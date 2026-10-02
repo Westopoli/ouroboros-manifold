@@ -4,18 +4,18 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 42 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 49 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. The rules of S-207 to S-209 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-095-01, Q-098-01, Q-099-01, Q-101-01. |
+| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-096-01 (the guard stance), Q-097-02 (two units on one spot), Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written.
+**Gate verdict: not passed.** Blocked on Q-096-01 (the guard stance, S-208), Q-097-02 (two units on one spot), Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written. S-207 and S-209 are design decided, not scheduled for building, apart from the movement rules R-207-06 and R-207-07, which are ruled and built with the tactical port; S-207 carries open flags.
 
 ## Purpose
 
-Four commands and nothing else: move, attack-move, attack a target, use the ability. A selection moves together at its slowest member's pace and keeps its shape on arrival; a player who wants a fast element to run ahead splits it off. Movement is two-level: a coarse route around obstacles, then local steering that flows around allies instead of shoving through them. A unit that has stopped to fight is immovable, so front ranks hold and later arrivals spill into flanking slots on their own. Everything is deterministic: same start, same commands, same movement tick for tick, which is what lockstep multiplayer needs.
+Four unit commands: move, attack-move, attack a target, use the ability. A guard stance is decided in principle and its design is open (S-208). Requests by pointing at the map and the economy seat's orders are a second channel beside these four, not unit commands (E-22 S-168, S-170, S-180). A selection moves together at its slowest member's pace and keeps its shape on arrival; a player who wants a fast element to run ahead splits it off. Movement is two-level: a coarse route around obstacles, buildings and, for walking units, ground too steep to cross (S-207), then local steering that flows around allies instead of shoving through them. A unit that has stopped to fight is immovable, so front ranks hold and later arrivals spill into flanking slots on their own. Everything is deterministic: same start, same commands, same movement tick for tick, which is what lockstep multiplayer needs.
 
 ## Obviously working in 60 seconds
 
@@ -42,6 +42,8 @@ Open flags: none.
 ### S-096 — Four commands
 As a commander, I want move to be movement and nothing else, attack-move to fight along the way, attack-target to commit, and ability to be a button, so that every order means one thing.
 
+Direction changed 2026-10-02, rewrite pending: a guard stance joins the commands (S-208), and an attack-moving unit engages what is within its type's reach and visible to its side, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
+
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
 - R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march. A unit attack-moved alone is not a group: it resumes toward the point after every fight.
@@ -53,10 +55,12 @@ Rules
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-096-01 (a guard stance: hold a post and step up to engage; decided after the ruled movement is built and a choke defence has been looked at).
+Open flags: Q-096-01 (the guard stance, S-208). Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
+
+Direction changed 2026-10-02, rewrite pending: the route grid and the cached routes follow buildings that appear and fall and slopes that join layers (S-207; E-22 S-174; E-01 S-200), and the steering probe reads positions as they stood at the start of the tick. The rules below are what the game does today.
 
 Rules
 - R-097-01  Given a map, When the route grid is built, Then it is 100 wu cells per layer, a cell blocked where obstacle density > 0.7, and a route is the shortest path on that grid, straightened by line-of-sight where cells allow.
@@ -72,7 +76,7 @@ Rules
 
 Inputs: map grid; unit positions, targets, states.
 Outputs: positions; route cache; collision log (T1).
-Open flags: Q-097-02.
+Open flags: Q-097-02. Q-165-01 (a lane speed above 1.0 is an idea only, E-17 S-165; R-097-06 stays as written until it is decided).
 
 ### S-098 — Firing through friends
 As a commander, I want my back rank to shoot over my front rank, so that formation depth is an advantage and not a jam.
@@ -100,6 +104,8 @@ Open flags: none.
 
 ### S-100 — Facing
 As a commander, I want units to face what they shoot and where they go, and to turn rather than snap, so that a retreat under fire looks like one.
+
+Direction changed 2026-10-02, rewrite pending: a unit faces its engaged target only within 1.5 times its range, else its move target, else its velocity, and a stationary firing unit turns. The rules below are what the game does today.
 
 Rules
 - R-100-01  Given a unit attacking a target, When facing updates, Then it faces the target; given moving with no target, it faces its heading; given idle with no target, it keeps its last facing.
@@ -132,12 +138,59 @@ Inputs: seed; command stream.
 Outputs: checksums.
 Open flags: none.
 
+### S-207 — Where units can go: buildings, slopes, solid ground and the edge
+As a commander, I want routes to follow the buildings that appear and fall, the slopes and the steep ground, and no unit to be stuck inside terrain or leave the map, so that a siege, a gate or a mountain pass changes where my army walks.
+
+The rules on buildings, slopes and steep ground are design decided 2026-10-02, not scheduled for building, and apply to land maps (E-22 S-174, E-01 S-200; space maps Q-166-02). R-207-06 and R-207-07 are ruled movement work that is built with the tactical port.
+
+Rules
+- R-207-01  Given a structure that blocks (a wall, a gate, a tower or a production building; E-11 S-204), When it is placed, Then the cells of its footprint on the layers it occupies are blocked on the route grid [Q-207-01: whether it blocks from placement, while under construction, or only when finished; Q-204-01: which layers it occupies].
+- R-207-02  Given a structure that falls, When it is destroyed, Then those cells are open again.
+- R-207-03  Given a cell that turns blocked or open (R-207-01, R-207-02), When units route, Then no unit follows a route through a blocked cell, and any route cached for a shared destination (R-097-02) that passes through a changed cell is computed again.
+- R-207-04  Given a gate, When a unit of either side reaches it, Then [Q-207-02: whether it lets its own side's units through and stops the enemy's, and whether it opens and closes].
+- R-207-05  Given a walking unit, When its route is planned, Then each slope joins its two layers on the route grid at its bottom edge and its top edge, crossing it takes the slope's length over the unit's speed (E-01 R-004-07), the route never passes through ground too steep to cross (E-01 S-200), and the shortest route is the one that takes least time (E-01 R-001-05).
+- R-207-06  Given a unit found inside a blocked cell on its layer, such as one a wall was placed on, When the tick runs, Then it is moved to the nearest open cell and is not left stalled in the cell.
+- R-207-07  Given a position, a destination or a collision push, When it is applied, Then the position is clamped to the map, and a push is slid along a blocked cell and not into it.
+
+Inputs: structures (E-11 S-204); slopes and sections too steep to cross (E-17 S-189, S-190); the route grid.
+Outputs: the route grid and the route cache as they change; unit positions.
+Open flags: Q-207-01, Q-207-02, Q-204-01.
+
+### S-208 — Guard
+As a commander, I want to put units on guard at a post, so that I can hold a choke, the top of a slope or a door without the units running out through it.
+
+The guard stance is decided in principle (Westley, 2026-10-01: "Yes a guard stance is fine"). How it works is open (Q-096-01) and is decided after the ruled movement is built and a choke defence has been looked at.
+
+Rules
+- R-208-01  Given selected units, When the player gives the guard stance at a post, Then the units hold the post and step up to engage what their side can see (E-12 R-093-02) [Q-096-01: how far they step up, whether and when they return, whether guard is a fifth command or a mode of attack-move, and how R-096-06 and "four commands" are reworded].
+- R-208-02  Given a force waiting for an enemy to come inside its ground, When the enemy is within its reach and has not seen it, Then [Q-208-01: whether a unit can be ordered to hold fire so that it stays unseen and the ambush is not spoiled, and whether that is the guard stance or a second order].
+- R-208-03  Given a guard command for tick t, When the tick runs, Then it is applied with every other command before any state advances, and recorded with the tick number (R-096-07).
+
+Inputs: guard command (selection, post).
+Outputs: unit order state in the tick delta.
+Open flags: Q-096-01, Q-208-01.
+
+### S-209 — Workers move like any unit
+As a commander, I want workers to walk the same ground and take the same room as soldiers, so that a base with thousands of them is a real crowd on the real map.
+
+Design decided 2026-10-02, not scheduled for building.
+
+Rules
+- R-209-01  Given a worker walking to a source or a drop-off (E-22 S-167), When it moves, Then it uses the route grid, the steering and the collision of S-097 as any unit does, and it is stopped by the buildings of S-207.
+- R-209-02  Given more than 1,000 live units, workers included, When the tactical tick rate is chosen, Then workers are counted among the live units (R-099-03, E-11 S-202).
+
+Inputs: worker positions and orders.
+Outputs: positions.
+Open flags: none.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Command packet | Player or enemy macro | move, attack_move, attack_target, activate_ability, layer_hard_transfer, layer_preference_set; unit ids; point in map bounds or target id | unknown kind, dead or foreign unit, point out of bounds, unknown target: rejected with reason |
 | Map grid, obstacle density | E-17 | | |
+| Slopes, sections too steep to cross | E-17 S-189, S-190 | land maps | |
+| Structures | E-11 S-204 | Position, footprint, layers | |
 | Unit speeds, radii | E-11 | | |
 
 ## Outputs
@@ -152,7 +205,7 @@ Open flags: none.
 
 - No two same-layer units within 30 wu after the collision pass, except when the pass hits its iteration cap.
 - A stationary unit is never moved by a moving unit's collision; two stationary units that overlap separate.
-- A unit never enters a blocked cell.
+- A unit never enters a blocked cell, which includes a cell a structure occupies and, for a walking unit, ground too steep to cross; a unit found inside one is moved out (R-207-06), and no unit leaves the map (R-207-07).
 - Same seed and commands, same movement, all platforms.
 - Under a plain move, no target is ever acquired.
 
@@ -160,7 +213,7 @@ Open flags: none.
 
 Confirmed by Westley, 2026-10-01: one pipe `tactical_step` round trip (request sent to frame parsed by the client) takes under 100 ms at 5,000 units, the tick length at the 10 ticks per second the sim runs above 1,000 live units (R-099-03).
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second on the route grid (100 wu cells, R-097-01; this line said 60 until 2026-10-02). The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second on the route grid (100 wu cells, R-097-01; this line said 60 until 2026-10-02). Workers are units and count in these figures (E-11 S-202, S-209). The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
 
 ## Look and behavior references
 
@@ -176,16 +229,19 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Probe angle order differs between platforms.
 - Plain move returns fire.
 - Leash measured from the target's position instead of the anchor.
+- A cached route kept through a cell that a building has since blocked, or a wall placed on a unit that is then stalled in it.
+- A walking unit routed over ground too steep to cross, or up a slope it has no edge for.
 
 ## Open ambiguity flags
 
-Q-096-01, Q-097-02, Q-101-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-096-01, Q-097-02, Q-101-02, Q-207-01, Q-207-02, Q-208-01, and from other epics Q-087-01, Q-204-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
 - E-01 Layer system (per-layer grids, transition state).
 - E-11 Units (speeds, radii, targeting loop).
 - E-12 Fog (visibility for attack-move acquisition).
-- E-17 Map generation (obstacle density, navmesh input).
+- E-17 Map generation (obstacle density, navmesh input, slopes and steep ground).
+- E-22 Economy and bases (buildings that block, workers).
 - E-16 Client (selection, control groups, input).
 - E-19 Multiplayer (lockstep determinism).

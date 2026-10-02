@@ -4,18 +4,18 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 27 rules, numbers from `algorithms.md` ALG-65 and config. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 31 rules, numbers from `algorithms.md` ALG-65 and config. The rules of S-205 and S-206 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 4 new flags, Q-089-01, Q-090-01, Q-092-01, Q-094-01. |
+| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-094 (how fog and interference look) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 4 open flags and one missing reference. Cross-layer vision and the pulse are specified in E-01 (S-005, S-006) and referenced here, not duplicated.
+**Gate verdict: not passed.** Blocked on open flags and one missing reference. Cross-layer vision, the targeted ping and going dark are specified in E-01 (S-005, S-162, S-163) and referenced here, not duplicated. S-205 and S-206 are design decided, not scheduled for building, and each carries open flags.
 
 ## Purpose
 
-The player sees only what their units can sense. Each unit reveals a circle around it, shrunk by whatever interference it is standing in, and the revealed map is the union of those circles. Enemies outside every circle do not exist on screen. Cover blocks sight by height (E-01 S-007). Other layers are seen at reduced range (E-01 S-005) or by pulse (E-01 S-006). Before the mission starts, the player sees all the terrain and none of the enemy; the moment the mission begins, fog falls. Fog binds every side by the same rule: a unit acquires, pursues and fires only at what its own side can see, so a spotter or a ping lets a long-range unit fire and losing sight stops it. What the player is shown never changes the result, and faction agents in the strategic sim see everything about their neighbors.
+The player sees only what their units can sense. Each unit reveals a circle around it, shrunk by whatever interference it is standing in, and the revealed map is the union of those circles. Enemies outside every circle do not exist on screen. Cover blocks sight by height (E-01 S-007). Other layers are seen at reduced range (E-01 S-005) or by a targeted ping (E-01 S-162), and a force that goes dark is harder to see from other layers (E-01 S-163). Before the mission starts, the player sees all the terrain and none of the enemy; the moment the mission begins, fog falls. Fog binds every side by the same rule: a unit acquires, pursues and fires only at what its own side can see, so a spotter or a ping lets a long-range unit fire and losing sight stops it. Enemy buildings are seen as enemy units are, and a seen production building shows what it is doing (S-205). A side keeps a record of which enemy unit types it has seen, and no more than that (S-206). What the player is shown never changes the result, and faction agents in the strategic sim see everything about their neighbors.
 
 At launch there is no era-to-era difference in fog (Stage 1 A-321). The Settled Reach ships with the values below.
 
@@ -38,7 +38,7 @@ Rules
 
 Inputs: unit positions, layers, sensor radii; interference at each position; cover geometry.
 Outputs: per-unit visible set and player-visible list in the tick delta; fog render.
-Open flags: Q-089-01 (last-seen ghost markers, shared with Q-006-02). Q-E12-01 is closed: the targeted ping (E-01 S-162) is how a player sees far; the seer is dropped or kept only at a very high cost so that it does not undercut the ping (Q-005-04).
+Open flags: Q-089-01 is closed: there is no memory of last-seen positions. Whether a shipment is a unit, and so whether R-089-05 would show it, is Q-176-02 (E-22 S-176). The line that crosses layers, for sight past cover or ground, is Q-007-01 (E-01 S-007). Q-E12-01 is closed: the targeted ping (E-01 S-162) is how a player sees far; the seer is dropped or kept only at a very high cost so that it does not undercut the ping (Q-005-04).
 
 ### S-090 — Hiding in the storm
 As a commander, I want a zone of interference to shrink what units inside it can see and what outsiders can see into it, so that I can hide a force or fear one.
@@ -52,7 +52,7 @@ Rules
 
 Inputs: gradient sources (position, radius, intensity, falloff, layer, motion).
 Outputs: interference field; fog render density.
-Open flags: Q-090-01.
+Open flags: Q-090-01. Weather that travels across the map and shuts down what it passes over is a hazard of E-15 (S-130), not a moving interference source.
 
 ### S-091 — Standing high
 As a commander, I want an elevated position to see farther, so that vantage is worth taking.
@@ -64,7 +64,7 @@ Rules
 
 Inputs: vantage nodes; elevation gradient.
 Outputs: effective radius.
-Open flags: Q-092-01.
+Open flags: Q-091-01 (how the elevation tiers of R-091-02, closed in Q-092-01 as steps of 0.25, relate to the five height-band layers, now that on land maps elevation and layers come from one height field (E-17 S-190); and whether the bonus is symmetric, since the sign of the tier difference is not stated while vision across layers is symmetric by layer distance, E-01 S-005).
 
 ### S-092 — Recon, then fog
 As a commander, I want to study the whole map before I commit and then lose sight of everything but what my units see, so that planning and scouting are two different skills.
@@ -102,6 +102,36 @@ Inputs: visibility; interference field.
 Outputs: screen.
 Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never says). Reference required: `references/E-12/notes.md`, missing.
 
+### S-205 — Buildings are seen like units, and show what they do
+As a commander, I want an enemy building to appear when my units see it and to show what it is doing, so that scouting reads an enemy base and hiding a building is a play.
+
+Design decided 2026-10-02, not scheduled for building. Walls, gates and towers are written for land maps (E-22 S-174).
+
+Rules
+- R-205-01  Given an enemy structure (E-11 S-204), When visibility is computed, Then it is in a side's visible set when it lies within the effective radius of one of that side's units and no cover or blocked cell blocks the line (R-089-01), as an enemy unit is [Q-204-01: which layers a structure occupies, and so which layer a sighting across layers measures to].
+- R-205-02  Given an enemy structure not in the side's visible set, When drawn, Then it is not drawn and its state is not in the client's data (R-089-03) [Q-205-01: whether a building once seen stays shown after it leaves sight, and in what form].
+- R-205-03  Given an enemy production building in the visible set, When the player looks at it, Then he can see what it is doing (E-22 S-170, S-172) [Q-172-01: what a seen building reveals, and what a building shows from a distance unseen].
+- R-205-04  Given a building that is disguised or hidden, When an enemy sees it, Then what the enemy reads is what the disguise allows (E-22 S-172) [Q-159-09: how disguising or hiding works and what it costs].
+
+Inputs: structure positions, layers and owners (E-11 S-204); each side's visible set.
+Outputs: the structures in each side's visible set; what each seen production building shows.
+Open flags: Q-204-01, Q-205-01, Q-172-01, Q-159-09.
+
+### S-206 — What a side has seen of the enemy's units
+As a commander, I want my side to keep which kinds of enemy unit it has seen, so that production can answer them using only what the fog has revealed.
+
+Design decided 2026-10-02, not scheduled for building.
+
+Rules
+- R-206-01  Given an enemy unit in a side's visible set, When visibility is computed, Then the side's record of enemy unit types seen includes that unit's type [Q-206-02: whether the record keeps how many of each type were seen, and whether it ever forgets].
+- R-206-02  Given the record, When it is read, Then it holds types and nothing about where they were: there is still no memory of last-seen positions (R-089-04) and no marker on screen.
+- R-206-03  Given a side whose economy runs without a human in the seat, When the rules shift production toward what counters the enemy units that side has seen, Then they read this record and nothing else about the enemy (E-22 S-179, S-180).
+- R-206-04  Given an enemy economy that scouts and counters (E-22 S-181), When it chooses what to build, Then [Q-181-02: whether it reads only its own side's record, built from its own side's visible set, or the real state of the player's side].
+
+Inputs: each side's visible set (R-093-02).
+Outputs: the per-side record of enemy unit types seen, read by E-22 S-179 to S-181.
+Open flags: Q-206-02, Q-181-02 (E-22).
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -110,7 +140,8 @@ Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never s
 | Interference field | E-17 map generation | [0, 1] per position and layer | values outside clamp |
 | Cover geometry | E-17 | obstacle position, radius, height | |
 | Vantage nodes | E-17 | position, radius | |
-| Elevation gradient, era flags | E-17, era pack | | |
+| Elevation gradient, era flags | E-17 (on land maps elevation and layers come from one height field, E-17 S-190), era pack | | |
+| Structures | E-11 S-204 | Position, footprint, layer, owner | |
 | Begin Mission | Player | | |
 
 ## Outputs
@@ -118,6 +149,7 @@ Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never s
 | Output | Observable where |
 |---|---|
 | Per-unit visible sets, player-visible list | Tick delta; T1 trace |
+| Visible structures; per-side record of enemy unit types seen | Tick delta; T1 trace |
 | Fog render, sensor circles, interference | Screen; T2 screenshots |
 | Recon state | Screen; mission clock |
 
@@ -130,7 +162,7 @@ Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never s
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): visibility for 1,000 units in under 2 ms per tick (shared with E-01); 10,000 in under 20 ms; must use spatial hashing, not all-pairs. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): visibility for 1,000 units in under 2 ms per tick (shared with E-01); 10,000 in under 20 ms; must use spatial hashing, not all-pairs. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s. Workers are units and count in these figures (E-11 S-202).
 
 ## Look and behavior references
 
@@ -145,14 +177,17 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - A unit fires at a target that no unit of its side sees.
 - Visibility computed all-pairs and falls off a cliff at scale.
 - Last-seen markers implemented as live positions.
+- The record of enemy types seen fed from the real state of the enemy instead of from the side's visible set.
+- An enemy building drawn or reported to the client while it is outside every sensor circle.
 
 ## Open ambiguity flags
 
-Q-089-01, Q-090-01, Q-092-01, Q-094-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-091-01, Q-205-01, Q-206-02, and from other epics Q-007-01, Q-159-09, Q-172-01, Q-176-02, Q-181-02, Q-204-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
-- E-01 Layer system (cross-layer vision, pulse, cover by height).
-- E-11 Units (sensor radii, acquisition).
+- E-01 Layer system (cross-layer vision, the ping, going dark, cover by height).
+- E-22 Economy and bases (what a seen building shows, disguise, the economy that reads the record of types seen).
+- E-11 Units (sensor radii, acquisition, structures).
 - E-17 Map generation (interference sources, cover, vantage, elevation).
 - E-16 Client (fog render, recon phase UI).

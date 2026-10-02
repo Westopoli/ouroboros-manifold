@@ -4,18 +4,18 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 9 stories, 52 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 16 stories, 91 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values; the economy and layer-action stories (S-230 to S-235) state what must be shown and leave numbers and layout to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
-| Implied-but-unstated behavior turned into flags | 7 new flags, Q-103-01, Q-104-01, Q-105-01, Q-106-01, Q-108-01, Q-110-01, Q-111-01. |
+| Implied-but-unstated behavior turned into flags | 7 flags on the first stories, Q-103-01, Q-104-01, Q-105-01, Q-106-01, Q-108-01, Q-110-01, Q-111-01, and 12 on S-230 to S-235: Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-234-02, Q-235-01. |
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and references. The camera is chosen (Q-103-03, the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
+**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-235 are design decided and not scheduled for building. The camera is chosen (Q-103-03, the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
 
 ## Purpose
 
-Everything the player sees and touches that is not the units themselves. In a mission: a standard RTS camera, a lean bottom-bar HUD in the register of Immortal: Gates of Pyre with the economy chrome removed, a layer strip, control groups, a minimap, the commander's face. Between missions: a 3D star map the player orbits like a tabletop, faction territory as glowing filaments and translucent shells, conflict as flashes of light, and the chronicle printing beside it. Around the loop: onboarding, briefing, debrief, a clean exit at every chapter boundary, and one unbroken camera move from battle to galaxy to the next battle.
+Everything the player sees and touches that is not the units themselves. In a mission: a standard RTS camera, a lean bottom-bar HUD for the commander in the register of Immortal: Gates of Pyre with the economy chrome removed, a layer strip, control groups, the map view in place of a minimap, the commander's face, and one continuous zoom from a single unit to the battlefield's map view. A second player who runs the economy has a screen of their own (S-230); a commander playing alone has a dial, a doctrine switch and a way to ask by pointing (S-231); the three layer actions and the economy's news have their places (S-232, S-235). Between missions: a 3D star map the player orbits like a tabletop, faction territory as glowing filaments and translucent shells, conflict as flashes of light, and the chronicle printing beside it. Around the loop: onboarding, briefing, debrief, a clean exit at every chapter boundary, and one unbroken camera move from battle to galaxy to the next battle.
 
 The design rule for every panel here is the player-perception rule adopted in Stage 1: state what the player can see and what it tells them, not where the pixels go.
 
@@ -48,33 +48,35 @@ As a commander, I want to pull the camera back until the battle reads as a map, 
 
 Rules
 - R-161-01  Given the camera pulled back past the tactical band, When the map view opens, Then it replaces the minimap; there is no corner minimap [Q-103-05: whether an always-visible glance survives].
-- R-161-02  Given the map view, When the player selects a group and clicks a point or a visible enemy, Then the only orders are move and attack-move; every other command needs the tactical band.
+- R-161-02  Given the map view, When the player selects a group and clicks a point or a visible enemy, Then the orders are move and attack-move; a commander playing alone may also ask for things by pointing at the map from here (expand here, fortify this pass, siege at this gate; E-22 S-180, S-231), allowed and subject to change (Westley, 2026-10-02); every other command needs the tactical band.
 - R-161-03  Given the map view, When groups are drawn, Then layers collapse into one icon per group carrying a mark for Upper (layers 4 and 5), Lower (1 and 2), or Expansive (1 to 5) [Q-103-06: a group entirely on layer 3, and indicators beyond pins].
 - R-161-04  Given the map view, When it is read, Then it shows the mission only, never the galaxy; the galaxy view lives outside missions.
-- R-161-05  Given the map view, When it is drawn, Then the overlay moves with the terrain and fog applies as everywhere; the look is the Sand Table candidate, a shrunken three-dimensional model of the ground with groups as pins, with a 45° view of the same table in which the layers sit far enough apart that specific sets of units read; committed only after a prototype [Q-103-05].
+- R-161-05  Given the map view, When it is drawn, Then the overlay moves with the terrain and fog applies as everywhere; the look is the Sand Table candidate, a shrunken three-dimensional model of the ground with groups as pins, with a 45° view of the same table in which the layers sit far enough apart that specific sets of units read; committed only after a prototype [Q-103-05; Q-234-01: whether this look is the zoomed-out end of the one continuous drawing of S-234 or a separate drawing].
 
 Inputs: mouse, keyboard.
 Outputs: viewport transform; orders.
-Open flags: Q-103-05 (Sand Table prototype before commitment), Q-103-06 (layer marks for groups beyond pins). Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
+Open flags: Q-103-05 (Sand Table prototype before commitment), Q-103-06 (layer marks for groups beyond pins), Q-234-01. What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
+
+Direction changed 2026-10-02, rewrite pending: the ticker also carries economy events (S-235), and the structure panel's production timers belong to the economy seat's schedule (S-230, E-22 S-170) with the structures themselves strongpoints (E-15). The rules below are what the game does today.
 
 Rules
 - R-104-01  Given a mission, When the HUD is drawn, Then the player can always see the objective list with progress (top-left) and a quiet ticker of notable beats beneath it; the ticker recognizes structure captured, structure lost, force routed, and objective threshold crossed, and nothing else at launch.
 - R-104-02  Given nothing mission-significant has happened, When the top-center is read, Then it is empty; Given a structure falls or an objective band threshold is crossed, Then a banner appears there and clears within 5 s.
 - R-104-03  Given a mission, When the top-right is read, Then it shows elapsed mission time and a pause or menu button [Q-104-01: pause in a real-time multiplayer match].
 - R-104-04  Given a selection, When the bottom-center is read, Then it shows the selected units' portraits, summed HP, and one ability slot per unit type with a cooldown ring, and no contextual prompt or "ready" notification.
-- R-104-05  Given the map view (S-161) in place of a minimap, When the player pulls the camera back, Then friendly groups are bright, visible enemies dim, terrain reads as ground, objectives are marked, and reinforcement structures are colored by owner.
+- R-104-05  Given the map view (S-161) in place of a minimap, When the player pulls the camera back, Then friendly groups are bright, visible enemies dim, terrain reads as ground, objectives are marked, and reinforcement structures are colored by owner; the economy's places and the weather are drawn there too (S-235).
 - R-104-06  Given player-owned reinforcement structures, When the structure panel is read, Then one row per owned structure shows the production timer bar, next unit icon, and structure HP; neutral and enemy structures do not appear.
 - R-104-07  Given control groups 1 through 0, When the tabs are read, Then each bound group shows its unit-type icon and count.
-- R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker.
-- R-104-09  Given the right sidebar, When read, Then it is empty at launch except the layer strip.
-- R-104-10  Given the in-world chrome, When read, Then every unit has a thin HP bar above it and a layer-color ring beneath it, and selected units have a selection ring; there is no enemy composition readout anywhere.
+- R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker [Q-230-02: what the economy player's screen shows here, since that player is not the commander].
+- R-104-09  Given the right sidebar, When read, Then it holds the layer strip and nothing else at launch [Q-231-01: where the solo commander's dial, doctrine switch and unit-mix switches sit, if not here].
+- R-104-10  Given the in-world chrome, When read, Then every unit has a thin HP bar above it and a layer-color ring beneath it, and selected units have a selection ring, and every force set to emit carries the emit mark of S-232; there is no enemy composition readout anywhere [Q-230-03: where the line falls between that and what a player infers from the world, such as heavy gathering of one resource showing which role a side is making more of, E-22 S-171].
 
 Inputs: tick delta; selection; control groups.
 Outputs: HUD panels, T2-checkable.
-Open flags: Q-104-01. Reference: IGoP HUD screenshots, pending confirmation.
+Open flags: Q-230-02, Q-230-03, Q-231-01. Q-104-01 is closed (single-player pause is allowed, multiplayer never pauses); the bracket in R-104-03 stays until that rule is rewritten. Reference: IGoP HUD screenshots, pending confirmation.
 
 ### S-105 — Selection and control groups
 As a commander, I want to click, box-select, and bind groups, and never to have an all-army button, so that positional thinking is the whole game.
@@ -91,7 +93,7 @@ Rules
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
-Open flags: none. Q-106-01 is closed: no replacement affordance; the control-group hotkeys stand. Chosen through the options pass, `docs/northstar/research/options/control-groups/`, Q-105-02.
+Open flags: none. The ping of S-232 also takes a layer number key; the keys are Q-232-01 and Q-103-04. Q-106-01 is closed: no replacement affordance; the control-group hotkeys stand. Chosen through the options pass, `docs/northstar/research/options/control-groups/`, Q-105-02.
 
 ### S-106 — The galaxy between missions
 As a player, I want to orbit a 3D star map where territory glows, borders touch, and war flashes, so that the world reads at a glance.
@@ -125,7 +127,7 @@ Open flags: Q-108-01 (what "aggregate stats" the data panel shows, given the no-
 As a player, I want the mission to pull back into the galaxy and the galaxy to push into the next mission without a cut, so that the world is one space at different scales.
 
 Rules
-- R-108-01  Given the mission ends, When the player confirms, Then the camera pulls back and up until the battlefield is one point of light and the galaxy fades in around it, full screen.
+- R-108-01  Given the mission ends, When the player confirms, Then the camera pulls back and up until the battlefield is one point of light and the galaxy fades in around it, full screen; this is a scripted move and not the player's zoom, which stops at the battlefield's map view (S-234).
 - R-108-02  Given the galaxy is visible, When narration begins, Then the scroll panel slides in from the right over 0.40 s and the galaxy resizes to 62 percent width (E-09 R-069-01).
 - R-108-03  Given a territory change in a keyframe, When animated, Then the shell tweens from old to new over 2.0 s; nothing snaps; all events in a keyframe animate together.
 - R-108-04  Given the entry currently printing names a system, When drawn, Then that system's emission brightens subtly and the entry text is tinted in its primary faction's color.
@@ -179,12 +181,104 @@ Inputs: game state.
 Outputs: save files; menu.
 Open flags: none.
 
+### S-230 — The economy seat's screen
+As an economy player in a pair, I want a screen that shows my resources, my workers, what a building would yield before I place it, my production schedule, my technology and my defenses, so that I can hold the whole economy in mind and nothing on screen does the remembering for me.
+
+Design decided 2026-10-02, not scheduled for building (E-19 S-159, E-22). The rules say what must be shown; where it sits on screen was not decided and is Q-230-01.
+
+Rules
+- R-230-01  Given the economy seat of a pair, When the screen is read, Then the player can see how much of each of the three resources is held (E-22 S-167), the workers and what each is doing, and the population against its one cap (E-22 S-169) [Q-230-01: the layout of the screen].
+- R-230-02  Given a building the player is about to place, When it is held over a lot, Then the screen shows what that lot would yield with what stands beside it, before the building is placed (E-22 S-168).
+- R-230-03  Given the production buildings, When the schedule is read, Then it shows what each is set to make and what is planned ahead on the timeline, and how long a change of focus would take (E-22 S-170).
+- R-230-04  Given technology, When the player reads the technology choices, Then the screen shows what can be chosen and what is in progress (E-22 S-173) [Q-159-12: what technology does].
+- R-230-05  Given walls, gates and towers, When the screen is read, Then the player can see each defense placed and where the raid lanes run (E-22 S-174).
+- R-230-06  Given the economy seat, When the screen is read, Then no list of what the commander needs appears, and no alert that the pair is falling behind on the population cap, worker production, the next technology or production; the player holds those in mind and the pair talks (E-19 R-159-01).
+
+Inputs: economy state from the tick delta; the player's building, queue, schedule and technology commands.
+Outputs: the economy panels, T2-checkable.
+Open flags: Q-230-01 (layout of the economy seat's screen), Q-230-02 (what this player sees in the commander's portrait place), Q-230-03 (the line between "no enemy composition readout" and inference from the world).
+
+### S-231 — The solo commander's hand
+As a commander playing alone, I want one dial, a doctrine switch, switches for the unit mix, and a way to ask by pointing at the map, so that I steer the economy without running it.
+
+Design decided 2026-10-02, not scheduled for building (E-22 S-179, S-180). The controls exist for a commander with nobody in the economy seat, and in a pair whose economy player has dropped out (E-19 R-140-04).
+
+Rules
+- R-231-01  Given a commander with nobody in the economy seat, When the player turns the dial, Then it sets the balance of spending between economy, technology and army (E-22 S-180).
+- R-231-02  Given a mission in progress, When the player changes the doctrine, Then the rules follow the new doctrine from then on, at any time in the mission (E-22 S-179).
+- R-231-03  Given the rules that pick the unit mix and the rules that shift production toward what counters the enemy units the player's forces have seen, When the player reads the unit-mix controls, Then there is one switch for each, each can be turned off, and the commander can override the mix the rules pick (E-22 S-180) [Q-231-02: how the override is made].
+- R-231-04  Given the tactical view or the map view (S-161), When the player points at a place and asks for something (expand here, fortify this pass, siege at this gate), Then the request is given and the rules carry it out; the commander never places or queues anything himself. Allowed from the map view, subject to change (Westley, 2026-10-02).
+- R-231-05  Given a request, When it has been given, Then [Q-231-02: whether and how the screen shows that the request was taken, and what it shows when the rules cannot carry it out].
+
+Inputs: dial setting; doctrine choice; switch states; a place and a request.
+Outputs: the controls and their state, T2-checkable; commands carried to the rules.
+Open flags: Q-231-01 (where the controls sit on the HUD), Q-231-02 (the override and the acknowledgement), Q-231-03 (whether the dial, the default-on unit-mix rules and the doctrine switch fit hub principle 6, "positional thinking over command shortcuts", which is about orders to units while the dial is about spending; Westley decides).
+
+### S-232 — Pinging, going dark, and reach, on screen
+As a commander, I want to see my ping and my emitting forces, to be told when I am pinged and from which way, and to be told when a unit type cannot reach a layer, so that the three layer actions are things I can read and use on purpose.
+
+Rules
+- R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one [Q-232-01: the keys and where the control sits; Q-103-04].
+- R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-01].
+- R-232-03  Given forces on the field, When the in-world chrome is read, Then every force set to emit carries a mark showing that it is emitting, and a silent force carries none.
+- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then the player is alerted that they were pinged and is shown a sector of about 60 degrees pointing toward where the ping came from, and nothing more precise [Q-232-02: where the alert and its sector are drawn].
+- R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the screen tells the player that the units cannot reach it, whatever the distance [Q-232-02: where and when the cue appears].
+
+Inputs: ping and emit commands; the alert and the unit reach tables from the tick delta.
+Outputs: the ping control and its cooldown; the emit mark; the alert and sector; the reach cue, T2-checkable.
+Open flags: Q-232-01, Q-232-02.
+
+### S-233 — Choosing how the economy runs
+As a commander, I want to choose how the rules run my economy and whether the enemy's economy is clever, so that the game is as hard as I want it.
+
+Design decided 2026-10-02, not scheduled for building.
+
+Rules
+- R-233-01  Given a commander who will play alone, When the player makes the choices for a mission, Then the player can set which doctrine the rules begin with and whether each of the two unit-mix behaviours (R-231-03) is on [Q-233-01: where these choices are made, and whether the starting doctrine is the player's pick].
+- R-233-02  Given the enemy's economy, When the player makes the choices for a mission, Then the player chooses whether it also scouts, counters and disguises (E-22 S-181), as a pick.
+- R-233-03  Given a multiplayer universe, When these choices are made, Then they are locked with the rest of the universe's configuration (E-19 R-144-03).
+
+Inputs: the player's choices.
+Outputs: the choice screen, T2-checkable; the settings carried into the mission.
+Open flags: Q-233-01.
+
+### S-234 — One zoom, from a single unit to the battlefield
+As a commander, I want to zoom smoothly from a single unit to the battlefield's map view and no further, so that the scale of the world is something I feel.
+
+Rules
+- R-234-01  Given the camera at any zoom between the closest and the battlefield's map view, When it moves, Then the world is drawn as one world at continuous detail, with smooth transitions between very different zoom levels (E-17 R-166-05, E-18 S-236).
+- R-234-02  Given the closest zoom, When it is read, Then it shows a single unit in deep detail; Given the farthest zoom, Then it is the battlefield's map view of S-161.
+- R-234-03  Given the camera at the map view, When the player zooms out further, Then the zoom stops; the galaxy is not reached by the player's zoom, and the pull-back of S-108 is the only move from battlefield to galaxy.
+- R-234-04  Given any zoom, When the viewport is read, Then the mission canvas edges still bound the camera (R-103-02), whatever the canvas size.
+
+Inputs: scroll or zoom input.
+Outputs: viewport transform.
+Open flags: Q-234-01 (whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing; Q-103-05 is the prototype question), Q-234-02 (scale, see Scale requirements).
+
+### S-235 — The map shows the economy and its news
+As a commander, I want the map to show where the economy is and the ticker to tell me what happened to it, so that I can read the war's other half at a glance.
+
+Design decided 2026-10-02, not scheduled for building. Strongpoints and slopes apply to land maps; the space-era landscape is not designed (Q-166-02).
+
+Rules
+- R-235-01  Given the map view (S-161) and the tactical view, When the economy's places are drawn, Then the economic locations, the neutral settlements, the objective, the side's base of operations, its expansions and forward bases, and on land maps the strongpoints are marked (E-22 S-175, S-177; E-15).
+- R-235-02  Given an environmental trouble travelling across the map, When it is drawn, Then both sides see where it is as it moves (E-15 holds what it does).
+- R-235-03  Given the ticker (R-104-01), When a base is occupied, a side falls back to an expansion, an expansion is founded, or a weather trouble arrives, Then the ticker names it [Q-235-01: which other economy beats the ticker carries].
+- R-235-04  Given a shipment that does not arrive (E-22 S-176), When the ticker, the banners and the map are read, Then nothing on them explains why.
+
+Inputs: economy and weather events from the tick delta.
+Outputs: marks on the map view; ticker lines, T2-checkable.
+Open flags: Q-235-01.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Tick delta, snapshot, jump report, chronicle entries | Sim | | malformed delta drops the frame and logs |
+| Live map content (obstacle, cover and interference gradients, spine, vantage and drifting nodes) | Sim, over the pipe (frames in `docs/architecture.md`) | | malformed frame drops and logs |
+| Economy state, weather and ping alerts | Sim, in the tick delta | | unknown event ignored and logged |
 | Mouse, keyboard | Player | | unknown keys ignored |
+| Economy, doctrine, dial, request, ping and emit commands | Player | by seat and role (E-19 S-242) | a command the seat may not give is dropped and logged |
 | Rebinding | Settings | | conflicts refused |
 
 ## Outputs
@@ -197,14 +291,16 @@ Open flags: none.
 
 ## Invariants
 
-- The HUD never shows an enemy composition readout.
+- The HUD never shows an enemy composition readout (the line against inference from the world is Q-230-03).
+- Nothing on screen lists what the commander needs, and nothing explains a shipment that did not arrive.
+- The player's zoom never goes past the battlefield's map view.
 - No select-all command exists.
 - No loading screen between mission and galaxy and mission.
 - Every screen text is free of raw field numbers.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is Q-234-02. Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
 
 ## Look and behavior references
 
@@ -225,7 +321,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-104-01, Q-106-01, Q-108-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-106-01, Q-108-01, Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-234-02, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
@@ -233,4 +329,7 @@ Q-104-01, Q-106-01, Q-108-01. Details in `docs/northstar/ambiguity_register.md`.
 - E-08, E-09, E-10 (onboarding, chronicle, briefing, debrief).
 - E-15 (reinforcement structure panel).
 - E-18 (visual style and animation for menus and transitions).
-- E-19 (pause and exit in multiplayer).
+- E-19 (pause and exit in multiplayer; the pair's roles, S-159, S-241, S-242).
+- E-22 (the economy the seat's screen and the commander's controls show: S-167 to S-181).
+- E-17 (S-166, the settlements and landscape that the zoom and the map view draw).
+- E-01 (the ping, going dark and reach that S-232 shows).

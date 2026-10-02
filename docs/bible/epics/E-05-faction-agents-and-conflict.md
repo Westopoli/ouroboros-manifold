@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable; conflict reaches the player through the world view (E-16), chronicle (E-09), and missions (E-10). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed 2026-09-14.** The five flags raised at the gate (Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01) are answered and folded into the rules below.
+**Gate verdict: S-032 to S-041 passed 2026-09-14; S-226 (added 2026-10-02) has not been through the gate and carries two open flags.** The five flags raised at the gate (Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01) are answered and folded into the rules below.
 
 ## Purpose
 
@@ -174,6 +174,20 @@ Inputs: neighbor ownership; edge types; stances.
 Outputs: friction record per region in the tick log.
 Open flags: none.
 
+### S-226 — How a faction meets a mission's economy
+As a commander, I want a faction's standing in the galaxy to carry into the economy it fights with in a mission, so that the strategic simulation and the mission are one story.
+
+Direction decided in part 2026-10-02 (E-22 S-178, E-22 S-179, E-22 S-181; E-22 S-179 and S-181 hold the economy); how it meets this epic is open. Not scheduled for building.
+
+Rules
+- R-226-01  Given a mission in which a side's economy runs (E-22), When it is set up, Then [Q-226-01: whether and how the owning faction's budget (S-033), its economy or its technology tier sets it; today the budget sets only the enemy's power, E-10 R-074-01].
+- R-226-02  Given a faction's archetype, attack weight, expand weight and attack confidence (S-032), When the doctrine that runs its economy is chosen (E-22 S-179, S-181), Then [Q-226-02: whether any of them links to a doctrine, for the enemy and for the player's civilization; this epic knows archetype only as combat and expansion behaviour].
+- R-226-03  Given a region is conquered here (S-038), When a base of operations is occupied in a mission (E-22 S-178), Then the two are separate: S-038 is a region-level ownership change resolved on a strategic tick, and occupation inside a mission has no stated link to it (E-02 S-220, Q-220-01).
+
+Inputs: faction budget, archetype, tier; mission setup (E-10).
+Outputs: none until the flags are answered.
+Open flags: Q-226-01, Q-226-02.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -185,7 +199,7 @@ Open flags: none.
 | Tech multipliers | E-06 | ≥ 1.0 | |
 | RNG | World stream | | |
 
-No player input reaches this epic in single-player; the player's faction runs the same agent. In multiplayer, each human player's faction still runs the agent (vision_v2: the civilization has its own plans).
+No player input reaches this epic in single-player; the player's faction runs the same agent. In multiplayer, each human player's faction still runs the agent (vision_v2: the civilization has its own plans). With more players, each pair is a sub-civilization inside the over-arching civilization (E-19 S-159), which this epic has no notion of; how it maps onto factions is Q-228-02 (E-08 S-228).
 
 ## Outputs
 
@@ -228,7 +242,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-036-02 (raised 2026-09-15 by the S-036 audit; the tests assume candidate (a)). Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01 are closed and folded (2026-09-14).
+Q-226-01, Q-226-02 (S-226), and Q-228-02 (E-08 S-228) as cited in the Inputs note. Q-036-02 (raised 2026-09-15 by the S-036 audit; the tests assume candidate (a)). Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01 are closed and folded (2026-09-14).
 
 ## Depends on
 
@@ -237,3 +251,4 @@ Q-036-02 (raised 2026-09-15 by the S-036 audit; the tests assume candidate (a)).
 - E-04 Events (Conquest Unrest and admin chain templates).
 - E-06 Diplomacy and technology (stances, tech multipliers).
 - E-07 Civilizational lifecycle (breakaway creation, zombie cleanup, latent loyalty).
+- E-10 Missions and E-22 Economy and bases (S-179, S-181: the economy a faction fights with, S-226).

@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable; events reach the player through the chronicle (E-09) and world view (E-16). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed 2026-09-14.** The five flags raised at the gate are answered and folded: simultaneous same-tick triggers (Q-026-01, Westley's direction, designed here), triangular spawn delays (Q-027-01), pruned entries logged (Q-027-02), coin-flip tie-break (Q-028-01), S-031 pacing thresholds measured from the Python reference sim (Q-031-01).
+**Gate verdict: S-026 to S-031 passed 2026-09-14; S-225 (added 2026-10-02) has not been through the gate and carries two open flags.** The five flags raised at the gate are answered and folded: simultaneous same-tick triggers (Q-026-01, Westley's direction, designed here), triangular spawn delays (Q-027-01), pruned entries logged (Q-027-02), coin-flip tie-break (Q-028-01), S-031 pacing thresholds measured from the Python reference sim (Q-031-01).
 
 ## Purpose
 
@@ -139,6 +139,19 @@ Inputs: full sim run.
 Outputs: window statistics in the T1 trace; trajectory invariants.
 Open flags: none. The reference measurement is a Stage 3 task for this story (Round 2); until it exists S-031 is not Ready.
 
+### S-225 — Environmental trouble and the event library
+As a commander, I want the history the chronicle tells to agree with the ground I fight on, so that a region's environmental trouble is either part of both or part of one on purpose.
+
+Direction decided in part 2026-10-02 (E-15 S-219; E-17 R-166-03; E-02 S-221 derives the trouble from the seed); whether it reaches the strategic sim is open. Not scheduled for building.
+
+Rules
+- R-225-01  Given a region has an environmental trouble (E-02 S-221), When the strategic sim runs, Then [Q-225-01: whether the trouble has any strategic effect, as an event template or a trigger, or is tactical only]; until it is decided the library stays the 26 templates of R-030-01 and no template reads a climate or trouble.
+- R-225-02  Given the growth of a settlement comes "in waves tied to events" (E-17 R-166-03), When "events" is read, Then [Q-225-02: whether it means the events of this epic, one chain per region-year in the strategic sim, or events inside a mission (a shipment arrives, an expansion is founded, a season turns)].
+
+Inputs: the region's trouble (E-02 S-221); the template table.
+Outputs: none until Q-225-01 is answered.
+Open flags: Q-225-01, Q-225-02.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -190,7 +203,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-None. Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01 are closed and folded (2026-09-14).
+Q-225-01, Q-225-02 (S-225). S-026 to S-031 have none: Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01 are closed and folded (2026-09-14).
 
 ## Depends on
 
@@ -199,3 +212,5 @@ None. Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01 are closed and folded (20
 - E-07 Civilizational lifecycle (what a faction-creating event does).
 - E-08 Generational structure (noise offsets roll at each time jump).
 - E-09 Chronicle (consumer of chain tags).
+- E-02 S-221 (a region's environmental trouble, if it ever becomes an event trigger, S-225).
+- E-17 Map generation (R-166-03 growth waves tied to events, S-225).

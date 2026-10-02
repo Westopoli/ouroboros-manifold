@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-063 (onboarding screen) has a visible surface and no reference. The chronicle scroll surface is E-09. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 7 open flags and one missing reference. Q-056-01 (the time jump is a fixed 50 ticks in code, not the state-derived 20 to 100 the vision confirms) is the load-bearing one.
+**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and carries two open flags. Blocked on 7 open flags and one missing reference. Q-056-01 (the time jump is a fixed 50 ticks in code, not the state-derived 20 to 100 the vision confirms) is the load-bearing one.
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Rules
 
 Inputs: mission outcome; world state.
 Outputs: chapter record (number, faction, character, start and end tick, end reason) in the save file.
-Open flags: none.
+Open flags: none. R-055-02 is about the strategic sim; the economy that grows during a mission (E-22 S-182) is part of the mission, and no strategic tick runs for it. The only channel from a mission to the simulation that R-055-03 names is field changes; what else a mission leaves behind is E-02 S-220.
 
 ### S-056 — Decades pass while I am gone
 As a player, I want the gap between chapters to be decades long and decided by the world, not by me, so that each return feels like history happened.
@@ -52,7 +52,7 @@ Rules
 
 Inputs: world state at jump start; config bounds.
 Outputs: time jump report; chronicle input (E-09); map animation input (E-16).
-Open flags: Q-056-01 (state-derived length: which variables, which mapping).
+Open flags: Q-056-01 (state-derived length: which variables, which mapping). No rule here calls a jump short or long; whether damage persisting across a jump depends on its length is part of Q-159-13 (E-02 S-220).
 
 ### S-057 — Stay with the family or move on
 As a player, I want to stay with a bloodline while its story is alive and move on when it goes quiet, so that lineages feel like arcs and not like a counter.
@@ -157,6 +157,8 @@ Open flags: Q-063-01, Q-063-02. Reference required: `references/E-08/notes.md`, 
 ### S-064 — What carries over
 As a player, I want the world to remember everything and my character to start fresh, so that my legacy is in the galaxy and not in a stat sheet.
 
+What a pair carries forward between missions is undecided (E-22 S-182, Q-159-07). R-064-02 and R-064-03 are true today because it is open, and are rewritten if a carry-forward is chosen. A carried deck, ability or economy would also have to enter the save and the determinism trace of R-064-04.
+
 Rules
 - R-064-01  Given any chapter transition, When the next chapter starts, Then every region field, ownership, faction, tech level, edge type, event queue, and ledger record persists unchanged except by the sim itself.
 - R-064-02  Given a new chapter, When forces are assigned, Then they come only from the mission generator's allocation (E-10); nothing carries from the previous mission's surviving units.
@@ -166,6 +168,19 @@ Rules
 Inputs: none.
 Outputs: save file; determinism trace.
 Open flags: none.
+
+### S-228 — More than one player in a chapter
+As a player in a team of 2, 4 or 6, I want the chapter, the ledger and the world to know I am in a team, so that my pair is a part of the story and not a rider on someone else's.
+
+Direction decided in part 2026-10-02 (DECISIONS H7; E-19 R-159-01): more teammates mean bigger maps, more to do, more resources and more enemies; each player is a sub-commander; each pair is a sub-civilization inside the over-arching civilization. The simulation has no notion of either. Not scheduled for building. S-055 to S-064 are written for one player and one commander and stay as written for it.
+
+Rules
+- R-228-01  Given a chapter played by a team of 2, 4 or 6, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
+- R-228-02  Given a team of 4 or 6, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
+
+Inputs: team size and pairs (E-19 S-159).
+Outputs: none until the flags are answered.
+Open flags: Q-228-01, Q-228-02.
 
 ## Inputs
 
@@ -218,7 +233,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-056-01, Q-057-01, Q-058-01, Q-060-01, Q-062-01, Q-063-01, Q-063-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-056-01, Q-057-01, Q-058-01, Q-060-01, Q-062-01, Q-063-01, Q-063-02, and Q-228-01, Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
@@ -228,3 +243,6 @@ Q-056-01, Q-057-01, Q-058-01, Q-060-01, Q-062-01, Q-063-01, Q-063-02. Details in
 - E-16 Client (briefing, debrief, map animation, onboarding screen).
 - E-20 Multi-era (era unlocks).
 - E-21 Offline AI pipeline (naming library).
+- E-19 Multiplayer (S-159 teams, pairs and the economy seat, S-228).
+- E-22 Economy and bases (S-182 what carries forward).
+- E-02 S-220 (what a mission leaves in a region).
