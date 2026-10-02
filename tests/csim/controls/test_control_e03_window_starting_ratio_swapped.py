@@ -17,10 +17,11 @@ PLANT: under OM_BUG_STARTING_RATIO_SWAPPED, om_world_generate computes
 `military = population * STARTING_ECO_RATIO(1.1) + jitter_m` -- the two
 ratio constants swapped, jitters and draw order untouched.
 
-Fixture: a single faction (the player, id 0 -- forced via om_gen_set_faction_count
-so its home also takes the general formula, never an archetype range), template
-Isolated (1 home + 2 frontiers + a 1-region corridor = 4 regions, the minimum
-feasible for n_regions=4), extra edges disabled (the isolation switch
+Fixture (TD-A122-e03-fixture: the old single-faction, n_regions=4 fixture was
+infeasible, om_world_generate returns at worldgen.c:181 with fewer than 2
+factions): two factions, n_regions=8. The player (faction 0) home follows the
+general formula; the AI faction's archetype home (region 3) uses its range
+path and is skipped. Extra edges disabled (the isolation switch
 ALG-31/header documents for exactly this kind of placement test, so no extra
 draws land between regions). The RNG is forced through the whole draw
 sequence with the SAME economy-jitter (u=0.70 -> jitter +2.0) and
@@ -44,11 +45,12 @@ from conftest import (
 
 STARTING_ECO_RATIO = 1.1
 STARTING_MIL_RATIO = 0.7
+AI_HOME_REGION = 3
 
 
 def test_control_starting_ratio_swapped_trips_the_detector(dbg, dbg_world_factory):
-    w = dbg_world_factory(n_regions=4, seed=3120001)
-    gen_set_faction_count(dbg, w, 1)
+    w = dbg_world_factory(n_regions=8, seed=3120001)
+    gen_set_faction_count(dbg, w, 2)
     gen_set_extra_edges_enabled(dbg, w, 0)
     dbg.om_debug_inject(w, OMBugE03.STARTING_RATIO_SWAPPED)
 
@@ -58,17 +60,19 @@ def test_control_starting_ratio_swapped_trips_the_detector(dbg, dbg_world_factor
     # inhabited regions actually need, so any corridor/shuffle draws this
     # test does not account for cannot shift a real region's jitter slot.
     per_region = [0.40, 0.70, 0.20, 0.50, 0.50, 0.50]
-    force_draws(dbg, w, [0.10] + per_region * 6)
+    force_draws(dbg, w, [0.10, 0.10] + per_region * 12)
 
-    assert generate(dbg, w) == 1, "fixture setup: n_regions=4 must be feasible for one Isolated faction"
+    assert generate(dbg, w) == 1, "fixture setup: n_regions=8 must be feasible for two factions"
 
     jitter_e = -5.0 + 10.0 * 0.70   # +2.0
     jitter_m = -5.0 + 10.0 * 0.20   # -3.0
 
     checked = 0
-    for idx in range(4):
+    for idx in range(8):
         if dbg.om_region_tier(w, idx) == OMTier.EMPTY:
             continue
+        if idx == AI_HOME_REGION:
+            continue  # archetype range path, not the general formula
         checked += 1
         p = dbg.om_region_field(w, idx, OMField.POPULATION)
         e = dbg.om_region_field(w, idx, OMField.ECONOMY)
@@ -87,4 +91,4 @@ def test_control_starting_ratio_swapped_trips_the_detector(dbg, dbg_world_factor
             f"still reads population*0.7+jitter ({correct_m}) instead of the "
             f"swapped population*1.1+jitter ({buggy_m}) -- the detector did not trip"
         )
-    assert checked == 3, "fixture setup: an Isolated faction must generate exactly 3 inhabited regions"
+    assert checked == 5, "fixture setup: expected 5 general-formula regions (probe: 0,1,2,4,5)"
