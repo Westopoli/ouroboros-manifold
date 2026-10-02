@@ -2087,12 +2087,17 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
     dy = om_unit_position_y(ww, p1) - y0;
     dist = sqrt(dx * dx + dy * dy);
     steps = (int)(dist / OM_LOS_SAMPLE_STEP);
-    if (om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN) && om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
+    if (om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) {
+        /* R-098-02: a blocked cell on the lower of the two layers blocks the line, as the cover test does.
+         * See also: fog.c, the sight side. */
+        if (om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
+        if (!om_move_los_clear(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1))) return 0;
+    }
     for (i = 1; i < steps; i++) {
         double t = (double)i / (double)steps;
         double px = x0 + t * dx, py = y0 + t * dy;
         om_gradient_properties g;
-        if (om_move_density_at_pos(ms, px, py, 0) > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
+        if (!om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN) && om_move_density_at_pos(ms, px, py, 0) > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
         om_map_sample_gradients(ww, px, py, &g);
         /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
         if ((g.cover_density > 0.0 && !om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) || g.obstacle_density > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
