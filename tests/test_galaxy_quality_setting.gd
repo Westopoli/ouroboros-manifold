@@ -234,4 +234,25 @@ func _run_tests() -> void:
 			"A54: stored galaxy_quality=%d loaded as %s at boot" % [tier, st.get("galaxy_quality")])
 		_assert(int(r.get("ui", {}).get("selected", -1)) == tier,
 			"A54: stored galaxy_quality=%d but a new Settings instance shows item %s" % [tier, r.get("ui", {}).get("selected")])
+
+	# --- out-of-range or unusable stored value is clamped (A60): below 0 -> 0, above 2 -> 2,
+	# non-int -> default 0. The valid-tier loop above is the control: a read path that clamps
+	# everything to one end, or ignores the stored value, fails there. ---
+	var clamp_cases := [
+		["7", 2, "above 2 clamps to 2"],
+		["-3", 0, "below 0 clamps to 0"],
+		["\"x\"", 0, "a non-int string falls back to the default 0"],
+		["", 0, "a settings file with no galaxy_quality key gives the default 0"],
+	]
+	for c in clamp_cases:
+		var fixture := "[display]\nvsync=true\n" if c[0] == "" else "[display]\ngalaxy_quality=%s\n" % c[0]
+		var r := _boot_child(fixture, "boot")
+		_assert(not r.has("error"), "A60 clamp (%s): child failed: %s" % [c[2], r.get("error", "")])
+		if r.has("error"):
+			continue
+		var st: Dictionary = r.get("stored", {})
+		_assert(st.has("galaxy_quality") and int(st["galaxy_quality"]) == int(c[1]),
+			"A60: stored galaxy_quality=%s: %s, but UIDataBus carries %s" % [c[0], c[2], st.get("galaxy_quality")])
+		_assert(int(r.get("ui", {}).get("selected", -1)) == int(c[1]),
+			"A60: stored galaxy_quality=%s: a new Settings instance shows item %s, expected %d" % [c[0], r.get("ui", {}).get("selected"), c[1]])
 	_completed = true

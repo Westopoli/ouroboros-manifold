@@ -9,8 +9,11 @@ settings.cfg fixture in a throwaway XDG_DATA_HOME (never the player's), and read
 What each value draws (observable, structural, not pixels):
   tier 0 full               faction shells are the raymarch box + ShaderMaterial
   tier 1 stand-in           faction shells are SphereMesh + StandardMaterial3D
-  tier 2 fewer particles    fewer particles (GPUParticles3D/CPUParticles3D `amount` summed over the view)
-                            than tiers 0 and 1; tiers 0 and 1 carry the same, non-zero, particle load
+  tier 2 fewer particles    stand-in shells, the same as tier 1 (A60). Its reduced ambient field is
+                            tested in tests/qa/desktop/test_galaxy_ambient.py, which waits on the
+                            ambient-rig port unit.
+Read at build (A60): the view reads the setting when it is built. The probe stores a different tier
+after the view is built; the same view keeps its tier and shells, a view built afterwards takes the new one.
 Never automatic: the probe stalls 130 frames by 60 ms (mean frame far over any step-down threshold);
 qa_state quality_tier, the stored value, the settings file and what is drawn must be unchanged.
 Positive controls: the stall really happened (mean frame >= 50 ms); tier 0 and tier 1 differ in what
@@ -104,17 +107,36 @@ def test_tier1_draws_stand_in_spheres(probes):
     assert shells == {("SphereMesh", "StandardMaterial3D")}, "tier 1 (stand-in) shells are %s, expected sphere + StandardMaterial3D" % shells
 
 
-def test_tier2_draws_fewer_particles(probes):
-    p0, p1, p2 = (probes[t]["before"]["particles"] for t in (0, 1, 2))
-    assert p0 > 0, "tier 0 draws no particles at all (control: there must be some to reduce)"
-    assert p1 == p0, "tier 1 changes the particle load (%d vs %d); it changes only the shells" % (p1, p0)
-    assert p2 < p0, "tier 2 (fewer particles) draws %d particles, tier 0 draws %d" % (p2, p0)
+def test_tier2_draws_stand_in_spheres(probes):
+    # A60: tier 2 = stand-in shells (the same as tier 1) plus a thinned ambient field.
+    shells = _shell_kinds(probes[2]["before"])
+    assert shells, "tier 2 drew no faction shells at all (control)"
+    assert shells == {("SphereMesh", "StandardMaterial3D")}, "tier 2 shells are %s, expected sphere + StandardMaterial3D" % shells
+    assert shells == _shell_kinds(probes[1]["before"]), "tier 2 and tier 1 draw different shells"
 
 
 def test_tiers_draw_differently(probes):
-    # Positive control for the three checks above: a view that ignores the setting fails here too.
-    draws = {t: (tuple(sorted(_shell_kinds(probes[t]["before"]))), probes[t]["before"]["particles"]) for t in (0, 1, 2)}
-    assert len(set(draws.values())) == 3, "the three quality values do not all draw differently: %s" % draws
+    # Positive control for the shell checks above: a view that ignores the setting fails here too.
+    # Tier 0 differs from tiers 1 and 2; tiers 1 and 2 share their shells (A60).
+    shells = {t: tuple(sorted(_shell_kinds(probes[t]["before"]))) for t in (0, 1, 2)}
+    assert shells[0] != shells[1], "tier 0 and tier 1 draw the same shells: %s" % shells
+    assert shells[1] == shells[2], "tier 1 and tier 2 draw different shells: %s" % shells
+
+
+@pytest.mark.parametrize("tier", [0, 1, 2])
+def test_view_reads_the_setting_at_build_only(probes, tier):
+    probe = probes[tier]
+    changed = probe["changed_to"]
+    # Positive controls: the value really changed in the store, and differs from the view's tier.
+    assert changed != tier, "probe did not pick a different tier (control)"
+    assert probe["stored_after_change"] == changed, "the stored value did not change (%r); control failed" % probe["stored_after_change"]
+    same = probe["same_view_after_change"]
+    assert same["quality_tier"] == tier, (
+        "a change to %d after the view was built re-applied to the open view: quality_tier %r (was %d)" % (changed, same["quality_tier"], tier))
+    assert _shell_kinds(same) == _shell_kinds(probe["before"]), "the open view's shells changed after the stored value changed"
+    rebuilt = probe["rebuilt_view"]
+    assert rebuilt["quality_tier"] == changed, (
+        "a view built after the change reports quality_tier %r, expected the new stored value %d" % (rebuilt["quality_tier"], changed))
 
 
 @pytest.mark.parametrize("tier", [0, 1, 2])

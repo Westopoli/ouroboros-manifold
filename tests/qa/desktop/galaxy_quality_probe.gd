@@ -39,6 +39,27 @@ func _initialize() -> void:
 		await process_frame
 	out["mean_frame_ms"] = float(Time.get_ticks_msec() - t0) / float(SLOW_FRAMES)
 	out["after"] = _measure(view)
+	# A60: the view reads the setting when it is built; a change made afterwards does not re-apply.
+	# Store the next tier through the real save path, let frames pass, read the SAME view again; then
+	# build a second view (positive control: the changed value is picked up at the next build).
+	var bus = get_root().get_node_or_null("UIDataBus")
+	var changed_to := (int(bus.get_settings().get("galaxy_quality", 0)) + 1) % 3
+	var settings: Dictionary = bus.get_settings()
+	settings["galaxy_quality"] = changed_to
+	bus.save_settings(settings)
+	for _i in 10:
+		await process_frame
+	out["changed_to"] = changed_to
+	out["stored_after_change"] = bus.get_settings().get("galaxy_quality", null)
+	out["same_view_after_change"] = _measure(view)
+	var view2: Node = (load(SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(view2)
+	await process_frame
+	await process_frame
+	view2.set_snapshot(JSON.parse_string(FileAccess.get_file_as_string(FIXTURE_PATH)))
+	for _i in 5:
+		await process_frame
+	out["rebuilt_view"] = _measure(view2)
 	print("PROBE ", JSON.stringify(out))
 	quit(0)
 
@@ -76,3 +97,4 @@ func _count_particles(node: Node, total: Array) -> void:
 		total[0] += int(node.amount)
 	for child in node.get_children():
 		_count_particles(child, total)
+
