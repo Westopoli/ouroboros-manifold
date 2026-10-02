@@ -8,8 +8,9 @@ extends Node
 # the whole grid once per frame (refill() is also callable, synchronously).
 #
 # The grid is filled by the graphics card: shaders/field_bake.gdshader runs the
-# field maths once per cell into a sheet of z-slices, the sheets are read back
-# and cut into the two 3D textures. Under the dummy renderer the sheets read
+# field maths once per cell into a sheet of z-slices (a second tiny pass copies
+# the id channel into an 8-bit sheet), the sheets are read back and cut into the
+# two 3D textures. Under the dummy renderer the sheets read
 # back empty and the textures stay zero (the headless verify only needs this
 # node not to fail).
 # See also: tests/test_field.gd (the contract this implements), tests/field_reference.gd.
@@ -20,7 +21,6 @@ const GRID_MIN := Vector3(-GRID_SIZE * 0.5, -GRID_SIZE * 0.5, -GRID_SIZE * 0.5)
 const MAX_SYSTEMS := 1024
 const MAX_FACTIONS := 16
 const GAP_STRENGTH := 0.5   # legacy_shell_renderer.gd's gap_strength (the shader default 0.8 was never used)
-const SHEET_COLS := 16
 
 var field_texture: ImageTexture3D
 var id_texture: ImageTexture3D
@@ -38,6 +38,7 @@ var _field_mat: ShaderMaterial
 var _id_mat: ShaderMaterial
 var _tex_a: ImageTexture
 var _tex_o: ImageTexture
+var _tex_ranges: ImageTexture
 
 
 func _init() -> void:
@@ -46,13 +47,13 @@ func _init() -> void:
 
 
 func _ready() -> void:
-	var rows := ceili(float(GRID_CELLS) / float(SHEET_COLS))
-	var sheet := Vector2i(SHEET_COLS * GRID_CELLS, rows * GRID_CELLS)
+	var sheet := Vector2i(GRID_CELLS, GRID_CELLS * GRID_CELLS)
 	var shader: Shader = load("res://scenes/mockups/galaxy/shaders/field_bake.gdshader")
 	_field_vp = _make_sheet_viewport(sheet, true)
 	_id_vp = _make_sheet_viewport(sheet, false)
 	_field_mat = _add_sheet_rect(_field_vp, sheet, shader, 0)
 	_id_mat = _add_sheet_rect(_id_vp, sheet, shader, 1)
+	_id_mat.set_shader_parameter("field_sheet", _field_vp.get_texture())
 
 
 func _make_sheet_viewport(size: Vector2i, hdr: bool) -> SubViewport:
@@ -74,7 +75,6 @@ func _add_sheet_rect(vp: SubViewport, size: Vector2i, shader: Shader, mode: int)
 	mat.shader = shader
 	mat.set_shader_parameter("mode", mode)
 	mat.set_shader_parameter("N", GRID_CELLS)
-	mat.set_shader_parameter("cols", SHEET_COLS)
 	mat.set_shader_parameter("gmin", GRID_MIN)
 	mat.set_shader_parameter("cell", GRID_SIZE / float(GRID_CELLS))
 	mat.set_shader_parameter("R", GalaxyGen.INFLUENCE_RADIUS)
@@ -143,20 +143,22 @@ func refill() -> void:
 	var ok: bool = field_sheet != null and not field_sheet.is_empty() and id_sheet != null and not id_sheet.is_empty()
 	var field_slices: Array[Image] = []
 	var id_slices: Array[Image] = []
+	var field_bytes := PackedByteArray()
+	var id_bytes := PackedByteArray()
+	if ok:
+		field_sheet.convert(Image.FORMAT_RGH)
+		id_sheet.convert(Image.FORMAT_R8)
+		field_bytes = field_sheet.get_data()
+		id_bytes = id_sheet.get_data()
+	var field_stride := GRID_CELLS * GRID_CELLS * 4
+	var id_stride := GRID_CELLS * GRID_CELLS
 	for z in GRID_CELLS:
-		var rect := Rect2i((z % SHEET_COLS) * GRID_CELLS, (z / SHEET_COLS) * GRID_CELLS, GRID_CELLS, GRID_CELLS)
-		var f: Image
-		var i: Image
 		if ok:
-			f = field_sheet.get_region(rect)
-			f.convert(Image.FORMAT_RGH)
-			i = id_sheet.get_region(rect)
-			i.convert(Image.FORMAT_R8)
+			field_slices.append(Image.create_from_data(GRID_CELLS, GRID_CELLS, false, Image.FORMAT_RGH, field_bytes.slice(z * field_stride, (z + 1) * field_stride)))
+			id_slices.append(Image.create_from_data(GRID_CELLS, GRID_CELLS, false, Image.FORMAT_R8, id_bytes.slice(z * id_stride, (z + 1) * id_stride)))
 		else:
-			f = Image.create(GRID_CELLS, GRID_CELLS, false, Image.FORMAT_RGH)
-			i = Image.create(GRID_CELLS, GRID_CELLS, false, Image.FORMAT_R8)
-		field_slices.append(f)
-		id_slices.append(i)
+			field_slices.append(Image.create(GRID_CELLS, GRID_CELLS, false, Image.FORMAT_RGH))
+			id_slices.append(Image.create(GRID_CELLS, GRID_CELLS, false, Image.FORMAT_R8))
 	if field_texture == null:
 		field_texture = ImageTexture3D.new()
 		field_texture.create(Image.FORMAT_RGH, GRID_CELLS, GRID_CELLS, GRID_CELLS, false, field_slices)
@@ -171,31 +173,57 @@ func refill() -> void:
 
 
 func _upload_systems() -> void:
+	# Owned systems, bucketed by z (counting sort), so a slice scans only the slab of
+	# systems that can reach it.
+	var cell := GRID_SIZE / float(GRID_CELLS)
+	var reach := GalaxyGen.INFLUENCE_RADIUS
 	var n := mini(_pos.size(), MAX_SYSTEMS)
-	var img_a := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
-	var img_o := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RF)
+	var bucket := PackedInt32Array()
+	bucket.resize(n)
+	var start := PackedInt32Array()
+	start.resize(GRID_CELLS + 2)
 	var max_sig := PackedFloat32Array()
 	max_sig.resize(MAX_FACTIONS)
 	var n_fac := 0
 	var used := 0
 	for i in n:
 		if _own[i] < 0 or _own[i] >= MAX_FACTIONS:
+			bucket[i] = -1
 			continue
-		var p := _pos[i]
-		img_a.set_pixel(used, 0, Color(p.x, p.y, p.z, _sig[i]))
-		img_o.set_pixel(used, 0, Color(float(_own[i]), 0.0, 0.0, 1.0))
+		bucket[i] = clampi(int((_pos[i].z - GRID_MIN.z) / cell), 0, GRID_CELLS - 1)
+		start[bucket[i] + 1] += 1
 		max_sig[_own[i]] = maxf(max_sig[_own[i]], _sig[i])
 		n_fac = maxi(n_fac, _own[i] + 1)
 		used += 1
+	for b in GRID_CELLS + 1:
+		start[b + 1] += start[b]
+	var fill := start.duplicate()
+	var img_a := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
+	var img_o := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RF)
+	for i in n:
+		if bucket[i] < 0:
+			continue
+		var slot := fill[bucket[i]]
+		fill[bucket[i]] += 1
+		var p := _pos[i]
+		img_a.set_pixel(slot, 0, Color(p.x, p.y, p.z, _sig[i]))
+		img_o.set_pixel(slot, 0, Color(float(_own[i]), 0.0, 0.0, 1.0))
+	var img_r := Image.create(GRID_CELLS, 1, false, Image.FORMAT_RGF)
+	for k in GRID_CELLS:
+		var zc := GRID_MIN.z + (k + 0.5) * cell
+		var b_lo := clampi(int((zc - reach - GRID_MIN.z) / cell), 0, GRID_CELLS - 1)
+		var b_hi := clampi(int((zc + reach - GRID_MIN.z) / cell), 0, GRID_CELLS - 1)
+		img_r.set_pixel(k, 0, Color(float(start[b_lo]), float(start[b_hi + 1]), 0.0, 1.0))
 	if _tex_a == null:
 		_tex_a = ImageTexture.create_from_image(img_a)
 		_tex_o = ImageTexture.create_from_image(img_o)
+		_tex_ranges = ImageTexture.create_from_image(img_r)
 	else:
 		_tex_a.update(img_a)
 		_tex_o.update(img_o)
-	for mat in [_field_mat, _id_mat]:
-		mat.set_shader_parameter("sys_a", _tex_a)
-		mat.set_shader_parameter("sys_o", _tex_o)
-		mat.set_shader_parameter("n_sys", used)
-		mat.set_shader_parameter("n_fac", n_fac)
-		mat.set_shader_parameter("max_sig", max_sig)
+		_tex_ranges.update(img_r)
+	_field_mat.set_shader_parameter("sys_a", _tex_a)
+	_field_mat.set_shader_parameter("sys_o", _tex_o)
+	_field_mat.set_shader_parameter("ranges", _tex_ranges)
+	_field_mat.set_shader_parameter("n_fac", n_fac)
+	_field_mat.set_shader_parameter("max_sig", max_sig)

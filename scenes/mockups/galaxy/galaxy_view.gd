@@ -38,7 +38,7 @@ func _ready() -> void:
 	_constellation.name = "ConstellationRenderer"
 	add_child(_constellation)
 	_shell = Node3D.new()
-	_shell.set_script(load("res://scenes/mockups/galaxy/legacy_shell_renderer.gd"))
+	_shell.set_script(load("res://scenes/mockups/galaxy/shell_renderer.gd"))
 	_shell.name = "ShellRenderer"
 	add_child(_shell)
 	# Zoom controller lives on OrbitCamera, a sibling created after GalaxyView

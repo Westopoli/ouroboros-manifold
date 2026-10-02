@@ -2,7 +2,8 @@ shader_type canvas_item;
 render_mode blend_disabled;
 
 // Territory field bake: one pass per grid cell, laid out as a sheet of z-slices
-// (cols slices across). The field maths is shell_metaball.gdshader's three
+// stacked down one column (N wide, N*N tall), so each slice is one contiguous run
+// of bytes when the sheet is read back. The field maths is shell_metaball.gdshader's three
 // field functions, run once per cell for every faction at once:
 //   per faction f, normalised by f's own max significance M_f (the legacy code
 //   normalised rivals by the EVALUATING faction's max, a quirk kept on purpose):
@@ -10,29 +11,33 @@ render_mode blend_disabled;
 //     own_f = sum of k over f's systems, rival_f = max k over every other system
 //     net_f = own_f * (1 - gap * smoothstep(0.3, 1.0, rival_f / max(own_f, 0.001)))
 //   cell = the faction with the highest net (ties: lowest id).
-// mode 0 writes (net, rival, 0, 0) to a half-float sheet; mode 1 writes the
-// winning faction id / 255 to an 8-bit sheet.
+// Systems arrive sorted by z with, per slice, the range of systems whose
+// influence can reach it (ranges texture), so a cell scans a slab, not the whole
+// galaxy. mode 0 writes (net, rival, id / 255, 0) to a half-float sheet; mode 1
+// reads that sheet back and writes its id channel alone, to an 8-bit sheet.
 
 uniform sampler2D sys_a : filter_nearest, repeat_disable; // xyz = position, w = raw significance
 uniform sampler2D sys_o : filter_nearest, repeat_disable; // r = owner id
-uniform int n_sys = 0;
 uniform int n_fac = 0;
 uniform int N = 96;
-uniform int cols = 16;
 uniform vec3 gmin = vec3(-64.0);
 uniform float cell = 1.3333;
 uniform float R = 14.0;
 uniform float gap_strength = 0.5;
 uniform float max_sig[16];
+uniform sampler2D ranges : filter_nearest, repeat_disable; // per slice: r = first system, g = one past the last
+uniform sampler2D field_sheet : filter_nearest, repeat_disable;
 uniform int mode = 0;
 
 void fragment() {
 	ivec2 px = ivec2(FRAGCOORD.xy);
-	ivec2 s = px / N;
-	ivec2 c = px - s * N;
-	int z = s.y * cols + s.x;
+	int z = px.y / N;
+	ivec2 c = ivec2(px.x, px.y - z * N);
 	COLOR = vec4(0.0);
-	if (z < N) {
+	if (mode == 1) {
+		COLOR = vec4(texelFetch(field_sheet, px, 0).b, 0.0, 0.0, 0.0);
+	} else if (z < N) {
+		ivec2 rg = ivec2(texelFetch(ranges, ivec2(z, 0), 0).rg + 0.5);
 	vec3 p = gmin + (vec3(float(c.x), float(c.y), float(z)) + 0.5) * cell;
 	float own[16];
 	float rival[16];
@@ -41,16 +46,16 @@ void fragment() {
 		rival[f] = 0.0;
 	}
 	for (int i = 0; i < 1024; i++) {
-		if (i >= n_sys) {
+		if (rg.x + i >= rg.y) {
 			break;
 		}
-		vec4 sys = texelFetch(sys_a, ivec2(i, 0), 0);
+		vec4 sys = texelFetch(sys_a, ivec2(rg.x + i, 0), 0);
 		vec3 diff = p - sys.xyz;
 		float d2 = dot(diff, diff);
 		if (d2 >= R * R) {
 			continue;
 		}
-		int owner = int(texelFetch(sys_o, ivec2(i, 0), 0).r + 0.5);
+		int owner = int(texelFetch(sys_o, ivec2(rg.x + i, 0), 0).r + 0.5);
 		for (int f = 0; f < 16; f++) {
 			if (f >= n_fac) {
 				break;
@@ -87,10 +92,6 @@ void fragment() {
 			best_f = f;
 		}
 	}
-	if (mode == 0) {
-		COLOR = vec4(best, best_rival, 0.0, 0.0);
-	} else {
-		COLOR = vec4(float(best_f) / 255.0, 0.0, 0.0, 0.0);
-	}
+	COLOR = vec4(best, best_rival, float(best_f) / 255.0, 0.0);
 	}
 }
