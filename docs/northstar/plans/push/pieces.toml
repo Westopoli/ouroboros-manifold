@@ -921,9 +921,23 @@ size_estimate = "owner row for docs/architecture.md contract text"
 id = "HARNESS-sigblocked"
 manager = "M0"
 wave = 4
-owns = ["scripts/specfactory/merge_gate_support.py", "scripts/specfactory/merge_gate.sh"]
+owns = ["scripts/specfactory/merge_gate.sh"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_sig_blocked.py"]
 depends_on = []
 status = "pending"
 size_estimate = "one support function and subcommand, one gate step, one env override"
+
+# Comment-only edits to a prototype or extern line must not read as an added
+# definition in symbol_ownership. See also: HARNESS-sigblocked (earlier owner of
+# merge_gate_support.py, kept merge_gate.sh).
+[[piece]]
+id = "HARNESS-symown"
+manager = "M0"
+wave = 4
+owns = ["scripts/specfactory/merge_gate_support.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_merge_gate_support.py"]
+depends_on = []
+status = "pending"
+size_estimate = "one helper and a few lines in _diff_added_definitions"
