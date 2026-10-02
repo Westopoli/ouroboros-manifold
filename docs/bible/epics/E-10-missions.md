@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-072 to S-080: yes, 9 stories, 48 rules, numbers from `algorithms.md` ALG-54 through ALG-59 and config tables. S-210 to S-214: 5 stories, 22 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 17 on S-210 to S-214 (Q-177-01 to Q-210-06, Q-177-02 to Q-211-04, Q-178-05 to Q-212-05, Q-173-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 17 on S-210 to S-214 (Q-210-03, Q-210-04, Q-210-06, and Q-177-01 and Q-191-04 held in E-22 and E-17, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -330,7 +330,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-080-03, Q-159-12, Q-177-05, Q-177-01 to Q-210-06, Q-177-02 to Q-211-04, Q-178-05 to Q-212-05, Q-173-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-080-03, Q-159-12, Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 and Q-191-04 held in E-22 and E-17, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
