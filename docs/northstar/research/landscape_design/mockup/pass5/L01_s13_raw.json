@@ -1,0 +1,271 @@
+{
+  "_qa": {
+    "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
+    "display": "X11",
+    "fps_ms": 1171.012,
+    "frame": 134,
+    "last_input": "Mouse motion at position ((960.0, 540.0)) with velocity ((913.8541, 514.0429))",
+    "method": "gl_compatibility",
+    "os_inputs": 1,
+    "plants": [],
+    "shots": [
+      "L01_s11_heat_base",
+      "L01_s11_heat_economic",
+      "L01_s11_heat_resource",
+      "L01_s11_heat_expansion",
+      "L01_s11_heat_settlement",
+      "L01_s11_raw_layout",
+      "L01_s11_react",
+      "L01_s11_walk",
+      "L01_s11_choke",
+      "L03_s11_raw_layout",
+      "L03_s11_react",
+      "L03_s11_walk",
+      "L03_s11_choke",
+      "L06_s11_raw_layout",
+      "L06_s11_react",
+      "L06_s11_walk",
+      "L06_s11_choke",
+      "L01_s12_raw_layout",
+      "L01_s12_react",
+      "L01_s12_walk",
+      "L01_s12_choke",
+      "L01_s13_raw_layout"
+    ],
+    "window_px": [
+      1920,
+      1080
+    ]
+  },
+  "band": "map",
+  "camera_height": 24000.0,
+  "canvas_wu": 24000.0,
+  "city": {
+    "footprint_aspect": 1.0,
+    "fraction_within_r_of_core": 0.333236236527818
+  },
+  "elevation_max_wu": 3088.30444335938,
+  "hash": 4230577056,
+  "kit": "greek",
+  "objective_px": [
+    1260.96875,
+    402.414245605469
+  ],
+  "overlay": {
+    "parent_class": "Node3D",
+    "parent_path": "World",
+    "visible": true
+  },
+  "p4": {
+    "analyse_ms": 215.637,
+    "band_floor_wu": [
+      0.0150878420099616,
+      617.672958945483,
+      1235.33083004896,
+      1852.98870115243,
+      2470.6465722559
+    ],
+    "bench_from_seed": true,
+    "bench_share_pct": 46.151924037981,
+    "core_cell": 21398,
+    "core_landmass_pct": 83.8890515834833,
+    "detail_scale": 1.0,
+    "footprint_table": {
+
+    },
+    "footprint_wu": 300.0,
+    "highest_wu": 3088.30444335938,
+    "hover_steep_deg": -1.0,
+    "land_pct": 41.1545944456879,
+    "landform_mode": "seed",
+    "landforms": [
+      "canyon",
+      "islands"
+    ],
+    "layer_share_pct": [
+      40.1414048445802,
+      31.1090658076392,
+      16.9183784462201,
+      10.8145421076852,
+      1.01660879387525
+    ],
+    "limit": 30.0,
+    "lowest_wu": 0.0150878420099616,
+    "min_relief_wu": 2500.0,
+    "ramp_bands": [
+      4,
+      5
+    ],
+    "ramp_cells": 118,
+    "ramps": 2,
+    "ramps_on": true,
+    "relief_mult": 1.0,
+    "relief_scale": 1.0,
+    "relief_wu": 3088.28935551737,
+    "shape_ms": 23.29,
+    "steep_pct": {
+      "30.0": 48.6382462452412,
+      "32.5": 44.6261975484249,
+      "35.0": 40.9153662720161
+    },
+    "step_wu": 617.657871103473,
+    "unit_selected": false,
+    "variety_bits": 2.12767271897518,
+    "variety_max_bits": 4.64385618977472,
+    "view": "visual",
+    "walk": {
+      "30.0": {
+        "layers_reachable": 5,
+        "peaks": 15,
+        "peaks_reachable": 1,
+        "peaks_reachable_pct": 6.66666666666667,
+        "reach_pct": 13.9689578713969
+      },
+      "35.0": {
+        "layers_reachable": 5,
+        "peaks": 15,
+        "peaks_reachable": 2,
+        "peaks_reachable_pct": 13.3333333333333,
+        "reach_pct": 18.7005815169644
+      }
+    },
+    "x_cursor_px": [
+      0.0,
+      0.0
+    ],
+    "x_cursor_shown": false
+  },
+  "p5": {
+    "bases_route": false,
+    "bases_straight_wu": 16701.197265625,
+    "bases_walk_wu": -1.0,
+    "changed_cells": {
+      "bridge": 0,
+      "choke corridor": 0,
+      "choke wall": 0,
+      "graded route": 0,
+      "pad": 0,
+      "vantage ground": 0
+    },
+    "chokes": [
+      {
+        "hint": "narrow",
+        "id": "chokepoint_main",
+        "measured_wu": 100.0,
+        "sides_blocked": false,
+        "target_wu": 300.0
+      },
+      {
+        "hint": "moderate",
+        "id": "chokepoint_right",
+        "measured_wu": 0.0,
+        "sides_blocked": false,
+        "target_wu": 600.0
+      }
+    ],
+    "counts_per_side": {
+      "economic": 3,
+      "expansion": 2,
+      "settlement": 3
+    },
+    "distance_rows": [
+      {
+        "name": "objective",
+        "straight_a": 15280.3271484375,
+        "straight_b": 1451.34423828125,
+        "straight_diff": 1.65303066149547,
+        "walk_a": -1.0,
+        "walk_b": -1.0,
+        "walk_diff": -1.0,
+        "within_tol": false
+      }
+    ],
+    "edges_broken": [
+      "staging_bottom-approach_main",
+      "approach_main-ravine_hazard",
+      "ravine_hazard-chokepoint_main",
+      "chokepoint_main-objective_fortress",
+      "staging_bottom-flank_route_left",
+      "flank_route_left-flank_junction_left",
+      "flank_junction_left-vantage_left",
+      "flank_junction_left-objective_fortress",
+      "staging_bottom-approach_right",
+      "approach_right-chokepoint_right",
+      "chokepoint_right-vantage_right",
+      "chokepoint_right-objective_fortress",
+      "objective_fortress-reinforcement_left",
+      "objective_fortress-reinforcement_right",
+      "spawn_enemy-objective_fortress"
+    ],
+    "edges_total": 15,
+    "edges_walkable": 0,
+    "equal_distance_ok": false,
+    "fair_cells": 0,
+    "flank_bypass_ok": 0,
+    "flank_total": 4,
+    "kind": "settlement",
+    "layout": "layout_01_fortress_ridge",
+    "mode": "1",
+    "moderate_wu": 600.0,
+    "name": "Fortress Ridge",
+    "narrow_wu": 300.0,
+    "places": [
+      {
+        "kind": "base",
+        "pos": [
+          11900.0,
+          19600.0
+        ],
+        "score": 0.37751492857933,
+        "side": 0,
+        "unmet": false
+      },
+      {
+        "kind": "base",
+        "pos": [
+          11700.0,
+          2900.0
+        ],
+        "score": 0.72921234369278,
+        "side": 1,
+        "unmet": false
+      }
+    ],
+    "places_ms": 303.081,
+    "react": false,
+    "react_ms": 0.0,
+    "resources_unmet": 2,
+    "route_iterations": 0,
+    "routes_cut": 0,
+    "scale": 1.0,
+    "tol": 0.1,
+    "vantages": [
+      {
+        "above_local_mean_wu": -457.871275571897,
+        "height_wu": -360.964782714844,
+        "id": "vantage_left",
+        "moved": false,
+        "reachable": false
+      },
+      {
+        "above_local_mean_wu": -147.941233810174,
+        "height_wu": 691.510192871094,
+        "id": "vantage_right",
+        "moved": false,
+        "reachable": false
+      }
+    ],
+    "vantages_reachable": 0
+  },
+  "piece_total": 10955,
+  "regen_count": 11,
+  "seed": 13,
+  "stability": 60.0,
+  "timing_ms": {
+    "gen": 1949.85,
+    "ground": 478.402,
+    "placer": 1602.54,
+    "total": 4030.792
+  },
+  "top_down": true
+}

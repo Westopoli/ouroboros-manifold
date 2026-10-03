@@ -3,7 +3,7 @@ extends Node
 # Pass 4 prototype UI (spec 2026-10-03-land-mockup-pass4-spec.md): view keys, the X cursor, the
 # sliders and the numbers panel. Owns the pass-4 settings; hud.gd reads them when it generates.
 
-const VIEWS := ["visual", "steep30", "steep35", "band", "walk"]
+const VIEWS := ["visual", "steep30", "steep35", "band", "walk", "react", "p5walk", "heat"]
 const MIN_RELIEF_RANGE := Vector2(0.0, 6000.0)
 
 var landform: String = "seed"
@@ -19,6 +19,7 @@ var limit: float = 30.0
 var unit_selected := false
 
 var _hud
+var _p5
 var _camera_rig: Node3D
 var _fm: FieldMap
 var _generated: Node3D
@@ -121,6 +122,18 @@ func setup(hud, camera_rig: Node3D, box: VBoxContainer) -> void:
 	set_process(true)
 
 
+func set_p5(p5) -> void:
+	_p5 = p5
+
+
+func refresh_view() -> void:
+	_apply_view()
+	_refresh_panel()
+	if _p5 != null:
+		_p5._apply_visibility()
+		_p5._key.queue_redraw()
+
+
 func _slider(low: float, high: float, step: float, value: float) -> HSlider:
 	var s := HSlider.new()
 	s.custom_minimum_size = Vector2(160, 0)
@@ -216,6 +229,9 @@ func set_view(v: String) -> void:
 		limit = 35.0
 	_apply_view()
 	_refresh_panel()
+	if _p5 != null:
+		_p5._apply_visibility()
+		_p5._key.queue_redraw()
 
 
 func handle_key(keycode: int) -> bool:
@@ -267,10 +283,13 @@ func _apply_view() -> void:
 	for child in _generated.get_children():
 		if child.name == "GroundMesh":
 			child.visible = not shown
-		elif child is Node3D:
+		elif child is Node3D and not String(child.name).begins_with("P5"):
 			child.visible = not shown
 	if shown:
-		var colors := Pass4Terrain.cell_colors(_fm, view, limit)
+		var p5_view: bool = _p5 != null and _p5.VIEWS.has(view)
+		if p5_view and _fm.p5_res.is_empty():
+			return
+		var colors: PackedColorArray = _p5.cell_colors(_fm, view) if p5_view else Pass4Terrain.cell_colors(_fm, view, limit)
 		_generated.add_child(Pass4Terrain.build_overlay(_fm, colors))
 
 
@@ -291,6 +310,9 @@ func _refresh_panel() -> void:
 		"steep35": "red = over 35: blocked; orange = 30 to 35, open at 35 only",
 		"band": "ground by layer 1 (green) to 5 (white)",
 		"walk": "green reachable, gold ramp, magenta cut off, cyan/black peaks, white core",
+		"react": "pass 5: ground the layout changed (key at bottom right)",
+		"p5walk": "pass 5: walk view from the layout's bases",
+		"heat": "pass 5: score per kind of place",
 	}[view]
 	_label.text = "PASS 4   view: %s   (%s)\n" % [view, view_note] \
 		+ "Relief %d wu  (lowest %d, highest %d)  minimum asked %d wu%s\n" % [int(m.relief_wu), int(m.lowest_wu), int(m.highest_wu), int(m.min_relief_wu), "  (stretched x%.2f)" % m.relief_scale if m.relief_scale > 1.0001 else ""] \

@@ -1,0 +1,255 @@
+{
+  "_qa": {
+    "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
+    "display": "X11",
+    "fps_ms": 1244.392,
+    "frame": 86,
+    "last_input": "Mouse motion at position ((960.0, 540.0)) with velocity ((913.8541, 514.0429))",
+    "method": "gl_compatibility",
+    "os_inputs": 1,
+    "plants": [],
+    "shots": [
+      "L01_s11_heat_base",
+      "L01_s11_heat_economic",
+      "L01_s11_heat_resource",
+      "L01_s11_heat_expansion",
+      "L01_s11_heat_settlement",
+      "L01_s11_raw_layout",
+      "L01_s11_react",
+      "L01_s11_walk",
+      "L01_s11_choke",
+      "L03_s11_raw_layout",
+      "L03_s11_react",
+      "L03_s11_walk",
+      "L03_s11_choke",
+      "L06_s11_raw_layout"
+    ],
+    "window_px": [
+      1920,
+      1080
+    ]
+  },
+  "band": "map",
+  "camera_height": 24000.0,
+  "canvas_wu": 24000.0,
+  "city": {
+    "footprint_aspect": 1.5,
+    "fraction_within_r_of_core": 0.416058394160584
+  },
+  "elevation_max_wu": 4523.94384765625,
+  "hash": 1427805541,
+  "kit": "greek",
+  "objective_px": [
+    1158.54418945312,
+    846.088989257812
+  ],
+  "overlay": {
+    "parent_class": "Node3D",
+    "parent_path": "World",
+    "visible": true
+  },
+  "p4": {
+    "analyse_ms": 218.923,
+    "band_floor_wu": [
+      0.0733314678072929,
+      904.847434705496,
+      1809.62153794318,
+      2714.39564118087,
+      3619.16974441856
+    ],
+    "bench_from_seed": true,
+    "bench_share_pct": 23.8223320732771,
+    "core_cell": 46922,
+    "core_landmass_pct": 97.9720471362017,
+    "detail_scale": 1.0,
+    "footprint_table": {
+
+    },
+    "footprint_wu": 300.0,
+    "highest_wu": 4523.94384765625,
+    "hover_steep_deg": -1.0,
+    "land_pct": 43.9782372893029,
+    "landform_mode": "seed",
+    "landforms": [
+      "mesa",
+      "islands"
+    ],
+    "layer_share_pct": [
+      40.3359041616098,
+      27.4830677680774,
+      22.7028931605528,
+      8.61684218768351,
+      0.861292722076498
+    ],
+    "limit": 30.0,
+    "lowest_wu": 0.0733314678072929,
+    "min_relief_wu": 2500.0,
+    "ramp_bands": [
+      2,
+      3,
+      4,
+      4,
+      5
+    ],
+    "ramp_cells": 696,
+    "ramps": 5,
+    "ramps_on": true,
+    "relief_mult": 1.0,
+    "relief_scale": 1.0,
+    "relief_wu": 4523.87051618844,
+    "shape_ms": 17.479,
+    "steep_pct": {
+      "30.0": 69.8077751243002,
+      "32.5": 65.5326312492659,
+      "35.0": 61.1204635320832
+    },
+    "step_wu": 904.774103237689,
+    "unit_selected": false,
+    "variety_bits": 2.33750997704468,
+    "variety_max_bits": 4.64385618977472,
+    "view": "visual",
+    "walk": {
+      "30.0": {
+        "layers_reachable": 5,
+        "peaks": 17,
+        "peaks_reachable": 0,
+        "peaks_reachable_pct": 0.0,
+        "reach_pct": 1.17449007555886
+      },
+      "35.0": {
+        "layers_reachable": 5,
+        "peaks": 17,
+        "peaks_reachable": 0,
+        "peaks_reachable_pct": 0.0,
+        "reach_pct": 1.54249696590064
+      }
+    },
+    "x_cursor_px": [
+      0.0,
+      0.0
+    ],
+    "x_cursor_shown": false
+  },
+  "p5": {
+    "bases_route": false,
+    "bases_straight_wu": 10914.2109375,
+    "bases_walk_wu": -1.0,
+    "changed_cells": {
+      "bridge": 0,
+      "choke corridor": 0,
+      "choke wall": 0,
+      "graded route": 0,
+      "pad": 0,
+      "vantage ground": 0
+    },
+    "chokes": [
+      {
+        "hint": "narrow",
+        "id": "choke_pass_entrance",
+        "measured_wu": 300.0,
+        "sides_blocked": true,
+        "target_wu": 300.0
+      },
+      {
+        "hint": "moderate",
+        "id": "choke_pass_exit",
+        "measured_wu": 100.0,
+        "sides_blocked": true,
+        "target_wu": 600.0
+      }
+    ],
+    "counts_per_side": {
+      "economic": 3,
+      "expansion": 2,
+      "settlement": 3
+    },
+    "distance_rows": [
+      {
+        "name": "objective",
+        "straight_a": 12340.76171875,
+        "straight_b": 1427.72546386719,
+        "straight_diff": 1.58521936508182,
+        "walk_a": -1.0,
+        "walk_b": 2172.79223632812,
+        "walk_diff": -1.0,
+        "within_tol": false
+      }
+    ],
+    "edges_broken": [
+      "staging_south-approach_center",
+      "staging_south-flank_west_trail",
+      "staging_south-flank_east_trail",
+      "approach_center-choke_pass_entrance",
+      "approach_center-hazard_cliff_west",
+      "approach_center-hazard_cliff_east",
+      "choke_pass_entrance-choke_pass_exit",
+      "flank_west_trail-vantage_summit_west",
+      "flank_east_trail-vantage_summit_east",
+      "vantage_summit_west-reinforcement_waystation",
+      "vantage_summit_east-reinforcement_waystation",
+      "choke_pass_exit-reinforcement_waystation",
+      "reinforcement_waystation-objective_stronghold",
+      "spawn_enemy-objective_stronghold"
+    ],
+    "edges_total": 14,
+    "edges_walkable": 0,
+    "equal_distance_ok": false,
+    "fair_cells": 0,
+    "flank_bypass_ok": 0,
+    "flank_total": 6,
+    "kind": "settlement",
+    "layout": "layout_06_flanking_pass",
+    "mode": "6",
+    "moderate_wu": 600.0,
+    "name": "Flanking Pass",
+    "narrow_wu": 300.0,
+    "places": [
+      {
+        "kind": "base",
+        "pos": [
+          10600.0,
+          2600.0
+        ],
+        "score": 0.449166476726532,
+        "side": 1,
+        "unmet": false
+      }
+    ],
+    "places_ms": 308.327,
+    "react": false,
+    "react_ms": 0.0,
+    "resources_unmet": 2,
+    "route_iterations": 0,
+    "routes_cut": 0,
+    "scale": 1.0,
+    "tol": 0.1,
+    "vantages": [
+      {
+        "above_local_mean_wu": -564.055725097656,
+        "height_wu": -564.055725097656,
+        "id": "vantage_summit_west",
+        "moved": false,
+        "reachable": false
+      },
+      {
+        "above_local_mean_wu": 1414.1751483357,
+        "height_wu": 2953.83642578125,
+        "id": "vantage_summit_east",
+        "moved": false,
+        "reachable": false
+      }
+    ],
+    "vantages_reachable": 0
+  },
+  "piece_total": 12084,
+  "regen_count": 7,
+  "seed": 11,
+  "stability": 60.0,
+  "timing_ms": {
+    "gen": 2632.871,
+    "ground": 476.418,
+    "placer": 1764.26,
+    "total": 4873.549
+  },
+  "top_down": true
+}

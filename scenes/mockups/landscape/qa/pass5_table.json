@@ -1,0 +1,499 @@
+[
+[
+"state",
+"boot"
+],
+[
+"call",
+"qa_set",
+"top_down",
+true
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L1_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L1_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L1_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "2",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L2_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "2",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L2_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "2",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L2_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "3",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L3_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "3",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L3_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "3",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L3_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "4",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L4_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "4",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L4_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "4",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L4_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "5",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L5_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "5",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L5_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "5",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L5_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "6",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L6_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "6",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L6_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "6",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L6_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "7",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L7_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "7",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L7_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "7",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L7_s13"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "8",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"state",
+"T_L8_s11"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "8",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"state",
+"T_L8_s12"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "8",
+"react": true,
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"state",
+"T_L8_s13"
+]
+]
