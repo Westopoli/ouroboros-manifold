@@ -72,8 +72,8 @@
 /* Route fields kept for shared destinations (R-097-02): one distance per cell of the largest canvas, each. */
 #define OM_MOVE_FIELD_POOL 16
 #define OM_MOVE_FIELD_UNREACHED UINT32_MAX
-/* R-099-04: a route waypoint is arrived at within 2 collision radii (a formation slot is 1.5). */
-#define OM_MOVE_WAYPOINT_ARRIVE_MULT 2.0
+/* R-099-04, ALG-68 WAYPOINT_ARRIVE_MULT: hand-defined here, om_constants.h is not generated from algorithms.md (as OM_COLLISION_PASSES was). */
+#define OM_WAYPOINT_ARRIVE_MULT 2.0
 
 /* Spatial index over this module's own unit positions (om_move_unit x/y).
  * unit.c's grid (om_grid_query_circle) holds unit.c's position cache, which
@@ -1929,7 +1929,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     double dx, dy, dist, steer_x, steer_y, step_dist, move_dist;
     if (route) {
         double wx = mu->aim_x - mu->x, wy = mu->aim_y - mu->y;
-        const double reach = OM_MOVE_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS;
+        const double reach = OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS;
         if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y
             || (mu->aim_is_waypoint && wx * wx + wy * wy < reach * reach))
             om_move_route_plan(w, ms, mu, om_move_across_plan(w, ms, mu, (uint32_t)om_move_layer(w, id)));
@@ -1941,7 +1941,9 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     }
     dist = sqrt(dx * dx + dy * dy);
     mu->waiting = 0;
-    if (sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y)) < OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS) {
+    /* R-099-04: a routed single move ends within the waypoint radius, like every waypoint before it; a group slot keeps its own. */
+    if (sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y))
+        < (route && mu->group_id == 0 ? OM_WAYPOINT_ARRIVE_MULT : OM_ARRIVAL_TOLERANCE_MULT) * OM_UNIT_COLLISION_RADIUS) {
         mu->has_dest = 0;
         mu->deflecting = 0;
         return;
