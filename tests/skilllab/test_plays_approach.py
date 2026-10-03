@@ -1,4 +1,5 @@
-# spec: Architect ruling A198 - plays set Setup.approach = 0.95; hand-placed and timeline plays keep 0.0
+# spec: Architect rulings A198 and A199 - the hold-to-contact approach is a lab setting, default off (Setup.approach 0.0);
+# a play builder takes approach=0.95 to switch it on
 """Which builders set approach, which keep 0.0, and which wrappers carry the field. No engine."""
 import sys
 from pathlib import Path
@@ -26,27 +27,29 @@ def _sensors(monkeypatch):
                                                            "layer_transition_time": 0.0, "aoe_radius": 0.0})
 
 
-def test_the_constant_is_point_nine_five_and_asym_shares_it():
-    assert plays.APPROACH == 0.95
-    assert asym.APPROACH is plays.APPROACH or asym.APPROACH == 0.95
+def test_the_default_is_off_the_lab_value_is_point_nine_five_and_asym_shares_both():
+    assert plays.APPROACH == 0.0 and plays.APPROACH_STOP == 0.95
+    assert asym.APPROACH == 0.0 and asym.APPROACH_STOP == 0.95
 
 
 @pytest.mark.parametrize("play", [plays.blob_play, plays.line_play, plays.reach_play, plays.damage_play])
 @pytest.mark.parametrize("swap", [False, True])
-def test_basic_plays_set_the_approach(play, swap):
-    assert play(16)(12, swap).approach == 0.95
+def test_basic_plays_default_to_no_approach_and_take_the_keyword(play, swap):
+    assert play(16)(12, swap).approach == 0.0
+    assert play(16, approach=0.95)(12, swap).approach == 0.95
 
 
 @pytest.mark.parametrize("role", ["blob", "line", "skilled", "counter"])
-def test_asym_play_sets_it_for_every_role_on_either_side(role):
+def test_asym_play_takes_the_keyword_for_every_role_on_either_side(role):
     other = "blob"
-    assert asym_play(16, Side(role), Side(other))(12, False).approach == 0.95
-    assert asym_play(16, Side(other), Side(role))(12, False).approach == 0.95
+    assert asym_play(16, Side(role), Side(other))(12, False).approach == 0.0
+    assert asym_play(16, Side(role), Side(other), approach=0.95)(12, False).approach == 0.95
+    assert asym_play(16, Side(other), Side(role), approach=0.95)(12, False).approach == 0.95
 
 
-def test_asym_play_sets_it_for_a_mixed_side():
+def test_asym_play_takes_the_keyword_for_a_mixed_side():
     mixed = Side("blob", mix=(("Vanguard", 1), ("Raider", 1)))
-    s = asym_play(16, mixed, Side("line"))(12, False)
+    s = asym_play(16, mixed, Side("line"), approach=0.95)(12, False)
     assert s.approach == 0.95
     assert any(g.formation == "points" for g in s.groups)
 
@@ -70,16 +73,16 @@ def test_choke_scene_keeps_approach_off():
 
 
 def test_with_terrain_keeps_the_field():
-    naive = asym_play(16, Side("blob"), Side("blob"))
+    naive = asym_play(16, Side("blob"), Side("blob"), approach=0.95)
     s = with_terrain(naive, scenes.tall_cover_terrain())(12, False)
     assert s.approach == 0.95
 
 
 def test_guard_defenders_keeps_the_field():
-    naive = asym_play(16, Side("blob"), Side("blob"))
+    naive = asym_play(16, Side("blob"), Side("blob"), approach=0.95)
     assert scenes.guard_defenders(naive)(12, False).approach == 0.95
 
 
 @pytest.mark.parametrize("counter", [False, True])
-def test_tall_cover_keeps_the_field(counter):
-    assert scenes.tall_cover(3, counter=counter)(16)(12, False).approach == 0.95
+def test_tall_cover_follows_the_default_off(counter):
+    assert scenes.tall_cover(3, counter=counter)(16)(12, False).approach == 0.0   # off by default (A199), like every play

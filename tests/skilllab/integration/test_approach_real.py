@@ -57,8 +57,8 @@ def _first_step(result):
 
 @pytest.fixture(scope="module")
 def line_runs(library):
-    on = fight.fight(_setup(plays.line_play(32)), 0, False, engine=library)
-    off_setup = dataclasses.replace(_setup(plays.line_play(32)), approach=0.0)
+    on = fight.fight(_setup(plays.line_play(32, approach=0.95)), 0, False, engine=library)
+    off_setup = dataclasses.replace(_setup(plays.line_play(32, approach=0.95)), approach=0.0)
     return on, fight.fight(off_setup, 0, False, engine=library)
 
 
@@ -98,7 +98,7 @@ def test_the_fronts_stop_short_at_the_stop_distance(line_runs):
 
 
 def test_a_mixed_raider_v_vanguard_play_uses_the_shorter_range(library):
-    build = asym_play(8, Side("blob", mix=(("Raider", 1),)), Side("blob"))
+    build = asym_play(8, Side("blob", mix=(("Raider", 1),)), Side("blob"), approach=0.95)
     result = fight.fight(_setup(build, enemy=8), 0, False, engine=library)
     stop = 0.95 * RAIDER_RANGE
     d = _closest(result, _first_step(result), 8)
@@ -106,5 +106,5 @@ def test_a_mixed_raider_v_vanguard_play_uses_the_shorter_range(library):
 
 
 def test_two_runs_are_identical(library):
-    s = _setup(plays.line_play(8), enemy=8)
+    s = _setup(plays.line_play(8, approach=0.95), enemy=8)
     assert fight.fight(s, 0, False, engine=library) == fight.fight(s, 0, False, engine=library)
