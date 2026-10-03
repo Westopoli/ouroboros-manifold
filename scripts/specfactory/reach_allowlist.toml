@@ -83,3 +83,67 @@ reason = "PP-contract (A139 extended, A185): going dark is a command the client 
 [[allow]]
 symbol = "om_ping_alert_get"
 reason = "PP-contract (A139 extended, A185): reads one ping alert for the client (Phase C G7); the alert is produced and consumed inside the tick, the getter has no game caller until the client wires it. Removed when the client wires it."
+
+[[allow]]
+symbol = "om_macro_enemy_leaves_trigger"
+reason = "superseded by design (R-120-02): the ambush never resets once triggered, so the function is a deliberate no-op (csrc/enemy_macro.c:331-335); the live behaviour is that nothing happens on leaving the radius. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_chapter_advance_phase"
+reason = "superseded: the live chapter phase moves through om_chapter_set_phase, called from the pipe handlers (csrc/pipe/om_pipe.c:1553, 1599, 1614); this +1 stepper (csrc/generational.c:1043) has no caller. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_chapter_end_reason_for_collapse"
+reason = "superseded: the live end-reason is computed inline in csrc/generational.c:2118-2121 with the same om_player_faction_check_collapse test (and also the commander-death case); this wrapper (generational.c:1058) is the collapse half only. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_character_selector_confirm_commander"
+reason = "superseded: the live selector marks the commander main through gen_char_mark_main at csrc/generational.c:857, 1244 and 1277; this public call (generational.c:1227) is the same one-line body. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_breakaway_create"
+reason = "superseded: breakaways are created in play by lc_resolve_faction_creation (csrc/lifecycle.c:141-240): picks a free slot, om_faction_set with the parent's tech, hostile stance to every used faction, region split. csrc/diplomacy.c:438 is the thinner fixture version of the same rule. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_faction_create_breakaway"
+reason = "superseded: the live hostile-to-all rule is applied inline in csrc/lifecycle.c:229-234 inside lc_resolve_faction_creation; csrc/diplomacy.c:425 only sets stances on an id the caller already made. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_outcome_apply_consequences"
+reason = "superseded: the live consequence application is om_mission_apply_consequences (csrc/mission.c:1027, called from om_mission_end at mission.c:1587) with the R-078 table; csrc/generational.c:1633 is a bare add of two deltas with no table. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_mission_setup_tactical"
+reason = "superseded: the live time-out is om_mission_tactical_tick -> om_mission_get_time_limit -> om_mission_setup_termination/om_mission_check_terminated (csrc/mission.c:1260, 1328). This setter feeds the om_mission_is_ended clock that mission.c:2058 calls currently unwired. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_force_allocator_run"
+reason = "superseded: the live force allocation is om_mission_compose_force (ALG-57, csrc/mission.c:2313), run at mission start; csrc/generational.c:1436 is the earlier fixed-ratio placeholder its own comment says E-10's allocator replaces. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_event_breached"
+reason = "public accessor over om_evt_state.breached, written in the tick at csrc/events.c:878 and read by the event logic; test observability only. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_event_last_fired"
+reason = "public accessor over om_evt_state.last_fired, written in the tick at csrc/events.c:628 and read by the cooldown logic; test observability only. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_chain_counter"
+reason = "public accessor over om_evt_state.chain_counter, advanced in play at csrc/events.c:527-532 when a chain tag is assigned; test observability only. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_campaign_opening_jump_length"
+reason = "public wrapper (csrc/generational.c:1026) over om_time_jump_choose_opening_length, which om_campaign_start calls in play at generational.c:1035; test observability only. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_character_selector_input_region"
+reason = "public accessor over gen_state.selector_input_region, written in play by om_character_selector_run (csrc/generational.c:1289) and saved; test observability only. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_chapter_transition_start"
+reason = "unused flag: it sets gen_state.in_transition (csrc/generational.c:1090), which nothing reads to gate behaviour (only save/load and the empty-state check at generational.c:412, 548, 570). R-064-01 persistence is live because the jump does not reset state. Ruling 2026-10-03 finish-loop."
+
+[[allow]]
+symbol = "om_chapter_transition_complete"
+reason = "unused flag pair partner of om_chapter_transition_start: clears in_transition (csrc/generational.c:1085), which nothing reads to gate behaviour. Ruling 2026-10-03 finish-loop."
