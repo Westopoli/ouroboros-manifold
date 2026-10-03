@@ -73,6 +73,8 @@ class Engine:
         path = Path(lib_path) if lib_path is not None else _cached_library()
         self._lib = ctypes.CDLL(str(path))      # a nonexistent path raises OSError
         self._bind()
+        self._px, self._py = ctypes.c_double(), ctypes.c_double()
+        self._pbx, self._pby = ctypes.byref(self._px), ctypes.byref(self._py)
 
     def _bind(self):
         c, V, u32, u64, d, i = (ctypes, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double,
@@ -187,12 +189,11 @@ class Engine:
         self._lib.om_tactical_step(w)
 
     def unit_hp(self, w, u):
-        return float(self._lib.om_unit_get_hp(w, int(u)))
+        return self._lib.om_unit_get_hp(w, u)
 
     def unit_pos(self, w, u):
-        x, y = ctypes.c_double(), ctypes.c_double()
-        self._lib.om_unit_get_pos(w, int(u), ctypes.byref(x), ctypes.byref(y))
-        return (float(x.value), float(y.value))
+        self._lib.om_unit_get_pos(w, u, self._pbx, self._pby)
+        return (self._px.value, self._py.value)
 
     def unit_destination(self, w, u):
         x, y = ctypes.c_double(), ctypes.c_double()
@@ -201,10 +202,10 @@ class Engine:
         return (float(x.value), float(y.value))
 
     def unit_layer(self, w, u):
-        return int(self._lib.om_unit_get_layer(w, int(u)))
+        return self._lib.om_unit_get_layer(w, u)
 
     def unit_alive(self, w, u):
-        return bool(self._lib.om_unit_alive(w, int(u)))
+        return bool(self._lib.om_unit_alive(w, u))
 
     def unit_target(self, w, u):
         return int(self._lib.om_unit_get_target(w, int(u)))
@@ -226,7 +227,7 @@ class Engine:
             raise ValueError("om_tactical_set_param(%r, %r) refused" % (param, value))
 
     def can_shoot(self, w, a, b):
-        return bool(self._lib.om_combat_can_shoot(w, int(a), int(b)))
+        return bool(self._lib.om_combat_can_shoot(w, a, b))
 
     def add_blocker(self, w, x, y, radius):
         if not radius > 0:
