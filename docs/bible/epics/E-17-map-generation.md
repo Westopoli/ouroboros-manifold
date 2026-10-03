@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 110 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 31 open flags, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 27 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -33,7 +33,7 @@ Generate a land map for a medium canvas from seed 11. The terrain has height and
 Flag closed, rule text pending: Q-113-01, fairness is a logger only until the generator is tuned in the P2 landscape design phase. The rule below is what the tests read today.
 Flag closed, rule text pending: Q-112-01, the launch ships 8 layouts and grows after testing. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts, and how the two combine is not yet defined (S-186, S-191, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts: the layout proposes roles and rough zones and the terrain disposes (S-191 R-191-10, decided 2026-10-03). The rules below are what the game does today.
 
 As a commander, I want maps built on hand-authored strategic layouts so that every map has a chokepoint, a flank, and a reason, and I learn the vocabulary over time.
 
@@ -51,7 +51,7 @@ Open flags: none.
 
 ### S-113 — Nine kinds of place
 
-Direction changed 2026-10-02, rewrite pending: the nine kinds of place stay, and terrain-first generation adds places found on the terrain by rule: bases, economic locations, significant resources, expansion sites, neutral settlements and strongpoints, with chokes and vantages that may also come from the land. How the two combine is not yet defined (S-191, S-192, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the nine kinds of place stay, and terrain-first generation adds places found on the terrain by rule: bases, economic locations, significant resources, expansion sites, neutral settlements and strongpoints, with chokes and vantages that may also come from the land. A layout's typed node proposes a role and a rough zone, and the terrain decides the exact ground (S-191 R-191-10, S-192). The rules below are what the game does today.
 
 As a commander, I want every place on the map to be one of nine things, so that I can read a map I have never seen.
 
@@ -69,7 +69,7 @@ Open flags: none.
 ### S-114 — Texture from gradients
 Flag closed, rule text pending: Q-115-01, overlapping gradient sources combine by sum clamped to 1.0: intensity = min(1.0, i1 + i2). The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: the gradient sources stay, and terrain-first generation adds elevation, blocking and layer access that follow from the terrain's height bands and slopes, with steep ground that blocks walking units. How the two combine is not yet defined (S-188, S-189, S-190, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the gradient sources stay, and terrain-first generation adds elevation, blocking and layer access that follow from the terrain's height bands and slopes, with steep ground that blocks walking units (S-188, S-189, S-190). The rules below are what the game does today.
 
 As a commander, I want the space between waypoints to feel dense or open, blind or clear, high or low, so that a map is a place and not a diagram.
 
@@ -87,7 +87,7 @@ Open flags: none.
 ### S-115 — The region shapes the terrain
 Flag closed, rule text pending: Q-117-01, the multipliers are active with conservative bounds: baseline hazard density * (1 + 0.5 * (100 - stability)/100), with deltas clamped to +-25%. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: the region's state keeps flavoring interference, hazards and cover, and terrain-first generation adds a climate and landform derived from the seed (S-187, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the region's state keeps flavoring interference, hazards and cover, and terrain-first generation adds a climate and landform derived from the seed (S-187). The rules below are what the game does today.
 
 As a commander, I want a prosperous region's battlefield to be cleaner than a war-torn one's, so that I feel the galaxy's state under my feet.
 
@@ -103,7 +103,7 @@ Open flags: none.
 ### S-116 — Canvas
 Flag closed, rule text pending: Q-118-01, state-based canvas sizing, the bible approach: base size plus or minus 30 percent by region, direction per archetype. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: a match of 4 to 6 players has a canvas of 64,000 wu, and smaller matches keep today's sizes (S-195), except that the small category goes away: Suppression and Counterinsurgency take a full-size canvas with a compact play area (R-188-06, Q-188-03). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: a match of 4 to 6 players has a canvas of 64,000 wu, and smaller matches keep today's sizes (S-195), except that the small category goes away: Suppression and Counterinsurgency take a canvas drawn from medium and large, with a compact play area (R-188-06). The rules below are what the game does today.
 
 As a commander, I want mission maps sized to the situation, so that a suppression is tight and a siege is vast.
 
@@ -118,7 +118,7 @@ Open flags: Q-118-02 (which way each archetype pushes the canvas). Q-195-01 (wha
 ### S-117 — Fair enough
 Flag closed, rule text pending: Q-113-01, a score outside the range is logged only until the generator is tuned in the P2 landscape design phase; switching to reject-and-regenerate is a design-phase decision. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: the fairness check stays and also scores the terrain and places of a terrain-first map, against a map the situation may deliberately slant (S-197, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the fairness check stays and also scores the terrain and places of a terrain-first map, against a map the situation may deliberately slant (S-197). The rules below are what the game does today.
 
 As a commander, I want maps that do not cheat me, so that a loss is mine.
 
@@ -133,7 +133,7 @@ Open flags: none.
 
 ### S-118 — The battlefield moves
 
-Direction changed 2026-10-02, rewrite pending: the moving objectives stay, and how they work on a map that combines a layout with terrain-first generation is not yet defined (S-191, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the moving objectives stay, and on a map that combines a layout with terrain-first generation they follow walking routes on the terrain (S-191 R-191-10). The rules below are what the game does today.
 
 As a commander, I want objectives to drift and hazards to move during a mission, so that a position is never solved.
 
@@ -149,7 +149,7 @@ Open flags: Q-118-03 (whether a strongpoint may drift). Weather that travels acr
 ### S-119 — Terrain that reads like a place
 Flag closed, rule text pending: Q-119-01, Track R research comes first, to inform the implementation style. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: terrain is blended layered noise added to the layouts, and the generator is one generator over one field map read by two kits through one placer (S-186, S-196, Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: terrain is blended layered noise added to the layouts, and the generator is one generator over one field map read by two kits through one placer (S-186, S-196). The rules below are what the game does today.
 
 As a commander, I want generated sections to blend like real terrain, not tile like a board, so that every map feels made.
 
@@ -159,7 +159,7 @@ Rules
 
 Inputs: map seed; era kit.
 Outputs: screen.
-Open flags: none. The layout library stays and terrain-first generation is added to it (Q-191-04). References: `docs/bible/references/E-17/notes.md` (Minecraft and Roblox biome blending are the named references, shots 09 to 13).
+Open flags: none. The layout library stays and terrain-first generation is added to it (S-191 R-191-10). References: `docs/bible/references/E-17/notes.md` (Minecraft and Roblox biome blending are the named references, shots 09 to 13).
 
 ### S-165 — Later, perhaps: travel lanes
 As a commander, I may someday want the map to have lanes where troops move faster and strategic ground where they move slower, so that where an army can travel quickly is part of reading the landscape.
@@ -229,11 +229,11 @@ Rules
 - R-188-03  Given a land map, When the landscape engine hands the terrain to the layer system, Then the terrain holds at least a minimum variance in height (Westley, 2026-10-03), so that every map has ground on layer 5 and every layer step is a real height difference; the layer system fits the bands only on terrain that meets it. A layer step that is only a meadow slope is a defect of the landscape generation. A detector measures the variance [Q-188-01: the minimum, which is Westley's to set] and ships with a positive control, a map built with less variance than the minimum that the detector must flag.
 - R-188-04  Given bands fitted per map, When a layer step has a different height on each map, Then the numbers written for a standard step in E-01 (time to change layer, how much worse sight is across layers, which layers a type may fire at) scale with the height of the step [Q-166-04: how each number scales, which the skill lab measures].
 - R-188-05  Given a space-era map, When layers are read, Then they stay pure altitude, asteroids and stations are the things that block them, and all five are open at every position (E-01 Q-001-01); height bands, ground flags, slopes and strongpoints apply to land maps only.
-- R-188-06  Given an archetype whose fight is compact (Suppression and Counterinsurgency, the small category of E-10 R-073-01), When its map is generated, Then the canvas is a full-size one [Q-188-03: which size] with five fitted layers like any other map (R-188-01); the home base takes a significant portion of it, the objective, the resources and the base sit closer together than on other archetypes, and the rest of the canvas is generated and rendered but not used for play (Westley, 2026-10-03) [Q-188-03: whether units may enter the unused ground].
+- R-188-06  Given an archetype whose fight is compact (Suppression and Counterinsurgency, the small category of E-10 R-073-01), When its map is generated, Then the canvas is drawn from medium and large like any other, with five fitted layers (R-188-01); the player's home base is extensive and impressive and takes a significant portion of it, though it is mostly unused; the objective, the resources and the base sit closer together than on other archetypes; and the rest of the canvas is ordinary ground with nothing placed on it (Westley, 2026-10-03).
 
 Inputs: terrain height.
 Outputs: band heights (S-190).
-Open flags: Q-166-04, Q-188-01, Q-188-03. The fitted-band rule is tested in the layer lab before it is fixed.
+Open flags: Q-166-04, Q-188-01. The fitted-band rule is tested in the layer lab before it is fixed.
 
 ### S-189 — Ground you cannot cross
 As a commander, I want some ground to be too steep to walk, and slopes to be the ways between layers, so that the lay of the land decides where an army can go.
@@ -276,20 +276,20 @@ As a commander, I want bases, objectives and resources to sit where the land put
 Applies to land maps (Q-166-02).
 
 Rules
-- R-191-01  Given the terrain, When places are found, Then each is found by rule on the terrain, no site type is chosen in advance, and a site is named afterwards for what it turned out to be (a valley floor, a mountainside, a river bend, an archipelago). The places of a layout (S-112) stay, and the terrain accounts for them [Q-191-04].
+- R-191-01  Given the terrain, When places are found, Then each is found by rule on the terrain, and a site is named afterwards for what it turned out to be (a valley floor, a mountainside, a river bend, an archipelago). The typed nodes of a layout (S-112) are roles and rough zones, and each snaps to the ground that fits its role (R-191-10).
 - R-191-02  Given a land map, When places are found, Then each side has a base of operations (E-22 S-177), and the map has the objective. An attacker's base is the forward base from which he produces and to which his resources come by supply lines (E-22 S-177).
-- R-191-03  Given a land map, When economic locations are found, Then they are placed throughout the map (E-22 S-177) [Q-191-02: how many, and how far apart].
-- R-191-04  Given the objective, When the significant resources are placed, Then they lie opposite the objective, so a side picks one or fights for both (E-22 S-177) [Q-191-03: what opposite measures].
+- R-191-03  Given a land map, When economic locations are found, Then they are placed throughout the map (E-22 S-177), in numbers that scale with the players and the canvas (Westley, 2026-10-03) [Q-191-05: the counts and the spacing].
+- R-191-04  Given the objective, When the significant resources are placed, Then each side is at the same distance from the objective and from each significant resource, whatever shape the map takes (Westley, 2026-10-03: only those distances matter, and the more the shapes vary under that constraint the better), so a side picks one or fights for both (E-22 S-177) [Q-191-05: what the distance is measured by and its tolerance; Q-197-01: how a deliberately slanted archetype changes it].
 - R-191-05  Given the terrain, When expansion sites are found, Then they are settlements that can be grown into further bases (E-22 S-175 and S-177).
 - R-191-06  Given the terrain, When neutral settlements are found, Then a neutral populace lives in them and they are contested (E-22 S-177).
 - R-191-07  Given any place found, When it is typed, Then it is one of the nine types of S-113 or one of base of operations, expansion site, economic location, significant resource, neutral settlement or strongpoint (S-192).
 - R-191-08  Given a base on ground that spans several bands, When an enemy goes for all of it, Then he has to cross every layer it spans (E-01 R-001-06, R-001-07).
-- R-191-09  Given the places, When they are found, Then they are found on the same field map as the terrain and the density [Q-191-01: how the sites are found: one scoring, as the prototype does for the first core, or a scoring per kind].
-- R-191-10  Given an archetype, When the map is generated, Then the layouts that fit it (S-112), including their moving objectives (S-118), and the terrain-first generation of S-186 to S-190 are both used [Q-191-04: how terrain and layouts combine, and what the archetype decides and what the terrain decides].
+- R-191-09  Given the places, When they are found, Then they are found on the same field map as the terrain and the density, with a scoring per kind of place (Westley, 2026-10-03). A live prototype shows the scoring and the equal distances of R-191-04 working, and Westley approves the product before it is integrated.
+- R-191-10  Given an archetype, When the map is generated, Then the layouts that fit it (S-112), including their moving objectives (S-118), and the terrain-first generation of S-186 to S-190 are both used, in this order (Westley, 2026-10-03): the layout gives roles and rough zones; the terrain is generated with a mild bias toward each zone's role; each node snaps to the best matching ground within a set radius of its zone, and if no ground within the radius qualifies the map is generated again with another jitter, a bounded number of times; moving objectives follow walking routes on the terrain. The archetype fixes the canvas size category, the objective type and the sides' roles, picks the layout, and also biases the landform [Q-191-05: the snap radius, the retry bound and the landform bias per archetype].
 
 Inputs: terrain; layouts; archetype; players; E-19 S-159's needs.
 Outputs: typed places in the map seed; recon render.
-Open flags: Q-191-01, Q-191-02, Q-191-03, Q-191-04.
+Open flags: Q-191-05.
 
 ### S-192 — Strongpoints, chokes and the places the layer plays need
 As a commander, I want ways up and down the land that I can hold, narrow places to fight over and high ground to take, so that the plays the layer system offers have somewhere to happen.
@@ -351,7 +351,7 @@ Rules
 
 Inputs: archetype; players in the match; region.
 Outputs: canvas size in the map seed.
-Open flags: Q-188-03 (canvas size for the compact archetypes), Q-195-01, Q-195-02.
+Open flags: Q-195-01, Q-195-02.
 
 ### S-196 — One field map, two kits
 As a commander, I want a land and a space era to look different over the same kind of map, so that the same game reads as two worlds.
@@ -390,10 +390,10 @@ Open flags: Q-197-01.
 | Region state | E-02 | fields and composites | |
 | Climate, landform, environmental trouble | Derived from the seed (S-187) | per S-187 | |
 | What the economy needs found (bases, sites, strongpoints) | E-19 S-159, E-22 | per S-191, S-192 | |
-| Layout library and library hints | E-21 | per S-112 | the terrain accounts for the layout [Q-191-04] |
+| Layout library and library hints | E-21 | per S-112 | the layout proposes, the terrain disposes (S-191 R-191-10) |
 | Era kit | Era pack | pieces per abstract type | missing piece uses a placeholder |
 
-The layout library and library hints (E-21) stay an input of this epic. How the terrain accounts for them is Q-191-04.
+The layout library and library hints (E-21) stay an input of this epic. The terrain accounts for them as S-191 R-191-10 says.
 
 ## Outputs
 
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-188-03, Q-189-02, Q-189-04, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-189-02, Q-189-04, Q-190-01, Q-191-05, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

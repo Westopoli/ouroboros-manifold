@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-072 to S-080: yes, 9 stories, 48 rules, numbers from `algorithms.md` ALG-54 through ALG-59 and config tables. S-210 to S-214: 5 stories, 22 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 17 on S-210 to S-214 (Q-210-03, Q-210-04, Q-210-06, and Q-177-01 and Q-191-04 held in E-22 and E-17, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 16 on S-210 to S-214 (Q-210-03, Q-210-04, Q-210-06, and Q-177-01 held in E-22, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -46,7 +46,7 @@ Open flags: none.
 
 ### S-073 — Ten kinds of trouble
 
-Direction changed 2026-10-02, rewrite pending: the layout library of R-073-03 stays, and terrain-first generation is added to it, so the terrain engine accounts for the layouts (E-17 S-166 R-166-03, Q-191-04; how an archetype shapes such a map is Q-191-04). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the layout library of R-073-03 stays, and terrain-first generation is added to it, so the terrain engine accounts for the layouts (E-17 S-166 R-166-03, S-191 R-191-10: the layout proposes and the terrain disposes, and the archetype also biases the landform). Suppression and Counterinsurgency no longer have a small canvas: they take one drawn from medium and large, with a compact play area (E-17 R-188-06). The rules below are what the game does today.
 As a commander, I want every mission to be a recognizable military situation with its own trigger, shape, and map, so that I learn the grammar of orders and still never see the same mission twice.
 
 Rules
@@ -71,7 +71,7 @@ Rules
 
 Inputs: library tables.
 Outputs: loaded archetype table; contract test.
-Open flags: none. Full per-archetype prose from the Stage 1 KEEP rows (A-441 through A-450) moves into the library's archetype entries in E-21. See also: S-210 (the base kind each archetype carries), S-214 (the canvas for 4 to 6 players), Q-191-04.
+Open flags: none. Full per-archetype prose from the Stage 1 KEEP rows (A-441 through A-450) moves into the library's archetype entries in E-21. See also: S-210 (the base kind each archetype carries), S-214 (the canvas for 4 to 6 players), E-17 R-191-10.
 
 ### S-074 — You get what the civilization can spare
 Flag closed, rule text pending: Q-074-01, power is (HP * base_damage) / attack_interval, normalized so Vanguard = 100.0. The rule below is what the tests read today.
@@ -202,7 +202,7 @@ Rules
 
 Inputs: archetype library; the supply distance (E-03 S-223); the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
-Open flags: Q-177-05 (carried from E-22 S-177), Q-177-01, Q-210-03, Q-210-04 (whether and where the briefing states each side's base kind), Q-191-04 (how an archetype shapes a map made from layouts and terrain-first generation together, see E-17 Q-191-04), Q-210-06 (where the economy settings are chosen). Where a base stands is whatever the terrain gives (E-17 R-166-03).
+Open flags: Q-177-05 (carried from E-22 S-177), Q-177-01, Q-210-03, Q-210-04 (whether and where the briefing states each side's base kind), Q-210-06 (where the economy settings are chosen). Where a base stands is whatever the terrain gives (E-17 R-166-03).
 
 ### S-211 — The resources fit the situation
 As a commander, I want the resources on the map to be scarce or plentiful as the simulation's situation says, tilted toward the side with the better position, and never so thin that I cannot do the job, so that the economy is part of the mission and never a trap.
@@ -330,7 +330,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-080-03, Q-159-12, Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 and Q-191-04 held in E-22 and E-17, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-080-03, Q-159-12, Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 held in E-22, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

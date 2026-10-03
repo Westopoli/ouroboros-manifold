@@ -50,7 +50,7 @@ Rules
 
 Inputs: prompts; category and slot definitions; model.
 Outputs: libraries; reports.
-Open flags: Q-153-01 (which libraries exist today: chronicle, naming, tutorial are on disk; archetype prose, briefing fragments, behavior scripts, and hints are in code or config, not libraries), Q-153-02 (whether an archetype's base kind and resource slant live in its library entry or in config). The enemy's economy runs on the same rules as the player's (E-22 S-181), which bears on the behavior scripts per archetype (E-14); the layout hints stay, and the terrain accounts for the layouts they belong to (E-17 S-191, Q-191-04).
+Open flags: Q-153-01 (which libraries exist today: chronicle, naming, tutorial are on disk; archetype prose, briefing fragments, behavior scripts, and hints are in code or config, not libraries), Q-153-02 (whether an archetype's base kind and resource slant live in its library entry or in config). The enemy's economy runs on the same rules as the player's (E-22 S-181), which bears on the behavior scripts per archetype (E-14); the layout hints stay, and the terrain accounts for the layouts they belong to (E-17 S-191 R-191-10).
 
 ### S-154 — Every name
 As a player, I want people, places, units, and factions to have names that sound like they belong together, so that the galaxy feels peopled.
