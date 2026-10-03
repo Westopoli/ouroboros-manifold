@@ -105,3 +105,6 @@ tests/csim/scale/test_PP_tables.py::test_PP_table_fog_tracked_elevation_units_co
 tests/csim/scale/test_PP_tables.py::test_PP_table_fog_tracked_over_cap_refused_cleanly
 tests/csim/scale/test_PP_tables.py::test_PP_table_structures_hold_the_most_a_mission_places
 tests/csim/scale/test_PP_tables.py::test_PP_table_structures_over_cap_refused_cleanly
+tests/csim/scale/test_PP_C_budgets.py::test_PP_C_visibility_1000_units_2ms
+tests/csim/scale/test_PP_C_budgets.py::test_PP_C_visibility_10000_units_20ms
+tests/csim/scale/test_PP_C_budgets.py::test_PP_C_targeting_and_damage_10000_units_25ms_with_sight_and_reach
