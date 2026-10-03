@@ -2523,7 +2523,8 @@ int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, dou
         mu->group_id = 0;
         mu->engaged = 0;
         mu->kiting = 0;
-        mu->deflecting = 0;
+        /* R-097-03: a new order does not cut a detour short; PP baseline only (switch = 0), deleted with the two movement switches at the end of Phase E (A140) */
+        if (!om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) mu->deflecting = 0;
         mu->order_kind = 0;
         om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, x, y);
