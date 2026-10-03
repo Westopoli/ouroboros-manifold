@@ -178,6 +178,8 @@ typedef struct {
     double max_sensor;
     int max_elev;
 
+    uint8_t emit[OM_MAX_UNITS + 1];
+
     om_client_snapshot snapshot;
 } om_fog_state;
 
@@ -655,6 +657,16 @@ static double om_fog_cross_layer_factor(const om_world *w, uint32_t unit, uint32
     return base;
 }
 
+/* G6 (S-163): an emitting observer's cross-layer factor is scaled by OM_TP_EMIT_SIGHT_MULT and an emitting target's by
+ * OM_TP_EMIT_SEEN_MULT, the product capped at 1.0. Same-layer sight never reaches here. */
+static double om_fog_emission_factor(const om_world *w, double factor, uint32_t observer, uint32_t target) {
+    const om_fog_state *st = om_fog_ro(w);
+    if (!st) return factor;
+    if (observer <= OM_MAX_UNITS && st->emit[observer]) factor *= om_tactical_get_param(w, OM_TP_EMIT_SIGHT_MULT);
+    if (target <= OM_MAX_UNITS && st->emit[target]) factor *= om_tactical_get_param(w, OM_TP_EMIT_SEEN_MULT);
+    return (factor > 1.0) ? 1.0 : factor;
+}
+
 int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     const om_fog_state *st = om_fog_ro(w);
     om_world *mw = (om_world *)w;
@@ -667,6 +679,7 @@ int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     tl = om_fog_unit_layer(w, target);
     factor = om_fog_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol, tl > ol);
     if (factor <= 0.0) return 0;
+    if (ol != tl) factor = om_fog_emission_factor(w, factor, observer, target);
     if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius(st, w, observer, (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
     if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
     return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
@@ -737,15 +750,21 @@ om_client_snapshot *om_client_snapshot_read(const om_world *w) {
     return snap;
 }
 int om_command_set_emission(om_world *w, const uint32_t *unit_ids, uint32_t n_units, om_emission mode) {
-    /* STUB */
-    (void)w; (void)unit_ids; (void)n_units; (void)mode;
+    om_fog_state *st;
+    uint32_t i;
+    if (mode != OM_EMIT_SILENT && mode != OM_EMIT_ACTIVE) return -1;
+    st = om_fog(w);
+    for (i = 0; unit_ids && i < n_units; i++) {
+        uint32_t id = unit_ids[i];
+        if (id == 0 || id > OM_MAX_UNITS || om_unit_get_faction(w, id) < 0) continue;
+        st->emit[id] = (uint8_t)mode;
+    }
     return 0;
 }
 
 int om_unit_get_emission(const om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
-    return 0;
+    const om_fog_state *st = om_fog_ro(w);
+    return (st && unit > 0 && unit <= OM_MAX_UNITS) ? st->emit[unit] : 0;
 }
 
 int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, double y) {
