@@ -98,6 +98,7 @@ class Engine:
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_command_attack_move": ([V, c.POINTER(u32), u32, d, d], i),
             "om_command_move": ([V, c.POINTER(u32), u32, d, d], i),
+            "om_command_group_move": ([V, c.POINTER(u32), u32, d, d], u32),
             "om_command_guard": ([V, c.POINTER(u32), u32], i),
             "om_roster_set_reach": ([V, i, u32, u32], i),
             "om_tactical_step": ([V], u64),
@@ -179,6 +180,10 @@ class Engine:
     def order_move(self, w, unit_ids, x, y):
         # om_command_move, not om_unit_order_move: the latter only records a destination and never moves the unit.
         self._order(self._lib.om_command_move, w, unit_ids, x, y)
+
+    def order_group_move(self, w, unit_ids, x, y):
+        ids = [int(u) for u in unit_ids]
+        return int(self._lib.om_command_group_move(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y)))
 
     def order_guard(self, w, unit_ids):
         ids = [int(u) for u in unit_ids]

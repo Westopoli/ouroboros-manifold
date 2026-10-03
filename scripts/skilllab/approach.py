@@ -1,4 +1,4 @@
-"""Hold-to-contact opening (Architect ruling A198): attack-moving groups walk as a move group, keeping their
+"""Hold-to-contact opening (Architect ruling A198): attack-moving groups walk as a group move, keeping their
 formation slots, to a stop line short of the enemy front, then switch to attack_move on arrival."""
 import dataclasses
 import math
@@ -18,7 +18,7 @@ def _centroid(points):
 
 
 def approach_setup(setup, ranges):
-    """Return setup with every attack_move group opened as move + an ("arrive", 60) attack_move Step; same object if nothing to do."""
+    """Return setup with every attack_move group opened as group_move + an ("arrive_all", 60) attack_move Step; same object if nothing to do."""
     if setup.approach <= 0:
         return setup
     movers = [i for i, g in enumerate(setup.groups) if g.order == "attack_move"]
@@ -44,6 +44,6 @@ def approach_setup(setup, ranges):
     for i in movers:
         g, sign = setup.groups[i], 1 if setup.groups[i].side == 0 else -1
         cx, cy = _centroid(placed[i])
-        groups[i] = dataclasses.replace(g, order="move", goal=(cx + sign * share * d[0], cy + sign * share * d[1]))
-        steps.append(Step(group=i, when=("arrive", ARRIVE), order="attack_move", goal=g.goal))
+        groups[i] = dataclasses.replace(g, order="group_move", goal=(cx + sign * share * d[0], cy + sign * share * d[1]))
+        steps.append(Step(group=i, when=("arrive_all", ARRIVE), order="attack_move", goal=g.goal))
     return dataclasses.replace(setup, groups=tuple(groups), timeline=tuple(steps))

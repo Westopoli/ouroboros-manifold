@@ -107,6 +107,8 @@ def _issue_orders(engine, w, setup, ids_by_group):
             issue = engine.order_attack_move
         elif g.order == "move":
             issue = engine.order_move
+        elif g.order == "group_move":
+            issue = engine.order_group_move
         else:
             raise ValueError("unknown order %r" % (g.order,))
         for ids, (dx, dy) in _chunks(engine, w, ids_by_group[gi]):
