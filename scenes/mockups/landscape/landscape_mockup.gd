@@ -110,6 +110,10 @@ func qa_state() -> Dictionary:
 		state["small_only_pct"] = fm.small_only_pct
 		state["triangles"] = _hud.get_triangles()
 		state["sections_near_layout"] = _hud.get_sections_near_layout()
+		state["join"] = _hud.get_join()
+		state["channels_widened"] = fm.channels_widened
+		state["join_cells_opened"] = fm.join_cells_opened
+		state["frames_shown"] = _hud.get_frames_drawn()
 	return state
 
 
@@ -155,6 +159,10 @@ func qa_set(name: String, value) -> void:
 			_hud.qa_set_small_share(float(value))
 		"sections_near_layout":
 			_hud.qa_set_sections_near_layout(bool(value))
+		"join":
+			_hud.qa_set_join(String(value))
+		"frames":
+			_hud.qa_set_frames(bool(value))
 
 
 func qa_camera(height: float, x: float, z: float) -> void:

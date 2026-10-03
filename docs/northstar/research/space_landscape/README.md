@@ -174,6 +174,14 @@ Two things to know:
 
 Open after pass 5: the camera among five stacked sheets (next, as design options); the small craft's size (Q-166-05); how the sections are chosen (two ways are in the mockup to compare).
 
+## Pass 6 (2026-10-03)
+
+Westley asked what the teal and brown lines in s11_d55 were (teal: frames around plates dropped to join cut-off regions; brown: the large mass and the backdrop; orange: the small-craft section). Pass 6: the debug frames are off by default (key F), and cut-off regions are joined by widening one channel to 300 wu instead of dropping whole plates, with plate dropping kept behind a "Join" toggle for comparison.
+
+Measured, seeds 11 to 16, both modes 0 unreachable: at density 55, drop removes about 100 plates per map and lands at 52 percent blocked; widen opens about 50 channels (3,100 cells) and lands at 56. At density 70, drop removes 262 plates and lands at 54; widen opens 125 channels and lands at 65, so the shortfall against the slider is gone. Widen is also faster (2.4 s against 3.5 s in GDScript) and keeps the floe look, since a widened channel is a straight cut through a plate. Triangles at density 70: 479,000.
+
+Side-by-side pictures, same seed, same camera, top-down, layer 3: `mockup/pass6/11_d35_drop_vs_widen.png`, `11_d55_drop_vs_widen.png`, `12_d55_drop_vs_widen.png` (drop on the left, widen on the right), and `11_d55_angled_widen.png`.
+
 ## Suggested next step
 
-Westley flies pass 5 (key V cycles visual, ordinary and small views; Small-craft share slider; Sections near layout toggle). Then the camera question is designed as options.
+Westley reads the pass 6 side-by-sides and flies the mockup (V cycles views; F shows the join frames; Join toggle). Then the camera question is designed as options.

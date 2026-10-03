@@ -1,606 +1,86 @@
 [
-[
-"state",
-"boot"
-],
-[
-"call",
-"qa_set",
-"kit",
-"space"
-],
-[
-"wait_frames",
-5
-],
-[
-"seed",
-11
-],
-[
-"call",
-"qa_set",
-"density",
-35
-],
-[
-"wait_frames",
-5
-],
-[
-"state",
-"s11_d35"
-],
-[
-"call",
-"qa_set",
-"top_down",
-true
-],
-[
-"call",
-"qa_camera",
-14000,
-12000,
-12000
-],
-[
-"call",
-"qa_set",
-"focus",
-3
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d35_visual_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"ordinary"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d35_ordinary_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"small"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d35_small_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"call",
-"qa_set",
-"focus",
-0
-],
-[
-"call",
-"qa_set",
-"top_down",
-false
-],
-[
-"call",
-"qa_camera",
-9000,
-12000,
-12000
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d35_visual_angled"
-],
-[
-"call",
-"qa_set",
-"density",
-55
-],
-[
-"wait_frames",
-5
-],
-[
-"state",
-"s11_d55"
-],
-[
-"call",
-"qa_set",
-"top_down",
-true
-],
-[
-"call",
-"qa_camera",
-14000,
-12000,
-12000
-],
-[
-"call",
-"qa_set",
-"focus",
-3
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d55_visual_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"ordinary"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d55_ordinary_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"small"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d55_small_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"call",
-"qa_set",
-"focus",
-0
-],
-[
-"call",
-"qa_set",
-"top_down",
-false
-],
-[
-"call",
-"qa_camera",
-9000,
-12000,
-12000
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d55_visual_angled"
-],
-[
-"call",
-"qa_set",
-"sections_near_layout",
-true
-],
-[
-"wait_frames",
-5
-],
-[
-"state",
-"s11_d55_nearlayout"
-],
-[
-"call",
-"qa_set",
-"view",
-"small"
-],
-[
-"call",
-"qa_set",
-"top_down",
-true
-],
-[
-"call",
-"qa_camera",
-14000,
-12000,
-12000
-],
-[
-"call",
-"qa_set",
-"focus",
-3
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s11_d55_nearlayout_small_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"call",
-"qa_set",
-"focus",
-0
-],
-[
-"call",
-"qa_set",
-"top_down",
-false
-],
-[
-"call",
-"qa_set",
-"sections_near_layout",
-false
-],
-[
-"wait_frames",
-5
-],
-[
-"seed",
-12
-],
-[
-"call",
-"qa_set",
-"density",
-35
-],
-[
-"wait_frames",
-5
-],
-[
-"state",
-"s12_d35"
-],
-[
-"call",
-"qa_set",
-"top_down",
-true
-],
-[
-"call",
-"qa_camera",
-14000,
-12000,
-12000
-],
-[
-"call",
-"qa_set",
-"focus",
-3
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d35_visual_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"ordinary"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d35_ordinary_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"small"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d35_small_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"call",
-"qa_set",
-"focus",
-0
-],
-[
-"call",
-"qa_set",
-"top_down",
-false
-],
-[
-"call",
-"qa_camera",
-9000,
-12000,
-12000
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d35_visual_angled"
-],
-[
-"call",
-"qa_set",
-"density",
-55
-],
-[
-"wait_frames",
-5
-],
-[
-"state",
-"s12_d55"
-],
-[
-"call",
-"qa_set",
-"top_down",
-true
-],
-[
-"call",
-"qa_camera",
-14000,
-12000,
-12000
-],
-[
-"call",
-"qa_set",
-"focus",
-3
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d55_visual_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"ordinary"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d55_ordinary_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"small"
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d55_small_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"call",
-"qa_set",
-"focus",
-0
-],
-[
-"call",
-"qa_set",
-"top_down",
-false
-],
-[
-"call",
-"qa_camera",
-9000,
-12000,
-12000
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d55_visual_angled"
-],
-[
-"call",
-"qa_set",
-"sections_near_layout",
-true
-],
-[
-"wait_frames",
-5
-],
-[
-"state",
-"s12_d55_nearlayout"
-],
-[
-"call",
-"qa_set",
-"view",
-"small"
-],
-[
-"call",
-"qa_set",
-"top_down",
-true
-],
-[
-"call",
-"qa_camera",
-14000,
-12000,
-12000
-],
-[
-"call",
-"qa_set",
-"focus",
-3
-],
-[
-"wait_frames",
-6
-],
-[
-"screenshot",
-"s12_d55_nearlayout_small_topdown_focus3"
-],
-[
-"call",
-"qa_set",
-"view",
-"visual"
-],
-[
-"call",
-"qa_set",
-"focus",
-0
-],
-[
-"call",
-"qa_set",
-"top_down",
-false
-],
-[
-"call",
-"qa_set",
-"sections_near_layout",
-false
-],
-[
-"wait_frames",
-5
-]
+["state", "boot"],
+["call", "qa_set", "kit", "space"],
+["wait_frames", 5],
+["seed", 11],
+["call", "qa_set", "density", 35],
+["wait_frames", 5],
+["call", "qa_set", "join", "drop"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", true],
+["call", "qa_camera", 14000, 12000, 12000],
+["call", "qa_set", "focus", 3],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "11_d35_drop"],
+["screenshot", "11_d35_drop"],
+["call", "qa_set", "join", "widen"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", true],
+["call", "qa_camera", 14000, 12000, 12000],
+["call", "qa_set", "focus", 3],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "11_d35_widen"],
+["screenshot", "11_d35_widen"],
+["seed", 11],
+["call", "qa_set", "density", 55],
+["wait_frames", 5],
+["call", "qa_set", "join", "drop"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", true],
+["call", "qa_camera", 14000, 12000, 12000],
+["call", "qa_set", "focus", 3],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "11_d55_drop"],
+["screenshot", "11_d55_drop"],
+["call", "qa_set", "join", "widen"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", true],
+["call", "qa_camera", 14000, 12000, 12000],
+["call", "qa_set", "focus", 3],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "11_d55_widen"],
+["screenshot", "11_d55_widen"],
+["seed", 12],
+["call", "qa_set", "density", 55],
+["wait_frames", 5],
+["call", "qa_set", "join", "drop"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", true],
+["call", "qa_camera", 14000, 12000, 12000],
+["call", "qa_set", "focus", 3],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "12_d55_drop"],
+["screenshot", "12_d55_drop"],
+["call", "qa_set", "join", "widen"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", true],
+["call", "qa_camera", 14000, 12000, 12000],
+["call", "qa_set", "focus", 3],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "12_d55_widen"],
+["screenshot", "12_d55_widen"],
+["seed", 11],
+["call", "qa_set", "density", 55],
+["call", "qa_set", "join", "widen"],
+["wait_frames", 5],
+["call", "qa_set", "top_down", false],
+["call", "qa_camera", 9000, 12000, 12000],
+["call", "qa_set", "focus", 0],
+["call", "qa_set", "view", "visual"],
+["call", "qa_set", "frames", false],
+["wait_frames", 6],
+["state", "11_d55_angled_widen"],
+["screenshot", "11_d55_angled_widen"]
 ]

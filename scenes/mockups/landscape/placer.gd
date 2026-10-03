@@ -99,9 +99,9 @@ static func load_kit(path: String) -> Dictionary:
 # Layer view of a space map, by rewriting colours, visibility and position; nothing is regenerated.
 # Outside top-down, focusing a layer darkens the others. In top-down a focused layer is alone
 # (the others are hidden); with focus 0 the layers use their top-down colours and each higher layer
-# is stepped sideways so stacked edges show. Crossing marks show only when asked. A node belongs to
+# is stepped sideways so stacked edges show. Crossing marks and the debug frames (plates dropped for reachability) show only when asked. A node belongs to
 # one view (meta "view": "visual" if absent, "*" for every view) and is hidden in the others.
-static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, show_crossings: bool, view: String = "visual") -> void:
+static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, show_crossings: bool, view: String = "visual", show_frames: bool = false) -> void:
 	var stacked := top_down and focus == 0
 	for child in world_parent.get_children():
 		var layers: Array = []
@@ -113,7 +113,7 @@ static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, sho
 			continue
 		var own_view: String = child.get_meta("view", "visual")
 		var inside: bool = focus == 0 or layers.has(focus)
-		child.visible = (own_view == "*" or own_view == view) and (inside or not top_down) and (show_crossings or not child.get_meta("crossing_mark", false))
+		child.visible = (own_view == "*" or own_view == view) and (inside or not top_down) and (show_crossings or not child.get_meta("crossing_mark", false)) and (show_frames or not child.get_meta("debug_frame", false))
 		var step: float = (layers.min() - 1) * TOP_DOWN_STEP_WU if stacked else 0.0
 		child.position = Vector3(step, child.position.y, step)
 		if child.has_meta("sheet_layer"):
@@ -178,6 +178,8 @@ func place(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> Dictio
 			mmi.set_meta("base_colors", PackedColorArray(g.colors))
 			if g.piece.begins_with("shaft_L"):
 				mmi.set_meta("crossing_mark", true)
+			elif g.piece.begins_with("cut_L"):
+				mmi.set_meta("debug_frame", true)
 		var mat := StandardMaterial3D.new()
 		mat.vertex_color_use_as_albedo = true
 		mmi.material_override = mat

@@ -12,7 +12,8 @@ extends FieldMap
 # Pass 5 adds the functional maps: what ordinary units can pass (the fine mask opened with a 300 wu
 # block: anything narrower is solid) and what small craft can pass. The fine fracture above is kept
 # whole; it is the small-craft map inside small-craft sections (batches of adjacent plates) and
-# visual detail everywhere else. Reachability runs on the ordinary map.
+# visual detail everywhere else. Reachability runs on the ordinary map: a cut-off region is joined to
+# the main one by widening one channel (default) or by dropping the plates on the way (`join_mode`).
 # No engine noise, no random calls: every random value is the hand-written hash below, so the C
 # simulation can copy this file line for line.
 # See also: docs/northstar/plans/2026-10-02-space-kit-mode-spec.md
@@ -27,6 +28,11 @@ const SMALL_SHARE_DEFAULT := 7.5
 const BATCH_PLATES := 6
 const SECTION_SEED_QUANTILE := 0.75
 const MIN_POCKET_CELLS := 40
+const JOIN_WIDEN := "widen"
+const JOIN_DROP := "drop"
+# Rounds of joining: every cut-off region is widened to the main region once per round.
+const MAX_JOIN_ROUNDS := 8
+const NO_MAIN_D2 := 1 << 28
 const CROSSING_MARK_MIN_CELLS := 8
 const CROSSING_MARK_MAX_CELLS := 50
 const HASH_MASK := 0xFFFFFFFF
@@ -79,6 +85,8 @@ var layer_gap_wu: float = LAYER_GAP_WU
 var size_spread: float = SIZE_SPREAD
 var density_swing: float = DENSITY_SWING
 var shared_density := true
+# How a cut-off region is joined to the main one: JOIN_WIDEN or JOIN_DROP.
+var join_mode: String = JOIN_WIDEN
 # Percent of each layer's cells that are small-craft sections.
 var small_share: float = SMALL_SHARE_DEFAULT
 # Sections grow from the plates at the objective, staging and vantage nodes instead of the noise.
@@ -117,6 +125,9 @@ var plate_polygon_count: Array = []
 var plates_cleared := 0
 var plates_cut := 0
 var rubble_share := 0.0
+# Join by widening: channels opened, and the cells they turned from blocked to open.
+var channels_widened := 0
+var join_cells_opened := 0
 var pockets_filled := 0
 var tunnels_cut := 0
 var regions_unreachable_after := 0
@@ -165,13 +176,18 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -
 	pockets_filled = 0
 	plates_cut = 0
 	tunnels_cut = 0
+	channels_widened = 0
+	join_cells_opened = 0
 	tunnels = []
 	var objective_cell := _cell_of(nodes[0].pos)
 	var ordinary_cells := int(MIN_PASSAGE_WU / SPACING)
 	var ordinary := _open_block(open, ordinary_cells)
 	var labelled := _label_regions(ordinary, objective_cell)
 	if not QaPlants.is_active("space-no-carve"):
-		_fill_and_drop_plates(open, kind, labelled)
+		if join_mode == JOIN_DROP:
+			_fill_and_drop_plates(open, kind, labelled)
+		else:
+			_fill_and_widen(open, kind, owner, labelled, objective_cell, ordinary_cells)
 		ordinary = _open_block(open, ordinary_cells)
 		labelled = _label_regions(ordinary, objective_cell)
 	regions_unreachable_after = labelled.sizes.size() - (1 if labelled.main >= 0 else 0)
@@ -854,6 +870,256 @@ func _fill_and_drop_plates(open: PackedByteArray, kind: PackedByteArray, labelle
 		for p in path:
 			if plate_region[k].has(p):
 				joined[_root(joined, plate_region[k][p])] = root
+
+
+# Reachability by widening. Pockets are filled solid; then, round after round, every region of
+# MIN_POCKET_CELLS or more that the main region does not reach is joined to it: the pair of cells
+# (one in the region, one in the main region, on the same layer) nearest in the plane is found, and the
+# straight line between them is opened with the 3 by 3 block (MIN_PASSAGE_WU / 2 each side of it). The
+# fine mask opens, the plates lose the same area (see _cut_polygons), so mask and picture agree.
+func _fill_and_widen(open: PackedByteArray, kind: PackedByteArray, owner: PackedInt32Array, labelled: Dictionary, objective_cell: Vector2i, ordinary_cells: int) -> void:
+	var n := dim * dim
+	_fill_pockets(open, labelled)
+	for _round in range(MAX_JOIN_ROUNDS):
+		labelled = _label_regions(_open_block(open, ordinary_cells), objective_cell)
+		var main: int = labelled.main
+		if main < 0:
+			return
+		var labels: PackedInt32Array = labelled.labels
+		var sizes: Array = labelled.sizes
+		var cut := {}
+		for id in range(sizes.size()):
+			if id != main and sizes[id] >= MIN_POCKET_CELLS:
+				cut[id] = []
+		if cut.is_empty():
+			return
+		var main_count := PackedInt32Array()
+		main_count.resize(LAYERS)
+		for c in range(LAYERS * n):
+			var id := labels[c]
+			if id == main:
+				main_count[c / n] += 1
+			elif cut.has(id):
+				cut[id].append(c)
+		var near: Array = []
+		near.resize(LAYERS)
+		for id in cut:
+			_widen_channel(open, kind, owner, labels, main, main_count, near, cut[id], ordinary_cells / 2)
+
+
+# Opens one channel from the region `cells` (indices over all layers) to the main region.
+func _widen_channel(open: PackedByteArray, kind: PackedByteArray, owner: PackedInt32Array, labels: PackedInt32Array, main: int, main_count: PackedInt32Array, near: Array, cells: Array, radius: int) -> void:
+	var n := dim * dim
+	var best := NO_MAIN_D2
+	var best_k := -1
+	var from := Vector2i.ZERO
+	var to := Vector2i.ZERO
+	for c in cells:
+		var k: int = c / n
+		if main_count[k] == 0:
+			continue
+		var p: int = c - k * n
+		var gy := p / dim
+		var gx := p - gy * dim
+		var id := labels[c]
+		if not ((gx > 0 and labels[c - 1] != id) or (gx < dim - 1 and labels[c + 1] != id) or (gy > 0 and labels[c - dim] != id) or (gy < dim - 1 and labels[c + dim] != id)):
+			continue
+		if near[k] == null:
+			near[k] = _main_nearest(labels, main, k)
+		var d2: int = near[k].d2[p]
+		if d2 < best:
+			best = d2
+			best_k = k
+			from = Vector2i(gx, gy)
+			var src: int = near[k].src[p]
+			to = Vector2i(src - (src / dim) * dim, src / dim)
+	if best_k < 0:
+		return
+	var channel := PackedByteArray()
+	channel.resize(n)
+	var low := Vector2i(maxi(mini(from.x, to.x) - 2 * radius, 0), maxi(mini(from.y, to.y) - 2 * radius, 0))
+	var high := Vector2i(mini(maxi(from.x, to.x) + 2 * radius, dim - 1), mini(maxi(from.y, to.y) + 2 * radius, dim - 1))
+	# Bresenham from `from` to `to`; every cell within `radius` of a line cell is opened.
+	var dx := absi(to.x - from.x)
+	var dy := -absi(to.y - from.y)
+	var sx := 1 if from.x < to.x else -1
+	var sy := 1 if from.y < to.y else -1
+	var err := dx + dy
+	var x := from.x
+	var y := from.y
+	while true:
+		# At the canvas edge the block slides inward, so it is still a whole block (the ordinary map's
+		# opening needs one) and the channel is not left open only on the edge row.
+		var block_x := clampi(x - radius, 0, dim - 1 - 2 * radius)
+		var block_y := clampi(y - radius, 0, dim - 1 - 2 * radius)
+		for cy in range(block_y, block_y + 2 * radius + 1):
+			for cx in range(block_x, block_x + 2 * radius + 1):
+				channel[cy * dim + cx] = 1
+				var c := best_k * n + cy * dim + cx
+				if open[c] == 0:
+					open[c] = 1
+					kind[c] = KIND_PLATE
+					owner[c] = -1
+					join_cells_opened += 1
+		if x == to.x and y == to.y:
+			break
+		var e2 := 2 * err
+		if e2 >= dy:
+			err += dy
+			x += sx
+		if e2 <= dx:
+			err += dx
+			y += sy
+	channels_widened += 1
+	_cut_polygons(best_k, channel, low, high)
+
+
+# For every cell of layer k, the cell of the main region nearest to it in the plane (Euclidean, exact:
+# a column pass, then the lower envelope of parabolas along each row): {d2: squared distance in cells,
+# src: the nearest main cell's index within the layer}. Cells with no main cell on the layer get d2 of
+# at least NO_MAIN_D2.
+func _main_nearest(labels: PackedInt32Array, main: int, k: int) -> Dictionary:
+	var n := dim * dim
+	var base := k * n
+	var row_of := PackedInt32Array()
+	row_of.resize(n)
+	for gx in range(dim):
+		var last := -1
+		for gy in range(dim):
+			if labels[base + gy * dim + gx] == main:
+				last = gy
+			row_of[gy * dim + gx] = last
+		var next := -1
+		for gy in range(dim - 1, -1, -1):
+			if labels[base + gy * dim + gx] == main:
+				next = gy
+			var above := row_of[gy * dim + gx]
+			if next >= 0 and (above < 0 or next - gy < gy - above):
+				row_of[gy * dim + gx] = next
+	var d2 := PackedInt32Array()
+	d2.resize(n)
+	var src := PackedInt32Array()
+	src.resize(n)
+	var f := PackedFloat64Array()
+	f.resize(dim)
+	var v := PackedInt32Array()
+	v.resize(dim)
+	var z := PackedFloat64Array()
+	z.resize(dim + 1)
+	for gy in range(dim):
+		for gx in range(dim):
+			var r := row_of[gy * dim + gx]
+			f[gx] = float((gy - r) * (gy - r)) if r >= 0 else float(NO_MAIN_D2)
+		var top := 0
+		v[0] = 0
+		z[0] = -INF
+		z[1] = INF
+		for q in range(1, dim):
+			var s := ((f[q] + q * q) - (f[v[top]] + v[top] * v[top])) / float(2 * q - 2 * v[top])
+			while s <= z[top]:
+				top -= 1
+				s = ((f[q] + q * q) - (f[v[top]] + v[top] * v[top])) / float(2 * q - 2 * v[top])
+			top += 1
+			v[top] = q
+			z[top] = s
+			z[top + 1] = INF
+		top = 0
+		for gx in range(dim):
+			while z[top + 1] < gx:
+				top += 1
+			d2[gy * dim + gx] = int((gx - v[top]) * (gx - v[top]) + f[v[top]])
+			src[gy * dim + gx] = row_of[gy * dim + v[top]] * dim + v[top]
+	return {d2 = d2, src = src}
+
+
+# Cuts the opened channel (`channel`: 1 per cell, inside the cell box low..high) out of layer k's plate
+# polygons by clipping, not by re-deriving the polygons from the mask, so the plates keep their straight
+# edges: the channel is the union of the cell squares, taken as one rectangle per run of equal rows, and
+# each polygon minus a rectangle is up to four convex pieces (each an ordinary polygon of the layer).
+func _cut_polygons(k: int, channel: PackedByteArray, low: Vector2i, high: Vector2i) -> void:
+	var half := SPACING * 0.5
+	var rects: Array = []
+	var above := {}
+	for gy in range(low.y, high.y + 1):
+		var now := {}
+		var gx := low.x
+		while gx <= high.x:
+			if channel[gy * dim + gx] == 0:
+				gx += 1
+				continue
+			var start := gx
+			while gx <= high.x and channel[gy * dim + gx] == 1:
+				gx += 1
+			var key := start * 4096 + gx
+			var at: int
+			if above.has(key):
+				at = above[key]
+				var taller: Rect2 = rects[at]
+				taller.size.y += SPACING
+				rects[at] = taller
+			else:
+				at = rects.size()
+				rects.append(Rect2(Vector2(start * SPACING - half, gy * SPACING - half), Vector2((gx - start) * SPACING, SPACING)))
+			now[key] = at
+		above = now
+	var box := Rect2(Vector2(low.x * SPACING - half, low.y * SPACING - half), Vector2((high.x - low.x + 1) * SPACING, (high.y - low.y + 1) * SPACING))
+	var ctx: Dictionary = _ctx[k]
+	var out: Array = []
+	for pl in ctx.polys:
+		var pieces: Array = [pl.points]
+		if _bounds(pl.points).intersects(box):
+			for rect in rects:
+				var next: Array = []
+				for piece in pieces:
+					if _bounds(piece).intersects(rect):
+						next.append_array(_subtract_rect(piece, rect))
+					else:
+						next.append(piece)
+				pieces = next
+		for piece in pieces:
+			out.append({points = piece, kind = pl.kind, plate = pl.plate})
+	ctx.polys = out
+
+
+func _bounds(poly: PackedVector2Array) -> Rect2:
+	var low := Vector2(INF, INF)
+	var high := Vector2(-INF, -INF)
+	for p in poly:
+		low = Vector2(minf(low.x, p.x), minf(low.y, p.y))
+		high = Vector2(maxf(high.x, p.x), maxf(high.y, p.y))
+	return Rect2(low, high - low)
+
+
+# A convex polygon minus an axis-aligned rectangle: the parts left of, right of, below and above it,
+# each clipped to what the earlier parts left (so they do not overlap). Parts under one square wu are
+# dropped.
+func _subtract_rect(poly: PackedVector2Array, rect: Rect2) -> Array:
+	var x0 := rect.position.x
+	var y0 := rect.position.y
+	var x1 := rect.end.x
+	var y1 := rect.end.y
+	var parts: Array = []
+	parts.append(_clip(poly, Vector2(1.0, 0.0), x0))
+	var rest := _clip(poly, Vector2(-1.0, 0.0), -x0)
+	parts.append(_clip(rest, Vector2(-1.0, 0.0), -x1))
+	rest = _clip(rest, Vector2(1.0, 0.0), x1)
+	parts.append(_clip(rest, Vector2(0.0, 1.0), y0))
+	rest = _clip(rest, Vector2(0.0, -1.0), -y0)
+	parts.append(_clip(rest, Vector2(0.0, -1.0), -y1))
+	var out: Array = []
+	for part in parts:
+		var clean := PackedVector2Array()
+		for p in part:
+			if clean.is_empty() or p.distance_to(clean[clean.size() - 1]) > 0.01:
+				clean.append(p)
+		if clean.size() > 1 and clean[0].distance_to(clean[clean.size() - 1]) <= 0.01:
+			clean.remove_at(clean.size() - 1)
+		var area := 0.0
+		for i in range(clean.size()):
+			area += clean[i].cross(clean[(i + 1) % clean.size()])
+		if clean.size() >= 3 and absf(area) * 0.5 >= 1.0:
+			out.append(clean)
+	return out
 
 
 func _root(joined: PackedInt32Array, id: int) -> int:
