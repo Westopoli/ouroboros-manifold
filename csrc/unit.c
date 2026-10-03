@@ -1951,23 +1951,6 @@ static om_unit_row *om_tac_nearest_actable(om_world *w, om_tac_state *st, const 
     return om_tac_nearest_visible(w, st, self, radius);
 }
 
-/* R-087-04 (P1): an attack-moving unit with no enemy in attack range, on its
- * cohort turn, makes the nearest enemy it sees in sensor range its move goal
- * and walks there by the ordinary movement step. The old goal is dropped. The sighting is not a leash
- * anchor: the anchor is taken where the unit stands once it holds the target in range (R-087-05). */
-static void om_tac_pursue_goal(om_world *w, om_tac_state *st, om_unit_row *u) {
-    const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
-    om_unit_row *seen;
-    if (!prof || !(prof->sensor_radius > u->attack_range)) return;
-    seen = om_tac_nearest_visible(w, st, u, prof->sensor_radius);
-    if (!seen) return;
-    u->target_id = seen->unit_id;
-    u->halted = 0;
-    u->order_x = seen->x; u->order_y = seen->y;
-    u->issued_x = seen->x; u->issued_y = seen->y;
-    om_command_move(w, &u->unit_id, 1, seen->x, seen->y);
-}
-
 static void om_tac_drop_orders(om_unit_row *u) {
     u->order = OM_ORDER_NONE;
     u->target_id = 0;
@@ -1997,7 +1980,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int arrived = has_dest && om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
     int noncombat = om_tac_noncombat(u);
     int pursue = om_tac_pursue(w);
-    int most_damaged, held_ok;
+    int most_damaged;
     int leash_first = om_tactical_get_param(w, OM_TP_LEASH_BEFORE_DAMAGE) != 0.0;
     /* P1: an attack-move that has arrived stays an attack-move (the chase persists) until a new order */
     int chase_idle = pursue && u->order == OM_ORDER_ATTACK_MOVE && !has_dest;
@@ -2120,7 +2103,6 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     most_damaged = om_tac_most_damaged_for(w, u);
-    held_ok = u->target_id != 0 && !(pursue && t && !om_tac_in_range(w, u, t));
     if ((u->target_id == 0 || most_damaged || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
         && (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT) {
         t = most_damaged
@@ -2132,9 +2114,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             if (u->order == OM_ORDER_ATTACK_MOVE && (!pursue || !u->anchor_set)) {
                 u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
             }
-        } else if (pursue && u->order == OM_ORDER_ATTACK_MOVE && !held_ok) {
-            om_tac_pursue_goal(w, st, u);
         }
+        /* A199 (R-087-04): no pursuit on sight; a unit with no target in attack range keeps its slot and route.
+         * The old pursue-on-sight call (om_tac_pursue_goal) is deleted; the switch-0 baseline arm below
+         * (old path kept as baseline only, deleted at end of Phase E) still steps toward a seen enemy. */
     }
 
     /* OM_TP_LEASH_BEFORE_DAMAGE 1 (R-087-05, R-096-03; the Python's order): the leash drop runs here, before this
@@ -2184,7 +2167,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         om_tac_release(w, u);
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
-        /* See also: om_tac_pursue_goal, the pursue branch above (R-087-04) */
+        /* old path kept as baseline only, deleted at end of Phase E. See also: A199 (R-087-04), the pursue branch above */
         const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
         om_unit_row *seen;
         if (om_tac_hostile_within(st, u, u->attack_range)) {
