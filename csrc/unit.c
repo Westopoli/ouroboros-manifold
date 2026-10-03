@@ -2042,8 +2042,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
             if (u->guard) {
                 /* R-096-08: a guard answers only what it can shoot, and never flees or walks */
-                if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk) && om_tac_may_act_on(w, u, atk)) u->target_id = atk->unit_id;
-            } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth || !om_tac_may_act_on(w, u, atk)) {
+                if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) u->target_id = atk->unit_id;
+            } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
                 if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
             } else if (om_tac_in_range(w, u, atk)) {
                 u->target_id = atk->unit_id;
