@@ -1934,6 +1934,32 @@ static void om_tac_drop_orders(om_unit_row *u) {
     u->am_engaged = 0;
 }
 
+/* R-087-06: the unit answers the attacker that hit it. See also: om_tac_fire_pass, which under
+ * PURSUE_BY_STEERING calls it at the end of the tick the hit landed, as the Python's resolve_damage does. */
+static void om_tac_return_fire(om_world *w, om_tac_state *st, om_unit_row *u, int pursue, int noncombat) {
+    om_unit_row *atk = om_registry_find_in(st, u->last_attacker);
+    u->last_attacker = 0;
+    /* PP baseline only (switch = 0): return fire for an idle unit only; see also the pursue term (R-087-06) */
+    if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
+        && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
+        if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
+            if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
+        } else if (om_tac_in_range(w, u, atk)) {
+            u->target_id = atk->unit_id;
+        } else {
+            u->halted = 0;
+            u->order = OM_ORDER_ATTACK_MOVE;
+            u->order_x = atk->x; u->order_y = atk->y;
+            u->issued_x = atk->x; u->issued_y = atk->y;
+            om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
+            if (pursue) {
+                u->target_id = atk->unit_id;
+                u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
+            }
+        }
+    }
+}
+
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
     double dest_x = 0.0, dest_y = 0.0, interval_ticks = u->attack_interval * (double)OM_TACTICAL_TICK_RATE;
     int has_dest = om_unit_get_destination(w, u->unit_id, &dest_x, &dest_y);
@@ -1995,25 +2021,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         }
     }
 
-    if (u->last_attacker != 0) {
-        om_unit_row *atk = om_registry_find_in(st, u->last_attacker);
-        u->last_attacker = 0;
-        /* PP baseline only (switch = 0): return fire for an idle unit only; see also the pursue term (R-087-06) */
-        if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
-            && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
-            if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
-                if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
-            } else if (om_tac_in_range(w, u, atk)) {
-                u->target_id = atk->unit_id;
-            } else {
-                u->halted = 0;
-                u->order = OM_ORDER_ATTACK_MOVE;
-                u->order_x = atk->x; u->order_y = atk->y;
-                u->issued_x = atk->x; u->issued_y = atk->y;
-                om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
-            }
-        }
-    }
+    if (u->last_attacker != 0) om_tac_return_fire(w, st, u, pursue, noncombat);
     if (noncombat) { u->target_id = 0; return; }
     if (u->flinching) { u->suppress_auto = 1; return; }
 
@@ -2160,6 +2168,16 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
         u->fire_pending = 0;
         om_tac_fire(w, u, om_registry_find_in(st, u->target_id));
         u->backswing_ticks_remaining = OM_BACKSWING_TICKS - 1;
+    }
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        double dest_x, dest_y;
+        int plain;
+        if (!u->in_use || u->hp <= 0.0 || u->last_attacker == 0 || u->flinching) continue;
+        plain = u->order == OM_ORDER_NONE && om_unit_get_destination(w, u->unit_id, &dest_x, &dest_y)
+                && !om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
+        if (plain) continue;
+        om_tac_return_fire(w, st, u, 1, om_tac_noncombat(u));
     }
 }
 
