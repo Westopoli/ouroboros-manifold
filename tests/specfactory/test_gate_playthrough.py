@@ -60,3 +60,18 @@ def test_missing_suite_fails_stage(tmp_path):
     ok, detail = mgs.playthrough_check(tmp_path, "HEAD", python_exe=PY, timeout=60,
                                        target="tests/qa/desktop", force=True, setup=False)
     assert not ok and "suite missing" in detail
+
+
+def test_build_failure_rejects_and_suite_not_run(tmp_path, monkeypatch):
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    (stub / "make").write_text("#!/bin/sh\necho planted build break >&2\nexit 1\n")
+    (stub / "make").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{stub}:/usr/bin:/bin")
+    cand = tmp_path / "cand"
+    cand.mkdir()
+    (cand / "test_flow_planted.py").write_text("def test_s_ran():\n    open('RAN', 'w')\n")
+    ok, detail = mgs.playthrough_check(cand, "HEAD", python_exe=PY, timeout=60,
+                                       target="test_flow_planted.py", force=True, setup=True)
+    assert not ok and detail.startswith("playthrough setup failed: build") and "planted build break" in detail
+    assert not (cand / "RAN").exists()

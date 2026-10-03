@@ -773,8 +773,12 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
         return False, f"playthrough suite missing: candidate has no {target}"
     t0 = time.monotonic()
     if setup:
-        subprocess.run(["make", "-s", "libouroboros.so", "pipe/ouroboros_pipe"], cwd=str(candidate),
-                       capture_output=True, timeout=300)
+        mk = subprocess.run(["make", "-s", "libouroboros.so", "pipe/ouroboros_pipe"], cwd=str(candidate),
+                            capture_output=True, text=True, timeout=300)
+        if mk.returncode != 0 or not (candidate / "libouroboros.so").exists() \
+                or not (candidate / "pipe/ouroboros_pipe").exists():
+            return False, "playthrough setup failed: build " + (mk.stderr or "")[-300:]
+        # import exit code left unchecked: godot prints errors yet exits 0, so it is no reliable signal
         subprocess.run(["godot", "--headless", "--path", str(candidate), "--import"],
                        capture_output=True, timeout=300)
     try:
