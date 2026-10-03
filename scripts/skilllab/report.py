@@ -55,7 +55,7 @@ def _hgrid(values, lo, hi, fmt):
     for v in values:
         y = _scale(v, hi, lo, PY0, PY1)       # larger value, smaller y
         out.append(f'<line class="grid" x1="{PX0}" x2="{PX1}" y1="{_n(y)}" y2="{_n(y)}"/>')
-        out.append(_text(PX0 - 6, y + 4, fmt(v), "muted", "end"))
+        out.append(_text(PX0 - 6, min(y + 4, PY1), fmt(v), "muted", "end"))
     return out
 
 
@@ -110,8 +110,10 @@ def _firing_svg(firing: list) -> str:
     parts += _hgrid(sorted({0, top}), 0, top, lambda v: str(v))
     parts.append(_text((PX0 + PX1) / 2, H - 6, "Tick", "muted", "middle"))
     parts.append(_text(12, PY0 - 8, "Units able to fire", "muted"))
-    for t, x in zip(ticks, xs):
-        parts.append(_text(x, PY1 + 16, t, "muted", "middle"))
+    n = len(ticks)
+    shown = range(n) if n <= 8 else sorted({round(i * (n - 1) / 7) for i in range(8)})
+    for i in shown:
+        parts.append(_text(xs[i], PY1 + 16, ticks[i], "muted", "middle"))
     if xs:
         gap = " ".join(f"{_n(x)},{_n(y)}" for x, y in list(zip(xs, y0)) + list(zip(xs, y1))[::-1])
         parts.append(f'<polygon class="gap" points="{gap}"/>')
@@ -148,6 +150,13 @@ def _sentences(scans: dict) -> list:
     return out
 
 
+def _html(title: str, body: list) -> str:
+    return ("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+            f"<title>{escape(title)}</title>\n<link rel=\"stylesheet\" href=\"{FONT}\">\n"
+            f"<style>{CSS}</style>\n</head>\n<body>\n" + "\n".join(body) + "\n</body>\n</html>\n")
+
+
 def report(batch: Batch, out_dir) -> str:
     out = Path(os.fspath(out_dir))
     out.mkdir(parents=True, exist_ok=True)
@@ -158,10 +167,7 @@ def report(batch: Batch, out_dir) -> str:
     for label, fr in batch.firing_example.items():
         body += [f"<h3>{escape(label)}: units able to fire through one fight</h3>",
                  _firing_svg(fr.firing), _firing_table(fr.firing)]
-    html = ("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-            f"<title>{escape(batch.title)}</title>\n<link rel=\"stylesheet\" href=\"{FONT}\">\n"
-            f"<style>{CSS}</style>\n</head>\n<body>\n" + "\n".join(body) + "\n</body>\n</html>\n")
+    html = _html(batch.title, body)
     path = out / "report.html"
     path.write_text(html, encoding="utf-8")
     return str(path)

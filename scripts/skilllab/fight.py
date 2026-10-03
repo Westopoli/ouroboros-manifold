@@ -2,7 +2,7 @@
 import random
 
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
-from scripts.skilllab.firing import count_able, count_able_weighted, unit_weight
+from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
 from scripts.skilllab.formations import place
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
@@ -128,6 +128,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
     firing, tick, quiet, outcome = [], 0, 0, None
     weighted = [] if wt else None
     trace, last = ([] if setup.trace else None), {}
+    states, had_dest, ends = ([], set(), {}) if setup.states else (None, None, None)
     all_ids = sorted(living)
 
     def record():
@@ -145,9 +146,19 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
         if weighted is not None:
             weighted.append((tick,) + count_able_weighted(engine, w, side_ids[0], side_ids[1], ranges, wt[0], wt[1]))
 
+    def record_states():
+        for u, (state, dest) in sorted(unit_states(engine, w, side_ids[0], side_ids[1], ranges).items()):
+            states.append((tick, u, state))
+            if dest is not None:
+                had_dest.add(u)
+            elif u in had_dest and u not in ends:
+                ends[u] = tick
+
     sample()
     if trace is not None:
         record()
+    if states is not None:
+        record_states()
     timeline.check(0, hp, zero=True)
     while outcome is None:
         engine.step(w)
@@ -162,6 +173,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
         quiet = 0 if changed else quiet + 1
         if trace is not None:
             record()
+        if states is not None:
+            record_states()
         alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
         if alive[0] == 0 and alive[1] == 0:
             outcome = "stalemate"
@@ -184,4 +197,5 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
                        firing=firing, firing_unit_seconds=seconds, trace=trace,
-                       steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec)
+                       steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec,
+                       states=states, order_ends=None if ends is None else tuple(sorted(ends.items())))
