@@ -15,12 +15,12 @@ Spec: `docs/northstar/plans/2026-10-03-settlement-mockup-pass1-spec.md`. Prototy
 - `qa/pass1.json`: the scripted pass that made the screenshots.
 
 1. Growing density. Potential P starts at 1.0 on the core and spreads one ring per growth tick (3 s sim). Each hop multiplies by a factor: base decay, less for climbing (elevation difference between cells), less for steepness, less far from water, and only 0.85 across water. So it hugs coasts, follows contour lines, no rings. Density D eases toward P x maturity (0.6 rising to 1.0 over 300 s), never falls.
-2. Lots and stages. One lot per 100 wu cell; every 4th row and column is a lane, left empty. A lot rises one stage at a time (0.9 s grow animation, 0.4 s in a wave): marked ground, scaffold (orange), built (grey), dense (tall blue-grey).
+2. Lots and stages. Each lot is jittered up to 0.22 cell and turned by a per-cell hash; where slope is above 0.06 (candidate) it is turned along the contour, with 0.25 rad of jitter, so rows bend with the land. One lot per 100 wu cell; every 4th row and column is a lane, left empty. A lot rises one stage at a time (0.9 s grow animation, 0.4 s in a wave): marked ground, scaffold (orange), built (grey), dense (tall blue-grey).
 3. Waves. Three buttons. Shipment: one street (24 cells long, 2 lots deep) goes up in a staggered sweep. Expansion: one street plus a new density seed at its far end. Season: three streets. The differences are my guess, the labels are what to judge.
 4. Placement. Click puts a 5x5 cell (500 wu) building. Lots under it are cleared, lots in the 2-cell ring around are reset and refill over about 1 to 8 s, and the building seeds density so the city bends around it.
-5. Difficult ground. Slope above 0.22 gets a cliff dwelling (purple, small, capped at 3 stages), never nothing. Water cells get nothing.
+5. Difficult ground. No lot on water or within 1 cell of water (candidate shore margin); the sea surface is drawn flat at sea level, so the steep seabed no longer reads as ground. Slope above 0.22 gets a cliff dwelling (purple, small, capped at 3 stages), never nothing. Water cells get nothing.
 6. Damage. D on the hovered area (13x13 cell yellow marker) drops lots one stage per press down to rubble (dark brown), rebuild starts 10 s later.
-7. Paths. Method: one Dijkstra from the core over a cost grid (1 + 6 x slope, +25 per water cell, player buildings impassable), the cheapest route to each of 8 compass sectors on the window edge, thickened by 1 cell each side (300 wu wide, over the 200 wu need). Those cells are never built on; a placement re-runs it and lots on the new route are cleared. Routes crossing more than 6 water cells are dropped (so on this map only 5 of 8 sectors get a path; the rest are sea). Toggle P. State reports `path_connected` by a flood fill from the core.
+7. Paths. Method: one Dijkstra from the core over a cost grid (1 + 6 x slope, +25 per water cell, player buildings impassable), the cheapest route to each of 8 compass sectors on the window edge, thickened by 1 cell each side (300 wu wide, over the 200 wu need). Drawn as one ribbon per route from the core to the window edge, raised to the highest ground in the 3x3 around each point so it sits on the land. Those cells are never built on; a placement re-runs it and lots on the new route are cleared. Routes crossing more than 6 water cells are dropped (so on this map only 5 of 8 sectors get a path; the rest are sea). Toggle P; the HUD prints the route count (5). State reports `path_connected` by a flood fill from the core.
 8. Time. 1x, 5x, 20x, Reset (buttons and keys 1/2/3, R).
 
 ## Keys
@@ -46,12 +46,13 @@ Click place building, D damage under mouse, Z/X/C waves (shipment, expansion, se
 ## Measured (Godot 4.6.3, xvfb, llvmpipe software GL, 1920x1080; RTX 3060 not used by xvfb, so render cost is unrepresentative)
 
 - Lots standing: 0 at start, 271 at 1 min, 595 at 5 min, 581 after placing and 59 rubble after damage. Instances allocated: 14,641 (idle ones scaled to zero).
-- Script cost per frame (sim update, growth, flush, hover pick): 0.1 to 0.5 ms normally, 1.3 ms at 20x. Growth tick 2 to 7 ms. Path recompute about 66 to 85 ms (on placement only). Window frame time under llvmpipe including the screenshot grab: 100 to 1000 ms, dominated by software rendering of the terrain and 14k instances; not a GPU number.
+- Script cost per frame (sim update, growth, flush, hover pick): 0.1 to 0.5 ms normally, 1.2 ms at 20x. Growth tick 2 to 6 ms. Path recompute about 65 to 70 ms (on placement only). Window frame time under llvmpipe including the screenshot grab: 100 to 1000 ms, dominated by software rendering of the terrain and 14k instances; not a GPU number.
 - `qa/pass1.json` runs clean: `errors.txt` count 0.
 
 ## Not built / limits
 
-- Lanes are an axis-aligned grid: contour-following comes from the density shape and the lot cells, not from curved streets.
+- Lanes are still an axis-aligned grid of empty cells; jitter and contour yaw hide it but streets are not curved.
+- Purple dwellings still cluster on dry steep land at the shore; they are on land cells, not sea.
 - No real GPU frame time (needs a desktop run).
 - Rubble kept the same rise path; no distinct "burnt" look.
 - The window is 12100 by 12100 wu around the core, not the whole map; the core is on a coast so about 43 percent of it is sea.

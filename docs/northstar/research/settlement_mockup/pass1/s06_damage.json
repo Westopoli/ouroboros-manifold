@@ -2,7 +2,7 @@
   "_qa": {
     "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
     "display": "X11",
-    "fps_ms": 108.132,
+    "fps_ms": 100.945,
     "frame": 56,
     "last_input": "D",
     "method": "gl_compatibility",
@@ -29,25 +29,27 @@
     74
   ],
   "counts": {
-    "cliff": 61,
+    "cliff": 48,
     "rubble": 59,
-    "stage1": 214,
-    "stage2": 151,
-    "stage3": 79,
+    "stage1": 199,
+    "stage2": 141,
+    "stage3": 67,
     "stage4": 16
   },
-  "flush_ms": 0.0661292021104806,
-  "frame_ms": 0.352333570248202,
+  "flush_ms": 0.0770205060418861,
+  "frame_ms": 0.352264089897372,
+  "lots_on_water": 0,
   "p_over_thresh0": 1899,
   "path_cells": 1071,
   "path_connected": 5,
   "path_ends": 5,
-  "path_ms": 68.007,
+  "path_ms": 65.292,
   "paths_visible": false,
-  "piece_total": 581,
-  "player_cells_cleared": 106,
+  "piece_total": 531,
+  "player_cells_cleared": 105,
   "players": 1,
   "reached": 5807,
+  "routes": 5,
   "seed": 11,
   "speed": 0.0,
   "t": 342.659166666667,
@@ -57,11 +59,11 @@
     0.38,
     0.58
   ],
-  "tick_ms": 5.44243672979863,
+  "tick_ms": 4.85590836088372,
   "water_cells": 6264,
   "wave": {
     "kind": "shipment",
-    "lots": 28
+    "lots": 21
   },
   "wave_active": false
 }

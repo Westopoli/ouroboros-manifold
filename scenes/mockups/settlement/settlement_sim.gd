@@ -28,6 +28,10 @@ const DAMAGE_R := 6
 const REBUILD_DELAY_S := 10.0
 const PATH_DILATE := 1
 const MAX_WET_PATH := 6
+const SHORE_MARGIN := 1
+const CONTOUR_SLOPE := 0.06
+const JITTER_CELLS := 0.22
+const YAW_JITTER := 0.25
 const LANE_PERIOD := 4
 
 var fm
@@ -52,6 +56,8 @@ var anims := {}
 var dirty := {}
 var players: Array = []
 var path_ends: Array = []
+var path_routes: Array = []
+var routes_dirty := true
 var path_connected := 0
 var core := Vector2i.ZERO
 var t := 0.0
@@ -168,7 +174,7 @@ func is_cliff(i: int) -> bool:
 
 
 func buildable(i: int) -> bool:
-	return water[i] == 0 and lane[i] == 0 and path[i] == 0 and player[i] == 0
+	return water[i] == 0 and wdist[i] > SHORE_MARGIN and lane[i] == 0 and path[i] == 0 and player[i] == 0
 
 
 func _factor(from_i: int, to_i: int, diag: bool) -> float:
@@ -519,6 +525,7 @@ func recompute_paths() -> void:
 	var old := path.duplicate()
 	path.fill(0)
 	path_ends = []
+	path_routes = []
 	var best_end := []
 	var best_d := []
 	for s in 8:
@@ -544,6 +551,12 @@ func recompute_paths() -> void:
 		if wet > MAX_WET_PATH:
 			continue
 		path_ends.append(cur)
+		var route := PackedInt32Array()
+		var walk := cur
+		while walk != -1:
+			route.append(walk)
+			walk = parent[walk]
+		path_routes.append(route)
 		while cur != -1:
 			var cx := cur % WIN
 			var cy := cur / WIN
@@ -567,6 +580,7 @@ func recompute_paths() -> void:
 		elif path[i] == 0 and old[i] != 0:
 			want[i] = true
 	path_connected = _check_connected()
+	routes_dirty = true
 	path_ms = (Time.get_ticks_usec() - t0) / 1000.0
 
 

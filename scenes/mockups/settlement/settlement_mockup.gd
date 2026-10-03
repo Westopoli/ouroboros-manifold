@@ -14,7 +14,7 @@ var cam_yaw := 0.35
 var cam_pitch := -0.9
 var cam_dist := 48.0
 var lots: MultiMeshInstance3D
-var path_view: MultiMeshInstance3D
+var path_view: MeshInstance3D
 var players_node: Node3D
 var hover_box: MeshInstance3D
 var hover_cell := Vector2i(-1, -1)
@@ -90,16 +90,11 @@ func _build_world() -> void:
 	lots.material_override = lm
 	add_child(lots)
 
-	path_view = MultiMeshInstance3D.new()
-	var pm := MultiMesh.new()
-	pm.transform_format = MultiMesh.TRANSFORM_3D
-	pm.use_colors = true
-	pm.mesh = BoxMesh.new()
-	pm.instance_count = Sim.WIN * Sim.WIN
-	path_view.multimesh = pm
+	path_view = MeshInstance3D.new()
 	var pmat := StandardMaterial3D.new()
-	pmat.vertex_color_use_as_albedo = true
+	pmat.albedo_color = Color(1.0, 0.85, 0.1)
 	pmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pmat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	path_view.material_override = pmat
 	path_view.visible = false
 	add_child(path_view)
@@ -130,6 +125,8 @@ func _terrain_mesh() -> ArrayMesh:
 		for gx in W:
 			var i := gy * W + gx
 			var h: float = sim.elev[i] / 100.0
+			if sim.water[i] == 1 and h < 0.0:
+				h = 0.0
 			verts.append(Vector3(gx, h, gy))
 			var hl: float = sim.elev[gy * W + maxi(gx - 1, 0)] / 100.0
 			var hr: float = sim.elev[gy * W + mini(gx + 1, W - 1)] / 100.0
@@ -227,9 +224,9 @@ func _process(delta: float) -> void:
 	_hover()
 	frame_ms = lerpf(frame_ms, (Time.get_ticks_usec() - t0) / 1000.0, 0.1)
 	var cnt: Dictionary = sim.counts()
-	info.text = "t %s  x%d   stage1 %d  scaffold %d  built %d  dense %d  cliff %d  rubble %d  player %d   script frame %.1f ms%s" % [
+	info.text = "t %s  x%d   stage1 %d  scaffold %d  built %d  dense %d  cliff %d  rubble %d  player %d   routes %d   script frame %.1f ms%s" % [
 		_clock(sim.t), int(speed), cnt.stage1, cnt.stage2, cnt.stage3, cnt.stage4, cnt.cliff, cnt.rubble,
-		sim.players.size(), frame_ms, ("   wave: " + str(last_wave.get("kind", "")) if sim.t < sim.wave_until else "")]
+		sim.players.size(), sim.path_routes.size(), frame_ms, ("   wave: " + str(last_wave.get("kind", "")) if sim.t < sim.wave_until else "")]
 
 
 func _clock(s: float) -> String:
@@ -248,17 +245,15 @@ func _flush() -> void:
 			mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
 		else:
 			var fw: float = v[1]
-			var b := Basis.from_scale(Vector3(fw, h, fw))
-			mm.set_instance_transform(i, Transform3D(b, Vector3(gx, sim.elev[i] / 100.0 + h * 0.5 - 0.12, gy)))
+			var jx: float = (sim._hash(i + 3) - 0.5) * 2.0 * Sim.JITTER_CELLS
+			var jz: float = (sim._hash(i + 5) - 0.5) * 2.0 * Sim.JITTER_CELLS
+			var yaw: float = _lot_yaw(i, gx, gy)
+			var b := Basis(Vector3.UP, yaw) * Basis.from_scale(Vector3(fw, h, fw * 0.85))
+			mm.set_instance_transform(i, Transform3D(b, Vector3(gx + jx, sim.elev[i] / 100.0 + h * 0.5 - 0.12, gy + jz)))
 			mm.set_instance_color(i, v[2])
-		var pm: MultiMesh = path_view.multimesh
-		if sim.path[i] != 0:
-			var c := Color(1.0, 0.85, 0.2, 1) if sim.path[i] == 1 else Color(0.95, 0.95, 0.5, 1)
-			pm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(1, 0.1, 1)), Vector3(gx, sim.elev[i] / 100.0 + 0.5, gy)))
-			pm.set_instance_color(i, c)
-		else:
-			pm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
 	sim.dirty = {}
+	if sim.routes_dirty:
+		_build_routes()
 	while player_boxes < sim.players.size():
 		var p: Dictionary = sim.players[player_boxes]
 		var mi := MeshInstance3D.new()
@@ -273,6 +268,55 @@ func _flush() -> void:
 		players_node.add_child(mi)
 		player_boxes += 1
 	flush_ms = lerpf(flush_ms, (Time.get_ticks_usec() - t0) / 1000.0, 0.2)
+
+
+func _lot_yaw(i: int, gx: int, gy: int) -> float:
+	var W: int = Sim.WIN
+	var dx: float = sim.elev[gy * W + mini(gx + 1, W - 1)] - sim.elev[gy * W + maxi(gx - 1, 0)]
+	var dz: float = sim.elev[mini(gy + 1, W - 1) * W + gx] - sim.elev[maxi(gy - 1, 0) * W + gx]
+	var jit: float = (sim._hash(i + 7) - 0.5) * 2.0 * Sim.YAW_JITTER
+	if sim.slope[i] > Sim.CONTOUR_SLOPE and (absf(dx) + absf(dz)) > 0.0:
+		return atan2(-dx, -dz) + jit
+	return sim._hash(i + 9) * PI + jit
+
+
+func _build_routes() -> void:
+	var W: int = Sim.WIN
+	var verts := PackedVector3Array()
+	var idxs := PackedInt32Array()
+	for route in sim.path_routes:
+		var pts: Array = []
+		for i in route:
+			var cx: int = i % W
+			var cy: int = i / W
+			var top := -1e9
+			for oy in range(-1, 2):
+				for ox in range(-1, 2):
+					var nx := clampi(cx + ox, 0, W - 1)
+					var ny := clampi(cy + oy, 0, W - 1)
+					var e: float = sim.elev[ny * W + nx]
+					if sim.water[ny * W + nx] == 1:
+						e = maxf(e, 0.0)
+					top = maxf(top, e)
+			pts.append(Vector3(cx, top / 100.0 + 0.15, cy))
+		for k in pts.size() - 1:
+			var a: Vector3 = pts[k]
+			var b: Vector3 = pts[k + 1]
+			var dir := (b - a)
+			dir.y = 0
+			var side := Vector3(-dir.z, 0, dir.x).normalized() * 1.0
+			var base := verts.size()
+			verts.append_array([a - side, a + side, b - side, b + side])
+			idxs.append_array([base, base + 1, base + 2, base + 1, base + 3, base + 2])
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = verts
+	arr[Mesh.ARRAY_INDEX] = idxs
+	var mesh := ArrayMesh.new()
+	if verts.size() > 0:
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	path_view.mesh = mesh
+	sim.routes_dirty = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -347,7 +391,7 @@ func qa_state() -> Dictionary:
 	var c: Dictionary = sim.counts()
 	return {"seed": SEED, "t": sim.t, "speed": speed, "counts": c, "piece_total": sim.piece_total(),
 		"frame_ms": frame_ms, "flush_ms": flush_ms, "tick_ms": sim.tick_ms, "path_ms": sim.path_ms,
-		"paths_visible": paths_on, "path_ends": sim.path_ends.size(), "path_connected": sim.path_connected,
+		"paths_visible": paths_on, "path_ends": sim.path_ends.size(), "routes": sim.path_routes.size(), "lots_on_water": _lots_on_water(), "path_connected": sim.path_connected,
 		"path_cells": int(sim.path.count(1)) + int(sim.path.count(2)), "players": sim.players.size(),
 		"thresholds": Sim.THRESHOLDS, "wave": last_wave, "wave_active": sim.t < sim.wave_until,
 		"core": [sim.core.x, sim.core.y], "player_cells_cleared": sim.path_cells_cleared,
@@ -410,5 +454,13 @@ func _p_over() -> int:
 	var n := 0
 	for i in Sim.WIN * Sim.WIN:
 		if sim.P[i] >= Sim.THRESHOLDS[0]:
+			n += 1
+	return n
+
+
+func _lots_on_water() -> int:
+	var n := 0
+	for i in Sim.WIN * Sim.WIN:
+		if sim.water[i] == 1 and (sim.state[i] > 0 or sim.rubble[i] == 1):
 			n += 1
 	return n

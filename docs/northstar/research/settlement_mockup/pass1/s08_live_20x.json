@@ -2,7 +2,7 @@
   "_qa": {
     "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
     "display": "X11",
-    "fps_ms": 121.337,
+    "fps_ms": 116.126,
     "frame": 307,
     "last_input": "P",
     "method": "gl_compatibility",
@@ -31,25 +31,27 @@
     74
   ],
   "counts": {
-    "cliff": 49,
+    "cliff": 37,
     "rubble": 0,
-    "stage1": 253,
+    "stage1": 227,
     "stage2": 101,
-    "stage3": 64,
-    "stage4": 19
+    "stage3": 54,
+    "stage4": 18
   },
-  "flush_ms": 0.0176819528613984,
-  "frame_ms": 1.25066236850592,
+  "flush_ms": 0.022443618028148,
+  "frame_ms": 1.24019595131084,
+  "lots_on_water": 0,
   "p_over_thresh0": 1899,
   "path_cells": 983,
   "path_connected": 5,
   "path_ends": 5,
-  "path_ms": 64.648,
+  "path_ms": 69.808,
   "paths_visible": false,
-  "piece_total": 486,
+  "piece_total": 437,
   "player_cells_cleared": 0,
   "players": 0,
   "reached": 5531,
+  "routes": 5,
   "seed": 11,
   "speed": 20.0,
   "t": 162.0,
@@ -59,7 +61,7 @@
     0.38,
     0.58
   ],
-  "tick_ms": 5.99950872915821,
+  "tick_ms": 5.82897145370898,
   "water_cells": 6264,
   "wave": {
 
