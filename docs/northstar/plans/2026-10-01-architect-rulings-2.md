@@ -716,3 +716,9 @@ Westley asked for more work in parallel and approved these three.
 
 **A149. Westley picked (a): parity tolerance 0.05 wu in position.** The named provisional constant in the parity tests becomes 0.05 wu, his number, with a ledger row (A136 said 1e-6, provisional); facing stays 2e-3 rad. A scene that misses it is a logic finding, not a tolerance question.
 
+
+## Addendum 54, 2026-10-02 (transport scenario clocks)
+
+**A150. Scenario clocks in the pipe tests are test scaffolding, not thresholds.** `CLASH_STEPS` in `test_pipe_assign_commander.py` and the death window in `test_pipe_tactical_delta_frame.py` state when a scripted scene used to reach a death under the old movement; no bible rule names those ticks. The ruled movement (slowest-member pacing R-095-01, pursuit by steering P1) moves them. Each is a test defect with a ledger row: the new value is found by running the scene, stated with its cause, and the assertion itself (a loss happens; a death arrives in one 100-tick frame) is unchanged. Westley is told in the same update and may overrule. A window that a bible rule names stays his.
+
+**A151. The spacing floor is back with Westley**: the Python's true minimum over the 200-tick move is 29.797 (tick 12), not the 29.92 of tick 9; the C is bit-identical. The 0.1 of A148 does not hold; his new number is awaited.
