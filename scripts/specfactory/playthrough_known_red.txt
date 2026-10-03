@@ -1,0 +1,3 @@
+# Desktop-flow tests allowed to be red in the gate's playthrough stage, one
+# test function name (or prefix) per line. Empty since the loop-fix landing; a
+# listed test that passes is reported "now green, remove from list".

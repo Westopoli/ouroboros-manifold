@@ -438,6 +438,18 @@ else
     warn transport "no tests/transport directory in this candidate"
 fi
 
+# -------------------------------------------------------------- 9b. playthrough (desktop flow suite, real client under xvfb)
+# Runs on the merged tree only when the diff touches game code; red outside
+# playthrough_known_red.txt rejects. See merge_gate_support.py playthrough_check.
+PT_LOG="$SCRATCH_ROOT/playthrough.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" playthrough "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "${MERGE_GATE_PLAYTHROUGH_TIMEOUT:-900}" >"$PT_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject playthrough "$(sed 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
+else
+    ok playthrough "$(sed 's/^OK //' "$PT_LOG" | tr '\n' ' ')"
+fi
+
 # -------------------------------------------------------------- 10. checksum_trace O0 vs O2
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
     O0O2_LOG="$SCRATCH_ROOT/o0o2_build.log"

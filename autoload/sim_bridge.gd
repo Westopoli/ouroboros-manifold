@@ -26,7 +26,8 @@ signal sim_ready(metadata: Dictionary)
 signal state_updated(state: Dictionary)
 signal sim_error(info: Dictionary)
 
-const USE_LIVE_SIM := true
+# See also: tests/qa/desktop/test_fresh_checkout_boot.py (legacy Python sim needs numpy and logs/; a fresh checkout has neither)
+const USE_LIVE_SIM := false
 const SIM_STARTUP_TIMEOUT_SEC := 30.0
 const ENTITLEMENT_SETTLED_REACH := true
 

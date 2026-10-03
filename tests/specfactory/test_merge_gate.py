@@ -210,8 +210,11 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     )
     assert "GATE godot_import" not in csim_only.stdout, csim_only.stdout + csim_only.stderr
     assert "venv_link" not in csim_only.stdout, csim_only.stdout
-    assert args_log.read_text() == ""
-    assert not (repo / ".venv").exists(), "csim-only piece should not pay the venv link"
+    # TD-GATE-playthrough-import: the acceptance-stage import is not run for a
+    # csim-only piece (no GATE godot_import line, no acceptance venv_link); a godot
+    # import made by the playthrough stage (csrc diff) is allowed, so args_log is
+    # not asserted empty.
+    assert "GATE playthrough" in csim_only.stdout, csim_only.stdout
 
 
 def test_unknown_candidate_dir_is_a_usage_error():

@@ -26,7 +26,8 @@ func _ready() -> void:
 	_load_tips()
 
 	if not SimBridge.USE_LIVE_SIM:
-		SceneRouter.go_to(_target_scene)
+		# go_to() here is swallowed while the router is still mid-transition; _process retries.
+		_skip_to_main = true
 		return
 
 	if SimBridge._ready_received:
