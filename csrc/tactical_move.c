@@ -131,6 +131,7 @@
 
 #define OM_COLLISION_MAX_ITER 3 /* PURSUE_BY_STEERING = 0 baseline; 1 uses OM_COLLISION_PASSES (A156) */
 #define OM_COLLISION_EXACT_EPS 1e-9
+#define OM_COLLISION_SETTLE_EPS2 (OM_COLLISION_SETTLE_EPS * OM_COLLISION_SETTLE_EPS)
 
 #define OM_PI 3.14159265358979323846
 #define OM_PI_2 1.57079632679489661923
@@ -295,6 +296,7 @@ uint32_t col_cur;
     /* PP-move (PURSUE_BY_STEERING): every unit's position and layer at the start of the tick, which
      * the steering probe reads (R-097-03); it never sees a position an earlier unit moved this tick. */
     double   start_x[OM_MOVE_MAX_UNITS], start_y[OM_MOVE_MAX_UNITS];
+    double   pass_x[OM_MOVE_MAX_UNITS], pass_y[OM_MOVE_MAX_UNITS];
     int32_t  start_layer[OM_MOVE_MAX_UNITS];
     /* col_pursue / col_route cache the two switches during a collision pass. */
     int      col_pursue, col_route;
@@ -1704,9 +1706,22 @@ static void om_move_settle_record(om_move_state *ms) {
     ms->settle_valid = 1;
 }
 
+/* A184: true when no unit moved more than OM_COLLISION_SETTLE_EPS over the pass just run (squared compare, no sqrt). */
+static int om_move_pass_settled(const om_move_state *ms) {
+    uint32_t id;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        double dx, dy;
+        if (!ms->grid_in[id]) continue;
+        dx = om_move_grid_x(ms, id) - ms->pass_x[id];
+        dy = om_move_grid_y(ms, id) - ms->pass_y[id];
+        if (dx * dx + dy * dy > OM_COLLISION_SETTLE_EPS2) return 0;
+    }
+    return 1;
+}
+
 /* Every unit starts pair checks, moving or stopped (A156, R-097-10). Under PURSUE_BY_STEERING the push pass
  * repeats up to OM_COLLISION_PASSES times and stops early when a pass changes nothing, i.e. no pair is
- * closer than 2 * radius. A140: with it 0 the baseline's 3 passes stay. */
+ * closer than 2 * radius, or when no unit moved more than OM_COLLISION_SETTLE_EPS in it (A184). A140: with it 0 the baseline's 3 passes stay. */
 static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     int iter, passes, settled = 0;
     uint32_t id;
@@ -1730,10 +1745,18 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     }
     passes = ms->col_pursue ? OM_COLLISION_PASSES : OM_COLLISION_MAX_ITER;
     for (iter = 0; iter < passes; iter++) {
+        if (ms->col_pursue) {
+            for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+                if (!ms->grid_in[id]) continue;
+                ms->pass_x[id] = om_move_grid_x(ms, id);
+                ms->pass_y[id] = om_move_grid_y(ms, id);
+            }
+        }
         if (!om_move_collision_once(w, ms, iter == 0, iter == passes - 1)) {
             settled = 1;
             break;
         }
+        if (ms->col_pursue && om_move_pass_settled(ms)) break;
     }
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         if (!ms->grid_in[id]) continue;
