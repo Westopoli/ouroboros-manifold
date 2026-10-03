@@ -50,10 +50,10 @@ def test_trigger_rules():
     assert t(["scenes/mockups/a.tscn", "scenes/hud.tscn"])
 
 
-def test_known_red_file_holds_only_c8_05():
+def test_known_red_file_is_empty():
     lines = [l.strip() for l in mgs.DEFAULT_KNOWN_RED.read_text().splitlines()
              if l.strip() and not l.startswith("#")]
-    assert lines == ["test_s_c8_05"]
+    assert lines == []
 
 
 def test_missing_suite_fails_stage(tmp_path):

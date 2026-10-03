@@ -1,4 +1,3 @@
 # Desktop-flow tests allowed to be red in the gate's playthrough stage, one
-# test function name per line. The loop-fix lane removes test_s_c8_05 when it
-# lands; a listed test that passes is reported "now green, remove from list".
-test_s_c8_05
+# test function name (or prefix) per line. Empty since the loop-fix landing; a
+# listed test that passes is reported "now green, remove from list".

@@ -773,10 +773,6 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
         return False, f"playthrough suite missing: candidate has no {target}"
     t0 = time.monotonic()
     if setup:
-        (candidate / "logs").mkdir(exist_ok=True)
-        venv = candidate / ".venv"
-        if not venv.exists():
-            venv.symlink_to(Path.home() / "Projects/agora/.venv")
         subprocess.run(["make", "-s", "libouroboros.so", "pipe/ouroboros_pipe"], cwd=str(candidate),
                        capture_output=True, timeout=300)
         subprocess.run(["godot", "--headless", "--path", str(candidate), "--import"],
@@ -796,7 +792,7 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
             (passed if m.group(1) == "PASSED" else red).add(m.group(2).split("::")[-1].split(" ")[0])
     if not passed and not red:
         return False, f"no tests ran in {secs}: {' '.join(proc.stdout.splitlines()[-3:])}"
-    # a list entry names a test by prefix (test_s_c8_05 -> test_s_c8_05_end_mission_...)
+    # a list entry names a test by prefix (a prefix of the test function name)
     is_known = lambda t: any(t.startswith(k) for k in known)  # noqa: E731
     bad = sorted(t for t in red if not is_known(t))
     green = sorted(t for t in passed if is_known(t))
