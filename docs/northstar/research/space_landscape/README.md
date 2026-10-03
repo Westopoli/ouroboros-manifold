@@ -101,6 +101,12 @@ The architect's read of pass 3, for Westley to confirm or overrule:
 - From the tactical camera the sheets above the camera hide everything, since five opaque sheets 1,400 wu apart put the camera inside the stack. How the camera and five stacked sheets work together is a design question in its own right, not a mockup bug; top-down with focus is the way to read it for now.
 - Small defect: crossing marks are drawn in the focused top-down view although the HUD says they are off.
 
+## Westley's review of pass 3 (2026-10-03)
+
+Verbatim: "It's close, yes I agree they're too even in size, there should be more variety in density, other than that it looks really good, I'd say in the next pass let's also *connect* the layers together so there's not so much space in between them. Unless it's too soon for that and that's something the godot visual engine will handle and we're just designing the borders to pass to it."
+
+Read as: plate sizes too even; more variety in density; connect the layers so there is less space between them. On the last point the architect's answer, which Westley accepted with "go": the gap between layers and whether blocked space lines up across layers are design (the layer height mapping for space, and a shared density map across layers); filling the gap with solid bodies where a spot is blocked on two neighbouring layers is the visual engine's job from the masks, and the mockup fakes it so the result can be judged. Pass 4 spec: `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`, "Pass 4".
+
 ## Suggested next step
 
 Westley flies pass 3 (Kit: space; Top-down button; keys 1 to 5 to focus one layer, 0 for all; C for crossing marks; sliders for density, layer gap and plate size).
