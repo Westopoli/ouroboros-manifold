@@ -287,6 +287,13 @@ def _update_attack_move_state(store, active):
         tgt = store.auto_engage_target[uid]
         if tgt >= 0 and store.alive[tgt]:
             if not store.engage_anchor_set[uid]:
+                # Deliberate difference from the old Python: A167/A163 (A176). A sensor sighting is a move
+                # goal, not a target: the leash anchor is taken only while the target is IN RANGE.
+                atk_r = store.data[uid, FIELD_ATTACK_RANGE]
+                ddx = store.data[tgt, FIELD_X] - store.data[uid, FIELD_X]
+                ddy = store.data[tgt, FIELD_Y] - store.data[uid, FIELD_Y]
+                if ddx * ddx + ddy * ddy > atk_r * atk_r:
+                    continue
                 store.engage_anchor_x[uid] = store.data[uid, FIELD_X]
                 store.engage_anchor_y[uid] = store.data[uid, FIELD_Y]
                 store.engage_anchor_set[uid] = True
@@ -328,7 +335,8 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
 
     for uid in active:
         if store.attack_backswing[uid] > 0:
-            store.attack_backswing[uid] = max(0.0, store.attack_backswing[uid] - dt)
+            # A177: count whole ticks (0.5 s / 0.05 s = 10), not float seconds whose residue added an 11th.
+            store.attack_backswing[uid] = max(0.0, round(store.attack_backswing[uid] / dt - 1.0) * dt)
 
     for uid in active:
         if not store.has_move_target[uid]:
@@ -388,8 +396,23 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             if uid in store.waypoints:
                 store.waypoints[uid].pop(0)
                 if store.waypoints[uid]:
-                    continue
-                del store.waypoints[uid]
+                    # A179: continue toward the next waypoint on this same tick.
+                    tx, ty = store.waypoints[uid][0]
+                    arrival_radius = collision_radius * 2.0
+                    dx = tx - px
+                    dy = ty - py
+                    dist = math.sqrt(dx * dx + dy * dy)
+                    if dist < arrival_radius:
+                        continue
+                    arrived = False
+                else:
+                    del store.waypoints[uid]
+                    arrived = True
+            else:
+                arrived = True
+        else:
+            arrived = False
+        if arrived:
             store.has_move_target[uid] = False
             store.effective_speed[uid] = 0.0
             # attack_moving is intentionally NOT cleared here — it is a command-
