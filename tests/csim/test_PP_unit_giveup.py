@@ -4,10 +4,16 @@ R-099-05 (Addendum 62, A169): a unit under a GROUP MOVE whose own slot it cannot
 where it stands once it has been within 75 wu of its slot for 40 ticks (2 s) without arriving; a unit
 never paces with no end. R-099-04 (arrival radius 1.5 x collision radius = 22.5 wu for a Raider) is unchanged.
 
-Counting (the boundary, pinned exactly): after every `om_tactical_step`, a tick is "near" when the unit is
-within 75 wu of its slot; `near` counts consecutive near ticks. The order must still be active
-(`om_unit_get_destination` return value has_dest == 1, read through `.raw`) after the step that makes near == 39,
-and ended (has_dest == 0) after the step that makes near == 40. The unit then stays where it stands.
+Counting (the boundary, pinned exactly): after every `om_tactical_step`, a tick is "near" when the unit's position
+REPORTED BY THE PREVIOUS STEP is within 75 wu of its slot (the C's give-up pass runs at the top of the tick, on
+the positions the last tick ended with: positions are reported one tick behind, commit b2effc96); `near` counts
+consecutive near ticks. The order must still be active (`om_unit_get_destination` return value has_dest == 1, read
+through `.raw`) after the step that makes near == 39, and ended (has_dest == 0) after the step that makes near == 40.
+The unit then stays where it stands.
+What shifted (Architect A182, PF-tests2; a defect of this test's counting, not of the rule): before C4 (shots land
+after movement, A178) the pinned count read the position after the same step and ended at near == 40; C4 moved the
+unit's last step so the same-step count reads one tick ahead (ended at near == 41). Counting the previous step's
+position, as the code's note says, restores 39 active / 40 ended. Rule and both boundaries are unchanged.
 
 Scenes: S101's own (20 Raiders, 4 x 5 at 35 wu, one group move to (1000, 70)); and a constructed pair
 (two Raiders group-moved to (1000, 0); slots (1000, -20) and (1000, 20); a third, orderless unit parked on
@@ -88,12 +94,14 @@ def test_R_099_05_blocked_slot_gives_up_at_exactly_40_ticks_within_75(lib, world
     a, slot = _blocked_pair(lib, w)
     near = 0
     ended_at = None
+    d_prev = math.inf          # distance reported by the previous step (positions are one tick behind)
     for t in range(SCENE_TICKS):
         lib.om_tactical_step(w)
         p = pos(lib, w, a)
         d = math.hypot(p[0] - slot[0], p[1] - slot[1])
         has = dest(lib, w, a)[0]
-        near = near + 1 if d <= GIVE_UP_RADIUS else 0
+        near = near + 1 if d_prev <= GIVE_UP_RADIUS else 0
+        d_prev = d
         if near == GIVE_UP_TICKS - 1:
             assert has == 1, "gave up before 40 ticks within 75 wu"
         if near == GIVE_UP_TICKS:
