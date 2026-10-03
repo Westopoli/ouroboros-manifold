@@ -91,7 +91,7 @@
  * full spill list refiles everything (from the index itself, without touching
  * the units). Results never depend on this layout: a query returns exactly
  * the units within its radius. */
-#define OM_MOVE_GRID_MAX_CELLS 8192
+#define OM_MOVE_GRID_MAX_CELLS 65536
 #define OM_MOVE_GRID_BASE_CELL (4.0 * OM_UNIT_COLLISION_RADIUS)
 #define OM_MOVE_GRID_MARGIN (3.0 * OM_UNIT_COLLISION_RADIUS)
 #define OM_MOVE_GRID_SPILL_MAX 48
