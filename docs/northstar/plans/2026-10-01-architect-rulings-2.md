@@ -709,3 +709,16 @@ Westley asked for more work in parallel and approved these three.
 **A146. Patrol waypoints are clamped to the canvas.** The patrol diamond in `csrc/enemy_macro.c` places waypoints beyond the map edge for a squad spawned near it; the canvas clamp of P3 then pins the squad and the patrol never advances. That is a bug in the macro, not in the clamp. `PP-move` may make that one-function edit in `enemy_macro.c` (B13 is attached, so no piece is in flight there), test first: a test that spawns a squad at the edge and asserts every waypoint lies inside the canvas, red on main. No row change for B13. Other macro waypoints that may lie off the canvas are listed in the wave report, not fixed in this unit.
 
 **A147. Collision (M4) is held out of the Phase A landing** until Westley rules on the 29.92 residual against R-101-01's 30 wu floor (brought to him 2026-10-02 with Q-101-02; the choices are his). Everything else of Phase A lands. R-097-09's repulsion has no magnitude in the rule and was rightly not applied; the rule is flagged for a number (register row by the builder, Q-097-03) and stays unbuilt until it has one.
+
+## Addendum 53, 2026-10-02 (Westley: spacing residual and parity tolerance)
+
+**A148. Westley picked (a): the Python's residual is accepted.** Units may stand up to 0.1 wu inside R-101-01's 30 wu floor (the port leaves 29.92; the Python gives the same bits). The one test line in `tests/csim/test_E13_S101_movement_that_reads.py` becomes `30.0 - 0.1`, his number, with a ledger row; the rule text stays "no unit overlaps another". Q-101-02 closes. `OM_TP_PURSUE_BY_STEERING` keeps default 1: the new movement is the game. `push/pp-cprime` is dropped. `push/pp-a-land2` lands with the four A99 hashes re-recorded once (A140) and setup lines for the three off-canvas F1 and F2 tests.
+
+**A149. Westley picked (a): parity tolerance 0.05 wu in position.** The named provisional constant in the parity tests becomes 0.05 wu, his number, with a ledger row (A136 said 1e-6, provisional); facing stays 2e-3 rad. A scene that misses it is a logic finding, not a tolerance question.
+
+
+## Addendum 54, 2026-10-02 (transport scenario clocks)
+
+**A150. Scenario clocks in the pipe tests are test scaffolding, not thresholds.** `CLASH_STEPS` in `test_pipe_assign_commander.py` and the death window in `test_pipe_tactical_delta_frame.py` state when a scripted scene used to reach a death under the old movement; no bible rule names those ticks. The ruled movement (slowest-member pacing R-095-01, pursuit by steering P1) moves them. Each is a test defect with a ledger row: the new value is found by running the scene, stated with its cause, and the assertion itself (a loss happens; a death arrives in one 100-tick frame) is unchanged. Westley is told in the same update and may overrule. A window that a bible rule names stays his.
+
+**A151. The spacing floor is back with Westley**: the Python's true minimum over the 200-tick move is 29.797 (tick 12), not the 29.92 of tick 9; the C is bit-identical. The 0.1 of A148 does not hold; his new number is awaited.
