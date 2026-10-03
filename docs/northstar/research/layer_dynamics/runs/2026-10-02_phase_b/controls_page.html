@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skill lab controls</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<style>
+:root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#6b675f;--grid:#dedad0;--won:#2a7f62;--lost:#c0452f;
+--side0:#2f5fb3;--side1:#b36a1f;--gap:rgba(120,120,120,.22);--rule:#cfcabd}
+@media (prefers-color-scheme: dark){:root{--bg:#161614;--fg:#ecebe6;--muted:#9c978c;--grid:#35332e;
+--won:#58c9a1;--lost:#f0806a;--side0:#7fa8f0;--side1:#e8a35c;--gap:rgba(190,190,190,.2);--rule:#4a4740}}
+body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.6rem}h2{font-size:1.15rem;margin:.6rem 0}h3{font-size:1rem;color:var(--muted);margin:1.6rem 0 .3rem}
+svg{width:100%;height:auto}svg text{fill:var(--fg);font-size:11px}svg .muted{fill:var(--muted)}
+.grid{stroke:var(--grid);stroke-width:1}.marker{stroke:var(--fg);stroke-width:1;stroke-dasharray:4 3}
+.cell.won{fill:var(--won)}.cell.lost{fill:var(--lost)}
+.side0{stroke:var(--side0);fill:none;stroke-width:2}.side1{stroke:var(--side1);fill:none;stroke-width:2}
+text.side0{fill:var(--side0);stroke:none}text.side1{fill:var(--side1);stroke:none}
+.gap{fill:var(--gap);stroke:none}
+table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.4rem 0 1.2rem}
+th,td{border-bottom:1px solid var(--rule);padding:.2rem .5rem;text-align:left}
+</style>
+</head>
+<body>
+<h1>Skill lab controls</h1>
+<h2>identical: 16 units beat 15.</h2>
+<h2>damage: 16 units beat 17.</h2>
+<h3>identical: line of fights by enemy size</h3>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="284.000" text-anchor="end" class="muted">-0.70</text>
+<line class="grid" x1="56" x2="560" y1="162.002" y2="162.002"/>
+<text x="50.000" y="166.002" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.82</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="31.722" r="5"/>
+<circle class="cell won" cx="134.000" cy="38.838" r="5"/>
+<circle class="cell won" cx="163.000" cy="48.118" r="5"/>
+<circle class="cell won" cx="192.000" cy="60.249" r="5"/>
+<circle class="cell won" cx="221.000" cy="71.234" r="5"/>
+<circle class="cell won" cx="250.000" cy="87.003" r="5"/>
+<circle class="cell won" cx="279.000" cy="110.920" r="5"/>
+<circle class="cell lost" cx="308.000" cy="161.183" r="5"/>
+<circle class="cell lost" cx="337.000" cy="207.438" r="5"/>
+<circle class="cell lost" cx="366.000" cy="227.545" r="5"/>
+<circle class="cell lost" cx="395.000" cy="242.299" r="5"/>
+<circle class="cell lost" cx="424.000" cy="252.284" r="5"/>
+<circle class="cell lost" cx="453.000" cy="259.244" r="5"/>
+<circle class="cell lost" cx="482.000" cy="267.781" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.806" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.822</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.776</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.734</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.678</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.606</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.541</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.447</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.304</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.005</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.271</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.390</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.478</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.538</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.579</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.630</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.666</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.703</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h3>damage: line of fights by enemy size</h3>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="284.000" text-anchor="end" class="muted">-0.63</text>
+<line class="grid" x1="56" x2="560" y1="170.944" y2="170.944"/>
+<text x="50.000" y="174.944" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.85</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="351.500" x2="351.500" y1="24" y2="280"/>
+<text x="351.500" y="18.000" text-anchor="middle">beats 17, loses to 18</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="30.503" r="5"/>
+<circle class="cell won" cx="134.000" cy="35.903" r="5"/>
+<circle class="cell won" cx="163.000" cy="43.867" r="5"/>
+<circle class="cell won" cx="192.000" cy="53.295" r="5"/>
+<circle class="cell won" cx="221.000" cy="61.556" r="5"/>
+<circle class="cell won" cx="250.000" cy="73.564" r="5"/>
+<circle class="cell won" cx="279.000" cy="88.530" r="5"/>
+<circle class="cell won" cx="308.000" cy="107.187" r="5"/>
+<circle class="cell won" cx="337.000" cy="128.766" r="5"/>
+<circle class="cell lost" cx="366.000" cy="187.142" r="5"/>
+<circle class="cell lost" cx="395.000" cy="223.613" r="5"/>
+<circle class="cell lost" cx="424.000" cy="240.624" r="5"/>
+<circle class="cell lost" cx="453.000" cy="252.522" r="5"/>
+<circle class="cell lost" cx="482.000" cy="263.673" r="5"/>
+<circle class="cell lost" cx="511.000" cy="271.371" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.852</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.814</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.783</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.736</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.682</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.634</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.564</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.478</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.369</td><td>won</td><td>16 units beat 16</td></tr>
+<tr><td>17</td><td>0.244</td><td>won</td><td>16 units beat 17</td></tr>
+<tr><td>18</td><td>-0.094</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.305</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.404</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.473</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.537</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.582</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.632</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h3>identical: units able to fire through one fight</h3>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="284.000" text-anchor="end" class="muted">0</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">16</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Tick</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Units able to fire</text>
+<text x="56.000" y="296.000" text-anchor="middle" class="muted">0</text>
+<text x="56.816" y="296.000" text-anchor="middle" class="muted">5</text>
+<text x="57.631" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="58.447" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="59.262" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="60.078" y="296.000" text-anchor="middle" class="muted">25</text>
+<text x="60.893" y="296.000" text-anchor="middle" class="muted">30</text>
+<text x="61.709" y="296.000" text-anchor="middle" class="muted">35</text>
+<text x="62.524" y="296.000" text-anchor="middle" class="muted">40</text>
+<text x="63.340" y="296.000" text-anchor="middle" class="muted">45</text>
+<text x="64.155" y="296.000" text-anchor="middle" class="muted">50</text>
+<text x="64.971" y="296.000" text-anchor="middle" class="muted">55</text>
+<text x="65.786" y="296.000" text-anchor="middle" class="muted">60</text>
+<text x="66.602" y="296.000" text-anchor="middle" class="muted">65</text>
+<text x="67.417" y="296.000" text-anchor="middle" class="muted">70</text>
+<text x="68.233" y="296.000" text-anchor="middle" class="muted">75</text>
+<text x="69.049" y="296.000" text-anchor="middle" class="muted">80</text>
+<text x="69.864" y="296.000" text-anchor="middle" class="muted">85</text>
+<text x="70.680" y="296.000" text-anchor="middle" class="muted">90</text>
+<text x="71.495" y="296.000" text-anchor="middle" class="muted">95</text>
+<text x="72.311" y="296.000" text-anchor="middle" class="muted">100</text>
+<text x="73.126" y="296.000" text-anchor="middle" class="muted">105</text>
+<text x="73.942" y="296.000" text-anchor="middle" class="muted">110</text>
+<text x="74.757" y="296.000" text-anchor="middle" class="muted">115</text>
+<text x="75.573" y="296.000" text-anchor="middle" class="muted">120</text>
+<text x="76.388" y="296.000" text-anchor="middle" class="muted">125</text>
+<text x="77.204" y="296.000" text-anchor="middle" class="muted">130</text>
+<text x="78.019" y="296.000" text-anchor="middle" class="muted">135</text>
+<text x="78.835" y="296.000" text-anchor="middle" class="muted">140</text>
+<text x="79.650" y="296.000" text-anchor="middle" class="muted">145</text>
+<text x="80.466" y="296.000" text-anchor="middle" class="muted">150</text>
+<text x="81.282" y="296.000" text-anchor="middle" class="muted">155</text>
+<text x="82.097" y="296.000" text-anchor="middle" class="muted">160</text>
+<text x="82.913" y="296.000" text-anchor="middle" class="muted">165</text>
+<text x="83.728" y="296.000" text-anchor="middle" class="muted">170</text>
+<text x="84.544" y="296.000" text-anchor="middle" class="muted">175</text>
+<text x="85.359" y="296.000" text-anchor="middle" class="muted">180</text>
+<text x="86.175" y="296.000" text-anchor="middle" class="muted">185</text>
+<text x="86.990" y="296.000" text-anchor="middle" class="muted">190</text>
+<text x="87.806" y="296.000" text-anchor="middle" class="muted">195</text>
+<text x="88.621" y="296.000" text-anchor="middle" class="muted">200</text>
+<text x="89.437" y="296.000" text-anchor="middle" class="muted">205</text>
+<text x="90.252" y="296.000" text-anchor="middle" class="muted">210</text>
+<text x="91.068" y="296.000" text-anchor="middle" class="muted">215</text>
+<text x="91.883" y="296.000" text-anchor="middle" class="muted">220</text>
+<text x="92.699" y="296.000" text-anchor="middle" class="muted">225</text>
+<text x="93.515" y="296.000" text-anchor="middle" class="muted">230</text>
+<text x="94.330" y="296.000" text-anchor="middle" class="muted">235</text>
+<text x="95.146" y="296.000" text-anchor="middle" class="muted">240</text>
+<text x="95.961" y="296.000" text-anchor="middle" class="muted">245</text>
+<text x="96.777" y="296.000" text-anchor="middle" class="muted">250</text>
+<text x="97.592" y="296.000" text-anchor="middle" class="muted">255</text>
+<text x="98.408" y="296.000" text-anchor="middle" class="muted">260</text>
+<text x="99.223" y="296.000" text-anchor="middle" class="muted">265</text>
+<text x="100.039" y="296.000" text-anchor="middle" class="muted">270</text>
+<text x="100.854" y="296.000" text-anchor="middle" class="muted">275</text>
+<text x="101.670" y="296.000" text-anchor="middle" class="muted">280</text>
+<text x="102.485" y="296.000" text-anchor="middle" class="muted">285</text>
+<text x="103.301" y="296.000" text-anchor="middle" class="muted">290</text>
+<text x="104.117" y="296.000" text-anchor="middle" class="muted">295</text>
+<text x="104.932" y="296.000" text-anchor="middle" class="muted">300</text>
+<text x="105.748" y="296.000" text-anchor="middle" class="muted">305</text>
+<text x="106.563" y="296.000" text-anchor="middle" class="muted">310</text>
+<text x="107.379" y="296.000" text-anchor="middle" class="muted">315</text>
+<text x="108.194" y="296.000" text-anchor="middle" class="muted">320</text>
+<text x="109.010" y="296.000" text-anchor="middle" class="muted">325</text>
+<text x="109.825" y="296.000" text-anchor="middle" class="muted">330</text>
+<text x="110.641" y="296.000" text-anchor="middle" class="muted">335</text>
+<text x="111.456" y="296.000" text-anchor="middle" class="muted">340</text>
+<text x="112.272" y="296.000" text-anchor="middle" class="muted">345</text>
+<text x="113.087" y="296.000" text-anchor="middle" class="muted">350</text>
+<text x="113.903" y="296.000" text-anchor="middle" class="muted">355</text>
+<text x="114.718" y="296.000" text-anchor="middle" class="muted">360</text>
+<text x="115.534" y="296.000" text-anchor="middle" class="muted">365</text>
+<text x="116.350" y="296.000" text-anchor="middle" class="muted">370</text>
+<text x="117.165" y="296.000" text-anchor="middle" class="muted">375</text>
+<text x="117.981" y="296.000" text-anchor="middle" class="muted">380</text>
+<text x="118.796" y="296.000" text-anchor="middle" class="muted">385</text>
+<text x="119.612" y="296.000" text-anchor="middle" class="muted">390</text>
+<text x="120.427" y="296.000" text-anchor="middle" class="muted">395</text>
+<text x="121.243" y="296.000" text-anchor="middle" class="muted">400</text>
+<text x="122.058" y="296.000" text-anchor="middle" class="muted">405</text>
+<text x="122.874" y="296.000" text-anchor="middle" class="muted">410</text>
+<text x="123.689" y="296.000" text-anchor="middle" class="muted">415</text>
+<text x="124.505" y="296.000" text-anchor="middle" class="muted">420</text>
+<text x="125.320" y="296.000" text-anchor="middle" class="muted">425</text>
+<text x="126.136" y="296.000" text-anchor="middle" class="muted">430</text>
+<text x="126.951" y="296.000" text-anchor="middle" class="muted">435</text>
+<text x="127.767" y="296.000" text-anchor="middle" class="muted">440</text>
+<text x="128.583" y="296.000" text-anchor="middle" class="muted">445</text>
+<text x="129.398" y="296.000" text-anchor="middle" class="muted">450</text>
+<text x="130.214" y="296.000" text-anchor="middle" class="muted">455</text>
+<text x="131.029" y="296.000" text-anchor="middle" class="muted">460</text>
+<text x="131.845" y="296.000" text-anchor="middle" class="muted">465</text>
+<text x="132.660" y="296.000" text-anchor="middle" class="muted">470</text>
+<text x="133.476" y="296.000" text-anchor="middle" class="muted">475</text>
+<text x="134.291" y="296.000" text-anchor="middle" class="muted">480</text>
+<text x="135.107" y="296.000" text-anchor="middle" class="muted">485</text>
+<text x="135.922" y="296.000" text-anchor="middle" class="muted">490</text>
+<text x="136.738" y="296.000" text-anchor="middle" class="muted">495</text>
+<text x="137.553" y="296.000" text-anchor="middle" class="muted">500</text>
+<text x="138.369" y="296.000" text-anchor="middle" class="muted">505</text>
+<text x="139.184" y="296.000" text-anchor="middle" class="muted">510</text>
+<text x="140.000" y="296.000" text-anchor="middle" class="muted">515</text>
+<text x="140.816" y="296.000" text-anchor="middle" class="muted">520</text>
+<text x="141.631" y="296.000" text-anchor="middle" class="muted">525</text>
+<text x="142.447" y="296.000" text-anchor="middle" class="muted">530</text>
+<text x="143.262" y="296.000" text-anchor="middle" class="muted">535</text>
+<text x="144.078" y="296.000" text-anchor="middle" class="muted">540</text>
+<text x="144.893" y="296.000" text-anchor="middle" class="muted">545</text>
+<text x="145.709" y="296.000" text-anchor="middle" class="muted">550</text>
+<text x="146.524" y="296.000" text-anchor="middle" class="muted">555</text>
+<text x="147.340" y="296.000" text-anchor="middle" class="muted">560</text>
+<text x="148.155" y="296.000" text-anchor="middle" class="muted">565</text>
+<text x="148.971" y="296.000" text-anchor="middle" class="muted">570</text>
+<text x="149.786" y="296.000" text-anchor="middle" class="muted">575</text>
+<text x="150.602" y="296.000" text-anchor="middle" class="muted">580</text>
+<text x="151.417" y="296.000" text-anchor="middle" class="muted">585</text>
+<text x="152.233" y="296.000" text-anchor="middle" class="muted">590</text>
+<text x="153.049" y="296.000" text-anchor="middle" class="muted">595</text>
+<text x="153.864" y="296.000" text-anchor="middle" class="muted">600</text>
+<text x="154.680" y="296.000" text-anchor="middle" class="muted">605</text>
+<text x="155.495" y="296.000" text-anchor="middle" class="muted">610</text>
+<text x="156.311" y="296.000" text-anchor="middle" class="muted">615</text>
+<text x="157.126" y="296.000" text-anchor="middle" class="muted">620</text>
+<text x="157.942" y="296.000" text-anchor="middle" class="muted">625</text>
+<text x="158.757" y="296.000" text-anchor="middle" class="muted">630</text>
+<text x="159.573" y="296.000" text-anchor="middle" class="muted">635</text>
+<text x="160.388" y="296.000" text-anchor="middle" class="muted">640</text>
+<text x="161.204" y="296.000" text-anchor="middle" class="muted">645</text>
+<text x="162.019" y="296.000" text-anchor="middle" class="muted">650</text>
+<text x="162.835" y="296.000" text-anchor="middle" class="muted">655</text>
+<text x="163.650" y="296.000" text-anchor="middle" class="muted">660</text>
+<text x="164.466" y="296.000" text-anchor="middle" class="muted">665</text>
+<text x="165.282" y="296.000" text-anchor="middle" class="muted">670</text>
+<text x="166.097" y="296.000" text-anchor="middle" class="muted">675</text>
+<text x="166.913" y="296.000" text-anchor="middle" class="muted">680</text>
+<text x="167.728" y="296.000" text-anchor="middle" class="muted">685</text>
+<text x="168.544" y="296.000" text-anchor="middle" class="muted">690</text>
+<text x="169.359" y="296.000" text-anchor="middle" class="muted">695</text>
+<text x="170.175" y="296.000" text-anchor="middle" class="muted">700</text>
+<text x="170.990" y="296.000" text-anchor="middle" class="muted">705</text>
+<text x="171.806" y="296.000" text-anchor="middle" class="muted">710</text>
+<text x="172.621" y="296.000" text-anchor="middle" class="muted">715</text>
+<text x="173.437" y="296.000" text-anchor="middle" class="muted">720</text>
+<text x="174.252" y="296.000" text-anchor="middle" class="muted">725</text>
+<text x="175.068" y="296.000" text-anchor="middle" class="muted">730</text>
+<text x="175.883" y="296.000" text-anchor="middle" class="muted">735</text>
+<text x="176.699" y="296.000" text-anchor="middle" class="muted">740</text>
+<text x="177.515" y="296.000" text-anchor="middle" class="muted">745</text>
+<text x="178.330" y="296.000" text-anchor="middle" class="muted">750</text>
+<text x="179.146" y="296.000" text-anchor="middle" class="muted">755</text>
+<text x="179.961" y="296.000" text-anchor="middle" class="muted">760</text>
+<text x="180.777" y="296.000" text-anchor="middle" class="muted">765</text>
+<text x="181.592" y="296.000" text-anchor="middle" class="muted">770</text>
+<text x="182.408" y="296.000" text-anchor="middle" class="muted">775</text>
+<text x="183.223" y="296.000" text-anchor="middle" class="muted">780</text>
+<text x="184.039" y="296.000" text-anchor="middle" class="muted">785</text>
+<text x="184.854" y="296.000" text-anchor="middle" class="muted">790</text>
+<text x="185.670" y="296.000" text-anchor="middle" class="muted">795</text>
+<text x="186.485" y="296.000" text-anchor="middle" class="muted">800</text>
+<text x="187.301" y="296.000" text-anchor="middle" class="muted">805</text>
+<text x="188.117" y="296.000" text-anchor="middle" class="muted">810</text>
+<text x="188.932" y="296.000" text-anchor="middle" class="muted">815</text>
+<text x="189.748" y="296.000" text-anchor="middle" class="muted">820</text>
+<text x="190.563" y="296.000" text-anchor="middle" class="muted">825</text>
+<text x="191.379" y="296.000" text-anchor="middle" class="muted">830</text>
+<text x="192.194" y="296.000" text-anchor="middle" class="muted">835</text>
+<text x="193.010" y="296.000" text-anchor="middle" class="muted">840</text>
+<text x="193.825" y="296.000" text-anchor="middle" class="muted">845</text>
+<text x="194.641" y="296.000" text-anchor="middle" class="muted">850</text>
+<text x="195.456" y="296.000" text-anchor="middle" class="muted">855</text>
+<text x="196.272" y="296.000" text-anchor="middle" class="muted">860</text>
+<text x="197.087" y="296.000" text-anchor="middle" class="muted">865</text>
+<text x="197.903" y="296.000" text-anchor="middle" class="muted">870</text>
+<text x="198.718" y="296.000" text-anchor="middle" class="muted">875</text>
+<text x="199.534" y="296.000" text-anchor="middle" class="muted">880</text>
+<text x="200.350" y="296.000" text-anchor="middle" class="muted">885</text>
+<text x="201.165" y="296.000" text-anchor="middle" class="muted">890</text>
+<text x="201.981" y="296.000" text-anchor="middle" class="muted">895</text>
+<text x="202.796" y="296.000" text-anchor="middle" class="muted">900</text>
+<text x="203.612" y="296.000" text-anchor="middle" class="muted">905</text>
+<text x="204.427" y="296.000" text-anchor="middle" class="muted">910</text>
+<text x="205.243" y="296.000" text-anchor="middle" class="muted">915</text>
+<text x="206.058" y="296.000" text-anchor="middle" class="muted">920</text>
+<text x="206.874" y="296.000" text-anchor="middle" class="muted">925</text>
+<text x="207.689" y="296.000" text-anchor="middle" class="muted">930</text>
+<text x="208.505" y="296.000" text-anchor="middle" class="muted">935</text>
+<text x="209.320" y="296.000" text-anchor="middle" class="muted">940</text>
+<text x="210.136" y="296.000" text-anchor="middle" class="muted">945</text>
+<text x="210.951" y="296.000" text-anchor="middle" class="muted">950</text>
+<text x="211.767" y="296.000" text-anchor="middle" class="muted">955</text>
+<text x="212.583" y="296.000" text-anchor="middle" class="muted">960</text>
+<text x="213.398" y="296.000" text-anchor="middle" class="muted">965</text>
+<text x="214.214" y="296.000" text-anchor="middle" class="muted">970</text>
+<text x="215.029" y="296.000" text-anchor="middle" class="muted">975</text>
+<text x="215.845" y="296.000" text-anchor="middle" class="muted">980</text>
+<text x="216.660" y="296.000" text-anchor="middle" class="muted">985</text>
+<text x="217.476" y="296.000" text-anchor="middle" class="muted">990</text>
+<text x="218.291" y="296.000" text-anchor="middle" class="muted">995</text>
+<text x="219.107" y="296.000" text-anchor="middle" class="muted">1000</text>
+<text x="219.922" y="296.000" text-anchor="middle" class="muted">1005</text>
+<text x="220.738" y="296.000" text-anchor="middle" class="muted">1010</text>
+<text x="221.553" y="296.000" text-anchor="middle" class="muted">1015</text>
+<text x="222.369" y="296.000" text-anchor="middle" class="muted">1020</text>
+<text x="223.184" y="296.000" text-anchor="middle" class="muted">1025</text>
+<text x="224.000" y="296.000" text-anchor="middle" class="muted">1030</text>
+<text x="224.816" y="296.000" text-anchor="middle" class="muted">1035</text>
+<text x="225.631" y="296.000" text-anchor="middle" class="muted">1040</text>
+<text x="226.447" y="296.000" text-anchor="middle" class="muted">1045</text>
+<text x="227.262" y="296.000" text-anchor="middle" class="muted">1050</text>
+<text x="228.078" y="296.000" text-anchor="middle" class="muted">1055</text>
+<text x="228.893" y="296.000" text-anchor="middle" class="muted">1060</text>
+<text x="229.709" y="296.000" text-anchor="middle" class="muted">1065</text>
+<text x="230.524" y="296.000" text-anchor="middle" class="muted">1070</text>
+<text x="231.340" y="296.000" text-anchor="middle" class="muted">1075</text>
+<text x="232.155" y="296.000" text-anchor="middle" class="muted">1080</text>
+<text x="232.971" y="296.000" text-anchor="middle" class="muted">1085</text>
+<text x="233.786" y="296.000" text-anchor="middle" class="muted">1090</text>
+<text x="234.602" y="296.000" text-anchor="middle" class="muted">1095</text>
+<text x="235.417" y="296.000" text-anchor="middle" class="muted">1100</text>
+<text x="236.233" y="296.000" text-anchor="middle" class="muted">1105</text>
+<text x="237.049" y="296.000" text-anchor="middle" class="muted">1110</text>
+<text x="237.864" y="296.000" text-anchor="middle" class="muted">1115</text>
+<text x="238.680" y="296.000" text-anchor="middle" class="muted">1120</text>
+<text x="239.495" y="296.000" text-anchor="middle" class="muted">1125</text>
+<text x="240.311" y="296.000" text-anchor="middle" class="muted">1130</text>
+<text x="241.126" y="296.000" text-anchor="middle" class="muted">1135</text>
+<text x="241.942" y="296.000" text-anchor="middle" class="muted">1140</text>
+<text x="242.757" y="296.000" text-anchor="middle" class="muted">1145</text>
+<text x="243.573" y="296.000" text-anchor="middle" class="muted">1150</text>
+<text x="244.388" y="296.000" text-anchor="middle" class="muted">1155</text>
+<text x="245.204" y="296.000" text-anchor="middle" class="muted">1160</text>
+<text x="246.019" y="296.000" text-anchor="middle" class="muted">1165</text>
+<text x="246.835" y="296.000" text-anchor="middle" class="muted">1170</text>
+<text x="247.650" y="296.000" text-anchor="middle" class="muted">1175</text>
+<text x="248.466" y="296.000" text-anchor="middle" class="muted">1180</text>
+<text x="249.282" y="296.000" text-anchor="middle" class="muted">1185</text>
+<text x="250.097" y="296.000" text-anchor="middle" class="muted">1190</text>
+<text x="250.913" y="296.000" text-anchor="middle" class="muted">1195</text>
+<text x="251.728" y="296.000" text-anchor="middle" class="muted">1200</text>
+<text x="252.544" y="296.000" text-anchor="middle" class="muted">1205</text>
+<text x="253.359" y="296.000" text-anchor="middle" class="muted">1210</text>
+<text x="254.175" y="296.000" text-anchor="middle" class="muted">1215</text>
+<text x="254.990" y="296.000" text-anchor="middle" class="muted">1220</text>
+<text x="255.806" y="296.000" text-anchor="middle" class="muted">1225</text>
+<text x="256.621" y="296.000" text-anchor="middle" class="muted">1230</text>
+<text x="257.437" y="296.000" text-anchor="middle" class="muted">1235</text>
+<text x="258.252" y="296.000" text-anchor="middle" class="muted">1240</text>
+<text x="259.068" y="296.000" text-anchor="middle" class="muted">1245</text>
+<text x="259.883" y="296.000" text-anchor="middle" class="muted">1250</text>
+<text x="260.699" y="296.000" text-anchor="middle" class="muted">1255</text>
+<text x="261.515" y="296.000" text-anchor="middle" class="muted">1260</text>
+<text x="262.330" y="296.000" text-anchor="middle" class="muted">1265</text>
+<text x="263.146" y="296.000" text-anchor="middle" class="muted">1270</text>
+<text x="263.961" y="296.000" text-anchor="middle" class="muted">1275</text>
+<text x="264.777" y="296.000" text-anchor="middle" class="muted">1280</text>
+<text x="265.592" y="296.000" text-anchor="middle" class="muted">1285</text>
+<text x="266.408" y="296.000" text-anchor="middle" class="muted">1290</text>
+<text x="267.223" y="296.000" text-anchor="middle" class="muted">1295</text>
+<text x="268.039" y="296.000" text-anchor="middle" class="muted">1300</text>
+<text x="268.854" y="296.000" text-anchor="middle" class="muted">1305</text>
+<text x="269.670" y="296.000" text-anchor="middle" class="muted">1310</text>
+<text x="270.485" y="296.000" text-anchor="middle" class="muted">1315</text>
+<text x="271.301" y="296.000" text-anchor="middle" class="muted">1320</text>
+<text x="272.117" y="296.000" text-anchor="middle" class="muted">1325</text>
+<text x="272.932" y="296.000" text-anchor="middle" class="muted">1330</text>
+<text x="273.748" y="296.000" text-anchor="middle" class="muted">1335</text>
+<text x="274.563" y="296.000" text-anchor="middle" class="muted">1340</text>
+<text x="275.379" y="296.000" text-anchor="middle" class="muted">1345</text>
+<text x="276.194" y="296.000" text-anchor="middle" class="muted">1350</text>
+<text x="277.010" y="296.000" text-anchor="middle" class="muted">1355</text>
+<text x="277.825" y="296.000" text-anchor="middle" class="muted">1360</text>
+<text x="278.641" y="296.000" text-anchor="middle" class="muted">1365</text>
+<text x="279.456" y="296.000" text-anchor="middle" class="muted">1370</text>
+<text x="280.272" y="296.000" text-anchor="middle" class="muted">1375</text>
+<text x="281.087" y="296.000" text-anchor="middle" class="muted">1380</text>
+<text x="281.903" y="296.000" text-anchor="middle" class="muted">1385</text>
+<text x="282.718" y="296.000" text-anchor="middle" class="muted">1390</text>
+<text x="283.534" y="296.000" text-anchor="middle" class="muted">1395</text>
+<text x="284.350" y="296.000" text-anchor="middle" class="muted">1400</text>
+<text x="285.165" y="296.000" text-anchor="middle" class="muted">1405</text>
+<text x="285.981" y="296.000" text-anchor="middle" class="muted">1410</text>
+<text x="286.796" y="296.000" text-anchor="middle" class="muted">1415</text>
+<text x="287.612" y="296.000" text-anchor="middle" class="muted">1420</text>
+<text x="288.427" y="296.000" text-anchor="middle" class="muted">1425</text>
+<text x="289.243" y="296.000" text-anchor="middle" class="muted">1430</text>
+<text x="290.058" y="296.000" text-anchor="middle" class="muted">1435</text>
+<text x="290.874" y="296.000" text-anchor="middle" class="muted">1440</text>
+<text x="291.689" y="296.000" text-anchor="middle" class="muted">1445</text>
+<text x="292.505" y="296.000" text-anchor="middle" class="muted">1450</text>
+<text x="293.320" y="296.000" text-anchor="middle" class="muted">1455</text>
+<text x="294.136" y="296.000" text-anchor="middle" class="muted">1460</text>
+<text x="294.951" y="296.000" text-anchor="middle" class="muted">1465</text>
+<text x="295.767" y="296.000" text-anchor="middle" class="muted">1470</text>
+<text x="296.583" y="296.000" text-anchor="middle" class="muted">1475</text>
+<text x="297.398" y="296.000" text-anchor="middle" class="muted">1480</text>
+<text x="298.214" y="296.000" text-anchor="middle" class="muted">1485</text>
+<text x="299.029" y="296.000" text-anchor="middle" class="muted">1490</text>
+<text x="299.845" y="296.000" text-anchor="middle" class="muted">1495</text>
+<text x="300.660" y="296.000" text-anchor="middle" class="muted">1500</text>
+<text x="301.476" y="296.000" text-anchor="middle" class="muted">1505</text>
+<text x="302.291" y="296.000" text-anchor="middle" class="muted">1510</text>
+<text x="303.107" y="296.000" text-anchor="middle" class="muted">1515</text>
+<text x="303.922" y="296.000" text-anchor="middle" class="muted">1520</text>
+<text x="304.738" y="296.000" text-anchor="middle" class="muted">1525</text>
+<text x="305.553" y="296.000" text-anchor="middle" class="muted">1530</text>
+<text x="306.369" y="296.000" text-anchor="middle" class="muted">1535</text>
+<text x="307.184" y="296.000" text-anchor="middle" class="muted">1540</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">1545</text>
+<text x="308.816" y="296.000" text-anchor="middle" class="muted">1550</text>
+<text x="309.631" y="296.000" text-anchor="middle" class="muted">1555</text>
+<text x="310.447" y="296.000" text-anchor="middle" class="muted">1560</text>
+<text x="311.262" y="296.000" text-anchor="middle" class="muted">1565</text>
+<text x="312.078" y="296.000" text-anchor="middle" class="muted">1570</text>
+<text x="312.893" y="296.000" text-anchor="middle" class="muted">1575</text>
+<text x="313.709" y="296.000" text-anchor="middle" class="muted">1580</text>
+<text x="314.524" y="296.000" text-anchor="middle" class="muted">1585</text>
+<text x="315.340" y="296.000" text-anchor="middle" class="muted">1590</text>
+<text x="316.155" y="296.000" text-anchor="middle" class="muted">1595</text>
+<text x="316.971" y="296.000" text-anchor="middle" class="muted">1600</text>
+<text x="317.786" y="296.000" text-anchor="middle" class="muted">1605</text>
+<text x="318.602" y="296.000" text-anchor="middle" class="muted">1610</text>
+<text x="319.417" y="296.000" text-anchor="middle" class="muted">1615</text>
+<text x="320.233" y="296.000" text-anchor="middle" class="muted">1620</text>
+<text x="321.049" y="296.000" text-anchor="middle" class="muted">1625</text>
+<text x="321.864" y="296.000" text-anchor="middle" class="muted">1630</text>
+<text x="322.680" y="296.000" text-anchor="middle" class="muted">1635</text>
+<text x="323.495" y="296.000" text-anchor="middle" class="muted">1640</text>
+<text x="324.311" y="296.000" text-anchor="middle" class="muted">1645</text>
+<text x="325.126" y="296.000" text-anchor="middle" class="muted">1650</text>
+<text x="325.942" y="296.000" text-anchor="middle" class="muted">1655</text>
+<text x="326.757" y="296.000" text-anchor="middle" class="muted">1660</text>
+<text x="327.573" y="296.000" text-anchor="middle" class="muted">1665</text>
+<text x="328.388" y="296.000" text-anchor="middle" class="muted">1670</text>
+<text x="329.204" y="296.000" text-anchor="middle" class="muted">1675</text>
+<text x="330.019" y="296.000" text-anchor="middle" class="muted">1680</text>
+<text x="330.835" y="296.000" text-anchor="middle" class="muted">1685</text>
+<text x="331.650" y="296.000" text-anchor="middle" class="muted">1690</text>
+<text x="332.466" y="296.000" text-anchor="middle" class="muted">1695</text>
+<text x="333.282" y="296.000" text-anchor="middle" class="muted">1700</text>
+<text x="334.097" y="296.000" text-anchor="middle" class="muted">1705</text>
+<text x="334.913" y="296.000" text-anchor="middle" class="muted">1710</text>
+<text x="335.728" y="296.000" text-anchor="middle" class="muted">1715</text>
+<text x="336.544" y="296.000" text-anchor="middle" class="muted">1720</text>
+<text x="337.359" y="296.000" text-anchor="middle" class="muted">1725</text>
+<text x="338.175" y="296.000" text-anchor="middle" class="muted">1730</text>
+<text x="338.990" y="296.000" text-anchor="middle" class="muted">1735</text>
+<text x="339.806" y="296.000" text-anchor="middle" class="muted">1740</text>
+<text x="340.621" y="296.000" text-anchor="middle" class="muted">1745</text>
+<text x="341.437" y="296.000" text-anchor="middle" class="muted">1750</text>
+<text x="342.252" y="296.000" text-anchor="middle" class="muted">1755</text>
+<text x="343.068" y="296.000" text-anchor="middle" class="muted">1760</text>
+<text x="343.883" y="296.000" text-anchor="middle" class="muted">1765</text>
+<text x="344.699" y="296.000" text-anchor="middle" class="muted">1770</text>
+<text x="345.515" y="296.000" text-anchor="middle" class="muted">1775</text>
+<text x="346.330" y="296.000" text-anchor="middle" class="muted">1780</text>
+<text x="347.146" y="296.000" text-anchor="middle" class="muted">1785</text>
+<text x="347.961" y="296.000" text-anchor="middle" class="muted">1790</text>
+<text x="348.777" y="296.000" text-anchor="middle" class="muted">1795</text>
+<text x="349.592" y="296.000" text-anchor="middle" class="muted">1800</text>
+<text x="350.408" y="296.000" text-anchor="middle" class="muted">1805</text>
+<text x="351.223" y="296.000" text-anchor="middle" class="muted">1810</text>
+<text x="352.039" y="296.000" text-anchor="middle" class="muted">1815</text>
+<text x="352.854" y="296.000" text-anchor="middle" class="muted">1820</text>
+<text x="353.670" y="296.000" text-anchor="middle" class="muted">1825</text>
+<text x="354.485" y="296.000" text-anchor="middle" class="muted">1830</text>
+<text x="355.301" y="296.000" text-anchor="middle" class="muted">1835</text>
+<text x="356.117" y="296.000" text-anchor="middle" class="muted">1840</text>
+<text x="356.932" y="296.000" text-anchor="middle" class="muted">1845</text>
+<text x="357.748" y="296.000" text-anchor="middle" class="muted">1850</text>
+<text x="358.563" y="296.000" text-anchor="middle" class="muted">1855</text>
+<text x="359.379" y="296.000" text-anchor="middle" class="muted">1860</text>
+<text x="360.194" y="296.000" text-anchor="middle" class="muted">1865</text>
+<text x="361.010" y="296.000" text-anchor="middle" class="muted">1870</text>
+<text x="361.825" y="296.000" text-anchor="middle" class="muted">1875</text>
+<text x="362.641" y="296.000" text-anchor="middle" class="muted">1880</text>
+<text x="363.456" y="296.000" text-anchor="middle" class="muted">1885</text>
+<text x="364.272" y="296.000" text-anchor="middle" class="muted">1890</text>
+<text x="365.087" y="296.000" text-anchor="middle" class="muted">1895</text>
+<text x="365.903" y="296.000" text-anchor="middle" class="muted">1900</text>
+<text x="366.718" y="296.000" text-anchor="middle" class="muted">1905</text>
+<text x="367.534" y="296.000" text-anchor="middle" class="muted">1910</text>
+<text x="368.350" y="296.000" text-anchor="middle" class="muted">1915</text>
+<text x="369.165" y="296.000" text-anchor="middle" class="muted">1920</text>
+<text x="369.981" y="296.000" text-anchor="middle" class="muted">1925</text>
+<text x="370.796" y="296.000" text-anchor="middle" class="muted">1930</text>
+<text x="371.612" y="296.000" text-anchor="middle" class="muted">1935</text>
+<text x="372.427" y="296.000" text-anchor="middle" class="muted">1940</text>
+<text x="373.243" y="296.000" text-anchor="middle" class="muted">1945</text>
+<text x="374.058" y="296.000" text-anchor="middle" class="muted">1950</text>
+<text x="374.874" y="296.000" text-anchor="middle" class="muted">1955</text>
+<text x="375.689" y="296.000" text-anchor="middle" class="muted">1960</text>
+<text x="376.505" y="296.000" text-anchor="middle" class="muted">1965</text>
+<text x="377.320" y="296.000" text-anchor="middle" class="muted">1970</text>
+<text x="378.136" y="296.000" text-anchor="middle" class="muted">1975</text>
+<text x="378.951" y="296.000" text-anchor="middle" class="muted">1980</text>
+<text x="379.767" y="296.000" text-anchor="middle" class="muted">1985</text>
+<text x="380.583" y="296.000" text-anchor="middle" class="muted">1990</text>
+<text x="381.398" y="296.000" text-anchor="middle" class="muted">1995</text>
+<text x="382.214" y="296.000" text-anchor="middle" class="muted">2000</text>
+<text x="383.029" y="296.000" text-anchor="middle" class="muted">2005</text>
+<text x="383.845" y="296.000" text-anchor="middle" class="muted">2010</text>
+<text x="384.660" y="296.000" text-anchor="middle" class="muted">2015</text>
+<text x="385.476" y="296.000" text-anchor="middle" class="muted">2020</text>
+<text x="386.291" y="296.000" text-anchor="middle" class="muted">2025</text>
+<text x="387.107" y="296.000" text-anchor="middle" class="muted">2030</text>
+<text x="387.922" y="296.000" text-anchor="middle" class="muted">2035</text>
+<text x="388.738" y="296.000" text-anchor="middle" class="muted">2040</text>
+<text x="389.553" y="296.000" text-anchor="middle" class="muted">2045</text>
+<text x="390.369" y="296.000" text-anchor="middle" class="muted">2050</text>
+<text x="391.184" y="296.000" text-anchor="middle" class="muted">2055</text>
+<text x="392.000" y="296.000" text-anchor="middle" class="muted">2060</text>
+<text x="392.816" y="296.000" text-anchor="middle" class="muted">2065</text>
+<text x="393.631" y="296.000" text-anchor="middle" class="muted">2070</text>
+<text x="394.447" y="296.000" text-anchor="middle" class="muted">2075</text>
+<text x="395.262" y="296.000" text-anchor="middle" class="muted">2080</text>
+<text x="396.078" y="296.000" text-anchor="middle" class="muted">2085</text>
+<text x="396.893" y="296.000" text-anchor="middle" class="muted">2090</text>
+<text x="397.709" y="296.000" text-anchor="middle" class="muted">2095</text>
+<text x="398.524" y="296.000" text-anchor="middle" class="muted">2100</text>
+<text x="399.340" y="296.000" text-anchor="middle" class="muted">2105</text>
+<text x="400.155" y="296.000" text-anchor="middle" class="muted">2110</text>
+<text x="400.971" y="296.000" text-anchor="middle" class="muted">2115</text>
+<text x="401.786" y="296.000" text-anchor="middle" class="muted">2120</text>
+<text x="402.602" y="296.000" text-anchor="middle" class="muted">2125</text>
+<text x="403.417" y="296.000" text-anchor="middle" class="muted">2130</text>
+<text x="404.233" y="296.000" text-anchor="middle" class="muted">2135</text>
+<text x="405.049" y="296.000" text-anchor="middle" class="muted">2140</text>
+<text x="405.864" y="296.000" text-anchor="middle" class="muted">2145</text>
+<text x="406.680" y="296.000" text-anchor="middle" class="muted">2150</text>
+<text x="407.495" y="296.000" text-anchor="middle" class="muted">2155</text>
+<text x="408.311" y="296.000" text-anchor="middle" class="muted">2160</text>
+<text x="409.126" y="296.000" text-anchor="middle" class="muted">2165</text>
+<text x="409.942" y="296.000" text-anchor="middle" class="muted">2170</text>
+<text x="410.757" y="296.000" text-anchor="middle" class="muted">2175</text>
+<text x="411.573" y="296.000" text-anchor="middle" class="muted">2180</text>
+<text x="412.388" y="296.000" text-anchor="middle" class="muted">2185</text>
+<text x="413.204" y="296.000" text-anchor="middle" class="muted">2190</text>
+<text x="414.019" y="296.000" text-anchor="middle" class="muted">2195</text>
+<text x="414.835" y="296.000" text-anchor="middle" class="muted">2200</text>
+<text x="415.650" y="296.000" text-anchor="middle" class="muted">2205</text>
+<text x="416.466" y="296.000" text-anchor="middle" class="muted">2210</text>
+<text x="417.282" y="296.000" text-anchor="middle" class="muted">2215</text>
+<text x="418.097" y="296.000" text-anchor="middle" class="muted">2220</text>
+<text x="418.913" y="296.000" text-anchor="middle" class="muted">2225</text>
+<text x="419.728" y="296.000" text-anchor="middle" class="muted">2230</text>
+<text x="420.544" y="296.000" text-anchor="middle" class="muted">2235</text>
+<text x="421.359" y="296.000" text-anchor="middle" class="muted">2240</text>
+<text x="422.175" y="296.000" text-anchor="middle" class="muted">2245</text>
+<text x="422.990" y="296.000" text-anchor="middle" class="muted">2250</text>
+<text x="423.806" y="296.000" text-anchor="middle" class="muted">2255</text>
+<text x="424.621" y="296.000" text-anchor="middle" class="muted">2260</text>
+<text x="425.437" y="296.000" text-anchor="middle" class="muted">2265</text>
+<text x="426.252" y="296.000" text-anchor="middle" class="muted">2270</text>
+<text x="427.068" y="296.000" text-anchor="middle" class="muted">2275</text>
+<text x="427.883" y="296.000" text-anchor="middle" class="muted">2280</text>
+<text x="428.699" y="296.000" text-anchor="middle" class="muted">2285</text>
+<text x="429.515" y="296.000" text-anchor="middle" class="muted">2290</text>
+<text x="430.330" y="296.000" text-anchor="middle" class="muted">2295</text>
+<text x="431.146" y="296.000" text-anchor="middle" class="muted">2300</text>
+<text x="431.961" y="296.000" text-anchor="middle" class="muted">2305</text>
+<text x="432.777" y="296.000" text-anchor="middle" class="muted">2310</text>
+<text x="433.592" y="296.000" text-anchor="middle" class="muted">2315</text>
+<text x="434.408" y="296.000" text-anchor="middle" class="muted">2320</text>
+<text x="435.223" y="296.000" text-anchor="middle" class="muted">2325</text>
+<text x="436.039" y="296.000" text-anchor="middle" class="muted">2330</text>
+<text x="436.854" y="296.000" text-anchor="middle" class="muted">2335</text>
+<text x="437.670" y="296.000" text-anchor="middle" class="muted">2340</text>
+<text x="438.485" y="296.000" text-anchor="middle" class="muted">2345</text>
+<text x="439.301" y="296.000" text-anchor="middle" class="muted">2350</text>
+<text x="440.117" y="296.000" text-anchor="middle" class="muted">2355</text>
+<text x="440.932" y="296.000" text-anchor="middle" class="muted">2360</text>
+<text x="441.748" y="296.000" text-anchor="middle" class="muted">2365</text>
+<text x="442.563" y="296.000" text-anchor="middle" class="muted">2370</text>
+<text x="443.379" y="296.000" text-anchor="middle" class="muted">2375</text>
+<text x="444.194" y="296.000" text-anchor="middle" class="muted">2380</text>
+<text x="445.010" y="296.000" text-anchor="middle" class="muted">2385</text>
+<text x="445.825" y="296.000" text-anchor="middle" class="muted">2390</text>
+<text x="446.641" y="296.000" text-anchor="middle" class="muted">2395</text>
+<text x="447.456" y="296.000" text-anchor="middle" class="muted">2400</text>
+<text x="448.272" y="296.000" text-anchor="middle" class="muted">2405</text>
+<text x="449.087" y="296.000" text-anchor="middle" class="muted">2410</text>
+<text x="449.903" y="296.000" text-anchor="middle" class="muted">2415</text>
+<text x="450.718" y="296.000" text-anchor="middle" class="muted">2420</text>
+<text x="451.534" y="296.000" text-anchor="middle" class="muted">2425</text>
+<text x="452.350" y="296.000" text-anchor="middle" class="muted">2430</text>
+<text x="453.165" y="296.000" text-anchor="middle" class="muted">2435</text>
+<text x="453.981" y="296.000" text-anchor="middle" class="muted">2440</text>
+<text x="454.796" y="296.000" text-anchor="middle" class="muted">2445</text>
+<text x="455.612" y="296.000" text-anchor="middle" class="muted">2450</text>
+<text x="456.427" y="296.000" text-anchor="middle" class="muted">2455</text>
+<text x="457.243" y="296.000" text-anchor="middle" class="muted">2460</text>
+<text x="458.058" y="296.000" text-anchor="middle" class="muted">2465</text>
+<text x="458.874" y="296.000" text-anchor="middle" class="muted">2470</text>
+<text x="459.689" y="296.000" text-anchor="middle" class="muted">2475</text>
+<text x="460.505" y="296.000" text-anchor="middle" class="muted">2480</text>
+<text x="461.320" y="296.000" text-anchor="middle" class="muted">2485</text>
+<text x="462.136" y="296.000" text-anchor="middle" class="muted">2490</text>
+<text x="462.951" y="296.000" text-anchor="middle" class="muted">2495</text>
+<text x="463.767" y="296.000" text-anchor="middle" class="muted">2500</text>
+<text x="464.583" y="296.000" text-anchor="middle" class="muted">2505</text>
+<text x="465.398" y="296.000" text-anchor="middle" class="muted">2510</text>
+<text x="466.214" y="296.000" text-anchor="middle" class="muted">2515</text>
+<text x="467.029" y="296.000" text-anchor="middle" class="muted">2520</text>
+<text x="467.845" y="296.000" text-anchor="middle" class="muted">2525</text>
+<text x="468.660" y="296.000" text-anchor="middle" class="muted">2530</text>
+<text x="469.476" y="296.000" text-anchor="middle" class="muted">2535</text>
+<text x="470.291" y="296.000" text-anchor="middle" class="muted">2540</text>
+<text x="471.107" y="296.000" text-anchor="middle" class="muted">2545</text>
+<text x="471.922" y="296.000" text-anchor="middle" class="muted">2550</text>
+<text x="472.738" y="296.000" text-anchor="middle" class="muted">2555</text>
+<text x="473.553" y="296.000" text-anchor="middle" class="muted">2560</text>
+<text x="474.369" y="296.000" text-anchor="middle" class="muted">2565</text>
+<text x="475.184" y="296.000" text-anchor="middle" class="muted">2570</text>
+<text x="476.000" y="296.000" text-anchor="middle" class="muted">2575</text>
+<text x="476.816" y="296.000" text-anchor="middle" class="muted">2580</text>
+<text x="477.631" y="296.000" text-anchor="middle" class="muted">2585</text>
+<text x="478.447" y="296.000" text-anchor="middle" class="muted">2590</text>
+<text x="479.262" y="296.000" text-anchor="middle" class="muted">2595</text>
+<text x="480.078" y="296.000" text-anchor="middle" class="muted">2600</text>
+<text x="480.893" y="296.000" text-anchor="middle" class="muted">2605</text>
+<text x="481.709" y="296.000" text-anchor="middle" class="muted">2610</text>
+<text x="482.524" y="296.000" text-anchor="middle" class="muted">2615</text>
+<text x="483.340" y="296.000" text-anchor="middle" class="muted">2620</text>
+<text x="484.155" y="296.000" text-anchor="middle" class="muted">2625</text>
+<text x="484.971" y="296.000" text-anchor="middle" class="muted">2630</text>
+<text x="485.786" y="296.000" text-anchor="middle" class="muted">2635</text>
+<text x="486.602" y="296.000" text-anchor="middle" class="muted">2640</text>
+<text x="487.417" y="296.000" text-anchor="middle" class="muted">2645</text>
+<text x="488.233" y="296.000" text-anchor="middle" class="muted">2650</text>
+<text x="489.049" y="296.000" text-anchor="middle" class="muted">2655</text>
+<text x="489.864" y="296.000" text-anchor="middle" class="muted">2660</text>
+<text x="490.680" y="296.000" text-anchor="middle" class="muted">2665</text>
+<text x="491.495" y="296.000" text-anchor="middle" class="muted">2670</text>
+<text x="492.311" y="296.000" text-anchor="middle" class="muted">2675</text>
+<text x="493.126" y="296.000" text-anchor="middle" class="muted">2680</text>
+<text x="493.942" y="296.000" text-anchor="middle" class="muted">2685</text>
+<text x="494.757" y="296.000" text-anchor="middle" class="muted">2690</text>
+<text x="495.573" y="296.000" text-anchor="middle" class="muted">2695</text>
+<text x="496.388" y="296.000" text-anchor="middle" class="muted">2700</text>
+<text x="497.204" y="296.000" text-anchor="middle" class="muted">2705</text>
+<text x="498.019" y="296.000" text-anchor="middle" class="muted">2710</text>
+<text x="498.835" y="296.000" text-anchor="middle" class="muted">2715</text>
+<text x="499.650" y="296.000" text-anchor="middle" class="muted">2720</text>
+<text x="500.466" y="296.000" text-anchor="middle" class="muted">2725</text>
+<text x="501.282" y="296.000" text-anchor="middle" class="muted">2730</text>
+<text x="502.097" y="296.000" text-anchor="middle" class="muted">2735</text>
+<text x="502.913" y="296.000" text-anchor="middle" class="muted">2740</text>
+<text x="503.728" y="296.000" text-anchor="middle" class="muted">2745</text>
+<text x="504.544" y="296.000" text-anchor="middle" class="muted">2750</text>
+<text x="505.359" y="296.000" text-anchor="middle" class="muted">2755</text>
+<text x="506.175" y="296.000" text-anchor="middle" class="muted">2760</text>
+<text x="506.990" y="296.000" text-anchor="middle" class="muted">2765</text>
+<text x="507.806" y="296.000" text-anchor="middle" class="muted">2770</text>
+<text x="508.621" y="296.000" text-anchor="middle" class="muted">2775</text>
+<text x="509.437" y="296.000" text-anchor="middle" class="muted">2780</text>
+<text x="510.252" y="296.000" text-anchor="middle" class="muted">2785</text>
+<text x="511.068" y="296.000" text-anchor="middle" class="muted">2790</text>
+<text x="511.883" y="296.000" text-anchor="middle" class="muted">2795</text>
+<text x="512.699" y="296.000" text-anchor="middle" class="muted">2800</text>
+<text x="513.515" y="296.000" text-anchor="middle" class="muted">2805</text>
+<text x="514.330" y="296.000" text-anchor="middle" class="muted">2810</text>
+<text x="515.146" y="296.000" text-anchor="middle" class="muted">2815</text>
+<text x="515.961" y="296.000" text-anchor="middle" class="muted">2820</text>
+<text x="516.777" y="296.000" text-anchor="middle" class="muted">2825</text>
+<text x="517.592" y="296.000" text-anchor="middle" class="muted">2830</text>
+<text x="518.408" y="296.000" text-anchor="middle" class="muted">2835</text>
+<text x="519.223" y="296.000" text-anchor="middle" class="muted">2840</text>
+<text x="520.039" y="296.000" text-anchor="middle" class="muted">2845</text>
+<text x="520.854" y="296.000" text-anchor="middle" class="muted">2850</text>
+<text x="521.670" y="296.000" text-anchor="middle" class="muted">2855</text>
+<text x="522.485" y="296.000" text-anchor="middle" class="muted">2860</text>
+<text x="523.301" y="296.000" text-anchor="middle" class="muted">2865</text>
+<text x="524.117" y="296.000" text-anchor="middle" class="muted">2870</text>
+<text x="524.932" y="296.000" text-anchor="middle" class="muted">2875</text>
+<text x="525.748" y="296.000" text-anchor="middle" class="muted">2880</text>
+<text x="526.563" y="296.000" text-anchor="middle" class="muted">2885</text>
+<text x="527.379" y="296.000" text-anchor="middle" class="muted">2890</text>
+<text x="528.194" y="296.000" text-anchor="middle" class="muted">2895</text>
+<text x="529.010" y="296.000" text-anchor="middle" class="muted">2900</text>
+<text x="529.825" y="296.000" text-anchor="middle" class="muted">2905</text>
+<text x="530.641" y="296.000" text-anchor="middle" class="muted">2910</text>
+<text x="531.456" y="296.000" text-anchor="middle" class="muted">2915</text>
+<text x="532.272" y="296.000" text-anchor="middle" class="muted">2920</text>
+<text x="533.087" y="296.000" text-anchor="middle" class="muted">2925</text>
+<text x="533.903" y="296.000" text-anchor="middle" class="muted">2930</text>
+<text x="534.718" y="296.000" text-anchor="middle" class="muted">2935</text>
+<text x="535.534" y="296.000" text-anchor="middle" class="muted">2940</text>
+<text x="536.350" y="296.000" text-anchor="middle" class="muted">2945</text>
+<text x="537.165" y="296.000" text-anchor="middle" class="muted">2950</text>
+<text x="537.981" y="296.000" text-anchor="middle" class="muted">2955</text>
+<text x="538.796" y="296.000" text-anchor="middle" class="muted">2960</text>
+<text x="539.612" y="296.000" text-anchor="middle" class="muted">2965</text>
+<text x="540.427" y="296.000" text-anchor="middle" class="muted">2970</text>
+<text x="541.243" y="296.000" text-anchor="middle" class="muted">2975</text>
+<text x="542.058" y="296.000" text-anchor="middle" class="muted">2980</text>
+<text x="542.874" y="296.000" text-anchor="middle" class="muted">2985</text>
+<text x="543.689" y="296.000" text-anchor="middle" class="muted">2990</text>
+<text x="544.505" y="296.000" text-anchor="middle" class="muted">2995</text>
+<text x="545.320" y="296.000" text-anchor="middle" class="muted">3000</text>
+<text x="546.136" y="296.000" text-anchor="middle" class="muted">3005</text>
+<text x="546.951" y="296.000" text-anchor="middle" class="muted">3010</text>
+<text x="547.767" y="296.000" text-anchor="middle" class="muted">3015</text>
+<text x="548.583" y="296.000" text-anchor="middle" class="muted">3020</text>
+<text x="549.398" y="296.000" text-anchor="middle" class="muted">3025</text>
+<text x="550.214" y="296.000" text-anchor="middle" class="muted">3030</text>
+<text x="551.029" y="296.000" text-anchor="middle" class="muted">3035</text>
+<text x="551.845" y="296.000" text-anchor="middle" class="muted">3040</text>
+<text x="552.660" y="296.000" text-anchor="middle" class="muted">3045</text>
+<text x="553.476" y="296.000" text-anchor="middle" class="muted">3050</text>
+<text x="554.291" y="296.000" text-anchor="middle" class="muted">3055</text>
+<text x="555.107" y="296.000" text-anchor="middle" class="muted">3060</text>
+<text x="555.922" y="296.000" text-anchor="middle" class="muted">3065</text>
+<text x="556.738" y="296.000" text-anchor="middle" class="muted">3070</text>
+<text x="557.553" y="296.000" text-anchor="middle" class="muted">3075</text>
+<text x="558.369" y="296.000" text-anchor="middle" class="muted">3080</text>
+<text x="559.184" y="296.000" text-anchor="middle" class="muted">3085</text>
+<text x="560.000" y="296.000" text-anchor="middle" class="muted">3090</text>
+<polygon class="gap" points="56.000,280.000 56.816,280.000 57.631,280.000 58.447,280.000 59.262,280.000 60.078,280.000 60.893,280.000 61.709,280.000 62.524,280.000 63.340,280.000 64.155,280.000 64.971,280.000 65.786,248.000 66.602,248.000 67.417,216.000 68.233,200.000 69.049,184.000 69.864,104.000 70.680,88.000 71.495,72.000 72.311,56.000 73.126,56.000 73.942,40.000 74.757,24.000 75.573,24.000 76.388,24.000 77.204,24.000 78.019,24.000 78.835,24.000 79.650,24.000 80.466,24.000 81.282,24.000 82.097,24.000 82.913,24.000 83.728,24.000 84.544,24.000 85.359,24.000 86.175,24.000 86.990,24.000 87.806,24.000 88.621,24.000 89.437,24.000 90.252,24.000 91.068,24.000 91.883,24.000 92.699,24.000 93.515,24.000 94.330,24.000 95.146,24.000 95.961,24.000 96.777,24.000 97.592,24.000 98.408,40.000 99.223,40.000 100.039,40.000 100.854,40.000 101.670,40.000 102.485,40.000 103.301,40.000 104.117,40.000 104.932,40.000 105.748,40.000 106.563,40.000 107.379,40.000 108.194,40.000 109.010,40.000 109.825,40.000 110.641,40.000 111.456,40.000 112.272,40.000 113.087,40.000 113.903,40.000 114.718,40.000 115.534,40.000 116.350,40.000 117.165,40.000 117.981,40.000 118.796,40.000 119.612,40.000 120.427,40.000 121.243,40.000 122.058,40.000 122.874,40.000 123.689,40.000 124.505,40.000 125.320,40.000 126.136,40.000 126.951,40.000 127.767,40.000 128.583,40.000 129.398,40.000 130.214,40.000 131.029,40.000 131.845,40.000 132.660,40.000 133.476,40.000 134.291,56.000 135.107,56.000 135.922,56.000 136.738,56.000 137.553,56.000 138.369,56.000 139.184,56.000 140.000,56.000 140.816,56.000 141.631,56.000 142.447,56.000 143.262,56.000 144.078,56.000 144.893,56.000 145.709,56.000 146.524,56.000 147.340,56.000 148.155,56.000 148.971,56.000 149.786,56.000 150.602,56.000 151.417,56.000 152.233,56.000 153.049,56.000 153.864,56.000 154.680,56.000 155.495,56.000 156.311,56.000 157.126,56.000 157.942,56.000 158.757,56.000 159.573,56.000 160.388,56.000 161.204,56.000 162.019,56.000 162.835,56.000 163.650,56.000 164.466,56.000 165.282,72.000 166.097,72.000 166.913,72.000 167.728,72.000 168.544,72.000 169.359,72.000 170.175,72.000 170.990,72.000 171.806,72.000 172.621,72.000 173.437,72.000 174.252,72.000 175.068,72.000 175.883,72.000 176.699,72.000 177.515,72.000 178.330,72.000 179.146,72.000 179.961,72.000 180.777,72.000 181.592,72.000 182.408,72.000 183.223,72.000 184.039,72.000 184.854,72.000 185.670,72.000 186.485,72.000 187.301,88.000 188.117,88.000 188.932,88.000 189.748,88.000 190.563,88.000 191.379,88.000 192.194,104.000 193.010,104.000 193.825,104.000 194.641,104.000 195.456,104.000 196.272,104.000 197.087,104.000 197.903,104.000 198.718,104.000 199.534,104.000 200.350,104.000 201.165,104.000 201.981,104.000 202.796,104.000 203.612,104.000 204.427,104.000 205.243,104.000 206.058,104.000 206.874,104.000 207.689,104.000 208.505,104.000 209.320,104.000 210.136,104.000 210.951,104.000 211.767,104.000 212.583,104.000 213.398,104.000 214.214,104.000 215.029,104.000 215.845,104.000 216.660,104.000 217.476,104.000 218.291,104.000 219.107,104.000 219.922,104.000 220.738,104.000 221.553,104.000 222.369,104.000 223.184,104.000 224.000,104.000 224.816,104.000 225.631,104.000 226.447,104.000 227.262,104.000 228.078,104.000 228.893,104.000 229.709,104.000 230.524,104.000 231.340,104.000 232.155,104.000 232.971,104.000 233.786,104.000 234.602,104.000 235.417,104.000 236.233,104.000 237.049,104.000 237.864,104.000 238.680,104.000 239.495,104.000 240.311,104.000 241.126,104.000 241.942,104.000 242.757,120.000 243.573,120.000 244.388,120.000 245.204,120.000 246.019,120.000 246.835,120.000 247.650,120.000 248.466,120.000 249.282,120.000 250.097,120.000 250.913,120.000 251.728,120.000 252.544,120.000 253.359,120.000 254.175,120.000 254.990,120.000 255.806,120.000 256.621,120.000 257.437,120.000 258.252,120.000 259.068,120.000 259.883,120.000 260.699,120.000 261.515,120.000 262.330,120.000 263.146,120.000 263.961,120.000 264.777,120.000 265.592,120.000 266.408,120.000 267.223,120.000 268.039,120.000 268.854,120.000 269.670,120.000 270.485,136.000 271.301,136.000 272.117,136.000 272.932,136.000 273.748,136.000 274.563,136.000 275.379,136.000 276.194,136.000 277.010,136.000 277.825,136.000 278.641,136.000 279.456,136.000 280.272,136.000 281.087,136.000 281.903,136.000 282.718,136.000 283.534,136.000 284.350,136.000 285.165,152.000 285.981,152.000 286.796,152.000 287.612,152.000 288.427,152.000 289.243,152.000 290.058,152.000 290.874,152.000 291.689,152.000 292.505,152.000 293.320,152.000 294.136,152.000 294.951,152.000 295.767,152.000 296.583,152.000 297.398,152.000 298.214,152.000 299.029,152.000 299.845,152.000 300.660,152.000 301.476,152.000 302.291,152.000 303.107,152.000 303.922,152.000 304.738,152.000 305.553,152.000 306.369,152.000 307.184,152.000 308.000,152.000 308.816,152.000 309.631,152.000 310.447,152.000 311.262,152.000 312.078,152.000 312.893,152.000 313.709,152.000 314.524,152.000 315.340,152.000 316.155,152.000 316.971,152.000 317.786,152.000 318.602,152.000 319.417,152.000 320.233,152.000 321.049,152.000 321.864,152.000 322.680,152.000 323.495,152.000 324.311,152.000 325.126,168.000 325.942,168.000 326.757,168.000 327.573,168.000 328.388,168.000 329.204,168.000 330.019,168.000 330.835,168.000 331.650,168.000 332.466,168.000 333.282,168.000 334.097,168.000 334.913,168.000 335.728,168.000 336.544,168.000 337.359,168.000 338.175,168.000 338.990,168.000 339.806,168.000 340.621,168.000 341.437,168.000 342.252,168.000 343.068,168.000 343.883,168.000 344.699,168.000 345.515,168.000 346.330,168.000 347.146,168.000 347.961,168.000 348.777,168.000 349.592,168.000 350.408,168.000 351.223,168.000 352.039,168.000 352.854,168.000 353.670,168.000 354.485,168.000 355.301,168.000 356.117,168.000 356.932,168.000 357.748,168.000 358.563,168.000 359.379,168.000 360.194,184.000 361.010,184.000 361.825,184.000 362.641,184.000 363.456,184.000 364.272,200.000 365.087,200.000 365.903,200.000 366.718,200.000 367.534,200.000 368.350,200.000 369.165,200.000 369.981,200.000 370.796,200.000 371.612,200.000 372.427,200.000 373.243,200.000 374.058,200.000 374.874,200.000 375.689,200.000 376.505,200.000 377.320,200.000 378.136,200.000 378.951,200.000 379.767,200.000 380.583,200.000 381.398,200.000 382.214,200.000 383.029,200.000 383.845,200.000 384.660,200.000 385.476,200.000 386.291,200.000 387.107,200.000 387.922,200.000 388.738,200.000 389.553,200.000 390.369,200.000 391.184,200.000 392.000,200.000 392.816,200.000 393.631,200.000 394.447,200.000 395.262,200.000 396.078,200.000 396.893,200.000 397.709,200.000 398.524,200.000 399.340,200.000 400.155,200.000 400.971,200.000 401.786,200.000 402.602,200.000 403.417,200.000 404.233,200.000 405.049,200.000 405.864,200.000 406.680,200.000 407.495,200.000 408.311,200.000 409.126,200.000 409.942,200.000 410.757,216.000 411.573,216.000 412.388,216.000 413.204,216.000 414.019,216.000 414.835,216.000 415.650,216.000 416.466,216.000 417.282,216.000 418.097,216.000 418.913,216.000 419.728,216.000 420.544,216.000 421.359,216.000 422.175,216.000 422.990,216.000 423.806,216.000 424.621,216.000 425.437,216.000 426.252,216.000 427.068,216.000 427.883,216.000 428.699,216.000 429.515,216.000 430.330,216.000 431.146,216.000 431.961,216.000 432.777,216.000 433.592,216.000 434.408,216.000 435.223,216.000 436.039,216.000 436.854,216.000 437.670,216.000 438.485,216.000 439.301,216.000 440.117,216.000 440.932,216.000 441.748,216.000 442.563,216.000 443.379,216.000 444.194,216.000 445.010,216.000 445.825,216.000 446.641,216.000 447.456,216.000 448.272,216.000 449.087,216.000 449.903,216.000 450.718,216.000 451.534,216.000 452.350,216.000 453.165,216.000 453.981,216.000 454.796,216.000 455.612,216.000 456.427,216.000 457.243,216.000 458.058,216.000 458.874,216.000 459.689,216.000 460.505,216.000 461.320,216.000 462.136,216.000 462.951,216.000 463.767,216.000 464.583,216.000 465.398,216.000 466.214,216.000 467.029,216.000 467.845,216.000 468.660,216.000 469.476,216.000 470.291,216.000 471.107,216.000 471.922,216.000 472.738,216.000 473.553,216.000 474.369,216.000 475.184,216.000 476.000,216.000 476.816,216.000 477.631,216.000 478.447,216.000 479.262,216.000 480.078,216.000 480.893,216.000 481.709,216.000 482.524,216.000 483.340,216.000 484.155,216.000 484.971,216.000 485.786,216.000 486.602,216.000 487.417,216.000 488.233,216.000 489.049,216.000 489.864,216.000 490.680,216.000 491.495,216.000 492.311,216.000 493.126,216.000 493.942,216.000 494.757,216.000 495.573,216.000 496.388,216.000 497.204,216.000 498.019,216.000 498.835,216.000 499.650,216.000 500.466,216.000 501.282,216.000 502.097,216.000 502.913,216.000 503.728,216.000 504.544,216.000 505.359,216.000 506.175,216.000 506.990,216.000 507.806,216.000 508.621,216.000 509.437,216.000 510.252,216.000 511.068,216.000 511.883,216.000 512.699,216.000 513.515,216.000 514.330,216.000 515.146,216.000 515.961,216.000 516.777,216.000 517.592,216.000 518.408,216.000 519.223,216.000 520.039,216.000 520.854,216.000 521.670,216.000 522.485,216.000 523.301,216.000 524.117,216.000 524.932,216.000 525.748,216.000 526.563,216.000 527.379,216.000 528.194,216.000 529.010,216.000 529.825,216.000 530.641,216.000 531.456,216.000 532.272,216.000 533.087,216.000 533.903,216.000 534.718,216.000 535.534,216.000 536.350,216.000 537.165,216.000 537.981,216.000 538.796,216.000 539.612,216.000 540.427,216.000 541.243,216.000 542.058,216.000 542.874,216.000 543.689,216.000 544.505,216.000 545.320,216.000 546.136,216.000 546.951,216.000 547.767,216.000 548.583,216.000 549.398,216.000 550.214,216.000 551.029,216.000 551.845,216.000 552.660,216.000 553.476,216.000 554.291,216.000 555.107,216.000 555.922,216.000 556.738,216.000 557.553,216.000 558.369,216.000 559.184,216.000 560.000,216.000 560.000,264.000 559.184,264.000 558.369,264.000 557.553,264.000 556.738,264.000 555.922,264.000 555.107,264.000 554.291,264.000 553.476,264.000 552.660,264.000 551.845,264.000 551.029,264.000 550.214,264.000 549.398,264.000 548.583,264.000 547.767,264.000 546.951,264.000 546.136,264.000 545.320,264.000 544.505,264.000 543.689,264.000 542.874,264.000 542.058,264.000 541.243,264.000 540.427,264.000 539.612,264.000 538.796,264.000 537.981,264.000 537.165,264.000 536.350,264.000 535.534,264.000 534.718,264.000 533.903,264.000 533.087,264.000 532.272,264.000 531.456,264.000 530.641,264.000 529.825,264.000 529.010,264.000 528.194,264.000 527.379,264.000 526.563,264.000 525.748,264.000 524.932,264.000 524.117,264.000 523.301,264.000 522.485,264.000 521.670,264.000 520.854,264.000 520.039,264.000 519.223,264.000 518.408,264.000 517.592,264.000 516.777,264.000 515.961,264.000 515.146,264.000 514.330,264.000 513.515,264.000 512.699,264.000 511.883,264.000 511.068,264.000 510.252,264.000 509.437,264.000 508.621,264.000 507.806,264.000 506.990,264.000 506.175,264.000 505.359,264.000 504.544,264.000 503.728,248.000 502.913,248.000 502.097,248.000 501.282,248.000 500.466,248.000 499.650,248.000 498.835,248.000 498.019,248.000 497.204,248.000 496.388,248.000 495.573,248.000 494.757,248.000 493.942,248.000 493.126,248.000 492.311,248.000 491.495,248.000 490.680,248.000 489.864,248.000 489.049,248.000 488.233,248.000 487.417,248.000 486.602,248.000 485.786,248.000 484.971,248.000 484.155,248.000 483.340,248.000 482.524,248.000 481.709,248.000 480.893,248.000 480.078,248.000 479.262,248.000 478.447,248.000 477.631,248.000 476.816,248.000 476.000,248.000 475.184,248.000 474.369,248.000 473.553,248.000 472.738,248.000 471.922,248.000 471.107,248.000 470.291,248.000 469.476,232.000 468.660,232.000 467.845,232.000 467.029,232.000 466.214,232.000 465.398,232.000 464.583,232.000 463.767,232.000 462.951,232.000 462.136,232.000 461.320,232.000 460.505,232.000 459.689,232.000 458.874,232.000 458.058,232.000 457.243,232.000 456.427,232.000 455.612,232.000 454.796,232.000 453.981,232.000 453.165,232.000 452.350,232.000 451.534,232.000 450.718,232.000 449.903,232.000 449.087,232.000 448.272,232.000 447.456,232.000 446.641,232.000 445.825,232.000 445.010,232.000 444.194,232.000 443.379,232.000 442.563,232.000 441.748,232.000 440.932,232.000 440.117,232.000 439.301,232.000 438.485,232.000 437.670,232.000 436.854,232.000 436.039,232.000 435.223,232.000 434.408,232.000 433.592,232.000 432.777,232.000 431.961,232.000 431.146,232.000 430.330,232.000 429.515,232.000 428.699,232.000 427.883,232.000 427.068,232.000 426.252,232.000 425.437,232.000 424.621,232.000 423.806,232.000 422.990,232.000 422.175,232.000 421.359,232.000 420.544,232.000 419.728,232.000 418.913,232.000 418.097,232.000 417.282,232.000 416.466,232.000 415.650,232.000 414.835,232.000 414.019,232.000 413.204,232.000 412.388,232.000 411.573,232.000 410.757,232.000 409.942,232.000 409.126,232.000 408.311,232.000 407.495,232.000 406.680,216.000 405.864,216.000 405.049,216.000 404.233,216.000 403.417,216.000 402.602,216.000 401.786,216.000 400.971,216.000 400.155,216.000 399.340,216.000 398.524,216.000 397.709,216.000 396.893,216.000 396.078,216.000 395.262,216.000 394.447,216.000 393.631,216.000 392.816,216.000 392.000,216.000 391.184,216.000 390.369,216.000 389.553,216.000 388.738,216.000 387.922,216.000 387.107,216.000 386.291,216.000 385.476,216.000 384.660,216.000 383.845,216.000 383.029,216.000 382.214,216.000 381.398,216.000 380.583,216.000 379.767,216.000 378.951,216.000 378.136,216.000 377.320,216.000 376.505,216.000 375.689,216.000 374.874,216.000 374.058,216.000 373.243,216.000 372.427,216.000 371.612,216.000 370.796,216.000 369.981,216.000 369.165,216.000 368.350,216.000 367.534,216.000 366.718,216.000 365.903,216.000 365.087,216.000 364.272,216.000 363.456,200.000 362.641,200.000 361.825,200.000 361.010,200.000 360.194,200.000 359.379,200.000 358.563,200.000 357.748,200.000 356.932,200.000 356.117,200.000 355.301,200.000 354.485,200.000 353.670,200.000 352.854,200.000 352.039,200.000 351.223,200.000 350.408,200.000 349.592,200.000 348.777,184.000 347.961,184.000 347.146,184.000 346.330,184.000 345.515,184.000 344.699,184.000 343.883,184.000 343.068,184.000 342.252,184.000 341.437,184.000 340.621,184.000 339.806,184.000 338.990,184.000 338.175,184.000 337.359,184.000 336.544,184.000 335.728,184.000 334.913,184.000 334.097,184.000 333.282,184.000 332.466,184.000 331.650,184.000 330.835,184.000 330.019,184.000 329.204,184.000 328.388,184.000 327.573,184.000 326.757,184.000 325.942,184.000 325.126,184.000 324.311,184.000 323.495,184.000 322.680,184.000 321.864,184.000 321.049,184.000 320.233,184.000 319.417,184.000 318.602,184.000 317.786,184.000 316.971,184.000 316.155,184.000 315.340,184.000 314.524,184.000 313.709,184.000 312.893,184.000 312.078,184.000 311.262,184.000 310.447,184.000 309.631,184.000 308.816,184.000 308.000,184.000 307.184,184.000 306.369,184.000 305.553,184.000 304.738,184.000 303.922,184.000 303.107,184.000 302.291,184.000 301.476,184.000 300.660,184.000 299.845,184.000 299.029,184.000 298.214,184.000 297.398,184.000 296.583,168.000 295.767,168.000 294.951,168.000 294.136,168.000 293.320,168.000 292.505,152.000 291.689,152.000 290.874,152.000 290.058,152.000 289.243,152.000 288.427,152.000 287.612,152.000 286.796,152.000 285.981,152.000 285.165,152.000 284.350,152.000 283.534,152.000 282.718,152.000 281.903,152.000 281.087,152.000 280.272,152.000 279.456,152.000 278.641,152.000 277.825,152.000 277.010,152.000 276.194,152.000 275.379,152.000 274.563,152.000 273.748,152.000 272.932,136.000 272.117,136.000 271.301,136.000 270.485,136.000 269.670,136.000 268.854,136.000 268.039,136.000 267.223,136.000 266.408,136.000 265.592,136.000 264.777,136.000 263.961,136.000 263.146,136.000 262.330,136.000 261.515,136.000 260.699,136.000 259.883,136.000 259.068,136.000 258.252,136.000 257.437,136.000 256.621,136.000 255.806,136.000 254.990,120.000 254.175,120.000 253.359,120.000 252.544,120.000 251.728,120.000 250.913,120.000 250.097,120.000 249.282,120.000 248.466,120.000 247.650,120.000 246.835,120.000 246.019,120.000 245.204,120.000 244.388,120.000 243.573,120.000 242.757,120.000 241.942,120.000 241.126,120.000 240.311,120.000 239.495,120.000 238.680,120.000 237.864,120.000 237.049,120.000 236.233,120.000 235.417,120.000 234.602,120.000 233.786,120.000 232.971,120.000 232.155,120.000 231.340,120.000 230.524,120.000 229.709,120.000 228.893,120.000 228.078,120.000 227.262,120.000 226.447,120.000 225.631,120.000 224.816,120.000 224.000,120.000 223.184,120.000 222.369,120.000 221.553,120.000 220.738,120.000 219.922,120.000 219.107,120.000 218.291,104.000 217.476,104.000 216.660,104.000 215.845,104.000 215.029,104.000 214.214,104.000 213.398,104.000 212.583,104.000 211.767,104.000 210.951,104.000 210.136,104.000 209.320,104.000 208.505,104.000 207.689,104.000 206.874,104.000 206.058,104.000 205.243,104.000 204.427,104.000 203.612,104.000 202.796,104.000 201.981,104.000 201.165,104.000 200.350,104.000 199.534,104.000 198.718,104.000 197.903,104.000 197.087,104.000 196.272,104.000 195.456,104.000 194.641,104.000 193.825,104.000 193.010,104.000 192.194,104.000 191.379,104.000 190.563,104.000 189.748,104.000 188.932,104.000 188.117,104.000 187.301,104.000 186.485,104.000 185.670,104.000 184.854,104.000 184.039,104.000 183.223,104.000 182.408,104.000 181.592,104.000 180.777,104.000 179.961,104.000 179.146,104.000 178.330,104.000 177.515,104.000 176.699,104.000 175.883,104.000 175.068,88.000 174.252,88.000 173.437,88.000 172.621,88.000 171.806,88.000 170.990,88.000 170.175,88.000 169.359,88.000 168.544,88.000 167.728,72.000 166.913,72.000 166.097,72.000 165.282,72.000 164.466,72.000 163.650,72.000 162.835,72.000 162.019,72.000 161.204,72.000 160.388,72.000 159.573,72.000 158.757,72.000 157.942,72.000 157.126,72.000 156.311,72.000 155.495,56.000 154.680,56.000 153.864,56.000 153.049,56.000 152.233,40.000 151.417,40.000 150.602,40.000 149.786,40.000 148.971,40.000 148.155,40.000 147.340,40.000 146.524,40.000 145.709,40.000 144.893,40.000 144.078,40.000 143.262,40.000 142.447,40.000 141.631,40.000 140.816,40.000 140.000,40.000 139.184,40.000 138.369,40.000 137.553,40.000 136.738,40.000 135.922,40.000 135.107,40.000 134.291,40.000 133.476,40.000 132.660,40.000 131.845,40.000 131.029,40.000 130.214,40.000 129.398,40.000 128.583,40.000 127.767,40.000 126.951,40.000 126.136,40.000 125.320,40.000 124.505,40.000 123.689,40.000 122.874,40.000 122.058,40.000 121.243,40.000 120.427,40.000 119.612,40.000 118.796,40.000 117.981,40.000 117.165,40.000 116.350,40.000 115.534,40.000 114.718,40.000 113.903,40.000 113.087,40.000 112.272,40.000 111.456,40.000 110.641,40.000 109.825,40.000 109.010,40.000 108.194,24.000 107.379,24.000 106.563,24.000 105.748,24.000 104.932,24.000 104.117,24.000 103.301,24.000 102.485,24.000 101.670,24.000 100.854,24.000 100.039,24.000 99.223,24.000 98.408,24.000 97.592,24.000 96.777,24.000 95.961,24.000 95.146,24.000 94.330,24.000 93.515,24.000 92.699,24.000 91.883,24.000 91.068,24.000 90.252,24.000 89.437,24.000 88.621,24.000 87.806,24.000 86.990,24.000 86.175,24.000 85.359,24.000 84.544,24.000 83.728,24.000 82.913,24.000 82.097,24.000 81.282,24.000 80.466,24.000 79.650,24.000 78.835,24.000 78.019,24.000 77.204,24.000 76.388,24.000 75.573,24.000 74.757,24.000 73.942,40.000 73.126,56.000 72.311,56.000 71.495,56.000 70.680,72.000 69.864,136.000 69.049,184.000 68.233,200.000 67.417,216.000 66.602,248.000 65.786,248.000 64.971,280.000 64.155,280.000 63.340,280.000 62.524,280.000 61.709,280.000 60.893,280.000 60.078,280.000 59.262,280.000 58.447,280.000 57.631,280.000 56.816,280.000 56.000,280.000"/>
+<polyline class="side0" fill="none" points="56.000,280.000 56.816,280.000 57.631,280.000 58.447,280.000 59.262,280.000 60.078,280.000 60.893,280.000 61.709,280.000 62.524,280.000 63.340,280.000 64.155,280.000 64.971,280.000 65.786,248.000 66.602,248.000 67.417,216.000 68.233,200.000 69.049,184.000 69.864,104.000 70.680,88.000 71.495,72.000 72.311,56.000 73.126,56.000 73.942,40.000 74.757,24.000 75.573,24.000 76.388,24.000 77.204,24.000 78.019,24.000 78.835,24.000 79.650,24.000 80.466,24.000 81.282,24.000 82.097,24.000 82.913,24.000 83.728,24.000 84.544,24.000 85.359,24.000 86.175,24.000 86.990,24.000 87.806,24.000 88.621,24.000 89.437,24.000 90.252,24.000 91.068,24.000 91.883,24.000 92.699,24.000 93.515,24.000 94.330,24.000 95.146,24.000 95.961,24.000 96.777,24.000 97.592,24.000 98.408,40.000 99.223,40.000 100.039,40.000 100.854,40.000 101.670,40.000 102.485,40.000 103.301,40.000 104.117,40.000 104.932,40.000 105.748,40.000 106.563,40.000 107.379,40.000 108.194,40.000 109.010,40.000 109.825,40.000 110.641,40.000 111.456,40.000 112.272,40.000 113.087,40.000 113.903,40.000 114.718,40.000 115.534,40.000 116.350,40.000 117.165,40.000 117.981,40.000 118.796,40.000 119.612,40.000 120.427,40.000 121.243,40.000 122.058,40.000 122.874,40.000 123.689,40.000 124.505,40.000 125.320,40.000 126.136,40.000 126.951,40.000 127.767,40.000 128.583,40.000 129.398,40.000 130.214,40.000 131.029,40.000 131.845,40.000 132.660,40.000 133.476,40.000 134.291,56.000 135.107,56.000 135.922,56.000 136.738,56.000 137.553,56.000 138.369,56.000 139.184,56.000 140.000,56.000 140.816,56.000 141.631,56.000 142.447,56.000 143.262,56.000 144.078,56.000 144.893,56.000 145.709,56.000 146.524,56.000 147.340,56.000 148.155,56.000 148.971,56.000 149.786,56.000 150.602,56.000 151.417,56.000 152.233,56.000 153.049,56.000 153.864,56.000 154.680,56.000 155.495,56.000 156.311,56.000 157.126,56.000 157.942,56.000 158.757,56.000 159.573,56.000 160.388,56.000 161.204,56.000 162.019,56.000 162.835,56.000 163.650,56.000 164.466,56.000 165.282,72.000 166.097,72.000 166.913,72.000 167.728,72.000 168.544,72.000 169.359,72.000 170.175,72.000 170.990,72.000 171.806,72.000 172.621,72.000 173.437,72.000 174.252,72.000 175.068,72.000 175.883,72.000 176.699,72.000 177.515,72.000 178.330,72.000 179.146,72.000 179.961,72.000 180.777,72.000 181.592,72.000 182.408,72.000 183.223,72.000 184.039,72.000 184.854,72.000 185.670,72.000 186.485,72.000 187.301,88.000 188.117,88.000 188.932,88.000 189.748,88.000 190.563,88.000 191.379,88.000 192.194,104.000 193.010,104.000 193.825,104.000 194.641,104.000 195.456,104.000 196.272,104.000 197.087,104.000 197.903,104.000 198.718,104.000 199.534,104.000 200.350,104.000 201.165,104.000 201.981,104.000 202.796,104.000 203.612,104.000 204.427,104.000 205.243,104.000 206.058,104.000 206.874,104.000 207.689,104.000 208.505,104.000 209.320,104.000 210.136,104.000 210.951,104.000 211.767,104.000 212.583,104.000 213.398,104.000 214.214,104.000 215.029,104.000 215.845,104.000 216.660,104.000 217.476,104.000 218.291,104.000 219.107,104.000 219.922,104.000 220.738,104.000 221.553,104.000 222.369,104.000 223.184,104.000 224.000,104.000 224.816,104.000 225.631,104.000 226.447,104.000 227.262,104.000 228.078,104.000 228.893,104.000 229.709,104.000 230.524,104.000 231.340,104.000 232.155,104.000 232.971,104.000 233.786,104.000 234.602,104.000 235.417,104.000 236.233,104.000 237.049,104.000 237.864,104.000 238.680,104.000 239.495,104.000 240.311,104.000 241.126,104.000 241.942,104.000 242.757,120.000 243.573,120.000 244.388,120.000 245.204,120.000 246.019,120.000 246.835,120.000 247.650,120.000 248.466,120.000 249.282,120.000 250.097,120.000 250.913,120.000 251.728,120.000 252.544,120.000 253.359,120.000 254.175,120.000 254.990,120.000 255.806,120.000 256.621,120.000 257.437,120.000 258.252,120.000 259.068,120.000 259.883,120.000 260.699,120.000 261.515,120.000 262.330,120.000 263.146,120.000 263.961,120.000 264.777,120.000 265.592,120.000 266.408,120.000 267.223,120.000 268.039,120.000 268.854,120.000 269.670,120.000 270.485,136.000 271.301,136.000 272.117,136.000 272.932,136.000 273.748,136.000 274.563,136.000 275.379,136.000 276.194,136.000 277.010,136.000 277.825,136.000 278.641,136.000 279.456,136.000 280.272,136.000 281.087,136.000 281.903,136.000 282.718,136.000 283.534,136.000 284.350,136.000 285.165,152.000 285.981,152.000 286.796,152.000 287.612,152.000 288.427,152.000 289.243,152.000 290.058,152.000 290.874,152.000 291.689,152.000 292.505,152.000 293.320,152.000 294.136,152.000 294.951,152.000 295.767,152.000 296.583,152.000 297.398,152.000 298.214,152.000 299.029,152.000 299.845,152.000 300.660,152.000 301.476,152.000 302.291,152.000 303.107,152.000 303.922,152.000 304.738,152.000 305.553,152.000 306.369,152.000 307.184,152.000 308.000,152.000 308.816,152.000 309.631,152.000 310.447,152.000 311.262,152.000 312.078,152.000 312.893,152.000 313.709,152.000 314.524,152.000 315.340,152.000 316.155,152.000 316.971,152.000 317.786,152.000 318.602,152.000 319.417,152.000 320.233,152.000 321.049,152.000 321.864,152.000 322.680,152.000 323.495,152.000 324.311,152.000 325.126,168.000 325.942,168.000 326.757,168.000 327.573,168.000 328.388,168.000 329.204,168.000 330.019,168.000 330.835,168.000 331.650,168.000 332.466,168.000 333.282,168.000 334.097,168.000 334.913,168.000 335.728,168.000 336.544,168.000 337.359,168.000 338.175,168.000 338.990,168.000 339.806,168.000 340.621,168.000 341.437,168.000 342.252,168.000 343.068,168.000 343.883,168.000 344.699,168.000 345.515,168.000 346.330,168.000 347.146,168.000 347.961,168.000 348.777,168.000 349.592,168.000 350.408,168.000 351.223,168.000 352.039,168.000 352.854,168.000 353.670,168.000 354.485,168.000 355.301,168.000 356.117,168.000 356.932,168.000 357.748,168.000 358.563,168.000 359.379,168.000 360.194,184.000 361.010,184.000 361.825,184.000 362.641,184.000 363.456,184.000 364.272,200.000 365.087,200.000 365.903,200.000 366.718,200.000 367.534,200.000 368.350,200.000 369.165,200.000 369.981,200.000 370.796,200.000 371.612,200.000 372.427,200.000 373.243,200.000 374.058,200.000 374.874,200.000 375.689,200.000 376.505,200.000 377.320,200.000 378.136,200.000 378.951,200.000 379.767,200.000 380.583,200.000 381.398,200.000 382.214,200.000 383.029,200.000 383.845,200.000 384.660,200.000 385.476,200.000 386.291,200.000 387.107,200.000 387.922,200.000 388.738,200.000 389.553,200.000 390.369,200.000 391.184,200.000 392.000,200.000 392.816,200.000 393.631,200.000 394.447,200.000 395.262,200.000 396.078,200.000 396.893,200.000 397.709,200.000 398.524,200.000 399.340,200.000 400.155,200.000 400.971,200.000 401.786,200.000 402.602,200.000 403.417,200.000 404.233,200.000 405.049,200.000 405.864,200.000 406.680,200.000 407.495,200.000 408.311,200.000 409.126,200.000 409.942,200.000 410.757,216.000 411.573,216.000 412.388,216.000 413.204,216.000 414.019,216.000 414.835,216.000 415.650,216.000 416.466,216.000 417.282,216.000 418.097,216.000 418.913,216.000 419.728,216.000 420.544,216.000 421.359,216.000 422.175,216.000 422.990,216.000 423.806,216.000 424.621,216.000 425.437,216.000 426.252,216.000 427.068,216.000 427.883,216.000 428.699,216.000 429.515,216.000 430.330,216.000 431.146,216.000 431.961,216.000 432.777,216.000 433.592,216.000 434.408,216.000 435.223,216.000 436.039,216.000 436.854,216.000 437.670,216.000 438.485,216.000 439.301,216.000 440.117,216.000 440.932,216.000 441.748,216.000 442.563,216.000 443.379,216.000 444.194,216.000 445.010,216.000 445.825,216.000 446.641,216.000 447.456,216.000 448.272,216.000 449.087,216.000 449.903,216.000 450.718,216.000 451.534,216.000 452.350,216.000 453.165,216.000 453.981,216.000 454.796,216.000 455.612,216.000 456.427,216.000 457.243,216.000 458.058,216.000 458.874,216.000 459.689,216.000 460.505,216.000 461.320,216.000 462.136,216.000 462.951,216.000 463.767,216.000 464.583,216.000 465.398,216.000 466.214,216.000 467.029,216.000 467.845,216.000 468.660,216.000 469.476,216.000 470.291,216.000 471.107,216.000 471.922,216.000 472.738,216.000 473.553,216.000 474.369,216.000 475.184,216.000 476.000,216.000 476.816,216.000 477.631,216.000 478.447,216.000 479.262,216.000 480.078,216.000 480.893,216.000 481.709,216.000 482.524,216.000 483.340,216.000 484.155,216.000 484.971,216.000 485.786,216.000 486.602,216.000 487.417,216.000 488.233,216.000 489.049,216.000 489.864,216.000 490.680,216.000 491.495,216.000 492.311,216.000 493.126,216.000 493.942,216.000 494.757,216.000 495.573,216.000 496.388,216.000 497.204,216.000 498.019,216.000 498.835,216.000 499.650,216.000 500.466,216.000 501.282,216.000 502.097,216.000 502.913,216.000 503.728,216.000 504.544,216.000 505.359,216.000 506.175,216.000 506.990,216.000 507.806,216.000 508.621,216.000 509.437,216.000 510.252,216.000 511.068,216.000 511.883,216.000 512.699,216.000 513.515,216.000 514.330,216.000 515.146,216.000 515.961,216.000 516.777,216.000 517.592,216.000 518.408,216.000 519.223,216.000 520.039,216.000 520.854,216.000 521.670,216.000 522.485,216.000 523.301,216.000 524.117,216.000 524.932,216.000 525.748,216.000 526.563,216.000 527.379,216.000 528.194,216.000 529.010,216.000 529.825,216.000 530.641,216.000 531.456,216.000 532.272,216.000 533.087,216.000 533.903,216.000 534.718,216.000 535.534,216.000 536.350,216.000 537.165,216.000 537.981,216.000 538.796,216.000 539.612,216.000 540.427,216.000 541.243,216.000 542.058,216.000 542.874,216.000 543.689,216.000 544.505,216.000 545.320,216.000 546.136,216.000 546.951,216.000 547.767,216.000 548.583,216.000 549.398,216.000 550.214,216.000 551.029,216.000 551.845,216.000 552.660,216.000 553.476,216.000 554.291,216.000 555.107,216.000 555.922,216.000 556.738,216.000 557.553,216.000 558.369,216.000 559.184,216.000 560.000,216.000"/>
+<polyline class="side1" fill="none" points="56.000,280.000 56.816,280.000 57.631,280.000 58.447,280.000 59.262,280.000 60.078,280.000 60.893,280.000 61.709,280.000 62.524,280.000 63.340,280.000 64.155,280.000 64.971,280.000 65.786,248.000 66.602,248.000 67.417,216.000 68.233,200.000 69.049,184.000 69.864,136.000 70.680,72.000 71.495,56.000 72.311,56.000 73.126,56.000 73.942,40.000 74.757,24.000 75.573,24.000 76.388,24.000 77.204,24.000 78.019,24.000 78.835,24.000 79.650,24.000 80.466,24.000 81.282,24.000 82.097,24.000 82.913,24.000 83.728,24.000 84.544,24.000 85.359,24.000 86.175,24.000 86.990,24.000 87.806,24.000 88.621,24.000 89.437,24.000 90.252,24.000 91.068,24.000 91.883,24.000 92.699,24.000 93.515,24.000 94.330,24.000 95.146,24.000 95.961,24.000 96.777,24.000 97.592,24.000 98.408,24.000 99.223,24.000 100.039,24.000 100.854,24.000 101.670,24.000 102.485,24.000 103.301,24.000 104.117,24.000 104.932,24.000 105.748,24.000 106.563,24.000 107.379,24.000 108.194,24.000 109.010,40.000 109.825,40.000 110.641,40.000 111.456,40.000 112.272,40.000 113.087,40.000 113.903,40.000 114.718,40.000 115.534,40.000 116.350,40.000 117.165,40.000 117.981,40.000 118.796,40.000 119.612,40.000 120.427,40.000 121.243,40.000 122.058,40.000 122.874,40.000 123.689,40.000 124.505,40.000 125.320,40.000 126.136,40.000 126.951,40.000 127.767,40.000 128.583,40.000 129.398,40.000 130.214,40.000 131.029,40.000 131.845,40.000 132.660,40.000 133.476,40.000 134.291,40.000 135.107,40.000 135.922,40.000 136.738,40.000 137.553,40.000 138.369,40.000 139.184,40.000 140.000,40.000 140.816,40.000 141.631,40.000 142.447,40.000 143.262,40.000 144.078,40.000 144.893,40.000 145.709,40.000 146.524,40.000 147.340,40.000 148.155,40.000 148.971,40.000 149.786,40.000 150.602,40.000 151.417,40.000 152.233,40.000 153.049,56.000 153.864,56.000 154.680,56.000 155.495,56.000 156.311,72.000 157.126,72.000 157.942,72.000 158.757,72.000 159.573,72.000 160.388,72.000 161.204,72.000 162.019,72.000 162.835,72.000 163.650,72.000 164.466,72.000 165.282,72.000 166.097,72.000 166.913,72.000 167.728,72.000 168.544,88.000 169.359,88.000 170.175,88.000 170.990,88.000 171.806,88.000 172.621,88.000 173.437,88.000 174.252,88.000 175.068,88.000 175.883,104.000 176.699,104.000 177.515,104.000 178.330,104.000 179.146,104.000 179.961,104.000 180.777,104.000 181.592,104.000 182.408,104.000 183.223,104.000 184.039,104.000 184.854,104.000 185.670,104.000 186.485,104.000 187.301,104.000 188.117,104.000 188.932,104.000 189.748,104.000 190.563,104.000 191.379,104.000 192.194,104.000 193.010,104.000 193.825,104.000 194.641,104.000 195.456,104.000 196.272,104.000 197.087,104.000 197.903,104.000 198.718,104.000 199.534,104.000 200.350,104.000 201.165,104.000 201.981,104.000 202.796,104.000 203.612,104.000 204.427,104.000 205.243,104.000 206.058,104.000 206.874,104.000 207.689,104.000 208.505,104.000 209.320,104.000 210.136,104.000 210.951,104.000 211.767,104.000 212.583,104.000 213.398,104.000 214.214,104.000 215.029,104.000 215.845,104.000 216.660,104.000 217.476,104.000 218.291,104.000 219.107,120.000 219.922,120.000 220.738,120.000 221.553,120.000 222.369,120.000 223.184,120.000 224.000,120.000 224.816,120.000 225.631,120.000 226.447,120.000 227.262,120.000 228.078,120.000 228.893,120.000 229.709,120.000 230.524,120.000 231.340,120.000 232.155,120.000 232.971,120.000 233.786,120.000 234.602,120.000 235.417,120.000 236.233,120.000 237.049,120.000 237.864,120.000 238.680,120.000 239.495,120.000 240.311,120.000 241.126,120.000 241.942,120.000 242.757,120.000 243.573,120.000 244.388,120.000 245.204,120.000 246.019,120.000 246.835,120.000 247.650,120.000 248.466,120.000 249.282,120.000 250.097,120.000 250.913,120.000 251.728,120.000 252.544,120.000 253.359,120.000 254.175,120.000 254.990,120.000 255.806,136.000 256.621,136.000 257.437,136.000 258.252,136.000 259.068,136.000 259.883,136.000 260.699,136.000 261.515,136.000 262.330,136.000 263.146,136.000 263.961,136.000 264.777,136.000 265.592,136.000 266.408,136.000 267.223,136.000 268.039,136.000 268.854,136.000 269.670,136.000 270.485,136.000 271.301,136.000 272.117,136.000 272.932,136.000 273.748,152.000 274.563,152.000 275.379,152.000 276.194,152.000 277.010,152.000 277.825,152.000 278.641,152.000 279.456,152.000 280.272,152.000 281.087,152.000 281.903,152.000 282.718,152.000 283.534,152.000 284.350,152.000 285.165,152.000 285.981,152.000 286.796,152.000 287.612,152.000 288.427,152.000 289.243,152.000 290.058,152.000 290.874,152.000 291.689,152.000 292.505,152.000 293.320,168.000 294.136,168.000 294.951,168.000 295.767,168.000 296.583,168.000 297.398,184.000 298.214,184.000 299.029,184.000 299.845,184.000 300.660,184.000 301.476,184.000 302.291,184.000 303.107,184.000 303.922,184.000 304.738,184.000 305.553,184.000 306.369,184.000 307.184,184.000 308.000,184.000 308.816,184.000 309.631,184.000 310.447,184.000 311.262,184.000 312.078,184.000 312.893,184.000 313.709,184.000 314.524,184.000 315.340,184.000 316.155,184.000 316.971,184.000 317.786,184.000 318.602,184.000 319.417,184.000 320.233,184.000 321.049,184.000 321.864,184.000 322.680,184.000 323.495,184.000 324.311,184.000 325.126,184.000 325.942,184.000 326.757,184.000 327.573,184.000 328.388,184.000 329.204,184.000 330.019,184.000 330.835,184.000 331.650,184.000 332.466,184.000 333.282,184.000 334.097,184.000 334.913,184.000 335.728,184.000 336.544,184.000 337.359,184.000 338.175,184.000 338.990,184.000 339.806,184.000 340.621,184.000 341.437,184.000 342.252,184.000 343.068,184.000 343.883,184.000 344.699,184.000 345.515,184.000 346.330,184.000 347.146,184.000 347.961,184.000 348.777,184.000 349.592,200.000 350.408,200.000 351.223,200.000 352.039,200.000 352.854,200.000 353.670,200.000 354.485,200.000 355.301,200.000 356.117,200.000 356.932,200.000 357.748,200.000 358.563,200.000 359.379,200.000 360.194,200.000 361.010,200.000 361.825,200.000 362.641,200.000 363.456,200.000 364.272,216.000 365.087,216.000 365.903,216.000 366.718,216.000 367.534,216.000 368.350,216.000 369.165,216.000 369.981,216.000 370.796,216.000 371.612,216.000 372.427,216.000 373.243,216.000 374.058,216.000 374.874,216.000 375.689,216.000 376.505,216.000 377.320,216.000 378.136,216.000 378.951,216.000 379.767,216.000 380.583,216.000 381.398,216.000 382.214,216.000 383.029,216.000 383.845,216.000 384.660,216.000 385.476,216.000 386.291,216.000 387.107,216.000 387.922,216.000 388.738,216.000 389.553,216.000 390.369,216.000 391.184,216.000 392.000,216.000 392.816,216.000 393.631,216.000 394.447,216.000 395.262,216.000 396.078,216.000 396.893,216.000 397.709,216.000 398.524,216.000 399.340,216.000 400.155,216.000 400.971,216.000 401.786,216.000 402.602,216.000 403.417,216.000 404.233,216.000 405.049,216.000 405.864,216.000 406.680,216.000 407.495,232.000 408.311,232.000 409.126,232.000 409.942,232.000 410.757,232.000 411.573,232.000 412.388,232.000 413.204,232.000 414.019,232.000 414.835,232.000 415.650,232.000 416.466,232.000 417.282,232.000 418.097,232.000 418.913,232.000 419.728,232.000 420.544,232.000 421.359,232.000 422.175,232.000 422.990,232.000 423.806,232.000 424.621,232.000 425.437,232.000 426.252,232.000 427.068,232.000 427.883,232.000 428.699,232.000 429.515,232.000 430.330,232.000 431.146,232.000 431.961,232.000 432.777,232.000 433.592,232.000 434.408,232.000 435.223,232.000 436.039,232.000 436.854,232.000 437.670,232.000 438.485,232.000 439.301,232.000 440.117,232.000 440.932,232.000 441.748,232.000 442.563,232.000 443.379,232.000 444.194,232.000 445.010,232.000 445.825,232.000 446.641,232.000 447.456,232.000 448.272,232.000 449.087,232.000 449.903,232.000 450.718,232.000 451.534,232.000 452.350,232.000 453.165,232.000 453.981,232.000 454.796,232.000 455.612,232.000 456.427,232.000 457.243,232.000 458.058,232.000 458.874,232.000 459.689,232.000 460.505,232.000 461.320,232.000 462.136,232.000 462.951,232.000 463.767,232.000 464.583,232.000 465.398,232.000 466.214,232.000 467.029,232.000 467.845,232.000 468.660,232.000 469.476,232.000 470.291,248.000 471.107,248.000 471.922,248.000 472.738,248.000 473.553,248.000 474.369,248.000 475.184,248.000 476.000,248.000 476.816,248.000 477.631,248.000 478.447,248.000 479.262,248.000 480.078,248.000 480.893,248.000 481.709,248.000 482.524,248.000 483.340,248.000 484.155,248.000 484.971,248.000 485.786,248.000 486.602,248.000 487.417,248.000 488.233,248.000 489.049,248.000 489.864,248.000 490.680,248.000 491.495,248.000 492.311,248.000 493.126,248.000 493.942,248.000 494.757,248.000 495.573,248.000 496.388,248.000 497.204,248.000 498.019,248.000 498.835,248.000 499.650,248.000 500.466,248.000 501.282,248.000 502.097,248.000 502.913,248.000 503.728,248.000 504.544,264.000 505.359,264.000 506.175,264.000 506.990,264.000 507.806,264.000 508.621,264.000 509.437,264.000 510.252,264.000 511.068,264.000 511.883,264.000 512.699,264.000 513.515,264.000 514.330,264.000 515.146,264.000 515.961,264.000 516.777,264.000 517.592,264.000 518.408,264.000 519.223,264.000 520.039,264.000 520.854,264.000 521.670,264.000 522.485,264.000 523.301,264.000 524.117,264.000 524.932,264.000 525.748,264.000 526.563,264.000 527.379,264.000 528.194,264.000 529.010,264.000 529.825,264.000 530.641,264.000 531.456,264.000 532.272,264.000 533.087,264.000 533.903,264.000 534.718,264.000 535.534,264.000 536.350,264.000 537.165,264.000 537.981,264.000 538.796,264.000 539.612,264.000 540.427,264.000 541.243,264.000 542.058,264.000 542.874,264.000 543.689,264.000 544.505,264.000 545.320,264.000 546.136,264.000 546.951,264.000 547.767,264.000 548.583,264.000 549.398,264.000 550.214,264.000 551.029,264.000 551.845,264.000 552.660,264.000 553.476,264.000 554.291,264.000 555.107,264.000 555.922,264.000 556.738,264.000 557.553,264.000 558.369,264.000 559.184,264.000 560.000,264.000"/>
+<text x="568.000" y="220.000" text-anchor="start" class="side0">Side 0</text>
+<text x="568.000" y="268.000" text-anchor="start" class="side1">Side 1</text>
+</svg>
+<table>
+<tr><th>Tick</th><th>Side 0</th><th>Side 1</th></tr>
+<tr><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>5</td><td>0</td><td>0</td></tr>
+<tr><td>10</td><td>0</td><td>0</td></tr>
+<tr><td>15</td><td>0</td><td>0</td></tr>
+<tr><td>20</td><td>0</td><td>0</td></tr>
+<tr><td>25</td><td>0</td><td>0</td></tr>
+<tr><td>30</td><td>0</td><td>0</td></tr>
+<tr><td>35</td><td>0</td><td>0</td></tr>
+<tr><td>40</td><td>0</td><td>0</td></tr>
+<tr><td>45</td><td>0</td><td>0</td></tr>
+<tr><td>50</td><td>0</td><td>0</td></tr>
+<tr><td>55</td><td>0</td><td>0</td></tr>
+<tr><td>60</td><td>2</td><td>2</td></tr>
+<tr><td>65</td><td>2</td><td>2</td></tr>
+<tr><td>70</td><td>4</td><td>4</td></tr>
+<tr><td>75</td><td>5</td><td>5</td></tr>
+<tr><td>80</td><td>6</td><td>6</td></tr>
+<tr><td>85</td><td>11</td><td>9</td></tr>
+<tr><td>90</td><td>12</td><td>13</td></tr>
+<tr><td>95</td><td>13</td><td>14</td></tr>
+<tr><td>100</td><td>14</td><td>14</td></tr>
+<tr><td>105</td><td>14</td><td>14</td></tr>
+<tr><td>110</td><td>15</td><td>15</td></tr>
+<tr><td>115</td><td>16</td><td>16</td></tr>
+<tr><td>120</td><td>16</td><td>16</td></tr>
+<tr><td>125</td><td>16</td><td>16</td></tr>
+<tr><td>130</td><td>16</td><td>16</td></tr>
+<tr><td>135</td><td>16</td><td>16</td></tr>
+<tr><td>140</td><td>16</td><td>16</td></tr>
+<tr><td>145</td><td>16</td><td>16</td></tr>
+<tr><td>150</td><td>16</td><td>16</td></tr>
+<tr><td>155</td><td>16</td><td>16</td></tr>
+<tr><td>160</td><td>16</td><td>16</td></tr>
+<tr><td>165</td><td>16</td><td>16</td></tr>
+<tr><td>170</td><td>16</td><td>16</td></tr>
+<tr><td>175</td><td>16</td><td>16</td></tr>
+<tr><td>180</td><td>16</td><td>16</td></tr>
+<tr><td>185</td><td>16</td><td>16</td></tr>
+<tr><td>190</td><td>16</td><td>16</td></tr>
+<tr><td>195</td><td>16</td><td>16</td></tr>
+<tr><td>200</td><td>16</td><td>16</td></tr>
+<tr><td>205</td><td>16</td><td>16</td></tr>
+<tr><td>210</td><td>16</td><td>16</td></tr>
+<tr><td>215</td><td>16</td><td>16</td></tr>
+<tr><td>220</td><td>16</td><td>16</td></tr>
+<tr><td>225</td><td>16</td><td>16</td></tr>
+<tr><td>230</td><td>16</td><td>16</td></tr>
+<tr><td>235</td><td>16</td><td>16</td></tr>
+<tr><td>240</td><td>16</td><td>16</td></tr>
+<tr><td>245</td><td>16</td><td>16</td></tr>
+<tr><td>250</td><td>16</td><td>16</td></tr>
+<tr><td>255</td><td>16</td><td>16</td></tr>
+<tr><td>260</td><td>15</td><td>16</td></tr>
+<tr><td>265</td><td>15</td><td>16</td></tr>
+<tr><td>270</td><td>15</td><td>16</td></tr>
+<tr><td>275</td><td>15</td><td>16</td></tr>
+<tr><td>280</td><td>15</td><td>16</td></tr>
+<tr><td>285</td><td>15</td><td>16</td></tr>
+<tr><td>290</td><td>15</td><td>16</td></tr>
+<tr><td>295</td><td>15</td><td>16</td></tr>
+<tr><td>300</td><td>15</td><td>16</td></tr>
+<tr><td>305</td><td>15</td><td>16</td></tr>
+<tr><td>310</td><td>15</td><td>16</td></tr>
+<tr><td>315</td><td>15</td><td>16</td></tr>
+<tr><td>320</td><td>15</td><td>16</td></tr>
+<tr><td>325</td><td>15</td><td>15</td></tr>
+<tr><td>330</td><td>15</td><td>15</td></tr>
+<tr><td>335</td><td>15</td><td>15</td></tr>
+<tr><td>340</td><td>15</td><td>15</td></tr>
+<tr><td>345</td><td>15</td><td>15</td></tr>
+<tr><td>350</td><td>15</td><td>15</td></tr>
+<tr><td>355</td><td>15</td><td>15</td></tr>
+<tr><td>360</td><td>15</td><td>15</td></tr>
+<tr><td>365</td><td>15</td><td>15</td></tr>
+<tr><td>370</td><td>15</td><td>15</td></tr>
+<tr><td>375</td><td>15</td><td>15</td></tr>
+<tr><td>380</td><td>15</td><td>15</td></tr>
+<tr><td>385</td><td>15</td><td>15</td></tr>
+<tr><td>390</td><td>15</td><td>15</td></tr>
+<tr><td>395</td><td>15</td><td>15</td></tr>
+<tr><td>400</td><td>15</td><td>15</td></tr>
+<tr><td>405</td><td>15</td><td>15</td></tr>
+<tr><td>410</td><td>15</td><td>15</td></tr>
+<tr><td>415</td><td>15</td><td>15</td></tr>
+<tr><td>420</td><td>15</td><td>15</td></tr>
+<tr><td>425</td><td>15</td><td>15</td></tr>
+<tr><td>430</td><td>15</td><td>15</td></tr>
+<tr><td>435</td><td>15</td><td>15</td></tr>
+<tr><td>440</td><td>15</td><td>15</td></tr>
+<tr><td>445</td><td>15</td><td>15</td></tr>
+<tr><td>450</td><td>15</td><td>15</td></tr>
+<tr><td>455</td><td>15</td><td>15</td></tr>
+<tr><td>460</td><td>15</td><td>15</td></tr>
+<tr><td>465</td><td>15</td><td>15</td></tr>
+<tr><td>470</td><td>15</td><td>15</td></tr>
+<tr><td>475</td><td>15</td><td>15</td></tr>
+<tr><td>480</td><td>14</td><td>15</td></tr>
+<tr><td>485</td><td>14</td><td>15</td></tr>
+<tr><td>490</td><td>14</td><td>15</td></tr>
+<tr><td>495</td><td>14</td><td>15</td></tr>
+<tr><td>500</td><td>14</td><td>15</td></tr>
+<tr><td>505</td><td>14</td><td>15</td></tr>
+<tr><td>510</td><td>14</td><td>15</td></tr>
+<tr><td>515</td><td>14</td><td>15</td></tr>
+<tr><td>520</td><td>14</td><td>15</td></tr>
+<tr><td>525</td><td>14</td><td>15</td></tr>
+<tr><td>530</td><td>14</td><td>15</td></tr>
+<tr><td>535</td><td>14</td><td>15</td></tr>
+<tr><td>540</td><td>14</td><td>15</td></tr>
+<tr><td>545</td><td>14</td><td>15</td></tr>
+<tr><td>550</td><td>14</td><td>15</td></tr>
+<tr><td>555</td><td>14</td><td>15</td></tr>
+<tr><td>560</td><td>14</td><td>15</td></tr>
+<tr><td>565</td><td>14</td><td>15</td></tr>
+<tr><td>570</td><td>14</td><td>15</td></tr>
+<tr><td>575</td><td>14</td><td>15</td></tr>
+<tr><td>580</td><td>14</td><td>15</td></tr>
+<tr><td>585</td><td>14</td><td>15</td></tr>
+<tr><td>590</td><td>14</td><td>15</td></tr>
+<tr><td>595</td><td>14</td><td>14</td></tr>
+<tr><td>600</td><td>14</td><td>14</td></tr>
+<tr><td>605</td><td>14</td><td>14</td></tr>
+<tr><td>610</td><td>14</td><td>14</td></tr>
+<tr><td>615</td><td>14</td><td>13</td></tr>
+<tr><td>620</td><td>14</td><td>13</td></tr>
+<tr><td>625</td><td>14</td><td>13</td></tr>
+<tr><td>630</td><td>14</td><td>13</td></tr>
+<tr><td>635</td><td>14</td><td>13</td></tr>
+<tr><td>640</td><td>14</td><td>13</td></tr>
+<tr><td>645</td><td>14</td><td>13</td></tr>
+<tr><td>650</td><td>14</td><td>13</td></tr>
+<tr><td>655</td><td>14</td><td>13</td></tr>
+<tr><td>660</td><td>14</td><td>13</td></tr>
+<tr><td>665</td><td>14</td><td>13</td></tr>
+<tr><td>670</td><td>13</td><td>13</td></tr>
+<tr><td>675</td><td>13</td><td>13</td></tr>
+<tr><td>680</td><td>13</td><td>13</td></tr>
+<tr><td>685</td><td>13</td><td>13</td></tr>
+<tr><td>690</td><td>13</td><td>12</td></tr>
+<tr><td>695</td><td>13</td><td>12</td></tr>
+<tr><td>700</td><td>13</td><td>12</td></tr>
+<tr><td>705</td><td>13</td><td>12</td></tr>
+<tr><td>710</td><td>13</td><td>12</td></tr>
+<tr><td>715</td><td>13</td><td>12</td></tr>
+<tr><td>720</td><td>13</td><td>12</td></tr>
+<tr><td>725</td><td>13</td><td>12</td></tr>
+<tr><td>730</td><td>13</td><td>12</td></tr>
+<tr><td>735</td><td>13</td><td>11</td></tr>
+<tr><td>740</td><td>13</td><td>11</td></tr>
+<tr><td>745</td><td>13</td><td>11</td></tr>
+<tr><td>750</td><td>13</td><td>11</td></tr>
+<tr><td>755</td><td>13</td><td>11</td></tr>
+<tr><td>760</td><td>13</td><td>11</td></tr>
+<tr><td>765</td><td>13</td><td>11</td></tr>
+<tr><td>770</td><td>13</td><td>11</td></tr>
+<tr><td>775</td><td>13</td><td>11</td></tr>
+<tr><td>780</td><td>13</td><td>11</td></tr>
+<tr><td>785</td><td>13</td><td>11</td></tr>
+<tr><td>790</td><td>13</td><td>11</td></tr>
+<tr><td>795</td><td>13</td><td>11</td></tr>
+<tr><td>800</td><td>13</td><td>11</td></tr>
+<tr><td>805</td><td>12</td><td>11</td></tr>
+<tr><td>810</td><td>12</td><td>11</td></tr>
+<tr><td>815</td><td>12</td><td>11</td></tr>
+<tr><td>820</td><td>12</td><td>11</td></tr>
+<tr><td>825</td><td>12</td><td>11</td></tr>
+<tr><td>830</td><td>12</td><td>11</td></tr>
+<tr><td>835</td><td>11</td><td>11</td></tr>
+<tr><td>840</td><td>11</td><td>11</td></tr>
+<tr><td>845</td><td>11</td><td>11</td></tr>
+<tr><td>850</td><td>11</td><td>11</td></tr>
+<tr><td>855</td><td>11</td><td>11</td></tr>
+<tr><td>860</td><td>11</td><td>11</td></tr>
+<tr><td>865</td><td>11</td><td>11</td></tr>
+<tr><td>870</td><td>11</td><td>11</td></tr>
+<tr><td>875</td><td>11</td><td>11</td></tr>
+<tr><td>880</td><td>11</td><td>11</td></tr>
+<tr><td>885</td><td>11</td><td>11</td></tr>
+<tr><td>890</td><td>11</td><td>11</td></tr>
+<tr><td>895</td><td>11</td><td>11</td></tr>
+<tr><td>900</td><td>11</td><td>11</td></tr>
+<tr><td>905</td><td>11</td><td>11</td></tr>
+<tr><td>910</td><td>11</td><td>11</td></tr>
+<tr><td>915</td><td>11</td><td>11</td></tr>
+<tr><td>920</td><td>11</td><td>11</td></tr>
+<tr><td>925</td><td>11</td><td>11</td></tr>
+<tr><td>930</td><td>11</td><td>11</td></tr>
+<tr><td>935</td><td>11</td><td>11</td></tr>
+<tr><td>940</td><td>11</td><td>11</td></tr>
+<tr><td>945</td><td>11</td><td>11</td></tr>
+<tr><td>950</td><td>11</td><td>11</td></tr>
+<tr><td>955</td><td>11</td><td>11</td></tr>
+<tr><td>960</td><td>11</td><td>11</td></tr>
+<tr><td>965</td><td>11</td><td>11</td></tr>
+<tr><td>970</td><td>11</td><td>11</td></tr>
+<tr><td>975</td><td>11</td><td>11</td></tr>
+<tr><td>980</td><td>11</td><td>11</td></tr>
+<tr><td>985</td><td>11</td><td>11</td></tr>
+<tr><td>990</td><td>11</td><td>11</td></tr>
+<tr><td>995</td><td>11</td><td>11</td></tr>
+<tr><td>1000</td><td>11</td><td>10</td></tr>
+<tr><td>1005</td><td>11</td><td>10</td></tr>
+<tr><td>1010</td><td>11</td><td>10</td></tr>
+<tr><td>1015</td><td>11</td><td>10</td></tr>
+<tr><td>1020</td><td>11</td><td>10</td></tr>
+<tr><td>1025</td><td>11</td><td>10</td></tr>
+<tr><td>1030</td><td>11</td><td>10</td></tr>
+<tr><td>1035</td><td>11</td><td>10</td></tr>
+<tr><td>1040</td><td>11</td><td>10</td></tr>
+<tr><td>1045</td><td>11</td><td>10</td></tr>
+<tr><td>1050</td><td>11</td><td>10</td></tr>
+<tr><td>1055</td><td>11</td><td>10</td></tr>
+<tr><td>1060</td><td>11</td><td>10</td></tr>
+<tr><td>1065</td><td>11</td><td>10</td></tr>
+<tr><td>1070</td><td>11</td><td>10</td></tr>
+<tr><td>1075</td><td>11</td><td>10</td></tr>
+<tr><td>1080</td><td>11</td><td>10</td></tr>
+<tr><td>1085</td><td>11</td><td>10</td></tr>
+<tr><td>1090</td><td>11</td><td>10</td></tr>
+<tr><td>1095</td><td>11</td><td>10</td></tr>
+<tr><td>1100</td><td>11</td><td>10</td></tr>
+<tr><td>1105</td><td>11</td><td>10</td></tr>
+<tr><td>1110</td><td>11</td><td>10</td></tr>
+<tr><td>1115</td><td>11</td><td>10</td></tr>
+<tr><td>1120</td><td>11</td><td>10</td></tr>
+<tr><td>1125</td><td>11</td><td>10</td></tr>
+<tr><td>1130</td><td>11</td><td>10</td></tr>
+<tr><td>1135</td><td>11</td><td>10</td></tr>
+<tr><td>1140</td><td>11</td><td>10</td></tr>
+<tr><td>1145</td><td>10</td><td>10</td></tr>
+<tr><td>1150</td><td>10</td><td>10</td></tr>
+<tr><td>1155</td><td>10</td><td>10</td></tr>
+<tr><td>1160</td><td>10</td><td>10</td></tr>
+<tr><td>1165</td><td>10</td><td>10</td></tr>
+<tr><td>1170</td><td>10</td><td>10</td></tr>
+<tr><td>1175</td><td>10</td><td>10</td></tr>
+<tr><td>1180</td><td>10</td><td>10</td></tr>
+<tr><td>1185</td><td>10</td><td>10</td></tr>
+<tr><td>1190</td><td>10</td><td>10</td></tr>
+<tr><td>1195</td><td>10</td><td>10</td></tr>
+<tr><td>1200</td><td>10</td><td>10</td></tr>
+<tr><td>1205</td><td>10</td><td>10</td></tr>
+<tr><td>1210</td><td>10</td><td>10</td></tr>
+<tr><td>1215</td><td>10</td><td>10</td></tr>
+<tr><td>1220</td><td>10</td><td>10</td></tr>
+<tr><td>1225</td><td>10</td><td>9</td></tr>
+<tr><td>1230</td><td>10</td><td>9</td></tr>
+<tr><td>1235</td><td>10</td><td>9</td></tr>
+<tr><td>1240</td><td>10</td><td>9</td></tr>
+<tr><td>1245</td><td>10</td><td>9</td></tr>
+<tr><td>1250</td><td>10</td><td>9</td></tr>
+<tr><td>1255</td><td>10</td><td>9</td></tr>
+<tr><td>1260</td><td>10</td><td>9</td></tr>
+<tr><td>1265</td><td>10</td><td>9</td></tr>
+<tr><td>1270</td><td>10</td><td>9</td></tr>
+<tr><td>1275</td><td>10</td><td>9</td></tr>
+<tr><td>1280</td><td>10</td><td>9</td></tr>
+<tr><td>1285</td><td>10</td><td>9</td></tr>
+<tr><td>1290</td><td>10</td><td>9</td></tr>
+<tr><td>1295</td><td>10</td><td>9</td></tr>
+<tr><td>1300</td><td>10</td><td>9</td></tr>
+<tr><td>1305</td><td>10</td><td>9</td></tr>
+<tr><td>1310</td><td>10</td><td>9</td></tr>
+<tr><td>1315</td><td>9</td><td>9</td></tr>
+<tr><td>1320</td><td>9</td><td>9</td></tr>
+<tr><td>1325</td><td>9</td><td>9</td></tr>
+<tr><td>1330</td><td>9</td><td>9</td></tr>
+<tr><td>1335</td><td>9</td><td>8</td></tr>
+<tr><td>1340</td><td>9</td><td>8</td></tr>
+<tr><td>1345</td><td>9</td><td>8</td></tr>
+<tr><td>1350</td><td>9</td><td>8</td></tr>
+<tr><td>1355</td><td>9</td><td>8</td></tr>
+<tr><td>1360</td><td>9</td><td>8</td></tr>
+<tr><td>1365</td><td>9</td><td>8</td></tr>
+<tr><td>1370</td><td>9</td><td>8</td></tr>
+<tr><td>1375</td><td>9</td><td>8</td></tr>
+<tr><td>1380</td><td>9</td><td>8</td></tr>
+<tr><td>1385</td><td>9</td><td>8</td></tr>
+<tr><td>1390</td><td>9</td><td>8</td></tr>
+<tr><td>1395</td><td>9</td><td>8</td></tr>
+<tr><td>1400</td><td>9</td><td>8</td></tr>
+<tr><td>1405</td><td>8</td><td>8</td></tr>
+<tr><td>1410</td><td>8</td><td>8</td></tr>
+<tr><td>1415</td><td>8</td><td>8</td></tr>
+<tr><td>1420</td><td>8</td><td>8</td></tr>
+<tr><td>1425</td><td>8</td><td>8</td></tr>
+<tr><td>1430</td><td>8</td><td>8</td></tr>
+<tr><td>1435</td><td>8</td><td>8</td></tr>
+<tr><td>1440</td><td>8</td><td>8</td></tr>
+<tr><td>1445</td><td>8</td><td>8</td></tr>
+<tr><td>1450</td><td>8</td><td>8</td></tr>
+<tr><td>1455</td><td>8</td><td>7</td></tr>
+<tr><td>1460</td><td>8</td><td>7</td></tr>
+<tr><td>1465</td><td>8</td><td>7</td></tr>
+<tr><td>1470</td><td>8</td><td>7</td></tr>
+<tr><td>1475</td><td>8</td><td>7</td></tr>
+<tr><td>1480</td><td>8</td><td>6</td></tr>
+<tr><td>1485</td><td>8</td><td>6</td></tr>
+<tr><td>1490</td><td>8</td><td>6</td></tr>
+<tr><td>1495</td><td>8</td><td>6</td></tr>
+<tr><td>1500</td><td>8</td><td>6</td></tr>
+<tr><td>1505</td><td>8</td><td>6</td></tr>
+<tr><td>1510</td><td>8</td><td>6</td></tr>
+<tr><td>1515</td><td>8</td><td>6</td></tr>
+<tr><td>1520</td><td>8</td><td>6</td></tr>
+<tr><td>1525</td><td>8</td><td>6</td></tr>
+<tr><td>1530</td><td>8</td><td>6</td></tr>
+<tr><td>1535</td><td>8</td><td>6</td></tr>
+<tr><td>1540</td><td>8</td><td>6</td></tr>
+<tr><td>1545</td><td>8</td><td>6</td></tr>
+<tr><td>1550</td><td>8</td><td>6</td></tr>
+<tr><td>1555</td><td>8</td><td>6</td></tr>
+<tr><td>1560</td><td>8</td><td>6</td></tr>
+<tr><td>1565</td><td>8</td><td>6</td></tr>
+<tr><td>1570</td><td>8</td><td>6</td></tr>
+<tr><td>1575</td><td>8</td><td>6</td></tr>
+<tr><td>1580</td><td>8</td><td>6</td></tr>
+<tr><td>1585</td><td>8</td><td>6</td></tr>
+<tr><td>1590</td><td>8</td><td>6</td></tr>
+<tr><td>1595</td><td>8</td><td>6</td></tr>
+<tr><td>1600</td><td>8</td><td>6</td></tr>
+<tr><td>1605</td><td>8</td><td>6</td></tr>
+<tr><td>1610</td><td>8</td><td>6</td></tr>
+<tr><td>1615</td><td>8</td><td>6</td></tr>
+<tr><td>1620</td><td>8</td><td>6</td></tr>
+<tr><td>1625</td><td>8</td><td>6</td></tr>
+<tr><td>1630</td><td>8</td><td>6</td></tr>
+<tr><td>1635</td><td>8</td><td>6</td></tr>
+<tr><td>1640</td><td>8</td><td>6</td></tr>
+<tr><td>1645</td><td>8</td><td>6</td></tr>
+<tr><td>1650</td><td>7</td><td>6</td></tr>
+<tr><td>1655</td><td>7</td><td>6</td></tr>
+<tr><td>1660</td><td>7</td><td>6</td></tr>
+<tr><td>1665</td><td>7</td><td>6</td></tr>
+<tr><td>1670</td><td>7</td><td>6</td></tr>
+<tr><td>1675</td><td>7</td><td>6</td></tr>
+<tr><td>1680</td><td>7</td><td>6</td></tr>
+<tr><td>1685</td><td>7</td><td>6</td></tr>
+<tr><td>1690</td><td>7</td><td>6</td></tr>
+<tr><td>1695</td><td>7</td><td>6</td></tr>
+<tr><td>1700</td><td>7</td><td>6</td></tr>
+<tr><td>1705</td><td>7</td><td>6</td></tr>
+<tr><td>1710</td><td>7</td><td>6</td></tr>
+<tr><td>1715</td><td>7</td><td>6</td></tr>
+<tr><td>1720</td><td>7</td><td>6</td></tr>
+<tr><td>1725</td><td>7</td><td>6</td></tr>
+<tr><td>1730</td><td>7</td><td>6</td></tr>
+<tr><td>1735</td><td>7</td><td>6</td></tr>
+<tr><td>1740</td><td>7</td><td>6</td></tr>
+<tr><td>1745</td><td>7</td><td>6</td></tr>
+<tr><td>1750</td><td>7</td><td>6</td></tr>
+<tr><td>1755</td><td>7</td><td>6</td></tr>
+<tr><td>1760</td><td>7</td><td>6</td></tr>
+<tr><td>1765</td><td>7</td><td>6</td></tr>
+<tr><td>1770</td><td>7</td><td>6</td></tr>
+<tr><td>1775</td><td>7</td><td>6</td></tr>
+<tr><td>1780</td><td>7</td><td>6</td></tr>
+<tr><td>1785</td><td>7</td><td>6</td></tr>
+<tr><td>1790</td><td>7</td><td>6</td></tr>
+<tr><td>1795</td><td>7</td><td>6</td></tr>
+<tr><td>1800</td><td>7</td><td>5</td></tr>
+<tr><td>1805</td><td>7</td><td>5</td></tr>
+<tr><td>1810</td><td>7</td><td>5</td></tr>
+<tr><td>1815</td><td>7</td><td>5</td></tr>
+<tr><td>1820</td><td>7</td><td>5</td></tr>
+<tr><td>1825</td><td>7</td><td>5</td></tr>
+<tr><td>1830</td><td>7</td><td>5</td></tr>
+<tr><td>1835</td><td>7</td><td>5</td></tr>
+<tr><td>1840</td><td>7</td><td>5</td></tr>
+<tr><td>1845</td><td>7</td><td>5</td></tr>
+<tr><td>1850</td><td>7</td><td>5</td></tr>
+<tr><td>1855</td><td>7</td><td>5</td></tr>
+<tr><td>1860</td><td>7</td><td>5</td></tr>
+<tr><td>1865</td><td>6</td><td>5</td></tr>
+<tr><td>1870</td><td>6</td><td>5</td></tr>
+<tr><td>1875</td><td>6</td><td>5</td></tr>
+<tr><td>1880</td><td>6</td><td>5</td></tr>
+<tr><td>1885</td><td>6</td><td>5</td></tr>
+<tr><td>1890</td><td>5</td><td>4</td></tr>
+<tr><td>1895</td><td>5</td><td>4</td></tr>
+<tr><td>1900</td><td>5</td><td>4</td></tr>
+<tr><td>1905</td><td>5</td><td>4</td></tr>
+<tr><td>1910</td><td>5</td><td>4</td></tr>
+<tr><td>1915</td><td>5</td><td>4</td></tr>
+<tr><td>1920</td><td>5</td><td>4</td></tr>
+<tr><td>1925</td><td>5</td><td>4</td></tr>
+<tr><td>1930</td><td>5</td><td>4</td></tr>
+<tr><td>1935</td><td>5</td><td>4</td></tr>
+<tr><td>1940</td><td>5</td><td>4</td></tr>
+<tr><td>1945</td><td>5</td><td>4</td></tr>
+<tr><td>1950</td><td>5</td><td>4</td></tr>
+<tr><td>1955</td><td>5</td><td>4</td></tr>
+<tr><td>1960</td><td>5</td><td>4</td></tr>
+<tr><td>1965</td><td>5</td><td>4</td></tr>
+<tr><td>1970</td><td>5</td><td>4</td></tr>
+<tr><td>1975</td><td>5</td><td>4</td></tr>
+<tr><td>1980</td><td>5</td><td>4</td></tr>
+<tr><td>1985</td><td>5</td><td>4</td></tr>
+<tr><td>1990</td><td>5</td><td>4</td></tr>
+<tr><td>1995</td><td>5</td><td>4</td></tr>
+<tr><td>2000</td><td>5</td><td>4</td></tr>
+<tr><td>2005</td><td>5</td><td>4</td></tr>
+<tr><td>2010</td><td>5</td><td>4</td></tr>
+<tr><td>2015</td><td>5</td><td>4</td></tr>
+<tr><td>2020</td><td>5</td><td>4</td></tr>
+<tr><td>2025</td><td>5</td><td>4</td></tr>
+<tr><td>2030</td><td>5</td><td>4</td></tr>
+<tr><td>2035</td><td>5</td><td>4</td></tr>
+<tr><td>2040</td><td>5</td><td>4</td></tr>
+<tr><td>2045</td><td>5</td><td>4</td></tr>
+<tr><td>2050</td><td>5</td><td>4</td></tr>
+<tr><td>2055</td><td>5</td><td>4</td></tr>
+<tr><td>2060</td><td>5</td><td>4</td></tr>
+<tr><td>2065</td><td>5</td><td>4</td></tr>
+<tr><td>2070</td><td>5</td><td>4</td></tr>
+<tr><td>2075</td><td>5</td><td>4</td></tr>
+<tr><td>2080</td><td>5</td><td>4</td></tr>
+<tr><td>2085</td><td>5</td><td>4</td></tr>
+<tr><td>2090</td><td>5</td><td>4</td></tr>
+<tr><td>2095</td><td>5</td><td>4</td></tr>
+<tr><td>2100</td><td>5</td><td>4</td></tr>
+<tr><td>2105</td><td>5</td><td>4</td></tr>
+<tr><td>2110</td><td>5</td><td>4</td></tr>
+<tr><td>2115</td><td>5</td><td>4</td></tr>
+<tr><td>2120</td><td>5</td><td>4</td></tr>
+<tr><td>2125</td><td>5</td><td>4</td></tr>
+<tr><td>2130</td><td>5</td><td>4</td></tr>
+<tr><td>2135</td><td>5</td><td>4</td></tr>
+<tr><td>2140</td><td>5</td><td>4</td></tr>
+<tr><td>2145</td><td>5</td><td>4</td></tr>
+<tr><td>2150</td><td>5</td><td>4</td></tr>
+<tr><td>2155</td><td>5</td><td>3</td></tr>
+<tr><td>2160</td><td>5</td><td>3</td></tr>
+<tr><td>2165</td><td>5</td><td>3</td></tr>
+<tr><td>2170</td><td>5</td><td>3</td></tr>
+<tr><td>2175</td><td>4</td><td>3</td></tr>
+<tr><td>2180</td><td>4</td><td>3</td></tr>
+<tr><td>2185</td><td>4</td><td>3</td></tr>
+<tr><td>2190</td><td>4</td><td>3</td></tr>
+<tr><td>2195</td><td>4</td><td>3</td></tr>
+<tr><td>2200</td><td>4</td><td>3</td></tr>
+<tr><td>2205</td><td>4</td><td>3</td></tr>
+<tr><td>2210</td><td>4</td><td>3</td></tr>
+<tr><td>2215</td><td>4</td><td>3</td></tr>
+<tr><td>2220</td><td>4</td><td>3</td></tr>
+<tr><td>2225</td><td>4</td><td>3</td></tr>
+<tr><td>2230</td><td>4</td><td>3</td></tr>
+<tr><td>2235</td><td>4</td><td>3</td></tr>
+<tr><td>2240</td><td>4</td><td>3</td></tr>
+<tr><td>2245</td><td>4</td><td>3</td></tr>
+<tr><td>2250</td><td>4</td><td>3</td></tr>
+<tr><td>2255</td><td>4</td><td>3</td></tr>
+<tr><td>2260</td><td>4</td><td>3</td></tr>
+<tr><td>2265</td><td>4</td><td>3</td></tr>
+<tr><td>2270</td><td>4</td><td>3</td></tr>
+<tr><td>2275</td><td>4</td><td>3</td></tr>
+<tr><td>2280</td><td>4</td><td>3</td></tr>
+<tr><td>2285</td><td>4</td><td>3</td></tr>
+<tr><td>2290</td><td>4</td><td>3</td></tr>
+<tr><td>2295</td><td>4</td><td>3</td></tr>
+<tr><td>2300</td><td>4</td><td>3</td></tr>
+<tr><td>2305</td><td>4</td><td>3</td></tr>
+<tr><td>2310</td><td>4</td><td>3</td></tr>
+<tr><td>2315</td><td>4</td><td>3</td></tr>
+<tr><td>2320</td><td>4</td><td>3</td></tr>
+<tr><td>2325</td><td>4</td><td>3</td></tr>
+<tr><td>2330</td><td>4</td><td>3</td></tr>
+<tr><td>2335</td><td>4</td><td>3</td></tr>
+<tr><td>2340</td><td>4</td><td>3</td></tr>
+<tr><td>2345</td><td>4</td><td>3</td></tr>
+<tr><td>2350</td><td>4</td><td>3</td></tr>
+<tr><td>2355</td><td>4</td><td>3</td></tr>
+<tr><td>2360</td><td>4</td><td>3</td></tr>
+<tr><td>2365</td><td>4</td><td>3</td></tr>
+<tr><td>2370</td><td>4</td><td>3</td></tr>
+<tr><td>2375</td><td>4</td><td>3</td></tr>
+<tr><td>2380</td><td>4</td><td>3</td></tr>
+<tr><td>2385</td><td>4</td><td>3</td></tr>
+<tr><td>2390</td><td>4</td><td>3</td></tr>
+<tr><td>2395</td><td>4</td><td>3</td></tr>
+<tr><td>2400</td><td>4</td><td>3</td></tr>
+<tr><td>2405</td><td>4</td><td>3</td></tr>
+<tr><td>2410</td><td>4</td><td>3</td></tr>
+<tr><td>2415</td><td>4</td><td>3</td></tr>
+<tr><td>2420</td><td>4</td><td>3</td></tr>
+<tr><td>2425</td><td>4</td><td>3</td></tr>
+<tr><td>2430</td><td>4</td><td>3</td></tr>
+<tr><td>2435</td><td>4</td><td>3</td></tr>
+<tr><td>2440</td><td>4</td><td>3</td></tr>
+<tr><td>2445</td><td>4</td><td>3</td></tr>
+<tr><td>2450</td><td>4</td><td>3</td></tr>
+<tr><td>2455</td><td>4</td><td>3</td></tr>
+<tr><td>2460</td><td>4</td><td>3</td></tr>
+<tr><td>2465</td><td>4</td><td>3</td></tr>
+<tr><td>2470</td><td>4</td><td>3</td></tr>
+<tr><td>2475</td><td>4</td><td>3</td></tr>
+<tr><td>2480</td><td>4</td><td>3</td></tr>
+<tr><td>2485</td><td>4</td><td>3</td></tr>
+<tr><td>2490</td><td>4</td><td>3</td></tr>
+<tr><td>2495</td><td>4</td><td>3</td></tr>
+<tr><td>2500</td><td>4</td><td>3</td></tr>
+<tr><td>2505</td><td>4</td><td>3</td></tr>
+<tr><td>2510</td><td>4</td><td>3</td></tr>
+<tr><td>2515</td><td>4</td><td>3</td></tr>
+<tr><td>2520</td><td>4</td><td>3</td></tr>
+<tr><td>2525</td><td>4</td><td>3</td></tr>
+<tr><td>2530</td><td>4</td><td>3</td></tr>
+<tr><td>2535</td><td>4</td><td>3</td></tr>
+<tr><td>2540</td><td>4</td><td>2</td></tr>
+<tr><td>2545</td><td>4</td><td>2</td></tr>
+<tr><td>2550</td><td>4</td><td>2</td></tr>
+<tr><td>2555</td><td>4</td><td>2</td></tr>
+<tr><td>2560</td><td>4</td><td>2</td></tr>
+<tr><td>2565</td><td>4</td><td>2</td></tr>
+<tr><td>2570</td><td>4</td><td>2</td></tr>
+<tr><td>2575</td><td>4</td><td>2</td></tr>
+<tr><td>2580</td><td>4</td><td>2</td></tr>
+<tr><td>2585</td><td>4</td><td>2</td></tr>
+<tr><td>2590</td><td>4</td><td>2</td></tr>
+<tr><td>2595</td><td>4</td><td>2</td></tr>
+<tr><td>2600</td><td>4</td><td>2</td></tr>
+<tr><td>2605</td><td>4</td><td>2</td></tr>
+<tr><td>2610</td><td>4</td><td>2</td></tr>
+<tr><td>2615</td><td>4</td><td>2</td></tr>
+<tr><td>2620</td><td>4</td><td>2</td></tr>
+<tr><td>2625</td><td>4</td><td>2</td></tr>
+<tr><td>2630</td><td>4</td><td>2</td></tr>
+<tr><td>2635</td><td>4</td><td>2</td></tr>
+<tr><td>2640</td><td>4</td><td>2</td></tr>
+<tr><td>2645</td><td>4</td><td>2</td></tr>
+<tr><td>2650</td><td>4</td><td>2</td></tr>
+<tr><td>2655</td><td>4</td><td>2</td></tr>
+<tr><td>2660</td><td>4</td><td>2</td></tr>
+<tr><td>2665</td><td>4</td><td>2</td></tr>
+<tr><td>2670</td><td>4</td><td>2</td></tr>
+<tr><td>2675</td><td>4</td><td>2</td></tr>
+<tr><td>2680</td><td>4</td><td>2</td></tr>
+<tr><td>2685</td><td>4</td><td>2</td></tr>
+<tr><td>2690</td><td>4</td><td>2</td></tr>
+<tr><td>2695</td><td>4</td><td>2</td></tr>
+<tr><td>2700</td><td>4</td><td>2</td></tr>
+<tr><td>2705</td><td>4</td><td>2</td></tr>
+<tr><td>2710</td><td>4</td><td>2</td></tr>
+<tr><td>2715</td><td>4</td><td>2</td></tr>
+<tr><td>2720</td><td>4</td><td>2</td></tr>
+<tr><td>2725</td><td>4</td><td>2</td></tr>
+<tr><td>2730</td><td>4</td><td>2</td></tr>
+<tr><td>2735</td><td>4</td><td>2</td></tr>
+<tr><td>2740</td><td>4</td><td>2</td></tr>
+<tr><td>2745</td><td>4</td><td>2</td></tr>
+<tr><td>2750</td><td>4</td><td>1</td></tr>
+<tr><td>2755</td><td>4</td><td>1</td></tr>
+<tr><td>2760</td><td>4</td><td>1</td></tr>
+<tr><td>2765</td><td>4</td><td>1</td></tr>
+<tr><td>2770</td><td>4</td><td>1</td></tr>
+<tr><td>2775</td><td>4</td><td>1</td></tr>
+<tr><td>2780</td><td>4</td><td>1</td></tr>
+<tr><td>2785</td><td>4</td><td>1</td></tr>
+<tr><td>2790</td><td>4</td><td>1</td></tr>
+<tr><td>2795</td><td>4</td><td>1</td></tr>
+<tr><td>2800</td><td>4</td><td>1</td></tr>
+<tr><td>2805</td><td>4</td><td>1</td></tr>
+<tr><td>2810</td><td>4</td><td>1</td></tr>
+<tr><td>2815</td><td>4</td><td>1</td></tr>
+<tr><td>2820</td><td>4</td><td>1</td></tr>
+<tr><td>2825</td><td>4</td><td>1</td></tr>
+<tr><td>2830</td><td>4</td><td>1</td></tr>
+<tr><td>2835</td><td>4</td><td>1</td></tr>
+<tr><td>2840</td><td>4</td><td>1</td></tr>
+<tr><td>2845</td><td>4</td><td>1</td></tr>
+<tr><td>2850</td><td>4</td><td>1</td></tr>
+<tr><td>2855</td><td>4</td><td>1</td></tr>
+<tr><td>2860</td><td>4</td><td>1</td></tr>
+<tr><td>2865</td><td>4</td><td>1</td></tr>
+<tr><td>2870</td><td>4</td><td>1</td></tr>
+<tr><td>2875</td><td>4</td><td>1</td></tr>
+<tr><td>2880</td><td>4</td><td>1</td></tr>
+<tr><td>2885</td><td>4</td><td>1</td></tr>
+<tr><td>2890</td><td>4</td><td>1</td></tr>
+<tr><td>2895</td><td>4</td><td>1</td></tr>
+<tr><td>2900</td><td>4</td><td>1</td></tr>
+<tr><td>2905</td><td>4</td><td>1</td></tr>
+<tr><td>2910</td><td>4</td><td>1</td></tr>
+<tr><td>2915</td><td>4</td><td>1</td></tr>
+<tr><td>2920</td><td>4</td><td>1</td></tr>
+<tr><td>2925</td><td>4</td><td>1</td></tr>
+<tr><td>2930</td><td>4</td><td>1</td></tr>
+<tr><td>2935</td><td>4</td><td>1</td></tr>
+<tr><td>2940</td><td>4</td><td>1</td></tr>
+<tr><td>2945</td><td>4</td><td>1</td></tr>
+<tr><td>2950</td><td>4</td><td>1</td></tr>
+<tr><td>2955</td><td>4</td><td>1</td></tr>
+<tr><td>2960</td><td>4</td><td>1</td></tr>
+<tr><td>2965</td><td>4</td><td>1</td></tr>
+<tr><td>2970</td><td>4</td><td>1</td></tr>
+<tr><td>2975</td><td>4</td><td>1</td></tr>
+<tr><td>2980</td><td>4</td><td>1</td></tr>
+<tr><td>2985</td><td>4</td><td>1</td></tr>
+<tr><td>2990</td><td>4</td><td>1</td></tr>
+<tr><td>2995</td><td>4</td><td>1</td></tr>
+<tr><td>3000</td><td>4</td><td>1</td></tr>
+<tr><td>3005</td><td>4</td><td>1</td></tr>
+<tr><td>3010</td><td>4</td><td>1</td></tr>
+<tr><td>3015</td><td>4</td><td>1</td></tr>
+<tr><td>3020</td><td>4</td><td>1</td></tr>
+<tr><td>3025</td><td>4</td><td>1</td></tr>
+<tr><td>3030</td><td>4</td><td>1</td></tr>
+<tr><td>3035</td><td>4</td><td>1</td></tr>
+<tr><td>3040</td><td>4</td><td>1</td></tr>
+<tr><td>3045</td><td>4</td><td>1</td></tr>
+<tr><td>3050</td><td>4</td><td>1</td></tr>
+<tr><td>3055</td><td>4</td><td>1</td></tr>
+<tr><td>3060</td><td>4</td><td>1</td></tr>
+<tr><td>3065</td><td>4</td><td>1</td></tr>
+<tr><td>3070</td><td>4</td><td>1</td></tr>
+<tr><td>3075</td><td>4</td><td>1</td></tr>
+<tr><td>3080</td><td>4</td><td>1</td></tr>
+<tr><td>3085</td><td>4</td><td>1</td></tr>
+<tr><td>3090</td><td>4</td><td>1</td></tr>
+</table>
+<h3>damage: units able to fire through one fight</h3>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="284.000" text-anchor="end" class="muted">0</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">16</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Tick</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Units able to fire</text>
+<text x="56.000" y="296.000" text-anchor="middle" class="muted">0</text>
+<text x="57.333" y="296.000" text-anchor="middle" class="muted">5</text>
+<text x="58.667" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="60.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="61.333" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="62.667" y="296.000" text-anchor="middle" class="muted">25</text>
+<text x="64.000" y="296.000" text-anchor="middle" class="muted">30</text>
+<text x="65.333" y="296.000" text-anchor="middle" class="muted">35</text>
+<text x="66.667" y="296.000" text-anchor="middle" class="muted">40</text>
+<text x="68.000" y="296.000" text-anchor="middle" class="muted">45</text>
+<text x="69.333" y="296.000" text-anchor="middle" class="muted">50</text>
+<text x="70.667" y="296.000" text-anchor="middle" class="muted">55</text>
+<text x="72.000" y="296.000" text-anchor="middle" class="muted">60</text>
+<text x="73.333" y="296.000" text-anchor="middle" class="muted">65</text>
+<text x="74.667" y="296.000" text-anchor="middle" class="muted">70</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">75</text>
+<text x="77.333" y="296.000" text-anchor="middle" class="muted">80</text>
+<text x="78.667" y="296.000" text-anchor="middle" class="muted">85</text>
+<text x="80.000" y="296.000" text-anchor="middle" class="muted">90</text>
+<text x="81.333" y="296.000" text-anchor="middle" class="muted">95</text>
+<text x="82.667" y="296.000" text-anchor="middle" class="muted">100</text>
+<text x="84.000" y="296.000" text-anchor="middle" class="muted">105</text>
+<text x="85.333" y="296.000" text-anchor="middle" class="muted">110</text>
+<text x="86.667" y="296.000" text-anchor="middle" class="muted">115</text>
+<text x="88.000" y="296.000" text-anchor="middle" class="muted">120</text>
+<text x="89.333" y="296.000" text-anchor="middle" class="muted">125</text>
+<text x="90.667" y="296.000" text-anchor="middle" class="muted">130</text>
+<text x="92.000" y="296.000" text-anchor="middle" class="muted">135</text>
+<text x="93.333" y="296.000" text-anchor="middle" class="muted">140</text>
+<text x="94.667" y="296.000" text-anchor="middle" class="muted">145</text>
+<text x="96.000" y="296.000" text-anchor="middle" class="muted">150</text>
+<text x="97.333" y="296.000" text-anchor="middle" class="muted">155</text>
+<text x="98.667" y="296.000" text-anchor="middle" class="muted">160</text>
+<text x="100.000" y="296.000" text-anchor="middle" class="muted">165</text>
+<text x="101.333" y="296.000" text-anchor="middle" class="muted">170</text>
+<text x="102.667" y="296.000" text-anchor="middle" class="muted">175</text>
+<text x="104.000" y="296.000" text-anchor="middle" class="muted">180</text>
+<text x="105.333" y="296.000" text-anchor="middle" class="muted">185</text>
+<text x="106.667" y="296.000" text-anchor="middle" class="muted">190</text>
+<text x="108.000" y="296.000" text-anchor="middle" class="muted">195</text>
+<text x="109.333" y="296.000" text-anchor="middle" class="muted">200</text>
+<text x="110.667" y="296.000" text-anchor="middle" class="muted">205</text>
+<text x="112.000" y="296.000" text-anchor="middle" class="muted">210</text>
+<text x="113.333" y="296.000" text-anchor="middle" class="muted">215</text>
+<text x="114.667" y="296.000" text-anchor="middle" class="muted">220</text>
+<text x="116.000" y="296.000" text-anchor="middle" class="muted">225</text>
+<text x="117.333" y="296.000" text-anchor="middle" class="muted">230</text>
+<text x="118.667" y="296.000" text-anchor="middle" class="muted">235</text>
+<text x="120.000" y="296.000" text-anchor="middle" class="muted">240</text>
+<text x="121.333" y="296.000" text-anchor="middle" class="muted">245</text>
+<text x="122.667" y="296.000" text-anchor="middle" class="muted">250</text>
+<text x="124.000" y="296.000" text-anchor="middle" class="muted">255</text>
+<text x="125.333" y="296.000" text-anchor="middle" class="muted">260</text>
+<text x="126.667" y="296.000" text-anchor="middle" class="muted">265</text>
+<text x="128.000" y="296.000" text-anchor="middle" class="muted">270</text>
+<text x="129.333" y="296.000" text-anchor="middle" class="muted">275</text>
+<text x="130.667" y="296.000" text-anchor="middle" class="muted">280</text>
+<text x="132.000" y="296.000" text-anchor="middle" class="muted">285</text>
+<text x="133.333" y="296.000" text-anchor="middle" class="muted">290</text>
+<text x="134.667" y="296.000" text-anchor="middle" class="muted">295</text>
+<text x="136.000" y="296.000" text-anchor="middle" class="muted">300</text>
+<text x="137.333" y="296.000" text-anchor="middle" class="muted">305</text>
+<text x="138.667" y="296.000" text-anchor="middle" class="muted">310</text>
+<text x="140.000" y="296.000" text-anchor="middle" class="muted">315</text>
+<text x="141.333" y="296.000" text-anchor="middle" class="muted">320</text>
+<text x="142.667" y="296.000" text-anchor="middle" class="muted">325</text>
+<text x="144.000" y="296.000" text-anchor="middle" class="muted">330</text>
+<text x="145.333" y="296.000" text-anchor="middle" class="muted">335</text>
+<text x="146.667" y="296.000" text-anchor="middle" class="muted">340</text>
+<text x="148.000" y="296.000" text-anchor="middle" class="muted">345</text>
+<text x="149.333" y="296.000" text-anchor="middle" class="muted">350</text>
+<text x="150.667" y="296.000" text-anchor="middle" class="muted">355</text>
+<text x="152.000" y="296.000" text-anchor="middle" class="muted">360</text>
+<text x="153.333" y="296.000" text-anchor="middle" class="muted">365</text>
+<text x="154.667" y="296.000" text-anchor="middle" class="muted">370</text>
+<text x="156.000" y="296.000" text-anchor="middle" class="muted">375</text>
+<text x="157.333" y="296.000" text-anchor="middle" class="muted">380</text>
+<text x="158.667" y="296.000" text-anchor="middle" class="muted">385</text>
+<text x="160.000" y="296.000" text-anchor="middle" class="muted">390</text>
+<text x="161.333" y="296.000" text-anchor="middle" class="muted">395</text>
+<text x="162.667" y="296.000" text-anchor="middle" class="muted">400</text>
+<text x="164.000" y="296.000" text-anchor="middle" class="muted">405</text>
+<text x="165.333" y="296.000" text-anchor="middle" class="muted">410</text>
+<text x="166.667" y="296.000" text-anchor="middle" class="muted">415</text>
+<text x="168.000" y="296.000" text-anchor="middle" class="muted">420</text>
+<text x="169.333" y="296.000" text-anchor="middle" class="muted">425</text>
+<text x="170.667" y="296.000" text-anchor="middle" class="muted">430</text>
+<text x="172.000" y="296.000" text-anchor="middle" class="muted">435</text>
+<text x="173.333" y="296.000" text-anchor="middle" class="muted">440</text>
+<text x="174.667" y="296.000" text-anchor="middle" class="muted">445</text>
+<text x="176.000" y="296.000" text-anchor="middle" class="muted">450</text>
+<text x="177.333" y="296.000" text-anchor="middle" class="muted">455</text>
+<text x="178.667" y="296.000" text-anchor="middle" class="muted">460</text>
+<text x="180.000" y="296.000" text-anchor="middle" class="muted">465</text>
+<text x="181.333" y="296.000" text-anchor="middle" class="muted">470</text>
+<text x="182.667" y="296.000" text-anchor="middle" class="muted">475</text>
+<text x="184.000" y="296.000" text-anchor="middle" class="muted">480</text>
+<text x="185.333" y="296.000" text-anchor="middle" class="muted">485</text>
+<text x="186.667" y="296.000" text-anchor="middle" class="muted">490</text>
+<text x="188.000" y="296.000" text-anchor="middle" class="muted">495</text>
+<text x="189.333" y="296.000" text-anchor="middle" class="muted">500</text>
+<text x="190.667" y="296.000" text-anchor="middle" class="muted">505</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">510</text>
+<text x="193.333" y="296.000" text-anchor="middle" class="muted">515</text>
+<text x="194.667" y="296.000" text-anchor="middle" class="muted">520</text>
+<text x="196.000" y="296.000" text-anchor="middle" class="muted">525</text>
+<text x="197.333" y="296.000" text-anchor="middle" class="muted">530</text>
+<text x="198.667" y="296.000" text-anchor="middle" class="muted">535</text>
+<text x="200.000" y="296.000" text-anchor="middle" class="muted">540</text>
+<text x="201.333" y="296.000" text-anchor="middle" class="muted">545</text>
+<text x="202.667" y="296.000" text-anchor="middle" class="muted">550</text>
+<text x="204.000" y="296.000" text-anchor="middle" class="muted">555</text>
+<text x="205.333" y="296.000" text-anchor="middle" class="muted">560</text>
+<text x="206.667" y="296.000" text-anchor="middle" class="muted">565</text>
+<text x="208.000" y="296.000" text-anchor="middle" class="muted">570</text>
+<text x="209.333" y="296.000" text-anchor="middle" class="muted">575</text>
+<text x="210.667" y="296.000" text-anchor="middle" class="muted">580</text>
+<text x="212.000" y="296.000" text-anchor="middle" class="muted">585</text>
+<text x="213.333" y="296.000" text-anchor="middle" class="muted">590</text>
+<text x="214.667" y="296.000" text-anchor="middle" class="muted">595</text>
+<text x="216.000" y="296.000" text-anchor="middle" class="muted">600</text>
+<text x="217.333" y="296.000" text-anchor="middle" class="muted">605</text>
+<text x="218.667" y="296.000" text-anchor="middle" class="muted">610</text>
+<text x="220.000" y="296.000" text-anchor="middle" class="muted">615</text>
+<text x="221.333" y="296.000" text-anchor="middle" class="muted">620</text>
+<text x="222.667" y="296.000" text-anchor="middle" class="muted">625</text>
+<text x="224.000" y="296.000" text-anchor="middle" class="muted">630</text>
+<text x="225.333" y="296.000" text-anchor="middle" class="muted">635</text>
+<text x="226.667" y="296.000" text-anchor="middle" class="muted">640</text>
+<text x="228.000" y="296.000" text-anchor="middle" class="muted">645</text>
+<text x="229.333" y="296.000" text-anchor="middle" class="muted">650</text>
+<text x="230.667" y="296.000" text-anchor="middle" class="muted">655</text>
+<text x="232.000" y="296.000" text-anchor="middle" class="muted">660</text>
+<text x="233.333" y="296.000" text-anchor="middle" class="muted">665</text>
+<text x="234.667" y="296.000" text-anchor="middle" class="muted">670</text>
+<text x="236.000" y="296.000" text-anchor="middle" class="muted">675</text>
+<text x="237.333" y="296.000" text-anchor="middle" class="muted">680</text>
+<text x="238.667" y="296.000" text-anchor="middle" class="muted">685</text>
+<text x="240.000" y="296.000" text-anchor="middle" class="muted">690</text>
+<text x="241.333" y="296.000" text-anchor="middle" class="muted">695</text>
+<text x="242.667" y="296.000" text-anchor="middle" class="muted">700</text>
+<text x="244.000" y="296.000" text-anchor="middle" class="muted">705</text>
+<text x="245.333" y="296.000" text-anchor="middle" class="muted">710</text>
+<text x="246.667" y="296.000" text-anchor="middle" class="muted">715</text>
+<text x="248.000" y="296.000" text-anchor="middle" class="muted">720</text>
+<text x="249.333" y="296.000" text-anchor="middle" class="muted">725</text>
+<text x="250.667" y="296.000" text-anchor="middle" class="muted">730</text>
+<text x="252.000" y="296.000" text-anchor="middle" class="muted">735</text>
+<text x="253.333" y="296.000" text-anchor="middle" class="muted">740</text>
+<text x="254.667" y="296.000" text-anchor="middle" class="muted">745</text>
+<text x="256.000" y="296.000" text-anchor="middle" class="muted">750</text>
+<text x="257.333" y="296.000" text-anchor="middle" class="muted">755</text>
+<text x="258.667" y="296.000" text-anchor="middle" class="muted">760</text>
+<text x="260.000" y="296.000" text-anchor="middle" class="muted">765</text>
+<text x="261.333" y="296.000" text-anchor="middle" class="muted">770</text>
+<text x="262.667" y="296.000" text-anchor="middle" class="muted">775</text>
+<text x="264.000" y="296.000" text-anchor="middle" class="muted">780</text>
+<text x="265.333" y="296.000" text-anchor="middle" class="muted">785</text>
+<text x="266.667" y="296.000" text-anchor="middle" class="muted">790</text>
+<text x="268.000" y="296.000" text-anchor="middle" class="muted">795</text>
+<text x="269.333" y="296.000" text-anchor="middle" class="muted">800</text>
+<text x="270.667" y="296.000" text-anchor="middle" class="muted">805</text>
+<text x="272.000" y="296.000" text-anchor="middle" class="muted">810</text>
+<text x="273.333" y="296.000" text-anchor="middle" class="muted">815</text>
+<text x="274.667" y="296.000" text-anchor="middle" class="muted">820</text>
+<text x="276.000" y="296.000" text-anchor="middle" class="muted">825</text>
+<text x="277.333" y="296.000" text-anchor="middle" class="muted">830</text>
+<text x="278.667" y="296.000" text-anchor="middle" class="muted">835</text>
+<text x="280.000" y="296.000" text-anchor="middle" class="muted">840</text>
+<text x="281.333" y="296.000" text-anchor="middle" class="muted">845</text>
+<text x="282.667" y="296.000" text-anchor="middle" class="muted">850</text>
+<text x="284.000" y="296.000" text-anchor="middle" class="muted">855</text>
+<text x="285.333" y="296.000" text-anchor="middle" class="muted">860</text>
+<text x="286.667" y="296.000" text-anchor="middle" class="muted">865</text>
+<text x="288.000" y="296.000" text-anchor="middle" class="muted">870</text>
+<text x="289.333" y="296.000" text-anchor="middle" class="muted">875</text>
+<text x="290.667" y="296.000" text-anchor="middle" class="muted">880</text>
+<text x="292.000" y="296.000" text-anchor="middle" class="muted">885</text>
+<text x="293.333" y="296.000" text-anchor="middle" class="muted">890</text>
+<text x="294.667" y="296.000" text-anchor="middle" class="muted">895</text>
+<text x="296.000" y="296.000" text-anchor="middle" class="muted">900</text>
+<text x="297.333" y="296.000" text-anchor="middle" class="muted">905</text>
+<text x="298.667" y="296.000" text-anchor="middle" class="muted">910</text>
+<text x="300.000" y="296.000" text-anchor="middle" class="muted">915</text>
+<text x="301.333" y="296.000" text-anchor="middle" class="muted">920</text>
+<text x="302.667" y="296.000" text-anchor="middle" class="muted">925</text>
+<text x="304.000" y="296.000" text-anchor="middle" class="muted">930</text>
+<text x="305.333" y="296.000" text-anchor="middle" class="muted">935</text>
+<text x="306.667" y="296.000" text-anchor="middle" class="muted">940</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">945</text>
+<text x="309.333" y="296.000" text-anchor="middle" class="muted">950</text>
+<text x="310.667" y="296.000" text-anchor="middle" class="muted">955</text>
+<text x="312.000" y="296.000" text-anchor="middle" class="muted">960</text>
+<text x="313.333" y="296.000" text-anchor="middle" class="muted">965</text>
+<text x="314.667" y="296.000" text-anchor="middle" class="muted">970</text>
+<text x="316.000" y="296.000" text-anchor="middle" class="muted">975</text>
+<text x="317.333" y="296.000" text-anchor="middle" class="muted">980</text>
+<text x="318.667" y="296.000" text-anchor="middle" class="muted">985</text>
+<text x="320.000" y="296.000" text-anchor="middle" class="muted">990</text>
+<text x="321.333" y="296.000" text-anchor="middle" class="muted">995</text>
+<text x="322.667" y="296.000" text-anchor="middle" class="muted">1000</text>
+<text x="324.000" y="296.000" text-anchor="middle" class="muted">1005</text>
+<text x="325.333" y="296.000" text-anchor="middle" class="muted">1010</text>
+<text x="326.667" y="296.000" text-anchor="middle" class="muted">1015</text>
+<text x="328.000" y="296.000" text-anchor="middle" class="muted">1020</text>
+<text x="329.333" y="296.000" text-anchor="middle" class="muted">1025</text>
+<text x="330.667" y="296.000" text-anchor="middle" class="muted">1030</text>
+<text x="332.000" y="296.000" text-anchor="middle" class="muted">1035</text>
+<text x="333.333" y="296.000" text-anchor="middle" class="muted">1040</text>
+<text x="334.667" y="296.000" text-anchor="middle" class="muted">1045</text>
+<text x="336.000" y="296.000" text-anchor="middle" class="muted">1050</text>
+<text x="337.333" y="296.000" text-anchor="middle" class="muted">1055</text>
+<text x="338.667" y="296.000" text-anchor="middle" class="muted">1060</text>
+<text x="340.000" y="296.000" text-anchor="middle" class="muted">1065</text>
+<text x="341.333" y="296.000" text-anchor="middle" class="muted">1070</text>
+<text x="342.667" y="296.000" text-anchor="middle" class="muted">1075</text>
+<text x="344.000" y="296.000" text-anchor="middle" class="muted">1080</text>
+<text x="345.333" y="296.000" text-anchor="middle" class="muted">1085</text>
+<text x="346.667" y="296.000" text-anchor="middle" class="muted">1090</text>
+<text x="348.000" y="296.000" text-anchor="middle" class="muted">1095</text>
+<text x="349.333" y="296.000" text-anchor="middle" class="muted">1100</text>
+<text x="350.667" y="296.000" text-anchor="middle" class="muted">1105</text>
+<text x="352.000" y="296.000" text-anchor="middle" class="muted">1110</text>
+<text x="353.333" y="296.000" text-anchor="middle" class="muted">1115</text>
+<text x="354.667" y="296.000" text-anchor="middle" class="muted">1120</text>
+<text x="356.000" y="296.000" text-anchor="middle" class="muted">1125</text>
+<text x="357.333" y="296.000" text-anchor="middle" class="muted">1130</text>
+<text x="358.667" y="296.000" text-anchor="middle" class="muted">1135</text>
+<text x="360.000" y="296.000" text-anchor="middle" class="muted">1140</text>
+<text x="361.333" y="296.000" text-anchor="middle" class="muted">1145</text>
+<text x="362.667" y="296.000" text-anchor="middle" class="muted">1150</text>
+<text x="364.000" y="296.000" text-anchor="middle" class="muted">1155</text>
+<text x="365.333" y="296.000" text-anchor="middle" class="muted">1160</text>
+<text x="366.667" y="296.000" text-anchor="middle" class="muted">1165</text>
+<text x="368.000" y="296.000" text-anchor="middle" class="muted">1170</text>
+<text x="369.333" y="296.000" text-anchor="middle" class="muted">1175</text>
+<text x="370.667" y="296.000" text-anchor="middle" class="muted">1180</text>
+<text x="372.000" y="296.000" text-anchor="middle" class="muted">1185</text>
+<text x="373.333" y="296.000" text-anchor="middle" class="muted">1190</text>
+<text x="374.667" y="296.000" text-anchor="middle" class="muted">1195</text>
+<text x="376.000" y="296.000" text-anchor="middle" class="muted">1200</text>
+<text x="377.333" y="296.000" text-anchor="middle" class="muted">1205</text>
+<text x="378.667" y="296.000" text-anchor="middle" class="muted">1210</text>
+<text x="380.000" y="296.000" text-anchor="middle" class="muted">1215</text>
+<text x="381.333" y="296.000" text-anchor="middle" class="muted">1220</text>
+<text x="382.667" y="296.000" text-anchor="middle" class="muted">1225</text>
+<text x="384.000" y="296.000" text-anchor="middle" class="muted">1230</text>
+<text x="385.333" y="296.000" text-anchor="middle" class="muted">1235</text>
+<text x="386.667" y="296.000" text-anchor="middle" class="muted">1240</text>
+<text x="388.000" y="296.000" text-anchor="middle" class="muted">1245</text>
+<text x="389.333" y="296.000" text-anchor="middle" class="muted">1250</text>
+<text x="390.667" y="296.000" text-anchor="middle" class="muted">1255</text>
+<text x="392.000" y="296.000" text-anchor="middle" class="muted">1260</text>
+<text x="393.333" y="296.000" text-anchor="middle" class="muted">1265</text>
+<text x="394.667" y="296.000" text-anchor="middle" class="muted">1270</text>
+<text x="396.000" y="296.000" text-anchor="middle" class="muted">1275</text>
+<text x="397.333" y="296.000" text-anchor="middle" class="muted">1280</text>
+<text x="398.667" y="296.000" text-anchor="middle" class="muted">1285</text>
+<text x="400.000" y="296.000" text-anchor="middle" class="muted">1290</text>
+<text x="401.333" y="296.000" text-anchor="middle" class="muted">1295</text>
+<text x="402.667" y="296.000" text-anchor="middle" class="muted">1300</text>
+<text x="404.000" y="296.000" text-anchor="middle" class="muted">1305</text>
+<text x="405.333" y="296.000" text-anchor="middle" class="muted">1310</text>
+<text x="406.667" y="296.000" text-anchor="middle" class="muted">1315</text>
+<text x="408.000" y="296.000" text-anchor="middle" class="muted">1320</text>
+<text x="409.333" y="296.000" text-anchor="middle" class="muted">1325</text>
+<text x="410.667" y="296.000" text-anchor="middle" class="muted">1330</text>
+<text x="412.000" y="296.000" text-anchor="middle" class="muted">1335</text>
+<text x="413.333" y="296.000" text-anchor="middle" class="muted">1340</text>
+<text x="414.667" y="296.000" text-anchor="middle" class="muted">1345</text>
+<text x="416.000" y="296.000" text-anchor="middle" class="muted">1350</text>
+<text x="417.333" y="296.000" text-anchor="middle" class="muted">1355</text>
+<text x="418.667" y="296.000" text-anchor="middle" class="muted">1360</text>
+<text x="420.000" y="296.000" text-anchor="middle" class="muted">1365</text>
+<text x="421.333" y="296.000" text-anchor="middle" class="muted">1370</text>
+<text x="422.667" y="296.000" text-anchor="middle" class="muted">1375</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">1380</text>
+<text x="425.333" y="296.000" text-anchor="middle" class="muted">1385</text>
+<text x="426.667" y="296.000" text-anchor="middle" class="muted">1390</text>
+<text x="428.000" y="296.000" text-anchor="middle" class="muted">1395</text>
+<text x="429.333" y="296.000" text-anchor="middle" class="muted">1400</text>
+<text x="430.667" y="296.000" text-anchor="middle" class="muted">1405</text>
+<text x="432.000" y="296.000" text-anchor="middle" class="muted">1410</text>
+<text x="433.333" y="296.000" text-anchor="middle" class="muted">1415</text>
+<text x="434.667" y="296.000" text-anchor="middle" class="muted">1420</text>
+<text x="436.000" y="296.000" text-anchor="middle" class="muted">1425</text>
+<text x="437.333" y="296.000" text-anchor="middle" class="muted">1430</text>
+<text x="438.667" y="296.000" text-anchor="middle" class="muted">1435</text>
+<text x="440.000" y="296.000" text-anchor="middle" class="muted">1440</text>
+<text x="441.333" y="296.000" text-anchor="middle" class="muted">1445</text>
+<text x="442.667" y="296.000" text-anchor="middle" class="muted">1450</text>
+<text x="444.000" y="296.000" text-anchor="middle" class="muted">1455</text>
+<text x="445.333" y="296.000" text-anchor="middle" class="muted">1460</text>
+<text x="446.667" y="296.000" text-anchor="middle" class="muted">1465</text>
+<text x="448.000" y="296.000" text-anchor="middle" class="muted">1470</text>
+<text x="449.333" y="296.000" text-anchor="middle" class="muted">1475</text>
+<text x="450.667" y="296.000" text-anchor="middle" class="muted">1480</text>
+<text x="452.000" y="296.000" text-anchor="middle" class="muted">1485</text>
+<text x="453.333" y="296.000" text-anchor="middle" class="muted">1490</text>
+<text x="454.667" y="296.000" text-anchor="middle" class="muted">1495</text>
+<text x="456.000" y="296.000" text-anchor="middle" class="muted">1500</text>
+<text x="457.333" y="296.000" text-anchor="middle" class="muted">1505</text>
+<text x="458.667" y="296.000" text-anchor="middle" class="muted">1510</text>
+<text x="460.000" y="296.000" text-anchor="middle" class="muted">1515</text>
+<text x="461.333" y="296.000" text-anchor="middle" class="muted">1520</text>
+<text x="462.667" y="296.000" text-anchor="middle" class="muted">1525</text>
+<text x="464.000" y="296.000" text-anchor="middle" class="muted">1530</text>
+<text x="465.333" y="296.000" text-anchor="middle" class="muted">1535</text>
+<text x="466.667" y="296.000" text-anchor="middle" class="muted">1540</text>
+<text x="468.000" y="296.000" text-anchor="middle" class="muted">1545</text>
+<text x="469.333" y="296.000" text-anchor="middle" class="muted">1550</text>
+<text x="470.667" y="296.000" text-anchor="middle" class="muted">1555</text>
+<text x="472.000" y="296.000" text-anchor="middle" class="muted">1560</text>
+<text x="473.333" y="296.000" text-anchor="middle" class="muted">1565</text>
+<text x="474.667" y="296.000" text-anchor="middle" class="muted">1570</text>
+<text x="476.000" y="296.000" text-anchor="middle" class="muted">1575</text>
+<text x="477.333" y="296.000" text-anchor="middle" class="muted">1580</text>
+<text x="478.667" y="296.000" text-anchor="middle" class="muted">1585</text>
+<text x="480.000" y="296.000" text-anchor="middle" class="muted">1590</text>
+<text x="481.333" y="296.000" text-anchor="middle" class="muted">1595</text>
+<text x="482.667" y="296.000" text-anchor="middle" class="muted">1600</text>
+<text x="484.000" y="296.000" text-anchor="middle" class="muted">1605</text>
+<text x="485.333" y="296.000" text-anchor="middle" class="muted">1610</text>
+<text x="486.667" y="296.000" text-anchor="middle" class="muted">1615</text>
+<text x="488.000" y="296.000" text-anchor="middle" class="muted">1620</text>
+<text x="489.333" y="296.000" text-anchor="middle" class="muted">1625</text>
+<text x="490.667" y="296.000" text-anchor="middle" class="muted">1630</text>
+<text x="492.000" y="296.000" text-anchor="middle" class="muted">1635</text>
+<text x="493.333" y="296.000" text-anchor="middle" class="muted">1640</text>
+<text x="494.667" y="296.000" text-anchor="middle" class="muted">1645</text>
+<text x="496.000" y="296.000" text-anchor="middle" class="muted">1650</text>
+<text x="497.333" y="296.000" text-anchor="middle" class="muted">1655</text>
+<text x="498.667" y="296.000" text-anchor="middle" class="muted">1660</text>
+<text x="500.000" y="296.000" text-anchor="middle" class="muted">1665</text>
+<text x="501.333" y="296.000" text-anchor="middle" class="muted">1670</text>
+<text x="502.667" y="296.000" text-anchor="middle" class="muted">1675</text>
+<text x="504.000" y="296.000" text-anchor="middle" class="muted">1680</text>
+<text x="505.333" y="296.000" text-anchor="middle" class="muted">1685</text>
+<text x="506.667" y="296.000" text-anchor="middle" class="muted">1690</text>
+<text x="508.000" y="296.000" text-anchor="middle" class="muted">1695</text>
+<text x="509.333" y="296.000" text-anchor="middle" class="muted">1700</text>
+<text x="510.667" y="296.000" text-anchor="middle" class="muted">1705</text>
+<text x="512.000" y="296.000" text-anchor="middle" class="muted">1710</text>
+<text x="513.333" y="296.000" text-anchor="middle" class="muted">1715</text>
+<text x="514.667" y="296.000" text-anchor="middle" class="muted">1720</text>
+<text x="516.000" y="296.000" text-anchor="middle" class="muted">1725</text>
+<text x="517.333" y="296.000" text-anchor="middle" class="muted">1730</text>
+<text x="518.667" y="296.000" text-anchor="middle" class="muted">1735</text>
+<text x="520.000" y="296.000" text-anchor="middle" class="muted">1740</text>
+<text x="521.333" y="296.000" text-anchor="middle" class="muted">1745</text>
+<text x="522.667" y="296.000" text-anchor="middle" class="muted">1750</text>
+<text x="524.000" y="296.000" text-anchor="middle" class="muted">1755</text>
+<text x="525.333" y="296.000" text-anchor="middle" class="muted">1760</text>
+<text x="526.667" y="296.000" text-anchor="middle" class="muted">1765</text>
+<text x="528.000" y="296.000" text-anchor="middle" class="muted">1770</text>
+<text x="529.333" y="296.000" text-anchor="middle" class="muted">1775</text>
+<text x="530.667" y="296.000" text-anchor="middle" class="muted">1780</text>
+<text x="532.000" y="296.000" text-anchor="middle" class="muted">1785</text>
+<text x="533.333" y="296.000" text-anchor="middle" class="muted">1790</text>
+<text x="534.667" y="296.000" text-anchor="middle" class="muted">1795</text>
+<text x="536.000" y="296.000" text-anchor="middle" class="muted">1800</text>
+<text x="537.333" y="296.000" text-anchor="middle" class="muted">1805</text>
+<text x="538.667" y="296.000" text-anchor="middle" class="muted">1810</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">1815</text>
+<text x="541.333" y="296.000" text-anchor="middle" class="muted">1820</text>
+<text x="542.667" y="296.000" text-anchor="middle" class="muted">1825</text>
+<text x="544.000" y="296.000" text-anchor="middle" class="muted">1830</text>
+<text x="545.333" y="296.000" text-anchor="middle" class="muted">1835</text>
+<text x="546.667" y="296.000" text-anchor="middle" class="muted">1840</text>
+<text x="548.000" y="296.000" text-anchor="middle" class="muted">1845</text>
+<text x="549.333" y="296.000" text-anchor="middle" class="muted">1850</text>
+<text x="550.667" y="296.000" text-anchor="middle" class="muted">1855</text>
+<text x="552.000" y="296.000" text-anchor="middle" class="muted">1860</text>
+<text x="553.333" y="296.000" text-anchor="middle" class="muted">1865</text>
+<text x="554.667" y="296.000" text-anchor="middle" class="muted">1870</text>
+<text x="556.000" y="296.000" text-anchor="middle" class="muted">1875</text>
+<text x="557.333" y="296.000" text-anchor="middle" class="muted">1880</text>
+<text x="558.667" y="296.000" text-anchor="middle" class="muted">1885</text>
+<text x="560.000" y="296.000" text-anchor="middle" class="muted">1890</text>
+<polygon class="gap" points="56.000,280.000 57.333,280.000 58.667,280.000 60.000,280.000 61.333,280.000 62.667,280.000 64.000,280.000 65.333,280.000 66.667,280.000 68.000,280.000 69.333,280.000 70.667,280.000 72.000,248.000 73.333,248.000 74.667,216.000 76.000,200.000 77.333,184.000 78.667,104.000 80.000,88.000 81.333,72.000 82.667,56.000 84.000,56.000 85.333,40.000 86.667,24.000 88.000,24.000 89.333,24.000 90.667,24.000 92.000,24.000 93.333,24.000 94.667,24.000 96.000,24.000 97.333,24.000 98.667,24.000 100.000,24.000 101.333,24.000 102.667,24.000 104.000,24.000 105.333,24.000 106.667,24.000 108.000,24.000 109.333,24.000 110.667,24.000 112.000,24.000 113.333,24.000 114.667,24.000 116.000,24.000 117.333,24.000 118.667,24.000 120.000,24.000 121.333,24.000 122.667,24.000 124.000,24.000 125.333,40.000 126.667,40.000 128.000,40.000 129.333,40.000 130.667,40.000 132.000,40.000 133.333,40.000 134.667,40.000 136.000,40.000 137.333,40.000 138.667,40.000 140.000,40.000 141.333,40.000 142.667,40.000 144.000,40.000 145.333,40.000 146.667,40.000 148.000,40.000 149.333,40.000 150.667,40.000 152.000,40.000 153.333,40.000 154.667,40.000 156.000,40.000 157.333,40.000 158.667,40.000 160.000,40.000 161.333,40.000 162.667,40.000 164.000,40.000 165.333,40.000 166.667,40.000 168.000,40.000 169.333,40.000 170.667,40.000 172.000,40.000 173.333,40.000 174.667,40.000 176.000,40.000 177.333,40.000 178.667,40.000 180.000,40.000 181.333,40.000 182.667,40.000 184.000,56.000 185.333,56.000 186.667,56.000 188.000,56.000 189.333,56.000 190.667,56.000 192.000,56.000 193.333,56.000 194.667,56.000 196.000,56.000 197.333,56.000 198.667,56.000 200.000,56.000 201.333,56.000 202.667,56.000 204.000,56.000 205.333,56.000 206.667,56.000 208.000,56.000 209.333,56.000 210.667,56.000 212.000,56.000 213.333,56.000 214.667,56.000 216.000,56.000 217.333,56.000 218.667,56.000 220.000,56.000 221.333,56.000 222.667,56.000 224.000,56.000 225.333,56.000 226.667,56.000 228.000,56.000 229.333,56.000 230.667,56.000 232.000,56.000 233.333,56.000 234.667,72.000 236.000,72.000 237.333,72.000 238.667,72.000 240.000,72.000 241.333,72.000 242.667,72.000 244.000,72.000 245.333,72.000 246.667,72.000 248.000,72.000 249.333,72.000 250.667,72.000 252.000,72.000 253.333,72.000 254.667,72.000 256.000,72.000 257.333,72.000 258.667,72.000 260.000,72.000 261.333,72.000 262.667,72.000 264.000,72.000 265.333,72.000 266.667,72.000 268.000,72.000 269.333,72.000 270.667,72.000 272.000,88.000 273.333,88.000 274.667,88.000 276.000,88.000 277.333,88.000 278.667,104.000 280.000,104.000 281.333,104.000 282.667,104.000 284.000,104.000 285.333,104.000 286.667,104.000 288.000,104.000 289.333,104.000 290.667,104.000 292.000,104.000 293.333,104.000 294.667,104.000 296.000,104.000 297.333,104.000 298.667,104.000 300.000,104.000 301.333,104.000 302.667,104.000 304.000,104.000 305.333,104.000 306.667,104.000 308.000,104.000 309.333,104.000 310.667,104.000 312.000,104.000 313.333,104.000 314.667,104.000 316.000,104.000 317.333,104.000 318.667,104.000 320.000,104.000 321.333,104.000 322.667,104.000 324.000,104.000 325.333,104.000 326.667,104.000 328.000,104.000 329.333,104.000 330.667,104.000 332.000,104.000 333.333,104.000 334.667,104.000 336.000,104.000 337.333,104.000 338.667,104.000 340.000,104.000 341.333,104.000 342.667,104.000 344.000,104.000 345.333,104.000 346.667,104.000 348.000,104.000 349.333,104.000 350.667,104.000 352.000,104.000 353.333,104.000 354.667,104.000 356.000,104.000 357.333,104.000 358.667,104.000 360.000,104.000 361.333,120.000 362.667,120.000 364.000,120.000 365.333,120.000 366.667,120.000 368.000,120.000 369.333,120.000 370.667,120.000 372.000,120.000 373.333,120.000 374.667,120.000 376.000,120.000 377.333,120.000 378.667,120.000 380.000,120.000 381.333,120.000 382.667,120.000 384.000,120.000 385.333,120.000 386.667,120.000 388.000,120.000 389.333,120.000 390.667,120.000 392.000,120.000 393.333,120.000 394.667,120.000 396.000,120.000 397.333,120.000 398.667,120.000 400.000,120.000 401.333,120.000 402.667,120.000 404.000,120.000 405.333,120.000 406.667,120.000 408.000,120.000 409.333,120.000 410.667,120.000 412.000,120.000 413.333,120.000 414.667,120.000 416.000,120.000 417.333,120.000 418.667,120.000 420.000,120.000 421.333,120.000 422.667,120.000 424.000,120.000 425.333,120.000 426.667,120.000 428.000,120.000 429.333,120.000 430.667,120.000 432.000,120.000 433.333,120.000 434.667,120.000 436.000,120.000 437.333,136.000 438.667,136.000 440.000,136.000 441.333,136.000 442.667,136.000 444.000,136.000 445.333,136.000 446.667,136.000 448.000,136.000 449.333,136.000 450.667,136.000 452.000,136.000 453.333,136.000 454.667,136.000 456.000,136.000 457.333,136.000 458.667,136.000 460.000,136.000 461.333,136.000 462.667,136.000 464.000,136.000 465.333,136.000 466.667,136.000 468.000,136.000 469.333,136.000 470.667,136.000 472.000,136.000 473.333,136.000 474.667,136.000 476.000,136.000 477.333,136.000 478.667,136.000 480.000,136.000 481.333,136.000 482.667,136.000 484.000,136.000 485.333,136.000 486.667,136.000 488.000,136.000 489.333,136.000 490.667,136.000 492.000,136.000 493.333,136.000 494.667,136.000 496.000,136.000 497.333,136.000 498.667,136.000 500.000,136.000 501.333,136.000 502.667,136.000 504.000,136.000 505.333,136.000 506.667,136.000 508.000,136.000 509.333,136.000 510.667,136.000 512.000,136.000 513.333,136.000 514.667,136.000 516.000,136.000 517.333,136.000 518.667,136.000 520.000,136.000 521.333,136.000 522.667,136.000 524.000,136.000 525.333,136.000 526.667,136.000 528.000,136.000 529.333,136.000 530.667,136.000 532.000,136.000 533.333,136.000 534.667,136.000 536.000,136.000 537.333,136.000 538.667,136.000 540.000,136.000 541.333,136.000 542.667,136.000 544.000,136.000 545.333,136.000 546.667,136.000 548.000,136.000 549.333,136.000 550.667,136.000 552.000,136.000 553.333,136.000 554.667,136.000 556.000,136.000 557.333,136.000 558.667,136.000 560.000,280.000 560.000,280.000 558.667,264.000 557.333,264.000 556.000,264.000 554.667,264.000 553.333,264.000 552.000,264.000 550.667,248.000 549.333,248.000 548.000,248.000 546.667,248.000 545.333,248.000 544.000,248.000 542.667,248.000 541.333,248.000 540.000,248.000 538.667,248.000 537.333,248.000 536.000,248.000 534.667,248.000 533.333,248.000 532.000,248.000 530.667,248.000 529.333,248.000 528.000,248.000 526.667,248.000 525.333,248.000 524.000,248.000 522.667,248.000 521.333,248.000 520.000,232.000 518.667,232.000 517.333,232.000 516.000,232.000 514.667,232.000 513.333,232.000 512.000,232.000 510.667,232.000 509.333,232.000 508.000,232.000 506.667,232.000 505.333,232.000 504.000,232.000 502.667,232.000 501.333,232.000 500.000,232.000 498.667,232.000 497.333,232.000 496.000,232.000 494.667,232.000 493.333,232.000 492.000,232.000 490.667,232.000 489.333,232.000 488.000,232.000 486.667,232.000 485.333,232.000 484.000,232.000 482.667,216.000 481.333,216.000 480.000,216.000 478.667,216.000 477.333,216.000 476.000,216.000 474.667,216.000 473.333,216.000 472.000,216.000 470.667,216.000 469.333,216.000 468.000,216.000 466.667,216.000 465.333,216.000 464.000,216.000 462.667,216.000 461.333,216.000 460.000,216.000 458.667,216.000 457.333,216.000 456.000,216.000 454.667,216.000 453.333,216.000 452.000,216.000 450.667,216.000 449.333,216.000 448.000,216.000 446.667,216.000 445.333,216.000 444.000,216.000 442.667,216.000 441.333,216.000 440.000,216.000 438.667,216.000 437.333,200.000 436.000,200.000 434.667,200.000 433.333,200.000 432.000,200.000 430.667,200.000 429.333,200.000 428.000,200.000 426.667,200.000 425.333,200.000 424.000,200.000 422.667,200.000 421.333,200.000 420.000,200.000 418.667,200.000 417.333,184.000 416.000,184.000 414.667,184.000 413.333,184.000 412.000,184.000 410.667,184.000 409.333,184.000 408.000,184.000 406.667,184.000 405.333,184.000 404.000,184.000 402.667,184.000 401.333,184.000 400.000,184.000 398.667,184.000 397.333,184.000 396.000,184.000 394.667,184.000 393.333,184.000 392.000,184.000 390.667,184.000 389.333,184.000 388.000,184.000 386.667,184.000 385.333,184.000 384.000,184.000 382.667,184.000 381.333,184.000 380.000,184.000 378.667,184.000 377.333,184.000 376.000,184.000 374.667,168.000 373.333,168.000 372.000,168.000 370.667,168.000 369.333,168.000 368.000,168.000 366.667,168.000 365.333,168.000 364.000,168.000 362.667,168.000 361.333,168.000 360.000,168.000 358.667,168.000 357.333,168.000 356.000,168.000 354.667,168.000 353.333,152.000 352.000,152.000 350.667,152.000 349.333,152.000 348.000,152.000 346.667,152.000 345.333,152.000 344.000,152.000 342.667,152.000 341.333,152.000 340.000,152.000 338.667,152.000 337.333,152.000 336.000,152.000 334.667,152.000 333.333,152.000 332.000,152.000 330.667,152.000 329.333,152.000 328.000,152.000 326.667,152.000 325.333,152.000 324.000,152.000 322.667,152.000 321.333,136.000 320.000,136.000 318.667,136.000 317.333,136.000 316.000,136.000 314.667,136.000 313.333,136.000 312.000,136.000 310.667,136.000 309.333,136.000 308.000,136.000 306.667,136.000 305.333,136.000 304.000,136.000 302.667,136.000 301.333,136.000 300.000,136.000 298.667,136.000 297.333,136.000 296.000,136.000 294.667,136.000 293.333,136.000 292.000,136.000 290.667,136.000 289.333,120.000 288.000,120.000 286.667,120.000 285.333,120.000 284.000,120.000 282.667,104.000 281.333,104.000 280.000,104.000 278.667,104.000 277.333,104.000 276.000,104.000 274.667,104.000 273.333,104.000 272.000,104.000 270.667,104.000 269.333,104.000 268.000,104.000 266.667,104.000 265.333,104.000 264.000,104.000 262.667,104.000 261.333,104.000 260.000,104.000 258.667,104.000 257.333,104.000 256.000,104.000 254.667,104.000 253.333,104.000 252.000,104.000 250.667,88.000 249.333,88.000 248.000,88.000 246.667,88.000 245.333,88.000 244.000,88.000 242.667,88.000 241.333,88.000 240.000,88.000 238.667,88.000 237.333,88.000 236.000,88.000 234.667,88.000 233.333,88.000 232.000,88.000 230.667,88.000 229.333,88.000 228.000,88.000 226.667,88.000 225.333,88.000 224.000,88.000 222.667,88.000 221.333,88.000 220.000,88.000 218.667,88.000 217.333,88.000 216.000,88.000 214.667,88.000 213.333,88.000 212.000,88.000 210.667,88.000 209.333,88.000 208.000,88.000 206.667,56.000 205.333,56.000 204.000,56.000 202.667,56.000 201.333,56.000 200.000,56.000 198.667,56.000 197.333,56.000 196.000,56.000 194.667,56.000 193.333,56.000 192.000,56.000 190.667,56.000 189.333,56.000 188.000,40.000 186.667,40.000 185.333,40.000 184.000,40.000 182.667,40.000 181.333,40.000 180.000,40.000 178.667,40.000 177.333,40.000 176.000,40.000 174.667,40.000 173.333,40.000 172.000,40.000 170.667,40.000 169.333,40.000 168.000,40.000 166.667,40.000 165.333,40.000 164.000,40.000 162.667,40.000 161.333,40.000 160.000,40.000 158.667,40.000 157.333,40.000 156.000,40.000 154.667,40.000 153.333,40.000 152.000,40.000 150.667,40.000 149.333,40.000 148.000,40.000 146.667,40.000 145.333,40.000 144.000,40.000 142.667,40.000 141.333,40.000 140.000,40.000 138.667,40.000 137.333,40.000 136.000,40.000 134.667,40.000 133.333,40.000 132.000,40.000 130.667,40.000 129.333,24.000 128.000,24.000 126.667,24.000 125.333,24.000 124.000,24.000 122.667,24.000 121.333,24.000 120.000,24.000 118.667,24.000 117.333,24.000 116.000,24.000 114.667,24.000 113.333,24.000 112.000,24.000 110.667,24.000 109.333,24.000 108.000,24.000 106.667,24.000 105.333,24.000 104.000,24.000 102.667,24.000 101.333,24.000 100.000,24.000 98.667,24.000 97.333,24.000 96.000,24.000 94.667,24.000 93.333,24.000 92.000,24.000 90.667,24.000 89.333,24.000 88.000,24.000 86.667,24.000 85.333,40.000 84.000,56.000 82.667,56.000 81.333,56.000 80.000,72.000 78.667,136.000 77.333,184.000 76.000,200.000 74.667,216.000 73.333,248.000 72.000,248.000 70.667,280.000 69.333,280.000 68.000,280.000 66.667,280.000 65.333,280.000 64.000,280.000 62.667,280.000 61.333,280.000 60.000,280.000 58.667,280.000 57.333,280.000 56.000,280.000"/>
+<polyline class="side0" fill="none" points="56.000,280.000 57.333,280.000 58.667,280.000 60.000,280.000 61.333,280.000 62.667,280.000 64.000,280.000 65.333,280.000 66.667,280.000 68.000,280.000 69.333,280.000 70.667,280.000 72.000,248.000 73.333,248.000 74.667,216.000 76.000,200.000 77.333,184.000 78.667,104.000 80.000,88.000 81.333,72.000 82.667,56.000 84.000,56.000 85.333,40.000 86.667,24.000 88.000,24.000 89.333,24.000 90.667,24.000 92.000,24.000 93.333,24.000 94.667,24.000 96.000,24.000 97.333,24.000 98.667,24.000 100.000,24.000 101.333,24.000 102.667,24.000 104.000,24.000 105.333,24.000 106.667,24.000 108.000,24.000 109.333,24.000 110.667,24.000 112.000,24.000 113.333,24.000 114.667,24.000 116.000,24.000 117.333,24.000 118.667,24.000 120.000,24.000 121.333,24.000 122.667,24.000 124.000,24.000 125.333,40.000 126.667,40.000 128.000,40.000 129.333,40.000 130.667,40.000 132.000,40.000 133.333,40.000 134.667,40.000 136.000,40.000 137.333,40.000 138.667,40.000 140.000,40.000 141.333,40.000 142.667,40.000 144.000,40.000 145.333,40.000 146.667,40.000 148.000,40.000 149.333,40.000 150.667,40.000 152.000,40.000 153.333,40.000 154.667,40.000 156.000,40.000 157.333,40.000 158.667,40.000 160.000,40.000 161.333,40.000 162.667,40.000 164.000,40.000 165.333,40.000 166.667,40.000 168.000,40.000 169.333,40.000 170.667,40.000 172.000,40.000 173.333,40.000 174.667,40.000 176.000,40.000 177.333,40.000 178.667,40.000 180.000,40.000 181.333,40.000 182.667,40.000 184.000,56.000 185.333,56.000 186.667,56.000 188.000,56.000 189.333,56.000 190.667,56.000 192.000,56.000 193.333,56.000 194.667,56.000 196.000,56.000 197.333,56.000 198.667,56.000 200.000,56.000 201.333,56.000 202.667,56.000 204.000,56.000 205.333,56.000 206.667,56.000 208.000,56.000 209.333,56.000 210.667,56.000 212.000,56.000 213.333,56.000 214.667,56.000 216.000,56.000 217.333,56.000 218.667,56.000 220.000,56.000 221.333,56.000 222.667,56.000 224.000,56.000 225.333,56.000 226.667,56.000 228.000,56.000 229.333,56.000 230.667,56.000 232.000,56.000 233.333,56.000 234.667,72.000 236.000,72.000 237.333,72.000 238.667,72.000 240.000,72.000 241.333,72.000 242.667,72.000 244.000,72.000 245.333,72.000 246.667,72.000 248.000,72.000 249.333,72.000 250.667,72.000 252.000,72.000 253.333,72.000 254.667,72.000 256.000,72.000 257.333,72.000 258.667,72.000 260.000,72.000 261.333,72.000 262.667,72.000 264.000,72.000 265.333,72.000 266.667,72.000 268.000,72.000 269.333,72.000 270.667,72.000 272.000,88.000 273.333,88.000 274.667,88.000 276.000,88.000 277.333,88.000 278.667,104.000 280.000,104.000 281.333,104.000 282.667,104.000 284.000,104.000 285.333,104.000 286.667,104.000 288.000,104.000 289.333,104.000 290.667,104.000 292.000,104.000 293.333,104.000 294.667,104.000 296.000,104.000 297.333,104.000 298.667,104.000 300.000,104.000 301.333,104.000 302.667,104.000 304.000,104.000 305.333,104.000 306.667,104.000 308.000,104.000 309.333,104.000 310.667,104.000 312.000,104.000 313.333,104.000 314.667,104.000 316.000,104.000 317.333,104.000 318.667,104.000 320.000,104.000 321.333,104.000 322.667,104.000 324.000,104.000 325.333,104.000 326.667,104.000 328.000,104.000 329.333,104.000 330.667,104.000 332.000,104.000 333.333,104.000 334.667,104.000 336.000,104.000 337.333,104.000 338.667,104.000 340.000,104.000 341.333,104.000 342.667,104.000 344.000,104.000 345.333,104.000 346.667,104.000 348.000,104.000 349.333,104.000 350.667,104.000 352.000,104.000 353.333,104.000 354.667,104.000 356.000,104.000 357.333,104.000 358.667,104.000 360.000,104.000 361.333,120.000 362.667,120.000 364.000,120.000 365.333,120.000 366.667,120.000 368.000,120.000 369.333,120.000 370.667,120.000 372.000,120.000 373.333,120.000 374.667,120.000 376.000,120.000 377.333,120.000 378.667,120.000 380.000,120.000 381.333,120.000 382.667,120.000 384.000,120.000 385.333,120.000 386.667,120.000 388.000,120.000 389.333,120.000 390.667,120.000 392.000,120.000 393.333,120.000 394.667,120.000 396.000,120.000 397.333,120.000 398.667,120.000 400.000,120.000 401.333,120.000 402.667,120.000 404.000,120.000 405.333,120.000 406.667,120.000 408.000,120.000 409.333,120.000 410.667,120.000 412.000,120.000 413.333,120.000 414.667,120.000 416.000,120.000 417.333,120.000 418.667,120.000 420.000,120.000 421.333,120.000 422.667,120.000 424.000,120.000 425.333,120.000 426.667,120.000 428.000,120.000 429.333,120.000 430.667,120.000 432.000,120.000 433.333,120.000 434.667,120.000 436.000,120.000 437.333,136.000 438.667,136.000 440.000,136.000 441.333,136.000 442.667,136.000 444.000,136.000 445.333,136.000 446.667,136.000 448.000,136.000 449.333,136.000 450.667,136.000 452.000,136.000 453.333,136.000 454.667,136.000 456.000,136.000 457.333,136.000 458.667,136.000 460.000,136.000 461.333,136.000 462.667,136.000 464.000,136.000 465.333,136.000 466.667,136.000 468.000,136.000 469.333,136.000 470.667,136.000 472.000,136.000 473.333,136.000 474.667,136.000 476.000,136.000 477.333,136.000 478.667,136.000 480.000,136.000 481.333,136.000 482.667,136.000 484.000,136.000 485.333,136.000 486.667,136.000 488.000,136.000 489.333,136.000 490.667,136.000 492.000,136.000 493.333,136.000 494.667,136.000 496.000,136.000 497.333,136.000 498.667,136.000 500.000,136.000 501.333,136.000 502.667,136.000 504.000,136.000 505.333,136.000 506.667,136.000 508.000,136.000 509.333,136.000 510.667,136.000 512.000,136.000 513.333,136.000 514.667,136.000 516.000,136.000 517.333,136.000 518.667,136.000 520.000,136.000 521.333,136.000 522.667,136.000 524.000,136.000 525.333,136.000 526.667,136.000 528.000,136.000 529.333,136.000 530.667,136.000 532.000,136.000 533.333,136.000 534.667,136.000 536.000,136.000 537.333,136.000 538.667,136.000 540.000,136.000 541.333,136.000 542.667,136.000 544.000,136.000 545.333,136.000 546.667,136.000 548.000,136.000 549.333,136.000 550.667,136.000 552.000,136.000 553.333,136.000 554.667,136.000 556.000,136.000 557.333,136.000 558.667,136.000 560.000,280.000"/>
+<polyline class="side1" fill="none" points="56.000,280.000 57.333,280.000 58.667,280.000 60.000,280.000 61.333,280.000 62.667,280.000 64.000,280.000 65.333,280.000 66.667,280.000 68.000,280.000 69.333,280.000 70.667,280.000 72.000,248.000 73.333,248.000 74.667,216.000 76.000,200.000 77.333,184.000 78.667,136.000 80.000,72.000 81.333,56.000 82.667,56.000 84.000,56.000 85.333,40.000 86.667,24.000 88.000,24.000 89.333,24.000 90.667,24.000 92.000,24.000 93.333,24.000 94.667,24.000 96.000,24.000 97.333,24.000 98.667,24.000 100.000,24.000 101.333,24.000 102.667,24.000 104.000,24.000 105.333,24.000 106.667,24.000 108.000,24.000 109.333,24.000 110.667,24.000 112.000,24.000 113.333,24.000 114.667,24.000 116.000,24.000 117.333,24.000 118.667,24.000 120.000,24.000 121.333,24.000 122.667,24.000 124.000,24.000 125.333,24.000 126.667,24.000 128.000,24.000 129.333,24.000 130.667,40.000 132.000,40.000 133.333,40.000 134.667,40.000 136.000,40.000 137.333,40.000 138.667,40.000 140.000,40.000 141.333,40.000 142.667,40.000 144.000,40.000 145.333,40.000 146.667,40.000 148.000,40.000 149.333,40.000 150.667,40.000 152.000,40.000 153.333,40.000 154.667,40.000 156.000,40.000 157.333,40.000 158.667,40.000 160.000,40.000 161.333,40.000 162.667,40.000 164.000,40.000 165.333,40.000 166.667,40.000 168.000,40.000 169.333,40.000 170.667,40.000 172.000,40.000 173.333,40.000 174.667,40.000 176.000,40.000 177.333,40.000 178.667,40.000 180.000,40.000 181.333,40.000 182.667,40.000 184.000,40.000 185.333,40.000 186.667,40.000 188.000,40.000 189.333,56.000 190.667,56.000 192.000,56.000 193.333,56.000 194.667,56.000 196.000,56.000 197.333,56.000 198.667,56.000 200.000,56.000 201.333,56.000 202.667,56.000 204.000,56.000 205.333,56.000 206.667,56.000 208.000,88.000 209.333,88.000 210.667,88.000 212.000,88.000 213.333,88.000 214.667,88.000 216.000,88.000 217.333,88.000 218.667,88.000 220.000,88.000 221.333,88.000 222.667,88.000 224.000,88.000 225.333,88.000 226.667,88.000 228.000,88.000 229.333,88.000 230.667,88.000 232.000,88.000 233.333,88.000 234.667,88.000 236.000,88.000 237.333,88.000 238.667,88.000 240.000,88.000 241.333,88.000 242.667,88.000 244.000,88.000 245.333,88.000 246.667,88.000 248.000,88.000 249.333,88.000 250.667,88.000 252.000,104.000 253.333,104.000 254.667,104.000 256.000,104.000 257.333,104.000 258.667,104.000 260.000,104.000 261.333,104.000 262.667,104.000 264.000,104.000 265.333,104.000 266.667,104.000 268.000,104.000 269.333,104.000 270.667,104.000 272.000,104.000 273.333,104.000 274.667,104.000 276.000,104.000 277.333,104.000 278.667,104.000 280.000,104.000 281.333,104.000 282.667,104.000 284.000,120.000 285.333,120.000 286.667,120.000 288.000,120.000 289.333,120.000 290.667,136.000 292.000,136.000 293.333,136.000 294.667,136.000 296.000,136.000 297.333,136.000 298.667,136.000 300.000,136.000 301.333,136.000 302.667,136.000 304.000,136.000 305.333,136.000 306.667,136.000 308.000,136.000 309.333,136.000 310.667,136.000 312.000,136.000 313.333,136.000 314.667,136.000 316.000,136.000 317.333,136.000 318.667,136.000 320.000,136.000 321.333,136.000 322.667,152.000 324.000,152.000 325.333,152.000 326.667,152.000 328.000,152.000 329.333,152.000 330.667,152.000 332.000,152.000 333.333,152.000 334.667,152.000 336.000,152.000 337.333,152.000 338.667,152.000 340.000,152.000 341.333,152.000 342.667,152.000 344.000,152.000 345.333,152.000 346.667,152.000 348.000,152.000 349.333,152.000 350.667,152.000 352.000,152.000 353.333,152.000 354.667,168.000 356.000,168.000 357.333,168.000 358.667,168.000 360.000,168.000 361.333,168.000 362.667,168.000 364.000,168.000 365.333,168.000 366.667,168.000 368.000,168.000 369.333,168.000 370.667,168.000 372.000,168.000 373.333,168.000 374.667,168.000 376.000,184.000 377.333,184.000 378.667,184.000 380.000,184.000 381.333,184.000 382.667,184.000 384.000,184.000 385.333,184.000 386.667,184.000 388.000,184.000 389.333,184.000 390.667,184.000 392.000,184.000 393.333,184.000 394.667,184.000 396.000,184.000 397.333,184.000 398.667,184.000 400.000,184.000 401.333,184.000 402.667,184.000 404.000,184.000 405.333,184.000 406.667,184.000 408.000,184.000 409.333,184.000 410.667,184.000 412.000,184.000 413.333,184.000 414.667,184.000 416.000,184.000 417.333,184.000 418.667,200.000 420.000,200.000 421.333,200.000 422.667,200.000 424.000,200.000 425.333,200.000 426.667,200.000 428.000,200.000 429.333,200.000 430.667,200.000 432.000,200.000 433.333,200.000 434.667,200.000 436.000,200.000 437.333,200.000 438.667,216.000 440.000,216.000 441.333,216.000 442.667,216.000 444.000,216.000 445.333,216.000 446.667,216.000 448.000,216.000 449.333,216.000 450.667,216.000 452.000,216.000 453.333,216.000 454.667,216.000 456.000,216.000 457.333,216.000 458.667,216.000 460.000,216.000 461.333,216.000 462.667,216.000 464.000,216.000 465.333,216.000 466.667,216.000 468.000,216.000 469.333,216.000 470.667,216.000 472.000,216.000 473.333,216.000 474.667,216.000 476.000,216.000 477.333,216.000 478.667,216.000 480.000,216.000 481.333,216.000 482.667,216.000 484.000,232.000 485.333,232.000 486.667,232.000 488.000,232.000 489.333,232.000 490.667,232.000 492.000,232.000 493.333,232.000 494.667,232.000 496.000,232.000 497.333,232.000 498.667,232.000 500.000,232.000 501.333,232.000 502.667,232.000 504.000,232.000 505.333,232.000 506.667,232.000 508.000,232.000 509.333,232.000 510.667,232.000 512.000,232.000 513.333,232.000 514.667,232.000 516.000,232.000 517.333,232.000 518.667,232.000 520.000,232.000 521.333,248.000 522.667,248.000 524.000,248.000 525.333,248.000 526.667,248.000 528.000,248.000 529.333,248.000 530.667,248.000 532.000,248.000 533.333,248.000 534.667,248.000 536.000,248.000 537.333,248.000 538.667,248.000 540.000,248.000 541.333,248.000 542.667,248.000 544.000,248.000 545.333,248.000 546.667,248.000 548.000,248.000 549.333,248.000 550.667,248.000 552.000,264.000 553.333,264.000 554.667,264.000 556.000,264.000 557.333,264.000 558.667,264.000 560.000,280.000"/>
+<text x="568.000" y="279.000" text-anchor="start" class="side0">Side 0</text>
+<text x="568.000" y="289.000" text-anchor="start" class="side1">Side 1</text>
+</svg>
+<table>
+<tr><th>Tick</th><th>Side 0</th><th>Side 1</th></tr>
+<tr><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>5</td><td>0</td><td>0</td></tr>
+<tr><td>10</td><td>0</td><td>0</td></tr>
+<tr><td>15</td><td>0</td><td>0</td></tr>
+<tr><td>20</td><td>0</td><td>0</td></tr>
+<tr><td>25</td><td>0</td><td>0</td></tr>
+<tr><td>30</td><td>0</td><td>0</td></tr>
+<tr><td>35</td><td>0</td><td>0</td></tr>
+<tr><td>40</td><td>0</td><td>0</td></tr>
+<tr><td>45</td><td>0</td><td>0</td></tr>
+<tr><td>50</td><td>0</td><td>0</td></tr>
+<tr><td>55</td><td>0</td><td>0</td></tr>
+<tr><td>60</td><td>2</td><td>2</td></tr>
+<tr><td>65</td><td>2</td><td>2</td></tr>
+<tr><td>70</td><td>4</td><td>4</td></tr>
+<tr><td>75</td><td>5</td><td>5</td></tr>
+<tr><td>80</td><td>6</td><td>6</td></tr>
+<tr><td>85</td><td>11</td><td>9</td></tr>
+<tr><td>90</td><td>12</td><td>13</td></tr>
+<tr><td>95</td><td>13</td><td>14</td></tr>
+<tr><td>100</td><td>14</td><td>14</td></tr>
+<tr><td>105</td><td>14</td><td>14</td></tr>
+<tr><td>110</td><td>15</td><td>15</td></tr>
+<tr><td>115</td><td>16</td><td>16</td></tr>
+<tr><td>120</td><td>16</td><td>16</td></tr>
+<tr><td>125</td><td>16</td><td>16</td></tr>
+<tr><td>130</td><td>16</td><td>16</td></tr>
+<tr><td>135</td><td>16</td><td>16</td></tr>
+<tr><td>140</td><td>16</td><td>16</td></tr>
+<tr><td>145</td><td>16</td><td>16</td></tr>
+<tr><td>150</td><td>16</td><td>16</td></tr>
+<tr><td>155</td><td>16</td><td>16</td></tr>
+<tr><td>160</td><td>16</td><td>16</td></tr>
+<tr><td>165</td><td>16</td><td>16</td></tr>
+<tr><td>170</td><td>16</td><td>16</td></tr>
+<tr><td>175</td><td>16</td><td>16</td></tr>
+<tr><td>180</td><td>16</td><td>16</td></tr>
+<tr><td>185</td><td>16</td><td>16</td></tr>
+<tr><td>190</td><td>16</td><td>16</td></tr>
+<tr><td>195</td><td>16</td><td>16</td></tr>
+<tr><td>200</td><td>16</td><td>16</td></tr>
+<tr><td>205</td><td>16</td><td>16</td></tr>
+<tr><td>210</td><td>16</td><td>16</td></tr>
+<tr><td>215</td><td>16</td><td>16</td></tr>
+<tr><td>220</td><td>16</td><td>16</td></tr>
+<tr><td>225</td><td>16</td><td>16</td></tr>
+<tr><td>230</td><td>16</td><td>16</td></tr>
+<tr><td>235</td><td>16</td><td>16</td></tr>
+<tr><td>240</td><td>16</td><td>16</td></tr>
+<tr><td>245</td><td>16</td><td>16</td></tr>
+<tr><td>250</td><td>16</td><td>16</td></tr>
+<tr><td>255</td><td>16</td><td>16</td></tr>
+<tr><td>260</td><td>15</td><td>16</td></tr>
+<tr><td>265</td><td>15</td><td>16</td></tr>
+<tr><td>270</td><td>15</td><td>16</td></tr>
+<tr><td>275</td><td>15</td><td>16</td></tr>
+<tr><td>280</td><td>15</td><td>15</td></tr>
+<tr><td>285</td><td>15</td><td>15</td></tr>
+<tr><td>290</td><td>15</td><td>15</td></tr>
+<tr><td>295</td><td>15</td><td>15</td></tr>
+<tr><td>300</td><td>15</td><td>15</td></tr>
+<tr><td>305</td><td>15</td><td>15</td></tr>
+<tr><td>310</td><td>15</td><td>15</td></tr>
+<tr><td>315</td><td>15</td><td>15</td></tr>
+<tr><td>320</td><td>15</td><td>15</td></tr>
+<tr><td>325</td><td>15</td><td>15</td></tr>
+<tr><td>330</td><td>15</td><td>15</td></tr>
+<tr><td>335</td><td>15</td><td>15</td></tr>
+<tr><td>340</td><td>15</td><td>15</td></tr>
+<tr><td>345</td><td>15</td><td>15</td></tr>
+<tr><td>350</td><td>15</td><td>15</td></tr>
+<tr><td>355</td><td>15</td><td>15</td></tr>
+<tr><td>360</td><td>15</td><td>15</td></tr>
+<tr><td>365</td><td>15</td><td>15</td></tr>
+<tr><td>370</td><td>15</td><td>15</td></tr>
+<tr><td>375</td><td>15</td><td>15</td></tr>
+<tr><td>380</td><td>15</td><td>15</td></tr>
+<tr><td>385</td><td>15</td><td>15</td></tr>
+<tr><td>390</td><td>15</td><td>15</td></tr>
+<tr><td>395</td><td>15</td><td>15</td></tr>
+<tr><td>400</td><td>15</td><td>15</td></tr>
+<tr><td>405</td><td>15</td><td>15</td></tr>
+<tr><td>410</td><td>15</td><td>15</td></tr>
+<tr><td>415</td><td>15</td><td>15</td></tr>
+<tr><td>420</td><td>15</td><td>15</td></tr>
+<tr><td>425</td><td>15</td><td>15</td></tr>
+<tr><td>430</td><td>15</td><td>15</td></tr>
+<tr><td>435</td><td>15</td><td>15</td></tr>
+<tr><td>440</td><td>15</td><td>15</td></tr>
+<tr><td>445</td><td>15</td><td>15</td></tr>
+<tr><td>450</td><td>15</td><td>15</td></tr>
+<tr><td>455</td><td>15</td><td>15</td></tr>
+<tr><td>460</td><td>15</td><td>15</td></tr>
+<tr><td>465</td><td>15</td><td>15</td></tr>
+<tr><td>470</td><td>15</td><td>15</td></tr>
+<tr><td>475</td><td>15</td><td>15</td></tr>
+<tr><td>480</td><td>14</td><td>15</td></tr>
+<tr><td>485</td><td>14</td><td>15</td></tr>
+<tr><td>490</td><td>14</td><td>15</td></tr>
+<tr><td>495</td><td>14</td><td>15</td></tr>
+<tr><td>500</td><td>14</td><td>14</td></tr>
+<tr><td>505</td><td>14</td><td>14</td></tr>
+<tr><td>510</td><td>14</td><td>14</td></tr>
+<tr><td>515</td><td>14</td><td>14</td></tr>
+<tr><td>520</td><td>14</td><td>14</td></tr>
+<tr><td>525</td><td>14</td><td>14</td></tr>
+<tr><td>530</td><td>14</td><td>14</td></tr>
+<tr><td>535</td><td>14</td><td>14</td></tr>
+<tr><td>540</td><td>14</td><td>14</td></tr>
+<tr><td>545</td><td>14</td><td>14</td></tr>
+<tr><td>550</td><td>14</td><td>14</td></tr>
+<tr><td>555</td><td>14</td><td>14</td></tr>
+<tr><td>560</td><td>14</td><td>14</td></tr>
+<tr><td>565</td><td>14</td><td>14</td></tr>
+<tr><td>570</td><td>14</td><td>12</td></tr>
+<tr><td>575</td><td>14</td><td>12</td></tr>
+<tr><td>580</td><td>14</td><td>12</td></tr>
+<tr><td>585</td><td>14</td><td>12</td></tr>
+<tr><td>590</td><td>14</td><td>12</td></tr>
+<tr><td>595</td><td>14</td><td>12</td></tr>
+<tr><td>600</td><td>14</td><td>12</td></tr>
+<tr><td>605</td><td>14</td><td>12</td></tr>
+<tr><td>610</td><td>14</td><td>12</td></tr>
+<tr><td>615</td><td>14</td><td>12</td></tr>
+<tr><td>620</td><td>14</td><td>12</td></tr>
+<tr><td>625</td><td>14</td><td>12</td></tr>
+<tr><td>630</td><td>14</td><td>12</td></tr>
+<tr><td>635</td><td>14</td><td>12</td></tr>
+<tr><td>640</td><td>14</td><td>12</td></tr>
+<tr><td>645</td><td>14</td><td>12</td></tr>
+<tr><td>650</td><td>14</td><td>12</td></tr>
+<tr><td>655</td><td>14</td><td>12</td></tr>
+<tr><td>660</td><td>14</td><td>12</td></tr>
+<tr><td>665</td><td>14</td><td>12</td></tr>
+<tr><td>670</td><td>13</td><td>12</td></tr>
+<tr><td>675</td><td>13</td><td>12</td></tr>
+<tr><td>680</td><td>13</td><td>12</td></tr>
+<tr><td>685</td><td>13</td><td>12</td></tr>
+<tr><td>690</td><td>13</td><td>12</td></tr>
+<tr><td>695</td><td>13</td><td>12</td></tr>
+<tr><td>700</td><td>13</td><td>12</td></tr>
+<tr><td>705</td><td>13</td><td>12</td></tr>
+<tr><td>710</td><td>13</td><td>12</td></tr>
+<tr><td>715</td><td>13</td><td>12</td></tr>
+<tr><td>720</td><td>13</td><td>12</td></tr>
+<tr><td>725</td><td>13</td><td>12</td></tr>
+<tr><td>730</td><td>13</td><td>12</td></tr>
+<tr><td>735</td><td>13</td><td>11</td></tr>
+<tr><td>740</td><td>13</td><td>11</td></tr>
+<tr><td>745</td><td>13</td><td>11</td></tr>
+<tr><td>750</td><td>13</td><td>11</td></tr>
+<tr><td>755</td><td>13</td><td>11</td></tr>
+<tr><td>760</td><td>13</td><td>11</td></tr>
+<tr><td>765</td><td>13</td><td>11</td></tr>
+<tr><td>770</td><td>13</td><td>11</td></tr>
+<tr><td>775</td><td>13</td><td>11</td></tr>
+<tr><td>780</td><td>13</td><td>11</td></tr>
+<tr><td>785</td><td>13</td><td>11</td></tr>
+<tr><td>790</td><td>13</td><td>11</td></tr>
+<tr><td>795</td><td>13</td><td>11</td></tr>
+<tr><td>800</td><td>13</td><td>11</td></tr>
+<tr><td>805</td><td>13</td><td>11</td></tr>
+<tr><td>810</td><td>12</td><td>11</td></tr>
+<tr><td>815</td><td>12</td><td>11</td></tr>
+<tr><td>820</td><td>12</td><td>11</td></tr>
+<tr><td>825</td><td>12</td><td>11</td></tr>
+<tr><td>830</td><td>12</td><td>11</td></tr>
+<tr><td>835</td><td>11</td><td>11</td></tr>
+<tr><td>840</td><td>11</td><td>11</td></tr>
+<tr><td>845</td><td>11</td><td>11</td></tr>
+<tr><td>850</td><td>11</td><td>11</td></tr>
+<tr><td>855</td><td>11</td><td>10</td></tr>
+<tr><td>860</td><td>11</td><td>10</td></tr>
+<tr><td>865</td><td>11</td><td>10</td></tr>
+<tr><td>870</td><td>11</td><td>10</td></tr>
+<tr><td>875</td><td>11</td><td>10</td></tr>
+<tr><td>880</td><td>11</td><td>9</td></tr>
+<tr><td>885</td><td>11</td><td>9</td></tr>
+<tr><td>890</td><td>11</td><td>9</td></tr>
+<tr><td>895</td><td>11</td><td>9</td></tr>
+<tr><td>900</td><td>11</td><td>9</td></tr>
+<tr><td>905</td><td>11</td><td>9</td></tr>
+<tr><td>910</td><td>11</td><td>9</td></tr>
+<tr><td>915</td><td>11</td><td>9</td></tr>
+<tr><td>920</td><td>11</td><td>9</td></tr>
+<tr><td>925</td><td>11</td><td>9</td></tr>
+<tr><td>930</td><td>11</td><td>9</td></tr>
+<tr><td>935</td><td>11</td><td>9</td></tr>
+<tr><td>940</td><td>11</td><td>9</td></tr>
+<tr><td>945</td><td>11</td><td>9</td></tr>
+<tr><td>950</td><td>11</td><td>9</td></tr>
+<tr><td>955</td><td>11</td><td>9</td></tr>
+<tr><td>960</td><td>11</td><td>9</td></tr>
+<tr><td>965</td><td>11</td><td>9</td></tr>
+<tr><td>970</td><td>11</td><td>9</td></tr>
+<tr><td>975</td><td>11</td><td>9</td></tr>
+<tr><td>980</td><td>11</td><td>9</td></tr>
+<tr><td>985</td><td>11</td><td>9</td></tr>
+<tr><td>990</td><td>11</td><td>9</td></tr>
+<tr><td>995</td><td>11</td><td>9</td></tr>
+<tr><td>1000</td><td>11</td><td>8</td></tr>
+<tr><td>1005</td><td>11</td><td>8</td></tr>
+<tr><td>1010</td><td>11</td><td>8</td></tr>
+<tr><td>1015</td><td>11</td><td>8</td></tr>
+<tr><td>1020</td><td>11</td><td>8</td></tr>
+<tr><td>1025</td><td>11</td><td>8</td></tr>
+<tr><td>1030</td><td>11</td><td>8</td></tr>
+<tr><td>1035</td><td>11</td><td>8</td></tr>
+<tr><td>1040</td><td>11</td><td>8</td></tr>
+<tr><td>1045</td><td>11</td><td>8</td></tr>
+<tr><td>1050</td><td>11</td><td>8</td></tr>
+<tr><td>1055</td><td>11</td><td>8</td></tr>
+<tr><td>1060</td><td>11</td><td>8</td></tr>
+<tr><td>1065</td><td>11</td><td>8</td></tr>
+<tr><td>1070</td><td>11</td><td>8</td></tr>
+<tr><td>1075</td><td>11</td><td>8</td></tr>
+<tr><td>1080</td><td>11</td><td>8</td></tr>
+<tr><td>1085</td><td>11</td><td>8</td></tr>
+<tr><td>1090</td><td>11</td><td>8</td></tr>
+<tr><td>1095</td><td>11</td><td>8</td></tr>
+<tr><td>1100</td><td>11</td><td>8</td></tr>
+<tr><td>1105</td><td>11</td><td>8</td></tr>
+<tr><td>1110</td><td>11</td><td>8</td></tr>
+<tr><td>1115</td><td>11</td><td>8</td></tr>
+<tr><td>1120</td><td>11</td><td>7</td></tr>
+<tr><td>1125</td><td>11</td><td>7</td></tr>
+<tr><td>1130</td><td>11</td><td>7</td></tr>
+<tr><td>1135</td><td>11</td><td>7</td></tr>
+<tr><td>1140</td><td>11</td><td>7</td></tr>
+<tr><td>1145</td><td>10</td><td>7</td></tr>
+<tr><td>1150</td><td>10</td><td>7</td></tr>
+<tr><td>1155</td><td>10</td><td>7</td></tr>
+<tr><td>1160</td><td>10</td><td>7</td></tr>
+<tr><td>1165</td><td>10</td><td>7</td></tr>
+<tr><td>1170</td><td>10</td><td>7</td></tr>
+<tr><td>1175</td><td>10</td><td>7</td></tr>
+<tr><td>1180</td><td>10</td><td>7</td></tr>
+<tr><td>1185</td><td>10</td><td>7</td></tr>
+<tr><td>1190</td><td>10</td><td>7</td></tr>
+<tr><td>1195</td><td>10</td><td>7</td></tr>
+<tr><td>1200</td><td>10</td><td>6</td></tr>
+<tr><td>1205</td><td>10</td><td>6</td></tr>
+<tr><td>1210</td><td>10</td><td>6</td></tr>
+<tr><td>1215</td><td>10</td><td>6</td></tr>
+<tr><td>1220</td><td>10</td><td>6</td></tr>
+<tr><td>1225</td><td>10</td><td>6</td></tr>
+<tr><td>1230</td><td>10</td><td>6</td></tr>
+<tr><td>1235</td><td>10</td><td>6</td></tr>
+<tr><td>1240</td><td>10</td><td>6</td></tr>
+<tr><td>1245</td><td>10</td><td>6</td></tr>
+<tr><td>1250</td><td>10</td><td>6</td></tr>
+<tr><td>1255</td><td>10</td><td>6</td></tr>
+<tr><td>1260</td><td>10</td><td>6</td></tr>
+<tr><td>1265</td><td>10</td><td>6</td></tr>
+<tr><td>1270</td><td>10</td><td>6</td></tr>
+<tr><td>1275</td><td>10</td><td>6</td></tr>
+<tr><td>1280</td><td>10</td><td>6</td></tr>
+<tr><td>1285</td><td>10</td><td>6</td></tr>
+<tr><td>1290</td><td>10</td><td>6</td></tr>
+<tr><td>1295</td><td>10</td><td>6</td></tr>
+<tr><td>1300</td><td>10</td><td>6</td></tr>
+<tr><td>1305</td><td>10</td><td>6</td></tr>
+<tr><td>1310</td><td>10</td><td>6</td></tr>
+<tr><td>1315</td><td>10</td><td>6</td></tr>
+<tr><td>1320</td><td>10</td><td>6</td></tr>
+<tr><td>1325</td><td>10</td><td>6</td></tr>
+<tr><td>1330</td><td>10</td><td>6</td></tr>
+<tr><td>1335</td><td>10</td><td>6</td></tr>
+<tr><td>1340</td><td>10</td><td>6</td></tr>
+<tr><td>1345</td><td>10</td><td>6</td></tr>
+<tr><td>1350</td><td>10</td><td>6</td></tr>
+<tr><td>1355</td><td>10</td><td>6</td></tr>
+<tr><td>1360</td><td>10</td><td>5</td></tr>
+<tr><td>1365</td><td>10</td><td>5</td></tr>
+<tr><td>1370</td><td>10</td><td>5</td></tr>
+<tr><td>1375</td><td>10</td><td>5</td></tr>
+<tr><td>1380</td><td>10</td><td>5</td></tr>
+<tr><td>1385</td><td>10</td><td>5</td></tr>
+<tr><td>1390</td><td>10</td><td>5</td></tr>
+<tr><td>1395</td><td>10</td><td>5</td></tr>
+<tr><td>1400</td><td>10</td><td>5</td></tr>
+<tr><td>1405</td><td>10</td><td>5</td></tr>
+<tr><td>1410</td><td>10</td><td>5</td></tr>
+<tr><td>1415</td><td>10</td><td>5</td></tr>
+<tr><td>1420</td><td>10</td><td>5</td></tr>
+<tr><td>1425</td><td>10</td><td>5</td></tr>
+<tr><td>1430</td><td>9</td><td>5</td></tr>
+<tr><td>1435</td><td>9</td><td>4</td></tr>
+<tr><td>1440</td><td>9</td><td>4</td></tr>
+<tr><td>1445</td><td>9</td><td>4</td></tr>
+<tr><td>1450</td><td>9</td><td>4</td></tr>
+<tr><td>1455</td><td>9</td><td>4</td></tr>
+<tr><td>1460</td><td>9</td><td>4</td></tr>
+<tr><td>1465</td><td>9</td><td>4</td></tr>
+<tr><td>1470</td><td>9</td><td>4</td></tr>
+<tr><td>1475</td><td>9</td><td>4</td></tr>
+<tr><td>1480</td><td>9</td><td>4</td></tr>
+<tr><td>1485</td><td>9</td><td>4</td></tr>
+<tr><td>1490</td><td>9</td><td>4</td></tr>
+<tr><td>1495</td><td>9</td><td>4</td></tr>
+<tr><td>1500</td><td>9</td><td>4</td></tr>
+<tr><td>1505</td><td>9</td><td>4</td></tr>
+<tr><td>1510</td><td>9</td><td>4</td></tr>
+<tr><td>1515</td><td>9</td><td>4</td></tr>
+<tr><td>1520</td><td>9</td><td>4</td></tr>
+<tr><td>1525</td><td>9</td><td>4</td></tr>
+<tr><td>1530</td><td>9</td><td>4</td></tr>
+<tr><td>1535</td><td>9</td><td>4</td></tr>
+<tr><td>1540</td><td>9</td><td>4</td></tr>
+<tr><td>1545</td><td>9</td><td>4</td></tr>
+<tr><td>1550</td><td>9</td><td>4</td></tr>
+<tr><td>1555</td><td>9</td><td>4</td></tr>
+<tr><td>1560</td><td>9</td><td>4</td></tr>
+<tr><td>1565</td><td>9</td><td>4</td></tr>
+<tr><td>1570</td><td>9</td><td>4</td></tr>
+<tr><td>1575</td><td>9</td><td>4</td></tr>
+<tr><td>1580</td><td>9</td><td>4</td></tr>
+<tr><td>1585</td><td>9</td><td>4</td></tr>
+<tr><td>1590</td><td>9</td><td>4</td></tr>
+<tr><td>1595</td><td>9</td><td>4</td></tr>
+<tr><td>1600</td><td>9</td><td>4</td></tr>
+<tr><td>1605</td><td>9</td><td>3</td></tr>
+<tr><td>1610</td><td>9</td><td>3</td></tr>
+<tr><td>1615</td><td>9</td><td>3</td></tr>
+<tr><td>1620</td><td>9</td><td>3</td></tr>
+<tr><td>1625</td><td>9</td><td>3</td></tr>
+<tr><td>1630</td><td>9</td><td>3</td></tr>
+<tr><td>1635</td><td>9</td><td>3</td></tr>
+<tr><td>1640</td><td>9</td><td>3</td></tr>
+<tr><td>1645</td><td>9</td><td>3</td></tr>
+<tr><td>1650</td><td>9</td><td>3</td></tr>
+<tr><td>1655</td><td>9</td><td>3</td></tr>
+<tr><td>1660</td><td>9</td><td>3</td></tr>
+<tr><td>1665</td><td>9</td><td>3</td></tr>
+<tr><td>1670</td><td>9</td><td>3</td></tr>
+<tr><td>1675</td><td>9</td><td>3</td></tr>
+<tr><td>1680</td><td>9</td><td>3</td></tr>
+<tr><td>1685</td><td>9</td><td>3</td></tr>
+<tr><td>1690</td><td>9</td><td>3</td></tr>
+<tr><td>1695</td><td>9</td><td>3</td></tr>
+<tr><td>1700</td><td>9</td><td>3</td></tr>
+<tr><td>1705</td><td>9</td><td>3</td></tr>
+<tr><td>1710</td><td>9</td><td>3</td></tr>
+<tr><td>1715</td><td>9</td><td>3</td></tr>
+<tr><td>1720</td><td>9</td><td>3</td></tr>
+<tr><td>1725</td><td>9</td><td>3</td></tr>
+<tr><td>1730</td><td>9</td><td>3</td></tr>
+<tr><td>1735</td><td>9</td><td>3</td></tr>
+<tr><td>1740</td><td>9</td><td>3</td></tr>
+<tr><td>1745</td><td>9</td><td>2</td></tr>
+<tr><td>1750</td><td>9</td><td>2</td></tr>
+<tr><td>1755</td><td>9</td><td>2</td></tr>
+<tr><td>1760</td><td>9</td><td>2</td></tr>
+<tr><td>1765</td><td>9</td><td>2</td></tr>
+<tr><td>1770</td><td>9</td><td>2</td></tr>
+<tr><td>1775</td><td>9</td><td>2</td></tr>
+<tr><td>1780</td><td>9</td><td>2</td></tr>
+<tr><td>1785</td><td>9</td><td>2</td></tr>
+<tr><td>1790</td><td>9</td><td>2</td></tr>
+<tr><td>1795</td><td>9</td><td>2</td></tr>
+<tr><td>1800</td><td>9</td><td>2</td></tr>
+<tr><td>1805</td><td>9</td><td>2</td></tr>
+<tr><td>1810</td><td>9</td><td>2</td></tr>
+<tr><td>1815</td><td>9</td><td>2</td></tr>
+<tr><td>1820</td><td>9</td><td>2</td></tr>
+<tr><td>1825</td><td>9</td><td>2</td></tr>
+<tr><td>1830</td><td>9</td><td>2</td></tr>
+<tr><td>1835</td><td>9</td><td>2</td></tr>
+<tr><td>1840</td><td>9</td><td>2</td></tr>
+<tr><td>1845</td><td>9</td><td>2</td></tr>
+<tr><td>1850</td><td>9</td><td>2</td></tr>
+<tr><td>1855</td><td>9</td><td>2</td></tr>
+<tr><td>1860</td><td>9</td><td>1</td></tr>
+<tr><td>1865</td><td>9</td><td>1</td></tr>
+<tr><td>1870</td><td>9</td><td>1</td></tr>
+<tr><td>1875</td><td>9</td><td>1</td></tr>
+<tr><td>1880</td><td>9</td><td>1</td></tr>
+<tr><td>1885</td><td>9</td><td>1</td></tr>
+<tr><td>1890</td><td>0</td><td>0</td></tr>
+</table>
+</body>
+</html>
