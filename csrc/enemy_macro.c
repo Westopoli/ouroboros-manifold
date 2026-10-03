@@ -143,6 +143,8 @@ typedef struct {
     int32_t faction_id;
     double hp_pct;
     int hp_pct_set;
+    double hp_sum_start;
+    int hp_sum_start_set;
     double threshold_noise;
     int threshold_noise_drawn;
     double timer_noise;
@@ -512,6 +514,8 @@ static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
         }
         if (have_dest && om_macro_target_changed(f, f->behavior, dest_x, dest_y, n_force)) {
             om_command_move(w, force_ids, n_force, dest_x, dest_y);
+            /* B1-U1: om_unit_get_order_destination reads only the order record om_unit_order_move writes. */
+            for (i = 0; i < n_force; i++) om_unit_order_move(w, force_ids[i], dest_x, dest_y);
             om_macro_remember_order(f, f->behavior, dest_x, dest_y, n_force);
         }
     } else if (f->behavior == OM_MACRO_PATROL) {
@@ -733,13 +737,15 @@ void om_macro_tick(om_world *w, uint64_t p1) {
      * pending Q-124-02). */
     om_mission_check_external_reinforcements(w);
     if (!st->has_evaluated) return;
+    st->last_tick_evaluated = slot; /* R-099-03/R-123-02: the replay log carries the crossed slot, not the landing tick */
+    om_macro_update_bus_runner(w);
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
         /* B1-1 (R-121-04, R-121-01): a true hook or threshold transition retreats the force
          * (the contract has no to_state; R-120-03 names retreat). */
-        if (om_macro_eval_transitions(w, i) >= 0) f->behavior = OM_MACRO_RETREAT;
-        f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
-        om_macro_log_command(w, slot, i, f->last_issued_command_type);
+        if (om_macro_eval_transitions(w, i) >= 0 || (f->hp_pct_set && f->hp_pct < OM_MACRO_ROUT_HP_THRESHOLD))
+            f->behavior = OM_MACRO_RETREAT;
+        om_macro_execute_behavior(w, i, f->behavior, 0);
         /* B13-8: only a force the mission actually registered gets real
          * group orders; the default force 0 above and every other
          * unregistered force keep the log-only behavior this loop already
@@ -770,13 +776,42 @@ void om_macro_update_bus_runner(om_world *w) {
     char name[OM_MACRO_BUS_NAME_CAP];
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
+        if (f->faction_id_set) {
+            /* B1-U1 (R-120-02, ALG-76): live hit-point share, current sum over the sum first seen. */
+            static uint32_t ids[OM_MACRO_ORDER_CAP];
+            uint32_t n = om_macro_collect_faction_units(w, f->faction_id, ids, OM_MACRO_ORDER_CAP), k;
+            double sum = 0.0;
+            for (k = 0; k < n; k++) sum += om_unit_get_hp(w, ids[k]);
+            if (n > 0 && !f->hp_sum_start_set) { f->hp_sum_start = sum; f->hp_sum_start_set = 1; }
+            if (n > 0 && f->hp_sum_start > 0.0) { f->hp_pct = sum / f->hp_sum_start; f->hp_pct_set = 1; }
+        }
         if (f->hp_pct_set && f->hp_pct < OM_MACRO_ROUT_HP_THRESHOLD) {
             snprintf(name, sizeof(name), "force_%u_routed", (unsigned)i);
             om_macro_bus_set_flag(w, name, 1);
         }
+        if (f->faction_id_set) {
+            /* B1-U2 (R-122-02, Q-122-01 a): a living player unit inside objective i's zone contests it. */
+            static uint32_t pids[OM_MACRO_ORDER_CAP];
+            om_vec2 ctr;
+            if (om_objective_get_center(w, i, &ctr)) {
+                double r = om_objective_get_radius(w, i);
+                uint32_t n = om_macro_collect_faction_units(w, om_player_faction(w), pids, OM_MACRO_ORDER_CAP), k;
+                int inside = 0;
+                for (k = 0; k < n && !inside; k++) {
+                    double px = 0.0, py = 0.0;
+                    om_unit_get_pos(w, pids[k], &px, &py);
+                    if ((px - ctr.x) * (px - ctr.x) + (py - ctr.y) * (py - ctr.y) <= r * r) inside = 1;
+                }
+                if (inside) om_macro_player_enter_objective(w, i);
+                else f->objective_entered = 0;
+            }
+        }
         if (f->objective_entered) {
             snprintf(name, sizeof(name), "objective_%u_contested", (unsigned)i);
             om_macro_bus_set_flag(w, name, 1);
+        } else if (f->faction_id_set) {
+            snprintf(name, sizeof(name), "objective_%u_contested", (unsigned)i);
+            if (om_macro_bus_get_flag(w, name)) om_macro_bus_set_flag(w, name, 0);
         }
     }
 }
