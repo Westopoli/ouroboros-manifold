@@ -1,7 +1,7 @@
-"""PP-unit: the guard stance (E-13 S-096, R-096-05; Architect A170, Addendum 62; contract
+"""PP-unit: the guard stance (E-13 S-096, R-096-08; Architect A170, Addendum 62; contract
 docs/northstar/plans/push/pp_contract.md section 6 "The guard call").
 
-R-096-05 (the builder writes it into E-13 with the landing): a unit ordered to guard holds its
+R-096-08 (the builder writes it into E-13 with the landing): a unit ordered to guard holds its
 position, fires at any target it can shoot in range, never pursues, and resumes nothing; a move,
 attack-move or layer order ends the guard. Westley, in the record: "Yes a guard stance is fine".
 Engine call: om_command_guard(w, ids, n) (ABI 4, PP-contract). Until it lands every test below
@@ -91,7 +91,7 @@ def vanguard_with_far_friend(lib, w):
 
 # ---- hold: no walk without a target in reach ----
 
-def test_R_096_05_guard_holds_while_an_enemy_stands_beyond_range(lib, world_factory):
+def test_R_096_08_guard_holds_while_an_enemy_stands_beyond_range(lib, world_factory):
     """Enemy 500 wu away (sensor 700 sees it, range 300 does not reach it). The guard stays exactly
     where it is, and holds nothing as a destination, for 60 ticks."""
     w = world_factory(n_regions=1)
@@ -103,7 +103,7 @@ def test_R_096_05_guard_holds_while_an_enemy_stands_beyond_range(lib, world_fact
     assert dest(lib, w, u)[0] == 0
 
 
-def test_control_R_096_05_attack_moving_unit_walks_toward_the_same_enemy(lib, world_factory):
+def test_control_R_096_08_attack_moving_unit_walks_toward_the_same_enemy(lib, world_factory):
     """Positive control for the hold test (green today): the same scene with an attack-move order
     closes on the enemy 500 wu away. The distance test would pass for a unit that cannot walk at all
     without this."""
@@ -115,7 +115,7 @@ def test_control_R_096_05_attack_moving_unit_walks_toward_the_same_enemy(lib, wo
     assert pos(lib, w, u) != (0.0, 0.0), "an attack-moving unit with an enemy in sight should walk"
 
 
-def test_R_096_05_guard_does_not_step_toward_an_enemy_that_stays_out_of_range(lib, world_factory):
+def test_R_096_08_guard_does_not_step_toward_an_enemy_that_stays_out_of_range(lib, world_factory):
     """The enemy stays 450 wu off for 120 ticks (two sensor-and-cohort cycles over): no step toward it,
     no change in the distance, and the enemy takes no damage."""
     w = world_factory(n_regions=1)
@@ -138,7 +138,7 @@ def _charged_guard_and_far_enemy(lib, w):
     return u, enemy
 
 
-def test_R_096_05_guard_fires_at_an_enemy_that_comes_into_range(lib, world_factory):
+def test_R_096_08_guard_fires_at_an_enemy_that_comes_into_range(lib, world_factory):
     """The enemy appears 250 wu away (inside range 300); within 30 ticks the guard has hit it, and has
     not moved."""
     w = world_factory(n_regions=1)
@@ -150,7 +150,7 @@ def test_R_096_05_guard_fires_at_an_enemy_that_comes_into_range(lib, world_facto
     assert pos(lib, w, u) == (0.0, 0.0)
 
 
-def test_control_R_096_05_idle_unit_also_fires_so_the_scene_can_hit(lib, world_factory):
+def test_control_R_096_08_idle_unit_also_fires_so_the_scene_can_hit(lib, world_factory):
     """Positive control for the fire test (green today): the same scene with no order at all lands a shot,
     so a red result above is the guard's fault, not the scene's."""
     w = world_factory(n_regions=1)
@@ -163,7 +163,7 @@ def test_control_R_096_05_idle_unit_also_fires_so_the_scene_can_hit(lib, world_f
     assert hp(lib, w, enemy) < before
 
 
-def test_R_096_05_guard_that_loses_its_target_does_not_resume_any_march(lib, world_factory):
+def test_R_096_08_guard_that_loses_its_target_does_not_resume_any_march(lib, world_factory):
     """Resumes nothing: attack-moving to (0, -3000), then guard; the enemy comes into range, is shot,
     and dies. The guard stays put with no goal; the old march is not taken up again."""
     w = world_factory(n_regions=1)
@@ -178,13 +178,15 @@ def test_R_096_05_guard_that_loses_its_target_does_not_resume_any_march(lib, wor
     assert hp(lib, w, enemy) < 100.0, "fixture: the guard should have shot"
     kill(lib, w, enemy)
     step(lib, w, 60)
-    assert pos(lib, w, u) == stopped_at
+    # Test-defect: stopped_at was read before the guard call; the unit finishes the one step in flight
+    # (4 wu at speed 80, the same tolerance as the pending-move test) and then holds.
+    assert pos(lib, w, u) == pytest.approx(stopped_at, abs=4.0 + 1e-9), "at most the step in flight"
     assert dest(lib, w, u)[0] == 0
 
 
 # ---- return fire turns a guard but does not move it ----
 
-def test_R_096_05_distant_attacker_does_not_move_a_guard(lib, world_factory):
+def test_R_096_08_distant_attacker_does_not_move_a_guard(lib, world_factory):
     """Hit by an attacker beyond range: an unguarded idle unit would take the attacker's place as its goal
     (R-087-06, see the control). A guard keeps its place and has no destination. Plain reading: return fire
     may turn it (no getter pinned here), it never moves it."""
@@ -196,7 +198,7 @@ def test_R_096_05_distant_attacker_does_not_move_a_guard(lib, world_factory):
     assert p == (0.0, 0.0)
 
 
-def test_control_R_096_05_idle_unit_hit_by_a_distant_attacker_gets_a_goal(lib, world_factory):
+def test_control_R_096_08_idle_unit_hit_by_a_distant_attacker_gets_a_goal(lib, world_factory):
     """Positive control for the probe (green today): an idle unit hit the same way has the attacker's
     place as its destination."""
     w = world_factory(n_regions=1)
@@ -205,7 +207,7 @@ def test_control_R_096_05_idle_unit_hit_by_a_distant_attacker_gets_a_goal(lib, w
     assert has == 1
 
 
-def test_R_096_05_guard_hit_from_in_range_fires_back_without_moving(lib, world_factory):
+def test_R_096_08_guard_hit_from_in_range_fires_back_without_moving(lib, world_factory):
     """Hit by an attacker 280 wu away (in range): the guard targets it (R-087-06, in range) and stays put."""
     w = world_factory(n_regions=1)
     u = vanguard_with_far_friend(lib, w)
@@ -220,7 +222,7 @@ def test_R_096_05_guard_hit_from_in_range_fires_back_without_moving(lib, world_f
 
 # ---- orders that end the guard ----
 
-def test_R_096_05_a_move_order_ends_the_guard(lib, world_factory):
+def test_R_096_08_a_move_order_ends_the_guard(lib, world_factory):
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
     assert guard(lib, w, [u]) == 0
@@ -231,7 +233,7 @@ def test_R_096_05_a_move_order_ends_the_guard(lib, world_factory):
     assert dest(lib, w, u)[0] == 1
 
 
-def test_R_096_05_an_attack_move_order_ends_the_guard(lib, world_factory):
+def test_R_096_08_an_attack_move_order_ends_the_guard(lib, world_factory):
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
     assert guard(lib, w, [u]) == 0
@@ -241,7 +243,7 @@ def test_R_096_05_an_attack_move_order_ends_the_guard(lib, world_factory):
     assert pos(lib, w, u)[1] < -40.0, f"an attack-moving unit should walk; at {pos(lib, w, u)}"
 
 
-def test_R_096_05_a_layer_order_ends_the_guard(lib, world_factory):
+def test_R_096_08_a_layer_order_ends_the_guard(lib, world_factory):
     """The guard is ended by om_command_set_layer: after the unit has settled on layer 1 a distant hit
     gives it a goal again. SKIPS (not fails) while om_command_set_layer is still the PP-contract stub (an
     unguarded unit ordered to layer 1 never leaves layer 0)."""
@@ -261,7 +263,7 @@ def test_R_096_05_a_layer_order_ends_the_guard(lib, world_factory):
 
 
 @pytest.mark.parametrize("order", ["move", "attack_move"])
-def test_R_096_05_guard_order_cancels_a_pending_move(lib, world_factory, order):
+def test_R_096_08_guard_order_cancels_a_pending_move(lib, world_factory, order):
     """A unit already walking to (0, -3000) is ordered to guard: it stops where it stands and the goal is
     gone."""
     w = world_factory(n_regions=1)
@@ -282,7 +284,7 @@ def test_R_096_05_guard_order_cancels_a_pending_move(lib, world_factory, order):
 
 # ---- group, refusals ----
 
-def test_R_096_05_a_group_of_units_all_guard(lib, world_factory):
+def test_R_096_08_a_group_of_units_all_guard(lib, world_factory):
     """Three units attack-moved together (a move group) are ordered to guard in one call: none walks, none
     keeps a destination. Control: the same trio left alone walks (green today)."""
     w = world_factory(n_regions=1)
@@ -302,7 +304,7 @@ def test_R_096_05_a_group_of_units_all_guard(lib, world_factory):
     assert all(pos(lib, w2, i)[0] > 100.0 for i in ids2), "control: the unguarded group should have marched"
 
 
-def test_R_096_05_an_unknown_id_is_refused_and_changes_nothing(lib, world_factory):
+def test_R_096_08_an_unknown_id_is_refused_and_changes_nothing(lib, world_factory):
     """Contract: unknown or dead ids are skipped (the sibling convention), the call returns 0, and no
     other unit is changed on their account: a live unit that is not listed is not guarding (it has a goal
     after a distant hit), a live unit listed with the unknown id is. A NULL id list with n > 0 returns -1."""
@@ -338,7 +340,7 @@ def _choke(lib, w):
     return defenders, attackers
 
 
-def test_R_096_05_choke_guard_holds_the_gap_against_a_larger_line(lib, world_factory):
+def test_R_096_08_choke_guard_holds_the_gap_against_a_larger_line(lib, world_factory):
     """Two defenders in the gap, guarding, against four attackers marching through it: after 150 ticks the
     defenders have not moved, are alive, hold no goal, no attacker is south of the wall, and the attackers
     took damage (the guard fired)."""
@@ -355,7 +357,7 @@ def test_R_096_05_choke_guard_holds_the_gap_against_a_larger_line(lib, world_fac
     assert min(hp(lib, w, a) for a in attackers) < 500.0, "the guard should have fired on the line"
 
 
-def test_control_R_096_05_choke_attack_moving_defenders_walk_out_through_the_gap(lib, world_factory):
+def test_control_R_096_08_choke_attack_moving_defenders_walk_out_through_the_gap(lib, world_factory):
     """Positive control for the choke test (green today): the same scene with the defenders attack-moving
     toward the line walk out of the gap, to the far side of the wall (y >= 1100)."""
     w = world_factory(n_regions=1)
