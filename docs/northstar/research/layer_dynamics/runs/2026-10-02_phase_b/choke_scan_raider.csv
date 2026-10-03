@@ -1,0 +1,881 @@
+variant,enemy_heads,outcome,margin,strength_left_0,strength_left_1,survivors_0,survivors_1,heads_0,heads_1,ticks,first_contact_tick,firing_unit_seconds_0,firing_unit_seconds_1
+"open ground, defenders attack-move",6,side0,0.615,0.615,0.0,6,0,8,6,428,45,128.0,67.25
+"open ground, defenders attack-move",6,side0,0.6265000000000001,0.6265000000000001,0.0,8,0,8,6,385,45,127.75,64.5
+"open ground, defenders attack-move",6,side0,0.5915,0.5915,0.0,7,0,8,6,396,45,129.75,70.75
+"open ground, defenders attack-move",6,side0,0.6095,0.6095,0.0,7,0,8,6,402,45,130.75,68.5
+"open ground, defenders attack-move",6,side0,0.597,0.597,0.0,6,0,8,6,416,45,130.0,69.75
+"open ground, defenders attack-move",6,side0,0.5655,0.5655,0.0,6,0,8,6,423,45,127.75,75.25
+"open ground, defenders attack-move",6,side0,0.624,0.624,0.0,6,0,8,6,416,45,129.75,64.5
+"open ground, defenders attack-move",6,side0,0.605,0.605,0.0,7,0,8,6,430,45,129.25,67.5
+"open ground, defenders attack-move",6,side0,0.596,0.596,0.0,7,0,8,6,416,45,128.0,71.5
+"open ground, defenders attack-move",6,side0,0.5825,0.5825,0.0,7,0,8,6,421,45,129.25,73.0
+"open ground, defenders attack-move",6,side0,0.6184999999999999,0.6184999999999999,0.0,7,0,8,6,400,45,126.0,66.5
+"open ground, defenders attack-move",6,side0,0.6085,0.6085,0.0,8,0,8,6,398,45,131.0,67.25
+"open ground, defenders attack-move",6,side0,0.605,0.605,0.0,7,0,8,6,401,45,129.25,67.5
+"open ground, defenders attack-move",6,side0,0.6005,0.6005,0.0,7,0,8,6,396,45,128.75,69.5
+"open ground, defenders attack-move",6,side0,0.57,0.57,0.0,6,0,8,6,439,45,128.5,73.75
+"open ground, defenders attack-move",6,side0,0.5925,0.5925,0.0,6,0,8,6,401,45,130.5,71.0
+"open ground, defenders attack-move",6,side0,0.614,0.614,0.0,7,0,8,6,397,45,129.25,68.0
+"open ground, defenders attack-move",6,side0,0.6095,0.6095,0.0,7,0,8,6,413,45,131.25,67.25
+"open ground, defenders attack-move",6,side0,0.6105,0.6105,0.0,6,0,8,6,415,45,126.5,66.25
+"open ground, defenders attack-move",6,side0,0.614,0.614,0.0,7,0,8,6,397,45,128.25,67.0
+"open ground, defenders attack-move",7,side0,0.462,0.462,0.0,6,0,8,7,494,45,149.25,94.0
+"open ground, defenders attack-move",7,side0,0.479,0.479,0.0,7,0,8,7,452,45,153.25,91.75
+"open ground, defenders attack-move",7,side0,0.471,0.471,0.0,6,0,8,7,497,45,149.75,92.0
+"open ground, defenders attack-move",7,side0,0.4235,0.4235,0.0,4,0,8,7,561,45,151.75,101.5
+"open ground, defenders attack-move",7,side0,0.4675,0.4675,0.0,5,0,8,7,490,45,148.0,93.5
+"open ground, defenders attack-move",7,side0,0.4845,0.4845,0.0,6,0,8,7,497,45,150.5,89.0
+"open ground, defenders attack-move",7,side0,0.524,0.524,0.0,7,0,8,7,478,45,152.25,83.5
+"open ground, defenders attack-move",7,side0,0.4675,0.4675,0.0,5,0,8,7,500,45,147.75,92.0
+"open ground, defenders attack-move",7,side0,0.4675,0.4675,0.0,5,0,8,7,507,45,151.5,92.75
+"open ground, defenders attack-move",7,side0,0.4845,0.4845,0.0,6,0,8,7,499,45,149.0,91.75
+"open ground, defenders attack-move",7,side0,0.4495,0.4495,0.0,5,0,8,7,544,45,152.75,95.75
+"open ground, defenders attack-move",7,side0,0.4765,0.4765,0.0,5,0,8,7,484,45,150.0,91.0
+"open ground, defenders attack-move",7,side0,0.481,0.481,0.0,5,0,8,7,517,45,151.0,89.75
+"open ground, defenders attack-move",7,side0,0.4485,0.4485,0.0,6,0,8,7,494,45,150.75,96.5
+"open ground, defenders attack-move",7,side0,0.463,0.463,0.0,5,0,8,7,507,45,149.5,93.0
+"open ground, defenders attack-move",7,side0,0.4845,0.4845,0.0,6,0,8,7,510,45,151.25,90.25
+"open ground, defenders attack-move",7,side0,0.4935,0.4935,0.0,6,0,8,7,496,45,148.75,88.75
+"open ground, defenders attack-move",7,side0,0.4305,0.4305,0.0,6,0,8,7,510,45,148.25,99.75
+"open ground, defenders attack-move",7,side0,0.472,0.472,0.0,5,0,8,7,528,45,150.75,92.25
+"open ground, defenders attack-move",7,side0,0.4675,0.4675,0.0,5,0,8,7,512,45,150.25,91.25
+"open ground, defenders attack-move",8,side0,0.256,0.256,0.0,5,0,8,8,546,45,175.25,130.5
+"open ground, defenders attack-move",8,side0,0.2265,0.2265,0.0,3,0,8,8,658,45,174.25,135.0
+"open ground, defenders attack-move",8,side0,0.16799999999999998,0.16799999999999998,0.0,3,0,8,8,732,45,175.75,144.5
+"open ground, defenders attack-move",8,side0,0.2345,0.2345,0.0,4,0,8,8,625,45,174.0,132.5
+"open ground, defenders attack-move",8,side0,0.292,0.292,0.0,5,0,8,8,564,45,172.5,123.25
+"open ground, defenders attack-move",8,side0,0.159,0.159,0.0,3,0,8,8,702,45,175.25,147.0
+"open ground, defenders attack-move",8,side0,0.1365,0.1365,0.0,3,0,8,8,754,45,175.25,151.75
+"open ground, defenders attack-move",8,side0,0.292,0.292,0.0,5,0,8,8,541,45,173.5,122.0
+"open ground, defenders attack-move",8,side0,0.2255,0.2255,0.0,4,0,8,8,682,45,173.5,135.5
+"open ground, defenders attack-move",8,side0,0.2235,0.2235,0.0,6,0,8,8,565,45,175.25,135.75
+"open ground, defenders attack-move",8,side0,0.061,0.061,0.0,2,0,8,8,791,45,176.25,164.0
+"open ground, defenders attack-move",8,side0,0.1015,0.1015,0.0,2,0,8,8,765,45,174.75,158.75
+"open ground, defenders attack-move",8,side0,0.08349999999999999,0.08349999999999999,0.0,2,0,8,8,763,45,176.25,159.75
+"open ground, defenders attack-move",8,side0,0.1555,0.1555,0.0,2,0,8,8,772,45,175.5,150.0
+"open ground, defenders attack-move",8,side0,0.2075,0.2075,0.0,4,0,8,8,657,45,176.5,137.75
+"open ground, defenders attack-move",8,side0,0.079,0.079,0.0,2,0,8,8,798,45,176.75,161.0
+"open ground, defenders attack-move",8,side0,0.07,0.07,0.0,2,0,8,8,910,45,176.0,162.75
+"open ground, defenders attack-move",8,side0,0.10149999999999999,0.10149999999999999,0.0,2,0,8,8,770,45,174.0,155.75
+"open ground, defenders attack-move",8,side0,0.221,0.221,0.0,4,0,8,8,614,45,175.75,136.5
+"open ground, defenders attack-move",8,side0,0.274,0.274,0.0,5,0,8,8,559,45,173.0,127.25
+"open ground, defenders attack-move",9,side0,0.0745,0.0745,0.0,2,0,8,9,792,45,196.25,162.25
+"open ground, defenders attack-move",9,side1,-0.18533333333333332,0.0,0.18533333333333332,0,3,8,9,701,45,160.25,174.25
+"open ground, defenders attack-move",9,side1,-0.2493333333333333,0.0,0.2493333333333333,0,3,8,9,667,45,145.5,173.25
+"open ground, defenders attack-move",9,side1,-0.2995555555555556,0.0,0.2995555555555556,0,5,8,9,579,45,137.25,172.75
+"open ground, defenders attack-move",9,side0,0.0385,0.0385,0.0,2,0,8,9,749,45,197.25,169.5
+"open ground, defenders attack-move",9,side1,-0.26355555555555554,0.0,0.26355555555555554,0,5,8,9,581,45,144.75,173.5
+"open ground, defenders attack-move",9,side1,-0.15244444444444444,0.0,0.15244444444444444,0,4,8,9,693,45,166.25,173.75
+"open ground, defenders attack-move",9,side1,-0.2493333333333333,0.0,0.2493333333333333,0,3,8,9,690,45,148.25,175.0
+"open ground, defenders attack-move",9,side1,-0.21244444444444444,0.0,0.21244444444444444,0,4,8,9,605,45,155.25,175.0
+"open ground, defenders attack-move",9,side1,-0.3595555555555555,0.0,0.3595555555555555,0,5,8,9,563,45,125.0,171.5
+"open ground, defenders attack-move",9,side1,-0.31155555555555553,0.0,0.31155555555555553,0,5,8,9,595,45,135.25,170.25
+"open ground, defenders attack-move",9,side1,-0.31244444444444447,0.0,0.31244444444444447,0,4,8,9,625,45,135.0,174.75
+"open ground, defenders attack-move",9,side1,-0.20933333333333332,0.0,0.20933333333333332,0,3,8,9,686,45,157.0,174.0
+"open ground, defenders attack-move",9,side1,-0.07422222222222222,0.0,0.07422222222222222,0,2,8,9,772,45,182.25,174.5
+"open ground, defenders attack-move",9,side1,-0.23555555555555557,0.0,0.23555555555555557,0,5,8,9,617,45,149.25,174.5
+"open ground, defenders attack-move",9,side1,-0.3164444444444444,0.0,0.3164444444444444,0,4,8,9,603,45,134.5,171.75
+"open ground, defenders attack-move",9,side1,-0.2733333333333333,0.0,0.2733333333333333,0,3,8,9,638,45,142.25,172.75
+"open ground, defenders attack-move",9,side1,-0.28844444444444445,0.0,0.28844444444444445,0,4,8,9,605,45,140.75,173.5
+"open ground, defenders attack-move",9,side1,-0.27244444444444443,0.0,0.27244444444444443,0,4,8,9,631,45,142.75,173.0
+"open ground, defenders attack-move",9,side1,-0.24444444444444446,0.0,0.24444444444444446,0,4,8,9,658,45,149.75,175.0
+"open ground, defenders attack-move",10,side1,-0.4596,0.0,0.4596,0,6,8,10,517,40,117.5,172.25
+"open ground, defenders attack-move",10,side1,-0.40279999999999994,0.0,0.40279999999999994,0,5,8,10,551,40,130.25,175.0
+"open ground, defenders attack-move",10,side1,-0.4524,0.0,0.4524,0,6,8,10,532,40,119.75,172.5
+"open ground, defenders attack-move",10,side1,-0.4452,0.0,0.4452,0,6,8,10,533,40,121.0,174.0
+"open ground, defenders attack-move",10,side1,-0.4732,0.0,0.4732,0,7,8,10,500,40,115.25,175.25
+"open ground, defenders attack-move",10,side1,-0.4624,0.0,0.4624,0,7,8,10,507,40,117.5,173.75
+"open ground, defenders attack-move",10,side1,-0.44960000000000006,0.0,0.44960000000000006,0,5,8,10,513,40,120.25,173.75
+"open ground, defenders attack-move",10,side1,-0.4372,0.0,0.4372,0,7,8,10,490,40,122.75,172.75
+"open ground, defenders attack-move",10,side1,-0.43520000000000003,0.0,0.43520000000000003,0,5,8,10,545,40,124.0,172.5
+"open ground, defenders attack-move",10,side1,-0.40199999999999997,0.0,0.40199999999999997,0,6,8,10,547,40,129.25,176.5
+"open ground, defenders attack-move",10,side1,-0.4848,0.0,0.4848,0,6,8,10,513,40,112.75,170.0
+"open ground, defenders attack-move",10,side1,-0.4488,0.0,0.4488,0,6,8,10,521,40,121.0,173.25
+"open ground, defenders attack-move",10,side1,-0.3948,0.0,0.3948,0,6,8,10,554,40,132.0,174.75
+"open ground, defenders attack-move",10,side1,-0.4344,0.0,0.4344,0,6,8,10,544,40,121.5,172.5
+"open ground, defenders attack-move",10,side1,-0.4272,0.0,0.4272,0,6,8,10,520,40,126.5,172.5
+"open ground, defenders attack-move",10,side1,-0.492,0.0,0.492,0,6,8,10,514,40,111.0,173.5
+"open ground, defenders attack-move",10,side1,-0.4596,0.0,0.4596,0,6,8,10,526,40,119.0,172.5
+"open ground, defenders attack-move",10,side1,-0.5056,0.0,0.5056,0,7,8,10,487,40,106.75,172.25
+"open ground, defenders attack-move",10,side1,-0.45599999999999996,0.0,0.45599999999999996,0,6,8,10,506,40,118.25,175.75
+"open ground, defenders attack-move",10,side1,-0.4272,0.0,0.4272,0,6,8,10,546,40,126.0,175.25
+"open ground, defenders attack-move",11,side1,-0.5603636363636363,0.0,0.5603636363636363,0,8,8,11,462,40,104.75,175.25
+"open ground, defenders attack-move",11,side1,-0.5152727272727273,0.0,0.5152727272727273,0,7,8,11,486,40,116.5,174.5
+"open ground, defenders attack-move",11,side1,-0.508,0.0,0.508,0,8,8,11,447,40,119.25,173.0
+"open ground, defenders attack-move",11,side1,-0.5636363636363636,0.0,0.5636363636363636,0,8,8,11,446,40,105.0,174.0
+"open ground, defenders attack-move",11,side1,-0.5636363636363636,0.0,0.5636363636363636,0,8,8,11,447,40,104.5,174.0
+"open ground, defenders attack-move",11,side1,-0.5669090909090909,0.0,0.5669090909090909,0,8,8,11,454,40,103.75,173.0
+"open ground, defenders attack-move",11,side1,-0.5570909090909091,0.0,0.5570909090909091,0,8,8,11,434,40,105.0,175.25
+"open ground, defenders attack-move",11,side1,-0.5832727272727273,0.0,0.5832727272727273,0,8,8,11,444,40,100.5,168.25
+"open ground, defenders attack-move",11,side1,-0.5505454545454546,0.0,0.5505454545454546,0,8,8,11,454,40,108.0,172.5
+"open ground, defenders attack-move",11,side1,-0.5407272727272727,0.0,0.5407272727272727,0,8,8,11,444,40,110.5,170.25
+"open ground, defenders attack-move",11,side1,-0.5283636363636364,0.0,0.5283636363636364,0,7,8,11,462,40,112.75,175.5
+"open ground, defenders attack-move",11,side1,-0.544,0.0,0.544,0,8,8,11,437,40,108.25,173.75
+"open ground, defenders attack-move",11,side1,-0.6029090909090908,0.0,0.6029090909090908,0,8,8,11,444,40,96.5,167.25
+"open ground, defenders attack-move",11,side1,-0.5930909090909091,0.0,0.5930909090909091,0,8,8,11,450,40,98.75,173.0
+"open ground, defenders attack-move",11,side1,-0.5570909090909091,0.0,0.5570909090909091,0,8,8,11,438,40,106.25,171.0
+"open ground, defenders attack-move",11,side1,-0.5374545454545454,0.0,0.5374545454545454,0,8,8,11,428,40,110.5,173.75
+"open ground, defenders attack-move",11,side1,-0.58,0.0,0.58,0,8,8,11,445,40,100.5,171.5
+"open ground, defenders attack-move",11,side1,-0.58,0.0,0.58,0,8,8,11,463,40,101.25,173.0
+"open ground, defenders attack-move",11,side1,-0.5661818181818181,0.0,0.5661818181818181,0,9,8,11,438,40,103.25,172.25
+"open ground, defenders attack-move",11,side1,-0.5152727272727273,0.0,0.5152727272727273,0,7,8,11,483,40,116.5,176.0
+"open ground, defenders attack-move",12,side1,-0.573,0.0,0.573,0,9,8,12,419,40,113.0,169.5
+"open ground, defenders attack-move",12,side1,-0.555,0.0,0.555,0,9,8,12,426,40,118.25,170.25
+"open ground, defenders attack-move",12,side1,-0.6233333333333334,0.0,0.6233333333333334,0,10,8,12,393,40,98.75,171.0
+"open ground, defenders attack-move",12,side1,-0.564,0.0,0.564,0,9,8,12,437,40,114.5,171.75
+"open ground, defenders attack-move",12,side1,-0.6336666666666667,0.0,0.6336666666666667,0,8,8,12,420,40,95.75,167.5
+"open ground, defenders attack-move",12,side1,-0.6336666666666667,0.0,0.6336666666666667,0,8,8,12,420,40,96.5,169.5
+"open ground, defenders attack-move",12,side1,-0.627,0.0,0.627,0,9,8,12,420,40,97.75,169.5
+"open ground, defenders attack-move",12,side1,-0.6629999999999999,0.0,0.6629999999999999,0,9,8,12,415,40,89.25,166.75
+"open ground, defenders attack-move",12,side1,-0.651,0.0,0.651,0,9,8,12,414,40,91.0,171.25
+"open ground, defenders attack-move",12,side1,-0.609,0.0,0.609,0,9,8,12,409,40,101.75,174.5
+"open ground, defenders attack-move",12,side1,-0.5783333333333334,0.0,0.5783333333333334,0,10,8,12,444,40,110.25,171.25
+"open ground, defenders attack-move",12,side1,-0.6126666666666667,0.0,0.6126666666666667,0,8,8,12,436,40,102.25,171.25
+"open ground, defenders attack-move",12,side1,-0.6443333333333333,0.0,0.6443333333333333,0,10,8,12,405,40,93.5,169.0
+"open ground, defenders attack-move",12,side1,-0.633,0.0,0.633,0,9,8,12,425,40,96.75,167.5
+"open ground, defenders attack-move",12,side1,-0.6083333333333333,0.0,0.6083333333333333,0,10,8,12,417,40,103.0,171.75
+"open ground, defenders attack-move",12,side1,-0.6323333333333333,0.0,0.6323333333333333,0,10,8,12,393,40,96.0,172.5
+"open ground, defenders attack-move",12,side1,-0.6096666666666667,0.0,0.6096666666666667,0,8,8,12,419,40,102.25,170.75
+"open ground, defenders attack-move",12,side1,-0.627,0.0,0.627,0,9,8,12,420,40,95.75,171.25
+"open ground, defenders attack-move",12,side1,-0.645,0.0,0.645,0,9,8,12,419,40,93.0,173.5
+"open ground, defenders attack-move",12,side1,-0.6413333333333333,0.0,0.6413333333333333,0,10,8,12,415,40,92.5,167.25
+"open ground, defenders attack-move",13,side1,-0.6390769230769231,0.0,0.6390769230769231,0,10,8,13,392,40,102.75,171.75
+"open ground, defenders attack-move",13,side1,-0.6855384615384617,0.0,0.6855384615384617,0,11,8,13,367,40,90.5,172.0
+"open ground, defenders attack-move",13,side1,-0.6473846153846154,0.0,0.6473846153846154,0,10,8,13,390,40,99.5,171.0
+"open ground, defenders attack-move",13,side1,-0.668923076923077,0.0,0.668923076923077,0,11,8,13,358,40,93.5,171.0
+"open ground, defenders attack-move",13,side1,-0.7,0.0,0.7,0,10,8,13,386,40,84.25,172.75
+"open ground, defenders attack-move",13,side1,-0.6584615384615385,0.0,0.6584615384615385,0,10,8,13,410,40,95.25,166.75
+"open ground, defenders attack-move",13,side1,-0.6523076923076924,0.0,0.6523076923076924,0,11,8,13,391,40,98.0,171.5
+"open ground, defenders attack-move",13,side1,-0.6584615384615385,0.0,0.6584615384615385,0,10,8,13,389,40,96.5,166.25
+"open ground, defenders attack-move",13,side1,-0.6584615384615385,0.0,0.6584615384615385,0,10,8,13,382,40,95.5,171.5
+"open ground, defenders attack-move",13,side1,-0.6695384615384616,0.0,0.6695384615384616,0,10,8,13,385,40,93.75,172.0
+"open ground, defenders attack-move",13,side1,-0.6550769230769231,0.0,0.6550769230769231,0,11,8,13,368,40,96.25,173.0
+"open ground, defenders attack-move",13,side1,-0.6778461538461538,0.0,0.6778461538461538,0,10,8,13,385,40,90.5,164.75
+"open ground, defenders attack-move",13,side1,-0.711076923076923,0.0,0.711076923076923,0,10,8,13,361,40,81.75,166.5
+"open ground, defenders attack-move",13,side1,-0.6529230769230769,0.0,0.6529230769230769,0,10,8,13,405,40,98.25,173.75
+"open ground, defenders attack-move",13,side1,-0.6612307692307693,0.0,0.6612307692307693,0,10,8,13,383,40,96.25,174.25
+"open ground, defenders attack-move",13,side1,-0.6855384615384617,0.0,0.6855384615384617,0,11,8,13,357,40,89.5,171.0
+"open ground, defenders attack-move",13,side1,-0.6799999999999999,0.0,0.6799999999999999,0,11,8,13,359,40,91.0,169.75
+"open ground, defenders attack-move",13,side1,-0.6861538461538461,0.0,0.6861538461538461,0,10,8,13,373,40,87.5,171.25
+"open ground, defenders attack-move",13,side1,-0.6369230769230769,0.0,0.6369230769230769,0,9,8,13,421,40,103.0,174.0
+"open ground, defenders attack-move",13,side1,-0.6529230769230769,0.0,0.6529230769230769,0,10,8,13,401,40,98.25,167.0
+"open ground, defenders attack-move",14,side1,-0.7214285714285714,0.0,0.7214285714285714,0,11,8,14,376,40,85.25,168.5
+"open ground, defenders attack-move",14,side1,-0.7034285714285715,0.0,0.7034285714285715,0,11,8,14,355,40,90.25,166.0
+"open ground, defenders attack-move",14,side1,-0.7445714285714286,0.0,0.7445714285714286,0,11,8,14,345,40,77.75,166.75
+"open ground, defenders attack-move",14,side1,-0.7311428571428572,0.0,0.7311428571428572,0,12,8,14,358,40,81.5,166.0
+"open ground, defenders attack-move",14,side1,-0.7291428571428572,0.0,0.7291428571428572,0,11,8,14,361,40,81.75,166.25
+"open ground, defenders attack-move",14,side1,-0.7368571428571429,0.0,0.7368571428571429,0,11,8,14,356,40,80.25,169.5
+"open ground, defenders attack-move",14,side1,-0.724,0.0,0.724,0,11,8,14,354,40,84.25,172.5
+"open ground, defenders attack-move",14,side1,-0.7265714285714286,0.0,0.7265714285714286,0,11,8,14,355,40,82.25,163.5
+"open ground, defenders attack-move",14,side1,-0.7465714285714286,0.0,0.7465714285714286,0,12,8,14,346,40,76.0,168.75
+"open ground, defenders attack-move",14,side1,-0.6931428571428572,0.0,0.6931428571428572,0,11,8,14,368,40,91.75,174.25
+"open ground, defenders attack-move",14,side1,-0.6982857142857143,0.0,0.6982857142857143,0,11,8,14,385,40,92.25,168.0
+"open ground, defenders attack-move",14,side1,-0.7208571428571429,0.0,0.7208571428571429,0,12,8,14,345,40,85.0,168.0
+"open ground, defenders attack-move",14,side1,-0.7265714285714286,0.0,0.7265714285714286,0,11,8,14,367,40,82.5,168.25
+"open ground, defenders attack-move",14,side1,-0.7105714285714286,0.0,0.7105714285714286,0,12,8,14,345,40,86.75,168.5
+"open ground, defenders attack-move",14,side1,-0.7342857142857142,0.0,0.7342857142857142,0,11,8,14,361,40,81.0,170.75
+"open ground, defenders attack-move",14,side1,-0.7234285714285714,0.0,0.7234285714285714,0,12,8,14,350,40,83.5,166.5
+"open ground, defenders attack-move",14,side1,-0.7388571428571428,0.0,0.7388571428571428,0,12,8,14,348,40,79.75,166.5
+"open ground, defenders attack-move",14,side1,-0.7291428571428572,0.0,0.7291428571428572,0,11,8,14,358,40,82.0,167.25
+"open ground, defenders attack-move",14,side1,-0.6751428571428572,0.0,0.6751428571428572,0,11,8,14,383,40,98.5,172.5
+"open ground, defenders attack-move",14,side1,-0.7131428571428572,0.0,0.7131428571428572,0,12,8,14,352,40,85.75,169.25
+"open ground, defenders attack-move",15,side1,-0.7130666666666666,0.0,0.7130666666666666,0,13,8,15,352,40,92.0,171.5
+"open ground, defenders attack-move",15,side1,-0.7610666666666667,0.0,0.7610666666666667,0,13,8,15,321,40,77.75,169.0
+"open ground, defenders attack-move",15,side1,-0.7629333333333334,0.0,0.7629333333333334,0,14,8,15,321,40,76.0,171.5
+"open ground, defenders attack-move",15,side1,-0.7490666666666667,0.0,0.7490666666666667,0,13,8,15,355,40,81.25,171.5
+"open ground, defenders attack-move",15,side1,-0.7495999999999999,0.0,0.7495999999999999,0,12,8,15,338,40,81.75,169.0
+"open ground, defenders attack-move",15,side1,-0.7352000000000001,0.0,0.7352000000000001,0,12,8,15,349,40,84.75,169.0
+"open ground, defenders attack-move",15,side1,-0.7394666666666667,0.0,0.7394666666666667,0,13,8,15,336,40,84.0,169.5
+"open ground, defenders attack-move",15,side1,-0.7634666666666666,0.0,0.7634666666666666,0,13,8,15,333,40,77.0,169.5
+"open ground, defenders attack-move",15,side1,-0.7370666666666666,0.0,0.7370666666666666,0,13,8,15,347,40,85.0,171.0
+"open ground, defenders attack-move",15,side1,-0.7490666666666667,0.0,0.7490666666666667,0,13,8,15,325,40,81.25,167.5
+"open ground, defenders attack-move",15,side1,-0.728,0.0,0.728,0,12,8,15,345,40,89.0,172.0
+"open ground, defenders attack-move",15,side1,-0.7677333333333334,0.0,0.7677333333333334,0,14,8,15,325,40,75.5,167.75
+"open ground, defenders attack-move",15,side1,-0.7586666666666667,0.0,0.7586666666666667,0,13,8,15,322,40,79.0,168.5
+"open ground, defenders attack-move",15,side1,-0.7303999999999999,0.0,0.7303999999999999,0,12,8,15,336,40,87.5,171.25
+"open ground, defenders attack-move",15,side1,-0.7466666666666666,0.0,0.7466666666666666,0,13,8,15,323,40,83.5,168.75
+"open ground, defenders attack-move",15,side1,-0.7466666666666666,0.0,0.7466666666666666,0,13,8,15,342,40,83.0,172.5
+"open ground, defenders attack-move",15,side1,-0.7538666666666667,0.0,0.7538666666666667,0,13,8,15,346,40,80.25,170.25
+"open ground, defenders attack-move",15,side1,-0.7418666666666667,0.0,0.7418666666666667,0,13,8,15,369,40,83.75,169.25
+"open ground, defenders attack-move",15,side1,-0.7466666666666666,0.0,0.7466666666666666,0,13,8,15,345,40,83.0,167.5
+"open ground, defenders attack-move",15,side1,-0.7610666666666667,0.0,0.7610666666666667,0,13,8,15,320,40,77.5,173.0
+"open ground, defenders attack-move",16,side1,-0.7625,0.0,0.7625,0,14,8,16,323,40,82.75,165.0
+"open ground, defenders attack-move",16,side1,-0.763,0.0,0.763,0,13,8,16,322,40,83.25,170.25
+"open ground, defenders attack-move",16,side1,-0.776,0.0,0.776,0,14,8,16,328,40,77.5,167.5
+"open ground, defenders attack-move",16,side1,-0.78275,0.0,0.78275,0,14,8,16,311,40,75.25,170.25
+"open ground, defenders attack-move",16,side1,-0.78725,0.0,0.78725,0,14,8,16,316,40,72.25,167.0
+"open ground, defenders attack-move",16,side1,-0.78725,0.0,0.78725,0,14,8,16,333,40,73.5,167.25
+"open ground, defenders attack-move",16,side1,-0.758,0.0,0.758,0,14,8,16,332,40,83.75,171.5
+"open ground, defenders attack-move",16,side1,-0.794,0.0,0.794,0,14,8,16,315,40,70.25,168.75
+"open ground, defenders attack-move",16,side1,-0.798,0.0,0.798,0,15,8,16,324,40,69.75,162.0
+"open ground, defenders attack-move",16,side1,-0.7827500000000001,0.0,0.7827500000000001,0,14,8,16,314,40,73.0,168.5
+"open ground, defenders attack-move",16,side1,-0.78325,0.0,0.78325,0,13,8,16,322,40,75.5,166.0
+"open ground, defenders attack-move",16,side1,-0.75075,0.0,0.75075,0,15,8,16,333,40,85.0,172.75
+"open ground, defenders attack-move",16,side1,-0.77425,0.0,0.77425,0,13,8,16,326,40,77.25,172.75
+"open ground, defenders attack-move",16,side1,-0.7895,0.0,0.7895,0,14,8,16,306,40,72.75,168.5
+"open ground, defenders attack-move",16,side1,-0.77375,0.0,0.77375,0,14,8,16,324,40,77.5,170.75
+"open ground, defenders attack-move",16,side1,-0.785,0.0,0.785,0,14,8,16,312,40,75.0,168.5
+"open ground, defenders attack-move",16,side1,-0.7805,0.0,0.7805,0,14,8,16,324,40,75.0,166.75
+"open ground, defenders attack-move",16,side1,-0.785,0.0,0.785,0,14,8,16,309,40,74.0,167.5
+"open ground, defenders attack-move",16,side1,-0.80075,0.0,0.80075,0,14,8,16,320,40,68.25,159.5
+"open ground, defenders attack-move",16,side1,-0.7985,0.0,0.7985,0,14,8,16,303,40,70.0,169.25
+"open ground, defenders idle",6,side0,0.436,0.436,0.0,5,0,8,6,858,85,130.25,98.0
+"open ground, defenders idle",6,side0,0.542,0.542,0.0,7,0,8,6,462,85,131.0,79.5
+"open ground, defenders idle",6,side0,0.4935,0.4935,0.0,6,0,8,6,635,85,130.25,87.25
+"open ground, defenders idle",6,side0,0.596,0.596,0.0,7,0,8,6,523,85,129.25,69.5
+"open ground, defenders idle",6,side0,0.533,0.533,0.0,7,0,8,6,581,85,129.75,81.25
+"open ground, defenders idle",6,side0,0.489,0.489,0.0,6,0,8,6,842,85,131.0,90.0
+"open ground, defenders idle",6,side0,0.428,0.428,0.0,4,0,8,6,700,85,131.5,101.25
+"open ground, defenders idle",6,side0,0.5680000000000001,0.5680000000000001,0.0,8,0,8,6,419,85,131.5,74.5
+"open ground, defenders idle",6,side0,0.5555,0.5555,0.0,7,0,8,6,560,90,129.75,76.75
+"open ground, defenders idle",6,side0,0.551,0.551,0.0,7,0,8,6,500,85,131.0,79.5
+"open ground, defenders idle",6,side0,0.3245,0.3245,0.0,4,0,8,6,852,85,129.75,117.75
+"open ground, defenders idle",6,side0,0.4325,0.4325,0.0,4,0,8,6,869,85,132.5,100.5
+"open ground, defenders idle",6,side0,0.348,0.348,0.0,3,0,8,6,960,85,130.0,112.75
+"open ground, defenders idle",6,side0,0.5105,0.5105,0.0,7,0,8,6,530,90,130.0,84.25
+"open ground, defenders idle",6,side0,0.5125,0.5125,0.0,5,0,8,6,706,85,130.25,85.5
+"open ground, defenders idle",6,side0,0.3235,0.3235,0.0,5,0,8,6,685,90,130.25,117.0
+"open ground, defenders idle",6,side0,0.1735,0.1735,0.0,2,0,8,6,1035,85,131.0,143.5
+"open ground, defenders idle",6,side0,0.454,0.454,0.0,5,0,8,6,829,90,129.25,95.5
+"open ground, defenders idle",6,side0,0.5825,0.5825,0.0,7,0,8,6,444,85,131.25,73.5
+"open ground, defenders idle",6,side0,0.443,0.443,0.0,7,0,8,6,610,85,130.25,96.0
+"open ground, defenders idle",7,side0,0.2965,0.2965,0.0,5,0,8,7,804,90,151.5,122.25
+"open ground, defenders idle",7,side0,0.445,0.445,0.0,5,0,8,7,547,90,153.25,98.25
+"open ground, defenders idle",7,side0,0.3855,0.3855,0.0,6,0,8,7,779,85,152.5,108.0
+"open ground, defenders idle",7,side0,0.4,0.4,0.0,5,0,8,7,773,85,150.0,104.5
+"open ground, defenders idle",7,side0,0.2175,0.2175,0.0,3,0,8,7,929,85,152.75,137.0
+"open ground, defenders idle",7,side0,0.319,0.319,0.0,5,0,8,7,778,85,152.0,119.5
+"open ground, defenders idle",7,side0,0.3675,0.3675,0.0,6,0,8,7,674,90,153.0,111.0
+"open ground, defenders idle",7,side0,0.133,0.133,0.0,2,0,8,7,1174,90,153.25,151.5
+"open ground, defenders idle",7,side0,0.0925,0.0925,0.0,2,0,8,7,940,90,150.25,158.0
+"open ground, defenders idle",7,side0,0.2625,0.2625,0.0,3,0,8,7,928,90,152.25,126.25
+"open ground, defenders idle",7,side0,0.2355,0.2355,0.0,3,0,8,7,760,85,152.25,132.75
+"open ground, defenders idle",7,side1,-0.17142857142857143,0.0,0.17142857142857143,0,3,8,7,917,90,124.75,170.75
+"open ground, defenders idle",7,side0,0.3605,0.3605,0.0,4,0,8,7,722,85,152.25,110.0
+"open ground, defenders idle",7,side0,0.425,0.425,0.0,7,0,8,7,537,90,155.25,98.75
+"open ground, defenders idle",7,side0,0.2965,0.2965,0.0,5,0,8,7,796,85,153.75,123.25
+"open ground, defenders idle",7,side0,0.186,0.186,0.0,3,0,8,7,936,85,153.5,142.25
+"open ground, defenders idle",7,side0,0.14200000000000002,0.14200000000000002,0.0,2,0,8,7,1197,90,151.75,147.25
+"open ground, defenders idle",7,side0,0.062,0.062,0.0,1,0,8,7,969,90,151.5,162.25
+"open ground, defenders idle",7,side0,0.32,0.32,0.0,4,0,8,7,670,85,152.5,118.25
+"open ground, defenders idle",7,side0,0.258,0.258,0.0,3,0,8,7,821,85,151.75,129.5
+"open ground, defenders idle",8,side1,-0.1015,0.0,0.1015,0,2,8,8,879,85,156.5,173.0
+"open ground, defenders idle",8,side0,0.0295,0.0295,0.0,2,0,8,8,938,85,175.25,168.5
+"open ground, defenders idle",8,side1,-0.07450000000000001,0.0,0.07450000000000001,0,2,8,8,849,90,162.5,172.75
+"open ground, defenders idle",8,side0,0.087,0.087,0.0,3,0,8,8,1155,85,175.5,159.25
+"open ground, defenders idle",8,side1,-0.1285,0.0,0.1285,0,2,8,8,845,85,152.75,175.5
+"open ground, defenders idle",8,side1,-0.19949999999999998,0.0,0.19949999999999998,0,3,8,8,743,85,140.75,173.25
+"open ground, defenders idle",8,side0,0.097,0.097,0.0,2,0,8,8,872,85,176.0,158.0
+"open ground, defenders idle",8,side0,0.08,0.08,0.0,1,0,8,8,1182,85,176.0,159.75
+"open ground, defenders idle",8,side0,0.044,0.044,0.0,1,0,8,8,1008,85,174.75,167.75
+"open ground, defenders idle",8,side0,0.017,0.017,0.0,1,0,8,8,1193,85,174.75,170.0
+"open ground, defenders idle",8,side1,-0.0745,0.0,0.0745,0,2,8,8,903,85,162.0,174.75
+"open ground, defenders idle",8,side1,-0.044,0.0,0.044,0,1,8,8,1007,85,167.25,173.5
+"open ground, defenders idle",8,side0,0.10500000000000001,0.10500000000000001,0.0,3,0,8,8,1022,85,175.0,155.5
+"open ground, defenders idle",8,side0,0.1185,0.1185,0.0,3,0,8,8,920,85,176.75,155.5
+"open ground, defenders idle",8,side1,-0.2175,0.0,0.2175,0,3,8,8,815,85,136.5,173.25
+"open ground, defenders idle",8,side1,-0.24,0.0,0.24,0,3,8,8,671,85,134.25,172.75
+"open ground, defenders idle",8,side1,-0.2885,0.0,0.2885,0,4,8,8,739,85,123.0,170.5
+"open ground, defenders idle",8,side1,-0.328,0.0,0.328,0,5,8,8,643,85,118.75,172.75
+"open ground, defenders idle",8,side0,0.044,0.044,0.0,1,0,8,8,964,85,175.5,166.75
+"open ground, defenders idle",8,side1,-0.1645,0.0,0.1645,0,2,8,8,801,85,147.0,173.25
+"open ground, defenders idle",9,side1,-0.20444444444444443,0.0,0.20444444444444443,0,4,8,9,669,85,156.5,173.25
+"open ground, defenders idle",9,side1,-0.2604444444444444,0.0,0.2604444444444444,0,4,8,9,681,85,148.25,175.5
+"open ground, defenders idle",9,side1,-0.18533333333333335,0.0,0.18533333333333335,0,3,8,9,741,85,160.25,173.25
+"open ground, defenders idle",9,side1,-0.27644444444444444,0.0,0.27644444444444444,0,4,8,9,674,85,143.0,172.5
+"open ground, defenders idle",9,side1,-0.2995555555555555,0.0,0.2995555555555555,0,5,8,9,586,85,140.0,175.25
+"open ground, defenders idle",9,side1,-0.13733333333333334,0.0,0.13733333333333334,0,3,8,9,795,85,170.5,174.5
+"open ground, defenders idle",9,side1,-0.37066666666666664,0.0,0.37066666666666664,0,6,8,9,580,85,124.0,174.5
+"open ground, defenders idle",9,side1,-0.31555555555555553,0.0,0.31555555555555553,0,5,8,9,620,85,133.5,172.75
+"open ground, defenders idle",9,side1,-0.29244444444444445,0.0,0.29244444444444445,0,4,8,9,628,85,139.75,174.5
+"open ground, defenders idle",9,side1,-0.3977777777777778,0.0,0.3977777777777778,0,7,8,9,532,85,117.5,173.25
+"open ground, defenders idle",9,side1,-0.33155555555555555,0.0,0.33155555555555555,0,5,8,9,625,85,133.25,173.25
+"open ground, defenders idle",9,side1,-0.4106666666666667,0.0,0.4106666666666667,0,6,8,9,593,85,117.25,170.25
+"open ground, defenders idle",9,side1,-0.25955555555555554,0.0,0.25955555555555554,0,5,8,9,635,85,145.75,173.75
+"open ground, defenders idle",9,side1,-0.39866666666666667,0.0,0.39866666666666667,0,6,8,9,547,85,119.0,171.25
+"open ground, defenders idle",9,side1,-0.21955555555555556,0.0,0.21955555555555556,0,5,8,9,601,90,154.5,174.25
+"open ground, defenders idle",9,side1,-0.28444444444444444,0.0,0.28444444444444444,0,4,8,9,663,85,140.25,172.0
+"open ground, defenders idle",9,side1,-0.17733333333333334,0.0,0.17733333333333334,0,3,8,9,741,85,162.75,174.25
+"open ground, defenders idle",9,side1,-0.40355555555555556,0.0,0.40355555555555556,0,5,8,9,639,85,117.0,173.5
+"open ground, defenders idle",9,side1,-0.36266666666666664,0.0,0.36266666666666664,0,6,8,9,576,85,125.25,175.25
+"open ground, defenders idle",9,side1,-0.22044444444444444,0.0,0.22044444444444444,0,4,8,9,735,85,153.0,173.25
+"open ground, defenders idle",10,side1,-0.40919999999999995,0.0,0.40919999999999995,0,6,8,10,549,80,129.0,173.0
+"open ground, defenders idle",10,side1,-0.4704,0.0,0.4704,0,6,8,10,519,80,115.75,171.25
+"open ground, defenders idle",10,side1,-0.4436,0.0,0.4436,0,8,8,10,514,80,122.25,173.0
+"open ground, defenders idle",10,side1,-0.5408000000000001,0.0,0.5408000000000001,0,8,8,10,486,80,100.25,170.75
+"open ground, defenders idle",10,side1,-0.44800000000000006,0.0,0.44800000000000006,0,7,8,10,539,80,120.0,170.75
+"open ground, defenders idle",10,side1,-0.4904,0.0,0.4904,0,8,8,10,521,80,113.0,172.25
+"open ground, defenders idle",10,side1,-0.5128,0.0,0.5128,0,7,8,10,513,80,106.5,173.5
+"open ground, defenders idle",10,side1,-0.4588,0.0,0.4588,0,7,8,10,540,80,118.0,169.25
+"open ground, defenders idle",10,side1,-0.49119999999999997,0.0,0.49119999999999997,0,7,8,10,530,80,110.0,173.25
+"open ground, defenders idle",10,side1,-0.43,0.0,0.43,0,7,8,10,519,80,124.75,172.75
+"open ground, defenders idle",10,side1,-0.438,0.0,0.438,0,6,8,10,565,80,123.5,171.25
+"open ground, defenders idle",10,side1,-0.4948,0.0,0.4948,0,7,8,10,510,80,112.25,173.0
+"open ground, defenders idle",10,side1,-0.45519999999999994,0.0,0.45519999999999994,0,7,8,10,511,80,120.0,172.75
+"open ground, defenders idle",10,side1,-0.4668,0.0,0.4668,0,6,8,10,514,80,116.25,172.25
+"open ground, defenders idle",10,side1,-0.4704,0.0,0.4704,0,6,8,10,535,80,116.5,168.0
+"open ground, defenders idle",10,side1,-0.484,0.0,0.484,0,7,8,10,528,80,113.5,173.25
+"open ground, defenders idle",10,side1,-0.5688,0.0,0.5688,0,9,8,10,492,80,92.0,167.25
+"open ground, defenders idle",10,side1,-0.6516,0.0,0.6516,0,9,8,10,481,80,76.0,170.0
+"open ground, defenders idle",10,side1,-0.45520000000000005,0.0,0.45520000000000005,0,7,8,10,526,80,120.0,171.25
+"open ground, defenders idle",10,side1,-0.4452,0.0,0.4452,0,6,8,10,550,80,122.25,171.5
+"open ground, defenders idle",11,side1,-0.6054545454545455,0.0,0.6054545454545455,0,9,8,11,444,80,93.5,164.75
+"open ground, defenders idle",11,side1,-0.6218181818181818,0.0,0.6218181818181818,0,9,8,11,451,80,90.0,169.0
+"open ground, defenders idle",11,side1,-0.5498181818181819,0.0,0.5498181818181819,0,9,8,11,453,80,108.25,170.75
+"open ground, defenders idle",11,side1,-0.5196363636363637,0.0,0.5196363636363637,0,10,8,11,520,80,114.5,171.5
+"open ground, defenders idle",11,side1,-0.5447272727272727,0.0,0.5447272727272727,0,7,8,11,482,80,109.0,174.5
+"open ground, defenders idle",11,side1,-0.5694545454545454,0.0,0.5694545454545454,0,9,8,11,482,80,102.25,168.5
+"open ground, defenders idle",11,side1,-0.544,0.0,0.544,0,8,8,11,466,80,109.75,172.25
+"open ground, defenders idle",11,side1,-0.49563636363636365,0.0,0.49563636363636365,0,7,8,11,543,80,122.0,172.25
+"open ground, defenders idle",11,side1,-0.5570909090909091,0.0,0.5570909090909091,0,8,8,11,474,80,107.5,172.25
+"open ground, defenders idle",11,side1,-0.5767272727272728,0.0,0.5767272727272728,0,8,8,11,489,80,101.25,170.25
+"open ground, defenders idle",11,side1,-0.5676363636363636,0.0,0.5676363636363636,0,7,8,11,508,80,103.75,166.25
+"open ground, defenders idle",11,side1,-0.6316363636363637,0.0,0.6316363636363637,0,9,8,11,465,80,89.25,169.0
+"open ground, defenders idle",11,side1,-0.5112727272727272,0.0,0.5112727272727272,0,8,8,11,472,80,118.0,174.25
+"open ground, defenders idle",11,side1,-0.6225454545454545,0.0,0.6225454545454545,0,8,8,11,457,80,90.0,170.25
+"open ground, defenders idle",11,side1,-0.6061818181818182,0.0,0.6061818181818182,0,8,8,11,481,80,93.0,169.75
+"open ground, defenders idle",11,side1,-0.612,0.0,0.612,0,9,8,11,466,80,92.75,175.25
+"open ground, defenders idle",11,side1,-0.6112727272727273,0.0,0.6112727272727273,0,10,8,11,445,80,93.0,171.0
+"open ground, defenders idle",11,side1,-0.5818181818181819,0.0,0.5818181818181819,0,10,8,11,454,80,99.5,169.75
+"open ground, defenders idle",11,side1,-0.5381818181818182,0.0,0.5381818181818182,0,7,8,11,481,80,112.25,174.5
+"open ground, defenders idle",11,side1,-0.5505454545454546,0.0,0.5505454545454546,0,8,8,11,483,80,108.25,171.25
+"open ground, defenders idle",12,side1,-0.543,0.0,0.543,0,9,8,12,489,80,120.0,171.25
+"open ground, defenders idle",12,side1,-0.6083333333333333,0.0,0.6083333333333333,0,10,8,12,473,80,103.0,172.25
+"open ground, defenders idle",12,side1,-0.576,0.0,0.576,0,9,8,12,439,80,110.75,173.0
+"open ground, defenders idle",12,side1,-0.597,0.0,0.597,0,9,8,12,456,80,104.5,168.5
+"open ground, defenders idle",12,side1,-0.6256666666666667,0.0,0.6256666666666667,0,11,8,12,429,80,95.5,169.75
+"open ground, defenders idle",12,side1,-0.5993333333333334,0.0,0.5993333333333334,0,10,8,12,468,80,103.25,168.5
+"open ground, defenders idle",12,side1,-0.537,0.0,0.537,0,9,8,12,484,80,121.0,172.75
+"open ground, defenders idle",12,side1,-0.6113333333333334,0.0,0.6113333333333334,0,10,8,12,440,80,99.25,168.0
+"open ground, defenders idle",12,side1,-0.6196666666666667,0.0,0.6196666666666667,0,11,8,12,415,80,99.5,170.5
+"open ground, defenders idle",12,side1,-0.6646666666666666,0.0,0.6646666666666666,0,11,8,12,421,80,87.25,172.0
+"open ground, defenders idle",12,side1,-0.5616666666666666,0.0,0.5616666666666666,0,8,8,12,458,80,116.0,172.75
+"open ground, defenders idle",12,side1,-0.633,0.0,0.633,0,9,8,12,433,80,98.25,173.25
+"open ground, defenders idle",12,side1,-0.5856666666666667,0.0,0.5856666666666667,0,8,8,12,460,80,110.0,169.0
+"open ground, defenders idle",12,side1,-0.6563333333333333,0.0,0.6563333333333333,0,10,8,12,416,80,90.5,169.5
+"open ground, defenders idle",12,side1,-0.6096666666666667,0.0,0.6096666666666667,0,8,8,12,454,80,102.5,167.5
+"open ground, defenders idle",12,side1,-0.6646666666666666,0.0,0.6646666666666666,0,11,8,12,401,80,88.25,174.75
+"open ground, defenders idle",12,side1,-0.6713333333333332,0.0,0.6713333333333332,0,10,8,12,424,80,86.75,173.5
+"open ground, defenders idle",12,side1,-0.615,0.0,0.615,0,9,8,12,463,80,100.5,168.75
+"open ground, defenders idle",12,side1,-0.603,0.0,0.603,0,9,8,12,454,80,105.0,172.0
+"open ground, defenders idle",12,side1,-0.6173333333333334,0.0,0.6173333333333334,0,10,8,12,440,80,100.25,173.5
+"open ground, defenders idle",13,side1,-0.6273846153846154,0.0,0.6273846153846154,0,11,8,13,433,80,106.25,168.75
+"open ground, defenders idle",13,side1,-0.6467692307692308,0.0,0.6467692307692308,0,11,8,13,435,80,99.5,167.5
+"open ground, defenders idle",13,side1,-0.6710769230769231,0.0,0.6710769230769231,0,12,8,13,390,80,92.25,168.5
+"open ground, defenders idle",13,side1,-0.6806153846153846,0.0,0.6806153846153846,0,10,8,13,422,80,91.25,171.5
+"open ground, defenders idle",13,side1,-0.6467692307692308,0.0,0.6467692307692308,0,11,8,13,415,80,99.25,168.0
+"open ground, defenders idle",13,side1,-0.6661538461538462,0.0,0.6661538461538462,0,11,8,13,432,80,93.0,167.0
+"open ground, defenders idle",13,side1,-0.6363076923076924,0.0,0.6363076923076924,0,10,8,13,429,80,102.75,170.0
+"open ground, defenders idle",13,side1,-0.6916923076923077,0.0,0.6916923076923077,0,10,8,13,407,80,87.0,170.5
+"open ground, defenders idle",13,side1,-0.7618461538461538,0.0,0.7618461538461538,0,13,8,13,375,80,66.25,167.25
+"open ground, defenders idle",13,side1,-0.7436923076923077,0.0,0.7436923076923077,0,11,8,13,408,80,73.75,167.0
+"open ground, defenders idle",13,side1,-0.684923076923077,0.0,0.684923076923077,0,12,8,13,414,80,88.5,167.75
+"open ground, defenders idle",13,side1,-0.6661538461538462,0.0,0.6661538461538462,0,11,8,13,404,80,94.25,170.0
+"open ground, defenders idle",13,side1,-0.6501538461538462,0.0,0.6501538461538462,0,10,8,13,433,80,100.5,169.5
+"open ground, defenders idle",13,side1,-0.7,0.0,0.7,0,10,8,13,454,80,84.75,166.75
+"open ground, defenders idle",13,side1,-0.6141538461538462,0.0,0.6141538461538462,0,10,8,13,450,80,110.25,172.25
+"open ground, defenders idle",13,side1,-0.7021538461538461,0.0,0.7021538461538461,0,11,8,13,381,80,84.75,171.5
+"open ground, defenders idle",13,side1,-0.7049230769230769,0.0,0.7049230769230769,0,11,8,13,389,80,83.5,169.75
+"open ground, defenders idle",13,side1,-0.6473846153846154,0.0,0.6473846153846154,0,10,8,13,441,80,99.0,172.25
+"open ground, defenders idle",13,side1,-0.6723076923076923,0.0,0.6723076923076923,0,10,8,13,406,80,93.0,173.0
+"open ground, defenders idle",13,side1,-0.6667692307692307,0.0,0.6667692307692307,0,10,8,13,441,80,95.0,172.5
+"open ground, defenders idle",14,side1,-0.744,0.0,0.744,0,12,8,14,394,80,77.25,166.75
+"open ground, defenders idle",14,side1,-0.7022857142857143,0.0,0.7022857142857143,0,13,8,14,387,80,91.25,171.25
+"open ground, defenders idle",14,side1,-0.7151428571428572,0.0,0.7151428571428572,0,13,8,14,377,80,86.5,169.5
+"open ground, defenders idle",14,side1,-0.7028571428571428,0.0,0.7028571428571428,0,12,8,14,388,80,90.5,174.75
+"open ground, defenders idle",14,side1,-0.726,0.0,0.726,0,12,8,14,361,80,83.25,170.75
+"open ground, defenders idle",14,side1,-0.6977142857142857,0.0,0.6977142857142857,0,12,8,14,426,80,93.0,170.0
+"open ground, defenders idle",14,side1,-0.6668571428571429,0.0,0.6668571428571429,0,12,8,14,418,80,101.25,171.25
+"open ground, defenders idle",14,side1,-0.7182857142857142,0.0,0.7182857142857142,0,12,8,14,398,80,86.0,171.0
+"open ground, defenders idle",14,side1,-0.7234285714285714,0.0,0.7234285714285714,0,12,8,14,377,80,83.25,168.0
+"open ground, defenders idle",14,side1,-0.7157142857142856,0.0,0.7157142857142856,0,12,8,14,402,80,88.25,172.0
+"open ground, defenders idle",14,side1,-0.726,0.0,0.726,0,12,8,14,405,80,82.5,165.25
+"open ground, defenders idle",14,side1,-0.7157142857142856,0.0,0.7157142857142856,0,12,8,14,390,80,86.5,168.25
+"open ground, defenders idle",14,side1,-0.7234285714285714,0.0,0.7234285714285714,0,12,8,14,368,85,84.25,169.25
+"open ground, defenders idle",14,side1,-0.7202857142857143,0.0,0.7202857142857143,0,13,8,14,402,80,85.5,171.0
+"open ground, defenders idle",14,side1,-0.7085714285714285,0.0,0.7085714285714285,0,11,8,14,401,80,90.0,172.25
+"open ground, defenders idle",14,side1,-0.7311428571428572,0.0,0.7311428571428572,0,12,8,14,390,80,83.75,170.25
+"open ground, defenders idle",14,side1,-0.728,0.0,0.728,0,13,8,14,380,80,83.0,170.5
+"open ground, defenders idle",14,side1,-0.7002857142857143,0.0,0.7002857142857143,0,12,8,14,388,80,91.5,169.5
+"open ground, defenders idle",14,side1,-0.7177142857142857,0.0,0.7177142857142857,0,13,8,14,389,80,87.0,171.25
+"open ground, defenders idle",14,side1,-0.7022857142857143,0.0,0.7022857142857143,0,13,8,14,397,80,91.25,168.0
+"open ground, defenders idle",15,side1,-0.7178666666666668,0.0,0.7178666666666668,0,13,8,15,383,80,91.75,169.0
+"open ground, defenders idle",15,side1,-0.7370666666666668,0.0,0.7370666666666668,0,13,8,15,389,80,85.75,168.0
+"open ground, defenders idle",15,side1,-0.7461333333333333,0.0,0.7461333333333333,0,14,8,15,366,80,82.0,167.75
+"open ground, defenders idle",15,side1,-0.7082666666666667,0.0,0.7082666666666667,0,13,8,15,401,80,95.25,169.5
+"open ground, defenders idle",15,side1,-0.7466666666666666,0.0,0.7466666666666666,0,13,8,15,379,80,82.25,165.5
+"open ground, defenders idle",15,side1,-0.7677333333333334,0.0,0.7677333333333334,0,14,8,15,374,80,74.25,167.25
+"open ground, defenders idle",15,side1,-0.7226666666666667,0.0,0.7226666666666667,0,13,8,15,392,80,90.0,170.5
+"open ground, defenders idle",15,side1,-0.7130666666666666,0.0,0.7130666666666666,0,13,8,15,380,80,92.5,166.25
+"open ground, defenders idle",15,side1,-0.7370666666666668,0.0,0.7370666666666668,0,13,8,15,379,80,85.25,169.5
+"open ground, defenders idle",15,side1,-0.8079999999999999,0.0,0.8079999999999999,0,15,8,15,349,80,60.5,164.25
+"open ground, defenders idle",15,side1,-0.7370666666666668,0.0,0.7370666666666668,0,13,8,15,386,80,85.5,167.25
+"open ground, defenders idle",15,side1,-0.7370666666666666,0.0,0.7370666666666666,0,13,8,15,391,80,85.0,173.5
+"open ground, defenders idle",15,side1,-0.7754666666666666,0.0,0.7754666666666666,0,13,8,15,355,85,73.0,168.5
+"open ground, defenders idle",15,side1,-0.7394666666666667,0.0,0.7394666666666667,0,13,8,15,395,80,84.0,170.5
+"open ground, defenders idle",15,side1,-0.7581333333333333,0.0,0.7581333333333333,0,14,8,15,361,85,78.75,172.75
+"open ground, defenders idle",15,side1,-0.7712,0.0,0.7712,0,12,8,15,364,80,75.5,166.0
+"open ground, defenders idle",15,side1,-0.74,0.0,0.74,0,12,8,15,381,80,85.0,169.5
+"open ground, defenders idle",15,side1,-0.7605333333333333,0.0,0.7605333333333333,0,14,8,15,362,80,76.5,161.5
+"open ground, defenders idle",15,side1,-0.7394666666666667,0.0,0.7394666666666667,0,13,8,15,397,80,84.75,170.5
+"open ground, defenders idle",15,side1,-0.7376,0.0,0.7376,0,12,8,15,377,80,87.0,170.0
+"open ground, defenders idle",16,side1,-0.7935,0.0,0.7935,0,15,8,16,340,85,70.5,164.75
+"open ground, defenders idle",16,side1,-0.762,0.0,0.762,0,15,8,16,365,80,81.5,170.75
+"open ground, defenders idle",16,side1,-0.789,0.0,0.789,0,15,8,16,341,80,73.25,168.0
+"open ground, defenders idle",16,side1,-0.767,0.0,0.767,0,14,8,16,363,80,81.25,170.5
+"open ground, defenders idle",16,side1,-0.7935,0.0,0.7935,0,15,8,16,352,80,71.75,170.75
+"open ground, defenders idle",16,side1,-0.7625,0.0,0.7625,0,14,8,16,386,80,82.5,172.25
+"open ground, defenders idle",16,side1,-0.7935,0.0,0.7935,0,15,8,16,353,85,71.75,171.25
+"open ground, defenders idle",16,side1,-0.75975,0.0,0.75975,0,15,8,16,362,80,83.75,172.75
+"open ground, defenders idle",16,side1,-0.785,0.0,0.785,0,14,8,16,336,80,73.75,167.75
+"open ground, defenders idle",16,side1,-0.75075,0.0,0.75075,0,15,8,16,382,80,86.75,171.5
+"open ground, defenders idle",16,side1,-0.79175,0.0,0.79175,0,14,8,16,360,80,71.75,172.0
+"open ground, defenders idle",16,side1,-0.77325,0.0,0.77325,0,15,8,16,370,80,78.75,168.25
+"open ground, defenders idle",16,side1,-0.80025,0.0,0.80025,0,15,8,16,343,85,69.25,168.0
+"open ground, defenders idle",16,side1,-0.76925,0.0,0.76925,0,14,8,16,371,80,79.75,166.5
+"open ground, defenders idle",16,side1,-0.76025,0.0,0.76025,0,14,8,16,381,80,84.25,172.25
+"open ground, defenders idle",16,side1,-0.78,0.0,0.78,0,15,8,16,360,80,77.25,169.75
+"open ground, defenders idle",16,side1,-0.8155,0.0,0.8155,0,16,8,16,347,80,64.5,169.25
+"open ground, defenders idle",16,side1,-0.7805,0.0,0.7805,0,14,8,16,346,80,76.75,173.0
+"open ground, defenders idle",16,side1,-0.7845,0.0,0.7845,0,15,8,16,354,85,74.25,167.0
+"open ground, defenders idle",16,side1,-0.767,0.0,0.767,0,14,8,16,377,80,81.5,165.25
+"choke, defenders attack-move",6,side0,0.597,0.597,0.0,6,0,8,6,416,45,129.25,69.0
+"choke, defenders attack-move",6,side0,0.577,0.577,0.0,8,0,8,6,397,45,131.0,73.75
+"choke, defenders attack-move",6,side0,0.596,0.596,0.0,7,0,8,6,402,45,129.0,70.5
+"choke, defenders attack-move",6,side0,0.6275,0.6275,0.0,7,0,8,6,400,45,127.75,65.5
+"choke, defenders attack-move",6,side0,0.6105,0.6105,0.0,6,0,8,6,416,45,128.0,68.5
+"choke, defenders attack-move",6,side0,0.614,0.614,0.0,7,0,8,6,406,45,126.75,66.5
+"choke, defenders attack-move",6,side0,0.6185,0.6185,0.0,7,0,8,6,411,45,128.75,65.75
+"choke, defenders attack-move",6,side0,0.6194999999999999,0.6194999999999999,0.0,6,0,8,6,413,45,128.0,64.5
+"choke, defenders attack-move",6,side0,0.596,0.596,0.0,7,0,8,6,409,45,128.25,71.25
+"choke, defenders attack-move",6,side0,0.587,0.587,0.0,7,0,8,6,405,45,125.5,72.5
+"choke, defenders attack-move",6,side0,0.633,0.633,0.0,6,0,8,6,407,45,129.25,63.25
+"choke, defenders attack-move",6,side0,0.6265000000000001,0.6265000000000001,0.0,8,0,8,6,379,45,130.0,64.25
+"choke, defenders attack-move",6,side0,0.5555,0.5555,0.0,7,0,8,6,416,45,130.25,77.75
+"choke, defenders attack-move",6,side0,0.5735,0.5735,0.0,7,0,8,6,412,45,130.75,74.5
+"choke, defenders attack-move",6,side0,0.5835,0.5835,0.0,6,0,8,6,415,45,128.0,72.25
+"choke, defenders attack-move",6,side0,0.606,0.606,0.0,6,0,8,6,397,45,130.0,68.0
+"choke, defenders attack-move",6,side0,0.614,0.614,0.0,7,0,8,6,396,45,131.5,67.25
+"choke, defenders attack-move",6,side0,0.587,0.587,0.0,7,0,8,6,404,45,129.5,70.25
+"choke, defenders attack-move",6,side0,0.606,0.606,0.0,6,0,8,6,413,45,127.75,66.5
+"choke, defenders attack-move",6,side0,0.6275,0.6275,0.0,7,0,8,6,400,45,128.25,63.25
+"choke, defenders attack-move",7,side0,0.4575,0.4575,0.0,6,0,8,7,493,45,152.5,93.75
+"choke, defenders attack-move",7,side0,0.4835,0.4835,0.0,7,0,8,7,452,45,152.25,90.0
+"choke, defenders attack-move",7,side0,0.39549999999999996,0.39549999999999996,0.0,5,0,8,7,530,45,149.75,103.75
+"choke, defenders attack-move",7,side0,0.5655,0.5655,0.0,6,0,8,7,476,45,153.25,76.25
+"choke, defenders attack-move",7,side0,0.498,0.498,0.0,6,0,8,7,487,45,149.0,88.0
+"choke, defenders attack-move",7,side0,0.516,0.516,0.0,6,0,8,7,477,45,150.5,84.0
+"choke, defenders attack-move",7,side0,0.49,0.49,0.0,5,0,8,7,503,45,151.0,89.25
+"choke, defenders attack-move",7,side0,0.4585,0.4585,0.0,5,0,8,7,522,45,149.5,94.0
+"choke, defenders attack-move",7,side0,0.5025,0.5025,0.0,6,0,8,7,485,45,148.0,87.0
+"choke, defenders attack-move",7,side0,0.463,0.463,0.0,5,0,8,7,492,45,149.5,94.25
+"choke, defenders attack-move",7,side0,0.4315,0.4315,0.0,5,0,8,7,528,45,152.0,98.25
+"choke, defenders attack-move",7,side0,0.4765,0.4765,0.0,5,0,8,7,484,45,150.25,91.0
+"choke, defenders attack-move",7,side0,0.4925,0.4925,0.0,7,0,8,7,477,45,152.75,87.0
+"choke, defenders attack-move",7,side0,0.48,0.48,0.0,6,0,8,7,504,45,151.5,91.0
+"choke, defenders attack-move",7,side0,0.488,0.488,0.0,7,0,8,7,469,45,149.0,88.25
+"choke, defenders attack-move",7,side0,0.454,0.454,0.0,5,0,8,7,529,45,149.25,94.25
+"choke, defenders attack-move",7,side0,0.4935,0.4935,0.0,6,0,8,7,485,45,148.75,89.0
+"choke, defenders attack-move",7,side0,0.453,0.453,0.0,6,0,8,7,496,45,149.25,95.0
+"choke, defenders attack-move",7,side0,0.471,0.471,0.0,6,0,8,7,490,45,151.75,91.5
+"choke, defenders attack-move",7,side0,0.444,0.444,0.0,6,0,8,7,504,45,152.5,96.5
+"choke, defenders attack-move",8,side0,0.292,0.292,0.0,5,0,8,8,593,45,174.75,123.5
+"choke, defenders attack-move",8,side0,0.16,0.16,0.0,2,0,8,8,764,45,174.75,148.5
+"choke, defenders attack-move",8,side0,0.1275,0.1275,0.0,3,0,8,8,666,45,175.75,152.75
+"choke, defenders attack-move",8,side0,0.1205,0.1205,0.0,1,0,8,8,769,45,174.0,154.75
+"choke, defenders attack-move",8,side0,0.239,0.239,0.0,4,0,8,8,637,45,174.25,132.5
+"choke, defenders attack-move",8,side0,0.194,0.194,0.0,4,0,8,8,655,45,173.75,139.75
+"choke, defenders attack-move",8,side0,0.2255,0.2255,0.0,4,0,8,8,650,45,174.5,136.0
+"choke, defenders attack-move",8,side0,0.2695,0.2695,0.0,5,0,8,8,583,45,174.75,127.5
+"choke, defenders attack-move",8,side0,0.1635,0.1635,0.0,3,0,8,8,683,45,175.0,147.0
+"choke, defenders attack-move",8,side0,0.265,0.265,0.0,5,0,8,8,550,45,172.75,128.75
+"choke, defenders attack-move",8,side0,0.133,0.133,0.0,2,0,8,8,711,45,174.75,151.75
+"choke, defenders attack-move",8,side0,0.0125,0.0125,0.0,1,0,8,8,994,45,176.0,175.25
+"choke, defenders attack-move",8,side0,0.131,0.131,0.0,4,0,8,8,681,45,175.25,152.0
+"choke, defenders attack-move",8,side0,0.2245,0.2245,0.0,5,0,8,8,597,45,174.0,136.25
+"choke, defenders attack-move",8,side0,0.2335,0.2335,0.0,5,0,8,8,619,45,177.5,132.25
+"choke, defenders attack-move",8,side0,0.1015,0.1015,0.0,2,0,8,8,749,45,175.75,157.75
+"choke, defenders attack-move",8,side1,-0.0475,0.0,0.0475,0,2,8,8,883,45,166.5,174.75
+"choke, defenders attack-move",8,side0,0.195,0.195,0.0,3,0,8,8,683,45,174.25,141.25
+"choke, defenders attack-move",8,side0,0.1905,0.1905,0.0,3,0,8,8,780,45,175.0,139.75
+"choke, defenders attack-move",8,side0,0.105,0.105,0.0,3,0,8,8,747,45,176.0,156.5
+"choke, defenders attack-move",9,side1,-0.27555555555555555,0.0,0.27555555555555555,0,5,8,9,619,45,142.0,174.5
+"choke, defenders attack-move",9,side1,-0.23733333333333334,0.0,0.23733333333333334,0,3,8,9,676,45,149.75,172.75
+"choke, defenders attack-move",9,side1,-0.27244444444444443,0.0,0.27244444444444443,0,4,8,9,645,45,143.75,173.25
+"choke, defenders attack-move",9,side1,-0.2644444444444444,0.0,0.2644444444444444,0,4,8,9,589,45,145.0,174.0
+"choke, defenders attack-move",9,side1,-0.10311111111111111,0.0,0.10311111111111111,0,1,8,9,859,45,176.0,174.0
+"choke, defenders attack-move",9,side1,-0.24133333333333334,0.0,0.24133333333333334,0,3,8,9,632,45,150.0,173.75
+"choke, defenders attack-move",9,side1,-0.20444444444444446,0.0,0.20444444444444446,0,4,8,9,641,45,155.5,173.75
+"choke, defenders attack-move",9,side1,-0.2773333333333333,0.0,0.2773333333333333,0,3,8,9,646,45,142.5,173.25
+"choke, defenders attack-move",9,side1,-0.17022222222222222,0.0,0.17022222222222222,0,2,8,9,681,45,165.5,174.5
+"choke, defenders attack-move",9,side1,-0.27155555555555555,0.0,0.27155555555555555,0,5,8,9,605,45,142.75,174.0
+"choke, defenders attack-move",9,side1,-0.2613333333333333,0.0,0.2613333333333333,0,3,8,9,641,45,145.75,173.25
+"choke, defenders attack-move",9,side1,-0.2644444444444444,0.0,0.2644444444444444,0,4,8,9,628,45,145.0,173.5
+"choke, defenders attack-move",9,side1,-0.29244444444444445,0.0,0.29244444444444445,0,4,8,9,607,45,139.0,171.5
+"choke, defenders attack-move",9,side1,-0.3937777777777778,0.0,0.3937777777777778,0,7,8,9,513,45,119.75,172.0
+"choke, defenders attack-move",9,side1,-0.25155555555555553,0.0,0.25155555555555553,0,5,8,9,565,45,147.0,172.25
+"choke, defenders attack-move",9,side1,-0.28844444444444445,0.0,0.28844444444444445,0,4,8,9,591,45,139.5,174.5
+"choke, defenders attack-move",9,side1,-0.19733333333333333,0.0,0.19733333333333333,0,3,8,9,643,45,158.0,172.25
+"choke, defenders attack-move",9,side0,0.2245,0.2245,0.0,5,0,8,9,624,45,196.75,134.75
+"choke, defenders attack-move",9,side1,-0.2573333333333333,0.0,0.2573333333333333,0,3,8,9,670,45,147.75,175.0
+"choke, defenders attack-move",9,side1,-0.27644444444444444,0.0,0.27644444444444444,0,4,8,9,654,45,141.25,174.25
+"choke, defenders attack-move",10,side1,-0.46319999999999995,0.0,0.46319999999999995,0,6,8,10,517,40,116.75,172.75
+"choke, defenders attack-move",10,side1,-0.4136,0.0,0.4136,0,5,8,10,549,40,128.25,175.5
+"choke, defenders attack-move",10,side1,-0.4596,0.0,0.4596,0,6,8,10,505,40,117.0,169.25
+"choke, defenders attack-move",10,side1,-0.4452,0.0,0.4452,0,6,8,10,533,40,121.0,174.0
+"choke, defenders attack-move",10,side1,-0.4732,0.0,0.4732,0,7,8,10,500,40,115.25,175.25
+"choke, defenders attack-move",10,side1,-0.43079999999999996,0.0,0.43079999999999996,0,6,8,10,559,40,123.75,173.25
+"choke, defenders attack-move",10,side1,-0.4344,0.0,0.4344,0,6,8,10,513,40,121.75,170.25
+"choke, defenders attack-move",10,side1,-0.4236,0.0,0.4236,0,6,8,10,490,40,126.25,174.0
+"choke, defenders attack-move",10,side1,-0.4316,0.0,0.4316,0,5,8,10,546,40,124.0,173.0
+"choke, defenders attack-move",10,side1,-0.4164,0.0,0.4164,0,6,8,10,547,40,126.75,174.0
+"choke, defenders attack-move",10,side1,-0.4904,0.0,0.4904,0,8,8,10,465,40,111.0,172.75
+"choke, defenders attack-move",10,side1,-0.4236,0.0,0.4236,0,6,8,10,501,40,126.0,175.5
+"choke, defenders attack-move",10,side1,-0.43079999999999996,0.0,0.43079999999999996,0,6,8,10,528,40,124.5,174.5
+"choke, defenders attack-move",10,side1,-0.438,0.0,0.438,0,6,8,10,512,40,121.25,174.25
+"choke, defenders attack-move",10,side1,-0.4272,0.0,0.4272,0,6,8,10,520,40,126.5,172.5
+"choke, defenders attack-move",10,side1,-0.5307999999999999,0.0,0.5307999999999999,0,7,8,10,497,40,101.0,172.0
+"choke, defenders attack-move",10,side1,-0.4344,0.0,0.4344,0,6,8,10,522,40,123.75,173.25
+"choke, defenders attack-move",10,side1,-0.5164,0.0,0.5164,0,7,8,10,469,40,104.25,172.0
+"choke, defenders attack-move",10,side1,-0.46959999999999996,0.0,0.46959999999999996,0,7,8,10,481,40,114.5,175.0
+"choke, defenders attack-move",10,side1,-0.4588,0.0,0.4588,0,7,8,10,498,40,119.0,172.0
+"choke, defenders attack-move",11,side1,-0.5767272727272728,0.0,0.5767272727272728,0,8,8,11,449,40,101.25,173.0
+"choke, defenders attack-move",11,side1,-0.5276363636363637,0.0,0.5276363636363637,0,8,8,11,469,40,113.75,174.75
+"choke, defenders attack-move",11,side1,-0.5930909090909091,0.0,0.5930909090909091,0,8,8,11,453,40,97.5,171.75
+"choke, defenders attack-move",11,side1,-0.5636363636363636,0.0,0.5636363636363636,0,8,8,11,446,40,105.0,174.0
+"choke, defenders attack-move",11,side1,-0.5701818181818182,0.0,0.5701818181818182,0,8,8,11,445,40,102.75,171.75
+"choke, defenders attack-move",11,side1,-0.5545454545454546,0.0,0.5545454545454546,0,7,8,11,453,40,106.0,173.25
+"choke, defenders attack-move",11,side1,-0.5414545454545455,0.0,0.5414545454545455,0,7,8,11,449,40,109.75,171.5
+"choke, defenders attack-move",11,side1,-0.58,0.0,0.58,0,8,8,11,438,40,100.25,168.25
+"choke, defenders attack-move",11,side1,-0.5505454545454546,0.0,0.5505454545454546,0,8,8,11,468,40,106.75,169.75
+"choke, defenders attack-move",11,side1,-0.5407272727272727,0.0,0.5407272727272727,0,8,8,11,444,40,110.5,170.75
+"choke, defenders attack-move",11,side1,-0.5603636363636363,0.0,0.5603636363636363,0,8,8,11,450,40,107.25,168.0
+"choke, defenders attack-move",11,side1,-0.5538181818181818,0.0,0.5538181818181818,0,8,8,11,438,40,107.5,174.0
+"choke, defenders attack-move",11,side1,-0.5938181818181818,0.0,0.5938181818181818,0,7,8,11,459,40,96.75,166.25
+"choke, defenders attack-move",11,side1,-0.6036363636363636,0.0,0.6036363636363636,0,7,8,11,454,40,95.25,172.25
+"choke, defenders attack-move",11,side1,-0.5570909090909091,0.0,0.5570909090909091,0,8,8,11,438,40,106.25,170.75
+"choke, defenders attack-move",11,side1,-0.5432727272727272,0.0,0.5432727272727272,0,9,8,11,429,40,110.0,174.75
+"choke, defenders attack-move",11,side1,-0.5407272727272727,0.0,0.5407272727272727,0,8,8,11,465,40,110.5,171.5
+"choke, defenders attack-move",11,side1,-0.5701818181818182,0.0,0.5701818181818182,0,8,8,11,458,40,102.0,171.5
+"choke, defenders attack-move",11,side1,-0.5661818181818181,0.0,0.5661818181818181,0,9,8,11,439,40,103.25,172.25
+"choke, defenders attack-move",11,side1,-0.512,0.0,0.512,0,7,8,11,475,40,116.25,173.75
+"choke, defenders attack-move",12,side1,-0.606,0.0,0.606,0,9,8,12,412,40,103.75,170.0
+"choke, defenders attack-move",12,side1,-0.621,0.0,0.621,0,9,8,12,432,40,99.75,174.0
+"choke, defenders attack-move",12,side1,-0.648,0.0,0.648,0,9,8,12,402,40,91.5,171.0
+"choke, defenders attack-move",12,side1,-0.633,0.0,0.633,0,9,8,12,420,40,95.5,168.75
+"choke, defenders attack-move",12,side1,-0.639,0.0,0.639,0,9,8,12,405,40,93.75,169.5
+"choke, defenders attack-move",12,side1,-0.606,0.0,0.606,0,9,8,12,427,40,102.75,174.5
+"choke, defenders attack-move",12,side1,-0.6143333333333333,0.0,0.6143333333333333,0,10,8,12,396,40,100.0,175.0
+"choke, defenders attack-move",12,side1,-0.66,0.0,0.66,0,9,8,12,402,40,89.0,172.75
+"choke, defenders attack-move",12,side1,-0.648,0.0,0.648,0,9,8,12,414,40,90.5,172.0
+"choke, defenders attack-move",12,side1,-0.6336666666666667,0.0,0.6336666666666667,0,8,8,12,422,40,95.5,170.0
+"choke, defenders attack-move",12,side1,-0.6233333333333334,0.0,0.6233333333333334,0,10,8,12,406,40,99.0,173.25
+"choke, defenders attack-move",12,side1,-0.6126666666666667,0.0,0.6126666666666667,0,8,8,12,436,40,102.25,171.25
+"choke, defenders attack-move",12,side1,-0.666,0.0,0.666,0,9,8,12,400,40,86.75,169.5
+"choke, defenders attack-move",12,side1,-0.6203333333333333,0.0,0.6203333333333333,0,10,8,12,418,40,99.0,169.0
+"choke, defenders attack-move",12,side1,-0.6173333333333334,0.0,0.6173333333333334,0,10,8,12,413,40,99.5,172.5
+"choke, defenders attack-move",12,side1,-0.645,0.0,0.645,0,9,8,12,405,40,94.0,172.25
+"choke, defenders attack-move",12,side1,-0.63,0.0,0.63,0,9,8,12,401,40,96.25,172.5
+"choke, defenders attack-move",12,side1,-0.627,0.0,0.627,0,9,8,12,414,40,97.75,170.0
+"choke, defenders attack-move",12,side1,-0.633,0.0,0.633,0,9,8,12,426,40,95.5,170.75
+"choke, defenders attack-move",12,side1,-0.6203333333333333,0.0,0.6203333333333333,0,10,8,12,409,40,98.25,169.5
+"choke, defenders attack-move",13,side1,-0.6778461538461538,0.0,0.6778461538461538,0,10,8,13,373,40,92.5,171.0
+"choke, defenders attack-move",13,side1,-0.6833846153846154,0.0,0.6833846153846154,0,10,8,13,363,40,89.75,171.0
+"choke, defenders attack-move",13,side1,-0.6883076923076923,0.0,0.6883076923076923,0,11,8,13,369,40,87.75,171.25
+"choke, defenders attack-move",13,side1,-0.668923076923077,0.0,0.668923076923077,0,11,8,13,358,40,93.5,171.0
+"choke, defenders attack-move",13,side1,-0.7027692307692307,0.0,0.7027692307692307,0,10,8,13,387,40,85.0,171.25
+"choke, defenders attack-move",13,side1,-0.6667692307692307,0.0,0.6667692307692307,0,10,8,13,389,40,92.5,169.25
+"choke, defenders attack-move",13,side1,-0.6806153846153846,0.0,0.6806153846153846,0,10,8,13,389,40,90.5,168.75
+"choke, defenders attack-move",13,side1,-0.6833846153846154,0.0,0.6833846153846154,0,10,8,13,386,40,88.0,167.75
+"choke, defenders attack-move",13,side1,-0.6646153846153846,0.0,0.6646153846153846,0,9,8,13,382,40,94.25,173.5
+"choke, defenders attack-move",13,side1,-0.6529230769230769,0.0,0.6529230769230769,0,10,8,13,391,40,97.75,171.25
+"choke, defenders attack-move",13,side1,-0.6639999999999999,0.0,0.6639999999999999,0,10,8,13,373,40,94.5,175.75
+"choke, defenders attack-move",13,side1,-0.6861538461538461,0.0,0.6861538461538461,0,10,8,13,361,40,89.0,171.0
+"choke, defenders attack-move",13,side1,-0.716,0.0,0.716,0,11,8,13,367,40,80.25,165.5
+"choke, defenders attack-move",13,side1,-0.6529230769230769,0.0,0.6529230769230769,0,10,8,13,401,40,98.5,174.0
+"choke, defenders attack-move",13,side1,-0.6716923076923076,0.0,0.6716923076923076,0,11,8,13,395,40,92.5,168.0
+"choke, defenders attack-move",13,side1,-0.668923076923077,0.0,0.668923076923077,0,11,8,13,389,40,94.75,168.0
+"choke, defenders attack-move",13,side1,-0.6861538461538461,0.0,0.6861538461538461,0,10,8,13,390,40,89.75,168.75
+"choke, defenders attack-move",13,side1,-0.6861538461538461,0.0,0.6861538461538461,0,10,8,13,373,40,87.5,171.25
+"choke, defenders attack-move",13,side1,-0.6772307692307693,0.0,0.6772307692307693,0,11,8,13,362,40,91.5,171.75
+"choke, defenders attack-move",13,side1,-0.6529230769230769,0.0,0.6529230769230769,0,10,8,13,401,40,98.25,167.0
+"choke, defenders attack-move",14,side1,-0.7214285714285714,0.0,0.7214285714285714,0,11,8,14,377,40,85.5,168.0
+"choke, defenders attack-move",14,side1,-0.688,0.0,0.688,0,11,8,14,370,40,95.5,170.0
+"choke, defenders attack-move",14,side1,-0.7157142857142856,0.0,0.7157142857142856,0,12,8,14,354,40,85.25,168.0
+"choke, defenders attack-move",14,side1,-0.7285714285714285,0.0,0.7285714285714285,0,12,8,14,356,40,82.5,171.5
+"choke, defenders attack-move",14,side1,-0.7208571428571429,0.0,0.7208571428571429,0,12,8,14,354,40,83.5,172.0
+"choke, defenders attack-move",14,side1,-0.7311428571428572,0.0,0.7311428571428572,0,12,8,14,357,40,82.25,170.0
+"choke, defenders attack-move",14,side1,-0.7188571428571429,0.0,0.7188571428571429,0,11,8,14,344,40,85.0,173.0
+"choke, defenders attack-move",14,side1,-0.7362857142857143,0.0,0.7362857142857143,0,12,8,14,359,40,77.75,165.75
+"choke, defenders attack-move",14,side1,-0.744,0.0,0.744,0,12,8,14,346,40,76.75,169.25
+"choke, defenders attack-move",14,side1,-0.7008571428571428,0.0,0.7008571428571428,0,11,8,14,373,40,89.75,169.0
+"choke, defenders attack-move",14,side1,-0.7085714285714285,0.0,0.7085714285714285,0,11,8,14,367,40,89.0,170.75
+"choke, defenders attack-move",14,side1,-0.7157142857142856,0.0,0.7157142857142856,0,12,8,14,356,40,87.0,169.5
+"choke, defenders attack-move",14,side1,-0.7157142857142856,0.0,0.7157142857142856,0,12,8,14,370,40,86.0,169.0
+"choke, defenders attack-move",14,side1,-0.6951428571428571,0.0,0.6951428571428571,0,12,8,14,351,40,92.25,174.75
+"choke, defenders attack-move",14,side1,-0.7317142857142857,0.0,0.7317142857142857,0,11,8,14,365,40,82.0,168.0
+"choke, defenders attack-move",14,side1,-0.7028571428571428,0.0,0.7028571428571428,0,12,8,14,369,40,89.75,166.5
+"choke, defenders attack-move",14,side1,-0.7234285714285714,0.0,0.7234285714285714,0,12,8,14,368,40,84.0,172.25
+"choke, defenders attack-move",14,side1,-0.6977142857142857,0.0,0.6977142857142857,0,12,8,14,357,40,91.25,166.75
+"choke, defenders attack-move",14,side1,-0.688,0.0,0.688,0,11,8,14,373,40,96.5,172.0
+"choke, defenders attack-move",14,side1,-0.7291428571428572,0.0,0.7291428571428572,0,11,8,14,362,40,83.25,167.5
+"choke, defenders attack-move",15,side1,-0.7322666666666666,0.0,0.7322666666666666,0,13,8,15,336,40,86.5,168.5
+"choke, defenders attack-move",15,side1,-0.7490666666666667,0.0,0.7490666666666667,0,13,8,15,329,40,80.0,165.25
+"choke, defenders attack-move",15,side1,-0.7466666666666666,0.0,0.7466666666666666,0,13,8,15,329,40,81.75,168.75
+"choke, defenders attack-move",15,side1,-0.7634666666666666,0.0,0.7634666666666666,0,13,8,15,343,40,76.5,170.0
+"choke, defenders attack-move",15,side1,-0.7634666666666666,0.0,0.7634666666666666,0,13,8,15,322,40,76.75,170.25
+"choke, defenders attack-move",15,side1,-0.7562666666666666,0.0,0.7562666666666666,0,13,8,15,338,40,77.0,168.0
+"choke, defenders attack-move",15,side1,-0.7592,0.0,0.7592,0,12,8,15,354,40,78.75,167.0
+"choke, defenders attack-move",15,side1,-0.7682666666666668,0.0,0.7682666666666668,0,13,8,15,327,40,74.75,167.25
+"choke, defenders attack-move",15,side1,-0.7472,0.0,0.7472,0,12,8,15,332,40,81.5,172.0
+"choke, defenders attack-move",15,side1,-0.7562666666666666,0.0,0.7562666666666666,0,13,8,15,322,40,78.5,167.0
+"choke, defenders attack-move",15,side1,-0.7424,0.0,0.7424,0,12,8,15,338,40,84.0,169.25
+"choke, defenders attack-move",15,side1,-0.7514666666666667,0.0,0.7514666666666667,0,13,8,15,345,40,80.75,166.5
+"choke, defenders attack-move",15,side1,-0.7581333333333333,0.0,0.7581333333333333,0,14,8,15,339,40,77.5,168.75
+"choke, defenders attack-move",15,side1,-0.7034666666666667,0.0,0.7034666666666667,0,13,8,15,376,40,95.75,171.75
+"choke, defenders attack-move",15,side1,-0.7581333333333333,0.0,0.7581333333333333,0,14,8,15,341,40,78.25,169.0
+"choke, defenders attack-move",15,side1,-0.7634666666666666,0.0,0.7634666666666666,0,13,8,15,326,40,78.0,171.75
+"choke, defenders attack-move",15,side1,-0.7658666666666666,0.0,0.7658666666666666,0,13,8,15,326,40,76.5,169.25
+"choke, defenders attack-move",15,side1,-0.7677333333333334,0.0,0.7677333333333334,0,14,8,15,337,40,75.75,167.0
+"choke, defenders attack-move",15,side1,-0.7538666666666667,0.0,0.7538666666666667,0,13,8,15,335,40,81.75,171.25
+"choke, defenders attack-move",15,side1,-0.7610666666666667,0.0,0.7610666666666667,0,13,8,15,320,40,77.5,173.0
+"choke, defenders attack-move",16,side1,-0.776,0.0,0.776,0,14,8,16,312,40,78.75,171.5
+"choke, defenders attack-move",16,side1,-0.76475,0.0,0.76475,0,14,8,16,328,40,82.25,171.75
+"choke, defenders attack-move",16,side1,-0.77375,0.0,0.77375,0,14,8,16,325,40,77.75,168.5
+"choke, defenders attack-move",16,side1,-0.7625,0.0,0.7625,0,14,8,16,342,40,83.25,164.5
+"choke, defenders attack-move",16,side1,-0.7985,0.0,0.7985,0,14,8,16,309,40,69.5,166.5
+"choke, defenders attack-move",16,side1,-0.7805,0.0,0.7805,0,14,8,16,344,40,76.0,167.75
+"choke, defenders attack-move",16,side1,-0.7805,0.0,0.7805,0,14,8,16,307,40,76.5,171.5
+"choke, defenders attack-move",16,side1,-0.776,0.0,0.776,0,14,8,16,332,40,76.75,171.0
+"choke, defenders attack-move",16,side1,-0.794,0.0,0.794,0,14,8,16,329,40,70.0,167.5
+"choke, defenders attack-move",16,side1,-0.776,0.0,0.776,0,14,8,16,309,40,77.75,169.5
+"choke, defenders attack-move",16,side1,-0.77875,0.0,0.77875,0,13,8,16,319,40,75.25,170.0
+"choke, defenders attack-move",16,side1,-0.77825,0.0,0.77825,0,14,8,16,311,40,76.0,172.0
+"choke, defenders attack-move",16,side1,-0.7715,0.0,0.7715,0,14,8,16,326,40,78.25,170.25
+"choke, defenders attack-move",16,side1,-0.79175,0.0,0.79175,0,14,8,16,313,40,71.5,164.5
+"choke, defenders attack-move",16,side1,-0.7715,0.0,0.7715,0,14,8,16,323,40,79.5,169.5
+"choke, defenders attack-move",16,side1,-0.798,0.0,0.798,0,15,8,16,313,40,69.0,169.0
+"choke, defenders attack-move",16,side1,-0.78725,0.0,0.78725,0,14,8,16,320,40,74.5,169.0
+"choke, defenders attack-move",16,side1,-0.7945,0.0,0.7945,0,13,8,16,328,40,71.25,159.75
+"choke, defenders attack-move",16,side1,-0.79625,0.0,0.79625,0,14,8,16,310,40,71.0,165.75
+"choke, defenders attack-move",16,side1,-0.767,0.0,0.767,0,14,8,16,311,40,81.0,170.25
+"choke, defenders idle",6,side0,0.5825,0.5825,0.0,7,0,8,6,748,85,131.0,72.5
+"choke, defenders idle",6,side0,0.5205,0.5205,0.0,6,0,8,6,580,85,130.75,83.0
+"choke, defenders idle",6,side0,0.4575,0.4575,0.0,6,0,8,6,523,85,132.5,95.5
+"choke, defenders idle",6,side0,0.5295,0.5295,0.0,6,0,8,6,650,85,129.5,83.0
+"choke, defenders idle",6,side0,0.533,0.533,0.0,7,0,8,6,581,85,129.75,81.25
+"choke, defenders idle",6,side0,0.694,0.694,0.0,8,0,8,6,767,85,130.75,86.0
+"choke, defenders idle",6,side0,0.5215,0.5215,0.0,5,0,8,6,718,85,131.25,104.25
+"choke, defenders idle",6,side0,0.41000000000000003,0.41000000000000003,0.0,4,0,8,6,807,85,129.25,103.25
+"choke, defenders idle",6,side0,0.5555,0.5555,0.0,7,0,8,6,560,90,129.75,76.75
+"choke, defenders idle",6,side0,0.551,0.551,0.0,7,0,8,6,500,85,131.0,79.5
+"choke, defenders idle",6,side0,0.543,0.543,0.0,6,0,8,6,498,85,132.5,78.25
+"choke, defenders idle",6,side0,0.4325,0.4325,0.0,4,0,8,6,869,85,132.5,100.5
+"choke, defenders idle",6,side0,0.516,0.516,0.0,6,0,8,6,882,85,130.75,83.25
+"choke, defenders idle",6,side0,0.5285,0.5285,0.0,7,0,8,6,754,90,130.25,82.0
+"choke, defenders idle",6,stalemate,0.4753333333333334,0.642,0.16666666666666666,6,1,8,6,1010,85,110.75,62.25
+"choke, defenders idle",6,side0,0.489,0.489,0.0,6,0,8,6,535,90,129.75,89.0
+"choke, defenders idle",6,side0,0.4405,0.4405,0.0,5,0,8,6,964,85,129.5,97.25
+"choke, defenders idle",6,stalemate,0.5148333333333334,0.6815,0.16666666666666666,7,1,8,6,886,90,107.5,55.0
+"choke, defenders idle",6,side0,0.5825,0.5825,0.0,7,0,8,6,444,85,131.25,73.5
+"choke, defenders idle",6,side0,0.533,0.533,0.0,7,0,8,6,642,85,128.75,80.0
+"choke, defenders idle",7,side0,0.3065,0.3065,0.0,4,0,8,7,1069,90,150.75,120.25
+"choke, defenders idle",7,side0,0.3685,0.3685,0.0,5,0,8,7,747,90,151.25,111.25
+"choke, defenders idle",7,side0,0.4665,0.4665,0.0,6,0,8,7,912,85,152.25,94.0
+"choke, defenders idle",7,stalemate,0.35164285714285715,0.4945,0.14285714285714285,5,1,8,7,1206,85,129.25,88.25
+"choke, defenders idle",7,stalemate,0.30214285714285716,0.445,0.14285714285714285,5,1,8,7,1018,85,143.75,97.5
+"choke, defenders idle",7,side0,0.4405,0.4405,0.0,5,0,8,7,835,85,152.5,134.5
+"choke, defenders idle",7,side0,0.498,0.498,0.0,6,0,8,7,611,90,163.25,106.0
+"choke, defenders idle",7,stalemate,0.37214285714285716,0.515,0.14285714285714285,7,1,8,7,928,90,131.0,84.0
+"choke, defenders idle",7,side0,0.1555,0.1555,0.0,2,0,8,7,796,90,152.0,146.75
+"choke, defenders idle",7,side0,0.303,0.303,0.0,3,0,8,7,672,90,154.0,121.0
+"choke, defenders idle",7,stalemate,0.35614285714285715,0.499,0.14285714285714285,5,1,8,7,1016,85,136.25,104.75
+"choke, defenders idle",7,stalemate,0.24014285714285716,0.383,0.14285714285714285,4,1,8,7,1264,90,149.5,106.5
+"choke, defenders idle",7,side0,0.3605,0.3605,0.0,4,0,8,7,722,85,152.25,110.0
+"choke, defenders idle",7,stalemate,0.397,0.401,0.004,4,1,8,7,1203,90,168.0,129.5
+"choke, defenders idle",7,side0,0.32,0.32,0.0,4,0,8,7,937,85,153.0,119.25
+"choke, defenders idle",7,stalemate,0.3588571428571429,0.624,0.2651428571428571,6,2,8,7,1078,85,112.0,64.0
+"choke, defenders idle",7,stalemate,0.2562142857142857,0.3425,0.08628571428571429,4,1,8,7,1308,90,138.25,112.75
+"choke, defenders idle",7,side0,0.544,0.544,0.0,5,0,8,7,826,90,154.25,115.5
+"choke, defenders idle",7,stalemate,0.3282857142857143,0.614,0.2857142857142857,7,2,8,7,935,85,130.75,66.5
+"choke, defenders idle",7,stalemate,0.34264285714285714,0.4855,0.14285714285714285,5,1,8,7,1067,85,136.5,89.5
+"choke, defenders idle",8,side0,0.1815,0.1815,0.0,3,0,8,8,983,85,174.0,141.75
+"choke, defenders idle",8,stalemate,0.096,0.221,0.125,4,1,8,8,1112,85,152.5,142.5
+"choke, defenders idle",8,stalemate,0.1915,0.258,0.0665,3,1,8,8,1339,90,163.25,142.5
+"choke, defenders idle",8,side0,0.053,0.053,0.0,1,0,8,8,1187,85,176.25,166.25
+"choke, defenders idle",8,side0,0.2425,0.2425,0.0,5,0,8,8,1050,85,192.75,158.75
+"choke, defenders idle",8,side1,-0.0395,0.0,0.0395,0,1,8,8,1137,85,188.5,185.25
+"choke, defenders idle",8,side0,0.07,0.07,0.0,2,0,8,8,851,85,175.75,164.75
+"choke, defenders idle",8,side0,0.328,0.328,0.0,5,0,8,8,684,85,176.0,116.75
+"choke, defenders idle",8,side0,0.2625,0.2625,0.0,3,0,8,8,789,85,175.0,130.25
+"choke, defenders idle",8,side0,0.1725,0.1725,0.0,3,0,8,8,836,85,176.0,144.5
+"choke, defenders idle",8,side1,-0.177,0.0,0.177,0,3,8,8,880,85,149.5,194.0
+"choke, defenders idle",8,stalemate,0.2705,0.3955,0.125,5,1,8,8,1048,85,152.25,105.25
+"choke, defenders idle",8,stalemate,0.2615,0.3865,0.125,5,1,8,8,1125,85,153.75,106.0
+"choke, defenders idle",8,side0,0.2165,0.2165,0.0,4,0,8,8,918,85,177.0,137.0
+"choke, defenders idle",8,side1,-0.017,0.0,0.017,0,1,8,8,1218,85,172.0,174.5
+"choke, defenders idle",8,stalemate,0.0665,0.1915,0.125,2,1,8,8,1602,85,192.75,174.25
+"choke, defenders idle",8,side0,0.20850000000000002,0.20850000000000002,0.0,3,0,8,8,1011,85,175.75,137.5
+"choke, defenders idle",8,side1,-0.258,0.0,0.258,0,3,8,8,814,85,129.75,173.75
+"choke, defenders idle",8,side1,-0.0915,0.0,0.0915,0,3,8,8,1085,85,172.25,189.25
+"choke, defenders idle",8,side1,-0.159,0.0,0.159,0,3,8,8,1019,85,146.75,172.0
+"choke, defenders idle",9,side0,0.0125,0.0125,0.0,1,0,8,9,1241,85,196.25,171.75
+"choke, defenders idle",9,side1,-0.19333333333333333,0.0,0.19333333333333333,0,3,8,9,1037,85,175.5,175.0
+"choke, defenders idle",9,side1,-0.07022222222222223,0.0,0.07022222222222223,0,2,8,9,938,85,183.25,174.5
+"choke, defenders idle",9,side1,-0.015111111111111112,0.0,0.015111111111111112,0,1,8,9,1024,85,194.0,175.25
+"choke, defenders idle",9,side1,-0.2053333333333333,0.0,0.2053333333333333,0,3,8,9,1294,85,185.0,210.25
+"choke, defenders idle",9,side0,0.089,0.089,0.0,1,0,8,9,1078,85,196.5,160.0
+"choke, defenders idle",9,side1,-0.42666666666666664,0.0,0.42666666666666664,0,6,8,9,765,85,125.0,193.25
+"choke, defenders idle",9,side1,-0.40755555555555556,0.0,0.40755555555555556,0,5,8,9,671,85,117.5,174.25
+"choke, defenders idle",9,side1,-0.21333333333333332,0.0,0.21333333333333332,0,3,8,9,767,85,154.75,173.75
+"choke, defenders idle",9,side1,-0.39066666666666666,0.0,0.39066666666666666,0,6,8,9,637,85,119.5,172.0
+"choke, defenders idle",9,side1,-0.16133333333333333,0.0,0.16133333333333333,0,3,8,9,1057,85,184.75,173.5
+"choke, defenders idle",9,side1,-0.18222222222222223,0.0,0.18222222222222223,0,2,8,9,1474,85,194.25,184.75
+"choke, defenders idle",9,side1,-0.22533333333333333,0.0,0.22533333333333333,0,3,8,9,919,85,188.25,174.25
+"choke, defenders idle",9,stalemate,0.1542777777777778,0.3765,0.2222222222222222,6,2,8,9,1048,85,152.25,108.25
+"choke, defenders idle",9,side1,-0.4475555555555556,0.0,0.4475555555555556,0,5,8,9,828,90,141.5,189.0
+"choke, defenders idle",9,side1,-0.16622222222222222,0.0,0.16622222222222222,0,2,8,9,1002,85,180.25,193.5
+"choke, defenders idle",9,side1,-0.11333333333333334,0.0,0.11333333333333334,0,3,8,9,892,85,176.75,174.0
+"choke, defenders idle",9,side1,-0.29244444444444445,0.0,0.29244444444444445,0,4,8,9,781,85,139.75,174.0
+"choke, defenders idle",9,stalemate,0.03438888888888891,0.14550000000000002,0.1111111111111111,3,1,8,9,1210,85,175.75,149.5
+"choke, defenders idle",9,side0,0.443,0.443,0.0,7,0,8,9,904,85,207.75,137.0
+"choke, defenders idle",10,side1,-0.3164,0.0,0.3164,0,5,8,10,689,80,149.75,174.25
+"choke, defenders idle",10,side1,-0.3084,0.0,0.3084,0,6,8,10,659,80,152.0,172.75
+"choke, defenders idle",10,side1,-0.38120000000000004,0.0,0.38120000000000004,0,5,8,10,796,80,159.5,188.0
+"choke, defenders idle",10,side1,-0.3424,0.0,0.3424,0,4,8,10,823,80,149.5,172.5
+"choke, defenders idle",10,side1,-0.23879999999999998,0.0,0.23879999999999998,0,3,8,10,1786,80,234.0,202.0
+"choke, defenders idle",10,side1,-0.192,0.0,0.192,0,3,8,10,1025,80,198.75,185.5
+"choke, defenders idle",10,side1,-0.3516,0.0,0.3516,0,6,8,10,663,80,141.25,174.25
+"choke, defenders idle",10,side1,-0.2488,0.0,0.2488,0,4,8,10,843,80,187.25,172.25
+"choke, defenders idle",10,side1,-0.3956,0.0,0.3956,0,5,8,10,676,80,149.25,174.75
+"choke, defenders idle",10,side1,-0.38039999999999996,0.0,0.38039999999999996,0,6,8,10,561,80,136.25,174.0
+"choke, defenders idle",10,side1,-0.1784,0.0,0.1784,0,2,8,10,863,80,182.75,172.0
+"choke, defenders idle",10,side1,-0.2172,0.0,0.2172,0,3,8,10,1539,80,219.75,172.5
+"choke, defenders idle",10,side1,-0.19119999999999998,0.0,0.19119999999999998,0,4,8,10,766,80,194.5,172.0
+"choke, defenders idle",10,side1,-0.5272,0.0,0.5272,0,7,8,10,710,80,136.0,183.0
+"choke, defenders idle",10,side1,-0.3704,0.0,0.3704,0,5,8,10,620,80,138.5,170.75
+"choke, defenders idle",10,side1,-0.2496,0.0,0.2496,0,3,8,10,797,80,166.75,199.75
+"choke, defenders idle",10,side1,-0.2524,0.0,0.2524,0,4,8,10,839,80,175.5,175.5
+"choke, defenders idle",10,side1,-0.6048,0.0,0.6048,0,9,8,10,511,80,86.25,171.25
+"choke, defenders idle",10,side1,-0.5336000000000001,0.0,0.5336000000000001,0,8,8,10,579,80,118.25,178.0
+"choke, defenders idle",10,side1,-0.264,0.0,0.264,0,3,8,10,929,80,173.75,173.25
+"choke, defenders idle",11,side1,-0.5367272727272727,0.0,0.5367272727272727,0,9,8,11,579,80,111.25,171.75
+"choke, defenders idle",11,side1,-0.5178181818181818,0.0,0.5178181818181818,0,8,8,11,537,80,117.0,171.25
+"choke, defenders idle",11,side1,-0.5185454545454545,0.0,0.5185454545454545,0,7,8,11,612,80,116.5,173.5
+"choke, defenders idle",11,side1,-0.35163636363636364,0.0,0.35163636363636364,0,7,8,11,717,80,156.25,175.5
+"choke, defenders idle",11,stalemate,-0.03986363636363635,0.2165,0.25636363636363635,4,3,8,11,1484,80,220.75,204.0
+"choke, defenders idle",11,side1,-0.45381818181818184,0.0,0.45381818181818184,0,6,8,11,563,80,131.5,173.25
+"choke, defenders idle",11,side1,-0.5145454545454545,0.0,0.5145454545454545,0,8,8,11,579,80,116.75,172.5
+"choke, defenders idle",11,side1,-0.3883636363636364,0.0,0.3883636363636364,0,6,8,11,724,80,156.25,201.25
+"choke, defenders idle",11,side1,-0.34,0.0,0.34,0,5,8,11,642,80,159.5,173.75
+"choke, defenders idle",11,side1,-0.5930909090909091,0.0,0.5930909090909091,0,8,8,11,578,80,96.75,172.5
+"choke, defenders idle",11,side1,-0.40545454545454546,0.0,0.40545454545454546,0,5,8,11,772,80,143.5,172.0
+"choke, defenders idle",11,side1,-0.46036363636363636,0.0,0.46036363636363636,0,6,8,11,617,80,130.75,174.5
+"choke, defenders idle",11,side1,-0.4629090909090909,0.0,0.4629090909090909,0,7,8,11,621,80,130.25,173.75
+"choke, defenders idle",11,side1,-0.31381818181818183,0.0,0.31381818181818183,0,5,8,11,673,80,165.0,173.25
+"choke, defenders idle",11,side1,-0.4465454545454545,0.0,0.4465454545454545,0,7,8,11,582,80,139.5,182.0
+"choke, defenders idle",11,side1,-0.598909090909091,0.0,0.598909090909091,0,9,8,11,586,80,125.0,194.25
+"choke, defenders idle",11,side1,-0.48763636363636365,0.0,0.48763636363636365,0,9,8,11,543,80,123.25,173.0
+"choke, defenders idle",11,side1,-0.4727272727272727,0.0,0.4727272727272727,0,7,8,11,600,80,128.25,169.75
+"choke, defenders idle",11,side1,-0.39745454545454545,0.0,0.39745454545454545,0,7,8,11,622,80,143.5,171.75
+"choke, defenders idle",11,side1,-0.3810909090909091,0.0,0.3810909090909091,0,7,8,11,713,80,165.5,173.0
+"choke, defenders idle",12,side1,-0.5166666666666667,0.0,0.5166666666666667,0,8,8,12,531,80,127.0,173.0
+"choke, defenders idle",12,side1,-0.39433333333333337,0.0,0.39433333333333337,0,7,8,12,621,80,158.5,173.5
+"choke, defenders idle",12,side1,-0.6113333333333334,0.0,0.6113333333333334,0,10,8,12,556,80,111.0,175.25
+"choke, defenders idle",12,side1,-0.5016666666666666,0.0,0.5016666666666666,0,8,8,12,526,80,131.75,175.25
+"choke, defenders idle",12,side1,-0.428,0.0,0.428,0,6,8,12,863,80,167.75,201.0
+"choke, defenders idle",12,side1,-0.5046666666666667,0.0,0.5046666666666667,0,8,8,12,531,80,131.0,178.5
+"choke, defenders idle",12,side1,-0.4686666666666666,0.0,0.4686666666666666,0,8,8,12,556,80,138.25,176.0
+"choke, defenders idle",12,side1,-0.48900000000000005,0.0,0.48900000000000005,0,9,8,12,609,80,153.5,173.25
+"choke, defenders idle",12,side1,-0.54,0.0,0.54,0,9,8,12,524,80,121.75,172.25
+"choke, defenders idle",12,side1,-0.5003333333333333,0.0,0.5003333333333333,0,10,8,12,527,80,131.75,173.5
+"choke, defenders idle",12,side1,-0.5353333333333333,0.0,0.5353333333333333,0,7,8,12,604,80,139.25,185.5
+"choke, defenders idle",12,side1,-0.5406666666666666,0.0,0.5406666666666666,0,8,8,12,561,80,124.5,171.0
+"choke, defenders idle",12,side1,-0.5196666666666666,0.0,0.5196666666666666,0,8,8,12,629,80,146.5,172.75
+"choke, defenders idle",12,side1,-0.5346666666666667,0.0,0.5346666666666667,0,8,8,12,534,80,123.0,168.5
+"choke, defenders idle",12,side1,-0.564,0.0,0.564,0,9,8,12,577,80,116.0,172.75
+"choke, defenders idle",12,side1,-0.6406666666666666,0.0,0.6406666666666666,0,11,8,12,497,80,103.5,171.0
+"choke, defenders idle",12,side1,-0.5903333333333333,0.0,0.5903333333333333,0,10,8,12,502,80,106.25,173.75
+"choke, defenders idle",12,side1,-0.4656666666666667,0.0,0.4656666666666667,0,8,8,12,653,80,145.25,212.75
+"choke, defenders idle",12,side1,-0.555,0.0,0.555,0,9,8,12,612,80,132.75,196.5
+"choke, defenders idle",12,side1,-0.49933333333333335,0.0,0.49933333333333335,0,7,8,12,597,80,131.0,180.5
+"choke, defenders idle",13,side1,-0.4873846153846154,0.0,0.4873846153846154,0,9,8,13,537,80,146.0,174.75
+"choke, defenders idle",13,side1,-0.48184615384615387,0.0,0.48184615384615387,0,9,8,13,598,80,148.75,174.0
+"choke, defenders idle",13,side1,-0.6384615384615385,0.0,0.6384615384615385,0,11,8,13,577,80,119.75,176.75
+"choke, defenders idle",13,side1,-0.5836923076923077,0.0,0.5836923076923077,0,10,8,13,527,80,119.0,172.5
+"choke, defenders idle",13,side1,-0.5455384615384615,0.0,0.5455384615384615,0,9,8,13,672,80,147.0,171.75
+"choke, defenders idle",13,side1,-0.5206153846153846,0.0,0.5206153846153846,0,9,8,13,551,80,136.75,181.0
+"choke, defenders idle",13,side1,-0.5433846153846154,0.0,0.5433846153846154,0,8,8,13,521,80,129.75,171.75
+"choke, defenders idle",13,side1,-0.5150769230769231,0.0,0.5150769230769231,0,9,8,13,540,80,137.5,172.75
+"choke, defenders idle",13,side1,-0.6593846153846153,0.0,0.6593846153846153,0,13,8,13,442,80,95.0,171.0
+"choke, defenders idle",13,side1,-0.6446153846153847,0.0,0.6446153846153847,0,10,8,13,535,80,101.0,171.75
+"choke, defenders idle",13,side1,-0.6267692307692307,0.0,0.6267692307692307,0,12,8,13,457,80,105.25,174.0
+"choke, defenders idle",13,side1,-0.5621538461538461,0.0,0.5621538461538461,0,9,8,13,557,80,124.25,181.0
+"choke, defenders idle",13,side1,-0.551076923076923,0.0,0.551076923076923,0,9,8,13,555,80,128.0,171.75
+"choke, defenders idle",13,side1,-0.6218461538461538,0.0,0.6218461538461538,0,11,8,13,577,80,107.25,172.0
+"choke, defenders idle",13,side1,-0.4858461538461538,0.0,0.4858461538461538,0,7,8,13,599,80,147.25,173.5
+"choke, defenders idle",13,side1,-0.707076923076923,0.0,0.707076923076923,0,12,8,13,435,80,83.25,172.0
+"choke, defenders idle",13,side1,-0.696,0.0,0.696,0,12,8,13,491,80,98.5,182.25
+"choke, defenders idle",13,side1,-0.49292307692307696,0.0,0.49292307692307696,0,9,8,13,590,80,143.75,171.25
+"choke, defenders idle",13,side1,-0.5849230769230769,0.0,0.5849230769230769,0,8,8,13,630,80,134.75,198.0
+"choke, defenders idle",13,side1,-0.5504615384615384,0.0,0.5504615384615384,0,10,8,13,545,80,128.0,172.25
+"choke, defenders idle",14,side1,-0.6971428571428572,0.0,0.6971428571428572,0,13,8,14,464,80,92.0,173.0
+"choke, defenders idle",14,side1,-0.596,0.0,0.596,0,10,8,14,511,80,123.25,170.0
+"choke, defenders idle",14,side1,-0.6397142857142857,0.0,0.6397142857142857,0,10,8,14,484,80,109.5,169.25
+"choke, defenders idle",14,side1,-0.5399999999999999,0.0,0.5399999999999999,0,9,8,14,548,80,140.5,190.75
+"choke, defenders idle",14,side1,-0.6,0.0,0.6,0,12,8,14,589,80,145.25,210.75
+"choke, defenders idle",14,side1,-0.6551428571428571,0.0,0.6551428571428571,0,10,8,14,484,80,112.75,174.0
+"choke, defenders idle",14,side1,-0.58,0.0,0.58,0,11,8,14,540,80,129.25,171.0
+"choke, defenders idle",14,side1,-0.6391428571428571,0.0,0.6391428571428571,0,11,8,14,534,80,120.25,186.25
+"choke, defenders idle",14,side1,-0.6262857142857143,0.0,0.6262857142857143,0,11,8,14,483,80,114.25,171.75
+"choke, defenders idle",14,side1,-0.6648571428571428,0.0,0.6648571428571428,0,11,8,14,457,80,103.5,180.25
+"choke, defenders idle",14,side1,-0.5754285714285714,0.0,0.5754285714285714,0,10,8,14,577,80,129.5,171.75
+"choke, defenders idle",14,side1,-0.6674285714285714,0.0,0.6674285714285714,0,11,8,14,473,80,101.5,170.25
+"choke, defenders idle",14,side1,-0.5245714285714286,0.0,0.5245714285714286,0,9,8,14,599,85,145.75,172.75
+"choke, defenders idle",14,side1,-0.5908571428571429,0.0,0.5908571428571429,0,10,8,14,514,80,125.75,171.75
+"choke, defenders idle",14,side1,-0.6474285714285715,0.0,0.6474285714285715,0,10,8,14,627,80,140.0,200.0
+"choke, defenders idle",14,side1,-0.6294285714285713,0.0,0.6294285714285713,0,10,8,14,519,80,113.75,171.75
+"choke, defenders idle",14,side1,-0.6822857142857143,0.0,0.6822857142857143,0,12,8,14,513,80,113.75,176.0
+"choke, defenders idle",14,side1,-0.6545714285714286,0.0,0.6545714285714286,0,11,8,14,517,80,115.25,186.5
+"choke, defenders idle",14,side1,-0.6822857142857143,0.0,0.6822857142857143,0,12,8,14,434,80,95.75,171.5
+"choke, defenders idle",14,side1,-0.71,0.0,0.71,0,13,8,14,497,80,108.0,173.25
+"choke, defenders idle",15,side1,-0.6872,0.0,0.6872,0,12,8,15,452,80,102.0,171.0
+"choke, defenders idle",15,side1,-0.6133333333333333,0.0,0.6133333333333333,0,11,8,15,497,80,127.25,173.5
+"choke, defenders idle",15,side1,-0.7111999999999999,0.0,0.7111999999999999,0,12,8,15,528,80,112.75,173.75
+"choke, defenders idle",15,side1,-0.6325333333333333,0.0,0.6325333333333333,0,11,8,15,507,80,122.0,172.5
+"choke, defenders idle",15,side1,-0.6848,0.0,0.6848,0,12,8,15,557,80,119.0,175.75
+"choke, defenders idle",15,side1,-0.6704000000000001,0.0,0.6704000000000001,0,12,8,15,453,80,107.0,179.5
+"choke, defenders idle",15,side1,-0.6445333333333333,0.0,0.6445333333333333,0,11,8,15,502,80,116.5,189.5
+"choke, defenders idle",15,side1,-0.5826666666666667,0.0,0.5826666666666667,0,10,8,15,598,80,146.75,170.25
+"choke, defenders idle",15,side1,-0.6842666666666666,0.0,0.6842666666666666,0,13,8,15,454,80,101.25,167.25
+"choke, defenders idle",15,side1,-0.6632,0.0,0.6632,0,12,8,15,514,80,111.0,170.5
+"choke, defenders idle",15,side1,-0.6914666666666667,0.0,0.6914666666666667,0,13,8,15,511,80,116.25,172.25
+"choke, defenders idle",15,side1,-0.7394666666666667,0.0,0.7394666666666667,0,13,8,15,483,80,102.0,169.5
+"choke, defenders idle",15,side1,-0.6752,0.0,0.6752,0,12,8,15,460,85,106.25,169.75
+"choke, defenders idle",15,side1,-0.6632,0.0,0.6632,0,12,8,15,483,80,110.5,173.0
+"choke, defenders idle",15,side1,-0.6493333333333333,0.0,0.6493333333333333,0,11,8,15,479,85,114.75,169.0
+"choke, defenders idle",15,side1,-0.6914666666666667,0.0,0.6914666666666667,0,13,8,15,434,80,100.25,169.75
+"choke, defenders idle",15,side1,-0.6781333333333334,0.0,0.6781333333333334,0,11,8,15,462,80,106.25,172.0
+"choke, defenders idle",15,side1,-0.7437333333333334,0.0,0.7437333333333334,0,14,8,15,452,80,84.75,168.75
+"choke, defenders idle",15,side1,-0.6272,0.0,0.6272,0,12,8,15,534,80,121.75,171.0
+"choke, defenders idle",15,side1,-0.6373333333333334,0.0,0.6373333333333334,0,11,8,15,535,80,118.75,170.75
+"choke, defenders idle",16,side1,-0.70575,0.0,0.70575,0,15,8,16,454,85,101.0,171.25
+"choke, defenders idle",16,side1,-0.6685,0.0,0.6685,0,13,8,16,511,80,116.0,174.75
+"choke, defenders idle",16,side1,-0.67975,0.0,0.67975,0,13,8,16,466,80,111.25,173.25
+"choke, defenders idle",16,side1,-0.602,0.0,0.602,0,11,8,16,589,80,153.75,187.25
+"choke, defenders idle",16,side1,-0.6915,0.0,0.6915,0,12,8,16,519,80,108.75,181.25
+"choke, defenders idle",16,side1,-0.65275,0.0,0.65275,0,13,8,16,495,80,121.75,172.5
+"choke, defenders idle",16,side1,-0.6775,0.0,0.6775,0,13,8,16,483,85,113.0,173.0
+"choke, defenders idle",16,side1,-0.6577500000000001,0.0,0.6577500000000001,0,12,8,16,536,80,128.25,192.0
+"choke, defenders idle",16,side1,-0.75125,0.0,0.75125,0,14,8,16,453,80,110.25,174.0
+"choke, defenders idle",16,side1,-0.6595,0.0,0.6595,0,13,8,16,530,80,120.25,171.0
+"choke, defenders idle",16,side1,-0.66125,0.0,0.66125,0,14,8,16,504,80,119.25,186.0
+"choke, defenders idle",16,side1,-0.71525,0.0,0.71525,0,14,8,16,443,80,100.5,172.5
+"choke, defenders idle",16,side1,-0.7445,0.0,0.7445,0,14,8,16,455,85,89.5,172.0
+"choke, defenders idle",16,side1,-0.6465,0.0,0.6465,0,12,8,16,525,80,123.0,170.5
+"choke, defenders idle",16,side1,-0.68925,0.0,0.68925,0,12,8,16,473,80,109.0,172.75
+"choke, defenders idle",16,side1,-0.71575,0.0,0.71575,0,13,8,16,464,80,99.5,172.5
+"choke, defenders idle",16,side1,-0.7535,0.0,0.7535,0,14,8,16,444,80,86.0,171.0
+"choke, defenders idle",16,side1,-0.71975,0.0,0.71975,0,14,8,16,453,80,98.0,179.75
+"choke, defenders idle",16,side1,-0.73325,0.0,0.73325,0,14,8,16,428,85,93.5,170.25
+"choke, defenders idle",16,side1,-0.637,0.0,0.637,0,13,8,16,505,80,127.0,169.25
