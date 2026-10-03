@@ -630,6 +630,31 @@ void om_unit_acquire_target(om_world *w, uint32_t unit) {
     }
 }
 
+#define OM_FOG_VISION_OFFSETS 4
+
+static double om_fog_vision_param(const om_world *w, uint32_t offset, int up) {
+    return om_tactical_get_param(w, (om_tac_param)((up ? OM_TP_VISION_UP_1 : OM_TP_VISION_DOWN_1) + (int)offset - 1));
+}
+
+static double om_fog_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0, int up) {
+    const om_fog_state *st = om_fog_ro(w);
+    double ux = 0.0, uy = 0.0;
+    int in_vantage;
+    double base;
+    om_fog_unit_pos(w, unit, &ux, &uy);
+    in_vantage = om_fog_in_vantage(st, ux, uy);
+    if (p0 == 0) return 1.0;
+    if (p0 > OM_FOG_VISION_OFFSETS) return 0.0;
+    base = om_fog_vision_param(w, p0, up);
+    if (base > 1.0) base = 1.0;
+    if (p0 == 2 + OM_VANTAGE_EXTRA_LAYER && in_vantage && base <= 0.0) return om_fog_vision_param(w, 2, up);
+    if (in_vantage && p0 <= 2) {
+        double doubled = base * OM_VANTAGE_CONE_MULTIPLIER;
+        return (doubled > 1.0) ? 1.0 : doubled;
+    }
+    return base;
+}
+
 int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     const om_fog_state *st = om_fog_ro(w);
     om_world *mw = (om_world *)w;
@@ -640,7 +665,7 @@ int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     if (!om_fog_unit_pos(w, observer, &ox, &oy) || !om_fog_unit_pos(w, target, &tx, &ty)) return 0;
     ol = om_fog_unit_layer(w, observer);
     tl = om_fog_unit_layer(w, target);
-    factor = om_unit_get_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol);
+    factor = om_fog_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol, tl > ol);
     if (factor <= 0.0) return 0;
     if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius(st, w, observer, (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
     if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
@@ -648,22 +673,7 @@ int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
 }
 
 double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0) {
-    const om_fog_state *st = om_fog_ro(w);
-    double ux = 0.0, uy = 0.0;
-    int in_vantage;
-    double base;
-    om_fog_unit_pos(w, unit, &ux, &uy);
-    in_vantage = om_fog_in_vantage(st, ux, uy);
-    if (p0 == 0) return 1.0;
-    if (p0 == 1) base = OM_CONE_LAYER_1_FACTOR;
-    else if (p0 == 2) base = OM_CONE_LAYER_2_FACTOR;
-    else if (in_vantage && p0 == 2 + OM_VANTAGE_EXTRA_LAYER) return OM_CONE_LAYER_2_FACTOR;
-    else return 0.0;
-    if (in_vantage) {
-        double doubled = base * OM_VANTAGE_CONE_MULTIPLIER;
-        return (doubled > 1.0) ? 1.0 : doubled;
-    }
-    return base;
+    return om_fog_cross_layer_factor(w, unit, p0, 1);
 }
 
 double om_unit_get_effective_sensor_radius_to_target_elevation(const om_world *w, uint32_t unit, uint32_t target_elevation_tier) {
