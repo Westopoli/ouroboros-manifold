@@ -1,6 +1,6 @@
 # spec: Architect ruling A198 - hold-to-contact opening through the production library
-"""Plays walk as move groups that keep their slots to a stop line (S = 0.95 x the smaller attack range), then switch
-to attack_move on arrival. EXPECTED RED until Setup.approach, approach_setup and the play wiring land."""
+"""Plays walk as group_move groups that keep their slots to a stop line (S = 0.95 x the smaller attack range), then switch
+to attack_move once both sides have arrived. EXPECTED RED until Setup.approach, approach_setup and the play wiring land."""
 import dataclasses
 import math
 import sys

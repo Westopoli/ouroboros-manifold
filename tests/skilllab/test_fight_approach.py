@@ -1,5 +1,5 @@
 # spec: Architect ruling A198 - fight() runs Setup.approach through approach_setup before spawning
-"""fight with Setup.approach on a WalkingFakeEngine: move first, attack_move on arrival; off is byte-identical."""
+"""fight with Setup.approach on a WalkingFakeEngine: group_move first, attack_move on arrival (both sides together); off is byte-identical."""
 import dataclasses
 import math
 import sys
@@ -37,12 +37,13 @@ def idx(fake, name, nth=0):
     return [i for i, c in enumerate(fake.calls) if c[0] == name][nth]
 
 
-def test_every_mover_group_is_ordered_to_move_before_any_attack_move():
+def test_every_mover_group_is_ordered_to_group_move_before_any_attack_move():
     _, fake = run(S())
-    moves = fake.calls_named("order_move")
+    moves = fake.calls_named("order_group_move")
     assert len(moves) == 2
-    assert idx(fake, "order_move", 1) < idx(fake, "order_attack_move", 0)
-    assert [o[1] for o in fake.order_log[:2]] == ["move", "move"]
+    assert fake.calls_named("order_move") == []
+    assert idx(fake, "order_group_move", 1) < idx(fake, "order_attack_move", 0)
+    assert [o[1] for o in fake.order_log[:2]] == ["group_move", "group_move"]
     assert [o[0] for o in fake.order_log[:2]] == [0, 0]
 
 
@@ -54,6 +55,13 @@ def test_attack_move_is_issued_only_after_the_group_is_near_its_move_goal():
         assert ids == _ids
         assert tick > 0
         assert math.hypot(centre[0] - goal[0], centre[1] - goal[1]) <= 60.0
+
+
+def test_both_sides_switch_to_attack_move_on_the_same_tick():
+    """arrive_all: the nearer side waits for the farther one (here the sides are unequal in width and distance)."""
+    result, fake = run(S(groups=(G(0, count=4, x=-1000.0), G(1, count=4, x=600.0))))
+    assert len({t for t, _, _ in fake.attack_log}) == 1 and len(fake.attack_log) == 2
+    assert len({t for _, t in result.steps_fired}) == 1
 
 
 def test_the_walkers_really_walk_so_the_arrival_is_not_instant():
@@ -79,7 +87,7 @@ def test_off_is_identical_to_a_setup_without_the_field():
     (r1, f1), (r2, f2) = run(plain), run(off)
     assert r1 == r2
     assert f1.calls == f2.calls
-    assert f1.calls_named("order_move") == []
+    assert f1.calls_named("order_group_move") == []
     assert r1.steps_fired == ()
     assert [o[:2] for o in f1.order_log] == [(0, "attack_move"), (0, "attack_move")]
 
@@ -96,7 +104,7 @@ def test_spawns_are_the_original_positions_and_orders_follow_the_spawns():
     _, fake = run(S())
     _, off = run(S(approach=0.0))
     assert fake.spawn_log() == off.spawn_log()
-    assert idx(fake, "_spawned", 7) < idx(fake, "order_move", 0)
+    assert idx(fake, "_spawned", 7) < idx(fake, "order_group_move", 0)
 
 
 def test_range_comes_from_the_registered_types():
@@ -112,7 +120,7 @@ def test_range_comes_from_the_registered_types():
 
 def test_idle_side_stays_and_the_mover_walks_all_of_it():
     result, fake = run(S(groups=(G(0), G(1, order="idle"))))
-    assert len(fake.calls_named("order_move")) == 1
+    assert len(fake.calls_named("order_group_move")) == 1
     assert len(fake.attack_log) == 1
     assert [i for i, _ in result.steps_fired] == [0]
 

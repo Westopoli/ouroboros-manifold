@@ -1,16 +1,19 @@
-"""TimelineFakeEngine whose units walk: a unit with a move destination goes 5 wu per tick toward it and stops on it.
+"""GroupMoveFakeEngine whose units walk: a unit with a destination goes 5 wu per tick toward it and stops on it.
 
-order_move sets the destination; order_attack_move, clear_orders and order_guard clear it (an attack-moving fake
-unit stays put; only the walk is simulated). `attack_log` is [(tick, unit_ids, centroid at that moment)] per attack_move.
+order_move sets the destination to the click point for every unit; order_group_move gives each unit its own slot
+(click point + the unit's offset from the group centroid, like om_command_group_move); order_attack_move,
+clear_orders and order_guard clear it (an attack-moving fake unit stays put; only the walk is simulated).
+`attack_log` is [(tick, unit_ids, centroid at that moment)] per attack_move; `move_goals` is [(unit_ids, click point)]
+for every order_move and order_group_move in call order.
 """
 import math
 
-from fakes_timeline import TimelineFakeEngine
+from fakes_group_move import GroupMoveFakeEngine
 
 WALK = 5.0
 
 
-class WalkingFakeEngine(TimelineFakeEngine):
+class WalkingFakeEngine(GroupMoveFakeEngine):
     def __init__(self, **kw):
         super().__init__(**kw)
         self.dest = {}
@@ -22,6 +25,15 @@ class WalkingFakeEngine(TimelineFakeEngine):
         self.move_goals.append((list(unit_ids), (x, y)))
         for u in unit_ids:
             self.dest[u] = (x, y)
+
+    def order_group_move(self, w, unit_ids, x, y):
+        gid = super().order_group_move(w, unit_ids, x, y)
+        self.move_goals.append((list(unit_ids), (x, y)))
+        pos = [(self.units[u]["x"], self.units[u]["y"]) for u in unit_ids]
+        cx, cy = sum(p[0] for p in pos) / len(pos), sum(p[1] for p in pos) / len(pos)
+        for u, p in zip(unit_ids, pos):
+            self.dest[u] = (x + p[0] - cx, y + p[1] - cy)
+        return gid
 
     def order_attack_move(self, w, unit_ids, x, y):
         super().order_attack_move(w, unit_ids, x, y)

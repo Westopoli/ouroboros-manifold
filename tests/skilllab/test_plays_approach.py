@@ -52,7 +52,7 @@ def test_asym_play_sets_it_for_a_mixed_side():
 
 
 def test_asym_play_defaults_still_order_attack_move_before_the_rewrite():
-    """The play builds attack_move groups; approach_setup turns them into move groups at fight time, not at build time."""
+    """The play builds attack_move groups; approach_setup turns them into group_move groups at fight time, not at build time."""
     s = asym_play(16, Side("blob"), Side("blob"))(12, False)
     assert [g.order for g in s.groups] == ["attack_move", "attack_move"]
     assert s.timeline == ()
