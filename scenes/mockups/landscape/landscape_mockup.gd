@@ -12,7 +12,6 @@ const PLANTS: Array[String] = [
 	"regen-stall",
 	"space-no-carve",
 	"space-independent-layers",
-	"space-noise-blobs",
 	"space-coherent-layers",
 ]
 
@@ -91,6 +90,8 @@ func qa_state() -> Dictionary:
 		state["regions_unreachable_after"] = fm.regions_unreachable_after
 		state["crossing_pct"] = fm.crossing_pct
 		state["crossing_marks"] = fm.crossings.size()
+		state["crossing_marks_shown"] = fm.crossings.size() if _hud.get_show_crossings() else 0
+		state["plate_polygon_count"] = fm.plate_polygon_count
 		state["focus_layer"] = _hud.get_focus_layer()
 		state["plate_cell_wu"] = _hud.get_plate_cell()
 		state["layer_gap_wu"] = _hud.get_layer_gap()
