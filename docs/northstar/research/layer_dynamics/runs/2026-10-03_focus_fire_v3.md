@@ -67,3 +67,5 @@ Pair spread at the edge (per-seed mean margin of the side-swapped pair, lowest t
 ## 8. Files
 
 `2026-10-03_focus_fire_v3/`: `run_v3.py` (driver), `focus_fire_v3.csv` (9280 fights, columns cell, p0, p1), `focus_fire_v3_run.md`, `focus_fire_v3_page.html`, `trace_v3.py` and `trace_agg.py` (who shoots whom) with `trace_agg.log`, `interp.txt` (interpolated crossings and margins with standard errors), `run.log`.
+
+Caveat (A200 follow-up): the distinct-target counts for swapped pairs may be mis-attributed, because the trace assumes side 0 holds the first 16 unit ids and side 1 spawns first when swap=True (fight.py line 143). The break-evens do not use the ids and are unaffected. No re-run.
