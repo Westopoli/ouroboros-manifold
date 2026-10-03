@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-03, by the planner chat (Agora-Fable-Planner).
+Last updated: 2026-10-03 (second update), by the planner chat (Agora-Fable-Planner).
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -15,34 +15,97 @@ Rules for this file:
 
 ## 1. Now building
 
-| Plan | Doc | Lane | Owns | Started | Exit condition |
+All lanes were paused by Westley on 2026-10-03. Nothing is running except the stage 0 audit.
+
+| Plan | Doc | Lane | Owns | State | Exit condition |
 |---|---|---|---|---|---|
-| Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder chat builds; harness chat runs batches | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | 2026-10-02 | Phases A to D done and Phase E (the search) run. Phase E waits on Westley's pass marks C0 to C9. Now in Phase D: small batches per skill (focus fire v3, formation v2). |
-| Skill lab cascade | `plans/2026-10-02-skill-lab-cascade.md`, `plans/skilllab-harness-spec.md` | Harness chat | `scripts/skilllab/`, `tests/skilllab/` | 2026-10-02 | Serves the plan above; ends with it. |
-| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-09-30-work-list.md` | Coordinator chat, with the Architect chat ruling | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | 2026-09-30 | Every work-list row is wired or ruled dead. Current wave: to confirm. |
-| Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | 2026-10-02 | Steps 2 and 3 built, old and new screenshots compared, Westley views it. Branch not yet on main. |
-| Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat with a Doer | `scenes/mockups/landscape/` | 2026-10-02 | Westley flies pass 5; the camera question is designed as options. Design work, not game code. |
+| Stage 0 audit: what is left in mission plays, and does the MVP loop play today | none (one Engineer report) | Planner chat | read-only | Running 2026-10-03 | Report delivered; this file updated from it |
+| Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
+| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-09-30-work-list.md` | Coordinator chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | Paused. Remaining items: stage 0 will say. | Every work-list row wired or ruled dead, and the loop plays end to end |
+| Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
+| Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat (Mac) with a Doer | `scenes/mockups/landscape/` | Pass 5 built; pass 6 spec written (`1c2d4494`) | Westley approves a pass; the camera question is designed as options |
 
 ## 2. Queued, in order
 
-No plan has a doc yet. The three below are proposed and sit in section 4 until their docs are written.
+The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each gets one when it starts.
 
-| # | Plan | Doc | Waits on | Ready? | Size guess | Why this position |
-|---|---|---|---|---|---|---|
-| | | | | | | |
+| # | Plan | Doc | Waits on | Why this position |
+|---|---|---|---|---|
+| 1 | Playthrough gate: a scripted end-to-end run in the merge gate | to write | Stage 0 | Every later landing is checked against it |
+| 2 | Finish the MVP loop | `plans/2026-09-30-mission-plays-plan.md` | Stage 0, row 1 | Westley: the MVP works 100 percent end to end before large new work |
+| 3 | Baseline playthrough by Westley or the 30B | none | Row 2 | The line every addition is compared with |
+| 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share |
 
 ## 3. Blocked on Westley
 
-| What | Needed from Westley | Flags | Unblocks |
+Every decision waiting on Westley, in the order that unblocks the most work. Candidates for each `Q-` flag are in `ambiguity_register.md`. An answer is recorded in the register and the epic, and its row is deleted here.
+
+### How the work is run
+
+| # | Decision | Notes |
+|---|---|---|
+| W1 | Run land part 1 as a measured pilot workflow (under 10 agents, Sonnet builders)? | Gives a real token figure to size the rest |
+| W2 | Add the playthrough rule to `CLAUDE.md`? | It is in memory only today |
+| W3 | Delete `plans/TODO.md`? | Read 2026-10-03: nothing live in it |
+| W4 | Work list: keep as is, or re-run the reach lint first so its counts are current? | Stage 0 re-runs the lint |
+| W5 | Worktree prune day | 497 stale worktrees, 135 GB; agents cannot delete them |
+
+### Land generator
+
+| # | Decision | Flags | Unblocks |
 |---|---|---|---|
-| Space landscape, pass 5 | Fly the mockup (key V, small-craft slider, sections toggle) and say yes or what to change | Q-166-02 | Writing the space stories into the bible; the space generator plan |
-| Small craft size | The size of the small unit class, and so the gap it fits | Q-166-05 | The second passability class in the shared mask contract |
-| Camera among five stacked sheets | Pick from options (options not yet drafted) | none yet | Space client view |
-| How layouts and terrain combine | An answer | Q-191-04 | Every land terrain story (S-186 to S-192, S-197) and the rewrites of S-112 to S-119 |
-| Land terrain numbers | Answers to the flag sheet (sheet not yet drafted) | Q-186-01 to Q-197-01, Q-166-04 | The land generator plan |
-| Pass marks for the search | Confirm or change the draft marks C0 to C9 | none | Phase E of movement, layers and search |
-| Balance items | Held until his new balance simulation | see `plans/2026-10-01-architect-rulings-2.md` | Knowledge Lost rate, collapse rate, mirror battle length |
-| Guard stance | A decision after a choke defence has been looked at | Q-096-01, Q-208-01 | S-208; the landscape batch in the skill lab |
+| L1 | Part 1, the ground: generation budget; minimum height per layer step; five layers on a small canvas; how steep is too steep; benched against natural share; which walking routes must exist | Q-186-01, Q-188-01, Q-188-02, Q-189-02, Q-189-03, Q-189-01 | Queue row 4 |
+| L2 | How layouts and terrain combine | Q-191-04 | Every place story (S-191, S-192, S-197) and the rewrites of S-112 to S-119 |
+| L3 | Part 2, the places: how sites are found, counts, "opposite the objective", strongpoint count, choke width, vantage reach, how many plays a map must offer, raid lanes, fairness on a slanted map | Q-191-01 to -03, Q-192-01 to -05, Q-197-01 | Land generator part 2 |
+| L4 | Landforms that ship, and how "variety packed in" is measured | Q-187-01, Q-187-02 | S-187 |
+| L5 | Canvas: largest present size; region modifier at 64,000 wu | Q-195-01, Q-195-02 | S-195 |
+| L6 | Smaller land choices: cover height source, region climate draw order, empty regions, when a building blocks | Q-190-01, Q-221-01, Q-221-02, Q-207-01 | S-190, S-221, S-207 |
+| L7 | Placeholder ground units: confirm the reading "the same six unit types with the space era's numbers, drawn as placeholders" | Q-201-01 | S-201; closes the flag |
+| L8 | Was land mockup pass 3 (2026-09-21) approved? The record still says "awaiting Westley's third look" | none | The record only |
+| L9 | Name and scope of the land era | Q-147-01 | S-147; a second era to play |
+
+### Space generator
+
+| # | Decision | Flags | Unblocks |
+|---|---|---|---|
+| S1 | Approve a space kit pass (5 built, 6 specified) | Q-166-02 | Writing the space stories into the bible |
+| S2 | Small craft size and the gap it fits | Q-166-05 | The second passability class |
+| S3 | Camera among five stacked sheets | options not yet drafted | Space client view |
+| S4 | Shared density on by default; the layer gap for space eras; how the small-craft sections are chosen | under Q-166-02 | Space generator plan |
+
+### Movement, layers and search (held by the Architect chat)
+
+| # | Decision | Reference |
+|---|---|---|
+| M1 | Pass marks C0 to C9 and the 0.05 win margin | rulings-2 A174; unblocks Phase E |
+| M2 | Variant B scale miss: keep red, drop the 1.35 factor for that scene, or change the pass rule | A193 |
+| M3 | Confirm the leash rewrite and attack-move holding formation until in range | A188, A199 |
+| M4 | Scattered-group rule (450 wu) collapses a 32-wide line | R-095-03 |
+| M5 | Leash before or after damage | Q-087-01 |
+| M6 | Guard stance | Q-096-01, Q-208-01; unblocks the landscape batch |
+| M7 | Same-spot fling; concentration of fire | Q-097-02, Q-008-05 |
+| M8 | Should the gate run the scale suite; should the tactical rule bound the worst step | rulings-2 |
+| M9 | Fight length | R-085-02, R-085-04 |
+| M10 | Height-band numbers scaling with step height | Q-166-04 (the skill lab measures first) |
+
+### Balance and housekeeping (not urgent)
+
+| # | Decision | Reference |
+|---|---|---|
+| B1 | Knowledge Lost rate, player-collapse rate, mirror battle length | held for the new balance simulation |
+| B2 | E-17 reds: field sampling 9.5 ms against 7.4 ms; map generator and objective drift | held on the map design |
+| B3 | Galaxy stack; the galaxy build chat has not reported | `plans/2026-10-02-galaxy-bubble-field-spec.md` |
+| B4 | Constants promotion to `algorithms.md`; snapshot fixture policy; world-generation speed target at 400 regions | rulings-2 |
+
+### Needed for the two-week scope, not yet sorted
+
+| Group | Flags | Notes |
+|---|---|---|
+| Multiplayer | Q-140-01, Q-141-01, Q-142-01, Q-144-01, Q-214-01, Q-241-02, Q-242-01 to -03 | Blocks S-140 to S-144 and the pair stories |
+| Economy and bases | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05 | E-22; the largest set. An ordered answer sheet is not yet drafted |
+| Settlements | Q-193-01 to -06, Q-222-01 | After the land generator |
+| Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
+| Client budgets | Q-194-01, Q-234-01, Q-240-01, Q-236-01 | Zoom and drawing |
 
 ## 4. Not planned yet
 
@@ -50,9 +113,9 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 
 | Group | Stories | Epic | State | Why parked |
 |---|---|---|---|---|
-| Proposed plan A: shared layer-mask contract | none yet (carries E-01 R-001-04, E-17 R-114-01) | E-01, E-17 | Not written | Waits for the movement and layers plan to leave `tactical_mapgen.c`, movement and fog; needs Q-166-05 |
-| Proposed plan B: space generator | none in the bible yet | E-17 | Research and mockup pass 5 only | Waits on pass 5 review, the stories being written, and plan A |
-| Proposed plan C: land generator | S-186 to S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, about 25 flags open | Waits on the flag sheet, Q-191-04 first, and plan A |
+| Shared layer-mask contract | none yet (carries E-01 R-001-04, E-17 R-114-01) | E-01, E-17 | Not written | Lands first inside land part 1 as its own contract piece; written so space can use it; the small-craft class needs Q-166-05 |
+| Space generator | none in the bible yet | E-17 | Research and mockup passes 1 to 5; pass 6 specified | Waits on decisions S1 to S4, the stories being written, and the mask contract |
+| Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, about 25 flags open | Waits on the flag sheet, Q-191-04 first, and plan A |
 | Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-01 to -06 open | After the land generator |
 | Zoom and drawing | S-194, S-234, S-236, S-240 | E-17, E-16, E-18 | Blocked on Westley's budgets (Q-194-01, Q-234-01, Q-240-01) | Client work, after a generator exists |
 | Strongpoints and weather | S-218, S-219 | E-15 | Design decided, flags open | After the land generator |
@@ -62,9 +125,9 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 
 ## 5. Dependency notes
 
-- Plan A after movement, layers and search: both edit `csrc/tactical_mapgen.c`, movement and fog, and one file has one owner at a time.
-- Plans B and C after plan A: a contract change lands first, alone, and consumers build after it.
-- Plan B before plan C: the Settled Reach is the only era that exists (Q-147-01), space has two open flags against about 25, and space output is the general form that land is a special case of.
+- The mask contract and the generators' wiring pieces touch `csrc/tactical_mapgen.c`, movement and fog, which the movement and layers plan owns today: one owner at a time, wiring pieces queued.
+- Both generators after the mask contract: a contract change lands first, alone, and consumers build after it. New code goes in new files behind the frozen header (`CLAUDE.md`, Architecture rules).
+- Land before space (Westley, 2026-10-03): the land design is further along and space is still in his design loop. Space output is the general form that land is a special case of, so the mask contract is written for both.
 - Both generators must use their own deterministic noise in C; the mockups use the engine's noise.
 - Economy after a generator: bases, resources and expansion sites are places the generator finds (S-191).
 - The landscape batch in the skill lab waits on the guard stance decision.
