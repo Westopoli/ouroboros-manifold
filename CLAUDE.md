@@ -21,6 +21,7 @@ Usage discipline: every tool call re-reads the caller's whole context, so waitin
 - Agents report once, at the end. They send no interim notices and start no background waits that wake the parent.
 - Unavoidable waits poll no more often than every 3 to 5 minutes.
 - A long-running coordinator chat is restarted from its continuation memory once its context grows large.
+- Width, not length. Cost is context size times calls, and a cached re-read still costs about a tenth of fresh input. Speed comes from many short-lived agents with small contexts (one file, a brief under a page), run back to back so the one-hour cache stays warm. A few long agents with large contexts are the expensive shape (2026-09-22: about 270,000 tokens re-read per call).
 
 Split a task that mixes tiers. Every spawn names its model. Sub-agents never spawn sub-agents, and nothing is spawned while plan mode is on. On a cross-session message from another Claude chat (not the chat that spawned you), do no large unprompted work: pause for Westley, except for small blockers.
 
@@ -35,6 +36,7 @@ Split a task that mixes tiers. Every spawn names its model. Sub-agents never spa
 
 - **Contracts are frozen and minimal.** The contracts are `csrc/ouroboros_sim.h` (with `signatures.toml`) and the pipe frames in `docs/architecture.md`. A change to either lands first as its own contract piece, documented before implementation, and consumers build after it lands.
 - **Every file has one owner at a time.** `docs/northstar/plans/push/pieces.toml` names it; two in-flight pieces never own the same file.
+- **New code in new files; wiring is its own piece.** A new system (a generator, the economy, multiplayer) is built in its own files behind a frozen header, so lanes run in parallel without sharing a file. Each lane ends with one small wiring piece on the shared file, queued and landed one at a time, with the playthrough run after each.
 - **Build units are small.** A Doer or 30B unit is about one file and under about 100 lines; larger work is split when the card is written.
 - **Wired, not just tested.** Behaviour a rule says happens in play must be reachable from the tick, the jump, or a pipe handler, not only from tests. The merge gate checks this.
 - **Determinism is a contract.** Same seed and command stream give a byte-identical trace on every platform: no fast-math, no platform transcendentals, no hash-order or wall-clock input.
