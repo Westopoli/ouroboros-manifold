@@ -297,8 +297,9 @@ def _update_attack_move_state(store, active):
                 store.engage_anchor_x[uid] = store.data[uid, FIELD_X]
                 store.engage_anchor_y[uid] = store.data[uid, FIELD_Y]
                 store.engage_anchor_set[uid] = True
-            dx = store.data[tgt, FIELD_X] - store.engage_anchor_x[uid]
-            dy = store.data[tgt, FIELD_Y] - store.engage_anchor_y[uid]
+            # A188: the unit's own distance from its anchor, never the target's.
+            dx = store.data[uid, FIELD_X] - store.engage_anchor_x[uid]
+            dy = store.data[uid, FIELD_Y] - store.engage_anchor_y[uid]
             if dx * dx + dy * dy > _ATTACK_MOVE_LEASH_SQ:
                 store.auto_engage_target[uid] = -1
                 store.engage_anchor_set[uid] = False
