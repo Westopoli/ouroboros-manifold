@@ -145,9 +145,16 @@ func _run_tests() -> void:
 	_assert(bridge.session_id() == id_run, "the debrief scene opened its own session")
 	debrief.queue_free()
 	await process_frame
+	# A69 (ledger TD-A69-simsession): the jump is issued once, by the debrief's Proceed
+	# (_on_continue -> load_chronicle_live); opening the chronicle scene sends nothing.
+	var tick_before_jump := int(bridge.snapshot().get("tick", -1))
+	_assert(bridge.load_chronicle_live(bridge.live_seed(), n, features), "load_chronicle_live (the debrief's Proceed call) failed: %s" % bridge.last_error())
+	_assert(bridge.session_id() == id_run, "the debrief's Proceed jump opened its own session")
+	_assert(int(bridge.snapshot().get("tick", -1)) == tick_before_jump + 50, "the Proceed jump did not advance the shared world by 50 (tick %d -> %s)" % [tick_before_jump, bridge.snapshot().get("tick")])
+	var tick_after_jump := int(bridge.snapshot().get("tick", -1))
 	var chronicle: Node = await _mount(CHRONICLE_SCENE)
 	_assert(bridge.session_id() == id_run, "the chronicle scene opened its own session")
-	_assert(int(bridge.snapshot().get("tick", 0)) >= STEPS + 50, "the chronicle's 50-tick jump did not advance the shared world (tick = %s)" % bridge.snapshot().get("tick"))
+	_assert(int(bridge.snapshot().get("tick", -1)) == tick_after_jump, "opening the chronicle scene sent a further jump (tick %d -> %s)" % [tick_after_jump, bridge.snapshot().get("tick")])
 	chronicle.queue_free()
 	await process_frame
 
@@ -160,7 +167,7 @@ func _run_tests() -> void:
 		if int(shown[i]) != int(_owners(bridge.snapshot()).get(int(i), -99)):
 			changed += 1
 	_assert(changed == 0, "the rebuilt galaxy shows %d owners that differ from the shared world" % changed)
-	_assert(int(again.qa_state().get("tick", -1)) >= STEPS + 50, "the rebuilt galaxy reports tick %s, expected >= %d" % [again.qa_state().get("tick"), STEPS + 50])
+	_assert(int(again.qa_state().get("tick", -1)) == tick_after_jump, "the rebuilt galaxy reports tick %s, expected the shared world's %d (after the Proceed jump, none from opening the chronicle)" % [again.qa_state().get("tick"), tick_after_jump])
 	var reowned := 0
 	for i in shown:
 		if int(shown[i]) >= 0:
