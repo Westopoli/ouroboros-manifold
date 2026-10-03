@@ -767,3 +767,26 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day20 | TD-PP-parity-control (test-defect, A149) | `tests/csim/parity/test_parity_harness.py::test_positive_control_coarse_fixed_vectors_exceed_the_tolerance` rounded to 4 decimals (5.7e-3 wu), below Westley's 0.05 wu tolerance; now rounds to 2 decimals (worst 3.98 wu). Control only; the tolerance is untouched. |
 | day20 | TD-PP-transport-test_pipe_assign_commander (test-defect, A150) | CLASH_STEPS 4150 -> 5900; cause: slowest-member pacing of attack-move groups (R-095-01) moves the first player loss to about tick 5765; assertions unchanged. |
 | day20 | TD-PP-transport-test_pipe_tactical_delta_frame (test-defect, A150) | `_death_script` clock 22x100+200x1 (ticks 2200-2400) -> 16x100+200x1 (ticks 1600-1800); cause: pursuit by steering (R-087-04) brings first contact and the first death (tick 1690) earlier; assertions unchanged. |
+
+| day20 | TD-PP-default0-test_PP_move_capture.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_move_collision.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_move_cover.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_move_group.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_move_route.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_move_steer_face.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_unit_attack_move_group.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_unit_first_shot.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_unit_leash.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_unit_pursuit.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_unit_return_fire.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_E13_S097_around_not_through.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-parity_c.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_PP_settings.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_pp_contract.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-test_settings_real.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-a99_tactical_hashes.json (re-record once, A140/A147) | four fast A99 hashes (fight_502_gap100, fight_990_gap300, fight_990_gap1500, fight_990_gap3000) differ from origin/main at both switches 0 only because the G04/G15 fixes are ungated; re-recorded once from this build. |
+| day20 | TD-PP-default0-test_F1_fog_per_faction_observers.py (test-defect, A147) | [spread] scene is off canvas; setup sets OM_TP_ROUTE_AROUND_TERRAIN 0 (baseline routing); golden unchanged. |
+| day20 | TD-PP-default0-test_F2_nearest_hostile_search.py (test-defect, A147) | window scene (equivalence window-1000/5000 and the positive control) is off canvas; setup sets OM_TP_ROUTE_AROUND_TERRAIN 0 (baseline routing). |
+| day20 | TD-PP-a99-rerecord-c-prime (re-record, A140) | tests/csim/data/a99_tactical_hashes.json four ids re-recorded once: with PURSUE default 0 they differ from main only because of the ungated G04/G15 bug fixes. Old and new hashes in the landing diff. |
+| day20 | TD-PP-default0-doc (doc, A155) | pp_contract.md section 4 and ALG-68 say PURSUE_BY_STEERING defaults to 0 (option c'): old movement is the game's default until the lab choice; ROUTE_AROUND_TERRAIN stays 1. |
+| day20 | PP-landing-c-prime (decision, A155) | Phase A lands under option c': OM_TP_PURSUE_BY_STEERING defaults to 0 (old movement is the game's default), ROUTE_AROUND_TERRAIN stays 1. This supersedes the earlier rows TD-PP-defaults-rerecord (the F1, F2, F3 goldens and six A99 ids are NOT re-recorded: they stay at main's values; only the four A99 ids above are), TD-PP-R101-01-floor (the floor line stays `30.0 - 1e-2`; neither 0.1 nor 0.25 is used) and the tolerance row stays (0.05 wu position, 2e-3 rad facing). The pile-up of the Python's collision pair-check rule is Westley's decision (A154); see runs/2026-10-02_pileup.md. |
