@@ -88,6 +88,19 @@ Read as:
 
 Pass 2 spec: `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`, section "Pass 2".
 
+## Passes 2 and 3 (2026-10-02)
+
+Pass 2 (`mockup/pass2/`) turned the generator from noise blobs into plates and the drawing into binary sheets, and was judged by the architect, not Westley: plates had ragged stair-stepped outlines, rubble covered half the map at low density, crossing marks cluttered everything, and top-down showed the union of all five layers. Pass 3 (`mockup/pass3/`) fixed those four: true jittered-lattice plates drawn as polygons with straight broken edges, rubble only beside kept plates, marks off by default, and top-down with a focused layer hiding the rest.
+
+Pass 3 numbers, seeds 11 to 16: blocked share per layer 14 to 23 percent at density 15 and 65 to 71 at density 70; 0 unreachable regions in all 24 runs; 190 to 530 plate polygons per layer; generate about 540 ms and placer about 15 ms at canvas 24,000. Spec: `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`, passes 2 and 3.
+
+The architect's read of pass 3, for Westley to confirm or overrule:
+
+- Top-down with one layer focused reads like the photo: floes with straight edges, channels, open pools, rubble at the edges of packed areas.
+- Plates are too even in size; the photo has a few huge floes among many small ones. A wider spread of plate sizes is the next knob.
+- From the tactical camera the sheets above the camera hide everything, since five opaque sheets 1,400 wu apart put the camera inside the stack. How the camera and five stacked sheets work together is a design question in its own right, not a mockup bug; top-down with focus is the way to read it for now.
+- Small defect: crossing marks are drawn in the focused top-down view although the HUD says they are off.
+
 ## Suggested next step
 
-Pass 2 of the mockup, then Westley flies it again.
+Westley flies pass 3 (Kit: space; Top-down button; keys 1 to 5 to focus one layer, 0 for all; C for crossing marks; sliders for density, layer gap and plate size).

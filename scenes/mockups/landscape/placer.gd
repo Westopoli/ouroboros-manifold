@@ -21,6 +21,9 @@ var _layer_gap: float = SpaceFieldMap.LAYER_GAP_WU
 const DARKEN_UNFOCUSED := 0.55
 const SPACE_WATER_Y_WU := -40.0
 const CUT_FRAME_WIDTH_WU := 60.0
+const TOP_DOWN_STEP_WU := 60.0
+const DEFAULT_PLATE_THICKNESS_WU := 60.0
+const DEFAULT_RUBBLE_THICKNESS_WU := 30.0
 
 # Cliff border height is sampled from real terrain, not the kit's flat default.
 const MIN_CLIFF_HEIGHT_WU := 40.0
@@ -88,13 +91,29 @@ static func load_kit(path: String) -> Dictionary:
 	return parsed
 
 
-# Darkens the pieces of every layer but the focused one (0 = all equal) by rewriting the
-# per-instance colours; nothing is regenerated.
-static func apply_layer_focus(world_parent: Node, focus: int) -> void:
+# Layer view of a space map, by rewriting colours, visibility and position; nothing is regenerated.
+# Outside top-down, focusing a layer darkens the others. In top-down a focused layer is alone
+# (the others are hidden); with focus 0 the layers use their top-down colours and each higher layer
+# is stepped sideways so stacked edges show. Crossing marks show only when asked.
+static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, show_crossings: bool) -> void:
+	var stacked := top_down and focus == 0
 	for child in world_parent.get_children():
-		if not child.has_meta("layers"):
+		var layers: Array = []
+		if child.has_meta("sheet_layer"):
+			layers = [child.get_meta("sheet_layer")]
+		elif child.has_meta("layers"):
+			layers = child.get_meta("layers")
+		else:
 			continue
-		var darkened: bool = focus != 0 and not child.get_meta("layers").has(focus)
+		var inside: bool = focus == 0 or layers.has(focus)
+		child.visible = (inside or not top_down) and (show_crossings or not child.get_meta("crossing_mark", false))
+		var step: float = (layers.min() - 1) * TOP_DOWN_STEP_WU if stacked else 0.0
+		child.position = Vector3(step, child.position.y, step)
+		if child.has_meta("sheet_layer"):
+			var colour: Color = child.get_meta("topdown_color") if stacked else child.get_meta("base_color")
+			child.material_override.albedo_color = colour if inside else colour.darkened(DARKEN_UNFOCUSED)
+			continue
+		var darkened := not inside
 		if child.get_meta("darkened", false) == darkened:
 			continue
 		child.set_meta("darkened", darkened)
@@ -124,7 +143,6 @@ func place(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> Dictio
 
 	if field_map is SpaceFieldMap:
 		_layer_gap = field_map.layer_gap_wu
-		_place_plates(field_map, kit, kit_name, groups)
 	else:
 		_place_cells(field_map, kit, kit_name, rng, groups)
 	_place_borders(field_map, kit, kit_name, groups)
@@ -159,6 +177,9 @@ func place(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> Dictio
 		by_type[g.piece] = int(by_type.get(g.piece, 0)) + g.transforms.size()
 
 	if field_map is SpaceFieldMap:
+		var sheets := _place_sheets(field_map, kit, world_parent)
+		total += sheets.total
+		by_type.merge(sheets.by_type)
 		_place_water(field_map, kit, world_parent, SPACE_WATER_Y_WU)
 	elif kit.get("water_is", "") == "surface":
 		_place_water(field_map, kit, world_parent)
@@ -197,37 +218,83 @@ func _place_cells(field_map: FieldMap, kit: Dictionary, kit_name: String, rng: R
 			_group_add(groups, rule.get("piece", "piece"), kit_name, resolved.mesh, xform, resolved.color)
 
 
-# Binary sheets: every blocked cell of layer k is one flat square tile at the layer's height, no
-# jitter, so plates read as continuous sheets with straight edges. Colour per layer from the kit's
-# `layers`; the large mass takes the kit's `mass` colour; rubble uses the rubble mesh (half thickness).
-func _place_plates(field_map: SpaceFieldMap, kit: Dictionary, kit_name: String, groups: Dictionary) -> void:
-	var plate_cfg: Dictionary = kit.get("plate", {})
-	var rubble_cfg: Dictionary = kit.get("rubble", {})
+# Each layer is two meshes: its plates and rubble in the layer colour, and the large mass in the
+# kit's `mass` colour. A plate is one polygon, a fan from its centroid (top face) with a skirt down
+# to the layer's height, so edges stay straight; rubble is half as thick. Pockets filled solid have
+# no polygon and get one square of the cell size each. Colour per layer from the kit's `layers`,
+# and `layers_topdown` for the stacked top-down view.
+func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node3D) -> Dictionary:
+	var plate_h: float = float(kit.get("plate", {}).get("thickness", DEFAULT_PLATE_THICKNESS_WU))
+	var rubble_h: float = float(kit.get("rubble", {}).get("thickness", DEFAULT_RUBBLE_THICKNESS_WU))
 	var layer_colors: Array = kit.get("layers", [])
-	var mass_hex: String = kit.get("mass", "#4a4038")
-	var dim: int = field_map.dim
+	var topdown_colors: Array = kit.get("layers_topdown", layer_colors)
+	var mass_color := Color(kit.get("mass", "#4a4038"))
 	var spacing: float = FieldMap.SPACING
+	var total := 0
+	var by_type := {}
 	for k in range(SpaceFieldMap.LAYERS):
-		var hex: String = layer_colors[k] if k < layer_colors.size() else "#ffffff"
-		var by_kind := {}
-		for entry in [[SpaceFieldMap.KIND_PLATE, "plate", plate_cfg, hex], [SpaceFieldMap.KIND_MASS, "mass", plate_cfg, mass_hex], [SpaceFieldMap.KIND_RUBBLE, "rubble", rubble_cfg, hex]]:
-			var resolved := _resolve(entry[2].get("mesh", "none"), entry[3], entry[2].get("size", []))
-			if resolved.is_empty():
+		var layer_color := Color(layer_colors[k] if k < layer_colors.size() else "#ffffff")
+		var topdown_color := Color(topdown_colors[k] if k < topdown_colors.size() else "#ffffff")
+		var sheet := {verts = PackedVector3Array(), norms = PackedVector3Array()}
+		var mass := {verts = PackedVector3Array(), norms = PackedVector3Array()}
+		for pl in field_map.plate_polys[k]:
+			var target: Dictionary = mass if pl.kind == SpaceFieldMap.KIND_MASS else sheet
+			_add_slab(target, pl.points, rubble_h if pl.kind == SpaceFieldMap.KIND_RUBBLE else plate_h)
+		total += field_map.plate_polys[k].size()
+		for i in field_map.fill_cells[k]:
+			var gy: int = i / field_map.dim
+			var at := Vector2(i - gy * field_map.dim, gy) * spacing
+			var half := Vector2(spacing, spacing) * 0.5
+			_add_slab(sheet, PackedVector2Array([at - half, Vector2(at.x + half.x, at.y - half.y), at + half, Vector2(at.x - half.x, at.y + half.y)]), plate_h)
+		total += field_map.fill_cells[k].size()
+		by_type["plate"] = int(by_type.get("plate", 0)) + field_map.plate_polys[k].size() + field_map.fill_cells[k].size()
+		for entry in [["sheet", sheet, layer_color, topdown_color], ["mass", mass, mass_color, mass_color]]:
+			var data: Dictionary = entry[1]
+			if data.verts.is_empty():
 				continue
-			var group := _group_for(groups, "%s_L%d" % [entry[1], k + 1], kit_name, resolved.mesh, [k + 1])
-			by_kind[entry[0]] = {transforms = group.transforms, colors = group.colors, color = resolved.color, y = _layer_y(k + 1) + _ground_offset(resolved.mesh)}
-		var mask: PackedByteArray = field_map.masks[k]
-		var kinds: PackedByteArray = field_map.kinds[k]
-		for i in range(mask.size()):
-			if mask[i] == 1 or not by_kind.has(kinds[i]):
-				continue
-			var gy := i / dim
-			var target: Dictionary = by_kind[kinds[i]]
-			target.transforms.append(Transform3D(Basis(), Vector3((i - gy * dim) * spacing, target.y, gy * spacing)))
-			target.colors.append(target.color)
-	for key in groups.keys():
-		if groups[key].transforms.is_empty():
-			groups.erase(key)
+			var arrays := []
+			arrays.resize(Mesh.ARRAY_MAX)
+			arrays[Mesh.ARRAY_VERTEX] = data.verts
+			arrays[Mesh.ARRAY_NORMAL] = data.norms
+			var mesh := ArrayMesh.new()
+			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			var mi := MeshInstance3D.new()
+			mi.name = "%s_L%d" % [entry[0], k + 1]
+			mi.mesh = mesh
+			var mat := StandardMaterial3D.new()
+			mat.albedo_color = entry[2]
+			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+			mi.material_override = mat
+			mi.position = Vector3(0.0, _layer_y(k + 1), 0.0)
+			mi.set_meta("sheet_layer", k + 1)
+			mi.set_meta("base_color", entry[2])
+			mi.set_meta("topdown_color", entry[3])
+			world_parent.add_child(mi)
+	return {total = total, by_type = by_type}
+
+
+# One slab: the top face at `height` as a fan from the centroid, and a skirt down to y = 0 on every
+# edge. The polygon is counter-clockwise in (x, z); normals are flat.
+func _add_slab(into: Dictionary, points: PackedVector2Array, height: float) -> void:
+	var verts: PackedVector3Array = into.verts
+	var norms: PackedVector3Array = into.norms
+	var centroid := Vector2.ZERO
+	for p in points:
+		centroid += p
+	centroid /= points.size()
+	var centre_top := Vector3(centroid.x, height, centroid.y)
+	for i in range(points.size()):
+		var a := points[i]
+		var b := points[(i + 1) % points.size()]
+		var a_top := Vector3(a.x, height, a.y)
+		var b_top := Vector3(b.x, height, b.y)
+		verts.append_array(PackedVector3Array([centre_top, a_top, b_top]))
+		norms.append_array(PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP]))
+		var outward := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
+		verts.append_array(PackedVector3Array([a_top, Vector3(b.x, 0.0, b.y), b_top, a_top, Vector3(a.x, 0.0, a.y), Vector3(b.x, 0.0, b.y)]))
+		norms.append_array(PackedVector3Array([outward, outward, outward, outward, outward, outward]))
+	into.verts = verts
+	into.norms = norms
 
 
 # Each plate dropped for reachability is outlined with the kit's `tunnel` colour as a thin flat
