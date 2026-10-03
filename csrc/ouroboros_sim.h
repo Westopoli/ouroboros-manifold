@@ -1039,6 +1039,7 @@ typedef enum {
     OM_TP_AREA_DOWN_2,
     OM_TP_AREA_DOWN_3,
     OM_TP_AREA_DOWN_4,
+    OM_TP_TARGET_POLICY_FACTION_1,
     OM_TP__COUNT
 } om_tac_param;
 
