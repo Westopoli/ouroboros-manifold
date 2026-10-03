@@ -95,7 +95,7 @@ def test_R_096_02_unit_halts_fires_target_dies(lib, world_factory):
 
 
 def test_R_096_03_unit_drops_target_resumes(lib, world_factory):
-    """Given an attack-move engagement, When the target moves more than 200 wu from the unit's anchor (its position at acquisition), Then the unit drops the target and resumes."""
+    """Given an attack-move engagement, When the unit itself is moved more than 200 wu from its anchor (its position at acquisition), Then the unit drops the target and resumes. Re-pinned to A188: the leash tests the unit's own distance from its anchor, never the target's."""
     w = world_factory(n_regions=1)
 
     # Friendly Vanguard attack-moving from (0, 0) towards (1000, 0)
@@ -109,8 +109,8 @@ def test_R_096_03_unit_drops_target_resumes(lib, world_factory):
         lib.om_world_step(w)
     assert lib.om_unit_get_target(w, u) == enemy
 
-    # Target moves farther than 200 wu from acquisition anchor (e.g. moved to 250, 0)
-    lib.om_unit_set_pos(w, enemy, 250.0, 0.0)
+    # Test-defect, A188: the unit (not the target) moves farther than 200 wu from its acquisition anchor (to 250, 0)
+    lib.om_unit_set_pos(w, u, 250.0, 0.0)
     lib.om_world_step(w)
 
     # Unit drops the target because leash > 200 wu from anchor, and resumes attack-move

@@ -77,8 +77,9 @@ def test_R_096_03_switch_0_fires_before_the_leash_drops_the_target(lib, world_fa
 
 
 def test_R_087_05_target_beyond_200_from_the_anchor_is_dropped(lib, world_factory):
-    """R-087-05 / R-096-03 (default order): the target moves from 150 to 250 wu from the unit's
-    anchor (inside its 300 wu range) and the unit drops it. The drop shows within one cohort cycle
+    """R-087-05 / R-096-03 (default order), re-pinned to A188 (the leash tests the unit's OWN distance from
+    its anchor, never the target's): the unit moves from 0 to 250 wu from its anchor (its target, 150 wu from
+    the anchor, stays inside its 300 wu range) and drops the target. The drop shows within one cohort cycle
     (a unit re-acquiring on its own turn re-anchors, so one tick can look kept)."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
@@ -87,10 +88,10 @@ def test_R_087_05_target_beyond_200_from_the_anchor_is_dropped(lib, world_factor
     step(lib, w, 4)
     assert target(lib, w, u) == enemy, "fixture: unit should have acquired and anchored"
 
-    lib.om_unit_teleport(w, enemy, 250.0, 0.0, 0)
+    lib.om_unit_teleport(w, u, 0.0, -250.0, 0)
     seen = watch_target(lib, w, u, 4)
 
-    assert -1 in seen, f"target 250 wu from the anchor was never dropped: {seen}"
+    assert -1 in seen, f"a unit 250 wu from its anchor never dropped its target: {seen}"
 
 
 def test_control_R_087_05_target_inside_200_of_the_anchor_is_kept(lib, world_factory):
@@ -112,18 +113,24 @@ def test_control_R_087_05_target_inside_200_of_the_anchor_is_kept(lib, world_fac
 # ---- switch 1: the Python's order, drop then (no) damage ----
 
 def test_R_096_03_switch_1_drops_before_damage_and_the_unit_walks_on(lib, world_factory):
-    """Switch 1 (the Python's order, audit G03): the same scene as the switch 0 test. Every
-    acquisition is at 250 wu or more, so every one is dropped before it can be shot: the target
-    takes no damage in 36 ticks, and the unit, holding nothing, keeps marching on its way to
-    (0, -3000) (its goal is unchanged)."""
+    """Switch 1, re-pinned to A188 (the leash tests the unit's OWN distance from its anchor): the unit
+    acquires a target 150 wu beside it, is then moved 250 wu from its anchor (the target stays in its
+    range), and on the next tick drops it with no damage taken and its goal is the march goal again
+    (it resumes). A target 250 wu from the anchor with the unit still at the anchor is no longer dropped."""
     w = world_factory(n_regions=1)
-    u, enemy, (_, y0) = _scene(lib, w, 250.0, switch=1)
+    assert set_param(lib, w, LEASH, 1) == 0
+    u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
+    enemy = spawn(lib, w, SUPPLY, 1, 150.0, 0.0)
+    attack_move(lib, w, [u], 0.0, -3000.0)
+    step(lib, w, 4)
+    assert target(lib, w, u) == enemy, "fixture: unit should have acquired and anchored"
     before = hp(lib, w, enemy)
 
-    step(lib, w, 36)
+    lib.om_unit_teleport(w, u, 0.0, -250.0, 0)
+    step(lib, w)
 
-    assert hp(lib, w, enemy) == before, "switch 1: a target beyond the leash must be dropped before damage"
-    assert pos(lib, w, u)[1] < y0 - 100.0, "switch 1: the unit should have gone on marching"
+    assert target(lib, w, u) == -1, "switch 1: a unit past the leash must drop its target"
+    assert hp(lib, w, enemy) == before, "switch 1: the drop must come before damage"
     has, gx, gy = dest(lib, w, u)
     assert has == 1 and (gx, gy) == pytest.approx((0.0, -3000.0), abs=1e-6)
 
