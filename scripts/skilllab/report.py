@@ -150,6 +150,13 @@ def _sentences(scans: dict) -> list:
     return out
 
 
+def _html(title: str, body: list) -> str:
+    return ("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
+            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+            f"<title>{escape(title)}</title>\n<link rel=\"stylesheet\" href=\"{FONT}\">\n"
+            f"<style>{CSS}</style>\n</head>\n<body>\n" + "\n".join(body) + "\n</body>\n</html>\n")
+
+
 def report(batch: Batch, out_dir) -> str:
     out = Path(os.fspath(out_dir))
     out.mkdir(parents=True, exist_ok=True)
@@ -160,10 +167,7 @@ def report(batch: Batch, out_dir) -> str:
     for label, fr in batch.firing_example.items():
         body += [f"<h3>{escape(label)}: units able to fire through one fight</h3>",
                  _firing_svg(fr.firing), _firing_table(fr.firing)]
-    html = ("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-            f"<title>{escape(batch.title)}</title>\n<link rel=\"stylesheet\" href=\"{FONT}\">\n"
-            f"<style>{CSS}</style>\n</head>\n<body>\n" + "\n".join(body) + "\n</body>\n</html>\n")
+    html = _html(batch.title, body)
     path = out / "report.html"
     path.write_text(html, encoding="utf-8")
     return str(path)

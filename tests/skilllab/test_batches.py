@@ -246,11 +246,11 @@ def test_no_break_even_in_range_when_beats_is_none(tmp_path):
 
 
 def test_stalled_count_beside_each_result(tmp_path):
-    fake = FakeScan({("blob@16", None): (15, 3)})
+    fake = FakeScan({("blob@16", None): (15, 2)})
     _, _, paths = _run("formation", tmp_path, fake)
     res = _section(_text(paths["run"]), "Results")
     block = "\n".join(ln for ln in res.splitlines() if "blob@16" in ln)
-    assert re.search(r"stalled\D{0,15}3\b|\b3\D{0,15}stalled", block)
+    assert re.search(r"stalled\D{0,15}2\b|\b2\D{0,15}stalled", block)
     block0 = "\n".join(ln for ln in res.splitlines() if "line@16" in ln)
     assert re.search(r"stalled\D{0,15}0\b|\b0\D{0,15}stalled", block0)
 

@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from scripts.skilllab import plays, report, rows, scan
+from scripts.skilllab import batches, plays, report, rows, scan
 from scripts.skilllab.contract import Batch
 
 SIZE = 16
@@ -40,6 +40,19 @@ def _reach(out_dir, factor):
                        "Skill lab reach control")
 
 
+def _batch(name, out_dir):
+    try:
+        defn = batches.get(name) if name else None
+    except ValueError:
+        defn = None
+    if defn is None:
+        print("batch needs one of: " + ", ".join(batches.NAMES))
+        return 2
+    for path in batches.run(defn, out_dir).values():
+        print(path)
+    return 0
+
+
 def _positive(text):
     value = float(text)
     if not value > 0 or value == float("inf"):
@@ -50,6 +63,7 @@ def _positive(text):
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="skilllab")
     parser.add_argument("command")
+    parser.add_argument("name", nargs="?")
     parser.add_argument("--out", default="./skilllab_out")
     parser.add_argument("--factor", type=_positive, default=1.2)
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
@@ -57,6 +71,8 @@ def main(argv=None) -> int:
         return _controls(Path(args.out))
     if args.command == "reach":
         return _reach(Path(args.out), args.factor)
+    if args.command == "batch":
+        return _batch(args.name, Path(args.out))
     return 2
 
 
