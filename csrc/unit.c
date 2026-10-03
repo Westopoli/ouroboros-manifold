@@ -1102,6 +1102,7 @@ static void om_tactical_apply_aura_regen(om_world *w) {
  * see it through fog.c's om_fog_faction_sees, and it is not stealthed. */
 static int om_tac_faction_sees(om_world *w, const om_unit_row *self, const om_unit_row *t) {
     if (t->stealth) return 0;
+    if (om_unit_can_see(w, self->unit_id, t->unit_id)) return 1;
     return om_fog_faction_sees(w, self->faction_id, t->unit_id);
 }
 
