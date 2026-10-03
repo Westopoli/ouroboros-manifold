@@ -288,27 +288,56 @@ static int om_fog_cover_blocks(const om_world *w, double ox, double oy, double t
     return 0;
 }
 
-#define OM_FOG_GRID_STEP (OM_NAVMESH_CELL_SIZE / 2.0)
-
 /* Defined in tactical_mapgen.c, not in the header: 1 blocked, 0 open, 100 wu cells.
  * See also: om_mapgen_cell_blocked in tactical_mapgen.c. */
 extern int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
 
-/* R-098-02: a blocked route-grid cell on the lower layer of the pair blocks the line, in addition to cover discs.
- * Fixed half-cell steps along the line; the cells holding the two units are exempt (standing in it, as with cover).
+static int32_t om_fog_cell_floor(double v) {
+    int32_t c = (int32_t)(v / OM_NAVMESH_CELL_SIZE);
+    if ((double)c * OM_NAVMESH_CELL_SIZE > v) c--;
+    return c;
+}
+
+static int32_t om_fog_cell_ceil(double v) {
+    int32_t c = (int32_t)(v / OM_NAVMESH_CELL_SIZE);
+    if ((double)c * OM_NAVMESH_CELL_SIZE < v) c++;
+    return c;
+}
+
+/* R-098-02 (A159): a blocked route-grid cell on the lower layer of the pair blocks the line when the segment has
+ * positive-length overlap with the half-open cell [lo, hi); touching only a corner point does not, and a segment
+ * lying along a cell's low edge is inside that cell.
+ * Exact walk, column by column: the segment is clipped to each 100 wu column, and the rows its y-span covers
+ * are tested. The cells holding the two units are exempt (standing in it, as with cover).
  * Only with ROUTE_AROUND_TERRAIN on. See also: om_combat_can_shoot in tactical_move.c (fire side). */
 static int om_fog_grid_blocks(const om_world *w, double ox, double oy, double tx, double ty, uint32_t low_layer) {
-    double dx = tx - ox, dy = ty - oy, len = sqrt(dx * dx + dy * dy);
-    int32_t c0x = (int32_t)(ox / OM_NAVMESH_CELL_SIZE), c0y = (int32_t)(oy / OM_NAVMESH_CELL_SIZE);
-    int32_t c1x = (int32_t)(tx / OM_NAVMESH_CELL_SIZE), c1y = (int32_t)(ty / OM_NAVMESH_CELL_SIZE);
-    int32_t i, n;
+    double dx = tx - ox, dy = ty - oy;
+    double xmin = (ox < tx) ? ox : tx, xmax = (ox < tx) ? tx : ox;
+    int32_t c0x = om_fog_cell_floor(ox), c0y = om_fog_cell_floor(oy);
+    int32_t c1x = om_fog_cell_floor(tx), c1y = om_fog_cell_floor(ty);
+    int32_t col, col_lo = om_fog_cell_floor(xmin), col_hi = om_fog_cell_floor(xmax);
     if (om_tactical_get_param(w, OM_TP_ROUTE_AROUND_TERRAIN) == 0.0) return 0;
-    n = (int32_t)(len / OM_FOG_GRID_STEP) + 1;
-    for (i = 1; i < n; i++) {
-        double f = (double)i / (double)n;
-        int32_t cx = (int32_t)((ox + dx * f) / OM_NAVMESH_CELL_SIZE), cy = (int32_t)((oy + dy * f) / OM_NAVMESH_CELL_SIZE);
-        if ((cx == c0x && cy == c0y) || (cx == c1x && cy == c1y)) continue;
-        if (om_mapgen_cell_blocked(w, low_layer, cx, cy)) return 1;
+    for (col = col_lo; col <= col_hi; col++) {
+        double left = (double)col * OM_NAVMESH_CELL_SIZE, right = left + OM_NAVMESH_CELL_SIZE;
+        double xa = (xmin > left) ? xmin : left, xb = (xmax < right) ? xmax : right;
+        double ya, yb, ylo, yhi;
+        int32_t row, row_lo, row_hi;
+        if (dx == 0.0) {
+            ya = oy;
+            yb = ty;
+        } else {
+            if (xa >= xb) continue;
+            ya = oy + dy * (xa - ox) / dx;
+            yb = oy + dy * (xb - ox) / dx;
+        }
+        ylo = (ya < yb) ? ya : yb;
+        yhi = (ya < yb) ? yb : ya;
+        row_lo = om_fog_cell_floor(ylo);
+        row_hi = (ylo == yhi) ? row_lo : om_fog_cell_ceil(yhi) - 1;
+        for (row = row_lo; row <= row_hi; row++) {
+            if ((col == c0x && row == c0y) || (col == c1x && row == c1y)) continue;
+            if (om_mapgen_cell_blocked(w, low_layer, col, row)) return 1;
+        }
     }
     return 0;
 }
