@@ -248,6 +248,10 @@ typedef struct {
     uint8_t  grid_in[OM_MOVE_MAX_UNITS];
     double   sweep_cos[OM_STEERING_SWEEP_COUNT], sweep_sin[OM_STEERING_SWEEP_COUNT];
     uint8_t  stat[OM_MOVE_MAX_UNITS];
+uint8_t  col_need[OM_MOVE_MAX_UNITS];
+uint32_t col_moved;
+uint8_t  col_last;
+uint32_t col_cur;
     uint32_t grid_scratch[OM_MOVE_MAX_UNITS];
 
     int      settle_valid;
@@ -1502,6 +1506,55 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     return changed;
 }
 
+/* A pair that neither unit has left since it was last checked cannot have started to overlap, so after the
+ * first iteration only units with something new to check take a turn: col_need marks a unit that moved, and
+ * every lower-id unit within the collision diameter of where a unit moved to (the pair is checked in the
+ * lower unit's turn). A skipped turn would have found no overlapping pair and written nothing. */
+static void om_move_collision_mark(om_move_state *ms, uint32_t id) {
+    const double target = 2.0 * OM_UNIT_COLLISION_RADIUS;
+    const double r2 = target * target;
+    const double x = om_move_grid_x(ms, id), y = om_move_grid_y(ms, id);
+    int32_t cx0, cx1, cy0, cy1, cy;
+    uint32_t base, lo, hi;
+    ms->col_need[id] = 1;
+    if (ms->col_last && id <= ms->col_cur + 1) return;
+    for (base = ms->slot_base; base < ms->slot_base + ms->n_spill; base += OM_MOVE_MASK_BITS) {
+        uint64_t mask = om_move_near_mask(ms, base, ms->slot_base + ms->n_spill, x, y, r2);
+        for (; mask; mask &= mask - 1) {
+            uint32_t v = ms->slot_id[base + om_move_lowest_bit(mask)];
+            if (v < id && (!ms->col_last || v > ms->col_cur)) ms->col_need[v] = 1;
+        }
+    }
+    if (!om_move_grid_box(ms, x, y, target, &cx0, &cx1, &cy0, &cy1)) return;
+    for (cy = cy0; cy <= cy1; cy++) {
+        uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
+        lo = ms->grid_start[row + (uint32_t)cx0];
+        hi = ms->grid_start[row + (uint32_t)cx1 + 1];
+        for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+            uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
+            for (; mask; mask &= mask - 1) {
+                uint32_t v = ms->slot_id[base + om_move_lowest_bit(mask)];
+                if (v < id && (!ms->col_last || v > ms->col_cur)) ms->col_need[v] = 1;
+            }
+        }
+    }
+}
+
+/* One pair, and whichever of its units it displaced (bit-compared) is marked for the next checks. */
+static void om_move_collide_pair_marked(om_world *w, om_move_state *ms, uint32_t ia, uint32_t ib) {
+    const double ax = om_move_grid_x(ms, ia), ay = om_move_grid_y(ms, ia);
+    const double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
+    if (!om_move_collide_pair(w, ms, ia, ib)) return;
+    if (memcmp(&ax, &ms->slot_x[ms->unit_slot[ia]], sizeof ax) || memcmp(&ay, &ms->slot_y[ms->unit_slot[ia]], sizeof ay)) {
+        om_move_collision_mark(ms, ia);
+        ms->col_moved = 1;
+    }
+    if (memcmp(&bx, &ms->slot_x[ms->unit_slot[ib]], sizeof bx) || memcmp(&by, &ms->slot_y[ms->unit_slot[ib]], sizeof by)) {
+        om_move_collision_mark(ms, ib);
+        ms->col_moved = 1;
+    }
+}
+
 /* One collision iteration: units in ascending id order; for unit a, its
  * partners (the units above it that overlap it) in ascending id order, each
  * resolved against a's position as the earlier ones left it, which is the
@@ -1517,23 +1570,27 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
  * listed candidate ended its turn without a re-query, whatever it now
  * overlapped. Results match it bit for bit, so that stop is reproduced: the
  * turn ends when the wider list has no candidate left
- * (om_move_grid_any_above). */
-static int om_move_collision_once(om_world *w, om_move_state *ms) {
+ * (om_move_grid_any_above). Returns whether any unit was displaced. */
+static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int last) {
     const double target = 2.0 * OM_UNIT_COLLISION_RADIUS;
     const double slack = OM_MOVE_COLLISION_SLACK;
     const double drift2 = slack * slack;
     uint32_t id_i;
-    int changed = 0;
+    ms->col_moved = 0;
+    ms->col_last = (uint8_t)last;
     for (id_i = 1; id_i <= ms->discovery_max; id_i++) {
         uint32_t n, k;
         double ax0, ay0;
         if (!ms->grid_in[id_i]) continue;
+        if (!first && !ms->col_need[id_i]) continue;
+        ms->col_need[id_i] = 0;
+        ms->col_cur = id_i;
         ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
         n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_i);
         for (k = 0; k < n; k++) {
             uint32_t id_j = ms->grid_scratch[k];
             double mx, my;
-            if (om_move_collide_pair(w, ms, id_i, id_j)) changed = 1;
+            om_move_collide_pair_marked(w, ms, id_i, id_j);
             mx = om_move_grid_x(ms, id_i) - ax0; my = om_move_grid_y(ms, id_i) - ay0;
             if (mx * mx + my * my > drift2) {
                 if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH, id_j)) break;
@@ -1543,7 +1600,7 @@ static int om_move_collision_once(om_world *w, om_move_state *ms) {
             }
         }
     }
-    return changed;
+    return (int)ms->col_moved;
 }
 
 /* A collision pass reads only each unit's x/y, its stationary flag, and
@@ -1603,7 +1660,7 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     }
     passes = ms->col_pursue ? OM_COLLISION_PASSES : OM_COLLISION_MAX_ITER;
     for (iter = 0; iter < passes; iter++) {
-        if (!om_move_collision_once(w, ms)) {
+        if (!om_move_collision_once(w, ms, iter == 0, iter == passes - 1)) {
             settled = 1;
             break;
         }
