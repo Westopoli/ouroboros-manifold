@@ -1,0 +1,10 @@
+01_start.png 1920x1080 sd=0.106989
+02_after_1min.png 1920x1080 sd=0.112243
+03_after_5min.png 1920x1080 sd=0.116216
+04_just_after_wave.png 1920x1080 sd=0.116492
+05a_before_placement.png 1920x1080 sd=0.113609
+05b_just_after_placement.png 1920x1080 sd=0.115343
+05c_placement_refilled.png 1920x1080 sd=0.118467
+06_damage.png 1920x1080 sd=0.118973
+07_paths_overlay.png 1920x1080 sd=0.136048
+08_live_20x.png 1920x1080 sd=0.119315
