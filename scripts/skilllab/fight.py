@@ -1,4 +1,5 @@
 """One tactical fight of one setup, stepped tick by tick (spec AC 5-11)."""
+import math
 import random
 
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
@@ -7,6 +8,7 @@ from scripts.skilllab.formations import place
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
 FIRST_CUSTOM_TYPE_ID = 100
+SLOT_RADIUS = 440
 
 
 def _register_types(engine, w, setup):
@@ -51,6 +53,36 @@ def _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges):
         ids_by_group[gi] = ids
 
 
+def _centroid(points):
+    return sum(p[0] for p in points) / len(points), sum(p[1] for p in points) / len(points)
+
+
+def _chunks(engine, w, ids):
+    """Split ids into the fewest equal chunks along the wider axis so each stays within SLOT_RADIUS of its own centroid.
+
+    The engine drops a group's slots to the click point past 450 wu from the centroid (R-095-03).
+    """
+    pos = {u: engine.unit_pos(w, u) for u in ids}
+    cx, cy = _centroid(list(pos.values()))
+    if all(math.hypot(x - cx, y - cy) <= SLOT_RADIUS for x, y in pos.values()):
+        return [(ids, (0.0, 0.0))]
+    axis = 0 if max(p[0] for p in pos.values()) - min(p[0] for p in pos.values()) >= \
+        max(p[1] for p in pos.values()) - min(p[1] for p in pos.values()) else 1
+    ordered = sorted(ids, key=lambda u: pos[u][axis])
+    for k in range(2, len(ids) + 1):
+        base, extra = divmod(len(ordered), k)
+        chunks, at = [], 0
+        for i in range(k):
+            size = base + (1 if i < extra else 0)
+            chunks.append(ordered[at:at + size])
+            at += size
+        centres = [_centroid([pos[u] for u in c]) for c in chunks]
+        if all(math.hypot(pos[u][0] - ctr[0], pos[u][1] - ctr[1]) <= SLOT_RADIUS
+               for c, ctr in zip(chunks, centres) for u in c):
+            return [(c, (ctr[0] - cx, ctr[1] - cy)) for c, ctr in zip(chunks, centres)]
+    return [([u], (pos[u][0] - cx, pos[u][1] - cy)) for u in ordered]
+
+
 def _issue_orders(engine, w, setup, ids_by_group):
     first_anchor, goals = first_anchors(setup), {}
     for gi, g in enumerate(setup.groups):
@@ -58,11 +90,13 @@ def _issue_orders(engine, w, setup, ids_by_group):
             continue
         goal = g.goal if g.goal is not None else first_anchor[1 - g.side]
         if g.order == "attack_move":
-            engine.order_attack_move(w, ids_by_group[gi], goal[0], goal[1])
+            issue = engine.order_attack_move
         elif g.order == "move":
-            engine.order_move(w, ids_by_group[gi], goal[0], goal[1])
+            issue = engine.order_move
         else:
             raise ValueError("unknown order %r" % (g.order,))
+        for ids, (dx, dy) in _chunks(engine, w, ids_by_group[gi]):
+            issue(w, ids, goal[0] + dx, goal[1] + dy)
         goals[gi] = goal
     return goals
 
