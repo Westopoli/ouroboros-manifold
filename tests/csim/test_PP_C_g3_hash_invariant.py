@@ -29,9 +29,12 @@ import baseline_fights as B  # noqa: E402
 
 TBS = 4  # OM_TP_TARGET_BY_SIGHT
 
-# Frozen pre-G3 goldens (copies of origin/main before the default-1 re-record). The shared
+# Frozen pre-G3 goldens (copies of origin/main before the default-1 re-record; A99 fights re-frozen at A188). The shared
 # a99_tactical_hashes.json and baseline_hashes.json now hold the default-1 hashes.
-# See also: TD-PP-C-invariant-goldens in docs/northstar/plans/push_ledger_2026-09-22.md
+# a99_tactical_hashes_pre_g3.json: the four fight ids fight_502_gap100, fight_990_gap300, fight_990_gap1500,
+# fight_990_gap3000 are re-frozen at A188 (recorded with OM_TP_TARGET_BY_SIGHT = 0 on the build with the
+# default PURSUE_BY_STEERING = 1 leash), so the invariant guards "G3 off equals the engine without G3".
+# See also: TD-PP-A188-g3-invariant-reference, TD-PP-C-invariant-goldens in docs/northstar/plans/push_ledger_2026-09-22.md
 _DATA = Path(__file__).resolve().parent / "data"
 PRE_G3_A99 = json.loads((_DATA / "a99_tactical_hashes_pre_g3.json").read_text())
 PRE_G3_BASELINE = json.loads((_DATA / "baseline_hashes_pre_g3.json").read_text())
@@ -47,7 +50,7 @@ FAST = [r for r in A.RUNS if r[4] == "fast"]
 
 @pytest.mark.parametrize("run", FAST, ids=[r[0] for r in FAST])
 def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
-    """A185: switch 0 leaves every recorded A99 per-step hash byte-identical."""
+    """A185: switch 0 leaves every recorded A99 per-step hash byte-identical (reference frozen at A188)."""
     name, units, gap, steps, _t = run
     rec = PRE_G3_A99[name]["hashes"]
     w = A.build(lib, units)
