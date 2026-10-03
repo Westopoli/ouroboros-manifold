@@ -75,7 +75,8 @@ def test_idle_group_stays_idle_next_to_a_group_move():
 # ---- steps --------------------------------------------------------------------------------------------------
 
 def test_tick_step_fires_a_group_move_once_with_the_group_ids():
-    result, fake = run(S([Step(0, ("tick", 3), "group_move", (9.0, 9.0))], max_ticks=6))
+    result, fake = run(S([Step(0, ("tick", 3), "group_move", (9.0, 9.0))], groups=(G(0, order="idle"), G(1, order="idle")),
+                         max_ticks=6))
     assert fake.orders_of("group_move") == [(3, "group_move", [1, 2], (9.0, 9.0))]
     assert result.steps_fired == ((0, 3),)
     steps = [i for i, c in enumerate(fake.calls) if c[0] == "step"]
@@ -85,7 +86,8 @@ def test_tick_step_fires_a_group_move_once_with_the_group_ids():
 
 
 def test_tick_step_does_not_fire_early():
-    result, fake = run(S([Step(0, ("tick", 3), "group_move", (9.0, 9.0))], max_ticks=2))
+    result, fake = run(S([Step(0, ("tick", 3), "group_move", (9.0, 9.0))], groups=(G(0, order="idle"), G(1, order="idle")),
+                         max_ticks=2))
     assert fake.orders_of("group_move") == [] and result.steps_fired == ()
 
 

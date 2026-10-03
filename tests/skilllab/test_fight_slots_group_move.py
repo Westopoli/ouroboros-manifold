@@ -39,7 +39,7 @@ def _run(group):
     eng.calls.clear()
     goals = fight._issue_orders(eng, w, setup, ids)
     orders = [c for c in eng.calls if c[0].startswith("order_")]
-    return eng, orders, ids[group.side], goals
+    return eng, orders, ids[0], goals   # the group under test is group index 0 (ids is keyed by group index)
 
 
 def _centroid(eng, unit_ids):
