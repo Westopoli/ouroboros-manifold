@@ -13,7 +13,7 @@ if str(ROOT) not in sys.path:
 from scripts.skilllab import batches, engine, fight  # noqa: E402
 from scripts.skilllab.scenes import tall_cover  # noqa: E402
 
-OUTCOMES = {"side0", "side1", "stalemate", "cap"}
+OUTCOMES = {"side0", "side1", "draw", "stalemate", "cap"}
 
 
 @pytest.fixture(scope="module")

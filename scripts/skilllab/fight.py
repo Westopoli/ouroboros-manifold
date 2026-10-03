@@ -1,7 +1,9 @@
-"""One tactical fight of one setup, stepped tick by tick (spec AC 5-11)."""
+"""One tactical fight of one setup, stepped tick by tick (spec AC 5-11).
+A Setup with approach > 0 is first opened by approach.approach_setup (move to a stop line, then attack_move)."""
 import math
 import random
 
+from scripts.skilllab.approach import approach_setup
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
 from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
 from scripts.skilllab.formations import place
@@ -105,12 +107,28 @@ def _issue_orders(engine, w, setup, ids_by_group):
             issue = engine.order_attack_move
         elif g.order == "move":
             issue = engine.order_move
+        elif g.order == "group_move":
+            issue = engine.order_group_move
         else:
             raise ValueError("unknown order %r" % (g.order,))
         for ids, (dx, dy) in _chunks(engine, w, ids_by_group[gi]):
             issue(w, ids, goal[0] + dx, goal[1] + dy)
         goals[gi] = goal
     return goals
+
+
+def _check_target_policy(policy):
+    if policy is None:
+        return
+    if not isinstance(policy, (tuple, list)) or len(policy) != 2 or any(p not in (None, 0, 1) or isinstance(p, bool) for p in policy):
+        raise ValueError("target_policy must be None or a pair of None, 0 or 1, got %r" % (policy,))
+
+
+def apply_target_policy(engine, w, setup):
+    """Faction 0 reads OM_TP_TARGET_POLICY, faction 1 reads OM_TP_TARGET_POLICY_FACTION_1 (A196); None leaves a side unset."""
+    for name, value in zip(("OM_TP_TARGET_POLICY", "OM_TP_TARGET_POLICY_FACTION_1"), setup.target_policy or (None, None)):
+        if value is not None:
+            engine.set_param(w, engine.param_id(name), float(value))
 
 
 def fight(setup, seed=0, swap=False, engine=None):
@@ -121,6 +139,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         raise ValueError("max_ticks, stalemate_ticks and sample_every must each be at least 1")
     validate(setup)
     _check_reach(setup)
+    _check_target_policy(setup.target_policy)
     if engine is None:
         from scripts.skilllab.engine import Engine
         engine = Engine()
@@ -131,6 +150,7 @@ def fight(setup, seed=0, swap=False, engine=None):
             engine.disable_abilities(w)
         for pid, value in [(engine.param_id(n), float(v)) for n, v in setup.settings.items()]:
             engine.set_param(w, pid, value)
+        apply_target_policy(engine, w, setup)
         if setup.terrain is not None:
             t = setup.terrain
             engine.set_canvas(w, t.canvas[0], t.canvas[1])
@@ -139,6 +159,7 @@ def fight(setup, seed=0, swap=False, engine=None):
             for c in t.covers:
                 engine.add_cover(w, c.x, c.y, c.radius, c.height)
         types = _register_types(engine, w, setup)
+        setup = approach_setup(setup, {name: reach for name, (tid, reach) in types.items()})
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
             _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges)
@@ -229,7 +250,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
         if states is not None:
             record_states()
         if alive[0] == 0 and alive[1] == 0:
-            outcome = "stalemate"
+            outcome = "draw"
         elif alive[1] == 0:
             outcome = "side0"
         elif alive[0] == 0:

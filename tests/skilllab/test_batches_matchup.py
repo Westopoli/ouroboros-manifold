@@ -62,8 +62,9 @@ def test_matchup_definition_fields_and_cell_order():
     assert d.name == "matchup" and d.title and d.scene
     assert d.weighted is True
     assert d.variants == (("default", {}),)
-    assert [c.label for c in d.cells] == [_label(*x) for x in EXPECTED]      # 200 cells, size 16 then 32
-    for c, (r, col, n) in zip(d.cells, EXPECTED):
+    assert len(d.cells) == 284                                               # 200 interleaved + 84 layered
+    assert [c.label for c in d.cells[:200]] == [_label(*x) for x in EXPECTED]      # size 16 then 32
+    for c, (r, col, n) in zip(d.cells[:200], EXPECTED):
         assert (c.size, c.enemy_from, c.enemy_to, c.replicates, c.status) == (n, n // 2, n * 3 // 2, 10, "naive")
         assert c.build is not None and c.reference is None
 
@@ -72,7 +73,7 @@ def test_matchup_scene_and_unexpressed_lines():
     d = batches.get("matchup")
     for want in ("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
                  "only even two-type mixes; unequal mixes and three-type mixes are not included",
-                 "arrangement is the default interleaved only"):
+                 "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"):
         assert want in d.unexpressed
     assert "weighted" in d.scene and "blob" in d.scene
 
@@ -102,9 +103,11 @@ def test_matchup_builds_put_the_mix_on_each_side(monkeypatch):
 
 def test_matchup_scanned_once_per_cell_with_range_and_weighted_setups(tmp_path):
     _, fake, _ = _run(tmp_path)
-    assert len(fake.calls) == 200
+    assert len(fake.calls) == 284
     want = sorted((_label(*x), x[2], x[2] // 2, x[2] * 3 // 2) for x in EXPECTED)
-    assert sorted((c["label"], c["size"], c["enemy_from"], c["enemy_to"]) for c in fake.calls) == want
+    old = [c for c in fake.calls if ":layered" not in c["label"]]
+    assert sorted((c["label"], c["size"], c["enemy_from"], c["enemy_to"]) for c in old) == want
+    assert sum(":layered" in c["label"] for c in fake.calls) == 84
     assert all(c["setup"].weighted is True for c in fake.calls)
     assert all(c["replicates"] == 10 and c["setup"].settings == {"OM_TP_PURSUE_BY_STEERING": 1} for c in fake.calls)
 
@@ -132,7 +135,7 @@ def test_matchup_results_carry_weighted_unit_seconds(tmp_path):
 def test_matchup_cells_table_lists_all_pairs(tmp_path):
     _, _, paths = _run(tmp_path)
     sec = _section(_text(paths["run"]), "Cells")
-    assert sum("_v_" in ln for ln in sec.splitlines()) == 200
+    assert sum("_v_" in ln for ln in sec.splitlines()) == 284
     assert "Bombard+Bastion_v_Vanguard+Raider@32" in sec
 
 
@@ -142,14 +145,14 @@ def test_matchup_run_file_lists_unexpressed(tmp_path):
     assert t.index(PROVISIONAL) < t.index("## Scene")
     sec = _section(t, "What the instrument could not express")
     assert "weighted count reads the engine's target" in sec
-    assert "only even two-type mixes" in sec and "default interleaved only" in sec
+    assert "only even two-type mixes" in sec and "interleaved in every cell; layered" in sec
 
 
-def test_matchup_page_has_one_grid_per_size_and_no_cell_charts(tmp_path):
+def test_matchup_page_has_a_grid_per_size_plus_the_layered_one_and_no_cell_charts(tmp_path):
     _, _, paths = _run(tmp_path)
     page = _text(paths["page"])
     assert PROVISIONAL in page
-    assert page.count('<table class="grid">') == 2
+    assert page.count('<table class="grid">') == 3      # 16, 32, layered 16 (see test_batches_matchup_layered.py)
     assert "<svg" not in page
     for n in SIZES:
         grid = matchup_grid_html(AXIS, AXIS, {(r, c): _beats(r, c, n) for r in AXIS for c in AXIS}, n, "x")
@@ -164,8 +167,9 @@ def test_matchup_csv_rows(tmp_path):
     _, _, paths = _run(tmp_path)
     with open(paths["csv"], newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    assert len(rows) == 100 * 17 * 2 + 100 * 33 * 2
-    assert {r["cell"] for r in rows} == {_label(*x) for x in EXPECTED}
+    assert len(rows) == 184 * 17 * 2 + 100 * 33 * 2
+    cells = {r["cell"] for r in rows}
+    assert {c for c in cells if ":layered" not in c} == {_label(*x) for x in EXPECTED} and len(cells) == 284
     assert {r["variant"] for r in rows} == {"default"}
     assert "weighted_unit_seconds_0" in rows[0]
     assert "defender_order" not in rows[0]

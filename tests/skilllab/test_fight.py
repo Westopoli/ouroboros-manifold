@@ -292,11 +292,11 @@ def test_ac9_side0_side1_and_ticks_count_the_steps_taken():
     assert r1.margin == pytest.approx(-0.375)
 
 
-def test_ac9_both_sides_losing_their_last_unit_on_the_same_tick_is_a_stalemate():
-    """AC-9: mutual wipe-out is "stalemate" with margin 0; positive control: only side 1 dying is "side0"."""
+def test_ac9_both_sides_losing_their_last_unit_on_the_same_tick_is_a_draw():
+    """AC-9 (A201): mutual wipe-out is "draw" with margin 0; positive control: only side 1 dying is "side0"."""
     both, fake = run(two_vs_four(), script=lambda t, f: (kill(f, 0), kill(f, 1)) if t == 3 else None)
     only1, _ = run(two_vs_four(), script=lambda t, f: kill(f, 1) if t == 3 else None)
-    assert (both.outcome, both.ticks, both.survivors, both.strength_left, both.margin) == ("stalemate", 4, (0, 0), (0.0, 0.0), 0.0)
+    assert (both.outcome, both.ticks, both.survivors, both.strength_left, both.margin) == ("draw", 4, (0, 0), (0.0, 0.0), 0.0)
     assert only1.outcome == "side0"
 
 
@@ -348,7 +348,7 @@ def _scenario_mutual():
 
 
 @pytest.mark.parametrize("scenario,outcome", [(_scenario_side0, "side0"), (_scenario_cap, "cap"),
-                                              (_scenario_stalemate, "stalemate"), (_scenario_mutual, "stalemate")])
+                                              (_scenario_stalemate, "stalemate"), (_scenario_mutual, "draw")])
 def test_ac11_every_result_field_is_populated_with_its_type(scenario, outcome):
     """AC-11: outcome, ticks, margin, strength_left, survivors, heads, first_contact_tick, firing, seconds on every outcome."""
     r = scenario()
@@ -583,7 +583,7 @@ def test_ac10_a_sample_is_also_taken_on_the_final_tick_when_it_is_a_multiple_of_
     (None, {"stalemate_ticks": 13}, "cap", 12, [0, 5, 10]),                                        # control: cap on a non-multiple
     (lambda t, f: kill(f, 1) if t == 9 else None, {}, "side0", 10, [0, 5, 10]),                    # elimination on a multiple
     (lambda t, f: kill(f, 0) if t == 4 else None, {}, "side1", 5, [0, 5]),                         # elimination on a multiple
-    (lambda t, f: (kill(f, 0), kill(f, 1)) if t == 9 else None, {}, "stalemate", 10, [0, 5, 10]),  # mutual wipe-out on a multiple
+    (lambda t, f: (kill(f, 0), kill(f, 1)) if t == 9 else None, {}, "draw", 10, [0, 5, 10]),  # mutual wipe-out on a multiple
     (lambda t, f: kill(f, 1) if t == 6 else None, {}, "side0", 7, [0, 5]),                         # control: elimination off the grid
 ])
 def test_ac10_final_tick_sample_also_holds_when_the_fight_ends_by_elimination_or_stalemate(script, kw, outcome, ticks, expected):
