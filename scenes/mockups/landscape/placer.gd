@@ -25,6 +25,10 @@ const TOP_DOWN_STEP_WU := 60.0
 const DEFAULT_PLATE_THICKNESS_WU := 60.0
 const DEFAULT_RUBBLE_THICKNESS_WU := 30.0
 const WALL_DARKEN := 0.2
+const FRAME_WIDTH_WU := 60.0
+const FRAME_LIFT_WU := 20.0
+const DEFAULT_SMALL_ONLY_COLOR := "#ff8a1f"
+const DEFAULT_VIEW_BLOCKED_COLOR := "#7c8087"
 
 # Cliff border height is sampled from real terrain, not the kit's flat default.
 const MIN_CLIFF_HEIGHT_WU := 40.0
@@ -95,8 +99,9 @@ static func load_kit(path: String) -> Dictionary:
 # Layer view of a space map, by rewriting colours, visibility and position; nothing is regenerated.
 # Outside top-down, focusing a layer darkens the others. In top-down a focused layer is alone
 # (the others are hidden); with focus 0 the layers use their top-down colours and each higher layer
-# is stepped sideways so stacked edges show. Crossing marks show only when asked.
-static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, show_crossings: bool) -> void:
+# is stepped sideways so stacked edges show. Crossing marks show only when asked. A node belongs to
+# one view (meta "view": "visual" if absent, "*" for every view) and is hidden in the others.
+static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, show_crossings: bool, view: String = "visual") -> void:
 	var stacked := top_down and focus == 0
 	for child in world_parent.get_children():
 		var layers: Array = []
@@ -106,8 +111,9 @@ static func apply_layer_view(world_parent: Node, focus: int, top_down: bool, sho
 			layers = child.get_meta("layers")
 		else:
 			continue
+		var own_view: String = child.get_meta("view", "visual")
 		var inside: bool = focus == 0 or layers.has(focus)
-		child.visible = (inside or not top_down) and (show_crossings or not child.get_meta("crossing_mark", false))
+		child.visible = (own_view == "*" or own_view == view) and (inside or not top_down) and (show_crossings or not child.get_meta("crossing_mark", false))
 		var step: float = (layers.min() - 1) * TOP_DOWN_STEP_WU if stacked else 0.0
 		child.position = Vector3(step, child.position.y, step)
 		if child.has_meta("sheet_layer"):
@@ -233,6 +239,7 @@ func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node
 	var layer_colors: Array = kit.get("layers", [])
 	var topdown_colors: Array = kit.get("layers_topdown", layer_colors)
 	var mass_color := Color(kit.get("mass", "#4a4038"))
+	var small_only := Color(kit.get("small_only", DEFAULT_SMALL_ONLY_COLOR))
 	var spacing: float = FieldMap.SPACING
 	var total := 0
 	var by_type := {}
@@ -260,6 +267,11 @@ func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node
 			var segments: int = field_map.walls[k].a.size()
 			total += segments
 			by_type["wall"] = int(by_type.get("wall", 0)) + segments
+		var frame: Dictionary = field_map.section_frames[k]
+		if frame.a.size() > 0:
+			total += frame.a.size()
+			by_type["frame"] = int(by_type.get("frame", 0)) + frame.a.size()
+			_add_sheet_node(world_parent, "frame_L%d" % (k + 1), _ribbon_mesh(frame.a, frame.b, plate_h + FRAME_LIFT_WU), small_only, small_only, k + 1, "*")
 		for entry in [["sheet", sheet, layer_color, topdown_color], ["mass", mass, mass_color, mass_color], ["wall", wall, layer_color.darkened(WALL_DARKEN), topdown_color.darkened(WALL_DARKEN)], ["wallmass", wall_mass, mass_color.darkened(WALL_DARKEN), mass_color.darkened(WALL_DARKEN)]]:
 			var data: Dictionary = entry[1]
 			if data.verts.is_empty():
@@ -270,19 +282,108 @@ func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node
 			arrays[Mesh.ARRAY_NORMAL] = data.norms
 			var mesh := ArrayMesh.new()
 			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-			var mi := MeshInstance3D.new()
-			mi.name = "%s_L%d" % [entry[0], k + 1]
-			mi.mesh = mesh
-			var mat := StandardMaterial3D.new()
-			mat.albedo_color = entry[2]
-			mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-			mi.material_override = mat
-			mi.position = Vector3(0.0, _layer_y(k + 1), 0.0)
-			mi.set_meta("sheet_layer", k + 1)
-			mi.set_meta("base_color", entry[2])
-			mi.set_meta("topdown_color", entry[3])
-			world_parent.add_child(mi)
+			_add_sheet_node(world_parent, "%s_L%d" % [entry[0], k + 1], mesh, entry[2], entry[3], k + 1)
 	return {total = total, by_type = by_type}
+
+
+# A mesh at layer `layer`'s height that the layer view can focus, darken and step: flat colour,
+# both faces. `view` is the view it belongs to ("*": all).
+func _add_sheet_node(world_parent: Node3D, node_name: String, mesh: Mesh, base_color: Color, topdown_color: Color, layer: int, view: String = "visual", unshaded: bool = false) -> void:
+	var mi := MeshInstance3D.new()
+	mi.name = node_name
+	mi.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = base_color
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	if unshaded:
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mi.material_override = mat
+	mi.position = Vector3(0.0, _layer_y(layer), 0.0)
+	mi.set_meta("sheet_layer", layer)
+	mi.set_meta("base_color", base_color)
+	mi.set_meta("topdown_color", topdown_color)
+	mi.set_meta("view", view)
+	world_parent.add_child(mi)
+
+
+# A flat ribbon FRAME_WIDTH_WU wide along each segment a[i] to b[i], at height y, each end pushed out
+# by half the width so neighbouring segments overlap at the corners.
+func _ribbon_mesh(a: PackedVector2Array, b: PackedVector2Array, y: float) -> ArrayMesh:
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var half := FRAME_WIDTH_WU * 0.5
+	for i in range(a.size()):
+		var along := (b[i] - a[i]).normalized()
+		var side := Vector2(-along.y, along.x) * half
+		var p := a[i] - along * half
+		var q := b[i] + along * half
+		var corners := [p + side, q + side, q - side, p + side, q - side, p - side]
+		for c in corners:
+			verts.append(Vector3(c.x, y, c.y))
+			norms.append(Vector3.UP)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
+
+
+# The functional views, built on demand and added to `world_parent` as nodes of that view: per layer
+# one flat quad per row-run of cells that are blocked in the view's map (grey), and in the small view
+# the cells small craft can pass and ordinary units cannot (the kit's `small_only`). The map is
+# `masks_ordinary` for "ordinary" and `small_masks` for "small".
+func place_view(field_map: SpaceFieldMap, kit: Dictionary, view: String, world_parent: Node3D) -> void:
+	_layer_gap = field_map.layer_gap_wu
+	var plate_h: float = float(kit.get("plate", {}).get("thickness", DEFAULT_PLATE_THICKNESS_WU))
+	var blocked_color := Color(kit.get("view_blocked", DEFAULT_VIEW_BLOCKED_COLOR))
+	var small_only := Color(kit.get("small_only", DEFAULT_SMALL_ONLY_COLOR))
+	var n: int = field_map.dim * field_map.dim
+	for k in range(SpaceFieldMap.LAYERS):
+		var mask: PackedByteArray = field_map.masks_ordinary[k] if view == "ordinary" else field_map.small_masks[k]
+		var blocked := PackedByteArray()
+		blocked.resize(n)
+		var only := PackedByteArray()
+		only.resize(n)
+		for i in range(n):
+			blocked[i] = 1 - mask[i]
+			only[i] = mask[i] & (1 - field_map.masks_ordinary[k][i])
+		_add_sheet_node(world_parent, "view_%s_L%d" % [view, k + 1], _runs_mesh(blocked, field_map.dim, field_map.canvas, plate_h), blocked_color, blocked_color, k + 1, view, true)
+		if view == "small":
+			_add_sheet_node(world_parent, "view_small_only_L%d" % (k + 1), _runs_mesh(only, field_map.dim, field_map.canvas, plate_h), small_only, small_only, k + 1, view, true)
+
+
+# One upward quad per run of flagged cells along a row, each cell a SPACING square centred on its
+# grid point, clipped to the canvas.
+func _runs_mesh(flags: PackedByteArray, dim: int, canvas: float, y: float) -> ArrayMesh:
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	var half := FieldMap.SPACING * 0.5
+	for gy in range(dim):
+		var z0: float = maxf(gy * FieldMap.SPACING - half, 0.0)
+		var z1: float = minf(gy * FieldMap.SPACING + half, canvas)
+		var gx := 0
+		while gx < dim:
+			if flags[gy * dim + gx] == 0:
+				gx += 1
+				continue
+			var start := gx
+			while gx < dim and flags[gy * dim + gx] == 1:
+				gx += 1
+			var x0: float = maxf(start * FieldMap.SPACING - half, 0.0)
+			var x1: float = minf((gx - 1) * FieldMap.SPACING + half, canvas)
+			verts.append_array(PackedVector3Array([Vector3(x0, y, z0), Vector3(x1, y, z0), Vector3(x1, y, z1), Vector3(x0, y, z0), Vector3(x1, y, z1), Vector3(x0, y, z1)]))
+			for _c in range(6):
+				norms.append(Vector3.UP)
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = norms
+	var mesh := ArrayMesh.new()
+	if not verts.is_empty():
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 # The wall segments of one kind (mass or not) from the layer's top face to the layer above's
@@ -853,6 +954,9 @@ func _mesh_hab_ring(size: Array) -> Mesh:
 	var m := TorusMesh.new()
 	m.inner_radius = wh.x * 0.3
 	m.outer_radius = wh.x * 0.5
+	# The default 64 by 32 is 4,096 triangles; the space kit has hundreds of crossing marks.
+	m.rings = 12
+	m.ring_segments = 6
 	return m
 
 

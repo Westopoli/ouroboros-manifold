@@ -164,6 +164,9 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
     trace, last = ([] if setup.trace else None), {}
     states, had_dest, ends = ([], set(), {}) if setup.states else (None, None, None)
     all_ids = sorted(living)
+    alive_set = {u for u in living if hp[u] > 0}
+    alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
+    unit_hp, step = engine.unit_hp, engine.step
 
     def record():
         for u in all_ids:
@@ -175,13 +178,13 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
                 trace.append((tick, u, last[u][0], last[u][1], 0, last[u][2], False))
 
     def sample():
-        a0, a1 = count_able(engine, w, side_ids[0], side_ids[1], ranges)
+        a0, a1 = count_able(engine, w, side_ids[0], side_ids[1], ranges, alive_set)
         firing.append((tick, a0, a1))
         if weighted is not None:
-            weighted.append((tick,) + count_able_weighted(engine, w, side_ids[0], side_ids[1], ranges, wt[0], wt[1]))
+            weighted.append((tick,) + count_able_weighted(engine, w, side_ids[0], side_ids[1], ranges, wt[0], wt[1], alive_set))
 
     def record_states():
-        for u, (state, dest) in sorted(unit_states(engine, w, side_ids[0], side_ids[1], ranges).items()):
+        for u, (state, dest) in sorted(unit_states(engine, w, side_ids[0], side_ids[1], ranges, alive_set).items()):
             states.append((tick, u, state))
             if dest is not None:
                 had_dest.add(u)
@@ -195,21 +198,23 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
         record_states()
     timeline.check(0, hp, zero=True)
     while outcome is None:
-        engine.step(w)
+        step(w)
         tick += 1
         changed = False
         for u in living:
-            h = engine.unit_hp(w, u)
+            h = unit_hp(w, u)
             if h != hp[u]:
                 hp[u], changed = h, True
-        living = [u for u in living if hp[u] > 0]
+        if changed:
+            living = [u for u in living if hp[u] > 0]
+            alive_set = set(living)
+            alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
         timeline.check(tick, hp)
         quiet = 0 if changed else quiet + 1
         if trace is not None:
             record()
         if states is not None:
             record_states()
-        alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
         if alive[0] == 0 and alive[1] == 0:
             outcome = "stalemate"
         elif alive[1] == 0:

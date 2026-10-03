@@ -104,6 +104,12 @@ func qa_state() -> Dictionary:
 		state["plates_cut"] = fm.plates_cut
 		state["rubble_share"] = fm.rubble_share
 		state["objective_clear_blocked_cells"] = _blocked_cells_near_objective(fm, core_pos)
+		state["view"] = _hud.get_view()
+		state["small_share"] = _hud.get_small_share()
+		state["small_section_pct"] = fm.small_section_pct
+		state["small_only_pct"] = fm.small_only_pct
+		state["triangles"] = _hud.get_triangles()
+		state["sections_near_layout"] = _hud.get_sections_near_layout()
 	return state
 
 
@@ -143,6 +149,12 @@ func qa_set(name: String, value) -> void:
 			_hud.qa_set_shared_density(bool(value))
 		"marks":
 			_hud.qa_set_marks(bool(value))
+		"view":
+			_hud.qa_set_view(String(value))
+		"small_share":
+			_hud.qa_set_small_share(float(value))
+		"sections_near_layout":
+			_hud.qa_set_sections_near_layout(bool(value))
 
 
 func qa_camera(height: float, x: float, z: float) -> void:
