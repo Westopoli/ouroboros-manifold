@@ -338,12 +338,9 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             # A177: count whole ticks (0.5 s / 0.05 s = 10), not float seconds whose residue added an 11th.
             store.attack_backswing[uid] = max(0.0, round(store.attack_backswing[uid] / dt - 1.0) * dt)
 
+    held = set()  # R-097-06: units halted by engagement this tick (a live target in range when they were to move)
     for uid in active:
         if not store.has_move_target[uid]:
-            continue
-        if is_immobile(store, uid):
-            continue
-        if store.attack_backswing[uid] > 0:  # post-attack movement lock (SC2-style backswing)
             continue
 
         px = store.data[uid, FIELD_X]
@@ -354,12 +351,21 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
         # See also: damage.py update_targeting — sensor pursuit updates target_x/y
         # each tick toward the nearest enemy for attack_moving units with large sensor radius.
         tgt = store.auto_engage_target[uid]
+        in_range = False
         if tgt >= 0 and store.alive[tgt]:
             atk_r = store.data[uid, FIELD_ATTACK_RANGE]
             dx_t = store.data[tgt, FIELD_X] - px
             dy_t = store.data[tgt, FIELD_Y] - py
-            if dx_t * dx_t + dy_t * dy_t <= atk_r * atk_r:
-                continue  # target in firing range — hold position
+            in_range = dx_t * dx_t + dy_t * dy_t <= atk_r * atk_r
+        if in_range:
+            held.add(uid)
+
+        if is_immobile(store, uid):
+            continue
+        if store.attack_backswing[uid] > 0:  # post-attack movement lock (SC2-style backswing)
+            continue
+        if in_range:
+            continue  # target in firing range — hold position
 
         eff = store.effective_speed[uid]
         speed = eff if eff > 0 else store.data[uid, FIELD_SPEED]
@@ -497,7 +503,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             store.data[uid, FIELD_X] != positions[uid][0] or
             store.data[uid, FIELD_Y] != positions[uid][1]
         )}
-        _resolve_collisions(store, active, moved, tactical_map, navmesh)
+        _resolve_collisions(store, active, moved, tactical_map, navmesh, held)
 
 
 def _update_move_groups(store):
@@ -559,7 +565,7 @@ def _update_move_groups(store):
             store.move_group_id[uid] = -1
 
 
-def _resolve_collisions(store, active, moved, tactical_map, navmesh):
+def _resolve_collisions(store, active, moved, tactical_map, navmesh, held=frozenset()):
     radius = config.UNIT_COLLISION_RADIUS
     min_dist = 2.0 * radius
     min_dist_sq = min_dist * min_dist
@@ -621,12 +627,10 @@ def _resolve_collisions(store, active, moved, tactical_map, navmesh):
                         nx = dx / d
                         ny = dy / d
 
-                        moving_a = store.has_move_target[uid_a] and not (
-                            store.auto_engage_target[uid_a] >= 0 and store.alive[store.auto_engage_target[uid_a]]
-                        )
-                        moving_b = store.has_move_target[uid_b] and not (
-                            store.auto_engage_target[uid_b] >= 0 and store.alive[store.auto_engage_target[uid_b]]
-                        )
+                        # R-097-06: stationary is halted by engagement (held), not 'has any target': a unit walking
+                        # toward a sighted target is moving, as in the C.
+                        moving_a = store.has_move_target[uid_a] and uid_a not in held
+                        moving_b = store.has_move_target[uid_b] and uid_b not in held
 
                         if moving_a and moving_b:
                             push_a, push_b = overlap * 0.5, overlap * 0.5
