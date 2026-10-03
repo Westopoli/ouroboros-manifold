@@ -25,6 +25,15 @@ var crossings: Array = []
 # Each entry a PackedVector2Array of world-space points, highlands to the sea/a lake.
 var rivers: Array = []
 
+# Pass 4 (pass4_terrain.gd): landform shaping, minimum relief and benching are applied to the
+# elevation right after _build_elevation; p4_info records what they did, p4 holds the analysis
+# (set by pass4_ui.gd after generate).
+var p4_landform: String = "seed"
+var p4_min_relief: float = 2500.0
+var p4_bench_override: float = -1.0
+var p4_info: Dictionary = {}
+var p4: Dictionary = {}
+
 var _rng := RandomNumberGenerator.new()
 
 
@@ -49,6 +58,10 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0)
 	var noise_interference := _make_noise(p_seed + 7, 0.00040)
 
 	var elevation := _build_elevation(noise_continent, noise_hills, noise_detail)
+	if not QaPlants.is_active("flat-terrain"):
+		var t_shape := Time.get_ticks_usec()
+		elevation = Pass4Terrain.shape(self, elevation, p_seed)
+		p4_info["shape_ms"] = (Time.get_ticks_usec() - t_shape) / 1000.0
 	var slope := _build_slope(elevation)
 	var water_result := _build_water(elevation)
 	var water: PackedFloat32Array = water_result.water
