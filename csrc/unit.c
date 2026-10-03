@@ -1663,13 +1663,20 @@ static int om_tac_in_range(const om_world *w, const om_unit_row *a, const om_uni
     return om_tac_in_reach(w, a, t) && om_tac_within(a, t, a->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, a, t));
 }
 
+/* A196: the policy for this unit's side; faction 1's own id wins unless unset (-1), then OM_TP_TARGET_POLICY. */
+static int om_tac_most_damaged_for(const om_world *w, const om_unit_row *self) {
+    double p = self->faction_id == 1 ? om_tactical_get_param(w, OM_TP_TARGET_POLICY_FACTION_1) : -1.0;
+    if (p < 0.0) p = om_tactical_get_param(w, OM_TP_TARGET_POLICY);
+    return p == 1.0;
+}
+
 /* Acquisition for a unit whose type has reach: the better of the same-layer pick `same` and the best cross-layer
  * candidate in reach and in range at its offset (nearest, or per TARGET_POLICY 1 the most damaged). The cross-layer
  * pick replaces the same-layer one only when strictly better by OM_TIE_EPSILON. */
 static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_unit_row *self, om_unit_row *same) {
     uint32_t up, down, n, id;
     double widest = 0.0, best_frac = 0.0, best_d2 = 0.0, same_frac, same_d2 = 0.0, m;
-    int most_damaged = om_tactical_get_param(w, OM_TP_TARGET_POLICY) == 1.0;
+    int most_damaged = om_tac_most_damaged_for(w, self);
     om_unit_row *best = NULL;
     om_grid_iter it;
     if (om_unit_profile_reach(w, self->unit_type, &up, &down) != 0 || (up == 0 && down == 0)) return same;
@@ -1799,7 +1806,8 @@ static om_unit_row *om_tac_most_damaged_hostile(om_world *w, om_tac_state *st, c
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
         if (!om_tac_may_act_on(w, self, cand)) continue;
         if (!best || frac < best_frac - OM_TIE_EPSILON
-            || (frac <= best_frac + OM_TIE_EPSILON && d2 < best_d2 - OM_TIE_EPSILON)) {
+            || (frac <= best_frac + OM_TIE_EPSILON && (d2 < best_d2 - OM_TIE_EPSILON
+                || (d2 <= best_d2 + OM_TIE_EPSILON && cand->unit_id < best->unit_id)))) {
             best = cand; best_frac = frac; best_d2 = d2;
         }
     }
@@ -1989,6 +1997,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int arrived = has_dest && om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
     int noncombat = om_tac_noncombat(u);
     int pursue = om_tac_pursue(w);
+    int most_damaged, held_ok;
     int leash_first = om_tactical_get_param(w, OM_TP_LEASH_BEFORE_DAMAGE) != 0.0;
     /* P1: an attack-move that has arrived stays an attack-move (the chase persists) until a new order */
     int chase_idle = pursue && u->order == OM_ORDER_ATTACK_MOVE && !has_dest;
@@ -2110,9 +2119,11 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     }
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
-    if ((u->target_id == 0 || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
+    most_damaged = om_tac_most_damaged_for(w, u);
+    held_ok = u->target_id != 0 && !(pursue && t && !om_tac_in_range(w, u, t));
+    if ((u->target_id == 0 || most_damaged || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
         && (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT) {
-        t = om_tactical_get_param(w, OM_TP_TARGET_POLICY) == 1.0
+        t = most_damaged
             ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
             : om_tac_nearest_actable(w, st, u, u->attack_range);
         t = om_tac_pick_across(w, st, u, t);
@@ -2121,7 +2132,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             if (u->order == OM_ORDER_ATTACK_MOVE && (!pursue || !u->anchor_set)) {
                 u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
             }
-        } else if (pursue && u->order == OM_ORDER_ATTACK_MOVE) {
+        } else if (pursue && u->order == OM_ORDER_ATTACK_MOVE && !held_ok) {
             om_tac_pursue_goal(w, st, u);
         }
     }
