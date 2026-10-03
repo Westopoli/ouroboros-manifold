@@ -703,3 +703,56 @@ Westley asked for more work in parallel and approved these three.
 ## Addendum 51, 2026-10-02 (harness: what "skilled" means)
 
 **A145. The harness does not define skilled play.** A "skilled" play and its counter are per skill and are Westley's to confirm. The harness takes them as named, pluggable plays. The formation skill's draft plays (a 120-degree concave; a 3-wide column aimed at the end of the enemy front as its counter) are kept, labelled as unconfirmed drafts in code and in every result row, and the concave must be able to curve around the point where the enemy arrives, as the plan's formation batch asks. No skilled play is written for the other four skills until its batch in Phase D, where the play is looked at before it is measured. Hold-fire is not an engine call; plays that need it stay unwritten and the question goes to Westley with the enemy-position batch. The relaxed field-order assertion in `test_trace` is a test defect and takes a ledger row.
+
+## Addendum 52, 2026-10-02 (Phase A landing: patrol waypoints off the canvas; collision held)
+
+**A146. Patrol waypoints are clamped to the canvas.** The patrol diamond in `csrc/enemy_macro.c` places waypoints beyond the map edge for a squad spawned near it; the canvas clamp of P3 then pins the squad and the patrol never advances. That is a bug in the macro, not in the clamp. `PP-move` may make that one-function edit in `enemy_macro.c` (B13 is attached, so no piece is in flight there), test first: a test that spawns a squad at the edge and asserts every waypoint lies inside the canvas, red on main. No row change for B13. Other macro waypoints that may lie off the canvas are listed in the wave report, not fixed in this unit.
+
+**A147. Collision (M4) is held out of the Phase A landing** until Westley rules on the 29.92 residual against R-101-01's 30 wu floor (brought to him 2026-10-02 with Q-101-02; the choices are his). Everything else of Phase A lands. R-097-09's repulsion has no magnitude in the rule and was rightly not applied; the rule is flagged for a number (register row by the builder, Q-097-03) and stays unbuilt until it has one.
+
+## Addendum 53, 2026-10-02 (Westley: spacing residual and parity tolerance)
+
+**A148. Westley picked (a): the Python's residual is accepted.** Units may stand up to 0.1 wu inside R-101-01's 30 wu floor (the port leaves 29.92; the Python gives the same bits). The one test line in `tests/csim/test_E13_S101_movement_that_reads.py` becomes `30.0 - 0.1`, his number, with a ledger row; the rule text stays "no unit overlaps another". Q-101-02 closes. `OM_TP_PURSUE_BY_STEERING` keeps default 1: the new movement is the game. `push/pp-cprime` is dropped. `push/pp-a-land2` lands with the four A99 hashes re-recorded once (A140) and setup lines for the three off-canvas F1 and F2 tests.
+
+**A149. Westley picked (a): parity tolerance 0.05 wu in position.** The named provisional constant in the parity tests becomes 0.05 wu, his number, with a ledger row (A136 said 1e-6, provisional); facing stays 2e-3 rad. A scene that misses it is a logic finding, not a tolerance question.
+
+
+## Addendum 54, 2026-10-02 (transport scenario clocks)
+
+**A150. Scenario clocks in the pipe tests are test scaffolding, not thresholds.** `CLASH_STEPS` in `test_pipe_assign_commander.py` and the death window in `test_pipe_tactical_delta_frame.py` state when a scripted scene used to reach a death under the old movement; no bible rule names those ticks. The ruled movement (slowest-member pacing R-095-01, pursuit by steering P1) moves them. Each is a test defect with a ledger row: the new value is found by running the scene, stated with its cause, and the assertion itself (a loss happens; a death arrives in one 100-tick frame) is unchanged. Westley is told in the same update and may overrule. A window that a bible rule names stays his.
+
+**A151. The spacing floor is back with Westley**: the Python's true minimum over the 200-tick move is 29.797 (tick 12), not the 29.92 of tick 9; the C is bit-identical. The 0.1 of A148 does not hold; his new number is awaited.
+
+## Addendum 55, 2026-10-02 (spacing floor 0.25; small decisions delegated)
+
+**A152. Westley picked (a): the spacing tolerance is 0.25 wu.** The R-101-01 test line becomes `30.0 - 0.25` (his number, replacing A148's 0.1), covering the Python's 29.797 with room; rule text unchanged; Q-101-02's closing row updated.
+
+**A153. Small decisions are delegated to the Architect (Westley, 2026-10-02).** His words: "moving forward make these sort of small decisions for me to keep the cascade moving, and then report on them afterwards. I'll say something if I don't like the decision... If the decision effects anything less than 5%, make it yourself and flag it." So: a threshold, window or tolerance change whose effect on what the player sees or on a measured number is under 5 percent is ruled by the Architect at once, recorded here with the percentage and the reason, and reported to him afterwards in plain words; he may overrule. Anything at 5 percent or more, anything that changes a rule's meaning, and every pass mark for the search stays his. CLAUDE.md's line that Westley owns every threshold is read with this delegation.
+
+
+## Addendum 56, 2026-10-02 (the Python piles units up; interim landing under c')
+
+**A154. A152 is withdrawn: no floor near 30 wu passes.** On the R-101-01 scene the Python reference itself drives a pair to 4.978 wu at tick 140 (an 83 percent overlap), and the C matches it. This is not a tolerance; it is a conflict between "the same exact logic as the Python" and R-101-01's invariant, and it is Westley's. It goes to him with a picture after two facts are in: (1) the parity divergence from tick 19 on this scene (107 of 200 ticks differ, up to 14.8 wu) is diagnosed and, if the C is wrong, fixed; (2) the pile-up is characterised: which order produces it (a shared destination, arrival, the collision cap), whether the Python's own tests show it, and whether it occurs in the lab's plays. The builder reports both; nothing about the rule is changed meanwhile.
+
+**A155. Interim: Phase A lands under c'.** To keep the cascade moving, `push/pp-a-land2` lands with `OM_TP_PURSUE_BY_STEERING` default 0 (the old movement stays the game's, the ruled movement is the lab's switch), as prepared on `push/pp-cprime`, with its test setup rows and ledger text. `OM_TP_ROUTE_AROUND_TERRAIN` keeps default 1. The Phase B read runs in the lab with the switch at 1. The default returns to 1 by a ruling once Westley has answered A154. Effect on the game today: none, which is why the Architect takes it under A153.
+
+## Addendum 57, 2026-10-02 (Westley: the collision fix)
+
+**A156. Westley took the fix: every unit starts pair checks, 10 push passes.** The Python's rule (only a moving, lower-id unit starts a pair check) stacks a late arrival on a stopped unit (4.978 wu on the R-101-01 scene; 1 to 2 wu between same-side units after contact in the lab's four plays). Ruled: every unit, moving or stopped, starts pair checks; the push pass repeats up to `COLLISION_PASSES = 10` per tick, stopping early when no pair is closer than 30 wu. R-097-06 (the collision rule) and ALG-68 say so in this commit, named as a deliberate difference from the Python. The Python reference gets the same two changes (`simulation/`, tooling only) so parity holds; the parity scenes are re-recorded once with a ledger row. The stationary-pair split rule and the push-out stay as ruled. `OM_TP_PURSUE_BY_STEERING` returns to default 1 in the same landing (A155's interim ends), with the test setup rows of c' reverted and the A99 hashes re-recorded once more.
+
+**A157. R-101-01 tolerance 1.0 wu (Architect, under A153).** With the fix the worst pair on the scene is 29.11 wu, a 3 percent overlap; the test line becomes `30.0 - 1.0`, rule text unchanged. The line play starts overlapped at tick 0 (17.8 to 19.7 wu) and that is the play's layout, fixed in the harness, not in the engine. Scale: the 10 passes are measured at 1,000 and 10,000 units against the 3 and 30 ms budgets in the landing report; a miss stops the landing.
+
+**A158. E-13 carries two rules numbered R-097-06** (terrain slow; collision). The builder renumbers the collision one to R-097-10 in its landing, with the tests that name it, and says so in the report.
+
+
+## Addendum 58, 2026-10-02 (Phase A landed)
+
+**A159. The Phase A landing report (origin/main 3820e875) is accepted.** Budgets met: movement and collision 18.2 ms at 10,000 (30); targeting 3.5 ms (25); 1,000 route queries 9.4 ms (1 s); census 0.7 ms. Two items from the differences list are findings, not accepted differences: the sight line stepping in half cells can miss a corner clip (fixed in wave A5 with a test that places a blocked cell at a corner, under `PP-fog`); and the parity tolerance holds only with the leash at 1 and a canvas set, so the parity fixture sets both and says why. The cross-layer reading (a cover or blocked cell between units on different layers is tested on the lower layer) stands provisionally until Phase C, when the lab measures it; recorded as the builder's reading, not a rule. The `skilllab` speed gate at 29.06 s of 30 is watched; a miss comes to the Architect.
+
+## Addendum 59, 2026-10-02 (A5: arrival in the R-101-01 test)
+
+**A160. Option (a), under A153.** In the R-101-01 test a unit has arrived when its move order ends; the 2-second spread assertion stays; "on its slot within 22.5 wu" moves to a separate control that reports, for the 20-unit scene, how many units end on their slot and how far the rest end from it (18 of 20 today; two stop about 22 wu short, pushed around a mate; the Python reference does the same). No radius changes. The question of whether a unit pushed off its slot should seek it again (a change to R-097-10, both engines) is put to Westley at the Phase B read beside the formation printout, which is where it shows; until then R-099-04 stands as ruled (a displaced unit stays where it is). Reason this is mine: no number moves, 2 of 20 units are affected, and the behaviour is already ruled.
+
+**A161. A160 amended: option (i), the test is narrowed.** With the collision fix, two of the 20 units in the S101 scene never end their orders (milling at 600 ticks, 34 and 55 wu from their slots, in both engines: a mate settled in their slot and nothing yields). The spread, no-overlap and no-teleport assertions hold over the units whose order ended (count reported); the control reports the units that did not end and where they are. The full "all 20 arrive" returns when Westley rules the formation-arrival question at the Phase B read, now stated as: a unit whose slot is taken, or that is pushed off its slot, either seeks it again, takes the nearest free spot, or gives up after a time; and a unit never mills forever. This is a visible defect in play (two units of twenty never stand still), so it is his, not under A153. Narrowing is allowed; no number moves.
+
+**A162. Same cause, same handling: the 2-second arrival spread in the S101 test is reported, not asserted,** until the formation-arrival rule is decided (the stragglers pushed around by settled units end at ticks 177 and 198 against a first end at 124, a 3.7 s spread, identical in both engines). The 40-tick assertion returns over all 20 with that rule. No window is widened.

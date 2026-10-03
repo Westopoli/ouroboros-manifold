@@ -286,6 +286,9 @@ def _diff(got, want):
 
 def _prepared(lib, factory, kind, n, seed):
     w = _world(lib, factory, seed)
+    if kind == "window":
+        # PP: scene is off canvas; baseline routing (A147 option c', test-defect)
+        assert lib.om_tactical_set_param(w, 1, 0.0) == 0  # OM_TP_ROUTE_AROUND_TERRAIN
     ids = build_scene(lib, w, kind, n, seed)
     stealth = _stealth_ids(ids)
     rows = snapshot(lib, w)

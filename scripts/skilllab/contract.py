@@ -26,6 +26,39 @@ class Group:
 
 
 @dataclass(frozen=True)
+class Step:
+    group: int                # index into Setup.groups
+    when: tuple               # ("tick", n) | ("arrive", radius) | ("seen",)
+    order: str                # "attack_move" | "move" | "idle" (idle clears the group's orders)
+    goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle
+
+
+@dataclass(frozen=True)
+class Block:
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+    layer_lo: int = 0
+    layer_hi: int = 4
+
+
+@dataclass(frozen=True)
+class Cover:
+    x: float
+    y: float
+    radius: float
+    height: int               # in layers, 0..5
+
+
+@dataclass(frozen=True)
+class Terrain:
+    canvas: tuple             # (width, height)
+    blocks: tuple = ()
+    covers: tuple = ()
+
+
+@dataclass(frozen=True)
 class Setup:
     groups: tuple
     unit_types: dict          # name -> stats; see spec AC 5 (full stats, or base + scale/set)
@@ -35,6 +68,9 @@ class Setup:
     sample_every: int = 5     # ticks between firing-count samples
     trace: bool = False       # True records FightResult.trace
     settings: dict = field(default_factory=dict)   # OM_TP_* name -> number, set on the world before tick 1
+    timeline: tuple = ()      # Steps issuing later orders; listed order matters
+    terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
+    weighted: bool = False    # True records FightResult.weighted
 
 
 @dataclass
@@ -49,6 +85,9 @@ class FightResult:
     firing: list              # [(tick, able0, able1), ...]
     firing_unit_seconds: tuple
     trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
+    steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
+    weighted: Optional[list] = None   # [(tick, w0, w1), ...] when Setup.weighted, else None
+    weighted_unit_seconds: Optional[tuple] = None   # as firing_unit_seconds, over the weighted series
 
 
 @dataclass

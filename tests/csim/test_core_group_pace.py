@@ -62,9 +62,11 @@ def test_group_pace_mixed_raider_bastion_after_fortify(lib):
     """
     w = _make_world(lib)
     # Spawn 2 Raiders + 1 Bastion within 350 wu so Bastion sees 2+ friendlies.
-    r1 = lib.om_unit_spawn(w, _OM_UT_RAIDER,  _FACTION,  0.0,  0.0, _LAYER)
-    r2 = lib.om_unit_spawn(w, _OM_UT_RAIDER,  _FACTION, 30.0,  0.0, _LAYER)
-    b1 = lib.om_unit_spawn(w, _OM_UT_BASTION, _FACTION, 60.0,  0.0, _LAYER)
+    # Abreast across the march axis (y), not in file along it: group mates block one another
+    # (R-097-03, as the Python does), so a column would hold the rear units back.
+    r1 = lib.om_unit_spawn(w, _OM_UT_RAIDER,  _FACTION, 0.0,  0.0, _LAYER)
+    r2 = lib.om_unit_spawn(w, _OM_UT_RAIDER,  _FACTION, 0.0, 30.0, _LAYER)
+    b1 = lib.om_unit_spawn(w, _OM_UT_BASTION, _FACTION, 0.0, 60.0, _LAYER)
 
     # One step lets auto-fortify scan run; Bastion fortifies (ability_active -> 1,
     # effective_speed -> 16.0 wu/s on unmodified main).
@@ -143,10 +145,10 @@ def test_group_pace_dense_21_units(lib):
     w = _make_world(lib)
     spawned = []
     for i in range(19):
-        uid = lib.om_unit_spawn(w, _OM_UT_RAIDER,  _FACTION, float(i * 30), 0.0, _LAYER)
+        uid = lib.om_unit_spawn(w, _OM_UT_RAIDER,  _FACTION, 0.0, float(i * 30), _LAYER)
         spawned.append(uid)
     for i in range(2):
-        uid = lib.om_unit_spawn(w, _OM_UT_BASTION, _FACTION, float((19 + i) * 30), 0.0, _LAYER)
+        uid = lib.om_unit_spawn(w, _OM_UT_BASTION, _FACTION, 0.0, float((19 + i) * 30), _LAYER)
         spawned.append(uid)
 
     # Step once to allow auto-fortify.

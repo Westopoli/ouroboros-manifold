@@ -103,7 +103,11 @@ def test_R_087_04_it_moves_toward_nearest_visible(lib, world_factory):
     lib.om_command_attack_move(w, [vanguard], 1, 1000.0, 0.0)
     init_x = lib.om_unit_position_x(w, vanguard)
 
-    lib.om_tactical_step(w)
+    # Setup (test-defect, A127): the unit now walks by the movement layer (R-087-04): its goal is set
+    # on its own cohort tick (one of every 4) and it moves from the tick after, so one step is no
+    # longer enough. Step one full cohort cycle plus one.
+    for _ in range(5):
+        lib.om_tactical_step(w)
     # Unit moves toward the visible enemy (positive x)
     assert lib.om_unit_position_x(w, vanguard) > init_x
 

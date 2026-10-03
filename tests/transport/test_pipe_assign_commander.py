@@ -39,7 +39,9 @@ START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
 END = {"type": "cmd", "name": "mission_end"}
 QUIT = {"type": "cmd", "name": "quit"}
-CLASH_STEPS = 4150
+# Test-defect, A150: 4150 -> 5900; cause: slowest-member pacing of attack-move groups (R-095-01) / pursuit by steering (R-087-04); assertions unchanged.
+# First player loss now lands at about tick 5765; 5900 leaves about 135 ticks of margin.
+CLASH_STEPS = 5900
 FATE_KILLED, FATE_WOUNDED, FATE_SURVIVED = 0, 1, 2
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")

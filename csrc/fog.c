@@ -259,16 +259,24 @@ static double om_fog_zone_interference_at(const om_fog_state *st, const om_world
     return om_fog_clamp01(sum);
 }
 
-/* Exact cover test (Q-098-01: any cover blocks, no height threshold). A cover
- * disc blocks the segment when the segment passes through it; a disc that
- * contains an endpoint does not hide that unit (it is standing in it). */
-static int om_fog_cover_blocks(const om_world *w, double ox, double oy, double tx, double ty) {
+/* Exact cover test. A cover disc blocks the segment when the segment passes
+ * through it; a disc that contains an endpoint does not hide that unit (it is
+ * standing in it, R-007-06). With ROUTE_AROUND_TERRAIN on, a disc of height h
+ * blocks only when the lower of the two unit layers is below h (engine layers
+ * 0..h-1, R-007-01, R-007-02). Switch off, any cover blocks on every layer
+ * (Q-098-01): the by_height skip is not taken.
+ * PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140)
+ * See also: the by_height skip below, the new path.
+ * See also: om_combat_can_shoot in tactical_move.c, which must agree. */
+static int om_fog_cover_blocks(const om_world *w, double ox, double oy, double tx, double ty, uint32_t low_layer) {
+    int by_height = om_tactical_get_param(w, OM_TP_ROUTE_AROUND_TERRAIN) != 0.0;
     uint32_t i, n = om_map_cover_count(w);
     double dx = tx - ox, dy = ty - oy;
     double len2 = dx * dx + dy * dy;
     for (i = 0; i < n; i++) {
-        double cx, cy, r, t, px, py;
-        if (!om_map_cover_at(w, i, &cx, &cy, &r, NULL)) continue;
+        double cx, cy, r, h, t, px, py;
+        if (!om_map_cover_at(w, i, &cx, &cy, &r, &h)) continue;
+        if (by_height && (double)low_layer >= h) continue; /* new path: cover height in layers, R-007-01 */
         if (om_fog_dist(ox, oy, cx, cy) <= r || om_fog_dist(tx, ty, cx, cy) <= r) continue;
         t = (len2 > 0.0) ? ((cx - ox) * dx + (cy - oy) * dy) / len2 : 0.0;
         if (t < 0.0) t = 0.0;
@@ -276,6 +284,31 @@ static int om_fog_cover_blocks(const om_world *w, double ox, double oy, double t
         px = ox + dx * t;
         py = oy + dy * t;
         if (om_fog_dist(px, py, cx, cy) < r) return 1;
+    }
+    return 0;
+}
+
+#define OM_FOG_GRID_STEP (OM_NAVMESH_CELL_SIZE / 2.0)
+
+/* Defined in tactical_mapgen.c, not in the header: 1 blocked, 0 open, 100 wu cells.
+ * See also: om_mapgen_cell_blocked in tactical_mapgen.c. */
+extern int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
+
+/* R-098-02: a blocked route-grid cell on the lower layer of the pair blocks the line, in addition to cover discs.
+ * Fixed half-cell steps along the line; the cells holding the two units are exempt (standing in it, as with cover).
+ * Only with ROUTE_AROUND_TERRAIN on. See also: om_combat_can_shoot in tactical_move.c (fire side). */
+static int om_fog_grid_blocks(const om_world *w, double ox, double oy, double tx, double ty, uint32_t low_layer) {
+    double dx = tx - ox, dy = ty - oy, len = sqrt(dx * dx + dy * dy);
+    int32_t c0x = (int32_t)(ox / OM_NAVMESH_CELL_SIZE), c0y = (int32_t)(oy / OM_NAVMESH_CELL_SIZE);
+    int32_t c1x = (int32_t)(tx / OM_NAVMESH_CELL_SIZE), c1y = (int32_t)(ty / OM_NAVMESH_CELL_SIZE);
+    int32_t i, n;
+    if (om_tactical_get_param(w, OM_TP_ROUTE_AROUND_TERRAIN) == 0.0) return 0;
+    n = (int32_t)(len / OM_FOG_GRID_STEP) + 1;
+    for (i = 1; i < n; i++) {
+        double f = (double)i / (double)n;
+        int32_t cx = (int32_t)((ox + dx * f) / OM_NAVMESH_CELL_SIZE), cy = (int32_t)((oy + dy * f) / OM_NAVMESH_CELL_SIZE);
+        if ((cx == c0x && cy == c0y) || (cx == c1x && cy == c1y)) continue;
+        if (om_mapgen_cell_blocked(w, low_layer, cx, cy)) return 1;
     }
     return 0;
 }
@@ -581,7 +614,8 @@ int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     factor = om_unit_get_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol);
     if (factor <= 0.0) return 0;
     if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius(st, w, observer, (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
-    return om_fog_cover_blocks(w, ox, oy, tx, ty) ? 0 : 1;
+    if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
+    return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
 }
 
 double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0) {

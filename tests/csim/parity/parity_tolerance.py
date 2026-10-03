@@ -1,7 +1,8 @@
 """The parity tolerance: the ONE place the side-by-side harness reads it from.
 
-PROPOSED, not confirmed. Westley owns the final value (CLAUDE.md "Tests are the spec": a threshold
-is his; narrowing is allowed, widening needs him). Plan: docs/northstar/plans/
+Confirmed by Westley, 2026-10-02 (Architect A149): position 0.05 wu, facing 2e-3 rad. The measured
+proposal discussed below was 1e-6 wu; 0.05 is his number (a threshold is his: narrowing needs no one,
+widening needs him). Plan: docs/northstar/plans/
 2026-10-02-movement-layers-and-search-plan.md, Phase A "Verification" 1 ("Tolerance measured
 first, proposed to Westley, then fixed"). Every number below is reproduced by
 `python -m parity.measure --tolerance` (from tests/csim/) and `--sensitivity` (agora venv python).
@@ -25,6 +26,8 @@ algorithms.md / alg_constants.py that the six sweep constants carry at least 8 d
 that the straight-line step use the Python's own direction vector (dx / dist, a sqrt, allowed), not
 om_cos(om_atan2(...)): today's C trig alone leaves 4.7e-3 wu after a 450 wu diagonal march
 (scene control_diagonal_march) and 2.5e-5 wu after a 450 wu march along x.
+Westley's 0.05 wu (A149) passes constants of 3 decimals or more (3 and 4 decimals both measure
+5.7e-3 wu over all nine scenes) and fails 2 decimals (3.98 wu) and 1 decimal (118 wu).
 
 What it does NOT absorb: collision pair order. The Python takes pairs by grid cell, the C by id.
 In the six scenes reversing the Python's own pair order changes nothing (0 wu), but in a pile-up
@@ -42,7 +45,7 @@ that error rounded up; a tighter facing tolerance needs a better om_atan2 first.
 """
 
 # Largest position difference, in wu, any unit may show against the Python on any tick.
-PARITY_TOLERANCE = 1e-6  # PROPOSED (Westley owns it)
+PARITY_TOLERANCE = 0.05  # Westley, 2026-10-02 (A149): position, world units; was proposed as 1e-6
 
 # Largest facing difference, in radians (shortest arc), any unit may show on any tick.
-PARITY_FACING_TOLERANCE = 2e-3  # PROPOSED (Westley owns it)
+PARITY_FACING_TOLERANCE = 2e-3  # confirmed unchanged by Westley, 2026-10-02 (A149)

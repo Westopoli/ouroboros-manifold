@@ -142,6 +142,11 @@ def test_R_086_04_every_friendly_unit_within_400(lib, world_factory):
 def test_R_086_05_after_30_tick_1_5(lib, world_factory):
     """Given a Bombard with Barrage ready and a target position, When activated, Then after a 30-tick (1.5 s) telegraph visible to both sides, every enemy within 100 wu of the position on the Bombard's layer takes base × 3.0, subject to the AoE cap at 4 × (base × 3.0); cooldown 1,800 ticks (90 s)."""
     w = world_factory(n_regions=1)
+    # Setup (test-defect, A127): the enemies sit inside the Bombard's attack range, so with
+    # OM_TP_PURSUE_BY_STEERING on (R-084-01, its default) the Bombard's own first shot lands on the
+    # first tick and the "no damage during the telegraph" check would count that attack, not the
+    # ability. Baseline mode (0) keeps the first-attack wait this test was written against.
+    assert lib.om_tactical_set_param(w, 0, 0.0) == 0
 
     bombard = lib.om_unit_spawn(w, OMUnitType.BOMBARD, 0, 0.0, 0.0, 0)
     target_x, target_y = 500.0, 0.0

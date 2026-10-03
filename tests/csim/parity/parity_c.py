@@ -50,6 +50,7 @@ def lib(rebuild=True):
             "om_world_new": ([u32, u64], V), "om_world_free": ([V], None),
             "om_roster_register_custom_unit": ([V, u32, i, c.c_char_p, d, d, d, d, d, d, d, d, i], i),
             "om_tactical_disable_abilities": ([V], None),
+            "om_tactical_set_param": ([V, i, d], i),
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_map_set_obstacle_density": ([V, u32, u32, u32, d], None),
             "om_command_move": ([V, pu, u32, d, d], i),
@@ -122,6 +123,7 @@ def run_scene(scene, seed=1, hook=None, id_offset=0):
                 spec["layer_transition_time"], spec["aoe_radius"], 0)
             assert rc == 0, "register %s: %d" % (name, rc)
         h.om_tactical_disable_abilities(w)
+        h.om_tactical_set_param(w, 0, 1.0)   # PP: runs the new movement (switch default 0, A147 option c')
         if scene.map == "wall":
             for cx, cy in _WALL_CELLS:
                 h.om_map_set_obstacle_density(w, cx, cy, 0, 1.0)

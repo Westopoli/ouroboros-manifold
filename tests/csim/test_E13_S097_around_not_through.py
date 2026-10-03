@@ -66,6 +66,8 @@ def test_R_097_02_route_computed_once_cached(lib, world_factory):
 def test_R_097_03_it_probes_40_wu_ahead(lib, world_factory):
     """Given a moving unit, When it steps, Then it probes 40 wu ahead; if an ally blocks the probe it sweeps alternate angles left and right in a fixed order and takes the first clear one; if none, it waits."""
     w = world_factory(n_regions=1)
+    # PP: runs the new movement (switch default 0, A147 option c')
+    lib.om_tactical_set_param(w, 0, 1.0)
 
     # Unit at (0, 0) heading along +x toward (200, 0)
     u = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
@@ -81,7 +83,8 @@ def test_R_097_03_it_probes_40_wu_ahead(lib, world_factory):
     # Heading deviated from direct 0.0 rad (+x)
     assert abs(heading) > 1e-3
 
-    # If completely blocked in all sweep angles, unit waits (speed = 0)
+    # If completely blocked in all sweep angles, the unit continues straight (R-097-03, ruled text; the
+    # old test text said "it waits"). Test-defect, A127: the assertion below was speed 0.
     u_blocked = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 500.0, 500.0, 0)
     lib.om_command_move(w, u_blocked, 600.0, 500.0)
     # Surround with allies within probe distance
@@ -90,8 +93,11 @@ def test_R_097_03_it_probes_40_wu_ahead(lib, world_factory):
         lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 500.0 + 30.0 * math.cos(rad), 500.0 + 30.0 * math.sin(rad), 0)
 
     lib.om_world_step(w)
-    # Unit cannot find a clear probe angle, so it waits
-    assert pytest.approx(lib.om_unit_get_current_speed(w, u_blocked), abs=1e-4) == 0.0
+    # Unit cannot find a clear probe angle, so it continues straight: still moving at its own speed,
+    # heading unchanged (positive control: the first unit above did deflect, so a deflection would show)
+    assert lib.om_unit_get_current_speed(w, u_blocked) == pytest.approx(lib.om_unit_effective_speed(w, u_blocked), abs=1e-4)
+    assert lib.om_unit_get_current_speed(w, u_blocked) > 0.0
+    assert abs(lib.om_unit_get_facing(w, u_blocked)) < 1e-3
 
 
 def test_R_097_04_it_keeps_that_heading_for(lib, world_factory):
@@ -105,14 +111,23 @@ def test_R_097_04_it_keeps_that_heading_for(lib, world_factory):
     lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 30.0, 0.0, 0)
     lib.om_world_step(w)
 
-    deflected_heading = lib.om_unit_get_facing(w, u)
-    start_pos_x, start_pos_y = lib.om_unit_get_pos(w, u)
+    # Test-defect, A127: facing now turns at a limited rate toward the heading (R-100), so facing keeps
+    # changing while the unit walks one steady line. The heading the rule talks about is the direction
+    # the unit travels: measured here as the direction of each tick's displacement. The first two steps
+    # are the turn onto the deflected line (and the push-out from a blocker spawned exactly 30 wu
+    # away), so the deflected heading is taken from the third step. Distance is counted from where the
+    # unit stood (0, 0), threshold 55 wu < 60 unchanged.
+    start_pos_x, start_pos_y = 0.0, 0.0
+    lib.om_world_step(w)
+    prev = lib.om_unit_get_pos(w, u)
+    lib.om_world_step(w)
+    cur = lib.om_unit_get_pos(w, u)
+    deflected_heading = math.atan2(cur[1] - prev[1], cur[0] - prev[0])
+    prev = cur
+    # Positive control: the deflected travel heading is not the straight +x line, so a unit that
+    # re-evaluated back to straight would show.
+    assert abs(deflected_heading) > 0.1
 
-    # Step simulation until unit covers < 60 wu: heading must remain unchanged.
-    # Bounded (cap matches test_R_099_01's range(100) in this epic): a Raider
-    # covers 55 wu in ~8 real ticks (7.5 wu/tick, R-099-02), so 100 is generous
-    # headroom against a working sim; against the STUB (no movement) the loop
-    # must still terminate rather than spin forever.
     dist_covered = 0.0
     for _ in range(100):
         if dist_covered >= 55.0:
@@ -120,8 +135,9 @@ def test_R_097_04_it_keeps_that_heading_for(lib, world_factory):
         lib.om_world_step(w)
         curr_x, curr_y = lib.om_unit_get_pos(w, u)
         dist_covered = math.hypot(curr_x - start_pos_x, curr_y - start_pos_y)
-        curr_heading = lib.om_unit_get_facing(w, u)
-        assert pytest.approx(curr_heading, abs=1e-3) == deflected_heading
+        step_heading = math.atan2(curr_y - prev[1], curr_x - prev[0])
+        prev = (curr_x, curr_y)
+        assert pytest.approx(step_heading, abs=1e-3) == deflected_heading
 
 
 def test_R_097_05_they_pushed_apart_along_line(lib, world_factory):
