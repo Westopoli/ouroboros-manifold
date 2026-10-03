@@ -282,3 +282,27 @@ Decisions, verbatim, in `docs/northstar/research/space_landscape/README.md` ("De
 ## P5.6 Rules for the Doer
 
 As section 8 and the pass rules before. Do not delete the pass 4 fracture code; it is what runs inside the sections. Report once, ten lines at most, with the measured reachability, section shares, small-only shares and triangle counts.
+
+---
+
+# Pass 6 (2026-10-03)
+
+Two changes, nothing else. Westley saw the teal frames and asked what they were; the answer led to both.
+
+## P6.1 Debug frames off by default
+
+- The frames around plates dropped for reachability (teal, kit `tunnel` colour) and the clearing frames, if any, are hidden by default. Key `F` toggles them; `qa_set("frames", bool)`; `qa_state.frames_shown`. The small-craft section outline (orange) stays visible in every view, since it is landscape, not debug.
+
+## P6.2 Join by widening a channel, not by dropping plates
+
+- When a region is cut off from the main region on the ordinary-unit map, join it by **widening one channel**: find the pair of cells (one in the region, one in the main region) with the shortest in-plane distance across blocked cells on that layer, trace the straight line between them, and open every cell within `MIN_PASSAGE_WU / 2` (150 wu, the 3 by 3 block) of the line. The fine mask and the plate polygons are updated to match: cells opened this way are cut out of the plates they belonged to (clip the polygon by the widened channel's rectangle, or re-derive the polygon's cells from the mask; say which). Repeat until no region of `MIN_POCKET_CELLS` or more remains cut off, with the same cap on iterations as today. Small pockets are still filled solid.
+- Plate dropping stays available behind a HUD toggle "Join: widen | drop" (default widen) and `qa_set("join", "widen"|"drop")`, so the two can be compared on the same seed.
+- Report, seeds 11 to 16, densities 35, 55 and 70, both modes: blocked share per layer, plates dropped, channels widened, cells opened by joining, `regions_unreachable_after` (must be 0 in both).
+
+## P6.3 Side-by-side
+
+- The QA script takes, for seed 11 at densities 35 and 55 and seed 12 at density 55, the top-down layer 3 visual view with join = drop and join = widen, same camera, frames off, so the architect can lay them side by side. Name them `<seed>_d<density>_drop.png` and `<seed>_d<density>_widen.png`.
+
+## P6.4 Rules
+
+As before. Report once, eight lines at most, with the table from P6.2.
