@@ -149,7 +149,12 @@ typedef struct {
 /* G7: a cast ping's disc, live for OM_TP_PING_REVEAL_TICKS tactical ticks after the cast. */
 #define OM_FOG_MAX_REVEALS 64
 #define OM_FOG_MAX_ALERTS 256
-#define OM_FOG_PING_SECTORS 6
+#define OM_FOG_PING_EDGE_SLOPE_SQ 3.0 /* the 60 and 120 degree edges have slope sqrt(3) */
+/* om_command_ping refusal reasons (docs/northstar/plans/push/pp_contract.md section 6) */
+#define OM_FOG_PING_REASON_CASTER 1
+#define OM_FOG_PING_REASON_REACH 2
+#define OM_FOG_PING_REASON_COOLDOWN 3
+#define OM_FOG_PING_REASON_LAYER 4
 #define OM_FOG_PING_DOWN_SECTORS 3
 #define OM_FOG_MAX_PINGED_FACTIONS 16
 typedef struct {
@@ -811,7 +816,7 @@ static int om_fog_ping_reveals(const om_world *w, int32_t faction, uint32_t unit
 /* The 60-degree slice, counter-clockwise from +x, of direction (dx, dy): the slice test is a cross product against
  * the 60 and 120 degree edges (slope sqrt(3)), so no trigonometry. The lower half-plane is the upper one turned 180. */
 static int om_fog_ping_sector(double dx, double dy) {
-    double k = sqrt(3.0);
+    double k = sqrt(OM_FOG_PING_EDGE_SLOPE_SQ);
     int base = 0;
     if (!(dy > 0.0 || (dy == 0.0 && dx > 0.0))) {
         dx = -dx; dy = -dy;
@@ -859,11 +864,11 @@ int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, doub
     uint64_t now = om_tactical_tick((om_world *)w);
     uint32_t i, kept = 0;
     int32_t f = om_unit_get_faction(w, caster);
-    if (caster == 0 || caster > OM_MAX_UNITS || f < 0 || !om_unit_alive(w, caster) || !om_fog_unit_pos(w, caster, &cx, &cy)) return 1;
-    if (layer >= OM_LAYER_COUNT) return 4;
-    if (om_fog_dist(cx, cy, x, y) > om_tactical_get_param(w, OM_TP_PING_REACH)) return 2;
+    if (caster == 0 || caster > OM_MAX_UNITS || f < 0 || !om_unit_alive(w, caster) || !om_fog_unit_pos(w, caster, &cx, &cy)) return OM_FOG_PING_REASON_CASTER;
+    if (layer >= OM_LAYER_COUNT) return OM_FOG_PING_REASON_LAYER;
+    if (om_fog_dist(cx, cy, x, y) > om_tactical_get_param(w, OM_TP_PING_REACH)) return OM_FOG_PING_REASON_REACH;
     st = om_fog(w);
-    if (st->ping_cast_plus1[caster] && now - (st->ping_cast_plus1[caster] - 1) < (uint64_t)om_tactical_get_param(w, OM_TP_PING_COOLDOWN_TICKS)) return 3;
+    if (st->ping_cast_plus1[caster] && now - (st->ping_cast_plus1[caster] - 1) < (uint64_t)om_tactical_get_param(w, OM_TP_PING_COOLDOWN_TICKS)) return OM_FOG_PING_REASON_COOLDOWN;
     st->ping_cast_plus1[caster] = now + 1;
     for (i = 0; i < st->n_reveals; i++) if (st->reveals[i].until >= now) st->reveals[kept++] = st->reveals[i];
     st->n_reveals = kept;
