@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>focus_fire v3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<style>
+:root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#6b675f;--grid:#dedad0;--won:#2a7f62;--lost:#c0452f;
+--side0:#2f5fb3;--side1:#b36a1f;--gap:rgba(120,120,120,.22);--rule:#cfcabd}
+@media (prefers-color-scheme: dark){:root{--bg:#161614;--fg:#ecebe6;--muted:#9c978c;--grid:#35332e;
+--won:#58c9a1;--lost:#f0806a;--side0:#7fa8f0;--side1:#e8a35c;--gap:rgba(190,190,190,.2);--rule:#4a4740}}
+body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.6rem}h2{font-size:1.15rem;margin:.6rem 0}h3{font-size:1rem;color:var(--muted);margin:1.6rem 0 .3rem}
+svg{width:100%;height:auto}svg text{fill:var(--fg);font-size:11px}svg .muted{fill:var(--muted)}
+.grid{stroke:var(--grid);stroke-width:1}.marker{stroke:var(--fg);stroke-width:1;stroke-dasharray:4 3}
+.cell.won{fill:var(--won)}.cell.lost{fill:var(--lost)}
+.side0{stroke:var(--side0);fill:none;stroke-width:2}.side1{stroke:var(--side1);fill:none;stroke-width:2}
+text.side0{fill:var(--side0);stroke:none}text.side1{fill:var(--side1);stroke:none}
+.gap{fill:var(--gap);stroke:none}
+table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.4rem 0 1.2rem}
+th,td{border-bottom:1px solid var(--rule);padding:.2rem .5rem;text-align:left}
+</style>
+</head>
+<body>
+<h2>identical, pair (0, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.61</text>
+<line class="grid" x1="56" x2="560" y1="167.908" y2="167.908"/>
+<text x="50.000" y="171.908" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.78</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="35.459" r="5"/>
+<circle class="cell won" cx="134.000" cy="47.238" r="5"/>
+<circle class="cell won" cx="163.000" cy="61.526" r="5"/>
+<circle class="cell won" cx="192.000" cy="66.201" r="5"/>
+<circle class="cell won" cx="221.000" cy="81.256" r="5"/>
+<circle class="cell won" cx="250.000" cy="108.844" r="5"/>
+<circle class="cell won" cx="279.000" cy="132.723" r="5"/>
+<circle class="cell lost" cx="308.000" cy="175.958" r="5"/>
+<circle class="cell lost" cx="337.000" cy="196.821" r="5"/>
+<circle class="cell lost" cx="366.000" cy="224.984" r="5"/>
+<circle class="cell lost" cx="395.000" cy="245.641" r="5"/>
+<circle class="cell lost" cx="424.000" cy="256.770" r="5"/>
+<circle class="cell lost" cx="453.000" cy="264.772" r="5"/>
+<circle class="cell lost" cx="482.000" cy="273.147" r="5"/>
+<circle class="cell lost" cx="511.000" cy="278.120" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.778</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.716</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.653</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.575</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.550</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.469</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.319</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.190</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.044</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.156</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.309</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.420</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.481</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.524</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.569</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.596</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.606</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>identical, pair (1, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.60</text>
+<line class="grid" x1="56" x2="560" y1="168.924" y2="168.924"/>
+<text x="50.000" y="172.924" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.78</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="34.048" r="5"/>
+<circle class="cell won" cx="134.000" cy="44.147" r="5"/>
+<circle class="cell won" cx="163.000" cy="57.255" r="5"/>
+<circle class="cell won" cx="192.000" cy="63.431" r="5"/>
+<circle class="cell won" cx="221.000" cy="77.160" r="5"/>
+<circle class="cell won" cx="250.000" cy="102.579" r="5"/>
+<circle class="cell won" cx="279.000" cy="126.878" r="5"/>
+<circle class="cell lost" cx="308.000" cy="161.613" r="5"/>
+<circle class="cell lost" cx="337.000" cy="189.874" r="5"/>
+<circle class="cell lost" cx="366.000" cy="217.178" r="5"/>
+<circle class="cell lost" cx="395.000" cy="243.054" r="5"/>
+<circle class="cell lost" cx="424.000" cy="255.367" r="5"/>
+<circle class="cell lost" cx="453.000" cy="264.357" r="5"/>
+<circle class="cell lost" cx="482.000" cy="273.257" r="5"/>
+<circle class="cell lost" cx="511.000" cy="279.120" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.784</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.729</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.675</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.604</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.570</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.496</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.359</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.227</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.040</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.113</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.261</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.401</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.467</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.516</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.564</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.596</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.601</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>identical, pair (0, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.62</text>
+<line class="grid" x1="56" x2="560" y1="166.302" y2="166.302"/>
+<text x="50.000" y="170.302" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.78</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="35.494" r="5"/>
+<circle class="cell won" cx="134.000" cy="47.190" r="5"/>
+<circle class="cell won" cx="163.000" cy="62.445" r="5"/>
+<circle class="cell won" cx="192.000" cy="66.371" r="5"/>
+<circle class="cell won" cx="221.000" cy="85.618" r="5"/>
+<circle class="cell won" cx="250.000" cy="111.870" r="5"/>
+<circle class="cell won" cx="279.000" cy="143.059" r="5"/>
+<circle class="cell lost" cx="308.000" cy="190.945" r="5"/>
+<circle class="cell lost" cx="337.000" cy="205.170" r="5"/>
+<circle class="cell lost" cx="366.000" cy="231.764" r="5"/>
+<circle class="cell lost" cx="395.000" cy="250.450" r="5"/>
+<circle class="cell lost" cx="424.000" cy="259.187" r="5"/>
+<circle class="cell lost" cx="453.000" cy="264.681" r="5"/>
+<circle class="cell lost" cx="482.000" cy="275.929" r="5"/>
+<circle class="cell lost" cx="511.000" cy="278.264" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.777</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.714</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.650</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.567</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.546</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.441</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.297</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.127</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.135</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.212</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.357</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.459</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.507</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.537</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.599</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.611</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.621</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>identical, pair (1, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.62</text>
+<line class="grid" x1="56" x2="560" y1="167.227" y2="167.227"/>
+<text x="50.000" y="171.227" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.79</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="34.382" r="5"/>
+<circle class="cell won" cx="134.000" cy="45.206" r="5"/>
+<circle class="cell won" cx="163.000" cy="58.110" r="5"/>
+<circle class="cell won" cx="192.000" cy="63.283" r="5"/>
+<circle class="cell won" cx="221.000" cy="81.975" r="5"/>
+<circle class="cell won" cx="250.000" cy="104.348" r="5"/>
+<circle class="cell won" cx="279.000" cy="133.870" r="5"/>
+<circle class="cell lost" cx="308.000" cy="175.755" r="5"/>
+<circle class="cell lost" cx="337.000" cy="200.076" r="5"/>
+<circle class="cell lost" cx="366.000" cy="227.485" r="5"/>
+<circle class="cell lost" cx="395.000" cy="248.895" r="5"/>
+<circle class="cell lost" cx="424.000" cy="259.147" r="5"/>
+<circle class="cell lost" cx="453.000" cy="264.818" r="5"/>
+<circle class="cell lost" cx="482.000" cy="275.018" r="5"/>
+<circle class="cell lost" cx="511.000" cy="278.313" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.786</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.729</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.669</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.599</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.570</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.468</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.345</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.183</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.047</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.180</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.331</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.448</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.504</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.535</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.591</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.609</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.619</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>reach, pair (0, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.59</text>
+<line class="grid" x1="56" x2="560" y1="174.406" y2="174.406"/>
+<text x="50.000" y="178.406" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.83</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="322.500" x2="322.500" y1="24" y2="280"/>
+<text x="322.500" y="18.000" text-anchor="middle">beats 16, loses to 17</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.394" r="5"/>
+<circle class="cell won" cx="134.000" cy="40.839" r="5"/>
+<circle class="cell won" cx="163.000" cy="51.828" r="5"/>
+<circle class="cell won" cx="192.000" cy="63.009" r="5"/>
+<circle class="cell won" cx="221.000" cy="72.389" r="5"/>
+<circle class="cell won" cx="250.000" cy="89.377" r="5"/>
+<circle class="cell won" cx="279.000" cy="107.951" r="5"/>
+<circle class="cell won" cx="308.000" cy="143.698" r="5"/>
+<circle class="cell lost" cx="337.000" cy="196.209" r="5"/>
+<circle class="cell lost" cx="366.000" cy="225.005" r="5"/>
+<circle class="cell lost" cx="395.000" cy="242.586" r="5"/>
+<circle class="cell lost" cx="424.000" cy="253.447" r="5"/>
+<circle class="cell lost" cx="453.000" cy="261.194" r="5"/>
+<circle class="cell lost" cx="482.000" cy="269.562" r="5"/>
+<circle class="cell lost" cx="511.000" cy="275.823" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.834</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.782</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.740</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.679</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.617</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.565</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.471</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.368</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.170</td><td>won</td><td>16 units beat 16</td></tr>
+<tr><td>17</td><td>-0.121</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.280</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.378</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.438</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.481</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.527</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.562</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.585</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>reach, pair (1, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.59</text>
+<line class="grid" x1="56" x2="560" y1="175.987" y2="175.987"/>
+<text x="50.000" y="179.987" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.86</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="351.500" x2="351.500" y1="24" y2="280"/>
+<text x="351.500" y="18.000" text-anchor="middle">beats 17, loses to 18</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="31.867" r="5"/>
+<circle class="cell won" cx="134.000" cy="37.617" r="5"/>
+<circle class="cell won" cx="163.000" cy="46.350" r="5"/>
+<circle class="cell won" cx="192.000" cy="56.972" r="5"/>
+<circle class="cell won" cx="221.000" cy="65.793" r="5"/>
+<circle class="cell won" cx="250.000" cy="77.228" r="5"/>
+<circle class="cell won" cx="279.000" cy="93.679" r="5"/>
+<circle class="cell won" cx="308.000" cy="113.200" r="5"/>
+<circle class="cell won" cx="337.000" cy="142.643" r="5"/>
+<circle class="cell lost" cx="366.000" cy="191.505" r="5"/>
+<circle class="cell lost" cx="395.000" cy="227.101" r="5"/>
+<circle class="cell lost" cx="424.000" cy="242.822" r="5"/>
+<circle class="cell lost" cx="453.000" cy="256.617" r="5"/>
+<circle class="cell lost" cx="482.000" cy="265.210" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.606" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.855</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.811</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.779</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.729</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.670</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.620</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.556</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.463</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.353</td><td>won</td><td>16 units beat 16</td></tr>
+<tr><td>17</td><td>0.188</td><td>won</td><td>16 units beat 17</td></tr>
+<tr><td>18</td><td>-0.087</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.288</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.376</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.454</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.502</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.549</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.585</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>reach, pair (0, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.60</text>
+<line class="grid" x1="56" x2="560" y1="173.254" y2="173.254"/>
+<text x="50.000" y="177.254" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.83</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="322.500" x2="322.500" y1="24" y2="280"/>
+<text x="322.500" y="18.000" text-anchor="middle">beats 16, loses to 17</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.246" r="5"/>
+<circle class="cell won" cx="134.000" cy="40.607" r="5"/>
+<circle class="cell won" cx="163.000" cy="52.173" r="5"/>
+<circle class="cell won" cx="192.000" cy="62.982" r="5"/>
+<circle class="cell won" cx="221.000" cy="73.102" r="5"/>
+<circle class="cell won" cx="250.000" cy="89.923" r="5"/>
+<circle class="cell won" cx="279.000" cy="108.335" r="5"/>
+<circle class="cell won" cx="308.000" cy="148.656" r="5"/>
+<circle class="cell lost" cx="337.000" cy="197.813" r="5"/>
+<circle class="cell lost" cx="366.000" cy="226.393" r="5"/>
+<circle class="cell lost" cx="395.000" cy="242.633" r="5"/>
+<circle class="cell lost" cx="424.000" cy="251.925" r="5"/>
+<circle class="cell lost" cx="453.000" cy="261.752" r="5"/>
+<circle class="cell lost" cx="482.000" cy="268.612" r="5"/>
+<circle class="cell lost" cx="511.000" cy="275.991" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.833</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.781</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.740</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.675</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.615</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.559</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.465</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.362</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.137</td><td>won</td><td>16 units beat 16</td></tr>
+<tr><td>17</td><td>-0.137</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.296</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.387</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.439</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.494</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.532</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.573</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.595</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>reach, pair (1, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.59</text>
+<line class="grid" x1="56" x2="560" y1="175.571" y2="175.571"/>
+<text x="50.000" y="179.571" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.85</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="351.500" x2="351.500" y1="24" y2="280"/>
+<text x="351.500" y="18.000" text-anchor="middle">beats 17, loses to 18</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="31.756" r="5"/>
+<circle class="cell won" cx="134.000" cy="37.619" r="5"/>
+<circle class="cell won" cx="163.000" cy="46.398" r="5"/>
+<circle class="cell won" cx="192.000" cy="56.782" r="5"/>
+<circle class="cell won" cx="221.000" cy="66.442" r="5"/>
+<circle class="cell won" cx="250.000" cy="77.694" r="5"/>
+<circle class="cell won" cx="279.000" cy="95.241" r="5"/>
+<circle class="cell won" cx="308.000" cy="116.172" r="5"/>
+<circle class="cell won" cx="337.000" cy="149.393" r="5"/>
+<circle class="cell lost" cx="366.000" cy="198.376" r="5"/>
+<circle class="cell lost" cx="395.000" cy="231.556" r="5"/>
+<circle class="cell lost" cx="424.000" cy="244.627" r="5"/>
+<circle class="cell lost" cx="453.000" cy="258.666" r="5"/>
+<circle class="cell lost" cx="482.000" cy="267.580" r="5"/>
+<circle class="cell lost" cx="511.000" cy="274.023" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.854</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.811</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.778</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.728</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.670</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.615</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.552</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.453</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.335</td><td>won</td><td>16 units beat 16</td></tr>
+<tr><td>17</td><td>0.148</td><td>won</td><td>16 units beat 17</td></tr>
+<tr><td>18</td><td>-0.129</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.316</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.389</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.468</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.519</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.555</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.589</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_skilled, pair (0, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.65</text>
+<line class="grid" x1="56" x2="560" y1="164.981" y2="164.981"/>
+<text x="50.000" y="168.981" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.80</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="34.365" r="5"/>
+<circle class="cell won" cx="134.000" cy="52.528" r="5"/>
+<circle class="cell won" cx="163.000" cy="56.936" r="5"/>
+<circle class="cell won" cx="192.000" cy="67.420" r="5"/>
+<circle class="cell won" cx="221.000" cy="79.835" r="5"/>
+<circle class="cell won" cx="250.000" cy="100.669" r="5"/>
+<circle class="cell won" cx="279.000" cy="126.245" r="5"/>
+<circle class="cell lost" cx="308.000" cy="169.916" r="5"/>
+<circle class="cell lost" cx="337.000" cy="197.325" r="5"/>
+<circle class="cell lost" cx="366.000" cy="229.800" r="5"/>
+<circle class="cell lost" cx="395.000" cy="244.911" r="5"/>
+<circle class="cell lost" cx="424.000" cy="246.388" r="5"/>
+<circle class="cell lost" cx="453.000" cy="262.033" r="5"/>
+<circle class="cell lost" cx="482.000" cy="270.927" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.421" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.802</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.743</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.640</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.615</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.555</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.484</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.366</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.220</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.028</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.184</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.369</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.455</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.463</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.552</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.603</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.617</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.654</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_skilled, pair (1, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.65</text>
+<line class="grid" x1="56" x2="560" y1="165.500" y2="165.500"/>
+<text x="50.000" y="169.500" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.81</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="322.500" x2="322.500" y1="24" y2="280"/>
+<text x="322.500" y="18.000" text-anchor="middle">beats 16, loses to 17</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.045" r="5"/>
+<circle class="cell won" cx="134.000" cy="51.068" r="5"/>
+<circle class="cell won" cx="163.000" cy="55.732" r="5"/>
+<circle class="cell won" cx="192.000" cy="64.518" r="5"/>
+<circle class="cell won" cx="221.000" cy="77.142" r="5"/>
+<circle class="cell won" cx="250.000" cy="97.099" r="5"/>
+<circle class="cell won" cx="279.000" cy="121.194" r="5"/>
+<circle class="cell won" cx="308.000" cy="153.244" r="5"/>
+<circle class="cell lost" cx="337.000" cy="190.032" r="5"/>
+<circle class="cell lost" cx="366.000" cy="225.335" r="5"/>
+<circle class="cell lost" cx="395.000" cy="239.536" r="5"/>
+<circle class="cell lost" cx="424.000" cy="248.258" r="5"/>
+<circle class="cell lost" cx="453.000" cy="260.464" r="5"/>
+<circle class="cell lost" cx="482.000" cy="269.046" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.294" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.805</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.754</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.651</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.625</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.575</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.503</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.389</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.252</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>0.070</td><td>won</td><td>16 units beat 16</td></tr>
+<tr><td>17</td><td>-0.140</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.341</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.421</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.471</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.541</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.589</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.614</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.652</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_skilled, pair (0, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.66</text>
+<line class="grid" x1="56" x2="560" y1="164.478" y2="164.478"/>
+<text x="50.000" y="168.478" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.80</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="34.409" r="5"/>
+<circle class="cell won" cx="134.000" cy="52.864" r="5"/>
+<circle class="cell won" cx="163.000" cy="57.533" r="5"/>
+<circle class="cell won" cx="192.000" cy="68.353" r="5"/>
+<circle class="cell won" cx="221.000" cy="81.600" r="5"/>
+<circle class="cell won" cx="250.000" cy="104.210" r="5"/>
+<circle class="cell won" cx="279.000" cy="137.083" r="5"/>
+<circle class="cell lost" cx="308.000" cy="180.709" r="5"/>
+<circle class="cell lost" cx="337.000" cy="203.242" r="5"/>
+<circle class="cell lost" cx="366.000" cy="233.542" r="5"/>
+<circle class="cell lost" cx="395.000" cy="246.281" r="5"/>
+<circle class="cell lost" cx="424.000" cy="250.352" r="5"/>
+<circle class="cell lost" cx="453.000" cy="263.774" r="5"/>
+<circle class="cell lost" cx="482.000" cy="271.619" r="5"/>
+<circle class="cell lost" cx="511.000" cy="275.812" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.802</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.742</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.637</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.610</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.548</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.473</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.344</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.156</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.093</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.221</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.394</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.467</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.490</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.567</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.611</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.635</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.659</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_skilled, pair (1, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.66</text>
+<line class="grid" x1="56" x2="560" y1="164.706" y2="164.706"/>
+<text x="50.000" y="168.706" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.81</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.171" r="5"/>
+<circle class="cell won" cx="134.000" cy="50.909" r="5"/>
+<circle class="cell won" cx="163.000" cy="55.811" r="5"/>
+<circle class="cell won" cx="192.000" cy="64.779" r="5"/>
+<circle class="cell won" cx="221.000" cy="78.228" r="5"/>
+<circle class="cell won" cx="250.000" cy="98.486" r="5"/>
+<circle class="cell won" cx="279.000" cy="128.523" r="5"/>
+<circle class="cell lost" cx="308.000" cy="166.391" r="5"/>
+<circle class="cell lost" cx="337.000" cy="197.605" r="5"/>
+<circle class="cell lost" cx="366.000" cy="228.600" r="5"/>
+<circle class="cell lost" cx="395.000" cy="243.290" r="5"/>
+<circle class="cell lost" cx="424.000" cy="247.919" r="5"/>
+<circle class="cell lost" cx="453.000" cy="262.906" r="5"/>
+<circle class="cell lost" cx="482.000" cy="269.990" r="5"/>
+<circle class="cell lost" cx="511.000" cy="275.107" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.805</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.753</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.651</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.623</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.572</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.495</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.379</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.207</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.010</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.188</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.366</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.450</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.476</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.562</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.602</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.632</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.660</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_counter, pair (0, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.70</text>
+<line class="grid" x1="56" x2="560" y1="158.602" y2="158.602"/>
+<text x="50.000" y="162.602" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.78</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="264.500" x2="264.500" y1="24" y2="280"/>
+<text x="264.500" y="18.000" text-anchor="middle">beats 14, loses to 15</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.875" r="5"/>
+<circle class="cell won" cx="134.000" cy="43.151" r="5"/>
+<circle class="cell won" cx="163.000" cy="55.361" r="5"/>
+<circle class="cell won" cx="192.000" cy="68.500" r="5"/>
+<circle class="cell won" cx="221.000" cy="88.466" r="5"/>
+<circle class="cell won" cx="250.000" cy="114.038" r="5"/>
+<circle class="cell lost" cx="279.000" cy="159.888" r="5"/>
+<circle class="cell lost" cx="308.000" cy="197.524" r="5"/>
+<circle class="cell lost" cx="337.000" cy="222.099" r="5"/>
+<circle class="cell lost" cx="366.000" cy="237.200" r="5"/>
+<circle class="cell lost" cx="395.000" cy="250.156" r="5"/>
+<circle class="cell lost" cx="424.000" cy="258.486" r="5"/>
+<circle class="cell lost" cx="453.000" cy="262.125" r="5"/>
+<circle class="cell lost" cx="482.000" cy="268.285" r="5"/>
+<circle class="cell lost" cx="511.000" cy="272.639" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.779</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.722</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.668</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.598</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.522</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.406</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.258</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>-0.007</td><td>lost</td><td>16 units lose to 15</td></tr>
+<tr><td>16</td><td>-0.225</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.368</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.455</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.530</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.578</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.599</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.635</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.660</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.703</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_counter, pair (1, 0)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.70</text>
+<line class="grid" x1="56" x2="560" y1="160.052" y2="160.052"/>
+<text x="50.000" y="164.052" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.79</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="293.500" x2="293.500" y1="24" y2="280"/>
+<text x="293.500" y="18.000" text-anchor="middle">beats 15, loses to 16</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="34.055" r="5"/>
+<circle class="cell won" cx="134.000" cy="42.138" r="5"/>
+<circle class="cell won" cx="163.000" cy="53.981" r="5"/>
+<circle class="cell won" cx="192.000" cy="66.473" r="5"/>
+<circle class="cell won" cx="221.000" cy="83.398" r="5"/>
+<circle class="cell won" cx="250.000" cy="106.914" r="5"/>
+<circle class="cell won" cx="279.000" cy="145.805" r="5"/>
+<circle class="cell lost" cx="308.000" cy="189.300" r="5"/>
+<circle class="cell lost" cx="337.000" cy="218.752" r="5"/>
+<circle class="cell lost" cx="366.000" cy="237.111" r="5"/>
+<circle class="cell lost" cx="395.000" cy="249.786" r="5"/>
+<circle class="cell lost" cx="424.000" cy="258.040" r="5"/>
+<circle class="cell lost" cx="453.000" cy="261.940" r="5"/>
+<circle class="cell lost" cx="482.000" cy="267.811" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.495" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.793</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.734</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.687</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.618</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.545</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.447</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.310</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.083</td><td>won</td><td>16 units beat 15</td></tr>
+<tr><td>16</td><td>-0.170</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.342</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.449</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.523</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.571</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.594</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.628</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.661</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.699</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_counter, pair (0, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.71</text>
+<line class="grid" x1="56" x2="560" y1="158.272" y2="158.272"/>
+<text x="50.000" y="162.272" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.78</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="264.500" x2="264.500" y1="24" y2="280"/>
+<text x="264.500" y="18.000" text-anchor="middle">beats 14, loses to 15</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.774" r="5"/>
+<circle class="cell won" cx="134.000" cy="43.727" r="5"/>
+<circle class="cell won" cx="163.000" cy="56.471" r="5"/>
+<circle class="cell won" cx="192.000" cy="70.302" r="5"/>
+<circle class="cell won" cx="221.000" cy="91.250" r="5"/>
+<circle class="cell won" cx="250.000" cy="122.738" r="5"/>
+<circle class="cell lost" cx="279.000" cy="170.009" r="5"/>
+<circle class="cell lost" cx="308.000" cy="203.273" r="5"/>
+<circle class="cell lost" cx="337.000" cy="223.391" r="5"/>
+<circle class="cell lost" cx="366.000" cy="237.317" r="5"/>
+<circle class="cell lost" cx="395.000" cy="251.315" r="5"/>
+<circle class="cell lost" cx="424.000" cy="259.643" r="5"/>
+<circle class="cell lost" cx="453.000" cy="263.618" r="5"/>
+<circle class="cell lost" cx="482.000" cy="268.050" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.328" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.779</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.722</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.665</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.591</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.511</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.389</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.206</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>-0.068</td><td>lost</td><td>16 units lose to 15</td></tr>
+<tr><td>16</td><td>-0.261</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.378</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.459</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.540</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.588</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.611</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.637</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.668</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.706</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+<h2>S2_counter, pair (1, 1)</h2>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">-0.70</text>
+<line class="grid" x1="56" x2="560" y1="160.047" y2="160.047"/>
+<text x="50.000" y="164.047" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">0.79</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Enemy units</text>
+<text x="12.000" y="16.000" text-anchor="start" class="muted">Mean margin</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<text x="105.000" y="296.000" text-anchor="middle" class="muted">9</text>
+<text x="134.000" y="296.000" text-anchor="middle" class="muted">10</text>
+<text x="163.000" y="296.000" text-anchor="middle" class="muted">11</text>
+<text x="192.000" y="296.000" text-anchor="middle" class="muted">12</text>
+<text x="221.000" y="296.000" text-anchor="middle" class="muted">13</text>
+<text x="250.000" y="296.000" text-anchor="middle" class="muted">14</text>
+<text x="279.000" y="296.000" text-anchor="middle" class="muted">15</text>
+<text x="308.000" y="296.000" text-anchor="middle" class="muted">16</text>
+<text x="337.000" y="296.000" text-anchor="middle" class="muted">17</text>
+<text x="366.000" y="296.000" text-anchor="middle" class="muted">18</text>
+<text x="395.000" y="296.000" text-anchor="middle" class="muted">19</text>
+<text x="424.000" y="296.000" text-anchor="middle" class="muted">20</text>
+<text x="453.000" y="296.000" text-anchor="middle" class="muted">21</text>
+<text x="482.000" y="296.000" text-anchor="middle" class="muted">22</text>
+<text x="511.000" y="296.000" text-anchor="middle" class="muted">23</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">24</text>
+<line class="marker" x1="264.500" x2="264.500" y1="24" y2="280"/>
+<text x="264.500" y="18.000" text-anchor="middle">beats 14, loses to 15</text>
+<circle class="cell won" cx="76.000" cy="24.000" r="5"/>
+<circle class="cell won" cx="105.000" cy="33.932" r="5"/>
+<circle class="cell won" cx="134.000" cy="42.573" r="5"/>
+<circle class="cell won" cx="163.000" cy="54.812" r="5"/>
+<circle class="cell won" cx="192.000" cy="68.458" r="5"/>
+<circle class="cell won" cx="221.000" cy="85.421" r="5"/>
+<circle class="cell won" cx="250.000" cy="110.375" r="5"/>
+<circle class="cell lost" cx="279.000" cy="152.591" r="5"/>
+<circle class="cell lost" cx="308.000" cy="196.856" r="5"/>
+<circle class="cell lost" cx="337.000" cy="222.082" r="5"/>
+<circle class="cell lost" cx="366.000" cy="237.295" r="5"/>
+<circle class="cell lost" cx="395.000" cy="251.377" r="5"/>
+<circle class="cell lost" cx="424.000" cy="258.854" r="5"/>
+<circle class="cell lost" cx="453.000" cy="262.474" r="5"/>
+<circle class="cell lost" cx="482.000" cy="269.004" r="5"/>
+<circle class="cell lost" cx="511.000" cy="273.984" r="5"/>
+<circle class="cell lost" cx="540.000" cy="280.000" r="5"/>
+</svg>
+<table>
+<tr><th>Enemy units</th><th>Mean margin</th><th>Result</th><th>In words</th></tr>
+<tr><td>8</td><td>0.794</td><td>won</td><td>16 units beat 8</td></tr>
+<tr><td>9</td><td>0.736</td><td>won</td><td>16 units beat 9</td></tr>
+<tr><td>10</td><td>0.686</td><td>won</td><td>16 units beat 10</td></tr>
+<tr><td>11</td><td>0.615</td><td>won</td><td>16 units beat 11</td></tr>
+<tr><td>12</td><td>0.535</td><td>won</td><td>16 units beat 12</td></tr>
+<tr><td>13</td><td>0.436</td><td>won</td><td>16 units beat 13</td></tr>
+<tr><td>14</td><td>0.290</td><td>won</td><td>16 units beat 14</td></tr>
+<tr><td>15</td><td>0.044</td><td>lost</td><td>16 units lose to 15</td></tr>
+<tr><td>16</td><td>-0.215</td><td>lost</td><td>16 units lose to 16</td></tr>
+<tr><td>17</td><td>-0.362</td><td>lost</td><td>16 units lose to 17</td></tr>
+<tr><td>18</td><td>-0.451</td><td>lost</td><td>16 units lose to 18</td></tr>
+<tr><td>19</td><td>-0.533</td><td>lost</td><td>16 units lose to 19</td></tr>
+<tr><td>20</td><td>-0.577</td><td>lost</td><td>16 units lose to 20</td></tr>
+<tr><td>21</td><td>-0.598</td><td>lost</td><td>16 units lose to 21</td></tr>
+<tr><td>22</td><td>-0.636</td><td>lost</td><td>16 units lose to 22</td></tr>
+<tr><td>23</td><td>-0.665</td><td>lost</td><td>16 units lose to 23</td></tr>
+<tr><td>24</td><td>-0.700</td><td>lost</td><td>16 units lose to 24</td></tr>
+</table>
+</body>
+</html>
