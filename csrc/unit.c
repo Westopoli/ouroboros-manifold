@@ -1902,7 +1902,8 @@ static om_unit_row *om_tac_nearest_visible(om_world *w, om_tac_state *st, const 
 
 /* R-087-04 (P1): an attack-moving unit with no enemy in attack range, on its
  * cohort turn, makes the nearest enemy it sees in sensor range its move goal
- * and walks there by the ordinary movement step. The old goal is dropped. */
+ * and walks there by the ordinary movement step. The old goal is dropped. The sighting is not a leash
+ * anchor: the anchor is taken where the unit stands once it holds the target in range (R-087-05). */
 static void om_tac_pursue_goal(om_world *w, om_tac_state *st, om_unit_row *u) {
     const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
     om_unit_row *seen;
@@ -1910,7 +1911,6 @@ static void om_tac_pursue_goal(om_world *w, om_tac_state *st, om_unit_row *u) {
     seen = om_tac_nearest_visible(w, st, u, prof->sensor_radius);
     if (!seen) return;
     u->target_id = seen->unit_id;
-    if (!u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
     u->halted = 0;
     u->order_x = seen->x; u->order_y = seen->y;
     u->issued_x = seen->x; u->issued_y = seen->y;
@@ -2089,8 +2089,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 u->issued_x = t->x; u->issued_y = t->y;
                 u->halted = 0;
             }
-        } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue && !in_range) {
-            /* P1: holds only while its own target is in attack range, otherwise walks its goal */
+        } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue
+                   && (!in_range || !om_combat_can_shoot(w, u->unit_id, t->unit_id))) {
+            /* P1: holds only while its own target is in attack range and the unit can shoot it (A171, R-087-05),
+             * otherwise walks its goal and fires when the line clears */
             om_tac_release(w, u);
         } else if (u->order == OM_ORDER_ATTACK_MOVE) {
             om_tac_hold(w, u, t->unit_id);
