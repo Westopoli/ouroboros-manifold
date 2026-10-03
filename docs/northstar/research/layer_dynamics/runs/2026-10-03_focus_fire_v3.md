@@ -56,7 +56,7 @@ Pair spread at the edge (per-seed mean margin of the side-swapped pair, lowest t
 1. **The (0,0) per-seed traces do not match v2's.** v2 page: identical first kill by seed 0 to 5 was 674, 587, 747, 588, 849, 586; this tree gives 586, 587, 587, 587, 458, 586 (swap False, the same plain `OM_TP_TARGET_POLICY` 0 setting, the `(0,0)` pair and the unset pair give identical fights here). Aggregate break-evens agree in three of four cells and S2 counter differs by one unit. Not isolated; the trees differ by sl-land-6..8, pt-land and the formation work. Needs the harness lane to say which change moved the walk, or a v2 re-run on this tree.
 2. First contact is tick 50 to 60 and the first kill 250 to 600 ticks later, as in v2 (A196 left the pace to Westley).
 3. The pair assignment (0,1) is exactly the side-swapped test of (1,0) only if the cell's plays are symmetric; in S2 they are not (side 0 is skilled, side 1 the opponent play), so (0,1) is "the opponent focuses", not the same fight with sides exchanged.
-4. Unit-id to side in the trace is inferred (first 16 ids side 0 when side 0 spawns first), checked by the kill sides against `survivors`; if the harness numbers ids differently the distinct-target counts shift, the break-evens do not.
+4. Unit-id to side in the trace is inferred (first 16 ids side 0 when side 0 spawns first), not verified against the engine ids; if the harness numbers ids differently the distinct-target counts shift, the break-evens do not.
 
 ## 7. What could not be expressed
 
