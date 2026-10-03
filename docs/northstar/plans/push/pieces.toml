@@ -1170,3 +1170,24 @@ acceptance = ["tests/test_sim_session.gd"]
 depends_on = []
 status = "pending"
 size_estimate = "one Godot test file, 30 cases"
+
+# Integration tests written for the finish-the-loop units (2026-10-03,
+# plans/2026-10-03-finish-loop-rulings.md): B1-U1/U2, B7-1, RET-1.
+[[piece]]
+id = "FL-tests"
+manager = "M0"
+wave = 5
+owns = [
+    "tests/csim/test_E14_S122_B1_5_rout_and_contested_live.py",
+    "tests/csim/test_core_commander_death_ledger.py",
+    "tests/csim/test_E10_S077_RET1_retention_live.py",
+]
+owns_glob = []
+acceptance = [
+    "tests/csim/test_E14_S122_B1_5_rout_and_contested_live.py",
+    "tests/csim/test_core_commander_death_ledger.py",
+    "tests/csim/test_E10_S077_RET1_retention_live.py",
+]
+depends_on = []
+status = "pending"
+size_estimate = "three csim integration test files"
