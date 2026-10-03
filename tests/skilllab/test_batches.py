@@ -42,7 +42,7 @@ def _section(text, head):
 
 
 def test_names_and_get():
-    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape")
+    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
     assert batches.BASE_SETTINGS == {"OM_TP_PURSUE_BY_STEERING": 1}
     for n in batches.NAMES:
         d = batches.get(n)
@@ -367,7 +367,7 @@ def test_vanguard_against_raider_in_page_and_not_in_other_batches(tmp_path):
     assert "Vanguard against Raider" not in _text(p2["run"]) + _text(p2["page"])
 
 
-@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape"])
+@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"])
 def test_deterministic_byte_identical(tmp_path, name):
     _, _, a = _run(name, tmp_path, FakeScan(FOCUS_RESULTS), sub="one")
     _, _, b = _run(name, tmp_path, FakeScan(FOCUS_RESULTS), sub="two")
