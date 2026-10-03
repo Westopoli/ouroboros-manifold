@@ -41,7 +41,7 @@ The Linux chat brings these to Westley as register rows before building; they ar
 5. **Asteroids.** Python line of sight uses 3D cylinders with height; C uses 2D discs of any height; `Q-098-01` is open on cover height and on units inside a cover disc.
 6. **E-17.** Map generation is E-17's; the C comment says the gradient model is "held" for it. P4 needs E-17's open flags checked and its gate run.
 7. **Leash before damage.** In the Python the 200 wu leash runs before damage, so an attack-moving unit with range over 200 never shoots a target more than 200 from its anchor (audit G03). This is tied to P1's code path but was not ruled. Do not port it silently.
-8. **Collision details** beyond the clamp and slide in P3 (stationary pairs, snap to slot, exact-overlap direction; audit G14): R-097-10/07 and R-099-04 match the C.
+8. **Collision details** beyond the clamp and slide in P3 (stationary pairs, snap to slot, exact-overlap direction; audit G14): R-097-06/07 and R-099-04 match the C.
 9. **Fixed caps.** The C's 1,024 density cells against a Python navmesh of 57,600 cells for a 24,000 wu canvas (audit G23): P3 and P4 cannot fit in the present table.
 
 ## 4. Not ruled: leave as the C has it
