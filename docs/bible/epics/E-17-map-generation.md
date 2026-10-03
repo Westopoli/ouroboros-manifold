@@ -103,7 +103,7 @@ Open flags: none.
 ### S-116 — Canvas
 Flag closed, rule text pending: Q-118-01, state-based canvas sizing, the bible approach: base size plus or minus 30 percent by region, direction per archetype. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: a match of 4 to 6 players has a canvas of 64,000 wu, and smaller matches keep today's sizes (S-195). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: a match of 4 to 6 players has a canvas of 64,000 wu, and smaller matches keep today's sizes (S-195), except that the small category goes away: Suppression and Counterinsurgency take a full-size canvas with a compact play area (R-188-06, Q-188-03). The rules below are what the game does today.
 
 As a commander, I want mission maps sized to the situation, so that a suppression is tight and a siege is vast.
 
@@ -229,11 +229,11 @@ Rules
 - R-188-03  Given a land map, When the landscape engine hands the terrain to the layer system, Then the terrain holds at least a minimum variance in height (Westley, 2026-10-03), so that every map has ground on layer 5 and every layer step is a real height difference; the layer system fits the bands only on terrain that meets it. A layer step that is only a meadow slope is a defect of the landscape generation. A detector measures the variance [Q-188-01: the minimum, which is Westley's to set] and ships with a positive control, a map built with less variance than the minimum that the detector must flag.
 - R-188-04  Given bands fitted per map, When a layer step has a different height on each map, Then the numbers written for a standard step in E-01 (time to change layer, how much worse sight is across layers, which layers a type may fire at) scale with the height of the step [Q-166-04: how each number scales, which the skill lab measures].
 - R-188-05  Given a space-era map, When layers are read, Then they stay pure altitude, asteroids and stations are the things that block them, and all five are open at every position (E-01 Q-001-01); height bands, ground flags, slopes and strongpoints apply to land maps only.
-- R-188-06  Given a small canvas, When bands are fitted, Then [Q-188-02: whether a small canvas can hold five real height steps, and what happens if it cannot].
+- R-188-06  Given an archetype whose fight is compact (Suppression and Counterinsurgency, the small category of E-10 R-073-01), When its map is generated, Then the canvas is a full-size one [Q-188-03: which size] with five fitted layers like any other map (R-188-01); the home base takes a significant portion of it, the objective, the resources and the base sit closer together than on other archetypes, and the rest of the canvas is generated and rendered but not used for play (Westley, 2026-10-03) [Q-188-03: whether units may enter the unused ground].
 
 Inputs: terrain height.
 Outputs: band heights (S-190).
-Open flags: Q-166-04, Q-188-01, Q-188-02. The fitted-band rule is tested in the layer lab before it is fixed.
+Open flags: Q-166-04, Q-188-01, Q-188-03. The fitted-band rule is tested in the layer lab before it is fixed.
 
 ### S-189 — Ground you cannot cross
 As a commander, I want some ground to be too steep to walk, and slopes to be the ways between layers, so that the lay of the land decides where an army can go.
@@ -351,7 +351,7 @@ Rules
 
 Inputs: archetype; players in the match; region.
 Outputs: canvas size in the map seed.
-Open flags: Q-188-02 (small canvas), Q-195-01, Q-195-02.
+Open flags: Q-188-03 (canvas size for the compact archetypes), Q-195-01, Q-195-02.
 
 ### S-196 — One field map, two kits
 As a commander, I want a land and a space era to look different over the same kind of map, so that the same game reads as two worlds.
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-188-02, Q-189-02, Q-189-04, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-188-03, Q-189-02, Q-189-04, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

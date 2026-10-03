@@ -43,7 +43,7 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 
 | # | Decision | Flags | Unblocks |
 |---|---|---|---|
-| L1 | Part 1, the ground, what is left (answers 2026-10-03 in the register): the minimum height variance; a small canvas (his question answered, waiting for his pick); the exact steepness limit inside 30 to 35 degrees, after his visual pass; what counts as unreasonably hard to reach on foot | Q-188-01, Q-188-02, Q-189-02, Q-189-04 | Queue row 4 |
+| L1 | Part 1, the ground, what is left (answers 2026-10-03 in the register): the minimum height variance; which full size the two small-canvas archetypes take and whether the unused ground is enterable; the exact steepness limit inside 30 to 35 degrees, after his visual pass; what counts as unreasonably hard to reach on foot | Q-188-01, Q-188-03, Q-189-02, Q-189-04 | Queue row 4 |
 | L2 | How layouts and terrain combine | Q-191-04 | Every place story (S-191, S-192, S-197) and the rewrites of S-112 to S-119 |
 | L3 | Part 2, the places: how sites are found, counts, "opposite the objective", strongpoint count, choke width, vantage reach, how many plays a map must offer, raid lanes, fairness on a slanted map | Q-191-01 to -03, Q-192-01 to -05, Q-197-01 | Land generator part 2 |
 | L4 | Landforms that ship, and how "variety packed in" is measured | Q-187-01, Q-187-02 | S-187 |

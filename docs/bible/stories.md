@@ -188,7 +188,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-182 | E-22 | "I carry something forward between missions, without the fifteenth mission becoming lopsided." | Open (Q-159-07, Q-159-13) | `epics/E-22-economy-and-bases.md` S-182 |
 | S-186 | E-17 | "Every map starts as real ground, height and water from the seed." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-17-map-generation.md` S-186 |
 | S-187 | E-17 | "Mesas, canyons, island chains and fjords, not only rolling hills." | Design decided 2026-10-02, not scheduled; flags Q-187-01, Q-187-02 | `epics/E-17-map-generation.md` S-187 |
-| S-188 | E-17 | "A mountainside is a stack of layers an attacker has to climb." | Design decided 2026-10-02, not scheduled; flags Q-166-04, Q-188-01, Q-188-02; land maps only (Q-166-02) | `epics/E-17-map-generation.md` S-188 |
+| S-188 | E-17 | "A mountainside is a stack of layers an attacker has to climb." | Design decided 2026-10-02, not scheduled; flags Q-166-04, Q-188-01, Q-188-03; land maps only (Q-166-02) | `epics/E-17-map-generation.md` S-188 |
 | S-189 | E-17 | "Some ground is too steep to walk, and slopes are the ways between layers." | Design decided 2026-10-02, not scheduled; flags Q-189-02, Q-189-04; land maps only | `epics/E-17-map-generation.md` S-189 |
 | S-190 | E-17 | "The layers follow the land under my units." | Design decided 2026-10-02, not scheduled; flag Q-190-01; land maps only | `epics/E-17-map-generation.md` S-190 |
 | S-191 | E-17 | "Bases, objectives and resources sit where the land puts them." | Design decided 2026-10-02, not scheduled; flags Q-191-01 to Q-191-04; land maps only | `epics/E-17-map-generation.md` S-191 |
