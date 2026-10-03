@@ -95,6 +95,8 @@
 #define OM_MOVE_GRID_SPILL_MAX 48
 #define OM_MOVE_GRID_BOUND_PAD 1.0e-6
 #define OM_MOVE_GRID_FAR 1.0e300
+#define OM_MOVE_CELL_MID 0.5
+#define OM_MOVE_ROUND_HALF 0.5
 #define OM_MOVE_FLOOR_LIMIT 1.0e9
 #define OM_MOVE_INSERTION_SORT_MAX 96
 #define OM_MOVE_NET_SMALL 8
@@ -172,6 +174,12 @@ typedef struct {
     uint32_t plan_epoch;
     double   plan_dest_x, plan_dest_y, aim_x, aim_y;
     int      aim_is_waypoint;
+    /* G4 layer transfer (R-002-02 to R-002-07, R-004-01 to R-004-04): lay_state OM_LAY_NONE, OM_LAY_PENDING (waiting
+     * for lay_to to be open here) or OM_LAY_FLIGHT (lay_t of lay_dur ticks done; the layer crosses over at half).
+     * lay_pend is an order given in flight, begun when the flight ends. transit: the router sent the unit over a
+     * mass and it comes back down to transit_home; lay_route marks the pending order as the router's. */
+    int      lay_state, lay_has_pend, lay_route, transit;
+    uint32_t lay_to, lay_pend, lay_t, lay_dur, transit_home;
 } om_move_unit;
 
 typedef struct {
@@ -282,7 +290,21 @@ uint32_t col_cur;
 
     /* PP-move: the tunable settings (om_tac_param); see om_tactical_set_param. */
     double   param[OM_TP__COUNT];
+    int      lay_any; /* a layer order or a routed transfer has happened: the per-tick layer pass runs */
 } om_move_state;
+
+enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
+
+/* See also: om_tac_unit_set_layer in unit.c, which owns the unit's layer row */
+void om_tac_unit_set_layer(om_world *w, uint32_t unit_id, uint32_t layer);
+
+/* A new move order ends a routed transfer that has not begun; one in flight finishes (R-002-04: a user's transfer
+ * is never cleared by a move order). */
+static void om_move_transit_cancel(om_move_unit *mu) {
+    if (!mu->transit) return;
+    mu->transit = 0;
+    if (mu->lay_route && mu->lay_state == OM_LAY_PENDING) mu->lay_state = OM_LAY_NONE;
+}
 
 /* PP-move: every om_tac_param member's kind, default and refusal range (docs/northstar/plans/push/pp_contract.md
  * section 4). The ranges are the writer's refusal bounds for the lab's setting call, never game values (A133 Q-C9);
@@ -1692,6 +1714,7 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
         mu->kiting = 0;
         mu->deflecting = 0;
         mu->order_kind = q->kind;
+        om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, q->x, q->y);
     }
 }
@@ -1729,6 +1752,92 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
         }
     }
     return n;
+}
+
+/* Length in wu of the route from (x0, y0) to (x1, y1) on one layer, the way om_move_route_plan walks it (the
+ * farthest cell centre in line of sight, again and again); -1 when either end is blocked or no route exists.
+ * See also: om_move_across_plan, which compares these lengths across layers (R-001-05). */
+static double om_move_path_len(const om_world *w, om_move_state *ms, uint32_t layer, double x0, double y0, double x1, double y1) {
+    static const int32_t OM_BFS_DX[OM_MOVE_BFS_DIR_COUNT] = {1, -1, 0, 0};
+    static const int32_t OM_BFS_DY[OM_MOVE_BFS_DIR_COUNT] = {0, 0, 1, -1};
+    int32_t nx, ny, cx, cy, dcx, dcy, guard;
+    double px = x0, py = y0, total = 0.0;
+    const uint32_t *f;
+    om_move_window(ms, &nx, &ny);
+    om_move_cell_at(ms, x0, y0, &cx, &cy);
+    om_move_cell_at(ms, x1, y1, &dcx, &dcy);
+    if (cx < 0 || cy < 0 || cx >= nx || cy >= ny || dcx < 0 || dcy < 0 || dcx >= nx || dcy >= ny) return -1.0;
+    if (om_move_cell_blocked(w, ms, layer, cx, cy) || om_move_cell_blocked(w, ms, layer, dcx, dcy)) return -1.0;
+    if (om_move_los_clear(w, ms, x0, y0, x1, y1, layer)) return sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+    f = om_move_field_for(w, ms, layer, dcx, dcy);
+    if (!f || f[cy * nx + cx] == OM_MOVE_FIELD_UNREACHED) return -1.0;
+    for (guard = 0; guard < nx * ny; guard++) {
+        double lx = px, ly = py;
+        int moved = 0;
+        while (f[cy * nx + cx] > 1) {
+            int dir;
+            int32_t bx = -1, by = -1;
+            double qx, qy;
+            for (dir = 0; dir < OM_MOVE_BFS_DIR_COUNT; dir++) {
+                int32_t x = cx + OM_BFS_DX[dir], y = cy + OM_BFS_DY[dir];
+                if (x < 0 || y < 0 || x >= nx || y >= ny || f[y * nx + x] != f[cy * nx + cx] - 1) continue;
+                bx = x;
+                by = y;
+                break;
+            }
+            if (bx < 0) return -1.0;
+            qx = ((double)bx + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
+            qy = ((double)by + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
+            if (moved && !om_move_los_clear(w, ms, px, py, qx, qy, layer)) break;
+            cx = bx;
+            cy = by;
+            lx = qx;
+            ly = qy;
+            moved = 1;
+        }
+        total += sqrt((lx - px) * (lx - px) + (ly - py) * (ly - py));
+        px = lx;
+        py = ly;
+        if (f[cy * nx + cx] <= 1 || om_move_los_clear(w, ms, px, py, x1, y1, layer)) {
+            return total + sqrt((x1 - px) * (x1 - px) + (y1 - py) * (y1 - py));
+        }
+    }
+    return -1.0;
+}
+
+/* R-001-05 (Q-001-05 (a), provisional; ROUTE_ACROSS_LAYERS): the layer to plan on. Where the straight line is
+ * blocked on the unit's layer, the quickest route by travel time wins: the walk on its own layer, or the walk
+ * on another layer plus a transfer there and a transfer back (the unit ends on the layer it was ordered on).
+ * Going over starts a routed transfer, which om_move_layer_unit brings back down. */
+static uint32_t om_move_across_plan(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t layer) {
+    const double tx = om_move_clamp_axis(mu->dest_x, ms->canvas_w), ty = om_move_clamp_axis(mu->dest_y, ms->canvas_h);
+    double speed, len, best_t, xfer;
+    uint32_t l, best = layer;
+    if (mu->transit) return mu->lay_state != OM_LAY_NONE ? mu->lay_to : layer;
+    if (!om_move_param_on(ms, OM_TP_ROUTE_ACROSS_LAYERS) || mu->lay_state != OM_LAY_NONE) return layer;
+    if (om_move_los_clear(w, ms, mu->x, mu->y, tx, ty, layer)) return layer;
+    speed = om_unit_effective_speed(w, mu->unit_id);
+    if (!(speed > 0.0)) return layer;
+    len = om_move_path_len(w, ms, layer, mu->x, mu->y, tx, ty);
+    best_t = len < 0.0 ? OM_MOVE_GRID_FAR : len / speed;
+    xfer = 2.0 * om_unit_profile_layer_transition_time(w, om_unit_get_unit_type(w, mu->unit_id));
+    for (l = 0; l < OM_LAYER_COUNT; l++) {
+        double t;
+        if (l == layer) continue;
+        len = om_move_path_len(w, ms, l, mu->x, mu->y, tx, ty);
+        if (len < 0.0) continue;
+        t = len / speed + xfer;
+        if (t < best_t) { best_t = t; best = l; }
+    }
+    if (best == layer) return layer;
+    mu->transit = 1;
+    mu->transit_home = layer;
+    mu->lay_state = OM_LAY_PENDING;
+    mu->lay_to = best;
+    mu->lay_route = 1;
+    mu->lay_has_pend = 0;
+    ms->lay_any = 1;
+    return best;
 }
 
 /* R-097-09 (Westley, 2026-10-02): a unit found inside a blocked cell of its layer is moved to the nearest open
@@ -1807,7 +1916,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
         const double reach = OM_MOVE_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS;
         if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y
             || (mu->aim_is_waypoint && wx * wx + wy * wy < reach * reach))
-            om_move_route_plan(w, ms, mu, (uint32_t)om_move_layer(w, id));
+            om_move_route_plan(w, ms, mu, om_move_across_plan(w, ms, mu, (uint32_t)om_move_layer(w, id)));
         dx = mu->aim_x - mu->x;
         dy = mu->aim_y - mu->y;
     } else {
@@ -2031,10 +2140,67 @@ static void om_move_groups_check_arrival(om_move_state *ms) {
     }
 }
 
+/* One tick of a unit's layer transfer (R-002-01 to R-002-07, R-004-01 to R-004-04). A pending order begins on the
+ * first tick the target layer is open at the unit's cell; the unit then counts lay_dur ticks (the type's
+ * layer_transition_time), crosses over at half (R-004-02) and settles at the end. An order given in flight begins the
+ * tick after. A routed unit that went over a mass asks to come back down once its own layer is open and clear. */
+static void om_move_layer_unit(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t period) {
+    const uint32_t id = mu->unit_id;
+    const uint32_t cur = (uint32_t)om_move_layer(w, id);
+    int32_t cx, cy;
+    if (mu->lay_state == OM_LAY_NONE && mu->transit) {
+        if (cur == mu->transit_home) mu->transit = 0;
+        else {
+            om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
+            if (!mu->has_dest || (!om_move_cell_blocked(w, ms, mu->transit_home, cx, cy)
+                && om_move_los_clear(w, ms, mu->x, mu->y, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), mu->transit_home))) {
+                mu->lay_state = OM_LAY_PENDING;
+                mu->lay_to = mu->transit_home;
+                mu->lay_route = 1;
+            }
+        }
+    } else if (mu->lay_state == OM_LAY_PENDING && mu->transit && !mu->has_dest && cur == mu->transit_home) {
+        mu->lay_state = OM_LAY_NONE;
+        mu->transit = 0;
+    }
+    if (mu->lay_state == OM_LAY_PENDING) {
+        double secs;
+        if (mu->lay_to == cur) { mu->lay_state = OM_LAY_NONE; return; }
+        om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
+        if (om_move_cell_blocked(w, ms, mu->lay_to, cx, cy)) return;
+        secs = om_unit_profile_layer_transition_time(w, om_unit_get_unit_type(w, id));
+        mu->lay_dur = (uint32_t)floor(secs * (double)OM_TACTICAL_TICK_RATE + OM_MOVE_ROUND_HALF);
+        if (mu->lay_dur < 1) mu->lay_dur = 1;
+        mu->lay_state = OM_LAY_FLIGHT;
+        mu->lay_t = 0;
+    }
+    if (mu->lay_state != OM_LAY_FLIGHT) return;
+    mu->lay_t += period;
+    if (2 * mu->lay_t >= mu->lay_dur && cur != mu->lay_to) om_tac_unit_set_layer(w, id, mu->lay_to);
+    if (mu->lay_t < mu->lay_dur) return;
+    mu->lay_state = OM_LAY_NONE;
+    mu->lay_route = 0;
+    if (mu->lay_has_pend) {
+        mu->lay_has_pend = 0;
+        mu->lay_state = OM_LAY_PENDING;
+        mu->lay_to = mu->lay_pend;
+    }
+}
+
+static void om_move_layer_pass(om_world *w, om_move_state *ms, uint32_t period) {
+    uint32_t id;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        if (!mu->in_use || (mu->lay_state == OM_LAY_NONE && !mu->transit) || !om_unit_alive(w, id)) continue;
+        om_move_layer_unit(w, ms, mu, period);
+    }
+}
+
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
+    if (ms->lay_any) om_move_layer_pass(w, ms, period);
     om_move_grid_rebuild(w, ms, 1);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) {
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
@@ -2320,6 +2486,7 @@ int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, dou
         mu->kiting = 0;
         mu->deflecting = 0;
         mu->order_kind = 0;
+        om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, x, y);
     }
     return 0;
@@ -2691,21 +2858,47 @@ int om_tactical_set_param(om_world *w, om_tac_param p, double value) {
 }
 
 int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units, uint32_t layer) {
-    /* STUB */
-    (void)w; (void)unit_ids; (void)n_units; (void)layer;
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || layer >= OM_LAYER_COUNT || (n_units > 0 && !unit_ids)) return -1;
+    om_move_sync(w);
+    ms = om_ms(w);
+    for (i = 0; i < n_units; i++) {
+        om_move_unit *mu;
+        if (om_unit_get_layer(w, unit_ids[i]) < 0 || !om_unit_alive(w, unit_ids[i])) continue;
+        mu = om_move_touch(w, ms, unit_ids[i]);
+        if (!mu) continue;
+        ms->lay_any = 1;
+        mu->transit = 0;
+        if (mu->lay_state == OM_LAY_FLIGHT) {
+            mu->lay_has_pend = layer != mu->lay_to;
+            mu->lay_pend = layer;
+        } else {
+            mu->lay_route = 0;
+            mu->lay_to = layer;
+            mu->lay_state = layer == (uint32_t)om_move_layer(w, unit_ids[i]) ? OM_LAY_NONE : OM_LAY_PENDING;
+        }
+    }
     return 0;
 }
 
 double om_unit_transition_progress(const om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
-    return 0.0;
+    const om_move_state *ms;
+    if (!w) return 0.0;
+    om_move_sync((om_world *)w);
+    ms = om_ms((om_world *)w);
+    if (unit >= OM_MOVE_MAX_UNITS || !ms->units[unit].in_use || ms->units[unit].lay_state != OM_LAY_FLIGHT) return 0.0;
+    return (double)ms->units[unit].lay_t / (double)ms->units[unit].lay_dur;
 }
 
 uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
-    return 0;
+    const om_move_state *ms;
+    int32_t own;
+    if (!w || (own = om_unit_get_layer(w, unit)) < 0) return UINT32_MAX;
+    om_move_sync((om_world *)w);
+    ms = om_ms((om_world *)w);
+    if (unit < OM_MOVE_MAX_UNITS && ms->units[unit].in_use && ms->units[unit].lay_state != OM_LAY_NONE) return ms->units[unit].lay_to;
+    return (uint32_t)om_unit_get_layer(w, unit);
 }
 
 int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down) {
