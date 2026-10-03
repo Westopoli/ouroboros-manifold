@@ -109,7 +109,7 @@ def _max_diff(a, b):
 
 # ---- scenes: jam seeds (dense, a few hundred units) and a sparse scene -----------------------------
 
-JAM_SEEDS = (1, 2, 3, 4, 5)
+JAM_SEEDS = (1, 2, 3, 4)
 JAM_N, JAM_BOX = 300, 1000.0
 
 
@@ -143,8 +143,7 @@ def test_R_097_10_A184_jam_passes_end_when_no_unit_moves_more_than_eps(lib, seed
     reference with COLLISION_SETTLE_EPS = 0.1 (and so differ from the eps = 0 path). Red on today's build,
     which always runs to the cap or to no-overlap."""
     div, _, _ = _jam_diverges(seed)
-    if not div:
-        pytest.skip("seed does not separate rule from pre-rule path (the control test covers this)")
+    assert div, f"seed {seed} does not separate the settle rule from the pre-rule path; drop it from JAM_SEEDS"
     pts = _jam_points(JAM_N, seed, JAM_BOX)
     start, got = _c_after_pass(lib, pts)
     rule, _ = reference({u: list(v) for u, v in start.items()}, settle_eps=SETTLE_EPS)
@@ -152,7 +151,7 @@ def test_R_097_10_A184_jam_passes_end_when_no_unit_moves_more_than_eps(lib, seed
 
 
 def test_R_097_10_A184_jam_scene_is_not_vacuous():
-    """The jam scenes must separate the two paths on at least one seed (else test above skips all)."""
+    """The jam scenes must separate the two paths on at least one seed (else the test above is vacuous)."""
     assert any(_jam_diverges(s)[0] for s in JAM_SEEDS)
 
 
