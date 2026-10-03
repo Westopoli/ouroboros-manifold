@@ -37,6 +37,13 @@ var p4_detail_scale: float = 1.0
 var p4_relief: float = 1.0
 var p4_info: Dictionary = {}
 var p4: Dictionary = {}
+# Pass 5 (pass5_layout.gd): the chosen layout leads, the terrain obeys it. Null layout = off.
+var p5_layout = null
+var p5_react := true
+var p5_narrow: float = 300.0
+var p5_moderate: float = 600.0
+var p5_info: Dictionary = {}
+var p5_res: Dictionary = {}
 
 var _rng := RandomNumberGenerator.new()
 
@@ -97,6 +104,10 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0)
 
 	if p4_ramps and not QaPlants.is_active("flat-terrain"):
 		Pass4Terrain.cut_ramps(self, elevation, Vector2(core_gxy.x, core_gxy.y))
+	if p5_layout != null:
+		Pass5Layout.prepare(self)
+		if p5_react:
+			Pass5Layout.react(self, elevation)
 
 	borders = []
 	_append_borders(_march_squares(water, dim, 0.5), "coast")

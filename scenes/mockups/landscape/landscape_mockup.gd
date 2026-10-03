@@ -80,6 +80,7 @@ func qa_state() -> Dictionary:
 		"top_down": _camera_rig.is_top_down(),
 	}
 	state["p4"] = _hud.get_p4().get_state()
+	state["p5"] = _hud.get_p5().get_state()
 	if fm is SpaceFieldMap:
 		var layer_blocked_pct: Array = []
 		for stat in fm.layer_stats:
@@ -184,6 +185,8 @@ func qa_set(name: String, value) -> void:
 			_hud.get_p4().set_detail_scale(float(value))
 		"relief_mult":
 			_hud.get_p4().set_relief_mult(float(value))
+		"p5":
+			_hud.get_p5().qa_apply(value)
 		"canvas":
 			_hud.qa_set_canvas(float(value))
 

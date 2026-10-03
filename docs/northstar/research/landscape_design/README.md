@@ -333,3 +333,65 @@ A new slider, large-shape relief x0.25 to 1.5 (default 1, printed in the HUD), m
 8. Layer bands: equal heights between lowest and highest ground, or fitted by share of land so layers 4 and 5 are never nearly empty?
 
 **Not built or weak.** No bridges, so rivers and bays block the flood. Ramps are generated at limit 30 only and can fail to connect on some seeds (15, 16). Ramps are one-dimensional corridors, no switchbacks beyond the shortest path. Close-up shots sit on very steep ground, so the X reads on red with a white edge.
+
+## Pass 5: the layout leads, the terrain obeys (2026-10-03)
+
+Prototype under the Prototype gate, spec `docs/northstar/plans/2026-10-03-land-mockup-pass5-spec.md`, answering Q-191-04 (amended): the landscape engine takes the layout engine's node graph and must produce what it calls for. Land kits only; the space kit and `field_map_space.gd` are untouched (`qa/space.json` runs clean). Code: `pass5_layout.gd` (reaction), `pass5_places.gd` (checks, equal distance, places), `pass5_ui.gd` (picker, views, panel); small hooks in `field_map.gd`, `hud.gd`, `pass4_ui.gd`, `landscape_mockup.gd`. Screenshots: `mockup/pass5/` (1920x1080; `scripts/mockup_qa.sh run landscape scenes/mockups/landscape/qa/pass5.json <out> --res 1920x1080`). Table run: `qa/pass5_table.json`.
+
+**What was built.**
+1. Layout picker: the eight `simulation/layout_library` layouts (off, from the seed as seed mod 8, or 1 to 8). Nodes drawn as coloured discs with labels, edges as ribbons (white path, orange flank, magenta restricted); toggle N.
+2. Terrain obeys (toggle O regenerates with the reaction off, for before and after). Runs inside the generator after the pass-4 ramps and uses the same blocked-ground mask (limit 30, footprint 300 wu). A vantage moves to the highest dry ground within 1500 wu that its neighbours can climb to; every node gets a levelled pad by kind (staging 500, objective 600, vantage 350, spawn 450, reinforcement 250, transit and flank 200, hazard 150 wu, plus a 250 wu shoulder); each chokepoint gets a flat corridor 1600 wu long at the layout's width with a wall on both sides (rises 900 wu in 120 wu and keeps rising, so the wall is blocked top to bottom); then each edge is walked by A* (blocked ground costs 5, water 9, wall closed) and, where the mask breaks it, a graded strip 500 wu wide with 150 wu shoulders is cut along the route at no more than 18 degrees, water on the route becomes a bridge, repeated up to 6 rounds with 3 tries per edge. A flank edge pays 15 to cross a choke corridor so it bypasses the choke where it can. Changed ground has its own colours (key C): pad, graded route, bridge, choke corridor, choke wall, vantage ground.
+3. Places per kind, each with its own score on the obeying terrain, heat view on a key (H cycles) and winners as markers (Z). Base: flat, open, near the staging node (side A) or the spawn node (side B), within 2500 wu. Economic: flat, water within 1500 wu, open, near its own base. Significant resource: flat, open, high, and only where the two bases' walking distances agree. Expansion: flat, open, 3000 to 8000 wu of walking from its own side and clearly nearer to it. Neutral settlement: flat, water, open, near the walking midline, 4500 wu or more from either base.
+4. Equal distance: walking distance is a Dijkstra over walkable cells (8 neighbours, 100 wu and 141 wu steps), straight distance is the straight line, both from each side's base. Resources are only eligible where the two walking distances differ by no more than the tolerance (relative to their mean). The HUD prints both sides' walking and straight distances to the objective and each resource, the difference, and says NOT MET when it fails.
+5. Checks in the HUD: edges walkable (and which are broken), each choke's asked and measured width (walkable run through the choke centre, sampled every 20 wu) and whether both sides are blocked, vantage reachable from base A and its height over the mean ground within 3000 wu, flank routes that avoid every choke corridor, base A to base B route and length.
+
+**Keys.** Y layout, O terrain obeys on/off, N layout graph, Z place markers, C changed ground, V walk view (green joined to base A, orange cut off, magenta blocked, cyan bridge, gold line per edge), H heat view and kind. Sliders: narrow choke, moderate choke, equal-distance tolerance (release to apply). Pass 4's keys all still work.
+
+**Candidate numbers (every one is Westley's to set).** Choke widths narrow 300 wu, moderate 600 wu (the layouts only say "narrow" and "moderate"). Equal-distance tolerance 10 percent. Pad radii above. Choke corridor 1600 wu long, wall 900 wu high, 500 wu band. Route strip 500 wu wide, 150 wu shoulder, 18 degree grade, 6 rounds, 3 tries. Vantage search 1500 wu, climbable at 14 degrees. Blocked-ground limit 30 degrees, footprint 300 wu (from pass 4). Place counts at canvas 24,000: 3 economic and 2 expansion per side, 2 resources, 3 settlements, scaled by canvas over 24,000 and rounded. Minimum separations 1500 (economic), 2500 (expansion), 3000 (settlement), 4000 (between resources) wu; resources at least 2500 wu of walking from each base.
+
+**Table: all eight layouts, seeds 11 to 13** (canvas 24,000, reaction on, limit 30; `qa/pass5_table.json`). Walking distances in wu. Generate is the whole regenerate (terrain, reaction, ground and pieces) in seconds on llvmpipe; the reaction alone is about 3 to 9 seconds.
+
+| layout | seed | edges walkable | chokes asked > measured (wu) | vantages reachable | base A to B walking (wu) | objective walking A / B | resource 1 walking A / B | resource 2 walking A / B | all within tolerance | generate (s) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 11 | 12 of 15 | 300 > 300, 600 > 540 | 1 of 2 | 30308 | 27808 / 2831 | 14608 / 15992 | 43916 / 23930 | no | 13.2 |
+| 1 | 12 | 15 of 15 | 300 > 300, 600 > 540 | 2 of 2 | 22315 | 18611 / 4328 | 11449 / 10867 | 20708 / 29941 | no | 4.7 |
+| 1 | 13 | 15 of 15 | 300 > 300, 600 > 540 | 2 of 2 | 26569 | 23731 / 3131 | 13812 / 13123 | 19292 / 18651 | no | 8.3 |
+| 2 | 11 | 10 of 12 | 600 > 500 | 1 of 1 | 39919 | 38378 / 1600 | 19620 / 21182 | 23765 / 18861 | no | 10.5 |
+| 2 | 12 | 12 of 12 | 600 > 500 | 1 of 1 | 20840 | 20840 / 0 | 10963 / 10160 | 18691 / 29634 | no | 4.2 |
+| 2 | 13 | 11 of 12 | 600 > 500 | 1 of 1 | no route | none / 2066 | - | - | no | 9.1 |
+| 3 | 11 | 12 of 14 | 600 > 500, 300 > 340, 300 > 240 | 2 of 2 | 16004 | 2641 / 13363 | 7773 / 8563 | 17184 / 28588 | no | 12.8 |
+| 3 | 12 | 14 of 14 | 600 > 500, 300 > 240, 300 > 240 | 2 of 2 | 16263 | 2800 / 13463 | 7741 / 8521 | 17311 / 22208 | no | 4.9 |
+| 3 | 13 | 11 of 14 | 600 > 500, 300 > 240, 300 > 240 | 1 of 2 | no route | 3963 / none | - | - | no | 12.3 |
+| 4 | 11 | 15 of 15 | 300 > 200, 600 > 500, 300 > 200 | 0 of 0 | 23251 | 21710 / 1600 | 12188 / 11063 | 34253 / 27679 | no | 11.9 |
+| 4 | 12 | 15 of 15 | 300 > 200, 600 > 500, 300 > 200 | 0 of 0 | 21254 | 21254 / 0 | 11084 / 10170 | 17654 / 33231 | no | 4.8 |
+| 4 | 13 | 15 of 15 | 300 > 200, 600 > 500, 300 > 200 | 0 of 0 | 34340 | 32675 / 2066 | 16317 / 18024 | 20231 / 23211 | no | 10.4 |
+| 5 | 11 | 11 of 11 | 300 > 200, 600 > 580 | 1 of 1 | 26355 | 23226 / 3187 | 13324 / 13197 | 27533 / 23612 | no | 10.0 |
+| 5 | 12 | 11 of 11 | 300 > 320, 600 > 580 | 1 of 1 | 32296 | 29209 / 3087 | 15499 / 16797 | 20538 / 12489 | no | 4.5 |
+| 5 | 13 | 8 of 11 | 300 > 320, 600 > 580 | 0 of 1 | no route | none / 3087 | - | - | no | 10.1 |
+| 6 | 11 | 11 of 14 | 300 > 300, 600 > 500 | 2 of 2 | 22523 | 20923 / 1600 | 10846 / 11853 | 19814 / 27304 | no | 13.4 |
+| 6 | 12 | 14 of 14 | 300 > 300, 600 > 500 | 2 of 2 | 25342 | 25301 / 100 | 13885 / 14671 | 9674 / 15668 | no | 5.5 |
+| 6 | 13 | 14 of 14 | 300 > 300, 600 > 500 | 2 of 2 | 26728 | 25062 / 2066 | 14388 / 13281 | 15234 / 19961 | no | 9.8 |
+| 7 | 11 | 13 of 13 | no chokes | 0 of 0 | 29066 | 27001 / 2183 | 14012 / 15054 | 18424 / 10643 | no | 10.7 |
+| 7 | 12 | 13 of 13 | no chokes | 0 of 0 | 29735 | 27245 / 3514 | 14947 / 15095 | 19037 / 10698 | no | 4.8 |
+| 7 | 13 | 13 of 13 | no chokes | 0 of 0 | 23359 | 21245 / 2407 | 12154 / 11205 | 20524 / 27842 | no | 7.7 |
+| 8 | 11 | 13 of 14 | 600 > 600, 300 > 380, 300 > 200 | 1 of 2 | 10624 | 1900 / 8724 | 5541 / 5083 | 14227 / 23699 | no | 11.3 |
+| 8 | 12 | 14 of 14 | 600 > 600, 300 > 380, 300 > 380 | 2 of 2 | 11321 | 2024 / 9297 | 5938 / 5383 | 8611 / 12046 | no | 4.8 |
+| 8 | 13 | 14 of 14 | 600 > 500, 300 > 380, 300 > 260 | 2 of 2 | 11860 | 1800 / 10060 | 6190 / 5728 | 24531 / 20455 | no | 10.2 |
+
+**What the numbers say.**
+(a) Most edges become walkable, but not all: 12 of 15 on layout 1 seed 11, and on seeds 13 of layouts 2, 3 and 5 base A and base B are not joined at all. The broken edges are where a pad or a choke corridor sits at a height the neighbouring ground cannot reach inside the grade (a spawn node on a cliff, a choke on a plateau): the cutter meets in the middle for the strip but later cuts still undo earlier ones. Not fixed in this pass; the HUD says which edges.
+(b) Chokes are real: the corridor is walkable and both sides are blocked on every table row. Measured widths land within 100 wu of the asked width (200 to 380 measured for 300 asked, 500 to 600 for 600), because the mask is cells 100 wu wide and the 300 wu footprint rounds the run.
+(c) Equal distance is never met for the objective: the layouts are assaults (the objective is placed by the layout for one side), so Q-191-03 cannot hold for the objective without moving it: layouts 1, 2, 4, 5, 6 and 7 put it a few thousand wu from the enemy spawn and 15,000 to 38,000 wu of walking from the staging, and layouts 3 and 8 do the reverse (about 2000 to 4000 from the staging, 8,700 to 13,400 from the spawn). The first resource usually lands within 10 percent; the second usually cannot, because of the 4000 wu separation from the first, and is placed at the most balanced cell and marked "tol not met".
+(d) Seed 12 is a small-island map (7 percent land); the reaction bridges the sea, so edges become walkable across water, which reads as long cyan causeways in the react view.
+(e) The cut routes are wide graded strips; where two routes cross they look like a flattened junction. Natural-looking is Westley's call (question 4 below).
+(f) The mask limits places to the walkable network and the pads: with about 60 percent of land too steep, the heat views show scores only along the cut routes and on the few natural flats.
+
+**Questions for Westley.**
+1. Choke widths: are 300 wu (narrow) and 600 wu (moderate) the right candidates? The layout only says "narrow" and "moderate".
+2. Distance measure and tolerance: is the walking distance over the 8-neighbour walkable mask the right measure, and 10 percent the right tolerance? Which should win when walking and straight distance disagree (they differ by 50 to 150 percent in the table)?
+3. The objective cannot be equidistant in an assault layout. Should the objective (and the second resource) be allowed to move to the equal-distance line, or should the layout engine place the staging and spawn nodes symmetrically?
+4. Do the cut routes (500 wu graded strips, bridges over sea and rivers, flat pads on cliffs) read as natural landscape, or should the terrain reshape more gently, or the layout move the node instead of the terrain bending to it?
+5. Counts: 3 economic and 2 expansion per side, 2 resources, 3 settlements at canvas 24,000, scaled by canvas. Right shape, or should they come from the layout?
+6. Should layouts with no chokepoint (layout 7) and with hazard anchors (a terrain break, cliff face) ask the terrain for a hazard feature too? Hazard anchors only get a 150 wu pad here.
+
+**Not built or not working.** Edges that stay broken (counts in the table). Nodes in open sea are given a pad islet, so a layout node can sit on a lone island joined by a bridge. No landforms batch 2, settlements, or archetype bias. The vantage check is height over the local mean (one candidate measure), not a field-of-view check.

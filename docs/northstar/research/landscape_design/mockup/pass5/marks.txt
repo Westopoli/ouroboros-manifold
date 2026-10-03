@@ -1,0 +1,81 @@
+4:regenerate timing: gen=7587.6ms ground=491.0ms placer=1764.0ms total=9842.6ms
+5:QA_CALL qa_set -> <null>
+6:QA_CALL qa_camera -> <null>
+7:QA_CALL qa_set -> <null>
+8:regenerate timing: gen=10902.3ms ground=487.7ms placer=1750.3ms total=13140.3ms
+9:QA_CALL qa_seed -> <null>
+10:QA_CALL qa_set -> <null>
+11:QA_CALL qa_set -> <null>
+12:QA_CALL qa_set -> <null>
+13:QA_CALL qa_set -> <null>
+14:QA_CALL qa_set -> <null>
+15:QA_CALL qa_set -> <null>
+16:QA_CALL qa_set -> <null>
+17:QA_CALL qa_set -> <null>
+18:QA_CALL qa_set -> <null>
+19:QA_CALL qa_set -> <null>
+20:QA_CALL qa_set -> <null>
+21:QA_CALL qa_set -> <null>
+22:regenerate timing: gen=2626.6ms ground=487.2ms placer=1756.8ms total=4870.7ms
+23:QA_CALL qa_seed -> <null>
+24:QA_CALL qa_set -> <null>
+25:regenerate timing: gen=10858.1ms ground=462.6ms placer=1755.5ms total=13076.2ms
+26:QA_CALL qa_seed -> <null>
+27:QA_CALL qa_set -> <null>
+28:QA_CALL qa_set -> <null>
+29:QA_CALL qa_set -> <null>
+30:QA_CALL qa_set -> <null>
+31:QA_CALL qa_set -> <null>
+32:QA_CALL qa_camera -> <null>
+33:QA_CALL qa_set -> <null>
+34:QA_CALL qa_set -> <null>
+35:regenerate timing: gen=2658.7ms ground=473.5ms placer=1771.6ms total=4903.8ms
+36:QA_CALL qa_seed -> <null>
+37:QA_CALL qa_set -> <null>
+38:regenerate timing: gen=9592.7ms ground=478.7ms placer=1746.6ms total=11818.0ms
+39:QA_CALL qa_seed -> <null>
+40:QA_CALL qa_set -> <null>
+41:QA_CALL qa_set -> <null>
+42:QA_CALL qa_set -> <null>
+43:QA_CALL qa_set -> <null>
+44:QA_CALL qa_set -> <null>
+45:QA_CALL qa_camera -> <null>
+46:QA_CALL qa_set -> <null>
+47:QA_CALL qa_set -> <null>
+48:regenerate timing: gen=2632.9ms ground=476.4ms placer=1764.3ms total=4873.5ms
+49:QA_CALL qa_seed -> <null>
+50:QA_CALL qa_set -> <null>
+51:regenerate timing: gen=10013.0ms ground=476.2ms placer=1760.7ms total=12249.9ms
+52:QA_CALL qa_seed -> <null>
+53:QA_CALL qa_set -> <null>
+54:QA_CALL qa_set -> <null>
+55:QA_CALL qa_set -> <null>
+56:QA_CALL qa_set -> <null>
+57:QA_CALL qa_set -> <null>
+58:QA_CALL qa_camera -> <null>
+59:QA_CALL qa_set -> <null>
+60:QA_CALL qa_set -> <null>
+61:regenerate timing: gen=910.5ms ground=477.3ms placer=1055.9ms total=2443.6ms
+62:QA_CALL qa_seed -> <null>
+63:QA_CALL qa_set -> <null>
+64:regenerate timing: gen=3180.7ms ground=473.3ms placer=1074.2ms total=4728.1ms
+65:QA_CALL qa_seed -> <null>
+66:QA_CALL qa_set -> <null>
+67:QA_CALL qa_set -> <null>
+68:QA_CALL qa_set -> <null>
+69:QA_CALL qa_set -> <null>
+70:QA_CALL qa_set -> <null>
+71:QA_CALL qa_camera -> <null>
+72:QA_CALL qa_set -> <null>
+73:QA_CALL qa_set -> <null>
+74:regenerate timing: gen=1949.8ms ground=478.4ms placer=1602.5ms total=4030.8ms
+75:QA_CALL qa_seed -> <null>
+76:QA_CALL qa_set -> <null>
+77:regenerate timing: gen=6155.7ms ground=471.6ms placer=1605.2ms total=8232.4ms
+78:QA_CALL qa_seed -> <null>
+79:QA_CALL qa_set -> <null>
+80:QA_CALL qa_set -> <null>
+81:QA_CALL qa_set -> <null>
+82:QA_CALL qa_set -> <null>
+83:QA_CALL qa_set -> <null>
+84:QA_CALL qa_camera -> <null>

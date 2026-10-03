@@ -1,0 +1,397 @@
+{
+  "_qa": {
+    "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
+    "display": "X11",
+    "fps_ms": 701.484,
+    "frame": 104,
+    "last_input": "Mouse motion at position ((960.0, 540.0)) with velocity ((913.8541, 514.0429))",
+    "method": "gl_compatibility",
+    "os_inputs": 1,
+    "plants": [],
+    "shots": [
+      "L01_s11_heat_base",
+      "L01_s11_heat_economic",
+      "L01_s11_heat_resource",
+      "L01_s11_heat_expansion",
+      "L01_s11_heat_settlement",
+      "L01_s11_raw_layout",
+      "L01_s11_react",
+      "L01_s11_walk",
+      "L01_s11_choke",
+      "L03_s11_raw_layout",
+      "L03_s11_react",
+      "L03_s11_walk",
+      "L03_s11_choke",
+      "L06_s11_raw_layout",
+      "L06_s11_react",
+      "L06_s11_walk",
+      "L06_s11_choke"
+    ],
+    "window_px": [
+      1920,
+      1080
+    ]
+  },
+  "band": "tactical",
+  "camera_height": 3500.0,
+  "canvas_wu": 24000.0,
+  "city": {
+    "footprint_aspect": 1.5,
+    "fraction_within_r_of_core": 0.416058394160584
+  },
+  "elevation_max_wu": 4523.94384765625,
+  "hash": 1694903376,
+  "kit": "greek",
+  "objective_px": [
+    2017.45983886719,
+    1641.52038574219
+  ],
+  "overlay": {
+    "parent_class": "Node3D",
+    "parent_path": "World",
+    "visible": false
+  },
+  "p4": {
+    "analyse_ms": 221.239,
+    "band_floor_wu": [
+      0.0733314678072929,
+      904.847434705496,
+      1809.62153794318,
+      2714.39564118087,
+      3619.16974441856
+    ],
+    "bench_from_seed": true,
+    "bench_share_pct": 23.8223320732771,
+    "core_cell": 46922,
+    "core_landmass_pct": 97.3061507630646,
+    "detail_scale": 1.0,
+    "footprint_table": {
+
+    },
+    "footprint_wu": 300.0,
+    "highest_wu": 4523.94384765625,
+    "hover_steep_deg": -1.0,
+    "land_pct": 44.6755393330005,
+    "landform_mode": "seed",
+    "landforms": [
+      "mesa",
+      "islands"
+    ],
+    "layer_share_pct": [
+      43.2094959149067,
+      25.9634653923231,
+      22.1674117465701,
+      7.81177740095576,
+      0.847849545244335
+    ],
+    "limit": 30.0,
+    "lowest_wu": 0.0733314678072929,
+    "min_relief_wu": 2500.0,
+    "ramp_bands": [
+      2,
+      3,
+      4,
+      4,
+      5
+    ],
+    "ramp_cells": 696,
+    "ramps": 5,
+    "ramps_on": true,
+    "relief_mult": 1.0,
+    "relief_scale": 1.0,
+    "relief_wu": 4523.87051618844,
+    "shape_ms": 17.428,
+    "steep_pct": {
+      "30.0": 64.0704485894867,
+      "32.5": 60.740712193618,
+      "35.0": 57.0833975643595
+    },
+    "step_wu": 904.774103237689,
+    "unit_selected": false,
+    "variety_bits": 2.42827715546527,
+    "variety_max_bits": 4.64385618977472,
+    "view": "react",
+    "walk": {
+      "30.0": {
+        "layers_reachable": 5,
+        "peaks": 17,
+        "peaks_reachable": 0,
+        "peaks_reachable_pct": 0.0,
+        "reach_pct": 1.15615847078773
+      },
+      "35.0": {
+        "layers_reachable": 5,
+        "peaks": 17,
+        "peaks_reachable": 0,
+        "peaks_reachable_pct": 0.0,
+        "reach_pct": 1.51842145830122
+      }
+    },
+    "x_cursor_px": [
+      0.0,
+      0.0
+    ],
+    "x_cursor_shown": false
+  },
+  "p5": {
+    "bases_route": true,
+    "bases_straight_wu": 20700.0,
+    "bases_walk_wu": 22522.53515625,
+    "changed_cells": {
+      "bridge": 684,
+      "choke corridor": 280,
+      "choke wall": 510,
+      "graded route": 5321,
+      "pad": 570,
+      "vantage ground": 136
+    },
+    "chokes": [
+      {
+        "hint": "narrow",
+        "id": "choke_pass_entrance",
+        "measured_wu": 300.0,
+        "sides_blocked": true,
+        "target_wu": 300.0
+      },
+      {
+        "hint": "moderate",
+        "id": "choke_pass_exit",
+        "measured_wu": 500.0,
+        "sides_blocked": true,
+        "target_wu": 600.0
+      }
+    ],
+    "counts_per_side": {
+      "economic": 3,
+      "expansion": 2,
+      "settlement": 3
+    },
+    "distance_rows": [
+      {
+        "name": "objective",
+        "straight_a": 19120.0,
+        "straight_b": 1580.0,
+        "straight_diff": 1.69468599033816,
+        "walk_a": 20922.53515625,
+        "walk_b": 1600.0,
+        "walk_diff": 1.71584015939591,
+        "within_tol": false
+      },
+      {
+        "name": "resource 1",
+        "straight_a": 10196.568359375,
+        "straight_b": 10692.052734375,
+        "straight_diff": 0.0474406015386293,
+        "walk_a": 10845.583984375,
+        "walk_b": 11852.6845703125,
+        "walk_diff": 0.0887380976668831,
+        "within_tol": true
+      },
+      {
+        "name": "resource 2",
+        "straight_a": 16175.5986328125,
+        "straight_b": 8062.2578125,
+        "straight_diff": 0.66947676157902,
+        "walk_a": 19813.701171875,
+        "walk_b": 27303.666015625,
+        "walk_diff": 0.317927986678214,
+        "within_tol": false
+      }
+    ],
+    "edges_broken": [
+      "staging_south-flank_east_trail",
+      "approach_center-hazard_cliff_east",
+      "flank_east_trail-vantage_summit_east"
+    ],
+    "edges_total": 14,
+    "edges_walkable": 11,
+    "equal_distance_ok": false,
+    "fair_cells": 128,
+    "flank_bypass_ok": 3,
+    "flank_total": 6,
+    "kind": "settlement",
+    "layout": "layout_06_flanking_pass",
+    "mode": "6",
+    "moderate_wu": 600.0,
+    "name": "Flanking Pass",
+    "narrow_wu": 300.0,
+    "places": [
+      {
+        "kind": "base",
+        "pos": [
+          12000.0,
+          22000.0
+        ],
+        "score": 0.8507319688797,
+        "side": 0,
+        "unmet": false
+      },
+      {
+        "kind": "base",
+        "pos": [
+          12000.0,
+          1300.0
+        ],
+        "score": 0.501998424530029,
+        "side": 1,
+        "unmet": false
+      },
+      {
+        "kind": "resource",
+        "pos": [
+          10600.0,
+          11900.0
+        ],
+        "score": 0.644855856895447,
+        "side": 2,
+        "unmet": false
+      },
+      {
+        "kind": "resource",
+        "pos": [
+          6200.0,
+          6900.0
+        ],
+        "score": 0.0,
+        "side": 2,
+        "unmet": true
+      },
+      {
+        "kind": "economic",
+        "pos": [
+          12000.0,
+          20500.0
+        ],
+        "score": 0.822727262973785,
+        "side": 0,
+        "unmet": false
+      },
+      {
+        "kind": "economic",
+        "pos": [
+          11700.0,
+          17900.0
+        ],
+        "score": 0.79473090171814,
+        "side": 0,
+        "unmet": false
+      },
+      {
+        "kind": "economic",
+        "pos": [
+          7900.0,
+          14600.0
+        ],
+        "score": 0.74346911907196,
+        "side": 0,
+        "unmet": false
+      },
+      {
+        "kind": "economic",
+        "pos": [
+          12100.0,
+          5400.0
+        ],
+        "score": 0.760548055171967,
+        "side": 1,
+        "unmet": false
+      },
+      {
+        "kind": "economic",
+        "pos": [
+          12200.0,
+          8300.0
+        ],
+        "score": 0.721472561359406,
+        "side": 1,
+        "unmet": false
+      },
+      {
+        "kind": "economic",
+        "pos": [
+          12700.0,
+          6800.0
+        ],
+        "score": 0.71603798866272,
+        "side": 1,
+        "unmet": false
+      },
+      {
+        "kind": "expansion",
+        "pos": [
+          10100.0,
+          15900.0
+        ],
+        "score": 0.601642489433289,
+        "side": 0,
+        "unmet": false
+      },
+      {
+        "kind": "settlement",
+        "pos": [
+          4000.0,
+          11700.0
+        ],
+        "score": 0.76909351348877,
+        "side": 2,
+        "unmet": false
+      },
+      {
+        "kind": "settlement",
+        "pos": [
+          5100.0,
+          16000.0
+        ],
+        "score": 0.710222005844116,
+        "side": 2,
+        "unmet": false
+      },
+      {
+        "kind": "settlement",
+        "pos": [
+          18200.0,
+          7500.0
+        ],
+        "score": 0.49770325422287,
+        "side": 2,
+        "unmet": false
+      }
+    ],
+    "places_ms": 394.64,
+    "react": true,
+    "react_ms": 7366.961,
+    "resources_unmet": 1,
+    "route_iterations": 3,
+    "routes_cut": 29,
+    "scale": 1.0,
+    "tol": 0.1,
+    "vantages": [
+      {
+        "above_local_mean_wu": 0.204298231336807,
+        "height_wu": 100.0,
+        "id": "vantage_summit_west",
+        "moved": false,
+        "reachable": true
+      },
+      {
+        "above_local_mean_wu": 326.018938558887,
+        "height_wu": 1961.11572265625,
+        "id": "vantage_summit_east",
+        "moved": false,
+        "reachable": true
+      }
+    ],
+    "vantages_reachable": 2
+  },
+  "piece_total": 12206,
+  "regen_count": 8,
+  "seed": 11,
+  "stability": 60.0,
+  "timing_ms": {
+    "gen": 10012.966,
+    "ground": 476.226,
+    "placer": 1760.738,
+    "total": 12249.93
+  },
+  "top_down": true
+}

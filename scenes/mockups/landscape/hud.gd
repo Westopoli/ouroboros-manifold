@@ -22,6 +22,7 @@ var _camera_rig: Node3D
 var _generated: Node3D
 var _field_map: FieldMap
 var _p4
+var _p5
 
 var _kits: Dictionary = {}
 var _kit_name: String = DEFAULT_KIT
@@ -115,6 +116,10 @@ func _ready() -> void:
 	_p4 = preload("res://scenes/mockups/landscape/pass4_ui.gd").new()
 	add_child(_p4)
 	_p4.setup(self, _camera_rig, $VBoxContainer)
+	_p5 = preload("res://scenes/mockups/landscape/pass5_ui.gd").new()
+	add_child(_p5)
+	_p5.setup(self, _p4, _camera_rig)
+	_p4.set_p5(_p5)
 
 	_regenerate()
 
@@ -131,6 +136,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_regenerate_pressed()
 		elif event.keycode == KEY_TAB:
 			_on_kit_toggle_pressed()
+		elif _p5.handle_key(event.keycode):
+			pass
 		elif _p4.handle_key(event.keycode):
 			pass
 		elif _kit_name == SPACE_KIT and event.keycode >= KEY_0 and event.keycode <= KEY_5:
@@ -194,6 +201,10 @@ func _regenerate() -> void:
 		field_map.p4_ramps = _p4.ramps
 		field_map.p4_detail_scale = _p4.detail_scale
 		field_map.p4_relief = _p4.relief_mult
+		field_map.p5_layout = _p5.layout_for(_seed)
+		field_map.p5_react = _p5.react_on
+		field_map.p5_narrow = _p5.narrow
+		field_map.p5_moderate = _p5.moderate
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()
@@ -229,6 +240,7 @@ func _regenerate() -> void:
 	_map_view.set_field_map(field_map)
 	_update_space_controls(field_map)
 	_p4.on_regenerated(field_map, _generated, is_space)
+	_p5.on_regenerated(field_map, _generated, is_space)
 	_regen_count += 1
 
 
@@ -238,6 +250,10 @@ func p4_regenerate() -> void:
 
 func get_p4():
 	return _p4
+
+
+func get_p5():
+	return _p5
 
 
 func _on_regenerate_pressed() -> void:

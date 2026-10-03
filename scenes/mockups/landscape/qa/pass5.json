@@ -1,0 +1,755 @@
+[
+[
+"state",
+"boot"
+],
+[
+"call",
+"qa_set",
+"top_down",
+true
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": true,
+"graph": true,
+"places": true,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"kind": "base",
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"heat"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_heat_base"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"kind": "economic",
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"heat"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_heat_economic"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"kind": "resource",
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"heat"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_heat_resource"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"kind": "expansion",
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"heat"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_heat_expansion"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"kind": "settlement",
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"heat"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_heat_settlement"
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"visual"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": false,
+"graph": true,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_raw_layout"
+],
+[
+"state",
+"L01_s11_raw"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"react": true,
+"graph": true,
+"places": true,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_react"
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"p5walk"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_walk"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"look_choke": 3500,
+"regen": false
+}
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s11_choke"
+],
+[
+"state",
+"L01_s11_on"
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"visual"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "3",
+"react": false,
+"graph": true,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L03_s11_raw_layout"
+],
+[
+"state",
+"L03_s11_raw"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"react": true,
+"graph": true,
+"places": true,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L03_s11_react"
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"p5walk"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L03_s11_walk"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"look_choke": 3500,
+"regen": false
+}
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L03_s11_choke"
+],
+[
+"state",
+"L03_s11_on"
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"visual"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "6",
+"react": false,
+"graph": true,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L06_s11_raw_layout"
+],
+[
+"state",
+"L06_s11_raw"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"react": true,
+"graph": true,
+"places": true,
+"regen": false
+}
+],
+[
+"seed",
+11
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L06_s11_react"
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"p5walk"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L06_s11_walk"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"look_choke": 3500,
+"regen": false
+}
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L06_s11_choke"
+],
+[
+"state",
+"L06_s11_on"
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"visual"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": false,
+"graph": true,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s12_raw_layout"
+],
+[
+"state",
+"L01_s12_raw"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"react": true,
+"graph": true,
+"places": true,
+"regen": false
+}
+],
+[
+"seed",
+12
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s12_react"
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"p5walk"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s12_walk"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"look_choke": 3500,
+"regen": false
+}
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s12_choke"
+],
+[
+"state",
+"L01_s12_on"
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"visual"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"layout": "1",
+"react": false,
+"graph": true,
+"places": false,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s13_raw_layout"
+],
+[
+"state",
+"L01_s13_raw"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"react": true,
+"graph": true,
+"places": true,
+"regen": false
+}
+],
+[
+"seed",
+13
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s13_react"
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"p5walk"
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s13_walk"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"graph": false,
+"places": false,
+"regen": false
+}
+],
+[
+"call",
+"qa_set",
+"p4_view",
+"react"
+],
+[
+"call",
+"qa_set",
+"p5",
+{
+"look_choke": 3500,
+"regen": false
+}
+],
+[
+"wait_frames",
+4
+],
+[
+"screenshot",
+"L01_s13_choke"
+],
+[
+"state",
+"L01_s13_on"
+],
+[
+"call",
+"qa_camera",
+24000,
+12000,
+12000
+]
+]

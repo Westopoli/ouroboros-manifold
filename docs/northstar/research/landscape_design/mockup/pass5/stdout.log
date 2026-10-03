@@ -1,0 +1,84 @@
+Godot Engine v4.6.3.stable.official.7d41c59c4 - https://godotengine.org
+OpenGL API 4.5 (Core Profile) Mesa 26.0.8-1ubuntu0.3 - Compatibility - Using Device: Mesa - llvmpipe (LLVM 21.1.8, 256 bits)
+
+regenerate timing: gen=7587.6ms ground=491.0ms placer=1764.0ms total=9842.6ms
+QA_CALL qa_set -> <null>
+QA_CALL qa_camera -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=10902.3ms ground=487.7ms placer=1750.3ms total=13140.3ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=2626.6ms ground=487.2ms placer=1756.8ms total=4870.7ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=10858.1ms ground=462.6ms placer=1755.5ms total=13076.2ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_camera -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=2658.7ms ground=473.5ms placer=1771.6ms total=4903.8ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=9592.7ms ground=478.7ms placer=1746.6ms total=11818.0ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_camera -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=2632.9ms ground=476.4ms placer=1764.3ms total=4873.5ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=10013.0ms ground=476.2ms placer=1760.7ms total=12249.9ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_camera -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=910.5ms ground=477.3ms placer=1055.9ms total=2443.6ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=3180.7ms ground=473.3ms placer=1074.2ms total=4728.1ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_camera -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=1949.8ms ground=478.4ms placer=1602.5ms total=4030.8ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+regenerate timing: gen=6155.7ms ground=471.6ms placer=1605.2ms total=8232.4ms
+QA_CALL qa_seed -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_set -> <null>
+QA_CALL qa_camera -> <null>
