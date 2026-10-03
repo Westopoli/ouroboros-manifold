@@ -770,7 +770,7 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
         if not trigger:
             return True, "skipped: diff touches none of csrc/ autoload/ scenes/ (non-mockup) project.godot tests/qa/desktop/"
     if not (candidate / target).exists():
-        return True, f"skipped: candidate has no {target}"
+        return False, f"playthrough suite missing: candidate has no {target}"
     t0 = time.monotonic()
     if setup:
         (candidate / "logs").mkdir(exist_ok=True)

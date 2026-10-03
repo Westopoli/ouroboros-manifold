@@ -54,3 +54,9 @@ def test_known_red_file_holds_only_c8_05():
     lines = [l.strip() for l in mgs.DEFAULT_KNOWN_RED.read_text().splitlines()
              if l.strip() and not l.startswith("#")]
     assert lines == ["test_s_c8_05"]
+
+
+def test_missing_suite_fails_stage(tmp_path):
+    ok, detail = mgs.playthrough_check(tmp_path, "HEAD", python_exe=PY, timeout=60,
+                                       target="tests/qa/desktop", force=True, setup=False)
+    assert not ok and "suite missing" in detail
