@@ -16,7 +16,7 @@ from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: 
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 DRAFT = "unconfirmed draft"
-SCENES = ("mirror", "high_ground", "choke")
+SCENES = ("mirror", "high_ground", "choke", "choke_phase_b")
 UPS = ((0.5, 0.25), (0.5, 0.5), (0.75, 0.25), (0.75, 0.5), (1.0, 0.25), (1.0, 0.5))
 SWEEP_NOTE = "settings are draft sweep points (A174)"
 HIGH_NOTE = "units on different layers cannot fire until reach by type lands (Phase C G5)"
@@ -42,6 +42,11 @@ def _lb(u1, u2):
 def _lc(u1, u2, d):
     return {**_lb(u1, u2), "OM_TP_DAMAGE_UP_1": d, "OM_TP_DAMAGE_UP_2": d / 2, "OM_TP_DAMAGE_DOWN_1": 1.0,
             "OM_TP_DAMAGE_DOWN_2": 1.0}
+
+
+def _dims(label):
+    """(size, enemy_from, enemy_to) of a cell: the Phase B choke is 8 defenders against 7 to 12 attackers."""
+    return (8, 7, 12) if "choke_phase_b" in label else (16, 8, 24)
 
 
 def _expected():
@@ -90,14 +95,21 @@ def _run(tmp_path, fake=None, sub="out", real=False, mutate=None):
 def test_counts_and_order_and_labels():
     d = batches.get("layers")
     assert d.name == "layers" and d.title and d.scene
-    assert len(EXPECTED) == 3 + 18 + 36 + 16 == 73
+    assert len(EXPECTED) == 4 + 24 + 48 + 16 == 92
     assert [c.label for c in d.cells] == [e[0] for e in EXPECTED]
     assert d.variants == (("default", {}),) and d.weighted is False
 
 
-def test_every_cell_is_16_units_against_8_to_24_with_10_replicates():
+def test_every_cell_is_16_units_against_8_to_24_with_10_replicates_except_choke_phase_b():
     for c in batches.get("layers").cells:
-        assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == (16, 8, 24, 10), c.label
+        assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == _dims(c.label) + (10,), c.label
+
+
+def test_choke_phase_b_cells_are_8_defenders_against_7_to_12():
+    cells = [c for c in batches.get("layers").cells if "choke_phase_b" in c.label]
+    assert [c.label for c in cells][0] == "LA:choke_phase_b" and len(cells) == 1 + 6 + 12
+    for c in cells:
+        assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == (8, 7, 12, 10), c.label
 
 
 def test_settings_per_cell_including_not_expressed():
@@ -118,7 +130,8 @@ def test_which_cells_are_expressed():
     d = batches.get("layers")
     assert [c.label for c in d.cells if c.build is not None] == EXPRESSED
     assert [c.label for c in d.cells if c.build is None] == NOT_EXPRESSED
-    assert len(EXPRESSED) == 2 + 16 and "LA:mirror" in EXPRESSED and "LA:choke" in EXPRESSED
+    assert len(EXPRESSED) == 3 + 16 and "LA:mirror" in EXPRESSED and "LA:choke" in EXPRESSED
+    assert "LA:choke_phase_b" in EXPRESSED
     for c in d.cells:
         if c.build is not None:
             assert c.status == DRAFT, c.label
@@ -129,6 +142,7 @@ def test_which_cells_are_expressed():
 def test_notes():
     d = {c.label: c for c in batches.get("layers").cells}
     assert d["LA:mirror"].note == SWEEP_NOTE and d["LA:choke"].note == SWEEP_NOTE
+    assert d["LA:choke_phase_b"].note == SWEEP_NOTE
     assert d["LA:high_ground"].note == HIGH_NOTE
     for label, c in d.items():
         if label.startswith(("LB:", "LC:")):
@@ -170,6 +184,16 @@ def test_mirror_is_one_layer_blob_v_blob_and_choke_is_the_sampled_wall(monkeypat
     assert choke.terrain == shift_terrain(maps.sample_map("wall", 0), 2000.0, 2000.0)
 
 
+def test_choke_phase_b_build_is_the_phase_b_scene(monkeypatch):
+    fake_sensors(monkeypatch)
+    d = {c.label: c for c in batches.get("layers").cells}
+    setup = d["LA:choke_phase_b"].build(9, False)
+    assert [(g.side, g.count, g.formation, g.order) for g in setup.groups] == [
+        (0, 8, "line", "attack_move"), (1, 9, "blob", "attack_move")]
+    assert setup.terrain.canvas == (3000.0, 1600.0) and len(setup.terrain.blocks) == 2
+    assert [g.layer for g in setup.groups] == [0, 0]
+
+
 def test_scan_calls_only_expressed_cells_with_the_overlay(tmp_path):
     _, fake, _ = _run(tmp_path)
     assert [c["label"] for c in fake.calls] == EXPRESSED
@@ -177,7 +201,7 @@ def test_scan_calls_only_expressed_cells_with_the_overlay(tmp_path):
     want = {e[0]: e[1] for e in EXPECTED}
     for c in fake.calls:
         assert c["setup"].settings == {**batches.BASE_SETTINGS, **want[c["label"]]}, c["label"]
-        assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == (16, 8, 24, 10)
+        assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == _dims(c["label"]) + (10,)
 
 
 def test_settings_overlay_order_base_then_variant_then_cell(tmp_path):
@@ -211,6 +235,7 @@ def test_scene_text_says_drafts_and_sampled_wall():
     assert "A174" in scene and "Architect" in scene and "not confirmed" in scene
     assert "LB" in scene and "LC" in scene
     assert "sampled wall" in scene
+    assert "Phase B choke" in scene and "attack-move" in scene and "8 defenders" in scene
 
 
 def test_run_file(tmp_path):
@@ -222,7 +247,7 @@ def test_run_file(tmp_path):
     results = _section(t, "Results")
     line = [ln for ln in results.splitlines() if ln.startswith("- body20_range150_ratio7.5")][0]
     assert "(unconfirmed draft)" in line and "16 units beat 21, lose to 22" in line
-    assert sum(ln.startswith("- ") for ln in results.splitlines()) == 18
+    assert sum(ln.startswith("- ") for ln in results.splitlines()) == 19
     sec = _section(t, "What the instrument could not express")
     assert "high ground and the LB and LC tables wait for reach" in sec
     assert REACH_TABLE_TEXT in sec and "the choke is a sampled wall, not the Phase B scene" in sec
@@ -234,13 +259,13 @@ def test_run_file(tmp_path):
 def test_page_and_csv(tmp_path):
     _, _, paths = _run(tmp_path)
     page = _text(paths["page"])
-    assert PROVISIONAL in page and page.count("<svg") >= 18
+    assert PROVISIONAL in page and page.count("<svg") >= 19
     for label in EXPRESSED:
         assert label in page
     assert REACH_NOTE in page and HIGH_NOTE in page
     with open(paths["csv"], newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    assert len(rows) == 18 * 17 * 2
+    assert len(rows) == 18 * 17 * 2 + 6 * 2
     assert {r["cell"] for r in rows} == set(EXPRESSED)
     assert {r["status"] for r in rows} == {DRAFT}
 

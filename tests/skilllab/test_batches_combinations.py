@@ -86,6 +86,7 @@ def test_notes_name_the_skills_with_no_play():
     n = cells["combo:S3+S4+S5"].note
     assert all(s in n for s in ("S3", "S4", "S5")) and "S1" not in n and "S2" not in n
     assert "S1" in cells["combo:S1+S2+S3+S4+S5"].note
+    assert "no rule for combining plays" not in " ".join(c.note for c in cells.values())
 
 
 def test_real_builds(monkeypatch):
@@ -115,7 +116,8 @@ def test_registering_s3_changes_the_result(s3_registered, monkeypatch):
     assert setup.groups[0].formation == "blob" and setup.groups[0].params == {"radius": 100}   # the S3 play, not S2's
     pair = cells["combo:S2+S3"]
     assert pair.build is None and pair.status == "not expressed"
-    assert "no rule for combining plays" in pair.note
+    assert "no rule" not in pair.note and "slot plays do not exist yet to fill" in pair.note
+    assert "shape" in pair.note and "layer" in pair.note
     assert "S3" not in cells["combo:S3+S4"].note and "S4" in cells["combo:S3+S4"].note
     assert "S1" in cells["combo:S1+S3"].note and "no rule" not in cells["combo:S1+S3"].note
 
@@ -171,7 +173,7 @@ def test_profile_row_for_a_registered_s3(s3_registered, tmp_path):
     s3_index = SUBSETS.index(frozenset({"S3"}))
     assert "S3" in rows[s3_index] and "14" in rows[s3_index] and re.search(r"(?<![\d.])4(?![\d.])", rows[s3_index])
     pair = rows[SUBSETS.index(frozenset({"S2", "S3"}))]
-    assert pair.count("not expressed") >= 2 or "no rule for combining plays" in pair
+    assert pair.count("not expressed") >= 2
 
 
 def test_page_has_the_profile_table_and_charts(tmp_path):
