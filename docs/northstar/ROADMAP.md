@@ -15,13 +15,12 @@ Rules for this file:
 
 ## 1. Now building
 
-All lanes were paused by Westley on 2026-10-03. Nothing is running except the stage 0 audit.
+All lanes were paused by Westley on 2026-10-03. Nothing is running. The stage 0 audit (2026-10-03, origin/main `1c2d4494`) is the source for the mission-plays row.
 
 | Plan | Doc | Lane | Owns | State | Exit condition |
 |---|---|---|---|---|---|
-| Stage 0 audit: what is left in mission plays, and does the MVP loop play today | none (one Engineer report) | Planner chat | read-only | Running 2026-10-03 | Report delivered; this file updated from it |
 | Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
-| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-09-30-work-list.md` | Coordinator chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | Paused. Remaining items: stage 0 will say. | Every work-list row wired or ruled dead, and the loop plays end to end |
+| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-09-30-work-list.md` | Coordinator chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | Paused. Waves A and B mostly landed. Left: B1 (8 enemy state-machine symbols), B6 (9 chapter and selector symbols), B7 (3 commander-death symbols), C3 (legacy SimBridge autoload still in `project.godot`), C4 E1 unverified, C6 sweep not started (32 rows need a wire-or-dead ruling, plus 4 client gaps). Work-list rows still unreachable: 48 of 89. | Every work-list row wired or ruled dead, and the loop plays end to end |
 | Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
 | Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat (Mac) with a Doer | `scenes/mockups/landscape/` | Pass 5 built; pass 6 spec written (`1c2d4494`) | Westley approves a pass; the camera question is designed as options |
 
@@ -31,8 +30,8 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 
 | # | Plan | Doc | Waits on | Why this position |
 |---|---|---|---|---|
-| 1 | Playthrough gate: a scripted end-to-end run in the merge gate | to write | Stage 0 | Every later landing is checked against it |
-| 2 | Finish the MVP loop | `plans/2026-09-30-mission-plays-plan.md` | Stage 0, row 1 | Westley: the MVP works 100 percent end to end before large new work |
+| 1 | Playthrough gate: a scripted end-to-end run in the merge gate | to write | nothing | Every later landing is checked against it. `tests/qa/desktop` flow test is the base: 29 of 30 pass. |
+| 2 | Finish the MVP loop | `plans/2026-09-30-mission-plays-plan.md` | Row 1 | Westley: the MVP works 100 percent end to end before large new work. Known breaks (stage 0): the chronicle shows 0 entries after a mission in the Godot flow and the jump does not advance the shared world; a fresh checkout boots to the error screen through the legacy SimBridge autoload; the 30B QA sticks on NEW GAME (IndexError) and has 0 full loops since 2026-10-01; 9 Godot test scripts abort headless. |
 | 3 | Baseline playthrough by Westley or the 30B | none | Row 2 | The line every addition is compared with |
 | 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
