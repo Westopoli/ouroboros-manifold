@@ -1545,11 +1545,9 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
  * them directly, with no time term), so this only needs to stop
  * om_mission_is_ended from re-deriving "ended" off the clock afterward. */
 /* R-077-01/04: bands final = 0.75*o + 0.25*r once, here, and never again
- * (om_mission_get_band just returns the stored value). Retention has no
- * live source yet -- surviving/deployed unit power is unit.c/tactical
- * combat state (B10), not wired into om_mission_state -- so r defaults to
- * full retention (1.0) until that lands; om_mission_compute_retention is
- * already correct and ready for that wiring (see also: csrc/unit.c). */
+ * (om_mission_get_band just returns the stored value). r is surviving over
+ * deployed unit power across the player roster recorded at mission start,
+ * living units weighted by HP fraction (om_mission_end_retention). */
 /* See also: csrc/generational.c om_gen_consequence_rearm (owns consequence_consumed). */
 void om_gen_consequence_rearm(om_world *w);
 static uint32_t om_mission_main_commander(const om_world *w) {
@@ -1561,12 +1559,27 @@ static uint32_t om_mission_main_commander(const om_world *w) {
     return 0;
 }
 
+static double om_mission_end_retention(const om_world *w, const om_mission_state *st) {
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    double deployed = 0.0, surviving = 0.0;
+    for (uint32_t i = 0; i < st->n_force_units; i++) {
+        const om_mission_force_entry *e = &st->force_units[i];
+        if (e->faction != player) continue;
+        double p = om_unit_power((uint32_t)e->type);
+        double max_hp = om_unit_profile_max_hp((om_world *)w, e->type);
+        deployed += p;
+        if (max_hp > 0.0) surviving += p * om_mis_clamp01(om_unit_get_hp(w, e->unit_id) / max_hp);
+    }
+    return deployed > 0.0 ? om_mission_compute_retention(deployed, surviving) : 1.0;
+}
+
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
     om_gen_consequence_rearm(w);
     st->tactical_ended = 1;
     double o = om_mission_get_objective_score(w);
-    double r = om_mission_compute_retention(1.0, 1.0);
+    double r = om_mission_end_retention(w, st);
     st->last_objective_score = o;
     st->last_retention = r;
     double final = om_mission_compute_final_score(o, r);
