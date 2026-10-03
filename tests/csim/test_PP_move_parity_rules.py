@@ -98,15 +98,28 @@ def _walk_to_rest(lib, w, u, limit=900, quiet=15):
 
 
 def test_R_099_04_one_waypoint_final_waypoint_reached_within_30_wu(lib, tw):
-    """A one-waypoint route (the destination itself): a Raider (7.5 wu per tick) ordered 500 wu away stops at the
-    first tick that starts within 30 wu: 500 - 7.5 * 63 = 27.5 wu short. The previous tick started 35 wu out, so
-    it cannot have stopped earlier. Red today: tactical_move.c ~1936 uses OM_ARRIVAL_TOLERANCE_MULT x radius = 22.5,
-    so it stops 20 wu short."""
+    """A routed move (a wall column across the line, so the path takes a waypoint before the destination): a Raider
+    (7.5 wu per tick) ends within 30 wu of the destination, the final waypoint included, and not before it was within
+    30 wu of the previous tick's start: [22.5, 30). The previous tick started at least 30 wu out, so it cannot have
+    stopped earlier. Red today: tactical_move.c ~1936 uses OM_ARRIVAL_TOLERANCE_MULT x radius = 22.5."""
+    # Test-defect, A163/A164: direct 300->800 move with no wall -> routed move around a wall (om_map_block_rect); cause: aligned targeting cohort (parity with the Python, Addendum 63): R-099-04's 30 wu applies to route waypoints, a direct move keeps 22.5 (see the control below).
+    assert lib.om_map_block_rect(tw, 510.0, 10.0, 590.0, 790.0, 0, 4) == 0
+    u = lib.om_unit_spawn(tw, RAIDER, FRIEND, 300.0, 400.0, 0)
+    lib.om_command_move(tw, u, 850.0, 400.0)
+    p = _walk_to_rest(lib, tw, u, limit=1200)
+    d = math.hypot(850.0 - p[0], 400.0 - p[1])
+    assert WAYPOINT_REACH - RAIDER_STEP <= d < WAYPOINT_REACH, f"stopped {d:.2f} wu short, want [22.5, 30)"
+
+
+def test_control_R_099_04_direct_move_keeps_the_22_5_wu_arrival(lib, tw):
+    """Positive control for the waypoint test (the old direct scene, open ground): a direct move is not a route
+    waypoint, so it ends inside 1.5 x the 15 wu radius = 22.5 wu, the Python's arrival, not 30."""
+    # Test-defect, A163/A164: new control, the former one-waypoint scene kept as the direct-move case; cause: aligned targeting cohort (parity with the Python, Addendum 63).
     u = lib.om_unit_spawn(tw, RAIDER, FRIEND, 300.0, 400.0, 0)
     lib.om_command_move(tw, u, 800.0, 400.0)
     p = _walk_to_rest(lib, tw, u)
     d = math.hypot(800.0 - p[0], 400.0 - p[1])
-    assert WAYPOINT_REACH - RAIDER_STEP <= d < WAYPOINT_REACH, f"stopped {d:.2f} wu short, want [22.5, 30)"
+    assert d < WAYPOINT_REACH - RAIDER_STEP, f"stopped {d:.2f} wu short, want < 22.5"
 
 
 def test_R_099_04_two_waypoint_route_ends_within_30_wu_and_not_earlier(lib, tw):

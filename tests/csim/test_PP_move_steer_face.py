@@ -242,8 +242,12 @@ def test_R_100_01_stationary_firing_unit_turns_to_its_target(lib, tw):
     idle at (1000,1000) facing +x, enemy Raider 150 wu away at +y (inside the 200 wu range): A acquires it and
     must turn to face +y (pi/2), at the capped rate (0.3 rad on the first tick, not a snap)."""
     a, e = _face_scene(lib, tw, 0.0, 150.0)
-    lib.om_tactical_step(tw)
-    assert lib.om_unit_get_target(tw, a) == e, "scene error: A did not engage the enemy on tick 1"
+    # Test-defect, A163/A164: 1 step -> up to 4 steps, stopping on the tick A acquires (first acquisition moved by up to 3 ticks); the first-tick capped-turn check now reads that acquiring tick; cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(4):
+        lib.om_tactical_step(tw)
+        if lib.om_unit_get_target(tw, a) == e:
+            break
+    assert lib.om_unit_get_target(tw, a) == e, "scene error: A did not engage the enemy within 4 ticks"
     f1 = lib.om_unit_get_facing(tw, a)
     assert 0.0 < f1 <= 0.3 + 1e-6, f"first-tick facing {f1}: expected a capped turn toward the target"
     for _ in range(7):
@@ -266,10 +270,14 @@ def test_R_100_01_engaged_target_outranks_move_target(lib, tw):
     meets an enemy 150 wu away at +y: it halts and fires and must face the enemy (pi/2), not its move target (0)."""
     a, e = _face_scene(lib, tw, 0.0, 150.0)
     lib.om_command_attack_move(tw, a, 3000.0, 1000.0)
-    for _ in range(10):
+    # Test-defect, A163/A164: 10 steps -> 13 steps (first acquisition moved by up to 3 ticks); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(13):
         lib.om_tactical_step(tw)
     assert lib.om_unit_get_target(tw, a) == e
-    assert abs(_angle_diff(lib.om_unit_get_facing(tw, a), math.pi / 2.0)) < ANGLE_TOL_RAD
+    # Test-defect, A163/A164: expected facing pi/2 -> the bearing from A's actual position to E (A walks 7.5 wu along +x before it acquires, so the bearing is pi/2 + 0.05); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    ax, ay = lib.om_unit_get_pos(tw, a)
+    ex, ey = lib.om_unit_get_pos(tw, e)
+    assert abs(_angle_diff(lib.om_unit_get_facing(tw, a), math.atan2(ey - ay, ex - ax))) < ANGLE_TOL_RAD
 
 
 def test_R_100_01_plain_move_never_faces_an_enemy_control(lib, tw):

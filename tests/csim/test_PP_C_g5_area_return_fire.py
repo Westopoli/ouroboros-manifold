@@ -181,6 +181,8 @@ def _return_fire(lib, world_factory, reach, offset, dist, params=None, victim_la
     for name, value in (params or {}).items():
         assert set_param(lib, w, name, value) == 0
     spawn(lib, w, SUPPLY, 0, -9000.0, 0.0)
+    # Test-defect, A163/A164: first step was the victim's cohort turn (tick 1) -> one idle step before spawning the victim and enemies (the first step is now tick 2, not its turn); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    step(lib, w)
     v = spawn(lib, w, VANGUARD, 0, 0.0, 0.0, layer=victim_layer)
     spawn(lib, w, SUPPLY, 1, 0.0, 100.0, layer=victim_layer)
     atk = spawn(lib, w, SUPPLY, 1, float(dist), 0.0, layer=victim_layer + offset)
