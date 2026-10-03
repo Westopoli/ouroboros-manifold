@@ -13,7 +13,7 @@ import pytest  # noqa: E402
 import scripts.skilllab.fight as fight_mod  # noqa: E402
 import scripts.skilllab.formations as formations_mod  # noqa: E402
 from fakes import FakeEngine  # noqa: E402
-from fakes_weighted import WeightedFakeEngine  # noqa: E402
+from fakes_weighted_target import WeightedTargetFakeEngine  # noqa: E402
 from scripts.skilllab.contract import TICKS_PER_SECOND, Group, Setup  # noqa: E402
 from scripts.skilllab.firing import count_able_weighted, unit_weight  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
@@ -22,7 +22,7 @@ from scripts.skilllab.rows import fight_row  # noqa: E402
 
 def world(**kw):
     """Shooter s (side 0) at the origin, enemy e (side 1) 50 away on the same layer; range 100 each."""
-    fake = WeightedFakeEngine(**kw)
+    fake = WeightedTargetFakeEngine(**kw)
     w = fake.new_world(0)
     vg = fake.type_id("Vanguard")
     s = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
@@ -84,11 +84,12 @@ def test_clause_b_range_is_less_or_equal():
     assert able(fake, w, s, e, ranges, weights)[1] == 3.0
 
 
-def test_clause_c_unseen_target_removes_the_shooter_and_positive_control_holds():
-    """item 8 (c): a target no friend sees cannot be fired at, even in range and shootable; the other side is unchanged."""
-    fake, w, s, e, ranges, weights = world(can_see_fn=lambda f, o, t: o == e)
+def test_clause_c_no_engine_target_removes_the_shooter_even_with_an_enemy_in_range_and_visible():
+    """item 8b: a unit the engine has given no target (0) counts nothing, however visible the enemy; the other side is unchanged."""
+    fake, w, s, e, ranges, weights = world(can_see_fn=lambda f, o, t: True)
+    fake.set_target(s, 0)
     assert able(fake, w, s, e, ranges, weights) == (0.0, 3.0)
-    fake.can_see_fn = lambda f, o, t: True
+    fake.set_target(s, e)
     assert able(fake, w, s, e, ranges, weights) == (2.0, 3.0)
 
 
@@ -99,25 +100,23 @@ def test_clause_d_can_shoot_false_removes_the_shooter():
     assert able(fake, w, s, e, ranges, weights) == (0.0, 3.0)
 
 
-def test_spotter_story_long_range_unit_needs_a_friend_who_sees():
-    """item 8 (c): a long-range unit is not able until a short-range friend sees the target (the Bombard-with-a-spotter story)."""
-    fake = WeightedFakeEngine(can_see_fn=lambda f, o, t: f.units[o]["x"] > 100.0)   # only the spotter is close
+def test_long_range_unit_counts_as_soon_as_the_engine_gave_it_a_target_without_a_spotter():
+    """item 8b: the engine decides who has a target; a long-range unit with its target counts, a friend's sight is not read."""
+    fake = WeightedTargetFakeEngine(can_see_fn=lambda f, o, t: False)       # nobody sees anybody by the lab's old rule
     w = fake.new_world(0)
     vg = fake.type_id("Vanguard")
     bomb = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
-    spotter = fake.spawn(w, vg, 0, 190.0, 0.0, 0)
     e = fake.spawn(w, vg, 1, 200.0, 0.0, 0)
-    ranges = {bomb: 250.0, spotter: 5.0, e: 5.0}
-    weights = {bomb: 4.0, spotter: 1.0, e: 1.0}
-    # the spotter sees e from 10 away but its own range is 5, so it is never able itself
-    assert count_able_weighted(fake, w, [bomb], [e], ranges, weights)[0] == 0.0       # no friend sees
-    assert count_able_weighted(fake, w, [bomb, spotter], [e], ranges, weights)[0] == 4.0   # spotter sees
-    fake.set_hp(spotter, 0)                                                         # a dead spotter does not
-    assert count_able_weighted(fake, w, [bomb, spotter], [e], ranges, weights)[0] == 0.0
+    ranges, weights = {bomb: 250.0, e: 5.0}, {bomb: 4.0, e: 1.0}
+    fake.set_target(bomb, 0)
+    assert count_able_weighted(fake, w, [bomb], [e], ranges, weights)[0] == 0.0       # not yet acquired
+    fake.set_target(bomb, e)
+    assert count_able_weighted(fake, w, [bomb], [e], ranges, weights)[0] == 4.0       # acquired, no spotter
+    assert not fake.calls_named("can_see")
 
 
-def test_dead_units_contribute_nothing_and_are_never_observers():
-    """item 8: a dead shooter, a dead target and a dead observer all drop out; can_see is never asked of a dead unit."""
+def test_dead_units_contribute_nothing_and_the_engine_is_never_asked_about_a_dead_shooter():
+    """item 8b: a dead shooter and a dead target drop out; unit_target is never asked of a unit not in the living set."""
     fake, w, s, e, ranges, weights = world()
     fake.set_hp(e, 0)
     assert able(fake, w, s, e, ranges, weights) == (0.0, 0.0)
@@ -130,12 +129,12 @@ def test_dead_units_contribute_nothing_and_are_never_observers():
     ranges[dead], weights[dead] = 100.0, 1.0
     fake.set_hp(dead, 0)
     count_able_weighted(fake, w, [s, dead], [e], ranges, weights)
-    assert all(c[2] != dead for c in fake.calls_named("can_see"))
+    assert all(c[2] != dead for c in fake.calls_named("unit_target"))
 
 
-def test_side_sight_is_cached_per_target_per_side():
-    """item 8: can_see is asked at most n_friends * n_targets times per side."""
-    fake = WeightedFakeEngine()
+def test_the_count_never_asks_about_sight():
+    """item 8b: no can_see calls, however many units are on the field."""
+    fake = WeightedTargetFakeEngine()
     w = fake.new_world(0)
     vg = fake.type_id("Vanguard")
     a = [fake.spawn(w, vg, 0, float(i), 0.0, 0) for i in range(4)]
@@ -143,9 +142,7 @@ def test_side_sight_is_cached_per_target_per_side():
     ranges = {u: 100.0 for u in a + b}
     weights = {u: 1.0 for u in a + b}
     assert count_able_weighted(fake, w, a, b, ranges, weights) == (4.0, 3.0)
-    asked = fake.calls_named("can_see")
-    assert sum(1 for c in asked if c[2] in a) <= len(a) * len(b)
-    assert sum(1 for c in asked if c[2] in b) <= len(b) * len(a)
+    assert not fake.calls_named("can_see")
 
 
 def test_swapping_sides_swaps_the_tuple():
@@ -223,7 +220,7 @@ def test_default_result_is_unchanged_by_the_new_field():
 
 def test_weighted_series_is_sampled_at_the_firing_ticks():
     """item 8: weighted is [(tick, w0, w1)] at the same ticks as firing; 2 units of 0.5 against 1 of 0.5."""
-    fake = WeightedFakeEngine()
+    fake = WeightedTargetFakeEngine()
     r = fight(S(weighted=True), 0, False, engine=fake)
     assert [t for t, _, _ in r.weighted] == [t for t, _, _ in r.firing] == [0, 5, 10]
     assert r.weighted == [(0, 1.0, 0.5), (5, 1.0, 0.5), (10, 1.0, 0.5)]
@@ -232,13 +229,13 @@ def test_weighted_series_is_sampled_at_the_firing_ticks():
 
 def test_weighted_series_is_deterministic():
     """item 8: same setup and seed give the same weighted series."""
-    run = lambda: fight(S(weighted=True), 3, False, engine=WeightedFakeEngine()).weighted
+    run = lambda: fight(S(weighted=True), 3, False, engine=WeightedTargetFakeEngine()).weighted
     assert run() == run()
 
 
 def test_fight_row_weighted_columns_only_when_recorded():
     """item 8: weighted_unit_seconds_0/_1 = sum(w * sample_every / 20); absent, not blank, when not weighted."""
-    on = fight_row(fight(S(weighted=True), 0, False, engine=WeightedFakeEngine()), tag="x")
+    on = fight_row(fight(S(weighted=True), 0, False, engine=WeightedTargetFakeEngine()), tag="x")
     assert on["weighted_unit_seconds_0"] == pytest.approx(3 * 1.0 * 5 / TICKS_PER_SECOND)
     assert on["weighted_unit_seconds_1"] == pytest.approx(3 * 0.5 * 5 / TICKS_PER_SECOND)
     off = fight_row(fight(S(), 0, False, engine=FakeEngine()), tag="x")

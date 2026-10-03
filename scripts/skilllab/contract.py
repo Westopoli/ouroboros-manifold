@@ -20,7 +20,7 @@ class Group:
     y: float                  # anchor
     facing_deg: float
     layer: int                # as the engine numbers layers
-    order: str                # "attack_move" | "move" | "idle"
+    order: str                # "attack_move" | "move" | "idle" | "guard"
     goal: Optional[tuple] = None
     params: dict = field(default_factory=dict)   # spacing, cols, arc_deg, radius, points
 
@@ -29,8 +29,8 @@ class Group:
 class Step:
     group: int                # index into Setup.groups
     when: tuple               # ("tick", n) | ("arrive", radius) | ("seen",)
-    order: str                # "attack_move" | "move" | "idle" (idle clears the group's orders)
-    goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle
+    order: str                # "attack_move" | "move" | "idle" | "guard" (idle clears the group's orders; guard holds and fires in range)
+    goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle and guard
 
 
 @dataclass(frozen=True)

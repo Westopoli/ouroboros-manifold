@@ -98,6 +98,8 @@ class Engine:
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_command_attack_move": ([V, c.POINTER(u32), u32, d, d], i),
             "om_command_move": ([V, c.POINTER(u32), u32, d, d], i),
+            "om_command_guard": ([V, c.POINTER(u32), u32], i),
+            "om_roster_set_reach": ([V, i, u32, u32], i),
             "om_tactical_step": ([V], u64),
             "om_unit_get_hp": ([V, u32], d),
             "om_unit_get_pos": ([V, u32, pd, pd], i),
@@ -160,6 +162,11 @@ class Engine:
             raise ValueError("om_unit_profile_reach(%r) refused" % (type_id,))
         return (int(up.value), int(down.value))
 
+    def set_reach(self, w, type_id, up, down):
+        rc = self._lib.om_roster_set_reach(w, int(type_id), int(up), int(down))
+        if rc != 0:
+            raise ValueError("om_roster_set_reach(%r, %r, %r) returned %d" % (type_id, up, down, rc))
+
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)
 
@@ -172,6 +179,12 @@ class Engine:
     def order_move(self, w, unit_ids, x, y):
         # om_command_move, not om_unit_order_move: the latter only records a destination and never moves the unit.
         self._order(self._lib.om_command_move, w, unit_ids, x, y)
+
+    def order_guard(self, w, unit_ids):
+        ids = [int(u) for u in unit_ids]
+        rc = self._lib.om_command_guard(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids))
+        if rc != 0:
+            raise ValueError("om_command_guard returned %d" % rc)
 
     @staticmethod
     def _order(fn, w, unit_ids, x, y):

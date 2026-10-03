@@ -7,7 +7,7 @@ from typing import Optional
 
 from scripts.skilllab import compose, maps, matchup, plays, positions, profile, report, rows, scan, skills
 from scripts.skilllab.asym import Side, asym_play
-from scripts.skilllab.scenes import phase_b_choke
+from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
 from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
@@ -17,7 +17,7 @@ REFINE_FACTOR = 3
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 NOT_EXPRESSED = "not expressed"
 REPLICATES = 10
-DEFENDER_ORDER = "idle"
+DEFENDER_ORDER = "guard"
 UNIT_TYPES = ("Vanguard", "Raider", "Bombard", "Bastion")
 REFERENCE = "reference"
 _STALLED = ("stalemate", "cap")
@@ -116,18 +116,10 @@ def _matchup():
                "side 1 of half to one and a half times N of another. Sizes 16 and 32; every row against every column. "
                "The weighted firing count is on."),
         cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("the weighted count reads the lab's own sight rule, not the engine's, until Phase C side sight lands",
+        unexpressed=("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
                      "only even two-type mixes; unequal mixes and three-type mixes are not included",
                      "arrangement is the default interleaved only"),
         weighted=True)
-
-
-def _idle_defenders(build):
-    def wrapped(enemy_heads, swap):
-        setup = build(enemy_heads, swap)
-        groups = tuple(dataclasses.replace(g, order=DEFENDER_ORDER) if g.side == 1 else g for g in setup.groups)
-        return dataclasses.replace(setup, groups=groups)
-    return wrapped
 
 
 def _landscape():
@@ -136,21 +128,22 @@ def _landscape():
         terrain = maps.sample_map(kind, 0)
         reference = with_terrain(asym_play(16, Side("blob"), Side("blob")), terrain)
         for role in ("blob", "line"):
-            build = with_terrain(_idle_defenders(asym_play(16, Side(role), Side("blob"))), terrain)
+            build = with_terrain(guard_defenders(asym_play(16, Side(role), Side("blob"))), terrain)
             cells.append(_cell("%s:%s_v_defenders" % (kind, role), 16, build, "naive", enemy=(8, 24),
                                reference=reference))
-    cells += [_cell("tall_cover", 16, None, NOT_EXPRESSED, "tall cover with height needs layer reach (Phase C G5)",
-                    enemy=(8, 24)),
-              _cell("tall_cover_counter", 16, None, NOT_EXPRESSED,
-                    "a layer above the cover needs layer reach and layer orders (Phase C G4, G5)", enemy=(8, 24))]
+    for label, counter in (("tall_cover", False), ("tall_cover_counter", True)):
+        note = ("draft numbers: height 3, discs of radius 100 every 150 wu" +
+                ("; attackers on layer 3 reach 3 layers down" if counter else ""))
+        cells.append(_cell(label, 16, tall_cover(3, counter)(16), "unconfirmed draft", note, enemy=(8, 24),
+                           reference=with_terrain(asym_play(16, Side("blob"), Side("blob")), tall_cover_terrain(3))))
     return BatchDef(
         name="landscape",
         title="Skill lab landscape batch",
         scene=("Five sampled maps (open, block, wall, lane, cover field). 16 attackers playing blob or line against 8 to "
-               "24 defenders in a blob. The guard order is not built yet, so the defenders hold the order idle. Each "
+               "24 defenders in a blob. The defenders hold the guard order. Each "
                "cell also scans naive blob against naive blob on the same map as a reference."),
         cells=tuple(cells), variants=((DEFENDER_ORDER, {}),),
-        unexpressed=("tall_cover", "tall_cover_counter", "guard order not built: defenders idle"))
+        unexpressed=())
 
 
 def _enemy_position():
@@ -285,7 +278,8 @@ def get(name):
 
 def _with_settings(build, settings, weighted=False):
     def wrapped(enemy_heads, swap):
-        setup = dataclasses.replace(build(enemy_heads, swap), settings={**BASE_SETTINGS, **settings})
+        setup = build(enemy_heads, swap)
+        setup = dataclasses.replace(setup, settings={**setup.settings, **BASE_SETTINGS, **settings})
         return dataclasses.replace(setup, weighted=True) if weighted else setup
     return wrapped
 

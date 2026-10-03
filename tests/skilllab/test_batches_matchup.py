@@ -70,7 +70,7 @@ def test_matchup_definition_fields_and_cell_order():
 
 def test_matchup_scene_and_unexpressed_lines():
     d = batches.get("matchup")
-    for want in ("the weighted count reads the lab's own sight rule, not the engine's, until Phase C side sight lands",
+    for want in ("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
                  "only even two-type mixes; unequal mixes and three-type mixes are not included",
                  "arrangement is the default interleaved only"):
         assert want in d.unexpressed
@@ -141,7 +141,7 @@ def test_matchup_run_file_lists_unexpressed(tmp_path):
     t = _text(paths["run"])
     assert t.index(PROVISIONAL) < t.index("## Scene")
     sec = _section(t, "What the instrument could not express")
-    assert "weighted count reads the lab's own sight rule" in sec
+    assert "weighted count reads the engine's target" in sec
     assert "only even two-type mixes" in sec and "default interleaved only" in sec
 
 

@@ -8,11 +8,11 @@ for _p in (ROOT, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from fakes_weighted import WeightedFakeEngine  # noqa: E402
+from fakes_weighted_target import WeightedTargetFakeEngine  # noqa: E402
 from scripts.skilllab.firing import count_able, count_able_weighted, unit_states  # noqa: E402
 
 
-class Fake(WeightedFakeEngine):
+class Fake(WeightedTargetFakeEngine):
     def unit_destination(self, w, u):
         self.calls.append(("unit_destination", w, u))
         return None

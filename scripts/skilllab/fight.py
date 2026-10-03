@@ -11,6 +11,13 @@ FIRST_CUSTOM_TYPE_ID = 100
 SLOT_RADIUS = 440
 
 
+def _check_reach(setup):
+    for name, entry in setup.unit_types.items():
+        reach = entry.get("reach")
+        if "reach" in entry and not (isinstance(reach, (tuple, list)) and len(reach) == 2):
+            raise ValueError("unit type %r: reach must be (up, down), got %r" % (name, reach))
+
+
 def _register_types(engine, w, setup):
     """Return {name: (type_id, attack_range)} for every unit name the groups use, ids from 100 in order of first use."""
     types, next_id = {}, FIRST_CUSTOM_TYPE_ID
@@ -32,8 +39,10 @@ def _register_types(engine, w, setup):
                     stats[stat] = stats[stat] * value if op == "scale" else value
             stats["role"], stats["ability_id"] = entry["base"], 0
         else:
-            stats = dict(entry)
+            stats = {k: v for k, v in entry.items() if k != "reach"}
         engine.register_unit_type(w, next_id, stats)
+        if "reach" in entry:
+            engine.set_reach(w, next_id, *entry["reach"])
         types[name] = (next_id, stats["attack_range"])
         next_id += 1
     return types
@@ -88,6 +97,9 @@ def _issue_orders(engine, w, setup, ids_by_group):
     for gi, g in enumerate(setup.groups):
         if g.order == "idle":
             continue
+        if g.order == "guard":
+            engine.order_guard(w, ids_by_group[gi])
+            continue
         goal = g.goal if g.goal is not None else first_anchor[1 - g.side]
         if g.order == "attack_move":
             issue = engine.order_attack_move
@@ -108,6 +120,7 @@ def fight(setup, seed=0, swap=False, engine=None):
     if min(setup.max_ticks, setup.stalemate_ticks, setup.sample_every) < 1:
         raise ValueError("max_ticks, stalemate_ticks and sample_every must each be at least 1")
     validate(setup)
+    _check_reach(setup)
     if engine is None:
         from scripts.skilllab.engine import Engine
         engine = Engine()
