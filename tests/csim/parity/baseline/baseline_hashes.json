@@ -41,14 +41,14 @@
  "fixture_cover_standoff": {
   "checkpoints": [
    "9bb820629e29e7ce",
-   "41cb8d30ef4cebae",
-   "392dd6552b971e06",
-   "aea301ca6c67a740",
-   "797583498ad2cca1",
-   "8ce5c9ccf8d7dbf5",
-   "c05349a870a9a789"
+   "f836b42de6bd7aa7",
+   "822cf9a6c15b855d",
+   "1b05f6f0964d17d2",
+   "4e4cbf1e6050ed57",
+   "305bc7b522357f63",
+   "583e0a66c2d609c4"
   ],
-  "final": "c05349a870a9a7895ba6f7666f83b5bae487805cd7f936fe904437c188b69767",
+  "final": "583e0a66c2d609c4fa9a44d8a9ddfd47baef4717222dae2a118f721c133e1037",
   "ticks": 700
  },
  "fixture_mixed_march": {

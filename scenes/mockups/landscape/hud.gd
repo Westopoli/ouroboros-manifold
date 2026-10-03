@@ -8,7 +8,9 @@ const DEFAULT_KIT := "greek"
 const SPACE_KIT := "space"
 const DEFAULT_DENSITY := 35.0
 const MAX_DENSITY := 90.0
-const GAP_RANGE := Vector2(400.0, 3000.0)
+const GAP_RANGE := Vector2(200.0, 3000.0)
+const SPREAD_RANGE := Vector2(0.0, 1.0)
+const SWING_RANGE := Vector2(0.0, 1.2)
 const PLATE_RANGE := Vector2(800.0, 3200.0)
 const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/pass3/"
 const BAND_HEIGHTS := {"micro": 1000.0, "tactical": 3000.0, "map": 20000.0}
@@ -26,6 +28,9 @@ var _stability: float = 60.0
 var _density: float = DEFAULT_DENSITY
 var _layer_gap: float = SpaceFieldMap.LAYER_GAP_WU
 var _plate_cell: float = SpaceFieldMap.PLATE_CELL_WU
+var _size_spread: float = SpaceFieldMap.SIZE_SPREAD
+var _density_swing: float = SpaceFieldMap.DENSITY_SWING
+var _shared_density := true
 var _focus_layer: int = 0
 var _show_crossings := false
 var _piece_total: int = 0
@@ -52,6 +57,11 @@ var _gap_label: Label
 var _gap_slider: HSlider
 var _plate_label: Label
 var _plate_slider: HSlider
+var _spread_label: Label
+var _spread_slider: HSlider
+var _swing_label: Label
+var _swing_slider: HSlider
+var _shared_button: Button
 var _top_down_button: Button
 var _focus_label: Label
 var _solo_label: Label
@@ -142,6 +152,9 @@ func _regenerate() -> void:
 		var space_map := SpaceFieldMap.new()
 		space_map.plate_cell_wu = _plate_cell
 		space_map.layer_gap_wu = _layer_gap
+		space_map.size_spread = _size_spread
+		space_map.density_swing = _density_swing
+		space_map.shared_density = _shared_density
 		field_map = space_map
 	else:
 		field_map = FieldMap.new()
@@ -226,6 +239,14 @@ func _build_space_controls() -> void:
 	_plate_label = Label.new()
 	_plate_label.name = "PlateLabel"
 	_plate_slider = _make_slider("PlateSlider", PLATE_RANGE.x, PLATE_RANGE.y, 100.0, _plate_cell)
+	_spread_label = Label.new()
+	_spread_label.name = "SpreadLabel"
+	_spread_slider = _make_slider("SpreadSlider", SPREAD_RANGE.x, SPREAD_RANGE.y, 0.05, _size_spread)
+	_swing_label = Label.new()
+	_swing_label.name = "SwingLabel"
+	_swing_slider = _make_slider("SwingSlider", SWING_RANGE.x, SWING_RANGE.y, 0.05, _density_swing)
+	_shared_button = Button.new()
+	_shared_button.name = "SharedDensityButton"
 	_top_down_button = Button.new()
 	_top_down_button.name = "TopDownButton"
 	_focus_label = Label.new()
@@ -234,7 +255,7 @@ func _build_space_controls() -> void:
 	_solo_label.name = "SoloLabel"
 	_space_stats_label = Label.new()
 	_space_stats_label.name = "SpaceStatsLabel"
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _top_down_button, _focus_label, _solo_label, _space_stats_label]:
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _top_down_button, _focus_label, _solo_label, _space_stats_label]:
 		box.add_child(control)
 	# Same debounce as stability: regenerate on release, not per drag tick.
 	_density_slider.drag_ended.connect(_on_density_drag_ended)
@@ -243,10 +264,18 @@ func _build_space_controls() -> void:
 	_gap_slider.value_changed.connect(_on_gap_value_changed)
 	_plate_slider.drag_ended.connect(_on_plate_drag_ended)
 	_plate_slider.value_changed.connect(_on_plate_value_changed)
+	_spread_slider.drag_ended.connect(_on_spread_drag_ended)
+	_spread_slider.value_changed.connect(_on_spread_value_changed)
+	_swing_slider.drag_ended.connect(_on_swing_drag_ended)
+	_swing_slider.value_changed.connect(_on_swing_value_changed)
+	_shared_button.pressed.connect(_on_shared_pressed)
 	_top_down_button.pressed.connect(_on_top_down_pressed)
 	_on_density_value_changed(_density)
 	_on_gap_value_changed(_layer_gap)
 	_on_plate_value_changed(_plate_cell)
+	_on_spread_value_changed(_size_spread)
+	_on_swing_value_changed(_density_swing)
+	_refresh_shared_text()
 	_refresh_top_down_text()
 	_set_focus(_focus_layer)
 
@@ -272,6 +301,42 @@ func _on_gap_value_changed(value: float) -> void:
 
 func _on_plate_value_changed(value: float) -> void:
 	_plate_label.text = "Plate size: %d wu" % int(value)
+
+
+func _on_spread_value_changed(value: float) -> void:
+	_spread_label.text = "Size spread: %.2f" % value
+
+
+func _on_swing_value_changed(value: float) -> void:
+	_swing_label.text = "Density swing: %.2f" % value
+
+
+func _on_spread_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_size_spread = _spread_slider.value
+	_regenerate()
+
+
+func _on_swing_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_density_swing = _swing_slider.value
+	_regenerate()
+
+
+func _on_shared_pressed() -> void:
+	_set_shared_density(not _shared_density)
+
+
+func _set_shared_density(on: bool) -> void:
+	_shared_density = on
+	_refresh_shared_text()
+	_regenerate()
+
+
+func _refresh_shared_text() -> void:
+	_shared_button.text = "Shared density: %s" % ("on" if _shared_density else "off")
 
 
 func _on_gap_drag_ended(value_changed: bool) -> void:
@@ -319,7 +384,7 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	var is_space := field_map is SpaceFieldMap
 	_stability_label.visible = not is_space
 	_stability_slider.visible = not is_space
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider]:
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button]:
 		control.visible = is_space
 	_focus_label.visible = is_space
 	_solo_label.visible = is_space and _camera_rig.is_top_down() and _focus_layer != 0
@@ -330,10 +395,11 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	for stat in field_map.layer_stats:
 		blocked.append("%d%%" % int(round(stat.blocked * 100.0)))
 	var plates: Array = field_map.plates_per_layer.map(func(c): return str(c))
-	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable: %d  Crossings (8 to 50 cells): %d, marks %s (C)" % [
+	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable: %d  Crossings (8 to 50 cells): %d, marks %s (C)\nCells blocked on two neighbouring layers: %s" % [
 		" ".join(blocked), " ".join(plates) if not plates.is_empty() else "-", field_map.plates_cleared, field_map.tunnels_cut,
 		int(round(field_map.rubble_share * 100.0)), field_map.pockets_filled,
-		field_map.regions_unreachable_after, field_map.crossings.size(), "on" if _show_crossings else "off"]
+		field_map.regions_unreachable_after, field_map.crossings.size(), "on" if _show_crossings else "off",
+		" ".join(field_map.filled_cells_per_pair.map(func(c): return str(c)))]
 
 
 func _on_band_changed(band: String) -> void:
@@ -475,6 +541,27 @@ func get_show_crossings() -> bool:
 	return _show_crossings
 
 
+# Crossing marks actually drawn: the instances in the visible mark groups.
+func get_marks_drawn() -> int:
+	var drawn := 0
+	for child in _generated.get_children():
+		if child.get_meta("crossing_mark", false) and child.visible:
+			drawn += child.multimesh.instance_count
+	return drawn
+
+
+func get_size_spread() -> float:
+	return _size_spread
+
+
+func get_density_swing() -> float:
+	return _density_swing
+
+
+func get_shared_density() -> bool:
+	return _shared_density
+
+
 func get_kit_name() -> String:
 	return _kit_name
 
@@ -527,6 +614,28 @@ func qa_set_layer_gap(v: float) -> void:
 	_layer_gap = clamp(v, GAP_RANGE.x, GAP_RANGE.y)
 	_gap_slider.value = _layer_gap
 	_regenerate()
+
+
+func qa_set_size_spread(v: float) -> void:
+	_size_spread = clamp(v, SPREAD_RANGE.x, SPREAD_RANGE.y)
+	_spread_slider.value = _size_spread
+	_regenerate()
+
+
+func qa_set_density_swing(v: float) -> void:
+	_density_swing = clamp(v, SWING_RANGE.x, SWING_RANGE.y)
+	_swing_slider.value = _density_swing
+	_regenerate()
+
+
+func qa_set_shared_density(on: bool) -> void:
+	_set_shared_density(on)
+
+
+func qa_set_marks(on: bool) -> void:
+	_show_crossings = on
+	_apply_view()
+	_update_space_controls(_field_map)
 
 
 func qa_set_top_down(on: bool) -> void:

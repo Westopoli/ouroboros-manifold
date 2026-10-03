@@ -101,6 +101,66 @@ The architect's read of pass 3, for Westley to confirm or overrule:
 - From the tactical camera the sheets above the camera hide everything, since five opaque sheets 1,400 wu apart put the camera inside the stack. How the camera and five stacked sheets work together is a design question in its own right, not a mockup bug; top-down with focus is the way to read it for now.
 - Small defect: crossing marks are drawn in the focused top-down view although the HUD says they are off.
 
+## Westley's review of pass 3 (2026-10-03)
+
+Verbatim: "It's close, yes I agree they're too even in size, there should be more variety in density, other than that it looks really good, I'd say in the next pass let's also *connect* the layers together so there's not so much space in between them. Unless it's too soon for that and that's something the godot visual engine will handle and we're just designing the borders to pass to it."
+
+Read as: plate sizes too even; more variety in density; connect the layers so there is less space between them. On the last point the architect's answer, which Westley accepted with "go": the gap between layers and whether blocked space lines up across layers are design (the layer height mapping for space, and a shared density map across layers); filling the gap with solid bodies where a spot is blocked on two neighbouring layers is the visual engine's job from the masks, and the mockup fakes it so the result can be judged. Pass 4 spec: `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`, "Pass 4".
+
+## Pass 4 (2026-10-03)
+
+Built to the pass 4 spec with two corrections the Doer's measurements forced: the keep roll is shared across layers when "Shared density" is on (sharing only the density noise moved the stacked-cell count by 4 percent; sharing the roll moves it from 18,200 to 21,600 cells per layer pair at density 55), and the size spread is set from the noise's quantiles so the slider means what it says (at 1, a quarter of lattice centres split; removals cap near 8 percent because of the no-holes rule). Screenshots in `mockup/pass4/`.
+
+What the pictures show: from above the stack, the field now reads as one thick body of stacked floes with channels and shafts through it, which is the "wicked, tight, thick asteroid field" Westley asked for; a focused layer from the top shows large floes among small ones, rubble, and the shaded sides of the fill where the layer below is also blocked. Blocked-share averages 20, 38, 56 and 67 percent at slider 15, 35, 55 and 70; 0 unreachable regions in all 24 runs; generate about 1.1 s at canvas 24,000 (the fill walls cost about 0.4 s of it).
+
+Open after pass 4, for Westley:
+
+- The camera among five stacked sheets (the tactical band sits inside the stack).
+- Whether "Shared density" on is the default for the game, and the layer gap for space eras (the slider's 1,000 wu default is a guess).
+- Whether removals should be allowed to cluster (bigger floes) at the cost of the no-holes rule.
+
+## Westley's question after pass 4 (2026-10-03): priorities and cost
+
+Verbatim: "I'm seeing a lot of objects, is the level of detail we're introducing going to be a problem for fps/output efficiency? Analyze the way we're generating, investigate if we're making it harder for the godot engine to operate effciently because it's being passed something too complex. - This comes from s11_d55, the small gaps look cool but I doubt they'd be functional in the real game (most ships would be too big to pass through it) and it's everwhere, it's functionally one large "block", but it's split into little pieces. In s11_d15 as well there's a *ton* of little pieces, which is great for depth/detail, but we're not designing visuals right now we're designing the landscape engine for space. I just want to take a step back and make sure our priorities are in order. *detail is good, in the right locations*, and my query is regarding whether this is the right location or not."
+
+### What the mockup hands the renderer (seed 11, canvas 24,000, measured headless)
+
+| Density | Draw surfaces | Triangles | of which fill walls | Pieces counted | Open cells of 290,405 |
+|---|---|---|---|---|---|
+| 15 | 22 | 241,584 | 35,000 | 19,833 | 226,565 |
+| 55 | 22 | 1,760,365 | 121,716 | 63,164 | 127,100 |
+| 70 | 22 | 3,158,078 | 155,040 | 79,921 | 95,978 |
+
+- Draw calls are not the problem: one mesh per layer per kind, 22 in all.
+- Triangles are: 1.8 to 3.2 million at the heavy end. The walls are a small share. The bulk is the gap fill, which is emitted as one closed slab per 100 wu cell (top, bottom and four sides, twelve triangles) for every cell blocked on two layers, about 80,000 cells at density 55, nearly all of them hidden inside the body they fill. Merging those cells into regions and emitting only their outline walls, which the wall pass already does, would cut the count five to ten times. A GTX 1070 can draw three million static triangles, so this is waste rather than a wall, but it is the wrong shape.
+- Generation is 1.1 s in GDScript, a mockup cost; in C it is tens of milliseconds.
+- In the game the renderer never draws per cell: the decided direction (7D) is a coarse functional map in the simulation and detail drawn by the client at the level the zoom needs. The mockup is wasteful by construction, not by concept.
+
+### The priorities question
+
+Westley is right, and the numbers make the case. The sim's unit collision radius is 15 wu and a formation is 200 wu wide. The mockup's channels are 160 wu and the rubble gaps 100 wu: a single ship squeezes through, a formation never does. So most of the small gaps are not passages in play. Functionally, a packed area is one block, and the gaps are visual.
+
+What follows:
+
+- **The functional map has a minimum passage.** Anything narrower than a chosen width is solid in the simulation. The width is Westley's number (it should be tied to the formation width, so a formation can pass what the map says is open). That makes the simulation's mask coarse, honest, and cheap.
+- **The detail is the client's.** Cracks, rubble, broken edges and small gaps are drawn by the client from the same seed, as decided in 7D, and never enter the simulation. They are the "right location" for detail: on screen, at the edges of real passages and real bodies, and dropped at distance by level of detail.
+- **The mockup should show both.** A "functional" toggle that draws the simulation's mask (closed at the minimum passage) over the pretty one, so the two can be compared on the same map.
+
+Open, for Westley: the minimum passage width for the functional map.
+
+## Decisions (2026-10-03): passage widths
+
+Westley, verbatim: "300 sounds good, but I want to sprinkle in little gaps for the smaller ships. The units aren't sized correctly right now, and there's going to be a unit that I want to be able to pass through gaps that other ships can't (little micro shits), I want to make sure there are little sparatic (5-10% of the landscape, in batches to induce strategic depth, like little sections of region that players can take advantage of the fact that small units can get through a *tunnel/gap*) sections. - The level of detail i see in s11_d55 would be great for the types of gaps those little ships could get through, and I'd like to retain the code that built that formation, just in a reduced capacity for the 5-10% that I referenced. Record these decisions."
+
+Recorded as:
+
+- **Minimum passage for the functional map: 300 wu.** Anything narrower is solid in the simulation for ordinary units.
+- **Two passability classes.** A small unit class (a micro craft, to be designed) can pass gaps that other ships cannot. Units are not sized correctly yet; the small craft's size, and so the width of the gaps it fits, is open.
+- **Small-craft gaps are sprinkled, in batches.** They cover 5 to 10 percent of the landscape, as little sections of a region, not everywhere, so a player can take advantage of a tunnel or gap that only small units get through. This is strategic depth on purpose.
+- **The fine fracture of pass 4 is kept for those sections.** The code that made s11_d55's detail stays, used at reduced scope: inside the 5 to 10 percent, the fine channels and rubble gaps are functional for small craft; outside it, anything under 300 wu is solid for everyone, and fine detail there is the client's to draw.
+
+Open: the small craft's size and gap width; how the 5 to 10 percent is chosen (which plates, which layers); whether the batches are placed by the layout (near objectives and resources) or by the noise.
+
 ## Suggested next step
 
-Westley flies pass 3 (Kit: space; Top-down button; keys 1 to 5 to focus one layer, 0 for all; C for crossing marks; sliders for density, layer gap and plate size).
+Pass 5: the functional map at 300 wu minimum passage, small-craft sections at 5 to 10 percent with the fine fracture kept there, a functional-view toggle, and the fill-cell triangle fix. Then the camera question.
