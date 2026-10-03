@@ -744,8 +744,7 @@ void om_macro_tick(om_world *w, uint64_t p1) {
          * (the contract has no to_state; R-120-03 names retreat). */
         if (om_macro_eval_transitions(w, i) >= 0 || (f->hp_pct_set && f->hp_pct < OM_MACRO_ROUT_HP_THRESHOLD))
             f->behavior = OM_MACRO_RETREAT;
-        f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
-        om_macro_log_command(w, slot, i, f->last_issued_command_type);
+        om_macro_execute_behavior(w, i, f->behavior, 0);
         /* B13-8: only a force the mission actually registered gets real
          * group orders; the default force 0 above and every other
          * unregistered force keep the log-only behavior this loop already
