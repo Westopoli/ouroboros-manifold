@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 110 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 27 open flags, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 23 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -15,7 +15,7 @@
 
 ## Purpose
 
-Every land map has terrain generated from the seed. A seeded formula gives the height of the ground and the water on it: lakes in the low ground and rivers that run downhill from the peaks to a coast. Landforms and a climate, derived from the seed, give each map its own shape. Height is cut into five bands fitted to that map, and the band a piece of ground falls in is its layer, so a mountainside is a stack of layers and an attacker has to cross every one of them to reach everything on it. Some ground is too steep to walk. The generator then finds the places the game needs on that terrain by rule: a base of operations for each side, the objective, economic locations throughout the map, the significant resources opposite the objective, expansion sites, strongpoints at the slopes between bands, chokes, high ground and the other places the layer plays need. The hand-authored layouts of S-112 stay, with their moving objectives, and the terrain engine accounts for them. The new terrain-first ideas are added to the old layout design and do not remove it. Both are built together: the layout proposes roles and rough zones and the terrain disposes (S-191 R-191-10).
+Every land map has terrain generated from the seed. A seeded formula gives the height of the ground and the water on it: lakes in the low ground and rivers that run downhill from the peaks to a coast. Landforms and a climate, derived from the seed, give each map its own shape. Height is cut into five bands fitted to that map, and the band a piece of ground falls in is its layer, so a mountainside is a stack of layers and an attacker has to cross every one of them to reach everything on it. Some ground is too steep to walk. The generator then finds the places the game needs on that terrain by rule: a base of operations for each side, the objective, economic locations throughout the map, the significant resources opposite the objective, expansion sites, strongpoints at the slopes between bands, chokes, high ground and the other places the layer plays need. The hand-authored layouts of S-112 stay, with their moving objectives, and the terrain engine accounts for them. The new terrain-first ideas are added to the old layout design and do not remove it. Both are built together: the layout calls for places and the landscape engine is required to produce them (S-191 R-191-10).
 
 Cities and bases are on the same field map. Population density is a growing field that spreads a little at a time and never gives up at difficult terrain. Buildings rise from scaffolds in waves, and the city reshapes around whatever the player places. The world is one formula drawn at continuous detail, from a single unit to the map view. The theme pack decides whether a barrier is a rock or a wall, and the era kit decides what a piece looks like.
 
@@ -33,7 +33,7 @@ Generate a land map for a medium canvas from seed 11. The terrain has height and
 Flag closed, rule text pending: Q-113-01, fairness is a logger only until the generator is tuned in the P2 landscape design phase. The rule below is what the tests read today.
 Flag closed, rule text pending: Q-112-01, the launch ships 8 layouts and grows after testing. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts: the layout proposes roles and rough zones and the terrain disposes (S-191 R-191-10, decided 2026-10-03). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts: the layout calls for places and the landscape engine is required to produce them (S-191 R-191-10, decided 2026-10-03). The rules below are what the game does today.
 
 As a commander, I want maps built on hand-authored strategic layouts so that every map has a chokepoint, a flank, and a reason, and I learn the vocabulary over time.
 
@@ -51,7 +51,7 @@ Open flags: none.
 
 ### S-113 — Nine kinds of place
 
-Direction changed 2026-10-02, rewrite pending: the nine kinds of place stay, and terrain-first generation adds places found on the terrain by rule: bases, economic locations, significant resources, expansion sites, neutral settlements and strongpoints, with chokes and vantages that may also come from the land. A layout's typed node proposes a role and a rough zone, and the terrain decides the exact ground (S-191 R-191-10, S-192). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the nine kinds of place stay, and terrain-first generation adds places found on the terrain by rule: bases, economic locations, significant resources, expansion sites, neutral settlements and strongpoints, with chokes and vantages that may also come from the land. A layout's typed node is a requirement the landscape engine must produce at its zone (S-191 R-191-10, S-192). The rules below are what the game does today.
 
 As a commander, I want every place on the map to be one of nine things, so that I can read a map I have never seen.
 
@@ -276,16 +276,16 @@ As a commander, I want bases, objectives and resources to sit where the land put
 Applies to land maps (Q-166-02).
 
 Rules
-- R-191-01  Given the terrain, When places are found, Then each is found by rule on the terrain, and a site is named afterwards for what it turned out to be (a valley floor, a mountainside, a river bend, an archipelago). The typed nodes of a layout (S-112) are roles and rough zones, and each snaps to the ground that fits its role (R-191-10).
+- R-191-01  Given the terrain, When places are found, Then each is found by rule on the terrain, and a site is named afterwards for what it turned out to be (a valley floor, a mountainside, a river bend, an archipelago). The typed nodes of a layout (S-112) are requirements: the landscape engine is required to produce each at its zone (R-191-10). Places the layout does not name are found by rule.
 - R-191-02  Given a land map, When places are found, Then each side has a base of operations (E-22 S-177), and the map has the objective. An attacker's base is the forward base from which he produces and to which his resources come by supply lines (E-22 S-177).
 - R-191-03  Given a land map, When economic locations are found, Then they are placed throughout the map (E-22 S-177), in numbers that scale with the players and the canvas (Westley, 2026-10-03) [Q-191-05: the counts and the spacing].
-- R-191-04  Given the objective, When the significant resources are placed, Then each side is at the same distance from the objective and from each significant resource, whatever shape the map takes (Westley, 2026-10-03: only those distances matter, and the more the shapes vary under that constraint the better), so a side picks one or fights for both (E-22 S-177) [Q-191-05: what the distance is measured by and its tolerance; Q-197-01: how a deliberately slanted archetype changes it].
+- R-191-04  Given the objective, When the significant resources are placed, Then each side is at the same distance from the objective and from each significant resource, whatever shape the map takes (Westley, 2026-10-03: only those distances matter, and the more the shapes vary under that constraint the better), except where an archetype's slant says otherwise (Westley, 2026-10-03), so a side picks one or fights for both (E-22 S-177) [Q-191-05: what the distance is measured by, its tolerance, and how much the distances differ on a slanted archetype].
 - R-191-05  Given the terrain, When expansion sites are found, Then they are settlements that can be grown into further bases (E-22 S-175 and S-177).
 - R-191-06  Given the terrain, When neutral settlements are found, Then a neutral populace lives in them and they are contested (E-22 S-177).
 - R-191-07  Given any place found, When it is typed, Then it is one of the nine types of S-113 or one of base of operations, expansion site, economic location, significant resource, neutral settlement or strongpoint (S-192).
 - R-191-08  Given a base on ground that spans several bands, When an enemy goes for all of it, Then he has to cross every layer it spans (E-01 R-001-06, R-001-07).
 - R-191-09  Given the places, When they are found, Then they are found on the same field map as the terrain and the density, with a scoring per kind of place (Westley, 2026-10-03). A live prototype shows the scoring and the equal distances of R-191-04 working, and Westley approves the product before it is integrated.
-- R-191-10  Given an archetype, When the map is generated, Then the layouts that fit it (S-112), including their moving objectives (S-118), and the terrain-first generation of S-186 to S-190 are both used, in this order (Westley, 2026-10-03): the layout gives roles and rough zones; the terrain is generated with a mild bias toward each zone's role; each node snaps to the best matching ground within a set radius of its zone, and if no ground within the radius qualifies the map is generated again with another jitter, a bounded number of times; moving objectives follow walking routes on the terrain. The archetype fixes the canvas size category, the objective type and the sides' roles, picks the layout, and also biases the landform [Q-191-05: the snap radius, the retry bound and the landform bias per archetype].
+- R-191-10  Given an archetype, When the map is generated, Then the layouts that fit it (S-112), including their moving objectives (S-118), and the terrain-first generation of S-186 to S-190 are both used, in this order (Westley, 2026-10-03, amended the same day): the layout engine gives the places and their widths; the landscape engine takes them as inputs and leans on them, and is required to produce each one (a choke the layout calls for is a real choke of the layout's width, a vantage a real peak); moving objectives follow walking routes on the terrain. A prototype of the layout engine, and of how the landscape engine reacts to it, is shown to Westley before integration. The archetype fixes the canvas size category, the objective type and the sides' roles, picks the layout, and also biases the landform [Q-191-05: the landform bias per archetype].
 
 Inputs: terrain; layouts; archetype; players; E-19 S-159's needs.
 Outputs: typed places in the map seed; recon render.
@@ -297,15 +297,15 @@ As a commander, I want ways up and down the land that I can hold, narrow places 
 Applies to land maps (Q-166-02).
 
 Rules
-- R-192-01  Given the slopes between height bands, When strongpoints are placed, Then they stand at those slopes, so holding one holds the way up or down and gives production on that band (E-15 S-218, E-15 S-126) [Q-192-01: how many when the relief gives few or many band slopes].
-- R-192-02  Given the terrain, When chokes are found, Then each is where a pass, a bridge or a gate must be, at a crossing of a cliff, of water or of a wall [Q-192-02: the width of a choke found on the terrain, and how it relates to the width ratio of a layout's chokepoint spec (R-113-05)].
-- R-192-03  Given the terrain, When vantages are found, Then each is on a real peak [Q-192-03: whether a vantage must be reachable by walking units when it lies on a high band, as R-113-04 requires today].
-- R-192-04  Given a generated land map, When the plays of the layer system are listed (hold a choke, hold the top of a slope past its midline, fight from behind tall cover), Then the map offers each [Q-192-04: how many of each a map must offer, and what happens to a map that offers none].
-- R-192-05  Given the terrain, When raids and shipments reach a base, Then they come along lanes the terrain sets (E-22 S-168 and S-174, E-22 S-176) [Q-192-05: whether the generator outputs lanes or routes, or the economy finds them from the terrain during play].
+- R-192-01  Given the slopes between height bands, When strongpoints are placed, Then they stand at those slopes, so holding one holds the way up or down and gives production on that band (E-15 S-218, E-15 S-126). The count and the owner split are R-126-01's, placed on the best slopes, and as many as there are where the relief gives fewer slopes than the count (Westley, 2026-10-03) [Q-192-04: whether a layout's reinforcement-structure nodes are these strongpoints].
+- R-192-02  Given the terrain, When chokes are found, Then each is where a pass, a bridge or a gate must be, at a crossing of a cliff, of water or of a wall. A choke the layout calls for has the layout's width (R-113-05; Westley, 2026-10-03: the layout engine decides the width) [Q-191-05: the numeric width of each authored choke].
+- R-192-03  Given the terrain, When vantages are found, Then each is on a real peak [Q-192-03: whether a vantage on an upper layer must be reachable by walking units on a ground era, as R-113-04 requires today].
+- R-192-04  Given a generated land map, When the plays of the layer system are listed (hold a choke, hold the top of a slope past its midline, fight from behind tall cover), Then the map offers each [Q-192-04: how a map comes to offer them now that the layout engine leads, and whether rule-found places are added to the layout's].
+- R-192-05  Given the terrain, When raids and shipments reach a base, Then they come along lanes the terrain sets (E-22 S-168 and S-174, E-22 S-176). Both ways are built behind a switch: the generator outputs the lanes, or they are found at play from the route grid; playtests choose (Westley, 2026-10-03).
 
 Inputs: slopes; terrain; places.
 Outputs: strongpoints, chokes and vantages as typed places.
-Open flags: Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05.
+Open flags: Q-192-03, Q-192-04.
 
 ### S-193 — Settlements that build themselves
 As a commander, I want cities and bases to rise from scaffolds in waves, spread along the land, climb cliffsides and reshape around what I place, so that the base I fight over is a spectacle to watch being built.
@@ -372,13 +372,13 @@ As a commander, I want a map that favors the defender to still be one I can win,
 
 Rules
 - R-197-01  Given a generated land map, When the fairness evaluator runs, Then it scores the derived terrain, its places and any layout it accounts for on route count, travel time balance, vantage accessibility balance and hazard symmetry as S-117 does, and logs the score with the seed.
-- R-197-02  Given a map the situation slants, When the score is read, Then the acceptable range accounts for the slant, such as a defender's better position (E-22 S-177) [Q-197-01: how the range takes the situation as an input].
+- R-197-02  Given a map the situation slants, When the score is read, Then the acceptable range accounts for the slant, such as a defender's better position (E-22 S-177), and the range is centered on the slant the situation gives (Westley, 2026-10-03).
 - R-197-03  Given the derived map, When it is checked, Then the hard constraints of R-117-03 hold on it: no side's every approach is blocked while the other's is clear, and every vantage is reachable by both sides [Q-192-03 for walking units on high bands].
 - R-197-04  Given the launch build, When a score is outside the range, Then it is logged, and whether a map is regenerated is a design-phase decision (Q-113-01, closed: logger only until the generator is tuned).
 
 Inputs: map seed; the situation (E-02, E-10).
 Outputs: fairness log.
-Open flags: Q-197-01.
+Open flags: none.
 
 ## Inputs
 
@@ -390,7 +390,7 @@ Open flags: Q-197-01.
 | Region state | E-02 | fields and composites | |
 | Climate, landform, environmental trouble | Derived from the seed (S-187) | per S-187 | |
 | What the economy needs found (bases, sites, strongpoints) | E-19 S-159, E-22 | per S-191, S-192 | |
-| Layout library and library hints | E-21 | per S-112 | the layout proposes, the terrain disposes (S-191 R-191-10) |
+| Layout library and library hints | E-21 | per S-112 | the layout calls for places, the landscape engine must produce them (S-191 R-191-10) |
 | Era kit | Era pack | pieces per abstract type | missing piece uses a placeholder |
 
 The layout library and library hints (E-21) stay an input of this epic. The terrain accounts for them as S-191 R-191-10 says.
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-189-02, Q-189-04, Q-190-01, Q-191-05, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-189-02, Q-189-04, Q-190-01, Q-191-05, Q-192-03, Q-192-04, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

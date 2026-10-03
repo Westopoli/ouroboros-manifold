@@ -46,7 +46,7 @@ Open flags: none.
 
 ### S-073 — Ten kinds of trouble
 
-Direction changed 2026-10-02, rewrite pending: the layout library of R-073-03 stays, and terrain-first generation is added to it, so the terrain engine accounts for the layouts (E-17 S-166 R-166-03, S-191 R-191-10: the layout proposes and the terrain disposes, and the archetype also biases the landform). Suppression and Counterinsurgency no longer have a small canvas: they take one drawn from medium and large, with a compact play area (E-17 R-188-06). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the layout library of R-073-03 stays, and terrain-first generation is added to it, so the terrain engine accounts for the layouts (E-17 S-166 R-166-03, S-191 R-191-10: the layout calls for places and the landscape engine must produce them, and the archetype also biases the landform). Suppression and Counterinsurgency no longer have a small canvas: they take one drawn from medium and large, with a compact play area (E-17 R-188-06). The rules below are what the game does today.
 As a commander, I want every mission to be a recognizable military situation with its own trigger, shape, and map, so that I learn the grammar of orders and still never see the same mission twice.
 
 Rules
