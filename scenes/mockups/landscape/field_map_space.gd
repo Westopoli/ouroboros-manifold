@@ -1,35 +1,37 @@
 class_name SpaceFieldMap
 extends FieldMap
 
-# Five open-or-blocked layers, each a sheet of fractured plates (jittered-lattice Worley cells
-# with narrow channels) from its own seed. No engine noise, no random calls: every random value is
-# the hand-written hash below, so the C simulation can copy this file line for line.
-# Pass 1's value-noise blobs stay reachable through the plant `space-noise-blobs`.
+# Five open-or-blocked layers, each a sheet of plates from its own seed: a jittered lattice of plate
+# centres, each plate the cell of its centre against its eight neighbours (straight bisector edges)
+# pulled in by half a channel, so the gap between two plates is one channel wide. Dropped plates are
+# open water; rubble gathers on dropped plates next to kept ones. Every plate is a polygon; the cell
+# masks are filled from the polygons, so play data and picture agree.
+# No engine noise, no random calls: every random value is the hand-written hash below, so the C
+# simulation can copy this file line for line.
 # See also: docs/northstar/plans/2026-10-02-space-kit-mode-spec.md
 
 const LAYERS := 5
 const LAYER_GAP_WU := 1400.0
 const CLEAR_RADIUS_WU := 600.0
 const MIN_POCKET_CELLS := 40
-const TUNNEL_HALF_WIDTH_CELLS := 1
+const CROSSING_MARK_MIN_CELLS := 8
 const CROSSING_MARK_MAX_CELLS := 50
 const HASH_MASK := 0xFFFFFFFF
 const LAYER_SEED_STEP := 7919
 # lattice cells across (canvas, canvas, 5 layers), and the octave's weight.
 const OCTAVE_LATTICES: Array[Vector3i] = [Vector3i(5, 5, 2), Vector3i(14, 14, 4)]
 const OCTAVE_WEIGHTS: Array[float] = [0.65, 0.35]
-# Pass 2 (plates). Hash channels: the iz argument of hash32 names what a value is for.
 const PLATE_CELL_WU := 1600.0
 const CHANNEL_WU := 160.0
+const JITTER_MAX := 0.45
 const RUBBLE_CELL_WU := 400.0
 const RUBBLE_CHANNEL_WU := 100.0
 const RUBBLE_SHARE := 0.35
-const SCALE_BASE := 0.6
-const SCALE_SWING := 0.8
 const DROP_SWING := 0.3
 const MASS_CHANCE := 0.5
 const MASS_RADIUS_WU := 2200.0
-const ERODE_SHARE := 0.15
+const ERODE_MAX := 0.12
+# Hash channels: the iz argument of hash32 names what a value is for.
 const H_JITTER_X := 0
 const H_JITTER_Y := 1
 const H_DROP := 2
@@ -39,10 +41,15 @@ const H_ERODE := 5
 const H_RUBBLE_X := 6
 const H_RUBBLE_Y := 7
 const H_RUBBLE_KEEP := 8
-# kinds[k] values for a blocked cell.
+const H_RUBBLE_ERODE := 9
+# kinds[k] values for a blocked cell, and the kind of a plate polygon.
 const KIND_PLATE := 0
 const KIND_MASS := 1
 const KIND_RUBBLE := 2
+const NEIGHBOURS: Array[Vector2i] = [
+	Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0),
+	Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1),
+]
 
 var density: float = 35.0
 var plate_cell_wu: float = PLATE_CELL_WU
@@ -51,13 +58,20 @@ var layer_gap_wu: float = LAYER_GAP_WU
 var masks: Array = []
 # kinds[k]: KIND_* of each blocked cell (0 where open).
 var kinds: Array = []
-# Each {points: PackedVector2Array, layer: int (1-based)}. Pass 2: the closed bounding box of a
-# plate dropped for reachability. Pass 1 (`space-noise-blobs`): a carved tunnel's polyline.
+# plate_polys[k]: each {points: PackedVector2Array (counter-clockwise), kind: KIND_*, plate: int}.
+# This is what is drawn; plates dropped for reachability are gone from it.
+var plate_polys: Array = []
+# fill_cells[k]: cells of layer k filled solid as small pockets (no polygon covers them).
+var fill_cells: Array = []
+# Each {points: PackedVector2Array, layer: int (1-based)}: the closed outline of a plate dropped
+# for reachability.
 var tunnels: Array = []
 # Per layer {blocked, open}, shares 0..1.
 var layer_stats: Array = []
-# Kept plates per layer after the clearing (the large mass counts as plates); empty in blob mode.
+# Kept plates per layer after the clearing (the large mass counts as plates), before rubble.
 var plates_per_layer: Array = []
+# Polygons drawn per layer: plates, mass and rubble.
+var plate_polygon_count: Array = []
 var plates_cleared := 0
 var plates_cut := 0
 var rubble_share := 0.0
@@ -66,9 +80,10 @@ var tunnels_cut := 0
 var regions_unreachable_after := 0
 # Percent of cells open on layer k and k + 1, k = 0..3.
 var crossing_pct: Array = []
-# Per layer: plate id of every cell, and the number of plate id slots.
-var _plate_ids: Array = []
-var _plate_slots: Array = []
+# Per layer: {cx, cy, stride, wc, cell, polys, base, links}; see _build_plate_layer.
+var _ctx: Array = []
+# Cells (index over all layers) filled solid as pockets.
+var _filled := PackedInt32Array()
 
 
 func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -> void:
@@ -76,24 +91,19 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -
 	density = clamp(p_density, 0.0, 90.0)
 	dim = int(canvas / SPACING) + 1
 	var n := dim * dim
-	var blobs: bool = QaPlants.is_active("space-noise-blobs")
 	var open := PackedByteArray()
 	open.resize(LAYERS * n)
+	open.fill(1)
 	var kind := PackedByteArray()
 	kind.resize(LAYERS * n)
-	_plate_ids = []
-	_plate_slots = []
+	_ctx = []
+	_filled = PackedInt32Array()
 	plates_per_layer = []
 	plates_cleared = 0
 
 	_build_nodes()
-	if blobs:
-		_fill_blobs(open, p_seed)
-		for node in nodes:
-			_clear_around(open, node.pos)
-	else:
-		for k in range(LAYERS):
-			_build_plate_layer(open, kind, k, p_seed)
+	for k in range(LAYERS):
+		_build_plate_layer(open, kind, k, p_seed)
 
 	pockets_filled = 0
 	plates_cut = 0
@@ -102,16 +112,16 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -
 	var objective_cell := _cell_of(nodes[0].pos)
 	var labelled := _label_regions(open, objective_cell)
 	if not QaPlants.is_active("space-no-carve"):
-		if blobs:
-			_fill_and_carve(open, labelled, objective_cell)
-		else:
-			_fill_and_drop_plates(open, labelled, objective_cell)
+		_fill_and_drop_plates(open, kind, labelled, objective_cell)
 		labelled = _label_regions(open, objective_cell)
 	regions_unreachable_after = labelled.sizes.size() - 1
 
 	masks = []
 	kinds = []
 	layer_stats = []
+	plate_polys = []
+	plate_polygon_count = []
+	fill_cells = []
 	var rubble_cells := 0
 	var blocked_cells := 0
 	for k in range(LAYERS):
@@ -128,15 +138,18 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -
 		masks.append(mask)
 		kinds.append(kk)
 		layer_stats.append({blocked = float(n - open_count) / n, open = float(open_count) / n})
+		plate_polys.append(_ctx[k].polys)
+		plate_polygon_count.append(_ctx[k].polys.size())
+		fill_cells.append(PackedInt32Array())
 	rubble_share = float(rubble_cells) / max(blocked_cells, 1)
+	for c in _filled:
+		if open[c] == 0:
+			var k := c / n
+			fill_cells[k].append(c - k * n)
 
 	_build_grid(open)
 	_build_crossings(open)
-	if blobs:
-		_build_borders()
-	else:
-		# Plates are drawn as tiles; an outline overlay of five stacked layers would only clutter.
-		borders = []
+	borders = []
 	rivers = []
 
 
@@ -150,6 +163,8 @@ func compute_hash() -> int:
 		parts.append(hash(mask))
 	for kk in kinds:
 		parts.append(hash(kk))
+	for count in plate_polygon_count:
+		parts.append(count)
 	for t in tunnels:
 		var pts: PackedVector2Array = t.points
 		parts.append(t.layer)
@@ -170,29 +185,14 @@ func hash32(ix: int, iy: int, iz: int, p_seed: int) -> int:
 	return h
 
 
-# Pass 1 generator (`space-noise-blobs`): one block of three-dimensional value noise, thresholded
-# at the density quantile over all five layers.
-func _fill_blobs(open: PackedByteArray, p_seed: int) -> void:
-	var n := dim * dim
-	var independent: bool = QaPlants.is_active("space-independent-layers")
-	var samples := PackedFloat64Array()
-	samples.resize(LAYERS * n)
-	for k in range(LAYERS):
-		var layer_seed := p_seed + k * LAYER_SEED_STEP if independent else p_seed
-		_sample_layer(samples, k, layer_seed, independent, k * n)
-
-	var threshold := -1.0
-	if density > 0.0:
-		var sorted := samples.duplicate()
-		sorted.sort()
-		threshold = sorted[min(int(floor(density / 100.0 * sorted.size())), sorted.size() - 1)]
-	for i in range(LAYERS * n):
-		open[i] = 0 if samples[i] <= threshold else 1
+func _hash01(ix: int, iy: int, channel: int, layer_seed: int) -> float:
+	return hash32(ix, iy, channel, layer_seed) / 4294967296.0
 
 
 # Samples layer k (0-based) into samples[out_base ...]. Trilinear value noise with
 # smoothstep on every axis; the z blend is done once per lattice plane, which gives the same
-# number as blending the eight corners per sample.
+# number as blending the eight corners per sample. `independent` fixes z at 0.5 (a layer with its
+# own seed); otherwise the layer's slice of one shared block is sampled.
 func _sample_layer(samples: PackedFloat64Array, k: int, layer_seed: int, independent: bool, out_base: int) -> void:
 	for o in range(OCTAVE_LATTICES.size()):
 		var lattice: Vector3i = OCTAVE_LATTICES[o]
@@ -267,17 +267,6 @@ func _cell_of(pos: Vector2) -> Vector2i:
 	return Vector2i(clampi(int(round(pos.x / SPACING)), 0, dim - 1), clampi(int(round(pos.y / SPACING)), 0, dim - 1))
 
 
-func _clear_around(open: PackedByteArray, pos: Vector2) -> void:
-	var n := dim * dim
-	var reach := int(ceil(CLEAR_RADIUS_WU / SPACING))
-	var centre := _cell_of(pos)
-	for gy in range(max(0, centre.y - reach), min(dim, centre.y + reach + 1)):
-		for gx in range(max(0, centre.x - reach), min(dim, centre.x + reach + 1)):
-			if (Vector2(gx, gy) * SPACING).distance_to(pos) <= CLEAR_RADIUS_WU:
-				for k in range(LAYERS):
-					open[k * n + gy * dim + gx] = 1
-
-
 # Six-neighbour flood fill over open cells (four in-plane, one above, one below). Returns
 # labels per cell (-1 blocked), the size of each region, and each region's cell nearest the
 # objective in plane distance (first found wins a tie).
@@ -334,7 +323,7 @@ func _label_regions(open: PackedByteArray, objective_cell: Vector2i) -> Dictiona
 
 
 # Regions other than the main one under MIN_POCKET_CELLS are filled solid. Returns 1 per filled
-# region id.
+# region id. The filled cells are kept in `_filled`: no polygon covers them, the placer draws them.
 func _fill_pockets(open: PackedByteArray, labelled: Dictionary) -> PackedByteArray:
 	var labels: PackedInt32Array = labelled.labels
 	var sizes: Array = labelled.sizes
@@ -349,331 +338,339 @@ func _fill_pockets(open: PackedByteArray, labelled: Dictionary) -> PackedByteArr
 		for i in range(labels.size()):
 			if labels[i] >= 0 and fill[labels[i]] == 1:
 				open[i] = 0
+				_filled.append(i)
 	return fill
 
 
-# Pass 1: larger pockets get a tunnel on their own layer toward the objective's cell, cut as a
-# Bresenham line TUNNEL_HALF_WIDTH_CELLS wide, ending at the first main-region cell it touches. The
-# objective column is open on every layer (the clear radius), so every line ends. Pockets are
-# filled before any tunnel is cut, so a tunnel through a small pocket is not filled back in.
-func _fill_and_carve(open: PackedByteArray, labelled: Dictionary, objective_cell: Vector2i) -> void:
-	var n := dim * dim
-	var labels: PackedInt32Array = labelled.labels
-	var sizes: Array = labelled.sizes
-	var main: int = labelled.main
-	var fill := _fill_pockets(open, labelled)
-	for id in range(sizes.size()):
-		if id == main or fill[id] == 1:
-			continue
-		var c: int = labelled.nearest[id]
-		var k := c / n
-		var p := c - k * n
-		var x0 := p % dim
-		var y0 := p / dim
-		var dx: int = abs(objective_cell.x - x0)
-		var dy: int = -abs(objective_cell.y - y0)
-		var sx := 1 if x0 < objective_cell.x else -1
-		var sy := 1 if y0 < objective_cell.y else -1
-		var err := dx + dy
-		var points := PackedVector2Array()
-		while true:
-			points.append(Vector2(x0, y0) * SPACING)
-			var reached := false
-			for oy in range(-TUNNEL_HALF_WIDTH_CELLS, TUNNEL_HALF_WIDTH_CELLS + 1):
-				for ox in range(-TUNNEL_HALF_WIDTH_CELLS, TUNNEL_HALF_WIDTH_CELLS + 1):
-					var nx := x0 + ox
-					var ny := y0 + oy
-					if nx < 0 or nx >= dim or ny < 0 or ny >= dim:
-						continue
-					var ci := k * n + ny * dim + nx
-					if labels[ci] == main:
-						reached = true
-					open[ci] = 1
-			if reached or (x0 == objective_cell.x and y0 == objective_cell.y):
-				break
-			var e2 := 2 * err
-			if e2 >= dy:
-				err += dy
-				x0 += sx
-			if e2 <= dx:
-				err += dx
-				y0 += sy
-		tunnels.append({points = points, layer = k + 1})
-		tunnels_cut += 1
+func _key(i: int, j: int, stride: int) -> int:
+	return (j + 2) * stride + (i + 2)
 
 
-func _hash01(ix: int, iy: int, channel: int, layer_seed: int) -> float:
-	return hash32(ix, iy, channel, layer_seed) / 4294967296.0
+# A jittered square lattice of centres over the canvas, cell size `cell`, indices -2 .. wc + 1.
+# The noise v (the layer's grid, sampled at the lattice cell's own middle) scales the jitter, up to
+# JITTER_MAX of the cell: where v is low the plates are more regular. `v` holds v per key.
+func _lattice(noise: PackedFloat64Array, cell: float, layer_seed: int, hx: int, hy: int) -> Dictionary:
+	var wc := int(ceil(canvas / cell))
+	var stride := wc + 4
+	var cx := PackedFloat64Array()
+	var cy := PackedFloat64Array()
+	var v := PackedFloat64Array()
+	cx.resize(stride * stride)
+	cy.resize(stride * stride)
+	v.resize(stride * stride)
+	for j in range(-2, wc + 2):
+		for i in range(-2, wc + 2):
+			var key := _key(i, j, stride)
+			var gx := clampi(int(round((i + 0.5) * cell / SPACING)), 0, dim - 1)
+			var gy := clampi(int(round((j + 0.5) * cell / SPACING)), 0, dim - 1)
+			var vv := noise[gy * dim + gx]
+			var amp := JITTER_MAX * (0.5 + 0.5 * vv)
+			v[key] = vv
+			cx[key] = (i + 0.5 + (_hash01(i, j, hx, layer_seed) * 2.0 - 1.0) * amp) * cell
+			cy[key] = (j + 0.5 + (_hash01(i, j, hy, layer_seed) * 2.0 - 1.0) * amp) * cell
+	return {cx = cx, cy = cy, v = v, wc = wc, stride = stride, cell = cell}
 
 
-# Pass 2: layer k (0-based) as a sheet of plates, written into open / kind at k * dim * dim.
-# Plates are Worley cells of a jittered lattice laid in a warped space whose cell size follows the
-# two-octave noise (small plates where it is low), so the field has packed and open areas.
-# A cell is open water within CHANNEL_WU of a plate boundary. Each plate is kept or dropped by
-# its own hash against the density; dropped plates carry rubble; one large mass may be grown;
-# the layout places drop the plates around them; kept edges are eroded.
+# Keeps the part of a convex polygon with n . p <= d.
+func _clip(poly: PackedVector2Array, nrm: Vector2, d: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var count := poly.size()
+	for i in range(count):
+		var a := poly[i]
+		var b := poly[(i + 1) % count]
+		var sa := nrm.dot(a) - d
+		var sb := nrm.dot(b) - d
+		if sa <= 0.0:
+			out.append(a)
+		if (sa < 0.0 and sb > 0.0) or (sa > 0.0 and sb < 0.0):
+			out.append(a + (b - a) * (sa / (sa - sb)))
+	return out
+
+
+func _clip_canvas(poly: PackedVector2Array) -> PackedVector2Array:
+	poly = _clip(poly, Vector2(-1.0, 0.0), 0.0)
+	poly = _clip(poly, Vector2(1.0, 0.0), canvas)
+	poly = _clip(poly, Vector2(0.0, -1.0), 0.0)
+	return _clip(poly, Vector2(0.0, 1.0), canvas)
+
+
+# The cell of centre (i, j): the lattice square widened by one cell, cut by the perpendicular
+# bisector against each of the eight neighbours, each cut pulled in by insets[idx] toward the
+# centre. Counter-clockwise. `found` receives the (i, j) of every neighbour whose cut leaves an edge.
+func _cell_polygon(cx: PackedFloat64Array, cy: PackedFloat64Array, stride: int, i: int, j: int, cell: float, insets: PackedFloat64Array, found: Array) -> PackedVector2Array:
+	var key := _key(i, j, stride)
+	var c := Vector2(cx[key], cy[key])
+	var poly := PackedVector2Array([
+		Vector2((i - 1) * cell, (j - 1) * cell), Vector2((i + 2) * cell, (j - 1) * cell),
+		Vector2((i + 2) * cell, (j + 2) * cell), Vector2((i - 1) * cell, (j + 2) * cell),
+	])
+	var cuts: Array = []
+	for idx in range(8):
+		var o: Vector2i = NEIGHBOURS[idx]
+		var q := _key(i + o.x, j + o.y, stride)
+		var qc := Vector2(cx[q], cy[q])
+		var nrm := (qc - c).normalized()
+		var d := nrm.dot((c + qc) * 0.5) - insets[idx]
+		poly = _clip(poly, nrm, d)
+		cuts.append([nrm, d])
+	for idx in range(8):
+		var nrm: Vector2 = cuts[idx][0]
+		var d: float = cuts[idx][1]
+		var first := Vector2.ZERO
+		var seen := false
+		for p in poly:
+			if absf(nrm.dot(p) - d) < 0.01:
+				if not seen:
+					first = p
+					seen = true
+				elif p.distance_to(first) > 1.0:
+					found.append(Vector2i(i + NEIGHBOURS[idx].x, j + NEIGHBOURS[idx].y))
+					break
+	return poly
+
+
+# Moves each vertex toward the centroid by a hashed share (up to ERODE_MAX) of its distance, so
+# edges stay straight and corners vary. Vertices on the canvas boundary stay.
+func _erode(poly: PackedVector2Array, i: int, j: int, layer_seed: int, channel: int) -> PackedVector2Array:
+	var centroid := Vector2.ZERO
+	for p in poly:
+		centroid += p
+	centroid /= poly.size()
+	var out := PackedVector2Array()
+	for vi in range(poly.size()):
+		var p := poly[vi]
+		if p.x < 0.01 or p.y < 0.01 or p.x > canvas - 0.01 or p.y > canvas - 0.01:
+			out.append(p)
+		else:
+			out.append(p + (centroid - p) * (_hash01(i, j * 64 + vi, channel, layer_seed) * ERODE_MAX))
+	return out
+
+
+# The key of the plate whose centre is nearest `pos` (3 by 3 lattice cells around it).
+func _nearest_plate(ctx: Dictionary, pos: Vector2) -> int:
+	var cx: PackedFloat64Array = ctx.cx
+	var cy: PackedFloat64Array = ctx.cy
+	var bi := clampi(int(floor(pos.x / ctx.cell)), -1, ctx.wc)
+	var bj := clampi(int(floor(pos.y / ctx.cell)), -1, ctx.wc)
+	var best := -1
+	var best_d := INF
+	for j in range(bj - 1, bj + 2):
+		for i in range(bi - 1, bi + 2):
+			var key := _key(i, j, ctx.stride)
+			var dx := cx[key] - pos.x
+			var dy := cy[key] - pos.y
+			var d := dx * dx + dy * dy
+			if d < best_d:
+				best_d = d
+				best = key
+	return best
+
+
+# Sets the cells inside a polygon blocked, row by row (even-odd crossings of each row).
+func _fill_polygon(open: PackedByteArray, kind: PackedByteArray, base: int, poly: PackedVector2Array, kind_value: int) -> void:
+	var low_y := INF
+	var high_y := -INF
+	for p in poly:
+		low_y = min(low_y, p.y)
+		high_y = max(high_y, p.y)
+	var count := poly.size()
+	for gy in range(maxi(0, int(ceil(low_y / SPACING))), mini(dim - 1, int(floor(high_y / SPACING))) + 1):
+		var y: float = min(gy * SPACING, canvas - 0.001)
+		var xs := PackedFloat64Array()
+		for e in range(count):
+			var a := poly[e]
+			var b := poly[(e + 1) % count]
+			if (a.y <= y and b.y > y) or (b.y <= y and a.y > y):
+				xs.append(a.x + (y - a.y) / (b.y - a.y) * (b.x - a.x))
+		xs.sort()
+		for pair in range(0, xs.size() - 1, 2):
+			for gx in range(maxi(0, int(ceil(xs[pair] / SPACING))), mini(dim - 1, int(floor(xs[pair + 1] / SPACING))) + 1):
+				open[base + gy * dim + gx] = 0
+				kind[base + gy * dim + gx] = kind_value
+
+
+# Layer k (0-based) as a sheet of plates, written into open / kind at k * dim * dim.
+# Each plate is kept or dropped by its own hash against the density, shifted by the noise v at the
+# plate (some areas packed, some open); one large mass may be grown; the layout places drop the
+# plates around them; rubble fills dropped plates that touch a kept one.
 func _build_plate_layer(open: PackedByteArray, kind: PackedByteArray, k: int, p_seed: int) -> void:
 	var n := dim * dim
-	var base := k * n
 	var coherent: bool = QaPlants.is_active("space-coherent-layers")
 	var ls := p_seed if coherent else p_seed + k * LAYER_SEED_STEP
-	var v := PackedFloat64Array()
-	v.resize(n)
-	_sample_layer(v, k, ls, not coherent, 0)
+	var noise := PackedFloat64Array()
+	noise.resize(n)
+	_sample_layer(noise, k, ls, not coherent, 0)
 
-	# Warped lattice coordinates: one lattice unit is one plate, whatever the local plate size.
-	var ux := PackedFloat64Array()
-	var uy := PackedFloat64Array()
-	ux.resize(n)
-	uy.resize(n)
-	var umax_x := 0.0
-	var umax_y := 0.0
-	for gy in range(dim):
-		var acc := 0.0
-		for gx in range(dim):
-			var i := gy * dim + gx
-			ux[i] = acc
-			acc += SPACING / (plate_cell_wu * (SCALE_BASE + SCALE_SWING * v[i]))
-		umax_x = max(umax_x, ux[gy * dim + dim - 1])
-	for gx in range(dim):
-		var acc := 0.0
-		for gy in range(dim):
-			var i := gy * dim + gx
-			uy[i] = acc
-			acc += SPACING / (plate_cell_wu * (SCALE_BASE + SCALE_SWING * v[i]))
-		umax_y = max(umax_y, uy[(dim - 1) * dim + gx])
-	# Lattice index ix runs from -1; slot lx = ix + 1.
-	var wx := int(floor(umax_x)) + 3
-	var wy := int(floor(umax_y)) + 3
-	var slots := wx * wy
-	var centre_x := PackedFloat64Array()
-	var centre_y := PackedFloat64Array()
-	centre_x.resize(slots)
-	centre_y.resize(slots)
-	for ly in range(wy):
-		for lx in range(wx):
-			centre_x[ly * wx + lx] = (lx - 1) + _hash01(lx - 1, ly - 1, H_JITTER_X, ls)
-			centre_y[ly * wx + lx] = (ly - 1) + _hash01(lx - 1, ly - 1, H_JITTER_Y, ls)
+	var ctx := _lattice(noise, plate_cell_wu, ls, H_JITTER_X, H_JITTER_Y)
+	var wc: int = ctx.wc
+	var stride: int = ctx.stride
+	var cx: PackedFloat64Array = ctx.cx
+	var cy: PackedFloat64Array = ctx.cy
+	var cell: float = ctx.cell
 
-	var pid := PackedInt32Array()
-	var pid2 := PackedInt32Array()
-	var channel := PackedByteArray()
-	pid.resize(n)
-	pid2.resize(n)
-	channel.resize(n)
-	var count := PackedInt32Array()
-	var sum_x := PackedFloat64Array()
-	var sum_y := PackedFloat64Array()
-	var sum_v := PackedFloat64Array()
-	count.resize(slots)
-	sum_x.resize(slots)
-	sum_y.resize(slots)
-	sum_v.resize(slots)
-	for gy in range(dim):
-		for gx in range(dim):
-			var i := gy * dim + gx
-			var px := ux[i]
-			var py := uy[i]
-			var bx := int(floor(px))
-			var by := int(floor(py))
-			var d1 := INF
-			var d2 := INF
-			var id1 := 0
-			var id2 := 0
-			for ly in range(by, by + 3):
-				for lx in range(bx, bx + 3):
-					var j := ly * wx + lx
-					var dx := centre_x[j] - px
-					var dy := centre_y[j] - py
-					var d := dx * dx + dy * dy
-					if d < d1:
-						d2 = d1
-						id2 = id1
-						d1 = d
-						id1 = j
-					elif d < d2:
-						d2 = d
-						id2 = j
-			pid[i] = id1
-			pid2[i] = id2
-			var width_wu := (sqrt(d2) - sqrt(d1)) * plate_cell_wu * (SCALE_BASE + SCALE_SWING * v[i])
-			channel[i] = 1 if width_wu < CHANNEL_WU else 0
-			count[id1] += 1
-			sum_x[id1] += gx * SPACING
-			sum_y[id1] += gy * SPACING
-			sum_v[id1] += v[i]
+	# Plates exist for lattice indices -1 .. wc: their cells reach into the canvas.
+	var keys: Array = []
+	var inside: Array = []
+	var base := {}
+	var links := {}
+	var half := PackedFloat64Array()
+	half.resize(8)
+	half.fill(CHANNEL_WU * 0.5)
+	for j in range(-1, wc + 1):
+		for i in range(-1, wc + 1):
+			var key := _key(i, j, stride)
+			var found: Array = []
+			base[key] = _cell_polygon(cx, cy, stride, i, j, cell, half, found)
+			var neighbours: Array = []
+			for o in found:
+				if o.x >= -1 and o.x <= wc and o.y >= -1 and o.y <= wc:
+					neighbours.append(_key(o.x, o.y, stride))
+			links[key] = neighbours
+			keys.append(key)
+			if i >= 0 and i < wc and j >= 0 and j < wc:
+				inside.append(key)
 
-	var existing: Array = []
-	var centroid := PackedVector2Array()
-	centroid.resize(slots)
+	# The channels and the eroded corners take about a quarter of a plate's area, so the share of
+	# plates kept is the blocked percent divided by the share of a plate that stays solid.
+	var solid := (1.0 - CHANNEL_WU / cell) * (1.0 - CHANNEL_WU / cell) * (1.0 - ERODE_MAX * 0.5) * (1.0 - ERODE_MAX * 0.5)
 	var kept := PackedByteArray()
 	var mass := PackedByteArray()
 	var cleared := PackedByteArray()
-	kept.resize(slots)
-	mass.resize(slots)
-	cleared.resize(slots)
-	for p in range(slots):
-		if count[p] == 0:
-			continue
-		existing.append(p)
-		centroid[p] = Vector2(sum_x[p], sum_y[p]) / count[p]
-		var keep_share := density / 100.0 + (sum_v[p] / count[p] - 0.5) * DROP_SWING if density > 0.0 else -1.0
-		kept[p] = 1 if _hash01(p % wx - 1, p / wx - 1, H_DROP, ls) <= keep_share else 0
+	kept.resize(stride * stride)
+	mass.resize(stride * stride)
+	cleared.resize(stride * stride)
+	for key in keys:
+		var i: int = key % stride - 2
+		var j: int = key / stride - 2
+		var keep_share: float = density / 100.0 / solid + (ctx.v[key] - 0.5) * DROP_SWING if density > 0.0 else -1.0
+		kept[key] = 1 if _hash01(i, j, H_DROP, ls) <= keep_share else 0
 
 	if _hash01(0, 0, H_MASS_ON, ls) < MASS_CHANCE:
-		var pick: int = existing[int(_hash01(0, 0, H_MASS_PICK, ls) * existing.size())]
-		for p in existing:
-			if centroid[p].distance_to(centroid[pick]) <= MASS_RADIUS_WU:
-				mass[p] = 1
-				kept[p] = 1
+		var pick: int = inside[int(_hash01(0, 0, H_MASS_PICK, ls) * inside.size())]
+		var pick_centre := Vector2(cx[pick], cy[pick])
+		for key in keys:
+			if Vector2(cx[key], cy[key]).distance_to(pick_centre) <= MASS_RADIUS_WU:
+				mass[key] = 1
+				kept[key] = 1
 
 	# The layout places: the plate holding each node and every plate whose centre is near it.
 	for node in nodes:
-		var cell := _cell_of(node.pos)
-		var home := pid[cell.y * dim + cell.x]
-		for p in existing:
-			if cleared[p] == 0 and (p == home or centroid[p].distance_to(node.pos) <= CLEAR_RADIUS_WU):
-				cleared[p] = 1
-				if kept[p] == 1:
+		var home := _nearest_plate(ctx, node.pos)
+		for key in keys:
+			if cleared[key] == 0 and (key == home or Vector2(cx[key], cy[key]).distance_to(node.pos) <= CLEAR_RADIUS_WU):
+				cleared[key] = 1
+				if kept[key] == 1:
 					plates_cleared += 1
-				kept[p] = 0
-				mass[p] = 0
-	var kept_count := 0
-	for p in existing:
-		kept_count += kept[p]
-	plates_per_layer.append(kept_count)
+				kept[key] = 0
+				mass[key] = 0
 
-	# Rubble: a second, finer lattice in world units.
-	var rw := int(canvas / RUBBLE_CELL_WU) + 4
-	var rubble_x := PackedFloat64Array()
-	var rubble_y := PackedFloat64Array()
-	var rubble_kept := PackedByteArray()
-	rubble_x.resize(rw * rw)
-	rubble_y.resize(rw * rw)
-	rubble_kept.resize(rw * rw)
-	for ly in range(rw):
-		for lx in range(rw):
-			rubble_x[ly * rw + lx] = ((lx - 1) + _hash01(lx - 1, ly - 1, H_RUBBLE_X, ls)) * RUBBLE_CELL_WU
-			rubble_y[ly * rw + lx] = ((ly - 1) + _hash01(lx - 1, ly - 1, H_RUBBLE_Y, ls)) * RUBBLE_CELL_WU
-			rubble_kept[ly * rw + lx] = 1 if _hash01(lx - 1, ly - 1, H_RUBBLE_KEEP, ls) < RUBBLE_SHARE else 0
+	var polys: Array = []
+	for key in keys:
+		if kept[key] == 0:
+			continue
+		var i: int = key % stride - 2
+		var j: int = key / stride - 2
+		var poly: PackedVector2Array = base[key]
+		if mass[key] == 1:
+			# The channels between two plates of the mass are closed.
+			var insets := PackedFloat64Array()
+			for o in NEIGHBOURS:
+				insets.append(0.0 if mass[_key(i + o.x, j + o.y, stride)] == 1 else CHANNEL_WU * 0.5)
+			poly = _clip_canvas(_cell_polygon(cx, cy, stride, i, j, cell, insets, []))
+		else:
+			poly = _clip_canvas(poly)
+			if poly.size() >= 3:
+				poly = _erode(poly, i, j, ls, H_ERODE)
+		if poly.size() < 3:
+			continue
+		var kind_value := KIND_MASS if mass[key] == 1 else KIND_PLATE
+		polys.append({points = poly, kind = kind_value, plate = key})
+		_fill_polygon(open, kind, k * n, poly, kind_value)
+	plates_per_layer.append(polys.size())
 
-	for gy in range(dim):
-		for gx in range(dim):
-			var i := gy * dim + gx
-			var p := pid[i]
-			var blocked_kind := -1
-			if channel[i] == 1:
-				if mass[p] == 1 and mass[pid2[i]] == 1:
-					blocked_kind = KIND_MASS
-			elif kept[p] == 1:
-				blocked_kind = KIND_MASS if mass[p] == 1 else KIND_PLATE
-			elif cleared[p] == 0 and _in_rubble(gx * SPACING, gy * SPACING, rubble_x, rubble_y, rubble_kept, rw):
-				blocked_kind = KIND_RUBBLE
-			if blocked_kind < 0:
-				open[base + i] = 1
-			else:
-				kind[base + i] = blocked_kind
-
-	# Erode: a blocked cell next to open space is removed by its own hash, so edges are broken.
-	var before := open.slice(base, base + n)
-	for gy in range(dim):
-		for gx in range(dim):
-			var i := gy * dim + gx
-			if before[i] == 1:
+	# Rubble: only on dropped plates that share a channel with a kept plate, on a finer lattice;
+	# the share follows the noise at the fragment, so it gathers at the edges of packed areas.
+	var near_kept := PackedByteArray()
+	near_kept.resize(stride * stride)
+	for key in keys:
+		if kept[key] == 0 and cleared[key] == 0:
+			for q in links[key]:
+				if kept[q] == 1:
+					near_kept[key] = 1
+					break
+	var rub := _lattice(noise, RUBBLE_CELL_WU, ls, H_RUBBLE_X, H_RUBBLE_Y)
+	var rubble_insets := PackedFloat64Array()
+	rubble_insets.resize(8)
+	rubble_insets.fill(RUBBLE_CHANNEL_WU * 0.5)
+	for j in range(-1, rub.wc + 1):
+		for i in range(-1, rub.wc + 1):
+			var rk := _key(i, j, rub.stride)
+			if _hash01(i, j, H_RUBBLE_KEEP, ls) >= RUBBLE_SHARE * rub.v[rk]:
 				continue
-			var edge: bool = (gx > 0 and before[i - 1] == 1) or (gx < dim - 1 and before[i + 1] == 1) \
-				or (gy > 0 and before[i - dim] == 1) or (gy < dim - 1 and before[i + dim] == 1)
-			if edge and _hash01(gx, gy, H_ERODE, ls) < ERODE_SHARE:
-				open[base + i] = 1
-	_plate_ids.append(pid)
-	_plate_slots.append(slots)
+			var centre := Vector2(rub.cx[rk], rub.cy[rk])
+			if centre.x < -RUBBLE_CELL_WU * 0.5 or centre.y < -RUBBLE_CELL_WU * 0.5 or centre.x > canvas + RUBBLE_CELL_WU * 0.5 or centre.y > canvas + RUBBLE_CELL_WU * 0.5:
+				continue
+			var parent := _nearest_plate(ctx, centre)
+			if near_kept[parent] == 0:
+				continue
+			var poly := _cell_polygon(rub.cx, rub.cy, rub.stride, i, j, RUBBLE_CELL_WU, rubble_insets, [])
+			var outline: PackedVector2Array = base[parent]
+			for e in range(outline.size()):
+				var edge := outline[(e + 1) % outline.size()] - outline[e]
+				if edge.length() > 0.01:
+					var outward := Vector2(edge.y, -edge.x).normalized()
+					poly = _clip(poly, outward, outward.dot(outline[e]))
+			poly = _clip_canvas(poly)
+			if poly.size() < 3:
+				continue
+			poly = _erode(poly, i, j, ls, H_RUBBLE_ERODE)
+			polys.append({points = poly, kind = KIND_RUBBLE, plate = parent})
+			_fill_polygon(open, kind, k * n, poly, KIND_RUBBLE)
+
+	ctx.polys = polys
+	ctx.base = base
+	ctx.links = links
+	_ctx.append(ctx)
 
 
-# True where (x, y) lies in a kept rubble fragment: the fragment's own cell wins the nearest-centre
-# test and the point is at least RUBBLE_CHANNEL_WU clear of the next cell.
-func _in_rubble(x: float, y: float, rubble_x: PackedFloat64Array, rubble_y: PackedFloat64Array, rubble_kept: PackedByteArray, rw: int) -> bool:
-	var bx := int(floor(x / RUBBLE_CELL_WU))
-	var by := int(floor(y / RUBBLE_CELL_WU))
-	var d1 := INF
-	var d2 := INF
-	var id1 := 0
-	for ly in range(by, by + 3):
-		for lx in range(bx, bx + 3):
-			var j := ly * rw + lx
-			var dx := rubble_x[j] - x
-			var dy := rubble_y[j] - y
-			var d := dx * dx + dy * dy
-			if d < d1:
-				d2 = d1
-				d1 = d
-				id1 = j
-			elif d < d2:
-				d2 = d
-	return rubble_kept[id1] == 1 and sqrt(d2) - sqrt(d1) >= RUBBLE_CHANNEL_WU
-
-
-# Pass 2 reachability. Pockets are filled solid as in pass 1; every other cut-off region is joined
-# to the main one by dropping plates: from the region's nearest cell, breadth-first over the layer's
-# plate adjacency (plates that share a channel) to the objective's plate, and every plate on the
-# path becomes open water. A dropped plate that held anything is recorded in `tunnels` as its
-# bounding box.
-func _fill_and_drop_plates(open: PackedByteArray, labelled: Dictionary, objective_cell: Vector2i) -> void:
+# Pass 2 reachability. Pockets are filled solid; every other cut-off region is joined to the main
+# one by dropping plates: from the plate under the region's nearest cell, breadth-first over the
+# layer's plate adjacency (plates that share a channel) to the objective's plate, and every plate
+# on the path becomes open water.
+func _fill_and_drop_plates(open: PackedByteArray, kind: PackedByteArray, labelled: Dictionary, objective_cell: Vector2i) -> void:
 	var n := dim * dim
 	var sizes: Array = labelled.sizes
 	var main: int = labelled.main
 	var fill := _fill_pockets(open, labelled)
-	var adjacency: Array = []
-	adjacency.resize(LAYERS)
 	for id in range(sizes.size()):
 		if id == main or fill[id] == 1:
 			continue
 		var c: int = labelled.nearest[id]
 		var k := c / n
-		if adjacency[k] == null:
-			adjacency[k] = _plate_adjacency(k)
-		var pid: PackedInt32Array = _plate_ids[k]
-		var path := _plate_path(adjacency[k], _plate_slots[k], pid[c - k * n], pid[objective_cell.y * dim + objective_cell.x])
-		_drop_plates(open, k, path)
+		var ctx: Dictionary = _ctx[k]
+		var gy := (c - k * n) / dim
+		var gx := (c - k * n) - gy * dim
+		var from := _nearest_plate(ctx, Vector2(gx, gy) * SPACING)
+		var to := _nearest_plate(ctx, nodes[0].pos)
+		_drop_plates(open, kind, k, _plate_path(ctx.links, from, to))
 
 
-func _plate_adjacency(k: int) -> Array:
-	var pid: PackedInt32Array = _plate_ids[k]
-	var adjacency: Array = []
-	for p in range(_plate_slots[k]):
-		adjacency.append([])
-	for gy in range(dim):
-		for gx in range(dim):
-			var i := gy * dim + gx
-			if gx < dim - 1:
-				_link(adjacency, pid[i], pid[i + 1])
-			if gy < dim - 1:
-				_link(adjacency, pid[i], pid[i + dim])
-	return adjacency
-
-
-func _link(adjacency: Array, a: int, b: int) -> void:
-	if a != b and not adjacency[a].has(b):
-		adjacency[a].append(b)
-		adjacency[b].append(a)
-
-
-# Plate ids from `from` to `to` inclusive (empty if not connected).
-func _plate_path(adjacency: Array, slots: int, from: int, to: int) -> PackedInt32Array:
-	var parent := PackedInt32Array()
-	parent.resize(slots)
-	parent.fill(-2)
-	parent[from] = -1
+# Plate keys from `from` to `to` inclusive (empty if not connected).
+func _plate_path(links: Dictionary, from: int, to: int) -> PackedInt32Array:
+	var path := PackedInt32Array()
+	if not links.has(from) or not links.has(to):
+		return path
+	var parent := {from: -1}
 	var queue: Array = [from]
 	var head := 0
-	while head < queue.size() and parent[to] == -2:
+	while head < queue.size() and not parent.has(to):
 		var cur: int = queue[head]
 		head += 1
-		for q in adjacency[cur]:
-			if parent[q] == -2:
+		for q in links[cur]:
+			if not parent.has(q):
 				parent[q] = cur
 				queue.append(q)
-	var path := PackedInt32Array()
-	if parent[to] == -2:
+	if not parent.has(to):
 		return path
 	var p := to
 	while p != -1:
@@ -682,40 +679,38 @@ func _plate_path(adjacency: Array, slots: int, from: int, to: int) -> PackedInt3
 	return path
 
 
-func _drop_plates(open: PackedByteArray, k: int, path: PackedInt32Array) -> void:
+# Opens every cell nearest to a plate on the path and removes its polygons. A plate that held
+# anything is recorded in `tunnels` as its outline.
+func _drop_plates(open: PackedByteArray, kind: PackedByteArray, k: int, path: PackedInt32Array) -> void:
 	var n := dim * dim
-	var pid: PackedInt32Array = _plate_ids[k]
-	var index := PackedInt32Array()
-	index.resize(_plate_slots[k])
-	index.fill(-1)
-	for j in range(path.size()):
-		index[path[j]] = j
-	var low: Array = []
-	var high: Array = []
-	var held := PackedByteArray()
-	held.resize(path.size())
-	for j in range(path.size()):
-		low.append(Vector2(INF, INF))
-		high.append(Vector2(-INF, -INF))
-	for i in range(n):
-		var j := index[pid[i]]
-		if j < 0:
-			continue
-		var gy := i / dim
-		var cell := Vector2(i - gy * dim, gy)
-		low[j] = Vector2(min(low[j].x, cell.x), min(low[j].y, cell.y))
-		high[j] = Vector2(max(high[j].x, cell.x), max(high[j].y, cell.y))
-		if open[k * n + i] == 0:
-			held[j] = 1
-			open[k * n + i] = 1
-	for j in range(path.size()):
-		if held[j] == 0:
-			continue
-		var a: Vector2 = (low[j] - Vector2(0.5, 0.5)) * SPACING
-		var b: Vector2 = (high[j] + Vector2(0.5, 0.5)) * SPACING
-		tunnels.append({points = PackedVector2Array([a, Vector2(b.x, a.y), b, Vector2(a.x, b.y), a]), layer = k + 1})
-		plates_cut += 1
-		tunnels_cut += 1
+	var ctx: Dictionary = _ctx[k]
+	var cell: float = ctx.cell
+	for p in path:
+		var held := false
+		var kept_polys: Array = []
+		for pl in ctx.polys:
+			if pl.plate == p:
+				held = true
+			else:
+				kept_polys.append(pl)
+		ctx.polys = kept_polys
+		var i: int = p % ctx.stride - 2
+		var j: int = p / ctx.stride - 2
+		for gy in range(maxi(0, int(floor((j - 1) * cell / SPACING))), mini(dim - 1, int(ceil((j + 2) * cell / SPACING))) + 1):
+			for gx in range(maxi(0, int(floor((i - 1) * cell / SPACING))), mini(dim - 1, int(ceil((i + 2) * cell / SPACING))) + 1):
+				if _nearest_plate(ctx, Vector2(gx, gy) * SPACING) == p:
+					var c := k * n + gy * dim + gx
+					if open[c] == 0:
+						held = true
+						open[c] = 1
+						kind[c] = KIND_PLATE
+		if held:
+			var outline: PackedVector2Array = ctx.base[p]
+			var points := outline.duplicate()
+			points.append(outline[0])
+			tunnels.append({points = points, layer = k + 1})
+			plates_cut += 1
+			tunnels_cut += 1
 
 
 func _build_grid(open: PackedByteArray) -> void:
@@ -739,8 +734,9 @@ func _build_grid(open: PackedByteArray) -> void:
 		}
 
 
-# A crossing cell is open on layers k and k + 1. In-plane clusters of such cells that are small
-# enough to be scarce get one mark at their centroid; bigger ones are obviously crossable.
+# A crossing cell is open on layers k and k + 1. In-plane clusters of such cells between
+# CROSSING_MARK_MIN_CELLS and CROSSING_MARK_MAX_CELLS get one mark at their centroid; bigger ones
+# are obviously crossable, smaller ones are noise.
 func _build_crossings(open: PackedByteArray) -> void:
 	var n := dim * dim
 	crossings = []
@@ -782,18 +778,5 @@ func _build_crossings(open: PackedByteArray) -> void:
 				if gy < dim - 1 and both[c + dim] == 1 and seen[c + dim] == 0:
 					seen[c + dim] = 1
 					stack.append(c + dim)
-			if size <= CROSSING_MARK_MAX_CELLS:
+			if size >= CROSSING_MARK_MIN_CELLS and size <= CROSSING_MARK_MAX_CELLS:
 				crossings.append({point = sum / size * SPACING, kind = "shaft", layer_from = k + 1, layer_to = k + 2})
-
-
-func _build_borders() -> void:
-	borders = []
-	for k in range(LAYERS):
-		var mask: PackedByteArray = masks[k]
-		var values := PackedFloat32Array()
-		values.resize(mask.size())
-		for i in range(mask.size()):
-			values[i] = mask[i]
-		for pl in _march_squares(values, dim, 0.5):
-			if pl.size() >= 2:
-				borders.append({kind = "asteroid", layer = k + 1, points = pl})

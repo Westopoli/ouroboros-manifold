@@ -27,6 +27,7 @@ var _density: float = DEFAULT_DENSITY
 var _layer_gap: float = SpaceFieldMap.LAYER_GAP_WU
 var _plate_cell: float = SpaceFieldMap.PLATE_CELL_WU
 var _focus_layer: int = 0
+var _show_crossings := false
 var _piece_total: int = 0
 var _timing_ms: Dictionary = {}
 var _regen_count: int = 0
@@ -53,6 +54,7 @@ var _plate_label: Label
 var _plate_slider: HSlider
 var _top_down_button: Button
 var _focus_label: Label
+var _solo_label: Label
 var _space_stats_label: Label
 
 
@@ -103,6 +105,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_kit_toggle_pressed()
 		elif _kit_name == SPACE_KIT and event.keycode >= KEY_0 and event.keycode <= KEY_5:
 			_set_focus(event.keycode - KEY_0)
+		elif _kit_name == SPACE_KIT and event.keycode == KEY_C:
+			_show_crossings = not _show_crossings
+			_apply_view()
+			_update_space_controls(_field_map)
 		elif event.keycode == KEY_F12:
 			_take_screenshot("manual_%d" % Time.get_unix_time_from_system())
 
@@ -154,7 +160,7 @@ func _regenerate() -> void:
 	var placer := Placer.new()
 	var result := placer.place(field_map, kit, _generated)
 	if is_space:
-		Placer.apply_layer_focus(_generated, _focus_layer)
+		_apply_view()
 	var t3 := Time.get_ticks_usec()
 
 	_field_map = field_map
@@ -224,9 +230,11 @@ func _build_space_controls() -> void:
 	_top_down_button.name = "TopDownButton"
 	_focus_label = Label.new()
 	_focus_label.name = "FocusLabel"
+	_solo_label = Label.new()
+	_solo_label.name = "SoloLabel"
 	_space_stats_label = Label.new()
 	_space_stats_label.name = "SpaceStatsLabel"
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _top_down_button, _focus_label, _space_stats_label]:
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _top_down_button, _focus_label, _solo_label, _space_stats_label]:
 		box.add_child(control)
 	# Same debounce as stability: regenerate on release, not per drag tick.
 	_density_slider.drag_ended.connect(_on_density_drag_ended)
@@ -287,6 +295,7 @@ func _on_top_down_pressed() -> void:
 func _set_top_down(on: bool) -> void:
 	_camera_rig.set_top_down(on)
 	_refresh_top_down_text()
+	_apply_view()
 
 
 func _refresh_top_down_text() -> void:
@@ -296,7 +305,14 @@ func _refresh_top_down_text() -> void:
 func _set_focus(layer: int) -> void:
 	_focus_layer = layer
 	_focus_label.text = "Focus: all" if layer == 0 else "Focus: layer %d" % layer
-	Placer.apply_layer_focus(_generated, layer)
+	_apply_view()
+
+
+func _apply_view() -> void:
+	var top_down: bool = _camera_rig.is_top_down()
+	Placer.apply_layer_view(_generated, _focus_layer, top_down, _show_crossings)
+	_solo_label.text = "Solo: layer %d" % _focus_layer
+	_solo_label.visible = _kit_name == SPACE_KIT and top_down and _focus_layer != 0
 
 
 func _update_space_controls(field_map: FieldMap) -> void:
@@ -306,6 +322,7 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider]:
 		control.visible = is_space
 	_focus_label.visible = is_space
+	_solo_label.visible = is_space and _camera_rig.is_top_down() and _focus_layer != 0
 	_space_stats_label.visible = is_space
 	if not is_space:
 		return
@@ -313,10 +330,10 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	for stat in field_map.layer_stats:
 		blocked.append("%d%%" % int(round(stat.blocked * 100.0)))
 	var plates: Array = field_map.plates_per_layer.map(func(c): return str(c))
-	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable: %d  Marked crossings: %d" % [
+	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable: %d  Crossings (8 to 50 cells): %d, marks %s (C)" % [
 		" ".join(blocked), " ".join(plates) if not plates.is_empty() else "-", field_map.plates_cleared, field_map.tunnels_cut,
 		int(round(field_map.rubble_share * 100.0)), field_map.pockets_filled,
-		field_map.regions_unreachable_after, field_map.crossings.size()]
+		field_map.regions_unreachable_after, field_map.crossings.size(), "on" if _show_crossings else "off"]
 
 
 func _on_band_changed(band: String) -> void:
@@ -452,6 +469,10 @@ func get_plate_cell() -> float:
 
 func get_focus_layer() -> int:
 	return _focus_layer
+
+
+func get_show_crossings() -> bool:
+	return _show_crossings
 
 
 func get_kit_name() -> String:
