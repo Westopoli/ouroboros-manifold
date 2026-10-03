@@ -99,6 +99,7 @@ class Engine:
             "om_tactical_step": ([V], u64),
             "om_unit_get_hp": ([V, u32], d),
             "om_unit_get_pos": ([V, u32, pd, pd], i),
+            "om_unit_get_destination": ([V, u32, pd, pd], i),
             "om_unit_get_layer": ([V, u32], c.c_int32),
             "om_unit_alive": ([V, u32], i),
             "om_unit_get_target": ([V, u32], u32),
@@ -191,6 +192,12 @@ class Engine:
     def unit_pos(self, w, u):
         x, y = ctypes.c_double(), ctypes.c_double()
         self._lib.om_unit_get_pos(w, int(u), ctypes.byref(x), ctypes.byref(y))
+        return (float(x.value), float(y.value))
+
+    def unit_destination(self, w, u):
+        x, y = ctypes.c_double(), ctypes.c_double()
+        if not self._lib.om_unit_get_destination(w, int(u), ctypes.byref(x), ctypes.byref(y)):
+            return None
         return (float(x.value), float(y.value))
 
     def unit_layer(self, w, u):
