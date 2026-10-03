@@ -1676,6 +1676,7 @@ static om_unit_row *om_tac_pick_across(om_world *w, om_tac_state *st, const om_u
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
         if (cand->hp <= 0.0 || cand->stealth || cand->layer == self->layer || !om_tac_hostile(self, cand)) continue;
         if (!om_tac_in_range(w, self, cand)) continue;
+        if (!om_tac_may_act_on(w, self, cand)) continue;
         if (best) {
             int better = most_damaged
                 ? (frac < best_frac - OM_TIE_EPSILON || (frac <= best_frac + OM_TIE_EPSILON && (d2 < best_d2 || (d2 == best_d2 && id < best->unit_id))))
@@ -1776,7 +1777,7 @@ static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *
 /* OM_TP_TARGET_POLICY 1 (lab only, R-087-03): the enemy in attack range with the
  * lowest hit point fraction, then nearest, then lowest id (ids ascend, so a
  * candidate replaces the best only when strictly better by OM_TIE_EPSILON). */
-static om_unit_row *om_tac_most_damaged_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
+static om_unit_row *om_tac_most_damaged_hostile(om_world *w, om_tac_state *st, const om_unit_row *self, double radius) {
     om_unit_row *best = NULL;
     double best_frac = 0.0, best_d2 = 0.0;
     uint32_t ids[st->n_units + 1];
@@ -1787,6 +1788,7 @@ static om_unit_row *om_tac_most_damaged_hostile(om_tac_state *st, const om_unit_
         double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
         if (cand->hp <= 0.0 || cand->stealth) continue;
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (!om_tac_may_act_on(w, self, cand)) continue;
         if (!best || frac < best_frac - OM_TIE_EPSILON
             || (frac <= best_frac + OM_TIE_EPSILON && d2 < best_d2 - OM_TIE_EPSILON)) {
             best = cand; best_frac = frac; best_d2 = d2;
@@ -1910,6 +1912,7 @@ static om_unit_row *om_tac_nearest_visible(om_world *w, om_tac_state *st, const 
     double best_d2 = 0.0;
     uint32_t id;
     om_grid_iter it;
+    int by_sight = om_tac_by_sight(w);
     om_grid_iter_begin_other_st(&it, st, self->faction_id, self->x, self->y, radius);
     while ((id = om_grid_iter_next(&it)) != 0) {
         om_unit_row *cand = &st->units[id - 1];
@@ -1917,10 +1920,18 @@ static om_unit_row *om_tac_nearest_visible(om_world *w, om_tac_state *st, const 
         if (cand->hp <= 0.0 || cand->stealth) continue;
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
         if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
-        if (!om_unit_can_see(w, self->unit_id, id)) continue;
+        if (by_sight ? !om_tac_faction_sees(w, self, cand) : !om_unit_can_see(w, self->unit_id, id)) continue;
         best = cand; best_d2 = d2;
     }
     return best;
+}
+
+/* G3 acquisition: the nearest enemy in range, and when it is the side's to act on that is the answer (one sight check
+ * per pick); only when the nearest is hidden does the sight-filtered scan run. Switch 0: the plain nearest. */
+static om_unit_row *om_tac_nearest_actable(om_world *w, om_tac_state *st, const om_unit_row *self, double radius) {
+    om_unit_row *best = om_tac_nearest_hostile(st, self, radius);
+    if (!best || om_tac_may_act_on(w, self, best)) return best;
+    return om_tac_nearest_visible(w, st, self, radius);
 }
 
 /* R-087-04 (P1): an attack-moving unit with no enemy in attack range, on its
@@ -2066,6 +2077,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 return;
             }
         }
+        /* G3 (R-008-04): a held target the side no longer sees is dropped on the spot, one sight check per held target */
+        if (!drop && u->order != OM_ORDER_ATTACK_TARGET && !om_tac_may_act_on(w, u, t)) drop = 1;
         if (!drop && u->order != OM_ORDER_ATTACK_TARGET) {
             /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another */
             if (!om_tac_in_reach(w, u, t) || t->stealth || ((!pursue || u->guard) && !om_tac_in_range(w, u, t))) {
@@ -2091,8 +2104,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     if ((u->target_id == 0 || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
         && (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT) {
         t = om_tactical_get_param(w, OM_TP_TARGET_POLICY) == 1.0
-            ? om_tac_most_damaged_hostile(st, u, u->attack_range)
-            : om_tac_nearest_hostile(st, u, u->attack_range);
+            ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
+            : om_tac_nearest_actable(w, st, u, u->attack_range);
         t = om_tac_pick_across(w, st, u, t);
         if (t) {
             u->target_id = t->unit_id;
