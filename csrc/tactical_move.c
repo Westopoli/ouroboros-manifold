@@ -2971,4 +2971,9 @@ int om_tac_move_resume(om_world *w, uint32_t unit_id) {
     mu->engaged = 0;
     return 1;
 }
+int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
+    /* STUB */
+    (void)w; (void)unit_ids; (void)n_units;
+    return 0;
+}
 /* ---- end generated stubs ---- */
