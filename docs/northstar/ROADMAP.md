@@ -31,7 +31,8 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 | # | Plan | Doc | Waits on | Why this position |
 |---|---|---|---|---|
 | 1 | Playthrough gate: a scripted end-to-end run in the merge gate | to write | nothing | Every later landing is checked against it. `tests/qa/desktop` flow test is the base: 29 of 30 pass. |
-| 2 | Finish the MVP loop | `plans/2026-09-30-mission-plays-plan.md` | Row 1 | Westley: the MVP works 100 percent end to end before large new work. Known breaks (stage 0): the chronicle shows 0 entries after a mission in the Godot flow and the jump does not advance the shared world; a fresh checkout boots to the error screen through the legacy SimBridge autoload; the 30B QA sticks on NEW GAME (IndexError) and has 0 full loops since 2026-10-01; 9 Godot test scripts abort headless. |
+| 2a | Loop fix workflow: chronicle and jump, fresh-checkout boot, 30B reaches the galaxy | `plans/2026-10-03-loop-fix-workflow-brief.md` | Westley pastes the brief into a Sonnet chat | The three known breaks; run by a Sonnet chat as a workflow, reports to the planner chat. |
+| 2b | Finish the MVP loop | `plans/2026-09-30-mission-plays-plan.md` | Row 1 | Westley: the MVP works 100 percent end to end before large new work. Known breaks (stage 0): the chronicle shows 0 entries after a mission in the Godot flow and the jump does not advance the shared world; a fresh checkout boots to the error screen through the legacy SimBridge autoload; the 30B QA sticks on NEW GAME (IndexError) and has 0 full loops since 2026-10-01; 9 Godot test scripts abort headless. |
 | 3 | Baseline playthrough by Westley or the 30B | none | Row 2 | The line every addition is compared with |
 | 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
