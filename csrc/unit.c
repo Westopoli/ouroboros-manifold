@@ -1617,6 +1617,13 @@ static int om_tac_within(const om_unit_row *a, const om_unit_row *b, double r) {
     return om_tac_dist_le(a->x - b->x, a->y - b->y, r);
 }
 
+/* Targeting cohort slot: the Python staggers by its 0-based uid and the C ids are uid + 1, so under
+ * PURSUE_BY_STEERING the slot is (id - 1) % count; PP baseline (switch = 0) keeps id % count, deleted with the
+ * two movement switches at the end of Phase E (A140). */
+static uint32_t om_unit_cohort_slot(const om_world *w, uint32_t unit_id) {
+    return (om_tac_pursue(w) ? unit_id - 1 : unit_id) % OM_TARGETING_COHORT_COUNT;
+}
+
 /* In attack range of the target: same layer at the plain range, another layer only within reach, at the range times
  * the offset's multiplier. */
 static int om_tac_in_range(const om_world *w, const om_unit_row *a, const om_unit_row *t) {
@@ -2050,7 +2057,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if ((u->target_id == 0 || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
-        && (uint64_t)(u->unit_id % OM_TARGETING_COHORT_COUNT) == tick % OM_TARGETING_COHORT_COUNT) {
+        && (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT) {
         t = om_tactical_get_param(w, OM_TP_TARGET_POLICY) == 1.0
             ? om_tac_most_damaged_hostile(st, u, u->attack_range)
             : om_tac_nearest_hostile(st, u, u->attack_range);
@@ -2819,8 +2826,7 @@ int32_t om_unit_target(om_world *w, uint32_t unit_id) {
 }
 
 uint32_t om_unit_targeting_cohort(om_world *w, uint32_t unit_id) {
-    (void)w;
-    return unit_id % OM_TARGETING_COHORT_COUNT;
+    return om_unit_cohort_slot(w, unit_id);
 }
 
 void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref) {
