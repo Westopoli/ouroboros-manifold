@@ -441,8 +441,11 @@ static double om_move_turn_rate_by_category(om_world *w, uint32_t id) {
     return cat == 1 ? OM_LINE : OM_SIEGE;
 }
 
-static double om_move_turn_toward(double current, double target, double rate_per_sec, uint32_t period) {
+/* arc_low: an exact half-turn goes the negative way, as the Python's shortest arc on [-pi, pi) (facing.py
+ * _shortest_arc); the PURSUE_BY_STEERING facing pass sets it. */
+static double om_move_turn_toward(double current, double target, double rate_per_sec, uint32_t period, int arc_low) {
     double delta = om_wrap_pi(target - current);
+    if (arc_low && delta >= OM_PI) delta -= OM_TWO_PI;
     double max_step = rate_per_sec * (double)period / (double)OM_TACTICAL_TICK_RATE;
     if (delta > max_step) delta = max_step;
     if (delta < -max_step) delta = -max_step;
@@ -2099,7 +2102,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     if (mu->deflecting) {
         mu->facing = heading; /* pinned for the whole detour segment */
     } else {
-        mu->facing = om_move_turn_toward(mu->facing, heading, om_move_turn_rate_for(mu->native_speed), period);
+        mu->facing = om_move_turn_toward(mu->facing, heading, om_move_turn_rate_for(mu->native_speed), period, 0);
     }
 }
 
@@ -2136,7 +2139,7 @@ static void om_move_face_pass(om_world *w, om_move_state *ms, uint32_t period) {
             dy = mu->y - mu->prev_y;
             have = dx * dx + dy * dy > OM_PP_FACING_MIN_MOVE_SQ;
         }
-        if (have) mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_by_category(w, id), period);
+        if (have) mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_by_category(w, id), period, 1);
     }
 }
 
