@@ -60,6 +60,8 @@
 /* ---------------------------------------------------------------- setup */
 
 #define OM_MOVE_MAX_UNITS (OM_MAX_UNITS + 1)
+/* PP-unit G5: the six built-in unit types plus unit.c's OM_MAX_CUSTOM_TYPES (64). */
+#define OM_PP_REACH_MAX 70
 #define OM_MOVE_MAX_GROUPS OM_MAX_UNITS
 #define OM_MOVE_MAX_GROUP_MEMBERS OM_MAX_UNITS
 /* Dense density grid (A134): one value per 100 wu cell of the largest canvas, per layer. */
@@ -282,6 +284,11 @@ uint32_t col_cur;
 
     /* PP-move: the tunable settings (om_tac_param); see om_tactical_set_param. */
     double   param[OM_TP__COUNT];
+    /* PP-unit G5 (R-164-02): reach by unit type; a type absent here has reach 0 up, 0 down. Kept with the settings, so
+     * unit.c's om_tactical_reset carries the built-in types across the reset. See also: om_roster_set_reach. */
+    uint32_t reach_n;
+    int32_t  reach_type[OM_PP_REACH_MAX];
+    uint32_t reach_up[OM_PP_REACH_MAX], reach_down[OM_PP_REACH_MAX];
 } om_move_state;
 
 /* PP-move: every om_tac_param member's kind, default and refusal range (docs/northstar/plans/push/pp_contract.md
@@ -2708,15 +2715,33 @@ uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit) {
     return 0;
 }
 
+/* R-164-02. A type never set reads 0 up, 0 down; -1 for a type that is not built in and not registered. */
 int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down) {
-    /* STUB */
-    (void)w; (void)unit_type; (void)layers_up; (void)layers_down;
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || om_unit_profile_ability_count(w, unit_type) == 0u) return -1;
+    ms = om_ms(w);
+    for (i = 0; i < ms->reach_n && ms->reach_type[i] != unit_type; i++) {}
+    if (i == ms->reach_n) {
+        if (i >= OM_PP_REACH_MAX) return -1;
+        ms->reach_n++;
+        ms->reach_type[i] = unit_type;
+    }
+    ms->reach_up[i] = layers_up;
+    ms->reach_down[i] = layers_down;
     return 0;
 }
 
 int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down) {
-    /* STUB */
-    (void)w; (void)unit_type; (void)up; (void)down;
+    const om_move_state *ms;
+    uint32_t i, u = 0, d = 0;
+    if (!w || om_unit_profile_ability_count((om_world *)w, unit_type) == 0u) return -1;
+    ms = (const om_move_state *)w->move_state;
+    for (i = 0; ms && i < ms->reach_n; i++) {
+        if (ms->reach_type[i] == unit_type) { u = ms->reach_up[i]; d = ms->reach_down[i]; break; }
+    }
+    if (up) *up = u;
+    if (down) *down = d;
     return 0;
 }
 uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit) {
