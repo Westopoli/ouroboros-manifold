@@ -554,9 +554,9 @@ def _resolve_collisions(store, active, moved, tactical_map, navmesh):
                 grid[(cr, cc)] = []
             grid[(cr, cc)].append(uid)
 
-        # Only moved units drive the outer loop — stationary engaged units never
-        # initiate pair checks, cutting ~90% of iterations during dense combat.
-        for uid_a in moved:
+        # Every active unit starts pair checks, moving or stopped (A156).
+        found_close = False
+        for uid_a in active:
             ax = store.data[uid_a, FIELD_X]
             ay = store.data[uid_a, FIELD_Y]
             layer_a = store.data[uid_a, FIELD_LAYER]
@@ -585,6 +585,7 @@ def _resolve_collisions(store, active, moved, tactical_map, navmesh):
                         if d_sq >= min_dist_sq:
                             continue
 
+                        found_close = True
                         if d_sq < 0.001:
                             # Deterministic fallback: lower uid pushes left
                             dx = -1.0 if uid_a < uid_b else 1.0
@@ -656,6 +657,9 @@ def _resolve_collisions(store, active, moved, tactical_map, navmesh):
                         ay = new_ay
                         store.data[uid_b, FIELD_X] = new_bx
                         store.data[uid_b, FIELD_Y] = new_by
+
+        if not found_close:
+            break
 
 
 def has_combat_los(navmesh, x1, y1, x2, y2):

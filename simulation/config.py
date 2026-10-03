@@ -593,7 +593,7 @@ UNIT_COLLISION_RADIUS          = 15
 STEERING_PROBE_DIST            = 40
 STEERING_DETOUR_MIN_DIST       = 60
 HARD_COLLISION_ENABLED         = True
-COLLISION_RESOLUTION_ITERATIONS = 3
+COLLISION_RESOLUTION_ITERATIONS = 10
 
 # ── Formation movement (formation_move_spec) ─────────────────────────────────
 FORMATION_MOVE_ENABLED         = True    # kill switch: set False to restore pre-formation behavior
