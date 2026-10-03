@@ -42,6 +42,216 @@ ALWAYS_EXEMPT_VALUES = {0.0, 1.0, -1.0, 2.0, 0.5}
 
 # --------------------------------------------------------------------- ALG parsing
 
+# ALG-56's base-minutes table parses as TACTICAL_TICK_RATE_<ARCHETYPE>; those are
+# minutes, not tick rates, and mission.c keeps them local, so they are not emitted.
+EXCLUDED_NAMES = {
+    f"OM_TACTICAL_TICK_RATE_{a}" for a in (
+        "ASSAULT", "CONTAINMENT", "COUNTERINSURGENCY", "DEFENSIVE", "EVACUATION",
+        "FRONT", "INTERCEPTION", "RECONQUEST", "SIEGE", "SUPPRESSION")
+} | {"OM_WAYPOINT_ARRIVE_MULT"}  # ALG-68 states it; tactical_move.c keeps it a local #define
+
+# Hand-maintained header lines that algorithms.md does not state as `IDENT = value`,
+# each inserted right after the generated line it follows. Promote a value into
+# algorithms.md and delete its entry here; --emit must keep reproducing csrc/om_constants.h.
+MANUAL_INSERTS: list[tuple[str, tuple[str, ...]]] = [
+    ('/* ALG-21 Damage split */', (
+        '#define OM_ALG21_BREAKTHROUGH_ECO 0.3',
+        '#define OM_ALG21_BREAKTHROUGH_MIL 0.8',
+        '#define OM_ALG21_BREAKTHROUGH_TENSION 0.5',
+        '#define OM_ALG21_BREAKTHROUGH_TENSION_CAP 30.0',
+        '#define OM_ALG21_CONTESTED_ECO 0.2',
+        '#define OM_ALG21_CONTESTED_MIL 0.5',
+        '#define OM_ALG21_CONTESTED_TENSION 0.4',
+        '#define OM_ALG21_REPELLED_MIL 0.10',
+    )),
+    ('#define OM_FIELD_MAX 100', (
+        '#define OM_PCT_SCALE 100.0                          /* ALG-26/27/28/39 field value to fraction */',
+    )),
+    ('#define OM_KNOWLEDGE_LOST_POP_DROP 10.0', (
+        '#define OM_KNOWLEDGE_LOST_POP_WINDOW 50 /* ALG-27b: population-history window, ticks */',
+    )),
+    ('#define OM_TECH_CONVERGENCE_RATE 0.1', (
+        '/* E-06 Tech tiers (R-048-01) */',
+        '#define OM_TECH_TIER_1_MAX 34.0',
+        '#define OM_TECH_TIER_2_MAX 67.0',
+    )),
+    ('#define OM_BASE_BETRAYAL_RATE 0.005', (
+        '#define OM_BETRAYAL_OPPORTUNITY_CAP 3.0',
+        '#define OM_BETRAYAL_TENSION_SCALE 50.0',
+    )),
+    ('#define OM_EVENT_TIER_EVT_WAR_WEARINESS 3', (
+        '#define OM_SIGNIFICANCE_CHARACTER_BONUS 0.3',
+        '#define OM_SIGNIFICANCE_CHAIN_LENGTH_BONUS 0.1',
+    )),
+    ('#define OM_SIGNIFICANCE_DELTA_SCALE 50.0', (
+        '#define OM_SIGNIFICANCE_LINEAGE_REGION_BONUS 0.8',
+        '#define OM_SIGNIFICANCE_MISSION_REGION_BONUS 0.5',
+        '/* E-09 Chronicle thresholds (R-067-02..R-067-05) */',
+        '#define OM_CHRON_CASCADE_MIN_EVENTS 4',
+        '#define OM_CHRON_DEFEAT_MIL_MAX -2.0',
+        '#define OM_CHRON_DEFEAT_TEN_MIN 3.0',
+        '#define OM_CHRON_REGIONAL_DECLINE_MAX -3.0',
+        '#define OM_CHRON_REGIONAL_GROWTH_MIN 3.0',
+        '#define OM_CHRON_STALEMATE_MIL_ABS_MAX 2.0',
+        '#define OM_CHRON_STALEMATE_TEN_MIN 2.0',
+        '#define OM_CHRON_SUFFERED_ECO_MAX -3.0',
+        '#define OM_CHRON_SUFFERED_TEN_MIN 5.0',
+        '#define OM_CHRON_THRIVED_ECO_MIN 2.0',
+        '#define OM_CHRON_THRIVED_MIL_MIN 2.0',
+        '#define OM_CHRON_VICTORY_MIL_MIN 2.0',
+        '#define OM_CHRON_VICTORY_TEN_MAX 3.0',
+        '/* E-09 Chronicle prose bands (R-068-03) */',
+        '#define OM_CHRON_CAPACITY_HIGH 70.0',
+        '#define OM_CHRON_CAPACITY_LOW 30.0',
+        '#define OM_CHRON_CAPACITY_MID 50.0',
+        '#define OM_CHRON_STABILITY_HIGH 70.0',
+        '#define OM_CHRON_STABILITY_LOW 30.0',
+        '#define OM_CHRON_STABILITY_MID 50.0',
+        '#define OM_CHRON_TENSION_HIGH 60.0',
+        '#define OM_CHRON_TENSION_LOW 20.0',
+        '#define OM_CHRON_TENSION_MID 40.0',
+    )),
+    ('#define OM_PARITY_FLOOR 0.75', (
+        '#define OM_MISSION_FILL_OVERSHOOT_MULT 1.15',
+        '#define OM_MISSION_INSURGENT_POP_HIGH_THRESHOLD 70.0',
+        '#define OM_MISSION_INSURGENT_POP_LOW_THRESHOLD 25.0    /* Q-057-02 */',
+        '#define OM_MISSION_PARITY_EASY_FLOOR 0.95',
+        '#define OM_MISSION_PARITY_HARD_CEILING 0.85',
+    )),
+    ('/* ALG-58 Outcome */', (
+        '#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T1 0.30',
+        '#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T2 0.50',
+        '#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T3 0.65',
+        '#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T4 0.80',
+        '#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T1 0.15',
+        '#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T2 0.35',
+        '#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T3 0.55',
+        '#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T4 0.75',
+        '#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T1 0.25',
+        '#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T2 0.45',
+        '#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T3 0.65',
+        '#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T4 0.82',
+        '#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T1 0.20',
+        '#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T2 0.40',
+        '#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T3 0.60',
+        '#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T4 0.80',
+        '#define OM_MISSION_COMMANDER_WOUNDED_HP_FRACTION 0.30',
+        '#define OM_MISSION_DEBRIEF_RETENTION_MOST_CUTOFF 0.75',
+        '#define OM_MISSION_DEBRIEF_RETENTION_SOME_CUTOFF 0.4',
+    )),
+    ('/* ALG-59 Consequences */', (
+        '#define OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT 8.0',
+    )),
+    ('#define OM_TACTICAL_TICK_RATE 20', (
+        '/* ALG-60 Damage — unit roster (ALG-60/61, simulation/config.py unit_stats) */',
+        '#define OM_ROSTER_BASTION_DAMAGE 7.0',
+        '#define OM_ROSTER_BASTION_HP 1050.0',
+        '#define OM_ROSTER_BASTION_INTERVAL 1.8',
+        '#define OM_ROSTER_BASTION_RANGE 800.0',
+        '#define OM_ROSTER_BASTION_SENSOR 300.0',
+        '#define OM_ROSTER_BASTION_SPEED 40.0',
+        '#define OM_ROSTER_BOMBARD_AOE 150.0',
+        '#define OM_ROSTER_BOMBARD_DAMAGE 17.5',
+        '#define OM_ROSTER_BOMBARD_HP 400.0',
+        '#define OM_ROSTER_BOMBARD_INTERVAL 3.0',
+        '#define OM_ROSTER_BOMBARD_RANGE 1200.0',
+        '#define OM_ROSTER_BOMBARD_SENSOR 300.0',
+        '#define OM_ROSTER_BOMBARD_SPEED 50.0',
+        '#define OM_ROSTER_INTERCEPTOR_DAMAGE 6.0',
+        '#define OM_ROSTER_INTERCEPTOR_HP 325.0',
+        '#define OM_ROSTER_INTERCEPTOR_INTERVAL 1.0',
+        '#define OM_ROSTER_INTERCEPTOR_RANGE 250.0',
+        '#define OM_ROSTER_INTERCEPTOR_SENSOR 1000.0',
+        '#define OM_ROSTER_INTERCEPTOR_SPEED 130.0',
+        '#define OM_ROSTER_RAIDER_DAMAGE 9.0',
+        '#define OM_ROSTER_RAIDER_HP 250.0',
+        '#define OM_ROSTER_RAIDER_INTERVAL 0.8',
+        '#define OM_ROSTER_RAIDER_RANGE 200.0',
+        '#define OM_ROSTER_RAIDER_SENSOR 800.0',
+        '#define OM_ROSTER_RAIDER_SPEED 150.0',
+        '#define OM_ROSTER_VANGUARD_DAMAGE 7.5',
+        '#define OM_ROSTER_VANGUARD_HP 500.0',
+        '#define OM_ROSTER_VANGUARD_INTERVAL 1.2',
+        '#define OM_ROSTER_VANGUARD_RANGE 300.0',
+        '#define OM_ROSTER_VANGUARD_SENSOR 700.0',
+        '#define OM_ROSTER_VANGUARD_SPEED 80.0',
+        '#define OM_ROSTER_WARDEN_DAMAGE 4.0',
+        '#define OM_ROSTER_WARDEN_HP 375.0',
+        '#define OM_ROSTER_WARDEN_INTERVAL 1.5',
+        '#define OM_ROSTER_WARDEN_RANGE 350.0',
+        '#define OM_ROSTER_WARDEN_SENSOR 800.0',
+        '#define OM_ROSTER_WARDEN_SPEED 70.0',
+    )),
+    ('/* ALG-63 Abilities */', (
+        '#define OM_ABILITY_BARRAGE_COOLDOWN_TICKS 1800.0',
+        '#define OM_ABILITY_BARRAGE_DAMAGE_MULT 3.0',
+        '#define OM_ABILITY_BARRAGE_RADIUS 100.0',
+        '#define OM_ABILITY_BARRAGE_TELEGRAPH_TICKS 30',
+        '#define OM_ABILITY_BRACE_COOLDOWN_TICKS 700.0',
+        '#define OM_ABILITY_BRACE_DAMAGE_REDUCTION 0.50',
+        '#define OM_ABILITY_BRACE_OUTPUT_MULT 1.3',
+        '#define OM_ABILITY_BRACE_WINDUP_TICKS 40',
+        '#define OM_ABILITY_FORTIFY_COOLDOWN_TICKS 1400.0',
+        '#define OM_ABILITY_FORTIFY_DAMAGE_REDUCTION 0.20',
+        '#define OM_ABILITY_FORTIFY_DURATION_TICKS 400',
+        '#define OM_ABILITY_FORTIFY_SPEED_MULT 0.4',
+        '#define OM_ABILITY_INTERCEPT_COOLDOWN_TICKS 600.0',
+        '#define OM_ABILITY_INTERCEPT_OUTPUT_MULT 1.5',
+        '#define OM_ABILITY_INTERCEPT_SPEED_MULT 1.8',
+        '#define OM_ABILITY_RALLY_COOLDOWN_TICKS 1500.0',
+        '#define OM_ABILITY_RALLY_HEAL_AMOUNT 112.0',
+        '#define OM_ABILITY_RALLY_RADIUS 400.0',
+        '#define OM_ABILITY_SURGE_COOLDOWN_TICKS 1500.0',
+        '#define OM_ABILITY_SURGE_DURATION_TICKS 60',
+        '#define OM_ABILITY_SURGE_OUTPUT_MULT 2.0',
+        '#define OM_ABILITY_SURGE_SPEED_MULT 2.5',
+    )),
+    ('#define OM_ARRIVAL_TOLERANCE_MULT 1.5', (
+        '#define OM_ATTACK_MOVE_LEASH_DIST 200.0',
+        '#define OM_COMPOSITION_BASE 50',
+        '#define OM_COMPOSITION_BASTION 2',
+        '#define OM_COMPOSITION_BOMBARD 3',
+        '#define OM_COMPOSITION_INTERCEPTOR 10',
+        '#define OM_COMPOSITION_RAIDER 15',
+        '#define OM_COMPOSITION_VANGUARD 15',
+        '#define OM_COMPOSITION_WARDEN 5',
+        '#define OM_GRID_CELL_SIZE 400.0',
+    )),
+    ('#define OM_MAGIC_BOX_SPREAD_RADIUS 450', (
+        '#define OM_RETURN_FIRE_FLEE_DIST 200.0',
+    )),
+    ('#define OM_NAVMESH_OBSTACLE_THRESHOLD 0.7', (
+        '#define OM_OBSTACLE_DENSITY_LOW_THRESHOLD 0.3',
+        '#define OM_TERRAIN_SPEED_PENALTY_COEF 0.5',
+    )),
+    ('/* ALG-68 Steering and collision */', (
+        '#define OM_LOS_SAMPLE_STEP 1.0',
+    )),
+    ('#define OM_STEERING_PROBE_DIST 40', (
+        '#define OM_STEERING_SWEEP_COUNT 13',
+        '#define OM_STEERING_SWEEP_DELTA_RAD 0.2617993878',
+    )),
+    ('#define OM_LINE 4.0', (
+        '#define OM_MOVE_CAT_LINE_SPEED_MIN 60.0',
+        '#define OM_MOVE_CAT_STRIKE_SPEED_MIN 100.0',
+    )),
+    ('#define OM_LAYER_MASK_RADIUS 600', (
+        '#define OM_MISSION_OBJECTIVE_COVER_HEIGHT 5.0',
+        '#define OM_MISSION_OBJECTIVE_COVER_RADIUS 400.0',
+        '#define OM_SUP_HAZARD_INTERFERENCE_RADIUS 500.0',
+    )),
+    ('#define OM_SELECTOR_DECAY_BASE 0.75', (
+        '/* Math constants */',
+        '#define OM_TWO_PI 6.28318530717958647692528676655900577',
+    )),
+]
+
+# See also: MANUAL_INSERTS. A heading's parenthetical question ids are not in the md title.
+TITLE_SUFFIXES = {
+    "ALG-76": " (Q-120-03, Q-124-03)",
+    "ALG-77": " (Q-060-02)",
+}
+
 ALG_HEADER_RE = re.compile(r"\*\*(ALG-\d+[a-z]?)\s+([^*.]+)\.?\*\*")
 NUM = r"-?\d+(?:\.\d+)?"
 
@@ -406,7 +616,9 @@ def parse_algorithms_md(text: str) -> tuple[dict[str, Const], list[str], list[st
         pairs += parse_scalars_and_compounds(block, used_spans)
 
         for name, val in pairs:
-            out_name = f"OM_{name}"
+            out_name = name if name.startswith("OM_") else f"OM_{name}"
+            if out_name in EXCLUDED_NAMES:
+                continue
             if out_name in resolved:
                 if resolved[out_name].value != val:
                     conflicts.append(
@@ -419,6 +631,7 @@ def parse_algorithms_md(text: str) -> tuple[dict[str, Const], list[str], list[st
         all_idents_seen.update(re.findall(r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]*[A-Z0-9]\b", block))
 
     resolved_bare = {c.name[3:] for c in resolved.values()}
+    resolved_bare |= {n[3:] for n in EXCLUDED_NAMES}
     unparsed = sorted(
         ident for ident in all_idents_seen
         if ident not in resolved_bare
@@ -440,9 +653,14 @@ def emit_header(consts: dict[str, Const]) -> str:
     current_alg = None
     for c in ordered:
         if c.alg_id != current_alg:
-            lines.append(f"/* {c.alg_id} {c.alg_title} */")
+            lines.append(f"/* {c.alg_id} {c.alg_title}{TITLE_SUFFIXES.get(c.alg_id, '')} */")
             current_alg = c.alg_id
         lines.append(f"#define {c.name} {c.value}")
+    for anchor, extra in MANUAL_INSERTS:
+        if anchor not in lines:
+            raise SystemExit(f"MANUAL_INSERTS anchor no longer generated: {anchor}")
+        at = lines.index(anchor) + 1
+        lines[at:at] = extra
     lines.append("")
     lines.append("#endif /* OM_CONSTANTS_H */")
     lines.append("")
