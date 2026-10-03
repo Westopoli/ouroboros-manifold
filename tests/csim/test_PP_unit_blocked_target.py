@@ -64,6 +64,28 @@ def _walks(lib, w, a, ticks=WALK_TICKS):
     return _dist(start, pos(lib, w, a))
 
 
+def _advances_then_fires(lib, w, a, t, min_run=5):
+    """A171: while the held target is blocked the unit's position advances along its route every tick (its distance
+    from where it started strictly increases for at least `min_run` consecutive ticks), and once the line clears
+    it fires (the target's hp falls). Both within RUN_LIMIT ticks. Replaces the invented '75 wu in 20 ticks' and
+    'past x 1600' detector bounds (test-defect, A172: the unit walks 52 to 67 wu while blocked, then fires)."""
+    start, hp0 = pos(lib, w, a), hp(lib, w, t)
+    run = best = 0
+    prev = 0.0
+    for _ in range(RUN_LIMIT):
+        blocked = lib.om_combat_can_shoot(w, a, t) == 0
+        step(lib, w)
+        d = _dist(start, pos(lib, w, a))
+        if blocked:
+            run = run + 1 if d > prev else 0
+            best = max(best, run)
+        prev = d
+        if hp(lib, w, t) < hp0:
+            assert best >= min_run, f"fired, but never advanced {min_run} consecutive ticks while blocked (best {best})"
+            return
+    pytest.fail(f"never fired after the line cleared (advanced {best} consecutive blocked ticks)")
+
+
 def _full_wall(lib, w):
     """Column 5, rows 0..7 (x 500..600, y 0..800), every layer."""
     assert lib.om_map_block_rect(w, 510.0, 10.0, 590.0, 790.0, 0, 4) == 0
@@ -103,19 +125,14 @@ def test_R_087_05_the_corner_blocked_attacker_of_the_choke_page_walks_on_into_th
     """A171 / the Phase B choke page: the attacker stands at the wall's west face, (1499, 690), its defender in range
     by distance (151 wu) with the shot blocked by the wall (x 1500..1600, y 0..700), and 'stays' for ever. Ruled: it
     keeps walking its route. The gap is the open ground north of y = 700; the unit is attack-moving to (1800, 690).
-    It leaves the corner, is never inside a blocked cell, and is east of the wall (x > 1600) inside the run limit.
+    It leaves the corner advancing every tick while blocked, and fires once the line clears.
     Red today: it stands at (1499, 690) for the whole run."""
     assert lib.om_map_block_rect(tw, 1510.0, 10.0, 1590.0, 690.0, 0, 4) == 0
     a, t = _scene(lib, tw, (1499.0, 690.0), (1650.0, 690.0), (1800.0, 690.0))
     _in_range_but_blocked(lib, tw, a, t)
-    assert _walks(lib, tw, a) >= MOVES, "the corner-blocked attacker stood still"
-    for _ in range(RUN_LIMIT):
-        step(lib, tw)
-        x, y = pos(lib, tw, a)
-        assert not (1500.0 <= x < 1600.0 and y < 700.0), f"inside the wall at ({x:.1f}, {y:.1f})"
-        if x > 1600.0:
-            return
-    pytest.fail("the attacker never got round the wall")
+    _advances_then_fires(lib, tw, a, t)
+    x, y = pos(lib, tw, a)
+    assert not (1500.0 <= x < 1600.0 and y < 700.0), f"inside the wall at ({x:.1f}, {y:.1f})"
 
 
 def test_R_087_05_cover_disc_blocks_fire_the_same_way_and_the_unit_walks_on(lib, tw):
@@ -125,7 +142,7 @@ def test_R_087_05_cover_disc_blocks_fire_the_same_way_and_the_unit_walks_on(lib,
     lib.om_map_add_cover(tw, 500.0, 400.0, 20.0, 5.0)
     a, t = _scene(lib, tw, (400.0, 400.0), (580.0, 400.0), (900.0, 700.0), layer=1)
     _in_range_but_blocked(lib, tw, a, t)
-    assert _walks(lib, tw, a) >= MOVES, "a cover-blocked target halted the march"
+    _advances_then_fires(lib, tw, a, t)
 
 
 # ------------------------------------------------------------ positive controls (today's behaviour, must stay)

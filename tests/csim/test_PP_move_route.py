@@ -52,6 +52,8 @@ def tw_open(lib, world_factory):
 def tw(lib, tw_open):
     """A tactical world with the 2000 x 2000 canvas set (new contract call, red until PP-contract lands it)."""
     assert lib.om_map_set_canvas(tw_open, CANVAS[0], CANVAS[1]) == 0
+    # Test-defect, A164: these scenes test same-layer routing; routing across layers (G4) is its own tests
+    assert lib.om_tactical_set_param(tw_open, _tp("OM_TP_ROUTE_ACROSS_LAYERS"), 0.0) == 0
     return tw_open
 
 

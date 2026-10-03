@@ -86,7 +86,7 @@ def test_R_087_05_target_taken_300_wu_into_a_march_is_kept_and_shot(lib, world_f
 def test_R_087_05_mutual_approach_target_is_held_every_tick_once_in_range(lib, world_factory, switch):
     """The Phase B scene in two units (R-087-05, R-096-03, A167): Vanguards 682 wu apart attack-move at each
     other (each sees the other at 700 wu, sensor). Once the pair is inside range (300 wu) and a cohort cycle
-    (24 ticks) has passed, each must hold the other on EVERY tick for the next 30 ticks. Red today: the sighting at about 700 wu sets the anchor there (`om_tac_pursue_goal`, unit.c),
+    (24 ticks) has passed, each must hold the other on every tick while the target is within 200 wu of its anchor (see the test-defect note below). Red before the fix: the sighting at about 700 wu sets the anchor there (`om_tac_pursue_goal`, unit.c),
     so the target is always more than 200 wu from its anchor and is dropped on the next tick, then
     re-sighted on the next cohort turn; the target flickers 1 tick in 4 and the units walk on to about 190 wu.
     Positive control: the same measure reads 'dropped' in the control test below."""
@@ -104,12 +104,30 @@ def test_R_087_05_mutual_approach_target_is_held_every_tick_once_in_range(lib, w
         pytest.fail("fixture: the pair never closed to 300 wu in 120 ticks")
     step(lib, w, 24)    # two 12-tick cohort cycles to take a target in range
 
-    gaps = []
+    # Test-defect, A172: a Vanguard's range (300 wu) is longer than the leash (200 wu, ALG-68 "from the
+    # acquisition anchor"). The Python reference does the same: simulation/movement.py
+    # `_update_attack_move_state` (lines 279-296) drops the target when its distance from the anchor
+    # (where the unit stood when it took the target) is over 200 wu. So "held every tick once in range"
+    # holds only while the target is within the leash of the anchor. A drop is allowed only when the target
+    # is beyond the leash (slack 8 wu: both units walk 4 wu in the tick). Before the fix it flickered
+    # 1 tick in 4 with the target well inside 200 wu of the anchor.
+    drops_inside_leash, held, dropped_outside = [], 0, 0
     for _ in range(30):
+        was_held = target(lib, w, a) == b
+        got, ax, ay = _anchor(lib, w, a)
         step(lib, w)
-        gaps.append((target(lib, w, a), target(lib, w, b)))
+        now_held = target(lib, w, a) == b
+        held += now_held
+        if was_held and got == 1 and not now_held:
+            bx, by = pos(lib, w, b)
+            d = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+            if d <= 192.0:
+                drops_inside_leash.append(round(d, 1))
+            else:
+                dropped_outside += 1
 
-    assert gaps == [(b, a)] * 30, f"a target held in range was dropped (a, b per tick): {gaps}"
+    assert not drops_inside_leash, f"a target within the leash of its anchor was dropped (distances): {drops_inside_leash}"
+    assert held >= 1, "the pair never held each other in range"
 
 
 @SWITCHES
