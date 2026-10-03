@@ -35,3 +35,14 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-22 | `2026-09-22-mockup-qa-harness-pass2.md` (first-look runs: real input, live clock, Westley's resolution, `expect` verb) | Sonnet sub-agent, worktree branch `mockup/harness-pass2` | done 2026-09-22, pushed, in the M0 gate; `firstlook` command, `expect` verb, cursor warp so polled mouse tracks synthetic moves, landscape positive control |
 
 From 2026-09-22 evening every mockup branch and this ledger land through the M0 integrator's gate (origin/main has one writer during the push); ledger rows are batched on `docs/mockup-ledger`.
+
+## Default shape of a workflow brief (2026-10-03)
+
+For a brief the Architect writes and a Sonnet chat runs as a workflow. First used after `plans/2026-10-03-loop-fix-workflow-brief.md`, whose serial steps and one-at-a-time landings made it slow.
+
+- Lanes run in parallel, one lane per file or file group, new code in new files.
+- Inside a lane, the diagnoser and the test-writer start at the same time. The builder starts when both have reported. The test-writer works from the rule and the evidence in the brief, never from the diagnosis.
+- Landings are batched: all lane branches merge into one landing branch, and the merge gate and the playthrough run once, at the end. Lanes whose files overlap are still queued one at a time.
+- If the batched gate is red, the clerk bisects by lane: drop one lane's branch, rerun, and report the lane that caused it. A lane that fails is left out and reported; the others land.
+- Agents stay small: one step, a brief under a page, one report under 30 lines, Sonnet only.
+- The report gives agents spawned, tokens per agent and in total, wall-clock time, and lines changed per lane.
