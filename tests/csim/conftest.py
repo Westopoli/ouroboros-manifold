@@ -2428,6 +2428,7 @@ def _bind_e13(lib):
     _bind(lib, "om_command_attack_target_kiting", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2", "p3"))
     _bind(lib, "om_command_direct_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
     _bind(lib, "om_command_group_move", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "p0", "n", "p2", "p3"))
+    _bind(lib, "om_command_guard", [W, P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_int, ("w", "unit_ids", "n_units"))
     _bind(lib, "om_command_issue_named", [W, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "p0", "p1", "p2", "p3"))
     _bind(lib, "om_command_queue_attack_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
     _bind(lib, "om_command_queue_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
