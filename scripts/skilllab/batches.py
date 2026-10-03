@@ -12,6 +12,8 @@ from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
+NOT_SINGLE = "not a single group order"
+REFINE_FACTOR = 3
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 NOT_EXPRESSED = "not expressed"
 REPLICATES = 10
@@ -154,9 +156,11 @@ def _landscape():
 def _enemy_position():
     blob = asym_play(16, Side("blob"), Side("blob"))
     cells = [_cell("blob", 16, blob, "naive", enemy=(8, 24))]
+    notes = {"bait": "the bait is a second group, so the play is " + NOT_SINGLE,
+             "fall_back": "the retreat is a later move, so the play is " + NOT_SINGLE}
     for name, make in (("bait", positions.bait_play), ("ambush", positions.ambush_play),
                        ("fall_back", positions.fall_back_play)):
-        cells.append(_cell(name, 16, make(16), skills.DRAFT, enemy=(8, 24)))
+        cells.append(_cell(name, 16, make(16), skills.DRAFT, notes.get(name, ""), enemy=(8, 24)))
     hold, dark = "needs hold-fire, not built", "going dark, emission per unit, needs Phase C G6"
     cells += [_cell(label, 16, None, NOT_EXPRESSED, note, enemy=(8, 24)) for label, note in (
         ("bait_hold_fire", hold), ("ambush_hold_fire", hold), ("dark_approach", dark), ("dark_ambush", dark))]
@@ -294,6 +298,15 @@ def _tag(cell):
     return " (unconfirmed draft)" if cell.status == skills.DRAFT else ""
 
 
+def _spread_text(sc):
+    """" | pair spread LOW to HIGH" for the cell at the break-even edge, else empty."""
+    edge = next((c for c in sc.cells if c.enemy_heads == sc.beats), None)
+    if edge is None:
+        return ""
+    low, high = scan.pair_spread(edge)
+    return " | pair spread %.2f to %.2f" % (low, high)
+
+
 def _result_line(cell, variant, sc):
     fights = [f for c in sc.cells for f in c.fights]
     beats = ("no break-even in range" if sc.beats is None
@@ -301,11 +314,12 @@ def _result_line(cell, variant, sc):
     weighted = [f.weighted_unit_seconds for f in fights if f.weighted_unit_seconds is not None]
     weighted_text = ("; mean weighted firing unit-seconds %.2f side 0, %.2f side 1"
                      % (_mean([w[0] for w in weighted]), _mean([w[1] for w in weighted]))) if weighted else ""
+    spread = _spread_text(sc)
     return ("- %s%s, %s: %s; mean fight ticks %.1f; mean firing unit-seconds %.2f side 0, %.2f side 1%s; "
-            "stalled fights %d" % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
+            "stalled fights %d%s" % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
                                    _mean([f.firing_unit_seconds[0] for f in fights]),
                                    _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
-                                   sum(f.outcome in _STALLED for f in fights)))
+                                   sum(f.outcome in _STALLED for f in fights), spread))
 
 
 def _reference_line(sc):
@@ -370,6 +384,7 @@ def _run_file(defn, scans, names):
     for c in defn.cells:
         lines.append("| %s | %d | %d to %d | %d | %d | %s |" % (c.label, c.size, c.enemy_from, c.enemy_to,
                                                                  c.replicates, 2 * c.replicates, c.status))
+    lines += ["", "Cells within 2 enemy units of a break-even run %d times the fights." % REFINE_FACTOR]
     lines += ["", "## Results", ""]
     for c in defn.cells:
         if c.build is None:
@@ -393,7 +408,7 @@ def _run_file(defn, scans, names):
                   for c, a, b, word in changes]
     lines += ["", "## What the instrument could not express", ""]
     lines += ["- " + u for u in defn.unexpressed]
-    lines += ["- %s: %s" % (c.label, c.note) for c in defn.cells if c.build is None]
+    lines += ["- %s: %s" % (c.label, c.note) for c in defn.cells if c.build is None or NOT_SINGLE in c.note]
     lines += ["", "## Files", ""] + ["- " + n for n in names] + [""]
     return "\n".join(lines)
 
@@ -420,6 +435,8 @@ def _page(defn, scans, examples):
         for v, _ in defn.variants:
             body += ["<h3>%s, %s: line of fights by enemy size</h3>" % (escape(c.label), escape(v)),
                      report._scan_svg(scans[(c.label, v)]), report._scan_table(scans[(c.label, v)])]
+            if _spread_text(scans[(c.label, v)]):
+                body.append("<p>Margin at the break-even edge%s</p>" % escape(_spread_text(scans[(c.label, v)])))
         if c.reference is not None:
             body.append("<p>%s</p>" % escape(_reference_line(scans[(c.label, REFERENCE)])))
         fr = examples.get(c.label)
@@ -459,10 +476,11 @@ def run(defn, out_dir, scan_fn=None):
             continue
         if c.reference is not None:
             scans[(c.label, REFERENCE)] = scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
-                                                  c.size, c.enemy_from, c.enemy_to, replicates=c.replicates)
+                                                  c.size, c.enemy_from, c.enemy_to, replicates=c.replicates,
+                                                  refine_factor=REFINE_FACTOR)
         for v, overlay in defn.variants:
             result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
-                             replicates=c.replicates)
+                             replicates=c.replicates, refine_factor=REFINE_FACTOR)
             scans[(c.label, v)] = result
             for cell in result.cells:
                 if cell.enemy_heads == c.size and c.label not in examples:
