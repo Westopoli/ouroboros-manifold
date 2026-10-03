@@ -19,9 +19,8 @@ The movement and layers lanes stay paused (Westley, 2026-10-03). The same day he
 
 | Plan | Doc | Lane | Owns | State | Exit condition |
 |---|---|---|---|---|---|
-| Land mockup pass 4 (prototype) | `plans/2026-10-03-land-mockup-pass4-spec.md` | Planner chat, one Doer | `scenes/mockups/landscape/` (land kits) | Built, then sent back by the Architect: the too-steep view and the walk view used different slope measures. Fix pass running on `push/proto-land-p4` (one blocked-ground mask, ramps to every band, steepness slider) | Screenshots and record ready for Westley |
 | Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
-| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-09-30-work-list.md` | Planner chat (scouts running 2026-10-03) | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end on main (`465d7145`). Left: B1 (8 enemy state-machine symbols), B6 (9 chapter and selector symbols), B7 (3 commander-death symbols), C4 E1 unverified, C6 sweep (32 rows need a wire-or-dead ruling, plus 4 client gaps). | Every work-list row wired or ruled dead |
+| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-10-03-finish-loop-rulings.md` | Planner chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end and the gate checks it. Landed 2026-10-03: enemy rout and contested objective, commander death ledger, live retention, 16 allowlist entries. Left to build: ability events to the client (ABIL-1, contract piece first). Left for Westley: F1 to F13. C4 E1 unverified; 4 client gaps not started. Reach lint 258 unreachable of 728. | Every work-list row wired or ruled |
 | Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
 | Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat (Mac) with a Doer | `scenes/mockups/landscape/` | Pass 5 built; pass 6 spec written (`1c2d4494`) | Westley approves a pass; the camera question is designed as options |
 
@@ -31,7 +30,7 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 
 | # | Plan | Doc | Waits on | Why this position |
 |---|---|---|---|---|
-| 1 | Finish the MVP loop: B1, B6, B7, C6 | `plans/2026-09-30-mission-plays-plan.md` | nothing | The loop itself plays; these are the behaviours inside it that are built but not reachable from play. |
+| 1 | Finish the MVP loop: ABIL-1, then whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
 | 2 | Baseline playthrough by Westley or the 30B | none | Westley (the 30B waits on decision W6) | The scripted playthrough is green in the gate; the human or 30B baseline is still owed before large new work. |
 | 3 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
@@ -44,16 +43,40 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 | # | Decision | Notes |
 |---|---|---|
 | W6 | Land the Agora QA fix so the 30B can play | The fix is verified on Agora branch `lf-lane3-build` (`74956c9`): QA profile clicks NEW CAMPAIGN, empty click no longer raises. Not landed because `~/Projects/agora` (on `wn/qa-director`) has your uncommitted edit to `scripts/qa_desktop.py`. Commit or stash it, `git -C ~/Projects/agora merge lf-lane3-build`, push, restart the QA session (pid 2931521 runs the old code). |
-| W7 | Cold-start flake in the desktop flow | One cold run failed 8 flow tests on a 10 s scene-wait timeout, then passed warm and passed cold again. Being investigated; if it is a timeout value, the number is yours. |
 | W8 | 17 standing failures in `tests/specfactory/` on main | Same 17 before and after this work; nobody has ruled on them. |
 
 ### Prototypes ready for your eyes
 
-Built while you were away. Each record lists the keys to fly it and the questions for you.
+Built 2026-10-03 while you were away. Each record lists the keys to fly it and the questions for you. Run any land view with `godot --path . res://scenes/mockups/landscape/landscape_mockup.tscn`.
 
-| Prototype | Run | Record | What to judge |
-|---|---|---|---|
-| Settlement mockup pass 1 | `godot --path . res://scenes/mockups/settlement/settlement_mockup.tscn` | `research/settlement_mockup/README.md`, screenshots in `pass1/` | Which events start a wave (Q-193-01), whether four lot stages is right (Q-193-02), whether one 300 wu route per direction is enough way through (Q-193-06) |
+| Prototype | Record | What to judge |
+|---|---|---|
+| Land mockup pass 4: where walkers can go | `research/landscape_design/README.md` "Pass 4" and "Pass 4 sweep"; screenshots in `mockup/pass4/` | The too-steep view at 30 and 35 degrees, the (X) cursor, the band view, ramps. Finding: 42 to 85 percent of land is too steep and a walker reaches under 15 percent of it |
+| Land terrain options page | `research/landscape_design/options_2026-10-03_walkable_land.md` | Pick a direction: A layout first and terrain obeys (recommended), B gentler land, C bigger canvas, D higher walking limit. Three questions at the bottom |
+| Land mockup pass 5: the layout leads, the terrain obeys | `research/landscape_design/README.md` "Pass 5"; screenshots in `mockup/pass5/` | The prototype asked for under Q-191-04. Finding: carving a layout into finished terrain leaves broken edges and wide cut routes, and the old assault layouts cannot meet the equal-distance rule for the objective. Six questions in the record |
+| Settlement mockup pass 1 | `research/settlement_mockup/README.md`; `godot --path . res://scenes/mockups/settlement/settlement_mockup.tscn` | Which events start a wave (Q-193-01), whether four lot stages is right (Q-193-02), whether one 300 wu route per direction is enough way through (Q-193-06) |
+
+The land mockup has had passes 3, 4 and 5 without your approval, so no further land pass is built until you choose a direction on the options page.
+
+### Finishing the MVP loop: questions from the scouts
+
+Full text and evidence: `plans/2026-10-03-finish-loop-rulings.md`.
+
+| # | Question |
+|---|---|
+| F1 | R-026-04: event thresholds are meant to be noised at each jump start and never are. Wiring it changes every campaign's history and every recorded golden. Now, or with the balance simulation? |
+| F2 | R-062-02 collapse successor: the register has Q-062-01 closed as (b); the code and ruling A15 use most regions and call it open. Which is right? |
+| F3 | Chronicle entries for a fallen faction (R-062-04) and a dead commander (R-061-04): category and wording |
+| F4 | Campaign end (R-062-03): how the client is told no faction survives |
+| F5 | Enemy hooks (R-121-04, R-122-01): no mission registers a second force and no hook scripts exist |
+| F6 | Timed transitions (R-121-02): the duration per force |
+| F7 | Cautious break-off (R-120-03): the contact threshold |
+| F8 | `om_faction_phase` (R-053): who consumes a faction's phase |
+| F9 | Jump length (R-056-01, Q-056-01): the client sends raw ticks with no clamp to 20 to 100 |
+| F10 | Regional commander on conquest (R-060-01): never created in play |
+| F11 | Two tested functions disagree with their rule or the live path: `om_player_faction_collapsed` (returns false for a faction that no longer exists, against R-062-01) and `om_selector_resolve_fallback_pool` (can name a pool the live resolver skips, R-058). Fix, or remove with their tests? |
+| F12 | Objectives (R-075-03, R-075-04): four of ten archetypes can never score. What is a designated target and how many; who the escorted units are and how many; where the extraction point is; where Interception's enemy force comes from. Red tests wait on `push/obj-tests` |
+| F13 | Retention (R-077-01) is now live from the force as deployed. Do the commander's unit, units made mid-mission and structures count, and is a unit that leaves the map alive? |
 
 ### Land generator
 
@@ -135,7 +158,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Group | Prototype | State |
 |---|---|---|
 | Loop fix workflow; finishing the MVP loop | Not needed (wiring) | |
-| Land generator | Mockup: `scenes/mockups/landscape/` | Pass 3 (2026-09-21); approval not recorded (L8) |
+| Land generator | Mockup: `scenes/mockups/landscape/` | Passes 4 and 5 built 2026-10-03; options page written; waiting for Westley to choose a direction |
 | Space generator | Mockup: space kit mode | Pass 6 built 2026-10-03, in review. Past the three-pass limit set the same day; the limit applies from the next direction change |
 | Movement and layers | Instrument: skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists. Answers the number flags: costs, times, caps, yields, technology, doctrine weights |
@@ -156,6 +179,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 
 | Plan | Doc | Landed | Date |
 |---|---|---|---|
+| Finish-the-loop batch: enemy rout and contested objective, commander death ledger, live retention, allowlist, gate setup check | `plans/2026-10-03-finish-loop-rulings.md` | `0d4006fd` (gate on `fd676ea9`: no stage rejected; playthrough 32 passed) | 2026-10-03 |
 | MVP loop plays end to end; playthrough stage in the merge gate | `plans/2026-10-03-loop-fix-workflow-brief.md`, report on `push/lf-report` | `465d7145` (gate on `6244dec8`: no stage rejected; playthrough 32 passed, 151 s) | 2026-10-03 |
 | Bible rewrite: E-22 added, E-17 terrain-first | `research/epics_audit_2026-10-02/` | `6b8a6c59`, `1fe25028`, `8b5d7d07`, `424055f8` | 2026-10-02 |
 | Movement and layers, Phase A (port parity) and Phase C (layers in the engine) | `plans/2026-10-02-movement-layers-and-search-plan.md` | see rulings-2 Addenda 62 to 64 | 2026-10-03 |
