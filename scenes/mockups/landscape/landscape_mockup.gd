@@ -79,6 +79,7 @@ func qa_state() -> Dictionary:
 		"objective_px": [objective_px.x, objective_px.y],
 		"top_down": _camera_rig.is_top_down(),
 	}
+	state["p4"] = _hud.get_p4().get_state()
 	if fm is SpaceFieldMap:
 		var layer_blocked_pct: Array = []
 		for stat in fm.layer_stats:
@@ -163,6 +164,36 @@ func qa_set(name: String, value) -> void:
 			_hud.qa_set_join(String(value))
 		"frames":
 			_hud.qa_set_frames(bool(value))
+		"p4_view":
+			_hud.get_p4().set_view(String(value))
+		"landform":
+			_hud.get_p4().set_landform(String(value))
+		"min_relief":
+			_hud.get_p4().set_min_relief(float(value))
+		"bench":
+			_hud.get_p4().set_bench(float(value))
+		"unit_selected":
+			_hud.get_p4().set_unit_selected(bool(value))
+		"limit":
+			_hud.get_p4().set_limit(float(value))
+		"footprint":
+			_hud.get_p4().set_footprint(float(value))
+		"ramps":
+			_hud.get_p4().set_ramps(bool(value))
+		"detail_scale":
+			_hud.get_p4().set_detail_scale(float(value))
+
+
+func qa_look_steep(height: float) -> Array:
+	return _hud.get_p4().qa_look_steep(height)
+
+
+func qa_footprint_table() -> void:
+	_hud.get_p4().qa_footprint_table()
+
+
+func qa_cursor_world(x: float, z: float) -> void:
+	_hud.get_p4().qa_cursor_world(x, z)
 
 
 func qa_camera(height: float, x: float, z: float) -> void:

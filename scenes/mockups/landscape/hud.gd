@@ -21,6 +21,7 @@ var _world: Node3D
 var _camera_rig: Node3D
 var _generated: Node3D
 var _field_map: FieldMap
+var _p4
 
 var _kits: Dictionary = {}
 var _kit_name: String = DEFAULT_KIT
@@ -100,6 +101,7 @@ func _ready() -> void:
 	_stability = _stability_slider.value
 	_kit_toggle_button.text = "Kit: %s" % _kit_name
 	_canvas_toggle_button.text = "Canvas: %d" % int(_canvas)
+	_camera_rig.canvas_size = _canvas
 	_band_label.text = "Band: %s" % _camera_rig.get_current_band()
 
 	_camera_rig.band_changed.connect(_on_band_changed)
@@ -110,6 +112,9 @@ func _ready() -> void:
 	# for a few seconds" because value_changed fired a full regenerate per pixel of drag).
 	_stability_slider.drag_ended.connect(_on_stability_drag_ended)
 	_build_space_controls()
+	_p4 = preload("res://scenes/mockups/landscape/pass4_ui.gd").new()
+	add_child(_p4)
+	_p4.setup(self, _camera_rig, $VBoxContainer)
 
 	_regenerate()
 
@@ -126,6 +131,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_regenerate_pressed()
 		elif event.keycode == KEY_TAB:
 			_on_kit_toggle_pressed()
+		elif _p4.handle_key(event.keycode):
+			pass
 		elif _kit_name == SPACE_KIT and event.keycode >= KEY_0 and event.keycode <= KEY_5:
 			_set_focus(event.keycode - KEY_0)
 		elif _kit_name == SPACE_KIT and event.keycode == KEY_V:
@@ -180,6 +187,12 @@ func _regenerate() -> void:
 		field_map = space_map
 	else:
 		field_map = FieldMap.new()
+		field_map.p4_landform = _p4.landform
+		field_map.p4_min_relief = _p4.min_relief
+		field_map.p4_bench_override = _p4.bench_override
+		field_map.p4_footprint = _p4.footprint
+		field_map.p4_ramps = _p4.ramps
+		field_map.p4_detail_scale = _p4.detail_scale
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()
@@ -190,6 +203,7 @@ func _regenerate() -> void:
 	var ground_builder := GroundBuilder.new()
 	var ground := ground_builder.build(field_map, kit)
 	if ground != null:
+		ground.name = "GroundMesh"
 		_generated.add_child(ground)
 	var t2 := Time.get_ticks_usec()
 
@@ -213,7 +227,16 @@ func _regenerate() -> void:
 	print("regenerate timing: gen=%.1fms ground=%.1fms placer=%.1fms total=%.1fms" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms])
 	_map_view.set_field_map(field_map)
 	_update_space_controls(field_map)
+	_p4.on_regenerated(field_map, _generated, is_space)
 	_regen_count += 1
+
+
+func p4_regenerate() -> void:
+	_regenerate()
+
+
+func get_p4():
+	return _p4
 
 
 func _on_regenerate_pressed() -> void:
