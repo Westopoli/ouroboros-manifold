@@ -300,8 +300,8 @@ enum { OM_PP_BOOL, OM_PP_INT, OM_PP_REAL };
 #define OM_PP_DIST(d) { OM_PP_REAL, d, 0.0, OM_CANVAS_SIZE_RANGES_LARGE_HI }
 
 static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
-    /* A147 option c': PURSUE_BY_STEERING defaults 0 (the old movement is the game's default; 1 is the lab switch) */
-    OM_PP_SWITCH(0.0), OM_PP_SWITCH(1.0), OM_PP_SWITCH(0.0),
+    /* A155/A156: PURSUE_BY_STEERING defaults 1 (the option c' interim default 0 is reverted) */
+    OM_PP_SWITCH(1.0), OM_PP_SWITCH(1.0), OM_PP_SWITCH(0.0),
     { OM_PP_INT, 0.0, 0.0, 1.0 },
     OM_PP_SWITCH(1.0), OM_PP_SWITCH(1.0),
     OM_PP_DIST(OM_ATTACK_MOVE_LEASH_DIST), OM_PP_DIST(OM_RETURN_FIRE_FLEE_DIST),

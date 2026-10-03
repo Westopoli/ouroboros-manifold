@@ -124,7 +124,6 @@ def run_scene(scene, seed=1, hook=None, id_offset=0):
                 spec["layer_transition_time"], spec["aoe_radius"], 0)
             assert rc == 0, "register %s: %d" % (name, rc)
         h.om_tactical_disable_abilities(w)
-        h.om_tactical_set_param(w, 0, 1.0)   # PP: runs the new movement (switch default 0, A147 option c')
         # A159: parity holds only with both of these. The Python runs the attack-move leash BEFORE
         # damage (OM_TP_LEASH_BEFORE_DAMAGE = 2) and always clamps positions to its map, so the C is
         # given the same order of steps and the same canvas as the Python scene assumes.

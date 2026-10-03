@@ -286,7 +286,7 @@ Build:
 - Pursuit goes through `csrc/tactical_move.c`'s movement step (the same path a move order uses), with the goal refreshed to the nearest visible enemy on the cadence the Python uses. `om_tac_step_toward` is no longer used for pursuit (it stays for flinch).
 - Hold only while the unit's own target is alive and within its attack range.
 - The sweep order, probe distance, detour commitment and arrival handling match the Python line for line. Where the C already differs from the Python in any of these (the C sweeps in 15-degree steps), list the difference and report it to the design chat; do not choose.
-- A setting `OM_TP_PURSUE_BY_STEERING`, default 0 (A147 option c': today's behaviour is the game's; 1 is the lab switch); the hash invariant is asserted with it at 0.
+- A setting `OM_TP_PURSUE_BY_STEERING`, default 1 (A155/A156: the new movement is the game's; 0 is the old-movement switch); the hash invariant is asserted with it at 0.
 - Tests: a unit behind a row of its own side, enemy seen beyond range, reaches a firing position by going around and fires (today it does not); a unit whose target walks out of range follows it; a unit with its target in range does not move; three units in file all end within range of the enemy; with the setting at 0 the old hashes hold. A side-by-side fixture: the same small scene run in the Python reference and in C gives the same positions within a stated tolerance, tolerance proposed to Westley.
 
 A wider audit of the port (Python tactical code against C) is running; its findings may add steps here before the cascade starts.

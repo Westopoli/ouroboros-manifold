@@ -9,10 +9,9 @@ NOT tested, on purpose: two units on exactly the same spot (R-097-07). The Pytho
 thousand times the normal push; that case is Q-097-02, held for Westley. No scene below places two units
 on one point.
 
-NOT tested, unclear (see the report): the second sentence of R-097-10, "given both are stationary and either
-was displaced earlier in the tick, they split the displacement equally". In the Python that branch is reached
-only by a unit that moved this tick and is nonetheless flagged stationary (its group just ended, or it moved
-while engaged). The rule text does not say which cases it means, so no scene is written for it.
+The second sentence of R-097-10, "given both are stationary and either was displaced earlier in the tick, they
+split the displacement equally", is read under the A153 rule (every unit, moving or stopped, starts pair checks):
+see test_R_097_10_a_stopped_unit_starts_a_pair_check (test-defect, A155 to A159).
 
 Scenes avoid the cheap-trig drift of the C (a step is 5e-5 wu short): positions are compared with
 POS_TOL, which is numeric slack, not a rule threshold.
@@ -35,8 +34,6 @@ def tw(lib, world_factory):
     """A world with the tactical feature on. Files named test_PP_* get no epic isolation set."""
     w = world_factory(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
-    # PP: runs the new movement (switch default 0, A147 option c')
-    lib.om_tactical_set_param(w, 0, 1.0)
     return w
 
 
@@ -86,16 +83,18 @@ def test_R_097_10_stationary_unit_takes_no_push_mover_takes_all(lib, tw):
     assert _dist(pm, (110.0, 0.0)) == pytest.approx(COLLISION_DIAMETER, abs=POS_TOL)
 
 
-def test_R_097_10_only_a_unit_that_moved_starts_a_pair_check(lib, tw):
-    """R-097-10 (Python: only moved units drive the collision loop): two idle units 20 wu apart, nobody moving this
-    tick, are left exactly where they are; no pair check starts. Companion to the mover test above, which is the
-    positive control: the same overlap with one unit moving does get resolved."""
+def test_R_097_10_a_stopped_unit_starts_a_pair_check(lib, tw):
+    """R-097-10 (A153: every unit, moving or stopped, starts pair checks; was: only moved units did): two idle units
+    20 wu apart, nobody moving this tick, are pushed apart equally (two stopped units split the push) to 30 wu:
+    (95,0) and (125,0). Companion to the mover test above, which pushes the mover with the other unit idle."""
     a = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
     b = lib.om_unit_spawn(tw, RAIDER, FRIEND, 120.0, 0.0, 0)
     for _ in range(3):
         lib.om_tactical_step(tw)
-    assert lib.om_unit_get_pos(tw, a) == (100.0, 0.0)
-    assert lib.om_unit_get_pos(tw, b) == (120.0, 0.0)
+    pa, pb = lib.om_unit_get_pos(tw, a), lib.om_unit_get_pos(tw, b)
+    assert pa == pytest.approx((95.0, 0.0), abs=POS_TOL)
+    assert pb == pytest.approx((125.0, 0.0), abs=POS_TOL)
+    assert _dist(pa, pb) == pytest.approx(COLLISION_DIAMETER, abs=POS_TOL)
 
 
 def test_R_097_05_other_layer_units_do_not_collide(lib, tw):

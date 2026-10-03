@@ -66,8 +66,6 @@ def test_R_097_02_route_computed_once_cached(lib, world_factory):
 def test_R_097_03_it_probes_40_wu_ahead(lib, world_factory):
     """Given a moving unit, When it steps, Then it probes 40 wu ahead; if an ally blocks the probe it sweeps alternate angles left and right in a fixed order and takes the first clear one; if none, it waits."""
     w = world_factory(n_regions=1)
-    # PP: runs the new movement (switch default 0, A147 option c')
-    lib.om_tactical_set_param(w, 0, 1.0)
 
     # Unit at (0, 0) heading along +x toward (200, 0)
     u = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)

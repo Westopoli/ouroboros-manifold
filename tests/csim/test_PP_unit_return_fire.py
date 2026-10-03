@@ -24,8 +24,6 @@ def world_factory(world_factory, lib):
     """The shared factory, plus the new movement switched on."""
     def make(*args, **kwargs):
         w = world_factory(*args, **kwargs)
-        # PP: runs the new movement (switch default 0, A147 option c')
-        lib.om_tactical_set_param(w, 0, 1.0)
         return w
     return make
 
@@ -35,8 +33,6 @@ def world_factory(world_factory, lib):
     """The shared factory, plus the new movement switched on."""
     def make(*args, **kwargs):
         w = world_factory(*args, **kwargs)
-        # PP: runs the new movement (switch default 0, A147 option c')
-        lib.om_tactical_set_param(w, 0, 1.0)
         return w
     return make
 
