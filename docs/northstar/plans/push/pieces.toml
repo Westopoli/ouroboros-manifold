@@ -1157,3 +1157,16 @@ status = "pending"
 tests_pending = true
 size_estimate = "plan Phase S: trace, settings, plays, sampler, condition checker, chart forms"
 
+
+# tests/test_sim_session.gd had no owner row; named here for the loop-fix landing
+# (TD-A69-simsession, 2026-10-03).
+[[piece]]
+id = "G-simsessiontest"
+manager = "M0"
+wave = 5
+owns = ["tests/test_sim_session.gd"]
+owns_glob = []
+acceptance = ["tests/test_sim_session.gd"]
+depends_on = []
+status = "pending"
+size_estimate = "one Godot test file, 30 cases"
