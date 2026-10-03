@@ -790,3 +790,21 @@ Read in full: `runs/2026-10-03_phase_b_read_fixed_movement.md`. Every ruling her
 **A174. Pass marks and the rest of the Phase B list, as drafts.** The README's draft marks for C0 to C9 and the 0.05 win margin are adopted as **labelled drafts** for Phases D and E; every page carries "pass marks provisional" until he confirms. The harness's three statistic definitions (firing advantage, share of advantage, off trend as an absolute margin distance) stand as labelled unconfirmed. Concentration of fire stays out of the principle (the firing count is the measure); the focus-fire batch measures it. The S2 roll-up counter stays as provided. Going dark is per unit (a group order is many unit orders). The brief's section 6 numbers are the lab's starting layer settings, not engine defaults. E-01's scale figures are the targets as the plan says.
 
 **A175. Instrument items.** Harness chat: regenerate the seven goldens (A156 cause, ledger row); fix the grey bar under the firing chart; add the reach control to the CLI; record order-end ticks and per-tick "can fire / blocked / walking / no target" in the trace (the read needed a scratch wrapper); bind `om_command_guard` when it exists. The "won" rule keeps counting a stalled fight as not won, with the stall count shown beside every margin.
+
+## Addendum 63, 2026-10-03 (parity diagnosis, provisional overnight)
+
+Read: `runs/2026-10-03_parity_diagnosis.md`. The "can fix now" list is approved (fixture sets `ROUTE_ACROSS_LAYERS` 0; the detour reset C5; the pi tie; cohort alignment C1). On the four questions:
+
+**A176. C2, the sighting anchor: the C keeps the A167 fix and the Python reference takes the same fix** (`simulation/`, tooling only), listed as a deliberate difference from the Python as it was. "The same exact logic" was Westley's instruction for movement he had seen work; the sighting anchor is the flicker that stopped units short of their range, which he has not seen and would not want. Reversed by him only.
+
+**A177. C3, the backswing lock is 10 ticks in both**: 0.5 s at 20 ticks per second is 10; the Python's 11 is float residue. Python changed.
+
+**A178. C4, step order: isolate first.** The C moves to the Python's order (fire after movement) only if the experiment shows it is the cause of the remaining residual; goldens are then re-recorded once with a ledger row.
+
+**A179. W2, the lost tick per waypoint, is a Python bug**: a unit that reaches a waypoint and spends a tick standing is not a rule anywhere. Python changed; the C stays.
+
+**A180. W3, the final-waypoint radius follows R-099-04**: a route waypoint's arrival radius is 2 x the collision radius, 30 wu, the final one included; the C's 22.5 is corrected to the rule. Turn rate: the bible decides; if E-13 names the rate by unit category, the C follows it; if it is silent, the Python's category rate is the reference and the C follows the Python, and the builder writes the rate into E-13 S-100 with the landing.
+
+**A181. R-085-02 test window, lower bound 2,850 ticks (142.5 s), under A153.** The parity fix that keeps a steering detour across a new move order (R-097-03, as the Python) closes the two lines of the S085 scene sooner: 2,886 ticks against a 3,000 floor, 3.8 percent under; the Python does the same. The test's lower bound becomes 2,850 (5 percent under), measured value in the ledger row; the rule's 150 to 200 s stays as written and remains on Westley's held balance list (A129), where the fight length is retuned after the layer simulation. Effect on play: none; on the test: a 5 percent wider window.
+
+**A182. Parity wave, four answers (provisional overnight).** (1) The Python reference takes collision partners in ascending id order, as the C does; a deliberate difference from the old Python, listed; the C does not emulate cell order. (2) The Python's "stationary" test (a live target in range at move time, R-097-06 as the C) is signed off. (3) The harness fixture records the target channel after the same phase as the Python; no tolerance change; the C's return-fire timing stays. (4) Yes: the R-085-02 test window is 2,850 to 4,200 ticks (5 percent each side, A153; 4,081 measured under C4, in the ledger row); the rule's 150 to 200 s stays as written and on Westley's balance list. The give-up boundary test is the builder's own test defect.
