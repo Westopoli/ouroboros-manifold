@@ -745,6 +745,69 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                             cwd=str(candidate_dir), capture_output=True, text=True)
 
 
+PLAYTHROUGH_TRIGGERS = ("csrc/", "autoload/", "scenes/", "project.godot", "tests/qa/desktop/")
+DEFAULT_KNOWN_RED = Path(__file__).resolve().parent / "playthrough_known_red.txt"
+
+
+def playthrough_trigger(files: list[str]) -> str:
+    """The changed path that makes the playthrough stage run, or ''."""
+    for f in files:
+        if f.startswith("scenes/mockups/"):
+            continue
+        if f.startswith(PLAYTHROUGH_TRIGGERS):
+            return f
+    return ""
+
+
+def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeout: int,
+                      known_red_path: Path = DEFAULT_KNOWN_RED, target: str = "tests/qa/desktop",
+                      force: bool = False, setup: bool = True) -> tuple[bool, str]:
+    """Run the desktop flow suite on the merged tree. ok=False on any red not in
+    the known-red list, a suite that collects or runs nothing, or a timeout."""
+    import time
+    if not force:
+        trigger = playthrough_trigger(changed_files(candidate, base_ref))
+        if not trigger:
+            return True, "skipped: diff touches none of csrc/ autoload/ scenes/ (non-mockup) project.godot tests/qa/desktop/"
+    if not (candidate / target).exists():
+        return False, f"playthrough suite missing: candidate has no {target}"
+    t0 = time.monotonic()
+    if setup:
+        (candidate / "logs").mkdir(exist_ok=True)
+        venv = candidate / ".venv"
+        if not venv.exists():
+            venv.symlink_to(Path.home() / "Projects/agora/.venv")
+        subprocess.run(["make", "-s", "libouroboros.so", "pipe/ouroboros_pipe"], cwd=str(candidate),
+                       capture_output=True, timeout=300)
+        subprocess.run(["godot", "--headless", "--path", str(candidate), "--import"],
+                       capture_output=True, timeout=300)
+    try:
+        proc = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "--color=no", target],
+                              cwd=str(candidate), capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return False, f"timed out after {timeout}s"
+    secs = f"{time.monotonic() - t0:.0f}s"
+    known = {l.strip() for l in known_red_path.read_text().splitlines()
+             if l.strip() and not l.startswith("#")} if known_red_path.exists() else set()
+    passed, red = set(), set()
+    for line in proc.stdout.splitlines():
+        m = re.match(r"(PASSED|FAILED|ERROR) (\S+)", line)
+        if m:
+            (passed if m.group(1) == "PASSED" else red).add(m.group(2).split("::")[-1].split(" ")[0])
+    if not passed and not red:
+        return False, f"no tests ran in {secs}: {' '.join(proc.stdout.splitlines()[-3:])}"
+    # a list entry names a test by prefix (test_s_c8_05 -> test_s_c8_05_end_mission_...)
+    is_known = lambda t: any(t.startswith(k) for k in known)  # noqa: E731
+    bad = sorted(t for t in red if not is_known(t))
+    green = sorted(t for t in passed if is_known(t))
+    notes = f"{len(passed)} passed, wall {secs}"
+    if green:
+        notes += f"; now green, remove from list: {','.join(green)}"
+    if bad:
+        return False, f"red outside known-red list: {','.join(bad)} ({notes})"
+    return True, f"{notes}; known red: {','.join(sorted(red)) or 'none'}"
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -775,6 +838,16 @@ def main(argv: list[str]) -> int:
     ai = sub.add_parser("acceptance-ids")
     ai.add_argument("piece_id")
     ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
+
+    pt = sub.add_parser("playthrough")
+    pt.add_argument("candidate_dir")
+    pt.add_argument("base_ref")
+    pt.add_argument("--python", default=sys.executable)
+    pt.add_argument("--timeout", type=int, default=900)
+    pt.add_argument("--known-red", default=str(DEFAULT_KNOWN_RED))
+    pt.add_argument("--target", default="tests/qa/desktop")
+    pt.add_argument("--force", action="store_true")
+    pt.add_argument("--no-setup", action="store_true")
 
     ut = sub.add_parser("undertest")
     ut.add_argument("candidate_dir")
@@ -859,6 +932,10 @@ def main(argv: list[str]) -> int:
             green, red = partition_godot_ids(ids, Path(args.godot_log).read_text())
         print(f"WARN {acceptance_warn_detail(args.piece_id, resolved, green, ids, red)}")
         return 0
+    elif args.cmd == "playthrough":
+        ok, detail = playthrough_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
+                                       timeout=args.timeout, known_red_path=Path(args.known_red),
+                                       target=args.target, force=args.force, setup=not args.no_setup)
     elif args.cmd == "undertest":
         lines = undertest_warn(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                 pieces_path=Path(args.pieces), cap=args.cap)
