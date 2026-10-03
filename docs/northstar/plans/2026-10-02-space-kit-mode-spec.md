@@ -240,3 +240,45 @@ His review is verbatim in `docs/northstar/research/space_landscape/README.md`. P
 ## P4.8 Rules for the Doer
 
 As section 8, P2.7 and P3.6. Report once, ten lines at most, with the measured averages and the shared-on and shared-off comparison.
+
+---
+
+# Pass 5 (2026-10-03, after Westley's passage-width decisions)
+
+Decisions, verbatim, in `docs/northstar/research/space_landscape/README.md` ("Decisions (2026-10-03): passage widths"). Pass 4 is the base. The mockup now shows two maps on top of the pretty one: what ordinary units can pass and what small craft can pass.
+
+## P5.1 Two functional masks
+
+- `MIN_PASSAGE_WU = 300.0` (ordinary units; Westley's number). `SMALL_PASSAGE_WU = 100.0` (placeholder until Q-166-05).
+- After the pass 4 generation produces the fine mask per layer (`masks[k]`, 1 open), derive two more per layer:
+  - `small_masks[k]`: the fine mask closed at the small passage: a cell is open only if an open disc of diameter `SMALL_PASSAGE_WU` fits over it (morphological opening of the open set with a disc of radius 50 wu, on the 100 wu grid that is a 1-cell radius: keep an open cell only if all four in-plane neighbours are open; use the structuring element the grid gives, say so).
+  - `masks_ordinary[k]`: the fine mask opened with a disc of radius `MIN_PASSAGE_WU / 2` (150 wu, radius 1.5 cells: the 3 by 3 block), **except inside small-craft sections**, where cells keep the `small_masks` value. A cell is open for ordinary units only if a 3 by 3 block of open cells covers it.
+- The clearing around layout nodes and the reachability check and plate dropping run on `masks_ordinary`; a map must be connected for ordinary units. Report `regions_unreachable_after` for ordinary units, and separately the share of small-craft-open cells that ordinary units cannot reach (`small_only_pct` per layer).
+
+## P5.2 Small-craft sections
+
+- `SMALL_SHARE` slider "Small-craft share" from 0 to 20 percent, default 7.5. Sections are chosen per layer as contiguous batches of plates: pick seed plates by hash where the pass 4 noise `v` is in its top quartile (packed areas, where fine gaps exist), grow each by adding adjacent plates (sharing a channel) until the batch reaches `BATCH_PLATES` (default 6) plates, and stop adding batches when the sections' cells reach `SMALL_SHARE` of the layer's cells. Record `small_section_pct` per layer.
+- Toggle "Sections near layout" (default off): when on, seed plates are instead the plates nearest the objective, staging and vantage nodes, so the sections sit where the layout matters. Both are kept so Westley can compare.
+- Inside a section the fine fracture of pass 4 is the functional map for small craft (P5.1). Outside, fine detail is visual only.
+
+## P5.3 Views
+
+- Key `V` cycles the view: `visual` (pass 4 drawing), `ordinary` (draws `masks_ordinary`: blocked cells as flat tiles in a muted grey, open as nothing; the pretty mesh hidden), `small` (draws `small_masks` the same way, with small-craft-only cells, open for small craft and blocked for ordinary units, in the kit's `small_only` colour, an orange). HUD shows the view name. `qa_set("view", name)`.
+- Section outlines: in every view, each small-craft section is outlined with a thin flat frame in the `small_only` colour at its layer's height, so Westley sees where the batches are.
+- Layer focus, top-down and solo work in every view.
+
+## P5.4 Triangle fix
+
+- Gap fill: instead of one closed slab per filled cell, group the filled cells per layer into in-plane connected regions, trace each region's outline with the existing marching squares, and emit only the outline wall from the layer's top to the layer above's bottom (the wall pass already does this; the per-cell slabs are removed). Where the region's top would show (it never does, the plate above covers it), emit nothing.
+- Target: at seed 11, canvas 24,000, density 70, under 500,000 triangles in the visual view. Report triangles at densities 15, 55 and 70 in the visual view, measured the way `qa/_tri_count` did (sum of surface triangles over the generated children), and put a `triangles` field in `qa_state`.
+
+## P5.5 QA
+
+- `qa_state` adds `view`, `small_share`, `small_section_pct` (array of 5), `small_only_pct` (array of 5), `regions_unreachable_after` now for ordinary units, `triangles`, `sections_near_layout`.
+- `qa_set` adds `view`, `small_share`, `sections_near_layout`.
+- Checklist adds: ordinary-unit reachability 0 on seeds 11 to 16 at densities 15, 35, 55, 70; `small_section_pct` within 2 points of the slider on average; triangles under 500,000 at density 70; `small_only_pct` above 0 at density 55 on every seed.
+- The QA script takes, for seeds 11 and 12 at densities 35 and 55: top-down with layer 3 focused in each of the three views; angled all-layers in the visual view; plus density 55 with "Sections near layout" on, top-down, layer 3, small view.
+
+## P5.6 Rules for the Doer
+
+As section 8 and the pass rules before. Do not delete the pass 4 fracture code; it is what runs inside the sections. Report once, ten lines at most, with the measured reachability, section shares, small-only shares and triangle counts.
