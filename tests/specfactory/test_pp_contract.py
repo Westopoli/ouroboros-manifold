@@ -285,8 +285,8 @@ def test_the_three_getters_are_defined_in_tactical_move_never_in_unit_c():
 
 def test_param_table_in_the_contract_document_is_well_formed():
     rows = parse_param_table(DOC.read_text())
-    assert len(rows) == 60, "59 parameters and the OM_TP__COUNT sentinel"
-    assert [r["value"] for r in rows] == list(range(60))
+    assert len(rows) == 61, "60 parameters and the OM_TP__COUNT sentinel"
+    assert [r["value"] for r in rows] == list(range(61))
     assert rows[-1]["name"] == "OM_TP__COUNT"
     by_name = {r["name"]: r for r in rows}
     # the six switches the plan names, hardcoded here so a mis-transcribed table cannot hide

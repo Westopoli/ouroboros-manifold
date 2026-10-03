@@ -20,7 +20,7 @@ class Group:
     y: float                  # anchor
     facing_deg: float
     layer: int                # as the engine numbers layers
-    order: str                # "attack_move" | "move" | "idle"
+    order: str                # "attack_move" | "move" | "group_move" | "idle" | "guard"
     goal: Optional[tuple] = None
     params: dict = field(default_factory=dict)   # spacing, cols, arc_deg, radius, points
 
@@ -29,8 +29,8 @@ class Group:
 class Step:
     group: int                # index into Setup.groups
     when: tuple               # ("tick", n) | ("arrive", radius) | ("seen",)
-    order: str                # "attack_move" | "move" | "idle" (idle clears the group's orders)
-    goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle
+    order: str                # "attack_move" | "move" | "group_move" | "idle" | "guard" (idle clears the group's orders; guard holds and fires in range)
+    goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle and guard
 
 
 @dataclass(frozen=True)
@@ -72,11 +72,13 @@ class Setup:
     terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
     weighted: bool = False    # True records FightResult.weighted
     states: bool = False      # True records FightResult.states and .order_ends
+    target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
+    approach: float = 0.0     # stop factor of the hold-to-contact opening (approach.py); 0.0 = off
 
 
 @dataclass
 class FightResult:
-    outcome: str              # "side0" | "side1" | "stalemate" | "cap"
+    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "stalemate" (stalemate_ticks quiet) | "cap" (A201)
     margin: float
     strength_left: tuple
     survivors: tuple

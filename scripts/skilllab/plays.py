@@ -1,10 +1,20 @@
-"""Plays: builders of the two-sided Setups the scans fight."""
+"""Plays: builders of the two-sided Setups the scans fight.
+Each issues one attack-move per group. The hold-to-contact opening of approach.py (groups walk as a group move to a stop
+line, then attack-move) is a lab setting, off by default (A199): pass approach=APPROACH_STOP to switch it on."""
 import math
 
 from scripts.skilllab.contract import Group, Setup
 
 _LINE_SPACING = 30
+APPROACH = 0.0          # default: off, one attack-move per group
+MAX_TICKS_BIG = 8000    # A201: cells of 32 a side and above get longer (the Setup default of 6000 is for smaller ones)
+APPROACH_STOP = 0.95    # the stop factor of the lab setting (A198)
 _STATS = {}
+
+
+def max_ticks_for(size, enemy_heads):
+    """max_ticks of a play: MAX_TICKS_BIG when either side has 32 or more units, else the Setup default."""
+    return MAX_TICKS_BIG if max(size, enemy_heads) >= 32 else Setup.__dataclass_fields__["max_ticks"].default
 
 
 def unit_stats(name):
@@ -30,36 +40,37 @@ def _group(side, unit, count, kind, x):
                  order="attack_move", goal=None, params=params)
 
 
-def _play(size, unit, kind, side0_unit=None, unit_types=None):
+def _play(size, unit, kind, side0_unit=None, unit_types=None, approach=APPROACH):
     def build(enemy_heads, swap):
         if size < 1 or enemy_heads < 1:
             raise ValueError("size and enemy_heads must be >= 1")
         gap = unit_stats(unit)["sensor_radius"] + 1 + _depth(size, kind) + _depth(enemy_heads, kind)
         return Setup(groups=(_group(0, side0_unit or unit, size, kind, -gap / 2),
                              _group(1, unit, enemy_heads, kind, gap / 2)),
-                     unit_types=dict(unit_types or {}))
+                     unit_types=dict(unit_types or {}), approach=approach,
+                     max_ticks=max_ticks_for(size, enemy_heads))
     return build
 
 
-def blob_play(size, unit="Vanguard"):
-    return _play(size, unit, "blob")
+def blob_play(size, unit="Vanguard", approach=APPROACH):
+    return _play(size, unit, "blob", approach=approach)
 
 
-def line_play(size, unit="Vanguard"):
-    return _play(size, unit, "line")
+def line_play(size, unit="Vanguard", approach=APPROACH):
+    return _play(size, unit, "line", approach=approach)
 
 
-def _derived_play(size, unit, factor, suffix, stat):
+def _derived_play(size, unit, factor, suffix, stat, approach=APPROACH):
     if factor <= 0:
         raise ValueError("factor must be > 0")
     name = unit + suffix
     types = {name: {"base": unit, "scale": {stat: factor}, "set": {}}}
-    return _play(size, unit, "blob", side0_unit=name, unit_types=types)
+    return _play(size, unit, "blob", side0_unit=name, unit_types=types, approach=approach)
 
 
-def reach_play(size, unit="Vanguard", factor=1.2):
-    return _derived_play(size, unit, factor, "Long", "attack_range")
+def reach_play(size, unit="Vanguard", factor=1.2, approach=APPROACH):
+    return _derived_play(size, unit, factor, "Long", "attack_range", approach)
 
 
-def damage_play(size, unit="Vanguard", factor=1.2):
-    return _derived_play(size, unit, factor, "Strong", "base_damage")
+def damage_play(size, unit="Vanguard", factor=1.2, approach=APPROACH):
+    return _derived_play(size, unit, factor, "Strong", "base_damage", approach)

@@ -73,6 +73,8 @@ class Engine:
         path = Path(lib_path) if lib_path is not None else _cached_library()
         self._lib = ctypes.CDLL(str(path))      # a nonexistent path raises OSError
         self._bind()
+        self._px, self._py = ctypes.c_double(), ctypes.c_double()
+        self._pbx, self._pby = ctypes.byref(self._px), ctypes.byref(self._py)
 
     def _bind(self):
         c, V, u32, u64, d, i = (ctypes, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double,
@@ -96,6 +98,9 @@ class Engine:
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_command_attack_move": ([V, c.POINTER(u32), u32, d, d], i),
             "om_command_move": ([V, c.POINTER(u32), u32, d, d], i),
+            "om_command_group_move": ([V, c.POINTER(u32), u32, d, d], u32),
+            "om_command_guard": ([V, c.POINTER(u32), u32], i),
+            "om_roster_set_reach": ([V, i, u32, u32], i),
             "om_tactical_step": ([V], u64),
             "om_unit_get_hp": ([V, u32], d),
             "om_unit_get_pos": ([V, u32, pd, pd], i),
@@ -158,6 +163,11 @@ class Engine:
             raise ValueError("om_unit_profile_reach(%r) refused" % (type_id,))
         return (int(up.value), int(down.value))
 
+    def set_reach(self, w, type_id, up, down):
+        rc = self._lib.om_roster_set_reach(w, int(type_id), int(up), int(down))
+        if rc != 0:
+            raise ValueError("om_roster_set_reach(%r, %r, %r) returned %d" % (type_id, up, down, rc))
+
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)
 
@@ -170,6 +180,16 @@ class Engine:
     def order_move(self, w, unit_ids, x, y):
         # om_command_move, not om_unit_order_move: the latter only records a destination and never moves the unit.
         self._order(self._lib.om_command_move, w, unit_ids, x, y)
+
+    def order_group_move(self, w, unit_ids, x, y):
+        ids = [int(u) for u in unit_ids]
+        return int(self._lib.om_command_group_move(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y)))
+
+    def order_guard(self, w, unit_ids):
+        ids = [int(u) for u in unit_ids]
+        rc = self._lib.om_command_guard(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids))
+        if rc != 0:
+            raise ValueError("om_command_guard returned %d" % rc)
 
     @staticmethod
     def _order(fn, w, unit_ids, x, y):
@@ -187,12 +207,11 @@ class Engine:
         self._lib.om_tactical_step(w)
 
     def unit_hp(self, w, u):
-        return float(self._lib.om_unit_get_hp(w, int(u)))
+        return self._lib.om_unit_get_hp(w, u)
 
     def unit_pos(self, w, u):
-        x, y = ctypes.c_double(), ctypes.c_double()
-        self._lib.om_unit_get_pos(w, int(u), ctypes.byref(x), ctypes.byref(y))
-        return (float(x.value), float(y.value))
+        self._lib.om_unit_get_pos(w, u, self._pbx, self._pby)
+        return (self._px.value, self._py.value)
 
     def unit_destination(self, w, u):
         x, y = ctypes.c_double(), ctypes.c_double()
@@ -201,10 +220,10 @@ class Engine:
         return (float(x.value), float(y.value))
 
     def unit_layer(self, w, u):
-        return int(self._lib.om_unit_get_layer(w, int(u)))
+        return self._lib.om_unit_get_layer(w, u)
 
     def unit_alive(self, w, u):
-        return bool(self._lib.om_unit_alive(w, int(u)))
+        return bool(self._lib.om_unit_alive(w, u))
 
     def unit_target(self, w, u):
         return int(self._lib.om_unit_get_target(w, int(u)))
@@ -226,7 +245,7 @@ class Engine:
             raise ValueError("om_tactical_set_param(%r, %r) refused" % (param, value))
 
     def can_shoot(self, w, a, b):
-        return bool(self._lib.om_combat_can_shoot(w, int(a), int(b)))
+        return bool(self._lib.om_combat_can_shoot(w, a, b))
 
     def add_blocker(self, w, x, y, radius):
         if not radius > 0:

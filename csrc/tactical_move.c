@@ -255,6 +255,8 @@ typedef struct {
     uint32_t grid_fill[OM_MOVE_GRID_MAX_CELLS];
     uint32_t slot_base, n_spill;
     double   grid_disp;
+    /* Largest distance from a unit's start-of-tick position to where the grid filed it: the probe's widening. */
+    double   probe_extra;
     uint32_t slot_id[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
     double   slot_x[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
     double   slot_y[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
@@ -369,6 +371,8 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_DIST(OM_PP_PING_REACH_DEFAULT),
     OM_PP_VIS4, OM_PP_VIS4,
     OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
+    /* A196: faction 1's target policy, -1 = unset (follows OM_TP_TARGET_POLICY); lab only */
+    { OM_PP_INT, -1.0, -1.0, 1.0 },
 };
 
 static void om_pp_load_defaults(double *out) {
@@ -621,6 +625,7 @@ static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units)
     double cell = OM_MOVE_GRID_BASE_CELL, spanx, spany;
     uint32_t id, c, n = 0, cells;
     int32_t gw, gh;
+    double extra = 0.0;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         int live;
         double x = 0.0, y = 0.0;
@@ -683,6 +688,8 @@ static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units)
         ms->slot_y[slot] = ms->slot_fy[slot] = ms->scan_y[id];
         ms->slot_sx[slot] = ms->start_x[id];
         ms->slot_sy[slot] = ms->start_y[id];
+        if (fabs(ms->start_x[id] - ms->scan_x[id]) > extra) extra = fabs(ms->start_x[id] - ms->scan_x[id]);
+        if (fabs(ms->start_y[id] - ms->scan_y[id]) > extra) extra = fabs(ms->start_y[id] - ms->scan_y[id]);
     }
     /* Compute per-cell group sentinel and flat unit_group mirror.
      * cell_group[c] starts as UINT32_MAX (homogeneous / empty).
@@ -705,14 +712,15 @@ static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units)
     ms->slot_base = n;
     ms->n_spill = 0;
     ms->grid_disp = 0.0;
+    ms->probe_extra = extra;
     ms->grid_live = 1;
 }
 
 /* The cells that can hold a unit within r of (x, y): every unit still in a
  * cell is within grid_disp of where it was filed. The cells of one row are
  * consecutive slots. Returns 0 when there are none. */
-static inline int om_move_grid_box(const om_move_state *ms, double x, double y, double r, int32_t *x0, int32_t *x1, int32_t *y0, int32_t *y1) {
-    double reach = r + ms->grid_disp + OM_MOVE_GRID_BOUND_PAD;
+static inline int om_move_grid_box_disp(const om_move_state *ms, double disp, double x, double y, double r, int32_t *x0, int32_t *x1, int32_t *y0, int32_t *y1) {
+    double reach = r + disp + OM_MOVE_GRID_BOUND_PAD;
     int32_t xa = om_move_floor_i((x - reach - ms->grid_ox) * ms->grid_inv), xb = om_move_floor_i((x + reach - ms->grid_ox) * ms->grid_inv);
     int32_t ya = om_move_floor_i((y - reach - ms->grid_oy) * ms->grid_inv), yb = om_move_floor_i((y + reach - ms->grid_oy) * ms->grid_inv);
     if (xa >= ms->grid_w || xb < 0 || ya >= ms->grid_h || yb < 0) return 0;
@@ -721,6 +729,10 @@ static inline int om_move_grid_box(const om_move_state *ms, double x, double y, 
     *y0 = ya > 0 ? ya : 0;
     *y1 = yb >= ms->grid_h ? ms->grid_h - 1 : yb;
     return 1;
+}
+
+static inline int om_move_grid_box(const om_move_state *ms, double x, double y, double r, int32_t *x0, int32_t *x1, int32_t *y0, int32_t *y1) {
+    return om_move_grid_box_disp(ms, ms->grid_disp, x, y, r, x0, x1, y0, y1);
 }
 
 static void om_move_grid_refresh(om_world *w, om_move_state *ms) {
@@ -1808,7 +1820,7 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
         ms->scan_y[n] = ms->start_y[cid];
         n++;
     }
-    if (!om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) return n;
+    if (!om_move_grid_box_disp(ms, ms->probe_extra, x, y, r, &cx0, &cx1, &cy0, &cy1)) return n;
     for (cy = cy0; cy <= cy1; cy++) {
         uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w, lo = ms->grid_start[row + (uint32_t)cx0], hi = ms->grid_start[row + (uint32_t)cx1 + 1], base;
         for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
@@ -2307,6 +2319,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
             }
             ms->start_layer[id] = ms->grid_in[id] ? om_unit_get_layer(w, id) : -1;
         }
+        ms->probe_extra = 0.0;
     }
     for (id = 1; id <= ms->discovery_max; id++) {
         om_move_tick_unit(w, ms, id, period);

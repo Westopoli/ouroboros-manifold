@@ -14,7 +14,7 @@ from scripts.skilllab.asym import Side, asym_play  # noqa: E402
 
 ROLES = ("blob", "line", "skilled", "counter")
 PAIRS = [(a, b) for a in ROLES for b in ROLES if not (a == b == "counter")]
-OUTCOMES = {"side0", "side1", "stalemate", "cap"}
+OUTCOMES = {"side0", "side1", "draw", "stalemate", "cap"}
 
 
 @pytest.fixture(scope="module")

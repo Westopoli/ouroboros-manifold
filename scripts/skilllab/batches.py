@@ -7,7 +7,7 @@ from typing import Optional
 
 from scripts.skilllab import compose, maps, matchup, plays, positions, profile, report, rows, scan, skills
 from scripts.skilllab.asym import Side, asym_play
-from scripts.skilllab.scenes import phase_b_choke
+from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
 from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
@@ -17,10 +17,10 @@ REFINE_FACTOR = 3
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 NOT_EXPRESSED = "not expressed"
 REPLICATES = 10
-DEFENDER_ORDER = "idle"
+DEFENDER_ORDER = "guard"
 UNIT_TYPES = ("Vanguard", "Raider", "Bombard", "Bastion")
 REFERENCE = "reference"
-_STALLED = ("stalemate", "cap")
+_STALLED = ("stalemate",)   # quiet stalemate only; caps and draws are counted apart (A201)
 PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
@@ -109,25 +109,22 @@ def _matchup():
     axis += [("%s+%s" % (a, b), ((a, 1), (b, 1))) for i, a in enumerate(UNIT_TYPES) for b in UNIT_TYPES[i + 1:]]
     cells = [_cell("%s_v_%s@%d" % (r, c, n), n, asym_play(n, Side("blob", mix=rm), Side("blob", mix=cm)), "naive")
              for n in (16, 32) for r, rm in axis for c, cm in axis]
+    short = lambda m: Side("blob", mix=m, arrangement="layered_short_front" if len(m) > 1 else "interleaved")
+    cells += [_cell("%s_v_%s@16:layered" % (r, c), 16, asym_play(16, short(rm), short(cm)), "unconfirmed draft")
+              for r, rm in axis for c, cm in axis if len(rm) > 1 or len(cm) > 1]
     return BatchDef(
         name="matchup",
         title="Skill lab matchup batch",
         scene=("Open map, no terrain, blob against blob. Side 0 of N units of one type or an even two-type mix against "
                "side 1 of half to one and a half times N of another. Sizes 16 and 32; every row against every column. "
-               "The weighted firing count is on."),
+               "The weighted firing count is on. Layered cells (short-range types in front, long-range behind) run at size 16 only, "
+               "so the batch stays under about 30 minutes."),
         cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("the weighted count reads the lab's own sight rule, not the engine's, until Phase C side sight lands",
+        unexpressed=("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
                      "only even two-type mixes; unequal mixes and three-type mixes are not included",
-                     "arrangement is the default interleaved only"),
+                     "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 "
+                     "and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"),
         weighted=True)
-
-
-def _idle_defenders(build):
-    def wrapped(enemy_heads, swap):
-        setup = build(enemy_heads, swap)
-        groups = tuple(dataclasses.replace(g, order=DEFENDER_ORDER) if g.side == 1 else g for g in setup.groups)
-        return dataclasses.replace(setup, groups=groups)
-    return wrapped
 
 
 def _landscape():
@@ -136,21 +133,22 @@ def _landscape():
         terrain = maps.sample_map(kind, 0)
         reference = with_terrain(asym_play(16, Side("blob"), Side("blob")), terrain)
         for role in ("blob", "line"):
-            build = with_terrain(_idle_defenders(asym_play(16, Side(role), Side("blob"))), terrain)
+            build = with_terrain(guard_defenders(asym_play(16, Side(role), Side("blob"))), terrain)
             cells.append(_cell("%s:%s_v_defenders" % (kind, role), 16, build, "naive", enemy=(8, 24),
                                reference=reference))
-    cells += [_cell("tall_cover", 16, None, NOT_EXPRESSED, "tall cover with height needs layer reach (Phase C G5)",
-                    enemy=(8, 24)),
-              _cell("tall_cover_counter", 16, None, NOT_EXPRESSED,
-                    "a layer above the cover needs layer reach and layer orders (Phase C G4, G5)", enemy=(8, 24))]
+    for label, counter in (("tall_cover", False), ("tall_cover_counter", True)):
+        note = ("draft numbers: height 3, discs of radius 100 every 150 wu" +
+                ("; attackers on layer 3 reach 3 layers down" if counter else ""))
+        cells.append(_cell(label, 16, tall_cover(3, counter)(16), "unconfirmed draft", note, enemy=(8, 24),
+                           reference=with_terrain(asym_play(16, Side("blob"), Side("blob")), tall_cover_terrain(3))))
     return BatchDef(
         name="landscape",
         title="Skill lab landscape batch",
         scene=("Five sampled maps (open, block, wall, lane, cover field). 16 attackers playing blob or line against 8 to "
-               "24 defenders in a blob. The guard order is not built yet, so the defenders hold the order idle. Each "
+               "24 defenders in a blob. The defenders hold the guard order. Each "
                "cell also scans naive blob against naive blob on the same map as a reference."),
         cells=tuple(cells), variants=((DEFENDER_ORDER, {}),),
-        unexpressed=("tall_cover", "tall_cover_counter", "guard order not built: defenders idle"))
+        unexpressed=())
 
 
 def _enemy_position():
@@ -285,7 +283,8 @@ def get(name):
 
 def _with_settings(build, settings, weighted=False):
     def wrapped(enemy_heads, swap):
-        setup = dataclasses.replace(build(enemy_heads, swap), settings={**BASE_SETTINGS, **settings})
+        setup = build(enemy_heads, swap)
+        setup = dataclasses.replace(setup, settings={**setup.settings, **BASE_SETTINGS, **settings})
         return dataclasses.replace(setup, weighted=True) if weighted else setup
     return wrapped
 
@@ -316,10 +315,12 @@ def _result_line(cell, variant, sc):
                      % (_mean([w[0] for w in weighted]), _mean([w[1] for w in weighted]))) if weighted else ""
     spread = _spread_text(sc)
     return ("- %s%s, %s: %s; mean fight ticks %.1f; mean firing unit-seconds %.2f side 0, %.2f side 1%s; "
-            "stalled fights %d%s" % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
-                                   _mean([f.firing_unit_seconds[0] for f in fights]),
-                                   _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
-                                   sum(f.outcome in _STALLED for f in fights), spread))
+            "stalled fights %d (quiet stalemates only); caps %d; draws %d%s"
+            % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
+               _mean([f.firing_unit_seconds[0] for f in fights]),
+               _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
+               sum(f.outcome in _STALLED for f in fights), sum(f.outcome == "cap" for f in fights),
+               sum(f.outcome == "draw" for f in fights), spread))
 
 
 def _reference_line(sc):
@@ -416,10 +417,18 @@ def _run_file(defn, scans, names):
 def _matchup_page(defn, scans):
     body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(defn.scene)]
     names = list(dict.fromkeys(c.label.split("_v_")[0] for c in defn.cells))
-    for n in sorted({c.size for c in defn.cells}):
+    plain = [c for c in defn.cells if not c.label.endswith(":layered")]
+    for n in sorted({c.size for c in plain}):
         grid = {tuple(c.label.split("@")[0].split("_v_")): scans[(c.label, defn.variants[0][0])].beats
-                for c in defn.cells if c.size == n}
+                for c in plain if c.size == n}
         body.append(matchup.matchup_grid_html(names, names, grid, n, "%s, %d units" % (defn.title, n)))
+    grid = {tuple(c.label.split("@")[0].split("_v_")): scans[(c.label, defn.variants[0][0])].beats
+            for c in plain if c.size == 16}
+    grid.update({tuple(c.label.split("@")[0].split("_v_")): scans[(c.label, defn.variants[0][0])].beats
+                 for c in defn.cells if c.label.endswith(":layered")})
+    body.append(matchup.matchup_grid_html(names, names, grid, 16, "layered, 16 units"))
+    body.append("<p>The third grid is the layered arrangement at 16 units: pairs with a mix use the layered cell, "
+                "pure-versus-pure pairs repeat the interleaved result.</p>")
     return report._html(defn.title, body)
 
 
