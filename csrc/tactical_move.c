@@ -1546,7 +1546,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
         ux = dx / dist; uy = dy / dist;
         if (a_stat && b_stat && !ms->col_pursue) {
             /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140)
-             * Both fixed: neither takes a push. Under PURSUE_BY_STEERING two stationary units split it (R-097-06). */
+             * Both fixed: neither takes a push. Under PURSUE_BY_STEERING two stationary units split it (R-097-10). */
             return 0;
         } else if (a_stat && !b_stat) {
             bx += ux * overlap; by += uy * overlap;
