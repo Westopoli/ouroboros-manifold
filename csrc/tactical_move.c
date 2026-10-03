@@ -177,6 +177,7 @@ typedef struct {
     uint32_t plan_epoch;
     double   plan_dest_x, plan_dest_y, aim_x, aim_y;
     int      aim_is_waypoint;
+    int      routed; /* this order's route had a waypoint: its final arrival radius is the waypoint's (R-099-04) */
     /* G4 layer transfer (R-002-02 to R-002-07, R-004-01 to R-004-04): lay_state OM_LAY_NONE, OM_LAY_PENDING (waiting
      * for lay_to to be open here) or OM_LAY_FLIGHT (lay_t of lay_dur ticks done; the layer crosses over at half).
      * lay_pend is an order given in flight, begun when the flight ends. transit: the router sent the unit over a
@@ -1002,6 +1003,7 @@ static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit
         mu->kite_target = 0;
         mu->order_kind = -1;
         mu->native_speed = om_unit_effective_speed(w, unit_id);
+        mu->routed = 0;
         mu->deflecting = 0;
         mu->deflect_heading = 0.0;
         mu->deflect_origin_x = mu->x;
@@ -1316,6 +1318,7 @@ static void om_move_route_plan(const om_world *w, om_move_state *ms, om_move_uni
     om_move_window(ms, &nx, &ny);
     om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
     om_move_cell_at(ms, tx, ty, &dcx, &dcy);
+    if (!mu->plan_valid || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y) mu->routed = 0;
     mu->plan_valid = 1;
     mu->plan_epoch = ms->terrain_epoch;
     mu->aim_is_waypoint = 0;
@@ -1354,6 +1357,7 @@ static void om_move_route_plan(const om_world *w, om_move_state *ms, om_move_uni
             mu->aim_x = ((double)cx + 0.5) * OM_NAVMESH_CELL_SIZE;
             mu->aim_y = ((double)cy + 0.5) * OM_NAVMESH_CELL_SIZE;
             mu->aim_is_waypoint = 1;
+            mu->routed = 1;
         }
         if (seen_all && mu->aim_is_waypoint) {
             mu->aim_x = tx;
@@ -1941,9 +1945,9 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     }
     dist = sqrt(dx * dx + dy * dy);
     mu->waiting = 0;
-    /* R-099-04: a routed single move ends within the waypoint radius, like every waypoint before it; a group slot keeps its own. */
+    /* R-099-04: a move that followed route waypoints ends within the waypoint radius, like every one before it; a direct move and a group slot keep 1.5 radii. */
     if (sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y))
-        < (route && mu->group_id == 0 ? OM_WAYPOINT_ARRIVE_MULT : OM_ARRIVAL_TOLERANCE_MULT) * OM_UNIT_COLLISION_RADIUS) {
+        < (route && mu->routed && mu->group_id == 0 ? OM_WAYPOINT_ARRIVE_MULT : OM_ARRIVAL_TOLERANCE_MULT) * OM_UNIT_COLLISION_RADIUS) {
         mu->has_dest = 0;
         mu->deflecting = 0;
         return;
