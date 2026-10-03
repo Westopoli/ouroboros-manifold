@@ -109,16 +109,21 @@ def _matchup():
     axis += [("%s+%s" % (a, b), ((a, 1), (b, 1))) for i, a in enumerate(UNIT_TYPES) for b in UNIT_TYPES[i + 1:]]
     cells = [_cell("%s_v_%s@%d" % (r, c, n), n, asym_play(n, Side("blob", mix=rm), Side("blob", mix=cm)), "naive")
              for n in (16, 32) for r, rm in axis for c, cm in axis]
+    short = lambda m: Side("blob", mix=m, arrangement="layered_short_front" if len(m) > 1 else "interleaved")
+    cells += [_cell("%s_v_%s@16:layered" % (r, c), 16, asym_play(16, short(rm), short(cm)), "unconfirmed draft")
+              for r, rm in axis for c, cm in axis if len(rm) > 1 or len(cm) > 1]
     return BatchDef(
         name="matchup",
         title="Skill lab matchup batch",
         scene=("Open map, no terrain, blob against blob. Side 0 of N units of one type or an even two-type mix against "
                "side 1 of half to one and a half times N of another. Sizes 16 and 32; every row against every column. "
-               "The weighted firing count is on."),
+               "The weighted firing count is on. Layered cells (short-range types in front, long-range behind) run at size 16 only, "
+               "so the batch stays under about 30 minutes."),
         cells=tuple(cells), variants=(("default", {}),),
         unexpressed=("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
                      "only even two-type mixes; unequal mixes and three-type mixes are not included",
-                     "arrangement is the default interleaved only"),
+                     "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 "
+                     "and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"),
         weighted=True)
 
 
@@ -412,10 +417,18 @@ def _run_file(defn, scans, names):
 def _matchup_page(defn, scans):
     body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(defn.scene)]
     names = list(dict.fromkeys(c.label.split("_v_")[0] for c in defn.cells))
-    for n in sorted({c.size for c in defn.cells}):
+    plain = [c for c in defn.cells if not c.label.endswith(":layered")]
+    for n in sorted({c.size for c in plain}):
         grid = {tuple(c.label.split("@")[0].split("_v_")): scans[(c.label, defn.variants[0][0])].beats
-                for c in defn.cells if c.size == n}
+                for c in plain if c.size == n}
         body.append(matchup.matchup_grid_html(names, names, grid, n, "%s, %d units" % (defn.title, n)))
+    grid = {tuple(c.label.split("@")[0].split("_v_")): scans[(c.label, defn.variants[0][0])].beats
+            for c in plain if c.size == 16}
+    grid.update({tuple(c.label.split("@")[0].split("_v_")): scans[(c.label, defn.variants[0][0])].beats
+                 for c in defn.cells if c.label.endswith(":layered")})
+    body.append(matchup.matchup_grid_html(names, names, grid, 16, "layered, 16 units"))
+    body.append("<p>The third grid is the layered arrangement at 16 units: pairs with a mix use the layered cell, "
+                "pure-versus-pure pairs repeat the interleaved result.</p>")
     return report._html(defn.title, body)
 
 

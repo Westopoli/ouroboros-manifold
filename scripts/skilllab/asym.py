@@ -11,7 +11,7 @@ from scripts.skilllab.formations import place
 from scripts.skilllab.plays import APPROACH, APPROACH_STOP, max_ticks_for, unit_stats  # noqa: F401  (APPROACH_STOP: the lab value)
 
 _ROLES = {"blob": "blob", "line": "line", "skilled": "concave", "counter": "column"}
-_ARRANGEMENTS = ("interleaved", "layered")
+_ARRANGEMENTS = ("interleaved", "layered", "layered_short_front")
 
 
 @dataclass(frozen=True)
@@ -43,9 +43,19 @@ def _split(n, mix):
     return counts
 
 
-def _assign(pts, counts, arrangement, dirx):
-    """Type index per point, aligned with pts."""
+def _assign(pts, counts, arrangement, dirx, rank=None):
+    """Type index per point, aligned with pts. rank orders the types for layered_short_front."""
     n = len(pts)
+    if arrangement == "layered_short_front":
+        order = sorted(range(len(counts)), key=lambda t: (rank[t], t))
+        idx = sorted(range(n), key=lambda i: -dirx * pts[i][0])
+        out = [0] * n
+        k = 0
+        for t in order:
+            for i in idx[k:k + counts[t]]:
+                out[i] = t
+            k += counts[t]
+        return out
     if arrangement == "layered":
         idx = sorted(range(n), key=lambda i: -dirx * pts[i][0])   # nearest the enemy first
         out = [0] * n
@@ -81,12 +91,13 @@ def _local(side, n, idx, anchor_y):
     return plan, place(plan[0], n, 0.0, anchor_y, plan[2], plan[1]), _split(n, side.mix)
 
 
-def _groups(side, idx, plan, pts, counts, shift, anchor_y):
+def _groups(side, idx, plan, pts, counts, shift, anchor_y, unit_types=None):
     formation, params, f = plan
     if len(side.mix) == 1:
         return [Group(side=idx, unit=side.mix[0][0], count=counts[0], formation=formation, x=shift,
                       y=anchor_y, facing_deg=f, layer=0, order="attack_move", params=params)]
-    kinds = _assign(pts, counts, side.arrangement, 1 if idx == 0 else -1)
+    rank = [unit_stats((unit_types or {}).get(n, {}).get("base", n))["attack_range"] for n, _ in side.mix]
+    kinds = _assign(pts, counts, side.arrangement, 1 if idx == 0 else -1, rank)
     out = []
     for t, (name, _) in enumerate(side.mix):
         mine = [(x + shift, y) for (x, y), k in zip(pts, kinds) if k == t]
@@ -125,7 +136,7 @@ def asym_play(size, side0, side1, unit_types=None, approach=APPROACH):
                 anchor_y[i] = (max(ys) - min(ys)) / 2.0
             local[i] = _local(sides[i], heads[i], i, anchor_y[i])
         shift = (-gap / 2 - max(x for x, _ in local[0][1]), gap / 2 - min(x for x, _ in local[1][1]))
-        groups = [_groups(sides[i], i, *local[i], shift[i], anchor_y[i]) for i in (0, 1)]
+        groups = [_groups(sides[i], i, *local[i], shift[i], anchor_y[i], types) for i in (0, 1)]
         for i in (0, 1):
             if sides[i].role == "counter":
                 enemy = [p for g in groups[1 - i] for p in place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)]
