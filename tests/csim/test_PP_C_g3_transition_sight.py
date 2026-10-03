@@ -84,8 +84,10 @@ def test_R_004_02_a_transitioning_unit_does_not_fire_at_what_its_side_cannot_see
 
 def test_R_004_02_a_transitioning_unit_stops_when_its_side_loses_sight(lib, world_factory):
     """R-004-02 ('stops attacking a target the moment its side loses sight of it'): the spotter dies at
-    tick 20, before the Bastion's first hit (tick 36) and before the cross-over (tick 50): no damage lands
-    on any tick from 21 to 49, and the target is dropped within one cohort cycle. Red today as above."""
+    tick 20, before the cross-over (tick 50): no damage lands on any tick from 21 to 49 beyond what had
+    landed by tick 20, and the target is dropped within one cohort cycle. Red today as above.
+    Timing fixed (TD-PP-C-transition-timing, A185): R-084-01 puts the Bastion's first shot at tick 4, not 36,
+    so the target has already been hit before the spotter dies; the baseline is the hp at tick 20."""
     w = world_factory(n_regions=1)
     bastion, supply, spotter = _bastion_scene(lib, w, spotter=True)
     assert _set_layer(lib, w, bastion, 1) == 0
@@ -93,10 +95,11 @@ def test_R_004_02_a_transitioning_unit_stops_when_its_side_loses_sight(lib, worl
     _assert_mid_transition(lib, w, bastion, "tick 20")
 
     kill(lib, w, spotter)
+    hp_at_loss = hp(lib, w, supply)
     cycle = cohort_cycle(lib, w)
     for tick in range(21, 50):
         step(lib, w)
-        assert hp(lib, w, supply) == BIG_HP, f"damage landed at tick {tick}, after its side lost sight"
+        assert hp(lib, w, supply) == hp_at_loss, f"damage landed at tick {tick}, after its side lost sight"
         if tick == 20 + cycle:
             assert target(lib, w, bastion) != supply, f"still holding the target {cycle} ticks after sight was lost"
 

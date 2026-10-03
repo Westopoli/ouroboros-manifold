@@ -80,8 +80,10 @@ def test_R_089_02_a_friend_that_sees_the_enemy_lets_it_be_pursued(lib, world_fac
 
 
 def test_R_093_02_pursuit_switch_zero_is_todays_behaviour(lib, world_factory):
-    """OM_TP_TARGET_BY_SIGHT = 0: today's behaviour, the Raider walks at the hidden enemy (green today);
-    the default (1) test is the first one in this file."""
+    """OM_TP_TARGET_BY_SIGHT = 0: today's behaviour, byte-compatible with origin/main: main never pursued
+    an enemy hidden behind cover (its own-set sight test), so the Raider keeps marching west and its
+    distance to the hidden enemy grows (1000 wu after 40 ticks, as on main). Test-defect fix TD-PP-C-switch0
+    (A185): the old assertion said the Raider walks at the hidden enemy, which main never did."""
     w = world_factory(n_regions=1)
     assert set_param(lib, w, "TARGET_BY_SIGHT", 0) == 0
     raider, enemy = _scene(lib, w, 700.0, cover_x=350.0)
@@ -89,7 +91,7 @@ def test_R_093_02_pursuit_switch_zero_is_todays_behaviour(lib, world_factory):
 
     step(lib, w, TICKS)
 
-    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) < start, "switch 0 must keep the old behaviour"
+    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) > start, "switch 0 must keep main's behaviour"
 
 
 def test_R_093_02_beyond_sensor_radius_nothing_reacts(lib, world_factory):

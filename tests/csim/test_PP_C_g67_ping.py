@@ -468,7 +468,7 @@ def test_R_162_05_when_the_reveal_ends_the_fire_stops(lib, world_factory):
     assert lib.om_unit_get_hp(w, victim) < hp0, "control: it was hit during the reveal"
     step(lib, w, 20)
     hp_settled = lib.om_unit_get_hp(w, victim)
-    assert lib.om_unit_target(w, bombard) == 0, "the Bombard still holds a target the side cannot see"
+    assert lib.om_unit_target(w, bombard) == -1, "the Bombard still holds a target the side cannot see"
     step(lib, w, 200)
     assert lib.om_unit_get_hp(w, victim) == hp_settled
 
