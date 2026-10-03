@@ -1,0 +1,16 @@
+identical (0, 0) 15 16 28s
+identical (1, 0) 15 16 40s
+identical (0, 1) 15 16 50s
+identical (1, 1) 15 16 60s
+reach (0, 0) 16 17 69s
+reach (1, 0) 17 18 79s
+reach (0, 1) 16 17 89s
+reach (1, 1) 17 18 99s
+S2_skilled (0, 0) 15 16 108s
+S2_skilled (1, 0) 16 17 118s
+S2_skilled (0, 1) 15 16 129s
+S2_skilled (1, 1) 15 16 140s
+S2_counter (0, 0) 14 15 151s
+S2_counter (1, 0) 15 16 161s
+S2_counter (0, 1) 14 15 172s
+S2_counter (1, 1) 14 15 183s
