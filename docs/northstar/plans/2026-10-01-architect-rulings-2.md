@@ -869,3 +869,11 @@ His reply, verbatim: "W1: yes W2: yes W3: Yes W4: keep as is W5: Yes definitely"
 **A205. W4: the work list stays as is.** `plans/2026-09-30-work-list.md` keeps its 2026-09-30 counts. Stage 0 re-runs the reach lint and refreshes them.
 
 **A206. W5: worktree prune day, yes.** Westley: "Yes definitely". The 497 stale worktrees (135 GB) are on the other machine, not this Mac, and agents cannot delete them, so the prune is his to run by hand. No date was given.
+
+## Addendum 69, 2026-10-03 (Westley: space kit not approved; prototypes belong on the Linux machine)
+
+His words, verbatim: "S1: the space generator prototype wasn't something I really opened to approve, so I wouldn't call it passing yet. We're not at the point where we're integrating the space landscape yet, so I think we can direct our attention to decision blockers from roadmap.md that block work to be done before we integrate the space generator, despite the prototype being built on this machine, the prototype method has been formalized on the linux machine, and I want all prototyping to happen there. Let's move to movement."
+
+**A207. S1: no space kit pass is approved.** Passes 1 to 5 are built and pass 6 is specified; none has been opened by Westley for approval, so none passes. Space integration is not near, so S1 to S4 are parked and are not asked until the work before the space generator is done.
+
+**A208. All prototyping happens on the Linux machine (Westley, 2026-10-03).** The prototype method is formalized there. The space mockup was built on the Mac; nothing new is prototyped on the Mac. The land terrain pass and the layout engine and places prototype (ROADMAP section 4) are built there under that method.
