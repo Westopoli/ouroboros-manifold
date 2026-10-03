@@ -744,3 +744,7 @@ Westley asked for more work in parallel and approved these three.
 
 **A158. E-13 carries two rules numbered R-097-06** (terrain slow; collision). The builder renumbers the collision one to R-097-10 in its landing, with the tests that name it, and says so in the report.
 
+
+## Addendum 58, 2026-10-02 (Phase A landed)
+
+**A159. The Phase A landing report (origin/main 3820e875) is accepted.** Budgets met: movement and collision 18.2 ms at 10,000 (30); targeting 3.5 ms (25); 1,000 route queries 9.4 ms (1 s); census 0.7 ms. Two items from the differences list are findings, not accepted differences: the sight line stepping in half cells can miss a corner clip (fixed in wave A5 with a test that places a blocked cell at a corner, under `PP-fog`); and the parity tolerance holds only with the leash at 1 and a canvas set, so the parity fixture sets both and says why. The cross-layer reading (a cover or blocked cell between units on different layers is tested on the lower layer) stands provisionally until Phase C, when the lab measures it; recorded as the builder's reading, not a rule. The `skilllab` speed gate at 29.06 s of 30 is watched; a miss comes to the Architect.
