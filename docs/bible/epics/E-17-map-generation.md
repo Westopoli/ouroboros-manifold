@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 110 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 23 open flags, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 21 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -33,7 +33,7 @@ Generate a land map for a medium canvas from seed 11. The terrain has height and
 Flag closed, rule text pending: Q-113-01, fairness is a logger only until the generator is tuned in the P2 landscape design phase. The rule below is what the tests read today.
 Flag closed, rule text pending: Q-112-01, the launch ships 8 layouts and grows after testing. The rule below is what the tests read today.
 
-Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts: the layout calls for places and the landscape engine is required to produce them (S-191 R-191-10, decided 2026-10-03). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts: the layout calls for places and the landscape engine is required to produce them (S-191 R-191-10, decided 2026-10-03). The library is audited and double checked before it is implemented, because the game has changed since the layouts were authored, and archetypes are probably paired with layouts (Westley, 2026-10-03). The rules below are what the game does today.
 
 As a commander, I want maps built on hand-authored strategic layouts so that every map has a chokepoint, a flank, and a reason, and I learn the vocabulary over time.
 
@@ -299,13 +299,13 @@ Applies to land maps (Q-166-02).
 Rules
 - R-192-01  Given the slopes between height bands, When strongpoints are placed, Then they stand at those slopes, so holding one holds the way up or down and gives production on that band (E-15 S-218, E-15 S-126). The count and the owner split are R-126-01's, placed on the best slopes, and as many as there are where the relief gives fewer slopes than the count (Westley, 2026-10-03) [Q-192-04: whether a layout's reinforcement-structure nodes are these strongpoints].
 - R-192-02  Given the terrain, When chokes are found, Then each is where a pass, a bridge or a gate must be, at a crossing of a cliff, of water or of a wall. A choke the layout calls for has the layout's width (R-113-05; Westley, 2026-10-03: the layout engine decides the width) [Q-191-05: the numeric width of each authored choke].
-- R-192-03  Given the terrain, When vantages are found, Then each is on a real peak [Q-192-03: whether a vantage on an upper layer must be reachable by walking units on a ground era, as R-113-04 requires today].
-- R-192-04  Given a generated land map, When the plays of the layer system are listed (hold a choke, hold the top of a slope past its midline, fight from behind tall cover), Then the map offers each [Q-192-04: how a map comes to offer them now that the layout engine leads, and whether rule-found places are added to the layout's].
+- R-192-03  Given the terrain, When vantages are found, Then each is on a real peak. On a ground era a vantage is reachable on foot by a slope, and about 30 percent of peaks may be unreachable on foot, which is natural (Westley, 2026-10-03; R-113-04's "reachable from staging and every spawn point" is rewritten to this).
+- R-192-04  Given a generated land map, When the plays of the layer system are listed (hold a choke, hold the top of a slope past its midline, fight from behind tall cover), Then the map offers each, because every layout declares the plays it offers, with node kinds for a slope top and for a tall-cover place beside the chokes and vantages it has, and no layout offers none (Westley, 2026-10-03). The terrain adds chokes, vantages and strongpoints by rule only where the layout names none of that kind. The library is audited before it is implemented, and archetypes are probably paired with layouts (S-112).
 - R-192-05  Given the terrain, When raids and shipments reach a base, Then they come along lanes the terrain sets (E-22 S-168 and S-174, E-22 S-176). Both ways are built behind a switch: the generator outputs the lanes, or they are found at play from the route grid; playtests choose (Westley, 2026-10-03).
 
 Inputs: slopes; terrain; places.
 Outputs: strongpoints, chokes and vantages as typed places.
-Open flags: Q-192-03, Q-192-04.
+Open flags: none.
 
 ### S-193 — Settlements that build themselves
 As a commander, I want cities and bases to rise from scaffolds in waves, spread along the land, climb cliffsides and reshape around what I place, so that the base I fight over is a spectacle to watch being built.
@@ -373,7 +373,7 @@ As a commander, I want a map that favors the defender to still be one I can win,
 Rules
 - R-197-01  Given a generated land map, When the fairness evaluator runs, Then it scores the derived terrain, its places and any layout it accounts for on route count, travel time balance, vantage accessibility balance and hazard symmetry as S-117 does, and logs the score with the seed.
 - R-197-02  Given a map the situation slants, When the score is read, Then the acceptable range accounts for the slant, such as a defender's better position (E-22 S-177), and the range is centered on the slant the situation gives (Westley, 2026-10-03).
-- R-197-03  Given the derived map, When it is checked, Then the hard constraints of R-117-03 hold on it: no side's every approach is blocked while the other's is clear, and every vantage is reachable by both sides [Q-192-03 for walking units on high bands].
+- R-197-03  Given the derived map, When it is checked, Then the hard constraints of R-117-03 hold on it: no side's every approach is blocked while the other's is clear, and every vantage that is reachable on foot is reachable by both sides (R-192-03: about 30 percent of peaks may be unreachable).
 - R-197-04  Given the launch build, When a score is outside the range, Then it is logged, and whether a map is regenerated is a design-phase decision (Q-113-01, closed: logger only until the generator is tuned).
 
 Inputs: map seed; the situation (E-02, E-10).
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-189-02, Q-189-04, Q-190-01, Q-191-05, Q-192-03, Q-192-04, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-189-02, Q-189-04, Q-190-01, Q-191-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

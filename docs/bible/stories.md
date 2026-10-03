@@ -192,7 +192,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-189 | E-17 | "Some ground is too steep to walk, and slopes are the ways between layers." | Design decided 2026-10-02, not scheduled; flags Q-189-02, Q-189-04; land maps only | `epics/E-17-map-generation.md` S-189 |
 | S-190 | E-17 | "The layers follow the land under my units." | Design decided 2026-10-02, not scheduled; flag Q-190-01; land maps only | `epics/E-17-map-generation.md` S-190 |
 | S-191 | E-17 | "Bases, objectives and resources sit where the land puts them." | Design decided 2026-10-02, not scheduled; flag Q-191-05; land maps only | `epics/E-17-map-generation.md` S-191 |
-| S-192 | E-17 | "Ways up and down I can hold, narrow places to fight over, high ground to take." | Design decided 2026-10-02, not scheduled; flags Q-192-03, Q-192-04; land maps only | `epics/E-17-map-generation.md` S-192 |
+| S-192 | E-17 | "Ways up and down I can hold, narrow places to fight over, high ground to take." | Design decided 2026-10-02, not scheduled; no open flag; land maps only | `epics/E-17-map-generation.md` S-192 |
 | S-193 | E-17 | "Cities rise from scaffolds in waves, climb cliffs and reshape around what I place, and dense districts slow units and give cover but always leave natural paths through." | Design decided 2026-10-02, not scheduled; flags Q-193-01 to Q-193-06 | `epics/E-17-map-generation.md` S-193 |
 | S-194 | E-17 | "One continuous world from a single unit to the whole battlefield." | Design decided 2026-10-02, not scheduled; flag Q-194-01 | `epics/E-17-map-generation.md` S-194 |
 | S-195 | E-17 | "Bigger matches have bigger maps." | Design decided 2026-10-02, not scheduled; flags Q-195-01, Q-195-02 | `epics/E-17-map-generation.md` S-195 |
