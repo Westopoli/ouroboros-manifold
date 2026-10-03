@@ -903,15 +903,17 @@ static uint64_t om_move_near_mask_at(const double *xs, const double *ys, uint32_
     uint64_t mask = 0;
 #if defined(__SSE2__)
     const __m128d vx = _mm_set1_pd(x), vy = _mm_set1_pd(y), vr2 = _mm_set1_pd(r2);
-    for (; i + 2 <= count; i += 2) {
+    for (; i < count; i += 2) {
         __m128d dx = _mm_sub_pd(_mm_loadu_pd(sx + i), vx), dy = _mm_sub_pd(_mm_loadu_pd(sy + i), vy);
         mask |= (uint64_t)(uint32_t)_mm_movemask_pd(_mm_cmple_pd(_mm_add_pd(_mm_mul_pd(dx, dx), _mm_mul_pd(dy, dy)), vr2)) << i;
     }
-#endif
+    if (count < OM_MOVE_MASK_BITS) mask &= ((uint64_t)1 << count) - 1u;
+#else
     for (; i < count; i++) {
         double dx = sx[i] - x, dy = sy[i] - y;
         mask |= (uint64_t)(dx * dx + dy * dy <= r2) << i;
     }
+#endif
     return mask;
 }
 
