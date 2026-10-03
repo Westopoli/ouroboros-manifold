@@ -182,6 +182,10 @@ func qa_set(name: String, value) -> void:
 			_hud.get_p4().set_ramps(bool(value))
 		"detail_scale":
 			_hud.get_p4().set_detail_scale(float(value))
+		"relief_mult":
+			_hud.get_p4().set_relief_mult(float(value))
+		"canvas":
+			_hud.qa_set_canvas(float(value))
 
 
 func qa_look_steep(height: float) -> Array:

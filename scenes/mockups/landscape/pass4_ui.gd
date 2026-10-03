@@ -12,6 +12,7 @@ var bench_override: float = -1.0
 var footprint: float = 300.0
 var ramps := true
 var detail_scale: float = 1.0
+var relief_mult: float = 1.0
 var _fp_table: Dictionary = {}
 var view: String = "visual"
 var limit: float = 30.0
@@ -28,6 +29,8 @@ var _cursor: Control
 var _controls: Array = []
 var _landform_button: Button
 var _relief_label: Label
+var _relief_mult_label: Label
+var _relief_mult_slider: HSlider
 var _relief_slider: HSlider
 var _bench_button: Button
 var _bench_label: Label
@@ -75,16 +78,21 @@ func setup(hud, camera_rig: Node3D, box: VBoxContainer) -> void:
 	_detail_slider = _slider(0.0, 3.0, 0.1, detail_scale)
 	_detail_slider.value_changed.connect(func(v): _detail_label.text = "Terrain steepness (detail x): %.1f" % v)
 	_detail_slider.drag_ended.connect(func(changed): if changed: set_detail_scale(_detail_slider.value))
+	_relief_mult_label = Label.new()
+	_relief_mult_slider = _slider(0.25, 1.5, 0.05, relief_mult)
+	_relief_mult_slider.value_changed.connect(func(v): _relief_mult_label.text = "Large-shape relief x%.2f" % v)
+	_relief_mult_slider.drag_ended.connect(func(changed): if changed: set_relief_mult(_relief_mult_slider.value))
 	_ramp_button = Button.new()
 	_ramp_button.focus_mode = Control.FOCUS_NONE
 	_ramp_button.pressed.connect(func(): set_ramps(not ramps))
-	_controls = [_landform_button, _relief_label, _relief_slider, _bench_button, _bench_label, _bench_slider, _fp_label, _fp_slider, _detail_label, _detail_slider, _ramp_button, _unit_button]
+	_controls = [_landform_button, _relief_label, _relief_slider, _bench_button, _bench_label, _bench_slider, _fp_label, _fp_slider, _detail_label, _detail_slider, _relief_mult_label, _relief_mult_slider, _ramp_button, _unit_button]
 	for c in _controls:
 		box.add_child(c)
 	_relief_label.text = "Min relief: %d wu (candidate)" % int(min_relief)
 	_bench_label.text = "Benched share override: 50%"
 	_fp_label.text = "Slope footprint: %d wu (candidate)" % int(footprint)
 	_detail_label.text = "Terrain steepness (detail x): %.1f" % detail_scale
+	_relief_mult_label.text = "Large-shape relief x%.2f" % relief_mult
 	_refresh_buttons()
 
 	_panel = PanelContainer.new()
@@ -170,6 +178,13 @@ func set_detail_scale(v: float) -> void:
 	detail_scale = clampf(v, 0.0, 3.0)
 	_detail_slider.set_value_no_signal(detail_scale)
 	_detail_label.text = "Terrain steepness (detail x): %.1f" % detail_scale
+	_hud.p4_regenerate()
+
+
+func set_relief_mult(v: float) -> void:
+	relief_mult = clampf(v, 0.25, 1.5)
+	_relief_mult_slider.set_value_no_signal(relief_mult)
+	_relief_mult_label.text = "Large-shape relief x%.2f" % relief_mult
 	_hud.p4_regenerate()
 
 
@@ -281,7 +296,7 @@ func _refresh_panel() -> void:
 		+ "Relief %d wu  (lowest %d, highest %d)  minimum asked %d wu%s\n" % [int(m.relief_wu), int(m.lowest_wu), int(m.highest_wu), int(m.min_relief_wu), "  (stretched x%.2f)" % m.relief_scale if m.relief_scale > 1.0001 else ""] \
 		+ "Layer floors (wu): %s   step %d wu\n" % [floors_s, int(round(m.step_wu))] \
 		+ "Land on layers 1..5: %s %%\n" % shares_s \
-		+ "Slope footprint %d wu   terrain steepness x%.1f\n" % [int(m.footprint_wu), m.detail_scale] \
+		+ "Slope footprint %d wu   terrain steepness x%.1f   large-shape relief x%.2f\n" % [int(m.footprint_wu), m.detail_scale, m.relief_mult] \
 		+ "Too steep (share of land): over 30 = %.1f%%   32.5 = %.1f%%   35 = %.1f%%\n" % [steep["30.0"], steep["32.5"], steep["35.0"]] \
 		+ "Benched ground: %.0f%% (%s)   Landforms: %s\n" % [m.bench_share_pct, "from seed" if m.bench_from_seed else "override", ", ".join(lf) if not lf.is_empty() else "none"] \
 		+ "Ramps %s: %d cut (%d cells, gold) for layers %s\n" % ["on" if m.ramps_on else "off", m.ramps, m.ramp_cells, str(m.ramp_bands)] \

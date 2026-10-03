@@ -193,6 +193,7 @@ func _regenerate() -> void:
 		field_map.p4_footprint = _p4.footprint
 		field_map.p4_ramps = _p4.ramps
 		field_map.p4_detail_scale = _p4.detail_scale
+		field_map.p4_relief = _p4.relief_mult
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()
@@ -739,6 +740,13 @@ func get_regen_count() -> int:
 
 
 func qa_regenerate() -> void:
+	_regenerate()
+
+
+func qa_set_canvas(v: float) -> void:
+	_canvas = v
+	_canvas_toggle_button.text = "Canvas: %d" % int(_canvas)
+	_camera_rig.canvas_size = _canvas
 	_regenerate()
 
 
