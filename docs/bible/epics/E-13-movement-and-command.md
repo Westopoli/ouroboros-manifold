@@ -147,7 +147,7 @@ As a commander, I want routes to follow the buildings that appear and fall, the 
 The rules on buildings, slopes and steep ground are design decided 2026-10-02, not scheduled for building, and apply to land maps (E-22 S-174, E-01 S-200; space maps Q-166-02). R-207-06 and R-207-07 are ruled movement work that is built with the tactical port.
 
 Rules
-- R-207-01  Given a structure that blocks (a wall, a gate, a tower or a production building; E-11 S-204), When it is placed, Then the cells of its footprint on the layers it occupies are blocked on the route grid [Q-207-01: whether it blocks from placement, while under construction, or only when finished; Q-204-01: which layers it occupies].
+- R-207-01  Given a structure that blocks (a wall, a gate, a tower or a production building; E-11 S-204), When it is placed, Then the cells of its footprint on the layers it occupies are blocked on the route grid It blocks from placement, including while under construction (Westley, 2026-10-03) [Q-204-01: which layers it occupies].
 - R-207-02  Given a structure that falls, When it is destroyed, Then those cells are open again.
 - R-207-03  Given a cell that turns blocked or open (R-207-01, R-207-02), When units route, Then no unit follows a route through a blocked cell, and any route cached for a shared destination (R-097-02) that passes through a changed cell is computed again.
 - R-207-04  Given a gate, When a unit of either side reaches it, Then [Q-174-02: whether it lets its own side's units through and stops the enemy's, and whether it opens and closes].
@@ -157,7 +157,7 @@ Rules
 
 Inputs: structures (E-11 S-204); slopes and sections too steep to cross (E-17 S-189, S-190); the route grid.
 Outputs: the route grid and the route cache as they change; unit positions.
-Open flags: Q-207-01, Q-174-02, Q-204-01.
+Open flags: Q-174-02, Q-204-01.
 
 ### S-208 — Guard
 As a commander, I want to put units on guard at a post, so that I can hold a choke, the top of a slope or a door without the units running out through it.

@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 31 rules, numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on this epic's stories, Q-224-01 (S-224); Q-221-01 (E-02 S-221) and Q-177-05 (E-22 S-177) are cited and held elsewhere. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on this epic's stories, Q-224-01 (S-224); Q-177-05 (E-22 S-177) is cited and held elsewhere. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -141,7 +141,7 @@ Open flags: Q-224-01.
 | Faction list with archetype, starting tech, confidence | Strategic snapshot `factions` |
 | Generation report | T1 trace: seed, N, edge count, buffer check result |
 
-A region's climate, landform and environmental trouble are not outputs of this epic and not part of the region record; they are derived from the seed (E-02 S-221). Whether deriving them touches the draw order of R-022-04 is Q-221-01.
+A region's climate, landform and environmental trouble are not outputs of this epic and not part of the region record; they are derived from the seed (E-02 S-221). Deriving them does not touch the draw order of R-022-04 (E-02 R-221-03).
 
 ## Invariants
 
@@ -173,7 +173,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-224-01 (S-224) and Q-221-01 (E-02 S-221). S-223 has none; the numbers of regions its supply distance is read against are Q-177-05 (E-22 S-177). S-021 to S-025 have none.
+Q-224-01 (S-224). S-223 has none; the numbers of regions its supply distance is read against are Q-177-05 (E-22 S-177). S-021 to S-025 have none.
 
 ## Depends on
 

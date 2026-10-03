@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 13 stories, 60 rules; the numbers of S-012 to S-020 and S-160 are from `algorithms.md` ALG-01 through ALG-10. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. No player inputs; every input is sim-internal. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 9 open flags, all on S-220 to S-222: Q-220-01, Q-220-02, Q-159-13, Q-221-01, Q-221-02, Q-222-01, Q-193-04, Q-193-05, Q-193-06. |
+| Implied-but-unstated behavior turned into flags | 7 open flags, all on S-220 and S-222: Q-220-01, Q-220-02, Q-159-13, Q-222-01, Q-193-04, Q-193-05, Q-193-06. |
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate and are blocked on Q-220-01, Q-220-02 and Q-159-13 (S-220), Q-221-01 and Q-221-02 (S-221), and Q-222-01 (S-222, which also cites Q-193-04 to Q-193-06 from E-17 S-193). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
+**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate; S-220 and S-222 are blocked on Q-220-01, Q-220-02 and Q-159-13 (S-220), and Q-222-01 (S-222, which also cites Q-193-04 to Q-193-06 from E-17 S-193). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
 
 ## Purpose
 
@@ -195,13 +195,13 @@ Decided 2026-10-02 (DECISIONS H9): derived from the seed for now, with no change
 Rules
 - R-221-01  Given any region, When its climate, landform or environmental trouble is needed (E-17 R-166-03, E-15 S-219), Then it is derived from the world seed, and the region record keeps exactly the fields of R-012-01 and gains none for them.
 - R-221-02  Given the same seed, When a region's climate, landform and trouble are derived twice, Then they are identical, on every platform.
-- R-221-03  Given the derivation is made, When it runs, Then [Q-221-01: whether it draws from the world generation's random stream, which would extend R-022-04's draw order, or is derived on its own from the seed and leaves that order alone].
-- R-221-04  Given an empty-tier region, When its climate, landform or trouble is needed, Then [Q-221-02: whether empty regions have them, or only inhabited ones].
+- R-221-03  Given the derivation is made, When it runs, Then it is derived on its own from the seed and draws nothing from the world generation's random stream, so R-022-04's draw order and R-021-10 are untouched (Westley, 2026-10-03).
+- R-221-04  Given an empty-tier region, When its climate, landform or trouble is needed, Then it has them: every region has a climate, landform and trouble, empty or not (Westley, 2026-10-03).
 - R-221-05  Given the derivation is later replaced by stored fields, When that is decided, Then it is a contract change to `csrc/ouroboros_sim.h` that lands first as its own piece.
 
 Inputs: the world seed.
 Outputs: climate, landform and environmental trouble to the map generator (E-17 S-166); not part of the strategic snapshot's region entry.
-Open flags: Q-221-01, Q-221-02.
+Open flags: none.
 
 ### S-222 — What a settlement's growth reads from a region
 As a commander, I want a settlement to grow in step with how its region is doing, so that a rich region looks rich.

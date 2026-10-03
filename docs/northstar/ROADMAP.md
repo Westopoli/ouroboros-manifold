@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-03 (seventh update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-03 (eighth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -46,8 +46,6 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 |---|---|---|---|
 | L1 | Part 1, the ground, what is left (answers 2026-10-03 in the register): the minimum height variance; the exact steepness limit inside 30 to 35 degrees, after his visual pass; what counts as unreasonably hard to reach on foot | Q-188-01, Q-189-02, Q-189-04 | Queue row 4 |
 | L3 | Part 2, the places, what is left (answers 2026-10-03 in the register): the figures the live prototype sets (choke widths, landform bias, counts, the distance measure) | Q-191-05 | Land generator part 2 |
-| L6 | Smaller land choices: region climate draw order, empty regions, when a building blocks | Q-221-01, Q-221-02, Q-207-01 | S-221, S-207 |
-| L7 | Placeholder ground units: confirm the reading "the same six unit types with the space era's numbers, drawn as placeholders" | Q-201-01 | S-201; closes the flag |
 | L8 | Was land mockup pass 3 (2026-09-21) approved? The record still says "awaiting Westley's third look" | none | The record only |
 | L9 | Name and scope of the land era | Q-147-01 | S-147; a second era to play |
 
@@ -105,7 +103,7 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 | Layout engine and places prototype for Westley's approval | none | E-17 | Not written; shares the prototype of the terrain pass above if that is where it is built (to confirm) | Westley asked (Q-191-04 amendment) to see the layout engine, and how the landscape engine reacts to it, in a live prototype: the landscape engine is required to produce what the layout calls for (a choke, a peak). It also shows sites found with a scoring per kind of place (Q-191-01) and the significant resources at equal distances from both sides and the objective with as much variety of shape as that allows (Q-191-03, Q-191-05). The old layouts are node graphs (`simulation/layout_library/`, dot images in `simulation/tuning_output/stage7/checkpoint_f/`). Westley approves the product before it is integrated |
 | Shared layer-mask contract | none yet (carries E-01 R-001-04, E-17 R-114-01) | E-01, E-17 | Not written | Lands first inside land part 1 as its own contract piece; written so space can use it; the small-craft class needs Q-166-05 |
 | Space generator | none in the bible yet | E-17 | Research and mockup passes 1 to 5; pass 6 specified | Waits on decisions S1 to S4, the stories being written, and the mask contract |
-| Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, 5 flags open | Waits on the flag sheet, the places prototype Westley approves (row above), and plan A. Q-191-04 closed 2026-10-03: the rewrites of S-112 to S-119 can now be written |
+| Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, 1 flag open | Waits on the flag sheet, the places prototype Westley approves (row above), and plan A. Q-191-04 closed 2026-10-03: the rewrites of S-112 to S-119 can now be written |
 | Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-01 to -06 open | After the land generator |
 | Zoom and drawing | S-194, S-234, S-236, S-240 | E-17, E-16, E-18 | Blocked on Westley's budgets (Q-194-01, Q-234-01, Q-240-01) | Client work, after a generator exists |
 | Strongpoints and weather | S-218, S-219 | E-15 | Design decided, flags open | After the land generator |
