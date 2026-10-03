@@ -11,6 +11,7 @@ with the switch at 0. Today the switch is not read by the C code, so that contro
 red-before, and it must pass once G3 is built.
 """
 import hashlib
+import json
 import struct
 import sys
 from pathlib import Path
@@ -28,6 +29,13 @@ import baseline_fights as B  # noqa: E402
 
 TBS = 4  # OM_TP_TARGET_BY_SIGHT
 
+# Frozen pre-G3 goldens (copies of origin/main before the default-1 re-record). The shared
+# a99_tactical_hashes.json and baseline_hashes.json now hold the default-1 hashes.
+# See also: TD-PP-C-invariant-goldens in docs/northstar/plans/push_ledger_2026-09-22.md
+_DATA = Path(__file__).resolve().parent / "data"
+PRE_G3_A99 = json.loads((_DATA / "a99_tactical_hashes_pre_g3.json").read_text())
+PRE_G3_BASELINE = json.loads((_DATA / "baseline_hashes_pre_g3.json").read_text())
+
 
 def _off(lib, w):
     assert lib.om_tactical_set_param(w, TBS, 0.0) == 0
@@ -41,7 +49,7 @@ FAST = [r for r in A.RUNS if r[4] == "fast"]
 def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
     """A185: switch 0 leaves every recorded A99 per-step hash byte-identical."""
     name, units, gap, steps, _t = run
-    rec = A.load_recorded()[name]["hashes"]
+    rec = PRE_G3_A99[name]["hashes"]
     w = A.build(lib, units)
     _off(lib, w)
     if gap is not None:
@@ -57,7 +65,7 @@ def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
 
 def test_G3_positive_control_perturbed_recorded_hash_is_caught(lib):
     name, units, gap, _s, _t = FAST[0]
-    rec = list(A.load_recorded()[name]["hashes"][:30])
+    rec = list(PRE_G3_A99[name]["hashes"][:30])
     w = A.build(lib, units)
     _off(lib, w)
     got = []
@@ -81,7 +89,7 @@ def test_G3_baseline_fights_unchanged_with_target_by_sight_0(name, monkeypatch):
         assert lib.om_tactical_set_param(w, TBS, 0.0) == 0
     monkeypatch.setattr(B, "apply_baseline_settings", both)
     got = B.run_one(B.LIB["O2"], name)
-    assert got["final"] == B.load_recorded()[name]["final"], f"{name}: final hash moved with TARGET_BY_SIGHT 0"
+    assert got["final"] == PRE_G3_BASELINE[name]["final"], f"{name}: final hash moved with TARGET_BY_SIGHT 0"
 
 
 @pytest.mark.parametrize("kind", F1.SCENE_KINDS)
