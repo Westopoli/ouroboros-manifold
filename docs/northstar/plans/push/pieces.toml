@@ -1157,17 +1157,3 @@ status = "pending"
 tests_pending = true
 size_estimate = "plan Phase S: trace, settings, plays, sampler, condition checker, chart forms"
 
-
-# Temporary row for the constants-generator unit (Architect, coordinator): alg_constants.py regenerates
-# csrc/om_constants.h byte-identically, keeping the hand-inserted PP lines (OM_COLLISION_PASSES, OM_GROUP_GIVEUP_*).
-# Remove when the unit lands.
-[[piece]]
-id = "GEN-consts"
-manager = "M0"
-wave = 5
-owns = ["csrc/om_constants.h", "scripts/specfactory/alg_constants.py", "tests/specfactory/test_alg_constants.py"]
-owns_glob = []
-acceptance = ["tests/specfactory/test_alg_constants.py"]
-depends_on = ["A94-harness", "core", "PP-move"]
-status = "pending"
-size_estimate = "generator re-sync with om_constants.h (154 lines drift), one positive control"
