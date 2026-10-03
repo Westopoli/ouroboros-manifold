@@ -157,6 +157,7 @@ typedef struct {
     double   facing;
     double   prev_x, prev_y, prev_facing;
     int      has_dest;
+    uint32_t giveup_near;
     double   dest_x, dest_y;
     int      direct_move;
     uint32_t group_id;
@@ -2203,12 +2204,33 @@ static void om_move_layer_pass(om_world *w, om_move_state *ms, uint32_t period) 
     }
 }
 
+/* PP-move R-099-05, A169 (PURSUE_BY_STEERING): a unit under a group move that has been within GROUP_GIVEUP_RADIUS of
+ * its slot for GROUP_GIVEUP_TICKS consecutive ticks without arriving ends its order where it stands; leaving the
+ * disc or arriving resets the count. Runs at the top of the tick, on the positions the last tick ended with. */
+static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
+    uint32_t id;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        double dx, dy;
+        if (!mu->in_use || !mu->has_dest || mu->group_id == 0 || !om_unit_alive(w, id)) { if (mu->in_use) mu->giveup_near = 0; continue; }
+        dx = mu->dest_x - mu->x;
+        dy = mu->dest_y - mu->y;
+        if (dx * dx + dy * dy > (double)OM_GROUP_GIVEUP_RADIUS * (double)OM_GROUP_GIVEUP_RADIUS) { mu->giveup_near = 0; continue; }
+        if (++mu->giveup_near >= OM_GROUP_GIVEUP_TICKS) {
+            mu->has_dest = 0;
+            mu->deflecting = 0;
+            mu->giveup_near = 0;
+        }
+    }
+}
+
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
     if (ms->lay_any) om_move_layer_pass(w, ms, period);
     om_move_grid_rebuild(w, ms, 1);
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_giveup_pass(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) {
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
             ms->start_x[id] = ms->units[id].x;

@@ -97,6 +97,7 @@ Rules
 - R-099-02  Given a Raider, When it moves, Then it covers 150 wu per second at 20 ticks per second, 7.5 wu per tick.
 - R-099-03  Given more than 1,000 live units on the battlefield, When the tactical tick rate drops from 20 to 10 ticks per second (and returns above that count is crossed downward), Then every per-second quantity (speed, attack interval, ability duration and cooldown, drift) is unchanged in real time because per-tick values scale with the tick period, the change happens on a tick boundary, and every peer in a multiplayer session switches on the same tick (decision A, Westley 2026-09-24).
 - R-099-04  Given a unit within its arrival radius of its destination (1.5 × collision radius for a formation slot, 2 × for a route waypoint), When the tick runs, Then it has arrived where it stands, without snapping to the point: its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach.
+- R-099-05  Given a unit under a group move whose own slot it cannot reach (a stopped neighbour holds it), When it has been within 75 wu (about two slot spacings) of its slot for 40 consecutive ticks (2 s) without arriving, Then it ends its order where it stands, the same state as an arrival (destination cleared, stationary from that tick onward); the count resets when the unit leaves the 75 wu disc or arrives, and a unit never paces with no end.
 
 Inputs: none beyond S-097.
 Outputs: positions.
