@@ -130,6 +130,10 @@ def run_scene(scene, seed=1, hook=None, id_offset=0):
         h.om_tactical_set_param(w, 2, 1.0)
         canvas = (4000.0, 4000.0) if scene.map == "open" else (2000.0, 1000.0)
         assert h.om_map_set_canvas(w, canvas[0], canvas[1]) == 0
+        # Addendum 63 (A176-A180 diagnosis, W1): the Python has no layer crossing, so the C's route across
+        # layers (default on, OM_TP_ROUTE_ACROSS_LAYERS = 5) is switched off. Without this wall_with_a_gap
+        # crossed the wall on layer 1 and deviated by 890 wu from tick 1.
+        assert h.om_tactical_set_param(w, 5, 0.0) == 0
         if scene.map == "wall":
             for cx, cy in _WALL_CELLS:
                 h.om_map_set_obstacle_density(w, cx, cy, 0, 1.0)
