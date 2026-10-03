@@ -1057,7 +1057,7 @@ wave = 5
 owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "tests/csim/conftest.py", "docs/northstar/plans/push/pp_contract.md", "tests/csim/test_PP_settings.py", "tests/specfactory/test_pp_contract.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py", "docs/architecture.md", "scripts/specfactory/reach_allowlist.toml"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_conftest_bindings.py"]
-depends_on = ["A117-contract"]
+depends_on = ["A117-contract", "DOCS-arch"]
 status = "pending"
 size_estimate = "one contract piece, one ABI bump: the calls in the plan's appendix"
 
@@ -1080,7 +1080,7 @@ wave = 5
 owns = ["csrc/tactical_move.c", "docs/bible/algorithms.md", "docs/northstar/plans/push/scale_gated_tests.txt", "tests/csim/test_E13_S097_around_not_through.py", "tests/csim/test_E13_S098_firing_through_friends.py", "tests/csim/test_E13_S096_four_commands.py", "tests/csim/test_core_group_pace.py", "csrc/enemy_macro.c", "tests/csim/test_E14_S120_B1_2_patrol_waypoint_loop.py"]
 owns_glob = ["tests/csim/test_PP_move_*.py", "tests/csim/scale/test_PP_*.py"]
 acceptance = []
-depends_on = ["PP-contract", "B12", "B12b"]
+depends_on = ["PP-contract", "B12", "B12b", "B13", "HARNESS-symown"]
 status = "pending"
 tests_pending = true
 size_estimate = "P8, P7, P5 tables, collision, clamp, cover exemption, routing (plan Phase A), in units of about 100 lines"
