@@ -1,4 +1,5 @@
 """Asymmetric plays: a role (blob, line, skilled, counter) and a unit mix per side.
+A skilled side's groups get a goal that lands the arc's focus on the target (Side.focus, else the enemy's first anchor).
 Skilled and counter come from the skills registry; the S2 ones are an unconfirmed draft and every build says so in build.labels."""
 import math
 from dataclasses import dataclass
@@ -130,6 +131,18 @@ def asym_play(size, side0, side1, unit_types=None):
                 enemy = [p for g in groups[1 - i] for p in place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)]
                 goal = max(enemy, key=lambda p: p[1])
                 groups[i] = [Group(**{**g.__dict__, "goal": goal}) for g in groups[i]]
+        for i in (0, 1):
+            if sides[i].role == "skilled":
+                formation, params, f = local[i][0]
+                rad = math.radians(f)
+                centre = (shift[i] + params["radius"] * math.cos(rad), anchor_y[i] + params["radius"] * math.sin(rad))
+                t = sides[i].focus or (groups[1 - i][0].x, groups[1 - i][0].y)
+                goals = []
+                for g in groups[i]:
+                    pts = place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)
+                    cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
+                    goals.append(Group(**{**g.__dict__, "goal": (cx + t[0] - centre[0], cy + t[1] - centre[1])}))
+                groups[i] = goals
         return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types)
     build.labels = labels
     return build
