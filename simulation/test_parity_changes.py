@@ -71,17 +71,17 @@ def test_A176_positive_control_enemy_taken_in_range_is_kept():
 
 
 def test_A176_documented_vanguard_range_300_vs_leash_200_drops_target():
-    """Documented behaviour, unchanged by A176: a Vanguard (range 300) takes the enemy in range at ~298 wu, the
-    anchor is there, the target is 298 > 200 (the leash) from the anchor, so it drops it. At no tick end is the
-    target held while the enemy is between 200 and 298 wu away. The unit then walks on; inside 200 it keeps it.
-    Pinned so the pair stays equal (A176 text: 'that case stays as the Python does')."""
+    """Documented CHANGE, A188 (R-087-05, R-096-03): the A176 parity case (a Vanguard, range 300, takes the enemy
+    in range at ~298 wu, the target is beyond the 200 leash from the anchor, so it drops it and walks on) is
+    superseded. The leash now tests the unit's OWN distance from its anchor, never the target's, so the Vanguard
+    stops at 300 wu from the enemy, keeps the target on every tick it has the enemy in range (including while the
+    enemy is between 200 and 300 wu away), and does not walk on. Pair equal with the C (om_tac_leash_broken)."""
     rows, rng = _sight_scene("Vanguard", 0, 700.0, n=140)
     assert rng == 300.0
-    assert any(200.0 < r[0] <= 300.0 for r in rows), "scene never put the enemy in (200,300]"
-    # the take at the range edge (300) shows for one tick end before the leash drops it; below 298 it never holds
-    assert not any(r[2] for r in rows if LEASH < r[0] < 298.0)
-    inside = [r for r in rows if r[0] <= LEASH]
-    assert inside and inside[-1][2], "target not kept once inside the leash"
+    first = next(i for i, r in enumerate(rows) if r[0] <= rng)
+    assert rows[first][0] > LEASH, "scene never put the enemy in (200,300]"
+    assert all(r[2] for r in rows[first:]), "target dropped while in range and the unit held at its anchor"
+    assert rows[-1][1] == rows[first + 1][1], "the Vanguard walked on after the enemy was in range"
 
 
 # ---------------------------------------------------------------- A177 / C3: backswing is 10 ticks

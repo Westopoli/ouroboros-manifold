@@ -117,7 +117,7 @@ def test_R_087_04_it_moves_toward_nearest_visible(lib, world_factory):
 
 
 def test_R_087_05_it_anchors_at_its_position(lib, world_factory):
-    """Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the target moves more than 200 wu from the anchor it drops the target and resumes its path."""
+    """Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the unit itself moves more than 200 wu from the anchor it drops the target and resumes its path (A188: the leash tests the unit's own distance, never the target's)."""
     w = world_factory(n_regions=1)
 
     vanguard = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 100.0, 0.0, 0)
@@ -129,8 +129,8 @@ def test_R_087_05_it_anchors_at_its_position(lib, world_factory):
         lib.om_tactical_step(w)
     assert lib.om_unit_target(w, vanguard) == enemy
 
-    # Target moves > 200 wu from the anchor (anchor was at ~100.0, target moved to 350.0 -> distance 250 > 200)
-    lib.om_unit_teleport(w, enemy, 350.0, 0.0, 0)
+    # Test-defect, A188: the unit moves > 200 wu from the anchor (anchor was at ~100.0, unit moved to 350.0 -> distance 250 > 200)
+    lib.om_unit_teleport(w, vanguard, 350.0, 0.0, 0)
     lib.om_tactical_step(w)
 
     # Target is dropped, unit resumes path

@@ -149,18 +149,18 @@ def test_R_087_05_target_sighted_by_sensor_is_held_when_it_comes_into_range(lib,
 
 @SWITCHES
 def test_control_R_087_05_target_leaving_200_of_the_acquisition_spot_is_dropped(lib, world_factory, switch):
-    """Positive control (the leash still works): the same 300 wu in scene; the target is held 150 wu ahead,
-    then moved to 250 wu from the acquisition spot (in range 300, beyond the leash). It is dropped within a
-    cohort cycle. Measured from the acquisition spot, so it distinguishes a leash that works from one that
-    never drops."""
+    """Positive control (the leash still works), re-pinned to A188 (the leash tests the unit's OWN distance
+    from its anchor): the same 300 wu in scene; the target is held 150 wu ahead, then the UNIT is moved to 250
+    wu from the acquisition spot (the target stays in range 300). It is dropped within a cohort cycle.
+    Measured from the acquisition spot, so it distinguishes a leash that works from one that never drops."""
     w = world_factory(n_regions=1)
     u, enemy = _marched_unit(lib, w, switch)
     ax, ay = _acquire_ahead(lib, w, u, enemy, 150.0)
-    lib.om_unit_teleport(w, enemy, ax, ay - 250.0, 0)
+    lib.om_unit_teleport(w, u, ax + 250.0, ay, 0)
 
     seen = watch_target(lib, w, u, 25)
 
-    assert -1 in seen, f"a target 250 wu from the acquisition spot was never dropped: {seen}"
+    assert -1 in seen, f"a unit 250 wu from the acquisition spot never dropped its target: {seen}"
 
 
 @SWITCHES
