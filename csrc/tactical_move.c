@@ -108,6 +108,10 @@
 /* The neighbour list of the collision sweep (om_move_collision_once). */
 #define OM_MOVE_LIST_REACH (4.0 * OM_UNIT_COLLISION_RADIUS)
 #define OM_MOVE_COLLISION_SLACK (OM_UNIT_COLLISION_RADIUS)
+/* Marking stops, and every unit takes its turn, once this fraction (1 / the divisor) of the units have been
+ * marked in one collision call: past that a dense scene revisits nearly everyone and the marking costs more
+ * than it saves. A turn the marks would have skipped writes nothing, so results are bit-identical. */
+#define OM_MOVE_MARK_FULL_DIV 4
 
 /* Steering probe: the largest gap between a probe point computed with
  * om_sin/om_cos and one computed with om_move_sincos_approx is under 0.05 wu;
@@ -261,6 +265,9 @@ typedef struct {
     double   sweep_cos[OM_STEERING_SWEEP_COUNT], sweep_sin[OM_STEERING_SWEEP_COUNT];
     uint8_t  stat[OM_MOVE_MAX_UNITS];
 uint8_t  col_need[OM_MOVE_MAX_UNITS];
+uint32_t col_marks;
+uint8_t  col_all;
+uint8_t  col_open;
 uint32_t col_moved;
 uint8_t  col_last;
 uint32_t col_cur;
@@ -369,6 +376,7 @@ static void om_pp_load_defaults(double *out) {
  * See also: om_mapgen_cell_blocked / om_mapgen_cell_set_density there. */
 int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
 void om_mapgen_cell_set_density(om_world *w, uint32_t layer, int32_t cx, int32_t cy, double density);
+int om_mapgen_terrain_free(const om_world *w);
 
 static void om_move_state_free_fn(void *p) {
     if (p) {
@@ -1543,7 +1551,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
             ax = om_move_clamp_axis(ax, ms->canvas_w); ay = om_move_clamp_axis(ay, ms->canvas_h);
             bx = om_move_clamp_axis(bx, ms->canvas_w); by = om_move_clamp_axis(by, ms->canvas_h);
         }
-        if (ms->col_route) {
+        if (ms->col_route && !ms->col_open) {
             om_move_slide(w, ms, (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
             om_move_slide(w, ms, (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
         }
@@ -1563,6 +1571,8 @@ static void om_move_collision_mark(om_move_state *ms, uint32_t id) {
     const double x = om_move_grid_x(ms, id), y = om_move_grid_y(ms, id);
     int32_t cx0, cx1, cy0, cy1, cy;
     uint32_t base, lo, hi;
+    if (ms->col_all) return;
+    if (++ms->col_marks > ms->discovery_max / OM_MOVE_MARK_FULL_DIV) { ms->col_all = 1; return; }
     ms->col_need[id] = 1;
     if (ms->col_last && id <= ms->col_cur + 1) return;
     for (base = ms->slot_base; base < ms->slot_base + ms->n_spill; base += OM_MOVE_MASK_BITS) {
@@ -1629,7 +1639,7 @@ static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int
         uint32_t n, k;
         double ax0, ay0;
         if (!ms->grid_in[id_i]) continue;
-        if (!first && !ms->col_need[id_i]) continue;
+        if (!first && !ms->col_all && !ms->col_need[id_i]) continue;
         ms->col_need[id_i] = 0;
         ms->col_cur = id_i;
         ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
@@ -1693,6 +1703,7 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     om_move_discover(w, ms);
     ms->col_pursue = om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING);
     ms->col_route = om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN);
+    ms->col_open = (uint8_t)(!ms->density && om_mapgen_terrain_free(w));
     if (ms->col_pursue) {
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
             const om_move_unit *mu = &ms->units[id];
@@ -1702,6 +1713,8 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     if (om_move_settle_matches(w, ms)) return;
     if (!ms->grid_live) om_move_grid_rebuild(w, ms, 1);
     ms->settle_valid = 0;
+    ms->col_marks = 0;
+    ms->col_all = 0;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         ms->stat[id] = (uint8_t)om_move_is_stationary(&ms->units[id]);
     }
