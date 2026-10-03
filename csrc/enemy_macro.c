@@ -737,6 +737,7 @@ void om_macro_tick(om_world *w, uint64_t p1) {
      * pending Q-124-02). */
     om_mission_check_external_reinforcements(w);
     if (!st->has_evaluated) return;
+    st->last_tick_evaluated = slot; /* R-099-03/R-123-02: the replay log carries the crossed slot, not the landing tick */
     om_macro_update_bus_runner(w);
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
