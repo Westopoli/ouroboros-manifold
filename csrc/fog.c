@@ -442,7 +442,10 @@ static double om_fog_effective_radius(const om_fog_state *st, const om_world *w,
     return effective;
 }
 
-/* Candidate observers come from the grid around the target; an any-of, so the iterator's order does not matter. */
+static int om_fog_ping_reveals(const om_world *w, int32_t faction, uint32_t unit);
+
+/* Candidate observers come from the grid around the target; an any-of, so the iterator's order does not matter.
+ * A live G7 ping disc of the faction joins its visible set (R-162-05). */
 int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
     om_grid_iter it;
     double tx, ty;
@@ -452,7 +455,7 @@ int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
     while ((observer = om_grid_iter_next(&it)) != 0) {
         if (om_unit_can_see(w, observer, target)) return 1;
     }
-    return 0;
+    return om_fog_ping_reveals(w, faction, target);
 }
 
 /* ---- generated stubs from signatures.toml ---- */
@@ -562,15 +565,13 @@ int om_player_can_see_friendly(const om_world *w, int32_t faction_id, uint32_t u
     return f < 0 || f == faction_id;
 }
 
-static int om_fog_ping_reveals(const om_world *w, int32_t faction, uint32_t unit);
-
 int om_player_can_see_unit(const om_world *w, int32_t p0, uint32_t unit) {
     const om_fog_state *st = om_fog_ro(w);
     int32_t target_faction = om_unit_get_faction(w, unit);
     if (target_faction < 0) return 0;
     if (target_faction == p0) return 1;
     if (st && st->player_fog_on_set && !st->player_fog_on) return 1; /* fog explicitly off: omniscient (S-093 R-093-01) */
-    return om_fog_faction_sees(w, p0, unit) || om_fog_ping_reveals(w, p0, unit);
+    return om_fog_faction_sees(w, p0, unit);
 }
 
 double om_recon_get_terrain_visibility_ratio(const om_world *w) {
