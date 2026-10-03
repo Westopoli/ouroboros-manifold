@@ -263,6 +263,13 @@ int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_
     return (st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] >> (b & OM_MAPGEN_BIT_MASK)) & 1;
 }
 
+/* 1 when no cell can be blocked and no obstacle disc exists: no canvas (so no edge and no route grid) and no
+ * obstacle. Lets collision skip its per-push terrain reads. See also: om_move_slide in tactical_move.c. */
+int om_mapgen_terrain_free(const om_world *w) {
+    const om_mapgen_state *st = w ? om_mgs_ro(w) : NULL;
+    return !st || (!st->has_canvas && st->n_obstacles == 0);
+}
+
 /* Called by om_map_set_obstacle_density (tactical_move.c): a density above the R-097-01 threshold blocks the
  * cell, anything at or below opens it. Ignored with no canvas or outside it. */
 void om_mapgen_cell_set_density(om_world *w, uint32_t layer, int32_t cx, int32_t cy, double density) {
