@@ -82,12 +82,12 @@ static func _mesa(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGenerato
 	for attempt in range(60):
 		c = Vector2(rng.randf_range(margin, canvas - margin), rng.randf_range(margin, canvas - margin))
 		base = e[_idx(fm, c)]
-		if base > 400.0 and base < 3000.0:
+		if base > 400.0 * fm.p4_relief and base < 3000.0 * fm.p4_relief:
 			found = true
 			break
 	if not found:
 		return false
-	var top := base + 900.0
+	var top := base + 900.0 * fm.p4_relief
 	var edge := 200.0
 	var p1 := rng.randf() * TAU
 	var p2 := rng.randf() * TAU
@@ -109,7 +109,7 @@ static func _canyon(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGenera
 	var canvas := fm.canvas
 	var half := 300.0
 	var shoulder := 150.0
-	var depth := 1500.0
+	var depth := 1500.0 * fm.p4_relief
 	var carve := PackedFloat32Array()
 	carve.resize(e.size())
 	var dim := fm.dim
@@ -117,7 +117,7 @@ static func _canyon(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGenera
 	for attempt in range(30):
 		carve.fill(0.0)
 		var pos := Vector2(rng.randf_range(0.1, 0.9), rng.randf_range(0.1, 0.9)) * canvas
-		if e[_idx(fm, pos)] < 1200.0:
+		if e[_idx(fm, pos)] < 1200.0 * fm.p4_relief:
 			continue
 		var heading := rng.randf() * TAU
 		var phase := rng.randf() * TAU
@@ -133,7 +133,7 @@ static func _canyon(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGenera
 					carve[i] = maxf(carve[i], v)
 		cut = 0
 		for i in range(e.size()):
-			if carve[i] > 0.5 and e[i] > 600.0:
+			if carve[i] > 0.5 and e[i] > 600.0 * fm.p4_relief:
 				cut += 1
 		if cut >= 250:
 			break
@@ -164,7 +164,7 @@ static func _islands(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGener
 		pos += Vector2.from_angle(heading) * rng.randf_range(1500.0, 2300.0)
 		pos = pos.clamp(Vector2.ONE * 800.0, Vector2.ONE * (canvas - 800.0))
 		var r := canvas * rng.randf_range(0.02, 0.037)
-		var peak := rng.randf_range(300.0, 900.0)
+		var peak := rng.randf_range(300.0, 900.0) * fm.p4_relief
 		if e[_idx(fm, pos)] > -50.0:
 			continue
 		var box := _cell_box(fm, pos, r)
@@ -618,6 +618,7 @@ static func analyse(fm: FieldMap) -> Dictionary:
 		"shape_ms": fm.p4_info.get("shape_ms", 0.0),
 		"footprint_wu": fm.p4_footprint,
 		"detail_scale": fm.p4_detail_scale,
+		"relief_mult": fm.p4_relief,
 		"ramps_on": fm.p4_ramps,
 		"ramps": fm.p4_info.get("ramps", 0),
 		"ramp_cells": ramp_cells.count(1),

@@ -34,6 +34,7 @@ var p4_bench_override: float = -1.0
 var p4_footprint: float = 300.0
 var p4_ramps := true
 var p4_detail_scale: float = 1.0
+var p4_relief: float = 1.0
 var p4_info: Dictionary = {}
 var p4: Dictionary = {}
 
@@ -316,7 +317,7 @@ func _build_elevation(noise_continent: FastNoiseLite, noise_hills: FastNoiseLite
 			var n: float = raw[idx]
 			var h := 0.0
 			if n >= 0.0 and max_raw > 0.0:
-				h = pow(n / max_raw, 1.3) * peak_target
+				h = pow(n / max_raw, 1.3) * peak_target * p4_relief
 			elif n < 0.0 and min_raw < 0.0:
 				h = (n / min_raw) * sea_depth_target
 			var wpos := Vector2(gx * SPACING, gy * SPACING)
