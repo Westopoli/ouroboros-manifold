@@ -150,7 +150,8 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 | 56 | `OM_TP_AREA_DOWN_2` | real | 1.0 | 0 | 10 | plan Phase C (area multipliers by signed offset); no number given, 1.0 by analogy with RANGE and DAMAGE (writer) | writer: non-negative, top 10 |
 | 57 | `OM_TP_AREA_DOWN_3` | real | 1.0 | 0 | 10 | plan Phase C (area multipliers by signed offset); no number given, 1.0 by analogy with RANGE and DAMAGE (writer) | writer: non-negative, top 10 |
 | 58 | `OM_TP_AREA_DOWN_4` | real | 1.0 | 0 | 10 | plan Phase C (area multipliers by signed offset); no number given, 1.0 by analogy with RANGE and DAMAGE (writer) | writer: non-negative, top 10 |
-| 59 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
+| 59 | `OM_TP_TARGET_POLICY_FACTION_1` | int | -1 | -1 | 1 | A196: faction 1's target policy; -1 = unset, faction 1 follows `OM_TP_TARGET_POLICY` (faction 0's, range 0 to 1); 0 nearest, 1 most damaged | lab only; whole numbers -1 to 1 |
+| 60 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
 
 Order: the six switches first (Phase A needs the first four, Phase C the last two), then the brief G1 numbers, then the section 6 numbers, then the four families by signed offset (up 1 to 4, then down 1 to 4, each family in the order VISION, RANGE, DAMAGE, AREA). A later member is only ever appended before `OM_TP__COUNT`, never inserted.
 
@@ -203,6 +204,7 @@ Addendum 46 of `docs/northstar/plans/2026-10-01-architect-rulings-2.md`. The ope
 - **A134**: tables sized for `OM_MAX_UNITS` and the 28,000 canvas; every fixed table refuses when full and returns an error, with a test that fills it.
 - **A135**: tests red until a later wave sit on one strict expected-failure list owned by `PP-parity`; nothing else goes on it. In this document's tests, the Phase C refusals (`om_command_set_layer`, `om_command_ping`) are the kind that list takes until PP-unit and PP-fog land.
 - **A170**: the guard call, row 18 (section 6, above); R-096-05 written into E-13 by the landing.
+- **A196**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 59): `OM_TP_TARGET_POLICY_FACTION_1`, int, default -1 (unset: faction 1 follows `OM_TP_TARGET_POLICY`), range -1 to 1, lab only. `OM_TP_TARGET_POLICY` keeps range 0 to 1 and means faction 0. `OM_TP__COUNT` becomes 60.
 - **A136**: the parity tolerances (1e-6 wu, 2e-3 rad) are provisional and Westley's; they are not part of this contract.
 
 ## 8. Tests that prove this piece
