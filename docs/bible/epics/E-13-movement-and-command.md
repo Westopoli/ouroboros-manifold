@@ -52,10 +52,11 @@ Rules
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
+- R-096-08  Given a guard order, When issued to a selection, Then each unit holds its position, fires at any target it can shoot in range, never pursues or marches, and resumes no earlier order; a move, attack-move, attack-target or layer order ends the guard, and return fire (R-087-06) may turn a guarding unit and give it a target in range but never a destination. (Q-096-01 closed provisionally, A170.)
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-096-01 (the guard stance, S-208). Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
+Open flags: Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
