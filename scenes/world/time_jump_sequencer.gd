@@ -537,10 +537,10 @@ func _on_proceed() -> void:
 	tw.tween_property(_fade_overlay, "color:a", 1.0, 0.6)
 	tw.tween_callback(func():
 		_disconnect_bus_signals()
-		if SimBridge.USE_LIVE_SIM:
+		if SimSession.bridge().has_world():
 			UIDataBus.proceed_to_next_mission()
 		else:
-			# No sim running — fall back to main menu
+			# No C sim session — fall back to main menu
 			UIDataBus.exit_to_main_menu()
 	)
 
@@ -675,6 +675,7 @@ func qa_state() -> Dictionary:
 		"scene": "time_jump",
 		"tick": -1,
 		"phase": _phase,
+		"entries": _rp_entries,
 		"entries_total": _total_entries,
 		"entries_printed": _entries_printed,
 		"plants": [],

@@ -37,6 +37,7 @@ ever retries it.
 """
 from __future__ import annotations
 
+import json
 import struct
 import time
 import zlib
@@ -108,6 +109,26 @@ def game():
     # per-run OM_SAVE_DIR; the player's real save directory must be untouched.
     assert _real_saves_snapshot() == real_before, "the flow wrote into the real save directory"
     assert any(g.save_dir.glob("campaign_*.omsave")), "control: the flow wrote no autosave at all into OM_SAVE_DIR"
+
+
+def _autosave_meta(game) -> dict:
+    """The mission-start/jump autosave's sidecar ({"tick","chapter",...}, docs/
+    architecture.md "Save slots"; chapter is om_chapter_get_number). The client's
+    qa_state does not expose the chapter number, so this is the one readable
+    surface; the player's single campaign slot is rewritten at each autosave."""
+    deadline = time.monotonic() + STEP_TIMEOUT_S
+    while time.monotonic() < deadline:
+        for p in sorted(game.save_dir.glob("campaign_*.omsave.json")):
+            try:
+                return json.loads(p.read_text())
+            except ValueError:
+                pass
+        time.sleep(0.2)
+    raise AssertionError("no campaign autosave sidecar in %s" % game.save_dir)
+
+
+# Filled by test_s_c8_04 (state at mission 1 start), read by test_s_c8_09.
+MISSION1 = {}
 
 
 def _read_png_rgb(path: Path) -> "np.ndarray":
@@ -280,6 +301,7 @@ def test_s_c8_04_deploy_reaches_tactical(game):
     cx, cy = control_center(control)
     client.click(cx, cy)
     wait_for(client, lambda s: s.get("scene") == TACTICAL_SCENE, STEP_TIMEOUT_S, label="S-C8-04")
+    MISSION1.update(_autosave_meta(game))  # chapter and tick as mission 1 starts
     # C4-4: Deploy is the player's Begin. It sends mission_begin over the shared session
     # and the tactical view then steps the begun mission (a mission still in recon
     # refuses the step and the view stays at tick 0). Since C5-6, the mission steps in
@@ -378,8 +400,52 @@ def test_s_c8_06_return_to_galaxy_then_shutdown(game):
 
     resp = client.state()
     assert resp.get("ok"), "S-C8-06: daemon not responsive for final state check: %r" % resp
+    # The game keeps running: test_s_c8_09 plays the next chapter; the fixture stops it.
 
-    game.stop()
+
+def test_s_c8_09_next_chapter_after_chronicle(game):
+    """Proves the MVP loop closes: E-08 R-055-06 (chapter counter advances by
+    one at the end of the jump that follows a mission), E-08 R-056-01 (a jump
+    runs an integer number of strategic ticks in [20, 100]), E-08 R-055-01
+    (chapter order: briefing, recon, mission, resolution, jump with chronicle,
+    next briefing), E-10 R-074-04 (a mission deploys an enemy force and a
+    player force). Starts from the galaxy test_s_c8_06 returned to.
+    Not assertable: qa_state exposes no chapter number on any scene, so the
+    chapter is read from the autosave sidecar the chronicle jump wrote."""
+    client = game.client
+    before = MISSION1
+    assert before, "S-C8-09: test_s_c8_04 recorded no mission-1 autosave meta (run the whole module)"
+    after = _autosave_meta(game)
+    assert int(after["chapter"]) == int(before["chapter"]) + 1, (
+        "S-C8-09: chapter after the mission-1 jump = %r, expected %r + 1 (R-055-06)"
+        % (after.get("chapter"), before.get("chapter"))
+    )
+    state = client.state()["result"]
+    assert state.get("scene") == GALAXY_SCENE, "S-C8-09: not on the galaxy: %r" % state.get("scene")
+    jump_ticks = int(state["qa"]["tick"]) - int(before["tick"])
+    assert 20 <= jump_ticks <= 100, (
+        "S-C8-09: world tick advanced %d (from %r), expected an integer jump in [20, 100] (R-056-01)"
+        % (jump_ticks, before.get("tick"))
+    )
+
+    control = find_control(client.tree(), "Mission")
+    assert control is not None, "S-C8-09: no Mission control on the galaxy among %r" % control_names(client.tree())
+    cx, cy = control_center(control)
+    client.click(cx, cy)
+    wait_for(client, lambda s: s.get("scene") == MISSION_BRIEFING_SCENE, STEP_TIMEOUT_S, label="S-C8-09 (briefing 2)")
+    control = find_control(client.tree(), "Deploy")
+    assert control is not None, "S-C8-09: no Deploy control on briefing 2 among %r" % control_names(client.tree())
+    cx, cy = control_center(control)
+    client.click(cx, cy)
+    wait_for(client, lambda s: s.get("scene") == TACTICAL_SCENE, STEP_TIMEOUT_S, label="S-C8-09 (tactical 2)")
+    tqa = client.state()["result"].get("qa", {})
+    units = tqa.get("units", {})
+    assert len(units) > 0, "S-C8-09: mission 2 has no units; qa = %r" % sorted(tqa.keys())
+    factions = {int(u["faction"]) for u in units.values()}
+    assert int(tqa.get("local_faction", -1)) in factions and len(factions) >= 2, (
+        "S-C8-09: mission 2 needs player and enemy units; factions present = %r, local_faction = %r"
+        % (sorted(factions), tqa.get("local_faction"))
+    )
 
 
 def test_s_c8_07_boot_reaches_main_menu_with_privacy_flag_present():
