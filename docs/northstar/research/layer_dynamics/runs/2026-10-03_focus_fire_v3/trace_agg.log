@@ -1,0 +1,8 @@
+identical (0, 0) first enemy loss 599 first own loss 575 side0 distinct targets (contact..first enemy loss) 6.01 side0 switches/fight 38 [589, 765, 587, 587, 588, 586, 587, 453, 663, 587]
+identical (1, 0) first enemy loss 576 first own loss 575 side0 distinct targets (contact..first enemy loss) 5.41 side0 switches/fight 50 [589, 765, 587, 586, 563, 586, 587, 453, 459, 587]
+reach (0, 0) first enemy loss 306 first own loss 365 side0 distinct targets (contact..first enemy loss) 5.21 side0 switches/fight 13 [372, 370, 275, 318, 273, 211, 318, 317, 285, 318]
+reach (1, 0) first enemy loss 249 first own loss 364 side0 distinct targets (contact..first enemy loss) 4.49 side0 switches/fight 39 [318, 264, 227, 253, 249, 201, 228, 260, 237, 251]
+S2_skilled (0, 0) first enemy loss 348 first own loss 339 side0 distinct targets (contact..first enemy loss) 4.39 side0 switches/fight 20 [318, 367, 319, 378, 279, 381, 375, 371, 318, 378]
+S2_skilled (1, 0) first enemy loss 340 first own loss 339 side0 distinct targets (contact..first enemy loss) 4.15 side0 switches/fight 32 [318, 367, 319, 375, 279, 355, 321, 371, 318, 378]
+S2_counter (0, 0) first enemy loss 387 first own loss 378 side0 distinct targets (contact..first enemy loss) 6.46 side0 switches/fight 39 [403, 410, 373, 342, 356, 373, 376, 372, 427, 434]
+S2_counter (1, 0) first enemy loss 350 first own loss 378 side0 distinct targets (contact..first enemy loss) 5.41 side0 switches/fight 58 [355, 410, 373, 310, 323, 337, 352, 330, 369, 338]
