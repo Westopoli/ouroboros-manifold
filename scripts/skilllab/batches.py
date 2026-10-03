@@ -5,8 +5,9 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import maps, matchup, plays, positions, profile, report, rows, scan, skills
+from scripts.skilllab import compose, maps, matchup, plays, positions, profile, report, rows, scan, skills
 from scripts.skilllab.asym import Side, asym_play
+from scripts.skilllab.scenes import phase_b_choke
 from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
@@ -21,7 +22,7 @@ _STALLED = ("stalemate", "cap")
 PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
-LAYER_SCENES = ("mirror", "high_ground", "choke")
+LAYER_SCENES = ("mirror", "high_ground", "choke", "choke_phase_b")
 LAYER_NOTES = {"LA": "units on different layers cannot fire until reach by type lands (Phase C G5)",
                "LB": "needs reach by type (om_roster_set_reach) and Phase C G5",
                "LC": "needs reach by type (om_roster_set_reach) and Phase C G5"}
@@ -173,23 +174,12 @@ def _combinations():
     cells = []
     for s in profile.subsets():
         label = "combo:" + ("+".join(sorted(s)) if s else "none")
-        missing = []
-        for skill in sorted(s):
-            try:
-                skills.get(skill, "skilled")
-            except ValueError:
-                missing.append(skill)
-        if not s:
-            cells.append(_cell(label, 16, asym_play(16, Side("blob"), Side("blob")), "naive", enemy=(8, 24)))
-        elif missing:
-            cells.append(_cell(label, 16, None, NOT_EXPRESSED, "no skilled play for " + ", ".join(missing),
-                               enemy=(8, 24)))
-        elif len(s) > 1:
-            cells.append(_cell(label, 16, None, NOT_EXPRESSED, "no rule for combining plays", enemy=(8, 24)))
+        comp = compose.compose(s)
+        if comp.expressible:
+            status = skills.get(comp.skills[0], "skilled").status if s else "naive"
+            cells.append(_cell(label, 16, comp.build(16), status, enemy=(8, 24)))
         else:
-            (skill,) = s
-            cells.append(_cell(label, 16, asym_play(16, Side("skilled", skill=skill), Side("blob")),
-                               skills.get(skill, "skilled").status, enemy=(8, 24)))
+            cells.append(_cell(label, 16, None, NOT_EXPRESSED, comp.note, enemy=(8, 24)))
     cells.append(_cell("counter:S2", 16, asym_play(16, Side("counter"), Side("line")),
                        skills.get("S2", "counter").status, enemy=(8, 24)))
     return BatchDef(
@@ -197,10 +187,10 @@ def _combinations():
         title="Skill lab combinations batch",
         scene=("Open map, no terrain. 16 Vanguards on side 0 apply a subset of the five skills (S1 to S5) against a "
                "naive blob of 8 to 24; 32 subsets, then S2's counter play against a line. A subset is played only if "
-               "every skill in it has a registered skilled play and it holds at most one skill: no rule for combining "
-               "two plays exists."),
+               "every skill in it has a registered skilled play and it holds at most one skill: the slot plays that "
+               "would merge several skills' plays do not exist yet."),
         cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("subsets of two or more skills: no rule for combining plays",
+        unexpressed=("subsets of two or more skills: slot plays that merge several skills' plays do not exist yet",
                      "skills with no registered skilled play (defined with Westley later)"))
 
 
@@ -220,20 +210,22 @@ def _layer_settings(u1=None, u2=None, d=None):
 
 def _layers():
     scenes = {"mirror": asym_play(16, Side("blob"), Side("blob")),
-              "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0))}
+              "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0)),
+              "choke_phase_b": phase_b_choke(8)}
     pairs = [(u1, u2) for u1 in (0.5, 0.75, 1.0) for u2 in (0.25, 0.5)]
     cells = []
 
     def add(table, scene, suffix, settings):
         build = scenes.get(scene) if table == "LA" else None
         label = "%s:%s%s" % (table, scene, suffix)
+        size, enemy = (8, (7, 12)) if scene == "choke_phase_b" else (16, (8, 24))
         if build is not None:
-            cells.append(_cell(label, 16, build, skills.DRAFT, "settings are draft sweep points (A174)",
-                               enemy=(8, 24), settings=settings))
+            cells.append(_cell(label, size, build, skills.DRAFT, "settings are draft sweep points (A174)",
+                               enemy=enemy, settings=settings))
             return
         note = LAYER_NOTES[table] if scene != "high_ground" else (
             LAYER_NOTES["LA"] if table == "LA" else "%s; %s" % (LAYER_NOTES["LA"], LAYER_NOTES[table]))
-        cells.append(_cell(label, 16, None, NOT_EXPRESSED, note, enemy=(8, 24), settings=settings))
+        cells.append(_cell(label, size, None, NOT_EXPRESSED, note, enemy=enemy, settings=settings))
 
     for scene in LAYER_SCENES:
         add("LA", scene, "", _layer_settings())
@@ -256,15 +248,17 @@ def _layers():
     return BatchDef(
         name="layers",
         title="Skill lab layers batch",
-        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by three scenes: a "
-               "mirror, high ground and a choke. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
-               "proposed by the Architect as drafts (A174), not confirmed by Westley. The choke is a sampled wall, "
-               "not the exact scene of the Phase B read. The last 16 cells are a Raider mirror over collision radius "
+        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by four scenes: a "
+               "mirror, high ground and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
+               "proposed by the Architect as drafts (A174), not confirmed by Westley. The sampled choke is a sampled wall from "
+               "maps.sample_map and the Phase B choke is its own cell: a 3000 by 1600 canvas with a gap in the wall, "
+               "where the defenders attack-move (the idle version is in the landscape batch) and side 0 is the 8 "
+               "defenders against 7 to 12 attackers. The last 16 cells are a Raider mirror over collision radius "
                "and attack range (reach against body size), also drafts."),
         cells=tuple(cells), variants=(("default", {}),),
         unexpressed=("the tall-cover scene (needs reach)", REACH_TABLE,
                      "high ground and the LB and LC tables wait for reach",
-                     "the choke is a sampled wall, not the Phase B scene"))
+                     "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
 
 
 def get(name):

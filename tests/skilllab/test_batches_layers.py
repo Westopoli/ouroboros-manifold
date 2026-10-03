@@ -226,7 +226,7 @@ def test_unexpressed_lines():
     joined = " ".join(d.unexpressed)
     assert "tall" in joined and "reach" in joined
     assert "high ground and the LB and LC tables wait for reach" in d.unexpressed
-    assert "the choke is a sampled wall, not the Phase B scene" in d.unexpressed
+    assert "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in d.unexpressed
     assert any(REACH_TABLE_TEXT in u for u in d.unexpressed)
 
 
@@ -250,7 +250,7 @@ def test_run_file(tmp_path):
     assert sum(ln.startswith("- ") for ln in results.splitlines()) == 19
     sec = _section(t, "What the instrument could not express")
     assert "high ground and the LB and LC tables wait for reach" in sec
-    assert REACH_TABLE_TEXT in sec and "the choke is a sampled wall, not the Phase B scene" in sec
+    assert REACH_TABLE_TEXT in sec and "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in sec
     for label in ("LA:high_ground", "LB:mirror:up1=0.5,up2=0.25", "LC:choke:up1=1.0,up2=0.5,dmg1=0.75"):
         assert label in sec
     assert "None" not in t
