@@ -2089,8 +2089,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 u->issued_x = t->x; u->issued_y = t->y;
                 u->halted = 0;
             }
-        } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue && !in_range) {
-            /* P1: holds only while its own target is in attack range, otherwise walks its goal */
+        } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue
+                   && (!in_range || !om_combat_can_shoot(w, u->unit_id, t->unit_id))) {
+            /* P1: holds only while its own target is in attack range and the unit can shoot it (A171, R-087-05),
+             * otherwise walks its goal and fires when the line clears */
             om_tac_release(w, u);
         } else if (u->order == OM_ORDER_ATTACK_MOVE) {
             om_tac_hold(w, u, t->unit_id);
