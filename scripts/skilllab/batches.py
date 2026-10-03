@@ -1,15 +1,15 @@
 """Named batches: cell and variant definitions, and run(), which scans them and writes the csv, run file and page."""
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import maps, matchup, plays, report, rows, scan, skills
+from scripts.skilllab import maps, matchup, plays, positions, profile, report, rows, scan, skills
 from scripts.skilllab.asym import Side, asym_play
 from scripts.skilllab.terrain import with_terrain
 
-NAMES = ("formation", "focus_fire", "matchup", "landscape")
+NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 NOT_EXPRESSED = "not expressed"
@@ -18,6 +18,15 @@ DEFENDER_ORDER = "idle"
 UNIT_TYPES = ("Vanguard", "Raider", "Bombard", "Bastion")
 REFERENCE = "reference"
 _STALLED = ("stalemate", "cap")
+PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
+                "(unconfirmed definition).")
+DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
+LAYER_SCENES = ("mirror", "high_ground", "choke")
+LAYER_NOTES = {"LA": "units on different layers cannot fire until reach by type lands (Phase C G5)",
+               "LB": "needs reach by type (om_roster_set_reach) and Phase C G5",
+               "LC": "needs reach by type (om_roster_set_reach) and Phase C G5"}
+REACH_TABLE = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
+               "Bombard and Bastion 0 up 2 down (needs om_roster_set_reach bound in the harness and Phase C G5)")
 
 
 @dataclass(frozen=True)
@@ -31,6 +40,7 @@ class CellDef:
     status: str
     note: str = ""
     reference: Optional[object] = None
+    settings: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -44,9 +54,9 @@ class BatchDef:
     weighted: bool = False
 
 
-def _cell(label, size, build, status, note="", enemy=None, reference=None):
+def _cell(label, size, build, status, note="", enemy=None, reference=None, settings=None):
     lo, hi = enemy or (size // 2, size * 3 // 2)
-    return CellDef(label, size, lo, hi, REPLICATES, build, status, note, reference)
+    return CellDef(label, size, lo, hi, REPLICATES, build, status, note, reference, settings or {})
 
 
 def _formation():
@@ -140,6 +150,123 @@ def _landscape():
         unexpressed=("tall_cover", "tall_cover_counter", "guard order not built: defenders idle"))
 
 
+def _enemy_position():
+    blob = asym_play(16, Side("blob"), Side("blob"))
+    cells = [_cell("blob", 16, blob, "naive", enemy=(8, 24))]
+    for name, make in (("bait", positions.bait_play), ("ambush", positions.ambush_play),
+                       ("fall_back", positions.fall_back_play)):
+        cells.append(_cell(name, 16, make(16), skills.DRAFT, enemy=(8, 24)))
+    hold, dark = "needs hold-fire, not built", "going dark, emission per unit, needs Phase C G6"
+    cells += [_cell(label, 16, None, NOT_EXPRESSED, note, enemy=(8, 24)) for label, note in (
+        ("bait_hold_fire", hold), ("ambush_hold_fire", hold), ("dark_approach", dark), ("dark_ambush", dark))]
+    return BatchDef(
+        name="enemy_position",
+        title="Skill lab enemy position batch",
+        scene=("Open map, no terrain. 16 Vanguards on side 0 play a position play (bait, ambush or fall back) against a "
+               "naive blob of 8 to 24; a blob against a blob is the control. The plays are drafts: the turn or spring "
+               "tick is 100 and the bait share is 0.25, neither confirmed."),
+        cells=tuple(cells), variants=(("default", {}),),
+        unexpressed=tuple(c.label for c in cells if c.build is None) + (DRAFT_NUMBERS,))
+
+
+def _combinations():
+    cells = []
+    for s in profile.subsets():
+        label = "combo:" + ("+".join(sorted(s)) if s else "none")
+        missing = []
+        for skill in sorted(s):
+            try:
+                skills.get(skill, "skilled")
+            except ValueError:
+                missing.append(skill)
+        if not s:
+            cells.append(_cell(label, 16, asym_play(16, Side("blob"), Side("blob")), "naive", enemy=(8, 24)))
+        elif missing:
+            cells.append(_cell(label, 16, None, NOT_EXPRESSED, "no skilled play for " + ", ".join(missing),
+                               enemy=(8, 24)))
+        elif len(s) > 1:
+            cells.append(_cell(label, 16, None, NOT_EXPRESSED, "no rule for combining plays", enemy=(8, 24)))
+        else:
+            (skill,) = s
+            cells.append(_cell(label, 16, asym_play(16, Side("skilled", skill=skill), Side("blob")),
+                               skills.get(skill, "skilled").status, enemy=(8, 24)))
+    cells.append(_cell("counter:S2", 16, asym_play(16, Side("counter"), Side("line")),
+                       skills.get("S2", "counter").status, enemy=(8, 24)))
+    return BatchDef(
+        name="combinations",
+        title="Skill lab combinations batch",
+        scene=("Open map, no terrain. 16 Vanguards on side 0 apply a subset of the five skills (S1 to S5) against a "
+               "naive blob of 8 to 24; 32 subsets, then S2's counter play against a line. A subset is played only if "
+               "every skill in it has a registered skilled play and it holds at most one skill: no rule for combining "
+               "two plays exists."),
+        cells=tuple(cells), variants=(("default", {}),),
+        unexpressed=("subsets of two or more skills: no rule for combining plays",
+                     "skills with no registered skilled play (defined with Westley later)"))
+
+
+def _layer_settings(u1=None, u2=None, d=None):
+    s = {}
+    for n, v in ((1, 0.5), (2, 0.2), (3, 0.0), (4, 0.0)):
+        s["OM_TP_VISION_UP_%d" % n] = s["OM_TP_VISION_DOWN_%d" % n] = v
+    for n in (1, 2):
+        for kind in ("RANGE", "DAMAGE"):
+            s["OM_TP_%s_UP_%d" % (kind, n)] = s["OM_TP_%s_DOWN_%d" % (kind, n)] = 1.0
+    if u1 is not None:
+        s["OM_TP_RANGE_UP_1"], s["OM_TP_RANGE_UP_2"] = u1, u2
+    if d is not None:
+        s["OM_TP_DAMAGE_UP_1"], s["OM_TP_DAMAGE_UP_2"] = d, d / 2
+    return s
+
+
+def _layers():
+    scenes = {"mirror": asym_play(16, Side("blob"), Side("blob")),
+              "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0))}
+    pairs = [(u1, u2) for u1 in (0.5, 0.75, 1.0) for u2 in (0.25, 0.5)]
+    cells = []
+
+    def add(table, scene, suffix, settings):
+        build = scenes.get(scene) if table == "LA" else None
+        label = "%s:%s%s" % (table, scene, suffix)
+        if build is not None:
+            cells.append(_cell(label, 16, build, skills.DRAFT, "settings are draft sweep points (A174)",
+                               enemy=(8, 24), settings=settings))
+            return
+        note = LAYER_NOTES[table] if scene != "high_ground" else (
+            LAYER_NOTES["LA"] if table == "LA" else "%s; %s" % (LAYER_NOTES["LA"], LAYER_NOTES[table]))
+        cells.append(_cell(label, 16, None, NOT_EXPRESSED, note, enemy=(8, 24), settings=settings))
+
+    for scene in LAYER_SCENES:
+        add("LA", scene, "", _layer_settings())
+    for scene in LAYER_SCENES:
+        for u1, u2 in pairs:
+            add("LB", scene, ":up1=%s,up2=%s" % (u1, u2), _layer_settings(u1, u2))
+    for scene in LAYER_SCENES:
+        for d in (0.5, 0.75):
+            for u1, u2 in pairs:
+                add("LC", scene, ":up1=%s,up2=%s,dmg1=%s" % (u1, u2, d), _layer_settings(u1, u2, d))
+    for r in (10, 15, 20, 30):
+        for a in (150, 200, 300, 450):
+            name = "RaiderR%d" % a
+            side = Side("blob", mix=((name, 1),))
+            build = asym_play(16, side, side, {name: {"base": "Raider", "set": {"attack_range": a}}})
+            ratio = "%.1f" % (a / (2 * r))
+            cells.append(_cell("body%d_range%d_ratio%s" % (2 * r, a, ratio), 16, build, skills.DRAFT,
+                               "collision radius %d, body size %d, attack range %d, range-to-body ratio %s"
+                               % (r, 2 * r, a, ratio), enemy=(8, 24), settings={"OM_TP_UNIT_COLLISION_RADIUS": r}))
+    return BatchDef(
+        name="layers",
+        title="Skill lab layers batch",
+        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by three scenes: a "
+               "mirror, high ground and a choke. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
+               "proposed by the Architect as drafts (A174), not confirmed by Westley. The choke is a sampled wall, "
+               "not the exact scene of the Phase B read. The last 16 cells are a Raider mirror over collision radius "
+               "and attack range (reach against body size), also drafts."),
+        cells=tuple(cells), variants=(("default", {}),),
+        unexpressed=("the tall-cover scene (needs reach)", REACH_TABLE,
+                     "high ground and the LB and LC tables wait for reach",
+                     "the choke is a sampled wall, not the Phase B scene"))
+
+
 def get(name):
     if name == "formation":
         return _formation()
@@ -149,6 +276,12 @@ def get(name):
         return _matchup()
     if name == "landscape":
         return _landscape()
+    if name == "enemy_position":
+        return _enemy_position()
+    if name == "combinations":
+        return _combinations()
+    if name == "layers":
+        return _layers()
     raise ValueError("unknown batch %r; valid names: %s" % (name, ", ".join(NAMES)))
 
 
@@ -205,6 +338,26 @@ def _raider_pairs(defn, scans):
     return out
 
 
+def _profile_rows(defn, scans):
+    first = defn.variants[0][0]
+    cells = {c.label: c for c in defn.cells}
+    control = scans.get(("combo:none", first))
+    rows_ = []
+    for sub in profile.subsets():
+        cell = cells["combo:" + ("+".join(sorted(sub)) if sub else "none")]
+        if cell.build is None:
+            rows_.append(("+".join(sorted(sub)), NOT_EXPRESSED, NOT_EXPRESSED, NOT_EXPRESSED))
+            continue
+        got = scans[(cell.label, first)].beats
+        if got is None:
+            beats = adv = "no break-even in range"
+        else:
+            beats = str(got)
+            adv = "no break-even in range" if control.beats is None else str(got - control.beats)
+        rows_.append(("+".join(sorted(sub)) or "none", cell.status, beats, adv))
+    return rows_
+
+
 def _changes(defn, scans):
     (first, _), (second, _) = defn.variants
     out = []
@@ -234,6 +387,10 @@ def _run_file(defn, scans, names):
         lines += ["", "## Vanguard against Raider", ""]
         lines += ["- %s: Vanguard %s; Raider %s; %s" % (label, _units(a), _units(b), word)
                   for label, a, b, word in _raider_pairs(defn, scans)]
+    if defn.name == "combinations":
+        lines += ["", "## Profile", "", PROFILE_NOTE, "", "| skills | status | break-even | advantage over combo:none |",
+                  "|---|---|---|---|"]
+        lines += ["| %s |" % " | ".join(r) for r in _profile_rows(defn, scans)]
     if defn.name == "focus_fire":
         first, second, changes = _changes(defn, scans)
         lines += ["", "## What changes", ""]
@@ -281,6 +438,11 @@ def _page(defn, scans, examples):
         body += ["<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (escape(label), _units(a), _units(b), word)
                  for label, a, b, word in _raider_pairs(defn, scans)]
         body.append("</table>")
+    if defn.name == "combinations":
+        body += ["<h2>Profile</h2>", "<p>%s</p>" % escape(PROFILE_NOTE), "<table>",
+                 "<tr><th>Skills</th><th>Status</th><th>Break-even</th><th>Advantage over combo:none</th></tr>"]
+        body += ["<tr>%s</tr>" % "".join("<td>%s</td>" % escape(c) for c in r) for r in _profile_rows(defn, scans)]
+        body.append("</table>")
     if defn.name == "focus_fire":
         first, second, changes = _changes(defn, scans)
         body += ["<h2>What changes</h2>", "<table>",
@@ -305,7 +467,7 @@ def run(defn, out_dir, scan_fn=None):
             scans[(c.label, REFERENCE)] = scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
                                                   c.size, c.enemy_from, c.enemy_to, replicates=c.replicates)
         for v, overlay in defn.variants:
-            result = scan_fn(_with_settings(c.build, overlay, defn.weighted), c.size, c.enemy_from, c.enemy_to,
+            result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
                              replicates=c.replicates)
             scans[(c.label, v)] = result
             for cell in result.cells:
