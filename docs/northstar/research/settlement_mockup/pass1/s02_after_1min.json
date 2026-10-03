@@ -1,0 +1,62 @@
+{
+  "_qa": {
+    "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
+    "display": "X11",
+    "fps_ms": 426.325,
+    "frame": 12,
+    "last_input": "Mouse motion at position ((960.0, 540.0)) with velocity ((8410.503, 4730.908))",
+    "method": "gl_compatibility",
+    "os_inputs": 1,
+    "plants": [],
+    "shots": [
+      "01_start",
+      "02_after_1min"
+    ],
+    "window_px": [
+      1920,
+      1080
+    ]
+  },
+  "cliff_cells": 566,
+  "core": [
+    60,
+    74
+  ],
+  "counts": {
+    "cliff": 26,
+    "rubble": 0,
+    "stage1": 110,
+    "stage2": 63,
+    "stage3": 49,
+    "stage4": 3
+  },
+  "flush_ms": 0.236032504158806,
+  "frame_ms": 0.216980027972222,
+  "lots_on_water": 0,
+  "p_over_thresh0": 1242,
+  "path_cells": 983,
+  "path_connected": 5,
+  "path_ends": 5,
+  "path_ms": 65.698,
+  "paths_visible": false,
+  "piece_total": 251,
+  "player_cells_cleared": 0,
+  "players": 0,
+  "reached": 1681,
+  "routes": 5,
+  "seed": 11,
+  "speed": 0.0,
+  "t": 60.1591666666667,
+  "thresholds": [
+    0.1,
+    0.22,
+    0.38,
+    0.58
+  ],
+  "tick_ms": 1.64002755219839,
+  "water_cells": 6264,
+  "wave": {
+
+  },
+  "wave_active": false
+}

@@ -1,0 +1,70 @@
+{
+  "_qa": {
+    "adapter": "llvmpipe (LLVM 21.1.8, 256 bits)",
+    "display": "X11",
+    "fps_ms": 116.126,
+    "frame": 307,
+    "last_input": "P",
+    "method": "gl_compatibility",
+    "os_inputs": 3,
+    "plants": [],
+    "shots": [
+      "01_start",
+      "02_after_1min",
+      "03_after_5min",
+      "04_just_after_wave",
+      "05a_before_placement",
+      "05b_just_after_placement",
+      "05c_placement_refilled",
+      "06_damage",
+      "07_paths_overlay",
+      "08_live_20x"
+    ],
+    "window_px": [
+      1920,
+      1080
+    ]
+  },
+  "cliff_cells": 566,
+  "core": [
+    60,
+    74
+  ],
+  "counts": {
+    "cliff": 37,
+    "rubble": 0,
+    "stage1": 227,
+    "stage2": 101,
+    "stage3": 54,
+    "stage4": 18
+  },
+  "flush_ms": 0.022443618028148,
+  "frame_ms": 1.24019595131084,
+  "lots_on_water": 0,
+  "p_over_thresh0": 1899,
+  "path_cells": 983,
+  "path_connected": 5,
+  "path_ends": 5,
+  "path_ms": 69.808,
+  "paths_visible": false,
+  "piece_total": 437,
+  "player_cells_cleared": 0,
+  "players": 0,
+  "reached": 5531,
+  "routes": 5,
+  "seed": 11,
+  "speed": 20.0,
+  "t": 162.0,
+  "thresholds": [
+    0.1,
+    0.22,
+    0.38,
+    0.58
+  ],
+  "tick_ms": 5.82897145370898,
+  "water_cells": 6264,
+  "wave": {
+
+  },
+  "wave_active": false
+}
