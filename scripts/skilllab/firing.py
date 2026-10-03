@@ -1,10 +1,10 @@
 """Units able to fire at one instant (spec AC 10)."""
 
 
-def _living(engine, w, units, ranges):
+def _living(engine, w, units, ranges, alive=None):
     out = []
     for u in units:
-        if engine.unit_alive(w, u):
+        if (u in alive) if alive is not None else engine.unit_alive(w, u):
             x, y = engine.unit_pos(w, u)
             out.append((u, x, y, engine.unit_layer(w, u), ranges[u]))
     return out
@@ -24,10 +24,10 @@ def _able(engine, w, shooters, targets):
     return count
 
 
-def unit_states(engine, w, units0, units1, ranges):
+def unit_states(engine, w, units0, units1, ranges, alive=None):
     """{unit: (state, destination)} for each living unit: can fire, blocked, walking or no target."""
-    side0 = _living(engine, w, units0, ranges)
-    side1 = _living(engine, w, units1, ranges)
+    side0 = _living(engine, w, units0, ranges, alive)
+    side1 = _living(engine, w, units1, ranges, alive)
     out = {}
     for shooters, targets in ((side0, side1), (side1, side0)):
         for u, x, y, layer, reach in shooters:
@@ -46,9 +46,9 @@ def unit_states(engine, w, units0, units1, ranges):
     return out
 
 
-def count_able(engine, w, units0, units1, ranges):
-    side0 = _living(engine, w, units0, ranges)
-    side1 = _living(engine, w, units1, ranges)
+def count_able(engine, w, units0, units1, ranges, alive=None):
+    side0 = _living(engine, w, units0, ranges, alive)
+    side1 = _living(engine, w, units1, ranges, alive)
     return _able(engine, w, side0, side1), _able(engine, w, side1, side0)
 
 
@@ -78,10 +78,10 @@ def _able_weighted(engine, w, shooters, targets, seen, weights, reach):
     return float(total)
 
 
-def count_able_weighted(engine, w, units0, units1, ranges, weights, reach=None):
+def count_able_weighted(engine, w, units0, units1, ranges, weights, reach=None, alive=None):
     """Sum of weights of units with a seen, shootable enemy in range and layer reach; sight is shared by the side."""
-    side0 = _living(engine, w, units0, ranges)
-    side1 = _living(engine, w, units1, ranges)
+    side0 = _living(engine, w, units0, ranges, alive)
+    side1 = _living(engine, w, units1, ranges, alive)
     seen0, seen1 = _seen(engine, w, side0, side1), _seen(engine, w, side1, side0)
     return (_able_weighted(engine, w, side0, side1, seen0, weights, reach),
             _able_weighted(engine, w, side1, side0, seen1, weights, reach))
