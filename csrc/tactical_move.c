@@ -432,6 +432,14 @@ static double om_move_turn_rate_for(double native_speed) {
     return OM_SIEGE;
 }
 
+/* R-100-02: the turn cap is set by category (0 Strike, 1 Line, else Siege), never by speed.
+ * See also: om_move_turn_rate_for, the speed-band rate the baseline (switch = 0) keeps. */
+static double om_move_turn_rate_by_category(om_world *w, uint32_t id) {
+    int cat = om_unit_profile_category(w, om_unit_get_unit_type(w, id));
+    if (cat == 0) return OM_FACING_ROTATION_SPEED_STRIKE;
+    return cat == 1 ? OM_LINE : OM_SIEGE;
+}
+
 static double om_move_turn_toward(double current, double target, double rate_per_sec, uint32_t period) {
     double delta = om_wrap_pi(target - current);
     double max_step = rate_per_sec * (double)period / (double)OM_TACTICAL_TICK_RATE;
@@ -2122,7 +2130,7 @@ static void om_move_face_pass(om_world *w, om_move_state *ms, uint32_t period) {
             dy = mu->y - mu->prev_y;
             have = dx * dx + dy * dy > OM_PP_FACING_MIN_MOVE_SQ;
         }
-        if (have) mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_for(mu->native_speed), period);
+        if (have) mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_by_category(w, id), period);
     }
 }
 
