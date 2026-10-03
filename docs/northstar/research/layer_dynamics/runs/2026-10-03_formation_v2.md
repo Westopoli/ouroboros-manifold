@@ -36,7 +36,7 @@ So the answer to the question "do these plays differ at contact": they differ at
 
 ## 2. Break-evens, whole units
 
-Cell: "beats / loses to", the harness's own wording this time ("16 units beat 15, lose to 16" is shown 15 / 16, about 15.5). The first run's page showed the first and second number the other way round for the same lab call: its "16 / 17" is the row for a break-even of about 16.5. Here a pure mirror at N is N / N+1 on the old page and (N-1) / N on the new one. Be careful comparing: both the new and old numbers below are in the harness's raw "beat X, lose to Y" form taken from each run's own output; old values from the first page.
+Cell: "beats / loses to", the harness's wording (side 0 of size N beats an enemy of the first number and loses to the second). Higher means a stronger side 0. A pure mirror is about N-1 / N or N / N+1 (the 20-fight cell and the 0.05 margin put it there).
 
 | play | Vanguard 8 | Vanguard 16 | Vanguard 32 | Raider 8 | Raider 16 | Raider 32 |
 |---|---|---|---|---|---|---|
@@ -49,11 +49,9 @@ Cell: "beats / loses to", the harness's own wording this time ("16 units beat 15
 | counter (draft), new | 7 / 8 | 15 / 16 | 28 / 29 | 7 / 8 | 15 / 16 | 29 / 30 |
 | counter, first run | 7 / 8 | 15 / 16 | 31 / 32 | 7 / 8 | 15 / 16 | 28 / 29 |
 
-(The first-run row for the line at Vanguard 32 is 32 / 33 and Raider 32 is 33 / 34; the first run's page rows are copied as they were printed.)
-
 Pair spread (lowest to highest per-seed mean margin of the side-swapped pairs) at the edge cells, new run: roughly -0.3 to +0.4 in nearly every cell (examples: line@16 0.09 to 0.40, blob@16 -0.21 to 0.40, counter@32 -0.14 to 0.36, concave@32:Raider -0.27 to 0.32). The win margin mark is 0.05. So a single seed pair swings by several times the margin that decides a win, and one-unit differences between plays are inside that noise.
 
-What changed against the first run, in units: the Vanguard line at 32 is now two units worse (34 against 32), the Vanguard blob and concave at 32 are now two units better (30 against 31 and 32), the Vanguard counter at 32 is three units worse (28 against 31; the first run had it at 31), the Raider counter at 32 is one unit worse (29 against 28), and the Raider blob and Raider concave at 8 are one unit lower. All other cells within a unit of the first run. The only effect larger than the noise reading above is the Vanguard counter at 32 (28 / 29 against a line at 34 / 35 and a blob at 30 / 31); with a 3-fold repeated cell and a spread of -0.14 to 0.36 it is a suggestion, not a result.
+What changed against the first run, in units (higher = stronger): the Vanguard line at 32 is two units stronger (34 against 32); the Vanguard blob at 32 is one weaker (30 against 31) and the concave two weaker (30 against 32); the Vanguard counter at 32 is three weaker (28 against 31); the Raider counter at 32 is one stronger (29 against 28); the Raider blob and concave at 8 are one weaker. All other cells within a unit of the first run. The largest spread across plays is the Vanguard 32 row: line 34, blob 30, concave 30, counter 28, a six-unit range, against a pair spread of about -0.3 to +0.4; it is a suggestion that the counter does worse and the line does better against a blob at 32, not a result. Direction is the opposite of the draft's intent for the counter.
 
 Firing unit-seconds (mean, side 0 against side 1): the counter fires less than its enemy in every size (Vanguard 16: 892 against 991, a 10 percent deficit; 32: 1664 against 2013, 17 percent; Raider 32: 473 against 537, 12 percent) and still breaks even at or below an even fight. A187 noted this for C2; still unexplained here.
 
@@ -63,7 +61,7 @@ Cell by cell (new): Raider larger at line@16 (16 against 15), blob@32 (31 agains
 
 ## 4. Stalled counts
 
-4 stalled fights in 480: Vanguard counter@8 1, blob@32 2, concave@32 1 (first run: 0). Not "stalled in a corner"; a stalled count above zero where the first run had none appeared with the leash change and the units now holding at range. Not looked at.
+4 stalled fights in 480: Vanguard counter@8 1, blob@32 2, concave@32 1 (first run: 0). New with the leash change; not traced.
 
 ## 5. What the instrument could not express
 
