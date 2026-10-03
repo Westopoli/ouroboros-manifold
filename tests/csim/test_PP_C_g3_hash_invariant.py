@@ -1,0 +1,134 @@
+# spec: docs/northstar/plans/2026-10-01-architect-rulings-2.md A185 (Addendum 64), A125
+# spec: docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md Phase C, G3
+"""G3 hash invariant. With OM_TP_TARGET_BY_SIGHT = 0 (reach 0 and emission silent are the defaults)
+every recorded hash is unchanged: the A99 tactical traces (tests/csim/data/a99_tactical_hashes.json,
+per step), the baseline fights (tests/csim/parity/baseline/baseline_hashes.json, with the
+baseline switches still 0), and the F1/F2/F3 goldens. These are guards: green now, green after G3.
+
+Positive controls: a perturbed recorded hash is caught; and (RED until G3 lands) with the switch at 1 a
+scene where a unit has an enemy in its own range that its side cannot see gives a different hash than
+with the switch at 0. Today the switch is not read by the C code, so that control fails: that is the
+red-before, and it must pass once G3 is built.
+"""
+import hashlib
+import struct
+import sys
+from pathlib import Path
+
+import pytest
+
+import a99_tactical_runs as A
+import test_F1_fog_per_faction_observers as F1
+import test_F2_nearest_hostile_search as F2
+import test_F3_macro_contact_skip as F3
+from test_PP_C_g3_support import BOMBARD, SUPPLY, set_param, spawn, step
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "parity" / "baseline"))
+import baseline_fights as B  # noqa: E402
+
+TBS = 4  # OM_TP_TARGET_BY_SIGHT
+
+
+def _off(lib, w):
+    assert lib.om_tactical_set_param(w, TBS, 0.0) == 0
+    assert lib.om_tactical_get_param(w, TBS) == 0.0
+
+
+FAST = [r for r in A.RUNS if r[4] == "fast"]
+
+
+@pytest.mark.parametrize("run", FAST, ids=[r[0] for r in FAST])
+def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
+    """A185: switch 0 leaves every recorded A99 per-step hash byte-identical."""
+    name, units, gap, steps, _t = run
+    rec = A.load_recorded()[name]["hashes"]
+    w = A.build(lib, units)
+    _off(lib, w)
+    if gap is not None:
+        A.stage_fight(lib, w, A._slots(lib, w), gap)
+    got = []
+    for _ in range(steps):
+        lib.om_tactical_step(w)
+        got.append(A.state_hash(lib, w))
+    lib.om_world_free(w)
+    bad = A.first_mismatch(rec, got)
+    assert bad is None, f"{name}: step {bad} hash differs from recorded with TARGET_BY_SIGHT 0"
+
+
+def test_G3_positive_control_perturbed_recorded_hash_is_caught(lib):
+    name, units, gap, _s, _t = FAST[0]
+    rec = list(A.load_recorded()[name]["hashes"][:30])
+    w = A.build(lib, units)
+    _off(lib, w)
+    got = []
+    for _ in range(30):
+        lib.om_tactical_step(w)
+        got.append(A.state_hash(lib, w))
+    lib.om_world_free(w)
+    assert A.first_mismatch(rec, got) is None
+    rec[9] = ("0" if rec[9][0] != "0" else "1") + rec[9][1:]
+    assert A.first_mismatch(rec, got) == 9
+
+
+@pytest.mark.parametrize("name", B.all_names())
+def test_G3_baseline_fights_unchanged_with_target_by_sight_0(name, monkeypatch):
+    """A185: baseline_hashes.json holds with the baseline switches at 0 AND TARGET_BY_SIGHT 0."""
+    B.build_libs()
+    orig = B.apply_baseline_settings
+
+    def both(lib, w):
+        orig(lib, w)
+        assert lib.om_tactical_set_param(w, TBS, 0.0) == 0
+    monkeypatch.setattr(B, "apply_baseline_settings", both)
+    got = B.run_one(B.LIB["O2"], name)
+    assert got["final"] == B.load_recorded()[name]["final"], f"{name}: final hash moved with TARGET_BY_SIGHT 0"
+
+
+@pytest.mark.parametrize("kind", F1.SCENE_KINDS)
+def test_G3_F1_golden_with_target_by_sight_0(lib, world_factory, kind):
+    w = F1._world(lib, world_factory, 1)
+    _off(lib, w)
+    assert F1._full_run(lib, w, kind) == F1.GOLDEN[kind]
+
+
+@pytest.mark.parametrize("kind", ["clash", "spread"])
+def test_G3_F2_golden_with_target_by_sight_0(lib, world_factory, kind):
+    w = F2._world(lib, world_factory, 1, custom=False)
+    _off(lib, w)
+    assert F2._full_run(lib, w, kind) == F2.GOLDEN[kind]
+
+
+@pytest.mark.parametrize("kind", ["clash", "spread"])
+def test_G3_F3_golden_with_target_by_sight_0(lib, world_factory, kind):
+    w = F3._world(lib, world_factory, 1)
+    _off(lib, w)
+    assert F3._full_run(lib, w, kind) == F3.GOLDEN[kind]
+
+
+# ---- positive control: the switch must change something at 1 -------------------------------
+
+def unseen_in_range_hashes(lib, w_factory, switch, ticks=80):
+    """A Bombard (range 1200, sensor 300) with a never-firing 5,000 hp Supply 800 wu away on its own
+    layer, no other friendly: in the Bombard's range, unseen by its side."""
+    w = w_factory(n_regions=1)
+    set_param(lib, w, "TARGET_BY_SIGHT", switch)
+    b = spawn(lib, w, BOMBARD, 0, 0.0, 0.0)
+    t = spawn(lib, w, SUPPLY, 1, 800.0, 0.0)
+    lib.om_unit_set_hp(w, t, 5000.0)
+    lib.om_visibility_compute(w)
+    assert not lib.om_unit_can_see(w, b, t), "scene premise: the target is outside the side's sight"
+    out = []
+    for _ in range(ticks):
+        step(lib, w)
+        x, y = lib.om_unit_get_pos(w, t)
+        out.append(hashlib.sha256(struct.pack("<IddddI", t, x, y, lib.om_unit_get_hp(w, t), 0.0,
+                                              lib.om_unit_get_target(w, b))).hexdigest()[:16])
+    return out
+
+
+def test_G3_positive_control_hash_differs_at_1_when_a_target_is_in_range_but_unseen(lib, world_factory):
+    """RED until G3: at 1 the Bombard may not fire at what its side cannot see, so hp and target
+    differ from the switch-0 run (where it fires)."""
+    off = unseen_in_range_hashes(lib, world_factory, 0.0)
+    on = unseen_in_range_hashes(lib, world_factory, 1.0)
+    assert off != on, "TARGET_BY_SIGHT 1 changed nothing on an in-range, unseen target"
