@@ -74,6 +74,20 @@ What the pictures say, before Westley flies it:
 - The crossing rings are small at tactical zoom and invisible at map zoom.
 - Layer focus works (unfocused layers darken) and is the clearest way to read one layer.
 
+## Westley's review of the first mockup (2026-10-02)
+
+Verbatim: "So this isn't exactly what I had in mind, first of all it's only one layer. the "cities" are far too circular, it doesn't seem like you used the stochiacity of the existing biome engine. *cities* have very distinctive shapes. The wall traveling through them was nice. - It definitely doesn't read as ice sheets yet, it seems like a single layer. I imagined somethign more like this: [a photograph from above of arctic sea ice: large irregular floes with straight-edged, fractured outlines, narrow dark water channels between them, fields of small broken fragments, one large dark rock mass, open water in the gaps] this is a real picture in the arctic, think this but 5 different versions stacked together (would create a wicked, tight, thick asteroid field). We don't need a whole bunch of *assets* like shown in the mocket, we really just need a binary representation: shapes where there is no object, and space where there is object (just like the photo), passable vs inpassable space. 5 layers of different seeds create what I'm looking for for the *whole* map."
+
+Read as:
+
+- The five layers do not read; it looks like one. The look must show five sheets.
+- The round clearings around the layout nodes read as circular cities. Nothing cleared may be a disc.
+- The picture to match is fractured sea ice: plates with straight broken edges, narrow channels between them, rubble fields of small fragments, open water, and the odd large mass. Not noise blobs.
+- No asset variety. A binary picture: object or no object, impassable or passable, drawn as flat plates.
+- Each layer from its own seed, five stacked, giving a tight thick field over the whole map.
+
+Pass 2 spec: `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`, section "Pass 2".
+
 ## Suggested next step
 
-Westley flies the kit mode (Kit: space, density slider, keys 1 to 5 for layer focus, 0 for all) and gives the same kind of review as the landscape mockup got. The look items above are the architect's first read, not his.
+Pass 2 of the mockup, then Westley flies it again.
