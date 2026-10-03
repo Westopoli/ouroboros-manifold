@@ -345,8 +345,10 @@ def _death_script(first):
                     key=lambda p: math.hypot(p[0]["x"] - p[1]["x"], p[0]["y"] - p[1]["y"]))
     cmds = [{"type": "cmd", "name": "command", "verb": "attack_target",
              "units": [u["id"] for u in mine], "target": target["id"]}]
-    cmds += [_step(100)] * 22  # to tick 2200
-    cmds += [_step(1)] * 200   # one frame per tick through the first deaths (tick ~2301)
+    # Test-defect, A150: 22 x 100 + 200 x 1 (ticks 2200-2400) -> 16 x 100 + 200 x 1 (ticks 1600-1800); cause: slowest-member pacing of attack-move groups (R-095-01) / pursuit by steering (R-087-04); assertions unchanged.
+    # First death now lands at tick 1690: 90 ticks inside the window start, 110 before its end.
+    cmds += [_step(100)] * 16  # to tick 1600
+    cmds += [_step(1)] * 200   # one frame per tick through the first deaths (tick ~1690)
     return cmds
 
 
