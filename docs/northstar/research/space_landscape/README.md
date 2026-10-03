@@ -119,6 +119,35 @@ Open after pass 4, for Westley:
 - Whether "Shared density" on is the default for the game, and the layer gap for space eras (the slider's 1,000 wu default is a guess).
 - Whether removals should be allowed to cluster (bigger floes) at the cost of the no-holes rule.
 
+## Westley's question after pass 4 (2026-10-03): priorities and cost
+
+Verbatim: "I'm seeing a lot of objects, is the level of detail we're introducing going to be a problem for fps/output efficiency? Analyze the way we're generating, investigate if we're making it harder for the godot engine to operate effciently because it's being passed something too complex. - This comes from s11_d55, the small gaps look cool but I doubt they'd be functional in the real game (most ships would be too big to pass through it) and it's everwhere, it's functionally one large "block", but it's split into little pieces. In s11_d15 as well there's a *ton* of little pieces, which is great for depth/detail, but we're not designing visuals right now we're designing the landscape engine for space. I just want to take a step back and make sure our priorities are in order. *detail is good, in the right locations*, and my query is regarding whether this is the right location or not."
+
+### What the mockup hands the renderer (seed 11, canvas 24,000, measured headless)
+
+| Density | Draw surfaces | Triangles | of which fill walls | Pieces counted | Open cells of 290,405 |
+|---|---|---|---|---|---|
+| 15 | 22 | 241,584 | 35,000 | 19,833 | 226,565 |
+| 55 | 22 | 1,760,365 | 121,716 | 63,164 | 127,100 |
+| 70 | 22 | 3,158,078 | 155,040 | 79,921 | 95,978 |
+
+- Draw calls are not the problem: one mesh per layer per kind, 22 in all.
+- Triangles are: 1.8 to 3.2 million at the heavy end. The walls are a small share. The bulk is the gap fill, which is emitted as one closed slab per 100 wu cell (top, bottom and four sides, twelve triangles) for every cell blocked on two layers, about 80,000 cells at density 55, nearly all of them hidden inside the body they fill. Merging those cells into regions and emitting only their outline walls, which the wall pass already does, would cut the count five to ten times. A GTX 1070 can draw three million static triangles, so this is waste rather than a wall, but it is the wrong shape.
+- Generation is 1.1 s in GDScript, a mockup cost; in C it is tens of milliseconds.
+- In the game the renderer never draws per cell: the decided direction (7D) is a coarse functional map in the simulation and detail drawn by the client at the level the zoom needs. The mockup is wasteful by construction, not by concept.
+
+### The priorities question
+
+Westley is right, and the numbers make the case. The sim's unit collision radius is 15 wu and a formation is 200 wu wide. The mockup's channels are 160 wu and the rubble gaps 100 wu: a single ship squeezes through, a formation never does. So most of the small gaps are not passages in play. Functionally, a packed area is one block, and the gaps are visual.
+
+What follows:
+
+- **The functional map has a minimum passage.** Anything narrower than a chosen width is solid in the simulation. The width is Westley's number (it should be tied to the formation width, so a formation can pass what the map says is open). That makes the simulation's mask coarse, honest, and cheap.
+- **The detail is the client's.** Cracks, rubble, broken edges and small gaps are drawn by the client from the same seed, as decided in 7D, and never enter the simulation. They are the "right location" for detail: on screen, at the edges of real passages and real bodies, and dropped at distance by level of detail.
+- **The mockup should show both.** A "functional" toggle that draws the simulation's mask (closed at the minimum passage) over the pretty one, so the two can be compared on the same map.
+
+Open, for Westley: the minimum passage width for the functional map.
+
 ## Suggested next step
 
 Westley flies pass 4 (Kit: space; Top-down button; keys 1 to 5 to focus one layer, 0 for all; C for crossing marks; sliders for density, layer gap, plate size, size spread and density swing; Shared density toggle). Then the camera question is designed as options.
