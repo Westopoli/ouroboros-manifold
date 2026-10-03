@@ -196,3 +196,47 @@ Pass 2 screenshots: `docs/northstar/research/space_landscape/mockup/pass2/`. Wha
 ## P3.6 Rules for the Doer
 
 As section 8 and P2.7. Pass 1 and pass 2 generators may be removed; only the plate generator of this pass needs to stay (drop the `space-noise-blobs` plant). Report once, ten lines at most, with the measured blocked shares.
+
+---
+
+# Pass 4 (2026-10-03, after Westley's review of pass 3)
+
+His review is verbatim in `docs/northstar/research/space_landscape/README.md`. Pass 3 is the base. Six changes, nothing else.
+
+## P4.1 Size variety
+
+- Plate size varies across the map. The lattice stays regular (so membership search stays 3 by 3), but each lattice centre is kept or merged by a size field: sample the two-octave noise `u` at the lattice cell's middle; where `u` is below `0.5 - SPREAD / 2` the centre is removed, and the cells that would have belonged to it go to the nearest surviving centre, which makes a large floe; where `u` is above `0.5 + SPREAD / 2` the cell is split into four centres (jittered sub-lattice at half size), which makes small floes. `SPREAD` is a HUD slider "Size spread" from 0 (even, as pass 3) to 1, default 0.6. Membership is computed against the surviving centre set with a 5 by 5 neighbourhood so removed centres do not leave holes.
+- Rubble as pass 3.
+
+## P4.2 Density variety
+
+- The drop test's swing by the noise rises from `(v - 0.5) * 0.3` to `(v - 0.5) * DENSITY_SWING`, with `DENSITY_SWING` a HUD slider "Density swing" from 0 to 1.2, default 0.8, so some areas are packed and some are nearly open water at the same slider density. The measured blocked share per layer must still average within 10 points of the slider over seeds 11 to 16 at densities 15, 35, 55 and 70; if the swing pushes the average off, rescale the keep share so it lands, and report the before and after.
+
+## P4.3 Shared density across layers
+
+- Toggle "Shared density" (HUD button and `qa_set("shared_density", bool)`), default on. On: every layer samples the same density noise `v` (seeded from `p_seed` alone), while plate centres, jitter, size field and erosion still use the layer's own seed, so packed regions stack over packed regions and each layer keeps its own plate pattern. Off: as pass 3, independent.
+- Report mean `crossing_pct` at density 70 with the toggle on and off, seeds 11 to 16.
+
+## P4.4 Fill the gap
+
+- For every cell blocked on layer k and also blocked on layer k + 1, the layer k geometry at that cell is extruded from layer k's height up to layer k + 1's height, so the two read as one solid body. Implement by building, per layer, a second mesh: for each plate, the set of its cells that are blocked above forms one or more regions; emit each region as a flat-shaded extruded polygon (trace the region's outline on the cell grid with the existing marching squares, extrude the outline as a wall from layer k's top to layer k + 1's bottom, colour it the layer's colour darkened 20 percent). Cells blocked only on their own layer keep the thin plate. Rubble included.
+- Top-down with all layers shown still steps the layers by 60 wu; with a layer focused, solo, the extrusion of the focused layer is shown too.
+
+## P4.5 Gap
+
+- The layer gap slider stays, range widened to 200 to 3,000, default 1,000.
+
+## P4.6 Defect
+
+- Crossing marks must not be drawn when the HUD says they are off, in any view. Add `qa_set("marks", bool)` and `qa_state.crossing_marks_shown` must agree with what is drawn.
+
+## P4.7 QA
+
+- `qa_state` adds `size_spread`, `density_swing`, `shared_density`, `filled_cells_per_pair` (array of 4: cells blocked on both layers of each pair).
+- `qa_set` adds `size_spread`, `density_swing`, `shared_density`, `marks`.
+- Checklist adds: the blocked-share averages of P4.2; `shared_density` on raises mean `filled_cells_per_pair` over seeds 11 to 16 at density 55 compared with off; marks off draws no marks (screenshot pixel check is not required; the state field suffices).
+- The QA script takes, for seeds 11 and 12 at densities 15, 35, 55 and 70: top-down with all layers; top-down with layer 3 focused; and one angled shot from above the stack (camera height 9,000, pitch as the tactical band gives) so the filled bodies can be seen from the side; plus density 55 with shared density off for comparison.
+
+## P4.8 Rules for the Doer
+
+As section 8, P2.7 and P3.6. Report once, ten lines at most, with the measured averages and the shared-on and shared-off comparison.

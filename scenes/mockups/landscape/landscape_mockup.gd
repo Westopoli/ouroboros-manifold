@@ -90,7 +90,11 @@ func qa_state() -> Dictionary:
 		state["regions_unreachable_after"] = fm.regions_unreachable_after
 		state["crossing_pct"] = fm.crossing_pct
 		state["crossing_marks"] = fm.crossings.size()
-		state["crossing_marks_shown"] = fm.crossings.size() if _hud.get_show_crossings() else 0
+		state["crossing_marks_shown"] = _hud.get_marks_drawn()
+		state["size_spread"] = _hud.get_size_spread()
+		state["density_swing"] = _hud.get_density_swing()
+		state["shared_density"] = _hud.get_shared_density()
+		state["filled_cells_per_pair"] = fm.filled_cells_per_pair
 		state["plate_polygon_count"] = fm.plate_polygon_count
 		state["focus_layer"] = _hud.get_focus_layer()
 		state["plate_cell_wu"] = _hud.get_plate_cell()
@@ -131,6 +135,14 @@ func qa_set(name: String, value) -> void:
 			_hud.qa_set_layer_gap(float(value))
 		"top_down":
 			_hud.qa_set_top_down(bool(value))
+		"size_spread":
+			_hud.qa_set_size_spread(float(value))
+		"density_swing":
+			_hud.qa_set_density_swing(float(value))
+		"shared_density":
+			_hud.qa_set_shared_density(bool(value))
+		"marks":
+			_hud.qa_set_marks(bool(value))
 
 
 func qa_camera(height: float, x: float, z: float) -> void:

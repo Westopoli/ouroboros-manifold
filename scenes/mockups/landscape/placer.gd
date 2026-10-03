@@ -24,6 +24,7 @@ const CUT_FRAME_WIDTH_WU := 60.0
 const TOP_DOWN_STEP_WU := 60.0
 const DEFAULT_PLATE_THICKNESS_WU := 60.0
 const DEFAULT_RUBBLE_THICKNESS_WU := 30.0
+const WALL_DARKEN := 0.2
 
 # Cliff border height is sampled from real terrain, not the kit's flat default.
 const MIN_CLIFF_HEIGHT_WU := 40.0
@@ -169,6 +170,8 @@ func place(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> Dictio
 		if not g.layers.is_empty():
 			mmi.set_meta("layers", g.layers)
 			mmi.set_meta("base_colors", PackedColorArray(g.colors))
+			if g.piece.begins_with("shaft_L"):
+				mmi.set_meta("crossing_mark", true)
 		var mat := StandardMaterial3D.new()
 		mat.vertex_color_use_as_albedo = true
 		mmi.material_override = mat
@@ -218,11 +221,12 @@ func _place_cells(field_map: FieldMap, kit: Dictionary, kit_name: String, rng: R
 			_group_add(groups, rule.get("piece", "piece"), kit_name, resolved.mesh, xform, resolved.color)
 
 
-# Each layer is two meshes: its plates and rubble in the layer colour, and the large mass in the
-# kit's `mass` colour. A plate is one polygon, a fan from its centroid (top face) with a skirt down
-# to the layer's height, so edges stay straight; rubble is half as thick. Pockets filled solid have
-# no polygon and get one square of the cell size each. Colour per layer from the kit's `layers`,
-# and `layers_topdown` for the stacked top-down view.
+# Each layer is up to four meshes: its plates and rubble in the layer colour, the large mass in the
+# kit's `mass` colour, and the walls (the same two, 20 percent darker) that fill the gap up to the
+# layer above wherever both are blocked. A plate is one polygon, a fan from its centroid (top face)
+# with a skirt down to the layer's height, so edges stay straight; rubble is half as thick. Pockets
+# filled solid have no polygon and get one square of the cell size each. Colour per layer from the
+# kit's `layers`, and `layers_topdown` for the stacked top-down view.
 func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node3D) -> Dictionary:
 	var plate_h: float = float(kit.get("plate", {}).get("thickness", DEFAULT_PLATE_THICKNESS_WU))
 	var rubble_h: float = float(kit.get("rubble", {}).get("thickness", DEFAULT_RUBBLE_THICKNESS_WU))
@@ -237,6 +241,8 @@ func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node
 		var topdown_color := Color(topdown_colors[k] if k < topdown_colors.size() else "#ffffff")
 		var sheet := {verts = PackedVector3Array(), norms = PackedVector3Array()}
 		var mass := {verts = PackedVector3Array(), norms = PackedVector3Array()}
+		var wall := {verts = PackedVector3Array(), norms = PackedVector3Array()}
+		var wall_mass := {verts = PackedVector3Array(), norms = PackedVector3Array()}
 		for pl in field_map.plate_polys[k]:
 			var target: Dictionary = mass if pl.kind == SpaceFieldMap.KIND_MASS else sheet
 			_add_slab(target, pl.points, rubble_h if pl.kind == SpaceFieldMap.KIND_RUBBLE else plate_h)
@@ -248,7 +254,13 @@ func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node
 			_add_slab(sheet, PackedVector2Array([at - half, Vector2(at.x + half.x, at.y - half.y), at + half, Vector2(at.x - half.x, at.y + half.y)]), plate_h)
 		total += field_map.fill_cells[k].size()
 		by_type["plate"] = int(by_type.get("plate", 0)) + field_map.plate_polys[k].size() + field_map.fill_cells[k].size()
-		for entry in [["sheet", sheet, layer_color, topdown_color], ["mass", mass, mass_color, mass_color]]:
+		if k < SpaceFieldMap.LAYERS - 1:
+			wall = _wall_data(field_map.walls[k], false, plate_h, rubble_h)
+			wall_mass = _wall_data(field_map.walls[k], true, plate_h, rubble_h)
+			var segments: int = field_map.walls[k].a.size()
+			total += segments
+			by_type["wall"] = int(by_type.get("wall", 0)) + segments
+		for entry in [["sheet", sheet, layer_color, topdown_color], ["mass", mass, mass_color, mass_color], ["wall", wall, layer_color.darkened(WALL_DARKEN), topdown_color.darkened(WALL_DARKEN)], ["wallmass", wall_mass, mass_color.darkened(WALL_DARKEN), mass_color.darkened(WALL_DARKEN)]]:
 			var data: Dictionary = entry[1]
 			if data.verts.is_empty():
 				continue
@@ -271,6 +283,37 @@ func _place_sheets(field_map: SpaceFieldMap, kit: Dictionary, world_parent: Node
 			mi.set_meta("topdown_color", entry[3])
 			world_parent.add_child(mi)
 	return {total = total, by_type = by_type}
+
+
+# The wall segments of one kind (mass or not) from the layer's top face to the layer above's
+# bottom, flat shaded, outward normal (d.y, -d.x) as in _add_slab's skirt.
+func _wall_data(w: Dictionary, mass: bool, plate_h: float, rubble_h: float) -> Dictionary:
+	var count := 0
+	for kind in w.kind:
+		if (kind == SpaceFieldMap.KIND_MASS) == mass:
+			count += 1
+	var verts := PackedVector3Array()
+	var norms := PackedVector3Array()
+	verts.resize(count * 6)
+	norms.resize(count * 6)
+	var at := 0
+	for i in range(w.a.size()):
+		if (w.kind[i] == SpaceFieldMap.KIND_MASS) != mass:
+			continue
+		var a: Vector2 = w.a[i]
+		var b: Vector2 = w.b[i]
+		var y0 := rubble_h if w.kind[i] == SpaceFieldMap.KIND_RUBBLE else plate_h
+		var outward := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
+		var a_low := Vector3(a.x, y0, a.y)
+		var b_low := Vector3(b.x, y0, b.y)
+		var a_high := Vector3(a.x, _layer_gap, a.y)
+		var b_high := Vector3(b.x, _layer_gap, b.y)
+		var corners := [a_high, b_low, b_high, a_high, a_low, b_low]
+		for c in range(6):
+			verts[at + c] = corners[c]
+			norms[at + c] = outward
+		at += 6
+	return {verts = verts, norms = norms}
 
 
 # One slab: the top face at `height` as a fan from the centroid, and a skirt down to y = 0 on every
