@@ -1,0 +1,227 @@
+{
+ "a99_fight_502_gap100": {
+  "checkpoints": [
+   "c6200fc1f17f1545",
+   "bed512a7cef6e0e5",
+   "e06b77cce79bf070",
+   "d6a86098930b57e5",
+   "26e4e21b0604a16c",
+   "973a44a4d2a7bbc2",
+   "b62901d2169a0732",
+   "e004c717f704fdda",
+   "49a317a9aee74a91",
+   "a245a48a2b1c9e1e",
+   "a43d0260b4142e77",
+   "087dffc21db76a55"
+  ],
+  "final": "087dffc21db76a55e344eb1baeee8b71b95ce6419633e1f7a63aea599dc990d7",
+  "ticks": 1200
+ },
+ "a99_fight_990_gap300": {
+  "checkpoints": [
+   "b5de1e048d52fff2",
+   "b4b68abd3a05793d",
+   "ab040c702e47d6ca",
+   "6acfb70c587414d1",
+   "563c26fd0dbaae1a",
+   "0294e6fa6ef5d462",
+   "366b1981ac156072",
+   "5d30669fd2e50461",
+   "d6054e6deb296ecd",
+   "1d0a3338ede81efb",
+   "adab851209afd02d",
+   "8e26773964d0b095",
+   "958e6861de103988",
+   "ed446f76eaed799c",
+   "2d9ef44a01ea44af"
+  ],
+  "final": "2d9ef44a01ea44af290cb59086bd7fbfdc5d0dc3614bf80972969d58c368ed71",
+  "ticks": 1500
+ },
+ "fixture_cover_standoff": {
+  "checkpoints": [
+   "9bb820629e29e7ce",
+   "41cb8d30ef4cebae",
+   "392dd6552b971e06",
+   "aea301ca6c67a740",
+   "797583498ad2cca1",
+   "8ce5c9ccf8d7dbf5",
+   "c05349a870a9a789"
+  ],
+  "final": "c05349a870a9a7895ba6f7666f83b5bae487805cd7f936fe904437c188b69767",
+  "ticks": 700
+ },
+ "fixture_mixed_march": {
+  "checkpoints": [
+   "f82caf018d644382",
+   "9fddc624492d09da",
+   "5b66060b26f84f75",
+   "d77060a625b39c66",
+   "89207b115d0e4792",
+   "eaf16e8279f627f5",
+   "3730730435df2235",
+   "7665ed3cdba5cd26",
+   "d245a66d45056730",
+   "8a8b0971deb862ff"
+  ],
+  "final": "8a8b0971deb862ffb83e34e954df4c2cd5bcb8653cac41c3aa86920db20a9731",
+  "ticks": 1000
+ },
+ "fixture_wall_gap": {
+  "checkpoints": [
+   "f6ff62222cb183ca",
+   "cb445f12fade9327",
+   "c05362a6eaad98e3",
+   "b2f8eac5c8ae3bf8",
+   "1cefabd2d1cf350a",
+   "1f1e6ca8bf80758d",
+   "51002889def8a27a",
+   "a8c1ac7594606d01",
+   "bf2dbb68194d92b3"
+  ],
+  "final": "bf2dbb68194d92b3f4fda7a21a6e2c68005194dd9dc4662c37f09b0092d296a5",
+  "ticks": 900
+ },
+ "skilllab_mirror_s0": {
+  "checkpoints": [
+   "9f74cafd2afb5ca0",
+   "219dca32f4e04aba",
+   "44531fe18dc1af8c",
+   "97cce4e2af4246b2",
+   "ef185e0facfbad9b",
+   "e2adb1274dd5c660",
+   "cfedbb5d1d03fd05",
+   "fa15af7e4c89edc6",
+   "aa170f3a05361d12",
+   "39769ae7bcd06bf1",
+   "af8232c62b63c8cf",
+   "7adea3f5dd85b504",
+   "ee23ddd10b15042f",
+   "e66a39742a1932c9",
+   "d7dcb3bb7e011c1d",
+   "753e3868d4d74112",
+   "1017e7f784696b6c",
+   "72b84c1b031cadec",
+   "dcb835d7c5de7a2b",
+   "ca75be279732ecaf",
+   "89510fd58c5e08a2",
+   "fcff884a56fdaf32",
+   "6b419a3ad247e788",
+   "6dcd28283a08107a"
+  ],
+  "final": "8d54f7de992c549fca8508def0e0312281f08db36432a82366e383c0e9c2a0be",
+  "ticks": 2406
+ },
+ "skilllab_mirror_s1_swap": {
+  "checkpoints": [
+   "169e4de499b2f8dc",
+   "50e2c53737939ab3",
+   "9c6cf67a1639c539",
+   "5be9172bea0b20ad",
+   "fb871123e8306308",
+   "e25164d3021a4722",
+   "8bd201ff64fc2e4c",
+   "4f7df9d1650721be",
+   "bb6ffe4aec5a8a21",
+   "b38f7057807f59cf",
+   "4293d141f752d9ac",
+   "fc59b529afa7c7a0",
+   "84e6403f98494a76",
+   "c2ec5a686b98036c",
+   "76c6baba8e75e2ed",
+   "be834146d18da3d8",
+   "e7536b8c2722f84e",
+   "06d8683b30ae5c5f",
+   "7d89e7b582f8802e",
+   "ad9abdfd0a46a8eb",
+   "26f85ceda25c0c2c"
+  ],
+  "final": "df1c4aaaeecab24d439e9c500036407a54254a4b7c1726d69ed070fc6ef0da47",
+  "ticks": 2166
+ },
+ "skilllab_numbers_s0": {
+  "checkpoints": [
+   "693b8a097b0c9892",
+   "e3ad8b5cc65e6e8a",
+   "c0a9d9d56e150039",
+   "390d1521006b832e",
+   "4e3825e090b2c2ef",
+   "4e3573531b391bed",
+   "dc4c1160a90c5109",
+   "9482ee88e63de7fd"
+  ],
+  "final": "4beaee1124d807332c58b8be6055b3759f0bc0e502e2f2c7d8cb9b7a3bd70b1b",
+  "ticks": 899
+ },
+ "skilllab_numbers_s1_swap": {
+  "checkpoints": [
+   "592926d428604ee9",
+   "b287e34a8fcfc46a",
+   "a6fc42b47d185b8a",
+   "7dfee6ab11486b7e",
+   "4f0809b978885cbe",
+   "4ed672865647cd12",
+   "314039307f4224d6",
+   "b98576a1993aa137",
+   "7375a2b7429f368d"
+  ],
+  "final": "16196b69e2a6bf669da67392a6c2a7c2ae2f10d0d3d3dc22923351aca7c4d83e",
+  "ticks": 917
+ },
+ "skilllab_planted_s0": {
+  "checkpoints": [
+   "c2f0dd183629362f",
+   "b66b8aab6c09b849",
+   "394770919bb34d39",
+   "c3ed17e8fd9a7033",
+   "5c83b712bf1e0ca5",
+   "ba7292dc046815c8",
+   "635ded8196689202",
+   "5cefbbf63c581e7c",
+   "ff96da72e9c6b5b8",
+   "1749b5b8edf52153",
+   "3e68165b5a62926c",
+   "d573984f509ca78e",
+   "ae0eb01a0c316ce6",
+   "48d383e8831b989f",
+   "c913ca052564a63f",
+   "3b21726321fca774",
+   "8fed59902ea97444",
+   "afa42724f74cb14c",
+   "e45f24d1da11bbfc"
+  ],
+  "final": "d5320aacd2a452dd4c504014d08ec58f05a172c923a32cd66146f6ed19fba90c",
+  "ticks": 1970
+ },
+ "skilllab_planted_s1_swap": {
+  "checkpoints": [
+   "c7aa4bf270f023c8",
+   "6417fe3cd55c3985",
+   "3df74639778debb4",
+   "3e210377d8b0916c",
+   "2566c4f8d6c2ec78",
+   "61c0833d071ddee2",
+   "51f1df751eda5ef1",
+   "d36b790528afad9e",
+   "613bc32c700ad64e",
+   "fec6736e34074ec5",
+   "936b2f6023ccc273",
+   "f4a45d53ae57ee36",
+   "3aff40fc6d3fa97d",
+   "47939489dfcde247",
+   "8cb7e53ff2c93525",
+   "583bce6089007892",
+   "d60860615b7edcb3",
+   "c6cb25e61c0502c7",
+   "2d0cb2dffc82d900",
+   "bcedbf609f6f1be6",
+   "163ae5e36e56a98e",
+   "cf1a3115a492f0ab",
+   "bd26d1fc980d8365",
+   "20cabe05c1a5be41",
+   "5510d916c662db87"
+  ],
+  "final": "5510d916c662db874182239b65f1da35fb9a0ccdb7be31b2911fa31bf7866f9b",
+  "ticks": 2500
+ }
+}

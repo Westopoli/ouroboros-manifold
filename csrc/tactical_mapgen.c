@@ -129,6 +129,11 @@
 #define OM_MAPGEN_CANVAS_BASE_MEDIUM 16000.0
 #define OM_MAPGEN_CANVAS_BASE_LARGE 24000.0
 
+/* Obstacle sample grid: cells at least 200 wu, at most 128 a side; the box is padded 1 wu so a point on a disc edge stays in range. */
+#define OM_MAPGEN_OBS_CELL 200.0
+#define OM_MAPGEN_OBS_MAX_SIDE 128
+#define OM_MAPGEN_OBS_PAD 1.0
+
 /* The 28,000 wu canvas at the 100 wu route cell: 280 cells a side. */
 enum { OM_MAPGEN_GRID_SIDE = (int)(OM_MAP_MAX_CANVAS / OM_NAVMESH_CELL_SIZE) };
 #define OM_MAPGEN_BITS_PER_BYTE 8
@@ -159,6 +164,13 @@ typedef struct {
     uint32_t               n_cover;
     om_mapgen_obstacle_row obstacles[OM_MAPGEN_MAX_OBSTACLES];
     uint32_t               n_obstacles;
+    /* Lazy uniform grid over the obstacle discs for point samples; each cell lists disc indices
+     * ascending. Rebuilt on first sample after an add (obs_dirty). */
+    int                     obs_dirty;
+    int                     obs_side;
+    double                  obs_x0, obs_y0, obs_cell;
+    uint32_t               *obs_start;
+    uint32_t               *obs_ids;
     /* Index-ordered; rows are in insertion order. Spine nodes (faction 0) and spawn points share
      * this table, as spawn_point is a spine node type. Structures have no spine type and are kept
      * apart; the ids the add functions return are 1-based indices into these tables. */
@@ -173,6 +185,8 @@ typedef struct {
 } om_mapgen_state;
 
 static void om_mapgen_state_free(void *p) {
+    om_mapgen_state *st = (om_mapgen_state *)p;
+    if (st) { free(st->obs_start); free(st->obs_ids); }
     free(p);
 }
 
@@ -247,6 +261,13 @@ int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_
     if (!om_mgs_in_canvas(st, layer, cx, cy)) return 1;
     b = om_mgs_bit(layer, cx, cy);
     return (st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] >> (b & OM_MAPGEN_BIT_MASK)) & 1;
+}
+
+/* 1 when no cell can be blocked and no obstacle disc exists: no canvas (so no edge and no route grid) and no
+ * obstacle. Lets collision skip its per-push terrain reads. See also: om_move_slide in tactical_move.c. */
+int om_mapgen_terrain_free(const om_world *w) {
+    const om_mapgen_state *st = w ? om_mgs_ro(w) : NULL;
+    return !st || (!st->has_canvas && st->n_obstacles == 0);
 }
 
 /* Called by om_map_set_obstacle_density (tactical_move.c): a density above the R-097-01 threshold blocks the
@@ -363,6 +384,7 @@ uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius) {
     st->obstacles[st->n_obstacles].y = y;
     st->obstacles[st->n_obstacles].radius = radius;
     st->n_obstacles++;
+    st->obs_dirty = 1;
     return st->n_obstacles;
 }
 
@@ -653,11 +675,86 @@ int om_map_sample_layer_accessibility(om_world *w, double p1, double x, uint32_t
     return !om_mapgen_cell_blocked(w, layer, (int32_t)(px / OM_NAVMESH_CELL_SIZE), (int32_t)(py / OM_NAVMESH_CELL_SIZE));
 }
 
-double om_map_sample_obstacle_density(om_world *w, double p1, double x) {
-    const om_mapgen_state *st = om_mgs_ro(w);
-    double px = p1, py = x;
+static int om_mgs_obs_cell_range(const om_mapgen_state *st, const om_mapgen_obstacle_row *o, int *x0, int *x1, int *y0, int *y1) {
+    double r = o->radius < 0.0 ? -o->radius : o->radius;
+    double lo, hi;
+    lo = (o->x - r - OM_MAPGEN_OBS_PAD - st->obs_x0) / st->obs_cell;
+    hi = (o->x + r + OM_MAPGEN_OBS_PAD - st->obs_x0) / st->obs_cell;
+    *x0 = lo < 0.0 ? 0 : (int)lo;
+    *x1 = hi >= st->obs_side ? st->obs_side - 1 : (int)hi;
+    lo = (o->y - r - OM_MAPGEN_OBS_PAD - st->obs_y0) / st->obs_cell;
+    hi = (o->y + r + OM_MAPGEN_OBS_PAD - st->obs_y0) / st->obs_cell;
+    *y0 = lo < 0.0 ? 0 : (int)lo;
+    *y1 = hi >= st->obs_side ? st->obs_side - 1 : (int)hi;
+    return *x0 <= *x1 && *y0 <= *y1;
+}
+
+/* Builds the cell lists in two counting passes; discs go in ascending index so each list is ascending. */
+static void om_mgs_obs_build(om_mapgen_state *st) {
+    double minx = 0.0, miny = 0.0, maxx = 0.0, maxy = 0.0, span;
+    size_t cells, total = 0, pass;
     uint32_t h;
+    int cx, cy, x0, x1, y0, y1;
+    uint32_t *fill;
+    free(st->obs_start); free(st->obs_ids);
+    st->obs_start = NULL; st->obs_ids = NULL;
+    st->obs_dirty = 0;
+    st->obs_side = 0;
+    if (st->n_obstacles == 0) return;
+    for (h = 0; h < st->n_obstacles; h++) {
+        const om_mapgen_obstacle_row *o = &st->obstacles[h];
+        double r = (o->radius < 0.0 ? -o->radius : o->radius) + OM_MAPGEN_OBS_PAD;
+        if (h == 0 || o->x - r < minx) minx = o->x - r;
+        if (h == 0 || o->y - r < miny) miny = o->y - r;
+        if (h == 0 || o->x + r > maxx) maxx = o->x + r;
+        if (h == 0 || o->y + r > maxy) maxy = o->y + r;
+    }
+    span = maxx - minx > maxy - miny ? maxx - minx : maxy - miny;
+    st->obs_x0 = minx; st->obs_y0 = miny;
+    st->obs_cell = span / OM_MAPGEN_OBS_MAX_SIDE > OM_MAPGEN_OBS_CELL ? span / OM_MAPGEN_OBS_MAX_SIDE : OM_MAPGEN_OBS_CELL;
+    st->obs_side = (int)(span / st->obs_cell) + 1;
+    cells = (size_t)st->obs_side * (size_t)st->obs_side;
+    st->obs_start = (uint32_t *)calloc(cells + 1, sizeof(uint32_t));
+    fill = (uint32_t *)calloc(cells, sizeof(uint32_t));
+    if (!st->obs_start || !fill) { free(st->obs_start); free(fill); st->obs_start = NULL; st->obs_side = 0; st->obs_dirty = 1; return; }
+    for (pass = 0; pass < 2; pass++) {
+        for (h = 0; h < st->n_obstacles; h++) {
+            if (!om_mgs_obs_cell_range(st, &st->obstacles[h], &x0, &x1, &y0, &y1)) continue;
+            for (cy = y0; cy <= y1; cy++)
+                for (cx = x0; cx <= x1; cx++) {
+                    size_t c = (size_t)cy * (size_t)st->obs_side + (size_t)cx;
+                    if (pass == 0) { st->obs_start[c + 1]++; total++; }
+                    else st->obs_ids[st->obs_start[c] + fill[c]++] = h;
+                }
+        }
+        if (pass == 0) {
+            size_t c;
+            for (c = 0; c < cells; c++) st->obs_start[c + 1] += st->obs_start[c];
+            st->obs_ids = (uint32_t *)malloc((total ? total : 1) * sizeof(uint32_t));
+            if (!st->obs_ids) { free(st->obs_start); free(fill); st->obs_start = NULL; st->obs_side = 0; st->obs_dirty = 1; return; }
+        }
+    }
+    free(fill);
+}
+
+double om_map_sample_obstacle_density(om_world *w, double p1, double x) {
+    om_mapgen_state *st = (om_mapgen_state *)w->mapgen_state;
+    double px = p1, py = x;
+    uint32_t h, i, end;
     if (!st) return 0.0;
+    if (st->obs_dirty) om_mgs_obs_build(st);
+    if (st->obs_start) {
+        double fx = (px - st->obs_x0) / st->obs_cell, fy = (py - st->obs_y0) / st->obs_cell;
+        size_t c;
+        if (!(fx >= 0.0 && fy >= 0.0 && fx < st->obs_side && fy < st->obs_side)) return 0.0;
+        c = (size_t)(int)fy * (size_t)st->obs_side + (size_t)(int)fx;
+        end = st->obs_start[c + 1];
+        for (i = st->obs_start[c]; i < end; i++) {
+            const om_mapgen_obstacle_row *o = &st->obstacles[st->obs_ids[i]];
+            if (om_mgs_dist_sq(px, py, o->x, o->y) <= o->radius * o->radius) return 1.0;
+        }
+        return 0.0;
+    }
     for (h = 1; h <= st->n_obstacles; h++) {
         const om_mapgen_obstacle_row *o = om_mgs_obstacle_at(st, h);
         if (om_mgs_dist_sq(px, py, o->x, o->y) <= o->radius * o->radius) {

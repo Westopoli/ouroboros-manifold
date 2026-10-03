@@ -79,12 +79,14 @@ def test_R_083_03_that_unit_takes_10_percent(lib, world_factory):
     # Enemy attacker: same category (Line) as the Vanguard targets so the
     # R-081-01 category multiplier (Strike->Line 0.75x, see ALG-60) does not
     # confound the aura reduction this rule is testing.
-    enemy = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 1, 100.0, 50.0, 0)
 
     # Advance 1 tick: Warden aura repairs friendly_in by 0.075 HP, friendly_out by 0.0
     lib.om_tactical_step(w)
     assert lib.om_unit_hp(w, friendly_in) == pytest.approx(400.075, abs=1e-6)
     assert lib.om_unit_hp(w, friendly_out) == pytest.approx(400.0, abs=1e-6)
+
+    # Test-defect, A163/A164: enemy spawned after the first tick, was spawned before it; cause: aligned targeting cohort (parity with the Python, Addendum 63): the enemy's first shot moved to tick 1, which broke the 400.075 pin of the aura heal alone.
+    enemy = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 1, 100.0, 50.0, 0)
 
     # Damage test: 10% reduction for friendly_in
     base_hit = 50.0
@@ -102,6 +104,8 @@ def test_R_083_03_that_unit_takes_10_percent(lib, world_factory):
 
     # Multiple Wardens: Q-084-01 answered: diminishing reduction (first 0.10, second 0.05),
     # healing stacks normally (2 * 0.075 = 0.150 HP/tick)
+    # Test-defect, A163/A164: enemy stays in range -> enemy moved out of reach before the heal tick; cause: aligned targeting cohort (parity with the Python, Addendum 63): the enemy now fires within the tick and would mask the 0.150 heal delta.
+    lib.om_unit_teleport(w, enemy, 5000.0, 5000.0, 0)
     warden2 = lib.om_unit_spawn(w, OMUnitType.WARDEN, 0, 50.0, 0.0, 0)
     hp_pre_multi = lib.om_unit_hp(w, friendly_in)
     lib.om_tactical_step(w)

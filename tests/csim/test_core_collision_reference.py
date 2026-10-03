@@ -2,7 +2,7 @@
 
 Verifies that the C spatial-grid collision pass (tactical_move.c) produces
 bit-identical results to the all-pairs i<j sweep the bible specifies in ALG-68:
-every pair i<j once per iteration, push apart by overlap, iteration cap 3,
+every pair i<j once per iteration, push apart by overlap, iteration cap 10 (OM_COLLISION_PASSES, switch default 1),
 early-stop when a full pass is a no-op.
 
 Early-stop rule source: om_move_collision_once (tactical_move.c:1094), outer
@@ -18,7 +18,7 @@ list has no candidate left (om_move_grid_any_above)."
 
 Constants from csrc:
     OM_UNIT_COLLISION_RADIUS = 15          (om_constants.h:443)
-    OM_COLLISION_MAX_ITER    = 3           (tactical_move.c:131)
+    OM_COLLISION_PASSES      = 10          (om_constants.h; the C uses it at PURSUE_BY_STEERING 1)
     OM_COLLISION_EXACT_EPS   = 1e-9        (tactical_move.c:132)
 """
 import ctypes
@@ -33,7 +33,7 @@ import pytest
 _RADIUS = 15.0          # OM_UNIT_COLLISION_RADIUS
 _TARGET = 2.0 * _RADIUS  # 30.0 wu -- minimum separation
 _EXACT_EPS = 1e-9       # OM_COLLISION_EXACT_EPS
-_MAX_ITER = 3           # OM_COLLISION_MAX_ITER
+_MAX_ITER = 10          # OM_COLLISION_MAX_ITER (A156: was 3; test-defect A155 to A159)
 
 
 def _run_collision_reference(positions, stationary, max_iter=_MAX_ITER):
@@ -41,7 +41,7 @@ def _run_collision_reference(positions, stationary, max_iter=_MAX_ITER):
 
     positions: {unit_id: [x, y]} -- modified in-place; ids must be sorted ints.
     stationary: set of unit ids with no move target (take zero displacement).
-    max_iter: iteration cap (default 3 per OM_COLLISION_MAX_ITER).
+    max_iter: iteration cap (default 10 per OM_COLLISION_PASSES).
 
     Returns the same dict (modified in-place) for chaining.
 

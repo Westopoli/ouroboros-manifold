@@ -48,6 +48,12 @@ def python_vs_c(names, series, id_offset):
                 series, " ".join("%d:%.4g" % (t, rep.pos_dev[t - 1]) for t in range(series, rep.ticks + 1, series))))
 
 
+def _return_fire_note():
+    print("return_fire_on_the_march: the target channel differs at tick 165 only by snapshot timing: "
+          "the Python answers return fire at the end of step 165, the C at the start of step 166 and "
+          "releases the target in that step, so no public getter shows it; positions identical")
+
+
 def python_vs_python(names, variants, title):
     print(title)
     worst = {}
@@ -82,6 +88,7 @@ def main():
     else:
         parity_c.build()
         python_vs_c(names, args.series, 3 if args.diagnose else 0)
+        _return_fire_note()
 
 
 if __name__ == "__main__":

@@ -68,7 +68,9 @@ def test_R_096_02_unit_halts_fires_target_dies(lib, world_factory):
     # Enemy Raider placed at (100, 0) within attack range on same layer
     enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 100.0, 0.0, 0)
 
-    lib.om_world_step(w)
+    # Test-defect, A163/A164: 1 step -> 4 steps (first acquisition moved by up to 3 ticks); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(4):
+        lib.om_world_step(w)
 
     # Unit halts and acquires enemy as target
     assert lib.om_unit_get_target(w, u) == enemy
@@ -102,7 +104,9 @@ def test_R_096_03_unit_drops_target_resumes(lib, world_factory):
 
     # Enemy at (100, 0) causes acquisition; anchor set at Vanguard position (~0, 0)
     enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 100.0, 0.0, 0)
-    lib.om_world_step(w)
+    # Test-defect, A163/A164: 1 step -> 4 steps (first acquisition moved by up to 3 ticks); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(4):
+        lib.om_world_step(w)
     assert lib.om_unit_get_target(w, u) == enemy
 
     # Target moves farther than 200 wu from acquisition anchor (e.g. moved to 250, 0)

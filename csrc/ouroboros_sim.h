@@ -1812,6 +1812,7 @@ void om_command_attack_target_kiting(om_world *w, uint32_t p0, uint32_t p1, doub
 void om_command_direct_move(om_world *w, uint32_t p0, double p1, double p2);
 uint32_t om_command_group_move(om_world *w, const uint32_t *p0, uint32_t n, double p2, double p3);
 int om_command_issue_named(om_world *w, const char *p0, uint32_t p1, double p2, double p3);
+int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units);
 int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y);
 void om_command_queue_attack_move(om_world *w, uint32_t p0, double p1, double p2);
 void om_command_queue_move(om_world *w, uint32_t p0, double p1, double p2);

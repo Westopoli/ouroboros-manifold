@@ -28,8 +28,6 @@ def world_factory(world_factory, lib):
     """The shared factory, plus the new movement switched on."""
     def make(*args, **kwargs):
         w = world_factory(*args, **kwargs)
-        # PP: runs the new movement (switch default 0, A147 option c')
-        lib.om_tactical_set_param(w, 0, 1.0)
         return w
     return make
 
@@ -39,8 +37,6 @@ def world_factory(world_factory, lib):
     """The shared factory, plus the new movement switched on."""
     def make(*args, **kwargs):
         w = world_factory(*args, **kwargs)
-        # PP: runs the new movement (switch default 0, A147 option c')
-        lib.om_tactical_set_param(w, 0, 1.0)
         return w
     return make
 
@@ -179,11 +175,13 @@ def test_R_087_04_only_a_visible_enemy_is_pursued(lib, world_factory):
     _assert_goal(lib, w, u, 500.0, 0.0, "visible enemy is pursued (positive control)")
 
 
-def test_R_087_04_visible_means_the_units_own_set_in_phase_a(lib, world_factory):
-    """Plan P1 / Phase C note: in Phase A "visible" is the pursuing unit's OWN set, as the Python.
-    A friendly Interceptor (sensor 1000) sees an enemy 600 wu from a Raider whose own sensing is
-    blanked by an interference zone on it. Preconditions are asserted (the friend sees the enemy,
-    the Raider does not); the Raider must then go on marching, not chase what only its friend sees."""
+def test_R_087_04_visible_means_the_sides_set(lib, world_factory):
+    """R-087-04 / R-093-02 (Phase C, A185): "visible" is the pursuer's SIDE's set. A friendly Interceptor
+    (sensor 1000) sees an enemy 600 wu from a Raider whose own sensing is blanked by an interference zone
+    on it. Preconditions are asserted (the friend sees the enemy, the Raider does not); the Raider, whose
+    side sees the enemy and which has it inside its sensor radius, then pursues it.
+    TD-PP-C-r08704-sideset (A185): the Phase A text of this test (own set only, march goes on) is
+    superseded; plan P1 / Phase C."""
     w = world_factory(n_regions=1)
     u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
     spotter = spawn(lib, w, INTERCEPTOR, 0, 0.0, 700.0)
@@ -195,5 +193,5 @@ def test_R_087_04_visible_means_the_units_own_set_in_phase_a(lib, world_factory)
 
     step(lib, w, CYCLE + 4)
 
-    _assert_goal(lib, w, u, -3000.0, 0.0, "R-087-04 own visible set only (Phase A)")
-    assert pos(lib, w, u)[0] < 0.0, "Raider walked toward an enemy only its friend can see"
+    _assert_goal(lib, w, u, 600.0, 0.0, "R-087-04 the side's visible set (Phase C)")
+    assert pos(lib, w, u)[0] > 0.0, "Raider did not walk toward an enemy its friend sees"

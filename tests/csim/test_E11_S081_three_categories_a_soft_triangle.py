@@ -78,10 +78,26 @@ def test_R_081_02_line_wins_with_at_least(lib, world_factory):
     assert surviving_strike_hp == 0.0
     assert surviving_line_hp >= 0.30 * initial_line_hp
 
-    # 2. Siege vs Line in a straight fight: Siege wins with >= 30% HP remaining
+    # 2a. Siege vs Line at 1000 wu, nobody spots: a stand-off. A Bombard (sensor 300) cannot see a
+    # Vanguard at 1000 wu and fires only at what its side sees, so no damage is dealt and nobody dies.
+    # TD-PP-C-r08102-standoff (A189).
     lib.om_tactical_reset(w)
     u_siege = [lib.om_unit_spawn(w, OMUnitType.BOMBARD, 0, 0.0, float(i * 40), 0) for i in range(6)]
     u_line2 = [lib.om_unit_spawn(w, OMUnitType.VANGUARD, 1, 1000.0, float(i * 40), 0) for i in range(6)]
+    all_units = u_siege + u_line2
+    full_hp = [lib.om_unit_hp(w, u) for u in all_units]
+    assert all(h > 0 for h in full_hp)
+    lib.om_tactical_run(w, 400)
+    assert all(lib.om_unit_alive(w, u) == 1 for u in all_units)
+    assert [lib.om_unit_hp(w, u) for u in all_units] == full_hp
+
+    # 2b. Same scene with a spotter: a Raider one layer above the Vanguards, about 320 wu from them
+    # (cross-layer sight 0.5 x 700 reaches them; the Vanguards' reach 0 cannot touch it). The Bombards
+    # fire on its sight: Siege wins with >= 30% HP remaining.
+    lib.om_tactical_reset(w)
+    u_siege = [lib.om_unit_spawn(w, OMUnitType.BOMBARD, 0, 0.0, float(i * 40), 0) for i in range(6)]
+    u_line2 = [lib.om_unit_spawn(w, OMUnitType.VANGUARD, 1, 1000.0, float(i * 40), 0) for i in range(6)]
+    lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 1000.0, 520.0, 1)
     initial_siege_hp = sum(lib.om_unit_hp(w, u) for u in u_siege)
     assert initial_siege_hp > 0
 

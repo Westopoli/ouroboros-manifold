@@ -195,10 +195,12 @@ def test_emit_deterministic_order(tmp_path):
     _run("--emit", str(out))
     defines = [l for l in out.read_text().splitlines() if l.startswith("#define OM_")]
     # within each ALG comment group, defines are alphabetical by output name
+    manual = {line for _, extra in ac.MANUAL_INSERTS for line in extra}
     groups = out.read_text().split("/* ALG-")[1:]
     for g in groups:
         body = g.split("*/", 1)[1]
-        names = [l.split()[1] for l in body.splitlines() if l.startswith("#define ")]
+        names = [l.split()[1] for l in body.splitlines()
+                 if l.startswith("#define ") and l not in manual]
         assert names == sorted(names)
     assert defines  # sanity: something was emitted
 
@@ -623,3 +625,25 @@ def test_lint_allowlist_survives_unrelated_line_shift_but_still_catches_new_lite
     appended = shifted.rstrip("\n") + "\ndouble om_scratch_probe(double x) { return x * 0.33; }\n"
     messages = ac.lint_file_violations("csrc/sim.c", appended, allowlist, grandfathered=True)
     assert any("0.33" in m for m in messages), messages
+
+
+# --------------------------------------------------------------------- regenerate == committed header
+
+
+def test_regenerate_reproduces_committed_header_byte_for_byte(tmp_path):
+    out = tmp_path / "om_constants.h"
+    proc = _run("--emit", str(out))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert out.read_bytes() == (REPO / "csrc" / "om_constants.h").read_bytes()
+
+
+def test_regenerate_keeps_collision_passes_from_alg68(tmp_path):
+    out = tmp_path / "om_constants.h"
+    assert _run("--emit", str(out)).returncode == 0
+    assert "#define OM_COLLISION_PASSES 10\n" in out.read_text()
+
+
+def test_emitted_names_never_double_the_om_prefix(tmp_path):
+    out = tmp_path / "om_constants.h"
+    assert _run("--emit", str(out)).returncode == 0
+    assert "OM_OM_" not in out.read_text()

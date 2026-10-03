@@ -74,7 +74,7 @@ def _mean_x(group):
 
 
 def test_role_group_shapes_single_type():
-    """Each role is one Group with its own formation, params, facing, layer, order; goal None except counter."""
+    """Each role is one Group with its own formation, params, facing, layer, order; goal None except skilled and counter (the skilled goal is pinned in test_asym_concave_goal.py)."""
     expect = {
         "blob": {"radius": 80 + 12 * math.sqrt(16)},
         "line": {"spacing": 30},
@@ -85,8 +85,9 @@ def test_role_group_shapes_single_type():
         s = asym_play(16, Side(role), Side("blob"))(16, False)
         g0, g1 = s.groups
         assert isinstance(s, Setup) and len(s.groups) == 2
-        assert (g0.side, g0.unit, g0.count, g0.formation, g0.facing_deg, g0.layer, g0.order, g0.goal, g0.y) == (
-            0, "Vanguard", 16, FORMATION[role], 0.0, 0, "attack_move", None, 0.0)
+        assert (g0.side, g0.unit, g0.count, g0.formation, g0.facing_deg, g0.layer, g0.order, g0.y) == (
+            0, "Vanguard", 16, FORMATION[role], 0.0, 0, "attack_move", 0.0)
+        assert (g0.goal is None) == (role != "skilled")
         assert g0.params == pytest.approx(expect[role])
         assert (g1.side, g1.facing_deg, g1.formation, g1.y) == (1, 180.0, "blob", 0.0)
     c0, _ = asym_play(16, Side("counter"), Side("line"))(16, False).groups
@@ -244,7 +245,7 @@ def test_counter_geometry_side0(enemy, heads):
     assert abs(c.goal[1] - centre[1]) > 1.0
     assert all(y > 0 for _, y in _points(s, 0))
     assert c.facing_deg == 0.0 and c.order == "attack_move"
-    assert _groups(s, 1)[0].goal is None
+    assert (_groups(s, 1)[0].goal is None) == (enemy != "skilled")
 
 
 def test_counter_geometry_side1_mirrors_side0():

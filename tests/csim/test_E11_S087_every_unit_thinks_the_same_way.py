@@ -48,7 +48,9 @@ def test_R_087_01_it_moves_200_wu_directly(lib, world_factory):
     # Once visible and in range, stands and fights
     lib.om_unit_set_stealth(w, attacker_unseen, 0)
     lib.om_unit_teleport(w, attacker_unseen, end_x + 100.0, 0.0, 0)  # in range
-    lib.om_tactical_step(w)
+    # Test-defect, A163/A164: 1 step -> 4 steps (first acquisition moved by up to 3 ticks: the victim's cohort slot is now (id-1)%4); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(4):
+        lib.om_tactical_step(w)
     assert lib.om_unit_target(w, victim) == attacker_unseen
 
 
@@ -83,7 +85,9 @@ def test_R_087_03_it_attacks_nearest_such_enemy(lib, world_factory):
     assert len({vanguard, e_near, e_far}) == 3, "spawned unit ids must be distinct"
 
     # Step targeting: acquires nearest enemy (e_near)
-    lib.om_tactical_step(w)
+    # Test-defect, A163/A164: 1 step -> 4 steps (first acquisition moved by up to 3 ticks); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(4):
+        lib.om_tactical_step(w)
     assert lib.om_unit_target(w, vanguard) == e_near
 
     # Move e_far closer than e_near; engaged target is still kept
@@ -120,7 +124,9 @@ def test_R_087_05_it_anchors_at_its_position(lib, world_factory):
     enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 250.0, 0.0, 0)
 
     lib.om_command_attack_move(w, [vanguard], 1, 1000.0, 0.0)
-    lib.om_tactical_step(w)
+    # Test-defect, A163/A164: 1 step -> 4 steps (first acquisition moved by up to 3 ticks); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    for _ in range(4):
+        lib.om_tactical_step(w)
     assert lib.om_unit_target(w, vanguard) == enemy
 
     # Target moves > 200 wu from the anchor (anchor was at ~100.0, target moved to 350.0 -> distance 250 > 200)
@@ -176,10 +182,11 @@ def test_R_087_08_each_unit_re_acquires_on(lib, world_factory):
 
     units = [lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, float(i * 20), 0) for i in range(4)]
 
-    # Each unit acquires when (unit_id % 4 == tick % 4)
+    # Each unit acquires when ((unit_id - 1) % 4 == tick % 4)
     for u in units:
         cohort = lib.om_unit_targeting_cohort(w, u)
-        assert cohort == (u % 4)
+        # Test-defect, A163/A164: u % 4 -> (u - 1) % 4; cause: aligned targeting cohort (parity with the Python, Addendum 63).
+        assert cohort == ((u - 1) % 4)
 
     # Current target validation occurs every tick
     lib.om_tactical_step(w)

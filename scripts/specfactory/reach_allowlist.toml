@@ -71,3 +71,15 @@ reason = "PP-contract (A139): layer change order (Phase C). Removed when the cli
 [[allow]]
 symbol = "om_command_ping"
 reason = "PP-contract (A139): targeted ping (Phase C). Removed when the client plan wires it to a pipe handler."
+
+[[allow]]
+symbol = "om_unit_transition_progress"
+reason = "PP-contract (A139 extended, A183): lab and test observer of a layer transfer (Phase C G4). The transfer itself is reached from om_tactical_step; the getter has no game caller until the client wires it. Removed when the client wires it."
+
+[[allow]]
+symbol = "om_command_set_emission"
+reason = "PP-contract (A139 extended, A185): going dark is a command the client will send (Phase C G6); the pipe handler is not wired yet. Reached from tests only until the client wires it. Removed when the client wires it."
+
+[[allow]]
+symbol = "om_ping_alert_get"
+reason = "PP-contract (A139 extended, A185): reads one ping alert for the client (Phase C G7); the alert is produced and consumed inside the tick, the getter has no game caller until the client wires it. Removed when the client wires it."

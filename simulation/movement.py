@@ -287,6 +287,13 @@ def _update_attack_move_state(store, active):
         tgt = store.auto_engage_target[uid]
         if tgt >= 0 and store.alive[tgt]:
             if not store.engage_anchor_set[uid]:
+                # Deliberate difference from the old Python: A167/A163 (A176). A sensor sighting is a move
+                # goal, not a target: the leash anchor is taken only while the target is IN RANGE.
+                atk_r = store.data[uid, FIELD_ATTACK_RANGE]
+                ddx = store.data[tgt, FIELD_X] - store.data[uid, FIELD_X]
+                ddy = store.data[tgt, FIELD_Y] - store.data[uid, FIELD_Y]
+                if ddx * ddx + ddy * ddy > atk_r * atk_r:
+                    continue
                 store.engage_anchor_x[uid] = store.data[uid, FIELD_X]
                 store.engage_anchor_y[uid] = store.data[uid, FIELD_Y]
                 store.engage_anchor_set[uid] = True
@@ -328,14 +335,12 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
 
     for uid in active:
         if store.attack_backswing[uid] > 0:
-            store.attack_backswing[uid] = max(0.0, store.attack_backswing[uid] - dt)
+            # A177: count whole ticks (0.5 s / 0.05 s = 10), not float seconds whose residue added an 11th.
+            store.attack_backswing[uid] = max(0.0, round(store.attack_backswing[uid] / dt - 1.0) * dt)
 
+    held = set()  # R-097-06: units halted by engagement this tick (a live target in range when they were to move)
     for uid in active:
         if not store.has_move_target[uid]:
-            continue
-        if is_immobile(store, uid):
-            continue
-        if store.attack_backswing[uid] > 0:  # post-attack movement lock (SC2-style backswing)
             continue
 
         px = store.data[uid, FIELD_X]
@@ -346,12 +351,21 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
         # See also: damage.py update_targeting — sensor pursuit updates target_x/y
         # each tick toward the nearest enemy for attack_moving units with large sensor radius.
         tgt = store.auto_engage_target[uid]
+        in_range = False
         if tgt >= 0 and store.alive[tgt]:
             atk_r = store.data[uid, FIELD_ATTACK_RANGE]
             dx_t = store.data[tgt, FIELD_X] - px
             dy_t = store.data[tgt, FIELD_Y] - py
-            if dx_t * dx_t + dy_t * dy_t <= atk_r * atk_r:
-                continue  # target in firing range — hold position
+            in_range = dx_t * dx_t + dy_t * dy_t <= atk_r * atk_r
+        if in_range:
+            held.add(uid)
+
+        if is_immobile(store, uid):
+            continue
+        if store.attack_backswing[uid] > 0:  # post-attack movement lock (SC2-style backswing)
+            continue
+        if in_range:
+            continue  # target in firing range — hold position
 
         eff = store.effective_speed[uid]
         speed = eff if eff > 0 else store.data[uid, FIELD_SPEED]
@@ -388,8 +402,23 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             if uid in store.waypoints:
                 store.waypoints[uid].pop(0)
                 if store.waypoints[uid]:
-                    continue
-                del store.waypoints[uid]
+                    # A179: continue toward the next waypoint on this same tick.
+                    tx, ty = store.waypoints[uid][0]
+                    arrival_radius = collision_radius * 2.0
+                    dx = tx - px
+                    dy = ty - py
+                    dist = math.sqrt(dx * dx + dy * dy)
+                    if dist < arrival_radius:
+                        continue
+                    arrived = False
+                else:
+                    del store.waypoints[uid]
+                    arrived = True
+            else:
+                arrived = True
+        else:
+            arrived = False
+        if arrived:
             store.has_move_target[uid] = False
             store.effective_speed[uid] = 0.0
             # attack_moving is intentionally NOT cleared here — it is a command-
@@ -474,7 +503,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             store.data[uid, FIELD_X] != positions[uid][0] or
             store.data[uid, FIELD_Y] != positions[uid][1]
         )}
-        _resolve_collisions(store, active, moved, tactical_map, navmesh)
+        _resolve_collisions(store, active, moved, tactical_map, navmesh, held)
 
 
 def _update_move_groups(store):
@@ -536,7 +565,7 @@ def _update_move_groups(store):
             store.move_group_id[uid] = -1
 
 
-def _resolve_collisions(store, active, moved, tactical_map, navmesh):
+def _resolve_collisions(store, active, moved, tactical_map, navmesh, held=frozenset()):
     radius = config.UNIT_COLLISION_RADIUS
     min_dist = 2.0 * radius
     min_dist_sq = min_dist * min_dist
@@ -554,108 +583,107 @@ def _resolve_collisions(store, active, moved, tactical_map, navmesh):
                 grid[(cr, cc)] = []
             grid[(cr, cc)].append(uid)
 
-        # Only moved units drive the outer loop — stationary engaged units never
-        # initiate pair checks, cutting ~90% of iterations during dense combat.
-        for uid_a in moved:
+        # Every active unit starts pair checks, moving or stopped (A156).
+        found_close = False
+        for uid_a in active:
             ax = store.data[uid_a, FIELD_X]
             ay = store.data[uid_a, FIELD_Y]
             layer_a = store.data[uid_a, FIELD_LAYER]
             cr = int(ax / cell_size)
             cc = int(ay / cell_size)
 
+            # Deliberate difference from the old Python: id order, A182 (partners in ascending uid, not grid-cell order).
+            partners = sorted(b for rr in range(cr - 1, cr + 2) for cc2 in range(cc - 1, cc + 2) for b in grid.get((rr, cc2), ()))
             # Only check units in the 3×3 neighborhood — units further away
             # cannot be within min_dist of uid_a given cell_size == min_dist.
-            for nr in range(cr - 1, cr + 2):
-                for nc in range(cc - 1, cc + 2):
-                    neighbors = grid.get((nr, nc))
-                    if neighbors is None:
-                        continue
-                    for uid_b in neighbors:
-                        if uid_b <= uid_a:  # avoid double-counting and self
-                            continue
-                        if store.data[uid_b, FIELD_LAYER] != layer_a:
-                            continue
+            for uid_b in partners:
+                if uid_b <= uid_a:  # avoid double-counting and self
+                    continue
+                if store.data[uid_b, FIELD_LAYER] != layer_a:
+                    continue
 
-                        bx = store.data[uid_b, FIELD_X]
-                        by = store.data[uid_b, FIELD_Y]
-                        dx = ax - bx
-                        dy = ay - by
-                        d_sq = dx * dx + dy * dy
+                bx = store.data[uid_b, FIELD_X]
+                by = store.data[uid_b, FIELD_Y]
+                dx = ax - bx
+                dy = ay - by
+                d_sq = dx * dx + dy * dy
 
-                        if d_sq >= min_dist_sq:
-                            continue
+                if d_sq >= min_dist_sq:
+                    continue
 
-                        if d_sq < 0.001:
-                            # Deterministic fallback: lower uid pushes left
-                            dx = -1.0 if uid_a < uid_b else 1.0
-                            dy = 0.0
-                            d = 0.001
+                found_close = True
+                if d_sq < 0.001:
+                    # Deterministic fallback: lower uid pushes left
+                    dx = -1.0 if uid_a < uid_b else 1.0
+                    dy = 0.0
+                    d = 0.001
+                else:
+                    d = math.sqrt(d_sq)
+
+                overlap = min_dist - d
+                nx = dx / d
+                ny = dy / d
+
+                # R-097-06: stationary is halted by engagement (held), not 'has any target': a unit walking
+                # toward a sighted target is moving, as in the C.
+                moving_a = store.has_move_target[uid_a] and uid_a not in held
+                moving_b = store.has_move_target[uid_b] and uid_b not in held
+
+                if moving_a and moving_b:
+                    push_a, push_b = overlap * 0.5, overlap * 0.5
+                elif moving_a:
+                    push_a, push_b = overlap, 0.0
+                elif moving_b:
+                    push_a, push_b = 0.0, overlap
+                else:
+                    push_a, push_b = overlap * 0.5, overlap * 0.5
+
+                new_ax = ax + nx * push_a
+                new_ay = ay + ny * push_a
+                new_bx = bx - nx * push_b
+                new_by = by - ny * push_b
+
+                if tactical_map is not None:
+                    new_ax = max(0.0, min(tactical_map.width, new_ax))
+                    new_ay = max(0.0, min(tactical_map.height, new_ay))
+                    new_bx = max(0.0, min(tactical_map.width, new_bx))
+                    new_by = max(0.0, min(tactical_map.height, new_by))
+
+                if navmesh is not None:
+                    ra, ca = navmesh.cell(new_ax, new_ay)
+                    if not navmesh.is_walkable(ra, ca):
+                        # Try sliding along each axis before full revert.
+                        ra2, ca2 = navmesh.cell(new_ax, ay)
+                        if navmesh.is_walkable(ra2, ca2):
+                            new_ay = ay
                         else:
-                            d = math.sqrt(d_sq)
-
-                        overlap = min_dist - d
-                        nx = dx / d
-                        ny = dy / d
-
-                        moving_a = store.has_move_target[uid_a] and not (
-                            store.auto_engage_target[uid_a] >= 0 and store.alive[store.auto_engage_target[uid_a]]
-                        )
-                        moving_b = store.has_move_target[uid_b] and not (
-                            store.auto_engage_target[uid_b] >= 0 and store.alive[store.auto_engage_target[uid_b]]
-                        )
-
-                        if moving_a and moving_b:
-                            push_a, push_b = overlap * 0.5, overlap * 0.5
-                        elif moving_a:
-                            push_a, push_b = overlap, 0.0
-                        elif moving_b:
-                            push_a, push_b = 0.0, overlap
+                            ra3, ca3 = navmesh.cell(ax, new_ay)
+                            if navmesh.is_walkable(ra3, ca3):
+                                new_ax = ax
+                            else:
+                                new_ax, new_ay = ax, ay
+                    rb, cb = navmesh.cell(new_bx, new_by)
+                    if not navmesh.is_walkable(rb, cb):
+                        # Try sliding along each axis before full revert.
+                        rb2, cb2 = navmesh.cell(new_bx, by)
+                        if navmesh.is_walkable(rb2, cb2):
+                            new_by = by
                         else:
-                            push_a, push_b = overlap * 0.5, overlap * 0.5
+                            rb3, cb3 = navmesh.cell(bx, new_by)
+                            if navmesh.is_walkable(rb3, cb3):
+                                new_bx = bx
+                            else:
+                                new_bx, new_by = bx, by
 
-                        new_ax = ax + nx * push_a
-                        new_ay = ay + ny * push_a
-                        new_bx = bx - nx * push_b
-                        new_by = by - ny * push_b
+                store.data[uid_a, FIELD_X] = new_ax
+                store.data[uid_a, FIELD_Y] = new_ay
+                ax = new_ax
+                ay = new_ay
+                store.data[uid_b, FIELD_X] = new_bx
+                store.data[uid_b, FIELD_Y] = new_by
 
-                        if tactical_map is not None:
-                            new_ax = max(0.0, min(tactical_map.width, new_ax))
-                            new_ay = max(0.0, min(tactical_map.height, new_ay))
-                            new_bx = max(0.0, min(tactical_map.width, new_bx))
-                            new_by = max(0.0, min(tactical_map.height, new_by))
-
-                        if navmesh is not None:
-                            ra, ca = navmesh.cell(new_ax, new_ay)
-                            if not navmesh.is_walkable(ra, ca):
-                                # Try sliding along each axis before full revert.
-                                ra2, ca2 = navmesh.cell(new_ax, ay)
-                                if navmesh.is_walkable(ra2, ca2):
-                                    new_ay = ay
-                                else:
-                                    ra3, ca3 = navmesh.cell(ax, new_ay)
-                                    if navmesh.is_walkable(ra3, ca3):
-                                        new_ax = ax
-                                    else:
-                                        new_ax, new_ay = ax, ay
-                            rb, cb = navmesh.cell(new_bx, new_by)
-                            if not navmesh.is_walkable(rb, cb):
-                                # Try sliding along each axis before full revert.
-                                rb2, cb2 = navmesh.cell(new_bx, by)
-                                if navmesh.is_walkable(rb2, cb2):
-                                    new_by = by
-                                else:
-                                    rb3, cb3 = navmesh.cell(bx, new_by)
-                                    if navmesh.is_walkable(rb3, cb3):
-                                        new_bx = bx
-                                    else:
-                                        new_bx, new_by = bx, by
-
-                        store.data[uid_a, FIELD_X] = new_ax
-                        store.data[uid_a, FIELD_Y] = new_ay
-                        ax = new_ax
-                        ay = new_ay
-                        store.data[uid_b, FIELD_X] = new_bx
-                        store.data[uid_b, FIELD_Y] = new_by
+        if not found_close:
+            break
 
 
 def has_combat_los(navmesh, x1, y1, x2, y2):

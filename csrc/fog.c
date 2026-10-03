@@ -146,6 +146,24 @@ typedef struct {
     int elevation_tier;
 } om_fog_unit_track;
 
+/* G7: a cast ping's disc, live for OM_TP_PING_REVEAL_TICKS tactical ticks after the cast. */
+#define OM_FOG_MAX_REVEALS 64
+#define OM_FOG_MAX_ALERTS 256
+#define OM_FOG_PING_EDGE_SLOPE_SQ 3.0 /* the 60 and 120 degree edges have slope sqrt(3) */
+/* om_command_ping refusal reasons (docs/northstar/plans/push/pp_contract.md section 6) */
+#define OM_FOG_PING_REASON_CASTER 1
+#define OM_FOG_PING_REASON_REACH 2
+#define OM_FOG_PING_REASON_COOLDOWN 3
+#define OM_FOG_PING_REASON_LAYER 4
+#define OM_FOG_PING_DOWN_SECTORS 3
+#define OM_FOG_MAX_PINGED_FACTIONS 16
+typedef struct {
+    int32_t faction;
+    uint32_t layer;
+    double x, y, radius;
+    uint64_t until;
+} om_fog_ping_reveal;
+
 typedef struct {
     char name[OM_FOG_ERA_FLAG_NAME_LEN];
     int on;
@@ -177,6 +195,14 @@ typedef struct {
     uint32_t bound_scanned;
     double max_sensor;
     int max_elev;
+
+    uint8_t emit[OM_MAX_UNITS + 1];
+
+    uint64_t ping_cast_plus1[OM_MAX_UNITS + 1];
+    om_fog_ping_reveal reveals[OM_FOG_MAX_REVEALS];
+    uint32_t n_reveals;
+    om_ping_alert alerts[OM_FOG_MAX_ALERTS];
+    uint32_t n_alerts;
 
     om_client_snapshot snapshot;
 } om_fog_state;
@@ -288,27 +314,56 @@ static int om_fog_cover_blocks(const om_world *w, double ox, double oy, double t
     return 0;
 }
 
-#define OM_FOG_GRID_STEP (OM_NAVMESH_CELL_SIZE / 2.0)
-
 /* Defined in tactical_mapgen.c, not in the header: 1 blocked, 0 open, 100 wu cells.
  * See also: om_mapgen_cell_blocked in tactical_mapgen.c. */
 extern int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
 
-/* R-098-02: a blocked route-grid cell on the lower layer of the pair blocks the line, in addition to cover discs.
- * Fixed half-cell steps along the line; the cells holding the two units are exempt (standing in it, as with cover).
+static int32_t om_fog_cell_floor(double v) {
+    int32_t c = (int32_t)(v / OM_NAVMESH_CELL_SIZE);
+    if ((double)c * OM_NAVMESH_CELL_SIZE > v) c--;
+    return c;
+}
+
+static int32_t om_fog_cell_ceil(double v) {
+    int32_t c = (int32_t)(v / OM_NAVMESH_CELL_SIZE);
+    if ((double)c * OM_NAVMESH_CELL_SIZE < v) c++;
+    return c;
+}
+
+/* R-098-02 (A159): a blocked route-grid cell on the lower layer of the pair blocks the line when the segment has
+ * positive-length overlap with the half-open cell [lo, hi); touching only a corner point does not, and a segment
+ * lying along a cell's low edge is inside that cell.
+ * Exact walk, column by column: the segment is clipped to each 100 wu column, and the rows its y-span covers
+ * are tested. The cells holding the two units are exempt (standing in it, as with cover).
  * Only with ROUTE_AROUND_TERRAIN on. See also: om_combat_can_shoot in tactical_move.c (fire side). */
 static int om_fog_grid_blocks(const om_world *w, double ox, double oy, double tx, double ty, uint32_t low_layer) {
-    double dx = tx - ox, dy = ty - oy, len = sqrt(dx * dx + dy * dy);
-    int32_t c0x = (int32_t)(ox / OM_NAVMESH_CELL_SIZE), c0y = (int32_t)(oy / OM_NAVMESH_CELL_SIZE);
-    int32_t c1x = (int32_t)(tx / OM_NAVMESH_CELL_SIZE), c1y = (int32_t)(ty / OM_NAVMESH_CELL_SIZE);
-    int32_t i, n;
+    double dx = tx - ox, dy = ty - oy;
+    double xmin = (ox < tx) ? ox : tx, xmax = (ox < tx) ? tx : ox;
+    int32_t c0x = om_fog_cell_floor(ox), c0y = om_fog_cell_floor(oy);
+    int32_t c1x = om_fog_cell_floor(tx), c1y = om_fog_cell_floor(ty);
+    int32_t col, col_lo = om_fog_cell_floor(xmin), col_hi = om_fog_cell_floor(xmax);
     if (om_tactical_get_param(w, OM_TP_ROUTE_AROUND_TERRAIN) == 0.0) return 0;
-    n = (int32_t)(len / OM_FOG_GRID_STEP) + 1;
-    for (i = 1; i < n; i++) {
-        double f = (double)i / (double)n;
-        int32_t cx = (int32_t)((ox + dx * f) / OM_NAVMESH_CELL_SIZE), cy = (int32_t)((oy + dy * f) / OM_NAVMESH_CELL_SIZE);
-        if ((cx == c0x && cy == c0y) || (cx == c1x && cy == c1y)) continue;
-        if (om_mapgen_cell_blocked(w, low_layer, cx, cy)) return 1;
+    for (col = col_lo; col <= col_hi; col++) {
+        double left = (double)col * OM_NAVMESH_CELL_SIZE, right = left + OM_NAVMESH_CELL_SIZE;
+        double xa = (xmin > left) ? xmin : left, xb = (xmax < right) ? xmax : right;
+        double ya, yb, ylo, yhi;
+        int32_t row, row_lo, row_hi;
+        if (dx == 0.0) {
+            ya = oy;
+            yb = ty;
+        } else {
+            if (xa >= xb) continue;
+            ya = oy + dy * (xa - ox) / dx;
+            yb = oy + dy * (xb - ox) / dx;
+        }
+        ylo = (ya < yb) ? ya : yb;
+        yhi = (ya < yb) ? yb : ya;
+        row_lo = om_fog_cell_floor(ylo);
+        row_hi = (ylo == yhi) ? row_lo : om_fog_cell_ceil(yhi) - 1;
+        for (row = row_lo; row <= row_hi; row++) {
+            if ((col == c0x && row == c0y) || (col == c1x && row == c1y)) continue;
+            if (om_mapgen_cell_blocked(w, low_layer, col, row)) return 1;
+        }
     }
     return 0;
 }
@@ -370,14 +425,13 @@ static double om_fog_observer_bound(const om_fog_state *st, const om_world *w, u
  * Reach" with no om_set_era_flag call) do not agree; both fenced tests pass
  * only if the bonus always applies, so it always applies here (the flag is
  * stored by om_set_era_flag but not consulted by this formula). */
-static double om_fog_effective_radius(const om_fog_state *st, const om_world *w, uint32_t observer,
-                                       uint32_t target_elev_tier, int have_target_elev) {
-    om_world *mw = (om_world *)w;
-    int type = om_unit_get_unit_type(w, observer);
-    double base, interference, effective, ox, oy;
-    if (type < 0 || !om_fog_unit_pos(w, observer, &ox, &oy)) return 0.0;
-    base = om_unit_profile_sensor_radius(mw, type);
-    interference = om_fog_zone_interference_at(st, w, ox, oy, om_fog_unit_layer(w, observer));
+static double om_fog_effective_radius_at(const om_fog_state *st, const om_world *w, uint32_t observer, int type,
+                                          double ox, double oy, uint32_t layer,
+                                          uint32_t target_elev_tier, int have_target_elev) {
+    double base, interference, effective;
+    if (type < 0) return 0.0;
+    base = om_unit_profile_sensor_radius((om_world *)w, type);
+    interference = om_fog_zone_interference_at(st, w, ox, oy, layer);
     effective = base * (1.0 - interference);
     if (have_target_elev) {
         double mult = 1.0 + OM_ELEVATION_SENSOR_BONUS_PER_TIER *
@@ -387,17 +441,37 @@ static double om_fog_effective_radius(const om_fog_state *st, const om_world *w,
     return effective;
 }
 
-/* Candidate observers come from the grid around the target; an any-of, so the iterator's order does not matter. */
+static double om_fog_effective_radius(const om_fog_state *st, const om_world *w, uint32_t observer,
+                                       uint32_t target_elev_tier, int have_target_elev) {
+    int type = om_unit_get_unit_type(w, observer);
+    double ox, oy;
+    if (type < 0 || !om_fog_unit_pos(w, observer, &ox, &oy)) return 0.0;
+    return om_fog_effective_radius_at(st, w, observer, type, ox, oy, om_fog_unit_layer(w, observer),
+                                      target_elev_tier, have_target_elev);
+}
+
+static int om_fog_ping_reveals(const om_world *w, int32_t faction, uint32_t unit);
+
+static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, double oy, uint32_t ol,
+                             uint32_t target, double tx, double ty, uint32_t tl);
+
+/* Candidate observers come from the grid around the target; an any-of, so the iterator's order does not matter.
+ * A live G7 ping disc of the faction joins its visible set (R-162-05). */
 int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
     om_grid_iter it;
     double tx, ty;
-    uint32_t observer;
+    uint32_t observer, tl;
     if (!om_fog_unit_pos(w, target, &tx, &ty)) return 0;
-    om_grid_iter_begin_faction(&it, (om_world *)w, faction, tx, ty, om_fog_world_bound(w));
-    while ((observer = om_grid_iter_next(&it)) != 0) {
-        if (om_unit_can_see(w, observer, target)) return 1;
+    if (om_unit_get_faction(w, target) >= 0) {
+        tl = om_fog_unit_layer(w, target);
+        om_grid_iter_begin_faction(&it, (om_world *)w, faction, tx, ty, om_fog_world_bound(w));
+        while ((observer = om_grid_iter_next(&it)) != 0) {
+            double ox, oy;
+            if (!om_unit_alive((om_world *)w, observer) || !om_fog_unit_pos(w, observer, &ox, &oy)) continue;
+            if (om_fog_can_see_at(w, observer, ox, oy, om_fog_unit_layer(w, observer), target, tx, ty, tl)) return 1;
+        }
     }
-    return 0;
+    return om_fog_ping_reveals(w, faction, target);
 }
 
 /* ---- generated stubs from signatures.toml ---- */
@@ -601,24 +675,13 @@ void om_unit_acquire_target(om_world *w, uint32_t unit) {
     }
 }
 
-int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
-    const om_fog_state *st = om_fog_ro(w);
-    om_world *mw = (om_world *)w;
-    double ox, oy, tx, ty, factor;
-    uint32_t ol, tl;
-    if (om_unit_get_faction(w, observer) < 0 || om_unit_get_faction(w, target) < 0) return 0;
-    if (!om_unit_alive(mw, observer)) return 0;
-    if (!om_fog_unit_pos(w, observer, &ox, &oy) || !om_fog_unit_pos(w, target, &tx, &ty)) return 0;
-    ol = om_fog_unit_layer(w, observer);
-    tl = om_fog_unit_layer(w, target);
-    factor = om_unit_get_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol);
-    if (factor <= 0.0) return 0;
-    if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius(st, w, observer, (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
-    if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
-    return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
+#define OM_FOG_VISION_OFFSETS 4
+
+static double om_fog_vision_param(const om_world *w, uint32_t offset, int up) {
+    return om_tactical_get_param(w, (om_tac_param)((up ? OM_TP_VISION_UP_1 : OM_TP_VISION_DOWN_1) + (int)offset - 1));
 }
 
-double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0) {
+static double om_fog_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0, int up) {
     const om_fog_state *st = om_fog_ro(w);
     double ux = 0.0, uy = 0.0;
     int in_vantage;
@@ -626,15 +689,54 @@ double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t
     om_fog_unit_pos(w, unit, &ux, &uy);
     in_vantage = om_fog_in_vantage(st, ux, uy);
     if (p0 == 0) return 1.0;
-    if (p0 == 1) base = OM_CONE_LAYER_1_FACTOR;
-    else if (p0 == 2) base = OM_CONE_LAYER_2_FACTOR;
-    else if (in_vantage && p0 == 2 + OM_VANTAGE_EXTRA_LAYER) return OM_CONE_LAYER_2_FACTOR;
-    else return 0.0;
-    if (in_vantage) {
+    if (p0 > OM_FOG_VISION_OFFSETS) return 0.0;
+    base = om_fog_vision_param(w, p0, up);
+    if (base > 1.0) base = 1.0;
+    if (p0 == 2 + OM_VANTAGE_EXTRA_LAYER && in_vantage && base <= 0.0) return om_fog_vision_param(w, 2, up);
+    if (in_vantage && p0 <= 2) {
         double doubled = base * OM_VANTAGE_CONE_MULTIPLIER;
         return (doubled > 1.0) ? 1.0 : doubled;
     }
     return base;
+}
+
+/* G6 (S-163): an emitting observer's cross-layer factor is scaled by OM_TP_EMIT_SIGHT_MULT and an emitting target's by
+ * OM_TP_EMIT_SEEN_MULT, the product capped at 1.0. Same-layer sight never reaches here. */
+static double om_fog_emission_factor(const om_world *w, double factor, uint32_t observer, uint32_t target) {
+    const om_fog_state *st = om_fog_ro(w);
+    if (!st) return factor;
+    if (observer <= OM_MAX_UNITS && st->emit[observer]) factor *= om_tactical_get_param(w, OM_TP_EMIT_SIGHT_MULT);
+    if (target <= OM_MAX_UNITS && st->emit[target]) factor *= om_tactical_get_param(w, OM_TP_EMIT_SEEN_MULT);
+    return (factor > 1.0) ? 1.0 : factor;
+}
+
+/* The geometry of om_unit_can_see once both positions and layers are known (callers resolved them once). */
+static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, double oy, uint32_t ol,
+                             uint32_t target, double tx, double ty, uint32_t tl) {
+    const om_fog_state *st = om_fog_ro(w);
+    double factor = 1.0;
+    if (ol != tl) {
+        factor = om_fog_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol, tl > ol);
+        if (factor <= 0.0) return 0;
+        factor = om_fog_emission_factor(w, factor, observer, target);
+    }
+    if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol,
+                                                                 (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
+    if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
+    return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
+}
+
+int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
+    om_world *mw = (om_world *)w;
+    double ox, oy, tx, ty;
+    if (om_unit_get_faction(w, observer) < 0 || om_unit_get_faction(w, target) < 0) return 0;
+    if (!om_unit_alive(mw, observer)) return 0;
+    if (!om_fog_unit_pos(w, observer, &ox, &oy) || !om_fog_unit_pos(w, target, &tx, &ty)) return 0;
+    return om_fog_can_see_at(w, observer, ox, oy, om_fog_unit_layer(w, observer), target, tx, ty, om_fog_unit_layer(w, target));
+}
+
+double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0) {
+    return om_fog_cross_layer_factor(w, unit, p0, 1);
 }
 
 double om_unit_get_effective_sensor_radius_to_target_elevation(const om_world *w, uint32_t unit, uint32_t target_elevation_tier) {
@@ -698,32 +800,126 @@ om_client_snapshot *om_client_snapshot_read(const om_world *w) {
     return snap;
 }
 int om_command_set_emission(om_world *w, const uint32_t *unit_ids, uint32_t n_units, om_emission mode) {
-    /* STUB */
-    (void)w; (void)unit_ids; (void)n_units; (void)mode;
+    om_fog_state *st;
+    uint32_t i;
+    if (mode != OM_EMIT_SILENT && mode != OM_EMIT_ACTIVE) return -1;
+    st = om_fog(w);
+    for (i = 0; unit_ids && i < n_units; i++) {
+        uint32_t id = unit_ids[i];
+        if (id == 0 || id > OM_MAX_UNITS || om_unit_get_faction(w, id) < 0) continue;
+        st->emit[id] = (uint8_t)mode;
+    }
     return 0;
 }
 
 int om_unit_get_emission(const om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
+    const om_fog_state *st = om_fog_ro(w);
+    return (st && unit > 0 && unit <= OM_MAX_UNITS) ? st->emit[unit] : 0;
+}
+
+static int om_fog_ping_in_disc(const om_world *w, const om_fog_ping_reveal *r, uint32_t unit) {
+    double x, y;
+    if (om_unit_get_layer(w, unit) != (int32_t)r->layer || !om_unit_alive((om_world *)w, unit)) return 0;
+    if (!om_fog_unit_pos(w, unit, &x, &y)) return 0;
+    return om_fog_dist(r->x, r->y, x, y) <= r->radius;
+}
+
+/* R-162-05: an enemy inside a live ping disc of the faction is in its visible set. */
+static int om_fog_ping_reveals(const om_world *w, int32_t faction, uint32_t unit) {
+    const om_fog_state *st = om_fog_ro(w);
+    uint64_t now = om_tactical_tick((om_world *)w);
+    uint32_t i;
+    if (!st) return 0;
+    for (i = 0; i < st->n_reveals; i++) {
+        const om_fog_ping_reveal *r = &st->reveals[i];
+        if (r->faction == faction && now <= r->until && om_fog_ping_in_disc(w, r, unit)) return 1;
+    }
     return 0;
 }
 
+/* The 60-degree slice, counter-clockwise from +x, of direction (dx, dy): the slice test is a cross product against
+ * the 60 and 120 degree edges (slope sqrt(3)), so no trigonometry. The lower half-plane is the upper one turned 180. */
+static int om_fog_ping_sector(double dx, double dy) {
+    double k = sqrt(OM_FOG_PING_EDGE_SLOPE_SQ);
+    int base = 0;
+    if (!(dy > 0.0 || (dy == 0.0 && dx > 0.0))) {
+        dx = -dx; dy = -dy;
+        base = OM_FOG_PING_DOWN_SECTORS;
+        if (dx == 0.0 && dy == 0.0) return 0;
+    }
+    if (dy >= k * dx) base++;
+    if (dy <= -k * dx) base++;
+    return base;
+}
+
+static void om_fog_ping_alert_sides(om_world *w, om_fog_state *st, const om_fog_ping_reveal *r, double cx, double cy) {
+    int32_t fac[OM_FOG_MAX_PINGED_FACTIONS];
+    double sx[OM_FOG_MAX_PINGED_FACTIONS], sy[OM_FOG_MAX_PINGED_FACTIONS];
+    uint32_t cnt[OM_FOG_MAX_PINGED_FACTIONS];
+    uint32_t nf = 0, k;
+    om_grid_iter it;
+    uint32_t u;
+    om_grid_iter_begin(&it, w, r->x, r->y, r->radius);
+    while ((u = om_grid_iter_next(&it)) != 0) {
+        int32_t f = om_unit_get_faction(w, u);
+        double x, y;
+        if (f < 0 || f == r->faction || !om_fog_ping_in_disc(w, r, u) || !om_fog_unit_pos(w, u, &x, &y)) continue;
+        for (k = 0; k < nf && fac[k] != f; k++) {}
+        if (k == nf) {
+            if (nf == OM_FOG_MAX_PINGED_FACTIONS) continue;
+            fac[nf] = f; sx[nf] = 0.0; sy[nf] = 0.0; cnt[nf] = 0; nf++;
+        }
+        sx[k] += x; sy[k] += y; cnt[k]++;
+    }
+    for (k = 0; k < nf; k++) {
+        om_ping_alert *a;
+        if (st->n_alerts == OM_FOG_MAX_ALERTS) return;
+        a = &st->alerts[st->n_alerts++];
+        a->tick = om_tactical_tick((om_world *)w);
+        a->faction = fac[k];
+        a->sector = om_fog_ping_sector(cx - sx[k] / (double)cnt[k], cy - sy[k] / (double)cnt[k]);
+    }
+}
+
 int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, double y) {
-    /* STUB */
-    (void)w; (void)caster; (void)layer; (void)x; (void)y;
+    om_fog_state *st;
+    om_fog_ping_reveal *r;
+    double cx, cy;
+    uint64_t now = om_tactical_tick((om_world *)w);
+    uint32_t i, kept = 0;
+    int32_t f = om_unit_get_faction(w, caster);
+    if (caster == 0 || caster > OM_MAX_UNITS || f < 0 || !om_unit_alive(w, caster) || !om_fog_unit_pos(w, caster, &cx, &cy)) return OM_FOG_PING_REASON_CASTER;
+    if (layer >= OM_LAYER_COUNT) return OM_FOG_PING_REASON_LAYER;
+    if (om_fog_dist(cx, cy, x, y) > om_tactical_get_param(w, OM_TP_PING_REACH)) return OM_FOG_PING_REASON_REACH;
+    st = om_fog(w);
+    if (st->ping_cast_plus1[caster] && now - (st->ping_cast_plus1[caster] - 1) < (uint64_t)om_tactical_get_param(w, OM_TP_PING_COOLDOWN_TICKS)) return OM_FOG_PING_REASON_COOLDOWN;
+    st->ping_cast_plus1[caster] = now + 1;
+    for (i = 0; i < st->n_reveals; i++) if (st->reveals[i].until >= now) st->reveals[kept++] = st->reveals[i];
+    st->n_reveals = kept;
+    if (st->n_reveals == OM_FOG_MAX_REVEALS) st->n_reveals--;
+    r = &st->reveals[st->n_reveals++];
+    r->faction = f; r->layer = layer; r->x = x; r->y = y;
+    r->radius = om_tactical_get_param(w, OM_TP_PING_RADIUS);
+    r->until = now + (uint64_t)om_tactical_get_param(w, OM_TP_PING_REVEAL_TICKS);
+    om_fog_ping_alert_sides(w, st, r, cx, cy);
     return 0;
 }
 
 uint32_t om_ping_alert_count(const om_world *w, int32_t faction) {
-    /* STUB */
-    (void)w; (void)faction;
-    return 0;
+    const om_fog_state *st = om_fog_ro(w);
+    uint32_t i, n = 0;
+    for (i = 0; st && i < st->n_alerts; i++) if (st->alerts[i].faction == faction) n++;
+    return n;
 }
 
 int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_ping_alert *out) {
-    /* STUB */
-    (void)w; (void)faction; (void)index; (void)out;
-    return 0;
+    const om_fog_state *st = om_fog_ro(w);
+    uint32_t i, n = 0;
+    if (!out) return -1;
+    for (i = 0; st && i < st->n_alerts; i++) {
+        if (st->alerts[i].faction != faction) continue;
+        if (n++ == index) { *out = st->alerts[i]; return 0; }
+    }
+    return -1;
 }
 /* ---- end generated stubs ---- */

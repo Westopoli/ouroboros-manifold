@@ -71,6 +71,7 @@ class Setup:
     timeline: tuple = ()      # Steps issuing later orders; listed order matters
     terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
     weighted: bool = False    # True records FightResult.weighted
+    states: bool = False      # True records FightResult.states and .order_ends
 
 
 @dataclass
@@ -88,6 +89,8 @@ class FightResult:
     steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
     weighted: Optional[list] = None   # [(tick, w0, w1), ...] when Setup.weighted, else None
     weighted_unit_seconds: Optional[tuple] = None   # as firing_unit_seconds, over the weighted series
+    states: Optional[list] = None   # [(tick, unit, state), ...] per living unit when Setup.states, else None
+    order_ends: Optional[tuple] = None   # ((unit, tick), ...) first tick each unit's destination ended, by unit id
 
 
 @dataclass

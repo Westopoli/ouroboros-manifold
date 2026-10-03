@@ -238,10 +238,12 @@ def _state_hash(lib, w):
     return h.hexdigest()
 
 
-# Recorded on origin/main before the F3 change; must hold after it.
+# Re-recorded A155 to A159 on push/pp-a5-land at default OM_TP_PURSUE_BY_STEERING 1 (was: recorded on origin/main before the F3 change).
+# Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
+# Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 GOLDEN = {
-    "clash": "40a710504933b34a59cc013f14e51be10e5864bc7e66718b4922d9601f5f38fc",
-    "spread": "e80afeadbd872e4f0c3ebe1b90d0c33d5f3f5cc3140f85160cf80caa29054980",
+    "clash": "6e9927b1b0f659ec93a237b8a7f8135f5de2f751a465997ebb5aaebe22842250",
+    "spread": "12ad27cb5f68afb9e32c68dbd9c38cf22ccaa61cbda43a18e7409024a861cceb",
 }
 
 

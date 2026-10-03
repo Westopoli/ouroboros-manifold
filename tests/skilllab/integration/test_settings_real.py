@@ -23,7 +23,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.skilllab import engine, fight, plays, rows  # noqa: E402
 
-DEFAULTS = {"OM_TP_PURSUE_BY_STEERING": 0.0, "OM_TP_ROUTE_AROUND_TERRAIN": 1.0, "OM_TP_TARGET_BY_SIGHT": 1.0,
+DEFAULTS = {"OM_TP_PURSUE_BY_STEERING": 1.0, "OM_TP_ROUTE_AROUND_TERRAIN": 1.0, "OM_TP_TARGET_BY_SIGHT": 1.0,
             "OM_TP_ROUTE_ACROSS_LAYERS": 1.0, "OM_TP_LEASH_BEFORE_DAMAGE": 0.0, "OM_TP_TARGET_POLICY": 0.0}
 
 

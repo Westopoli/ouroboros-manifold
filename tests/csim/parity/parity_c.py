@@ -7,8 +7,8 @@ om_unit_alive. Every value a Trace needs has a getter today; no call is missing.
 
 Deliberate differences from the Python that the harness itself introduces (not C behaviour):
   * C unit id = Python uid + 1 (the registry is 1-based); targets are translated back.
-  * The C world has no canvas; the Python map clamps positions to its 4,000 x 4,000 (or 2,000 x
-    1,000) canvas. No scene goes near an edge.
+  * The Python map clamps positions to its 4,000 x 4,000 (or 2,000 x 1,000) canvas, so the C is given
+    the same canvas through om_map_set_canvas (A159).
   * The wall map is given to the C as density cells through om_map_set_obstacle_density, with the
     same cells the Python derives from its gradient sources (rows 4-5, cols 3-18, density 1.0).
   * abilities are switched off with om_tactical_disable_abilities (the Python's abilities are
@@ -51,6 +51,7 @@ def lib(rebuild=True):
             "om_roster_register_custom_unit": ([V, u32, i, c.c_char_p, d, d, d, d, d, d, d, d, i], i),
             "om_tactical_disable_abilities": ([V], None),
             "om_tactical_set_param": ([V, i, d], i),
+            "om_map_set_canvas": ([V, d, d], i),
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_map_set_obstacle_density": ([V, u32, u32, u32, d], None),
             "om_command_move": ([V, pu, u32, d, d], i),
@@ -123,7 +124,16 @@ def run_scene(scene, seed=1, hook=None, id_offset=0):
                 spec["layer_transition_time"], spec["aoe_radius"], 0)
             assert rc == 0, "register %s: %d" % (name, rc)
         h.om_tactical_disable_abilities(w)
-        h.om_tactical_set_param(w, 0, 1.0)   # PP: runs the new movement (switch default 0, A147 option c')
+        # A159: parity holds only with both of these. The Python runs the attack-move leash BEFORE
+        # damage (OM_TP_LEASH_BEFORE_DAMAGE = 2) and always clamps positions to its map, so the C is
+        # given the same order of steps and the same canvas as the Python scene assumes.
+        h.om_tactical_set_param(w, 2, 1.0)
+        canvas = (4000.0, 4000.0) if scene.map == "open" else (2000.0, 1000.0)
+        assert h.om_map_set_canvas(w, canvas[0], canvas[1]) == 0
+        # Addendum 63 (A176-A180 diagnosis, W1): the Python has no layer crossing, so the C's route across
+        # layers (default on, OM_TP_ROUTE_ACROSS_LAYERS = 5) is switched off. Without this wall_with_a_gap
+        # crossed the wall on layer 1 and deviated by 890 wu from tick 1.
+        assert h.om_tactical_set_param(w, 5, 0.0) == 0
         if scene.map == "wall":
             for cx, cy in _WALL_CELLS:
                 h.om_map_set_obstacle_density(w, cx, cy, 0, 1.0)

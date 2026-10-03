@@ -47,15 +47,16 @@ Direction changed 2026-10-02, rewrite pending: a guard stance joins the commands
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
 - R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march. A unit attack-moved alone is not a group: it resumes toward the point after every fight.
-- R-096-03  Given an attack-move engagement, When the target moves more than 200 wu from the unit's anchor (its position at acquisition), Then the unit drops the target and resumes.
+- R-096-03  Given an attack-move engagement, When the unit itself has pursued more than 200 wu from its anchor (its position at acquisition), Then it drops the target and resumes; a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance, which made a 300 wu weapon drop a target standing still in range).
 - R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
+- R-096-08  Given a guard order, When issued to a selection, Then each unit holds its position, fires at any target it can shoot in range, never pursues or marches, and resumes no earlier order; a move, attack-move, attack-target or layer order ends the guard, and return fire (R-087-06) may turn a guarding unit and give it a target in range but never a destination. (Q-096-01 closed provisionally, A170.)
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-096-01 (the guard stance, S-208). Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
+Open flags: Q-087-01 (whether the 200 wu leash of R-096-03 is tested before or after damage; E-11 S-087).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -69,7 +70,7 @@ Rules
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
 - R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick.
 - R-097-06  Given a unit moving through terrain with obstacle density d, When d is in [0.3, 0.7], Then its speed is multiplied by (1 − 0.5 · d); below 0.3 speed is unchanged; at 0.7 and above the cell is blocked (R-097-01). The multiplier is era-uniform; an era pack may not switch it off.
-- R-097-06  Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement; given both are stationary and either was displaced earlier in the tick, they split the displacement equally. Every unit starts pair checks, moving or stopped, so a unit that walks into a stopped one is pushed out; the push pass repeats up to 10 times a tick until no pair is closer than 30 wu (ALG-68). This is a deliberate difference from the Python reference, whose rule let a higher-id unit stack on a stopped lower-id one (Westley, 2026-10-02).
+- R-097-10  Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement; given both are stationary and either was displaced earlier in the tick, they split the displacement equally. Every unit starts pair checks, moving or stopped, so a unit that walks into a stopped one is pushed out; the push pass repeats up to 10 times a tick until no pair is closer than 30 wu, or until a pass displaces no unit by more than `COLLISION_SETTLE_EPS = 0.1` wu (that pass is applied; ALG-68). This is a deliberate difference from the Python reference, whose rule let a higher-id unit stack on a stopped lower-id one (Westley, 2026-10-02).
 - R-097-07  Given two units at exactly the same position, When pushed, Then the lower unit id moves in the canonical direction (+x) [Q-097-02: the Python reference moves it the other way and by a thousand times the normal push].
 - R-097-08  Given enemy units, When colliding, Then they collide like allies; nobody passes through anybody.
 - R-097-09  Given a direct-move unit (no route waypoints), When obstacle density ahead within 50 wu exceeds 0.3, Then a repulsion opposes the move; units following route waypoints are exempt.
@@ -97,6 +98,7 @@ Rules
 - R-099-02  Given a Raider, When it moves, Then it covers 150 wu per second at 20 ticks per second, 7.5 wu per tick.
 - R-099-03  Given more than 1,000 live units on the battlefield, When the tactical tick rate drops from 20 to 10 ticks per second (and returns above that count is crossed downward), Then every per-second quantity (speed, attack interval, ability duration and cooldown, drift) is unchanged in real time because per-tick values scale with the tick period, the change happens on a tick boundary, and every peer in a multiplayer session switches on the same tick (decision A, Westley 2026-09-24).
 - R-099-04  Given a unit within its arrival radius of its destination (1.5 × collision radius for a formation slot, 2 × for a route waypoint), When the tick runs, Then it has arrived where it stands, without snapping to the point: its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach.
+- R-099-05  Given a unit under a group move whose own slot it cannot reach (a stopped neighbour holds it), When it has been within 75 wu (about two slot spacings) of its slot for 40 consecutive ticks (2 s) without arriving, Then it ends its order where it stands, the same state as an arrival (destination cleared, stationary from that tick onward); the count resets when the unit leaves the 75 wu disc or arrives, and a unit never paces with no end.
 
 Inputs: none beyond S-097.
 Outputs: positions.

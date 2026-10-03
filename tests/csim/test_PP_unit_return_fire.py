@@ -24,8 +24,6 @@ def world_factory(world_factory, lib):
     """The shared factory, plus the new movement switched on."""
     def make(*args, **kwargs):
         w = world_factory(*args, **kwargs)
-        # PP: runs the new movement (switch default 0, A147 option c')
-        lib.om_tactical_set_param(w, 0, 1.0)
         return w
     return make
 
@@ -35,8 +33,6 @@ def world_factory(world_factory, lib):
     """The shared factory, plus the new movement switched on."""
     def make(*args, **kwargs):
         w = world_factory(*args, **kwargs)
-        # PP: runs the new movement (switch default 0, A147 option c')
-        lib.om_tactical_set_param(w, 0, 1.0)
         return w
     return make
 
@@ -46,6 +42,8 @@ def _victim(lib, w, state):
     """Vanguard at the origin, id 2 (id 1 is a far-off friendly), in the given state; asserts the
     first step will not be its cohort turn."""
     spawn(lib, w, BASTION, 0, -9000.0, 0.0)
+    # Test-defect, A163/A164: first step was the victim's cohort turn (tick 1) -> one idle step before spawning the victim and enemies (the first step is now tick 2, not its turn); cause: aligned targeting cohort (parity with the Python, Addendum 63).
+    step(lib, w)
     u = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
     if state == "attack_move":
         attack_move(lib, w, [u], -3000.0, 0.0)

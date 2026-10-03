@@ -1207,6 +1207,15 @@ confidence = "likely"
 note = "Call (w, b\"patrol\", u, 200.0, 200.0); status != 0 = rejected. Inferred p0=command_name, p1=unit_id, p2=x, p3=y. Needs c_char_p argtype. Only rejection tested; accepted names never exercised."
 
 [[symbols]]
+name = "om_command_guard"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_ids", ctype = "const uint32_t*" }, { name = "n_units", ctype = "uint32_t" }]
+epics = ["E-13"]
+confidence = "likely"
+note = "A170, R-096-05, pp_contract.md row 18. 0 ok; -1 for NULL w or NULL unit_ids with n_units > 0; unknown or dead ids skipped."
+
+[[symbols]]
 name = "om_command_move"
 module = "tactical_move.c"
 restype = "int"

@@ -295,11 +295,13 @@ def _visible_hash(lib, w):
     return hashlib.sha256(struct.pack("<%dI" % len(vis), *vis)).hexdigest()
 
 
+# Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
+# Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
 GOLDEN = {
-    "clash": ("a2ffd097fbb311daeea5b6b329a23b25f9f5ca47d92876e7988b89cd0382e052",
-              "f117de306c02dc3521112b6fce60bd9509636705051e41d45911d1b0e654c518"),
-    "spread": ("b0be5c4ea074ddd6caf484c7f5607a9fcb06ae7d624ec661a82ba44d0f29c154",
-               "9caced15c5faf036fd64081aa3bd5de996562fc82be8f7c221eaa5a305cbc825"),
+    "clash": ("3b43063847820b5d396c097cc652a2ffc70b39ac24d98d678fc59a2e920194e6",
+              "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
+    "spread": ("0a25117f74c6b8e7e089fd2df1b4e5e5d550c6aba7c062bcffe8446ff79b102d",
+               "17787dc7463c62f492f8ab47bb722349938eade3ddb9107fa529f952b9078aee"),
 }
 
 
