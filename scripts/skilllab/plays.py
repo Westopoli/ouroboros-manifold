@@ -1,9 +1,11 @@
-"""Plays: builders of the two-sided Setups the scans fight."""
+"""Plays: builders of the two-sided Setups the scans fight.
+Each opens with the hold-to-contact approach (APPROACH, approach.py): groups walk in formation to a stop line, then attack-move."""
 import math
 
 from scripts.skilllab.contract import Group, Setup
 
 _LINE_SPACING = 30
+APPROACH = 0.95
 _STATS = {}
 
 
@@ -37,7 +39,7 @@ def _play(size, unit, kind, side0_unit=None, unit_types=None):
         gap = unit_stats(unit)["sensor_radius"] + 1 + _depth(size, kind) + _depth(enemy_heads, kind)
         return Setup(groups=(_group(0, side0_unit or unit, size, kind, -gap / 2),
                              _group(1, unit, enemy_heads, kind, gap / 2)),
-                     unit_types=dict(unit_types or {}))
+                     unit_types=dict(unit_types or {}), approach=APPROACH)
     return build
 
 

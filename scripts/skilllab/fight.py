@@ -1,7 +1,9 @@
-"""One tactical fight of one setup, stepped tick by tick (spec AC 5-11)."""
+"""One tactical fight of one setup, stepped tick by tick (spec AC 5-11).
+A Setup with approach > 0 is first opened by approach.approach_setup (move to a stop line, then attack_move)."""
 import math
 import random
 
+from scripts.skilllab.approach import approach_setup
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
 from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
 from scripts.skilllab.formations import place
@@ -139,6 +141,7 @@ def fight(setup, seed=0, swap=False, engine=None):
             for c in t.covers:
                 engine.add_cover(w, c.x, c.y, c.radius, c.height)
         types = _register_types(engine, w, setup)
+        setup = approach_setup(setup, {name: reach for name, (tid, reach) in types.items()})
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
             _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges)

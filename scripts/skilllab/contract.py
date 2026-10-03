@@ -72,6 +72,7 @@ class Setup:
     terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
     weighted: bool = False    # True records FightResult.weighted
     states: bool = False      # True records FightResult.states and .order_ends
+    approach: float = 0.0     # stop factor of the hold-to-contact opening (approach.py); 0.0 = off
 
 
 @dataclass
