@@ -248,6 +248,8 @@ typedef struct {
      * unit) and whether this member has held a target since; the group ends once every member has. */
     uint32_t am_gid;
     int      am_engaged;
+    /* R-096-08: set by om_command_guard (tactical_move.c); the unit holds, fires in range, never walks */
+    int      guard;
     int      anchor_set;
     double   anchor_x, anchor_y;
     int      flinching;
@@ -1924,6 +1926,19 @@ static void om_tac_drop_orders(om_unit_row *u) {
     u->halted = 0;
     u->am_gid = 0;
     u->am_engaged = 0;
+    u->guard = 0;
+}
+
+/* See also: om_command_guard in tactical_move.c, which clears the movement side of the order */
+void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on) {
+    om_unit_row *u = om_registry_find_in(om_tac(w), unit_id);
+    if (!u) return;
+    if (!on) { u->guard = 0; return; }
+    if (u->guard) return;
+    om_tac_drop_orders(u);
+    u->flinching = 0;
+    u->last_attacker = 0;
+    u->guard = 1;
 }
 
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
@@ -1993,7 +2008,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         /* PP baseline only (switch = 0): return fire for an idle unit only; see also the pursue term (R-087-06) */
         if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
             && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
-            if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
+            if (u->guard) {
+                /* R-096-08: a guard answers only what it can shoot, and never flees or walks */
+                if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) u->target_id = atk->unit_id;
+            } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
                 if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
             } else if (om_tac_in_range(w, u, atk)) {
                 u->target_id = atk->unit_id;
@@ -2029,7 +2047,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         }
         if (!drop && u->order != OM_ORDER_ATTACK_TARGET) {
             /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another */
-            if (!om_tac_in_reach(w, u, t) || t->stealth || (!pursue && !om_tac_in_range(w, u, t))) {
+            if (!om_tac_in_reach(w, u, t) || t->stealth || ((!pursue || u->guard) && !om_tac_in_range(w, u, t))) {
                 drop = 1;
             } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
                        && !om_tac_dist_le(t->x - u->anchor_x, t->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST)) {

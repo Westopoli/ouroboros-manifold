@@ -305,6 +305,8 @@ enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
 
 /* See also: om_tac_unit_set_layer in unit.c, which owns the unit's layer row */
 void om_tac_unit_set_layer(om_world *w, uint32_t unit_id, uint32_t layer);
+/* See also: om_tac_unit_set_guard in unit.c, which owns the guard flag (R-096-08) */
+void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on);
 
 /* A new move order ends a routed transfer that has not begun; one in flight finishes (R-002-04: a user's transfer
  * is never cleared by a move order). */
@@ -2485,6 +2487,7 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
         mu->deflecting = 0;
         mu->order_kind = 0;
         om_move_route_touch(ms, 0, slot_x, slot_y);
+        om_tac_unit_set_guard(w, ids[i], 0);
     }
     return gid;
 }
@@ -2517,6 +2520,7 @@ int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, dou
         mu->order_kind = 0;
         om_move_transit_cancel(mu);
         om_move_route_touch(ms, 0, x, y);
+        om_tac_unit_set_guard(w, unit_ids[i], 0);
     }
     return 0;
 }
@@ -2899,6 +2903,7 @@ int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units
         if (!mu) continue;
         ms->lay_any = 1;
         mu->transit = 0;
+        om_tac_unit_set_guard(w, unit_ids[i], 0);
         if (mu->lay_state == OM_LAY_FLIGHT) {
             mu->lay_has_pend = layer != mu->lay_to;
             mu->lay_pend = layer;
@@ -2994,8 +2999,23 @@ int om_tac_move_resume(om_world *w, uint32_t unit_id) {
     return 1;
 }
 int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
-    /* STUB */
-    (void)w; (void)unit_ids; (void)n_units;
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || (n_units > 0 && !unit_ids)) return -1;
+    om_move_sync(w);
+    ms = om_ms(w);
+    for (i = 0; i < n_units; i++) {
+        om_move_unit *mu;
+        if (om_unit_get_layer(w, unit_ids[i]) < 0 || !om_unit_alive(w, unit_ids[i])) continue;
+        om_unit_clear_orders(w, unit_ids[i]);
+        mu = om_move_touch(w, ms, unit_ids[i]);
+        if (!mu) continue;
+        /* a transfer not yet under way is dropped, one in flight lands and nothing follows it */
+        if (mu->lay_state == OM_LAY_PENDING) mu->lay_state = OM_LAY_NONE;
+        mu->lay_has_pend = 0;
+        om_move_transit_cancel(mu);
+        om_tac_unit_set_guard(w, unit_ids[i], 1);
+    }
     return 0;
 }
 /* ---- end generated stubs ---- */
