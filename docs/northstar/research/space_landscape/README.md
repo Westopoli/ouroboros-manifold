@@ -148,6 +148,19 @@ What follows:
 
 Open, for Westley: the minimum passage width for the functional map.
 
+## Decisions (2026-10-03): passage widths
+
+Westley, verbatim: "300 sounds good, but I want to sprinkle in little gaps for the smaller ships. The units aren't sized correctly right now, and there's going to be a unit that I want to be able to pass through gaps that other ships can't (little micro shits), I want to make sure there are little sparatic (5-10% of the landscape, in batches to induce strategic depth, like little sections of region that players can take advantage of the fact that small units can get through a *tunnel/gap*) sections. - The level of detail i see in s11_d55 would be great for the types of gaps those little ships could get through, and I'd like to retain the code that built that formation, just in a reduced capacity for the 5-10% that I referenced. Record these decisions."
+
+Recorded as:
+
+- **Minimum passage for the functional map: 300 wu.** Anything narrower is solid in the simulation for ordinary units.
+- **Two passability classes.** A small unit class (a micro craft, to be designed) can pass gaps that other ships cannot. Units are not sized correctly yet; the small craft's size, and so the width of the gaps it fits, is open.
+- **Small-craft gaps are sprinkled, in batches.** They cover 5 to 10 percent of the landscape, as little sections of a region, not everywhere, so a player can take advantage of a tunnel or gap that only small units get through. This is strategic depth on purpose.
+- **The fine fracture of pass 4 is kept for those sections.** The code that made s11_d55's detail stays, used at reduced scope: inside the 5 to 10 percent, the fine channels and rubble gaps are functional for small craft; outside it, anything under 300 wu is solid for everyone, and fine detail there is the client's to draw.
+
+Open: the small craft's size and gap width; how the 5 to 10 percent is chosen (which plates, which layers); whether the batches are placed by the layout (near objectives and resources) or by the noise.
+
 ## Suggested next step
 
-Westley flies pass 4 (Kit: space; Top-down button; keys 1 to 5 to focus one layer, 0 for all; C for crossing marks; sliders for density, layer gap, plate size, size spread and density swing; Shared density toggle). Then the camera question is designed as options.
+Pass 5: the functional map at 300 wu minimum passage, small-craft sections at 5 to 10 percent with the fine fracture kept there, a functional-view toggle, and the fill-cell triangle fix. Then the camera question.
