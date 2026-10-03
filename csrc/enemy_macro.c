@@ -789,9 +789,29 @@ void om_macro_update_bus_runner(om_world *w) {
             snprintf(name, sizeof(name), "force_%u_routed", (unsigned)i);
             om_macro_bus_set_flag(w, name, 1);
         }
+        if (f->faction_id_set) {
+            /* B1-U2 (R-122-02, Q-122-01 a): a living player unit inside objective i's zone contests it. */
+            static uint32_t pids[OM_MACRO_ORDER_CAP];
+            om_vec2 ctr;
+            if (om_objective_get_center(w, i, &ctr)) {
+                double r = om_objective_get_radius(w, i);
+                uint32_t n = om_macro_collect_faction_units(w, om_player_faction(w), pids, OM_MACRO_ORDER_CAP), k;
+                int inside = 0;
+                for (k = 0; k < n && !inside; k++) {
+                    double px = 0.0, py = 0.0;
+                    om_unit_get_pos(w, pids[k], &px, &py);
+                    if ((px - ctr.x) * (px - ctr.x) + (py - ctr.y) * (py - ctr.y) <= r * r) inside = 1;
+                }
+                if (inside) om_macro_player_enter_objective(w, i);
+                else f->objective_entered = 0;
+            }
+        }
         if (f->objective_entered) {
             snprintf(name, sizeof(name), "objective_%u_contested", (unsigned)i);
             om_macro_bus_set_flag(w, name, 1);
+        } else if (f->faction_id_set) {
+            snprintf(name, sizeof(name), "objective_%u_contested", (unsigned)i);
+            if (om_macro_bus_get_flag(w, name)) om_macro_bus_set_flag(w, name, 0);
         }
     }
 }
