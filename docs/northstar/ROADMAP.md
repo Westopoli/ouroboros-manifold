@@ -15,10 +15,14 @@ Rules for this file:
 
 ## 1. Now building
 
-All lanes were paused by Westley on 2026-10-03. Nothing is running. The stage 0 audit (2026-10-03, origin/main `1c2d4494`) is the source for the mission-plays row.
+The movement and layers lanes stay paused (Westley, 2026-10-03). The same day he let the planner chat run integration work and prototypes in parallel while he is away; prototypes wait for his review.
 
 | Plan | Doc | Lane | Owns | State | Exit condition |
 |---|---|---|---|---|---|
+| Loop fix workflow | `plans/2026-10-03-loop-fix-workflow-brief.md` | A Sonnet chat (`ouroboros-manifold-a3`) | chronicle and jump (client), `project.godot` and `autoload/sim_bridge.gd`, Agora QA harness | Running since 15:16. Lane 2 fix pushed (`push/lf-2-fix`), not landed yet | Report on `push/lf-report` |
+| Playthrough gate | none yet (two Engineer briefs from the planner chat) | Planner chat | `scripts/specfactory/merge_gate.sh` and support, `tests/qa/desktop/` | Building on `push/gate-playthrough` and `push/gate-flow-test`; lands after the loop fix | The gate fails on a broken loop (positive control) and the flow test covers the next chapter |
+| Land mockup pass 4 (prototype) | `plans/2026-10-03-land-mockup-pass4-spec.md` | Planner chat, one Doer | `scenes/mockups/landscape/` (land kits) | Building on `push/proto-land-p4` | Screenshots and record ready for Westley |
+| Settlement mockup pass 1 (prototype) | `plans/2026-10-03-settlement-mockup-pass1-spec.md` | Planner chat, one Doer | `scenes/mockups/settlement/` | Building on `push/proto-settlement-p1` | Screenshots and record ready for Westley |
 | Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
 | Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-09-30-work-list.md` | Coordinator chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | Paused. Waves A and B mostly landed. Left: B1 (8 enemy state-machine symbols), B6 (9 chapter and selector symbols), B7 (3 commander-death symbols), C3 (legacy SimBridge autoload still in `project.godot`), C4 E1 unverified, C6 sweep not started (32 rows need a wire-or-dead ruling, plus 4 client gaps). Work-list rows still unreachable: 48 of 89. | Every work-list row wired or ruled dead, and the loop plays end to end |
 | Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
