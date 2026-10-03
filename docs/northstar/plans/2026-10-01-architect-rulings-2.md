@@ -722,3 +722,10 @@ Westley asked for more work in parallel and approved these three.
 **A150. Scenario clocks in the pipe tests are test scaffolding, not thresholds.** `CLASH_STEPS` in `test_pipe_assign_commander.py` and the death window in `test_pipe_tactical_delta_frame.py` state when a scripted scene used to reach a death under the old movement; no bible rule names those ticks. The ruled movement (slowest-member pacing R-095-01, pursuit by steering P1) moves them. Each is a test defect with a ledger row: the new value is found by running the scene, stated with its cause, and the assertion itself (a loss happens; a death arrives in one 100-tick frame) is unchanged. Westley is told in the same update and may overrule. A window that a bible rule names stays his.
 
 **A151. The spacing floor is back with Westley**: the Python's true minimum over the 200-tick move is 29.797 (tick 12), not the 29.92 of tick 9; the C is bit-identical. The 0.1 of A148 does not hold; his new number is awaited.
+
+## Addendum 55, 2026-10-02 (spacing floor 0.25; small decisions delegated)
+
+**A152. Westley picked (a): the spacing tolerance is 0.25 wu.** The R-101-01 test line becomes `30.0 - 0.25` (his number, replacing A148's 0.1), covering the Python's 29.797 with room; rule text unchanged; Q-101-02's closing row updated.
+
+**A153. Small decisions are delegated to the Architect (Westley, 2026-10-02).** His words: "moving forward make these sort of small decisions for me to keep the cascade moving, and then report on them afterwards. I'll say something if I don't like the decision... If the decision effects anything less than 5%, make it yourself and flag it." So: a threshold, window or tolerance change whose effect on what the player sees or on a measured number is under 5 percent is ruled by the Architect at once, recorded here with the percentage and the reason, and reported to him afterwards in plain words; he may overrule. Anything at 5 percent or more, anything that changes a rule's meaning, and every pass mark for the search stays his. CLAUDE.md's line that Westley owns every threshold is read with this delegation.
+
