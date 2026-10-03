@@ -26,6 +26,8 @@ algorithms.md / alg_constants.py that the six sweep constants carry at least 8 d
 that the straight-line step use the Python's own direction vector (dx / dist, a sqrt, allowed), not
 om_cos(om_atan2(...)): today's C trig alone leaves 4.7e-3 wu after a 450 wu diagonal march
 (scene control_diagonal_march) and 2.5e-5 wu after a 450 wu march along x.
+Westley's 0.05 wu (A149) passes constants of 3 decimals or more (3 and 4 decimals both measure
+5.7e-3 wu over all nine scenes) and fails 2 decimals (3.98 wu) and 1 decimal (118 wu).
 
 What it does NOT absorb: collision pair order. The Python takes pairs by grid cell, the C by id.
 In the six scenes reversing the Python's own pair order changes nothing (0 wu), but in a pile-up

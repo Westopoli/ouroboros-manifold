@@ -227,12 +227,14 @@ def test_fixed_direction_vectors_stay_inside_the_tolerance(digits):
 
 
 def test_positive_control_coarse_fixed_vectors_exceed_the_tolerance():
-    """Control for the tolerance: constants rounded to 4 decimals move a unit by more than
-    PARITY_TOLERANCE in at least one scene, so the tolerance is not so loose that nothing could fail."""
+    """Control for the tolerance (A149, PARITY_TOLERANCE 0.05 wu): constants rounded to 2 decimals
+    (measured worst position difference 3.98 wu over the six scenes; 3 and 4 decimals give only
+    5.7e-3 wu, inside the tolerance) move a unit by more than PARITY_TOLERANCE in at least one scene,
+    so the tolerance is not so loose that nothing could fail."""
     worst = 0.0
     for name in SIX:
         scene = SCENES[name]
-        rep = compare(parity_python.run_scene(scene), parity_python.run_scene(scene, "fixed", 4), 0.0, 0.0)
+        rep = compare(parity_python.run_scene(scene), parity_python.run_scene(scene, "fixed", 2), 0.0, 0.0)
         worst = max(worst, rep.max_pos)
     assert worst > PARITY_TOLERANCE
 
