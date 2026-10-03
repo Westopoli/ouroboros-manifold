@@ -1294,6 +1294,8 @@ void om_character_selector_run(om_world *w) {
         int pool = om_selector_roll_pool(w, om_rng_draw(w));
         om_character_selector_force_rotate(w, 0, region, GEN_REASON_FORCED, pool, &rec);
     } else if (om_mission_get_debrief(w, &d) == 1 && d.commander_fate == 0) {
+        om_character_kill(w, had_commander, om_world_strategic_tick(w));
+        om_outcome_record_commander_death(w, had_commander, om_mission_generator_chosen_region(w), d.band);
         om_character_selector_resolve_commander_death(w, gs->current_lineage, region, &rec);
     } else {
         om_character_selector_run_for_lineage(w, gs->current_lineage, region, &rec);
