@@ -91,7 +91,7 @@
  * full spill list refiles everything (from the index itself, without touching
  * the units). Results never depend on this layout: a query returns exactly
  * the units within its radius. */
-#define OM_MOVE_GRID_MAX_CELLS 8192
+#define OM_MOVE_GRID_MAX_CELLS 65536
 #define OM_MOVE_GRID_BASE_CELL (4.0 * OM_UNIT_COLLISION_RADIUS)
 #define OM_MOVE_GRID_MARGIN (3.0 * OM_UNIT_COLLISION_RADIUS)
 #define OM_MOVE_GRID_SPILL_MAX 48
@@ -258,6 +258,8 @@ typedef struct {
     double   slot_x[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
     double   slot_y[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
     double   slot_fx[OM_MOVE_MAX_UNITS], slot_fy[OM_MOVE_MAX_UNITS];
+    /* start_x / start_y of the unit filed in each cell slot, in slot order, for the steering probe's scan. */
+    double   slot_sx[OM_MOVE_MAX_UNITS], slot_sy[OM_MOVE_MAX_UNITS];
     uint32_t unit_slot[OM_MOVE_MAX_UNITS];
     uint32_t unit_cell[OM_MOVE_MAX_UNITS];
     double   scan_x[OM_MOVE_MAX_UNITS], scan_y[OM_MOVE_MAX_UNITS];
@@ -677,6 +679,8 @@ static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units)
         ms->slot_id[slot] = id;
         ms->slot_x[slot] = ms->slot_fx[slot] = ms->scan_x[id];
         ms->slot_y[slot] = ms->slot_fy[slot] = ms->scan_y[id];
+        ms->slot_sx[slot] = ms->start_x[id];
+        ms->slot_sy[slot] = ms->start_y[id];
     }
     /* Compute per-cell group sentinel and flat unit_group mirror.
      * cell_group[c] starts as UINT32_MAX (homogeneous / empty).
@@ -893,22 +897,28 @@ static void om_move_sort_ids(uint32_t *a, uint32_t n) {
  * unit within sqrt(r2) of (x, y); a NaN slot (a free or vacated one) never
  * passes. The SSE2 path does the same IEEE double arithmetic two slots at a
  * time, so both paths agree. */
-static uint64_t om_move_near_mask(const om_move_state *ms, uint32_t lo, uint32_t hi, double x, double y, double r2) {
-    const double *sx = ms->slot_x + lo, *sy = ms->slot_y + lo;
+static uint64_t om_move_near_mask_at(const double *xs, const double *ys, uint32_t lo, uint32_t hi, double x, double y, double r2) {
+    const double *sx = xs + lo, *sy = ys + lo;
     uint32_t count = hi - lo > OM_MOVE_MASK_BITS ? OM_MOVE_MASK_BITS : hi - lo, i = 0;
     uint64_t mask = 0;
 #if defined(__SSE2__)
     const __m128d vx = _mm_set1_pd(x), vy = _mm_set1_pd(y), vr2 = _mm_set1_pd(r2);
-    for (; i + 2 <= count; i += 2) {
+    for (; i < count; i += 2) {
         __m128d dx = _mm_sub_pd(_mm_loadu_pd(sx + i), vx), dy = _mm_sub_pd(_mm_loadu_pd(sy + i), vy);
         mask |= (uint64_t)(uint32_t)_mm_movemask_pd(_mm_cmple_pd(_mm_add_pd(_mm_mul_pd(dx, dx), _mm_mul_pd(dy, dy)), vr2)) << i;
     }
-#endif
+    if (count < OM_MOVE_MASK_BITS) mask &= ((uint64_t)1 << count) - 1u;
+#else
     for (; i < count; i++) {
         double dx = sx[i] - x, dy = sy[i] - y;
         mask |= (uint64_t)(dx * dx + dy * dy <= r2) << i;
     }
+#endif
     return mask;
+}
+
+static uint64_t om_move_near_mask(const om_move_state *ms, uint32_t lo, uint32_t hi, double x, double y, double r2) {
+    return om_move_near_mask_at(ms->slot_x, ms->slot_y, lo, hi, x, y, r2);
 }
 
 /* Index of the lowest set bit of a nonzero mask. */
@@ -1765,10 +1775,10 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
     const double r = OM_STEERING_PROBE_DIST + 2.0 * OM_UNIT_COLLISION_RADIUS + OM_MOVE_GRID_BOUND_PAD;
     const double r2 = r * r;
     const int32_t layer = ms->start_layer[self_id];
-    int32_t cx0, cx1, cy0, cy1, cy, cx;
-    uint32_t n = 0, slot;
+    int32_t cx0, cx1, cy0, cy1, cy;
+    uint32_t n = 0, slot, cid;
     for (slot = ms->slot_base; slot < ms->slot_base + ms->n_spill; slot++) {
-        uint32_t cid = ms->slot_id[slot];
+        cid = ms->slot_id[slot];
         double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
         if (cid == self_id || ms->start_layer[cid] != layer || dx * dx + dy * dy > r2) continue;
         ms->scan_x[n] = ms->start_x[cid];
@@ -1777,14 +1787,15 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
     }
     if (!om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) return n;
     for (cy = cy0; cy <= cy1; cy++) {
-        uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
-        for (cx = cx0; cx <= cx1; cx++) {
-            for (slot = ms->grid_start[row + (uint32_t)cx]; slot < ms->grid_start[row + (uint32_t)cx + 1]; slot++) {
-                uint32_t cid = ms->slot_id[slot];
-                double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
-                if (ms->unit_slot[cid] != slot || cid == self_id || ms->start_layer[cid] != layer || dx * dx + dy * dy > r2) continue;
-                ms->scan_x[n] = ms->start_x[cid];
-                ms->scan_y[n] = ms->start_y[cid];
+        uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w, lo = ms->grid_start[row + (uint32_t)cx0], hi = ms->grid_start[row + (uint32_t)cx1 + 1], base;
+        for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+            uint64_t mask = om_move_near_mask_at(ms->slot_sx, ms->slot_sy, base, hi, x, y, r2);
+            for (; mask; mask &= mask - 1) {
+                slot = base + om_move_lowest_bit(mask);
+                cid = ms->slot_id[slot];
+                if (ms->unit_slot[cid] != slot || cid == self_id || ms->start_layer[cid] != layer) continue;
+                ms->scan_x[n] = ms->slot_sx[slot];
+                ms->scan_y[n] = ms->slot_sy[slot];
                 n++;
             }
         }
@@ -2267,6 +2278,10 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
         for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
             ms->start_x[id] = ms->units[id].x;
             ms->start_y[id] = ms->units[id].y;
+            if (ms->grid_in[id]) {
+                ms->slot_sx[ms->unit_slot[id]] = ms->start_x[id];
+                ms->slot_sy[ms->unit_slot[id]] = ms->start_y[id];
+            }
             ms->start_layer[id] = ms->grid_in[id] ? om_unit_get_layer(w, id) : -1;
         }
     }
