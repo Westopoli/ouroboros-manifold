@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-03 (third update): decisions W1 to W5 recorded in rulings-2 Addendum 68.
+Last updated: 2026-10-03 (fourth update): W1 to W5 recorded in rulings-2 Addendum 68; L1 partly answered in the register.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -44,7 +44,7 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 
 | # | Decision | Flags | Unblocks |
 |---|---|---|---|
-| L1 | Part 1, the ground: generation budget; minimum height per layer step; five layers on a small canvas; how steep is too steep; benched against natural share; which walking routes must exist | Q-186-01, Q-188-01, Q-188-02, Q-189-02, Q-189-03, Q-189-01 | Queue row 4 |
+| L1 | Part 1, the ground, what is left (answers 2026-10-03 in the register): the minimum height variance; a small canvas (his question answered, waiting for his pick); the exact steepness limit inside 30 to 35 degrees, after his visual pass; what counts as unreasonably hard to reach on foot | Q-188-01, Q-188-02, Q-189-02, Q-189-04 | Queue row 4 |
 | L2 | How layouts and terrain combine | Q-191-04 | Every place story (S-191, S-192, S-197) and the rewrites of S-112 to S-119 |
 | L3 | Part 2, the places: how sites are found, counts, "opposite the objective", strongpoint count, choke width, vantage reach, how many plays a map must offer, raid lanes, fairness on a slanted map | Q-191-01 to -03, Q-192-01 to -05, Q-197-01 | Land generator part 2 |
 | L4 | Landforms that ship, and how "variety packed in" is measured | Q-187-01, Q-187-02 | S-187 |
@@ -103,6 +103,7 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 
 | Group | Stories | Epic | State | Why parked |
 |---|---|---|---|---|
+| Land terrain visual pass for Westley | none | E-17 | Not written; where it is built is to confirm (the land prototype is in `research/landscape_design/mockup/`) | Westley asked for two things to look at: the landscape engine's output with ground steeper than 35 degrees clearly marked, so he sees where players can and cannot go (Q-189-02, Q-189-04); and the benched and natural ratio varying per map (Q-189-03, answered). Comes before land part 1 because Q-189-02's exact figure waits on it |
 | Shared layer-mask contract | none yet (carries E-01 R-001-04, E-17 R-114-01) | E-01, E-17 | Not written | Lands first inside land part 1 as its own contract piece; written so space can use it; the small-craft class needs Q-166-05 |
 | Space generator | none in the bible yet | E-17 | Research and mockup passes 1 to 5; pass 6 specified | Waits on decisions S1 to S4, the stories being written, and the mask contract |
 | Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, about 25 flags open | Waits on the flag sheet, Q-191-04 first, and plan A |

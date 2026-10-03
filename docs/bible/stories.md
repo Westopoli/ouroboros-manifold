@@ -186,10 +186,10 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-180 | E-22 | "Alone I have one dial and I ask for things by pointing at the map." | Design decided 2026-10-02, not scheduled (Q-180-01 to -04) | `epics/E-22-economy-and-bases.md` S-180 |
 | S-181 | E-22 | "The enemy's economy runs on the same rules, and I choose whether it also scouts, counters and disguises." | Design decided 2026-10-02, not scheduled (Q-181-01, Q-181-02) | `epics/E-22-economy-and-bases.md` S-181 |
 | S-182 | E-22 | "I carry something forward between missions, without the fifteenth mission becoming lopsided." | Open (Q-159-07, Q-159-13) | `epics/E-22-economy-and-bases.md` S-182 |
-| S-186 | E-17 | "Every map starts as real ground, height and water from the seed." | Design decided 2026-10-02, not scheduled; flag Q-186-01 | `epics/E-17-map-generation.md` S-186 |
+| S-186 | E-17 | "Every map starts as real ground, height and water from the seed." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-17-map-generation.md` S-186 |
 | S-187 | E-17 | "Mesas, canyons, island chains and fjords, not only rolling hills." | Design decided 2026-10-02, not scheduled; flags Q-187-01, Q-187-02 | `epics/E-17-map-generation.md` S-187 |
 | S-188 | E-17 | "A mountainside is a stack of layers an attacker has to climb." | Design decided 2026-10-02, not scheduled; flags Q-166-04, Q-188-01, Q-188-02; land maps only (Q-166-02) | `epics/E-17-map-generation.md` S-188 |
-| S-189 | E-17 | "Some ground is too steep to walk, and slopes are the ways between layers." | Design decided 2026-10-02, not scheduled; flags Q-189-01 to Q-189-03; land maps only | `epics/E-17-map-generation.md` S-189 |
+| S-189 | E-17 | "Some ground is too steep to walk, and slopes are the ways between layers." | Design decided 2026-10-02, not scheduled; flags Q-189-02, Q-189-04; land maps only | `epics/E-17-map-generation.md` S-189 |
 | S-190 | E-17 | "The layers follow the land under my units." | Design decided 2026-10-02, not scheduled; flag Q-190-01; land maps only | `epics/E-17-map-generation.md` S-190 |
 | S-191 | E-17 | "Bases, objectives and resources sit where the land puts them." | Design decided 2026-10-02, not scheduled; flags Q-191-01 to Q-191-04; land maps only | `epics/E-17-map-generation.md` S-191 |
 | S-192 | E-17 | "Ways up and down I can hold, narrow places to fight over, high ground to take." | Design decided 2026-10-02, not scheduled; flags Q-192-01 to Q-192-05; land maps only | `epics/E-17-map-generation.md` S-192 |

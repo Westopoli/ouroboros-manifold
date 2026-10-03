@@ -4,10 +4,10 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 107 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
+| Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 110 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 33 open flags, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 31 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -198,10 +198,11 @@ Rules
 - R-186-04  Given the same seed, canvas and inputs, When terrain is generated on any platform, Then height, water, bands, slopes and ground flags are byte-identical, with no fast-math, no platform transcendentals, no hash-order input and no wall-clock input, and the formula that decides play runs in the C simulation.
 - R-186-05  Given the terrain, When the simulation holds it, Then it holds a coarse grid of what affects play (the layer of the ground, slopes, water and density), the same on every machine; finer detail is worked out from the seed and stored nowhere (S-194).
 - R-186-06  Given two different seeds, When their maps are generated, Then they differ in the shape of the land (a continent, an archipelago, a river delta) and not only in dressing.
+- R-186-07  Given a mission whose map is generated, When the player reaches the match, Then the player has never waited on a loading screen for the landscape for longer than 5 seconds (Westley, 2026-10-03); terrain generation may start while the player is in the mission brief.
 
 Inputs: seed; canvas (S-195).
 Outputs: height, water, rivers and biome bands; the coarse grid.
-Open flags: Q-186-01 (the time and sampling budgets for this generator, see Scale requirements).
+Open flags: none.
 
 ### S-187 — Landforms and climate
 As a commander, I want mesas, canyons, island chains and fjords and not only rolling hills, so that every map is its own place and the variety has a Minecraft feel.
@@ -225,7 +226,7 @@ Applies to land maps. Space maps: R-188-05 and Q-166-02.
 Rules
 - R-188-01  Given the terrain height, When bands are set, Then the five height bands are fitted to the map, stretched between its lowest and highest ground, so every land map has ground on all five layers.
 - R-188-02  Given any position, When its layer is read, Then it is the band the ground there falls in, and a map always has five layers (E-01 Q-001-01).
-- R-188-03  Given a land map, When the generator finishes, Then it has given enough relief that every layer step is a real height difference. A layer step that is only a meadow slope is a defect of the landscape generation. A detector measures it [Q-188-01: the minimum height difference per step, which is Westley's to set] and ships with a positive control, a map built with a meadow-slope step that the detector must flag.
+- R-188-03  Given a land map, When the landscape engine hands the terrain to the layer system, Then the terrain holds at least a minimum variance in height (Westley, 2026-10-03), so that every map has ground on layer 5 and every layer step is a real height difference; the layer system fits the bands only on terrain that meets it. A layer step that is only a meadow slope is a defect of the landscape generation. A detector measures the variance [Q-188-01: the minimum, which is Westley's to set] and ships with a positive control, a map built with less variance than the minimum that the detector must flag.
 - R-188-04  Given bands fitted per map, When a layer step has a different height on each map, Then the numbers written for a standard step in E-01 (time to change layer, how much worse sight is across layers, which layers a type may fire at) scale with the height of the step [Q-166-04: how each number scales, which the skill lab measures].
 - R-188-05  Given a space-era map, When layers are read, Then they stay pure altitude, asteroids and stations are the things that block them, and all five are open at every position (E-01 Q-001-01); height bands, ground flags, slopes and strongpoints apply to land maps only.
 - R-188-06  Given a small canvas, When bands are fitted, Then [Q-188-02: whether a small canvas can hold five real height steps, and what happens if it cannot].
@@ -240,15 +241,17 @@ As a commander, I want some ground to be too steep to walk, and slopes to be the
 Applies to land maps (Q-166-02).
 
 Rules
-- R-189-01  Given the terrain, When ground is shaped, Then it is a mix of benched ground (wide shelves with steep risers at each band edge, so a layer boundary is a visible cliff or ramp) and natural ground (ground that rolls freely) [Q-189-03: how much of each a map holds].
-- R-189-02  Given a section whose ground is too steep, When a walking unit is routed, Then it cannot cross it and the route grid treats it as blocked (E-13 R-097-01) [Q-189-02: how steep is too steep to cross].
+- R-189-01  Given the terrain, When ground is shaped, Then it is a mix of benched ground (wide shelves with steep risers at each band edge, so a layer boundary is a visible cliff or ramp) and natural ground (ground that rolls freely), in a ratio drawn per map from the seed (Westley, 2026-10-03). The spread of the ratio is checked in Westley's visual pass on a prototype.
+- R-189-02  Given a section whose ground is too steep, When a walking unit is routed, Then it cannot cross it and the route grid treats it as blocked (E-13 R-097-01). One steepness limit holds for every walking unit, and ground steeper than about 30 to 35 degrees is impassable (Westley, 2026-10-03) [Q-189-02: the exact figure inside that range, set after his visual pass of the landscape engine's output with ground steeper than 35 degrees marked].
 - R-189-03  Given ground that jumps a band, When it is steep, Then it is a cliff and walking units cannot cross it. When it is a natural ramp, a pass, a switchback road, stairs or a built lift, it is a slope, and walking units change layer there and nowhere else (E-01 R-001-06, R-001-07).
 - R-189-04  Given the map, When the generator finishes, Then it has listed every slope for E-01 (S-190).
-- R-189-05  Given the walking route between the two sides' bases and between each base and its objective, When the map is checked, Then [Q-189-01: whether a walking route over slopes must exist, whether every band must be reachable by walking units, and for which movement kinds a route must exist].
+- R-189-05  Given a ground era, When the map is checked, Then a walking route over slopes exists between the two sides' bases, between each base and its objective, and to every band. Given a flying era, Then no walking route is required (Westley, 2026-10-03).
+- R-189-06  Given a player has a unit selected, When the cursor hovers ground that is too steep to cross, Then the cursor shows a small (X) (Westley, 2026-10-03: his current thinking, subject to change; a client element, E-16).
+- R-189-07  Given a generated ground-era map, When the landscape engine is tested, Then no strategically important place (a base, the objective, an economic site) is unreasonably difficult to reach on foot (Westley, 2026-10-03) [Q-189-04: what counts as unreasonably difficult].
 
 Inputs: terrain; bands.
 Outputs: cliffs and steep ground in the route grid; the slope list.
-Open flags: Q-189-01, Q-189-02, Q-189-03.
+Open flags: Q-189-02, Q-189-04.
 
 ### S-190 — What the layer system gets from the ground
 As a commander, I want the layers to follow the land under my units, so that where I can stand, climb and be hit matches what I see.
@@ -411,7 +414,7 @@ The layout library and library hints (E-21) stay an input of this epic. How the 
 ## Invariants
 
 - Same seed and inputs, same map seed bytes and the same terrain, byte-identical on every platform.
-- Every objective reachable from staging by 2 or more routes [Q-189-01: for which movement kinds].
+- Every objective reachable from staging by 2 or more routes; on a ground era they are walking routes, on a flying era no walking route is required (S-189 R-189-05).
 - No node outside the canvas.
 - Map seed under 1 KB.
 - Every land map has ground on all five layers.
@@ -422,7 +425,7 @@ The layout library and library hints (E-21) stay an input of this epic. How the 
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): generation under 50 ms; field sampling under 1 µs per query with a precomputed grid at 100 wu. These figures were set for the spine-and-gradient generator [Q-186-01: whether they stand for terrain-first generation, which adds noise, lakes, rivers and site finding, and at the canvas sizes of S-195 up to 64,000 wu].
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): generation of the spine-and-gradient layouts under 50 ms; field sampling under 1 µs per query with a precomputed grid at 100 wu. Terrain-first generation (noise, lakes, rivers and site finding, at canvases up to 64,000 wu) is not held to 50 ms: it runs off the match-start path, and the player never waits on a loading screen for it for longer than 5 seconds (R-186-07, Westley, 2026-10-03). Sampling stays at 1 µs.
 
 ## Look and behavior references
 
@@ -448,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-186-01, Q-187-01, Q-187-02, Q-188-01, Q-188-02, Q-189-01, Q-189-02, Q-189-03, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-188-02, Q-189-02, Q-189-04, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
