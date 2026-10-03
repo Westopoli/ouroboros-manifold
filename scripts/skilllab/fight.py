@@ -117,6 +117,20 @@ def _issue_orders(engine, w, setup, ids_by_group):
     return goals
 
 
+def _check_target_policy(policy):
+    if policy is None:
+        return
+    if not isinstance(policy, (tuple, list)) or len(policy) != 2 or any(p not in (None, 0, 1) or isinstance(p, bool) for p in policy):
+        raise ValueError("target_policy must be None or a pair of None, 0 or 1, got %r" % (policy,))
+
+
+def apply_target_policy(engine, w, setup):
+    """Faction 0 reads OM_TP_TARGET_POLICY, faction 1 reads OM_TP_TARGET_POLICY_FACTION_1 (A196); None leaves a side unset."""
+    for name, value in zip(("OM_TP_TARGET_POLICY", "OM_TP_TARGET_POLICY_FACTION_1"), setup.target_policy or (None, None)):
+        if value is not None:
+            engine.set_param(w, engine.param_id(name), float(value))
+
+
 def fight(setup, seed=0, swap=False, engine=None):
     heads = tuple(sum(g.count for g in setup.groups if g.side == s) for s in (0, 1))
     if min(heads) < 1:
@@ -125,6 +139,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         raise ValueError("max_ticks, stalemate_ticks and sample_every must each be at least 1")
     validate(setup)
     _check_reach(setup)
+    _check_target_policy(setup.target_policy)
     if engine is None:
         from scripts.skilllab.engine import Engine
         engine = Engine()
@@ -135,6 +150,7 @@ def fight(setup, seed=0, swap=False, engine=None):
             engine.disable_abilities(w)
         for pid, value in [(engine.param_id(n), float(v)) for n, v in setup.settings.items()]:
             engine.set_param(w, pid, value)
+        apply_target_policy(engine, w, setup)
         if setup.terrain is not None:
             t = setup.terrain
             engine.set_canvas(w, t.canvas[0], t.canvas[1])
