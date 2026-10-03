@@ -157,3 +157,42 @@ Replace section 4.
 ## P2.7 Rules for the Doer
 
 As section 8. Keep the pass 1 generator reachable through the plant `space-noise-blobs` for comparison, so the two can be flown side by side. Report once, ten lines at most.
+
+---
+
+# Pass 3 (2026-10-02, after the architect's read of pass 2)
+
+Pass 2 screenshots: `docs/northstar/research/space_landscape/mockup/pass2/`. What they show against the photo: plates have ragged, stair-stepped outlines, not straight broken edges, because the plate lattice was warped per row and column and because every plate is drawn as 100 wu tiles; rubble covers 47 percent of the map at 15 percent density, so a light field reads as static, not as a few floes on open water; crossing marks number in the hundreds and clutter every view; and the top-down view shows the union of all five layers, so it reads as one dense sheet whatever the density. Pass 3 fixes these four things and changes nothing else.
+
+## P3.1 True plates with straight edges
+
+- Plate centres: a square lattice of cell size `PLATE_CELL_WU` with each centre jittered by up to 45 percent of the cell size in x and y by hash. No row or column warping. The noise `v` scales only the jitter and the drop test, not the lattice.
+- Plate membership by nearest centre (Euclidean, 3 by 3 neighbourhood), as pass 2 intended. Channels by `d2 - d1 < CHANNEL_WU`.
+- **Draw each plate as one polygon, not as tiles.** For each kept plate build its cell polygon: start from the lattice cell's square expanded by one cell size, clip it by the perpendicular bisector half-plane against each of the eight neighbouring centres, then inset every edge by `CHANNEL_WU / 2`. Erode by moving each vertex toward the centroid by a hashed amount up to 12 percent of its distance, so edges stay straight and corners vary. Triangulate as a fan from the centroid and emit it into one `ArrayMesh` per layer (top face plus a 60 wu skirt, flat shaded), coloured by the layer. Rubble plates the same way on their finer lattice. The cell grid (`masks`) is still filled from the plate polygons by point-in-polygon on each cell centre, so play data and picture agree.
+- The large mass: union of the merged plates' polygons is not needed; draw the merged plates as plates in the `mass` colour with their shared channels closed (skip the inset on edges shared inside the mass).
+
+## P3.2 Rubble where it belongs
+
+- Rubble is generated only in dropped plates that lie next to a kept plate (share a channel with one), and its keep share is `RUBBLE_SHARE * v` where `v` is the noise at the rubble plate's centre, so rubble gathers at the edges of packed areas and open water stays open. Pools of dropped plates farther from any kept plate get no rubble.
+- At density 15 the blocked share per layer, rubble included, must land between 10 and 25 percent; at 70 between 60 and 80. Report the measured values.
+
+## P3.3 Crossing marks
+
+- Marks off by default. Key `C` toggles them. The HUD still counts crossings.
+- When on, one mark per cluster at most, and only clusters of 8 to 50 cells (bigger ones are obvious, smaller ones are noise).
+
+## P3.4 Reading the layers
+
+- In top-down with a layer focused (keys 1 to 5), the other layers are hidden, not darkened. With focus 0 in top-down, layers are drawn with the lower layers lighter and the upper layers more saturated, and each higher layer is offset 60 wu in x and y so stacked edges show as a stepped outline rather than a union.
+- Outside top-down, focus darkens as before.
+- A "Solo" label on the HUD shows when only one layer is visible.
+
+## P3.5 QA
+
+- `qa_state` adds `plate_polygon_count` per layer and `crossing_marks_shown`.
+- Checklist adds the blocked-share bands of P3.2 as measured rows, and the determinism and carving rows from pass 2 hold.
+- The QA script takes top-down shots at density 15, 35, 55 and 70 for seeds 11 and 12 with focus 0, and at density 55 with focus 3, plus tactical at density 55.
+
+## P3.6 Rules for the Doer
+
+As section 8 and P2.7. Pass 1 and pass 2 generators may be removed; only the plate generator of this pass needs to stay (drop the `space-noise-blobs` plant). Report once, ten lines at most, with the measured blocked shares.

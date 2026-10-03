@@ -12,6 +12,8 @@ const PLANTS: Array[String] = [
 	"regen-stall",
 	"space-no-carve",
 	"space-independent-layers",
+	"space-noise-blobs",
+	"space-coherent-layers",
 ]
 
 var _hud
@@ -76,6 +78,7 @@ func qa_state() -> Dictionary:
 		"regen_count": _hud.get_regen_count(),
 		"piece_total": _hud.get_piece_total(),
 		"objective_px": [objective_px.x, objective_px.y],
+		"top_down": _camera_rig.is_top_down(),
 	}
 	if fm is SpaceFieldMap:
 		var layer_blocked_pct: Array = []
@@ -89,6 +92,13 @@ func qa_state() -> Dictionary:
 		state["crossing_pct"] = fm.crossing_pct
 		state["crossing_marks"] = fm.crossings.size()
 		state["focus_layer"] = _hud.get_focus_layer()
+		state["plate_cell_wu"] = _hud.get_plate_cell()
+		state["layer_gap_wu"] = _hud.get_layer_gap()
+		state["plates_per_layer"] = fm.plates_per_layer
+		state["plates_cleared"] = fm.plates_cleared
+		state["plates_cut"] = fm.plates_cut
+		state["rubble_share"] = fm.rubble_share
+		state["objective_clear_blocked_cells"] = _blocked_cells_near_objective(fm, core_pos)
 	return state
 
 
@@ -114,11 +124,33 @@ func qa_set(name: String, value) -> void:
 			_hud.qa_set_density(float(value))
 		"focus":
 			_hud.qa_set_focus(int(value))
+		"plate_cell":
+			_hud.qa_set_plate_cell(float(value))
+		"layer_gap":
+			_hud.qa_set_layer_gap(float(value))
+		"top_down":
+			_hud.qa_set_top_down(bool(value))
 
 
 func qa_camera(height: float, x: float, z: float) -> void:
 	_camera_rig.pan_to(Vector3(x, 0.0, z))
 	_camera_rig.set_height(height)
+
+
+# Blocked cells, all layers, within the clear radius of the objective: above 0 means the clearing
+# is a pool of plate shapes, not a disc.
+func _blocked_cells_near_objective(fm: SpaceFieldMap, core_pos: Vector3) -> int:
+	var core2 := Vector2(core_pos.x, core_pos.z)
+	var reach := int(ceil(SpaceFieldMap.CLEAR_RADIUS_WU / FieldMap.SPACING))
+	var cx := int(round(core2.x / FieldMap.SPACING))
+	var cy := int(round(core2.y / FieldMap.SPACING))
+	var blocked := 0
+	for mask in fm.masks:
+		for gy in range(max(0, cy - reach), min(fm.dim, cy + reach + 1)):
+			for gx in range(max(0, cx - reach), min(fm.dim, cx + reach + 1)):
+				if mask[gy * fm.dim + gx] == 0 and (Vector2(gx, gy) * FieldMap.SPACING).distance_to(core2) <= SpaceFieldMap.CLEAR_RADIUS_WU:
+					blocked += 1
+	return blocked
 
 
 func _compute_city_stats(fm: FieldMap, core_pos: Vector3) -> Dictionary:
