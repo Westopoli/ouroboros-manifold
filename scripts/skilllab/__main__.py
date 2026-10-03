@@ -40,7 +40,7 @@ def _reach(out_dir, factor):
                        "Skill lab reach control")
 
 
-def _batch(name, out_dir):
+def _batch(name, out_dir, workers=1):
     try:
         defn = batches.get(name) if name else None
     except ValueError:
@@ -48,9 +48,19 @@ def _batch(name, out_dir):
     if defn is None:
         print("batch needs one of: " + ", ".join(batches.NAMES))
         return 2
-    for path in batches.run(defn, out_dir).values():
+    for path in batches.run(defn, out_dir, workers=workers).values():
         print(path)
     return 0
+
+
+def _workers(text):
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be a positive whole number, got %r" % (text,)) from None
+    if value < 1:
+        raise argparse.ArgumentTypeError("must be a positive whole number, got %r" % (text,))
+    return value
 
 
 def _positive(text):
@@ -66,13 +76,15 @@ def main(argv=None) -> int:
     parser.add_argument("name", nargs="?")
     parser.add_argument("--out", default="./skilllab_out")
     parser.add_argument("--factor", type=_positive, default=1.2)
+    parser.add_argument("--workers", type=_workers, default=1,
+                        help="batch only: fight in this many worker processes (default 1; try the number of idle cores)")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     if args.command == "controls":
         return _controls(Path(args.out))
     if args.command == "reach":
         return _reach(Path(args.out), args.factor)
     if args.command == "batch":
-        return _batch(args.name, Path(args.out))
+        return _batch(args.name, Path(args.out), args.workers)
     return 2
 
 

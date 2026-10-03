@@ -20,7 +20,7 @@ class World:
         self.run_calls, self.get_calls = [], []
         self.paths = {"csv": tmp_path / "x.csv", "run": tmp_path / "x_run.md", "page": tmp_path / "x_page.html"}
 
-        def fake_run(defn, out_dir, scan_fn=None):
+        def fake_run(defn, out_dir, scan_fn=None, workers=1):
             self.run_calls.append((defn, out_dir))
             return self.paths
 

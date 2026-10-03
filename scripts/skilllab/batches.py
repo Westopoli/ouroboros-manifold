@@ -5,7 +5,7 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import compose, maps, matchup, plays, positions, profile, report, rows, scan, skills
+from scripts.skilllab import compose, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills
 from scripts.skilllab.asym import Side, asym_play
 from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
 from scripts.skilllab.terrain import with_terrain
@@ -474,8 +474,19 @@ def _page(defn, scans, examples):
     return report._html(defn.title, body)
 
 
-def run(defn, out_dir, scan_fn=None):
+def run(defn, out_dir, scan_fn=None, workers=1):
+    """Run every cell of the batch; workers above 1 fights in a process pool shared by all the scans (same results)."""
+    if workers < 1:
+        raise ValueError("workers must be at least 1")
+    if workers == 1:
+        return _run(defn, out_dir, scan_fn)
+    with pool.FightPool(workers) as p:
+        return _run(defn, out_dir, scan_fn, map_fn=p.map)
+
+
+def _run(defn, out_dir, scan_fn=None, map_fn=None):
     scan_fn = scan_fn or scan.scan
+    more = {} if map_fn is None else {"map_fn": map_fn}
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     scans, examples, fight_rows = {}, {}, []
@@ -486,10 +497,10 @@ def run(defn, out_dir, scan_fn=None):
         if c.reference is not None:
             scans[(c.label, REFERENCE)] = scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
                                                   c.size, c.enemy_from, c.enemy_to, replicates=c.replicates,
-                                                  refine_factor=REFINE_FACTOR)
+                                                  refine_factor=REFINE_FACTOR, **more)
         for v, overlay in defn.variants:
             result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
-                             replicates=c.replicates, refine_factor=REFINE_FACTOR)
+                             replicates=c.replicates, refine_factor=REFINE_FACTOR, **more)
             scans[(c.label, v)] = result
             for cell in result.cells:
                 if cell.enemy_heads == c.size and c.label not in examples:
