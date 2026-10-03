@@ -59,13 +59,17 @@ Clean: `scripts/mockup_qa.sh firstlook landscape <out>` — `exit.txt` 0, `error
 - One clean `qa_seed`+screenshot regenerate cycle: ~3800-4800ms CPU (`gen`+`ground`+`placer`), independent of resolution.
 - Per rendered frame under llvmpipe/Compatibility at 1280x720: ~840-950ms once warmed up (measured via `_qa.fps_ms`), largely flat 640x360 to 1280x720 (CPU/draw-call bound on ~12,000 placer pieces, not fill-rate bound — see `_shared/README.md`'s SimBridge/timing notes and the main report).
 
-## Space kit mode (2026-10-02)
+## Space kit mode (2026-10-02, pass 2)
 
-Kit `space` builds a `SpaceFieldMap` (`field_map_space.gd`); spec `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`. Drive it with `qa_set kit space`, `qa_set density N`, `qa_set focus K`. Measured headless, Godot 4.6.1, canvas 24000, seeds 11 to 16. Thresholds are the spec's; Westley owns them.
+Kit `space` builds a `SpaceFieldMap` (`field_map_space.gd`): five sheets of fractured plates, each from its own seed, drawn as flat tiles. Spec `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md` ("Pass 2"). Drive it with `qa_set kit space`, `qa_set density N`, `qa_set focus K`, `qa_set plate_cell W`, `qa_set layer_gap W`, `qa_set top_down true|false`. Measured headless, Godot 4.6.1, canvas 24000, seeds 11 to 16. Thresholds are the spec's; Westley owns them. Pass 1's value-noise generator stays reachable through the plant `space-noise-blobs`.
 
 | id | oracle | threshold | measured clean | measured planted | plant |
 |---|---|---|---|---|---|
 | SPACE-DET-1 | `hash` for one seed and density, two runs | equal | equal at densities 15, 35, 55, 70 (seed 11) | | none |
-| SPACE-CARVE-2 | `regions_unreachable_after` | 0 for seeds 11 to 16 at densities 15, 35, 55, 70 | 0 in all 24 runs (also 0 and 90) | above 0 at density 70 on every seed 11 to 16 (7 to 13 regions) | `space-no-carve` |
-| SPACE-LAYERS-3 | mean `crossing_pct` over seeds 11 to 16 at density 70 | lower under the plant than default | 17.24 | 9.52 | `space-independent-layers` |
-| SPACE-KITS-4 | `kit` after `qa_set kit` in the order settled_reach, space, greek, space, settled_reach, greek | each switch lands, no error | all six switches land, no error | | none |
+| SPACE-CARVE-2 | `regions_unreachable_after` | 0 for seeds 11 to 16 at densities 15, 35, 55, 70 | 0 in all 24 runs | above 0 at density 70 on every seed 11 to 16 (23, 32, 50, 33, 20, 34 pockets) | `space-no-carve` |
+| SPACE-LAYERS-3 | mean `crossing_pct` over seeds 11 to 16 at density 70 | higher under the plant than default (layers are independent by default; `space-independent-layers` is now a no-op alias) | 22.25 | 29.08 | `space-coherent-layers` |
+| SPACE-KITS-4 | `kit` after `qa_set kit` in the order settled_reach, space, greek, space, settled_reach, greek, space | each switch lands, no error | all seven switches land, no error | | none |
+| SPACE-CLEAR-5 | `objective_clear_blocked_cells` at density 70 (blocked cells, all layers, within 600 wu of the objective) | at least 1 for seed 11 (no disc) | 74 (seeds 11 to 16: 74, 80, 76, 116, 112, 18) | | none |
+| SPACE-BLOBS-6 | pass 1 generator: `regions_unreachable_after` at density 70 | 0 carved; above 0 without carving | 0 for seeds 11 to 16 (4 to 9 tunnels cut) | 13, 10, 8, 10, 11, 7 | `space-noise-blobs` with `space-no-carve` |
+
+Notes. Plates keep every cut-off region small: the channels between plates form one connected network, so the planted pockets are all under `MIN_POCKET_CELLS` and are filled solid; `tunnels_cut` / `plates_cut` is 0 on seeds 11 to 16 at every density measured, so the drop-plates path (breadth-first over plate adjacency) is exercised only by a hand-sealed island in a scratch check, not by a seed. Screenshots wanted from the driver `qa/space.json`: seeds 11 and 12, densities 15, 35, 55, 70, at the micro, tactical and map bands, plus the same view top-down (`top_down` on, height 14000), plus one tactical with layer 3 focused.

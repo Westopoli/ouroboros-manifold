@@ -109,28 +109,30 @@ func _rebuild_world_geometry() -> void:
 	grid_instance.material_override = grid_mat
 	_world_container.add_child(grid_instance)
 
-	var border_mesh := ImmediateMesh.new()
-	border_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
-	for border in _field_map.borders:
-		var pts: Array = border.points
-		if pts.size() < 2:
-			continue
-		var color: Color = BORDER_COLORS.get(border.kind, Color.WHITE)
-		for i in range(pts.size() - 1):
-			var a: Vector2 = pts[i]
-			var b: Vector2 = pts[i + 1]
-			border_mesh.surface_set_color(color)
-			border_mesh.surface_add_vertex(Vector3(a.x, HEIGHT_OFFSET, a.y))
-			border_mesh.surface_set_color(color)
-			border_mesh.surface_add_vertex(Vector3(b.x, HEIGHT_OFFSET, b.y))
-	border_mesh.surface_end()
-	var border_mat := StandardMaterial3D.new()
-	border_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	border_mat.vertex_color_use_as_albedo = true
-	var border_instance := MeshInstance3D.new()
-	border_instance.mesh = border_mesh
-	border_instance.material_override = border_mat
-	_world_container.add_child(border_instance)
+	# A map with no borders (space plates) adds no surface: an empty one is an engine error.
+	if not _field_map.borders.is_empty():
+		var border_mesh := ImmediateMesh.new()
+		border_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+		for border in _field_map.borders:
+			var pts: Array = border.points
+			if pts.size() < 2:
+				continue
+			var color: Color = BORDER_COLORS.get(border.kind, Color.WHITE)
+			for i in range(pts.size() - 1):
+				var a: Vector2 = pts[i]
+				var b: Vector2 = pts[i + 1]
+				border_mesh.surface_set_color(color)
+				border_mesh.surface_add_vertex(Vector3(a.x, HEIGHT_OFFSET, a.y))
+				border_mesh.surface_set_color(color)
+				border_mesh.surface_add_vertex(Vector3(b.x, HEIGHT_OFFSET, b.y))
+		border_mesh.surface_end()
+		var border_mat := StandardMaterial3D.new()
+		border_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		border_mat.vertex_color_use_as_albedo = true
+		var border_instance := MeshInstance3D.new()
+		border_instance.mesh = border_mesh
+		border_instance.material_override = border_mat
+		_world_container.add_child(border_instance)
 
 	for col in range(GRID_DIVISIONS):
 		var letter := String.chr(65 + col)

@@ -15,10 +15,12 @@ const WALL_THICKNESS_WU := 40.0
 const FLAT_THICKNESS_WU := 20.0
 const MAGENTA_COLOR := Color(1.0, 0.0, 1.0)
 
-# Space kit: layered maps put layer k (1-based) at (k - 1) * LAYER_HEIGHT_WU.
+var _layer_gap: float = SpaceFieldMap.LAYER_GAP_WU
+
+# Space kit: layered maps put layer k (1-based) at (k - 1) * the map's layer gap.
 const DARKEN_UNFOCUSED := 0.55
-const SHAFT_MARK_LIFT_WU := 500.0
-const TUNNEL_SEGMENT_LENGTH_WU := 150.0
+const SPACE_WATER_Y_WU := -40.0
+const CUT_FRAME_WIDTH_WU := 60.0
 
 # Cliff border height is sampled from real terrain, not the kit's flat default.
 const MIN_CLIFF_HEIGHT_WU := 40.0
@@ -121,7 +123,8 @@ func place(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> Dictio
 	var groups: Dictionary = {}
 
 	if field_map is SpaceFieldMap:
-		_place_layered_cells(field_map, kit, kit_name, rng, groups)
+		_layer_gap = field_map.layer_gap_wu
+		_place_plates(field_map, kit, kit_name, groups)
 	else:
 		_place_cells(field_map, kit, kit_name, rng, groups)
 	_place_borders(field_map, kit, kit_name, groups)
@@ -155,7 +158,9 @@ func place(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> Dictio
 		total += g.transforms.size()
 		by_type[g.piece] = int(by_type.get(g.piece, 0)) + g.transforms.size()
 
-	if kit.get("water_is", "") == "surface":
+	if field_map is SpaceFieldMap:
+		_place_water(field_map, kit, world_parent, SPACE_WATER_Y_WU)
+	elif kit.get("water_is", "") == "surface":
 		_place_water(field_map, kit, world_parent)
 
 	return {total = total, by_type = by_type}
@@ -192,70 +197,79 @@ func _place_cells(field_map: FieldMap, kit: Dictionary, kit_name: String, rng: R
 			_group_add(groups, rule.get("piece", "piece"), kit_name, resolved.mesh, xform, resolved.color)
 
 
-# One terrain rule `{when: {blocked: true}}` fills the blocked cells of every layer. A cell
-# next to open space (in plane, or the layer above or below) always gets a piece; an interior
-# cell gets one with the rule's density. `layer_tint` lightens each layer toward white.
-func _place_layered_cells(field_map: SpaceFieldMap, kit: Dictionary, kit_name: String, rng: RandomNumberGenerator, groups: Dictionary) -> void:
-	var rule := _find_matching_rule(kit.get("terrain", []), {blocked = true})
-	if rule.is_empty():
-		return
-	var resolved := _resolve(rule.get("mesh", "none"), rule.get("color", "#ffffff"), rule.get("size", []))
-	if resolved.is_empty():
-		return
-	var interior_density: float = rule.get("density", 0.0)
-	var tint: float = rule.get("layer_tint", 0.0)
+# Binary sheets: every blocked cell of layer k is one flat square tile at the layer's height, no
+# jitter, so plates read as continuous sheets with straight edges. Colour per layer from the kit's
+# `layers`; the large mass takes the kit's `mass` colour; rubble uses the rubble mesh (half thickness).
+func _place_plates(field_map: SpaceFieldMap, kit: Dictionary, kit_name: String, groups: Dictionary) -> void:
+	var plate_cfg: Dictionary = kit.get("plate", {})
+	var rubble_cfg: Dictionary = kit.get("rubble", {})
+	var layer_colors: Array = kit.get("layers", [])
+	var mass_hex: String = kit.get("mass", "#4a4038")
 	var dim: int = field_map.dim
 	var spacing: float = FieldMap.SPACING
-	var layers: int = SpaceFieldMap.LAYERS
-	var lift: float = _ground_offset(resolved.mesh)
-	for k in range(layers):
+	for k in range(SpaceFieldMap.LAYERS):
+		var hex: String = layer_colors[k] if k < layer_colors.size() else "#ffffff"
+		var by_kind := {}
+		for entry in [[SpaceFieldMap.KIND_PLATE, "plate", plate_cfg, hex], [SpaceFieldMap.KIND_MASS, "mass", plate_cfg, mass_hex], [SpaceFieldMap.KIND_RUBBLE, "rubble", rubble_cfg, hex]]:
+			var resolved := _resolve(entry[2].get("mesh", "none"), entry[3], entry[2].get("size", []))
+			if resolved.is_empty():
+				continue
+			var group := _group_for(groups, "%s_L%d" % [entry[1], k + 1], kit_name, resolved.mesh, [k + 1])
+			by_kind[entry[0]] = {transforms = group.transforms, colors = group.colors, color = resolved.color, y = _layer_y(k + 1) + _ground_offset(resolved.mesh)}
 		var mask: PackedByteArray = field_map.masks[k]
-		var below: PackedByteArray = field_map.masks[k - 1] if k > 0 else PackedByteArray()
-		var above: PackedByteArray = field_map.masks[k + 1] if k < layers - 1 else PackedByteArray()
-		var color: Color = resolved.color.lerp(Color.WHITE, tint * k)
-		var y: float = _layer_y(k + 1) + lift
-		var piece: String = "%s_L%d" % [rule.get("piece", "piece"), k + 1]
-		for gy in range(dim):
-			for gx in range(dim):
-				var i := gy * dim + gx
-				if mask[i] == 1:
-					continue
-				var edge: bool = (gx > 0 and mask[i - 1] == 1) or (gx < dim - 1 and mask[i + 1] == 1) \
-					or (gy > 0 and mask[i - dim] == 1) or (gy < dim - 1 and mask[i + dim] == 1) \
-					or (not below.is_empty() and below[i] == 1) or (not above.is_empty() and above[i] == 1)
-				if not edge and rng.randf() >= interior_density:
-					continue
-				var jx := rng.randf_range(-JITTER_RANGE_WU, JITTER_RANGE_WU)
-				var jz := rng.randf_range(-JITTER_RANGE_WU, JITTER_RANGE_WU)
-				var xform := Transform3D(Basis(), Vector3(gx * spacing + jx, y, gy * spacing + jz))
-				_group_add(groups, piece, kit_name, resolved.mesh, xform, color, [k + 1])
+		var kinds: PackedByteArray = field_map.kinds[k]
+		for i in range(mask.size()):
+			if mask[i] == 1 or not by_kind.has(kinds[i]):
+				continue
+			var gy := i / dim
+			var target: Dictionary = by_kind[kinds[i]]
+			target.transforms.append(Transform3D(Basis(), Vector3((i - gy * dim) * spacing, target.y, gy * spacing)))
+			target.colors.append(target.color)
+	for key in groups.keys():
+		if groups[key].transforms.is_empty():
+			groups.erase(key)
 
 
-# Cut tunnels (kit `tunnel`, laid along each path at its layer's height) and one shaft mark
-# (kit `shaft`) per scarce crossing, hung halfway between its two layers.
+# Each plate dropped for reachability is outlined with the kit's `tunnel` colour as a thin flat
+# frame (four strips around its bounding box); one `shaft` mark per scarce crossing hangs halfway
+# between its two layers.
 func _place_space_extras(field_map: SpaceFieldMap, kit: Dictionary, kit_name: String, groups: Dictionary) -> void:
 	var tunnel_cfg: Dictionary = kit.get("tunnel", {})
-	var tunnel := _resolve(tunnel_cfg.get("mesh", "none"), tunnel_cfg.get("color", "#ffffff"), tunnel_cfg.get("size", [TUNNEL_SEGMENT_LENGTH_WU, 300.0]))
+	var tunnel := _resolve(tunnel_cfg.get("mesh", "none"), tunnel_cfg.get("color", "#ffffff"), tunnel_cfg.get("size", [100.0, 100.0]))
+	var unit: float = float(tunnel_cfg.get("size", [100.0, 100.0])[0])
 	if not tunnel.is_empty():
 		for t in field_map.tunnels:
 			var pts: PackedVector2Array = t.points
+			var low := Vector2(INF, INF)
+			var high := Vector2(-INF, -INF)
+			for pt in pts:
+				low = Vector2(min(low.x, pt.x), min(low.y, pt.y))
+				high = Vector2(max(high.x, pt.x), max(high.y, pt.y))
+			var mid := (low + high) * 0.5
+			var size := high - low
 			var y: float = _layer_y(t.layer) + _ground_offset(tunnel.mesh)
-			var dir := Vector2(1.0, 0.0)
-			for i in range(pts.size()):
-				if i + 1 < pts.size():
-					dir = (pts[i + 1] - pts[i]).normalized()
-				_group_add(groups, "tunnel_L%d" % t.layer, kit_name, tunnel.mesh, Transform3D(_border_basis(dir), Vector3(pts[i].x, y, pts[i].y)), tunnel.color, [t.layer])
+			var strips := [
+				[Vector2(mid.x, low.y), Vector2(size.x + CUT_FRAME_WIDTH_WU, CUT_FRAME_WIDTH_WU)],
+				[Vector2(mid.x, high.y), Vector2(size.x + CUT_FRAME_WIDTH_WU, CUT_FRAME_WIDTH_WU)],
+				[Vector2(low.x, mid.y), Vector2(CUT_FRAME_WIDTH_WU, size.y + CUT_FRAME_WIDTH_WU)],
+				[Vector2(high.x, mid.y), Vector2(CUT_FRAME_WIDTH_WU, size.y + CUT_FRAME_WIDTH_WU)],
+			]
+			for strip in strips:
+				var at: Vector2 = strip[0]
+				var extent: Vector2 = strip[1]
+				var basis := Basis().scaled(Vector3(extent.x / unit, 1.0, extent.y / unit))
+				_group_add(groups, "cut_L%d" % t.layer, kit_name, tunnel.mesh, Transform3D(basis, Vector3(at.x, y, at.y)), tunnel.color, [t.layer])
 	var shaft_cfg: Dictionary = kit.get("shaft", {})
 	var shaft := _resolve(shaft_cfg.get("mesh", "none"), shaft_cfg.get("color", "#ffffff"), shaft_cfg.get("size", []))
 	if not shaft.is_empty():
 		for c in field_map.crossings:
 			var p: Vector2 = c.point
-			var y: float = _layer_y(c.layer_from) + SHAFT_MARK_LIFT_WU + _ground_offset(shaft.mesh)
+			var y: float = _layer_y(c.layer_from) + _layer_gap * 0.5
 			_group_add(groups, "shaft_L%d" % c.layer_from, kit_name, shaft.mesh, Transform3D(Basis(), Vector3(p.x, y, p.y)), shaft.color, [c.layer_from, c.layer_to])
 
 
 func _layer_y(layer: int) -> float:
-	return (layer - 1) * SpaceFieldMap.LAYER_HEIGHT_WU if layer > 0 else 0.0
+	return (layer - 1) * _layer_gap if layer > 0 else 0.0
 
 
 func _place_borders(field_map: FieldMap, kit: Dictionary, kit_name: String, groups: Dictionary) -> void:
@@ -320,10 +334,10 @@ func _place_borders(field_map: FieldMap, kit: Dictionary, kit_name: String, grou
 								var bucket := int(round(cliff_h / CLIFF_HEIGHT_BUCKET_WU))
 								group_kit_name = "%s_h%d" % [kit_name, bucket]
 							if not resolved.is_empty():
-								var ground_y := _elevation_at(field_map, p) + layer_y
+								var ground_y := _elevation_at(field_map, p)
 								var y: float = ground_y + _ground_offset(resolved.mesh)
 								var xform := Transform3D(basis, Vector3(p.x, y, p.y))
-								_group_add(groups, piece_name, group_kit_name, resolved.mesh, xform, resolved.color, layer_tag)
+								_group_add(groups, piece_name, group_kit_name, resolved.mesh, xform, resolved.color)
 						d += spacing_wu
 
 		var crossing_cfg: Dictionary = cfg.get("crossing", {})
@@ -391,7 +405,7 @@ func _place_backdrop(field_map: FieldMap, kit: Dictionary, kit_name: String, gro
 		_group_add(groups, "backdrop", kit_name, resolved.mesh, xform, resolved.color)
 
 
-func _place_water(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> void:
+func _place_water(field_map: FieldMap, kit: Dictionary, world_parent: Node3D, y: float = 0.0) -> void:
 	var palette: Dictionary = kit.get("palette", {})
 	var color_hex: String = palette.get("water", "#2aa7d6")
 	var plane := PlaneMesh.new()
@@ -402,7 +416,7 @@ func _place_water(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) ->
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(color_hex)
 	mi.material_override = mat
-	mi.position = Vector3(field_map.canvas * 0.5, 0.0, field_map.canvas * 0.5)
+	mi.position = Vector3(field_map.canvas * 0.5, y, field_map.canvas * 0.5)
 	world_parent.add_child(mi)
 
 
@@ -414,12 +428,17 @@ func _resolve(mesh_name: String, color_hex: String, size: Array) -> Dictionary:
 	return {mesh = mesh, color = color}
 
 
-func _group_add(groups: Dictionary, piece: String, kit_name: String, mesh: Mesh, xform: Transform3D, color: Color, layers: Array = []) -> void:
+func _group_for(groups: Dictionary, piece: String, kit_name: String, mesh: Mesh, layers: Array = []) -> Dictionary:
 	var key := "%s::%s" % [piece, kit_name]
 	if not groups.has(key):
 		groups[key] = {piece = piece, mesh = mesh, transforms = [], colors = [], layers = layers}
-	groups[key].transforms.append(xform)
-	groups[key].colors.append(color)
+	return groups[key]
+
+
+func _group_add(groups: Dictionary, piece: String, kit_name: String, mesh: Mesh, xform: Transform3D, color: Color, layers: Array = []) -> void:
+	var group := _group_for(groups, piece, kit_name, mesh, layers)
+	group.transforms.append(xform)
+	group.colors.append(color)
 
 
 func _find_matching_rule(rules: Array, cell: Dictionary) -> Dictionary:

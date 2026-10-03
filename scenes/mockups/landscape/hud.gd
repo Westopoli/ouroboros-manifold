@@ -8,6 +8,8 @@ const DEFAULT_KIT := "greek"
 const SPACE_KIT := "space"
 const DEFAULT_DENSITY := 35.0
 const MAX_DENSITY := 90.0
+const GAP_RANGE := Vector2(400.0, 3000.0)
+const PLATE_RANGE := Vector2(800.0, 3200.0)
 const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/pass3/"
 const BAND_HEIGHTS := {"micro": 1000.0, "tactical": 3000.0, "map": 20000.0}
 
@@ -22,6 +24,8 @@ var _seed: int = 11
 var _canvas: float = DEFAULT_CANVAS
 var _stability: float = 60.0
 var _density: float = DEFAULT_DENSITY
+var _layer_gap: float = SpaceFieldMap.LAYER_GAP_WU
+var _plate_cell: float = SpaceFieldMap.PLATE_CELL_WU
 var _focus_layer: int = 0
 var _piece_total: int = 0
 var _timing_ms: Dictionary = {}
@@ -43,6 +47,11 @@ var _regen_count: int = 0
 # Space-kit controls, built here so the scene file stays as it is.
 var _density_label: Label
 var _density_slider: HSlider
+var _gap_label: Label
+var _gap_slider: HSlider
+var _plate_label: Label
+var _plate_slider: HSlider
+var _top_down_button: Button
 var _focus_label: Label
 var _space_stats_label: Label
 
@@ -122,7 +131,14 @@ func _regenerate() -> void:
 	if QaPlants.is_active("regen-stall"):
 		OS.delay_msec(3000)
 	var is_space := _kit_name == SPACE_KIT
-	var field_map: FieldMap = SpaceFieldMap.new() if is_space else FieldMap.new()
+	var field_map: FieldMap
+	if is_space:
+		var space_map := SpaceFieldMap.new()
+		space_map.plate_cell_wu = _plate_cell
+		space_map.layer_gap_wu = _layer_gap
+		field_map = space_map
+	else:
+		field_map = FieldMap.new()
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()
@@ -197,28 +213,84 @@ func _build_space_controls() -> void:
 	var box: VBoxContainer = $VBoxContainer
 	_density_label = Label.new()
 	_density_label.name = "DensityLabel"
-	_density_slider = HSlider.new()
-	_density_slider.name = "DensitySlider"
-	_density_slider.custom_minimum_size = Vector2(160, 0)
-	_density_slider.min_value = 0.0
-	_density_slider.max_value = MAX_DENSITY
-	_density_slider.step = 1.0
-	_density_slider.value = _density
+	_density_slider = _make_slider("DensitySlider", 0.0, MAX_DENSITY, 1.0, _density)
+	_gap_label = Label.new()
+	_gap_label.name = "GapLabel"
+	_gap_slider = _make_slider("GapSlider", GAP_RANGE.x, GAP_RANGE.y, 100.0, _layer_gap)
+	_plate_label = Label.new()
+	_plate_label.name = "PlateLabel"
+	_plate_slider = _make_slider("PlateSlider", PLATE_RANGE.x, PLATE_RANGE.y, 100.0, _plate_cell)
+	_top_down_button = Button.new()
+	_top_down_button.name = "TopDownButton"
 	_focus_label = Label.new()
 	_focus_label.name = "FocusLabel"
 	_space_stats_label = Label.new()
 	_space_stats_label.name = "SpaceStatsLabel"
-	for control in [_density_label, _density_slider, _focus_label, _space_stats_label]:
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _top_down_button, _focus_label, _space_stats_label]:
 		box.add_child(control)
 	# Same debounce as stability: regenerate on release, not per drag tick.
 	_density_slider.drag_ended.connect(_on_density_drag_ended)
 	_density_slider.value_changed.connect(_on_density_value_changed)
+	_gap_slider.drag_ended.connect(_on_gap_drag_ended)
+	_gap_slider.value_changed.connect(_on_gap_value_changed)
+	_plate_slider.drag_ended.connect(_on_plate_drag_ended)
+	_plate_slider.value_changed.connect(_on_plate_value_changed)
+	_top_down_button.pressed.connect(_on_top_down_pressed)
 	_on_density_value_changed(_density)
+	_on_gap_value_changed(_layer_gap)
+	_on_plate_value_changed(_plate_cell)
+	_refresh_top_down_text()
 	_set_focus(_focus_layer)
+
+
+func _make_slider(slider_name: String, low: float, high: float, step: float, value: float) -> HSlider:
+	var slider := HSlider.new()
+	slider.name = slider_name
+	slider.custom_minimum_size = Vector2(160, 0)
+	slider.min_value = low
+	slider.max_value = high
+	slider.step = step
+	slider.value = value
+	return slider
 
 
 func _on_density_value_changed(value: float) -> void:
 	_density_label.text = "Density: %d%% blocked" % int(value)
+
+
+func _on_gap_value_changed(value: float) -> void:
+	_gap_label.text = "Layer gap: %d wu" % int(value)
+
+
+func _on_plate_value_changed(value: float) -> void:
+	_plate_label.text = "Plate size: %d wu" % int(value)
+
+
+func _on_gap_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_layer_gap = _gap_slider.value
+	_regenerate()
+
+
+func _on_plate_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_plate_cell = _plate_slider.value
+	_regenerate()
+
+
+func _on_top_down_pressed() -> void:
+	_set_top_down(not _camera_rig.is_top_down())
+
+
+func _set_top_down(on: bool) -> void:
+	_camera_rig.set_top_down(on)
+	_refresh_top_down_text()
+
+
+func _refresh_top_down_text() -> void:
+	_top_down_button.text = "Top-down: %s" % ("on" if _camera_rig.is_top_down() else "off")
 
 
 func _set_focus(layer: int) -> void:
@@ -231,8 +303,8 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	var is_space := field_map is SpaceFieldMap
 	_stability_label.visible = not is_space
 	_stability_slider.visible = not is_space
-	_density_label.visible = is_space
-	_density_slider.visible = is_space
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider]:
+		control.visible = is_space
 	_focus_label.visible = is_space
 	_space_stats_label.visible = is_space
 	if not is_space:
@@ -240,8 +312,10 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	var blocked: Array = []
 	for stat in field_map.layer_stats:
 		blocked.append("%d%%" % int(round(stat.blocked * 100.0)))
-	_space_stats_label.text = "Blocked per layer: %s\nPockets filled: %d  Tunnels cut: %d\nStill unreachable: %d  Marked crossings: %d" % [
-		" ".join(blocked), field_map.pockets_filled, field_map.tunnels_cut,
+	var plates: Array = field_map.plates_per_layer.map(func(c): return str(c))
+	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable: %d  Marked crossings: %d" % [
+		" ".join(blocked), " ".join(plates) if not plates.is_empty() else "-", field_map.plates_cleared, field_map.tunnels_cut,
+		int(round(field_map.rubble_share * 100.0)), field_map.pockets_filled,
 		field_map.regions_unreachable_after, field_map.crossings.size()]
 
 
@@ -368,6 +442,14 @@ func get_density() -> float:
 	return _density
 
 
+func get_layer_gap() -> float:
+	return _layer_gap
+
+
+func get_plate_cell() -> float:
+	return _plate_cell
+
+
 func get_focus_layer() -> int:
 	return _focus_layer
 
@@ -412,6 +494,22 @@ func qa_set_density(v: float) -> void:
 	_density = clamp(v, 0.0, MAX_DENSITY)
 	_density_slider.value = _density
 	_regenerate()
+
+
+func qa_set_plate_cell(v: float) -> void:
+	_plate_cell = clamp(v, PLATE_RANGE.x, PLATE_RANGE.y)
+	_plate_slider.value = _plate_cell
+	_regenerate()
+
+
+func qa_set_layer_gap(v: float) -> void:
+	_layer_gap = clamp(v, GAP_RANGE.x, GAP_RANGE.y)
+	_gap_slider.value = _layer_gap
+	_regenerate()
+
+
+func qa_set_top_down(on: bool) -> void:
+	_set_top_down(on)
 
 
 func qa_set_focus(layer: int) -> void:
