@@ -1,6 +1,6 @@
 """PP-move rule tests, collision, arrival and map clamp.
 
-Proves E-13 R-097-05, R-097-06 (the stationary-pair rule, the second rule of that number), R-099-04
+Proves E-13 R-097-05, R-097-10 (the stationary-pair rule, renumbered from the second R-097-10 by A158), R-099-04
 (S-097, S-099) and the P3 clamp part (plan Phase A row P3, `om_map_set_canvas`), as reworded by
 Addendum 45 (docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md, rows "Collision" and P3).
 The reference is simulation/movement.py 566-690 (collision) and 331-360 (arrival).
@@ -9,7 +9,7 @@ NOT tested, on purpose: two units on exactly the same spot (R-097-07). The Pytho
 thousand times the normal push; that case is Q-097-02, held for Westley. No scene below places two units
 on one point.
 
-NOT tested, unclear (see the report): the second sentence of R-097-06, "given both are stationary and either
+NOT tested, unclear (see the report): the second sentence of R-097-10, "given both are stationary and either
 was displaced earlier in the tick, they split the displacement equally". In the Python that branch is reached
 only by a unit that moved this tick and is nonetheless flagged stationary (its group just ended, or it moved
 while engaged). The rule text does not say which cases it means, so no scene is written for it.
@@ -54,10 +54,10 @@ def _dist(p, q):
     return math.hypot(p[0] - q[0], p[1] - q[1])
 
 
-# ---------------------------------------------------------------- pair pushes (R-097-05, R-097-06)
+# ---------------------------------------------------------------- pair pushes (R-097-05, R-097-10)
 
 def test_R_097_05_two_moving_units_split_the_push_to_30_apart(lib, tw):
-    """R-097-05 / R-097-06 (both moving): two same-layer units that overlap after the move are pushed apart along
+    """R-097-05 / R-097-10 (both moving): two same-layer units that overlap after the move are pushed apart along
     the line between them until 30 wu apart, half each. A (100,0) and B (100,20) both go +x: after the step both
     are at x 107.5, 20 apart, so each gives 5 wu along y: A (107.5,-5), B (107.5,25). Their straight probes are
     clear (44.7 from the other's start), so no steering enters. Green today; stays green."""
@@ -72,8 +72,8 @@ def test_R_097_05_two_moving_units_split_the_push_to_30_apart(lib, tw):
     assert pb == pytest.approx((107.5, 25.0), abs=POS_TOL)
 
 
-def test_R_097_06_stationary_unit_takes_no_push_mover_takes_all(lib, tw):
-    """R-097-06 (one stationary): a unit with no move target takes 0 and the mover takes the full displacement.
+def test_R_097_10_stationary_unit_takes_no_push_mover_takes_all(lib, tw):
+    """R-097-10 (one stationary): a unit with no move target takes 0 and the mover takes the full displacement.
     M (id 1, the lower id so it starts the pair check) at (100,0) goes -x, 7.5 wu to (92.5,0), 17.5 from the idle
     S at (110,0); it is pushed back to 30 from S, i.e. to (80,0), and S has not moved at all."""
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
@@ -86,8 +86,8 @@ def test_R_097_06_stationary_unit_takes_no_push_mover_takes_all(lib, tw):
     assert _dist(pm, (110.0, 0.0)) == pytest.approx(COLLISION_DIAMETER, abs=POS_TOL)
 
 
-def test_R_097_06_only_a_unit_that_moved_starts_a_pair_check(lib, tw):
-    """R-097-06 (Python: only moved units drive the collision loop): two idle units 20 wu apart, nobody moving this
+def test_R_097_10_only_a_unit_that_moved_starts_a_pair_check(lib, tw):
+    """R-097-10 (Python: only moved units drive the collision loop): two idle units 20 wu apart, nobody moving this
     tick, are left exactly where they are; no pair check starts. Companion to the mover test above, which is the
     positive control: the same overlap with one unit moving does get resolved."""
     a = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
