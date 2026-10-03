@@ -1902,7 +1902,8 @@ static om_unit_row *om_tac_nearest_visible(om_world *w, om_tac_state *st, const 
 
 /* R-087-04 (P1): an attack-moving unit with no enemy in attack range, on its
  * cohort turn, makes the nearest enemy it sees in sensor range its move goal
- * and walks there by the ordinary movement step. The old goal is dropped. */
+ * and walks there by the ordinary movement step. The old goal is dropped. The sighting is not a leash
+ * anchor: the anchor is taken where the unit stands once it holds the target in range (R-087-05). */
 static void om_tac_pursue_goal(om_world *w, om_tac_state *st, om_unit_row *u) {
     const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
     om_unit_row *seen;
@@ -1910,7 +1911,6 @@ static void om_tac_pursue_goal(om_world *w, om_tac_state *st, om_unit_row *u) {
     seen = om_tac_nearest_visible(w, st, u, prof->sensor_radius);
     if (!seen) return;
     u->target_id = seen->unit_id;
-    if (!u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
     u->halted = 0;
     u->order_x = seen->x; u->order_y = seen->y;
     u->issued_x = seen->x; u->issued_y = seen->y;
