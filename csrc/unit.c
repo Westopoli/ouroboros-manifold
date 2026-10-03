@@ -846,6 +846,15 @@ void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y
     om_grid_move(st, unit_id - 1);
 }
 
+/* See also: the extern of the same name in tactical_move.c, the only caller: the cross-over of a layer transfer
+ * (R-004-02) sets the unit's effective layer. The grid is not layered, so nothing is re-bucketed. */
+void om_tac_unit_set_layer(om_world *w, uint32_t unit_id, uint32_t layer) {
+    om_tac_state *st = w ? (om_tac_state *)w->tactical_state : NULL;
+    om_unit_row *u = om_registry_find_in(st, unit_id);
+    if (!u || layer >= OM_LAYER_COUNT) return;
+    u->layer = layer;
+}
+
 static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t faction_id,
                                         double x, double y, uint32_t layer) {
     const om_unit_type_profile *prof;
