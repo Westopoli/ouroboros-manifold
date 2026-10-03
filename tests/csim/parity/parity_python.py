@@ -44,8 +44,8 @@ _FIXED_REPLACEMENT = """            for _c, _s in _FIXED_SWEEP:
                 ax = seek_x * _c - seek_y * _s
                 ay = seek_x * _s + seek_y * _c
 """
-_ORDER_ANCHOR = "        for uid_a in moved:\n"
-_ORDER_REPLACEMENT = "        for uid_a in sorted(moved, reverse=True):\n"
+_ORDER_ANCHOR = "        for uid_a in active:\n"  # A156: every active unit starts pair checks (was `moved`)
+_ORDER_REPLACEMENT = "        for uid_a in sorted(active, reverse=True):\n"
 
 _loaded = {}
 

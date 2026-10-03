@@ -238,10 +238,10 @@ def _state_hash(lib, w):
     return h.hexdigest()
 
 
-# Recorded on origin/main before the F3 change; must hold after it.
+# Re-recorded A155 to A159 on push/pp-a5-land at default OM_TP_PURSUE_BY_STEERING 1 (was: recorded on origin/main before the F3 change).
 GOLDEN = {
-    "clash": "40a710504933b34a59cc013f14e51be10e5864bc7e66718b4922d9601f5f38fc",
-    "spread": "e80afeadbd872e4f0c3ebe1b90d0c33d5f3f5cc3140f85160cf80caa29054980",
+    "clash": "c7dba9d7281d5c72ec026f5799cae93b8a2a4e511786c431d9a64adad89366e5",
+    "spread": "ef0d4155f0fea6836c1d6af6855e01634c514767bd0ac978e5fd861a45fdcf23",
 }
 
 
