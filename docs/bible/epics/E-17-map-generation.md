@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 110 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 21 open flags, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 16 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -209,14 +209,14 @@ As a commander, I want mesas, canyons, island chains and fjords and not only rol
 
 Rules
 - R-187-01  Given a seed, When a map's climate and landform are chosen, Then both are derived from the seed alone, and the simulation's region record is unchanged (Westley, 2026-10-02, "derived from seed for now").
-- R-187-02  Given the landform, When terrain is generated, Then large features with their own shape are blended into the layered noise, because noise alone gives only rolling hills [Q-187-01: which landforms ship; the options Westley chose from named canyon, mesa, caldera, fjord, terraced massif and island chain].
+- R-187-02  Given the landform, When terrain is generated, Then large features with their own shape are blended into the layered noise, because noise alone gives only rolling hills All six ship: canyon, mesa, caldera, fjord, terraced massif and island chain (Westley, 2026-10-03). The prototype may build them in batches.
 - R-187-03  Given the climate and landform, When the region's environmental trouble (the storm, the flood, the dust) is chosen, Then it is derived from the seed in the same way; how the trouble travels across the map is E-15 S-130.
-- R-187-04  Given any generated land map, When it is read as a whole, Then landscape variety is packed into it, which is the condition on which the canvas stays at today's sizes (R-166-05) [Q-187-02: how much variety counts as packed in, and how it is measured].
+- R-187-04  Given any generated land map, When it is read as a whole, Then landscape variety is packed into it, which is the condition on which the canvas stays at today's sizes (R-166-05). The prototype's builder picks the measure (a count of distinct biome bands and landforms, or the spread of height and biome across the canvas) and, when presenting, asks Westley whether the variety is the one he had in mind; his judgment decides it (Westley, 2026-10-03).
 - R-187-05  Given the region's stability and capacity, When terrain is flavored, Then they act as S-115 describes today, on interference, hazards and cover, and do not decide the landform.
 
 Inputs: seed.
 Outputs: climate and landform in the map seed; landform shapes in the terrain.
-Open flags: Q-187-01, Q-187-02.
+Open flags: none.
 
 ### S-188 — Height becomes the five layers
 As a commander, I want a mountainside to be a stack of layers that an attacker has to climb, so that height is play and not paint.
@@ -263,12 +263,12 @@ Rules
 - R-190-02  Given any position, When the land flag is read per layer, Then a walking unit can stand only on the layer of the ground there, and on a slope on each layer it passes in turn (E-01 R-001-06).
 - R-190-03  Given a slope, When it is output, Then it carries its position, its length, the layers it joins (adjacent or not), a bottom edge on the lower layer, a top edge on the upper layer, and the midline halfway along its length (E-01 R-001-06, R-004-06).
 - R-190-04  Given the fitted bands, When the map is output, Then the five band heights are output, and E-01 R-010-01 reads them to draw a unit at its layer's height. This amends the note under E-01 Q-E01-01 that the elevation mapping is fixed globally.
-- R-190-05  Given a cover obstacle on the map, When it is generated, Then it has a height in layers, and it blocks sight and fire only on the layers it reaches (E-01 R-007-01, R-007-02) [Q-190-01: where a generated cover obstacle's height comes from on a land map]. Asteroid height on space maps stays with the held map content (Q-098-02).
+- R-190-05  Given a cover obstacle on the map, When it is generated, Then it has a height in layers, and it blocks sight and fire only on the layers it reaches (E-01 R-007-01, R-007-02) Its height comes from the terrain feature it is (boulder, wall, tree line) and the era kit (Westley, 2026-10-03). Asteroid height on space maps stays with the held map content (Q-098-02).
 - R-190-06  Given the terrain, When a height is stored, Then it is stored continuous in world units, and the layer is derived from it by the bands.
 
 Inputs: bands; slopes; cover obstacles.
 Outputs: layer mask; land flag per layer; slopes; band heights; cover heights. E-01 reads them as its generator inputs.
-Open flags: Q-190-01.
+Open flags: none.
 
 ### S-191 — The places the game needs, found on the terrain
 As a commander, I want bases, objectives and resources to sit where the land puts them, so that every map has its own shape of fight and a reason for every place.
@@ -344,14 +344,14 @@ Open flags: Q-194-01.
 As a commander, I want bigger matches to have bigger maps, so that more teammates mean more to do, more resources and more enemies.
 
 Rules
-- R-195-01  Given a match of 4 to 6 players, When the canvas is chosen, Then it is 64,000 wu (Westley, 2026-10-02) [Q-195-02: whether the region modifier of R-116-02 applies at this size].
-- R-195-02  Given a match of fewer players, When the canvas is chosen, Then it keeps today's sizes (R-116-01) [Q-195-01: today's largest size is 32,000 wu in the landscape decision and 28,000 wu in R-116-01 and the code constant `OM_CANVAS_SIZE_RANGES_LARGE_HI`; candidates are 28,000, 32,000, or the 24,000 base plus 30 percent].
+- R-195-01  Given a match of 4 to 6 players, When the canvas is chosen, Then it is 64,000 wu (Westley, 2026-10-02), fixed: the region modifier of R-116-02 does not apply at this size (Westley, 2026-10-03).
+- R-195-02  Given a match of fewer players, When the canvas is chosen, Then it keeps today's sizes (R-116-01), with the largest at 32,000 wu (Westley, 2026-10-03). The code constant `OM_CANVAS_SIZE_RANGES_LARGE_HI` (28,000), R-116-01 and ALG-70 still say 28,000 and change in a contract piece when the canvas work is built.
 - R-195-03  Given any canvas, When terrain is generated, Then it holds the five fitted bands (S-188) and the landscape variety of S-187. The canvas is not shrunk to fit them.
 - R-195-04  Given a larger canvas, When a mission runs, Then there is more to do, more resources and more enemies (DECISIONS H7), the economic locations scaling with the players and the canvas (R-191-03). Each player is a sub-commander and each pair a sub-civilization (E-19 S-159).
 
 Inputs: archetype; players in the match; region.
 Outputs: canvas size in the map seed.
-Open flags: Q-195-01, Q-195-02.
+Open flags: none.
 
 ### S-196 — One field map, two kits
 As a commander, I want a land and a space era to look different over the same kind of map, so that the same game reads as two worlds.
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-187-01, Q-187-02, Q-188-01, Q-189-02, Q-189-04, Q-190-01, Q-191-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-02, Q-189-04, Q-191-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
