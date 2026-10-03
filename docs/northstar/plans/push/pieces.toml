@@ -1134,6 +1134,18 @@ tests_pending = true
 size_estimate = "canvas size, block-rect, cover height, layer accessibility from the grid"
 
 [[piece]]
+id = "PP-ledger"
+manager = "M0"
+wave = 5
+owns = ["docs/northstar/plans/push_ledger_2026-09-22.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["PP-contract"]
+status = "pending"
+tests_pending = false
+size_estimate = "ledger rows that ride the cumulative landing (A163)"
+
+[[piece]]
 id = "SL-harness"
 manager = "M0"
 wave = 5
