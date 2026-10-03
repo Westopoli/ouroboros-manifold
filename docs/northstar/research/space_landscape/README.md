@@ -132,7 +132,7 @@ Verbatim: "I'm seeing a lot of objects, is the level of detail we're introducing
 | 70 | 22 | 3,158,078 | 155,040 | 79,921 | 95,978 |
 
 - Draw calls are not the problem: one mesh per layer per kind, 22 in all.
-- Triangles are: 1.8 to 3.2 million at the heavy end. The walls are a small share. The bulk is the gap fill, which is emitted as one closed slab per 100 wu cell (top, bottom and four sides, twelve triangles) for every cell blocked on two layers, about 80,000 cells at density 55, nearly all of them hidden inside the body they fill. Merging those cells into regions and emitting only their outline walls, which the wall pass already does, would cut the count five to ten times. A GTX 1070 can draw three million static triangles, so this is waste rather than a wall, but it is the wrong shape.
+- Triangles are: 1.8 to 3.2 million at the heavy end. The architect first blamed the gap fill; the pass 5 Doer measured the real cause: the hidden crossing-mark rings, drawn as 2.9 of the 3.2 million triangles at density 70 even while hidden. The gap fill was already outline walls at about 120,000. With the rings cut to a coarse mesh the visual view is 154,000, 302,000 and 340,000 triangles at densities 15, 55 and 70. A GTX 1070 draws that without effort. The lesson for the record: measure before blaming.
 - Generation is 1.1 s in GDScript, a mockup cost; in C it is tens of milliseconds.
 - In the game the renderer never draws per cell: the decided direction (7D) is a coarse functional map in the simulation and detail drawn by the client at the level the zoom needs. The mockup is wasteful by construction, not by concept.
 
@@ -161,6 +161,19 @@ Recorded as:
 
 Open: the small craft's size and gap width; how the 5 to 10 percent is chosen (which plates, which layers); whether the batches are placed by the layout (near objectives and resources) or by the noise.
 
+## Pass 5 (2026-10-03)
+
+Built to the pass 5 spec. Screenshots in `mockup/pass5/`: the same map in the visual view, the ordinary-unit view (gaps under 300 wu solid) and the small-craft view (orange is open to small craft only), with the small-craft section outlined, plus the "sections near layout" variant.
+
+Measured, seeds 11 to 16: ordinary-unit reachability 0 unreachable at every density; small-craft sections 7.5 to 8.0 percent of each layer against the 7.5 slider; cells open to small craft only 1 to 2.5 percent per layer at density 55; triangles 154,000 to 340,000. Generation 1.5 to 3.5 s in GDScript (the two extra masks and the plate-path joining), a mockup cost.
+
+Two things to know:
+
+- Joining every cut-off pool to the ordinary-unit map costs blocked share at the heavy end: density 70 measures 54 percent blocked, not 67. Closing gaps under 300 wu makes many more pockets, and each is joined by dropping plates. Left as is; whether the slider should be rescaled is a tuning question for later, not a design one.
+- The functional views look like blobs, not floes. That is right: the straight edges and channels are the client's picture, the blobs are what units can and cannot pass.
+
+Open after pass 5: the camera among five stacked sheets (next, as design options); the small craft's size (Q-166-05); how the sections are chosen (two ways are in the mockup to compare).
+
 ## Suggested next step
 
-Pass 5: the functional map at 300 wu minimum passage, small-craft sections at 5 to 10 percent with the fine fracture kept there, a functional-view toggle, and the fill-cell triangle fix. Then the camera question.
+Westley flies pass 5 (key V cycles visual, ordinary and small views; Small-craft share slider; Sections near layout toggle). Then the camera question is designed as options.

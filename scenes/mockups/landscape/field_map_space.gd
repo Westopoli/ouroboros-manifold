@@ -9,6 +9,10 @@ extends FieldMap
 # plates next to kept ones. Every plate is a polygon; the cell masks are filled from the polygons,
 # so play data and picture agree. Cells blocked on a layer and the one above are traced into walls
 # so the two read as one solid body.
+# Pass 5 adds the functional maps: what ordinary units can pass (the fine mask opened with a 300 wu
+# block: anything narrower is solid) and what small craft can pass. The fine fracture above is kept
+# whole; it is the small-craft map inside small-craft sections (batches of adjacent plates) and
+# visual detail everywhere else. Reachability runs on the ordinary map.
 # No engine noise, no random calls: every random value is the hand-written hash below, so the C
 # simulation can copy this file line for line.
 # See also: docs/northstar/plans/2026-10-02-space-kit-mode-spec.md
@@ -16,6 +20,12 @@ extends FieldMap
 const LAYERS := 5
 const LAYER_GAP_WU := 1000.0
 const CLEAR_RADIUS_WU := 600.0
+const MIN_PASSAGE_WU := 300.0
+# Placeholder until Q-166-05 (the small craft's size).
+const SMALL_PASSAGE_WU := 100.0
+const SMALL_SHARE_DEFAULT := 7.5
+const BATCH_PLATES := 6
+const SECTION_SEED_QUANTILE := 0.75
 const MIN_POCKET_CELLS := 40
 const CROSSING_MARK_MIN_CELLS := 8
 const CROSSING_MARK_MAX_CELLS := 50
@@ -53,6 +63,7 @@ const H_SPLIT_X := 10
 const H_SPLIT_Y := 11
 const H_SPLIT_DROP := 12
 const H_SPLIT_ERODE := 13
+const H_SECTION := 14
 # kinds[k] values for a blocked cell, and the kind of a plate polygon.
 const KIND_PLATE := 0
 const KIND_MASS := 1
@@ -68,8 +79,25 @@ var layer_gap_wu: float = LAYER_GAP_WU
 var size_spread: float = SIZE_SPREAD
 var density_swing: float = DENSITY_SWING
 var shared_density := true
+# Percent of each layer's cells that are small-craft sections.
+var small_share: float = SMALL_SHARE_DEFAULT
+# Sections grow from the plates at the objective, staging and vantage nodes instead of the noise.
+var sections_near_layout := false
 # masks[k]: PackedByteArray of dim * dim, 1 open, 0 blocked, k = 0..4 (layer k + 1).
 var masks: Array = []
+# masks_ordinary[k]: the fine mask opened with a MIN_PASSAGE_WU block, 1 open. Reachability runs on
+# this. small_masks[k]: what small craft can pass: the fine mask opened at SMALL_PASSAGE_WU (or the
+# ordinary map, if more is open there) inside small-craft sections, the ordinary map outside.
+var masks_ordinary: Array = []
+var small_masks: Array = []
+# section_cells[k]: per cell the 1-based index of the section batch it belongs to, 0 outside.
+var section_cells: Array = []
+# section_frames[k]: {a, b} segments outlining each section batch (marching squares on its cells).
+var section_frames: Array = []
+# Percent of layer k's cells in sections; percent of layer k's small-craft-open cells that ordinary
+# units cannot reach.
+var small_section_pct: Array = []
+var small_only_pct: Array = []
 # kinds[k]: KIND_* of each blocked cell (0 where open).
 var kinds: Array = []
 # plate_polys[k]: each {points: PackedVector2Array (counter-clockwise), kind: KIND_*, plate: site index}.
@@ -139,11 +167,14 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -
 	tunnels_cut = 0
 	tunnels = []
 	var objective_cell := _cell_of(nodes[0].pos)
-	var labelled := _label_regions(open, objective_cell)
+	var ordinary_cells := int(MIN_PASSAGE_WU / SPACING)
+	var ordinary := _open_block(open, ordinary_cells)
+	var labelled := _label_regions(ordinary, objective_cell)
 	if not QaPlants.is_active("space-no-carve"):
-		_fill_and_drop_plates(open, kind, labelled, objective_cell)
-		labelled = _label_regions(open, objective_cell)
-	regions_unreachable_after = labelled.sizes.size() - 1
+		_fill_and_drop_plates(open, kind, labelled)
+		ordinary = _open_block(open, ordinary_cells)
+		labelled = _label_regions(ordinary, objective_cell)
+	regions_unreachable_after = labelled.sizes.size() - (1 if labelled.main >= 0 else 0)
 
 	masks = []
 	kinds = []
@@ -176,6 +207,7 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_density: float = 35.0) -
 			var k := c / n
 			fill_cells[k].append(c - k * n)
 
+	_build_functional_maps(open, ordinary, labelled, p_seed)
 	_build_grid(open)
 	_build_crossings(open)
 	_build_walls(open, owner)
@@ -190,6 +222,10 @@ func compute_hash() -> int:
 		parts.append(int(round(n.pos.x)))
 		parts.append(int(round(n.pos.y)))
 	for mask in masks:
+		parts.append(hash(mask))
+	for mask in masks_ordinary:
+		parts.append(hash(mask))
+	for mask in small_masks:
 		parts.append(hash(mask))
 	for kk in kinds:
 		parts.append(hash(kk))
@@ -768,18 +804,39 @@ func _build_plate_layer(open: PackedByteArray, kind: PackedByteArray, owner: Pac
 	ctx.polys = polys
 	ctx.base = base
 	ctx.links = links
+	ctx.noise = noise
+	ctx.ls = ls
 	_ctx.append(ctx)
 
 
-# Pass 2 reachability. Pockets are filled solid; every other cut-off region is joined to the main
-# one by dropping plates: from the plate under the region's nearest cell, breadth-first over the
-# layer's plate adjacency (plates that share a channel) to the objective's plate, and every plate
-# on the path becomes open water.
-func _fill_and_drop_plates(open: PackedByteArray, kind: PackedByteArray, labelled: Dictionary, objective_cell: Vector2i) -> void:
+# Reachability. Pockets are filled solid; the other regions are joined into the main one by dropping
+# plates. Each region, in order, is joined to the nearest region it is not yet joined to: from the
+# plate under its nearest cell, breadth-first over the layer's plate adjacency (plates that share a
+# channel) to a plate whose centre cell lies in such a region, and every plate on the path becomes
+# open water. (Pass 2 walked every region to the objective's plate; on the ordinary map, where every
+# narrow channel is solid and the main region starts as the one pool around the objective, that cut
+# so many plates that density 70 came out near 50 percent blocked.)
+func _fill_and_drop_plates(open: PackedByteArray, kind: PackedByteArray, labelled: Dictionary) -> void:
 	var n := dim * dim
 	var sizes: Array = labelled.sizes
 	var main: int = labelled.main
 	var fill := _fill_pockets(open, labelled)
+	var labels: PackedInt32Array = labelled.labels
+	# plate_region[k]: plate -> id of the region holding its centre cell (unfilled regions only).
+	var plate_region: Array = []
+	for k in range(LAYERS):
+		var regions := {}
+		var ctx: Dictionary = _ctx[k]
+		for p in ctx.base:
+			var at: Vector2 = ctx.site_pos[p]
+			var id := labels[k * n + clampi(int(round(at.y / SPACING)), 0, dim - 1) * dim + clampi(int(round(at.x / SPACING)), 0, dim - 1)]
+			if id >= 0 and fill[id] == 0:
+				regions[p] = id
+		plate_region.append(regions)
+	var joined := PackedInt32Array()
+	joined.resize(sizes.size())
+	for id in range(sizes.size()):
+		joined[id] = id
 	for id in range(sizes.size()):
 		if id == main or fill[id] == 1:
 			continue
@@ -789,30 +846,46 @@ func _fill_and_drop_plates(open: PackedByteArray, kind: PackedByteArray, labelle
 		var gy := (c - k * n) / dim
 		var gx := (c - k * n) - gy * dim
 		var from := _nearest_plate(ctx, Vector2(gx, gy) * SPACING)
-		var to := _nearest_plate(ctx, nodes[0].pos)
-		_drop_plates(open, kind, k, _plate_path(ctx.links, from, to))
+		var path := _plate_path(ctx.links, from, plate_region[k], joined, id)
+		if path.is_empty():
+			continue
+		_drop_plates(open, kind, k, path)
+		var root := _root(joined, id)
+		for p in path:
+			if plate_region[k].has(p):
+				joined[_root(joined, plate_region[k][p])] = root
 
 
+func _root(joined: PackedInt32Array, id: int) -> int:
+	while joined[id] != id:
+		id = joined[id]
+	return id
 
 
-# Plate keys from `from` to `to` inclusive (empty if not connected).
-func _plate_path(links: Dictionary, from: int, to: int) -> PackedInt32Array:
+# Plate keys from `from` to the nearest plate (in hops) that lies in a region joined to a different
+# root than `own`, inclusive; empty if none is connected.
+func _plate_path(links: Dictionary, from: int, plate_region: Dictionary, joined: PackedInt32Array, own: int) -> PackedInt32Array:
 	var path := PackedInt32Array()
-	if not links.has(from) or not links.has(to):
+	if not links.has(from):
 		return path
+	var own_root := _root(joined, own)
 	var parent := {from: -1}
 	var queue: Array = [from]
 	var head := 0
-	while head < queue.size() and not parent.has(to):
+	var found := -1
+	while head < queue.size() and found < 0:
 		var cur: int = queue[head]
 		head += 1
+		if plate_region.has(cur) and _root(joined, plate_region[cur]) != own_root:
+			found = cur
+			break
 		for q in links[cur]:
 			if not parent.has(q):
 				parent[q] = cur
 				queue.append(q)
-	if not parent.has(to):
+	if found < 0:
 		return path
-	var p := to
+	var p := found
 	while p != -1:
 		path.append(p)
 		p = parent[p]
@@ -853,6 +926,191 @@ func _drop_plates(open: PackedByteArray, kind: PackedByteArray, k: int, path: Pa
 			tunnels.append({points = points, layer = k + 1})
 			plates_cut += 1
 			tunnels_cut += 1
+
+
+# Opens `src` (LAYERS * dim * dim, 1 open) in plane with a square block of `size` cells, 1 or 3 (the
+# widths MIN_PASSAGE_WU and SMALL_PASSAGE_WU give on the 100 wu grid): a cell stays open only if a
+# block of open cells inside the canvas covers it. A block of one cell, the grid's own element for a
+# disc as wide as a cell, is the mask itself.
+func _open_block(src: PackedByteArray, size: int) -> PackedByteArray:
+	if size <= 1:
+		return src.duplicate()
+	var n := dim * dim
+	var last := dim - 1
+	# Erosion: rows, then columns.
+	var rows := PackedByteArray()
+	rows.resize(src.size())
+	for start in range(0, src.size(), dim):
+		for i in range(start + 1, start + last):
+			rows[i] = src[i - 1] & src[i] & src[i + 1]
+	var eroded := PackedByteArray()
+	eroded.resize(src.size())
+	for k in range(LAYERS):
+		for i in range(k * n + dim, (k + 1) * n - dim):
+			eroded[i] = rows[i - dim] & rows[i] & rows[i + dim]
+	# Dilation: rows, then columns.
+	for start in range(0, src.size(), dim):
+		rows[start] = eroded[start] | eroded[start + 1]
+		rows[start + last] = eroded[start + last - 1] | eroded[start + last]
+		for i in range(start + 1, start + last):
+			rows[i] = eroded[i - 1] | eroded[i] | eroded[i + 1]
+	var out := PackedByteArray()
+	out.resize(src.size())
+	for k in range(LAYERS):
+		var base := k * n
+		for i in range(base, base + dim):
+			out[i] = rows[i] | rows[i + dim]
+		for i in range(base + n - dim, base + n):
+			out[i] = rows[i - dim] | rows[i]
+		for i in range(base + dim, base + n - dim):
+			out[i] = rows[i - dim] | rows[i] | rows[i + dim]
+	return out
+
+
+# The ordinary and small-craft maps, the sections and their numbers, from the final fine mask
+# `open`, its ordinary opening and that map's final region labelling.
+func _build_functional_maps(open: PackedByteArray, ordinary: PackedByteArray, labelled: Dictionary, p_seed: int) -> void:
+	var n := dim * dim
+	var small_open := _open_block(open, int(SMALL_PASSAGE_WU / SPACING))
+	masks_ordinary = []
+	small_masks = []
+	section_cells = []
+	section_frames = []
+	small_section_pct = []
+	small_only_pct = []
+	var labels: PackedInt32Array = labelled.labels
+	for k in range(LAYERS):
+		var cells := _build_sections(k)
+		var in_section := 0
+		var mask_ord := ordinary.slice(k * n, (k + 1) * n)
+		var mask_small := mask_ord.duplicate()
+		var small_count := 0
+		var small_only := 0
+		for i in range(n):
+			if cells[i] != 0:
+				in_section += 1
+				mask_small[i] = small_open[k * n + i] | mask_ord[i]
+			if mask_small[i] == 1:
+				small_count += 1
+				if labels[k * n + i] != labelled.main:
+					small_only += 1
+		masks_ordinary.append(mask_ord)
+		small_masks.append(mask_small)
+		section_cells.append(cells)
+		section_frames.append(_trace_sections(cells))
+		small_section_pct.append(100.0 * in_section / n)
+		small_only_pct.append(100.0 * small_only / max(small_count, 1))
+
+
+# Section cells of layer k (0-based): batches of BATCH_PLATES adjacent plates, a cell belonging to
+# the plate nearest it. Seeds are, by default, plates where the density noise is in its top
+# quartile, taken in hash order, one batch after another; with `sections_near_layout`, the plates at
+# the objective, staging and vantage nodes, grown in turns so every place gets a share. Growing
+# stops as soon as the sections hold `small_share` percent of the layer's cells.
+func _build_sections(k: int) -> PackedByteArray:
+	var n := dim * dim
+	var cells := PackedByteArray()
+	cells.resize(n)
+	var target := int(round(small_share / 100.0 * n))
+	if target <= 0:
+		return cells
+	var ctx: Dictionary = _ctx[k]
+	var site_pos: PackedVector2Array = ctx.site_pos
+	var on_canvas: Array = []
+	for p in ctx.base:
+		if site_pos[p].x >= 0.0 and site_pos[p].y >= 0.0 and site_pos[p].x <= canvas and site_pos[p].y <= canvas:
+			on_canvas.append(p)
+	var taken := {}
+	var batches: Array = []
+	var covered := 0
+	if sections_near_layout:
+		for node in nodes:
+			if node.type == "objective" or node.type == "staging" or node.type == "vantage":
+				var seed_plate := _nearest_plate(ctx, node.pos)
+				if not taken.has(seed_plate):
+					taken[seed_plate] = true
+					batches.append([seed_plate])
+					covered += _mark_plate(ctx, seed_plate, cells, batches.size())
+		for _round in range(BATCH_PLATES - 1):
+			for b in range(batches.size()):
+				if covered >= target or batches[b].size() >= BATCH_PLATES:
+					continue
+				var next := _next_plate(ctx, batches[b], taken, on_canvas)
+				if next >= 0:
+					taken[next] = true
+					batches[b].append(next)
+					covered += _mark_plate(ctx, next, cells, b + 1)
+		return cells
+	var noise_at_plate: Array = []
+	for p in on_canvas:
+		noise_at_plate.append(_noise_at(ctx.noise, site_pos[p]))
+	var sorted_noise := noise_at_plate.duplicate()
+	sorted_noise.sort()
+	var cut: float = sorted_noise[int(SECTION_SEED_QUANTILE * sorted_noise.size())]
+	var seeds: Array = []
+	for i in range(on_canvas.size()):
+		if noise_at_plate[i] >= cut:
+			seeds.append([_hash01(on_canvas[i], k, H_SECTION, ctx.ls), on_canvas[i]])
+	seeds.sort()
+	for entry in seeds:
+		if covered >= target:
+			break
+		var seed_plate: int = entry[1]
+		if taken.has(seed_plate):
+			continue
+		taken[seed_plate] = true
+		var batch: Array = [seed_plate]
+		batches.append(batch)
+		covered += _mark_plate(ctx, seed_plate, cells, batches.size())
+		while batch.size() < BATCH_PLATES and covered < target:
+			var next := _next_plate(ctx, batch, taken, on_canvas)
+			if next < 0:
+				break
+			taken[next] = true
+			batch.append(next)
+			covered += _mark_plate(ctx, next, cells, batches.size())
+	return cells
+
+
+# The first untaken plate on the canvas that shares a channel with a member of the batch.
+func _next_plate(ctx: Dictionary, batch: Array, taken: Dictionary, on_canvas: Array) -> int:
+	for m in batch:
+		for q in ctx.links[m]:
+			if not taken.has(q) and on_canvas.has(q):
+				return q
+	return -1
+
+
+# Marks the cells nearest to plate p with `id` and returns how many were unmarked before.
+func _mark_plate(ctx: Dictionary, p: int, cells: PackedByteArray, id: int) -> int:
+	var low := Vector2(INF, INF)
+	var high := Vector2(-INF, -INF)
+	for pt in ctx.base[p]:
+		low = Vector2(min(low.x, pt.x), min(low.y, pt.y))
+		high = Vector2(max(high.x, pt.x), max(high.y, pt.y))
+	var added := 0
+	for gy in range(maxi(0, int(floor(low.y / SPACING)) - 1), mini(dim - 1, int(ceil(high.y / SPACING)) + 1) + 1):
+		for gx in range(maxi(0, int(floor(low.x / SPACING)) - 1), mini(dim - 1, int(ceil(high.x / SPACING)) + 1) + 1):
+			if cells[gy * dim + gx] == 0 and _nearest_plate(ctx, Vector2(gx, gy) * SPACING) == p:
+				cells[gy * dim + gx] = id
+				added += 1
+	return added
+
+
+# The outline of every section batch of one layer.
+func _trace_sections(cells: PackedByteArray) -> Dictionary:
+	var by_batch := {}
+	for i in range(cells.size()):
+		if cells[i] != 0:
+			if not by_batch.has(cells[i]):
+				by_batch[cells[i]] = []
+			by_batch[cells[i]].append(i)
+	var wa := PackedVector2Array()
+	var wb := PackedVector2Array()
+	var wk := PackedByteArray()
+	for id in by_batch:
+		_trace_walls(by_batch[id], KIND_PLATE, wa, wb, wk)
+	return {a = wa, b = wb}
 
 
 func _build_grid(open: PackedByteArray) -> void:

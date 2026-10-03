@@ -11,6 +11,8 @@ const MAX_DENSITY := 90.0
 const GAP_RANGE := Vector2(200.0, 3000.0)
 const SPREAD_RANGE := Vector2(0.0, 1.0)
 const SWING_RANGE := Vector2(0.0, 1.2)
+const SMALL_SHARE_RANGE := Vector2(0.0, 20.0)
+const VIEWS := ["visual", "ordinary", "small"]
 const PLATE_RANGE := Vector2(800.0, 3200.0)
 const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/pass3/"
 const BAND_HEIGHTS := {"micro": 1000.0, "tactical": 3000.0, "map": 20000.0}
@@ -31,6 +33,10 @@ var _plate_cell: float = SpaceFieldMap.PLATE_CELL_WU
 var _size_spread: float = SpaceFieldMap.SIZE_SPREAD
 var _density_swing: float = SpaceFieldMap.DENSITY_SWING
 var _shared_density := true
+var _small_share: float = SpaceFieldMap.SMALL_SHARE_DEFAULT
+var _sections_near_layout := false
+var _view: String = VIEWS[0]
+var _triangles := -1
 var _focus_layer: int = 0
 var _show_crossings := false
 var _piece_total: int = 0
@@ -62,6 +68,10 @@ var _spread_slider: HSlider
 var _swing_label: Label
 var _swing_slider: HSlider
 var _shared_button: Button
+var _small_label: Label
+var _small_slider: HSlider
+var _layout_button: Button
+var _view_label: Label
 var _top_down_button: Button
 var _focus_label: Label
 var _solo_label: Label
@@ -115,6 +125,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_kit_toggle_pressed()
 		elif _kit_name == SPACE_KIT and event.keycode >= KEY_0 and event.keycode <= KEY_5:
 			_set_focus(event.keycode - KEY_0)
+		elif _kit_name == SPACE_KIT and event.keycode == KEY_V:
+			_set_view(VIEWS[(VIEWS.find(_view) + 1) % VIEWS.size()])
 		elif _kit_name == SPACE_KIT and event.keycode == KEY_C:
 			_show_crossings = not _show_crossings
 			_apply_view()
@@ -155,12 +167,15 @@ func _regenerate() -> void:
 		space_map.size_spread = _size_spread
 		space_map.density_swing = _density_swing
 		space_map.shared_density = _shared_density
+		space_map.small_share = _small_share
+		space_map.sections_near_layout = _sections_near_layout
 		field_map = space_map
 	else:
 		field_map = FieldMap.new()
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()
+	_field_map = field_map
 
 	var kit: Dictionary = _kits[_kit_name]
 
@@ -175,8 +190,8 @@ func _regenerate() -> void:
 	if is_space:
 		_apply_view()
 	var t3 := Time.get_ticks_usec()
+	_triangles = -1
 
-	_field_map = field_map
 	_camera_rig.field_map = field_map
 	_seed_label.text = "Seed: %d" % _seed
 	_piece_count_label.text = "Pieces: %d" % result.total
@@ -247,6 +262,13 @@ func _build_space_controls() -> void:
 	_swing_slider = _make_slider("SwingSlider", SWING_RANGE.x, SWING_RANGE.y, 0.05, _density_swing)
 	_shared_button = Button.new()
 	_shared_button.name = "SharedDensityButton"
+	_small_label = Label.new()
+	_small_label.name = "SmallShareLabel"
+	_small_slider = _make_slider("SmallShareSlider", SMALL_SHARE_RANGE.x, SMALL_SHARE_RANGE.y, 0.5, _small_share)
+	_layout_button = Button.new()
+	_layout_button.name = "SectionsNearLayoutButton"
+	_view_label = Label.new()
+	_view_label.name = "ViewLabel"
 	_top_down_button = Button.new()
 	_top_down_button.name = "TopDownButton"
 	_focus_label = Label.new()
@@ -255,7 +277,7 @@ func _build_space_controls() -> void:
 	_solo_label.name = "SoloLabel"
 	_space_stats_label = Label.new()
 	_space_stats_label.name = "SpaceStatsLabel"
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _top_down_button, _focus_label, _solo_label, _space_stats_label]:
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _small_label, _small_slider, _layout_button, _top_down_button, _view_label, _focus_label, _solo_label, _space_stats_label]:
 		box.add_child(control)
 	# Same debounce as stability: regenerate on release, not per drag tick.
 	_density_slider.drag_ended.connect(_on_density_drag_ended)
@@ -268,14 +290,20 @@ func _build_space_controls() -> void:
 	_spread_slider.value_changed.connect(_on_spread_value_changed)
 	_swing_slider.drag_ended.connect(_on_swing_drag_ended)
 	_swing_slider.value_changed.connect(_on_swing_value_changed)
+	_small_slider.drag_ended.connect(_on_small_drag_ended)
+	_small_slider.value_changed.connect(_on_small_value_changed)
 	_shared_button.pressed.connect(_on_shared_pressed)
+	_layout_button.pressed.connect(_on_layout_pressed)
 	_top_down_button.pressed.connect(_on_top_down_pressed)
 	_on_density_value_changed(_density)
 	_on_gap_value_changed(_layer_gap)
 	_on_plate_value_changed(_plate_cell)
 	_on_spread_value_changed(_size_spread)
 	_on_swing_value_changed(_density_swing)
+	_on_small_value_changed(_small_share)
 	_refresh_shared_text()
+	_refresh_layout_text()
+	_refresh_view_text()
 	_refresh_top_down_text()
 	_set_focus(_focus_layer)
 
@@ -309,6 +337,42 @@ func _on_spread_value_changed(value: float) -> void:
 
 func _on_swing_value_changed(value: float) -> void:
 	_swing_label.text = "Density swing: %.2f" % value
+
+
+func _on_small_value_changed(value: float) -> void:
+	_small_label.text = "Small-craft share: %.1f%%" % value
+
+
+func _on_small_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_small_share = _small_slider.value
+	_regenerate()
+
+
+func _on_layout_pressed() -> void:
+	_set_sections_near_layout(not _sections_near_layout)
+
+
+func _set_sections_near_layout(on: bool) -> void:
+	_sections_near_layout = on
+	_refresh_layout_text()
+	_regenerate()
+
+
+func _refresh_layout_text() -> void:
+	_layout_button.text = "Sections near layout: %s" % ("on" if _sections_near_layout else "off")
+
+
+# The functional views are built the first time they are shown after a regenerate.
+func _set_view(view: String) -> void:
+	_view = view
+	_refresh_view_text()
+	_apply_view()
+
+
+func _refresh_view_text() -> void:
+	_view_label.text = "View: %s (V)" % _view
 
 
 func _on_spread_drag_ended(value_changed: bool) -> void:
@@ -375,7 +439,9 @@ func _set_focus(layer: int) -> void:
 
 func _apply_view() -> void:
 	var top_down: bool = _camera_rig.is_top_down()
-	Placer.apply_layer_view(_generated, _focus_layer, top_down, _show_crossings)
+	if _field_map is SpaceFieldMap and _view != VIEWS[0] and not _generated.has_node("view_%s_L1" % _view):
+		Placer.new().place_view(_field_map, _kits[_kit_name], _view, _generated)
+	Placer.apply_layer_view(_generated, _focus_layer, top_down, _show_crossings, _view)
 	_solo_label.text = "Solo: layer %d" % _focus_layer
 	_solo_label.visible = _kit_name == SPACE_KIT and top_down and _focus_layer != 0
 
@@ -384,7 +450,7 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	var is_space := field_map is SpaceFieldMap
 	_stability_label.visible = not is_space
 	_stability_slider.visible = not is_space
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button]:
+	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _small_label, _small_slider, _layout_button, _view_label]:
 		control.visible = is_space
 	_focus_label.visible = is_space
 	_solo_label.visible = is_space and _camera_rig.is_top_down() and _focus_layer != 0
@@ -395,11 +461,13 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	for stat in field_map.layer_stats:
 		blocked.append("%d%%" % int(round(stat.blocked * 100.0)))
 	var plates: Array = field_map.plates_per_layer.map(func(c): return str(c))
-	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable: %d  Crossings (8 to 50 cells): %d, marks %s (C)\nCells blocked on two neighbouring layers: %s" % [
+	_space_stats_label.text = "Blocked per layer: %s\nPlates per layer: %s\nPlates dropped: %d clearing, %d reachability  Rubble: %d%%\nPockets filled: %d  Still unreachable (ordinary units): %d  Crossings (8 to 50 cells): %d, marks %s (C)\nCells blocked on two neighbouring layers: %s\nSmall-craft sections per layer: %s%%  open to small craft only: %s%%" % [
 		" ".join(blocked), " ".join(plates) if not plates.is_empty() else "-", field_map.plates_cleared, field_map.tunnels_cut,
 		int(round(field_map.rubble_share * 100.0)), field_map.pockets_filled,
 		field_map.regions_unreachable_after, field_map.crossings.size(), "on" if _show_crossings else "off",
-		" ".join(field_map.filled_cells_per_pair.map(func(c): return str(c)))]
+		" ".join(field_map.filled_cells_per_pair.map(func(c): return str(c))),
+		" ".join(field_map.small_section_pct.map(func(c): return "%.1f" % c)),
+		" ".join(field_map.small_only_pct.map(func(c): return "%.1f" % c))]
 
 
 func _on_band_changed(band: String) -> void:
@@ -562,6 +630,32 @@ func get_shared_density() -> bool:
 	return _shared_density
 
 
+func get_small_share() -> float:
+	return _small_share
+
+
+func get_sections_near_layout() -> bool:
+	return _sections_near_layout
+
+
+func get_view() -> String:
+	return _view
+
+
+# Triangles in the visual view's nodes (the functional views' nodes are not counted), summed over
+# every surface of every mesh, and every instance of a multimesh. Counted once per regenerate.
+func get_triangles() -> int:
+	if _triangles < 0:
+		_triangles = 0
+		for child in _generated.get_children():
+			if child.get_meta("view", "visual") != "visual":
+				continue
+			var mesh: Mesh = child.mesh if child is MeshInstance3D else child.multimesh.mesh
+			var instances: int = 1 if child is MeshInstance3D else child.multimesh.instance_count
+			_triangles += mesh.get_faces().size() / 3 * instances
+	return _triangles
+
+
 func get_kit_name() -> String:
 	return _kit_name
 
@@ -630,6 +724,21 @@ func qa_set_density_swing(v: float) -> void:
 
 func qa_set_shared_density(on: bool) -> void:
 	_set_shared_density(on)
+
+
+func qa_set_small_share(v: float) -> void:
+	_small_share = clamp(v, SMALL_SHARE_RANGE.x, SMALL_SHARE_RANGE.y)
+	_small_slider.value = _small_share
+	_regenerate()
+
+
+func qa_set_sections_near_layout(on: bool) -> void:
+	_set_sections_near_layout(on)
+
+
+func qa_set_view(view: String) -> void:
+	if VIEWS.has(view):
+		_set_view(view)
 
 
 func qa_set_marks(on: bool) -> void:
