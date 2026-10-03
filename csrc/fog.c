@@ -425,14 +425,13 @@ static double om_fog_observer_bound(const om_fog_state *st, const om_world *w, u
  * Reach" with no om_set_era_flag call) do not agree; both fenced tests pass
  * only if the bonus always applies, so it always applies here (the flag is
  * stored by om_set_era_flag but not consulted by this formula). */
-static double om_fog_effective_radius(const om_fog_state *st, const om_world *w, uint32_t observer,
-                                       uint32_t target_elev_tier, int have_target_elev) {
-    om_world *mw = (om_world *)w;
-    int type = om_unit_get_unit_type(w, observer);
-    double base, interference, effective, ox, oy;
-    if (type < 0 || !om_fog_unit_pos(w, observer, &ox, &oy)) return 0.0;
-    base = om_unit_profile_sensor_radius(mw, type);
-    interference = om_fog_zone_interference_at(st, w, ox, oy, om_fog_unit_layer(w, observer));
+static double om_fog_effective_radius_at(const om_fog_state *st, const om_world *w, uint32_t observer, int type,
+                                          double ox, double oy, uint32_t layer,
+                                          uint32_t target_elev_tier, int have_target_elev) {
+    double base, interference, effective;
+    if (type < 0) return 0.0;
+    base = om_unit_profile_sensor_radius((om_world *)w, type);
+    interference = om_fog_zone_interference_at(st, w, ox, oy, layer);
     effective = base * (1.0 - interference);
     if (have_target_elev) {
         double mult = 1.0 + OM_ELEVATION_SENSOR_BONUS_PER_TIER *
@@ -442,18 +441,35 @@ static double om_fog_effective_radius(const om_fog_state *st, const om_world *w,
     return effective;
 }
 
+static double om_fog_effective_radius(const om_fog_state *st, const om_world *w, uint32_t observer,
+                                       uint32_t target_elev_tier, int have_target_elev) {
+    int type = om_unit_get_unit_type(w, observer);
+    double ox, oy;
+    if (type < 0 || !om_fog_unit_pos(w, observer, &ox, &oy)) return 0.0;
+    return om_fog_effective_radius_at(st, w, observer, type, ox, oy, om_fog_unit_layer(w, observer),
+                                      target_elev_tier, have_target_elev);
+}
+
 static int om_fog_ping_reveals(const om_world *w, int32_t faction, uint32_t unit);
+
+static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, double oy, uint32_t ol,
+                             uint32_t target, double tx, double ty, uint32_t tl);
 
 /* Candidate observers come from the grid around the target; an any-of, so the iterator's order does not matter.
  * A live G7 ping disc of the faction joins its visible set (R-162-05). */
 int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
     om_grid_iter it;
     double tx, ty;
-    uint32_t observer;
+    uint32_t observer, tl;
     if (!om_fog_unit_pos(w, target, &tx, &ty)) return 0;
-    om_grid_iter_begin_faction(&it, (om_world *)w, faction, tx, ty, om_fog_world_bound(w));
-    while ((observer = om_grid_iter_next(&it)) != 0) {
-        if (om_unit_can_see(w, observer, target)) return 1;
+    if (om_unit_get_faction(w, target) >= 0) {
+        tl = om_fog_unit_layer(w, target);
+        om_grid_iter_begin_faction(&it, (om_world *)w, faction, tx, ty, om_fog_world_bound(w));
+        while ((observer = om_grid_iter_next(&it)) != 0) {
+            double ox, oy;
+            if (!om_unit_alive((om_world *)w, observer) || !om_fog_unit_pos(w, observer, &ox, &oy)) continue;
+            if (om_fog_can_see_at(w, observer, ox, oy, om_fog_unit_layer(w, observer), target, tx, ty, tl)) return 1;
+        }
     }
     return om_fog_ping_reveals(w, faction, target);
 }
@@ -694,22 +710,29 @@ static double om_fog_emission_factor(const om_world *w, double factor, uint32_t 
     return (factor > 1.0) ? 1.0 : factor;
 }
 
-int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
+/* The geometry of om_unit_can_see once both positions and layers are known (callers resolved them once). */
+static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, double oy, uint32_t ol,
+                             uint32_t target, double tx, double ty, uint32_t tl) {
     const om_fog_state *st = om_fog_ro(w);
+    double factor = 1.0;
+    if (ol != tl) {
+        factor = om_fog_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol, tl > ol);
+        if (factor <= 0.0) return 0;
+        factor = om_fog_emission_factor(w, factor, observer, target);
+    }
+    if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol,
+                                                                 (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
+    if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
+    return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
+}
+
+int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     om_world *mw = (om_world *)w;
-    double ox, oy, tx, ty, factor;
-    uint32_t ol, tl;
+    double ox, oy, tx, ty;
     if (om_unit_get_faction(w, observer) < 0 || om_unit_get_faction(w, target) < 0) return 0;
     if (!om_unit_alive(mw, observer)) return 0;
     if (!om_fog_unit_pos(w, observer, &ox, &oy) || !om_fog_unit_pos(w, target, &tx, &ty)) return 0;
-    ol = om_fog_unit_layer(w, observer);
-    tl = om_fog_unit_layer(w, target);
-    factor = om_fog_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol, tl > ol);
-    if (factor <= 0.0) return 0;
-    if (ol != tl) factor = om_fog_emission_factor(w, factor, observer, target);
-    if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius(st, w, observer, (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
-    if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
-    return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
+    return om_fog_can_see_at(w, observer, ox, oy, om_fog_unit_layer(w, observer), target, tx, ty, om_fog_unit_layer(w, target));
 }
 
 double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0) {
