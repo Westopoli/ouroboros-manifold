@@ -39,6 +39,7 @@ Split a task that mixes tiers. Every spawn names its model. Sub-agents never spa
 - **New code in new files; wiring is its own piece.** A new system (a generator, the economy, multiplayer) is built in its own files behind a frozen header, so lanes run in parallel without sharing a file. Each lane ends with one small wiring piece on the shared file, queued and landed one at a time, with the playthrough run after each.
 - **Build units are small.** A Doer or 30B unit is about one file and under about 100 lines; larger work is split when the card is written.
 - **Wired, not just tested.** Behaviour a rule says happens in play must be reachable from the tick, the jump, or a pipe handler, not only from tests. The merge gate checks this.
+- **Playthrough gate.** Every landing is checked against a scripted end-to-end playthrough in the merge gate. `docs/northstar/ROADMAP.md` queue row 1 builds the script; until it lands the gate does not have it.
 - **Determinism is a contract.** Same seed and command stream give a byte-identical trace on every platform: no fast-math, no platform transcendentals, no hash-order or wall-clock input.
 - **No runtime API calls.** The game never calls a model; missing library content falls back to a placeholder.
 - **No IP exposure.** No names, places or plot from existing fiction.

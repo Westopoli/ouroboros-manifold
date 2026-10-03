@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-03 (second update), by the planner chat (Agora-Fable-Planner).
+Last updated: 2026-10-03 (third update): decisions W1 to W5 recorded in rulings-2 Addendum 68.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -34,21 +34,11 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 | 1 | Playthrough gate: a scripted end-to-end run in the merge gate | to write | Stage 0 | Every later landing is checked against it |
 | 2 | Finish the MVP loop | `plans/2026-09-30-mission-plays-plan.md` | Stage 0, row 1 | Westley: the MVP works 100 percent end to end before large new work |
 | 3 | Baseline playthrough by Westley or the 30B | none | Row 2 | The line every addition is compared with |
-| 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share |
+| 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
 ## 3. Blocked on Westley
 
 Every decision waiting on Westley, in the order that unblocks the most work. Candidates for each `Q-` flag are in `ambiguity_register.md`. An answer is recorded in the register and the epic, and its row is deleted here.
-
-### How the work is run
-
-| # | Decision | Notes |
-|---|---|---|
-| W1 | Run land part 1 as a measured pilot workflow (under 10 agents, Sonnet builders)? | Gives a real token figure to size the rest |
-| W2 | Add the playthrough rule to `CLAUDE.md`? | It is in memory only today |
-| W3 | Delete `plans/TODO.md`? | Read 2026-10-03: nothing live in it |
-| W4 | Work list: keep as is, or re-run the reach lint first so its counts are current? | Stage 0 re-runs the lint |
-| W5 | Worktree prune day | 497 stale worktrees, 135 GB; agents cannot delete them |
 
 ### Land generator
 
