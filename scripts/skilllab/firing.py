@@ -24,6 +24,28 @@ def _able(engine, w, shooters, targets):
     return count
 
 
+def unit_states(engine, w, units0, units1, ranges):
+    """{unit: (state, destination)} for each living unit: can fire, blocked, walking or no target."""
+    side0 = _living(engine, w, units0, ranges)
+    side1 = _living(engine, w, units1, ranges)
+    out = {}
+    for shooters, targets in ((side0, side1), (side1, side0)):
+        for u, x, y, layer, reach in shooters:
+            in_range = shootable = False
+            for e, ex, ey, elayer, _ in targets:
+                dx, dy = ex - x, ey - y
+                if elayer == layer and dx * dx + dy * dy <= reach * reach:
+                    in_range = True
+                    if engine.can_shoot(w, u, e):
+                        shootable = True
+                        break
+            dest = engine.unit_destination(w, u)
+            state = ("can fire" if shootable else "blocked" if in_range
+                     else "walking" if dest is not None else "no target")
+            out[u] = (state, dest)
+    return out
+
+
 def count_able(engine, w, units0, units1, ranges):
     side0 = _living(engine, w, units0, ranges)
     side1 = _living(engine, w, units1, ranges)

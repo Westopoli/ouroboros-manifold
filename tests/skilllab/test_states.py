@@ -140,10 +140,10 @@ def test_rows_are_triples_ordered_by_tick_then_unit_id(swap):
 
 def test_dead_units_are_omitted_from_the_tick_they_die():
     """Unit 3 (side 1) reads hp 0 from tick 3: present for ticks 0-2, absent after; the survivors keep rows."""
-    pos = {1: lambda t: (0.0, 0.0), 3: lambda t: (NEAR, 0.0), 4: lambda t: (FAR * 2, 0.0)}
+    pos = {1: lambda t: (0.0, 0.0), 3: lambda t: (NEAR, 0.0), 2: lambda t: (FAR * 2, 0.0)}
     r, _ = run(S(counts=(1, 2)), pos_fn=pos, hp_at={3: 3})
     assert [3 in at(r, t) for t in range(7)] == [True] * 3 + [False] * 4
-    assert all(1 in at(r, t) and 4 in at(r, t) for t in range(7))
+    assert all(1 in at(r, t) and 2 in at(r, t) for t in range(7))
 
 
 def test_a_dead_enemy_is_not_a_target():

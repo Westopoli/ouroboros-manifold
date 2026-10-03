@@ -55,7 +55,7 @@ def _hgrid(values, lo, hi, fmt):
     for v in values:
         y = _scale(v, hi, lo, PY0, PY1)       # larger value, smaller y
         out.append(f'<line class="grid" x1="{PX0}" x2="{PX1}" y1="{_n(y)}" y2="{_n(y)}"/>')
-        out.append(_text(PX0 - 6, y + 4, fmt(v), "muted", "end"))
+        out.append(_text(PX0 - 6, min(y + 4, PY1), fmt(v), "muted", "end"))
     return out
 
 
@@ -110,8 +110,10 @@ def _firing_svg(firing: list) -> str:
     parts += _hgrid(sorted({0, top}), 0, top, lambda v: str(v))
     parts.append(_text((PX0 + PX1) / 2, H - 6, "Tick", "muted", "middle"))
     parts.append(_text(12, PY0 - 8, "Units able to fire", "muted"))
-    for t, x in zip(ticks, xs):
-        parts.append(_text(x, PY1 + 16, t, "muted", "middle"))
+    n = len(ticks)
+    shown = range(n) if n <= 8 else sorted({round(i * (n - 1) / 7) for i in range(8)})
+    for i in shown:
+        parts.append(_text(xs[i], PY1 + 16, ticks[i], "muted", "middle"))
     if xs:
         gap = " ".join(f"{_n(x)},{_n(y)}" for x, y in list(zip(xs, y0)) + list(zip(xs, y1))[::-1])
         parts.append(f'<polygon class="gap" points="{gap}"/>')

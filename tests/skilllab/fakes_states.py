@@ -27,6 +27,12 @@ class StatesFakeEngine(FakeEngine):
             return tuple(float(v) for v in self.pos_fn[u](self.tick))
         return (self.units[u]["x"], self.units[u]["y"])
 
+    def unit_target(self, w, u):
+        return 0
+
+    def unit_facing(self, w, u):
+        return 0.0
+
     def unit_hp(self, w, u):
         self.calls.append(("unit_hp", w, u))
         if u in self.hp_at and self.tick >= self.hp_at[u]:
