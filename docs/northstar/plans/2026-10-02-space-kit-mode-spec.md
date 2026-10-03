@@ -100,3 +100,60 @@ Screenshots, seeds 11 and 12, densities 15, 35, 55 and 70, at the micro, tactica
 - Keep each file's style. Comments only where a choice is not obvious.
 - Run `scripts/mockup_verify.sh landscape` if Godot is on this machine (`/Applications/Godot.app/Contents/MacOS/Godot`); if the script cannot find it, say so rather than editing the script.
 - No git commands; no commit. Do not touch tests, `csrc/`, the bible or the register. Report once at the end, caveman-terse, ten lines at most: files changed with line counts, what the verify said, timings for one regenerate at canvas 24,000 and density 55, anything chosen where the spec was silent, anything not done.
+
+---
+
+# Pass 2 (2026-10-02, after Westley's first flight)
+
+His review is verbatim in `docs/northstar/research/space_landscape/README.md`. Pass 1 stays as the base; this section changes the generator's shape, the drawing, and the clearing. Everything in sections 2 to 8 not contradicted here still holds.
+
+## P2.1 The picture to match
+
+Fractured sea ice seen from above: large plates with straight, broken edges; narrow dark channels between plates; fields of small fragments; open water; now and then one large irregular mass. Five such sheets, each from its own seed, stacked, make a tight, thick field over the whole map. Blocked space is a plate, open space is water. Nothing else is drawn.
+
+## P2.2 Generator: plates, not blobs
+
+Replace section 3.1 to 3.2 for the default mode. Keep the hand-written hash and value noise (the noise now modulates, it no longer thresholds).
+
+1. **Per layer, its own seed:** `layer_seed = p_seed + k * LAYER_SEED_STEP`. Layers are independent by default. Keep the plant `space-independent-layers` as a no-op alias and add plant `space-coherent-layers` that uses one seed with the z-offset of pass 1 for comparison.
+2. **Plates by jittered lattice (Worley).** Lay a lattice of plate centres over the canvas with cell size `PLATE_CELL_WU` (default 1,600 wu); jitter each centre within its cell by the hash. For each map cell find the nearest and second-nearest centres (search the 3 by 3 neighbouring lattice cells) with plain Euclidean distance, giving `d1`, `d2` and the nearest centre's id. A map cell belongs to plate `id`.
+3. **Channels.** A map cell is open water where `d2 - d1 < CHANNEL_WU` (default 160 wu, so channels are one to two cells wide). This gives straight broken edges between plates.
+4. **Open water pools.** Each plate is kept or dropped by its own hash against the density: a plate is dropped (all its cells open) when `hash01(plate) > density / 100`. Dropped plates adjacent to each other merge into pools.
+5. **Rubble.** Inside dropped plates, a second lattice with cell size `RUBBLE_CELL_WU` (default 400 wu) makes small fragments: a rubble plate is kept when `hash01(rubble) < RUBBLE_SHARE` (default 0.35), with its own channel width `RUBBLE_CHANNEL_WU` (default 100). Rubble is also blocked space.
+6. **Stochastic variation across the map.** Sample the pass 1 two-octave noise per layer (lattice 5 by 5 and 14 by 14, weights 0.65 and 0.35, in two dimensions) as `v` in [0, 1] and use it to vary the field: plate cell size scales by `0.6 + 0.8 * v` (small plates where v is low, large where high), and the drop test uses `density / 100 + (v - 0.5) * 0.3`, so some areas are packed and some are open. This is the existing engine's stochasticity put to use.
+7. **The odd large mass.** With probability 0.5 per layer by hash, one plate chosen by hash is grown: every plate whose centre lies within 2,200 wu of it is merged into it and the channels between them are closed.
+8. **Edges.** Erode each kept plate's outline by removing a boundary cell where `hash01(cell) < 0.15`, so edges are broken rather than exact.
+9. Density, as before, is the slider's percent blocked, but it is now the share of plates kept, not a quantile of noise. Record the actual blocked share per layer as before.
+
+## P2.3 Clearing for layout places
+
+No discs. For each node, drop the plate containing its cell and every plate whose centre lies within `CLEAR_RADIUS_WU` of the node, so the clearing is a pool of plate shapes. Rubble is not generated inside these pools.
+
+## P2.4 Reachability
+
+As section 3.4, with one change: a cut-off region is joined to the main region by dropping plates, not by a straight tunnel. From the region's nearest cell, walk the plate adjacency graph (plates sharing a channel) toward the objective's plate by breadth-first search and drop every plate on the path; a dropped plate is recorded in `tunnels` as its outline so the HUD can still count and show cuts. Small pockets are still filled solid.
+
+## P2.5 Drawing: binary sheets
+
+Replace section 4.
+
+- **Plates.** Every blocked cell of layer k is one flat square tile, `flat_box` sized `[100, PLATE_THICKNESS_WU]` (thickness 60), at height `(k - 1) * LAYER_GAP_WU`, no jitter, so plates read as continuous sheets with straight edges. Tile colour per layer from the kit's `layers` array (five colours, pale blue-white for layer 1 grading to brighter white-blue for layer 5; the kit gives the five hex values). No shards, no asteroid pieces, no borders drawn.
+- **Layer gap.** `LAYER_GAP_WU` default 1,400, so from the tactical camera the sheets separate. The HUD gets a gap slider (400 to 3,000) so Westley can find the spacing that reads.
+- **Water.** Under each layer, nothing. Under layer 1 only, a single dark plane the size of the canvas at height -40, colour from the kit's `palette.water`, so open space reads as water in the photo's way. Fog or sky unchanged.
+- **The large mass** is drawn with the same tiles, in the kit's `mass` colour (dark grey-brown).
+- **Rubble** uses the plate tiles at half thickness.
+- **Crossings.** Keep the marks, but make them a flat `hab_ring` 240 wu across in the kit's `shaft` colour, at the lower layer's height plus half the gap, visible at the map band.
+- **Cut plates** are outlined with the `tunnel` colour as a thin flat frame (four thin `flat_box` strips around the dropped plate's bounding box), not a corridor.
+- **Layer focus** as before: keys 1 to 5 darken the other layers by 55 percent; 0 shows all.
+- **Top-down button.** The HUD gets a "Top-down" toggle that sets the camera pitch to straight down at the current height, so the stacked sheets can be compared with the photo; the existing bands and the height floor are unaffected when it is off.
+
+## P2.6 HUD and QA additions
+
+- Sliders: density (as before), layer gap, plate size (`PLATE_CELL_WU` 800 to 3,200). Labels: per-layer blocked percent, plates per layer, plates dropped for clearing, plates dropped for reachability, rubble share.
+- `qa_state` adds `plate_cell_wu`, `layer_gap_wu`, `plates_per_layer` (array), `plates_cut`, `top_down`.
+- `qa_set` adds `plate_cell`, `layer_gap`, `top_down`.
+- Checklist: the pass 1 rows hold; add: no cleared area is a disc (at density 70, seed 11, the cells open within 600 wu of the objective are not all open: at least one blocked cell inside the radius); top-down screenshots at densities 15, 35, 55, 70 for seeds 11 and 12, plus tactical and map, plus one tactical with layer 3 focused.
+
+## P2.7 Rules for the Doer
+
+As section 8. Keep the pass 1 generator reachable through the plant `space-noise-blobs` for comparison, so the two can be flown side by side. Report once, ten lines at most.
