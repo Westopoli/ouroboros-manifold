@@ -253,6 +253,7 @@ typedef struct {
     int      flinching;
     double   flinch_x, flinch_y;
     uint32_t last_attacker;
+    int      fire_pending;
     int      stealth;
     /* set each tactical tick while the unit is under an order (move,
      * attack-move, attack-target) or fleeing: a threshold auto-activation
@@ -2106,9 +2107,12 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             /* a target taken by return fire is anchored here and leashed from the next tick */
             if (pursue && !u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
         }
-        /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
-        /* See also: the pursue && !u->fired term below is the new path (R-084-01) */
-        if (in_range && (u->cooldown >= interval_ticks - OM_TIE_EPSILON || (pursue && !u->fired))
+        /* See also: om_tac_fire_pass, the same decision (and the first shot, R-084-01) after movement under
+         * PURSUE_BY_STEERING (A178). PP baseline only (switch = 0): fire here; deleted with the two movement
+         * switches at the end of Phase E (A140) */
+        if (pursue) {
+            u->fire_pending = 1;
+        } else if (in_range && u->cooldown >= interval_ticks - OM_TIE_EPSILON
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
             om_tac_fire(w, u, t);
         }
@@ -2129,6 +2133,33 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             om_tac_release(w, u);
             if (arrived) om_tac_drop_orders(u);
         }
+    }
+}
+
+/* P2 (A178, the Python's order: update_targeting, update_movement, resolve_damage): a shot is decided on the
+ * positions after this tick's movement, and every shooter of the tick is chosen before any hit lands. */
+static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
+    uint32_t i;
+    om_tac_refresh_positions(w, st);
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        om_unit_row *t;
+        int pending = u->fire_pending;
+        u->fire_pending = 0;
+        if (!pending || !u->in_use || u->hp <= 0.0 || u->target_id == 0) continue;
+        t = om_registry_find_in(st, u->target_id);
+        if (t && t->hp > 0.0 && om_tac_in_range(w, u, t)
+            && (u->cooldown >= u->attack_interval * (double)OM_TACTICAL_TICK_RATE - OM_TIE_EPSILON || !u->fired)
+            && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
+            u->fire_pending = 2;
+        }
+    }
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        if (u->fire_pending != 2) continue;
+        u->fire_pending = 0;
+        om_tac_fire(w, u, om_registry_find_in(st, u->target_id));
+        u->backswing_ticks_remaining = OM_BACKSWING_TICKS - 1;
     }
 }
 
@@ -2160,6 +2191,7 @@ uint64_t om_tactical_step(om_world *w) {
     om_tactical_apply_aura_regen(w);
     om_tactical_advance_backswing(st);
     om_ability_advance_all(w);
+    if (om_tac_pursue(w)) om_tac_fire_pass(w, st);
     om_macro_tick(w, st->current_tick);
     om_support_tick(w);
     om_mission_tactical_tick(w);
