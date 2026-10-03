@@ -364,7 +364,7 @@ def test_ac11_every_result_field_is_populated_with_its_type(scenario, outcome):
 def _spy(monkeypatch, table):
     seen = []
 
-    def spy(engine, w, units0, units1, ranges):
+    def spy(engine, w, units0, units1, ranges, alive=None):
         seen.append({"engine": engine, "w": w, "u0": list(units0), "u1": list(units1),
                      "ranges": dict(ranges), "tick": engine.step_count})
         return table.get(engine.step_count, (0, 0))
