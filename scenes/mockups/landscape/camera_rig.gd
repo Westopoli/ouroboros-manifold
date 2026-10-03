@@ -34,6 +34,7 @@ var _height: float = 3000.0
 var _pan_target: Vector3 = Vector3.ZERO
 var _current_band: String = "tactical"
 var _ground_y: float = 0.0
+var _top_down := false
 
 # Set by the owner (hud.gd) after every regenerate. The rig samples this to keep a
 # constant height above the terrain under it (Halo Wars: scrolling onto a mountain
@@ -140,6 +141,8 @@ func _update_band() -> void:
 
 
 func _pitch_degrees() -> float:
+	if _top_down:
+		return PITCH_HIGH_DEG
 	return lerp(PITCH_LOW_DEG, PITCH_HIGH_DEG, smoothstep(TACTICAL_MAX, MAP_MAX, _height))
 
 
@@ -156,6 +159,16 @@ func _update_camera() -> void:
 
 func get_current_band() -> String:
 	return _current_band
+
+
+# Straight down at the current height, any band; off restores the band's own pitch.
+func set_top_down(on: bool) -> void:
+	_top_down = on
+	_update_camera()
+
+
+func is_top_down() -> bool:
+	return _top_down
 
 
 func get_height() -> float:
