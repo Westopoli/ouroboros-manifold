@@ -29,7 +29,7 @@ def _scene(name, enemy_x, enemy_y):
 
 
 FLANK = _scene("attack_move_no_sight_flank", XS[-1] + 450.0, 2000.0)
-ON_ROUTE = _scene("attack_move_no_sight_on_route", CX, 2000.0)
+ON_ROUTE = _scene("attack_move_no_sight_on_route", (CX + CLICK[0]) / 2, 2000.0)   # on the centroid's straight route to the click
 
 
 def _misses(trace):
