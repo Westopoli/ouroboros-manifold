@@ -20,7 +20,7 @@ The movement and layers lanes stay paused (Westley, 2026-10-03). The same day he
 | Plan | Doc | Lane | Owns | State | Exit condition |
 |---|---|---|---|---|---|
 | Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
-| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-10-03-finish-loop-rulings.md` | Planner chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end and the gate checks it. Landed 2026-10-03: enemy rout and contested objective, commander death ledger, live retention, 16 allowlist entries. Left to build: ability events to the client (ABIL-1, contract piece first). Left for Westley: F1 to F13. C4 E1 unverified; 4 client gaps not started. Reach lint 258 unreachable of 728. | Every work-list row wired or ruled |
+| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-10-03-finish-loop-rulings.md` | Planner chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end and the gate checks it. Landed 2026-10-03: enemy rout and contested objective, commander death ledger, live retention, 16 allowlist entries. Nothing left to build without Westley: ability events to the client (ABIL-1) are deferred to land with the S-135 render piece, which needs a prototype. Left for Westley: F1 to F13. C4 E1 unverified; 4 client gaps not started. Reach lint 258 unreachable of 728. | Every work-list row wired or ruled |
 | Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
 | Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat (Mac) with a Doer | `scenes/mockups/landscape/` | Pass 5 built; pass 6 spec written (`1c2d4494`) | Westley approves a pass; the camera question is designed as options |
 
@@ -30,7 +30,7 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 
 | # | Plan | Doc | Waits on | Why this position |
 |---|---|---|---|---|
-| 1 | Finish the MVP loop: ABIL-1, then whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
+| 1 | Finish the MVP loop: whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
 | 2 | Baseline playthrough by Westley or the 30B | none | Westley (the 30B waits on decision W6) | The scripted playthrough is green in the gate; the human or 30B baseline is still owed before large new work. |
 | 3 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 

@@ -12,7 +12,6 @@ Planner chat, under Westley's 2026-10-03 leave to keep implementation moving. So
 | B7-1 | `csrc/generational.c` | R-061-04 | On commander death the selector marks the character dead (`om_character_kill`) and writes the death ledger (`om_outcome_record_commander_death`) |
 | OBJ-1 | `csrc/mission.c` | R-075-03, R-075-04, R-129-02 | Destroy-targets and escort-to-extraction objectives are set up and evaluated in play; today four of ten archetypes can never score |
 | RET-1 | `csrc/mission.c`, `csrc/unit.c` | R-077-01 | Retention computed from deployed and surviving unit power; today it is hardcoded to 1.0 |
-| ABIL-1 | `docs/architecture.md` first, then `csrc/om_pipe.c` | R-086-09 | Ability events reach the client in the tactical frame (contract piece first) |
 
 Units on one file queue in the order listed. Each has a failing test first.
 
@@ -28,6 +27,14 @@ Deleting these and their tests is Westley's call (tests are the spec); allowlist
 
 `om_tick_revolts`, `om_tick_reversions`, `om_tick_absorptions` (a faction-history view); `om_mission_setup_survive`, `om_mission_eval_survive` (no archetype uses it); `om_mission_compute_starting_force`, `om_mission_compute_reinforcement_capacity` (Q-218-04 open); `om_objective_setup_drifting`, `om_hazard_spawn_moving_interference`, `om_hazard_sample_interference`, `om_zone_sample_interference` (arrive with map generation reaching mission setup).
 
+## Results (2026-10-03, evening)
+
+- **Landed** (`0d4006fd`): B1-U1, B1-U2, B1-U4, B7-1, RET-1, and 16 of the 19 allowlist entries.
+- **Refused for the allowlist, with evidence** (F11 below): `om_selector_resolve_fallback_pool` is not the same job as the live resolver; `om_player_faction_collapsed` contradicts R-062-01 for a faction that no longer exists. `om_force_set_surviving_units` is not superseded: it writes state nothing reads.
+- **OBJ-1 held** (F12 below): the rules give only fractions; nothing defines the targets, the escorted units or the extraction point. Red tests wait on `push/obj-tests`.
+- **ABIL-1 deferred.** The sim half of R-086-09 is done and tested (the event record). No live client code reads a per-tick event list, the tactical frame has no events array, and E-18 S-135 (how an ability looks) is "Spec'd, needs reference" and is judged by eye, so it needs a prototype first (`agile.md`, Prototype gate). The pipe contract lands together with the S-135 render piece. Scout's draft for then: an `events` array on every tactical frame, at most 256, drained on write; open points are whether a mid-play `snapshot` should consume events and whether events are filtered by what the player's side sees. `docs/northstar/spec_factory/transport/tactical.schema.json` has no owner row and `docs/architecture.md` has two (DOCS-arch, PP-contract); both need settling before that contract piece.
+- **Known limits of what landed:** a force's starting hit-point sum is captured once, so later reinforcements raise its share; the retreat also calls `om_unit_order_move` per unit because `om_command_move` does not write the destination record the getter reads (the clean fix is in `csrc/tactical_move.c`, owned by the movement and layers lane); retention counts only the force as deployed (F13).
+
 ## Westley
 
 | # | Question | Why it is his |
@@ -42,3 +49,6 @@ Deleting these and their tests is Westley's call (tests are the spec); allowlist
 | F8 | `om_faction_phase` (R-053): who consumes a faction's phase, the chronicle or the mission generator? | Rule meaning |
 | F9 | Jump length (R-056-01, Q-056-01): the client sends raw ticks with no clamp to 20 to 100 | Open flag |
 | F10 | Regional commander on conquest (R-060-01): never created in play; where it hooks is unclear | Needs a scout first |
+| F11 | `om_player_faction_collapsed` and `om_selector_resolve_fallback_pool` disagree with their rule or the live path: fix, or remove with their tests? | Tests are the spec |
+| F12 | Objectives (R-075-03, R-075-04): what a designated target is and how many, who is escorted and how many, where the extraction point is, where Interception's enemy force comes from | Rule content |
+| F13 | Retention (R-077-01): do the commander's unit, units made mid-mission and structures count; is a unit that leaves the map alive? | Rule content |
