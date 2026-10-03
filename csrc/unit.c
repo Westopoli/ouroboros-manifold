@@ -937,6 +937,14 @@ static int om_tac_pursue(const om_world *w) {
     return om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0;
 }
 
+/* A188 (R-087-05, R-096-03): the leash tests the unit's own distance from its anchor, never the target's.
+ * Switch 0 keeps the old target-distance test: old path kept as baseline only, deleted at end of Phase E.
+ * See also: simulation/movement.py _update_attack_move_state */
+static int om_tac_leash_broken(const om_world *w, const om_unit_row *u, const om_unit_row *t) {
+    const om_unit_row *p = om_tac_pursue(w) ? u : t;
+    return !om_tac_dist_le(p->x - u->anchor_x, p->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST);
+}
+
 /* R-087-06: the unit returns fire at the lowest-id living same-layer attacker
  * (a cross-layer one only while no same-layer one has hit it). With pursuit
  * by steering off, the last writer wins as it did. */
@@ -2085,7 +2093,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             if (!om_tac_in_reach(w, u, t) || t->stealth || ((!pursue || u->guard) && !om_tac_in_range(w, u, t))) {
                 drop = 1;
             } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
-                       && !om_tac_dist_le(t->x - u->anchor_x, t->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST)) {
+                       && om_tac_leash_broken(w, u, t)) {
                 drop = 1;
             }
         }
@@ -2122,7 +2130,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
      * tick's shot; at 0 it runs at the start of the next tick, after the shot. */
     if (leash_first && u->target_id != 0 && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set) {
         t = om_registry_find_in(st, u->target_id);
-        if (t && !om_tac_dist_le(t->x - u->anchor_x, t->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST)) {
+        if (t && om_tac_leash_broken(w, u, t)) {
             u->target_id = 0;
             u->anchor_set = 0;
         }

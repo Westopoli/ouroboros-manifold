@@ -2438,6 +2438,8 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
         if (om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
         if (!om_move_los_clear(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1))) return 0;
     }
+    /* Nothing to sample: no density cell, no canvas or obstacle disc, no cover disc, so every sample reads zero. */
+    if (!ms->density && om_mapgen_terrain_free(w) && om_map_cover_count(w) == 0) return 1;
     for (i = 1; i < steps; i++) {
         double t = (double)i / (double)steps;
         double px = x0 + t * dx, py = y0 + t * dy;
