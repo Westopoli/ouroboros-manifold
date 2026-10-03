@@ -8,7 +8,7 @@ from typing import Optional
 from scripts.skilllab import skills
 from scripts.skilllab.contract import Group, Setup
 from scripts.skilllab.formations import place
-from scripts.skilllab.plays import APPROACH, APPROACH_STOP, unit_stats  # noqa: F401  (APPROACH_STOP: the lab value)
+from scripts.skilllab.plays import APPROACH, APPROACH_STOP, max_ticks_for, unit_stats  # noqa: F401  (APPROACH_STOP: the lab value)
 
 _ROLES = {"blob": "blob", "line": "line", "skilled": "concave", "counter": "column"}
 _ARRANGEMENTS = ("interleaved", "layered")
@@ -143,7 +143,8 @@ def asym_play(size, side0, side1, unit_types=None, approach=APPROACH):
                     cx, cy = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
                     goals.append(Group(**{**g.__dict__, "goal": (cx + t[0] - centre[0], cy + t[1] - centre[1])}))
                 groups[i] = goals
-        return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types, approach=approach)
+        return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types, approach=approach,
+                     max_ticks=max_ticks_for(size, enemy_heads))
     build.labels = labels
     return build
 

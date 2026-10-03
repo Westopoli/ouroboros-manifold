@@ -250,7 +250,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
         if states is not None:
             record_states()
         if alive[0] == 0 and alive[1] == 0:
-            outcome = "stalemate"
+            outcome = "draw"
         elif alive[1] == 0:
             outcome = "side0"
         elif alive[0] == 0:

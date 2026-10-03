@@ -78,7 +78,7 @@ class Setup:
 
 @dataclass
 class FightResult:
-    outcome: str              # "side0" | "side1" | "stalemate" | "cap"
+    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "stalemate" (stalemate_ticks quiet) | "cap" (A201)
     margin: float
     strength_left: tuple
     survivors: tuple

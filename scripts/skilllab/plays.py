@@ -7,8 +7,14 @@ from scripts.skilllab.contract import Group, Setup
 
 _LINE_SPACING = 30
 APPROACH = 0.0          # default: off, one attack-move per group
+MAX_TICKS_BIG = 8000    # A201: cells of 32 a side and above get longer (the Setup default of 6000 is for smaller ones)
 APPROACH_STOP = 0.95    # the stop factor of the lab setting (A198)
 _STATS = {}
+
+
+def max_ticks_for(size, enemy_heads):
+    """max_ticks of a play: MAX_TICKS_BIG when either side has 32 or more units, else the Setup default."""
+    return MAX_TICKS_BIG if max(size, enemy_heads) >= 32 else Setup.__dataclass_fields__["max_ticks"].default
 
 
 def unit_stats(name):
@@ -41,7 +47,8 @@ def _play(size, unit, kind, side0_unit=None, unit_types=None, approach=APPROACH)
         gap = unit_stats(unit)["sensor_radius"] + 1 + _depth(size, kind) + _depth(enemy_heads, kind)
         return Setup(groups=(_group(0, side0_unit or unit, size, kind, -gap / 2),
                              _group(1, unit, enemy_heads, kind, gap / 2)),
-                     unit_types=dict(unit_types or {}), approach=approach)
+                     unit_types=dict(unit_types or {}), approach=approach,
+                     max_ticks=max_ticks_for(size, enemy_heads))
     return build
 
 

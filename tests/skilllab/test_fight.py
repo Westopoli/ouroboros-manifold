@@ -583,7 +583,7 @@ def test_ac10_a_sample_is_also_taken_on_the_final_tick_when_it_is_a_multiple_of_
     (None, {"stalemate_ticks": 13}, "cap", 12, [0, 5, 10]),                                        # control: cap on a non-multiple
     (lambda t, f: kill(f, 1) if t == 9 else None, {}, "side0", 10, [0, 5, 10]),                    # elimination on a multiple
     (lambda t, f: kill(f, 0) if t == 4 else None, {}, "side1", 5, [0, 5]),                         # elimination on a multiple
-    (lambda t, f: (kill(f, 0), kill(f, 1)) if t == 9 else None, {}, "stalemate", 10, [0, 5, 10]),  # mutual wipe-out on a multiple
+    (lambda t, f: (kill(f, 0), kill(f, 1)) if t == 9 else None, {}, "draw", 10, [0, 5, 10]),  # mutual wipe-out on a multiple
     (lambda t, f: kill(f, 1) if t == 6 else None, {}, "side0", 7, [0, 5]),                         # control: elimination off the grid
 ])
 def test_ac10_final_tick_sample_also_holds_when_the_fight_ends_by_elimination_or_stalemate(script, kw, outcome, ticks, expected):

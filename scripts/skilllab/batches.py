@@ -20,7 +20,7 @@ REPLICATES = 10
 DEFENDER_ORDER = "guard"
 UNIT_TYPES = ("Vanguard", "Raider", "Bombard", "Bastion")
 REFERENCE = "reference"
-_STALLED = ("stalemate", "cap")
+_STALLED = ("stalemate",)   # quiet stalemate only; caps and draws are counted apart (A201)
 PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
@@ -310,10 +310,12 @@ def _result_line(cell, variant, sc):
                      % (_mean([w[0] for w in weighted]), _mean([w[1] for w in weighted]))) if weighted else ""
     spread = _spread_text(sc)
     return ("- %s%s, %s: %s; mean fight ticks %.1f; mean firing unit-seconds %.2f side 0, %.2f side 1%s; "
-            "stalled fights %d%s" % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
-                                   _mean([f.firing_unit_seconds[0] for f in fights]),
-                                   _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
-                                   sum(f.outcome in _STALLED for f in fights), spread))
+            "stalled fights %d (quiet stalemates only); caps %d; draws %d%s"
+            % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
+               _mean([f.firing_unit_seconds[0] for f in fights]),
+               _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
+               sum(f.outcome in _STALLED for f in fights), sum(f.outcome == "cap" for f in fights),
+               sum(f.outcome == "draw" for f in fights), spread))
 
 
 def _reference_line(sc):
