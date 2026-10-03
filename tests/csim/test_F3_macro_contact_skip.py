@@ -239,8 +239,9 @@ def _state_hash(lib, w):
 
 
 # Re-recorded A155 to A159 on push/pp-a5-land at default OM_TP_PURSUE_BY_STEERING 1 (was: recorded on origin/main before the F3 change).
+# Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
 GOLDEN = {
-    "clash": "c7dba9d7281d5c72ec026f5799cae93b8a2a4e511786c431d9a64adad89366e5",
+    "clash": "848f969638af2c9f94deb16ca0239a6561c094f012938bfa551f59cd38fa9ea3",
     "spread": "ef0d4155f0fea6836c1d6af6855e01634c514767bd0ac978e5fd861a45fdcf23",
 }
 

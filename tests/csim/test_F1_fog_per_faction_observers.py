@@ -295,11 +295,12 @@ def _visible_hash(lib, w):
     return hashlib.sha256(struct.pack("<%dI" % len(vis), *vis)).hexdigest()
 
 
+# Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
 GOLDEN = {
-    "clash": ("9aedf56e5aa72e4d2f11f8946f2a157c120564ca517fed4549a2e4573a0bc6ce",
+    "clash": ("29b07feeaaa50dfb1ed718e7e115a0647910b443aa3c43efe526179757c700b8",
               "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
-    "spread": ("3df7c712dd2da3f9e73e698cb27dd9fbb85d00ef32b3cc207a34d778330a463e",
-               "959387980c0f0c96a11b8dc1035d014123ad3ea01cfae649310928f896076a1c"),
+    "spread": ("f3b55b9e9d3f9a1ab9194c837378c2390e9f12c694d87829c269cfadb19b0a96",
+               "17787dc7463c62f492f8ab47bb722349938eade3ddb9107fa529f952b9078aee"),
 }
 
 

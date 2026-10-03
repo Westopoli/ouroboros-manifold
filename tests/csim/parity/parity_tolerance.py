@@ -42,6 +42,11 @@ the second, and Westley may fold or move it). The fixed vectors barely move faci
 267-285, coefficients 0.2447 and 0.0663; libm atan2 is banned for determinism) is off by up to
 1.51e-3 rad (largest error over a full circle, replicated and scanned at 0.01 degree). 2e-3 rad is
 that error rounded up; a tighter facing tolerance needs a better om_atan2 first.
+
+Known timing difference (Architect A183, return_fire_on_the_march): the target channel differs at
+tick 165 only by snapshot timing; the Python answers return fire at the end of step 165, the C at
+the start of step 166 and releases the target in that step, so no public getter shows it.
+Positions are identical. No tolerance, getter or emulation was added for it.
 """
 
 # Largest position difference, in wu, any unit may show against the Python on any tick.
