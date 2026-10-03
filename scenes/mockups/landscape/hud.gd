@@ -101,6 +101,7 @@ func _ready() -> void:
 	_stability = _stability_slider.value
 	_kit_toggle_button.text = "Kit: %s" % _kit_name
 	_canvas_toggle_button.text = "Canvas: %d" % int(_canvas)
+	_camera_rig.canvas_size = _canvas
 	_band_label.text = "Band: %s" % _camera_rig.get_current_band()
 
 	_camera_rig.band_changed.connect(_on_band_changed)
@@ -189,6 +190,9 @@ func _regenerate() -> void:
 		field_map.p4_landform = _p4.landform
 		field_map.p4_min_relief = _p4.min_relief
 		field_map.p4_bench_override = _p4.bench_override
+		field_map.p4_footprint = _p4.footprint
+		field_map.p4_ramps = _p4.ramps
+		field_map.p4_detail_scale = _p4.detail_scale
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()

@@ -176,10 +176,20 @@ func qa_set(name: String, value) -> void:
 			_hud.get_p4().set_unit_selected(bool(value))
 		"limit":
 			_hud.get_p4().set_limit(float(value))
+		"footprint":
+			_hud.get_p4().set_footprint(float(value))
+		"ramps":
+			_hud.get_p4().set_ramps(bool(value))
+		"detail_scale":
+			_hud.get_p4().set_detail_scale(float(value))
 
 
 func qa_look_steep(height: float) -> Array:
 	return _hud.get_p4().qa_look_steep(height)
+
+
+func qa_footprint_table() -> void:
+	_hud.get_p4().qa_footprint_table()
 
 
 func qa_cursor_world(x: float, z: float) -> void:

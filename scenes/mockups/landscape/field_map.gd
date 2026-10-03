@@ -31,6 +31,9 @@ var rivers: Array = []
 var p4_landform: String = "seed"
 var p4_min_relief: float = 2500.0
 var p4_bench_override: float = -1.0
+var p4_footprint: float = 300.0
+var p4_ramps := true
+var p4_detail_scale: float = 1.0
 var p4_info: Dictionary = {}
 var p4: Dictionary = {}
 
@@ -90,6 +93,9 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0)
 				interference = 0.0,
 				wealth = 0.0,
 			}
+
+	if p4_ramps and not QaPlants.is_active("flat-terrain"):
+		Pass4Terrain.cut_ramps(self, elevation, Vector2(core_gxy.x, core_gxy.y))
 
 	borders = []
 	_append_borders(_march_squares(water, dim, 0.5), "coast")
@@ -300,7 +306,7 @@ func _build_elevation(noise_continent: FastNoiseLite, noise_hills: FastNoiseLite
 
 	var peak_target: float = PEAK_HEIGHT_WU * _rng.randf_range(0.6, 1.0)
 	var sea_depth_target: float = -PEAK_HEIGHT_WU * 0.3
-	var detail_amplitude_wu := 80.0
+	var detail_amplitude_wu := 80.0 * p4_detail_scale
 
 	var out := PackedFloat32Array()
 	out.resize(dim * dim)

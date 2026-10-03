@@ -76,44 +76,72 @@ Mockup review 1's items 1-5 are fixed (2026-09-21): world-space map overlay (was
 
 Pass 3 (2026-09-21) rebuilds the generator per review 2: terrain-first (elevation/water/biome from layered noise, spine nodes found on it, not placed), big elevation (peaks 3000-5000wu, was 250wu terraces), cities that follow rivers/valleys instead of forming a ring, canvas 24000wu default with a 16000/24000/32000 switch, and the camera's Halo Wars height-above-ground floor. Two real bugs found by looking at the first render (continent/detail noise frequencies effectively swapped; detail amplitude scaling with peak height instead of staying a fixed ripple) rather than by inspection. 20 screenshots in `mockup/pass3/` show three genuinely different seeds (a continent, an archipelago, a river-delta landmass) under both kits. Awaiting Westley's third look. On approval: epics E-17/E-16/E-19 are rewritten from this design and Stage 5 tests are authored.
 
-## Pass 4: where walkers can go (2026-10-03)
+## Pass 4: where walkers can go (2026-10-03, reworked)
 
-Prototype under the Prototype gate, spec `docs/northstar/plans/2026-10-03-land-mockup-pass4-spec.md`. Greek and settled_reach kits only; the space kit and `field_map_space.gd` are untouched. Screenshots: `mockup/pass4/` (1920x1080, `scripts/mockup_qa.sh run landscape scenes/mockups/landscape/qa/pass4.json <out> --res 1920x1080`; numbers: `qa/pass4_numbers.json`).
+Prototype under the Prototype gate, spec `docs/northstar/plans/2026-10-03-land-mockup-pass4-spec.md`, reworked after the Architect found the first version's steep view and walk view disagreeing. Greek and settled_reach kits; the space kit and `field_map_space.gd` are untouched (`qa/space.json` still runs clean). Screenshots: `mockup/pass4/` (1920x1080; `scripts/mockup_qa.sh run landscape scenes/mockups/landscape/qa/pass4.json <out> --res 1920x1080`). Numbers: `qa/pass4_numbers.json`.
 
-**Built.** New files `pass4_terrain.gd` (generation and analysis) and `pass4_ui.gd` (views, X cursor, panel, sliders); small hooks in `field_map.gd`, `hud.gd`, `landscape_mockup.gd`.
-1. Too-steep view (T): off, then over 30, then over 35. Over 35 flat red. In the 30 view the 30 to 35 band is orange (blocked at 30 only); in the 35 view that band shows as normal ground. Slope is the plane gradient of one 100 wu quad. The panel prints the share of land (quads with four dry corners) too steep at 30, 32.5 and 35.
-2. X cursor (U toggles "unit selected"): hovering a quad over the current limit draws a red X with a white edge at the cursor. Shots `closeup_*`.
-3. Band view (B): five equal-height layers fitted between the lowest and highest dry ground of the map; panel prints the five floor heights, the step and the share of land per layer.
-4. Minimum relief slider (default **2500 wu, candidate, Westley owns it**). Why 2500: layer 5 then starts at 2000 wu and every layer step is at least 500 wu, over a quarter of a typical 1500 wu tactical view height, so a step is never a meadow slope. After landforms the generator stretches dry ground upward if highest minus lowest is below the slider. The existing generator already makes 2700 to 4800 wu, so the default never bites; 5000 on seed 15 stretches x1.88 (shot `seed15_relief5000_band`).
-5. Benched share: drawn per map from the seed (15 to 65 percent of land), terraces of 300 wu with short risers over a noise-shaped region; slider override 0 to 100 percent (button switches seed and override). Shots `seed11_bench0_*`, `seed11_bench100_*`.
-6. Landforms batch 1 (M cycles seed, mesa, canyon, islands, none): mesa is a flat block lifted 900 wu with walls about 200 wu wide; canyon is a winding 600 wu wide cut up to 1500 wu deep; island chain is 5 to 7 cones in the sea. "seed" picks one to three by seed. Canyon needs high land: not built on seeds 12, 15, 16. Caldera, fjord, terraced massif are batch 2 (Q-187-01).
-7. Walk view (G, L switches limit 30/35): flood from the city core over dry ground, a step allowed when its slope is at most the limit (8 neighbours). Cut-off land magenta, reachable green, core white, peaks cyan (reachable) or black. Peak = highest point in a 9 by 9 cell window on layers 4 or 5. Water blocks the walk, so a river or bay cuts off land (no bridges in the prototype).
-8. Variety measure: **joint entropy of (layer, biome zone) over dry cells, in bits, out of 4.64.** Why: it is the spread measure (b), one number, needs no landform tally, goes up when height and biome both spread out and stays put when the canvas grows. It does not see how the places are arranged and does not count landforms; the panel lists those next to it.
+**One blocked-ground mask.** Slope is the steepest height difference across a window `footprint` wu wide (four directions, centred on the cell; heights floored at sea level so a beach is not a cliff). Default footprint 300 wu (candidate: a formation is 200 wu wide), slider 100 to 600. A cell is too steep when its slope is over the limit. The steep view (T), the X cursor (U) and the walk flood (G) read this one array, and nothing but water blocks otherwise: a red cell is a cell the flood cannot enter. Cells are drawn as flat squares centred on the grid point so a painted cell is exactly a mask cell. Red is blocked at the limit; in the 35 view orange marks 30 to 35 (open at 35, blocked at 30).
 
-**Keys.** T steep, B bands, G walk, L limit, U unit selected, M landform, R regenerate, Tab kit; sliders for minimum relief and benched share. Drag-release regenerates (about 4 s each, the placer).
+**Other things built.** Band view (B): five equal-height layers between the lowest and highest dry ground, floors, step and land share per layer in the panel. Minimum relief slider (default 2500 wu, candidate; the generator already makes 2700 to 4800, so it only bites when raised; Westley owns it). Benched share drawn from the seed (15 to 65 percent of land) with a 0 to 100 override. Landforms batch 1 (M): mesa, canyon, island chain, from the seed or forced; caldera, fjord and terraced massif are batch 2. Variety measure: joint entropy of (layer, biome zone) over dry cells in bits, out of 4.64; it is a spread measure, one number, and does not see arrangement or count landforms. Terrain steepness slider (0 to 3, default 1): a multiplier on the detail noise only (80 wu amplitude), not on the continent or hill shapes. Keys: T steep 30/35/off, B bands, G walk, L limit 30/35, P ramps, U unit selected, M landform, R regenerate.
 
-**Numbers** (landform "seed", bench "seed", minimum relief 2500; limit 30 / 35 for walk columns are reach, layers reachable, peaks reachable). Generate = `FieldMap.generate` ms in this run (includes shape); shape and analyse ms are the pass-4 parts.
+**Ramps (Q-189-01: a walking route reaches every band).** After landforms and benching, the generator floods from the city core at limit 30. For each layer that has land on the core's landmass but nothing the flood reaches, it grades a ramp: 28 degrees, 500 wu wide with 150 wu shoulders and a 400 wu level pad at the top, from the nearest reached ground that lets it climb at that grade up to the layer floor, over dry ground only. Gold in the walk view, counted in the panel; P turns cutting off. Islands across water stay unreachable. A ramp can fail to connect and is retried; seed 15 ends one layer short and seed 16 gets none. Ramps are thin corridors, so total reach barely moves while layers reachable jumps.
 
-| seed | relief wu | layer floors wu | step wu | land % on L1..L5 | too steep % at 30/32.5/35 | walk at 30 | walk at 35 | landforms | variety bits | land share | bench % | generate / shape / analyse ms |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 11 | 4500 | 0/900/1800/2700/3600 | 900 | 35/31/25/9/1 | 71/68/64 | 19.6%, 2, 0 of 18 | 72.8%, 4, 9 of 18 | mesa, islands | 2.33 | 39% | 26% | 1741 / 19 / 116 |
-| 12 | 4773 | 0/955/1909/2864/3819 | 955 | 76/22/2/1/0 | 89/87/86 | 3.8%, 1, 0 of 0 | 11.4%, 1, 0 of 0 | islands | 1.01 | 6% | 41% | 865 / 5 / 54 |
-| 13 | 3088 | 0/618/1235/1853/2471 | 618 | 21/28/30/19/2 | 51/48/44 | 0.7%, 2, 0 of 13 | 0.8%, 2, 0 of 13 | canyon, islands | 2.44 | 23% | 67% | 1422 / 22 / 67 |
-| 14 | 4802 | 0/960/1921/2881/3842 | 960 | 41/22/16/14/7 | 71/67/64 | 0.6%, 1, 0 of 9 | 0.6%, 1, 0 of 9 | islands | 2.54 | 19% | 33% | 1472 / 9 / 62 |
-| 15 | 2693 | 0/539/1077/1616/2154 | 539 | 58/25/12/3/1 | 55/50/45 | 0.3%, 2, 0 of 2 | 0.5%, 2, 0 of 2 | islands | 1.64 | 17% | 36% | 972 / 10 / 60 |
-| 16 | 2700 | 0/540/1080/1620/2160 | 540 | 72/16/8/3/1 | 88/86/82 | 0.8%, 1, 0 of 2 | 2.0%, 1, 0 of 2 | islands | 1.42 | 4% | 30% | 858 / 5 / 53 |
+**Share of land too steep (% at 30 / 32.5 / 35), by footprint** (no ramps, pure terrain):
 
-Extra cases (seed 11 unless noted): bench 0 percent gives reach 81.9 percent at 30 (9 of 13 peaks); bench 26 percent (seed) 19.6 percent; bench 100 percent 0.2 percent. Forced landform at limit 35: mesa 48.5 percent reach (4 of 18 peaks), canyon 76.6 percent (8 of 13), islands 77.3 percent, none 78.9 percent. Seed 15, minimum relief 5000: too steep at 30 goes 55 to 80 percent.
+| seed | footprint 100 | footprint 300 | footprint 500 |
+|---|---|---|---|
+| 11 | 70/66/62 | 70/66/62 | 67/61/56 |
+| 12 | 86/83/79 | 85/82/78 | 80/75/70 |
+| 13 | 46/42/38 | 49/45/41 | 45/36/32 |
+| 14 | 67/63/59 | 69/64/59 | 66/59/53 |
+| 15 | 44/39/34 | 42/37/31 | 36/28/23 |
+| 16 | 81/78/73 | 79/75/69 | 70/64/60 |
 
-**What the numbers say.** (a) The pass-3 terrain is steep: 3000 to 4800 wu of height over a 24000 wu canvas leaves 50 to 90 percent of dry land over 30 degrees. (b) Walking reach swings with the limit and with benching, not with the steep share: seed 11 reaches 20 percent of its land at 30 degrees and 73 percent at 35; terrace risers are what shut the doors. On seeds 13 to 16 the city core is walled in at both limits (2 percent reach or less), so those maps fail the "reachable" test as built. (c) Peaks reachable: 9 of 18 (50 percent) on seed 11 at 35, 0 at 30; the other seeds have zero or two to thirteen peaks and none reachable. Seed 12 and 16 are mostly sea (6 and 4 percent land), so layers 4 and 5 hold almost nothing. (d) Equal-height layers leave layers 4 and 5 with 1 to 21 percent of the land because one summit sets the top of the range. Nothing was tuned to the 70 percent peak expectation.
+The footprint barely changes the picture (seed 11 stays near 70 percent at 30 degrees from 100 to 300 wu). The steepness is in the large shapes (3000 to 4800 wu of height on a 24000 wu canvas), not in single-quad noise.
+
+**Per seed** (defaults: footprint 300, ramps on, detail x1):
+
+| seed | relief wu | land % on L1..L5 | step wu | landforms | land share | core landmass (share of land) | variety bits | bench | too steep at 30 |
+|---|---|---|---|---|---|---|---|---|---|
+| 11 | 4524 | 40/27/23/9/1 | 905 | mesa, islands | 44% | 98% | 2.34 | 24% | 70% |
+| 12 | 4775 | 79/19/1/1/0 | 955 | islands | 7% | 11% | 0.92 | 24% | 85% |
+| 13 | 3088 | 40/31/17/11/1 | 618 | canyon, islands | 41% | 84% | 2.13 | 46% | 49% |
+| 14 | 4813 | 49/19/14/12/6 | 963 | islands | 22% | 85% | 2.39 | 26% | 68% |
+| 15 | 2693 | 66/22/9/2/1 | 539 | islands | 24% | 46% | 1.51 | 15% | 41% |
+| 16 | 2722 | 74/15/7/3/1 | 544 | islands | 5% | 2% | 1.36 | 20% | 79% |
+
+**Reach with ramps off and on** (reach % of land, layers reachable, peaks reachable of total):
+
+| seed | off, limit 30 | on, limit 30 | off, limit 35 | on, limit 35 | ramps cut |
+|---|---|---|---|---|---|
+| 11 | 0.1%, L1, 0/17 | 1.2%, L5, 0/17 | 0.2%, L1, 0/17 | 1.5%, L5, 0/17 | 5 (696 cells) [2, 3, 4, 4, 5] |
+| 12 | 0.5%, L1, 0/0 | 0.5%, L1, 0/0 | 1.0%, L1, 0/0 | 1.0%, L1, 0/0 | 0 (0 cells) [] |
+| 13 | 12.1%, L3, 0/15 | 14.0%, L5, 1/15 | 18.5%, L4, 2/15 | 18.7%, L5, 2/15 | 2 (118 cells) [4, 5] |
+| 14 | 1.8%, L1, 0/8 | 6.2%, L5, 4/8 | 2.2%, L1, 0/8 | 8.0%, L5, 4/8 | 4 (532 cells) [2, 3, 4, 5] |
+| 15 | 5.7%, L2, 0/2 | 6.5%, L4, 0/2 | 7.3%, L2, 0/2 | 8.1%, L4, 0/2 | 3 (224 cells) [3, 3, 4] |
+| 16 | 0.1%, L1, 0/1 | 0.1%, L1, 0/1 | 0.1%, L1, 0/1 | 0.1%, L1, 0/1 | 0 (0 cells) [] |
+
+**Terrain steepness slider** (detail x0 / x1 / x2: too steep at 30 / 32.5 / 35, reach at limit 30, ramps on):
+
+| seed | x0 | x1 | x2 |
+|---|---|---|---|
+| 11 | 69 / 64 / 60, reach 1.3% | 70 / 66 / 61, reach 1.2% | 70 / 66 / 62, reach 4.6% |
+| 12 | 86 / 82 / 78, reach 0.7% | 85 / 82 / 78, reach 0.5% | 83 / 80 / 75, reach 0.6% |
+| 13 | 48 / 45 / 41, reach 3.0% | 49 / 45 / 41, reach 14.0% | 51 / 47 / 43, reach 3.5% |
+| 14 | 67 / 62 / 58, reach 7.2% | 68 / 63 / 58, reach 6.2% | 68 / 63 / 59, reach 7.3% |
+| 15 | 40 / 34 / 29, reach 23.2% | 41 / 36 / 30, reach 6.5% | 42 / 37 / 31, reach 5.7% |
+| 16 | 81 / 77 / 72, reach 0.5% | 79 / 75 / 69, reach 0.1% | 75 / 71 / 66, reach 0.8% |
+
+**What the numbers say.** (a) 40 to 85 percent of land is over 30 degrees on every seed at every footprint and every detail scale: the pass-3 shapes are mountains, not rolling ground. (b) The city core is boxed in. Without ramps the flood from the core reaches 0.1 to 12 percent of land at limit 30. Seeds 12 and 16 put the core on a small landmass (11 and 2 percent of the land), so nothing helps there. (c) Ramps give every layer a route on seeds 11, 13 and 14 (5 of 5 layers) and 4 of 5 on seed 15; they are corridors, so reach rises by a few points and peaks reachable stay at 0 to 4 per map (seed 14: 4 of 8 at both limits). Nothing was tuned to the 70 percent peak figure. (d) A bug in the first version of this pass is fixed: terraces were dead flat, the lake finder read each bench as a basin, flooded it, and rivers then cut the core off. Benches now keep a 15 percent tilt and low coast ground is left unbenched. (e) Bench stripes still show as thin lakes next to the city on seeds 13 and 14 in the walk shots. (f) The camera clamp used a 16000 wu canvas on a 24000 wu map (it could not reach the south and east); fixed, one line in `hud.gd`.
 
 **Questions for Westley.**
-1. Steepness: with the red view in hand, which figure inside 30 to 35 degrees? Note the ground is already above it over most of the map; do you want less steep ground overall, or are the red areas the point (mountains units go around)?
-2. Minimum relief: is 2500 wu the right floor, and should it grow with the canvas?
-3. "Unreasonably hard to reach": the walk view prints reach of land, layers reachable and peaks reachable. Which is the measure: a walking route no longer than a multiple of the straight line (Q-189-04 a), a count of routes (b), or what you see in the magenta?
-4. Is a core that can walk to under 2 percent of its map acceptable on any seed? (It is what seeds 13 to 16 give now.)
-5. Variety: is "layer by biome spread" what you meant, or do you mean counting landforms and biomes on the map? Do the mesa, canyon and island chain read as the variety you have in mind, and which of the batch-2 forms do you want first?
-6. Benched share: does 15 to 65 percent look right, and is a bench riser (steep short step) what "benched" should look like?
-7. Layer bands: equal heights between lowest and highest ground, or fitted by share of land so layers 4 and 5 are never nearly empty?
+1. Footprint: is 300 wu the right width to measure slope over (a formation is 200 wu wide)?
+2. Steepness: which figure inside 30 to 35 degrees? About 60 to 70 percent of this ground is over it on a big map; is that the mountains you want, or should the terrain be gentler overall (the detail slider does not do it; the large shapes would need a height or width change)?
+3. Minimum relief: is 2500 wu the floor, and should it grow with the canvas?
+4. "Unreasonably hard to reach": the walk view prints reach of land, layers reachable and peaks reachable. Which is the test: a route no longer than a multiple of the straight line (Q-189-04 a), a count of routes (b), or what you see in the gold and magenta? Is a ramp-only corridor an acceptable way up, or should walkable ground be wider?
+5. Is it acceptable that on some seeds the city core sits on a landmass of a few percent of the land?
+6. Variety: is "layer by biome spread" what you meant? Do mesa, canyon and island chain read as the variety you have in mind; which batch-2 form first?
+7. Benching: does 15 to 65 percent look right, and is a short steep riser what "benched" should look like?
+8. Layer bands: equal heights between lowest and highest ground, or fitted by share of land so layers 4 and 5 are never nearly empty?
 
-**Not built or weak.** No bridges or ramps in the walk flood (water and steep ground block). Canyon not built on seeds 12, 15, 16 (no high ground). Close-up shots sit on very steep ground, so the X reads on red. The 30 and 35 walk shots exist for seeds 11 to 13 (`*_walk-30`, `*_walk-35`). The space kit shows none of this.
+**Not built or weak.** No bridges, so rivers and bays block the flood. Ramps are generated at limit 30 only and can fail to connect on some seeds (15, 16). Ramps are one-dimensional corridors, no switchbacks beyond the shortest path. Close-up shots sit on very steep ground, so the X reads on red with a white edge.

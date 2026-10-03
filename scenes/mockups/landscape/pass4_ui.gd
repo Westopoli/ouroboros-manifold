@@ -9,6 +9,10 @@ const MIN_RELIEF_RANGE := Vector2(0.0, 6000.0)
 var landform: String = "seed"
 var min_relief: float = Pass4Terrain.MIN_RELIEF_DEFAULT
 var bench_override: float = -1.0
+var footprint: float = 300.0
+var ramps := true
+var detail_scale: float = 1.0
+var _fp_table: Dictionary = {}
 var view: String = "visual"
 var limit: float = 30.0
 var unit_selected := false
@@ -29,7 +33,14 @@ var _bench_button: Button
 var _bench_label: Label
 var _bench_slider: HSlider
 var _unit_button: Button
+var _fp_label: Label
+var _fp_slider: HSlider
+var _ramp_button: Button
+var _detail_label: Label
+var _detail_slider: HSlider
 var _cursor_override := Vector2(-1.0, -1.0)
+var _cursor_world := Vector3.ZERO
+var _cursor_world_on := false
 var _x_pos := Vector2.ZERO
 var _x_show := false
 var _last_mouse := Vector2(-1.0, -1.0)
@@ -56,11 +67,24 @@ func setup(hud, camera_rig: Node3D, box: VBoxContainer) -> void:
 	_unit_button = Button.new()
 	_unit_button.focus_mode = Control.FOCUS_NONE
 	_unit_button.pressed.connect(func(): set_unit_selected(not unit_selected))
-	_controls = [_landform_button, _relief_label, _relief_slider, _bench_button, _bench_label, _bench_slider, _unit_button]
+	_fp_label = Label.new()
+	_fp_slider = _slider(100.0, 600.0, 50.0, footprint)
+	_fp_slider.value_changed.connect(func(v): _fp_label.text = "Slope footprint: %d wu (candidate)" % int(v))
+	_fp_slider.drag_ended.connect(func(changed): if changed: set_footprint(_fp_slider.value))
+	_detail_label = Label.new()
+	_detail_slider = _slider(0.0, 3.0, 0.1, detail_scale)
+	_detail_slider.value_changed.connect(func(v): _detail_label.text = "Terrain steepness (detail x): %.1f" % v)
+	_detail_slider.drag_ended.connect(func(changed): if changed: set_detail_scale(_detail_slider.value))
+	_ramp_button = Button.new()
+	_ramp_button.focus_mode = Control.FOCUS_NONE
+	_ramp_button.pressed.connect(func(): set_ramps(not ramps))
+	_controls = [_landform_button, _relief_label, _relief_slider, _bench_button, _bench_label, _bench_slider, _fp_label, _fp_slider, _detail_label, _detail_slider, _ramp_button, _unit_button]
 	for c in _controls:
 		box.add_child(c)
 	_relief_label.text = "Min relief: %d wu (candidate)" % int(min_relief)
 	_bench_label.text = "Benched share override: 50%"
+	_fp_label.text = "Slope footprint: %d wu (candidate)" % int(footprint)
+	_detail_label.text = "Terrain steepness (detail x): %.1f" % detail_scale
 	_refresh_buttons()
 
 	_panel = PanelContainer.new()
@@ -102,6 +126,7 @@ func _slider(low: float, high: float, step: float, value: float) -> HSlider:
 func _refresh_buttons() -> void:
 	_landform_button.text = "Landform: %s (M)" % landform
 	_bench_button.text = "Benched share: %s" % ("override" if bench_override >= 0.0 else "from seed")
+	_ramp_button.text = "Ramps: %s (P)" % ("on" if ramps else "off")
 	_unit_button.text = "Unit selected: %s (U)" % ("on" if unit_selected else "off")
 
 
@@ -130,6 +155,26 @@ func set_bench(pct: float) -> void:
 	if pct >= 0.0:
 		_bench_slider.set_value_no_signal(pct)
 		_bench_label.text = "Benched share override: %d%%" % int(pct)
+	_refresh_buttons()
+	_hud.p4_regenerate()
+
+
+func set_footprint(v: float) -> void:
+	footprint = clampf(v, 100.0, 600.0)
+	_fp_slider.set_value_no_signal(footprint)
+	_fp_label.text = "Slope footprint: %d wu (candidate)" % int(footprint)
+	_hud.p4_regenerate()
+
+
+func set_detail_scale(v: float) -> void:
+	detail_scale = clampf(v, 0.0, 3.0)
+	_detail_slider.set_value_no_signal(detail_scale)
+	_detail_label.text = "Terrain steepness (detail x): %.1f" % detail_scale
+	_hud.p4_regenerate()
+
+
+func set_ramps(on: bool) -> void:
+	ramps = on
 	_refresh_buttons()
 	_hud.p4_regenerate()
 
@@ -170,6 +215,8 @@ func handle_key(keycode: int) -> bool:
 			set_view("visual" if view == "walk" else "walk")
 		KEY_L:
 			set_limit(35.0 if limit < 32.5 else 30.0)
+		KEY_P:
+			set_ramps(not ramps)
 		KEY_U:
 			set_unit_selected(not unit_selected)
 		KEY_M:
@@ -208,7 +255,7 @@ func _apply_view() -> void:
 		elif child is Node3D:
 			child.visible = not shown
 	if shown:
-		var colors := Pass4Terrain.quad_colors(_fm, view, limit)
+		var colors := Pass4Terrain.cell_colors(_fm, view, limit)
 		_generated.add_child(Pass4Terrain.build_overlay(_fm, colors))
 
 
@@ -225,21 +272,23 @@ func _refresh_panel() -> void:
 	var shares_s := " / ".join(shares.map(func(v): return "%.0f" % v))
 	var view_note: String = {
 		"visual": "normal ground",
-		"steep30": "red = over 35, orange = 30 to 35 (blocked at limit 30)",
-		"steep35": "red = over 35 (blocked at limit 35)",
+		"steep30": "red = over 30: blocked, the walk flood cannot enter",
+		"steep35": "red = over 35: blocked; orange = 30 to 35, open at 35 only",
 		"band": "ground by layer 1 (green) to 5 (white)",
-		"walk": "green reachable, magenta cut off, cyan/black peaks, white core",
+		"walk": "green reachable, gold ramp, magenta cut off, cyan/black peaks, white core",
 	}[view]
 	_label.text = "PASS 4   view: %s   (%s)\n" % [view, view_note] \
 		+ "Relief %d wu  (lowest %d, highest %d)  minimum asked %d wu%s\n" % [int(m.relief_wu), int(m.lowest_wu), int(m.highest_wu), int(m.min_relief_wu), "  (stretched x%.2f)" % m.relief_scale if m.relief_scale > 1.0001 else ""] \
 		+ "Layer floors (wu): %s   step %d wu\n" % [floors_s, int(round(m.step_wu))] \
 		+ "Land on layers 1..5: %s %%\n" % shares_s \
+		+ "Slope footprint %d wu   terrain steepness x%.1f\n" % [int(m.footprint_wu), m.detail_scale] \
 		+ "Too steep (share of land): over 30 = %.1f%%   32.5 = %.1f%%   35 = %.1f%%\n" % [steep["30.0"], steep["32.5"], steep["35.0"]] \
 		+ "Benched ground: %.0f%% (%s)   Landforms: %s\n" % [m.bench_share_pct, "from seed" if m.bench_from_seed else "override", ", ".join(lf) if not lf.is_empty() else "none"] \
+		+ "Ramps %s: %d cut (%d cells, gold) for layers %s\n" % ["on" if m.ramps_on else "off", m.ramps, m.ramp_cells, str(m.ramp_bands)] \
 		+ "Walk, limit %d deg: %.1f%% of land reachable, %d of 5 layers, peaks %d of %d reachable (%.0f%%)\n" % [int(limit), w.reach_pct, w.layers_reachable, w.peaks_reachable, w.peaks, w.peaks_reachable_pct] \
 		+ "Variety: %.2f of %.2f bits (layer x biome spread)\n" % [m.variety_bits, m.variety_max_bits] \
 		+ "Unit selected: %s   hover steep: %s\n" % ["on" if unit_selected else "off", "%d deg" % int(_hover_steep_deg) if _hover_steep_deg >= 0.0 else "-"] \
-		+ "Keys: T steep 30/35/off   B bands   G walk   L limit 30/35   U unit   M landform   R regen"
+		+ "Keys: T steep 30/35/off  B bands  G walk  L limit  P ramps  U unit  M landform  R regen"
 
 
 func _process(_delta: float) -> void:
@@ -249,15 +298,17 @@ func _process(_delta: float) -> void:
 	var pos_before := _x_pos
 	_x_show = false
 	_hover_steep_deg = -1.0
+	if _cursor_world_on:
+		_cursor_override = _camera_rig.get_camera().unproject_position(Vector3(_cursor_world.x, _camera_rig.position.y, _cursor_world.z))
 	if unit_selected:
 		var mouse: Vector2 = _cursor_override if _cursor_override.x >= 0.0 else get_viewport().get_mouse_position()
 		var hit = _pick(mouse)
 		if hit != null:
-			var gx := clampi(int(hit.x / FieldMap.SPACING), 0, _fm.dim - 2)
-			var gy := clampi(int(hit.z / FieldMap.SPACING), 0, _fm.dim - 2)
-			var q := gy * (_fm.dim - 1) + gx
-			if _fm.p4.quad_land[q] == 1:
-				var tn: float = _fm.p4.quad_tan[q]
+			var gx := clampi(int(round(hit.x / FieldMap.SPACING)), 0, _fm.dim - 1)
+			var gy := clampi(int(round(hit.z / FieldMap.SPACING)), 0, _fm.dim - 1)
+			var q := gy * _fm.dim + gx
+			if _fm.p4.land[q] == 1:
+				var tn: float = _fm.p4.tan[q]
 				_hover_steep_deg = rad_to_deg(atan(tn))
 				if tn > tan(deg_to_rad(limit)):
 					_x_show = true
@@ -315,60 +366,62 @@ func _pick(screen: Vector2) -> Variant:
 	return null
 
 
-# QA: a too-steep quad near the core with walkable ground beside it, camera aimed at it.
+# QA: a blocked cell near the core with open ground beside it, camera aimed at it.
 func qa_look_steep(height: float) -> Array:
 	if _fm == null or _fm.p4.is_empty():
 		return []
-	var qd := _fm.dim - 1
+	var dim := _fm.dim
 	var core: int = _fm.p4.metrics.core_cell
-	var cx := core % _fm.dim
-	var cy := core / _fm.dim
-	var t35 := tan(deg_to_rad(35.0))
+	var cx := core % dim
+	var cy := core / dim
+	var tl := tan(deg_to_rad(limit))
 	var best := -1
 	var best_d := INF
-	for q in range(qd * qd):
-		if _fm.p4.quad_land[q] == 1 and _fm.p4.quad_tan[q] > t35 * 1.15:
-			var gx := q % qd
-			var gy := q / qd
+	for i in range(dim * dim):
+		if _fm.p4.land[i] == 1 and _fm.p4.tan[i] > tl:
+			var gx := i % dim
+			var gy := i / dim
 			var d := Vector2(gx - cx, gy - cy).length()
-			if d > 12.0 and d < best_d and _has_walkable_neighbour(gx, gy, qd):
-				best = q
+			if d > 12.0 and d < best_d and _edge_cell(gx, gy, tl):
+				best = i
 				best_d = d
 	if best < 0:
 		return []
-	var wx := (best % qd + 0.5) * FieldMap.SPACING
-	var wz := (best / qd + 0.5) * FieldMap.SPACING
+	var wx := (best % dim) * FieldMap.SPACING
+	var wz := (best / dim) * FieldMap.SPACING
 	_camera_rig.pan_to(Vector3(wx, 0.0, wz))
 	_camera_rig.set_height(height)
 	qa_cursor_world(wx, wz)
 	return [wx, wz]
 
 
-func _has_walkable_neighbour(gx: int, gy: int, qd: int) -> bool:
-	var t15 := tan(deg_to_rad(15.0))
-	var t35 := tan(deg_to_rad(35.0))
-	var flat := 0
-	var wall := 0
+# Blocked cell in a 5 by 5 block that is about half open dry ground: a real edge.
+func _edge_cell(gx: int, gy: int, tl: float) -> bool:
+	var dim := _fm.dim
+	var open := 0
 	for oy in range(-2, 3):
 		for ox in range(-2, 3):
 			var x := gx + ox
 			var y := gy + oy
-			if x < 0 or y < 0 or x >= qd or y >= qd or _fm.p4.quad_land[y * qd + x] == 0:
+			if x < 0 or y < 0 or x >= dim or y >= dim or _fm.p4.land[y * dim + x] == 0:
 				return false
-			var tn: float = _fm.p4.quad_tan[y * qd + x]
-			if tn < t15:
-				flat += 1
-			elif tn > t35:
-				wall += 1
-	return flat >= 11 and wall >= 4
+			if _fm.p4.tan[y * dim + x] <= tl:
+				open += 1
+	return open >= 10 and open <= 16
+
+
+func qa_footprint_table() -> void:
+	if _fm != null and not _fm.p4.is_empty():
+		_fp_table = Pass4Terrain.footprint_table(_fm, [100.0, 300.0, 500.0])
 
 
 func qa_cursor_world(x: float, z: float) -> void:
-	var cam: Camera3D = _camera_rig.get_camera()
-	_cursor_override = cam.unproject_position(Vector3(x, _height_at(x, z), z))
+	_cursor_world = Vector3(x, _height_at(x, z), z)
+	_cursor_world_on = true
 
 
 func qa_cursor_clear() -> void:
+	_cursor_world_on = false
 	_cursor_override = Vector2(-1.0, -1.0)
 
 
@@ -381,5 +434,7 @@ func get_state() -> Dictionary:
 	d["unit_selected"] = unit_selected
 	d["landform_mode"] = landform
 	d["x_cursor_shown"] = _x_show
+	d["x_cursor_px"] = [_x_pos.x, _x_pos.y]
+	d["footprint_table"] = _fp_table
 	d["hover_steep_deg"] = _hover_steep_deg
 	return d
