@@ -114,6 +114,21 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 | Cross-epic follow-ons | S-220, S-223 to S-228, S-230 to S-233, S-235, S-238, S-239, S-241 to S-244 | several | Mixed; S-224, S-225, S-226 open | Each follows its parent group |
 | Port parity P4, map content | none | E-17 | Held | Waits on the generator design |
 
+## 4b. Prototype state
+
+Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its prototype is approved.
+
+| Group | Prototype | State |
+|---|---|---|
+| Loop fix workflow; finishing the MVP loop | Not needed (wiring) | |
+| Land generator | Mockup: `scenes/mockups/landscape/` | Pass 3 (2026-09-21); approval not recorded (L8) |
+| Space generator | Mockup: space kit mode | Pass 6 built 2026-10-03, in review. Past the three-pass limit set the same day; the limit applies from the next direction change |
+| Movement and layers | Instrument: skill lab | Phase D pages; pass marks open (M1) |
+| Economy and bases, rules | Instrument, needed | None exists. Answers the number flags: costs, times, caps, yields, technology, doctrine weights |
+| Economy and bases, look | Mockup, needed | None exists. Answers lots and placement, what buildings show, disguise, lanes, the two economy screens |
+| Settlements | Mockup, needed | The land mockup covers part (city on terrain); growth in waves not shown |
+| Multiplayer | Not needed for transport; mockup needed for lobby screens | None exists |
+
 ## 5. Dependency notes
 
 - The mask contract and the generators' wiring pieces touch `csrc/tactical_mapgen.c`, movement and fog, which the movement and layers plan owns today: one owner at a time, wiring pieces queued.

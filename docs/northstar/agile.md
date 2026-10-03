@@ -47,6 +47,7 @@ Recorded at the top of the epic file as a checklist with a date.
 - Every output is listed with where it is observable: state field, screen region, chronicle, save.
 - Anything the epic implies but does not state is turned into a `Q-###-##` flag, not left implicit.
 - Every visible-surface story has a reference.
+- If its group is marked "prototype: needed" in `ROADMAP.md`, the prototype is approved and its record is linked (Prototype gate).
 - The epic names what "obviously working" looks like in a 60-second play session, in plain words. This is the seed of the epic's technical end-state (see below) and T2 QA's first target.
 
 If the gate produces no flags on a non-trivial epic, the gate was run too loosely. Re-run it.
@@ -62,6 +63,24 @@ Two required parts, both in the epic file:
 
 Both parts are finalized at Stage 3, before the epic can be Ready. A visible-surface epic whose visual end-state is still empty is not Ready and is not queued.
 
+## Prototype gate
+
+Added 2026-10-03 (PLAN.md principle 18). It generalises what the landscape mockups, the space kit passes and the skill lab already did.
+
+**Which features.** Anything judged by eye or feel: how a thing looks, moves, lays out, or plays (map shape, camera, HUD, unit behaviour, balance). Not wiring, refactors, or rules whose numbers are already confirmed. The Architect marks each story group "prototype: needed" or "not needed" in `ROADMAP.md`; Westley can overrule either way.
+
+**Two kinds, kept separate.** A *mockup* is a Godot scene under `scenes/mockups/` with placeholder art, for things he must see. An *instrument* is a harness under `scripts/` or `toys/` that runs the rule and prints a page of charts, for things he must read. A feature with both a rules side and a look side gets one of each, built apart: they answer different flags, use different tools and share no code.
+
+**The loop.** One pass is: a spec under a page; one Doer builds it; screenshots or the page are committed; Westley reviews; his words are recorded verbatim with the Architect's reading of them; the next pass's spec follows. The Architect may send back a pass that misses its spec. Only Westley approves one.
+
+**Pass limit.** If three passes go by without Westley's approval, the Architect stops building passes and writes an options page: two or three different directions to choose from. The count restarts on the direction he picks.
+
+**What a prototype may skip.** Determinism, budgets, tests, file ownership, polish. It is never loaded by the game. It must measure and report what it costs, so the plan starts from numbers.
+
+**Exit.** Westley's approval is recorded verbatim in `docs/northstar/research/<topic>/README.md`. His decisions are written into the epic as rules. Each flag the prototype answered is closed; flags it did not answer are listed. Then the plan is written, and it cites the record.
+
+**After approval.** Game code is built fresh, tests first. The prototype's code is a reference, not a source.
+
 ## Definition of Ready (Stage 3 exit, Stage 5 entry)
 
 A story is Ready when all of:
@@ -73,6 +92,7 @@ A story is Ready when all of:
 - The ambiguity register has zero open flags for the story.
 - Scale gates have numbers Westley confirmed.
 - Every visible-surface story has a reference.
+- If its group is marked "prototype: needed" in `ROADMAP.md`, the prototype is approved and its record is linked (Prototype gate).
 - R4 watch-fors are assigned with a tier (T1 or T2).
 
 Only Ready stories get tests. Only Tested stories get queued.
