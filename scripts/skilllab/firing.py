@@ -59,29 +59,24 @@ def unit_weight(stats):
     return stats["base_damage"] / stats["attack_interval"]
 
 
-def _seen(engine, w, friends, targets):
-    """Targets (by unit id) that any living friend sees; one scan of the friends per target."""
-    return {e for e, *_ in targets if any(engine.can_see(w, f, e) for f, *_ in friends)}
-
-
-def _able_weighted(engine, w, shooters, targets, seen, weights, reach):
+def _able_weighted(engine, w, shooters, targets, weights, reach):
+    by_id = {e: (ex, ey, elayer) for e, ex, ey, elayer, _ in targets}
     total = 0.0
     for u, x, y, layer, rng in shooters:
+        t = engine.unit_target(w, u)
+        if t not in by_id:
+            continue
+        ex, ey, elayer = by_id[t]
         up, down = reach.get(u, (0, 0)) if reach else (0, 0)
-        for e, ex, ey, elayer, _ in targets:
-            if not -down <= elayer - layer <= up or e not in seen:
-                continue
-            dx, dy = ex - x, ey - y
-            if dx * dx + dy * dy <= rng * rng and engine.can_shoot(w, u, e):
-                total += weights[u]
-                break
+        dx, dy = ex - x, ey - y
+        if -down <= elayer - layer <= up and dx * dx + dy * dy <= rng * rng and engine.can_shoot(w, u, t):
+            total += weights[u]
     return float(total)
 
 
 def count_able_weighted(engine, w, units0, units1, ranges, weights, reach=None, alive=None):
-    """Sum of weights of units with a seen, shootable enemy in range and layer reach; sight is shared by the side."""
+    """Sum of weights of units whose engine target is a living enemy in range and layer reach that they can shoot."""
     side0 = _living(engine, w, units0, ranges, alive)
     side1 = _living(engine, w, units1, ranges, alive)
-    seen0, seen1 = _seen(engine, w, side0, side1), _seen(engine, w, side1, side0)
-    return (_able_weighted(engine, w, side0, side1, seen0, weights, reach),
-            _able_weighted(engine, w, side1, side0, seen1, weights, reach))
+    return (_able_weighted(engine, w, side0, side1, weights, reach),
+            _able_weighted(engine, w, side1, side0, weights, reach))

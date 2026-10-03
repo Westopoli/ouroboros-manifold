@@ -1,7 +1,7 @@
 """The order timeline of fight(): Steps that issue later orders (plan Phase S)."""
 import math
 
-ORDERS = ("attack_move", "move", "idle")
+ORDERS = ("attack_move", "move", "idle", "guard")
 
 
 def first_anchors(setup):
@@ -26,7 +26,7 @@ def validate(setup):
             pass
         else:
             raise ValueError("bad step condition %r" % (s.when,))
-        if s.order != "idle" and s.goal is not None and (
+        if s.order not in ("idle", "guard") and s.goal is not None and (
                 not isinstance(s.goal, (tuple, list)) or len(s.goal) != 2):
             raise ValueError("step goal must be (x, y), got %r" % (s.goal,))
 
@@ -71,6 +71,9 @@ class Timeline:
     def _issue(self, s, alive):
         if s.order == "idle":
             self.engine.clear_orders(self.w, alive)
+            return
+        if s.order == "guard":
+            self.engine.order_guard(self.w, alive)
             return
         goal = s.goal if s.goal is not None else self.anchors[1 - self.setup.groups[s.group].side]
         (self.engine.order_attack_move if s.order == "attack_move" else self.engine.order_move)(

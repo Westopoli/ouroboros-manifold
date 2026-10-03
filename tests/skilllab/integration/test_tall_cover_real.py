@@ -23,7 +23,7 @@ def library():
 
 def _setup(counter):
     s = tall_cover(counter=counter)(16)(12, False)
-    return dataclasses.replace(s, settings=dict(batches.BASE_SETTINGS), max_ticks=1500)
+    return dataclasses.replace(s, settings={**s.settings, **batches.BASE_SETTINGS}, max_ticks=1500)
 
 
 @pytest.mark.parametrize("counter", [False, True])
@@ -34,9 +34,11 @@ def test_fight_finishes_with_a_valid_outcome_and_is_deterministic(library, count
     assert a == b
 
 
-def test_counter_run_makes_contact(library):
+def test_counter_run_damages_the_defenders(library):
+    """The scene's draft reach settings let layer-3 attackers hit layer 0. first_contact_tick stays -1 by design:
+    count_able needs the same layer, so contact is read from the defenders' strength instead."""
     r = fight.fight(_setup(True), 1, False, engine=library)
-    assert r.first_contact_tick >= 0
+    assert r.strength_left[1] < 1.0
 
 
 def test_layer_zero_run_reads_whatever_it_reads(library):

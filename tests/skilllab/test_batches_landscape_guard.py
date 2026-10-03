@@ -72,3 +72,13 @@ def test_all_twelve_cells_have_a_reference(d):
 def test_scene_text_says_the_defenders_guard(d):
     assert "guard" in d.scene and "idle" not in d.scene
     assert "not built" not in d.scene
+
+
+def test_tall_cover_counter_cell_keeps_the_scenes_reach_settings():
+    """A cell's settings overlay the scene's own (the counter's draft reach settings), they do not replace them."""
+    from scripts.skilllab import batches
+    d = batches.get("landscape")
+    cell = next(c for c in d.cells if c.label == "tall_cover_counter")
+    setup = batches._with_settings(cell.build, {**d.variants[0][1], **cell.settings})(12, False)
+    assert setup.settings["OM_TP_RANGE_DOWN_3"] == 1.0
+    assert setup.settings["OM_TP_PURSUE_BY_STEERING"] == 1
