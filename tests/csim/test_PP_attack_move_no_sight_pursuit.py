@@ -25,6 +25,7 @@ PURSUE = "OM_TP_PURSUE_BY_STEERING"
 _H = (CSRC_DIR / "om_constants.h").read_text()
 ARRIVAL = (float(re.search(r"#define\s+OM_ARRIVAL_TOLERANCE_MULT\s+([\d.]+)", _H).group(1))
            * float(re.search(r"#define\s+OM_UNIT_COLLISION_RADIUS\s+([\d.]+)", _H).group(1)))
+CENTROID_ARRIVAL = 2.0 * 15.0   # 2 x collision radius, the looser of the engines' centroid radii (open flag, R-095-05)
 VAN_RANGE = 300.0   # Vanguard attack range (config.py / unit table)
 LINE_N, SPACING = 32, 40.0   # 40 wu = collision diameter 30 + a gap, so the line spawns un-overlapped
 LINE_X0, LINE_Y = 1000.0, 1000.0
@@ -36,6 +37,22 @@ def _d(a, b):
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
 
 
+def _centroid(ps):
+    return (sum(p[0] for p in ps) / len(ps), sum(p[1] for p in ps) / len(ps))
+
+
+def _shape_error(at, slots, clicks):
+    """TD-PP-A199-shape-measure: the largest gap between a unit's offset from its chunk's centroid and its assigned
+    slot's offset from the chunk's click (zero when the chunk's shape is intact)."""
+    err = 0.0
+    for chunk, click in clicks:
+        c = _centroid([at(u) for u in chunk])
+        for u in chunk:
+            p = at(u)
+            err = max(err, _d((p[0] - c[0], p[1] - c[1]), (slots[u][0] - click[0], slots[u][1] - click[1])))
+    return err
+
+
 def _line(lib, w, enemy_xy):
     ids = [spawn(lib, w, VANGUARD, 0, LINE_X0 + i * SPACING, LINE_Y) for i in range(LINE_N)]
     enemy = spawn(lib, w, RAIDER, 1, *enemy_xy)
@@ -43,31 +60,35 @@ def _line(lib, w, enemy_xy):
     # group order drops every slot to the raw click. Issue it as two chunks of 16 (300 wu from their own centroid), each
     # to the click plus its chunk's offset from the line's centroid, as scripts/skilllab/fight.py _chunks does.
     half = LINE_N // 2
+    clicks = []
     for chunk in (ids[:half], ids[half:]):
         cx = LINE_X0 + (LINE_X0 + (LINE_N - 1) * SPACING - LINE_X0) / 2.0
         cc = sum(pos(lib, w, u)[0] for u in chunk) / len(chunk)
         attack_move(lib, w, chunk, CLICK[0] + cc - cx, CLICK[1])
+        clicks.append((chunk, (CLICK[0] + cc - cx, CLICK[1])))
     slots = {}
     for u in ids:
         has, x, y = dest(lib, w, u)
         assert has == 1, "fixture: a line unit has no slot after the group attack-move"
         slots[u] = (x, y)
     assert len({(round(x), round(y)) for x, y in slots.values()}) == LINE_N, "fixture: slots collapsed to the click (R-095-03)"
-    return ids, enemy, slots
+    return ids, enemy, slots, clicks
 
 
 def _run_line(lib, w, enemy_xy):
     """Returns (max slot miss at the end, closest approach of any unit to the enemy, enemy hp, max slot miss on the
     tick the enemy first lost hp or None)."""
-    ids, enemy, slots = _line(lib, w, enemy_xy)
-    closest, at_hit = 1e9, None
+    ids, enemy, slots, clicks = _line(lib, w, enemy_xy)
+    closest, at_hit, held = 1e9, None, 0.0
     for _ in range(TICKS):
         step(lib, w)
         closest = min(closest, min(_d(pos(lib, w, u), pos(lib, w, enemy)) for u in ids))
+        held = max(held, _shape_error(lambda u: pos(lib, w, u), slots, clicks))   # the shape, every tick of the run
         if at_hit is None and hp(lib, w, enemy) < 250.0:
             at_hit = max(_d(pos(lib, w, u), slots[u]) for u in ids)
-    miss = max(_d(pos(lib, w, u), slots[u]) for u in ids)
-    return miss, closest, hp(lib, w, enemy), at_hit
+    miss = held
+    arrive = max(_d(_centroid([pos(lib, w, u) for u in ch]), ck) for ch, ck in clicks)
+    return (miss, arrive), closest, hp(lib, w, enemy), at_hit
 
 
 def test_R_087_04_A199_a_32_unit_line_reaches_its_slots_with_the_shape_intact_past_a_seen_enemy(lib, world_factory):
@@ -77,8 +98,14 @@ def test_R_087_04_A199_a_32_unit_line_reaches_its_slots_with_the_shape_intact_pa
     RED now: P1 makes the seen enemy each unit's goal, the line walks off its route toward it and stops in range."""
     w = world_factory(n_regions=1)
     east = LINE_X0 + (LINE_N - 1) * SPACING
-    miss, closest, ehp, _ = _run_line(lib, w, (east + 450.0, 2000.0))
-    assert miss <= ARRIVAL, "a unit ended %.1f wu from its slot (arrival radius %.1f): the line walked off to the seen enemy" % (miss, ARRIVAL)
+    (shape, arrive), closest, ehp, _ = _run_line(lib, w, (east + 450.0, 2000.0))
+    # TD-PP-A199-shape-measure: R-095-05 ends a group when its centroid arrives, so outer units need not be inside their own
+    # slot radius; A199 claims the shape is held. (1) shape held on every tick of the run (the enemy dies and the line resumes, so the end reading alone
+    # would not tell held from broken-then-reformed), (2) arrival.
+    assert shape <= ARRIVAL, "the chunk's shape broke during the run: a unit's offset from its chunk centroid is %.1f wu off its slot offset (slot radius %.1f): the line walked off to the seen enemy" % (shape, ARRIVAL)
+    # Open flag (ambiguity register, Westley): the engines differ on the centroid radius, C 1.5 x, Python 2 x collision
+    # radius; R-095-05's text does not settle it, so the looser (30) is used.
+    assert arrive <= CENTROID_ARRIVAL, "a chunk's centroid ended %.1f wu from its click (limit %.1f)" % (arrive, CENTROID_ARRIVAL)
     assert closest > VAN_RANGE and ehp == 250.0, "fixture: the enemy was inside attack range (%.0f wu) or hit" % closest
 
 
@@ -91,6 +118,16 @@ def test_control_R_087_04_A199_the_slot_miss_detector_trips_when_the_route_leads
     _, closest, ehp, at_hit = _run_line(lib, w, (LINE_X0 + 15.5 * SPACING, 2000.0))
     assert closest <= VAN_RANGE and ehp < 250.0, "fixture: the line never engaged the enemy on its route"
     assert at_hit is not None and at_hit > ARRIVAL, "control: units were firing but still read as at their slots (miss %s)" % at_hit
+
+def test_control_R_087_04_A199_the_shape_measure_trips_when_one_unit_leaves_its_slot_offset():
+    """Positive control (TD-PP-A199-shape-measure): the shape reading is zero when every unit sits on its slot and over the
+    slot radius when one unit is 40 wu off its slot offset, so assertion (1) above can trip."""
+    ids = list(range(4))
+    slots = {0: (0.0, 0.0), 1: (40.0, 0.0), 2: (80.0, 0.0), 3: (120.0, 0.0)}
+    clicks = [(ids, (60.0, 0.0))]
+    assert _shape_error(lambda u: slots[u], slots, clicks) < 1e-9
+    assert _shape_error(lambda u: (slots[u][0], slots[u][1] + (40.0 if u == 3 else 0.0)), slots, clicks) > ARRIVAL
+
 
 
 def _lone(lib, w, enemy_xy, switch=None):
