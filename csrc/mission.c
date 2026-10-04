@@ -2499,6 +2499,7 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
      * after the first mission. */
     st->tactical_ended = 0;
     st->band_set = 0;
+    st->refused = 0;
     st->band = OM_MISSION_BAND_UNKNOWN;
     st->commander_fate_set = 0;
     st->commander_unit = 0;
