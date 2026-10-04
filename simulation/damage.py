@@ -250,28 +250,4 @@ def update_targeting(store: UnitStore, tmap, rng=None, dt=None):
             pre_acquisition = int(store.auto_engage_target[uid])
             if pre_acquisition < 0:
                 store.auto_engage_target[uid] = -1
-            # Attack-move pursuit: walk toward the nearest visible enemy if none in range.
-            # Uses spatial_hash (large cells) — cheap at long sensor ranges during march.
-            # See movement.py apply_group_move — attack_moving flag set by attack_move command.
-            if store.attack_moving[uid]:
-                sensor_r = store.data[uid, FIELD_SENSOR_RADIUS]
-                if sensor_r > atk_range:
-                    sensor_r_sq = sensor_r * sensor_r
-                    best_d_sq = float("inf")
-                    best_uid  = -1
-                    uid_visible = visibility_map.get(uid, set())
-                    for other in tmap.spatial_hash.query(mx, my_, sensor_r):
-                        if store.faction[other] == my_faction: continue
-                        if store.data[other, FIELD_LAYER] != my_layer: continue
-                        if other not in uid_visible: continue
-                        dx = store.data[other, FIELD_X] - mx
-                        dy = store.data[other, FIELD_Y] - my_
-                        d_sq = dx * dx + dy * dy
-                        if d_sq <= sensor_r_sq and d_sq < best_d_sq:
-                            best_d_sq = d_sq
-                            best_uid  = other
-                    if best_uid >= 0:
-                        store.auto_engage_target[uid] = best_uid
-                        store.set_move_target(uid,
-                                              store.data[best_uid, FIELD_X],
-                                              store.data[best_uid, FIELD_Y])
+            # A199: pursuit on sight removed; See also csrc/unit.c om_tac_unit_ai (A199)

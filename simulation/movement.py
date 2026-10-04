@@ -349,8 +349,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
 
         # Hold position only while target is actively within firing range.
         # When target drifts out of range, unit pursues rather than staying frozen.
-        # See also: damage.py update_targeting — sensor pursuit updates target_x/y
-        # each tick toward the nearest enemy for attack_moving units with large sensor radius.
+        # A199: no sensor pursuit; an attack-mover keeps its route until a target is in range.
         tgt = store.auto_engage_target[uid]
         in_range = False
         if tgt >= 0 and store.alive[tgt]:
@@ -425,8 +424,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             # attack_moving is intentionally NOT cleared here — it is a command-
             # level flag that should persist until a new command (move,
             # attack_target, activate_ability) replaces it. Clearing it on
-            # arrival left units unable to pursue enemies they could see but
-            # not yet shoot after their move target was consumed.
+            # arrival left units unable to engage enemies that later came into range.
             store.plain_moving[uid] = False
             store.detour_remaining[uid] = 0.0
             # Remove from formation group's moving set on slot arrival.
