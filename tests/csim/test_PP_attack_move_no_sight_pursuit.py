@@ -1,0 +1,185 @@
+"""PP-move: an attack-moving unit holds its slot and route until it can SHOOT, not until it sees (E-11 R-087-04,
+R-087-05; E-13 R-096-02, R-096-03; ruling A199, docs/northstar/plans/2026-10-01-architect-rulings-2.md Addendum).
+Rule marked for playtest review, A199 (Westley: "something we might change when it comes to play testing").
+
+Old rule (P1, csrc/unit.c om_tac_pursue_goal, called from om_tac_unit_ai when OM_TP_PURSUE_BY_STEERING != 0, the
+default): an attack-mover with no enemy in attack range, on its cohort turn, makes the nearest enemy it SEES in
+sensor range its move goal and drops its slot and route. New rule: it keeps slot and route, halts and fires when an
+enemy is in attack range, and pursues an ACQUIRED target under the leash (R-087-05, unchanged).
+Gate: OM_TP_PURSUE_BY_STEERING (om_tac_pursue). At 0 the PP baseline branch (the `else if (u->order ==
+OM_ORDER_ATTACK_MOVE)` arm of om_tac_unit_ai: hold on the seen unit and om_tac_step_toward it) keeps the old
+walk; the baseline tests below must not move.
+
+Scenes (Vanguard: range 300, sensor 700, speed 80, collision radius 15; Raider: range 200, sensor 800, hp 250,
+idle faction 1). Slot arrival radius is OM_ARRIVAL_TOLERANCE_MULT x OM_UNIT_COLLISION_RADIUS = 1.5 x 15, read
+from csrc/om_constants.h, not a free tolerance.
+"""
+import re
+
+import pytest
+
+from conftest import CSRC_DIR
+from test_PP_unit_support import (RAIDER, VANGUARD, attack_move, dest, hp, pos, set_param, spawn, step, target)
+
+PURSUE = "OM_TP_PURSUE_BY_STEERING"
+_H = (CSRC_DIR / "om_constants.h").read_text()
+ARRIVAL = (float(re.search(r"#define\s+OM_ARRIVAL_TOLERANCE_MULT\s+([\d.]+)", _H).group(1))
+           * float(re.search(r"#define\s+OM_UNIT_COLLISION_RADIUS\s+([\d.]+)", _H).group(1)))
+VAN_RANGE = 300.0   # Vanguard attack range (config.py / unit table)
+LINE_N, SPACING = 32, 40.0   # 40 wu = collision diameter 30 + a gap, so the line spawns un-overlapped
+LINE_X0, LINE_Y = 1000.0, 1000.0
+CLICK = (1620.0, 3000.0)     # the line's centroid (x0 + 31*20) goes here: its slots keep the line's shape
+TICKS = 700                  # 2000 wu at 80 wu/s is 500 ticks; the rest is slack, not a rule number
+
+
+def _d(a, b):
+    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+
+def _line(lib, w, enemy_xy):
+    ids = [spawn(lib, w, VANGUARD, 0, LINE_X0 + i * SPACING, LINE_Y) for i in range(LINE_N)]
+    enemy = spawn(lib, w, RAIDER, 1, *enemy_xy)
+    attack_move(lib, w, ids, *CLICK)
+    slots = {}
+    for u in ids:
+        has, x, y = dest(lib, w, u)
+        assert has == 1, "fixture: a line unit has no slot after the group attack-move"
+        slots[u] = (x, y)
+    return ids, enemy, slots
+
+
+def _run_line(lib, w, enemy_xy):
+    """Returns (max slot miss at the end, closest approach of any unit to the enemy, enemy hp)."""
+    ids, enemy, slots = _line(lib, w, enemy_xy)
+    closest = 1e9
+    for _ in range(TICKS):
+        step(lib, w)
+        closest = min(closest, min(_d(pos(lib, w, u), pos(lib, w, enemy)) for u in ids))
+    miss = max(_d(pos(lib, w, u), slots[u]) for u in ids)
+    return miss, closest, hp(lib, w, enemy)
+
+
+def test_R_087_04_A199_a_32_unit_line_reaches_its_slots_with_the_shape_intact_past_a_seen_enemy(lib, world_factory):
+    """R-087-04 / R-096-02 / A199: a 32-unit line attack-moves with an idle enemy 450 wu off its east flank
+    (inside sensor 700, outside attack range 300 all the way: nearest path point 450 wu away). Every unit ends
+    within the arrival radius of its own slot (so width and depth are the slots' own), and nothing fires.
+    RED now: P1 makes the seen enemy each unit's goal, the line walks off its route toward it and stops in range."""
+    w = world_factory(n_regions=1)
+    east = LINE_X0 + (LINE_N - 1) * SPACING
+    miss, closest, ehp = _run_line(lib, w, (east + 450.0, 2000.0))
+    assert miss <= ARRIVAL, "a unit ended %.1f wu from its slot (arrival radius %.1f): the line walked off to the seen enemy" % (miss, ARRIVAL)
+    assert closest > VAN_RANGE and ehp == 250.0, "fixture: the enemy was inside attack range (%.0f wu) or hit" % closest
+
+
+def test_control_R_087_04_A199_the_slot_miss_detector_trips_when_the_route_leads_to_the_enemy(lib, world_factory):
+    """Positive control (green now and after): the enemy stands ON the route, between the line and its slots,
+    in attack range of the units passing it. The units halt and fire short of their slots, so the same
+    measurement reads a miss over the arrival radius: the detector above can trip."""
+    w = world_factory(n_regions=1)
+    miss, closest, ehp = _run_line(lib, w, (LINE_X0 + 15.5 * SPACING, 2000.0))
+    assert closest <= VAN_RANGE and ehp < 250.0, "fixture: the line never engaged the enemy on its route"
+    assert miss > ARRIVAL, "control: units halted to fire but still read as at their slots (miss %.1f)" % miss
+
+
+def _lone(lib, w, enemy_xy, switch=None):
+    if switch is not None:
+        assert set_param(lib, w, PURSUE, switch) == 0
+    u = spawn(lib, w, VANGUARD, 0, 2000.0, 500.0)
+    enemy = spawn(lib, w, RAIDER, 1, *enemy_xy)
+    attack_move(lib, w, [u], 2000.0, 3000.0)
+    return u, enemy
+
+
+def _diverted(lib, w, u, goal=(2000.0, 3000.0)):
+    has, x, y = dest(lib, w, u)
+    return has == 1 and _d((x, y), goal) > 1e-6
+
+
+def test_R_087_04_A199_a_lone_attack_mover_keeps_its_goal_and_takes_no_target_for_an_enemy_it_only_sees(lib, world_factory):
+    """R-087-04 / A199: a Vanguard with an idle Raider 450 wu to its side (seen, out of range) keeps its march
+    goal and holds no target for 60 ticks (more than two cohort cycles) and its sideways drift stays inside the
+    arrival radius. RED now: on its cohort turn P1 sets the goal to the Raider and the target to it."""
+    w = world_factory(n_regions=1)
+    u, enemy = _lone(lib, w, (2450.0, 800.0))
+    for _ in range(60):
+        step(lib, w)
+        assert target(lib, w, u) == -1 or target(lib, w, u) == 0, "took the enemy it only sees as its target"
+        assert not _diverted(lib, w, u), "its goal was replaced by the seen enemy's position"
+    assert abs(pos(lib, w, u)[0] - 2000.0) <= ARRIVAL, "it drifted sideways toward the enemy"
+
+
+def test_control_R_087_04_A199_the_diverted_goal_detector_reads_a_changed_order(lib, world_factory):
+    """Positive control (green now and after): with no enemy in sensor range the goal is the click; a new
+    attack-move to another point then reads as diverted, so a True above would be a real change of goal."""
+    w = world_factory(n_regions=1)
+    u, enemy = _lone(lib, w, (3900.0, 3900.0))
+    step(lib, w)
+    assert not _diverted(lib, w, u)
+    attack_move(lib, w, [u], 2500.0, 3000.0)
+    assert _diverted(lib, w, u)
+
+
+def test_R_087_04_A199_halt_and_fire_when_an_enemy_is_in_attack_range(lib, world_factory):
+    """R-087-04 / A199 guard (green now and after): an idle Raider 250 wu ahead is inside attack range 300. The
+    unit halts (same place at tick 40 and 60) and the enemy loses hp."""
+    w = world_factory(n_regions=1)
+    u, enemy = _lone(lib, w, (2000.0, 750.0))
+    step(lib, w, 40)
+    p40 = pos(lib, w, u)
+    step(lib, w, 20)
+    assert _d(p40, pos(lib, w, u)) <= 0.5, "the unit kept walking with an enemy in attack range"
+    assert hp(lib, w, enemy) < 250.0, "it halted but never fired"
+    assert target(lib, w, u) == enemy
+
+
+def test_R_087_05_A199_an_acquired_target_that_walks_out_of_range_stays_held_under_the_leash(lib, world_factory):
+    """R-087-05 / A199 guard (green now and after): the Vanguard acquires a Raider 250 ahead, the Raider is moved to
+    350 ahead (out of range 300, inside sensor). While the unit is inside 200 wu of its anchor it keeps that
+    target on every tick of the next 10 and the anchor stays where it was taken."""
+    import ctypes
+    from conftest import OMWorldP
+    w = world_factory(n_regions=1)
+    u, enemy = _lone(lib, w, (2000.0, 750.0))
+    for _ in range(40):
+        step(lib, w)
+        if target(lib, w, u) == enemy:
+            break
+    assert target(lib, w, u) == enemy, "fixture: no acquisition"
+    ax, ay = pos(lib, w, u)
+    lib.om_unit_teleport(w, enemy, ax, ay + 350.0, 0)
+    for _ in range(10):
+        step(lib, w)
+        assert _d(pos(lib, w, u), (ax, ay)) < 200.0
+        assert target(lib, w, u) == enemy, "the acquired target was dropped while the unit was inside its leash"
+
+
+def test_R_087_04_A199_a_lone_attack_mover_resumes_its_route_after_the_fight(lib, world_factory):
+    """R-087-04 / A199: a Vanguard kills a weak Raider (hp 20) in range on its way, then continues and ends
+    within the arrival radius of its destination (the target is dead: the attack-move goes on)."""
+    w = world_factory(n_regions=1)
+    u, enemy = _lone(lib, w, (2000.0, 750.0))
+    lib.om_unit_set_hp(w, enemy, 20.0)
+    for _ in range(TICKS + 200):
+        step(lib, w)
+    assert hp(lib, w, enemy) <= 0.0, "fixture: the enemy never died"
+    assert _d(pos(lib, w, u), (2000.0, 3000.0)) <= ARRIVAL, "it did not resume its route: ended %s" % (pos(lib, w, u),)
+
+
+def test_PP_baseline_switch_0_keeps_the_old_walk_toward_a_seen_enemy(lib, world_factory):
+    """A140 baseline (green now and after A199): with OM_TP_PURSUE_BY_STEERING 0 the old behaviour is kept: the
+    Vanguard steps sideways toward the Raider it sees (om_tac_step_toward; no target is exposed)."""
+    w = world_factory(n_regions=1)
+    u, enemy = _lone(lib, w, (2450.0, 800.0), switch=0)
+    step(lib, w, 40)
+    assert pos(lib, w, u)[0] > 2000.0 + ARRIVAL, "baseline no longer steps toward the seen enemy"
+
+
+def test_R_087_04_A199_an_idle_unit_never_walks_toward_a_seen_enemy(lib, world_factory):
+    """Guard (green now and after): a unit with no order stays where it is with an enemy in sensor range, out
+    of attack range, and takes no target."""
+    w = world_factory(n_regions=1)
+    u = spawn(lib, w, VANGUARD, 0, 2000.0, 500.0)
+    spawn(lib, w, RAIDER, 1, 2450.0, 800.0)
+    step(lib, w, 60)
+    assert _d(pos(lib, w, u), (2000.0, 500.0)) <= 0.5
+    assert target(lib, w, u) in (-1, 0)
