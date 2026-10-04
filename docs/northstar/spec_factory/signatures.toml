@@ -5733,7 +5733,7 @@ restype = "double"
 params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
 epics = ["E-11", "E-13"]
 confidence = "likely"
-note = "om_unit_effective_speed without the momentary backswing stop; the speed a move order fixes, read for the group speed cap (R-095-01). Contract piece SPEEDCAP-contract."
+note = "The speed a move order fixes for this unit: om_unit_effective_speed without the momentary backswing stop. Lasting modifiers apply (a player-cast Fortify's 0.4 x, R-086-06; a Vanguard that is immobile by R-086-03 reads 0). Used for the group speed cap, which is fixed at order time (E-13 R-095-01). Contract piece SPEEDCAP-contract."
 
 [[symbols]]
 name = "om_unit_engage"
