@@ -7,6 +7,7 @@ from scripts.skilllab.approach import approach_setup
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
 from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
 from scripts.skilllab.formations import place
+from scripts.skilllab.mopup import mopup_goal
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
 FIRST_CUSTOM_TYPE_ID = 100
@@ -159,6 +160,7 @@ def fight(setup, seed=0, swap=False, engine=None):
             for c in t.covers:
                 engine.add_cover(w, c.x, c.y, c.radius, c.height)
         types = _register_types(engine, w, setup)
+        mop_sides = tuple(s for s in (0, 1) if setup.mopup and all(g.order == "attack_move" for g in setup.groups if g.side == s))
         setup = approach_setup(setup, {name: reach for name, (tid, reach) in types.items()})
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
@@ -169,7 +171,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
         timeline = Timeline(engine, w, setup, ids_by_group, goals)
         wt = _weights(engine, w, setup, types, ids_by_group) if setup.weighted else None
-        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt)
+        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt, mop_sides)
     finally:
         engine.free_world(w)
 
@@ -190,7 +192,7 @@ def _strength(hp, ids, start_hp, head):
     return sum(hp[u] / start_hp[u] for u in ids if hp[u] > 0) / head
 
 
-def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None):
+def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None, mop_sides=()):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
@@ -225,6 +227,16 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
             elif u in had_dest and u not in ends:
                 ends[u] = tick
 
+    mopup = [0] if setup.mopup else None
+
+    def mop_up():
+        for s in mop_sides:
+            goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set)
+            if goal is not None:
+                for ids, (dx, dy) in _chunks(engine, w, [u for u in side_ids[s] if u in alive_set]):
+                    engine.order_attack_move(w, ids, goal[0] + dx, goal[1] + dy)
+                mopup[0] += 1
+
     sample()
     if trace is not None:
         record()
@@ -244,6 +256,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
             alive_set = set(living)
             alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
         timeline.check(tick, hp)
+        if mopup is not None and tick % setup.mopup_interval_ticks == 0:
+            mop_up()
         quiet = 0 if changed else quiet + 1
         if trace is not None:
             record()
@@ -271,4 +285,5 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None)
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
                        firing=firing, firing_unit_seconds=seconds, trace=trace,
                        steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec,
-                       states=states, order_ends=None if ends is None else tuple(sorted(ends.items())))
+                       states=states, order_ends=None if ends is None else tuple(sorted(ends.items())),
+                       mopup_orders=None if mopup is None else mopup[0])
