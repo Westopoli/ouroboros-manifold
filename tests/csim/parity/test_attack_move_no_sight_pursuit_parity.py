@@ -51,8 +51,17 @@ def _shape_error(trace):
     return worst
 
 
-def _centroid_miss(trace):
-    last = trace.frames[-1]
+def _last_moving_tick(trace):
+    fr = trace.frames
+    last = 0
+    for k in range(1, len(fr)):
+        if any(fr[k][i][1:3] != fr[k - 1][i][1:3] for i in range(len(XS))):
+            last = k
+    return last
+
+
+def _centroid_miss(trace, tick=-1):
+    last = trace.frames[tick]
     return math.hypot(sum(last[i][1] for i in range(len(XS))) / len(XS) - CLICK[0], sum(last[i][2] for i in range(len(XS))) / len(XS) - CLICK[1])
 
 
@@ -73,9 +82,18 @@ def test_A199_R087_04_c_and_python_both_end_at_the_slots_past_a_seen_enemy():
         # (C 1.5 x, Python 2 x; open flag for Westley, R-095-05's text does not settle it).
         assert _shape_error(tr) <= ARRIVAL, "%s: shape broke, a unit is %.1f wu off its slot offset (slot radius %.1f)" % (name, _shape_error(tr), ARRIVAL)
         assert _centroid_miss(tr) <= CENTROID_ARRIVAL, "%s: centroid ended %.1f wu from the click (limit %.1f)" % (name, _centroid_miss(tr), CENTROID_ARRIVAL)
-    dev = max(math.hypot(py.frames[-1][i][1] - c.frames[-1][i][1], py.frames[-1][i][2] - c.frames[-1][i][2]) for i in range(len(XS)))
-    assert dev <= PARITY_TOLERANCE, "final positions differ between the engines by %.2f wu" % dev
-
+    # TD-PP-A199-parity-scope: the engines are compared tick by tick, with PARITY_TOLERANCE, over the march past the seen
+    # enemy, up to the last tick on which BOTH still have the group moving (the trace carries positions only, so "moving"
+    # is read as "some unit's position changed on that tick"). After that the engines end a group move on different
+    # conditions (open finding PF-GROUP-ARRIVAL, ledger), so only the shape and centroid assertions above apply.
+    span = min(_last_moving_tick(py), _last_moving_tick(c))
+    # The span must cover the approach to within 60 wu of the click: the engines stop the centroid at 30 (Python
+    # GROUP_ARRIVAL_RADIUS, 2 x 15) and 22.5 (C, 1.5 x 15); the group is still moving on the tick it crosses the larger
+    # radius, which is at most one tick of travel (4 wu) earlier; 60 is twice the larger radius, a deliberate margin.
+    for name, tr in (("python", py), ("c", c)):
+        assert _centroid_miss(tr, span) <= 60.0, "%s: the compared span ends at tick %d, %.1f wu from the click (needs 60)" % (name, span, _centroid_miss(tr, span))
+    dev = max(math.hypot(py.frames[k][i][1] - c.frames[k][i][1], py.frames[k][i][2] - c.frames[k][i][2]) for k in range(span + 1) for i in range(len(XS)))
+    assert dev <= PARITY_TOLERANCE, "positions differ between the engines by %.2f wu within the first %d ticks (the march)" % (dev, span)
 
 def test_control_A199_the_slot_miss_reading_trips_when_the_enemy_is_on_the_route():
     """Positive control (green now and after): with the enemy on the route in range, both engines halt and fire
