@@ -39,24 +39,35 @@ def _d(a, b):
 def _line(lib, w, enemy_xy):
     ids = [spawn(lib, w, VANGUARD, 0, LINE_X0 + i * SPACING, LINE_Y) for i in range(LINE_N)]
     enemy = spawn(lib, w, RAIDER, 1, *enemy_xy)
-    attack_move(lib, w, ids, *CLICK)
+    # TD-PP-A199-line-fixture: 32 units 40 wu apart sit 620 wu from their centroid, past R-095-03's 450 wu, so one
+    # group order drops every slot to the raw click. Issue it as two chunks of 16 (300 wu from their own centroid), each
+    # to the click plus its chunk's offset from the line's centroid, as scripts/skilllab/fight.py _chunks does.
+    half = LINE_N // 2
+    for chunk in (ids[:half], ids[half:]):
+        cx = LINE_X0 + (LINE_X0 + (LINE_N - 1) * SPACING - LINE_X0) / 2.0
+        cc = sum(pos(lib, w, u)[0] for u in chunk) / len(chunk)
+        attack_move(lib, w, chunk, CLICK[0] + cc - cx, CLICK[1])
     slots = {}
     for u in ids:
         has, x, y = dest(lib, w, u)
         assert has == 1, "fixture: a line unit has no slot after the group attack-move"
         slots[u] = (x, y)
+    assert len({(round(x), round(y)) for x, y in slots.values()}) == LINE_N, "fixture: slots collapsed to the click (R-095-03)"
     return ids, enemy, slots
 
 
 def _run_line(lib, w, enemy_xy):
-    """Returns (max slot miss at the end, closest approach of any unit to the enemy, enemy hp)."""
+    """Returns (max slot miss at the end, closest approach of any unit to the enemy, enemy hp, max slot miss on the
+    tick the enemy first lost hp or None)."""
     ids, enemy, slots = _line(lib, w, enemy_xy)
-    closest = 1e9
+    closest, at_hit = 1e9, None
     for _ in range(TICKS):
         step(lib, w)
         closest = min(closest, min(_d(pos(lib, w, u), pos(lib, w, enemy)) for u in ids))
+        if at_hit is None and hp(lib, w, enemy) < 250.0:
+            at_hit = max(_d(pos(lib, w, u), slots[u]) for u in ids)
     miss = max(_d(pos(lib, w, u), slots[u]) for u in ids)
-    return miss, closest, hp(lib, w, enemy)
+    return miss, closest, hp(lib, w, enemy), at_hit
 
 
 def test_R_087_04_A199_a_32_unit_line_reaches_its_slots_with_the_shape_intact_past_a_seen_enemy(lib, world_factory):
@@ -66,19 +77,20 @@ def test_R_087_04_A199_a_32_unit_line_reaches_its_slots_with_the_shape_intact_pa
     RED now: P1 makes the seen enemy each unit's goal, the line walks off its route toward it and stops in range."""
     w = world_factory(n_regions=1)
     east = LINE_X0 + (LINE_N - 1) * SPACING
-    miss, closest, ehp = _run_line(lib, w, (east + 450.0, 2000.0))
+    miss, closest, ehp, _ = _run_line(lib, w, (east + 450.0, 2000.0))
     assert miss <= ARRIVAL, "a unit ended %.1f wu from its slot (arrival radius %.1f): the line walked off to the seen enemy" % (miss, ARRIVAL)
     assert closest > VAN_RANGE and ehp == 250.0, "fixture: the enemy was inside attack range (%.0f wu) or hit" % closest
 
 
 def test_control_R_087_04_A199_the_slot_miss_detector_trips_when_the_route_leads_to_the_enemy(lib, world_factory):
     """Positive control (green now and after): the enemy stands ON the route, between the line and its slots,
-    in attack range of the units passing it. The units halt and fire short of their slots, so the same
-    measurement reads a miss over the arrival radius: the detector above can trip."""
+    in attack range of the units passing it. The units halt and fire short of their slots, so the same slot-miss
+    measurement, taken on the tick the enemy first loses hp (it dies before the end and the line resumes, so the end
+    reading is not the control's), is over the arrival radius: the detector above can trip."""
     w = world_factory(n_regions=1)
-    miss, closest, ehp = _run_line(lib, w, (LINE_X0 + 15.5 * SPACING, 2000.0))
+    _, closest, ehp, at_hit = _run_line(lib, w, (LINE_X0 + 15.5 * SPACING, 2000.0))
     assert closest <= VAN_RANGE and ehp < 250.0, "fixture: the line never engaged the enemy on its route"
-    assert miss > ARRIVAL, "control: units halted to fire but still read as at their slots (miss %.1f)" % miss
+    assert at_hit is not None and at_hit > ARRIVAL, "control: units were firing but still read as at their slots (miss %s)" % at_hit
 
 
 def _lone(lib, w, enemy_xy, switch=None):
@@ -151,6 +163,11 @@ def test_R_087_05_A199_an_acquired_target_that_walks_out_of_range_stays_held_und
         step(lib, w)
         assert _d(pos(lib, w, u), (ax, ay)) < 200.0
         assert target(lib, w, u) == enemy, "the acquired target was dropped while the unit was inside its leash"
+    # R-087-04: "pursues an acquired target that leaves that range under the leash": it walks back into range.
+    for _ in range(40):
+        step(lib, w)
+    assert _d(pos(lib, w, u), pos(lib, w, enemy)) <= VAN_RANGE, "it held its place and never pursued the target that left its range"
+    assert _d(pos(lib, w, u), (ax, ay)) < 200.0 and target(lib, w, u) == enemy
 
 
 def test_R_087_04_A199_a_lone_attack_mover_resumes_its_route_after_the_fight(lib, world_factory):
@@ -183,3 +200,30 @@ def test_R_087_04_A199_an_idle_unit_never_walks_toward_a_seen_enemy(lib, world_f
     step(lib, w, 60)
     assert _d(pos(lib, w, u), (2000.0, 500.0)) <= 0.5
     assert target(lib, w, u) in (-1, 0)
+
+
+def test_R_087_04_A199_a_blocked_cell_between_it_and_an_enemy_in_range_does_not_stop_the_march(lib, world_factory):
+    """R-087-04: "a target behind cover, a wall or a blocked cell does not stop the march: it keeps walking its route
+    and fires when the line clears". A Vanguard marches north along x=1950; a Raider at (2200, 1500) is in attack range
+    from y=1334 to y=1666, and a one-cell wall (cell column 20, row 14) hides it while the Vanguard is at y 1334 to
+    1500 (the line crosses the wall at x=2050; hand-placed terrain as in test_PP_move_route.py). The unit keeps
+    walking through that stretch with the enemy untouched, then fires once the line clears."""
+    from conftest import OMFeature
+    w = world_factory(n_regions=1)
+    lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
+    assert lib.om_map_set_canvas(w, 4000.0, 4000.0) == 0
+    assert lib.om_map_block_rect(w, 2010.0, 1410.0, 2090.0, 1490.0, 0, 4) == 0
+    u = spawn(lib, w, VANGUARD, 0, 1950.0, 500.0)
+    enemy = spawn(lib, w, RAIDER, 1, 2200.0, 1500.0)
+    attack_move(lib, w, [u], 1950.0, 3000.0)
+    walked, last_y = 0, pos(lib, w, u)[1]
+    for _ in range(400):
+        step(lib, w)
+        y = pos(lib, w, u)[1]
+        if 1340.0 <= y <= 1490.0:
+            assert hp(lib, w, enemy) == 250.0, "it fired through the blocked cell"
+            assert y > last_y, "it stopped in the blocked stretch (y %.1f)" % y
+            walked += 1
+        last_y = y
+    assert walked >= 20, "fixture: the unit was not in the blocked stretch long enough (%d ticks)" % walked
+    assert hp(lib, w, enemy) < 250.0, "it never fired once the line cleared"

@@ -18,18 +18,25 @@ from .parity_tolerance import PARITY_TOLERANCE
 ARRIVAL = 1.5 * 15.0
 XS = (1000.0, 1040.0, 1080.0, 1120.0)
 CX = sum(XS) / len(XS)
-CLICK = (2000.0, 3000.0)
+# TD-PP-A199-parity-length / TD-PP-A199-parity-route: the click is due north of the line's centroid, so the route is a
+# straight 2000 wu north and an enemy 450 wu east of the line's end is never in attack range (the old click (2000, 3000)
+# sent the line on a diagonal that passed within range of that enemy, so both engines halted and fired mid-route).
+CLICK = (CX, 3000.0)
+# Ticks from the distance, not from a run: 2000 wu at the Vanguard's 80 wu/s on the 20 Hz tick (4 wu per tick) is 500
+# ticks; a margin of 1.4 for turning, the slot approach and the arrival radius gives 700.
+VAN_SPEED, TICK_HZ, ROUTE_WU, MARGIN = 80.0, 20, 2000.0, 1.4
+TICKS = math.ceil(ROUTE_WU / (VAN_SPEED / TICK_HZ) * MARGIN)
 
 
 def _scene(name, enemy_x, enemy_y):
-    return Scene(name, 700, "open",
+    return Scene(name, TICKS, "open",
                  tuple(("Vanguard", 0, x, 1000.0) for x in XS) + (("Raider", 1, enemy_x, enemy_y),),
                  ((0, "attack_move", (0, 1, 2, 3), CLICK[0], CLICK[1]),),
                  "A199: hold slot and route until shooting; R-087-04")
 
 
 FLANK = _scene("attack_move_no_sight_flank", XS[-1] + 450.0, 2000.0)
-ON_ROUTE = _scene("attack_move_no_sight_on_route", (CX + CLICK[0]) / 2, 2000.0)   # on the centroid's straight route to the click
+ON_ROUTE = _scene("attack_move_no_sight_on_route", CX, 2000.0)   # on the centroid's straight route to the click
 
 
 def _misses(trace):
