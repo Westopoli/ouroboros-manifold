@@ -1949,6 +1949,8 @@ uint32_t om_unit_count(const om_world *w);
 double om_unit_damage_reduction(om_world *w, uint32_t unit_id);
 void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3);
 double om_unit_effective_speed(om_world *w, uint32_t unit_id);
+/* The speed a move order fixes for this unit: om_unit_effective_speed without the momentary backswing stop. Lasting modifiers apply (a player-cast Fortify's 0.4 x, R-086-06; a Vanguard that is immobile by R-086-03 reads 0). Used for the group speed cap, which is fixed at order time (E-13 R-095-01). */
+double om_unit_order_speed(om_world *w, uint32_t unit_id);
 void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_id, double radius);
 int32_t om_unit_get_faction(const om_world *w, uint32_t unit_id);
 double om_unit_get_hp(const om_world *w, uint32_t unit);
