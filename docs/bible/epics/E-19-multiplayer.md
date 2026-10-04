@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 9 stories, 33 rules; the determinism and transport rules are concrete, the match-shape rules are placeholders pending Westley, and the paired-mode stories (S-159, S-241, S-242) carry numbers as flags. |
 | Every input listed with range and rejection behavior | Partly; see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 13 open flags: 8 on S-140 to S-144 (Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03) and 5 on S-241 and S-242 (Q-214-01, Q-241-02, Q-242-01 to Q-242-03). |
+| Implied-but-unstated behavior turned into flags | 9 open flags: 6 on S-140 to S-144 (Q-140-01, Q-140-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03) and 3 on S-241 and S-242 (Q-214-01, Q-242-03, Q-242-04). |
 | Every visible-surface story has a reference | **No.** S-144 (lobby and match flow) is a visible surface with no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the 13 open flags listed at the foot and one missing reference (S-144). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); what a match is, co-op or versus, is not (Q-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
+**Gate verdict: not passed.** Blocked on the 9 open flags listed at the foot and one missing reference (S-144). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); a match is co-op only at launch (R-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
 
 ## Purpose
 
@@ -60,13 +60,13 @@ Open flags: Q-140-01, Q-140-02.
 As a player, I want to know what my friends and I are doing together in this galaxy, so that we can play it.
 
 Rules
-- R-141-01  Given a match, When it starts, Then it is played by teams of 2 or 4 (S-241), and [Q-141-01: the match shape: co-op commanders in one civilization, opposing commanders in different civilizations, or both].
-- R-141-02  Given a match, When missions are generated, Then [Q-141-02: one shared mission with several commanders, or one mission per commander paired into a shared tactical map; relates to Q-079-01]; within a team, a pair is one commander and one economy player on the same tactical map (R-159-01).
+- R-141-01  Given a match, When it starts, Then it is played by teams of 2 or 4 (S-241), and it is co-op only at launch, the commanders of a team being in one civilization. Versus waits for demand, and the simulation is bent to allow it then (Westley, 2026-10-04).
+- R-141-02  Given a match, When missions are generated, Then the team has one shared mission, and its force is not split among the players: the number of units rises with the players, so a player never has fewer units in multiplayer than alone (Westley, 2026-10-04); within a team, a pair is one commander and one economy player on the same tactical map (R-159-01).
 - R-141-03  Given a match, When the time jump runs, Then every peer runs the same jump from the same state and the chronicle prints the same entries.
 
 Inputs: lobby settings.
 Outputs: match state.
-Open flags: Q-141-01, Q-141-02.
+Open flags: none.
 
 ### S-142 — No pause, no rewind, no cheating the clock
 As a player, I want a match that cannot be paused or rolled back by anyone, so that time is fair.
@@ -76,11 +76,11 @@ Rules
 - R-142-02  Given a match, When the chronicle scroll runs, Then Proceed requires [Q-142-01: all peers, the host, or a majority].
 - R-142-03  Given the sim, When fog is applied, Then each peer's client renders only its own faction's visible set, but every peer's sim has the full state; the state is not secret, the presentation is [Q-142-02: is that acceptable against memory-reading cheats at launch].
 
-- R-142-04  Given a pair (one faction on one tactical map), When fog is applied, Then [Q-242-01: whether the economy player sees what the commander sees; shipments (E-22 S-176) and disguise (E-22 S-172) depend on the answer].
+- R-142-04  Given a pair (one faction on one tactical map), When fog is applied, Then a setting the players switch on and off chooses between shared vision and vision for each player's own units only. Technically both players are the same civilization and all the units are shared, and the split is offered if players like it (Westley, 2026-10-04) [Q-242-04: the default, who sets it, and whether it is fixed in the universe lock]. Shipments (E-22 S-176) and disguise (E-22 S-172) read the setting.
 
 Inputs: player inputs.
 Outputs: match flow.
-Open flags: Q-142-01, Q-142-02, Q-242-01.
+Open flags: Q-142-01, Q-142-02, Q-242-04.
 
 ### S-143 — Eras in sequence
 As a player, I want a match with friends who own the same era packs to move chronologically through eras, so that a campaign spans history.
@@ -118,7 +118,7 @@ The economy itself is E-22 Economy and Bases, stories S-167 to S-182: what the s
 
 Inputs: the paired queue; the two seats.
 Outputs: a team of pairs, each on one tactical map.
-Open flags: Q-141-01 (co-op or versus); the economy's own flags are E-22's.
+Open flags: none here; the economy's own flags are E-22's.
 
 ### S-241 — Teams, sub-commanders and sub-civilizations
 As a player in a team, I want my pair to be a sub-civilization inside the over-arching civilization, with the map, the resources and the enemies growing as players join, so that more friends make a bigger game.
@@ -127,13 +127,13 @@ Design decided 2026-10-02 (DECISIONS H7, H13), not scheduled for building. Teams
 
 Rules
 - R-241-01  Given the paired queue, When a team forms, Then it has 2 or 4 players, in pairs (R-159-01). Teams of 6 are a desired future feature (R-241-04).
-- R-241-02  Given a team, When it plays, Then each player is a sub-commander and each pair is a sub-civilization inside the over-arching civilization [Q-241-02: what a sub-civilization is in the rules (its own base, resources, population cap, ledger), and what a sub-commander is when the player runs the economy].
-- R-241-03  Given more players in a team, When the map and mission are made, Then the map is bigger, there is more to do, there are more resources and there are more enemies; Given 4 to 6 players, Then the canvas is 64,000 wu, and smaller matches keep today's sizes (E-17 S-166) [Q-214-01: how much more of each resource and how many more enemies per added pair].
+- R-241-02  Given a team, When it plays, Then each player is a sub-commander and each pair is a sub-civilization inside the over-arching civilization: a pair has its own economy (its own base, resources, population cap and ledger), the sub-commander title covers both seats, and the pairs read as highly collaborative, cohesive factions more than one civilization (Westley, 2026-10-04).
+- R-241-03  Given more players in a team, When the map and mission are made, Then the map is bigger, there is more to do, there are more resources and there are more enemies, and the number of units rises with the players and is never lower than in single player (R-141-02); Given 4 to 6 players, Then the canvas is 64,000 wu, and smaller matches keep today's sizes (E-17 S-166) [Q-214-01: how much more of each resource and how many more enemies per added pair].
 - R-241-04  Given the match runs on lockstep, When a team forms, Then every player is a peer, and the confirmed scale figure is 4 peers, so a team has 2 or 4 players. More than 4 peers, and so teams of 6, are a desired future feature that waits on a higher peer count (Westley, 2026-10-02: "we can keep 4, so long as more is marked as a desired future feature").
 
 Inputs: the pairs in the queue.
 Outputs: a team and its map.
-Open flags: Q-214-01, Q-241-02.
+Open flags: Q-214-01.
 
 ### S-242 — A pair on the wire
 As a player in a pair, I want my building, scheduling and requests to reach my partner's machine as commands like any other, so that we play one economy and one war.
@@ -143,12 +143,12 @@ Design decided 2026-10-02, not scheduled for building.
 Rules
 - R-242-01  Given the economy seat, When the player places or queues a building, sets the production schedule, chooses technology or changes the doctrine, Then each is a peer command, signed and stamped with its tick, applied on every peer in the fixed peer order (R-140-02).
 - R-242-02  Given the commander seat, When the player turns the dial, changes the doctrine, switches a unit-mix behaviour, asks by pointing at the map, or gives a military order, Then each is a peer command in the same way (E-16 S-231).
-- R-242-03  Given a command from a seat for something that seat does not do, When it arrives, Then it is dropped and logged like any malformed command [Q-242-02: whether the economy seat may ever give a military order, and the commander seat a building order, in a pair; E-22 S-180 says a solo commander never places or queues].
+- R-242-03  Given a command from a seat for something that seat does not do, When it arrives, Then it is dropped and logged like any malformed command. Roles are strict: the economy seat never gives a military order and the commander seat never gives a building order (Westley, 2026-10-04; E-22 S-180 says a solo commander never places or queues).
 - R-242-04  Given a pair, When the rules run any part of the economy (a seat vacated, the enemy's economy), Then every peer runs the same rules from the same state (S-139).
 
 Inputs: commands by seat.
 Outputs: the same economy on every peer; dropped-command log.
-Open flags: Q-242-01 (R-142-04), Q-242-02, Q-242-03 (the cost the economy adds to a tick and to the checkpoint checksum in a team of 4, and later of 6; E-13 R-099-03 halves the tick rate above 1,000 live units, which changes what 3 ticks of input delay means).
+Open flags: Q-242-04 (R-142-04), Q-242-03 (the cost the economy adds to a tick and to the checkpoint checksum in a team of 4, and later of 6; E-13 R-099-03 halves the tick rate above 1,000 live units, which changes what 3 ticks of input delay means).
 
 ## Inputs
 
@@ -197,7 +197,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-214-01, Q-241-02, Q-242-01, Q-242-02, Q-242-03. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-214-01, Q-242-03, Q-242-04. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

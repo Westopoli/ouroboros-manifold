@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-03 (eighth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-04 (ninth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -128,7 +128,7 @@ Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness
 
 | Group | Flags | Notes |
 |---|---|---|
-| Multiplayer | Q-140-01, Q-141-01, Q-142-01, Q-144-01, Q-214-01, Q-241-02, Q-242-01 to -03 | Blocks S-140 to S-144 and the pair stories |
+| Multiplayer | Q-140-01, Q-140-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-214-01, Q-242-03, Q-242-04 | Blocks S-140 to S-144 and the pair stories. Match shape, pairs and seat roles answered 2026-10-04 |
 | Economy and bases | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05 | E-22; the largest set. An ordered answer sheet is not yet drafted |
 | Settlements | Q-193-01 to -06, Q-222-01 | After the land generator |
 | Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
