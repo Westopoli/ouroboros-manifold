@@ -877,3 +877,13 @@ His words, verbatim: "S1: the space generator prototype wasn't something I reall
 **A207. S1: no space kit pass is approved.** Passes 1 to 5 are built and pass 6 is specified; none has been opened by Westley for approval, so none passes. Space integration is not near, so S1 to S4 are parked and are not asked until the work before the space generator is done.
 
 **A208. All prototyping happens on the Linux machine (Westley, 2026-10-03).** The prototype method is formalized there. The space mockup was built on the Mac; nothing new is prototyped on the Mac. The land terrain pass and the layout engine and places prototype (ROADMAP section 4) are built there under that method.
+
+## Addendum 70, 2026-10-03 (Westley: no movement or simulation decisions before the harness data)
+
+His words, verbatim: "M1: your draft is leaning on specific numbers, the military theory behind the expected winner/loser is based in how many units they can get shooting concurrently more than their enemy given the conditions of the situation. That's a much more complex deduction than a simple "no skill gives >60% of the full set's advantage". These drafted rules would dilute the strategic depth of the game. It was my understanding that everything was already decided with regards to the simulation engine and movement, and that nothing further would be decided until we had real data to look at from the harness we created. - these questions are seem like they shoudl come after that experiment has been completed"
+
+**A209. M1 to M10 are parked until the harness experiment has been run.** No pass mark, margin, threshold or movement rule is put to Westley, or decided, until he has real data from the skill lab (Phases D and E) in front of him. The questions come back with the data.
+
+**A210. The draft pass marks C0 to C9 and the 0.05 win margin (A174) are not decisions and gate nothing.** Reading, the Architect's, which Westley may correct: lab pages report measurements; no page passes or fails a rule set on a draft mark. His principle for what decides a fight is how many units each side can get shooting at the same time, given the conditions of the situation (hub principle 4); a mark such as "no skill gives more than 60 percent of the full set's advantage" is a simplification of that, and the drafts are not to shape the engine or the maps. What the marks become is decided after the data.
+
+**A211. Provisional rulings stand as they are.** A188 (the leash measures the pursuer) and the rest of the overnight provisional rulings are unchanged and unconfirmed; they are not asked again before the data. A199 (attack-move holds formation until shooting) was his own ruling and stands.
