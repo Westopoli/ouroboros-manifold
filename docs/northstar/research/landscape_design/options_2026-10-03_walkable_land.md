@@ -31,6 +31,10 @@ Two of Westley's decisions pull against each other on the pass 3 terrain: huge m
 
 A can be combined with B or C. B, C and D alone leave the cut-off core.
 
+## Decision (Westley, 2026-10-04)
+
+Verbatim: "#1 A was what I asked for so that's what we'll build. #2 35 degrees. #3 I'd like to see the mockups before I decide this, it's more visual to me than a number." Option A is the direction. The walking limit is 35 degrees (Q-189-02, closed). The minimum layer step (Q-188-01) stays open until he has judged the band view. He also asked why cliff walls cover the map: the mockup draws a cliff face along every terrace contour whether or not the ground is impassable; pass 6 draws them only at impassable ground.
+
 ## What happens next
 
 Pass 5 is being built as option A, because it is the prototype Westley asked for by name and the direction he ruled. If he prefers another option, pass 5 is still the layout prototype he wanted to see, and the terrain under it can be changed with the relief and canvas sliders that now exist.
