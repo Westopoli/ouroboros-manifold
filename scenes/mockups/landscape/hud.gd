@@ -203,6 +203,7 @@ func _regenerate() -> void:
 		field_map.p4_relief = _p4.relief_mult
 		field_map.p5_layout = _p5.layout_for(_seed)
 		field_map.p5_react = _p5.react_on
+		field_map.p6_shape = _p5.shape_on
 		field_map.p5_narrow = _p5.narrow
 		field_map.p5_moderate = _p5.moderate
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed

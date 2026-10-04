@@ -44,6 +44,9 @@ var p5_narrow: float = 300.0
 var p5_moderate: float = 600.0
 var p5_info: Dictionary = {}
 var p5_res: Dictionary = {}
+# Pass 6 (pass6_shape.gd, pass6_cliffs.gd): the layout shapes the terrain as it is generated.
+var p6_shape := true
+var p6_info: Dictionary = {}
 
 var _rng := RandomNumberGenerator.new()
 
@@ -73,9 +76,13 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0)
 		var t_shape := Time.get_ticks_usec()
 		elevation = Pass4Terrain.shape(self, elevation, p_seed)
 		p4_info["shape_ms"] = (Time.get_ticks_usec() - t_shape) / 1000.0
+	if p5_layout != null and p6_shape and not QaPlants.is_active("flat-terrain"):
+		Pass6Shape.apply(self, elevation, p_seed)
 	var slope := _build_slope(elevation)
 	var water_result := _build_water(elevation)
 	var water: PackedFloat32Array = water_result.water
+	if p6_info.get("applied", false):
+		Pass6Shape.clear_water(self, elevation, water)
 	rivers = water_result.rivers
 	var zone := _build_zone(elevation, water, noise_boundary, noise_moisture)
 
@@ -120,9 +127,11 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0)
 	# high-frequency texture crosses it (13,000+ segments, measured) -- cliffs should read
 	# macro terrain structure, not surface texture. A small box blur removes that
 	# salt-and-pepper noise before tracing without touching the mesh/placement elevation.
-	var terraced := _blur(_build_terrace_bands(elevation), dim, 2)
-	for frac in [0.20, 0.42, 0.64, 0.86]:
-		_append_borders(_march_squares(terraced, dim, frac), "cliff")
+	# Pass 6: cliff faces only along the edge of ground the 35-degree-style blocked mask closes
+	# (pass6_cliffs.gd). The old terrace-contour cliffs put a wall along every terrace.
+	# See also: pass6_cliffs.gd, README "Pass 6" fault 1.
+	for pl in Pass6Cliffs.polylines(self):
+		borders.append({kind = "cliff", points = pl})
 	var district_flat := PackedFloat32Array()
 	district_flat.resize(dim * dim)
 	for i in range(district.size()):

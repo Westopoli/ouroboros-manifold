@@ -13,6 +13,7 @@ const HEAT := [Color(0.1, 0.02, 0.25), Color(0.25, 0.2, 0.6), Color(0.1, 0.6, 0.
 
 var mode := "seed"
 var react_on := true
+var shape_on := true
 var show_graph := true
 var show_places := true
 var narrow := 300.0
@@ -27,8 +28,10 @@ var _fm: FieldMap
 var _generated: Node3D
 var _active := false
 var _box: VBoxContainer
+var _boxpanel: PanelContainer
 var _mode_btn: Button
 var _react_btn: Button
+var _shape_btn: Button
 var _graph_btn: Button
 var _places_btn: Button
 var _heat_btn: Button
@@ -45,10 +48,20 @@ func setup(hud, p4, camera_rig: Node3D) -> void:
 	_p4 = p4
 	_camera_rig = camera_rig
 	_box = VBoxContainer.new()
-	_box.position = Vector2(340.0, 16.0)
-	hud.add_child(_box)
+	_boxpanel = PanelContainer.new()
+	_boxpanel.position = Vector2(500.0, 12.0)
+	var bs := StyleBoxFlat.new()
+	bs.bg_color = Color(0.04, 0.05, 0.08, 0.88)
+	bs.content_margin_left = 6
+	bs.content_margin_right = 6
+	bs.content_margin_top = 4
+	bs.content_margin_bottom = 4
+	_boxpanel.add_theme_stylebox_override("panel", bs)
+	_boxpanel.add_child(_box)
+	hud.add_child(_boxpanel)
 	_mode_btn = _button(func(): set_mode(MODES[(MODES.find(mode) + 1) % MODES.size()]))
 	_react_btn = _button(func(): set_react(not react_on))
+	_shape_btn = _button(func(): set_shape(not shape_on))
 	_graph_btn = _button(func(): set_graph(not show_graph))
 	_places_btn = _button(func(): set_places(not show_places))
 	_heat_btn = _button(func(): cycle_heat())
@@ -64,7 +77,7 @@ func setup(hud, p4, camera_rig: Node3D) -> void:
 	var ts := _slider(2.0, 30.0, 1.0, tol_pct)
 	ts.value_changed.connect(func(v): _tol_label.text = "Equal-distance tolerance: %d%% (candidate)" % int(v))
 	ts.drag_ended.connect(func(c): if c: set_tol(ts.value))
-	for c in [_mode_btn, _react_btn, _graph_btn, _places_btn, _heat_btn, _narrow_label, ns, _moderate_label, ms, _tol_label, ts]:
+	for c in [_mode_btn, _shape_btn, _react_btn, _graph_btn, _places_btn, _heat_btn, _narrow_label, ns, _moderate_label, ms, _tol_label, ts]:
 		_box.add_child(c)
 	_refresh_buttons()
 	_panel = PanelContainer.new()
@@ -112,7 +125,8 @@ func _slider(low: float, high: float, step: float, value: float) -> HSlider:
 
 func _refresh_buttons() -> void:
 	_mode_btn.text = "Layout: %s (Y)" % mode
-	_react_btn.text = "Terrain obeys layout: %s (O)" % ("on" if react_on else "off")
+	_shape_btn.text = "Layout shapes terrain: %s (K)" % ("on" if shape_on else "off")
+	_react_btn.text = "Cut routes after: %s (O)" % ("on" if react_on else "off")
 	_graph_btn.text = "Layout graph: %s (N)" % ("on" if show_graph else "off")
 	_places_btn.text = "Place markers: %s (Z)" % ("on" if show_places else "off")
 	_heat_btn.text = "Heat view: %s (H)" % kind
@@ -143,6 +157,12 @@ func set_mode(m: String) -> void:
 
 func set_react(on: bool) -> void:
 	react_on = on
+	_refresh_buttons()
+	_hud.p4_regenerate()
+
+
+func set_shape(on: bool) -> void:
+	shape_on = on
 	_refresh_buttons()
 	_hud.p4_regenerate()
 
@@ -195,6 +215,8 @@ func qa_apply(d: Dictionary) -> void:
 		mode = str(d.layout)
 	if d.has("react"):
 		react_on = bool(d.react)
+	if d.has("shape"):
+		shape_on = bool(d.shape)
 	if d.has("narrow"):
 		narrow = float(d.narrow)
 	if d.has("moderate"):
@@ -208,7 +230,7 @@ func qa_apply(d: Dictionary) -> void:
 	if d.has("kind"):
 		kind = String(d.kind)
 	_refresh_buttons()
-	if bool(d.get("regen", true)) and (d.has("layout") or d.has("react") or d.has("narrow") or d.has("moderate") or d.has("tol")):
+	if bool(d.get("regen", true)) and (d.has("layout") or d.has("react") or d.has("shape") or d.has("narrow") or d.has("moderate") or d.has("tol")):
 		_hud.p4_regenerate()
 	else:
 		_apply_visibility()
@@ -228,6 +250,8 @@ func handle_key(keycode: int) -> bool:
 	match keycode:
 		KEY_Y:
 			set_mode(MODES[(MODES.find(mode) + 1) % MODES.size()])
+		KEY_K:
+			set_shape(not shape_on)
 		KEY_O:
 			set_react(not react_on)
 		KEY_N:
@@ -252,6 +276,7 @@ func on_regenerated(fm: FieldMap, generated: Node3D, is_space: bool) -> void:
 	_generated = generated
 	_active = not is_space
 	_box.visible = _active
+	_boxpanel.visible = _active
 	_panel.visible = _active
 	_key.visible = _active
 	if not _active:
@@ -304,6 +329,16 @@ func _build_overlay() -> void:
 		var y := _h(h, dim, nd.pos) + 40.0
 		graph.add_child(_disc(Vector3(nd.pos.x, y, nd.pos.y), 280.0, TYPE_COLOR.get(nd.type, Color.GRAY)))
 		graph.add_child(_label3d(nd.id, Vector3(nd.pos.x, y + 250.0, nd.pos.y - 420.0), Color.WHITE, 8.0))
+	for r in res.distance_rows:
+		if r.name == "objective":
+			var objn: Dictionary = {}
+			for nd in info.nodes:
+				if nd.type == "objective":
+					objn = nd
+			if not objn.is_empty():
+				var oy := _h(h, dim, objn.pos) + 900.0
+				var bad: bool = not r.within_tol
+				graph.add_child(_label3d("OBJECTIVE walking A %s | B %s%s" % [_fmt_wu(r.walk_a), _fmt_wu(r.walk_b), "   NOT EQUAL" if bad else "   equal"], Vector3(objn.pos.x, oy, objn.pos.y + 700.0), Color(1.0, 0.3, 0.25) if bad else Color(0.4, 1.0, 0.4), 14.0))
 	_generated.add_child(graph)
 
 	var places := Node3D.new()
@@ -539,6 +574,9 @@ func _refresh_panel() -> void:
 	var info: Dictionary = _fm.p5_info
 	var t: PackedStringArray = []
 	t.append("PASS 5   layout %s %s   terrain obeys layout: %s   (react %.0f ms, checks %.0f ms)" % [res.layout.substr(7, 2), res.name, "ON" if res.react else "OFF", info.react_ms, res.places_ms])
+	for r in res.distance_rows:
+		if r.name == "objective" and not r.within_tol:
+			t.append("!! CONFLICT with Q-191-03: this layout puts the objective %s wu of walking from base A and %s from base B. Equal cannot hold unless the objective moves or the layout is made symmetric. Westley decides." % [_fmt_wu(r.walk_a), _fmt_wu(r.walk_b)])
 	t.append("Edges walkable: %d of %d%s" % [res.edges_walkable, res.edges_total, "" if res.edges_broken.is_empty() else "   broken: " + ", ".join(res.edges_broken.slice(0, 2)) + (" ..." if res.edges_broken.size() > 2 else "")])
 	for ck in res.chokes:
 		t.append("Choke %s (%s): asked %d wu, measured %d wu, sides blocked: %s" % [ck.id, ck.hint, int(ck.target_wu), int(ck.measured_wu), "yes" if ck.sides_blocked else "NO"])
@@ -561,7 +599,7 @@ func _refresh_panel() -> void:
 		for cat in CAT_NAME:
 			parts.append("%s %d" % [CAT_NAME[cat], ch.count(cat)])
 		t.append("Changed cells: " + ", ".join(parts) + "   routes cut %d" % info.cuts)
-	t.append("Keys: Y layout  O terrain obeys  N graph  Z places  C changed ground  V walk  H heat kind")
+	t.append("Keys: Y layout  K layout shapes terrain  O cut routes after  N graph  Z places  C changed ground  V walk  H heat kind")
 	_label.text = "\n".join(t)
 
 
@@ -588,4 +626,7 @@ func get_state() -> Dictionary:
 	out["narrow_wu"] = narrow
 	out["moderate_wu"] = moderate
 	out["mode"] = mode
+	out["shape_on"] = shape_on
+	var p6: Dictionary = _fm.p6_info
+	out["p6"] = {"applied": p6.get("applied", false), "ms": p6.get("ms", 0.0), "floor_cells": p6.get("floor_cells", 0)}
 	return out

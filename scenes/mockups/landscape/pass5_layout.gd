@@ -124,7 +124,8 @@ static func react(fm: FieldMap, elev: PackedFloat32Array) -> void:
 		by_id[nd.id] = nd
 	# vantages: the highest dry ground near the node, or the node's own spot if that is higher
 	for nd in info.nodes:
-		if nd.type != "vantage":
+		# Pass 6 already made the vantage the local summit; moving it would leave its cone.
+		if nd.type != "vantage" or fm.p6_info.get("applied", false):
 			continue
 		var c := _cell(fm, nd.pos)
 		var best := c

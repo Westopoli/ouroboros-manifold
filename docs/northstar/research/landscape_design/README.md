@@ -395,3 +395,28 @@ Prototype under the Prototype gate, spec `docs/northstar/plans/2026-10-03-land-m
 6. Should layouts with no chokepoint (layout 7) and with hazard anchors (a terrain break, cliff face) ask the terrain for a hazard feature too? Hazard anchors only get a 150 wu pad here.
 
 **Not built or not working.** Edges that stay broken (counts in the table). Nodes in open sea are given a pad islet, so a layout node can sit on a lone island joined by a bridge. No landforms batch 2, settlements, or archetype bias. The vantage check is height over the local mean (one candidate measure), not a field-of-view check.
+
+## Pass 6: the layout shapes the land as it is made (2026-10-03)
+
+Prototype under the Prototype gate. Land kits only; the space kit is untouched. Code: `pass6_shape.gd` (terrain shaped by the layout during generation), `pass6_cliffs.gd` (cliff faces from the blocked-ground mask), small hooks in `field_map.gd`, `hud.gd`, `pass5_layout.gd`, `pass5_ui.gd`. Table run: `qa/pass6_table.json`. Not yet looked at by Westley. Screenshots for this pass are not taken yet; run it live (line below).
+
+**Feedback this pass answers (verbatim).** "What's up with all the walls in the prototype? There's like a ton, and not necessarily related to a city or anything just kinda everywhere." And the standing rulings: the layout leads and the terrain obeys; every layout edge walkable; both sides equal distance (asked below).
+
+**What changed.**
+1. Walls. A cliff face now stands only along the edge of ground the blocked-ground mask closes (30 degrees, footprint slider), and only on edges 1200 wu or longer (candidate). The terrace-contour cliffs are gone. City walls are unchanged.
+2. Layout shapes the land. Key K turns it on or off (regenerates) so before and after compare. In order: each node gets a height by kind (vantage 70 percent of relief, objective 30, chokepoint 27, staging 10, and so on), relaxed so every edge is walkable at 13 degrees over 1.2 times its length; each edge is a meandering centreline running between its node heights; a land belt (full inside 2200 wu of the graph, gone at 5500 wu) is raised around the graph, with mountains up to 75 percent of relief from the seed's own noise, so nodes stand on land and seeds differ; each vantage gets a 40 degree summit cone; a valley is carved along every edge, flat floor 700 wu wide measured (candidate), walls rising 1300 wu beside it; a chokepoint tapers the floor to the layout's width over 1100 wu and lifts the ground beside it 900 wu; valley floors are dried (rivers become fords). Pass 5's cutter (key O, now "cut routes after") runs behind it as the fallback.
+3. Edges walkable, 24 runs (layouts 1 to 8, seeds 11 to 13): every run has a base-to-base route. 21 of 24 have every edge walkable (pass 5 had 14 of 24 full). Broken: layout 5 seed 11 (10 of 11), layout 8 seeds 11 and 12 (12 of 14). All three break on the edge to a vantage; layout 8's vantage edges are the `restricted` type. Not fixed. Cause not yet measured; ramps (pass 4) and the cutter both rework ground near it and I have not separated them.
+4. Routes cut after shaping fell from 37 (layout 1 seed 11, pass 5) to 1. Layout 1 seed 11: 29 percent of land reachable on foot (pass 5: 0.4), 4 of 5 layers, 3 of 27 peaks.
+5. Equal distance. Still not met for the objective. It now shows on the map (red label at the objective with both walking distances) and as a banner in the panel. Resources met the tolerance in 41 of 48 cases; the failures are mostly the second resource.
+6. HUD: control column moved to x=500 on a dark panel so it no longer overlaps the left column.
+
+**Keys.** K layout shapes terrain on/off, O cut routes after, Y layout, N graph, V walk view, C changed ground, Z places, H heat. Pass 4 and 5 keys unchanged.
+
+**Candidate numbers (Westley's to set).** Valley floor 700 wu; shoulder 1300 wu; belt 2200 to 5500 wu; belt peak 75 percent of relief; grade 13 degrees at 1.2 slack; meander 10 percent of edge length up to 900 wu; choke taper 1100 wu and side lift 900 wu; vantage cone 40 degrees over 1800 wu; cliff minimum edge 1200 wu; generate adds about 0.3 s, shaping itself 0.25 to 0.34 s.
+
+**Questions for Westley.**
+1. Do the valleys read as natural land, or as carved scars? If scars, should the floor be wider, the walls softer, or the meander bigger?
+2. Walls: are there now too few, too many, or right? Cliffs only mark blocked ground.
+3. The objective in six layouts sits beside one base. Should the objective move to the equal line, or should the layout's staging and spawn be symmetric? Which wins?
+4. Fords: valley floors dry out rivers where they cross. Fine, or should rivers keep a bridge?
+5. Layout 8 and layout 5 vantage edges are still broken on some seeds. Keep chasing them, or look at the rest first?
