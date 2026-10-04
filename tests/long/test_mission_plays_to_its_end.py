@@ -1,6 +1,7 @@
 """Long-mission suite: a mission played through the pipe to its own end.
 
-Never sends mission_end. The player force is given attack-move orders (half
+mission_end is sent only after a frame reports mission_over (as the client does, then
+the jump). The player force is given attack-move orders (half
 toward the objective node, half toward the enemy centroid, refreshed every
 REORDER_TICKS), then tactical_step runs in batches until the frame reports
 mission_over or deadline_ticks * 1.10 is passed.
@@ -119,15 +120,26 @@ def _play(seed):
         out["wall_s"] = round(time.time() - t0, 1)
         out["tps"] = round(ticks / max(out["wall_s"], 0.01), 1)
         out["game_s"] = ticks / TACTICAL_TICK_RATE
-        # post-mission: jump then chronicle, chapter advance (no mission_end sent)
+        # What the client does (tactical_view.gd, A43): on mission_over send
+        # mission_end for the debrief, then the debrief's Proceed sends the jump.
+        out["end_sent_before_over"] = False  # the loop above never sends it
         chap0 = snap.get("chapter")
-        j = pp.send("jump", ticks=50)
-        out["jump_first"] = j["type"]
-        if j["type"] == "chronicle":
-            s1 = pp.read_more()
-            out["chapter"] = [chap0, s1.get("chapter")]
-        else:
-            out["jump_err"] = j
+        if out["over"]:
+            d = pp.send("mission_end")
+            out["debrief_type"] = d["type"]
+            if d["type"] == "debrief":
+                out["debrief_band"] = d["band"]
+                out["retention"] = d["brought_home"]
+                out["achieved"] = d["achieved"]
+                out["commander_fate"] = d.get("commander_fate")
+                pp.read_more()  # snapshot
+            j = pp.send("jump", ticks=50)
+            out["jump_first"] = j["type"]
+            if j["type"] == "chronicle":
+                s1 = pp.read_more()
+                out["chapter"] = [chap0, s1.get("chapter")]
+            else:
+                out["jump_err"] = j
     finally:
         pp.close()
     return out
@@ -167,3 +179,16 @@ def test_both_sides_took_part(run):
 def test_post_mission_jump_and_chapter_advance(run):
     assert run.get("jump_first") == "chronicle", run.get("jump_err")
     assert run["chapter"][1] == run["chapter"][0] + 1, run["chapter"]
+
+
+def test_mission_end_only_after_mission_over_and_answers_a_debrief(run):
+    assert run["end_sent_before_over"] is False
+    assert run["over"] and run.get("debrief_type") == "debrief", run.get("debrief_type")
+
+
+def test_debrief_band_matches_last_tactical_frame_and_retention_in_range(run):
+    assert run["debrief_band"] == run["band_tactical"], (run["debrief_band"], run["band_tactical"])
+    r = run["retention"]
+    assert 0.0 <= r <= 1.0, r
+    if run["alive"][0] < run["start_alive"][0]:  # R-077-01: retention = surviving/deployed power, capped at 1
+        assert r < 1.0, "player lost units but retention is %r" % r
