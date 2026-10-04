@@ -32,7 +32,8 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 |---|---|---|---|---|
 | 1 | Finish the MVP loop: whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
 | 2 | Baseline playthrough by Westley or the 30B | none | Westley (the 30B waits on decision W6) | The scripted playthrough is green in the gate; the human or 30B baseline is still owed before large new work. |
-| 3 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
+| 3 | Layout engine: prototype, approval, then integration into mission setup (S-112 to S-119, S-191, S-192) | to write | Westley's approval of the layout prototype | He ruled the layout comes before the landscape. |
+| 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
 ## 3. Blocked on Westley
 
@@ -169,6 +170,8 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Multiplayer | Not needed for transport; mockup needed for lobby screens | None exists |
 
 ## 5. Dependency notes
+
+- **Layout before landscape (Westley, 2026-10-04, verbatim: "layout comes before landscape. The layout engine should be prototyped and integrated before the landscape engine.").** Order: prototype the layout engine and get his approval; integrate it (the C layout generator of S-112 to S-119 exists and is tested, but no live mission calls `om_map_generate`, so today's missions have no layout); then the landscape engine, which takes the layout as its input (option A). The layout library is audited and paired with archetypes first (Q-192-04).
 
 - The mask contract and the generators' wiring pieces touch `csrc/tactical_mapgen.c`, movement and fog, which the movement and layers plan owns today: one owner at a time, wiring pieces queued.
 - Both generators after the mask contract: a contract change lands first, alone, and consumers build after it. New code goes in new files behind the frozen header (`CLAUDE.md`, Architecture rules).
