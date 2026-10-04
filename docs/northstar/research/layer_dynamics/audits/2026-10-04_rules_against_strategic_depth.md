@@ -80,7 +80,7 @@ A199 in both directions. What it protects: formation is the player's choice (A19
 | Play | Counter in the rules | On most maps? | Note |
 |---|---|---|---|
 | S1 hold a choke | Go around (routing exists), go over (reach default 0), outrange (Bombard 1,200 and Bastion 800 against walls: R-098-02 blocks) | Cannot say: no map has chokes | Guard (R-096-08) makes the hold possible |
-| S1 slope, tall cover | Land only / Q-007-07 and Q-162-01 open | No | Out of space scope |
+| S1 slope, tall cover | Land only; Q-007-01 and Q-162-01 open | No | Out of space scope |
 | S2 spread line | Mass one end (README table); no rule prevents it, the scatter fallback hurts the line | Yes in open ground | Unmeasured |
 | S2 concave | Stop at range edge | Yes (A199 helps the stopper) | The same A199 makes a stop at range edge a stand-off |
 | S2 ranged behind screen | Flank by speed (R-099-01, Strike arrives first) | Yes | Needs group split |
