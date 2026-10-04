@@ -259,7 +259,7 @@ Status: design decided 2026-10-02, not scheduled for building. The team sizes an
 Rules
 - R-214-01  Given a mission with 4 to 6 players, When the canvas is chosen (E-17 S-116), Then its dimension is 64,000 wu (Westley, 2026-10-02: "64k if there's 4-6 players").
 - R-214-02  Given a mission with fewer than 4 players, When the canvas is chosen, Then it keeps the sizes of the S-073 table.
-- R-214-03  Given more players on a team, When the mission is built, Then there are more enemies and more to do [Q-214-01: how enemy force and the amount to do scale with the player count; Q-214-02: whether each pair has its own objective and parity].
+- R-214-03  Given more players on a team, When the mission is built, Then there are more enemies and more to do, and the player units rise with the players and are never fewer than in single player (E-19 R-141-02) [Q-214-01: how enemy force and the amount to do scale with the player count; Q-214-02: whether each pair has its own objective and parity].
 - R-214-04  Given more players on a team, When the resources are set (S-211), Then there are more of them [Q-214-01: how many more].
 
 Inputs: the team's player count (E-19 S-159).
