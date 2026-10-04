@@ -1205,3 +1205,22 @@ acceptance = []
 depends_on = []
 status = "pending"
 size_estimate = "one harness, one test file, seven seeds"
+
+# Ruling A199 (attack-move holds formation until an enemy is in attack range): the
+# Python reference's targeting change and the A199 test files had no owner row.
+# 2026-10-04, planner chat, for the pa-land landing.
+[[piece]]
+id = "PP-a199"
+manager = "M0"
+wave = 5
+owns = [
+    "simulation/damage.py",
+    "simulation/test_asteroid_damage_and_targeting_gate.py",
+    "simulation/test_attack_move_no_sight_pursuit.py",
+    "tests/csim/test_PP_attack_move_no_sight_pursuit.py",
+]
+owns_glob = []
+acceptance = ["tests/csim/test_PP_attack_move_no_sight_pursuit.py"]
+depends_on = []
+status = "pending"
+size_estimate = "A199 tests and the Python reference's targeting gate"
