@@ -8,7 +8,7 @@ from typing import Optional
 from scripts.skilllab import skills
 from scripts.skilllab.contract import Group, Setup
 from scripts.skilllab.formations import place
-from scripts.skilllab.plays import APPROACH, APPROACH_STOP, max_ticks_for, unit_stats  # noqa: F401  (APPROACH_STOP: the lab value)
+from scripts.skilllab.plays import APPROACH, APPROACH_STOP, MOPUP, MOPUP_INTERVAL_TICKS, max_ticks_for, unit_stats  # noqa: F401  (APPROACH_STOP: the lab value)
 
 _ROLES = {"blob": "blob", "line": "line", "skilled": "concave", "counter": "column"}
 _ARRANGEMENTS = ("interleaved", "layered", "layered_short_front")
@@ -113,7 +113,7 @@ def _label(side):
     return "%s:%s" % (side.skill, side.role), skills.get(side.skill, side.role).status
 
 
-def asym_play(size, side0, side1, unit_types=None, approach=APPROACH):
+def asym_play(size, side0, side1, unit_types=None, approach=APPROACH, mopup=MOPUP):
     for s in (side0, side1):
         _check(s, size)
     if side0.role == side1.role == "counter":
@@ -155,7 +155,7 @@ def asym_play(size, side0, side1, unit_types=None, approach=APPROACH):
                     goals.append(Group(**{**g.__dict__, "goal": (cx + t[0] - centre[0], cy + t[1] - centre[1])}))
                 groups[i] = goals
         return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types, approach=approach,
-                     max_ticks=max_ticks_for(size, enemy_heads))
+                     mopup=mopup, mopup_interval_ticks=MOPUP_INTERVAL_TICKS, max_ticks=max_ticks_for(size, enemy_heads))
     build.labels = labels
     return build
 
