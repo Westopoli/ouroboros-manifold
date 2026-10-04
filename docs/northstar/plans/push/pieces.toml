@@ -1181,6 +1181,7 @@ owns = [
     "tests/csim/test_E14_S122_B1_5_rout_and_contested_live.py",
     "tests/csim/test_core_commander_death_ledger.py",
     "tests/csim/test_E10_S077_RET1_retention_live.py",
+    "tests/transport/test_pipe_mission_after_refuse.py",
 ]
 owns_glob = []
 acceptance = [
@@ -1191,3 +1192,16 @@ acceptance = [
 depends_on = []
 status = "pending"
 size_estimate = "three csim integration test files"
+
+# Long-mission suite: plays missions to their own end through the pipe. Not collected
+# by the gate; run per plan or nightly (tests/long/README.md). 2026-10-04.
+[[piece]]
+id = "LONG-tests"
+manager = "M0"
+wave = 5
+owns = []
+owns_glob = ["tests/long/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+size_estimate = "one harness, one test file, seven seeds"
