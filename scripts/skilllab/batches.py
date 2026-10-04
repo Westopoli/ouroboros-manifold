@@ -12,6 +12,10 @@ from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
+MOPUP_NOTE = ("Lab rule, provisional: mop-up order. A side whose units have stopped, none with an enemy in attack range, "
+              "that sees an enemy, re-issues its attack-move at the centroid of the enemies it sees, at most once per "
+              "mopup_interval_ticks. Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
+              % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
 NOT_SINGLE = "not a single group order"
 REFINE_FACTOR = 3
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
@@ -380,7 +384,7 @@ def _changes(defn, scans):
 
 
 def _run_file(defn, scans, names):
-    lines = ["# " + defn.title, "", PROVISIONAL, "", "## Scene", "", defn.scene, "", "## Cells", "",
+    lines = ["# " + defn.title, "", PROVISIONAL, "", MOPUP_NOTE, "", "## Scene", "", defn.scene, "", "## Cells", "",
              "| cell | size | enemy range | replicates | fights per cell | status |", "|---|---|---|---|---|---|"]
     for c in defn.cells:
         lines.append("| %s | %d | %d to %d | %d | %d | %s |" % (c.label, c.size, c.enemy_from, c.enemy_to,
@@ -415,7 +419,8 @@ def _run_file(defn, scans, names):
 
 
 def _matchup_page(defn, scans):
-    body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(defn.scene)]
+    body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(MOPUP_NOTE),
+            "<p>%s</p>" % escape(defn.scene)]
     names = list(dict.fromkeys(c.label.split("_v_")[0] for c in defn.cells))
     plain = [c for c in defn.cells if not c.label.endswith(":layered")]
     for n in sorted({c.size for c in plain}):
@@ -435,7 +440,8 @@ def _matchup_page(defn, scans):
 def _page(defn, scans, examples):
     if defn.name == "matchup":
         return _matchup_page(defn, scans)
-    body = ["<h1>%s</h1>" % escape(defn.title), "<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(defn.scene)]
+    body = ["<h1>%s</h1>" % escape(defn.title), "<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(MOPUP_NOTE),
+            "<p>%s</p>" % escape(defn.scene)]
     for c in defn.cells:
         body.append("<h2>%s (%s)</h2>" % (escape(c.label), escape(c.status)))
         if c.build is None:

@@ -32,7 +32,7 @@ TBS = 4  # OM_TP_TARGET_BY_SIGHT
 # Frozen pre-G3 goldens (copies of origin/main before the default-1 re-record; A99 fights re-frozen at A188). The shared
 # a99_tactical_hashes.json and baseline_hashes.json now hold the default-1 hashes.
 # a99_tactical_hashes_pre_g3.json: the four fight ids fight_502_gap100, fight_990_gap300, fight_990_gap1500,
-# fight_990_gap3000 are re-frozen at A188 (recorded with OM_TP_TARGET_BY_SIGHT = 0 on the build with the
+# fight_990_gap3000 are re-frozen at A188 and again at A199 (recorded with OM_TP_TARGET_BY_SIGHT = 0 on the build with the
 # default PURSUE_BY_STEERING = 1 leash), so the invariant guards "G3 off equals the engine without G3".
 # See also: TD-PP-A188-g3-invariant-reference, TD-PP-C-invariant-goldens in docs/northstar/plans/push_ledger_2026-09-22.md
 _DATA = Path(__file__).resolve().parent / "data"

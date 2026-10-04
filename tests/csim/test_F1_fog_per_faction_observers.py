@@ -297,11 +297,12 @@ def _visible_hash(lib, w):
 
 # Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
+# Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
 GOLDEN = {
-    "clash": ("3b43063847820b5d396c097cc652a2ffc70b39ac24d98d678fc59a2e920194e6",
+    "clash": ("950bdb7159ac04c758d06565eb158b5ea0887c8f31a2da8c69503e66480175a3",
               "740858b42c174da068bb0ad94b10fddef168a6b370c8b6d5f99b51e9e89b57df"),
-    "spread": ("0a25117f74c6b8e7e089fd2df1b4e5e5d550c6aba7c062bcffe8446ff79b102d",
-               "17787dc7463c62f492f8ab47bb722349938eade3ddb9107fa529f952b9078aee"),
+    "spread": ("4928c5cef96bc6311bed78405632727759c2489f68449fe574d5d80b570a72f6",
+               "a181b84205ebd8ae6f7a76e5f30db9d5715326c45ea4a2b80a0de5c4a6018ec8"),
 }
 
 

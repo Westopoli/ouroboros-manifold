@@ -185,7 +185,7 @@ def test_states_default_is_off_and_both_fields_are_none():
 
 def test_new_fields_follow_weighted_unit_seconds_and_default_to_none():
     names = [f.name for f in dataclasses.fields(FightResult)]
-    assert names[-2:] == ["states", "order_ends"]
+    assert names[-3:] == ["states", "order_ends", "mopup_orders"]   # TD-SL-mopup-field-order: mopup_orders appended last
     assert names.index("states") == names.index("weighted_unit_seconds") + 1
     old = FightResult(outcome="cap", margin=0.0, strength_left=(1.0, 1.0), survivors=(1, 1), heads=(1, 1), ticks=1,
                       first_contact_tick=-1, firing=[], firing_unit_seconds=(0.0, 0.0))

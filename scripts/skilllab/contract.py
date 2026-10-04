@@ -74,6 +74,8 @@ class Setup:
     states: bool = False      # True records FightResult.states and .order_ends
     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
     approach: float = 0.0     # stop factor of the hold-to-contact opening (approach.py); 0.0 = off
+    mopup: bool = False       # lab rule, provisional (A199): re-issue a stopped side's attack-move at the enemies it sees (mopup.py)
+    mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
 
 
 @dataclass
@@ -93,6 +95,7 @@ class FightResult:
     weighted_unit_seconds: Optional[tuple] = None   # as firing_unit_seconds, over the weighted series
     states: Optional[list] = None   # [(tick, unit, state), ...] per living unit when Setup.states, else None
     order_ends: Optional[tuple] = None   # ((unit, tick), ...) first tick each unit's destination ended, by unit id
+    mopup_orders: Optional[int] = None   # mop-up attack-moves issued by both sides in this fight; None when Setup.mopup is off
 
 
 @dataclass

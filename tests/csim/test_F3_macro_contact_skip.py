@@ -241,8 +241,9 @@ def _state_hash(lib, w):
 # Re-recorded A155 to A159 on push/pp-a5-land at default OM_TP_PURSUE_BY_STEERING 1 (was: recorded on origin/main before the F3 change).
 # Re-recorded day20 on push/pp-c3-land (parity wave, leash anchor, give-up rule moved target choice and paths on purpose; baseline_hashes.json still green with both switches at 0; was: A155 to A159 recorded).
 # Re-recorded day21 on push/pp-settle-gold (A184 collision settle epsilon 0.1 wu ends the push sequence early; was: day20 pp-c3-land recorded).
+# Re-recorded day23 on push/pa-land (A199: an attack-mover no longer walks toward an enemy it merely sees, R-087-04; was: day21 pp-settle-gold recorded). TD-PP-A199-rerecord.
 GOLDEN = {
-    "clash": "6e9927b1b0f659ec93a237b8a7f8135f5de2f751a465997ebb5aaebe22842250",
+    "clash": "1b9d798dc65ec041527915132b8c1b4f1b218450c5c60ea29b0d8db2fd9dac17",
     "spread": "12ad27cb5f68afb9e32c68dbd9c38cf22ccaa61cbda43a18e7409024a861cceb",
 }
 
