@@ -13,7 +13,6 @@ const DRY_LEVEL_WU := 60.0
 const LIMITS := [30.0, 32.5, 35.0]
 const WALK_LIMITS := [30.0, 35.0]
 const PEAK_WINDOW := 4
-const SP := FieldMap.SPACING
 
 
 # ---------------------------------------------------------------- generation
@@ -58,16 +57,16 @@ static func shape(fm: FieldMap, e: PackedFloat32Array, p_seed: int) -> PackedFlo
 
 
 static func _idx(fm: FieldMap, p: Vector2) -> int:
-	var gx := clampi(int(round(p.x / SP)), 0, fm.dim - 1)
-	var gy := clampi(int(round(p.y / SP)), 0, fm.dim - 1)
+	var gx := clampi(int(round(p.x / FieldMap.SPACING)), 0, fm.dim - 1)
+	var gy := clampi(int(round(p.y / FieldMap.SPACING)), 0, fm.dim - 1)
 	return gy * fm.dim + gx
 
 
 static func _cell_box(fm: FieldMap, c: Vector2, r: float) -> Rect2i:
-	var x0 := clampi(int(floor((c.x - r) / SP)), 0, fm.dim - 1)
-	var x1 := clampi(int(ceil((c.x + r) / SP)), 0, fm.dim - 1)
-	var y0 := clampi(int(floor((c.y - r) / SP)), 0, fm.dim - 1)
-	var y1 := clampi(int(ceil((c.y + r) / SP)), 0, fm.dim - 1)
+	var x0 := clampi(int(floor((c.x - r) / FieldMap.SPACING)), 0, fm.dim - 1)
+	var x1 := clampi(int(ceil((c.x + r) / FieldMap.SPACING)), 0, fm.dim - 1)
+	var y0 := clampi(int(floor((c.y - r) / FieldMap.SPACING)), 0, fm.dim - 1)
+	var y1 := clampi(int(ceil((c.y + r) / FieldMap.SPACING)), 0, fm.dim - 1)
 	return Rect2i(x0, y0, x1 - x0, y1 - y0)
 
 
@@ -94,7 +93,7 @@ static func _mesa(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGenerato
 	var box := _cell_box(fm, c, r * 1.3 + edge)
 	for gy in range(box.position.y, box.end.y + 1):
 		for gx in range(box.position.x, box.end.x + 1):
-			var p := Vector2(gx, gy) * SP
+			var p := Vector2(gx, gy) * FieldMap.SPACING
 			var d := p.distance_to(c)
 			var a := (p - c).angle()
 			var rr := r * (1.0 + 0.12 * sin(3.0 * a + p1) + 0.08 * sin(5.0 * a + p2))
@@ -121,13 +120,13 @@ static func _canyon(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGenera
 			continue
 		var heading := rng.randf() * TAU
 		var phase := rng.randf() * TAU
-		var steps := int(canvas * 0.4 / SP)
+		var steps := int(canvas * 0.4 / FieldMap.SPACING)
 		for s in range(steps):
-			pos += Vector2.from_angle(heading + 0.7 * sin(s * 0.06 + phase)) * SP
+			pos += Vector2.from_angle(heading + 0.7 * sin(s * 0.06 + phase)) * FieldMap.SPACING
 			var box := _cell_box(fm, pos, half + shoulder)
 			for gy in range(box.position.y, box.end.y + 1):
 				for gx in range(box.position.x, box.end.x + 1):
-					var d := (Vector2(gx, gy) * SP).distance_to(pos)
+					var d := (Vector2(gx, gy) * FieldMap.SPACING).distance_to(pos)
 					var v := smoothstep(half + shoulder, half, d)
 					var i := gy * dim + gx
 					carve[i] = maxf(carve[i], v)
@@ -170,7 +169,7 @@ static func _islands(fm: FieldMap, e: PackedFloat32Array, rng: RandomNumberGener
 		var box := _cell_box(fm, pos, r)
 		for gy in range(box.position.y, box.end.y + 1):
 			for gx in range(box.position.x, box.end.x + 1):
-				var d := (Vector2(gx, gy) * SP).distance_to(pos)
+				var d := (Vector2(gx, gy) * FieldMap.SPACING).distance_to(pos)
 				if d >= r:
 					continue
 				var cone := -200.0 + (peak + 200.0) * pow(1.0 - d / r, 0.8)
@@ -219,7 +218,7 @@ static func _bench(fm: FieldMap, e: PackedFloat32Array, p_seed: int) -> float:
 	vals.resize(land.size())
 	for k in range(land.size()):
 		var i: int = land[k]
-		vals[k] = noise.get_noise_2d((i % dim) * SP, (i / dim) * SP)
+		vals[k] = noise.get_noise_2d((i % dim) * FieldMap.SPACING, (i / dim) * FieldMap.SPACING)
 	var sorted := vals.duplicate()
 	sorted.sort()
 	var thr: float = sorted[int(share * (sorted.size() - 1))]
@@ -251,7 +250,7 @@ static func slope_tan(h: PackedFloat32Array, land: PackedByteArray, dim: int, wi
 
 
 static func _slope_rect(h: PackedFloat32Array, land: PackedByteArray, dim: int, width: float, out: PackedFloat32Array, x0: int, y0: int, x1: int, y1: int) -> void:
-	var r := width * 0.5 / SP
+	var r := width * 0.5 / FieldMap.SPACING
 	var rd := r * 0.70710678
 	var ox := [r, 0.0, rd, rd]
 	var oy := [0.0, r, rd, -rd]
@@ -452,7 +451,7 @@ static func _ramp_path(h: PackedFloat32Array, main: PackedByteArray, reach: Pack
 					continue
 				var j := ny * dim + nx
 				if dist[j] < 0.0 and main[j] == 1:
-					dist[j] = dist[i] + (SP if ox == 0 or oy == 0 else SP * 1.41421356)
+					dist[j] = dist[i] + (FieldMap.SPACING if ox == 0 or oy == 0 else FieldMap.SPACING * 1.41421356)
 					start_h[j] = start_h[i]
 					parent[j] = i
 					queue.append(j)
@@ -465,12 +464,12 @@ static func _stamp_ramp(fm: FieldMap, elev: PackedFloat32Array, h: PackedFloat32
 	for k in range(1, path.size()):
 		var a := Vector2(path[k - 1] % dim, path[k - 1] / dim)
 		var b := Vector2(path[k] % dim, path[k] / dim)
-		total += a.distance_to(b) * SP
+		total += a.distance_to(b) * FieldMap.SPACING
 		arc.append(total)
 	var h0: float = h[path[0]]
 	var best_v := {}
 	var best_h := {}
-	var reach_cells := ceili((RAMP_HALF_WU + RAMP_SHOULDER_WU) / SP)
+	var reach_cells := ceili((RAMP_HALF_WU + RAMP_SHOULDER_WU) / FieldMap.SPACING)
 	for k in range(path.size()):
 		var p: float = h0 + (floor_h - h0) * minf(arc[k] / maxf(total - RAMP_PAD_WU, 1.0), 1.0)
 		var cx: int = path[k] % dim
@@ -480,7 +479,7 @@ static func _stamp_ramp(fm: FieldMap, elev: PackedFloat32Array, h: PackedFloat32
 				var i := gy * dim + gx
 				if land[i] == 0 or reach[i] == 1:
 					continue
-				var d := Vector2(gx - cx, gy - cy).length() * SP
+				var d := Vector2(gx - cx, gy - cy).length() * FieldMap.SPACING
 				var v := smoothstep(RAMP_HALF_WU + RAMP_SHOULDER_WU, RAMP_HALF_WU, d)
 				if v > best_v.get(i, 0.0):
 					best_v[i] = v
@@ -752,17 +751,17 @@ static func build_overlay(fm: FieldMap, colors: PackedColorArray) -> MeshInstanc
 			var h10 := _corner(h, dim, gx + 1, gy)
 			var h01 := _corner(h, dim, gx, gy + 1)
 			var h11 := _corner(h, dim, gx + 1, gy + 1)
-			var x0 := (gx - 0.5) * SP
-			var z0 := (gy - 0.5) * SP
+			var x0 := (gx - 0.5) * FieldMap.SPACING
+			var z0 := (gy - 0.5) * FieldMap.SPACING
 			var c := colors[gy * dim + gx]
-			var nrm := Vector3(-(h10 + h11 - h00 - h01) / (2.0 * SP), 1.0, -(h01 + h11 - h00 - h10) / (2.0 * SP)).normalized()
+			var nrm := Vector3(-(h10 + h11 - h00 - h01) / (2.0 * FieldMap.SPACING), 1.0, -(h01 + h11 - h00 - h10) / (2.0 * FieldMap.SPACING)).normalized()
 			var lam := maxf(0.0, nrm.dot(light))
 			var shade := 0.9 + 0.1 * lam if (c == RED or c == ORANGE or c == RAMP) else 0.62 + 0.38 * lam
 			var cc := Color(c.r * shade, c.g * shade, c.b * shade)
 			var p00 := Vector3(x0, h00, z0)
-			var p10 := Vector3(x0 + SP, h10, z0)
-			var p11 := Vector3(x0 + SP, h11, z0 + SP)
-			var p01 := Vector3(x0, h01, z0 + SP)
+			var p10 := Vector3(x0 + FieldMap.SPACING, h10, z0)
+			var p11 := Vector3(x0 + FieldMap.SPACING, h11, z0 + FieldMap.SPACING)
+			var p01 := Vector3(x0, h01, z0 + FieldMap.SPACING)
 			verts[o] = p00
 			verts[o + 1] = p10
 			verts[o + 2] = p11

@@ -169,7 +169,7 @@ func _check_chokepoint_kinds(fm: FieldMap) -> void:
 	for c in fm.crossings:
 		kinds[c.kind] = true
 	_assert(kinds.has("bridge"), "no chokepoint crossing is a river/coast bridge")
-	_assert(kinds.has("pass"), "no chokepoint crossing is a cliff pass")
+	# Pass 6: no cliff faces, so no cliff pass crossing is asserted.
 	_assert(kinds.has("gate"), "no chokepoint crossing is a wall gate")
 
 

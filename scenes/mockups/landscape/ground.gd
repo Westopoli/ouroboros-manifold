@@ -28,14 +28,16 @@ func build(field_map: FieldMap, kit: Dictionary) -> MeshInstance3D:
 		for gx in range(dim):
 			heights[gy * dim + gx] = field_map.grid[gy * dim + gx].elevation
 
+	# Impassable ground (the blocked-ground mask) is shaded toward the cliff colour, softened by a
+	# 1-cell blur so the edge grades in. Replaces the cliff face meshes (pass 6).
+	var blocked := field_map._blur(Pass6Cliffs.blocked(field_map), dim, 1)
 	var colors: Array = []
 	colors.resize(dim * dim)
 	for gy in range(dim):
 		for gx in range(dim):
 			var idx := gy * dim + gx
 			var color := _zone_color(field_map, gx, gy, dim, zone_colors)
-			var cliff_factor := _cliff_factor(heights, gx, gy, dim)
-			colors[idx] = color.lerp(cliff_color, cliff_factor)
+			colors[idx] = color.lerp(cliff_color, blocked[idx] * 0.85)
 
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)

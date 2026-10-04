@@ -17,7 +17,6 @@ extends RefCounted
 #     walls rising beside it; a chokepoint narrows the floor to the layout's width and lifts
 #     its sides.
 
-const SP := FieldMap.SPACING
 const HEIGHT_FRAC := {"staging": 0.10, "spawn_point": 0.13, "extraction": 0.08, "reinforcement_structure": 0.17, "transit": 0.20, "flank_route": 0.22, "hazard_zone_anchor": 0.24, "chokepoint": 0.27, "objective": 0.30, "vantage": 0.70}
 const NODE_MIN_H := 150.0
 const GRADE_DEG := 13.0
@@ -132,7 +131,7 @@ static func apply(fm: FieldMap, e: PackedFloat32Array, p_seed: int) -> void:
 			var c := smoothstep(BELT_OUT_WU, BELT_IN_WU, near_d[i])
 			if c <= 0.0:
 				continue
-			var wp := Vector2(gx, gy) * SP
+			var wp := Vector2(gx, gy) * FieldMap.SPACING
 			var f := clampf(n_hills.get_noise_2d(wp.x, wp.y) * 0.8 + 0.5, 0.0, 1.0)
 			var floor_h := NODE_MIN_H + relief * BELT_PEAK_FRAC * pow(f, 1.2)
 			e1[i] = lerpf(e[i], maxf(e[i], floor_h), c)
@@ -141,7 +140,7 @@ static func apply(fm: FieldMap, e: PackedFloat32Array, p_seed: int) -> void:
 			var box := Pass4Terrain._cell_box(fm, nd.pos, CONE_R_WU)
 			for gy in range(box.position.y, box.end.y + 1):
 				for gx in range(box.position.x, box.end.x + 1):
-					var d := (Vector2(gx, gy) * SP).distance_to(nd.pos)
+					var d := (Vector2(gx, gy) * FieldMap.SPACING).distance_to(nd.pos)
 					if d > CONE_R_WU:
 						continue
 					var i := gy * dim + gx
@@ -151,7 +150,7 @@ static func apply(fm: FieldMap, e: PackedFloat32Array, p_seed: int) -> void:
 		var box := Pass4Terrain._cell_box(fm, ck.pos, CHOKE_WALL_REACH_WU)
 		for gy in range(box.position.y, box.end.y + 1):
 			for gx in range(box.position.x, box.end.x + 1):
-				var d := (Vector2(gx, gy) * SP).distance_to(ck.pos)
+				var d := (Vector2(gx, gy) * FieldMap.SPACING).distance_to(ck.pos)
 				e1[gy * dim + gx] += CHOKE_WALL_LIFT_WU * smoothstep(CHOKE_WALL_REACH_WU, CHOKE_WALL_REACH_WU * 0.5, d)
 	# 5. carve the valleys
 	_floor = PackedByteArray()
@@ -164,7 +163,7 @@ static func apply(fm: FieldMap, e: PackedFloat32Array, p_seed: int) -> void:
 			continue
 		var rel: float = near_d[i] - s_hw[s]
 		var w := 1.0 - smoothstep(0.0, SHOULDER_WU, maxf(rel, 0.0))
-		var wp := Vector2(i % dim, i / dim) * SP
+		var wp := Vector2(i % dim, i / dim) * FieldMap.SPACING
 		var target: float = s_h[s] + n_fine.get_noise_2d(wp.x, wp.y) * FLOOR_NOISE_WU
 		e[i] = lerpf(e1[i], target, w)
 		if rel <= 0.0:
@@ -191,19 +190,19 @@ static func _distance_to_samples(fm: FieldMap, s_pos: PackedVector2Array, s_hw: 
 	src.resize(n)
 	src.fill(-1)
 	for k in range(s_pos.size()):
-		var c := clampi(int(round(s_pos[k].y / SP)), 0, dim - 1) * dim + clampi(int(round(s_pos[k].x / SP)), 0, dim - 1)
+		var c := clampi(int(round(s_pos[k].y / FieldMap.SPACING)), 0, dim - 1) * dim + clampi(int(round(s_pos[k].x / FieldMap.SPACING)), 0, dim - 1)
 		if dist[c] > 0.0 or s_hw[k] < s_hw[src[c]]:
 			dist[c] = 0.0
 			src[c] = k
-	var diag := SP * 1.41421356
+	var diag := FieldMap.SPACING * 1.41421356
 	for rep in range(2):
 		for gy in range(dim):
 			for gx in range(dim):
 				var i := gy * dim + gx
 				if gx > 0:
-					_relax(dist, src, i, i - 1, SP)
+					_relax(dist, src, i, i - 1, FieldMap.SPACING)
 				if gy > 0:
-					_relax(dist, src, i, i - dim, SP)
+					_relax(dist, src, i, i - dim, FieldMap.SPACING)
 					if gx > 0:
 						_relax(dist, src, i, i - dim - 1, diag)
 					if gx < dim - 1:
@@ -212,9 +211,9 @@ static func _distance_to_samples(fm: FieldMap, s_pos: PackedVector2Array, s_hw: 
 			for gx in range(dim - 1, -1, -1):
 				var i := gy * dim + gx
 				if gx < dim - 1:
-					_relax(dist, src, i, i + 1, SP)
+					_relax(dist, src, i, i + 1, FieldMap.SPACING)
 				if gy < dim - 1:
-					_relax(dist, src, i, i + dim, SP)
+					_relax(dist, src, i, i + dim, FieldMap.SPACING)
 					if gx > 0:
 						_relax(dist, src, i, i + dim - 1, diag)
 					if gx < dim - 1:
