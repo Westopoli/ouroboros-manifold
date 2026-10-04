@@ -7,6 +7,7 @@ from typing import Optional
 
 from scripts.skilllab import compose, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills
 from scripts.skilllab.asym import Side, asym_play
+from scripts.skilllab.contract import trim_series
 from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
 from scripts.skilllab.terrain import with_terrain
 
@@ -486,8 +487,15 @@ def run(defn, out_dir, scan_fn=None, workers=1):
         raise ValueError("workers must be at least 1")
     if workers == 1:
         return _run(defn, out_dir, scan_fn)
-    with pool.FightPool(workers) as p:
+    with pool.FightPool(workers, lean=True) as p:
         return _run(defn, out_dir, scan_fn, map_fn=p.map)
+
+
+def _trimmed(result, keep):
+    """Drop the per-tick series from every fight of the scan except `keep` (the charted example); row values stay."""
+    for cell in result.cells:
+        cell.fights = [f if f is keep else trim_series(f) for f in cell.fights]
+    return result
 
 
 def _run(defn, out_dir, scan_fn=None, map_fn=None):
@@ -501,19 +509,21 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
         if c.build is None:
             continue
         if c.reference is not None:
-            scans[(c.label, REFERENCE)] = scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
+            scans[(c.label, REFERENCE)] = _trimmed(scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
                                                   c.size, c.enemy_from, c.enemy_to, replicates=c.replicates,
-                                                  refine_factor=REFINE_FACTOR, **more)
+                                                  refine_factor=REFINE_FACTOR, **more), None)
         for v, overlay in defn.variants:
             result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
                              replicates=c.replicates, refine_factor=REFINE_FACTOR, **more)
             scans[(c.label, v)] = result
+            keep = None
             for cell in result.cells:
                 if cell.enemy_heads == c.size and c.label not in examples:
-                    examples[c.label] = cell.fights[0]
+                    examples[c.label] = keep = cell.fights[0]
                 for f in cell.fights:
                     fight_rows.append(rows.fight_row(f, cell=c.label, variant=v, size=c.size,
                                                      enemy_heads=cell.enemy_heads, status=c.status, **extra))
+            _trimmed(result, keep)
     paths = {"csv": out / (defn.name + ".csv"), "run": out / (defn.name + "_run.md"),
              "page": out / (defn.name + "_page.html")}
     rows.write_rows(fight_rows, paths["csv"])

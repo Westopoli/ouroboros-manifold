@@ -6,6 +6,7 @@ sentinel. Callers import the real function from its own module, never from this 
 """
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
@@ -96,6 +97,13 @@ class FightResult:
     states: Optional[list] = None   # [(tick, unit, state), ...] per living unit when Setup.states, else None
     order_ends: Optional[tuple] = None   # ((unit, tick), ...) first tick each unit's destination ended, by unit id
     mopup_orders: Optional[int] = None   # mop-up attack-moves issued by both sides in this fight; None when Setup.mopup is off
+
+
+def trim_series(result: "FightResult") -> "FightResult":
+    """The result without its per-tick series; row values stay. A series that was on becomes [] so 'was recorded' still reads."""
+    return dataclasses.replace(result, firing=[], trace=None if result.trace is None else [],
+                               weighted=None if result.weighted is None else [],
+                               states=None if result.states is None else [])
 
 
 @dataclass
