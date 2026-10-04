@@ -100,6 +100,8 @@ Parked (Westley, 2026-10-03, A207): space integration is not near, so S1 to S4 a
 
 ### Movement, layers and search (held by the Architect chat)
 
+Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness experiment has been run and he has the data. The draft pass marks gate nothing (A210).
+
 | # | Decision | Reference |
 |---|---|---|
 | M1 | Pass marks C0 to C9 and the 0.05 win margin | rulings-2 A174; unblocks Phase E |
