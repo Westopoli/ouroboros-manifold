@@ -26,7 +26,8 @@ def library():
 
 def _setup(build, enemy=32, **kw):
     s = build(enemy, False)
-    return dataclasses.replace(s, trace=True, max_ticks=900, settings={**s.settings, **batches.BASE_SETTINGS}, **kw)
+    return dataclasses.replace(s, trace=True, max_ticks=900, settings={**s.settings, **batches.BASE_SETTINGS},
+                               mopup=False, **kw)
 
 
 def _rows(result, tick):
@@ -57,12 +58,23 @@ def _first_step(result):
 
 @pytest.fixture(scope="module")
 def line_runs(library):
+    """(on, scattered): the approach on, and no approach with the line's attack-move issued as ONE unchunked order.
+    TD-SL-A199-approach-control: the 930 wu line is wider than 450 wu from its centroid, so R-095-03 (scatter fallback)
+    sends every unit to the raw click point and the line collapses; the chunked order (<= 440 wu) keeps its slots."""
     on = fight.fight(_setup(plays.line_play(32, approach=0.95)), 0, False, engine=library)
-    off_setup = dataclasses.replace(_setup(plays.line_play(32, approach=0.95)), approach=0.0)
-    return on, fight.fight(off_setup, 0, False, engine=library)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(fight, "_chunks", lambda eng, w, ids: [(ids, (0.0, 0.0))])
+        scattered = fight.fight(_setup(plays.line_play(32)), 0, False, engine=library)
+    return on, scattered
 
 
-def test_the_shape_is_held_until_contact(line_runs):
+@pytest.fixture(scope="module")
+def default_run(library):
+    """No approach, the correct chunked order (A199: formation held until an enemy is in attack range)."""
+    return fight.fight(_setup(plays.line_play(32)), 0, False, engine=library)
+
+
+def test_the_shape_is_held_until_contact(line_runs, default_run):
     on, off = line_runs
     ids = set(range(1, 33))
     t_on, t_off = on.first_contact_tick - 1, off.first_contact_tick - 1
@@ -72,8 +84,11 @@ def test_the_shape_is_held_until_contact(line_runs):
     held = _depth(on, t_on, ids) / _depth(on, 0, ids)
     assert held < 2.0
     assert _spread(on, t_on, ids) / _spread(on, 0, ids) >= 0.9
-    # positive control: without the approach the line has thickened to more than twice its depth by first contact
-    assert _depth(off, t_off, ids) / _depth(off, 0, ids) > held
+    # positive control: the scattered order (R-095-03) thickens the line past twice its depth by first contact,
+    # while the chunked order with no approach stays under the same threshold
+    assert _depth(off, t_off, ids) / _depth(off, 0, ids) > 2.0
+    t_def = default_run.first_contact_tick - 1
+    assert _depth(default_run, t_def, ids) / _depth(default_run, 0, ids) < 2.0
 
 
 def test_nobody_fires_during_the_approach(line_runs):
