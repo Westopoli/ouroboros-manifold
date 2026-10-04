@@ -1218,6 +1218,7 @@ owns = [
     "simulation/test_asteroid_damage_and_targeting_gate.py",
     "simulation/test_attack_move_no_sight_pursuit.py",
     "tests/csim/test_PP_attack_move_no_sight_pursuit.py",
+    "tests/csim/test_PP_group_cap_base_speed.py",
 ]
 owns_glob = []
 acceptance = ["tests/csim/test_PP_attack_move_no_sight_pursuit.py"]
