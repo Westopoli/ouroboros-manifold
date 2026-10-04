@@ -243,7 +243,9 @@ class TestUpdateTargetingLosGate:
         )
 
     def test_no_asteroid_target_acquired(self):
-        """No asteroid: sensor-pursuit acquires target → auto_engage_target == target uid."""
+        """No asteroid: an enemy seen but outside attack range is not acquired (A199, R-087-04: no pursuit on
+        sight); the same enemy inside attack range 50 is → auto_engage_target == target uid.
+        TD-PP-A199-repin: the old expectation was acquisition on first sight at 200 wu."""
         store = UnitStore()
         attacker = _spawn(store, 0, 200.0, 500.0, stats=_SENSOR_STATS)
         store.attack_moving[attacker] = True
@@ -252,6 +254,13 @@ class TestUpdateTargetingLosGate:
 
         tm = TacticalMap(width=1000, height=1000, gradient_sources=[], spine_nodes=[])
 
+        _run_targeting_full_cohort(store, tm, n=2)
+
+        assert store.auto_engage_target[attacker] == -1, (
+            f"Enemy 200 wu away is outside attack range 50; expected no acquisition, got {store.auto_engage_target[attacker]}"
+        )
+
+        store.data[target, FIELD_X] = 240.0     # 40 wu from the attacker: inside attack range 50
         _run_targeting_full_cohort(store, tm, n=2)
 
         assert store.auto_engage_target[attacker] == target, (
@@ -273,8 +282,8 @@ class TestUpdateTargetingLosGate:
         _run_targeting_full_cohort(store, tm, n=2)
         assert store.auto_engage_target[attacker] == -1
 
-        # Move target to open (near attacker, no asteroid between them).
-        store.data[target, FIELD_X] = 300.0
+        # Move target to open, inside attack range 50 (A199: acquisition needs range, not sight; TD-PP-A199-repin).
+        store.data[target, FIELD_X] = 240.0
         store.data[target, FIELD_Y] = 500.0
         # Remove asteroid (empty field).
         tm.asteroid_field = AsteroidField([])

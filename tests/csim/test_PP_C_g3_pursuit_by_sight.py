@@ -50,8 +50,11 @@ def test_R_093_02_a_hidden_enemy_is_not_pursued(lib, world_factory):
 
 
 def test_R_093_02_a_visible_enemy_is_pursued_control(lib, world_factory):
-    """Positive control for the test above: no cover, same scene: the Raider walks toward the enemy and
-    its distance shrinks. Green today and after."""
+    """Positive control for the test above, rewritten under A199 (TD-PP-A199-repin; R-087-04): no cover, same
+    scene, the enemy in plain sight 700 wu away: an attack-mover does not walk toward an enemy it merely sees,
+    so its distance grows just as for the hidden one. What sight buys is the shot: the same enemy brought into
+    attack range is acquired and fired at (so the hidden test passes because of the cover, not on a unit that
+    reacts to nothing)."""
     w = world_factory(n_regions=1)
     raider, enemy = _scene(lib, w, 700.0)
     assert can_see(lib, w, raider, enemy) == 1, "fixture: open ground must show the enemy"
@@ -59,15 +62,21 @@ def test_R_093_02_a_visible_enemy_is_pursued_control(lib, world_factory):
 
     step(lib, w, TICKS)
 
-    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) < start, "a visible enemy in sensor range is pursued"
+    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) > start, "a seen enemy out of attack range is not chased"
+    assert target(lib, w, raider) != enemy
+
+    here = pos(lib, w, raider)
+    lib.om_unit_teleport(w, enemy, here[0] + 150.0, here[1], 0)
+    step(lib, w, cohort_cycle(lib, w))
+    assert target(lib, w, raider) == enemy and hp(lib, w, enemy) < BIG_HP, "in attack range it is acquired and hit"
 
 
 def test_R_089_02_a_friend_that_sees_the_enemy_lets_it_be_pursued(lib, world_factory):
-    """R-089-02, R-093-02, plan Phase C (shared sight): the same hidden enemy, but a friendly Interceptor
-    300 wu from it with a clear line sees it. It is in the side's visible set, so the Raider pursues it
-    (the enemy is also inside the Raider's own sensor range 800, which pursuit still requires). Green
-    today (it pursues everything); it keeps the test above from passing on a unit that pursues nothing,
-    and it is the case that tells the side's set from the unit's own after Phase C."""
+    """R-089-02, R-093-02, plan Phase C (shared sight), rewritten under A199 (TD-PP-A199-repin): the same
+    hidden enemy, but a friendly Interceptor 300 wu from it with a clear line sees it. The side's set no longer
+    makes the Raider walk toward it (R-087-04): its distance still grows. What the side's set does give is the
+    shot: with the enemy 150 wu away and the Raider's own sensing blanked by an interference zone on it (the
+    friend sees it), the Raider acquires and fires at it."""
     w = world_factory(n_regions=1)
     raider, enemy = _scene(lib, w, 700.0, cover_x=350.0)
     friend = spawn(lib, w, INTERCEPTOR, 0, 700.0, 300.0)
@@ -76,7 +85,17 @@ def test_R_089_02_a_friend_that_sees_the_enemy_lets_it_be_pursued(lib, world_fac
 
     step(lib, w, TICKS)
 
-    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) < start, "the side sees the enemy: it must be pursued"
+    assert dist(pos(lib, w, raider), pos(lib, w, enemy)) > start, "a friend's sight does not make it chase"
+
+    w = world_factory(n_regions=1)
+    raider, enemy = _scene(lib, w, 150.0)
+    friend = spawn(lib, w, INTERCEPTOR, 0, 150.0, 300.0)
+    lib.om_map_add_interference_zone(w, 0.0, 0.0, 0, 1.0, 100.0)
+    assert can_see(lib, w, raider, enemy) == 0 and can_see(lib, w, friend, enemy) == 1, "fixture: sight"
+
+    step(lib, w, cohort_cycle(lib, w))
+
+    assert target(lib, w, raider) == enemy and hp(lib, w, enemy) < BIG_HP, "the side sees the enemy in range: it is fired at"
 
 
 def test_R_093_02_pursuit_switch_zero_is_todays_behaviour(lib, world_factory):
