@@ -242,7 +242,7 @@ Applies to land maps (Q-166-02).
 
 Rules
 - R-189-01  Given the terrain, When ground is shaped, Then it is a mix of benched ground (wide shelves with steep risers at each band edge, so a layer boundary is a visible cliff or ramp) and natural ground (ground that rolls freely), in a ratio drawn per map from the seed (Westley, 2026-10-03). The spread of the ratio is checked in Westley's visual pass on a prototype.
-- R-189-02  Given a section whose ground is too steep, When a walking unit is routed, Then it cannot cross it and the route grid treats it as blocked (E-13 R-097-01). One steepness limit holds for every walking unit: ground steeper than 35 degrees is impassable (Westley, 2026-10-04, "35 degrees", after his visual pass of land mockup passes 4 and 5)..
+- R-189-02  Given a section whose ground is too steep, When a walking unit is routed, Then it cannot cross it and the route grid treats it as blocked (E-13 R-097-01). One steepness limit holds for every walking unit: ground steeper than 35 degrees is impassable (Westley, 2026-10-04, "35 degrees", after his visual pass of land mockup passes 4 and 5).
 - R-189-03  Given ground that jumps a band, When it is steep, Then it is a cliff and walking units cannot cross it. When it is a natural ramp, a pass, a switchback road, stairs or a built lift, it is a slope, and walking units change layer there and nowhere else (E-01 R-001-06, R-001-07).
 - R-189-04  Given the map, When the generator finishes, Then it has listed every slope for E-01 (S-190).
 - R-189-05  Given a ground era, When the map is checked, Then a walking route over slopes exists between the two sides' bases, between each base and its objective, and to every band. Given a flying era, Then no walking route is required (Westley, 2026-10-03).
@@ -251,7 +251,7 @@ Rules
 
 Inputs: terrain; bands.
 Outputs: cliffs and steep ground in the route grid; the slope list.
-Open flags: Q-189-02, Q-189-04.
+Open flags: Q-189-04.
 
 ### S-190 — What the layer system gets from the ground
 As a commander, I want the layers to follow the land under my units, so that where I can stand, climb and be hit matches what I see.
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-02, Q-189-04, Q-191-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

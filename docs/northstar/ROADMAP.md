@@ -20,7 +20,7 @@ The movement and layers lanes stay paused (Westley, 2026-10-03). The same day he
 | Plan | Doc | Lane | Owns | State | Exit condition |
 |---|---|---|---|---|---|
 | Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
-| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-10-03-finish-loop-rulings.md` | Planner chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end and the gate checks it. Landed 2026-10-03: enemy rout and contested objective, commander death ledger, live retention, 16 allowlist entries. Nothing left to build without Westley: ability events to the client (ABIL-1) are deferred to land with the S-135 render piece, which needs a prototype. Left for Westley: F1 to F13. C4 E1 unverified; 4 client gaps not started. Reach lint 258 unreachable of 728. | Every work-list row wired or ruled |
+| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-10-03-finish-loop-rulings.md` | Planner chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end and the gate checks it. Landed 2026-10-04: a refused mission no longer blocks every later one (found by the 30B). Landed 2026-10-03: enemy rout and contested objective, commander death ledger, live retention, 16 allowlist entries. Nothing left to build without Westley: ability events to the client (ABIL-1) are deferred to land with the S-135 render piece, which needs a prototype. Left for Westley: F1 to F13. C4 E1 unverified; 4 client gaps not started. Reach lint 258 unreachable of 728. | Every work-list row wired or ruled |
 | Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
 | Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat (Mac) with a Doer | `scenes/mockups/landscape/` | Pass 5 built; pass 6 spec written (`1c2d4494`) | Westley approves a pass; the camera question is designed as options |
 
@@ -42,7 +42,7 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 
 | # | Decision | Notes |
 |---|---|---|
-| W6 | Land the Agora QA fix so the 30B can play | The fix is verified on Agora branch `lf-lane3-build` (`74956c9`): QA profile clicks NEW CAMPAIGN, empty click no longer raises. Not landed because `~/Projects/agora` (on `wn/qa-director`) has your uncommitted edit to `scripts/qa_desktop.py`. Commit or stash it, `git -C ~/Projects/agora merge lf-lane3-build`, push, restart the QA session (pid 2931521 runs the old code). |
+| W6 | DONE 2026-10-04 (Westley asked the planner chat to do it). Was: land the Agora QA fix so the 30B can play | The fix is verified on Agora branch `lf-lane3-build` (`74956c9`): QA profile clicks NEW CAMPAIGN, empty click no longer raises. Not landed because `~/Projects/agora` (on `wn/qa-director`) has your uncommitted edit to `scripts/qa_desktop.py`. Commit or stash it, `git -C ~/Projects/agora merge lf-lane3-build`, push, restart the QA session (pid 2931521 runs the old code). |
 | W8 | 17 standing failures in `tests/specfactory/` on main | Same 17 before and after this work; nobody has ruled on them. |
 
 ### Prototypes ready for your eyes
@@ -52,11 +52,11 @@ Built 2026-10-03 while you were away. Each record lists the keys to fly it and t
 | Prototype | Record | What to judge |
 |---|---|---|
 | Land mockup pass 4: where walkers can go | `research/landscape_design/README.md` "Pass 4" and "Pass 4 sweep"; screenshots in `mockup/pass4/` | The too-steep view at 30 and 35 degrees, the (X) cursor, the band view, ramps. Finding: 42 to 85 percent of land is too steep and a walker reaches under 15 percent of it |
-| Land terrain options page | `research/landscape_design/options_2026-10-03_walkable_land.md` | Pick a direction: A layout first and terrain obeys (recommended), B gentler land, C bigger canvas, D higher walking limit. Three questions at the bottom |
+| Land terrain options page | `research/landscape_design/options_2026-10-03_walkable_land.md` | DECIDED 2026-10-04: option A (layout first, terrain obeys); walking limit 35 degrees |
 | Land mockup pass 5: the layout leads, the terrain obeys | `research/landscape_design/README.md` "Pass 5"; screenshots in `mockup/pass5/` | The prototype asked for under Q-191-04. Finding: carving a layout into finished terrain leaves broken edges and wide cut routes, and the old assault layouts cannot meet the equal-distance rule for the objective. Six questions in the record |
 | Settlement mockup pass 1 | `research/settlement_mockup/README.md`; `godot --path . res://scenes/mockups/settlement/settlement_mockup.tscn` | Which events start a wave (Q-193-01), whether four lot stages is right (Q-193-02), whether one 300 wu route per direction is enough way through (Q-193-06) |
 
-The land mockup has had passes 3, 4 and 5 without your approval, so no further land pass is built until you choose a direction on the options page.
+Land mockup passes continue in a Sonnet chat working directly with Westley (`plans/briefs/2026-10-04-land-mockup-iteration-brief.md`, branch `push/proto-land-iter`); pass 6 fixes the cliff walls drawn on every contour and makes the layout shape the terrain as it is generated. View prototypes from `~/Projects/om-push/wt/view-main` (imported, kept at current main).
 
 ### Finishing the MVP loop: questions from the scouts
 
@@ -82,7 +82,7 @@ Full text and evidence: `plans/2026-10-03-finish-loop-rulings.md`.
 
 | # | Decision | Flags | Unblocks |
 |---|---|---|---|
-| L1 | Part 1, the ground, what is left (answers 2026-10-03 in the register): the minimum height variance; the exact steepness limit inside 30 to 35 degrees, after his visual pass; what counts as unreasonably hard to reach on foot | Q-188-01, Q-189-02, Q-189-04 | Queue row 4 |
+| L1 | Part 1, the ground, what is left: the smallest layer step that reads as real height, judged in the band view of the mockup (he chose to look, not to give a number); what counts as unreasonably hard to reach on foot | Q-188-01, Q-189-04 | Queue row 3 |
 | L3 | Part 2, the places, what is left (answers 2026-10-03 in the register): the figures the live prototype sets (choke widths, landform bias, counts, the distance measure) | Q-191-05 | Land generator part 2 |
 | L8 | Was land mockup pass 3 (2026-09-21) approved? The record still says "awaiting Westley's third look" | none | The record only |
 | L9 | Name and scope of the land era | Q-147-01 | S-147; a second era to play |
@@ -181,6 +181,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 
 | Plan | Doc | Landed | Date |
 |---|---|---|---|
+| Refuse fix; long-mission suite (`tests/long`, seven seeds, 42 passed); Agora QA holds End Mission, timeouts, 30B plays loops | `plans/2026-10-03-finish-loop-rulings.md`; Agora `wn/qa-director` `3c03883` | `a136e3c0` | 2026-10-04 |
 | Finish-the-loop batch: enemy rout and contested objective, commander death ledger, live retention, allowlist, gate setup check | `plans/2026-10-03-finish-loop-rulings.md` | `0d4006fd` (gate on `fd676ea9`: no stage rejected; playthrough 32 passed) | 2026-10-03 |
 | MVP loop plays end to end; playthrough stage in the merge gate | `plans/2026-10-03-loop-fix-workflow-brief.md`, report on `push/lf-report` | `465d7145` (gate on `6244dec8`: no stage rejected; playthrough 32 passed, 151 s) | 2026-10-03 |
 | Bible rewrite: E-22 added, E-17 terrain-first | `research/epics_audit_2026-10-02/` | `6b8a6c59`, `1fe25028`, `8b5d7d07`, `424055f8` | 2026-10-02 |
