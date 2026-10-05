@@ -967,14 +967,22 @@ static void om_mg_sw_f64(om_mg_sw *sw, double d) {
     om_mg_sw_uint(sw, v, sizeof v);
 }
 
+#define OM_MG_NET_F64 sizeof(double)
+#define OM_MG_NET_I32 sizeof(int32_t)
+#define OM_MG_NET_COVER_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_F64)
+#define OM_MG_NET_OBSTACLE_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_F64)
+#define OM_MG_NET_NODE_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_I32 + OM_MG_NET_I32)
+#define OM_MG_NET_STRUCTURE_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_I32)
+#define OM_MG_NET_FIXED (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t) + OM_MG_NET_F64 + OM_MG_NET_F64)
+
 static uint32_t om_mg_net_size(const om_world *w) {
     const om_mapgen_state *st = om_mgs_ro(w);
     if (!st) return 0;
-    return (uint32_t)(sizeof(uint32_t) * 4 + sizeof(uint8_t) + 2 * sizeof(double)
-        + st->n_cover * (4 * sizeof(double))
-        + st->n_obstacles * (3 * sizeof(double))
-        + st->n_nodes * (2 * sizeof(double) + 2 * sizeof(int32_t))
-        + st->n_structures * (2 * sizeof(double) + sizeof(int32_t))
+    return (uint32_t)(OM_MG_NET_FIXED
+        + st->n_cover * OM_MG_NET_COVER_ROW
+        + st->n_obstacles * OM_MG_NET_OBSTACLE_ROW
+        + st->n_nodes * OM_MG_NET_NODE_ROW
+        + st->n_structures * OM_MG_NET_STRUCTURE_ROW
         + sizeof st->blocked_bits);
 }
 
