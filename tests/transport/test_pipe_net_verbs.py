@@ -78,10 +78,10 @@ def sess():
     s.close()
 
 
-def _trace(s, cmds, ticks):
-    """Step to `ticks` in tens; returns {tick: (checksum, sections)}."""
+def _trace(s, cmds, ticks, start=0):
+    """Step from tick `start` to `ticks` in tens; returns {tick: (checksum, sections)}."""
     out = {}
-    for tick in range(10, ticks + 1, 10):
+    for tick in range(start + 10, ticks + 1, 10):
         for t in range(tick - 9, tick + 1):
             for c in cmds.get(t, []):
                 assert s.submit(**c)["code"] == 0, c
@@ -222,15 +222,13 @@ def test_existing_command_and_tactical_step_unchanged():
         s.close()
 
 
-@pytest.mark.xfail(strict=False, reason="needs the module save hooks")
 def test_state_get_put_equal_checksums_next_100_ticks():
     a = Session()
     try:
         _trace(a, _script(a), 100)
         st = a.pp.send("net_state_get")
         assert st["type"] == "net_state" and isinstance(st["hex"], str), st
-        ta = _trace(a, {}, 200)
-        ta = {k: v for k, v in ta.items()}
+        ta = _trace(a, {}, 200, start=100)
         b = Session(reset=False)
         try:
             put = b.pp.send("net_state_put", **{k: v for k, v in st.items() if k != "type"})
