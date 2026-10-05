@@ -303,12 +303,18 @@ func _spine(homes: Dictionary) -> void:
 	var jit := _jitter_table(lanes)
 	for l in lanes:
 		var via_u := (rng.randf_range(-0.12, 0.12) if lanes == 1 else (0.55 if l == 0 else -0.55) * rng.randf_range(0.9, 1.1))
+		# The road bends: even about the middle under mirror, odd under rotate, random phase when separate.
+		var bow_amp := rng.randf_range(0.1, 0.3) if lanes == 1 else rng.randf_range(0.04, 0.12)
+		var bow_k := float(rng.randi_range(1, 2))
+		var bow_phase := rng_b.randf_range(0.0, TAU)
 		var ids := []
 		for i in WAY_T.size():
 			var t: float = WAY_T[i]
 			var prof := 1.0 - pow(absf(t) / 0.62, 2.0)
 			var j: Vector2 = jit[l][i]
-			var p := _pos(t + j.x, via_u * prof + j.y)
+			var arg := bow_k * PI * t / 0.62
+			var bow := cos(arg) if sym == "mirror" else (sin(arg) if sym == "rotate" else sin(arg + bow_phase))
+			var p := _pos(t + j.x, via_u * prof + j.y + bow_amp * bow * prof)
 			var nid := _add_node("waypoint", "", p, -1)
 			ids.append(nid)
 		lane_ids.append(ids)
@@ -556,8 +562,8 @@ func _rule_crossing() -> bool:
 	e["closed"] = true
 	e["width"] = w
 	e["used"] = true
-	e["step"] = cur_step
-	var e2 := _add_edge(m, v, "route", w, {"lane": lane, "choke": true, "closed": true, "used": true})
+	e["fx_step"] = cur_step
+	var e2 := _add_edge(m, v, "route", w, {"lane": lane, "choke": true, "closed": true, "used": true, "fx_step": cur_step, "step": e["step"]})
 	var wl := rng.randf_range(700.0, 1100.0)
 	var n1 := _add_node("waypoint", "", b1, -1, {"loop": true})
 	var n2 := _add_node("waypoint", "", b2, -1, {"loop": true})
@@ -579,7 +585,7 @@ func _rule_crossing() -> bool:
 	nodes[m]["nums"] = {"width": int(w), "bypass": snappedf(round_len / maxf(through, 1.0), 0.1), "extra_s": extra}
 	nodes[m]["loop_nodes"] = [n1, n2]
 	steps[cur_step]["text"] = "Crossing: %s on the %s route; %d wu choke, way round %.1fx." % [nodes[m]["name"], "short", int(w), round_len / maxf(through, 1.0)]
-	_stamp(cur_step, [m, n1, n2], [e["id"], e2, mid_edge, edges.size() - 3, edges.size() - 1])
+	_stamp(cur_step, [m, n1, n2], [mid_edge, edges.size() - 3, edges.size() - 1])
 	return true
 
 
@@ -677,14 +683,11 @@ func _rule_commons() -> bool:
 	n["choice"] = _fmt(cv["choice"], {"width": int(w)})
 	n["nums"] = {"width": int(w)}
 	n["piece"] = true
-	n["step"] = cur_step
-	var es := []
 	for e in edges:
 		if (e["a"] == nid or e["b"] == nid) and e["kind"] == "route":
 			e["width"] = w
 			e["open"] = true
-			e["step"] = cur_step
-			es.append(e["id"])
+			e["fx_step"] = cur_step
 	steps[cur_step]["text"] = "Commons: %s, %d wu of open ground on the road." % [n["name"], int(w)]
 	return true
 
