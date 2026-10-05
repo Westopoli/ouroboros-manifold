@@ -27,6 +27,7 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 | Prototype | Command | State | Record (keys and open questions) |
 |---|---|---|---|
+| Layout mockup, pass 1: the flat diagram | `cd ~/Projects/om-push/wt/proto-layout && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/layout/layout_mockup.tscn` | Building 2026-10-04, branch `push/proto-layout`; not yet reviewed | `plans/2026-10-04-layout-prototype-pass1-spec.md`; `research/layout_engine/README.md` when built |
 | Land mockup, latest: the layout shapes the terrain | `cd ~/Projects/om-push/wt/proto-land-iter && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Pass 6b, 2026-10-04; paused, waiting for Westley's feedback | `research/landscape_design/README.md` on branch `push/proto-land-iter`, sections Pass 4 to Pass 6 |
 | Land mockup as on main | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Passes 4 and 5 | `research/landscape_design/README.md` |
 | Space kit (same scene: press the Kit button until it reads space) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Pass 6; parked (A207) | `research/space_landscape/README.md` |
@@ -60,7 +61,7 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 |---|---|---|---|---|
 | 1 | Finish the MVP loop: whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
 | 2 | Baseline playthrough by Westley or the 30B | none | Westley (the 30B waits on decision W6) | The scripted playthrough is green in the gate; the human or 30B baseline is still owed before large new work. |
-| 3 | Layout engine: prototype, approval, then integration into mission setup (S-112 to S-119, S-191, S-192) | options page `research/layout_engine/README.md` (2026-10-04), waiting for Westley's pick (Q-191-06, Q-191-07); prototype spec to write after | Westley's approval of the layout prototype | He ruled the layout comes before the landscape. |
+| 3 | Layout engine: prototype, approval, then integration into mission setup (S-112 to S-119, S-191, S-192) | pass 1 spec `plans/2026-10-04-layout-prototype-pass1-spec.md` (method M4 picked, Q-191-06 and Q-191-07 closed); options page `research/layout_engine/README.md` | Westley's approval of the layout prototype | He ruled the layout comes before the landscape. |
 | 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
 ## 3. Blocked on Westley
