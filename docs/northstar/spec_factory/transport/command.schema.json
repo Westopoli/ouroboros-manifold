@@ -28,6 +28,7 @@
     "net_log_load",
     "net_state_get",
     "net_state_put",
+    "net_state_diff",
     "quit"
    ]
   },
@@ -92,6 +93,9 @@
    "type": "boolean"
   },
   "hex": {
+   "type": "string"
+  },
+  "state": {
    "type": "string"
   },
   "tactical_tick": {
