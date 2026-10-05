@@ -373,6 +373,8 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
     /* A196: faction 1's target policy, -1 = unset (follows OM_TP_TARGET_POLICY); lab only */
     { OM_PP_INT, -1.0, -1.0, 1.0 },
+    /* R-162-03: the pinged side's alert, 0 off (default), 1 on */
+    OM_PP_SWITCH(0.0),
 };
 
 static void om_pp_load_defaults(double *out) {
