@@ -296,6 +296,26 @@ def _mean(values):
     return sum(values) / len(values) if values else 0.0
 
 
+def terrain_had_no_effect(cell_result, open_result):
+    """True when the two scans agree on break-even and on every fight's outcome, margin, survivors and ticks."""
+    key = lambda sc: (sc.beats, sc.loses_to, [(c.enemy_heads, c.won, [(f.outcome, f.margin, f.survivors, f.ticks)
+                                                                  for f in c.fights]) for c in sc.cells])
+    return key(cell_result) == key(open_result)
+
+
+def _no_effect_lines(defn, scans):
+    """Landscape: each non-open cell whose scan equals the open cell's of the same role, per variant."""
+    out = []
+    for c in defn.cells:
+        kind, _, rest = c.label.partition(":")
+        if c.build is None or kind == "open" or "_v_defenders" not in rest or kind not in maps.KINDS:
+            continue
+        for v, _ in defn.variants:
+            if terrain_had_no_effect(scans[(c.label, v)], scans[("open:" + rest, v)]):
+                out.append("- %s, %s: the sampled map did not change the fight against the open map" % (c.label, v))
+    return out
+
+
 def _tag(cell):
     return " (unconfirmed draft)" if cell.status == skills.DRAFT else ""
 
@@ -412,6 +432,8 @@ def _run_file(defn, scans, names):
                   for c, a, b, word in changes]
     lines += ["", "## What the instrument could not express", ""]
     lines += ["- " + u for u in defn.unexpressed]
+    if defn.name == "landscape":
+        lines += _no_effect_lines(defn, scans)
     lines += ["- %s: %s" % (c.label, c.note) for c in defn.cells if c.build is None or NOT_SINGLE in c.note]
     lines += ["", "## Files", ""] + ["- " + n for n in names] + [""]
     return "\n".join(lines)
