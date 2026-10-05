@@ -2080,8 +2080,8 @@ static int hex_nibble(char c) {
 }
 
 /* Decodes the "hex" string field into a new buffer; NULL on absent or bad. */
-static uint8_t *hex_get(const char *json, uint32_t *len_out, const char **why) {
-    const char *p = find_key(json, "hex");
+static uint8_t *hex_get(const char *json, const char *key, uint32_t *len_out, const char **why) {
+    const char *p = find_key(json, key);
     if (!p || *p != '"') {
         *why = "missing field";
         return NULL;
@@ -2150,6 +2150,17 @@ static void net_ack_checksum(jbuf *j) {
     for (int i = 0; i < 9; i++) {
         if (i) jb_putc(j, ',');
         jb_uint(j, sec[i]);
+    }
+    jb_putc(j, ']');
+}
+
+static void net_ack_names(jbuf *j) {
+    jb_putc(j, ',');
+    jb_key(j, "names");
+    jb_putc(j, '[');
+    for (uint32_t i = 0; i < om_checksum_section_count(); i++) {
+        if (i) jb_putc(j, ',');
+        jb_str(j, om_checksum_section_name(i));
     }
     jb_putc(j, ']');
 }
@@ -2225,6 +2236,7 @@ static void handle_net_checksum(void) {
     jbuf j;
     net_ack_open(&j, "net_checksum");
     net_ack_checksum(&j);
+    net_ack_names(&j);
     net_ack_close(&j);
 }
 
@@ -2247,7 +2259,7 @@ static void handle_net_log_load(const char *json) {
     if (!net_guard("net_log_load", 0)) return;
     uint32_t len = 0;
     const char *why = NULL;
-    uint8_t *buf = hex_get(json, &len, &why);
+    uint8_t *buf = hex_get(json, "hex", &len, &why);
     if (!buf) {
         write_error("net_log_load", why);
         return;
@@ -2299,7 +2311,7 @@ static void handle_net_state_put(const char *json) {
     }
     uint32_t len = 0;
     const char *why = NULL;
-    uint8_t *buf = hex_get(json, &len, &why);
+    uint8_t *buf = hex_get(json, "hex", &len, &why);
     if (!buf) {
         write_error("net_state_put", why);
         return;
@@ -2321,6 +2333,57 @@ static void handle_net_state_put(const char *json) {
     jbuf j;
     net_ack_open(&j, "net_state_put");
     net_ack_close(&j);
+}
+
+static void handle_net_state_diff(const char *json) {
+    if (!net_guard("net_state_diff", 0)) return;
+    uint32_t len = 0;
+    const char *why = NULL;
+    uint8_t *buf = hex_get(json, "state", &len, &why);
+    if (!buf) {
+        write_error("net_state_diff", why);
+        return;
+    }
+    om_world *scratch = om_world_new(om_region_count(W), om_world_seed(W));
+    for (int f = 0; f <= OM_FEAT_TACTICAL; f++)
+        om_world_set_feature(scratch, (om_feature)f, om_world_feature(W, (om_feature)f));
+    om_world_generate(scratch);
+    om_events_load_launch(scratch);
+    om_mission_load_launch_library(scratch);
+    om_campaign_start(scratch, 1);
+    int rc = om_load_state_read(scratch, buf, len);
+    free(buf);
+    if (rc != 0) {
+        om_world_free(scratch);
+        write_error("net_state_diff", "corrupt");
+        return;
+    }
+    uint32_t section = 0, unit = 0;
+    int diff = om_checksum_first_diff(W, scratch, &section, &unit);
+    om_world_free(scratch);
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "net_ack");
+    jb_putc(&j, ',');
+    jb_key(&j, "name");
+    jb_str(&j, "net_state_diff");
+    jb_putc(&j, ',');
+    jb_key(&j, "equal");
+    jb_raw(&j, diff ? "false" : "true");
+    jb_putc(&j, ',');
+    jb_key(&j, "section");
+    jb_int(&j, diff ? (int64_t)section : -1);
+    jb_putc(&j, ',');
+    jb_key(&j, "section_name");
+    jb_str(&j, diff ? om_checksum_section_name(section) : "");
+    jb_putc(&j, ',');
+    jb_key(&j, "unit");
+    jb_uint(&j, diff ? unit : 0);
+    jb_putc(&j, '}');
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
 }
 
 /* ---------------------------------------------------------------------
@@ -2431,6 +2494,8 @@ int main(void) {
             handle_net_state_get();
         } else if (!strcmp(name, "net_state_put")) {
             handle_net_state_put(buf);
+        } else if (!strcmp(name, "net_state_diff")) {
+            handle_net_state_diff(buf);
         } else if (!strcmp(name, "list_saves")) {
             handle_list_saves(buf);
         } else if (!strcmp(name, "quit")) {
