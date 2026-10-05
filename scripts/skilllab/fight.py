@@ -228,14 +228,16 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
                 ends[u] = tick
 
     mopup = [0] if setup.mopup else None
+    before = [{u: engine.unit_pos(w, u) for u in all_ids}] if setup.mopup else None   # positions one interval ago
 
     def mop_up():
         for s in mop_sides:
-            goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set)
+            goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set, before[0])
             if goal is not None:
-                for ids, (dx, dy) in _chunks(engine, w, [u for u in side_ids[s] if u in alive_set]):
-                    engine.order_attack_move(w, ids, goal[0] + dx, goal[1] + dy)
+                for ids, _offset in _chunks(engine, w, [u for u in side_ids[s] if u in alive_set]):
+                    engine.order_attack_move(w, ids, goal[0], goal[1])   # v2: no chunk offsets
                 mopup[0] += 1
+        before[0] = {u: engine.unit_pos(w, u) for u in living}
 
     sample()
     if trace is not None:

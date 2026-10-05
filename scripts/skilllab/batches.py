@@ -5,7 +5,7 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import compose, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills
+from scripts.skilllab import compose, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
 from scripts.skilllab.asym import Side, asym_play
 from scripts.skilllab.contract import trim_series
 from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
@@ -13,9 +13,7 @@ from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
-MOPUP_NOTE = ("Lab rule, provisional: mop-up order. A side whose units have stopped, none with an enemy in attack range, "
-              "that sees an enemy, re-issues its attack-move at the centroid of the enemies it sees, at most once per "
-              "mopup_interval_ticks. Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
+MOPUP_NOTE = (mopup.RULE_TEXT + " Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
               % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
 NOT_SINGLE = "not a single group order"
 REFINE_FACTOR = 3
@@ -525,8 +523,9 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
                                                      enemy_heads=cell.enemy_heads, status=c.status, **extra))
             _trimmed(result, keep)
     paths = {"csv": out / (defn.name + ".csv"), "run": out / (defn.name + "_run.md"),
-             "page": out / (defn.name + "_page.html")}
+             "page": out / (defn.name + "_page.html"), "summary": out / "summary.json"}
     rows.write_rows(fight_rows, paths["csv"])
     paths["run"].write_text(_run_file(defn, scans, [p.name for p in paths.values()]), encoding="utf-8")
     paths["page"].write_text(_page(defn, scans, examples), encoding="utf-8")
+    summary.write(defn, scans, paths["summary"], MOPUP_NOTE)
     return paths
