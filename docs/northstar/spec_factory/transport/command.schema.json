@@ -20,6 +20,14 @@
     "inject",
     "save",
     "load",
+    "net_reset",
+    "net_submit",
+    "net_step",
+    "net_checksum",
+    "net_log_dump",
+    "net_log_load",
+    "net_state_get",
+    "net_state_put",
     "quit"
    ]
   },
@@ -55,6 +63,48 @@
   },
   "path": {
    "type": "string"
+  },
+  "peer": {
+   "type": "integer"
+  },
+  "seq": {
+   "type": "integer"
+  },
+  "arg": {
+   "type": "integer"
+  },
+  "layer": {
+   "type": "integer"
+  },
+  "x": {
+   "type": "number"
+  },
+  "y": {
+   "type": "number"
+  },
+  "units": {
+   "type": "array",
+   "items": {
+    "type": "integer"
+   }
+  },
+  "checksum": {
+   "type": "boolean"
+  },
+  "hex": {
+   "type": "string"
+  },
+  "tactical_tick": {
+   "type": "integer"
+  },
+  "steps": {
+   "type": "integer"
+  },
+  "mission_archetype": {
+   "type": "integer"
+  },
+  "placed_structures": {
+   "type": "integer"
   }
  },
  "additionalProperties": true
