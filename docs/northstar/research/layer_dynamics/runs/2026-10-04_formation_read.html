@@ -1,0 +1,197 @@
+<title>Formation Read</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; the chart is four small panels on a shared scale, then one table, then the analysis. */
+:root{
+  --bg:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781; --grid:#e1e0d9; --axis:#c3c2b7;
+  --won:#2a78d6; --lost:#e34948; --unf:#b9b7ae; --mark:#0b0b0b; --tip:#ffffff; --tipb:#c3c2b7;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781; --grid:#2c2c2a; --axis:#383835;
+  --won:#3987e5; --lost:#e66767; --unf:#5c5b56; --mark:#ffffff; --tip:#262624; --tipb:#484742; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781; --grid:#2c2c2a; --axis:#383835;
+  --won:#3987e5; --lost:#e66767; --unf:#5c5b56; --mark:#ffffff; --tip:#262624; --tipb:#484742; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
+.wrap{max-width:60rem;margin:0 auto;padding-inline:16px;padding-block:28px 56px;display:flex;flex-direction:column;gap:28px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+h1{font-size:clamp(1.5rem,4.2vw,2.15rem);line-height:1.18;font-weight:600;margin:6px 0 0;text-wrap:balance;max-width:34ch}
+h2{font-size:1.1rem;font-weight:600;margin:0 0 8px;text-wrap:balance}
+p{margin:0 0 10px;max-width:68ch}
+.lede{color:var(--ink2);max-width:66ch}
+.bar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;border:1px solid var(--axis);border-radius:8px;overflow:hidden}
+.seg button{font:500 14px var(--sans);padding:7px 14px;border:0;background:transparent;color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--won);outline-offset:-2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:18px}
+.panel{background:var(--surface);border:1px solid var(--grid);border-radius:10px;padding:12px 12px 8px;min-width:0}
+.panel h3{font-size:15px;font-weight:600;margin:0}
+.panel .sub{font-size:12.5px;color:var(--ink2);margin:0 0 4px}
+.panel .find{font-size:13.5px;margin:6px 0 0;color:var(--ink)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:38rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--grid);vertical-align:top}
+th{font-weight:500;color:var(--ink2);font-size:12.5px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mini{display:inline-block;vertical-align:middle;width:84px;height:8px;background:var(--grid);border-radius:2px;position:relative;margin-left:8px}
+.mini i{position:absolute;left:0;top:0;bottom:0;background:var(--ink2);border-radius:2px}
+.mini b{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:22px 32px}
+.grid2>div{min-width:0}
+ul{margin:0;padding-left:1.1rem;max-width:68ch} li{margin-bottom:6px}
+.note{font-size:13.5px;color:var(--ink2);border-left:3px solid var(--axis);padding-left:12px;max-width:68ch}
+.kv{font-size:14px;width:auto;min-width:0} .kv td{padding:5px 14px 5px 0;border:0} .kv td:first-child{color:var(--ink2);white-space:nowrap}
+#tip{position:fixed;pointer-events:none;background:var(--tip);border:1px solid var(--tipb);border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:15rem;z-index:5}
+#tip strong{font-weight:600} #tip .m{font-family:var(--mono)}
+details summary{cursor:pointer;color:var(--ink2);font-size:14px}
+</style>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Skill lab, real engine &middot; formation batch &middot; 4 October 2026</div>
+    <h1 id="headline"></h1>
+    <p class="lede" id="lede" style="margin-top:10px"></p>
+  </header>
+
+  <section>
+    <div class="bar">
+      <div class="seg" role="group" aria-label="Unit type">
+        <button id="u-Vanguard" aria-pressed="true">Vanguards</button>
+        <button id="u-Raider" aria-pressed="false">Raiders</button>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i class="sw" style="background:var(--won)"></i>our 16 won</span>
+        <span><i class="sw" style="background:var(--unf)"></i>did not finish</span>
+        <span><i class="sw" style="background:var(--lost)"></i>our 16 lost</span>
+      </div>
+    </div>
+    <p class="lede" style="font-size:14px;margin:10px 0 12px">Each column is one enemy size, from 8 to 24, always a loose clump. Its height is every fight at that size, split by how it ended. Our side is always 16 units in the named shape.</p>
+    <div class="panels" id="panels"></div>
+  </section>
+
+  <section>
+    <h2>The same run as a table</h2>
+    <div class="tw"><table id="tbl"></table></div>
+    <p class="note" style="margin-top:12px">"Share of firing time" is our side's part of all the seconds in which any unit was able to fire, at 16 against 16. Fifty percent means both sides got the same number of shots off.</p>
+  </section>
+
+  <section class="grid2">
+    <div>
+      <h2>What was held fixed</h2>
+      <table class="kv">
+        <tr><td>Map</td><td>Open ground, no terrain, one layer</td></tr>
+        <tr><td>Units</td><td>One type per fight, both sides the same</td></tr>
+        <tr><td>Our side</td><td>16 units in the named shape</td></tr>
+        <tr><td>Enemy</td><td>8 to 24 units in a loose clump (a line, against the column)</td></tr>
+        <tr><td>Start</td><td>Just outside sensor range of each other</td></tr>
+        <tr><td>Orders</td><td>One attack-move each; formation held until an enemy is in range (ruling A199)</td></tr>
+        <tr><td>Lab rule</td><td>A stopped side re-issues its attack-move at enemies it sees, at most every 200 ticks. Provisional; not yet shown to Westley</td></tr>
+        <tr><td>Target choice</td><td>Nearest enemy</td></tr>
+        <tr><td>Abilities</td><td>Off</td></tr>
+        <tr><td>Fights</td><td>20 per enemy size, 60 near the break-even</td></tr>
+      </table>
+    </div>
+    <div>
+      <h2>What it says against the goal</h2>
+      <ul>
+        <li><strong>Shape does change who gets shots off.</strong> At equal numbers a line holds 57 percent of the firing time and a clump holds 50. The result follows that count: the line wins, the clump is a coin toss. This is the principle working as written.</li>
+        <li><strong>The size of the effect is small.</strong> A line of 16 still wins at least half its fights against 18. A clump of 16 manages that against 15. So shape is worth about three enemy soldiers in sixteen on open ground, a fifth more force, not "a much larger force".</li>
+        <li><strong>A concave buys nothing over a line here.</strong> It holds to 16 where the line holds to 18. The toy found the same: width matters, curvature barely.</li>
+        <li><strong>The column is worse than doing nothing.</strong> It was meant as the counter to a line and it loses firing time (48 percent) and fights. As drafted, that counter does not exist.</li>
+        <li><strong>Formation alone cannot carry the goal.</strong> If one skill is meant to be worth roughly 30 percent, this one delivers about 20 on the kindest reading, and only against an enemy that does not form up at all.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What this run cannot tell you</h2>
+      <ul>
+        <li><strong>The lab's own break-even is wrong for this run.</strong> It prints "16 beat 11" for the line, because a size counts as beaten only when every fight there finishes with a win. Unfinished fights drag it down. The columns above show the line winning nearly everything up to 16.</li>
+        <li><strong>Some fights never finish.</strong> A fifth of the column's fights, and 3 to 7 percent of the others, stall or hit the tick cap. Traced causes: a group ordered while one member had just fired froze for good (an engine bug, fix ready), and the lab's re-order aimed the wings of a line back where they stood.</li>
+        <li><strong>Identical forces are not quite even.</strong> Raider clump against Raider clump at 16 goes 36 to 23 to our side. Something no player controls is tilting it. Not yet traced.</li>
+        <li><strong>There is no terrain and one layer.</strong> Every unit in range can fire whatever the shape, which is the kindest case for the clump. A choke is where the research says shape should matter most, and no map here has one.</li>
+        <li><strong>No chart of units firing through the fight.</strong> The lab records it per fight, but this batch kept it for one example fight per cell only.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What I would run next, and why</h2>
+      <ul>
+        <li><strong>The same four shapes at a choke.</strong> Theory says a narrow front turns the fight from "numbers squared" to "numbers", which is where a small force should hold a large one. That is the test of whether landscape and formation together reach the goal.</li>
+        <li><strong>Short range against wide front.</strong> Vary attack range from 150 to 400 with the line 600 wu wide. When range is shorter than the front, only part of a clump can fire. That is the first two-knob map: range against front width.</li>
+        <li><strong>A real counter to the line.</strong> The column fails. A flank or a split is what the research calls defeat in detail.</li>
+      </ul>
+      <p class="note">Before any of those: fix the frozen-group bug and the re-order rule, so a fight that does not finish means something.</p>
+    </div>
+  </section>
+
+  <details>
+    <summary>Every count behind the chart</summary>
+    <div class="tw" style="margin-top:10px"><table id="raw"></table></div>
+  </details>
+  <p class="note">Source: <span style="font-family:var(--mono);font-size:12.5px">docs/northstar/research/layer_dynamics/runs/2026-10-04_formation/formation.csv</span> on branch push/batches-1004, 15,040 fights. Size 16 cells shown; sizes 8 and 32 are in the file.</p>
+</div>
+<div id="tip" hidden></div>
+<script>
+const DATA={"Vanguard":[{"key":"line","name":"Line","desc":"One rank, side by side","lab":11,"half":18,"unf":2.8,"fire16":57,"m16":0.259,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":69,"m":0.774,"mo":1.2},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":68,"m":0.736,"mo":1.5},{"n":10,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.682,"mo":1.7},{"n":11,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.642,"mo":1.7},{"n":12,"f":60,"w":59,"l":0,"u":1,"fs":63,"m":0.561,"mo":2.15},{"n":13,"f":60,"w":60,"l":0,"u":0,"fs":61,"m":0.477,"mo":2.83},{"n":14,"f":60,"w":60,"l":0,"u":0,"fs":60,"m":0.425,"mo":2.82},{"n":15,"f":60,"w":55,"l":0,"u":5,"fs":58,"m":0.328,"mo":3.5},{"n":16,"f":60,"w":59,"l":0,"u":1,"fs":57,"m":0.259,"mo":3.63},{"n":17,"f":60,"w":46,"l":8,"u":6,"fs":56,"m":0.146,"mo":4.92},{"n":18,"f":20,"w":15,"l":4,"u":1,"fs":54,"m":0.057,"mo":4.65},{"n":19,"f":20,"w":4,"l":14,"u":2,"fs":52,"m":-0.087,"mo":3.75},{"n":20,"f":20,"w":0,"l":20,"u":0,"fs":48,"m":-0.275,"mo":2.4},{"n":21,"f":20,"w":0,"l":20,"u":0,"fs":46,"m":-0.341,"mo":1.0},{"n":22,"f":20,"w":0,"l":20,"u":0,"fs":45,"m":-0.404,"mo":0.75},{"n":23,"f":20,"w":0,"l":20,"u":0,"fs":46,"m":-0.416,"mo":0.4},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":43,"m":-0.49,"mo":0.15}]},{"key":"concave","name":"Concave","desc":"An arc of 120 degrees, open toward the enemy","lab":12,"half":16,"unf":4.7,"fire16":56,"m16":0.212,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":70,"m":0.785,"mo":0.55},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":70,"m":0.756,"mo":0.0},{"n":10,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.683,"mo":1.2},{"n":11,"f":20,"w":20,"l":0,"u":0,"fs":64,"m":0.608,"mo":1.95},{"n":12,"f":60,"w":60,"l":0,"u":0,"fs":64,"m":0.575,"mo":1.37},{"n":13,"f":60,"w":59,"l":0,"u":1,"fs":62,"m":0.495,"mo":2.47},{"n":14,"f":60,"w":60,"l":0,"u":0,"fs":59,"m":0.399,"mo":2.85},{"n":15,"f":60,"w":57,"l":0,"u":3,"fs":57,"m":0.296,"mo":4.02},{"n":16,"f":60,"w":56,"l":1,"u":3,"fs":56,"m":0.212,"mo":4.7},{"n":17,"f":60,"w":29,"l":17,"u":14,"fs":52,"m":0.034,"mo":5.83},{"n":18,"f":20,"w":6,"l":13,"u":1,"fs":51,"m":-0.091,"mo":4.35},{"n":19,"f":20,"w":0,"l":17,"u":3,"fs":48,"m":-0.236,"mo":3.45},{"n":20,"f":20,"w":0,"l":19,"u":1,"fs":47,"m":-0.282,"mo":2.7},{"n":21,"f":20,"w":0,"l":20,"u":0,"fs":45,"m":-0.372,"mo":1.85},{"n":22,"f":20,"w":0,"l":20,"u":0,"fs":44,"m":-0.434,"mo":1.2},{"n":23,"f":20,"w":0,"l":19,"u":1,"fs":43,"m":-0.484,"mo":0.55},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":41,"m":-0.531,"mo":0.45}]},{"key":"blob","name":"Clump","desc":"A loose clump, the same as the enemy","lab":10,"half":15,"unf":7.2,"fire16":50,"m16":0.014,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":68,"m":0.765,"mo":0.3},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.717,"mo":0.1},{"n":10,"f":60,"w":60,"l":0,"u":0,"fs":65,"m":0.668,"mo":0.83},{"n":11,"f":60,"w":59,"l":0,"u":1,"fs":63,"m":0.602,"mo":1.02},{"n":12,"f":60,"w":60,"l":0,"u":0,"fs":60,"m":0.507,"mo":2.02},{"n":13,"f":60,"w":57,"l":0,"u":3,"fs":59,"m":0.432,"mo":3.02},{"n":14,"f":60,"w":56,"l":1,"u":3,"fs":56,"m":0.305,"mo":3.32},{"n":15,"f":60,"w":46,"l":1,"u":13,"fs":54,"m":0.194,"mo":5.15},{"n":16,"f":20,"w":9,"l":5,"u":6,"fs":50,"m":0.014,"mo":6.3},{"n":17,"f":20,"w":1,"l":12,"u":7,"fs":47,"m":-0.173,"mo":5.8},{"n":18,"f":20,"w":0,"l":16,"u":4,"fs":47,"m":-0.217,"mo":4.2},{"n":19,"f":20,"w":0,"l":19,"u":1,"fs":44,"m":-0.332,"mo":3.2},{"n":20,"f":20,"w":0,"l":20,"u":0,"fs":43,"m":-0.407,"mo":2.5},{"n":21,"f":20,"w":0,"l":19,"u":1,"fs":42,"m":-0.446,"mo":2.25},{"n":22,"f":20,"w":0,"l":19,"u":1,"fs":40,"m":-0.512,"mo":1.05},{"n":23,"f":20,"w":0,"l":19,"u":1,"fs":39,"m":-0.548,"mo":0.85},{"n":24,"f":20,"w":0,"l":19,"u":1,"fs":39,"m":-0.583,"mo":1.05}]},{"key":"counter","name":"Column","desc":"A column, played against an enemy line","lab":10,"half":13,"unf":20.5,"fire16":48,"m16":-0.086,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.743,"mo":1.05},{"n":9,"f":60,"w":60,"l":0,"u":0,"fs":61,"m":0.64,"mo":1.63},{"n":10,"f":60,"w":60,"l":0,"u":0,"fs":58,"m":0.549,"mo":2.95},{"n":11,"f":60,"w":59,"l":0,"u":1,"fs":56,"m":0.472,"mo":4.03},{"n":12,"f":60,"w":55,"l":0,"u":5,"fs":54,"m":0.358,"mo":5.13},{"n":13,"f":60,"w":41,"l":1,"u":18,"fs":52,"m":0.254,"mo":6.22},{"n":14,"f":60,"w":27,"l":5,"u":28,"fs":50,"m":0.132,"mo":6.95},{"n":15,"f":20,"w":4,"l":3,"u":13,"fs":49,"m":0.036,"mo":7.6},{"n":16,"f":20,"w":3,"l":6,"u":11,"fs":48,"m":-0.086,"mo":6.5},{"n":17,"f":20,"w":0,"l":11,"u":9,"fs":45,"m":-0.215,"mo":6.9},{"n":18,"f":20,"w":1,"l":11,"u":8,"fs":45,"m":-0.265,"mo":5.9},{"n":19,"f":20,"w":0,"l":15,"u":5,"fs":42,"m":-0.392,"mo":5.25},{"n":20,"f":20,"w":0,"l":13,"u":7,"fs":44,"m":-0.366,"mo":4.7},{"n":21,"f":20,"w":0,"l":14,"u":6,"fs":42,"m":-0.441,"mo":5.15},{"n":22,"f":20,"w":0,"l":13,"u":7,"fs":42,"m":-0.453,"mo":4.6},{"n":23,"f":20,"w":0,"l":19,"u":1,"fs":35,"m":-0.617,"mo":2.35},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":33,"m":-0.676,"mo":1.4}]}],"Raider":[{"key":"line","name":"Line","desc":"One rank, side by side","lab":16,"half":18,"unf":0.9,"fire16":57,"m16":0.231,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":68,"m":0.76,"mo":1.8},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.709,"mo":1.9},{"n":10,"f":20,"w":20,"l":0,"u":0,"fs":65,"m":0.66,"mo":1.75},{"n":11,"f":20,"w":20,"l":0,"u":0,"fs":65,"m":0.625,"mo":1.6},{"n":12,"f":20,"w":20,"l":0,"u":0,"fs":62,"m":0.543,"mo":2.1},{"n":13,"f":20,"w":20,"l":0,"u":0,"fs":62,"m":0.501,"mo":2.2},{"n":14,"f":20,"w":20,"l":0,"u":0,"fs":60,"m":0.415,"mo":2.25},{"n":15,"f":20,"w":20,"l":0,"u":0,"fs":58,"m":0.332,"mo":2.9},{"n":16,"f":60,"w":60,"l":0,"u":0,"fs":57,"m":0.231,"mo":3.17},{"n":17,"f":60,"w":48,"l":10,"u":2,"fs":55,"m":0.133,"mo":3.97},{"n":18,"f":60,"w":35,"l":23,"u":2,"fs":54,"m":0.037,"mo":3.92},{"n":19,"f":60,"w":8,"l":52,"u":0,"fs":51,"m":-0.116,"mo":3.48},{"n":20,"f":60,"w":2,"l":57,"u":1,"fs":50,"m":-0.21,"mo":2.48},{"n":21,"f":60,"w":0,"l":60,"u":0,"fs":48,"m":-0.301,"mo":1.67},{"n":22,"f":20,"w":0,"l":20,"u":0,"fs":47,"m":-0.368,"mo":0.95},{"n":23,"f":20,"w":0,"l":20,"u":0,"fs":44,"m":-0.451,"mo":0.45},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":43,"m":-0.498,"mo":0.3}]},{"key":"concave","name":"Concave","desc":"An arc of 120 degrees, open toward the enemy","lab":14,"half":16,"unf":0.5,"fire16":52,"m16":0.079,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":68,"m":0.76,"mo":1.2},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":66,"m":0.709,"mo":1.15},{"n":10,"f":20,"w":20,"l":0,"u":0,"fs":64,"m":0.65,"mo":1.6},{"n":11,"f":20,"w":20,"l":0,"u":0,"fs":62,"m":0.581,"mo":1.9},{"n":12,"f":60,"w":60,"l":0,"u":0,"fs":61,"m":0.524,"mo":2.1},{"n":13,"f":60,"w":60,"l":0,"u":0,"fs":60,"m":0.456,"mo":2.23},{"n":14,"f":60,"w":60,"l":0,"u":0,"fs":57,"m":0.339,"mo":3.03},{"n":15,"f":60,"w":57,"l":1,"u":2,"fs":55,"m":0.22,"mo":4.15},{"n":16,"f":60,"w":43,"l":16,"u":1,"fs":52,"m":0.079,"mo":4.65},{"n":17,"f":60,"w":24,"l":36,"u":0,"fs":50,"m":-0.044,"mo":4.78},{"n":18,"f":20,"w":2,"l":18,"u":0,"fs":49,"m":-0.137,"mo":3.7},{"n":19,"f":20,"w":0,"l":20,"u":0,"fs":46,"m":-0.271,"mo":2.3},{"n":20,"f":20,"w":0,"l":20,"u":0,"fs":47,"m":-0.306,"mo":2.1},{"n":21,"f":20,"w":0,"l":20,"u":0,"fs":46,"m":-0.363,"mo":2.15},{"n":22,"f":20,"w":0,"l":20,"u":0,"fs":43,"m":-0.444,"mo":1.6},{"n":23,"f":20,"w":0,"l":20,"u":0,"fs":42,"m":-0.502,"mo":0.65},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":41,"m":-0.547,"mo":0.25}]},{"key":"blob","name":"Clump","desc":"A loose clump, the same as the enemy","lab":15,"half":16,"unf":0.5,"fire16":51,"m16":0.026,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":67,"m":0.76,"mo":0.45},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":65,"m":0.7,"mo":0.3},{"n":10,"f":20,"w":20,"l":0,"u":0,"fs":61,"m":0.605,"mo":1.5},{"n":11,"f":20,"w":20,"l":0,"u":0,"fs":61,"m":0.555,"mo":1.6},{"n":12,"f":20,"w":20,"l":0,"u":0,"fs":59,"m":0.485,"mo":2.35},{"n":13,"f":60,"w":60,"l":0,"u":0,"fs":57,"m":0.381,"mo":3.12},{"n":14,"f":60,"w":60,"l":0,"u":0,"fs":56,"m":0.302,"mo":3.65},{"n":15,"f":60,"w":54,"l":6,"u":0,"fs":53,"m":0.167,"mo":5.03},{"n":16,"f":60,"w":36,"l":23,"u":1,"fs":51,"m":0.026,"mo":5.53},{"n":17,"f":60,"w":9,"l":51,"u":0,"fs":48,"m":-0.125,"mo":5.9},{"n":18,"f":60,"w":2,"l":57,"u":1,"fs":46,"m":-0.233,"mo":4.13},{"n":19,"f":20,"w":1,"l":19,"u":0,"fs":45,"m":-0.304,"mo":4.25},{"n":20,"f":20,"w":0,"l":20,"u":0,"fs":44,"m":-0.386,"mo":2.5},{"n":21,"f":20,"w":0,"l":20,"u":0,"fs":42,"m":-0.442,"mo":1.95},{"n":22,"f":20,"w":0,"l":20,"u":0,"fs":41,"m":-0.503,"mo":1.55},{"n":23,"f":20,"w":0,"l":19,"u":1,"fs":40,"m":-0.541,"mo":1.55},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":38,"m":-0.589,"mo":1.2}]},{"key":"counter","name":"Column","desc":"A column, played against an enemy line","lab":13,"half":15,"unf":0.3,"fire16":46,"m16":-0.147,"rows":[{"n":8,"f":20,"w":20,"l":0,"u":0,"fs":64,"m":0.727,"mo":0.5},{"n":9,"f":20,"w":20,"l":0,"u":0,"fs":63,"m":0.668,"mo":0.6},{"n":10,"f":20,"w":20,"l":0,"u":0,"fs":59,"m":0.577,"mo":1.65},{"n":11,"f":20,"w":20,"l":0,"u":0,"fs":57,"m":0.493,"mo":2.15},{"n":12,"f":60,"w":60,"l":0,"u":0,"fs":56,"m":0.413,"mo":3.23},{"n":13,"f":60,"w":58,"l":2,"u":0,"fs":55,"m":0.328,"mo":4.05},{"n":14,"f":60,"w":48,"l":11,"u":1,"fs":52,"m":0.184,"mo":5.75},{"n":15,"f":60,"w":30,"l":30,"u":0,"fs":49,"m":0.008,"mo":6.35},{"n":16,"f":60,"w":12,"l":48,"u":0,"fs":46,"m":-0.147,"mo":5.62},{"n":17,"f":60,"w":2,"l":57,"u":1,"fs":42,"m":-0.313,"mo":3.67},{"n":18,"f":20,"w":1,"l":19,"u":0,"fs":41,"m":-0.378,"mo":2.7},{"n":19,"f":20,"w":0,"l":20,"u":0,"fs":40,"m":-0.44,"mo":2.45},{"n":20,"f":20,"w":0,"l":20,"u":0,"fs":39,"m":-0.493,"mo":2.1},{"n":21,"f":20,"w":0,"l":20,"u":0,"fs":38,"m":-0.523,"mo":1.8},{"n":22,"f":20,"w":0,"l":20,"u":0,"fs":38,"m":-0.549,"mo":1.4},{"n":23,"f":20,"w":0,"l":20,"u":0,"fs":37,"m":-0.59,"mo":0.95},{"n":24,"f":20,"w":0,"l":20,"u":0,"fs":38,"m":-0.593,"mo":1.3}]}]};
+const NS='http://www.w3.org/2000/svg';
+let unit='Vanguard';
+const $=s=>document.querySelector(s);
+function el(n,a,t){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;return e}
+function pct(a,b){return Math.round(100*a/b)}
+function panel(c){
+  const W=340,H=188,L=30,R=8,T=14,B=30,pw=W-L-R,ph=H-T-B,n=c.rows.length,step=pw/n,bw=Math.min(13,step-4);
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':`${c.name}: share of fights won, unfinished and lost by enemy size`});
+  [0,50,100].forEach(v=>{const y=T+ph-ph*v/100;svg.append(el('line',{x1:L,x2:W-R,y1:y,y2:y,stroke:v===0?'var(--axis)':'var(--grid)','stroke-width':1}));svg.append(el('text',{x:L-6,y:y+3.5,'text-anchor':'end'},v+'%'))});
+  c.rows.forEach((r,i)=>{
+    const x=L+step*i+(step-bw)/2; let y=T+ph;
+    [['w','var(--won)'],['u','var(--unf)'],['l','var(--lost)']].forEach(([k,col])=>{
+      const h=ph*r[k]/r.f; if(h<=0)return; const gap=h>3?2:0;
+      svg.append(el('rect',{x,y:y-h+gap/2,width:bw,height:Math.max(h-gap,0.8),fill:col,rx:1.5})); y-=h;});
+    if(r.n%4===0) svg.append(el('text',{x:x+bw/2,y:T+ph+13,'text-anchor':'middle'},r.n));
+    const hit=el('rect',{x:L+step*i,y:T,width:step,height:ph,fill:'transparent',tabindex:0,'aria-label':`Against ${r.n}: ${r.w} won, ${r.l} lost, ${r.u} unfinished of ${r.f}`});
+    const show=ev=>tip(ev,c,r); hit.addEventListener('pointermove',show); hit.addEventListener('focus',e=>{const b=hit.getBoundingClientRect();tip({clientX:b.left+b.width/2,clientY:b.top+20},c,r)});
+    hit.addEventListener('pointerleave',()=>$('#tip').hidden=true); hit.addEventListener('blur',()=>$('#tip').hidden=true);
+    svg.append(hit);
+  });
+  const i16=c.rows.findIndex(r=>r.n===16), x16=L+step*i16+step/2;
+  svg.append(el('line',{x1:x16,x2:x16,y1:T-6,y2:T+ph,stroke:'var(--mark)','stroke-width':1,'stroke-dasharray':'2 3','pointer-events':'none'}));
+  svg.append(el('text',{x:x16+4,y:T-2,style:'fill:var(--ink2)'},'equal numbers'));
+  svg.append(el('text',{x:L+pw/2,y:H-3,'text-anchor':'middle'},'enemy units'));
+  const d=document.createElement('div'); d.className='panel';
+  d.innerHTML=`<h3>${c.name}</h3><p class="sub">${c.desc}</p>`; d.append(svg);
+  const p=document.createElement('p'); p.className='find';
+  p.innerHTML=`Wins at least half its fights against up to <strong>${c.half}</strong>. The lab printed "beats ${c.lab}".`; d.append(p);
+  return d;
+}
+function tip(ev,c,r){
+  const t=$('#tip'); t.hidden=false;
+  t.innerHTML=`<strong>${c.name}, 16 against ${r.n}</strong><br><span class="m">${r.w}</span> won &middot; <span class="m">${r.l}</span> lost &middot; <span class="m">${r.u}</span> unfinished, of <span class="m">${r.f}</span><br>Firing time held by the 16: <span class="m">${r.fs}%</span><br>Mean margin: <span class="m">${(r.m>0?'+':'')+r.m.toFixed(2)}</span><br>Re-orders per fight: <span class="m">${r.mo.toFixed(1)}</span>`;
+  const w=t.offsetWidth,h=t.offsetHeight; let x=ev.clientX+14,y=ev.clientY+14;
+  if(x+w>innerWidth-8)x=ev.clientX-w-14; if(y+h>innerHeight-8)y=ev.clientY-h-14; t.style.left=Math.max(8,x)+'px'; t.style.top=Math.max(8,y)+'px';
+}
+const WORDS={Vanguard:{line:'Fires more than the enemy at equal numbers and wins. The best of the four.',concave:'Much like the line, a little worse. The curve buys nothing on open ground.',blob:'The same shape as the enemy: a coin toss at equal numbers, as it should be.',counter:'Gets fewer shots off than a line does and loses to it. Not a counter.'},
+ Raider:{line:'Wins every fight at equal numbers and most against 18.',concave:'Even with a clump of the same size; no gain from the curve.',blob:'Should be a coin toss at 16 and is not: 36 wins to 23. An instrument question.',counter:'Loses to a line of equal size four times in five.'}};
+function render(){
+  const cells=DATA[unit]; const ps=$('#panels'); ps.textContent=''; cells.forEach(c=>ps.append(panel(c)));
+  const by=k=>cells.find(c=>c.key===k);
+  if(unit==='Vanguard'){ $('#headline').textContent='A line of 16 Vanguards beats a clump of 16 nearly every time, and holds its own against 18. A clump against a clump is a coin toss.';
+    $('#lede').textContent='Shape is worth about three enemy soldiers in sixteen on open ground. That is real, it follows who gets shots off, and it is far short of defeating a much larger force.'; }
+  else { $('#headline').textContent='A line of 16 Raiders wins every fight against 16 and most against 18. The curve and the column add nothing.';
+    $('#lede').textContent='Raiders reach 200 wu, so more of a clump is out of range. The line gains about two soldiers in sixteen over a clump, and identical clumps do not come out even.'; }
+  const t=$('#tbl'); t.innerHTML='<thead><tr><th>Shape of our 16</th><th>Holds against (wins half or more)</th><th>Share of firing time at 16 v 16</th><th>Mean margin at 16 v 16</th><th>Fights that did not finish</th><th>In plain words</th></tr></thead>';
+  const tb=document.createElement('tbody');
+  cells.forEach(c=>{const tr=document.createElement('tr');
+    tr.innerHTML=`<td><strong>${c.name}</strong></td><td class="num">${c.half} enemies</td><td class="num">${c.fire16}%<span class="mini"><i style="width:${c.fire16}%"></i><b></b></span></td><td class="num">${(c.m16>0?'+':'')+c.m16.toFixed(2)}</td><td class="num">${c.unf}%</td><td>${WORDS[unit][c.key]}</td>`; tb.append(tr)});
+  t.append(tb);
+  const raw=$('#raw'); let h='<thead><tr><th>Shape</th><th>Enemy</th><th>Fights</th><th>Won</th><th>Lost</th><th>Unfinished</th><th>Firing time, ours</th><th>Mean margin</th></tr></thead><tbody>';
+  cells.forEach(c=>c.rows.forEach(r=>{h+=`<tr><td>${c.name}</td><td class="num">${r.n}</td><td class="num">${r.f}</td><td class="num">${r.w}</td><td class="num">${r.l}</td><td class="num">${r.u}</td><td class="num">${r.fs}%</td><td class="num">${(r.m>0?'+':'')+r.m.toFixed(2)}</td></tr>`}));
+  raw.innerHTML=h+'</tbody>';
+  ['Vanguard','Raider'].forEach(u=>$('#u-'+u).setAttribute('aria-pressed',u===unit));
+}
+['Vanguard','Raider'].forEach(u=>$('#u-'+u).addEventListener('click',()=>{unit=u;render()}));
+render();
+</script>
