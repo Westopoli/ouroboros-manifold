@@ -27,7 +27,7 @@ STALL = 20
 DROP = 1200
 CHECK_EVERY = 10
 REISSUE = 400
-MAX_UNITS = 200  # per command; the wire field n_units is a uint8
+MAX_UNITS = 70  # per command: OM_CMD_MAX_UNITS in csrc/cmd_stream.c (spec: at most 70 unit ids)
 VERB_ATTACK_MOVE = 1  # enum in csrc/ouroboros_sim.h (spec, base item 1)
 SECTIONS = ["regions", "factions", "rng", "units", "movement", "mission", "fog", "macro", "support_map"]
 
