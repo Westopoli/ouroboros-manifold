@@ -117,3 +117,34 @@ Candidates only; "rec." marks the Architect's recommendation, not an answer.
 1. **Q-191-06**: A, B or C. Recommended C.
 2. **Q-191-07**: what the objective does. The quote above says "how the objective is supposed to move"; no rule says. Candidates: (a) it stays put, both sides equally far, value constant; (b) it stays put and its worth grows with time held, so an early grab can be answered; (c) it moves along a walking route on the three moving archetypes only (Interception, Rear Guard, Containment), fixed elsewhere; (d) the old assault shape stays where the archetype is an assault, and the equal-distance rule applies only to resources there.
 3. **First prototype**, whichever option: step 1 is the flat diagram alone, no terrain, to judge whether the choices read; step 2 is the terrain reacting with the met-or-broken list. Agree, or terrain from the first pass?
+
+## Pass 1: layout prototype, flat diagram (2026-10-04)
+
+Spec: `plans/2026-10-04-layout-prototype-pass1-spec.md`. Code: branch `push/proto-layout`, `scenes/mockups/layout/` (commits `0d7a8c48`, `819d7a75`). Built in one Sonnet 5.5 chat, not by two Doers (a Sonnet chat executes briefs directly). Method M4 as recommended; Q-191-11 (a), Q-191-12 (d), Q-191-13 (d) closed in the register.
+
+Run: `cd ~/Projects/om-push/wt/proto-layout && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/layout/layout_mockup.tscn`
+
+Keys: `A` archetype, Left/Right seed, `S` sides switch (mirror, rotate, separate), `G` growth on/off, `V` view (map, sheet, replay), `Tab` map and sheet, `[` `]` replay step, `L` route labels, `H` help. Hover a piece, route or check dot for its numbers.
+
+### What was built
+
+- Seven piece kinds with two to three variants each and number ranges (`layout_kits.json`), plus a hidden-approach piece the growth rules need; three recipes: Defensive Stand (objective beside side A), Assault (48,000 wu canvas, objective beside side B), Interception (objective walks four stops across the lanes).
+- Generator (`layout_gen.gd`): districts on an 8x8 grid with the division drawn per seed (band, ring or two patches, axis angle in 15 degree steps), home ground and gate slots matched between sides, lanes through the middle (one for a band, two for ring and patches), growth rules (crossing with a way round, heights with two ways up, prize pair, commons, hidden approach) each recorded as a replay step, meander tuned until walking distances match, five candidates made and the best by checks kept.
+- Eight checks (`layout_checks.gd`): connected, sides matched, equal distance (10 percent), way round at least 1.5x, two approaches to the objective, recipe choices present, objective placed as the recipe says, distinct from earlier maps. Draft figures, Q-191-05.
+- Significant resources are placed as a pair either side of the road at its middle, because only the middle is equally far from both homes. Each side's own expansion site is a separate near-ground slot and is not held to equal distance.
+
+### Measured (`pass1/selftest_output.txt`, headless, about 4 s)
+
+- 108 maps (3 archetypes x 12 seeds x 3 sides modes): 0 disconnected. 86 pass all eight checks; 22 have at least one red.
+- Red checks over 864 evaluations: distinct 8, way round 8, objective 3, choices present 3. Causes not measured. Likely, not verified: another route is shorter than the way round; a rule found no room on a one-lane map.
+- Mean pairwise signature distance over 12 seeds, mirror / rotate / separate: Defensive Stand 2.56 / 2.60 / 2.27; Assault 2.35 / 2.59 / 2.13; Interception 2.94 / 2.87 / 2.43. What distance counts as "feels different" is for Westley's eye on the sheet; the scale is 0 (same) to about 5.
+- Positive controls: each of the eight detectors turns red on a map broken on purpose for it.
+- Default-visible text: 0.4 to 1.1 percent of window area (limit about 5 percent), counted in the view as the area of the top bar line, piece names and sheet numbers. Screenshots in `pass1/`: three maps, two sheets, replay, tooltip, route labels on, growth off. Screenshots are of 1920x1080 logical size.
+
+### Known gaps
+
+- Mirror and rotate differ little on a band map (one lane). The seven archetypes not in the recipes, terrain, 4 to 6 sides and 64,000 wu are not in this pass.
+- The ring pattern draws a straight link across the middle that looks unlike the rest; the walking distances through it are counted.
+- Replay shows a crossing's pinch and a commons' width from its own step, but the final meander and a width changed later show from the first step.
+- Names overlap routes in a few places; route labels (`L`) crowd on dense maps.
+- Not seen by Westley yet. His review is recorded here, verbatim, when he gives it.
