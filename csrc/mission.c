@@ -392,74 +392,10 @@ static const om_mission_state *om_mis_ro(const om_world *w) {
     return (const om_mission_state *)w->mission_state;
 }
 
-/* S-111 save hooks: only a resolved result is saved (band, region, refusal, commander fate);
- * a mission still in progress is not (no mid-battle save). Without a result the blob is 0 bytes.
- * Little-endian scalars. See also: csrc/save.c OM_SAVE_SLOT_MISSION, csrc/region.c om_world_new
- * (installs these through om_mission_install_save_hooks). */
-#define OM_MIS_SAVE_WORD 4u
-#define OM_MIS_SAVE_LEN 16u
-#define OM_MIS_FLAG_REFUSED 1u
-#define OM_MIS_FLAG_END_APPLIED 2u
-#define OM_MIS_FLAG_FATE_SET 4u
-
-static void om_mis_put_u32(uint8_t *out, uint32_t *pos, uint32_t v) {
-    for (uint32_t i = 0; i < OM_MIS_SAVE_WORD; i++)
-        out[(*pos)++] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
-}
-
-static uint32_t om_mis_get_u32(const uint8_t *buf, uint32_t *pos) {
-    uint32_t v = 0;
-    for (uint32_t i = 0; i < OM_MIS_SAVE_WORD; i++) v |= (uint32_t)buf[(*pos)++] << (OM_SAVE_BYTE_BITS * i);
-    return v;
-}
-
-static void om_mis_put(uint8_t *out, const om_mission_state *st) {
-    uint32_t pos = 0;
-    om_mis_put_u32(out, &pos, (uint32_t)st->band);
-    om_mis_put_u32(out, &pos, st->mission_region);
-    om_mis_put_u32(out, &pos, (uint32_t)st->commander_fate);
-    uint32_t flags = (st->refused ? OM_MIS_FLAG_REFUSED : 0) | (st->end_applied ? OM_MIS_FLAG_END_APPLIED : 0)
-                   | (st->commander_fate_set ? OM_MIS_FLAG_FATE_SET : 0);
-    om_mis_put_u32(out, &pos, flags);
-}
-
-static uint32_t om_mis_save_size(const om_world *w) {
-    const om_mission_state *st = om_mis_ro(w);
-    return (st && st->band_set) ? OM_MIS_SAVE_LEN : 0;
-}
-
-static void om_mis_save_write(const om_world *w, uint8_t *out) {
-    const om_mission_state *st = om_mis_ro(w);
-    if (st && st->band_set) om_mis_put(out, st);
-}
-
-static int om_mis_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
-    if (len == 0) return 0;
-    if (!buf || len != OM_MIS_SAVE_LEN) return 1;
-    uint32_t pos = 0;
-    uint32_t band = om_mis_get_u32(buf, &pos);
-    uint32_t region = om_mis_get_u32(buf, &pos);
-    uint32_t fate = om_mis_get_u32(buf, &pos);
-    uint32_t flags = om_mis_get_u32(buf, &pos);
-    om_mission_state *st = (om_mission_state *)calloc(1, sizeof(om_mission_state));
-    if (!st) return 1;
-    st->band = (int32_t)band;
-    st->band_set = 1;
-    st->mission_region = region;
-    st->commander_fate = (int32_t)fate;
-    st->refused = (flags & OM_MIS_FLAG_REFUSED) != 0;
-    st->end_applied = (flags & OM_MIS_FLAG_END_APPLIED) != 0;
-    st->commander_fate_set = (flags & OM_MIS_FLAG_FATE_SET) != 0;
-    if (w->mission_state && w->mission_state_free) w->mission_state_free(w->mission_state);
-    w->mission_state = st;
-    w->mission_state_free = om_mis_state_free;
-    return 0;
-}
-
+/* S-111 save hooks live below the net-hooks marker (full mid-battle state, lockstep spec
+ * 2026-10-05); this entry point stays because csrc/region.c installs it. */
 void om_mission_install_save_hooks(om_world *w) {
-    w->mission_state_size = om_mis_save_size;
-    w->mission_state_write = om_mis_save_write;
-    w->mission_state_read = om_mis_save_read;
+    om_mission_install_net_hooks(w);
 }
 
 /* HDR3 legacy-compat rule: the mission state holds one player's data slot.
@@ -2853,6 +2789,236 @@ static uint64_t om_mis_net_hash(const om_world *w) {
     return h;
 }
 
+/* Stage 2 save hooks (slot mission_state): the fields om_mis_net_hash hashes plus the
+ * counts that bound them. Not saved: the library pool, archetypes, preference_*, region_ctx,
+ * candidate_viable, shortfall_text (the read starts from the target's own copy of these).
+ * See also: om_mission_install_save_hooks. */
+typedef struct {
+    uint8_t *out; /* NULL = count only */
+    uint32_t pos;
+} om_mis_w;
+
+static void om_mis_w_uint(om_mis_w *m, uint64_t v, uint32_t width) {
+    for (uint32_t i = 0; i < width; i++) {
+        if (m->out) m->out[m->pos] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+        m->pos++;
+    }
+}
+static void om_mis_w_u32(om_mis_w *m, uint32_t v) { om_mis_w_uint(m, v, (uint32_t)sizeof(uint32_t)); }
+static void om_mis_w_u64(om_mis_w *m, uint64_t v) { om_mis_w_uint(m, v, (uint32_t)sizeof(uint64_t)); }
+static void om_mis_w_i32(om_mis_w *m, int32_t v) { om_mis_w_uint(m, (uint32_t)v, (uint32_t)sizeof(int32_t)); }
+static void om_mis_w_f64(om_mis_w *m, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    om_mis_w_u64(m, v);
+}
+
+static uint32_t om_mis_serialize(const om_mission_state *st, uint8_t *out) {
+    om_mis_w m = {out, 0};
+    om_mis_w_u32(&m, st->mission_region);
+    om_mis_w_u32(&m, st->mission_archetype);
+    om_mis_w_i32(&m, st->lineage_connection);
+    om_mis_w_i32(&m, st->mission_set);
+    for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) om_mis_w_u32(&m, st->player_units[k]);
+    om_mis_w_u32(&m, st->n_objectives);
+    for (uint32_t i = 0; i < st->n_objectives; i++) {
+        const om_mission_objective *o = &st->objectives[i];
+        om_mis_w_u32(&m, o->spec.id);
+        om_mis_w_u32(&m, o->spec.kind);
+        om_mis_w_u32(&m, o->spec.is_primary);
+        om_mis_w_f64(&m, o->spec.weight);
+        om_mis_w_f64(&m, o->spec.completion);
+        om_mis_w_u32(&m, o->spec.is_complete);
+        om_mis_w_u32(&m, o->spec.is_failed);
+        om_mis_w_u64(&m, o->hold_required_ticks);
+        om_mis_w_u64(&m, o->hold_elapsed_ticks);
+        om_mis_w_u32(&m, o->destroy_total);
+        om_mis_w_u32(&m, o->escort_total);
+        om_mis_w_u64(&m, o->survive_required_ticks);
+        om_mis_w_f64(&m, o->eliminate_initial_hp);
+        om_mis_w_i32(&m, o->used);
+    }
+    om_mis_w_i32(&m, st->term_primary_complete);
+    om_mis_w_i32(&m, st->term_primary_failed);
+    om_mis_w_u64(&m, st->term_tick);
+    om_mis_w_u64(&m, st->term_time_limit);
+    om_mis_w_i32(&m, st->term_player_alive);
+    om_mis_w_u64(&m, st->tactical_time_limit);
+    om_mis_w_u64(&m, st->tactical_baseline_tick);
+    om_mis_w_i32(&m, st->tactical_baseline_pending);
+    om_mis_w_i32(&m, st->tactical_ended);
+    om_mis_w_i32(&m, st->band);
+    om_mis_w_i32(&m, st->band_set);
+    om_mis_w_f64(&m, st->last_objective_score);
+    om_mis_w_f64(&m, st->last_retention);
+    om_mis_w_i32(&m, st->commander_fate);
+    om_mis_w_i32(&m, st->commander_fate_set);
+    om_mis_w_i32(&m, st->refused);
+    om_mis_w_i32(&m, st->end_applied);
+    om_mis_w_i32(&m, st->consequence_seen);
+    for (int k = 0; k < OM_F_COUNT; k++) om_mis_w_f64(&m, st->consequence_delta[k]);
+    om_mis_w_i32(&m, st->consequence_transferred);
+    om_mis_w_f64(&m, st->enemy_power);
+    om_mis_w_f64(&m, st->player_parity);
+    for (int k = 0; k < OM_MISSION_MAX_OBJECTIVES; k++) {
+        om_mis_w_f64(&m, st->objective_center[k].x);
+        om_mis_w_f64(&m, st->objective_center[k].y);
+        om_mis_w_i32(&m, st->objective_center_set[k]);
+    }
+    for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) om_mis_w_u32(&m, st->enemy_units[k]);
+    om_mis_w_u32(&m, st->n_force_units);
+    for (uint32_t i = 0; i < st->n_force_units; i++) {
+        om_mis_w_u32(&m, st->force_units[i].unit_id);
+        om_mis_w_i32(&m, st->force_units[i].faction);
+        om_mis_w_i32(&m, st->force_units[i].type);
+    }
+    om_mis_w_u32(&m, st->commander_unit);
+    om_mis_w_i32(&m, st->fallback_pending);
+    om_mis_w_i32(&m, st->fallback_active);
+    om_mis_w_i32(&m, st->fallback_enemy);
+    om_mis_w_f64(&m, st->fallback_power);
+    return m.pos;
+}
+
+static uint32_t om_mis_net_save_size(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    uint32_t n_obj = st->n_objectives < OM_MISSION_MAX_OBJECTIVES ? st->n_objectives : OM_MISSION_MAX_OBJECTIVES;
+    uint32_t n_force = st->n_force_units < OM_MISSION_FORCE_ARRAY_MAX ? st->n_force_units : OM_MISSION_FORCE_ARRAY_MAX;
+    om_mission_state tmp = *st;
+    tmp.n_objectives = n_obj;
+    tmp.n_force_units = n_force;
+    return om_mis_serialize(&tmp, NULL);
+}
+
+static void om_mis_net_save_write(const om_world *w, uint8_t *out) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return;
+    om_mission_state tmp = *st;
+    if (tmp.n_objectives > OM_MISSION_MAX_OBJECTIVES) tmp.n_objectives = OM_MISSION_MAX_OBJECTIVES;
+    if (tmp.n_force_units > OM_MISSION_FORCE_ARRAY_MAX) tmp.n_force_units = OM_MISSION_FORCE_ARRAY_MAX;
+    om_mis_serialize(&tmp, out);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len;
+    uint32_t pos;
+    int ok;
+} om_mis_r;
+
+static uint64_t om_mis_r_uint(om_mis_r *r, uint32_t width) {
+    if (!r->ok || width > r->len - r->pos) {
+        r->ok = 0;
+        return 0;
+    }
+    uint64_t v = 0;
+    for (uint32_t i = 0; i < width; i++) v |= ((uint64_t)r->p[r->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    r->pos += width;
+    return v;
+}
+static uint32_t om_mis_r_u32(om_mis_r *r) { return (uint32_t)om_mis_r_uint(r, (uint32_t)sizeof(uint32_t)); }
+static uint64_t om_mis_r_u64(om_mis_r *r) { return om_mis_r_uint(r, (uint32_t)sizeof(uint64_t)); }
+static int32_t om_mis_r_i32(om_mis_r *r) { return (int32_t)om_mis_r_uint(r, (uint32_t)sizeof(int32_t)); }
+static double om_mis_r_f64(om_mis_r *r) {
+    uint64_t bits = om_mis_r_u64(r);
+    double v;
+    memcpy(&v, &bits, sizeof v);
+    return v;
+}
+static uint32_t om_mis_r_count(om_mis_r *r, uint32_t cap) {
+    uint32_t n = om_mis_r_u32(r);
+    if (n > cap) {
+        r->ok = 0;
+        return 0;
+    }
+    return n;
+}
+
+static int om_mis_net_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    om_mission_state *st = (om_mission_state *)calloc(1, sizeof(om_mission_state));
+    if (!st) return 1;
+    if (w->mission_state) memcpy(st, w->mission_state, sizeof *st); /* unsaved library caches */
+    om_mis_r r = {buf, len, 0, 1};
+    st->mission_region = om_mis_r_u32(&r);
+    st->mission_archetype = om_mis_r_u32(&r);
+    st->lineage_connection = om_mis_r_i32(&r);
+    st->mission_set = om_mis_r_i32(&r);
+    for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) st->player_units[k] = om_mis_r_u32(&r);
+    st->n_objectives = om_mis_r_count(&r, OM_MISSION_MAX_OBJECTIVES);
+    memset(st->objectives, 0, sizeof st->objectives);
+    for (uint32_t i = 0; i < st->n_objectives; i++) {
+        om_mission_objective *o = &st->objectives[i];
+        o->spec.id = om_mis_r_u32(&r);
+        o->spec.kind = om_mis_r_u32(&r);
+        o->spec.is_primary = om_mis_r_u32(&r);
+        o->spec.weight = om_mis_r_f64(&r);
+        o->spec.completion = om_mis_r_f64(&r);
+        o->spec.is_complete = om_mis_r_u32(&r);
+        o->spec.is_failed = om_mis_r_u32(&r);
+        o->hold_required_ticks = om_mis_r_u64(&r);
+        o->hold_elapsed_ticks = om_mis_r_u64(&r);
+        o->destroy_total = om_mis_r_u32(&r);
+        o->escort_total = om_mis_r_u32(&r);
+        o->survive_required_ticks = om_mis_r_u64(&r);
+        o->eliminate_initial_hp = om_mis_r_f64(&r);
+        o->used = om_mis_r_i32(&r);
+    }
+    st->term_primary_complete = om_mis_r_i32(&r);
+    st->term_primary_failed = om_mis_r_i32(&r);
+    st->term_tick = om_mis_r_u64(&r);
+    st->term_time_limit = om_mis_r_u64(&r);
+    st->term_player_alive = om_mis_r_i32(&r);
+    st->tactical_time_limit = om_mis_r_u64(&r);
+    st->tactical_baseline_tick = om_mis_r_u64(&r);
+    st->tactical_baseline_pending = om_mis_r_i32(&r);
+    st->tactical_ended = om_mis_r_i32(&r);
+    st->band = om_mis_r_i32(&r);
+    st->band_set = om_mis_r_i32(&r);
+    st->last_objective_score = om_mis_r_f64(&r);
+    st->last_retention = om_mis_r_f64(&r);
+    st->commander_fate = om_mis_r_i32(&r);
+    st->commander_fate_set = om_mis_r_i32(&r);
+    st->refused = om_mis_r_i32(&r);
+    st->end_applied = om_mis_r_i32(&r);
+    st->consequence_seen = om_mis_r_i32(&r);
+    for (int k = 0; k < OM_F_COUNT; k++) st->consequence_delta[k] = om_mis_r_f64(&r);
+    st->consequence_transferred = om_mis_r_i32(&r);
+    st->enemy_power = om_mis_r_f64(&r);
+    st->player_parity = om_mis_r_f64(&r);
+    for (int k = 0; k < OM_MISSION_MAX_OBJECTIVES; k++) {
+        st->objective_center[k].x = om_mis_r_f64(&r);
+        st->objective_center[k].y = om_mis_r_f64(&r);
+        st->objective_center_set[k] = om_mis_r_i32(&r);
+    }
+    for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) st->enemy_units[k] = om_mis_r_u32(&r);
+    st->n_force_units = om_mis_r_count(&r, OM_MISSION_FORCE_ARRAY_MAX);
+    memset(st->force_units, 0, sizeof st->force_units);
+    for (uint32_t i = 0; i < st->n_force_units; i++) {
+        st->force_units[i].unit_id = om_mis_r_u32(&r);
+        st->force_units[i].faction = om_mis_r_i32(&r);
+        st->force_units[i].type = om_mis_r_i32(&r);
+    }
+    st->commander_unit = om_mis_r_u32(&r);
+    st->fallback_pending = om_mis_r_i32(&r);
+    st->fallback_active = om_mis_r_i32(&r);
+    st->fallback_enemy = om_mis_r_i32(&r);
+    st->fallback_power = om_mis_r_f64(&r);
+    if (!r.ok || r.pos != r.len) {
+        free(st);
+        return 1;
+    }
+    if (w->mission_state && w->mission_state_free) w->mission_state_free(w->mission_state);
+    w->mission_state = st;
+    w->mission_state_free = om_mis_state_free;
+    return 0;
+}
+
 void om_mission_install_net_hooks(om_world *w) {
     w->net_section_hash[OM_MIS_NET_SECTION] = om_mis_net_hash;
+    w->mission_state_size = om_mis_net_save_size;
+    w->mission_state_write = om_mis_net_save_write;
+    w->mission_state_read = om_mis_net_save_read;
 }
