@@ -2767,6 +2767,92 @@ int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, doubl
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_MIS_NET_PRIME 1099511628211ULL
+#define OM_MIS_NET_SEED 14695981039346656037ULL
+#define OM_MIS_NET_MIX_SHIFT 29
+#define OM_MIS_NET_SECTION 5
+#define OM_MIS_NET_NULL 0x6d6973735f6e756cULL
+
+static uint64_t om_mis_h_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_MIS_NET_PRIME;
+    return h ^ (h >> OM_MIS_NET_MIX_SHIFT);
+}
+
+static uint64_t om_mis_h_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return om_mis_h_word(h, v);
+}
+
+static uint64_t om_mis_net_hash(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return OM_MIS_NET_NULL;
+    uint64_t h = OM_MIS_NET_SEED;
+    h = om_mis_h_word(h, st->mission_region);
+    h = om_mis_h_word(h, st->mission_archetype);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->lineage_connection);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->mission_set);
+    for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) h = om_mis_h_word(h, st->player_units[k]);
+    h = om_mis_h_word(h, st->n_objectives);
+    for (uint32_t i = 0; i < st->n_objectives && i < OM_MISSION_MAX_OBJECTIVES; i++) {
+        const om_mission_objective *o = &st->objectives[i];
+        h = om_mis_h_word(h, o->spec.id);
+        h = om_mis_h_word(h, o->spec.kind);
+        h = om_mis_h_word(h, o->spec.is_primary);
+        h = om_mis_h_dbl(h, o->spec.weight);
+        h = om_mis_h_dbl(h, o->spec.completion);
+        h = om_mis_h_word(h, o->spec.is_complete);
+        h = om_mis_h_word(h, o->spec.is_failed);
+        h = om_mis_h_word(h, o->hold_required_ticks);
+        h = om_mis_h_word(h, o->hold_elapsed_ticks);
+        h = om_mis_h_word(h, o->destroy_total);
+        h = om_mis_h_word(h, o->escort_total);
+        h = om_mis_h_word(h, o->survive_required_ticks);
+        h = om_mis_h_dbl(h, o->eliminate_initial_hp);
+        h = om_mis_h_word(h, (uint64_t)(int64_t)o->used);
+    }
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->term_primary_complete);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->term_primary_failed);
+    h = om_mis_h_word(h, st->term_tick);
+    h = om_mis_h_word(h, st->term_time_limit);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->term_player_alive);
+    h = om_mis_h_word(h, st->tactical_time_limit);
+    h = om_mis_h_word(h, st->tactical_baseline_tick);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->tactical_baseline_pending);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->tactical_ended);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->band);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->band_set);
+    h = om_mis_h_dbl(h, st->last_objective_score);
+    h = om_mis_h_dbl(h, st->last_retention);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->commander_fate);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->commander_fate_set);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->refused);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->end_applied);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->consequence_seen);
+    for (int k = 0; k < OM_F_COUNT; k++) h = om_mis_h_dbl(h, st->consequence_delta[k]);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->consequence_transferred);
+    h = om_mis_h_dbl(h, st->enemy_power);
+    h = om_mis_h_dbl(h, st->player_parity);
+    for (int k = 0; k < OM_MISSION_MAX_OBJECTIVES; k++) {
+        h = om_mis_h_dbl(h, st->objective_center[k].x);
+        h = om_mis_h_dbl(h, st->objective_center[k].y);
+        h = om_mis_h_word(h, (uint64_t)(int64_t)st->objective_center_set[k]);
+    }
+    for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) h = om_mis_h_word(h, st->enemy_units[k]);
+    h = om_mis_h_word(h, st->n_force_units);
+    for (uint32_t i = 0; i < st->n_force_units && i < OM_MISSION_FORCE_ARRAY_MAX; i++) {
+        h = om_mis_h_word(h, st->force_units[i].unit_id);
+        h = om_mis_h_word(h, (uint64_t)(int64_t)st->force_units[i].faction);
+        h = om_mis_h_word(h, (uint64_t)(int64_t)st->force_units[i].type);
+    }
+    h = om_mis_h_word(h, st->commander_unit);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->fallback_pending);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->fallback_active);
+    h = om_mis_h_word(h, (uint64_t)(int64_t)st->fallback_enemy);
+    h = om_mis_h_dbl(h, st->fallback_power);
+    return h;
+}
+
 void om_mission_install_net_hooks(om_world *w) {
-    (void)w;
+    w->net_section_hash[OM_MIS_NET_SECTION] = om_mis_net_hash;
 }
