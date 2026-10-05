@@ -13,6 +13,34 @@ Rules for this file:
 - File ownership stays in `plans/push/pieces.toml`. Open questions stay in `ambiguity_register.md`. Rulings stay in `plans/2026-10-01-architect-rulings-2.md`.
 - A cell marked "to confirm" was not checked against the owning chat when the row was written.
 
+## 0. Run a prototype
+
+Copy a command, paste it in a terminal, look, give feedback. Whoever builds or moves a prototype updates its row in the same commit. The scene path must come last.
+
+Two folders hold what can be viewed:
+
+- `~/Projects/om-push/wt/view-main`: current main, already imported. Refresh it before viewing anything new on main:
+  `cd ~/Projects/om-push/wt/view-main && git fetch -q origin && git checkout -q --detach origin/main && ~/.local/bin/godot.real --headless --path . --import`
+- `~/Projects/om-push/wt/proto-land-iter`: the land mockup's working copy (branch `push/proto-land-iter`), ahead of main.
+
+If a scene prints "Could not find type" errors, the folder has not been imported since new scripts arrived: run the refresh line (or the same `--import` in that folder).
+
+| Prototype | Command | State | Record (keys and open questions) |
+|---|---|---|---|
+| Land mockup, latest: the layout shapes the terrain | `cd ~/Projects/om-push/wt/proto-land-iter && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Pass 6b, 2026-10-04; paused, waiting for Westley's feedback | `research/landscape_design/README.md` on branch `push/proto-land-iter`, sections Pass 4 to Pass 6 |
+| Land mockup as on main | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Passes 4 and 5 | `research/landscape_design/README.md` |
+| Space kit (same scene: press the Kit button until it reads space) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/landscape/landscape_mockup.tscn` | Pass 6; parked (A207) | `research/space_landscape/README.md` |
+| Settlement mockup: a base that builds itself | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/settlement/settlement_mockup.tscn` | Pass 1, 2026-10-03; waiting for Westley's review | `research/settlement_mockup/README.md` |
+| Galaxy mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/galaxy/galaxy_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/galaxy/` |
+| Hud mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/hud/hud_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/hud/` |
+| Layers mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/layers/layers_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/layers/` |
+| Fog mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/fog/fog_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/fog/` |
+| Menus mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/menus/menus_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/menus/` |
+| Objectives mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/objectives/objectives_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/objectives/` |
+| Units mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/units/units_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/units/` |
+| Chronicle mockup (September mockup ladder) | `cd ~/Projects/om-push/wt/view-main && ~/.local/bin/godot.real --path . --display-driver x11 --rendering-driver opengl3 res://scenes/mockups/chronicle/chronicle_mockup.tscn` | Pass 2, 2026-09-22 | `scenes/mockups/chronicle/` |
+| Skill lab chart: Formation Read (a web page, not a scene) | open https://claude.ai/artifact/GcVZDf8481tppLwSHE6Bqz | 2026-10-04; private to Westley | `research/layer_dynamics/runs/README.md` |
+
 ## 1. Now building
 
 The movement and layers lanes stay paused (Westley, 2026-10-03). The same day he let the planner chat run integration work and prototypes in parallel while he is away; prototypes wait for his review.
@@ -48,14 +76,14 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 
 ### Prototypes ready for your eyes
 
-Built 2026-10-03 while you were away. Each record lists the keys to fly it and the questions for you. Run any land view with `godot --path . res://scenes/mockups/landscape/landscape_mockup.tscn`.
+Built 2026-10-03 while you were away. Each record lists the keys to fly it and the questions for you. The commands to run each one are in section 0.
 
 | Prototype | Record | What to judge |
 |---|---|---|
 | Land mockup pass 4: where walkers can go | `research/landscape_design/README.md` "Pass 4" and "Pass 4 sweep"; screenshots in `mockup/pass4/` | The too-steep view at 30 and 35 degrees, the (X) cursor, the band view, ramps. Finding: 42 to 85 percent of land is too steep and a walker reaches under 15 percent of it |
 | Land terrain options page | `research/landscape_design/options_2026-10-03_walkable_land.md` | DECIDED 2026-10-04: option A (layout first, terrain obeys); walking limit 35 degrees |
 | Land mockup pass 5: the layout leads, the terrain obeys | `research/landscape_design/README.md` "Pass 5"; screenshots in `mockup/pass5/` | The prototype asked for under Q-191-04. Finding: carving a layout into finished terrain leaves broken edges and wide cut routes, and the old assault layouts cannot meet the equal-distance rule for the objective. Six questions in the record |
-| Settlement mockup pass 1 | `research/settlement_mockup/README.md`; `godot --path . res://scenes/mockups/settlement/settlement_mockup.tscn` | Which events start a wave (Q-193-01), whether four lot stages is right (Q-193-02), whether one 300 wu route per direction is enough way through (Q-193-06) |
+| Settlement mockup pass 1 | `research/settlement_mockup/README.md` | Which events start a wave (Q-193-01), whether four lot stages is right (Q-193-02), whether one 300 wu route per direction is enough way through (Q-193-06) |
 
 Land mockup passes continue in a Sonnet chat working directly with Westley (`plans/briefs/2026-10-04-land-mockup-iteration-brief.md`, branch `push/proto-land-iter`); pass 6 fixes the cliff walls drawn on every contour and makes the layout shape the terrain as it is generated. View prototypes from `~/Projects/om-push/wt/view-main` (imported, kept at current main).
 
