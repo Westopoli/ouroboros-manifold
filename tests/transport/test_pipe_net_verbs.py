@@ -242,3 +242,67 @@ def test_state_get_put_equal_checksums_next_100_ticks():
             b.close()
     finally:
         a.close()
+
+
+# ---- reachability of om_checksum_section_name / om_checksum_first_diff (lane "cksum") ----
+# Architect ruling 2026-10-05: net_checksum gains "names"; net_state_diff {"state": hex}
+# loads the state into a scratch world and replies from om_checksum_first_diff(live, scratch).
+SECTION_NAMES = ["regions", "factions", "rng", "units", "movement", "mission",
+                 "fog", "macro", "support and map"]
+
+
+def _diff(s, hexstate):
+    return s.pp.send("net_state_diff", state=hexstate)
+
+
+def _state_at_tick_10(s):
+    s.step(10)
+    st = s.pp.send("net_state_get")
+    assert st["type"] == "net_state", st
+    return st["hex"]
+
+
+def test_net_checksum_reply_names_the_nine_sections(sess):
+    sess.step(10)
+    c = sess.pp.send("net_checksum")
+    assert c.get("names") == SECTION_NAMES, c
+
+
+def test_state_diff_same_tick_is_equal(sess):
+    hx = _state_at_tick_10(sess)
+    d = _diff(sess, hx)
+    assert d == {"type": "net_ack", "name": "net_state_diff", "equal": True,
+                 "section": -1, "section_name": "", "unit": 0}, d
+
+
+def test_state_diff_after_moves_names_a_section(sess):
+    hx = _state_at_tick_10(sess)
+    assert sess.submit(tick=12)["code"] == 0
+    sess.step(20)
+    d = _diff(sess, hx)
+    assert d["type"] == "net_ack" and d["name"] == "net_state_diff", d
+    assert d["equal"] is False, d
+    assert 0 <= d["section"] < 9 and d["section_name"] == SECTION_NAMES[d["section"]], d
+    assert isinstance(d["unit"], int), d
+
+
+def test_state_diff_leaves_live_world_unchanged(sess):
+    hx = _state_at_tick_10(sess)
+    sess.submit(tick=12)
+    sess.step(20, checksum=True)
+    before = sess.pp.send("net_checksum")
+    d = _diff(sess, hx)
+    assert d.get("type") == "net_ack" and d.get("equal") is False, d
+    after = sess.pp.send("net_checksum")
+    assert after["checksum"] == before["checksum"] and after["sections"] == before["sections"], (before, after)
+    b = sess.step(10, checksum=True)
+    assert b["tick"] == 40, b
+
+
+def test_state_diff_garbage_hex_refused(sess):
+    hx = _state_at_tick_10(sess)
+    assert _diff(sess, hx).get("equal") is True  # the verb exists and takes a good state
+    for bad in ("zz", "0a0", "0a0b0c"):
+        r = _diff(sess, bad)
+        assert r["type"] == "error", (bad, r)
+    assert sess.pp.send("net_checksum")["type"] == "net_ack"
