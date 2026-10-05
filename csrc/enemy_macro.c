@@ -1113,6 +1113,108 @@ const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1) {
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_MACRO_CK_PRIME 1099511628211ULL
+#define OM_MACRO_CK_SEED 14695981039346656037ULL
+#define OM_MACRO_CK_MIX_SHIFT 29
+#define OM_MACRO_NET_SECTION 7 /* section order in om_internal.h */
+#define OM_MACRO_CK_NULL 0x6d61u /* fixed hash of an absent macro state */
+
+static uint64_t macro_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_MACRO_CK_PRIME;
+    return h ^ (h >> OM_MACRO_CK_MIX_SHIFT);
+}
+
+static uint64_t macro_ck_int(uint64_t h, int v) {
+    return macro_ck_word(h, (uint64_t)(int64_t)v);
+}
+
+static uint64_t macro_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return macro_ck_word(h, v);
+}
+
+static uint64_t macro_ck_str(uint64_t h, const char *s, size_t cap) {
+    size_t n = 0;
+    while (n < cap && s[n]) n++;
+    h = macro_ck_word(h, (uint64_t)n);
+    for (size_t i = 0; i < n; i++) h = macro_ck_word(h, (uint64_t)(unsigned char)s[i]);
+    return h;
+}
+
+static uint64_t macro_ck_force(uint64_t h, const om_macro_force *f) {
+    h = macro_ck_int(h, f->behavior);
+    h = macro_ck_int(h, f->modifier);
+    h = macro_ck_int(h, f->hidden);
+    h = macro_ck_int(h, f->ambush_triggered);
+    h = macro_ck_int(h, f->hook_true);
+    h = macro_ck_int(h, f->base_transition_true);
+    h = macro_ck_int(h, f->last_issued_command_type);
+    h = macro_ck_int(h, f->objective_entered);
+    h = macro_ck_int(h, f->faction_id);
+    h = macro_ck_dbl(h, f->hp_pct);
+    h = macro_ck_int(h, f->hp_pct_set);
+    h = macro_ck_dbl(h, f->hp_sum_start);
+    h = macro_ck_int(h, f->hp_sum_start_set);
+    h = macro_ck_dbl(h, f->threshold_noise);
+    h = macro_ck_int(h, f->threshold_noise_drawn);
+    h = macro_ck_dbl(h, f->timer_noise);
+    h = macro_ck_int(h, f->timer_noise_drawn);
+    h = macro_ck_word(h, f->phased_subgroups);
+    h = macro_ck_int(h, f->phased_subgroups_drawn);
+    h = macro_ck_int(h, f->faction_id_set);
+    h = macro_ck_int(h, f->has_contact);
+    h = macro_ck_dbl(h, f->hp_sum_last_eval);
+    h = macro_ck_int(h, f->hp_sum_last_eval_set);
+    h = macro_ck_dbl(h, f->fallback_x);
+    h = macro_ck_dbl(h, f->fallback_y);
+    h = macro_ck_int(h, f->fallback_set);
+    h = macro_ck_int(h, f->last_order_valid);
+    h = macro_ck_int(h, f->last_order_behavior);
+    h = macro_ck_dbl(h, f->last_order_x);
+    h = macro_ck_dbl(h, f->last_order_y);
+    h = macro_ck_word(h, f->last_order_n);
+    h = macro_ck_int(h, f->patrol_anchor_set);
+    h = macro_ck_dbl(h, f->patrol_anchor_x);
+    h = macro_ck_dbl(h, f->patrol_anchor_y);
+    return macro_ck_word(h, f->patrol_idx);
+}
+
+static uint64_t om_macro_section_hash(const om_world *w) {
+    const om_macro_state *st = (const om_macro_state *)w->macro_state;
+    uint64_t h = OM_MACRO_CK_SEED;
+    uint32_t i, n;
+    if (!st) return OM_MACRO_CK_NULL;
+    n = st->n_forces < OM_MACRO_MAX_FORCES ? st->n_forces : OM_MACRO_MAX_FORCES;
+    h = macro_ck_word(h, n);
+    for (i = 0; i < n; i++) h = macro_ck_force(h, &st->forces[i]);
+    n = st->n_bus_flags < OM_MACRO_MAX_BUS_FLAGS ? st->n_bus_flags : OM_MACRO_MAX_BUS_FLAGS;
+    h = macro_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = macro_ck_str(h, st->bus_flags[i].name, OM_MACRO_BUS_NAME_CAP);
+        h = macro_ck_int(h, st->bus_flags[i].value);
+        h = macro_ck_int(h, st->bus_flags[i].in_use);
+    }
+    n = st->n_hook_binds < OM_MACRO_MAX_HOOK_BINDS ? st->n_hook_binds : OM_MACRO_MAX_HOOK_BINDS;
+    h = macro_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = macro_ck_word(h, st->hook_binds[i].force_id);
+        h = macro_ck_str(h, st->hook_binds[i].name, OM_MACRO_BUS_NAME_CAP);
+    }
+    h = macro_ck_word(h, st->last_tick_evaluated);
+    h = macro_ck_word(h, st->prev_clock);
+    h = macro_ck_int(h, st->has_evaluated);
+    h = macro_ck_word(h, st->wave.is_scheduled);
+    h = macro_ck_word(h, st->wave.direction);
+    h = macro_ck_word(h, st->wave.arrival_tick);
+    h = macro_ck_word(h, st->wave.is_spawned);
+    h = macro_ck_int(h, st->wave_set);
+    h = macro_ck_int(h, st->reinforcement_spawned);
+    h = macro_ck_dbl(h, st->spawn_x);
+    h = macro_ck_dbl(h, st->spawn_y);
+    return h;
+}
+
 void om_macro_install_net_hooks(om_world *w) {
-    (void)w;
+    w->net_section_hash[OM_MACRO_NET_SECTION] = om_macro_section_hash;
 }
