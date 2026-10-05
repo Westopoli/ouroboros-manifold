@@ -161,7 +161,7 @@ def trace_suite():
         r = empty("make build/O0 build/O2", rc, round(time.time() - t0, 1))
         r.update(status="fail", failed=1, failing_ids=["build"])
         return r
-    args = ["--seed", "1", "--regions", "60", "--ticks", "500", "--features", "6"]
+    args = ["--seed", "1", "--ticks", "1500"]  # same as merge_gate.sh stage 10b
     with tempfile.TemporaryDirectory() as tmp:
         outs = []
         for o in ("O0", "O2"):
