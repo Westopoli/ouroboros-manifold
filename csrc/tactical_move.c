@@ -3122,6 +3122,26 @@ static uint64_t mv_dbl(uint64_t h, double d) {
     memcpy(&v, &d, sizeof v);
     return mv_word(h, v);
 }
+/* A row still in the state om_move_touch gives a new row hashes as an absent one: reads such as om_unit_get_pos
+ * create rows lazily, and a read must never change the checksum. Mirrors every field om_move_touch initialises.
+ * See also: om_move_touch */
+static int mv_row_is_fresh(const om_world *cw, const om_move_unit *mu) {
+    om_world *w = (om_world *)cw; /* the position and speed getters only read */
+    uint32_t f;
+    double x = om_unit_position_x(w, mu->unit_id), y = om_unit_position_y(w, mu->unit_id);
+    if (mu->x != x || mu->y != y) return 0;
+    if (mu->pushed_x != x || mu->pushed_y != y || mu->prev_x != x || mu->prev_y != y) return 0;
+    if (mu->deflect_origin_x != x || mu->deflect_origin_y != y) return 0;
+    if (mu->facing != 0.0 || mu->prev_facing != 0.0 || mu->has_dest || mu->dest_x != 0.0 || mu->dest_y != 0.0) return 0;
+    if (mu->direct_move || mu->group_id || mu->speed_cap != 0.0 || mu->engaged || mu->kiting || mu->kite_target) return 0;
+    if (mu->order_kind != -1 || mu->routed || mu->deflecting || mu->deflect_heading != 0.0 || mu->waiting) return 0;
+    if (mu->native_speed != om_unit_effective_speed(w, mu->unit_id)) return 0;
+    for (f = 0; f < OM_MAX_FACTIONS; f++) if (!mu->visible[f]) return 0;
+    return !mu->giveup_near && !mu->detour_remaining && !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
+           !mu->plan_epoch && !mu->plan_dest_x && !mu->plan_dest_y && !mu->aim_x && !mu->aim_y &&
+           !mu->aim_is_waypoint && !mu->lay_state && !mu->lay_has_pend && !mu->lay_route && !mu->transit &&
+           !mu->lay_to && !mu->lay_pend && !mu->lay_t && !mu->lay_dur && !mu->transit_home;
+}
 static uint64_t om_move_section_hash(const om_world *w) {
     const om_move_state *ms = (const om_move_state *)w->move_state;
     uint64_t h = OM_MV_SEED;
@@ -3132,8 +3152,9 @@ static uint64_t om_move_section_hash(const om_world *w) {
     for (id = 1; id <= nu; id++) {
         const om_move_unit *mu = &ms->units[id];
         uint64_t bits = 0;
-        h = mv_word(h, (uint64_t)(int64_t)mu->in_use);
-        if (!mu->in_use) continue;
+        int live = mu->in_use && !mv_row_is_fresh(w, mu);
+        h = mv_word(h, (uint64_t)(int64_t)live);
+        if (!live) continue;
         h = mv_word(h, mu->unit_id);
         h = mv_dbl(h, mu->x); h = mv_dbl(h, mu->y);
         h = mv_dbl(h, mu->pushed_x); h = mv_dbl(h, mu->pushed_y);
