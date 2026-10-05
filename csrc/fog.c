@@ -925,6 +925,92 @@ int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_pin
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_FOG_CK_PRIME 1099511628211ULL
+#define OM_FOG_CK_SEED 14695981039346656037ULL
+#define OM_FOG_CK_MIX_SHIFT 29
+#define OM_FOG_NET_SECTION 6 /* section order in om_internal.h */
+#define OM_FOG_CK_NULL 0x6f67u /* fixed hash of an absent fog state */
+
+static uint64_t fog_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_FOG_CK_PRIME;
+    return h ^ (h >> OM_FOG_CK_MIX_SHIFT);
+}
+
+static uint64_t fog_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return fog_ck_word(h, v);
+}
+
+static uint64_t fog_ck_str(uint64_t h, const char *s, size_t cap) {
+    size_t n = 0;
+    while (n < cap && s[n]) n++;
+    h = fog_ck_word(h, (uint64_t)n);
+    for (size_t i = 0; i < n; i++) h = fog_ck_word(h, (uint64_t)(unsigned char)s[i]);
+    return h;
+}
+
+static uint64_t om_fog_section_hash(const om_world *w) {
+    const om_fog_state *st = om_fog_ro(w);
+    uint64_t h = OM_FOG_CK_SEED;
+    uint32_t i, n;
+    if (!st) return OM_FOG_CK_NULL;
+    n = st->n_zones < OM_FOG_MAX_ZONES ? st->n_zones : OM_FOG_MAX_ZONES;
+    h = fog_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        const om_fog_zone *z = &st->zones[i];
+        h = fog_ck_dbl(h, z->x); h = fog_ck_dbl(h, z->y);
+        h = fog_ck_word(h, z->layer);
+        h = fog_ck_dbl(h, z->intensity); h = fog_ck_dbl(h, z->radius);
+        h = fog_ck_word(h, (uint64_t)(int64_t)z->moving);
+        h = fog_ck_dbl(h, z->vx); h = fog_ck_dbl(h, z->vy);
+        h = fog_ck_word(h, z->start_tick);
+    }
+    n = st->n_vantage < OM_FOG_MAX_VANTAGE ? st->n_vantage : OM_FOG_MAX_VANTAGE;
+    h = fog_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = fog_ck_dbl(h, st->vantage[i].x); h = fog_ck_dbl(h, st->vantage[i].y);
+        h = fog_ck_dbl(h, st->vantage[i].radius);
+    }
+    h = fog_ck_word(h, st->next_feature_id);
+    n = st->n_units < OM_FOG_MAX_TRACKED_UNITS ? st->n_units : OM_FOG_MAX_TRACKED_UNITS;
+    h = fog_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = fog_ck_word(h, st->units[i].unit_id);
+        h = fog_ck_word(h, (uint64_t)(int64_t)st->units[i].elevation_tier);
+    }
+    n = st->n_era_flags < OM_FOG_MAX_ERA_FLAGS ? st->n_era_flags : OM_FOG_MAX_ERA_FLAGS;
+    h = fog_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = fog_ck_str(h, st->era_flags[i].name, OM_FOG_ERA_FLAG_NAME_LEN);
+        h = fog_ck_word(h, (uint64_t)(int64_t)st->era_flags[i].on);
+    }
+    h = fog_ck_str(h, st->era_name, OM_FOG_ERA_NAME_LEN);
+    h = fog_ck_word(h, (uint64_t)(int64_t)st->mission_phase);
+    h = fog_ck_word(h, (uint64_t)(int64_t)st->mission_started);
+    h = fog_ck_word(h, st->mission_begin_base_tick);
+    h = fog_ck_word(h, (uint64_t)(int64_t)st->player_fog_on);
+    h = fog_ck_word(h, (uint64_t)(int64_t)st->player_fog_on_set);
+    for (i = 0; i <= OM_MAX_UNITS; i++) h = fog_ck_word(h, st->ping_cast_plus1[i]);
+    n = st->n_reveals < OM_FOG_MAX_REVEALS ? st->n_reveals : OM_FOG_MAX_REVEALS;
+    h = fog_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        const om_fog_ping_reveal *r = &st->reveals[i];
+        h = fog_ck_word(h, (uint64_t)(int64_t)r->faction);
+        h = fog_ck_word(h, r->layer);
+        h = fog_ck_dbl(h, r->x); h = fog_ck_dbl(h, r->y); h = fog_ck_dbl(h, r->radius);
+        h = fog_ck_word(h, r->until);
+    }
+    n = st->n_alerts < OM_FOG_MAX_ALERTS ? st->n_alerts : OM_FOG_MAX_ALERTS;
+    h = fog_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = fog_ck_word(h, st->alerts[i].tick);
+        h = fog_ck_word(h, (uint64_t)(int64_t)st->alerts[i].faction);
+        h = fog_ck_word(h, (uint64_t)(int64_t)st->alerts[i].sector);
+    }
+    return h;
+}
+
 void om_fog_install_net_hooks(om_world *w) {
-    (void)w;
+    w->net_section_hash[OM_FOG_NET_SECTION] = om_fog_section_hash;
 }
