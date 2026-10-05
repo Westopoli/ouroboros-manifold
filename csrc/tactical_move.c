@@ -496,6 +496,7 @@ static const double OM_STEERING_SWEEP_ANGLES[OM_STEERING_SWEEP_COUNT] = {
     OM_STEERING_SWEEP_DELTA_RAD_6X, -OM_STEERING_SWEEP_DELTA_RAD_6X,
 };
 
+static void om_move_set_save_hooks(om_world *w);
 static om_move_state *om_ms(om_world *w) {
     om_move_state *ms = (om_move_state *)w->move_state;
     if (!ms) {
@@ -508,6 +509,7 @@ static om_move_state *om_ms(om_world *w) {
         om_pp_load_defaults(ms->param);
         w->move_state = ms;
         w->move_state_free = om_move_state_free_fn;
+        om_move_set_save_hooks(w);
     }
     return ms;
 }
@@ -3204,6 +3206,249 @@ static uint64_t om_move_section_hash(const om_world *w) {
     }
     return h;
 }
+typedef struct {
+    uint8_t *out;
+    uint32_t pos;
+} mv_sw;
+static void mv_put(mv_sw *s, uint64_t v, uint32_t width) {
+    uint32_t i;
+    if (s->out) {
+        for (i = 0; i < width; i++) s->out[s->pos + i] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+    }
+    s->pos += width;
+}
+static void mv_put_u32(mv_sw *s, uint32_t v) { mv_put(s, v, sizeof v); }
+static void mv_put_i32(mv_sw *s, int32_t v) { mv_put(s, (uint32_t)v, sizeof v); }
+static void mv_put_u64(mv_sw *s, uint64_t v) { mv_put(s, v, sizeof v); }
+static void mv_put_f64(mv_sw *s, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    mv_put_u64(s, v);
+}
+static uint32_t mv_unit_count(const om_move_state *ms) {
+    return ms->discovery_max < OM_MOVE_MAX_UNITS - 1 ? ms->discovery_max : OM_MOVE_MAX_UNITS - 1;
+}
+static void mv_save_all(const om_move_state *ms, mv_sw *s) {
+    uint32_t id, k, nu = mv_unit_count(ms);
+    mv_put_u32(s, ms->discovery_max);
+    for (id = 1; id <= nu; id++) {
+        const om_move_unit *mu = &ms->units[id];
+        mv_put_i32(s, mu->in_use);
+        if (!mu->in_use) continue;
+        mv_put_u32(s, mu->unit_id);
+        mv_put_f64(s, mu->x); mv_put_f64(s, mu->y);
+        mv_put_f64(s, mu->pushed_x); mv_put_f64(s, mu->pushed_y);
+        mv_put_f64(s, mu->facing);
+        mv_put_f64(s, mu->prev_x); mv_put_f64(s, mu->prev_y); mv_put_f64(s, mu->prev_facing);
+        mv_put_i32(s, mu->has_dest);
+        mv_put_u32(s, mu->giveup_near);
+        mv_put_f64(s, mu->dest_x); mv_put_f64(s, mu->dest_y);
+        mv_put_i32(s, mu->direct_move);
+        mv_put_u32(s, mu->group_id);
+        mv_put_f64(s, mu->speed_cap);
+        mv_put_i32(s, mu->engaged);
+        mv_put_i32(s, mu->kiting);
+        mv_put_u32(s, mu->kite_target);
+        mv_put_i32(s, mu->order_kind);
+        mv_put_f64(s, mu->native_speed);
+        mv_put_i32(s, mu->deflecting);
+        mv_put_f64(s, mu->deflect_heading);
+        mv_put_f64(s, mu->deflect_origin_x); mv_put_f64(s, mu->deflect_origin_y);
+        mv_put_i32(s, mu->waiting);
+        mv_put_f64(s, mu->detour_remaining); mv_put_f64(s, mu->detour_dx); mv_put_f64(s, mu->detour_dy);
+        for (k = 0; k < OM_MAX_FACTIONS; k++) mv_put_i32(s, mu->visible[k]);
+        mv_put_i32(s, mu->plan_valid);
+        mv_put_u32(s, mu->plan_epoch);
+        mv_put_f64(s, mu->plan_dest_x); mv_put_f64(s, mu->plan_dest_y);
+        mv_put_f64(s, mu->aim_x); mv_put_f64(s, mu->aim_y);
+        mv_put_i32(s, mu->aim_is_waypoint);
+        mv_put_i32(s, mu->routed);
+        mv_put_i32(s, mu->lay_state);
+        mv_put_i32(s, mu->lay_has_pend);
+        mv_put_i32(s, mu->lay_route);
+        mv_put_i32(s, mu->transit);
+        mv_put_u32(s, mu->lay_to); mv_put_u32(s, mu->lay_pend);
+        mv_put_u32(s, mu->lay_t); mv_put_u32(s, mu->lay_dur);
+        mv_put_u32(s, mu->transit_home);
+    }
+    mv_put_u32(s, ms->n_groups);
+    mv_put_u32(s, ms->next_group_id);
+    for (k = 0; k < ms->n_groups && k < OM_MOVE_MAX_GROUPS; k++) {
+        const om_move_group *g = &ms->groups[k];
+        mv_put_i32(s, g->active);
+        mv_put_u32(s, g->id); mv_put_u32(s, g->first_member); mv_put_u32(s, g->n_members);
+        mv_put_f64(s, g->click_x); mv_put_f64(s, g->click_y); mv_put_f64(s, g->speed_cap);
+    }
+    mv_put_u32(s, ms->n_group_members);
+    for (k = 0; k < ms->n_group_members && k < OM_MOVE_MAX_GROUP_MEMBERS; k++) mv_put_u32(s, ms->group_members[k]);
+    mv_put_u64(s, ms->last_synced_tick);
+    mv_put_u32(s, ms->period_seen);
+    mv_put_u32(s, ms->terrain_epoch);
+    mv_put_u32(s, ms->n_queue);
+    for (k = 0; k < ms->n_queue && k < OM_MOVE_MAX_QUEUE; k++) {
+        const om_move_queue_entry *q = &ms->queue[k];
+        mv_put_i32(s, q->in_use);
+        mv_put_u64(s, q->tick);
+        mv_put_i32(s, q->kind);
+        mv_put_u32(s, q->unit_id);
+        mv_put_f64(s, q->x); mv_put_f64(s, q->y);
+    }
+    mv_put_f64(s, ms->canvas_w); mv_put_f64(s, ms->canvas_h);
+    for (k = 0; k < OM_TP__COUNT; k++) mv_put_f64(s, ms->param[k]);
+    mv_put_i32(s, ms->lay_any);
+    mv_put_u32(s, ms->reach_n);
+    for (k = 0; k < ms->reach_n && k < OM_PP_REACH_MAX; k++) {
+        mv_put_i32(s, ms->reach_type[k]);
+        mv_put_u32(s, ms->reach_up[k]);
+        mv_put_u32(s, ms->reach_down[k]);
+    }
+}
+static uint32_t om_move_save_size(const om_world *w) {
+    const om_move_state *ms = (const om_move_state *)w->move_state;
+    mv_sw s = { NULL, 0 };
+    if (!ms) return 0;
+    mv_save_all(ms, &s);
+    return s.pos;
+}
+static void om_move_save_write(const om_world *w, uint8_t *out) {
+    const om_move_state *ms = (const om_move_state *)w->move_state;
+    mv_sw s = { out, 0 };
+    if (ms) mv_save_all(ms, &s);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len, pos;
+    int ok;
+} mv_sr;
+static uint64_t mv_get(mv_sr *r, uint32_t width) {
+    uint64_t v = 0;
+    uint32_t i;
+    if (!r->ok || width > r->len - r->pos) {
+        r->ok = 0;
+        return 0;
+    }
+    for (i = 0; i < width; i++) v |= ((uint64_t)r->p[r->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    r->pos += width;
+    return v;
+}
+static uint32_t mv_get_u32(mv_sr *r) { return (uint32_t)mv_get(r, sizeof(uint32_t)); }
+static int32_t mv_get_i32(mv_sr *r) { return (int32_t)mv_get(r, sizeof(int32_t)); }
+static uint64_t mv_get_u64(mv_sr *r) { return mv_get(r, sizeof(uint64_t)); }
+static double mv_get_f64(mv_sr *r) {
+    uint64_t bits = mv_get_u64(r);
+    double v;
+    memcpy(&v, &bits, sizeof v);
+    return v;
+}
+static uint32_t mv_get_count(mv_sr *r, uint32_t cap) {
+    uint32_t n = mv_get_u32(r);
+    if (n > cap) {
+        r->ok = 0;
+        return 0;
+    }
+    return n;
+}
+static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    mv_sr r;
+    om_move_state *ms;
+    uint32_t id, k, nu;
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    r.p = buf; r.len = len; r.pos = 0; r.ok = 1;
+    ms = (om_move_state *)calloc(1, sizeof(om_move_state));
+    if (!ms) return 1;
+    for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
+        om_move_sincos_approx(OM_STEERING_SWEEP_ANGLES[k], &ms->sweep_sin[k], &ms->sweep_cos[k]);
+    }
+    ms->discovery_max = mv_get_count(&r, OM_MOVE_MAX_UNITS - 1);
+    nu = ms->discovery_max;
+    for (id = 1; id <= nu && r.ok; id++) {
+        om_move_unit *mu = &ms->units[id];
+        mu->in_use = mv_get_i32(&r);
+        if (!mu->in_use) continue;
+        mu->unit_id = mv_get_u32(&r);
+        mu->x = mv_get_f64(&r); mu->y = mv_get_f64(&r);
+        mu->pushed_x = mv_get_f64(&r); mu->pushed_y = mv_get_f64(&r);
+        mu->facing = mv_get_f64(&r);
+        mu->prev_x = mv_get_f64(&r); mu->prev_y = mv_get_f64(&r); mu->prev_facing = mv_get_f64(&r);
+        mu->has_dest = mv_get_i32(&r);
+        mu->giveup_near = mv_get_u32(&r);
+        mu->dest_x = mv_get_f64(&r); mu->dest_y = mv_get_f64(&r);
+        mu->direct_move = mv_get_i32(&r);
+        mu->group_id = mv_get_u32(&r);
+        mu->speed_cap = mv_get_f64(&r);
+        mu->engaged = mv_get_i32(&r);
+        mu->kiting = mv_get_i32(&r);
+        mu->kite_target = mv_get_u32(&r);
+        mu->order_kind = mv_get_i32(&r);
+        mu->native_speed = mv_get_f64(&r);
+        mu->deflecting = mv_get_i32(&r);
+        mu->deflect_heading = mv_get_f64(&r);
+        mu->deflect_origin_x = mv_get_f64(&r); mu->deflect_origin_y = mv_get_f64(&r);
+        mu->waiting = mv_get_i32(&r);
+        mu->detour_remaining = mv_get_f64(&r); mu->detour_dx = mv_get_f64(&r); mu->detour_dy = mv_get_f64(&r);
+        for (k = 0; k < OM_MAX_FACTIONS; k++) mu->visible[k] = mv_get_i32(&r);
+        mu->plan_valid = mv_get_i32(&r);
+        mu->plan_epoch = mv_get_u32(&r);
+        mu->plan_dest_x = mv_get_f64(&r); mu->plan_dest_y = mv_get_f64(&r);
+        mu->aim_x = mv_get_f64(&r); mu->aim_y = mv_get_f64(&r);
+        mu->aim_is_waypoint = mv_get_i32(&r);
+        mu->routed = mv_get_i32(&r);
+        mu->lay_state = mv_get_i32(&r);
+        mu->lay_has_pend = mv_get_i32(&r);
+        mu->lay_route = mv_get_i32(&r);
+        mu->transit = mv_get_i32(&r);
+        mu->lay_to = mv_get_u32(&r); mu->lay_pend = mv_get_u32(&r);
+        mu->lay_t = mv_get_u32(&r); mu->lay_dur = mv_get_u32(&r);
+        mu->transit_home = mv_get_u32(&r);
+    }
+    ms->n_groups = mv_get_count(&r, OM_MOVE_MAX_GROUPS);
+    ms->next_group_id = mv_get_u32(&r);
+    for (k = 0; k < ms->n_groups && r.ok; k++) {
+        om_move_group *g = &ms->groups[k];
+        g->active = mv_get_i32(&r);
+        g->id = mv_get_u32(&r); g->first_member = mv_get_u32(&r); g->n_members = mv_get_u32(&r);
+        g->click_x = mv_get_f64(&r); g->click_y = mv_get_f64(&r); g->speed_cap = mv_get_f64(&r);
+    }
+    ms->n_group_members = mv_get_count(&r, OM_MOVE_MAX_GROUP_MEMBERS);
+    for (k = 0; k < ms->n_group_members && r.ok; k++) ms->group_members[k] = mv_get_u32(&r);
+    ms->last_synced_tick = mv_get_u64(&r);
+    ms->period_seen = mv_get_u32(&r);
+    ms->terrain_epoch = mv_get_u32(&r);
+    ms->n_queue = mv_get_count(&r, OM_MOVE_MAX_QUEUE);
+    for (k = 0; k < ms->n_queue && r.ok; k++) {
+        om_move_queue_entry *q = &ms->queue[k];
+        q->in_use = mv_get_i32(&r);
+        q->tick = mv_get_u64(&r);
+        q->kind = mv_get_i32(&r);
+        q->unit_id = mv_get_u32(&r);
+        q->x = mv_get_f64(&r); q->y = mv_get_f64(&r);
+    }
+    ms->canvas_w = mv_get_f64(&r); ms->canvas_h = mv_get_f64(&r);
+    for (k = 0; k < OM_TP__COUNT; k++) ms->param[k] = mv_get_f64(&r);
+    ms->lay_any = mv_get_i32(&r);
+    ms->reach_n = mv_get_count(&r, OM_PP_REACH_MAX);
+    for (k = 0; k < ms->reach_n && r.ok; k++) {
+        ms->reach_type[k] = mv_get_i32(&r);
+        ms->reach_up[k] = mv_get_u32(&r);
+        ms->reach_down[k] = mv_get_u32(&r);
+    }
+    if (!r.ok || r.pos != len) {
+        free(ms);
+        return 1;
+    }
+    if (w->move_state && w->move_state_free) w->move_state_free(w->move_state);
+    w->move_state = ms;
+    w->move_state_free = om_move_state_free_fn;
+    return 0;
+}
+static void om_move_set_save_hooks(om_world *w) {
+    w->move_state_size = om_move_save_size;
+    w->move_state_write = om_move_save_write;
+    w->move_state_read = om_move_save_read;
+}
 void om_move_install_net_hooks(om_world *w) {
     w->net_section_hash[OM_MV_SECTION] = om_move_section_hash;
+    om_move_set_save_hooks(w);
 }
