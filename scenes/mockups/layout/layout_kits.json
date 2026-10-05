@@ -1,0 +1,85 @@
+{
+  "note": "Layout prototype pass 1. All figures are drafts (Q-191-05). Ranges are [min, max]. Choice text takes {placeholders} filled from the drawn numbers.",
+  "walk_speed": 180,
+  "tolerances": {"equal_distance": 0.10, "bypass_min": 1.5, "meander_max": 1.6},
+  "kinds": {
+    "home": {
+      "label": "Home ground", "job": "A side's base and safe economy",
+      "variants": [
+        {"id": "basin", "skins": ["Basin", "Hollow"], "choice": "Safe ground: walls {wall} bands high; all traffic leaves by the gate.", "numbers": {"radius": [1400, 2000], "wall": [2, 3]}},
+        {"id": "plateau", "skins": ["Plateau", "Mesa"], "choice": "Safe ground on a plateau {wall} bands up; the gate is the only stair.", "numbers": {"radius": [1600, 2400], "wall": [2, 3]}},
+        {"id": "bend", "skins": ["Bend", "Meander"], "choice": "Safe ground in a river bend; the river is {wall} bands of cover on three sides.", "numbers": {"radius": [1500, 2200], "wall": [1, 2]}}
+      ]
+    },
+    "gate": {
+      "label": "Gate", "job": "The way out of home ground",
+      "variants": [
+        {"id": "wide", "skins": ["Mouth", "Throat"], "mouths": 1, "choice": "One {width} wu mouth: easy to leave, easy to be seen leaving.", "numbers": {"width": [900, 1400]}},
+        {"id": "twin", "skins": ["Doors", "Gates"], "mouths": 2, "choice": "Two {width} wu mouths: split out, or hold both with one force.", "numbers": {"width": [350, 600]}},
+        {"id": "ridge", "skins": ["Under-Ridge", "Shadow"], "mouths": 1, "overlook": true, "choice": "A {width} wu mouth under a ridge: whoever holds the ridge sees every exit.", "numbers": {"width": [500, 800]}}
+      ]
+    },
+    "crossing": {
+      "label": "Crossing", "job": "Through or around",
+      "variants": [
+        {"id": "choke", "skins": ["Ford", "Pass", "Canyon", "Gate"], "choice": "Hold here: about {fire} can fire at once; the way round is {extra} s longer.", "numbers": {"width": [300, 700], "bypass": [1.5, 2.4]}},
+        {"id": "double", "skins": ["Narrows", "Twin Pass"], "twin": true, "choice": "Two chokes, one half-hidden: watch both or lose the second; the way round is {extra} s longer.", "numbers": {"width": [300, 600], "bypass": [1.6, 2.2]}}
+      ]
+    },
+    "heights": {
+      "label": "Heights", "job": "Climb or stay low",
+      "variants": [
+        {"id": "ridge", "skins": ["Ridge", "Crest"], "choice": "Climb: {band} bands up it looks down the road; two ways up, one {extra} s longer.", "numbers": {"band": [1, 3], "climb": [200, 320]}},
+        {"id": "stair", "skins": ["Stair", "Terrace"], "strongpoint": true, "choice": "Hold the stair: a strongpoint {band} bands up covers the road below.", "numbers": {"band": [1, 2], "climb": [220, 350]}},
+        {"id": "hill", "skins": ["Hill", "Knoll"], "choice": "A hill overlooking the crossing: take it before the crossing, or be shot crossing.", "numbers": {"band": [1, 2], "climb": [250, 400]}}
+      ]
+    },
+    "prize": {
+      "label": "Prize", "job": "A resource worth leaving the main line for",
+      "variants": [
+        {"id": "pocket", "skins": ["Pocket", "Cove"], "choice": "A dead-end pocket {spur} s off the road: take it and commit.", "numbers": {"width": [400, 700], "spur": [1500, 2600]}},
+        {"id": "backdoor", "skins": ["Vault", "Mine"], "backdoor": true, "choice": "A pocket with a back door: hold the front and the raid still comes round.", "numbers": {"width": [350, 600], "spur": [1500, 2600]}},
+        {"id": "raid", "skins": ["Orchard", "Quarry"], "choice": "Open ground {spur} s off a raid lane: cheap to take, cheap to lose.", "numbers": {"width": [700, 1100], "spur": [1200, 2200]}}
+      ]
+    },
+    "commons": {
+      "label": "Commons", "job": "Open contested ground where formation decides",
+      "variants": [
+        {"id": "plain", "skins": ["Plain", "Steppe"], "choice": "Open plain {width} wu wide: formation and numbers decide.", "numbers": {"width": [1800, 3000]}},
+        {"id": "broken", "skins": ["Thicket", "Ruins"], "choice": "Plain broken by tall cover: fight from behind it or flank around it.", "numbers": {"width": [1500, 2400]}},
+        {"id": "settlement", "skins": ["Hamlet", "Market"], "choice": "A neutral settlement on open ground: whoever holds it feeds there.", "numbers": {"width": [1600, 2600]}}
+      ]
+    },
+    "objective": {
+      "label": "Objective ground", "job": "Where the objective sits or travels",
+      "variants": [
+        {"id": "keep", "skins": ["Keep", "Citadel"], "choice": "The objective with {approaches} approaches: one is hidden, so watch them all.", "numbers": {"width": [600, 1000]}},
+        {"id": "crossing", "skins": ["Span", "Causeway"], "choice": "The objective on an open crossing: strong to hold, hard to reinforce.", "numbers": {"width": [800, 1300]}},
+        {"id": "walkway", "skins": ["Convoy"], "moving": true, "choice": "The objective is on the move: be where it will be, not where it is.", "numbers": {"width": [500, 900]}}
+      ]
+    },
+    "hidden": {
+      "label": "Hidden approach", "job": "A second way in, out of sight of the first",
+      "variants": [
+        {"id": "gully", "skins": ["Gully", "Sap"], "choice": "A {width} wu way in, out of sight of the main road: watch it or be flanked.", "numbers": {"width": [300, 500]}}
+      ]
+    }
+  },
+  "recipes": {
+    "defensive_stand": {
+      "title": "Defensive Stand", "canvas": 32000, "objective": "defender", "objective_side": 0,
+      "budget": {"crossing": 2, "heights": 2, "prize": 1, "commons": 1, "hidden": 1},
+      "required": ["crossing", "heights", "prize", "hidden"]
+    },
+    "assault": {
+      "title": "Assault", "canvas": 48000, "objective": "defender", "objective_side": 1,
+      "budget": {"crossing": 3, "heights": 3, "prize": 1, "commons": 2, "hidden": 1},
+      "required": ["crossing", "heights", "prize", "hidden"]
+    },
+    "interception": {
+      "title": "Interception", "canvas": 32000, "objective": "route", "objective_side": -1,
+      "budget": {"crossing": 2, "heights": 1, "prize": 1, "commons": 2, "hidden": 0},
+      "required": ["crossing", "heights", "prize", "commons"]
+    }
+  }
+}
