@@ -1240,6 +1240,7 @@ owns = [
     "tests/test_lockstep_session.gd",
     "tests/transport/test_pipe_net_verbs.py",
     "scripts/integration_check.sh",
+    "scripts/integration_check.py",
     "docs/northstar/regression.md",
     "docs/northstar/spec_factory/transport/command.schema.json",
     "scenes/load_game/load_game.gd",
