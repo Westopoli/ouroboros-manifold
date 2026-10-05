@@ -184,6 +184,10 @@ typedef struct {
     uint8_t                 blocked_bits[(OM_LAYER_COUNT * OM_MAPGEN_GRID_SIDE * OM_MAPGEN_GRID_SIDE + OM_MAPGEN_BIT_MASK) / OM_MAPGEN_BITS_PER_BYTE];
 } om_mapgen_state;
 
+static uint32_t om_mg_net_size(const om_world *w);
+static void om_mg_net_write(const om_world *w, uint8_t *out);
+static int om_mg_net_read(om_world *w, const uint8_t *buf, uint32_t len);
+
 static void om_mapgen_state_free(void *p) {
     om_mapgen_state *st = (om_mapgen_state *)p;
     if (st) { free(st->obs_start); free(st->obs_ids); }
@@ -200,6 +204,9 @@ static om_mapgen_state *om_mgs(om_world *w) {
         st = (om_mapgen_state *)calloc(1, sizeof(om_mapgen_state));
         w->mapgen_state = st;
         w->mapgen_state_free = om_mapgen_state_free;
+        w->mapgen_state_size = om_mg_net_size;
+        w->mapgen_state_write = om_mg_net_write;
+        w->mapgen_state_read = om_mg_net_read;
     }
     return st;
 }
@@ -939,4 +946,170 @@ void om_mapgen_install_net_hooks(om_world *w) {
     uint64_t (*cur)(const om_world *) = w->net_section_hash[OM_NET_SECTION_COUNT - 1];
     if (cur != om_mg_net_section_hash) om_mg_net_support_hash = cur;
     w->net_section_hash[OM_NET_SECTION_COUNT - 1] = om_mg_net_section_hash;
+    w->mapgen_state_size = om_mg_net_size;
+    w->mapgen_state_write = om_mg_net_write;
+    w->mapgen_state_read = om_mg_net_read;
+}
+
+typedef struct {
+    uint8_t *p;
+    uint32_t pos;
+} om_mg_sw;
+
+static void om_mg_sw_uint(om_mg_sw *sw, uint64_t v, uint32_t width) {
+    for (uint32_t i = 0; i < width; i++) sw->p[sw->pos++] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+}
+static void om_mg_sw_u32(om_mg_sw *sw, uint32_t v) { om_mg_sw_uint(sw, v, sizeof v); }
+static void om_mg_sw_i32(om_mg_sw *sw, int32_t v) { om_mg_sw_uint(sw, (uint32_t)v, sizeof v); }
+static void om_mg_sw_f64(om_mg_sw *sw, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    om_mg_sw_uint(sw, v, sizeof v);
+}
+
+#define OM_MG_NET_F64 sizeof(double)
+#define OM_MG_NET_I32 sizeof(int32_t)
+#define OM_MG_NET_COVER_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_F64)
+#define OM_MG_NET_OBSTACLE_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_F64)
+#define OM_MG_NET_NODE_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_I32 + OM_MG_NET_I32)
+#define OM_MG_NET_STRUCTURE_ROW (OM_MG_NET_F64 + OM_MG_NET_F64 + OM_MG_NET_I32)
+#define OM_MG_NET_FIXED (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t) + OM_MG_NET_F64 + OM_MG_NET_F64)
+
+static uint32_t om_mg_net_size(const om_world *w) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st) return 0;
+    return (uint32_t)(OM_MG_NET_FIXED
+        + st->n_cover * OM_MG_NET_COVER_ROW
+        + st->n_obstacles * OM_MG_NET_OBSTACLE_ROW
+        + st->n_nodes * OM_MG_NET_NODE_ROW
+        + st->n_structures * OM_MG_NET_STRUCTURE_ROW
+        + sizeof st->blocked_bits);
+}
+
+static void om_mg_net_write(const om_world *w, uint8_t *out) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    om_mg_sw sw = { out, 0 };
+    if (!st) return;
+    om_mg_sw_u32(&sw, st->n_cover);
+    for (uint32_t i = 0; i < st->n_cover; i++) {
+        om_mg_sw_f64(&sw, st->cover[i].x);
+        om_mg_sw_f64(&sw, st->cover[i].y);
+        om_mg_sw_f64(&sw, st->cover[i].radius);
+        om_mg_sw_f64(&sw, st->cover[i].height);
+    }
+    om_mg_sw_u32(&sw, st->n_obstacles);
+    for (uint32_t i = 0; i < st->n_obstacles; i++) {
+        om_mg_sw_f64(&sw, st->obstacles[i].x);
+        om_mg_sw_f64(&sw, st->obstacles[i].y);
+        om_mg_sw_f64(&sw, st->obstacles[i].radius);
+    }
+    om_mg_sw_u32(&sw, st->n_nodes);
+    for (uint32_t i = 0; i < st->n_nodes; i++) {
+        om_mg_sw_f64(&sw, st->nodes[i].x);
+        om_mg_sw_f64(&sw, st->nodes[i].y);
+        om_mg_sw_i32(&sw, st->nodes[i].type);
+        om_mg_sw_i32(&sw, st->nodes[i].faction);
+    }
+    om_mg_sw_u32(&sw, st->n_structures);
+    for (uint32_t i = 0; i < st->n_structures; i++) {
+        om_mg_sw_f64(&sw, st->structures[i].x);
+        om_mg_sw_f64(&sw, st->structures[i].y);
+        om_mg_sw_i32(&sw, st->structures[i].owner_faction);
+    }
+    sw.p[sw.pos++] = (uint8_t)(st->has_canvas != 0);
+    om_mg_sw_f64(&sw, st->canvas_w);
+    om_mg_sw_f64(&sw, st->canvas_h);
+    memcpy(sw.p + sw.pos, st->blocked_bits, sizeof st->blocked_bits);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len;
+    uint32_t pos;
+    int ok;
+} om_mg_sr;
+
+static uint64_t om_mg_sr_uint(om_mg_sr *sr, uint32_t width) {
+    uint64_t v = 0;
+    if (!sr->ok || width > sr->len - sr->pos) {
+        sr->ok = 0;
+        return 0;
+    }
+    for (uint32_t i = 0; i < width; i++) v |= ((uint64_t)sr->p[sr->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    sr->pos += width;
+    return v;
+}
+static uint32_t om_mg_sr_u32(om_mg_sr *sr) { return (uint32_t)om_mg_sr_uint(sr, sizeof(uint32_t)); }
+static int32_t om_mg_sr_i32(om_mg_sr *sr) { return (int32_t)om_mg_sr_uint(sr, sizeof(int32_t)); }
+static double om_mg_sr_f64(om_mg_sr *sr) {
+    uint64_t bits = om_mg_sr_uint(sr, sizeof(uint64_t));
+    double v;
+    memcpy(&v, &bits, sizeof v);
+    return v;
+}
+static uint32_t om_mg_sr_count(om_mg_sr *sr, uint32_t cap) {
+    uint32_t n = om_mg_sr_u32(sr);
+    if (n > cap) {
+        sr->ok = 0;
+        return 0;
+    }
+    return n;
+}
+
+static int om_mg_net_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    om_mg_sr sr = { buf, len, 0, 1 };
+    om_mapgen_state *st;
+    if (len == 0) return 0;
+    st = (om_mapgen_state *)calloc(1, sizeof(om_mapgen_state));
+    if (!st) return 1;
+    st->n_cover = om_mg_sr_count(&sr, OM_MAPGEN_MAX_COVER);
+    for (uint32_t i = 0; i < st->n_cover && sr.ok; i++) {
+        st->cover[i].x = om_mg_sr_f64(&sr);
+        st->cover[i].y = om_mg_sr_f64(&sr);
+        st->cover[i].radius = om_mg_sr_f64(&sr);
+        st->cover[i].height = om_mg_sr_f64(&sr);
+    }
+    st->n_obstacles = om_mg_sr_count(&sr, OM_MAPGEN_MAX_OBSTACLES);
+    for (uint32_t i = 0; i < st->n_obstacles && sr.ok; i++) {
+        st->obstacles[i].x = om_mg_sr_f64(&sr);
+        st->obstacles[i].y = om_mg_sr_f64(&sr);
+        st->obstacles[i].radius = om_mg_sr_f64(&sr);
+    }
+    st->n_nodes = om_mg_sr_count(&sr, OM_MAPGEN_MAX_NODES);
+    for (uint32_t i = 0; i < st->n_nodes && sr.ok; i++) {
+        st->nodes[i].x = om_mg_sr_f64(&sr);
+        st->nodes[i].y = om_mg_sr_f64(&sr);
+        st->nodes[i].type = om_mg_sr_i32(&sr);
+        st->nodes[i].faction = om_mg_sr_i32(&sr);
+    }
+    st->n_structures = om_mg_sr_count(&sr, OM_MAPGEN_MAX_STRUCTURES);
+    for (uint32_t i = 0; i < st->n_structures && sr.ok; i++) {
+        st->structures[i].x = om_mg_sr_f64(&sr);
+        st->structures[i].y = om_mg_sr_f64(&sr);
+        st->structures[i].owner_faction = om_mg_sr_i32(&sr);
+    }
+    {
+        uint64_t hc = om_mg_sr_uint(&sr, sizeof(uint8_t));
+        if (hc > 1) sr.ok = 0;
+        st->has_canvas = (int)hc;
+    }
+    st->canvas_w = om_mg_sr_f64(&sr);
+    st->canvas_h = om_mg_sr_f64(&sr);
+    if (sr.ok && sizeof st->blocked_bits == len - sr.pos) {
+        memcpy(st->blocked_bits, sr.p + sr.pos, sizeof st->blocked_bits);
+        sr.pos += (uint32_t)sizeof st->blocked_bits;
+    } else {
+        sr.ok = 0;
+    }
+    if (!sr.ok || sr.pos != len) {
+        free(st);
+        return 1;
+    }
+    st->obs_dirty = 1;
+    w->mapgen_state = st;
+    w->mapgen_state_free = om_mapgen_state_free;
+    w->mapgen_state_size = om_mg_net_size;
+    w->mapgen_state_write = om_mg_net_write;
+    w->mapgen_state_read = om_mg_net_read;
+    return 0;
 }
