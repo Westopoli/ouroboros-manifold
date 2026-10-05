@@ -871,6 +871,72 @@ int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, u
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_MG_NET_PRIME 1099511628211ULL
+#define OM_MG_NET_SEED 14695981039346656037ULL
+#define OM_MG_NET_MIX_SHIFT 29
+#define OM_MG_NET_NULL_STATE 0x6d61706e756c6cULL
+
+/* Section 8 is shared with support: support installs first, so its hash is kept
+ * here (a function pointer, identical for every world) and mixed in below. */
+static uint64_t (*om_mg_net_support_hash)(const om_world *w);
+
+static uint64_t om_mg_net_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_MG_NET_PRIME;
+    return h ^ (h >> OM_MG_NET_MIX_SHIFT);
+}
+
+static uint64_t om_mg_net_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return om_mg_net_word(h, v);
+}
+
+static uint64_t om_mg_net_map_hash(const om_world *w) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st) return OM_MG_NET_NULL_STATE;
+    uint64_t h = OM_MG_NET_SEED;
+    h = om_mg_net_word(h, st->n_cover);
+    for (uint32_t i = 0; i < st->n_cover && i < OM_MAPGEN_MAX_COVER; i++) {
+        h = om_mg_net_dbl(h, st->cover[i].x);
+        h = om_mg_net_dbl(h, st->cover[i].y);
+        h = om_mg_net_dbl(h, st->cover[i].radius);
+        h = om_mg_net_dbl(h, st->cover[i].height);
+    }
+    h = om_mg_net_word(h, st->n_obstacles);
+    for (uint32_t i = 0; i < st->n_obstacles && i < OM_MAPGEN_MAX_OBSTACLES; i++) {
+        h = om_mg_net_dbl(h, st->obstacles[i].x);
+        h = om_mg_net_dbl(h, st->obstacles[i].y);
+        h = om_mg_net_dbl(h, st->obstacles[i].radius);
+    }
+    h = om_mg_net_word(h, st->n_nodes);
+    for (uint32_t i = 0; i < st->n_nodes && i < OM_MAPGEN_MAX_NODES; i++) {
+        h = om_mg_net_dbl(h, st->nodes[i].x);
+        h = om_mg_net_dbl(h, st->nodes[i].y);
+        h = om_mg_net_word(h, (uint64_t)(int64_t)st->nodes[i].type);
+        h = om_mg_net_word(h, (uint64_t)(int64_t)st->nodes[i].faction);
+    }
+    h = om_mg_net_word(h, st->n_structures);
+    for (uint32_t i = 0; i < st->n_structures && i < OM_MAPGEN_MAX_STRUCTURES; i++) {
+        h = om_mg_net_dbl(h, st->structures[i].x);
+        h = om_mg_net_dbl(h, st->structures[i].y);
+        h = om_mg_net_word(h, (uint64_t)(int64_t)st->structures[i].owner_faction);
+    }
+    h = om_mg_net_word(h, (uint64_t)(int64_t)st->has_canvas);
+    h = om_mg_net_dbl(h, st->canvas_w);
+    h = om_mg_net_dbl(h, st->canvas_h);
+    for (size_t i = 0; i < sizeof st->blocked_bits; i++)
+        h = om_mg_net_word(h, st->blocked_bits[i]);
+    return h;
+}
+
+static uint64_t om_mg_net_section_hash(const om_world *w) {
+    uint64_t h = OM_MG_NET_SEED;
+    h = om_mg_net_word(h, om_mg_net_support_hash ? om_mg_net_support_hash(w) : 0);
+    return om_mg_net_word(h, om_mg_net_map_hash(w));
+}
+
 void om_mapgen_install_net_hooks(om_world *w) {
-    (void)w;
+    uint64_t (*cur)(const om_world *) = w->net_section_hash[OM_NET_SECTION_COUNT - 1];
+    if (cur != om_mg_net_section_hash) om_mg_net_support_hash = cur;
+    w->net_section_hash[OM_NET_SECTION_COUNT - 1] = om_mg_net_section_hash;
 }
