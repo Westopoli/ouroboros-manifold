@@ -31,6 +31,7 @@ BATTLE_TICKS = 600
 def _battle(lib, world_factory, seed=7):
     """A real battle: two squads closing on each other, plus one structure."""
     w = tactical_world(lib, world_factory, seed=seed)
+    lib.om_mission_build_objectives(w, 0)  # DEFENSIVE_STAND; gives the mission an objective
     ids = [lib.om_unit_spawn(w, RAIDER, ENEMY_FAC, 8000.0 + 40.0 * i, 8300.0, 0) for i in range(3)]
     ids += [lib.om_unit_spawn(w, RAIDER, PLAYER_FAC, 8000.0 + 40.0 * i, 7700.0, 0) for i in range(3)]
     st = lib.om_map_add_structure(w, 9000.0, 8000.0, ENEMY_FAC)
