@@ -3105,6 +3105,105 @@ int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_MV_PRIME 1099511628211ULL
+#define OM_MV_SEED  14695981039346656037ULL
+#define OM_MV_MIX_SHIFT 29
+#define OM_MV_SECTION 4
+#define OM_MV_WORD_BITS 64
+#define OM_MV_NULL  0x6d6f76652d6e756cULL
+static uint64_t mv_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_MV_PRIME;
+    return h ^ (h >> OM_MV_MIX_SHIFT);
+}
+static uint64_t mv_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return mv_word(h, v);
+}
+static uint64_t om_move_section_hash(const om_world *w) {
+    const om_move_state *ms = (const om_move_state *)w->move_state;
+    uint64_t h = OM_MV_SEED;
+    uint32_t id, k, nu;
+    if (!ms) return OM_MV_NULL;
+    nu = ms->discovery_max < OM_MOVE_MAX_UNITS - 1 ? ms->discovery_max : OM_MOVE_MAX_UNITS - 1;
+    h = mv_word(h, ms->discovery_max);
+    for (id = 1; id <= nu; id++) {
+        const om_move_unit *mu = &ms->units[id];
+        uint64_t bits = 0;
+        h = mv_word(h, (uint64_t)(int64_t)mu->in_use);
+        if (!mu->in_use) continue;
+        h = mv_word(h, mu->unit_id);
+        h = mv_dbl(h, mu->x); h = mv_dbl(h, mu->y);
+        h = mv_dbl(h, mu->pushed_x); h = mv_dbl(h, mu->pushed_y);
+        h = mv_dbl(h, mu->facing);
+        h = mv_dbl(h, mu->prev_x); h = mv_dbl(h, mu->prev_y); h = mv_dbl(h, mu->prev_facing);
+        h = mv_word(h, (uint64_t)(int64_t)mu->has_dest);
+        h = mv_word(h, mu->giveup_near);
+        h = mv_dbl(h, mu->dest_x); h = mv_dbl(h, mu->dest_y);
+        h = mv_word(h, (uint64_t)(int64_t)mu->direct_move);
+        h = mv_word(h, mu->group_id);
+        h = mv_dbl(h, mu->speed_cap);
+        h = mv_word(h, (uint64_t)(int64_t)mu->engaged);
+        h = mv_word(h, (uint64_t)(int64_t)mu->kiting);
+        h = mv_word(h, mu->kite_target);
+        h = mv_word(h, (uint64_t)(int64_t)mu->order_kind);
+        h = mv_dbl(h, mu->native_speed);
+        h = mv_word(h, (uint64_t)(int64_t)mu->deflecting);
+        h = mv_dbl(h, mu->deflect_heading);
+        h = mv_dbl(h, mu->deflect_origin_x); h = mv_dbl(h, mu->deflect_origin_y);
+        h = mv_word(h, (uint64_t)(int64_t)mu->waiting);
+        h = mv_dbl(h, mu->detour_remaining); h = mv_dbl(h, mu->detour_dx); h = mv_dbl(h, mu->detour_dy);
+        for (k = 0; k < OM_MAX_FACTIONS; k++) {
+            if (mu->visible[k]) bits |= 1ULL << (k % OM_MV_WORD_BITS);
+        }
+        h = mv_word(h, bits);
+        h = mv_word(h, (uint64_t)(int64_t)mu->plan_valid);
+        h = mv_word(h, mu->plan_epoch);
+        h = mv_dbl(h, mu->plan_dest_x); h = mv_dbl(h, mu->plan_dest_y);
+        h = mv_dbl(h, mu->aim_x); h = mv_dbl(h, mu->aim_y);
+        h = mv_word(h, (uint64_t)(int64_t)mu->aim_is_waypoint);
+        h = mv_word(h, (uint64_t)(int64_t)mu->routed);
+        h = mv_word(h, (uint64_t)(int64_t)mu->lay_state);
+        h = mv_word(h, (uint64_t)(int64_t)mu->lay_has_pend);
+        h = mv_word(h, (uint64_t)(int64_t)mu->lay_route);
+        h = mv_word(h, (uint64_t)(int64_t)mu->transit);
+        h = mv_word(h, mu->lay_to); h = mv_word(h, mu->lay_pend);
+        h = mv_word(h, mu->lay_t); h = mv_word(h, mu->lay_dur);
+        h = mv_word(h, mu->transit_home);
+    }
+    h = mv_word(h, ms->n_groups);
+    h = mv_word(h, ms->next_group_id);
+    for (k = 0; k < ms->n_groups && k < OM_MOVE_MAX_GROUPS; k++) {
+        const om_move_group *g = &ms->groups[k];
+        h = mv_word(h, (uint64_t)(int64_t)g->active);
+        h = mv_word(h, g->id); h = mv_word(h, g->first_member); h = mv_word(h, g->n_members);
+        h = mv_dbl(h, g->click_x); h = mv_dbl(h, g->click_y); h = mv_dbl(h, g->speed_cap);
+    }
+    h = mv_word(h, ms->n_group_members);
+    for (k = 0; k < ms->n_group_members && k < OM_MOVE_MAX_GROUP_MEMBERS; k++) h = mv_word(h, ms->group_members[k]);
+    h = mv_word(h, ms->last_synced_tick);
+    h = mv_word(h, ms->period_seen);
+    h = mv_word(h, ms->terrain_epoch);
+    h = mv_word(h, ms->n_queue);
+    for (k = 0; k < ms->n_queue && k < OM_MOVE_MAX_QUEUE; k++) {
+        const om_move_queue_entry *q = &ms->queue[k];
+        h = mv_word(h, (uint64_t)(int64_t)q->in_use);
+        h = mv_word(h, q->tick);
+        h = mv_word(h, (uint64_t)(int64_t)q->kind);
+        h = mv_word(h, q->unit_id);
+        h = mv_dbl(h, q->x); h = mv_dbl(h, q->y);
+    }
+    h = mv_dbl(h, ms->canvas_w); h = mv_dbl(h, ms->canvas_h);
+    for (k = 0; k < OM_TP__COUNT; k++) h = mv_dbl(h, ms->param[k]);
+    h = mv_word(h, (uint64_t)(int64_t)ms->lay_any);
+    h = mv_word(h, ms->reach_n);
+    for (k = 0; k < ms->reach_n && k < OM_PP_REACH_MAX; k++) {
+        h = mv_word(h, (uint64_t)(int64_t)ms->reach_type[k]);
+        h = mv_word(h, ms->reach_up[k]);
+        h = mv_word(h, ms->reach_down[k]);
+    }
+    return h;
+}
 void om_move_install_net_hooks(om_world *w) {
-    (void)w;
+    w->net_section_hash[OM_MV_SECTION] = om_move_section_hash;
 }
