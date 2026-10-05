@@ -199,11 +199,13 @@ def test_R_139_03_unit_hp_changes_only_section_3_and_first_diff_names_unit(lib, 
     assert (sec.value, uid.value) == (3, ids_b[2])
 
 
-@needs_module_hooks
 def test_R_139_03_move_order_changes_section_4(lib, world_factory):
     wa, ids_a = _battle_world(lib, world_factory, 7)
     wb, ids_b = _battle_world(lib, world_factory, 7)
     _, sa = _full(lib, wa)
-    lib.om_unit_order_move(wb, ids_b[3], 9000.0, 5000.0)
+    # a group move reaches the movement module; om_unit_order_move only writes the
+    # support module's order record (section 8)
+    arr = (ctypes.c_uint32 * 3)(*ids_b[3:])
+    lib.om_command_group_move(wb, arr, 3, 9000.0, 5000.0)
     _, sb = _full(lib, wb)
     assert 4 in _diff_sections(sa, sb)
