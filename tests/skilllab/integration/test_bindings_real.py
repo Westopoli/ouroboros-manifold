@@ -69,10 +69,11 @@ def test_2_wrong_layer_reveals_nothing(lib, world):
     _need(lib, "ping", "visible_enemies")
     w = world
     caster, enemy = _scene(lib, w)
+    # the control must be on the named layer inside the radius AT THE CAST (a ping reveals only those)
+    other = lib.spawn(w, SUPPLY, 1, 1500.0, 100.0, HIGH - 1)
     assert lib.ping(w, caster, HIGH - 1, 1500.0, 0.0) == 0, "control: the call itself is accepted"
     _steps(lib, w, 1)
     assert lib.visible_enemies(w, 0, [enemy]) == set()
-    other = lib.spawn(w, SUPPLY, 1, 1500.0, 100.0, HIGH - 1)
     assert lib.visible_enemies(w, 0, [other]) == {other}, "control: the named layer is revealed"
 
 
@@ -97,7 +98,8 @@ def test_4_reveal_ends_after_the_reveal_time(lib, world):
     assert lib.ping(w, caster, HIGH, 1500.0, 0.0) == 0
     _steps(lib, w, 1)
     assert lib.visible_enemies(w, 0, [enemy]) == {enemy}, "control: revealed while the ping is live"
-    _steps(lib, w, REVEAL + 2)
+    reveal = int(lib.get_param(w, lib.param_id("OM_TP_PING_REVEAL_TICKS")))
+    _steps(lib, w, reveal + 2)
     assert lib.visible_enemies(w, 0, [enemy]) == set()
 
 
