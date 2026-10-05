@@ -1092,6 +1092,99 @@ void om_mission_check_extraction_objectives(om_world *w) {
 }
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_SUP_CK_SEED  14695981039346656037ULL
+#define OM_SUP_CK_PRIME 1099511628211ULL
+#define OM_SUP_CK_SHIFT 29
+#define OM_SUP_CK_SECTION 8
+#define OM_SUP_CK_NULL  0x5355505F4E554C4CULL
+
+static uint64_t sup_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_SUP_CK_PRIME;
+    return h ^ (h >> OM_SUP_CK_SHIFT);
+}
+
+static uint64_t sup_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return sup_ck_word(h, v);
+}
+
+static uint64_t sup_ck_vec(uint64_t h, om_vec2 v) {
+    return sup_ck_dbl(sup_ck_dbl(h, v.x), v.y);
+}
+
+/* Section 8 (support half). The base gives no shared registration for the map
+ * half, so this hook hashes support only; mapgen's install owns the slot after it. */
+static uint64_t om_support_section_hash(const om_world *w) {
+    const om_sup_state *st = (const om_sup_state *)w->support_state;
+    uint64_t h = OM_SUP_CK_SEED;
+    uint32_t i, k;
+    if (!st) return OM_SUP_CK_NULL;
+    for (i = 0; i <= OM_SUP_MAX_STRUCTURES; i++) {
+        const om_sup_structure *s = &st->structures[i];
+        h = sup_ck_word(h, (uint64_t)s->in_use);
+        if (!s->in_use) continue;
+        h = sup_ck_word(h, (uint64_t)(int64_t)s->owner);
+        h = sup_ck_word(h, (uint64_t)s->destroyed);
+        h = sup_ck_dbl(h, s->hp);
+        h = sup_ck_dbl(h, s->power);
+        h = sup_ck_word(h, s->unit_type);
+        h = sup_ck_word(h, s->timer);
+        h = sup_ck_word(h, (uint64_t)s->prod_accruing);
+        h = sup_ck_word(h, s->prod_last_base);
+        h = sup_ck_dbl(h, s->capture_progress);
+        h = sup_ck_word(h, (uint64_t)s->capture_accruing);
+        h = sup_ck_word(h, s->capture_last_base);
+        h = sup_ck_word(h, (uint64_t)s->capture_driven);
+        h = sup_ck_word(h, s->capture_driven_base);
+        h = sup_ck_word(h, (uint64_t)(int64_t)s->capturing_faction);
+        h = sup_ck_word(h, (uint64_t)s->contested);
+        h = sup_ck_dbl(h, s->x);
+        h = sup_ck_dbl(h, s->y);
+        h = sup_ck_dbl(h, s->last_spawn_distance);
+        h = sup_ck_dbl(h, s->last_spawn_x);
+        h = sup_ck_dbl(h, s->last_spawn_y);
+        h = sup_ck_word(h, s->pending_spawns);
+        h = sup_ck_word(h, (uint64_t)s->drifting);
+        h = sup_ck_word(h, s->drift_period);
+        h = sup_ck_vec(h, s->drift_wp[0]);
+        h = sup_ck_vec(h, s->drift_wp[1]);
+    }
+    for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
+        const om_sup_objective *o = &st->objectives[i];
+        h = sup_ck_word(h, (uint64_t)o->in_use);
+        if (!o->in_use) continue;
+        h = sup_ck_word(h, (uint64_t)o->drifting);
+        h = sup_ck_word(h, o->drift_period);
+        h = sup_ck_vec(h, o->drift_wp[0]);
+        h = sup_ck_vec(h, o->drift_wp[1]);
+    }
+    h = sup_ck_word(h, st->n_hazards);
+    for (i = 0; i < st->n_hazards && i < OM_SUP_MAX_HAZARDS; i++) {
+        const om_sup_hazard *z = &st->hazards[i];
+        h = sup_ck_word(h, (uint64_t)z->in_use);
+        h = sup_ck_vec(h, z->src);
+        h = sup_ck_vec(h, z->dst);
+        h = sup_ck_word(h, z->travel_ticks);
+    }
+    h = sup_ck_word(h, st->n_unit_ext);
+    for (k = 0; k < st->n_unit_ext && k < OM_SUP_MAX_UNIT_EXT; k++) {
+        const om_sup_unit_ext *u = &st->unit_ext[k];
+        h = sup_ck_word(h, (uint64_t)u->in_use);
+        h = sup_ck_word(h, u->unit_id);
+        h = sup_ck_word(h, (uint64_t)u->nc_kind);
+        h = sup_ck_dbl(h, u->last_hp);
+        h = sup_ck_word(h, (uint64_t)u->has_order);
+        h = sup_ck_vec(h, u->order_dest);
+        h = sup_ck_word(h, (uint64_t)u->extracted);
+    }
+    h = sup_ck_vec(h, st->extraction_point);
+    h = sup_ck_dbl(h, st->extraction_radius);
+    h = sup_ck_word(h, (uint64_t)st->extraction_set);
+    h = sup_ck_word(h, st->held_structures_count);
+    return h;
+}
+
 void om_support_install_net_hooks(om_world *w) {
-    (void)w;
+    w->net_section_hash[OM_SUP_CK_SECTION] = om_support_section_hash;
 }
