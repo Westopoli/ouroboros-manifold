@@ -119,13 +119,6 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->net_unit_hashes = NULL;
     w->net_state = NULL;
     w->net_state_free = NULL;
-    om_unit_install_net_hooks(w);
-    om_move_install_net_hooks(w);
-    om_macro_install_net_hooks(w);
-    om_fog_install_net_hooks(w);
-    om_support_install_net_hooks(w);
-    om_mission_install_net_hooks(w);
-    om_mapgen_install_net_hooks(w);
     w->mission_state = NULL;
     w->mission_state_free = NULL;
     w->mission_state_size = NULL;
@@ -162,6 +155,13 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->mapgen_state_size = NULL;
     w->mapgen_state_write = NULL;
     w->mapgen_state_read = NULL;
+    om_unit_install_net_hooks(w);
+    om_move_install_net_hooks(w);
+    om_macro_install_net_hooks(w);
+    om_fog_install_net_hooks(w);
+    om_support_install_net_hooks(w);
+    om_mission_install_net_hooks(w);
+    om_mapgen_install_net_hooks(w);
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes
      * faction_stance_counter/faction_cooperative_since (0 = never-counted /
