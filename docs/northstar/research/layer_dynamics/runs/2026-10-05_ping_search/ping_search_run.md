@@ -212,6 +212,68 @@ Vanguard sight 700 wu; 60 placements per setting and policy; 36 settings; polici
 | reactive | 0.39 | 0.39 |
 | none | 0.00 | 0.00 |
 
+## Why not found (runs where the seeker never found the hider before contact; start distance is the hider's at the start, against ping reach)
+
+| policy | hider layer | start distance | runs | not found | ended at the cap, no contact, no find | ended in contact, no earlier find |
+|---|---|---|---|---|---|---|
+| ahead | same layer | within reach | 72 | 60 | 0 | 60 |
+| ahead | same layer | beyond reach | 288 | 210 | 107 | 103 |
+| ahead | other layer | within reach | 480 | 480 | 312 | 168 |
+| ahead | other layer | beyond reach | 1320 | 1320 | 1056 | 264 |
+| sweep | same layer | within reach | 72 | 54 | 0 | 54 |
+| sweep | same layer | beyond reach | 288 | 166 | 93 | 73 |
+| sweep | other layer | within reach | 480 | 134 | 106 | 28 |
+| sweep | other layer | beyond reach | 1320 | 965 | 828 | 137 |
+| reactive | same layer | within reach | 72 | 54 | 0 | 54 |
+| reactive | same layer | beyond reach | 288 | 166 | 93 | 73 |
+| reactive | other layer | within reach | 480 | 134 | 106 | 28 |
+| reactive | other layer | beyond reach | 1320 | 965 | 828 | 137 |
+| none | same layer | within reach | 72 | 72 | 0 | 72 |
+| none | same layer | beyond reach | 288 | 288 | 144 | 144 |
+| none | other layer | within reach | 480 | 480 | 312 | 168 |
+| none | other layer | beyond reach | 1320 | 1320 | 1056 | 264 |
+
+## Reactive against sweep (found rates are equal by construction)
+
+| setting | sweep: mean picture age (ticks) | reactive: mean picture age (ticks) | sweep: pings per find | reactive: pings per find |
+|---|---|---|---|---|
+| reach 1050, radius 250, cooldown 100 | 812 | 751 | 594.8 | 163.8 |
+| reach 1050, radius 250, cooldown 200 | 1047 | 956 | 458.1 | 202.3 |
+| reach 1050, radius 250, cooldown 400 | 723 | 723 | 372.0 | 372.0 |
+| reach 1050, radius 250, cooldown 800 | 696 | 696 | 386.7 | 386.7 |
+| reach 1050, radius 500, cooldown 100 | 960 | 920 | 198.3 | 71.9 |
+| reach 1050, radius 500, cooldown 200 | 1050 | 986 | 167.4 | 90.6 |
+| reach 1050, radius 500, cooldown 400 | 1019 | 1019 | 135.3 | 135.3 |
+| reach 1050, radius 500, cooldown 800 | 1076 | 1076 | 128.9 | 128.9 |
+| reach 1050, radius 1000, cooldown 100 | 975 | 983 | 62.5 | 34.3 |
+| reach 1050, radius 1000, cooldown 200 | 1022 | 1022 | 60.9 | 41.7 |
+| reach 1050, radius 1000, cooldown 400 | 1185 | 1185 | 49.6 | 49.6 |
+| reach 1050, radius 1000, cooldown 800 | 1272 | 1272 | 45.5 | 45.5 |
+| reach 1400, radius 250, cooldown 100 | 924 | 800 | 507.3 | 107.3 |
+| reach 1400, radius 250, cooldown 200 | 1021 | 895 | 310.9 | 107.4 |
+| reach 1400, radius 250, cooldown 400 | 872 | 872 | 248.0 | 248.0 |
+| reach 1400, radius 250, cooldown 800 | 848 | 848 | 232.0 | 232.0 |
+| reach 1400, radius 500, cooldown 100 | 867 | 788 | 164.3 | 47.8 |
+| reach 1400, radius 500, cooldown 200 | 1076 | 980 | 152.7 | 66.9 |
+| reach 1400, radius 500, cooldown 400 | 1006 | 1006 | 114.5 | 114.5 |
+| reach 1400, radius 500, cooldown 800 | 969 | 969 | 110.5 | 110.5 |
+| reach 1400, radius 1000, cooldown 100 | 1043 | 1013 | 59.7 | 26.0 |
+| reach 1400, radius 1000, cooldown 200 | 1109 | 1072 | 56.5 | 30.0 |
+| reach 1400, radius 1000, cooldown 400 | 1218 | 1218 | 48.0 | 48.0 |
+| reach 1400, radius 1000, cooldown 800 | 1363 | 1363 | 43.0 | 43.0 |
+| reach 2100, radius 250, cooldown 100 | 963 | 754 | 383.3 | 48.1 |
+| reach 2100, radius 250, cooldown 200 | 1060 | 847 | 414.5 | 98.9 |
+| reach 2100, radius 250, cooldown 400 | 1182 | 1182 | 297.6 | 297.6 |
+| reach 2100, radius 250, cooldown 800 | 1227 | 1227 | 257.8 | 257.8 |
+| reach 2100, radius 500, cooldown 100 | 1034 | 838 | 158.2 | 26.6 |
+| reach 2100, radius 500, cooldown 200 | 1174 | 950 | 142.7 | 33.3 |
+| reach 2100, radius 500, cooldown 400 | 1201 | 1201 | 117.5 | 117.5 |
+| reach 2100, radius 500, cooldown 800 | 1512 | 1512 | 96.7 | 96.7 |
+| reach 2100, radius 1000, cooldown 100 | 1142 | 1012 | 56.4 | 15.7 |
+| reach 2100, radius 1000, cooldown 200 | 1182 | 1050 | 52.8 | 18.6 |
+| reach 2100, radius 1000, cooldown 400 | 1325 | 1325 | 46.5 | 46.5 |
+| reach 2100, radius 1000, cooldown 800 | 1464 | 1464 | 36.2 | 36.2 |
+
 ## What the instrument could not express
 
 - The "likely places" policy: it needs terrain to say where a hider would sit, and the scene is open ground.

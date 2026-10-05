@@ -91,14 +91,14 @@ def _row(setting, policy, i, placement, res):
 
 
 def _stats(runs):
-    """runs: list of (SideResult of the seeker, Placement)."""
+    """runs: list of (SideResult of the seeker, Placement, ended)."""
     n = len(runs)
-    found = [r for r, _ in runs if r.found_before_contact]
+    found = [r for r, *_ in runs if r.found_before_contact]
     warn = [r.warning_ticks for r in found]
     ages = [r.picture_age_ticks for r in found if r.picture_age_ticks is not None]
-    cast, hit = sum(r.pings_cast for r, _ in runs), sum(r.pings_found for r, _ in runs)
+    cast, hit = sum(r.pings_cast for r, *_ in runs), sum(r.pings_found for r, *_ in runs)
     return {"n": n, "found": len(found) / n, "warn": statistics.median(warn) if warn else None,
-            "share": sum(r.share_revealed for r, _ in runs) / n,
+            "share": sum(r.share_revealed for r, *_ in runs) / n,
             "age": sum(ages) / len(ages) if ages else None, "per_find": cast / hit if hit else None}
 
 
@@ -130,20 +130,69 @@ def run_search_batch(settings, policies, n_placements, seed, workers, out_dir=No
             w.writerow(_header())
             for (st, p, pl, _), i, res in zip(jobs, index, results):
                 w.writerow(_row(st, p, i, pl, res))
-                groups.setdefault((st, p), []).append((res.side[0], pl))
+                groups.setdefault((st, p), []).append((res.side[0], pl, res.ended))
     finally:
         if pool is not None:
             pool.close()
             pool.join()
+    _write_outputs(paths, settings, policies, groups, name, n_placements, sight)
+    return paths
+
+
+def _write_outputs(paths, settings, policies, groups, name, n_placements, sight):
     data = _aggregate(settings, policies, groups)
     paths["run"].write_text(_run_file(data, name, n_placements, sight), encoding="utf-8")
     paths["page"].write_text(_page(data, name, n_placements, sight), encoding="utf-8")
     paths["summary"].write_text(_summary(data), encoding="utf-8")
+
+
+def _typed(cls, row, prefix=""):
+    kw = {}
+    for f in dataclasses.fields(cls):
+        v = row[prefix + f.name]
+        t = str(f.type)
+        if v == "":
+            kw[f.name] = None
+        elif "float" in t:
+            kw[f.name] = float(v)
+        elif "int" in t:
+            kw[f.name] = int(v)
+        elif "bool" in t:
+            kw[f.name] = v == "True"
+        else:
+            kw[f.name] = v
+    return cls(**kw)
+
+
+def _read_csv(path):
+    """The inverse of the csv writer: (settings, policies, placements per cell, groups), in file order."""
+    settings, policies, groups = [], [], {}
+    with open(path, newline="", encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            st = _typed(S.SearchSetting, row)
+            p = row["policy"]
+            if st not in settings:
+                settings.append(st)
+            if p not in policies:
+                policies.append(p)
+            groups.setdefault((st, p), []).append(
+                (_typed(S.SideResult, row, "seeker_"), _typed(S.Placement, row), row["ended"]))
+    return settings, policies, max(len(g) for g in groups.values()), groups
+
+
+def rebuild_from_csv(csv_path, out_dir, name):
+    csv_path = Path(csv_path)
+    settings, policies, n_placements, groups = _read_csv(csv_path)
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {"csv": csv_path, "run": out / (name + "_run.md"), "page": out / (name + "_page.html"),
+             "summary": out / "summary.txt"}
+    _write_outputs(paths, settings, policies, groups, name, n_placements, _vanguard_sight())
     return paths
 
 
 def _aggregate(settings, policies, groups):
-    cells, spread, by_script, by_layer = {}, {}, {}, {}
+    cells, spread, by_script, by_layer, why = {}, {}, {}, {}, {}
     for st in settings:
         for p in policies:
             cells[(st, p)] = _stats(groups[(st, p)])
@@ -161,8 +210,18 @@ def _aggregate(settings, policies, groups):
             sub = [x for x in pooled if test(x[1])]
             if sub:
                 by_layer[(p, key)] = _stats(sub)["found"]
+    for p in policies:
+        for st in settings:
+            for side, pl, ended in groups[(st, p)]:
+                k = (p, "same layer" if pl.layer == S.SEEKER_LAYER else "other layer",
+                     "within reach" if math.hypot(pl.dx, pl.dy) <= st.reach else "beyond reach")
+                c = why.setdefault(k, {"runs": 0, "missed": 0, "cap": 0, "contact": 0})
+                c["runs"] += 1
+                if not side.found_before_contact:
+                    c["missed"] += 1
+                    c[ended] += 1
     return {"settings": settings, "policies": policies, "cells": cells, "spread": spread,
-            "by_script": by_script, "by_layer": by_layer}
+            "by_script": by_script, "by_layer": by_layer, "why": why}
 
 
 def _f(v, nd=2):
@@ -201,6 +260,21 @@ def _tables(data):
     t.append(("Found rate by hider layer", ["policy", "same layer", "other layer"],
               [[p, _f(data["by_layer"].get((p, "same layer"))), _f(data["by_layer"].get((p, "other layer")))]
                for p in pol]))
+    why = data["why"]
+    t.append(("Why not found (runs where the seeker never found the hider before contact; start distance is the hider's at the start, against ping reach)",
+              ["policy", "hider layer", "start distance", "runs", "not found", "ended at the cap, no contact, no find",
+               "ended in contact, no earlier find"],
+              [[p, lay, dist, why[(p, lay, dist)]["runs"], why[(p, lay, dist)]["missed"], why[(p, lay, dist)]["cap"],
+                why[(p, lay, dist)]["contact"]]
+               for p in pol for lay in ("same layer", "other layer") for dist in ("within reach", "beyond reach")
+               if (p, lay, dist) in why]))
+    if "reactive" in pol and "sweep" in pol:
+        t.append(("Reactive against sweep (found rates are equal by construction)",
+                  ["setting", "sweep: mean picture age (ticks)", "reactive: mean picture age (ticks)",
+                   "sweep: pings per find", "reactive: pings per find"],
+                  [[_label(st), _f(data["cells"][(st, "sweep")]["age"], 0), _f(data["cells"][(st, "reactive")]["age"], 0),
+                    _f(data["cells"][(st, "sweep")]["per_find"], 1), _f(data["cells"][(st, "reactive")]["per_find"], 1)]
+                   for st in data["settings"]]))
     return t
 
 
@@ -249,7 +323,8 @@ def _chart(data):
     ordered = [p for p in POLICY_ORDER if p in data["policies"]] + [p for p in data["policies"] if p not in POLICY_ORDER]
     ends = []
     for p in ordered:
-        pts = sorted((S.coverage_rate(st), data["cells"][(st, p)]["found"], st) for st in data["settings"])
+        pts = sorted(((S.coverage_rate(st), data["cells"][(st, p)]["found"], st) for st in data["settings"]),
+                     key=lambda t: (t[0], t[1], dataclasses.astuple(t[2])))
         cls = "s-" + p
         o.append('<polyline class="line %s" points="%s"/>' % (cls, " ".join("%.1f,%.1f" % (px(x), py(y)) for x, y, _ in pts)))
         for x, y, st in pts:
@@ -310,12 +385,21 @@ th,td{border-bottom:1px solid var(--rule);padding:.2rem .5rem;text-align:left}
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="search_batch")
-    ap.add_argument("--name", required=True)
+    ap.add_argument("--name", default=None)
+    ap.add_argument("--from-csv", default=None)
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--date", default=datetime.date.today().isoformat())
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
+    if a.from_csv:
+        src = Path(a.from_csv)
+        paths = rebuild_from_csv(src, a.out or src.parent, a.name or src.stem)
+        for p in paths.values():
+            print(p)
+        return 0
+    if not a.name:
+        ap.error("--name is required unless --from-csv is given")
     out = Path(a.out) if a.out else RUNS / ("%s_%s" % (a.date, a.name))
     if a.smoke:
         sight = _vanguard_sight()
