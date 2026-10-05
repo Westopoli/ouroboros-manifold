@@ -187,7 +187,6 @@ def test_R_139_01_combined_stable_across_two_processes(lib):
 
 # ---- NEEDS MODULE SECTIONS (units, movement, ...): hooks are empty on this branch ----
 
-@needs_module_hooks
 def test_R_139_03_unit_hp_changes_only_section_3_and_first_diff_names_unit(lib, world_factory):
     wa, ids_a = _battle_world(lib, world_factory, 7)
     wb, ids_b = _battle_world(lib, world_factory, 7)

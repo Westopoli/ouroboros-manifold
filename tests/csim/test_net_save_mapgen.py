@@ -157,7 +157,6 @@ def test_save_before_any_mission_still_loads(lib, world_factory):
     assert _load(lib, wb, buf, size) == 0, "a save with an empty mapgen slot must load"
 
 
-@pytest.mark.xfail(strict=False, reason="needs every module's save hooks")
 def test_full_checksum_equal_for_500_ticks(lib, world_factory):
     wa, buf, size = _saved_battle(lib, world_factory)
     wb = _target(lib, world_factory)

@@ -140,7 +140,6 @@ def test_fog_save_before_any_mission_still_loads(lib, world_factory):
     assert _secs(lib, w1)[FOG] == _secs(lib, w2)[FOG]
 
 
-@pytest.mark.xfail(strict=False, reason="needs every module's save hooks")
 def test_full_checksum_equal_500_ticks(lib, world_factory):
     w1, buf, size = _saved_at_150(lib, world_factory)
     w2 = _target(lib, world_factory)

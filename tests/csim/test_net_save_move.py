@@ -79,7 +79,6 @@ def test_move_section_equal_every_tenth_tick_for_500_ticks(lib, world_factory):
             assert a == b, f"tick {SAVE_TICK + t}: movement section differs after load"
 
 
-@pytest.mark.xfail(strict=False, reason="needs every module's save hooks")
 def test_full_checksum_equal_every_tenth_tick_for_500_ticks(lib, world_factory):
     w1, buf, size = _saved_battle(lib, world_factory)
     w2 = _target(lib, world_factory)

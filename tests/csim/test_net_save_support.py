@@ -106,7 +106,6 @@ def test_R_139_03_support_section_equal_every_tenth_tick_for_500_ticks(lib, worl
             assert a == b, f"tick {SAVE_TICK + t}: support section differs after load"
 
 
-@pytest.mark.xfail(strict=False, reason="needs every module's save hooks")
 def test_R_139_03_full_checksum_equal_every_tenth_tick_for_500_ticks(lib, world_factory):
     src, dst, _, _ = _saved_and_loaded(lib, world_factory)
     for t in range(1, FOLLOW_TICKS + 1):

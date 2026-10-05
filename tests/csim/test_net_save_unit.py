@@ -145,7 +145,6 @@ def test_unit_save_before_any_mission_loads(lib, world_factory):
     assert _load(lib, target, buf, size) == 0
 
 
-@pytest.mark.xfail(strict=False, reason="needs every module's save hooks")
 def test_unit_save_full_checksum_equal_500_ticks(lib, world_factory):
     w1, buf, size = _battle_saved(lib, world_factory)
     w2 = _target(lib, world_factory)
