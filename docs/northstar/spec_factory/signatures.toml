@@ -6700,6 +6700,86 @@ epics = ["E-19"]
 confidence = "likely"
 note = "Load a command log into the pending buffer. Lockstep backend spec 2026-10-05, base stub."
 
+[[symbols]]
+name = "om_cmd_apply_tick"
+module = "cmd_stream.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_fog_install_net_hooks"
+module = "fog.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_macro_install_net_hooks"
+module = "enemy_macro.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_mapgen_install_net_hooks"
+module = "tactical_mapgen.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_mission_install_net_hooks"
+module = "mission.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_install_net_hooks"
+module = "tactical_move.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_support_install_net_hooks"
+module = "tactical_support.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_unit_install_net_hooks"
+module = "unit.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
 [[structs]]
 name = "OMAbilityEvent"
 source_test = "tests/csim/test_E11_S086_one_ability_each.py"
