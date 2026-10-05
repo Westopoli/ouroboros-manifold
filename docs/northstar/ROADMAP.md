@@ -60,7 +60,7 @@ The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each ge
 |---|---|---|---|---|
 | 1 | Finish the MVP loop: whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
 | 2 | Baseline playthrough by Westley or the 30B | none | Westley (the 30B waits on decision W6) | The scripted playthrough is green in the gate; the human or 30B baseline is still owed before large new work. |
-| 3 | Layout engine: prototype, approval, then integration into mission setup (S-112 to S-119, S-191, S-192) | to write | Westley's approval of the layout prototype | He ruled the layout comes before the landscape. |
+| 3 | Layout engine: prototype, approval, then integration into mission setup (S-112 to S-119, S-191, S-192) | options page `research/layout_engine/README.md` (2026-10-04), waiting for Westley's pick (Q-191-06, Q-191-07); prototype spec to write after | Westley's approval of the layout prototype | He ruled the layout comes before the landscape. |
 | 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
 
 ## 3. Blocked on Westley
