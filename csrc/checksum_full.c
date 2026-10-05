@@ -324,35 +324,162 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ---- generated stubs from signatures.toml ---- */
+/* ---- full-state checksum (lockstep spec 2026-10-05, lane cksum) ---- */
+#define OM_CK_PRIME      1099511628211ULL
+#define OM_CK_SEED       14695981039346656037ULL
+#define OM_CK_MIX_SHIFT  29
+#define OM_CK_POP_HIST   50
+#define OM_CK_SEC_REGIONS  0
+#define OM_CK_SEC_FACTIONS 1
+#define OM_CK_SEC_RNG      2
+#define OM_CK_SEC_UNITS    3
+#define OM_CK_REGION_VALS  6
+
+static const char *const om_ck_names[OM_NET_SECTION_COUNT] = {
+    "regions", "factions", "rng", "units", "movement", "mission", "fog",
+    "macro", "support and map"
+};
+
+static uint64_t ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_CK_PRIME;
+    return h ^ (h >> OM_CK_MIX_SHIFT);
+}
+
+static uint64_t ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return ck_word(h, v);
+}
+
+static uint64_t ck_regions(const om_world *w) {
+    uint64_t h = OM_CK_SEED;
+    h = ck_word(h, w->tick);
+    h = ck_word(h, w->n_regions);
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        const om_region *r = &w->regions[i];
+        if (r->tier == OM_TIER_EMPTY) { h = ck_word(h, OM_TIER_EMPTY); continue; }
+        double vals[OM_CK_REGION_VALS] = {
+            r->military, r->economy, r->tension, r->population,
+            om_region_composite(w, i, OM_C_STABILITY),
+            om_region_composite(w, i, OM_C_CAPACITY)
+        };
+        h = ck_word(h, (uint64_t)r->tier);
+        for (int k = 0; k < OM_CK_REGION_VALS; k++) h = ck_dbl(h, vals[k]);
+        if (w->region_held_since) h = ck_word(h, (uint64_t)w->region_held_since[i]);
+    }
+    for (uint32_t i = 0; i < w->n_regions; i++)
+        for (uint32_t j = 0; j < w->n_regions; j++)
+            h = ck_word(h, (uint64_t)w->region_edge[i][j]);
+    return h;
+}
+
+static uint64_t ck_factions(const om_world *w) {
+    uint64_t h = OM_CK_SEED;
+    h = ck_word(h, w->faction_n);
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) {
+        h = ck_word(h, (uint64_t)w->faction_used[i]);
+        if (!w->faction_used[i]) continue;
+        for (int k = 0; k < OM_F_COUNT; k++) h = ck_dbl(h, w->faction_mod[i][k]);
+        h = ck_dbl(h, w->faction_budget[i]);
+        h = ck_dbl(h, w->faction_budget_snapshot[i]);
+        h = ck_dbl(h, w->faction_tech[i]);
+        h = ck_dbl(h, w->faction_confidence[i]);
+        h = ck_dbl(h, w->faction_tech_attack[i]);
+        h = ck_dbl(h, w->faction_tech_defense[i]);
+        h = ck_dbl(h, w->faction_tech_economy[i]);
+        h = ck_word(h, (uint64_t)w->faction_archetype[i]);
+        h = ck_word(h, w->faction_created_tick[i]);
+        h = ck_word(h, (uint64_t)w->faction_conquered_this_tick[i]);
+        h = ck_word(h, w->faction_window_total[i]);
+        h = ck_word(h, w->faction_window_revolts[i]);
+        h = ck_word(h, w->faction_window_attacks[i]);
+        h = ck_word(h, w->faction_window_colonizations[i]);
+        h = ck_word(h, (uint64_t)w->faction_last_knowledge_lost[i]);
+        h = ck_word(h, w->faction_pop_history_head[i]);
+        h = ck_word(h, w->faction_pop_history_len[i]);
+        for (int k = 0; k < OM_CK_POP_HIST; k++) h = ck_dbl(h, w->faction_pop_history[i][k]);
+        for (uint32_t j = 0; j < OM_MAX_FACTIONS; j++) {
+            h = ck_word(h, (uint64_t)w->faction_stance[i][j]);
+            h = ck_word(h, w->faction_stance_counter[i][j]);
+            h = ck_word(h, w->faction_cooperative_since[i][j]);
+        }
+    }
+    return h;
+}
+
+static uint64_t ck_rng(const om_world *w) {
+    uint64_t h = OM_CK_SEED;
+    h = ck_word(h, w->rng_state);
+    h = ck_word(h, w->rng_inc);
+    h = ck_word(h, w->rng_forced_head);
+    h = ck_word(h, w->rng_forced_len);
+    for (uint32_t k = 0; k < w->rng_forced_len && k < OM_RNG_FORCED_CAP; k++)
+        h = ck_dbl(h, w->rng_forced[(w->rng_forced_head + k) % OM_RNG_FORCED_CAP]);
+    return h;
+}
+
+static uint64_t ck_section(const om_world *w, uint32_t s) {
+    switch (s) {
+    case OM_CK_SEC_REGIONS:  return ck_regions(w);
+    case OM_CK_SEC_FACTIONS: return ck_factions(w);
+    case OM_CK_SEC_RNG:      return ck_rng(w);
+    default:
+        return w->net_section_hash[s] ? w->net_section_hash[s](w) : 0;
+    }
+}
+
 uint64_t om_world_checksum_full(const om_world *w, uint64_t *sections, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)sections; (void)cap;
-    return 0;
+    if (!w) return 0;
+    uint64_t h = OM_CK_SEED;
+    for (uint32_t s = 0; s < OM_NET_SECTION_COUNT; s++) {
+        uint64_t v = ck_section(w, s);
+        if (sections && s < cap) sections[s] = v;
+        h = ck_word(h, v);
+    }
+    return h;
 }
 
 uint32_t om_checksum_section_count(void) {
-    /* STUB */
-    return 0;
+    return OM_NET_SECTION_COUNT;
 }
 
 const char *om_checksum_section_name(uint32_t section) {
-    /* STUB */
-    (void)section;
-    return "";
+    return section < OM_NET_SECTION_COUNT ? om_ck_names[section] : "";
 }
 
+/* Per-unit hashes are indexed by unit id: out[id] is that unit's hash. */
 int om_checksum_first_diff(const om_world *a, const om_world *b, uint32_t *section, uint32_t *unit_id) {
-    /* STUB */
-    (void)a; (void)b; (void)section; (void)unit_id;
+    if (!a || !b) return 0;
+    for (uint32_t s = 0; s < OM_NET_SECTION_COUNT; s++) {
+        if (ck_section(a, s) == ck_section(b, s)) continue;
+        if (section) *section = s;
+        if (unit_id) *unit_id = 0;
+        if (s == OM_CK_SEC_UNITS && unit_id && a->net_unit_hashes && b->net_unit_hashes) {
+            uint32_t na = a->net_unit_hashes(a, NULL, 0);
+            uint32_t nb = b->net_unit_hashes(b, NULL, 0);
+            uint32_t n = na > nb ? na : nb;
+            uint64_t *ha = (uint64_t *)calloc(n ? n : 1, sizeof(uint64_t));
+            uint64_t *hb = (uint64_t *)calloc(n ? n : 1, sizeof(uint64_t));
+            if (ha && hb) {
+                a->net_unit_hashes(a, ha, n);
+                b->net_unit_hashes(b, hb, n);
+                for (uint32_t i = 0; i < n; i++)
+                    if (ha[i] != hb[i]) { *unit_id = i; break; }
+            }
+            free(ha);
+            free(hb);
+        }
+        return 1;
+    }
     return 0;
 }
 
 uint32_t om_checksum_unit_hashes(const om_world *w, uint64_t *out, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)out; (void)cap;
-    return 0;
+    if (!w || !w->net_unit_hashes) return 0;
+    return w->net_unit_hashes(w, out, cap);
 }
 /* ---- end generated stubs ---- */
