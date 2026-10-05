@@ -116,7 +116,10 @@ def test_control_3_a_still_hider_beyond_reach_plus_radius_is_found_later_than_on
 def test_control_4_reactive_keeps_a_fresher_picture_than_sweep_against_a_drifting_hider(lib, stats):
     _need()
     st = _setting(stats, reveal_ticks=20)
-    pl = _place(4000.0, heading=180.0, script="drift")     # drifts straight at the seeker; contact after some 400 ticks
+    # Staged where sweep is certain to find it early: same layer as the seeker, at a sweep target (bearing 0, ring 1.0 of
+    # reach), 1200 wu below the line, drifting across the seeker's front (heading 90) so it leaves the disc; measured:
+    # sweep finds it (picture age 155), reactive keeps it fresher (45).
+    pl = _place(st.reach, dy=-1200.0, heading=90.0, script="drift")
     s, r = _run(st, "sweep", pl, engine=lib), _run(st, "reactive", pl, engine=lib)
     age_r, age_s = r.side[0].picture_age_ticks, s.side[0].picture_age_ticks
     assert age_r is not None, "reactive found nothing; the placement must be findable by sweep first: %r" % (r,)
