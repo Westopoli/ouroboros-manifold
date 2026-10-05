@@ -133,12 +133,12 @@ def test_sweep_skips_a_target_its_caster_cannot_reach():
     mem = {}
     seen = []
     for call in range(60):
-        v = _view(tick=call * DECIDE, ready=[1], memory=mem, unit_pos={1: (-1800.0, 0.0)})   # force centre at origin
+        v = _view(tick=call * DECIDE, ready=[1], memory=mem, unit_pos={1: (-1000.0, 0.0)})   # force centre at origin
         for o in p.POLICIES["sweep"](v):
             seen.append(o)
-            assert math.hypot(o[2] + 1800.0, o[3]) <= 2000.0 + 1e-6, "ping beyond the caster's reach: %r" % (o,)
+            assert math.hypot(o[2] + 1000.0, o[3]) <= 2000.0 + 1e-6, "ping beyond the caster's reach: %r" % (o,)
     assert seen, "a caster that can reach some targets must still ping"
-    assert len({_key(o) for o in seen}) < 50, "a caster 1800 wu behind the centre cannot reach every target"
+    assert len({_key(o) for o in seen}) < 50, "a caster 1000 wu behind the centre cannot reach every target"
 
 
 def _reactive_step(mem, tick, revealed, ready=(1, 2)):
