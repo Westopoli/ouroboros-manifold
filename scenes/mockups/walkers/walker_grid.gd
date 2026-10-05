@@ -20,6 +20,7 @@ var cell := 100.0
 var height := PackedFloat32Array()
 var band := PackedByteArray()
 var walkable := PackedByteArray()
+var land := PackedByteArray()
 var main_cells := PackedInt32Array()
 var _grade_limit := 0.0
 
@@ -40,7 +41,9 @@ func _init(p_seed: int = 11, p_canvas: float = CANVAS_WU) -> void:
 	height = a.h
 	band.resize(n)
 	walkable.resize(n)
+	land.resize(n)
 	for i in range(n):
+		land[i] = 1 if a.land[i] == 1 else 0
 		band[i] = maxi(int(a.layer[i]), 1)
 		walkable[i] = 1 if (a.land[i] == 1 and a.tan[i] <= _grade_limit) else 0
 	_find_main()
