@@ -1,6 +1,6 @@
 # The ping: what it is, and how the skill lab measures it
 
-Status: definition restated from Westley, 2026-10-05, against E-01 S-162. The measurement method is a proposal that waits for his go. Every number here is a provisional runtime setting or a draft sweep point; none is confirmed.
+Status: definition restated from Westley, 2026-10-05, against E-01 S-162, with his answers of the same day folded in (alert off for now; the reveal follows the units caught, 5 s; cooldown per casting unit; every unit can cast for now). The measurement method is a proposal that waits for his go. Every number here is a provisional runtime setting or a draft sweep point; none is confirmed.
 
 ## 1. What the ping is
 
@@ -10,18 +10,18 @@ Westley, 2026-10-05:
 
 > "Skilled players will use the ping system to effectively guess where their opponent's forces might be and use the series of pings that they have access to find the enemy's forces without the enemy's forces ever getting inside their vision. When I say vision, I mean like true unit vision. The ping system is designed to be the method that players can devise traps and plan surrounds, essentially plan ahead, knowing the enemy's current position and unit composition and unit formation."
 
-This agrees with what is already written and built:
+His answers later the same day changed three parts of this: "Let's skip the alert actually, I'm realizing that enemies will just ping back, switch that off for now"; "reveal follows units caught for a short time, starting with 5 seconds is probably good"; "yes cooldown per casting"; "every unit for now". The table gives the rule as it now stands against the engine:
 
 | Part | Rule | Built in the engine | Setting (provisional) |
 |---|---|---|---|
 | Pick a place and a layer; see that layer around that place for a moment | R-162-01 | `om_command_ping(caster, layer, x, y)`, `csrc/fog.c` | radius 500 |
 | Reach is beyond the caster's sight, and is not the whole map | R-162-01 | refused beyond the reach | reach 2,000 |
-| An enemy inside is visible for a set time | R-162-01, R-162-05 | a reveal disc that lives for the reveal time | reveal 2 s |
+| An enemy inside at the cast stays visible for a set time wherever it moves | R-162-01, R-162-05 | differs: today a disc reveals whatever is inside it while it lives; the engine must change | reveal 5 s (engine default today: 2 s) |
 | Limit on repeated use | R-162-02 | cooldown per casting unit; no resource cost | 20 s |
-| The pinged side is alerted with a sector of about 60 degrees, nothing more | R-162-03 | alert with a sector | 60 degrees |
-| Only some units can ping | R-162-01 "units that can ping" | not built: any living unit can cast | open, Q-005-04 |
+| The pinged side is told nothing (alert switched off for now) | R-162-03 | differs: today the engine writes an alert with a 60 degree sector; to be switched off by a setting | off |
+| Every unit can ping, for now | R-162-01 | any living unit can cast | |
 
-So the ping is decided in kind and exists in the engine. What is missing is: the numbers (Q-005-04), four questions of kind (section 6), the lab's ability to cast a ping at all, and a way to measure the skill. The rest of this file is about the last two.
+So the ping is decided in kind and exists in the engine, apart from the two differences marked above. What is missing is: those two engine changes, the numbers (Q-005-04), the lab's ability to cast a ping at all, and a way to measure the skill. The rest of this file is about the last two.
 
 ## 2. How the ping differs from the five skills
 
@@ -59,7 +59,6 @@ Recorded per run, for each side:
 | Picture quality | share of the enemy's units revealed at least once before contact; whether their layer was learned; whether each type was seen |
 | Picture age | ticks since the last reveal at the moment of contact; an old picture of a moving enemy is wrong |
 | Pings spent, pings that found | the cost of the search |
-| Alerts given | each ping that lands on units tells the enemy a 60 degree bearing; how many times the seeker gave itself away |
 | **Detection ratio** | found-before-contact rate of one side over the other's, across the placement set (Westley's proposal) |
 
 The policies, from naive to skilled. Each is a script, the same on every placement:
@@ -70,9 +69,9 @@ The policies, from naive to skilled. Each is a script, the same on every placeme
 | ahead | pings straight along its own route at the edge of reach, own layer, every cooldown |
 | sweep | cycles through bearings and layers in a fixed order |
 | likely places | pings the places the map makes likely: the far side of a choke, behind tall cover, the routes into the objective, and the layers from which each could be reached |
-| reactive | as "likely places", and also: after an alert, pings back along the alert's sector; after a reveal, pings where the revealed units were heading |
+| reactive | as "likely places", and also: after a reveal, pings where the revealed units were heading |
 
-The hider's counters, also scripts: stand still; relocate when alerted (so the picture goes stale); split a decoy that is meant to be found; ping back.
+The hider's counters, also scripts: stand still; keep changing place and layer on a schedule (so any picture goes stale); split a decoy that is meant to be found. With the alert off the hider cannot know it was pinged, so no counter reacts to a ping.
 
 "Better guesses" is then a measured thing: the gap in found-before-contact, warning time and picture quality between a higher policy and a lower one, over the same placements.
 
@@ -90,7 +89,7 @@ For a scene where the enemy may come by one of several routes or layers, fight t
 
 ### The product
 
-**Units gained by a ping policy** = (share of placements found with enough warning to re-arrange) x (value of knowing), less the cost of what the alerts gave away (measured by running the hider's "relocate" and "ping back" counters).
+**Units gained by a ping policy** = (share of placements found with enough warning to re-arrange) x (value of knowing).
 
 "Enough warning" is the time the play needs to be set up, measured in Stage B by moving the informed setup later and later until its advantage is gone.
 
@@ -98,15 +97,16 @@ Splitting it this way keeps the work small: fights are expensive and are run a f
 
 ## 4. Which settings induce strategic depth
 
-A setting is a tuple: reach, radius, reveal time, cooldown (the frequency), how many units can cast, and the alert rule. The lab reports, for each tuple, these five readings. Which values count as passing is Westley's (Q-162-05).
+A setting is a tuple: reach, radius, reveal time and cooldown (the frequency). Every unit can cast, so the number of pings a force has is its headcount over the cooldown.
+
+With the alert off, pinging has no risk: nothing punishes "ping everything, always". The only limit on that is the coverage rate below, so the sweep must find the settings where a force of ordinary size still has fewer pings than places worth looking. If no such setting exists with every unit casting, that is a finding for Westley, not something to tune around. The lab reports, for each tuple, these four readings. Which values count as passing is Westley's (Q-162-05).
 
 | Reading | Depth is present when | It fails when |
 |---|---|---|
 | **Policy spread**: found-before-contact of the best policy minus that of "ahead" | the gap is large: guessing well is rewarded | the ping is so big or so frequent that every policy finds the enemy (no skill), or so small that none does (a lottery) |
-| **Counter cost**: how much "relocate when alerted" and "decoy" reduce the seeker's picture, and what they cost the hider in time and position | the counter works and costs something | the counter is free and total (pinging is pointless), or does nothing (being pinged is a death sentence) |
+| **Counter cost**: how much "keep moving" and "decoy" reduce the seeker's picture, and what they cost the hider in time and position | the counter works and costs something | the counter is free and total (pinging is pointless), or does nothing (being pinged is a death sentence) |
 | **Value of knowing**, Stage B | knowledge is worth whole units for at least the trap plays | it is worth nothing: the ping is decoration |
 | **Warning time against set-up time** | the best policy usually gives enough time to re-arrange; "ahead" usually does not | everyone has time, or no one does |
-| **Give-away**: alerts per find, and the enemy's found-before-contact when it pings back along the sector | pinging carelessly gets the pinger found | pinging has no risk, so the best policy is "ping everything, always" |
 
 One number predicts most of this before any run and is the axis the sweep should be laid out on:
 
@@ -120,10 +120,9 @@ Draft sweep points (drafts, not confirmed; the first pass is Stage A only, so it
 |---|---|
 | reach, as a multiple of true vision | 1.5, 2, 3 |
 | radius | 250, 500, 1,000 |
-| reveal time | 1 s, 2 s, 5 s |
+| reveal time | 2 s, 5 s, 10 s |
 | cooldown per caster | 5 s, 10 s, 20 s, 40 s |
-| casters in a force of 16 | 1, 2, 4 |
-| alert | on every ping that lands on units (today); on every ping, found or not |
+| force size (every unit casts) | 8, 16, 32 |
 
 ## 5. Putting it into the simulation
 
@@ -132,7 +131,7 @@ The engine needs almost nothing. The lab needs four pieces, in this order. Each 
 | Step | Piece | Where | Control |
 |---|---|---|---|
 | 1 | Bind `om_command_ping` in the lab's engine wrapper, with read-outs: which enemy units a side currently sees by ping and by true vision, and the alerts a side received | `scripts/skilllab/engine.py` (the calls exist in the library; if no public read-out separates "seen by ping" from "seen by sight", that is a contract piece first) | a ping on a known enemy reveals it and only on the pinged layer; one beyond reach is refused; the alert's sector contains the true bearing |
-| 2 | Casters: the lab restricts which of its units may cast (a list per group), since the engine lets any unit cast | lab only; an engine rule waits for Q-005-04 | a non-caster's ping is never issued |
+| 2 | Engine: the reveal follows the units caught (R-162-01), and a setting that switches the alert off, default off (R-162-03) | `csrc/fog.c`; the setting is a contract piece first | a unit caught by a ping and then moved out of the disc is still seen until the reveal time ends; with the setting off no alert is written |
 | 3 | The search scene and the policies: a no-fire scene, a seeded placement set, the five policies and four counters as controllers stepped at an interval (the lab already steps a per-interval rule for re-orders) | `scripts/skilllab/` new files | on a placement directly ahead, "ahead" finds it; on one behind cover on another layer, "ahead" does not and "likely places" does |
 | 4 | The value-of-knowing batch: the informed, uninformed and stale cases for each play | `scripts/skilllab/batches.py` and the plays | informed is never worse than the mean of uninformed |
 
@@ -144,9 +143,8 @@ Output: one chart page per stage. Stage A: found-before-contact by policy agains
 
 | Row | Question |
 |---|---|
-| Q-005-04 (1) | which units can cast; the numbers |
+| Q-005-04 (1) | the numbers: radius, reach, reveal time, cooldown |
 | Q-162-01 | does a ping see behind cover or ground |
-| Q-162-02 | does the reveal stay with the place, or follow the units it caught |
-| Q-162-03 | is the limit a cooldown per casting unit, or a pool of pings per player |
-| Q-162-04 | is the alert sent on every ping, or only when it lands on units |
 | Q-162-05 | what readings count as "induces strategic depth" for the ping |
+
+Answered 2026-10-05: Q-162-02 (the reveal follows the units, 5 s), Q-162-03 (cooldown per casting unit), Q-162-04 (alert off for now), and which units cast (every unit for now).
