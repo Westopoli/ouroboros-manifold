@@ -24,7 +24,7 @@ def test_equal_scans_had_no_effect_and_different_ones_did():
 
 
 def test_the_page_lists_non_open_cells_that_equal_open_and_only_those(tmp_path):
-    fake = FakeScan(results={("block:blob_v_defenders", "guard"): 9, ("wall:line_v_defenders", "guard"): 4})
+    fake = FakeScan(results={("block:blob_v_defenders", None): 9, ("wall:line_v_defenders", None): 4})
     defn = faked(batches.get("landscape"))
     out = tmp_path / "out"
     batches.run(defn, out, scan_fn=fake)

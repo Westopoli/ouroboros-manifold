@@ -145,7 +145,7 @@ def test_default_scan_fn_is_looked_up_at_call_time(tmp_path, monkeypatch):
     fake = FakeScan()
     monkeypatch.setattr(scan_mod, "scan", fake)
     paths = batches.run(faked(batches.get("formation")), tmp_path / "late")
-    assert len(fake.calls) == 24 and set(paths) == {"csv", "run", "page"}
+    assert len(fake.calls) == 24 and set(paths) == {"csv", "run", "page", "summary"}
 
 
 def test_not_expressed_cells_are_never_scanned_and_are_listed(tmp_path):
@@ -172,7 +172,7 @@ def test_paths_and_out_dir_created(tmp_path):
     assert paths == {"csv": out / "formation.csv", "run": out / "formation_run.md",
                      "page": out / "formation_page.html"} or \
         {k: Path(v) for k, v in paths.items()} == {"csv": out / "formation.csv", "run": out / "formation_run.md",
-                                                  "page": out / "formation_page.html"}
+                                                  "page": out / "formation_page.html", "summary": out / "summary.json"}
 
 
 def test_csv_rows_carry_labels(tmp_path):
