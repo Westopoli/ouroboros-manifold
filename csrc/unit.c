@@ -2986,6 +2986,105 @@ uint64_t om_tactical_base_tick(const om_world *w) {
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_UNIT_CK_PRIME 1099511628211ULL
+#define OM_UNIT_CK_SEED 14695981039346656037ULL
+#define OM_UNIT_CK_NULL 0x6e756c6c74616374ULL
+#define OM_UNIT_CK_MIX_SHIFT 29
+#define OM_UNIT_CK_SECTION 3
+
+static uint64_t om_unit_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_UNIT_CK_PRIME;
+    return h ^ (h >> OM_UNIT_CK_MIX_SHIFT);
+}
+
+static uint64_t om_unit_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return om_unit_ck_word(h, v);
+}
+
+static uint64_t om_unit_ck_row(const om_unit_row *r) {
+    uint64_t h = OM_UNIT_CK_SEED;
+#define W(f) h = om_unit_ck_word(h, (uint64_t)(int64_t)(r->f))
+#define D(f) h = om_unit_ck_dbl(h, r->f)
+    W(unit_id); W(in_use); W(unit_type); W(category); W(faction_id);
+    D(x); D(y); W(layer); D(hp); D(max_hp); D(base_damage); D(attack_interval);
+    D(attack_range); D(cooldown); W(target_id);
+    W(ability_phase); W(ability_bonus_on); W(ability_ticks_remaining);
+    D(ability_cooldown); D(ability_target_x); D(ability_target_y);
+    W(backswing_ticks_remaining); W(backswing_active); W(force_brace_reduction);
+    W(force_fortify_reduction); W(force_warden_aura_reduction);
+    W(order); D(order_x); D(order_y); D(issued_x); D(issued_y); W(halted);
+    W(am_gid); W(am_engaged); W(guard); W(anchor_set); D(anchor_x); D(anchor_y);
+    W(flinching); D(flinch_x); D(flinch_y); W(last_attacker); W(fire_pending);
+    W(stealth); W(suppress_auto); W(brace_auto); W(fortify_auto);
+    D(last_seen_x); D(last_seen_y); W(fired);
+#undef W
+#undef D
+    return h;
+}
+
+static uint64_t om_unit_ck_section(const om_world *w) {
+    const om_tac_state *st = w ? (const om_tac_state *)w->tactical_state : NULL;
+    if (!st) return OM_UNIT_CK_NULL;
+    uint64_t h = OM_UNIT_CK_SEED;
+    h = om_unit_ck_word(h, st->n_units);
+    h = om_unit_ck_word(h, st->next_unit_id);
+    h = om_unit_ck_word(h, st->current_tick);
+    h = om_unit_ck_word(h, st->base_tick);
+    h = om_unit_ck_word(h, (uint64_t)(int64_t)st->abilities_disabled);
+    h = om_unit_ck_word(h, st->validated_tick);
+    h = om_unit_ck_word(h, st->n_wardens);
+    h = om_unit_ck_word(h, st->n_bastions);
+    h = om_unit_ck_word(h, st->n_custom_types);
+    for (uint32_t i = 0; i < st->n_custom_types && i < OM_MAX_CUSTOM_TYPES; i++) {
+        const om_custom_type_row *c = &st->custom_types[i];
+        const om_unit_type_profile *p = &c->profile;
+        h = om_unit_ck_word(h, c->type_id);
+        h = om_unit_ck_word(h, (uint64_t)(int64_t)c->in_use);
+        h = om_unit_ck_word(h, (uint64_t)(int64_t)p->category);
+        h = om_unit_ck_dbl(h, p->max_hp);
+        h = om_unit_ck_dbl(h, p->base_damage);
+        h = om_unit_ck_dbl(h, p->attack_interval);
+        h = om_unit_ck_dbl(h, p->attack_range);
+        h = om_unit_ck_dbl(h, p->speed);
+        h = om_unit_ck_dbl(h, p->sensor_radius);
+        h = om_unit_ck_dbl(h, p->layer_transition_time);
+        h = om_unit_ck_dbl(h, p->aoe_radius);
+    }
+    h = om_unit_ck_word(h, st->n_ability_events);
+    for (uint32_t i = 0; i < st->n_ability_events && i < OM_ABILITY_EVENT_BUFFER_CAP; i++) {
+        const om_ability_event *e = &st->ability_events[i];
+        h = om_unit_ck_word(h, e->tick);
+        h = om_unit_ck_word(h, e->unit_id);
+        h = om_unit_ck_word(h, (uint64_t)(int64_t)e->ability_id);
+        h = om_unit_ck_dbl(h, e->target_x);
+        h = om_unit_ck_dbl(h, e->target_y);
+        h = om_unit_ck_word(h, e->duration);
+        h = om_unit_ck_word(h, e->telegraph_ticks);
+        h = om_unit_ck_word(h, e->cue_id);
+        h = om_unit_ck_dbl(h, e->radius);
+    }
+    for (uint32_t i = 0; i < st->n_units; i++)
+        h = om_unit_ck_word(h, om_unit_ck_row(&st->units[i]));
+    return h;
+}
+
+static uint32_t om_unit_ck_per_unit(const om_world *w, uint64_t *out, uint32_t cap) {
+    const om_tac_state *st = w ? (const om_tac_state *)w->tactical_state : NULL;
+    if (!st) return 0;
+    uint32_t n = st->next_unit_id;
+    if (!out || !cap) return n;
+    for (uint32_t i = 0; i < cap && i < n; i++) out[i] = 0;
+    for (uint32_t i = 0; i < st->n_units; i++) {
+        const om_unit_row *r = &st->units[i];
+        if (r->in_use && r->unit_id && r->unit_id < cap && r->unit_id < n)
+            out[r->unit_id] = om_unit_ck_row(r);
+    }
+    return n;
+}
+
 void om_unit_install_net_hooks(om_world *w) {
-    (void)w;
+    w->net_section_hash[OM_UNIT_CK_SECTION] = om_unit_ck_section;
+    w->net_unit_hashes = om_unit_ck_per_unit;
 }
