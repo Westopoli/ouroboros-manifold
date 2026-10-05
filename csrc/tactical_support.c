@@ -242,6 +242,11 @@ static void om_sup_state_free(void *p) {
     free(p);
 }
 
+/* See also: the net hooks at the end of this file (lockstep spec 2026-10-05). */
+static uint32_t om_sup_save_size(const om_world *w);
+static void om_sup_save_write(const om_world *w, uint8_t *out);
+static int om_sup_save_read(om_world *w, const uint8_t *buf, uint32_t len);
+
 /* Lazily calloc's the per-world support state, mirroring om_mis()/om_tac()
  * exactly -- writes w->support_state. */
 static om_sup_state *om_sup(om_world *w) {
@@ -250,6 +255,9 @@ static om_sup_state *om_sup(om_world *w) {
         st = (om_sup_state *)calloc(1, sizeof(om_sup_state));
         w->support_state = st;
         w->support_state_free = om_sup_state_free;
+        w->support_state_size = om_sup_save_size;
+        w->support_state_write = om_sup_save_write;
+        w->support_state_read = om_sup_save_read;
     }
     return st;
 }
@@ -1089,4 +1097,334 @@ void om_mission_check_extraction_objectives(om_world *w) {
         if (e->extracted) reached++;
     }
     if (total > 0) om_mission_set_objective_completion(w, 0, (double)reached / (double)total);
+}
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_SUP_CK_SEED  14695981039346656037ULL
+#define OM_SUP_CK_PRIME 1099511628211ULL
+#define OM_SUP_CK_SHIFT 29
+#define OM_SUP_CK_SECTION 8
+#define OM_SUP_CK_NULL  0x5355505F4E554C4CULL
+
+static uint64_t sup_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_SUP_CK_PRIME;
+    return h ^ (h >> OM_SUP_CK_SHIFT);
+}
+
+static uint64_t sup_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return sup_ck_word(h, v);
+}
+
+static uint64_t sup_ck_vec(uint64_t h, om_vec2 v) {
+    return sup_ck_dbl(sup_ck_dbl(h, v.x), v.y);
+}
+
+/* Section 8 (support half). The base gives no shared registration for the map
+ * half, so this hook hashes support only; mapgen's install owns the slot after it. */
+static uint64_t om_support_section_hash(const om_world *w) {
+    const om_sup_state *st = (const om_sup_state *)w->support_state;
+    uint64_t h = OM_SUP_CK_SEED;
+    uint32_t i, k;
+    if (!st) return OM_SUP_CK_NULL;
+    for (i = 0; i <= OM_SUP_MAX_STRUCTURES; i++) {
+        const om_sup_structure *s = &st->structures[i];
+        h = sup_ck_word(h, (uint64_t)s->in_use);
+        if (!s->in_use) continue;
+        h = sup_ck_word(h, (uint64_t)(int64_t)s->owner);
+        h = sup_ck_word(h, (uint64_t)s->destroyed);
+        h = sup_ck_dbl(h, s->hp);
+        h = sup_ck_dbl(h, s->power);
+        h = sup_ck_word(h, s->unit_type);
+        h = sup_ck_word(h, s->timer);
+        h = sup_ck_word(h, (uint64_t)s->prod_accruing);
+        h = sup_ck_word(h, s->prod_last_base);
+        h = sup_ck_dbl(h, s->capture_progress);
+        h = sup_ck_word(h, (uint64_t)s->capture_accruing);
+        h = sup_ck_word(h, s->capture_last_base);
+        h = sup_ck_word(h, (uint64_t)s->capture_driven);
+        h = sup_ck_word(h, s->capture_driven_base);
+        h = sup_ck_word(h, (uint64_t)(int64_t)s->capturing_faction);
+        h = sup_ck_word(h, (uint64_t)s->contested);
+        h = sup_ck_dbl(h, s->x);
+        h = sup_ck_dbl(h, s->y);
+        h = sup_ck_dbl(h, s->last_spawn_distance);
+        h = sup_ck_dbl(h, s->last_spawn_x);
+        h = sup_ck_dbl(h, s->last_spawn_y);
+        h = sup_ck_word(h, s->pending_spawns);
+        h = sup_ck_word(h, (uint64_t)s->drifting);
+        h = sup_ck_word(h, s->drift_period);
+        h = sup_ck_vec(h, s->drift_wp[0]);
+        h = sup_ck_vec(h, s->drift_wp[1]);
+    }
+    for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
+        const om_sup_objective *o = &st->objectives[i];
+        h = sup_ck_word(h, (uint64_t)o->in_use);
+        if (!o->in_use) continue;
+        h = sup_ck_word(h, (uint64_t)o->drifting);
+        h = sup_ck_word(h, o->drift_period);
+        h = sup_ck_vec(h, o->drift_wp[0]);
+        h = sup_ck_vec(h, o->drift_wp[1]);
+    }
+    h = sup_ck_word(h, st->n_hazards);
+    for (i = 0; i < st->n_hazards && i < OM_SUP_MAX_HAZARDS; i++) {
+        const om_sup_hazard *z = &st->hazards[i];
+        h = sup_ck_word(h, (uint64_t)z->in_use);
+        h = sup_ck_vec(h, z->src);
+        h = sup_ck_vec(h, z->dst);
+        h = sup_ck_word(h, z->travel_ticks);
+    }
+    h = sup_ck_word(h, st->n_unit_ext);
+    for (k = 0; k < st->n_unit_ext && k < OM_SUP_MAX_UNIT_EXT; k++) {
+        const om_sup_unit_ext *u = &st->unit_ext[k];
+        h = sup_ck_word(h, (uint64_t)u->in_use);
+        h = sup_ck_word(h, u->unit_id);
+        h = sup_ck_word(h, (uint64_t)u->nc_kind);
+        h = sup_ck_dbl(h, u->last_hp);
+        h = sup_ck_word(h, (uint64_t)u->has_order);
+        h = sup_ck_vec(h, u->order_dest);
+        h = sup_ck_word(h, (uint64_t)u->extracted);
+    }
+    h = sup_ck_vec(h, st->extraction_point);
+    h = sup_ck_dbl(h, st->extraction_radius);
+    h = sup_ck_word(h, (uint64_t)st->extraction_set);
+    h = sup_ck_word(h, st->held_structures_count);
+    return h;
+}
+
+/* ---- stage 2: save hooks (slot OM_SAVE_SLOT_SUPPORT) ----
+ * Fields are exactly what om_support_section_hash covers. Not saved: the ticker
+ * queue (a UI feed; a loaded world starts with it empty). Every row is written. */
+typedef struct {
+    uint8_t *buf;   /* NULL: count only */
+    uint32_t pos;
+} sup_sw;
+
+static void sup_put(sup_sw *sw, uint64_t v, uint32_t width) {
+    uint32_t i;
+    if (sw->buf)
+        for (i = 0; i < width; i++)
+            sw->buf[sw->pos + i] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+    sw->pos += width;
+}
+static void sup_put_u8(sup_sw *sw, uint32_t v) { sup_put(sw, v, (uint32_t)sizeof(uint8_t)); }
+static void sup_put_u32(sup_sw *sw, uint32_t v) { sup_put(sw, v, (uint32_t)sizeof(uint32_t)); }
+static void sup_put_u64(sup_sw *sw, uint64_t v) { sup_put(sw, v, (uint32_t)sizeof(uint64_t)); }
+static void sup_put_i32(sup_sw *sw, int32_t v) { sup_put(sw, (uint32_t)v, (uint32_t)sizeof(int32_t)); }
+static void sup_put_f64(sup_sw *sw, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    sup_put_u64(sw, v);
+}
+static void sup_put_vec(sup_sw *sw, om_vec2 v) { sup_put_f64(sw, v.x); sup_put_f64(sw, v.y); }
+
+static void sup_state_put(sup_sw *sw, const om_sup_state *st) {
+    uint32_t i;
+    for (i = 0; i <= OM_SUP_MAX_STRUCTURES; i++) {
+        const om_sup_structure *s = &st->structures[i];
+        sup_put_u8(sw, (uint32_t)(s->in_use != 0));
+        sup_put_i32(sw, s->owner);
+        sup_put_u8(sw, (uint32_t)(s->destroyed != 0));
+        sup_put_f64(sw, s->hp);
+        sup_put_f64(sw, s->power);
+        sup_put_u32(sw, s->unit_type);
+        sup_put_u64(sw, s->timer);
+        sup_put_u8(sw, (uint32_t)(s->prod_accruing != 0));
+        sup_put_u64(sw, s->prod_last_base);
+        sup_put_f64(sw, s->capture_progress);
+        sup_put_u8(sw, (uint32_t)(s->capture_accruing != 0));
+        sup_put_u64(sw, s->capture_last_base);
+        sup_put_u8(sw, (uint32_t)(s->capture_driven != 0));
+        sup_put_u64(sw, s->capture_driven_base);
+        sup_put_i32(sw, s->capturing_faction);
+        sup_put_u8(sw, (uint32_t)(s->contested != 0));
+        sup_put_f64(sw, s->x);
+        sup_put_f64(sw, s->y);
+        sup_put_f64(sw, s->last_spawn_distance);
+        sup_put_f64(sw, s->last_spawn_x);
+        sup_put_f64(sw, s->last_spawn_y);
+        sup_put_u32(sw, s->pending_spawns);
+        sup_put_u8(sw, (uint32_t)(s->drifting != 0));
+        sup_put_u64(sw, s->drift_period);
+        sup_put_vec(sw, s->drift_wp[0]);
+        sup_put_vec(sw, s->drift_wp[1]);
+    }
+    for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
+        const om_sup_objective *o = &st->objectives[i];
+        sup_put_u8(sw, (uint32_t)(o->in_use != 0));
+        sup_put_u8(sw, (uint32_t)(o->drifting != 0));
+        sup_put_u64(sw, o->drift_period);
+        sup_put_vec(sw, o->drift_wp[0]);
+        sup_put_vec(sw, o->drift_wp[1]);
+    }
+    sup_put_u32(sw, st->n_hazards);
+    for (i = 0; i < st->n_hazards && i < OM_SUP_MAX_HAZARDS; i++) {
+        const om_sup_hazard *z = &st->hazards[i];
+        sup_put_u8(sw, (uint32_t)(z->in_use != 0));
+        sup_put_vec(sw, z->src);
+        sup_put_vec(sw, z->dst);
+        sup_put_u64(sw, z->travel_ticks);
+    }
+    sup_put_u32(sw, st->n_unit_ext);
+    for (i = 0; i < st->n_unit_ext && i < OM_SUP_MAX_UNIT_EXT; i++) {
+        const om_sup_unit_ext *u = &st->unit_ext[i];
+        sup_put_u8(sw, (uint32_t)(u->in_use != 0));
+        sup_put_u32(sw, u->unit_id);
+        sup_put_i32(sw, u->nc_kind);
+        sup_put_f64(sw, u->last_hp);
+        sup_put_u8(sw, (uint32_t)(u->has_order != 0));
+        sup_put_vec(sw, u->order_dest);
+        sup_put_u8(sw, (uint32_t)(u->extracted != 0));
+    }
+    sup_put_vec(sw, st->extraction_point);
+    sup_put_f64(sw, st->extraction_radius);
+    sup_put_u8(sw, (uint32_t)(st->extraction_set != 0));
+    sup_put_u32(sw, st->held_structures_count);
+}
+
+static uint32_t om_sup_save_size(const om_world *w) {
+    sup_sw sw = { NULL, 0 };
+    if (!w->support_state) return 0;
+    sup_state_put(&sw, (const om_sup_state *)w->support_state);
+    return sw.pos;
+}
+
+static void om_sup_save_write(const om_world *w, uint8_t *out) {
+    sup_sw sw = { out, 0 };
+    if (!w->support_state || !out) return;
+    sup_state_put(&sw, (const om_sup_state *)w->support_state);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len, pos;
+    int ok;
+} sup_sr;
+
+static uint64_t sup_get(sup_sr *sr, uint32_t width) {
+    uint64_t v = 0;
+    uint32_t i;
+    if (!sr->ok || width > sr->len - sr->pos) { sr->ok = 0; return 0; }
+    for (i = 0; i < width; i++) v |= ((uint64_t)sr->p[sr->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    sr->pos += width;
+    return v;
+}
+static uint32_t sup_get_u32(sup_sr *sr) { return (uint32_t)sup_get(sr, (uint32_t)sizeof(uint32_t)); }
+static uint64_t sup_get_u64(sup_sr *sr) { return sup_get(sr, (uint32_t)sizeof(uint64_t)); }
+static int32_t sup_get_i32(sup_sr *sr) { return (int32_t)sup_get(sr, (uint32_t)sizeof(int32_t)); }
+static int sup_get_flag(sup_sr *sr) {
+    uint32_t v = (uint32_t)sup_get(sr, (uint32_t)sizeof(uint8_t));
+    if (v > 1) sr->ok = 0;
+    return (int)v;
+}
+static double sup_get_f64(sup_sr *sr) {
+    uint64_t bits = sup_get_u64(sr);
+    double d;
+    memcpy(&d, &bits, sizeof d);
+    return d;
+}
+static om_vec2 sup_get_vec(sup_sr *sr) {
+    om_vec2 v;
+    v.x = sup_get_f64(sr);
+    v.y = sup_get_f64(sr);
+    return v;
+}
+static uint32_t sup_get_count(sup_sr *sr, uint32_t cap) {
+    uint32_t n = sup_get_u32(sr);
+    if (n > cap) { sr->ok = 0; return 0; }
+    return n;
+}
+
+static void sup_state_get(sup_sr *sr, om_sup_state *st) {
+    uint32_t i;
+    for (i = 0; i <= OM_SUP_MAX_STRUCTURES; i++) {
+        om_sup_structure *s = &st->structures[i];
+        s->in_use = sup_get_flag(sr);
+        s->owner = sup_get_i32(sr);
+        s->destroyed = sup_get_flag(sr);
+        s->hp = sup_get_f64(sr);
+        s->power = sup_get_f64(sr);
+        s->unit_type = sup_get_u32(sr);
+        s->timer = sup_get_u64(sr);
+        s->prod_accruing = sup_get_flag(sr);
+        s->prod_last_base = sup_get_u64(sr);
+        s->capture_progress = sup_get_f64(sr);
+        s->capture_accruing = sup_get_flag(sr);
+        s->capture_last_base = sup_get_u64(sr);
+        s->capture_driven = sup_get_flag(sr);
+        s->capture_driven_base = sup_get_u64(sr);
+        s->capturing_faction = sup_get_i32(sr);
+        s->contested = sup_get_flag(sr);
+        s->x = sup_get_f64(sr);
+        s->y = sup_get_f64(sr);
+        s->last_spawn_distance = sup_get_f64(sr);
+        s->last_spawn_x = sup_get_f64(sr);
+        s->last_spawn_y = sup_get_f64(sr);
+        s->pending_spawns = sup_get_u32(sr);
+        s->drifting = sup_get_flag(sr);
+        s->drift_period = sup_get_u64(sr);
+        s->drift_wp[0] = sup_get_vec(sr);
+        s->drift_wp[1] = sup_get_vec(sr);
+    }
+    for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
+        om_sup_objective *o = &st->objectives[i];
+        o->in_use = sup_get_flag(sr);
+        o->drifting = sup_get_flag(sr);
+        o->drift_period = sup_get_u64(sr);
+        o->drift_wp[0] = sup_get_vec(sr);
+        o->drift_wp[1] = sup_get_vec(sr);
+    }
+    st->n_hazards = sup_get_count(sr, OM_SUP_MAX_HAZARDS);
+    for (i = 0; i < st->n_hazards; i++) {
+        om_sup_hazard *z = &st->hazards[i];
+        z->in_use = sup_get_flag(sr);
+        z->src = sup_get_vec(sr);
+        z->dst = sup_get_vec(sr);
+        z->travel_ticks = sup_get_u64(sr);
+    }
+    st->n_unit_ext = sup_get_count(sr, OM_SUP_MAX_UNIT_EXT);
+    for (i = 0; i < st->n_unit_ext; i++) {
+        om_sup_unit_ext *u = &st->unit_ext[i];
+        u->in_use = sup_get_flag(sr);
+        u->unit_id = sup_get_u32(sr);
+        u->nc_kind = sup_get_i32(sr);
+        u->last_hp = sup_get_f64(sr);
+        u->has_order = sup_get_flag(sr);
+        u->order_dest = sup_get_vec(sr);
+        u->extracted = sup_get_flag(sr);
+    }
+    st->extraction_point = sup_get_vec(sr);
+    st->extraction_radius = sup_get_f64(sr);
+    st->extraction_set = sup_get_flag(sr);
+    st->held_structures_count = sup_get_u32(sr);
+}
+
+static int om_sup_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    om_sup_state *st;
+    sup_sr sr;
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    st = (om_sup_state *)calloc(1, sizeof(om_sup_state));
+    if (!st) return 1;
+    sr.p = buf; sr.len = len; sr.pos = 0; sr.ok = 1;
+    sup_state_get(&sr, st);
+    if (!sr.ok || sr.pos != len) {
+        free(st);
+        return 1;
+    }
+    if (w->support_state && w->support_state_free) w->support_state_free(w->support_state);
+    w->support_state = st;
+    w->support_state_free = om_sup_state_free;
+    w->support_state_size = om_sup_save_size;
+    w->support_state_write = om_sup_save_write;
+    w->support_state_read = om_sup_save_read;
+    return 0;
+}
+
+void om_support_install_net_hooks(om_world *w) {
+    w->net_section_hash[OM_SUP_CK_SECTION] = om_support_section_hash;
+    w->support_state_size = om_sup_save_size;
+    w->support_state_write = om_sup_save_write;
+    w->support_state_read = om_sup_save_read;
 }

@@ -336,6 +336,8 @@ static void om_move_transit_cancel(om_move_unit *mu) {
 #define OM_PP_MULT_HI 10.0
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
+/* R-162-01: 5 s at the tactical rate; om_constants.h OM_PULSE_REVEAL_TICKS (40) is the bible's old 2 s */
+#define OM_PP_PING_REVEAL_DEFAULT 100
 #define OM_PP_PING_REVEAL_HI 1200
 #define OM_PP_PING_COOLDOWN_HI 12000
 
@@ -366,13 +368,15 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_MULT(OM_CATEGORY_MULTIPLIER_STRIKE_STRIKE),
     OM_PP_MULT(1.0), OM_PP_MULT(1.0),
     OM_PP_DIST(OM_PULSE_RADIUS),
-    { OM_PP_INT, OM_PULSE_REVEAL_TICKS, 0.0, OM_PP_PING_REVEAL_HI },
+    { OM_PP_INT, OM_PP_PING_REVEAL_DEFAULT, 0.0, OM_PP_PING_REVEAL_HI },
     { OM_PP_INT, OM_PULSE_COOLDOWN_TICKS, 0.0, OM_PP_PING_COOLDOWN_HI },
     OM_PP_DIST(OM_PP_PING_REACH_DEFAULT),
     OM_PP_VIS4, OM_PP_VIS4,
     OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
     /* A196: faction 1's target policy, -1 = unset (follows OM_TP_TARGET_POLICY); lab only */
     { OM_PP_INT, -1.0, -1.0, 1.0 },
+    /* R-162-03: the pinged side's alert, 0 off (default), 1 on */
+    OM_PP_SWITCH(0.0),
 };
 
 static void om_pp_load_defaults(double *out) {
@@ -496,6 +500,7 @@ static const double OM_STEERING_SWEEP_ANGLES[OM_STEERING_SWEEP_COUNT] = {
     OM_STEERING_SWEEP_DELTA_RAD_6X, -OM_STEERING_SWEEP_DELTA_RAD_6X,
 };
 
+static void om_move_set_save_hooks(om_world *w);
 static om_move_state *om_ms(om_world *w) {
     om_move_state *ms = (om_move_state *)w->move_state;
     if (!ms) {
@@ -508,6 +513,7 @@ static om_move_state *om_ms(om_world *w) {
         om_pp_load_defaults(ms->param);
         w->move_state = ms;
         w->move_state_free = om_move_state_free_fn;
+        om_move_set_save_hooks(w);
     }
     return ms;
 }
@@ -3103,3 +3109,371 @@ int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
     return 0;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_MV_PRIME 1099511628211ULL
+#define OM_MV_SEED  14695981039346656037ULL
+#define OM_MV_MIX_SHIFT 29
+#define OM_MV_SECTION 4
+#define OM_MV_WORD_BITS 64
+#define OM_MV_NULL  0x6d6f76652d6e756cULL
+static uint64_t mv_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_MV_PRIME;
+    return h ^ (h >> OM_MV_MIX_SHIFT);
+}
+static uint64_t mv_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return mv_word(h, v);
+}
+/* A row still in the state om_move_touch gives a new row hashes as an absent one: reads such as om_unit_get_pos
+ * create rows lazily, and a read must never change the checksum. Mirrors every field om_move_touch initialises.
+ * See also: om_move_touch */
+static int mv_row_is_fresh(const om_world *cw, const om_move_unit *mu) {
+    om_world *w = (om_world *)cw; /* the position and speed getters only read */
+    uint32_t f;
+    double x = om_unit_position_x(w, mu->unit_id), y = om_unit_position_y(w, mu->unit_id);
+    if (mu->x != x || mu->y != y) return 0;
+    if (mu->pushed_x != x || mu->pushed_y != y || mu->prev_x != x || mu->prev_y != y) return 0;
+    if (mu->deflect_origin_x != x || mu->deflect_origin_y != y) return 0;
+    if (mu->facing != 0.0 || mu->prev_facing != 0.0 || mu->has_dest || mu->dest_x != 0.0 || mu->dest_y != 0.0) return 0;
+    if (mu->direct_move || mu->group_id || mu->speed_cap != 0.0 || mu->engaged || mu->kiting || mu->kite_target) return 0;
+    if (mu->order_kind != -1 || mu->routed || mu->deflecting || mu->deflect_heading != 0.0 || mu->waiting) return 0;
+    if (mu->native_speed != om_unit_effective_speed(w, mu->unit_id)) return 0;
+    for (f = 0; f < OM_MAX_FACTIONS; f++) if (!mu->visible[f]) return 0;
+    return !mu->giveup_near && !mu->detour_remaining && !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
+           !mu->plan_epoch && !mu->plan_dest_x && !mu->plan_dest_y && !mu->aim_x && !mu->aim_y &&
+           !mu->aim_is_waypoint && !mu->lay_state && !mu->lay_has_pend && !mu->lay_route && !mu->transit &&
+           !mu->lay_to && !mu->lay_pend && !mu->lay_t && !mu->lay_dur && !mu->transit_home;
+}
+static uint64_t om_move_section_hash(const om_world *w) {
+    const om_move_state *ms = (const om_move_state *)w->move_state;
+    uint64_t h = OM_MV_SEED;
+    uint32_t id, k, nu;
+    if (!ms) return OM_MV_NULL;
+    nu = ms->discovery_max < OM_MOVE_MAX_UNITS - 1 ? ms->discovery_max : OM_MOVE_MAX_UNITS - 1;
+    h = mv_word(h, ms->discovery_max);
+    for (id = 1; id <= nu; id++) {
+        const om_move_unit *mu = &ms->units[id];
+        uint64_t bits = 0;
+        int live = mu->in_use && !mv_row_is_fresh(w, mu);
+        h = mv_word(h, (uint64_t)(int64_t)live);
+        if (!live) continue;
+        h = mv_word(h, mu->unit_id);
+        h = mv_dbl(h, mu->x); h = mv_dbl(h, mu->y);
+        h = mv_dbl(h, mu->pushed_x); h = mv_dbl(h, mu->pushed_y);
+        h = mv_dbl(h, mu->facing);
+        h = mv_dbl(h, mu->prev_x); h = mv_dbl(h, mu->prev_y); h = mv_dbl(h, mu->prev_facing);
+        h = mv_word(h, (uint64_t)(int64_t)mu->has_dest);
+        h = mv_word(h, mu->giveup_near);
+        h = mv_dbl(h, mu->dest_x); h = mv_dbl(h, mu->dest_y);
+        h = mv_word(h, (uint64_t)(int64_t)mu->direct_move);
+        h = mv_word(h, mu->group_id);
+        h = mv_dbl(h, mu->speed_cap);
+        h = mv_word(h, (uint64_t)(int64_t)mu->engaged);
+        h = mv_word(h, (uint64_t)(int64_t)mu->kiting);
+        h = mv_word(h, mu->kite_target);
+        h = mv_word(h, (uint64_t)(int64_t)mu->order_kind);
+        h = mv_dbl(h, mu->native_speed);
+        h = mv_word(h, (uint64_t)(int64_t)mu->deflecting);
+        h = mv_dbl(h, mu->deflect_heading);
+        h = mv_dbl(h, mu->deflect_origin_x); h = mv_dbl(h, mu->deflect_origin_y);
+        h = mv_word(h, (uint64_t)(int64_t)mu->waiting);
+        h = mv_dbl(h, mu->detour_remaining); h = mv_dbl(h, mu->detour_dx); h = mv_dbl(h, mu->detour_dy);
+        for (k = 0; k < OM_MAX_FACTIONS; k++) {
+            if (mu->visible[k]) bits |= 1ULL << (k % OM_MV_WORD_BITS);
+        }
+        h = mv_word(h, bits);
+        h = mv_word(h, (uint64_t)(int64_t)mu->plan_valid);
+        h = mv_word(h, mu->plan_epoch);
+        h = mv_dbl(h, mu->plan_dest_x); h = mv_dbl(h, mu->plan_dest_y);
+        h = mv_dbl(h, mu->aim_x); h = mv_dbl(h, mu->aim_y);
+        h = mv_word(h, (uint64_t)(int64_t)mu->aim_is_waypoint);
+        h = mv_word(h, (uint64_t)(int64_t)mu->routed);
+        h = mv_word(h, (uint64_t)(int64_t)mu->lay_state);
+        h = mv_word(h, (uint64_t)(int64_t)mu->lay_has_pend);
+        h = mv_word(h, (uint64_t)(int64_t)mu->lay_route);
+        h = mv_word(h, (uint64_t)(int64_t)mu->transit);
+        h = mv_word(h, mu->lay_to); h = mv_word(h, mu->lay_pend);
+        h = mv_word(h, mu->lay_t); h = mv_word(h, mu->lay_dur);
+        h = mv_word(h, mu->transit_home);
+    }
+    h = mv_word(h, ms->n_groups);
+    h = mv_word(h, ms->next_group_id);
+    for (k = 0; k < ms->n_groups && k < OM_MOVE_MAX_GROUPS; k++) {
+        const om_move_group *g = &ms->groups[k];
+        h = mv_word(h, (uint64_t)(int64_t)g->active);
+        h = mv_word(h, g->id); h = mv_word(h, g->first_member); h = mv_word(h, g->n_members);
+        h = mv_dbl(h, g->click_x); h = mv_dbl(h, g->click_y); h = mv_dbl(h, g->speed_cap);
+    }
+    h = mv_word(h, ms->n_group_members);
+    for (k = 0; k < ms->n_group_members && k < OM_MOVE_MAX_GROUP_MEMBERS; k++) h = mv_word(h, ms->group_members[k]);
+    h = mv_word(h, ms->last_synced_tick);
+    h = mv_word(h, ms->period_seen);
+    h = mv_word(h, ms->terrain_epoch);
+    h = mv_word(h, ms->n_queue);
+    for (k = 0; k < ms->n_queue && k < OM_MOVE_MAX_QUEUE; k++) {
+        const om_move_queue_entry *q = &ms->queue[k];
+        h = mv_word(h, (uint64_t)(int64_t)q->in_use);
+        h = mv_word(h, q->tick);
+        h = mv_word(h, (uint64_t)(int64_t)q->kind);
+        h = mv_word(h, q->unit_id);
+        h = mv_dbl(h, q->x); h = mv_dbl(h, q->y);
+    }
+    h = mv_dbl(h, ms->canvas_w); h = mv_dbl(h, ms->canvas_h);
+    for (k = 0; k < OM_TP__COUNT; k++) h = mv_dbl(h, ms->param[k]);
+    h = mv_word(h, (uint64_t)(int64_t)ms->lay_any);
+    h = mv_word(h, ms->reach_n);
+    for (k = 0; k < ms->reach_n && k < OM_PP_REACH_MAX; k++) {
+        h = mv_word(h, (uint64_t)(int64_t)ms->reach_type[k]);
+        h = mv_word(h, ms->reach_up[k]);
+        h = mv_word(h, ms->reach_down[k]);
+    }
+    return h;
+}
+typedef struct {
+    uint8_t *out;
+    uint32_t pos;
+} mv_sw;
+static void mv_put(mv_sw *s, uint64_t v, uint32_t width) {
+    uint32_t i;
+    if (s->out) {
+        for (i = 0; i < width; i++) s->out[s->pos + i] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+    }
+    s->pos += width;
+}
+static void mv_put_u32(mv_sw *s, uint32_t v) { mv_put(s, v, sizeof v); }
+static void mv_put_i32(mv_sw *s, int32_t v) { mv_put(s, (uint32_t)v, sizeof v); }
+static void mv_put_u64(mv_sw *s, uint64_t v) { mv_put(s, v, sizeof v); }
+static void mv_put_f64(mv_sw *s, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    mv_put_u64(s, v);
+}
+static uint32_t mv_unit_count(const om_move_state *ms) {
+    return ms->discovery_max < OM_MOVE_MAX_UNITS - 1 ? ms->discovery_max : OM_MOVE_MAX_UNITS - 1;
+}
+static void mv_save_all(const om_move_state *ms, mv_sw *s) {
+    uint32_t id, k, nu = mv_unit_count(ms);
+    mv_put_u32(s, ms->discovery_max);
+    for (id = 1; id <= nu; id++) {
+        const om_move_unit *mu = &ms->units[id];
+        mv_put_i32(s, mu->in_use);
+        if (!mu->in_use) continue;
+        mv_put_u32(s, mu->unit_id);
+        mv_put_f64(s, mu->x); mv_put_f64(s, mu->y);
+        mv_put_f64(s, mu->pushed_x); mv_put_f64(s, mu->pushed_y);
+        mv_put_f64(s, mu->facing);
+        mv_put_f64(s, mu->prev_x); mv_put_f64(s, mu->prev_y); mv_put_f64(s, mu->prev_facing);
+        mv_put_i32(s, mu->has_dest);
+        mv_put_u32(s, mu->giveup_near);
+        mv_put_f64(s, mu->dest_x); mv_put_f64(s, mu->dest_y);
+        mv_put_i32(s, mu->direct_move);
+        mv_put_u32(s, mu->group_id);
+        mv_put_f64(s, mu->speed_cap);
+        mv_put_i32(s, mu->engaged);
+        mv_put_i32(s, mu->kiting);
+        mv_put_u32(s, mu->kite_target);
+        mv_put_i32(s, mu->order_kind);
+        mv_put_f64(s, mu->native_speed);
+        mv_put_i32(s, mu->deflecting);
+        mv_put_f64(s, mu->deflect_heading);
+        mv_put_f64(s, mu->deflect_origin_x); mv_put_f64(s, mu->deflect_origin_y);
+        mv_put_i32(s, mu->waiting);
+        mv_put_f64(s, mu->detour_remaining); mv_put_f64(s, mu->detour_dx); mv_put_f64(s, mu->detour_dy);
+        for (k = 0; k < OM_MAX_FACTIONS; k++) mv_put_i32(s, mu->visible[k]);
+        mv_put_i32(s, mu->plan_valid);
+        mv_put_u32(s, mu->plan_epoch);
+        mv_put_f64(s, mu->plan_dest_x); mv_put_f64(s, mu->plan_dest_y);
+        mv_put_f64(s, mu->aim_x); mv_put_f64(s, mu->aim_y);
+        mv_put_i32(s, mu->aim_is_waypoint);
+        mv_put_i32(s, mu->routed);
+        mv_put_i32(s, mu->lay_state);
+        mv_put_i32(s, mu->lay_has_pend);
+        mv_put_i32(s, mu->lay_route);
+        mv_put_i32(s, mu->transit);
+        mv_put_u32(s, mu->lay_to); mv_put_u32(s, mu->lay_pend);
+        mv_put_u32(s, mu->lay_t); mv_put_u32(s, mu->lay_dur);
+        mv_put_u32(s, mu->transit_home);
+    }
+    mv_put_u32(s, ms->n_groups);
+    mv_put_u32(s, ms->next_group_id);
+    for (k = 0; k < ms->n_groups && k < OM_MOVE_MAX_GROUPS; k++) {
+        const om_move_group *g = &ms->groups[k];
+        mv_put_i32(s, g->active);
+        mv_put_u32(s, g->id); mv_put_u32(s, g->first_member); mv_put_u32(s, g->n_members);
+        mv_put_f64(s, g->click_x); mv_put_f64(s, g->click_y); mv_put_f64(s, g->speed_cap);
+    }
+    mv_put_u32(s, ms->n_group_members);
+    for (k = 0; k < ms->n_group_members && k < OM_MOVE_MAX_GROUP_MEMBERS; k++) mv_put_u32(s, ms->group_members[k]);
+    mv_put_u64(s, ms->last_synced_tick);
+    mv_put_u32(s, ms->period_seen);
+    mv_put_u32(s, ms->terrain_epoch);
+    mv_put_u32(s, ms->n_queue);
+    for (k = 0; k < ms->n_queue && k < OM_MOVE_MAX_QUEUE; k++) {
+        const om_move_queue_entry *q = &ms->queue[k];
+        mv_put_i32(s, q->in_use);
+        mv_put_u64(s, q->tick);
+        mv_put_i32(s, q->kind);
+        mv_put_u32(s, q->unit_id);
+        mv_put_f64(s, q->x); mv_put_f64(s, q->y);
+    }
+    mv_put_f64(s, ms->canvas_w); mv_put_f64(s, ms->canvas_h);
+    for (k = 0; k < OM_TP__COUNT; k++) mv_put_f64(s, ms->param[k]);
+    mv_put_i32(s, ms->lay_any);
+    mv_put_u32(s, ms->reach_n);
+    for (k = 0; k < ms->reach_n && k < OM_PP_REACH_MAX; k++) {
+        mv_put_i32(s, ms->reach_type[k]);
+        mv_put_u32(s, ms->reach_up[k]);
+        mv_put_u32(s, ms->reach_down[k]);
+    }
+}
+static uint32_t om_move_save_size(const om_world *w) {
+    const om_move_state *ms = (const om_move_state *)w->move_state;
+    mv_sw s = { NULL, 0 };
+    if (!ms) return 0;
+    mv_save_all(ms, &s);
+    return s.pos;
+}
+static void om_move_save_write(const om_world *w, uint8_t *out) {
+    const om_move_state *ms = (const om_move_state *)w->move_state;
+    mv_sw s = { out, 0 };
+    if (ms) mv_save_all(ms, &s);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len, pos;
+    int ok;
+} mv_sr;
+static uint64_t mv_get(mv_sr *r, uint32_t width) {
+    uint64_t v = 0;
+    uint32_t i;
+    if (!r->ok || width > r->len - r->pos) {
+        r->ok = 0;
+        return 0;
+    }
+    for (i = 0; i < width; i++) v |= ((uint64_t)r->p[r->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    r->pos += width;
+    return v;
+}
+static uint32_t mv_get_u32(mv_sr *r) { return (uint32_t)mv_get(r, sizeof(uint32_t)); }
+static int32_t mv_get_i32(mv_sr *r) { return (int32_t)mv_get(r, sizeof(int32_t)); }
+static uint64_t mv_get_u64(mv_sr *r) { return mv_get(r, sizeof(uint64_t)); }
+static double mv_get_f64(mv_sr *r) {
+    uint64_t bits = mv_get_u64(r);
+    double v;
+    memcpy(&v, &bits, sizeof v);
+    return v;
+}
+static uint32_t mv_get_count(mv_sr *r, uint32_t cap) {
+    uint32_t n = mv_get_u32(r);
+    if (n > cap) {
+        r->ok = 0;
+        return 0;
+    }
+    return n;
+}
+static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    mv_sr r;
+    om_move_state *ms;
+    uint32_t id, k, nu;
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    r.p = buf; r.len = len; r.pos = 0; r.ok = 1;
+    ms = (om_move_state *)calloc(1, sizeof(om_move_state));
+    if (!ms) return 1;
+    for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
+        om_move_sincos_approx(OM_STEERING_SWEEP_ANGLES[k], &ms->sweep_sin[k], &ms->sweep_cos[k]);
+    }
+    ms->discovery_max = mv_get_count(&r, OM_MOVE_MAX_UNITS - 1);
+    nu = ms->discovery_max;
+    for (id = 1; id <= nu && r.ok; id++) {
+        om_move_unit *mu = &ms->units[id];
+        mu->in_use = mv_get_i32(&r);
+        if (!mu->in_use) continue;
+        mu->unit_id = mv_get_u32(&r);
+        mu->x = mv_get_f64(&r); mu->y = mv_get_f64(&r);
+        mu->pushed_x = mv_get_f64(&r); mu->pushed_y = mv_get_f64(&r);
+        mu->facing = mv_get_f64(&r);
+        mu->prev_x = mv_get_f64(&r); mu->prev_y = mv_get_f64(&r); mu->prev_facing = mv_get_f64(&r);
+        mu->has_dest = mv_get_i32(&r);
+        mu->giveup_near = mv_get_u32(&r);
+        mu->dest_x = mv_get_f64(&r); mu->dest_y = mv_get_f64(&r);
+        mu->direct_move = mv_get_i32(&r);
+        mu->group_id = mv_get_u32(&r);
+        mu->speed_cap = mv_get_f64(&r);
+        mu->engaged = mv_get_i32(&r);
+        mu->kiting = mv_get_i32(&r);
+        mu->kite_target = mv_get_u32(&r);
+        mu->order_kind = mv_get_i32(&r);
+        mu->native_speed = mv_get_f64(&r);
+        mu->deflecting = mv_get_i32(&r);
+        mu->deflect_heading = mv_get_f64(&r);
+        mu->deflect_origin_x = mv_get_f64(&r); mu->deflect_origin_y = mv_get_f64(&r);
+        mu->waiting = mv_get_i32(&r);
+        mu->detour_remaining = mv_get_f64(&r); mu->detour_dx = mv_get_f64(&r); mu->detour_dy = mv_get_f64(&r);
+        for (k = 0; k < OM_MAX_FACTIONS; k++) mu->visible[k] = mv_get_i32(&r);
+        mu->plan_valid = mv_get_i32(&r);
+        mu->plan_epoch = mv_get_u32(&r);
+        mu->plan_dest_x = mv_get_f64(&r); mu->plan_dest_y = mv_get_f64(&r);
+        mu->aim_x = mv_get_f64(&r); mu->aim_y = mv_get_f64(&r);
+        mu->aim_is_waypoint = mv_get_i32(&r);
+        mu->routed = mv_get_i32(&r);
+        mu->lay_state = mv_get_i32(&r);
+        mu->lay_has_pend = mv_get_i32(&r);
+        mu->lay_route = mv_get_i32(&r);
+        mu->transit = mv_get_i32(&r);
+        mu->lay_to = mv_get_u32(&r); mu->lay_pend = mv_get_u32(&r);
+        mu->lay_t = mv_get_u32(&r); mu->lay_dur = mv_get_u32(&r);
+        mu->transit_home = mv_get_u32(&r);
+    }
+    ms->n_groups = mv_get_count(&r, OM_MOVE_MAX_GROUPS);
+    ms->next_group_id = mv_get_u32(&r);
+    for (k = 0; k < ms->n_groups && r.ok; k++) {
+        om_move_group *g = &ms->groups[k];
+        g->active = mv_get_i32(&r);
+        g->id = mv_get_u32(&r); g->first_member = mv_get_u32(&r); g->n_members = mv_get_u32(&r);
+        g->click_x = mv_get_f64(&r); g->click_y = mv_get_f64(&r); g->speed_cap = mv_get_f64(&r);
+    }
+    ms->n_group_members = mv_get_count(&r, OM_MOVE_MAX_GROUP_MEMBERS);
+    for (k = 0; k < ms->n_group_members && r.ok; k++) ms->group_members[k] = mv_get_u32(&r);
+    ms->last_synced_tick = mv_get_u64(&r);
+    ms->period_seen = mv_get_u32(&r);
+    ms->terrain_epoch = mv_get_u32(&r);
+    ms->n_queue = mv_get_count(&r, OM_MOVE_MAX_QUEUE);
+    for (k = 0; k < ms->n_queue && r.ok; k++) {
+        om_move_queue_entry *q = &ms->queue[k];
+        q->in_use = mv_get_i32(&r);
+        q->tick = mv_get_u64(&r);
+        q->kind = mv_get_i32(&r);
+        q->unit_id = mv_get_u32(&r);
+        q->x = mv_get_f64(&r); q->y = mv_get_f64(&r);
+    }
+    ms->canvas_w = mv_get_f64(&r); ms->canvas_h = mv_get_f64(&r);
+    for (k = 0; k < OM_TP__COUNT; k++) ms->param[k] = mv_get_f64(&r);
+    ms->lay_any = mv_get_i32(&r);
+    ms->reach_n = mv_get_count(&r, OM_PP_REACH_MAX);
+    for (k = 0; k < ms->reach_n && r.ok; k++) {
+        ms->reach_type[k] = mv_get_i32(&r);
+        ms->reach_up[k] = mv_get_u32(&r);
+        ms->reach_down[k] = mv_get_u32(&r);
+    }
+    if (!r.ok || r.pos != len) {
+        free(ms);
+        return 1;
+    }
+    if (w->move_state && w->move_state_free) w->move_state_free(w->move_state);
+    w->move_state = ms;
+    w->move_state_free = om_move_state_free_fn;
+    return 0;
+}
+static void om_move_set_save_hooks(om_world *w) {
+    w->move_state_size = om_move_save_size;
+    w->move_state_write = om_move_save_write;
+    w->move_state_read = om_move_save_read;
+}
+void om_move_install_net_hooks(om_world *w) {
+    w->net_section_hash[OM_MV_SECTION] = om_move_section_hash;
+    om_move_set_save_hooks(w);
+}

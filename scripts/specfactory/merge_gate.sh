@@ -478,6 +478,39 @@ else
     warn checksum_trace "Makefile does not support OPT yet; O0 vs O2 comparison skipped"
 fi
 
+# -------------------------------------------------------------- 10b. tactical_trace O0 vs O2
+# Scripted mission plus scripted command stream, full checksums every tenth tick.
+# See also: stage 10 above (strategic checksum_trace), scripts/specfactory/tactical_trace.py.
+if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
+    if [[ -f "$CANDIDATE/build/O0/libouroboros.so" && -f "$CANDIDATE/build/O2/libouroboros.so" ]]; then
+        TT_O0="$SCRATCH_ROOT/tactical_o0.txt"
+        TT_O2="$SCRATCH_ROOT/tactical_o2.txt"
+        ( cd "$CANDIDATE" && "$PYTHON" "$GATE_DIR/tactical_trace.py" \
+            --lib build/O0/libouroboros.so --seed 1 --ticks 1500 ) >"$TT_O0" 2>&1
+        TT_RC0=$?
+        ( cd "$CANDIDATE" && "$PYTHON" "$GATE_DIR/tactical_trace.py" \
+            --lib build/O2/libouroboros.so --seed 1 --ticks 1500 ) >"$TT_O2" 2>&1
+        TT_RC2=$?
+        if grep -q 'lacks om_world_checksum_full' "$TT_O0" "$TT_O2"; then
+            warn tactical_trace "library lacks om_world_checksum_full; tactical O0 vs O2 comparison skipped"
+        elif [[ $TT_RC0 -ne 0 || $TT_RC2 -ne 0 ]]; then
+            reject tactical_trace "trace run failed: $(tail_oneline "$TT_O0") / $(tail_oneline "$TT_O2")"
+        else
+            TT_CMP="$SCRATCH_ROOT/tactical_compare.log"
+            "$PYTHON" "$GATE_DIR/tactical_trace.py" --compare "$TT_O0" "$TT_O2" >"$TT_CMP" 2>&1
+            if [[ $? -ne 0 ]]; then
+                reject tactical_trace "$(cat "$TT_CMP")"
+            else
+                ok tactical_trace "$(cat "$TT_CMP")"
+            fi
+        fi
+    else
+        warn tactical_trace "build/O0 or build/O2 missing; tactical comparison skipped"
+    fi
+else
+    warn tactical_trace "Makefile does not support OPT yet; tactical O0 vs O2 comparison skipped"
+fi
+
 # -------------------------------------------------------------- 11. undertest_check (WARN only, never blocks)
 UT_OUT="$("$PYTHON" -c "
 import sys

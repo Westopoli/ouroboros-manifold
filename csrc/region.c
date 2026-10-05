@@ -112,6 +112,13 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
      * the state itself, the first time either module is actually used). */
     om_events_install_save_hooks(w);
     om_generational_install_save_hooks(w);
+    {
+        uint32_t ns;
+        for (ns = 0; ns < OM_NET_SECTION_COUNT; ns++) w->net_section_hash[ns] = NULL;
+    }
+    w->net_unit_hashes = NULL;
+    w->net_state = NULL;
+    w->net_state_free = NULL;
     w->mission_state = NULL;
     w->mission_state_free = NULL;
     w->mission_state_size = NULL;
@@ -148,6 +155,13 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->mapgen_state_size = NULL;
     w->mapgen_state_write = NULL;
     w->mapgen_state_read = NULL;
+    om_unit_install_net_hooks(w);
+    om_move_install_net_hooks(w);
+    om_macro_install_net_hooks(w);
+    om_fog_install_net_hooks(w);
+    om_support_install_net_hooks(w);
+    om_mission_install_net_hooks(w);
+    om_mapgen_install_net_hooks(w);
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes
      * faction_stance_counter/faction_cooperative_since (0 = never-counted /
@@ -186,6 +200,9 @@ void om_world_free(om_world *w) {
     }
     if (w->events_state && w->events_state_free) {
         w->events_state_free(w->events_state);
+    }
+    if (w->net_state && w->net_state_free) {
+        w->net_state_free(w->net_state);
     }
     if (w->mission_state && w->mission_state_free) {
         w->mission_state_free(w->mission_state);

@@ -52,11 +52,11 @@ def _two_in_range(lib, w, attacker_faction, ox=0.0):
 
 # ---- (a) the id, round trip, default unset ----
 
-def test_A196_new_param_id_exists_and_is_the_last_member_before_count(lib):
+def test_A196_new_param_id_exists_and_keeps_its_number(lib):
     from test_PP_unit_support import _enum_values
     v = _enum_values()
     assert P1 in v, f"A196: {P1} is not in enum om_tac_param"
-    assert v[P1] == v["OM_TP__COUNT"] - 1, "A196: the enum only grows at the end, before OM_TP__COUNT"
+    assert v[P1] == 59, "A196: the enum only grows at the end; the id keeps the number it had (59)"
     assert v[P1] not in (v[P0],)
 
 

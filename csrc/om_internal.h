@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 5 /* bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 6 /* bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -69,6 +69,8 @@ typedef struct {
     double   damage_economy[OM_DAMAGE_HISTORY_CAP];
     uint32_t damage_head, damage_len;
 } om_region;
+
+#define OM_NET_SECTION_COUNT 9
 
 struct om_world {
     uint32_t n_regions;
@@ -309,6 +311,16 @@ struct om_world {
      * starting at 1: a cheap way for any module to detect a reused
      * om_world* address (e.g. a stale cached pointer after free/realloc). */
     uint64_t world_serial;
+
+    /* Lockstep spec 2026-10-05: per-section checksum hooks (csrc/checksum_full.c),
+     * installed by each module's om_<module>_install_net_hooks; NULL hashes as 0.
+     * Order: 0 regions, 1 factions, 2 rng, 3 units, 4 movement, 5 mission,
+     * 6 fog, 7 macro, 8 support and map. */
+    uint64_t (*net_section_hash[OM_NET_SECTION_COUNT])(const om_world *w);
+    uint32_t (*net_unit_hashes)(const om_world *w, uint64_t *out, uint32_t cap);
+    /* csrc/cmd_stream.c per-world state, same convention as tactical_state. */
+    void *net_state;
+    void (*net_state_free)(void *);
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage
@@ -336,6 +348,16 @@ void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out);
  * first time state is actually needed, so this only pre-wires the hooks;
  * it never allocates the state itself. */
 void om_events_install_save_hooks(om_world *w);
+
+/* Lockstep spec 2026-10-05: net hooks and the per-tick command apply. */
+void om_cmd_apply_tick(om_world *w);
+void om_unit_install_net_hooks(om_world *w);
+void om_move_install_net_hooks(om_world *w);
+void om_macro_install_net_hooks(om_world *w);
+void om_fog_install_net_hooks(om_world *w);
+void om_support_install_net_hooks(om_world *w);
+void om_mission_install_net_hooks(om_world *w);
+void om_mapgen_install_net_hooks(om_world *w);
 void om_generational_install_save_hooks(om_world *w);
 
 /* Internal step hooks. om_step_collisions runs between om_step_reinforce

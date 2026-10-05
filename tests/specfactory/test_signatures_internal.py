@@ -31,6 +31,14 @@ CSRC_DIR = REPO / "csrc"
 # what csrc/*.c actually defines today -- every one of these already has a
 # body, so "if none defines it yet" never applies here.
 EXPECTED_MODULE = {
+    "om_cmd_apply_tick": "cmd_stream.c",
+    "om_macro_install_net_hooks": "enemy_macro.c",
+    "om_fog_install_net_hooks": "fog.c",
+    "om_mission_install_net_hooks": "mission.c",
+    "om_mapgen_install_net_hooks": "tactical_mapgen.c",
+    "om_move_install_net_hooks": "tactical_move.c",
+    "om_support_install_net_hooks": "tactical_support.c",
+    "om_unit_install_net_hooks": "unit.c",
     "om_debug_gen_config": "region.c",
     "om_events_install_save_hooks": "events.c",
     "om_faction_step_budget": "faction.c",

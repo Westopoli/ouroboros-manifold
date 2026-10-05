@@ -3,7 +3,7 @@
 R-162-05, R-008-04; E-12 R-093-02; brief section 5 G7 and section 6; contract pp_contract.md rows 12 to 14, section 4
 rows OM_TP_PING_*, section 6 for the refusal reasons; rulings A132 for the layer range, A133).
 
-Numbers (brief section 6, engine defaults, all settings): radius 500, reveal 40 ticks, cooldown 400 ticks per unit,
+Numbers (brief section 6, engine defaults, all settings; reveal now 100 ticks, R-162-01, Westley 2026-10-05, and the alert tests below set OM_TP_PING_ALERT 1 because the alert is off by default, R-162-03; the units caught are now followed, see test_E01_S162_ping_reveal_follows_units.py): radius 500, reveal 40 ticks, cooldown 400 ticks per unit,
 reach 2,000 from the caster. The brief's G7 test list is followed: 'a ping on layer 5 from a unit on layer 1 reveals
 an enemy there for exactly the reveal ticks and then not; an enemy on another layer inside the disc is not revealed; a
 second ping inside the cooldown is refused; a ping beyond reach is refused; the pinged side's alert sector contains the
@@ -29,11 +29,11 @@ import pytest
 
 from test_PP_C_g67_support import (BOMBARD, PING_OK, PING_REASON_CASTER, PING_REASON_COOLDOWN, PING_REASON_LAYER,
                                    PING_REASON_REACH, RAIDER, SUPPLY, VANGUARD, alert, alert_count, layer_count,
-                                   ping, set_param, side_sees, spawn, step)
+                                   ping, set_param, set_ping_alert, side_sees, spawn, step)
 
 REACH = 2000.0
 RADIUS = 500.0
-REVEAL = 40
+REVEAL = 100   # R-162-01 (Westley 2026-10-05): 5 s at 20 ticks per second; was 40
 COOLDOWN = 400
 HIGH = 4   # bible layer 5
 
@@ -66,7 +66,7 @@ def test_R_162_05_a_ping_reveals_an_enemy_on_the_named_layer_for_exactly_the_rev
     w, caster, enemy = _scene(lib, world_factory)
     assert side_sees(lib, w, 0, enemy) == 0, "control: no passive sight across four layers"
     assert ping(lib, w, caster, HIGH, 1500.0, 0.0) == PING_OK
-    assert _visible_steps(lib, w, 0, enemy, 60) == list(range(1, REVEAL + 1))
+    assert _visible_steps(lib, w, 0, enemy, REVEAL + 20) == list(range(1, REVEAL + 1))
 
 
 def test_R_162_05_the_reveal_length_is_the_setting(lib, world_factory):
@@ -290,8 +290,10 @@ def _bearing_sector(from_x, from_y, to_x, to_y):
 
 def _alert_scene(lib, world_factory, theta_deg, r=1500.0, ex=5000.0, ey=5000.0):
     """Enemy (faction 1, engine layer 4) at E; caster (faction 0, engine layer 0) r wu from it at bearing theta
-    (degrees counter-clockwise from +x, measured from the enemy to the caster)."""
+    (degrees counter-clockwise from +x, measured from the enemy to the caster). The alert is off by default
+    (R-162-03, Westley 2026-10-05), so this scene switches it on (OM_TP_PING_ALERT 1)."""
     w = world_factory(n_regions=1)
+    set_ping_alert(lib, w, 1)
     cx = ex + r * math.cos(math.radians(theta_deg))
     cy = ey + r * math.sin(math.radians(theta_deg))
     caster = spawn(lib, w, RAIDER, 0, cx, cy, 0)
@@ -340,6 +342,7 @@ def test_R_162_03_the_sector_is_taken_from_the_centroid_of_the_pinged_units(lib,
     theta, r, ex, ey = 57.0, 1500.0, 5000.0, 5000.0
     px, py = -math.sin(math.radians(theta)), math.cos(math.radians(theta))
     w = world_factory(n_regions=1)
+    set_ping_alert(lib, w, 1)   # the alert is off by default (R-162-03, Westley 2026-10-05)
     cx, cy = ex + r * math.cos(math.radians(theta)), ey + r * math.sin(math.radians(theta))
     caster = spawn(lib, w, RAIDER, 0, cx, cy, 0)
     first = spawn(lib, w, VANGUARD, 1, ex - 300.0 * px, ey - 300.0 * py, HIGH)

@@ -216,6 +216,10 @@ typedef struct {
 static char g_macro_vocab[OM_MACRO_MAX_VOCAB][OM_MACRO_BUS_NAME_CAP];
 static uint32_t g_macro_vocab_n;
 
+static uint32_t om_macro_state_size_hook(const om_world *w);
+static void om_macro_state_write_hook(const om_world *w, uint8_t *out);
+static int om_macro_state_read_hook(om_world *w, const uint8_t *buf, uint32_t len);
+
 static void om_macro_state_free(void *p) {
     free(p);
 }
@@ -226,6 +230,9 @@ static om_macro_state *om_macro_st(om_world *w) {
         st = (om_macro_state *)calloc(1, sizeof(om_macro_state));
         w->macro_state = st;
         w->macro_state_free = om_macro_state_free;
+        w->macro_state_size = om_macro_state_size_hook;
+        w->macro_state_write = om_macro_state_write_hook;
+        w->macro_state_read = om_macro_state_read_hook;
     }
     return st;
 }
@@ -1111,3 +1118,333 @@ const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1) {
     return (const void *)&OM_MACRO_DECISION_LOOP_SLOTS[p0];
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_MACRO_CK_PRIME 1099511628211ULL
+#define OM_MACRO_CK_SEED 14695981039346656037ULL
+#define OM_MACRO_CK_MIX_SHIFT 29
+#define OM_MACRO_NET_SECTION 7 /* section order in om_internal.h */
+#define OM_MACRO_CK_NULL 0x6d61u /* fixed hash of an absent macro state */
+
+static uint64_t macro_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_MACRO_CK_PRIME;
+    return h ^ (h >> OM_MACRO_CK_MIX_SHIFT);
+}
+
+static uint64_t macro_ck_int(uint64_t h, int v) {
+    return macro_ck_word(h, (uint64_t)(int64_t)v);
+}
+
+static uint64_t macro_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return macro_ck_word(h, v);
+}
+
+static uint64_t macro_ck_str(uint64_t h, const char *s, size_t cap) {
+    size_t n = 0;
+    while (n < cap && s[n]) n++;
+    h = macro_ck_word(h, (uint64_t)n);
+    for (size_t i = 0; i < n; i++) h = macro_ck_word(h, (uint64_t)(unsigned char)s[i]);
+    return h;
+}
+
+static uint64_t macro_ck_force(uint64_t h, const om_macro_force *f) {
+    h = macro_ck_int(h, f->behavior);
+    h = macro_ck_int(h, f->modifier);
+    h = macro_ck_int(h, f->hidden);
+    h = macro_ck_int(h, f->ambush_triggered);
+    h = macro_ck_int(h, f->hook_true);
+    h = macro_ck_int(h, f->base_transition_true);
+    h = macro_ck_int(h, f->last_issued_command_type);
+    h = macro_ck_int(h, f->objective_entered);
+    h = macro_ck_int(h, f->faction_id);
+    h = macro_ck_dbl(h, f->hp_pct);
+    h = macro_ck_int(h, f->hp_pct_set);
+    h = macro_ck_dbl(h, f->hp_sum_start);
+    h = macro_ck_int(h, f->hp_sum_start_set);
+    h = macro_ck_dbl(h, f->threshold_noise);
+    h = macro_ck_int(h, f->threshold_noise_drawn);
+    h = macro_ck_dbl(h, f->timer_noise);
+    h = macro_ck_int(h, f->timer_noise_drawn);
+    h = macro_ck_word(h, f->phased_subgroups);
+    h = macro_ck_int(h, f->phased_subgroups_drawn);
+    h = macro_ck_int(h, f->faction_id_set);
+    h = macro_ck_int(h, f->has_contact);
+    h = macro_ck_dbl(h, f->hp_sum_last_eval);
+    h = macro_ck_int(h, f->hp_sum_last_eval_set);
+    h = macro_ck_dbl(h, f->fallback_x);
+    h = macro_ck_dbl(h, f->fallback_y);
+    h = macro_ck_int(h, f->fallback_set);
+    h = macro_ck_int(h, f->last_order_valid);
+    h = macro_ck_int(h, f->last_order_behavior);
+    h = macro_ck_dbl(h, f->last_order_x);
+    h = macro_ck_dbl(h, f->last_order_y);
+    h = macro_ck_word(h, f->last_order_n);
+    h = macro_ck_int(h, f->patrol_anchor_set);
+    h = macro_ck_dbl(h, f->patrol_anchor_x);
+    h = macro_ck_dbl(h, f->patrol_anchor_y);
+    return macro_ck_word(h, f->patrol_idx);
+}
+
+static uint64_t om_macro_section_hash(const om_world *w) {
+    const om_macro_state *st = (const om_macro_state *)w->macro_state;
+    uint64_t h = OM_MACRO_CK_SEED;
+    uint32_t i, n;
+    if (!st) return OM_MACRO_CK_NULL;
+    n = st->n_forces < OM_MACRO_MAX_FORCES ? st->n_forces : OM_MACRO_MAX_FORCES;
+    h = macro_ck_word(h, n);
+    for (i = 0; i < n; i++) h = macro_ck_force(h, &st->forces[i]);
+    n = st->n_bus_flags < OM_MACRO_MAX_BUS_FLAGS ? st->n_bus_flags : OM_MACRO_MAX_BUS_FLAGS;
+    h = macro_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = macro_ck_str(h, st->bus_flags[i].name, OM_MACRO_BUS_NAME_CAP);
+        h = macro_ck_int(h, st->bus_flags[i].value);
+        h = macro_ck_int(h, st->bus_flags[i].in_use);
+    }
+    n = st->n_hook_binds < OM_MACRO_MAX_HOOK_BINDS ? st->n_hook_binds : OM_MACRO_MAX_HOOK_BINDS;
+    h = macro_ck_word(h, n);
+    for (i = 0; i < n; i++) {
+        h = macro_ck_word(h, st->hook_binds[i].force_id);
+        h = macro_ck_str(h, st->hook_binds[i].name, OM_MACRO_BUS_NAME_CAP);
+    }
+    h = macro_ck_word(h, st->last_tick_evaluated);
+    h = macro_ck_word(h, st->prev_clock);
+    h = macro_ck_int(h, st->has_evaluated);
+    h = macro_ck_word(h, st->wave.is_scheduled);
+    h = macro_ck_word(h, st->wave.direction);
+    h = macro_ck_word(h, st->wave.arrival_tick);
+    h = macro_ck_word(h, st->wave.is_spawned);
+    h = macro_ck_int(h, st->wave_set);
+    h = macro_ck_int(h, st->reinforcement_spawned);
+    h = macro_ck_dbl(h, st->spawn_x);
+    h = macro_ck_dbl(h, st->spawn_y);
+    return h;
+}
+
+void om_macro_install_net_hooks(om_world *w) {
+    w->net_section_hash[OM_MACRO_NET_SECTION] = om_macro_section_hash;
+    w->macro_state_size = om_macro_state_size_hook;
+    w->macro_state_write = om_macro_state_write_hook;
+    w->macro_state_read = om_macro_state_read_hook;
+}
+
+typedef struct { uint8_t *out; uint32_t pos; } macro_sw;
+
+static void msv_uint(macro_sw *sw, uint64_t v, uint32_t width) {
+    for (uint32_t i = 0; i < width; i++) {
+        if (sw->out) sw->out[sw->pos] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+        sw->pos++;
+    }
+}
+static void msv_u8(macro_sw *sw, uint32_t v) { msv_uint(sw, v, (uint32_t)sizeof(uint8_t)); }
+static void msv_u32(macro_sw *sw, uint32_t v) { msv_uint(sw, v, (uint32_t)sizeof(uint32_t)); }
+static void msv_u64(macro_sw *sw, uint64_t v) { msv_uint(sw, v, (uint32_t)sizeof(uint64_t)); }
+static void msv_i32(macro_sw *sw, int32_t v) { msv_uint(sw, (uint32_t)v, (uint32_t)sizeof(int32_t)); }
+static void msv_f64(macro_sw *sw, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    msv_u64(sw, v);
+}
+static void msv_str(macro_sw *sw, const char *s, uint32_t cap) {
+    uint32_t n = 0;
+    while (n + 1 < cap && s[n]) n++;
+    msv_u32(sw, n);
+    for (uint32_t i = 0; i < n; i++) msv_u8(sw, (uint8_t)s[i]);
+}
+
+static void macro_force_put(macro_sw *sw, const om_macro_force *f) {
+    msv_i32(sw, f->behavior);
+    msv_i32(sw, f->modifier);
+    msv_i32(sw, f->hidden);
+    msv_i32(sw, f->ambush_triggered);
+    msv_i32(sw, f->hook_true);
+    msv_i32(sw, f->base_transition_true);
+    msv_i32(sw, f->last_issued_command_type);
+    msv_i32(sw, f->objective_entered);
+    msv_i32(sw, f->faction_id);
+    msv_f64(sw, f->hp_pct);
+    msv_i32(sw, f->hp_pct_set);
+    msv_f64(sw, f->hp_sum_start);
+    msv_i32(sw, f->hp_sum_start_set);
+    msv_f64(sw, f->threshold_noise);
+    msv_i32(sw, f->threshold_noise_drawn);
+    msv_f64(sw, f->timer_noise);
+    msv_i32(sw, f->timer_noise_drawn);
+    msv_u32(sw, f->phased_subgroups);
+    msv_i32(sw, f->phased_subgroups_drawn);
+    msv_i32(sw, f->faction_id_set);
+    msv_i32(sw, f->has_contact);
+    msv_f64(sw, f->hp_sum_last_eval);
+    msv_i32(sw, f->hp_sum_last_eval_set);
+    msv_f64(sw, f->fallback_x);
+    msv_f64(sw, f->fallback_y);
+    msv_i32(sw, f->fallback_set);
+    msv_i32(sw, f->last_order_valid);
+    msv_i32(sw, f->last_order_behavior);
+    msv_f64(sw, f->last_order_x);
+    msv_f64(sw, f->last_order_y);
+    msv_u32(sw, f->last_order_n);
+    msv_i32(sw, f->patrol_anchor_set);
+    msv_f64(sw, f->patrol_anchor_x);
+    msv_f64(sw, f->patrol_anchor_y);
+    msv_u32(sw, f->patrol_idx);
+}
+
+static void macro_state_put(macro_sw *sw, const om_macro_state *st) {
+    uint32_t i;
+    msv_u32(sw, st->n_forces);
+    for (i = 0; i < st->n_forces; i++) macro_force_put(sw, &st->forces[i]);
+    msv_u32(sw, st->n_bus_flags);
+    for (i = 0; i < st->n_bus_flags; i++) {
+        msv_str(sw, st->bus_flags[i].name, OM_MACRO_BUS_NAME_CAP);
+        msv_i32(sw, st->bus_flags[i].value);
+        msv_i32(sw, st->bus_flags[i].in_use);
+    }
+    msv_u32(sw, st->n_hook_binds);
+    for (i = 0; i < st->n_hook_binds; i++) {
+        msv_u32(sw, st->hook_binds[i].force_id);
+        msv_str(sw, st->hook_binds[i].name, OM_MACRO_BUS_NAME_CAP);
+    }
+    msv_u64(sw, st->last_tick_evaluated);
+    msv_u64(sw, st->prev_clock);
+    msv_i32(sw, st->has_evaluated);
+    msv_u32(sw, st->wave.is_scheduled);
+    msv_u32(sw, st->wave.direction);
+    msv_u64(sw, st->wave.arrival_tick);
+    msv_u32(sw, st->wave.is_spawned);
+    msv_i32(sw, st->wave_set);
+    msv_i32(sw, st->reinforcement_spawned);
+    msv_f64(sw, st->spawn_x);
+    msv_f64(sw, st->spawn_y);
+}
+
+static uint32_t om_macro_state_size_hook(const om_world *w) {
+    const om_macro_state *st = (const om_macro_state *)w->macro_state;
+    macro_sw sw = { NULL, 0 };
+    if (!st) return 0;
+    macro_state_put(&sw, st);
+    return sw.pos;
+}
+
+static void om_macro_state_write_hook(const om_world *w, uint8_t *out) {
+    const om_macro_state *st = (const om_macro_state *)w->macro_state;
+    macro_sw sw = { out, 0 };
+    if (!st) return;
+    macro_state_put(&sw, st);
+}
+
+typedef struct { const uint8_t *p; uint32_t len, pos; int ok; } macro_sr;
+
+static uint64_t msr_uint(macro_sr *sr, uint32_t width) {
+    uint64_t v = 0;
+    if (!sr->ok || width > sr->len - sr->pos) { sr->ok = 0; return 0; }
+    for (uint32_t i = 0; i < width; i++) v |= ((uint64_t)sr->p[sr->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    sr->pos += width;
+    return v;
+}
+static uint32_t msr_u8(macro_sr *sr) { return (uint32_t)msr_uint(sr, (uint32_t)sizeof(uint8_t)); }
+static uint32_t msr_u32(macro_sr *sr) { return (uint32_t)msr_uint(sr, (uint32_t)sizeof(uint32_t)); }
+static uint64_t msr_u64(macro_sr *sr) { return msr_uint(sr, (uint32_t)sizeof(uint64_t)); }
+static int32_t msr_i32(macro_sr *sr) { return (int32_t)msr_uint(sr, (uint32_t)sizeof(int32_t)); }
+static double msr_f64(macro_sr *sr) {
+    uint64_t bits = msr_u64(sr);
+    double v;
+    memcpy(&v, &bits, sizeof v);
+    return v;
+}
+static uint32_t msr_count(macro_sr *sr, uint32_t cap) {
+    uint32_t n = msr_u32(sr);
+    if (n > cap) { sr->ok = 0; return 0; }
+    return n;
+}
+static void msr_str(macro_sr *sr, char *dst, uint32_t cap) {
+    uint32_t n = msr_count(sr, cap - 1);
+    for (uint32_t i = 0; i < n; i++) dst[i] = (char)msr_u8(sr);
+    dst[n] = '\0';
+}
+
+static void macro_force_get(macro_sr *sr, om_macro_force *f) {
+    f->behavior = msr_i32(sr);
+    f->modifier = msr_i32(sr);
+    f->hidden = msr_i32(sr);
+    f->ambush_triggered = msr_i32(sr);
+    f->hook_true = msr_i32(sr);
+    f->base_transition_true = msr_i32(sr);
+    f->last_issued_command_type = msr_i32(sr);
+    f->objective_entered = msr_i32(sr);
+    f->faction_id = msr_i32(sr);
+    f->hp_pct = msr_f64(sr);
+    f->hp_pct_set = msr_i32(sr);
+    f->hp_sum_start = msr_f64(sr);
+    f->hp_sum_start_set = msr_i32(sr);
+    f->threshold_noise = msr_f64(sr);
+    f->threshold_noise_drawn = msr_i32(sr);
+    f->timer_noise = msr_f64(sr);
+    f->timer_noise_drawn = msr_i32(sr);
+    f->phased_subgroups = msr_u32(sr);
+    f->phased_subgroups_drawn = msr_i32(sr);
+    f->faction_id_set = msr_i32(sr);
+    f->has_contact = msr_i32(sr);
+    f->hp_sum_last_eval = msr_f64(sr);
+    f->hp_sum_last_eval_set = msr_i32(sr);
+    f->fallback_x = msr_f64(sr);
+    f->fallback_y = msr_f64(sr);
+    f->fallback_set = msr_i32(sr);
+    f->last_order_valid = msr_i32(sr);
+    f->last_order_behavior = msr_i32(sr);
+    f->last_order_x = msr_f64(sr);
+    f->last_order_y = msr_f64(sr);
+    f->last_order_n = msr_u32(sr);
+    f->patrol_anchor_set = msr_i32(sr);
+    f->patrol_anchor_x = msr_f64(sr);
+    f->patrol_anchor_y = msr_f64(sr);
+    f->patrol_idx = msr_u32(sr);
+}
+
+static void macro_state_get(macro_sr *sr, om_macro_state *st) {
+    uint32_t i;
+    st->n_forces = msr_count(sr, OM_MACRO_MAX_FORCES);
+    for (i = 0; i < st->n_forces; i++) macro_force_get(sr, &st->forces[i]);
+    st->n_bus_flags = msr_count(sr, OM_MACRO_MAX_BUS_FLAGS);
+    for (i = 0; i < st->n_bus_flags; i++) {
+        msr_str(sr, st->bus_flags[i].name, OM_MACRO_BUS_NAME_CAP);
+        st->bus_flags[i].value = msr_i32(sr);
+        st->bus_flags[i].in_use = msr_i32(sr);
+    }
+    st->n_hook_binds = msr_count(sr, OM_MACRO_MAX_HOOK_BINDS);
+    for (i = 0; i < st->n_hook_binds; i++) {
+        st->hook_binds[i].force_id = msr_u32(sr);
+        msr_str(sr, st->hook_binds[i].name, OM_MACRO_BUS_NAME_CAP);
+    }
+    st->last_tick_evaluated = msr_u64(sr);
+    st->prev_clock = msr_u64(sr);
+    st->has_evaluated = msr_i32(sr);
+    st->wave.is_scheduled = msr_u32(sr);
+    st->wave.direction = msr_u32(sr);
+    st->wave.arrival_tick = msr_u64(sr);
+    st->wave.is_spawned = msr_u32(sr);
+    st->wave_set = msr_i32(sr);
+    st->reinforcement_spawned = msr_i32(sr);
+    st->spawn_x = msr_f64(sr);
+    st->spawn_y = msr_f64(sr);
+}
+
+static int om_macro_state_read_hook(om_world *w, const uint8_t *buf, uint32_t len) {
+    om_macro_state *st;
+    macro_sr sr;
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    st = (om_macro_state *)calloc(1, sizeof(om_macro_state));
+    if (!st) return 1;
+    sr.p = buf; sr.len = len; sr.pos = 0; sr.ok = 1;
+    macro_state_get(&sr, st);
+    if (!sr.ok || sr.pos != len) { free(st); return 1; }
+    if (w->macro_state && w->macro_state_free) w->macro_state_free(w->macro_state);
+    w->macro_state = st;
+    w->macro_state_free = om_macro_state_free;
+    w->macro_state_size = om_macro_state_size_hook;
+    w->macro_state_write = om_macro_state_write_hook;
+    w->macro_state_read = om_macro_state_read_hook;
+    return 0;
+}

@@ -202,14 +202,14 @@ Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
 As a commander, I want to ping a layer I choose at a place I choose and see it for a moment, so that looking across layers is something I do on purpose and at a distance.
 
 Rules
-- R-162-01  Given selected units that can ping, When the player chooses the ping, presses a layer number and clicks a place, Then the player sees that layer around that place for a very short time, at a reach much longer than passive cross-layer vision (S-005): radius 500, reveal 2 s, reach 2,000 [Q-005-04: which units; Q-162-01: whether cover or ground between the caster and the place stops the ping, so that it does not see behind them].
+- R-162-01  Given selected units, When the player chooses the ping, presses a layer number and clicks a place, Then every enemy unit on that layer around that place at that moment becomes visible to the player and stays visible for a short time wherever it moves, at a reach much longer than passive cross-layer vision (S-005) and well short of the whole map: radius 500, reveal 5 s, reach 2,000. Every unit can ping for now (Westley, 2026-10-05: "every unit for now"; "reveal follows units caught for a short time, starting with 5 seconds is probably good") [Q-162-01: whether cover or ground between the caster and the place stops the ping, so that it does not see behind them].
 - R-162-02  Given a ping, When it is cast, Then it costs the player no resource, and the casting unit has a cooldown of 20 s.
-- R-162-03  Given a player whose units are pinged, When the ping lands, Then that player is alerted that they were pinged and is shown a sector of about 60 degrees pointing toward where the ping came from, and nothing more precise.
+- R-162-03  Given a player whose units are pinged, When the ping lands, Then that player is told nothing. The alert, a sector of about 60 degrees pointing toward the caster, is switched off for now (Westley, 2026-10-05: "Let's skip the alert actually, I'm realizing that enemies will just ping back, switch that off for now").
 - R-162-04  Given an era without the technology for a ping, When the player pings, Then, if the era uses scouts (proposed, not decided; Westley, 2026-10-01: "we could have them send out little scouts that cost nothing"), small scouts that cost nothing carry the ping.
 - R-162-05  Given a ping that has ended, When no passive detection applies, Then the units it revealed are hidden again.
 
 Inputs: ping command (selection, layer, place); era pack (ping or scouts).
-Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; the cooldown of 20 s per unit.
+Outputs: the revealed units for the reveal time; the cooldown of 20 s per unit.
 Open flags: Q-162-01 (whether a ping sees behind cover or ground).
 The numbers are provisional runtime settings, tuned by the skill lab.
 

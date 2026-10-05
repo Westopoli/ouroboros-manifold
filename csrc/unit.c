@@ -407,6 +407,10 @@ static int om_tac_reserve(om_tac_state *st, uint32_t need) {
  * call returns the existing pointer. Needs a non-const om_world* since it
  * writes w->tactical_state -- om_unit_get_hp (const om_world*) goes
  * through om_tac_ro instead, which never allocates. */
+static uint32_t om_unit_save_size(const om_world *w);
+static void om_unit_save_write(const om_world *w, uint8_t *out);
+static int om_unit_save_read(om_world *w, const uint8_t *buf, uint32_t len);
+
 static om_tac_state *om_tac(om_world *w) {
     om_tac_state *st = (om_tac_state *)w->tactical_state;
     if (!st) {
@@ -414,6 +418,9 @@ static om_tac_state *om_tac(om_world *w) {
         st->next_unit_id = 1;
         w->tactical_state = st;
         w->tactical_state_free = om_tac_state_free;
+        w->tactical_state_size = om_unit_save_size;
+        w->tactical_state_write = om_unit_save_write;
+        w->tactical_state_read = om_unit_save_read;
     }
     return st;
 }
@@ -2224,6 +2231,7 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
 /* ---- end S-087 ---- */
 
 uint64_t om_tactical_step(om_world *w) {
+    om_cmd_apply_tick(w);
     /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
      * ::test_R_wiring_tactical_step_is_callable): a strategic-only world with no
      * units spawned must not advance the tactical tick counter at all. */
@@ -2522,6 +2530,7 @@ uint64_t om_tactical_tick_to(om_world *w, uint64_t tick) {
         if (st->n_units > 0) {
             om_tactical_step(w);
         } else {
+            om_cmd_apply_tick(w);
             st->current_tick++;
             st->base_tick++;
             om_macro_tick(w, st->current_tick);
@@ -2990,3 +2999,314 @@ uint64_t om_tactical_base_tick(const om_world *w) {
     return st ? st->base_tick : 0;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+#define OM_UNIT_CK_PRIME 1099511628211ULL
+#define OM_UNIT_CK_SEED 14695981039346656037ULL
+#define OM_UNIT_CK_NULL 0x6e756c6c74616374ULL
+#define OM_UNIT_CK_MIX_SHIFT 29
+#define OM_UNIT_CK_SECTION 3
+
+static uint64_t om_unit_ck_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * OM_UNIT_CK_PRIME;
+    return h ^ (h >> OM_UNIT_CK_MIX_SHIFT);
+}
+
+static uint64_t om_unit_ck_dbl(uint64_t h, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    return om_unit_ck_word(h, v);
+}
+
+static uint64_t om_unit_ck_row(const om_unit_row *r) {
+    uint64_t h = OM_UNIT_CK_SEED;
+#define W(f) h = om_unit_ck_word(h, (uint64_t)(int64_t)(r->f))
+#define D(f) h = om_unit_ck_dbl(h, r->f)
+    W(unit_id); W(in_use); W(unit_type); W(category); W(faction_id);
+    D(x); D(y); W(layer); D(hp); D(max_hp); D(base_damage); D(attack_interval);
+    D(attack_range); D(cooldown); W(target_id);
+    W(ability_phase); W(ability_bonus_on); W(ability_ticks_remaining);
+    D(ability_cooldown); D(ability_target_x); D(ability_target_y);
+    W(backswing_ticks_remaining); W(backswing_active); W(force_brace_reduction);
+    W(force_fortify_reduction); W(force_warden_aura_reduction);
+    W(order); D(order_x); D(order_y); D(issued_x); D(issued_y); W(halted);
+    W(am_gid); W(am_engaged); W(guard); W(anchor_set); D(anchor_x); D(anchor_y);
+    W(flinching); D(flinch_x); D(flinch_y); W(last_attacker); W(fire_pending);
+    W(stealth); W(suppress_auto); W(brace_auto); W(fortify_auto);
+    D(last_seen_x); D(last_seen_y); W(fired);
+#undef W
+#undef D
+    return h;
+}
+
+static uint64_t om_unit_ck_section(const om_world *w) {
+    const om_tac_state *st = w ? (const om_tac_state *)w->tactical_state : NULL;
+    if (!st) return OM_UNIT_CK_NULL;
+    uint64_t h = OM_UNIT_CK_SEED;
+    h = om_unit_ck_word(h, st->n_units);
+    h = om_unit_ck_word(h, st->next_unit_id);
+    h = om_unit_ck_word(h, st->current_tick);
+    h = om_unit_ck_word(h, st->base_tick);
+    h = om_unit_ck_word(h, (uint64_t)(int64_t)st->abilities_disabled);
+    h = om_unit_ck_word(h, st->validated_tick);
+    h = om_unit_ck_word(h, st->n_wardens);
+    h = om_unit_ck_word(h, st->n_bastions);
+    h = om_unit_ck_word(h, st->n_custom_types);
+    for (uint32_t i = 0; i < st->n_custom_types && i < OM_MAX_CUSTOM_TYPES; i++) {
+        const om_custom_type_row *c = &st->custom_types[i];
+        const om_unit_type_profile *p = &c->profile;
+        h = om_unit_ck_word(h, c->type_id);
+        h = om_unit_ck_word(h, (uint64_t)(int64_t)c->in_use);
+        h = om_unit_ck_word(h, (uint64_t)(int64_t)p->category);
+        h = om_unit_ck_dbl(h, p->max_hp);
+        h = om_unit_ck_dbl(h, p->base_damage);
+        h = om_unit_ck_dbl(h, p->attack_interval);
+        h = om_unit_ck_dbl(h, p->attack_range);
+        h = om_unit_ck_dbl(h, p->speed);
+        h = om_unit_ck_dbl(h, p->sensor_radius);
+        h = om_unit_ck_dbl(h, p->layer_transition_time);
+        h = om_unit_ck_dbl(h, p->aoe_radius);
+    }
+    h = om_unit_ck_word(h, st->n_ability_events);
+    for (uint32_t i = 0; i < st->n_ability_events && i < OM_ABILITY_EVENT_BUFFER_CAP; i++) {
+        const om_ability_event *e = &st->ability_events[i];
+        h = om_unit_ck_word(h, e->tick);
+        h = om_unit_ck_word(h, e->unit_id);
+        h = om_unit_ck_word(h, (uint64_t)(int64_t)e->ability_id);
+        h = om_unit_ck_dbl(h, e->target_x);
+        h = om_unit_ck_dbl(h, e->target_y);
+        h = om_unit_ck_word(h, e->duration);
+        h = om_unit_ck_word(h, e->telegraph_ticks);
+        h = om_unit_ck_word(h, e->cue_id);
+        h = om_unit_ck_dbl(h, e->radius);
+    }
+    for (uint32_t i = 0; i < st->n_units; i++)
+        h = om_unit_ck_word(h, om_unit_ck_row(&st->units[i]));
+    return h;
+}
+
+static uint32_t om_unit_ck_per_unit(const om_world *w, uint64_t *out, uint32_t cap) {
+    const om_tac_state *st = w ? (const om_tac_state *)w->tactical_state : NULL;
+    if (!st) return 0;
+    uint32_t n = st->next_unit_id;
+    if (!out || !cap) return n;
+    for (uint32_t i = 0; i < cap && i < n; i++) out[i] = 0;
+    for (uint32_t i = 0; i < st->n_units; i++) {
+        const om_unit_row *r = &st->units[i];
+        if (r->in_use && r->unit_id && r->unit_id < cap && r->unit_id < n)
+            out[r->unit_id] = om_unit_ck_row(r);
+    }
+    return n;
+}
+
+/* Save hooks, slot tactical_state: the fields the section hash covers, little-endian. Caches (grid, aura scratch,
+ * tick period) are rebuilt on first use; grid.built stays 0 after a load so the grid is rebuilt in index order. */
+#define OM_UNIT_SV_U32 4u
+#define OM_UNIT_SV_U64 8u
+
+typedef struct {
+    uint8_t *out;
+    uint32_t pos;
+} om_unit_sw;
+
+static void om_unit_sw_put(om_unit_sw *s, uint64_t v, uint32_t width) {
+    for (uint32_t i = 0; i < width; i++, s->pos++)
+        if (s->out) s->out[s->pos] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+}
+
+static void om_unit_sw_dbl(om_unit_sw *s, double d) {
+    uint64_t v;
+    memcpy(&v, &d, sizeof v);
+    om_unit_sw_put(s, v, OM_UNIT_SV_U64);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len, pos;
+    int ok;
+} om_unit_sr;
+
+static uint64_t om_unit_sr_get(om_unit_sr *s, uint32_t width) {
+    if (!s->ok || width > s->len - s->pos) {
+        s->ok = 0;
+        return 0;
+    }
+    uint64_t v = 0;
+    for (uint32_t i = 0; i < width; i++) v |= ((uint64_t)s->p[s->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    s->pos += width;
+    return v;
+}
+
+static double om_unit_sr_dbl(om_unit_sr *s) {
+    uint64_t v = om_unit_sr_get(s, OM_UNIT_SV_U64);
+    double d;
+    memcpy(&d, &v, sizeof d);
+    return d;
+}
+
+static uint32_t om_unit_sr_count(om_unit_sr *s, uint32_t cap) {
+    uint32_t n = (uint32_t)om_unit_sr_get(s, OM_UNIT_SV_U32);
+    if (n > cap) {
+        s->ok = 0;
+        return 0;
+    }
+    return n;
+}
+
+/* row fields in hash order: U unsigned 32, I signed 32 (int), D double */
+#define OM_UNIT_ROW_FIELDS(U, I, D) \
+    U(unit_id) I(in_use) I(unit_type) I(category) I(faction_id) D(x) D(y) U(layer) D(hp) D(max_hp) \
+    D(base_damage) D(attack_interval) D(attack_range) D(cooldown) U(target_id) \
+    I(ability_phase) I(ability_bonus_on) U(ability_ticks_remaining) D(ability_cooldown) \
+    D(ability_target_x) D(ability_target_y) U(backswing_ticks_remaining) I(backswing_active) \
+    I(force_brace_reduction) I(force_fortify_reduction) I(force_warden_aura_reduction) \
+    I(order) D(order_x) D(order_y) D(issued_x) D(issued_y) I(halted) U(am_gid) I(am_engaged) \
+    I(guard) I(anchor_set) D(anchor_x) D(anchor_y) I(flinching) D(flinch_x) D(flinch_y) \
+    U(last_attacker) I(fire_pending) I(stealth) I(suppress_auto) I(brace_auto) I(fortify_auto) \
+    D(last_seen_x) D(last_seen_y) I(fired)
+
+static void om_unit_sw_row(om_unit_sw *s, const om_unit_row *r) {
+#define U(f) om_unit_sw_put(s, r->f, OM_UNIT_SV_U32);
+#define I(f) om_unit_sw_put(s, (uint32_t)(int32_t)r->f, OM_UNIT_SV_U32);
+#define D(f) om_unit_sw_dbl(s, r->f);
+    OM_UNIT_ROW_FIELDS(U, I, D)
+#undef U
+#undef I
+#undef D
+}
+
+static void om_unit_sr_row(om_unit_sr *s, om_unit_row *r) {
+#define U(f) r->f = (uint32_t)om_unit_sr_get(s, OM_UNIT_SV_U32);
+#define I(f) r->f = (int)(int32_t)(uint32_t)om_unit_sr_get(s, OM_UNIT_SV_U32);
+#define D(f) r->f = om_unit_sr_dbl(s);
+    OM_UNIT_ROW_FIELDS(U, I, D)
+#undef U
+#undef I
+#undef D
+}
+
+static void om_unit_sw_state(om_unit_sw *s, const om_tac_state *st) {
+    om_unit_sw_put(s, st->n_units, OM_UNIT_SV_U32);
+    om_unit_sw_put(s, st->next_unit_id, OM_UNIT_SV_U32);
+    om_unit_sw_put(s, st->current_tick, OM_UNIT_SV_U64);
+    om_unit_sw_put(s, st->base_tick, OM_UNIT_SV_U64);
+    om_unit_sw_put(s, (uint32_t)(int32_t)st->abilities_disabled, OM_UNIT_SV_U32);
+    om_unit_sw_put(s, st->validated_tick, OM_UNIT_SV_U64);
+    om_unit_sw_put(s, st->n_wardens, OM_UNIT_SV_U32);
+    om_unit_sw_put(s, st->n_bastions, OM_UNIT_SV_U32);
+    om_unit_sw_put(s, st->n_custom_types, OM_UNIT_SV_U32);
+    for (uint32_t i = 0; i < st->n_custom_types; i++) {
+        const om_custom_type_row *c = &st->custom_types[i];
+        const om_unit_type_profile *p = &c->profile;
+        om_unit_sw_put(s, c->type_id, OM_UNIT_SV_U32);
+        om_unit_sw_put(s, (uint32_t)(int32_t)c->in_use, OM_UNIT_SV_U32);
+        om_unit_sw_put(s, (uint32_t)(int32_t)p->category, OM_UNIT_SV_U32);
+        om_unit_sw_dbl(s, p->max_hp);
+        om_unit_sw_dbl(s, p->base_damage);
+        om_unit_sw_dbl(s, p->attack_interval);
+        om_unit_sw_dbl(s, p->attack_range);
+        om_unit_sw_dbl(s, p->speed);
+        om_unit_sw_dbl(s, p->sensor_radius);
+        om_unit_sw_dbl(s, p->layer_transition_time);
+        om_unit_sw_dbl(s, p->aoe_radius);
+    }
+    om_unit_sw_put(s, st->n_ability_events, OM_UNIT_SV_U32);
+    for (uint32_t i = 0; i < st->n_ability_events; i++) {
+        const om_ability_event *e = &st->ability_events[i];
+        om_unit_sw_put(s, e->tick, OM_UNIT_SV_U64);
+        om_unit_sw_put(s, e->unit_id, OM_UNIT_SV_U32);
+        om_unit_sw_put(s, (uint32_t)e->ability_id, OM_UNIT_SV_U32);
+        om_unit_sw_dbl(s, e->target_x);
+        om_unit_sw_dbl(s, e->target_y);
+        om_unit_sw_put(s, e->duration, OM_UNIT_SV_U32);
+        om_unit_sw_put(s, e->telegraph_ticks, OM_UNIT_SV_U32);
+        om_unit_sw_put(s, e->cue_id, OM_UNIT_SV_U32);
+        om_unit_sw_dbl(s, e->radius);
+    }
+    for (uint32_t i = 0; i < st->n_units; i++) om_unit_sw_row(s, &st->units[i]);
+}
+
+static uint32_t om_unit_save_size(const om_world *w) {
+    const om_tac_state *st = om_tac_ro(w);
+    om_unit_sw s = {NULL, 0};
+    if (!st) return 0;
+    om_unit_sw_state(&s, st);
+    return s.pos;
+}
+
+static void om_unit_save_write(const om_world *w, uint8_t *out) {
+    const om_tac_state *st = om_tac_ro(w);
+    om_unit_sw s = {out, 0};
+    if (st && out) om_unit_sw_state(&s, st);
+}
+
+static int om_unit_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    om_unit_sr s = {buf, len, 0, 1};
+    om_tac_state *st = (om_tac_state *)calloc(1, sizeof(om_tac_state));
+    if (!st) return 1;
+    st->n_units = om_unit_sr_count(&s, OM_MAX_UNITS);
+    st->next_unit_id = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+    st->current_tick = om_unit_sr_get(&s, OM_UNIT_SV_U64);
+    st->base_tick = om_unit_sr_get(&s, OM_UNIT_SV_U64);
+    st->abilities_disabled = (int)(int32_t)(uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+    st->validated_tick = om_unit_sr_get(&s, OM_UNIT_SV_U64);
+    st->n_wardens = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+    st->n_bastions = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+    st->n_custom_types = om_unit_sr_count(&s, OM_MAX_CUSTOM_TYPES);
+    for (uint32_t i = 0; i < st->n_custom_types && s.ok; i++) {
+        om_custom_type_row *c = &st->custom_types[i];
+        om_unit_type_profile *p = &c->profile;
+        c->type_id = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        c->in_use = (int)(int32_t)(uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        p->category = (int)(int32_t)(uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        p->max_hp = om_unit_sr_dbl(&s);
+        p->base_damage = om_unit_sr_dbl(&s);
+        p->attack_interval = om_unit_sr_dbl(&s);
+        p->attack_range = om_unit_sr_dbl(&s);
+        p->speed = om_unit_sr_dbl(&s);
+        p->sensor_radius = om_unit_sr_dbl(&s);
+        p->layer_transition_time = om_unit_sr_dbl(&s);
+        p->aoe_radius = om_unit_sr_dbl(&s);
+    }
+    st->n_ability_events = om_unit_sr_count(&s, OM_ABILITY_EVENT_BUFFER_CAP);
+    for (uint32_t i = 0; i < st->n_ability_events && s.ok; i++) {
+        om_ability_event *e = &st->ability_events[i];
+        e->tick = om_unit_sr_get(&s, OM_UNIT_SV_U64);
+        e->unit_id = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        e->ability_id = (int32_t)(uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        e->target_x = om_unit_sr_dbl(&s);
+        e->target_y = om_unit_sr_dbl(&s);
+        e->duration = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        e->telegraph_ticks = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        e->cue_id = (uint32_t)om_unit_sr_get(&s, OM_UNIT_SV_U32);
+        e->radius = om_unit_sr_dbl(&s);
+    }
+    if (!s.ok || st->next_unit_id < 1 || st->next_unit_id > OM_MAX_UNITS + 1 ||
+        !om_tac_reserve(st, st->n_units ? st->n_units : 1)) {
+        om_tac_state_free(st);
+        return 1;
+    }
+    for (uint32_t i = 0; i < st->n_units && s.ok; i++) {
+        om_unit_sr_row(&s, &st->units[i]);
+        if (st->units[i].in_use && st->units[i].unit_id >= st->next_unit_id) s.ok = 0;
+    }
+    if (!s.ok || s.pos != len) {
+        om_tac_state_free(st);
+        return 1;
+    }
+    for (uint32_t i = 0; i < st->n_units; i++) st->grid.cell_of[i] = OM_GRID_UNLINKED;
+    if (w->tactical_state && w->tactical_state_free) w->tactical_state_free(w->tactical_state);
+    w->tactical_state = st;
+    w->tactical_state_free = om_tac_state_free;
+    return 0;
+}
+
+void om_unit_install_net_hooks(om_world *w) {
+    w->tactical_state_size = om_unit_save_size;
+    w->tactical_state_write = om_unit_save_write;
+    w->tactical_state_read = om_unit_save_read;
+    w->net_section_hash[OM_UNIT_CK_SECTION] = om_unit_ck_section;
+    w->net_unit_hashes = om_unit_ck_per_unit;
+}
