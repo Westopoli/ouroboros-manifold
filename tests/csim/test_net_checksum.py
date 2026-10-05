@@ -99,7 +99,8 @@ def test_R_139_03_same_seed_agrees_every_section_200_strategic_ticks(lib, world_
     wa = _strategic_world(lib, world_factory, 99999)
     wb = _strategic_world(lib, world_factory, 99999)
     for t in range(200):
-        assert lib.om_world_run(wa, 1) == 1 and lib.om_world_run(wb, 1) == 1
+        # om_world_run returns the cumulative tick, not the ticks just run
+        assert lib.om_world_run(wa, 1) == t + 1 and lib.om_world_run(wb, 1) == t + 1
         ca, sa = _full(lib, wa)
         cb, sb = _full(lib, wb)
         assert (ca, sa) == (cb, sb), f"strategic tick {t}: sections differ {_diff_sections(sa, sb)}"
