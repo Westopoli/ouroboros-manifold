@@ -9,7 +9,7 @@ const FLYER_SPEED := 80.0
 # provisional (prototype draft, 2026-10-05)
 const FLYER_START_LAYER := 3
 # provisional (prototype draft, 2026-10-05): spacing of the start squads and of a group's targets, wu
-const START_SPACING := 300.0
+const START_SPACING := 700.0
 const FORMATION_WU := 140.0
 
 var grid

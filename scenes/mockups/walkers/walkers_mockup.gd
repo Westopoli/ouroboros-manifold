@@ -20,6 +20,9 @@ const WALKER_COLOUR := Color(1.0, 0.72, 0.1)
 const FLYER_COLOUR := Color(0.25, 0.95, 1.0)
 const FONT := 24
 # provisional (prototype draft, 2026-10-05)
+const PANEL_FONT := 17
+const PANEL_ALPHA := 0.55
+# provisional (prototype draft, 2026-10-05)
 const QA_FRAMES := 6
 const HELP := [
 	"HELP",
@@ -34,6 +37,7 @@ const HELP := [
 	"Arrow keys or middle mouse drag: move view",
 	"Mouse wheel: zoom",
 	"Squares are walkers, triangles are flyers.",
+		"Pink tint: ground too steep to walk (V shows it apart).",
 	"Number by a unit: its layer. Short bar on a route:",
 	"where the unit changes layer. Red X: target no route reaches.",
 ]
@@ -85,7 +89,7 @@ func load_seed(s: int) -> void:
 
 func _fit(r: Rect2) -> void:
 	var vp := get_viewport_rect().size
-	var z := minf(vp.x / (r.size.x * 1.25), vp.y / (r.size.y * 1.25))
+	var z := minf(vp.x / (r.size.x * 1.05), vp.y / (r.size.y * 1.05))
 	cam.zoom = Vector2(z, z)
 	cam.position = r.get_center()
 
@@ -117,7 +121,7 @@ func _draw() -> void:
 				draw_line(c.pos - n, c.pos + n, Color.WHITE, 3.0 * px)
 			for t in r.transfers:
 				draw_circle(t.pos, 6.0 * px, Color.WHITE)
-			if not r.reached:
+			if not r.reached and not units.last.get("reached", true):
 				var e: Vector2 = u.target
 				draw_line(e + Vector2(-14, -14) * px, e + Vector2(14, 14) * px, Color.RED, 5.0 * px)
 				draw_line(e + Vector2(-14, 14) * px, e + Vector2(14, -14) * px, Color.RED, 5.0 * px)
@@ -164,7 +168,7 @@ func _draw_overlay() -> void:
 	var lines := st.duplicate()
 	lines.append("")
 	lines.append_array(_readout_lines())
-	_panel(Vector2(10, vp.y - 40 - lines.size() * (FONT + 6)), lines)
+	_panel(Vector2(10, vp.y - 40 - lines.size() * (PANEL_FONT + 5)), lines)
 
 
 func _layers_text() -> String:
@@ -184,19 +188,19 @@ func _readout_lines() -> Array:
 	return [
 		"LAST ORDER: %d unit(s), %s, at pace %d" % [l.count, l.kind, l.pace],
 		"Route length %d wu   Time %.1f s   Bands crossed %d   %s" % [l.length, l.seconds, l.bands, r],
-		"Same order as a %s (own speed): %.1f s, %d wu, %s" % [l.other_kind, l.other_seconds, l.other_length, o],
+		"Same order by a lone %s at its own speed: %.1f s, %d wu, %s" % [l.other_kind, l.other_seconds, l.other_length, o],
 	]
 
 
 func _panel(pos: Vector2, lines: Array, right := false) -> void:
 	var w := 0.0
 	for t in lines:
-		w = maxf(w, ThemeDB.fallback_font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT).x)
+		w = maxf(w, ThemeDB.fallback_font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, PANEL_FONT).x)
 	if right:
 		pos.x -= w + 20
-	over.draw_rect(Rect2(pos, Vector2(w + 20, lines.size() * (FONT + 6) + 14)), Color(0, 0, 0, 0.75))
+	over.draw_rect(Rect2(pos, Vector2(w + 20, lines.size() * (PANEL_FONT + 5) + 14)), Color(0, 0, 0, PANEL_ALPHA))
 	for i in range(lines.size()):
-		over.draw_string(ThemeDB.fallback_font, pos + Vector2(10, 8 + (i + 1) * (FONT + 6) - 6), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, FONT, Color.WHITE)
+		over.draw_string(ThemeDB.fallback_font, pos + Vector2(10, 8 + (i + 1) * (PANEL_FONT + 5) - 5), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, PANEL_FONT, Color.WHITE)
 
 
 func _process(dt: float) -> void:
@@ -310,13 +314,13 @@ func _shot(name: String) -> void:
 		frac = 0.4
 	order_to(target)
 	var longest := 0.0
-	var box := Rect2(home, Vector2.ZERO)
+	var box := Rect2(home, Vector2.ZERO).expand(target)
 	for i in sel:
 		longest = maxf(longest, units.units[i].secs)
 		for p in units.units[i].route.points:
 			box = box.expand(p)
 	units.step(longest * frac)
-	_fit(box.grow(600.0))
+	_fit(box.grow(600.0).intersection(Rect2(0, 0, Grid.CANVAS_WU, Grid.CANVAS_WU)))
 	await get_tree().process_frame
 	for i in range(QA_FRAMES):
 		await get_tree().process_frame
