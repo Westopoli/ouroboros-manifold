@@ -1090,3 +1090,8 @@ void om_mission_check_extraction_objectives(om_world *w) {
     }
     if (total > 0) om_mission_set_objective_completion(w, 0, (double)reached / (double)total);
 }
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_support_install_net_hooks(om_world *w) {
+    (void)w;
+}

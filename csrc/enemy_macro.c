@@ -1111,3 +1111,8 @@ const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1) {
     return (const void *)&OM_MACRO_DECISION_LOOP_SLOTS[p0];
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_macro_install_net_hooks(om_world *w) {
+    (void)w;
+}

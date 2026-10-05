@@ -2765,3 +2765,8 @@ int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, doubl
     return 1;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_mission_install_net_hooks(om_world *w) {
+    (void)w;
+}

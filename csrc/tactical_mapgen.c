@@ -869,3 +869,8 @@ int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, u
     return 0;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_mapgen_install_net_hooks(om_world *w) {
+    (void)w;
+}

@@ -2224,6 +2224,7 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
 /* ---- end S-087 ---- */
 
 uint64_t om_tactical_step(om_world *w) {
+    om_cmd_apply_tick(w);
     /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
      * ::test_R_wiring_tactical_step_is_callable): a strategic-only world with no
      * units spawned must not advance the tactical tick counter at all. */
@@ -2522,6 +2523,7 @@ uint64_t om_tactical_tick_to(om_world *w, uint64_t tick) {
         if (st->n_units > 0) {
             om_tactical_step(w);
         } else {
+            om_cmd_apply_tick(w);
             st->current_tick++;
             st->base_tick++;
             om_macro_tick(w, st->current_tick);
@@ -2982,3 +2984,8 @@ uint64_t om_tactical_base_tick(const om_world *w) {
     return st ? st->base_tick : 0;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_unit_install_net_hooks(om_world *w) {
+    (void)w;
+}

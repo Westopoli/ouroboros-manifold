@@ -3103,3 +3103,8 @@ int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
     return 0;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_move_install_net_hooks(om_world *w) {
+    (void)w;
+}

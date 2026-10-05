@@ -923,3 +923,8 @@ int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_pin
     return -1;
 }
 /* ---- end generated stubs ---- */
+
+/* ---- net hooks (lockstep spec 2026-10-05) ---- */
+void om_fog_install_net_hooks(om_world *w) {
+    (void)w;
+}

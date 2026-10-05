@@ -273,6 +273,19 @@ typedef enum {
                                  * docs/northstar/plans/briefs/2026-09-22-two-day-push.md) */
 } om_feature;
 void om_world_set_feature(om_world *w, om_feature f, int on);
+
+/* Lockstep command verbs (OMNetCommand.verb; lockstep spec 2026-10-05). */
+typedef enum {
+    OM_NET_VERB_MOVE             = 0,
+    OM_NET_VERB_ATTACK_MOVE      = 1,
+    OM_NET_VERB_ATTACK_TARGET    = 2,
+    OM_NET_VERB_ACTIVATE_ABILITY = 3,
+    OM_NET_VERB_SET_LAYER        = 4,
+    OM_NET_VERB_SET_EMISSION     = 5,
+    OM_NET_VERB_PING             = 6,
+    OM_NET_VERB_GUARD            = 7,
+    OM_NET_VERB_ASSIGN_COMMANDER = 8
+} om_net_verb;
 int  om_world_feature(const om_world *w, om_feature f);
 
 /* ---- faction fixture ----
@@ -1183,6 +1196,18 @@ typedef struct om_mission_candidate {
     double score;
 } om_mission_candidate;
 
+typedef struct om_net_command {
+    uint64_t tick;
+    uint32_t seq;
+    uint32_t arg;
+    double x;
+    double y;
+    uint8_t peer;
+    uint8_t verb;
+    uint8_t layer;
+    uint8_t n_units;
+} om_net_command;
+
 typedef struct om_objective_spec {
     uint32_t id;
     uint32_t kind;
@@ -1294,6 +1319,14 @@ typedef struct om_client_snapshot {
 } om_client_snapshot;
 /* ---- end generated: structs ---- */
 
+/* ---- generated from signatures.toml: checksum_full.c ---- */
+uint64_t om_world_checksum_full(const om_world *w, uint64_t *sections, uint32_t cap);
+uint32_t om_checksum_section_count(void);
+const char *om_checksum_section_name(uint32_t section);
+int om_checksum_first_diff(const om_world *a, const om_world *b, uint32_t *section, uint32_t *unit_id);
+uint32_t om_checksum_unit_hashes(const om_world *w, uint64_t *out, uint32_t cap);
+/* ---- end generated: checksum_full.c ---- */
+
 /* ---- generated from signatures.toml: chronicle.c ---- */
 void om_chronicle_add_chain_event(om_world *w, int32_t chain_tag, uint32_t region_idx, uint32_t category);
 void om_chronicle_add_cluster_direct(om_world *w, uint32_t cluster_type, uint32_t category, double score);
@@ -1364,6 +1397,16 @@ void om_chronicle_set_entry_state(om_world *w, uint32_t entry_id, int is_printin
 int om_chronicle_validate_event_template_prose(const om_world *w);
 const char *om_event_template_chronicle_prose(const om_world *w, uint32_t template);
 /* ---- end generated: chronicle.c ---- */
+
+/* ---- generated from signatures.toml: cmd_stream.c ---- */
+int om_cmd_submit(om_world *w, const om_net_command *cmd, const uint32_t *unit_ids);
+void om_cmd_reset(om_world *w);
+uint64_t om_net_tick(const om_world *w);
+uint32_t om_cmd_pending_count(const om_world *w);
+uint32_t om_cmd_log_size(const om_world *w);
+uint32_t om_cmd_log_write(const om_world *w, uint8_t *out, uint32_t cap);
+int om_cmd_log_feed(om_world *w, const uint8_t *buf, uint32_t len);
+/* ---- end generated: cmd_stream.c ---- */
 
 /* ---- generated from signatures.toml: diplomacy.c ---- */
 double om_archetype_betrayal_weight(om_archetype archetype);

@@ -1661,6 +1661,20 @@ class OMMissionCandidate(ctypes.Structure):
 om_mission_candidate = OMMissionCandidate
 
 
+class OMNetCommand(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("seq", ctypes.c_uint32),
+        ("arg", ctypes.c_uint32),
+        ("x", ctypes.c_double),
+        ("y", ctypes.c_double),
+        ("peer", ctypes.c_uint8),
+        ("verb", ctypes.c_uint8),
+        ("layer", ctypes.c_uint8),
+        ("n_units", ctypes.c_uint8),
+    ]
+
+
 class OMObjectiveSpec(ctypes.Structure):
     _fields_ = [
         ("id", ctypes.c_uint32),
@@ -1845,6 +1859,7 @@ STRUCT_C_NAMES = {
     "OMGradientProperties": "om_gradient_properties",
     "OMMissionCandidate": "om_mission_candidate",
     "om_mission_candidate": "om_mission_candidate",
+    "OMNetCommand": "om_net_command",
     "OMObjectiveSpec": "om_objective_spec",
     "om_objective_spec": "om_objective_spec",
     "OmOnboardingConfig": "om_onboarding_config",
@@ -2674,5 +2689,26 @@ def _bind_e17(lib):
     lib._e17_bound = True
 
 
-_GENERATED_BINDERS = (_bind_e01, _bind_e06, _bind_e07, _bind_e08, _bind_e09, _bind_e10, _bind_e11, _bind_e12, _bind_e13, _bind_e14, _bind_e15, _bind_e17)
+def _bind_e19(lib):
+    if getattr(lib, "_e19_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_checksum_first_diff", [W, W, P(ctypes.c_uint32), P(ctypes.c_uint32)], ctypes.c_int, ("a", "b", "section", "unit_id"))
+    _bind(lib, "om_checksum_section_count", [], ctypes.c_uint32, ())
+    _bind(lib, "om_checksum_section_name", [ctypes.c_uint32], ctypes.c_char_p, ("section",))
+    _bind(lib, "om_checksum_unit_hashes", [W, P(ctypes.c_uint64), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
+    _bind(lib, "om_cmd_log_feed", [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int, ("w", "buf", "len"))
+    _bind(lib, "om_cmd_log_size", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_cmd_log_write", [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
+    _bind(lib, "om_cmd_pending_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_cmd_reset", [W], None, ("w",))
+    _bind(lib, "om_cmd_submit", [W, V, P(ctypes.c_uint32)], ctypes.c_int, ("w", "cmd", "unit_ids"))
+    _bind(lib, "om_net_tick", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_world_checksum_full", [W, P(ctypes.c_uint64), ctypes.c_uint32], ctypes.c_uint64, ("w", "sections", "cap"))
+    lib._e19_bound = True
+
+
+_GENERATED_BINDERS = (_bind_e01, _bind_e06, _bind_e07, _bind_e08, _bind_e09, _bind_e10, _bind_e11, _bind_e12, _bind_e13, _bind_e14, _bind_e15, _bind_e17, _bind_e19)
 # ---- end generated ----
