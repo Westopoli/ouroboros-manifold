@@ -239,6 +239,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
                 mopup[0] += 1
         before[0] = {u: engine.unit_pos(w, u) for u in living}
 
+    damaged = False
     sample()
     if trace is not None:
         record()
@@ -260,7 +261,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
         timeline.check(tick, hp)
         if mopup is not None and tick % setup.mopup_interval_ticks == 0:
             mop_up()
-        quiet = 0 if changed else quiet + 1
+        damaged = damaged or changed
+        quiet = 0 if changed or (setup.quiet_from_first_damage and not damaged) else quiet + 1   # flag set: the window opens at first damage
         if trace is not None:
             record()
         if states is not None:
