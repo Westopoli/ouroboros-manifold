@@ -67,7 +67,7 @@ Every story exists as failing tests before any code, in fenced paths builders ca
 
 ## Git
 
-Work on `main` and push each meaningful unit; branches only for a stated reason. Never stage files you did not change, and never touch Westley's uncommitted work. Guardrails (`.claude/hooks/git-guard.sh`) deny destructive operations; if a legitimate one is blocked, ask. Ledger, register and epic updates are committed and pushed as they happen.
+Work on `main` and push each meaningful unit; branches only for a stated reason. Worktrees live under `~/Projects/om-push/wt/<name>`; when a chat or agent is finished with one, it writes `.wt-done` at the worktree root (one line: date, branch, pushed sha) and never touches it again. A clerk removes any worktree that has `.wt-done`, a clean `git status` apart from build outputs, and a HEAD contained in `origin` (`git branch -r --contains HEAD`); anything else is kept and listed. Find them with `ls ~/Projects/om-push/wt/*/.wt-done`. Uncommitted or unpushed work in a worktree is not on git and is lost on removal, so the marker is written only after the push. Never stage files you did not change, and never touch Westley's uncommitted work. Guardrails (`.claude/hooks/git-guard.sh`) deny destructive operations; if a legitimate one is blocked, ask. Ledger, register and epic updates are committed and pushed as they happen.
 
 ## Tone
 
