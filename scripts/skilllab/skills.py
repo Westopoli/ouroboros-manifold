@@ -80,3 +80,7 @@ register("S3", "skilled", _types_by_reach, DRAFT)
 register("S4", "skilled", _types_by_reach, DRAFT)   # draft: the bait orders are in plays_space.s4_bait
 register("S4", "counter", _types_by_reach, DRAFT)   # draft: the guard orders are in plays_space.s4_do_not_chase
 register("S5", "skilled", _hold, DRAFT)             # draft: the frail type behind is in plays_space.s5_vulnerable_away
+
+
+def has_counter(skill):
+    return (skill, "counter") in _REGISTRY
