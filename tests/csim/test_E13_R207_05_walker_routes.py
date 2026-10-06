@@ -396,8 +396,6 @@ class _Slope(ctypes.Structure):
 
 
 def _slopes(lib, w):
-    lib.om_terrain_slope_get.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.POINTER(_Slope)]
-    lib.om_terrain_slope_at.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double, ctypes.POINTER(_Slope)]
     out = []
     for i in range(lib.om_terrain_slope_count(w)):
         s = _Slope()

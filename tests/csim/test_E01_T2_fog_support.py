@@ -68,6 +68,10 @@ class Scan:
             self._band[k] = self.lib.om_terrain_band_at(self.w, centre(cx), centre(cy))
         return self._band[k]
 
+    def walk(self, cx, cy):
+        """The cell centre is walkable (a walking type's spawn returns 0 on an unwalkable cell, spec unit row)."""
+        return self.lib.om_terrain_walkable_at(self.w, centre(cx), centre(cy)) != 0
+
     def height(self, x, y):
         return self.lib.om_terrain_height_at(self.w, x, y)
 
@@ -98,7 +102,8 @@ class Scan:
             for dx, dy in DIRS:
                 for steps in range(dist_lo // 100, dist_hi // 100 + 1):
                     ex, ey = cx + dx * steps, cy + dy * steps
-                    if 1 <= ex < CELLS - 1 and 1 <= ey < CELLS - 1:
+                    if 1 <= ex < CELLS - 1 and 1 <= ey < CELLS - 1 and self.walk(cx, cy) and self.walk(ex, ey) \
+                            and steps * CELL * (math.sqrt(2.0) if dx and dy else 1.0) <= dist_hi:
                         yield cx, cy, ex, ey, steps * CELL * (math.sqrt(2.0) if dx and dy else 1.0)
 
 
@@ -178,6 +183,7 @@ def valley_ridge_pair(sc, lo, hi):
 def open_line(sc, length_cells):
     """(x0, y, x1, y): a +x line of band-1 cells, length_cells long, clear for a layer-4 eye. Walkers sit at x0 + d."""
     for cx, cy in sc.cells():
-        if cx + length_cells < CELLS - 1 and set(sc.band(cx + i, cy) for i in range(length_cells + 1)) == {1}:
+        if cx + length_cells < CELLS - 1 and set(sc.band(cx + i, cy) for i in range(length_cells + 1)) == {1} \
+                and all(sc.walk(cx + i, cy) for i in range(length_cells + 1)):
             return centre(cx), centre(cy), centre(cx + length_cells), centre(cy)
     raise AssertionError("no band-1 line on seed 11")

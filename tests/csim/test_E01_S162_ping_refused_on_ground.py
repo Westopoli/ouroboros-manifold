@@ -2,7 +2,7 @@
 (om_era_kind 1) om_command_ping is refused with reason 5 (pp_contract.md section 6: after the caster check, before the
 reach check), reveals nothing, and costs no cooldown; era kind 0 casts as today.
 
-Fixture follows test_E01_S162_ping_reveal_follows_units.py: caster RAIDER on engine layer 0, an enemy VANGUARD on layer 4
+Fixture follows test_E01_S162_ping_reveal_follows_units.py: caster RAIDER on engine layer 0, an enemy INTERCEPTOR (a flyer: a walking type is placed on its band whatever layer is asked) on layer 4
 (four layers up, never passively seen), the ping 1,500 wu from the caster (reach 2,000). Units sit on the terrain-seed-11
 band-1 line of test_E01_T2_fog_support.py. RAIDER is a walker here (kind 1); the ping is the space-era caster verb.
 
@@ -12,7 +12,7 @@ test_era_kind_0_ping_casts are guards (green today).
 """
 import pytest
 
-from test_E01_T2_fog_support import (PING_OK, PING_REASON_CASTER, PING_REASON_GROUND, PING_REASON_REACH, RAIDER, VANGUARD,
+from test_E01_T2_fog_support import (PING_OK, PING_REASON_CASTER, PING_REASON_GROUND, PING_REASON_REACH, INTERCEPTOR, RAIDER,
                                      Scan, make_ground_world, open_line, spawn)
 
 HIGH = 4
@@ -25,7 +25,7 @@ def _scene(lib, world_factory, era):
     w = make_ground_world(lib, world_factory, era_kind=era)
     x0, y, _, _ = open_line(Scan(lib, w), 17)
     caster = spawn(lib, w, RAIDER, 0, x0, y, 0)
-    enemy = spawn(lib, w, VANGUARD, 1, x0 + CAST_DX + 100.0, y, HIGH)
+    enemy = spawn(lib, w, INTERCEPTOR, 1, x0 + CAST_DX + 100.0, y, HIGH)
     return w, caster, enemy, x0, y
 
 
