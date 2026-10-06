@@ -39,6 +39,8 @@ EXPECTED_MODULE = {
     "om_terrain_install_net_hooks": "terrain.c",
     "om_terrain_apply_ground": "terrain.c",
     "om_terrain_state_free": "terrain.c",
+    "om_walk_route": "walk_route.c",
+    "om_move_walker_tick": "tactical_move.c",
     "om_tn_value2": "terrain_noise.c",
     "om_tn_fbm2": "terrain_noise.c",
     "om_tn_sin_q16": "terrain_noise.c",

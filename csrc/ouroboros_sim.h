@@ -1055,11 +1055,18 @@ typedef enum {
     OM_TP_TARGET_POLICY_FACTION_1,
     OM_TP_PING_ALERT,
     OM_TP_TERRAIN_STEEP_DEG,
+    OM_TP_SLOPE_UP_DIV,
+    OM_TP_SLOPE_DOWN_MULT,
+    OM_TP_SIGHT_EYE_HEIGHT,
+    OM_TP_GROUND_FLYER_SEEN_MULT,
     OM_TP__COUNT
 } om_tac_param;
 
 /* PP-contract: a unit's active-emission mode (om_command_set_emission). */
 typedef enum { OM_EMIT_SILENT = 0, OM_EMIT_ACTIVE = 1 } om_emission;
+
+/* Terrain stage 2 (spec 2026-10-06): how a unit type moves (om_roster_set_movement_kind). */
+typedef enum { OM_MOVE_FLYING = 0, OM_MOVE_WALKING = 1, OM_MOVE_SWIMMING = 2 } om_movement_kind;
 
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
@@ -1555,6 +1562,8 @@ int om_unit_get_emission(const om_world *w, uint32_t unit);
 int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, double y);
 uint32_t om_ping_alert_count(const om_world *w, int32_t faction);
 int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_ping_alert *out);
+int om_set_era_kind(om_world *w, int kind);
+int om_era_kind(const om_world *w);
 /* ---- end generated: fog.c ---- */
 
 /* ---- generated from signatures.toml: generational.c ---- */
@@ -1911,6 +1920,8 @@ int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32
 uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit);
 int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y);
 int om_unit_get_engaged(const om_world *w, uint32_t unit);
+int om_roster_set_movement_kind(om_world *w, int type, int kind);
+int om_unit_profile_movement_kind(const om_world *w, int type);
 /* ---- end generated: tactical_move.c ---- */
 
 /* ---- generated from signatures.toml: tactical_support.c ---- */
@@ -1987,6 +1998,9 @@ int om_terrain_slope_get(const om_world *w, uint32_t i, om_slope *out);
 uint32_t om_terrain_cells(const om_world *w, uint32_t *w_cells, uint32_t *h_cells);
 int om_terrain_cell_band(const om_world *w, uint32_t cx, uint32_t cy);
 uint32_t om_terrain_dump_bands(const om_world *w, uint8_t *out, uint32_t cap);
+uint32_t om_terrain_walk_mask(const om_world *w, int layer, uint8_t *out, uint32_t cap);
+int om_terrain_slope_at(const om_world *w, double x, double y, om_slope *out);
+int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0, int layer1, double x1, double y1);
 /* ---- end generated: terrain.c ---- */
 
 /* ---- generated from signatures.toml: unit.c ---- */

@@ -155,6 +155,9 @@ def fight(setup, seed=0, swap=False, engine=None):
         if setup.terrain is not None:
             t = setup.terrain
             engine.set_canvas(w, t.canvas[0], t.canvas[1])
+            if t.field_seed is not None:
+                engine.terrain_generate(w, t.field_seed, t.canvas[0])
+                engine.set_era_kind(w, 1)
             for b in t.blocks:
                 engine.block_rect(w, b.x0, b.y0, b.x1, b.y1, b.layer_lo, b.layer_hi)
             for c in t.covers:

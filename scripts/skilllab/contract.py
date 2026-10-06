@@ -75,6 +75,7 @@ class Terrain:
     canvas: tuple             # (width, height)
     blocks: tuple = ()
     covers: tuple = ()
+    field_seed: int = None    # set: the fight generates the ground field of this seed (era kind 1)
 
 
 @dataclass(frozen=True)

@@ -128,6 +128,11 @@ class Engine:
             "om_terrain_walkable_at": ([V, d, d], i),
             "om_terrain_cells": ([V, c.POINTER(u32), c.POINTER(u32)], u32),
             "om_terrain_dump_bands": ([V, c.c_char_p, u32], u32),
+            "om_terrain_walk_mask": ([V, i, c.c_char_p, u32], u32),
+            "om_terrain_slope_at": ([V, d, d, V], i),
+            "om_set_era_kind": ([V, i], i),
+            "om_roster_set_movement_kind": ([V, i, i], i),
+            "om_unit_profile_movement_kind": ([V, i], i),
         }
         for name, (argtypes, restype) in sigs.items():
             fn = getattr(self._lib, name)
@@ -322,3 +327,22 @@ class Engine:
         buf = ctypes.create_string_buffer(n)
         self._lib.om_terrain_dump_bands(w, buf, n)
         return int(cw.value), int(ch.value), buf.raw
+
+    def terrain_walk_mask(self, w, layer):
+        cw, ch = ctypes.c_uint32(), ctypes.c_uint32()
+        n = int(self._lib.om_terrain_cells(w, ctypes.byref(cw), ctypes.byref(ch)))
+        buf = ctypes.create_string_buffer(n)
+        self._lib.om_terrain_walk_mask(w, int(layer), buf, n)
+        return buf.raw
+
+    def terrain_slope_at(self, w, x, y):
+        return int(self._lib.om_terrain_slope_at(w, float(x), float(y), None))
+
+    def set_era_kind(self, w, kind):
+        return int(self._lib.om_set_era_kind(w, int(kind)))
+
+    def set_movement_kind(self, w, type_id, kind):
+        return int(self._lib.om_roster_set_movement_kind(w, int(type_id), int(kind)))
+
+    def movement_kind(self, w, type_id):
+        return int(self._lib.om_unit_profile_movement_kind(w, int(type_id)))
