@@ -68,7 +68,7 @@ func _run_tests() -> void:
 	# the python fallback may really spawn (python3 on PATH); do not leave it running
 	if int(sb._pid) > 0:
 		OS.kill(int(sb._pid))
-	sb.free()
+	await create_timer(0.3).timeout  # let the reader thread see the closed pipe
 
 	# (3) the landscape mockup in the tree for 30 frames
 	var packed = load(MOCKUP)
