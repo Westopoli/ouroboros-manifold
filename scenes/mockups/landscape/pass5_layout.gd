@@ -5,7 +5,6 @@ extends RefCounted
 # from simulation/layout_library leads, the generated terrain obeys it. Runs inside
 # FieldMap.generate right after the pass-4 ramps. Prototype only; every number is a candidate.
 
-const SP := FieldMap.SPACING
 const DIR := "res://simulation/layout_library/"
 
 const CAT_PAD := 1
@@ -103,7 +102,7 @@ static func _zeros(n: int) -> PackedByteArray:
 
 
 static func _cell(fm: FieldMap, p: Vector2) -> int:
-	return clampi(int(round(p.y / SP)), 0, fm.dim - 1) * fm.dim + clampi(int(round(p.x / SP)), 0, fm.dim - 1)
+	return clampi(int(round(p.y / FieldMap.SPACING)), 0, fm.dim - 1) * fm.dim + clampi(int(round(p.x / FieldMap.SPACING)), 0, fm.dim - 1)
 
 
 static func _put(fm: FieldMap, elev: PackedFloat32Array, i: int, h: float) -> void:
@@ -124,7 +123,8 @@ static func react(fm: FieldMap, elev: PackedFloat32Array) -> void:
 		by_id[nd.id] = nd
 	# vantages: the highest dry ground near the node, or the node's own spot if that is higher
 	for nd in info.nodes:
-		if nd.type != "vantage":
+		# Pass 6 already made the vantage the local summit; moving it would leave its cone.
+		if nd.type != "vantage" or fm.p6_info.get("applied", false):
 			continue
 		var c := _cell(fm, nd.pos)
 		var best := c
@@ -138,7 +138,7 @@ static func react(fm: FieldMap, elev: PackedFloat32Array) -> void:
 		for gy in range(box.position.y, box.end.y + 1):
 			for gx in range(box.position.x, box.end.x + 1):
 				var i := gy * dim + gx
-				var cp := Vector2(gx, gy) * SP
+				var cp := Vector2(gx, gy) * FieldMap.SPACING
 				if fm.grid[i].water >= 0.5 or cp.distance_to(nd.pos) > VANTAGE_SEARCH_WU or fm.grid[i].elevation <= best_h:
 					continue
 				var climbable := true
@@ -149,7 +149,7 @@ static func react(fm: FieldMap, elev: PackedFloat32Array) -> void:
 					best = i
 					best_h = fm.grid[i].elevation
 		if best != c:
-			nd.pos = Vector2(best % dim, best / dim) * SP
+			nd.pos = Vector2(best % dim, best / dim) * FieldMap.SPACING
 			nd.moved = true
 	# node heights: start at the ground under each node, then relax so every edge can be walked at
 	# NODE_GRADE_DEG over 1.2 times its straight length (vantages move least)
@@ -217,7 +217,7 @@ static func _pad(fm: FieldMap, elev: PackedFloat32Array, info: Dictionary, centr
 	var box := Pass4Terrain._cell_box(fm, centre, r + PAD_SHOULDER_WU)
 	for gy in range(box.position.y, box.end.y + 1):
 		for gx in range(box.position.x, box.end.x + 1):
-			var d := (Vector2(gx, gy) * SP).distance_to(centre)
+			var d := (Vector2(gx, gy) * FieldMap.SPACING).distance_to(centre)
 			var v := smoothstep(r + PAD_SHOULDER_WU, r, d)
 			if v <= 0.0:
 				continue
@@ -236,7 +236,7 @@ static func _choke(fm: FieldMap, elev: PackedFloat32Array, info: Dictionary, ck:
 	var box := Pass4Terrain._cell_box(fm, ck.pos, reach * 1.45)
 	for gy in range(box.position.y, box.end.y + 1):
 		for gx in range(box.position.x, box.end.x + 1):
-			var rel: Vector2 = Vector2(gx, gy) * SP - ck.pos
+			var rel: Vector2 = Vector2(gx, gy) * FieldMap.SPACING - ck.pos
 			var as_ := absf(rel.dot(axis))
 			var at := absf(rel.dot(perp))
 			var ws := smoothstep(CHOKE_LEN_WU * 0.5 + 400.0, CHOKE_LEN_WU * 0.5, as_)
@@ -369,16 +369,16 @@ static func astar(fm: FieldMap, m: Dictionary, info: Dictionary, src: int, dst: 
 				if pass_[j] == 0:
 					if walk_only or wall[j] == 1:
 						continue
-					cost = (BLOCKED_COST if land[j] == 1 else WATER_COST) + 8.0 * absf(hh[j] - hh[i]) / SP
+					cost = (BLOCKED_COST if land[j] == 1 else WATER_COST) + 8.0 * absf(hh[j] - hh[i]) / FieldMap.SPACING
 				elif flank and corr[j] == 1:
 					cost = CHOKE_FLANK_COST
-				var ng: float = g[i] + cost * (SP if ox == 0 or oy == 0 else SP * 1.41421356)
+				var ng: float = g[i] + cost * (FieldMap.SPACING if ox == 0 or oy == 0 else FieldMap.SPACING * 1.41421356)
 				if ng < g[j]:
 					g[j] = ng
 					parent[j] = i
 					var ddx := absf(nx - dx)
 					var ddy := absf(ny - dy)
-					_push(hk, hv, ng + SP * (maxf(ddx, ddy) + 0.41421356 * minf(ddx, ddy)), j)
+					_push(hk, hv, ng + FieldMap.SPACING * (maxf(ddx, ddy) + 0.41421356 * minf(ddx, ddy)), j)
 	return PackedInt32Array()
 
 
@@ -460,7 +460,7 @@ static func walk_dist(fm: FieldMap, pass_: PackedByteArray, src: int) -> PackedF
 				var j := ny * dim + nx
 				if pass_[j] == 0:
 					continue
-				var ng: float = g[i] + (SP if ox == 0 or oy == 0 else SP * 1.41421356)
+				var ng: float = g[i] + (FieldMap.SPACING if ox == 0 or oy == 0 else FieldMap.SPACING * 1.41421356)
 				if g[j] < 0.0 or ng < g[j]:
 					g[j] = ng
 					_push(hk, hv, ng, j)
@@ -498,7 +498,7 @@ static func _stamp(fm: FieldMap, elev: PackedFloat32Array, info: Dictionary, m0:
 	else:
 		for q in range(last + 1, m):
 			prof[q] = hs[last]
-	var md := tan(deg_to_rad(ROUTE_GRADE_DEG)) * SP
+	var md := tan(deg_to_rad(ROUTE_GRADE_DEG)) * FieldMap.SPACING
 	for k in range(1, m):
 		if pin[k] == 0:
 			prof[k] = clampf(prof[k], prof[k - 1] - md, prof[k - 1] + md)
@@ -513,7 +513,7 @@ static func _stamp(fm: FieldMap, elev: PackedFloat32Array, info: Dictionary, m0:
 			prof[k] = maxf(mid + sgn * md * (k - (m - 1) * 0.5), 0.0)
 	var best_d := {}
 	var best_h := {}
-	var rc := ceili((half + ROUTE_SHOULDER_WU) / SP)
+	var rc := ceili((half + ROUTE_SHOULDER_WU) / FieldMap.SPACING)
 	for k in range(m):
 		var cx: int = path[k] % dim
 		var cy: int = path[k] / dim
@@ -530,7 +530,7 @@ static func _stamp(fm: FieldMap, elev: PackedFloat32Array, info: Dictionary, m0:
 				var i := gy * dim + gx
 				if info.wall[i] == 1:
 					continue
-				var d := Vector2(gx - cx, gy - cy).length() * SP
+				var d := Vector2(gx - cx, gy - cy).length() * FieldMap.SPACING
 				if d < best_d.get(i, INF) and d < half + ROUTE_SHOULDER_WU:
 					best_d[i] = d
 					best_h[i] = prof[k]

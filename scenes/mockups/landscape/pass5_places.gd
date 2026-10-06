@@ -4,7 +4,6 @@ extends RefCounted
 # Pass 5 prototype: checks on the obeying terrain, equal-distance resources, and a separate score
 # per kind of place. Everything here is a candidate number for Westley to judge.
 
-const SP := FieldMap.SPACING
 const KINDS := ["base", "economic", "resource", "expansion", "settlement"]
 const BOX_CELLS := 5
 const WATER_BOX_CELLS := 15
@@ -105,8 +104,8 @@ static func compute(fm: FieldMap, tol: float) -> Dictionary:
 	if d_b.is_empty():
 		d_b.resize(n)
 		d_b.fill(-1.0)
-	var pos_a: Vector2 = Vector2(cell_a % dim, cell_a / dim) * SP if cell_a >= 0 else Vector2.ZERO
-	var pos_b: Vector2 = Vector2(cell_b % dim, cell_b / dim) * SP if cell_b >= 0 else Vector2.ZERO
+	var pos_a: Vector2 = Vector2(cell_a % dim, cell_a / dim) * FieldMap.SPACING if cell_a >= 0 else Vector2.ZERO
+	var pos_b: Vector2 = Vector2(cell_b % dim, cell_b / dim) * FieldMap.SPACING if cell_b >= 0 else Vector2.ZERO
 	var bases_route: bool = cell_a >= 0 and cell_b >= 0 and d_a[cell_b] >= 0.0
 	res["bases_route"] = bases_route
 	res["bases_walk_wu"] = d_a[cell_b] if bases_route else -1.0
@@ -271,11 +270,11 @@ static func compute(fm: FieldMap, tol: float) -> Dictionary:
 
 
 static func _place(kind: String, side: int, c: int, dim: int, score: float) -> Dictionary:
-	return {"kind": kind, "side": side, "cell": c, "pos": Vector2(c % dim, c / dim) * SP, "score": score}
+	return {"kind": kind, "side": side, "cell": c, "pos": Vector2(c % dim, c / dim) * FieldMap.SPACING, "score": score}
 
 
 static func _cell(fm: FieldMap, p: Vector2) -> int:
-	return clampi(int(round(p.y / SP)), 0, fm.dim - 1) * fm.dim + clampi(int(round(p.x / SP)), 0, fm.dim - 1)
+	return clampi(int(round(p.y / FieldMap.SPACING)), 0, fm.dim - 1) * fm.dim + clampi(int(round(p.x / FieldMap.SPACING)), 0, fm.dim - 1)
 
 
 # The cell itself if walkable, else the nearest walkable cell within 4 cells, else the cell.
@@ -308,7 +307,7 @@ static func _pick_base(fm: FieldMap, pass_: PackedByteArray, flat: PackedFloat32
 	for gy in range(box.position.y, box.end.y + 1):
 		for gx in range(box.position.x, box.end.x + 1):
 			var i := gy * fm.dim + gx
-			var d := (Vector2(gx, gy) * SP).distance_to(nd.pos)
+			var d := (Vector2(gx, gy) * FieldMap.SPACING).distance_to(nd.pos)
 			if pass_[i] == 0 or d > BASE_RADIUS_WU:
 				continue
 			var v := 0.4 * flat[i] + 0.3 * open[i] + 0.3 * (1.0 - d / BASE_RADIUS_WU) + 0.0001
@@ -327,7 +326,7 @@ static func _pick(score: PackedFloat32Array, dim: int, sep: float, placed: Array
 	for i in range(score.size()):
 		if score[i] <= best_s:
 			continue
-		var p := Vector2(i % dim, i / dim) * SP
+		var p := Vector2(i % dim, i / dim) * FieldMap.SPACING
 		var ok := true
 		for q in placed:
 			var need := sep
@@ -351,7 +350,7 @@ static func _best_balanced(pass_: PackedByteArray, d_a: PackedFloat32Array, d_b:
 		var r := absf(d_a[i] - d_b[i]) / maxf((d_a[i] + d_b[i]) * 0.5, 1.0)
 		if r >= best_r:
 			continue
-		var p := Vector2(i % dim, i / dim) * SP
+		var p := Vector2(i % dim, i / dim) * FieldMap.SPACING
 		var ok := true
 		for q in placed:
 			if q.kind == "resource" and p.distance_to(q.pos) < RES_SEP_WU:
@@ -393,7 +392,7 @@ static func _ring_mean_height(fm: FieldMap, pass_: PackedByteArray, h: PackedFlo
 	for gy in range(box.position.y, box.end.y + 1):
 		for gx in range(box.position.x, box.end.x + 1):
 			var i := gy * fm.dim + gx
-			if fm.grid[i].water < 0.5 and (Vector2(gx, gy) * SP).distance_to(centre) <= r:
+			if fm.grid[i].water < 0.5 and (Vector2(gx, gy) * FieldMap.SPACING).distance_to(centre) <= r:
 				s += h[i]
 				cnt += 1
 	return s / maxf(cnt, 1)

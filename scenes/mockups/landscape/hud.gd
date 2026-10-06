@@ -3,7 +3,7 @@ extends CanvasLayer
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const KITS_DIR := "res://scenes/mockups/landscape/kits/"
 const DEFAULT_CANVAS := 24000.0
-const CANVAS_OPTIONS := [16000.0, 24000.0, 32000.0]
+const CANVAS_OPTIONS := [16000.0, 24000.0, 32000.0, 64000.0, 128000.0]
 const DEFAULT_KIT := "greek"
 const SPACE_KIT := "space"
 const DEFAULT_DENSITY := 35.0
@@ -182,6 +182,7 @@ func _regenerate() -> void:
 	var is_space := _kit_name == SPACE_KIT
 	var field_map: FieldMap
 	if is_space:
+		FieldMap.SPACING = 100.0
 		var space_map := SpaceFieldMap.new()
 		space_map.plate_cell_wu = _plate_cell
 		space_map.layer_gap_wu = _layer_gap
@@ -203,6 +204,7 @@ func _regenerate() -> void:
 		field_map.p4_relief = _p4.relief_mult
 		field_map.p5_layout = _p5.layout_for(_seed)
 		field_map.p5_react = _p5.react_on
+		field_map.p6_shape = _p5.shape_on
 		field_map.p5_narrow = _p5.narrow
 		field_map.p5_moderate = _p5.moderate
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
