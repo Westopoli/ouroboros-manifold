@@ -757,86 +757,295 @@ int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canv
     if (w->terrain_state && w->terrain_state_free) w->terrain_state_free(w->terrain_state);
     w->terrain_state = st;
     w->terrain_state_free = tg_free;
+    om_terrain_apply_ground(w);
     return 0;
 }
 
 /* ---- queries ---- */
+#include <math.h>
+void om_mapgen_cell_set_density(om_world *w, uint32_t layer, int32_t cx, int32_t cy, double density);
+void om_move_terrain_changed(om_world *w);
+
+#define TS_DIAG_Q16 46341 /* 0.70710678 in Q16: the mockup's diagonal reach */
+#define TS_FOOT_CM 10000 /* footprint width, one cell, in cm */
+#define TS_DEG_MAX 90
+#define TS_TAN_COUNT 90
+#define TS_TAN_INF ((int64_t)1 << 40) /* no limit: 90 degrees and up */
+#define TS_DIRS 4
+#define TS_RUN_MAX 64 /* provisional (2026-10-05): longest slope run, cells */
+#define TS_SAMPLES_PER_CELL 2 /* walkable check every half cell along a slope */
+#define TS_BLOCKED_DENSITY 1.0
+#define TS_OPEN_DENSITY 0.0
+
+/* constants-table: docs/bible/epics/E-01-layer-system.md R-200-03 (tan of 0 to 89 degrees in Q16, for OM_TP_TERRAIN_STEEP_DEG) */
+static const int32_t ts_tan_q16[TS_TAN_COUNT] = {
+    0, 1144, 2289, 3435, 4583, 5734, 6888, 8047, 9210, 10380, 11556, 12739, 13930, 15130, 16340, 17560, 18792, 20036,
+    21294, 22566, 23853, 25157, 26478, 27818, 29179, 30560, 31964, 33392, 34846, 36327, 37837, 39378, 40951, 42560,
+    44205, 45889, 47615, 49385, 51202, 53070, 54991, 56970, 59009, 61113, 63287, 65536, 67865, 70279, 72785, 75391,
+    78103, 80930, 83882, 86969, 90203, 93595, 97161, 100917, 104880, 109070, 113512, 118230, 123255, 128622, 134369,
+    140542, 147196, 154393, 162207, 170727, 180059, 190330, 201699, 214359, 228551, 244584, 262851, 283868, 308323,
+    337153, 371673, 413778, 466313, 533748, 623533, 749080, 937208, 1250501, 1876705, 3754555
+};
+/* end constants-table */
+
+static const om_terrain_state *ts_ro(const om_world *w) {
+    const om_terrain_state *st = w ? (const om_terrain_state *)w->terrain_state : NULL;
+    return st && st->present ? st : NULL;
+}
+
+static int64_t ts_floor_div(int64_t a, int64_t b) {
+    int64_t q = a / b;
+    return (a % b != 0 && (a < 0) != (b < 0)) ? q - 1 : q;
+}
+
+/* Height in cm at a Q16 wu position: bilinear between cell centres, clamped at the border. */
+static int64_t ts_height_q(const om_terrain_state *st, int64_t xq, int64_t yq) {
+    int64_t u = xq - TG_CELL_Q16 / 2, v = yq - TG_CELL_Q16 / 2;
+    int64_t i = ts_floor_div(u, TG_CELL_Q16), j = ts_floor_div(v, TG_CELL_Q16);
+    int64_t fx = ((u - i * TG_CELL_Q16) << TG_SHIFT) / TG_CELL_Q16, fy = ((v - j * TG_CELL_Q16) << TG_SHIFT) / TG_CELL_Q16;
+    int64_t i0 = tg_clamp(i, 0, (int64_t)st->cells_w - 1), i1 = tg_clamp(i + 1, 0, (int64_t)st->cells_w - 1);
+    int64_t j0 = tg_clamp(j, 0, (int64_t)st->cells_h - 1), j1 = tg_clamp(j + 1, 0, (int64_t)st->cells_h - 1);
+    int64_t top = tg_lerp(st->height_cm[j0 * st->cells_w + i0], st->height_cm[j0 * st->cells_w + i1], fx);
+    int64_t bot = tg_lerp(st->height_cm[j1 * st->cells_w + i0], st->height_cm[j1 * st->cells_w + i1], fx);
+    return tg_lerp(top, bot, fy);
+}
+
+/* Steep limit as tan in Q16, by linear interpolation between whole degrees. */
+static int64_t ts_limit_tan_q(const om_world *w) {
+    double deg = om_tactical_get_param(w, OM_TP_TERRAIN_STEEP_DEG);
+    int64_t i, frac;
+    if (deg >= (double)TS_DEG_MAX) return TS_TAN_INF;
+    if (deg < 0.0) deg = 0.0;
+    i = (int64_t)deg;
+    frac = (int64_t)((deg - (double)i) * (double)TG_ONE);
+    if (i >= TS_TAN_COUNT - 1) return ts_tan_q16[TS_TAN_COUNT - 1];
+    return ts_tan_q16[i] + (((int64_t)(ts_tan_q16[i + 1] - ts_tan_q16[i]) * frac) >> TG_SHIFT);
+}
+
+/* The mockup's footprint slope: four directions through the point, a cell wide; the steepest rise over the width. */
+static int ts_walk_q(const om_terrain_state *st, int64_t tanq, int64_t xq, int64_t yq) {
+    int64_t r = TG_CELL_Q16 / 2, rd = (r * TS_DIAG_Q16) >> TG_SHIFT, best = 0;
+    int64_t ox[TS_DIRS] = { r, 0, rd, rd }, oy[TS_DIRS] = { 0, r, rd, -rd };
+    int k;
+    for (k = 0; k < TS_DIRS; k++) {
+        int64_t d = ts_height_q(st, xq + ox[k], yq + oy[k]) - ts_height_q(st, xq - ox[k], yq - oy[k]);
+        if (d < 0) d = -d;
+        if (d > best) best = d;
+    }
+    return best * TG_ONE <= tanq * TS_FOOT_CM;
+}
+
+static int ts_in_cells(const om_terrain_state *st, int64_t cx, int64_t cy) {
+    return cx >= 0 && cy >= 0 && cx < (int64_t)st->cells_w && cy < (int64_t)st->cells_h;
+}
+
+static int ts_cell_of(const om_terrain_state *st, double x, double y, int64_t *cx, int64_t *cy) {
+    if (!(x >= 0.0 && y >= 0.0)) return 0;
+    *cx = (int64_t)(x / OM_TERRAIN_CELL_WU);
+    *cy = (int64_t)(y / OM_TERRAIN_CELL_WU);
+    return ts_in_cells(st, *cx, *cy);
+}
+
+static int64_t ts_centre_q(int64_t c) { return c * TG_CELL_Q16 + TG_CELL_Q16 / 2; }
+
+/* Walkable per cell centre, then slopes: a maximal straight run of walkable cells that crosses one band boundary,
+ * found in ascending cell order and capped at OM_TERRAIN_SLOPE_CAP. */
+static void ts_analyse(const om_world *w, om_terrain_state *st) {
+    static const int dx[TS_DIRS] = { 1, 0, -1, 0 }, dy[TS_DIRS] = { 0, 1, 0, -1 };
+    int64_t tanq = ts_limit_tan_q(w), cx, cy, cells = (int64_t)st->cells_w * st->cells_h;
+    uint8_t *used = (uint8_t *)calloc((size_t)cells, 1);
+    st->slope_count = 0;
+    for (cy = 0; cy < (int64_t)st->cells_h; cy++) for (cx = 0; cx < (int64_t)st->cells_w; cx++)
+        st->walkable[cy * st->cells_w + cx] = (uint8_t)ts_walk_q(st, tanq, ts_centre_q(cx), ts_centre_q(cy));
+    if (!used) return;
+    for (cy = 0; cy < (int64_t)st->cells_h; cy++) for (cx = 0; cx < (int64_t)st->cells_w; cx++) {
+        int64_t idx = cy * st->cells_w + cx;
+        int d;
+        if (!st->walkable[idx] || used[idx]) continue;
+        for (d = 0; d < TS_DIRS; d++) {
+            int64_t nx = cx + dx[d], ny = cy + dy[d], bx = cx, by = cy, tx = nx, ty = ny, k, n, len;
+            int lo = st->band[idx];
+            om_slope *s;
+            int ok = 1;
+            if (st->slope_count >= OM_TERRAIN_SLOPE_CAP) break;
+            if (!ts_in_cells(st, nx, ny) || !st->walkable[ny * st->cells_w + nx] || st->band[ny * st->cells_w + nx] != lo + 1) continue;
+            for (k = 0; k < TS_RUN_MAX; k++) {
+                int64_t px = bx - dx[d], py = by - dy[d];
+                if (!ts_in_cells(st, px, py) || !st->walkable[py * st->cells_w + px] || st->band[py * st->cells_w + px] != lo) break;
+                bx = px;
+                by = py;
+            }
+            for (k = 0; k < TS_RUN_MAX; k++) {
+                int64_t px = tx + dx[d], py = ty + dy[d];
+                if (!ts_in_cells(st, px, py) || !st->walkable[py * st->cells_w + px] || st->band[py * st->cells_w + px] != lo + 1) break;
+                tx = px;
+                ty = py;
+            }
+            len = (tx - bx) + (ty - by);
+            if (len < 0) len = -len;
+            n = len * TS_SAMPLES_PER_CELL;
+            for (k = 0; k <= n && ok; k++)
+                ok = ts_walk_q(st, tanq, ts_centre_q(bx) + (ts_centre_q(tx) - ts_centre_q(bx)) * k / n,
+                               ts_centre_q(by) + (ts_centre_q(ty) - ts_centre_q(by)) * k / n);
+            if (!ok) continue;
+            s = &st->slopes[st->slope_count++];
+            s->x0 = ((double)bx + 0.5) * OM_TERRAIN_CELL_WU;
+            s->y0 = ((double)by + 0.5) * OM_TERRAIN_CELL_WU;
+            s->x1 = ((double)tx + 0.5) * OM_TERRAIN_CELL_WU;
+            s->y1 = ((double)ty + 0.5) * OM_TERRAIN_CELL_WU;
+            s->mx = (((double)cx + (double)nx) * 0.5 + 0.5) * OM_TERRAIN_CELL_WU;
+            s->my = (((double)cy + (double)ny) * 0.5 + 0.5) * OM_TERRAIN_CELL_WU;
+            s->length = sqrt((s->x1 - s->x0) * (s->x1 - s->x0) + (s->y1 - s->y0) * (s->y1 - s->y0));
+            s->lower_band = lo;
+            s->upper_band = lo + 1;
+            for (k = 0; k <= len; k++) {
+                int64_t ux = bx + (tx > bx ? k : (tx < bx ? -k : 0)), uy = by + (ty > by ? k : (ty < by ? -k : 0));
+                used[uy * st->cells_w + ux] = 1;
+            }
+            break;
+        }
+    }
+    free(used);
+}
+
 int om_terrain_present(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    return ts_ro(w) != NULL;
 }
 
 double om_terrain_height_at(const om_world *w, double x, double y) {
-    /* STUB */
-    (void)w; (void)x; (void)y;
-    return 0.0;
+    const om_terrain_state *st = ts_ro(w);
+    int64_t cx, cy;
+    if (!st || !ts_cell_of(st, x, y, &cx, &cy)) return 0.0;
+    return (double)ts_height_q(st, (int64_t)(x * (double)TG_ONE), (int64_t)(y * (double)TG_ONE)) / (double)TG_CM_PER_WU;
 }
 
 int om_terrain_band_at(const om_world *w, double x, double y) {
-    /* STUB */
-    (void)w; (void)x; (void)y;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    int64_t cx, cy;
+    if (!st || !ts_cell_of(st, x, y, &cx, &cy)) return 0;
+    return st->band[cy * st->cells_w + cx];
 }
 
 int om_terrain_walkable_at(const om_world *w, double x, double y) {
-    /* STUB */
-    (void)w; (void)x; (void)y;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    int64_t cx, cy;
+    if (!st || !ts_cell_of(st, x, y, &cx, &cy)) return 0;
+    return ts_walk_q(st, ts_limit_tan_q(w), (int64_t)(x * (double)TG_ONE), (int64_t)(y * (double)TG_ONE));
 }
 
+/* Layer numbering is the engine's: band k is layer k - 1. A slope cell (a cell of a slope's run) counts on both bands. */
 int om_terrain_ground_at(const om_world *w, int layer, double x, double y) {
-    /* STUB */
-    (void)w; (void)layer; (void)x; (void)y;
+    const om_terrain_state *st = ts_ro(w);
+    int64_t cx, cy;
+    int band;
+    uint32_t i;
+    if (!st || layer < 0 || layer >= OM_TERRAIN_BANDS || !ts_cell_of(st, x, y, &cx, &cy)) return 0;
+    band = st->band[cy * st->cells_w + cx];
+    if (layer == band - 1) return 1;
+    for (i = 0; i < st->slope_count; i++) {
+        const om_slope *s = &st->slopes[i];
+        int64_t ax = (int64_t)(s->x0 / OM_TERRAIN_CELL_WU), ay = (int64_t)(s->y0 / OM_TERRAIN_CELL_WU);
+        int64_t bx = (int64_t)(s->x1 / OM_TERRAIN_CELL_WU), by = (int64_t)(s->y1 / OM_TERRAIN_CELL_WU);
+        int64_t lox = ax < bx ? ax : bx, hix = ax < bx ? bx : ax, loy = ay < by ? ay : by, hiy = ay < by ? by : ay;
+        if (cx < lox || cx > hix || cy < loy || cy > hiy) continue;
+        if ((s->lower_band == layer + 1 && s->upper_band == band) || (s->lower_band == band && s->upper_band == layer + 1)) return 1;
+    }
     return 0;
 }
 
 uint32_t om_terrain_band_heights(const om_world *w, double *out, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)out; (void)cap;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    uint32_t i;
+    if (!st || !out) return 0;
+    for (i = 0; i < OM_TERRAIN_BANDS && i < cap; i++) out[i] = (double)st->band_floor_cm[i] / (double)TG_CM_PER_WU;
+    return i;
 }
 
 uint32_t om_terrain_slope_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    return st ? st->slope_count : 0;
 }
 
 int om_terrain_slope_get(const om_world *w, uint32_t i, om_slope *out) {
-    /* STUB */
-    (void)w; (void)i; (void)out;
+    const om_terrain_state *st = ts_ro(w);
+    if (!st || !out || i >= st->slope_count) return -1;
+    *out = st->slopes[i];
     return 0;
 }
 
 uint32_t om_terrain_cells(const om_world *w, uint32_t *w_cells, uint32_t *h_cells) {
-    /* STUB */
-    (void)w; (void)w_cells; (void)h_cells;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    if (w_cells) *w_cells = st ? st->cells_w : 0;
+    if (h_cells) *h_cells = st ? st->cells_h : 0;
+    return st ? st->cells_w * st->cells_h : 0;
 }
 
 int om_terrain_cell_band(const om_world *w, uint32_t cx, uint32_t cy) {
-    /* STUB */
-    (void)w; (void)cx; (void)cy;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    if (!st || cx >= st->cells_w || cy >= st->cells_h) return 0;
+    return st->band[(size_t)cy * st->cells_w + cx];
 }
 
 uint32_t om_terrain_dump_bands(const om_world *w, uint8_t *out, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)out; (void)cap;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    uint32_t n;
+    if (!st || !out) return 0;
+    n = st->cells_w * st->cells_h;
+    if (n > cap) n = cap;
+    memcpy(out, st->band, n);
+    return n;
 }
-/* ---- end generated stubs ---- */
 
 void om_terrain_state_free(void *state) {
-    (void)state;
+    tg_free(state);
+}
+
+/* R-200-02: layers 1..k-1 blocked at every cell of band k, the rest open; written over every layer so a regenerate
+ * leaves nothing stale. Also derives the walkable cells and slopes, which generate cannot see.
+ * See also: the call at the end of om_terrain_generate. */
+void om_terrain_apply_ground(om_world *w) {
+    om_terrain_state *st = w ? (om_terrain_state *)w->terrain_state : NULL;
+    uint32_t cx, cy, layer;
+    if (!st || !st->present) return;
+    ts_analyse(w, st);
+    for (cy = 0; cy < st->cells_h; cy++) for (cx = 0; cx < st->cells_w; cx++) {
+        int band = st->band[(size_t)cy * st->cells_w + cx];
+        for (layer = 0; layer < OM_LAYER_COUNT; layer++)
+            om_mapgen_cell_set_density(w, layer, (int32_t)cx, (int32_t)cy, (int)layer < band - 1 ? TS_BLOCKED_DENSITY : TS_OPEN_DENSITY);
+    }
+    om_move_terrain_changed(w);
 }
 
 /* ---- net hooks (terrain stage 1 spec 2026-10-05) ---- */
-void om_terrain_install_net_hooks(om_world *w) {
-    (void)w;
+#define TS_NET_PRIME 1099511628211ULL
+#define TS_NET_SEED 0x74657272616e6eULL
+#define TS_NET_MIX_SHIFT 29
+
+/* Section 8 is shared: mapgen (and support under it) installs first, its hash is kept here
+ * (a function pointer, identical for every world) and chained. Terrain has no save slot: see the report, not saved yet. */
+static uint64_t (*ts_prev_hash)(const om_world *w);
+
+static uint64_t ts_word(uint64_t h, uint64_t v) {
+    h = (h ^ v) * TS_NET_PRIME;
+    return h ^ (h >> TS_NET_MIX_SHIFT);
 }
 
-void om_terrain_apply_ground(om_world *w) {
-    (void)w;
+static uint64_t ts_section_hash(const om_world *w) {
+    const om_terrain_state *st = ts_ro(w);
+    uint64_t prev = ts_prev_hash ? ts_prev_hash(w) : 0, h;
+    size_t i;
+    if (!st) return prev;
+    h = ts_word(TS_NET_SEED, prev);
+    h = ts_word(h, st->seed);
+    h = ts_word(h, st->cells_w);
+    h = ts_word(h, st->cells_h);
+    for (i = 0; i < OM_TERRAIN_BANDS; i++) h = ts_word(h, (uint64_t)(int64_t)st->band_floor_cm[i]);
+    for (i = 0; i < (size_t)st->cells_w * st->cells_h; i++) h = ts_word(h, (uint64_t)(int64_t)st->height_cm[i]);
+    return h;
+}
+
+void om_terrain_install_net_hooks(om_world *w) {
+    uint64_t (*cur)(const om_world *) = w->net_section_hash[OM_NET_SECTION_COUNT - 1];
+    if (cur != ts_section_hash) ts_prev_hash = cur;
+    w->net_section_hash[OM_NET_SECTION_COUNT - 1] = ts_section_hash;
 }
