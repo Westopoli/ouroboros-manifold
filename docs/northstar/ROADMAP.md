@@ -70,16 +70,22 @@ Updated 2026-10-06 evening. Branches only; main gets a piece only through the me
 | Unit size as a runtime setting (`plans/2026-10-06-unit-size-runtime-spec.md`) | spec | After stage 2 lands (same file) | Two Doer units |
 | Sonnet chat briefs B1 to B11 (`plans/briefs/2026-10-06-sonnet-parallel-briefs.md`) | running in a parallel chat | mop-up line of sight, tick cap 12,000, method and era-pack drafts, doctrine synthesis, website refresh, flake root cause, worktree cleanup, lab throughput | Each pushes a branch; the planner lands it |
 
-## 2. Queued, in order
+## 2. The beta critical path (rewritten 2026-10-06 night)
 
-The agreed order of work (2026-10-03). Rows 1 to 3 have no plan doc yet; each gets one when it starts.
+Target: a private Steam beta with multiplayer in about two weeks (Westley, 2026-10-06). The old 2026-10-03 queue is folded in here; anything not on this path is in 3b or section 4.
 
-| # | Plan | Doc | Waits on | Why this position |
+| # | Step | State | Gate | Then |
 |---|---|---|---|---|
-| 1 | Finish the MVP loop: whatever F1 to F13 release | `plans/2026-10-03-finish-loop-rulings.md` | Westley for most of it | What can be built without him is built. |
-| 2 | Baseline playthrough by Westley or the 30B | none | Westley (the 30B waits on decision W6) | The scripted playthrough is green in the gate; the human or 30B baseline is still owed before large new work. |
-| 3 | Layout engine: prototype, approval, then integration into mission setup (S-112 to S-119, S-191, S-192) | pass 1 spec `plans/2026-10-04-layout-prototype-pass1-spec.md` (method M4 picked, Q-191-06 and Q-191-07 closed); options page `research/layout_engine/README.md` | Westley's approval of the layout prototype | He ruled the layout comes before the landscape. |
-| 4 | Land generator, part 1: the ground (S-186, S-188, S-189, S-190) | to write | Row 3; decisions L1 below | First new system; fills the layer-mask stub both generators share. Runs as a measured pilot workflow, under 10 agents, Sonnet builders (A202) |
+| 1 | Terrain stage 2 lands on main | landing clerk running (three sim defects found by the lab's ground scene, all fixed with tests) | merge gate clean, csim ids equal main | 2, 3, 4 start |
+| 2 | Terrain stage 3: missions on ground, the player sees it, era toggle (`plans/2026-10-06-terrain-stage3-spec.md` rev 3) | spec audited and pre-flighted | its gate plus a ground-era desktop playthrough | 5 |
+| 3 | Unit size as a runtime setting (D1) | spec ready | gate | lab run 2 |
+| 4 | Steam wiring phase A: session catch-up, Steam transport, match pump, export tooling, portability (`plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 5) | workflow running | gate on `push/net-wire-a` | 5 |
+| 5 | Steam wiring phase B: pipe frame flag, bridge wrappers, lobby + menu, tactical hookup | after 2 and 4 | gate plus a two-process loopback match | 6 |
+| 6 | Shipping the C pipe on Windows/macOS/Linux (cross-build, static link, path resolution in exports, signing) | scouted 2026-10-06: static pipe exe per OS, mingw-w64 cross build, client path fix (Steam spec W8); needs `mingw-w64` + `wine64` installed (Westley, sudo) | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
+| 7 | First real-Steam test: Westley's two accounts on Spacewar 480, Linux + Mac | after 5 and 6 | a match to its end, a stall, a leave | 8 |
+| 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafting now; app id is Westley's (T17) | one tester plays a mission and files an F12 report | public track (store page, Coming Soon) |
+
+Off the critical path but running in parallel: the lab's layout search (run 1 tonight, run 2 after D1 and the category table), the bug-report piece T16 (built, awaiting the gate), the flake root cause T12, the gate harness fix (merge-base footprint, lab integration stage), the doc drafts (T5, T7, T9), the website refresh (T8).
 
 ## 3. Blocked on Westley
 

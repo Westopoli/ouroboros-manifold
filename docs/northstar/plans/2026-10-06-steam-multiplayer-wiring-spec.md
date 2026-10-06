@@ -1,6 +1,6 @@
-# Steam P2P multiplayer: wiring the client (spec, rev 4)
+# Steam P2P multiplayer: wiring the client (spec, rev 6)
 
-Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). Rev 4 folds the Fable contract audit (four blocking lines, all folded). Approved for pre-flight; not launched.
+Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). Rev 4 folds the Fable contract audit (four blocking lines, all folded). Rev 5 folds the pre-flight (2026-10-06 night): no technical blocker; launched in two phases (below).
 
 ## The match, in one picture
 
@@ -69,6 +69,33 @@ sequenceDiagram
 | `net_checksum` wrapper unused by the session; `checksum: true` redundant | Both dropped from W2 |
 | `.gitignore` cannot re-include a file under a fully ignored directory | Pattern `addons/godotsteam/*` plus `!addons/godotsteam/*.gdextension`; the `.gdextension` declares `libsteam_api.dylib` under `dependencies`; ad-hoc signing for the Mac export (notarization is Mac-only tooling, Westley's step) |
 | A silent 3-to-4-peer drop can diverge if the dropped peer's last packet reached one survivor only | Accepted for the beta, written here |
+
+## Pre-flight results (2026-10-06 night)
+
+| Check | Result |
+|---|---|
+| GodotSteam v4.23-gde under Godot 4.6.3 headless | loads (`Engine.has_singleton("Steam")` true); `steamInitEx(480)` without a Steam client answers `{status: 2, verbal: "Cannot create IPC pipe to Steam client process..."}`, no crash. Asset `godotsteam-4.23-gdextension-plugin-4.4.zip` (26.3 MB, 2026-10-04), URL `https://codeberg.org/godotsteam/godotsteam/releases/download/v4.23-gde/godotsteam-4.23-gdextension-plugin-4.4.zip`, no published hash; measured sha256 `c1728b4bf330da851a00eaf64dab2e99c506018b1d9f529511b25d7fe7649e97` (the fetch script pins it). Layout: `addons/godotsteam/{godotsteam.gdextension, plugin.cfg, license.md, linux64, linuxarm64, win64, osx (universal), ...}` each with debug/release libs plus the Steam API lib |
+| 20 Hz budget | blocking round trips, seed 3, 2,000 each: `net_step` mean 0.45 ms (p99 0.72); `tactical_step` 1.37 ms (p99 2.17); full frame 1.85 ms (p99 2.68). `OM_PIPE_FULL_PERIOD` 20 (`om_pipe.c:79`). Margin on 50 ms: about 18x |
+| `_request` with `want = ["tactical", "net_ack"]` | works (keys by frame type; `net_ack` is its own type). If one of the two never arrives the whole call returns `{}` after `LIVE_READ_TIMEOUT_MSEC`; `PipeSim` treats `{}` as a failed step |
+| `tests/test_lockstep_session.gd` | PASS 39 on main, 1 s. `tests/net` 14 pass, 224 s |
+| Owners | `.gitignore` has no row (NET-wire-export takes it); `tactical_move.c` sits under B12/B12b/PP-move, `libm_lint.py` under A94-harness, `Makefile` and `region.c` under `core`: W7 lists those ids on its gate run; `c_bridge.gd` and `scenes/main_menu/**` are multi-owned, so W2/W4 run after stage 3's 3c/3e |
+
+## Shipping the pipe binary per OS (scout 2026-10-06 night; new piece W8)
+
+The client launches `res://pipe/ouroboros_pipe` through `globalize_path` (`c_bridge.gd:19, 207-211`): works in the editor, not in an export (a pck is not a directory); no `.exe` suffix; the pipe is dynamically linked to `libouroboros.so` via `$ORIGIN/..` rpath (`Makefile:75-76`). A native static link (`-static`, all `csrc/*.c` plus `om_pipe.c`, `-lm`) builds a 1.5 MB self-contained exe that answers the hello frame: so the shipped pipe is static, no `.so`. Portability sites beyond W7: `om_pipe.c` reads stdin/stdout as binary frames (`:88-109`) and needs `_setmode(_fileno(stdin|stdout), _O_BINARY)` under `_WIN32` in `main` (`:2524`); `<dirent.h>` in `list_saves` (`:1788`, mingw ships it); `%.17g`/`strtod` (`:190, 244`) round-trip on ucrt, not old msvcrt: build with mingw-w64 ucrt. No `fork`, `poll`, `dlopen`, `unistd` anywhere. Decisions (Architect): Windows is built with mingw-w64 (the Makefile's flags carry over; MSVC would need its own flag set), one static pipe exe per OS beside the game executable (`OS.get_executable_path().get_base_dir()`; macOS `Contents/MacOS/`), an `OM_PIPE` override for QA, ad-hoc `codesign -s -` on the Mac binaries, one Steam depot per OS (game binary, pck, pipe exe).
+
+| Piece | Files (owner) | What | Tests |
+|---|---|---|---|
+| W8a static + cross build | `Makefile` (core; after W7 lands), `scripts/build_pipe_linux.sh`, `scripts/build_pipe_windows.sh` (mingw-w64 cross from this box), `scripts/build_pipe_macos.sh` (native clang, arm64 flags), `scripts/codesign_macos.sh` (new, NET-wire-ship) | a `pipe_static` target; per-OS scripts producing `dist/<os>/ouroboros_pipe[.exe]` | the Linux static exe answers hello and reproduces the probe's checksums; the Windows exe runs the probe under wine on this box with equal checksums (Q-NET-05 for Windows) |
+| W8b binary stdio | `csrc/pipe/om_pipe.c` (T1; phase B with W-contract) | `_setmode` under `_WIN32` | the Windows probe above |
+| W8c client path | `autoload/c_bridge.gd` (phase B with W2) | exe-relative resolution with the `.exe` suffix, the editor fallback on `res://pipe`, `OM_PIPE` override | a Godot test with a fake executable dir; the Linux export launches a mission |
+| W8d presets | `export_presets.cfg` (W6 adds Windows x86_64 beside Linux and macOS) | | a Windows export builds headless |
+
+Needs on this box (Westley, sudo): `mingw-w64` (ucrt variant if packaged) and `wine64` for the probe.
+
+## Launch order
+
+Phase A (now, disjoint from stage 3): W0 backend catch-up, W1 SteamTransport, W3 NetMatch + SteamInit, W6 export (fetch script, presets), W7 portability; W8a and W8d after W7 and W6 land and mingw is installed. Phase B (after stage 3 lands): W8b, W8c, W-contract (`om_pipe.c`, shared with 3b), W2 PipeSim + bridge wrappers (`c_bridge.gd`, shared with 3c), W4 lobby + menu (shared with 3e), W5 tactical hookup (`tactical_view.gd`, shared with 3d), clerk, loopback two-process match.
 
 ## Interfaces fixed here
 
