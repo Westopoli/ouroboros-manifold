@@ -171,7 +171,7 @@ As a commander in the land era, I want unit types that walk, so that slopes, ste
 Design decided 2026-10-02, not scheduled for building. This story is for the land era. The space era's types fly.
 
 Rules
-- R-201-01  Given the land era pack, When its roster is read, Then it contains unit types whose movement kind is walking (E-01 R-001-07), in the same three categories and under the same roster checks as the space era's roster, because "the units and rules for them will be essentially the same" (Westley, 2026-10-02) The land era has the same six unit types, re-skinned, with the space era's table (Westley, 2026-10-03).
+- R-201-01  Given the land era pack, When its roster is read, Then it contains unit types whose movement kind is walking (E-01 R-001-07), in the same three categories and under the same roster checks as the space era's roster, because "the units and rules for them will be essentially the same" (Westley, 2026-10-02); the six space types re-skinned with the space era's table (Westley, 2026-10-03), plus the vision units a ground era needs because it has no ping (E-01 R-005-12): seer-type units, and a simple placeholder scout for now (Westley, 2026-10-05: "correct not the same six"; "a simple placeholder unit that's a scout is sufficient for now") [Q-201-02: the seer type's stats and cost].
 - R-201-02  Given a walking unit, When it changes layer, Then it does so only by walking a slope (E-01 R-001-07), the time the slope takes is its length over the unit's speed, and the unit type's layer transition time plays no part (E-01 R-004-07).
 
 Inputs: the land era pack's unit profile table.
