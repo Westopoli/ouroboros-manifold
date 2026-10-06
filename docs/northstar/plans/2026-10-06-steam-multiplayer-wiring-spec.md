@@ -1,6 +1,6 @@
-# Steam P2P multiplayer: wiring the client (spec, rev 3)
+# Steam P2P multiplayer: wiring the client (spec, rev 4)
 
-Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). This spec is contract-level (a pipe frame changes), so a second Fable chat audits it next. Not approved; not launched.
+Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). Rev 4 folds the Fable contract audit (four blocking lines, all folded). Approved for pre-flight; not launched.
 
 ## The match, in one picture
 
@@ -19,7 +19,7 @@ sequenceDiagram
         H->>G: var_to_bytes([n, cmds, sums]) over Networking Messages, unreliable, channel 0
         G->>H: same
         Note over H,G: LockstepSession.poll(): releases every tick whose cmds are in (catch-up), net_submit, net_step 1
-        Note over H,G: net_step reply carries the tactical frame (contract change); a missing tick is re-requested
+        Note over H,G: net_step {frame:true} answers net_ack then the tactical frame (contract change); packets carry coverage back to the peer's last released tick
     end
     H-->>G: desync at tick t, section s: error panel, no retry
 ```
@@ -51,6 +51,24 @@ sequenceDiagram
 | `autoload/net/**` owned by `NET-backend` (`pieces.toml:1263`, `pending`) | PP-ledger marks NET-backend landed, narrows its glob to the four landed files, and adds NET-wire rows for the new ones |
 | `tests/test_main_menu_items.gd:100-110` asserts exactly 5 menu items | W4 changes it through a ledger row `TD-MENU-multiplayer` (test-defect: the list grew by design) |
 | `error_panel.gd:12` has no retry flag; the Retry button lives in the `.tscn` | `show_error(reason, retry := true)` hides the button node |
+
+## What the Fable audit changed (2026-10-06, contract level)
+
+| Finding (file:line) | Decision |
+|---|---|
+| Every existing `net_step` consumer reads one reply (`tests/long/harness.py:33-37`, `tests/net/driver.py:96-100`, `tests/transport/test_pipe_net_verbs.py:60`); an unconditional extra frame breaks about 15 passing tests inside a contract piece | The frame is opt-in: `net_step {"n":1, "frame":true}` answers `net_ack` first, then one `tactical` frame (full or delta by the `tactical_step` rule, `om_pipe.c:1683`); without the flag unchanged. `write_tactical` touches pipe-local delta bookkeeping only, no world state, no RNG (`:1098-1310`): no checksum effect |
+| `mission_start` zeroes `g_tactical_tick` (`:1554`) and `net_reset` zeroes the net tick, so in a match `frame.tick == ack.tick` | `PipeSim.step` asserts it; a mismatch means a stray `tactical_step` and ends the session |
+| Steam Networking Messages drops packets until the receiver answers `network_messages_session_request` with `acceptSessionWithUser` | W1: `SteamTransport` accepts session requests from lobby members and refuses others; nothing flows on the first real test otherwise |
+| `ensure_world` is `has_world() or ensure_session(...)` (`c_bridge.gd:381-382`) and a same-args session is reused however far it advanced (`:350-352`): a guest who played first keeps an old world | Every peer calls `open_session` (a fresh pipe) with the record's `seed, n_regions, features, new_campaign`; `new_campaign` joins the MatchRecord |
+| `mission_start {faction: 0}` (`:501`); per-peer factions contradict "one human faction" | One `faction` field in the record, sent identically by all; `archetype, era_kind, movement_kinds` are host-reported outputs a guest compares against its own `mission` frame and refuses on mismatch before `ready` |
+| `Makefile:28-29` passes `-msse2 -mfpmath=sse` (clang on Apple Silicon rejects it) and the tick path calls libm `pow/sin/cos/exp/log` (`sim.c`, `region.c`, `unit.c`, `tactical_support.c`); glibc and Apple libm differ in the last bit | Linux-vs-Mac determinism is unproven. Pre-flight adds: build the pipe on the Mac (arch-gated flags) and compare `net_checksum` after a scripted 2,000-tick match against Linux. Until green, beta matches are same-platform (Q-NET-05) |
+| `need` re-request answers "stored commands" but what is missing is coverage (`lockstep_session.gd:110-112`) | W0 replaces `need` with a fourth packet element: my `_released`; `_send` carries commands and coverage for every tick from `max(peer_released + 1, n - 63)` to `n`, per destination. Self-healing, one validator, no request shape |
+| Peer id: "lobby member order" is not stable across clients | The record's peer table is the only source |
+| A hostile shape halts `poll()` before `_send` (`:108-116`): one bad packet per poll is a denial of service | W0 validator bounds: `tick` in `(_released, _released + 64]`, finite floats, `units` size 1..70, a per-tick command cap, `cmd.peer == from`, sums entries int; the transport drops senders not in the peer table |
+| No way to leave; host quit waits 60 s; `mission_end` (`tactical_view.gd:165`) mutates one peer's world | In a match End Mission means leave: `leaveLobby`, session end, then local `mission_end`. W4 feeds `lobby_chat_update` (member left) into `session.drop(peer)`; `lobby_join_requested` and `+connect_lobby` for friends-list joins; a paste-lobby-id field for the Spacewar test |
+| `net_checksum` wrapper unused by the session; `checksum: true` redundant | Both dropped from W2 |
+| `.gitignore` cannot re-include a file under a fully ignored directory | Pattern `addons/godotsteam/*` plus `!addons/godotsteam/*.gdextension`; the `.gdextension` declares `libsteam_api.dylib` under `dependencies`; ad-hoc signing for the Mac export (notarization is Mac-only tooling, Westley's step) |
+| A silent 3-to-4-peer drop can diverge if the dropped peer's last packet reached one survivor only | Accepted for the beta, written here |
 
 ## Interfaces fixed here
 
@@ -99,11 +117,12 @@ Late join and resync (`net_log_*`, `net_state_*` stay unwrapped); the economy se
 - Q-NET-01: the `"4.7"` feature pin against the 4.6.3 binary: which Godot does the beta ship on (Westley).
 - Q-NET-02: whether a stalled peer's units keep their last orders or halt (the sim does whatever it did; the question is whether to show a pause).
 - Q-NET-03 (closed, every call): delta frames cannot be skipped.
+- Q-NET-05 (open, Westley if the check fails): Linux-vs-Mac byte-identical ticks are unproven (libm transcendentals in the tick path); if the Mac check desyncs, the beta is same-platform or the libm calls are replaced (a sim piece).
 - Q-NET-04 (closed, a): fetch script, pinned sha256, folder gitignored; mirror the release zip into our own GitHub release once so a vanished upstream cannot break checkouts.
 
 ## Pre-flight before launch
 
-Check by reading or running: a 20 Hz loop of blocking `net_step` requests with a full frame every `OM_PIPE_FULL_PERIOD` holds 50 ms on this box (measure); GodotSteam v4.23-gde loads under the 4.6.3 binary headless (`Steam` singleton present, `steamInitEx(480)` returns a code without the client running, no crash); `_request` timeouts against `net_step` at 20 Hz (the pipe's reply latency measured); the loopback two-process match from `tests/net/driver.py` reused for W2's Godot test; owner rows added; stage 3's menu change sequenced with W4.
+Check by reading or running: the Mac determinism check above (Westley runs a script on his Mac; the script is written by the pre-flight); a 20 Hz loop of blocking `net_step` requests with a full frame every `OM_PIPE_FULL_PERIOD` holds 50 ms on this box (measure); GodotSteam v4.23-gde loads under the 4.6.3 binary headless (`Steam` singleton present, `steamInitEx(480)` returns a code without the client running, no crash); `_request` timeouts against `net_step` at 20 Hz (the pipe's reply latency measured); the loopback two-process match from `tests/net/driver.py` reused for W2's Godot test; owner rows added; stage 3's menu change sequenced with W4.
 
 ## Estimate
 
