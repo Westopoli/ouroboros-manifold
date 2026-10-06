@@ -6952,7 +6952,7 @@ note = "internal (om_internal.h); no ctypes binding"
 name = "om_terrain_state_free"
 module = "terrain.c"
 restype = "void"
-params = [{ name = "state", ctype = "void *" }]
+params = [{ name = "state", ctype = "void*" }]
 internal = true
 epics = ["internal"]
 confidence = "certain"
