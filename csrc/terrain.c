@@ -850,6 +850,40 @@ static int ts_cell_of(const om_terrain_state *st, double x, double y, int64_t *c
 
 static int64_t ts_centre_q(int64_t c) { return c * TG_CELL_Q16 + TG_CELL_Q16 / 2; }
 
+/* A slope's cells: the bounding box of its two endpoint cells (its run, the slopes being axis-aligned). */
+static int ts_slope_box(const om_slope *s, int64_t *lox, int64_t *loy, int64_t *hix, int64_t *hiy) {
+    int64_t ax = (int64_t)(s->x0 / OM_TERRAIN_CELL_WU), ay = (int64_t)(s->y0 / OM_TERRAIN_CELL_WU);
+    int64_t bx = (int64_t)(s->x1 / OM_TERRAIN_CELL_WU), by = (int64_t)(s->y1 / OM_TERRAIN_CELL_WU);
+    *lox = ax < bx ? ax : bx; *hix = ax < bx ? bx : ax;
+    *loy = ay < by ? ay : by; *hiy = ay < by ? by : ay;
+    return 1;
+}
+
+/* Walk masks per engine layer: (band == layer + 1 AND walkable) OR (slope cell with a band of layer + 1 AND walkable).
+ * Re-derived by ts_analyse on generate and on load; never saved. */
+static void ts_derive_masks(om_terrain_state *st) {
+    size_t n = (size_t)st->cells_w * st->cells_h, i;
+    uint32_t b, k;
+    for (b = 0; b < OM_TERRAIN_BANDS; b++) {
+        if (!st->walk[b]) st->walk[b] = (uint8_t *)calloc(n, 1);
+        if (!st->walk[b]) continue;
+        for (i = 0; i < n; i++) st->walk[b][i] = (uint8_t)(st->walkable[i] && st->band[i] == b + 1);
+    }
+    for (k = 0; k < st->slope_count; k++) {
+        const om_slope *s = &st->slopes[k];
+        int64_t lox, loy, hix, hiy, cx, cy;
+        ts_slope_box(s, &lox, &loy, &hix, &hiy);
+        for (cy = loy; cy <= hiy; cy++) for (cx = lox; cx <= hix; cx++) {
+            size_t idx;
+            if (!ts_in_cells(st, cx, cy)) continue;
+            idx = (size_t)cy * st->cells_w + cx;
+            if (!st->walkable[idx]) continue;
+            for (b = 0; b < OM_TERRAIN_BANDS; b++)
+                if (st->walk[b] && (s->lower_band == (int32_t)b + 1 || s->upper_band == (int32_t)b + 1)) st->walk[b][idx] = 1;
+        }
+    }
+}
+
 /* Walkable per cell centre, then slopes: a maximal straight run of walkable cells that crosses one band boundary,
  * found in ascending cell order and capped at OM_TERRAIN_SLOPE_CAP. */
 static void ts_analyse(const om_world *w, om_terrain_state *st) {
@@ -908,6 +942,7 @@ static void ts_analyse(const om_world *w, om_terrain_state *st) {
         }
     }
     free(used);
+    ts_derive_masks(st);
 }
 
 int om_terrain_present(const om_world *w) {
@@ -1134,22 +1169,67 @@ void om_terrain_install_net_hooks(om_world *w) {
     w->net_section_hash[OM_NET_SECTION_COUNT - 1] = ts_section_hash;
 }
 
-/* Terrain stage 2 contract stubs; the mask lane (spec 2026-10-06) replaces these bodies. */
 uint32_t om_terrain_walk_mask(const om_world *w, int layer, uint8_t *out, uint32_t cap) {
     const om_terrain_state *st = ts_ro(w);
     uint32_t n, i;
     if (!st || layer < 0 || layer >= OM_TERRAIN_BANDS) return 0;
     n = st->cells_w * st->cells_h;
-    for (i = 0; out && i < n && i < cap; i++) out[i] = 0;
+    for (i = 0; out && i < n && i < cap; i++) out[i] = st->walk[layer] ? st->walk[layer][i] : 0;
     return n;
 }
 
 int om_terrain_slope_at(const om_world *w, double x, double y, om_slope *out) {
-    (void)w; (void)x; (void)y; (void)out;
+    const om_terrain_state *st = ts_ro(w);
+    int64_t cx, cy;
+    int band;
+    uint32_t i;
+    if (!st || !ts_cell_of(st, x, y, &cx, &cy)) return -1;
+    band = st->band[cy * st->cells_w + cx];
+    for (i = 0; i < st->slope_count; i++) {
+        const om_slope *s = &st->slopes[i];
+        int64_t lox, loy, hix, hiy;
+        ts_slope_box(s, &lox, &loy, &hix, &hiy);
+        if (cx < lox || cx > hix || cy < loy || cy > hiy) continue;
+        if (s->lower_band != band && s->upper_band != band) continue;
+        if (out) *out = *s;
+        return (int)i;
+    }
     return -1;
 }
 
+#define TS_SIGHT_STEP_WU 25
+#define TS_SIGHT_SKIP_WU 50
+
+/* Terrain height in cm at a wu point, 0 off the map (as om_terrain_height_at). */
+static int64_t ts_height_cm(const om_terrain_state *st, double x, double y) {
+    int64_t cx, cy;
+    if (!ts_cell_of(st, x, y, &cx, &cy)) return 0;
+    return ts_height_q(st, (int64_t)(x * (double)TG_ONE), (int64_t)(y * (double)TG_ONE));
+}
+
+static int64_t ts_eye_cm(const om_world *w, const om_terrain_state *st, int layer, double x, double y) {
+    int64_t h = ts_height_cm(st, x, y), floor_cm;
+    if (layer < 0) layer = 0;
+    if (layer >= OM_TERRAIN_BANDS) layer = OM_TERRAIN_BANDS - 1;
+    floor_cm = st->band_floor_cm[layer];
+    if (floor_cm > h) h = floor_cm;
+    return h + (int64_t)(om_tactical_get_param(w, OM_TP_SIGHT_EYE_HEIGHT) * (double)TG_CM_PER_WU);
+}
+
 int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0, int layer1, double x1, double y1) {
-    (void)w; (void)layer0; (void)x0; (void)y0; (void)layer1; (void)x1; (void)y1;
+    const om_terrain_state *st = ts_ro(w);
+    double dx = x1 - x0, dy = y1 - y0, d;
+    int64_t e0, e1, s;
+    if (!st) return 0;
+    d = sqrt(dx * dx + dy * dy);
+    e0 = ts_eye_cm(w, st, layer0, x0, y0);
+    e1 = ts_eye_cm(w, st, layer1, x1, y1);
+    for (s = TS_SIGHT_STEP_WU; (double)s < d; s += TS_SIGHT_STEP_WU) {
+        double t = (double)s / d;
+        int64_t line;
+        if (s < TS_SIGHT_SKIP_WU || d - (double)s < (double)TS_SIGHT_SKIP_WU) continue;
+        line = e0 + (int64_t)((double)(e1 - e0) * t);
+        if (ts_height_cm(st, x0 + dx * t, y0 + dy * t) > line) return 1;
+    }
     return 0;
 }
