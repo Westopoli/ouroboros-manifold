@@ -511,7 +511,7 @@ status = { state = "attached", attach_sha = "6abaff8" }
 id = "C8"
 manager = "M3"
 wave = 3
-owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd"]
+owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd", "tests/test_scene_router_queue.gd"]
 owns_glob = ["scenes/main_menu/**", "scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*", "scenes/loading_screen/**"]
 acceptance = [
     "tests/qa/desktop/test_flow_spine.py",
@@ -1283,6 +1283,12 @@ owns = [
     "tests/test_steam_transport.gd",
     "tests/transport/test_fetch_godotsteam.py",
     ".gitignore",
+    "autoload/net/net_match.gd",
+    "autoload/steam/steam_init.gd",
+    "scripts/net_xplat_checksum.py",
+    "tests/test_lockstep_catchup.gd",
+    "tests/test_net_match.gd",
+    "tests/csim/test_PP_portability.py",
 ]
 owns_glob = []
 acceptance = []

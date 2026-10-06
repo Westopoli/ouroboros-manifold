@@ -1,17 +1,17 @@
 extends Node
 # Steam bootstrap (W3, docs/northstar/plans/2026-10-06-steam-multiplayer-wiring-spec.md).
-# App id 480 (Spacewar) until the real app id exists.
+# App id 5402100 (Westley's Steam app id, 2026-10-06).
 
-const SPACEWAR_APP_ID := 480
+const APP_ID := 5402100
 
 var steam_ready := false
 
 
 func _ready() -> void:
-	init_steam(SPACEWAR_APP_ID)
+	init_steam(APP_ID)
 
 
-func init_steam(app_id: int = SPACEWAR_APP_ID) -> void:
+func init_steam(app_id: int = APP_ID) -> void:
 	steam_ready = false
 	if not Engine.has_singleton("Steam"):
 		return
