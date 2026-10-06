@@ -28,6 +28,8 @@ graphify-out/raw/
 # C sim build + Python test env (Sprint 0)
 .venv/
 *.so
+addons/godotsteam/*
+!addons/godotsteam/*.gdextension
 *.o
 build/
 pipe/ouroboros_pipe
