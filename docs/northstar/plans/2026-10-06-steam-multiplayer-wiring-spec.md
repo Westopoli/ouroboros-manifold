@@ -1,6 +1,6 @@
-# Steam P2P multiplayer: wiring the client (spec, rev 4)
+# Steam P2P multiplayer: wiring the client (spec, rev 6)
 
-Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). Rev 4 folds the Fable contract audit (four blocking lines, all folded). Approved for pre-flight; not launched.
+Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). Rev 4 folds the Fable contract audit (four blocking lines, all folded). Rev 5 folds the pre-flight (2026-10-06 night): no technical blocker; launched in two phases (below).
 
 ## The match, in one picture
 
@@ -70,6 +70,37 @@ sequenceDiagram
 | `.gitignore` cannot re-include a file under a fully ignored directory | Pattern `addons/godotsteam/*` plus `!addons/godotsteam/*.gdextension`; the `.gdextension` declares `libsteam_api.dylib` under `dependencies`; ad-hoc signing for the Mac export (notarization is Mac-only tooling, Westley's step) |
 | A silent 3-to-4-peer drop can diverge if the dropped peer's last packet reached one survivor only | Accepted for the beta, written here |
 
+## Pre-flight results (2026-10-06 night)
+
+| Check | Result |
+|---|---|
+| GodotSteam v4.23-gde under Godot 4.6.3 headless | loads (`Engine.has_singleton("Steam")` true); `steamInitEx(480)` without a Steam client answers `{status: 2, verbal: "Cannot create IPC pipe to Steam client process..."}`, no crash. Asset `godotsteam-4.23-gdextension-plugin-4.4.zip` (26.3 MB, 2026-10-04), URL `https://codeberg.org/godotsteam/godotsteam/releases/download/v4.23-gde/godotsteam-4.23-gdextension-plugin-4.4.zip`, no published hash; measured sha256 `c1728b4bf330da851a00eaf64dab2e99c506018b1d9f529511b25d7fe7649e97` (the fetch script pins it). Layout: `addons/godotsteam/{godotsteam.gdextension, plugin.cfg, license.md, linux64, linuxarm64, win64, osx (universal), ...}` each with debug/release libs plus the Steam API lib |
+| 20 Hz budget | blocking round trips, seed 3, 2,000 each: `net_step` mean 0.45 ms (p99 0.72); `tactical_step` 1.37 ms (p99 2.17); full frame 1.85 ms (p99 2.68). `OM_PIPE_FULL_PERIOD` 20 (`om_pipe.c:79`). Margin on 50 ms: about 18x |
+| `_request` with `want = ["tactical", "net_ack"]` | works (keys by frame type; `net_ack` is its own type). If one of the two never arrives the whole call returns `{}` after `LIVE_READ_TIMEOUT_MSEC`; `PipeSim` treats `{}` as a failed step |
+| `tests/test_lockstep_session.gd` | PASS 39 on main, 1 s. `tests/net` 14 pass, 224 s |
+| Owners | `.gitignore` has no row (NET-wire-export takes it); `tactical_move.c` sits under B12/B12b/PP-move, `libm_lint.py` under A94-harness, `Makefile` and `region.c` under `core`: W7 lists those ids on its gate run; `c_bridge.gd` and `scenes/main_menu/**` are multi-owned, so W2/W4 run after stage 3's 3c/3e |
+
+## Shipping the pipe binary per OS (scout 2026-10-06 night; new piece W8)
+
+The client launches `res://pipe/ouroboros_pipe` through `globalize_path` (`c_bridge.gd:19, 207-211`): works in the editor, not in an export (a pck is not a directory); no `.exe` suffix; the pipe is dynamically linked to `libouroboros.so` via `$ORIGIN/..` rpath (`Makefile:75-76`). A native static link (`-static`, all `csrc/*.c` plus `om_pipe.c`, `-lm`) builds a 1.5 MB self-contained exe that answers the hello frame: so the shipped pipe is static, no `.so`. Portability sites beyond W7: `om_pipe.c` reads stdin/stdout as binary frames (`:88-109`) and needs `_setmode(_fileno(stdin|stdout), _O_BINARY)` under `_WIN32` in `main` (`:2524`); `<dirent.h>` in `list_saves` (`:1788`, mingw ships it); `%.17g`/`strtod` (`:190, 244`) round-trip on ucrt, not old msvcrt: build with mingw-w64 ucrt. No `fork`, `poll`, `dlopen`, `unistd` anywhere. Decisions (Architect): Windows is built with mingw-w64 (the Makefile's flags carry over; MSVC would need its own flag set), one static pipe exe per OS beside the game executable (`OS.get_executable_path().get_base_dir()`; macOS `Contents/MacOS/`), an `OM_PIPE` override for QA, ad-hoc `codesign -s -` on the Mac binaries, one Steam depot per OS (game binary, pck, pipe exe).
+
+| Piece | Files (owner) | What | Tests |
+|---|---|---|---|
+| W8a static + cross build | `Makefile` (core; after W7 lands), `scripts/build_pipe_linux.sh`, `scripts/build_pipe_windows.sh` (mingw-w64 cross from this box), `scripts/build_pipe_macos.sh` (native clang, arm64 flags), `scripts/codesign_macos.sh` (new, NET-wire-ship) | a `pipe_static` target; per-OS scripts producing `dist/<os>/ouroboros_pipe[.exe]` | the Linux static exe answers hello and reproduces the probe's checksums; the Windows exe runs the probe under wine on this box with equal checksums (Q-NET-05 for Windows) |
+| W8b binary stdio | `csrc/pipe/om_pipe.c` (T1; phase B with W-contract) | `_setmode` under `_WIN32` | the Windows probe above |
+| W8c client path | `autoload/c_bridge.gd` (phase B with W2) | exe-relative resolution with the `.exe` suffix, the editor fallback on `res://pipe`, `OM_PIPE` override | a Godot test with a fake executable dir; the Linux export launches a mission |
+| W8d presets | `export_presets.cfg` (W6 adds Windows x86_64 beside Linux and macOS) | | a Windows export builds headless |
+
+Installed 2026-10-06 (Westley): `mingw-w64` GCC 13-win32 and `wine64`. First Windows data point the same night: the brief's static build (`-static -D__USE_MINGW_ANSI_STDIO=1`, the Linux flag set, `_setmode` in `main`) compiled with zero warnings; under wine64 the probe's four checkpoints are byte-identical to Linux for both the default msvcrt link and a ucrt link (`-mcrtdll=ucrt` is not in GCC 13; a `-specs` file swapping `-lmsvcrt` for `-lucrt` works). Ship the ucrt link. Artifacts in `~/.claude/jobs/cb87e7a3/tmp/ship/` (exe, outputs, `ucrt.specs`).
+
+## Relay and transport notes (2026-10-06)
+
+Steam Datagram Relay has no dashboard switch: P2P traffic over Steam Networking Messages or Sockets is relayed by Valve's backbone automatically; `initRelayNetworkAccess()` at startup (W3) only warms it. Godot's own high-level multiplayer (ENet `MultiplayerPeer`, RPCs, spawners) is not used: the lockstep session is its own protocol over `transport.gd`, so the `SteamMultiplayerPeer` extension is not needed; GodotSteam's `sendMessageToUser`/`receiveMessagesOnChannel` (W1) is the whole transport.
+
+## Launch order
+
+Phase A (now, disjoint from stage 3): W0 backend catch-up, W1 SteamTransport, W3 NetMatch + SteamInit, W6 export (fetch script, presets), W7 portability; W8a and W8d after W7 and W6 land and mingw is installed. Phase B (after stage 3 lands): W8b, W8c, W-contract (`om_pipe.c`, shared with 3b), W2 PipeSim + bridge wrappers (`c_bridge.gd`, shared with 3c), W4 lobby + menu (shared with 3e), W5 tactical hookup (`tactical_view.gd`, shared with 3d), clerk, loopback two-process match.
+
 ## Interfaces fixed here
 
 1. **Transport** (`autoload/net/transport.gd:1-16` as-is): `attach(id)`, `send(from, to, bytes)`, `poll(id) -> Array of {from, data}`. `SteamTransport` keeps a table `peer_id (small int, lobby member order) -> SteamID`; sends with `Steam.sendMessageToUser(identity, bytes, UNRELIABLE_NO_DELAY, channel 0)`; `poll` drains `receiveMessagesOnChannel(0, 32)` after `Steam.run_callbacks()`. Unreliable fits the session's repeat-5 scheme (`lockstep_session.gd:42`). Wall clock: `stall_ticks 1000` and `drop_ticks 2000` at 20 Hz are 50 s and 100 s; set `stall_ticks 20` (1 s) and `drop_ticks 1200` (60 s) in the MatchRecord (the 2026-10-05 settings).
@@ -79,7 +110,7 @@ sequenceDiagram
 5. **Order mapping**: move 0, attack_move 1, attack_target 2 (`c_bridge.gd:422` to `OM_NET_VERB`), `units` are sim ids (identical on both peers by construction); other verbs are not reachable from the client today and stay so. Single player keeps `send_unit_command` untouched; `tactical_view.send_command` branches on `NetMatch.active()`.
 6. **The pump**: new autoload `NetMatch` (`autoload/net/net_match.gd`, registered in `project.godot`): holds the session, the transport and the `PipeSim`; `_process` calls `Steam.run_callbacks()` and, on a 50 ms accumulator, `session.poll()`; exposes `active()`, `command(cmd)`, `state()` (`running | stalled(peer) | desync(tick, section) | ended`). Autoloads `SteamInit` (`autoload/steam/steam_init.gd`: `steamInitEx(app_id)`, `initRelayNetworkAccess()`, a `steam_ready` flag; app id 480 Spacewar until Westley's app id exists) before it.
 7. **Desync screen**: `scenes/shared/error_panel.gd` gains `show_error(reason, retry := true)`; a desync shows "Desync at tick N, section NAME" with the main-menu button only. A stall shows a "waiting for PEER (s)" line in the tactical HUD; a drop ends the match with the same panel.
-8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
+8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (committed, 5402100).
 
 ## Pieces
 
@@ -107,7 +138,7 @@ Order: W0 and W-contract, gate; W1, W2, W3, W6 in parallel; W4 after W3; W5 afte
 | stall / drop | 1 s / 60 s | planner, provisional |
 | catchup_max / need window / history | 8 ticks per poll / `repeat` polls / 64 ticks | planner, provisional |
 | Lobby | friends-only, max 4 | E-19 R-141-01 |
-| App id | 480 until the real one | T17 |
+| App id | 5402100 (Westley, 2026-10-06); 480 (Spacewar) only for the first transport test if the real app's relay flag is not yet on | T17 |
 
 ## Not in this piece
 
