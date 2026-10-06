@@ -1,6 +1,8 @@
 """Situation sampler: deterministic space maps in play coordinates (plan Phase S, item 5b).
 The draw ranges are documented design numbers, not thresholds."""
+import math
 import random
+from dataclasses import dataclass
 from typing import NamedTuple
 
 from scripts.skilllab.contract import Block, Cover, Terrain
@@ -33,6 +35,9 @@ LANE_CENTRE = 40              # lane centre within +-this of the segment
 COVER_RADIUS = (50, 150)
 COVER_COUNT = (3, 8)
 COVER_X = 300                 # the corridor disc's x within +-this of the segment midpoint
+CORRIDOR_WIDTH = 600.0        # provisional (2026-10-05): wu, the corridor between the spawns for cover density
+UNIT_RADIUS_WU = 15.0         # provisional (2026-10-05): collision radius used when no engine is given
+CORRIDOR_SLICES = 256         # provisional (2026-10-05): fixed slice count for partial disc overlap
 
 
 def _layers(rng, fight):
@@ -109,3 +114,61 @@ def sample_maps(kinds, per_kind, seed=0):
             map_seed = seed * 1000 + len(out)
             out.append((k, map_seed, sample_map(k, map_seed)))
     return out
+
+
+@dataclass(frozen=True)
+class Features:
+    """What a sampled map does to a fight, one record per map (field order is the feat_ column order)."""
+    choke_count: int
+    choke_width_wu: float
+    choke_width_bodies: float
+    lane_count: int
+    blocked_layer_ranges: tuple
+    fight_layer_blocked: bool
+    cover_density_corridor: float
+    start_distance: float
+
+
+def _disc_in_corridor(cu, cv, r, length, half_w):
+    """Area of the disc (centre cu, cv in corridor coordinates) inside [0, length] x [-half_w, half_w]."""
+    if cu - r >= 0 and cu + r <= length and abs(cv) + r <= half_w:
+        return math.pi * r * r
+    lo, hi = max(cu - r, 0.0), min(cu + r, length)
+    if hi <= lo:
+        return 0.0
+    h = (hi - lo) / CORRIDOR_SLICES
+    area = 0.0
+    for i in range(CORRIDOR_SLICES):
+        u = lo + (i + 0.5) * h
+        c = math.sqrt(max(r * r - (u - cu) ** 2, 0.0))
+        area += max(min(cv + c, half_w) - max(cv - c, -half_w), 0.0) * h
+    return area
+
+
+def sample_features(kind, seed, canvas=(4000.0, 4000.0), frame=DEFAULT_FRAME):
+    terrain = sample_map(kind, seed, canvas, frame)
+    dx, dy = frame.spawn1[0] - frame.spawn0[0], frame.spawn1[1] - frame.spawn0[1]
+    dist = math.sqrt(dx * dx + dy * dy)
+    ranges = tuple((b.layer_lo, b.layer_hi) for b in terrain.blocks)
+    gap = 0.0
+    if kind == "wall":
+        a, b = terrain.blocks
+        gap = float(b.y0 - a.y1)
+    density = 0.0
+    if terrain.covers and dist > 0:
+        ux, uy = dx / dist, dy / dist
+        area = 0.0
+        for c in terrain.covers:
+            rx, ry = c.x - frame.spawn0[0], c.y - frame.spawn0[1]
+            area += _disc_in_corridor(rx * ux + ry * uy, -rx * uy + ry * ux, c.radius, dist, CORRIDOR_WIDTH / 2)
+        density = area / (dist * CORRIDOR_WIDTH)
+    return Features(
+        choke_count=1 if kind == "wall" else 0,
+        choke_width_wu=gap,
+        choke_width_bodies=gap / (2 * UNIT_RADIUS_WU),
+        lane_count=1 if kind == "lane" else 0,
+        blocked_layer_ranges=ranges,
+        fight_layer_blocked=any(lo <= frame.layer <= hi for lo, hi in ranges),
+        cover_density_corridor=float(density),
+        start_distance=float(dist),
+    )
