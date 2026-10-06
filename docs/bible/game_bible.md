@@ -25,7 +25,26 @@ Missions are won or lost on positional skill. A smaller force that understands s
 
 The game is structured as a generational chain of missions. Each mission is a chapter. Between chapters, decades pass and the galaxy evolves through the simulation. The player returns as someone new: a descendant, an old enemy's heir, or a stranger raised by circumstance. The player's career across generations is the story. The bloodline is cosmetic: it changes who the player is and what the chronicle says, never a simulation number.
 
-The game ships across multiple eras built on one shared skeleton. Maps, civilizations, and era systems are transferable systems, not bespoke content. Players who own the same era packs can play a match that moves chronologically through them.
+The game ships across multiple eras built on one shared skeleton. Maps, civilizations, and era systems are transferable systems, not bespoke content. Players who own the same era packs can play a match that moves chronologically through them. Every era has an era kind, space or ground (Westley, 2026-10-05); the kind decides the vision model and the landscape, and the one exception is a ground era with flying units, which borrows pieces of the space model for them.
+
+### The skeleton
+
+What is shared across every era, decided 2026-10-05 (Westley: "we're going to eventually have 20+ eras that are on top of the 'skeleton' we're currently building"):
+
+- The strategic simulation of civilizations, factions and regions; the time jump and the generational loop; campaign carry-over between eras.
+- The chronicle machinery (half of each prose and naming pool is shared).
+- Mission archetypes and objectives; the layout engine; the fairness numbers (equal distance to the objective; significant resources opposite it).
+- The five layers; the command set; group movement at the slowest member's pace; formations.
+- The three unit categories and their counter table; the three tiers; the unit roles.
+- Enemy AI.
+- The economy's structure: three resources, buildings, population, tech choice, the economy seat; a base of operations for every side; the settlement generator.
+- The landscape placement engine.
+- The five skills and the strategic-depth measure.
+- Saves, multiplayer lockstep, and a UI that reads everything from the pack.
+
+Shared within an era kind: the vision model; on the ground, height bands, slopes, walking units and strongpoints; in space, free layers, the ping and the space landscape; landscape objects and environmental troubles.
+
+Supplied per era: identity, models, structures, palette; names and prose; unit types and stats; ability visuals; resource names and building pieces; the landscape kit.
 
 ### The core fantasy
 
@@ -129,7 +148,7 @@ Commander or god? Chronicle material? Era-agnostic? Is losing interesting? Does 
 
 ## Monetization
 
-Steam, one base SKU at $15, which buys 3 to 5 eras to start. The first build starts with two eras, one in space and one on land. Each new era is $3 to $5; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The launch eras' units and rules are essentially the same; landscape, visuals, art, names, and prose differ. Eras that feel different come after launch, through per-era fog, pace, and the pace of production (E-20 S-151).
+Steam, one base SKU at $15, which buys 3 to 5 eras to start. The first build starts with two eras, one in space and one on land. Each new era is $3 to $5; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The launch eras' units and rules are the same within an era kind; between space and ground the vision model, the ping and the vision units differ (E-01), and landscape, visuals, art, names, and prose differ. Eras that feel different come after launch, through per-era fog, pace, and the pace of production (E-20 S-151).
 
 ## Reference Hardware
 
