@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.skilllab import maps, plays_space, skills, timeline  # noqa: E402
 from scripts.skilllab.contract import Setup  # noqa: E402
+from scripts.skilllab.terrain import shift_terrain  # noqa: E402
 
 NAMES = ("s1_hold_choke", "s2_concave", "s2_spread_line", "s2_screen", "s3_types_by_reach", "s4_bait",
          "s5_vulnerable_away", "s2_mass_one_end", "s4_do_not_chase", "s1_outrange")
@@ -36,8 +37,11 @@ def test_each_play_builds_at_8_and_24_enemy_heads(name, heads):
 
 @pytest.mark.parametrize("name", NAMES)
 def test_16_v_16_build_equals_todays_fn(name):
-    """P3 tests column: the 16 v 16 build equals today's fn() exactly."""
-    assert plays_space.scan_build(name)(None, UNITS, False) == plays_space.PLAYS[name].setup_fn()
+    """P3 tests column: the 16 v 16 build equals today's fn() once the three stall flags are applied (TD-LAB-scan-build-flags)."""
+    import dataclasses
+    from scripts.skilllab import plays
+    flags = dict(mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS, quiet_from_first_damage=True)
+    assert plays_space.scan_build(name)(None, UNITS, False) == dataclasses.replace(plays_space.PLAYS[name].setup_fn(), **flags)
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -45,8 +49,11 @@ def test_build_takes_the_layouts_map(name):
     """Audit row 1: the wrapper 'takes the layout's map'; the built Setup's terrain is that map's blocks and covers."""
     terrain = maps.sample_map("lane", 3)
     setup = plays_space.scan_build(name)(terrain, 12, False)
-    assert setup.terrain.blocks == terrain.blocks
-    assert setup.terrain.covers == terrain.covers
+    first = {}
+    for g in setup.groups:
+        first.setdefault(g.side, g)
+    mid = ((first[0].x + first[1].x) / 2, (first[0].y + first[1].y) / 2)
+    assert setup.terrain == shift_terrain(terrain, *mid)  # TD-LAB-scan-build-flags: map is shifted to the sides' midpoint
     assert _side(setup, 0) == UNITS and _side(setup, 1) == 12
 
 
