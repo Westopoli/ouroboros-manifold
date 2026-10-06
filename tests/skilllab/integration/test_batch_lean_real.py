@@ -9,10 +9,12 @@ ROOT = Path(__file__).resolve().parents[3]
 PROBE = Path(__file__).with_name("lean_batch_probe.py")
 PY = sys.executable
 
-# recorded on origin/main before the change: 3 replicates, workers 2
-BEFORE = {"csv": "b01d649c3a65ae95946429890e331ae998f521006054cbc48f2ddc075962feb9",
-          "page": "7bb1c195a9db78c701fe6c1093e2cbb428f757cb97e003a23cbf6c50bfdc5633",
-          "run": "94af00f2fe0532c3e8cbf73500a5fdfb3d06fba3ce023e52dec860a6a05b512a"}
+# recorded on origin/main before the change: 3 replicates, workers 2; re-recorded once 2026-10-06
+# (TD-SL-goldens-rerecord-1006: group speed-cap fix dcb83d5f, re-order rule efdc5548, which added summary.json)
+BEFORE = {"csv": "e7b9dca1a1b85858a038e79f74af60e4c63f358072559767bcd42fde220b8fdd",
+          "page": "e4d1bc887c6f2f16afcbd7cf1d742cc29a708eb0b5618f8e620ce2ac1a652bd6",
+          "run": "574b22110687eb1060ef0c43766bf47de4c3c97a5e9619d1344e38688538dbe8",
+          "summary": "e23287200d62021ebb408efca856b8d24e71d72530906e82162e1773efc1ec21"}
 # measured on origin/main: about 206 KB per finished fight (weighted on); after: about 3.4 KB. Bound sits between.
 KB_PER_FIGHT_BOUND = 40.0
 
