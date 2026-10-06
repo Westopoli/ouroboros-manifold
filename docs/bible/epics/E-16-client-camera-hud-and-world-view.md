@@ -224,7 +224,7 @@ Rules
 - R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one [Q-232-01: the keys and where the control sits; Q-103-04].
 - R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-01].
 - R-232-03  Given forces on the field, When the in-world chrome is read, Then every force set to emit carries a mark showing that it is emitting, and a silent force carries none.
-- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then the player is alerted that they were pinged and is shown a sector of about 60 degrees pointing toward where the ping came from, and nothing more precise [Q-232-02: where the alert and its sector are drawn].
+- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn: the alert is switched off for now (Westley, 2026-10-05). If it returns, it is a sector of about 60 degrees toward the caster and nothing more precise [Q-232-02 stays open for that case].
 - R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the screen tells the player that the units cannot reach it, whatever the distance [Q-232-02: where and when the cue appears].
 
 Inputs: ping and emit commands; the alert and the unit reach tables from the tick delta.

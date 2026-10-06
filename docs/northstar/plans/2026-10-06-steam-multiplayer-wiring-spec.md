@@ -1,4 +1,4 @@
-# Steam P2P multiplayer: wiring the client (spec, rev 2)
+# Steam P2P multiplayer: wiring the client (spec, rev 3)
 
 Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). This spec is contract-level (a pipe frame changes), so a second Fable chat audits it next. Not approved; not launched.
 
@@ -29,7 +29,7 @@ sequenceDiagram
 | Finding | Evidence | Decision |
 |---|---|---|
 | `net_step` writes no `tactical` frame; the view draws from `tactical_step` frames only | `architecture.md:352`, `om_pipe.c:2217-2231`, `c_bridge.gd:470-484` | Contract: `net_step` emits the same `tactical` frame as `tactical_step` after the step (one frame per `net_step` call); `architecture.md` first |
-| `project.godot:17` pins features `"4.7"`; the installed binary is 4.6.3 (`godot.real --version`) | | GodotSteam 4.19.1 (Godot 4.6.3) as researched; the pin is Westley's to confirm (T-note: a 4.7 editor would rewrite the project) |
+| `project.godot:17` pins features `"4.7"`; the installed binary is 4.6.3 (`godot.real --version`) | | Westley 2026-10-06 (Q-NET-01 a): the beta ships on 4.6.3; 4.7.2 after the beta behind a playthrough gate. GodotSteam v4.23-gde (2026-10-05, GDExtension for Godot 4.4+, Steamworks SDK 1.65; Codeberg releases) replaces the 4.19.1 pin; no 4.6-targeted native build exists |
 | The session is proven on a FakeSim and the loopback only; `tests/net` proves a Python port of the rule through real pipes, not the GDScript session | `lockstep_session.gd:150-159`, `tests/net/README.md` | Piece W2 builds the pipe-backed sim adapter and a Godot test runs the GDScript session over it with the loopback transport |
 | `bytes_to_var` on remote packets | `lockstep_session.gd:93-105` | `bytes_to_var` (no objects) is already the call; the transport also rejects any packet whose decoded value is not an Array of length 3 with int, Array, Array; a test plants a bad packet |
 | Every order passes `tactical_view.send_command` (`:359`) to `send_unit_command` (`c_bridge.gd:415`) to the immediate `command` verb; the view's `_process` releases ticks by time accumulation (`:43-85`, `:438`) | | In a match the view hands orders to `NetMatch.command()` and stops stepping; `NetMatch` owns the tick |
@@ -61,7 +61,7 @@ sequenceDiagram
 5. **Order mapping**: move 0, attack_move 1, attack_target 2 (`c_bridge.gd:422` to `OM_NET_VERB`), `units` are sim ids (identical on both peers by construction); other verbs are not reachable from the client today and stay so. Single player keeps `send_unit_command` untouched; `tactical_view.send_command` branches on `NetMatch.active()`.
 6. **The pump**: new autoload `NetMatch` (`autoload/net/net_match.gd`, registered in `project.godot`): holds the session, the transport and the `PipeSim`; `_process` calls `Steam.run_callbacks()` and, on a 50 ms accumulator, `session.poll()`; exposes `active()`, `command(cmd)`, `state()` (`running | stalled(peer) | desync(tick, section) | ended`). Autoloads `SteamInit` (`autoload/steam/steam_init.gd`: `steamInitEx(app_id)`, `initRelayNetworkAccess()`, a `steam_ready` flag; app id 480 Spacewar until Westley's app id exists) before it.
 7. **Desync screen**: `scenes/shared/error_panel.gd` gains `show_error(reason, retry := true)`; a desync shows "Desync at tick N, section NAME" with the main-menu button only. A stall shows a "waiting for PEER (s)" line in the tactical HUD; a drop ends the match with the same panel.
-8. **Export and Steam files**: `addons/godotsteam/` (GDExtension 4.19.1, binaries for Linux and macOS, owner NET-wire-ext), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
+8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
 
 ## Pieces
 
@@ -99,11 +99,11 @@ Late join and resync (`net_log_*`, `net_state_*` stay unwrapped); the economy se
 - Q-NET-01: the `"4.7"` feature pin against the 4.6.3 binary: which Godot does the beta ship on (Westley).
 - Q-NET-02: whether a stalled peer's units keep their last orders or halt (the sim does whatever it did; the question is whether to show a pause).
 - Q-NET-03 (closed, every call): delta frames cannot be skipped.
-- Q-NET-04: GodotSteam binaries by fetch script (this spec) or Git LFS (Westley).
+- Q-NET-04 (closed, a): fetch script, pinned sha256, folder gitignored; mirror the release zip into our own GitHub release once so a vanished upstream cannot break checkouts.
 
 ## Pre-flight before launch
 
-Check by reading or running: a 20 Hz loop of blocking `net_step` requests with a full frame every `OM_PIPE_FULL_PERIOD` holds 50 ms on this box (measure); GodotSteam 4.19.1 loads under the 4.6.3 binary headless (`Steam` singleton present, `steamInitEx(480)` returns a code without the client running, no crash); `_request` timeouts against `net_step` at 20 Hz (the pipe's reply latency measured); the loopback two-process match from `tests/net/driver.py` reused for W2's Godot test; owner rows added; stage 3's menu change sequenced with W4.
+Check by reading or running: a 20 Hz loop of blocking `net_step` requests with a full frame every `OM_PIPE_FULL_PERIOD` holds 50 ms on this box (measure); GodotSteam v4.23-gde loads under the 4.6.3 binary headless (`Steam` singleton present, `steamInitEx(480)` returns a code without the client running, no crash); `_request` timeouts against `net_step` at 20 Hz (the pipe's reply latency measured); the loopback two-process match from `tests/net/driver.py` reused for W2's Godot test; owner rows added; stage 3's menu change sequenced with W4.
 
 ## Estimate
 
