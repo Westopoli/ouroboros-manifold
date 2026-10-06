@@ -79,7 +79,7 @@ A layout scores 0 to 5. A high score means several skills pay and none is unansw
 
 Where two lines cross is a point at which composition choice stops being dominant; the search records, per layout, which pairs cross and at which feature values. A layout with no crossings has a best composition for everyone.
 
-**Cost per cell:** one break-even scan is 11 to 14 s (3 seeds). Per layout: 7 plays × 3 (skilled, naive, counter) + 3 compositions × 1 ≈ 24 scans ≈ 5 minutes of one worker. 200 layouts ≈ 17 worker-hours ≈ 3 hours on 6 workers, within the 6 GB scope.
+**Cost per cell:** one break-even scan is 11 to 14 s (3 seeds) on the linear sweep. Per layout: 7 plays × 3 (skilled, naive, counter) + 3 compositions × 1 ≈ 24 scans ≈ 5 minutes of one worker; 200 layouts ≈ 17 worker-hours. Measured levers (`docs/northstar/research/layer_dynamics/throughput_2026-10-06.md`): 12 workers scale 6.6× (about 2.6 h wall); bracketed bisection (B10) cuts the fights 3.4× (about 45 min); batched hp reads (B11) cut the per-fight Python (about 30 min). Memory is not a constraint (32 MB per worker).
 
 ## 3. The outputs
 
