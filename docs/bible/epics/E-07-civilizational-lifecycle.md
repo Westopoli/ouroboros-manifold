@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 28 rules, numbers from `algorithms.md` ALG-41 through ALG-44. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | No open flags on this epic's stories. Q-220-02 (E-02 S-220) and Q-222-01 (E-02 S-222) are cited and held there. |
+| Implied-but-unstated behavior turned into flags | No open flags on this epic's stories. Q-220-02 (E-02 S-220) is cited and held there. |
 | Every visible-surface story has a reference | Not applicable. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict:** no open flags; gate to be rerun. The flags that touch this epic, Q-220-02 and Q-222-01, are held by E-02 S-220 and S-222.
+**Gate verdict:** no open flags; gate to be rerun. The flag that touches this epic, Q-220-02, is held by E-02 S-220.
 
 ## Purpose
 
@@ -96,7 +96,7 @@ Rules
 - R-053-07  Given the six checks, When evaluated, Then they are evaluated in exactly this order and the first match wins.
 
 Inputs: recent event window; owned regions; world.
-Outputs: phase label in the faction entry; consumed by E-09 and E-10. Whether it also feeds the density of self-built settlements is Q-222-01 (E-02 S-222).
+Outputs: phase label in the faction entry; consumed by E-09 and E-10. It does not feed the density of self-built settlements for now (E-02 S-222).
 Open flags: none.
 
 ### S-054 — Where a civilization ends up
@@ -155,7 +155,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-220-02 and Q-222-01 as cited in S-050 and S-053. Details in `docs/northstar/ambiguity_register.md`.
+Q-220-02 as cited in S-050. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

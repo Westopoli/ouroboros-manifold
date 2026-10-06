@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-06 (tenth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-06 (twelfth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -59,14 +59,16 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 ## 1. Now building
 
-The movement and layers lanes stay paused (Westley, 2026-10-03). The same day he let the planner chat run integration work and prototypes in parallel while he is away; prototypes wait for his review.
+Updated 2026-10-06 evening. Branches only; main gets a piece only through the merge gate.
 
-| Plan | Doc | Lane | Owns | State | Exit condition |
-|---|---|---|---|---|---|
-| Movement, layers and search | `plans/2026-10-02-movement-layers-and-search-plan.md` | Architect chat rules; builder and harness chats | `csrc/tactical_move.c`, fog, unit and command code (pieces `PP-*`, `SL-harness`); `scripts/skilllab/` | Paused. Phases A, C and S landed. Phase D: formation and focus-fire batches run; matchup, landscape, layers, enemy position and combinations not run. `push/pa-impl` pushed but unverified; `push/sl-land-11` not landed. | Phase D batches done and Phase E (the search) run |
-| Mission plays | `plans/2026-09-30-mission-plays-plan.md`, `plans/2026-10-03-finish-loop-rulings.md` | Planner chat | Pipe handlers, mission, macro, chronicle and chapter wiring; client gaps | The loop plays end to end and the gate checks it. Landed 2026-10-04: a refused mission no longer blocks every later one (found by the 30B). Landed 2026-10-03: enemy rout and contested objective, commander death ledger, live retention, 16 allowlist entries. Nothing left to build without Westley: ability events to the client (ABIL-1) are deferred to land with the S-135 render piece, which needs a prototype. Left for Westley: F1 to F13. C4 E1 unverified; 4 client gaps not started. Reach lint 258 unreachable of 728. | Every work-list row wired or ruled |
-| Galaxy bubble rebuild | `plans/2026-10-02-galaxy-bubble-field-spec.md` | A separate build chat on `push/galaxy-field` | Galaxy view shader and field bake | Not on main; the build chat has not reported | Steps 2 and 3 built, screenshots compared, Westley views it |
-| Space landscape mockup | `plans/2026-10-02-space-kit-mode-spec.md`, `research/space_landscape/README.md` | Design chat (Mac) with a Doer | `scenes/mockups/landscape/` | Pass 5 built; pass 6 spec written (`1c2d4494`) | Westley approves a pass; the camera question is designed as options |
+| Lane | Branch | State | Next |
+|---|---|---|---|
+| Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | `push/terrain2-land` | All engine lanes merged; traces identical; 20 cross-lane test reds being arbitrated (`push/t2-arbiter`); the movement-kind table made sparse for custom types (`push/t2-kind-sparse`) | Lab lane re-run, clerk, gate, then Westley's look at walkers on the ported ground |
+| Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md`) | spec draft 1 | Era toggle decided (Q-STAGE3-02 a). Audit next, then launch in parallel with stage 2's landing (disjoint files except the contract) | The first thing playtesters see |
+| Steam P2P beta (`docs/research/topics/steam_p2p_and_beta_submission.md`, branch `docs/steam-research`) | spec draft 1 (`plans/2026-10-06-steam-multiplayer-wiring-spec.md`) | Westley 2026-10-06: private beta by key first, public steps started now (Q-STEAM-01). Pre-flight found `net_step` emits no tactical frame (contract change) and a `"4.7"` feature pin against the 4.6.3 binary (Q-NET-01, Westley) | Sonnet audit, second Fable chat audit (contract-level), pre-flight, workflow; real-Steam test by hand on Spacewar 480 |
+| Space lab: layout search (`plans/2026-10-06-layout-search-spec.md`) | spec, not approved | Needs the objective scene, detour generator, category shares, depth module (four small pieces) and the throughput briefs B9 to B11 | First run after B9 to B11 land: about 45 min |
+| Unit size as a runtime setting (`plans/2026-10-06-unit-size-runtime-spec.md`) | spec | After stage 2 lands (same file) | Two Doer units |
+| Sonnet chat briefs B1 to B11 (`plans/briefs/2026-10-06-sonnet-parallel-briefs.md`) | running in a parallel chat | mop-up line of sight, tick cap 12,000, method and era-pack drafts, doctrine synthesis, website refresh, flake root cause, worktree cleanup, lab throughput | Each pushes a branch; the planner lands it |
 
 ## 2. Queued, in order
 
@@ -175,8 +177,8 @@ Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness
 |---|---|---|
 | Multiplayer | Q-144-03 (re-asked: who hosts the next sitting of a locked universe). The lockstep drop is 30 s, so the 60 s provisional setting in `plans/2026-10-05-lockstep-backend-spec.md` needs updating by its owner | Blocks S-144 and the lobby. Everything else in S-140 to S-144 and the pair stories answered 2026-10-06 |
 | Economy and bases | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05 | E-22; the largest set. An ordered answer sheet is not yet drafted |
-| Settlements | Q-193-01 to -06, Q-222-01 | After the land generator |
-| Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
+| Settlements | Q-193-04, Q-193-05 (parked until fights have been run in the simulation) | Answered 2026-10-06: the rest of S-193 and S-222. After the land generator |
+| Strongpoints and weather | Q-219-02 (to be designed; Westley prefers the player not seeing a trouble coming), Q-219-04 (parked) | Answered 2026-10-06: the rest of S-218 and S-219. After the land generator |
 
 ## 3b. Parallel work (the TODO list)
 
@@ -198,6 +200,7 @@ Work that does not wait on the build lanes. Written 2026-10-06 from Westley's li
 | T12 | Flaky playthrough test `test_s_c8_09`: Westley 2026-10-06, find the root cause of the dropped click ("solve the root problem, not put a bandaid on a system that is effected down the sequence"); no re-click | Engineer: diagnose the input path in the first frames of a fresh scene | nothing | The cause named; a fix in the game or the driver |
 | T13 | Body size: decided 2026-10-06 (Q-LAB-02 a): the engine reads the runtime collision radius; per-type sizes follow with the era rosters; the lab finds where the lines cross as size changes | Planner chat spec; Doer | nothing | A contract piece (one parameter read at every collision site) |
 | T14 | Fight tick cap raised to 12,000 (provisional; Westley 2026-10-06 "raise the cap"), and never-engaged fights must not read as ties (Q-LAB-01) | Planner chat spec; Engineer | nothing | The cap changed; the mop-up rule and the outcome classes per Q-LAB-01 |
+| T17 | Steam onboarding, public track (Westley, by hand): pay the app fee (21 to 30 days to any release), finish tax and identity (10 to 15 business days if not done), create the app, a Coming Soon page (live 2 weeks before release; review 3 to 5 business days), enable relay networking in the app settings, generate Dev Comp keys for the second account; Playtest as a child app once the page passes | Westley | nothing | The app id and keys; dates in `docs/research/topics/steam_p2p_and_beta_submission.md` |
 | T16 | Feedback and bug reports (E-16 S-245, direction 2026-10-06): in-game F12 report with a 5 to 10 s capture replayable through the lockstep save and command log; website feedback into the same queue; classification; a local model fixes bugs through the gate | Planner chat: a plan after the lockstep client wiring; Westley: Q-245-01 to -03 | lockstep client wiring; the website refresh | A plan |
 | T15 | Stale `om-*` checkout folders under `~/Projects` | cleaned 2026-10-06 (report in the planner chat) | | |
 
@@ -213,7 +216,7 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 | Shared layer-mask contract | none yet (carries E-01 R-001-04, E-17 R-114-01) | E-01, E-17 | Not written | Lands first inside land part 1 as its own contract piece; written so space can use it; the small-craft class needs Q-166-05 |
 | Space generator | none in the bible yet | E-17 | Research and mockup passes 1 to 5; pass 6 specified | Waits on decisions S1 to S4, the stories being written, and the mask contract |
 | Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, 1 flag open | Waits on the flag sheet, the places prototype Westley approves (row above), and plan A. Q-191-04 closed 2026-10-03: the rewrites of S-112 to S-119 can now be written |
-| Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-01 to -06 open | After the land generator |
+| Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-04 and -05 parked | After the land generator |
 | Zoom and drawing | S-194, S-234, S-236, S-240 | E-17, E-16, E-18 | Q-194-01 needs research first (keep the backend true to the ground without heavy snapping, Westley 2026-10-06); the Sand Table waits on its prototype (Q-103-05); budgets for thousands stay a direction | Client work, after a generator exists |
 | Strongpoints and weather | S-218, S-219 | E-15 | Design decided, flags open | After the land generator |
 | Economy and bases | S-167 to S-182, S-202 to S-206, S-209 to S-217 | E-22, E-11, E-12, E-13, E-10, E-14 | Design decided, flags open; S-182 open | Largest group; needs places from a generator |
