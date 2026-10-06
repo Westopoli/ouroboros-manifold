@@ -118,6 +118,11 @@ class Engine:
             "om_map_set_canvas": ([V, d, d], i),
             "om_map_block_rect": ([V, d, d, d, d, u32, u32], i),
             "om_map_add_cover": ([V, d, d, d, d], u32),
+            "om_terrain_generate": ([V, u64, d, d], i),
+            "om_terrain_band_at": ([V, d, d], i),
+            "om_terrain_walkable_at": ([V, d, d], i),
+            "om_terrain_cells": ([V, c.POINTER(u32), c.POINTER(u32)], u32),
+            "om_terrain_dump_bands": ([V, c.c_char_p, u32], u32),
         }
         for name, (argtypes, restype) in sigs.items():
             fn = getattr(self._lib, name)
@@ -267,3 +272,19 @@ class Engine:
         if idx == 0:
             raise ValueError("om_map_add_cover(%r, %r, %r, %r) refused (add_cover)" % (x, y, radius, height))
         return idx
+
+    def terrain_generate(self, w, seed, canvas):
+        return int(self._lib.om_terrain_generate(w, int(seed), float(canvas), float(canvas)))
+
+    def terrain_band_at(self, w, x, y):
+        return int(self._lib.om_terrain_band_at(w, float(x), float(y)))
+
+    def terrain_walkable_at(self, w, x, y):
+        return bool(self._lib.om_terrain_walkable_at(w, float(x), float(y)))
+
+    def terrain_dump_bands(self, w):
+        cw, ch = ctypes.c_uint32(), ctypes.c_uint32()
+        n = int(self._lib.om_terrain_cells(w, ctypes.byref(cw), ctypes.byref(ch)))
+        buf = ctypes.create_string_buffer(n)
+        self._lib.om_terrain_dump_bands(w, buf, n)
+        return int(cw.value), int(ch.value), buf.raw
