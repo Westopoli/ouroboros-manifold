@@ -91,7 +91,11 @@ The client launches `res://pipe/ouroboros_pipe` through `globalize_path` (`c_bri
 | W8c client path | `autoload/c_bridge.gd` (phase B with W2) | exe-relative resolution with the `.exe` suffix, the editor fallback on `res://pipe`, `OM_PIPE` override | a Godot test with a fake executable dir; the Linux export launches a mission |
 | W8d presets | `export_presets.cfg` (W6 adds Windows x86_64 beside Linux and macOS) | | a Windows export builds headless |
 
-Needs on this box (Westley, sudo): `mingw-w64` (ucrt variant if packaged) and `wine64` for the probe.
+Installed 2026-10-06 (Westley): `mingw-w64` GCC 13-win32 and `wine64`. First Windows data point the same night: the brief's static build (`-static -D__USE_MINGW_ANSI_STDIO=1`, the Linux flag set, `_setmode` in `main`) compiled with zero warnings; under wine64 the probe's four checkpoints are byte-identical to Linux for both the default msvcrt link and a ucrt link (`-mcrtdll=ucrt` is not in GCC 13; a `-specs` file swapping `-lmsvcrt` for `-lucrt` works). Ship the ucrt link. Artifacts in `~/.claude/jobs/cb87e7a3/tmp/ship/` (exe, outputs, `ucrt.specs`).
+
+## Relay and transport notes (2026-10-06)
+
+Steam Datagram Relay has no dashboard switch: P2P traffic over Steam Networking Messages or Sockets is relayed by Valve's backbone automatically; `initRelayNetworkAccess()` at startup (W3) only warms it. Godot's own high-level multiplayer (ENet `MultiplayerPeer`, RPCs, spawners) is not used: the lockstep session is its own protocol over `transport.gd`, so the `SteamMultiplayerPeer` extension is not needed; GodotSteam's `sendMessageToUser`/`receiveMessagesOnChannel` (W1) is the whole transport.
 
 ## Launch order
 
@@ -106,7 +110,7 @@ Phase A (now, disjoint from stage 3): W0 backend catch-up, W1 SteamTransport, W3
 5. **Order mapping**: move 0, attack_move 1, attack_target 2 (`c_bridge.gd:422` to `OM_NET_VERB`), `units` are sim ids (identical on both peers by construction); other verbs are not reachable from the client today and stay so. Single player keeps `send_unit_command` untouched; `tactical_view.send_command` branches on `NetMatch.active()`.
 6. **The pump**: new autoload `NetMatch` (`autoload/net/net_match.gd`, registered in `project.godot`): holds the session, the transport and the `PipeSim`; `_process` calls `Steam.run_callbacks()` and, on a 50 ms accumulator, `session.poll()`; exposes `active()`, `command(cmd)`, `state()` (`running | stalled(peer) | desync(tick, section) | ended`). Autoloads `SteamInit` (`autoload/steam/steam_init.gd`: `steamInitEx(app_id)`, `initRelayNetworkAccess()`, a `steam_ready` flag; app id 480 Spacewar until Westley's app id exists) before it.
 7. **Desync screen**: `scenes/shared/error_panel.gd` gains `show_error(reason, retry := true)`; a desync shows "Desync at tick N, section NAME" with the main-menu button only. A stall shows a "waiting for PEER (s)" line in the tactical HUD; a drop ends the match with the same panel.
-8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
+8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (committed, 5402100).
 
 ## Pieces
 
@@ -134,7 +138,7 @@ Order: W0 and W-contract, gate; W1, W2, W3, W6 in parallel; W4 after W3; W5 afte
 | stall / drop | 1 s / 60 s | planner, provisional |
 | catchup_max / need window / history | 8 ticks per poll / `repeat` polls / 64 ticks | planner, provisional |
 | Lobby | friends-only, max 4 | E-19 R-141-01 |
-| App id | 480 until the real one | T17 |
+| App id | 5402100 (Westley, 2026-10-06); 480 (Spacewar) only for the first transport test if the real app's relay flag is not yet on | T17 |
 
 ## Not in this piece
 
