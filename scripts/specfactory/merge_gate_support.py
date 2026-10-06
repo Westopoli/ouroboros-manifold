@@ -182,11 +182,11 @@ def _ignored(path: str, ignores: tuple[str, ...]) -> bool:
 
 def changed_files(candidate_dir: Path, base_ref: str) -> list[str]:
     proc = subprocess.run(
-        ["git", "diff", "--name-only", f"{base_ref}..HEAD"],
+        ["git", "diff", "--name-only", f"{base_ref}...HEAD"],
         cwd=str(candidate_dir), capture_output=True, text=True,
     )
     if proc.returncode != 0:
-        raise RuntimeError(f"git diff --name-only {base_ref}..HEAD failed: {proc.stderr}")
+        raise RuntimeError(f"git diff --name-only {base_ref}...HEAD failed: {proc.stderr}")
     return [line for line in proc.stdout.splitlines() if line.strip()]
 
 
@@ -258,17 +258,17 @@ def _in_block_comment_lines(text: str) -> set[int]:
 
 
 def _diff_added_definitions(candidate_dir: Path, base_ref: str) -> list[tuple[str, str]]:
-    """[(file, symbol), ...] for every `+` line in `git diff base_ref..HEAD`
+    """[(file, symbol), ...] for every `+` line in `git diff base_ref...HEAD`
     matching DEF_RE (a top-level-looking C function definition whose name
     starts with om_) -- a line-level heuristic, not a real C parse, exactly
     as the spec names it ("parse + lines for `^[a-z_ ]+ om_[a-z0-9_]+\\(`
     definitions")."""
     proc = subprocess.run(
-        ["git", "diff", "-U0", f"{base_ref}..HEAD"],
+        ["git", "diff", "-U0", f"{base_ref}...HEAD"],
         cwd=str(candidate_dir), capture_output=True, text=True,
     )
     if proc.returncode not in (0, 1):
-        raise RuntimeError(f"git diff -U0 {base_ref}..HEAD failed: {proc.stderr}")
+        raise RuntimeError(f"git diff -U0 {base_ref}...HEAD failed: {proc.stderr}")
 
     found: list[tuple[str, str]] = []
     current_file = None
@@ -745,6 +745,20 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                             cwd=str(candidate_dir), capture_output=True, text=True)
 
 
+LAB_TRIGGERS = ("csrc/", "scripts/skilllab/")
+LAB_TARGETS = ["tests/skilllab/integration", "tests/skilllab/ground"]
+
+
+def regression_lab_check(candidate_dir: Path, base_ref: str, **kw) -> tuple[bool, str]:
+    """(ok, detail). The lab's real-engine suites (tests/skilllab/integration and /ground)
+    under regression_csim's pass rule (failing ids equal base's); skipped unless the diff
+    touches csrc/ or scripts/skilllab/. See also: merge_gate.sh stage regression_lab."""
+    if not any(f.startswith(LAB_TRIGGERS) for f in changed_files(candidate_dir, base_ref)):
+        return True, "skipped: diff touches neither csrc/ nor scripts/skilllab/"
+    ok, detail, _report = regression_check(candidate_dir, base_ref, LAB_TARGETS, **kw)
+    return ok, detail
+
+
 PLAYTHROUGH_TRIGGERS = ("csrc/", "autoload/", "scenes/", "project.godot", "tests/qa/desktop/")
 DEFAULT_KNOWN_RED = Path(__file__).resolve().parent / "playthrough_known_red.txt"
 
@@ -849,6 +863,13 @@ def main(argv: list[str]) -> int:
     pt.add_argument("--force", action="store_true")
     pt.add_argument("--no-setup", action="store_true")
 
+    rl = sub.add_parser("regression-lab")
+    rl.add_argument("candidate_dir")
+    rl.add_argument("base_ref")
+    rl.add_argument("--python", default=sr.DEFAULT_PYTHON)
+    rl.add_argument("--timeout", type=int, default=600)
+    rl.add_argument("--merge-root", default=None)
+
     ut = sub.add_parser("undertest")
     ut.add_argument("candidate_dir")
     ut.add_argument("base_ref")
@@ -936,6 +957,10 @@ def main(argv: list[str]) -> int:
         ok, detail = playthrough_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                        timeout=args.timeout, known_red_path=Path(args.known_red),
                                        target=args.target, force=args.force, setup=not args.no_setup)
+    elif args.cmd == "regression-lab":
+        ok, detail = regression_lab_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
+                                          timeout=args.timeout,
+                                          merge_root=Path(args.merge_root) if args.merge_root else None)
     elif args.cmd == "undertest":
         lines = undertest_warn(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                 pieces_path=Path(args.pieces), cap=args.cap)
