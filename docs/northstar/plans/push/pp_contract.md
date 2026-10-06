@@ -115,7 +115,7 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 | 21 | `OM_TP_EMIT_SIGHT_MULT` | real | 1.0 | 0 | 10 | brief section 6 (engine default 1.0; lab 2.0); G6 | writer: non-negative, top 10 |
 | 22 | `OM_TP_EMIT_SEEN_MULT` | real | 1.0 | 0 | 10 | brief section 6 (engine default 1.0; lab 2.0); G6 | writer: non-negative, top 10 |
 | 23 | `OM_TP_PING_RADIUS` | real | 500.0 | 0 | 28000 | brief section 6; om_constants.h OM_PULSE_RADIUS | writer: top is OM_CANVAS_SIZE_RANGES_LARGE_HI |
-| 24 | `OM_TP_PING_REVEAL_TICKS` | int | 40 | 0 | 1200 | brief section 6; om_constants.h OM_PULSE_REVEAL_TICKS | writer: whole ticks, top 1200 (60 s) |
+| 24 | `OM_TP_PING_REVEAL_TICKS` | int | 100 | 0 | 1200 | brief section 6; om_constants.h OM_PULSE_REVEAL_TICKS | writer: whole ticks, top 1200 (60 s) |
 | 25 | `OM_TP_PING_COOLDOWN_TICKS` | int | 400 | 0 | 12000 | brief section 6; om_constants.h OM_PULSE_COOLDOWN_TICKS | writer: whole ticks, top 12000 (10 min) |
 | 26 | `OM_TP_PING_REACH` | real | 2000.0 | 0 | 28000 | brief section 6 (2,000, design chat proposal) | writer: top is OM_CANVAS_SIZE_RANGES_LARGE_HI |
 | 27 | `OM_TP_VISION_UP_1` | real | 0.5 | 0 | 1 | offsets 1 and 2: om_constants.h OM_CONE_LAYER_1_FACTOR and _2_FACTOR; offsets 3 and 4: fog.c om_unit_get_cross_layer_factor returns 0.0, E-01 R-005-05 | writer: a fraction of sensor radius; fog.c caps cross-layer factors at 1.0 |
@@ -151,8 +151,9 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 | 57 | `OM_TP_AREA_DOWN_3` | real | 1.0 | 0 | 10 | plan Phase C (area multipliers by signed offset); no number given, 1.0 by analogy with RANGE and DAMAGE (writer) | writer: non-negative, top 10 |
 | 58 | `OM_TP_AREA_DOWN_4` | real | 1.0 | 0 | 10 | plan Phase C (area multipliers by signed offset); no number given, 1.0 by analogy with RANGE and DAMAGE (writer) | writer: non-negative, top 10 |
 | 59 | `OM_TP_TARGET_POLICY_FACTION_1` | int | -1 | -1 | 1 | A196: faction 1's target policy; -1 = unset, faction 1 follows `OM_TP_TARGET_POLICY` (faction 0's, range 0 to 1); 0 nearest, 1 most damaged | lab only; whole numbers -1 to 1 |
-| 60 | `OM_TP_TERRAIN_STEEP_DEG` | real | 35 | 0 | 90 | R-200-03, Q-189-02 (30 to 35; the approved mockups used 35); terrain stage 1 spec 2026-10-05 | writer: degrees, 0 to 90 |
-| 61 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
+| 60 | `OM_TP_PING_ALERT` | bool | 0 | 0 | 1 | R-162-03 (Westley 2026-10-05): 0 the pinged side is told nothing, 1 it gets the 60-degree alert | switch: exactly 0 or 1 |
+| 61 | `OM_TP_TERRAIN_STEEP_DEG` | real | 35 | 0 | 90 | R-200-03, Q-189-02 (30 to 35; the approved mockups used 35); terrain stage 1 spec 2026-10-05 | writer: degrees, 0 to 90 |
+| 62 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
 
 Order: the six switches first (Phase A needs the first four, Phase C the last two), then the brief G1 numbers, then the section 6 numbers, then the four families by signed offset (up 1 to 4, then down 1 to 4, each family in the order VISION, RANGE, DAMAGE, AREA). A later member is only ever appended before `OM_TP__COUNT`, never inserted.
 
@@ -206,7 +207,8 @@ Addendum 46 of `docs/northstar/plans/2026-10-01-architect-rulings-2.md`. The ope
 - **A135**: tests red until a later wave sit on one strict expected-failure list owned by `PP-parity`; nothing else goes on it. In this document's tests, the Phase C refusals (`om_command_set_layer`, `om_command_ping`) are the kind that list takes until PP-unit and PP-fog land.
 - **A170**: the guard call, row 18 (section 6, above); R-096-05 written into E-13 by the landing.
 - **A196**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 59): `OM_TP_TARGET_POLICY_FACTION_1`, int, default -1 (unset: faction 1 follows `OM_TP_TARGET_POLICY`), range -1 to 1, lab only. `OM_TP_TARGET_POLICY` keeps range 0 to 1 and means faction 0. `OM_TP__COUNT` becomes 60.
-- **TERRAIN-1**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 60, no existing number moves): `OM_TP_TERRAIN_STEEP_DEG`, real, default 35, range 0 to 90. `OM_TP__COUNT` becomes 61. (If `OM_TP_PING_ALERT` lands first it takes 60 and this one moves to 61; the clerk resolves.)
+- **R-162-03**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 60, no existing number moves): `OM_TP_PING_ALERT`, bool, default 0. `OM_TP__COUNT` becomes 61. R-162-01 also moves the `OM_TP_PING_REVEAL_TICKS` default from 40 to 100 (5 s); its range is unchanged.
+- **TERRAIN-1**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 61, no existing number moves): `OM_TP_TERRAIN_STEEP_DEG`, real, default 35, range 0 to 90. `OM_TP__COUNT` becomes 62. `OM_TP_PING_ALERT` landed first and holds 60, so this one is 61.
 - **A136**: the parity tolerances (1e-6 wu, 2e-3 rad) are provisional and Westley's; they are not part of this contract.
 
 ## 8. Tests that prove this piece

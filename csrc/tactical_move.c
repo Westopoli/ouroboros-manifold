@@ -97,6 +97,7 @@
 #define OM_MOVE_GRID_SPILL_MAX 48
 #define OM_MOVE_GRID_BOUND_PAD 1.0e-6
 #define OM_MOVE_GRID_FAR 1.0e300
+#define OM_MOVE_DESCENT_SEARCH_RINGS 64
 #define OM_MOVE_CELL_MID 0.5
 #define OM_MOVE_ROUND_HALF 0.5
 #define OM_MOVE_FLOOR_LIMIT 1.0e9
@@ -338,6 +339,8 @@ static void om_move_transit_cancel(om_move_unit *mu) {
 #define OM_PP_TERRAIN_STEEP_HI 90.0
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
+/* R-162-01: 5 s at the tactical rate; om_constants.h OM_PULSE_REVEAL_TICKS (40) is the bible's old 2 s */
+#define OM_PP_PING_REVEAL_DEFAULT 100
 #define OM_PP_PING_REVEAL_HI 1200
 #define OM_PP_PING_COOLDOWN_HI 12000
 
@@ -368,13 +371,15 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_MULT(OM_CATEGORY_MULTIPLIER_STRIKE_STRIKE),
     OM_PP_MULT(1.0), OM_PP_MULT(1.0),
     OM_PP_DIST(OM_PULSE_RADIUS),
-    { OM_PP_INT, OM_PULSE_REVEAL_TICKS, 0.0, OM_PP_PING_REVEAL_HI },
+    { OM_PP_INT, OM_PP_PING_REVEAL_DEFAULT, 0.0, OM_PP_PING_REVEAL_HI },
     { OM_PP_INT, OM_PULSE_COOLDOWN_TICKS, 0.0, OM_PP_PING_COOLDOWN_HI },
     OM_PP_DIST(OM_PP_PING_REACH_DEFAULT),
     OM_PP_VIS4, OM_PP_VIS4,
     OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
     /* A196: faction 1's target policy, -1 = unset (follows OM_TP_TARGET_POLICY); lab only */
     { OM_PP_INT, -1.0, -1.0, 1.0 },
+    /* R-162-03: the pinged side's alert, 0 off (default), 1 on */
+    OM_PP_SWITCH(0.0),
     /* R-200-03, Q-189-02: steepest walkable slope in degrees, 35 default (provisional 2026-10-05; Westley owns) */
     { OM_PP_REAL, OM_PP_TERRAIN_STEEP_DEFAULT, 0.0, OM_PP_TERRAIN_STEEP_HI },
 };
@@ -1930,17 +1935,13 @@ static uint32_t om_move_across_plan(om_world *w, om_move_state *ms, om_move_unit
     return best;
 }
 
-/* R-097-09 (Westley, 2026-10-02): a unit found inside a blocked cell of its layer is moved to the nearest open
- * cell, not stalled: the nearest point of that cell at least a collision radius inside it; ties go to the lower
- * cell id. See also: om_move_tick_unit, which calls this each tick while ROUTE_AROUND_TERRAIN is on. */
-static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_unit *mu) {
-    const uint32_t layer = (uint32_t)om_move_layer(w, mu->unit_id);
+/* The open cell of `layer` nearest to (px, py) within max_r rings; ties go to the lower row, then column. */
+static int om_move_nearest_open(const om_world *w, om_move_state *ms, uint32_t layer, double px, double py, int32_t max_r, int32_t *out_x, int32_t *out_y) {
     int32_t nx, ny, cx, cy, r, best_x = -1, best_y = -1;
     double best = OM_MOVE_GRID_FAR;
-    om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
+    om_move_cell_at(ms, px, py, &cx, &cy);
     om_move_window(ms, &nx, &ny);
-    for (r = 1; r < nx + ny; r++) {
+    for (r = 1; r < nx + ny && r <= max_r; r++) {
         int32_t x, y;
         if (best_x >= 0 && (double)r * OM_NAVMESH_CELL_SIZE * (double)r * OM_NAVMESH_CELL_SIZE >= best) break;
         for (y = cy - r; y <= cy + r; y++) {
@@ -1950,14 +1951,28 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
                 if (x < 0 || y < 0 || x >= nx || y >= ny || om_move_cell_blocked(w, ms, layer, x, y)) continue;
                 x0 = (double)x * OM_NAVMESH_CELL_SIZE;
                 y0 = (double)y * OM_NAVMESH_CELL_SIZE;
-                qx = mu->x < x0 ? x0 : (mu->x > x0 + OM_NAVMESH_CELL_SIZE ? x0 + OM_NAVMESH_CELL_SIZE : mu->x);
-                qy = mu->y < y0 ? y0 : (mu->y > y0 + OM_NAVMESH_CELL_SIZE ? y0 + OM_NAVMESH_CELL_SIZE : mu->y);
-                d2 = (qx - mu->x) * (qx - mu->x) + (qy - mu->y) * (qy - mu->y);
+                qx = px < x0 ? x0 : (px > x0 + OM_NAVMESH_CELL_SIZE ? x0 + OM_NAVMESH_CELL_SIZE : px);
+                qy = py < y0 ? y0 : (py > y0 + OM_NAVMESH_CELL_SIZE ? y0 + OM_NAVMESH_CELL_SIZE : py);
+                d2 = (qx - px) * (qx - px) + (qy - py) * (qy - py);
                 if (d2 < best || (d2 == best && (y < best_y || (y == best_y && x < best_x)))) { best = d2; best_x = x; best_y = y; }
             }
         }
     }
-    if (best_x < 0) return;
+    *out_x = best_x;
+    *out_y = best_y;
+    return best_x >= 0;
+}
+
+/* R-097-09 (Westley, 2026-10-02): a unit found inside a blocked cell of its layer is moved to the nearest open
+ * cell, not stalled: the nearest point of that cell at least a collision radius inside it; ties go to the lower
+ * cell id. See also: om_move_tick_unit, which calls this each tick while ROUTE_AROUND_TERRAIN is on. */
+static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_unit *mu) {
+    const uint32_t layer = (uint32_t)om_move_layer(w, mu->unit_id);
+    int32_t nx, ny, cx, cy, best_x, best_y;
+    om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
+    om_move_window(ms, &nx, &ny);
+    if (!om_move_nearest_open(w, ms, layer, mu->x, mu->y, nx + ny, &best_x, &best_y)) return;
     {
         const double lo = OM_UNIT_COLLISION_RADIUS, hi = OM_NAVMESH_CELL_SIZE - OM_UNIT_COLLISION_RADIUS;
         double rx = mu->x - (double)best_x * OM_NAVMESH_CELL_SIZE, ry = mu->y - (double)best_y * OM_NAVMESH_CELL_SIZE;
@@ -2244,7 +2259,17 @@ static void om_move_layer_unit(om_world *w, om_move_state *ms, om_move_unit *mu,
         if (cur == mu->transit_home) mu->transit = 0;
         else {
             om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
-            if (!mu->has_dest || (!om_move_cell_blocked(w, ms, mu->transit_home, cx, cy)
+            if (!mu->has_dest && om_move_cell_blocked(w, ms, mu->transit_home, cx, cy)) {
+                /* R-001-05, R-097-09: the cell under the unit is blocked on its home layer; it walks on to the nearest open one before it descends. */
+                int32_t ox, oy;
+                if (om_move_nearest_open(w, ms, mu->transit_home, mu->x, mu->y, OM_MOVE_DESCENT_SEARCH_RINGS, &ox, &oy)) {
+                    mu->has_dest = 1;
+                    mu->dest_x = ((double)ox + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
+                    mu->dest_y = ((double)oy + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
+                    mu->direct_move = 1;
+                    mu->plan_valid = 0;
+                }
+            } else if (!mu->has_dest || (!om_move_cell_blocked(w, ms, mu->transit_home, cx, cy)
                 && om_move_los_clear(w, ms, mu->x, mu->y, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), mu->transit_home))) {
                 mu->lay_state = OM_LAY_PENDING;
                 mu->lay_to = mu->transit_home;

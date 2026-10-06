@@ -530,8 +530,9 @@ class OMTacParam:
     AREA_DOWN_3 = 57
     AREA_DOWN_4 = 58
     TARGET_POLICY_FACTION_1 = 59
-    TERRAIN_STEEP_DEG = 60
-    _COUNT = 61
+    PING_ALERT = 60
+    TERRAIN_STEEP_DEG = 61
+    _COUNT = 62
 
 
 class OMEmission:

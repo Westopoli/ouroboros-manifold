@@ -1053,6 +1053,7 @@ typedef enum {
     OM_TP_AREA_DOWN_3,
     OM_TP_AREA_DOWN_4,
     OM_TP_TARGET_POLICY_FACTION_1,
+    OM_TP_PING_ALERT,
     OM_TP_TERRAIN_STEEP_DEG,
     OM_TP__COUNT
 } om_tac_param;

@@ -50,6 +50,35 @@ def set_param(lib, w, name, value):
     assert rc == 0, f"om_tactical_set_param({name}, {value}) refused; the contract table says it is in range"
 
 
+def ping_alert_param():
+    """The enum value of OM_TP_PING_ALERT, read from the header at run time (R-162-03, Westley 2026-10-05: the
+    alert is off by default and kept behind this parameter). Fails clearly, not at import, while the name is
+    not in csrc/ouroboros_sim.h."""
+    text = HEADER.read_text()
+    m = re.search(r"\{([^{}]*)\}\s*om_tac_param\s*;", text)
+    assert m, "enum om_tac_param is not in csrc/ouroboros_sim.h"
+    body = re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S)
+    nxt = 0
+    for item in body.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        name = item
+        if "=" in item:
+            name, val = [x.strip() for x in item.split("=", 1)]
+            nxt = int(val, 0)
+        if name == "OM_TP_PING_ALERT":
+            return nxt
+        nxt += 1
+    raise AssertionError("OM_TP_PING_ALERT is not in the om_tac_param enum of csrc/ouroboros_sim.h "
+                         "(R-162-03: the builder adds it next to OM_TP_PING_REACH)")
+
+
+def set_ping_alert(lib, w, on):
+    rc = lib.om_tactical_set_param(w, ping_alert_param(), float(on))
+    assert rc == 0, f"om_tactical_set_param(PING_ALERT, {on}) refused"
+
+
 def set_emission(lib, w, ids, mode):
     ids = list(ids)
     arr = (ctypes.c_uint32 * max(len(ids), 1))(*ids)
