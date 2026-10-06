@@ -76,12 +76,19 @@ def _find_pair(bands, cw, ch):
 
 
 def _walk(lib, w, layer, start, goal):
+    # ROUTE_ACROSS_LAYERS is on by default: an order into ground blocked on the unit's layer makes it climb to an
+    # open layer and stay there (layer 0 -> 2 for band 3), which is correct play but not what this test measures.
+    # Off, the unit must stop at the edge on its own layer.
+    lib.set_param(w, lib.param_id("OM_TP_ROUTE_ACROSS_LAYERS"), 0.0)
     u = lib.spawn(w, lib.type_id("Vanguard"), 0, *_centre(*start), layer)
     gx, gy = _centre(*goal)
     lib.order_move(w, [u], gx, gy)
     for _ in range(600):
         lib.step(w)
     ux, uy = lib.unit_pos(w, u)
+    assert lib.unit_layer(w, u) == layer, "unit stayed on its layer"
+    cw, _, bands = lib.terrain_dump_bands(w)
+    assert layer >= bands[int(uy // CELL) * cw + int(ux // CELL)] - 1, "unit stands in a cell open on its layer (R-200-02)"
     return ((ux - gx) ** 2 + (uy - gy) ** 2) ** 0.5
 
 
