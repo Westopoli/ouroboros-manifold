@@ -7182,3 +7182,86 @@ fields = [{ name = "tick", ctype = "uint64_t" }, { name = "seq", ctype = "uint32
 name = "OMSlope"
 source_test = "tests/csim/test_E01_R001_06_slopes.py"
 fields = [{ name = "x0", ctype = "double" }, { name = "y0", ctype = "double" }, { name = "x1", ctype = "double" }, { name = "y1", ctype = "double" }, { name = "mx", ctype = "double" }, { name = "my", ctype = "double" }, { name = "length", ctype = "double" }, { name = "lower_band", ctype = "int32_t" }, { name = "upper_band", ctype = "int32_t" }]
+
+[[symbols]]
+name = "om_roster_set_movement_kind"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "type", ctype = "int" }, { name = "kind", ctype = "int" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: movement kind (om_movement_kind) of a unit type; 0 ok, 1 unknown type, 2 unknown kind. Working body in the contract piece."
+
+[[symbols]]
+name = "om_unit_profile_movement_kind"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "type", ctype = "int" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: the type's movement kind; 0 (flying) for an unknown type. Working body in the contract piece."
+
+[[symbols]]
+name = "om_set_era_kind"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "kind", ctype = "int" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: era kind, 0 space or 1 ground (pack field, Q-146-04 a); 0 ok, 1 bad kind. Working body in the contract piece."
+
+[[symbols]]
+name = "om_era_kind"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: the era kind; default 0. Working body in the contract piece."
+
+[[symbols]]
+name = "om_terrain_walk_mask"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer", ctype = "int" }, { name = "out", ctype = "uint8_t *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: one byte per cell, 1 where a walker may stand on engine layer 0..4; returns the cell count; out NULL counts only. Contract stub writes zeros."
+
+[[symbols]]
+name = "om_terrain_slope_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "out", ctype = "OMSlope *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: lowest-index slope whose run contains the cell and whose bands match the cell's band; its index or -1. Contract stub returns -1."
+
+[[symbols]]
+name = "om_terrain_sight_blocks"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer0", ctype = "int" }, { name = "x0", ctype = "double" }, { name = "y0", ctype = "double" }, { name = "layer1", ctype = "int" }, { name = "x1", ctype = "double" }, { name = "y1", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: 1 when terrain stands in the sight line between two eyes (R-005-10); 0 when none or no terrain. Contract stub returns 0."
+
+[[symbols]]
+name = "om_walk_route"
+module = "walk_route.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }, { name = "gx", ctype = "double" }, { name = "gy", ctype = "double" }, { name = "pts", ctype = "double*" }, { name = "cap", ctype = "uint32_t" }, { name = "seconds", ctype = "double*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_walker_tick"
+module = "tactical_move.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"

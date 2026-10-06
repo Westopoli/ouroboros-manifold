@@ -692,6 +692,7 @@ static void tg_free(void *p) {
     free(st->band);
     free(st->walkable);
     free(st->slopes);
+    for (int b = 0; b < OM_TERRAIN_BANDS; b++) free(st->walk[b]);
     free(st);
 }
 
@@ -1131,4 +1132,24 @@ void om_terrain_install_net_hooks(om_world *w) {
     uint64_t (*cur)(const om_world *) = w->net_section_hash[OM_NET_SECTION_COUNT - 1];
     if (cur != ts_section_hash) ts_prev_hash = cur;
     w->net_section_hash[OM_NET_SECTION_COUNT - 1] = ts_section_hash;
+}
+
+/* Terrain stage 2 contract stubs; the mask lane (spec 2026-10-06) replaces these bodies. */
+uint32_t om_terrain_walk_mask(const om_world *w, int layer, uint8_t *out, uint32_t cap) {
+    const om_terrain_state *st = ts_ro(w);
+    uint32_t n, i;
+    if (!st || layer < 0 || layer >= OM_TERRAIN_BANDS) return 0;
+    n = st->cells_w * st->cells_h;
+    for (i = 0; out && i < n && i < cap; i++) out[i] = 0;
+    return n;
+}
+
+int om_terrain_slope_at(const om_world *w, double x, double y, om_slope *out) {
+    (void)w; (void)x; (void)y; (void)out;
+    return -1;
+}
+
+int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0, int layer1, double x1, double y1) {
+    (void)w; (void)layer0; (void)x0; (void)y0; (void)layer1; (void)x1; (void)y1;
+    return 0;
 }

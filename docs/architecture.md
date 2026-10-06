@@ -435,3 +435,7 @@ flowchart TD
 
 `om_visibility_compute` (`csrc/fog.c:615`, E-12) is **not** in this call chain
 and has no other caller anywhere in `csrc/`.
+
+## Era manifest `kind` field (terrain stage 2)
+
+`assets/eras/<id>/manifest.json` may carry `"kind": "space"` or `"kind": "ground"` (Q-146-04 a). `space` is the default and the model every era used before; `ground` makes the world play on the terrain (walkers, ground vision). It is a declared property of the era, not a mechanical key: `scripts/specfactory/pack_validate.py` accepts it as optional and `--diff-mechanical` does not compare it (R-146-02). `settled_reach` and `test_era` are `space`; `greek_placeholder` is `ground`. The sim reads it through `om_set_era_kind` / `om_era_kind`; no client code reads the manifest field yet (stage 3).

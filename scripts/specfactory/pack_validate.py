@@ -34,6 +34,9 @@ import re
 import sys
 from pathlib import Path
 
+# Terrain stage 2 (Q-146-04 a): the optional "kind" is a declared property, not a mechanical key, so
+# mechanical_keys below leaves it out of the R-146-02 diff.
+ERA_KINDS = ("space", "ground")
 REQUIRED_KEYS = (
     "era_id", "era_display_name", "era_accent_color",
     "era_spatial_scale", "era_tone", "era_order",
@@ -103,6 +106,9 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
         findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", "era_order must be an int"))
     if "test_only" in manifest and not isinstance(manifest["test_only"], bool):
         findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", "test_only must be a bool when present"))
+
+    if "kind" in manifest and manifest["kind"] not in ERA_KINDS:
+        findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", f"kind must be one of {ERA_KINDS} when present"))
 
     era_id = manifest.get("era_id")
     units = manifest.get("units")

@@ -371,6 +371,7 @@ typedef struct om_terrain_state {
     int32_t *height_cm;   /* cells_w * cells_h, row-major, cm (fixed point) */
     uint8_t *band;        /* 1 to OM_TERRAIN_BANDS per cell */
     uint8_t *walkable;    /* 0 or 1 per cell */
+    uint8_t *walk[OM_TERRAIN_BANDS]; /* terrain stage 2: per engine layer, 1 where a walker may stand; NULL until derived */
     om_slope *slopes;     /* OM_TERRAIN_SLOPE_CAP entries allocated */
     uint32_t slope_count;
 } om_terrain_state;
@@ -378,6 +379,12 @@ void om_terrain_state_free(void *state);
 void om_terrain_install_net_hooks(om_world *w);
 /* Writes the blocked bits for the ground (R-200-02): layers 1..k-1 blocked at every cell; cleared on regenerate. */
 void om_terrain_apply_ground(om_world *w);
+
+/* Terrain stage 2 (spec 2026-10-06). Route for a walking unit over the walk mask of its layer, crossing layers only
+ * by slope links; see the spec for the return values. Body in csrc/walk_route.c. */
+int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double *pts, uint32_t cap, double *seconds);
+/* Steers every walking unit one tick along its om_walk_route; body in csrc/tactical_move.c. */
+void om_move_walker_tick(om_world *w);
 
 /* Terrain noise (csrc/terrain_noise.c), integer only, no libm, no world rng.
  * Fixed point is Q16.16 (1.0 = 65536). Lattice spacing is 1.0 in input units.

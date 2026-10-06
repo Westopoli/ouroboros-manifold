@@ -189,6 +189,7 @@ typedef struct {
     om_fog_era_flag era_flags[OM_FOG_MAX_ERA_FLAGS];
     uint32_t n_era_flags;
     char era_name[OM_FOG_ERA_NAME_LEN];
+    int era_kind; /* terrain stage 2: 0 space (default), 1 ground; see om_set_era_kind */
 
     int mission_phase;
     int mission_started;
@@ -651,6 +652,18 @@ void om_set_era_name(om_world *w, const char *name) {
     st->era_name[OM_FOG_ERA_NAME_LEN - 1] = '\0';
 }
 
+/* Terrain stage 2: 0 space, 1 ground (a pack field, Q-146-04 a); 1 for any other value, nothing changed. */
+int om_set_era_kind(om_world *w, int kind) {
+    if (!w || (kind != 0 && kind != 1)) return 1;
+    om_fog(w)->era_kind = kind;
+    return 0;
+}
+
+int om_era_kind(const om_world *w) {
+    const om_fog_state *st = w ? (const om_fog_state *)w->fog_state : NULL;
+    return st ? st->era_kind : 0;
+}
+
 double om_strategic_agent_read_region_field(const om_world *w, int32_t p0, uint32_t region_idx, om_field field) {
     /* S-093 R-093-03: the strategic sim reads every neighbor region's fields
      * without tactical fog (E-05); tactical fog never gates this. */
@@ -1007,6 +1020,7 @@ static uint64_t om_fog_section_hash(const om_world *w) {
         h = fog_ck_word(h, (uint64_t)(int64_t)st->era_flags[i].on);
     }
     h = fog_ck_str(h, st->era_name, OM_FOG_ERA_NAME_LEN);
+    h = fog_ck_word(h, (uint64_t)(int64_t)st->era_kind);
     h = fog_ck_word(h, (uint64_t)(int64_t)st->mission_phase);
     h = fog_ck_word(h, (uint64_t)(int64_t)st->mission_started);
     h = fog_ck_word(h, st->mission_begin_base_tick);
@@ -1086,6 +1100,7 @@ static void fog_state_put(fog_sw *sw, const om_fog_state *st) {
         fog_sw_i32(sw, st->era_flags[i].on);
     }
     fog_sw_str(sw, st->era_name, OM_FOG_ERA_NAME_LEN);
+    fog_sw_i32(sw, st->era_kind);
     fog_sw_i32(sw, st->mission_phase);
     fog_sw_i32(sw, st->mission_started);
     fog_sw_u64(sw, st->mission_begin_base_tick);
@@ -1184,6 +1199,7 @@ static void fog_state_get(fog_sr *sr, om_fog_state *st) {
         st->era_flags[i].on = fog_sr_i32(sr);
     }
     fog_sr_str(sr, st->era_name, OM_FOG_ERA_NAME_LEN);
+    st->era_kind = fog_sr_i32(sr);
     st->mission_phase = fog_sr_i32(sr);
     st->mission_started = fog_sr_i32(sr);
     st->mission_begin_base_tick = fog_sr_u64(sr);

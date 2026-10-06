@@ -314,6 +314,9 @@ uint32_t col_cur;
     uint32_t reach_n;
     int32_t  reach_type[OM_PP_REACH_MAX];
     uint32_t reach_up[OM_PP_REACH_MAX], reach_down[OM_PP_REACH_MAX];
+    /* Terrain stage 2: movement kind per unit type (om_movement_kind), a plain array indexed by type id (0 = flying).
+     * Kept and carried across om_tactical_reset like reach. See also: om_roster_set_movement_kind. */
+    int32_t  kind_of_type[OM_PP_REACH_MAX];
 } om_move_state;
 
 enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
@@ -337,6 +340,10 @@ static void om_move_transit_cancel(om_move_unit *mu) {
 #define OM_PP_MULT_HI 10.0
 #define OM_PP_TERRAIN_STEEP_DEFAULT 35.0 /* provisional (2026-10-05) */
 #define OM_PP_TERRAIN_STEEP_HI 90.0
+#define OM_PP_SLOPE_FACTOR_DEFAULT 1.1 /* R-004-07: Westley 2026-10-06; provisional (2026-10-06) */
+#define OM_PP_SIGHT_EYE_DEFAULT 50.0 /* wu above the ground; provisional (2026-10-06) lab draft */
+#define OM_PP_SIGHT_EYE_HI 1000.0
+#define OM_PP_FLYER_SEEN_DEFAULT 1.5 /* provisional (2026-10-06) lab draft; Westley: longer than the flyer's own vision */
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
 /* R-162-01: 5 s at the tactical rate; om_constants.h OM_PULSE_REVEAL_TICKS (40) is the bible's old 2 s */
@@ -382,6 +389,13 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_SWITCH(0.0),
     /* R-200-03, Q-189-02: steepest walkable slope in degrees, 35 default (provisional 2026-10-05; Westley owns) */
     { OM_PP_REAL, OM_PP_TERRAIN_STEEP_DEFAULT, 0.0, OM_PP_TERRAIN_STEEP_HI },
+    /* R-004-07: slope speed divided going up, multiplied going down (1.1 each; Westley 2026-10-06; provisional) */
+    { OM_PP_REAL, OM_PP_SLOPE_FACTOR_DEFAULT, 1.0, OM_PP_MULT_HI },
+    { OM_PP_REAL, OM_PP_SLOPE_FACTOR_DEFAULT, 1.0, OM_PP_MULT_HI },
+    /* R-005-10: eye height above the ground at both ends of a sight line, wu (lab draft) */
+    { OM_PP_REAL, OM_PP_SIGHT_EYE_DEFAULT, 0.0, OM_PP_SIGHT_EYE_HI },
+    /* R-005-11: ground-era flyer seen from max(sensor radii) x this; at least 1 so it is seen from farther than it sees */
+    { OM_PP_REAL, OM_PP_FLYER_SEEN_DEFAULT, 1.0, OM_PP_MULT_HI },
 };
 
 static void om_pp_load_defaults(double *out) {
@@ -3067,6 +3081,24 @@ int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t
     return 0;
 }
 
+/* Terrain stage 2: 0 ok; 1 unknown type (including a type id the per-type array cannot hold); 2 unknown kind. */
+int om_roster_set_movement_kind(om_world *w, int type, int kind) {
+    if (!w || type < 0 || type >= OM_PP_REACH_MAX || om_unit_profile_ability_count(w, type) == 0u) return 1;
+    if (kind != OM_MOVE_FLYING && kind != OM_MOVE_WALKING && kind != OM_MOVE_SWIMMING) return 2;
+    om_ms(w)->kind_of_type[type] = kind;
+    return 0;
+}
+
+int om_unit_profile_movement_kind(const om_world *w, int type) {
+    const om_move_state *ms;
+    if (!w || type < 0 || type >= OM_PP_REACH_MAX || om_unit_profile_ability_count((om_world *)w, type) == 0u) return OM_MOVE_FLYING;
+    ms = (const om_move_state *)w->move_state;
+    return ms ? ms->kind_of_type[type] : OM_MOVE_FLYING;
+}
+
+/* Terrain stage 2 stub: the walker's per-tick steering lands with the move lane (spec 2026-10-06). */
+void om_move_walker_tick(om_world *w) { (void)w; }
+
 int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down) {
     const om_move_state *ms;
     uint32_t i, u = 0, d = 0;
@@ -3254,6 +3286,7 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_word(h, ms->reach_up[k]);
         h = mv_word(h, ms->reach_down[k]);
     }
+    for (k = 0; k < OM_PP_REACH_MAX; k++) h = mv_word(h, (uint64_t)(int64_t)ms->kind_of_type[k]);
     return h;
 }
 typedef struct {
@@ -3352,6 +3385,7 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_u32(s, ms->reach_up[k]);
         mv_put_u32(s, ms->reach_down[k]);
     }
+    for (k = 0; k < OM_PP_REACH_MAX; k++) mv_put_i32(s, ms->kind_of_type[k]);
 }
 static uint32_t om_move_save_size(const om_world *w) {
     const om_move_state *ms = (const om_move_state *)w->move_state;
@@ -3484,6 +3518,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         ms->reach_up[k] = mv_get_u32(&r);
         ms->reach_down[k] = mv_get_u32(&r);
     }
+    for (k = 0; k < OM_PP_REACH_MAX && r.ok; k++) ms->kind_of_type[k] = mv_get_i32(&r);
     if (!r.ok || r.pos != len) {
         free(ms);
         return 1;

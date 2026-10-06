@@ -2393,9 +2393,13 @@ void om_tactical_reset(om_world *w) {
     om_tac_state *st = om_tac(w);
     double kept[OM_TP__COUNT];
     uint32_t kept_up[OM_UNIT_TYPE_COUNT], kept_down[OM_UNIT_TYPE_COUNT];
+    int kept_kind[OM_UNIT_TYPE_COUNT];
     int k;
     for (k = 0; k < OM_TP__COUNT; k++) kept[k] = om_tactical_get_param(w, (om_tac_param)k);
-    for (k = 0; k < OM_UNIT_TYPE_COUNT; k++) om_unit_profile_reach(w, k, &kept_up[k], &kept_down[k]);
+    for (k = 0; k < OM_UNIT_TYPE_COUNT; k++) {
+        om_unit_profile_reach(w, k, &kept_up[k], &kept_down[k]);
+        kept_kind[k] = om_unit_profile_movement_kind(w, k);
+    }
     om_tac_release_arrays(st);
     memset(st, 0, sizeof(*st));
     st->next_unit_id = 1;
@@ -2408,6 +2412,7 @@ void om_tactical_reset(om_world *w) {
     }
     for (k = 0; k < OM_UNIT_TYPE_COUNT; k++) {
         if (kept_up[k] != 0 || kept_down[k] != 0) om_roster_set_reach(w, k, kept_up[k], kept_down[k]);
+        if (kept_kind[k] != OM_MOVE_FLYING) om_roster_set_movement_kind(w, k, kept_kind[k]);
     }
 }
 
