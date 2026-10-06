@@ -29,6 +29,9 @@
     "net_state_get",
     "net_state_put",
     "net_state_diff",
+    "terrain_generate",
+    "terrain_dump",
+    "terrain_probe",
     "quit"
    ]
   },
@@ -73,6 +76,9 @@
   },
   "arg": {
    "type": "integer"
+  },
+  "canvas": {
+   "type": "number"
   },
   "layer": {
    "type": "integer"
