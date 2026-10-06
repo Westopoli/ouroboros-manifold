@@ -17,6 +17,19 @@ Rules for this file:
 
 Copy a command, paste it in a terminal, look, give feedback. Whoever builds or moves a prototype updates its row in the same commit. The scene path must come last.
 
+**On a Mac.** The mockups are plain Godot scenes and need no C sim (verified 2026-10-06: `tests/test_mockup_without_pipe.gd`). Install Godot 4.6.x (the .app), then in a clone of the repo:
+
+```
+git fetch origin && git checkout mac/prototypes && git pull
+GODOT=/Applications/Godot.app/Contents/MacOS/Godot
+$GODOT --path . res://scenes/mockups/walkers/walkers_mockup.tscn        # walkers and flyers on generated land (keys: F1-F3 seeds, B speed, G slope, C climb, 1-5 layer, V view)
+$GODOT --path . res://scenes/mockups/landscape/landscape_mockup.tscn    # land mockup pass 6b (Kit button: space kit)
+$GODOT --path . res://scenes/mockups/layout/layout_mockup.tscn          # layout engine pass 1
+$GODOT --path . res://scenes/mockups/settlement/settlement_mockup.tscn  # settlement pass 1
+```
+
+The first launch imports assets (about a minute). `mac/prototypes` is main plus the prototype branches (`push/proto-land-iter`, `push/proto-walkers`, `push/proto-layout`), merged read-only; it is rebuilt when a prototype moves, never edited directly. The Linux lines below keep their x11/opengl3 flags; a Mac does not need them.
+
 Two folders hold what can be viewed:
 
 - `~/Projects/om-push/wt/view-main`: current main, already imported. Refresh it before viewing anything new on main:
@@ -160,11 +173,10 @@ Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness
 
 | Group | Flags | Notes |
 |---|---|---|
-| Multiplayer | Q-144-03 (re-asked: who hosts the next sitting of a locked universe); the lockstep drop time, 30 s here against 60 s in the lockstep spec | Blocks S-144 and the lobby. Everything else in S-140 to S-144 and the pair stories answered 2026-10-06 |
+| Multiplayer | Q-144-03 (re-asked: who hosts the next sitting of a locked universe). The lockstep drop is 30 s, so the 60 s provisional setting in `plans/2026-10-05-lockstep-backend-spec.md` needs updating by its owner | Blocks S-144 and the lobby. Everything else in S-140 to S-144 and the pair stories answered 2026-10-06 |
 | Economy and bases | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05 | E-22; the largest set. An ordered answer sheet is not yet drafted |
 | Settlements | Q-193-01 to -06, Q-222-01 | After the land generator |
 | Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
-| Client budgets | Q-194-01, Q-234-01, Q-240-01, Q-236-01 | Zoom and drawing |
 
 ## 4. Not planned yet
 
@@ -179,7 +191,7 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 | Space generator | none in the bible yet | E-17 | Research and mockup passes 1 to 5; pass 6 specified | Waits on decisions S1 to S4, the stories being written, and the mask contract |
 | Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, 1 flag open | Waits on the flag sheet, the places prototype Westley approves (row above), and plan A. Q-191-04 closed 2026-10-03: the rewrites of S-112 to S-119 can now be written |
 | Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-01 to -06 open | After the land generator |
-| Zoom and drawing | S-194, S-234, S-236, S-240 | E-17, E-16, E-18 | Blocked on Westley's budgets (Q-194-01, Q-234-01, Q-240-01) | Client work, after a generator exists |
+| Zoom and drawing | S-194, S-234, S-236, S-240 | E-17, E-16, E-18 | Q-194-01 needs research first (keep the backend true to the ground without heavy snapping, Westley 2026-10-06); the Sand Table waits on its prototype (Q-103-05); budgets for thousands stay a direction | Client work, after a generator exists |
 | Strongpoints and weather | S-218, S-219 | E-15 | Design decided, flags open | After the land generator |
 | Economy and bases | S-167 to S-182, S-202 to S-206, S-209 to S-217 | E-22, E-11, E-12, E-13, E-10, E-14 | Design decided, flags open; S-182 open | Largest group; needs places from a generator |
 | Cross-epic follow-ons | S-220, S-223 to S-228, S-230 to S-233, S-235, S-238, S-239, S-241 to S-244 | several | Mixed; S-224, S-225, S-226 open | Each follows its parent group |
@@ -192,14 +204,15 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Group | Prototype | State |
 |---|---|---|
 | Loop fix workflow; finishing the MVP loop | Not needed (wiring) | |
-| Land generator | Mockup: `scenes/mockups/landscape/` | Pass 6b approved 2026-10-05 with markers (layout under it flawed, scale and size are later polish). Ground substrate in the C sim may be planned; "layout before landscape" relaxed for the substrate the same day |
-| Walking and flying units on land | Mockup: `scenes/mockups/walkers/` (`push/proto-walkers`) | Built and approved 2026-10-05; slope-speed, flyer-climb and scale choices still his (`research/walkers/README.md`) |
+| Land generator | Mockup: `scenes/mockups/landscape/` | Approved 2026-10-06 (Westley: "Landscape engine is also approved"), after pass 6b's markers of 2026-10-05 (scale and size are later polish). Integration: terrain stage 1 (the field) landing 2026-10-06; stage 2 walkers and slopes, stage 3 pipe and client, to plan |
+| Walking and flying units on land | Mockup: `scenes/mockups/walkers/` (`push/proto-walkers`) | Approved final 2026-10-06 (Westley: "Walkers prototype approved, no need for any more iteration that one can be integrated as is"). Integration = terrain stage 2 (walking kind, slope routing, midline rule) |
 | High ground worth | Instrument: `scripts/skilllab/highground.py` (`push/proto-highground`) | Built 2026-10-05; stands in a hill with space mechanics, so it is a space-lab result, not a ground answer; its fate open |
 | Space generator | Mockup: space kit mode | Pass 6 built 2026-10-03, in review. Past the three-pass limit set the same day; the limit applies from the next direction change |
 | Movement and layers | Instrument: skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists. Answers the number flags: costs, times, caps, yields, technology, doctrine weights |
 | Economy and bases, look | Mockup, needed | None exists. Answers lots and placement, what buildings show, disguise, lanes, the two economy screens |
 | Settlements | Mockup: `scenes/mockups/settlement/` | Pass 1 built 2026-10-03, waiting for Westley's review |
+| Layout engine | No prototype (Westley, 2026-10-06: "Layout engine doesn't need a prototype, we'll get the data on what layouts work from the simulation engine") | The space lab's layout search supplies the data; the layout-engine chat's pass 1 (`push/proto-layout`) stands as reference only |
 | Multiplayer | Not needed for transport; mockup needed for lobby screens | None exists |
 
 ## 5. Dependency notes

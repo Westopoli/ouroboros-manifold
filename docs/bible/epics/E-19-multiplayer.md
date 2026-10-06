@@ -48,7 +48,7 @@ As a player, I want my orders to reach every peer with no server in the middle, 
 Rules
 - R-140-01  Given a match, When peers connect, Then they connect peer to peer over the Steam Datagram Relay with a direct-connect fallback negotiated by the API.
 - R-140-02  Given a tactical tick, When commands are exchanged, Then each peer's commands for tick t + d are sent on a reliable channel and every peer applies all peers' commands for tick t in a fixed peer order before advancing The input delay d is 3 tactical ticks (150 ms) (Westley, 2026-10-06).
-- R-140-03  Given a peer that has not delivered its commands for tick t, When the deadline passes, Then every peer stalls until they arrive or the peer is dropped after 30 seconds (Westley, 2026-10-06; the deadline is 1 second) [the lockstep backend spec of 2026-10-05 holds the drop at 60 seconds as a provisional setting: to be reconciled].
+- R-140-03  Given a peer that has not delivered its commands for tick t, When the deadline passes, Then every peer stalls until they arrive or the peer is dropped after 30 seconds (Westley, 2026-10-06; the deadline is 1 second). The lockstep backend spec of 2026-10-05 holds the drop at 60 seconds as a provisional setting, which this supersedes.
 - R-140-04  Given a dropped peer that held an economy seat, When the match continues, Then the rules that run an economy with nobody in the seat take the seat (E-22 S-179, S-181); Given any other dropped peer, Then its units stand idle, and every other player is alerted to the disconnection; a disconnected player's problem is theirs, not the team's to solve (Westley, 2026-10-06).
 - R-140-05  Given the handshake, When measured, Then it completes within 5 s in the common case.
 
