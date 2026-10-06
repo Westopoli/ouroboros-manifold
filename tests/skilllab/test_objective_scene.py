@@ -43,9 +43,9 @@ def _G(side):
                  params={"spacing": 30.0})
 
 
-def _run(script, max_ticks, stalemate_ticks):
+def _run(script, max_ticks, stalemate_ticks, **extra):
     s = Setup(groups=(_G(0), _G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=stalemate_ticks,
-              sample_every=5)
+              sample_every=5, **extra)
     return fight(s, 0, False, engine=FakeEngine(script=script))
 
 
@@ -64,6 +64,7 @@ def test_setup_gains_start_distance_and_objective_defaulting_to_none():
     assert "start_distance" in fields and "objective" in fields
     s = Setup(groups=(), unit_types={})
     assert (s.start_distance, s.objective) == (None, None)
+    assert "quiet_from_first_damage" in fields and s.quiet_from_first_damage is False
 
 
 def test_setup_accepts_both_fields_as_keywords():
@@ -91,6 +92,7 @@ def test_objective_scene_sends_both_groups_to_the_objective_between_them():
     for g in (g0, g1):
         assert g.order == "attack_move" and tuple(g.goal) == tuple(setup.objective)
     assert g0.x < setup.objective[0] < g1.x
+    assert setup.quiet_from_first_damage is True
 
 
 def test_objective_scene_has_16_v_16_by_default_and_takes_the_enemy_heads():
@@ -101,20 +103,26 @@ def test_objective_scene_has_16_v_16_by_default_and_takes_the_enemy_heads():
 
 def test_no_damage_before_contact_ends_only_at_the_cap(stub_place):
     """Section 'What the audit changed', stalemate row: before first contact the only ends are the cap and a wipe."""
-    r = _run(None, max_ticks=50, stalemate_ticks=10)
+    r = _run(None, max_ticks=50, stalemate_ticks=10, quiet_from_first_damage=True)
     assert (r.outcome, r.ticks) == ("cap", 50)
 
 
 def test_quiet_window_starts_at_first_damage(stub_place):
     """Same row: first damage at tick 30, window 10 quiet ticks after it, so the fight ends stalemate at tick 40."""
-    r = _run(_hit_at(29), max_ticks=100, stalemate_ticks=10)
+    r = _run(_hit_at(29), max_ticks=100, stalemate_ticks=10, quiet_from_first_damage=True)
     assert (r.outcome, r.ticks) == ("stalemate", 40)
 
 
 def test_a_later_damage_restarts_the_quiet_window(stub_place):
     """Same row: a hit at tick 35 restarts the count, so the stalemate lands at tick 45."""
-    r = _run(_hit_at(29, 34), max_ticks=100, stalemate_ticks=10)
+    r = _run(_hit_at(29, 34), max_ticks=100, stalemate_ticks=10, quiet_from_first_damage=True)
     assert (r.outcome, r.ticks) == ("stalemate", 45)
+
+
+def test_flag_false_keeps_the_quiet_window_from_tick_zero(stub_place):
+    """Ruling 2026-10-06: default (flag False) is today's rule, 10 quiet ticks from tick 0 ends stalemate at 10."""
+    r = _run(_hit_at(29), max_ticks=100, stalemate_ticks=10)
+    assert (r.outcome, r.ticks) == ("stalemate", 10)
 
 
 def test_far_open_ground_fight_does_not_stalemate_before_contact():
