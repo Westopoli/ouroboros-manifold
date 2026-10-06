@@ -20,7 +20,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches, depth, maps, plays_space, report, scenes, skills  # noqa: E402
-from scripts.skilllab.contract import Terrain  # noqa: E402
+from scripts.skilllab.contract import Block, Terrain  # noqa: E402
+from scripts.skilllab.terrain import shift_terrain  # noqa: E402
 from tests.skilllab.fakes_scans import cell, fight, scan_of  # noqa: E402
 
 KEYS = ("choke_width_bodies", "detour_ratio", "lane_count", "blocked_layer_top", "cover_density_corridor",
@@ -33,6 +34,7 @@ SKILLED = [n for n, p in plays_space.PLAYS.items() if n in (
 COUNTERS = ["s2_mass_one_end", "s4_do_not_chase", "s1_outrange"]
 HAS_COUNTER = {"S1", "S2", "S4"}
 FLAT = Terrain(canvas=(4000.0, 4000.0))
+WALLED = Terrain(canvas=(4000.0, 4000.0), blocks=(Block(-30.0, -500.0, 30.0, -100.0, 0, 4),))
 SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="real fights; set OM_LAB_SLOW=1")
 
 
@@ -154,7 +156,7 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
 
     def lm(features, seed, *a, **k):
         seen.append((features, seed))
-        return FLAT
+        return WALLED
     monkeypatch.setattr(maps, "layout_map", lm)
     asked = []
     real = scenes.objective_scene
@@ -167,8 +169,10 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
             f.start_distance) == (8, 2, 1.5, 2, 0.1, 2800)
     assert asked == [2800]          # one shared naive blob, at the layout d
     by = {c[0]: c[1] for c in calls}
-    assert by["naive"](16, False).terrain is FLAT and by["naive"](16, False).start_distance == 2800
-    assert by["s1_hold_choke"](16, False).terrain is FLAT
+    # TD-LAB-layout-shift: the layout is in play coordinates (origin = midpoint between the sides); builds translate it by that midpoint
+    shifted = shift_terrain(WALLED, 2000.0, 2000.0)
+    assert by["naive"](16, False).terrain == shifted and by["naive"](16, False).start_distance == 2800
+    assert by["s1_hold_choke"](16, False).terrain == shifted
 
 
 def test_run_layout_scores_from_the_scans(monkeypatch):
