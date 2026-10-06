@@ -32,6 +32,24 @@ class Step:
     when: tuple               # ("tick", n) | ("arrive", radius) | ("seen",)
     order: str                # "attack_move" | "move" | "group_move" | "idle" | "guard" (idle clears the group's orders; guard holds and fires in range)
     goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle and guard
+    layer: Optional[int] = None    # ping and set_layer: the layer
+    on: Optional[bool] = None      # set_emission: the flag
+    casters: str = "all"           # ping: every living unit pings once
+
+    @classmethod
+    def ping(cls, layer, x, y, casters="all", when=("tick", 0)):
+        """Every living unit pings (x, y) on `layer`; group is 0 (no group name exists), only the 'all' casters are built."""
+        if casters != "all":
+            raise ValueError("ping casters must be 'all', got %r" % (casters,))
+        return cls(0, when, "ping", (x, y), layer=layer, casters=casters)
+
+    @classmethod
+    def set_layer(cls, group, layer, when=("tick", 0)):
+        return cls(group, when, "set_layer", layer=layer)
+
+    @classmethod
+    def set_emission(cls, group, on, when=("tick", 0)):
+        return cls(group, when, "set_emission", on=bool(on))
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,8 @@
 """The order timeline of fight(): Steps that issue later orders (plan Phase S)."""
 import math
 
-ORDERS = ("attack_move", "move", "group_move", "idle", "guard")
+ORDERS = ("attack_move", "move", "group_move", "idle", "guard", "ping", "set_layer", "set_emission")
+NO_MOVE = ("idle", "guard", "ping", "set_layer", "set_emission")
 
 
 def first_anchors(setup):
@@ -28,7 +29,7 @@ def validate(setup):
             pass
         else:
             raise ValueError("bad step condition %r" % (s.when,))
-        if s.order not in ("idle", "guard") and s.goal is not None and (
+        if s.order not in NO_MOVE and s.goal is not None and (
                 not isinstance(s.goal, (tuple, list)) or len(s.goal) != 2):
             raise ValueError("step goal must be (x, y), got %r" % (s.goal,))
 
@@ -51,7 +52,7 @@ class Timeline:
                 self.pending.remove(i)
             elif self._due(s, alive, tick, hp, zero):
                 self.pending.remove(i)
-                self._issue(s, alive)
+                self._issue(s, alive, hp)
                 self.fired.append((i, tick))
 
     def _due(self, s, alive, tick, hp, zero):
@@ -81,7 +82,19 @@ class Timeline:
                   for u in self.ids[gi] if hp[u] > 0]
         return any(self.engine.can_see(self.w, a, t) for a in alive for t in others)
 
-    def _issue(self, s, alive):
+    def _issue(self, s, alive, hp):
+        if s.order == "ping":
+            for gi in range(len(self.setup.groups)):
+                for u in self.ids[gi]:
+                    if hp[u] > 0:
+                        self.engine.ping(self.w, u, s.layer, s.goal[0], s.goal[1])
+            return
+        if s.order == "set_layer":
+            self.engine.set_layer(self.w, alive, s.layer)
+            return
+        if s.order == "set_emission":
+            self.engine.set_emission(self.w, alive, s.on)
+            return
         if s.order == "idle":
             self.engine.clear_orders(self.w, alive)
             return
