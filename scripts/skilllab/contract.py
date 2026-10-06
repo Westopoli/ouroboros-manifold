@@ -82,7 +82,7 @@ class Setup:
     groups: tuple
     unit_types: dict          # name -> stats; see spec AC 5 (full stats, or base + scale/set)
     abilities: bool = False   # False calls om_tactical_disable_abilities
-    max_ticks: int = 6000
+    max_ticks: int = 12000
     stalemate_ticks: int = 400
     sample_every: int = 5     # ticks between firing-count samples
     trace: bool = False       # True records FightResult.trace
