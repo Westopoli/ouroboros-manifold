@@ -272,7 +272,6 @@ def test_page_and_csv(tmp_path):
     assert PROVISIONAL in page and page.count("<svg") >= 73
     for label in EXPRESSED:
         assert label in page
-    assert REACH_NOTE in page
     with open(paths["csv"], newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     assert len(rows) == 54 * 17 * 2 + 19 * 6 * 2

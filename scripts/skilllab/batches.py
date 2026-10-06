@@ -29,10 +29,11 @@ PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
 LAYER_SCENES = ("mirror", "choke", "choke_phase_b")
-LAYER_NOTES = {"LB": "needs reach by type (om_roster_set_reach) and Phase C G5",
-               "LC": "needs reach by type (om_roster_set_reach) and Phase C G5"}
+LAYER_REACH = {"Vanguard": (0, 0)}   # the reach table's Vanguard row (REACH_TABLE); the type's reach goes in through set_reach
+REACH_NOTE = ("reach set per the reach table (Vanguard 0 up 0 down); every unit is on layer 0, so the "
+              "layer settings have no effect in this scene (a layered scene is still needed)")
 REACH_TABLE = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
-               "Bombard and Bastion 0 up 2 down (needs om_roster_set_reach bound in the harness and Phase C G5)")
+               "Bombard and Bastion 0 up 2 down (set per cell on the unit type through om_roster_set_reach)")
 
 
 @dataclass(frozen=True)
@@ -213,6 +214,19 @@ def _layer_settings(u1=None, u2=None, d=None):
     return s
 
 
+def _with_reach(build):
+    """Side units become a Vanguard-based type that carries its table reach (stale gate removed: set_reach is bound)."""
+    name = "VanguardL"
+
+    def wrapped(enemy_heads, swap):
+        setup = build(enemy_heads, swap)
+        groups = tuple(dataclasses.replace(g, unit=name) if g.unit == "Vanguard" else g for g in setup.groups)
+        types = {**setup.unit_types, name: {"base": "Vanguard", "reach": LAYER_REACH["Vanguard"]}}
+        return dataclasses.replace(setup, groups=groups, unit_types=types)
+    wrapped.labels = getattr(build, "labels", None)
+    return wrapped
+
+
 def _layers():
     scenes = {"mirror": asym_play(16, Side("blob"), Side("blob")),
               "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0)),
@@ -221,15 +235,11 @@ def _layers():
     cells = []
 
     def add(table, scene, suffix, settings):
-        build = scenes.get(scene) if table == "LA" else None
+        build = scenes[scene] if table == "LA" else _with_reach(scenes[scene])
         label = "%s:%s%s" % (table, scene, suffix)
         size, enemy = (8, (7, 12)) if scene == "choke_phase_b" else (16, (8, 24))
-        if build is not None:
-            cells.append(_cell(label, size, build, skills.DRAFT, "settings are draft sweep points (A174)",
-                               enemy=enemy, settings=settings))
-            return
-        note = LAYER_NOTES[table]
-        cells.append(_cell(label, size, None, NOT_EXPRESSED, note, enemy=enemy, settings=settings))
+        note = "settings are draft sweep points (A174)" if table == "LA" else REACH_NOTE
+        cells.append(_cell(label, size, build, skills.DRAFT, note, enemy=enemy, settings=settings))
 
     for scene in LAYER_SCENES:
         add("LA", scene, "", _layer_settings())
@@ -260,9 +270,8 @@ def _layers():
                "defenders against 7 to 12 attackers. The last 16 cells are a Raider mirror over collision radius "
                "and attack range (reach against body size), also drafts."),
         cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("the tall-cover scene (needs reach)", REACH_TABLE,
-                     "the LB and LC tables wait for reach",
-                     "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
+        unexpressed=("the tall-cover scene (units on different layers; reach is bound but this batch has no layered scene, see the landscape batch)", REACH_TABLE,
+                                          "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
 
 
 def get(name):
