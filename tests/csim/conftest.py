@@ -530,7 +530,8 @@ class OMTacParam:
     AREA_DOWN_3 = 57
     AREA_DOWN_4 = 58
     TARGET_POLICY_FACTION_1 = 59
-    _COUNT = 60
+    TERRAIN_STEEP_DEG = 60
+    _COUNT = 61
 
 
 class OMEmission:
@@ -1771,6 +1772,20 @@ class OmSelectionRecord(ctypes.Structure):
     ]
 
 
+class OMSlope(ctypes.Structure):
+    _fields_ = [
+        ("x0", ctypes.c_double),
+        ("y0", ctypes.c_double),
+        ("x1", ctypes.c_double),
+        ("y1", ctypes.c_double),
+        ("mx", ctypes.c_double),
+        ("my", ctypes.c_double),
+        ("length", ctypes.c_double),
+        ("lower_band", ctypes.c_int32),
+        ("upper_band", ctypes.c_int32),
+    ]
+
+
 class OMStructureHUD(ctypes.Structure):
     _fields_ = [
         ("timer_progress", ctypes.c_double),
@@ -1871,6 +1886,7 @@ STRUCT_C_NAMES = {
     "OmRevoltRecord": "om_revolt_record",
     "om_revolt_record": "om_revolt_record",
     "OmSelectionRecord": "om_selection_record",
+    "OMSlope": "om_slope",
     "OMStructureHUD": "om_structure_hud",
     "om_structure_hud": "om_structure_hud",
     "OmTimeJumpReport": "om_time_jump_report",
@@ -2684,6 +2700,18 @@ def _bind_e17(lib):
     _bind(lib, "om_proc_arch_section_is_era_agnostic", [ctypes.c_int], ctypes.c_int, ("section_type",))
     _bind(lib, "om_render_detect_repeated_tile_boundary", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_route_grid_is_cell_blocked", [ctypes.c_double], ctypes.c_int, ("obstacle",))
+    _bind(lib, "om_terrain_band_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
+    _bind(lib, "om_terrain_band_heights", [W, P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
+    _bind(lib, "om_terrain_cell_band", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "cx", "cy"))
+    _bind(lib, "om_terrain_cells", [W, P(ctypes.c_uint32), P(ctypes.c_uint32)], ctypes.c_uint32, ("w", "w_cells", "h_cells"))
+    _bind(lib, "om_terrain_dump_bands", [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
+    _bind(lib, "om_terrain_generate", [W, ctypes.c_uint64, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "seed", "canvas_w", "canvas_h"))
+    _bind(lib, "om_terrain_ground_at", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "layer", "x", "y"))
+    _bind(lib, "om_terrain_height_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "x", "y"))
+    _bind(lib, "om_terrain_present", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_terrain_slope_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_terrain_slope_get", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
+    _bind(lib, "om_terrain_walkable_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
     _bind(lib, "om_unit_get_position", [W, ctypes.c_uint32, V], None, ("w", "unit_id", "byref"))
     _bind(lib, "om_unit_order_hold_node", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "unit_id", "node_id"))
     lib._e17_bound = True

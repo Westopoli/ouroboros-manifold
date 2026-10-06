@@ -334,6 +334,8 @@ static void om_move_transit_cancel(om_move_unit *mu) {
  * section 4). The ranges are the writer's refusal bounds for the lab's setting call, never game values (A133 Q-C9);
  * they are named here because om_constants.h has no home for them. */
 #define OM_PP_MULT_HI 10.0
+#define OM_PP_TERRAIN_STEEP_DEFAULT 35.0 /* provisional (2026-10-05) */
+#define OM_PP_TERRAIN_STEEP_HI 90.0
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
 #define OM_PP_PING_REVEAL_HI 1200
@@ -373,6 +375,8 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
     /* A196: faction 1's target policy, -1 = unset (follows OM_TP_TARGET_POLICY); lab only */
     { OM_PP_INT, -1.0, -1.0, 1.0 },
+    /* R-200-03, Q-189-02: steepest walkable slope in degrees, 35 default (provisional 2026-10-05; Westley owns) */
+    { OM_PP_REAL, OM_PP_TERRAIN_STEEP_DEFAULT, 0.0, OM_PP_TERRAIN_STEEP_HI },
 };
 
 static void om_pp_load_defaults(double *out) {

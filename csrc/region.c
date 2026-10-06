@@ -162,6 +162,9 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     om_support_install_net_hooks(w);
     om_mission_install_net_hooks(w);
     om_mapgen_install_net_hooks(w);
+    w->terrain_state = NULL;
+    w->terrain_state_free = NULL;
+    om_terrain_install_net_hooks(w);
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes
      * faction_stance_counter/faction_cooperative_since (0 = never-counted /
@@ -203,6 +206,9 @@ void om_world_free(om_world *w) {
     }
     if (w->net_state && w->net_state_free) {
         w->net_state_free(w->net_state);
+    }
+    if (w->terrain_state && w->terrain_state_free) {
+        w->terrain_state_free(w->terrain_state);
     }
     if (w->mission_state && w->mission_state_free) {
         w->mission_state_free(w->mission_state);
