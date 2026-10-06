@@ -17,7 +17,7 @@
 
 The engine is a skeleton that never names an era. Eras are packs: names, art, prose, unit models by tier, building pieces and environment assets, landforms and environmental troubles, resource names, doctrines, naming pools, chronicle and briefing fragments, and per-era config values the engine consumes uniformly. Maps, era systems, and civilizations are built as transferable systems, Fortnite-skin style, so any map, any skin, any civilization works in any era. The base SKU on Steam costs $15 and buys 3 to 5 eras to start, and the first build starts with two eras, one in space and one on land; each new era costs $3 to $5, some earnable through play and some exclusive. Era unlocks are the one progression unlock at launch. A campaign can move chronologically through eras the player owns.
 
-At launch the two eras' units and rules are essentially the same and the landscape and visuals differ (Westley, 2026-10-02). Differentiation of feel comes after launch as the Climate of War (S-151): per-era fog thickness, engagement pace, and reinforcement rate.
+At launch the two eras' units and rules are the same within an era kind; between space and ground the vision model, the ping and the vision units differ (E-01 S-005, S-162; Westley, 2026-10-02 and 2026-10-05), and the landscape and visuals differ. Differentiation of feel comes after launch as the Climate of War (S-151): per-era fog thickness, engagement pace, and reinforcement rate.
 
 ## Obviously working in 60 seconds
 
@@ -46,7 +46,7 @@ Direction changed 2026-10-02, rewrite pending: a pack also carries what the econ
 
 Rules
 - R-146-01  Given an era pack, When validated, Then it contains: identity (name, spatial scale, tone), three tier definitions, one unit model per roster type per tier and per-type silhouette conformance (E-18 S-132), 3 to 6 tiered structures, 5 to 10 environment objects, the ability visual mappings for every ability in the roster, attack visual categories per type, era-specific naming pools, era-specific chronicle and briefing fragments, a strategic view definition, and the per-era config values (unit stat profile per tier, restriction mask or none, elevation flag, reinforcement constants, fog constants).
-- R-146-02  Given the launch constraint (A-321), When per-era config values are set for the three launch eras, Then they are identical across eras except art, names, and prose [Q-146-01].
+- R-146-02  Given the launch constraint (A-321), When per-era config values are set for the launch eras, Then they are identical within an era kind except art, names and prose, and between the space era and the ground era they differ only in what the kind decides: the vision model, the ping, the vision units and the landscape (E-01; Westley, 2026-10-05: "no longer byte identical, superceded") [Q-146-01 superseded; Q-146-04: whether the era kind is a pack field].
 - R-146-03  Given a pack, When any required entry is missing, Then the pack fails to load with the entry named; a missing optional asset uses the placeholder.
 - R-146-04  Given the Era Creation Template (six layers), When a new era is designed, Then it follows those layers in order and stays within the fixed engine abstractions (three categories on a fixed rock-paper-scissors, a 20 to 40 type roster per era [Q-082-05], spine plus five gradients, abstract structure types, three tiers at 0/34/67, three resources, E-22 S-167, and the building kinds of E-22 S-168).
 
@@ -58,7 +58,7 @@ Open flags: Q-146-02 (whether resource names, doctrine names and environmental t
 As a player, I want an era in space and an era on land to play, all one game, so that the smallest version I buy already spans two ages.
 
 Rules
-- R-147-01  Given the first build, When eras are listed, Then it contains exactly two, one in space and one on land, with units and rules essentially the same and landscape and visuals different (Westley, 2026-10-02), chronologically ordered [Q-147-01: the Settled Reach is the space era; the land era is unnamed and undesigned].
+- R-147-01  Given the first build, When eras are listed, Then it contains exactly two, one in space and one on land, each with an era kind, with units and rules the same within a kind and the vision model, ping, vision units, landscape and visuals different between them (Westley, 2026-10-02 and 2026-10-05), chronologically ordered [Q-147-01: the Settled Reach is the space era; the land era is unnamed and undesigned].
 - R-147-02  Given any era, When a mission runs, Then the map generator, mission generator, agents, events, combat, and chronicle are the same code with the era's pack loaded.
 - R-147-03  Given the same seed in two eras, When maps are generated, Then the map seeds are identical and the landscape and the rendering differ, since the land and space landscape systems are sisters with different objects (E-17 S-166; the space system is Q-166-02) [Q-147-02: whether eras share map seeds or eras may weight layouts differently].
 
@@ -150,7 +150,7 @@ Open flags: Q-243-01; Q-159-08, Q-146-02, Q-146-03.
 
 - Zero era names in engine source.
 - Every pack passes the same contract test.
-- The two launch eras' units and rules are essentially the same (A-321, Westley 2026-10-02); only art, names, prose, landscape and visuals differ [Q-082-05: whether per-era rosters keep unit profiles identical across the launch packs; Q-146-02].
+- The two launch eras' units and rules are the same within an era kind (A-321, Westley 2026-10-02 and 2026-10-05); between kinds the vision model, the ping, the vision units, the landscape and the visuals differ, plus art, names and prose [Q-082-05: whether per-era rosters keep unit profiles identical across the launch packs; Q-146-02].
 
 ## Scale requirements
 

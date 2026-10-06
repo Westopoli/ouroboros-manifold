@@ -19,7 +19,7 @@ The layer system is the game's strategic defining characteristic. The battlefiel
 
 The promise this keeps for the player (vision_v2 Q6): a smaller force that understands surrounds, high ground, and layers beats a larger force that does not. Layers are one of five understandings (landscape, formation, layers, the enemy's position, unit-type matchup) that together let a smaller force beat a larger one (hub principle 4; `docs/northstar/research/layer_dynamics/README.md` section 3). Every rule below exists to make that promise testable.
 
-Era-agnostic: the engine knows "layers 1 and 2 are blocked here." The era pack decides whether that is an asteroid, a mountain, or a reef. Launch ships two simple eras, one in space (the Settled Reach) and one on land, with essentially the same units and rules and different landscape and visuals (Westley, 2026-10-02), and with no per-unit-type layer restriction mask. On a land map terrain height decides the layers (S-200). The space landscape is not designed (Q-166-02), so this epic writes no landscape rules for it.
+Era-agnostic: the engine knows "layers 1 and 2 are blocked here." The era pack decides whether that is an asteroid, a mountain, or a reef. Every era has an era kind, space or ground, a formal property of the pack (Westley, 2026-10-05: "space/ground is a formal property, though eras with flying units in ground eras like WW2 may pull from pieces of the space property to model airplane movements/vision. That's the only exception, otherwise it's a clean separation"). The kind decides the vision model (S-005), whether the ping exists (S-162), and whether the ground is the layers (S-200). Launch ships two simple eras, one in space (the Settled Reach) and one on land, with the same units and rules within a kind and different landscape and visuals (Westley, 2026-10-02 and 2026-10-05), and with no per-unit-type layer restriction mask. The space landscape is not designed (Q-166-02), so this epic writes no landscape rules for it.
 
 ## Obviously working in 60 seconds
 
@@ -102,14 +102,20 @@ Rules
 - R-005-03  Given the same observer and an enemy on layer 4 at distance 600, When one tick passes, Then the enemy is not visible.
 - R-005-04  Given the same observer and an enemy on layer 5 at distance 150, When one tick passes, Then the enemy is visible (two-layer factor 0.20, effective radius 200); at distance 250 it is not.
 - R-005-05  Given the same observer and an enemy on layer 1 (two layers below) at distance 150, When one tick passes, Then the enemy is visible exactly as the enemy two layers above is (R-005-04): vision is symmetric by layer distance; and Given an observer on layer 1 and an enemy on layer 4 or 5, or any pair three or more layers apart in either direction, When one tick passes, Then the enemy is never visible by passive detection at any distance.
-- R-005-06  Given an observer standing at a vantage node, When the same enemies are placed, Then the adjacent factor is 1.00, the two-layer factor is 0.40, and a three-layer enemy is visible at factor 0.20.
+- R-005-06  Given a space era and an observer standing at a vantage node (retired for ground eras, Westley, 2026-10-05: "retire them yes"; high ground sees down there, R-005-09), When the same enemies are placed, Then the adjacent factor is 1.00, the two-layer factor is 0.40, and a three-layer enemy is visible at factor 0.20.
 - R-005-07  Given an observer inside a sensor interference zone of intensity 0.5, When an enemy is on an adjacent layer, Then the effective cross-layer radius is sensor radius × 0.50 × 0.50.
 - R-005-08  Given fog on, When an enemy on another layer is outside the effective cross-layer radius, Then it is hidden from the player exactly as a same-layer enemy outside sensor radius is hidden: no silhouette, no marker, no special treatment.
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
-Vision is symmetric by layer distance to start. Passive cross-layer vision stays beside the three layer actions (S-162 to S-164), at a shorter range than the ping reaches. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
+Open flags: Q-005-05, Q-005-06, Q-005-07; Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
+Which model applies is the era kind (Westley, 2026-10-05, verbatim): "Space eras and Ground eras are different in terms of vision. Ground eras are just like Starcraft 2, high ground can see down, low ground can't see up. Space eras relies on the pinging system because there's no limit on up/down viewing like there is on land." R-005-01 to R-005-08 are the space model: symmetric by layer distance, and very limited ("passive cross-layer sight is very limited, to induce strategic depth, ping reaches past it in every layer/direction"); the factors 0.50 and 0.20 are provisional and not his [Q-005-07]. The ground model is R-005-09 to R-005-11. Q-005-02's condition on asymmetric vision (2026-10-01: "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter") still stands for the space model; the ground model is not asymmetry inside one model but the other kind's model (Westley, 2026-10-05: "Q-005-02 this is still true, it's just that we're not seperating space from ground eras").
+
+Ground model (land eras; every number provisional):
+- R-005-09  Given a ground era, an observer and an enemy within the observer's sensor radius, When the enemy is on a lower layer than the observer, Then the enemy is visible (high ground sees down); and When the enemy is on a higher layer, Then it is never visible by passive detection at any distance (Westley, 2026-10-05: "zero, like starcraft 2") [Q-005-05: the band edge and a unit on a slope].
+- R-005-10  Given a ground era, When ground stands between an observer and an enemy on the same or a lower layer, Then the ground blocks sight (Westley, 2026-10-05: "blocks site"), as cover of sufficient height does (S-007) [Q-007-01].
+- R-005-11  Given a flying unit in a ground era, When it is above the ground's layer, Then it sees down onto lower layers as high ground does, and it is visible to units below from farther away than it can see them (Westley, 2026-10-05: "yes it sees down, but it's visible from farther away than it can see") [Q-005-06: the two distances; which other pieces of the space model a ground-era flyer borrows].
+- R-005-12  Given a ground era, When vision beyond passive sight is wanted, Then it comes from units, not from the ping: seer-type units (E-11 S-201; Westley, 2026-10-05: "ground eras will get seer type units yes"; "a simple placeholder unit that's a scout is sufficient for now") and, less aggressively than the ping, scouts (R-162-04).
 
 ### S-006 — Sensor pulse
 As a commander, I want to spend a pulse to see every layer around a unit for a moment, so that scouting before a commitment is a decision with a cost.
@@ -202,19 +208,20 @@ Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
 As a commander, I want to ping a layer I choose at a place I choose and see it for a moment, so that looking across layers is something I do on purpose and at a distance.
 
 Rules
-- R-162-01  Given selected units, When the player chooses the ping, presses a layer number and clicks a place, Then every enemy unit on that layer around that place at that moment becomes visible to the player and stays visible for a short time wherever it moves, at a reach much longer than passive cross-layer vision (S-005) and well short of the whole map: radius 500, reveal 5 s, reach 2,000. Every unit can ping for now (Westley, 2026-10-05: "every unit for now"; "reveal follows units caught for a short time, starting with 5 seconds is probably good") [Q-162-01: whether cover or ground between the caster and the place stops the ping, so that it does not see behind them].
+- R-162-01  Given a space era (ground eras have no ping for now: Westley, 2026-10-05, "Not as of right now, we'll give them vision options in the form of units"; R-005-12) and selected units, When the player chooses the ping, presses a layer number and clicks a place, Then every enemy unit on that layer around that place at that moment becomes visible to the player and stays visible for a short time wherever it moves, at a reach much longer than passive cross-layer vision (S-005) and well short of the whole map: radius 500, reveal 5 s, reach 2,000. Every unit can ping for now (Westley, 2026-10-05: "every unit for now"; "reveal follows units caught for a short time, starting with 5 seconds is probably good") [Q-162-01: whether cover or ground between the caster and the place stops the ping, so that it does not see behind them].
 - R-162-02  Given a ping, When it is cast, Then it costs the player no resource, and the casting unit has a cooldown of 20 s.
 - R-162-03  Given a player whose units are pinged, When the ping lands, Then that player is told nothing. The alert, a sector of about 60 degrees pointing toward the caster, is switched off for now (Westley, 2026-10-05: "Let's skip the alert actually, I'm realizing that enemies will just ping back, switch that off for now").
-- R-162-04  Given an era without the technology for a ping, When the player pings, Then, if the era uses scouts (proposed, not decided; Westley, 2026-10-01: "we could have them send out little scouts that cost nothing"), small scouts that cost nothing carry the ping.
+- R-162-04  Given a ground era, or a space era without the technology for a ping, When the player wants to look where passive sight does not reach, Then small scouts that cost nothing may carry a look, used less aggressively than the ping (Westley, 2026-10-01: "we could have them send out little scouts that cost nothing"; 2026-10-05: "we can still keep scouts, but less aggressively than the pinging, we'll play around with what we do based on what players like") [Q-162-06: what a scout is and what it reveals].
 - R-162-05  Given a ping that has ended, When no passive detection applies, Then the units it revealed are hidden again.
 
-Inputs: ping command (selection, layer, place); era pack (ping or scouts).
+Inputs: ping command (selection, layer, place); era kind (space: ping; ground: units and scouts).
 Outputs: the revealed units for the reveal time; the cooldown of 20 s per unit.
 Open flags: Q-162-01 (whether a ping sees behind cover or ground).
 The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
+Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now").
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer see it from further away than they otherwise would: emitting doubles cross-layer sight and being seen [Q-163-01: whether "every layer" includes the emitter's own layer].
@@ -228,6 +235,7 @@ Silent is the default. The numbers are provisional runtime settings, tuned by th
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
+Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"); a ground era fights by the ground model (S-005 R-005-09 to R-005-12).
 
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].
