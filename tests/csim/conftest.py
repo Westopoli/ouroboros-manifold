@@ -530,7 +530,8 @@ class OMTacParam:
     AREA_DOWN_3 = 57
     AREA_DOWN_4 = 58
     TARGET_POLICY_FACTION_1 = 59
-    _COUNT = 60
+    PING_ALERT = 60
+    _COUNT = 61
 
 
 class OMEmission:

@@ -337,6 +337,8 @@ static void om_move_transit_cancel(om_move_unit *mu) {
 #define OM_PP_MULT_HI 10.0
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
+/* R-162-01: 5 s at the tactical rate; om_constants.h OM_PULSE_REVEAL_TICKS (40) is the bible's old 2 s */
+#define OM_PP_PING_REVEAL_DEFAULT 100
 #define OM_PP_PING_REVEAL_HI 1200
 #define OM_PP_PING_COOLDOWN_HI 12000
 
@@ -367,13 +369,15 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     OM_PP_MULT(OM_CATEGORY_MULTIPLIER_STRIKE_STRIKE),
     OM_PP_MULT(1.0), OM_PP_MULT(1.0),
     OM_PP_DIST(OM_PULSE_RADIUS),
-    { OM_PP_INT, OM_PULSE_REVEAL_TICKS, 0.0, OM_PP_PING_REVEAL_HI },
+    { OM_PP_INT, OM_PP_PING_REVEAL_DEFAULT, 0.0, OM_PP_PING_REVEAL_HI },
     { OM_PP_INT, OM_PULSE_COOLDOWN_TICKS, 0.0, OM_PP_PING_COOLDOWN_HI },
     OM_PP_DIST(OM_PP_PING_REACH_DEFAULT),
     OM_PP_VIS4, OM_PP_VIS4,
     OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
     /* A196: faction 1's target policy, -1 = unset (follows OM_TP_TARGET_POLICY); lab only */
     { OM_PP_INT, -1.0, -1.0, 1.0 },
+    /* R-162-03: the pinged side's alert, 0 off (default), 1 on */
+    OM_PP_SWITCH(0.0),
 };
 
 static void om_pp_load_defaults(double *out) {
