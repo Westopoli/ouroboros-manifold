@@ -26,6 +26,7 @@ SAVE_TICK = 150
 FOLLOW_TICKS = 500
 SLOT_SUPPORT = 8
 SLOT_MAPGEN = 9
+SLOT_TERRAIN = 10
 
 
 def _bind_save(lib):
@@ -71,9 +72,9 @@ def _saved_and_loaded(lib, world_factory):
 
 
 def _slot_header(buf, size):
-    """Offset of the support slot header (id u8, length u32 LE). Slots 8 and 9 are the
+    """Offset of the support slot header (id u8, length u32 LE). Slots 8, 9 and 10 are the
     tail of the buffer; find the unique offset where slot 8's length lands on slot 9's
-    header and slot 9's length lands exactly on the end."""
+    header, slot 9's length lands on slot 10's header and slot 10's length lands exactly on the end."""
     b = bytes(buf)
     hits = []
     for p in range(size - 10, 0, -1):
@@ -83,8 +84,11 @@ def _slot_header(buf, size):
         q = p + 5 + l8
         if q + 5 <= size and b[q] == SLOT_MAPGEN:
             l9 = int.from_bytes(b[q + 1:q + 5], "little")
-            if q + 5 + l9 == size:
-                hits.append(p)
+            r = q + 5 + l9
+            if r + 5 <= size and b[r] == SLOT_TERRAIN:
+                l10 = int.from_bytes(b[r + 1:r + 5], "little")
+                if r + 5 + l10 == size:
+                    hits.append(p)
     assert len(hits) >= 1, "could not locate the support slot header in the save"
     return hits[0]
 

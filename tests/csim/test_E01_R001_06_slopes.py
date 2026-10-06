@@ -110,7 +110,7 @@ def _save(lib, w):
 
 def _target(lib, world_factory, seed=999):
     from conftest import OMFeature
-    w = world_factory(n_regions=2, seed=seed)
+    w = world_factory(n_regions=1, seed=seed)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
     return w
 
