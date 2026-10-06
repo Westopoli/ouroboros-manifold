@@ -79,7 +79,7 @@ def run_layout(values, seed, replicates, scan_fn):
     frame = maps.Frame((-d / 2, 0.0), (d / 2, 0.0), 0)
     terrain = maps.layout_map(features, seed, frame=frame)
     naive_build = scenes.objective_scene(d)
-    builds = {name: (lambda h, swap, b=plays_space.scan_build(name): b(terrain, h, swap)) for name in SKILLED + COUNTERS}
+    builds = {name: (lambda h, swap, b=plays_space.scan_build(name): b(terrain, h, swap, d)) for name in SKILLED + COUNTERS}
     builds["naive"] = lambda h, swap: dataclasses.replace(naive_build(h, swap), terrain=terrain)
     results = {label: scan_fn(label, build, replicates) for label, build in builds.items()}
     be = {label: r.beats for label, r in results.items()}

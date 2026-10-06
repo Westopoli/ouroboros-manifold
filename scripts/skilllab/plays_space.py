@@ -205,12 +205,27 @@ PLAYS = {
 }
 
 
+def _spread(setup, start_distance):
+    anchor = {}
+    for g in setup.groups:
+        anchor.setdefault(g.side, g.x)
+    shift = (start_distance - (anchor[1] - anchor[0])) / 2
+    delta = {0: -shift, 1: shift}
+    near = lambda x: delta[min(anchor, key=lambda s: abs(anchor[s] - x))]
+    groups = tuple(dataclasses.replace(g, x=g.x + delta[g.side],
+                                       goal=None if g.goal is None else (g.goal[0] + near(g.goal[0]), g.goal[1]))
+                   for g in setup.groups)
+    steps = tuple(dataclasses.replace(t, goal=(t.goal[0] + delta[setup.groups[t.group].side], t.goal[1]))
+                  if t.goal is not None else t for t in setup.timeline)
+    return dataclasses.replace(setup, groups=groups, timeline=steps)
+
+
 def scan_build(name):
     if name not in PLAYS:
         raise ValueError("no space play named %r" % (name,))
     fn = PLAYS[name].setup_fn
 
-    def build(terrain, enemy_heads, swap):
+    def build(terrain, enemy_heads, swap, start_distance=None):
         if enemy_heads < 1:
             raise ValueError("enemy_heads must be at least 1, got %r" % (enemy_heads,))
         setup = fn()
@@ -229,6 +244,8 @@ def scan_build(name):
             new[id(g)] = dataclasses.replace(g, count=c, params=params)
         groups = tuple(new.get(id(g), g) for g in setup.groups)
         setup = dataclasses.replace(setup, groups=groups)
+        if start_distance is not None:
+            setup = _spread(setup, start_distance)
         return setup if terrain is None else dataclasses.replace(setup, terrain=terrain)
 
     return build
