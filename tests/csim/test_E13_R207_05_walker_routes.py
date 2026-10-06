@@ -381,6 +381,165 @@ def test_R_004_07_a_rising_step_costs_more_than_a_falling_one(lib, ground):
 
 
 # ================================================================ PART B: planner-b (slope links)
-# Left empty on purpose: planner-b's tests (a goal on another band reached by a slope and nowhere else; a goal across
-# steep ground reached by a slope; 600 wu slope crossing times at speed 150 and 40 matching R-004-07 within 2 ticks;
-# part A still passing) are appended here by the same test writer after planner-a lands.
+
+RAIDER_TYPE = 41                # provisional (2026-10-06): speed 150 clone
+BASTION_TYPE = 42               # provisional (2026-10-06): speed 40 clone
+TICK_SECONDS = 0.05             # provisional (2026-10-06): 20 Hz tactical tick (speed 150 steps 7.5 wu per tick)
+CROSS_TICKS = 2                 # spec: within 2 ticks
+SLOPE_600 = 600.0
+NEAR_MIN, NEAR_MAX = 3, 8       # provisional (2026-10-06): cells away from a slope end for the steep-ground cases
+
+
+class _Slope(ctypes.Structure):
+    _fields_ = [(n, ctypes.c_double) for n in ("x0", "y0", "x1", "y1", "mx", "my", "length")] + \
+               [("lower_band", ctypes.c_int32), ("upper_band", ctypes.c_int32)]
+
+
+def _slopes(lib, w):
+    lib.om_terrain_slope_get.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.POINTER(_Slope)]
+    lib.om_terrain_slope_at.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double, ctypes.POINTER(_Slope)]
+    out = []
+    for i in range(lib.om_terrain_slope_count(w)):
+        s = _Slope()
+        assert lib.om_terrain_slope_get(w, i, ctypes.byref(s)) == 0
+        out.append(s)
+    return out
+
+
+def _on_slope(lib, w, x, y):
+    return lib.om_terrain_slope_at(w, x, y, ctypes.byref(_Slope())) >= 0
+
+
+def _usable_slopes(lib, w, length=None):
+    """Slopes whose bottom cell is masked on the lower layer and top cell on the upper layer."""
+    cw, _ch = _grid(lib, w)
+    res = []
+    for s in _slopes(lib, w):
+        if length is not None and s.length != length:
+            continue
+        lo, up = s.lower_band - 1, s.upper_band - 1
+        bc, tc = _cell_of(s.x0, s.y0), _cell_of(s.x1, s.y1)
+        if _mask(lib, w, lo)[bc[1] * cw + bc[0]] and _mask(lib, w, up)[tc[1] * cw + tc[0]]:
+            res.append(s)
+    return res
+
+
+def _register_speed_types(lib, w):
+    for t, spd in ((RAIDER_TYPE, 150.0), (BASTION_TYPE, 40.0)):
+        rc = lib.om_roster_register_custom_unit(
+            w, t, lib.om_unit_profile_category(w, VANGUARD), b"clone", lib.om_unit_profile_max_hp(w, VANGUARD),
+            lib.om_unit_profile_base_damage(w, VANGUARD), lib.om_unit_profile_attack_interval(w, VANGUARD),
+            lib.om_unit_profile_attack_range(w, VANGUARD), spd, lib.om_unit_profile_sensor_radius(w, VANGUARD),
+            lib.om_unit_profile_layer_transition_time(w, VANGUARD), lib.om_unit_profile_aoe_radius(w, VANGUARD), 0)
+        assert rc == 0, f"register {t}: {rc}"
+        assert lib.om_roster_set_movement_kind(w, t, KIND_WALKING) == 0
+
+
+def _spawn_at(lib, w, utype, x, y, layer):
+    u = lib.om_unit_spawn(w, utype, 0, x, y, layer)
+    assert u != 0, "spawn failed"
+    return u
+
+
+def _assert_layer_changes_only_on_slopes(lib, w, pts, lo_mask, up_mask, cw):
+    """Each consecutive pair of route points that changes mask membership does so with a point on a slope cell."""
+    cells = _cells_of(pts)
+    for (ax, ay), (bx, by), pa, pb in zip(cells, cells[1:], pts, pts[1:]):
+        ia, ib = ay * cw + ax, by * cw + bx
+        in_lo_a, in_lo_b = lo_mask[ia], lo_mask[ib]
+        in_up_a, in_up_b = up_mask[ia], up_mask[ib]
+        if (in_lo_a and not in_up_a and in_up_b and not in_lo_b) or (in_up_a and not in_lo_a and in_lo_b and not in_up_b):
+            raise AssertionError(f"jumped bands without a slope cell: {(ax, ay)} to {(bx, by)}")
+    for (cx, cy) in cells:
+        assert lo_mask[cy * cw + cx] or up_mask[cy * cw + cx], f"route leaves both masks at {(cx, cy)}"
+
+
+def test_R_207_05_goal_on_another_band_is_reached_by_a_slope_and_nowhere_else(lib, ground):
+    """R-207-05: bottom-edge cell on the lower layer to a top-edge cell on the upper layer; the route crosses a slope."""
+    cw, _ch = _grid(lib, ground)
+    usable = _usable_slopes(lib, ground)
+    assert usable, "no slope with both ends masked on seed 11 (mask lane or generator)"
+    s = usable[0]
+    lo, up = s.lower_band - 1, s.upper_band - 1
+    lo_mask, up_mask = _mask(lib, ground, lo), _mask(lib, ground, up)
+    u = _spawn_at(lib, ground, CLONE_TYPE, s.x0, s.y0, lo)
+    n, pts, sec = _route(lib, ground, u, s.x1, s.y1)
+    assert n >= 2, f"slope links do not exist: om_walk_route returned {n}"
+    assert pts[-1] == (s.x1, s.y1) or _cell_of(*pts[-1]) == _cell_of(s.x1, s.y1), f"ended at {pts[-1]}"
+    assert any(_on_slope(lib, ground, x, y) for x, y in pts), "route never stands on a slope cell"
+    _assert_layer_changes_only_on_slopes(lib, ground, pts, lo_mask, up_mask, cw)
+    assert sec > 0.0
+
+
+def test_R_207_05_without_the_slope_the_other_band_is_not_reachable_on_the_layer(lib, ground):
+    """Control for the test above: the route's last cell is on the upper layer, which the unit did not start on."""
+    cw, _ch = _grid(lib, ground)
+    s = _usable_slopes(lib, ground)[0]
+    lo = s.lower_band - 1
+    u = _spawn_at(lib, ground, CLONE_TYPE, s.x0, s.y0, lo)
+    n, pts, _sec = _route(lib, ground, u, s.x1, s.y1)
+    assert n >= 2, f"om_walk_route returned {n}"
+    up_mask = _mask(lib, ground, s.upper_band - 1)
+    ex, ey = _cell_of(*pts[-1])
+    assert up_mask[ey * cw + ex] == 1, "the route's last cell is on the upper layer (only a slope can have taken it there)"
+
+
+def test_R_207_05_goal_across_steep_ground_is_reached_by_a_slope(lib, ground):
+    """R-207-05 / S-200: start and goal on two bands with unwalkable ground on the straight line between them."""
+    cw, ch = _grid(lib, ground)
+    found = None
+    for s in _usable_slopes(lib, ground):
+        lo, up = s.lower_band - 1, s.upper_band - 1
+        lo_mask, up_mask = _mask(lib, ground, lo), _mask(lib, ground, up)
+        bc, tc = _cell_of(s.x0, s.y0), _cell_of(s.x1, s.y1)
+        lo_comp = _component_cells(lo_mask, cw, ch, bc[1] * cw + bc[0])
+        up_comp = _component_cells(up_mask, cw, ch, tc[1] * cw + tc[0])
+        starts = [i for i in sorted(lo_comp) if NEAR_MIN <= max(abs(i % cw - bc[0]), abs(i // cw - bc[1])) <= NEAR_MAX]
+        goals = [i for i in sorted(up_comp) if NEAR_MIN <= max(abs(i % cw - tc[0]), abs(i // cw - tc[1])) <= NEAR_MAX]
+        for a in starts:
+            for b in goals:
+                ax, ay = _centre(a % cw, a // cw)
+                bx, by = _centre(b % cw, b // cw)
+                steps = int(max(abs(bx - ax), abs(by - ay)) / CELL)
+                line = [(ax + (bx - ax) * k / steps, ay + (by - ay) * k / steps) for k in range(1, steps)]
+                if steps >= 2 and any(not lib.om_terrain_walkable_at(ground, x, y) for x, y in line):
+                    found = (s, a, b, lo_mask, up_mask)
+                    break
+            if found:
+                break
+        if found:
+            break
+    assert found, "positive control: no start and goal across steep ground near one slope on seed 11"
+    s, a, b, lo_mask, up_mask = found
+    u = _spawn_at(lib, ground, CLONE_TYPE, *_centre(a % cw, a // cw), s.lower_band - 1)
+    gx, gy = _centre(b % cw, b // cw)
+    n, pts, sec = _route(lib, ground, u, gx, gy)
+    assert n >= 2, f"slope links do not exist: om_walk_route returned {n}"
+    assert pts[-1] == (gx, gy), f"ended at {pts[-1]}, goal {(gx, gy)}"
+    assert any(_on_slope(lib, ground, x, y) for x, y in pts), "route never stands on a slope cell"
+    _assert_layer_changes_only_on_slopes(lib, ground, pts, lo_mask, up_mask, cw)
+    for x, y in pts:
+        cx, cy = _cell_of(x, y)
+        assert lo_mask[cy * cw + cx] or up_mask[cy * cw + cx]
+
+
+@pytest.mark.parametrize("speed,utype", [(150.0, RAIDER_TYPE), (40.0, BASTION_TYPE)])
+@pytest.mark.parametrize("going_up", [True, False])
+def test_R_004_07_600wu_slope_crossing_time(lib, ground, speed, utype, going_up):
+    """R-004-07: a 600 wu slope takes 4.4 s / 16.5 s up (speed / 1.1) and 3.6 s / 13.6 s down (speed x 1.1), within 2 ticks."""
+    _register_speed_types(lib, ground)
+    cands = _usable_slopes(lib, ground, SLOPE_600)
+    assert cands, "positive control: no 600 wu slope with both ends masked on seed 11"
+    s = cands[0]
+    lo, up = s.lower_band - 1, s.upper_band - 1
+    if going_up:
+        u = _spawn_at(lib, ground, utype, s.x0, s.y0, lo)
+        gx, gy = s.x1, s.y1
+    else:
+        u = _spawn_at(lib, ground, utype, s.x1, s.y1, up)
+        gx, gy = s.x0, s.y0
+    assert lib.om_unit_effective_speed(ground, u) == pytest.approx(speed)
+    n, pts, sec = _route(lib, ground, u, gx, gy)
+    assert n >= 2, f"slope links do not exist: om_walk_route returned {n}"
+    want = SLOPE_600 / (speed / 1.1) if going_up else SLOPE_600 / (speed * 1.1)
+    assert abs(sec - want) <= CROSS_TICKS * TICK_SECONDS, f"crossing took {sec} s, R-004-07 says {want} s"
