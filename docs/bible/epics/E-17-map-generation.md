@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 110 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 16 open flags, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 11 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -312,18 +312,18 @@ As a commander, I want cities and bases to rise from scaffolds in waves, spread 
 
 Rules
 - R-193-01  Given a map, When population density is set, Then it is a growing field on the same field map the landscape uses, and it spreads over the map a little at a time. It is shaped by water, slope and the core's position, so districts follow rivers, coasts and contour lines and never form rings, and walls follow defensible ground.
-- R-193-02  Given difficult terrain, When density reaches it, Then the field never gives up and the city adapts by placing buildings in wild locations, such as inside a cliff, underneath a waterfall or on a steep mountainside. Difficult ground changes what gets built, not whether anything is [Q-193-03: how an opening in rock appears in the layer mask and the land flag].
+- R-193-02  Given difficult terrain, When density reaches it, Then the field never gives up and the city adapts by placing buildings in wild locations, such as inside a cliff, underneath a waterfall or on a steep mountainside. Difficult ground changes what gets built, not whether anything is. An opening in rock is cosmetic only: the layer mask and the land flag are unchanged (Westley, 2026-10-06).
 - R-193-03  Given a building the player places, When it claims its footprint, Then the self-built pieces under it are cleared and the pieces around it are refilled. Where it may be placed is E-22 S-168.
-- R-193-04  Given an event, When it happens, Then growth comes in a wave, and a whole street can go up at once [Q-193-01: which events start a wave, for example a shipment arriving, an expansion being founded or a season turning].
-- R-193-05  Given a lot, When the density at its cell passes a threshold, Then the lot rises through its stages, starting under construction, with a construction animation between stages [Q-193-02: how many stages and the thresholds].
+- R-193-04  Given an event, When it happens, Then growth comes in a wave, and a whole street can go up at once. The events that start a wave are a shipment arriving, an expansion being founded, a season turning, a capture and a battle's end (Westley, 2026-10-06).
+- R-193-05  Given a lot, When the density at its cell passes a threshold, Then the lot rises through its stages, starting under construction, with a construction animation between stages. There are five stages: empty, staked, scaffold, small and large (Westley, 2026-10-06) [Q-191-05: the thresholds, drafted in the prototype].
 - R-193-06  Given damage to a lot, When it is applied, Then the stages run backward toward rubble, and rebuilding speed follows the civilization's economy (decided 2026-09-22).
 - R-193-07  Given any mode, When a base is on screen, Then it is a spectacle: buildings start under construction and rise, expansions are made, and density changes over time (E-22 S-179). The self-built pieces are mostly cosmetic and the economy is run by rules (E-22 S-179), and the city grows during a mission.
-- R-193-08  Given the density field, When the game runs, Then it is in the simulation, and dense districts slow units and give cover [Q-193-04: how much dense districts slow units; Q-193-05: how much cover they give].
-- R-193-09  Given a settlement, When armies and units cross it, Then there are always natural paths through it, so that the slowing of dense districts is never annoying to the player [Q-193-06: how paths through a settlement are guaranteed].
+- R-193-08  Given the density field, When the game runs, Then it is in the simulation, and dense districts slow units and give cover [Q-193-04: how much dense districts slow units; Q-193-05: how much cover they give; both parked until fights have been run in the simulation (Westley, 2026-10-06)].
+- R-193-09  Given a settlement, When armies and units cross it, Then there are always natural paths through it, so that the slowing of dense districts is never annoying to the player. The generator leaves open streets along the contour lines and rivers by rule (Westley, 2026-10-06).
 
 Inputs: terrain; places; events; the player's buildings (E-22 S-168).
 Outputs: density field; lot stages; self-built pieces on screen.
-Open flags: Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06.
+Open flags: Q-193-04, Q-193-05 (parked).
 
 ### S-194 — One world at every zoom
 As a commander, I want the world to stay one continuous place from a single unit to the whole battlefield, so that scale is felt and never loaded.
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

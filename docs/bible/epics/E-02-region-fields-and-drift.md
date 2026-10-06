@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 13 stories, 60 rules; the numbers of S-012 to S-020 and S-160 are from `algorithms.md` ALG-01 through ALG-10. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. No player inputs; every input is sim-internal. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 7 open flags, all on S-220 and S-222: Q-220-01, Q-220-02, Q-159-13, Q-222-01, Q-193-04, Q-193-05, Q-193-06. |
+| Implied-but-unstated behavior turned into flags | 5 open flags: Q-220-01, Q-220-02, Q-159-13 (S-220), and Q-193-04, Q-193-05 (cited by S-222, parked). |
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate; S-220 and S-222 are blocked on Q-220-01, Q-220-02 and Q-159-13 (S-220), and Q-222-01 (S-222, which also cites Q-193-04 to Q-193-06 from E-17 S-193). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
+**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate; S-220 is blocked on Q-220-01, Q-220-02 and Q-159-13, and S-222 on Q-193-04 and Q-193-05 (cited from E-17 S-193, parked). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
 
 ## Purpose
 
@@ -210,12 +210,12 @@ Decided in part 2026-10-02 (E-17 R-166-03, `docs/northstar/research/economy_desi
 
 Rules
 - R-222-01  Given a mission region, When the density target of its self-built settlements is set, Then it comes from the region's economy and the mission clock.
-- R-222-02  Given the region's population, or the age of the owning faction (the phase label of E-07 S-053), When the density target is set, Then [Q-222-01: whether and how they also feed it].
-- R-222-03  Given the density field, When it is read, Then it is in the simulation: dense districts slow units and give cover, and a settlement always has natural paths through it for armies and units (E-17 S-193). How much they slow units, how much cover they give and how the paths are guaranteed are E-17 Q-193-04, Q-193-05 and Q-193-06.
+- R-222-02  Given the region's population, or the age of the owning faction (the phase label of E-07 S-053), When the density target is set, Then they do not feed it for now: the target comes from the economy and the mission clock only (Westley, 2026-10-06).
+- R-222-03  Given the density field, When it is read, Then it is in the simulation: dense districts slow units and give cover, and a settlement always has natural paths through it for armies and units (E-17 S-193). How much they slow units and how much cover they give are E-17 Q-193-04 and Q-193-05, parked until fights have been run in the simulation; the paths are E-17 R-193-09.
 
 Inputs: the region's economy; the mission clock; the flagged inputs above.
 Outputs: the density target to the settlement generator (E-17 S-166).
-Open flags: Q-222-01. Q-193-04, Q-193-05 and Q-193-06 are cited from E-17 S-193.
+Open flags: none. Q-193-04 and Q-193-05 are cited from E-17 S-193 (parked).
 
 ## Inputs
 
@@ -239,7 +239,7 @@ No player input reaches this epic directly. Missions change fields through the o
 | Per-term drift deltas | Tick log `drift` entry per region (T1 trace) |
 | Checksums | T1 trace every 10 ticks |
 | Region condition to the player | World view faction data panel and system hover tooltip (E-16); chronicle fragments (E-09) |
-| Economy (and, per Q-222-01, other fields) to settlement growth | Settlement generator (E-17 S-166), through S-222 |
+| Economy to settlement growth | Settlement generator (E-17 S-166), through S-222 |
 | Fields and composites to a mission's situation | Mission generator (E-10 S-074 reads capacity); the richness and base-kind inputs of E-22 S-177 and E-22 S-177 are held by E-22 S-177 |
 
 ## Invariants
@@ -273,7 +273,7 @@ None required. The player-facing surface for region state is E-16 (world view).
 
 ## Open ambiguity flags
 
-Q-220-01, Q-220-02, Q-221-01, Q-221-02, Q-222-01, and Q-159-13 as cited in S-220 and Q-193-04 to Q-193-06 as cited in S-222. S-012 to S-020 and S-160 have none. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
+Q-220-01, Q-220-02 and Q-159-13 as cited in S-220, and Q-193-04 and Q-193-05 (parked) as cited in S-222. S-012 to S-020 and S-160 have none. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
 
 ## Depends on
 

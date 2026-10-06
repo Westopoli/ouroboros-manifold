@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-06 (tenth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-06 (eleventh update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -162,7 +162,7 @@ Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness
 |---|---|---|
 | Multiplayer | Q-144-03 (re-asked: who hosts the next sitting of a locked universe); the lockstep drop time, 30 s here against 60 s in the lockstep spec | Blocks S-144 and the lobby. Everything else in S-140 to S-144 and the pair stories answered 2026-10-06 |
 | Economy and bases | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05 | E-22; the largest set. An ordered answer sheet is not yet drafted |
-| Settlements | Q-193-01 to -06, Q-222-01 | After the land generator |
+| Settlements | Q-193-04, Q-193-05 (parked until fights have been run in the simulation) | Answered 2026-10-06: the rest of S-193 and S-222. After the land generator |
 | Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
 | Client budgets | Q-194-01, Q-234-01, Q-240-01, Q-236-01 | Zoom and drawing |
 
@@ -178,7 +178,7 @@ Decided or partly decided in the bible, with no plan doc. Order within this tabl
 | Shared layer-mask contract | none yet (carries E-01 R-001-04, E-17 R-114-01) | E-01, E-17 | Not written | Lands first inside land part 1 as its own contract piece; written so space can use it; the small-craft class needs Q-166-05 |
 | Space generator | none in the bible yet | E-17 | Research and mockup passes 1 to 5; pass 6 specified | Waits on decisions S1 to S4, the stories being written, and the mask contract |
 | Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, 1 flag open | Waits on the flag sheet, the places prototype Westley approves (row above), and plan A. Q-191-04 closed 2026-10-03: the rewrites of S-112 to S-119 can now be written |
-| Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-01 to -06 open | After the land generator |
+| Settlements and cities | S-166, S-193, S-222, S-237 | E-17, E-02, E-18 | Design decided, Q-193-04 and -05 parked | After the land generator |
 | Zoom and drawing | S-194, S-234, S-236, S-240 | E-17, E-16, E-18 | Blocked on Westley's budgets (Q-194-01, Q-234-01, Q-240-01) | Client work, after a generator exists |
 | Strongpoints and weather | S-218, S-219 | E-15 | Design decided, flags open | After the land generator |
 | Economy and bases | S-167 to S-182, S-202 to S-206, S-209 to S-217 | E-22, E-11, E-12, E-13, E-10, E-14 | Design decided, flags open; S-182 open | Largest group; needs places from a generator |
