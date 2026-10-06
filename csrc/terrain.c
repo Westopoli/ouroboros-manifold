@@ -328,9 +328,435 @@
 
 /* ---- generated stubs from signatures.toml ---- */
 /* ---- generation ---- */
+#include <stdlib.h>
+
+/* Terrain field generation: port of the land mockup (scenes/mockups/landscape/field_map.gd
+ * _build_elevation and pass4_terrain.gd shape/_mesa/_canyon/_islands/_enforce_relief/_bench, band fit
+ * from analyse). Q16.16 fixed point, heights in cm (100 cm = 1 wu). Noise lane om_tn_* only; every
+ * random choice is a hash of the seed, never the world rng. Not bit-identical to the GDScript: value
+ * noise, the sine table and the exponents below differ (spec 2026-10-05). */
+#define TG_Q(x) ((int64_t)((x) * 65536.0 + 0.5))
+#define TG_ONE 65536
+#define TG_HALF 32768
+#define TG_SHIFT 16
+#define TG_CM_PER_WU 100
+#define TG_CELL_Q16 (6553600) /* OM_TERRAIN_CELL_WU in Q16 wu */
+#define TG_MAX_CANVAS_WU 24000 /* provisional (2026-10-05): larger needs the mapgen grid widened */
+#define TG_SPLIT3 3
+#define TG_BAND_DIV 5
+#define TG_TOP_BIT 62
+#define TG_NOISE_BUCKETS (2 * TG_ONE + 1)
+
+/* provisional (2026-10-05): mockup constants, wu unless noted */
+#define TG_FREQ_CONT_X10 15 /* cycles across the canvas, times 10 */
+#define TG_FREQ_HILLS_X10 80
+#define TG_FREQ_DETAIL_X10 400
+#define TG_FREQ_BENCH_X10 60
+#define TG_FREQ_DIV 10
+#define TG_SALT_CONT 0
+#define TG_SALT_HILLS 1
+#define TG_SALT_DETAIL 2
+#define TG_SALT_BENCH 9
+#define TG_SALT_PICK 101
+#define TG_SALT_MESA 201
+#define TG_SALT_CANYON 202
+#define TG_SALT_ISLANDS 203
+#define TG_SALT_PEAK 301
+#define TG_SALT_BENCH_SHARE 313
+#define TG_SALT_WOBBLE 401
+#define TG_W_CONT TG_Q(0.7)
+#define TG_W_HILLS TG_Q(0.3)
+#define TG_PEAK_WU 5000
+#define TG_PEAK_LO_WU 3000 /* final peak fit: highest ground lands in 3,000..5,000 wu */
+#define TG_PEAK_FRAC_LO TG_Q(0.6)
+#define TG_PEAK_FRAC_HI TG_Q(1.0)
+#define TG_SEA_DEPTH_FRAC TG_Q(0.3)
+#define TG_DETAIL_WU 80
+#define TG_HEIGHT_EXP_STEPS 2 /* x^1.25 = x * sqrt(sqrt(x)); mockup 1.3 */
+#define TG_EDGE_START TG_Q(0.72)
+#define TG_EDGE_PEAK_FRAC TG_Q(0.5)
+#define TG_EDGE_FLAT_WU 800
+#define TG_LAND_PICK_FRAC TG_Q(0.4)
+#define TG_LANDFORM_COUNT 3
+#define TG_MESA_R_LO TG_Q(0.05)
+#define TG_MESA_R_HI TG_Q(0.085)
+#define TG_MESA_MARGIN TG_Q(1.6)
+#define TG_MESA_TRIES 60
+#define TG_MESA_BASE_LO_WU 400
+#define TG_MESA_BASE_HI_WU 3000
+#define TG_MESA_LIFT_WU 900
+#define TG_MESA_EDGE_WU 200
+#define TG_MESA_WOBBLE TG_Q(0.2) /* mockup: two sines, 0.12 + 0.08 */
+#define TG_MESA_WOBBLE_CELL_WU 1500
+#define TG_MESA_BOX TG_Q(1.3)
+#define TG_CANYON_HALF_WU 300
+#define TG_CANYON_SHOULDER_WU 150
+#define TG_CANYON_DEPTH_WU 1500
+#define TG_CANYON_TRIES 30
+#define TG_CANYON_START_LO_WU 1200
+#define TG_CANYON_CUT_WU 600
+#define TG_CANYON_FLOOR_WU 120
+#define TG_CANYON_MIN_CUT 250
+#define TG_CANYON_LEN_NUM 2
+#define TG_CANYON_LEN_DEN 5
+#define TG_CANYON_START_LO TG_Q(0.1)
+#define TG_CANYON_START_HI TG_Q(0.9)
+#define TG_CANYON_STEP_WU 100
+#define TG_CANYON_SWAY_TURN 7301 /* 0.7 rad in Q16 turns */
+#define TG_CANYON_SWAY_STEP 626 /* 0.06 rad per step in Q16 turns */
+#define TG_ISLAND_TRIES 80
+#define TG_ISLAND_SEA_WU (-300)
+#define TG_ISLAND_COUNT_LO 5
+#define TG_ISLAND_COUNT_SPAN 3
+#define TG_ISLAND_TURN_LO TG_Q(-0.0955) /* -0.6 rad in turns */
+#define TG_ISLAND_TURN_HI TG_Q(0.0955)
+#define TG_ISLAND_HOP_LO_WU 1500
+#define TG_ISLAND_HOP_HI_WU 2300
+#define TG_ISLAND_PAD_WU 800
+#define TG_ISLAND_R_LO TG_Q(0.02)
+#define TG_ISLAND_R_HI TG_Q(0.037)
+#define TG_ISLAND_PEAK_LO_WU 300
+#define TG_ISLAND_PEAK_HI_WU 900
+#define TG_ISLAND_SKIP_WU (-50)
+#define TG_ISLAND_FOOT_WU (-200)
+#define TG_MIN_RELIEF_WU 2500
+#define TG_DRY_LEVEL_WU 60
+#define TG_BENCH_STEP_WU 300
+#define TG_BENCH_SHARE_LO TG_Q(0.15)
+#define TG_BENCH_SHARE_HI TG_Q(0.65)
+#define TG_BENCH_BLEND TG_Q(0.06)
+#define TG_BENCH_FADE_LO_WU 150
+#define TG_BENCH_FADE_HI_WU 450
+#define TG_BENCH_TILT TG_Q(0.15)
+#define TG_BENCH_RISE TG_Q(0.85)
+#define TG_BENCH_RISE_LO TG_Q(0.7)
+#define TG_SMOOTH_3 (3 * TG_ONE)
+#define TG_SMOOTH_2 2
+#define TG_CANYON_HALF_COVER TG_HALF
+
+typedef struct { uint64_t seed; uint32_t k; } tg_rng;
+typedef struct { uint32_t n, m; int64_t cv; int32_t *e; } tg_grid; /* n by m cells, cv = canvas side in Q16 wu */
+
+static int32_t tg_draw(tg_rng *r) {
+    int32_t v = om_tn_value2(r->seed, (int32_t)(r->k * (uint32_t)TG_ONE), 0);
+    r->k++;
+    return (v + TG_ONE) >> 1;
+}
+static int64_t tg_range(tg_rng *r, int64_t lo, int64_t hi) { return lo + (((hi - lo) * tg_draw(r)) >> TG_SHIFT); }
+static int64_t tg_clamp(int64_t v, int64_t lo, int64_t hi) { return v < lo ? lo : (v > hi ? hi : v); }
+static int64_t tg_lerp(int64_t a, int64_t b, int64_t t) { return a + (((b - a) * t) >> TG_SHIFT); }
+static int64_t tg_smooth(int64_t t) {
+    t = tg_clamp(t, 0, TG_ONE);
+    return (((t * t) >> TG_SHIFT) * (TG_SMOOTH_3 - TG_SMOOTH_2 * t)) >> TG_SHIFT;
+}
+/* smoothstep(a, b, v) with a <= b in the same units */
+static int64_t tg_step(int64_t a, int64_t b, int64_t v) {
+    if (b <= a) return v >= b ? TG_ONE : 0;
+    return tg_smooth(((v - a) << TG_SHIFT) / (b - a));
+}
+static uint64_t tg_isqrt(uint64_t v) {
+    uint64_t r = 0, bit = (uint64_t)1 << TG_TOP_BIT;
+    while (bit > v) bit >>= 2;
+    while (bit) {
+        if (v >= r + bit) { v -= r + bit; r = (r >> 1) + bit; } else r >>= 1;
+        bit >>= 2;
+    }
+    return r;
+}
+static int64_t tg_dist(int64_t dx, int64_t dy) { return (int64_t)tg_isqrt((uint64_t)(dx * dx + dy * dy)); }
+static int32_t tg_noise(const tg_grid *g, uint64_t seed, uint32_t gx, uint32_t gy, int freq_x10) {
+    int64_t cv = g->cv; /* Q16 wu */
+    int64_t xq = ((int64_t)gx * TG_CELL_Q16 * freq_x10) / (cv / TG_ONE) / TG_FREQ_DIV;
+    int64_t yq = ((int64_t)gy * TG_CELL_Q16 * freq_x10) / (cv / TG_ONE) / TG_FREQ_DIV;
+    return om_tn_value2(seed, (int32_t)xq, (int32_t)yq);
+}
+static uint32_t tg_cell_of(const tg_grid *g, int64_t pos, uint32_t cells) {
+    (void)g;
+    return (uint32_t)tg_clamp((pos + TG_CELL_Q16 / 2) / TG_CELL_Q16, 0, (int64_t)cells - 1);
+}
+static int32_t *tg_e_at(const tg_grid *g, int64_t px, int64_t py) {
+    return &g->e[tg_cell_of(g, tg_clamp(py, 0, INT64_MAX), g->m) * g->n + tg_cell_of(g, tg_clamp(px, 0, INT64_MAX), g->n)];
+}
+/* inclusive cell box around (cx, cy) with radius r (Q16 wu) */
+static void tg_box(const tg_grid *g, int64_t cx, int64_t cy, int64_t r, int64_t *x0, int64_t *x1, int64_t *y0, int64_t *y1) {
+    *x0 = tg_clamp((cx - r) < 0 ? 0 : (cx - r) / TG_CELL_Q16, 0, (int64_t)g->n - 1);
+    *x1 = tg_clamp((cx + r + TG_CELL_Q16 - 1) / TG_CELL_Q16, 0, (int64_t)g->n - 1);
+    *y0 = tg_clamp((cy - r) < 0 ? 0 : (cy - r) / TG_CELL_Q16, 0, (int64_t)g->m - 1);
+    *y1 = tg_clamp((cy + r + TG_CELL_Q16 - 1) / TG_CELL_Q16, 0, (int64_t)g->m - 1);
+}
+static int64_t tg_wu(int64_t wu) { return wu * TG_ONE; }
+static int64_t tg_cm(int64_t wu) { return wu * TG_CM_PER_WU; }
+
+static void tg_elevation(tg_grid *g, uint64_t seed) {
+    uint32_t n = g->n, m = g->m, x, y;
+    int32_t *raw = (int32_t *)malloc((size_t)n * m * sizeof(int32_t));
+    int32_t min_raw = INT32_MAX, max_raw = INT32_MIN;
+    tg_rng rp = { seed + TG_SALT_PEAK, 0 };
+    int64_t peak = (tg_cm(TG_PEAK_WU) * tg_range(&rp, TG_PEAK_FRAC_LO, TG_PEAK_FRAC_HI)) >> TG_SHIFT;
+    int64_t sea = -((tg_cm(TG_PEAK_WU) * TG_SEA_DEPTH_FRAC) >> TG_SHIFT);
+    for (y = 0; y < m; y++) for (x = 0; x < n; x++) {
+        int64_t c = tg_noise(g, seed + TG_SALT_CONT, x, y, TG_FREQ_CONT_X10);
+        int64_t h = tg_noise(g, seed + TG_SALT_HILLS, x, y, TG_FREQ_HILLS_X10);
+        int32_t v = (int32_t)((c * TG_W_CONT + h * TG_W_HILLS) >> TG_SHIFT);
+        raw[y * n + x] = v;
+        if (v < min_raw) min_raw = v;
+        if (v > max_raw) max_raw = v;
+    }
+    for (y = 0; y < m; y++) for (x = 0; x < n; x++) {
+        int64_t v = raw[y * n + x], h = 0, d;
+        if (v >= 0 && max_raw > 0) {
+            int64_t f = (v << TG_SHIFT) / max_raw, s = f;
+            int i;
+            for (i = 0; i < TG_HEIGHT_EXP_STEPS; i++) s = (int64_t)tg_isqrt((uint64_t)s << TG_SHIFT);
+            h = (((f * s) >> TG_SHIFT) * peak) >> TG_SHIFT;
+        } else if (v < 0 && min_raw < 0) {
+            h = (((v << TG_SHIFT) / min_raw) * sea) >> TG_SHIFT;
+        }
+        d = (tg_noise(g, seed + TG_SALT_DETAIL, x, y, TG_FREQ_DETAIL_X10) * tg_cm(TG_DETAIL_WU)) >> TG_SHIFT;
+        h += d;
+        {
+            int64_t wy = (int64_t)y * TG_CELL_Q16;
+            int64_t t = tg_step((g->cv * TG_EDGE_START) >> TG_SHIFT, g->cv, wy);
+            h -= (t * (((peak * TG_EDGE_PEAK_FRAC) >> TG_SHIFT) + tg_cm(TG_EDGE_FLAT_WU))) >> TG_SHIFT;
+        }
+        g->e[y * n + x] = (int32_t)h;
+    }
+    free(raw);
+}
+
+static int tg_mesa(tg_grid *g, uint64_t seed, tg_rng *r) {
+    int64_t rad = (g->cv * tg_range(r, TG_MESA_R_LO, TG_MESA_R_HI)) >> TG_SHIFT;
+    int64_t margin = (rad * TG_MESA_MARGIN) >> TG_SHIFT, cx = 0, cy = 0, base = 0, top, edge = tg_wu(TG_MESA_EDGE_WU);
+    int64_t x0, x1, y0, y1, gx, gy;
+    int found = 0, t;
+    for (t = 0; t < TG_MESA_TRIES && !found; t++) {
+        cx = tg_range(r, margin, g->cv - margin);
+        cy = tg_range(r, margin, g->cv - margin);
+        base = *tg_e_at(g, cx, cy);
+        found = base > tg_cm(TG_MESA_BASE_LO_WU) && base < tg_cm(TG_MESA_BASE_HI_WU);
+    }
+    if (!found) return 0;
+    top = base + tg_cm(TG_MESA_LIFT_WU);
+    tg_box(g, cx, cy, ((rad * TG_MESA_BOX) >> TG_SHIFT) + edge, &x0, &x1, &y0, &y1);
+    for (gy = y0; gy <= y1; gy++) for (gx = x0; gx <= x1; gx++) {
+        int64_t px = gx * TG_CELL_Q16, py = gy * TG_CELL_Q16, d = tg_dist(px - cx, py - cy);
+        int32_t wob = om_tn_value2(seed + TG_SALT_WOBBLE, (int32_t)(px / TG_MESA_WOBBLE_CELL_WU), (int32_t)(py / TG_MESA_WOBBLE_CELL_WU));
+        int64_t rr = rad + ((rad * ((wob * TG_MESA_WOBBLE) >> TG_SHIFT)) >> TG_SHIFT);
+        int64_t tt = tg_smooth(((rr + edge - d) << TG_SHIFT) / edge);
+        int32_t *e = &g->e[gy * g->n + gx];
+        *e = (int32_t)tg_lerp(*e, top, tt);
+    }
+    return 1;
+}
+
+static int tg_canyon(tg_grid *g, tg_rng *r) {
+    int64_t half = tg_wu(TG_CANYON_HALF_WU), hs = half + tg_wu(TG_CANYON_SHOULDER_WU);
+    int64_t depth = tg_cm(TG_CANYON_DEPTH_WU);
+    size_t cells = (size_t)g->n * g->m, i;
+    int32_t *carve = (int32_t *)malloc(cells * sizeof(int32_t));
+    int cut = 0, a, ok;
+    int64_t steps = ((g->cv / TG_ONE) * TG_CANYON_LEN_NUM / TG_CANYON_LEN_DEN) / TG_CANYON_STEP_WU, s;
+    for (a = 0; a < TG_CANYON_TRIES; a++) {
+        int64_t px = (g->cv * tg_range(r, TG_CANYON_START_LO, TG_CANYON_START_HI)) >> TG_SHIFT;
+        int64_t py = (g->cv * tg_range(r, TG_CANYON_START_LO, TG_CANYON_START_HI)) >> TG_SHIFT;
+        uint32_t heading, phase;
+        if (*tg_e_at(g, px, py) < tg_cm(TG_CANYON_START_LO_WU)) continue;
+        heading = (uint32_t)tg_range(r, 0, TG_ONE);
+        phase = (uint32_t)tg_range(r, 0, TG_ONE);
+        memset(carve, 0, cells * sizeof(int32_t));
+        for (s = 0; s < steps; s++) {
+            int64_t sway = (TG_CANYON_SWAY_TURN * (int64_t)om_tn_sin_q16((uint32_t)(s * TG_CANYON_SWAY_STEP + phase) & (TG_ONE - 1))) >> TG_SHIFT;
+            uint32_t ang = (uint32_t)(heading + sway) & (TG_ONE - 1);
+            int64_t x0, x1, y0, y1, gx, gy;
+            px += (int64_t)om_tn_cos_q16(ang) * TG_CANYON_STEP_WU;
+            py += (int64_t)om_tn_sin_q16(ang) * TG_CANYON_STEP_WU;
+            tg_box(g, px, py, hs, &x0, &x1, &y0, &y1);
+            for (gy = y0; gy <= y1; gy++) for (gx = x0; gx <= x1; gx++) {
+                int64_t d = tg_dist(gx * TG_CELL_Q16 - px, gy * TG_CELL_Q16 - py);
+                int32_t v;
+                int32_t *c = &carve[gy * g->n + gx];
+                if (d >= hs) v = 0; else if (d <= half) v = TG_ONE; else v = (int32_t)tg_smooth(((hs - d) << TG_SHIFT) / (hs - half));
+                if (v > *c) *c = v;
+            }
+        }
+        cut = 0;
+        for (i = 0; i < cells; i++) if (carve[i] > TG_CANYON_HALF_COVER && g->e[i] > tg_cm(TG_CANYON_CUT_WU)) cut++;
+        if (cut >= TG_CANYON_MIN_CUT) break;
+    }
+    ok = cut >= TG_CANYON_MIN_CUT;
+    if (ok) for (i = 0; i < cells; i++) if (carve[i] > 0 && g->e[i] > tg_cm(TG_CANYON_FLOOR_WU)) {
+        int64_t low = g->e[i] - depth;
+        if (low < tg_cm(TG_CANYON_FLOOR_WU)) low = tg_cm(TG_CANYON_FLOOR_WU);
+        g->e[i] = (int32_t)tg_lerp(g->e[i], low, carve[i]);
+    }
+    free(carve);
+    return ok;
+}
+
+static int tg_islands(tg_grid *g, tg_rng *r) {
+    int64_t px = 0, py = 0, heading, hop;
+    int found = 0, t, placed = 0, count, k;
+    for (t = 0; t < TG_ISLAND_TRIES && !found; t++) {
+        px = (g->cv * tg_range(r, TG_CANYON_START_LO, TG_CANYON_START_HI)) >> TG_SHIFT;
+        py = (g->cv * tg_range(r, TG_CANYON_START_LO, TG_CANYON_START_HI)) >> TG_SHIFT;
+        found = *tg_e_at(g, px, py) < tg_cm(TG_ISLAND_SEA_WU);
+    }
+    if (!found) return 0;
+    heading = tg_range(r, 0, TG_ONE);
+    count = TG_ISLAND_COUNT_LO + (int)((tg_draw(r) * (int64_t)TG_ISLAND_COUNT_SPAN) >> TG_SHIFT);
+    for (k = 0; k < count; k++) {
+        int64_t rad, peak, x0, x1, y0, y1, gx, gy, pad = tg_wu(TG_ISLAND_PAD_WU);
+        heading += tg_range(r, TG_ISLAND_TURN_LO, TG_ISLAND_TURN_HI);
+        hop = tg_range(r, tg_wu(TG_ISLAND_HOP_LO_WU), tg_wu(TG_ISLAND_HOP_HI_WU));
+        px += ((int64_t)om_tn_cos_q16((uint32_t)heading & (TG_ONE - 1)) * hop) >> TG_SHIFT;
+        py += ((int64_t)om_tn_sin_q16((uint32_t)heading & (TG_ONE - 1)) * hop) >> TG_SHIFT;
+        px = tg_clamp(px, pad, g->cv - pad);
+        py = tg_clamp(py, pad, g->cv - pad);
+        rad = (g->cv * tg_range(r, TG_ISLAND_R_LO, TG_ISLAND_R_HI)) >> TG_SHIFT;
+        peak = tg_range(r, tg_cm(TG_ISLAND_PEAK_LO_WU), tg_cm(TG_ISLAND_PEAK_HI_WU));
+        if (*tg_e_at(g, px, py) > tg_cm(TG_ISLAND_SKIP_WU)) continue;
+        tg_box(g, px, py, rad, &x0, &x1, &y0, &y1);
+        for (gy = y0; gy <= y1; gy++) for (gx = x0; gx <= x1; gx++) {
+            int64_t d = tg_dist(gx * TG_CELL_Q16 - px, gy * TG_CELL_Q16 - py), s, cone;
+            if (d >= rad) continue;
+            s = ((rad - d) << TG_SHIFT) / rad; /* cone profile 1 - d/r to the 0.75; mockup 0.8 */
+            s = (int64_t)tg_isqrt((uint64_t)s << TG_SHIFT);
+            s = (s * (int64_t)tg_isqrt((uint64_t)s << TG_SHIFT)) >> TG_SHIFT;
+            cone = tg_cm(TG_ISLAND_FOOT_WU) + (((peak - tg_cm(TG_ISLAND_FOOT_WU)) * s) >> TG_SHIFT);
+            if (g->e[gy * g->n + gx] < cone) g->e[gy * g->n + gx] = (int32_t)cone;
+        }
+        placed++;
+    }
+    return placed > 0;
+}
+
+static void tg_relief(tg_grid *g) {
+    size_t i, cells = (size_t)g->n * g->m;
+    int64_t hi = INT32_MIN, need = tg_cm(TG_MIN_RELIEF_WU + TG_DRY_LEVEL_WU), k;
+    for (i = 0; i < cells; i++) if (g->e[i] > hi) hi = g->e[i];
+    if (hi >= need || hi <= 0) return;
+    k = (need << TG_SHIFT) / hi;
+    for (i = 0; i < cells; i++) if (g->e[i] > 0) g->e[i] = (int32_t)(((int64_t)g->e[i] * k) >> TG_SHIFT);
+}
+
+static void tg_bench(tg_grid *g, uint64_t seed) {
+    size_t i, cells = (size_t)g->n * g->m, land = 0;
+    tg_rng r = { seed + TG_SALT_BENCH_SHARE, 0 };
+    int64_t share = tg_range(&r, TG_BENCH_SHARE_LO, TG_BENCH_SHARE_HI), thr, step = tg_cm(TG_BENCH_STEP_WU);
+    int32_t *vals;
+    uint32_t *hist;
+    int64_t rank, seen = 0, b = 0;
+    for (i = 0; i < cells; i++) if (g->e[i] > 0) land++;
+    if (!land) return;
+    vals = (int32_t *)malloc(cells * sizeof(int32_t));
+    hist = (uint32_t *)calloc(TG_NOISE_BUCKETS, sizeof(uint32_t));
+    for (i = 0; i < cells; i++) {
+        vals[i] = g->e[i] > 0 ? tg_noise(g, seed + TG_SALT_BENCH, (uint32_t)(i % g->n), (uint32_t)(i / g->n), TG_FREQ_BENCH_X10) : 0;
+        if (g->e[i] > 0) hist[vals[i] + TG_ONE]++;
+    }
+    rank = (share * (int64_t)(land - 1)) >> TG_SHIFT;
+    while (b < TG_NOISE_BUCKETS && seen + hist[b] <= (uint64_t)rank) seen += hist[b++];
+    thr = b - TG_ONE;
+    for (i = 0; i < cells; i++) {
+        int64_t e = g->e[i], wgt, t, f, fr, terr;
+        if (e <= 0) continue;
+        wgt = tg_step(thr + TG_BENCH_BLEND, thr, vals[i]);
+        wgt = (wgt * tg_step(tg_cm(TG_BENCH_FADE_LO_WU), tg_cm(TG_BENCH_FADE_HI_WU), e)) >> TG_SHIFT;
+        t = (e << TG_SHIFT) / step;
+        f = t & ~(int64_t)(TG_ONE - 1);
+        fr = t - f;
+        terr = (f + ((TG_BENCH_TILT * fr) >> TG_SHIFT) + ((TG_BENCH_RISE * tg_step(TG_BENCH_RISE_LO, TG_ONE, fr)) >> TG_SHIFT));
+        terr = (terr * step) >> TG_SHIFT;
+        g->e[i] = (int32_t)tg_lerp(e, terr, wgt);
+    }
+    free(vals);
+    free(hist);
+}
+
+static void tg_peak_fit(tg_grid *g) {
+    size_t i, cells = (size_t)g->n * g->m;
+    int64_t hi = INT32_MIN, lo_cm = tg_cm(TG_PEAK_LO_WU), hi_cm = tg_cm(TG_PEAK_WU);
+    for (i = 0; i < cells; i++) if (g->e[i] > hi) hi = g->e[i];
+    if (hi > 0 && (hi < lo_cm || hi > hi_cm)) {
+        int64_t k = ((hi < lo_cm ? lo_cm : hi_cm) << TG_SHIFT) / hi;
+        for (i = 0; i < cells; i++) if (g->e[i] > 0) g->e[i] = (int32_t)(((int64_t)g->e[i] * k) >> TG_SHIFT);
+    }
+    for (i = 0; i < cells; i++) if (g->e[i] < 0) g->e[i] = 0;
+}
+
+static void tg_free(void *p) {
+    om_terrain_state *st = (om_terrain_state *)p;
+    if (!st) return;
+    free(st->height_cm);
+    free(st->band);
+    free(st->walkable);
+    free(st->slopes);
+    free(st);
+}
+
 int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canvas_h) {
-    /* STUB */
-    (void)w; (void)seed; (void)canvas_w; (void)canvas_h;
+    om_terrain_state *st;
+    tg_grid g;
+    tg_rng pick = { seed + TG_SALT_PICK, 0 };
+    int64_t lo = INT64_MAX, hi = INT64_MIN, step;
+    size_t i, cells;
+    int first, li, dry;
+    int32_t chosen[TG_LANDFORM_COUNT];
+    if (!w) return -1;
+    if (!(canvas_w > 0.0 && canvas_h > 0.0 && canvas_w <= TG_MAX_CANVAS_WU && canvas_h <= TG_MAX_CANVAS_WU)) return -1;
+    if (om_map_set_canvas(w, canvas_w, canvas_h) != 0) return -1;
+    g.n = (uint32_t)(canvas_w / OM_TERRAIN_CELL_WU);
+    g.m = (uint32_t)(canvas_h / OM_TERRAIN_CELL_WU);
+    if (g.n == 0 || g.m == 0) return -1;
+    g.cv = tg_wu((int64_t)(canvas_w > canvas_h ? canvas_w : canvas_h));
+    cells = (size_t)g.n * g.m;
+    st = (om_terrain_state *)calloc(1, sizeof(*st));
+    g.e = (int32_t *)malloc(cells * sizeof(int32_t));
+    st->band = (uint8_t *)calloc(cells, 1);
+    st->walkable = (uint8_t *)calloc(cells, 1);
+    st->slopes = (om_slope *)calloc(OM_TERRAIN_SLOPE_CAP, sizeof(om_slope));
+    tg_elevation(&g, seed);
+    first = (int)((tg_draw(&pick) * (int64_t)TG_LANDFORM_COUNT) >> TG_SHIFT);
+    if (first >= TG_LANDFORM_COUNT) first = TG_LANDFORM_COUNT - 1;
+    for (li = 0; li < TG_LANDFORM_COUNT; li++) chosen[li] = li == first || tg_draw(&pick) < TG_LAND_PICK_FRAC;
+    for (li = 0; li < TG_LANDFORM_COUNT; li++) {
+        tg_rng r;
+        if (!chosen[li]) continue;
+        r.seed = seed + TG_SALT_MESA + (uint64_t)li;
+        r.k = 0;
+        if (li == 0) tg_mesa(&g, seed, &r);
+        else if (li == 1) tg_canyon(&g, &r);
+        else tg_islands(&g, &r);
+    }
+    tg_relief(&g);
+    tg_bench(&g, seed);
+    tg_peak_fit(&g);
+    dry = 0;
+    for (i = 0; i < cells; i++) if (g.e[i] > tg_cm(TG_DRY_LEVEL_WU)) {
+        dry = 1;
+        if (g.e[i] < lo) lo = g.e[i];
+        if (g.e[i] > hi) hi = g.e[i];
+    }
+    if (!dry) {
+        free(g.e);
+        tg_free(st);
+        return -1;
+    }
+    step = (hi - lo) / TG_BAND_DIV;
+    if (step < 1) step = 1;
+    for (i = 0; i < OM_TERRAIN_BANDS; i++) st->band_floor_cm[i] = (int32_t)(lo + step * (int64_t)i);
+    for (i = 0; i < cells; i++) {
+        int64_t b = g.e[i] < lo ? 0 : (g.e[i] - lo) / step;
+        st->band[i] = (uint8_t)(tg_clamp(b, 0, OM_TERRAIN_BANDS - 1) + 1);
+    }
+    st->present = 1;
+    st->seed = seed;
+    st->cells_w = g.n;
+    st->cells_h = g.m;
+    st->height_cm = g.e;
+    if (w->terrain_state && w->terrain_state_free) w->terrain_state_free(w->terrain_state);
+    w->terrain_state = st;
+    w->terrain_state_free = tg_free;
     return 0;
 }
 
