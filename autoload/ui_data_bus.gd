@@ -92,7 +92,9 @@ func _load_settings() -> void:
 			"fullscreen": config.get_value("display", "fullscreen", false),
 			"vsync": config.get_value("display", "vsync", true),
 			"pan_speed": clampf(float(config.get_value("camera", "pan_speed", 1.0)), 0.5, 2.0),
+			"era_id": str(config.get_value("game", "era_id", "settled_reach")),
 		}
+		EraConfig.apply_saved(_settings["era_id"])
 		_apply_stored_settings()
 	else:
 		_settings = {
@@ -104,6 +106,7 @@ func _load_settings() -> void:
 			"fullscreen": false,
 			"vsync": true,
 			"pan_speed": 1.0,
+			"era_id": "settled_reach",
 		}
 
 
@@ -136,6 +139,7 @@ func save_settings(settings: Dictionary) -> void:
 		"fullscreen": bool(settings.get("fullscreen", false)),
 		"vsync": bool(settings.get("vsync", true)),
 		"pan_speed": clampf(float(settings.get("pan_speed", 1.0)), 0.5, 2.0),
+		"era_id": str(settings.get("era_id", "settled_reach")),
 	}
 	_settings = clamped
 	var config := ConfigFile.new()
@@ -147,4 +151,5 @@ func save_settings(settings: Dictionary) -> void:
 	config.set_value("display", "fullscreen", clamped["fullscreen"])
 	config.set_value("display", "vsync", clamped["vsync"])
 	config.set_value("camera", "pan_speed", clamped["pan_speed"])
+	config.set_value("game", "era_id", clamped["era_id"])
 	config.save(SETTINGS_PATH)
