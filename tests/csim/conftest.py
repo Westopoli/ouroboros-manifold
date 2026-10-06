@@ -1919,6 +1919,8 @@ def _bind_e01(lib):
     _bind(lib, "om_roster_set_movement_kind", [W, ctypes.c_int, ctypes.c_int], ctypes.c_int, ("w", "type", "kind"))
     _bind(lib, "om_roster_set_reach", [W, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_type", "layers_up", "layers_down"))
     _bind(lib, "om_set_era_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "kind"))
+    _bind(lib, "om_terrain_clear", [W], None, ("w",))
+    _bind(lib, "om_terrain_nearest_walkable", [W, ctypes.c_double, ctypes.c_double, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "x", "y", "ox", "oy"))
     _bind(lib, "om_unit_get_emission", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
     _bind(lib, "om_unit_get_target_layer", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit"))
     _bind(lib, "om_unit_profile_movement_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "type"))

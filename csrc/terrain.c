@@ -31,7 +31,7 @@
  *  * field order, F2i). * /
  * #define OM_SAVE_MAGIC "OMSV"
  * #define OM_SAVE_MAGIC_LEN 4
- * #define OM_SAVE_FORMAT_VERSION 6 / * bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
+ * #define OM_SAVE_FORMAT_VERSION 7 / * bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
  * #define OM_SAVE_BYTE_BITS 8
  * #define OM_SAVE_BYTE_MASK 0xFFu
  * #define OM_SAVE_SLOT_TACTICAL     0
@@ -968,6 +968,45 @@ int om_terrain_walkable_at(const om_world *w, double x, double y) {
     int64_t cx, cy;
     if (!st || !ts_cell_of(st, x, y, &cx, &cy)) return 0;
     return ts_walk_q(st, ts_limit_tan_q(w), (int64_t)(x * (double)TG_ONE), (int64_t)(y * (double)TG_ONE));
+}
+
+int om_terrain_nearest_walkable(const om_world *w, double x, double y, double *ox, double *oy) {
+    const om_terrain_state *st = ts_ro(w);
+    int64_t cx, cy, r, rmax, bx = 0, by = 0, bd = -1;
+    if (!ox || !oy || x != x || y != y) return -1;
+    if (!st) { *ox = x; *oy = y; return 0; }
+    if (om_terrain_walkable_at(w, x, y)) { *ox = x; *oy = y; return 0; }
+    cx = x <= 0.0 ? 0 : (int64_t)(x / OM_TERRAIN_CELL_WU);
+    cy = y <= 0.0 ? 0 : (int64_t)(y / OM_TERRAIN_CELL_WU);
+    if (cx >= (int64_t)st->cells_w) cx = (int64_t)st->cells_w - 1;
+    if (cy >= (int64_t)st->cells_h) cy = (int64_t)st->cells_h - 1;
+    rmax = (int64_t)(st->cells_w > st->cells_h ? st->cells_w : st->cells_h);
+    for (r = 0; r <= rmax; r++) {
+        int64_t gy, gx;
+        if (bd >= 0 && r * r > bd) break;
+        for (gy = cy - r; gy <= cy + r; gy++) {
+            int64_t step = (gy == cy - r || gy == cy + r) ? 1 : 2 * r;
+            if (gy < 0 || gy >= (int64_t)st->cells_h) continue;
+            for (gx = cx - r; gx <= cx + r; gx += step) {
+                int64_t d = (gx - cx) * (gx - cx) + (gy - cy) * (gy - cy);
+                if (gx >= 0 && gx < (int64_t)st->cells_w && (bd < 0 || d <= bd)
+                    && om_terrain_walkable_at(w, ((double)gx + 0.5) * OM_TERRAIN_CELL_WU, ((double)gy + 0.5) * OM_TERRAIN_CELL_WU)) {
+                    if (bd < 0 || d < bd || gy * (int64_t)st->cells_w + gx < by * (int64_t)st->cells_w + bx) { bd = d; bx = gx; by = gy; }
+                }
+            }
+        }
+    }
+    if (bd < 0) return -1;
+    *ox = ((double)bx + 0.5) * OM_TERRAIN_CELL_WU;
+    *oy = ((double)by + 0.5) * OM_TERRAIN_CELL_WU;
+    return 0;
+}
+
+void om_terrain_clear(om_world *w) {
+    if (!w || !w->terrain_state) return;
+    if (w->terrain_state_free) w->terrain_state_free(w->terrain_state);
+    w->terrain_state = NULL;
+    w->terrain_state_free = NULL;
 }
 
 /* Layer numbering is the engine's: band k is layer k - 1. A slope cell (a cell of a slope's run) counts on both bands. */
