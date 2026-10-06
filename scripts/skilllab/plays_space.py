@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.skilllab.contract import Block, Group, Setup, Step, Terrain
-from scripts.skilllab.terrain import with_terrain
+from scripts.skilllab import plays
+from scripts.skilllab.terrain import shift_terrain, with_terrain
 
 STATUS = "unconfirmed draft, not measured, for Westley's look"
 PAGE = Path(__file__).resolve().parents[2] / "docs" / "northstar" / "research" / "layer_dynamics" / "plays_drafts.md"
@@ -209,8 +210,8 @@ def _spread(setup, start_distance):
     anchor = {}
     for g in setup.groups:
         anchor.setdefault(g.side, g.x)
-    shift = (start_distance - (anchor[1] - anchor[0])) / 2
-    delta = {0: -shift, 1: shift}
+    centre = CANVAS[0] / 2
+    delta = {0: centre - start_distance / 2 - anchor[0], 1: centre + start_distance / 2 - anchor[1]}
     near = lambda x: delta[min(anchor, key=lambda s: abs(anchor[s] - x))]
     groups = tuple(dataclasses.replace(g, x=g.x + delta[g.side],
                                        goal=None if g.goal is None else (g.goal[0] + near(g.goal[0]), g.goal[1]))
@@ -228,7 +229,8 @@ def scan_build(name):
     def build(terrain, enemy_heads, swap, start_distance=None):
         if enemy_heads < 1:
             raise ValueError("enemy_heads must be at least 1, got %r" % (enemy_heads,))
-        setup = fn()
+        setup = dataclasses.replace(fn(), mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
+                                    quiet_from_first_damage=True)
         enemy = [g for g in setup.groups if g.side == 1]
         if len(enemy) > enemy_heads:
             raise ValueError("%s has %d enemy groups, needs at least that many heads" % (name, len(enemy)))
@@ -246,7 +248,13 @@ def scan_build(name):
         setup = dataclasses.replace(setup, groups=groups)
         if start_distance is not None:
             setup = _spread(setup, start_distance)
-        return setup if terrain is None else dataclasses.replace(setup, terrain=terrain)
+        if terrain is None:
+            return setup
+        first = {}
+        for g in setup.groups:
+            first.setdefault(g.side, g)
+        mid = ((first[0].x + first[1].x) / 2, (first[0].y + first[1].y) / 2)
+        return dataclasses.replace(setup, terrain=shift_terrain(terrain, *mid))
 
     return build
 
