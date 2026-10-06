@@ -93,6 +93,10 @@ The client launches `res://pipe/ouroboros_pipe` through `globalize_path` (`c_bri
 
 Installed 2026-10-06 (Westley): `mingw-w64` GCC 13-win32 and `wine64`. First Windows data point the same night: the brief's static build (`-static -D__USE_MINGW_ANSI_STDIO=1`, the Linux flag set, `_setmode` in `main`) compiled with zero warnings; under wine64 the probe's four checkpoints are byte-identical to Linux for both the default msvcrt link and a ucrt link (`-mcrtdll=ucrt` is not in GCC 13; a `-specs` file swapping `-lmsvcrt` for `-lucrt` works). Ship the ucrt link. Artifacts in `~/.claude/jobs/cb87e7a3/tmp/ship/` (exe, outputs, `ucrt.specs`).
 
+## Relay and transport notes (2026-10-06)
+
+Steam Datagram Relay has no dashboard switch: P2P traffic over Steam Networking Messages or Sockets is relayed by Valve's backbone automatically; `initRelayNetworkAccess()` at startup (W3) only warms it. Godot's own high-level multiplayer (ENet `MultiplayerPeer`, RPCs, spawners) is not used: the lockstep session is its own protocol over `transport.gd`, so the `SteamMultiplayerPeer` extension is not needed; GodotSteam's `sendMessageToUser`/`receiveMessagesOnChannel` (W1) is the whole transport.
+
 ## Launch order
 
 Phase A (now, disjoint from stage 3): W0 backend catch-up, W1 SteamTransport, W3 NetMatch + SteamInit, W6 export (fetch script, presets), W7 portability; W8a and W8d after W7 and W6 land and mingw is installed. Phase B (after stage 3 lands): W8b, W8c, W-contract (`om_pipe.c`, shared with 3b), W2 PipeSim + bridge wrappers (`c_bridge.gd`, shared with 3c), W4 lobby + menu (shared with 3e), W5 tactical hookup (`tactical_view.gd`, shared with 3d), clerk, loopback two-process match.
