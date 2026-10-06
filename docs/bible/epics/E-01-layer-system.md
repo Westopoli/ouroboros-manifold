@@ -102,13 +102,13 @@ Rules
 - R-005-03  Given the same observer and an enemy on layer 4 at distance 600, When one tick passes, Then the enemy is not visible.
 - R-005-04  Given the same observer and an enemy on layer 5 at distance 150, When one tick passes, Then the enemy is visible (two-layer factor 0.20, effective radius 200); at distance 250 it is not.
 - R-005-05  Given the same observer and an enemy on layer 1 (two layers below) at distance 150, When one tick passes, Then the enemy is visible exactly as the enemy two layers above is (R-005-04): vision is symmetric by layer distance; and Given an observer on layer 1 and an enemy on layer 4 or 5, or any pair three or more layers apart in either direction, When one tick passes, Then the enemy is never visible by passive detection at any distance.
-- R-005-06  Given an observer standing at a vantage node, When the same enemies are placed, Then the adjacent factor is 1.00, the two-layer factor is 0.40, and a three-layer enemy is visible at factor 0.20.
+- R-005-06  Given a space era and an observer standing at a vantage node (retired for ground eras, Westley, 2026-10-05: "retire them yes"; high ground sees down there, R-005-09), When the same enemies are placed, Then the adjacent factor is 1.00, the two-layer factor is 0.40, and a three-layer enemy is visible at factor 0.20.
 - R-005-07  Given an observer inside a sensor interference zone of intensity 0.5, When an enemy is on an adjacent layer, Then the effective cross-layer radius is sensor radius × 0.50 × 0.50.
 - R-005-08  Given fog on, When an enemy on another layer is outside the effective cross-layer radius, Then it is hidden from the player exactly as a same-layer enemy outside sensor radius is hidden: no silhouette, no marker, no special treatment.
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: Q-005-05, Q-005-06, Q-005-07; Q-005-08 (whether going dark, S-163, and reach by type, S-164, exist in ground eras); Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
+Open flags: Q-005-05, Q-005-06, Q-005-07; Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
 Which model applies is the era kind (Westley, 2026-10-05, verbatim): "Space eras and Ground eras are different in terms of vision. Ground eras are just like Starcraft 2, high ground can see down, low ground can't see up. Space eras relies on the pinging system because there's no limit on up/down viewing like there is on land." R-005-01 to R-005-08 are the space model: symmetric by layer distance, and very limited ("passive cross-layer sight is very limited, to induce strategic depth, ping reaches past it in every layer/direction"); the factors 0.50 and 0.20 are provisional and not his [Q-005-07]. The ground model is R-005-09 to R-005-11. Q-005-02's condition on asymmetric vision (2026-10-01: "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter") still stands for the space model; the ground model is not asymmetry inside one model but the other kind's model (Westley, 2026-10-05: "Q-005-02 this is still true, it's just that we're not seperating space from ground eras").
 
 Ground model (land eras; every number provisional):
@@ -221,6 +221,7 @@ The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
+Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now").
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer see it from further away than they otherwise would: emitting doubles cross-layer sight and being seen [Q-163-01: whether "every layer" includes the emitter's own layer].
@@ -234,6 +235,7 @@ Silent is the default. The numbers are provisional runtime settings, tuned by th
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
+Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"); a ground era fights by the ground model (S-005 R-005-09 to R-005-12).
 
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].

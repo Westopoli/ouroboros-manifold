@@ -62,8 +62,8 @@ Flag closed, rule text pending: Q-092-01, the elevation sensor bonus is built: t
 As a commander, I want an elevated position to see farther, so that vantage is worth taking.
 
 Rules
-- R-091-01  Given a unit within a vantage node's radius (default 100 wu), When visibility is computed, Then cross-layer factors double and extend one layer (E-01 R-005-06).
-- R-091-02  Given an elevation tier difference of d between observer and target, When the era enables elevation sensor bonus, Then the observer's effective radius is multiplied by 1 + 0.15 · d [Q-092-01: nothing in code reads this].
+- R-091-01  Given a space era (vantage nodes are retired for ground eras, where high ground sees down, E-01 R-005-09; Westley, 2026-10-05) and a unit within a vantage node's radius (default 100 wu), When visibility is computed, Then cross-layer factors double and extend one layer (E-01 R-005-06).
+- R-091-02  Given a space era (the elevation bonus is retired for ground eras, replaced by E-01 R-005-09; Westley, 2026-10-05) and an elevation tier difference of d between observer and target, When the era enables elevation sensor bonus, Then the observer's effective radius is multiplied by 1 + 0.15 · d [Q-092-01: nothing in code reads this].
 - R-091-03  Given the Settled Reach, When elevation is read, Then it affects sensors only, never damage (E-11 R-084-06).
 
 Inputs: vantage nodes; elevation gradient.
