@@ -2174,7 +2174,10 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
         }
         v = speed * f;
         if (d > 0.0 && !(v > 0.0)) { mu->waiting = 1; return; }
-        if (d == 0.0 || v * left >= d) {
+        /* See also: tests/csim/test_E01_T2_walker_waypoint_arrival.py */
+        if (mu->aim_is_waypoint && d < OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS) {
+            mu->plan_valid = 0;
+        } else if (d == 0.0 || v * left >= d) {
             mu->x = mu->aim_x;
             mu->y = mu->aim_y;
             if (d > 0.0) left -= d / v;
