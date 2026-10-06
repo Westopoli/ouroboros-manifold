@@ -330,7 +330,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-080-03, Q-159-12, Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 held in E-22, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-080-03, Q-159-12, Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 held in E-22, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
