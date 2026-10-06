@@ -143,11 +143,11 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-137 | E-18 | "Menus and transitions feel alive from simple elements with precise timing." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-137 |
 | S-138 | E-18 | "The whole game looks like one thing, low-poly and stylized." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-138 |
 | S-139 | E-19 | "Every peer computes exactly the same galaxy and battle." | Spec'd | `epics/E-19-multiplayer.md` S-139 |
-| S-140 | E-19 | "My orders reach every peer with no server in the middle." | Spec'd, blocked on Q-140-01 | `epics/E-19-multiplayer.md` S-140 |
+| S-140 | E-19 | "My orders reach every peer with no server in the middle." | Spec'd | `epics/E-19-multiplayer.md` S-140 |
 | S-141 | E-19 | "I know what my friends and I are doing together in this galaxy." | Spec'd; co-op only at launch | `epics/E-19-multiplayer.md` S-141 |
-| S-142 | E-19 | "A match nobody can pause or roll back." | Spec'd, blocked on Q-142-01 | `epics/E-19-multiplayer.md` S-142 |
+| S-142 | E-19 | "A match nobody can pause or roll back." | Spec'd | `epics/E-19-multiplayer.md` S-142 |
 | S-143 | E-19 | "A match with friends who own the same packs moves chronologically through eras." | Spec'd | `epics/E-19-multiplayer.md` S-143 |
-| S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-01 | `epics/E-19-multiplayer.md` S-144 |
+| S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-03 | `epics/E-19-multiplayer.md` S-144 |
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
 | S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
 | S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd, blocked on Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
@@ -212,7 +212,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-211 | E-10 | "The resources on the map fit the situation, tilted toward the better position, and I always have the means to do the job." | Design decided 2026-10-02, not scheduled (Q-211-02 to Q-211-04, and Q-177-02 held in E-22) | `epics/E-10-missions.md` S-211 |
 | S-212 | E-10 | "Losing my main base costs me the result, never better than partial failure, but I can fall back to what I still hold." | Design decided 2026-10-02, not scheduled (Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22) | `epics/E-10-missions.md` S-212 |
 | S-213 | E-10 | "A mission starts with technology that follows the civilization only slightly, so there is still room to climb." | Design decided in part 2026-10-02, not scheduled (Q-173-01, Q-159-12) | `epics/E-10-missions.md` S-213 |
-| S-214 | E-10 | "More players on the team means a bigger map, more enemies and more resources: 64,000 wu for 4 to 6." | Design decided 2026-10-02, not scheduled (Q-214-01, Q-214-02; teams of 6 are a desired future feature) | `epics/E-10-missions.md` S-214 |
+| S-214 | E-10 | "More players on the team means a bigger map, more enemies and more resources: 64,000 wu for 4 to 6." | Design decided 2026-10-02, not scheduled (Q-214-02; teams of 6 are a desired future feature) | `epics/E-10-missions.md` S-214 |
 | S-215 | E-14 | "The enemy runs an economy on my rules, richer by difficulty, farsighted only if I choose." | Design decided 2026-10-02, not scheduled (Q-125-03, Q-215-01 to Q-215-04) | `epics/E-14-enemy-macro-behavior.md` S-215 |
 | S-216 | E-14 | "The enemy defends its bases, falls back to what it holds and raids my workers and shipments." | Design decided 2026-10-02, not scheduled (Q-216-01 to Q-216-03) | `epics/E-14-enemy-macro-behavior.md` S-216 |
 | S-217 | E-14 | "The enemy moves between layers, pings and goes quiet as I can." | Design decided 2026-10-02, not scheduled (Q-217-01) | `epics/E-14-enemy-macro-behavior.md` S-217 |
@@ -238,7 +238,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-238 | E-18 | "I see workers walk and gather, weather cross the map, and disguised buildings look like what they pretend to be." | Design decided 2026-10-02, not scheduled; Q-238-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-238 |
 | S-239 | E-18 | "A ping, an emitting force and a ping alert read at a glance." | Spec'd, blocked on Q-239-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-239 |
 | S-240 | E-18 | "A screen of thousands of units, workers and buildings stays smooth." | Direction only; blocked on Q-240-01 (Westley's budgets) | `epics/E-18-visual-style-and-combat-visuals.md` S-240 |
-| S-241 | E-19 | "My pair is a sub-civilization in a team of 2 or 4, and the map, resources and enemies grow with the team; teams of 6 are a desired future feature." | Design decided 2026-10-02, not scheduled; Q-214-01 | `epics/E-19-multiplayer.md` S-241 |
-| S-242 | E-19 | "My building, scheduling and requests reach my partner as commands like any other." | Design decided 2026-10-02, not scheduled; Q-242-03, Q-242-04 | `epics/E-19-multiplayer.md` S-242 |
+| S-241 | E-19 | "My pair is a sub-civilization in a team of 2 or 4, and the map, resources and enemies grow with the team; teams of 6 are a desired future feature." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-19-multiplayer.md` S-241 |
+| S-242 | E-19 | "My building, scheduling and requests reach my partner as commands like any other." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-19-multiplayer.md` S-242 |
 | S-243 | E-20 | "The era pack checklist names what the economy and the landscape need." | Design decided 2026-10-02, not scheduled; Q-243-01, Q-159-08, Q-146-02, Q-146-03 | `epics/E-20-multi-era-and-monetization.md` S-243 |
 | S-244 | E-21 | "The names and teaching text for the economy come from the same pipeline as every other library." | Design decided 2026-10-02, not scheduled; Q-244-01, Q-244-02 | `epics/E-21-offline-ai-pipeline.md` S-244 |
