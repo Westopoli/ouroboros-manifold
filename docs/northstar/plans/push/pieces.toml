@@ -1304,6 +1304,18 @@ tests_pending = true
 size_estimate = "stage 1 of the ground substrate: the terrain field (spec 2026-10-05); the header, signatures, region.c, om_internal.h stay with their owners"
 
 [[piece]]
+id = "TERRAIN-2"
+manager = "M0"
+wave = 6
+owns = ["csrc/walk_route.c", "tests/skilllab/integration/test_ground_scene_real.py", "tests/transport/test_pipe_mission_start_era_kind.py"]
+owns_glob = ["tests/csim/test_E17_S190_*.py", "tests/csim/test_E01_R005_*.py", "tests/csim/test_E13_R207_05_*.py", "tests/csim/test_E11_R082_09_*.py", "tests/csim/test_E01_R001_07_*.py", "tests/csim/test_E01_R004_0*.py", "tests/csim/test_E01_S162_ping_refused*.py", "tests/csim/test_E01_T2_*.py"]
+acceptance = []
+depends_on = ["PP-contract", "core", "PP-move", "PP-unit", "PP-fog", "TERRAIN-1", "SL-harness"]
+status = "pending"
+tests_pending = true
+size_estimate = "stage 2 of the ground substrate: walkers, slopes, ground vision, era kind (spec 2026-10-06); the contract piece lands first on push/terrain2-base"
+
+[[piece]]
 id = "SPACELAB-1"
 manager = "M0"
 wave = 6

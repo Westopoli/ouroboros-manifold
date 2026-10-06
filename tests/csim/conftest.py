@@ -532,7 +532,11 @@ class OMTacParam:
     TARGET_POLICY_FACTION_1 = 59
     PING_ALERT = 60
     TERRAIN_STEEP_DEG = 61
-    _COUNT = 62
+    SLOPE_UP_DIV = 62
+    SLOPE_DOWN_MULT = 63
+    SIGHT_EYE_HEIGHT = 64
+    GROUND_FLYER_SEEN_MULT = 65
+    _COUNT = 66
 
 
 class OMEmission:
@@ -1909,11 +1913,15 @@ def _bind_e01(lib):
     _bind(lib, "om_command_ping", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "caster", "layer", "x", "y"))
     _bind(lib, "om_command_set_emission", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_int], ctypes.c_int, ("w", "unit_ids", "n_units", "mode"))
     _bind(lib, "om_command_set_layer", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_ids", "n_units", "layer"))
+    _bind(lib, "om_era_kind", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_ping_alert_count", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction"))
     _bind(lib, "om_ping_alert_get", [W, ctypes.c_int32, ctypes.c_uint32, V], ctypes.c_int, ("w", "faction", "index", "out"))
+    _bind(lib, "om_roster_set_movement_kind", [W, ctypes.c_int, ctypes.c_int], ctypes.c_int, ("w", "type", "kind"))
     _bind(lib, "om_roster_set_reach", [W, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_type", "layers_up", "layers_down"))
+    _bind(lib, "om_set_era_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "kind"))
     _bind(lib, "om_unit_get_emission", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
     _bind(lib, "om_unit_get_target_layer", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit"))
+    _bind(lib, "om_unit_profile_movement_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "type"))
     _bind(lib, "om_unit_profile_reach", [W, ctypes.c_int, P(ctypes.c_uint32), P(ctypes.c_uint32)], ctypes.c_int, ("w", "unit_type", "up", "down"))
     _bind(lib, "om_unit_transition_progress", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit"))
     lib._e01_bound = True
@@ -2711,8 +2719,11 @@ def _bind_e17(lib):
     _bind(lib, "om_terrain_ground_at", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "layer", "x", "y"))
     _bind(lib, "om_terrain_height_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "x", "y"))
     _bind(lib, "om_terrain_present", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_terrain_sight_blocks", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "layer0", "x0", "y0", "layer1", "x1", "y1"))
+    _bind(lib, "om_terrain_slope_at", [W, ctypes.c_double, ctypes.c_double, V], ctypes.c_int, ("w", "x", "y", "out"))
     _bind(lib, "om_terrain_slope_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_terrain_slope_get", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
+    _bind(lib, "om_terrain_walk_mask", [W, ctypes.c_int, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32, ("w", "layer", "out", "cap"))
     _bind(lib, "om_terrain_walkable_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
     _bind(lib, "om_unit_get_position", [W, ctypes.c_uint32, V], None, ("w", "unit_id", "byref"))
     _bind(lib, "om_unit_order_hold_node", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "unit_id", "node_id"))

@@ -5,6 +5,7 @@
   "era_spatial_scale": "placeholder: test fixture era with no real spatial scale.",
   "era_tone": "placeholder: test fixture era with no real tone.",
   "era_order": 2,
+  "kind": "space",
   "test_only": true,
 
   "units": {

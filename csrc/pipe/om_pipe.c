@@ -1440,6 +1440,12 @@ static void handle_mission_start(const char *json) {
     }
     int64_t faction = 0;
     get_i64(json, "faction", &faction);
+    int64_t era_kind = 0;
+    get_i64(json, "era_kind", &era_kind);
+    if (era_kind != 0 && era_kind != 1) {
+        write_error("mission_start", "bad era_kind");
+        return;
+    }
 
     int owns_region = 0;
     for (uint32_t ri = 0; ri < om_region_count(W) && !owns_region; ri++)
@@ -1504,6 +1510,7 @@ static void handle_mission_start(const char *json) {
         }
     }
     if (have_mission) {
+        om_set_era_kind(W, (int)era_kind);
         if (quiet_world)
             om_mission_setup_fallback(W, region, fb_enemy);
         else

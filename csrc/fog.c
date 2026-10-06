@@ -159,6 +159,7 @@ typedef struct {
 #define OM_FOG_PING_REASON_REACH 2
 #define OM_FOG_PING_REASON_COOLDOWN 3
 #define OM_FOG_PING_REASON_LAYER 4
+#define OM_FOG_PING_REASON_GROUND 5 /* terrain stage 2: ping is space-only */
 #define OM_FOG_PING_DOWN_SECTORS 3
 #define OM_FOG_MAX_PINGED_FACTIONS 16
 typedef struct {
@@ -189,6 +190,7 @@ typedef struct {
     om_fog_era_flag era_flags[OM_FOG_MAX_ERA_FLAGS];
     uint32_t n_era_flags;
     char era_name[OM_FOG_ERA_NAME_LEN];
+    int era_kind; /* terrain stage 2: 0 space (default), 1 ground; see om_set_era_kind */
 
     int mission_phase;
     int mission_started;
@@ -261,7 +263,7 @@ static const om_fog_unit_track *om_fog_find_tracked(const om_fog_state *st, uint
 
 static int om_fog_in_vantage(const om_fog_state *st, double x, double y) {
     uint32_t i;
-    if (!st) return 0;
+    if (!st || st->era_kind == 1) return 0;
     for (i = 0; i < st->n_vantage; i++) {
         if (om_fog_dist(x, y, st->vantage[i].x, st->vantage[i].y) <= st->vantage[i].radius) return 1;
     }
@@ -349,6 +351,7 @@ static int32_t om_fog_cell_ceil(double v) {
  * are tested. The cells holding the two units are exempt (standing in it, as with cover).
  * Only with ROUTE_AROUND_TERRAIN on. See also: om_combat_can_shoot in tactical_move.c (fire side). */
 static int om_fog_grid_blocks(const om_world *w, double ox, double oy, double tx, double ty, uint32_t low_layer) {
+    int ground_terrain = om_era_kind(w) == 1 && om_terrain_present(w);
     double dx = tx - ox, dy = ty - oy;
     double xmin = (ox < tx) ? ox : tx, xmax = (ox < tx) ? tx : ox;
     int32_t c0x = om_fog_cell_floor(ox), c0y = om_fog_cell_floor(oy);
@@ -374,6 +377,9 @@ static int om_fog_grid_blocks(const om_world *w, double ox, double oy, double tx
         row_hi = (ylo == yhi) ? row_lo : om_fog_cell_ceil(yhi) - 1;
         for (row = row_lo; row <= row_hi; row++) {
             if ((col == c0x && row == c0y) || (col == c1x && row == c1y)) continue;
+            if (ground_terrain &&
+                om_terrain_band_at(w, ((double)col + 0.5) * OM_NAVMESH_CELL_SIZE, ((double)row + 0.5) * OM_NAVMESH_CELL_SIZE) - 1 > (int)low_layer)
+                continue;
             if (om_mapgen_cell_blocked(w, low_layer, col, row)) return 1;
         }
     }
@@ -408,6 +414,14 @@ static double om_fog_elev_scale(int max_elev) {
     return (max_elev > 0) ? 1.0 + OM_ELEVATION_SENSOR_BONUS_PER_TIER * (double)max_elev : 1.0;
 }
 
+/* Ground era: a flyer is seen from max(radii) x OM_TP_GROUND_FLYER_SEEN_MULT, so candidate bounds widen by that mult
+ * (bound only has to never be too small). The elevation bonus is skipped there, so the bound stays an upper bound. */
+static double om_fog_ground_reach_w(const om_fog_state *st, const om_world *w) {
+    double m = om_tactical_get_param(w, OM_TP_GROUND_FLYER_SEEN_MULT);
+    return (st && st->era_kind == 1 && m > 1.0) ? m : 1.0;
+}
+#define om_fog_ground_reach(st) om_fog_ground_reach_w((st), w)
+
 static double om_fog_world_bound(const om_world *w) {
     om_fog_state *st = om_fog((om_world *)w);
     om_world *mw = (om_world *)w;
@@ -417,14 +431,14 @@ static double om_fog_world_bound(const om_world *w) {
         if (sr > st->max_sensor) st->max_sensor = sr;
         st->bound_scanned++;
     }
-    return st->max_sensor * om_fog_elev_scale(st->max_elev) * (1.0 + OM_FOG_BOUND_SLACK);
+    return st->max_sensor * om_fog_elev_scale(st->max_elev) * om_fog_ground_reach(st) * (1.0 + OM_FOG_BOUND_SLACK);
 }
 
 static double om_fog_observer_bound(const om_fog_state *st, const om_world *w, uint32_t observer) {
     int type = om_unit_get_unit_type(w, observer);
     if (type < 0) return 0.0;
     return om_unit_profile_sensor_radius((om_world *)w, type) *
-           om_fog_elev_scale(om_fog_elevation(st, observer)) * (1.0 + OM_FOG_BOUND_SLACK);
+           om_fog_elev_scale(om_fog_elevation(st, observer)) * om_fog_ground_reach_w(st, w) * (1.0 + OM_FOG_BOUND_SLACK);
 }
 
 /* ALG-65 effective sensor radius for an observer: base radius by unit type
@@ -445,7 +459,7 @@ static double om_fog_effective_radius_at(const om_fog_state *st, const om_world 
     base = om_unit_profile_sensor_radius((om_world *)w, type);
     interference = om_fog_zone_interference_at(st, w, ox, oy, layer);
     effective = base * (1.0 - interference);
-    if (have_target_elev) {
+    if (have_target_elev && !(st && st->era_kind == 1)) {
         double mult = 1.0 + OM_ELEVATION_SENSOR_BONUS_PER_TIER *
                       (double)(om_fog_elevation(st, observer) - (int)target_elev_tier);
         effective *= (mult > 0.0) ? mult : 0.0;
@@ -651,6 +665,18 @@ void om_set_era_name(om_world *w, const char *name) {
     st->era_name[OM_FOG_ERA_NAME_LEN - 1] = '\0';
 }
 
+/* Terrain stage 2: 0 space, 1 ground (a pack field, Q-146-04 a); 1 for any other value, nothing changed. */
+int om_set_era_kind(om_world *w, int kind) {
+    if (!w || (kind != 0 && kind != 1)) return 1;
+    om_fog(w)->era_kind = kind;
+    return 0;
+}
+
+int om_era_kind(const om_world *w) {
+    const om_fog_state *st = w ? (const om_fog_state *)w->fog_state : NULL;
+    return st ? st->era_kind : 0;
+}
+
 double om_strategic_agent_read_region_field(const om_world *w, int32_t p0, uint32_t region_idx, om_field field) {
     /* S-093 R-093-03: the strategic sim reads every neighbor region's fields
      * without tactical fog (E-05); tactical fog never gates this. */
@@ -701,6 +727,7 @@ static double om_fog_cross_layer_factor(const om_world *w, uint32_t unit, uint32
     om_fog_unit_pos(w, unit, &ux, &uy);
     in_vantage = om_fog_in_vantage(st, ux, uy);
     if (p0 == 0) return 1.0;
+    if (st && st->era_kind == 1) return up ? 0.0 : 1.0;
     if (p0 > OM_FOG_VISION_OFFSETS) return 0.0;
     base = om_fog_vision_param(w, p0, up);
     if (base > 1.0) base = 1.0;
@@ -727,6 +754,20 @@ static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, do
                              uint32_t target, double tx, double ty, uint32_t tl) {
     const om_fog_state *st = om_fog_ro(w);
     double factor = 1.0;
+    int ground = st && st->era_kind == 1;
+    int terrain_sight = ground && om_terrain_present(w);
+    int flyer_seen = 0;
+    if (ground) {
+        int tt = om_unit_get_unit_type(w, target);
+        if (tt >= 0 && om_unit_profile_movement_kind(w, tt) == OM_MOVE_FLYING && (int)tl > om_terrain_band_at(w, tx, ty) - 1) {
+            double r = om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol, 0, 0);
+            double tr = om_unit_profile_sensor_radius((om_world *)w, tt);
+            if (tr > r) r = tr;
+            flyer_seen = om_fog_dist(ox, oy, tx, ty) <= r * om_tactical_get_param(w, OM_TP_GROUND_FLYER_SEEN_MULT) &&
+                         !(terrain_sight && om_terrain_sight_blocks(w, (int)ol, ox, oy, (int)tl, tx, ty));
+        }
+    }
+    if (flyer_seen) return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
     if (ol != tl) {
         factor = om_fog_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol, tl > ol);
         if (factor <= 0.0) return 0;
@@ -735,6 +776,7 @@ static int om_fog_can_see_at(const om_world *w, uint32_t observer, double ox, do
     if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius_at(st, w, observer, om_unit_get_unit_type(w, observer), ox, oy, ol,
                                                                  (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
     if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
+    if (terrain_sight && om_terrain_sight_blocks(w, (int)ol, ox, oy, (int)tl, tx, ty)) return 0;
     return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
 }
 
@@ -903,6 +945,7 @@ int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, doub
     om_grid_iter it;
     int32_t f = om_unit_get_faction(w, caster);
     if (caster == 0 || caster > OM_MAX_UNITS || f < 0 || !om_unit_alive(w, caster) || !om_fog_unit_pos(w, caster, &cx, &cy)) return OM_FOG_PING_REASON_CASTER;
+    if (om_era_kind(w) == 1) return OM_FOG_PING_REASON_GROUND;
     if (layer >= OM_LAYER_COUNT) return OM_FOG_PING_REASON_LAYER;
     if (om_fog_dist(cx, cy, x, y) > om_tactical_get_param(w, OM_TP_PING_REACH)) return OM_FOG_PING_REASON_REACH;
     st = om_fog(w);
@@ -1007,6 +1050,7 @@ static uint64_t om_fog_section_hash(const om_world *w) {
         h = fog_ck_word(h, (uint64_t)(int64_t)st->era_flags[i].on);
     }
     h = fog_ck_str(h, st->era_name, OM_FOG_ERA_NAME_LEN);
+    h = fog_ck_word(h, (uint64_t)(int64_t)st->era_kind);
     h = fog_ck_word(h, (uint64_t)(int64_t)st->mission_phase);
     h = fog_ck_word(h, (uint64_t)(int64_t)st->mission_started);
     h = fog_ck_word(h, st->mission_begin_base_tick);
@@ -1086,6 +1130,7 @@ static void fog_state_put(fog_sw *sw, const om_fog_state *st) {
         fog_sw_i32(sw, st->era_flags[i].on);
     }
     fog_sw_str(sw, st->era_name, OM_FOG_ERA_NAME_LEN);
+    fog_sw_i32(sw, st->era_kind);
     fog_sw_i32(sw, st->mission_phase);
     fog_sw_i32(sw, st->mission_started);
     fog_sw_u64(sw, st->mission_begin_base_tick);
@@ -1184,6 +1229,7 @@ static void fog_state_get(fog_sr *sr, om_fog_state *st) {
         st->era_flags[i].on = fog_sr_i32(sr);
     }
     fog_sr_str(sr, st->era_name, OM_FOG_ERA_NAME_LEN);
+    st->era_kind = fog_sr_i32(sr);
     st->mission_phase = fog_sr_i32(sr);
     st->mission_started = fog_sr_i32(sr);
     st->mission_begin_base_tick = fog_sr_u64(sr);
