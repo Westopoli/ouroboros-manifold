@@ -1562,15 +1562,15 @@ static int om_move_probe_sure_blocked(const om_move_state *ms, uint32_t n_near, 
 
 /* PP-move (ROUTE_AROUND_TERRAIN): a push that would end in a blocked cell of the unit's layer, or in an obstacle
  * disc, slides along one axis, else reverts (Python _resolve_collisions, R-099-04). */
-static int om_move_slide_blocked(om_world *w, om_move_state *ms, uint32_t layer, double x, double y) {
-    return om_move_cell_blocked(w, ms, layer, (int32_t)floor(x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(y / OM_NAVMESH_CELL_SIZE))
+static int om_move_slide_blocked(om_world *w, om_move_state *ms, int walk, uint32_t layer, double x, double y) {
+    return om_move_cell_blocked_for(w, ms, walk, layer, (int32_t)floor(x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(y / OM_NAVMESH_CELL_SIZE))
         || om_map_sample_obstacle_density(w, x, y) > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
-static void om_move_slide(om_world *w, om_move_state *ms, uint32_t layer, double ox, double oy, double *nx, double *ny) {
-    if ((*nx == ox && *ny == oy) || !om_move_slide_blocked(w, ms, layer, *nx, *ny)) return;
-    if (!om_move_slide_blocked(w, ms, layer, *nx, oy)) *ny = oy;
-    else if (!om_move_slide_blocked(w, ms, layer, ox, *ny)) *nx = ox;
+static void om_move_slide(om_world *w, om_move_state *ms, int walk, uint32_t layer, double ox, double oy, double *nx, double *ny) {
+    if ((*nx == ox && *ny == oy) || !om_move_slide_blocked(w, ms, walk, layer, *nx, *ny)) return;
+    if (!om_move_slide_blocked(w, ms, walk, layer, *nx, oy)) *ny = oy;
+    else if (!om_move_slide_blocked(w, ms, walk, layer, ox, *ny)) *nx = ox;
     else { *nx = ox; *ny = oy; }
 }
 
@@ -1582,7 +1582,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     double ax = om_move_grid_x(ms, ia), ay = om_move_grid_y(ms, ia);
     double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
     const double oax = ax, oay = ay, obx = bx, oby = by;
-    int changed = 0;
+    int changed = 0, routed = 0;
     if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
     target = 2.0 * OM_UNIT_COLLISION_RADIUS;
@@ -1622,9 +1622,15 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
             bx = om_move_clamp_axis(bx, ms->canvas_w); by = om_move_clamp_axis(by, ms->canvas_h);
         }
         if (ms->col_route && !ms->col_open) {
-            om_move_slide(w, ms, (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
-            om_move_slide(w, ms, (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
+            om_move_slide(w, ms, om_move_is_walker(w, ia), (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
+            om_move_slide(w, ms, om_move_is_walker(w, ib), (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
+            routed = 1;
         }
+    }
+    /* R-001-07: a walker's push result stays on its walk mask. See also: tests/csim/test_E01_T2_collision_mask.py */
+    if (changed && !routed) {
+        if (om_move_is_walker(w, ia)) om_move_slide(w, ms, 1, (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
+        if (om_move_is_walker(w, ib)) om_move_slide(w, ms, 1, (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
     }
     om_move_grid_set(ms, ia, ax, ay);
     om_move_grid_set(ms, ib, bx, by);
@@ -2168,7 +2174,10 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
         }
         v = speed * f;
         if (d > 0.0 && !(v > 0.0)) { mu->waiting = 1; return; }
-        if (d == 0.0 || v * left >= d) {
+        /* See also: tests/csim/test_E01_T2_walker_waypoint_arrival.py */
+        if (mu->aim_is_waypoint && d < OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS) {
+            mu->plan_valid = 0;
+        } else if (d == 0.0 || v * left >= d) {
             mu->x = mu->aim_x;
             mu->y = mu->aim_y;
             if (d > 0.0) left -= d / v;

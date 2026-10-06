@@ -153,6 +153,9 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
             if (nx < 0 || ny < 0 || nx >= (int64_t)cw || ny >= (int64_t)ch) continue;
             nb = (uint32_t)(ny * (int64_t)cw + nx);
             if (mask && !mask[nb]) continue;
+            /* See also: tests/csim/test_E01_T2_walker_no_corner_cut.py */
+            if (mask && dxs[k] && dys[k] &&
+                (!mask[cy * cw + (uint32_t)nx] || !mask[(uint32_t)ny * cw + cx])) continue;
             h0 = terrain ? wr_height(w, cur, cw) : 0.0;
             h1 = terrain ? wr_height(w, nb, cw) : 0.0;
             kind = h1 > h0 ? 1 : (h1 < h0 ? 2 : 0);

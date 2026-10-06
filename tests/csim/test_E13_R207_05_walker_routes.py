@@ -129,6 +129,9 @@ def _component_cells(mask, cw, ch, start):
                 nx, ny = cx + dx, cy + dy
                 if (dx or dy) and 0 <= nx < cw and 0 <= ny < ch:
                     j = ny * cw + nx
+                    # R-001-07 no corner cutting: a diagonal needs both orthogonals walkable.
+                    if dx and dy and not (mask[cy * cw + nx] and mask[ny * cw + cx]):
+                        continue
                     if mask[j] and j not in seen:
                         seen.add(j)
                         stack.append(j)
