@@ -326,3 +326,19 @@ def test_real_smoke_two_layouts_one_replicate_four_workers(tmp_path):
     csv_path = next(Path(p) for p in paths.values() if str(p).endswith(".csv"))
     assert csv_path.exists() and csv_path.stat().st_size > 0
     assert (tmp_path / "depth_summary.json").exists()
+
+
+# ---- stall fix, defect 3: the naive scene shares the plays' geometry (shifted by canvas/2) and flags ----
+
+def test_run_layout_naive_build_is_inside_the_canvas_with_the_plays_flags(monkeypatch):
+    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+    calls = []
+    depth.run_layout(values_of(start_distance=2800), 5, 1, fake_scan(table_all(), calls))
+    setup = {c[0]: c[1] for c in calls}["naive"](16, False)
+    cw, ch = FLAT.canvas
+    g0, g1 = [next(g for g in setup.groups if g.side == s) for s in (0, 1)]
+    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.objective]:
+        assert 0 <= x <= cw and 0 <= y <= ch, (x, y)
+    assert g1.x - g0.x == pytest.approx(2800) and g0.y == g1.y
+    assert setup.objective == pytest.approx(((g0.x + g1.x) / 2, g0.y))
+    assert setup.quiet_from_first_damage is True and setup.mopup is True
