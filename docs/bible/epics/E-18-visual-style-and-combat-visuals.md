@@ -170,7 +170,7 @@ As a commander, I want a ping, an emitting force and a ping alert to read at a g
 Rules
 - R-239-01  Given a ping (E-01 R-162-01), When it lands, Then a burst is drawn at the place for as long as the layer is revealed there, and the units it revealed are drawn hidden again when it ends (E-01 R-162-05); the burst slows into place and never snaps [Q-239-01: the look in each manifest].
 - R-239-02  Given a force set to emit (E-01 S-163), When it is drawn, Then it reads as emitting from a silent force at tactical zoom, using the mark of E-16 S-232.
-- R-239-03  Given the alert that a side was pinged (E-01 R-162-03), When it is drawn, Then a sector of about 60 degrees points toward where the ping came from, and nothing more precise is drawn (E-16 S-232).
+- R-239-03  Given a side is pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn for the pinged side: the alert is switched off for now (Westley, 2026-10-05); if it returns, a sector of about 60 degrees toward the caster and nothing more precise (E-16 S-232).
 
 Inputs: ping, emit and alert events (tick delta); manifest fields for the looks.
 Outputs: screen.

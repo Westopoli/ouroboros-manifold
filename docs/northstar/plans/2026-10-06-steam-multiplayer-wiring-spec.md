@@ -1,6 +1,6 @@
-# Steam P2P multiplayer: wiring the client (spec, rev 2)
+# Steam P2P multiplayer: wiring the client (spec, rev 4)
 
-Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). This spec is contract-level (a pipe frame changes), so a second Fable chat audits it next. Not approved; not launched.
+Written 2026-10-06 evening from the Sonnet pre-flight scout on main `1470e10e`. Goal (Westley, 2026-10-06): a Steam beta with multiplayer in about two weeks; private beta by Dev Comp key first, the public track started at once (Q-STEAM-01 a). Research: `docs/research/topics/steam_p2p_and_beta_submission.md`. Backend on main: pipe verbs `net_*` (`csrc/pipe/om_pipe.c:2612-2634`), `autoload/net/*.gd` (unregistered), `tests/net` (14 pass, 224 s), `tests/test_lockstep_session.gd` (PASS). Rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, under "What the audits changed"). Rev 4 folds the Fable contract audit (four blocking lines, all folded). Approved for pre-flight; not launched.
 
 ## The match, in one picture
 
@@ -19,7 +19,7 @@ sequenceDiagram
         H->>G: var_to_bytes([n, cmds, sums]) over Networking Messages, unreliable, channel 0
         G->>H: same
         Note over H,G: LockstepSession.poll(): releases every tick whose cmds are in (catch-up), net_submit, net_step 1
-        Note over H,G: net_step reply carries the tactical frame (contract change); a missing tick is re-requested
+        Note over H,G: net_step {frame:true} answers net_ack then the tactical frame (contract change); packets carry coverage back to the peer's last released tick
     end
     H-->>G: desync at tick t, section s: error panel, no retry
 ```
@@ -29,7 +29,7 @@ sequenceDiagram
 | Finding | Evidence | Decision |
 |---|---|---|
 | `net_step` writes no `tactical` frame; the view draws from `tactical_step` frames only | `architecture.md:352`, `om_pipe.c:2217-2231`, `c_bridge.gd:470-484` | Contract: `net_step` emits the same `tactical` frame as `tactical_step` after the step (one frame per `net_step` call); `architecture.md` first |
-| `project.godot:17` pins features `"4.7"`; the installed binary is 4.6.3 (`godot.real --version`) | | GodotSteam 4.19.1 (Godot 4.6.3) as researched; the pin is Westley's to confirm (T-note: a 4.7 editor would rewrite the project) |
+| `project.godot:17` pins features `"4.7"`; the installed binary is 4.6.3 (`godot.real --version`) | | Westley 2026-10-06 (Q-NET-01 a): the beta ships on 4.6.3; 4.7.2 after the beta behind a playthrough gate. GodotSteam v4.23-gde (2026-10-05, GDExtension for Godot 4.4+, Steamworks SDK 1.65; Codeberg releases) replaces the 4.19.1 pin; no 4.6-targeted native build exists |
 | The session is proven on a FakeSim and the loopback only; `tests/net` proves a Python port of the rule through real pipes, not the GDScript session | `lockstep_session.gd:150-159`, `tests/net/README.md` | Piece W2 builds the pipe-backed sim adapter and a Godot test runs the GDScript session over it with the loopback transport |
 | `bytes_to_var` on remote packets | `lockstep_session.gd:93-105` | `bytes_to_var` (no objects) is already the call; the transport also rejects any packet whose decoded value is not an Array of length 3 with int, Array, Array; a test plants a bad packet |
 | Every order passes `tactical_view.send_command` (`:359`) to `send_unit_command` (`c_bridge.gd:415`) to the immediate `command` verb; the view's `_process` releases ticks by time accumulation (`:43-85`, `:438`) | | In a match the view hands orders to `NetMatch.command()` and stops stepping; `NetMatch` owns the tick |
@@ -52,6 +52,24 @@ sequenceDiagram
 | `tests/test_main_menu_items.gd:100-110` asserts exactly 5 menu items | W4 changes it through a ledger row `TD-MENU-multiplayer` (test-defect: the list grew by design) |
 | `error_panel.gd:12` has no retry flag; the Retry button lives in the `.tscn` | `show_error(reason, retry := true)` hides the button node |
 
+## What the Fable audit changed (2026-10-06, contract level)
+
+| Finding (file:line) | Decision |
+|---|---|
+| Every existing `net_step` consumer reads one reply (`tests/long/harness.py:33-37`, `tests/net/driver.py:96-100`, `tests/transport/test_pipe_net_verbs.py:60`); an unconditional extra frame breaks about 15 passing tests inside a contract piece | The frame is opt-in: `net_step {"n":1, "frame":true}` answers `net_ack` first, then one `tactical` frame (full or delta by the `tactical_step` rule, `om_pipe.c:1683`); without the flag unchanged. `write_tactical` touches pipe-local delta bookkeeping only, no world state, no RNG (`:1098-1310`): no checksum effect |
+| `mission_start` zeroes `g_tactical_tick` (`:1554`) and `net_reset` zeroes the net tick, so in a match `frame.tick == ack.tick` | `PipeSim.step` asserts it; a mismatch means a stray `tactical_step` and ends the session |
+| Steam Networking Messages drops packets until the receiver answers `network_messages_session_request` with `acceptSessionWithUser` | W1: `SteamTransport` accepts session requests from lobby members and refuses others; nothing flows on the first real test otherwise |
+| `ensure_world` is `has_world() or ensure_session(...)` (`c_bridge.gd:381-382`) and a same-args session is reused however far it advanced (`:350-352`): a guest who played first keeps an old world | Every peer calls `open_session` (a fresh pipe) with the record's `seed, n_regions, features, new_campaign`; `new_campaign` joins the MatchRecord |
+| `mission_start {faction: 0}` (`:501`); per-peer factions contradict "one human faction" | One `faction` field in the record, sent identically by all; `archetype, era_kind, movement_kinds` are host-reported outputs a guest compares against its own `mission` frame and refuses on mismatch before `ready` |
+| The Fable audit's libm premise was stale (Sonnet analysis the same night): the release build calls no libm transcendental; `om_sin/om_cos/om_atan2/om_pow` are the sim's own (`sim.c:42-106`, `tactical_move.c:412-430`), `libm_lint.py` bans the rest, and `-ffp-contract=off` is already set (`Makefile:28-29`; dropping it diverges at tick 100, measured). Real hazards: the unconditional `-msse2 -mfpmath=sse` fails on arm64; clang rejects `-fexcess-precision=standard`; MSVC needs `/fp:precise /fp:contract-`; a dead weak `sin` stub (`region.c:358`) keeps `sin` an undefined symbol; `__builtin_ctzll` (`tactical_move.c:952`) has no MSVC form; the lint misses `fma hypot ldexp frexp rint` | New piece W7 portability (two Doer units, Makefile and the two C sites, lint extension) plus `scripts/net_xplat_checksum.py` (the probe: seed 3, 2,000 ticks, full and section checksums at 100/500/1000/2000; Linux gcc reference `full=17857234444101692619` at tick 100) run by Westley on Linux, Windows and macOS. Q-NET-05 stays open only until the three outputs match |
+| `need` re-request answers "stored commands" but what is missing is coverage (`lockstep_session.gd:110-112`) | W0 replaces `need` with a fourth packet element: my `_released`; `_send` carries commands and coverage for every tick from `max(peer_released + 1, n - 63)` to `n`, per destination. Self-healing, one validator, no request shape |
+| Peer id: "lobby member order" is not stable across clients | The record's peer table is the only source |
+| A hostile shape halts `poll()` before `_send` (`:108-116`): one bad packet per poll is a denial of service | W0 validator bounds: `tick` in `(_released, _released + 64]`, finite floats, `units` size 1..70, a per-tick command cap, `cmd.peer == from`, sums entries int; the transport drops senders not in the peer table |
+| No way to leave; host quit waits 60 s; `mission_end` (`tactical_view.gd:165`) mutates one peer's world | In a match End Mission means leave: `leaveLobby`, session end, then local `mission_end`. W4 feeds `lobby_chat_update` (member left) into `session.drop(peer)`; `lobby_join_requested` and `+connect_lobby` for friends-list joins; a paste-lobby-id field for the Spacewar test |
+| `net_checksum` wrapper unused by the session; `checksum: true` redundant | Both dropped from W2 |
+| `.gitignore` cannot re-include a file under a fully ignored directory | Pattern `addons/godotsteam/*` plus `!addons/godotsteam/*.gdextension`; the `.gdextension` declares `libsteam_api.dylib` under `dependencies`; ad-hoc signing for the Mac export (notarization is Mac-only tooling, Westley's step) |
+| A silent 3-to-4-peer drop can diverge if the dropped peer's last packet reached one survivor only | Accepted for the beta, written here |
+
 ## Interfaces fixed here
 
 1. **Transport** (`autoload/net/transport.gd:1-16` as-is): `attach(id)`, `send(from, to, bytes)`, `poll(id) -> Array of {from, data}`. `SteamTransport` keeps a table `peer_id (small int, lobby member order) -> SteamID`; sends with `Steam.sendMessageToUser(identity, bytes, UNRELIABLE_NO_DELAY, channel 0)`; `poll` drains `receiveMessagesOnChannel(0, 32)` after `Steam.run_callbacks()`. Unreliable fits the session's repeat-5 scheme (`lockstep_session.gd:42`). Wall clock: `stall_ticks 1000` and `drop_ticks 2000` at 20 Hz are 50 s and 100 s; set `stall_ticks 20` (1 s) and `drop_ticks 1200` (60 s) in the MatchRecord (the 2026-10-05 settings).
@@ -61,7 +79,7 @@ sequenceDiagram
 5. **Order mapping**: move 0, attack_move 1, attack_target 2 (`c_bridge.gd:422` to `OM_NET_VERB`), `units` are sim ids (identical on both peers by construction); other verbs are not reachable from the client today and stay so. Single player keeps `send_unit_command` untouched; `tactical_view.send_command` branches on `NetMatch.active()`.
 6. **The pump**: new autoload `NetMatch` (`autoload/net/net_match.gd`, registered in `project.godot`): holds the session, the transport and the `PipeSim`; `_process` calls `Steam.run_callbacks()` and, on a 50 ms accumulator, `session.poll()`; exposes `active()`, `command(cmd)`, `state()` (`running | stalled(peer) | desync(tick, section) | ended`). Autoloads `SteamInit` (`autoload/steam/steam_init.gd`: `steamInitEx(app_id)`, `initRelayNetworkAccess()`, a `steam_ready` flag; app id 480 Spacewar until Westley's app id exists) before it.
 7. **Desync screen**: `scenes/shared/error_panel.gd` gains `show_error(reason, retry := true)`; a desync shows "Desync at tick N, section NAME" with the main-menu button only. A stall shows a "waiting for PEER (s)" line in the tactical HUD; a drop ends the match with the same panel.
-8. **Export and Steam files**: `addons/godotsteam/` (GDExtension 4.19.1, binaries for Linux and macOS, owner NET-wire-ext), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
+8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
 
 ## Pieces
 
@@ -74,6 +92,7 @@ sequenceDiagram
 | W3 NetMatch + SteamInit | `autoload/net/net_match.gd`, `autoload/steam/steam_init.gd` (new), `project.godot` (G-projectgodot) | Godot: `NetMatch` with loopback and fake sims advances ticks at 20 Hz, reports stalled and desync states |
 | W4 Lobby | `scenes/lobby/lobby.gd`, `lobby.tscn` (new, NET-wire-lobby), `autoload/scene_router.gd` (M3), `scenes/main_menu/main_menu.gd` (C1, after the era toggle): MULTIPLAYER row (`main_menu.gd:70-76`), host or join, member list, the MatchRecord barrier | Godot: with a fake lobby, a host record reaches the guest; mismatched `version` refuses; `ready` from all peers releases `go` |
 | W5 Tactical hookup | `scenes/tactical_c/tactical_view.gd` (C5): `send_command` branches to `NetMatch`; `_process` skips its own stepping when a match is active; frames from `PipeSim`; stall line; desync panel | Godot: in match mode the view issues no `tactical_step`, an order reaches `NetMatch.command`; a desync state shows the panel without retry; single-player path byte-identical (existing tests unchanged) |
+| W7 portability | `Makefile`, `csrc/region.c` (dead stub), `csrc/tactical_move.c:952` (owners B10/B12 per `pieces.toml`), `scripts/specfactory/libm_lint.py`, `scripts/net_xplat_checksum.py` (new) | per-target flags (arm64, clang, MSVC), stub removed, portable ctz, lint gains `fma hypot ldexp frexp rint`, the probe script committed | the probe on this box reproduces the Linux reference checksums; the lint rejects a planted `hypot`; the library's `nm -D` lists no `sin` |
 | W6 Export | `scripts/fetch_godotsteam.sh`, `addons/godotsteam/*.gdextension`, `.gitignore`, `export_presets.cfg`, `steam_appid.txt` (NET-wire-export) | the fetch script verifies the sha256; `godot --headless --export-release Linux` builds once Westley has installed the 4.6.3 templates (T17); the Mac export is a Westley step |
 | Clerk | merge `push/net-wire-land`, gate, a two-process loopback match playthrough on this box | |
 
@@ -99,11 +118,12 @@ Late join and resync (`net_log_*`, `net_state_*` stay unwrapped); the economy se
 - Q-NET-01: the `"4.7"` feature pin against the 4.6.3 binary: which Godot does the beta ship on (Westley).
 - Q-NET-02: whether a stalled peer's units keep their last orders or halt (the sim does whatever it did; the question is whether to show a pause).
 - Q-NET-03 (closed, every call): delta frames cannot be skipped.
-- Q-NET-04: GodotSteam binaries by fetch script (this spec) or Git LFS (Westley).
+- Q-NET-05 (open until measured): no libm transcendental is in the tick path; the remaining hazards are compiler flags per target (W7). Closed when the probe matches on Linux, Windows and macOS; a mismatch after W7 reopens the question.
+- Q-NET-04 (closed, a): fetch script, pinned sha256, folder gitignored; mirror the release zip into our own GitHub release once so a vanished upstream cannot break checkouts.
 
 ## Pre-flight before launch
 
-Check by reading or running: a 20 Hz loop of blocking `net_step` requests with a full frame every `OM_PIPE_FULL_PERIOD` holds 50 ms on this box (measure); GodotSteam 4.19.1 loads under the 4.6.3 binary headless (`Steam` singleton present, `steamInitEx(480)` returns a code without the client running, no crash); `_request` timeouts against `net_step` at 20 Hz (the pipe's reply latency measured); the loopback two-process match from `tests/net/driver.py` reused for W2's Godot test; owner rows added; stage 3's menu change sequenced with W4.
+Check by reading or running: the three-OS probe after W7 (Westley runs `scripts/net_xplat_checksum.py` on each machine; outputs diffed); a 20 Hz loop of blocking `net_step` requests with a full frame every `OM_PIPE_FULL_PERIOD` holds 50 ms on this box (measure); GodotSteam v4.23-gde loads under the 4.6.3 binary headless (`Steam` singleton present, `steamInitEx(480)` returns a code without the client running, no crash); `_request` timeouts against `net_step` at 20 Hz (the pipe's reply latency measured); the loopback two-process match from `tests/net/driver.py` reused for W2's Godot test; owner rows added; stage 3's menu change sequenced with W4.
 
 ## Estimate
 

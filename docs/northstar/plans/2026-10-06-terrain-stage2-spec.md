@@ -4,6 +4,9 @@ Written 2026-10-06 from the two stage-2 pre-flight scouts and revised after two 
 
 Rules built: E-01 R-001-05, R-001-06, R-001-07, R-004-06, R-004-07, R-200-02 to R-200-04, R-005-09 to R-005-11, S-162 (ping space-only), R-091-01/02 (retired for ground); E-11 R-082-09; E-13 R-095-01, R-207-05; E-17 R-190-02. Open flags carried on purpose (Q-BIBLE-01): Q-005-06 (the flyer's distances), Q-007-01 (cover against ground sight), R-004-07's 1.1 (provisional).
 
+
+Go recorded: Westley, 2026-10-06, "go ahead and write the increased parrallelism into the script and launch the workflow." (pre-flight reported before launch).
+
 ## Scope
 
 Two pieces behind one contract piece. **2a Walkers:** a movement kind per unit type; a walker stands only on the ground's band at its position, routes by least time over walkable cells and slopes, changes layer at a slope's midline by position, never takes a timed transfer, ignores layer orders, and spawns on the band under it. **2b Ground vision and era kind:** an era kind (space 0, ground 1) in the world; in a ground era a lower unit never sees a higher one, a higher unit sees down within its sensor radius unless ground stands in the line, a flyer sees down and is seen from farther than it sees, vantage nodes and the elevation bonus do nothing, the ping is refused. Not in stage 2: pipe and client (stage 3); missions calling the generator (stage 3); seer and scout units (E-11 S-201, own piece); swimming (declared, not routed); slopes spanning more than two layers (Q-STAGE2-01); water (stage 1 clamps it to height 0).

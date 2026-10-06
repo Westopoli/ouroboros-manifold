@@ -1,6 +1,6 @@
-# The space lab's layout search (spec, D2)
+# The space lab's layout search (spec, D2, rev 2)
 
-Decision: Westley, 2026-10-06, "yes on B": run the space lab on guided-random layouts now, record which induce strategic depth, and find where the composition lines cross, while the ground lab waits for the sim's ground. Builds on space lab stage 1 (on main `047c8aed`: the space label, timeline orders, recorded features, the draft plays) and the fixed terrain sampler. Not audited; not approved; no run until Westley says so.
+Decision: Westley, 2026-10-06, "yes on B": run the space lab on guided-random layouts now, record which induce strategic depth, and find where the composition lines cross, while the ground lab waits for the sim's ground. Builds on space lab stage 1 (on main `047c8aed`: the space label, timeline orders, recorded features, the draft plays) and the fixed terrain sampler. Rev 2 (2026-10-06 evening) folds a fresh Sonnet audit; Westley the same evening: "go on all, we're pushing for our 2 week deadline" (the build go for the pieces and the first run).
 
 ## The idea in one picture
 
@@ -19,6 +19,22 @@ flowchart LR
 ```
 
 Hundreds of layouts, each a small set of fights. The product is a chart per feature and a table per pillar, not a single number.
+
+## What the audit changed (2026-10-06)
+
+| Finding (file:line, `scripts/skilllab/`) | Decision |
+|---|---|
+| The space plays are fixed 16 v 16 `Setup`s built by `fn()` (`plays_space.py:92-95`), not `build(enemy_heads, swap)` functions; nothing scans them, so no break-even exists for them today | Piece P3: a `BuildFn` wrapper per registered play that varies the enemy headcount and takes the layout's map; the skilled side stays at 16 |
+| Counters are registered for S1, S2 (spread line) and S4 only (`plays_space.py:171-204`, `skills.py:75-82`); none for S3, S5, concave, screen | The score counts "counter works" only where a counter exists; S3 and S5 score on gain alone and the page marks them "no counter registered" (a lab draft; counters for S3/S5 are a later play-writing unit) |
+| No category notion in the lab (`Side.mix` is unit-name shares, `asym.py:36,80-100`); the sim has `om_composition_ratio` and a category per type (`ouroboros_sim.h:1155-1159, 1998`) but which builtin type is Strike, Line or Siege is undecided and Q-081-01 is open | Compositions move to run 2. Run 1 measures depth per skill only. The category-to-type table is a Westley decision before run 2 |
+| Features: `choke_width_wu/_bodies` (bodies = gap / 30, body hardcoded 15 wu until D1), `lane_count` 0 or 1 only, `blocked_layer_ranges` from random `lo, hi`, no detour ratio, no objective; kinds are exclusive (one wall OR lane OR cover per map) (`maps.py:52-129, 168-169`) | Piece P1: a feature-controlled generator `layout_map(features, seed)` beside `sample_map`, lanes 0/1/2, `k` as `layer_hi` with `lo = 0`, a detour path of known ratio around the wall, cover density; `Features` gains `detour_ratio`, `blocked_layer_top`; `rows.py` columns follow |
+| `start_distance` is computed from `Frame` (`DEFAULT_FRAME` ±445, `maps.py:22`) and the scenes place sides at sensor radius + 1 (`asym.py:131`, `plays.py:49`); no objective field in `Setup` (`contract.py:81-97`) | Piece P2: `Setup` gains `start_distance` and `objective`; the objective scene converges both groups on it; mop-up (`mopup.py:36-38`) already returns `None` with no enemy seen, so no re-order problem |
+| Stalemate = 400 ticks with no hp change anywhere (`fight.py:263,271-277`); at `d` = 2,800 the approach alone may exceed it and score "undecided" | Provisional (Westley's veto, it changes a window's start, not its length): the quiet counter starts at first damage; before first contact the only ends are the cap and a wipe. If he prefers, (b) raise `stalemate_ticks` instead |
+| Cost: 7 skilled + 1 shared naive + 3 counters = 11 scans per layout in run 1; a scan is 17 cells × 2 swaps × 3 seeds = 102 fights (`scan.py:33,69`) | 200 layouts × 11 × 102 = 224k fights; at 55 fights/s (12 workers) about 68 min; with bisection (B10) about 20 min |
+| No `random` outside seeded `Random(seed)`; no numpy | The Latin-hypercube draw is hand-written on `Random(seed)` in `depth.py` |
+| `summary.py` is cell-shaped; `report.py` has the CSS vars, dark mode and SVG helpers | `depth.py` writes its own `depth_summary.json` and uses `report.py`'s helpers for the pages |
+| `SL-harness` (glob) and `SPACELAB-1` (explicit) both list `plays_space.py` and `test_plays_space.py` | PP-ledger: SPACELAB-1 landed; its rows retire; LAB-SEARCH rows per piece below |
+| B1 (mop-up LOS) and B2 (cap 12,000) unmerged | Both land through the gate before the pieces merge; a wall layout without `can_shoot` stalls on the first blocked pair |
 
 ## 1. A layout is a feature vector
 
@@ -94,17 +110,19 @@ flowchart TD
 
 Charts in the lab's own page style (inline SVG, light and dark), one `summary.json` for the pillars table.
 
-## 4. What must exist first
+## 4. Pieces (run 1)
 
-| Need | State | Who |
-|---|---|---|
-| Objective scene: both forces start `d` apart and converge on an objective; today's plays start at contact distance | not built; a new `scenes.py` entry plus a `Setup` start distance | Doer, one unit |
-| Flank detour generator (a wall with a gap plus a detour path of known ratio) | not built; the sampler draws random rectangles | Doer, one unit |
-| Composition by category share (the lab mixes by type name; the three-category wrapper is small) | small addition | Doer |
-| Fight end on "never engaged" and the mop-up line-of-sight rule (Q-LAB-01, briefs B1, B2) | in flight today | Sonnet chat |
-| Depth score and the pillars table | new module `scripts/skilllab/depth.py` | Doer, one unit |
-| Pass marks `G`, the score rule, the sweep values | drafts above | Westley, after the first chart |
-| Unit size as a setting (D1) for the bodies axis | spec written; after stage 2 lands | Doer |
+| Piece | Files (owner row LAB-SEARCH-*) | What | Tests first (different agent) |
+|---|---|---|---|
+| P1 layout generator | `maps.py`, `rows.py` | `layout_map(features, seed)`: wall with gap `w` bodies, lanes 0/1/2, blocked layers 0..k, detour of ratio `r`, cover `c`; `Features` gains `detour_ratio`, `blocked_layer_top` | `tests/skilllab/test_layout_map.py`: every feature value round-trips through `Features`; same seed and features give byte-identical maps; the detour path's length over the through path is within 5% of `r` |
+| P2 objective scene | `contract.py` (`Setup` fields), `scenes.py`, `asym.py`, `plays.py`, `fight.py` (quiet counter from first damage) | `start_distance`, `objective`; both groups attack-move to the objective; stalemate window starts at first damage | `tests/skilllab/test_objective_scene.py`: sides start `d` apart; a fight at `d` = 2,800 on open ground does not end "stalemate" before contact; the existing contact-distance plays are byte-identical (rows recorded before and after) |
+| P3 scannable space plays | `plays_space.py`, `skills.py` | `BuildFn` per registered play taking `(map, enemy_heads, swap)`; counters where registered; "no counter" flagged | `tests/skilllab/test_plays_space_scan.py`: each of the 10 plays builds at 8 and 24 enemy heads; the 16 v 16 build equals today's `fn()` |
+| P4 depth | `depth.py` (new), `batches.py` entry `layout_search`, `tests/skilllab/test_depth.py` | seeded LHS over the grid; per layout 11 scans; `gain`, `counter_works`, score (`None` break-even = no gain, flagged); `depth_summary.json`; pages (chart 1, chart 2, the pillars table) | the score of a hand-built fixture equals the rule; LHS at seed 7 is byte-identical twice; the pillars table has one row per pillar in `map_design/README.md` |
+| B9, B10, B11 | deferred (pre-flight 2026-10-06): B9 saves 11 s per worker process once per run (workers persist across a batch), B11 needs a new public symbol (`om_unit_get_hp_all`, a contract piece) and B10 returns sparse cells that `batches.py:536`, `report.py:63-94` and the summary consume as dense. Run 1 at 68 min needs none of them; B10 is revisited if runs repeat | | |
+
+Order: tests first (four writers); P1, P2, P3 in parallel (disjoint files); P4 after P1 to P3; clerk merges onto main (after B1 and B2 have landed), gate, a 3-layout smoke run, then the 200-layout run at 12 workers. Owner rows: one piece LAB-SEARCH with explicit rows (`maps.py`, `rows.py`, `contract.py`, `scenes.py`, `asym.py`, `plays.py`, `fight.py`, `plays_space.py`, `skills.py`, `depth.py`, `batches.py`, the four test files), the way SPACELAB-1 sat beside the `SL-harness` glob. Baseline (pre-flight): `tests/skilllab` 2045 passed, 1 failed (`ground/test_highground_real.py::test_control_3_h0_a_longer_climb_never_raises_the_break_even`), 2 skipped; one 32v32 fight 0.27 s.
+
+Run 2 (after Westley's category table and D1): compositions by category share and the body-size axis.
 
 ## 5. Pre-flight (to do before the run is launched)
 

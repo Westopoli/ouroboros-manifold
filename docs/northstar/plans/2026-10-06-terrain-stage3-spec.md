@@ -1,4 +1,4 @@
-# Ground substrate, stage 3: missions on generated ground, seen by the player (spec, rev 2)
+# Ground substrate, stage 3: missions on generated ground, seen by the player (spec, rev 3)
 
 Written 2026-10-06 from the stage-3 pre-flight scout; rev 2 folds a fresh Sonnet audit the same evening (seven blocking findings, listed under "What the audit changed"). Rests on stage 1 (on main) and stage 2 (`push/terrain2-land`, landing). Goal set by Westley the same day: playtesters on a Steam beta in two weeks must see ground eras; stage 3 is the smallest honest path from "the sim has ground" to "a player plays a mission on it". Rulings: era choice is a main-menu toggle (Q-STAGE3-02 a). Not approved; not launched.
 
@@ -31,6 +31,19 @@ What the player sees: the walkers mockup's top-down look (bands as a colour ramp
 | Generate fails with -1 (canvas above `TG_MAX_CANVAS_WU` or no dry cell) and calls `om_map_set_canvas` itself (`terrain.c:707`) | 3a: on -1 the mission refuses to start with a named error through the pipe (no silent flat mission); the archetype canvases (8k, 16k, 24k) are all within the cap |
 | `om_unit_spawn_internal` returns 0 for a walker on an unwalkable cell (`unit.c:898`) | 3a's spawn grid pre-checks `om_terrain_walk_mask` and steps to the next grid slot; a force that cannot place every unit fails the mission start with a named error |
 | Main menu double-claimed (`pieces.toml` lines 515 "core" and 534 C1) | PP-ledger resolves to C1 before the card is cut |
+
+## What the pre-flight changed (2026-10-06 night)
+
+| Finding (file:line) | Decision |
+|---|---|
+| No name-to-id table exists: manifests key units by name (`vanguard, warden, bombard, bastion, raider, interceptor`), sim ids are `OM_UT_*` at `csrc/unit.c:69-76` (`raider 0, interceptor 1, vanguard 2, warden 3, bombard 4, bastion 5`); the client registers no custom types | 3f writes the table into the manifest reader (`autoload/era_config.gd`: `const TYPE_IDS = {raider 0, ...}`) and the manifest row gains `movement`; the wire form is flat `movement_kinds: [t, k, t, k, ...]` parsed with the existing `get_int_array` (`om_pipe.c:264`), applied once before `om_set_era_kind` (`:1513`), which precedes both `om_mission_setup` paths |
+| `UIDataBus.save_settings` (`ui_data_bus.gd:129-148`) and `_load_settings` (`:83-107`) rebuild from fixed key lists; an unknown key is dropped | 3e edits `autoload/ui_data_bus.gd` (G-uidatabus, one piece-row handover) in both branches of `_load_settings`, `save_settings`, section `[game] era_id` |
+| `daemon_client.py:148-156` builds a fixed command; user args use the space form (`c_bridge.gd:100-103` `--seed <n>`) | 3e: `--era <id>` (space form); `daemon_client.py` gains `extra_args` |
+| `scenes/main_menu/**` owned by C8 (`:515`) and C1 (`:539`); `c_bridge.gd` has six owners | PP-ledger: the menu toggle lands under C1 (C8's row drops the glob); 3c takes C2's `c_bridge.gd` row; new rows for `era_config.gd` (C-era), 3d/3e/3f files |
+| The walkers mockup lives only on `origin/push/proto-walkers` | 3d reads its constants from that branch: `BAND_COLOURS` (0.40,0.72,0.42) (0.72,0.80,0.38) (0.90,0.68,0.30) (0.72,0.48,0.30) (0.92,0.90,0.88); `STEEP_COLOUR` (0.85,0.10,0.85) lerped 0.5 on unwalkable land; `WATER_COLOUR` unused (the sim has no water) |
+| `om_terrain_generate` is called from `handle_terrain_generate` only (`:2287-2298`); `write_error(name, reason)` (`:360`) is the error pattern | 3a/3b: the generate call joins `handle_mission_start`; -1 answers `write_error("mission_start", "terrain generate failed")` |
+| Save pins on this base: `om_internal.h:36`, `om_pipe.c:68`, `load_game.gd:5`, `test_E16_B5_save_version.py:13` (and `:97` 7→8), `test_E16_C2_save_version.py:14`, `test_load_game_wrong_version.gd:14`, comment copies `checksum_full.c:34`, `terrain.c:34`; stale prose `architecture.md:368` (`format_version 4`) | The contract piece's pin list is these; the stale prose is fixed in the same change |
+| Stage 2 base = `push/t2-erakind` + `push/t2-corner-td` (contains colmask, wp); nothing on main yet | Launch after the stage 2 clerk lands them |
 
 ## Pieces
 
