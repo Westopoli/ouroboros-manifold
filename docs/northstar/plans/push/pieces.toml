@@ -1268,7 +1268,9 @@ acceptance = []
 depends_on = []
 status = "landed"
 tests_pending = true
-size_estimate = "lockstep backend: checksum, command stream, pipe verbs, harness, client se[[piece]]
+size_estimate = "lockstep backend: checksum, command stream, pipe verbs, harness, client session, save hooks"
+
+[[piece]]
 id = "NET-wire-A"
 manager = "M0"
 wave = 5
@@ -1288,8 +1290,6 @@ depends_on = ["NET-backend"]
 status = "pending"
 tests_pending = false
 size_estimate = "Steam transport wiring: transport class, GodotSteam fetch script, extension, export presets, app id"
-
-ssion, save hooks"
 
 [[piece]]
 id = "TERRAIN-1"
