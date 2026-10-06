@@ -347,7 +347,7 @@ Rules
 - R-245-02  Given the lockstep backend (E-19 S-139, S-140), When a capture is made, Then it is the save state from 5 to 10 seconds before the press plus the command log since, so the sim replays those seconds byte-identically on our machine; the window is 10 s, and the screenshot, mission metrics, crash log, client log tail, scene name and camera ride beside it (Q-245-02 closed). The last version's zip had no seed and no words field; both are added.
 - R-245-03  Given a crash, When the game dies, Then the player is pointed at the log and the capture, as the last version did.
 - R-245-04  Given the website, When a player leaves feedback or a report there, Then it enters the same queue as the in-game reports, and nobody has to be present for it to be received.
-- R-245-05  Given the queue, When a report arrives, Then it is classified as a bug or a complaint, a bug is slotted into the maintenance queue, and a local model (the 30B of the Agora harness) investigates and proposes or lands a fix through the merge gate; a complaint is summarised for Westley [Q-245-03: what a model may land unattended, and what always waits for him].
+- R-245-05  Given the queue, When a report arrives, Then it is read by a person for the beta: a bug goes into the maintenance queue, a complaint is summarised. The later shape, a classifier and the local model of the Agora harness investigating and proposing fixes, is a post-launch idea (Westley, 2026-10-06: "a long way down the road post launch, we can just stub that idea"); Q-245-03 is deferred until then.
 
 Inputs: the report key; the player's words; the lockstep save and command log; the website form.
 Outputs: a report file with the capture; a queue entry; a classification; for bugs, an Agora task.
