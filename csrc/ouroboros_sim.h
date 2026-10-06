@@ -1054,6 +1054,7 @@ typedef enum {
     OM_TP_AREA_DOWN_4,
     OM_TP_TARGET_POLICY_FACTION_1,
     OM_TP_PING_ALERT,
+    OM_TP_TERRAIN_STEEP_DEG,
     OM_TP__COUNT
 } om_tac_param;
 
@@ -1279,6 +1280,18 @@ typedef struct om_selection_record {
     uint32_t home_region_idx;
     uint32_t _pad;
 } om_selection_record;
+
+typedef struct om_slope {
+    double x0;
+    double y0;
+    double x1;
+    double y1;
+    double mx;
+    double my;
+    double length;
+    int32_t lower_band;
+    int32_t upper_band;
+} om_slope;
 
 typedef struct om_structure_hud {
     double timer_progress;
@@ -1960,6 +1973,21 @@ void om_unit_order_move(om_world *w, uint32_t unit, double p2, double c_double);
 uint32_t om_unit_spawn_non_combat(om_world *w, int p1, double p2, double c_double);
 void om_unit_tick_decision_loop(om_world *w, uint32_t unit);
 /* ---- end generated: tactical_support.c ---- */
+
+/* ---- generated from signatures.toml: terrain.c ---- */
+int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canvas_h);
+int om_terrain_present(const om_world *w);
+double om_terrain_height_at(const om_world *w, double x, double y);
+int om_terrain_band_at(const om_world *w, double x, double y);
+int om_terrain_walkable_at(const om_world *w, double x, double y);
+int om_terrain_ground_at(const om_world *w, int layer, double x, double y);
+uint32_t om_terrain_band_heights(const om_world *w, double *out, uint32_t cap);
+uint32_t om_terrain_slope_count(const om_world *w);
+int om_terrain_slope_get(const om_world *w, uint32_t i, om_slope *out);
+uint32_t om_terrain_cells(const om_world *w, uint32_t *w_cells, uint32_t *h_cells);
+int om_terrain_cell_band(const om_world *w, uint32_t cx, uint32_t cy);
+uint32_t om_terrain_dump_bands(const om_world *w, uint8_t *out, uint32_t cap);
+/* ---- end generated: terrain.c ---- */
 
 /* ---- generated from signatures.toml: unit.c ---- */
 int om_command_activate_ability(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double target_x, double target_y);

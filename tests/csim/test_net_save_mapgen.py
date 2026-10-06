@@ -34,6 +34,7 @@ from test_net_section_hashes import _battle, _secs, _run, N_SECTIONS, SUPPORT_MA
 SAVE_TICK = 150
 AFTER_TICKS = 500
 OM_SAVE_SLOT_MAPGEN = 9
+OM_SAVE_SLOT_COUNT = 11
 OM_FEATURE_TACTICAL = None  # resolved lazily from conftest's OMFeature
 
 
@@ -81,16 +82,23 @@ def _saved_battle(lib, world_factory, ticks=SAVE_TICK):
 
 
 def _mapgen_slot(buf, size):
-    """(offset of the slot header, blob length). The mapgen slot is the last in
-    the buffer: [u8 id=9][u32 len][len bytes] ends at size. Found by scanning."""
+    """(offset of the slot header, blob length). The save ends with the slot table
+    (ids 0..OM_SAVE_SLOT_COUNT-1 in order: [u8 id][u32 len][blob]); found by walking
+    the ids from each candidate start until the chain ends exactly at size."""
     raw = bytes(buf)
-    hits = []
-    for blen in range(0, size - 4):
-        off = size - blen - 5
-        if raw[off] == OM_SAVE_SLOT_MAPGEN and struct.unpack_from("<I", raw, off + 1)[0] == blen:
-            hits.append((off, blen))
-    assert hits, "no mapgen slot header found at the end of the save buffer"
-    return hits[0]
+    for start in range(size - 5, -1, -1):
+        pos, ok, hit = start, True, None
+        for sid in range(OM_SAVE_SLOT_COUNT):
+            if pos + 5 > size or raw[pos] != sid:
+                ok = False
+                break
+            blen = struct.unpack_from("<I", raw, pos + 1)[0]
+            if sid == OM_SAVE_SLOT_MAPGEN:
+                hit = (pos, blen)
+            pos += 5 + blen
+        if ok and pos == size:
+            return hit
+    raise AssertionError("no mapgen slot header found in the save slot table")
 
 
 def test_round_trip_section_equal_right_after_load(lib, world_factory):

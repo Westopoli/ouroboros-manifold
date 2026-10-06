@@ -131,7 +131,7 @@ static double sv_get_f64(sv_reader *sr) { return sv_bits_f64(sv_get_u64(sr)); }
  * use either way, the same lazy-alloc-on-first-access pattern every module
  * already uses for these pointers (e.g. csrc/generational.c's
  * gen_get_state). */
-/* The ten slots' hook fields differ in type per slot (void* state vs.
+/* The eleven slots' hook fields differ in type per slot (void* state vs.
  * function pointers of distinct signatures), which is not safely tabled
  * without incompatible-pointer casts under -Wall -Werror, so each slot
  * below is one explicit call instead of a generic loop over a descriptor
@@ -161,6 +161,7 @@ static void sv_write_slots(sv_writer *sw, const om_world *w) {
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_MACRO,        w->macro_state_size,        w->macro_state_write);
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_SUPPORT,      w->support_state_size,      w->support_state_write);
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_MAPGEN,       w->mapgen_state_size,       w->mapgen_state_write);
+    sv_write_one_slot(sw, w, OM_SAVE_SLOT_TERRAIN,      w->terrain_state_size,      w->terrain_state_write);
 }
 
 /* F2m (R-111-03 atomic refusal): apply == 0 (the validate pass) used to
@@ -205,7 +206,7 @@ static void sv_parse_slots(sv_reader *sr, om_world *w, int apply) {
     /* Only the validate pass (apply == 0) needs a shadow target; the apply
      * pass reads straight into w as before. One shadow, calloc'd so the
      * (large, OM_MAX_REGIONS/OM_MAX_FACTIONS-sized) om_world is never put
-     * on the stack, covers all ten slot calls below -- each call only ever
+     * on the stack, covers all eleven slot calls below -- each call only ever
      * touches its own module's pair of fields on it. */
     om_world *shadow = NULL;
     if (!apply) {
@@ -262,6 +263,11 @@ static void sv_parse_slots(sv_reader *sr, om_world *w, int apply) {
                        shadow ? &shadow->mapgen_state : NULL,
                        shadow ? &shadow->mapgen_state_free : NULL,
                        w->mapgen_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_TERRAIN,
+                       &w->terrain_state, w->terrain_state_free,
+                       shadow ? &shadow->terrain_state : NULL,
+                       shadow ? &shadow->terrain_state_free : NULL,
+                       w->terrain_state_read);
     if (shadow) free(shadow);
 }
 

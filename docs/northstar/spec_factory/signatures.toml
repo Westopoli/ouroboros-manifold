@@ -6,8 +6,8 @@
 
 [meta]
 abi_version = 4
-symbol_count = 635
-struct_count = 39
+symbol_count = 757
+struct_count = 45
 ambiguous_remaining = 0
 
 [[symbols]]
@@ -6789,6 +6789,184 @@ epics = ["internal"]
 confidence = "certain"
 note = "internal (om_internal.h); no ctypes binding"
 
+[[symbols]]
+name = "om_terrain_generate"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint64_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Fill the terrain field from the seed alone; 0 on success, nonzero for a canvas the mapgen grid cannot hold. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_present"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "1 when a terrain field exists. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_height_at"
+module = "terrain.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Ground height in wu at a point; 0 outside the canvas. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_band_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Band 1 to 5 at a point; 0 when absent or outside. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_walkable_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "1 when the cell is walkable (slope within OM_TP_TERRAIN_STEEP_DEG). Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_ground_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer", ctype = "int" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "R-200-02: 1 on the ground band only; on a slope cell 1 on both bands it joins. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_band_heights"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "double *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "The five band floors (R-190-04); returns how many written. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_slope_count"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of slopes. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_slope_get"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "out", ctype = "OMSlope *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Slope i (R-001-06); 0 on success. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_cells"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "w_cells", ctype = "uint32_t *" }, { name = "h_cells", ctype = "uint32_t *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Grid size in cells; returns the cell count. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_cell_band"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "cx", ctype = "uint32_t" }, { name = "cy", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Band of one cell; 0 when absent or outside. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_dump_bands"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "uint8_t *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Whole-grid band bytes, row-major; returns how many written. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_install_net_hooks"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_terrain_apply_ground"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_value2"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "seed", ctype = "uint64_t" }, { name = "x_q16", ctype = "int32_t" }, { name = "y_q16", ctype = "int32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_fbm2"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "seed", ctype = "uint64_t" }, { name = "x_q16", ctype = "int32_t" }, { name = "y_q16", ctype = "int32_t" }, { name = "octaves", ctype = "int" }, { name = "gain_q16", ctype = "int32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_sin_q16"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "turn_q16", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_cos_q16"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "turn_q16", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_terrain_state_free"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "state", ctype = "void*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
 [[structs]]
 name = "OMAbilityEvent"
 source_test = "tests/csim/test_E11_S086_one_ability_each.py"
@@ -7008,3 +7186,8 @@ fields = [{ name = "tick", ctype = "uint64_t" }, { name = "faction", ctype = "in
 name = "OMNetCommand"
 source_test = "tests/csim/test_net_cmd_stream.py"
 fields = [{ name = "tick", ctype = "uint64_t" }, { name = "seq", ctype = "uint32_t" }, { name = "arg", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "peer", ctype = "uint8_t" }, { name = "verb", ctype = "uint8_t" }, { name = "layer", ctype = "uint8_t" }, { name = "n_units", ctype = "uint8_t" }]
+
+[[structs]]
+name = "OMSlope"
+source_test = "tests/csim/test_E01_R001_06_slopes.py"
+fields = [{ name = "x0", ctype = "double" }, { name = "y0", ctype = "double" }, { name = "x1", ctype = "double" }, { name = "y1", ctype = "double" }, { name = "mx", ctype = "double" }, { name = "my", ctype = "double" }, { name = "length", ctype = "double" }, { name = "lower_band", ctype = "int32_t" }, { name = "upper_band", ctype = "int32_t" }]

@@ -46,7 +46,8 @@
 #define OM_SAVE_SLOT_MACRO        7
 #define OM_SAVE_SLOT_SUPPORT      8
 #define OM_SAVE_SLOT_MAPGEN       9
-#define OM_SAVE_SLOT_COUNT        10
+#define OM_SAVE_SLOT_TERRAIN      10
+#define OM_SAVE_SLOT_COUNT        11
 
 typedef struct {
     om_tier  tier;
@@ -321,6 +322,14 @@ struct om_world {
     /* csrc/cmd_stream.c per-world state, same convention as tactical_state. */
     void *net_state;
     void (*net_state_free)(void *);
+    /* Terrain stage 1 (spec 2026-10-05): per-world terrain field (csrc/terrain.c),
+     * NULL until om_terrain_generate; freed through terrain_state_free. */
+    void *terrain_state;
+    void (*terrain_state_free)(void *);
+    /* Save hooks beside terrain_state_free (same convention as mapgen_state_*); see csrc/save.c OM_SAVE_SLOT_TERRAIN. */
+    uint32_t (*terrain_state_size)(const om_world *w);
+    void (*terrain_state_write)(const om_world *w, uint8_t *out);
+    int (*terrain_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage
@@ -348,6 +357,39 @@ void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out);
  * first time state is actually needed, so this only pre-wires the hooks;
  * it never allocates the state itself. */
 void om_events_install_save_hooks(om_world *w);
+
+/* Terrain stage 1 (spec 2026-10-05). Sizes are provisional (2026-10-05). */
+#define OM_TERRAIN_CELL_WU 100.0 /* R-186-05: one cell is 100 wu */
+#define OM_TERRAIN_BANDS 5 /* R-200-01 */
+#define OM_TERRAIN_MAX_CELLS 280 /* cells a side: OM_MAP_MAX_CANVAS / OM_TERRAIN_CELL_WU */
+#define OM_TERRAIN_SLOPE_CAP 4096 /* most slopes held; provisional (2026-10-05) */
+typedef struct om_terrain_state {
+    uint8_t present;
+    uint64_t seed;
+    uint32_t cells_w, cells_h;
+    int32_t band_floor_cm[OM_TERRAIN_BANDS]; /* band floors, cm */
+    int32_t *height_cm;   /* cells_w * cells_h, row-major, cm (fixed point) */
+    uint8_t *band;        /* 1 to OM_TERRAIN_BANDS per cell */
+    uint8_t *walkable;    /* 0 or 1 per cell */
+    om_slope *slopes;     /* OM_TERRAIN_SLOPE_CAP entries allocated */
+    uint32_t slope_count;
+} om_terrain_state;
+void om_terrain_state_free(void *state);
+void om_terrain_install_net_hooks(om_world *w);
+/* Writes the blocked bits for the ground (R-200-02): layers 1..k-1 blocked at every cell; cleared on regenerate. */
+void om_terrain_apply_ground(om_world *w);
+
+/* Terrain noise (csrc/terrain_noise.c), integer only, no libm, no world rng.
+ * Fixed point is Q16.16 (1.0 = 65536). Lattice spacing is 1.0 in input units.
+ *  om_tn_value2: value noise at (x_q16, y_q16), output in [-65536, 65536].
+ *  om_tn_fbm2: octaves summed, octave i has amplitude gain_q16^i and double the frequency;
+ *    output normalised by the amplitude sum so it stays in [-65536, 65536].
+ *  om_tn_sin_q16 / om_tn_cos_q16: angle is a turn fraction in Q16 (65536 = one full turn);
+ *    output in [-65536, 65536], exact at the quarter points. */
+int32_t om_tn_value2(uint64_t seed, int32_t x_q16, int32_t y_q16);
+int32_t om_tn_fbm2(uint64_t seed, int32_t x_q16, int32_t y_q16, int octaves, int32_t gain_q16);
+int32_t om_tn_sin_q16(uint32_t turn_q16);
+int32_t om_tn_cos_q16(uint32_t turn_q16);
 
 /* Lockstep spec 2026-10-05: net hooks and the per-tick command apply. */
 void om_cmd_apply_tick(om_world *w);

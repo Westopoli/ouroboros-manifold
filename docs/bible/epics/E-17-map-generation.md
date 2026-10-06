@@ -334,7 +334,7 @@ Rules
 - R-194-03  Given distance from the camera, When buildings and units are drawn, Then they step down: full models and scaffolds with people up close, simple shapes drawn in bulk farther away, district-colored blocks farther still, and the map view with unit groups as icons.
 - R-194-04  Given the zoom, When it moves, Then it is one continuous zoom from a single unit to the whole battlefield, on the camera's height-above-ground floor (E-16 S-103 R-103-03).
 - R-194-05  Given the map view, When the player zooms out, Then the zoom stops at the battlefield's map view (E-16 S-161), and the galaxy view stays outside a mission.
-- R-194-06  Given the coarse grid and the fine formula, When they describe the same ground, Then they agree where play depends on it [Q-194-01: how closely, and which one wins a disagreement].
+- R-194-06  Given the coarse grid and the fine formula, When they describe the same ground, Then they agree where play depends on it [Q-194-01: how closely, and which one wins a disagreement]. Research is needed before this is designed: how to keep the backend, what is really happening in the game, true to the ground (the simulation's grid wins) while keeping the player's experience, without the heavy snapping that brings (Westley, 2026-10-06).
 
 Inputs: seed; camera height.
 Outputs: terrain tiles; pieces at each level of detail.
