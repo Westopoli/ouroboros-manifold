@@ -38,6 +38,10 @@ The ported field will not be bit-identical to the GDScript mockup (different noi
 - `csrc/terrain.c` created with the generated stubs (every function returns 0 / absent).
 - Checks as the lockstep base: `make OPT=-O2 WERROR=1`, `sig_table --check`, lints, csim failing ids equal to main's (plus the count tests), transport 277.
 
+## Contract piece 2 (found by the query lane, 2026-10-06): a terrain save slot
+
+The terrain field needs its own save slot: `csrc/tactical_mapgen.c` re-sets the mapgen slot's hooks at lazy allocation and at the end of its own read, so a wrapper on the mapgen slot is overwritten. Add to `csrc/om_internal.h` the three hook pointers `terrain_state_size`, `terrain_state_write`, `terrain_state_read` on `om_world` (nulled in `csrc/region.c` with the other slots, before the install calls) and to `csrc/save.c` a slot `OM_SAVE_SLOT_TERRAIN` = 10, written and parsed exactly as the mapgen slot is (length-prefixed; an empty slot is legal; the read runs on the shadow world first). The save format number stays 6 (no saves of format 6 exist outside today's tests; ledger row `TD-TERRAIN-save-slot`). The query lane then installs its hooks on that slot from `om_terrain_install_net_hooks`: blob = seed u64, cells_w, cells_h, five band floors (i32 cm), heights (i32 cm); walkable, slopes and bands re-derived on load; the read atomic (scratch, caps, install at the end). The two cell-count readings (canvas/100 against canvas/100 + 1) are settled by the field test: n = floor(canvas / 100) cells per side, noise sampled at cell corners.
+
 ## Lanes (from `push/terrain-base`; files disjoint; tests first by a different agent)
 
 | Lane | Files | What |
