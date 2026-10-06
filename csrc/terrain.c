@@ -655,7 +655,7 @@ static void tg_bench(tg_grid *g, uint64_t seed) {
         if (g->e[i] > 0) hist[vals[i] + TG_ONE]++;
     }
     rank = (share * (int64_t)(land - 1)) >> TG_SHIFT;
-    while (b < TG_NOISE_BUCKETS && seen + hist[b] <= (uint64_t)rank) seen += hist[b++];
+    while (b < TG_NOISE_BUCKETS && seen + (int64_t)hist[b] <= rank) seen += hist[b++];
     thr = b - TG_ONE;
     for (i = 0; i < cells; i++) {
         int64_t e = g->e[i], wgt, t, f, fr, terr;
