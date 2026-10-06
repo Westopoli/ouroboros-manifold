@@ -1,5 +1,8 @@
 # Space-era landscape: first investigation
 
+**Approved 2026-10-06, with a note.** Westley, verbatim: "space landscape approved as well (note on the space landscape, we're going to have to design a clever system of allowing a vision *tube* for the player through upper layers that cover their line of sight on units on the lower layers, I've seen other RTSs do it where there's an object blocking your LOS but it becomes invisible with a small effect to make it clear to the user that that's what's happening. It'll be a hard problem to solve given the multi-layer nature of this game, and that'll be fun figuring out with the camera view, I just want a note of that when approving the prototype because I very much can't see certain areas of the landscape because of the limited method we're currently using (classic rts))". The note is recorded as Q-S3-01 in the register and is the first requirement of the S3 camera options page.
+
+
 Opened 2026-10-02. Flag: Q-166-02. Nothing here is bible text.
 
 ## Westley's idea, verbatim

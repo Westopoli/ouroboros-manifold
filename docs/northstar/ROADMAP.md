@@ -178,6 +178,28 @@ Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness
 | Settlements | Q-193-01 to -06, Q-222-01 | After the land generator |
 | Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
 
+## 3b. Parallel work (the TODO list)
+
+Work that does not wait on the build lanes. Written 2026-10-06 from Westley's list ("there's more than just the code"); one row per item, who moves it next, what it waits on. Research is done as a Gemini deep-research run (Westley) followed by a Sonnet synthesis (planner chat). A row is deleted when its product exists.
+
+| # | Item | Next mover | Waits on | Product |
+|---|---|---|---|---|
+| T1 | Settlement mockup pass 1 approved 2026-10-06; its five questions and Q-193-01 to -06 still open | Westley | nothing | Decisions into E-17 S-193; a pass 2 spec if he wants buildings inside cliffs and behind waterfalls seen first |
+| T2 | Space landscape pass 6 approved 2026-10-06 with the vision-tube note (Q-S3-01); S1 to S4, Q-166-02, Q-166-05 to be folded | Planner chat | nothing | The space kit recorded as decided; S3 options page (T3) |
+| T3 | Camera options page for S3 (space, five opaque sheets) and the remaining camera questions Q-103-04/05/06, Q-232-01 (the classic view, Angle Rack, Peel, flip and continuous zoom S-234 are already decided; `options/camera/options.md` A+C picked) | Planner chat drafts; Westley picks | T2 for S3 | `research/camera/options_s3.md` |
+| T4 | Sense-of-scale prototype: the Sand Table / zoomed-out end of the one drawing (Q-103-05, Q-234-01 (c): "a prototype before I commit to it"); terrain stage 3 draws the ground, which is where scale is first seen in the game | Planner chat spec; Doer; Westley look | terrain stage 3 | A mockup pass; his verdict on R-166-01's "massive scale" against the real client |
+| T5 | Methodology write-up: how strategic depth is measured, the skill lab method, the prototype gate, workflow discipline; one document from `agile.md`, `PLAN.md`, `layer_dynamics/README.md`, the ping doc, CLAUDE.md "Workflow specs" | Sonnet drafter; Westley reviews | nothing | `docs/northstar/method.md` |
+| T6 | Map-design pillars: review `docs/map-design-pillars` (branch), accept or amend, then map each pillar to a measurable the lab's layout search records | Westley; then planner chat | nothing | `research/map_design/README.md` on main; the layout-search spec cites it |
+| T7 | Military-strategy research (terrain in doctrine, air over ground, naval and space analogues) | Westley runs the Gemini prompt (given 2026-10-06); Sonnet synthesis | nothing | `docs/research/topics/terrain_in_military_doctrine.md` |
+| T8 | Website refresh (`~/Projects/ouroboros-site`, Astro on Fly.io, unlisted; copy pinned at `e10649a1`; two real captures, both stale): captures at 1920x1080 from the live client on the RTX box (galaxy, chronicle, briefing, tactical with cover and layer ring) and the prototypes (land 6b, settlement, walkers); regenerate the pinned copy; a `/method` and `/research` page if wanted | Westley decides scope (private or open; concept art kept or replaced; which scenes); a Doer captures and a drafter writes | T1, T2 for prototype shots | New captures and pages; `fly deploy` by hand |
+| T9 | Era pack form for 20+ eras: a one-page "how an era is written" from the hub's skeleton section and E-20 (identity, kind, roster by role, kits, prose pools) | Sonnet drafter; Westley reviews | nothing | `docs/northstar/era_pack_form.md` |
+| T10 | Cosmetics and art direction: nothing exists past placeholders; a brief needs the art direction first | Westley: a paragraph on the look per launch era | nothing | An art brief; then a cosmetics plan |
+| T11 | Economy "look" mockup (ROADMAP 4b: needed, none exists): lots and placement, what buildings show, disguise, lanes, the two economy screens | Planner chat spec; Doer; Westley look | T1 | A mockup pass |
+| T12 | Flaky playthrough test `test_s_c8_09` (lost Deploy click, diagnosed 2026-10-06): a logged re-click in the test helper, or find why the click drops | Westley: which; then an Engineer | nothing | A green gate without reruns |
+| T13 | Body size: the engine ignores the runtime collision radius, so the lab's body axis is void (found 2026-10-06) | Westley: runtime parameter, per-type stat, or drop the axis | nothing | A contract piece |
+| T14 | Fight tick cap 6,000: wall cells end as "capped" | Westley | nothing | A threshold |
+| T15 | Stale `om-*` checkout folders under `~/Projects` | cleaned 2026-10-06 (report in the planner chat) | | |
+
 ## 4. Not planned yet
 
 Decided or partly decided in the bible, with no plan doc. Order within this table is the proposed build order.
@@ -207,11 +229,11 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Land generator | Mockup: `scenes/mockups/landscape/` | Approved 2026-10-06 (Westley: "Landscape engine is also approved"), after pass 6b's markers of 2026-10-05 (scale and size are later polish). Integration: terrain stage 1 (the field) landing 2026-10-06; stage 2 walkers and slopes, stage 3 pipe and client, to plan |
 | Walking and flying units on land | Mockup: `scenes/mockups/walkers/` (`push/proto-walkers`) | Approved final 2026-10-06 (Westley: "Walkers prototype approved, no need for any more iteration that one can be integrated as is"). Integration = terrain stage 2 (walking kind, slope routing, midline rule) |
 | High ground worth | Instrument: `scripts/skilllab/highground.py` (`push/proto-highground`) | Built 2026-10-05; stands in a hill with space mechanics, so it is a space-lab result, not a ground answer; its fate open |
-| Space generator | Mockup: space kit mode | Pass 6 built 2026-10-03, in review. Past the three-pass limit set the same day; the limit applies from the next direction change |
+| Space generator | Mockup: space kit mode | Pass 6 approved 2026-10-06 with a note: a vision tube through covering layers is required of the camera (Q-S3-01) |
 | Movement and layers | Instrument: skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists. Answers the number flags: costs, times, caps, yields, technology, doctrine weights |
 | Economy and bases, look | Mockup, needed | None exists. Answers lots and placement, what buildings show, disguise, lanes, the two economy screens |
-| Settlements | Mockup: `scenes/mockups/settlement/` | Pass 1 built 2026-10-03, waiting for Westley's review |
+| Settlements | Mockup: `scenes/mockups/settlement/` | Pass 1 approved 2026-10-06; its numbers (Q-193-01 to -06) still his |
 | Layout engine | No prototype (Westley, 2026-10-06: "Layout engine doesn't need a prototype, we'll get the data on what layouts work from the simulation engine") | The space lab's layout search supplies the data; the layout-engine chat's pass 1 (`push/proto-layout`) stands as reference only |
 | Multiplayer | Not needed for transport; mockup needed for lobby screens | None exists |
 
