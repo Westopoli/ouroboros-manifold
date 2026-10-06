@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-06 (eleventh update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-06 (twelfth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -178,7 +178,7 @@ Parked (Westley, 2026-10-03, A209): none of M1 to M10 is asked until the harness
 | Multiplayer | Q-144-03 (re-asked: who hosts the next sitting of a locked universe). The lockstep drop is 30 s, so the 60 s provisional setting in `plans/2026-10-05-lockstep-backend-spec.md` needs updating by its owner | Blocks S-144 and the lobby. Everything else in S-140 to S-144 and the pair stories answered 2026-10-06 |
 | Economy and bases | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05 | E-22; the largest set. An ordered answer sheet is not yet drafted |
 | Settlements | Q-193-04, Q-193-05 (parked until fights have been run in the simulation) | Answered 2026-10-06: the rest of S-193 and S-222. After the land generator |
-| Strongpoints and weather | Q-218-01 to -06, Q-219-01 to -04 | After the land generator |
+| Strongpoints and weather | Q-219-02 (to be designed; Westley prefers the player not seeing a trouble coming), Q-219-04 (parked) | Answered 2026-10-06: the rest of S-218 and S-219. After the land generator |
 
 ## 3b. Parallel work (the TODO list)
 
