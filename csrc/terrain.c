@@ -44,7 +44,8 @@
  * #define OM_SAVE_SLOT_MACRO        7
  * #define OM_SAVE_SLOT_SUPPORT      8
  * #define OM_SAVE_SLOT_MAPGEN       9
- * #define OM_SAVE_SLOT_COUNT        10
+ * #define OM_SAVE_SLOT_TERRAIN      10
+ * #define OM_SAVE_SLOT_COUNT        11
  *
  * typedef struct {
  *     om_tier  tier;
@@ -1022,7 +1023,7 @@ void om_terrain_apply_ground(om_world *w) {
 #define TS_NET_MIX_SHIFT 29
 
 /* Section 8 is shared: mapgen (and support under it) installs first, its hash is kept here
- * (a function pointer, identical for every world) and chained. Terrain has no save slot: see the report, not saved yet. */
+ * (a function pointer, identical for every world) and chained. Terrain has its own save slot (OM_SAVE_SLOT_TERRAIN). */
 static uint64_t (*ts_prev_hash)(const om_world *w);
 
 static uint64_t ts_word(uint64_t h, uint64_t v) {
@@ -1044,7 +1045,89 @@ static uint64_t ts_section_hash(const om_world *w) {
     return h;
 }
 
+/* Save slot blob (little-endian): seed u64, cells_w u32, cells_h u32, five band floors i32 cm, heights i32 cm.
+ * Walkable, slopes and bands are re-derived on load. Format version stays 6 (ledger TD-TERRAIN-save-slot). */
+#define TS_SAVE_U64 8 /* bytes of a u64 */
+#define TS_SAVE_I32 4 /* bytes of a u32 or i32 */
+#define TS_SAVE_BYTE_BITS 8
+#define TS_SAVE_OFF_W TS_SAVE_U64
+#define TS_SAVE_OFF_H (TS_SAVE_OFF_W + TS_SAVE_I32)
+#define TS_SAVE_OFF_FLOORS (TS_SAVE_OFF_H + TS_SAVE_I32)
+#define TS_SAVE_HEAD (TS_SAVE_OFF_FLOORS + TS_SAVE_I32 * OM_TERRAIN_BANDS)
+
+static void ts_put(uint8_t *out, uint64_t v, int bytes) {
+    int i;
+    for (i = 0; i < bytes; i++) out[i] = (uint8_t)(v >> (TS_SAVE_BYTE_BITS * i));
+}
+
+static uint64_t ts_get(const uint8_t *in, int bytes) {
+    uint64_t v = 0;
+    int i;
+    for (i = 0; i < bytes; i++) v |= (uint64_t)in[i] << (TS_SAVE_BYTE_BITS * i);
+    return v;
+}
+
+static uint32_t ts_save_size(const om_world *w) {
+    const om_terrain_state *st = ts_ro(w);
+    return st ? (uint32_t)(TS_SAVE_HEAD + TS_SAVE_I32 * (size_t)st->cells_w * st->cells_h) : 0;
+}
+
+static void ts_save_write(const om_world *w, uint8_t *out) {
+    const om_terrain_state *st = ts_ro(w);
+    size_t i, n;
+    if (!st) return;
+    n = (size_t)st->cells_w * st->cells_h;
+    ts_put(out, st->seed, TS_SAVE_U64);
+    ts_put(out + TS_SAVE_OFF_W, st->cells_w, TS_SAVE_I32);
+    ts_put(out + TS_SAVE_OFF_H, st->cells_h, TS_SAVE_I32);
+    for (i = 0; i < OM_TERRAIN_BANDS; i++) ts_put(out + TS_SAVE_OFF_FLOORS + TS_SAVE_I32 * i, (uint32_t)st->band_floor_cm[i], TS_SAVE_I32);
+    for (i = 0; i < n; i++) ts_put(out + TS_SAVE_HEAD + TS_SAVE_I32 * i, (uint32_t)st->height_cm[i], TS_SAVE_I32);
+}
+
+/* Atomic: parse into scratch, install at the end. Bands are re-derived as generate does (clamp((h - floor0) / step)). */
+static int ts_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    om_terrain_state *st;
+    uint32_t cw, ch;
+    size_t i, n;
+    int64_t lo, step;
+    if (len == 0) return 0;
+    if (!w || !buf || len < TS_SAVE_HEAD) return -1;
+    cw = (uint32_t)ts_get(buf + TS_SAVE_OFF_W, TS_SAVE_I32);
+    ch = (uint32_t)ts_get(buf + TS_SAVE_OFF_H, TS_SAVE_I32);
+    if (cw == 0 || ch == 0 || cw > OM_TERRAIN_MAX_CELLS || ch > OM_TERRAIN_MAX_CELLS) return -1;
+    n = (size_t)cw * ch;
+    if ((size_t)len != TS_SAVE_HEAD + TS_SAVE_I32 * n) return -1;
+    st = (om_terrain_state *)calloc(1, sizeof(*st));
+    if (!st) return -1;
+    st->height_cm = (int32_t *)malloc(n * sizeof(int32_t));
+    st->band = (uint8_t *)calloc(n, 1);
+    st->walkable = (uint8_t *)calloc(n, 1);
+    st->slopes = (om_slope *)calloc(OM_TERRAIN_SLOPE_CAP, sizeof(om_slope));
+    if (!st->height_cm || !st->band || !st->walkable || !st->slopes) { tg_free(st); return -1; }
+    st->seed = ts_get(buf, TS_SAVE_U64);
+    st->cells_w = cw;
+    st->cells_h = ch;
+    for (i = 0; i < OM_TERRAIN_BANDS; i++) st->band_floor_cm[i] = (int32_t)(uint32_t)ts_get(buf + TS_SAVE_OFF_FLOORS + TS_SAVE_I32 * i, TS_SAVE_I32);
+    for (i = 0; i < n; i++) st->height_cm[i] = (int32_t)(uint32_t)ts_get(buf + TS_SAVE_HEAD + TS_SAVE_I32 * i, TS_SAVE_I32);
+    lo = st->band_floor_cm[0];
+    step = (int64_t)st->band_floor_cm[1] - lo;
+    if (step < 1) step = 1;
+    for (i = 0; i < n; i++) {
+        int64_t b = st->height_cm[i] < lo ? 0 : (st->height_cm[i] - lo) / step;
+        st->band[i] = (uint8_t)(tg_clamp(b, 0, OM_TERRAIN_BANDS - 1) + 1);
+    }
+    st->present = 1;
+    ts_analyse(w, st);
+    if (w->terrain_state && w->terrain_state_free) w->terrain_state_free(w->terrain_state);
+    w->terrain_state = st;
+    w->terrain_state_free = tg_free;
+    return 0;
+}
+
 void om_terrain_install_net_hooks(om_world *w) {
+    w->terrain_state_size = ts_save_size;
+    w->terrain_state_write = ts_save_write;
+    w->terrain_state_read = ts_save_read;
     uint64_t (*cur)(const om_world *) = w->net_section_hash[OM_NET_SECTION_COUNT - 1];
     if (cur != ts_section_hash) ts_prev_hash = cur;
     w->net_section_hash[OM_NET_SECTION_COUNT - 1] = ts_section_hash;

@@ -164,6 +164,9 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     om_mapgen_install_net_hooks(w);
     w->terrain_state = NULL;
     w->terrain_state_free = NULL;
+    w->terrain_state_size = NULL;
+    w->terrain_state_write = NULL;
+    w->terrain_state_read = NULL;
     om_terrain_install_net_hooks(w);
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes

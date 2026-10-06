@@ -46,7 +46,8 @@
 #define OM_SAVE_SLOT_MACRO        7
 #define OM_SAVE_SLOT_SUPPORT      8
 #define OM_SAVE_SLOT_MAPGEN       9
-#define OM_SAVE_SLOT_COUNT        10
+#define OM_SAVE_SLOT_TERRAIN      10
+#define OM_SAVE_SLOT_COUNT        11
 
 typedef struct {
     om_tier  tier;
@@ -325,6 +326,10 @@ struct om_world {
      * NULL until om_terrain_generate; freed through terrain_state_free. */
     void *terrain_state;
     void (*terrain_state_free)(void *);
+    /* Save hooks beside terrain_state_free (same convention as mapgen_state_*); see csrc/save.c OM_SAVE_SLOT_TERRAIN. */
+    uint32_t (*terrain_state_size)(const om_world *w);
+    void (*terrain_state_write)(const om_world *w, uint8_t *out);
+    int (*terrain_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage
