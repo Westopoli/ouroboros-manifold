@@ -30,26 +30,34 @@ On 2026-10-01 he added that there is more than one answer: "The *lines* can cros
 
 Skill is represented by scripted plays: a skilled play and a naive play. The naive play is measured two ways, side by side: a blob, and a line abreast (Westley, 2026-10-01). Plays and their counters, accepted in outline ("your list looks good", "Everything else looks good"). The counter to S2's spread line is the one he said he could not picture; he was shown a diagram and has not confirmed it:
 
-| Skill | Skilled play | Counter |
-|---|---|---|
-| S1 | Hold a choke: stand just behind a narrow passage so few enemies can fire at once | Go around or over it on another layer; or stand outside and outrange it |
-| S1 | Hold the top of a slope, far enough past the midline that climbers cannot reach | Take another way up, or fly; or shell the top from below with a type that fires upward |
-| S1 | Fight from behind tall cover | Get sight first: ping behind the cover, or move to a layer above its height |
-| S2 | Concave around the point where the enemy arrives | Stop at the edge of range; or throw the whole force at one horn of the arc |
-| S2 | Spread to full width so every unit is in range together | Mass the whole force on one end of the line, so only the few defenders at that end can fire, and work along it |
-| S2 | Long-range units behind a screen of tough ones | Reach the back line from another layer; or send fast units around the screen |
-| S3 | Ping the layer and place that matters before committing | Move after being pinged so the picture is stale (later); or show a decoy to be pinged |
-| S3 | A silent striking force with an emitting decoy | Ping the likely approaches; do not chase the emitter (later) |
-| S3 | Place each type where its reach covers the enemy and the enemy's does not | Change layer to leave their reach and enter yours; bring the type that fires upward |
-| S4 | Find the enemy with pings and fire first | Go silent so less is found; relocate after the alert (later) |
-| S4 | Take the route or layer the enemy is not watching | Watch more routes with pings; hold a reserve in the middle |
-| S4 | Bait: a small group engages and falls back, the main force closes a surround (later) | Do not chase, or chase with a small detachment only (later) |
-| S4 | Ambush: wait unseen and hold fire until the enemy is inside the concave (later) | Ping ahead before advancing; send a vanguard first (later) |
-| S5 | Line each type up against the type it beats | Mix types evenly so there is no clean matchup; re-shuffle to mirror (later; the reactive idea) |
-| S5 | Each type shoots the type it beats first | Keep the targeted type behind a screen |
-| S5 | Keep the vulnerable type away from its counter | Reach it from another layer, or flank it |
+| Skill | Skilled play | Counter | Kind |
+|---|---|---|---|
+| S1 | Hold a choke: stand just behind a narrow passage so few enemies can fire at once | Go around or over it on another layer; or stand outside and outrange it | both |
+| S1 | Hold the top of a slope, far enough past the midline that climbers cannot reach | Take another way up, or fly; or shell the top from below with a type that fires upward | ground |
+| S1 | Fight from behind tall cover | Get sight first: ping behind the cover, or move to a layer above its height | ground |
+| S2 | Concave around the point where the enemy arrives | Stop at the edge of range; or throw the whole force at one horn of the arc | both |
+| S2 | Spread to full width so every unit is in range together | Mass the whole force on one end of the line, so only the few defenders at that end can fire, and work along it | both |
+| S2 | Long-range units behind a screen of tough ones | Reach the back line from another layer; or send fast units around the screen | both |
+| S3 | Ping the layer and place that matters before committing | Move after being pinged so the picture is stale (later); or show a decoy to be pinged | space |
+| S3 | A silent striking force with an emitting decoy | Ping the likely approaches; do not chase the emitter (later) | space |
+| S3 | Place each type where its reach covers the enemy and the enemy's does not | Change layer to leave their reach and enter yours; bring the type that fires upward | space |
+| S4 | Find the enemy with pings and fire first | Go silent so less is found; relocate after the alert (later) | space |
+| S4 | Take the route or layer the enemy is not watching | Watch more routes with pings; hold a reserve in the middle | both |
+| S4 | Bait: a small group engages and falls back, the main force closes a surround (later) | Do not chase, or chase with a small detachment only (later) | both |
+| S4 | Ambush: wait unseen and hold fire until the enemy is inside the concave (later) | Ping ahead before advancing; send a vanguard first (later) | both |
+| S5 | Line each type up against the type it beats | Mix types evenly so there is no clean matchup; re-shuffle to mirror (later; the reactive idea) | both |
+| S5 | Each type shoots the type it beats first | Keep the targeted type behind a screen | both |
+| S5 | Keep the vulnerable type away from its counter | Reach it from another layer, or flank it | both |
 
 Refusing a fight is a counter: "a skilled player only takes a battle that they can win, skilled players make it so that the opponent doesn't have a choice." A play needs a counter on most maps, not all; "some situations are unbeatable (like a full surround or a trap where the door gets closed)". "Later" marks plays that need orders to change during a fight. After the prototype, if it works, a reactive version: one side or both re-form mid-fight to keep their rocks on the enemy's scissors.
+
+## Two labs
+
+Westley, 2026-10-05: every era is space or ground, a formal property of the era pack (E-01), and the two kinds are a clean separation (flying units in ground eras may borrow from space). So there are two labs, one per kind.
+
+- The space lab is `scripts/skilllab/`: five free layers, every unit flies, terrain blocks per layer range, cover discs, the ping; passive cross-layer sight is very limited (Q-005-07). It is the one being built and run.
+- The ground lab waits for the sim to have ground. What was written for it is parked in `scripts/skilllab/ground/` and `tests/skilllab/ground/`: the height-rule sweep (`highground.py`) and the tall-cover scenes. It is not a ground answer; on the space engine a slope is only a timed layer change.
+- The Kind column of the plays table in section 3 says which lab a play belongs to: space, ground, or both. The S1 slope-top and tall-cover plays are ground. The kinds are a first reading by the 2026-10-05 split step, not confirmed by Westley.
 
 ## 4. The measure
 

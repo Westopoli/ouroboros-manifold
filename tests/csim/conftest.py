@@ -2369,6 +2369,7 @@ def _bind_e11(lib):
     _bind(lib, "om_unit_hp", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_in_backswing", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
     _bind(lib, "om_unit_in_flinch", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_unit_order_speed", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_output_multiplier", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_position_x", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_position_y", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))

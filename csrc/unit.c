@@ -2659,11 +2659,11 @@ void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
     attacker->backswing_active = 1;
 }
 
-double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
+static double om_unit_speed_with_modifiers(om_world *w, uint32_t unit_id, int stop_in_backswing) {
     om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
     double base;
     if (!row) return 0.0;
-    if (row->backswing_active) return 0.0;
+    if (stop_in_backswing && row->backswing_active) return 0.0;
     base = om_unit_profile_speed(w, row->unit_type);
     switch (row->unit_type) {
         case OM_UT_RAIDER:
@@ -2682,6 +2682,14 @@ double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
         default: break;
     }
     return base;
+}
+
+double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
+    return om_unit_speed_with_modifiers(w, unit_id, 1);
+}
+
+double om_unit_order_speed(om_world *w, uint32_t unit_id) {
+    return om_unit_speed_with_modifiers(w, unit_id, 0);
 }
 
 /* ALG-61: every enemy on the attacker's layer within `radius` of the
