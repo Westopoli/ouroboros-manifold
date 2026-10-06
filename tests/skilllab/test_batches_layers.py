@@ -15,7 +15,7 @@ from scripts.skilllab.terrain import shift_terrain  # noqa: E402
 from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
-DRAFT = "unconfirmed draft"
+DRAFT = "draft"
 SCENES = ("mirror", "choke", "choke_phase_b")
 UPS = ((0.5, 0.25), (0.5, 0.5), (0.75, 0.25), (0.75, 0.5), (1.0, 0.25), (1.0, 0.5))
 SWEEP_NOTE = "settings are draft sweep points (A174)"

@@ -1,5 +1,5 @@
-# spec: ruling A145 (named pluggable skilled/counter plays; S2 drafts are UNCONFIRMED DRAFTS), brief t1b
-"""skills registry + asym wiring: S2 drafts registered, other skills refuse, focus-centred concave, labels in rows.
+# spec: ruling A145 as superseded for registration by the Architect ruling of 2026-10-06 (plays registered as drafts, status "draft"), brief t1b
+"""skills registry + asym wiring: S2 drafts registered, a skill with no entry refuses, focus-centred concave, labels in rows.
 Assumes get() returns a Play spec with `.fn` and `.status`. `asym.unit_stats` is faked; no Engine, no compiler."""
 import math
 import sys
@@ -19,7 +19,7 @@ from scripts.skilllab.asym import Side, asym_play  # noqa: E402
 from scripts.skilllab.contract import FightResult  # noqa: E402
 from scripts.skilllab.formations import place  # noqa: E402
 
-DRAFT = "unconfirmed draft"
+DRAFT = "draft"
 
 
 @pytest.fixture(autouse=True)
@@ -57,12 +57,12 @@ def _points(setup, side):
 
 
 def test_s2_drafts_registered_as_unconfirmed():
-    """Exactly the two S2 plays exist and both say 'unconfirmed draft'."""
+    """Both S2 plays exist and say 'draft'."""
     assert skills.get("S2", "skilled").status == DRAFT
     assert skills.get("S2", "counter").status == DRAFT
 
 
-@pytest.mark.parametrize("pair", [("S1", "skilled"), ("S3", "counter"), ("S5", "skilled"), ("TEST", "skilled"),
+@pytest.mark.parametrize("pair", [("S9", "skilled"), ("S9", "counter"), ("TEST", "skilled"),
                                   ("S2", "blob"), ("S2", "nope")])
 def test_get_unknown_pair_raises(pair):
     """An unregistered (skill, role) is a ValueError, never a default play."""
@@ -70,12 +70,12 @@ def test_get_unknown_pair_raises(pair):
         skills.get(*pair)
 
 
-@pytest.mark.parametrize("skill", ["S1", "S3", "S4", "S5"])
+@pytest.mark.parametrize("skill", ["S9"])
 @pytest.mark.parametrize("role", ["skilled", "counter"])
 def test_undefined_skills_error_names_westley(skill, role):
-    """Asking asym_play for a play of S1/S3/S4/S5 says it is defined with Westley later."""
+    """Ruling 2026-10-06: S1/S3/S4/S5 no longer raise once registered; asym_play still refuses a skill with no entry."""
     other = Side("line")
-    with pytest.raises(ValueError, match="defined with Westley"):
+    with pytest.raises(ValueError):
         asym_play(16, Side(role, skill=skill), other)(16, False)
 
 
@@ -133,7 +133,7 @@ def test_concave_focus_none_keeps_today_points():
 
 
 def test_labels_for_every_role():
-    """Draft plays say 'unconfirmed draft'; naive plays say 'naive' and never 'unconfirmed draft'."""
+    """Draft plays say 'draft'; naive plays say 'naive' and never 'draft'."""
     l = asym_play(16, Side("skilled"), Side("line")).labels
     assert l["play_side0"] == "S2:skilled" and l["status_side0"] == DRAFT
     assert l["play_side1"] == "line" and l["status_side1"] == "naive"
@@ -162,5 +162,5 @@ def test_labels_flow_into_fight_row_and_csv(tmp_path):
 
 @pytest.mark.parametrize("name", ["asym.py", "skills.py"])
 def test_source_labels_unconfirmed_draft(name):
-    """The code itself carries the phrase 'unconfirmed draft'."""
+    """The code itself carries the status string 'draft'."""
     assert DRAFT in (ROOT / "scripts" / "skilllab" / name).read_text()
