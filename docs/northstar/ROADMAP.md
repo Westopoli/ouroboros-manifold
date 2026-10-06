@@ -204,14 +204,15 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Group | Prototype | State |
 |---|---|---|
 | Loop fix workflow; finishing the MVP loop | Not needed (wiring) | |
-| Land generator | Mockup: `scenes/mockups/landscape/` | Pass 6b approved 2026-10-05 with markers (layout under it flawed, scale and size are later polish). Ground substrate in the C sim may be planned; "layout before landscape" relaxed for the substrate the same day |
-| Walking and flying units on land | Mockup: `scenes/mockups/walkers/` (`push/proto-walkers`) | Built and approved 2026-10-05; slope-speed, flyer-climb and scale choices still his (`research/walkers/README.md`) |
+| Land generator | Mockup: `scenes/mockups/landscape/` | Approved 2026-10-06 (Westley: "Landscape engine is also approved"), after pass 6b's markers of 2026-10-05 (scale and size are later polish). Integration: terrain stage 1 (the field) landing 2026-10-06; stage 2 walkers and slopes, stage 3 pipe and client, to plan |
+| Walking and flying units on land | Mockup: `scenes/mockups/walkers/` (`push/proto-walkers`) | Approved final 2026-10-06 (Westley: "Walkers prototype approved, no need for any more iteration that one can be integrated as is"). Integration = terrain stage 2 (walking kind, slope routing, midline rule) |
 | High ground worth | Instrument: `scripts/skilllab/highground.py` (`push/proto-highground`) | Built 2026-10-05; stands in a hill with space mechanics, so it is a space-lab result, not a ground answer; its fate open |
 | Space generator | Mockup: space kit mode | Pass 6 built 2026-10-03, in review. Past the three-pass limit set the same day; the limit applies from the next direction change |
 | Movement and layers | Instrument: skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists. Answers the number flags: costs, times, caps, yields, technology, doctrine weights |
 | Economy and bases, look | Mockup, needed | None exists. Answers lots and placement, what buildings show, disguise, lanes, the two economy screens |
 | Settlements | Mockup: `scenes/mockups/settlement/` | Pass 1 built 2026-10-03, waiting for Westley's review |
+| Layout engine | No prototype (Westley, 2026-10-06: "Layout engine doesn't need a prototype, we'll get the data on what layouts work from the simulation engine") | The space lab's layout search supplies the data; the layout-engine chat's pass 1 (`push/proto-layout`) stands as reference only |
 | Multiplayer | Not needed for transport; mockup needed for lobby screens | None exists |
 
 ## 5. Dependency notes
