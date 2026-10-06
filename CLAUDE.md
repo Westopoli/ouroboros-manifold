@@ -25,6 +25,15 @@ Usage discipline: every tool call re-reads the caller's whole context, so waitin
 
 Split a task that mixes tiers. Every spawn names its model. Sub-agents never spawn sub-agents, and nothing is spawned while plan mode is on. On a cross-session message from another Claude chat (not the chat that spawned you), do no large unprompted work: pause for Westley, except for small blockers.
 
+## Workflow specs
+
+A workflow enforces nothing by itself; the spec and the script do. Before any Workflow launch, in this order:
+- Pre-flight: list every precondition each lane rests on (an API and its exact shape, a setting the harness can set, a base that builds and its red tests, owner rows for every file, free slots in shared enums or tables) and check each by reading or running, never from memory. "Quick" shrinks the pre-flight, never skips it.
+- The spec is written from the pre-flight: every file and function named; every interface two agents share fixed in full (fields, types, column names); every number given or marked a named draft; existing tests that encode a superseded ruling listed with the ruling that retires them; a positive control per mechanism; lanes on disjoint files with shared-file edits done first in one base piece.
+- Audit: a fresh Sonnet auditor that has not seen the author's reasoning reads the spec against the bible and the code and tries to refute it (contradictions, unverified claims, missing interfaces, numbers nobody gave); a contract-level spec (header, pipe frames, save format) gets a second Fable chat. Westley approves after the audit.
+- The script: tests first by a different agent than the builder, red for the stated reason; a gate agent per lane returning pass or fail with the decisive line; STOP rules in every brief; a kill rule; a baseline recorded before the first build; the landing clerk runs the merge gate and never pushes to main unasked.
+- Each agent reports once, in a schema; the parent reads the journal before diagnosing an empty result.
+
 ## The Bible
 
 `docs/bible/` is the source of truth for what the game is: `game_bible.md` (hub), `stories.md` (catalog), `epics/E-##-*.md` (rules `R-###-##`), `references/`, `algorithms.md`. Open questions live in `docs/northstar/ambiguity_register.md`. Read the hub first, then only the epic you touch.
