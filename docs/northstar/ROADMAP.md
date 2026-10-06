@@ -184,8 +184,8 @@ Work that does not wait on the build lanes. Written 2026-10-06 from Westley's li
 
 | # | Item | Next mover | Waits on | Product |
 |---|---|---|---|---|
-| T1 | Settlement mockup pass 1: look, answer its five questions (`research/settlement_mockup/README.md`) and Q-193-01 to -06 | Westley | nothing; Mac line in section 0 | Decisions into E-17 S-193; a pass 2 spec if he wants buildings inside cliffs and behind waterfalls seen first |
-| T2 | Space landscape mockup pass 6: open it (Kit button to "space"); S1 to S4, Q-166-02, Q-166-05, the camera among five sheets (S3) | Westley | nothing | The space kit decided; S3 options page |
+| T1 | Settlement mockup pass 1 approved 2026-10-06; its five questions and Q-193-01 to -06 still open | Westley | nothing | Decisions into E-17 S-193; a pass 2 spec if he wants buildings inside cliffs and behind waterfalls seen first |
+| T2 | Space landscape pass 6 approved 2026-10-06 with the vision-tube note (Q-S3-01); S1 to S4, Q-166-02, Q-166-05 to be folded | Planner chat | nothing | The space kit recorded as decided; S3 options page (T3) |
 | T3 | Camera options page for S3 (space, five opaque sheets) and the remaining camera questions Q-103-04/05/06, Q-232-01 (the classic view, Angle Rack, Peel, flip and continuous zoom S-234 are already decided; `options/camera/options.md` A+C picked) | Planner chat drafts; Westley picks | T2 for S3 | `research/camera/options_s3.md` |
 | T4 | Sense-of-scale prototype: the Sand Table / zoomed-out end of the one drawing (Q-103-05, Q-234-01 (c): "a prototype before I commit to it"); terrain stage 3 draws the ground, which is where scale is first seen in the game | Planner chat spec; Doer; Westley look | terrain stage 3 | A mockup pass; his verdict on R-166-01's "massive scale" against the real client |
 | T5 | Methodology write-up: how strategic depth is measured, the skill lab method, the prototype gate, workflow discipline; one document from `agile.md`, `PLAN.md`, `layer_dynamics/README.md`, the ping doc, CLAUDE.md "Workflow specs" | Sonnet drafter; Westley reviews | nothing | `docs/northstar/method.md` |
@@ -229,11 +229,11 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Land generator | Mockup: `scenes/mockups/landscape/` | Approved 2026-10-06 (Westley: "Landscape engine is also approved"), after pass 6b's markers of 2026-10-05 (scale and size are later polish). Integration: terrain stage 1 (the field) landing 2026-10-06; stage 2 walkers and slopes, stage 3 pipe and client, to plan |
 | Walking and flying units on land | Mockup: `scenes/mockups/walkers/` (`push/proto-walkers`) | Approved final 2026-10-06 (Westley: "Walkers prototype approved, no need for any more iteration that one can be integrated as is"). Integration = terrain stage 2 (walking kind, slope routing, midline rule) |
 | High ground worth | Instrument: `scripts/skilllab/highground.py` (`push/proto-highground`) | Built 2026-10-05; stands in a hill with space mechanics, so it is a space-lab result, not a ground answer; its fate open |
-| Space generator | Mockup: space kit mode | Pass 6 built 2026-10-03, in review. Past the three-pass limit set the same day; the limit applies from the next direction change |
+| Space generator | Mockup: space kit mode | Pass 6 approved 2026-10-06 with a note: a vision tube through covering layers is required of the camera (Q-S3-01) |
 | Movement and layers | Instrument: skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists. Answers the number flags: costs, times, caps, yields, technology, doctrine weights |
 | Economy and bases, look | Mockup, needed | None exists. Answers lots and placement, what buildings show, disguise, lanes, the two economy screens |
-| Settlements | Mockup: `scenes/mockups/settlement/` | Pass 1 built 2026-10-03, waiting for Westley's review |
+| Settlements | Mockup: `scenes/mockups/settlement/` | Pass 1 approved 2026-10-06; its numbers (Q-193-01 to -06) still his |
 | Layout engine | No prototype (Westley, 2026-10-06: "Layout engine doesn't need a prototype, we'll get the data on what layouts work from the simulation engine") | The space lab's layout search supplies the data; the layout-engine chat's pass 1 (`push/proto-layout`) stands as reference only |
 | Multiplayer | Not needed for transport; mockup needed for lobby screens | None exists |
 
