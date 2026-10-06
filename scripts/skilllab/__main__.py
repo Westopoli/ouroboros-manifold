@@ -40,7 +40,11 @@ def _reach(out_dir, factor):
                        "Skill lab reach control")
 
 
-def _batch(name, out_dir, workers=1):
+def _batch(name, out_dir, workers=1, layouts=200):
+    if name == "layout_search":
+        for path in batches.layout_search(layouts, 0, workers, out_dir).values():
+            print(path)
+        return 0
     try:
         defn = batches.get(name) if name else None
     except ValueError:
@@ -78,13 +82,14 @@ def main(argv=None) -> int:
     parser.add_argument("--factor", type=_positive, default=1.2)
     parser.add_argument("--workers", type=_workers, default=1,
                         help="batch only: fight in this many worker processes (default 1; try the number of idle cores)")
+    parser.add_argument("--layouts", type=_workers, default=200, help="batch layout_search only: how many layouts to draw (default 200)")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     if args.command == "controls":
         return _controls(Path(args.out))
     if args.command == "reach":
         return _reach(Path(args.out), args.factor)
     if args.command == "batch":
-        return _batch(args.name, Path(args.out), args.workers)
+        return _batch(args.name, Path(args.out), args.workers, args.layouts)
     return 2
 
 

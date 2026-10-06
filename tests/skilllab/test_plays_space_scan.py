@@ -80,3 +80,28 @@ def test_has_counter_follows_the_registry(strip):
     """Audit row 2 positive control: the flag is read from the registry, not a fixed table; stripping S4's counter flips it."""
     strip("S4")
     assert skills.has_counter("S4") is False
+
+
+def _anchor_gap(setup):
+    """Anchor of a side = x of its first group (the play's main group); gap = enemy anchor minus ours."""
+    first = {}
+    for g in setup.groups:
+        first.setdefault(g.side, g.x)
+    return first[1] - first[0]
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_start_distance_places_anchors_that_far_apart(name):
+    """Layout-search P4 ruling (Architect 2026-10-06): start_distance=2800 puts the two anchors 2800 wu apart on x; unit counts unchanged."""
+    build = plays_space.scan_build(name)
+    base = build(None, 16, False)
+    far = build(None, 16, False, start_distance=2800)
+    assert abs(_anchor_gap(far) - 2800) <= 1
+    assert [(g.side, g.count) for g in far.groups] == [(g.side, g.count) for g in base.groups]
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_start_distance_none_is_todays_build_byte_equal(name):
+    """Ruling: start_distance=None keeps today's gap; the Setup is equal to the call without the argument."""
+    build = plays_space.scan_build(name)
+    assert build(None, 16, False, start_distance=None) == build(None, 16, False)
