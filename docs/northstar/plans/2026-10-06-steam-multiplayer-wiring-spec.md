@@ -106,7 +106,7 @@ Phase A (now, disjoint from stage 3): W0 backend catch-up, W1 SteamTransport, W3
 5. **Order mapping**: move 0, attack_move 1, attack_target 2 (`c_bridge.gd:422` to `OM_NET_VERB`), `units` are sim ids (identical on both peers by construction); other verbs are not reachable from the client today and stay so. Single player keeps `send_unit_command` untouched; `tactical_view.send_command` branches on `NetMatch.active()`.
 6. **The pump**: new autoload `NetMatch` (`autoload/net/net_match.gd`, registered in `project.godot`): holds the session, the transport and the `PipeSim`; `_process` calls `Steam.run_callbacks()` and, on a 50 ms accumulator, `session.poll()`; exposes `active()`, `command(cmd)`, `state()` (`running | stalled(peer) | desync(tick, section) | ended`). Autoloads `SteamInit` (`autoload/steam/steam_init.gd`: `steamInitEx(app_id)`, `initRelayNetworkAccess()`, a `steam_ready` flag; app id 480 Spacewar until Westley's app id exists) before it.
 7. **Desync screen**: `scenes/shared/error_panel.gd` gains `show_error(reason, retry := true)`; a desync shows "Desync at tick N, section NAME" with the main-menu button only. A stall shows a "waiting for PEER (s)" line in the tactical HUD; a drop ends the match with the same panel.
-8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (gitignored? no: committed with 480 until the real id).
+8. **Export and Steam files**: `addons/godotsteam/` (GDExtension v4.23-gde, Linux and macOS binaries, fetched not committed, Q-NET-04 a), `export_presets.cfg` (Linux x86_64, macOS; owner NET-wire-export), `steam_appid.txt` for editor runs (committed, 5402100).
 
 ## Pieces
 
@@ -134,7 +134,7 @@ Order: W0 and W-contract, gate; W1, W2, W3, W6 in parallel; W4 after W3; W5 afte
 | stall / drop | 1 s / 60 s | planner, provisional |
 | catchup_max / need window / history | 8 ticks per poll / `repeat` polls / 64 ticks | planner, provisional |
 | Lobby | friends-only, max 4 | E-19 R-141-01 |
-| App id | 480 until the real one | T17 |
+| App id | 5402100 (Westley, 2026-10-06); 480 (Spacewar) only for the first transport test if the real app's relay flag is not yet on | T17 |
 
 ## Not in this piece
 
