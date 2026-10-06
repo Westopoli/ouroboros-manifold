@@ -16,27 +16,6 @@ from tests.skilllab.fakes_batches import fake_sensors  # noqa: E402
 
 
 @pytest.fixture
-def strip():
-    """strip(*skills): remove any real skilled/counter entry of those skills (ruling 2026-10-06 registers drafts);
-    restored afterwards, so a skill with no entry can be tested whatever is registered."""
-    saved = []
-
-    def _strip(*names):
-        for name in names:
-            for role in ("skilled", "counter"):
-                try:
-                    play = skills.get(name, role)
-                except ValueError:
-                    continue
-                skills.unregister(name, role)
-                saved.append(play)
-
-    yield _strip
-    for play in saved:
-        skills.register(play.skill, play.role, play.fn, play.status)
-
-
-@pytest.fixture
 def s3_registered(strip):
     """A fake S3 skilled play (status "fake"); the real S3 entry, if any, is saved and restored afterwards."""
     strip("S3")

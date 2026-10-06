@@ -14,14 +14,16 @@ from scripts.skilllab import batches, profile, skills  # noqa: E402
 from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
-DRAFT = "unconfirmed draft"
+DRAFT = "draft"
+S3_AT_IMPORT = skills.get("S3", "skilled")
 SUBSETS = profile.subsets()
 LABELS = ["combo:none" if not s else "combo:" + "+".join(sorted(s)) for s in SUBSETS] + ["counter:S2"]
 
 
 @pytest.fixture
-def s3_registered():
-    """A fake S3 skilled play (a plain blob with radius 100), removed again afterwards."""
+def s3_registered(strip):
+    """A fake S3 skilled play (a plain blob with radius 100); the real S3 entry is saved and restored afterwards."""
+    strip("S3")
     skills.register("S3", "skilled", lambda ctx: ("blob", {"radius": 100}, ctx.facing_deg), DRAFT)
     try:
         yield
@@ -66,7 +68,8 @@ def test_33_cells_in_order_with_fields():
         assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == (16, 8, 24, 10), c.label
 
 
-def test_with_only_s2_registered_two_subsets_are_expressed():
+def test_with_only_s2_registered_two_subsets_are_expressed(strip):
+    strip("S1", "S3", "S4", "S5")
     d = batches.get("combinations")
     cells = {c.label: c for c in d.cells}
     expressed = [c.label for c in d.cells[:32] if c.build is not None]
@@ -79,7 +82,8 @@ def test_with_only_s2_registered_two_subsets_are_expressed():
             assert cells[label].build is None and cells[label].status == "not expressed", label
 
 
-def test_notes_name_the_skills_with_no_play():
+def test_notes_name_the_skills_with_no_play(strip):
+    strip("S1", "S3", "S4", "S5")
     cells = {c.label: c for c in batches.get("combinations").cells}
     assert "S1" in cells["combo:S1"].note and "S2" not in cells["combo:S1"].note
     assert "S1" in cells["combo:S1+S2"].note and "S2" not in cells["combo:S1+S2"].note
@@ -98,7 +102,8 @@ def test_real_builds(monkeypatch):
     assert [g.formation for g in counter.groups] == ["column", "line"]
 
 
-def test_scan_only_expressed_cells(tmp_path):
+def test_scan_only_expressed_cells(tmp_path, strip):
+    strip("S1", "S3", "S4", "S5")
     _, fake, _ = _run(tmp_path)
     assert [c["label"] for c in fake.calls] == ["combo:none", "combo:S2", "counter:S2"]
     for c in fake.calls:
@@ -106,7 +111,8 @@ def test_scan_only_expressed_cells(tmp_path):
         assert c["setup"].settings == batches.BASE_SETTINGS
 
 
-def test_registering_s3_changes_the_result(s3_registered, monkeypatch):
+def test_registering_s3_changes_the_result(s3_registered, monkeypatch, strip):
+    strip("S1", "S4", "S5")
     fake_sensors(monkeypatch)
     d = batches.get("combinations")
     cells = {c.label: c for c in d.cells}
@@ -124,19 +130,20 @@ def test_registering_s3_changes_the_result(s3_registered, monkeypatch):
 
 def test_registry_is_restored_after_the_fixture():
     cells = {c.label: c for c in batches.get("combinations").cells}
-    assert cells["combo:S3"].build is None and cells["combo:S3"].status == "not expressed"
-    with pytest.raises(ValueError):
-        skills.get("S3", "skilled")
+    assert skills.get("S3", "skilled") == S3_AT_IMPORT      # the real S3 draft is back, the fake one is gone
+    assert cells["combo:S3"].status == DRAFT
 
 
-def test_scan_calls_follow_the_registry(s3_registered, tmp_path):
+def test_scan_calls_follow_the_registry(s3_registered, tmp_path, strip):
+    strip("S1", "S4", "S5")
     defn = faked(batches.get("combinations"))
     fake = FakeScan()
     batches.run(defn, tmp_path / "o", scan_fn=fake)
     assert [c["label"] for c in fake.calls] == ["combo:none", "combo:S2", "combo:S3", "counter:S2"]
 
 
-def test_profile_section_rows_and_arithmetic(tmp_path):
+def test_profile_section_rows_and_arithmetic(tmp_path, strip):
+    strip("S1", "S3", "S4", "S5")
     results = {("combo:none", None): 12, ("combo:S2", None): 17}
     _, _, paths = _run(tmp_path, FakeScan(results))
     t = _text(paths["run"])
