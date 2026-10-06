@@ -1,6 +1,6 @@
 # spec: docs/northstar/plans/2026-10-05-proto-highground-spec.md::Build notes - positive controls (real engine)
 """The positive controls of the high-ground instrument, on the production C library. Each test fails with a clear
-message while scripts/skilllab/highground.py does not exist.
+message while scripts/skilllab/ground/highground.py does not exist.
 
 Readings of the spec the builder must confirm (see the report):
 - run_fight returns an object with: winner ("attackers", "defenders" or another string for a draw or stalemate),
@@ -30,7 +30,7 @@ if str(ROOT) not in sys.path:
 from scripts.skilllab import engine  # noqa: E402
 
 try:
-    from scripts.skilllab import highground as HG
+    from scripts.skilllab.ground import highground as HG
 except Exception as e:  # noqa: BLE001
     HG, HG_ERR = None, e
 
@@ -43,9 +43,9 @@ def lib():
 
 
 def _need():
-    assert HG is not None, "scripts/skilllab/highground.py is missing or fails to import: %r" % (HG_ERR,)
+    assert HG is not None, "scripts/skilllab/ground/highground.py is missing or fails to import: %r" % (HG_ERR,)
     for n in ("HEIGHT_RULES", "CLIMB_SECONDS", "run_fight", "break_even", "run_batch"):
-        assert hasattr(HG, n), "scripts/skilllab/highground.py has no %s" % n
+        assert hasattr(HG, n), "scripts/skilllab/ground/highground.py has no %s" % n
 
 
 def test_control_1_h0_nobody_is_hurt_before_a_climber_is_halfway():

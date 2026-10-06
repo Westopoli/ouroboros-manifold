@@ -8,7 +8,8 @@ from typing import Optional
 from scripts.skilllab import compose, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
 from scripts.skilllab.asym import Side, asym_play
 from scripts.skilllab.contract import trim_series
-from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
+from scripts.skilllab.ground.scenes_ground import tall_cover, tall_cover_terrain
+from scripts.skilllab.scenes import guard_defenders, phase_b_choke
 from scripts.skilllab.terrain import with_terrain
 
 NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
@@ -27,9 +28,8 @@ _STALLED = ("stalemate",)   # quiet stalemate only; caps and draws are counted a
 PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
-LAYER_SCENES = ("mirror", "high_ground", "choke", "choke_phase_b")
-LAYER_NOTES = {"LA": "units on different layers cannot fire until reach by type lands (Phase C G5)",
-               "LB": "needs reach by type (om_roster_set_reach) and Phase C G5",
+LAYER_SCENES = ("mirror", "choke", "choke_phase_b")
+LAYER_NOTES = {"LB": "needs reach by type (om_roster_set_reach) and Phase C G5",
                "LC": "needs reach by type (om_roster_set_reach) and Phase C G5"}
 REACH_TABLE = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
                "Bombard and Bastion 0 up 2 down (needs om_roster_set_reach bound in the harness and Phase C G5)")
@@ -228,8 +228,7 @@ def _layers():
             cells.append(_cell(label, size, build, skills.DRAFT, "settings are draft sweep points (A174)",
                                enemy=enemy, settings=settings))
             return
-        note = LAYER_NOTES[table] if scene != "high_ground" else (
-            LAYER_NOTES["LA"] if table == "LA" else "%s; %s" % (LAYER_NOTES["LA"], LAYER_NOTES[table]))
+        note = LAYER_NOTES[table]
         cells.append(_cell(label, size, None, NOT_EXPRESSED, note, enemy=enemy, settings=settings))
 
     for scene in LAYER_SCENES:
@@ -253,8 +252,8 @@ def _layers():
     return BatchDef(
         name="layers",
         title="Skill lab layers batch",
-        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by four scenes: a "
-               "mirror, high ground and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
+        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by three scenes: a "
+               "mirror and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
                "proposed by the Architect as drafts (A174), not confirmed by Westley. The sampled choke is a sampled wall from "
                "maps.sample_map and the Phase B choke is its own cell: a 3000 by 1600 canvas with a gap in the wall, "
                "where the defenders attack-move (the idle version is in the landscape batch) and side 0 is the 8 "
@@ -262,7 +261,7 @@ def _layers():
                "and attack range (reach against body size), also drafts."),
         cells=tuple(cells), variants=(("default", {}),),
         unexpressed=("the tall-cover scene (needs reach)", REACH_TABLE,
-                     "high ground and the LB and LC tables wait for reach",
+                     "the LB and LC tables wait for reach",
                      "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
 
 

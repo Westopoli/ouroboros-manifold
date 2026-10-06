@@ -1,17 +1,17 @@
-# spec: R-096-08 (guard), R-096-04 (layer reach) - scripts/skilllab/scenes.py tall_cover (unconfirmed draft)
+# spec: R-096-08 (guard), R-096-04 (layer reach) - scripts/skilllab/ground/scenes_ground.py tall_cover (unconfirmed draft)
 """The tall-cover scene: a wall of nine Cover discs between a blob and guarding defenders. Fake sensors, no engine."""
 import sys
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
-for _p in (ROOT, Path(__file__).resolve().parent):
+ROOT = Path(__file__).resolve().parents[3]
+for _p in (ROOT, Path(__file__).resolve().parents[1]):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
 from fakes_batches import fake_sensors  # noqa: E402
-from scripts.skilllab import scenes  # noqa: E402
+from scripts.skilllab.ground import scenes_ground as scenes  # noqa: E402
 from scripts.skilllab.contract import Cover, Terrain  # noqa: E402
 
 

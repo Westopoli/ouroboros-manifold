@@ -19,7 +19,7 @@ from scripts.skilllab.contract import SHIFT_MAX
 from scripts.skilllab.formations import place
 from scripts.skilllab.mopup import mopup_goal
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 RUNS = ROOT / "docs/northstar/research/layer_dynamics/runs"
 VANGUARD, CLIMBER_TYPE, TPS = 2, 100, 20
 CLIMB_SECONDS = (2, 4, 8, 15)               # provisional (prototype draft, 2026-10-05)

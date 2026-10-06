@@ -16,10 +16,9 @@ from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: 
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 DRAFT = "unconfirmed draft"
-SCENES = ("mirror", "high_ground", "choke", "choke_phase_b")
+SCENES = ("mirror", "choke", "choke_phase_b")
 UPS = ((0.5, 0.25), (0.5, 0.5), (0.75, 0.25), (0.75, 0.5), (1.0, 0.25), (1.0, 0.5))
 SWEEP_NOTE = "settings are draft sweep points (A174)"
-HIGH_NOTE = "units on different layers cannot fire until reach by type lands (Phase C G5)"
 REACH_NOTE = "needs reach by type (om_roster_set_reach) and Phase C G5"
 REACH_TABLE_TEXT = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
                     "Bombard and Bastion 0 up 2 down (needs om_roster_set_reach bound in the harness and Phase C G5)")
@@ -53,7 +52,7 @@ def _expected():
     """[(label, settings, expressed, note_ok)] in the spec's order."""
     out = []
     for scene in SCENES:
-        out.append(("LA:" + scene, _la(), scene != "high_ground"))
+        out.append(("LA:" + scene, _la(), True))
     for scene in SCENES:
         for u1, u2 in UPS:
             out.append(("LB:%s:up1=%s,up2=%s" % (scene, u1, u2), _lb(u1, u2), False))
@@ -95,7 +94,7 @@ def _run(tmp_path, fake=None, sub="out", real=False, mutate=None):
 def test_counts_and_order_and_labels():
     d = batches.get("layers")
     assert d.name == "layers" and d.title and d.scene
-    assert len(EXPECTED) == 4 + 24 + 48 + 16 == 92
+    assert len(EXPECTED) == 3 + 18 + 36 + 16 == 73
     assert [c.label for c in d.cells] == [e[0] for e in EXPECTED]
     assert d.variants == (("default", {}),) and d.weighted is False
 
@@ -143,13 +142,9 @@ def test_notes():
     d = {c.label: c for c in batches.get("layers").cells}
     assert d["LA:mirror"].note == SWEEP_NOTE and d["LA:choke"].note == SWEEP_NOTE
     assert d["LA:choke_phase_b"].note == SWEEP_NOTE
-    assert d["LA:high_ground"].note == HIGH_NOTE
     for label, c in d.items():
         if label.startswith(("LB:", "LC:")):
-            if ":high_ground:" in label:
-                assert c.note in (HIGH_NOTE, REACH_NOTE) or (HIGH_NOTE in c.note and REACH_NOTE in c.note), label
-            else:
-                assert c.note == REACH_NOTE, label
+            assert c.note == REACH_NOTE, label
     for label, settings, _ in BODY:
         r, c = settings["OM_TP_UNIT_COLLISION_RADIUS"], d[label]
         body, rng = int(label[4:].split("_")[0]), int(label.split("_range")[1].split("_")[0])
@@ -225,7 +220,7 @@ def test_unexpressed_lines():
     d = batches.get("layers")
     joined = " ".join(d.unexpressed)
     assert "tall" in joined and "reach" in joined
-    assert "high ground and the LB and LC tables wait for reach" in d.unexpressed
+    assert "the LB and LC tables wait for reach" in d.unexpressed
     assert "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in d.unexpressed
     assert any(REACH_TABLE_TEXT in u for u in d.unexpressed)
 
@@ -249,9 +244,9 @@ def test_run_file(tmp_path):
     assert "(unconfirmed draft)" in line and "16 units beat 21, lose to 22" in line
     assert sum(ln.startswith("- ") for ln in results.splitlines()) == 19
     sec = _section(t, "What the instrument could not express")
-    assert "high ground and the LB and LC tables wait for reach" in sec
+    assert "the LB and LC tables wait for reach" in sec
     assert REACH_TABLE_TEXT in sec and "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in sec
-    for label in ("LA:high_ground", "LB:mirror:up1=0.5,up2=0.25", "LC:choke:up1=1.0,up2=0.5,dmg1=0.75"):
+    for label in ("LB:mirror:up1=0.5,up2=0.25", "LC:choke:up1=1.0,up2=0.5,dmg1=0.75"):
         assert label in sec
     assert "None" not in t
 
@@ -262,7 +257,7 @@ def test_page_and_csv(tmp_path):
     assert PROVISIONAL in page and page.count("<svg") >= 19
     for label in EXPRESSED:
         assert label in page
-    assert REACH_NOTE in page and HIGH_NOTE in page
+    assert REACH_NOTE in page
     with open(paths["csv"], newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
     assert len(rows) == 18 * 17 * 2 + 6 * 2

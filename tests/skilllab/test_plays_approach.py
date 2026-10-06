@@ -14,6 +14,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
 import scripts.skilllab.plays as plays  # noqa: E402
 from fakes_batches import fake_sensors  # noqa: E402
 from scripts.skilllab import asym, positions, scenes  # noqa: E402
+from scripts.skilllab.ground import scenes_ground  # noqa: E402
 from scripts.skilllab.asym import Side, asym_play  # noqa: E402
 from scripts.skilllab.terrain import with_terrain  # noqa: E402
 
@@ -74,7 +75,7 @@ def test_choke_scene_keeps_approach_off():
 
 def test_with_terrain_keeps_the_field():
     naive = asym_play(16, Side("blob"), Side("blob"), approach=0.95)
-    s = with_terrain(naive, scenes.tall_cover_terrain())(12, False)
+    s = with_terrain(naive, scenes_ground.tall_cover_terrain())(12, False)
     assert s.approach == 0.95
 
 
@@ -85,4 +86,4 @@ def test_guard_defenders_keeps_the_field():
 
 @pytest.mark.parametrize("counter", [False, True])
 def test_tall_cover_follows_the_default_off(counter):
-    assert scenes.tall_cover(3, counter=counter)(16)(12, False).approach == 0.0   # off by default (A199), like every play
+    assert scenes_ground.tall_cover(3, counter=counter)(16)(12, False).approach == 0.0   # off by default (A199), like every play

@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 try:
-    from scripts.skilllab import highground as HG
+    from scripts.skilllab.ground import highground as HG
 except Exception as e:  # noqa: BLE001
     HG, HG_ERR = None, e
 
@@ -21,8 +21,8 @@ KEYS = ("reach_up", "reach_down", "range_down", "range_up", "damage_down", "dama
 
 
 def _rule(name):
-    assert HG is not None, "scripts/skilllab/highground.py is missing or fails to import: %r" % (HG_ERR,)
-    assert hasattr(HG, "HEIGHT_RULES"), "scripts/skilllab/highground.py has no HEIGHT_RULES"
+    assert HG is not None, "scripts/skilllab/ground/highground.py is missing or fails to import: %r" % (HG_ERR,)
+    assert hasattr(HG, "HEIGHT_RULES"), "scripts/skilllab/ground/highground.py has no HEIGHT_RULES"
     assert name in HG.HEIGHT_RULES, "HEIGHT_RULES has no %s" % name
     r = HG.HEIGHT_RULES[name]
     for k in KEYS:
@@ -64,5 +64,5 @@ def test_h5_absent_or_marked_not_expressed():
 
 
 def test_climb_seconds():
-    assert HG is not None, "scripts/skilllab/highground.py is missing or fails to import: %r" % (HG_ERR,)
+    assert HG is not None, "scripts/skilllab/ground/highground.py is missing or fails to import: %r" % (HG_ERR,)
     assert HG.CLIMB_SECONDS == (2, 4, 8, 15)
