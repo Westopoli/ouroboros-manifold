@@ -17,6 +17,19 @@ Rules for this file:
 
 Copy a command, paste it in a terminal, look, give feedback. Whoever builds or moves a prototype updates its row in the same commit. The scene path must come last.
 
+**On a Mac.** The mockups are plain Godot scenes and need no C sim (verified 2026-10-06: `tests/test_mockup_without_pipe.gd`). Install Godot 4.6.x (the .app), then in a clone of the repo:
+
+```
+git fetch origin && git checkout mac/prototypes && git pull
+GODOT=/Applications/Godot.app/Contents/MacOS/Godot
+$GODOT --path . res://scenes/mockups/walkers/walkers_mockup.tscn        # walkers and flyers on generated land (keys: F1-F3 seeds, B speed, G slope, C climb, 1-5 layer, V view)
+$GODOT --path . res://scenes/mockups/landscape/landscape_mockup.tscn    # land mockup pass 6b (Kit button: space kit)
+$GODOT --path . res://scenes/mockups/layout/layout_mockup.tscn          # layout engine pass 1
+$GODOT --path . res://scenes/mockups/settlement/settlement_mockup.tscn  # settlement pass 1
+```
+
+The first launch imports assets (about a minute). `mac/prototypes` is main plus the prototype branches (`push/proto-land-iter`, `push/proto-walkers`, `push/proto-layout`), merged read-only; it is rebuilt when a prototype moves, never edited directly. The Linux lines below keep their x11/opengl3 flags; a Mac does not need them.
+
 Two folders hold what can be viewed:
 
 - `~/Projects/om-push/wt/view-main`: current main, already imported. Refresh it before viewing anything new on main:
