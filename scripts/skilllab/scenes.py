@@ -49,5 +49,5 @@ def objective_scene(start_distance, unit="Vanguard", size=16):
             for side, count, x, facing in ((0, size, -start_distance / 2, 0.0), (1, enemy_heads, start_distance / 2, 180.0)))
         return Setup(groups=groups, unit_types={}, start_distance=start_distance, objective=objective,
                      mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
-                     max_ticks=plays.max_ticks_for(size, enemy_heads))
+                     max_ticks=plays.max_ticks_for(size, enemy_heads), quiet_from_first_damage=True)
     return build

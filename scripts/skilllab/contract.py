@@ -96,6 +96,7 @@ class Setup:
     mopup: bool = False       # lab rule, provisional (A199): re-issue a stopped side's attack-move at the enemies it sees (mopup.py)
     start_distance: Optional[float] = None   # anchor distance between the sides, set by the objective scene; None = the plays' own contact distance
     objective: Optional[tuple] = None        # (x, y) both groups attack-move to; None = no objective
+    quiet_from_first_damage: bool = False   # True counts stalemate_ticks from the first hp change, not tick 0 (objective scene)
     mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
 
 
