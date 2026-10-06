@@ -355,7 +355,6 @@ __attribute__((weak)) uint64_t om_world_step(om_world *w) { if (!w) return 0; w-
 __attribute__((weak)) uint64_t om_world_run(om_world *w, uint64_t n) { (void)n; return w ? w->tick : 0; }
 __attribute__((weak)) int om_region_drift(const om_world *w, uint32_t idx, om_drift_row *out) { (void)w;(void)idx;(void)out; return -1; }
 __attribute__((weak)) uint64_t om_world_checksum(const om_world *w) { (void)w; return 0; }
-__attribute__((weak)) double om_sin(double x) { return sin(x); }
 __attribute__((weak)) void om_trace_enable(om_world *w, int on) { if (w) w->trace_on = on ? 1 : 0; }
 __attribute__((weak)) uint64_t om_trace_len(const om_world *w) { return w ? w->trace_len : 0; }
 __attribute__((weak)) uint64_t om_trace_read(const om_world *w, uint64_t s, uint64_t c, om_trace_row *o) { (void)w;(void)s;(void)c;(void)o; return 0; }

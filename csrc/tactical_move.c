@@ -965,13 +965,9 @@ static uint64_t om_move_near_mask(const om_move_state *ms, uint32_t lo, uint32_t
 
 /* Index of the lowest set bit of a nonzero mask. */
 static uint32_t om_move_lowest_bit(uint64_t mask) {
-#if defined(__GNUC__)
-    return (uint32_t)__builtin_ctzll(mask);
-#else
     uint32_t i = 0;
     while (!(mask & 1u)) { mask >>= 1; i++; }
     return i;
-#endif
 }
 
 /* The scans below test slots [lo, hi) for a unit within sqrt(r2) of
