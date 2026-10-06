@@ -193,7 +193,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-190 | E-17 | "The layers follow the land under my units." | Design decided 2026-10-02, not scheduled; no open flag; land maps only | `epics/E-17-map-generation.md` S-190 |
 | S-191 | E-17 | "Bases, objectives and resources sit where the land puts them." | Design decided 2026-10-02, not scheduled; flag Q-191-05; land maps only | `epics/E-17-map-generation.md` S-191 |
 | S-192 | E-17 | "Ways up and down I can hold, narrow places to fight over, high ground to take." | Design decided 2026-10-02, not scheduled; no open flag; land maps only | `epics/E-17-map-generation.md` S-192 |
-| S-193 | E-17 | "Cities rise from scaffolds in waves, climb cliffs and reshape around what I place, and dense districts slow units and give cover but always leave natural paths through." | Design decided 2026-10-02, not scheduled; flags Q-193-01 to Q-193-06 | `epics/E-17-map-generation.md` S-193 |
+| S-193 | E-17 | "Cities rise from scaffolds in waves, climb cliffs and reshape around what I place, and dense districts slow units and give cover but always leave natural paths through." | Design decided 2026-10-02, not scheduled; flags Q-193-04, Q-193-05 (parked) | `epics/E-17-map-generation.md` S-193 |
 | S-194 | E-17 | "One continuous world from a single unit to the whole battlefield." | Design decided 2026-10-02, not scheduled; flag Q-194-01 | `epics/E-17-map-generation.md` S-194 |
 | S-195 | E-17 | "Bigger matches have bigger maps." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-17-map-generation.md` S-195 |
 | S-196 | E-17 | "A land era and a space era look different over the same kind of map." | Design decided 2026-10-02, not scheduled; space landscape itself is Q-166-02 | `epics/E-17-map-generation.md` S-196 |
@@ -220,7 +220,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-219 | E-15 | "My region's trouble travels across the map where both sides see it and shuts down what it passes over." | Design decided 2026-10-02, not scheduled (Q-219-01 to Q-219-04) | `epics/E-15-reinforcement-supply-and-hazards.md` S-219 |
 | S-220 | E-02 | "What I did in a mission shows in the region when I come back." | Direction decided in part 2026-10-02, not scheduled; Q-220-01, Q-220-02, Q-159-13 | `epics/E-02-region-fields-and-drift.md` S-220 |
 | S-221 | E-02 | "Each region has its own climate, landform and trouble, derived from the seed, with no change to the region record." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-02-region-fields-and-drift.md` S-221 |
-| S-222 | E-02 | "A settlement grows in step with how its region is doing." | Decided in part 2026-10-02, not scheduled; Q-222-01, Q-193-04 to Q-193-06 (E-17) | `epics/E-02-region-fields-and-drift.md` S-222 |
+| S-222 | E-02 | "A settlement grows in step with how its region is doing." | Decided in part 2026-10-02, not scheduled; Q-193-04, Q-193-05 (E-17, parked) | `epics/E-02-region-fields-and-drift.md` S-222 |
 | S-223 | E-03 | "The galaxy says how far a mission's region lies from the civilization." | Design decided 2026-10-02, not scheduled; the numbers of regions are Q-177-05 | `epics/E-03-world-generation.md` S-223 |
 | S-224 | E-03 | "A 400-region galaxy starts within a time Westley has confirmed." | Open; Q-224-01 | `epics/E-03-world-generation.md` S-224 |
 | S-225 | E-04 | "The history I read agrees with the ground I fight on." | Open; Q-225-01, Q-225-02 | `epics/E-04-events-and-chains.md` S-225 |
