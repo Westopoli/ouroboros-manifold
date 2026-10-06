@@ -1,4 +1,5 @@
 extends SceneTree
+# test-timeout: 6000
 
 # T12 / E-16 (the client never loses an input the player saw land), S-C8 flow spine.
 # Root cause: SceneRouter.go_to silently returned while _transitioning was true, and that
