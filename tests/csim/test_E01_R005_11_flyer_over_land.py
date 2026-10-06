@@ -13,9 +13,7 @@ Expected today (cross-layer VISION_UP/DOWN 3 and 4 offsets are 0: nothing is see
         test_walker_at_the_ridge_cannot_see_across_it (red because om_terrain_sight_blocks is a stub returning 0: the
         ridge cells are band 1, so the cell grid does not block them).
  green today (guards): the "not seen" legs, test_flyer_does_not_see_beyond_its_own_radius_so_it_is_seen_from_farther
-        (the flyer's own sight is 0 across four layers today), test_era_kind_0_flyer_is_not_seen_from_afar,
-        test_walker_at_the_ridge_cannot_see_across_it (control: the ridge blocks a walker's eye; the cell grid blocks it
-        today, the sampler after the lane lands).
+        (the flyer's own sight is 0 across four layers today), test_era_kind_0_flyer_is_not_seen_from_afar.
 """
 import math
 
