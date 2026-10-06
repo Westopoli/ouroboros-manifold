@@ -315,9 +315,11 @@ uint32_t col_cur;
     uint32_t reach_n;
     int32_t  reach_type[OM_PP_REACH_MAX];
     uint32_t reach_up[OM_PP_REACH_MAX], reach_down[OM_PP_REACH_MAX];
-    /* Terrain stage 2: movement kind per unit type (om_movement_kind), a plain array indexed by type id (0 = flying).
-     * Kept and carried across om_tactical_reset like reach. See also: om_roster_set_movement_kind. */
-    int32_t  kind_of_type[OM_PP_REACH_MAX];
+    /* Terrain stage 2: movement kind per unit type (om_movement_kind), a sparse list keyed by type like reach; an
+     * unset type reads flying. Kept and carried across om_tactical_reset like reach. See also: om_roster_set_movement_kind. */
+    uint32_t kind_n;
+    int32_t  kind_type[OM_PP_REACH_MAX];
+    int32_t  kind_val[OM_PP_REACH_MAX];
 } om_move_state;
 
 enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
@@ -3179,19 +3181,37 @@ int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t
     return 0;
 }
 
-/* Terrain stage 2: 0 ok; 1 unknown type (including a type id the per-type array cannot hold); 2 unknown kind. */
+/* Terrain stage 2: 0 ok; 1 unknown type (or the kind list is full); 2 unknown kind. */
 int om_roster_set_movement_kind(om_world *w, int type, int kind) {
-    if (!w || type < 0 || type >= OM_PP_REACH_MAX || om_unit_profile_ability_count(w, type) == 0u) return 1;
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || type < 0 || om_unit_profile_ability_count(w, type) == 0u) return 1;
     if (kind != OM_MOVE_FLYING && kind != OM_MOVE_WALKING && kind != OM_MOVE_SWIMMING) return 2;
-    om_ms(w)->kind_of_type[type] = kind;
+    ms = om_ms(w);
+    for (i = 0; i < ms->kind_n && ms->kind_type[i] != type; i++) {}
+    if (kind == OM_MOVE_FLYING) {
+        for (; i + 1u < ms->kind_n; i++) { ms->kind_type[i] = ms->kind_type[i + 1u]; ms->kind_val[i] = ms->kind_val[i + 1u]; }
+        if (i < ms->kind_n) ms->kind_n--;
+        return 0;
+    }
+    if (i == ms->kind_n) {
+        if (i >= OM_PP_REACH_MAX) return 1;
+        ms->kind_n++;
+        ms->kind_type[i] = type;
+    }
+    ms->kind_val[i] = kind;
     return 0;
 }
 
 int om_unit_profile_movement_kind(const om_world *w, int type) {
     const om_move_state *ms;
-    if (!w || type < 0 || type >= OM_PP_REACH_MAX || om_unit_profile_ability_count((om_world *)w, type) == 0u) return OM_MOVE_FLYING;
+    uint32_t i;
+    if (!w || type < 0 || om_unit_profile_ability_count((om_world *)w, type) == 0u) return OM_MOVE_FLYING;
     ms = (const om_move_state *)w->move_state;
-    return ms ? ms->kind_of_type[type] : OM_MOVE_FLYING;
+    for (i = 0; ms && i < ms->kind_n; i++) {
+        if (ms->kind_type[i] == type) return ms->kind_val[i];
+    }
+    return OM_MOVE_FLYING;
 }
 
 /* R-004-06: a walker on a slope is on the lower band below the slope's midline and the upper band at or above it.
@@ -3399,7 +3419,11 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_word(h, ms->reach_up[k]);
         h = mv_word(h, ms->reach_down[k]);
     }
-    for (k = 0; k < OM_PP_REACH_MAX; k++) h = mv_word(h, (uint64_t)(int64_t)ms->kind_of_type[k]);
+    h = mv_word(h, ms->kind_n);
+    for (k = 0; k < ms->kind_n && k < OM_PP_REACH_MAX; k++) {
+        h = mv_word(h, (uint64_t)(int64_t)ms->kind_type[k]);
+        h = mv_word(h, (uint64_t)(int64_t)ms->kind_val[k]);
+    }
     return h;
 }
 typedef struct {
@@ -3498,7 +3522,11 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_u32(s, ms->reach_up[k]);
         mv_put_u32(s, ms->reach_down[k]);
     }
-    for (k = 0; k < OM_PP_REACH_MAX; k++) mv_put_i32(s, ms->kind_of_type[k]);
+    mv_put_u32(s, ms->kind_n);
+    for (k = 0; k < ms->kind_n && k < OM_PP_REACH_MAX; k++) {
+        mv_put_i32(s, ms->kind_type[k]);
+        mv_put_i32(s, ms->kind_val[k]);
+    }
 }
 static uint32_t om_move_save_size(const om_world *w) {
     const om_move_state *ms = (const om_move_state *)w->move_state;
@@ -3631,7 +3659,11 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         ms->reach_up[k] = mv_get_u32(&r);
         ms->reach_down[k] = mv_get_u32(&r);
     }
-    for (k = 0; k < OM_PP_REACH_MAX && r.ok; k++) ms->kind_of_type[k] = mv_get_i32(&r);
+    ms->kind_n = mv_get_count(&r, OM_PP_REACH_MAX);
+    for (k = 0; k < ms->kind_n && r.ok; k++) {
+        ms->kind_type[k] = mv_get_i32(&r);
+        ms->kind_val[k] = mv_get_i32(&r);
+    }
     if (!r.ok || r.pos != len) {
         free(ms);
         return 1;
