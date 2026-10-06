@@ -91,7 +91,7 @@ The client launches `res://pipe/ouroboros_pipe` through `globalize_path` (`c_bri
 | W8c client path | `autoload/c_bridge.gd` (phase B with W2) | exe-relative resolution with the `.exe` suffix, the editor fallback on `res://pipe`, `OM_PIPE` override | a Godot test with a fake executable dir; the Linux export launches a mission |
 | W8d presets | `export_presets.cfg` (W6 adds Windows x86_64 beside Linux and macOS) | | a Windows export builds headless |
 
-Needs on this box (Westley, sudo): `mingw-w64` (ucrt variant if packaged) and `wine64` for the probe.
+Installed 2026-10-06 (Westley): `mingw-w64` GCC 13-win32 and `wine64`. First Windows data point the same night: the brief's static build (`-static -D__USE_MINGW_ANSI_STDIO=1`, the Linux flag set, `_setmode` in `main`) compiled with zero warnings; under wine64 the probe's four checkpoints are byte-identical to Linux for both the default msvcrt link and a ucrt link (`-mcrtdll=ucrt` is not in GCC 13; a `-specs` file swapping `-lmsvcrt` for `-lucrt` works). Ship the ucrt link. Artifacts in `~/.claude/jobs/cb87e7a3/tmp/ship/` (exe, outputs, `ucrt.specs`).
 
 ## Launch order
 
