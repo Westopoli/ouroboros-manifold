@@ -2,15 +2,11 @@
 handler calls om_set_era_kind(w, era_kind) before om_mission_setup (Architect ruling 2026-10-06, pulled forward from the
 stage 3 spec; the merge gate's reach lint rejects om_set_era_kind as unreachable from the pipe).
 
-Observable: the ping (S-162 / R-005-09). In a ground era om_command_ping is refused with reason 5; in a space era it casts.
-NOTE: csrc/pipe/om_pipe.c has no `ping` verb in handle_command today (verbs: move, attack_move, attack_target,
-activate_ability, hold). The command frame assumed here is the move frame's shape with the ping's own fields:
-{"type":"cmd","name":"command","verb":"ping","units":[caster],"layer":L,"x":X,"y":Y}; the ack is {"type":"ack",...} and a
-ground refusal is an error frame named "command" whose reason is not "unknown verb" and names the ground refusal. The
-builder adds the verb with the wiring; if the frame shape is chosen differently, the Architect fixes this file's PING helper.
+Observable: the net checksum (docs/architecture.md net_checksum). fog.c folds era_kind into the `fog` section word, so a
+ground world and a space world answer different words after the same mission_start / mission_begin / net_reset. Section
+names come from the `names` array of the net_ack.
 
-Fixture: seed 1, 80 regions, features 1..7, mission_start faction 0, mission_begin; unit 23 is the player's rightmost
-spawn-row unit (see test_pipe_units_move.py), ping 500 wu from the spawn point (inside reach).
+Fixture: seed 1, 80 regions, features 1..7, mission_start faction 0, mission_begin; each case runs on a fresh pipe process.
 """
 import json
 import subprocess
@@ -24,8 +20,8 @@ SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "feat
             "new_campaign": False}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
 QUIT = {"type": "cmd", "name": "quit"}
-CASTER = 23
-PING = {"type": "cmd", "name": "command", "verb": "ping", "units": [CASTER], "layer": 0, "x": 12830.0, "y": 515.0}
+RESET = {"type": "cmd", "name": "net_reset"}
+CHECKSUM = {"type": "cmd", "name": "net_checksum"}
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built")
 
@@ -50,21 +46,27 @@ def _run(cmds):
     return out[1:]  # drop hello
 
 
-def test_era_kind_1_makes_the_ping_refused_on_ground():
-    """R-001-07 / S-162, ruling 2026-10-06: mission_start era_kind 1 puts the world in a ground era, so a ping is refused (reason 5)."""
-    frames = _run([SET_SEED, _start(era_kind=1), BEGIN, PING])
-    assert [f["type"] for f in frames[:2]] == ["mission", "tactical"], frames
-    refusal = frames[2]
-    assert refusal["type"] == "error" and refusal["name"] == "command", refusal
-    assert refusal["reason"] != "unknown verb", "no ping verb in the pipe: %r" % refusal
-    assert "ground" in refusal["reason"], refusal
+def _checksum(**extra):
+    frames = _run([SET_SEED, _start(**extra), BEGIN, RESET, CHECKSUM])
+    ack = frames[-1]
+    assert ack["type"] == "net_ack" and ack["name"] == "net_checksum", frames
+    return ack
 
 
-def test_no_era_kind_field_keeps_the_space_era_and_the_ping_casts():
-    """R-001-07, ruling 2026-10-06: without era_kind the default is 0 (space), as today; the same ping is accepted."""
-    frames = _run([SET_SEED, _start(), BEGIN, PING])
-    assert [f["type"] for f in frames[:2]] == ["mission", "tactical"], frames
-    assert frames[2] == {"type": "ack", "name": "command"}, frames[2]
+def test_era_kind_1_changes_the_fog_section_and_the_checksum():
+    """R-001-07, ruling 2026-10-06: mission_start era_kind 1 reaches om_set_era_kind, so the fog section word and the full checksum differ from era_kind 0."""
+    space, ground = _checksum(era_kind=0), _checksum(era_kind=1)
+    fog = space["names"].index("fog")
+    assert space["names"] == ground["names"]
+    assert ground["sections"][fog] != space["sections"][fog], "era_kind ignored: fog section equal %r" % space["sections"][fog]
+    assert ground["checksum"] != space["checksum"], "era_kind ignored: checksum equal"
+
+
+def test_no_era_kind_field_equals_era_kind_0():
+    """R-001-07, ruling 2026-10-06: the default is space. Positive control: green today (the field is ignored), must stay green after the wiring."""
+    absent, zero = _checksum(), _checksum(era_kind=0)
+    assert absent["checksum"] == zero["checksum"]
+    assert absent["sections"] == zero["sections"]
 
 
 def test_bad_era_kind_answers_error_and_leaves_the_world_untouched():
