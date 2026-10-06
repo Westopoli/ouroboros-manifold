@@ -10,10 +10,10 @@ Probe interface assumed (the spec fixes seed 3, 2,000 ticks, ticks 100/500/1000/
 script path, not the output format): scripts/net_xplat_checksum.py prints, per checkpoint, a line
 holding the tick and `full=<uint64 decimal>` (section words may follow on the line); exit 0.
 
-PINNED VALUES: measured on origin/main 341c41df (pipe built from it; tests/net/driver.py
-start_mission(seed 3), then net_step with checksum). The spec's reference
-full=17857234444101692619 at tick 100 was NOT reproduced by that route (measured
-2923953369385581583); the pins below are what main measures. See the report for the open question.
+PINNED VALUES: re-pinned under ledger row TD-NET-probe-pins (Architect ruling 2026-10-06). They are
+what scripts/net_xplat_checksum.py (the probe route: harness Pipe, driver make_script, net_submit
+then net_step) measures; this reproduces main and the spec's reference (17857234444101692619 at
+tick 100). The earlier pins came from a different route (start_mission then net_step only).
 """
 import os
 import re
@@ -30,12 +30,12 @@ PROBE = ROOT / "scripts/net_xplat_checksum.py"
 LINT = ROOT / "scripts/specfactory/libm_lint.py"
 PYTHON = sys.executable
 
-# Tick -> full checksum word, seed 3, measured on main 341c41df.
+# Tick -> full checksum word, seed 3, measured by the probe route (TD-NET-probe-pins).
 PINNED_FULL = {
-    100: 2923953369385581583,
-    500: 1535466345188735083,
-    1000: 17520316988645163074,
-    2000: 3564723825951932774,
+    100: 17857234444101692619,
+    500: 4620399227560823259,
+    1000: 5949207199339162702,
+    2000: 16137289696355536662,
 }
 
 

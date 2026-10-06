@@ -83,6 +83,12 @@ func live_peers() -> Array:
 	return _live.duplicate()
 
 
+# W4 lobby leave: the peer leaves the live set; the others carry on without it.
+func drop(peer: int) -> void:
+	if peer != _local:
+		_live.erase(peer)
+
+
 func desync() -> Dictionary:
 	return _desync
 

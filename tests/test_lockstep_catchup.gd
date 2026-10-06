@@ -143,6 +143,7 @@ func _test_catchup_command_order() -> void:
 	_spin(e["s"], 10)
 	e["net"].inject(1, 2, [10, [[2, _cmd(2, 2)], [9, _cmd(2, 9, 1)]], [], 0])
 	e["s"].poll()
+	e["s"].poll()  # TD-NET-catchup-cap: the first poll releases ticks 1..8 (cap), tick 9 follows
 	var log: Array = e["sim"].log
 	_assert(log.size() == 2 and log[0][0] == 1 and log[1][0] == 8,
 			"catch-up submits each command before its own tick's step (log %s)" % str(log))
