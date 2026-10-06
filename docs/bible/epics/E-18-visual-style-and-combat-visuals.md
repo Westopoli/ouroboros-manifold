@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 49 rules; numbers from the bible's combat visuals and animation sections and the Stage 1 A-368, A-369, A-372 rewrites; the world, settlement, economy, layer-action and scale stories (S-236 to S-240) leave numbers and looks to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes; every output is a screen, T2-checkable. |
-| Implied-but-unstated behavior turned into flags | 8 open flags: Q-132-02 (S-132), Q-133-01 (S-133), and Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01 on S-236 to S-240 (Q-236-02 is also listed on S-132). |
+| Implied-but-unstated behavior turned into flags | 6 open flags: Q-132-02 (S-132), Q-133-01 (S-133), and Q-236-02, Q-237-01, Q-238-01, Q-239-01 on S-236 to S-240 (Q-236-02 is also listed on S-132). |
 | Every visible-surface story has a reference | **No.** This entire epic is a visible surface. Art of Rally (look), the opening battle of Revenge of the Sith (combat weight), Halo CE (world-building), and Claude Code's spinner (glyph animation) are the bible's named references; none is attached as a screenshot yet. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -113,7 +113,7 @@ As a player, I want the whole game to look like one thing, low-poly and stylized
 Rules
 - R-138-01  Given any scene, When rendered, Then models are flat or minimally shaded low-poly with clean geometric forms; no photoreal textures; no PBR detail passes.
 - R-138-02  Given a T2 screenshot from any screen, When compared against the reference set, Then it passes a manual review against the reference set; there is no automated register check at launch.
-- R-138-03  Given the Settled Reach, When rendered, Then the tactical space reads as a lived-in frontier: asteroids, derelicts, cargo, nebula volumes, beacons [Q-236-01: how the landforms of S-236 read here; the space landscape is Q-166-02].
+- R-138-03  Given the Settled Reach, When rendered, Then the tactical space reads as a lived-in frontier: asteroids, derelicts, cargo, nebula volumes, beacons (the landforms of S-236 do not appear in space, R-236-03; the space landscape is Q-166-02).
 
 Inputs: era manifests; reference set.
 Outputs: screen.
@@ -127,11 +127,11 @@ Design decided 2026-10-02, not scheduled for building (E-17 S-166). These rules 
 Rules
 - R-236-01  Given the camera at any zoom between a single unit and the battlefield's map view, When the world is drawn, Then it is one world drawn at continuous detail: deep detail fully zoomed in, the shape of the land zoomed out, with smooth transitions between very different zoom levels and no pop from one level of detail to the next (E-17 R-166-05, E-16 S-234).
 - R-236-02  Given ground fitted to five height bands (E-17 R-166-04, R-166-06), When it is drawn, Then a step between bands is drawn as the real difference in height it is, benched and natural ground are both drawn, and cliffs, waterfalls and mountainsides read as the landforms they are.
-- R-236-03  Given the Settled Reach, When a landform such as a cliff or a waterfall would appear, Then [Q-236-01: how it reads in an era whose units all fly, and what the space landscape draws; Q-166-02].
+- R-236-03  Given the Settled Reach, When a landform such as a cliff or a waterfall would appear, Then it does not appear: cliffs and waterfalls do not exist in space, and the space and ground eras are kept separate (E-17 R-188-05; Westley, 2026-10-06). What the space landscape draws is Q-166-02.
 
 Inputs: the map's fields and height bands; era manifest.
 Outputs: screen.
-Open flags: Q-236-01.
+Open flags: none.
 
 ### S-237 — Settlements that rise
 As a player, I want a base to start as ground under construction and rise stage by stage, spreading and thickening as it grows, so that the base I fight over is a spectacle to watch being built.
@@ -184,11 +184,11 @@ Design decided in part 2026-10-01: the long-term goal is thousands of units and 
 Rules
 - R-240-01  Given units, workers, buildings and settlement pieces under budget pressure, When they are drawn, Then each degrades by distance and by count: full detail near, simpler far, culled beyond a count threshold; what happens in the sim is unaffected (as R-134-04 and R-136-03 for projectiles and wrecks).
 - R-240-02  Given any new visual, When it is designed, Then it is built so that it does not stand in the way of the long-term goal of thousands.
-- R-240-03  Given the client budgets, When the long-term goal is read against them, Then [Q-240-01: the frame-rate budgets for thousands of units, workers and buildings on the minimum-spec machine; Westley's numbers].
+- R-240-03  Given the client budgets, When the long-term goal is read against them, Then the client's budgets for thousands of units, workers and buildings are a direction, with no frame-rate number, until the simulation's budgets (10,000) are reached (Westley, 2026-10-06).
 
 Inputs: frame budget; counts on screen.
 Outputs: screen.
-Open flags: Q-240-01.
+Open flags: none.
 
 ## Inputs
 
@@ -215,7 +215,7 @@ Open flags: Q-240-01.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060). E-16 states 60 fps at 1,000 units where this epic states a 30 fps floor, and neither covers the long-term goal of thousands of units and workers; both are Q-240-01.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060). E-16 states 60 fps at 1,000 units where this epic states a 30 fps floor, and neither covers the long-term goal of thousands of units and workers, which stays a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06).
 
 ## Look and behavior references
 
@@ -232,7 +232,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-132-02, Q-133-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-132-02, Q-133-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
