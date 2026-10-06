@@ -81,7 +81,7 @@ Target: a private Steam beta with multiplayer in about two weeks (Westley, 2026-
 | 3 | Unit size as a runtime setting (D1) | spec ready | gate | lab run 2 |
 | 4 | Steam wiring phase A: session catch-up, Steam transport, match pump, export tooling, portability (`plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 5) | workflow running | gate on `push/net-wire-a` | 5 |
 | 5 | Steam wiring phase B: pipe frame flag, bridge wrappers, lobby + menu, tactical hookup | after 2 and 4 | gate plus a two-process loopback match | 6 |
-| 6 | Shipping the C pipe on Windows/macOS/Linux (cross-build, static link, path resolution in exports, signing) | scout running tonight; the biggest unstarted item | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
+| 6 | Shipping the C pipe on Windows/macOS/Linux (cross-build, static link, path resolution in exports, signing) | scouted 2026-10-06: static pipe exe per OS, mingw-w64 cross build, client path fix (Steam spec W8); needs `mingw-w64` + `wine64` installed (Westley, sudo) | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
 | 7 | First real-Steam test: Westley's two accounts on Spacewar 480, Linux + Mac | after 5 and 6 | a match to its end, a stall, a leave | 8 |
 | 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafting now; app id is Westley's (T17) | one tester plays a mission and files an F12 report | public track (store page, Coming Soon) |
 
