@@ -2,6 +2,7 @@
 import dataclasses
 import math
 
+from scripts.skilllab import plays
 from scripts.skilllab.contract import Block, Group, Setup, Terrain
 
 _CANVAS = (3000.0, 1600.0)
@@ -34,3 +35,19 @@ def guard_defenders(build):
         groups = tuple(dataclasses.replace(g, order="guard") if g.side == 1 else g for g in setup.groups)
         return dataclasses.replace(setup, groups=groups)
     return wrapped
+
+
+def objective_scene(start_distance, unit="Vanguard", size=16):
+    """Both groups start start_distance apart and attack-move to an objective midway between them."""
+    def build(enemy_heads, swap):
+        if size < 1 or enemy_heads < 1:
+            raise ValueError("size and enemy_heads must be >= 1")
+        objective = (0.0, 0.0)
+        groups = tuple(
+            Group(side=side, unit=unit, count=count, formation="blob", x=x, y=0.0, facing_deg=facing, layer=0,
+                  order="attack_move", goal=objective, params={"radius": 80 + 12 * math.sqrt(count)})
+            for side, count, x, facing in ((0, size, -start_distance / 2, 0.0), (1, enemy_heads, start_distance / 2, 180.0)))
+        return Setup(groups=groups, unit_types={}, start_distance=start_distance, objective=objective,
+                     mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
+                     max_ticks=plays.max_ticks_for(size, enemy_heads), quiet_from_first_damage=True)
+    return build
