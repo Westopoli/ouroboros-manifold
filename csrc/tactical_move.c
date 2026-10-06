@@ -2664,7 +2664,7 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
     cx /= (double)n;
     cy /= (double)n;
     for (i = 0; i < n; i++) {
-        double sp = om_unit_effective_speed(w, ids[i]);
+        double sp = om_unit_order_speed(w, ids[i]);
         if (i == 0 || sp < min_speed) min_speed = sp;
     }
     for (i = 0; i < n; i++) {

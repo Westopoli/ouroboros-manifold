@@ -6,8 +6,8 @@
 
 [meta]
 abi_version = 4
-symbol_count = 653
-struct_count = 40
+symbol_count = 757
+struct_count = 45
 ambiguous_remaining = 0
 
 [[symbols]]
@@ -5725,6 +5725,15 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint
 epics = ["E-11"]
 confidence = "likely"
 note = "approx base_speed * 2.5, == 0.0, > 0.0 -> double."
+
+[[symbols]]
+name = "om_unit_order_speed"
+module = "unit.c"
+restype = "double"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-11", "E-13"]
+confidence = "likely"
+note = "The speed a move order fixes for this unit: om_unit_effective_speed without the momentary backswing stop. Lasting modifiers apply (a player-cast Fortify's 0.4 x, R-086-06; a Vanguard that is immobile by R-086-03 reads 0). Used for the group speed cap, which is fixed at order time (E-13 R-095-01). Contract piece SPEEDCAP-contract."
 
 [[symbols]]
 name = "om_unit_engage"

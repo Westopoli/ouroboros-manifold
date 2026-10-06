@@ -336,3 +336,20 @@ Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, 
 - E-22 (the economy the seat's screen and the commander's controls show: S-167 to S-181).
 - E-17 (S-166, the settlements and landscape that the zoom and the map view draw).
 - E-01 (the ping, going dark and reach that S-232 shows).
+
+### S-245 — Feedback and bug reports that reach us by themselves
+As a player, I want to tell the makers what I think and report a bug from inside the game or the website, so that what I hit is seen and fixed without my chasing anyone.
+
+Design direction 2026-10-06, not scheduled. Westley, verbatim: "I want to make getting feedback a priority, I want players to be able to provide feedback on the website and have that be brought to our attention automatically (queue), I also want them to be able to put in bug/ticket reports. We already did something like this with the last version, where players were directed to a log file when a crash happened or they could press F12 to report one. The game would capture the last 5-10 seconds of the state exactly as it was happening so we could re-create the bug ourselves and see exactly what they were seeing and investigate deeper ourselves. The long term goal is to have a classification system that classifies betwee legitemate bugs and regular player complaints, slots that bug into a queue, and have a 30B model investigate/fix autonomously. The idea is to autonomize maintenence so I don't have to be present and can focus on other things."
+
+Rules
+- R-245-01  Given a player in any scene, When they press the report key (F12, Q-245-01), Then the game writes a report: the player's words, the scene, and a capture of the last 5 to 10 seconds of the simulation exactly as it ran, and tells the player where it went.
+- R-245-02  Given the lockstep backend (E-19 S-139, S-140), When a capture is made, Then it is the save state from 5 to 10 seconds before the press plus the command log since, so the sim replays those seconds byte-identically on our machine [Q-245-02: the capture window and whether the client's own input and camera are recorded beside it].
+- R-245-03  Given a crash, When the game dies, Then the player is pointed at the log and the capture, as the last version did.
+- R-245-04  Given the website, When a player leaves feedback or a report there, Then it enters the same queue as the in-game reports, and nobody has to be present for it to be received.
+- R-245-05  Given the queue, When a report arrives, Then it is classified as a bug or a complaint, a bug is slotted into the maintenance queue, and a local model (the 30B of the Agora harness) investigates and proposes or lands a fix through the merge gate; a complaint is summarised for Westley [Q-245-03: what a model may land unattended, and what always waits for him].
+
+Inputs: the report key; the player's words; the lockstep save and command log; the website form.
+Outputs: a report file with the capture; a queue entry; a classification; for bugs, an Agora task.
+Open flags: Q-245-01 (the key and whether the report asks for words first), Q-245-02 (the capture window and what else it holds), Q-245-03 (what the model may land unattended).
+Depends on E-19 S-139/S-140 (the lockstep backend landed 2026-10-06 gives the state and the command log), the website (`ouroboros-site`), and the Agora harness.

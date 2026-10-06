@@ -1137,7 +1137,7 @@ size_estimate = "canvas size, block-rect, cover height, layer accessibility from
 id = "PP-ledger"
 manager = "M0"
 wave = 5
-owns = ["docs/northstar/plans/push_ledger_2026-09-22.md"]
+owns = ["docs/northstar/plans/push_ledger_2026-09-22.md", "docs/northstar/plans/push/pieces.toml"]
 owns_glob = []
 acceptance = []
 depends_on = ["PP-contract"]
@@ -1225,6 +1225,18 @@ acceptance = ["tests/csim/test_PP_attack_move_no_sight_pursuit.py"]
 depends_on = []
 status = "pending"
 size_estimate = "A199 tests and the Python reference's targeting gate"
+
+# Group speed cap fix: declares om_unit_order_speed (unit.c, PP-unit) before PP-move's tactical_move.c reads it.
+[[piece]]
+id = "SPEEDCAP-contract"
+manager = "M0"
+wave = 5
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml"]
+owns_glob = []
+acceptance = []
+depends_on = ["core", "A2-contract", "A94-contract", "A117-contract", "PP-contract"]
+status = "pending"
+size_estimate = "one declaration plus one signatures.toml row"
 
 # Lockstep backend (plans/2026-10-05-lockstep-backend-spec.md): every new file of
 # the run. Shared files stay with their existing owners; the landing clerk names

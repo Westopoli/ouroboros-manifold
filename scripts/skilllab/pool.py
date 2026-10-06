@@ -3,14 +3,19 @@ from __future__ import annotations
 
 import multiprocessing
 
+from scripts.skilllab.contract import trim_series
 from scripts.skilllab import engine as engine_module, fight as fight_module
 
 _engine = None
 
 
-def _init_worker(library_path):
+_lean = False
+
+
+def _init_worker(library_path, lean=False):
     """Pool initializer: load the library the parent built, so no worker compiles its own."""
-    global _engine
+    global _engine, _lean
+    _lean = lean
     _engine = engine_module.Engine(library_path)
 
 
@@ -19,15 +24,18 @@ def run_job(job):
     if not isinstance(_engine, engine_module.Engine):
         _engine = engine_module.Engine()
     setup, seed, swap = job
-    return fight_module.fight(setup, seed, swap, _engine)
+    result = fight_module.fight(setup, seed, swap, _engine)
+    # lean: drop the per-tick series here, so the parent never holds them; seed 0, unswapped is each cell's charted example
+    return trim_series(result) if _lean and (seed != 0 or swap) else result
 
 
 class FightPool:
-    def __init__(self, workers: int, library_path=None):
+    def __init__(self, workers: int, library_path=None, lean: bool = False):
         if workers < 1:
             raise ValueError("workers must be at least 1")
         self._workers = workers
         self._library_path = library_path
+        self._lean = lean
         self._pool = None
         self._closed = False
 
@@ -41,7 +49,7 @@ class FightPool:
             # spawn, never fork: a forked child would inherit the parent's loaded library and world state
             path = self._library_path if self._library_path is not None else engine_module._cached_library()
             self._pool = multiprocessing.get_context("spawn").Pool(
-                self._workers, initializer=_init_worker, initargs=(path,))
+                self._workers, initializer=_init_worker, initargs=(path, True) if self._lean else (path,))
         return self._pool.map(run_job, jobs, chunksize=1)
 
     def __enter__(self):
