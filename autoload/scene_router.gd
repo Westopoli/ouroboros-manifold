@@ -22,6 +22,7 @@ var _back_stack: Array[Dictionary] = []
 var _overlay: ColorRect
 var _current_scene_name: String = ""
 var _transitioning := false
+var _pending: Dictionary = {}
 
 func _ready() -> void:
 	layer = 99
@@ -35,7 +36,11 @@ func _ready() -> void:
 
 
 func go_to(scene_name: String, params: Dictionary = {}) -> void:
+	# See also: tests/test_scene_router_queue.gd (T12, dropped Deploy click)
 	if _transitioning:
+		if not _pending.is_empty():
+			push_warning("SceneRouter: queued '%s' replaced by '%s'" % [_pending["name"], scene_name])
+		_pending = {"name": scene_name, "params": params}
 		return
 	if not SCENES.has(scene_name):
 		if not ThemeConstants.IS_RELEASE_BUILD:
@@ -55,7 +60,15 @@ func go_to(scene_name: String, params: Dictionary = {}) -> void:
 	tw.tween_property(_overlay, "modulate:a", 1.0, ThemeConstants.FADE_DURATION)
 	tw.tween_callback(_swap_scene.bind(scene_name, params))
 	tw.tween_property(_overlay, "modulate:a", 0.0, ThemeConstants.FADE_DURATION)
-	tw.tween_callback(func(): _transitioning = false)
+	tw.tween_callback(_finish_transition)
+
+
+func _finish_transition() -> void:
+	_transitioning = false
+	if not _pending.is_empty():
+		var next := _pending
+		_pending = {}
+		go_to(next["name"], next["params"])
 
 
 func go_back() -> void:
