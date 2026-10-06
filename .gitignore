@@ -33,3 +33,5 @@ build/
 pipe/ouroboros_pipe
 
 docs/northstar/research/mockups/**/*.import
+# worktree finished marker, see CLAUDE.md Git
+.wt-done
