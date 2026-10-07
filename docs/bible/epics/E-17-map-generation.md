@@ -264,11 +264,12 @@ Rules
 - R-190-03  Given a slope, When it is output, Then it carries its position, its length, the layers it joins (adjacent or not), a bottom edge on the lower layer, a top edge on the upper layer, and the midline halfway along its length (E-01 R-001-06, R-004-06).
 - R-190-04  Given the fitted bands, When the map is output, Then the five band heights are output, and E-01 R-010-01 reads them to draw a unit at its layer's height. This amends the note under E-01 Q-E01-01 that the elevation mapping is fixed globally.
 - R-190-05  Given a cover obstacle on the map, When it is generated, Then it has a height in layers, and it blocks sight and fire only on the layers it reaches (E-01 R-007-01, R-007-02) Its height comes from the terrain feature it is (boulder, wall, tree line) and the era kit (Westley, 2026-10-03). Asteroid height on space maps stays with the held map content (Q-098-02). The radius cutoffs for the small, medium and huge looks of a cover object are the Architect's (Westley, 2026-10-07).
+- R-190-07  Given any obstacle (cover, wall, ridge) on the map, When it is generated, Then it is kept narrow enough that a unit can walk around it to a clear line of fire (E-11 R-087-09), so an obstacle is a small annoyance and never a complete blocker (Westley, 2026-10-07: "if we make sure the landscape engine keeps obstacles to a minimum width, this will lead to obstacles being a small annoyance instead of a complete blocker") [Q-190-07: the width limit].
 - R-190-06  Given the terrain, When a height is stored, Then it is stored continuous in world units, and the layer is derived from it by the bands.
 
 Inputs: bands; slopes; cover obstacles.
 Outputs: layer mask; land flag per layer; slopes; band heights; cover heights. E-01 reads them as its generator inputs.
-Open flags: none.
+Open flags: Q-190-07 (the width limit of R-190-07).
 
 ### S-191 — The places the game needs, found on the terrain
 As a commander, I want bases, objectives and resources to sit where the land puts them, so that every map has its own shape of fight and a reason for every place.
@@ -469,7 +470,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-165-01, Q-166-02, Q-190-07, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
