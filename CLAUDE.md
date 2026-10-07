@@ -57,6 +57,18 @@ A workflow enforces nothing by itself; the spec and the script do. Before any Wo
 
 Every story exists as failing tests before any code, in fenced paths builders cannot edit, each naming the `S-###`/`R-###-##` it proves. Every detector ships with a positive control. Every system has an isolation test and an integration test. Builders never edit tests. A test is fixed only when it is classed as a `test-defect`, with a ledger row. Westley owns every threshold and tolerance: narrowing an invariant's scope is allowed; widening a threshold, extending a window or loosening a tolerance needs him; a real finding is never reclassified as a skip.
 
+## Visible-game guards
+
+Plan: `docs/northstar/plans/2026-10-07-visible-game-programme.md`. A story is done when the player has seen it.
+
+1. **Visual definition of done.** A player-facing piece asserts a deterministic element inventory from `qa_state()` in its tests and attaches a desktop-driver screenshot set to its landing report; a human sees it before "done". The gate's `look` stage rejects a blank or near-uniform frame.
+2. **Stories acted out.** Every lane names its stories. Each has a `story play` (scripted desktop-driver scenario, `qa_state()` plus screenshot) judged by a model reviewer against the story's words and `references/E-##/`. Answers go to a review queue; `stories.md` moves to `Seen` only on Westley's approval.
+3. **No deletion without parity.** Removing a working feature needs a test listing what it showed, green on the replacement first.
+4. **Approved means scheduled.** When a mockup is approved, ROADMAP section 1 gets its integration lane that day, with position and owner. "Approved, not integrated" is said in every status report.
+5. **Reporting.** Every status has two columns: works (tests) and what the player sees (stories Seen). Say "stub" when it is one.
+6. **Play it.** The 30B plays current main nightly after each landing; Westley or the Architect looks at least weekly.
+7. **Drift check.** After every landing round, at the start of the Architect chat's resume after any compaction, and at least weekly, a fresh Sonnet drift auditor checks promises vs artifacts, rulings vs every epic they touch, ROADMAP rows vs branches, unasked scope, open "stub" states. Its report goes to Westley unedited; drift found is fixed before new lanes launch.
+
 ## Code quality
 
 - No stink: no unasked-for layers, wrappers or config; no cosmetic refactoring inside another change; minimal diffs.
