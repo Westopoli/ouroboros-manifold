@@ -1439,7 +1439,7 @@ wave = 7
 owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf"]
 owns_glob = []
 acceptance = []
-depends_on = []
+depends_on = ["NET-wire-A"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
