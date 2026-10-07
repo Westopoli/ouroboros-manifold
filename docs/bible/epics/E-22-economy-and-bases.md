@@ -154,31 +154,31 @@ Open flags: Q-174-02. Unpicked: workers under raid. With nobody in the seat the 
 As an economy player, I want to grow a settlement into a further base and to build production near the front, so that my side out-produces the side that stays home.
 
 Rules
-- R-175-01  Given a settlement on the map, When a side works it hard enough, Then it grows into a further base with its own main building, worker production and lots [Q-175-01: what hard enough is].
-- R-175-02  Given a main base, When the mission runs, Then its sources never run dry, and a side that stays home and does not expand outward for resources is out-produced and overrun [Q-175-02: what makes a side that stays home lose, since its main base never runs dry].
-- R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from [Q-175-03: what forward works consist of, and their cost and build time].
+- R-175-01  Given a settlement on the map, When a side holds it uncontested for a length of time (Westley, 2026-10-06; for now), Then it grows into a further base with its own main building, worker production and lots.
+- R-175-02  Given a main base, When the mission runs, Then its sources never run dry but yield less over time, so a side that stays home and does not expand outward is out-produced and overrun; the resources of an expansion are quick to collect and fizzle out quickly (Westley, 2026-10-06; the rates are for the lab).
+- R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from; forward works can be production only, or also houses and workers if the side wants them, in the manner of Age of Empires 3, and the commander can flag "forward base here" to the economy player (Westley, 2026-10-06; cost and build time are Q-168-03).
 - R-175-04  Given a unit is made at forward works, When it is finished, Then it stands there and walks to the fight, so the walk is longer from a base kept home.
 
 Inputs: settlements (E-17); the economy player's build commands.
 Outputs: bases and forward works in the tick delta.
-Open flags: Q-175-01, Q-175-02, Q-175-03. Unpicked: trading posts at neutral settlements, trade caravans. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations and is supplied by supply lines, is E-22 S-177. Forward works are not a forward base.
+Open flags: none. Unpicked: trading posts at neutral settlements, trade caravans. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations and is supplied by supply lines, is E-22 S-177. Forward works are not a forward base.
 
 ### S-176 — Shipments
 
-As an economy player, I want shipments from the civilization that I cannot see on the road, so that waiting for one is a risk I plan around.
+As an economy player, I want shipments from the civilization and from my own forward posts that cross the map as visible objects with no sight of their own, so that waiting for one is a risk I plan around.
 
 This story is written for land maps. Space eras wait on Q-166-02.
 
 Rules
-- R-176-01  Given a mission, When time passes, Then a side that holds a forward base or economic post away from its main city may choose to send a shipment of resources to the main base, and the farther the post is from the main city the better the resources it carries; the amounts are for playtest and balance (Westley, 2026-10-06) [Q-176-03: whether the civilization also sends shipments, and who sends in solo play].
-- R-176-02  Given a shipment on its way, When the receiving side looks, Then it cannot see its own shipment: it has no vision of it at all.
-- R-176-03  Given a shipment that is killed on the way, When it does not arrive, Then the side gets no indication that it was killed and no explanation, since it has "no idea what happened".
+- R-176-01  Given a mission, When time passes, Then the civilization sends shipments to the base, and a side that holds a forward base or economic post away from its main city may also choose to send a shipment of resources to the main base, the farther the post is from the main city the better the resources it carries; in solo play the rules send them automatically; the amounts are for playtest and balance (Westley, 2026-10-06).
+- R-176-02  Given a shipment on its way, When the receiving side looks, Then it sees it on the map like any unit, as the enemy does (it is visible to both sides), but the shipment gives its own side no vision (Westley, 2026-10-06).
+- R-176-03  Given a shipment that is killed on the way, When it does not arrive, Then the side gets no ticker line that it was killed and no explanation, since it has "no idea what happened".
 - R-176-04  Given a shipment on its way, When raiders hold its lane (E-22 S-174), Then it can be stopped.
-- R-176-05  Given a shipment, When it is sent, Then it looks like a unit on the map but behaves like an event: it has no vision of its own and cannot be moved or given orders once it is sent (Westley, 2026-10-06) [Q-176-04: who can see it].
+- R-176-05  Given a shipment, When it is sent, Then it looks like a unit on the map but behaves like an event: it has no vision of its own and cannot be moved or given orders once it is sent (Westley, 2026-10-06).
 
 Inputs: the civilization's state (E-02, E-06); lanes.
-Outputs: arrivals at the base. No output shows a shipment in transit or tells a side that one was killed.
-Open flags: Q-176-03, Q-176-04 (who can see a shipment, which E-12 R-089-05 bears on). Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
+Outputs: arrivals at the base; a shipment in transit shows on the map to both sides. No output tells a side that one was killed.
+Open flags: none. Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
 
 ### S-177 — Bases, resources and the situation
 

@@ -39,7 +39,7 @@ Rules
 
 Inputs: unit positions, layers, sensor radii; interference at each position; cover geometry.
 Outputs: per-unit visible set and player-visible list in the tick delta; fog render.
-Open flags: Q-176-04 (who can see a shipment, which looks like a unit but has no vision of its own; E-22 S-176), Q-007-01 (the line that crosses layers, for sight past cover or ground; E-01 S-007).
+Open flags: Q-007-01 (the line that crosses layers, for sight past cover or ground; E-01 S-007).
 The targeted ping (E-01 S-162) is how a player sees far; the seer is dropped or kept only at a very high cost so that it does not undercut the ping.
 
 ### S-090 — Hiding in the storm
@@ -187,7 +187,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-091-01, Q-205-01, Q-206-02, and from other epics Q-007-01, Q-159-09, Q-172-01, Q-176-04, Q-181-02, Q-204-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-091-01, Q-205-01, Q-206-02, and from other epics Q-007-01, Q-159-09, Q-172-01, Q-181-02, Q-204-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
