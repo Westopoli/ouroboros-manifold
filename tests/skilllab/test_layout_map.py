@@ -26,7 +26,7 @@ BODY = 30.0
 OLD_FIELDS = ["choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
               "fight_layer_blocked", "cover_density_corridor", "start_distance"]
 NEW_FIELDS = ["detour_ratio", "blocked_layer_top"]
-SAMPLE_MAP_DIGEST = "7b00c74505369b541b4dcb20ed3b643e43d36d719e1f8265f74a4937ae42338d"  # sha256 of repr on origin/main
+SAMPLE_MAP_DIGEST = "7b00c74505369b541b4dcb20ed3b643e43d36d719e1f8265f74a4937ae42338d"  # sha256 of repr of (canvas, blocks, covers) per map; later defaulted Terrain fields (field_seed) stay out, TD-LAB-sample-map-pin
 RATIO_TOL = 0.05  # the spec's only tolerance (P1 tests column: "within 5% of r")
 
 
@@ -211,7 +211,10 @@ def test_the_seed_moves_the_cover():
 def test_sample_map_is_byte_identical_and_an_all_none_layout_is_the_open_map():
     """Spec section 4, P1: sample_map and every existing row stay byte-identical (digest pinned on origin/main); an
     all-none layout equals the open map."""
-    seen = repr([(k, s, sample_map(k, s)) for k in KINDS for s in range(20)])
+    # Hash the fields that define a map (canvas, blocks, covers), written as the original dataclass repr, so later
+    # defaulted Terrain fields (field_seed) cannot move the pin. Same digest as the pre-field_seed repr.
+    seen = "[" + ", ".join(f"({k!r}, {s}, Terrain(canvas={m.canvas!r}, blocks={m.blocks!r}, covers={m.covers!r}))"
+                           for k in KINDS for s in range(20) for m in [sample_map(k, s)]) + "]"
     assert hashlib.sha256(seen.encode()).hexdigest() == SAMPLE_MAP_DIGEST
     assert make(feats()) == sample_map("open", 0)
 
