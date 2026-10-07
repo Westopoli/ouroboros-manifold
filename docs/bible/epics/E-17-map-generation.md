@@ -21,7 +21,7 @@ Cities and bases are on the same field map. Population density is a growing fiel
 
 This is also where the layer system gets its terrain (E-01 S-001), where fog gets its interference (E-12 S-090), and where the economy gets its sites (E-22).
 
-Everything from the landscape decisions of 2026-10-01 and 2026-10-02 (S-166 and S-186 to S-197) is design decided, not scheduled for building. Stories S-112 to S-119 describe the layout generator that is built and tested today. It stays, and terrain-first generation is added to it. These rules are for land maps. The space-era landscape is a sister system and is not designed (Q-166-02), so no story here covers it except the one rule that says what space layers stay.
+Everything from the landscape decisions of 2026-10-01 and 2026-10-02 (S-166 and S-186 to S-197) is design decided, not scheduled for building. Stories S-112 to S-119 describe the layout generator that is built and tested today. It stays, and terrain-first generation is added to it. These rules are for land maps. The space-era landscape is a sister system with its own story, S-246.
 
 ## Obviously working in 60 seconds
 
@@ -221,14 +221,14 @@ Open flags: none.
 ### S-188 — Height becomes the five layers
 As a commander, I want a mountainside to be a stack of layers that an attacker has to climb, so that height is play and not paint.
 
-Applies to land maps. Space maps: R-188-05 and Q-166-02.
+Applies to land maps. Space maps: R-188-05 and S-246.
 
 Rules
 - R-188-01  Given the terrain height, When bands are set, Then the five height bands are fitted to the map, stretched between its lowest and highest ground, so every land map has ground on all five layers.
 - R-188-02  Given any position, When its layer is read, Then it is the band the ground there falls in, and a map always has five layers (E-01 Q-001-01).
 - R-188-03  Given a land map, When the landscape engine hands the terrain to the layer system, Then the terrain holds at least a minimum variance in height (Westley, 2026-10-03), so that every map has ground on layer 5 and every layer step is a real height difference; the layer system fits the bands only on terrain that meets it. A layer step that is only a meadow slope is a defect of the landscape generation. A detector measures the variance [Q-188-01: the minimum, which is Westley's to set] and ships with a positive control, a map built with less variance than the minimum that the detector must flag.
 - R-188-04  Given bands fitted per map, When a layer step has a different height on each map, Then the numbers written for a standard step in E-01 (time to change layer, how much worse sight is across layers, which layers a type may fire at) scale with the height of the step [Q-166-04: how each number scales, which the skill lab measures].
-- R-188-05  Given a space-era map, When layers are read, Then they stay pure altitude, asteroids and stations are the things that block them, and all five are open at every position (E-01 Q-001-01); height bands, ground flags, slopes and strongpoints apply to land maps only.
+- R-188-05  Given a space-era map, When layers are read, Then each layer is an open-or-blocked sheet (S-246; E-01 R-001-04), asteroids and stations are the things that block it where plates stand, and the areas between are open; height bands, ground flags, slopes and strongpoints apply to land maps only.
 - R-188-06  Given an archetype whose fight is compact (Suppression and Counterinsurgency, the small category of E-10 R-073-01), When its map is generated, Then the canvas is drawn from medium and large like any other, with five fitted layers (R-188-01); the player's home base is extensive and impressive and takes a significant portion of it, though it is mostly unused; the objective, the resources and the base sit closer together than on other archetypes; and the rest of the canvas is ordinary ground with nothing placed on it (Westley, 2026-10-03).
 
 Inputs: terrain height.
@@ -238,7 +238,7 @@ Open flags: Q-166-04, Q-188-01. The fitted-band rule is tested in the layer lab 
 ### S-189 — Ground you cannot cross
 As a commander, I want some ground to be too steep to walk, and slopes to be the ways between layers, so that the lay of the land decides where an army can go.
 
-Applies to land maps (Q-166-02).
+Applies to land maps; the space kit is S-246.
 
 Rules
 - R-189-01  Given the terrain, When ground is shaped, Then it is a mix of benched ground (wide shelves with steep risers at each band edge, so a layer boundary is a visible cliff or ramp) and natural ground (ground that rolls freely), in a ratio drawn per map from the seed (Westley, 2026-10-03). The spread of the ratio is checked in Westley's visual pass on a prototype.
@@ -256,7 +256,7 @@ Open flags: Q-189-04.
 ### S-190 — What the layer system gets from the ground
 As a commander, I want the layers to follow the land under my units, so that where I can stand, climb and be hit matches what I see.
 
-Applies to land maps (Q-166-02).
+Applies to land maps; the space kit is S-246.
 
 Rules
 - R-190-01  Given the bands, When the layer mask is read at a position where the ground is on layer L, Then layers below L are blocked as solid rock, and L and the layers above it are open, so a flying unit may be on the ground's layer or any layer above and never below (E-01 R-001-04).
@@ -273,7 +273,7 @@ Open flags: none.
 ### S-191 — The places the game needs, found on the terrain
 As a commander, I want bases, objectives and resources to sit where the land puts them, so that every map has its own shape of fight and a reason for every place.
 
-Applies to land maps (Q-166-02).
+Applies to land maps; the space kit is S-246.
 
 Rules
 - R-191-01  Given the terrain, When places are found, Then each is found by rule on the terrain, and a site is named afterwards for what it turned out to be (a valley floor, a mountainside, a river bend, an archipelago). The typed nodes of a layout (S-112) are requirements: the landscape engine is required to produce each at its zone (R-191-10). Places the layout does not name are found by rule.
@@ -294,7 +294,7 @@ Open flags: Q-191-05.
 ### S-192 — Strongpoints, chokes and the places the layer plays need
 As a commander, I want ways up and down the land that I can hold, narrow places to fight over and high ground to take, so that the plays the layer system offers have somewhere to happen.
 
-Applies to land maps (Q-166-02).
+Applies to land maps; the space kit is S-246.
 
 Rules
 - R-192-01  Given the slopes between height bands, When strongpoints are placed, Then they stand at those slopes, so holding one holds the way up or down and gives production on that band (E-15 S-218, E-15 S-126). The count and the owner split are R-126-01's, placed on the best slopes, and as many as there are where the relief gives fewer slopes than the count (Westley, 2026-10-03) [Q-192-04: whether a layout's reinforcement-structure nodes are these strongpoints].
@@ -379,6 +379,24 @@ Rules
 Inputs: map seed; the situation (E-02, E-10).
 Outputs: fairness log.
 Open flags: none.
+
+### S-246 — The space landscape
+
+As a commander in a space era, I want each layer of the map to be a sheet of open and blocked space with real obstacles filling it, so that the layers are places to fight in and not planes.
+
+Design decided 2026-10-07 (Westley; `docs/northstar/research/space_landscape/README.md`, the approved space kit). Not scheduled for building: Westley polishes and approves the prototype before the full build workflow.
+
+Rules
+- R-246-01  Given a space-era mission in the beta, When it is set up, Then the map has a generated field: each of the five layers is an open-or-blocked sheet (E-01 R-001-04), like ice over open water, and the generator is ported into the simulation as the land one was (Westley, 2026-10-07; Q-STAGE3-03).
+- R-246-02  Given the space kit, When it is drawn, Then it follows the approved prototype with one polish: the blocked space is filled across layers with real placeholder meteors instead of one plane per layer, and the layers are visibly separated.
+- R-246-03  Given a mission, When the simulation sends the map, Then it sends the cell masks and the plate polygons once per mission, and the client draws the layers as stacked 3D sheets from them (Q-166-06, Q-166-07).
+- R-246-04  Given a unit below an upper layer that hides it from the camera, When the player looks, Then a simple vision tube lets the player see through the covering layers around the cursor or selection, with a small effect that says so (Q-S3-01); the layer-visibility system of the approved prototype is the one the spec follows [Q-S3-02: which prototype].
+- R-246-05  Given an area units cannot leave, When a production building stands in it, Then in paired play that is the builder's problem, and in single player the rules place no production building in a section units cannot leave (Q-166-08).
+- R-246-06  Given the space-era roster, When it is read, Then one unit type is purposefully smaller, a group that can break formation and pass gaps other ships cannot (an animation later); sizes are decided with the roster (Q-166-05).
+
+Inputs: the seed; the mission archetype; the era kit (kits/space.json).
+Outputs: per layer the cell masks and plate polygons; blocked cells in the simulation's layer bits.
+Open flags: Q-S3-02.
 
 ## Inputs
 

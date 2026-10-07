@@ -216,7 +216,7 @@ Rules
 
 Inputs: dial setting; doctrine choice; switch states; a place and a request.
 Outputs: the controls and their state, T2-checkable; commands carried to the rules.
-Open flags: Q-231-01 and Q-231-02 (liberty: Architect), Q-231-03 (whether the dial, the default-on unit-mix rules and the doctrine switch fit hub principle 6, "positional thinking over command shortcuts", which is about orders to units while the dial is about spending; Westley decides).
+Open flags: Q-231-01 and Q-231-02 (liberty: Architect). The dial, the doctrine switch and the unit-mix switches are outside hub principle 6 (Westley, 2026-10-07).
 
 ### S-232 — Pinging, going dark, and reach, on screen
 As a commander, I want to see my ping and my emitting forces, to be told when I am pinged and from which way, and to be told when a unit type cannot reach a layer, so that the three layer actions are things I can read and use on purpose.
@@ -325,7 +325,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-02, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-02, Q-231-01, Q-231-02, Q-232-01, Q-232-02, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -138,7 +138,7 @@ Open flags: Q-159-12, Q-173-01, Q-173-02. Unpicked: ages by landmark, the Contes
 
 As an economy player, I want to build walls, gates and towers where raids will come, so that my workers and shipments reach the base.
 
-This story is written for land maps. Space eras wait on Q-166-02.
+This story is written for land maps. Space eras wait on a space reading of this story; the space landscape is E-17 S-246.
 
 Rules
 - R-174-01  Given a paired economy player, When he builds defenses, Then they are walls, gates and towers.
@@ -170,7 +170,7 @@ Open flags: Q-175-04. Unpicked: trading posts at neutral settlements. What a sid
 
 As an economy player, I want shipments from the civilization and from my own forward posts that cross the map as visible objects with no sight of their own, so that waiting for one is a risk I plan around.
 
-This story is written for land maps. Space eras wait on Q-166-02.
+This story is written for land maps. Space eras wait on a space reading of this story; the space landscape is E-17 S-246.
 
 Rules
 - R-176-01  Given a mission, When time passes, Then the civilization sends shipments to the base, and a side that holds a forward base or economic post away from its main city may also choose to send a shipment of resources to the main base, the farther the post is from the main city the better the resources it carries; in solo play the rules send them automatically; the amounts are for playtest and balance (Westley, 2026-10-06).
