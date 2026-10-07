@@ -77,13 +77,14 @@ def test_mop_up_orders_are_counted_and_bounded_by_the_interval(identical_16_v_8)
     assert all(f.mopup_orders <= 2 * (f.ticks // 200 + 1) for f in fights)
 
 
-def test_a_side_that_sees_nothing_issues_no_order_and_the_fight_stalls(library):
+def test_a_side_that_sees_nothing_attack_moves_to_the_enemy_anchor_and_the_fight_resolves(library):
     far = [Group(side=s, unit="Vanguard", count=4, formation="blob", x=x, y=0.0, facing_deg=0.0, layer=0,
-                 order="attack_move", goal=(x, 0.0), params={"radius": 100.0}) for s, x in ((0, -3000.0), (1, 3000.0))]
+                 order="attack_move", goal=(x, 0.0), params={"radius": 100.0}) for s, x in ((0, -1000.0), (1, 1000.0))]
     result = fight.fight(Setup(groups=tuple(far), unit_types={}, mopup=True, settings=batches.BASE_SETTINGS),
                          0, False, engine=library)
-    assert result.mopup_orders == 0
-    assert result.outcome == "stalemate"
+    # Lab rule (Westley, Architect 2026-10-07): an unseen side attack-moves to the enemy's starting anchor.  2000 wu apart: unseen, yet close enough to cross inside the stalemate window (6000 wu apart cannot).
+    assert result.mopup_orders > 0
+    assert result.outcome != "stalemate"
 
 
 def test_the_rule_is_symmetric_swapping_the_sides_swaps_the_result(library):
