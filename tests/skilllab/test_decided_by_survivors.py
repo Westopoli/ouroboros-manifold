@@ -8,10 +8,10 @@ Assumed names (the spec section fixes them; the builder must match or the test-w
     The winner is by remaining hp sums; a gap of at most 5% of the larger sum is "draw".
   - The blind count starts at the first tick on which nobody sees an enemy (after first damage) and ends the fight 400 ticks
     later, i.e. at tick first_blind_tick + 400. Sight on any tick resets it.
-  - scenes.placed_scene(layout, play) -> build(enemy_heads, swap) like the other scenes; `layout` is a Terrain in play
+  - scenes.placed_scene(layout, play, start_distance) -> build(enemy_heads, swap) like the other scenes; `layout` is a Terrain in play
     coordinates (maps.layout_map output), `play` a plays_space.PLAYS name; the first groups of the two sides sit
-    plays_space.START_GAP (the plays' contact distance) apart, their midpoint on the layout's choke (the middle of the
-    gap between the wall blocks); Setup.start_distance stays None; Setup.decided_by_survivors is True.
+    start_distance (1,400 or 2,800 wu) apart, their midpoint on the layout's choke (the middle of the
+    gap between the wall blocks); Setup.decided_by_survivors is True.
 """
 import dataclasses
 import json
@@ -177,18 +177,18 @@ LAYOUT = Terrain(canvas=(4000.0, 4000.0),
                  blocks=(Block(190.0, -800.0, 290.0, -10.0, 0, 4), Block(190.0, 90.0, 290.0, 800.0, 0, 4)))
 
 
+@pytest.mark.parametrize("start_distance", [1400.0, 2800.0])
 @pytest.mark.parametrize("play", ["s2_spread_line", "s4_bait"])
-def test_placed_scene_puts_the_formations_at_contact_distance_around_the_choke(play):
-    """Rev 3 rule 1: anchors contact distance apart, the choke midpoint between them, start_distance not used."""
-    setup = scenes.placed_scene(LAYOUT, play)(16, False)
+def test_placed_scene_puts_the_formations_start_distance_apart_around_the_choke(play, start_distance):
+    """Rev 3 rule 1: anchors start_distance apart, the choke midpoint between them."""
+    setup = scenes.placed_scene(LAYOUT, play, start_distance)(16, False)
     first = {}
     for g in setup.groups:
         first.setdefault(g.side, g)
     a, b = first[0], first[1]
-    assert ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5 == pytest.approx(plays_space.START_GAP)
+    assert ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5 == pytest.approx(start_distance)
     gx, gy = _gap_mid(setup.terrain)
     assert ((a.x + b.x) / 2, (a.y + b.y) / 2) == pytest.approx((gx, gy))
-    assert setup.start_distance is None
     assert setup.decided_by_survivors is True
 
 
@@ -198,25 +198,24 @@ def test_placed_scene_follows_the_choke_when_the_layout_moves():
         dataclasses.replace(k, y0=k.y0 + 120.0, y1=k.y1 + 120.0) for k in LAYOUT.blocks))
     mid = lambda s: (lambda f: ((f[0].x + f[1].x) / 2, (f[0].y + f[1].y) / 2))(
         {g.side: g for g in reversed(s.groups)})
-    s0 = scenes.placed_scene(LAYOUT, "s2_spread_line")(16, False)
-    s1 = scenes.placed_scene(moved, "s2_spread_line")(16, False)
+    s0 = scenes.placed_scene(LAYOUT, "s2_spread_line", 1400.0)(16, False)
+    s1 = scenes.placed_scene(moved, "s2_spread_line", 1400.0)(16, False)
     assert mid(s1)[1] - mid(s0)[1] == pytest.approx(120.0)
     assert _gap_mid(s1.terrain)[1] - _gap_mid(s0.terrain)[1] == pytest.approx(120.0)
 
 
-# ---- five features --------------------------------------------------------------------------------------------
+# ---- six features kept ----------------------------------------------------------------------------------------
 
-FIVE = {"choke_width_bodies": (0, 2, 4, 8), "detour_ratio": (0, 1.5, 3), "lane_count": (0, 1, 2),
-        "blocked_layer_top": (0, 2, 4), "cover_density_corridor": (0, 0.1, 0.3)}
+SIX = {"choke_width_bodies": (0, 2, 4, 8), "detour_ratio": (0, 1.5, 3), "lane_count": (0, 1, 2),
+       "blocked_layer_top": (0, 2, 4), "cover_density_corridor": (0, 0.1, 0.3), "start_distance": (1400, 2800)}
 
 
-def test_lhs_draw_has_five_features_covering_every_value_in_18_layouts_and_no_start_distance():
-    """Rev 3 cost change: 5 features, 4 x 3 x 3 x 3 x 3 = 324 layouts in the grid; start_distance is gone."""
+def test_lhs_draw_keeps_six_features_including_start_distance_covering_every_value_in_18_layouts():
+    """Rev 3: placement replaces walking, not the feature; 4 x 3 x 3 x 3 x 3 x 2 = 648 layouts in the grid."""
     draw = depth.lhs_draw(18, 7)
     assert len(draw) == 18
-    assert all(set(d) == set(FIVE) for d in draw)
-    assert not any("start_distance" in d for d in draw)
-    for k, values in FIVE.items():
+    assert all(set(d) == set(SIX) for d in draw)
+    for k, values in SIX.items():
         assert {d[k] for d in draw} == set(values), k
-    assert dict(depth.VALUES) == FIVE
+    assert dict(depth.VALUES) == SIX
     assert json.dumps(depth.lhs_draw(18, 7), sort_keys=True) == json.dumps(draw, sort_keys=True)

@@ -134,11 +134,11 @@ Check by reading or running, not from memory: the objective scene works with the
 - Q-LS-02: whether the enemy mix is fixed per layout or swept too (a 3 × 3 grid triples the cost).
 - Q-LS-03: whether the "likely places" ping policy joins the search once chokes exist (the ping search found that "ahead" is a weak naive baseline).
 
-## Rev 3 (proposed 2026-10-07, awaiting Westley): placed formations, decided by survivors
+## Rev 3 (2026-10-07, go given by Westley's correction): placed formations, decided by survivors
 
-Origin: Westley, 2026-10-07, on the lab's stalemates: "why can't we position the units ourselves instead of making them walk ... hypothetically we're placing units in specific patterns to detect strategic depth, not letting them just do their thing. A skilled player ... will micro them into specific formations." Not built until he says yes; the tests for it are red on purpose (`tests/skilllab/test_decided_by_survivors.py`).
+Origin: Westley, 2026-10-07, on the lab's stalemates: "why can't we position the units ourselves instead of making them walk ... hypothetically we're placing units in specific patterns to detect strategic depth, not letting them just do their thing. A skilled player ... will micro them into specific formations." His correction the same day: placement replaces the walking, not the start-distance feature. The tests for it are red on purpose (`tests/skilllab/test_decided_by_survivors.py`).
 
-**Rule 1, placed.** Every scene starts at contact distance with both formations already placed relative to the layout: the two first anchors sit `plays_space.START_GAP` (700 wu, the plays' own contact distance) apart with the layout's choke midpoint between them (the middle of the gap between the wall blocks; with no wall, the layout's centre). The layout has five features; start distance `d` is not one of them. Nobody walks across the map to meet.
+**Rule 1, placed.** Both formations are placed already in shape at the layout's `start_distance` (1,400 or 2,800 wu; the six-feature grid of 648 stays), with the layout's choke midpoint between them (the middle of the gap between the wall blocks; with no wall, the layout's centre). `scenes.placed_scene(layout, play, start_distance)` places the two first anchors `start_distance` apart. Nothing walks to a formation, and the approach cannot time out because (Rule 2) nothing ends the fight before first damage except the cap or a wipe.
 
 **Rule 2, decided by survivors.** Setup gains `decided_by_survivors` (default False). When set:
 - Before first damage the only ends are the cap and a wipe.
@@ -150,17 +150,17 @@ Origin: Westley, 2026-10-07, on the lab's stalemates: "why can't we position the
 
 | Old | Where | Replaced by |
 |---|---|---|
-| `start_distance` feature (1,400 / 2,800 wu) | section 1's feature table and `depth.VALUES` (the brief says section 2; the feature is in section 1) | placed formations at contact distance; the feature is dropped |
+| Walking to contact (formations marching to meet at `start_distance`) | `asym.py:131`, `plays.py:49` scenes | formations placed in shape at `start_distance` apart; the `start_distance` feature stays |
 | `mopup` (re-order at the seen enemy) and its fallback `enemy_anchor` (`mopup.py:18`, `fight.py:233-252`) | the stalemate-window row of "What the audit changed" | nothing: nobody re-orders; sight ends the fight, not a march |
 | `quiet_from_first_damage` and the 400-tick no-hp-change stalemate window (`fight.py:263,271-277`) | same row | the blind count above; `stalemate_ticks` is not read |
 | `Setup.start_distance` / `Setup.objective` and `scenes.objective_scene` (P2) | contract.py, scenes.py | left in place for now; removal is a later cleanup, not part of this piece |
 
 **New outcome label `decided`** joins `side0`, `side1`, `draw`, `stalemate`, `cap`; with the flag set `stalemate` never occurs, and `cap` remains for fights where sight never lapses.
 
-**Cost change.** Five features: 4 x 3 x 3 x 3 x 3 = 324 layouts in the grid (was 648); the search still samples 200 with the seeded Latin-hypercube draw, so each value of each feature appears at least 200 / 4 or 200 / 3 times (even within one). Scans are unchanged at 11 per layout (7 skilled, 1 shared naive, 3 counters), so 200 x 11 x 102 = 224k fights stay the upper bound; fights should get shorter (no approach walk, no 400-tick quiet wait), not longer.
+**Cost change.** None to the grid: six features, 4 x 3 x 3 x 3 x 3 x 2 = 648 layouts; the search still samples 200 with the seeded Latin-hypercube draw. Scans are unchanged at 11 per layout (7 skilled, 1 shared naive, 3 counters), so 200 x 11 x 102 = 224k fights stay the upper bound; fights should get shorter (no approach walk, no 400-tick quiet wait), not longer.
 
 **Two numbers for Westley** (both are draft; changing either later is a threshold change, so they are his):
 1. 400 ticks of no sight before the fight is decided (the old stalemate window's number, reused).
 2. 5% as the draw band on remaining hp.
 
-Build impact, for the builder's piece card: `contract.py` (`Setup.decided_by_survivors`, `FightResult.winner`), `fight.py` (the blind count and the winner), `scan.py` (`cell_result`), `scenes.py` (`placed_scene(layout, play)`), `depth.py` (`VALUES`, `_features`, `run_layout` drop `start_distance`). Existing tests that assert six features (`tests/skilllab/test_depth.py`: `KEYS`, `VALUES`, the `start_distance` rows) are defects against Rev 3 and are reclassed `test-defect` with a ledger row when it lands, not edited by the builder.
+Build impact, for the builder's piece card: `contract.py` (`Setup.decided_by_survivors`, `FightResult.winner`), `fight.py` (the blind count and the winner), `scan.py` (`cell_result`), `scenes.py` (`placed_scene(layout, play, start_distance)`); `depth.py` keeps its six features, so the existing depth tests stand.
