@@ -110,6 +110,7 @@ var _drag_start := Vector2(-1.0, -1.0)
 
 var _error_panel: Control
 var _ending := false
+var _ground_layer: Node2D
 
 
 func _ready() -> void:
@@ -134,10 +135,26 @@ func _load_live() -> void:
 		if _error_panel != null:
 			_error_panel.hide_error()
 		load_frame(bridge.tactical_frame())
+		set_terrain(bridge.terrain() if bridge.has_method("terrain") else {})
 		return
 	var reason: String = bridge.last_error()
 	push_error("tactical_view: live tactical frame failed: %s" % reason)
 	_show_error(reason if reason != "" else "tactical load failed")
+
+
+func set_terrain(t: Dictionary) -> void:
+	if t.is_empty():
+		if _ground_layer != null:
+			_ground_layer.queue_free()
+			remove_child(_ground_layer)
+			_ground_layer = null
+		return
+	if _ground_layer == null:
+		_ground_layer = load("res://scenes/tactical_c/terrain_layer.gd").new()
+		add_child(_ground_layer)
+		move_child(_ground_layer, 0)
+	_ground_layer.set_terrain(t)
+	_ground_layer.set_view(_world_scale, _camera)
 
 
 func _show_error(reason: String) -> void:
@@ -274,8 +291,16 @@ func qa_state() -> Dictionary:
 		"last_command": _last_command.duplicate(),
 		"commands_sent_last_order": _commands_sent_last_order,
 		"units_in_last_command": _units_in_last_command,
+		"ground_layer": _ground_layer_state(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
+
+
+func _ground_layer_state() -> Dictionary:
+	if _ground_layer == null:
+		return {"present": false}
+	var tex: Texture2D = _ground_layer.ground_texture()
+	return {"present": true, "cells_w": tex.get_width(), "cells_h": tex.get_height(), "ticks": _ground_layer.slope_ticks().size()}
 
 
 func qa_plant(id: String) -> bool:
@@ -637,6 +662,8 @@ func _update_display_px() -> void:
 func _redraw() -> void:
 	if not is_inside_tree():
 		return
+	if _ground_layer != null:
+		_ground_layer.set_view(_world_scale, _camera)
 	# Build a faction lookup for color selection.
 	var faction_of: Dictionary = {}
 	for u in _frame.get("units", []):
