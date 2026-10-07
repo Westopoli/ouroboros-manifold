@@ -133,3 +133,66 @@ Check by reading or running, not from memory: the objective scene works with the
 - Q-LS-01: the depth score rule and `G` (Westley).
 - Q-LS-02: whether the enemy mix is fixed per layout or swept too (a 3 × 3 grid triples the cost).
 - Q-LS-03: whether the "likely places" ping policy joins the search once chokes exist (the ping search found that "ahead" is a weak naive baseline).
+
+## Rev 3 (2026-10-07, go given by Westley's correction): placed formations, decided by survivors
+
+Origin: Westley, 2026-10-07, on the lab's stalemates: "why can't we position the units ourselves instead of making them walk ... hypothetically we're placing units in specific patterns to detect strategic depth, not letting them just do their thing. A skilled player ... will micro them into specific formations." His correction the same day: placement replaces the walking, not the start-distance feature. The tests for it are red on purpose (`tests/skilllab/test_decided_by_survivors.py`).
+
+**Rule 1, placed.** Both formations are placed already in shape at the layout's `start_distance` (1,400 or 2,800 wu; the six-feature grid of 648 stays), with the layout's choke midpoint between them (the middle of the gap between the wall blocks; with no wall, the layout's centre). `scenes.placed_scene(layout, play, start_distance)` places the two first anchors `start_distance` apart. Nothing walks to a formation, and the approach cannot time out because (Rule 2) nothing ends the fight before first damage except the cap or a wipe.
+
+**Rule 2, decided by survivors.** Setup gains `decided_by_survivors` (default False). When set:
+- Before first damage the only ends are the cap and a wipe.
+- After first damage, once no living unit can see a living enemy, a blind count starts at that first blind tick; any tick on which some unit sees an enemy resets it. At 400 blind ticks (tick = first blind tick + 400) the fight ends with outcome `decided`.
+- `FightResult.winner` (new; None for every other outcome) is read from the remaining hp sums: `side0` or `side1` for the larger, `draw` when they differ by at most 5% of the larger. A genuine standoff, where nobody sees or hits anybody, therefore scores as a draw, not as "undecided".
+- Scoring: `scan.cell_result` treats `decided` like a wipe, won only when side 0 is the winner in every fight and the mean margin clears the bar; a `draw` winner is not a win.
+
+**What it replaces** (with the flag set; the old paths stay for the ground lab and the existing plays, byte-identical):
+
+| Old | Where | Replaced by |
+|---|---|---|
+| Walking to contact (formations marching to meet at `start_distance`) | `asym.py:131`, `plays.py:49` scenes | formations placed in shape at `start_distance` apart; the `start_distance` feature stays |
+| `mopup` (re-order at the seen enemy) and its fallback `enemy_anchor` (`mopup.py:18`, `fight.py:233-252`) | the stalemate-window row of "What the audit changed" | nothing: nobody re-orders; sight ends the fight, not a march |
+| `quiet_from_first_damage` and the 400-tick no-hp-change stalemate window (`fight.py:263,271-277`) | same row | the blind count above; `stalemate_ticks` is not read |
+| `Setup.start_distance` / `Setup.objective` and `scenes.objective_scene` (P2) | contract.py, scenes.py | left in place for now; removal is a later cleanup, not part of this piece |
+
+**New outcome label `decided`** joins `side0`, `side1`, `draw`, `stalemate`, `cap`; with the flag set `stalemate` never occurs, and `cap` remains for fights where sight never lapses.
+
+**Cost change.** None to the grid: six features, 4 x 3 x 3 x 3 x 3 x 2 = 648 layouts; the search still samples 200 with the seeded Latin-hypercube draw. Scans are unchanged at 11 per layout (7 skilled, 1 shared naive, 3 counters), so 200 x 11 x 102 = 224k fights stay the upper bound; fights should get shorter (no approach walk, no 400-tick quiet wait), not longer.
+
+**Two numbers for Westley** (both are draft; changing either later is a threshold change, so they are his):
+1. 400 ticks of no sight before the fight is decided (the old stalemate window's number, reused).
+2. 5% as the draw band on remaining hp.
+
+Build impact, for the builder's piece card: `contract.py` (`Setup.decided_by_survivors`, `FightResult.winner`), `fight.py` (the blind count and the winner), `scan.py` (`cell_result`), `scenes.py` (`placed_scene(layout, play, start_distance)`); `depth.py` keeps its six features, so the existing depth tests stand.
+
+
+## Rev 4 (2026-10-07, Westley "a, that sounds good, that accounts for the whole situation"): feature-relative placement, roles, a hold condition
+
+Supersedes Rev 3's Rule 1 (translated formations) and completes Rule 2. The placement is the skill: each play says where its formation stands relative to the layout's features, which side defends and which attacks, and how a denial play wins.
+
+**Rule 1, placement by feature.** Every play declares anchors in layout terms, resolved by `scenes.placed_scene(layout, play, start_distance)` against the layout's `Features` (choke cells, lane mouths, cover discs, the blocked-layer top): the defender's formation is placed already in shape at its anchor; the attacker (the other side) is placed in its own shape `start_distance` from the choke on its side and is the only side that approaches (attack-move toward the defender's anchor); the defender holds (guard) unless its timeline says otherwise. Nothing walks to a formation.
+
+| Play | Role | Defender anchor (in shape) | Attacker |
+|---|---|---|---|
+| s1_hold_choke | defender | at the choke mouth on the defender's side, facing the choke | blob from `start_distance` |
+| s1_outrange | defender | one weapon reach beyond the choke exit, facing it | blob |
+| s2_concave | defender | concave around the choke exit | blob |
+| s2_spread_line | defender | a line across the choke exit at one reach | blob |
+| s2_screen | defender | screen at the exit, main body behind | blob |
+| s3_types_by_reach | defender | long-reach types behind the nearest cover to the exit, short-reach in front | blob |
+| s4_bait | defender | bait group at the lane mouth, ambush behind cover beside it; timeline unchanged | blob (chases the bait) |
+| s5_vulnerable_away | defender | vulnerable types on the far side of the choke from the attacker | blob |
+| s2_mass_one_end (counter) | attacker | the skilled line as above | mass at one end of the line |
+| s4_do_not_chase (counter) | attacker | the bait play as above | holds at `start_distance`, never chases |
+| s1_outrange (counter use) | attacker | the hold-choke play | stands off at reach |
+| naive | attacker | the defender is the naive blob at the choke mouth | blob from `start_distance` |
+
+Where a layout has no choke (choke width none), "the choke" is the midpoint of the corridor; where it has no lane, the bait mouth is the choke mouth; where it has no cover, "behind cover" is "behind the formation". Every anchor cell must be walkable on the play's layer (the mask test); if a formation does not fit, the scene shifts it along the corridor axis until it does and records the shift in the row.
+
+**Rule 2, outcomes.** As Rev 3 (decided by survivors after 400 blind ticks following first damage; draw within 5%), plus the hold condition: after `hold_ticks` from first damage, if at least half the defender's living units stand within 300 wu of the defender's anchor and no living attacker does, the fight ends `held` and the defender wins. `hold_ticks` = 1,200 (60 s; draft, Westley's number). Before first damage: cap or wipe only. Outcome labels: `side0`, `side1`, `draw`, `decided`, `held`, `cap`.
+
+**Naive baseline (restored from README §11, Westley 2026-10-02: "a blob if they're mediocre players, or a spread out line if they're skilled players"):** run 1 scans both naive baselines, the blob and the spread line, placed like a defender at the choke mouth; gain is reported against each (12 scans per layout, not 11).
+
+**What `start_distance` measures now:** the time the attacker needs to reach a placed defence; the feature stays (six features, 648 grid, 200 sampled).
+
+**Build impact:** `plays_space.py` gains an `anchors` declaration per play (role, defender anchor kind, attacker kind) used only by `placed_scene`; `scenes.placed_scene` resolves anchors against `Features` and the map; `fight.py` the `held` end; `scan.cell_result` treats `held` like a wipe for the defender; `depth.py` unchanged apart from the labels. Tests: the anchor table above (one case per play per layout kind: with and without choke, lane, cover), the shift rule, `held`, the existing-scenes hash.
