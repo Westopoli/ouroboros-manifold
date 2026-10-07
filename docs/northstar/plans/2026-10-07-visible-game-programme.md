@@ -8,7 +8,7 @@
 | 2. Audit loop (Opus 5.5 issues with evidence; a Sonnet parallelism audit beside it; three rounds) | done: round 1 → rev 2; round 2 → rev 3; round 3 (10 text items) → rev 4, the launch text. Awaiting Westley's go line and routed answers | 2026-10-08 |
 | 3. Execute (lanes A to F, guards first, story plays, drift checks) | not started | |
 
-Lane state (updated at each landing): A battle screen: not started · B galaxy: look approved by Westley 2026-10-07 ("galaxy view looks good, approved"), lane unblocked · C ground: stage 3 built on `push/terrain3-land-2`, 3D not started · D space landscape: not started · E settlement and economy: not started · F Steam phase B: phase A landing on `push/land-1007a`, B not started.
+Lane state (updated at each landing): A battle screen: not started · B galaxy: look approved by Westley 2026-10-07 ("galaxy view looks good, approved"), lane unblocked · C ground: stage 3 built on `push/terrain3-land-2`, 3D not started · D space landscape: not started · E settlement and economy: not started · F Steam phase B: phase A landed on main 2026-10-08 (e63483f6: session catch-up, Steam transport, match pump, export tooling, portability) with the router fix T12, the bug-report piece T16 and the gate harness fix; B not started.
 
 ---
 
