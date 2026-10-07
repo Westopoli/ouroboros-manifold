@@ -5,7 +5,7 @@
 | Stage | State | Date |
 |---|---|---|
 | 1. Pre-flight (ten read-only scouts, the spec, the script) | done: reports in `preflight_2026-10-07/`, spec `2026-10-07-visible-game-spec.md` rev 1, rulebook | 2026-10-07 |
-| 2. Audit loop (Opus 5.5 issues with evidence; a Sonnet parallelism audit beside it; up to three rounds) | in flight, round 1 | 2026-10-07 |
+| 2. Audit loop (Opus 5.5 issues with evidence; a Sonnet parallelism audit beside it; up to three rounds) | round 1 folded into spec rev 2 (15 Opus issues, all verified; parallelism cuts: 37 h → ~18 h); round 2 in flight | 2026-10-07 |
 | 3. Execute (lanes A to F, guards first, story plays, drift checks) | not started | |
 
 Lane state (updated at each landing): A battle screen: not started · B galaxy: look approved by Westley 2026-10-07 ("galaxy view looks good, approved"), lane unblocked · C ground: stage 3 built on `push/terrain3-land-2`, 3D not started · D space landscape: not started · E settlement and economy: not started · F Steam phase B: phase A landing on `push/land-1007b`, B not started.
@@ -79,7 +79,7 @@ Output: `docs/northstar/plans/2026-10-07-visible-game-spec.md` (lanes, contracts
 - A test writer or builder stops on "existing test looks wrong": an in-script ruling agent (Sonnet) applies the rulebook; a test that pins a line the spec explicitly replaces (it must quote the spec line) is ruled a test defect with a ledger row and updated; anything else stops the lane and is listed for the Architect.
 - "File outside my list": the script re-checks the lane's allowed file set from the pre-flight owner map; if the file is in it, the builder continues; else stop.
 - Footprint REJECT on a new, unowned file: the clerk adds the owner row (new files only) and re-runs the gate once.
-- A stage red on one test that passes alone twice: re-run once (flake rule); a second red is real.
+- A stage red on one test id: re-run that id up to twice; real only when it reds on a full-stage re-run (flake rule).
 - Main moved: the clerk merges main before every gate (the merge-base harness fix is landing).
 - A lane fails its check twice: dropped and listed; dependents skipped, not attempted.
 - Budget: per-lane and whole-run token ceilings read from the journals; kill rule writes "finished / not finished" and stops.
