@@ -64,6 +64,12 @@ Updated 2026-10-06 evening. Branches only; main gets a piece only through the me
 | Lane | Branch | State | Next |
 |---|---|---|---|
 | **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | IN FLIGHT: stage 1 pre-flight (2026-10-07) | each lane's gate plus the `look` stage; stories `Seen` by Westley | marked DONE in this row and in the plan header when the last lane lands |
+| Visible game lane A: battle screen (`plans/2026-10-07-visible-game-programme.md`) | after K0 and K-a | stories S-001 group acted out | HUD, fog, selection, camera; owner: Architect chat |
+| Visible game lane B: galaxy (look approved 2026-10-07) | unblocked, first wave | S-106 to S-108 | bubble field from `push/galaxy-field` |
+| Visible game lane C: ground 3D | after lane A's view structure | S-236, S-001, S-004, S-207, S-132 | camera, picking, mesh |
+| Visible game lane D: space landscape | HELD on Westley's routed answers | E-17 stories, S-007 | space kit |
+| Visible game lane E: settlement and economy | after K-e | S-230 to S-235 | E1 first; E2 waits on Westley |
+| Visible game lane F: Steam phase B | B after lane A | E-19 stories | frame flag, lobby, depot script |
 | Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | landed on main 008de465 (2026-10-07) after three sim defects found by the lab's ground scene were fixed with tests | gate clean | done |
 | Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md` rev 3) | landed on main 0304d821 (2026-10-08) | gate clean, ground-era desktop case green | lane C of the visible game programme adds the 3D ground |
 | Steam P2P beta (`plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6) | phase A landed on main e63483f6 (2026-10-08): session catch-up, Steam transport, match pump, export tooling, portability; phase B is lane F of the visible game programme | gate clean | lane F: pipe frame flag, bridge wrappers, lobby, tactical hookup, pipe per OS, depot script |
