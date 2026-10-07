@@ -35,9 +35,12 @@ var _conn: StreamPeerTCP = null
 var _conn_buffer: String = ""
 
 var _script_actions: Array = []
+var _pointer := Vector2.ZERO
+var _pointer_set := false
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(false)
 	var args := OS.get_cmdline_user_args()
 	var port_str := _arg_value(args, "--qa-port")
@@ -77,11 +80,35 @@ func state() -> Dictionary:
 func tree() -> Dictionary:
 	var t := get_tree()
 	if t == null or t.current_scene == null:
-		return {"controls": [], "node3ds": []}
+		return {"controls": [], "node3ds": [], "hover": ""}
 	var controls: Array = []
 	var node3ds: Array = []
 	_collect_tree(t.current_scene, controls, node3ds)
-	return {"controls": controls, "node3ds": node3ds}
+	return {"controls": controls, "node3ds": node3ds, "hover": _hover_path(t.current_scene)}
+
+
+func _hover_path(scene: Node) -> String:
+	var vp := scene.get_viewport()
+	var hovered := vp.gui_get_hovered_control()
+	if hovered != null:
+		return String(hovered.get_path())
+	# Headless viewports do not track the hovered control; fall back to the topmost visible one under the pointer.
+	var pos := _pointer if _pointer_set else vp.get_mouse_position()
+	var best: Control = null
+	var stack: Array = [scene]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for c in n.get_children():
+			stack.push_back(c)
+		if n is Control and n != scene and n.is_visible_in_tree() and n.mouse_filter != Control.MOUSE_FILTER_IGNORE \
+				and n.get_global_rect().has_point(pos):
+			if best == null or _later(n, best):
+				best = n
+	return String(best.get_path()) if best != null else ""
+
+
+func _later(a: Node, b: Node) -> bool:
+	return a.is_greater_than(b) or b.is_ancestor_of(a)
 
 
 func _start_server(port: int) -> void:
@@ -202,7 +229,10 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			var name: String = String(args[0]) if args.size() > 0 else "screenshot"
 			if _driver == null:
 				return {"ok": false, "error": "screenshot: only available in --qa-port mode"}
-			await _driver.call("_do_screenshot", name)
+			if args.size() > 1 and String(args[1]) != "":
+				await _driver.call("_do_screenshot", name, String(args[1]))
+			else:
+				await _driver.call("_do_screenshot", name)
 			return {"ok": true, "result": name}
 		"input":
 			return await _dispatch_input(args)
@@ -221,23 +251,35 @@ func _dispatch_input(args: Array) -> Dictionary:
 	var rest: Array = args.slice(1)
 	match sub:
 		"move":
+			_track_pointer(float(rest[0]), float(rest[1]))
 			await _driver.call("_do_move", float(rest[0]), float(rest[1]))
 		"click":
+			_track_pointer(float(rest[0]), float(rest[1]))
 			var button: int = int(rest[2]) if rest.size() > 2 else MOUSE_BUTTON_LEFT
 			await _driver.call("_do_click", float(rest[0]), float(rest[1]), button)
 		"click_node":
 			await _driver.call("_do_click_node", String(rest[0]))
 		"drag":
+			_track_pointer(float(rest[2]), float(rest[3]))
 			var steps: int = int(rest[4]) if rest.size() > 4 else 8
 			await _driver.call("_do_drag", float(rest[0]), float(rest[1]), float(rest[2]), float(rest[3]), steps)
 		"wheel":
 			await _driver.call("_do_wheel", int(rest[0]))
 		"key":
-			await _driver.call("_do_key", String(rest[0]))
+			if _has_mods(rest):
+				await _key_with_mods(String(rest[0]), rest[1], [true, false])
+			else:
+				await _driver.call("_do_key", String(rest[0]))
 		"key_down":
-			await _driver.call("_do_key_hold", String(rest[0]), true)
+			if _has_mods(rest):
+				await _key_with_mods(String(rest[0]), rest[1], [true])
+			else:
+				await _driver.call("_do_key_hold", String(rest[0]), true)
 		"key_up":
-			await _driver.call("_do_key_hold", String(rest[0]), false)
+			if _has_mods(rest):
+				await _key_with_mods(String(rest[0]), rest[1], [false])
+			else:
+				await _driver.call("_do_key_hold", String(rest[0]), false)
 		"wait_frames":
 			var t := get_tree()
 			if t != null:
@@ -246,6 +288,35 @@ func _dispatch_input(args: Array) -> Dictionary:
 		_:
 			return {"ok": false, "error": "input: unknown sub-verb %s" % sub}
 	return {"ok": true, "result": sub}
+
+
+func _track_pointer(x: float, y: float) -> void:
+	_pointer = Vector2(x, y)
+	_pointer_set = true
+
+
+func _has_mods(rest: Array) -> bool:
+	return rest.size() > 1 and typeof(rest[1]) == TYPE_ARRAY and not rest[1].is_empty()
+
+
+func _key_with_mods(key_name: String, mods: Array, phases: Array) -> void:
+	var keycode := OS.find_keycode_from_string(key_name)
+	if keycode == KEY_NONE:
+		return
+	for pressed in phases:
+		var e := InputEventKey.new()
+		e.keycode = keycode
+		e.physical_keycode = keycode
+		e.unicode = keycode
+		e.pressed = pressed
+		e.ctrl_pressed = mods.has("ctrl")
+		e.shift_pressed = mods.has("shift")
+		e.alt_pressed = mods.has("alt")
+		e.meta_pressed = mods.has("meta")
+		Input.parse_input_event(e)
+		var t := get_tree()
+		if t != null:
+			await t.process_frame
 
 
 func _do_seed(n: int) -> Dictionary:

@@ -142,11 +142,12 @@ Rules
 - R-087-01  Given a unit taking damage from an attacker it cannot see or cannot reach, When the loop runs, Then it moves 200 wu directly away from the damage direction and stops; once the attacker is visible and in range it stands and fights.
 - R-087-02  Given a unit with an active player order, When the loop runs, Then the order wins over auto-engagement; a plain move never acquires or returns fire.
 - R-087-03  Given an idle or attack-moving unit with an enemy within attack range on its layer, When targets are evaluated, Then it attacks the nearest such enemy; an engaged target still alive and in range is kept.
-- R-087-04  Given an attack-moving unit with no target within its attack range, When evaluated, Then it keeps marching on its slot and route (R-095-02, R-097-03), steering around units in its way, and does not walk toward an enemy it merely sees in sensor range; the formation holds until shooting, not until sight (Westley, 2026-10-03, A199; marked for review in playtesting). It halts and fires when an enemy is within its attack range and it can shoot it (a target behind cover, a wall or a blocked cell does not stop the march: it keeps walking its route and fires when the line clears), and pursues an acquired target that leaves that range under the leash (R-087-05).
+- R-087-04  Given an attack-moving unit with no target within its attack range, When evaluated, Then it keeps marching on its slot and route (R-095-02, R-097-03), steering around units in its way, and does not walk toward an enemy it merely sees in sensor range; the formation holds until shooting, not until sight (Westley, 2026-10-03, A199; marked for review in playtesting). It halts and fires when an enemy is within its attack range and it can shoot it (a target behind cover, a wall or a blocked cell does not stop the march: it keeps walking its route and fires when the line clears, or seeks a firing spot under R-087-09), and pursues an acquired target that leaves that range under the leash (R-087-05).
 - R-087-05  Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the unit itself pursues more than 200 wu from the anchor it drops the target and resumes its attack-move (R-096-03). The leash measures the pursuer's own distance from its anchor, never the target's, so a unit holding and firing from its anchor keeps its target at any weapon range (A188, 2026-10-03).
 - R-087-06  Given an idle or attack-moving unit with no target taking damage, When hit, Then it targets the attacker (return fire); if the attacker is out of range it attack-moves to the attacker, dropping its earlier destination; a plain-moving unit and an already-engaged unit ignore incoming damage for targeting.
 - R-087-07  Given a supply or evacuation unit, When the loop runs, Then it never attacks; it flinches and otherwise holds.
 - R-087-08  Given target acquisition, When it runs, Then each unit re-acquires on every 4th tick (cohort stagger) and validates its current target every tick.
+- R-087-09  Given an idle or attack-moving unit with a target within its attack range whose line of fire is blocked by units, cover or ground, When evaluated, Then it steers around the blockers by the probe of blocked movement (R-097-03) until it reaches a spot with a clear line, and if it finds none within 1 s (20 ticks) it drops the target and acquires another (Westley, 2026-10-07: blocked fire is handled like blocked movement; "a unit gives up to pick another target if it can't find a firing spot within 1 second"). An obstacle is a detour, never a full stop (E-17 R-190-07).
 
 Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
@@ -212,14 +213,14 @@ As a commander, I want walls, gates, towers and production buildings to be thing
 Design decided 2026-10-02, not scheduled for building. Walls, gates and towers are written for land maps (E-22 S-174). That they block is E-13 S-097, and that they are seen is E-12 S-205.
 
 Rules
-- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points [Q-204-01: which layers a structure occupies and blocks; Q-174-02: its statistics].
+- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points; it occupies and blocks its own layer and some layers above it, up to a height, as cover does (E-01 R-007-01; Westley, 2026-10-07: "#4: B") [Q-174-02: its statistics].
 - R-204-02  Given an enemy that can see a structure and has it within reach, When it attacks the structure, Then the structure takes damage, and at 0 HP it falls: it stops blocking (E-13 S-097) and stops being seen (E-12 S-205) [Q-174-02: the damage a structure takes from each category].
-- R-204-03  Given an idle or attack-moving unit with an enemy structure within its reach and visible to its side, When targets are evaluated, Then [Q-204-02: whether an idle unit targets structures, and whether before or after units].
+- R-204-03  Given an idle or attack-moving unit with an enemy structure within its reach and visible to its side, When targets are evaluated, Then it attacks an enemy unit in reach first, and an enemy structure only when no enemy unit is in reach (Westley, 2026-10-07: "#5: B").
 - R-204-04  Given a tower with an enemy within its range that its side sees, When its turn comes, Then [Q-174-02: whether a tower fires, and its damage, range and interval].
 
 Inputs: structure records (E-22 S-168, S-170, S-174); unit states; visibility (E-12).
 Outputs: structure hit points and destroyed events in the tick delta.
-Open flags: Q-204-01, Q-204-02, Q-174-02.
+Open flags: Q-174-02.
 
 ## Inputs
 
@@ -272,7 +273,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-082-03, Q-082-04, Q-082-05, Q-083-03, Q-087-01, Q-008-05, Q-201-01, Q-204-01, Q-204-02, and from E-22 Q-159-08, Q-159-10, Q-167-01, Q-167-03, Q-169-01, Q-174-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-082-03, Q-082-04, Q-082-05, Q-083-03, Q-087-01, Q-008-05, Q-201-01, and from E-22 Q-159-08, Q-159-10, Q-167-01, Q-167-03, Q-169-01, Q-174-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
