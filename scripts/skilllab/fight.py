@@ -163,7 +163,7 @@ def fight(setup, seed=0, swap=False, engine=None):
             for c in t.covers:
                 engine.add_cover(w, c.x, c.y, c.radius, c.height)
         types = _register_types(engine, w, setup)
-        mop_sides = tuple(s for s in (0, 1) if setup.mopup and all(g.order == "attack_move" for g in setup.groups if g.side == s))
+        mop_sides = (0, 1) if setup.mopup else ()
         setup = approach_setup(setup, {name: reach for name, (tid, reach) in types.items()})
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
@@ -233,8 +233,18 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
     mopup = [0] if setup.mopup else None
     before = [{u: engine.unit_pos(w, u) for u in all_ids}] if setup.mopup else None   # positions one interval ago
 
+    def eligible(s):
+        order = {gi: g.order for gi, g in enumerate(setup.groups) if g.side == s}
+        for i, _tick in timeline.fired:
+            st = setup.timeline[i]
+            if st.group in order:
+                order[st.group] = st.order
+        return all(o == "attack_move" for o in order.values())
+
     def mop_up():
         for s in mop_sides:
+            if not eligible(s):
+                continue
             goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set, before[0])
             if goal is not None:
                 for ids, _offset in _chunks(engine, w, [u for u in side_ids[s] if u in alive_set]):

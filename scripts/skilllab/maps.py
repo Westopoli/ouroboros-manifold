@@ -125,6 +125,8 @@ def layout_map(features, seed, canvas=(4000.0, 4000.0), frame=DEFAULT_FRAME):
         lx0, lx1 = frame.spawn0[0] - LAYOUT_LANE_PAST, frame.spawn1[0] + LAYOUT_LANE_PAST
         edges = [(-half - t, -half), (half, half + t)] if n == 1 else [
             (-t / 2, t / 2), (-t / 2 - 2 * half - t, -t / 2 - 2 * half), (t / 2 + 2 * half, t / 2 + 2 * half + t)]
+        if n == 2 and f.choke_width_bodies:   # axis and choke gap sit inside the first channel
+            edges = [(-half - t, -half), (half, half + t), (3 * half + t, 3 * half + 2 * t)]
         blocks += [Block(lx0, my + a, lx1, my + b, lo, hi) for a, b in sorted(edges)]
     covers = ()
     if f.cover_density_corridor:

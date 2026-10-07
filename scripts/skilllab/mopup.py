@@ -2,7 +2,7 @@
 A side re-orders when no unit of it has an enemy in attack range (same layer, within range, and able to shoot it: a wall
 between the pair does not count) and it sees at least one enemy. A unit that still has a
 destination blocks the re-order only if it moved at least MOVED_WU in the last WINDOW_TICKS. The order sends every unit of
-the side at the position of the nearest seen enemy to the side's centroid, with no chunk offsets (chunked only when the
+the side at the position of the nearest seen enemy to the side's centroid (the nearest living enemy when none is seen), with no chunk offsets (chunked only when the
 side does not fit inside the scatter limit of E-13 R-095-03, each chunk aimed at that same point)."""
 
 MOVED_WU = 30.0        # a unit with a destination counts as still moving if it covered this much ground
@@ -35,7 +35,5 @@ def mopup_goal(engine, w, mine, theirs, ranges, alive, before=None):
             if layer[e] == layer[u] and dx * dx + dy * dy <= ranges[u] * ranges[u] and engine.can_shoot(w, u, e):
                 return None
     seen = [e for e in theirs if any(engine.can_see(w, u, e) for u in mine)]
-    if not seen:
-        return None
     cx, cy = sum(pos[u][0] for u in mine) / len(mine), sum(pos[u][1] for u in mine) / len(mine)
-    return min((pos[e] for e in seen), key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)
+    return min((pos[e] for e in (seen or theirs)), key=lambda p: (p[0] - cx) ** 2 + (p[1] - cy) ** 2)
