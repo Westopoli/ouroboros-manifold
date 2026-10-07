@@ -535,7 +535,7 @@ status = { state = "attached", attach_sha = "bec7f8d2" }
 id = "C1"
 manager = "M3"
 wave = 1
-owns = []
+owns = ["tests/test_main_menu_items.gd"]  # the test follows the scene (Architect 2026-10-07)
 owns_glob = ["scenes/main_menu/**"]
 acceptance = ["tests/test_boot_scripts_parse.gd", "tests/test_privacy_modal.gd"]
 depends_on = []
@@ -1293,9 +1293,10 @@ size_estimate = "stage 2 of the ground substrate: walkers, slopes, ground vision
 
 [[piece]]
 id = "TERRAIN-3"
+# owns pack_clean/manifest.json: evidence pack for the movement validator (the real pack test_pack_validate_movement reads; Architect 2026-10-07)
 manager = "M0"
 wave = 6
-owns = ["scenes/tactical_c/terrain_layer.gd", "tests/csim/test_E01_T3_contract.py", "tests/test_c_bridge_terrain.gd", "tests/test_tactical_terrain_layer.gd", "autoload/era_config.gd", "tests/test_era_toggle.gd", "tests/qa/desktop/test_ground_era.py", "tests/transport/test_pipe_mission_start_ground.py", "tests/csim/test_E01_T3_mission_ground.py", "tests/specfactory/test_pack_validate_movement.py"]
+owns = ["docs/northstar/proving_ground/evidence/px10/pack_clean/manifest.json", "scenes/tactical_c/terrain_layer.gd", "tests/csim/test_E01_T3_contract.py", "tests/test_c_bridge_terrain.gd", "tests/test_tactical_terrain_layer.gd", "autoload/era_config.gd", "tests/test_era_toggle.gd", "tests/qa/desktop/test_ground_era.py", "tests/transport/test_pipe_mission_start_ground.py", "tests/csim/test_E01_T3_mission_ground.py", "tests/specfactory/test_pack_validate_movement.py"]
 owns_glob = []
 acceptance = ["tests/test_c_bridge_terrain.gd", "tests/test_tactical_terrain_layer.gd"]
 depends_on = ["PP-contract", "TERRAIN-2", "C8", "G-qadesktoptests"]
