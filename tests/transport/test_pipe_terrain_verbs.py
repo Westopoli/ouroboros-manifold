@@ -91,7 +91,7 @@ def test_terrain_then_mission_tactical_step_unchanged():
         assert p.send("terrain_generate", seed=SEED, canvas=CANVAS)["code"] == 0
         p.cmd("snapshot")
         pf = p.read_more().get("player_faction", 0)
-        m = p.send("mission_start", faction=pf)
+        m = p.send("mission_start", faction=pf, era_kind=1)  # TD-T3-terrain-clear: a space mission clears terrain
         assert m["type"] == "mission", m
         t = p.send("mission_begin")
         assert t["type"] == "tactical", t

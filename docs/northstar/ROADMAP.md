@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-06 (twelfth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-07: section 2b added, the order of work after the beta workflow (Westley). Before that, 2026-10-06 (twelfth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -64,9 +64,9 @@ Updated 2026-10-06 evening. Branches only; main gets a piece only through the me
 | Lane | Branch | State | Next |
 |---|---|---|---|
 | **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | IN FLIGHT: stage 1 pre-flight (2026-10-07) | each lane's gate plus the `look` stage; stories `Seen` by Westley | marked DONE in this row and in the plan header when the last lane lands |
-| Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | `push/terrain2-land` | All engine lanes merged; traces identical; 20 cross-lane test reds being arbitrated (`push/t2-arbiter`); the movement-kind table made sparse for custom types (`push/t2-kind-sparse`) | Lab lane re-run, clerk, gate, then Westley's look at walkers on the ported ground |
-| Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md`) | spec draft 1 | Era toggle decided (Q-STAGE3-02 a). Audit next, then launch in parallel with stage 2's landing (disjoint files except the contract) | The first thing playtesters see |
-| Steam P2P beta (`docs/research/topics/steam_p2p_and_beta_submission.md`, branch `docs/steam-research`) | spec draft 1 (`plans/2026-10-06-steam-multiplayer-wiring-spec.md`) | Westley 2026-10-06: private beta by key first, public steps started now (Q-STEAM-01). Rev 2 audited by Sonnet; Westley 2026-10-06: ship on 4.6.3 (Q-NET-01 a), fetch script for GodotSteam (Q-NET-04 a), Fable second audit kept | Fable chat audit (Westley opens it), pre-flight, workflow; real-Steam test by hand on Spacewar 480 |
+| Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | landed on main 008de465 (2026-10-07) after three sim defects found by the lab's ground scene were fixed with tests | gate clean | done |
+| Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md` rev 3) | landed on main 0304d821 (2026-10-08) | gate clean, ground-era desktop case green | lane C of the visible game programme adds the 3D ground |
+| Steam P2P beta (`plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6) | phase A landed on main e63483f6 (2026-10-08): session catch-up, Steam transport, match pump, export tooling, portability; phase B is lane F of the visible game programme | gate clean | lane F: pipe frame flag, bridge wrappers, lobby, tactical hookup, pipe per OS, depot script |
 | Space lab: layout search (`plans/2026-10-06-layout-search-spec.md`) | spec, not approved | Needs the objective scene, detour generator, category shares, depth module (four small pieces) and the throughput briefs B9 to B11 | First run after B9 to B11 land: about 45 min |
 | Unit size as a runtime setting (`plans/2026-10-06-unit-size-runtime-spec.md`) | spec | After stage 2 lands (same file) | Two Doer units |
 | Sonnet chat briefs B1 to B11 (`plans/briefs/2026-10-06-sonnet-parallel-briefs.md`) | running in a parallel chat | mop-up line of sight, tick cap 12,000, method and era-pack drafts, doctrine synthesis, website refresh, flake root cause, worktree cleanup, lab throughput | Each pushes a branch; the planner lands it |
@@ -87,6 +87,14 @@ Target: a private Steam beta with multiplayer and every approved prototype integ
 | 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafting now; app id is Westley's (T17) | one tester plays a mission and files an F12 report | public track (store page, Coming Soon) |
 
 Off the critical path but running in parallel: the lab's layout search (run 1 tonight, run 2 after D1 and the category table), the bug-report piece T16 (built, awaiting the gate), the flake root cause T12, the gate harness fix (merge-base footprint, lab integration stage), the doc drafts (T5, T7, T9), the website refresh (T8).
+
+## 2b. After the beta workflow completes: verification, polish, next features (Westley, 2026-10-07)
+
+Three steps, in this order. Step 1 and step 2 run at the same time; step 3 starts when step 2 is finished. Building new features stops for the length of step 2.
+
+1. **Verify the simulation still follows the stochastic rules written into the bible** (`docs/bible/algorithms.md`). The legacy Python version had a small viewer, built on a Python game library, showing the regions on a 2D plane, how they are exchanged as ticks pass, which events fired, what the simulation chose for each mission and how much time passed each time (`simulation/run_strategic_viewer.py` and `simulation/strategic_viewer.py`, pygame). The goal is to find regressions in the core of the game: mission choice, and the source of the chronicle.
+2. **Pause new features until the existing ones are relatively perfected.** Westley gives feedback on each aspect of the game, a change is made, and he checks it again, repeated. Only when this is finished is the game ready for Steam posting.
+3. **Assess the lay of the land** for prospective and unimplemented features and decide what to build next. Contrast the old ideas in the bible and the roadmap with the user feedback received, and prioritise between them.
 
 ## 3. Blocked on Westley
 
@@ -202,7 +210,7 @@ Work that does not wait on the build lanes. Written 2026-10-06 from Westley's li
 | T7 | Military-strategy research (terrain in doctrine, air over ground, naval and space analogues) | synthesis drafted on `docs/military-doctrine` (B5, 2026-10-06) | nothing | lands after Westley reads it |
 | T8 | Website refresh (`~/Projects/ouroboros-site`, Astro on Fly.io, public; copy pinned at `e10649a1`). Westley 2026-10-06: show the galaxy view, the space and the land landscape engines, and the walking prototype (route finding among layers); add `/method` and `/research` pages, no limit on internal reasoning ("I don't have a blue ocean here I'm just having fun and want to share it with people"); captures at 1920x1080 from the live client on the RTX box; regenerate the pinned copy | Planner chat spec; a Doer captures; a drafter writes; Westley reviews | nothing | New captures and pages; `fly deploy` by hand |
 | T9 | Era pack form for 20+ eras: a one-page "how an era is written" from the hub's skeleton section and E-20 (identity, kind, roster by role, kits, prose pools) | drafted on `docs/era-pack-form` (B4, 2026-10-06) | nothing | lands after Westley reads it |
-| T10 | Cosmetics and art direction: nothing exists past placeholders. Westley 2026-10-06: he cannot decide verbally; he needs example choices (Claude design or a mockup tool) to pick from | Westley, with a design tool; not a planner-chat build | an example set of looks | An art brief; then a cosmetics plan |
+| T10 | Cosmetics and art direction: nothing exists past placeholders. Westley 2026-10-06: he cannot decide verbally; he needs example choices (Claude design or a mockup tool) to pick from. Westley 2026-10-07: the art direction is documented in the bible and some assets exist, so no example pass is needed now | Westley, with a design tool; not a planner-chat build | an example set of looks | An art brief; then a cosmetics plan |
 | T11 | Economy "look" mockup (ROADMAP 4b: needed, none exists): lots and placement, what buildings show, disguise, lanes, the two economy screens | Planner chat spec; Doer; Westley look | T1 | A mockup pass |
 | T12 | Flaky playthrough test `test_s_c8_09`: Westley 2026-10-06, find the root cause of the dropped click ("solve the root problem, not put a bandaid on a system that is effected down the sequence"); no re-click | Engineer: diagnose the input path in the first frames of a fresh scene | nothing | The cause named; a fix in the game or the driver |
 | T13 | Body size: decided 2026-10-06 (Q-LAB-02 a): the engine reads the runtime collision radius; per-type sizes follow with the era rosters; the lab finds where the lines cross as size changes | Planner chat spec; Doer | nothing | A contract piece (one parameter read at every collision site) |

@@ -32,7 +32,7 @@ def _base_manifest(era_id="synth_era", era_display_name="Synth Era"):
         "era_order": 1,
         "units": {
             "vanguard": {
-                "category": "line", "squad_count": 1, "visual_scale": 1.0,
+                "category": "line", "squad_count": 1, "visual_scale": 1.0, "movement": "flying",
                 "tiers": {"1": {"scene": "units/line_unit.tscn"}},
             },
         },

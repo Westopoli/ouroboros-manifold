@@ -162,7 +162,7 @@ Open flags: none. Reference required: `references/E-08/notes.md`, missing.
 ### S-064 — What carries over
 As a player, I want the world to remember everything and my character to start fresh, so that my legacy is in the galaxy and not in a stat sheet.
 
-What a pair carries forward between missions is undecided (E-22 S-182, Q-159-07). R-064-02 and R-064-03 are true today because it is open, and are rewritten if a carry-forward is chosen. A carried deck, ability or economy would also have to enter the save and the determinism trace of R-064-04.
+Nothing carries forward between missions in the beta (E-22 S-182; Westley, 2026-10-07); R-064-02 and R-064-03 stay true, and are rewritten if a post-beta carry-forward is chosen. A carried deck, ability or economy would also have to enter the save and the determinism trace of R-064-04.
 
 Rules
 - R-064-01  Given any chapter transition, When the next chapter starts, Then every region field, ownership, faction, tech level, edge type, event queue, and ledger record persists unchanged except by the sim itself.

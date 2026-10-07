@@ -7256,6 +7256,24 @@ confidence = "likely"
 note = "Terrain stage 2 spec 2026-10-06: 1 when terrain stands in the sight line between two eyes (R-005-10); 0 when none or no terrain. Contract stub returns 0."
 
 [[symbols]]
+name = "om_terrain_nearest_walkable"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "ox", ctype = "double *" }, { name = "oy", ctype = "double *" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 3 spec 2026-10-06: centre of the nearest walkable cell to (x, y), ring search, lowest cell index on a tie; (x, y) itself when it is walkable or no terrain stands; -1 (outputs untouched) when no walkable cell exists or x or y is NaN."
+
+[[symbols]]
+name = "om_terrain_clear"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 3 spec 2026-10-06: frees the terrain state so om_terrain_present is 0; a space mission after a ground one calls it."
+
+[[symbols]]
 name = "om_walk_route"
 module = "walk_route.c"
 restype = "int"

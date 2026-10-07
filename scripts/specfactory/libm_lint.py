@@ -30,6 +30,7 @@ from pathlib import Path
 BANNED = [
     "pow", "exp", "log", "log2", "log10", "sin", "cos", "tan",
     "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp2", "cbrt",
+    "fma", "hypot", "ldexp", "frexp", "rint",
     "rand", "srand", "time", "clock", "qsort", "bsearch",
 ]
 ALLOWED = {"sqrt", "fabs", "floor", "ceil", "round", "trunc", "fmin", "fmax", "fmod"}

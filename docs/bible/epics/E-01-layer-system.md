@@ -108,7 +108,7 @@ Rules
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: Q-005-05, Q-005-06, Q-005-07; Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
+Open flags: Q-005-05, Q-005-06 (parked for the beta); Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
 Which model applies is the era kind (Westley, 2026-10-05, verbatim): "Space eras and Ground eras are different in terms of vision. Ground eras are just like Starcraft 2, high ground can see down, low ground can't see up. Space eras relies on the pinging system because there's no limit on up/down viewing like there is on land." R-005-01 to R-005-08 are the space model: symmetric by layer distance, and very limited ("passive cross-layer sight is very limited, to induce strategic depth, ping reaches past it in every layer/direction"); the factors 0.50 and 0.20 are provisional and not his [Q-005-07]. The ground model is R-005-09 to R-005-11. Q-005-02's condition on asymmetric vision (2026-10-01: "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter") still stands for the space model; the ground model is not asymmetry inside one model but the other kind's model (Westley, 2026-10-05: "Q-005-02 this is still true, it's just that we're not seperating space from ground eras").
 
 Ground model (land eras; every number provisional):
@@ -170,13 +170,13 @@ Rules
 - R-009-01  Given any unit on screen, When the player looks at it, Then a ring under the unit shows one color per layer, and the color changes on the tick the unit's layer changes.
 - R-009-02  Given a unit toggled toward another layer, When the player looks at it, Then the target disc on its spindle (R-009-05) gains an outline and a chevron, a waypoint-like mark of where it is going, distinct from the lit current-layer disc.
 - R-009-05  Given any unit on screen, When drawn, Then a thin rod beside it carries five small discs, one per layer, the unit's own disc lit at about 50 percent, adjacent discs at 10 to 20 percent, discs two away at 5 percent (the Floor Spindle); and its grid tiers are flat discs that tilt to the ground's slope at each layer's height (Terrace Reading). Both are subdued, never loud, and never block the view of the battlefield behind them.
-- R-009-06  Given units hidden from the player by the current perspective (behind terrain or another layer's ground), When the player looks at the scene, Then something tells them they are not seeing the whole picture [Q-009-02: the mechanism, such as a small mark on the occluding units].
+- R-009-06  Given units hidden from the player by the current perspective (behind terrain or another layer's ground), When the player looks at the scene, Then for the beta the vision tube (E-17 S-246) lets the player see them and no occlusion mark is drawn; a small mark on the occluding units is post-beta (Westley, 2026-10-07).
 - R-009-03  Given the layer strip on the HUD, When the player clicks a layer or presses Tab, Then the focused layer changes and the strip highlights the new one.
 - R-009-04  Given the same selection and camera, When a T2 screenshot is taken, Then the ring colors match the sim's per-unit layer field for every unit in view.
 
 Inputs: unit layer, preferred layer; focus click or Tab.
 Outputs: ring color per unit; spindle and terrace discs; target mark; focused layer on the strip.
-Open flags: Q-009-02 (the occlusion indicator).
+Open flags: none.
 Focus is purely visual: other layers dim slightly. The look was chosen through the options pass, `docs/northstar/research/options/layer-system/`; Godot renders of it fill `references/E-01/notes.md`.
 
 ### S-010 — Layers read as height on screen
@@ -335,7 +335,7 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 
 ## Open ambiguity flags
 
-Q-007-01, Q-008-02, Q-008-03, Q-008-05, Q-008-06, Q-008-07, Q-009-02, Q-162-01, Q-163-01, Q-166-02, Q-166-04, Q-189-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-007-01, Q-008-02, Q-008-03, Q-008-05, Q-008-06, Q-008-07, Q-162-01, Q-163-01, Q-166-02, Q-166-04, Q-189-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

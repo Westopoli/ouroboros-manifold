@@ -120,6 +120,14 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
                     f"unit id {unit_id!r} contains the era id {era_id!r}",
                 ))
 
+    if isinstance(units, dict):
+        for unit_id, row in units.items():
+            if not isinstance(row, dict) or row.get("movement") not in ("walking", "flying"):
+                findings.append(Finding(
+                    "FAIL", "BAD_MOVEMENT",
+                    f"units.{unit_id}: movement must be \"walking\" or \"flying\"",
+                ))
+
     for class_name in ("units", "structures", "environment"):
         entries = manifest.get(class_name)
         if not isinstance(entries, dict):

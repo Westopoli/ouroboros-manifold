@@ -180,7 +180,7 @@ fi
 # regression_csim/regression_qa_t1 above compare failing-id sets rather than
 # absolute pass/fail counts.
 REACH_LOG="$SCRATCH_ROOT/reach_lint.log"
-"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --base-ref "$BASE_REF" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
+"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --base-ref "$(git -C "$CANDIDATE" merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
     reject reach_lint "$(tail_oneline "$REACH_LOG" 10)"
 else
@@ -237,6 +237,15 @@ if [[ $? -ne 0 ]]; then
     reject regression_csim "$(cat "$REG_CSIM_LOG")"
 else
     ok regression_csim "$(cat "$REG_CSIM_LOG")"
+fi
+
+REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject regression_lab "$(cat "$REG_LAB_LOG")"
+else
+    ok regression_lab "$(cat "$REG_LAB_LOG")"
 fi
 
 REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"

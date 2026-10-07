@@ -65,7 +65,7 @@ Rules
 
 Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
-Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), Q-167-03 (whether worker types sit in the roster).
+Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), workers sit outside the roster for the beta (Westley, 2026-10-07).
 
 ### S-083 — Stats, trait cards, ability
 As a commander, I want to unlock trait cards and build a force that plays my way, so that units differ in kind, and never in a way that beats positioning.
@@ -185,13 +185,13 @@ Design decided 2026-10-02, not scheduled for building. What workers gather and c
 
 Rules
 - R-202-01  Given a worker, When the decision loop of S-087 runs, Then it never acquires a target and never returns fire, it flinches from damage, and otherwise holds, follows its move order or does its work (R-087-07, E-15 R-129-01).
-- R-202-02  Given a worker that an enemy's side can see within that enemy's reach, When targets are evaluated, Then it is a target as any enemy unit is (R-087-03), and at 0 HP it is dead (Invariants below) [Q-167-03: worker statistics, including hit points and the category it is hit as; whether raids target workers first is Q-159-10].
+- R-202-02  Given a worker that an enemy's side can see within that enemy's reach, When targets are evaluated, Then it is a target as any enemy unit is (R-087-03), and at 0 HP it is dead (Invariants below) (worker statistics, including hit points and the category it is hit as, are placeholders for the beta; workers are outside the roster for the beta, Westley, 2026-10-07).
 - R-202-03  Given a side's units, When the population is counted, Then every worker counts in the one population cap with the soldiers (E-22 S-169, S-167).
 - R-202-04  Given the unit budgets (the scale requirements of this epic, E-12 and E-13), When workers are counted, Then they count as units with the soldiers, and each figure covers both together.
 
 Inputs: worker type profile (era pack); unit states.
 Outputs: worker hit points and position in the tick delta; kills.
-Open flags: Q-167-03 (worker statistics and whether workers are in the roster), Q-159-10 (workers under raid, not yet picked).
+Open flags: none on workers; workers under raid (a later idea, Westley, 2026-10-07).
 
 ### S-203 — What a unit costs
 As an economy player, I want each unit type to cost the three resources by its category, so that what a side builds and what it gathers match.

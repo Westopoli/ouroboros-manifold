@@ -2001,6 +2001,8 @@ uint32_t om_terrain_dump_bands(const om_world *w, uint8_t *out, uint32_t cap);
 uint32_t om_terrain_walk_mask(const om_world *w, int layer, uint8_t *out, uint32_t cap);
 int om_terrain_slope_at(const om_world *w, double x, double y, om_slope *out);
 int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0, int layer1, double x1, double y1);
+int om_terrain_nearest_walkable(const om_world *w, double x, double y, double *ox, double *oy);
+void om_terrain_clear(om_world *w);
 /* ---- end generated: terrain.c ---- */
 
 /* ---- generated from signatures.toml: unit.c ---- */

@@ -32,16 +32,17 @@ Rules
 - R-103-01  Given a mission, When the player pans, zooms, or edge-scrolls, Then the camera moves freely with no forced follow; the classic view has one auto-anchor home the player returns to by key, and the designed views of R-103-05 and R-103-06 are the only camera modes.
 - R-103-02  Given any zoom level, When the viewport is read, Then the mission canvas edges bound the camera; it never leaves the map.
 - R-103-03  Given the launch build, When the camera is read, Then the default is the classic RTS view with an auto-anchor home, the camera keeps its height above the ground under it through elevation changes (the Halo Wars floor), and the multi-perspective camera of R-103-05 and R-103-06 ships from launch; the classic view ships in every playtest round regardless of the designed views' state.
-- R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view [Q-103-04: the keys].
-- R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option [Q-103-04: its default state, and whether the peel's plane focus and the layer strip's focus are one control].
-- R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north [Q-103-04: the key and the center it turns about].
+- R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view; the Angle Rack is entered on a held key plus 1 to 5 (Westley, 2026-10-07).
+- R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option on a toggle, and its plane focus and the layer strip's focus are one control (Westley, 2026-10-07).
+- R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north; the flip is a modifier plus the anchor key and turns about the camera's ground target, and the height floor is shared across views (Westley, 2026-10-07).
 - R-103-08  Given a selection in the tactical view, When the player presses A and then left-clicks a point or a visible enemy, Then the selection attack-moves there; right-click alone is move (Westley 2026-10-01; the rest of the control scheme stays under Q-103-04).
 - R-103-09  Given the player pans by keys or by edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
+- R-103-10  Idea only, not a decision (Q-103-07; Westley, 2026-10-07). Instead of the Angle Rack and Layer Peel above, the player could bind keys to camera angles of their own: each key puts the camera at an angle relative to the current forward direction of a unit, in a view that tracks the unit as it moves; a default mode that does not follow, reached by its own key, is the one the player switches back to; and the player may change as much about each view as we can give: its angle, whether it follows, its zoom distance. Nothing here is specified or scheduled.
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
-Open flags: Q-103-04 (control specifics for the chosen camera: keys, the flip center, height floor per view, peel focus versus strip focus).
+Open flags: Q-103-07 (the player-bound camera, an idea only, not a blocker).
 Chosen through the options pass, `docs/northstar/research/options/camera/`.
 
 ### S-161 — The map view
@@ -72,20 +73,20 @@ Rules
 - R-104-05  Given the map view (S-161) in place of a minimap, When the player pulls the camera back, Then friendly groups are bright, visible enemies dim, terrain reads as ground, objectives are marked, and reinforcement structures are colored by owner; the economy's places and the weather are drawn there too (S-235).
 - R-104-06  Given player-owned reinforcement structures, When the structure panel is read, Then one row per owned structure shows the production timer bar, next unit icon, and structure HP; neutral and enemy structures do not appear.
 - R-104-07  Given control groups 1 through 0, When the tabs are read, Then each bound group shows its unit-type icon and count.
-- R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker [Q-230-02: what the economy player's screen shows here, since that player is not the commander].
-- R-104-09  Given the right sidebar, When read, Then it holds the layer strip and nothing else at launch [Q-231-01: where the solo commander's dial, doctrine switch and unit-mix switches sit, if not here].
+- R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker; the economy player's screen skips this place in the beta (Westley, 2026-10-07) [Q-230-02: parked].
+- R-104-09  Given the right sidebar, When read, Then it holds the layer strip and nothing else at launch; where the solo commander's dial, doctrine switch and unit-mix switches sit is the Architect's choice, with Westley's feedback after the beta (Q-231-01).
 - R-104-10  Given the in-world chrome, When read, Then every unit has a thin HP bar above it and a layer-color ring beneath it, and selected units have a selection ring, and every force set to emit carries the emit mark of S-232; there is no enemy composition readout anywhere [Q-230-03: where the line falls between that and what a player infers from the world, such as heavy gathering of one resource showing which role a side is making more of, E-22 S-171].
 
 Inputs: tick delta; selection; control groups.
 Outputs: HUD panels, T2-checkable.
-Open flags: Q-230-02, Q-230-03, Q-231-01. Reference: IGoP HUD screenshots, pending confirmation.
+Open flags: Q-230-02 (parked for the beta), Q-231-01 (liberty: Architect). Reference: IGoP HUD screenshots, pending confirmation.
 
 ### S-105 — Selection and control groups
 As a commander, I want to click, box-select, and bind groups, and never to have an all-army button, so that positional thinking is the whole game.
 
 Rules
 - R-105-01  Given the player clicks a friendly unit, When released, Then it is the selection; Given a drag box, Then every friendly unit inside it on every layer is the selection.
-- R-105-06  Given a selection that spans layers, When the player presses the hotkey for layer N, Then the selection narrows to its units on layer N; the layer strip's focus is unchanged by this.
+- R-105-06  Given a selection that spans layers, When the player presses the hotkey for layer N, Then the selection narrows to its units on layer N; the hotkey is Alt plus the number N, and plain digits stay with control groups (Westley, 2026-10-07); the layer strip's focus is unchanged by this.
 - R-105-02  Given a selection and Ctrl plus a digit, When pressed, Then the group is bound to that digit and the units leave any other group (exclusive membership); pressing the digit recalls the group; pressing it twice centers the camera on it.
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
@@ -95,7 +96,7 @@ Rules
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
-Open flags: none here. The ping of S-232 also takes a layer number key; the keys are Q-232-01 and Q-103-04.
+Open flags: none here. The ping of S-232 also takes a layer number key; the keys are Q-232-03 and R-103-05.
 The control-group hotkeys stand, with no replacement affordance. Chosen through the options pass, `docs/northstar/research/options/control-groups/`.
 
 ### S-106 — The galaxy between missions
@@ -187,7 +188,7 @@ Open flags: none.
 ### S-230 — The economy seat's screen
 As an economy player in a pair, I want a screen that shows my resources, my workers, what a building would yield before I place it, my production schedule, my technology and my defenses, so that I can hold the whole economy in mind and nothing on screen does the remembering for me.
 
-Design decided 2026-10-02, not scheduled for building (E-19 S-159, E-22). The rules say what must be shown; where it sits on screen was not decided and is Q-230-01.
+Design decided 2026-10-02, not scheduled for building (E-19 S-159, E-22). The rules say what must be shown; where it sits on screen is built from the IGoP HUD screenshots in the references, with Westley's feedback after the first beta build (Westley, 2026-10-07).
 
 Rules
 - R-230-01  Given the economy seat of a pair, When the screen is read, Then the player can see how much of each of the three resources is held (E-22 S-167), the workers and what each is doing, and the population against its one cap (E-22 S-169) [Q-230-01: the layout of the screen].
@@ -199,7 +200,7 @@ Rules
 
 Inputs: economy state from the tick delta; the player's building, queue, schedule and technology commands.
 Outputs: the economy panels, T2-checkable.
-Open flags: Q-230-01 (layout of the economy seat's screen), Q-230-02 (what this player sees in the commander's portrait place), Q-230-03 (the line between "no enemy composition readout" and inference from the world).
+Open flags: Q-230-02 (parked for the beta). The economy player infers the enemy's composition from the world only and nothing is totalled (Westley, 2026-10-07).
 
 ### S-231 — The solo commander's hand
 As a commander playing alone, I want one dial, a doctrine switch, switches for the unit mix, and a way to ask by pointing at the map, so that I steer the economy without running it.
@@ -211,25 +212,25 @@ Rules
 - R-231-02  Given a mission in progress, When the player changes the doctrine, Then the rules follow the new doctrine from then on, at any time in the mission (E-22 S-179).
 - R-231-03  Given the rules that pick the unit mix and the rules that shift production toward what counters the enemy units the player's forces have seen, When the player reads the unit-mix controls, Then there is one switch for each, each can be turned off, and the commander can override the mix the rules pick (E-22 S-180) [Q-231-02: how the override is made].
 - R-231-04  Given the tactical view or the map view (S-161), When the player points at a place and asks for something (expand here, fortify this pass, siege at this gate), Then the request is given and the rules carry it out; the commander never places or queues anything himself. Allowed from the map view, subject to change (Westley, 2026-10-02).
-- R-231-05  Given a request, When it has been given, Then [Q-231-02: whether and how the screen shows that the request was taken, and what it shows when the rules cannot carry it out].
+- R-231-05  Given a request, When it has been given, Then how the screen shows that the request was taken, and what it shows when the rules cannot carry it out, is the Architect's choice (Westley, 2026-10-07; Q-231-02).
 
 Inputs: dial setting; doctrine choice; switch states; a place and a request.
 Outputs: the controls and their state, T2-checkable; commands carried to the rules.
-Open flags: Q-231-01 (where the controls sit on the HUD), Q-231-02 (the override and the acknowledgement), Q-231-03 (whether the dial, the default-on unit-mix rules and the doctrine switch fit hub principle 6, "positional thinking over command shortcuts", which is about orders to units while the dial is about spending; Westley decides).
+Open flags: Q-231-01 and Q-231-02 (liberty: Architect). The dial, the doctrine switch and the unit-mix switches are outside hub principle 6 (Westley, 2026-10-07).
 
 ### S-232 — Pinging, going dark, and reach, on screen
 As a commander, I want to see my ping and my emitting forces, to be told when I am pinged and from which way, and to be told when a unit type cannot reach a layer, so that the three layer actions are things I can read and use on purpose.
 
 Rules
-- R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one [Q-232-01: the keys and where the control sits; Q-103-04].
-- R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-01].
+- R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one; the ping is an ability on the one command card all selected units share, on the same keystroke for every unit, in a sub-group or the whole group (the style of Immortal: Gates of Pyre; Westley, 2026-10-07), and with a group selected the unit closest to the clicked place casts it, unless it is out of range, in which case the player moves the cursor closer until it is in range [Q-232-03: how the layer is chosen].
+- R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-03: its key].
 - R-232-03  Given forces on the field, When the in-world chrome is read, Then every force set to emit carries a mark showing that it is emitting, and a silent force carries none.
-- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn: the alert is switched off for now (Westley, 2026-10-05). If it returns, it is a sector of about 60 degrees toward the caster and nothing more precise [Q-232-02 stays open for that case].
-- R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the screen tells the player that the units cannot reach it, whatever the distance [Q-232-02: where and when the cue appears].
+- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn: the alert is switched off for now (Westley, 2026-10-05). If it returns, it is a sector of about 60 degrees toward the caster and nothing more precise [the display of a returning alert is not decided].
+- R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the cursor shows a red X while it is out of reach and returns to the regular cursor when it is back in reach (Westley, 2026-10-07), whatever the distance.
 
 Inputs: ping and emit commands; the alert and the unit reach tables from the tick delta.
 Outputs: the ping control and its cooldown; the emit mark; the alert and sector; the reach cue, T2-checkable.
-Open flags: Q-232-01, Q-232-02.
+Open flags: Q-232-03.
 
 ### S-233 — Choosing how the economy runs
 As a commander, I want to choose how the rules run my economy and whether the enemy's economy is clever, so that the game is as hard as I want it.
@@ -237,13 +238,13 @@ As a commander, I want to choose how the rules run my economy and whether the en
 Design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-233-01  Given a commander who will play alone, When the player makes the choices for a mission, Then the player can set which doctrine the rules begin with and whether each of the two unit-mix behaviours (R-231-03) is on [Q-233-01: where these choices are made, and whether the starting doctrine is the player's pick].
+- R-233-01  Given a commander who will play alone, When the player makes the choices for a mission, Then the player can set which doctrine the rules begin with and whether each of the two unit-mix behaviours (R-231-03) is on; the starting doctrine is the player's pick and has no default, so until the player sets it nothing is produced (Westley, 2026-10-07), and it is set in the lobby (E-22 R-179-03).
 - R-233-02  Given the enemy's economy, When the player makes the choices for a mission, Then the player chooses whether it also scouts, counters and disguises (E-22 S-181), as a pick.
 - R-233-03  Given a multiplayer universe, When these choices are made, Then they are locked with the rest of the universe's configuration (E-19 R-144-03).
 
 Inputs: the player's choices.
 Outputs: the choice screen, T2-checkable; the settings carried into the mission.
-Open flags: Q-233-01.
+Open flags: none.
 
 ### S-234 — One zoom, from a single unit to the battlefield
 As a commander, I want to zoom smoothly from a single unit to the battlefield's map view and no further, so that the scale of the world is something I feel.
@@ -294,7 +295,7 @@ Open flags: Q-235-01.
 
 ## Invariants
 
-- The HUD never shows an enemy composition readout (the line against inference from the world is Q-230-03).
+- The HUD never shows an enemy composition readout; the player infers from the world only (Westley, 2026-10-07).
 - Nothing on screen lists what the commander needs, and nothing explains a shipment that did not arrive.
 - The player's zoom never goes past the battlefield's map view.
 - No select-all command exists.
@@ -324,7 +325,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-02, Q-231-01, Q-231-02, Q-232-03, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

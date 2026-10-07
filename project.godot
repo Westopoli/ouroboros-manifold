@@ -37,6 +37,8 @@ InspectionState="*res://scenes/world/world_view_inspection_state.gd"
 DebugOverlay="*res://autoload/debug_overlay.gd"
 TutorialStateMachine="*res://autoload/tutorial_state_machine.gd"
 QADaemon="*res://autoload/qa_daemon.gd"
+SteamInit="*res://autoload/steam/steam_init.gd"
+NetMatch="*res://autoload/net/net_match.gd"
 
 [display]
 

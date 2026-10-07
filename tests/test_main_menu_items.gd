@@ -101,6 +101,17 @@ func _run_tests() -> void:
 
 	var entries: Array[String] = []
 	_entries(scene, entries)
+	# TD-T3-menu-era-toggle: the Era toggle ("era: space" / "era: ground") sits beside the five.
+	var toggles: Array[String] = []
+	var rest: Array[String] = []
+	for e in entries:
+		if e.begins_with("era: "):
+			toggles.append(e)
+		else:
+			rest.append(e)
+	_assert(toggles.size() == 1 and (toggles[0] == "era: space" or toggles[0] == "era: ground"),
+		"G3/3e: exactly one Era toggle entry (era: space / era: ground) beside the five; got %s" % str(toggles))
+	entries = rest
 	entries.sort()
 	var want := ["continue", "era library", "new campaign", "quit", "settings"]
 	_assert(entries == want, "G3: the visible menu entries are %s, expected exactly %s" % [str(entries), str(want)])

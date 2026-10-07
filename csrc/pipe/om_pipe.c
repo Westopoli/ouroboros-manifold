@@ -65,7 +65,7 @@
 #include "om_constants.h"
 
 /* Mirrors OM_SAVE_FORMAT_VERSION in om_internal.h (not visible to the pipe). */
-#define OM_PIPE_SAVE_FORMAT_VERSION 6
+#define OM_PIPE_SAVE_FORMAT_VERSION 7
 
 /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
  * by ouroboros_sim.h. See the file-header comment above. */
@@ -1446,6 +1446,25 @@ static void handle_mission_start(const char *json) {
         write_error("mission_start", "bad era_kind");
         return;
     }
+    int mk[64];
+    int mk_n = 0;
+    const char *mk_p = find_key(json, "movement_kinds");
+    if (mk_p) {
+        const char *close = *mk_p == '[' ? strchr(mk_p, ']') : NULL;
+        const char *inner = close ? memchr(mk_p + 1, '[', (size_t)(close - mk_p - 1)) : NULL;
+        if (!close || inner) {
+            write_error("mission_start", "bad movement_kinds");
+            return;
+        }
+        mk_n = get_int_array(json, "movement_kinds", mk, 64);
+        int mk_ok = mk_n % 2 == 0;
+        for (int i = 0; mk_ok && i < mk_n; i += 2)
+            mk_ok = mk[i] >= 0 && (mk[i + 1] == 0 || mk[i + 1] == 1);
+        if (!mk_ok) {
+            write_error("mission_start", "bad movement_kinds");
+            return;
+        }
+    }
 
     int owns_region = 0;
     for (uint32_t ri = 0; ri < om_region_count(W) && !owns_region; ri++)
@@ -1510,6 +1529,7 @@ static void handle_mission_start(const char *json) {
         }
     }
     if (have_mission) {
+        for (int i = 0; i + 1 < mk_n; i += 2) (void)om_roster_set_movement_kind(W, mk[i], mk[i + 1]);
         om_set_era_kind(W, (int)era_kind);
         if (quiet_world)
             om_mission_setup_fallback(W, region, fb_enemy);
@@ -1551,6 +1571,10 @@ static void handle_mission_start(const char *json) {
     }
     if (!have_mission) {
         write_error("mission_start", "no viable mission");
+        return;
+    }
+    if (era_kind == 1 && !om_terrain_present(W)) {
+        write_error("mission_start", "terrain generate failed");
         return;
     }
     om_mission_build_objectives(W, archetype);

@@ -104,7 +104,7 @@ Rules
 
 Inputs: archetype; tech.
 Outputs: multipliers used in attack resolution.
-Open flags: none here. The mission-level economy (E-22) is a possible consumer of the economy multiplier; nothing decides it (Q-226-01).
+Open flags: none here. The mission-level economy (E-22) reads the faction's economy and technology tier for its starting scale (E-05 R-226-01).
 
 ### S-047 — Friends share knowledge
 As a commander, I want the weaker partner in a cooperative pair to catch up toward the stronger, but never past it, so that peace has a tangible reward for the one who needs it.
