@@ -384,7 +384,7 @@ Open flags: none.
 
 As a commander in a space era, I want each layer of the map to be a sheet of open and blocked space with real obstacles filling it, so that the layers are places to fight in and not planes.
 
-Design decided 2026-10-07 (Westley; `docs/northstar/research/space_landscape/README.md`, the approved space kit). Not scheduled for building: Westley polishes and approves the prototype before the full build workflow.
+Design decided 2026-10-07 and approved as written the same day (Westley; `docs/northstar/research/space_landscape/README.md`, the approved space kit). Not scheduled for building: Westley polishes and approves the prototype before the full build workflow.
 
 Rules
 - R-246-01  Given a space-era mission in the beta, When it is set up, Then the map has a generated field: each of the five layers is an open-or-blocked sheet (E-01 R-001-04), like ice over open water, and the generator is ported into the simulation as the land one was (Westley, 2026-10-07; Q-STAGE3-03).

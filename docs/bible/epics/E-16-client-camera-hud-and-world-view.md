@@ -86,7 +86,7 @@ As a commander, I want to click, box-select, and bind groups, and never to have 
 
 Rules
 - R-105-01  Given the player clicks a friendly unit, When released, Then it is the selection; Given a drag box, Then every friendly unit inside it on every layer is the selection.
-- R-105-06  Given a selection that spans layers, When the player presses the hotkey for layer N, Then the selection narrows to its units on layer N; the layer strip's focus is unchanged by this.
+- R-105-06  Given a selection that spans layers, When the player presses the hotkey for layer N, Then the selection narrows to its units on layer N; the hotkey is Alt plus the number N, and plain digits stay with control groups (Westley, 2026-10-07); the layer strip's focus is unchanged by this.
 - R-105-02  Given a selection and Ctrl plus a digit, When pressed, Then the group is bound to that digit and the units leave any other group (exclusive membership); pressing the digit recalls the group; pressing it twice centers the camera on it.
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
