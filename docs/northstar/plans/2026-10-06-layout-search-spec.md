@@ -133,3 +133,34 @@ Check by reading or running, not from memory: the objective scene works with the
 - Q-LS-01: the depth score rule and `G` (Westley).
 - Q-LS-02: whether the enemy mix is fixed per layout or swept too (a 3 × 3 grid triples the cost).
 - Q-LS-03: whether the "likely places" ping policy joins the search once chokes exist (the ping search found that "ahead" is a weak naive baseline).
+
+## Rev 3 (proposed 2026-10-07, awaiting Westley): placed formations, decided by survivors
+
+Origin: Westley, 2026-10-07, on the lab's stalemates: "why can't we position the units ourselves instead of making them walk ... hypothetically we're placing units in specific patterns to detect strategic depth, not letting them just do their thing. A skilled player ... will micro them into specific formations." Not built until he says yes; the tests for it are red on purpose (`tests/skilllab/test_decided_by_survivors.py`).
+
+**Rule 1, placed.** Every scene starts at contact distance with both formations already placed relative to the layout: the two first anchors sit `plays_space.START_GAP` (700 wu, the plays' own contact distance) apart with the layout's choke midpoint between them (the middle of the gap between the wall blocks; with no wall, the layout's centre). The layout has five features; start distance `d` is not one of them. Nobody walks across the map to meet.
+
+**Rule 2, decided by survivors.** Setup gains `decided_by_survivors` (default False). When set:
+- Before first damage the only ends are the cap and a wipe.
+- After first damage, once no living unit can see a living enemy, a blind count starts at that first blind tick; any tick on which some unit sees an enemy resets it. At 400 blind ticks (tick = first blind tick + 400) the fight ends with outcome `decided`.
+- `FightResult.winner` (new; None for every other outcome) is read from the remaining hp sums: `side0` or `side1` for the larger, `draw` when they differ by at most 5% of the larger. A genuine standoff, where nobody sees or hits anybody, therefore scores as a draw, not as "undecided".
+- Scoring: `scan.cell_result` treats `decided` like a wipe, won only when side 0 is the winner in every fight and the mean margin clears the bar; a `draw` winner is not a win.
+
+**What it replaces** (with the flag set; the old paths stay for the ground lab and the existing plays, byte-identical):
+
+| Old | Where | Replaced by |
+|---|---|---|
+| `start_distance` feature (1,400 / 2,800 wu) | section 1's feature table and `depth.VALUES` (the brief says section 2; the feature is in section 1) | placed formations at contact distance; the feature is dropped |
+| `mopup` (re-order at the seen enemy) and its fallback `enemy_anchor` (`mopup.py:18`, `fight.py:233-252`) | the stalemate-window row of "What the audit changed" | nothing: nobody re-orders; sight ends the fight, not a march |
+| `quiet_from_first_damage` and the 400-tick no-hp-change stalemate window (`fight.py:263,271-277`) | same row | the blind count above; `stalemate_ticks` is not read |
+| `Setup.start_distance` / `Setup.objective` and `scenes.objective_scene` (P2) | contract.py, scenes.py | left in place for now; removal is a later cleanup, not part of this piece |
+
+**New outcome label `decided`** joins `side0`, `side1`, `draw`, `stalemate`, `cap`; with the flag set `stalemate` never occurs, and `cap` remains for fights where sight never lapses.
+
+**Cost change.** Five features: 4 x 3 x 3 x 3 x 3 = 324 layouts in the grid (was 648); the search still samples 200 with the seeded Latin-hypercube draw, so each value of each feature appears at least 200 / 4 or 200 / 3 times (even within one). Scans are unchanged at 11 per layout (7 skilled, 1 shared naive, 3 counters), so 200 x 11 x 102 = 224k fights stay the upper bound; fights should get shorter (no approach walk, no 400-tick quiet wait), not longer.
+
+**Two numbers for Westley** (both are draft; changing either later is a threshold change, so they are his):
+1. 400 ticks of no sight before the fight is decided (the old stalemate window's number, reused).
+2. 5% as the draw band on remaining hp.
+
+Build impact, for the builder's piece card: `contract.py` (`Setup.decided_by_survivors`, `FightResult.winner`), `fight.py` (the blind count and the winner), `scan.py` (`cell_result`), `scenes.py` (`placed_scene(layout, play)`), `depth.py` (`VALUES`, `_features`, `run_layout` drop `start_distance`). Existing tests that assert six features (`tests/skilllab/test_depth.py`: `KEYS`, `VALUES`, the `start_distance` rows) are defects against Rev 3 and are reclassed `test-defect` with a ledger row when it lands, not edited by the builder.

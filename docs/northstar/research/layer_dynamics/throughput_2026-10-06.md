@@ -35,3 +35,5 @@ Ryzen 7 3700X: 8 physical cores, 16 threads (SMT), 30 GB RAM, RTX 3060. The lab 
 Correction (pre-flight, same evening): pool workers persist across a batch (`pool.py:19` ships the library path via `initargs`), so the per-process compile is paid once per worker per run, about 11 s × workers, not per fight; B9 buys little. B11 needs a new public symbol (none exists: `ouroboros_sim.h` has `om_unit_get_hp` only), so it is a contract piece. B10's sparse cells break dense consumers. All three deferred; run 1 of the layout search runs at about 68 min without them.
 
 Default worker count for lab batches: 12 (8 physical cores plus some SMT), `MemoryMax=6G`, `nice 10` when anything else runs.
+
+Scheduling (2026-10-07): run 1 is pinned to a night slot, because CPU contention with the gates would skew both.
