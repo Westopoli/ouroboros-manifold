@@ -199,7 +199,7 @@ As an economy player, I want each unit type to cost the three resources by its c
 Design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in the three resources set by its category, Strike, Line or Siege, which are the unit families (E-22 S-171) [Q-159-08: which resource each category needs and how much; roles inside a category are Q-082-03].
+- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in two of the three resources, by its role, in the fixed pattern of E-22 R-171-03; Strike, Line and Siege are the unit families (E-22 S-171) [Q-159-08: the amounts; roles inside a category are Q-082-03].
 - R-203-02  Given a unit type, When it counts against the population cap, Then it counts by its population weight (E-22 S-169) [Q-169-01: the weight per type].
 
 Inputs: era pack cost table; population weights.
