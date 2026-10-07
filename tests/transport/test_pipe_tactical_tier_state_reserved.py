@@ -53,9 +53,12 @@ def _unit_violations(frame):
     bad = []
     for key in ("units", "units_changed"):
         for u in frame.get(key, []):
-            for field in ("tier", "state"):
-                if u.get(field) != 0:
-                    bad.append((key, u.get("id"), field, u.get(field)))
+            if u.get("tier") != 0:
+                bad.append((key, u.get("id"), "tier", u.get("tier")))
+            # TD-VG-K-2: `state` was always 0 (A30); spec section 2: int, always present, bits 1|2|4 only (rulebook row 22)
+            st = u.get("state")
+            if not isinstance(st, int) or st & ~7:
+                bad.append((key, u.get("id"), "state", st))
     return bad
 
 
@@ -94,5 +97,7 @@ def test_positive_control_the_detector_rejects_nonzero_tier_or_state():
     ok = {"id": 1, "tier": 0, "state": 0}
     assert _unit_violations({"units": [ok], "units_changed": [ok]}) == []
     assert _unit_violations({"units": [dict(ok, tier=1)]}) == [("units", 1, "tier", 1)]
-    assert _unit_violations({"units_changed": [dict(ok, state=1)]}) == [("units_changed", 1, "state", 1)]
+    assert _unit_violations({"units": [dict(ok, state=5)]}) == []
+    assert _unit_violations({"units_changed": [dict(ok, state=8)]}) == [("units_changed", 1, "state", 8)]
+    assert _unit_violations({"units_changed": [{"id": 3, "tier": 0}]}) == [("units_changed", 3, "state", None)]
     assert _unit_violations({"units_changed": [{"id": 2, "state": 0}]}) == [("units_changed", 2, "tier", None)]

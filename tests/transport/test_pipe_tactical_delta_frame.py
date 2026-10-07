@@ -168,7 +168,8 @@ def test_delta_frame_has_the_delta_shape_and_only_changed_units():
     _assert_delta(delta)
     assert delta["tick"] == 1
     assert [u["id"] for u in delta["units_changed"]] == [mover], [u["id"] for u in delta["units_changed"]][:10]
-    assert set(delta["units_changed"][0]) == UNIT_KEYS
+    # TD-VG-K-1: UNIT_KEYS exact -> superset (rulebook row 21; spec section 2 unit object)
+    assert UNIT_KEYS <= set(delta["units_changed"][0])
     assert delta["units_removed"] == []
     before = next(u for u in first["units"] if u["id"] == mover)
     assert (delta["units_changed"][0]["x"], delta["units_changed"][0]["y"]) != (before["x"], before["y"])
@@ -267,7 +268,8 @@ def test_objectives_ride_every_frame_full_and_delta():
         assert "objectives" in f, "tactical frame at tick %d has no objectives (A6/A7)" % f["tick"]
         assert [o["i"] for o in f["objectives"]] == want
         for o in f["objectives"]:
-            assert set(o) == {"i", "progress"}
+            # TD-VG-K-3: objectives exactly {i, progress} -> superset (rulebook row 23; spec section 2 `objectives`)
+            assert {"i", "progress"} <= set(o)
             assert 0.0 <= o["progress"] <= 1.0
     assert tac[1]["full"] is False and "objectives" in tac[1]
 
