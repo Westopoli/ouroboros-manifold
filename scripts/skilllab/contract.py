@@ -83,7 +83,7 @@ class Setup:
     groups: tuple
     unit_types: dict          # name -> stats; see spec AC 5 (full stats, or base + scale/set)
     abilities: bool = False   # False calls om_tactical_disable_abilities
-    max_ticks: int = 6000
+    max_ticks: int = 12000
     stalemate_ticks: int = 400
     sample_every: int = 5     # ticks between firing-count samples
     trace: bool = False       # True records FightResult.trace
@@ -95,6 +95,9 @@ class Setup:
     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
     approach: float = 0.0     # stop factor of the hold-to-contact opening (approach.py); 0.0 = off
     mopup: bool = False       # lab rule, provisional (A199): re-issue a stopped side's attack-move at the enemies it sees (mopup.py)
+    start_distance: Optional[float] = None   # anchor distance between the sides, set by the objective scene; None = the plays' own contact distance
+    objective: Optional[tuple] = None        # (x, y) both groups attack-move to; None = no objective
+    quiet_from_first_damage: bool = False   # True counts stalemate_ticks from the first hp change, not tick 0 (objective scene)
     mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
 
 

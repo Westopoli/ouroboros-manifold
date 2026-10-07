@@ -8,7 +8,7 @@ _FIXED = ("outcome", "margin", "strength_left_0", "strength_left_1", "survivors_
 
 # Features field order, matching scripts.skilllab.maps.Features
 _FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
-                   "fight_layer_blocked", "cover_density_corridor", "start_distance")
+                   "fight_layer_blocked", "cover_density_corridor", "start_distance", "detour_ratio", "blocked_layer_top")
 
 
 def fight_row(result, features=None, **labels):

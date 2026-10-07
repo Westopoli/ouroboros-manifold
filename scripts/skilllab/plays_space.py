@@ -2,6 +2,7 @@
 Ten plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
 is a named draft constant, provisional (2026-10-05), for Westley's look at docs/northstar/research/layer_dynamics/plays_drafts.md.
 Regenerate the page: python -m scripts.skilllab.plays_space"""
+import dataclasses
 import math
 from dataclasses import dataclass
 from pathlib import Path
@@ -202,6 +203,52 @@ PLAYS = {
         "Counter to the held choke. The enemy holds behind the wall; side 0 are all long-range units (reach x1.2) "
         "and attack-move, to fire from outside the holders' range."),
 }
+
+
+def _spread(setup, start_distance):
+    anchor = {}
+    for g in setup.groups:
+        anchor.setdefault(g.side, g.x)
+    shift = (start_distance - (anchor[1] - anchor[0])) / 2
+    delta = {0: -shift, 1: shift}
+    near = lambda x: delta[min(anchor, key=lambda s: abs(anchor[s] - x))]
+    groups = tuple(dataclasses.replace(g, x=g.x + delta[g.side],
+                                       goal=None if g.goal is None else (g.goal[0] + near(g.goal[0]), g.goal[1]))
+                   for g in setup.groups)
+    steps = tuple(dataclasses.replace(t, goal=(t.goal[0] + delta[setup.groups[t.group].side], t.goal[1]))
+                  if t.goal is not None else t for t in setup.timeline)
+    return dataclasses.replace(setup, groups=groups, timeline=steps)
+
+
+def scan_build(name):
+    if name not in PLAYS:
+        raise ValueError("no space play named %r" % (name,))
+    fn = PLAYS[name].setup_fn
+
+    def build(terrain, enemy_heads, swap, start_distance=None):
+        if enemy_heads < 1:
+            raise ValueError("enemy_heads must be at least 1, got %r" % (enemy_heads,))
+        setup = fn()
+        enemy = [g for g in setup.groups if g.side == 1]
+        if len(enemy) > enemy_heads:
+            raise ValueError("%s has %d enemy groups, needs at least that many heads" % (name, len(enemy)))
+        counts = [max(1, round(g.count * enemy_heads / UNITS)) for g in enemy]
+        for i in range(len(counts) - 1):
+            counts[i] = min(counts[i], enemy_heads - (len(counts) - 1 - i) - sum(counts[:i]))
+        counts[-1] = enemy_heads - sum(counts[:-1])
+        new = {}
+        for g, c in zip(enemy, counts):
+            params = dict(g.params)
+            if g.formation == "blob":
+                params["radius"] = 80 + 12 * math.sqrt(c)
+            new[id(g)] = dataclasses.replace(g, count=c, params=params)
+        groups = tuple(new.get(id(g), g) for g in setup.groups)
+        setup = dataclasses.replace(setup, groups=groups)
+        if start_distance is not None:
+            setup = _spread(setup, start_distance)
+        return setup if terrain is None else dataclasses.replace(setup, terrain=terrain)
+
+    return build
 
 
 def _group_line(g):

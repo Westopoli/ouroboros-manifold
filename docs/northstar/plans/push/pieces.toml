@@ -1303,3 +1303,14 @@ status = "pending"
 tests_pending = true
 size_estimate = "stage 1 of the space lab (spec 2026-10-05); existing scripts/skilllab files stay with A94-harness"
 
+
+[[piece]]
+id = "LAB-SEARCH"
+manager = "M0"
+wave = 6
+owns = ["scripts/skilllab/maps.py", "scripts/skilllab/rows.py", "scripts/skilllab/contract.py", "scripts/skilllab/scenes.py", "scripts/skilllab/asym.py", "scripts/skilllab/plays.py", "scripts/skilllab/fight.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/skills.py", "scripts/skilllab/depth.py", "scripts/skilllab/batches.py", "tests/skilllab/test_layout_map.py", "tests/skilllab/test_objective_scene.py", "tests/skilllab/test_plays_space_scan.py", "tests/skilllab/test_depth.py", "scripts/skilllab/__main__.py", "scripts/skilllab/mopup.py", "tests/skilllab/test_batches.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_mopup.py", "tests/skilllab/test_plays_max_ticks.py", "tests/skilllab/golden_hashes.json"]
+acceptance = []
+depends_on = ["SPACELAB-1"]
+status = "pending"
+tests_pending = true
+size_estimate = "lab search lane: layout map, objective scene, plays-space scan and depth work in scripts/skilllab"

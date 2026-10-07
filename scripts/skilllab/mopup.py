@@ -1,5 +1,6 @@
 """Lab rule, provisional (v2; A199, A201, Architect): the re-order, a player's obvious next order after the clash.
-A side re-orders when no unit of it has an enemy in attack range and it sees at least one enemy. A unit that still has a
+A side re-orders when no unit of it has an enemy in attack range (same layer, within range, and able to shoot it: a wall
+between the pair does not count) and it sees at least one enemy. A unit that still has a
 destination blocks the re-order only if it moved at least MOVED_WU in the last WINDOW_TICKS. The order sends every unit of
 the side at the position of the nearest seen enemy to the side's centroid, with no chunk offsets (chunked only when the
 side does not fit inside the scatter limit of E-13 R-095-03, each chunk aimed at that same point)."""
@@ -31,7 +32,7 @@ def mopup_goal(engine, w, mine, theirs, ranges, alive, before=None):
     for u in mine:
         for e in theirs:
             dx, dy = pos[e][0] - pos[u][0], pos[e][1] - pos[u][1]
-            if layer[e] == layer[u] and dx * dx + dy * dy <= ranges[u] * ranges[u]:
+            if layer[e] == layer[u] and dx * dx + dy * dy <= ranges[u] * ranges[u] and engine.can_shoot(w, u, e):
                 return None
     seen = [e for e in theirs if any(engine.can_see(w, u, e) for u in mine)]
     if not seen:

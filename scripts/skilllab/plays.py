@@ -7,7 +7,7 @@ from scripts.skilllab.contract import Group, Setup
 
 _LINE_SPACING = 30
 APPROACH = 0.0          # default: off, one attack-move per group
-MAX_TICKS_BIG = 8000    # A201: cells of 32 a side and above get longer (the Setup default of 6000 is for smaller ones)
+MAX_TICKS_BIG = 12000   # A201: cells of 32 a side and above get the cap named here; same as the Setup default since 2026-10-06 (TD-LAB-tick-cap)
 MOPUP = True            # lab rule, provisional (mopup.py): a stopped side re-issues its attack-move at what it sees
 MOPUP_INTERVAL_TICKS = 200
 APPROACH_STOP = 0.95    # the stop factor of the lab setting (A198)

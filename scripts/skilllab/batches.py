@@ -5,14 +5,14 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import compose, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
+from scripts.skilllab import compose, depth, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
 from scripts.skilllab.asym import Side, asym_play
 from scripts.skilllab.contract import trim_series
 from scripts.skilllab.ground.scenes_ground import tall_cover, tall_cover_terrain
 from scripts.skilllab.scenes import guard_defenders, phase_b_choke
 from scripts.skilllab.terrain import with_terrain
 
-NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
+NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
 MOPUP_NOTE = (mopup.RULE_TEXT + " Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
               % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
@@ -559,3 +559,7 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
     paths["page"].write_text(_page(defn, scans, examples), encoding="utf-8")
     summary.write(defn, scans, paths["summary"], MOPUP_NOTE)
     return paths
+
+
+def layout_search(n_layouts, seed, workers, out_dir, replicates=3):
+    return depth.run(n_layouts, seed, workers, out_dir, replicates=replicates)
