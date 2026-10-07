@@ -31,7 +31,7 @@ A test is a defect only if ALL hold: (1) the failing assertion is in a row below
 | 19 | `test_galaxy_pixels.py:131-197,231,273` | pixel at `systems_px` equals region colour within tolerance | B | ARCH (tolerance is Westley's) | yes |
 | 20 | `test_galaxy_conquest.py:90-126` | flipped owner colour within `COLOUR_TOLERANCE` | B | ARCH | yes |
 | 21 | `test_pipe_tactical_delta_frame.py:41,171` | `set(unit) == UNIT_KEYS` exact | A (+contract) | SUP; the contract names each key | yes |
-| 22 | `test_pipe_tactical_tier_state_reserved.py` | `tier == 0`, `state == 0` (ruling A30) | A | `state`: RP by K-a quoting the spec's section 2 bit table; `tier` stays 0 (ARCH until the tier source is ruled) | yes |
+| 22 | `test_pipe_tactical_tier_state_reserved.py` (detector `:57` `!= 0`, control `:97` rejects `state=1`) | `tier == 0`, `state == 0` (ruling A30) | A | `state`: RP by K-a quoting the spec's section 2: the assertion becomes `state` present and `state & ~7 == 0`; the control plants `state=8` and a missing `state` (this control literal change is permitted by this row); `tier` stays 0 (ARCH until the tier source is ruled) | yes, as rewritten |
 | 23 | `test_pipe_tactical_delta_frame.py:270` | objectives exactly `{i, progress}` | A | SUP for `done` | yes |
 | 24 | `test_pipe_mission_frame_briefing_fields.py:37,77,84` | `force`/`briefing` exact key sets; no `position_name` (A4) | A, E | SUP for named keys; `position_name` ARCH | yes |
 | 25 | `test_pipe_tactical_world.py:131-142`, `test_pipe_shapes.py:171,178` | cover count; `tactical.schema.json` required; no `map`/`units` in deltas | A, C, E | new `map` fields SUP; map stays full-frame only (ARCH otherwise); schema updated by the contract piece | yes |
@@ -47,6 +47,7 @@ A test is a defect only if ALL hold: (1) the failing assertion is in a row below
 | 35 | `test_pipe_tactical_tier_state_reserved.py:64-65` | enemy positions from the first frame | K-h | as row 33 | yes |
 | 36 | `test_pipe_macro_group_orders.py:59-60` | enemies present (else "vacuous") | K-h | as row 33 | yes |
 | 37 | `test_pipe_tactical_delta_frame.py:21` | nearest-enemy attack from the first frame | K-h | as row 33 | yes |
+| 38 | `tests/qa/desktop/test_flow_spine.py:444-447` (S-C8-09) | at least two factions in `qa.units` | K-h | stands: the flag is off unless `tactical_view.gd`'s live call passes it; the desktop driver's live path passes it only when A4 has landed, at which point this assertion reads `units_px` of own units (RP, quoting K-h) | yes |
 
 Mockup `verify.gd` scripts: never edited; a red one means a lane edited a mockup, which is refused.
 

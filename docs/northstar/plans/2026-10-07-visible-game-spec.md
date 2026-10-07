@@ -1,6 +1,6 @@
-# The visible game programme: workflow spec (rev 3, after audit round 2)
+# The visible game programme: workflow spec (rev 4, after audit round 3)
 
-Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 goes to round 3 (the last).
+Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 went to round 3 (Opus, 10 must-change items, all text; verdict "approve with the listed changes"); rev 4 applies them and is the launch text, pending Westley's go line.
 
 ## 0. What changed in rev 3 and why
 
@@ -23,24 +23,40 @@ Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-f
 | Stale text: `1007b`, rev-1 counts in the programme, rulebook row 7, the E2 liberties still listed | Fixed in the programme, the rulebook and section 7 |
 | Builder guesses: hidden shooter/victim events, event accumulation over n>1, "objective threshold", E1m feeding A8, whether `state` may be omitted | Answered in section 2 |
 
+## 0b. Rev 4 changes (round 3)
+
+| Finding | Change |
+|---|---|
+| K0 proposed new getters that already exist (`om_unit_get_target_layer` :1917, `om_fog_get_drawn_sensor_circle_radius` :1530, `om_structure_get_hud_data` :1953, `om_unit_is_braced` :1908, `om_unit_transition_progress` :1916, `om_unit_ability_cooldown` :2029, `om_unit_in_backswing` :2047, `om_tick_read_ability_events` :2027) and declared no reader for fire/kill/capture events; `stage` undefined | K0 reuses those names; new symbols only: `om_tactical_event_count`, `om_tactical_event_get_at` (fire and kill produced in `unit.c`, capture in `tactical_support.c`; ability events read through the existing reader by the pipe only, once per call), `om_structure_count`, `om_structure_get_at` (`stage` 0 until E1), `om_objective_get_done`, `om_map_obstacle_count`, `om_map_get_obstacle_at`, `om_terrain_get_heights`; `acd` = now + `om_unit_ability_cooldown`, `acd_max` from the profile |
+| Row 22's re-pin breaks its own control (`:97` rejects `state=1`; detector `!= 0` at `:57`) | Row 22 spells out the edit: `state` present and `state & ~7 == 0`; the control plants `state=8` and a missing `state`; this control change is permitted by the row |
+| K-a's identity test cannot pass once `state` is non-zero and new keys move units into deltas | The test compares reconstructed full views with `state` zeroed and the new keys stripped, on a fixture with no deaths (the dead-slot scan untouched) |
+| K-a and K-f both edit `om_pipe.c`/`c_bridge.gd` in parallel; K-h and K-e unordered | K-f starts after K-a's pipe and bridge pieces pass their check; K-h lands before K-e starts |
+| G1's `look` needs a threshold routed to Westley | `look` ships warn-only (frames attached, metric reported) until the number lands; then it rejects |
+| `fog_filter` set in the shared bridge would turn it on for tests (`_ensure_mission` :498-501; row 33 and `test_flow_spine.py:444-447`) | The flag is a bridge parameter, default off, set only by `tactical_view.gd`'s live call; rulebook row 38 for the flow spine (stands with the flag off) |
+| The park rule had no mechanism | Every Westley-threshold check lives in its own `*_park_*` test file; the clerk leaves such files off the candidate, keeps them on `push/vg-parked`, lists them; the footprint fence only warns on owned files missing from a diff |
+| The landing order in §1 read as a literal chain | Written as dependency edges (below) |
+| "Lane dropped" undefined; a parked VG-VIEW link would park the chain | A lane is dropped when its clerk has no landable candidate after two check failures of non-parked pieces; contract double-rejects park dependents, they do not drop lanes; a parked VG-VIEW link hands `tactical_view.gd` to the next link |
+| Stale programme text; `push/tv-read` unaddressed; E1h/E1i naming; save 8 twice; C10 file list; `state` bits as values; VG-CONTRACT must own whole files | Fixed below and in the programme; `push/tv-read` is source only (its test is adopted by A1/A5's writers or dropped); the wiring piece is E1i everywhere; save 8 lives in K-e only; C10 names its files; VG-CONTRACT owns the seven `.c` files whole for K-a's duration |
+| Budget recount: about 117 per-file pieces (A 20, K0 9, C10 5–6, E1 22) | Section 8: expected about 115M, ceiling 140M; lanes C and E1 in two workflows each |
+
 ## 1. Lanes, pieces, stories
 
 A piece is one file, about 100 lines: tests (Engineer, a different agent) → build (Doer) → check (Engineer; C pieces and contracts) or the lane clerk's gate (Godot and docs pieces). Every lane ends with its story plays run and queued.
 
-**Sequencing.** T0 (stage 3 + phase A landed; stale `pending` rows flipped): the test writers for A, C, F and GUARD; GUARD builds (G1–G4, G6, G7); B0 (lane B's pre-check only); the F build scripts (W8a, W8d, the depot script). K0 (about 3 h) unlocks every lane's builds against fixture dicts; K-a and K-f run beside them. Landing order: GUARD alone → B0's result and the F scripts (a shared gate) → K0 → K-a, K-f → A (two workflows) → VG-VIEW: A12 → F5 → C5 → E1p → D hook → C's 3D (C2–C4, C7–C8 build from K0; C5/C6/C10 after A) → E1 (K-e first, then its sim and client pieces; E1h after K-a) → D when its answers land. Pairs of disjoint green lanes land in one gate. Lab run 1 pinned to a night slot.
+**Sequencing (dependency edges; a script may start anything whose edges are satisfied).** T0 (stage 3 + phase A landed; stale `pending` rows flipped): test writers for A, C, F, GUARD; GUARD builds G1–G4, G6, G7 (G1 warn-only); B0; the F build scripts. Edges: GUARD lands → every other landing; B0 result + F scripts land together; K0 → every lane's builds (against fixtures) and K-a; K-a's pipe and bridge pieces checked → K-f; K-a lands → A's workflows, E1i; A lands → A12; A12 → F5 (after K-f); C2–C4 land → C5 (after F5's slot in the chain) → C6, C10; K-e lands (E1's first piece; after K-h) → E1's tests and pieces → E1p (after C5); D's answers → D1–D4 → D5 (after E1i) → the D hook (after E1p); A4 lands → K-h. Pairs of disjoint green lanes land in one gate. Lab run 1 at night.
 
 ### Contract gates
 
 | Gate | Pieces (one file each unless noted) | What | Tests |
 |---|---|---|---|
-| K0 doc-first | `docs/architecture.md` (the field table of section 2), `csrc/ouroboros_sim.h` + `signatures.toml` (declarations; stub bodies in the owning `.c` files that return 0/-1), bindings; ABI 4 → 5 with the three pins (rulebook row 27) | the shapes every lane's tests use | `sig_check`, `sig_blocked`, a `hasattr` presence test for every new symbol (no calls), the ABI pins |
-| K-a lane A data (7 sim files + pipe + bridge; each file one piece, one gate) | `unit.c` (fire-event ring, cap 512 per call, `events_dropped` counter; `state` bits), `tactical_support.c` (`om_structure_count`, `om_structure_get_at`), `mission.c` (`om_objective_get_done`), `fog.c` (`om_fog_get_sight_radius`), `tactical_move.c` (`om_unit_get_layer_target`, `om_unit_get_layer_done_tick`; `om_command_set_layer` from `command`), `tactical_mapgen.c` (`om_map_obstacle_count`, `om_map_get_obstacle_at`, cover `class` by section 7's thresholds), `terrain.c` (`om_terrain_get_heights`; cap 240), `om_pipe.c` (the frame fields of section 2; `terrain_dump.heights`; the dead-slot scan fixed), `c_bridge.gd` (decoders; `set_layer` and `activate_ability` wrappers; heights into `terrain()`) | the data lane A draws | every getter against a fixture world; every field's shape; frames identical to main's after stripping the named new keys (`state` is always present and 0 on main's frames: the reserved test's control holds); the dead-slot fix measured |
-| K-f net plumbing | `om_pipe.c` (`net_step {frame:true}`; `_setmode`), `c_bridge.gd` (exe-relative pipe path, `OM_PIPE` override) | Steam phase B | a transport test per item; the Windows probe under wine |
-| K-h fog filter (amendment, after A4) | `om_pipe.c` (`mission_start {fog_filter:true}`: hidden units and structures not written; leaving sight → `units_removed`/`structures_removed`), `c_bridge.gd` (sets the flag) | R-089-03, R-205-02 | hidden units absent with the flag, present without; the five rulebook rows added (33–37) |
+| K0 doc-first (about 9 files) | `docs/architecture.md` (the field table of section 2), `csrc/ouroboros_sim.h` + `signatures.toml` (new declarations: `om_tactical_event_count`, `om_tactical_event_get_at`, `om_structure_count`, `om_structure_get_at`, `om_objective_get_done`, `om_map_obstacle_count`, `om_map_get_obstacle_at`, `om_terrain_get_heights`; existing ones reused as listed in 0b), stub bodies returning 0/-1 in the six owning `.c` files, bindings; ABI 4 → 5 with the three pins (rulebook row 27) | the shapes every lane's tests use | `sig_check`, `sig_blocked`, a `hasattr` presence test for every new symbol (no calls), the ABI pins |
+| K-a lane A data (7 sim files + pipe + bridge; each file one piece, one gate; VG-CONTRACT owns the seven `.c` files whole until K-a lands) | `unit.c` (fire and kill events into the event ring, cap 512 per call, `events_dropped`; `state` bits), `tactical_support.c` (`om_structure_count`, `om_structure_get_at` with `stage` 0; capture events), `mission.c` (`om_objective_get_done`), `fog.c` (sight through the existing `om_fog_get_drawn_sensor_circle_radius`), `tactical_move.c` (layer target through `om_unit_get_target_layer`, done tick from `om_unit_transition_progress`; `om_command_set_layer` from `command`), `tactical_mapgen.c` (obstacle getters, cover `class` by section 7's thresholds), `terrain.c` (`om_terrain_get_heights`; cap 240), `om_pipe.c` (the frame fields of section 2 read only through the public header; ability events via `om_tick_read_ability_events` once per call; the dead-slot scan fixed), `c_bridge.gd` (decoders; `set_layer` and `activate_ability` wrappers; heights into `terrain()`) | the data lane A draws | every getter against a fixture world; every field's shape; reconstructed full views equal main's with `state` zeroed and the new keys stripped, on a fixture with no deaths; the dead-slot fix measured on its own fixture |
+| K-f net plumbing (after K-a's pipe and bridge pieces pass their check) | `om_pipe.c` (`net_step {frame:true}`; `_setmode`), `c_bridge.gd` (exe-relative pipe path, `OM_PIPE` override) | Steam phase B | a transport test per item; the Windows probe under wine |
+| K-h fog filter (amendment, after A4, before K-e) | `om_pipe.c` (`mission_start {fog_filter:true}`: hidden units and structures not written; leaving sight → `units_removed`/`structures_removed`), `c_bridge.gd` (a parameter of `load_mission_live`, default off; only `tactical_view.gd`'s live call passes true) | R-089-03, R-205-02 | hidden units absent with the flag, present without; rulebook rows 33–38 stand with the flag off |
 | K-d (with lane D) | `space_field_dump` verb, bridge decode | after Westley's answers | shape and size |
-| K-e (`VG-CONTRACT-E1`, first piece of E1) | lots, density, strongpoints getters and frame fields; `om_internal.h`/`checksum_full.c` hashed fields; save format 8 with the pin list | E1's frame | shapes; checksum section moves recorded |
+| K-e (`VG-CONTRACT-E1`, first piece of E1, after K-h) | lots, density, strongpoints getters and frame fields; `om_internal.h`/`checksum_full.c` hashed fields; save format 8 with the pin list (the only place the bump lives) | E1's frame | shapes; checksum section moves recorded |
 
-### Lane A: battle screen (`VG-A`, 18 pieces, two workflows: A1–A8 (11 pieces) then A9–A15 + A12)
+### Lane A: battle screen (`VG-A`, 20 per-file pieces, two workflows: A1–A8 (11) then A9–A15 + A12 (9)). `push/tv-read` is source only: its `test_tactical_readability.gd` is adopted by A1/A5's test writers or dropped.
 
 Seen-reachable: S-104, S-105, S-005, S-007 (today's disc; the plays run again when D's field lands), S-075, S-096, S-101, S-134, S-136, S-135, S-086, S-088, S-095, S-097–S-100, S-091, S-092. Blocked: S-009 (Q-009-02), S-132 (Q-132-02; shapes ship anyway), S-234 (Q-103-05), S-133 (tier source), S-089 and S-205 (K-h), S-090 and S-094 (zones: no data source), S-093 (balance), S-010 → lane C.
 
@@ -71,15 +87,15 @@ Seen-reachable: S-106, S-107. Blocked: S-108 (router; after F). B0 pre-check (th
 
 ### Lane C: ground (`VG-C`, 10 pieces; `scenes/ground3d/**`)
 
-Seen-reachable: S-236, S-001, S-004, S-207, S-010, S-132 walkers. C2 `ground_mesh.gd`, C2b `ground_bands.gd`, C3 `camera_rig_3d.gd`, C4 projection + pick: from K0 (fixture heights); C5 the SubViewport host (VG-VIEW, after C2–C4), `qa_state` `ground3d`, projected `units_px`/`objects_px`; C6 units in 3D (walker Y = ground; flyer Y = layer floor + 150 wu, shadow disc); C7 slopes and layers visible; C8 LOD + no-pop test; C10 re-projection of A's fog, map, markers, shots, deaths, rings (handoff of those five files from VG-A to VG-C for this piece); C9 `look` + plays, then A's plays re-run.
+Seen-reachable: S-236, S-001, S-004, S-207, S-010, S-132 walkers. C2 `ground_mesh.gd`, C2b `ground_bands.gd`, C3 `camera_rig_3d.gd`, C4 projection + pick: from K0 (fixture heights); C5 the SubViewport host (VG-VIEW, after C2–C4), `qa_state` `ground3d`, projected `units_px`/`objects_px`; C6 units in 3D (walker Y = ground; flyer Y = layer floor + 150 wu, shadow disc); C7 slopes and layers visible; C8 LOD + no-pop test; C10 re-projection, one piece per file: `fog_layer.gd`, `map_layer.gd`, `objective_markers.gd`, `fx/shots.gd`, `fx/deaths.gd`, `layer_view.gd` (handoff of those six files from VG-A to VG-C for C10; rulebook row 3's perspective-zoom question ruled before C starts: the 2D zoom test keeps its semantics on the map band, the 3D rig publishes `camera {x,y}` and `scale` as the map band's equivalents); C9 `look` + plays, then A's plays re-run. C runs as two workflows (C2–C4 + C5; C6–C10).
 
 ### Lane D: space landscape (`VG-D`, 9 pieces; HELD until Q-STAGE3-03, Q-166-02, R-188-05, S-246, the D8 band and the kit questions are answered)
 
-As rev 2: `space_noise.c`, `space_plates.c`, `space_raster.c`, mask writer, mission wiring (after E1h), K-d, `scenes/space_field/space_layer.gd` (2D, focus layer, polygons), the statistical tests. Launches on the answers.
+As rev 2: `space_noise.c`, `space_plates.c`, `space_raster.c`, mask writer, mission wiring (after E1i), K-d, `scenes/space_field/space_layer.gd` (2D, focus layer, polygons), the statistical tests. Launches on the answers.
 
 ### Lane E1: settlement and economy, buildable half (`VG-E1`, 20 pieces, two workflows; K-e first)
 
-Seen-reachable: S-193 (density, stages, waves; the slowdown and cover parts parked), S-218, S-237 (look), S-168 (placement). Blocked: S-219 (Q-219-02), S-235 (E2 beats), S-238 and S-167/S-169–S-182 (E2). E1a K-e; E1b density field (`csrc/economy_density.c`); E1c lot stages; E1d waves + rubble/rebuild (10 s); E1e placement + footprint clearing (R-193-03, R-168-01); E1f building set per era pack (manifest + validator, R-168-04); E1g doctrine list as data (R-179-01); E1h strongpoints (`csrc/strongpoint.c`); E1i the one `mission.c`/`unit.c` wiring piece (after K-a lands); E1j save format 8; E1k `scenes/settlement/settlement_layer.gd`; E1l `strongpoint_layer.gd`; E1m `scenes/economy/ticker_beats.gd` (emits the `TickerBeats` signal A8 listens to; no edit to `events_feed.gd`); E1n `map_markers.gd`; E1o placement UI (yield preview is E2); E1p the view wiring (VG-VIEW, after K-e); tests per piece. E2: rev 4 when the batches land.
+Seen-reachable: S-193 (density, stages, waves; the slowdown and cover parts parked), S-218, S-237 (look), S-168 (placement). Blocked: S-219 (Q-219-02), S-235 (E2 beats), S-238 and S-167/S-169–S-182 (E2). E1a K-e; E1b density field (`csrc/economy_density.c`); E1c lot stages; E1d waves + rubble/rebuild (10 s); E1e placement + footprint clearing (R-193-03, R-168-01); E1f building set per era pack (manifest + validator, R-168-04); E1g doctrine list as data (R-179-01); E1h strongpoints (`csrc/strongpoint.c`); E1i the one `mission.c`/`unit.c` wiring piece (after K-a lands; lane D's D5 follows it); E1j (save pins beyond K-e: none; the piece is the ledger row and the Godot `load_game.gd` pin); E1k `scenes/settlement/settlement_layer.gd`; E1l `strongpoint_layer.gd`; E1m `scenes/economy/ticker_beats.gd` (emits the `TickerBeats` signal A8 listens to; no edit to `events_feed.gd`); E1n `map_markers.gd`; E1o placement UI (yield preview is E2); E1p the view wiring (VG-VIEW, after K-e); tests per piece. E2: rev 4 when the batches land.
 
 ### Lane F: Steam phase B and shipping (`VG-F` + `VG-F5`, 8 pieces)
 
@@ -87,7 +103,7 @@ Seen-reachable: S-139–S-143, S-241 (no E2 part), the tester guide. Blocked: S-
 
 ## 2. Interfaces fixed (K0's `architecture.md` table; every test is written against this)
 
-**Unit object** (per tick, full and delta): `{id,faction,type,tier,x,y,hp,layer,facing,target,state,acd?,tl?,ld?,sight?}`. `tier` int, 0 until a source exists. `state` int, always present: bit 1 fired this tick, bit 2 braced (guard/hold), bit 4 in layer transit (`tl` set); 0 otherwise. `acd` int: the tick the ability is ready (omitted when ready and never used). `tl` int layer target, `ld` int done tick: present only during a transit. `sight` int wu: own faction only. Deltas carry a unit when any of these changed.
+**Unit object** (per tick, full and delta): `{id,faction,type,tier,x,y,hp,layer,facing,target,state,acd?,tl?,ld?,sight?}`. `tier` int, 0 until a source exists. `state` int, always present (never omitted): value 1 fired during this call's steps (any of the n), 2 braced (guard/hold, `om_unit_is_braced`), 4 in layer transit (`tl` set); OR-ed; 0 otherwise. `acd` int: the tick the ability is ready (omitted when ready and never used). `tl` int layer target, `ld` int done tick: present only during a transit. `sight` int wu: own faction only. Deltas carry a unit when any of these changed.
 
 **`structures`** (full frame; deltas `structures_changed` with the changed fields and `structures_removed` ids): `{id,type,owner,x,y,hp,stage,cap,nst,next_type,period}`; `cap` 0..1000 capture progress; `nst` the next spawn tick; `period` ticks between spawns.
 
@@ -115,15 +131,15 @@ Story plays `tests/qa/desktop/plays/<lane>/<story>.py`; the review queue and led
 
 ## 4. Self-healing
 
-As rev 2, plus: a parked test file (a Westley threshold) is held off the candidate and listed, the code lands; a stopped piece parks itself and its dependents only; a contract double-reject stops its dependents only; `look` is regression-mode.
+As rev 2, plus: every Westley-threshold check is written in its own `*_park_*` test file; when it is red the clerk leaves that file off the candidate, keeps it on `push/vg-parked`, and lists it in the landing report (the footprint fence only warns on owned files missing from a diff); the code it covers lands. A stopped piece parks itself and its dependents; a parked VG-VIEW link hands `tactical_view.gd` to the next link. A contract double-reject parks its dependents. A lane is dropped only when its clerk has no landable candidate after two check failures of non-parked pieces. `look` is regression-mode and warn-only until its threshold lands.
 
 ## 5. Guard pieces (`VG-GUARD`, separate test writer)
 
-As rev 2; G1's `look` compares against main's frames at the same play moment (planted-blank control), threshold routed.
+As rev 2; G1's `look` compares against main's frames at the same play moment (planted-blank control); warn-only (metric reported, frames attached) until Westley's threshold lands.
 
 ## 6. Owner rows
 
-As rev 2 with: `VG-CONTRACT-E1` (K-e; E1's clerk); C10's five-file handoff A → C; E1h after K-a; plays per lane; the VG-VIEW chain A12 → F5 → C5 → E1p → D hook.
+As rev 2 with: VG-CONTRACT owns `unit.c`, `tactical_support.c`, `mission.c`, `fog.c`, `tactical_move.c`, `tactical_mapgen.c`, `terrain.c` whole while K-a is in flight (then they return to B10/B9/PP-fog/B12/PP-mapgen/TERRAIN-1 or the lane rows); `VG-CONTRACT-E1` (K-e; E1's clerk); C10's six-file handoff A → C; E1i after K-a; plays per lane; the VG-VIEW chain A12 → F5 → C5 → E1p → D hook with the hand-on rule.
 
 ## 7. Liberties (tuning only)
 
@@ -131,7 +147,7 @@ Q-193-02 thresholds (0.10/0.22/0.38/0.58 onto five stages; Westley approves with
 
 ## 8. Budget and kill rule
 
-Per-file pieces: GUARD 8, K0 3, K-a 9, K-f 2, K-h 2, A 18, B 11, C 10, D 9 (held), E1 20, F 8 = 100 (+3 for K-d/K-e amendments) ≈ 103. At 0.707M each: 73M; retries 18M; 12 clerks 6M; audits 5M; reviewer passes 1M: expected about 103M; ceiling 140M. Per piece: expected 0.7M, p90 1.2M, hard stop 2.4M. Per workflow 14M (A and E1 in two each; A's first has 11 pieces ≈ 7.8M expected). Per agent: stop past 120k context. Kill: the ceiling, or two lanes dropped by failures (parked thresholds and parked pieces do not count). Gates 12 by day, 25 by night; lab at 4 workers by day, run 1 at night.
+Per-file pieces: GUARD 8, K0 9, K-a 9, K-f 2, K-h 2, A 20, B 11, C 15, D 9 (held), E1 22, F 8, K-d 3 ≈ 118. At 0.707M each: 83M; retries 21M; 14 clerks 7M; audits 5M; reviewer passes 1M: expected about 117M; ceiling 150M. Per piece: expected 0.7M, p90 1.2M, hard stop 2.4M. Per workflow 14M (A, C, E1 in two each). Per agent: stop past 120k context. Kill: the ceiling, or two lanes dropped (section 4's definition; parked thresholds, parked pieces and contract double-rejects do not count). Gates 12 by day, 25 by night; lab at 4 workers by day, run 1 at night.
 
 ## 9. What Westley does
 
