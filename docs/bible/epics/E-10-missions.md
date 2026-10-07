@@ -23,7 +23,7 @@ Force size is set by parity: the enemy's strength comes from the simulation, the
 
 Put the player's frontier under a telegraphed attack and run the generator. The candidate pool contains (frontier, defensive_stand); its urgency is high, so it is in the top-5 draw pool, and the weighted draw (R-072-05) picks it on the example seed; another seed may draw a different candidate from the pool. The briefing has three sections and names the attacker. Forces: an enemy force worth the attacker's budget × 300 in power, a player force at parity 0.90 of that for capacity 0.5 on medium. Play it out: hold the zone for the required time, lose a third of the force. Final score 0.75 · 1.0 + 0.25 · 0.67 = 0.917, band total_success, region military +15 percent of its deficit, tension −10 percent of current. Same seed, same mission, same forces.
 
-Decided, not built (S-210 to S-214): in an Assault the player's base is a forward base supplied by supply lines and is its original main base; let the enemy occupy it and a result that would classify as strong_success is classified partial_failure, while a held expansion becomes the base and the mission goes on.
+Decided, not built (S-210 to S-214): in an Assault the player's base is a forward base and is its original main base; let the enemy occupy it and a result that would classify as strong_success is classified partial_failure, while a held expansion becomes the base and the mission goes on.
 
 ## Stories
 
@@ -197,12 +197,12 @@ Rules
 | Suppression, Counterinsurgency | garrison in a city | hidden cells among the settlements |
 | Rear Guard / Evacuation | the place being left | pursuing forward base |
 
-- R-210-03  Given a side that the archetype makes the attacker, When its base is given, Then it is a forward base, from which the side produces and to which resources come by supply lines (E-22 S-177 and S-176) [Q-210-03: which side attacks in each archetype; Westley, 2026-10-07: named per mission type by him].
+- R-210-03  Given a side that the archetype makes the attacker, When its base is given, Then it is a forward base from which the side produces; supply lines, the shipments of E-22 S-176, are not an attacker-only rule and either side may have them (Westley, 2026-10-07) [Q-210-03: which side attacks in each archetype; Westley, 2026-10-07: named per mission type by him].
 - R-210-04  Given the base a side is given at the start, When the mission runs, Then that base is the side's original main base for S-212, and a forward base given to an attacker by R-210-03 is its original main base (Westley, 2026-10-02: "attackers get a *forward* base from which they produce and recieve resources from supply lines"); expansions and forward works built later are not for the beta only mission types in which the sides start with a base launch, and there the base a side starts with is its original main base (Westley, 2026-10-07; which types launch is Q-210-07).
 
 Inputs: archetype library; the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
-Open flags: Q-177-07 (carried from E-22 S-177), Q-210-07 (liberty: Architect: which mission types launch in the beta). Where a base stands is whatever the terrain gives (E-17 R-166-03).
+Open flags: Q-210-07 (liberty: Architect: which mission types launch in the beta). Where a base stands is whatever the terrain gives (E-17 R-166-03).
 
 ### S-211 — The resources fit the situation
 As a commander, I want the resources on the map to be scarce or plentiful as the simulation's situation says, tilted toward the side with the better position, and never so thin that I cannot do the job, so that the economy is part of the mission and never a trap.

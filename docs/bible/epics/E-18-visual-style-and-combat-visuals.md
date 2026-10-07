@@ -169,13 +169,13 @@ Open flags: Q-238-01.
 As a commander, I want a ping, an emitting force and a ping alert to read at a glance, so that the three layer actions are visible things.
 
 Rules
-- R-239-01  Given a ping (E-01 R-162-01), When it lands, Then a burst is drawn at the place for as long as the layer is revealed there, and the units it revealed are drawn hidden again when it ends (E-01 R-162-05); the burst slows into place and never snaps [Q-239-01: the look in each manifest].
+- R-239-01  Given a ping (E-01 R-162-01), When it lands, Then a burst is drawn at the place for as long as the layer is revealed there, and the units it revealed are drawn hidden again when it ends (E-01 R-162-05); the burst slows into place and never snaps; every unit caught in the ping shows a small circle for about 5 seconds that shows the unit itself, its features and where it is moving, and is not vision of its surroundings (Westley, 2026-10-07).
 - R-239-02  Given a force set to emit (E-01 S-163), When it is drawn, Then it reads as emitting from a silent force at tactical zoom, using the mark of E-16 S-232.
 - R-239-03  Given a side is pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn for the pinged side: the alert is switched off for now (Westley, 2026-10-05); if it returns, a sector of about 60 degrees toward the caster and nothing more precise (E-16 S-232).
 
 Inputs: ping, emit and alert events (tick delta); manifest fields for the looks.
 Outputs: screen.
-Open flags: Q-239-01.
+Open flags: none.
 
 ### S-240 — Thousands on one screen
 As a player, I want a screen of thousands of units, workers and buildings to stay smooth, so that a busy world is a feature and not a cost.
@@ -233,7 +233,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-132-02, Q-133-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-132-02, Q-133-01, Q-236-02, Q-238-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

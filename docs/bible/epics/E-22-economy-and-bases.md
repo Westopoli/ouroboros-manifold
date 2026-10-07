@@ -159,12 +159,12 @@ Rules
 - R-175-01  Given a settlement on the map, When a side holds it uncontested for a length of time (Westley, 2026-10-06; for now), Then it grows into a further base with its own main building, worker production and lots.
 - R-175-02  Given a main base, When the mission runs, Then its sources never run dry but yield less over time, so a side that stays home and does not expand outward is out-produced and overrun; the resources of an expansion are quick to collect and fizzle out quickly (Westley, 2026-10-06; the rates are for the lab).
 - R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from; forward works can be production only, or also houses and workers if the side wants them, in the manner of Age of Empires 3, and the commander can flag "forward base here" to the economy player (Westley, 2026-10-06; cost and build time are Q-168-03).
-- R-175-05  Given trade caravans (Westley, 2026-10-07: in, and distinct from shipments), When they run, Then they walk visibly between a base and settlements, longer routes pay more and are easier to raid [Q-175-04: who sends them, between which places, and what they pay].
+- R-175-05  Given trade caravans (Westley, 2026-10-07: in, and distinct from shipments), When they run, Then they walk visibly between a base and settlements, longer routes pay more and are easier to raid; the rules send them in solo play and the economy player in paired mode (Westley, 2026-10-07).
 - R-175-04  Given a unit is made at forward works, When it is finished, Then it stands there and walks to the fight, so the walk is longer from a base kept home.
 
 Inputs: settlements (E-17); the economy player's build commands.
 Outputs: bases and forward works in the tick delta.
-Open flags: Q-175-04. Unpicked: trading posts at neutral settlements. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (its supply lines are Q-177-07). Forward works are not a forward base.
+Open flags: none. Unpicked: trading posts at neutral settlements. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (supply lines are not an attacker-only rule, Westley, 2026-10-07). Forward works are not a forward base.
 
 ### S-176 — Shipments
 
@@ -211,7 +211,7 @@ Rules
 
 Inputs: mission archetype (E-10); the region's situation (E-02); the map (E-17).
 Outputs: each side's base kind and place; economic locations and significant resources on the map.
-Open flags: Q-177-07. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
+Open flags: none. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
 
 ### S-178 — When a base falls
 
@@ -223,7 +223,7 @@ Rules
 - R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end: the side that takes the enemy's base gets that region (Westley, 2026-10-06).
 - R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations at no cost beyond the position; a side that loses an expansion loses the income it produced and its position (Westley, 2026-10-06).
 - R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against E-10 R-075-07 and S-077).
-- R-178-06  Given a side's original main base, When it is named, Then it is the base of operations the side was given at the start of the mission, and for an attacker it is the forward base from which it produces and to which resources come by supply lines. Expansions and forward works built later are never an original main base.
+- R-178-06  Given a side's original main base, When it is named, Then it is the base of operations the side was given at the start of the mission, and for an attacker it is the forward base from which it produces. Expansions and forward works built later are never an original main base.
 - R-178-07  Given the player's side has lost its original main base, When the mission is scored, Then the best result it can reach is partial failure (E-10 S-077), and retaking the original main base lifts that limit (Westley, 2026-10-06).
 
 Inputs: base ownership and occupation; the mission archetype.
