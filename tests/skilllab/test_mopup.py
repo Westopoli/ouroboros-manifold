@@ -56,7 +56,7 @@ def test_positive_control_blocked_enemy_not_seen_gives_no_goal():
     assert goal(Stub(shootable=False, sees=False)) is None
 
 
-# spec: Architect ruling 2026-10-06 (residual stalemate), ruling 1: with no enemy seen, hunt the nearest living enemy
+# spec: Architect ruling 2026-10-06 (residual stalemate), ruling 1 (changed 2026-10-07): with no enemy seen, go to the enemy's starting anchor (mopup_goal enemy_anchor kwarg)
 class Hunt(Stub):
     """Unit 1 mine at the origin; living enemies 2 (far) and 3 (nearer), both out of range; `sees` decides sight."""
 
@@ -65,16 +65,21 @@ class Hunt(Stub):
         self.pos = {1: (0.0, 0.0), 2: (900.0, 0.0), 3: (0.0, 600.0), 4: (10.0, 0.0)}
 
 
-def hunt_goal(engine, alive=(1, 2, 3)):
-    return mopup_goal(engine, "w", [1], [2, 3, 4], {1: RANGE}, set(alive))
+def hunt_goal(engine, alive=(1, 2, 3), **kw):
+    return mopup_goal(engine, "w", [1], [2, 3, 4], {1: RANGE}, set(alive), **kw)
 
 
-def test_unseen_enemies_re_order_at_the_nearest_living_enemy():
-    assert hunt_goal(Hunt(sees=False)) == (0.0, 600.0)
+ANCHOR = (1500.0, -300.0)   # the enemy's first-group spawn position at setup
 
 
-def test_nearest_living_enemy_skips_the_dead():
-    assert hunt_goal(Hunt(sees=False), alive=(1, 2)) == (900.0, 0.0)
+def test_unseen_enemies_re_order_at_the_enemy_anchor():
+    assert hunt_goal(Hunt(sees=False), enemy_anchor=ANCHOR) == ANCHOR
+
+
+def test_unseen_goal_is_the_anchor_not_the_nearest_unit():
+    """Living enemy 3 is 600 wu away, far nearer than the anchor; the goal is still the anchor."""
+    assert hunt_goal(Hunt(sees=False), alive=(1, 2, 3), enemy_anchor=ANCHOR) == ANCHOR
+    assert hunt_goal(Hunt(sees=False), alive=(1, 3), enemy_anchor=ANCHOR) == ANCHOR
 
 
 def test_seen_enemy_goal_is_unchanged_from_today():
