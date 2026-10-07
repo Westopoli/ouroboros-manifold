@@ -32,9 +32,9 @@ Rules
 - R-103-01  Given a mission, When the player pans, zooms, or edge-scrolls, Then the camera moves freely with no forced follow; the classic view has one auto-anchor home the player returns to by key, and the designed views of R-103-05 and R-103-06 are the only camera modes.
 - R-103-02  Given any zoom level, When the viewport is read, Then the mission canvas edges bound the camera; it never leaves the map.
 - R-103-03  Given the launch build, When the camera is read, Then the default is the classic RTS view with an auto-anchor home, the camera keeps its height above the ground under it through elevation changes (the Halo Wars floor), and the multi-perspective camera of R-103-05 and R-103-06 ships from launch; the classic view ships in every playtest round regardless of the designed views' state.
-- R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view [Q-103-04: the keys].
-- R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option [Q-103-04: its default state, and whether the peel's plane focus and the layer strip's focus are one control].
-- R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north [Q-103-04: the key and the center it turns about].
+- R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view; the Angle Rack is entered on a held key plus 1 to 5 (Westley, 2026-10-07).
+- R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option on a toggle, and its plane focus and the layer strip's focus are one control (Westley, 2026-10-07).
+- R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north; the flip is a modifier plus the anchor key and turns about the camera's ground target, and the height floor is shared across views (Westley, 2026-10-07).
 - R-103-08  Given a selection in the tactical view, When the player presses A and then left-clicks a point or a visible enemy, Then the selection attack-moves there; right-click alone is move (Westley 2026-10-01; the rest of the control scheme stays under Q-103-04).
 - R-103-09  Given the player pans by keys or by edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
@@ -42,7 +42,7 @@ Rules
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
-Open flags: Q-103-04 (control specifics for the chosen camera: keys, the flip center, height floor per view, peel focus versus strip focus); Q-103-07 (the player-bound camera, an idea only, not a blocker).
+Open flags: Q-103-07 (the player-bound camera, an idea only, not a blocker).
 Chosen through the options pass, `docs/northstar/research/options/camera/`.
 
 ### S-161 — The map view
@@ -96,7 +96,7 @@ Rules
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
-Open flags: none here. The ping of S-232 also takes a layer number key; the keys are Q-232-01 and Q-103-04.
+Open flags: none here. The ping of S-232 also takes a layer number key; the keys are Q-232-03 and R-103-05.
 The control-group hotkeys stand, with no replacement affordance. Chosen through the options pass, `docs/northstar/research/options/control-groups/`.
 
 ### S-106 — The galaxy between missions
@@ -222,15 +222,15 @@ Open flags: Q-231-01 and Q-231-02 (liberty: Architect). The dial, the doctrine s
 As a commander, I want to see my ping and my emitting forces, to be told when I am pinged and from which way, and to be told when a unit type cannot reach a layer, so that the three layer actions are things I can read and use on purpose.
 
 Rules
-- R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one [Q-232-01: the keys and where the control sits; Q-103-04].
-- R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-01].
+- R-232-01  Given selected units that can ping (E-01 S-162), When the player chooses the ping, presses a layer number and clicks a place, Then the ping is given there, and the screen shows the cooldown of the ping if the sim gives one; the ping is an ability on the one command card all selected units share, on the same keystroke for every unit, in a sub-group or the whole group (the style of Immortal: Gates of Pyre; Westley, 2026-10-07), and with a group selected the unit closest to the clicked place casts it, unless it is out of range, in which case the player moves the cursor closer until it is in range [Q-232-03: how the layer is chosen].
+- R-232-02  Given a force, When the player switches it between emitting and silent (E-01 R-163-03), Then the command is given from the HUD and the force's state changes on the next tick [Q-232-03: its key].
 - R-232-03  Given forces on the field, When the in-world chrome is read, Then every force set to emit carries a mark showing that it is emitting, and a silent force carries none.
-- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn: the alert is switched off for now (Westley, 2026-10-05). If it returns, it is a sector of about 60 degrees toward the caster and nothing more precise [Q-232-02 stays open for that case].
-- R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the screen tells the player that the units cannot reach it, whatever the distance [Q-232-02: where and when the cue appears].
+- R-232-04  Given the player's units are pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn: the alert is switched off for now (Westley, 2026-10-05). If it returns, it is a sector of about 60 degrees toward the caster and nothing more precise [the display of a returning alert is not decided].
+- R-232-05  Given selected units whose type cannot fire at a layer offset (E-01 S-164), When the player points at an enemy at that offset, Then the cursor shows a red X while it is out of reach and returns to the regular cursor when it is back in reach (Westley, 2026-10-07), whatever the distance.
 
 Inputs: ping and emit commands; the alert and the unit reach tables from the tick delta.
 Outputs: the ping control and its cooldown; the emit mark; the alert and sector; the reach cue, T2-checkable.
-Open flags: Q-232-01, Q-232-02.
+Open flags: Q-232-03.
 
 ### S-233 — Choosing how the economy runs
 As a commander, I want to choose how the rules run my economy and whether the enemy's economy is clever, so that the game is as hard as I want it.
@@ -325,7 +325,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-02, Q-231-01, Q-231-02, Q-232-01, Q-232-02, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-02, Q-231-01, Q-231-02, Q-232-03, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -31,7 +31,7 @@ As a commander, I want every unit type to have a shape I can read at a glance in
 Rules
 - R-132-01  Given the six Settled Reach baseline types, When drawn in any era, Then Raider is narrow, elongated, swept back and the smallest; Interceptor wider and flatter than Raider; Vanguard a front-heavy wedge or slab; Warden vertical or radial with a central projection; Bombard the longest, dominated by one linear axis; Bastion the widest and most compact, wider than long.
 - R-132-02  Given a T2 screenshot at tactical zoom with the six baseline types, When inspected, Then each type is identifiable from silhouette alone.
-- R-132-05  Given an era roster of 20 to 40 types, When drawn at tactical zoom, Then each type is identifiable [Q-132-02: one persistent silhouette per type, or silhouette families per category with variants read by size and detail].
+- R-132-05  Given an era roster of 20 to 40 types, When drawn at tactical zoom, Then each type is identifiable [Q-132-02: one persistent silhouette per type, or silhouette families per category; parked for the beta, Westley, 2026-10-07].
 - R-132-03  Given a Strike unit, When drawn, Then it is 3 to 5 small models moving as one (E-11 R-088-01).
 - R-132-04  Given any model, When counted, Then it is 150 to 300 polygons for Strike squad members, 300 to 500 for Line, 400 to 600 for Siege, 200 to 800 for structures, 100 to 300 for environment.
 - R-132-06  Given a worker or a building piece of a self-built settlement, When counted, Then it is within [Q-236-02: the polygon budget for workers and for the many pieces of a settlement; Westley's numbers].
@@ -48,6 +48,7 @@ Rules
 - R-133-02  Given Tier 2, When drawn, Then smooth, integrated, polished: deliberate curves, flush weapons, bilateral symmetry, cleaner metallics, faction color as plating, subtle seam glow.
 - R-133-03  Given Tier 3, When drawn, Then flowing, luminous, abstract: organic-geometric forms, minimal surface detail, emissive materials, faction color as a property of the material.
 - R-133-04  Given a faction that fell from Tier 3 to Tier 1, When its forces are drawn next to a Tier 3 neighbor, Then the contrast is immediate at tactical zoom.
+- R-133-06  Given a unit in a mission, When it is drawn, Then the tier it is drawn at is given by the simulation per unit, from the roster (ruling A30; Westley, 2026-10-07).
 - R-133-05  Given an era pack, When authored, Then it defines every type in its roster at all three tiers (one model per type per tier), 3 to 6 tiered point-of-interest structures, 5 to 10 universal environment objects, and the building pieces that settlements are built from, with their stages of construction [Q-133-01: how many building pieces; the 3 to 6 structures are points of interest, and the pieces of S-237 are not counted among them].
 
 Inputs: tier; era manifest.

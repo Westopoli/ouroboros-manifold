@@ -263,7 +263,7 @@ Rules
 - R-190-02  Given any position, When the land flag is read per layer, Then a walking unit can stand only on the layer of the ground there, and on a slope on each layer it passes in turn (E-01 R-001-06).
 - R-190-03  Given a slope, When it is output, Then it carries its position, its length, the layers it joins (adjacent or not), a bottom edge on the lower layer, a top edge on the upper layer, and the midline halfway along its length (E-01 R-001-06, R-004-06).
 - R-190-04  Given the fitted bands, When the map is output, Then the five band heights are output, and E-01 R-010-01 reads them to draw a unit at its layer's height. This amends the note under E-01 Q-E01-01 that the elevation mapping is fixed globally.
-- R-190-05  Given a cover obstacle on the map, When it is generated, Then it has a height in layers, and it blocks sight and fire only on the layers it reaches (E-01 R-007-01, R-007-02) Its height comes from the terrain feature it is (boulder, wall, tree line) and the era kit (Westley, 2026-10-03). Asteroid height on space maps stays with the held map content (Q-098-02).
+- R-190-05  Given a cover obstacle on the map, When it is generated, Then it has a height in layers, and it blocks sight and fire only on the layers it reaches (E-01 R-007-01, R-007-02) Its height comes from the terrain feature it is (boulder, wall, tree line) and the era kit (Westley, 2026-10-03). Asteroid height on space maps stays with the held map content (Q-098-02). The radius cutoffs for the small, medium and huge looks of a cover object are the Architect's (Westley, 2026-10-07).
 - R-190-06  Given the terrain, When a height is stored, Then it is stored continuous in world units, and the layer is derived from it by the bands.
 
 Inputs: bands; slopes; cover obstacles.
@@ -390,13 +390,13 @@ Rules
 - R-246-01  Given a space-era mission in the beta, When it is set up, Then the map has a generated field: each of the five layers is an open-or-blocked sheet (E-01 R-001-04), like ice over open water, and the generator is ported into the simulation as the land one was (Westley, 2026-10-07; Q-STAGE3-03).
 - R-246-02  Given the space kit, When it is drawn, Then it follows the approved prototype with one polish: the blocked space is filled across layers with real placeholder meteors instead of one plane per layer, and the layers are visibly separated.
 - R-246-03  Given a mission, When the simulation sends the map, Then it sends the cell masks and the plate polygons once per mission, and the client draws the layers as stacked 3D sheets from them (Q-166-06, Q-166-07).
-- R-246-04  Given a unit below an upper layer that hides it from the camera, When the player looks, Then a simple vision tube lets the player see through the covering layers around the cursor or selection, with a small effect that says so (Q-S3-01); the layer-visibility system of the approved prototype is the one the spec follows [Q-S3-02: which prototype].
+- R-246-04  Given a unit below an upper layer that hides it from the camera, When the player looks, Then a simple vision tube lets the player see through the covering layers around the cursor or selection, with a small effect that says so (Q-S3-01); the layer-visibility system of the layers prototype (`scenes/mockups/layers/`: with a unit sent to another layer, one circle moves with the unit and a second sits at the exact height of the layer it is moving to) is the one the spec follows (Q-S3-02).
 - R-246-05  Given an area units cannot leave, When a production building stands in it, Then in paired play that is the builder's problem, and in single player the rules place no production building in a section units cannot leave (Q-166-08).
 - R-246-06  Given the space-era roster, When it is read, Then one unit type is purposefully smaller, a group that can break formation and pass gaps other ships cannot (an animation later); sizes are decided with the roster (Q-166-05).
 
 Inputs: the seed; the mission archetype; the era kit (kits/space.json).
 Outputs: per layer the cell masks and plate polygons; blocked cells in the simulation's layer bits.
-Open flags: Q-S3-02.
+Open flags: none.
 
 ## Inputs
 

@@ -12,7 +12,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-006 | E-01 | "I spend a pulse to see every layer around a unit for two seconds, then it is gone and on cooldown." | Spec'd | `epics/E-01-layer-system.md` S-006 |
 | S-007 | E-01 | "A tall obstacle hides units on more layers than a short one; cover hides but never protects or blocks." | Spec'd | `epics/E-01-layer-system.md` S-007 |
 | S-008 | E-01 | "I know whether my unit can shoot an enemy one layer up." | Spec'd, blocked on Q-008-02, Q-008-03 | `epics/E-01-layer-system.md` S-008 |
-| S-009 | E-01 | "I see at a glance which layer every unit is on and which layer I am focused on." | Spec'd, blocked on Q-009-02 | `epics/E-01-layer-system.md` S-009 |
+| S-009 | E-01 | "I see at a glance which layer every unit is on and which layer I am focused on." | Spec'd; for the beta the vision tube serves (Q-009-02 closed) | `epics/E-01-layer-system.md` S-009 |
 | S-010 | E-01 | "A unit on a higher layer sits visibly higher on screen, and rises or drops when it changes layer." | Spec'd | `epics/E-01-layer-system.md` S-010 |
 | S-011 | E-01 | "An era pack can restrict which layers a unit type may use; the Settled Reach restricts nothing." | Spec'd | `epics/E-01-layer-system.md` S-011 |
 | S-012 | E-02 | "Each region's condition is four plain numbers and two summaries." | Ready | `epics/E-02-region-fields-and-drift.md` S-012 |
@@ -106,7 +106,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-100 | E-13 | "Units face what they shoot and where they go, and turn rather than snap." | Spec'd | `epics/E-13-movement-and-command.md` S-100 |
 | S-101 | E-13 | "I see units turn, slow behind blockers, and settle into their slots." | Spec'd, needs reference | `epics/E-13-movement-and-command.md` S-101 |
 | S-102 | E-13 | "Every peer computes the same movement from the same commands." | Spec'd | `epics/E-13-movement-and-command.md` S-102 |
-| S-103 | E-16 | "A free camera I manage myself, with the Angle Rack, the Layer Peel, and a flip key." | Spec'd, blocked on Q-103-04; idea only: Q-103-07 | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
+| S-103 | E-16 | "A free camera I manage myself, with the Angle Rack, the Layer Peel, and a flip key." | Spec'd; keys decided 2026-10-07; idea only: Q-103-07 | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
 | S-104 | E-16 | "A lean HUD that shows what I need and stays out of the way." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-104 |
 | S-105 | E-16 | "Click, box-select, bind groups, and never an all-army button." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-105 |
 | S-106 | E-16 | "A 3D star map where territory glows, borders touch, and war flashes." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-106 |
@@ -135,7 +135,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-129 | E-15 | "Convoys and evacuees are real units that die." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-129 |
 | S-130 | E-15 | "Objectives and garrisons drift and hazards travel." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-130 |
 | S-131 | E-15 | "A nebula looks like a place I cannot see into; a garrison looks like something I can take." | Spec'd, needs reference | `epics/E-15-reinforcement-supply-and-hazards.md` S-131 |
-| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Spec'd, needs reference, blocked on Q-132-02 | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
+| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Spec'd, needs reference; Q-132-02 parked for the beta | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
 | S-133 | E-18 | "A faction's technology tier shows in how its ships look, and shows loss when it falls." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-133 |
 | S-134 | E-18 | "Shots travel, hits bloom, nothing twitches." | Spec'd | `epics/E-18-visual-style-and-combat-visuals.md` S-134 |
 | S-135 | E-18 | "Every ability reads at a glance as an ability in progress." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-135 |
@@ -229,7 +229,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-228 | E-08 | "My pair is part of the chapter, the ledger and the world." | Direction decided 2026-10-02, not scheduled; Q-228-01, Q-228-02 | `epics/E-08-generational-structure.md` S-228 |
 | S-230 | E-16 | "As the economy player of a pair, my screen shows resources, workers, the yield of a lot before I place, my schedule, technology and defenses, and no list of what the commander needs." | Design decided 2026-10-02 and 10-07, not scheduled; Q-230-02 parked for the beta | `epics/E-16-client-camera-hud-and-world-view.md` S-230 |
 | S-231 | E-16 | "Alone, I have a dial, a doctrine switch, unit-mix switches and I ask by pointing, even from the map view." | Design decided 2026-10-02 and 10-07, not scheduled; Q-231-01 and -02 liberty: Architect | `epics/E-16-client-camera-hud-and-world-view.md` S-231 |
-| S-232 | E-16 | "I see my ping and my emitting forces, I am told when I am pinged and from which way, and told when a unit cannot reach a layer." | Spec'd, blocked on Q-232-01, Q-232-02 | `epics/E-16-client-camera-hud-and-world-view.md` S-232 |
+| S-232 | E-16 | "I see my ping and my emitting forces, I am told when I am pinged and from which way, and told when a unit cannot reach a layer." | Spec'd, keys decided in part 2026-10-07 (Q-232-03) | `epics/E-16-client-camera-hud-and-world-view.md` S-232 |
 | S-233 | E-16 | "I choose how the rules run my economy and whether the enemy's economy is clever." | Design decided 2026-10-02 and 10-07, not scheduled; no open flag | `epics/E-16-client-camera-hud-and-world-view.md` S-233 |
 | S-234 | E-16 | "I zoom from a single unit to the battlefield's map view in one smooth drawing, and the zoom stops there." | Spec'd; the Sand Table is decided by the prototype (Q-103-05) | `epics/E-16-client-camera-hud-and-world-view.md` S-234 |
 | S-235 | E-16 | "The map shows where the economy is, weather moving across it, and the ticker tells me what happened to it." | Design decided 2026-10-02, not scheduled; Q-235-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-235 |
@@ -243,4 +243,4 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-243 | E-20 | "The era pack checklist names what the economy and the landscape need." | Design decided 2026-10-02, not scheduled; Q-243-01, Q-159-08, Q-146-02, Q-146-03 | `epics/E-20-multi-era-and-monetization.md` S-243 |
 | S-244 | E-21 | "The names and teaching text for the economy come from the same pipeline as every other library." | Design decided 2026-10-02, not scheduled; Q-244-01, Q-244-02 | `epics/E-21-offline-ai-pipeline.md` S-244 |
 | S-245 | E-16 | "I report a bug or leave feedback from the game or the website, with the last seconds captured, and it reaches a queue a model works through." | Design direction 2026-10-06, not scheduled; Q-245-01 to Q-245-03 | `epics/E-16-client-camera-hud-and-world-view.md` S-245 |
-| S-246 | E-17 | "In space each layer is a sheet of open and blocked space with real obstacles filling it, and the layers sit visibly apart." | Design decided 2026-10-07, not scheduled (Q-S3-02) | `epics/E-17-map-generation.md` S-246 |
+| S-246 | E-17 | "In space each layer is a sheet of open and blocked space with real obstacles filling it, and the layers sit visibly apart." | Design decided 2026-10-07, not scheduled no open flag | `epics/E-17-map-generation.md` S-246 |
