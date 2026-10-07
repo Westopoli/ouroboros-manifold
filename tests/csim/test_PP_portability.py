@@ -30,12 +30,14 @@ PROBE = ROOT / "scripts/net_xplat_checksum.py"
 LINT = ROOT / "scripts/specfactory/libm_lint.py"
 PYTHON = sys.executable
 
-# Tick -> full checksum word, seed 3, measured by the probe route (TD-NET-probe-pins).
+# Tick -> full checksum word, seed 3, measured by the probe route (TD-NET-probe-pins-2).
+# These move whenever a ruled sim change moves the hashed state; re-pin under a ledger row; the
+# cross-OS check compares each OS's probe output to these values.
 PINNED_FULL = {
-    100: 17857234444101692619,
-    500: 4620399227560823259,
-    1000: 5949207199339162702,
-    2000: 16137289696355536662,
+    100: 11391461709400866719,
+    500: 7777581636381517055,
+    1000: 10189854968958058374,
+    2000: 2362659344636625831,
 }
 
 
