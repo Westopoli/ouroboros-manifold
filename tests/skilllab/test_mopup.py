@@ -54,3 +54,32 @@ def test_enemy_on_another_layer_in_range_does_not_veto_even_when_shootable():
 
 def test_positive_control_blocked_enemy_not_seen_gives_no_goal():
     assert goal(Stub(shootable=False, sees=False)) is None
+
+
+# spec: Architect ruling 2026-10-06 (residual stalemate), ruling 1: with no enemy seen, hunt the nearest living enemy
+class Hunt(Stub):
+    """Unit 1 mine at the origin; living enemies 2 (far) and 3 (nearer), both out of range; `sees` decides sight."""
+
+    def __init__(self, sees):
+        super().__init__(shootable=True, sees=sees)
+        self.pos = {1: (0.0, 0.0), 2: (900.0, 0.0), 3: (0.0, 600.0), 4: (10.0, 0.0)}
+
+
+def hunt_goal(engine, alive=(1, 2, 3)):
+    return mopup_goal(engine, "w", [1], [2, 3, 4], {1: RANGE}, set(alive))
+
+
+def test_unseen_enemies_re_order_at_the_nearest_living_enemy():
+    assert hunt_goal(Hunt(sees=False)) == (0.0, 600.0)
+
+
+def test_nearest_living_enemy_skips_the_dead():
+    assert hunt_goal(Hunt(sees=False), alive=(1, 2)) == (900.0, 0.0)
+
+
+def test_seen_enemy_goal_is_unchanged_from_today():
+    assert hunt_goal(Hunt(sees=True)) == (0.0, 600.0)
+
+
+def test_positive_control_no_living_enemy_gives_no_goal():
+    assert hunt_goal(Hunt(sees=False), alive=(1,)) is None
