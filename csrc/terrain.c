@@ -1272,3 +1272,11 @@ int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0,
     }
     return 0;
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+uint32_t om_terrain_get_heights(const om_world *w, int32_t *out, uint32_t cap) {
+    /* STUB */
+    (void)w; (void)out; (void)cap;
+    return 0;
+}
+/* ---- end generated stubs ---- */

@@ -3013,6 +3013,17 @@ uint64_t om_tactical_base_tick(const om_world *w) {
     const om_tac_state *st = w ? om_tac_ro(w) : NULL;
     return st ? st->base_tick : 0;
 }
+uint32_t om_tactical_event_count(om_world *w) {
+    /* STUB */
+    (void)w;
+    return 0;
+}
+
+int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a, int32_t *b, uint64_t *tick) {
+    /* STUB */
+    (void)w; (void)i; (void)kind; (void)a; (void)b; (void)tick;
+    return 0;
+}
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */

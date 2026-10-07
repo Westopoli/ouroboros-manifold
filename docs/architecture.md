@@ -212,9 +212,9 @@ Enums are sent as the header's integer values (`om_tier`, `om_archetype`, `om_st
 
 ### hello (server to client, once)
 ```json
-{"type":"hello","abi":4,"layout_ok":true,"seed":1,"n_regions":60,"features":[1,2,3,6],"checksum_cadence":10,"player_faction":-1}
+{"type":"hello","abi":5,"layout_ok":true,"seed":1,"n_regions":60,"features":[1,2,3,6],"checksum_cadence":10,"player_faction":-1}
 ```
-`abi` is `om_abi_version()` (4 since PP-contract; 3 since HDR3); `layout_ok` is `om_abi_layout_check(sizeof rows)`; `features` lists the enabled `om_feature` ids. `player_faction` is always -1 at hello time (no world is configured yet; the real value is available via `om_player_faction(w)` after `set_seed`).
+`abi` is `om_abi_version()` (5 since VG-K0; 4 since PP-contract; 3 since HDR3); `layout_ok` is `om_abi_layout_check(sizeof rows)`; `features` lists the enabled `om_feature` ids. `player_faction` is always -1 at hello time (no world is configured yet; the real value is available via `om_player_faction(w)` after `set_seed`).
 
 ### snapshot (server to client, on request and after `load`)
 ```json
@@ -366,6 +366,26 @@ Terrain verbs (E-17 S-186). Flat requests; each needs a world (`"no world"` othe
 - Errors, each `{"type":"error","name":<verb>,"reason":...}`: `"no world"`, `"no terrain"`, `"missing field"`.
 
 Save slots (T2g-2 rulings): `save` writes the state bytes to `path` and a sidecar `path + ".json"` with `{"tick","chapter","phase","seed","n_regions","format_version"}` so the client can list slots without parsing the binary; `list_saves` answers `{"type":"saves","slots":[{"path":"saves/slot1.omsave","tick":120,"chapter":2,"phase":0,"seed":1,"format_version":7}]}` from the sidecars in `dir`, slots sorted by slot name, ascending byte order; the slot directory is the client's `user://saves` path passed absolute; `load` needs a world whose region count equals the save's (the client sends `set_seed` with the sidecar's `seed` and `n_regions`, and `"new_campaign": false` so the R-056-04 opening jump does not run on a world this call is about to overwrite, first; a fresh pipe process has a 1-region world and refuses); it answers `error` with `reason` `"version mismatch"` or `"corrupt"` (until save.c distinguishes them, T2c-3, the pipe says `corrupt` for both) when `om_load_state_read` returns nonzero (R-111-03) and the world is left untouched, else the post-load `snapshot`; autosave (R-111-01) is client-side, a `save` sent after the `mission` frame, after the `debrief` frame and after the `chronicle` frame, never mid-mission (R-111-04). The sidecar `chapter` field is `om_chapter_get_number(w)` (HDR4, `csrc/generational.c`), the number the snapshot's `chapter` carries.
+
+### Visible-game tactical fields (VG-K0, ABI 5; the field table every lane's tests are written against)
+
+New C getters (K0 stubs return 0 or -1 until K-a): `om_tactical_event_count`, `om_tactical_event_get_at`, `om_structure_count`, `om_structure_get_at`, `om_objective_get_done`, `om_map_obstacle_count`, `om_map_get_obstacle_at`, `om_terrain_get_heights`. Sight and layer target reuse `om_fog_get_drawn_sensor_circle_radius` and `om_unit_get_target_layer`; abilities are read through the existing `om_tick_read_ability_events`, by the pipe only, once per call.
+
+**Unit object** (per tick, full and delta): `{id,faction,type,tier,x,y,hp,layer,facing,target,state,acd?,tl?,ld?,sight?}`. `tier` int, 0 until a source exists. `state` int, always present (never omitted): value 1 fired during this call's steps (any of the n), 2 braced (guard/hold, `om_unit_is_braced`), 4 in layer transit (`tl` set); OR-ed; 0 otherwise. `acd` int: the tick the ability is ready (omitted when ready and never used). `tl` int layer target, `ld` int done tick: present only during a transit. `sight` int wu: own faction only. Deltas carry a unit when any of these changed.
+
+**`structures`** (full frame; deltas `structures_changed` with the changed fields and `structures_removed` ids): `{id,type,owner,x,y,hp,stage,cap,nst,next_type,period}`; `cap` 0..1000 capture progress; `nst` the next spawn tick; `period` ticks between spawns.
+
+**`events`** (per tick, never diffed; accumulated over `n>1` with their tick; cap 512 per call; `events_dropped` int when the cap is hit): `[kind,a,b,tick]`, kinds `0 fire(a shooter, b target)`, `1 ability(a unit, b ability id)`, `2 kill(a unit, b killer or -1)`, `3 capture(a structure, b new owner)`. With `fog_filter` on, an event is sent when `a` or `b` is visible to the local faction.
+
+**`profiles`** (once per full frame): `[{type,max_hp,range,interval,sensor,ability,acd_max,aoe}]`.
+
+**`objectives`** (per tick): `[{i,progress,done}]`, `done` 0 open, 1 complete, 2 failed.
+
+**`map`** (full frames only, as today): `cover[{x,y,r,h,class}]` class 0 small (<150 wu) 1 medium (<400) 2 huge; `obstacles[{x,y,r}]`.
+
+**Dumps** (once per mission): `terrain_dump` gains `heights` (hex LE int32 cm, `cells_w*cells_h`); `space_field_dump` (K-d) and `lots_dump` (K-e) shapes are written in their amendments.
+
+**Verbs**: `command` gains `set_layer {units, layer}`; `activate_ability` as today; `mission_start` gains `fog_filter` (K-h).
 
 ### Schemas and fixture
 `docs/northstar/spec_factory/transport/{snapshot,delta,command}.schema.json` (JSON Schema, draft 2020-12, `additionalProperties: true`, required keys as above); `tests/transport/fixtures/snapshot_seed1_tick10.json` is produced through ctypes by `scripts/specfactory/snapshot_fixture.py --seed 1 --regions 80 --ticks 10 --generate` (80, not `set_seed`'s doc-example 60: 60 sits below `om_world_generate`'s feasibility floor for the default 15-faction generator on every seed, `csrc/worldgen.c`) and is the client pieces' stand-in until T1 attaches; `tests/transport/test_pipe_shapes.py` validates the fixture against the schema and, once `pipe/ouroboros_pipe` exists, drives it with a 10-step script and asserts the streamed checksum equals `om_world_get_state_checksum` through ctypes.
