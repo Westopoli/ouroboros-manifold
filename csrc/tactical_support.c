@@ -1428,3 +1428,17 @@ void om_support_install_net_hooks(om_world *w) {
     w->support_state_write = om_sup_save_write;
     w->support_state_read = om_sup_save_read;
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+uint32_t om_structure_count(const om_world *w) {
+    /* STUB */
+    (void)w;
+    return 0;
+}
+
+uint32_t om_structure_get_at(const om_world *w, uint32_t i) {
+    /* STUB */
+    (void)w; (void)i;
+    return 0;
+}
+/* ---- end generated stubs ---- */
