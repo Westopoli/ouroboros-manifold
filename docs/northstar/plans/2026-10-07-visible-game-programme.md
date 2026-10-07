@@ -105,6 +105,7 @@ Output: `docs/northstar/plans/2026-10-07-visible-game-spec.md` (lanes, contracts
 1. Settlement: economy play too, from the answered batches; small open rules may be Architect liberties, documented.
 2. The 3D landscape: in.
 3. Date: none; done right; efficiency, parallelism and no drift are the measures. A drift-check rule joins CLAUDE.md.
+4. Go (Westley, 2026-10-07, confirmed in the Westley chat after the Architect chat relayed it; verbatim): "The visible game programme builds Spec'd stories; the Definition of Ready and the open-flag rule are waived for the visual layer (E-16, E-18, E-12, E-22's open flags listed); blocked stories stay listed and are not claimed Seen."
 
 ## Verification (how we know the programme worked)
 
