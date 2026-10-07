@@ -512,7 +512,7 @@ id = "C8"
 manager = "M3"
 wave = 3
 owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd"]
-owns_glob = ["scenes/main_menu/**", "scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*", "scenes/loading_screen/**"]
+owns_glob = ["scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*", "scenes/loading_screen/**"]
 acceptance = [
     "tests/qa/desktop/test_flow_spine.py",
 ]
@@ -1290,6 +1290,18 @@ depends_on = ["PP-contract", "core", "PP-move", "PP-unit", "PP-fog", "TERRAIN-1"
 status = "pending"
 tests_pending = true
 size_estimate = "stage 2 of the ground substrate: walkers, slopes, ground vision, era kind (spec 2026-10-06); the contract piece lands first on push/terrain2-base"
+
+[[piece]]
+id = "TERRAIN-3"
+manager = "M0"
+wave = 6
+owns = ["scenes/tactical_c/terrain_layer.gd", "tests/csim/test_E01_T3_contract.py", "tests/test_c_bridge_terrain.gd", "tests/test_tactical_terrain_layer.gd"]
+owns_glob = []
+acceptance = ["tests/test_c_bridge_terrain.gd", "tests/test_tactical_terrain_layer.gd"]
+depends_on = ["PP-contract", "TERRAIN-2", "C8"]
+status = "pending"
+tests_pending = true
+size_estimate = "stage 3 of the ground substrate: terrain layer in the tactical view and the bridge terrain getters; the contract lands first on push/t3-contract (era_config.gd and the daemon_client extra ride later lanes)"
 
 [[piece]]
 id = "SPACELAB-1"
