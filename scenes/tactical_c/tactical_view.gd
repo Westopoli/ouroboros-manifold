@@ -77,7 +77,8 @@ var _pointer_seen := false
 var _facing_fixed := false
 var _frozen_facing: Dictionary = {}
 var _selected: Array = []
-var _unit_visuals: Dictionary = {}
+var _units_node: Node2D
+var _map_node: Node2D
 var _display_px: Dictionary = {}
 var _last_command: Dictionary = {}
 
@@ -118,6 +119,7 @@ func _ready() -> void:
 	# view self-loads the first live tactical frame on a fresh route-in. A
 	# failed live load leaves the view empty and logs the reason; it never
 	# falls back to a fixture (C5-2).
+	_ensure_layers()
 	_load_live()
 	_clock_label = _make_hud_label(Vector2(1500.0, 20.0))
 	_objective_label = _make_hud_label(Vector2(20.0, 20.0))
@@ -126,6 +128,19 @@ func _ready() -> void:
 	var end_mission_btn := get_node_or_null("CanvasLayer/EndMission")
 	if end_mission_btn != null:
 		end_mission_btn.pressed.connect(_end_mission)
+
+
+func _ensure_layers() -> void:
+	if _map_node != null:
+		return
+	_map_node = preload("res://scenes/tactical_c/map_layer.gd").new()
+	_map_node.name = "MapLayer"
+	add_child(_map_node)
+	move_child(_map_node, 0)
+	_units_node = preload("res://scenes/tactical_c/unit_visuals.gd").new()
+	_units_node.name = "UnitVisuals"
+	add_child(_units_node)
+	move_child(_units_node, 1)
 
 
 func _load_live() -> void:
@@ -452,6 +467,7 @@ func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
 		if sx >= rx0 and sx <= rx1 and sy >= ry0 and sy <= ry1:
 			out.append(int(id_str))
 	_selected = out.duplicate()
+	_sync_selection()
 	_update_hud()
 	return out
 
@@ -460,6 +476,7 @@ func qa_set_selected(ids: Array) -> void:
 	_selected = []
 	for v in ids:
 		_selected.append(int(v))
+	_sync_selection()
 	_update_hud()
 
 
@@ -569,6 +586,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_attack_move_mode = false
 			var w := _to_world(mb.position)
 			send_command({"kind": "move", "unit_ids": _selected.duplicate(), "x": w.x, "y": w.y})
+			if not _selected.is_empty():
+				_units_node.set_move_marker(w)
 
 
 func _to_world(screen: Vector2) -> Vector2:
@@ -598,6 +617,11 @@ func _to_screen(wx: float, wy: float) -> Array:
 	return [sx, sy]
 
 
+func _sync_selection() -> void:
+	if _units_node != null:
+		_units_node.set_selected(_selected)
+
+
 func _prune_selected() -> void:
 	var live_ids := {}
 	for u in _frame.get("units", []):
@@ -607,6 +631,7 @@ func _prune_selected() -> void:
 		if live_ids.has(int(s)):
 			kept.append(int(s))
 	_selected = kept
+	_sync_selection()
 
 
 func _update_display_px() -> void:
@@ -637,29 +662,15 @@ func _update_display_px() -> void:
 func _redraw() -> void:
 	if not is_inside_tree():
 		return
-	# Build a faction lookup for color selection.
-	var faction_of: Dictionary = {}
-	for u in _frame.get("units", []):
-		faction_of[str(int(u.get("id")))] = int(u.get("faction", 0))
-
-	var seen := {}
-	for id_str in _display_px:
-		var id := int(id_str)
-		seen[id] = true
-		var px: Array = _display_px[id_str]
-		var faction := int(faction_of.get(id_str, 0))
-		var poly: Polygon2D
-		if _unit_visuals.has(id):
-			poly = _unit_visuals[id]
-		else:
-			poly = _make_unit_visual(faction)
-			add_child(poly)
-			_unit_visuals[id] = poly
-		poly.position = Vector2(float(px[0]), float(px[1]))
-	for id in _unit_visuals.keys().duplicate():
-		if not seen.has(id):
-			_unit_visuals[id].queue_free()
-			_unit_visuals.erase(id)
+	_ensure_layers()
+	var lf := _get_local_faction()
+	_map_node.set_frame(_frame, SimSession.bridge().mission(), lf, _world_scale, _camera)
+	_units_node.set_frame(_frame, lf, _world_scale, _camera)
+	if _stuck or _rubber_band:
+		for id_str in _display_px:
+			var n: Node2D = _units_node.unit_node(int(id_str))
+			if n != null:
+				n.position = Vector2(float(_display_px[id_str][0]), float(_display_px[id_str][1]))
 
 
 func _make_unit_visual(faction: int) -> Polygon2D:
