@@ -164,3 +164,33 @@ Origin: Westley, 2026-10-07, on the lab's stalemates: "why can't we position the
 2. 5% as the draw band on remaining hp.
 
 Build impact, for the builder's piece card: `contract.py` (`Setup.decided_by_survivors`, `FightResult.winner`), `fight.py` (the blind count and the winner), `scan.py` (`cell_result`), `scenes.py` (`placed_scene(layout, play, start_distance)`); `depth.py` keeps its six features, so the existing depth tests stand.
+
+
+## Rev 4 (2026-10-07, Westley "a, that sounds good, that accounts for the whole situation"): feature-relative placement, roles, a hold condition
+
+Supersedes Rev 3's Rule 1 (translated formations) and completes Rule 2. The placement is the skill: each play says where its formation stands relative to the layout's features, which side defends and which attacks, and how a denial play wins.
+
+**Rule 1, placement by feature.** Every play declares anchors in layout terms, resolved by `scenes.placed_scene(layout, play, start_distance)` against the layout's `Features` (choke cells, lane mouths, cover discs, the blocked-layer top): the defender's formation is placed already in shape at its anchor; the attacker (the other side) is placed in its own shape `start_distance` from the choke on its side and is the only side that approaches (attack-move toward the defender's anchor); the defender holds (guard) unless its timeline says otherwise. Nothing walks to a formation.
+
+| Play | Role | Defender anchor (in shape) | Attacker |
+|---|---|---|---|
+| s1_hold_choke | defender | at the choke mouth on the defender's side, facing the choke | blob from `start_distance` |
+| s1_outrange | defender | one weapon reach beyond the choke exit, facing it | blob |
+| s2_concave | defender | concave around the choke exit | blob |
+| s2_spread_line | defender | a line across the choke exit at one reach | blob |
+| s2_screen | defender | screen at the exit, main body behind | blob |
+| s3_types_by_reach | defender | long-reach types behind the nearest cover to the exit, short-reach in front | blob |
+| s4_bait | defender | bait group at the lane mouth, ambush behind cover beside it; timeline unchanged | blob (chases the bait) |
+| s5_vulnerable_away | defender | vulnerable types on the far side of the choke from the attacker | blob |
+| s2_mass_one_end (counter) | attacker | the skilled line as above | mass at one end of the line |
+| s4_do_not_chase (counter) | attacker | the bait play as above | holds at `start_distance`, never chases |
+| s1_outrange (counter use) | attacker | the hold-choke play | stands off at reach |
+| naive | attacker | the defender is the naive blob at the choke mouth | blob from `start_distance` |
+
+Where a layout has no choke (choke width none), "the choke" is the midpoint of the corridor; where it has no lane, the bait mouth is the choke mouth; where it has no cover, "behind cover" is "behind the formation". Every anchor cell must be walkable on the play's layer (the mask test); if a formation does not fit, the scene shifts it along the corridor axis until it does and records the shift in the row.
+
+**Rule 2, outcomes.** As Rev 3 (decided by survivors after 400 blind ticks following first damage; draw within 5%), plus the hold condition: after `hold_ticks` from first damage, if at least half the defender's living units stand within 300 wu of the defender's anchor and no living attacker does, the fight ends `held` and the defender wins. `hold_ticks` = 1,200 (60 s; draft, Westley's number). Before first damage: cap or wipe only. Outcome labels: `side0`, `side1`, `draw`, `decided`, `held`, `cap`.
+
+**What `start_distance` measures now:** the time the attacker needs to reach a placed defence; the feature stays (six features, 648 grid, 200 sampled).
+
+**Build impact:** `plays_space.py` gains an `anchors` declaration per play (role, defender anchor kind, attacker kind) used only by `placed_scene`; `scenes.placed_scene` resolves anchors against `Features` and the map; `fight.py` the `held` end; `scan.cell_result` treats `held` like a wipe for the defender; `depth.py` unchanged apart from the labels. Tests: the anchor table above (one case per play per layout kind: with and without choke, lane, cover), the shift rule, `held`, the existing-scenes hash.
