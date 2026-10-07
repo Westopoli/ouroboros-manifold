@@ -245,7 +245,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
         for s in mop_sides:
             if not eligible(s):
                 continue
-            goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set, before[0])
+            goal = mopup_goal(engine, w, side_ids[s], side_ids[1 - s], ranges, alive_set, before[0], timeline.anchors[1 - s])
             if goal is not None:
                 for ids, _offset in _chunks(engine, w, [u for u in side_ids[s] if u in alive_set]):
                     engine.order_attack_move(w, ids, goal[0], goal[1])   # v2: no chunk offsets
