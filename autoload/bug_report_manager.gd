@@ -2,9 +2,9 @@ extends Node
 
 const SimSession := preload("res://autoload/sim_session.gd")
 
-const BUFFER_SNAPSHOTS := 5
+const BUFFER_SNAPSHOTS := 10
 const BUFFER_CADENCE_SEC := 1.0
-const COMMAND_BUFFER_SEC := 5.0
+const COMMAND_BUFFER_SEC := 10.0
 const REPORTS_DIR := "user://logs/reports"
 
 var _active := true
@@ -145,6 +145,10 @@ func _build_zip(screenshot: PackedByteArray) -> PackedByteArray:
 		"command_log_entries": _command_log.size(),
 		"note": "Paste this file into Discord for Westopoli.",
 	}
+	var bridge = SimSession.bridge()
+	if bridge != null:
+		metadata["seed"] = bridge.live_seed()
+	metadata["scene"] = SceneRouter._current_scene_name
 	_zip_json(writer, "metadata.json", metadata)
 
 	if not _snapshot_buffer.is_empty():

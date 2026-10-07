@@ -511,7 +511,7 @@ status = { state = "attached", attach_sha = "6abaff8" }
 id = "C8"
 manager = "M3"
 wave = 3
-owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd"]
+owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd", "tests/test_scene_router_queue.gd"]
 owns_glob = ["scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*", "scenes/loading_screen/**"]
 acceptance = [
     "tests/qa/desktop/test_flow_spine.py",
@@ -625,7 +625,7 @@ tests_pending = true
 id = "G-bugreport"
 manager = "M3"
 wave = 3
-owns = []
+owns = ["tests/test_bug_report_words_seed.gd"]
 owns_glob = ["scenes/bug_report/**", "autoload/bug_report_manager.gd"]
 acceptance = []
 depends_on = []
@@ -1246,6 +1246,9 @@ id = "NET-backend"
 manager = "M0"
 wave = 5
 owns = [
+    "autoload/net/lockstep_session.gd",
+    "autoload/net/loopback_transport.gd",
+    "autoload/net/transport.gd",
     "csrc/checksum_full.c",
     "csrc/cmd_stream.c",
     "csrc/cmd_stream.h",
@@ -1260,12 +1263,39 @@ owns = [
     "tests/csim/test_E16_C2_save_version.py",
     "tests/test_load_game_wrong_version.gd",
 ]
-owns_glob = ["tests/net/**", "tests/csim/test_net_*.py", "autoload/net/**", "docs/northstar/baselines/**"]
+owns_glob = ["tests/net/**", "tests/csim/test_net_*.py", "docs/northstar/baselines/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = "landed"
 tests_pending = true
 size_estimate = "lockstep backend: checksum, command stream, pipe verbs, harness, client session, save hooks"
+
+[[piece]]
+id = "NET-wire-A"
+manager = "M0"
+wave = 5
+owns = [
+    "autoload/net/steam_transport.gd",
+    "scripts/fetch_godotsteam.sh",
+    "addons/godotsteam/godotsteam.gdextension",
+    "export_presets.cfg",
+    "steam_appid.txt",
+    "tests/test_steam_transport.gd",
+    "tests/transport/test_fetch_godotsteam.py",
+    ".gitignore",
+    "autoload/net/net_match.gd",
+    "autoload/steam/steam_init.gd",
+    "scripts/net_xplat_checksum.py",
+    "tests/test_lockstep_catchup.gd",
+    "tests/test_net_match.gd",
+    "tests/csim/test_PP_portability.py",
+]
+owns_glob = []
+acceptance = []
+depends_on = ["NET-backend"]
+status = "pending"
+tests_pending = false
+size_estimate = "Steam transport wiring: transport class, GodotSteam fetch script, extension, export presets, app id"
 
 [[piece]]
 id = "TERRAIN-1"

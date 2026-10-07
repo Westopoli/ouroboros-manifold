@@ -25,8 +25,18 @@ SRC     := $(wildcard csrc/*.c)
 HDR     := csrc/ouroboros_sim.h
 
 CFLAGS_COMMON   := -std=c11 -Wall -Wextra -Icsrc -fPIC
-CFLAGS_DET_BASE := -fno-fast-math -ffp-contract=off -fexcess-precision=standard \
-                   -msse2 -mfpmath=sse -fno-math-errno
+# Per-target flags: -msse2 -mfpmath=sse only on x86 (arm64 rejects them);
+# -fexcess-precision=standard only where the compiler accepts it (clang does
+# not); -ffp-contract=off always (dropping it diverges at tick 100).
+# MSVC equivalents (no Makefile build there): /fp:precise /fp:contract-
+ARCH ?= $(firstword $(subst -, ,$(shell $(CC) -dumpmachine)))
+CFLAGS_DET_BASE := -fno-fast-math -ffp-contract=off -fno-math-errno
+ifneq (,$(filter x86_64 amd64 i386 i486 i586 i686 x86,$(ARCH)))
+CFLAGS_DET_BASE += -msse2 -mfpmath=sse
+endif
+ifneq (,$(shell $(CC) -fexcess-precision=standard -E -x c /dev/null -o /dev/null 2>/dev/null && echo ok))
+CFLAGS_DET_BASE += -fexcess-precision=standard
+endif
 ifeq ($(WERROR),1)
 CFLAGS_DET_BASE += -Werror
 endif

@@ -16,7 +16,7 @@ A test is a defect only if ALL hold: (1) the failing assertion is in a row below
 | 4 | `tests/test_tactical_camera.gd:104` | `UNIT_SIZE * 0.5` margin | A | const renamed: RP name only; margin widening: ARCH | yes |
 | 5 | `tests/test_tactical_camera.gd:222-243` | own units inside the viewport after load | A, C | keep; a HUD safe rect only from a spec line (RP) | yes |
 | 6 | `tests/test_tactical_view.gd:331-345`, `test_tactical_play.py:89,100` | `len(px) >= 100`; top-edge drag selects every drawn unit | A | camera start moved: RP the rectangle; selection rule change: ARCH | yes |
-| 7 | `tests/test_tactical_view.gd:569-616` | `units_px` lists only visible units | A | keep; remembered-fog marks go in a new key | yes |
+| 7 | `tests/test_tactical_view.gd:569-616` | `units_px` lists only visible units | A | keep (R-089-04: nothing is remembered) | yes |
 | 8 | `tests/test_tactical_hud.gd:133` | a Button "END MISSION" | A | RP text only if renamed by the spec | yes |
 | 9 | `tests/test_tactical_hud.gd:145,159` | DebugOverlay hidden; F3 toggles | A | keep | yes |
 | 10 | `tests/test_tactical_hud.gd:170-215` | objective "letters N%", clock mm:ss, selection count | A | pattern-based; RP regex only to the spec's example | yes |
@@ -31,7 +31,7 @@ A test is a defect only if ALL hold: (1) the failing assertion is in a row below
 | 19 | `test_galaxy_pixels.py:131-197,231,273` | pixel at `systems_px` equals region colour within tolerance | B | ARCH (tolerance is Westley's) | yes |
 | 20 | `test_galaxy_conquest.py:90-126` | flipped owner colour within `COLOUR_TOLERANCE` | B | ARCH | yes |
 | 21 | `test_pipe_tactical_delta_frame.py:41,171` | `set(unit) == UNIT_KEYS` exact | A (+contract) | SUP; the contract names each key | yes |
-| 22 | `test_pipe_tactical_tier_state_reserved.py` | `tier == 0`, `state == 0` (ruling A30) | A | ARCH; only the contract piece re-pins, quoting the spec | yes |
+| 22 | `test_pipe_tactical_tier_state_reserved.py` (detector `:57` `!= 0`, control `:97` rejects `state=1`) | `tier == 0`, `state == 0` (ruling A30) | A | `state`: RP by K-a quoting the spec's section 2: the assertion becomes `state` present and `state & ~7 == 0`; the control plants `state=8` and a missing `state` (this control literal change is permitted by this row); `tier` stays 0 (ARCH until the tier source is ruled) | yes, as rewritten |
 | 23 | `test_pipe_tactical_delta_frame.py:270` | objectives exactly `{i, progress}` | A | SUP for `done` | yes |
 | 24 | `test_pipe_mission_frame_briefing_fields.py:37,77,84` | `force`/`briefing` exact key sets; no `position_name` (A4) | A, E | SUP for named keys; `position_name` ARCH | yes |
 | 25 | `test_pipe_tactical_world.py:131-142`, `test_pipe_shapes.py:171,178` | cover count; `tactical.schema.json` required; no `map`/`units` in deltas | A, C, E | new `map` fields SUP; map stays full-frame only (ARCH otherwise); schema updated by the contract piece | yes |
@@ -42,12 +42,18 @@ A test is a defect only if ALL hold: (1) the failing assertion is in a row below
 | 30 | `tests/qa/t1/test_rts_detectors.py:247` | the four detector keys | A | SUP with a positive control for a new detector | yes |
 | 31 | `tests/test_tactical_view.gd:670-700`, `test_tactical_camera.gd:296-393` | camera inside the canvas | A, C | keep; 3D must still publish `camera {x,y}`; removal ARCH | yes |
 | 32 | `test_tactical_play.py:230-246` | unit speed vs the C library | none | a red is a finding | yes |
+| 33 | `tests/test_tactical_delta_reconstruction.gd:107,141-151` | two factions in the first frame; enemy positions averaged | K-h | stands with `fog_filter` off (the default); K-h's own tests set the flag | yes |
+| 34 | `test_pipe_assign_commander.py:85-87` | enemy positions read from the first frame | K-h | as row 33 | yes |
+| 35 | `test_pipe_tactical_tier_state_reserved.py:64-65` | enemy positions from the first frame | K-h | as row 33 | yes |
+| 36 | `test_pipe_macro_group_orders.py:59-60` | enemies present (else "vacuous") | K-h | as row 33 | yes |
+| 37 | `test_pipe_tactical_delta_frame.py:21` | nearest-enemy attack from the first frame | K-h | as row 33 | yes |
+| 38 | `tests/qa/desktop/test_flow_spine.py:444-447` (S-C8-09) | at least two factions in `qa.units` | K-h | stands: the flag is off unless `tactical_view.gd`'s live call passes it; the desktop driver's live path passes it only when A4 has landed, at which point this assertion reads `units_px` of own units (RP, quoting K-h) | yes |
 
 Mockup `verify.gd` scripts: never edited; a red one means a lane edited a mockup, which is refused.
 
 ## Do not touch (the ruling agent refuses and lists)
 
-Determinism: `test_checksum_trace.py`, `test_tactical_trace.py`, `test_E02_S020_determinism.py`, `test_E02_S020_rng_seeding.py`, `test_E02_S160_om_pow.py`, `test_E02_S160_no_default_features.py`, `test_E10_S072_a2_refresh_determinism.py`, `test_E17_S186_noise_deterministic.py`, `test_net_*.py`, `tests/net/*`, `test_libm_lint.py`, `test_alg_constants.py`. Goldens (re-record only by a numbered Architect ruling with its own ledger row): `test_B3_C2_friction_golden.py`, `test_F1/F2/F3_*` GOLDEN dicts, `test_PP_C_g3_hash_invariant.py` and its data, `test_PP_C_g3_rehash.py`, `test_E01_T2_collision_mask.py:24`, `test_E01_T2_walker_*` checksums, `tests/skilllab/golden_hashes.json`, `test_cross_machine.py`, `test_trace_real.py`, `test_mopup_real.py:20`, `test_objective_scene.py:28`, `test_layout_map.py:29`. Invariants (a red is a lane bug): `test_legacy_tactical_deleted.gd` (`scenes/tactical/` must not return), `test_tacticalbridge_ratchet.gd`, row 26, rows 22 and 25 (A30, A4), `test_PP_C_g3_pursuit_by_sight.py`, every positive control, every threshold/tolerance/`MIN_*`.
+Determinism: `test_checksum_trace.py`, `test_tactical_trace.py`, `test_E02_S020_determinism.py`, `test_E02_S020_rng_seeding.py`, `test_E02_S160_om_pow.py`, `test_E02_S160_no_default_features.py`, `test_E10_S072_a2_refresh_determinism.py`, `test_E17_S186_noise_deterministic.py`, `test_net_*.py`, `tests/net/*`, `test_libm_lint.py`, `test_alg_constants.py`. Goldens (re-record only by a numbered Architect ruling with its own ledger row): `test_B3_C2_friction_golden.py`, `test_F1/F2/F3_*` GOLDEN dicts, `test_PP_C_g3_hash_invariant.py` and its data, `test_PP_C_g3_rehash.py`, `test_E01_T2_collision_mask.py:24`, `test_E01_T2_walker_*` checksums, `tests/skilllab/golden_hashes.json`, `test_cross_machine.py`, `test_trace_real.py`, `test_mopup_real.py:20`, `test_objective_scene.py:28`, `test_layout_map.py:29`. Invariants (a red is a lane bug): `test_legacy_tactical_deleted.gd` (`scenes/tactical/` must not return), `test_tacticalbridge_ratchet.gd`, row 26, row 25 (A4), row 22's `tier` half, `test_PP_C_g3_pursuit_by_sight.py`, every positive control, every threshold/tolerance/`MIN_*`.
 
 ## Ledger row template
 
