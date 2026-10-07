@@ -191,7 +191,7 @@ Rules
 
 Inputs: worker type profile (era pack); unit states.
 Outputs: worker hit points and position in the tick delta; kills.
-Open flags: Q-167-03 (worker statistics and whether workers are in the roster), Q-159-10 (workers under raid, not yet picked).
+Open flags: Q-167-03 (worker statistics and whether workers are in the roster), workers under raid (a later idea, Westley, 2026-10-07).
 
 ### S-203 — What a unit costs
 As an economy player, I want each unit type to cost the three resources by its category, so that what a side builds and what it gathers match.

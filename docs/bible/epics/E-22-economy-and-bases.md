@@ -41,9 +41,11 @@ Rules
 - R-167-03  Given economic buildings, When the base is built, Then they include drop-off points, and Given a worker with a load, When it walks to a drop-off, Then the farther it walked the less it brings in [Q-167-02: how the yield falls with distance].
 - R-167-04  Given a worker, When units are counted, Then it counts against the one population cap (E-22 S-169) and in the unit budgets, and it cannot fight: it never acquires a target, never returns fire, and flinches from damage (E-15 R-129-01) [Q-167-03: worker statistics, and whether workers sit in the roster of E-11 S-082].
 
+- R-167-05  Given the sources of a base, When a side gathers, Then natural sources are fast and finite and built sources are slow and permanent and take lots, so the timing of the switch from foraging to farming is a skill (Westley, 2026-10-07).
+
 Inputs: the base; sources (E-22 S-177); the era's resources.
 Outputs: resource counts per side; worker positions in the tick delta.
-Open flags: Q-159-08, Q-167-01, Q-167-02, Q-167-03. Unpicked pieces that touch this story, listed under Open ambiguity flags: foraging to farming, workers under raid.
+Open flags: Q-159-08, Q-167-01, Q-167-02, Q-167-03. Unpicked pieces that touch this story, listed under Open ambiguity flags: workers under raid.
 
 ### S-168 — Building and placement
 
@@ -157,11 +159,12 @@ Rules
 - R-175-01  Given a settlement on the map, When a side holds it uncontested for a length of time (Westley, 2026-10-06; for now), Then it grows into a further base with its own main building, worker production and lots.
 - R-175-02  Given a main base, When the mission runs, Then its sources never run dry but yield less over time, so a side that stays home and does not expand outward is out-produced and overrun; the resources of an expansion are quick to collect and fizzle out quickly (Westley, 2026-10-06; the rates are for the lab).
 - R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from; forward works can be production only, or also houses and workers if the side wants them, in the manner of Age of Empires 3, and the commander can flag "forward base here" to the economy player (Westley, 2026-10-06; cost and build time are Q-168-03).
+- R-175-05  Given trade caravans (Westley, 2026-10-07: in, and distinct from shipments), When they run, Then they walk visibly between a base and settlements, longer routes pay more and are easier to raid [Q-175-04: who sends them, between which places, and what they pay].
 - R-175-04  Given a unit is made at forward works, When it is finished, Then it stands there and walks to the fight, so the walk is longer from a base kept home.
 
 Inputs: settlements (E-17); the economy player's build commands.
 Outputs: bases and forward works in the tick delta.
-Open flags: none. Unpicked: trading posts at neutral settlements, trade caravans. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (its supply lines are Q-177-07). Forward works are not a forward base.
+Open flags: Q-175-04. Unpicked: trading posts at neutral settlements. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (its supply lines are Q-177-07). Forward works are not a forward base.
 
 ### S-176 — Shipments
 
@@ -280,14 +283,14 @@ Open flags: none. The enemy's macro behaviour around its bases, expansions and r
 As a pair of players, I want to take something from one mission into the next, so that a campaign builds up without making the fifteenth mission a lopsided one.
 
 Rules
-- R-182-01  Given a time jump between two missions, When the next mission is set up, Then the economy is not assumed to persist through it, and what the pair carries forward is [Q-159-07: what carries forward, with abilities and unlocks, a deck of shipments, and nothing as candidates].
-- R-182-02  Given a mission the simulation picks on a poor planet with a small force, When the pair brings what it carried forward, Then the result is consistent with a small mission on very limited resources and not a "crazy good economy on the 15th mission together" [Q-159-07: the fit between what carries forward and the rest of the game].
+- R-182-01  Given a time jump between two missions, When the next mission is set up, Then the economy is not assumed to persist through it, and nothing carries forward in the beta; abilities, unlocks or a deck of shipments are a post-beta idea (Westley, 2026-10-07).
+- R-182-02  Given a mission the simulation picks on a poor planet with a small force, When the pair brings what it carried forward, Then the result is consistent with a small mission on very limited resources and not a "crazy good economy on the 15th mission together".
 - R-182-03  Given a base took damage in a mission, When a time jump follows, Then [Q-159-13: whether the damage persists and how fast it is rebuilt, which depends on the situation and is simulation work].
 - R-182-04  Given anything is carried forward, When the campaign is saved, Then it is in the save, written identically on every peer (E-19 R-144-03), and enters the checksum.
 
 Inputs: the end of a mission; the time jump (E-08).
 Outputs: what the next mission starts with.
-Open flags: Q-159-07, Q-159-13. What the mission leaves in the region is E-10 and E-02.
+Open flags: Q-159-13 (to be designed with the simulation). What the mission leaves in the region is E-10 and E-02.
 
 ## Inputs
 

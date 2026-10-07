@@ -140,14 +140,14 @@ Design decided 2026-10-02, not scheduled for building (E-17 S-166, E-22). The ba
 
 Rules
 - R-237-01  Given a self-built building, When it first appears, Then it is drawn under construction and rises to complete over time, and nothing about it snaps into place (E-17 R-166-01).
-- R-237-02  Given a lot whose population density passes a threshold, When it is drawn, Then it shows its next stage, from under construction upward [Q-237-01: how many stages there are and what each looks like].
+- R-237-02  Given a lot whose population density passes a threshold, When it is drawn, Then it shows its next stage, from under construction upward (five stages: empty, staked, scaffold, small, large; E-17 Q-193-02, Westley, 2026-10-06).
 - R-237-03  Given a wave of growth tied to an event (E-17 R-166-03), When it arrives, Then new buildings appear a little at a time across the settlement, and an expansion that is made appears as a new settlement growing in the same way.
 - R-237-04  Given the player places a building, When it is drawn, Then the self-built pieces on its footprint are cleared and the settlement fills in around it.
 - R-237-05  Given a settlement on a cliff, beside a waterfall or on a steep mountainside (E-17 R-166-03), When it is drawn, Then its buildings sit in those places and the settlement does not stop at difficult ground.
 
 Inputs: growth and density events; the player's placed buildings; era pack building pieces (E-20 S-243).
 Outputs: screen.
-Open flags: Q-237-01.
+Open flags: none.
 
 ### S-238 — Work on the map: workers, shipments, weather and disguise
 As a player, I want to see workers walk to a source and gather, weather cross the map, and disguised buildings look like what they pretend to be, so that the economy is something I watch happen.
