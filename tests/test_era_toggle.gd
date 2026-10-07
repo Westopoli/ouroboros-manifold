@@ -277,7 +277,7 @@ func _run_tests() -> void:
 		"RED (pre-flight: '_load_settings drops unknown keys'): UIDataBus.get_settings() has era_id %s (got %s)" % [GROUND_ID, JSON.stringify((stored.get("stored", {}) as Dictionary).get("era_id"))])
 	_assert(str(stored.get("kind", "")) == "ground",
 		"RED (3e): greek_placeholder's kind() is 'ground' (got %s)" % str(stored.get("kind")))
-	_check_movement(stored, "greek_placeholder", 1)
+	_check_movement(stored, "greek_placeholder", 0)  # TD-T3-ground-roster-flying: no scout row until S-201
 	# round trip through save_settings keeps era_id and the other sections
 	_assert(str((stored.get("after_save", {}) as Dictionary).get("era_id", "")) == GROUND_ID,
 		"RED (pre-flight: 'save_settings rebuilds from a fixed key list; an unknown key is dropped'): era_id survives save_settings (got %s)" % JSON.stringify((stored.get("after_save", {}) as Dictionary).get("era_id")))
