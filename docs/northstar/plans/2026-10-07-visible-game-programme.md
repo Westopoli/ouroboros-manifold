@@ -4,8 +4,8 @@
 
 | Stage | State | Date |
 |---|---|---|
-| 1. Pre-flight (ten read-only scouts, the spec, the script) | in flight | 2026-10-07 |
-| 2. Audit loop (Opus 5.5, up to three rounds) | not started | |
+| 1. Pre-flight (ten read-only scouts, the spec, the script) | done: reports in `preflight_2026-10-07/`, spec `2026-10-07-visible-game-spec.md` rev 1, rulebook | 2026-10-07 |
+| 2. Audit loop (Opus 5.5 issues with evidence; a Sonnet parallelism audit beside it; up to three rounds) | in flight, round 1 | 2026-10-07 |
 | 3. Execute (lanes A to F, guards first, story plays, drift checks) | not started | |
 
 Lane state (updated at each landing): A battle screen: not started · B galaxy: awaiting Westley's look · C ground: stage 3 built on `push/terrain3-land-2`, 3D not started · D space landscape: not started · E settlement and economy: not started · F Steam phase B: phase A landing on `push/land-1007b`, B not started.
