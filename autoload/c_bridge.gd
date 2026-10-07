@@ -48,6 +48,8 @@ var _player_faction: int = -1
 var _mission_active := false
 var _mission_begun := false
 var _session_mission: Dictionary = {}
+var _terrain: Dictionary = {}
+var _era_kind: int = 0
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -498,7 +500,34 @@ func tactical_step_n(n: int) -> bool:
 func _ensure_mission() -> bool:
 	if _mission_active:
 		return true
-	return not _request([{"type": "cmd", "name": "mission_start", "faction": 0}], ["mission"]).is_empty()
+	_terrain = {}
+	var era: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("EraConfig")
+	var cmd := {"type": "cmd", "name": "mission_start", "faction": 0, "era_kind": 0, "movement_kinds": []}
+	if era != null and era.has_method("kind") and era.has_method("movement_kinds"):
+		cmd["era_kind"] = 1 if str(era.call("kind")) == "ground" else 0
+		cmd["movement_kinds"] = era.call("movement_kinds")
+	_era_kind = int(cmd["era_kind"])
+	return not _request([cmd], ["mission"]).is_empty()
+
+
+# The ground terrain of the begun mission; {} in a space era (spec 3c).
+func terrain() -> Dictionary:
+	return _terrain
+
+
+func _fetch_terrain() -> bool:
+	var t: Dictionary = _request([{"type": "cmd", "name": "terrain_dump"}], ["terrain"])
+	if t.is_empty():
+		return false
+	var f: Dictionary = t["terrain"]
+	_terrain = {
+		"cells_w": int(f.get("cells_w", 0)),
+		"cells_h": int(f.get("cells_h", 0)),
+		"bands": String(f.get("bands", "")).hex_decode(),
+		"walkable": String(f.get("walkable", "")).hex_decode(),
+		"slopes": f.get("slopes", []),
+	}
+	return true
 
 
 # The mission frame of the shared world: a mission is started if none is
@@ -550,7 +579,7 @@ func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	if frames.is_empty():
 		return false
 	_tactical = _reconstruct_tactical(frames["tactical"])
-	return true
+	return _fetch_terrain() if _era_kind == 1 else true
 
 
 # ... one tactical_step of the begun mission (begun here if the player has
