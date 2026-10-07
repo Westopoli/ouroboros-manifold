@@ -224,3 +224,23 @@ def test_existing_sample_features_keep_their_old_fields_and_gain_the_new_ones(ki
     """Spec section 4, P1: sample_features rows keep their eight values; the two new fields exist."""
     f = sample_features(kind, 3)
     assert hasattr(f, "detour_ratio") and hasattr(f, "blocked_layer_top")
+
+
+# spec: Architect ruling 2026-10-06 (residual stalemate), ruling 3: two lanes with a choke keep the gap and the axis clear
+def _box_hits(b, x0, y0, x1, y1):
+    return b.x0 < x1 and b.x1 > x0 and b.y0 < y1 and b.y1 > y0
+
+
+@pytest.mark.parametrize("w", [2, 4, 8])
+@pytest.mark.parametrize("d", [1400.0, 2800.0])
+def test_two_lanes_with_a_choke_leave_the_gap_open_and_the_axis_clear(w, d):
+    t = make(feats(w=w, n=2, k=2, d=d))
+    gap = (0.0, -w * BODY / 2, 0.0, w * BODY / 2)   # the gap: the wall column, between its two halves
+    assert not [b for b in t.blocks if _box_hits(b, -1.0, gap[1], 1.0, gap[3])], "a block sits in the choke gap"
+    a, b = (-d / 2, 0.0), (d / 2, 0.0)
+    assert not [bl for bl in t.blocks if _hits(a, b, bl)], "a block crosses the straight spawn-to-spawn line"
+
+
+def test_positive_control_a_lane_free_choke_passes_the_same_check():
+    t = make(feats(w=4, d=1400.0))
+    assert not [b for b in t.blocks if _hits((-700.0, 0.0), (700.0, 0.0), b)]

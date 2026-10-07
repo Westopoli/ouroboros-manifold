@@ -20,7 +20,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches, depth, maps, plays_space, report, scenes, skills  # noqa: E402
-from scripts.skilllab.contract import Terrain  # noqa: E402
+from scripts.skilllab.contract import Block, Terrain  # noqa: E402
+from scripts.skilllab.terrain import shift_terrain  # noqa: E402
 from tests.skilllab.fakes_scans import cell, fight, scan_of  # noqa: E402
 
 KEYS = ("choke_width_bodies", "detour_ratio", "lane_count", "blocked_layer_top", "cover_density_corridor",
@@ -33,6 +34,7 @@ SKILLED = [n for n, p in plays_space.PLAYS.items() if n in (
 COUNTERS = ["s2_mass_one_end", "s4_do_not_chase", "s1_outrange"]
 HAS_COUNTER = {"S1", "S2", "S4"}
 FLAT = Terrain(canvas=(4000.0, 4000.0))
+WALLED = Terrain(canvas=(4000.0, 4000.0), blocks=(Block(-30.0, -500.0, 30.0, -100.0, 0, 4),))
 SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="real fights; set OM_LAB_SLOW=1")
 
 
@@ -154,7 +156,7 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
 
     def lm(features, seed, *a, **k):
         seen.append((features, seed))
-        return FLAT
+        return WALLED
     monkeypatch.setattr(maps, "layout_map", lm)
     asked = []
     real = scenes.objective_scene
@@ -167,8 +169,10 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
             f.start_distance) == (8, 2, 1.5, 2, 0.1, 2800)
     assert asked == [2800]          # one shared naive blob, at the layout d
     by = {c[0]: c[1] for c in calls}
-    assert by["naive"](16, False).terrain is FLAT and by["naive"](16, False).start_distance == 2800
-    assert by["s1_hold_choke"](16, False).terrain is FLAT
+    # TD-LAB-layout-shift: the layout is in play coordinates (origin = midpoint between the sides); builds translate it by that midpoint
+    shifted = shift_terrain(WALLED, 2000.0, 2000.0)
+    assert by["naive"](16, False).terrain == shifted and by["naive"](16, False).start_distance == 2800
+    assert by["s1_hold_choke"](16, False).terrain == shifted
 
 
 def test_run_layout_scores_from_the_scans(monkeypatch):
@@ -326,3 +330,19 @@ def test_real_smoke_two_layouts_one_replicate_four_workers(tmp_path):
     csv_path = next(Path(p) for p in paths.values() if str(p).endswith(".csv"))
     assert csv_path.exists() and csv_path.stat().st_size > 0
     assert (tmp_path / "depth_summary.json").exists()
+
+
+# ---- stall fix, defect 3: the naive scene shares the plays' geometry (shifted by canvas/2) and flags ----
+
+def test_run_layout_naive_build_is_inside_the_canvas_with_the_plays_flags(monkeypatch):
+    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+    calls = []
+    depth.run_layout(values_of(start_distance=2800), 5, 1, fake_scan(table_all(), calls))
+    setup = {c[0]: c[1] for c in calls}["naive"](16, False)
+    cw, ch = FLAT.canvas
+    g0, g1 = [next(g for g in setup.groups if g.side == s) for s in (0, 1)]
+    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.objective]:
+        assert 0 <= x <= cw and 0 <= y <= ch, (x, y)
+    assert g1.x - g0.x == pytest.approx(2800) and g0.y == g1.y
+    assert setup.objective == pytest.approx(((g0.x + g1.x) / 2, g0.y))
+    assert setup.quiet_from_first_damage is True and setup.mopup is True

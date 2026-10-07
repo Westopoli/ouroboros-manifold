@@ -19,7 +19,10 @@ from test_tactical_play import _to_tactical
 
 
 def _ground_keys(qa: dict) -> dict:
-    return {k: v for k, v in qa.items() if "ground" in str(k).lower() and v}
+    # TD-T3-ground-keys: a dict value counts only when it says present.
+    def _on(v):
+        return bool(v.get("present")) if isinstance(v, dict) and "present" in v else bool(v)
+    return {k: v for k, v in qa.items() if "ground" in str(k).lower() and _on(v)}
 
 
 @pytest.fixture()

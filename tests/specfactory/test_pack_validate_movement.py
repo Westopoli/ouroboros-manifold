@@ -230,7 +230,10 @@ def test_client_sends_movement_kinds_from_era_config():
     """Spec 3c: mission_start sends era_kind and movement_kinds from
     EraConfig. Red now."""
     src = _text("autoload/c_bridge.gd")
-    assert '"movement_kinds"' in src and "EraConfig.movement_kinds()" in src
+    # TD-T3-bridge-call: the autoload is resolved at runtime, so the call may
+    # be dynamic (era.call("movement_kinds")).
+    assert '"movement_kinds"' in src and (
+        "EraConfig.movement_kinds()" in src or 'call("movement_kinds")' in src)
     assert '"era_kind"' in src
 
 

@@ -10,6 +10,7 @@ import re
 from html import escape
 from pathlib import Path
 
+from scripts.skilllab.terrain import shift_terrain
 from scripts.skilllab import maps, plays_space, pool, report, rows, scan, scenes, skills
 from scripts.skilllab.contract import Batch
 
@@ -72,6 +73,14 @@ def _features(v):
         detour_ratio=v["detour_ratio"], blocked_layer_top=k)
 
 
+def _in_canvas(setup, terrain):
+    dx, dy = terrain.canvas[0] / 2, terrain.canvas[1] / 2
+    groups = tuple(dataclasses.replace(g, x=g.x + dx, y=g.y + dy, goal=None if g.goal is None else (g.goal[0] + dx, g.goal[1] + dy))
+                   for g in setup.groups)
+    objective = None if setup.objective is None else (setup.objective[0] + dx, setup.objective[1] + dy)
+    return dataclasses.replace(setup, groups=groups, objective=objective, terrain=shift_terrain(terrain, dx, dy))
+
+
 def run_layout(values, seed, replicates, scan_fn):
     """scan_fn(label, build, replicates) -> ScanResult; the map is built once and passed to every build."""
     features = _features(values)
@@ -80,7 +89,7 @@ def run_layout(values, seed, replicates, scan_fn):
     terrain = maps.layout_map(features, seed, frame=frame)
     naive_build = scenes.objective_scene(d)
     builds = {name: (lambda h, swap, b=plays_space.scan_build(name): b(terrain, h, swap, d)) for name in SKILLED + COUNTERS}
-    builds["naive"] = lambda h, swap: dataclasses.replace(naive_build(h, swap), terrain=terrain)
+    builds["naive"] = lambda h, swap: _in_canvas(naive_build(h, swap), terrain)
     results = {label: scan_fn(label, build, replicates) for label, build in builds.items()}
     be = {label: r.beats for label, r in results.items()}
     scored = score_layout(skill_break_evens({n: be[n] for n in SKILLED}), be["naive"],
