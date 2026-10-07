@@ -1388,3 +1388,43 @@ depends_on = ["A94-harness", "HARNESS-sigblocked", "HARNESS-symown", "C7"]
 status = { state = "in_flight" }
 tests_pending = false
 size_estimate = "G1 look stage and stage times in the merge gate, G2 qa_daemon driver verbs, G4 story-review README and format test"
+
+# Visible-game programme (2026-10-07), lane K: K0 contract piece (eight getters stubbed, field table in
+# architecture.md, ABI 4 to 5) and the K-a/K-f/K-h fenced tests and plays. Section 6: VG-CONTRACT owns
+# the seven sim .c files whole, plus the header, signatures, architecture.md, om_pipe.c, c_bridge.gd,
+# om_internal.h and checksum_full.c, while K-a is in flight; they return to their rows when K-a lands.
+[[piece]]
+id = "VG-CONTRACT"
+manager = "M0"
+wave = 7
+owns = [
+    "csrc/unit.c", "csrc/tactical_support.c", "csrc/mission.c", "csrc/fog.c", "csrc/tactical_move.c",
+    "csrc/tactical_mapgen.c", "csrc/terrain.c", "csrc/pipe/om_pipe.c", "csrc/ouroboros_sim.h",
+    "csrc/om_internal.h", "csrc/checksum_full.c", "docs/architecture.md",
+    "docs/northstar/spec_factory/signatures.toml", "autoload/c_bridge.gd",
+    "tests/csim/conftest.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py",
+    "tests/csim/test_VG_contract.py", "tests/test_c_bridge_vg.gd",
+    "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
+]
+owns_glob = ["tests/qa/desktop/plays/K/**"]
+acceptance = ["tests/csim/test_VG_contract.py", "tests/transport/test_pipe_vg_contract.py", "tests/test_c_bridge_vg.gd"]
+depends_on = ["B10", "B10b", "B10c", "PP-unit", "B14", "A117-contract", "PP-capture", "B9", "B11", "PP-fog", "B12", "B12b", "PP-move", "B15m", "PP-mapgen", "TERRAIN-1", "core", "A2-contract", "A94-contract", "PP-contract", "SPEEDCAP-contract", "DOCS-arch", "A94-harness", "C2", "T2g", "C3", "C4", "C5", "C8", "NET-backend", "G-qadesktoptests"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "K0: eight getters stubbed, ABI 4 to 5, field table in architecture.md; K-a/K-f/K-h tests red until their pieces land"
+
+# Visible-game programme, lane B: B0 (push/vg-b0) does NOT land alone. Its legacy shell saturates the
+# pixel test on the game's compact disc and its stack carries tests for four never-built features
+# (galaxy quality setting, ambient tiers, autonomous camera, Unknown label). It lands with B1 to B4 and
+# those four as pieces; this row is lane B's base and owns the galaxy scenes and B0's tests.
+[[piece]]
+id = "VG-B"
+manager = "M0"
+wave = 8
+owns = []
+owns_glob = ["scenes/galaxy/**", "tests/galaxy_field/**", "tests/test_galaxy_*.gd", "tests/qa/desktop/galaxy_*", "tests/qa/desktop/probe_runner.py", "tests/qa/desktop/test_galaxy_*.py", "docs/northstar/plans/push_2026-10-01/**"]
+acceptance = []
+depends_on = ["C2", "C8", "G-qadesktoptests"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane B galaxy field, shell, labels, wiring (11 pieces); B0 base from push/vg-b0, not landed"
