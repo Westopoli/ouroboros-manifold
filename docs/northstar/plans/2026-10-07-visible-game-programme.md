@@ -6,7 +6,7 @@
 |---|---|---|
 | 1. Pre-flight (ten read-only scouts, the spec, the script) | done: reports in `preflight_2026-10-07/`, spec `2026-10-07-visible-game-spec.md` rev 1, rulebook | 2026-10-07 |
 | 2. Audit loop (Opus 5.5 issues with evidence; a Sonnet parallelism audit beside it; three rounds) | done: round 1 → rev 2; round 2 → rev 3; round 3 (10 text items) → rev 4, the launch text. Awaiting Westley's go line and routed answers | 2026-10-08 |
-| 3. Execute (lanes A to F, guards first, story plays, drift checks) | not started | |
+| 3. Execute (lanes A to F, guards first, story plays, drift checks) | in flight: wave 1 launched 2026-10-07 15:0x on the go line e9ce6051 (GUARD, K0, B0, F scripts, test writers; script `workflows_2026-10-07/vg-wave1.js`, run wf_9ec1d513) | 2026-10-07 |
 
 Lane state (updated at each landing): A battle screen: not started · B galaxy: look approved by Westley 2026-10-07 ("galaxy view looks good, approved"), lane unblocked · C ground: stage 3 landed on main (0304d821: ground missions from the menu's era toggle, 2D band ground, walkers on it), the 3D view not started · D space landscape: not started · E settlement and economy: not started · F Steam phase B: phase A landed on main 2026-10-08 (e63483f6: session catch-up, Steam transport, match pump, export tooling, portability) with the router fix T12, the bug-report piece T16 and the gate harness fix; B not started.
 
