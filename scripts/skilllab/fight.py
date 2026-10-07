@@ -4,7 +4,7 @@ import math
 import random
 
 from scripts.skilllab.approach import approach_setup
-from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
+from scripts.skilllab.contract import BLIND_TICKS, DRAW_BAND, HOLD_RADIUS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
 from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
 from scripts.skilllab.formations import place
 from scripts.skilllab.mopup import mopup_goal
@@ -195,10 +195,40 @@ def _strength(hp, ids, start_hp, head):
     return sum(hp[u] / start_hp[u] for u in ids if hp[u] > 0) / head
 
 
+def _sees(engine, w, side_ids, hp):
+    """True when some living unit can see a living enemy."""
+    living = [[u for u in ids if hp[u] > 0] for ids in side_ids]
+    return any(engine.can_see(w, a, e) for s in (0, 1) for a in living[s] for e in living[1 - s])
+
+
+def _winner(hp, side_ids):
+    left = [sum(hp[u] for u in ids if hp[u] > 0) for ids in side_ids]
+    if abs(left[0] - left[1]) <= DRAW_BAND * max(left):
+        return "draw"
+    return "side0" if left[0] > left[1] else "side1"
+
+
+def _held(engine, w, setup, side_ids, hp, since_damage):
+    """The defender holds its anchor: half its living units within HOLD_RADIUS of it, no living attacker that close."""
+    if setup.hold_anchor is None or since_damage < setup.hold_ticks:
+        return False
+    ax, ay = setup.hold_anchor
+
+    def near(u):
+        x, y = engine.unit_pos(w, u)
+        return math.hypot(x - ax, y - ay) <= HOLD_RADIUS
+
+    mine = [u for u in side_ids[setup.defender_side] if hp[u] > 0]
+    if sum(1 for u in mine if near(u)) * 2 < len(mine):
+        return False
+    return not any(near(u) for u in side_ids[1 - setup.defender_side] if hp[u] > 0)
+
+
 def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None, mop_sides=()):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
+    first_damage, blind_from, winner = None, None, None
     weighted = [] if wt else None
     trace, last = ([] if setup.trace else None), {}
     states, had_dest, ends = ([], set(), {}) if setup.states else (None, None, None)
@@ -274,8 +304,12 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
         timeline.check(tick, hp)
         if mopup is not None and tick % setup.mopup_interval_ticks == 0:
             mop_up()
+        if changed and not damaged:
+            first_damage = tick
         damaged = damaged or changed
         quiet = 0 if changed or (setup.quiet_from_first_damage and not damaged) else quiet + 1   # flag set: the window opens at first damage
+        if setup.decided_by_survivors and first_damage is not None and alive[0] and alive[1]:
+            blind_from = None if _sees(engine, w, side_ids, hp) else tick if blind_from is None else blind_from
         if trace is not None:
             record()
         if states is not None:
@@ -286,7 +320,11 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
             outcome = "side0"
         elif alive[0] == 0:
             outcome = "side1"
-        elif quiet >= setup.stalemate_ticks:
+        elif setup.decided_by_survivors and first_damage is not None and _held(engine, w, setup, side_ids, hp, tick - first_damage):
+            outcome, winner = "held", "side%d" % setup.defender_side
+        elif blind_from is not None and tick - blind_from >= BLIND_TICKS:
+            outcome, winner = "decided", _winner(hp, side_ids)
+        elif not setup.decided_by_survivors and quiet >= setup.stalemate_ticks:
             outcome = "stalemate"
         elif tick >= setup.max_ticks:
             outcome = "cap"
@@ -303,4 +341,4 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
                        firing=firing, firing_unit_seconds=seconds, trace=trace,
                        steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec,
                        states=states, order_ends=None if ends is None else tuple(sorted(ends.items())),
-                       mopup_orders=None if mopup is None else mopup[0])
+                       mopup_orders=None if mopup is None else mopup[0], winner=winner)

@@ -99,11 +99,15 @@ class Setup:
     objective: Optional[tuple] = None        # (x, y) both groups attack-move to; None = no objective
     quiet_from_first_damage: bool = False   # True counts stalemate_ticks from the first hp change, not tick 0 (objective scene)
     mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
+    decided_by_survivors: bool = False   # True: after first damage 400 blind ticks end the fight "decided" (winner by hp); stalemate_ticks and mop-up are not used
+    hold_ticks: int = 1200    # decided_by_survivors with hold_anchor: from first damage this long, then the hold rule applies (draft, Westley's number)
+    defender_side: int = 0    # the side whose units must stand at hold_anchor
+    hold_anchor: Optional[tuple] = None   # (x, y); None = no hold rule. Half the defender's living units within 300 wu and no attacker ends the fight "held", defender the winner
 
 
 @dataclass
 class FightResult:
-    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "stalemate" (stalemate_ticks quiet) | "cap" (A201)
+    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "stalemate" (stalemate_ticks quiet) | "cap" (A201) | "decided" | "held" (decided_by_survivors)
     margin: float
     strength_left: tuple
     survivors: tuple
@@ -112,6 +116,7 @@ class FightResult:
     first_contact_tick: int
     firing: list              # [(tick, able0, able1), ...]
     firing_unit_seconds: tuple
+    winner: Optional[str] = None   # "side0" | "side1" | "draw" for a decided fight (hp sums, within 5% is a draw), the defender's side for a held one, else None
     trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
     steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
     weighted: Optional[list] = None   # [(tick, w0, w1), ...] when Setup.weighted, else None
@@ -155,6 +160,9 @@ class Batch:
 
 WIN_MARGIN = 0.05
 TICKS_PER_SECOND = 20
+DRAW_BAND = 0.05              # decided fights: hp sums within this share of the larger are a draw
+BLIND_TICKS = 400             # decided_by_survivors: ticks without sight, after first damage, that decide the fight
+HOLD_RADIUS = 300.0           # wu from hold_anchor
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
 BuildFn = Callable[[int, bool], "Setup"]
 

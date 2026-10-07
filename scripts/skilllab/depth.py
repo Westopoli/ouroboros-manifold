@@ -1,16 +1,14 @@
 """Layout search, run 1 (spec docs/northstar/plans/2026-10-06-layout-search-spec.md, P4): which layouts induce depth.
 
-A seeded Latin-hypercube draw over six feature values; per layout 7 skilled plays, 3 counters and one shared naive blob
+A seeded Latin-hypercube draw over six feature values; per layout 7 skilled plays, 3 counters and two naive baselines (blob, spread line)
 are scanned for a break-even; depth gain, counter works and the layout's score follow the spec section 2 rule.
 """
-import dataclasses
 import json
 import random
 import re
 from html import escape
 from pathlib import Path
 
-from scripts.skilllab.terrain import shift_terrain
 from scripts.skilllab import maps, plays_space, pool, report, rows, scan, scenes, skills
 from scripts.skilllab.contract import Batch
 
@@ -73,36 +71,32 @@ def _features(v):
         detour_ratio=v["detour_ratio"], blocked_layer_top=k)
 
 
-def _in_canvas(setup, terrain):
-    dx, dy = terrain.canvas[0] / 2, terrain.canvas[1] / 2
-    groups = tuple(dataclasses.replace(g, x=g.x + dx, y=g.y + dy, goal=None if g.goal is None else (g.goal[0] + dx, g.goal[1] + dy))
-                   for g in setup.groups)
-    objective = None if setup.objective is None else (setup.objective[0] + dx, setup.objective[1] + dy)
-    return dataclasses.replace(setup, groups=groups, objective=objective, terrain=shift_terrain(terrain, dx, dy))
-
-
 def run_layout(values, seed, replicates, scan_fn):
-    """scan_fn(label, build, replicates) -> ScanResult; the map is built once and passed to every build."""
+    """scan_fn(label, build, replicates) -> ScanResult; the map is built once and passed to every placed scene (Rev 4).
+    12 scans: 7 skilled, 3 counters, the naive blob and the naive spread line; gains are scored against each baseline."""
     features = _features(values)
     d = values["start_distance"]
     frame = maps.Frame((-d / 2, 0.0), (d / 2, 0.0), 0)
-    terrain = maps.layout_map(features, seed, frame=frame)
-    naive_build = scenes.objective_scene(d)
-    builds = {name: (lambda h, swap, b=plays_space.scan_build(name): b(terrain, h, swap, d)) for name in SKILLED + COUNTERS}
-    builds["naive"] = lambda h, swap: _in_canvas(naive_build(h, swap), terrain)
+    layout = maps.layout_map(features, seed, frame=frame)
+    builds = {name: scenes.placed_scene(layout, name, d, features) for name in SKILLED}
+    builds.update({name: scenes.placed_scene(layout, name, d, features, counter=True) for name in COUNTERS})
+    builds.update({name: scenes.placed_scene(layout, name, d, features) for name in scenes.NAIVE_PLAYS})
     results = {label: scan_fn(label, build, replicates) for label, build in builds.items()}
     be = {label: r.beats for label, r in results.items()}
-    scored = score_layout(skill_break_evens({n: be[n] for n in SKILLED}), be["naive"],
-                          skill_break_evens({n: be[n] for n in COUNTERS}))
+    skilled, counters = skill_break_evens({n: be[n] for n in SKILLED}), skill_break_evens({n: be[n] for n in COUNTERS})
+    scored = score_layout(skilled, be["naive"], counters)
+    scored_line = score_layout(skilled, be["naive_line"], counters)
     out = []
     for label, r in results.items():
-        skill = None if label == "naive" else plays_space.PLAYS[label].skill
-        variant = "naive" if label == "naive" else "skilled" if label in SKILLED else "counter"
+        skill = None if label in scenes.NAIVE_PLAYS else plays_space.PLAYS[label].skill
+        variant = "naive" if label in scenes.NAIVE_PLAYS else "skilled" if label in SKILLED else "counter"
         for c in r.cells:
             for f in c.fights:
                 out.append(rows.fight_row(f, features, play=label, variant=variant, enemy_heads=c.enemy_heads,
-                                          break_even=r.beats, no_gain=skill in scored["no_gain"]))
-    return {"features": dict(values), "rows": out, **scored}
+                                          break_even=r.beats, no_gain=skill in scored["no_gain"], winner=f.winner,
+                                          placement_shift=builds[label].labels["placement_shift"]))
+    return {"features": dict(values), "rows": out, **scored,
+            "gains_naive_line": scored_line["gains"], "score_naive_line": scored_line["score"]}
 
 
 def _mean(xs):

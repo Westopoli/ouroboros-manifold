@@ -60,6 +60,14 @@ _OUT = {"base": "Vanguard", "scale": {"attack_range": OUTRANGE_FACTOR}, "set": {
 
 
 @dataclass(frozen=True)
+class Anchors:
+    """Where a play stands, in layout terms (spec Rev 4): who defends, the defender's anchor kind, the attacker's kind."""
+    role: str        # "defender" | "attacker": which role the play's own side 0 takes
+    defender: str    # choke_mouth | reach_beyond_exit | exit_concave | exit_line | exit_screen | behind_cover | lane_mouth | far_side
+    attacker: str    # blob | mass_one_end | hold | stand_off
+
+
+@dataclass(frozen=True)
 class PlayDraft:
     setup_fn: object
     timeline: tuple
@@ -67,6 +75,7 @@ class PlayDraft:
     status: str
     numbers: dict
     words: str
+    anchors: Anchors = None
 
 
 def _g(side, unit, count, formation, x, y=0.0, order="attack_move", goal=None, layer=0, **params):
@@ -204,6 +213,23 @@ PLAYS = {
         "Counter to the held choke. The enemy holds behind the wall; side 0 are all long-range units (reach x1.2) "
         "and attack-move, to fire from outside the holders' range."),
 }
+
+
+_ANCHORS = {
+    "s1_hold_choke": Anchors("defender", "choke_mouth", "blob"),
+    "s1_outrange": Anchors("defender", "reach_beyond_exit", "blob"),
+    "s2_concave": Anchors("defender", "exit_concave", "blob"),
+    "s2_spread_line": Anchors("defender", "exit_line", "blob"),
+    "s2_screen": Anchors("defender", "exit_screen", "blob"),
+    "s3_types_by_reach": Anchors("defender", "behind_cover", "blob"),
+    "s4_bait": Anchors("defender", "lane_mouth", "blob"),
+    "s5_vulnerable_away": Anchors("defender", "far_side", "blob"),
+    "s2_mass_one_end": Anchors("attacker", "exit_line", "mass_one_end"),
+    "s4_do_not_chase": Anchors("attacker", "lane_mouth", "hold"),
+}
+PLAYS = {name: dataclasses.replace(p, anchors=_ANCHORS[name]) for name, p in PLAYS.items()}
+# s1_outrange is also the counter to s1_hold_choke (side 0 attacks the hold formation from a stand-off); scenes.placed_scene(..., counter=True) reads this row.
+COUNTER_USE = {"s1_outrange": Anchors("attacker", "choke_mouth", "stand_off")}
 
 
 def _spread(setup, start_distance):
