@@ -140,14 +140,14 @@ This story is written for land maps. Space eras wait on Q-166-02.
 
 Rules
 - R-174-01  Given a paired economy player, When he builds defenses, Then they are walls, gates and towers.
-- R-174-02  Given the terrain, When raiders go for workers or shipments, Then they come along lanes the terrain sets, for both sides [Q-174-01: where the lanes come from, and how a side sees its own and the enemy's lanes].
+- R-174-02  Given the terrain, When raiders go for workers or shipments, Then they come along lanes the terrain sets, for both sides; the lanes are an output of the map generator (E-17; Westley, 2026-10-06) [Q-174-01 closed; how a side sees its own and the enemy's lanes is E-16].
 - R-174-03  Given the lanes, When the economy player places defenses, Then he covers his own lanes, and he reads the enemy's lanes to tell the commander where a raid would hurt.
 - R-174-04  Given a wall, a gate or a tower, When it stands, Then it does [Q-174-02: what each does, whether it blocks, fires or sees, and its statistics].
 - R-174-05  Given a wall or gate is placed or destroyed, When units route, Then the cells that block movement have changed for every route (E-13 S-097).
 
 Inputs: placement commands; the terrain.
 Outputs: defenses in the tick delta; raid events.
-Open flags: Q-174-01, Q-174-02. Unpicked: workers under raid. With nobody in the seat the rules wall a lane only when the commander asks (E-22 S-180).
+Open flags: Q-174-02. Unpicked: workers under raid. With nobody in the seat the rules wall a lane only when the commander asks (E-22 S-180).
 
 ### S-175 — Expansions and forward works
 
@@ -170,14 +170,15 @@ As an economy player, I want shipments from the civilization that I cannot see o
 This story is written for land maps. Space eras wait on Q-166-02.
 
 Rules
-- R-176-01  Given a mission, When time passes, Then the civilization sends shipments to the base [Q-176-01: what a shipment carries, how often one is sent, and whether it is earned or called in].
+- R-176-01  Given a mission, When time passes, Then a side that holds a forward base or economic post away from its main city may choose to send a shipment of resources to the main base, and the farther the post is from the main city the better the resources it carries; the amounts are for playtest and balance (Westley, 2026-10-06) [Q-176-03: whether the civilization also sends shipments, and who sends in solo play].
 - R-176-02  Given a shipment on its way, When the receiving side looks, Then it cannot see its own shipment: it has no vision of it at all.
 - R-176-03  Given a shipment that is killed on the way, When it does not arrive, Then the side gets no indication that it was killed and no explanation, since it has "no idea what happened".
 - R-176-04  Given a shipment on its way, When raiders hold its lane (E-22 S-174), Then it can be stopped.
+- R-176-05  Given a shipment, When it is sent, Then it looks like a unit on the map but behaves like an event: it has no vision of its own and cannot be moved or given orders once it is sent (Westley, 2026-10-06) [Q-176-04: who can see it].
 
 Inputs: the civilization's state (E-02, E-06); lanes.
 Outputs: arrivals at the base. No output shows a shipment in transit or tells a side that one was killed.
-Open flags: Q-176-01, Q-176-02 (is a shipment a unit, and so does it meet E-12 R-089-05; where does it start, and how long is its journey). Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
+Open flags: Q-176-03, Q-176-04 (who can see a shipment, which E-12 R-089-05 bears on). Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
 
 ### S-177 — Bases, resources and the situation
 
@@ -249,15 +250,15 @@ As a solo commander, I want one dial and the ability to ask by pointing, so that
 Rules
 - R-180-01  Given a solo commander, When he sets the dial, Then the rules carry out the balance he chose between economy, technology and army [Q-180-01: the form of the dial and how much it moves spending].
 - R-180-02  Given a solo commander, When he sets the dial, Then he may also name the unit family he wants more of, Strike, Line or Siege.
-- R-180-03  Given a solo commander marks the map, When he asks as he would ask a partner, such as expand here, fortify this pass or I need siege at this gate, Then the rules answer and say in the ticker what they will do and when, with no menu and no queue [Q-180-02: the kinds of request, and what the rules do with one they cannot carry out].
+- R-180-03  Given a solo commander marks the map, When he asks as he would ask a partner, the requests at launch are the three examples, expand here, fortify this pass and I need siege at this gate (Westley, 2026-10-06), Then the rules answer and say in the ticker what they will do and when, with no menu and no queue.
 - R-180-04  Given a solo commander, When the economy runs, Then he places and queues nothing himself.
-- R-180-05  Given production is run by the rules, When units are chosen, Then the rules make the mix the mission archetype calls for [Q-180-03: the mix per archetype], and the commander can change the choice of any building.
+- R-180-05  Given production is run by the rules, When units are chosen, Then the rules make the mix the doctrine calls for (Westley, 2026-10-06; the mix per doctrine goes with Q-179-02), and the commander can change the choice of any building.
 - R-180-06  Given the commander's forces have seen enemy units, When production is chosen, Then the rules shift production toward what counters them, using only what the fog has revealed to that side (E-12). This is the one exception to the rules having no foresight (E-22 S-179).
-- R-180-07  Given the commander, When he turns the unit-mix behaviour off, the counter behaviour off, or both, Then the rules stop that behaviour [Q-180-04: when the switches can be changed, and who picks the mix when the rules do not].
+- R-180-07  Given the commander, When he turns the unit-mix behaviour off, the counter behaviour off, or both, Then the rules stop that behaviour; the switches can be changed at any time during a mission (Westley, 2026-10-06), and when the mix behaviour is off the commander picks at the building.
 
 Inputs: the dial; pointing requests; override choices; the two switches.
 Outputs: ticker lines; the economy's commands. The requests are a second channel beside the four commands of E-13.
-Open flags: Q-180-01, Q-180-02, Q-180-03, Q-180-04. Screens for these are E-16.
+Open flags: Q-180-01. Screens for these are E-16.
 
 ### S-181 — The enemy's economy
 
@@ -298,10 +299,10 @@ Open flags: Q-159-07, Q-159-13. What the mission leaves in the region is E-10 an
 | Supply distance | E-03 S-223 | a count of regions: those between the mission's region and the nearest region the civilization owns | [Q-177-05] |
 | Starting technology level | E-06 | | [Q-173-01] |
 | Economy player commands (place, schedule, focus, technology, defenses) | E-19 peers | tick-stamped | wrong tick, unknown peer, malformed: dropped and logged (E-19). The command set is E-19's to fix. |
-| Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01, Q-180-02] |
-| Settings: unit-mix behaviour, counter behaviour, enemy foresight | Player | on or off | [Q-180-04, Q-181-01] |
+| Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01] |
+| Settings: unit-mix behaviour, counter behaviour, enemy foresight | Player | on or off | [Q-181-01] |
 | Difficulty | Player | E-14 | |
-| Terrain, lots, lanes | E-17 | | [Q-174-01] |
+| Terrain, lots, lanes | E-17 | | |
 
 ## Outputs
 
