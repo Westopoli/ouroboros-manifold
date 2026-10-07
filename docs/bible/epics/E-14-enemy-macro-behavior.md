@@ -111,23 +111,23 @@ Open flags: Q-125-03 (its register candidate (a) ties prosperity to the reinforc
 Prosperity and multi-layer intelligence were chosen through the options pass, `docs/northstar/research/options/difficulty-knobs/`.
 
 ### S-215 — The enemy runs an economy too
-As a commander, I want the enemy's base to be run by the same economy rules as mine, richer or poorer by difficulty, and farsighted only if I choose, so that what the enemy builds is what a player could build and I decide how much foresight it has.
+As a commander, I want the enemy's base to be run by the same economy rules as mine, richer or poorer by difficulty, and farsighted as the difficulty sets, so that what the enemy builds is what a player could build and the difficulty decides how much foresight it has.
 
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-215-01  Given an enemy with a base (E-10 S-210), When the mission runs, Then its economy is run by the rules that run a side's economy with nobody in the seat (E-22 S-179 and S-181): the same rules as the player's side, under the same one population cap (E-22 S-169), with perfect hands and no foresight.
 - R-215-02  Given difficulty, When the enemy's economy is set up, Then its prosperity is scaled by difficulty (R-125-01) [Q-125-03: how].
-- R-215-03  Given the player has left enemy foresight off, When the enemy's economy runs, Then it does not scout, read the player, counter-pick technology or disguise anything.
-- R-215-04  Given the player has turned enemy foresight on, When the enemy's economy runs, Then it also scouts, counters and disguises, and it reads the player only through what its own side's sight has revealed (E-12 R-093-02), as the player's side does.
+- R-215-03  Given the difficulty has enemy foresight off, When the enemy's economy runs, Then it does not scout, read the player, counter-pick technology or disguise anything.
+- R-215-04  Given the difficulty has enemy foresight on, When the enemy's economy runs, Then it also scouts, counters and disguises, and it reads the player only through what its own side's sight has revealed (E-12 R-093-02), as the player's side does.
 - R-215-05  Given the enemy's production target (E-15 S-128), When foresight is off, Then production follows the target ratio and never shifts toward a counter; and When foresight is on, Then the counter-shift of E-15 R-128-02 applies, reading only the player's units the enemy has seen.
-- R-215-06  Given the foresight choice, When a mission is set up, Then it is the player's choice [Q-215-01: its default, whether it is made per mission, per campaign or live, and where E-10 receives it].
+- R-215-06  Given the difficulty, When a mission is set up, Then it decides which of scouting, countering and disguising the enemy's economy does, and the player has no switch for it (Westley, 2026-10-07; E-22 R-181-03).
 - R-215-07  Given the enemy's production, When its mix is chosen, Then [Q-215-02: which doctrine the enemy runs and who picks it, and how the doctrine and the script's target ratio (E-15 S-128) together decide the mix].
-- R-215-08  Given the enemy's foresight and its multi-layer intelligence (R-125-01), When both are set, Then [Q-215-03: whether they are independent, or hard difficulty turns foresight on].
+- R-215-08  Given the enemy's foresight and its multi-layer intelligence (R-125-01), When both are set, Then the difficulty sets foresight (E-22 R-181-03) [Q-215-03: whether it is the same scale as the multi-layer intelligence, or separate steps].
 
-Inputs: difficulty; the foresight choice; the doctrine; the enemy's base and economy state; what the enemy's side has seen.
+Inputs: difficulty, which also sets foresight; the doctrine; the enemy's base and economy state; what the enemy's side has seen.
 Outputs: the enemy economy's orders, in the command log (S-217); production choices in the T1 trace.
-Open flags: Q-125-03, Q-215-01, Q-215-02, Q-215-03, Q-215-04 (whether the macro evaluation budget under Scale requirements holds when the enemy runs thousands of workers).
+Open flags: Q-125-03, Q-215-02, Q-215-03, Q-215-04 (whether the macro evaluation budget under Scale requirements holds when the enemy runs thousands of workers).
 
 ### S-216 — The enemy fights over its bases
 As a commander, I want the enemy's forces to defend its base and its expansions, to fall back to what it still holds, and to raid my workers and shipments, so that the enemy plays the same war over the economy that I do.

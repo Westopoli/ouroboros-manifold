@@ -115,12 +115,12 @@ Design decided 2026-10-02, not scheduled for building. Walls, gates and towers a
 Rules
 - R-205-01  Given an enemy structure (E-11 S-204), When visibility is computed, Then it is in a side's visible set when it lies within the effective radius of one of that side's units and no cover or blocked cell blocks the line (R-089-01), as an enemy unit is [Q-204-01: which layers a structure occupies, and so which layer a sighting across layers measures to].
 - R-205-02  Given an enemy structure not in the side's visible set, When drawn, Then it is not drawn and its state is not in the client's data (R-089-03) [Q-205-01: whether a building once seen stays shown after it leaves sight, and in what form].
-- R-205-03  Given an enemy production building in the visible set, When the player looks at it, Then he can see what it is doing (E-22 S-170, S-172) [Q-172-01: what a seen building reveals, and what a building shows from a distance unseen].
+- R-205-03  Given an enemy production building in the visible set, When the player looks at it, Then he can see its focus family, which is what it is doing since production buildings are split by family (E-22 S-170, S-172; Westley, 2026-10-07).
 - R-205-04  Given a building that is disguised or hidden, When an enemy sees it, Then what the enemy reads is what the disguise allows (E-22 S-172) [Q-159-09: how disguising or hiding works and what it costs].
 
 Inputs: structure positions, layers and owners (E-11 S-204); each side's visible set.
 Outputs: the structures in each side's visible set; what each seen production building shows.
-Open flags: Q-204-01, Q-205-01, Q-172-01, Q-159-09.
+Open flags: Q-204-01, Q-205-01, Q-159-09 (parked).
 
 ### S-206 — What a side has seen of the enemy's units
 As a commander, I want my side to keep which kinds of enemy unit it has seen, so that production can answer them using only what the fog has revealed.
@@ -131,11 +131,11 @@ Rules
 - R-206-01  Given an enemy unit in a side's visible set, When visibility is computed, Then the side's record of enemy unit types seen includes that unit's type [Q-206-02: whether the record keeps how many of each type were seen, and whether it ever forgets].
 - R-206-02  Given the record, When it is read, Then it holds types and nothing about where they were: there is still no memory of last-seen positions (R-089-04) and no marker on screen.
 - R-206-03  Given a side whose economy runs without a human in the seat, When the rules shift production toward what counters the enemy units that side has seen, Then they read this record and nothing else about the enemy (E-22 S-179, S-180).
-- R-206-04  Given an enemy economy that scouts and counters (E-22 S-181), When it chooses what to build, Then [Q-181-02: whether it reads only its own side's record, built from its own side's visible set, or the real state of the player's side].
+- R-206-04  Given an enemy economy that scouts and counters (E-22 S-181), When it chooses what to build, Then it reads only its own side's record, built from its own side's visible set, never the real state of the player's side (Westley, 2026-10-07).
 
 Inputs: each side's visible set (R-093-02).
 Outputs: the per-side record of enemy unit types seen, read by E-22 S-179 to S-181.
-Open flags: Q-206-02, Q-181-02 (E-22).
+Open flags: Q-206-02.
 
 ## Inputs
 
@@ -187,7 +187,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-091-01, Q-205-01, Q-206-02, and from other epics Q-007-01, Q-159-09, Q-172-01, Q-181-02, Q-204-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-091-01, Q-205-01, Q-206-02, and from other epics Q-007-01, Q-159-09, Q-204-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

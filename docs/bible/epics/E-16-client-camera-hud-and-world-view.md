@@ -187,7 +187,7 @@ Open flags: none.
 ### S-230 — The economy seat's screen
 As an economy player in a pair, I want a screen that shows my resources, my workers, what a building would yield before I place it, my production schedule, my technology and my defenses, so that I can hold the whole economy in mind and nothing on screen does the remembering for me.
 
-Design decided 2026-10-02, not scheduled for building (E-19 S-159, E-22). The rules say what must be shown; where it sits on screen was not decided and is Q-230-01.
+Design decided 2026-10-02, not scheduled for building (E-19 S-159, E-22). The rules say what must be shown; where it sits on screen is built from the IGoP HUD screenshots in the references, with Westley's feedback after the first beta build (Westley, 2026-10-07).
 
 Rules
 - R-230-01  Given the economy seat of a pair, When the screen is read, Then the player can see how much of each of the three resources is held (E-22 S-167), the workers and what each is doing, and the population against its one cap (E-22 S-169) [Q-230-01: the layout of the screen].
@@ -199,7 +199,7 @@ Rules
 
 Inputs: economy state from the tick delta; the player's building, queue, schedule and technology commands.
 Outputs: the economy panels, T2-checkable.
-Open flags: Q-230-01 (layout of the economy seat's screen), Q-230-02 (what this player sees in the commander's portrait place), Q-230-03 (the line between "no enemy composition readout" and inference from the world).
+Open flags: Q-230-02 (what this player sees in the commander's portrait place), Q-230-03 (the line between "no enemy composition readout" and inference from the world).
 
 ### S-231 — The solo commander's hand
 As a commander playing alone, I want one dial, a doctrine switch, switches for the unit mix, and a way to ask by pointing at the map, so that I steer the economy without running it.
@@ -324,7 +324,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

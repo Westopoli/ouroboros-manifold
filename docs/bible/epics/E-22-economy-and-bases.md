@@ -98,24 +98,24 @@ Rules
 - R-171-01  Given a unit, When it is classed for counters, Then its family is its category: Strike, Line or Siege (E-11 S-081).
 - R-171-02  Given two families in a fight, When damage is dealt, Then they counter each other by the triangle of E-11 S-081: Strike flanks Siege, Siege crushes Line, Line absorbs Strike.
 - R-171-03  Given a unit role, When it is trained, Then it costs two of the three resources in a fixed pattern (Westley, 2026-10-06): Strike and Line roles cost the two common resources, and each Siege role costs the rare one plus one common one, not the same common one for every Siege role [Q-159-08: the exact pattern per role and the amounts, with the E-11 roster, Q-082-03].
-- R-171-04  Given a side gathers heavily from one resource, When the other side sees it, Then it shows which role the first side is making more of, and the other side needs the counter [Q-171-01: what shows heavy gathering to the other side, and how heavy counts as heavy].
+- R-171-04  Given a side gathers heavily from one resource, When the other side sees it, Then it shows which role the first side is making more of, and the other side needs the counter; what shows it is workers seen at the sources through the fog (Westley, 2026-10-07), and how heavy counts as heavy is a placeholder for the lab.
 
 Inputs: unit category and role; resource costs.
 Outputs: none of its own. The effect is the damage of E-11 S-081 and the fog-limited picture of E-12.
-Open flags: Q-159-08, Q-171-01. The roles inside a category are E-11 Q-082-03.
+Open flags: Q-159-08. The roles inside a category are E-11 Q-082-03.
 
 ### S-172 — Disguise
 
 As an economy player, I want to hide what my production is doing, so that the enemy cannot read my next push from the buildings he can see.
 
 Rules
-- R-172-01  Given an enemy sees a production building, When he looks, Then he can see what it is doing [Q-172-01: what a seen building reveals, and what a building shows from a distance unseen].
+- R-172-01  Given an enemy sees a production building, When he looks, Then he can see its focus family, Strike, Line or Siege, which is also what it is doing since production buildings are split by family (Westley, 2026-10-07); what a building shows from a distance unseen waits on the parked disguise question Q-159-09.
 - R-172-02  Given a player wants to hide a building, When he uses the way the game gives, Then the building is disguised or hidden [Q-159-09: how disguising or hiding works and what it costs].
-- R-172-03  Given the rules run an economy, When they decide what to build, Then they disguise nothing, unless the player chose that the enemy's economy also disguises (E-22 S-181).
+- R-172-03  Given the rules run an economy, When they decide what to build, Then they disguise nothing, unless the difficulty has the enemy's economy disguise (E-22 S-181).
 
 Inputs: the enemy's sight (E-12); the disguise command.
 Outputs: what a side can read of an enemy building.
-Open flags: Q-159-09, Q-172-01. Unpicked: worker scouting. How structures appear in fog is E-12.
+Open flags: Q-159-09 (parked). Unpicked: worker scouting. How structures appear in fog is E-12.
 
 ### S-173 — Technology
 
@@ -267,13 +267,13 @@ As a commander, I want the enemy's economy to run on the same rules as mine, so 
 Rules
 - R-181-01  Given an enemy, When its economy runs, Then it runs on the same rules as the solo player's.
 - R-181-02  Given the difficulty, When the enemy is set up, Then its prosperity scales with it (E-14 S-125).
-- R-181-03  Given the player's choice, When the match is set up, Then he chooses whether the enemy's economy also scouts, counters and disguises [Q-181-01: whether this is one switch or three, whether difficulty sets its start, and where it is set].
-- R-181-04  Given the enemy's economy scouts or counters, When it reads the player's side, Then it reads only what that side's fog has revealed [Q-181-02: whether the standing rule of E-14 R-125-02, that the macro layer never sees what a player could not see, binds the economy rules].
+- R-181-03  Given the difficulty, When the match is set up, Then the difficulty decides whether the enemy's economy also scouts, counters and disguises; it is not the player's choice (Westley, 2026-10-07).
+- R-181-04  Given the enemy's economy scouts or counters, When it reads the player's side, Then it reads only what that side's fog has revealed, as E-14 R-125-02 says of the macro layer (Westley, 2026-10-07).
 - R-181-05  Given a human economy player drops out of a mission, When the seat is empty, Then the same rules take his seat (E-19 S-159 holds the paired mode's drop-out).
 
 Inputs: difficulty; the player's choice.
 Outputs: the enemy's economy state and commands.
-Open flags: Q-181-01, Q-181-02. The enemy's macro behaviour around its bases, expansions and raids on workers and shipments is E-14.
+Open flags: none. The enemy's macro behaviour around its bases, expansions and raids on workers and shipments is E-14.
 
 ### S-182 — What carries forward
 
@@ -299,7 +299,8 @@ Open flags: Q-159-07, Q-159-13. What the mission leaves in the region is E-10 an
 | Starting technology level | E-06 | | [Q-173-01] |
 | Economy player commands (place, schedule, focus, technology, defenses) | E-19 peers | tick-stamped | wrong tick, unknown peer, malformed: dropped and logged (E-19). The command set is E-19's to fix. |
 | Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01] |
-| Settings: unit-mix behaviour, counter behaviour, enemy foresight | Player | on or off | [Q-181-01] |
+| Settings: unit-mix behaviour, counter behaviour | Player | on or off | |
+| Enemy foresight (scout, counter, disguise) | Difficulty | on or off per behaviour | |
 | Difficulty | Player | E-14 | |
 | Terrain, lots, lanes | E-17 | | |
 
