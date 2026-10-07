@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-06 (twelfth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
+Last updated: 2026-10-07: section 2b added, the order of work after the beta workflow (Westley). Before that, 2026-10-06 (twelfth update): W1 to W5 in rulings-2 Addendum 68; L1, L2 and most of L3 answered in the register; the layout engine now leads the landscape engine.
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -87,6 +87,14 @@ Target: a private Steam beta with multiplayer and every approved prototype integ
 | 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafting now; app id is Westley's (T17) | one tester plays a mission and files an F12 report | public track (store page, Coming Soon) |
 
 Off the critical path but running in parallel: the lab's layout search (run 1 tonight, run 2 after D1 and the category table), the bug-report piece T16 (built, awaiting the gate), the flake root cause T12, the gate harness fix (merge-base footprint, lab integration stage), the doc drafts (T5, T7, T9), the website refresh (T8).
+
+## 2b. After the beta workflow completes: verification, polish, next features (Westley, 2026-10-07)
+
+Three steps, in this order. Step 1 and step 2 run at the same time; step 3 starts when step 2 is finished. Building new features stops for the length of step 2.
+
+1. **Verify the simulation still follows the stochastic rules written into the bible** (`docs/bible/algorithms.md`). The legacy Python version had a small viewer, built on a Python game library, showing the regions on a 2D plane, how they are exchanged as ticks pass, which events fired, what the simulation chose for each mission and how much time passed each time (`simulation/run_strategic_viewer.py` and `simulation/strategic_viewer.py`, pygame). The goal is to find regressions in the core of the game: mission choice, and the source of the chronicle.
+2. **Pause new features until the existing ones are relatively perfected.** Westley gives feedback on each aspect of the game, a change is made, and he checks it again, repeated. Only when this is finished is the game ready for Steam posting.
+3. **Assess the lay of the land** for prospective and unimplemented features and decide what to build next. Contrast the old ideas in the bible and the roadmap with the user feedback received, and prioritise between them.
 
 ## 3. Blocked on Westley
 
