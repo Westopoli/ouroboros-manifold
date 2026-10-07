@@ -102,7 +102,8 @@ class GodotGame:
     module (see the `game` fixture in test_flow_spine.py)."""
 
     def __init__(self, qa_port: int, seed: int = 1, resolution: str = "1280x720",
-                 reset_privacy_flag: bool = True):
+                 reset_privacy_flag: bool = True, extra_args: list[str] | None = None):
+        self.extra_args = list(extra_args or [])
         self.qa_port = qa_port
         self.seed = seed
         self.resolution = resolution
@@ -152,6 +153,7 @@ class GodotGame:
             "-w", "--position", "0,0", "--resolution", self.resolution,
             "--fixed-fps", "30",
             "--", "--qa-port", str(self.qa_port), "--seed", str(self.seed),
+            *self.extra_args,
         ]
         self._stdout_f = open(self.out_dir / "stdout.log", "wb")
         self._stderr_f = open(self.out_dir / "stderr.log", "wb")
