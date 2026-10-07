@@ -42,9 +42,15 @@ def _section(text, head):
 
 
 def test_names_and_get():
-    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
+    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
     assert batches.BASE_SETTINGS == {"OM_TP_PURSUE_BY_STEERING": 1}
     for n in batches.NAMES:
+        if n == "layout_search":
+            # P4 adds layout_search by design; it is dispatched through batches.layout_search, not get().
+            assert callable(batches.layout_search)
+            with pytest.raises(ValueError):
+                batches.get(n)
+            continue
         d = batches.get(n)
         assert d.name == n and d.title and d.scene
         assert dataclasses.is_dataclass(d)

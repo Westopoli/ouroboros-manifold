@@ -17,7 +17,7 @@ from scripts.skilllab.rows import fight_row, write_rows  # noqa: E402
 
 SEEDS = range(30)
 FIELDS = ["choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
-          "fight_layer_blocked", "cover_density_corridor", "start_distance"]
+          "fight_layer_blocked", "cover_density_corridor", "start_distance", "detour_ratio", "blocked_layer_top"]
 CANVAS = (4000.0, 4000.0)
 DEFAULT_RADIUS = 15.0   # wu, the spec's value when no engine is given
 

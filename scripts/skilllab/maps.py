@@ -37,6 +37,11 @@ COVER_COUNT = (3, 8)
 COVER_X = 300                 # the corridor disc's x within +-this of the segment midpoint
 CORRIDOR_WIDTH = 600.0        # provisional (2026-10-05): wu, the corridor between the spawns for cover density
 UNIT_RADIUS_WU = 15.0         # provisional (2026-10-05): collision radius used when no engine is given
+LAYOUT_BODY_WU = 30.0         # provisional (2026-10-06): 2R, hardcoded until D1
+LAYOUT_WALL_THICK = 90.0      # provisional (2026-10-06): mid of WALL_THICK
+LAYOUT_WALL_HALF = 600.0      # provisional (2026-10-06): wall half-length when no detour ratio is asked for
+LAYOUT_LANE_HALF = 140.0      # provisional (2026-10-06): mid of LANE_HALF
+LAYOUT_LANE_PAST = 400.0      # provisional (2026-10-06): mid of LANE_LENGTH_PAST
 CORRIDOR_SLICES = 256         # provisional (2026-10-05): fixed slice count for partial disc overlap
 
 
@@ -102,6 +107,41 @@ def sample_map(kind, seed, canvas=(4000.0, 4000.0), frame=DEFAULT_FRAME):
     return terrain
 
 
+def layout_map(features, seed, canvas=(4000.0, 4000.0), frame=DEFAULT_FRAME):
+    f = features
+    mx, my = _mid(frame)
+    d = math.dist(frame.spawn0, frame.spawn1)
+    lo, hi = 0, f.blocked_layer_top
+    blocks = []
+    if f.choke_width_bodies:
+        gap, t = f.choke_width_bodies * LAYOUT_BODY_WU, LAYOUT_WALL_THICK
+        top = LAYOUT_WALL_HALF
+        if f.detour_ratio:
+            top = math.sqrt(((f.detour_ratio * d - t) / 2) ** 2 - ((d - t) / 2) ** 2)
+        x0, x1 = mx - t / 2, mx + t / 2
+        blocks += [Block(x0, my - top, x1, my - gap / 2, lo, hi), Block(x0, my + gap / 2, x1, my + top, lo, hi)]
+    n, t, half = f.lane_count, LAYOUT_WALL_THICK, LAYOUT_LANE_HALF
+    if n:
+        lx0, lx1 = frame.spawn0[0] - LAYOUT_LANE_PAST, frame.spawn1[0] + LAYOUT_LANE_PAST
+        edges = [(-half - t, -half), (half, half + t)] if n == 1 else [
+            (-t / 2, t / 2), (-t / 2 - 2 * half - t, -t / 2 - 2 * half), (t / 2 + 2 * half, t / 2 + 2 * half + t)]
+        if n == 2 and f.choke_width_bodies:   # axis and choke gap sit inside the first channel
+            edges = [(-half - t, -half), (half, half + t), (3 * half + t, 3 * half + 2 * t)]
+        blocks += [Block(lx0, my + a, lx1, my + b, lo, hi) for a, b in sorted(edges)]
+    covers = ()
+    if f.cover_density_corridor:
+        rng = random.Random(seed)
+        area = f.cover_density_corridor * d * CORRIDOR_WIDTH
+        m = math.ceil(area / (math.pi * COVER_RADIUS[1] ** 2))
+        r = math.sqrt(area / (m * math.pi))
+        covers = tuple(Cover(rng.uniform(frame.spawn0[0] + r, frame.spawn1[0] - r),
+                             rng.uniform(my - CORRIDOR_WIDTH / 2 + r, my + CORRIDOR_WIDTH / 2 - r), r, rng.randint(1, 5))
+                       for _ in range(m))
+    terrain = Terrain(canvas=canvas, blocks=tuple(blocks), covers=covers)
+    _validate_terrain(terrain)
+    return terrain
+
+
 def sample_maps(kinds, per_kind, seed=0):
     if per_kind < 1:
         raise ValueError("per_kind must be at least 1, got %r" % per_kind)
@@ -127,6 +167,8 @@ class Features:
     fight_layer_blocked: bool
     cover_density_corridor: float
     start_distance: float
+    detour_ratio: float = 0.0
+    blocked_layer_top: int = 0
 
 
 def _disc_in_corridor(cu, cv, r, length, half_w):
