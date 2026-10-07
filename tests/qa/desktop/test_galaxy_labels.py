@@ -9,7 +9,7 @@ import pytest
 
 from probe_runner import run_probe
 
-CHECKS = ["labels_overview", "labels_at_centroid", "labels_follow_conquest", "hover_system", "hover_clear"]
+CHECKS = ["labels_overview", "labels_at_centroid", "labels_follow_conquest", "hover_system", "hover_clear", "unknown_faction"]
 
 
 @pytest.fixture(scope="module")
