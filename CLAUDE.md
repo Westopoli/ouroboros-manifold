@@ -67,7 +67,7 @@ Plan: `docs/northstar/plans/2026-10-07-visible-game-programme.md`. A story is do
 4. **Approved means scheduled.** When a mockup is approved, ROADMAP section 1 gets its integration lane that day, with position and owner. "Approved, not integrated" is said in every status report.
 5. **Reporting.** Every status has two columns: works (tests) and what the player sees (stories Seen). Say "stub" when it is one.
 6. **Play it.** The 30B plays current main nightly after each landing; Westley or the Architect looks at least weekly.
-7. **Drift check.** After every landing round, at the start of the Architect chat's resume after any compaction, and at least weekly, a fresh Sonnet drift auditor checks promises vs artifacts, rulings vs every epic they touch, ROADMAP rows vs branches, unasked scope, open "stub" states. Its report goes to Westley unedited; drift found is fixed before new lanes launch.
+7. **Drift check.** After every landing round, after every context compaction of the Architect chat (its first action on resuming), and at least weekly, a fresh Sonnet drift auditor checks promises vs artifacts, rulings vs every epic they touch, ROADMAP rows vs branches, unasked scope, open "stub" states. Its report goes to Westley unedited; drift found is fixed before new lanes launch.
 
 ## Code quality
 

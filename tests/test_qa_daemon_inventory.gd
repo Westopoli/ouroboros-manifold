@@ -55,13 +55,22 @@ func _run_tests() -> void:
 	hud.add_child(_label("Objectives", "Hold the ridge"))
 	hud.add_child(_label("Reinforcements", "secret", false))
 	scene.add_child(hud)
-	var fx := Node2D.new()
-	fx.name = "Fx"
-	for i in 3:
+	# TD-VG-GUARD-1: Godot 4.6.3 auto-renames same-named siblings, so count 3 by name
+	# needs three distinct parents. Siblings case: two "Pair" siblings, second auto-renamed.
+	for pn in ["FxA", "FxB", "FxC"]:
+		var fx := Node2D.new()
+		fx.name = pn
 		var s := Node2D.new()
 		s.name = "Shots"
 		fx.add_child(s)
-	scene.add_child(fx)
+		scene.add_child(fx)
+	var sib := Node2D.new()
+	sib.name = "Sibs"
+	for i in 2:
+		var p := Node2D.new()
+		p.name = "Pair"
+		sib.add_child(p)
+	scene.add_child(sib)
 	var g3 := Node3D.new()
 	g3.name = "Ground3D"
 	scene.add_child(g3)
@@ -88,6 +97,8 @@ func _run_tests() -> void:
 		_check_entry(n, "Clock", "Label", true, 1)
 		_check_entry(n, "Ground3D", "Node3D", true, 1)
 		_check_entry(n, "Shots", "Node2D", true, 3)
+		_check_entry(n, "Pair", "Node2D", true, 1)
+		_assert(n.has("Pair") or n.has("@Node2D@2"), "auto-renamed sibling absent")
 		_check_entry(n, "FogLayer", "Node2D", false, 1)
 		_check_entry(n, "Reinforcements", "Label", false, 1)
 		_assert(not n.has("NoSuchNode"), "positive control: absent name NoSuchNode appeared in inventory")
