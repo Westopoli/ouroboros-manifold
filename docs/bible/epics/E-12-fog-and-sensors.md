@@ -128,14 +128,14 @@ As a commander, I want my side to keep which kinds of enemy unit it has seen, so
 Design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-206-01  Given an enemy unit in a side's visible set, When visibility is computed, Then the side's record of enemy unit types seen includes that unit's type [Q-206-02: the record keeps no counts and never forgets, and the player is not shown it (Westley, 2026-10-07: "#7: Nothing recorded, players need to remember."); open: whether the economy rules still read a types-only record, as R-206-03 and R-206-04 say].
+- R-206-01  Given an enemy unit in a side's visible set, When visibility is computed, Then the side's record of enemy unit types seen includes that unit's type The record keeps no counts and never forgets, and the player is not shown it (Westley, 2026-10-07: "#7: Nothing recorded, players need to remember."); only the economy rules read it (R-206-03, R-206-04), and no side keeps a persistent view of the other (Westley, 2026-10-07: "persistent vision on the player is prohibited").
 - R-206-02  Given the record, When it is read, Then it holds types and nothing about where they were: there is still no memory of last-seen positions (R-089-04) and no marker on screen.
 - R-206-03  Given a side whose economy runs without a human in the seat, When the rules shift production toward what counters the enemy units that side has seen, Then they read this record and nothing else about the enemy (E-22 S-179, S-180).
 - R-206-04  Given an enemy economy that scouts and counters (E-22 S-181), When it chooses what to build, Then it reads only its own side's record, built from its own side's visible set, never the real state of the player's side (Westley, 2026-10-07).
 
 Inputs: each side's visible set (R-093-02).
 Outputs: the per-side record of enemy unit types seen, read by E-22 S-179 to S-181.
-Open flags: Q-206-02.
+Open flags: none.
 
 ## Inputs
 
@@ -187,7 +187,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-091-01, Q-206-02, and from other epics Q-159-09. Details in `docs/northstar/ambiguity_register.md`.
+Q-091-01, and from other epics Q-159-09. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

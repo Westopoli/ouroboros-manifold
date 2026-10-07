@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009 and S-010 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed for S-008, S-009, S-010 and S-200; the rest are buildable, except the part of S-163 that carries a new open flag (Q-163-02).** S-008 is blocked on Q-008-02, Q-008-03, Q-008-05, Q-008-06 and Q-008-07 (the skill lab decides the cross-layer numbers), S-009 on Q-009-02, S-009 and S-010 on references, and S-200 on Q-166-04 and Q-189-02 (its design is decided and not scheduled for building). S-001 to S-004 and S-162 to S-164 carry provisional numbers held as runtime settings and are built by the engine cascade in `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
+**Gate verdict: not passed for S-008, S-009, S-010 and S-200; the rest are buildable, except the part of S-163 that carries a new open flag (none remains).** S-008 is blocked on Q-008-02, Q-008-03, Q-008-05, Q-008-06 and Q-008-07 (the skill lab decides the cross-layer numbers), S-009 on Q-009-02, S-009 and S-010 on references, and S-200 on Q-166-04 and Q-189-02 (its design is decided and not scheduled for building). S-001 to S-004 and S-162 to S-164 carry provisional numbers held as runtime settings and are built by the engine cascade in `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
 
 ## Purpose
 
@@ -226,11 +226,11 @@ Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer, its own included, see it from further away than they otherwise would; emitting widens how far it can be seen by more than it widens how far it sees (Westley, 2026-10-07: "emitting should extend the area that you can be seen beyond what you can see"). Provisional: cross-layer sight doubles, and the seen-from distance grows by more than that, held as runtime settings.
 - R-163-02  Given a force set to silent, When it is on the field, Then it is harder to see from other layers and gives up the extra sight that emitting gives [Q-005-04: by how much, and whether its passive cross-layer sight shrinks too].
-- R-163-03  Given a force, When the player switches it between emitting and silent, Then it is a toggle on a unit or on a group (Westley, 2026-10-07: "a toggle the player can toggle through per unit or group"), and emitting has a cost [Q-163-02: what the cost is, replacing the earlier "costs no resource"; Q-005-04: whether the switch takes time].
+- R-163-03  Given a force, When the player switches it between emitting and silent, Then it is a toggle on a unit or on a group (Westley, 2026-10-07: "a toggle the player can toggle through per unit or group"), and the switch costs no resource. Emitting's only drawback is the wider radius from which opponents detect the force (R-163-01; Westley, 2026-10-07: "The \"cost\" is increased detectability radius from opponents, that's it.") [Q-005-04: whether the switch takes time].
 
 Inputs: emit or silent command; selection.
 Outputs: the force's state in the tick delta; its sight and its visibility to others; a mark on screen showing which forces are emitting.
-Open flags: Q-163-02 (what emitting costs).
+Open flags: none.
 Silent is the default. The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-164 — Reach by unit type
@@ -335,7 +335,7 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 
 ## Open ambiguity flags
 
-Q-008-02, Q-008-03, Q-008-05, Q-008-06, Q-008-07, Q-163-02, Q-166-02, Q-166-04, Q-189-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-008-02, Q-008-03, Q-008-05, Q-008-06, Q-008-07, Q-166-02, Q-166-04, Q-189-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -95,7 +95,7 @@ The 3D ground (Q-STAGE3-01); the Sand Table and the camera options (T3, T4); bui
 
 ## Open (register rows)
 
-- Q-STAGE3-01 (open): when the 3D ground replaces the 2D band layer.
+- Q-STAGE3-01 (closed 2026-10-07): every battle scene in the beta is 3D, 2D is for UI screens only; the 3D ground is the visible game programme lane C.
 - Q-STAGE3-02 (closed, a): the main-menu toggle.
 - Q-STAGE3-03 (open): whether space missions also gain a generated field.
 
