@@ -1273,10 +1273,14 @@ int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0,
     return 0;
 }
 
-/* ---- generated stubs from signatures.toml ---- */
 uint32_t om_terrain_get_heights(const om_world *w, int32_t *out, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)out; (void)cap;
-    return 0;
+    const om_terrain_state *st = ts_ro(w);
+    uint32_t n, cx, cy;
+    if (!st || !out) return 0;
+    n = st->cells_w * st->cells_h;
+    if (cap < n) return 0;
+    for (cy = 0; cy < st->cells_h; cy++)
+        for (cx = 0; cx < st->cells_w; cx++)
+            out[(size_t)cy * st->cells_w + cx] = (int32_t)ts_height_q(st, ts_centre_q(cx), ts_centre_q(cy));
+    return n;
 }
-/* ---- end generated stubs ---- */
