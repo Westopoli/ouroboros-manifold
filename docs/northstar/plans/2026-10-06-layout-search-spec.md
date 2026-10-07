@@ -191,6 +191,8 @@ Where a layout has no choke (choke width none), "the choke" is the midpoint of t
 
 **Rule 2, outcomes.** As Rev 3 (decided by survivors after 400 blind ticks following first damage; draw within 5%), plus the hold condition: after `hold_ticks` from first damage, if at least half the defender's living units stand within 300 wu of the defender's anchor and no living attacker does, the fight ends `held` and the defender wins. `hold_ticks` = 1,200 (60 s; draft, Westley's number). Before first damage: cap or wipe only. Outcome labels: `side0`, `side1`, `draw`, `decided`, `held`, `cap`.
 
+**Naive baseline (restored from README §11, Westley 2026-10-02: "a blob if they're mediocre players, or a spread out line if they're skilled players"):** run 1 scans both naive baselines, the blob and the spread line, placed like a defender at the choke mouth; gain is reported against each (12 scans per layout, not 11).
+
 **What `start_distance` measures now:** the time the attacker needs to reach a placed defence; the feature stays (six features, 648 grid, 200 sampled).
 
 **Build impact:** `plays_space.py` gains an `anchors` declaration per play (role, defender anchor kind, attacker kind) used only by `placed_scene`; `scenes.placed_scene` resolves anchors against `Features` and the map; `fight.py` the `held` end; `scan.cell_result` treats `held` like a wipe for the defender; `depth.py` unchanged apart from the labels. Tests: the anchor table above (one case per play per layout kind: with and without choke, lane, cover), the shift rule, `held`, the existing-scenes hash.
