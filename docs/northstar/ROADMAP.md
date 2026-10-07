@@ -63,6 +63,7 @@ Updated 2026-10-06 evening. Branches only; main gets a piece only through the me
 
 | Lane | Branch | State | Next |
 |---|---|---|---|
+| **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | IN FLIGHT: stage 1 pre-flight (2026-10-07) | each lane's gate plus the `look` stage; stories `Seen` by Westley | marked DONE in this row and in the plan header when the last lane lands |
 | Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | `push/terrain2-land` | All engine lanes merged; traces identical; 20 cross-lane test reds being arbitrated (`push/t2-arbiter`); the movement-kind table made sparse for custom types (`push/t2-kind-sparse`) | Lab lane re-run, clerk, gate, then Westley's look at walkers on the ported ground |
 | Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md`) | spec draft 1 | Era toggle decided (Q-STAGE3-02 a). Audit next, then launch in parallel with stage 2's landing (disjoint files except the contract) | The first thing playtesters see |
 | Steam P2P beta (`docs/research/topics/steam_p2p_and_beta_submission.md`, branch `docs/steam-research`) | spec draft 1 (`plans/2026-10-06-steam-multiplayer-wiring-spec.md`) | Westley 2026-10-06: private beta by key first, public steps started now (Q-STEAM-01). Rev 2 audited by Sonnet; Westley 2026-10-06: ship on 4.6.3 (Q-NET-01 a), fetch script for GodotSteam (Q-NET-04 a), Fable second audit kept | Fable chat audit (Westley opens it), pre-flight, workflow; real-Steam test by hand on Spacewar 480 |
@@ -72,7 +73,7 @@ Updated 2026-10-06 evening. Branches only; main gets a piece only through the me
 
 ## 2. The beta critical path (rewritten 2026-10-06 night)
 
-Target: a private Steam beta with multiplayer in about two weeks (Westley, 2026-10-06). The old 2026-10-03 queue is folded in here; anything not on this path is in 3b or section 4.
+Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. The path below is now carried by the visible game programme (`plans/2026-10-07-visible-game-programme.md`); this table keeps the Steam-side steps.
 
 | # | Step | State | Gate | Then |
 |---|---|---|---|---|
