@@ -1,0 +1,38 @@
+"AppBuild"
+{
+	"AppID" "5402100"
+	"Desc" "Ouroboros Manifold build"
+	"BuildOutput" "../steam_out/"
+	"ContentRoot" "../dist/"
+	"SetLive" ""
+	"Depots"
+	{
+		"5402101"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "windows/*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+		"5402102"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "linux/*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+		"5402103"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "macos/*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+	}
+}

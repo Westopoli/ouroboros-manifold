@@ -1428,3 +1428,18 @@ depends_on = ["C2", "C8", "G-qadesktoptests"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane B galaxy field, shell, labels, wiring (11 pieces); B0 base from push/vg-b0, not landed"
+
+# Visible-game programme (2026-10-07), lane F T0: W8a static pipe build scripts per OS, W8d export
+# presets, the Steam depot script. Acceptance tests (tests/transport/test_vg_f_w8a_static_pipe.py,
+# test_vg_f_w8d_presets.py, test_vg_f_depot_script.py on push/vg-f-tests) land with the F tests.
+[[piece]]
+id = "VG-F"
+manager = "M0"
+wave = 7
+owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
