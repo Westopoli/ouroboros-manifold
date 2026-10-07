@@ -1,0 +1,125 @@
+{
+ "G": 2,
+ "feature_means": {
+  "blocked_layer_top": {
+   "0": 1.0,
+   "2": 2.0,
+   "4": 0.0
+  },
+  "choke_width_bodies": {
+   "0": 1.0,
+   "2": 2.0,
+   "4": 0.0
+  },
+  "cover_density_corridor": {
+   "0": 1.0,
+   "0.1": 2.0,
+   "0.3": 0.0
+  },
+  "detour_ratio": {
+   "0": 2.0,
+   "1.5": 0.0,
+   "3": 1.0
+  },
+  "lane_count": {
+   "0": 1.0,
+   "1": 0.0,
+   "2": 2.0
+  },
+  "start_distance": {
+   "1400": 1.0,
+   "2800": 1.0
+  }
+ },
+ "layouts": [
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": true,
+    "S3": null,
+    "S4": true,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 0,
+    "choke_width_bodies": 0,
+    "cover_density_corridor": 0,
+    "detour_ratio": 3,
+    "lane_count": 0,
+    "start_distance": 2800
+   },
+   "gains": {
+    "S1": -1,
+    "S2": 2,
+    "S3": -1,
+    "S4": -3,
+    "S5": -2
+   },
+   "index": 0,
+   "no_gain": [],
+   "score": 1
+  },
+  {
+   "counter_works": {
+    "S1": false,
+    "S2": true,
+    "S3": null,
+    "S4": true,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 4,
+    "choke_width_bodies": 4,
+    "cover_density_corridor": 0.3,
+    "detour_ratio": 1.5,
+    "lane_count": 1,
+    "start_distance": 1400
+   },
+   "gains": {
+    "S1": null,
+    "S2": null,
+    "S3": null,
+    "S4": null,
+    "S5": null
+   },
+   "index": 1,
+   "no_gain": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5"
+   ],
+   "score": 0
+  },
+  {
+   "counter_works": {
+    "S1": false,
+    "S2": true,
+    "S3": null,
+    "S4": false,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 2,
+    "choke_width_bodies": 2,
+    "cover_density_corridor": 0.1,
+    "detour_ratio": 0,
+    "lane_count": 2,
+    "start_distance": 1400
+   },
+   "gains": {
+    "S1": 0,
+    "S2": 2,
+    "S3": 2,
+    "S4": null,
+    "S5": -1
+   },
+   "index": 2,
+   "no_gain": [
+    "S4"
+   ],
+   "score": 2
+  }
+ ]
+}
