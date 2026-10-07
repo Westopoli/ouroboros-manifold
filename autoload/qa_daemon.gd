@@ -66,6 +66,10 @@ func state() -> Dictionary:
 			scene_name = cur.scene_file_path if cur.scene_file_path != "" else String(cur.name)
 			if cur.has_method("qa_state"):
 				result["qa"] = cur.qa_state()
+			var nodes_by_name := {}
+			var hud_texts := {}
+			_collect_tree(cur, [], [], nodes_by_name, hud_texts)
+			result["inventory"] = {"nodes_by_name": nodes_by_name, "hud_texts": hud_texts}
 		var tb := get_node_or_null("/root/TacticalBridge")
 		if tb != null and "current_tick" in tb:
 			tick_val = tb.current_tick
@@ -299,8 +303,15 @@ func _do_plant(id: String) -> Dictionary:
 	return {"ok": true, "result": {"id": id, "activated": activated}}
 
 
-func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
+func _collect_tree(node: Node, controls: Array, node3ds: Array, by_name: Dictionary = {}, texts: Dictionary = {}) -> void:
 	for child in node.get_children():
+		var nm := String(child.name)
+		if by_name.has(nm):
+			by_name[nm]["count"] += 1
+		else:
+			by_name[nm] = {"class": child.get_class(), "visible": child.visible if "visible" in child else true, "count": 1}
+		if child is Control and "text" in child and not texts.has(nm):
+			texts[nm] = String(child.get("text"))
 		if child is Control:
 			var ctrl: Control = child
 			if ctrl.visible:
@@ -325,7 +336,7 @@ func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
 				"path": String(child.get_path()),
 				"class": child.get_class(),
 			})
-		_collect_tree(child, controls, node3ds)
+		_collect_tree(child, controls, node3ds, by_name, texts)
 
 
 func _arg_value(args: PackedStringArray, flag: String) -> String:
