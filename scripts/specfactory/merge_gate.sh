@@ -55,10 +55,17 @@ trap cleanup EXIT
 
 REJECTED=0
 
+STAGE_MARK_US="${EPOCHREALTIME/./}"
+
 gate_line() {
-    local name="$1" status="$2"
+    local name="$1" status="$2" detail now_us el
     shift 2
-    echo "GATE $name $status $*"
+    detail="$*"
+    while [[ "$detail" == *$'\n' ]]; do detail="${detail%$'\n'}"; done
+    now_us="${EPOCHREALTIME/./}"
+    el=$(( (now_us - STAGE_MARK_US + 50000) / 100000 ))
+    STAGE_MARK_US="$now_us"
+    echo "GATE $name $status $detail [$((el / 10)).$((el % 10))s]"
 }
 
 reject() { gate_line "$1" REJECT "${*:2}"; REJECTED=1; }
@@ -72,7 +79,7 @@ tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
     MAKE_ARGS=(OPT=-O2 WERROR=1)
 else
-    warn make "Makefile does not reference \$(OPT) yet (F2 not landed); falling back to plain make"
+    MAKE_OPT_WARN="Makefile does not reference \$(OPT) yet (F2 not landed); falling back to plain make"
     MAKE_ARGS=()
 fi
 
@@ -87,6 +94,7 @@ elif [[ $MAKE_RC -ne 0 ]]; then
     harness make "COMPILE ERROR (rc=$MAKE_RC): $(tail_oneline "$MAKE_LOG")"
     exit 3
 fi
+[[ -n "${MAKE_OPT_WARN:-}" ]] && warn make "$MAKE_OPT_WARN"
 ok make ""
 
 # -------------------------------------------------------------- 2. libm_lint
@@ -542,6 +550,21 @@ SIZE_LOG="$SCRATCH_ROOT/size_lint.log"
 "$PYTHON" "$GATE_DIR/size_lint.py" HEAD "$BASE_REF" --piece-id "$PIECE_ID" \
     --pieces "$PIECES_TOML" --project "$CANDIDATE" >"$SIZE_LOG" 2>&1
 warn size_lint "$(tail_oneline "$SIZE_LOG" 3)"
+
+# -------------------------------------------------------------- 13. look (WARN only until Westley's threshold lands)
+# Frames of the candidate vs main's at the same play moment, dirs from env;
+# merge_gate_support.py look never rejects. See also: spec G1.
+if [[ -d "${MERGE_GATE_LOOK_CANDIDATE:-}" && -d "${MERGE_GATE_LOOK_BASE:-}" ]]; then
+    LOOK_LOG="$SCRATCH_ROOT/look.log"
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" look "$MERGE_GATE_LOOK_CANDIDATE" "$MERGE_GATE_LOOK_BASE" >"$LOOK_LOG" 2>&1
+    if [[ "$(head -c4 "$LOOK_LOG")" == "WARN" ]]; then
+        warn look "$(sed 's/^WARN //' "$LOOK_LOG" | tr '\n' ' ')"
+    else
+        ok look "$(sed 's/^OK //' "$LOOK_LOG" | tr '\n' ' ')"
+    fi
+else
+    warn look "no frame dirs (MERGE_GATE_LOOK_CANDIDATE / MERGE_GATE_LOOK_BASE unset); skipped"
+fi
 
 # --------------------------------------------------------------
 if [[ "$REJECTED" -eq 1 ]]; then
