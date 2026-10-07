@@ -161,7 +161,7 @@ Rules
 
 Inputs: settlements (E-17); the economy player's build commands.
 Outputs: bases and forward works in the tick delta.
-Open flags: none. Unpicked: trading posts at neutral settlements, trade caravans. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations and is supplied by supply lines, is E-22 S-177. Forward works are not a forward base.
+Open flags: none. Unpicked: trading posts at neutral settlements, trade caravans. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (its supply lines are Q-177-07). Forward works are not a forward base.
 
 ### S-176 — Shipments
 
@@ -186,7 +186,7 @@ As a commander, I want a base I must protect, set on a map where the rich resour
 
 Rules
 - R-177-01  Given a mission, When the sides are set up, Then every side has a base of operations it must protect, which is not always a city, and which receives resources from elsewhere, generates them on site, or both, depending on the simulation and the mission.
-- R-177-02  Given the mission archetype (E-10 S-073), When bases are given, Then the kind of base each side gets is decided by the archetype and by the supply distance together [Q-177-01: how the two combine, since the archetype table below and the supply-distance reading of R-177-03 each give a kind of base].
+- R-177-02  Given the mission archetype (E-10 S-073), When bases are given, Then the kind of base each side gets is decided by the archetype table below alone (Westley, 2026-10-06).
 
 | Archetype | Player's base | Enemy's base |
 |---|---|---|
@@ -197,7 +197,7 @@ Rules
 | Suppression, Counterinsurgency | garrison in a city | hidden cells among the settlements |
 | Rear Guard / Evacuation | the place being left | pursuing forward base |
 
-- R-177-03  Given the supply distance, which is the number of regions between the mission's region and the nearest region the civilization owns (E-03 S-223), When a base is given, Then a mission in a region the civilization owns gets a home base that generates on site, one next to such a region gets a base that both generates and is supplied, and one deep in foreign ground gets an expedition camp that lives on shipments (E-22 S-176) [Q-177-05: the numbers of regions at which the base kind changes, and what "next to" and "deep in foreign ground" are in regions].
+- R-177-03  Removed 2026-10-06 (Westley): the kind of base does not change with how far into foreign ground the mission lies, and no base lives on shipments by distance.
 - R-177-04  Given a map, When economic locations are placed, Then they are spread throughout the map, and each side is at the same distance from the objective and from each significant resource whatever shape the map takes (E-17 R-191-04), so a side picks one or fights for both.
 - R-177-05  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places, not always.
 - R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard; richness is derived from the simulation's existing region fields and composites (E-02), so a region with a big economy gives a mission big resources (Westley, 2026-10-06).
@@ -206,9 +206,9 @@ Rules
 - R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) [Q-177-06: the timer, and whether it is the same event as R-175-01].
 - R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization; pairs on a team share shipments and technology (Westley, 2026-10-06); how much more a big match has is a placeholder.
 
-Inputs: mission archetype (E-10); the region's situation (E-02); supply distance (E-03 S-223); the map (E-17).
+Inputs: mission archetype (E-10); the region's situation (E-02); the map (E-17).
 Outputs: each side's base kind and place; economic locations and significant resources on the map.
-Open flags: Q-177-01, Q-177-05, Q-177-06. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
+Open flags: Q-177-07. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
 
 ### S-178 — When a base falls
 
@@ -217,15 +217,15 @@ As a commander, I want a fallen base to be occupied and not destroyed, so that a
 Rules
 - R-178-01  Given a base of operations, When an enemy takes it, Then it is occupied, not destroyed, and the side that takes it gets its production and its people.
 - R-178-02  Given a base, When it is counted as occupied, Then enemy forces hold its central zone for a time and its main building is destroyed or captured, as the archetype sets (Westley, 2026-10-06); the taker may have to rebuild the building to take the location.
-- R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end [Q-178-02: how that meets the transfers of E-10 R-073-01].
-- R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations, at a cost [Q-178-03: the cost].
+- R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end: the side that takes the enemy's base gets that region (Westley, 2026-10-06).
+- R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations at no cost beyond the position; a side that loses an expansion loses the income it produced and its position (Westley, 2026-10-06).
 - R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against E-10 R-075-07 and S-077).
 - R-178-06  Given a side's original main base, When it is named, Then it is the base of operations the side was given at the start of the mission, and for an attacker it is the forward base from which it produces and to which resources come by supply lines. Expansions and forward works built later are never an original main base.
 - R-178-07  Given the player's side has lost its original main base, When the mission is scored, Then the best result it can reach is partial failure (E-10 S-077), and retaking the original main base lifts that limit (Westley, 2026-10-06).
 
 Inputs: base ownership and occupation; the mission archetype.
 Outputs: base owner and kind in the tick delta; the result band's ceiling to E-10; the region's owner at the mission's end.
-Open flags: Q-178-02, Q-178-03.
+Open flags: none.
 
 ### S-179 — The economy without a player
 
@@ -294,9 +294,8 @@ Open flags: Q-159-07, Q-159-13. What the mission leaves in the region is E-10 an
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Seed | Campaign | integer | |
-| Region state and situation | E-02 | fields and composites; the richness and slant of R-177-06 | [Q-177-02] |
+| Region state and situation | E-02 | fields and composites; the richness and slant of R-177-06 | |
 | Mission archetype | E-10 | 10 archetypes | unknown fails |
-| Supply distance | E-03 S-223 | a count of regions: those between the mission's region and the nearest region the civilization owns | [Q-177-05] |
 | Starting technology level | E-06 | | [Q-173-01] |
 | Economy player commands (place, schedule, focus, technology, defenses) | E-19 peers | tick-stamped | wrong tick, unknown peer, malformed: dropped and logged (E-19). The command set is E-19's to fix. |
 | Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01] |
@@ -340,7 +339,6 @@ None confirmed for the economy. The direction is thousands of units and workers 
 - A shipment that is a unit would be visible under E-12 R-089-05 and break its blindness.
 - The rules' habits (E-22 S-179) and the counter shift (E-22 S-180) read as foresight and break "no foresight" if the fog is not kept apart for the economy.
 - A fall-back at a cost, with no number, can make losing a base either trivial or final.
-- Two readings of the base kind (archetype, supply distance) disagree for some archetype.
 - Forward works counted as a forward base, so losing them caps the result at partial failure.
 - Technology that does nothing leaves the spending balance with only two real choices.
 - Carry-forward that grows without a bound makes a late mission lopsided.
@@ -364,4 +362,4 @@ Q-166-02 (the space-era landscape) is open in E-17 and bounds the land-map rules
 - E-02 (region fields, the situation and richness), E-06 (the technology number and tier), E-10 (archetypes S-073, the five outcomes S-077, mission end R-075-07, region transfers).
 - E-11 (categories, roster, workers as units), E-12 (fog, structures in fog, shipments against R-089-05), E-13 (route grid and routes that change with buildings, unit budgets and tick rate).
 - E-14 (difficulty S-125, enemy behaviour around bases, expansions and raids), E-15 (strongpoints, moving weather, non-combat units S-129).
-- E-03 (S-223, the supply distance), E-17 (terrain, height bands, settlements, economic locations, a city that reshapes S-166), E-16 (economy screen, the dial and pointing), E-18 (drawing workers, shipments, buildings at scale), E-20 (era contents), E-21 (library content).
+- E-17 (terrain, height bands, settlements, economic locations, a city that reshapes S-166), E-16 (economy screen, the dial and pointing), E-18 (drawing workers, shipments, buildings at scale), E-20 (era contents), E-21 (library content).
