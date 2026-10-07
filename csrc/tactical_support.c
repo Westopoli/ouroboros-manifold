@@ -1430,15 +1430,25 @@ void om_support_install_net_hooks(om_world *w) {
 }
 
 /* ---- generated stubs from signatures.toml ---- */
+/* Slots mission.c pre-inits at power 0 are placeholders, not structures. */
 uint32_t om_structure_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_sup_state *st = (const om_sup_state *)w->support_state;
+    uint32_t i, n = 0;
+    if (!st) return 0;
+    for (i = 0; i < OM_SUP_MAX_STRUCTURES; i++) {
+        if (st->structures[i].in_use && st->structures[i].power > 0.0) n++;
+    }
+    return n;
 }
 
 uint32_t om_structure_get_at(const om_world *w, uint32_t i) {
-    /* STUB */
-    (void)w; (void)i;
-    return 0;
+    const om_sup_state *st = (const om_sup_state *)w->support_state;
+    uint32_t slot, n = 0;
+    if (!st) return UINT32_MAX;
+    for (slot = 0; slot < OM_SUP_MAX_STRUCTURES; slot++) {
+        if (!st->structures[slot].in_use || st->structures[slot].power <= 0.0) continue;
+        if (n++ == i) return slot;
+    }
+    return UINT32_MAX;
 }
 /* ---- end generated stubs ---- */
