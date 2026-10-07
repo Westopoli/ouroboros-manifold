@@ -200,15 +200,15 @@ Rules
 - R-177-03  Given the supply distance, which is the number of regions between the mission's region and the nearest region the civilization owns (E-03 S-223), When a base is given, Then a mission in a region the civilization owns gets a home base that generates on site, one next to such a region gets a base that both generates and is supplied, and one deep in foreign ground gets an expedition camp that lives on shipments (E-22 S-176) [Q-177-05: the numbers of regions at which the base kind changes, and what "next to" and "deep in foreign ground" are in regions].
 - R-177-04  Given a map, When economic locations are placed, Then they are spread throughout the map, and each side is at the same distance from the objective and from each significant resource whatever shape the map takes (E-17 R-191-04), so a side picks one or fights for both.
 - R-177-05  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places, not always.
-- R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard [Q-177-02: what the situation record gives, and how limited, abundant and slanted are read from it].
+- R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard; richness is derived from the simulation's existing region fields and composites (E-02), so a region with a big economy gives a mission big resources (Westley, 2026-10-06).
 - R-177-07  Given the resources, When the mission is scored, Then they are not scored separately, and a side that ignores them is overrun unless it rushes and finishes fast.
 - R-177-08  Given a side's spending, When it spends, Then it is balanced between economy, technology and army, as in StarCraft 2.
-- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job [Q-177-03: what winning a settlement's populace means and gives].
-- R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization [Q-177-04: how much more, and what a pair's economy shares with the other pairs of its team, if anything].
+- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) [Q-177-06: the timer, and whether it is the same event as R-175-01].
+- R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization; pairs on a team share shipments and technology (Westley, 2026-10-06); how much more a big match has is a placeholder.
 
 Inputs: mission archetype (E-10); the region's situation (E-02); supply distance (E-03 S-223); the map (E-17).
 Outputs: each side's base kind and place; economic locations and significant resources on the map.
-Open flags: Q-177-01, Q-177-02, Q-177-03, Q-177-04, Q-177-05. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
+Open flags: Q-177-01, Q-177-05, Q-177-06. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
 
 ### S-178 — When a base falls
 
@@ -216,16 +216,16 @@ As a commander, I want a fallen base to be occupied and not destroyed, so that a
 
 Rules
 - R-178-01  Given a base of operations, When an enemy takes it, Then it is occupied, not destroyed, and the side that takes it gets its production and its people.
-- R-178-02  Given a base, When it is counted as occupied, Then [Q-178-01: what occupying is, how many forces for how long, and what ends it].
+- R-178-02  Given a base, When it is counted as occupied, Then enemy forces hold its central zone for a time and its main building is destroyed or captured, as the archetype sets (Westley, 2026-10-06); the taker may have to rebuild the building to take the location.
 - R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end [Q-178-02: how that meets the transfers of E-10 R-073-01].
 - R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations, at a cost [Q-178-03: the cost].
-- R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then [Q-178-04: whether the mission ends for that side or the fight goes on with what is on the field, and how this meets the end conditions of E-10 R-075-07].
+- R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against E-10 R-075-07 and S-077).
 - R-178-06  Given a side's original main base, When it is named, Then it is the base of operations the side was given at the start of the mission, and for an attacker it is the forward base from which it produces and to which resources come by supply lines. Expansions and forward works built later are never an original main base.
-- R-178-07  Given the player's side has lost its original main base, When the mission is scored, Then the best result it can reach is partial failure (E-10 S-077) [Q-178-05: whether retaking the original main base lifts that limit].
+- R-178-07  Given the player's side has lost its original main base, When the mission is scored, Then the best result it can reach is partial failure (E-10 S-077), and retaking the original main base lifts that limit (Westley, 2026-10-06).
 
 Inputs: base ownership and occupation; the mission archetype.
 Outputs: base owner and kind in the tick delta; the result band's ceiling to E-10; the region's owner at the mission's end.
-Open flags: Q-178-01, Q-178-02, Q-178-03, Q-178-04, Q-178-05.
+Open flags: Q-178-02, Q-178-03.
 
 ### S-179 — The economy without a player
 
