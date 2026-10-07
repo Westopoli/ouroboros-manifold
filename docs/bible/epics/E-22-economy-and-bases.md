@@ -36,7 +36,7 @@ Start a mission with nobody in the economy seat. At the base, buildings stand un
 As a commander, I want literal workers who walk to a source and bring back one of three resources, so that the base is a place with people in it that I can protect or lose.
 
 Rules
-- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3 [Q-159-08: what the three resources are and how each is gathered].
+- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3: two common ones that together are about 75 percent of what lies on the map, and one rare one, about 25 percent, that technology draws on most (Westley, 2026-10-06) [Q-159-08: the names, and how each is gathered].
 - R-167-02  Given a base, When a worker is trained, Then it appears at the base as a literal unit, walks to a source, gathers, and walks back to a drop-off, visible to the enemy and able to be killed [Q-167-01: training time, cost and the load a worker carries].
 - R-167-03  Given economic buildings, When the base is built, Then they include drop-off points, and Given a worker with a load, When it walks to a drop-off, Then the farther it walked the less it brings in [Q-167-02: how the yield falls with distance].
 - R-167-04  Given a worker, When units are counted, Then it counts against the one population cap (E-22 S-169) and in the unit budgets, and it cannot fight: it never acquires a target, never returns fire, and flinches from damage (E-15 R-129-01) [Q-167-03: worker statistics, and whether workers sit in the roster of E-11 S-082].
@@ -51,14 +51,14 @@ As an economy player, I want to place buildings where I choose and see the city 
 
 Rules
 - R-168-01  Given a paired economy player, When he places a building, Then it claims its footprint and the self-built pieces around it are cleared and refilled, so the city reshapes around what he placed (E-17 R-166-03).
-- R-168-02  Given a base, When lots are counted, Then lots are limited [Q-168-01: what a lot is, how many a base has, where a building may not be placed, and how limited lots meet "the player can place buildings wherever they want" of E-17 R-166-01].
-- R-168-03  Given a building, When what stands beside it changes, Then what it yields changes [Q-168-02: which buildings affect which, by how much, and within what range].
+- R-168-02  Given a base, When lots are counted, Then no count of lots limits the buildings, and only terrain limits where one may stand, as in E-17 R-166-01 (Westley, 2026-10-06). Direction for later, not for the beta: a very large base may be upgraded past its maximum into another tech level [Q-168-05: what that maximum is].
+- R-168-03  Given a building, When what stands beside it changes, Then what it yields changes; for the beta the effects are placeholders, and their kinds, size and range are set later in the lab (Westley, 2026-10-06).
 - R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished [Q-168-03: construction time, who builds it, and what it costs].
-- R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174) [Q-168-04: the full building set per era and the names].
+- R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174); the set is small and fixed per era pack (E-20 R-146-01) and its names are era pack content (Westley, 2026-10-06).
 
 Inputs: placement commands from the economy player; the terrain (E-17); the era's building set.
 Outputs: buildings with owner, footprint, stage and yield in the tick delta.
-Open flags: Q-168-01, Q-168-02, Q-168-03, Q-168-04. Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
+Open flags: Q-168-03, Q-168-05. Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
 
 ### S-169 — One population cap
 
@@ -84,7 +84,7 @@ Rules
 - R-170-03  Given a production building, When it is set up, Then it is focused on one family at a time, Strike, Line or Siege (E-22 S-171).
 - R-170-04  Given a building focused on one family, When it is changed to another, Then the change takes a while [Q-170-01: how long, and whether the building makes nothing meanwhile].
 - R-170-05  Given the economy player, When he plans production, Then it is laid out ahead on a timeline for each production building [Q-170-02: how far ahead the timeline reaches and what changing a slot costs].
-- R-170-06  Given a unit is queued, When it is made, Then it costs resources by its role (Q-159-08) and takes time [Q-170-03: build time per unit and how many a building makes at once].
+- R-170-06  Given a unit is queued, When it is made, Then it costs resources by its role (R-171-03) and takes time [Q-170-03: build time per unit and how many a building makes at once].
 
 Inputs: the economy player's production and schedule commands; resources; the cap.
 Outputs: units in the tick delta; each building's focus and timeline.
@@ -97,7 +97,7 @@ As a commander, I want the three families to counter each other and each role to
 Rules
 - R-171-01  Given a unit, When it is classed for counters, Then its family is its category: Strike, Line or Siege (E-11 S-081).
 - R-171-02  Given two families in a fight, When damage is dealt, Then they counter each other by the triangle of E-11 S-081: Strike flanks Siege, Siege crushes Line, Line absorbs Strike.
-- R-171-03  Given a unit role, When it is trained, Then it needs specific resources of the three [Q-159-08: which role needs which].
+- R-171-03  Given a unit role, When it is trained, Then it costs two of the three resources in a fixed pattern (Westley, 2026-10-06): Strike and Line roles cost the two common resources, and each Siege role costs the rare one plus one common one, not the same common one for every Siege role [Q-159-08: the exact pattern per role and the amounts, with the E-11 roster, Q-082-03].
 - R-171-04  Given a side gathers heavily from one resource, When the other side sees it, Then it shows which role the first side is making more of, and the other side needs the counter [Q-171-01: what shows heavy gathering to the other side, and how heavy counts as heavy].
 
 Inputs: unit category and role; resource costs.
@@ -233,14 +233,14 @@ As a commander, I want the same economy to run itself well when nobody holds the
 Rules
 - R-179-01  Given any match, When nobody holds the economy seat, Then rules run the economy, run it well, need no intelligent agent, and call no model at play time.
 - R-179-02  Given a base in any mode, When the mission runs, Then buildings start under construction and rise, expansions are made, and population density changes over time (E-17 S-166).
-- R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, such as boom, fortify, press or balanced, and the player can change the doctrine on the fly to adapt to what the enemy is doing [Q-179-01: the list of doctrines, and what sets the first doctrine].
+- R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, from the list boom, fortify, press and balanced, the player sets the first one in the lobby, and the player can change the doctrine on the fly to adapt to what the enemy is doing (Westley, 2026-10-06).
 - R-179-04  Given a doctrine, When it is read, Then it is a build order with its own weights on a checklist of standing habits [Q-179-02: the habits on the checklist and the weights per doctrine].
 - R-179-05  Given the rules run an economy, When it runs, Then they have perfect hands: they never idle a worker, never hit the population cap and never leave resources unspent.
 - R-179-06  Given the rules run an economy, When it runs, Then they have no foresight: they do not scout, do not read the enemy, do not counter-pick technology and do not disguise anything. The one exception is that they counter what the commander's forces have seen, by the unit counter shift of E-22 S-180.
 
 Inputs: the economy's state; the doctrine; the dial and requests of E-22 S-180.
 Outputs: the economy's commands, which are the same kind a human economy player's are; ticker lines.
-Open flags: Q-179-01, Q-179-02.
+Open flags: Q-179-02.
 
 ### S-180 — The commander alone
 
@@ -301,7 +301,7 @@ Open flags: Q-159-07, Q-159-13. What the mission leaves in the region is E-10 an
 | Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01, Q-180-02] |
 | Settings: unit-mix behaviour, counter behaviour, enemy foresight | Player | on or off | [Q-180-04, Q-181-01] |
 | Difficulty | Player | E-14 | |
-| Terrain, lots, lanes | E-17 | | [Q-168-01, Q-174-01] |
+| Terrain, lots, lanes | E-17 | | [Q-174-01] |
 
 ## Outputs
 
