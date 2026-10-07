@@ -165,9 +165,14 @@ func _t_steam_init_missing_singleton() -> void:
 	if not _have(STEAM_INIT):
 		return
 	var s = load(STEAM_INIT).new()
-	_assert(not Engine.has_singleton("Steam"), "setup: this box has no Steam singleton")
-	s.init_steam(480)
-	_assert(s.steam_ready == false, "no Steam singleton leaves steam_ready false without crashing")
+	# See also: TD-NET-steam-singleton. The fetch script unpacks addons/godotsteam/, which makes the
+	# singleton exist in a worktree; with no Steam client running, init still fails cleanly.
+	if Engine.has_singleton("Steam"):
+		s.init_steam(480)
+		_assert(s.steam_ready == false, "a Steam singleton with no Steam client running leaves steam_ready false without crashing")
+	else:
+		s.init_steam(480)
+		_assert(s.steam_ready == false, "no Steam singleton leaves steam_ready false without crashing")
 
 
 func _t_inactive_before_start() -> void:
