@@ -170,13 +170,16 @@ def expected(play, geo, ds):
 @pytest.mark.parametrize("sd", [1400.0, 2800.0])
 @pytest.mark.parametrize("play", PLAYS_PLACED)
 def test_defender_stands_at_its_declared_anchor(play, sd):
-    """Rev 4 rule 1: the defender's formation (the group the anchor names) is within 150 wu of the anchor."""
+    """Rev 4 rule 1: the defender's formation (the group the anchor names) is within 150 wu of the anchor plus the recorded
+    placement_shift (TD-LAB-fit-after-shift: the whole-formation fit can move a line up to FIT_LIMIT along the corridor axis)."""
     f = feats(sd=sd)
-    layout, _b, setup = scene(play, f)
+    layout, build, setup = scene(play, f)
     ds = dside_of(play)
     geo = Geo(setup, layout, f)
     got = centroid(anchor_units(play, setup, ds))
-    assert dist(got, expected(play, geo, ds)) <= TOL
+    ex = expected(play, geo, ds)
+    shift = build.labels["placement_shift"] or 0.0
+    assert dist(got, (ex[0] + shift, ex[1])) <= TOL
 
 
 @pytest.mark.parametrize("sd", [1400.0, 2800.0])
@@ -221,14 +224,28 @@ def test_defender_guards_attacker_attack_moves_toward_the_defender(play):
 
 @pytest.mark.parametrize("play", ["s4_bait", "s4_do_not_chase"])
 def test_bait_timeline_is_kept(play):
-    """Rev 4 table: 'bait play, timeline unchanged': the same steps (when, order) on the bait's own groups."""
+    """Rev 4 table: 'bait play, timeline unchanged': the same steps (order) on the bait's own groups. The `when` of s4_bait is
+    ruled to be first sight, see test_bait_timeline_fires_on_first_sight_not_on_fixed_ticks (TD-LAB-bait-sight)."""
     f = feats()
     _l, _b, setup = scene(play, f)
-    want = [(s.when, s.order) for s in plays_space.PLAYS[play].timeline]
+    want = [(s.when if play != "s4_bait" else None, s.order) for s in plays_space.PLAYS[play].timeline]
     assert want
-    assert [(s.when, s.order) for s in setup.timeline] == want
+    assert [(s.when if play != "s4_bait" else None, s.order) for s in setup.timeline] == want
     bait_side = dside_of(play)
     assert all(setup.groups[s.group].side == bait_side for s in setup.timeline)
+
+
+@pytest.mark.parametrize("sd", [1400.0, 2800.0])
+def test_bait_timeline_fires_on_first_sight_not_on_fixed_ticks(sd):
+    """Ruled 2026-10-07: the bait's retreat and the main group's close are keyed to the first tick an attacker is within the
+    bait group's sight ('seen'), not to fixed ticks: the fixed ticks 100/150 fire before an attacker 1,400+ wu away arrives
+    (red now: the placed scene keeps the plays_space ('tick', n) steps)."""
+    f = feats(sd=sd)
+    _l, _b, setup = scene("s4_bait", f)
+    assert len(setup.timeline) == 2
+    retreat, close = sorted(setup.timeline, key=lambda t: t.order != "move")
+    assert (retreat.order, close.order) == ("move", "attack_move")
+    assert [t.when for t in setup.timeline] == [("seen",), ("seen",)], [t.when for t in setup.timeline]
 
 
 def test_s3_shorts_stand_in_front_of_the_long_types_behind_cover():
@@ -314,6 +331,24 @@ def test_a_formation_that_fits_records_zero_shift_on_a_clear_layout():
         build = scenes.placed_scene(layout, play, 1400.0, f)
         build(16, False)
         assert build.labels["placement_shift"] == 0.0, play
+
+
+FIT_GRID = [(c, l, v) for c in (0, 2, 4, 8) for l in (0, 1, 2) for v in (0.0, 0.3)]
+
+
+@pytest.mark.parametrize("choke,lane,cover", FIT_GRID)
+@pytest.mark.parametrize("play", PLAYS_PLACED)
+def test_every_placed_defender_unit_stands_on_a_walkable_cell_of_its_layer(play, choke, lane, cover):
+    """TD-LAB-fit-after-shift: the fit covers the whole formation, not the anchor cells only: no defender unit stands inside a
+    block that covers its group's layer (red before: the builder checked each group's anchor point alone)."""
+    f = feats(choke=choke, lane=lane, cover=cover)
+    _l, build, setup = scene(play, f)
+    ds = dside_of(play)
+    if build.labels["placement_shift"] is None:
+        pytest.skip("no fit found: the scene records None")
+    bad = [(g.unit, p) for g in defender_groups(setup, ds) for p in units(setup, [g])
+           if any(b.x0 <= p[0] <= b.x1 and b.y0 <= p[1] <= b.y1 and b.layer_lo <= g.layer <= b.layer_hi for b in setup.terrain.blocks)]
+    assert not bad, bad[:3]
 
 
 # ---- (6) the declarations ----------------------------------------------------------------------------------------

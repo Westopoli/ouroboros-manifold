@@ -3,7 +3,7 @@
 
 Seam under test: depth.run_layout(values, seed, replicates, scan_fn) calls scan_fn(label, build, replicates) once per
 play and returns a ScanResult (break-even = result.beats). Labels are the plays_space.PLAYS names for the seven skilled
-plays and the three counters, and "naive" for the one shared naive blob. Fakes return chosen break-evens; no engine.
+plays and the three counters, and "naive" and "naive_line" for the two naive baselines (Rev 4: 12 scans, placed scenes). Fakes return chosen break-evens; no engine.
 Open reading, flagged in the report: a skill's B_s is its best (largest) skilled-play break-even (S2 has three plays).
 """
 import csv
@@ -56,6 +56,7 @@ def table_all(skilled=10, naive=7, counter=8):
     t = {n: skilled for n in SKILLED}
     t.update({n: counter for n in COUNTERS})
     t["naive"] = naive
+    t["naive_line"] = naive      # TD-LAB-twelve-scans
     return t
 
 
@@ -140,14 +141,14 @@ def test_depth_module_uses_no_numpy_and_no_global_random():
     assert "random.Random(" in src
 
 
-# ---- one layout: 11 scans, rows, seams ----------------------------------------------------------------------
+# ---- one layout: 12 scans, rows, seams ----------------------------------------------------------------------
 
-def test_run_layout_makes_eleven_scans_at_three_replicates(monkeypatch):
+def test_run_layout_makes_twelve_scans_at_three_replicates(monkeypatch):
     monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
     calls = []
     depth.run_layout(values_of(), 5, 3, fake_scan(table_all(), calls))
     labels = [c[0] for c in calls]
-    assert len(labels) == 11 and sorted(labels) == sorted(SKILLED + COUNTERS + ["naive"])
+    assert len(labels) == 12 and sorted(labels) == sorted(SKILLED + COUNTERS + ["naive", "naive_line"])
     assert {c[2] for c in calls} == {3}
 
 
@@ -159,20 +160,21 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
         return WALLED
     monkeypatch.setattr(maps, "layout_map", lm)
     asked = []
-    real = scenes.objective_scene
-    monkeypatch.setattr(scenes, "objective_scene", lambda d, *a, **k: (asked.append(d), real(d, *a, **k))[1])
+    real = scenes.placed_scene
+    monkeypatch.setattr(scenes, "placed_scene", lambda lay, play, d, *a, **k: (asked.append((play, d)), real(lay, play, d, *a, **k))[1])
     calls = []
     depth.run_layout(values_of(start_distance=2800, choke_width_bodies=8, lane_count=2), 5, 1, fake_scan(table_all(), calls))
     assert len(seen) == 1 and isinstance(seen[0][0], maps.Features) and isinstance(seen[0][1], int)
     f = seen[0][0]
     assert (f.choke_width_bodies, f.lane_count, f.detour_ratio, f.blocked_layer_top, f.cover_density_corridor,
             f.start_distance) == (8, 2, 1.5, 2, 0.1, 2800)
-    assert asked == [2800]          # one shared naive blob, at the layout d
+    # TD-LAB-twelve-scans: Rev 4 builds every scan with scenes.placed_scene on the layout, at the layout d (no objective scene)
+    assert len(asked) == 12 and {d for _p, d in asked} == {2800} and {p for p, _d in asked} >= {"naive", "naive_line"}
     by = {c[0]: c[1] for c in calls}
-    # TD-LAB-layout-shift: the layout is in play coordinates (origin = midpoint between the sides); builds translate it by that midpoint
-    shifted = shift_terrain(WALLED, 2000.0, 2000.0)
-    assert by["naive"](16, False).terrain == shifted and by["naive"](16, False).start_distance == 2800
-    assert by["s1_hold_choke"](16, False).terrain == shifted
+    for label in ("naive", "naive_line", "s1_hold_choke"):
+        want = real(WALLED, label, 2800, f)(16, False).terrain       # the layout moved as a whole into the canvas
+        assert by[label](16, False).terrain == want
+        assert by[label](16, False).decided_by_survivors is True
 
 
 def test_run_layout_scores_from_the_scans(monkeypatch):
@@ -199,7 +201,7 @@ def test_run_layout_flags_none_break_even_as_no_gain_in_the_row(monkeypatch):
 def test_run_layout_rows_one_per_fight_with_feat_columns_play_variant_break_even(monkeypatch):
     monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
     r = depth.run_layout(values_of(), 5, 3, fake_scan(table_all()))
-    assert len(r["rows"]) == 11 * 2          # the fake scan returns two fights per scan
+    assert len(r["rows"]) == 12 * 2          # the fake scan returns two fights per scan
     row = next(x for x in r["rows"] if x["play"] == "s4_do_not_chase")
     assert row["variant"] == "counter" and row["break_even"] == 8
     assert {x["variant"] for x in r["rows"]} == {"skilled", "naive", "counter"}
@@ -230,7 +232,7 @@ def test_run_writes_csv_with_one_row_per_fight(run_small):
     csv_path = Path(next(p for p in paths.values() if str(p).endswith(".csv")))
     with open(csv_path, newline="") as fh:
         rows = list(csv.DictReader(fh))
-    assert len(rows) == 18 * 11 * 2
+    assert len(rows) == 18 * 12 * 2
     assert {"play", "variant", "break_even", "feat_choke_width_bodies", "feat_start_distance"} <= set(rows[0])
 
 
@@ -332,17 +334,18 @@ def test_real_smoke_two_layouts_one_replicate_four_workers(tmp_path):
     assert (tmp_path / "depth_summary.json").exists()
 
 
-# ---- stall fix, defect 3: the naive scene shares the plays' geometry (shifted by canvas/2) and flags ----
+# ---- TD-LAB-twelve-scans: the naive scenes are placed scenes on the layout (Rev 4) ----
 
-def test_run_layout_naive_build_is_inside_the_canvas_with_the_plays_flags(monkeypatch):
+@pytest.mark.parametrize("label", ["naive", "naive_line"])
+def test_run_layout_naive_build_is_a_placed_scene_inside_the_canvas(monkeypatch, label):
     monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
     calls = []
     depth.run_layout(values_of(start_distance=2800), 5, 1, fake_scan(table_all(), calls))
-    setup = {c[0]: c[1] for c in calls}["naive"](16, False)
+    setup = {c[0]: c[1] for c in calls}[label](16, False)
     cw, ch = FLAT.canvas
     g0, g1 = [next(g for g in setup.groups if g.side == s) for s in (0, 1)]
-    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.objective]:
+    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.hold_anchor]:
         assert 0 <= x <= cw and 0 <= y <= ch, (x, y)
-    assert g1.x - g0.x == pytest.approx(2800) and g0.y == g1.y
-    assert setup.objective == pytest.approx(((g0.x + g1.x) / 2, g0.y))
-    assert setup.quiet_from_first_damage is True and setup.mopup is True
+    assert g1.x - g0.x == pytest.approx(2800) and g0.y == g1.y       # the naive defender is side 1, at the choke
+    assert setup.decided_by_survivors is True and setup.defender_side == 1
+    assert setup.hold_anchor == pytest.approx((g1.x, g1.y), abs=200.0)
