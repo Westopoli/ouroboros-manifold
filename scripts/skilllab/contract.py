@@ -100,6 +100,7 @@ class Setup:
     quiet_from_first_damage: bool = False   # True counts stalemate_ticks from the first hp change, not tick 0 (objective scene)
     mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
     decided_by_survivors: bool = False   # True: after first damage 400 blind ticks end the fight "decided" (winner by hp); stalemate_ticks and mop-up are not used
+    silence_ticks: int = 0    # decided_by_survivors: after first damage this many ticks with no hp change end the fight "decided" (winner by hp); 0 = off
     hold_ticks: int = 1200    # decided_by_survivors with hold_anchor: from first damage this long, then the hold rule applies (draft, Westley's number)
     defender_side: int = 0    # the side whose units must stand at hold_anchor
     hold_anchor: Optional[tuple] = None   # (x, y); None = no hold rule. Half the defender's living units within 300 wu and no attacker ends the fight "held", defender the winner
@@ -161,6 +162,8 @@ class Batch:
 WIN_MARGIN = 0.05
 TICKS_PER_SECOND = 20
 DRAW_BAND = 0.05              # decided fights: hp sums within this share of the larger are a draw
+SILENCE_TICKS = 1200          # placed scenes set Setup.silence_ticks to this: no hp change for this long after first damage ends the fight "decided" (ruled 2026-10-07)
+REISSUE_TICKS = 200           # decided_by_survivors with hold_anchor: every group of either side with an enemy in sight and no target attack-moves at the anchor this often (ruled 2026-10-07)
 BLIND_TICKS = 400             # decided_by_survivors: ticks without sight, after first damage, that decide the fight
 HOLD_RADIUS = 300.0           # wu from hold_anchor
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units

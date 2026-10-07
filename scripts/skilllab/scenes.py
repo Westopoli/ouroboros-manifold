@@ -3,7 +3,7 @@ import dataclasses
 import math
 
 from scripts.skilllab import formations, maps, plays, plays_space
-from scripts.skilllab.contract import SHIFT_MAX, Block, Group, Setup, Terrain
+from scripts.skilllab.contract import SHIFT_MAX, SILENCE_TICKS, Block, Group, Setup, Terrain
 from scripts.skilllab.terrain import shift_terrain
 
 _CANVAS = (3000.0, 1600.0)
@@ -55,8 +55,8 @@ def objective_scene(start_distance, unit="Vanguard", size=16):
 
 
 # Placed scenes (spec docs/northstar/plans/2026-10-06-layout-search-spec.md Rev 3 and Rev 4)
-FIT_STEP = 10.0          # provisional (2026-10-07): wu a formation is moved along the corridor axis per fit attempt
-FIT_LIMIT = 1200.0       # provisional (2026-10-07): the farthest it is moved before the scene gives up and records None
+FIT_STEP = 50.0          # ruled (Architect 2026-10-07): wu a formation is moved along the corridor axis per fit attempt, both directions, nearest first
+FIT_LIMIT = 800.0        # ruled (Architect 2026-10-07): the farthest it is moved before the scene gives up and records None
 BEHIND_COVER = 150.0     # provisional (2026-10-07): short-reach types stand this far in front of the long-reach ones
 AMBUSH_BEHIND = 200.0    # provisional (2026-10-07): the ambush group stands this far behind the bait group, as plays_space
 NAIVE_PLAYS = ("naive", "naive_line")
@@ -83,9 +83,10 @@ def _resolve(layout, features):
 
 
 def _walkable(layout, groups, margin):
-    """Every group's anchor cell is outside the layout's blocks on the group's layer (the spec's mask test is on anchor cells)."""
-    return not any(b.layer_lo <= g.layer <= b.layer_hi and b.x0 - margin <= g.x <= b.x1 + margin and b.y0 - margin <= g.y <= b.y1 + margin
-                   for g in groups for b in layout.blocks)
+    """Every unit of every group stands outside the layout's blocks on the group's layer."""
+    return not any(b.layer_lo <= g.layer <= b.layer_hi and b.x0 - margin <= x <= b.x1 + margin and b.y0 - margin <= y <= b.y1 + margin
+                   for g in groups for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)
+                   for b in layout.blocks)
 
 
 def _anchor_points(kind, s, centre, thick, lane_x, covers, reach):
@@ -175,10 +176,12 @@ def placed_scene(layout, play, start_distance, features, counter=False):
         for i, (x, y) in zip(d_idx, positions):
             placed[i] = dataclasses.replace(groups[i], x=x, y=y, facing_deg=face_d, order="guard")
         shift = None
-        for k in range(int(FIT_LIMIT / FIT_STEP) + 1):
-            moved = [dataclasses.replace(placed[i], x=placed[i].x + s * k * FIT_STEP) for i in d_idx]
-            if _walkable(layout, moved, SHIFT_MAX):
-                shift = s * k * FIT_STEP
+        steps_out = [0] + [k * sign for k in range(1, int(FIT_LIMIT / FIT_STEP) + 1) for sign in (s, -s)]
+        for k in steps_out:
+            moved = [dataclasses.replace(placed[i], x=placed[i].x + k * FIT_STEP) for i in d_idx]
+            if _walkable(layout, moved, SHIFT_MAX) and all(
+                    abs(placed[i].x - centre[0]) < 1e-9 or (placed[i].x - centre[0]) * (g.x - centre[0]) > 0 for i, g in zip(d_idx, moved)):
+                shift = k * FIT_STEP
                 for i, g in zip(d_idx, moved):
                     placed[i] = g
                 break
@@ -194,7 +197,7 @@ def placed_scene(layout, play, start_distance, features, counter=False):
                 goal = (placed[d_idx[0]].x, placed[d_idx[0]].y + end_y)
             placed[i] = dataclasses.replace(g, x=attack_x, y=centre[1] + end_y, facing_deg=face_a, goal=goal)
         steps = tuple(dataclasses.replace(
-            t, goal=None if t.goal is None else (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x),
+            t, when=("seen",) if play == "s4_bait" else t.when, goal=None if t.goal is None else (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x),
                                                  placed[t.group].y + t.goal[1] - groups[t.group].y)) for t in timeline)
         points = [p for i in d_idx for p in formations.place(placed[i].formation, placed[i].count, placed[i].x, placed[i].y,
                                                               placed[i].facing_deg, placed[i].params)]
@@ -203,6 +206,6 @@ def placed_scene(layout, play, start_distance, features, counter=False):
         final = tuple(dataclasses.replace(g, x=g.x + tx, y=g.y + ty, goal=None if g.goal is None else (g.goal[0] + tx, g.goal[1] + ty))
                       for g in placed)
         return Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain,
-                     decided_by_survivors=True, defender_side=ds, hold_anchor=hold)
+                     decided_by_survivors=True, silence_ticks=SILENCE_TICKS, defender_side=ds, hold_anchor=hold)
     build.labels = {"placement_shift": None}
     return build

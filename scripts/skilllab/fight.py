@@ -4,7 +4,7 @@ import math
 import random
 
 from scripts.skilllab.approach import approach_setup
-from scripts.skilllab.contract import BLIND_TICKS, DRAW_BAND, HOLD_RADIUS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
+from scripts.skilllab.contract import (BLIND_TICKS, DRAW_BAND, HOLD_RADIUS, REISSUE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult)
 from scripts.skilllab.firing import count_able, count_able_weighted, unit_states, unit_weight
 from scripts.skilllab.formations import place
 from scripts.skilllab.mopup import mopup_goal
@@ -174,7 +174,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
         timeline = Timeline(engine, w, setup, ids_by_group, goals)
         wt = _weights(engine, w, setup, types, ids_by_group) if setup.weighted else None
-        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt, mop_sides)
+        return _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, timeline, wt, mop_sides)
     finally:
         engine.free_world(w)
 
@@ -224,7 +224,7 @@ def _held(engine, w, setup, side_ids, hp, since_damage):
     return not any(near(u) for u in side_ids[1 - setup.defender_side] if hp[u] > 0)
 
 
-def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None, mop_sides=()):
+def _run(engine, w, setup, ids_by_group, side_ids, start_hp, ranges, heads, timeline, wt=None, mop_sides=()):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
@@ -282,6 +282,16 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
                 mopup[0] += 1
         before[0] = {u: engine.unit_pos(w, u) for u in living}
 
+    def reissue():
+        """Ruled 2026-10-07 (Westley 2026-10-06, attack-move all units to the same spot): every group of either side with an enemy in
+        sight and no target attack-moves at the defender's anchor again."""
+        for gi, g in enumerate(setup.groups):
+            ids = [u for u in ids_by_group[gi] if hp[u] > 0]
+            foes = [u for u in side_ids[1 - g.side] if hp[u] > 0]
+            if ids and not any(engine.unit_target(w, u) for u in ids) and any(engine.can_see(w, a, e) for a in ids for e in foes):
+                for chunk, (dx, dy) in _chunks(engine, w, ids):
+                    engine.order_attack_move(w, chunk, setup.hold_anchor[0] + dx, setup.hold_anchor[1] + dy)
+
     damaged = False
     sample()
     if trace is not None:
@@ -304,6 +314,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
         timeline.check(tick, hp)
         if mopup is not None and tick % setup.mopup_interval_ticks == 0:
             mop_up()
+        if setup.decided_by_survivors and setup.hold_anchor is not None and tick % REISSUE_TICKS == 0 and alive[0] and alive[1]:
+            reissue()
         if changed and not damaged:
             first_damage = tick
         damaged = damaged or changed
@@ -323,6 +335,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None,
         elif setup.decided_by_survivors and first_damage is not None and _held(engine, w, setup, side_ids, hp, tick - first_damage):
             outcome, winner = "held", "side%d" % setup.defender_side
         elif blind_from is not None and tick - blind_from >= BLIND_TICKS:
+            outcome, winner = "decided", _winner(hp, side_ids)
+        elif setup.decided_by_survivors and first_damage is not None and setup.silence_ticks and quiet >= setup.silence_ticks:
             outcome, winner = "decided", _winner(hp, side_ids)
         elif not setup.decided_by_survivors and quiet >= setup.stalemate_ticks:
             outcome = "stalemate"
