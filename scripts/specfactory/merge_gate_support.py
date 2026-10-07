@@ -13,6 +13,7 @@ import argparse
 import fnmatch
 import hashlib
 import json
+import os
 import re
 import shlex
 import shutil
@@ -20,7 +21,9 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import struct
 import uuid
+import zlib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -556,6 +559,9 @@ def _harness_sha() -> str:
 
 
 def _baseline_cache_path(merge_root: Path, main_sha: str) -> Path:
+    shared = os.environ.get("MERGE_GATE_BASELINE_CACHE")
+    if shared:
+        return Path(shared) / f"{main_sha}.json"
     return Path(merge_root) / "baseline_cache" / f"{main_sha}.json"
 
 
@@ -709,6 +715,12 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
         after.first_assertion = {k: _normalize_worktree_paths(v, Path(candidate_dir).resolve())
                                   for k, v in after.first_assertion.items()}
         report = sr.compare_runs(before, after)
+        flaky: list[str] = []
+        if report.new_failures:
+            flaky = [t for t in report.new_failures
+                     if flake_rerun(Path(candidate_dir), t, python_exe=python_exe, timeout=timeout)[0]]
+            if flaky:
+                report.new_failures = [t for t in report.new_failures if t not in flaky]
         # A red test whose first assertion line moves is a WARN, not a reject:
         # an attached piece legitimately changes how a still-unbuilt test fails
         # (B3 moved test_E16_S111's failing line by changing the checksum path).
@@ -723,6 +735,8 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                 detail += f"; {scale_part}"
             if report.changed_assertions:
                 detail += f" WARN changed assertions: {report.changed_assertions}"
+            if flaky:
+                detail += f" WARN flake (passed on re-run): {flaky}"
         else:
             parts = []
             if report.new_failures:
@@ -743,6 +757,97 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
         if tmp is not None:
             subprocess.run(["git", "worktree", "remove", "--force", str(tmp)],
                             cwd=str(candidate_dir), capture_output=True, text=True)
+
+
+FLAKE_RERUNS = 2
+
+
+def flake_rerun(candidate_dir: Path, test_id: str, *, python_exe: str = sr.DEFAULT_PYTHON,
+                timeout: int = 600) -> tuple[bool, str]:
+    """(passed, detail). Re-runs only `test_id`, at most FLAKE_RERUNS times, stopping
+    at the first pass. See also: regression_check, which drops new failures that pass here."""
+    for n in range(1, FLAKE_RERUNS + 1):
+        try:
+            r = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", test_id],
+                               cwd=str(candidate_dir), capture_output=True, text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            continue
+        if r.returncode == 0:
+            return True, f"flake: {test_id} red in the stage, green on re-run {n}"
+    return False, f"{test_id} red on {FLAKE_RERUNS} re-runs"
+
+
+def _read_png_gray(path: Path) -> list[int]:
+    """Luminance per pixel of an 8-bit non-interlaced grey/RGB/RGBA PNG (stdlib only)."""
+    data = path.read_bytes()
+    pos, idat, w = 8, b"", 0
+    h = ctype = 0
+    while pos < len(data):
+        n = int.from_bytes(data[pos:pos + 4], "big")
+        tag, body = data[pos + 4:pos + 8], data[pos + 8:pos + 8 + n]
+        if tag == b"IHDR":
+            w, h, depth, ctype, _c, _f, interlace = struct.unpack(">IIBBBBB", body)
+            if depth != 8 or interlace or ctype not in (0, 2, 6):
+                raise ValueError(f"unsupported PNG layout in {path}")
+        elif tag == b"IDAT":
+            idat += body
+        pos += 12 + n
+    bpp = {0: 1, 2: 3, 6: 4}[ctype]
+    raw = zlib.decompress(idat)
+    stride = w * bpp
+    prev = bytearray(stride)
+    pix: list[int] = []
+    for y in range(h):
+        ft = raw[y * (stride + 1)]
+        row = bytearray(raw[y * (stride + 1) + 1:(y + 1) * (stride + 1)])
+        for i in range(stride):
+            a = row[i - bpp] if i >= bpp else 0
+            b = prev[i]
+            c = prev[i - bpp] if i >= bpp else 0
+            if ft == 1:
+                row[i] = (row[i] + a) & 255
+            elif ft == 2:
+                row[i] = (row[i] + b) & 255
+            elif ft == 3:
+                row[i] = (row[i] + ((a + b) >> 1)) & 255
+            elif ft == 4:
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                row[i] = (row[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+        prev = row
+        for x in range(w):
+            px = row[x * bpp:x * bpp + bpp]
+            pix.append(px[0] if bpp == 1 else (px[0] * 299 + px[1] * 587 + px[2] * 114) // 1000)
+    return pix
+
+
+def frame_busyness(path: Path) -> float:
+    """Fraction of pixels differing from the frame's most common luminance (0 = blank)."""
+    pix = _read_png_gray(path)
+    if not pix:
+        return 0.0
+    counts: dict[int, int] = {}
+    for v in pix:
+        counts[v] = counts.get(v, 0) + 1
+    return 1.0 - max(counts.values()) / len(pix)
+
+
+def look_check(cand_dir: Path, base_dir: Path) -> tuple[str, list[str]]:
+    """('OK'|'WARN', lines). Same-named PNGs are the same play moment; a candidate frame
+    blanker than main's is flagged. Warn-only until Westley's threshold lands (spec G1)."""
+    flagged: list[str] = []
+    compared = 0
+    for cf in sorted(Path(cand_dir).glob("*.png")):
+        bf = Path(base_dir) / cf.name
+        if not bf.exists():
+            continue
+        compared += 1
+        cb, bb = frame_busyness(cf), frame_busyness(bf)
+        if cb < bb:
+            flagged.append(f"{cf.name} busyness {cb:.4f} vs main {bb:.4f} frame {cf}")
+    if flagged:
+        return "WARN", flagged
+    return "OK", [f"{compared} frames compared, none blanker than main"]
 
 
 LAB_TRIGGERS = ("csrc/", "scripts/skilllab/")
@@ -870,6 +975,16 @@ def main(argv: list[str]) -> int:
     rl.add_argument("--timeout", type=int, default=600)
     rl.add_argument("--merge-root", default=None)
 
+    lk = sub.add_parser("look")
+    lk.add_argument("candidate_frames")
+    lk.add_argument("base_frames")
+
+    fr = sub.add_parser("flake-rerun")
+    fr.add_argument("candidate_dir")
+    fr.add_argument("test_id")
+    fr.add_argument("--python", default=sr.DEFAULT_PYTHON)
+    fr.add_argument("--timeout", type=int, default=600)
+
     ut = sub.add_parser("undertest")
     ut.add_argument("candidate_dir")
     ut.add_argument("base_ref")
@@ -961,6 +1076,17 @@ def main(argv: list[str]) -> int:
         ok, detail = regression_lab_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                           timeout=args.timeout,
                                           merge_root=Path(args.merge_root) if args.merge_root else None)
+    elif args.cmd == "look":
+        status, lines = look_check(Path(args.candidate_frames), Path(args.base_frames))
+        print(f"{status} {lines[0]}")
+        for line in lines[1:]:
+            print(line)
+        return 0
+    elif args.cmd == "flake-rerun":
+        passed, detail = flake_rerun(Path(args.candidate_dir), args.test_id, python_exe=args.python,
+                                     timeout=args.timeout)
+        print(f"{'WARN' if passed else 'REJECT'} {detail}")
+        return 0 if passed else 1
     elif args.cmd == "undertest":
         lines = undertest_warn(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                 pieces_path=Path(args.pieces), cap=args.cap)
