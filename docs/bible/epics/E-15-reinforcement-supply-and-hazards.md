@@ -99,7 +99,7 @@ Rules
 
 Inputs: drift specs from the map seed.
 Outputs: positions per tick in the delta.
-Open flags: none. See also: Q-118-03 (whether a strongpoint may drift off its slope, against R-130-01 and R-130-03) and S-219 (a region's trouble travels; R-130-04's interference source is one kind of moving source).
+Open flags: none. See also: R-218-07 (a strongpoint does not drift, against R-130-01 and R-130-03) and S-219 (a region's trouble travels; R-130-04's interference source is one kind of moving source).
 
 ### S-131 — Reading hazards and structures
 
@@ -126,12 +126,12 @@ Rules
 - R-218-04  Given a held strongpoint, When what it makes is chosen, Then the economy rules choose it on the schedule of E-22 S-170, changing what it makes takes a while, and when nobody holds the economy seat the rules and the commander's override of E-22 S-179 and S-180 decide.
 - R-218-05  Given a strongpoint, When it is attacked or taken, Then it is captured as S-127 says, and when destroyed it falls to rubble and can be refounded (Westley, 2026-10-06; this replaces R-127-03's "never rebuilt").
 - R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then the split of R-126-04 (a fifth at the start, the rest from structures) is dropped and the situation (E-10 S-211) decides (Westley, 2026-10-06).
-- R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then [Q-118-03: whether a strongpoint may drift off its slope].
+- R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then a strongpoint does not drift: it is fixed at its slope for now (Westley, 2026-10-07).
 - R-218-08  Given a T2 screenshot, When inspected, Then a strongpoint is distinguishable by owner color from every unit silhouette and from a base, an expansion and forward works The mechanic is called "strongpoint", with an era-skinned visual, so it does not clash with "settlement" for the neutral populace and for self-built cities (Westley, 2026-10-06).
 
 Inputs: the fitted height bands and slopes (E-17); the holder's economy (E-22).
 Outputs: strongpoints (owner, HP, progress, band, position) in the tick delta; production on the band; HUD panel and minimap.
-Open flags: Q-118-03.
+Open flags: none.
 
 ### S-219 — Weather that travels
 As a commander, I want my region's environmental trouble to travel across the map where both sides can see it and to shut down what it passes over, so that the map has a danger and a clock that is not an enemy.
@@ -208,7 +208,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-03, Q-219-02, Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-219-02, Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

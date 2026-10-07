@@ -144,7 +144,7 @@ Rules
 
 Inputs: drift specs in the map seed.
 Outputs: node and source positions per tick in the delta; HUD objective marker.
-Open flags: Q-118-03 (whether a strongpoint may drift). Weather that travels across the map and shuts down what it passes over is E-15 S-130, not a drifting source.
+Open flags: none. A strongpoint is fixed at its slope and is not a drifting source (Westley, 2026-10-07). Weather that travels across the map and shuts down what it passes over is E-15 S-130, not a drifting source.
 
 ### S-119 — Terrain that reads like a place
 Flag closed, rule text pending: Q-119-01, Track R research comes first, to inform the implementation style. The rule below is what the tests read today.
@@ -451,7 +451,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-118-02, Q-165-01, Q-166-02, Q-166-04, Q-188-01, Q-189-04, Q-191-05, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
