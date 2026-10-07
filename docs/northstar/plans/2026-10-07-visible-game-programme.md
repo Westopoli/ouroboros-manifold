@@ -54,7 +54,7 @@ Order and sizes: see the spec (rev 3): about 103 per-file pieces, expected about
 4. **Approved means scheduled.** The day a mockup is approved, ROADMAP section 1 gets its integration lane with position and owner; "approved, not integrated" is a visible state in every status report.
 5. **Reporting.** Every status carries two columns: works (tests) and what the player sees (stories Seen). "Stub" is said when it is one.
 6. **Play it.** The 30B plays current main nightly after each landing (screenshots to the review queue); Westley or the Architect looks weekly at minimum.
-7. **Drift check (CLAUDE.md rule).** After every landing round, and at least weekly, a fresh Sonnet drift auditor checks the record against Westley's rulings and the plan: promises vs artifacts, rulings propagated to every epic they touch, ROADMAP rows vs branches, scope added nobody asked for, 'stub' states still open. Its report goes to Westley unedited; drift found is fixed before new lanes launch. (Today's audit found the stale alert rules and the missing integration rows; this makes it routine.)
+7. **Drift check (CLAUDE.md rule).** After every landing round, after every context compaction of the Architect chat (its first action on resuming), and at least weekly, a fresh Sonnet drift auditor checks the record against Westley's rulings and the plan: promises vs artifacts, rulings propagated to every epic they touch, ROADMAP rows vs branches, scope added nobody asked for, 'stub' states still open. Its report goes to Westley unedited; drift found is fixed before new lanes launch. (Today's audit found the stale alert rules and the missing integration rows; this makes it routine.)
 
 ## Stage 1: pre-flight (look as far ahead as possible)
 
