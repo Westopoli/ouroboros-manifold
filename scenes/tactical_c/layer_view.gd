@@ -15,12 +15,29 @@ var _scale := 1.0
 var _camera := Vector2.ZERO
 var _focus := 1
 var _layers: Array = []
+var _projector := Callable()
 
 
-func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera: Vector2) -> void:
-	_local_faction = local_faction
-	_scale = world_scale
-	_camera = camera
+func set_projector(p: Callable) -> void:
+	_projector = p
+	queue_redraw()
+
+
+func screen_points() -> Array:
+	var out := []
+	for id in _units:
+		out.append(_screen(_units[id]))
+	return out
+
+
+# Two call shapes: (frame, local_faction, world_scale, camera) from lane A, or (frame, mission, local_faction) from the 3D host.
+func set_frame(frame: Dictionary, a: Variant = 0, b: Variant = 1.0, c: Variant = Vector2.ZERO) -> void:
+	if a is Dictionary:
+		_local_faction = int(b)
+	else:
+		_local_faction = int(a)
+		_scale = float(b)
+		_camera = c
 	_units = {}
 	var seen := {}
 	for u in frame.get("units", []):
@@ -71,6 +88,8 @@ func sensor_ring(id: int) -> Variant:
 
 
 func _screen(u: Dictionary) -> Vector2:
+	if _projector.is_valid():
+		return _projector.call(Vector2(float(u["x"]), float(u["y"])))
 	return (Vector2(float(u["x"]), float(u["y"])) - _camera) * _scale + Vector2(SCREEN_W, SCREEN_H) * 0.5
 
 
