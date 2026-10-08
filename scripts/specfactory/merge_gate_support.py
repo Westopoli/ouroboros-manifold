@@ -919,7 +919,7 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
     is_known = lambda t: any(t.startswith(k) for k in known)  # noqa: E731
     bad = sorted(t for t in red if not is_known(t))
     green = sorted(t for t in passed if is_known(t))
-    notes = f"{len(passed)} passed, wall {secs}"
+    notes = f"{len(passed)} passed, wall {secs} of {timeout}s budget"
     if green:
         notes += f"; now green, remove from list: {','.join(green)}"
     if bad:
