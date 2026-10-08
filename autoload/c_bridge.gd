@@ -189,6 +189,19 @@ func _autosave() -> bool:
 	return not _request([{"type": "cmd", "name": "save", "path": path}], ["ack:save"]).is_empty()
 
 
+# The pipe binary: OM_PIPE override, else next to the game executable, else
+# (editor run) res://pipe.
+func _pipe_path() -> String:
+	var override := OS.get_environment("OM_PIPE")
+	if override != "":
+		return override
+	var suffix := ".exe" if OS.get_name() == "Windows" else ""
+	var beside := OS.get_executable_path().get_base_dir().path_join("ouroboros_pipe" + suffix)
+	if not OS.has_feature("editor") and FileAccess.file_exists(beside):
+		return beside
+	return ProjectSettings.globalize_path(PIPE_BIN_RES_PATH) + suffix
+
+
 # Persistent session (docs/architecture.md "persistent client session
 # (v1.1)"): one pipe process for the whole run. A reader Thread decodes
 # frames into a mutex-guarded queue (reads block, so they cannot run on the
@@ -206,7 +219,7 @@ func _autosave() -> bool:
 func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool = true) -> bool:
 	close_session()
 	_last_error = ""
-	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
+	var exe := _pipe_path()
 	if not FileAccess.file_exists(exe):
 		_last_error = "pipe binary missing"
 		return false
