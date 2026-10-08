@@ -1,0 +1,647 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Three decisions for the layout lab</title><style>body{font:16px/1.5 system-ui,sans-serif;max-width:760px;margin:1.5rem auto;padding:0 1rem;color:#1a1a1a}
+h1{font-size:1.6rem}h2{margin-top:2.5rem;border-top:3px solid #333;padding-top:.8rem}h3{margin:.2rem 0}h4{margin:.4rem 0 .1rem}
+.row{display:flex;flex-wrap:wrap;gap:.8rem}.side{flex:1 1 330px}.pair{margin:1.4rem 0;padding:.5rem .7rem;border:1px solid #ccc;border-radius:6px}
+.cap{font-size:.9rem;margin:.2rem 0 .6rem}svg{max-width:100%;height:auto;display:block;border:1px solid #bbb}
+.q{background:#fff7d6;border:2px solid #d4a800;padding:.6rem .9rem;margin-top:1.2rem}.q ul{list-style:none;padding-left:.2rem}
+.key span{display:inline-block;width:.9em;height:.9em;border-radius:50%;margin:0 .3em 0 .8em;vertical-align:middle}
+.note{color:#555;font-size:.9rem}</style></head><body>
+<h1>Three decisions for the layout lab</h1>
+<p>Run 1 played about 245,000 fights on 200 map layouts. Three questions need your eye, not a calculation. Each section shows real fights from that run, redrawn here from a replay, and ends with one question you can answer with a letter. Every picture is drawn from the replay, not a screenshot. Map units are the game's own distance unit; a unit body is a few dozen of them.</p>
+<!-- source: depth.csv (docs/northstar/research/layer_dynamics/runs/2026-10-08_layout_run1/depth.csv.gz, 244800 fight rows, 16989 capped). Each picture is the first of the six fights run for its (layout, play, enemy_heads) cell: fight seed 0, normal spawn order. -->
+<p class="key note">Key:<span style="background:#2b6cb0"></span>our holders (the side that stands and waits)<span style="background:#c05621"></span>attackers<span style="background:#4a4a4a;border-radius:0"></span>wall<span style="background:#9cc59a"></span>cover</p>
+<h2>1. How big a difference is real?</h2>
+<p>Every fight has dice in it, so two identical layouts never give the same count. Below are six pairs of fights. In each pair the same play fights the same number of attackers on two layouts. The pictures show where the survivors stood at the end; the counts under them are the survivors. Pair a is pure chance. In pairs b to f the only change is how wide the gap in the wall is. The gaps between the two counts grow from pair b to pair f. Also shown: the most attackers each layout can beat with this play (its break-even).</p>
+<div class="pair"><h3>Pair a: the same layout twice, built from two different random map seeds</h3><p>Nothing differs but chance (where the bushes and rocks sit, and the dice rolls of the fight). Same play, same 8 attackers. Play: <b>hold the choke</b>. Survivor gap between the two pictures: <b>1</b> of 16.</p>
+<div class="row"><div class="side"><svg viewBox="1134.91 1580 1040 840" width="330" height="267" role="img">
+<rect x="1134.91" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1237.77" width="90" height="642.234" fill="#4a4a4a"/>
+<rect x="1505" y="2120" width="90" height="642.234" fill="#4a4a4a"/>
+<rect x="450" y="1770" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2140" width="2200" height="90" fill="#4a4a4a"/>
+<circle cx="1935" cy="2082" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1037" cy="2147" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1444" cy="2090" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="2072" cy="1955" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1485" cy="1685" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1476" cy="1920" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1529" cy="1907" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="1902" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1514" cy="1933" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1497" cy="1958" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1509" cy="1985" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1513" cy="2023" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1512" cy="2053" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1468" cy="2071" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1497" cy="2080" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1526" cy="2088" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1492" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1462" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1819" cy="2018" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1806" cy="1990" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1811" cy="2047" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1819" cy="1958" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1847" cy="1900" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1817" cy="2086" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1844" cy="2100" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1823" cy="1918" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>same settings as its twin</b> (layout 0)<br>gap in the wall 8 bodies, 1 lane, walls close layers 0 to 2, cover 0.3, sides start 1400 map units apart, walls stretched (detour 1.5)<br>holders left: <b>14 of 16</b>; attackers left: 8 of 8<br>this layout holds against up to <b>10</b> attackers</p><!-- depth.csv row keys: layout=0 play=s1_hold_choke enemy_heads=8 fight=first of 6; csv data row 0: survivors_0=14 survivors_1=8 break_even=10 outcome=held -->
+</div>
+<div class="side"><svg viewBox="1134.91 1580 1040 840" width="330" height="267" role="img">
+<rect x="1134.91" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1237.77" width="90" height="642.234" fill="#4a4a4a"/>
+<rect x="1505" y="2120" width="90" height="642.234" fill="#4a4a4a"/>
+<rect x="450" y="1770" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2140" width="2200" height="90" fill="#4a4a4a"/>
+<circle cx="1575" cy="2097" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1315" cy="2084" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1730" cy="1877" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1270" cy="2100" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1485" cy="1685" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1476" cy="1920" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="1902" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1514" cy="1933" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1497" cy="1958" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1509" cy="1985" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1513" cy="2023" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1512" cy="2053" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1468" cy="2071" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1497" cy="2080" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1526" cy="2088" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1492" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1462" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1807" cy="1962" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1816" cy="1934" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1829" cy="1900" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1817" cy="2086" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1801" cy="1909" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>same settings as its twin</b> (layout 17)<br>gap in the wall 8 bodies, 1 lane, walls close layers 0 to 2, cover 0.3, sides start 1400 map units apart, walls stretched (detour 1.5)<br>holders left: <b>13 of 16</b>; attackers left: 5 of 8<br>this layout holds against up to <b>11</b> attackers</p><!-- depth.csv row keys: layout=17 play=s1_hold_choke enemy_heads=8 fight=first of 6; csv data row 20808: survivors_0=13 survivors_1=5 break_even=11 outcome=held -->
+</div></div></div>
+<div class="pair"><h3>Pair b: one thing changed, the choke width</h3><p>Same play, same 10 attackers; only the gap in the wall differs. Play: <b>hold the choke</b>. Survivor gap between the two pictures: <b>1</b> of 16.</p>
+<div class="row"><div class="side"><svg viewBox="1034.41 1580 1040 840" width="330" height="267" role="img">
+<rect x="1034.41" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1400" width="90" height="570" fill="#4a4a4a"/>
+<rect x="1505" y="2030" width="90" height="570" fill="#4a4a4a"/>
+<rect x="450" y="1770" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2140" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2510" width="2200" height="90" fill="#4a4a4a"/>
+<circle cx="1557" cy="1985" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1585" cy="1993" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1170" cy="1984" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="993" cy="1942" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1495" cy="1929" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1487" cy="1900" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1466" cy="1939" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1496" cy="1959" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1476" cy="1981" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1493" cy="2006" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1475" cy="2030" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1498" cy="2050" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1477" cy="2100" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1499" cy="2080" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1473" cy="2066" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1492" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1466" cy="2301" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1637" cy="1958" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1636" cy="2084" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1643" cy="2017" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 2 bodies wide</b> (layout 81)<br>2 lanes, walls close layers 0 to 4, cover 0.3, sides start 1400 map units apart<br>holders left: <b>13 of 16</b>; attackers left: 3 of 10<br>this layout holds against up to <b>14</b> attackers</p><!-- depth.csv row keys: layout=81 play=s1_hold_choke enemy_heads=10 fight=first of 6; csv data row 99156: survivors_0=13 survivors_1=3 break_even=14 outcome=decided -->
+</div>
+<div class="side"><svg viewBox="1034.41 1580 1040 840" width="330" height="267" role="img">
+<rect x="1034.41" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1400" width="90" height="540" fill="#4a4a4a"/>
+<rect x="1505" y="2060" width="90" height="540" fill="#4a4a4a"/>
+<rect x="450" y="1770" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2140" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2510" width="2200" height="90" fill="#4a4a4a"/>
+<circle cx="1443" cy="1905" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1249" cy="1884" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1272" cy="1963" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1092" cy="2039" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1495" cy="1929" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1487" cy="1900" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1496" cy="1959" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1476" cy="1981" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1493" cy="2006" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1475" cy="2030" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1498" cy="2050" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1477" cy="2100" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1499" cy="2080" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1473" cy="2066" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1492" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1466" cy="2301" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1637" cy="1958" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1636" cy="2084" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1643" cy="2017" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 4 bodies wide</b> (layout 99)<br>2 lanes, walls close layers 0 to 4, cover 0.3, sides start 1400 map units apart<br>holders left: <b>12 of 16</b>; attackers left: 3 of 10<br>this layout holds against up to <b>14</b> attackers</p><!-- depth.csv row keys: layout=99 play=s1_hold_choke enemy_heads=10 fight=first of 6; csv data row 121188: survivors_0=12 survivors_1=3 break_even=14 outcome=decided -->
+</div></div></div>
+<div class="pair"><h3>Pair c: one thing changed, the choke width</h3><p>Same play, same 14 attackers; only the gap in the wall differs. Play: <b>hold the choke</b>. Survivor gap between the two pictures: <b>2</b> of 16.</p>
+<div class="row"><div class="side"><svg viewBox="1083.78 1580 1040 840" width="330" height="267" role="img">
+<rect x="1083.78" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1400" width="90" height="540" fill="#4a4a4a"/>
+<rect x="1505" y="2060" width="90" height="540" fill="#4a4a4a"/>
+<circle cx="1231" cy="2170" r="116" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1191" cy="1832" r="116" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1464" cy="1776" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1451" cy="1803" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1455" cy="1833" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1450" cy="1866" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="1896" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1456" cy="1928" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1445" cy="1958" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1471" cy="2110" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1456" cy="2136" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="2167" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1463" cy="2204" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="2233" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1633" cy="2041" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1631" cy="1944" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 4 bodies wide</b> (layout 8)<br>no lanes, walls close layer 0 only, cover 0.1, sides start 1400 map units apart<br>holders left: <b>12 of 16</b>; attackers left: 2 of 14<br>this layout holds against up to <b>17</b> attackers</p><!-- depth.csv row keys: layout=8 play=s1_hold_choke enemy_heads=14 fight=first of 6; csv data row 9828: survivors_0=12 survivors_1=2 break_even=17 outcome=decided -->
+</div>
+<div class="side"><svg viewBox="1083.78 1580 1040 840" width="330" height="267" role="img">
+<rect x="1083.78" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1400" width="90" height="480" fill="#4a4a4a"/>
+<rect x="1505" y="2120" width="90" height="480" fill="#4a4a4a"/>
+<circle cx="1502" cy="2139" r="116" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1252" cy="2061" r="116" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1464" cy="1775" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1451" cy="1803" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="1832" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="1867" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="1897" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1449" cy="1956" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1452" cy="2132" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="2167" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1463" cy="2204" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1454" cy="2233" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1749" cy="1994" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1757" cy="1963" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1751" cy="1885" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1751" cy="2027" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1762" cy="1933" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 8 bodies wide</b> (layout 40)<br>no lanes, walls close layer 0 only, cover 0.1, sides start 1400 map units apart<br>holders left: <b>10 of 16</b>; attackers left: 5 of 14<br>this layout holds against up to <b>10</b> attackers</p><!-- depth.csv row keys: layout=40 play=s1_hold_choke enemy_heads=14 fight=first of 6; csv data row 48996: survivors_0=10 survivors_1=5 break_even=10 outcome=decided -->
+</div></div></div>
+<div class="pair"><h3>Pair d: one thing changed, the choke width</h3><p>Same play, same 14 attackers; only the gap in the wall differs. Play: <b>hold the choke</b>. Survivor gap between the two pictures: <b>3</b> of 16.</p>
+<div class="row"><div class="side"><svg viewBox="1114.57 1580 1040 840" width="330" height="267" role="img">
+<rect x="1114.57" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1237.77" width="90" height="702.234" fill="#4a4a4a"/>
+<rect x="1505" y="2060" width="90" height="702.234" fill="#4a4a4a"/>
+<rect x="450" y="1770" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2140" width="2200" height="90" fill="#4a4a4a"/>
+<circle cx="1748" cy="2090" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1126" cy="1905" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="2105" cy="1933" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1656" cy="1876" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1485" cy="1685" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="1921" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1431" cy="1925" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1478" cy="1900" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1448" cy="1900" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1442" cy="1953" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="1951" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1469" cy="1989" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="2011" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1458" cy="2025" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="2066" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="2096" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1470" cy="2063" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1492" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1462" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1651" cy="2031" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1627" cy="1945" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1632" cy="2058" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1627" cy="2012" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1606" cy="1920" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1637" cy="1973" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 4 bodies wide</b> (layout 19)<br>1 lane, walls close layers 0 to 2, cover 0.3, sides start 1400 map units apart, walls stretched (detour 1.5)<br>holders left: <b>15 of 16</b>; attackers left: 6 of 14<br>this layout holds against up to <b>18</b> attackers</p><!-- depth.csv row keys: layout=19 play=s1_hold_choke enemy_heads=14 fight=first of 6; csv data row 23292: survivors_0=15 survivors_1=6 break_even=18 outcome=decided -->
+</div>
+<div class="side"><svg viewBox="1114.57 1580 1040 840" width="330" height="267" role="img">
+<rect x="1114.57" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="1505" y="1237.77" width="90" height="642.234" fill="#4a4a4a"/>
+<rect x="1505" y="2120" width="90" height="642.234" fill="#4a4a4a"/>
+<rect x="450" y="1770" width="2200" height="90" fill="#4a4a4a"/>
+<rect x="450" y="2140" width="2200" height="90" fill="#4a4a4a"/>
+<circle cx="1935" cy="2082" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1037" cy="2147" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1444" cy="2090" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="2072" cy="1955" r="142" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1485" cy="1685" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1476" cy="1920" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="1902" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1514" cy="1933" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1497" cy="1958" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1509" cy="1985" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1513" cy="2023" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1512" cy="2053" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1472" cy="2072" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1500" cy="2081" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1492" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1462" cy="2315" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1830" cy="2012" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1806" cy="1961" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1811" cy="2035" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1834" cy="1948" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1808" cy="1901" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1807" cy="2095" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1837" cy="2100" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1810" cy="1930" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1809" cy="1990" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1836" cy="2053" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1838" cy="1900" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1809" cy="2065" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 8 bodies wide</b> (layout 0)<br>1 lane, walls close layers 0 to 2, cover 0.3, sides start 1400 map units apart, walls stretched (detour 1.5)<br>holders left: <b>12 of 16</b>; attackers left: 12 of 14<br>this layout holds against up to <b>10</b> attackers</p><!-- depth.csv row keys: layout=0 play=s1_hold_choke enemy_heads=14 fight=first of 6; csv data row 36: survivors_0=12 survivors_1=12 break_even=10 outcome=held -->
+</div></div></div>
+<div class="pair"><h3>Pair e: one thing changed, the choke width</h3><p>Same play, same 12 attackers; only the gap in the wall differs. Play: <b>hold the choke</b>. Survivor gap between the two pictures: <b>5</b> of 16.</p>
+<div class="row"><div class="side"><svg viewBox="383.255 1580 1040 840" width="330" height="267" role="img">
+<rect x="383.255" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="570" fill="#4a4a4a"/>
+<rect x="805" y="2030" width="90" height="570" fill="#4a4a4a"/>
+<circle cx="764" cy="1776" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="751" cy="1803" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="755" cy="1833" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="761" cy="1862" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="753" cy="1895" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="757" cy="1928" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="745" cy="1958" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="773" cy="2018" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="749" cy="2082" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="767" cy="2106" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="752" cy="2132" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2167" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="763" cy="2204" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2233" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="940" cy="1969" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="932" cy="1940" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 2 bodies wide</b> (layout 33)<br>no lanes, walls close layers 0 to 2, cover none, sides start 2800 map units apart<br>holders left: <b>14 of 16</b>; attackers left: 2 of 12<br>this layout holds against up to <b>18</b> attackers</p><!-- depth.csv row keys: layout=33 play=s1_hold_choke enemy_heads=12 fight=first of 6; csv data row 40416: survivors_0=14 survivors_1=2 break_even=18 outcome=decided -->
+</div>
+<div class="side"><svg viewBox="383.255 1580 1040 840" width="330" height="267" role="img">
+<rect x="383.255" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="480" fill="#4a4a4a"/>
+<rect x="805" y="2120" width="90" height="480" fill="#4a4a4a"/>
+<circle cx="764" cy="1776" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="751" cy="1803" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="755" cy="1833" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="761" cy="1862" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="1897" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="752" cy="2132" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2167" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="763" cy="2204" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2233" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1048" cy="1961" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1062" cy="2039" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1048" cy="1884" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="1033" cy="2064" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="935" cy="2078" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="940" cy="1893" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 8 bodies wide</b> (layout 131)<br>no lanes, walls close layers 0 to 2, cover none, sides start 2800 map units apart<br>holders left: <b>9 of 16</b>; attackers left: 6 of 12<br>this layout holds against up to <b>11</b> attackers</p><!-- depth.csv row keys: layout=131 play=s1_hold_choke enemy_heads=12 fight=first of 6; csv data row 160368: survivors_0=9 survivors_1=6 break_even=11 outcome=decided -->
+</div></div></div>
+<div class="pair"><h3>Pair f: one thing changed, the choke width</h3><p>Same play, same 11 attackers; only the gap in the wall differs. Play: <b>hold the choke</b>. Survivor gap between the two pictures: <b>8</b> of 16.</p>
+<div class="row"><div class="side"><svg viewBox="340.777 1580 1040 840" width="330" height="267" role="img">
+<rect x="340.777" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="570" fill="#4a4a4a"/>
+<rect x="805" y="2030" width="90" height="570" fill="#4a4a4a"/>
+<circle cx="-130" cy="1877" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1387" cy="1909" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1518" cy="1904" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="764" cy="1776" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="751" cy="1803" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="755" cy="1833" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="761" cy="1862" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="1894" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="762" cy="1923" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="764" cy="2020" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="756" cy="2049" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="746" cy="2078" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="764" cy="2113" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="748" cy="2139" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2168" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="763" cy="2204" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2233" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="934" cy="2041" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 2 bodies wide</b> (layout 28)<br>no lanes, walls close layers 0 to 2, cover 0.1, sides start 2800 map units apart<br>holders left: <b>14 of 16</b>; attackers left: 1 of 11<br>this layout holds against up to <b>18</b> attackers</p><!-- depth.csv row keys: layout=28 play=s1_hold_choke enemy_heads=11 fight=first of 6; csv data row 34290: survivors_0=14 survivors_1=1 break_even=18 outcome=decided -->
+</div>
+<div class="side"><svg viewBox="340.777 1580 1040 840" width="330" height="267" role="img">
+<rect x="340.777" y="1580" width="1040" height="840" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="480" fill="#4a4a4a"/>
+<rect x="805" y="2120" width="90" height="480" fill="#4a4a4a"/>
+<circle cx="634" cy="1929" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="708" cy="2010" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="1931" cy="2109" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="2.88889"/>
+<circle cx="764" cy="1776" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="751" cy="1803" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="755" cy="1833" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2167" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="763" cy="2204" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="754" cy="2233" r="17.3" fill="#2b6cb0" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="976" cy="1982" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="909" cy="2027" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="853" cy="2063" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="970" cy="1928" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+<circle cx="829" cy="1933" r="17.3" fill="#c05621" stroke="#fff" stroke-width="2.16667"/>
+</svg><p class="cap"><b>gap in the wall: 8 bodies wide</b> (layout 65)<br>no lanes, walls close layers 0 to 2, cover 0.1, sides start 2800 map units apart<br>holders left: <b>6 of 16</b>; attackers left: 5 of 11<br>this layout holds against up to <b>10</b> attackers</p><!-- depth.csv row keys: layout=65 play=s1_hold_choke enemy_heads=11 fight=first of 6; csv data row 79578: survivors_0=6 survivors_1=5 break_even=10 outcome=decided -->
+</div></div></div>
+<p><b>How loud is the noise?</b> Pair a is a quiet example. Layouts 0 and 17 are the same layout with different map seeds. Against 11 attackers (about the most these layouts hold against: 10 and 11), the same fight left 3 holders in one and 12 in the other: a gap of 9. So at the edge of what a layout can hold, chance alone can move the count by this much.</p>
+<!-- depth.csv row keys: layout=0 play=s1_hold_choke enemy_heads=11 first fight survivors_0=3 break_even=10 outcome=decided; layout=17 same keys survivors_0=12 break_even=11 outcome=held -->
+<div class="q"><b>Question 1.</b> Which is the first pair where the two layouts play differently, not just noisily? Answer a, b, c, d, e or f (a is the pure-chance pair; if you pick a, you are saying even the noise looks real).</div>
+<h2>2. Who won a held fight?</h2>
+<p>This is layout 3, play <b>screen</b> (a thin front line stands ahead of the main group), 17 attackers against our 16 holders, open ground with a few patches of cover and no walls. Both sides lost one unit (holders 15 of 16 left, attackers 16 of 17 left). The attackers came forward and traded shots from just outside the circle, about 359 to 366 map units from its middle, and never walked into it. At tick 1785, 1200 ticks after the first damage, all 15 holders were still inside the circle and no attacker was, so the lab stopped the fight and recorded <b>held</b>, a win for the holders.</p>
+<!-- depth.csv row keys: layout=3 play=s2_screen enemy_heads=17 first fight, csv data row 4032: outcome=held survivors_0=15 survivors_1=16 ticks=1785 first_contact_tick=585; replay matched these -->
+<p class="note">The dashed circle is 300 map units wide around the spot the holders were told to guard. The rule: after a minute of fighting (1,200 ticks since the first damage), if at least half the holders are inside the circle and no attacker is, the fight is "held".</p>
+<div class="fig"><h4>Tick 0 (the start)</h4><svg viewBox="450 1500 3450 1000" width="660" height="191" role="img">
+<rect x="450" y="1500" width="3450" height="1000" fill="#f7f4ec"/>
+<circle cx="186" cy="2015" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="9.58333"/>
+<circle cx="1904" cy="1991" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="9.58333"/>
+<circle cx="-251" cy="1838" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="9.58333"/>
+<circle cx="850" cy="2000" r="300" fill="#2b6cb0" fill-opacity=".08" stroke="#2b6cb0" stroke-width="19.1667" stroke-dasharray="57.5 34.5"/>
+<path d="M792.5 2000h115 M850 1942.5v115" stroke="#2b6cb0" stroke-width="19.1667"/>
+<circle cx="917" cy="1900" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="908" cy="1920" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="910" cy="1953" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="916" cy="1981" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="910" cy="2017" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="918" cy="2045" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="906" cy="2080" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="912" cy="2100" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="798" cy="1905" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="796" cy="1933" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="786" cy="1960" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="798" cy="1989" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="789" cy="2007" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="789" cy="2047" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="798" cy="2084" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="790" cy="2112" r="57.5" fill="#2b6cb0" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3645" cy="2006" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3683" cy="1990" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3622" cy="1998" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3615" cy="2041" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3681" cy="1962" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3664" cy="1923" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3640" cy="2080" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3696" cy="2069" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3593" cy="1941" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3560" cy="1982" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3737" cy="2013" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3741" cy="1951" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3552" cy="2059" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3624" cy="2114" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3687" cy="1888" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3601" cy="1891" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+<circle cx="3710" cy="2110" r="57.5" fill="#c05621" stroke="#fff" stroke-width="7.1875"/>
+</svg><p class="cap">Holders (blue) stand in a screen around the circle. Attackers (orange) start 2702 map units away.</p></div>
+<div class="row"><div class="side"><h4>Tick 585 (first contact)</h4><svg viewBox="450 1500 1450 1000" width="330" height="228" role="img">
+<rect x="450" y="1500" width="1450" height="1000" fill="#f7f4ec"/>
+<circle cx="186" cy="2015" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="4.02778"/>
+<circle cx="1904" cy="1991" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="4.02778"/>
+<circle cx="-251" cy="1838" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="4.02778"/>
+<circle cx="850" cy="2000" r="300" fill="#2b6cb0" fill-opacity=".08" stroke="#2b6cb0" stroke-width="8.05556" stroke-dasharray="24.1667 14.5"/>
+<path d="M825.833 2000h48.3333 M850 1975.83v48.3333" stroke="#2b6cb0" stroke-width="8.05556"/>
+<circle cx="919" cy="1896" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="906" cy="1923" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="910" cy="1953" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="916" cy="1982" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="909" cy="2017" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="918" cy="2045" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="904" cy="2076" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="914" cy="2104" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="798" cy="1903" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="797" cy="1933" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="785" cy="1960" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="801" cy="1985" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="787" cy="2012" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="789" cy="2047" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="798" cy="2084" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="789" cy="2113" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1463" cy="2049" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1480" cy="1994" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1308" cy="1984" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1282" cy="2011" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1387" cy="1964" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1324" cy="1922" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1300" cy="2079" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1372" cy="2046" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1253" cy="1940" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1220" cy="1981" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1529" cy="1954" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1423" cy="1917" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1212" cy="2058" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1284" cy="2113" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1347" cy="1887" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1261" cy="1890" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1370" cy="2109" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<line x1="850" y1="2000" x2="1212" y2="2058" stroke="#111" stroke-width="6.04167" stroke-dasharray="19.3333 12.0833"/>
+<text x="1031" y="2330" font-size="72.5" fill="#111" text-anchor="middle" font-weight="bold">366 map units</text>
+</svg><p class="cap">First damage. The closest attacker is 366 map units from the middle of the circle, outside it.</p></div><div class="side"><h4>Tick 1785 (the end)</h4><svg viewBox="450 1500 1450 1000" width="330" height="228" role="img">
+<rect x="450" y="1500" width="1450" height="1000" fill="#f7f4ec"/>
+<circle cx="186" cy="2015" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="4.02778"/>
+<circle cx="1904" cy="1991" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="4.02778"/>
+<circle cx="-251" cy="1838" r="134" fill="#9cc59a" fill-opacity=".7" stroke="#5c8a5a" stroke-width="4.02778"/>
+<circle cx="850" cy="2000" r="300" fill="#2b6cb0" fill-opacity=".08" stroke="#2b6cb0" stroke-width="8.05556" stroke-dasharray="24.1667 14.5"/>
+<path d="M825.833 2000h48.3333 M850 1975.83v48.3333" stroke="#2b6cb0" stroke-width="8.05556"/>
+<circle cx="906" cy="1923" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="910" cy="1953" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="916" cy="1982" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="909" cy="2017" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="918" cy="2045" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="904" cy="2076" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="914" cy="2104" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="834" cy="1900" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="833" cy="1930" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="820" cy="1957" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="837" cy="1982" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="823" cy="2009" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="825" cy="2044" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="834" cy="2081" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="825" cy="2110" r="24.2" fill="#2b6cb0" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1209" cy="1982" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1237" cy="1994" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1231" cy="1961" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1215" cy="2014" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1217" cy="1912" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1194" cy="1857" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1209" cy="2144" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1233" cy="2037" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1209" cy="1941" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1252" cy="1934" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1222" cy="1873" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1212" cy="2058" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1208" cy="2113" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1181" cy="1830" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1197" cy="1890" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<circle cx="1221" cy="2086" r="24.2" fill="#c05621" stroke="#fff" stroke-width="3.02083"/>
+<line x1="850" y1="2000" x2="1209" y2="1982" stroke="#111" stroke-width="6.04167" stroke-dasharray="19.3333 12.0833"/>
+<text x="1030" y="2330" font-size="72.5" fill="#111" text-anchor="middle" font-weight="bold">359 map units</text>
+</svg><p class="cap">Fight called &quot;held&quot;. Closest attacker 359 map units from the circle middle.</p></div></div>
+<div class="q"><b>Question 2.</b> Who won this fight?<ul><li>(a) The defender: it held the position for a minute.</li><li>(b) Nobody: the attacker never committed.</li><li>(c) This is a sim defect: attackers should always close.</li><li>(d) Count it for the defender only if the attacker took losses.</li></ul></div>
+<h2>3. The corner that never ends</h2>
+<p>Some layouts never finish. Of 244,800 fights in the run, 16,989 hit the 12,000-tick limit with no result (called "capped"). Where the gap in the wall is 2 bodies wide and the walls close all five layers (blocked_layer_top = 4), 5,714 of 15,912 fights capped; everywhere else together, 11,275 of 228,888. For gap 4 with all layers closed it is 10,729 of 20,808.</p>
+<!-- depth.csv row keys: capped counts by feat_choke_width_bodies=2.0 and feat_blocked_layer_top=4: 5714 of 15912; the rest 11275 of 228888; choke 4.0 top 4: 10729 of 20808; whole file 16989 of 244800 -->
+<p>What "blocked_layer_top" means: the game has five stacked layers (0 to 4), like floors, and a wall closes the layers up to this number. Where a wall is closed, a unit on that layer cannot cross it; a unit on an open layer goes over it. Here is what it means for this layout and, for comparison, a layout whose layers 3 and 4 are open:</p>
+<div class="row"><div class="side"><svg viewBox="0 0 330 118" width="330" height="118" role="img">
+<text x="0" y="12" font-size="12">This layout: blocked_layer_top = 4</text>
+<rect x="0" y="94" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="106" font-size="12">layer 0: closed</text>
+<rect x="0" y="76" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="88" font-size="12">layer 1: closed</text>
+<rect x="0" y="58" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="70" font-size="12">layer 2: closed</text>
+<rect x="0" y="40" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="52" font-size="12">layer 3: closed</text>
+<rect x="0" y="22" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="34" font-size="12">layer 4: closed</text>
+</svg></div><div class="side"><svg viewBox="0 0 330 118" width="330" height="118" role="img">
+<text x="0" y="12" font-size="12">For comparison: blocked_layer_top = 2</text>
+<rect x="0" y="94" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="106" font-size="12">layer 0: closed</text>
+<rect x="0" y="76" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="88" font-size="12">layer 1: closed</text>
+<rect x="0" y="58" width="90" height="14" fill="#4a4a4a"/>
+<text x="98" y="70" font-size="12">layer 2: closed</text>
+<rect x="0" y="40" width="90" height="14" fill="#d9e6f2"/>
+<text x="98" y="52" font-size="12">layer 3: open (passes over)</text>
+<rect x="0" y="22" width="90" height="14" fill="#d9e6f2"/>
+<text x="98" y="34" font-size="12">layer 4: open (passes over)</text>
+</svg></div></div>
+<p>The fight below: layout 124 (choke 2 bodies wide, 1 lane, walls closing layers 0 to 4, 2800 map units between the sides), play <b>hold the choke</b>, 8 attackers. All of its six fights capped with every unit alive (16 holders and 8 attackers left, 12,000 ticks). The trace shows every unit stayed on layer 0 for the whole fight, so no unit could ever go over a wall. The two sides ended up on either side of the wall and did not move again after tick 1200.</p>
+<!-- depth.csv row keys: layout=124 play=s1_hold_choke enemy_heads=8, all 6 fights outcome=cap survivors_0=16 survivors_1=8 ticks=12000; csv data rows 151776,151777,151778,151779,151780,151781 -->
+<div class="fig"><h4>Tick 0</h4><svg viewBox="300 1500 3600 1000" width="660" height="183" role="img">
+<rect x="300" y="1500" width="3600" height="1000" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="570" fill="#4a4a4a"/>
+<rect x="805" y="2030" width="90" height="570" fill="#4a4a4a"/>
+<rect x="-950" y="1770" width="3600" height="90" fill="#4a4a4a"/>
+<rect x="-950" y="2140" width="3600" height="90" fill="#4a4a4a"/>
+<circle cx="812" cy="1780" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="803" cy="1800" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="805" cy="1833" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="811" cy="1861" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="805" cy="1897" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="813" cy="1925" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="801" cy="1960" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="807" cy="1980" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="813" cy="2025" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="811" cy="2053" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="801" cy="2080" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="813" cy="2109" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="804" cy="2127" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="804" cy="2167" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="813" cy="2204" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="805" cy="2232" r="60.0" fill="#2b6cb0" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3685" cy="2006" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3611" cy="1990" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3603" cy="2045" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3708" cy="1956" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3648" cy="1910" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3649" cy="2085" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3711" cy="2092" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+<circle cx="3579" cy="1917" r="60.0" fill="#c05621" stroke="#fff" stroke-width="7.5"/>
+</svg><p class="cap">Our 16 stand at the gap, 8 attackers start at the far right. Every unit is on layer 0.</p></div>
+<div class="row"><div class="side"><h4>Tick 1200</h4><svg viewBox="450 1600 900 800" width="330" height="293" role="img">
+<rect x="450" y="1600" width="900" height="800" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="570" fill="#4a4a4a"/>
+<rect x="805" y="2030" width="90" height="570" fill="#4a4a4a"/>
+<rect x="-950" y="1770" width="3600" height="90" fill="#4a4a4a"/>
+<rect x="-950" y="2140" width="3600" height="90" fill="#4a4a4a"/>
+<circle cx="785" cy="1685" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="795" cy="1929" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="732" cy="1923" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="787" cy="1900" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="758" cy="1908" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="767" cy="1941" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="796" cy="1959" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="776" cy="1981" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="793" cy="2006" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="775" cy="2030" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="798" cy="2050" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="777" cy="2100" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="799" cy="2080" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="771" cy="2065" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="792" cy="2315" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="762" cy="2315" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="937" cy="2015" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="935" cy="1985" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="935" cy="2045" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="937" cy="1955" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="960" cy="1900" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="937" cy="2084" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="963" cy="2100" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="935" cy="1917" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<text x="785" y="1696" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="795" y="1940" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="732" y="1934" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="787" y="1911" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="758" y="1918" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="767" y="1952" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="796" y="1970" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="776" y="1992" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="793" y="2017" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="775" y="2041" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="798" y="2060" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="777" y="2111" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="799" y="2090" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="771" y="2076" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="792" y="2326" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="762" y="2326" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="937" y="2026" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="935" y="1996" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="935" y="2056" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="937" y="1966" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="960" y="1911" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="937" y="2095" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="963" y="2111" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="935" y="1927" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+</svg><p class="cap">The attackers have come up to the wall and stopped. Gap between the wall pieces is 60 map units; the dark bars are walls.</p></div><div class="side"><h4>Tick 2400</h4><svg viewBox="450 1600 900 800" width="330" height="293" role="img">
+<rect x="450" y="1600" width="900" height="800" fill="#f7f4ec"/>
+<rect x="805" y="1400" width="90" height="570" fill="#4a4a4a"/>
+<rect x="805" y="2030" width="90" height="570" fill="#4a4a4a"/>
+<rect x="-950" y="1770" width="3600" height="90" fill="#4a4a4a"/>
+<rect x="-950" y="2140" width="3600" height="90" fill="#4a4a4a"/>
+<circle cx="785" cy="1685" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="795" cy="1929" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="732" cy="1923" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="787" cy="1900" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="758" cy="1908" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="767" cy="1941" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="796" cy="1959" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="776" cy="1981" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="793" cy="2006" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="775" cy="2030" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="798" cy="2050" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="777" cy="2100" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="799" cy="2080" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="771" cy="2065" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="792" cy="2315" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="762" cy="2315" r="24.0" fill="#2b6cb0" stroke="#fff" stroke-width="3"/>
+<circle cx="937" cy="2015" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="935" cy="1985" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="935" cy="2045" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="937" cy="1955" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="960" cy="1900" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="937" cy="2084" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="963" cy="2100" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<circle cx="935" cy="1917" r="24.0" fill="#c05621" stroke="#fff" stroke-width="3"/>
+<text x="785" y="1696" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="795" y="1940" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="732" y="1934" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="787" y="1911" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="758" y="1918" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="767" y="1952" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="796" y="1970" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="776" y="1992" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="793" y="2017" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="775" y="2041" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="798" y="2060" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="777" y="2111" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="799" y="2090" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="771" y="2076" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="792" y="2326" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="762" y="2326" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="937" y="2026" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="935" y="1996" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="935" y="2056" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="937" y="1966" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="960" y="1911" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="937" y="2095" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="963" y="2111" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+<text x="935" y="1927" font-size="26.4" fill="#111" text-anchor="middle">L0</text>
+</svg><p class="cap">Not one unit has moved since tick 1200 (identical positions), and nobody has been hurt.</p></div></div>
+<p class="note">In the two closer pictures each unit carries its layer ("L0" = layer 0).</p>
+<div class="q"><b>Question 3.</b> What should the lab do with layouts like this one?<ul><li>(a) Exclude these layouts from the search.</li><li>(b) It is a sim defect: units should be able to reach each other. Fix that first.</li><li>(c) They are allowed layouts, and the lab should score them as a stalemate.</li></ul></div>
+</body></html>
