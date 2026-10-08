@@ -99,7 +99,9 @@ func _run() -> void:
 	for k in state.keys():
 		if str(k).contains("unknown_faction"):
 			has_key = true
-			_assert(state[k] != null and (not (state[k] is Array) or (state[k] as Array).size() > 0) and state[k] != 0 and state[k] != false,
+			var v = state[k]
+			var reported: bool = (v is Array and (v as Array).size() > 0) or (not (v is Array) and v != null and v != 0 and v != false)
+			_assert(reported,
 				"A48-6: qa_state[%s] must report the unknown faction (non-empty / non-zero)" % str(k))
 	_assert(has_key, "A48-6: qa_state has no key containing \"unknown_faction\" reporting the unknown id (keys: %s)" % str(state.keys()))
 

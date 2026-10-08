@@ -46,6 +46,7 @@ func _check(id: String, cond: bool, msg: String) -> void:
 func _initialize() -> void:
 	await _run()
 	print("\n=== B3a: %d passed, %d failed ===" % [_pass, _fail])
+	print("PASS: %d  FAIL: %d" % [_pass, _fail])
 	for m in _msgs:
 		print("  FAILED " + m)
 	quit(1 if _fail > 0 else 0)
