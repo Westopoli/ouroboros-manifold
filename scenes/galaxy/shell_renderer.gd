@@ -237,7 +237,8 @@ func _on_territory_removed(region_id: String) -> void:
 	_refresh_labels()
 
 
-# Label text goes through UnknownLabel: an owner id outside known_faction_ids reads "Unknown".
+# A faction display name (non-numeric faction_id) is kept; a bare owner id goes through UnknownLabel:
+# an id outside known_faction_ids reads "Unknown".
 func _refresh_labels() -> void:
 	_labels.refresh(_faction_systems, _wv_data)
 	for key in _faction_systems:
@@ -245,7 +246,14 @@ func _refresh_labels() -> void:
 		if label == null or _faction_systems[key].is_empty():
 			continue
 		var fid := str(_wv_data.get_region(_faction_systems[key].keys()[0]).get("faction_id", ""))
-		label.text = UnknownLabel.text_for(int(fid) if fid.is_valid_int() else int(fid.trim_prefix("faction_")) if fid.begins_with("faction_") else -1, known_faction_ids)
+		var owner_id := -1
+		if fid.is_valid_int():
+			owner_id = int(fid)
+		elif fid.begins_with("faction_") and fid.trim_prefix("faction_").is_valid_int():
+			owner_id = int(fid.trim_prefix("faction_"))
+		elif fid != "":
+			continue
+		label.text = UnknownLabel.text_for(owner_id, known_faction_ids)
 
 
 func _on_regions_cleared() -> void:

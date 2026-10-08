@@ -1,7 +1,7 @@
 extends RefCounted
 
 # Faction name labels (R-106-03: names show in the overview band only) and, under the
-# Compatibility renderer, a flat additive stand-in mesh per faction in place of the field shell.
+# Compatibility renderer, a flat alpha-blended stand-in mesh per faction in place of the field shell.
 # Called from shell_renderer.gd. Label text is the faction id spelled out; UnknownLabel.text_for
 # (scenes/galaxy/unknown_label.gd, lane B13) is not on this branch yet.
 
@@ -107,7 +107,7 @@ func _make_stand_in(color: Color) -> MeshInstance3D:
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = Color(color.r, color.g, color.b, 0.0)
 	mat.render_priority = -10
