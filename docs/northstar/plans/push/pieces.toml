@@ -1479,6 +1479,19 @@ size_estimate = "lane D space landscape, 9 pieces (vg-wave6-laneF-D.js lane D)"
 
 # Visible-game programme (2026-10-07), lane E1: settlement and economy, the buildable half (spec rev 4
 # section 1; K-e the contract amendment first, under VG-CONTRACT-E1). E1p is the VG-VIEW link (after C5).
+# K-d (lane D contract piece, landed by push/vg-kd-land): space field getters, space_field_dump verb, bridge decode.
+[[piece]]
+id = "VG-CONTRACT-D"
+manager = "M0"
+wave = 8
+owns = ["csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/pipe/om_pipe.c", "csrc/space_field.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "autoload/c_bridge.gd", "tests/csim/conftest.py", "tests/csim/test_VG_D_contract.py", "tests/test_c_bridge_vg_d.gd", "tests/transport/test_pipe_vg_d.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_D_contract.py", "tests/transport/test_pipe_vg_d.py", "tests/test_c_bridge_vg_d.gd"]
+depends_on = ["VG-CONTRACT"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "K-d: om_space_field getters, space_field_dump verb, bridge decode (placeholder plates)"
+
 [[piece]]
 id = "VG-CONTRACT-E1"
 manager = "M0"
