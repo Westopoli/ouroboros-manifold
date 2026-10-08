@@ -1377,11 +1377,12 @@ size_estimate = "lab search lane: layout map, objective scene, plays-space scan 
 
 # Visible-game programme (2026-10-07), guard pieces G1, G2, G4. Shares files with the pieces in
 # depends_on (the gate scripts, the QA daemon, the specfactory tests), sequenced after them.
+# VG-GUARD also owns daemon_client.py and test_qa_renderer_option.py (handed over from the attached G-qadesktoptests glob, vg-b-look-land 2026-10-08).
 [[piece]]
 id = "VG-GUARD"
 manager = "M0"
 wave = 7
-owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "autoload/qa_daemon.gd", "tests/test_qa_daemon_driver.gd", "tests/test_qa_daemon_inventory.gd", "tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_story_reviews_format.py", "docs/bible/stories.md", "docs/northstar/agile.md", "docs/northstar/story_reviews/README.md", "CLAUDE.md", "docs/northstar/ROADMAP.md"]
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "autoload/qa_daemon.gd", "tests/test_qa_daemon_driver.gd", "tests/test_qa_daemon_inventory.gd", "tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_story_reviews_format.py", "docs/bible/stories.md", "docs/northstar/agile.md", "docs/northstar/story_reviews/README.md", "CLAUDE.md", "docs/northstar/ROADMAP.md", "tests/qa/desktop/daemon_client.py", "tests/qa/desktop/test_qa_renderer_option.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_story_reviews_format.py", "tests/test_qa_daemon_driver.gd", "tests/test_qa_daemon_inventory.gd"]
 depends_on = ["A94-harness", "HARNESS-sigblocked", "HARNESS-symown", "C7"]
@@ -1424,7 +1425,7 @@ id = "VG-B"
 manager = "M0"
 wave = 8
 owns = ["scenes/world/time_jump_sequencer.gd", "autoload/ui_data_bus.gd"]
-owns_glob = ["scenes/galaxy/**", "tests/galaxy_field/**", "tests/test_galaxy_*.gd", "tests/test_vg_b_*.gd", "tests/qa/desktop/galaxy_*", "tests/qa/desktop/probe_runner.py", "tests/qa/desktop/test_galaxy_*.py", "docs/northstar/plans/push_2026-10-01/**"]
+owns_glob = ["scenes/galaxy/**", "tests/galaxy_field/**", "tests/test_galaxy_*.gd", "tests/test_vg_b_*.gd", "tests/qa/desktop/galaxy_*", "tests/qa/desktop/probe_runner.py", "tests/qa/desktop/test_galaxy_*.py", "tests/qa/desktop/plays/B/**", "docs/northstar/story_reviews/B.md", "docs/northstar/story_reviews/shots/**", "docs/northstar/plans/push_2026-10-01/**"]
 acceptance = []
 depends_on = ["C2", "C8", "G-qadesktoptests"]
 status = { state = "in_flight" }
