@@ -77,21 +77,6 @@ int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double 
     return 0;
 }
 
-/* STUB K-d2: D2/D3/D4 replace */
-int om_space_raster(const om_space_plates *plates, double cell_wu, om_space_cells *raster) {
-    (void)cell_wu;
-    if (!plates || !raster) return -1;
-    memset(raster, 0, sizeof *raster);
-    memset(raster->owner, 0xFF, sizeof raster->owner);
-    return 0;
-}
-
-/* STUB K-d2: D2/D3/D4 replace */
-int om_space_carve(om_space_plates *plates, om_space_cells *raster, uint32_t obj_cx, uint32_t obj_cy, int no_carve) {
-    (void)obj_cx; (void)obj_cy; (void)no_carve;
-    return plates && raster ? 0 : -1;
-}
-
 int om_space_field_present(const om_world *w) {
     return w && w->space_field.present;
 }
