@@ -53,6 +53,7 @@ var _mission_active := false
 var _mission_begun := false
 var _session_mission: Dictionary = {}
 var _terrain: Dictionary = {}
+var _space_field: Dictionary = {}
 var _era_kind: int = 0
 
 
@@ -543,6 +544,7 @@ func _ensure_mission() -> bool:
 	if _mission_active:
 		return true
 	_terrain = {}
+	_space_field = {}
 	var era: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("EraConfig")
 	var cmd := {"type": "cmd", "name": "mission_start", "faction": 0, "era_kind": 0, "movement_kinds": []}
 	if era != null and era.has_method("kind") and era.has_method("movement_kinds"):
@@ -562,6 +564,31 @@ func _fetch_terrain() -> bool:
 	if t.is_empty():
 		return false
 	_terrain = _DumpDecode.terrain_from_frame(t["terrain"])
+	return true
+
+
+# The space field of the begun mission (K-d, docs/architecture.md space_field_dump): {cells_w, cells_h, layers,
+# masks: 5 PackedByteArray (8 cells per byte, LSB first, 1 = blocked), polys: [{layer, kind, points}]}; {} in a ground era.
+func space_field() -> Dictionary:
+	return _space_field
+
+
+func _fetch_space_field() -> bool:
+	var t: Dictionary = _request([{"type": "cmd", "name": "space_field_dump"}], ["space_field"])
+	if t.is_empty():
+		return false
+	var f: Dictionary = t["space_field"]
+	var masks: Array = []
+	for m in f.get("masks", []):
+		masks.append(String(m).hex_decode())
+	var polys: Array = []
+	for p in f.get("polys", []):
+		var pts := PackedVector2Array()
+		var xy: Array = p[2]
+		for i in range(0, xy.size() - 1, 2):
+			pts.append(Vector2(float(xy[i]), float(xy[i + 1])))
+		polys.append({"layer": int(p[0]), "kind": int(p[1]), "points": pts})
+	_space_field = {"cells_w": int(f.get("cells_w", 0)), "cells_h": int(f.get("cells_h", 0)), "layers": int(f.get("layers", 0)), "masks": masks, "polys": polys}
 	return true
 
 
@@ -614,7 +641,7 @@ func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	if frames.is_empty():
 		return false
 	_tactical = _reconstruct_tactical(frames["tactical"])
-	return _fetch_terrain() if _era_kind == 1 else true
+	return _fetch_terrain() if _era_kind == 1 else _fetch_space_field()
 
 
 # ... one tactical_step of the begun mission (begun here if the player has
