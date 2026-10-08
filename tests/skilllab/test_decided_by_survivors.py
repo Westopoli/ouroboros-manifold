@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-06-layout-search-spec.md "Rev 3 (proposed 2026-10-07)": placed formations, decided by survivors
+# spec: docs/northstar/plans/2026-10-06-layout-search-spec.md Rev 3 (decided by survivors) and Rev 4 (the hold condition); placement tests are in test_placed_by_feature.py
 """Rev 3: Setup.decided_by_survivors, the `decided` outcome, scenes.placed_scene, a five-feature lhs_draw.
 
 Assumed names (the spec section fixes them; the builder must match or the test-writer is told):
@@ -8,10 +8,7 @@ Assumed names (the spec section fixes them; the builder must match or the test-w
     The winner is by remaining hp sums; a gap of at most 5% of the larger sum is "draw".
   - The blind count starts at the first tick on which nobody sees an enemy (after first damage) and ends the fight 400 ticks
     later, i.e. at tick first_blind_tick + 400. Sight on any tick resets it.
-  - scenes.placed_scene(layout, play, start_distance) -> build(enemy_heads, swap) like the other scenes; `layout` is a Terrain in play
-    coordinates (maps.layout_map output), `play` a plays_space.PLAYS name; the first groups of the two sides sit
-    start_distance (1,400 or 2,800 wu) apart, their midpoint on the layout's choke (the middle of the
-    gap between the wall blocks); Setup.decided_by_survivors is True.
+  - placement (Rev 4 supersedes Rev 3's translated formations) is tested in test_placed_by_feature.py.
 """
 import dataclasses
 import json
@@ -164,44 +161,93 @@ def test_existing_scenes_stay_byte_identical_with_the_flag_at_its_default():
     assert _rows_hash() == DEFAULT_PLAYS_HASH
 
 
-CHOKE = (240.0, 40.0)   # centre of the gap in LAYOUT below
+# ---- Rev 4 rule 2: the hold condition -------------------------------------------------------------------------
+# Assumed names (spec Rev 4 gives "hold_ticks = 1,200" and "the defender's anchor" but not the fields; builder must match):
+#   Setup.hold_ticks: int = 1200; Setup.defender_side: int = 0; Setup.hold_anchor: Optional[tuple] = None ((x, y), None = no hold rule).
+#   With hold_anchor set, at tick first_damage + hold_ticks, if >= half the defender side's living units are within 300 wu of
+#   hold_anchor and no living unit of the other side is, the fight ends outcome "held", winner = the defender's side name.
+
+HOLD, RADIUS = 1200, 300.0
 
 
-def _gap_mid(terrain):
-    """Midpoint of the gap between two blocks stacked at the same x (the choke)."""
-    a, b = sorted(terrain.blocks, key=lambda k: k.y0)[:2]
-    return ((a.x0 + a.x1) / 2, (a.y1 + b.y0) / 2)
+def _held_run(defender, script_extra=None, count=2, max_ticks=3000):
+    anchor = (-300.0, 0.0) if defender == 0 else (300.0, 0.0)
+
+    def script(t, f):
+        if t == 29:
+            f.set_hp(f.units_of(1)[0], 40)
+        if script_extra:
+            script_extra(t, f)
+
+    eng = TimelineFakeEngine(script=script, can_see_fn=lambda f, o, e: True)
+    g0, g1 = dataclasses.replace(_G(0), count=count), dataclasses.replace(_G(1), count=count)
+    s = Setup(groups=(g0, g1), unit_types={}, max_ticks=max_ticks, stalemate_ticks=10, sample_every=5,
+              decided_by_survivors=True, hold_ticks=HOLD, defender_side=defender, hold_anchor=anchor)
+    return fight(s, 0, False, engine=eng)
 
 
-LAYOUT = Terrain(canvas=(4000.0, 4000.0),
-                 blocks=(Block(190.0, -800.0, 290.0, -10.0, 0, 4), Block(190.0, 90.0, 290.0, 800.0, 0, 4)))
+def test_setup_gains_the_hold_fields():
+    """Rev 4 rule 2: hold_ticks (1,200 draft), defender_side and hold_anchor are Setup fields with defaults that change nothing."""
+    f = Setup.__dataclass_fields__
+    assert {"hold_ticks", "defender_side", "hold_anchor"} <= set(f)
+    s = Setup(groups=(), unit_types={})
+    assert (s.hold_ticks, s.hold_anchor) == (1200, None)
 
 
-@pytest.mark.parametrize("start_distance", [1400.0, 2800.0])
-@pytest.mark.parametrize("play", ["s2_spread_line", "s4_bait"])
-def test_placed_scene_puts_the_formations_start_distance_apart_around_the_choke(play, start_distance):
-    """Rev 3 rule 1: anchors start_distance apart, the choke midpoint between them."""
-    setup = scenes.placed_scene(LAYOUT, play, start_distance)(16, False)
-    first = {}
-    for g in setup.groups:
-        first.setdefault(g.side, g)
-    a, b = first[0], first[1]
-    assert ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5 == pytest.approx(start_distance)
-    gx, gy = _gap_mid(setup.terrain)
-    assert ((a.x + b.x) / 2, (a.y + b.y) / 2) == pytest.approx((gx, gy))
-    assert setup.decided_by_survivors is True
+@pytest.mark.parametrize("defender,winner", [(0, "side0"), (1, "side1")])
+def test_held_ends_1200_ticks_after_first_damage_with_the_defender_winning(stub_place, defender, winner):
+    """Rev 4 rule 2: damage first seen at tick 30, the defender keeps all units at its anchor, no attacker near:
+    ends ('held', 30 + 1200) with the defender as winner, whichever side defends (sight never lapses, so not 'decided')."""
+    r = _held_run(defender)
+    assert (r.outcome, r.ticks, r.winner) == ("held", 30 + HOLD, winner)
 
 
-def test_placed_scene_follows_the_choke_when_the_layout_moves():
-    """Rev 3 rule 1: shifting the layout's gap shifts the anchors by the same amount, distance unchanged."""
-    moved = Terrain(canvas=LAYOUT.canvas, blocks=tuple(
-        dataclasses.replace(k, y0=k.y0 + 120.0, y1=k.y1 + 120.0) for k in LAYOUT.blocks))
-    mid = lambda s: (lambda f: ((f[0].x + f[1].x) / 2, (f[0].y + f[1].y) / 2))(
-        {g.side: g for g in reversed(s.groups)})
-    s0 = scenes.placed_scene(LAYOUT, "s2_spread_line", 1400.0)(16, False)
-    s1 = scenes.placed_scene(moved, "s2_spread_line", 1400.0)(16, False)
-    assert mid(s1)[1] - mid(s0)[1] == pytest.approx(120.0)
-    assert _gap_mid(s1.terrain)[1] - _gap_mid(s0.terrain)[1] == pytest.approx(120.0)
+def test_held_needs_at_least_half_the_defenders_near_the_anchor(stub_place):
+    """Rev 4 rule 2: 1 of 2 defenders within 300 wu is half, enough; the other walks off at tick 100."""
+    away = lambda t, f: f.set_pos(f.units_of(0)[1], -1500.0, 900.0) if t == 100 else None
+    r = _held_run(0, away)
+    assert (r.outcome, r.ticks, r.winner) == ("held", 30 + HOLD, "side0")
+
+
+def test_held_not_reached_with_fewer_than_half_near_the_anchor(stub_place):
+    """Rev 4 rule 2: 1 of 3 near the anchor is under half: no hold, the fight runs to the cap."""
+    def away(t, f):
+        if t == 100:
+            for u in f.units_of(0)[1:]:
+                f.set_pos(u, -1500.0, 900.0)
+    r = _held_run(0, away, count=3)
+    assert (r.outcome, r.ticks, r.winner) == ("cap", 3000, None)
+
+
+def test_an_attacker_inside_the_radius_prevents_held(stub_place):
+    """Rev 4 rule 2: a living attacker within 300 wu of the defender's anchor at tick 1,230: no hold."""
+    r = _held_run(0, lambda t, f: f.set_pos(f.units_of(1)[0], -250.0, 0.0) if t == 100 else None)
+    assert (r.outcome, r.ticks, r.winner) == ("cap", 3000, None)
+
+
+def test_hold_rule_is_inert_without_an_anchor(stub_place):
+    """Rev 4 rule 2: hold_anchor None (the default) never ends a fight as held."""
+    eng = TimelineFakeEngine(script=lambda t, f: f.set_hp(f.units_of(1)[0], 40) if t == 29 else None,
+                             can_see_fn=lambda f, o, e: True)
+    s = Setup(groups=(_G(0), _G(1)), unit_types={}, max_ticks=2000, stalemate_ticks=10, decided_by_survivors=True)
+    assert fight(s, 0, False, engine=eng).outcome == "cap"
+
+
+def test_cell_result_scores_held_as_a_defender_win():
+    """Rev 4 rule 2 scoring: held is like a wipe for the defender; side 0 the defender and winner in every fight is a win."""
+    assert scan.cell_result(8, [_fr("held", 0.5, "side0")] * 4, WIN_MARGIN).won is True
+
+
+def test_cell_result_held_by_the_other_side_is_not_won():
+    """Rev 4 rule 2 scoring: held with winner side1 (side 1 defends) is a loss for side 0."""
+    assert scan.cell_result(8, [_fr("held", -0.5, "side1")] * 4, WIN_MARGIN).won is False
+
+
+def test_cell_result_one_lost_hold_among_held_fights_is_not_won():
+    """Rev 4 rule 2 scoring: the win must hold across the swapped fights, as for a wipe."""
+    c = scan.cell_result(8, [_fr("held", 0.9, "side0")] * 3 + [_fr("held", -0.1, "side1")], WIN_MARGIN)
+    assert c.won is False
+
 
 
 # ---- six features kept ----------------------------------------------------------------------------------------

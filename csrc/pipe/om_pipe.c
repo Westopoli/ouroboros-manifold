@@ -55,6 +55,10 @@
  *     om_chapter_mission_realtime take/read the raw int.
  */
 #include <dirent.h>
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -286,6 +290,7 @@ static om_world *W = NULL;
 static uint64_t g_tick = 0;
 static uint32_t g_n_regions = 0;
 static uint64_t g_tactical_tick = 0;
+static int g_net_full_next = 0;
 static uint32_t g_n_placed_structures = 0;
 
 static int32_t *prev_owner = NULL;
@@ -2515,6 +2520,7 @@ static void net_ack_close(jbuf *j) {
 static void handle_net_reset(void) {
     if (!net_guard("net_reset", 0)) return;
     om_cmd_reset(W);
+    g_net_full_next = 1;
     jbuf j;
     net_ack_open(&j, "net_reset");
     net_ack_close(&j);
@@ -2561,6 +2567,9 @@ static void handle_net_step(const char *json) {
     get_i64(json, "n", &n);
     int want = 0;
     get_bool(json, "checksum", &want);
+    int want_frame = 0;
+    get_bool(json, "frame", &want_frame);
+    uint64_t before = g_tac.steps;
     for (int64_t i = 0; i < n; i++) {
         om_tactical_step(W);
         g_tactical_tick++;
@@ -2570,6 +2579,11 @@ static void handle_net_step(const char *json) {
     net_ack_open(&j, "net_step");
     if (want || om_net_tick(W) % 10 == 0) net_ack_checksum(&j);
     net_ack_close(&j);
+    if (want_frame && n >= 0) {
+        int full = g_net_full_next;
+        g_net_full_next = 0;
+        write_tactical(full || n == 0 || g_tac.steps / OM_PIPE_FULL_PERIOD > before / OM_PIPE_FULL_PERIOD);
+    }
 }
 
 static void handle_net_checksum(void) {
@@ -2876,6 +2890,10 @@ static void handle_net_state_diff(const char *json) {
  * --------------------------------------------------------------------- */
 
 int main(void) {
+#ifdef _WIN32
+    _setmode(_fileno(stdin), _O_BINARY);
+    _setmode(_fileno(stdout), _O_BINARY);
+#endif
     jbuf hello;
     jb_init(&hello);
     jb_putc(&hello, '{');

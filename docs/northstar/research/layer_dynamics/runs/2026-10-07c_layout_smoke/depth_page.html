@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layout search</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<style>
+:root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#6b675f;--grid:#dedad0;--won:#2a7f62;--lost:#c0452f;
+--side0:#2f5fb3;--side1:#b36a1f;--gap:rgba(120,120,120,.22);--rule:#cfcabd}
+@media (prefers-color-scheme: dark){:root{--bg:#161614;--fg:#ecebe6;--muted:#9c978c;--grid:#35332e;
+--won:#58c9a1;--lost:#f0806a;--side0:#7fa8f0;--side1:#e8a35c;--gap:rgba(190,190,190,.2);--rule:#4a4740}}
+body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.6rem}h2{font-size:1.15rem;margin:.6rem 0}h3{font-size:1rem;color:var(--muted);margin:1.6rem 0 .3rem}
+svg{width:100%;height:auto}svg text{fill:var(--fg);font-size:11px}svg .muted{fill:var(--muted)}
+.grid{stroke:var(--grid);stroke-width:1}.marker{stroke:var(--fg);stroke-width:1;stroke-dasharray:4 3}
+.cell.won{fill:var(--won)}.cell.lost{fill:var(--lost)}
+.side0{stroke:var(--side0);fill:none;stroke-width:2}.side1{stroke:var(--side1);fill:none;stroke-width:2}
+text.side0{fill:var(--side0);stroke:none}text.side1{fill:var(--side1);stroke:none}
+.gap{fill:var(--gap);stroke:none}
+table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.4rem 0 1.2rem}
+th,td{border-bottom:1px solid var(--rule);padding:.2rem .5rem;text-align:left}
+</style>
+</head>
+<body>
+<h1>Layout search: which layouts induce depth</h1>
+<h2>3 layouts, depth score 0 to 5 (gain of at least 2 units, counter works)</h2>
+<p>S3, S5: no counter registered, scored on gain alone.</p>
+<h3>Depth score against each feature</h3>
+<svg viewBox="0 0 700 360" role="img">
+<g class="panel" transform="translate(20,24)">
+<text x="0.000" y="-8.000" text-anchor="start" class="muted">choke_width_bodies</text>
+<line class="grid" x1="0" x2="200" y1="120" y2="120"/>
+<circle class="cell won" cx="20.000" cy="72.000" r="4"/>
+<text x="20.000" y="134.000" text-anchor="middle" class="muted">0</text>
+<circle class="cell won" cx="100.000" cy="0.000" r="4"/>
+<text x="100.000" y="134.000" text-anchor="middle" class="muted">2</text>
+<circle class="cell won" cx="180.000" cy="120.000" r="4"/>
+<text x="180.000" y="134.000" text-anchor="middle" class="muted">4</text>
+<text x="-4.000" y="8.000" text-anchor="end" class="muted">5</text>
+</g>
+<g class="panel" transform="translate(240,24)">
+<text x="0.000" y="-8.000" text-anchor="start" class="muted">detour_ratio</text>
+<line class="grid" x1="0" x2="200" y1="120" y2="120"/>
+<circle class="cell won" cx="20.000" cy="0.000" r="4"/>
+<text x="20.000" y="134.000" text-anchor="middle" class="muted">0</text>
+<circle class="cell won" cx="100.000" cy="120.000" r="4"/>
+<text x="100.000" y="134.000" text-anchor="middle" class="muted">1.5</text>
+<circle class="cell won" cx="180.000" cy="72.000" r="4"/>
+<text x="180.000" y="134.000" text-anchor="middle" class="muted">3</text>
+<text x="-4.000" y="8.000" text-anchor="end" class="muted">5</text>
+</g>
+<g class="panel" transform="translate(460,24)">
+<text x="0.000" y="-8.000" text-anchor="start" class="muted">lane_count</text>
+<line class="grid" x1="0" x2="200" y1="120" y2="120"/>
+<circle class="cell won" cx="20.000" cy="72.000" r="4"/>
+<text x="20.000" y="134.000" text-anchor="middle" class="muted">0</text>
+<circle class="cell won" cx="100.000" cy="120.000" r="4"/>
+<text x="100.000" y="134.000" text-anchor="middle" class="muted">1</text>
+<circle class="cell won" cx="180.000" cy="0.000" r="4"/>
+<text x="180.000" y="134.000" text-anchor="middle" class="muted">2</text>
+<text x="-4.000" y="8.000" text-anchor="end" class="muted">5</text>
+</g>
+<g class="panel" transform="translate(20,194)">
+<text x="0.000" y="-8.000" text-anchor="start" class="muted">blocked_layer_top</text>
+<line class="grid" x1="0" x2="200" y1="120" y2="120"/>
+<circle class="cell won" cx="20.000" cy="72.000" r="4"/>
+<text x="20.000" y="134.000" text-anchor="middle" class="muted">0</text>
+<circle class="cell won" cx="100.000" cy="0.000" r="4"/>
+<text x="100.000" y="134.000" text-anchor="middle" class="muted">2</text>
+<circle class="cell won" cx="180.000" cy="120.000" r="4"/>
+<text x="180.000" y="134.000" text-anchor="middle" class="muted">4</text>
+<text x="-4.000" y="8.000" text-anchor="end" class="muted">5</text>
+</g>
+<g class="panel" transform="translate(240,194)">
+<text x="0.000" y="-8.000" text-anchor="start" class="muted">cover_density_corridor</text>
+<line class="grid" x1="0" x2="200" y1="120" y2="120"/>
+<circle class="cell won" cx="20.000" cy="72.000" r="4"/>
+<text x="20.000" y="134.000" text-anchor="middle" class="muted">0</text>
+<circle class="cell won" cx="100.000" cy="0.000" r="4"/>
+<text x="100.000" y="134.000" text-anchor="middle" class="muted">0.1</text>
+<circle class="cell won" cx="180.000" cy="120.000" r="4"/>
+<text x="180.000" y="134.000" text-anchor="middle" class="muted">0.3</text>
+<text x="-4.000" y="8.000" text-anchor="end" class="muted">5</text>
+</g>
+<g class="panel" transform="translate(460,194)">
+<text x="0.000" y="-8.000" text-anchor="start" class="muted">start_distance</text>
+<line class="grid" x1="0" x2="200" y1="120" y2="120"/>
+<circle class="cell won" cx="20.000" cy="60.000" r="4"/>
+<text x="20.000" y="134.000" text-anchor="middle" class="muted">1400</text>
+<circle class="cell won" cx="180.000" cy="72.000" r="4"/>
+<text x="180.000" y="134.000" text-anchor="middle" class="muted">2800</text>
+<text x="-4.000" y="8.000" text-anchor="end" class="muted">5</text>
+</g>
+</svg>
+<h3>Gain per skill against choke width</h3>
+<svg viewBox="0 0 640 320" role="img">
+<line class="grid" x1="56" x2="560" y1="280.000" y2="280.000"/>
+<text x="50.000" y="280.000" text-anchor="end" class="muted">0.0</text>
+<line class="grid" x1="56" x2="560" y1="24.000" y2="24.000"/>
+<text x="50.000" y="28.000" text-anchor="end" class="muted">8.0</text>
+<text x="308.000" y="314.000" text-anchor="middle" class="muted">Choke width (bodies)</text>
+<text x="76.000" y="296.000" text-anchor="middle" class="muted">none</text>
+<text x="230.667" y="296.000" text-anchor="middle" class="muted">2</text>
+<text x="385.333" y="296.000" text-anchor="middle" class="muted">4</text>
+<text x="540.000" y="296.000" text-anchor="middle" class="muted">8</text>
+<polyline class="line" style="stroke:var(--side0);fill:none;stroke-width:2" points="76.000,248.000 230.667,120.000"/>
+<text x="238.667" y="124.000" style="fill:var(--side0)">S1</text>
+<polyline class="line" style="stroke:var(--side1);fill:none;stroke-width:2" points="76.000,24.000 230.667,88.000"/>
+<text x="238.667" y="92.000" style="fill:var(--side1)">S2</text>
+<polyline class="line" style="stroke:var(--won);fill:none;stroke-width:2" points="230.667,184.000"/>
+<text x="238.667" y="188.000" style="fill:var(--won)">S3</text>
+<polyline class="line" style="stroke:var(--lost);fill:none;stroke-width:2" points="230.667,152.000"/>
+<text x="238.667" y="156.000" style="fill:var(--lost)">S4</text>
+<polyline class="line" style="stroke:var(--muted);fill:none;stroke-width:2" points="76.000,152.000 230.667,152.000"/>
+<text x="238.667" y="156.000" style="fill:var(--muted)">S5</text>
+</svg>
+<h3>Pillars</h3>
+<table>
+<thead><tr><th>Pillar</th><th>Title</th><th>Number recorded (mean depth score by value)</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td>Equal numbers, free shapes (topological fairness)</td><td>not measured in run 1</td><td>not judged</td></tr>
+<tr><td>P2</td><td>Paced distance</td><td>start_distance: 1400 -&gt; 2.50, 2800 -&gt; 2.00</td><td>recorded; pass marks are Westley&#x27;s</td></tr>
+<tr><td>P3</td><td>Chokes that bind, and can be paid for</td><td>choke_width_bodies: 0 -&gt; 2.00, 2 -&gt; 5.00, 4 -&gt; 0.00</td><td>recorded; pass marks are Westley&#x27;s</td></tr>
+<tr><td>P4</td><td>Several routes, unequal cost, with loops</td><td>lane_count: 0 -&gt; 2.00, 1 -&gt; 0.00, 2 -&gt; 5.00; detour_ratio: 0 -&gt; 5.00, 1.5 -&gt; 0.00, 3 -&gt; 2.00</td><td>recorded; pass marks are Westley&#x27;s</td></tr>
+<tr><td>P5</td><td>Height with a rule, and a readable reference</td><td>blocked_layer_top: 0 -&gt; 2.00, 2 -&gt; 5.00, 4 -&gt; 0.00</td><td>recorded; pass marks are Westley&#x27;s</td></tr>
+<tr><td>P6</td><td>Cover and sightlines that alternate open and sheltered</td><td>cover_density_corridor: 0 -&gt; 2.00, 0.1 -&gt; 5.00, 0.3 -&gt; 0.00</td><td>recorded; pass marks are Westley&#x27;s</td></tr>
+<tr><td>P7</td><td>Escalating exposure</td><td>not measured in run 1</td><td>not judged</td></tr>
+<tr><td>P8</td><td>Every strong position has a counter</td><td>counter works in 7 of 9 (layout, skill) pairs</td><td>recorded; pass marks are Westley&#x27;s</td></tr>
+</tbody>
+</table>
+<h3>Layouts scoring 3 or more (1)</h3>
+<p>#2 {&quot;blocked_layer_top&quot;: 2, &quot;choke_width_bodies&quot;: 2, &quot;cover_density_corridor&quot;: 0.1, &quot;detour_ratio&quot;: 0, &quot;lane_count&quot;: 2, &quot;start_distance&quot;: 1400}</p>
+</body>
+</html>
