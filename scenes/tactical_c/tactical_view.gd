@@ -398,6 +398,17 @@ func load_frame(frame: Dictionary) -> void:
 	_redraw()
 	_sync_selection()
 	_update_hud()
+	for n in ["Objectives", "Comb", "Events", "Reinforcements"]:
+		_ignore_mouse(_node(n))
+
+
+# The read-only HUD readouts rebuild their children each frame with the default STOP filter; one at the top-left
+# swallowed the press of a box drag from (0,0) before _unhandled_input saw it.
+func _ignore_mouse(n: Node) -> void:
+	if n is Control:
+		n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for c in n.get_children():
+		_ignore_mouse(c)
 
 
 func qa_state() -> Dictionary:
