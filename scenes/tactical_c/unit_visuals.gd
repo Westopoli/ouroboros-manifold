@@ -6,6 +6,8 @@ extends Node2D
 const MANIFEST := "res://assets/eras/settled_reach/manifest.json"
 const TYPE_NAMES := ["raider", "interceptor", "vanguard", "warden", "bombard", "bastion"]
 const SHAPE_RADIUS := 12.0
+# draft: the manifest scale is for the 3D model (warden is 200.0); uncapped, one 2D body fills ~2400 px and 330 of them cost ~1.2 s a frame
+const MAX_VISUAL_SCALE := 3.0
 const BAR_SIZE := Vector2(20.0, 3.0)
 const OTHER_COLOR := Color(1.0, 0.3, 0.3)
 const FALLBACK_OWN := Color(0.2, 0.6, 1.0)
@@ -52,7 +54,7 @@ func _init() -> void:
 	var units: Dictionary = m.get("units", {})
 	for i in TYPE_NAMES.size():
 		var e: Dictionary = units.get(TYPE_NAMES[i], {})
-		_vscale[i] = float(e.get("visual_scale", 1.0))
+		_vscale[i] = minf(float(e.get("visual_scale", 1.0)), MAX_VISUAL_SCALE)
 		_offset[i] = float(e.get("facing_offset_rad", 0.0))
 
 
