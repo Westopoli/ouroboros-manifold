@@ -1,6 +1,6 @@
 // Visible game programme, wave 6: lane F phase B (W2, W4, F5) and lane D (space landscape) by args.lane: 'F' or 'D'.
 // F needs K-f landed; F5 needs A12 landed (lane A part b). D needs E1i landed (mission.c wiring) for D5 and C5 landed for D7 (3D stacked sheets); K-d is D's first piece.
-// Launch: Workflow({scriptPath, args: {lane: 'F', ftests: 'push/vg-f-tests'}}) or {lane: 'D'}.
+// Launch: Workflow({scriptPath, args: {lane: 'F', ftests: 'push/vg-f-tests', skip: ['F5']}}) before A12 lands, then {lane: 'F', only: ['F5']}; or {lane: 'D'}.
 export const meta = {
   name: 'vg-wave6-laneF-D',
   description: 'Visible game lane F phase B (PipeSim, lobby + menu, the tactical hookup, loopback match) or lane D (space field: K-d, noise, plates, raster, masks, mission wiring, 3D sheets with a vision tube, stats, plays)',
@@ -41,7 +41,10 @@ if (LANE === 'D') {
 }
 
 phase('Tests')
-const pieces = LANE === 'F' ? F : D
+const SKIP = (args && args.skip) || [] // e.g. ['F5'] while A12 (lane A part b) has not landed; F5 runs later with {lane:'F', only:['F5']}
+const ONLY = (args && args.only) || null
+const pieces = (LANE === 'F' ? F : D).filter(p => !SKIP.includes(p.id) && (!ONLY || ONLY.includes(p.id)))
+log(`lane ${LANE} pieces: ${pieces.map(p => p.id).join(', ')}`)
 const FT = (args && args.ftests) || 'push/vg-f-tests'
 const tests = LANE === 'F' ? pieces.map(() => ({ ok: true, branch: FT })) : await parallel(pieces.map(p => () => agent(`${RULES}\nRole: test writer (Engineer) for lane D piece ${p.id} of ${SPEC}. Branch push/vg-${p.id.toLowerCase()}-tests, suffix vg-${p.id.toLowerCase()}-tests. Write ONLY ${p.id === 'D7' ? 'tests/test_vg_d_d7.gd and the story play tests/qa/desktop/plays/D/S-246.py' : `tests/csim/test_VG_D_${p.id.toLowerCase()}.py`}. It proves: ${p.what}${p.id === 'D4' ? '; plus the statistics against the mockup: blocked share per density within a *_park_* band (Westley\'s number), 0 unreachable regions, hash stable per seed, the positive control space-no-carve' : ''}. Red on main (quote). Report ok, branch, sha, summary, red_ids.`, { label: `tests:${p.id}`, phase: 'Tests', schema: REPORT, agentType: 'engineer', model: 'sonnet' })))
 
