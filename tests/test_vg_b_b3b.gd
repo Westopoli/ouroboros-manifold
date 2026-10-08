@@ -38,12 +38,12 @@ class FakeData extends Node:
 	signal territory_updated(region_id: String)
 	signal territory_removed(region_id: String)
 	signal regions_cleared()
-	var terr := {}
+	var territories := {}
 	var regs := {}
 
 	func put(id: String, faction: String, center: Vector3, color: Color) -> void:
-		var existed := terr.has(id)
-		terr[id] = {"center": center, "radius": 6.0, "color": color}
+		var existed := territories.has(id)
+		territories[id] = {"center": center, "radius": 6.0, "color": color}
 		regs[id] = {"faction_id": faction}
 		if existed:
 			territory_updated.emit(id)
@@ -51,16 +51,16 @@ class FakeData extends Node:
 			territory_set.emit(id)
 
 	func drop(id: String) -> void:
-		terr.erase(id)
+		territories.erase(id)
 		territory_removed.emit(id)
 
 	func wipe() -> void:
-		terr.clear()
+		territories.clear()
 		regs.clear()
 		regions_cleared.emit()
 
 	func get_territory(id: String) -> Dictionary:
-		return terr.get(id, {})
+		return territories.get(id, {})
 
 	func get_region(id: String) -> Dictionary:
 		return regs.get(id, {})
