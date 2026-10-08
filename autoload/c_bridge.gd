@@ -539,7 +539,7 @@ func tactical_step_n(n: int) -> bool:
 	return true
 
 
-func _ensure_mission() -> bool:
+func _ensure_mission(fog_filter: bool = false) -> bool:
 	if _mission_active:
 		return true
 	_terrain = {}
@@ -548,6 +548,8 @@ func _ensure_mission() -> bool:
 	if era != null and era.has_method("kind") and era.has_method("movement_kinds"):
 		cmd["era_kind"] = 1 if str(era.call("kind")) == "ground" else 0
 		cmd["movement_kinds"] = era.call("movement_kinds")
+	if fog_filter:
+		cmd["fog_filter"] = true
 	_era_kind = int(cmd["era_kind"])
 	return not _request([cmd], ["mission"]).is_empty()
 
@@ -567,9 +569,9 @@ func _fetch_terrain() -> bool:
 
 # The mission frame of the shared world: a mission is started if none is
 # running (one already running is reused), then autosaved (R-111-01).
-func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
+func load_mission_live(seed: int, n_regions: int, features: Array, fog_filter: bool = false) -> bool:
 	_mission = {}
-	if not ensure_world(seed, n_regions, features) or not _ensure_mission() or not _autosave():
+	if not ensure_world(seed, n_regions, features) or not _ensure_mission(fog_filter) or not _autosave():
 		return false
 	_mission = _session_mission
 	return true
