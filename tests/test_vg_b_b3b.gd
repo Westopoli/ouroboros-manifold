@@ -13,8 +13,8 @@ extends SceneTree
 #   zoom controller: vars current_band ("overview"|"regional"|"local"), blend_factor, blend_direction ("up"|"down"|"none").
 # Faction identity is the territory colour. One Label3D child per faction; label text is get_region(...).faction_id with
 # "_" replaced by " " and capitalised; label alpha follows the band (1.0 overview, lerp to 0 on a down blend, 0 otherwise).
-# Stand-in (rendering method gl_compatibility): no field, no SubViewport, one MeshInstance3D per faction, additive unshaded
-# material whose alpha is band opacity x 1.8 (the mockup's STAND_IN_OPACITY_MULTIPLIER). Field mode: one MeshInstance3D total.
+# Stand-in (rendering method gl_compatibility): no field, no SubViewport, one MeshInstance3D per faction, mix-blended unshaded
+# material whose alpha is band opacity x STAND_IN_OPACITY_MULTIPLIER (shell_labels.gd, 0.15). Field mode: one MeshInstance3D total.
 # Pinned here though the mockup uses GalaxyGen constants that scenes/galaxy lacks: only the label offset DIRECTION (above
 # the centroid), never its size (B4 retunes the scale).
 #
@@ -24,7 +24,12 @@ extends SceneTree
 # 15 factions at 1920x1080); no threshold is asserted (nobody gave one), the number goes in the report.
 
 const SHELL := "res://scenes/galaxy/shell_renderer.gd"
-const STAND_IN_MULT := 1.8
+const STAND_IN_LABELS := "res://scenes/galaxy/shell_labels.gd"
+# Read from the script constant, never a literal (rulings 2026-10-08 retired 1.8).
+func _stand_in_mult() -> float:
+	var c: Dictionary = load(STAND_IN_LABELS).get_script_constant_map()
+	return float(c.get("STAND_IN_OPACITY_MULTIPLIER", 0.0))
+
 
 var _pass := 0
 var _fail := 0
@@ -236,7 +241,7 @@ func _opacity_table(stand_in: bool) -> void:
 	_kill(p)
 
 
-# Stand-in: alpha / 1.8 of the single faction mesh. Field mode: the quad's shell_opacity uniform. -1 when unreadable.
+# Stand-in: alpha / STAND_IN_OPACITY_MULTIPLIER of the single faction mesh. Field mode: the quad's shell_opacity uniform. -1 when unreadable.
 func _read_opacity(r: Node, stand_in: bool) -> float:
 	var ms := _meshes(r)
 	if ms.is_empty():
@@ -244,7 +249,7 @@ func _read_opacity(r: Node, stand_in: bool) -> float:
 	var m: MeshInstance3D = ms[0]
 	if stand_in:
 		var sm := m.material_override as StandardMaterial3D
-		return sm.albedo_color.a / STAND_IN_MULT if sm else -1.0
+		return sm.albedo_color.a / _stand_in_mult() if sm and _stand_in_mult() > 0.0 else -1.0
 	var shm := m.material_override as ShaderMaterial
 	return float(shm.get_shader_parameter("shell_opacity")) if shm else -1.0
 
@@ -280,7 +285,7 @@ func _stand_in_checks() -> void:
 		_check(sm != null, "stand-in mesh has a StandardMaterial3D")
 		if sm:
 			_check(sm.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED, "stand-in is unshaded")
-			_check(sm.blend_mode == BaseMaterial3D.BLEND_MODE_ADD, "stand-in blends additively")
+			_check(sm.blend_mode == BaseMaterial3D.BLEND_MODE_MIX, "stand-in blends with BLEND_MODE_MIX")
 			_check(sm.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA, "stand-in uses alpha transparency")
 	# The stand-in grows with the faction's reach: the two-region faction's mesh is wider than a one-region faction's.
 	var widths := ms.map(func(m): return m.scale.x).duplicate()
