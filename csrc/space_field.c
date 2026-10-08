@@ -5,6 +5,7 @@
  * See also: om_map_block_rect in csrc/tactical_mapgen.c, whose route grid mission_begin clears (om_map_clear). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "space_internal.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -38,9 +39,10 @@ static uint32_t sf_range(uint64_t *s, uint32_t n) {
     return (uint32_t)((sf_next(s) >> SF_HIGH_SHIFT) % n);
 }
 
-int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h) {
+int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density) {
     om_space_field_state *f;
     uint64_t rs = (uint64_t)seed;
+    (void)density; /* STUB K-d2: D4 passes it to om_space_plates_build */
     if (!w || canvas_w != OM_SPACE_FIELD_CANVAS_WU || canvas_h != OM_SPACE_FIELD_CANVAS_WU) return -1;
     f = &w->space_field;
     memset(f, 0, sizeof *f);
@@ -73,6 +75,29 @@ int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double 
         }
     }
     return 0;
+}
+
+/* STUB K-d2: D2/D3/D4 replace */
+int om_space_plates_build(uint32_t seed, double canvas, double density, om_space_plates *out) {
+    (void)seed; (void)density;
+    if (!out || canvas != OM_SPACE_FIELD_CANVAS_WU) return -1;
+    memset(out, 0, sizeof *out);
+    return 0;
+}
+
+/* STUB K-d2: D2/D3/D4 replace */
+int om_space_raster(const om_space_plates *plates, double cell_wu, om_space_cells *raster) {
+    (void)cell_wu;
+    if (!plates || !raster) return -1;
+    memset(raster, 0, sizeof *raster);
+    memset(raster->owner, 0xFF, sizeof raster->owner);
+    return 0;
+}
+
+/* STUB K-d2: D2/D3/D4 replace */
+int om_space_carve(om_space_plates *plates, om_space_cells *raster, uint32_t obj_cx, uint32_t obj_cy, int no_carve) {
+    (void)obj_cx; (void)obj_cy; (void)no_carve;
+    return plates && raster ? 0 : -1;
 }
 
 int om_space_field_present(const om_world *w) {
