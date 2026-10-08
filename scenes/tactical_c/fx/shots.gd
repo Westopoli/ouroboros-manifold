@@ -17,6 +17,7 @@ var _camera := Vector2.ZERO
 var _shots: Array = []
 var _blooms: Array = []
 var _hp: Dictionary = {}
+var _proj := Callable()
 
 
 func shot_category(type: int) -> int:
@@ -35,7 +36,23 @@ func blooms() -> Array:
 	return _blooms
 
 
+func set_projector(projector: Callable) -> void:
+	_proj = projector
+
+
+func screen_points() -> Array:
+	var pts: Array = []
+	for s in _shots:
+		pts.append(s["from"])
+		pts.append(s["to"])
+	for b in _blooms:
+		pts.append(b["center"])
+	return pts
+
+
 func _to_screen(w: Vector2) -> Vector2:
+	if _proj.is_valid():
+		return _proj.call(w)
 	return (w - _camera) * _scale + SCREEN * 0.5
 
 
@@ -43,15 +60,25 @@ func _on_screen(p: Vector2) -> bool:
 	return Rect2(Vector2.ZERO, SCREEN).has_point(p)
 
 
-func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera: Vector2) -> void:
-	_scale = world_scale
-	_camera = camera
+# Two call shapes: (frame, local_faction, world_scale, camera) on the 2D view, (frame, mission, local_faction) with a projector.
+func set_frame(frame: Dictionary, second, third = null, camera: Vector2 = Vector2.ZERO) -> void:
+	var local_faction: int
+	if second is Dictionary:
+		local_faction = int(third)
+	else:
+		local_faction = int(second)
+		_scale = float(third)
+		_camera = camera
+	var has_vis: bool = frame.has("visible")
 	var by_id := {}
 	for u in frame.get("units", []):
 		by_id[int(u["id"])] = u
 	var vis := {}
 	for v in frame.get("visible", {}).get(str(local_faction), []):
 		vis[int(v)] = true
+	if not has_vis:
+		for id in by_id:
+			vis[id] = true
 	_blooms = []
 	var hp := {}
 	for id in by_id:
