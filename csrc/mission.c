@@ -2856,6 +2856,11 @@ int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, doubl
     st->objective_center_set[objective_idx] = 1;
     return 1;
 }
+int om_objective_get_done(const om_world *w, uint32_t idx) {
+    /* STUB */
+    (void)w; (void)idx;
+    return 0;
+}
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */

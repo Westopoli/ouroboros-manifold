@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 4
+#define OM_ABI_VERSION 5
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -1794,6 +1794,7 @@ int32_t om_region_get_owner(const om_world *w, uint32_t idx);
 void om_set_neighbors(om_world *w, uint32_t a, uint32_t b);
 int om_unit_get_profile(uint32_t unit_type, int difficulty, om_unit_profile *out);
 double om_unit_power(uint32_t unit_type);
+int om_objective_get_done(const om_world *w, uint32_t idx);
 /* ---- end generated: mission.c ---- */
 
 /* ---- generated from signatures.toml: save.c ---- */
@@ -1870,6 +1871,8 @@ void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref);
 void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id);
 int om_map_set_canvas(om_world *w, double width, double height);
 int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, uint32_t layer_lo, uint32_t layer_hi);
+uint32_t om_map_obstacle_count(const om_world *w);
+int om_map_get_obstacle_at(const om_world *w, uint32_t i, double *x, double *y, double *r);
 /* ---- end generated: tactical_mapgen.c ---- */
 
 /* ---- generated from signatures.toml: tactical_move.c ---- */
@@ -1983,6 +1986,8 @@ int om_unit_is_non_combat_supported(int p0);
 void om_unit_order_move(om_world *w, uint32_t unit, double p2, double c_double);
 uint32_t om_unit_spawn_non_combat(om_world *w, int p1, double p2, double c_double);
 void om_unit_tick_decision_loop(om_world *w, uint32_t unit);
+uint32_t om_structure_count(const om_world *w);
+uint32_t om_structure_get_at(const om_world *w, uint32_t i);
 /* ---- end generated: tactical_support.c ---- */
 
 /* ---- generated from signatures.toml: terrain.c ---- */
@@ -2003,6 +2008,7 @@ int om_terrain_slope_at(const om_world *w, double x, double y, om_slope *out);
 int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0, int layer1, double x1, double y1);
 int om_terrain_nearest_walkable(const om_world *w, double x, double y, double *ox, double *oy);
 void om_terrain_clear(om_world *w);
+uint32_t om_terrain_get_heights(const om_world *w, int32_t *out, uint32_t cap);
 /* ---- end generated: terrain.c ---- */
 
 /* ---- generated from signatures.toml: unit.c ---- */
@@ -2077,6 +2083,8 @@ uint32_t om_unit_spawn_combat(om_world *w, int32_t p1, double p2, double x);
 uint32_t om_unit_spawn_for_category(om_world *w, int category, int32_t faction_id, double x, double y, uint32_t layer);
 int32_t om_unit_target(om_world *w, uint32_t unit_id);
 uint32_t om_unit_targeting_cohort(om_world *w, uint32_t unit_id);
+uint32_t om_tactical_event_count(om_world *w);
+int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a, int32_t *b, uint64_t *tick);
 /* ---- end generated: unit.c ---- */
 
 #ifdef __cplusplus

@@ -61,7 +61,7 @@ _build_libs()
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 4
+EXPECTED_ABI_VERSION = 5
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -2422,11 +2422,14 @@ def _bind_e12(lib):
     _bind(lib, "om_map_add_spine_node", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_uint32, ("w", "x", "y", "p2"))
     _bind(lib, "om_map_add_structure", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int32], ctypes.c_uint32, ("w", "x", "y", "owner_faction"))
     _bind(lib, "om_map_add_vantage_node", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "radius"))
+    _bind(lib, "om_map_get_obstacle_at", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "i", "x", "y", "r"))
+    _bind(lib, "om_map_obstacle_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_mission_begin", [W], None, ("w",))
     _bind(lib, "om_mission_get_clock", [W], ctypes.c_uint64, ("w",))
     _bind(lib, "om_mission_get_phase", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_mission_is_started", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_mission_set_phase", [W, ctypes.c_int], None, ("w", "phase"))
+    _bind(lib, "om_objective_get_done", [W, ctypes.c_uint32], ctypes.c_int, ("w", "idx"))
     _bind(lib, "om_player_can_see", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "faction_id", "unit"))
     _bind(lib, "om_player_can_see_friendly", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "faction_id", "unit"))
     _bind(lib, "om_player_can_see_unit", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "unit"))
@@ -2438,6 +2441,11 @@ def _bind_e12(lib):
     _bind(lib, "om_set_era_flag", [W, ctypes.c_char_p, ctypes.c_int], None, ("w", "name", "on"))
     _bind(lib, "om_set_era_name", [W, ctypes.c_char_p], None, ("w", "name"))
     _bind(lib, "om_strategic_agent_read_region_field", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "p0", "region_idx", "field"))
+    _bind(lib, "om_structure_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_structure_get_at", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "i"))
+    _bind(lib, "om_tactical_event_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_tactical_event_get_at", [W, ctypes.c_uint32, P(ctypes.c_int32), P(ctypes.c_uint32), P(ctypes.c_int32), P(ctypes.c_uint64)], ctypes.c_int, ("w", "i", "kind", "a", "b", "tick"))
+    _bind(lib, "om_terrain_get_heights", [W, P(ctypes.c_int32), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
     _bind(lib, "om_unit_acquire_target", [W, ctypes.c_uint32], None, ("w", "unit"))
     _bind(lib, "om_unit_attack", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "attacker", "target"))
     _bind(lib, "om_unit_brace_phase", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "unit_id"))
