@@ -1,0 +1,1940 @@
+{
+  "inventory": {
+    "hud_texts": {
+      "Mission": "MISSION"
+    },
+    "nodes_by_name": {
+      "@GPUParticles3D@130": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@131": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@133": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@135": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@137": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@139": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@141": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@143": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@145": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@147": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@149": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@151": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@153": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@155": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@157": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@159": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@249": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@250": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@251": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@252": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@253": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@254": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@255": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@256": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@257": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@258": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@259": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@260": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@261": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@262": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@263": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@128": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@129": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@132": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@134": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@136": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@138": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@140": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@142": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@144": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@146": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@148": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@150": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@152": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@154": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@156": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@158": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@160": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@161": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@162": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@163": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@164": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@165": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@166": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@167": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@168": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@169": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@170": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@171": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@172": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@173": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@174": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@175": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@176": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@177": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@178": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@179": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@180": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@181": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@182": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@183": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@184": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@185": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@186": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@187": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@188": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@189": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@190": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@191": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@192": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@193": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@194": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@195": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@196": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@197": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@198": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@199": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@200": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@201": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@202": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@203": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@204": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@205": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@206": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@207": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@208": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@209": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@210": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@211": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@212": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@213": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@214": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@215": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@216": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@217": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@218": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@219": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@220": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@221": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@222": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@223": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@224": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@225": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@226": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@227": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@228": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@229": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@230": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@231": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@232": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@233": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@234": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@235": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@236": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@237": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@238": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@239": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@240": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@241": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@242": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@243": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@244": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@245": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@246": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@247": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@248": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "AmbientDust": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "AmbientRig": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "Camera3D": {
+        "class": "Camera3D",
+        "count": 1,
+        "visible": true
+      },
+      "ConstellationRenderer": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "FactionLabels": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": false
+      },
+      "GalaxyAdapter": {
+        "class": "Node",
+        "count": 1,
+        "visible": true
+      },
+      "GridPlane": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "Mission": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "OrbitCamera": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "Points": {
+        "class": "MultiMeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "RadialStreams": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring01": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring02": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring03": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring04": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring05": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring06": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring07": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring08": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring09": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring10": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring11": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring12": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "ShellRenderer": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "Starfield": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "StreamPivot": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "UI": {
+        "class": "CanvasLayer",
+        "count": 1,
+        "visible": true
+      },
+      "World": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "ZoomDisclosureController": {
+        "class": "Node",
+        "count": 1,
+        "visible": true
+      }
+    }
+  },
+  "qa": {
+    "ambient_rig": {
+      "present": true,
+      "tier": 0
+    },
+    "band": "Local",
+    "camera_autonomous": false,
+    "distance": 25.0,
+    "edge_counts": {
+      "0": 33,
+      "2": 55
+    },
+    "edges_3d": true,
+    "error_panel": false,
+    "flashes_active": 0,
+    "galaxy_quality": {
+      "res_divisor": 1,
+      "tier": 0
+    },
+    "hash": -5992094882092116636,
+    "owner_colours": {
+      "-1": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "0": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "1": [
+        0.297500014305115,
+        0.458717286586761,
+        0.850000023841858,
+        1.0
+      ],
+      "10": [
+        0.804673254489899,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "11": [
+        0.734109401702881,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "12": [
+        0.297500014305115,
+        0.850000023841858,
+        0.572892069816589,
+        1.0
+      ],
+      "13": [
+        0.850000023841858,
+        0.411674737930298,
+        0.297500014305115,
+        1.0
+      ],
+      "14": [
+        0.297500014305115,
+        0.344542622566223,
+        0.850000023841858,
+        1.0
+      ],
+      "2": [
+        0.619934737682343,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "3": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ],
+      "4": [
+        0.297500014305115,
+        0.850000023841858,
+        0.757630705833435,
+        1.0
+      ],
+      "5": [
+        0.850000023841858,
+        0.596413373947144,
+        0.297500014305115,
+        1.0
+      ],
+      "6": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "7": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "8": [
+        0.850000023841858,
+        0.297500014305115,
+        0.482238709926605,
+        1.0
+      ],
+      "9": [
+        0.297500014305115,
+        0.643455862998962,
+        0.850000023841858,
+        1.0
+      ]
+    },
+    "owners": {
+      "0": 0,
+      "1": 0,
+      "10": 3,
+      "11": 3,
+      "12": 3,
+      "13": 4,
+      "14": 4,
+      "15": 4,
+      "16": 4,
+      "17": 5,
+      "18": 5,
+      "19": 5,
+      "2": 0,
+      "20": 6,
+      "21": 6,
+      "22": 6,
+      "23": 6,
+      "24": 7,
+      "25": 7,
+      "26": 7,
+      "27": 7,
+      "28": 8,
+      "29": 8,
+      "3": 1,
+      "30": 8,
+      "31": 9,
+      "32": 9,
+      "33": 9,
+      "34": 10,
+      "35": 10,
+      "36": 10,
+      "37": 10,
+      "38": 11,
+      "39": 11,
+      "4": 1,
+      "40": 11,
+      "41": 11,
+      "42": 12,
+      "43": 12,
+      "44": 12,
+      "45": 13,
+      "46": 13,
+      "47": 13,
+      "48": 14,
+      "49": 14,
+      "5": 1,
+      "50": 14,
+      "51": 7,
+      "52": -1,
+      "53": 1,
+      "54": 6,
+      "55": -1,
+      "56": 14,
+      "57": 0,
+      "58": 3,
+      "59": 11,
+      "6": 2,
+      "60": 7,
+      "61": -1,
+      "62": 12,
+      "63": 9,
+      "64": 13,
+      "65": -1,
+      "66": 0,
+      "67": 8,
+      "68": 5,
+      "69": -1,
+      "7": 2,
+      "70": 13,
+      "71": 3,
+      "72": 10,
+      "73": -1,
+      "74": 0,
+      "75": 14,
+      "76": 2,
+      "77": 6,
+      "78": -1,
+      "79": 12,
+      "8": 2,
+      "9": 3
+    },
+    "pick_radius_px": 14.0,
+    "plants": [
+      "seed-ignored",
+      "owner-colour-flat",
+      "edges-2d-overlay",
+      "pick-radius-zero",
+      "bands-frozen",
+      "conquest-no-recolour"
+    ],
+    "quality_tier": 0,
+    "region_colours": {
+      "0": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "1": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "10": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ],
+      "11": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ],
+      "12": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ],
+      "13": [
+        0.297500014305115,
+        0.850000023841858,
+        0.757630705833435,
+        1.0
+      ],
+      "14": [
+        0.297500014305115,
+        0.850000023841858,
+        0.757630705833435,
+        1.0
+      ],
+      "15": [
+        0.297500014305115,
+        0.850000023841858,
+        0.757630705833435,
+        1.0
+      ],
+      "16": [
+        0.297500014305115,
+        0.850000023841858,
+        0.757630705833435,
+        1.0
+      ],
+      "17": [
+        0.850000023841858,
+        0.596413373947144,
+        0.297500014305115,
+        1.0
+      ],
+      "18": [
+        0.850000023841858,
+        0.596413373947144,
+        0.297500014305115,
+        1.0
+      ],
+      "19": [
+        0.850000023841858,
+        0.596413373947144,
+        0.297500014305115,
+        1.0
+      ],
+      "2": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "20": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "21": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "22": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "23": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "24": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "25": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "26": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "27": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "28": [
+        0.850000023841858,
+        0.297500014305115,
+        0.482238709926605,
+        1.0
+      ],
+      "29": [
+        0.850000023841858,
+        0.297500014305115,
+        0.482238709926605,
+        1.0
+      ],
+      "3": [
+        0.297500014305115,
+        0.458717286586761,
+        0.850000023841858,
+        1.0
+      ],
+      "30": [
+        0.850000023841858,
+        0.297500014305115,
+        0.482238709926605,
+        1.0
+      ],
+      "31": [
+        0.297500014305115,
+        0.643455862998962,
+        0.850000023841858,
+        1.0
+      ],
+      "32": [
+        0.297500014305115,
+        0.643455862998962,
+        0.850000023841858,
+        1.0
+      ],
+      "33": [
+        0.297500014305115,
+        0.643455862998962,
+        0.850000023841858,
+        1.0
+      ],
+      "34": [
+        0.804673254489899,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "35": [
+        0.804673254489899,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "36": [
+        0.804673254489899,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "37": [
+        0.804673254489899,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "38": [
+        0.734109401702881,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "39": [
+        0.734109401702881,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "4": [
+        0.297500014305115,
+        0.458717286586761,
+        0.850000023841858,
+        1.0
+      ],
+      "40": [
+        0.734109401702881,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "41": [
+        0.734109401702881,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "42": [
+        0.297500014305115,
+        0.850000023841858,
+        0.572892069816589,
+        1.0
+      ],
+      "43": [
+        0.297500014305115,
+        0.850000023841858,
+        0.572892069816589,
+        1.0
+      ],
+      "44": [
+        0.297500014305115,
+        0.850000023841858,
+        0.572892069816589,
+        1.0
+      ],
+      "45": [
+        0.850000023841858,
+        0.411674737930298,
+        0.297500014305115,
+        1.0
+      ],
+      "46": [
+        0.850000023841858,
+        0.411674737930298,
+        0.297500014305115,
+        1.0
+      ],
+      "47": [
+        0.850000023841858,
+        0.411674737930298,
+        0.297500014305115,
+        1.0
+      ],
+      "48": [
+        0.297500014305115,
+        0.344542622566223,
+        0.850000023841858,
+        1.0
+      ],
+      "49": [
+        0.297500014305115,
+        0.344542622566223,
+        0.850000023841858,
+        1.0
+      ],
+      "5": [
+        0.297500014305115,
+        0.458717286586761,
+        0.850000023841858,
+        1.0
+      ],
+      "50": [
+        0.297500014305115,
+        0.344542622566223,
+        0.850000023841858,
+        1.0
+      ],
+      "51": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "52": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "53": [
+        0.297500014305115,
+        0.458717286586761,
+        0.850000023841858,
+        1.0
+      ],
+      "54": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "55": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "56": [
+        0.297500014305115,
+        0.344542622566223,
+        0.850000023841858,
+        1.0
+      ],
+      "57": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "58": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ],
+      "59": [
+        0.734109401702881,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "6": [
+        0.619934737682343,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "60": [
+        0.321021318435669,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "61": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "62": [
+        0.297500014305115,
+        0.850000023841858,
+        0.572892069816589,
+        1.0
+      ],
+      "63": [
+        0.297500014305115,
+        0.643455862998962,
+        0.850000023841858,
+        1.0
+      ],
+      "64": [
+        0.850000023841858,
+        0.411674737930298,
+        0.297500014305115,
+        1.0
+      ],
+      "65": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "66": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "67": [
+        0.850000023841858,
+        0.297500014305115,
+        0.482238709926605,
+        1.0
+      ],
+      "68": [
+        0.850000023841858,
+        0.596413373947144,
+        0.297500014305115,
+        1.0
+      ],
+      "69": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "7": [
+        0.619934737682343,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "70": [
+        0.850000023841858,
+        0.411674737930298,
+        0.297500014305115,
+        1.0
+      ],
+      "71": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ],
+      "72": [
+        0.804673254489899,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "73": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "74": [
+        0.850000023841858,
+        0.297500014305115,
+        0.297500014305115,
+        1.0
+      ],
+      "75": [
+        0.297500014305115,
+        0.344542622566223,
+        0.850000023841858,
+        1.0
+      ],
+      "76": [
+        0.619934737682343,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "77": [
+        0.435196131467819,
+        0.297500014305115,
+        0.850000023841858,
+        1.0
+      ],
+      "78": [
+        0.297500014305115,
+        0.850000023841858,
+        0.458717435598373,
+        1.0
+      ],
+      "79": [
+        0.297500014305115,
+        0.850000023841858,
+        0.572892069816589,
+        1.0
+      ],
+      "8": [
+        0.619934737682343,
+        0.850000023841858,
+        0.297500014305115,
+        1.0
+      ],
+      "9": [
+        0.850000023841858,
+        0.297500014305115,
+        0.781151950359344,
+        1.0
+      ]
+    },
+    "scene": "galaxy_view",
+    "shell_renderer": {
+      "present": true,
+      "significance": {
+        "0": 1.0,
+        "1": 0.6,
+        "10": 0.6,
+        "11": 0.6,
+        "12": 0.6,
+        "13": 1.0,
+        "14": 0.6,
+        "15": 0.6,
+        "16": 0.6,
+        "17": 1.0,
+        "18": 0.6,
+        "19": 0.6,
+        "2": 0.6,
+        "20": 1.0,
+        "21": 0.6,
+        "22": 0.6,
+        "23": 0.6,
+        "24": 1.0,
+        "25": 0.6,
+        "26": 0.6,
+        "27": 0.6,
+        "28": 1.0,
+        "29": 0.6,
+        "3": 1.0,
+        "30": 0.6,
+        "31": 1.0,
+        "32": 0.6,
+        "33": 0.6,
+        "34": 1.0,
+        "35": 0.6,
+        "36": 0.6,
+        "37": 0.6,
+        "38": 1.0,
+        "39": 0.6,
+        "4": 0.6,
+        "40": 0.6,
+        "41": 0.6,
+        "42": 1.0,
+        "43": 0.6,
+        "44": 0.6,
+        "45": 1.0,
+        "46": 0.6,
+        "47": 0.6,
+        "48": 1.0,
+        "49": 0.6,
+        "5": 0.6,
+        "50": 0.6,
+        "51": 0.6,
+        "52": 0.3,
+        "53": 0.6,
+        "54": 0.6,
+        "55": 0.3,
+        "56": 0.6,
+        "57": 0.6,
+        "58": 0.6,
+        "59": 0.6,
+        "6": 1.0,
+        "60": 0.6,
+        "61": 0.3,
+        "62": 0.6,
+        "63": 0.6,
+        "64": 0.6,
+        "65": 0.3,
+        "66": 0.6,
+        "67": 0.6,
+        "68": 0.6,
+        "69": 0.3,
+        "7": 0.6,
+        "70": 0.6,
+        "71": 0.6,
+        "72": 0.6,
+        "73": 0.3,
+        "74": 0.6,
+        "75": 0.6,
+        "76": 0.6,
+        "77": 0.6,
+        "78": 0.3,
+        "79": 0.6,
+        "8": 0.6,
+        "9": 1.0
+      }
+    },
+    "system_count": 80,
+    "systems_px": {
+      "0": [
+        604.703857421875,
+        539.140014648438
+      ],
+      "1": [
+        1054.701171875,
+        -0.159838199615479
+      ],
+      "10": [
+        -454.683166503906,
+        1399.0966796875
+      ],
+      "11": [
+        344.0751953125,
+        871.836547851562
+      ],
+      "12": [
+        1128.27197265625,
+        1945.40783691406
+      ],
+      "13": [
+        787.978393554688,
+        479.305267333984
+      ],
+      "14": [
+        1798.27624511719,
+        233.275970458984
+      ],
+      "15": [
+        333.955596923828,
+        156.613922119141
+      ],
+      "16": [
+        1047.47375488281,
+        62.1655349731445
+      ],
+      "17": [
+        2036.28247070312,
+        2672.08813476562
+      ],
+      "18": [
+        1026.68420410156,
+        504.646209716797
+      ],
+      "19": [
+        3466.830078125,
+        3871.06787109375
+      ],
+      "2": [
+        1868.01257324219,
+        572.376403808594
+      ],
+      "20": [
+        933.911987304688,
+        78.53662109375
+      ],
+      "21": [
+        -196.298553466797,
+        2643.2548828125
+      ],
+      "22": [
+        -479.757843017578,
+        1373.431640625
+      ],
+      "23": [
+        215.325042724609,
+        1232.13598632812
+      ],
+      "24": [
+        2202.2236328125,
+        2042.27697753906
+      ],
+      "25": [
+        816.775756835938,
+        107.211296081543
+      ],
+      "26": [
+        911.030639648438,
+        -86.0922164916992
+      ],
+      "27": [
+        -47.2366333007812,
+        568.916809082031
+      ],
+      "28": [
+        1342.12463378906,
+        641.243713378906
+      ],
+      "29": [
+        855.461242675781,
+        749.239013671875
+      ],
+      "3": [
+        3012.96142578125,
+        650.992431640625
+      ],
+      "30": [
+        1046.70568847656,
+        826.127685546875
+      ],
+      "31": [
+        1356.07055664062,
+        1275.63684082031
+      ],
+      "32": [
+        455.626159667969,
+        35.4627075195312
+      ],
+      "33": [
+        1088.65881347656,
+        104.953125
+      ],
+      "34": [
+        899.32080078125,
+        316.783294677734
+      ],
+      "35": [
+        -1186.87707519531,
+        1464.21447753906
+      ],
+      "36": [
+        1419.47448730469,
+        -156.234405517578
+      ],
+      "37": [
+        1791.18786621094,
+        691.321350097656
+      ],
+      "38": [
+        -337.894836425781,
+        2359.35498046875
+      ],
+      "39": [
+        2866.22143554688,
+        3414.19555664062
+      ],
+      "4": [
+        960.000061035156,
+        540.0
+      ],
+      "40": [
+        1136.34033203125,
+        1255.24670410156
+      ],
+      "41": [
+        3298.4951171875,
+        6655.94580078125
+      ],
+      "42": [
+        666.447387695312,
+        372.562133789062
+      ],
+      "43": [
+        -346.789398193359,
+        377.412261962891
+      ],
+      "44": [
+        -2182.85815429688,
+        2838.38110351562
+      ],
+      "45": [
+        -195.449401855469,
+        862.369140625
+      ],
+      "46": [
+        -192.909973144531,
+        53.4041748046875
+      ],
+      "47": [
+        502.952972412109,
+        1459.59020996094
+      ],
+      "48": [
+        386.849212646484,
+        -142.993911743164
+      ],
+      "49": [
+        -209.043609619141,
+        396.956359863281
+      ],
+      "5": [
+        2444.70629882812,
+        1389.8681640625
+      ],
+      "50": [
+        300.260009765625,
+        443.482971191406
+      ],
+      "51": [
+        2289.31469726562,
+        336.150604248047
+      ],
+      "52": [
+        951.240966796875,
+        1483.06176757812
+      ],
+      "53": [
+        1303.8134765625,
+        461.000946044922
+      ],
+      "54": [
+        1492.86193847656,
+        106.857727050781
+      ],
+      "55": [
+        234.700012207031,
+        32.0206832885742
+      ],
+      "56": [
+        685.034362792969,
+        128.408584594727
+      ],
+      "57": [
+        865.088806152344,
+        1009.45849609375
+      ],
+      "58": [
+        2049.21826171875,
+        1094.52124023438
+      ],
+      "59": [
+        298.652984619141,
+        1696.81579589844
+      ],
+      "6": [
+        1117.21264648438,
+        184.207443237305
+      ],
+      "60": [
+        191.024658203125,
+        705.418273925781
+      ],
+      "61": [
+        15.0735282897949,
+        1045.01489257812
+      ],
+      "62": [
+        1183.98840332031,
+        -42.3024711608887
+      ],
+      "63": [
+        -348.988708496094,
+        400.284973144531
+      ],
+      "64": [
+        504.603637695312,
+        640.723571777344
+      ],
+      "65": [
+        1550.978515625,
+        710.798400878906
+      ],
+      "66": [
+        -364.989501953125,
+        493.720123291016
+      ],
+      "67": [
+        1669.14001464844,
+        108.300361633301
+      ],
+      "68": [
+        1498.32202148438,
+        2277.29711914062
+      ],
+      "69": [
+        892.682312011719,
+        199.862091064453
+      ],
+      "7": [
+        531.1533203125,
+        301.210845947266
+      ],
+      "70": [
+        -3789.10595703125,
+        5417.82177734375
+      ],
+      "71": [
+        330.515716552734,
+        714.010620117188
+      ],
+      "72": [
+        1958.69323730469,
+        8.15226364135742
+      ],
+      "73": [
+        1988.74267578125,
+        1484.33862304688
+      ],
+      "74": [
+        1319.28649902344,
+        249.724334716797
+      ],
+      "75": [
+        1559.34851074219,
+        3081.32275390625
+      ],
+      "76": [
+        190.259399414062,
+        -4.58374500274658
+      ],
+      "77": [
+        -1483.28112792969,
+        3046.89404296875
+      ],
+      "78": [
+        1463.72290039062,
+        892.741516113281
+      ],
+      "79": [
+        3541.994140625,
+        3045.17431640625
+      ],
+      "8": [
+        1391.47058105469,
+        10.7973823547363
+      ],
+      "9": [
+        1836.61193847656,
+        438.150207519531
+      ]
+    },
+    "tick": 20,
+    "unknown_factions": []
+  },
+  "scene": "res://scenes/galaxy/galaxy_view.tscn",
+  "tick": 0
+}
