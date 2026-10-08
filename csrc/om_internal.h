@@ -79,6 +79,7 @@ typedef struct {
 #define OM_SPACE_FIELD_CELLS (OM_SPACE_FIELD_SIDE * OM_SPACE_FIELD_SIDE)
 #define OM_SPACE_FIELD_CELL_WU 100.0
 #define OM_SPACE_FIELD_CANVAS_WU 24000.0
+#define OM_SPACE_FIELD_DENSITY_DEFAULT 35.0 /* field_map_space.gd default density; the era manifest may override later (lane D leftover) */
 /* Caps (K-d2). POLYS: tests/csim/test_VG_D_d2.py D2_POLYS_PER_LAYER hi 530 x 5 layers = 2650 (mockup field_map_space.gd
  * plate_polygon_count 417 to 496 per layer = 2480), rounded up to a power of two. PTS: D2_MAX_PTS 16 in the same file (the
  * mockup's rubble cells are 8-sided, _cell_polygon(..., 8, ...); plates are a square cut by bisectors); the D4 test's

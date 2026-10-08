@@ -2627,7 +2627,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     } else {
         om_terrain_clear(w);
         /* E-17 S-246 R-246-01: the space field, after the canvas is set (om_map_clear unsets it). */
-        if (om_space_field_generate(w, (uint32_t)(om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype), canvas, canvas) != 0)
+        if (om_space_field_generate(w, (uint32_t)(om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype), canvas, canvas, OM_SPACE_FIELD_DENSITY_DEFAULT) != 0)
             om_space_field_clear(w);
     }
     memset(st->objective_center_set, 0, sizeof(st->objective_center_set));
