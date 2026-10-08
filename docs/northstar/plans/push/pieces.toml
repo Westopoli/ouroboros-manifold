@@ -1454,7 +1454,7 @@ id = "VG-C"
 manager = "M0"
 wave = 8
 owns = []
-owns_glob = ["scenes/ground3d/**", "tests/test_vg_c_*.gd", "tests/csim/test_E01_*ground*.py", "tests/qa/desktop/plays/C/**", "tests/qa/desktop/test_vg_c_*.py"]
+owns_glob = ["scenes/ground3d/**", "tests/test_vg_c*.gd", "tests/support/vg_c_*.gd", "tests/csim/test_E01_*ground*.py", "tests/qa/desktop/plays/C/**", "tests/qa/desktop/test_vg_c_*.py"]
 acceptance = []
 depends_on = ["VG-CONTRACT", "TERRAIN-1"]
 status = { state = "in_flight" }

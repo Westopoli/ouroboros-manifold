@@ -1,6 +1,8 @@
 extends Node2D
 
 const SimSession := preload("res://autoload/sim_session.gd")
+const Ground3DHost := preload("res://scenes/ground3d/ground3d.gd")
+const GroundProjection := preload("res://scenes/ground3d/projection.gd")
 
 # Piece C5: minimal tactical view over a C transport v1 "tactical" snapshot
 # (docs/architecture.md "C transport v1"). Fresh scene, no legacy code. See
@@ -111,6 +113,9 @@ var _drag_start := Vector2(-1.0, -1.0)
 var _error_panel: Control
 var _ending := false
 var _ground_layer: Node2D
+# Ground era (S-236): the 3D ground hosted under the 2D shell. The 2D terrain layer is demoted to the map band.
+var _ground3d: Node
+var _terrain: Dictionary = {}
 
 
 func _ready() -> void:
@@ -142,12 +147,22 @@ func _load_live() -> void:
 	_show_error(reason if reason != "" else "tactical load failed")
 
 
+func _ground_era() -> bool:
+	var cfg := get_node_or_null("/root/EraConfig")
+	return cfg != null and cfg.kind() == "ground"
+
+
 func set_terrain(t: Dictionary) -> void:
+	_terrain = t
 	if t.is_empty():
 		if _ground_layer != null:
 			_ground_layer.queue_free()
 			remove_child(_ground_layer)
 			_ground_layer = null
+		if _ground3d != null:
+			_ground3d.queue_free()
+			remove_child(_ground3d)
+			_ground3d = null
 		return
 	if _ground_layer == null:
 		_ground_layer = load("res://scenes/tactical_c/terrain_layer.gd").new()
@@ -155,6 +170,35 @@ func set_terrain(t: Dictionary) -> void:
 		move_child(_ground_layer, 0)
 	_ground_layer.set_terrain(t)
 	_ground_layer.set_view(_world_scale, _camera)
+	if _ground_era():
+		if _ground3d == null:
+			_ground3d = Ground3DHost.new()
+			_ground3d.name = "Ground3D"
+			add_child(_ground3d)
+			move_child(_ground3d, 0)
+		_ground3d.set_terrain(t)
+		_ground3d.set_frame(_frame, SimSession.bridge().mission())
+		_ground3d.camera_rig().pan_to(_camera)
+		_sync_from_rig()
+		_update_display_px()
+		_redraw()
+
+
+func _rig() -> Node3D:
+	return _ground3d.camera_rig() if _ground3d != null else null
+
+
+# The rig is the camera in a ground era: the view reads its pan target and pixels-per-wu back as the map band's
+# camera {x,y} and scale, and shows the 2D terrain layer only on the map band.
+func _sync_from_rig() -> void:
+	var rig := _rig()
+	if rig == null:
+		return
+	var q: Dictionary = rig.qa_camera()
+	_camera = Vector2(q["x"], q["y"])
+	_world_scale = q["scale"]
+	if _ground_layer != null:
+		_ground_layer.visible = rig.band() == "map"
 
 
 func _show_error(reason: String) -> void:
@@ -238,6 +282,8 @@ func load_frame(frame: Dictionary) -> void:
 	if _canvas > 0.0:
 		_fit_scale = SCREEN_H / _canvas
 		_world_scale = _fit_scale * _zoom
+	if _ground3d != null:
+		_ground3d.set_frame(frame, SimSession.bridge().mission())
 	var tick := int(frame.get("tick", 0))
 	var fresh_load := tick <= _last_tick
 	_last_tick = tick
@@ -247,6 +293,10 @@ func load_frame(frame: Dictionary) -> void:
 		_camera = _force_camera()
 		_camera_initialized = true
 		_camera_canvas = _canvas
+		if _rig() != null:
+			_rig().pan_to(_camera)
+	if _rig() != null:
+		_sync_from_rig()
 	if _facing_fixed:
 		for u in frame.get("units", []):
 			var id := int(u.get("id"))
@@ -288,12 +338,24 @@ func qa_state() -> Dictionary:
 		"local_faction": _get_local_faction(),
 		"selected": _selected.duplicate(),
 		"camera": {"x": _camera.x, "y": _camera.y},
+		"ground3d": _ground3d.qa_state()["ground3d"] if _ground3d != null else {"present": false},
+		"objects_px": _objects_px(),
 		"last_command": _last_command.duplicate(),
 		"commands_sent_last_order": _commands_sent_last_order,
 		"units_in_last_command": _units_in_last_command,
 		"ground_layer": _ground_layer_state(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
+
+
+func _objects_px() -> Array:
+	var out: Array = []
+	var nodes: Array = _frame.get("map", {}).get("nodes", [])
+	for o in SimSession.bridge().mission().get("objectives", []):
+		var n := int(o.get("node", -1))
+		if n >= 0 and n < nodes.size():
+			out.append(_to_screen(float(nodes[n]["x"]), float(nodes[n]["y"])))
+	return out
 
 
 func _ground_layer_state() -> Dictionary:
@@ -493,6 +555,9 @@ func qa_pan(x: float, y: float) -> void:
 		_camera = Vector2(x, y)
 	else:
 		_camera = Vector2(clampf(x, 0.0, _canvas), clampf(y, 0.0, _canvas))
+	if _rig() != null:
+		_rig().pan_to(_camera)
+		_sync_from_rig()
 	_update_display_px()
 	_redraw()
 
@@ -529,6 +594,10 @@ func _force_camera() -> Vector2:
 
 
 func _zoom_by(factor: float) -> void:
+	if _rig() != null:
+		_rig().zoom_by(-1 if factor > 1.0 else 1)
+		qa_pan(_camera.x, _camera.y)
+		return
 	_zoom = clampf(_zoom * factor, ZOOM_MIN, ZOOM_MAX)
 	_world_scale = _fit_scale * _zoom
 	qa_pan(_camera.x, _camera.y)
@@ -597,6 +666,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _to_world(screen: Vector2) -> Vector2:
+	if _ground3d != null and is_inside_tree():
+		var w = _ground3d.to_world(screen)
+		if w != null:
+			return w
 	return (screen - Vector2(SCREEN_W, SCREEN_H) * 0.5) / _world_scale + _camera
 
 
@@ -618,6 +691,9 @@ func _visible_ids() -> Dictionary:
 
 
 func _to_screen(wx: float, wy: float) -> Array:
+	if _ground3d != null and is_inside_tree():
+		var p: Vector2 = _ground3d.to_screen(wx, wy)
+		return [p.x, p.y]
 	var sx := (wx - _camera.x) * _world_scale + SCREEN_W * 0.5
 	var sy := (wy - _camera.y) * _world_scale + SCREEN_H * 0.5
 	return [sx, sy]
