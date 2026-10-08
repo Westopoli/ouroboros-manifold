@@ -78,7 +78,6 @@ var _quality := {"tier": 0, "res_divisor": 1}
 var _unknown_factions: Array = []
 var _prev_owners: Dictionary = {}
 var _tween := TerritoryTween.new()
-var _tween_frames: Array = []
 var _flashes: Array = []
 
 signal camera_move_completed
@@ -223,7 +222,7 @@ func _on_bridge_changed(_tick) -> void:
 func _process(delta: float) -> void:
 	_zoom.update_from_distance(_camera_rig.get_distance())
 	_step_flashes(delta)
-	_tween_frames = _tween.step(Time.get_ticks_msec() / 1000.0)
+	_feed_tween(Time.get_ticks_msec() / 1000.0)
 	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 	if _bridge == null:
 		return
@@ -259,6 +258,7 @@ func set_snapshot(snapshot: Dictionary) -> void:
 	_note_unknown_factions(snapshot)
 	_relayout()
 	_render()
+	_feed_tween(Time.get_ticks_msec() / 1000.0)
 
 
 func _note_owner_changes() -> void:
@@ -271,6 +271,23 @@ func _note_owner_changes() -> void:
 		if _prev_owners.has(i) and _prev_owners[i] != owner:
 			_tween.start(i, _prev_owners[i], owner, now)
 	_prev_owners = owners
+
+
+# B7: a tweened region is fed through the same territory signal the renderer binds, owner colour
+# and radius = significance x scale, so the field shrinks the old owner then grows the new one.
+func _feed_tween(now: float) -> void:
+	for e in _tween.step(now):
+		var region := int(e["region"])
+		var owner := int(e["owner"])
+		if not _positions.has(region):
+			continue
+		var key := str(region)
+		if owner < 0:
+			_adapter.remove_territory(key)
+			continue
+		var colour: Color = _owner_colours_cache.get(owner, _colour_for_owner(owner))
+		var sig: float = _significance.get(region, 1.0)
+		_adapter.set_territory(key, _positions[region], sig * float(e["scale"]), colour)
 
 
 func _note_unknown_factions(snapshot: Dictionary) -> void:
