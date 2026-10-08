@@ -12,28 +12,44 @@ const RING_SEGMENTS := 64
 
 var _beacons: Array = []
 var _rings: Array = []
+var _projector := Callable()
 
 
 func _ready() -> void:
 	name = "ObjectiveMarkers"
 
 
-func set_frame(frame: Dictionary, mission: Dictionary, _local_faction: int, world_scale: float, camera: Vector2) -> void:
+func set_projector(projector: Callable) -> void:
+	_projector = projector
+
+
+func screen_points() -> Array:
+	var pts: Array = []
+	for b in _beacons:
+		pts.append(b["center"])
+	return pts
+
+
+func set_frame(frame: Dictionary, mission: Dictionary, _local_faction: int, world_scale := 1.0, camera := Vector2.ZERO) -> void:
 	_beacons = []
 	_rings = []
 	var nodes := {}
-	for n in frame.get("map", {}).get("nodes", []):
-		nodes[int(n["i"])] = Vector2(float(n["x"]), float(n["y"]))
+	var map_nodes: Array = frame.get("map", {}).get("nodes", [])
+	for k in map_nodes.size():
+		var n: Dictionary = map_nodes[k]
+		nodes[int(n.get("i", k))] = Vector2(float(n["x"]), float(n["y"]))
 	var states := {}
 	for o in frame.get("objectives", []):
 		states[int(o["i"])] = int(o["done"])
-	for o in mission.get("objectives", []):
+	var objectives: Array = mission.get("objectives", [])
+	for idx in objectives.size():
+		var o: Dictionary = objectives[idx]
 		var node := int(o.get("node", -1))
 		if not nodes.has(node):
 			continue
-		var i := int(o["i"])
+		var i := int(o.get("i", idx))
 		var state: int = states.get(i, 0)
-		var c: Vector2 = (nodes[node] - camera) * world_scale + SCREEN_CENTER
+		var c: Vector2 = _project(nodes[node], world_scale, camera)
 		var col := PRIMARY_COLOR if o.get("primary", false) else SECONDARY_COLOR
 		if state == 1:
 			col = DONE_COLOR
@@ -42,8 +58,20 @@ func set_frame(frame: Dictionary, mission: Dictionary, _local_faction: int, worl
 		_beacons.append({"objective": i, "center": c, "state": state, "color": col})
 		var radius := float(o.get("radius", 0.0))
 		if radius > 0.0:
-			_rings.append({"objective": i, "center": c, "radius": radius * world_scale, "color": col})
+			_rings.append({"objective": i, "center": c, "radius": _screen_radius(nodes[node], radius, c, world_scale), "color": col})
 	queue_redraw()
+
+
+func _project(w: Vector2, world_scale: float, camera: Vector2) -> Vector2:
+	if _projector.is_valid():
+		return _projector.call(w)
+	return (w - camera) * world_scale + SCREEN_CENTER
+
+
+func _screen_radius(w: Vector2, radius: float, centre: Vector2, world_scale: float) -> float:
+	if _projector.is_valid():
+		return centre.distance_to(_projector.call(w + Vector2(radius, 0.0)))
+	return radius * world_scale
 
 
 func beacons() -> Array:
