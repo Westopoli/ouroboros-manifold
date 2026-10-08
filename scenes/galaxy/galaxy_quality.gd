@@ -1,6 +1,7 @@
 extends RefCounted
 
-# Galaxy quality tier (ruling A54/A60): 0 full-resolution field, 1 half, 2 quarter.
+# Galaxy quality tier (ruling A54/A60): 0 full-resolution field shells (stand-in under the Compatibility renderer), 1 half-resolution stand-in shells, 2 quarter-resolution stand-in shells and a thinned ambient field.
+# The tier is the player's setting; the renderer is never switched by frame time or by the rendering method.
 const RES_DIVISORS := [1, 2, 4]
 
 
@@ -15,6 +16,7 @@ static func res_divisor_for_tier(tier: int) -> int:
 static func apply(shell: Object, settings: Dictionary) -> int:
 	var tier := tier_from_settings(settings)
 	shell.res_divisor = res_divisor_for_tier(tier)
+	shell.set("stand_in_mode", -1 if tier == 0 else 1)
 	return tier
 
 

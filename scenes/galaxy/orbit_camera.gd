@@ -22,6 +22,7 @@ var _yaw: float = 0.0
 var _mouse := Vector2(-1.0, -1.0)
 var _dragged := 0.0
 var _tween: Tween
+var _autonomous := false
 
 @onready var _camera: Camera3D = $Camera3D
 
@@ -34,6 +35,14 @@ func set_view(distance: float, target: Vector3) -> void:
 	_distance = clampf(distance, DIST_MIN, DIST_MAX)
 	_target = target
 	_update_camera()
+
+
+func set_autonomous(on: bool) -> void:
+	_autonomous = on
+
+
+func is_autonomous() -> bool:
+	return _autonomous
 
 
 func get_target() -> Vector3:
@@ -77,6 +86,8 @@ func project(pos: Vector3) -> Vector2:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_mouse = event.position
+		if event.button_mask != 0:
+			_autonomous = false
 		if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
 			_dragged += event.relative.length()
 			_pan(event.relative)
@@ -86,6 +97,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton:
 		_mouse = event.position
 		if event.pressed:
+			_autonomous = false
 			_stop_focus()
 			if event.button_index == MOUSE_BUTTON_LEFT:
 				_dragged = 0.0
