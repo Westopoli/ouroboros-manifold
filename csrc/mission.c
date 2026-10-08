@@ -2857,9 +2857,11 @@ int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, doubl
     return 1;
 }
 int om_objective_get_done(const om_world *w, uint32_t idx) {
-    /* STUB */
-    (void)w; (void)idx;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || idx >= st->n_objectives) return -1;
+    const om_mission_objective *o = &st->objectives[idx];
+    if (o->spec.is_failed) return 2;
+    return (o->spec.is_complete || o->spec.completion >= 1.0) ? 1 : 0;
 }
 /* ---- end generated stubs ---- */
 
