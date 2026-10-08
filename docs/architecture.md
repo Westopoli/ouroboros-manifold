@@ -362,6 +362,7 @@ Lockstep verbs (lockstep spec 2026-10-05, lane pipe). Every request is a flat ob
 Terrain verbs (E-17 S-186). Flat requests; each needs a world (`"no world"` otherwise). They write no `tactical` frame.
 - `terrain_generate` takes `seed` (uint64) and `canvas` (world units, square: `canvas_w = canvas_h`), calls `om_terrain_generate`, and answers `{"type":"terrain_ack","name":"terrain_generate","code":C,"cells_w":W,"cells_h":H,"band_heights":[h0..h4]}`. `code` is the sim result (0 ok, nonzero refused, e.g. canvas 32000); on a nonzero code `cells_w`, `cells_h` are 0 and `band_heights` is `[]`. A refusal is a `terrain_ack`, not an `error`. A missing `seed` or `canvas` is `error` `"missing field"`.
 - `terrain_dump` answers `{"type":"terrain","cells_w":W,"cells_h":H,"bands":"<hex>","walkable":"<hex>","slopes":[{"x0","y0","x1","y1","mx","my","length","lower_band","upper_band"}...]}`: `bands` is the `om_terrain_dump_bands` bytes (row-major, one byte per cell, values 1 to 5), `walkable` one byte (0 or 1) per cell from `om_terrain_walkable_at` at the cell centre, `slopes` every `om_terrain_slope_get` record. Without generated terrain it answers `error` `"no terrain"`.
+- `space_field_dump` (K-d) answers `{"type":"space_field","cells_w":240,"cells_h":240,"layers":5,"masks":[<5 hex strings>],"polys":[[layer,kind,[x0,y0,x1,y1,...]]...]}`: each mask is one layer's 57600 cells (100 wu each, row-major `cy*240+cx`) packed 8 per byte, LSB first, 1 = blocked, 7200 bytes; `polys` are the plate polygons, `layer` 0 to 4, `kind` 0 plate, 1 mass, 2 rubble, coordinates in wu on the 24000 wu canvas. `mission_start` with `era_kind` 0 generates the field (`om_space_field_generate`, seed folded from the world seed) and `era_kind` 1 drops it; without one the verb answers `error` `"no space field"`. The bridge asks once after `mission_begin` in a space era and decodes it to `space_field()`. The field is not saved: it is a pure function of (seed, canvas), and the masks reach routing through the saved mapgen blocked bits. At K-d the generator body is placeholder plates; lane D replaces it with the `field_map_space.gd` port.
 - `terrain_probe` takes `x`, `y` and optional `layer` (default 0) and answers `{"type":"terrain_probe","x":X,"y":Y,"height":H,"band":B,"walkable":0|1,"ground":G}` from `om_terrain_height_at`, `om_terrain_band_at`, `om_terrain_walkable_at`, `om_terrain_ground_at`; `error` `"no terrain"` when none is generated.
 - Errors, each `{"type":"error","name":<verb>,"reason":...}`: `"no world"`, `"no terrain"`, `"missing field"`.
 
@@ -383,7 +384,7 @@ New C getters (K0 stubs return 0 or -1 until K-a): `om_tactical_event_count`, `o
 
 **`map`** (full frames only, as today): `cover[{x,y,r,h,class}]` class 0 small (<150 wu) 1 medium (<400) 2 huge; `obstacles[{x,y,r}]`.
 
-**Dumps** (once per mission): `terrain_dump` gains `heights` (hex LE int32 cm, `cells_w*cells_h`); `space_field_dump` (K-d) and `lots_dump` (K-e) shapes are written in their amendments.
+**Dumps** (once per mission): `terrain_dump` gains `heights` (hex LE int32 cm, `cells_w*cells_h`); `space_field_dump` (K-d, below) and `lots_dump` (K-e) shapes are written in their amendments.
 
 **Verbs**: `command` gains `set_layer {units, layer}` and `ping {units, layer, x, y}`; `activate_ability` as today; `mission_start` gains `fog_filter` (K-h).
 

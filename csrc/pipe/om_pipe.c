@@ -1157,6 +1157,57 @@ static void handle_set_feature(const char *json) {
     write_ack("set_feature");
 }
 
+#define PIPE_SPACE_FIELD_CANVAS_WU 24000.0 /* K-d: the one field canvas (om_space_field_generate) */
+#define PIPE_SPACE_FIELD_SEED_FOLD 32
+#define PIPE_SPACE_FIELD_LAYERS 5
+#define PIPE_SPACE_FIELD_CELLS 57600u /* 240 x 240 */
+#define PIPE_SPACE_FIELD_POLY_PTS 64u
+
+/* K-d: {"type":"space_field", masks packed 8 cells per byte LSB first (1 blocked), polys [[layer,kind,[x,y,...]]]};
+ * docs/architecture.md "space_field_dump". Without a field: error "no space field" (terrain_dump's form). */
+static void handle_space_field_dump(void) {
+    if (!W || !om_space_field_present(W)) {
+        write_error("space_field_dump", "no space field");
+        return;
+    }
+    uint8_t *cells = malloc(PIPE_SPACE_FIELD_CELLS);
+    uint8_t *packed = malloc(PIPE_SPACE_FIELD_CELLS / 8);
+    jbuf j;
+    jb_init(&j);
+    jb_raw(&j, "{\"type\":\"space_field\",\"cells_w\":240,\"cells_h\":240,\"layers\":5,\"masks\":[");
+    for (uint32_t k = 0; k < PIPE_SPACE_FIELD_LAYERS; k++) {
+        om_space_field_get_mask(W, k, cells, PIPE_SPACE_FIELD_CELLS);
+        memset(packed, 0, PIPE_SPACE_FIELD_CELLS / 8);
+        for (uint32_t i = 0; i < PIPE_SPACE_FIELD_CELLS; i++)
+            if (cells[i]) packed[i >> 3] = (uint8_t)(packed[i >> 3] | (1u << (i & 7)));
+        if (k) jb_putc(&j, ',');
+        hex_put(&j, packed, PIPE_SPACE_FIELD_CELLS / 8);
+    }
+    jb_raw(&j, "],\"polys\":[");
+    uint32_t np = om_space_field_poly_count(W);
+    for (uint32_t i = 0; i < np; i++) {
+        double xy[2 * PIPE_SPACE_FIELD_POLY_PTS];
+        uint32_t layer = 0, kind = 0;
+        uint32_t n = om_space_field_poly_get(W, i, &layer, &kind, xy, PIPE_SPACE_FIELD_POLY_PTS);
+        if (i) jb_putc(&j, ',');
+        jb_raw(&j, "[");
+        jb_uint(&j, layer);
+        jb_putc(&j, ',');
+        jb_uint(&j, kind);
+        jb_raw(&j, ",[");
+        for (uint32_t m = 0; m < 2 * n; m++) {
+            if (m) jb_putc(&j, ',');
+            jb_double(&j, xy[m]);
+        }
+        jb_raw(&j, "]]");
+    }
+    jb_raw(&j, "]}");
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+    free(cells);
+    free(packed);
+}
+
 static void handle_mission_start(const char *json) {
     if (!W) {
         write_error("mission_start", "no world");
@@ -1301,6 +1352,16 @@ static void handle_mission_start(const char *json) {
     if (era_kind == 1 && !om_terrain_present(W)) {
         write_error("mission_start", "terrain generate failed");
         return;
+    }
+    if (era_kind == 0) {
+        uint64_t ws = om_world_seed(W);
+        if (om_space_field_generate(W, (uint32_t)(ws ^ (ws >> PIPE_SPACE_FIELD_SEED_FOLD)), PIPE_SPACE_FIELD_CANVAS_WU,
+                                    PIPE_SPACE_FIELD_CANVAS_WU) != 0) {
+            write_error("mission_start", "space field generate failed");
+            return;
+        }
+    } else {
+        om_space_field_clear(W);
     }
     om_mission_build_objectives(W, archetype);
     g_mission_archetype = archetype;
@@ -1943,6 +2004,8 @@ int main(void) {
             handle_terrain_generate(buf);
         } else if (!strcmp(name, "terrain_dump")) {
             handle_terrain_dump();
+        } else if (!strcmp(name, "space_field_dump")) {
+            handle_space_field_dump();
         } else if (!strcmp(name, "terrain_probe")) {
             handle_terrain_probe(buf);
         } else if (!strcmp(name, "net_state_get")) {
