@@ -18,6 +18,7 @@ const GalaxyAdapter := preload("res://scenes/galaxy/galaxy_adapter.gd")
 const ConstellationRenderer := preload("res://scenes/galaxy/legacy_constellation_renderer.gd")
 const ShellRenderer := preload("res://scenes/galaxy/legacy_shell_renderer.gd")
 const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
+const DrivenModel := preload("res://scenes/galaxy/galaxy_view_driven.gd")
 const ZoomController := preload("res://scenes/galaxy/legacy_zoom_disclosure_controller.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
@@ -65,6 +66,16 @@ var _edge_canvas: Node2D = null  # Node2D in a CanvasLayer; valid only while edg
 
 var _error_panel: Control
 
+signal camera_move_completed
+signal region_clicked(region_id: String)
+signal empty_space_clicked
+
+# S-069: a host that feeds regions through add_region_node & co. (the time-jump
+# sequencer) sets driven before add_child; the view then skips the live pipe.
+var driven := false
+var _driven_model := DrivenModel.new()
+var _auto_camera := false
+
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
 @onready var _camera_rig := $OrbitCamera
@@ -75,7 +86,8 @@ func _ready() -> void:
 	_build_renderers()
 	_build_labels()
 	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
-	_load_live_snapshot()
+	if not driven:
+		_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
 	if mission_btn:
 		mission_btn.pressed.connect(func(): SceneRouter.go_to("mission_briefing"))
@@ -442,3 +454,100 @@ func _render_points() -> void:
 		mm.set_instance_color(idx, _region_colours.get(i, FLAT_COLOUR))
 	_points.multimesh = mm
 	_points.material_override = _point_material
+
+
+# --- driven mode (S-069): the old world_view_shell API, answered here ---
+
+func add_region_node(region_id: String, _pos: Vector3, significance: float, _colour: Color, faction_id: String) -> void:
+	_driven_model.set_region(region_id, significance, faction_id)
+	_driven_refresh()
+
+
+func update_region_node(region_id: String, significance: float, _colour: Color) -> void:
+	_driven_model.set_tier(region_id, significance)
+	_driven_refresh()
+
+
+# The old shell took ownership as a colour; the galaxy view keys it by faction.
+func set_region_owner(region_id: String, faction_id: String) -> void:
+	_driven_model.set_owner(region_id, faction_id)
+	_driven_refresh()
+
+
+func set_territory(region_id: String, _pos: Vector3, _size: float, _colour: Color) -> void:
+	_driven_model.index_for(region_id)
+
+
+func update_territory(region_id: String, _size: float, _colour: Color) -> void:
+	_driven_model.index_for(region_id)
+
+
+func remove_territory(region_id: String) -> void:
+	_driven_model.clear_owner(region_id)
+	_driven_refresh()
+
+
+func add_connection(from_id: String, to_id: String, edge_type: String, _colour: Color) -> void:
+	_driven_model.add_edge(from_id, to_id, edge_type)
+	_driven_refresh()
+
+
+# Flashes arrive from sim events (VG-B B6); until then a driven flash is silent.
+func flash_military_activity(_region_id: String, _intensity: float) -> void:
+	pass
+
+
+func flash_conflict(_attacker_id: String, _defender_id: String, _intensity: float) -> void:
+	pass
+
+
+func highlight_region(region_id: String) -> void:
+	_camera_rig.focus_region(_driven_model.index_for(region_id))
+
+
+func clear_highlight() -> void:
+	pass
+
+
+func move_camera_to_region(region_id: String, _duration: float) -> void:
+	_camera_rig.focus_region(_driven_model.index_for(region_id))
+	_emit_camera_done()
+
+
+func move_camera_to_regions(region_ids: Array, duration: float) -> void:
+	if region_ids.is_empty():
+		move_camera_to_overview(duration)
+		return
+	var sum := Vector3.ZERO
+	var n := 0
+	for rid in region_ids:
+		var i := _driven_model.index_for(str(rid))
+		if _positions.has(i):
+			sum += _positions[i]
+			n += 1
+	if n > 0:
+		_camera_rig.set_view(BAND_SPLIT_LOW + 10.0, sum / float(n))
+	_emit_camera_done()
+
+
+func move_camera_to_overview(_duration: float) -> void:
+	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_emit_camera_done()
+
+
+func start_auto_camera() -> void:
+	_auto_camera = true
+
+
+func stop_auto_camera() -> void:
+	_auto_camera = false
+
+
+func _emit_camera_done() -> void:
+	await get_tree().create_timer(0.6).timeout
+	camera_move_completed.emit()
+
+
+func _driven_refresh() -> void:
+	if driven:
+		set_snapshot(_driven_model.snapshot())
