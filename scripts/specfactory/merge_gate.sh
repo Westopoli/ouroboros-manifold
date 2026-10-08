@@ -50,7 +50,10 @@ PIECE_ID="$3"
 MERGE_ROOT="$(dirname "$CANDIDATE")"
 
 SCRATCH_ROOT="$(mktemp -d -t merge_gate.XXXXXX)"
-cleanup() { rm -rf "$SCRATCH_ROOT"; }
+cleanup() {
+    [[ -d "$SCRATCH_ROOT/mainpipe_base" ]] && git -C "$CANDIDATE" worktree remove --force "$SCRATCH_ROOT/mainpipe_base" >/dev/null 2>&1
+    rm -rf "$SCRATCH_ROOT"
+}
 trap cleanup EXIT
 
 REJECTED=0
@@ -418,6 +421,21 @@ ok qa_t1 "covered by regression_qa_t1"
 # -------------------------------------------------------------- 9. tests/transport, if present and the pipe builds
 if [[ -d "$CANDIDATE/tests/transport" ]]; then
     PIPE_LOG="$SCRATCH_ROOT/pipe_build.log"
+    # See also: tests/transport/test_pipe_vg_identity.py skips without OM_MAIN_PIPE
+    # Build base-ref's pipe once and export it so the candidate and base runs see the same env;
+    # a separate baseline cache keeps skip counts cached without it from leaking in.
+    if [[ -z "${OM_MAIN_PIPE:-}" ]]; then
+        MAINPIPE_DIR="$SCRATCH_ROOT/mainpipe_base"
+        if git -C "$CANDIDATE" worktree add --detach "$MAINPIPE_DIR" "$BASE_REF" >"$SCRATCH_ROOT/mainpipe.log" 2>&1 \
+            && ( cd "$MAINPIPE_DIR" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >>"$SCRATCH_ROOT/mainpipe.log" 2>&1 \
+            && [[ -x "$MAINPIPE_DIR/pipe/ouroboros_pipe" ]]; then
+            export OM_MAIN_PIPE="$MAINPIPE_DIR/pipe/ouroboros_pipe"
+            export MERGE_GATE_BASELINE_CACHE="${MERGE_GATE_BASELINE_CACHE:-$MERGE_ROOT/baseline_cache_mainpipe}"
+            mkdir -p "$MERGE_GATE_BASELINE_CACHE"
+        else
+            warn transport "OM_MAIN_PIPE not set, base pipe did not build: $(tail_oneline "$SCRATCH_ROOT/mainpipe.log")"
+        fi
+    fi
     ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PIPE_LOG" 2>&1
     if [[ $? -eq 0 ]]; then
         PIPE_DBG_LOG="$SCRATCH_ROOT/pipe_dbg_build.log"

@@ -245,9 +245,8 @@ def build_callgraph(csrc_dir: Path) -> dict[str, set[str]]:
     harness fault, not a lint finding)."""
     graph: dict[str, set[str]] = {}
     sources = sorted(csrc_dir.glob("*.c"))
-    pipe_c = csrc_dir / "pipe" / "om_pipe.c"
-    if pipe_c.is_file():
-        sources.append(pipe_c)
+    # Every csrc/pipe/*.c: om_pipe.c's handlers were split into pipe_*.c.
+    sources.extend(sorted((csrc_dir / "pipe").glob("*.c")))
 
     with tempfile.TemporaryDirectory(prefix="reach_lint_cc_") as scratch:
         scratch_path = Path(scratch)

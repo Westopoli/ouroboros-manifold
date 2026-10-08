@@ -20,5 +20,5 @@ H
 $CC -specs="$tmp/ucrt.specs" -std=gnu11 -Wall -Wextra -Icsrc -O2 \
   -fno-fast-math -ffp-contract=off -fno-math-errno -msse2 -mfpmath=sse -fexcess-precision=standard \
   -D__USE_MINGW_ANSI_STDIO=1 -static -include "$tmp/binstdio.h" \
-  -o "$out/ouroboros_pipe.exe" csrc/*.c csrc/pipe/om_pipe.c -lm
+  -o "$out/ouroboros_pipe.exe" csrc/*.c csrc/pipe/om_pipe.c csrc/pipe/pipe_*.c -lm
 echo "$out/ouroboros_pipe.exe"

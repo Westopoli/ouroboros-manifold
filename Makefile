@@ -77,20 +77,23 @@ build/O2/libouroboros_dbg.so: $(SRC) $(HDR)
 # weak om_sin fallback's sin()) that ctypes.CDLL never had to resolve at
 # link time. T1 replaces the source; this target's shape (name, library
 # link) does not change.
-pipe/ouroboros_pipe: csrc/pipe/om_pipe.c libouroboros.so
+PIPE_SRC = csrc/pipe/om_pipe.c csrc/pipe/pipe_tactical.c csrc/pipe/pipe_dumps.c csrc/pipe/pipe_net.c
+PIPE_DBG_OBJ = $(patsubst csrc/pipe/%.c,pipe/obj_dbg/%.o,$(PIPE_SRC))
+
+pipe/ouroboros_pipe: $(PIPE_SRC) csrc/pipe/pipe_internal.h libouroboros.so
 	mkdir -p pipe
-	$(CC) $(CFLAGS) -o $@ csrc/pipe/om_pipe.c -L. -louroboros -lm -Wl,-rpath,'$$ORIGIN/..'
+	$(CC) $(CFLAGS) -Icsrc/pipe -o $@ $(PIPE_SRC) -L. -louroboros -lm -Wl,-rpath,'$$ORIGIN/..'
 
 # Debug pipe: same as pipe/ouroboros_pipe but compiled with -DOM_DEBUG_INJECT so
 # the inject/objective_complete handlers are active (om_pipe.c #ifdef gate).
 # Uses a separate object dir (pipe/obj_dbg/) so the two binaries never share .o files.
-pipe/obj_dbg/om_pipe.o: csrc/pipe/om_pipe.c $(HDR)
+pipe/obj_dbg/%.o: csrc/pipe/%.c csrc/pipe/pipe_internal.h $(HDR)
 	mkdir -p pipe/obj_dbg
-	$(CC) $(CFLAGS) -DOM_DEBUG_INJECT -c -o $@ $<
+	$(CC) $(CFLAGS) -Icsrc/pipe -DOM_DEBUG_INJECT -c -o $@ $<
 
-pipe/ouroboros_pipe_dbg: pipe/obj_dbg/om_pipe.o libouroboros_dbg.so
+pipe/ouroboros_pipe_dbg: $(PIPE_DBG_OBJ) libouroboros_dbg.so
 	mkdir -p pipe
-	$(CC) $(CFLAGS) -o $@ $< -L. -louroboros_dbg -lm -Wl,-rpath,'$$ORIGIN/..'
+	$(CC) $(CFLAGS) -o $@ $(PIPE_DBG_OBJ) -L. -louroboros_dbg -lm -Wl,-rpath,'$$ORIGIN/..'
 
 # Convenience: build then run the fenced C-sim test suite.
 test: all
