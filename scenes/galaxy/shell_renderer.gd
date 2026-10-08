@@ -10,11 +10,13 @@ extends Node3D
 const FIELD_PATH := "res://scenes/galaxy/territory_field.gd"
 const SHADER_PATH := "res://scenes/galaxy/shaders/shell_field.gdshader"
 const SHELL_RES_DIVISOR := 2
+const ShellLabels := preload("res://scenes/galaxy/shell_labels.gd")
 
 # Quality hook: 1 = full resolution, 2 = shipped default (half), 4 = quarter.
 var res_divisor := SHELL_RES_DIVISOR
 
 var _wv_data: Node
+var _labels: RefCounted   # faction labels, and the flat stand-in under the Compatibility renderer
 var _zoom_controller: Node
 var _field: Node
 var _field_script: Script
@@ -36,12 +38,14 @@ var _opacity_local := 0.05
 func setup(data: Node, zoom_controller: Node) -> void:
 	_wv_data = data
 	_zoom_controller = zoom_controller
-	if ResourceLoader.exists(FIELD_PATH):
-		_field_script = load(FIELD_PATH)
-		_field = _field_script.new()
-		_field.name = "TerritoryField"
-		add_child(_field)
-	_setup_low_res_viewport()
+	_labels = ShellLabels.new(self, RenderingServer.get_current_rendering_method() == "gl_compatibility")
+	if not _labels.stand_in:
+		if ResourceLoader.exists(FIELD_PATH):
+			_field_script = load(FIELD_PATH)
+			_field = _field_script.new()
+			_field.name = "TerritoryField"
+			add_child(_field)
+		_setup_low_res_viewport()
 	_wv_data.territory_set.connect(_on_territory_changed)
 	_wv_data.territory_updated.connect(_on_territory_changed)
 	_wv_data.territory_removed.connect(_on_territory_removed)
@@ -125,6 +129,7 @@ func teardown() -> void:
 		if _wv_data.regions_cleared.is_connected(_on_regions_cleared):
 			_wv_data.regions_cleared.disconnect(_on_regions_cleared)
 	_clear_state()
+	_labels = null
 	for node in [_overlay, _canvas_layer, _sub_viewport, _field]:
 		if node:
 			node.queue_free()
@@ -157,12 +162,13 @@ func set_debug_mode(mode: int) -> void:
 
 
 func _process(_delta: float) -> void:
-	if not _zoom_controller or not _sub_viewport:
+	if not _zoom_controller:
 		return
-	_follow_main_camera()
-	var target_size := _target_size()
-	if _sub_viewport.size != target_size:
-		_sub_viewport.size = target_size
+	if _sub_viewport:
+		_follow_main_camera()
+		var target_size := _target_size()
+		if _sub_viewport.size != target_size:
+			_sub_viewport.size = target_size
 
 	var band: String = _zoom_controller.current_band
 	var blend: float = _zoom_controller.blend_factor
@@ -179,7 +185,12 @@ func _process(_delta: float) -> void:
 				target_opacity = lerpf(_opacity_regional, _opacity_local, blend)
 		"local":
 			target_opacity = _opacity_local
-	_quad_mat.set_shader_parameter("shell_opacity", target_opacity)
+	var label_alpha := 0.0
+	if band == "overview":
+		label_alpha = 1.0 - blend if blend_dir == "down" else 1.0
+	_labels.apply(target_opacity, label_alpha)
+	if _quad_mat:
+		_quad_mat.set_shader_parameter("shell_opacity", target_opacity)
 	if _field:
 		_bind_field_textures()
 
@@ -212,6 +223,7 @@ func _on_territory_changed(region_id: String) -> void:
 		_faction_systems[color_key] = {}
 	_faction_systems[color_key][region_id] = true
 	_feed_field(region_id, color_key, t)
+	_labels.refresh(_faction_systems, _wv_data)
 
 
 func _on_territory_removed(region_id: String) -> void:
@@ -223,6 +235,7 @@ func _on_territory_removed(region_id: String) -> void:
 			break
 	if _field and _field_index.has(region_id):
 		_field.set_system_owner(_field_index[region_id], -1)
+	_labels.refresh(_faction_systems, _wv_data)
 
 
 func _on_regions_cleared() -> void:
@@ -233,6 +246,8 @@ func _clear_state() -> void:
 	_faction_systems.clear()
 	_faction_field_id.clear()
 	_field_index.clear()
+	if _labels:
+		_labels.clear()
 	if _field:
 		_field.set_systems([])
 
