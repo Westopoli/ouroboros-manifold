@@ -64,8 +64,31 @@ static func read_live_frame(stdio: FileAccess) -> Variant:
 		var raw_checksum := extract_raw_checksum(text)
 		if raw_checksum != "":
 			data["checksum"] = decimal_to_i64(raw_checksum)
+	elif data is Dictionary and data.get("type", "") == "net_ack":
+		# net_ack carries uint64 words too (R-139-04): checksum and every sections entry, read as int64 bit patterns.
+		var raw_ack := extract_raw_checksum(text)
+		if raw_ack != "":
+			data["checksum"] = decimal_to_i64(raw_ack)
+		var secs := extract_raw_sections(text)
+		if not secs.is_empty():
+			var words: Array = []
+			for w in secs:
+				words.append(decimal_to_i64(w))
+			data["sections"] = words
 
 	return data
+
+
+static func extract_raw_sections(text: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var re := RegEx.new()
+	re.compile("\"sections\"\\s*:\\s*\\[([^\\]]*)\\]")
+	var m := re.search(text)
+	if m == null:
+		return out
+	for part in m.get_string(1).split(",", false):
+		out.append(part.strip_edges())
+	return out
 
 
 static func extract_raw_checksum(text: String) -> String:
