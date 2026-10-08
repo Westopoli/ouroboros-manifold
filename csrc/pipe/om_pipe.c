@@ -1498,7 +1498,6 @@ static void write_tactical(int full) {
         {
             double cd = om_unit_ability_cooldown(W, cur.id);
             if (cd > 0.0) cur.acd = (int64_t)g_tactical_tick + (int64_t)(cd + 0.999999);
-            else if (om_unit_ability_active(W, cur.id)) cur.acd = (int64_t)g_tactical_tick + 1;
         }
         if (cur.faction == player) cur.sight = (int32_t)(om_fog_get_drawn_sensor_circle_radius(W, cur.id) + 0.5);
         int changed = full || !old->id || old->faction != cur.faction || old->type != cur.type ||
@@ -2570,11 +2569,14 @@ static void handle_net_step(const char *json) {
     int want_frame = 0;
     get_bool(json, "frame", &want_frame);
     uint64_t before = g_tac.steps;
+    ev_reset();
     for (int64_t i = 0; i < n; i++) {
         om_tactical_step(W);
         g_tactical_tick++;
         g_tac.steps++;
+        ev_collect_step();
     }
+    ev_collect_abilities(); /* drains the hashed ability buffer, as tactical_step does */
     jbuf j;
     net_ack_open(&j, "net_step");
     if (want || om_net_tick(W) % 10 == 0) net_ack_checksum(&j);
