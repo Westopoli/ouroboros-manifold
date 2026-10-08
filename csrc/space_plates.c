@@ -63,6 +63,7 @@
 #define SP_U32_SPAN 4294967296.0
 #define SP_REACH_SKIP 0.01
 #define SP_EDGE_EPS 0.01
+#define SP_CLAMP_EPS 1e-9 /* vertex-on-edge tolerance of the emit clamp (wave 6c ruling) */
 #define SP_LINK_EPS 1.0
 #define SP_SQUARE_PTS 4
 #define SP_MIN_PTS 3
@@ -287,7 +288,15 @@ static int sp_emit(om_space_plates *out, int k, int kind, const sp_poly *poly) {
     pl->dropped = 0;
     pl->id = (uint16_t)out->per_layer[k]++;
     pl->region = OM_SPACE_NO_REGION;
-    for (int v = 0; v < poly->n; v++) { pl->xy[2 * v] = poly->p[v].x; pl->xy[2 * v + 1] = poly->p[v].y; }
+    for (int v = 0; v < poly->n; v++) {
+        double c[2] = {poly->p[v].x, poly->p[v].y};
+        for (int a = 0; a < 2; a++) { /* D3 found a vertex at -2.84e-14: snap rounding noise at the canvas edge into [0, canvas] */
+            if (c[a] < 0.0 && c[a] > -SP_CLAMP_EPS) c[a] = 0.0;
+            else if (c[a] > OM_SPACE_FIELD_CANVAS_WU && c[a] < OM_SPACE_FIELD_CANVAS_WU + SP_CLAMP_EPS) c[a] = OM_SPACE_FIELD_CANVAS_WU;
+        }
+        pl->xy[2 * v] = c[0];
+        pl->xy[2 * v + 1] = c[1];
+    }
     return pl->id;
 }
 
