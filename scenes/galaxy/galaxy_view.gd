@@ -31,7 +31,8 @@ const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 
 const DEFAULT_SEED := 1
 const LIVE_SNAPSHOT_TIMEOUT_MSEC := 8000
-const DEFAULT_DISTANCE := 180.0
+const DEFAULT_DISTANCE := 72.0
+const DEFAULT_TARGET := Vector3(7.0, 0.0, 0.0)
 const PICK_RADIUS_PX := 14.0
 const BAND_SPLIT_LOW := 32.5
 const BAND_SPLIT_HIGH := 70.0
@@ -99,7 +100,7 @@ func _ready() -> void:
 	_build_materials()
 	_build_renderers()
 	_build_labels()
-	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_camera_rig.set_view(DEFAULT_DISTANCE, DEFAULT_TARGET)
 	if not driven:
 		_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
@@ -647,7 +648,7 @@ func move_camera_to_regions(region_ids: Array, duration: float) -> void:
 
 
 func move_camera_to_overview(_duration: float) -> void:
-	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_camera_rig.set_view(DEFAULT_DISTANCE, DEFAULT_TARGET)
 	_emit_camera_done()
 
 
