@@ -1405,6 +1405,7 @@ owns = [
     "tests/csim/conftest.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py",
     "tests/csim/test_VG_contract.py", "tests/test_c_bridge_vg.gd",
     "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
+    "tests/transport/test_pipe_vg_identity.py", "tests/transport/test_pipe_place_structure.py", "tests/transport/test_pipe_tactical_tier_state_reserved.py",
 ]
 owns_glob = ["tests/qa/desktop/plays/K/**"]
 acceptance = ["tests/csim/test_VG_contract.py", "tests/transport/test_pipe_vg_contract.py", "tests/test_c_bridge_vg.gd"]
