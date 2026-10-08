@@ -59,20 +59,20 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 ## 1. Now building
 
-Updated 2026-10-06 evening. Branches only; main gets a piece only through the merge gate.
+Updated 2026-10-08. Branches only; main gets a piece only through the merge gate.
 
 | Lane | Branch | State | Next |
 |---|---|---|---|
-| **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | IN FLIGHT: stage 1 pre-flight (2026-10-07) | each lane's gate plus the `look` stage; stories `Seen` by Westley | marked DONE in this row and in the plan header when the last lane lands |
-| Visible game lane A: battle screen (`plans/2026-10-07-visible-game-programme.md`) | after K0 and K-a | stories S-001 group acted out | HUD, fog, selection, camera; owner: Architect chat |
-| Visible game lane B: galaxy (look approved 2026-10-07) | unblocked, first wave | S-106 to S-108 | bubble field from `push/galaxy-field` |
+| **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | IN FLIGHT: stage 3, waves 1 and 2 landed, wave 2c (K-a pipe/bridge, split) running; see the programme file's stage table | each lane's gate plus the `look` stage; stories `Seen` by Westley | marked DONE in this row and in the plan header when the last lane lands |
+| Visible game lane A: battle screen (`plans/2026-10-07-visible-game-programme.md`) | tests on push/vg-a-tests; builds after K-a's pipe and bridge land (wave 2c) | stories S-001 group acted out | HUD, fog, selection, camera; owner: Architect chat |
+| Visible game lane B: galaxy (look approved 2026-10-07) | stack rebased on push/vg-b0, lands with B1–B4 (wave 2b, not launched) | S-106 to S-108 | bubble field from `push/galaxy-field` |
 | Visible game lane C: ground 3D | after lane A's view structure | S-236, S-001, S-004, S-207, S-132 | camera, picking, mesh |
 | Visible game lane D: space landscape | HELD on Westley's routed answers | E-17 stories, S-007 | space kit |
 | Visible game lane E: settlement and economy | after K-e | S-230 to S-235 | E1 first; E2 waits on Westley |
 | Visible game lane F: Steam phase B | B after lane A | E-19 stories | frame flag, lobby, depot script |
 | Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | landed on main 008de465 (2026-10-07) after three sim defects found by the lab's ground scene were fixed with tests | gate clean | done |
-| Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md` rev 3) | landed on main 0304d821 (2026-10-08) | gate clean, ground-era desktop case green | lane C of the visible game programme adds the 3D ground |
-| Steam P2P beta (`plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6) | phase A landed on main e63483f6 (2026-10-08): session catch-up, Steam transport, match pump, export tooling, portability; phase B is lane F of the visible game programme | gate clean | lane F: pipe frame flag, bridge wrappers, lobby, tactical hookup, pipe per OS, depot script |
+| Terrain stage 3: missions on generated ground, the client draws it, era toggle, save 7 (`plans/2026-10-06-terrain-stage3-spec.md` rev 3) | landed on main 0304d821 (2026-10-06) | gate clean, ground-era desktop case green | lane C of the visible game programme adds the 3D ground |
+| Steam P2P beta (`plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6) | phase A landed on main e63483f6 (2026-10-06): session catch-up, Steam transport, match pump, export tooling, portability; phase B is lane F of the visible game programme | gate clean | lane F: pipe frame flag, bridge wrappers, lobby, tactical hookup, pipe per OS, depot script |
 | Space lab: layout search (`plans/2026-10-06-layout-search-spec.md`, Rev 4 2026-10-07) | pieces P1 to P4 landed (ccf03460); Rev 4 (feature-relative placement, roles, decided by survivors, the hold condition, both naive baselines) in build | its tests, the smoke, then run 1 (200 layouts, a night slot, about 70 min) | the first chart to Westley; then D1 unit size (after K-a lands, both edit tactical_move.c), run 2 with the category table (Q-081-01 is not it: a new row), the ground lab spec |
 | Unit size as a runtime setting (`plans/2026-10-06-unit-size-runtime-spec.md`) | spec | After stage 2 lands (same file) | Two Doer units |
 | Sonnet chat briefs B1 to B11 (`plans/briefs/2026-10-06-sonnet-parallel-briefs.md`) | running in a parallel chat | mop-up line of sight, tick cap 12,000, method and era-pack drafts, doctrine synthesis, website refresh, flake root cause, worktree cleanup, lab throughput | Each pushes a branch; the planner lands it |

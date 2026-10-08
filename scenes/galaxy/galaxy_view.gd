@@ -14,6 +14,11 @@ extends Node3D
 const GalaxyGen := preload("res://scenes/galaxy/galaxy_gen.gd")
 const CBridge := preload("res://autoload/c_bridge.gd")
 const SimSession := preload("res://autoload/sim_session.gd")
+const GalaxyAdapter := preload("res://scenes/galaxy/galaxy_adapter.gd")
+const ConstellationRenderer := preload("res://scenes/galaxy/legacy_constellation_renderer.gd")
+const ShellRenderer := preload("res://scenes/galaxy/legacy_shell_renderer.gd")
+const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
+const ZoomController := preload("res://scenes/galaxy/legacy_zoom_disclosure_controller.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
@@ -25,29 +30,35 @@ const PICK_RADIUS_PX := 14.0
 const BAND_SPLIT_LOW := 32.5
 const BAND_SPLIT_HIGH := 70.0
 const FLAT_COLOUR := Color(1.0, 1.0, 1.0, 1.0)
-const FILAMENT_RADIUS := 0.5
-const FILAMENT_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
 const EDGE_2D_WIDTH := 1.5
 const EDGE_2D_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
 const POINT_RADIUS := 1.2
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
 const OWNER_ALPHA := 1.0
+const LABEL_LIFT := 2.0
+const LABEL_PIXEL_SIZE := 0.08
+const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const GOLDEN_ANGLE := 0.6180339887498949
+const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
 
 var _regions: Array = []
 var _edges: Array = []
 var _positions: Dictionary = {}
 var _region_colours: Dictionary = {}
+var _significance: Dictionary = {}
 var _owner_colours_cache: Dictionary = {}
 var _seed: int = DEFAULT_SEED
 var _hash: int = 0
 var _plants: Dictionary = {}
 var _frozen_band: String = ""
+var _names: RefCounted
+var _labels: Node3D
 
 var _gen := GalaxyGen.new()
 var _point_material: StandardMaterial3D
-var _filament_material: StandardMaterial3D
+var _adapter: Node
+var _zoom: Node
 var _bridge = null
 var _bridge_dirty := false
 var _edge_canvas: Node2D = null  # Node2D in a CanvasLayer; valid only while edges-2d-overlay plant is active
@@ -56,12 +67,13 @@ var _error_panel: Control
 
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
-@onready var _filaments: Node3D = $World/Filaments
 @onready var _camera_rig := $OrbitCamera
 
 
 func _ready() -> void:
 	_build_materials()
+	_build_renderers()
+	_build_labels()
 	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
 	_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
@@ -70,16 +82,70 @@ func _ready() -> void:
 
 
 # The scene has no light or environment, so a default lit material draws
-# every mesh black (look 4, first_look/README.md): both materials are
+# every mesh black (look 4, first_look/README.md): the point material is
 # unshaded, and the points read the per-instance owner colour as albedo.
 func _build_materials() -> void:
 	_point_material = StandardMaterial3D.new()
 	_point_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_point_material.vertex_color_use_as_albedo = true
 	_point_material.vertex_color_is_srgb = true
-	_filament_material = StandardMaterial3D.new()
-	_filament_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_filament_material.albedo_color = FILAMENT_COLOUR
+
+
+# R-106-02: filament arcs and faction shells come from the prototype renderers,
+# fed by GalaxyAdapter (scenes/galaxy/galaxy_adapter.gd) on every render. The
+# renderers read the zoom band from _zoom, which _process feeds from the camera.
+func _build_renderers() -> void:
+	_adapter = GalaxyAdapter.new()
+	_adapter.name = "GalaxyAdapter"
+	add_child(_adapter)
+	_zoom = ZoomController.new()
+	_zoom.name = "ZoomDisclosureController"
+	add_child(_zoom)
+	for pair in [[ConstellationRenderer, "ConstellationRenderer"], [ShellRenderer, "ShellRenderer"]]:
+		var node: Node3D = pair[0].new()
+		node.name = pair[1]
+		add_child(node)
+		node.setup(_adapter, _zoom)
+
+
+# R-106-03: faction names float at shell centroids in Overview. The wire carries
+# no names, so they come from chronicle_names.gd's placeholder table (indexed
+# modulo its size, not ruled).
+func _build_labels() -> void:
+	_names = ChronicleNames.new()
+	var lib = JSON.parse_string(FileAccess.get_file_as_string(LABEL_LIBRARY))
+	if lib is Dictionary:
+		_names.load_tables(lib.get("name_tables", {}))
+	_labels = Node3D.new()
+	_labels.name = "FactionLabels"
+	add_child(_labels)
+
+
+func _render_labels() -> void:
+	for child in _labels.get_children():
+		child.free()
+	var sums := {}
+	var counts := {}
+	for r in _regions:
+		var owner := int(r.get("owner", -1))
+		var i := int(r.get("i", -1))
+		if owner < 0 or not _positions.has(i):
+			continue
+		sums[owner] = sums.get(owner, Vector3.ZERO) + _positions[i]
+		counts[owner] = int(counts.get(owner, 0)) + 1
+	for owner in sums:
+		var label := Label3D.new()
+		label.text = _names.fill_template("{faction_name}", -1, owner)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.pixel_size = LABEL_PIXEL_SIZE
+		label.position = sums[owner] / float(counts[owner]) + Vector3(0.0, LABEL_LIFT, 0.0)
+		_labels.add_child(label)
+	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
+
+
+func get_positions() -> Dictionary:
+	return _positions
 
 
 # Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
@@ -121,6 +187,8 @@ func _on_bridge_changed(_tick) -> void:
 
 
 func _process(_delta: float) -> void:
+	_zoom.update_from_distance(_camera_rig.get_distance())
+	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 	if _bridge == null:
 		return
 	_bridge.pump()
@@ -198,6 +266,7 @@ func qa_state() -> Dictionary:
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
+		"shell_renderer": {"present": get_node_or_null("ShellRenderer") != null, "significance": _significance.duplicate()},
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
@@ -265,11 +334,15 @@ func _mix(h: int, v: int) -> int:
 
 
 func _render() -> void:
+	_significance.clear()
+	for r in _regions:
+		_significance[int(r.get("i", -1))] = TIER_SIGNIFICANCE[clampi(int(r.get("tier", 0)), 0, 2)]
 	_grow_owner_colours()
 	if not _plants.get("conquest-no-recolour", false):
 		_recompute_region_colours()
 	_render_filaments()
 	_render_points()
+	_render_labels()
 
 
 func _grow_owner_colours() -> void:
@@ -318,22 +391,15 @@ func _recompute_region_colours() -> void:
 
 
 func _render_filaments() -> void:
-	for child in _filaments.get_children():
-		child.free()
+	var drawn_edges: Array = [] if _plants.get("edges-2d-overlay", false) else _edges
+	_adapter.apply(_regions, drawn_edges, _positions, _region_colours)
 	if _plants.get("edges-2d-overlay", false):
 		_render_filaments_2d()
-		return
-	for e in _edges:
-		var a := int(e.get("a", -1))
-		var b := int(e.get("b", -1))
-		if not (_positions.has(a) and _positions.has(b)):
-			continue
-		_filaments.add_child(_build_tube(_positions[a], _positions[b]))
 
 
 # Draws each galaxy edge as a Line2D in a CanvasLayer overlay, using the
 # camera's canvas-space projection of the 3D system positions. Called only
-# when the edges-2d-overlay plant is active; replaces the 3D tube render.
+# when the edges-2d-overlay plant is active; replaces the 3D filament arcs.
 func _render_filaments_2d() -> void:
 	if _edge_canvas == null:
 		var layer := CanvasLayer.new()
@@ -358,22 +424,6 @@ func _render_filaments_2d() -> void:
 		line.width = EDGE_2D_WIDTH
 		line.default_color = EDGE_2D_COLOUR
 		_edge_canvas.add_child(line)
-
-
-func _build_tube(from_pos: Vector3, to_pos: Vector3) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = FILAMENT_RADIUS
-	mesh.bottom_radius = FILAMENT_RADIUS
-	mesh.height = maxf(from_pos.distance_to(to_pos), 0.001)
-	mi.mesh = mesh
-	mi.material_override = _filament_material
-	var dir := to_pos - from_pos
-	var basis := Basis()
-	if dir.length_squared() > 0.0001:
-		basis = Basis(Quaternion(Vector3.UP, dir.normalized()))
-	mi.transform = Transform3D(basis, (from_pos + to_pos) * 0.5)
-	return mi
 
 
 func _render_points() -> void:
