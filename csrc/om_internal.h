@@ -73,6 +73,26 @@ typedef struct {
 
 #define OM_NET_SECTION_COUNT 9
 
+/* VG K-d (lane D, 2026-10-07 spec rev 4): five layers of 240 x 240 cells of 100 wu on a 24000 wu canvas. */
+#define OM_SPACE_FIELD_LAYERS 5
+#define OM_SPACE_FIELD_SIDE 240
+#define OM_SPACE_FIELD_CELLS (OM_SPACE_FIELD_SIDE * OM_SPACE_FIELD_SIDE)
+#define OM_SPACE_FIELD_CELL_WU 100.0
+#define OM_SPACE_FIELD_CANVAS_WU 24000.0
+#define OM_SPACE_FIELD_MAX_POLYS 64 /* provisional: the stub body writes 20; lane D sets the real cap */
+#define OM_SPACE_FIELD_MAX_PTS 8 /* provisional, as above */
+typedef struct om_space_field_poly {
+    uint8_t layer, kind, n_pts;
+    double xy[2 * OM_SPACE_FIELD_MAX_PTS];
+} om_space_field_poly;
+typedef struct om_space_field_state {
+    uint8_t present;
+    uint32_t seed;
+    uint8_t mask[OM_SPACE_FIELD_LAYERS][OM_SPACE_FIELD_CELLS / 8]; /* bit (i & 7) of byte (i >> 3), i = cy * side + cx, 1 blocked */
+    uint32_t n_polys;
+    om_space_field_poly polys[OM_SPACE_FIELD_MAX_POLYS];
+} om_space_field_state;
+
 struct om_world {
     uint32_t n_regions;
     uint64_t seed;
@@ -330,6 +350,11 @@ struct om_world {
     uint32_t (*terrain_state_size)(const om_world *w);
     void (*terrain_state_write)(const om_world *w, uint8_t *out);
     int (*terrain_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
+    /* VG K-d: the space field (csrc/space_field.c), held inline so om_world_free needs no hook. Not hashed or saved on its
+     * own: the masks reach routing through the mapgen blocked_bits (hashed and saved in the mapgen slot), and the whole
+     * field, polygons included, is a pure function of (seed, canvas), so a loaded world regenerates it from the seed at
+     * mission_start; no save version bump. */
+    om_space_field_state space_field;
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage

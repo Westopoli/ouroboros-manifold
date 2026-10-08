@@ -73,6 +73,7 @@ extern int g_net_full_next;
 extern uint32_t g_n_placed_structures;
 extern uint32_t g_mission_archetype;
 extern pipe_tac_state g_tac;
+extern int g_fog_filter;
 
 int read_frame(char **out_buf, uint32_t *out_len);
 void write_frame(const char *buf, uint32_t len);
