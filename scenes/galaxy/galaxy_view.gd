@@ -93,7 +93,6 @@ var _auto_camera := false
 func _ready() -> void:
 	_build_materials()
 	_build_renderers()
-	_build_labels()
 	_camera_rig.set_view(DEFAULT_DISTANCE, DEFAULT_TARGET)
 	if not driven:
 		_load_live_snapshot()
