@@ -488,6 +488,10 @@ void     om_grid_iter_begin_faction(om_grid_iter *it, om_world *w, int32_t facti
  * state: no-op. Call it after every write of a unit's position outside
  * om_tactical_step (teleport, set_pos, move sync). */
 void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y);
+
+/* VG K-a: append one event (kind 0 fire, 1 ability, 2 kill, 3 capture) to the tactical event ring (csrc/unit.c). */
+#define OM_TAC_EV_CAPTURE 3
+void om_tac_event_push(om_world *w, int kind, int a, int b);
 /* For fog.c: clear only target_id, no order change. Unknown id: no-op. */
 void om_unit_clear_target(om_world *w, uint32_t unit_id);
 

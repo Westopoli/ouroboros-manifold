@@ -456,6 +456,10 @@ static om_tac_state *om_tac(om_world *w) {
     return st;
 }
 
+void om_tac_event_push(om_world *w, int kind, int a, int b) {
+    om_tac_ev_emit(om_tac(w), kind, (uint32_t)a, b);
+}
+
 /* Read-only: returns the existing tactical state, or NULL if none has been
  * allocated yet -- never allocates, so it is safe to call through a const
  * om_world*. */
