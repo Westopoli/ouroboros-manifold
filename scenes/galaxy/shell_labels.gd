@@ -2,8 +2,7 @@ extends RefCounted
 
 # Faction name labels (R-106-03: names show in the overview band only) and, under the
 # Compatibility renderer, a flat alpha-blended stand-in mesh per faction in place of the field shell.
-# Called from shell_renderer.gd. Label text is the faction id spelled out; UnknownLabel.text_for
-# (scenes/galaxy/unknown_label.gd, lane B13) is not on this branch yet.
+# Called from shell_renderer.gd.
 
 const LABEL_LIFT := 8.0   # draft: B4 retunes the label scale and offset
 const LABEL_PIXEL_SIZE := 0.05
@@ -21,46 +20,47 @@ func _init(host: Node3D, use_stand_in: bool) -> void:
 	stand_in = use_stand_in
 
 
-# factions: colour key -> {region_id: true}
-func refresh(factions: Dictionary, data: Node) -> void:
-	for key in _labels.keys():
-		if not factions.has(key):
-			_drop(_labels, key)
-	for key in _meshes.keys():
-		if not factions.has(key):
-			_drop(_meshes, key)
+# factions: colour key -> {region_id: true}. One label per (colour key, faction_id): a region
+# mid-tween sits in its old owner's colour but carries its new owner's id, so it keeps its own label.
+func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
+	var live := {}
 	for key in factions:
-		var sum := Vector3.ZERO
-		var n := 0
-		var color := Color.WHITE
-		var name_id := ""
+		var parts := {}
 		var terr: Array = []
+		var color := Color.WHITE
 		for rid in factions[key]:
 			var t: Dictionary = data.get_territory(rid)
 			if t.is_empty():
 				continue
 			terr.append(t)
-			sum += t["center"]
-			n += 1
 			color = t["color"]
-			if name_id == "":
-				name_id = str(data.get_region(rid).get("faction_id", ""))
-		if n == 0:
+			var fid := str(data.get_region(rid).get("faction_id", ""))
+			if not parts.has(fid):
+				parts[fid] = {"sum": Vector3.ZERO, "n": 0}
+			parts[fid]["sum"] += t["center"]
+			parts[fid]["n"] += 1
+		if terr.is_empty():
 			continue
-		var centroid := sum / n
-		var label: Label3D = _labels.get(key)
-		if label == null:
-			label = Label3D.new()
-			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-			label.no_depth_test = true
-			label.pixel_size = LABEL_PIXEL_SIZE
-			label.font_size = LABEL_FONT_SIZE
-			_host.add_child(label)
-			_labels[key] = label
-		label.text = name_id.replace("_", " ").capitalize() if name_id != "" else "Faction %d" % (_labels.size())
-		label.position = centroid + Vector3(0.0, LABEL_LIFT, 0.0)
-		label.modulate = Color(color.r, color.g, color.b, label.modulate.a)
-		label.outline_modulate = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, label.outline_modulate.a)
+		var centroid := Vector3.ZERO
+		for t in terr:
+			centroid += t["center"]
+		centroid /= terr.size()
+		for fid in parts:
+			var lkey := "%s|%s" % [key, fid]
+			live[lkey] = true
+			var label: Label3D = _labels.get(lkey)
+			if label == null:
+				label = Label3D.new()
+				label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+				label.no_depth_test = true
+				label.pixel_size = LABEL_PIXEL_SIZE
+				label.font_size = LABEL_FONT_SIZE
+				_host.add_child(label)
+				_labels[lkey] = label
+			label.text = _text_for(fid, known_ids, _labels.size())
+			label.position = parts[fid]["sum"] / parts[fid]["n"] + Vector3(0.0, LABEL_LIFT, 0.0)
+			label.modulate = Color(color.r, color.g, color.b, label.modulate.a)
+			label.outline_modulate = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, label.outline_modulate.a)
 		if stand_in:
 			var reach := 0.0
 			for t in terr:
@@ -73,6 +73,22 @@ func refresh(factions: Dictionary, data: Node) -> void:
 			mesh.position = centroid
 			mesh.scale = Vector3(reach, 1.0, reach)
 			(mesh.material_override as StandardMaterial3D).albedo_color = Color(color.r, color.g, color.b, (mesh.material_override as StandardMaterial3D).albedo_color.a)
+	for lkey in _labels.keys():
+		if not live.has(lkey):
+			_drop(_labels, lkey)
+	for key in _meshes.keys():
+		if not factions.has(key):
+			_drop(_meshes, key)
+
+
+# A display name (non-numeric faction_id) reads as a name; a bare owner id goes through UnknownLabel.
+func _text_for(fid: String, known_ids: Array, ordinal: int) -> String:
+	if fid == "":
+		return "Faction %d" % ordinal
+	var num := fid.trim_prefix("faction_")
+	if fid.is_valid_int() or (fid.begins_with("faction_") and num.is_valid_int()):
+		return UnknownLabel.text_for(int(num), known_ids)
+	return fid.replace("_", " ").capitalize()
 
 
 func apply(shell_opacity: float, label_alpha: float) -> void:
