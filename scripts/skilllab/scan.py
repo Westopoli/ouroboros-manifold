@@ -35,7 +35,8 @@ def cell_jobs(build: BuildFn, enemy_heads: int, start: int, stop: int) -> list:
 
 def cell_result(enemy_heads: int, fights: list, win_margin: float) -> CellResult:
     mean_margin = sum(f.margin for f in fights) / len(fights)
-    decided = all(f.outcome not in ("stalemate", "cap") for f in fights)
+    decided = all(f.outcome not in ("stalemate", "cap") and (f.outcome not in ("decided", "held") or f.winner == "side0")
+                  for f in fights)
     return CellResult(enemy_heads=enemy_heads, fights=fights, mean_margin=mean_margin,
                       won=mean_margin > win_margin and decided)
 

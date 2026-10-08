@@ -1,0 +1,150 @@
+{
+ "G": 2,
+ "feature_means": {
+  "blocked_layer_top": {
+   "0": 2.0,
+   "2": 5.0,
+   "4": 0.0
+  },
+  "choke_width_bodies": {
+   "0": 2.0,
+   "2": 5.0,
+   "4": 0.0
+  },
+  "cover_density_corridor": {
+   "0": 2.0,
+   "0.1": 5.0,
+   "0.3": 0.0
+  },
+  "detour_ratio": {
+   "0": 5.0,
+   "1.5": 0.0,
+   "3": 2.0
+  },
+  "lane_count": {
+   "0": 2.0,
+   "1": 0.0,
+   "2": 5.0
+  },
+  "start_distance": {
+   "1400": 2.5,
+   "2800": 2.0
+  }
+ },
+ "layouts": [
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": true,
+    "S3": null,
+    "S4": false,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 0,
+    "choke_width_bodies": 0,
+    "cover_density_corridor": 0,
+    "detour_ratio": 3,
+    "lane_count": 0,
+    "start_distance": 2800
+   },
+   "gains": {
+    "S1": 1,
+    "S2": 8,
+    "S3": null,
+    "S4": null,
+    "S5": 4
+   },
+   "gains_naive_line": {
+    "S1": -2,
+    "S2": 5,
+    "S3": null,
+    "S4": null,
+    "S5": 1
+   },
+   "index": 0,
+   "no_gain": [
+    "S3",
+    "S4"
+   ],
+   "score": 2,
+   "score_naive_line": 1
+  },
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": true,
+    "S3": null,
+    "S4": false,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 4,
+    "choke_width_bodies": 4,
+    "cover_density_corridor": 0.3,
+    "detour_ratio": 1.5,
+    "lane_count": 1,
+    "start_distance": 1400
+   },
+   "gains": {
+    "S1": null,
+    "S2": null,
+    "S3": null,
+    "S4": null,
+    "S5": null
+   },
+   "gains_naive_line": {
+    "S1": 6,
+    "S2": 12,
+    "S3": null,
+    "S4": null,
+    "S5": 6
+   },
+   "index": 1,
+   "no_gain": [
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5"
+   ],
+   "score": 0,
+   "score_naive_line": 3
+  },
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": true,
+    "S3": null,
+    "S4": true,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 2,
+    "choke_width_bodies": 2,
+    "cover_density_corridor": 0.1,
+    "detour_ratio": 0,
+    "lane_count": 2,
+    "start_distance": 1400
+   },
+   "gains": {
+    "S1": 5,
+    "S2": 6,
+    "S3": 3,
+    "S4": 4,
+    "S5": 4
+   },
+   "gains_naive_line": {
+    "S1": 0,
+    "S2": 1,
+    "S3": -2,
+    "S4": -1,
+    "S5": -1
+   },
+   "index": 2,
+   "no_gain": [],
+   "score": 5,
+   "score_naive_line": 0
+  }
+ ]
+}
