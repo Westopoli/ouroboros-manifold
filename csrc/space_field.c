@@ -78,14 +78,6 @@ int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double 
 }
 
 /* STUB K-d2: D2/D3/D4 replace */
-int om_space_plates_build(uint32_t seed, double canvas, double density, om_space_plates *out) {
-    (void)seed; (void)density;
-    if (!out || canvas != OM_SPACE_FIELD_CANVAS_WU) return -1;
-    memset(out, 0, sizeof *out);
-    return 0;
-}
-
-/* STUB K-d2: D2/D3/D4 replace */
 int om_space_raster(const om_space_plates *plates, double cell_wu, om_space_cells *raster) {
     (void)cell_wu;
     if (!plates || !raster) return -1;
