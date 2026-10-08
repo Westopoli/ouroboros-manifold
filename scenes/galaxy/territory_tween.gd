@@ -7,6 +7,8 @@ var _tweens: Dictionary = {}
 
 
 func start(region_id: int, old_owner: int, new_owner: int, now_s: float) -> void:
+	if _tweens.has(region_id):
+		old_owner = int(_tweens[region_id]["new"])
 	_tweens[region_id] = {"old": old_owner, "new": new_owner, "t0": now_s}
 
 
@@ -21,9 +23,10 @@ func step(now_s: float) -> Array:
 		if f >= 1.0:
 			out.append({"region": region, "owner": tw["new"], "scale": 1.0})
 			done.append(region)
+		elif f < 0.5:
+			out.append({"region": region, "owner": tw["old"], "scale": 1.0 - 2.0 * f})
 		else:
-			out.append({"region": region, "owner": tw["old"], "scale": 1.0 - f})
-			out.append({"region": region, "owner": tw["new"], "scale": f})
+			out.append({"region": region, "owner": tw["new"], "scale": 2.0 * f - 1.0})
 	for region in done:
 		_tweens.erase(region)
 	return out
