@@ -320,7 +320,7 @@ def test_cover_from_rubble(lib, world_factory):
     assert n1 > before, "no cover discs from rubble"
     for i in range(before, n1):
         x, y, r, h = ctypes.c_double(), ctypes.c_double(), ctypes.c_double(), ctypes.c_double()
-        assert lib.om_map_cover_at(w, i, ctypes.byref(x), ctypes.byref(y), ctypes.byref(r), ctypes.byref(h)) == 0
+        assert lib.om_map_cover_at(w, i, ctypes.byref(x), ctypes.byref(y), ctypes.byref(r), ctypes.byref(h)) == 1
         assert 0.0 <= x.value <= CANVAS and 0.0 <= y.value <= CANVAS and r.value > 0.0, (x.value, y.value, r.value)
     assert any(kind == 2 for _, kind, _ in read_polys(lib, w)), "no rubble polygon"
     assert gen(lib, w, 11, 35) == 0

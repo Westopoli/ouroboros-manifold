@@ -68,7 +68,7 @@ def bind(lib):
     missing = [n for n in NEW if not hasattr(lib, n)]
     assert not missing, f"K-d symbols missing from libouroboros.so: {missing}"
     g = lib.om_space_field_generate
-    g.argtypes, g.restype = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int
+    g.argtypes, g.restype = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_int
     m = lib.om_space_field_get_mask
     m.argtypes, m.restype = [W, ctypes.c_uint32, U8P, ctypes.c_uint32], ctypes.c_uint32
     c = lib.om_space_field_poly_count
@@ -113,7 +113,7 @@ def field(lib, world_factory, seed):
     if seed not in _CACHE:
         g = bind(lib)
         w = make_world(lib, world_factory)
-        assert g(w, seed, CANVAS, CANVAS) == 0
+        assert g(w, seed, CANVAS, CANVAS, 35.0) == 0
         _CACHE[seed] = (read_polys(lib, w), read_masks(lib, w))
     return _CACHE[seed]
 
@@ -280,7 +280,7 @@ def test_no_polygons_before_generate_and_bounds(lib, world_factory):
     layer, kind = ctypes.c_uint32(), ctypes.c_uint32()
     xy = (ctypes.c_double * (2 * CAP_PTS))()
     assert lib.om_space_field_poly_get(w, 0, ctypes.byref(layer), ctypes.byref(kind), xy, CAP_PTS) == 0
-    assert lib.om_space_field_generate(w, SEEDS[0], CANVAS, CANVAS) == 0
+    assert lib.om_space_field_generate(w, SEEDS[0], CANVAS, CANVAS, 35.0) == 0
     n = lib.om_space_field_poly_count(w)
     assert n > 0
     assert lib.om_space_field_poly_get(w, n, ctypes.byref(layer), ctypes.byref(kind), xy, CAP_PTS) == 0, "index == count answered"
@@ -428,7 +428,7 @@ def test_layers_are_separate_sheets(lib, world_factory, seed):
 def test_same_seed_identical_polygons_and_seed_changes_them(lib, world_factory):
     g = bind(lib)
     a, b, c = (make_world(lib, world_factory) for _ in range(3))
-    assert g(a, SEEDS[0], CANVAS, CANVAS) == 0 and g(b, SEEDS[0], CANVAS, CANVAS) == 0 and g(c, SEEDS[1], CANVAS, CANVAS) == 0
+    assert g(a, SEEDS[0], CANVAS, CANVAS, 35.0) == 0 and g(b, SEEDS[0], CANVAS, CANVAS, 35.0) == 0 and g(c, SEEDS[1], CANVAS, CANVAS, 35.0) == 0
     pa, pb, pc = read_polys(lib, a), read_polys(lib, b), read_polys(lib, c)
     assert pa == pb, "same seed, different polygons"
     assert pa != pc, "seeds 11 and 12 gave identical polygons"
@@ -437,6 +437,6 @@ def test_same_seed_identical_polygons_and_seed_changes_them(lib, world_factory):
 def test_regenerate_replaces_polygons(lib, world_factory):
     g = bind(lib)
     a, b = make_world(lib, world_factory), make_world(lib, world_factory)
-    assert g(a, SEEDS[0], CANVAS, CANVAS) == 0 and g(a, SEEDS[1], CANVAS, CANVAS) == 0
-    assert g(b, SEEDS[1], CANVAS, CANVAS) == 0
+    assert g(a, SEEDS[0], CANVAS, CANVAS, 35.0) == 0 and g(a, SEEDS[1], CANVAS, CANVAS, 35.0) == 0
+    assert g(b, SEEDS[1], CANVAS, CANVAS, 35.0) == 0
     assert read_polys(lib, a) == read_polys(lib, b), "a second generate left polygons of the first"
