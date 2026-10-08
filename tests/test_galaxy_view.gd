@@ -88,6 +88,7 @@ func _run_tests() -> void:
 	_check_plant_edges_2d_overlay()
 	_check_plant_edges_2d_overlay_draws_lines()
 	_check_plant_pick_radius_zero_R107_01()
+	_check_bands_match_prototype_A56()
 	_check_plant_bands_frozen_R106_03()
 	_check_plant_conquest_no_recolour_R106_02_04()
 	_check_plant_nope_is_false()
@@ -269,6 +270,18 @@ func _check_plant_pick_radius_zero_R107_01() -> void:
 	_assert(_root.qa_plant("pick-radius-zero"), "qa_plant(pick-radius-zero) must return true")
 	var after: float = float(_root.qa_state().get("pick_radius_px", -1))
 	_assert(after == 0.0, "PLANT pick-radius-zero: pick_radius_px should be 0, got %s" % after)
+
+
+# A56 (suspends A48-3): the prototype's band splits stand until Westley has
+# compared it with the game. scenes/mockups/galaxy/orbit_camera.gd:27-28 splits
+# Overview/Regional at 70 and Regional/Local at 32.5 (BAND_SPLIT_HIGH/LOW); the
+# game's view uses the same numbers. R-106-03's text (75 / 40-65 / 25) is NOT
+# tested here; see docs/northstar/proving_ground/evidence/push_2026-10-01/c5_prototype_vs_rules.md.
+func _check_bands_match_prototype_A56() -> void:
+	var pinned := {220.0: "Overview", 100.0: "Overview", 70.0: "Overview", 69.9: "Regional", 50.0: "Regional", 32.5: "Regional", 32.4: "Local", 15.0: "Local"}
+	for d in pinned:
+		_root.qa_camera(d, -1)
+		_assert(str(_root.qa_state().get("band")) == pinned[d], "A56 prototype parity: band at distance %s should be %s, got %s" % [d, pinned[d], _root.qa_state().get("band")])
 
 
 func _check_plant_bands_frozen_R106_03() -> void:
