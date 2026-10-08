@@ -1407,6 +1407,7 @@ owns = [
     "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
     "tests/transport/test_pipe_vg_identity.py", "tests/transport/test_pipe_place_structure.py", "tests/transport/test_pipe_tactical_tier_state_reserved.py",
     "tests/transport/test_pipe_tactical_delta_frame.py",  # handed to VG-CONTRACT 2026-10-08 (TD-VG-K-6/7)
+    "scenes/mission_briefing/mission_briefing.gd",  # handed to VG-CONTRACT for vg-f5-land (K-h wire)
     "scripts/specfactory/reach_lint.py",  # VG-split-land: pipe roots widened to every csrc/pipe/*.c after the om_pipe.c split
 ]
 owns_glob = ["tests/qa/desktop/plays/K/**"]
@@ -1523,8 +1524,10 @@ size_estimate = "lane E1, 20 pieces in two workflows (vg-wave5-laneE1.js parts a
 id = "VG-F"
 manager = "M0"
 wave = 7
-owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf", "tests/transport/test_vg_f_w2_net_step_frame.py", "tests/transport/test_vg_f_w8a_static_pipe.py", "tests/transport/test_vg_f_w8d_presets.py", "tests/transport/test_vg_f_depot_script.py", "tests/transport/test_vg_f_park_depot_setlive.py", "tests/test_vg_f_w2_pipe_sim.gd", "tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_f5_hookup.gd"]
-owns_glob = ["tests/qa/desktop/plays/F/**"]
+owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf", "tests/transport/test_vg_f_w2_net_step_frame.py", "tests/transport/test_vg_f_w8a_static_pipe.py", "tests/transport/test_vg_f_w8d_presets.py", "tests/transport/test_vg_f_depot_script.py", "tests/transport/test_vg_f_park_depot_setlive.py", "tests/test_vg_f_w2_pipe_sim.gd", "tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_f5_hookup.gd", "tests/qa/desktop/net_match_loopback.py",
+    "scenes/shared/error_panel.gd",  # handed from G-errorpanel to VG-F for vg-f5-land (F6b edit)
+]
+owns_glob = ["tests/qa/desktop/plays/F/**", "autoload/net/**", "scenes/lobby/**"]  # autoload/net/** + lobby: vg-f5-land (F5/F6a)
 acceptance = []
 depends_on = ["NET-wire-A"]
 status = { state = "in_flight" }
