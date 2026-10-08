@@ -1431,6 +1431,36 @@ status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane B galaxy field, shell, labels, wiring (11 pieces); B0 base from push/vg-b0, not landed"
 
+# Visible-game programme (2026-10-07), lane A: the battle screen (spec rev 4 section 1, 20 per-file
+# pieces under scenes/tactical_c/; A12 edits tactical_view.gd as the VG-VIEW chain's first link).
+# Tests on push/vg-a-tests; plays under tests/qa/desktop/plays/A/.
+[[piece]]
+id = "VG-A"
+manager = "M0"
+wave = 8
+owns = []
+owns_glob = ["scenes/tactical_c/**", "tests/test_vg_a_*.gd", "tests/qa/desktop/plays/A/**", "tests/qa/desktop/test_vg_a_*.py"]
+acceptance = []
+depends_on = ["VG-CONTRACT"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane A battle screen, 20 pieces in two workflows (vg-wave3-laneA.js parts a and b)"
+
+# Visible-game programme (2026-10-07), lane C: the 3D ground (spec rev 4 section 1, 10 pieces under
+# scenes/ground3d/; C5 the SubViewport host edits tactical_view.gd after A12 in the VG-VIEW chain).
+# Tests on push/vg-c-tests (csim ground-sight tests and the plays); plays under tests/qa/desktop/plays/C/.
+[[piece]]
+id = "VG-C"
+manager = "M0"
+wave = 8
+owns = []
+owns_glob = ["scenes/ground3d/**", "tests/test_vg_c_*.gd", "tests/csim/test_E01_*ground*.py", "tests/qa/desktop/plays/C/**", "tests/qa/desktop/test_vg_c_*.py"]
+acceptance = []
+depends_on = ["VG-CONTRACT", "TERRAIN-1"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane C 3D ground, 10 pieces in two workflows (vg-wave4-laneC.js parts a and b)"
+
 # Visible-game programme (2026-10-07), lane F T0: W8a static pipe build scripts per OS, W8d export
 # presets, the Steam depot script. Acceptance tests (tests/transport/test_vg_f_w8a_static_pipe.py,
 # test_vg_f_w8d_presets.py, test_vg_f_depot_script.py on push/vg-f-tests) land with the F tests.
