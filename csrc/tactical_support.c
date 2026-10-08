@@ -670,6 +670,7 @@ static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven, 
         s->capture_accruing = 0;
         s->capture_driven = 0;
         if (driven) om_structure_on_owner_changed(w, idx, old_owner, s->owner);
+        om_tac_event_push(w, OM_TAC_EV_CAPTURE, (int)idx, s->owner);
     }
 }
 
