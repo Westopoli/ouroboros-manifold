@@ -53,7 +53,7 @@ func _ready() -> void:
 
 func _load_live() -> void:
 	var bridge = SimSession.bridge()
-	if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+	if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES, true):
 		if _error_panel != null:
 			_error_panel.hide_error()
 		load_frame(bridge.mission_frame())
