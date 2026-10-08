@@ -8,6 +8,6 @@ out=dist/macos; mkdir -p "$out"
 flags="-std=c11 -Wall -Wextra -Icsrc -O2 -fno-fast-math -ffp-contract=off -fno-math-errno -arch $arch"
 [ "$arch" = x86_64 ] && flags="$flags -m""sse2 -mfpmath""=sse"
 # shellcheck disable=SC2086
-${CC:-clang} $flags -o "$out/ouroboros_pipe" csrc/*.c csrc/pipe/om_pipe.c -lm
+${CC:-clang} $flags -o "$out/ouroboros_pipe" csrc/*.c csrc/pipe/om_pipe.c csrc/pipe/pipe_*.c -lm
 "$(dirname "$0")/codesign_macos.sh" "$out/ouroboros_pipe"
 echo "$out/ouroboros_pipe"

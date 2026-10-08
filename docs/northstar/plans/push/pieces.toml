@@ -1399,7 +1399,7 @@ manager = "M0"
 wave = 7
 owns = [
     "csrc/unit.c", "csrc/tactical_support.c", "csrc/mission.c", "csrc/fog.c", "csrc/tactical_move.c",
-    "csrc/tactical_mapgen.c", "csrc/terrain.c", "csrc/pipe/om_pipe.c", "csrc/ouroboros_sim.h",
+    "csrc/tactical_mapgen.c", "csrc/terrain.c", "csrc/pipe/om_pipe.c", "csrc/pipe/pipe_tactical.c", "csrc/pipe/pipe_dumps.c", "csrc/pipe/pipe_net.c", "csrc/pipe/pipe_internal.h", "autoload/bridge/frame_decode.gd", "autoload/bridge/dump_decode.gd", "csrc/ouroboros_sim.h",
     "csrc/om_internal.h", "csrc/checksum_full.c", "docs/architecture.md",
     "docs/northstar/spec_factory/signatures.toml", "autoload/c_bridge.gd",
     "tests/csim/conftest.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py",
