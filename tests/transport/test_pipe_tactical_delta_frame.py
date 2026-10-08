@@ -126,6 +126,12 @@ def _move_cmd(ids, dx=500.0):
     return {"type": "cmd", "name": "command", "verb": "move", "units": ids, "x": dx, "y": 5000.0}
 
 
+# TD-VG-K-6: bastions auto-fortify at tick 1 (csrc/unit.c om_ability_autotrigger_scan -> om_ability_start_fortify,
+# run each tactical tick), so `acd` and `state` bit 2 change on the first step. Four tests step once past
+# tick 1 (one n=SETTLE_TICKS call, one frame) before their assertions.
+SETTLE_TICKS = 2
+
+
 def _begin_units():
     _, tac = _begin_frames([])
     return tac[0]
@@ -163,10 +169,10 @@ def test_delta_frame_has_the_delta_shape_and_only_changed_units():
     never rides units_changed."""
     first = _begin_units()
     mover = _player_ids(first)[0]
-    _, tac = _begin_frames([_move_cmd([mover]), _step(1)])
+    _, tac = _begin_frames([_step(SETTLE_TICKS), _move_cmd([mover]), _step(1)])
     delta = tac[-1]
     _assert_delta(delta)
-    assert delta["tick"] == 1
+    assert delta["tick"] == SETTLE_TICKS + 1
     assert [u["id"] for u in delta["units_changed"]] == [mover], [u["id"] for u in delta["units_changed"]][:10]
     # TD-VG-K-1: UNIT_KEYS exact -> superset (rulebook row 21; spec section 2 unit object)
     assert UNIT_KEYS <= set(delta["units_changed"][0])
@@ -176,7 +182,7 @@ def test_delta_frame_has_the_delta_shape_and_only_changed_units():
 
 
 def test_idle_step_writes_an_empty_delta():
-    _, tac = _begin_frames([_step(1)])
+    _, tac = _begin_frames([_step(SETTLE_TICKS), _step(1)])
     _assert_delta(tac[-1])
     assert tac[-1]["units_changed"] == [] and tac[-1]["units_removed"] == []
 
@@ -197,13 +203,13 @@ def test_full_frame_on_every_20th_step_counted_from_mission_begin():
 def test_n_greater_than_one_writes_only_the_last_frame_against_the_last_frame_written():
     first = _begin_units()
     mover = _player_ids(first)[0]
-    _, tac = _begin_frames([_move_cmd([mover]), _step(5), _step(0)])
-    assert len(tac) == 3, "n=5 must write one frame, got ticks %r" % [f["tick"] for f in tac]
-    delta, probe = tac[1], tac[2]
+    _, tac = _begin_frames([_step(SETTLE_TICKS), _move_cmd([mover]), _step(5), _step(0)])
+    assert len(tac) == 4, "n=5 must write one frame, got ticks %r" % [f["tick"] for f in tac]
+    delta, probe = tac[2], tac[3]
     _assert_delta(delta)
-    assert delta["tick"] == 5
+    assert delta["tick"] == SETTLE_TICKS + 5
     assert [u["id"] for u in delta["units_changed"]] == [mover]
-    state = _apply(_apply({}, tac[0]), delta)
+    state = _apply(_apply(_apply({}, tac[0]), tac[1]), delta)
     assert state == {u["id"]: u for u in probe["units"]}, "reconstruction after an n=5 call differs from the full state"
 
 
@@ -329,9 +335,9 @@ def test_reconstruction_check_detects_a_dropped_change():
     delta breaks the equality the tests above assert."""
     first = _begin_units()
     movers = _player_ids(first)[:3]
-    frames = _run([SET_SEED, START, BEGIN, _move_cmd(movers), _step(1), _step(0)])
+    frames = _run([SET_SEED, START, BEGIN, _step(SETTLE_TICKS), _move_cmd(movers), _step(1), _step(0)])
     tac = _tacticals(frames)
-    base, delta, probe = _apply({}, tac[0]), tac[1], tac[2]
+    base, delta, probe = _apply(_apply({}, tac[0]), tac[1]), tac[2], tac[3]
     assert "full" in delta, "tactical frame carries no `full` key (A7)"
     honest = _apply(base, delta)
     assert honest == {u["id"]: u for u in probe["units"]}
@@ -375,7 +381,10 @@ def test_a_death_shows_in_units_removed_and_the_full_frame_agrees():
     _assert_full(final)
     assert not (set(removed_at["units_removed"]) & {u["id"] for u in final["units"]}), (
         "a unit reported in units_removed is still listed in the full frame (dead units must leave both)")
-    assert state == {u["id"]: u for u in final["units"]}
+    # TD-VG-K-7: `state` bit 1 (fired this call) is call-scoped; a step(0) frame has no fires. Mask it only.
+    def _mask(units):
+        return {uid: dict(u, state=u["state"] & ~1) for uid, u in units.items()}
+    assert _mask(state) == _mask({u["id"]: u for u in final["units"]})
 
 
 def test_death_positive_control_every_removed_id_belonged_to_the_previous_state():
