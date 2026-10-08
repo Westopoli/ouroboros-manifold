@@ -8,7 +8,7 @@ extends RefCounted
 const LABEL_LIFT := 8.0   # draft: B4 retunes the label scale and offset
 const LABEL_PIXEL_SIZE := 0.05
 const LABEL_FONT_SIZE := 64
-const STAND_IN_OPACITY_MULTIPLIER := 1.8
+const STAND_IN_OPACITY_MULTIPLIER := 0.15   # draft: Architect ruling 2026-10-08, planes sit under the dots
 
 var stand_in: bool
 var _host: Node3D
@@ -110,5 +110,8 @@ func _make_stand_in(color: Color) -> MeshInstance3D:
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = Color(color.r, color.g, color.b, 0.0)
+	mat.render_priority = -10
+	mat.no_depth_test = false
+	mesh.sorting_offset = -1000.0
 	mesh.material_override = mat
 	return mesh
