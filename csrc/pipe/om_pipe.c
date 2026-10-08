@@ -1214,6 +1214,7 @@ static void handle_mission_start(const char *json) {
         return;
     }
     int64_t faction = 0;
+    { int ff = 0; get_bool(json, "fog_filter", &ff); g_fog_filter = ff; }
     get_i64(json, "faction", &faction);
     int64_t era_kind = 0;
     get_i64(json, "era_kind", &era_kind);
