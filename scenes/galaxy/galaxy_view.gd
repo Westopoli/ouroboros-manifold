@@ -40,11 +40,13 @@ const LABEL_LIFT := 2.0
 const LABEL_PIXEL_SIZE := 0.08
 const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const GOLDEN_ANGLE := 0.6180339887498949
+const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
 
 var _regions: Array = []
 var _edges: Array = []
 var _positions: Dictionary = {}
 var _region_colours: Dictionary = {}
+var _significance: Dictionary = {}
 var _owner_colours_cache: Dictionary = {}
 var _seed: int = DEFAULT_SEED
 var _hash: int = 0
@@ -264,6 +266,7 @@ func qa_state() -> Dictionary:
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
+		"shell_renderer": {"present": get_node_or_null("ShellRenderer") != null, "significance": _significance.duplicate()},
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
@@ -331,6 +334,9 @@ func _mix(h: int, v: int) -> int:
 
 
 func _render() -> void:
+	_significance.clear()
+	for r in _regions:
+		_significance[int(r.get("i", -1))] = TIER_SIGNIFICANCE[clampi(int(r.get("tier", 0)), 0, 2)]
 	_grow_owner_colours()
 	if not _plants.get("conquest-no-recolour", false):
 		_recompute_region_colours()
