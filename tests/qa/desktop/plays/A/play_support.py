@@ -111,3 +111,19 @@ def step_until(client, pred, max_ticks: int, chunk: int = 5) -> bool:
         done += chunk
         time.sleep(0.05)
     return pred(qa(client))
+
+
+def nearest_enemy_px(q: dict) -> tuple:
+    """Screen pixel of the enemy unit nearest (world distance) to the local faction's units, read from qa_state units and
+    projected with the flat view the tactical view uses (screen = (world - camera) * scale + half screen), clamped to the
+    screen. Enemies are fogged at the start, so units_px cannot be used."""
+    units, me = q["units"], q["local_faction"]
+    mine = [u for u in units.values() if u["faction"] == me]
+    foes = [u for u in units.values() if u["faction"] != me]
+    assert mine and foes, "play_support: no local or no enemy units in qa_state"
+    e = min(foes, key=lambda f: min((f["x"] - m["x"]) ** 2 + (f["y"] - m["y"]) ** 2 for m in mine))
+    w, h = (int(v) for v in RESOLUTION.split("x"))
+    cam, sc = q["camera"], q["scale"]
+    px = (e["x"] - cam["x"]) * sc + w / 2
+    py = (e["y"] - cam["y"]) * sc + h / 2
+    return int(min(max(px, 1), w - 2)), int(min(max(py, 1), h - 2))
