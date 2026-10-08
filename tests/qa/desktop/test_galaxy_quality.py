@@ -7,7 +7,7 @@ stand-in on its own). Boots tests/qa/desktop/galaxy_quality_probe.gd once per st
 settings.cfg fixture in a throwaway XDG_DATA_HOME (never the player's), and reads the live galaxy view.
 
 What each value draws (observable, structural, not pixels):
-  tier 0 full               faction shells are the raymarch box + ShaderMaterial
+  tier 0 full               raymarch box + ShaderMaterial on forward_plus/mobile; the stand-in sphere on Compatibility (TD-VG-B-8)
   tier 1 stand-in           faction shells are SphereMesh + StandardMaterial3D
   tier 2 fewer particles    stand-in shells, the same as tier 1 (A60). Its reduced ambient field is
                             tested in tests/qa/desktop/test_galaxy_ambient.py, which waits on the
@@ -35,6 +35,12 @@ from daemon_client import REPO_ROOT, find_godot
 
 PROBE_SCRIPT = "res://tests/qa/desktop/galaxy_quality_probe.gd"
 XVFB_SCREEN = "1920x1080x24"
+# _boot_probe passes --rendering-driver opengl3, so the probe runs gl_compatibility. The probe does not
+# expose the rendering method, so this constant mirrors that flag. Rev 4 lane B (B3b) and the Architect
+# ruling of 2026-10-08 (TD-VG-B-8): on Compatibility the stand-in replaces the raymarch shell.
+RENDERING_METHOD = "gl_compatibility"
+RAYMARCH = {("BoxMesh", "ShaderMaterial")}
+STAND_IN = {("SphereMesh", "StandardMaterial3D")}
 
 
 def _boot_probe(tier: int) -> dict:
@@ -98,7 +104,11 @@ def test_qa_state_reports_the_stored_tier(probes, tier):
 def test_tier0_draws_raymarch_shells(probes):
     shells = _shell_kinds(probes[0]["before"])
     assert shells, "tier 0 drew no faction shells at all (control)"
-    assert shells == {("BoxMesh", "ShaderMaterial")}, "tier 0 (full) shells are %s, expected the raymarch box + ShaderMaterial" % shells
+    if RENDERING_METHOD == "gl_compatibility":
+        # See also: TD-VG-B-8 in docs/northstar/plans/push_ledger_2026-09-22.md
+        assert shells == STAND_IN, "tier 0 (full) on Compatibility shells are %s, expected the stand-in sphere + StandardMaterial3D" % shells
+    else:
+        assert shells == RAYMARCH, "tier 0 (full) shells are %s, expected the raymarch box + ShaderMaterial" % shells
 
 
 def test_tier1_draws_stand_in_spheres(probes):
@@ -119,7 +129,13 @@ def test_tiers_draw_differently(probes):
     # Positive control for the shell checks above: a view that ignores the setting fails here too.
     # Tier 0 differs from tiers 1 and 2; tiers 1 and 2 share their shells (A60).
     shells = {t: tuple(sorted(_shell_kinds(probes[t]["before"]))) for t in (0, 1, 2)}
-    assert shells[0] != shells[1], "tier 0 and tier 1 draw the same shells: %s" % shells
+    if RENDERING_METHOD == "gl_compatibility":
+        # Compatibility: tiers 0 and 1 both draw the stand-in; tier 2 differs by its half ambient field.
+        assert shells[0] == shells[1], "tier 0 and tier 1 draw different shells on Compatibility: %s" % shells
+        amb = {t: probes[t]["before"]["ambient_particles"] for t in (0, 1, 2)}
+        assert amb[0] == amb[1] and amb[2] < amb[0], "tier 2 does not draw a thinner field than tiers 0/1: %s" % amb
+    else:
+        assert shells[0] != shells[1], "tier 0 and tier 1 draw the same shells: %s" % shells
     assert shells[1] == shells[2], "tier 1 and tier 2 draw different shells: %s" % shells
 
 
