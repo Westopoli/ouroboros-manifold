@@ -18,6 +18,8 @@ extends RefCounted
 
 const PIPE_BIN_RES_PATH := "res://pipe/ouroboros_pipe"
 const LIVE_READ_TIMEOUT_MSEC := 5000
+const _FrameDecode := preload("res://autoload/bridge/frame_decode.gd")
+const _DumpDecode := preload("res://autoload/bridge/dump_decode.gd")
 const DEFAULT_N_REGIONS := 80
 # Every strategic om_feature id (csrc/ouroboros_sim.h OM_FEAT_EVENTS ..
 # OM_FEAT_LIFECYCLE); OM_FEAT_TACTICAL (8) stays off. With [6] alone nothing
@@ -256,7 +258,7 @@ func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool
 
 func send_command(cmd: Dictionary) -> void:
 	if _session_stdio != null:
-		_session_stdio.store_buffer(_frame_cmd(cmd))
+		_session_stdio.store_buffer(_FrameDecode.frame_cmd(cmd))
 
 
 func step(n: int) -> void:
@@ -315,7 +317,7 @@ func close_session() -> void:
 
 func _reader_loop() -> void:
 	while true:
-		var msg: Variant = _read_live_frame(_session_stdio)
+		var msg: Variant = _FrameDecode.read_live_frame(_session_stdio)
 		if msg == null:
 			return
 		_mutex.lock()
@@ -555,27 +557,11 @@ func terrain() -> Dictionary:
 	return _terrain
 
 
-func _decode_heights(hex: String) -> PackedInt32Array:
-	var raw := hex.hex_decode()
-	var out := PackedInt32Array()
-	for i in range(raw.size() / 4):
-		out.append(raw.decode_s32(i * 4))
-	return out
-
-
 func _fetch_terrain() -> bool:
 	var t: Dictionary = _request([{"type": "cmd", "name": "terrain_dump"}], ["terrain"])
 	if t.is_empty():
 		return false
-	var f: Dictionary = t["terrain"]
-	_terrain = {
-		"cells_w": int(f.get("cells_w", 0)),
-		"cells_h": int(f.get("cells_h", 0)),
-		"bands": String(f.get("bands", "")).hex_decode(),
-		"walkable": String(f.get("walkable", "")).hex_decode(),
-		"slopes": f.get("slopes", []),
-		"heights": _decode_heights(String(f.get("heights", ""))),
-	}
+	_terrain = _DumpDecode.terrain_from_frame(t["terrain"])
 	return true
 
 
@@ -642,125 +628,3 @@ func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
 		return false
 	_tactical = _reconstruct_tactical(frames["tactical"])
 	return true
-
-
-func _frame_cmd(cmd: Dictionary) -> PackedByteArray:
-	var body := JSON.stringify(cmd).to_utf8_buffer()
-	var n := body.size()
-	var framed := PackedByteArray()
-	framed.push_back((n >> 24) & 0xFF)
-	framed.push_back((n >> 16) & 0xFF)
-	framed.push_back((n >> 8) & 0xFF)
-	framed.push_back(n & 0xFF)
-	framed.append_array(body)
-	return framed
-
-
-func _read_live_frame(stdio: FileAccess) -> Variant:
-	var header := PackedByteArray()
-	while header.size() < 4:
-		var chunk: PackedByteArray = stdio.get_buffer(4 - header.size())
-		if chunk.size() > 0:
-			header.append_array(chunk)
-		elif stdio.eof_reached():
-			return null
-		elif stdio.get_error() != OK:
-			return null
-		else:
-			OS.delay_msec(5)
-
-	var length: int = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3]
-	if length <= 0 or length > 10 * 1024 * 1024:
-		return null
-
-	var body := PackedByteArray()
-	while body.size() < length:
-		var chunk: PackedByteArray = stdio.get_buffer(length - body.size())
-		if chunk.size() > 0:
-			body.append_array(chunk)
-		elif stdio.eof_reached():
-			return null
-		elif stdio.get_error() != OK:
-			return null
-		else:
-			OS.delay_msec(5)
-
-	var text := body.get_string_from_utf8()
-	var json := JSON.new()
-	if json.parse(text) != OK:
-		return null
-	var data: Variant = json.get_data()
-
-	# om_pipe.c writes "checksum" as a decimal uint64 (jb_uint, om_pipe.c).
-	# Godot's JSON parser has no uint64/int64-overflow-safe integer type: a
-	# literal above INT64_MAX (as the real checksum here is) silently
-	# round-trips through a double first, which is nowhere near precise
-	# enough to hold a 19-20 digit integer, then int()-casting that garbled
-	# double saturates to INT64_MIN. Re-read the checksum digits straight
-	# off the wire text and store the exact value as its int64 two's-
-	# complement bit pattern instead (the same bits the C uint64_t has),
-	# since GDScript has no native unsigned 64-bit type to hold it directly.
-	# "delta" frames carry the same "checksum" field (nonzero on cadence
-	# ticks, per docs/architecture.md "C transport v1"), so the same
-	# precision-loss bug and fix apply there too.
-	if data is Dictionary and (data.get("type", "") == "snapshot" or data.get("type", "") == "delta"):
-		var raw_checksum := _extract_raw_checksum(text)
-		if raw_checksum != "":
-			data["checksum"] = _decimal_to_i64(raw_checksum)
-
-	return data
-
-
-func _extract_raw_checksum(text: String) -> String:
-	var re := RegEx.new()
-	re.compile("\"checksum\"\\s*:\\s*(-?\\d+)")
-	var m := re.search(text)
-	if m == null:
-		return ""
-	return m.get_string(1)
-
-
-const _INT64_MAX_STR := "9223372036854775807"
-const _UINT64_MOD_STR := "18446744073709551616"  # 2^64
-
-
-func _decimal_to_i64(s: String) -> int:
-	if s.is_empty():
-		return -1
-	if not _decimal_gt(s, _INT64_MAX_STR):
-		return int(s)
-	# s is in (INT64_MAX, 2^64): the int64 bit pattern equals s - 2^64,
-	# computed as -(2^64 - s) via string subtraction (both fit in int64).
-	return -int(_decimal_sub(_UINT64_MOD_STR, s))
-
-
-func _decimal_gt(a: String, b: String) -> bool:
-	if a.length() != b.length():
-		return a.length() > b.length()
-	return a > b
-
-
-func _decimal_sub(a: String, b: String) -> String:
-	# a - b, decimal digit strings, a >= b >= 0.
-	var ai := a.length() - 1
-	var bi := b.length() - 1
-	var borrow := 0
-	var digits := PackedStringArray()
-	while ai >= 0:
-		var da := a.unicode_at(ai) - 48
-		var db := (b.unicode_at(bi) - 48) if bi >= 0 else 0
-		var d := da - db - borrow
-		if d < 0:
-			d += 10
-			borrow = 1
-		else:
-			borrow = 0
-		digits.append(str(d))
-		ai -= 1
-		bi -= 1
-	digits.reverse()
-	var result := "".join(digits)
-	var start := 0
-	while start < result.length() - 1 and result[start] == "0":
-		start += 1
-	return result.substr(start)
