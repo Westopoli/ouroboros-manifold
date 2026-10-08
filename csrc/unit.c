@@ -276,7 +276,23 @@ typedef struct {
     /* R-084-01: set once the unit has landed an attack; until then the attack
      * is ready without waiting out the first interval. */
     int      fired;
+    /* VG K-a: roster tier at spawn (Q-133-02), tick of the last landed attack, kill event already logged */
+    uint32_t tier;
+    uint64_t fired_tick;
+    int      kill_logged;
 } om_unit_row;
+
+/* VG K-a tactical event ring: fire, ability and kill events of one om_tactical_step call. */
+#define OM_TAC_EVENT_CAP 512
+#define OM_TAC_EV_FIRE 0
+#define OM_TAC_EV_ABILITY 1
+#define OM_TAC_EV_KILL 2
+typedef struct {
+    int32_t  kind;
+    uint32_t a;
+    int32_t  b;
+    uint64_t tick;
+} om_tac_event;
 
 typedef struct {
     uint32_t        type_id;
@@ -343,7 +359,22 @@ typedef struct {
      * never changes): zero means no candidate can match, so the aura and
      * fortify scans in om_unit_damage_reduction are skipped. */
     uint32_t            n_wardens, n_bastions;
+    /* events of the last step; ev_closed marks them as read so the next emit or step starts a fresh ring */
+    om_tac_event        events[OM_TAC_EVENT_CAP];
+    uint32_t            n_events, events_dropped;
+    int                 ev_closed;
+    uint64_t            ev_tick;   /* tick every event of the running step carries; 0 outside a step */
 } om_tac_state;
+
+static void om_tac_ev_emit(om_tac_state *st, int32_t kind, uint32_t a, int32_t b) {
+    if (st->ev_closed) { st->n_events = 0; st->events_dropped = 0; st->ev_closed = 0; }
+    if (st->n_events >= OM_TAC_EVENT_CAP) { st->events_dropped++; return; }
+    st->events[st->n_events].kind = kind;
+    st->events[st->n_events].a = a;
+    st->events[st->n_events].b = b;
+    st->events[st->n_events].tick = st->ev_tick ? st->ev_tick : st->current_tick + 1;
+    st->n_events++;
+}
 
 static void om_tac_release_arrays(om_tac_state *st) {
     free(st->units);
@@ -918,6 +949,7 @@ static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t facti
     row->layer = layer;
     row->target_id = 0;
     row->cooldown = 0.0;
+    row->tier = om_faction_unit_tier(w, faction_id);
     if (prof) {
         row->category = prof->category;
         row->max_hp = prof->max_hp;
@@ -1339,6 +1371,7 @@ static int om_tac_count_friendlies_within(om_tac_state *st, const om_unit_row *s
 static void om_ability_emit_event(om_tac_state *st, const om_unit_row *u, double target_x, double target_y,
                                    uint32_t duration, uint32_t telegraph_ticks, uint32_t cue_id, double radius) {
     om_ability_event *evt;
+    om_tac_ev_emit(st, OM_TAC_EV_ABILITY, u->unit_id, u->unit_type);
     if (st->n_ability_events >= OM_ABILITY_EVENT_BUFFER_CAP) return;
     evt = &st->ability_events[st->n_ability_events++];
     evt->tick = st->current_tick + 1;
@@ -1922,6 +1955,9 @@ static void om_tac_release(om_world *w, om_unit_row *u) {
 }
 
 static void om_tac_fire(om_world *w, om_unit_row *u, om_unit_row *t) {
+    om_tac_state *st = om_tac(w);
+    om_tac_ev_emit(st, OM_TAC_EV_FIRE, u->unit_id, (int32_t)t->unit_id);
+    u->fired_tick = st->ev_tick ? st->ev_tick : st->current_tick + 1;
     const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
     if (prof && prof->aoe_radius > 0.0) {
         om_unit_fire_aoe_attack(w, u->unit_id, t->unit_id, prof->aoe_radius);
@@ -2240,6 +2276,20 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
 
 /* ---- end S-087 ---- */
 
+static void om_tac_log_kills(om_tac_state *st) {
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        const om_unit_row *k;
+        int32_t killer = -1;
+        if (!u->in_use || u->hp > 0.0 || u->kill_logged) continue;
+        u->kill_logged = 1;
+        k = om_registry_find_in(st, u->last_attacker);
+        if (k && k->faction_id != u->faction_id) killer = (int32_t)k->unit_id;
+        om_tac_ev_emit(st, OM_TAC_EV_KILL, u->unit_id, killer);
+    }
+}
+
 uint64_t om_tactical_step(om_world *w) {
     om_cmd_apply_tick(w);
     /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
@@ -2247,8 +2297,13 @@ uint64_t om_tactical_step(om_world *w) {
      * units spawned must not advance the tactical tick counter at all. */
     const om_tac_state *ro = om_tac_ro(w);
     om_tac_state *st;
-    if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
+    if (!ro || ro->n_units == 0) {
+        if (ro) { om_tac(w)->n_events = 0; om_tac(w)->events_dropped = 0; om_tac(w)->ev_closed = 1; }
+        return ro ? ro->current_tick : 0;
+    }
     st = om_tac(w);
+    if (st->ev_closed) { st->n_events = 0; st->events_dropped = 0; st->ev_closed = 0; }
+    st->ev_tick = st->current_tick + 1;
     om_tac_update_period(st);
     st->base_tick += st->tick_period_ticks;
     om_tac_refresh_positions(w, st);
@@ -2260,6 +2315,9 @@ uint64_t om_tactical_step(om_world *w) {
     om_macro_tick(w, st->current_tick);
     om_support_tick(w);
     om_mission_tactical_tick(w);
+    om_tac_log_kills(st);
+    st->ev_tick = 0;
+    st->ev_closed = 1;
     return st->current_tick;
 }
 
@@ -3014,14 +3072,17 @@ uint64_t om_tactical_base_tick(const om_world *w) {
     return st ? st->base_tick : 0;
 }
 uint32_t om_tactical_event_count(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_tac_state *st = w ? om_tac_ro(w) : NULL;
+    return st ? st->n_events : 0;
 }
 
 int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a, int32_t *b, uint64_t *tick) {
-    /* STUB */
-    (void)w; (void)i; (void)kind; (void)a; (void)b; (void)tick;
+    const om_tac_state *st = w ? om_tac_ro(w) : NULL;
+    if (!st || i >= st->n_events) return -1;
+    if (kind) *kind = st->events[i].kind;
+    if (a) *a = st->events[i].a;
+    if (b) *b = st->events[i].b;
+    if (tick) *tick = st->events[i].tick;
     return 0;
 }
 /* ---- end generated stubs ---- */
