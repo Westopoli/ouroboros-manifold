@@ -5,6 +5,7 @@
  * See also: om_map_block_rect in csrc/tactical_mapgen.c, whose route grid mission_begin clears (om_map_clear). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "space_internal.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -38,9 +39,10 @@ static uint32_t sf_range(uint64_t *s, uint32_t n) {
     return (uint32_t)((sf_next(s) >> SF_HIGH_SHIFT) % n);
 }
 
-int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h) {
+int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density) {
     om_space_field_state *f;
     uint64_t rs = (uint64_t)seed;
+    (void)density; /* STUB K-d2: D4 passes it to om_space_plates_build */
     if (!w || canvas_w != OM_SPACE_FIELD_CANVAS_WU || canvas_h != OM_SPACE_FIELD_CANVAS_WU) return -1;
     f = &w->space_field;
     memset(f, 0, sizeof *f);
