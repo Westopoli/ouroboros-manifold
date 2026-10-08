@@ -10,10 +10,12 @@ extends Node3D
 const FIELD_PATH := "res://scenes/galaxy/territory_field.gd"
 const SHADER_PATH := "res://scenes/galaxy/shaders/shell_field.gdshader"
 const SHELL_RES_DIVISOR := 2
+const UnknownLabel := preload("res://scenes/galaxy/unknown_label.gd")
 const ShellLabels := preload("res://scenes/galaxy/shell_labels.gd")
 
 # Quality hook: 1 = full resolution, 2 = shipped default (half), 4 = quarter.
 var res_divisor := SHELL_RES_DIVISOR
+var known_faction_ids: Array = []
 
 var _wv_data: Node
 var _labels: RefCounted   # faction labels, and the flat stand-in under the Compatibility renderer
@@ -27,8 +29,6 @@ var _overlay: TextureRect
 var _quad_mat: ShaderMaterial
 var _bound_field_tex: Texture3D
 var _faction_systems: Dictionary = {}     # colour key -> {region_id: true}
-var _faction_field_id: Dictionary = {}    # colour key -> field id
-var _field_index: Dictionary = {}         # region_id -> index in the field's system list
 
 var _opacity_overview := 0.50
 var _opacity_regional := 0.12
@@ -45,6 +45,7 @@ func setup(data: Node, zoom_controller: Node) -> void:
 			_field = _field_script.new()
 			_field.name = "TerritoryField"
 			add_child(_field)
+			_field.bind_world_view(_wv_data)
 		_setup_low_res_viewport()
 	_wv_data.territory_set.connect(_on_territory_changed)
 	_wv_data.territory_updated.connect(_on_territory_changed)
@@ -197,11 +198,12 @@ func _process(_delta: float) -> void:
 
 # The field creates its textures on the first fill; bind them once they exist.
 func _bind_field_textures() -> void:
-	if _field.field_texture == null or _field.field_texture == _bound_field_tex:
+	if _field.field_texture == null:
 		return
-	_bound_field_tex = _field.field_texture
-	_quad_mat.set_shader_parameter("field", _field.field_texture)
-	_quad_mat.set_shader_parameter("id_tex", _field.id_texture)
+	if _field.field_texture != _bound_field_tex:
+		_bound_field_tex = _field.field_texture
+		_quad_mat.set_shader_parameter("field", _field.field_texture)
+		_quad_mat.set_shader_parameter("id_tex", _field.id_texture)
 	var pal: Array = []
 	for c in _field.palette:
 		pal.append(c)
@@ -222,8 +224,7 @@ func _on_territory_changed(region_id: String) -> void:
 	if color_key not in _faction_systems:
 		_faction_systems[color_key] = {}
 	_faction_systems[color_key][region_id] = true
-	_feed_field(region_id, color_key, t)
-	_labels.refresh(_faction_systems, _wv_data)
+	_refresh_labels()
 
 
 func _on_territory_removed(region_id: String) -> void:
@@ -233,9 +234,18 @@ func _on_territory_removed(region_id: String) -> void:
 			if _faction_systems[fk].is_empty():
 				_faction_systems.erase(fk)
 			break
-	if _field and _field_index.has(region_id):
-		_field.set_system_owner(_field_index[region_id], -1)
+	_refresh_labels()
+
+
+# Label text goes through UnknownLabel: an owner id outside known_faction_ids reads "Unknown".
+func _refresh_labels() -> void:
 	_labels.refresh(_faction_systems, _wv_data)
+	for key in _faction_systems:
+		var label: Label3D = _labels._labels.get(key)
+		if label == null or _faction_systems[key].is_empty():
+			continue
+		var fid := str(_wv_data.get_region(_faction_systems[key].keys()[0]).get("faction_id", ""))
+		label.text = UnknownLabel.text_for(int(fid) if fid.is_valid_int() else int(fid.trim_prefix("faction_")) if fid.begins_with("faction_") else -1, known_faction_ids)
 
 
 func _on_regions_cleared() -> void:
@@ -244,30 +254,8 @@ func _on_regions_cleared() -> void:
 
 func _clear_state() -> void:
 	_faction_systems.clear()
-	_faction_field_id.clear()
-	_field_index.clear()
 	if _labels:
 		_labels.clear()
-	if _field:
-		_field.set_systems([])
-
-
-func _feed_field(region_id: String, color_key: String, t: Dictionary) -> void:
-	if _field == null:
-		return
-	if color_key not in _faction_field_id:
-		var max_factions: int = _field_script.get_script_constant_map()["MAX_FACTIONS"]
-		if _faction_field_id.size() >= max_factions:
-			push_warning("shell_renderer: more than %d factions, the extra one gets no shell" % max_factions)
-			return
-		_faction_field_id[color_key] = _faction_field_id.size()
-		_field.set_palette_color(_faction_field_id[color_key], t["color"])
-		_bound_field_tex = null
-	var fid: int = _faction_field_id[color_key]
-	if _field_index.has(region_id):
-		_field.update_system(_field_index[region_id], t["center"], t["radius"], fid)
-	else:
-		_field_index[region_id] = _field.add_system(t["center"], t["radius"], fid)
 
 
 func _color_key(color: Color) -> String:

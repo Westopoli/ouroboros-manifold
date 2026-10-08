@@ -16,9 +16,14 @@ const CBridge := preload("res://autoload/c_bridge.gd")
 const SimSession := preload("res://autoload/sim_session.gd")
 const GalaxyAdapter := preload("res://scenes/galaxy/galaxy_adapter.gd")
 const ConstellationRenderer := preload("res://scenes/galaxy/legacy_constellation_renderer.gd")
-const ShellRenderer := preload("res://scenes/galaxy/legacy_shell_renderer.gd")
+const ShellRenderer := preload("res://scenes/galaxy/shell_renderer.gd")
 const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
 const DrivenModel := preload("res://scenes/galaxy/galaxy_view_driven.gd")
+const AmbientRig := preload("res://scenes/galaxy/ambient_rig.gd")
+const GalaxyQuality := preload("res://scenes/galaxy/galaxy_quality.gd")
+const GalaxyFlash := preload("res://scenes/galaxy/galaxy_flash.gd")
+const UnknownLabel := preload("res://scenes/galaxy/unknown_label.gd")
+const TerritoryTween := preload("res://scenes/galaxy/territory_tween.gd")
 const ZoomController := preload("res://scenes/galaxy/legacy_zoom_disclosure_controller.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
@@ -42,6 +47,10 @@ const LABEL_PIXEL_SIZE := 0.08
 const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const GOLDEN_ANGLE := 0.6180339887498949
 const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
+# draft (no ruling gives a flash length or size): seconds a war flash lives, and its sphere radius
+const FLASH_SECONDS := 1.0
+const FLASH_RADIUS := 3.0
+const FLASH_COLOURS := {"attack": Color(1.0, 0.45, 0.2), "conquest": Color(1.0, 0.9, 0.3), "revolt": Color(0.6, 0.8, 1.0)}
 
 var _regions: Array = []
 var _edges: Array = []
@@ -65,6 +74,12 @@ var _bridge_dirty := false
 var _edge_canvas: Node2D = null  # Node2D in a CanvasLayer; valid only while edges-2d-overlay plant is active
 
 var _error_panel: Control
+var _quality := {"tier": 0, "res_divisor": 1}
+var _unknown_factions: Array = []
+var _prev_owners: Dictionary = {}
+var _tween := TerritoryTween.new()
+var _tween_frames: Array = []
+var _flashes: Array = []
 
 signal camera_move_completed
 signal region_clicked(region_id: String)
@@ -113,9 +128,16 @@ func _build_renderers() -> void:
 	_zoom = ZoomController.new()
 	_zoom.name = "ZoomDisclosureController"
 	add_child(_zoom)
+	var rig := AmbientRig.new()
+	rig.name = "AmbientRig"
+	add_child(rig)
+	var settings: Dictionary = UIDataBus.get_settings()
 	for pair in [[ConstellationRenderer, "ConstellationRenderer"], [ShellRenderer, "ShellRenderer"]]:
 		var node: Node3D = pair[0].new()
 		node.name = pair[1]
+		if pair[1] == "ShellRenderer":
+			_quality["tier"] = GalaxyQuality.apply(node, settings)
+			_quality["res_divisor"] = node.res_divisor
 		add_child(node)
 		node.setup(_adapter, _zoom)
 
@@ -198,8 +220,10 @@ func _on_bridge_changed(_tick) -> void:
 	_bridge_dirty = true
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_zoom.update_from_distance(_camera_rig.get_distance())
+	_step_flashes(delta)
+	_tween_frames = _tween.step(Time.get_ticks_msec() / 1000.0)
 	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 	if _bridge == null:
 		return
@@ -231,8 +255,77 @@ func _arg_value(args: PackedStringArray, flag: String) -> String:
 func set_snapshot(snapshot: Dictionary) -> void:
 	_regions = snapshot.get("regions", [])
 	_edges = snapshot.get("edges", [])
+	_note_owner_changes()
+	_note_unknown_factions(snapshot)
 	_relayout()
 	_render()
+
+
+func _note_owner_changes() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	var owners := {}
+	for r in _regions:
+		var i := int(r.get("i", -1))
+		var owner := int(r.get("owner", -1))
+		owners[i] = owner
+		if _prev_owners.has(i) and _prev_owners[i] != owner:
+			_tween.start(i, _prev_owners[i], owner, now)
+	_prev_owners = owners
+
+
+func _note_unknown_factions(snapshot: Dictionary) -> void:
+	var owner_ids: Array = []
+	for r in _regions:
+		owner_ids.append(int(r.get("owner", -1)))
+	var known: Array = []
+	if snapshot.has("factions"):
+		for f in snapshot["factions"]:
+			known.append(int(f.get("id", -1)) if f is Dictionary else int(f))
+	else:
+		known = owner_ids.duplicate()
+	var shell := get_node_or_null("ShellRenderer")
+	if shell != null:
+		shell.known_faction_ids = known
+	_unknown_factions = []
+	for id in UnknownLabel.unknown_ids(owner_ids, known):
+		if id >= 0:
+			_unknown_factions.append(id)
+
+
+# R-106-04: one flash per region GalaxyFlash names, on the drawn system; returns how many spawned.
+func flash_from_delta(delta: Dictionary) -> int:
+	var n := 0
+	for f in GalaxyFlash.flashes_for_delta(delta):
+		var region := int(f["region"])
+		if not _positions.has(region):
+			continue
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color = FLASH_COLOURS.get(f["kind"], Color.WHITE)
+		var sphere := SphereMesh.new()
+		sphere.radius = FLASH_RADIUS
+		sphere.height = FLASH_RADIUS * 2.0
+		var mesh := MeshInstance3D.new()
+		mesh.mesh = sphere
+		mesh.material_override = mat
+		mesh.position = _positions[region]
+		add_child(mesh)
+		_flashes.append({"node": mesh, "mat": mat, "left": FLASH_SECONDS})
+		n += 1
+	return n
+
+
+func _step_flashes(dt: float) -> void:
+	for fl in _flashes.duplicate():
+		fl["left"] = float(fl["left"]) - dt
+		if fl["left"] <= 0.0:
+			fl["node"].queue_free()
+			_flashes.erase(fl)
+		else:
+			var c: Color = fl["mat"].albedo_color
+			c.a = float(fl["left"]) / FLASH_SECONDS
+			fl["mat"].albedo_color = c
 
 
 func qa_state() -> Dictionary:
@@ -279,6 +372,10 @@ func qa_state() -> Dictionary:
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
 		"shell_renderer": {"present": get_node_or_null("ShellRenderer") != null, "significance": _significance.duplicate()},
+		"unknown_factions": _unknown_factions.duplicate(),
+		"ambient_rig": {"present": get_node_or_null("AmbientRig") != null, "tier": _quality["tier"]},
+		"galaxy_quality": _quality.duplicate(),
+		"flashes_active": _flashes.size(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
