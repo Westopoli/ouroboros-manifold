@@ -1407,6 +1407,7 @@ owns = [
     "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
     "tests/transport/test_pipe_vg_identity.py", "tests/transport/test_pipe_place_structure.py", "tests/transport/test_pipe_tactical_tier_state_reserved.py",
     "tests/transport/test_pipe_tactical_delta_frame.py",  # handed to VG-CONTRACT 2026-10-08 (TD-VG-K-6/7)
+    "scripts/specfactory/merge_gate.sh",  # handed from HARNESS-sigblocked (attached) 2026-10-08 for the OM_MAIN_PIPE fix
     "scripts/specfactory/reach_lint.py",  # VG-split-land: pipe roots widened to every csrc/pipe/*.c after the om_pipe.c split
 ]
 owns_glob = ["tests/qa/desktop/plays/K/**"]
