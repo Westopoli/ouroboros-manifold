@@ -117,9 +117,7 @@ func _drop(from: Dictionary, key) -> void:
 
 func _make_stand_in(color: Color) -> MeshInstance3D:
 	var mesh := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(2, 2)
-	mesh.mesh = plane
+	mesh.mesh = SphereMesh.new()
 	mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

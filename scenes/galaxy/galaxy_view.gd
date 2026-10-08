@@ -392,6 +392,8 @@ func qa_state() -> Dictionary:
 		"unknown_factions": _unknown_factions.duplicate(),
 		"ambient_rig": {"present": get_node_or_null("AmbientRig") != null, "tier": _quality["tier"]},
 		"galaxy_quality": _quality.duplicate(),
+		"quality_tier": _quality["tier"],
+		"camera_autonomous": _camera_rig.has_method("is_autonomous") and _camera_rig.is_autonomous(),
 		"flashes_active": _flashes.size(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
@@ -651,10 +653,14 @@ func move_camera_to_overview(_duration: float) -> void:
 
 func start_auto_camera() -> void:
 	_auto_camera = true
+	if _camera_rig.has_method("set_autonomous"):
+		_camera_rig.set_autonomous(true)
 
 
 func stop_auto_camera() -> void:
 	_auto_camera = false
+	if _camera_rig.has_method("set_autonomous"):
+		_camera_rig.set_autonomous(false)
 
 
 func _emit_camera_done() -> void:

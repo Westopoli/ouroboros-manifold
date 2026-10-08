@@ -15,6 +15,8 @@ const ShellLabels := preload("res://scenes/galaxy/shell_labels.gd")
 
 # Quality hook: 1 = full resolution, 2 = shipped default (half), 4 = quarter.
 var res_divisor := SHELL_RES_DIVISOR
+# Set by galaxy_quality.gd (A54): 1 forces stand-in shells (tiers 1 and 2). -1 (tier 0, or unset) follows the rendering method.
+var stand_in_mode := -1
 var known_faction_ids: Array = []
 
 var _wv_data: Node
@@ -38,7 +40,8 @@ var _opacity_local := 0.05
 func setup(data: Node, zoom_controller: Node) -> void:
 	_wv_data = data
 	_zoom_controller = zoom_controller
-	_labels = ShellLabels.new(self, RenderingServer.get_current_rendering_method() == "gl_compatibility")
+	var use_stand_in := RenderingServer.get_current_rendering_method() == "gl_compatibility" if stand_in_mode < 0 else stand_in_mode == 1
+	_labels = ShellLabels.new(self, use_stand_in)
 	if not _labels.stand_in:
 		if ResourceLoader.exists(FIELD_PATH):
 			_field_script = load(FIELD_PATH)
