@@ -27,6 +27,10 @@ func shots() -> Array:
 	return _shots
 
 
+func in_flight() -> Array:
+	return _shots
+
+
 func blooms() -> Array:
 	return _blooms
 

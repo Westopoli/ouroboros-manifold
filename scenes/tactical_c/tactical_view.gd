@@ -93,7 +93,11 @@ var _clock_label: Label
 var _selection_label: Label
 var _hud: Control
 var _fx: Node2D
-var _loading_overlay: Control
+var _motion: Node
+var _since_load := 0.0
+var _load_gap := 0.05
+var _live_stepped := false
+var _loading_overlay: Control # loading_overlay.gd
 var _ping_armed := false
 var _last_tick := -1
 var _fit_scale := WORLD_SCALE
@@ -154,6 +158,8 @@ func _ready() -> void:
 
 
 func _build_shell() -> void:
+	_motion = load("res://scenes/tactical_c/unit_motion.gd").new()
+	add_child(_motion)
 	for n in ["MapLayer", "StructuresLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
 		add_child(_piece(n, false))
 	_fx = Node2D.new()
@@ -177,9 +183,7 @@ func _build_shell() -> void:
 	_hud.add_child(clock)
 	_clock_label = _make_hud_label(Vector2(1500.0, 20.0), clock)
 	_selection_label = _make_hud_label(Vector2(20.0, SCREEN_H - 60.0), _hud.get_node("Selection"))
-	_loading_overlay = Control.new()
-	_loading_overlay.name = "LoadingOverlay"
-	_loading_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_loading_overlay = load("res://scenes/tactical_c/loading_overlay.gd").new()
 	$CanvasLayer.add_child(_loading_overlay)
 	var sel := _hud.get_node("Selection")
 	if sel.has_signal("selection_changed"):
@@ -392,18 +396,17 @@ func load_frame(frame: Dictionary) -> void:
 				_frozen_facing[id] = float(u.get("facing", 0.0))
 	_prune_selected()
 	_update_display_px()
-	_loading_overlay.hide()
+	_loading_overlay.dismiss()
 	_node("Selection").set_frame(frame)
 	_node("Events").feed(frame, _get_local_faction())
 	_redraw()
 	_sync_selection()
 	_update_hud()
-	for n in ["Objectives", "Comb", "Events", "Reinforcements"]:
-		_ignore_mouse(_node(n))
 
 
 # The read-only HUD readouts rebuild their children each frame with the default STOP filter; one at the top-left
-# swallowed the press of a box drag from (0,0) before _unhandled_input saw it.
+# swallowed the press of a box drag from (0,0) before _unhandled_input saw it. Run at the end of every _redraw: a camera
+# pan redraws without a load_frame and rebuilt Reinforcements with fresh STOP children under the edge-scrolling pointer.
 func _ignore_mouse(n: Node) -> void:
 	if n is Control:
 		n.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -636,6 +639,12 @@ func send_command(cmd: Dictionary) -> bool:
 # scene has no pause/menu state to also gate on.
 func _process(delta: float) -> void:
 	_pan_input(delta)
+	_since_load += delta
+	_step_live(delta)
+	_apply_motion()
+
+
+func _step_live(delta: float) -> void:
 	if _mission_over_seen:
 		return
 	var bridge = SimSession.bridge()
@@ -649,6 +658,26 @@ func _process(delta: float) -> void:
 		k = TACTICAL_MAX_STEPS_PER_FRAME
 	_tactical_calls_due -= float(k)
 	qa_step(k)
+
+
+# S-101: between two loaded frames the units are drawn on the path from the previous frame to the current one
+# (UnitMotion), taking as long as the last gap between loads. Direct load_frame calls keep the raw positions.
+func _apply_motion() -> void:
+	if not _live_stepped or _mission_over_seen:
+		return
+	var alpha := clampf(_since_load / maxf(_load_gap, 0.001), 0.0, 1.0)
+	var visible_ids := _visible_ids()
+	var uv := _node("UnitVisuals")
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		if not visible_ids.has(id) or not _motion.has_unit(id):
+			continue
+		var w: Vector2 = _motion.position_at(id, alpha)
+		var px := _to_screen(w.x, w.y)
+		_display_px[str(id)] = px
+		var node: Node2D = uv.unit_node(id)
+		if node != null:
+			node.position = Vector2(px[0], px[1])
 
 
 # R-099-03: the tick period the engine is currently spanning per
@@ -673,7 +702,11 @@ func _live_unit_count() -> int:
 func qa_step(n: int) -> void:
 	var bridge = SimSession.bridge()
 	if bridge.tactical_step_n(n):
+		_load_gap = _since_load
+		_since_load = 0.0
 		load_frame(bridge.tactical_frame())
+		_live_stepped = true
+		_motion.push_frame(_frame)
 
 
 func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
@@ -948,6 +981,8 @@ func _redraw() -> void:
 	var reinforcements := _node("Reinforcements")
 	if reinforcements.has_method("set_frame"):
 		reinforcements.set_frame(_frame, lf)
+	for n in ["Objectives", "Comb", "Events", "Reinforcements"]:
+		_ignore_mouse(_node(n))
 
 
 # The order marker: a small square at the click, faded out; not a unit drawing.
