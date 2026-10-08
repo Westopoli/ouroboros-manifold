@@ -36,7 +36,7 @@ RESOLUTION = "1920x1080"
 
 
 def start_game(seed: int = 1) -> GodotGame:
-    g = GodotGame(qa_port=pick_free_port(), seed=seed, resolution=RESOLUTION)
+    g = GodotGame(qa_port=pick_free_port(), seed=seed, resolution=RESOLUTION, renderer="vulkan")
     g.start()
     g.wait_for_port(timeout=PORT_S)
     return g
