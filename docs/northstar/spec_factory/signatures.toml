@@ -7372,10 +7372,10 @@ note = "K0: fills cap cells of heights in cm, row-major; returns the cell count.
 name = "om_space_field_generate"
 module = "space_field.c"
 restype = "int"
-params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint32_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }]
+params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint32_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }, { name = "density", ctype = "double" }]
 epics = ["E-17", "E-01"]
 confidence = "likely"
-note = "Generates the five-layer open-or-blocked field from the seed, replacing any held one; writes the masks to the route grid (blocked_bits) when the mapgen canvas is 24000 x 24000 wu. 0 ok, nonzero refused (null world, canvas not 24000 x 24000). K-d: stub body (placeholder plates), lane D replaces it with the field_map_space.gd port."
+note = "Generates the five-layer open-or-blocked field from the seed, replacing any held one; writes the masks to the route grid (blocked_bits) when the mapgen canvas is 24000 x 24000 wu. 0 ok, nonzero refused (null world, canvas not 24000 x 24000). density 0..90 (clamped), the plate keep share in percent; the pipe passes 35.0 (field_map_space.gd default). K-d: stub body (placeholder plates), lane D replaces it with the field_map_space.gd port."
 
 [[symbols]]
 name = "om_space_field_present"
@@ -7421,3 +7421,23 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint
 epics = ["E-17"]
 confidence = "likely"
 note = "Polygon i: layer 0..4, kind 0 plate / 1 mass / 2 rubble, vertices as x,y pairs in wu into xy. Returns the vertex count; 0 when i is out of range or cap_pts is smaller than the count."
+
+# ---- VG K-d2: D1's symbols (space_noise.c), declared; density argument above ----
+
+[[symbols]]
+name = "om_space_hash32"
+module = "space_noise.c"
+restype = "uint32_t"
+params = [{ name = "ix", ctype = "int32_t" }, { name = "iy", ctype = "int32_t" }, { name = "iz", ctype = "int32_t" }, { name = "seed", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Integer lattice hash of field_map_space.gd hash32; the iz argument names the hash channel."
+
+[[symbols]]
+name = "om_space_noise_layer"
+module = "space_noise.c"
+restype = "uint32_t"
+params = [{ name = "layer_seed", ctype = "uint32_t" }, { name = "canvas", ctype = "double" }, { name = "k", ctype = "uint32_t" }, { name = "independent", ctype = "int" }, { name = "out", ctype = "double *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Smoothed two-octave value noise of layer k over the canvas (field_map_space.gd _sample_layer, _smooth); fills out with (canvas/100+1)^2 grid samples, row-major; independent nonzero samples the layer alone (z fixed at 0.5), zero samples the shared stack at depth k. Returns the sample count, 0 when cap is too small or allocation fails."

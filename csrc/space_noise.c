@@ -1,6 +1,7 @@
 /* csrc/space_noise.c -- space landscape value noise, ported line for line from
  * scenes/mockups/landscape/field_map_space.gd (hash32, _sample_layer, _smooth). Double arithmetic, no libm.
- * Symbols are not yet declared in csrc/ouroboros_sim.h (contract piece owed, TD-VG-D-1). */
+ * Symbols are declared in csrc/ouroboros_sim.h (K-d2). */
+#include "ouroboros_sim.h"
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -28,10 +29,6 @@
 
 static const int sn_lattice[SN_OCTAVES][3] = {{SN_L0X, SN_L0Y, SN_L0Z}, {SN_L1X, SN_L1Y, SN_L1Z}};
 static const double sn_weight[SN_OCTAVES] = {SN_W0, SN_W1};
-
-uint32_t om_space_hash32(int32_t ix, int32_t iy, int32_t iz, uint32_t seed);
-uint32_t om_space_noise_layer(uint32_t layer_seed, double canvas, uint32_t k, int independent,
-                              double *out, uint32_t cap);
 
 uint32_t om_space_hash32(int32_t ix, int32_t iy, int32_t iz, uint32_t seed) {
     uint32_t h = (uint32_t)ix * SN_HASH_X;
