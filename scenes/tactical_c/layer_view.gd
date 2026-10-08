@@ -1,0 +1,103 @@
+extends Node2D
+
+const SCREEN_W := 1920.0
+const SCREEN_H := 1080.0
+const INACTIVE_ALPHA := 0.4
+const STRIP_X := 1840.0
+const STRIP_Y := 120.0
+const STRIP_STEP := 56.0
+const STRIP_BOX := Vector2(48.0, 48.0)
+const LAYER_COLOURS := [Color(0.55, 0.85, 0.45), Color(0.40, 0.80, 0.85), Color(0.45, 0.60, 0.95), Color(0.75, 0.50, 0.95), Color(0.95, 0.85, 0.95)]
+
+var _units: Dictionary = {}
+var _local_faction := 0
+var _scale := 1.0
+var _camera := Vector2.ZERO
+var _focus := 1
+var _layers: Array = []
+
+
+func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera: Vector2) -> void:
+	_local_faction = local_faction
+	_scale = world_scale
+	_camera = camera
+	_units = {}
+	var seen := {}
+	for u in frame.get("units", []):
+		_units[int(u["id"])] = u
+		seen[int(u.get("layer", 1))] = true
+	_layers = seen.keys()
+	_layers.sort()
+	queue_redraw()
+
+
+func set_focus_layer(n: int) -> void:
+	_focus = n
+	queue_redraw()
+
+
+func focus_layer() -> int:
+	return _focus
+
+
+func strip_layers() -> Array:
+	return _layers.duplicate()
+
+
+func cycle_focus() -> void:
+	if _layers.is_empty():
+		return
+	var i := _layers.find(_focus)
+	_focus = int(_layers[(i + 1) % _layers.size()]) if i >= 0 else int(_layers[0])
+	queue_redraw()
+
+
+func dim_alpha(layer: int) -> float:
+	return 1.0 if layer == _focus else INACTIVE_ALPHA
+
+
+func transit(id: int) -> String:
+	var u = _units.get(id)
+	if u == null or not u.has("tl"):
+		return ""
+	return "rise" if int(u["tl"]) > int(u.get("layer", 1)) else "drop"
+
+
+func sensor_ring(id: int) -> Variant:
+	var u = _units.get(id)
+	if u == null or int(u["faction"]) != _local_faction or not u.has("sight"):
+		return null
+	return {"center": _screen(u), "radius": float(u["sight"]) * _scale}
+
+
+func _screen(u: Dictionary) -> Vector2:
+	return (Vector2(float(u["x"]), float(u["y"])) - _camera) * _scale + Vector2(SCREEN_W, SCREEN_H) * 0.5
+
+
+func _colour(layer: int) -> Color:
+	return LAYER_COLOURS[clampi(layer, 1, LAYER_COLOURS.size()) - 1]
+
+
+func _draw() -> void:
+	for id in _units:
+		var u: Dictionary = _units[id]
+		var layer := int(u.get("layer", 1))
+		var c := _colour(layer)
+		c.a = dim_alpha(layer)
+		var p := _screen(u)
+		draw_arc(p, 14.0, 0.0, TAU, 24, c, 2.0)
+		var t := transit(id)
+		if t != "":
+			var d := -1.0 if t == "rise" else 1.0
+			draw_colored_polygon(PackedVector2Array([p + Vector2(0, d * 22), p + Vector2(-6, d * 14), p + Vector2(6, d * 14)]), c)
+		var ring = sensor_ring(id)
+		if ring != null:
+			c.a = 0.5 * dim_alpha(layer)
+			draw_arc(ring["center"], ring["radius"], 0.0, TAU, 64, c, 1.0)
+	for i in _layers.size():
+		var l := int(_layers[i])
+		var r := Rect2(Vector2(STRIP_X, STRIP_Y + i * STRIP_STEP), STRIP_BOX)
+		var c := _colour(l)
+		c.a = dim_alpha(l)
+		draw_rect(r, c, l == _focus)
+		draw_rect(r, c, false, 2.0)
