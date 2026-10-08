@@ -14,6 +14,17 @@ extends Node3D
 const GalaxyGen := preload("res://scenes/galaxy/galaxy_gen.gd")
 const CBridge := preload("res://autoload/c_bridge.gd")
 const SimSession := preload("res://autoload/sim_session.gd")
+const GalaxyAdapter := preload("res://scenes/galaxy/galaxy_adapter.gd")
+const ConstellationRenderer := preload("res://scenes/galaxy/legacy_constellation_renderer.gd")
+const ShellRenderer := preload("res://scenes/galaxy/shell_renderer.gd")
+const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
+const DrivenModel := preload("res://scenes/galaxy/galaxy_view_driven.gd")
+const AmbientRig := preload("res://scenes/galaxy/ambient_rig.gd")
+const GalaxyQuality := preload("res://scenes/galaxy/galaxy_quality.gd")
+const GalaxyFlash := preload("res://scenes/galaxy/galaxy_flash.gd")
+const UnknownLabel := preload("res://scenes/galaxy/unknown_label.gd")
+const TerritoryTween := preload("res://scenes/galaxy/territory_tween.gd")
+const ZoomController := preload("res://scenes/galaxy/legacy_zoom_disclosure_controller.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
@@ -25,61 +36,149 @@ const PICK_RADIUS_PX := 14.0
 const BAND_SPLIT_LOW := 32.5
 const BAND_SPLIT_HIGH := 70.0
 const FLAT_COLOUR := Color(1.0, 1.0, 1.0, 1.0)
-const FILAMENT_RADIUS := 0.5
-const FILAMENT_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
 const EDGE_2D_WIDTH := 1.5
 const EDGE_2D_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
 const POINT_RADIUS := 1.2
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
 const OWNER_ALPHA := 1.0
+const LABEL_LIFT := 2.0
+const LABEL_PIXEL_SIZE := 0.08
+const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const GOLDEN_ANGLE := 0.6180339887498949
+const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
+# draft (no ruling gives a flash length or size): seconds a war flash lives, and its sphere radius
+const FLASH_SECONDS := 1.0
+const FLASH_RADIUS := 3.0
+const FLASH_COLOURS := {"attack": Color(1.0, 0.45, 0.2), "conquest": Color(1.0, 0.9, 0.3), "revolt": Color(0.6, 0.8, 1.0)}
 
 var _regions: Array = []
 var _edges: Array = []
 var _positions: Dictionary = {}
 var _region_colours: Dictionary = {}
+var _significance: Dictionary = {}
 var _owner_colours_cache: Dictionary = {}
 var _seed: int = DEFAULT_SEED
 var _hash: int = 0
 var _plants: Dictionary = {}
 var _frozen_band: String = ""
+var _names: RefCounted
+var _labels: Node3D
 
 var _gen := GalaxyGen.new()
 var _point_material: StandardMaterial3D
-var _filament_material: StandardMaterial3D
+var _adapter: Node
+var _zoom: Node
 var _bridge = null
 var _bridge_dirty := false
 var _edge_canvas: Node2D = null  # Node2D in a CanvasLayer; valid only while edges-2d-overlay plant is active
 
 var _error_panel: Control
+var _quality := {"tier": 0, "res_divisor": 1}
+var _unknown_factions: Array = []
+var _prev_owners: Dictionary = {}
+var _tween := TerritoryTween.new()
+var _flashes: Array = []
+
+signal camera_move_completed
+signal region_clicked(region_id: String)
+signal empty_space_clicked
+
+# S-069: a host that feeds regions through add_region_node & co. (the time-jump
+# sequencer) sets driven before add_child; the view then skips the live pipe.
+var driven := false
+var _driven_model := DrivenModel.new()
+var _auto_camera := false
 
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
-@onready var _filaments: Node3D = $World/Filaments
 @onready var _camera_rig := $OrbitCamera
 
 
 func _ready() -> void:
 	_build_materials()
+	_build_renderers()
+	_build_labels()
 	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
-	_load_live_snapshot()
+	if not driven:
+		_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
 	if mission_btn:
 		mission_btn.pressed.connect(func(): SceneRouter.go_to("mission_briefing"))
 
 
 # The scene has no light or environment, so a default lit material draws
-# every mesh black (look 4, first_look/README.md): both materials are
+# every mesh black (look 4, first_look/README.md): the point material is
 # unshaded, and the points read the per-instance owner colour as albedo.
 func _build_materials() -> void:
 	_point_material = StandardMaterial3D.new()
 	_point_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_point_material.vertex_color_use_as_albedo = true
 	_point_material.vertex_color_is_srgb = true
-	_filament_material = StandardMaterial3D.new()
-	_filament_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_filament_material.albedo_color = FILAMENT_COLOUR
+
+
+# R-106-02: filament arcs and faction shells come from the prototype renderers,
+# fed by GalaxyAdapter (scenes/galaxy/galaxy_adapter.gd) on every render. The
+# renderers read the zoom band from _zoom, which _process feeds from the camera.
+func _build_renderers() -> void:
+	_adapter = GalaxyAdapter.new()
+	_adapter.name = "GalaxyAdapter"
+	add_child(_adapter)
+	_zoom = ZoomController.new()
+	_zoom.name = "ZoomDisclosureController"
+	add_child(_zoom)
+	var rig := AmbientRig.new()
+	rig.name = "AmbientRig"
+	add_child(rig)
+	var settings: Dictionary = UIDataBus.get_settings()
+	for pair in [[ConstellationRenderer, "ConstellationRenderer"], [ShellRenderer, "ShellRenderer"]]:
+		var node: Node3D = pair[0].new()
+		node.name = pair[1]
+		if pair[1] == "ShellRenderer":
+			_quality["tier"] = GalaxyQuality.apply(node, settings)
+			_quality["res_divisor"] = node.res_divisor
+		add_child(node)
+		node.setup(_adapter, _zoom)
+
+
+# R-106-03: faction names float at shell centroids in Overview. The wire carries
+# no names, so they come from chronicle_names.gd's placeholder table (indexed
+# modulo its size, not ruled).
+func _build_labels() -> void:
+	_names = ChronicleNames.new()
+	var lib = JSON.parse_string(FileAccess.get_file_as_string(LABEL_LIBRARY))
+	if lib is Dictionary:
+		_names.load_tables(lib.get("name_tables", {}))
+	_labels = Node3D.new()
+	_labels.name = "FactionLabels"
+	add_child(_labels)
+
+
+func _render_labels() -> void:
+	for child in _labels.get_children():
+		child.free()
+	var sums := {}
+	var counts := {}
+	for r in _regions:
+		var owner := int(r.get("owner", -1))
+		var i := int(r.get("i", -1))
+		if owner < 0 or not _positions.has(i):
+			continue
+		sums[owner] = sums.get(owner, Vector3.ZERO) + _positions[i]
+		counts[owner] = int(counts.get(owner, 0)) + 1
+	for owner in sums:
+		var label := Label3D.new()
+		label.text = _names.fill_template("{faction_name}", -1, owner)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.pixel_size = LABEL_PIXEL_SIZE
+		label.position = sums[owner] / float(counts[owner]) + Vector3(0.0, LABEL_LIFT, 0.0)
+		_labels.add_child(label)
+	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
+
+
+func get_positions() -> Dictionary:
+	return _positions
 
 
 # Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
@@ -120,7 +219,11 @@ func _on_bridge_changed(_tick) -> void:
 	_bridge_dirty = true
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_zoom.update_from_distance(_camera_rig.get_distance())
+	_step_flashes(delta)
+	_feed_tween(Time.get_ticks_msec() / 1000.0)
+	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 	if _bridge == null:
 		return
 	_bridge.pump()
@@ -151,8 +254,95 @@ func _arg_value(args: PackedStringArray, flag: String) -> String:
 func set_snapshot(snapshot: Dictionary) -> void:
 	_regions = snapshot.get("regions", [])
 	_edges = snapshot.get("edges", [])
+	_note_owner_changes()
+	_note_unknown_factions(snapshot)
 	_relayout()
 	_render()
+	_feed_tween(Time.get_ticks_msec() / 1000.0)
+
+
+func _note_owner_changes() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	var owners := {}
+	for r in _regions:
+		var i := int(r.get("i", -1))
+		var owner := int(r.get("owner", -1))
+		owners[i] = owner
+		if _prev_owners.has(i) and _prev_owners[i] != owner:
+			_tween.start(i, _prev_owners[i], owner, now)
+	_prev_owners = owners
+
+
+# B7: a tweened region is fed through the same territory signal the renderer binds, owner colour
+# and radius = significance x scale, so the field shrinks the old owner then grows the new one.
+func _feed_tween(now: float) -> void:
+	for e in _tween.step(now):
+		var region := int(e["region"])
+		var owner := int(e["owner"])
+		if not _positions.has(region):
+			continue
+		var key := str(region)
+		if owner < 0:
+			_adapter.remove_territory(key)
+			continue
+		var colour: Color = _owner_colours_cache.get(owner, _colour_for_owner(owner))
+		var sig: float = _significance.get(region, 1.0)
+		_adapter.set_territory(key, _positions[region], sig * float(e["scale"]), colour)
+
+
+func _note_unknown_factions(snapshot: Dictionary) -> void:
+	var owner_ids: Array = []
+	for r in _regions:
+		owner_ids.append(int(r.get("owner", -1)))
+	var known: Array = []
+	if snapshot.has("factions"):
+		for f in snapshot["factions"]:
+			known.append(int(f.get("id", -1)) if f is Dictionary else int(f))
+	else:
+		known = owner_ids.duplicate()
+	var shell := get_node_or_null("ShellRenderer")
+	if shell != null:
+		shell.known_faction_ids = known
+	_unknown_factions = []
+	for id in UnknownLabel.unknown_ids(owner_ids, known):
+		if id >= 0:
+			_unknown_factions.append(id)
+
+
+# R-106-04: one flash per region GalaxyFlash names, on the drawn system; returns how many spawned.
+func flash_from_delta(delta: Dictionary) -> int:
+	var n := 0
+	for f in GalaxyFlash.flashes_for_delta(delta):
+		var region := int(f["region"])
+		if not _positions.has(region):
+			continue
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color = FLASH_COLOURS.get(f["kind"], Color.WHITE)
+		var sphere := SphereMesh.new()
+		sphere.radius = FLASH_RADIUS
+		sphere.height = FLASH_RADIUS * 2.0
+		var mesh := MeshInstance3D.new()
+		mesh.mesh = sphere
+		mesh.material_override = mat
+		mesh.position = _positions[region]
+		add_child(mesh)
+		_flashes.append({"node": mesh, "mat": mat, "left": FLASH_SECONDS})
+		n += 1
+	return n
+
+
+func _step_flashes(dt: float) -> void:
+	for fl in _flashes.duplicate():
+		fl["left"] = float(fl["left"]) - dt
+		if fl["left"] <= 0.0:
+			fl["node"].queue_free()
+			_flashes.erase(fl)
+		else:
+			var c: Color = fl["mat"].albedo_color
+			c.a = float(fl["left"]) / FLASH_SECONDS
+			fl["mat"].albedo_color = c
 
 
 func qa_state() -> Dictionary:
@@ -198,6 +388,13 @@ func qa_state() -> Dictionary:
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
+		"shell_renderer": {"present": get_node_or_null("ShellRenderer") != null, "significance": _significance.duplicate()},
+		"unknown_factions": _unknown_factions.duplicate(),
+		"ambient_rig": {"present": get_node_or_null("AmbientRig") != null, "tier": _quality["tier"]},
+		"galaxy_quality": _quality.duplicate(),
+		"quality_tier": _quality["tier"],
+		"camera_autonomous": _camera_rig.has_method("is_autonomous") and _camera_rig.is_autonomous(),
+		"flashes_active": _flashes.size(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
@@ -265,11 +462,15 @@ func _mix(h: int, v: int) -> int:
 
 
 func _render() -> void:
+	_significance.clear()
+	for r in _regions:
+		_significance[int(r.get("i", -1))] = TIER_SIGNIFICANCE[clampi(int(r.get("tier", 0)), 0, 2)]
 	_grow_owner_colours()
 	if not _plants.get("conquest-no-recolour", false):
 		_recompute_region_colours()
 	_render_filaments()
 	_render_points()
+	_render_labels()
 
 
 func _grow_owner_colours() -> void:
@@ -318,22 +519,15 @@ func _recompute_region_colours() -> void:
 
 
 func _render_filaments() -> void:
-	for child in _filaments.get_children():
-		child.free()
+	var drawn_edges: Array = [] if _plants.get("edges-2d-overlay", false) else _edges
+	_adapter.apply(_regions, drawn_edges, _positions, _region_colours)
 	if _plants.get("edges-2d-overlay", false):
 		_render_filaments_2d()
-		return
-	for e in _edges:
-		var a := int(e.get("a", -1))
-		var b := int(e.get("b", -1))
-		if not (_positions.has(a) and _positions.has(b)):
-			continue
-		_filaments.add_child(_build_tube(_positions[a], _positions[b]))
 
 
 # Draws each galaxy edge as a Line2D in a CanvasLayer overlay, using the
 # camera's canvas-space projection of the 3D system positions. Called only
-# when the edges-2d-overlay plant is active; replaces the 3D tube render.
+# when the edges-2d-overlay plant is active; replaces the 3D filament arcs.
 func _render_filaments_2d() -> void:
 	if _edge_canvas == null:
 		var layer := CanvasLayer.new()
@@ -360,22 +554,6 @@ func _render_filaments_2d() -> void:
 		_edge_canvas.add_child(line)
 
 
-func _build_tube(from_pos: Vector3, to_pos: Vector3) -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = FILAMENT_RADIUS
-	mesh.bottom_radius = FILAMENT_RADIUS
-	mesh.height = maxf(from_pos.distance_to(to_pos), 0.001)
-	mi.mesh = mesh
-	mi.material_override = _filament_material
-	var dir := to_pos - from_pos
-	var basis := Basis()
-	if dir.length_squared() > 0.0001:
-		basis = Basis(Quaternion(Vector3.UP, dir.normalized()))
-	mi.transform = Transform3D(basis, (from_pos + to_pos) * 0.5)
-	return mi
-
-
 func _render_points() -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -392,3 +570,104 @@ func _render_points() -> void:
 		mm.set_instance_color(idx, _region_colours.get(i, FLAT_COLOUR))
 	_points.multimesh = mm
 	_points.material_override = _point_material
+
+
+# --- driven mode (S-069): the old world_view_shell API, answered here ---
+
+func add_region_node(region_id: String, _pos: Vector3, significance: float, _colour: Color, faction_id: String) -> void:
+	_driven_model.set_region(region_id, significance, faction_id)
+	_driven_refresh()
+
+
+func update_region_node(region_id: String, significance: float, _colour: Color) -> void:
+	_driven_model.set_tier(region_id, significance)
+	_driven_refresh()
+
+
+# The old shell took ownership as a colour; the galaxy view keys it by faction.
+func set_region_owner(region_id: String, faction_id: String) -> void:
+	_driven_model.set_owner(region_id, faction_id)
+	_driven_refresh()
+
+
+func set_territory(region_id: String, _pos: Vector3, _size: float, _colour: Color) -> void:
+	_driven_model.index_for(region_id)
+
+
+func update_territory(region_id: String, _size: float, _colour: Color) -> void:
+	_driven_model.index_for(region_id)
+
+
+func remove_territory(region_id: String) -> void:
+	_driven_model.clear_owner(region_id)
+	_driven_refresh()
+
+
+func add_connection(from_id: String, to_id: String, edge_type: String, _colour: Color) -> void:
+	_driven_model.add_edge(from_id, to_id, edge_type)
+	_driven_refresh()
+
+
+# Flashes arrive from sim events (VG-B B6); until then a driven flash is silent.
+func flash_military_activity(_region_id: String, _intensity: float) -> void:
+	pass
+
+
+func flash_conflict(_attacker_id: String, _defender_id: String, _intensity: float) -> void:
+	pass
+
+
+func highlight_region(region_id: String) -> void:
+	_camera_rig.focus_region(_driven_model.index_for(region_id))
+
+
+func clear_highlight() -> void:
+	pass
+
+
+func move_camera_to_region(region_id: String, _duration: float) -> void:
+	_camera_rig.focus_region(_driven_model.index_for(region_id))
+	_emit_camera_done()
+
+
+func move_camera_to_regions(region_ids: Array, duration: float) -> void:
+	if region_ids.is_empty():
+		move_camera_to_overview(duration)
+		return
+	var sum := Vector3.ZERO
+	var n := 0
+	for rid in region_ids:
+		var i := _driven_model.index_for(str(rid))
+		if _positions.has(i):
+			sum += _positions[i]
+			n += 1
+	if n > 0:
+		_camera_rig.set_view(BAND_SPLIT_LOW + 10.0, sum / float(n))
+	_emit_camera_done()
+
+
+func move_camera_to_overview(_duration: float) -> void:
+	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_emit_camera_done()
+
+
+func start_auto_camera() -> void:
+	_auto_camera = true
+	if _camera_rig.has_method("set_autonomous"):
+		_camera_rig.set_autonomous(true)
+
+
+func stop_auto_camera() -> void:
+	_auto_camera = false
+	if _camera_rig.has_method("set_autonomous"):
+		_camera_rig.set_autonomous(false)
+
+
+func _emit_camera_done() -> void:
+	await get_tree().create_timer(0.6).timeout
+	camera_move_completed.emit()
+
+
+func _driven_refresh() -> void:
+	if driven:
+		set_snapshot(_driven_model.snapshot())
