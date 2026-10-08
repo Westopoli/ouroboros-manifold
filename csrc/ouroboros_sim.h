@@ -1803,6 +1803,15 @@ uint32_t om_save_state_size(const om_world *w);
 void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
 /* ---- end generated: save.c ---- */
 
+/* ---- generated from signatures.toml: space_field.c ---- */
+int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h);
+int om_space_field_present(const om_world *w);
+uint32_t om_space_field_get_mask(const om_world *w, uint32_t layer, uint8_t *out, uint32_t cap);
+void om_space_field_clear(om_world *w);
+uint32_t om_space_field_poly_count(const om_world *w);
+uint32_t om_space_field_poly_get(const om_world *w, uint32_t i, uint32_t *layer, uint32_t *kind, double *xy, uint32_t cap_pts);
+/* ---- end generated: space_field.c ---- */
+
 /* ---- generated from signatures.toml: tactical_mapgen.c ---- */
 void om_fairness_evaluate(om_world *w, om_fairness_score *byref);
 void om_fairness_force_score(om_world *w, double composite);

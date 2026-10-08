@@ -4,6 +4,35 @@ uint32_t g_mission_archetype = 0;
 
 pipe_tac_state g_tac;
 
+/* VG K-h: mission_start {fog_filter}; stored per mission by handle_mission_start. */
+int g_fog_filter = 0;
+
+/* Sight circles (x, y, radius) of the local faction's units in the frame being written, for structure visibility. */
+typedef struct {
+    double x, y, r;
+} sight_circle;
+static sight_circle *g_sight;
+static uint32_t g_n_sight, g_cap_sight;
+
+static int struct_in_sight(double x, double y) {
+    for (uint32_t i = 0; i < g_n_sight; i++) {
+        double dx = x - g_sight[i].x, dy = y - g_sight[i].y;
+        if (dx * dx + dy * dy <= g_sight[i].r * g_sight[i].r) return 1;
+    }
+    return 0;
+}
+
+/* An event id is shown if the unit is in this frame's unit list or was in the previous one (kill and leave-sight frames). */
+static int unit_shown(int64_t id) {
+    return id >= 0 && (uint64_t)id < g_tac.cap && g_tac.by_id[id].seen == g_tac.serial;
+}
+
+static int event_shown(int32_t kind, uint32_t a, int32_t b) {
+    if (kind == 3) return a < g_tac.st_cap && g_tac.st_by_id[a].in && g_tac.st_by_id[a].seen == g_tac.serial;
+    if (unit_shown(a)) return 1;
+    return (kind == 0 || kind == 2) && unit_shown(b);
+}
+
 /* VG K-a events: the fire, kill and capture events of the sim's per-step ring
  * and the ability events of the call, accumulated over the n steps of one
  * tactical_step call (docs/architecture.md, tactical frame `events`). */
@@ -81,6 +110,12 @@ static void write_tactical_structures(jbuf *j, int full) {
     for (uint32_t i = 0; i < n; i++) {
         uint32_t id = om_structure_get_at(W, i);
         if (id == UINT32_MAX || om_structure_is_destroyed(W, id)) continue;
+        if (g_fog_filter && om_structure_get_owner(W, id) != om_player_faction(W)) {
+            om_vec2 sp;
+            memset(&sp, 0, sizeof sp);
+            om_structure_get_position(W, id, &sp);
+            if (!struct_in_sight(sp.x, sp.y)) continue;
+        }
         ids[n_ids++] = id;
         if (id > max_id) max_id = id;
     }
@@ -157,6 +192,7 @@ static void write_tactical_structures(jbuf *j, int full) {
         uint32_t id = g_tac.st_prev[k];
         if (g_tac.st_by_id[id].seen == serial) continue;
         g_tac.st_by_id[id].in = 0;
+        if (g_fog_filter) g_tac.st_by_id[id].seen = serial;
         if (full) continue;
         if (wrote) jb_putc(j, ',');
         wrote = 1;
@@ -341,6 +377,7 @@ void write_tactical(int full) {
         if (!id) continue;
         occupied++;
         if (!om_unit_alive(W, id)) continue;
+        if (g_fog_filter && !om_player_can_see_unit(W, om_player_faction(W), id)) continue;
         ids[n_ids++] = id;
         if (id > max_id) max_id = id;
     }
@@ -352,6 +389,7 @@ void write_tactical(int full) {
     }
     g_tac.serial++;
     int32_t player = om_player_faction(W);
+    g_n_sight = 0;
     jb_key(&j, full ? "units" : "units_changed");
     jb_putc(&j, '[');
     int wrote = 0;
@@ -389,7 +427,20 @@ void write_tactical(int full) {
             double cd = om_unit_ability_cooldown(W, cur.id);
             if (cd > 0.0) cur.acd = (int64_t)g_tactical_tick + (int64_t)(cd + 0.999999);
         }
-        if (cur.faction == player) cur.sight = (int32_t)(om_fog_get_drawn_sensor_circle_radius(W, cur.id) + 0.5);
+        if (cur.faction == player) {
+            double sr = om_fog_get_drawn_sensor_circle_radius(W, cur.id);
+            cur.sight = (int32_t)(sr + 0.5);
+            if (g_fog_filter) {
+                if (g_n_sight >= g_cap_sight) {
+                    g_cap_sight = g_cap_sight ? g_cap_sight * 2 : 64;
+                    g_sight = realloc(g_sight, sizeof(sight_circle) * g_cap_sight);
+                }
+                g_sight[g_n_sight].x = cur.x;
+                g_sight[g_n_sight].y = cur.y;
+                g_sight[g_n_sight].r = sr;
+                g_n_sight++;
+            }
+        }
         int changed = full || !old->id || old->faction != cur.faction || old->type != cur.type ||
                       old->layer != cur.layer || old->target != cur.target || old->x != cur.x ||
                       old->y != cur.y || old->hp != cur.hp || old->facing != cur.facing ||
@@ -459,6 +510,7 @@ void write_tactical(int full) {
         uint32_t id = g_tac.prev_ids[k];
         if (g_tac.by_id[id].seen == g_tac.serial) continue;
         g_tac.by_id[id].id = 0;
+        if (g_fog_filter) g_tac.by_id[id].seen = g_tac.serial;
         if (full) continue;
         if (wrote) jb_putc(&j, ',');
         wrote = 1;
@@ -475,8 +527,11 @@ void write_tactical(int full) {
     write_tactical_structures(&j, full);
 
     jb_raw(&j, "\"events\":[");
+    int ev_wrote = 0;
     for (uint32_t k = 0; k < g_ev_n; k++) {
-        if (k) jb_putc(&j, ',');
+        if (g_fog_filter && !event_shown(g_ev[k].kind, g_ev[k].a, g_ev[k].b)) continue;
+        if (ev_wrote) jb_putc(&j, ',');
+        ev_wrote = 1;
         jb_putc(&j, '[');
         jb_int(&j, g_ev[k].kind);
         jb_putc(&j, ',');
