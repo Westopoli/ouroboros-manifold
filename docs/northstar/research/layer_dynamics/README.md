@@ -138,6 +138,34 @@ Until the port parity lands, two armies sent at each other end as two flat rows 
 
 The harness contract and the engine brief are `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
 
+### Layout run 1 (space lab)
+
+Landed 2026-10-08 (`a9ee5897`); the chart waits for Westley. Record: `runs/2026-10-08_layout_run1/` (`depth_summary.json`, `depth_page.html`, `depth.csv.gz`).
+
+- What ran: 200 layouts sampled from the 648-layout grid, 12 scans each (seven skilled plays, three counters, a naive blob, a naive spread line), Rev 4 placed formations, 8 workers, 3 h 18 m wall (00:11 to 03:29). That is 244,800 fights.
+- Outcomes over all fights: decided 37.2 percent, held 29.8, side 0 13.7, side 1 12.4, capped 6.9, draw 5 rows. 294 of the 2,400 (layout, play, variant) groups have at least one capped fight; 143 are capped in every fight.
+- Skilled score, layouts per score 0 to 5: 40, 66, 46, 29, 13, 6. Naive line: 109, 75, 4, 7, 4, 1. The score is the skilled-beats-naive depth signal, so the naive line scoring 0 or 1 on 184 of 200 layouts is the result that matters.
+- Six layouts score 5. Five of them (81, 78, 68, 151, 169; naive line 5, 3, 1, 1, 1) share blocked_layer_top 4 and start_distance 1400. The sixth (192) has blocked_layer_top 0 and start_distance 2800, naive 1.
+- Mean skilled score by feature value:
+
+| Feature | Values: mean score |
+|---|---|
+| blocked_layer_top | 0: 1.52, 2: 1.82, 4: 1.56 |
+| choke_width_bodies | 0: 1.22, 2: 1.88, 4: 1.84, 8: 1.60 |
+| cover_density_corridor | 0: 1.78, 0.1: 1.63, 0.3: 1.50 |
+| detour_ratio | 0: 1.61, 1.5: 1.84, 3: 1.45 |
+| lane_count | 0: 1.36, 1: 1.66, 2: 1.89 |
+| start_distance | 1400: 2.08, 2800: 1.19 |
+
+Not verified from the files in the folder: the 8 workers and the wall-clock times (they come from the run's brief, not from the json or csv). Everything else above was recomputed from the json and the csv.
+
+Open for Westley, after he reads the chart:
+
+1. The draft constants of Q-LAB-03: hold 1,200 ticks, 400 blind ticks, 5 percent draw band, 300 wu hold radius.
+2. The held share, 29.8 percent: is a held outcome the depth signal he wants, or noise?
+3. The 143 always-capped groups: which plays are they, and is a fight that never ends a layout fault or a play fault?
+4. The composition category table for run 2.
+
 ## 9. Two machines
 
 The Mac and the Linux machine work on this repo at the same time.
