@@ -1462,6 +1462,47 @@ status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane C 3D ground, 10 pieces in two workflows (vg-wave4-laneC.js parts a and b)"
 
+# Visible-game programme (2026-10-07), lane D: the space landscape (spec rev 4 section 1; unblocked by
+# Westley's batch 20: ported generator, masks + polygons, 3D stacked sheets with a vision tube). K-d is its
+# contract piece (VG-CONTRACT); D5 is the mission.c hook (after E1i). Tests written in the wave.
+[[piece]]
+id = "VG-D"
+manager = "M0"
+wave = 8
+owns = ["csrc/space_noise.c", "csrc/space_plates.c", "csrc/space_raster.c", "csrc/space_field.c"]
+owns_glob = ["scenes/space_field/**", "tests/test_vg_d_*.gd", "tests/csim/test_VG_D_*.py", "tests/qa/desktop/plays/D/**"]
+acceptance = []
+depends_on = ["VG-CONTRACT", "VG-C"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane D space landscape, 9 pieces (vg-wave6-laneF-D.js lane D)"
+
+# Visible-game programme (2026-10-07), lane E1: settlement and economy, the buildable half (spec rev 4
+# section 1; K-e the contract amendment first, under VG-CONTRACT-E1). E1p is the VG-VIEW link (after C5).
+[[piece]]
+id = "VG-CONTRACT-E1"
+manager = "M0"
+wave = 8
+owns = ["csrc/ouroboros_sim.h", "csrc/signatures.toml", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "docs/architecture.md"]
+owns_glob = ["tests/csim/test_VG_contract_e1*.py", "tests/transport/test_pipe_vg_e1*.py"]
+acceptance = []
+depends_on = ["VG-CONTRACT"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "K-e: lots, density, strongpoint getters and frame fields; save format 8"
+
+[[piece]]
+id = "VG-E1"
+manager = "M0"
+wave = 8
+owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py"]
+owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e1_*.gd", "tests/csim/test_VG_E1_*.py", "tests/qa/desktop/plays/E1/**"]
+acceptance = []
+depends_on = ["VG-CONTRACT-E1"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane E1, 20 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
+
 # Visible-game programme (2026-10-07), lane F T0: W8a static pipe build scripts per OS, W8d export
 # presets, the Steam depot script. Acceptance tests (tests/transport/test_vg_f_w8a_static_pipe.py,
 # test_vg_f_w8d_presets.py, test_vg_f_depot_script.py on push/vg-f-tests) land with the F tests.
