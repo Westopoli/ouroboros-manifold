@@ -42,6 +42,8 @@ var _chronicle_snapshot: Dictionary = {}
 var _tactical: Dictionary = {}
 var _tactical_units: Dictionary = {}
 var _tactical_map: Dictionary = {}
+var _tactical_structures: Dictionary = {}
+var _tactical_profiles: Array = []
 var _session_args: Array = []
 var _session_id: int = 0
 var _player_faction: int = -1
@@ -435,7 +437,9 @@ func _request(cmds: Array, want: Array) -> Dictionary:
 func send_unit_command(cmd: Dictionary) -> bool:
 	var kind := str(cmd.get("kind", ""))
 	var unit_ids: Array = cmd.get("unit_ids", [])
-	if not kind in ["move", "attack_move", "attack_target"]:
+	if not kind in ["move", "attack_move", "attack_target", "set_layer", "activate_ability"]:
+		return false
+	if kind == "set_layer" and unit_ids.is_empty():
 		return false
 	var pipe_cmd := {
 		"type": "cmd",
@@ -448,6 +452,11 @@ func send_unit_command(cmd: Dictionary) -> bool:
 		pipe_cmd["y"] = float(cmd.get("y", 0.0))
 	elif kind == "attack_target":
 		pipe_cmd["target"] = int(cmd.get("target", -1))
+	elif kind == "set_layer":
+		pipe_cmd["layer"] = int(cmd.get("layer", 0))
+	elif kind == "activate_ability":
+		pipe_cmd["x"] = float(cmd.get("x", 0.0))
+		pipe_cmd["y"] = float(cmd.get("y", 0.0))
 	send_command(pipe_cmd)
 	return true
 
@@ -459,9 +468,20 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 	if bool(frame.get("full", true)):
 		_tactical_units = {}
 		_tactical_map = frame.get("map", {})
+		_tactical_structures = {}
+		_tactical_profiles = frame.get("profiles", [])
+		for st in frame.get("structures", []):
+			_tactical_structures[int(st["id"])] = st
 	else:
 		for id in frame.get("units_removed", []):
 			_tactical_units.erase(int(id))
+		for id in frame.get("structures_removed", []):
+			_tactical_structures.erase(int(id))
+		for ch in frame.get("structures_changed", []):
+			var sid := int(ch["id"])
+			var row: Dictionary = _tactical_structures.get(sid, {}).duplicate()
+			row.merge(ch, true)
+			_tactical_structures[sid] = row
 	for u in frame.get("units", frame.get("units_changed", [])):
 		_tactical_units[int(u["id"])] = u
 	var ids := _tactical_units.keys()
@@ -470,8 +490,15 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 	for id in ids:
 		units.append(_tactical_units[id])
 	var view := frame.duplicate()
-	for k in ["units_changed", "units_removed"]:
+	var sids := _tactical_structures.keys()
+	sids.sort()
+	var structures: Array = []
+	for id in sids:
+		structures.append(_tactical_structures[id])
+	for k in ["units_changed", "units_removed", "structures_changed", "structures_removed"]:
 		view.erase(k)
+	view["structures"] = structures
+	view["profiles"] = _tactical_profiles
 	view["full"] = true
 	view["units"] = units
 	view["map"] = _tactical_map
@@ -528,6 +555,14 @@ func terrain() -> Dictionary:
 	return _terrain
 
 
+func _decode_heights(hex: String) -> PackedInt32Array:
+	var raw := hex.hex_decode()
+	var out := PackedInt32Array()
+	for i in range(raw.size() / 4):
+		out.append(raw.decode_s32(i * 4))
+	return out
+
+
 func _fetch_terrain() -> bool:
 	var t: Dictionary = _request([{"type": "cmd", "name": "terrain_dump"}], ["terrain"])
 	if t.is_empty():
@@ -539,6 +574,7 @@ func _fetch_terrain() -> bool:
 		"bands": String(f.get("bands", "")).hex_decode(),
 		"walkable": String(f.get("walkable", "")).hex_decode(),
 		"slopes": f.get("slopes", []),
+		"heights": _decode_heights(String(f.get("heights", ""))),
 	}
 	return true
 
