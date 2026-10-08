@@ -149,7 +149,8 @@ def test_ability_events_come_from_the_ability_ring(lib, world_factory):
 # ---- tactical_support.c: structures ----
 
 def hand_structures(lib, w):
-    for slot, (x, y, owner) in enumerate(((3000.0, 3000.0, PLAYER_FAC), (9000.0, 9000.0, ENEMY_FAC))):
+    # slots 3 and 4: the seed-11 world already holds mission structures in slots 0..2 (TD-VG-K-9)
+    for slot, (x, y, owner) in enumerate(((3000.0, 3000.0, PLAYER_FAC), (9000.0, 9000.0, ENEMY_FAC)), start=3):
         lib.om_structure_init(w, slot, 0, DBL(100.0))
         lib.om_structure_set_owner(w, slot, owner)
         lib.om_structure_set_position(w, slot, x, y)
