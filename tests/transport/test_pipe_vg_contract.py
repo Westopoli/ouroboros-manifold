@@ -234,7 +234,9 @@ def test_ability_use_sets_acd_and_ability_event(first_frames):
     an int above the current tick) and the frame's events hold [1, unit, ability, tick]; before use `acd` is
     omitted. Red on main: no `acd`, no events."""
     first = tacticals(first_frames)[0]
-    raider = next(u for u in first["units"] if u["faction"] == 0 and u["type"] == 0)
+    # A Warden (type 3, Rally) starts its cooldown at activation; a Raider's Surge zeroes its cooldown while
+    # active, so `acd` is absent then (`acd` present only while cooldown_end > tick; TD-VG-K-8).
+    raider = next(u for u in first["units"] if u["faction"] == 0 and u["type"] == 3)
     assert "acd" not in raider
     frames = run([SET_SEED, start(), BEGIN,
                   {"type": "cmd", "name": "command", "verb": "activate_ability", "units": [raider["id"]]},
