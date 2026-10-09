@@ -41,13 +41,13 @@ SHOT_DIR = REPO / "docs/northstar/story_reviews/shots" / RUN_ID
 
 
 def start_tactical_game(fog_off: bool = False) -> GodotGame:
-    """fog_off (or OM_PLAY_FOG=off) sends the daemon verb set_fog_filter {on:false} before the mission loads (TD-VG-A-5).
-    The verb lands with push/vg-qa-fog-net; its argument shape here follows that branch's docstring (one dict arg)."""
+    """fog_off (or OM_PLAY_FOG=off) sends the daemon verb set_fog_filter with the bare bool false (one bool arg, TD-VG-A-7) before the mission loads (TD-VG-A-5).
+    The verb reads args[0] as one bool; a dict arg is truthy and leaves the filter on."""
     g = GodotGame(qa_port=pick_free_port(), seed=1, resolution=RESOLUTION)
     g.start()
     g.wait_for_port(timeout=60.0)
     if fog_off or os.environ.get("OM_PLAY_FOG", "").lower() == "off":
-        r = g.client.call("set_fog_filter", {"on": False})
+        r = g.client.call("set_fog_filter", False)
         assert r.get("ok", True), "play_support: set_fog_filter refused: %r" % r
     _to_tactical(g)
     return g
