@@ -114,6 +114,59 @@ def moment(client, story: str, label: str) -> dict:
     return state.get("qa", {})
 
 
+def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
+    """TD-VG-A-9i/9j: the edge-scroll method. Edge from the WORLD delta (wx, wy) minus camera, one input move to 2 px inside
+    the edge, poll project every 0.2 s, stop on two consecutive on_screen polls (True) or when the qa_state camera moved no
+    more than 1 wu over 15 consecutive polls (3 s, False); then the pointer goes back to the centre. SCREEN_WU is a named
+    draft (3000 wu, a screen's worth of world at the start height): both axes scroll only when both deltas exceed it."""
+    w, h = (int(v) for v in RESOLUTION.split("x"))
+    SCREEN_WU = 3000.0
+    ddx, ddy = wx - cam["x"], wy - cam["y"]
+    both = abs(ddx) > SCREEN_WU and abs(ddy) > SCREEN_WU
+    ex_, ey_ = w // 2, h // 2
+    if both or abs(ddx) >= abs(ddy):
+        ex_ = w - 3 if ddx > 0 else 2
+    if both or abs(ddy) > abs(ddx):
+        ey_ = h - 3 if ddy > 0 else 2
+    client.call("input", "move", ex_, ey_)
+    hits, still, last = 0, 0, (cam["x"], cam["y"])
+    while hits < 2:
+        time.sleep(0.2)
+        r = client.call("project", float(wx), float(wy))
+        assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+        hits = hits + 1 if r["result"].get("on_screen") else 0
+        if hits:
+            continue
+        c = qa(client)["camera"]
+        still = still + 1 if abs(c["x"] - last[0]) <= 1.0 and abs(c["y"] - last[1]) <= 1.0 else 0
+        if still >= 15:
+            break
+        if still == 0:
+            last = (c["x"], c["y"])
+    client.call("input", "move", w // 2, h // 2)
+    return hits >= 2
+
+
+def follow_army_on() -> None:
+    """TD-VG-A-9j: after the attack-move order a player follows the army. Turns on the per-chunk follow in step_until."""
+    global _FOLLOW
+    _FOLLOW = True
+
+
+def _pan_enemy_into_view(client) -> None:
+    """TD-VG-A-9j: own-units centroid from qa_state; when project() says it is off screen, edge-scroll toward it (9i method)."""
+    q = qa(client)
+    me = q["local_faction"]
+    mine = [u for u in q["units"].values() if u["faction"] == me]
+    if not mine:
+        return
+    cx = sum(u["x"] for u in mine) / len(mine)
+    cy = sum(u["y"] for u in mine) / len(mine)
+    r = client.call("project", float(cx), float(cy))
+    if r.get("ok") is True and not r["result"].get("on_screen"):
+        _edge_scroll_to(client, cx, cy, q["camera"])
+
+
 def step_until(client, pred, max_ticks: int, chunk: int = 5) -> bool:
     """Steps the mission chunk ticks at a time until pred(qa) holds; False when max_ticks pass first."""
     done = 0
@@ -164,39 +217,11 @@ def nearest_enemy_px(client, q: dict) -> tuple:
     # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
     # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
     # scroll only when both deltas exceed it; otherwise the larger one. on_screen must hold for two consecutive polls.
-    SCREEN_WU = 3000.0
     if not r["result"].get("on_screen"):
-        cam = q["camera"]
-        ddx, ddy = e["x"] - cam["x"], e["y"] - cam["y"]
-        both = abs(ddx) > SCREEN_WU and abs(ddy) > SCREEN_WU
-        ex_ = w // 2
-        ey_ = h // 2
-        if both or abs(ddx) >= abs(ddy):
-            ex_ = w - 3 if ddx > 0 else 2
-        if both or abs(ddy) > abs(ddx):
-            ey_ = h - 3 if ddy > 0 else 2
-        client.call("input", "move", ex_, ey_)
-        # TD-VG-A-9i: the scroll stops on progress, not on a clock: fail only when the qa_state camera moved no more than 1 wu
-        # over 15 consecutive polls (3 s) while the enemy is still off screen. No other bound (the play timeout is the ceiling).
-        hits, still, last = 0, 0, (cam["x"], cam["y"])
-        while hits < 2:
-            time.sleep(0.2)
-            r = client.call("project", float(e["x"]), float(e["y"]))
-            assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
-            hits = hits + 1 if r["result"].get("on_screen") else 0
-            if hits:
-                continue
-            c = qa(client)["camera"]
-            still = still + 1 if abs(c["x"] - last[0]) <= 1.0 and abs(c["y"] - last[1]) <= 1.0 else 0
-            if still >= 15:
-                break
-            if still == 0:
-                last = (c["x"], c["y"])
-        client.call("input", "move", w // 2, h // 2)
-        if hits < 2:
-            r["result"]["on_screen"] = False
+        if not _edge_scroll_to(client, e["x"], e["y"], qa(client)["camera"]):
             c = qa(client)["camera"]
             assert False, "play_support: FINDING: enemy %s off screen, camera stopped making progress (%s, %s)" % (k, c["x"], c["y"])
-    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after %.0f s edge scroll toward it (computed budget)" % (k, budget_s)
+        r = client.call("project", float(e["x"]), float(e["y"]))
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after the edge scroll toward it" % k
     px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))

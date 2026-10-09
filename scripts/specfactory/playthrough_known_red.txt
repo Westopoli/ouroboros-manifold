@@ -1,5 +1,3 @@
 # Desktop-flow tests allowed to be red in the gate's playthrough stage, one
 # test function name (or prefix) per line. Empty since the loop-fix landing; a
 # listed test that passes is reported "now green, remove from list".
-# A19 opening zoom: see lane_plays_known_red.txt; TD-VG-A-9 chain, fix pending with the camera-pan piece (Architect 2026-10-09)
-test_s_134_a_shot_is_in_flight_during_combat

@@ -2,4 +2,3 @@
 # then "# reason". A red not listed rejects; a listed play that passes rejects too (trim the list).
 tests/qa/desktop/plays/C/s004.py::test_s004_transit_is_visible  # spec gap, no layer-change order
 tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # TD-VG-C-2 pending
-tests/qa/desktop/plays/A/test_S_134_shots_and_hits.py::test_s_134_a_shot_is_in_flight_during_combat  # A19 opening zoom: the attack-move after the edge scroll draws no shot inside the 6730-tick window in the space era; TD-VG-A-9 chain, fix pending with the camera-pan piece (Architect 2026-10-09)

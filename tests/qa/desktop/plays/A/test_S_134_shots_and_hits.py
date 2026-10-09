@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from play_support import count, has_key, moment, nearest_enemy_px, qa, select_own_by_drag, start_tactical_game, step_until
+from play_support import count, follow_army_on, has_key, moment, nearest_enemy_px, qa, select_own_by_drag, start_tactical_game, step_until
 
 
 @pytest.fixture(scope="module")
@@ -29,6 +29,7 @@ def test_s_134_a_shot_is_in_flight_during_combat(tactical_game):
     ex, ey = nearest_enemy_px(client, qa(client))
     client.call("input", "click", ex, ey, 1)
     time.sleep(0.3)
+    follow_army_on()  # TD-VG-A-9j
     seen = step_until(client, lambda q: count(q, "shots_in_flight") > 0, MAX_TICKS, chunk=CHUNK)
     moment(client, "S-134", "shots_in_flight")
     assert seen, "S-134: no shot was drawn in %d ticks of attack-move" % MAX_TICKS
