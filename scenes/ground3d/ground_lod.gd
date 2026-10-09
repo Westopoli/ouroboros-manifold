@@ -6,7 +6,7 @@ extends RefCounted
 # See also: ground_mesh.gd, which builds the full-detail mesh with the same vertex placement and colours.
 
 const CELL_WU := 100.0
-const TerrainLayer := preload("res://scenes/tactical_c/terrain_layer.gd")
+const GroundBands := preload("res://scenes/ground3d/ground_bands.gd")
 # Draft, not Westley's number: camera height (wu) at which level 0 hands over to level 1; each level doubles it.
 const SWITCH_BASE_WU := 1500.0
 const BLEND_BAND := 0.25
@@ -106,13 +106,14 @@ func _build(stride: int) -> Dictionary:
 			var c11 := Vector2i(xs[a + 1], ys[b + 1])
 			for c in [c00, c10, c11, c00, c11, c01]:
 				var k: int = c.y * w + c.x
-				st.set_color(TerrainLayer.BAND_COLOURS[clampi(bands[k], 1, 5) - 1] if walk[k] != 0 else TerrainLayer.STEEP_COLOUR)
+				st.set_color(GroundBands.colour(bands[k], walk[k] != 0))
 				st.add_vertex(Vector3((c.x + 0.5) * CELL_WU, _terrain["heights"][k] / 100.0, (c.y + 0.5) * CELL_WU))
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
 	mat.roughness = 0.9
 	mi.material_override = mat
 	return {"mi": mi, "xs": xs, "ys": ys}

@@ -29,6 +29,7 @@ func _ready() -> void:
 	_container.stretch = true
 	_container.size = SCREEN_SIZE
 	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.z_index = -1
 	add_child(_container)
 	_viewport = SubViewport.new()
 	_viewport.size = SCREEN_SIZE
