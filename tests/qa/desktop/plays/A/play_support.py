@@ -51,6 +51,8 @@ def start_tactical_game() -> GodotGame:
     g.start()
     g.wait_for_port(timeout=60.0)
     _to_tactical(g)
+    global _CLIENT, _FOLLOW
+    _CLIENT, _FOLLOW = g.client, False
     return g
 
 
@@ -114,15 +116,19 @@ def step_until(client, pred, max_ticks: int, chunk: int = 5) -> bool:
         if pred(qa(client)):
             return True
         client.call("step", chunk)
+        if _FOLLOW and client is _CLIENT:
+            _pan_enemy_into_view(client)
         done += chunk
         time.sleep(0.05)
     return pred(qa(client))
 
 
-def nearest_enemy_px(q: dict) -> tuple:
-    """Screen pixel of the enemy unit nearest (world distance) to the local faction's units, read from qa_state units and
-    projected with the flat view the tactical view uses (screen = (world - camera) * scale + half screen), clamped to the
-    screen. Enemies are fogged at the start, so units_px cannot be used."""
+
+_FOLLOW = False  # set by nearest_enemy_px: step_until then keeps the nearest enemy on screen
+_CLIENT = None  # set by start_tactical_game; nearest_enemy_px pans through it (TD-VG-A-3)
+
+
+def _enemy_screen(q: dict) -> tuple:
     units, me = q["units"], q["local_faction"]
     mine = [u for u in units.values() if u["faction"] == me]
     foes = [u for u in units.values() if u["faction"] != me]
@@ -130,6 +136,53 @@ def nearest_enemy_px(q: dict) -> tuple:
     e = min(foes, key=lambda f: min((f["x"] - m["x"]) ** 2 + (f["y"] - m["y"]) ** 2 for m in mine))
     w, h = (int(v) for v in RESOLUTION.split("x"))
     cam, sc = q["camera"], q["scale"]
-    px = (e["x"] - cam["x"]) * sc + w / 2
-    py = (e["y"] - cam["y"]) * sc + h / 2
-    return int(min(max(px, 1), w - 2)), int(min(max(py, 1), h - 2))
+    return (e["x"] - cam["x"]) * sc + w / 2, (e["y"] - cam["y"]) * sc + h / 2
+
+
+def _pan_enemy_into_view(c) -> tuple:
+    """Pans with the arrow keys (the view's own pan input; pointer parked mid-screen so edge scroll stays off) until the
+    nearest enemy sits in the central box; returns its screen position."""
+    w, h = (int(v) for v in RESOLUTION.split("x"))
+    box = (w * 0.2, w * 0.8, h * 0.2, h * 0.8)
+    ex, ey = _enemy_screen(qa(c))
+    if box[0] <= ex <= box[1] and box[2] <= ey <= box[3]:
+        return ex, ey
+    c.call("input", "move", w // 2, h // 2)
+    held = set()
+    try:
+        for _ in range(400):
+            ex, ey = _enemy_screen(qa(c))
+            if box[0] <= ex <= box[1] and box[2] <= ey <= box[3]:
+                break
+            want = set()
+            if ex < box[0]:
+                want.add("Left")
+            elif ex > box[1]:
+                want.add("Right")
+            if ey < box[2]:
+                want.add("Up")
+            elif ey > box[3]:
+                want.add("Down")
+            for k in held - want:
+                c.call("input", "key_up", k)
+            for k in want - held:
+                c.call("input", "key_down", k)
+            held = want
+    finally:
+        for k in held:
+            c.call("input", "key_up", k)
+    time.sleep(0.2)
+    return _enemy_screen(qa(c))
+
+
+def nearest_enemy_px(q: dict) -> tuple:
+    """Screen pixel of the enemy unit nearest (world distance) to the local faction's units, unclamped. Since A19 the
+    opening zoom frames the own force, so the enemy may be off screen (TD-VG-A-3): the camera is panned to it first, and
+    step_until then keeps it in view (shots are drawn, and counted, only on screen). Enemies are fogged at the start, so
+    units_px cannot be used."""
+    global _FOLLOW
+    w, h = (int(v) for v in RESOLUTION.split("x"))
+    ex, ey = _pan_enemy_into_view(_CLIENT) if _CLIENT is not None else _enemy_screen(q)
+    _FOLLOW = True
+    assert 0 <= ex < w and 0 <= ey < h, "play_support: the enemy at (%.0f, %.0f) is still off screen after panning" % (ex, ey)
+    return int(ex), int(ey)
