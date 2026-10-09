@@ -9,5 +9,3 @@ tests/qa/desktop/plays/A/test_S_105_select_and_groups.py::test_s_105_box_select_
 tests/qa/desktop/plays/A/test_S_100_units_turn_not_snap.py::test_s_101_drawn_positions_between_ticks  # TD-VG-A-9 pending
 tests/qa/desktop/plays/A/test_S_096_commands.py::test_s_096_move_order_and_ability_button  # TD-VG-A-9 pending
 tests/qa/desktop/plays/A/test_S_135_abilities.py::test_s_135_ability_slots_and_fx_inventory  # TD-VG-A-9 pending
-tests/qa/desktop/plays/A/test_S_134_shots_and_hits.py::test_s_134_a_shot_is_in_flight_during_combat  # TD-VG-A-9 pending
-tests/qa/desktop/plays/A/test_S_136_deaths.py::test_s_136_a_wreck_is_on_the_field  # TD-VG-A-9 pending
