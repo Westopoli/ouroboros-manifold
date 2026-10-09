@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from play_support import count, has_key, moment, nearest_enemy_px, qa, start_tactical_game, step_until
+from play_support import count, has_key, moment, nearest_enemy_px, qa, select_own_by_drag, start_tactical_game, step_until
 
 
 @pytest.fixture(scope="module")
@@ -25,9 +25,9 @@ WRECK_CAP = 150
 def test_s_136_a_wreck_is_on_the_field(tactical_game):
     client = tactical_game.client
     assert has_key(qa(client), "wrecks"), "S-136: no wrecks in the inventory"
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     client.call("input", "key", "A")
-    ex, ey = nearest_enemy_px(qa(client))
+    ex, ey = nearest_enemy_px(client, qa(client))
     client.call("input", "click", ex, ey, 1)
     time.sleep(0.3)
     seen = step_until(client, lambda q: count(q, "wrecks") > 0, MAX_TICKS, chunk=CHUNK)

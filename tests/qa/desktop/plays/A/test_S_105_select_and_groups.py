@@ -3,12 +3,12 @@ Moment: after a real box drag the selection panel shows the selection (type x co
 shows. Control: no select-all control exists in the tree. Red on main: no hud.selection inventory."""
 import time
 
-from play_support import count, has_key, moment, qa
+from play_support import count, has_key, moment, qa, select_own_by_drag
 
 
 def test_s_105_box_select_shows_in_the_selection_panel(tactical_game):
     client = tactical_game.client
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     time.sleep(0.5)
     state = moment(client, "S-105", "box_selected")
     assert len(state["selected"]) > 0, "S-105 CONTROL: the drag selected nothing (the old selection path)"

@@ -1545,6 +1545,19 @@ owns = [
     "tests/test_vg_c_zoom_once.gd",
 ]
 
+# Architect 2026-10-09: test-only daemon verb "project" x y so lane A plays get the view's own world-to-pixel projection.
+[[piece]]
+id = "G-project"
+manager = "Architect"
+wave = 4
+owns = ["tests/test_qa_daemon.gd"]
+owns_glob = []
+acceptance = ["tests/test_qa_daemon.gd"]
+depends_on = []
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "owns the 'project' verb lines in autoload/qa_daemon.gd (shared with VG-GUARD); dispatch case plus one helper calling the view's projection"
+
 # Merge-gate pieces ordered by Westley 2026-10-09. Tests written first (push/vg-gate-tests); a different agent builds.
 [[piece]]
 id = "HARNESS-gdreach"

@@ -248,6 +248,8 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			return await _dispatch_input(args)
 		"qa_select":
 			return _do_qa_select(args)
+		"project":
+			return _do_project(args)
 		"set_fog_filter":
 			_fog_filter_override = 1 if (args.size() > 0 and bool(args[0])) else 0
 			return {"ok": true, "result": {"fog_filter": fog_filter()}}
@@ -508,6 +510,18 @@ func _peer_call(verb: String, args: Array) -> Dictionary:
 		else:
 			OS.delay_msec(1)
 	return {"ok": false, "error": "peer timed out"}
+
+
+## Verb "project" x y (world): the screen pixel the open tactical view draws that world point at.
+func _do_project(args: Array) -> Dictionary:
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	if scene == null or not scene.has_method("_to_screen"):
+		return {"ok": false, "error": "project: no tactical view"}
+	var p: Array = scene._to_screen(float(args[0]) if args.size() > 0 else 0.0, float(args[1]) if args.size() > 1 else 0.0)
+	var px := float(p[0])
+	var py := float(p[1])
+	return {"ok": true, "result": {"x": px, "y": py, "on_screen": px >= 0.0 and px < scene.SCREEN_W and py >= 0.0 and py < scene.SCREEN_H}}
 
 
 func _do_qa_select(args: Array) -> Dictionary:

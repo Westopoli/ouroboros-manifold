@@ -124,17 +124,62 @@ def step_until(client, pred, max_ticks: int, chunk: int = 5) -> bool:
     return pred(qa(client))
 
 
-def nearest_enemy_px(q: dict) -> tuple:
-    """Screen pixel of the enemy unit nearest (world distance) to the local faction's units, read from qa_state units and
-    projected with the flat view the tactical view uses (screen = (world - camera) * scale + half screen), clamped to the
-    screen. Enemies are fogged at the start, so units_px cannot be used."""
+def select_own_by_drag(client) -> None:
+    """TD-VG-A-9: a real drag over the bounding box of the own-faction entries of qa_state units_px, padded 8 px and clamped
+    at least 8 px inside the screen so the 4 px edge-scroll margin is never touched. Replaces the flat-view drag 0,0 to
+    1900,140, which selects nothing on the tilted 3D ground view. The play runs at 1920x1080, so driver pixels equal canvas pixels."""
+    q = qa(client)
+    me = q["local_faction"]
+    pts = [tuple(p) for uid, p in q["units_px"].items() if uid in q["units"] and q["units"][uid]["faction"] == me]
+    assert pts, "play_support: no own-faction unit in units_px; nothing to drag over"
+    w, h = (int(v) for v in RESOLUTION.split("x"))
+    x0 = int(max(min(p[0] for p in pts) - 8, 8))
+    y0 = int(max(min(p[1] for p in pts) - 8, 8))
+    x1 = int(min(max(p[0] for p in pts) + 8, w - 8))
+    y1 = int(min(max(p[1] for p in pts) + 8, h - 8))
+    client.call("input", "drag", x0, y0, x1, y1)
+
+
+def nearest_enemy_px(client, q: dict) -> tuple:
+    """TD-VG-A-9b: screen pixel of the enemy unit nearest (world distance) to the local faction's units. The enemy is found
+    in qa_state units (all units, fog filter off, TD-VG-A-7); its pixel comes from the test-only daemon verb "project"
+    (the view's own projection, flat or ground rig), because units_px holds only the visible set (R-089-04) so an unseen
+    enemy never has a pixel there. Clamped at least 70 px inside the screen: camera_rig_3d.gd EDGE_SCROLL_ZONE is 60 px,
+    so a click nearer the edge would scroll the camera."""
     units, me = q["units"], q["local_faction"]
     mine = [u for u in units.values() if u["faction"] == me]
     foes = [u for u in units.values() if u["faction"] != me]
     assert mine and foes, "play_support: no local or no enemy units in qa_state"
-    e = min(foes, key=lambda f: min((f["x"] - m["x"]) ** 2 + (f["y"] - m["y"]) ** 2 for m in mine))
+    k = min(range(len(foes)), key=lambda i: min((foes[i]["x"] - m["x"]) ** 2 + (foes[i]["y"] - m["y"]) ** 2 for m in mine))
+    e = foes[k]
+    r = client.call("project", float(e["x"]), float(e["y"]))
+    assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+    for _ in range(12):  # TD-VG-A-9c: an off-screen enemy is zoomed into view as a player would; wheel +1 zooms out (plays/C/s236.py)
+        if r["result"].get("on_screen"):
+            break
+        client.call("input", "wheel", 1)
+        r = client.call("project", float(e["x"]), float(e["y"]))
+        assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
-    cam, sc = q["camera"], q["scale"]
-    px = (e["x"] - cam["x"]) * sc + w / 2
-    py = (e["y"] - cam["y"]) * sc + h / 2
-    return int(min(max(px, 1), w - 2)), int(min(max(py, 1), h - 2))
+    # TD-VG-A-9d: the ground rig's zoom is capped, so a player scrolls: real pointer input parked 2 px inside the screen edge
+    # on the enemy's side (the 2D margin is 4 px, EDGE_SCROLL_ZONE is 60 px, so 2 px works for both), 30 s bound, no camera verb.
+    if not r["result"].get("on_screen"):
+        dx, dy = r["result"]["x"] - w / 2, r["result"]["y"] - h / 2
+        ex_ = 2 if dx < 0 else (w - 3 if dx > 0 else w // 2)
+        ey_ = 2 if dy < 0 else (h - 3 if dy > 0 else h // 2)
+        if abs(dx) <= w / 2:
+            ex_ = w // 2
+        if abs(dy) <= h / 2:
+            ey_ = h // 2
+        client.call("input", "move", ex_, ey_)
+        deadline = time.monotonic() + 30.0
+        while time.monotonic() < deadline:
+            time.sleep(0.2)
+            r = client.call("project", float(e["x"]), float(e["y"]))
+            assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+            if r["result"].get("on_screen"):
+                break
+        client.call("input", "move", w // 2, h // 2)
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after zoom-out and 30 s edge scroll toward it" % k
+    px, py = r["result"]["x"], r["result"]["y"]
+    return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
