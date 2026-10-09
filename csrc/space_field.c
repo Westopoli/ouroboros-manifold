@@ -1,78 +1,86 @@
 /* csrc/space_field.c -- E-17 S-246 (R-246-01), E-01 R-001-04: the space mission's five open-or-blocked layers.
- * K-d contract piece: the bodies below are PLACEHOLDER plates (a few seeded rectangles per layer), so the verb, the
- * bridge and the routing mask can be built against a real field. Lane D replaces generate with the
- * scenes/mockups/landscape/field_map_space.gd port; the getters and the state in om_internal.h stay.
+ * generate runs the port of scenes/mockups/landscape/field_map_space.gd: noise and plates (space_plates.c), raster and
+ * carve (space_raster.c); the masks go to the route grid through om_map_set_obstacle_density (it can clear as well as set,
+ * so a regenerate leaves no stale bits), rubble polygons become cover discs. The getters and the state in om_internal.h stay.
  * See also: om_map_block_rect in csrc/tactical_mapgen.c, whose route grid mission_begin clears (om_map_clear). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
+#include "space_internal.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
-#define SF_PLATES_PER_LAYER 4 /* placeholder count */
-#define SF_PLATE_MIN_CELLS 6 /* placeholder half-sizes, cells */
-#define SF_PLATE_SPAN_CELLS 10
-#define SF_KIND_PLATE 0
-#define SF_KIND_MASS 1
-#define SF_KIND_RUBBLE 2
-#define SF_RECT_PTS 4
-#define SF_MASS_INDEX 2
-#define SF_RUBBLE_INDEX 3
-#define SF_SPLIT_A 0x9E3779B97F4A7C15ULL
-#define SF_SPLIT_B 0xBF58476D1CE4E5B9ULL
-#define SF_SPLIT_C 0x94D049BB133111EBULL
-#define SF_SHIFT_A 30
-#define SF_SHIFT_B 27
-#define SF_SHIFT_C 31
-#define SF_HIGH_SHIFT 33
+#ifdef OM_DEBUG_INJECT
+#define SF_NO_CARVE(w) ((w)->inject == OM_BUG_SPACE_NO_CARVE)
+#else
+#define SF_NO_CARVE(w) 0
+#endif
 #define SF_BYTE_SHIFT 3
 #define SF_BIT_MASK 7u
+#define SF_BLOCKED_DENSITY 1.0 /* above OM_NAVMESH_OBSTACLE_THRESHOLD (0.7): the cell blocks (om_route_grid_is_cell_blocked) */
+#define SF_OPEN_DENSITY 0.0
+#define SF_RUBBLE_COVER_RADIUS 200.0 /* RUBBLE_CELL_WU 400 / 2, field_map_space.gd */
+#define SF_RUBBLE_COVER_HEIGHT OM_MISSION_OBJECTIVE_COVER_HEIGHT /* no space-cover height is pinned; the sim's existing cover disc height */
 
-static uint64_t sf_next(uint64_t *s) {
-    uint64_t z = (*s += SF_SPLIT_A);
-    z = (z ^ (z >> SF_SHIFT_A)) * SF_SPLIT_B;
-    z = (z ^ (z >> SF_SHIFT_B)) * SF_SPLIT_C;
-    return z ^ (z >> SF_SHIFT_C);
+/* Cover discs are only ever added: the map has no remove call, so a repeat of the same field adds nothing new.
+ * See also: om_map_clear in csrc/tactical_mapgen.c, which mission_begin runs before cover is laid. */
+static int sf_has_cover(const om_world *w, double x, double y) {
+    double cx, cy, r, h;
+    for (uint32_t i = om_map_cover_count(w); i-- > 0;)
+        if (om_map_cover_at(w, i, &cx, &cy, &r, &h) && cx == x && cy == y && r == SF_RUBBLE_COVER_RADIUS) return 1;
+    return 0;
 }
 
-static uint32_t sf_range(uint64_t *s, uint32_t n) {
-    return (uint32_t)((sf_next(s) >> SF_HIGH_SHIFT) % n);
+static void sf_rubble_cover(om_world *w, const om_space_field_poly *p) {
+    double x = 0.0, y = 0.0;
+    for (uint32_t c = 0; c < p->n_pts; c++) {
+        x += p->xy[2u * c];
+        y += p->xy[2u * c + 1u];
+    }
+    x /= (double)p->n_pts;
+    y /= (double)p->n_pts;
+    if (!sf_has_cover(w, x, y)) (void)om_map_add_cover(w, x, y, SF_RUBBLE_COVER_RADIUS, SF_RUBBLE_COVER_HEIGHT);
 }
 
-int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h) {
+int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density) {
     om_space_field_state *f;
-    uint64_t rs = (uint64_t)seed;
+    om_space_plates *pl;
+    om_space_cells *cells;
+    int rc = -1;
     if (!w || canvas_w != OM_SPACE_FIELD_CANVAS_WU || canvas_h != OM_SPACE_FIELD_CANVAS_WU) return -1;
+    pl = malloc(sizeof *pl);
+    cells = malloc(sizeof *cells);
+    if (!pl || !cells) goto done;
+    if (om_space_plates_build(seed, canvas_w, density, pl) != 0 || om_space_raster(pl, OM_SPACE_FIELD_CELL_WU, cells) != 0) goto done;
+    if (om_space_carve(pl, cells, OM_SPACE_OBJECTIVE_CX, OM_SPACE_OBJECTIVE_CY, SF_NO_CARVE(w)) < 0) goto done;
     f = &w->space_field;
     memset(f, 0, sizeof *f);
     f->present = 1;
     f->seed = seed;
-    for (uint32_t k = 0; k < OM_SPACE_FIELD_LAYERS; k++) {
-        for (uint32_t n = 0; n < SF_PLATES_PER_LAYER; n++) {
-            uint32_t half = SF_PLATE_MIN_CELLS + sf_range(&rs, SF_PLATE_SPAN_CELLS);
-            uint32_t cx = half + sf_range(&rs, OM_SPACE_FIELD_SIDE - 2 * half);
-            uint32_t cy = half + sf_range(&rs, OM_SPACE_FIELD_SIDE - 2 * half);
-            om_space_field_poly *p = &f->polys[f->n_polys++];
-            double x0 = (double)(cx - half) * OM_SPACE_FIELD_CELL_WU, x1 = (double)(cx + half) * OM_SPACE_FIELD_CELL_WU;
-            double y0 = (double)(cy - half) * OM_SPACE_FIELD_CELL_WU, y1 = (double)(cy + half) * OM_SPACE_FIELD_CELL_WU;
-            p->layer = (uint8_t)k;
-            p->kind = n == SF_MASS_INDEX ? SF_KIND_MASS : (n == SF_RUBBLE_INDEX ? SF_KIND_RUBBLE : SF_KIND_PLATE);
-            p->n_pts = SF_RECT_PTS;
-            {
-                const double cxs[SF_RECT_PTS] = {x0, x1, x1, x0}, cys[SF_RECT_PTS] = {y0, y0, y1, y1};
-                for (uint32_t c = 0; c < SF_RECT_PTS; c++) {
-                    p->xy[2u * c] = cxs[c];
-                    p->xy[2u * c + 1u] = cys[c];
-                }
-            }
-            for (uint32_t y = cy - half; y < cy + half; y++)
-                for (uint32_t x = cx - half; x < cx + half; x++) {
-                    uint32_t i = y * OM_SPACE_FIELD_SIDE + x;
-                    f->mask[k][i >> SF_BYTE_SHIFT] = (uint8_t)(f->mask[k][i >> SF_BYTE_SHIFT] | (1u << (i & SF_BIT_MASK)));
-                }
-            (void)om_map_block_rect(w, x0, y0, x1, y1, k, k);
+    for (uint32_t k = 0; k < OM_SPACE_FIELD_LAYERS; k++)
+        for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++) {
+            int blocked = cells->mask[k][i] != 0;
+            if (blocked) f->mask[k][i >> SF_BYTE_SHIFT] = (uint8_t)(f->mask[k][i >> SF_BYTE_SHIFT] | (1u << (i & SF_BIT_MASK)));
+            om_map_set_obstacle_density(w, i % OM_SPACE_FIELD_SIDE, i / OM_SPACE_FIELD_SIDE, k,
+                                        blocked ? SF_BLOCKED_DENSITY : SF_OPEN_DENSITY);
         }
+    for (uint32_t n = 0; n < pl->n_plates && f->n_polys < OM_SPACE_FIELD_MAX_POLYS; n++) {
+        const om_space_plate *src = &pl->plates[n];
+        om_space_field_poly *p;
+        if (src->dropped) continue;
+        p = &f->polys[f->n_polys++];
+        p->layer = src->layer;
+        p->kind = src->kind;
+        p->n_pts = src->n_pts;
+        memcpy(p->xy, src->xy, sizeof(double) * 2u * src->n_pts);
+        if (p->kind == OM_SPACE_KIND_RUBBLE) sf_rubble_cover(w, p);
     }
-    return 0;
+    rc = 0;
+done:
+    free(pl);
+    free(cells);
+    return rc;
 }
 
 int om_space_field_present(const om_world *w) {
