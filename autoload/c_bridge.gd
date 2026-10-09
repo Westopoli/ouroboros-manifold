@@ -54,6 +54,9 @@ var _mission_begun := false
 var _session_mission: Dictionary = {}
 var _terrain: Dictionary = {}
 var _space_field: Dictionary = {}
+var _lots: Array = []
+var _lots_fetched := false
+var _strongpoints: Array = []
 var _era_kind: int = 0
 
 
@@ -289,6 +292,8 @@ func pump() -> int:
 			"mission":
 				_mission_active = true
 				_mission_begun = false
+				_lots = []
+				_lots_fetched = false
 				_session_mission = frame
 			"tactical":
 				_mission_begun = true
@@ -477,6 +482,8 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 		_tactical_map = frame.get("map", {})
 		_tactical_structures = {}
 		_tactical_profiles = frame.get("profiles", [])
+		_strongpoints = frame.get("strongpoints", [])
+		_strongpoints.sort_custom(func(a, b): return int(a["id"]) < int(b["id"]))
 		for st in frame.get("structures", []):
 			_tactical_structures[int(st["id"])] = st
 	else:
@@ -489,6 +496,7 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 			var row: Dictionary = _tactical_structures.get(sid, {}).duplicate()
 			row.merge(ch, true)
 			_tactical_structures[sid] = row
+		_fold_lots(frame.get("lots_changed", []))
 	for u in frame.get("units", frame.get("units_changed", [])):
 		_tactical_units[int(u["id"])] = u
 	var ids := _tactical_units.keys()
@@ -502,10 +510,13 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 	var structures: Array = []
 	for id in sids:
 		structures.append(_tactical_structures[id])
-	for k in ["units_changed", "units_removed", "structures_changed", "structures_removed"]:
+	for k in ["units_changed", "units_removed", "structures_changed", "structures_removed", "lots_changed"]:
 		view.erase(k)
 	view["structures"] = structures
 	view["profiles"] = _tactical_profiles
+	view["lots"] = _lots
+	view["strongpoints"] = _strongpoints
+	view["economy"] = frame.get("economy", {"doctrine": 3, "resources": {}})
 	view["full"] = true
 	view["units"] = units
 	view["map"] = _tactical_map
@@ -628,6 +639,49 @@ func _fetch_space_field() -> bool:
 	return true
 
 
+# The lots of the begun mission (K-e, docs/architecture.md lots_dump), ascending id, kept current by
+# delta lots_changed rows: [{id, x, y, stage, building, owner}]; [] before the dump.
+func lots() -> Array:
+	return _lots
+
+
+func _lot_row(r: Array) -> Dictionary:
+	return {"id": int(r[0]), "x": float(r[1]), "y": float(r[2]), "stage": int(r[3]), "building": int(r[4]), "owner": int(r[5])}
+
+
+func _fold_lots(rows: Array) -> void:
+	if rows.is_empty():
+		return
+	var by_id := {}
+	for l in _lots:
+		by_id[int(l["id"])] = l
+	for r in rows:
+		by_id[int(r[0])] = _lot_row(r)
+	var ids := by_id.keys()
+	ids.sort()
+	_lots = []
+	for id in ids:
+		_lots.append(by_id[id])
+	_tactical["lots"] = _lots
+
+
+func _fetch_lots() -> bool:
+	var t: Dictionary = _request([{"type": "cmd", "name": "lots_dump"}], ["lots"])
+	if t.is_empty():
+		return false
+	_lots_fetched = true
+	_lots = []
+	_fold_lots_dump(t["lots"].get("lots", []))
+	return true
+
+
+func _fold_lots_dump(rows: Array) -> void:
+	for r in rows:
+		_lots.append(_lot_row(r))
+	_lots.sort_custom(func(a, b): return int(a["id"]) < int(b["id"]))
+	_tactical["lots"] = _lots
+
+
 # The mission frame of the shared world: a mission is started if none is
 # running (one already running is reused), then autosaved (R-111-01).
 func load_mission_live(seed: int, n_regions: int, features: Array, fog_filter: bool = false) -> bool:
@@ -677,7 +731,10 @@ func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	if frames.is_empty():
 		return false
 	_tactical = _reconstruct_tactical(frames["tactical"])
-	return _fetch_terrain() if _era_kind == 1 else _fetch_space_field()
+	var ok := _fetch_terrain() if _era_kind == 1 else _fetch_space_field()
+	if not _lots_fetched:
+		_fetch_lots()
+	return ok
 
 
 # ... one tactical_step of the begun mission (begun here if the player has
