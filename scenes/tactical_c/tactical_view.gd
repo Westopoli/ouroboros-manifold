@@ -310,6 +310,8 @@ func _end_mission() -> void:
 		if String(frame.get("type", "")) == "debrief":
 			got.append(frame)
 	bridge.frame_received.connect(on_frame)
+	if NetMatch.active():
+		NetMatch.leave()
 	bridge.send_command({"type": "cmd", "name": "mission_end"})
 	var deadline: int = Time.get_ticks_msec() + bridge.LIVE_READ_TIMEOUT_MSEC
 	while got.is_empty() and Time.get_ticks_msec() < deadline:
