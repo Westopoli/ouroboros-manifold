@@ -1157,9 +1157,6 @@ static void handle_set_feature(const char *json) {
     write_ack("set_feature");
 }
 
-#define PIPE_SPACE_FIELD_CANVAS_WU 24000.0 /* K-d: the one field canvas (om_space_field_generate) */
-#define PIPE_SPACE_FIELD_SEED_FOLD 32
-#define PIPE_SPACE_FIELD_DENSITY 35.0 /* mission default: scenes/mockups/landscape/field_map_space.gd generate(p_density = 35.0) and var density = 35.0 */
 #define PIPE_SPACE_FIELD_LAYERS 5
 #define PIPE_SPACE_FIELD_CELLS 57600u /* 240 x 240 */
 #define PIPE_SPACE_FIELD_POLY_PTS 64u
@@ -1353,16 +1350,6 @@ static void handle_mission_start(const char *json) {
     if (era_kind == 1 && !om_terrain_present(W)) {
         write_error("mission_start", "terrain generate failed");
         return;
-    }
-    if (era_kind == 0) {
-        uint64_t ws = om_world_seed(W);
-        if (om_space_field_generate(W, (uint32_t)(ws ^ (ws >> PIPE_SPACE_FIELD_SEED_FOLD)), PIPE_SPACE_FIELD_CANVAS_WU,
-                                    PIPE_SPACE_FIELD_CANVAS_WU, PIPE_SPACE_FIELD_DENSITY) != 0) {
-            write_error("mission_start", "space field generate failed");
-            return;
-        }
-    } else {
-        om_space_field_clear(W);
     }
     om_mission_build_objectives(W, archetype);
     g_mission_archetype = archetype;
