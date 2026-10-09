@@ -26,7 +26,7 @@ def test_s_134_a_shot_is_in_flight_during_combat(tactical_game):
     assert has_key(qa(client), "shots_in_flight"), "S-134: no shots_in_flight in the inventory"
     select_own_by_drag(client)
     client.call("input", "key", "A")
-    ex, ey = nearest_enemy_px(qa(client))
+    ex, ey = nearest_enemy_px(client, qa(client))
     client.call("input", "click", ex, ey, 1)
     time.sleep(0.3)
     seen = step_until(client, lambda q: count(q, "shots_in_flight") > 0, MAX_TICKS, chunk=CHUNK)

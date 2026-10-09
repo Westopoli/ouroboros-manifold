@@ -140,17 +140,19 @@ def select_own_by_drag(client) -> None:
     client.call("input", "drag", x0, y0, x1, y1)
 
 
-def nearest_enemy_px(q: dict) -> tuple:
-    """TD-VG-A-9: screen pixel of the enemy unit nearest (world distance) to the local faction's units, read from qa_state
-    units_px (the driver's own projection, correct for the flat and the 3D view). Needs the fog filter off
-    (start_tactical_game(fog_off=True), TD-VG-A-7), else enemies are not in units_px. The point is clamped at least 70 px
-    inside the screen: camera_rig_3d.gd EDGE_SCROLL_ZONE is 60 px, so a click nearer the edge would scroll the camera."""
+def nearest_enemy_px(client, q: dict) -> tuple:
+    """TD-VG-A-9b: screen pixel of the enemy unit nearest (world distance) to the local faction's units. The enemy is found
+    in qa_state units (all units, fog filter off, TD-VG-A-7); its pixel comes from the test-only daemon verb "project"
+    (the view's own projection, flat or ground rig), because units_px holds only the visible set (R-089-04) so an unseen
+    enemy never has a pixel there. Clamped at least 70 px inside the screen: camera_rig_3d.gd EDGE_SCROLL_ZONE is 60 px,
+    so a click nearer the edge would scroll the camera."""
     units, me = q["units"], q["local_faction"]
     mine = [u for u in units.values() if u["faction"] == me]
-    foes = {k: u for k, u in units.items() if u["faction"] != me}
+    foes = [u for u in units.values() if u["faction"] != me]
     assert mine and foes, "play_support: no local or no enemy units in qa_state"
-    k = min(foes, key=lambda i: min((foes[i]["x"] - m["x"]) ** 2 + (foes[i]["y"] - m["y"]) ** 2 for m in mine))
-    assert k in q["units_px"], "play_support: FINDING: nearest enemy %s is not in units_px even with the fog filter off" % k
+    e = min(foes, key=lambda f: min((f["x"] - m["x"]) ** 2 + (f["y"] - m["y"]) ** 2 for m in mine))
+    r = client.call("project", float(e["x"]), float(e["y"]))
+    assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
-    px, py = q["units_px"][k]
+    px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
