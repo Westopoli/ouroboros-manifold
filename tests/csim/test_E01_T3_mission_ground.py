@@ -254,7 +254,12 @@ def test_flying_units_still_spawn_on_unwalkable_ground(lib, world_factory):
 # Captured 2026-10-06 on origin/push/t3-contract (space era, archetype 3, military 20, world seed s): sha256 of
 # every unit (type, faction, x, y) and every placed structure slot after om_mission_setup. Regression guard, not a
 # red test. (om_world_get_state_checksum is the same for all three seeds, so it cannot guard this.)
-SPACE_GOLDEN = dict.fromkeys((1, 2, 3), "43fa2378887c19f51261b3daf7afdcbbfb02273590c65d88467e79569995d2ef")  # space setup ignores the seed today
+# TD-VG-D-2 (rule-changed, R-246-*): D5 puts the space field into every space mission, so the space setup hash now depends on the seed.
+SPACE_GOLDEN = {
+    1: "0f5382c47727dbe9b69bc213a5bee26b33a9c94f79c0a5fa6a710c11ae66e1d8",
+    2: "0d3e90303ca4bbb938141723207a7bdf07a5e26983c3ff3a3b9a1ace05e45381",
+    3: "ae30be2f47ceeb8937b6b13a67df381552b98794d2e65c41a94523fd201b572b",
+}
 
 
 def _state_hash(lib, w):
