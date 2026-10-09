@@ -150,9 +150,17 @@ def nearest_enemy_px(client, q: dict) -> tuple:
     mine = [u for u in units.values() if u["faction"] == me]
     foes = [u for u in units.values() if u["faction"] != me]
     assert mine and foes, "play_support: no local or no enemy units in qa_state"
-    e = min(foes, key=lambda f: min((f["x"] - m["x"]) ** 2 + (f["y"] - m["y"]) ** 2 for m in mine))
+    k = min(range(len(foes)), key=lambda i: min((foes[i]["x"] - m["x"]) ** 2 + (foes[i]["y"] - m["y"]) ** 2 for m in mine))
+    e = foes[k]
     r = client.call("project", float(e["x"]), float(e["y"]))
     assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+    for _ in range(12):  # TD-VG-A-9c: an off-screen enemy is zoomed into view as a player would; wheel +1 zooms out (plays/C/s236.py)
+        if r["result"].get("on_screen"):
+            break
+        client.call("input", "wheel", 1)
+        r = client.call("project", float(e["x"]), float(e["y"]))
+        assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after 12 zoom-out notches" % k
     w, h = (int(v) for v in RESOLUTION.split("x"))
     px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
