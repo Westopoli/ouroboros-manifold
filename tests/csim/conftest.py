@@ -2723,6 +2723,7 @@ def _bind_e17(lib):
     _bind(lib, "om_render_detect_repeated_tile_boundary", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_route_grid_is_cell_blocked", [ctypes.c_double], ctypes.c_int, ("obstacle",))
     _bind(lib, "om_space_field_clear", [W], None, ("w",))
+    _bind(lib, "om_space_field_generate_nodes", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double, P(ctypes.c_double), P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_int, ("w", "seed", "canvas_w", "canvas_h", "density", "node_xy", "node_slots", "n_nodes"))
     _bind(lib, "om_space_field_poly_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_space_field_poly_get", [W, ctypes.c_uint32, P(ctypes.c_uint32), P(ctypes.c_uint32), P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("w", "i", "layer", "kind", "xy", "cap_pts"))
     _bind(lib, "om_space_field_present", [W], ctypes.c_int, ("w",))

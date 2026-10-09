@@ -28,6 +28,7 @@
 #define SP_DIM 241             /* noise grid: canvas / SPACING + 1 */
 #define SP_SPACING 100.0
 #define SP_NODES 6
+#define SP_NODES_MAX (SP_NODES + OM_SPACE_FIELD_MAX_NODES) /* the six built nodes plus any extra clearing nodes the caller gives */
 #define SP_STAGE0 3 /* nodes: objective, spawn, spawn, staging, staging, vantage */
 #define SP_VANTAGE 5
 #define SP_LAYER_SEED_STEP 7919u /* LAYER_SEED_STEP, gd:39 */
@@ -301,9 +302,13 @@ static int sp_emit(om_space_plates *out, int k, int kind, const sp_poly *poly) {
 }
 
 /* gd _build_nodes: objective, two spawns on the diagonal, two staging nodes toward the centre, one vantage. */
-static void sp_nodes(double canvas, sp_v2 *nodes) {
+static void sp_nodes(double canvas, const double *xy, uint32_t n, sp_v2 *nodes) {
     sp_v2 centre = {canvas * 0.5, canvas * 0.5};
     sp_v2 spawn[2] = {{canvas * SP_SPAWN_NEAR, canvas * SP_SPAWN_NEAR}, {canvas * SP_SPAWN_FAR, canvas * SP_SPAWN_FAR}};
+    if (n >= OM_SPACE_FIELD_MIN_NODES) { /* VG-D8 R-246-07: the mission's two anchors and objective replace the diagonal points */
+        for (uint32_t i = 0; i < 2; i++) { spawn[i].x = xy[2 * i]; spawn[i].y = xy[2 * i + 1]; }
+        centre.x = xy[2 * 2]; centre.y = xy[2 * 2 + 1];
+    }
     static const double quarter[SP_QUARTERS][2] = {{SP_Q_LO, SP_Q_LO}, {SP_Q_HI, SP_Q_LO}, {SP_Q_LO, SP_Q_HI}, {SP_Q_HI, SP_Q_HI}};
     double best_score = -HUGE_VAL;
     sp_v2 best = centre;
@@ -323,11 +328,15 @@ static void sp_nodes(double canvas, sp_v2 *nodes) {
         if (score > best_score + 1.0) { best_score = score; best = pos; }
     }
     nodes[SP_VANTAGE] = best;
+    for (uint32_t i = OM_SPACE_FIELD_MIN_NODES; i < n && SP_NODES + (i - OM_SPACE_FIELD_MIN_NODES) < SP_NODES_MAX; i++) {
+        nodes[SP_NODES + (i - OM_SPACE_FIELD_MIN_NODES)].x = xy[2 * i];
+        nodes[SP_NODES + (i - OM_SPACE_FIELD_MIN_NODES)].y = xy[2 * i + 1];
+    }
 }
 
 /* gd _build_plate_layer, polygons only. */
 static int sp_layer(sp_scratch *sc, int k, uint32_t seed, double canvas, double density, const double *shared,
-                    const double *size_noise, const sp_v2 *nodes, om_space_plates *out) {
+                    const double *size_noise, const sp_v2 *nodes, const double *rad, int n_nodes, om_space_plates *out) {
     uint32_t ls = seed + (uint32_t)k * SP_LAYER_SEED_STEP;
     int nsite = 0, nplated = 0, ninside = 0, tail, nkeys = SP_KEYS;
     double low_cut, high_cut, solid;
@@ -433,11 +442,11 @@ static int sp_layer(sp_scratch *sc, int k, uint32_t seed, double canvas, double 
         }
     }
 
-    for (int nd = 0; nd < SP_NODES; nd++) {
+    for (int nd = 0; nd < n_nodes; nd++) {
         int home = sp_nearest_plate(sc, nodes[nd]);
         for (int t = 0; t < nplated; t++) {
             int s = sc->plated_ids[t];
-            if (!sc->cleared[s] && (s == home || sp_dist(sc->sites[s].pos, nodes[nd]) <= SP_CLEAR_RADIUS)) {
+            if (!sc->cleared[s] && (s == home || sp_dist(sc->sites[s].pos, nodes[nd]) <= rad[nd])) {
                 sc->cleared[s] = 1; sc->kept[s] = 0; sc->mass[s] = 0;
             }
         }
@@ -536,11 +545,13 @@ static int sp_layer(sp_scratch *sc, int k, uint32_t seed, double canvas, double 
     return 0;
 }
 
-int om_space_plates_build(uint32_t seed, double canvas, double density, om_space_plates *out) {
+int om_space_plates_build_nodes(uint32_t seed, double canvas, double density, const double *node_xy, const double *node_radius,
+                               uint32_t n_nodes, om_space_plates *out) {
     sp_scratch *sc;
     double *shared, *size_noise;
-    sp_v2 nodes[SP_NODES];
-    int rc = 0;
+    sp_v2 nodes[SP_NODES_MAX];
+    double rad[SP_NODES_MAX];
+    int rc = 0, total;
     if (!out || canvas != OM_SPACE_FIELD_CANVAS_WU) return -1;
     memset(out, 0, sizeof *out);
     if (!(density > 0.0)) density = 0.0;
@@ -550,12 +561,23 @@ int om_space_plates_build(uint32_t seed, double canvas, double density, om_space
     size_noise = malloc(sizeof(double) * SP_DIM * SP_DIM);
     if (!sc || !shared || !size_noise) { free(sc); free(shared); free(size_noise); return -1; }
     if (om_space_noise_layer(seed, canvas, 0, 1, shared, SP_DIM * SP_DIM) == 0) rc = -1;
-    sp_nodes(canvas, nodes);
+    if (n_nodes > OM_SPACE_FIELD_MAX_NODES) n_nodes = OM_SPACE_FIELD_MAX_NODES;
+    if (n_nodes < OM_SPACE_FIELD_MIN_NODES) n_nodes = 0;
+    sp_nodes(canvas, node_xy, n_nodes, nodes);
+    total = SP_NODES + (n_nodes > OM_SPACE_FIELD_MIN_NODES ? (int)n_nodes - OM_SPACE_FIELD_MIN_NODES : 0);
+    memset(rad, 0, sizeof rad);
+    if (n_nodes >= OM_SPACE_FIELD_MIN_NODES) { rad[0] = node_radius[2]; rad[1] = node_radius[0]; rad[2] = node_radius[1]; /* nodes: objective, spawns */ }
+    for (uint32_t i = OM_SPACE_FIELD_MIN_NODES; i < n_nodes; i++) rad[SP_NODES + (i - OM_SPACE_FIELD_MIN_NODES)] = node_radius[i];
+    for (int i = 0; i < total; i++) if (!(rad[i] > 0.0)) rad[i] = SP_CLEAR_RADIUS;
     for (int k = 0; k < OM_SPACE_FIELD_LAYERS && rc == 0; k++) {
         uint32_t ls = seed + (uint32_t)k * SP_LAYER_SEED_STEP;
         if (om_space_noise_layer(ls + SP_SIZE_SEED_OFFSET, canvas, (uint32_t)k, 1, size_noise, SP_DIM * SP_DIM) == 0) { rc = -1; break; }
-        rc = sp_layer(sc, k, seed, canvas, density, shared, size_noise, nodes, out);
+        rc = sp_layer(sc, k, seed, canvas, density, shared, size_noise, nodes, rad, total, out);
     }
     free(sc); free(shared); free(size_noise);
     return rc;
+}
+
+int om_space_plates_build(uint32_t seed, double canvas, double density, om_space_plates *out) {
+    return om_space_plates_build_nodes(seed, canvas, density, NULL, NULL, 0, out);
 }

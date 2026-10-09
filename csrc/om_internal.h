@@ -93,6 +93,9 @@ typedef struct om_space_field_poly {
 typedef struct om_space_field_state {
     uint8_t present;
     uint32_t seed;
+    uint32_t n_nodes; /* VG-D8: the clearing nodes the held field was generated with, so om_space_field_generate on the same seed repeats it */
+    double node_xy[2 * OM_SPACE_FIELD_MAX_NODES];
+    uint32_t node_slots[OM_SPACE_FIELD_MAX_NODES];
     uint8_t mask[OM_SPACE_FIELD_LAYERS][OM_SPACE_FIELD_CELLS / 8]; /* bit (i & 7) of byte (i >> 3), i = cy * side + cx, 1 blocked */
     uint32_t n_polys;
     om_space_field_poly polys[OM_SPACE_FIELD_MAX_POLYS];

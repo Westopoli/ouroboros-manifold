@@ -1073,6 +1073,10 @@ typedef enum { OM_EMIT_SILENT = 0, OM_EMIT_ACTIVE = 1 } om_emission;
 /* Terrain stage 2 (spec 2026-10-06): how a unit type moves (om_roster_set_movement_kind). */
 typedef enum { OM_MOVE_FLYING = 0, OM_MOVE_WALKING = 1, OM_MOVE_SWIMMING = 2 } om_movement_kind;
 
+/* VG-D8 R-246-07: the most clearing nodes om_space_field_generate_nodes takes (two faction anchors, the objective, extras). */
+#define OM_SPACE_FIELD_MAX_NODES 8
+#define OM_SPACE_FIELD_MIN_NODES 3 /* the two faction anchors and the objective; fewer takes the old diagonal nodes */
+
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
     uint64_t tick;
@@ -1810,6 +1814,7 @@ void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
 
 /* ---- generated from signatures.toml: space_field.c ---- */
 int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density);
+int om_space_field_generate_nodes(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density, const double *node_xy, const uint32_t *node_slots, uint32_t n_nodes);
 int om_space_field_present(const om_world *w);
 uint32_t om_space_field_get_mask(const om_world *w, uint32_t layer, uint8_t *out, uint32_t cap);
 void om_space_field_clear(om_world *w);

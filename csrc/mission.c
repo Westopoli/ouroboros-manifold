@@ -2452,7 +2452,7 @@ static void om_mission_reach_cell_sort(om_mission_reach_cell *a, uint32_t n) {
 
 /* Ground era grid: the reach cells nearest the anchor first, side x side slots at collision spacing in each; slots on
  * slope cells or another band are skipped. The space-era grid below is unchanged. */
-static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint32_t *counts, int32_t faction, double x0, double y0, double dir,
+static int om_mission_spawn_force(om_world *w, om_mission_state *st, const uint32_t *counts, int32_t faction, double x0, double y0, double dir,
                                     const uint8_t *reach, uint32_t rcw, uint32_t rch, int rlayer, const uint8_t *good) {
     uint32_t total = 0;
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) total += counts[t];
@@ -2460,6 +2460,7 @@ static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint
     while (cols * cols < total) cols++;
     double spacing = 2.0 * OM_UNIT_COLLISION_RADIUS;
     uint32_t k = 0, n_order = 0;
+    int short_pocket = 0;
     om_mission_reach_cell *order = NULL;
     if (reach) {
         int64_t ax = (int64_t)(x0 / OM_TERRAIN_CELL_WU), ay = (int64_t)(y0 / OM_TERRAIN_CELL_WU);
@@ -2487,7 +2488,8 @@ static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint
         for (uint32_t c = 0; c < counts[t]; c++, k++) {
             uint32_t id = 0;
             if (order && !reach && n_order) {
-                const om_mission_reach_cell *rc = &order[(k / OM_MISSION_SLOTS_PER_CELL) % n_order];
+                if (k / OM_MISSION_SLOTS_PER_CELL >= n_order) { short_pocket = 1; goto out; } /* VG-D8 R-246-07: never wrap onto a used slot */
+                const om_mission_reach_cell *rc = &order[k / OM_MISSION_SLOTS_PER_CELL];
                 double x = ((double)(rc->cell % OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU + ((double)(k % OM_MISSION_SLOT_SIDE) - 1.0) * spacing;
                 double y = ((double)(rc->cell / OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU + ((double)((k / OM_MISSION_SLOT_SIDE) % OM_MISSION_SLOT_SIDE) - 1.0) * spacing;
                 id = om_unit_spawn(w, (int)t, faction, x, y, 0);
@@ -2514,7 +2516,9 @@ static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint
             }
         }
     }
+out:
     free(order);
+    return short_pocket;
 }
 
 /* E-17 S-246 R-246-05 / Q-166-08: in a space era every anchor (objective, spawns, structure slots) sits on a cell that is
@@ -2562,6 +2566,17 @@ static uint32_t om_mission_space_flood(const uint8_t *ok, uint8_t *seen, uint32_
     return tail;
 }
 
+/* A cell with r cells of margin inside the canvas and open on all five layers. */
+static int om_mission_space_cell_ok(const om_space_field_state *f, int32_t cx, int32_t cy, int32_t r) {
+    const int32_t side = OM_SPACE_FIELD_SIDE;
+    if (cx < r || cy < r || cx >= side - r || cy >= side - r) return 0;
+    for (uint32_t k = 0; k < OM_SPACE_FIELD_LAYERS; k++)
+        for (int32_t dy = -r; dy <= r; dy++)
+            for (int32_t dx = -r; dx <= r; dx++)
+                if (om_mission_space_blocked(f, k, (uint32_t)((cy + dy) * side + cx + dx))) return 0;
+    return 1;
+}
+
 /* Returns the good-cell map (caller frees) and moves the objective onto it; NULL leaves everything as it was. */
 static uint8_t *om_mission_space_good(const om_world *w, double *ox, double *oy) {
     const om_space_field_state *f = &w->space_field;
@@ -2575,11 +2590,7 @@ static uint8_t *om_mission_space_good(const om_world *w, double *ox, double *oy)
     if (!ok || !good || !seen || !queue) goto fail;
     for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++) {
         int32_t cx = (int32_t)(i % OM_SPACE_FIELD_SIDE), cy = (int32_t)(i / OM_SPACE_FIELD_SIDE);
-        ok[i] = (uint8_t)(cx >= r && cy >= r && cx < side - r && cy < side - r);
-        for (uint32_t k = 0; k < OM_SPACE_FIELD_LAYERS && ok[i]; k++)
-            for (int32_t dy = -r; dy <= r && ok[i]; dy++)
-                for (int32_t dx = -r; dx <= r; dx++)
-                    if (om_mission_space_blocked(f, k, (uint32_t)((cy + dy) * side + cx + dx))) { ok[i] = 0; break; }
+        ok[i] = (uint8_t)om_mission_space_cell_ok(f, cx, cy, r);
     }
     /* The objective sits in the largest cleared section (first by cell index on a tie), at its cell nearest the requested point:
      * a pocket nearest the canvas centre would leave a handful of cells for the whole mission. */
@@ -2622,6 +2633,29 @@ static uint8_t *om_mission_space_good(const om_world *w, double *ox, double *oy)
 fail:
     free(ok); free(good); free(seen); free(queue);
     return NULL;
+}
+
+/* VG-D8 R-246-07: a faction's own pocket: the section of cells open on all layers (OM_MISSION_POCKET_MARGIN_CELLS of margin, so
+ * an anchor on the canvas edge keeps a pocket) holding the cell nearest its anchor, the anchor moved onto that cell. Not tied
+ * to the objective's section: the field's carve joins the pockets, the army needs only its own cells. NULL when none. */
+#define OM_MISSION_POCKET_MARGIN_CELLS 1
+static uint8_t *om_mission_space_pocket(const om_world *w, double *x, double *y) {
+    const om_space_field_state *f = &w->space_field;
+    uint8_t *ok = f->present ? (uint8_t *)malloc(OM_SPACE_FIELD_CELLS) : NULL;
+    uint8_t *pocket = ok ? (uint8_t *)calloc(OM_SPACE_FIELD_CELLS, 1) : NULL;
+    uint32_t *queue = pocket ? (uint32_t *)malloc(sizeof(uint32_t) * OM_SPACE_FIELD_CELLS) : NULL;
+    int32_t c = -1;
+    if (queue) {
+        for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++)
+            ok[i] = (uint8_t)om_mission_space_cell_ok(f, (int32_t)(i % OM_SPACE_FIELD_SIDE), (int32_t)(i / OM_SPACE_FIELD_SIDE), OM_MISSION_POCKET_MARGIN_CELLS);
+        c = om_mission_space_nearest(ok, *x, *y);
+    }
+    if (c < 0) { free(ok); free(pocket); free(queue); return NULL; }
+    om_mission_space_flood(ok, pocket, queue, (uint32_t)c);
+    free(ok); free(queue);
+    *x = ((double)(c % OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    *y = ((double)(c / OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    return pocket;
 }
 
 /* take: clear the chosen cell so the next anchor snapped against the same map lands on another one. */
@@ -2674,6 +2708,9 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_tactical_reset(w);
     om_map_clear(w);
     om_map_set_canvas(w, canvas, canvas); /* clear unsets the canvas; movement clamps to it */
+    double px = canvas / 2.0, py = edge, ex = canvas / 2.0, ey = canvas - edge;
+    uint32_t n_player = 0, n_enemy = 0;
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) { n_player += st->player_units[t]; n_enemy += st->enemy_units[t]; }
     if (om_era_kind(w) == 1) {
         uint64_t seed = om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype;
         om_space_field_clear(w);
@@ -2681,13 +2718,15 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     } else {
         om_terrain_clear(w);
         /* E-17 S-246 R-246-01: the space field, after the canvas is set (om_map_clear unsets it). */
-        if (om_space_field_generate(w, (uint32_t)(om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype), canvas, canvas, OM_SPACE_FIELD_DENSITY_DEFAULT) != 0)
+        /* VG-D8 R-246-07: the clearing nodes are the pre-snap anchors and the objective; the field serves the mission. */
+        const double node_xy[6] = {px, py, ex, ey, canvas / 2.0, canvas / 2.0};
+        const uint32_t node_slots[3] = {n_player, n_enemy, 0};
+        if (om_space_field_generate_nodes(w, (uint32_t)(om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype), canvas, canvas, OM_SPACE_FIELD_DENSITY_DEFAULT, node_xy, node_slots, OM_SPACE_FIELD_MIN_NODES) != 0)
             om_space_field_clear(w);
     }
     memset(st->objective_center_set, 0, sizeof(st->objective_center_set));
     st->n_force_units = 0;
     double ox = canvas / 2.0, oy = canvas / 2.0;
-    double px = canvas / 2.0, py = edge, ex = canvas / 2.0, ey = canvas - edge;
     uint32_t rcw = 0, rch = 0, need = 0;
     int rlayer = 0;
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) need += st->player_units[t] + st->enemy_units[t];
@@ -2697,15 +2736,19 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     if (reach) { ox = (px + ex) / 2.0; oy = (py + ey) / 2.0; } /* the reach set may not span the canvas: objective between the spawns */
     om_mission_reach_snap(reach, rcw, rch, &ox, &oy);
     uint8_t *space_good = om_mission_space_good(w, &ox, &oy);
-    om_mission_space_snap(space_good, &px, &py, 0);
-    om_mission_space_snap(space_good, &ex, &ey, 0);
+    uint8_t *player_pocket = om_mission_space_pocket(w, &px, &py);
+    uint8_t *enemy_pocket = om_mission_space_pocket(w, &ex, &ey);
     om_map_add_spine_node(w, ox, oy, OM_MISSION_SPINE_NODE_OBJECTIVE);
     om_map_add_cover(w, ox, oy, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
     om_map_add_spawn_point(w, px, py, player);
     om_map_add_spawn_point(w, ex, ey, enemy);
-    om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, space_good);
-    om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, space_good);
+    if (om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
+        fprintf(stderr, "mission: player spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+    if (om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, enemy_pocket))
+        fprintf(stderr, "mission: enemy spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
     free(reach);
+    free(player_pocket);
+    free(enemy_pocket);
     /* B9-13/Q-123-01: the mission's enemy units are macro force 0 (enemy
      * macro forces are indexed separately from the player's force -- the
      * player is never a macro force). Fallback point is the enemy's own
