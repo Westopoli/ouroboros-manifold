@@ -67,6 +67,7 @@ typedef struct {
 
 extern om_world *W;
 extern uint64_t g_tick;
+extern int g_roster_types;
 extern uint32_t g_n_regions;
 extern uint64_t g_tactical_tick;
 extern int g_net_full_next;

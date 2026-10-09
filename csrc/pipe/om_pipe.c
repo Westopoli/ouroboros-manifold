@@ -260,6 +260,7 @@ int get_int_array(const char *json, const char *key, int *out, int max) {
 
 om_world *W = NULL;
 uint64_t g_tick = 0;
+int g_roster_types = 0;
 uint32_t g_n_regions = 0;
 uint64_t g_tactical_tick = 0;
 int g_net_full_next = 0;
@@ -1305,6 +1306,7 @@ static void handle_mission_start(const char *json) {
         }
     }
     if (have_mission) {
+        g_roster_types = mk_n / 2;
         for (int i = 0; i + 1 < mk_n; i += 2) (void)om_roster_set_movement_kind(W, mk[i], mk[i + 1]);
         om_set_era_kind(W, (int)era_kind);
         if (quiet_world)

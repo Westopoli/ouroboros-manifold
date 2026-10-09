@@ -83,6 +83,24 @@ void handle_terrain_dump(void) {
         free(hv);
         free(hb);
     }
+    {
+        double lf[5];
+        uint32_t nl = om_terrain_band_heights(W, lf, 5);
+        jb_raw(&j, ",\"layer_floors_wu\":[");
+        for (uint32_t i = 0; i < nl; i++) {
+            if (i) jb_putc(&j, ',');
+            jb_double(&j, lf[i]);
+        }
+        jb_raw(&j, "],\"flyer_types\":[");
+        int first = 1;
+        for (int t = 0; t < g_roster_types; t++) {
+            if (om_unit_profile_movement_kind(W, t) != OM_MOVE_FLYING) continue;
+            if (!first) jb_putc(&j, ',');
+            first = 0;
+            jb_uint(&j, (uint32_t)t);
+        }
+        jb_putc(&j, ']');
+    }
     jb_raw(&j, ",\"slopes\":[");
     uint32_t ns = om_terrain_slope_count(W);
     for (uint32_t i = 0; i < ns; i++) {
