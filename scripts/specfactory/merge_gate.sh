@@ -198,6 +198,16 @@ else
     ok reach_lint "$(tail_oneline "$REACH_LOG" 1)"
 fi
 
+# -------------------------------------------------------------- 5b-gd. Godot reach lint (HARNESS-gdreach)
+# Same regression mode as reach_lint: only a .gd newly unreachable from the main scene/autoloads rejects.
+GDREACH_LOG="$SCRATCH_ROOT/gd_reach_lint.log"
+"$PYTHON" "$GATE_DIR/gd_reach_lint.py" --ref "HEAD" --base-ref "$(git -C "$CANDIDATE" merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")" --project "$CANDIDATE" >"$GDREACH_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject gd_reach "$(grep '^NEW UNREACHABLE' "$GDREACH_LOG" | tr '\n' ' ')"
+else
+    warn gd_reach "$(tail_oneline "$GDREACH_LOG" 1)"
+fi
+
 # -------------------------------------------------------------- 5c. single-owner lint
 # Same gap-fix plan item: no file owned by two in-flight pieces. Reads
 # THIS repo's own pieces.toml ($PIECES_TOML), never the candidate's copy
@@ -483,6 +493,20 @@ if [[ $? -ne 0 ]]; then
     reject playthrough "$(sed 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
 else
     ok playthrough "$(sed 's/^OK //' "$PT_LOG" | tr '\n' ' ')"
+fi
+
+# -------------------------------------------------------------- 9b. lane_plays (per-lane desktop plays, real client under xvfb)
+# Runs the plays of each lane whose globs (lane_plays.toml) the diff touches; red outside
+# lane_plays_known_red.txt rejects. See merge_gate_support.py lane_plays_check.
+LP_LOG="$SCRATCH_ROOT/lane_plays.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject lane_plays "$(sed 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+elif grep -q '^OK skipped' "$LP_LOG"; then
+    warn lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
+else
+    ok lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
 fi
 
 # -------------------------------------------------------------- 10. checksum_trace O0 vs O2

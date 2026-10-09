@@ -1540,7 +1540,29 @@ status = "in_flight"
 manager = "Architect"
 owns = [
     "scenes/ground3d/ground3d.gd",  # wiring: add ground_units.gd and slope_view.gd as children, feed set_terrain/set_frame, add slope_view and units3d to qa_state
-    "scenes/tactical_c/tactical_view.gd",  # note: only _unhandled_input / _zoom_by (about lines 865-922) if a zoom fix is needed; the double zoom did not reproduce (see test_vg_c_zoom_once.gd)
     "tests/test_vg_c_wire_ground3d.gd",
     "tests/test_vg_c_zoom_once.gd",
 ]
+
+# Merge-gate pieces ordered by Westley 2026-10-09. Tests written first (push/vg-gate-tests); a different agent builds.
+[[piece]]
+id = "HARNESS-gdreach"
+manager = "Architect"
+owns = ["scripts/specfactory/gd_reach_lint.py", "scripts/specfactory/gd_reach_stubs.txt", "tests/specfactory/test_gd_reach_lint.py"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "one new file; also inserts the stage gd_reach in the SHARED scripts/specfactory/merge_gate.sh after reach_lint (one stage insert, queued)"
+
+[[piece]]
+id = "HARNESS-laneplays"
+manager = "Architect"
+owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/lane_plays_known_red.txt", "tests/specfactory/test_lane_plays_check.py"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane_plays_check in the SHARED merge_gate_support.py plus the lane_plays stage in the SHARED merge_gate.sh after playthrough (queued edits)"
