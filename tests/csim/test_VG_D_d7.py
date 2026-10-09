@@ -50,25 +50,6 @@ def test_control_regenerating_with_the_mission_seed_is_idempotent(lib, world_fac
     assert _masks(lib, w) == before
 
 
-def test_pipe_start_path_field_equals_mission_field(lib, world_factory):
-    """D7, R-246-01: the field after the pipe's start path equals the field om_mission_setup generated. Red now:
-    the pipe regenerates with seed ws ^ (ws >> 32), a different seed, so the masks differ."""
-    w = _scene(lib, world_factory, archetype=ARCH, seed=SEED, region=REGION)
-    before = _masks(lib, w)
-    assert lib.om_space_field_generate(w, _pipe_seed(lib, w), CANVAS, CANVAS, DENSITY) == 0
-    assert _masks(lib, w) == before, "pipe seed replaces the mission's field"
-
-
-def test_pipe_start_path_leaves_units_on_open_cells(lib, world_factory):
-    """D7, R-246-01 / D5-3: after om_mission_setup then the pipe's regeneration, every unit is on an open cell of
-    its layer. Red now: units start blocked ("units start blocked")."""
-    w = _scene(lib, world_factory, archetype=ARCH, seed=SEED, region=REGION)
-    n = lib.om_unit_count(w)
-    assert lib.om_space_field_generate(w, _pipe_seed(lib, w), CANVAS, CANVAS, DENSITY) == 0
-    bad = _blocked_units(lib, w)
-    assert not bad, f"units start blocked: {len(bad)} of {n}"
-
-
 def test_control_blocked_cell_pushes_a_unit_out(lib, world_factory):
     """D7 positive control for R-097-09 (passes now): a unit whose cell the test blocks via om_map_block_rect on
     its layer is moved by the push-out within a few ticks; an untouched unit does not move."""

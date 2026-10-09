@@ -27,6 +27,7 @@ import pytest
 W = ctypes.c_void_p
 U8P = ctypes.POINTER(ctypes.c_uint8)
 CANVAS = 24000.0
+DENSITY = 35.0
 N = 240
 CELLS = N * N
 LAYERS = 5
@@ -38,7 +39,7 @@ def bind(lib):
     missing = [n for n in NEW if not hasattr(lib, n)]
     assert not missing, f"K-d symbols missing from libouroboros.so: {missing}"
     g = lib.om_space_field_generate
-    g.argtypes, g.restype = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int
+    g.argtypes, g.restype = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_int
     p = lib.om_space_field_present
     p.argtypes, p.restype = [W], ctypes.c_int
     m = lib.om_space_field_get_mask
@@ -48,7 +49,7 @@ def bind(lib):
 
 def make_world(lib, world_factory):
     w = world_factory(n_regions=1)
-    assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
+    assert lib.om_map_set_canvas(w, CANVAS, CANVAS, DENSITY) == 0
     return w
 
 
@@ -85,7 +86,7 @@ def test_generate_makes_five_binary_layers_with_both_states(lib, world_factory):
     """R-246-01 / R-001-04: five layers, each cell open or blocked; every layer has blocked cells and open cells."""
     g, _, _ = bind(lib)
     w = make_world(lib, world_factory)
-    assert g(w, SEED, CANVAS, CANVAS) == 0
+    assert g(w, SEED, CANVAS, CANVAS, DENSITY) == 0
     assert lib.om_space_field_present(w) == 1
     for k, m in enumerate(masks_of(lib, w)):
         assert set(m) <= {0, 1}, f"layer {k}: values {sorted(set(m))}"
@@ -96,7 +97,7 @@ def test_get_mask_bounds(lib, world_factory):
     """Layer 5 and a short buffer return 0 and write nothing."""
     g, _, _ = bind(lib)
     w = make_world(lib, world_factory)
-    assert g(w, SEED, CANVAS, CANVAS) == 0
+    assert g(w, SEED, CANVAS, CANVAS, DENSITY) == 0
     buf = (ctypes.c_uint8 * CELLS)()
     assert lib.om_space_field_get_mask(w, LAYERS, buf, CELLS) == 0
     assert lib.om_space_field_get_mask(w, 0, buf, CELLS - 1) == 0
@@ -107,14 +108,14 @@ def test_same_seed_identical_masks_two_worlds(lib, world_factory):
     """Determinism contract: same seed, byte-identical masks."""
     g, _, _ = bind(lib)
     a, b = make_world(lib, world_factory), make_world(lib, world_factory)
-    assert g(a, SEED, CANVAS, CANVAS) == 0 and g(b, SEED, CANVAS, CANVAS) == 0
+    assert g(a, SEED, CANVAS, CANVAS, DENSITY) == 0 and g(b, SEED, CANVAS, CANVAS, DENSITY) == 0
     assert differing_layers(masks_of(lib, a), masks_of(lib, b)) == []
 
 
 def test_different_seed_changes_a_layer(lib, world_factory):
     g, _, _ = bind(lib)
     a, b = make_world(lib, world_factory), make_world(lib, world_factory)
-    assert g(a, SEED, CANVAS, CANVAS) == 0 and g(b, SEED + 1, CANVAS, CANVAS) == 0
+    assert g(a, SEED, CANVAS, CANVAS, DENSITY) == 0 and g(b, SEED + 1, CANVAS, CANVAS, DENSITY) == 0
     assert differing_layers(masks_of(lib, a), masks_of(lib, b)), "seeds 11 and 12 gave identical fields"
 
 
@@ -131,7 +132,7 @@ def test_generated_mask_is_what_routing_reads(lib, world_factory):
     om_map_sample_layer_accessibility (1 open) at every cell centre of every layer."""
     g, _, _ = bind(lib)
     w = make_world(lib, world_factory)
-    assert g(w, SEED, CANVAS, CANVAS) == 0
+    assert g(w, SEED, CANVAS, CANVAS, DENSITY) == 0
     f = lib.om_map_sample_layer_accessibility
     f.argtypes, f.restype = [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_int
     bad = []
@@ -147,6 +148,6 @@ def test_regenerate_replaces_field(lib, world_factory):
     """A second generate (another seed) replaces the first; no stale blocked bits from the first remain."""
     g, _, _ = bind(lib)
     a, b = make_world(lib, world_factory), make_world(lib, world_factory)
-    assert g(a, SEED, CANVAS, CANVAS) == 0 and g(a, SEED + 1, CANVAS, CANVAS) == 0
-    assert g(b, SEED + 1, CANVAS, CANVAS) == 0
+    assert g(a, SEED, CANVAS, CANVAS, DENSITY) == 0 and g(a, SEED + 1, CANVAS, CANVAS, DENSITY) == 0
+    assert g(b, SEED + 1, CANVAS, CANVAS, DENSITY) == 0
     assert differing_layers(masks_of(lib, a), masks_of(lib, b)) == []
