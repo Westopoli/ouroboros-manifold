@@ -1548,7 +1548,7 @@ tests_pending = true
 # om_mission_setup (units spawn blocked, R-097-09 push-out moves every unit on tick 1).
 # csrc/pipe/om_pipe.c handle_mission_start lines are shared with VG-CONTRACT-D for this change only.
 [[piece]]
-id = "VG-D7"
+id = "VG-D-pipefix"
 manager = "Architect"
 owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_vg_d7.py", "tests/csim/test_VG_D_d7.py"]
 acceptance = []
