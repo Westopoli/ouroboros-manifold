@@ -1531,3 +1531,14 @@ depends_on = ["NET-wire-A"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
+
+# Visible-game lane D, piece D6 (Westley 2026-10-09, option A): remove the rubble cover discs (R-246-01).
+# csrc/space_field.c is shared with VG-D and VG-CONTRACT-D for this change only.
+[[piece]]
+id = "VG-D6"
+manager = "Architect"
+owns = ["csrc/space_field.c", "tests/csim/test_VG_D_d6.py"]
+acceptance = []
+depends_on = ["VG-D"]
+status = { state = "in_flight" }
+tests_pending = true
