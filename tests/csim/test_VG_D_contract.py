@@ -49,7 +49,7 @@ def bind(lib):
 
 def make_world(lib, world_factory):
     w = world_factory(n_regions=1)
-    assert lib.om_map_set_canvas(w, CANVAS, CANVAS, DENSITY) == 0
+    assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
     return w
 
 
