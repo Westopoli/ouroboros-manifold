@@ -5,7 +5,9 @@ extends "res://tests/support/vg_c_case.gd"
 # RED NOW because ground3d.gd adds neither child, so its qa_state has no "slope_view" and no "units3d" key.
 # Contract pinned: after set_terrain + set_frame (fixtures as tactical_view feeds them), qa_state()["ground3d"] carries
 #   "slope_view": {slopes, midlines, blocked_cells, in_transit} (the names the S-001 play reads)
-#   "units3d": int, the count of drawn 3D units = the frame's visible own units (faction 0 here: ids 1, 2, 4).
+#   "units3d": int, the count of drawn 3D units = own units plus seen enemies (R-089-04, E-12; TD-VG-C-3): ids 1, 2, 4
+#   own and 3 seen enemy = 4; hidden enemy id 5 (not own, not in the visible list) is not counted.
+# RED NOW for units3d: the wiring feeds only own units (3), so the 4 expected here fails until enemies seen are fed.
 # CONTROL: the key finder says false for a state without the keys, and true for one with them.
 
 
@@ -27,6 +29,7 @@ func _run() -> void:
 	var frame: Dictionary = fx.frame().duplicate(true)
 	frame["player_faction"] = 0
 	frame["visible"] = {"0": [1, 2, 3, 4]}
+	(frame["units"] as Array).append({"id": 5, "faction": 1, "type": 0, "tier": 0, "x": 600.0, "y": 500.0, "hp": 100, "layer": 0, "facing": 0.0, "target": -1, "state": 0})
 	host.set_terrain(fx.terrain())
 	host.set_frame(frame, fx.mission())
 	await process_frame
@@ -40,4 +43,4 @@ func _run() -> void:
 	var n = _find(qa, "units3d")
 	_check(n != null, "S-132: ground3d qa_state has no units3d count")
 	if n != null:
-		_check(int(n) == 3, "S-132: units3d %s, expected 3 visible own units" % [n])
+		_check(int(n) == 4, "R-089-04: units3d %s, expected 4 (3 own + seen enemy 3; hidden enemy 5 not counted)" % [n])
