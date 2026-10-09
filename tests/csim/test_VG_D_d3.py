@@ -5,7 +5,7 @@ the carve step that guarantees a route to the objective. Fenced: builders never 
 Proves S-246 R-246-01 (the generator ported into the simulation; Q-STAGE3-03 b), R-246-03 (masks and plate polygons
 both reach the client, Q-166-06) and E-01 R-001-04 (a binary mask per layer), against the port of
 scenes/mockups/landscape/field_map_space.gd. Only the symbols already in csrc/ouroboros_sim.h are used
-(om_space_field_generate / _get_mask / _poly_count / _poly_get); D3 adds none.
+(om_space_field_generate_nodes / _get_mask / _poly_count / _poly_get); D3 adds none.
 
 What the tests encode, with its source in the mockup:
   RASTER   a mask cell whose centre ((cx + .5) * 100, (cy + .5) * 100 wu) lies at least 1 wu inside a plate polygon of
@@ -55,12 +55,12 @@ ROW_MASK = (1 << N) - 1
 # ---- library binding -------------------------------------------------------------------------------------------
 
 def bind(lib):
-    names = ["om_space_field_generate", "om_space_field_get_mask", "om_space_field_poly_count",
+    names = ["om_space_field_generate_nodes", "om_space_field_get_mask", "om_space_field_poly_count",
              "om_space_field_poly_get"]
     missing = [n for n in names if not hasattr(lib, n)]
     assert not missing, f"space field symbols missing from libouroboros.so: {missing}"
-    lib.om_space_field_generate.argtypes = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double]
-    lib.om_space_field_generate.restype = ctypes.c_int
+    lib.om_space_field_generate_nodes.argtypes = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32]
+    lib.om_space_field_generate_nodes.restype = ctypes.c_int
     lib.om_space_field_get_mask.argtypes = [W, ctypes.c_uint32, U8P, ctypes.c_uint32]
     lib.om_space_field_get_mask.restype = ctypes.c_uint32
     lib.om_space_field_poly_count.argtypes = [W]
@@ -73,7 +73,7 @@ def generated(lib, world_factory, seed):
     bind(lib)
     w = world_factory(n_regions=1)
     assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
-    assert lib.om_space_field_generate(w, seed, CANVAS, CANVAS) == 0
+    assert lib.om_space_field_generate_nodes(w, seed, CANVAS, CANVAS, 35.0, None, None, 0) == 0
     return w
 
 

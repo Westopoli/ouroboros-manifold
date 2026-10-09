@@ -4,7 +4,7 @@ the generator scenes/mockups/landscape/field_map_space.gd). Fenced: builders nev
 
 Proves S-246 R-246-01 (each layer a sheet of plates, the generator ported into the simulation; Q-STAGE3-03 b), R-246-03
 (the polygons the client draws, Q-166-06 b: masks plus polygons) and E-01 R-001-04 (a binary mask per layer), through the
-frozen K-d getters only: om_space_field_generate, om_space_field_get_mask, om_space_field_poly_count and
+frozen K-d getters only: om_space_field_generate_nodes, om_space_field_get_mask, om_space_field_poly_count and
 om_space_field_poly_get (csrc/ouroboros_sim.h). The tunables are read off the output, because the contract has no setter:
   plate_cell_wu 1600   plate size scale                 -> polygon area and count per layer
   size_spread 0.6      some plates large, some small     -> the spread of plate areas
@@ -61,14 +61,14 @@ D2_SWING_MIN = 0.15  # density_swing: (max - min) blocked share over the blocks 
 D2_SHARED_CORR_MIN = 0.45  # shared_density: mean pairwise correlation of block shares between layers (mockup 0.71 to 0.81)
 D2_LAYER_SAME_MAX = 0.75  # two layers are separate sheets: at most this share of their blocked cells coincide (mockup max 0.46)
 D2_MASS_PER_LAYER_MAX = 24  # a mass is a cluster of polygons (mockup: 4 to 16 on a layer that has one)
-NEW = ["om_space_field_generate", "om_space_field_get_mask", "om_space_field_poly_count", "om_space_field_poly_get"]
+NEW = ["om_space_field_generate_nodes", "om_space_field_get_mask", "om_space_field_poly_count", "om_space_field_poly_get"]
 
 
 def bind(lib):
     missing = [n for n in NEW if not hasattr(lib, n)]
     assert not missing, f"K-d symbols missing from libouroboros.so: {missing}"
-    g = lib.om_space_field_generate
-    g.argtypes, g.restype = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_int
+    g = lib.om_space_field_generate_nodes
+    g.argtypes, g.restype = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_int
     m = lib.om_space_field_get_mask
     m.argtypes, m.restype = [W, ctypes.c_uint32, U8P, ctypes.c_uint32], ctypes.c_uint32
     c = lib.om_space_field_poly_count
@@ -113,7 +113,7 @@ def field(lib, world_factory, seed):
     if seed not in _CACHE:
         g = bind(lib)
         w = make_world(lib, world_factory)
-        assert g(w, seed, CANVAS, CANVAS, 35.0) == 0
+        assert g(w, seed, CANVAS, CANVAS, 35.0, None, None, 0) == 0
         _CACHE[seed] = (read_polys(lib, w), read_masks(lib, w))
     return _CACHE[seed]
 
@@ -280,7 +280,7 @@ def test_no_polygons_before_generate_and_bounds(lib, world_factory):
     layer, kind = ctypes.c_uint32(), ctypes.c_uint32()
     xy = (ctypes.c_double * (2 * CAP_PTS))()
     assert lib.om_space_field_poly_get(w, 0, ctypes.byref(layer), ctypes.byref(kind), xy, CAP_PTS) == 0
-    assert lib.om_space_field_generate(w, SEEDS[0], CANVAS, CANVAS, 35.0) == 0
+    assert lib.om_space_field_generate_nodes(w, SEEDS[0], CANVAS, CANVAS, 35.0, None, None, 0) == 0
     n = lib.om_space_field_poly_count(w)
     assert n > 0
     assert lib.om_space_field_poly_get(w, n, ctypes.byref(layer), ctypes.byref(kind), xy, CAP_PTS) == 0, "index == count answered"
@@ -428,7 +428,7 @@ def test_layers_are_separate_sheets(lib, world_factory, seed):
 def test_same_seed_identical_polygons_and_seed_changes_them(lib, world_factory):
     g = bind(lib)
     a, b, c = (make_world(lib, world_factory) for _ in range(3))
-    assert g(a, SEEDS[0], CANVAS, CANVAS, 35.0) == 0 and g(b, SEEDS[0], CANVAS, CANVAS, 35.0) == 0 and g(c, SEEDS[1], CANVAS, CANVAS, 35.0) == 0
+    assert g(a, SEEDS[0], CANVAS, CANVAS, 35.0, None, None, 0) == 0 and g(b, SEEDS[0], CANVAS, CANVAS, 35.0, None, None, 0) == 0 and g(c, SEEDS[1], CANVAS, CANVAS, 35.0, None, None, 0) == 0
     pa, pb, pc = read_polys(lib, a), read_polys(lib, b), read_polys(lib, c)
     assert pa == pb, "same seed, different polygons"
     assert pa != pc, "seeds 11 and 12 gave identical polygons"
@@ -437,6 +437,6 @@ def test_same_seed_identical_polygons_and_seed_changes_them(lib, world_factory):
 def test_regenerate_replaces_polygons(lib, world_factory):
     g = bind(lib)
     a, b = make_world(lib, world_factory), make_world(lib, world_factory)
-    assert g(a, SEEDS[0], CANVAS, CANVAS, 35.0) == 0 and g(a, SEEDS[1], CANVAS, CANVAS, 35.0) == 0
-    assert g(b, SEEDS[1], CANVAS, CANVAS, 35.0) == 0
+    assert g(a, SEEDS[0], CANVAS, CANVAS, 35.0, None, None, 0) == 0 and g(a, SEEDS[1], CANVAS, CANVAS, 35.0, None, None, 0) == 0
+    assert g(b, SEEDS[1], CANVAS, CANVAS, 35.0, None, None, 0) == 0
     assert read_polys(lib, a) == read_polys(lib, b), "a second generate left polygons of the first"

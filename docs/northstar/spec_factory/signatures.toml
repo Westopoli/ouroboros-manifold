@@ -7369,22 +7369,13 @@ note = "K0: fills cap cells of heights in cm, row-major; returns the cell count.
 # Canvas 24000 wu only (240 x 240 cells of 100 wu, 5 layers). Mask byte: 1 blocked, 0 open (the blocked_bits sense).
 
 [[symbols]]
-name = "om_space_field_generate"
-module = "space_field.c"
-restype = "int"
-params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint32_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }, { name = "density", ctype = "double" }]
-epics = ["E-17", "E-01"]
-confidence = "likely"
-note = "Generates the five-layer open-or-blocked field from the seed, replacing any held one; writes the masks to the route grid (blocked_bits) when the mapgen canvas is 24000 x 24000 wu. 0 ok, nonzero refused (null world, canvas not 24000 x 24000). density 0..90 (clamped), the plate keep share in percent; the pipe passes 35.0 (field_map_space.gd default). K-d: stub body (placeholder plates), lane D replaces it with the field_map_space.gd port."
-
-[[symbols]]
 name = "om_space_field_generate_nodes"
 module = "space_field.c"
 restype = "int"
 params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint32_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }, { name = "density", ctype = "double" }, { name = "node_xy", ctype = "const double*" }, { name = "node_slots", ctype = "const uint32_t*" }, { name = "n_nodes", ctype = "uint32_t" }]
 epics = ["E-17"]
 confidence = "likely"
-note = "VG-D8 R-246-07: om_space_field_generate with the clearing nodes. node_xy is n_nodes x,y pairs (faction 0 anchor, faction 1 anchor, objective, then any extra, n_nodes capped at OM_SPACE_FIELD_MAX_NODES 8); node_slots[i] is the army slot count the pocket at node i must hold (0 for the objective): the pocket grows ring by ring until its open cells hold it. n_nodes below 3 or null node_xy takes the old 15/85 percent diagonal nodes, which is what om_space_field_generate does."
+note = "Generates the five-layer open-or-blocked field from the seed, replacing any held one; writes the masks to the route grid (blocked_bits) when the mapgen canvas is 24000 x 24000 wu. 0 ok, nonzero refused (null world, canvas not 24000 x 24000). density 0..90 (clamped), the plate keep share in percent; the pipe passes 35.0 (field_map_space.gd default).  VG-D8 R-246-07: the clearing nodes. node_xy is n_nodes x,y pairs (faction 0 anchor, faction 1 anchor, objective, then any extra, n_nodes capped at OM_SPACE_FIELD_MAX_NODES 8); node_slots[i] is the army slot count the pocket at node i must hold (0 for the objective): the pocket grows ring by ring until its open cells hold it. n_nodes below 3 or null node_xy takes the old 15/85 percent diagonal nodes. (The 5-argument wrapper om_space_field_generate was removed, TD-VG-D-10: it was reachable only from tests.)"
 
 [[symbols]]
 name = "om_space_field_present"

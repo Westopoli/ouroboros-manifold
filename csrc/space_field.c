@@ -64,10 +64,6 @@ static uint32_t sf_pocket_cells(const om_space_cells *cells, double x, double y,
     return n;
 }
 
-int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density) {
-    return om_space_field_generate_nodes(w, seed, canvas_w, canvas_h, density, NULL, NULL, 0);
-}
-
 int om_space_field_generate_nodes(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density, const double *node_xy,
                                   const uint32_t *node_slots, uint32_t n_nodes) {
     double radius[OM_SPACE_FIELD_MAX_NODES], held_xy[2 * OM_SPACE_FIELD_MAX_NODES];

@@ -1504,7 +1504,7 @@ wave = 8
 owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "csrc/pipe/pipe_tactical.c", "csrc/pipe/pipe_dumps.c", "csrc/pipe/om_pipe.c", "autoload/c_bridge.gd", "docs/architecture.md", "csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
-depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6", "VG-D-pipefix"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
@@ -1517,7 +1517,7 @@ wave = 8
 owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "csrc/mission.c", "csrc/unit.c"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
@@ -1556,7 +1556,7 @@ id = "VG-D-pipefix"
 manager = "Architect"
 owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_vg_d7.py", "tests/csim/test_VG_D_d7.py"]
 acceptance = []
-depends_on = ["VG-D6"]
+depends_on = ["VG-D6", "K-c6"]
 status = { state = "in_flight" }
 tests_pending = true
 

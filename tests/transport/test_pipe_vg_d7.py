@@ -2,7 +2,7 @@
 
 Proves S-246 / R-246-01 (the mission's field is the one the units were spawned on, D5-3: unit spawns are cleared to
 open cells) and R-097-09 (the blocked-cell push-out never fires on a fresh mission: nothing moves without an order).
-Bug: csrc/pipe/om_pipe.c handle_mission_start (era_kind 0) calls om_space_field_generate a second time with seed
+Bug: csrc/pipe/om_pipe.c handle_mission_start (era_kind 0) calls om_space_field_generate_nodes a second time with seed
 ws ^ (ws >> 32), after om_mission_setup already generated the field (seed ws ^ region*0x9E3779B1 ^ archetype) and
 spawned units on its cleared cells. The second generation overwrites the field and the blocked mask, so on seed 1
 about 70 percent of the units start inside blocked layer cells and R-097-09 pushes every unit on tick 1.

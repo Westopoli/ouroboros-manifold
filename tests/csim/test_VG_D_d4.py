@@ -4,18 +4,18 @@ docs/northstar/plans/preflight_2026-10-07/5-space-kit.md). Fenced: builders neve
 Proves S-246 (R-246-01 five open-or-blocked layers ported into the sim; R-246-03 masks plus polygons, Q-166-06 b),
 E-01 R-001-04 (a binary mask per layer, written to the mapgen blocked bits), Q-STAGE3-03 b (the port; cross-layer
 filling is the client's drawing, not tested here). D4 is the piece that runs D1 (noise), D2 (plates) and D3
-(raster + carve) behind om_space_field_generate, writes the masks to blocked_bits per layer, makes cover from rubble
+(raster + carve) behind om_space_field_generate_nodes, writes the masks to blocked_bits per layer, makes cover from rubble
 and keeps the polygons for the dump getters (K-d: om_space_field_poly_count / om_space_field_poly_get).
 
 ASSUMED PROTOTYPES (the brief names the symbols; mismatches are contract questions for the Architect, not test defects):
-  int om_space_field_generate(om_world*, uint32_t seed, double canvas_w, double canvas_h, double density)
+  int om_space_field_generate_nodes(om_world*, uint32_t seed, double canvas_w, double canvas_h, double density)
       density 0..90 (the mockup's `generate(seed, canvas, density)`, default 35, clamped 0..90). QUESTION 1: main's
       K-d contract is the 4-argument form with no density; a density parameter changes a frozen signature (needs its
       own contract piece, and the call site om_pipe.c:1357). This file passes density as a fifth double argument; on
       main the extra argument is ignored. If the contract piece chooses a setter instead, only `gen` below changes.
   Plant (QUESTION 2): the positive control `space-no-carve` (skip the fill-and-carve join, as the mockup's
       QaPlants "space-no-carve" does) is assumed to be a debug-build bug id passed to om_debug_inject(w, bug) BEFORE
-      om_space_field_generate. NO NUMBER IS GIVEN for it; NO_CARVE_BUG below is a named draft (above every id in
+      om_space_field_generate_nodes. NO NUMBER IS GIVEN for it; NO_CARVE_BUG below is a named draft (above every id in
       csrc/ouroboros_sim.h on main, 1601). If the contract piece uses another id, change the one constant.
 Everything else is main's K-d surface: om_space_field_present / _get_mask / _clear / _poly_count / _poly_get,
 om_map_sample_layer_accessibility, om_map_cover_count / om_map_cover_at.
@@ -60,12 +60,12 @@ _cache = {}
 
 
 def bind(lib):
-    needed = ["om_space_field_generate", "om_space_field_present", "om_space_field_get_mask", "om_space_field_clear",
+    needed = ["om_space_field_generate_nodes", "om_space_field_present", "om_space_field_get_mask", "om_space_field_clear",
               "om_space_field_poly_count", "om_space_field_poly_get", "om_map_cover_count", "om_map_cover_at"]
     missing = [n for n in needed if not hasattr(lib, n)]
     assert not missing, f"symbols missing from the library: {missing}"
-    lib.om_space_field_generate.argtypes = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double]
-    lib.om_space_field_generate.restype = ctypes.c_int
+    lib.om_space_field_generate_nodes.argtypes = [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32]
+    lib.om_space_field_generate_nodes.restype = ctypes.c_int
     lib.om_space_field_present.argtypes, lib.om_space_field_present.restype = [W], ctypes.c_int
     lib.om_space_field_get_mask.argtypes = [W, ctypes.c_uint32, U8P, ctypes.c_uint32]
     lib.om_space_field_get_mask.restype = ctypes.c_uint32
@@ -89,7 +89,7 @@ def make_world(lib, factory):
 
 
 def gen(lib, w, seed, density):
-    return lib.om_space_field_generate(w, seed, CANVAS, CANVAS, float(density))
+    return lib.om_space_field_generate_nodes(w, seed, CANVAS, CANVAS, float(density), None, None, 0, None, None, 0)
 
 
 def read_masks(lib, w):

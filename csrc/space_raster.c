@@ -1,7 +1,7 @@
 /* csrc/space_raster.c -- VG lane D, piece D3 (E-17 R-246-01, E-01 R-001-04): plate polygons to the 100 wu cell masks, and
  * the carve step that joins cut-off regions to the objective's. Port of scenes/mockups/landscape/field_map_space.gd.
  * Cells are sampled at their centres ((cx + .5) * 100 wu), so the mask and the polygons agree on the same 240 x 240 grid.
- * See also: om_space_field_generate in csrc/space_field.c, which calls both stages (D4). */
+ * See also: om_space_field_generate_nodes in csrc/space_field.c, which calls both stages (D4). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include "space_internal.h"

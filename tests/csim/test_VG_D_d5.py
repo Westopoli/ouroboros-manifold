@@ -2,11 +2,11 @@
 docs/northstar/plans/preflight_2026-10-07/5-space-kit.md, "Mission wiring"). Fenced: builders never edit this file.
 
 Proves S-246: R-246-01 (a space-era mission has the generated field: om_mission_setup in a space era calls
-om_space_field_generate after om_map_set_canvas, Q-STAGE3-03 b), the layer masks are the ones routing reads, and
+om_space_field_generate_nodes after om_map_set_canvas, Q-STAGE3-03 b), the layer masks are the ones routing reads, and
 R-246-05 / Q-166-08 (nodes, unit spawns and structure slots are cleared to open cells; in single player no production
 building stands in an enclosed section, i.e. an open region cut off from the objective). Era kind 1 drops the field.
 
-RED on main (mission.c never calls om_space_field_generate): om_space_field_present is 0 after a space-era setup.
+RED on main (mission.c never calls om_space_field_generate_nodes): om_space_field_present is 0 after a space-era setup.
 Tests marked CONTROL pass on main by design.
 
 Provisional definitions (test drafts, 2026-10-08; none is given in the spec):
@@ -14,7 +14,7 @@ Provisional definitions (test drafts, 2026-10-08; none is given in the spec):
    ("cleared", kit CLEAR_RADIUS_WU 600); a unit must be open on its own layer (om_unit_get_layer).
  - "Enclosed section": on a layer, a 4-connected open region of 100 wu cells that does not contain the objective node's
    cell. Every unit and every owned structure on a layer must lie in the objective's region on that layer.
- - Only archetypes whose canvas is 24000 wu are asserted: om_space_field_generate refuses any other canvas and the
+ - Only archetypes whose canvas is 24000 wu are asserted: om_space_field_generate_nodes refuses any other canvas and the
    spec gives no rule for 8000 / 16000 wu missions (reported as an open question; test_control_canvas_table records it).
  - Seed: the spec says only "the mission seed"; the formula is not asserted. Determinism and seed sensitivity are.
 """
@@ -181,7 +181,7 @@ def test_control_ground_era_holds_no_space_field(lib, world_factory):
 def test_space_era_setup_generates_the_field(lib, world_factory, archetype):
     """R-246-01: after om_mission_setup in a space era the world holds a field: five layers, each with open and blocked."""
     w = _scene(lib, world_factory, archetype=archetype)
-    assert lib.om_space_field_present(w) == 1, "om_mission_setup did not call om_space_field_generate"
+    assert lib.om_space_field_present(w) == 1, "om_mission_setup did not call om_space_field_generate_nodes"
     for k, m in enumerate(_masks(lib, w)):
         assert set(m) == {0, 1}, f"layer {k}: not both open and blocked"
 

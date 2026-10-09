@@ -2,7 +2,7 @@
 
 R-246-01 (E-17): each space layer is an open-or-blocked sheet; rubble is small plates drawn at half thickness
 (docs/northstar/plans/2026-10-02-space-kit-mode-spec.md, "Rubble"). Nothing makes rubble a cover obstacle, so
-om_space_field_generate (csrc/space_field.c sf_rubble_cover) must lay no cover disc; rubble plates join the blocked
+om_space_field_generate_nodes (csrc/space_field.c sf_rubble_cover) must lay no cover disc; rubble plates join the blocked
 cell mask of their layer like every other plate.
 
 RED on origin/push/vg-d-land-2 (one 200 wu cover disc per rubble polygon is present): tests 1 and 3.

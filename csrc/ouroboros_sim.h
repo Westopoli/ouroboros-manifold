@@ -979,7 +979,7 @@ typedef enum {
     OM_BUG_SAVE_SKIPS_TICK = 1601 /* om_load_state_read restores everything but the tick counter, so a loaded world resumes stepping from tick 0 */
 } om_bug_save;
 
-/* VG K-d2 (lane D): debug-inject ids for the space field, passed to om_debug_inject before om_space_field_generate. */
+/* VG K-d2 (lane D): debug-inject ids for the space field, passed to om_debug_inject before om_space_field_generate_nodes. */
 typedef enum {
     OM_BUG_SPACE_NO_CARVE = 1700 /* space no-carve plant: the fill-and-carve join step is skipped (mockup QaPlants "space-no-carve"); the carve step reads w->inject */
 } om_bug_space;
@@ -1813,7 +1813,6 @@ void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
 /* ---- end generated: save.c ---- */
 
 /* ---- generated from signatures.toml: space_field.c ---- */
-int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density);
 int om_space_field_generate_nodes(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density, const double *node_xy, const uint32_t *node_slots, uint32_t n_nodes);
 int om_space_field_present(const om_world *w);
 uint32_t om_space_field_get_mask(const om_world *w, uint32_t layer, uint8_t *out, uint32_t cap);
