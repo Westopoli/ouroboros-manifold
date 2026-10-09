@@ -57,7 +57,7 @@ func squad_models(id: int) -> Array:
 func _draw() -> void:
 	for d in _batches:
 		var col: Color = FACTION_COLORS[clampi(d["f"], 0, FACTION_COLORS.size() - 1)]
-		var r: float = MODEL_RADIUS * maxf(d["s"] * 4.0, 0.5)
+		var r: float = MODEL_RADIUS * clampf(d["s"] * 4.0, 0.5, 1.0)
 		for o in d["offs"]:
 			var p: Vector2 = d["c"] + o
 			var tri := PackedVector2Array([
