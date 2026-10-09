@@ -93,8 +93,8 @@ void handle_terrain_dump(void) {
         }
         jb_raw(&j, "],\"flyer_types\":[");
         int first = 1;
-        for (int t = 0; t < 32; t++) {
-            if (om_unit_profile_ability_count(W, t) == 0u || om_unit_profile_movement_kind(W, t) != OM_MOVE_FLYING) continue;
+        for (int t = 0; t < g_roster_types; t++) {
+            if (om_unit_profile_movement_kind(W, t) != OM_MOVE_FLYING) continue;
             if (!first) jb_putc(&j, ',');
             first = 0;
             jb_uint(&j, (uint32_t)t);
