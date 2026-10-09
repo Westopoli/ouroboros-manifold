@@ -93,8 +93,15 @@ def test_c5_3_drawn_units_are_on_screen(tactical_game):
 
 def test_c5_3_real_drag_selects_and_right_click_orders_a_move(tactical_game):
     client = tactical_game.client
-    drawn = len(_qa(client)["units_px"])
-    client.call("input", "drag", 0, 0, 1900, 140)
+    px = _qa(client)["units_px"]
+    drawn = len(px)
+    # TD-VG-A-10: the opening frame is zoomed on the deployment, so the box is
+    # computed from the drawn units instead of a fixed 0,0 to 1900,140.
+    xs = [p[0] for p in px.values()]
+    ys = [p[1] for p in px.values()]
+    x0, y0 = max(0, int(min(xs)) - 8), max(0, int(min(ys)) - 8)
+    x1, y1 = min(1919, int(max(xs)) + 8), min(1079, int(max(ys)) + 8)
+    client.call("input", "drag", x0, y0, x1, y1)
     time.sleep(0.5)
     selected = _qa(client)["selected"]
     assert len(selected) == drawn and drawn > 0, "drag selected %d of %d drawn units" % (len(selected), drawn)
