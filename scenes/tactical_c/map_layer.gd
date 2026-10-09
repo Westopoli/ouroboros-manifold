@@ -11,20 +11,33 @@ const SCREEN := Vector2(1920.0, 1080.0)
 var _cover: Array = []
 var _obstacles: Array = []
 var _boundary := PackedVector2Array()
+var _centres: Array = []
+var _projector := Callable()
+var _scale := 1.0
+var _camera := Vector2.ZERO
 
 
-func _to_screen(w: Vector2, scale: float, camera: Vector2) -> Vector2:
-	return (w - camera) * scale + SCREEN * 0.5
+func set_projector(projector: Callable) -> void:
+	_projector = projector
+
+
+func _to_screen(w: Vector2) -> Vector2:
+	if _projector.is_valid():
+		return _projector.call(w)
+	return (w - _camera) * _scale + SCREEN * 0.5
 
 
 func _circle(c: Vector2, r: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	for i in 24:
-		pts.append(c + Vector2.from_angle(TAU * i / 24.0) * r)
+		pts.append(_to_screen(c + Vector2.from_angle(TAU * i / 24.0) * r))
 	return pts
 
 
-func set_frame(frame: Dictionary, _mission: Dictionary, _local_faction: int, world_scale: float, camera: Vector2) -> void:
+func set_frame(frame: Dictionary, _mission: Dictionary, _local_faction: int, world_scale := 1.0, camera := Vector2.ZERO) -> void:
+	_scale = world_scale
+	_camera = camera
+	_centres = []
 	_cover = []
 	_obstacles = []
 	_boundary = PackedVector2Array()
@@ -34,15 +47,17 @@ func set_frame(frame: Dictionary, _mission: Dictionary, _local_faction: int, wor
 		return
 	for c in map.get("cover", []):
 		var cls := clampi(int(c.get("class", 0)), 0, CLASS_COLORS.size() - 1)
-		var ctr := _to_screen(Vector2(float(c.get("x", 0.0)), float(c.get("y", 0.0))), world_scale, camera)
-		_cover.append({"class": cls, "polygon": _circle(ctr, float(c.get("r", 0.0)) * world_scale), "color": CLASS_COLORS[cls]})
+		var ctr := Vector2(float(c.get("x", 0.0)), float(c.get("y", 0.0)))
+		_centres.append(_to_screen(ctr))
+		_cover.append({"class": cls, "polygon": _circle(ctr, float(c.get("r", 0.0))), "color": CLASS_COLORS[cls]})
 	for o in map.get("obstacles", []):
-		var ctr := _to_screen(Vector2(float(o.get("x", 0.0)), float(o.get("y", 0.0))), world_scale, camera)
-		_obstacles.append(_circle(ctr, float(o.get("r", 0.0)) * world_scale))
+		var ctr := Vector2(float(o.get("x", 0.0)), float(o.get("y", 0.0)))
+		_centres.append(_to_screen(ctr))
+		_obstacles.append(_circle(ctr, float(o.get("r", 0.0))))
 	var canvas := float(map.get("canvas", 0.0))
 	if canvas > 0.0:
 		for p in [Vector2(0, 0), Vector2(canvas, 0), Vector2(canvas, canvas), Vector2(0, canvas)]:
-			_boundary.append(_to_screen(p, world_scale, camera))
+			_boundary.append(_to_screen(p))
 	queue_redraw()
 
 
@@ -67,3 +82,7 @@ func obstacle_polygons() -> Array:
 
 func boundary_polygon() -> PackedVector2Array:
 	return _boundary
+
+
+func screen_points() -> Array:
+	return _centres

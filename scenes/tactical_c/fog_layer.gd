@@ -21,6 +21,7 @@ void fragment() {
 
 var _discs: Array = []
 var _mat: ShaderMaterial
+var _projector := Callable()
 
 
 func _ready() -> void:
@@ -32,19 +33,44 @@ func _ready() -> void:
 	material = _mat
 
 
-func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera: Vector2) -> void:
+# Two call shapes. Flat 2D: set_frame(frame, local_faction, world_scale, camera). Ground era (C10a):
+# set_frame(frame, mission, local_faction) with set_projector(world wu -> screen px) set; the disc radius is
+# re-derived through the projector (mean of the x and y offsets), never a flat scale.
+func set_projector(projector: Callable) -> void:
+	_projector = projector
+
+
+func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = null) -> void:
 	var half := Vector2(960, 540)
 	var vp := get_viewport()
 	if vp != null:
 		half = vp.get_visible_rect().size * 0.5
+	var flat: bool = c is Vector2 or not _projector.is_valid()
+	var local_faction := int(a) if flat else int(b)
+	var world_scale := float(b) if flat else 1.0
+	var camera: Vector2 = c if c is Vector2 else Vector2.ZERO
 	_discs.clear()
 	for u in frame.get("units", []):
 		if int(u.get("faction", -1)) != local_faction or not u.has("sight"):
 			continue
-		_discs.append({"center": (Vector2(float(u["x"]), float(u["y"])) - camera) * world_scale + half,
-			"radius": float(u["sight"]) * world_scale})
+		var w := Vector2(float(u["x"]), float(u["y"]))
+		var sight := float(u["sight"])
+		if flat:
+			_discs.append({"center": (w - camera) * world_scale + half, "radius": sight * world_scale})
+		else:
+			var ctr: Vector2 = _projector.call(w)
+			var rx := ctr.distance_to(_projector.call(w + Vector2(sight, 0.0)))
+			var ry := ctr.distance_to(_projector.call(w + Vector2(0.0, sight)))
+			_discs.append({"center": ctr, "radius": (rx + ry) * 0.5})
 	_push_uniforms()
 	queue_redraw()
+
+
+func screen_points() -> Array:
+	var out := []
+	for d in _discs:
+		out.append(d["center"])
+	return out
 
 
 func sight_discs() -> Array:
