@@ -58,6 +58,12 @@ typedef struct om_space_raster {
  * density is clamped to 0..90. Returns 0 ok, nonzero when canvas is not OM_SPACE_FIELD_CANVAS_WU or out is NULL. */
 int om_space_plates_build(uint32_t seed, double canvas, double density, om_space_plates *out);
 
+/* VG-D8. om_space_plates_build with the clearing nodes: node_xy holds n_nodes x,y pairs (faction 0 anchor, faction 1 anchor,
+ * objective, extras; below OM_SPACE_FIELD_MIN_NODES the old diagonal nodes), node_radius[i] the clear radius at node i (0 = the
+ * default 600 wu). om_space_plates_build is this call with no nodes. */
+int om_space_plates_build_nodes(uint32_t seed, double canvas, double density, const double *node_xy, const double *node_radius,
+                                uint32_t n_nodes, om_space_plates *out);
+
 /* D3. Rasterises the non-dropped plates into masks and owner/kind arrays at cell_wu (OM_SPACE_FIELD_CELL_WU, 100) per cell,
  * and fills pockets under the mockup's MIN_POCKET_CELLS. Writes only raster. Returns 0 ok, nonzero on a bad argument. */
 int om_space_raster(const om_space_plates *plates, double cell_wu, om_space_cells *raster);

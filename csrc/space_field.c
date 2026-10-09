@@ -40,9 +40,6 @@ static int sf_centroid_blocked(const om_space_cells *cells, const om_space_plate
 #define SF_OK_MARGIN 1 /* OM_MISSION_POCKET_MARGIN_CELLS in csrc/mission.c: an army cell has this many open cells round it on every layer */
 #define SF_SLOTS_PER_CELL 9u /* OM_MISSION_SLOTS_PER_CELL in csrc/mission.c */
 
-int om_space_plates_build_nodes(uint32_t seed, double canvas, double density, const double *node_xy, const double *node_radius,
-                               uint32_t n_nodes, om_space_plates *out);
-
 static int sf_cell_ok(const om_space_cells *cells, int32_t cx, int32_t cy) {
     const int32_t side = OM_SPACE_FIELD_SIDE, r = SF_OK_MARGIN;
     if (cx < r || cy < r || cx >= side - r || cy >= side - r) return 0;

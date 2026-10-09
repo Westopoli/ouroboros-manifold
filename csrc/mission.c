@@ -2735,7 +2735,9 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_mission_reach_snap(reach, rcw, rch, &ex, &ey);
     if (reach) { ox = (px + ex) / 2.0; oy = (py + ey) / 2.0; } /* the reach set may not span the canvas: objective between the spawns */
     om_mission_reach_snap(reach, rcw, rch, &ox, &oy);
-    uint8_t *space_good = om_mission_space_good(w, &ox, &oy);
+    double gx = ox, gy = oy; /* the structures' pool still centres on the largest cleared section; the objective stays at its own carved pocket */
+    uint8_t *space_good = om_mission_space_good(w, &gx, &gy);
+    free(om_mission_space_pocket(w, &ox, &oy)); /* VG-D8 R-246-07: the objective moves to the open cell nearest its anchor */
     uint8_t *player_pocket = om_mission_space_pocket(w, &px, &py);
     uint8_t *enemy_pocket = om_mission_space_pocket(w, &ex, &ey);
     om_map_add_spine_node(w, ox, oy, OM_MISSION_SPINE_NODE_OBJECTIVE);
