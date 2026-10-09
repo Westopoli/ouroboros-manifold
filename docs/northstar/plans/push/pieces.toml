@@ -1501,7 +1501,7 @@ wave = 8
 owns = ["csrc/ouroboros_sim.h", "csrc/signatures.toml", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "docs/architecture.md"]
 owns_glob = ["tests/csim/test_VG_contract_e1*.py", "tests/transport/test_pipe_vg_e1*.py"]
 acceptance = []
-depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; save format 8"
