@@ -10,7 +10,7 @@ static func decode_heights(hex: String) -> PackedInt32Array:
 
 
 static func terrain_from_frame(f: Dictionary) -> Dictionary:
-	return {
+	var t := {
 		"cells_w": int(f.get("cells_w", 0)),
 		"cells_h": int(f.get("cells_h", 0)),
 		"bands": String(f.get("bands", "")).hex_decode(),
@@ -18,3 +18,7 @@ static func terrain_from_frame(f: Dictionary) -> Dictionary:
 		"slopes": f.get("slopes", []),
 		"heights": decode_heights(String(f.get("heights", ""))),
 	}
+	for k in ["layer_floors_wu", "flyer_types"]:
+		if f.has(k):
+			t[k] = f[k]
+	return t
