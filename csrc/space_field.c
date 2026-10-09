@@ -1,7 +1,7 @@
 /* csrc/space_field.c -- E-17 S-246 (R-246-01), E-01 R-001-04: the space mission's five open-or-blocked layers.
  * generate runs the port of scenes/mockups/landscape/field_map_space.gd: noise and plates (space_plates.c), raster and
  * carve (space_raster.c); the masks go to the route grid through om_map_set_obstacle_density (it can clear as well as set,
- * so a regenerate leaves no stale bits), rubble polygons become cover discs. The getters and the state in om_internal.h stay.
+ * so a regenerate leaves no stale bits), and the field adds no cover obstacles. The getters and the state in om_internal.h stay.
  * See also: om_map_block_rect in csrc/tactical_mapgen.c, whose route grid mission_begin clears (om_map_clear). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
@@ -20,19 +20,8 @@
 #define SF_BIT_MASK 7u
 #define SF_BLOCKED_DENSITY 1.0 /* above OM_NAVMESH_OBSTACLE_THRESHOLD (0.7): the cell blocks (om_route_grid_is_cell_blocked) */
 #define SF_OPEN_DENSITY 0.0
-#define SF_RUBBLE_COVER_RADIUS 200.0 /* RUBBLE_CELL_WU 400 / 2, field_map_space.gd */
-#define SF_RUBBLE_COVER_HEIGHT OM_MISSION_OBJECTIVE_COVER_HEIGHT /* no space-cover height is pinned; the sim's existing cover disc height */
 
-/* Cover discs are only ever added: the map has no remove call, so a repeat of the same field adds nothing new.
- * See also: om_map_clear in csrc/tactical_mapgen.c, which mission_begin runs before cover is laid. */
-static int sf_has_cover(const om_world *w, double x, double y) {
-    double cx, cy, r, h;
-    for (uint32_t i = om_map_cover_count(w); i-- > 0;)
-        if (om_map_cover_at(w, i, &cx, &cy, &r, &h) && cx == x && cy == y && r == SF_RUBBLE_COVER_RADIUS) return 1;
-    return 0;
-}
-
-static void sf_rubble_cover(om_world *w, const om_space_field_poly *p) {
+static int sf_centroid_blocked(const om_space_cells *cells, const om_space_plate *p) {
     double x = 0.0, y = 0.0;
     for (uint32_t c = 0; c < p->n_pts; c++) {
         x += p->xy[2u * c];
@@ -40,7 +29,7 @@ static void sf_rubble_cover(om_world *w, const om_space_field_poly *p) {
     }
     x /= (double)p->n_pts;
     y /= (double)p->n_pts;
-    if (!sf_has_cover(w, x, y)) (void)om_map_add_cover(w, x, y, SF_RUBBLE_COVER_RADIUS, SF_RUBBLE_COVER_HEIGHT);
+    return cells->mask[p->layer][(uint32_t)(y / OM_SPACE_FIELD_CELL_WU) * OM_SPACE_FIELD_SIDE + (uint32_t)(x / OM_SPACE_FIELD_CELL_WU)] != 0;
 }
 
 int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density) {
@@ -69,12 +58,12 @@ int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double 
         const om_space_plate *src = &pl->plates[n];
         om_space_field_poly *p;
         if (src->dropped) continue;
+        if (src->kind == OM_SPACE_KIND_RUBBLE && !sf_centroid_blocked(cells, src)) continue; /* the carve cleared it: rubble is not generated in cleared pools */
         p = &f->polys[f->n_polys++];
         p->layer = src->layer;
         p->kind = src->kind;
         p->n_pts = src->n_pts;
         memcpy(p->xy, src->xy, sizeof(double) * 2u * src->n_pts);
-        if (p->kind == OM_SPACE_KIND_RUBBLE) sf_rubble_cover(w, p);
     }
     rc = 0;
 done:
