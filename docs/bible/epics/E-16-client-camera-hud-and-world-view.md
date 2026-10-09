@@ -39,6 +39,7 @@ Rules
 - R-103-09  Given the player pans by keys or by edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
 - R-103-10  Idea only, not a decision (Q-103-07; Westley, 2026-10-07). Instead of the Angle Rack and Layer Peel above, the player could bind keys to camera angles of their own: each key puts the camera at an angle relative to the current forward direction of a unit, in a view that tracks the unit as it moves; a default mode that does not follow, reached by its own key, is the one the player switches back to; and the player may change as much about each view as we can give: its angle, whether it follows, its zoom distance. Nothing here is specified or scheduled.
+- R-103-11  Given a ground-era mission, When the battle screen draws it, Then every own unit and every seen enemy (R-089-04) has a 3D body on the terrain, and a slope view marks slope midlines and blocked ground over the field; flyers stand above their layer floor once the terrain frame carries the floors (K-c6) (Architect, 2026-10-09; built by C6, C7 and VG-C-wire).
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
@@ -152,6 +153,7 @@ Rules
 - R-109-02  Given a mission ends, When the debrief shows, Then it is E-10 R-079-03 and offers Continue and Exit.
 - R-109-03  Given a new campaign, When it starts, Then the onboarding screen is E-08 S-063.
 - R-109-04  Given any of these screens, When rendered, Then no raw field numbers appear.
+- R-109-05  Given a live mission load the simulation refuses, When the player is on the briefing, Then an error panel names the reason and offers Retry; when the refusal cannot be retried (a desync, a missing peer) the Retry button is hidden (Architect, 2026-10-09, from the lane F landing).
 
 Inputs: mission setup, result, onboarding.
 Outputs: screens.

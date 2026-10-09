@@ -20,7 +20,9 @@ const UNIT_SIZE := 24.0
 # A6a camera. Q-103-04 leaves the bible without numbers: these are named
 # placeholders. Zoom 1.0 fits the whole canvas to the screen height.
 const ZOOM_MIN := 1.0
-const ZOOM_MAX := 4.0
+# Draft: raised from 4.0 so the opening frame can close in on a dense deployment (A19: 330 own units sit inside 540 wu of a
+# 24000 wu canvas, one pixel at the fit scale); the framing stops one wheel notch short of this.
+const ZOOM_MAX := 40.0
 const ZOOM_STEP := 1.25
 const PAN_SPEED_PX := 600.0
 
@@ -172,7 +174,11 @@ func _build_shell() -> void:
 	_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	$CanvasLayer.add_child(_hud)
 	for n in ["Objectives", "Selection", "Comb", "Events", "Reinforcements"]:
-		_hud.add_child(_piece(n, true))
+		var panel := _piece(n, true)
+		_hud.add_child(panel)
+		if PANEL_POSITIONS.has(n):
+			panel.position = PANEL_POSITIONS[n]
+		panel.draw.connect(_draw_backing.bind(panel))
 	var strip := Control.new()
 	strip.name = "Strip"
 	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -181,6 +187,7 @@ func _build_shell() -> void:
 	clock.name = "Clock"
 	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hud.add_child(clock)
+	clock.draw.connect(_draw_backing.bind(clock))
 	_clock_label = _make_hud_label(Vector2(1500.0, 20.0), clock)
 	_selection_label = _make_hud_label(Vector2(20.0, SCREEN_H - 60.0), _hud.get_node("Selection"))
 	_loading_overlay = load("res://scenes/tactical_c/loading_overlay.gd").new()
@@ -189,6 +196,28 @@ func _build_shell() -> void:
 	if sel.has_signal("selection_changed"):
 		sel.selection_changed.connect(_on_panel_selection)
 		sel.centre_requested.connect(func(w: Vector2): qa_pan(w.x, w.y))
+
+
+# A19: HUD panels sit at fixed corners (a bare Control sits at 0,0 with no size, so Reinforcements drew under Objectives).
+const PANEL_POSITIONS := {"Events": Vector2(760.0, 70.0), "Reinforcements": Vector2(1640.0, 800.0)}
+const PANEL_BACK := Color(0.05, 0.06, 0.08, 0.7)
+const PANEL_PAD := 8.0
+
+
+# A19: a translucent backing under whatever the panel's children show, so each reads as a panel on the field.
+func _draw_backing(panel: Control) -> void:
+	var box := Rect2()
+	var any := false
+	for c in panel.get_children():
+		if not (c is Control) or not c.visible:
+			continue
+		var r := Rect2(c.position, c.size.max(c.get_combined_minimum_size()))
+		if r.size.x < 1.0 or r.size.y < 1.0 or (c is Label and c.text == ""):
+			continue
+		box = r if not any else box.merge(r)
+		any = true
+	if any:
+		panel.draw_rect(box.grow(PANEL_PAD), PANEL_BACK)
 
 
 func _piece(node_name: String, control: bool) -> Node:
@@ -311,6 +340,8 @@ func _end_mission() -> void:
 		if String(frame.get("type", "")) == "debrief":
 			got.append(frame)
 	bridge.frame_received.connect(on_frame)
+	if NetMatch.active():
+		NetMatch.leave()
 	bridge.send_command({"type": "cmd", "name": "mission_end"})
 	var deadline: int = Time.get_ticks_msec() + bridge.LIVE_READ_TIMEOUT_MSEC
 	while got.is_empty() and Time.get_ticks_msec() < deadline:
@@ -381,8 +412,8 @@ func load_frame(frame: Dictionary) -> void:
 	var fresh_load := tick <= _last_tick
 	_last_tick = tick
 	if _canvas > 0.0 and (not _camera_initialized or _canvas != _camera_canvas or fresh_load):
-		_zoom = 1.0
-		_world_scale = _fit_scale
+		_zoom = _framing_zoom()
+		_world_scale = _fit_scale * _zoom
 		_camera = _force_camera()
 		_camera_initialized = true
 		_camera_canvas = _canvas
@@ -603,6 +634,8 @@ func send_command(cmd: Dictionary) -> bool:
 	BugReportManager.log_command(cmd)
 	var bridge = SimSession.bridge()
 	var ok: bool
+	if NetMatch.active():
+		return _send_match_command(kind, unit_ids, cmd)
 	if _move_order_dropped:
 		# Plant: one pipe command per unit (trips the one-command invariant).
 		_commands_sent_last_order = unit_ids.size()
@@ -640,9 +673,88 @@ func send_command(cmd: Dictionary) -> bool:
 # scene has no pause/menu state to also gate on.
 func _process(delta: float) -> void:
 	_pan_input(delta)
+	for n in ["Objectives", "Selection", "Events", "Reinforcements", "Clock"]:
+		_node(n).queue_redraw()
 	_since_load += delta
-	_step_live(delta)
+	if NetMatch.active():
+		_match_frame()
+	else:
+		_step_live(delta)
 	_apply_motion()
+
+
+# Wiring spec W5 / interface 5: in a match NetMatch owns the tick; the view only submits orders and shows frames.
+const MATCH_VERBS := {"move": 0, "attack_move": 1, "attack_target": 2}
+
+
+func _send_match_command(kind: String, unit_ids: Array, cmd: Dictionary) -> bool:
+	var ok := MATCH_VERBS.has(kind)
+	if ok:
+		var c := {"verb": MATCH_VERBS[kind], "units": unit_ids, "x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}
+		if kind == "attack_target":
+			c["arg"] = int(cmd.get("target", -1))
+		ok = NetMatch.command(c) >= 0
+	_commands_sent_last_order = 1
+	_units_in_last_command = unit_ids.size()
+	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size(),
+		"x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}
+	return ok
+
+
+func _match_frame() -> void:
+	var st: Dictionary = NetMatch.state()
+	var kind := String(st.get("kind", ""))
+	if kind == "desync":
+		_show_desync(int(st["tick"]), int(st["section"]))
+	_show_stall(st.get("peer", -1) if kind == "stalled" else -1)
+	if kind == "stalled" or not NetMatch.has_method("last_frame"):
+		return
+	var f: Dictionary = NetMatch.last_frame()
+	if f.is_empty() or int(f.get("tick", -1)) == int(_frame.get("tick", -2)):
+		return
+	_load_gap = _since_load
+	_since_load = 0.0
+	load_frame(f)
+	_live_stepped = true
+	_motion.push_frame(_frame)
+
+
+const SECTION_NAMES := ["regions", "factions", "rng", "units", "movement", "mission", "fog", "macro", "support_map"]
+
+
+func _show_desync(tick: int, section: int) -> void:
+	var name: String = SECTION_NAMES[section] if section >= 0 and section < SECTION_NAMES.size() else str(section)
+	_show_error("Desync at tick %d, section %s" % [tick, name])
+	var retry := _error_panel.find_child("Retry", true, false)
+	if retry != null:
+		retry.visible = false
+
+
+var _stall_overlay: Control
+var _stall_label: Label
+
+
+# Q-NET-02 b: a dimmed pause overlay naming the peer the match waits for; never a rewind.
+func _show_stall(peer) -> void:
+	if int(peer) < 0:
+		if _stall_overlay != null:
+			_stall_overlay.visible = false
+		return
+	if _stall_overlay == null:
+		_stall_overlay = Control.new()
+		_stall_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_stall_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var dim := ColorRect.new()
+		dim.color = Color(0, 0, 0, 0.5)
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_stall_overlay.add_child(dim)
+		_stall_label = Label.new()
+		_stall_label.set_anchors_preset(Control.PRESET_CENTER)
+		_stall_overlay.add_child(_stall_label)
+		$CanvasLayer.add_child(_stall_overlay)
+	_stall_label.text = "Paused, waiting for peer %d" % int(peer)
+	_stall_overlay.visible = true
 
 
 func _step_live(delta: float) -> void:
@@ -746,6 +858,32 @@ func qa_pan(x: float, y: float) -> void:
 		_sync_from_rig()
 	_update_display_px()
 	_redraw()
+
+
+# A19: the zoom at which every own and visible unit fits the screen with the edge of its sight disc, so the dimming outside
+# it shows too; 1.0 when they span the canvas, at most one wheel notch under ZOOM_MAX.
+# Draft: the share of a sight radius kept in view around the units (nobody gave a number).
+const FRAMING_SIGHT_SHARE := 1.0
+
+
+func _framing_zoom() -> float:
+	var lf := _get_local_faction()
+	var seen := _visible_ids()
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	var sight := 0.0
+	for u in _frame.get("units", []):
+		if int(u.get("faction", -1)) == lf or seen.has(int(u.get("id"))):
+			var p := Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+			lo = lo.min(p)
+			hi = hi.max(p)
+			sight = maxf(sight, float(u.get("sight", 0.0)))
+	if lo.x == INF:
+		return 1.0
+	var size := hi - lo + Vector2.ONE * sight * FRAMING_SIGHT_SHARE
+	var room := Vector2(SCREEN_W, SCREEN_H) - Vector2.ONE * UNIT_SIZE * 4.0
+	var z := minf(room.x / maxf(size.x * _fit_scale, 1.0), room.y / maxf(size.y * _fit_scale, 1.0))
+	return clampf(z, 1.0, ZOOM_MAX / ZOOM_STEP)
 
 
 # Frames what the player sees at mission start: shifts the canvas-centred camera

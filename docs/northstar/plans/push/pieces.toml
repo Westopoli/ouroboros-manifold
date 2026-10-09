@@ -867,7 +867,7 @@ size_estimate = "om_player_faction_reassign_on_collapse runs the restricted rota
 id = "G-errorpanel"
 manager = "M3"
 wave = 4
-owns = ["scenes/shared/error_panel.tscn", "scenes/shared/error_panel.gd"]
+owns = ["scenes/shared/error_panel.tscn", "scenes/shared/error_panel.gd", "tests/test_pipe_error_panels.gd"]
 owns_glob = []
 acceptance = ["tests/test_pipe_error_panels.gd"]
 depends_on = []
@@ -1408,6 +1408,7 @@ owns = [
     "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
     "tests/transport/test_pipe_vg_identity.py", "tests/transport/test_pipe_place_structure.py", "tests/transport/test_pipe_tactical_tier_state_reserved.py",
     "tests/transport/test_pipe_tactical_delta_frame.py",  # handed to VG-CONTRACT 2026-10-08 (TD-VG-K-6/7)
+    "scenes/mission_briefing/mission_briefing.gd",  # handed to VG-CONTRACT for vg-f5-land (K-h wire)
     "scripts/specfactory/reach_lint.py",  # VG-split-land: pipe roots widened to every csrc/pipe/*.c after the om_pipe.c split
 ]
 owns_glob = ["tests/qa/desktop/plays/K/**"]
@@ -1494,29 +1495,32 @@ status = { state = "in_flight" }
 tests_pending = false
 size_estimate = "K-d: om_space_field getters, space_field_dump verb, bridge decode (placeholder plates)"
 
+# VG-CONTRACT-E1 shares csrc/ouroboros_sim.h, csrc/om_internal.h, csrc/pipe/om_pipe.c, docs/architecture.md, signatures.toml and
+# autoload/c_bridge.gd with VG-CONTRACT-D and lands after it. K-e also stubs the four lane files (E1b, E1c, E1g, E1h fill them).
 [[piece]]
 id = "VG-CONTRACT-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/ouroboros_sim.h", "csrc/signatures.toml", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "docs/architecture.md"]
-owns_glob = ["tests/csim/test_VG_contract_e1*.py", "tests/transport/test_pipe_vg_e1*.py"]
-acceptance = []
-depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
+owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "csrc/pipe/pipe_tactical.c", "csrc/pipe/pipe_dumps.c", "csrc/pipe/om_pipe.c", "autoload/c_bridge.gd", "docs/architecture.md", "csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6"]
 status = { state = "in_flight" }
 tests_pending = true
-size_estimate = "K-e: lots, density, strongpoint getters and frame fields; save format 8"
+size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
 
+# E1i touches csrc/mission.c and csrc/unit.c: wiring lines only; shared with the attached owners.
 [[piece]]
 id = "VG-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py"]
-owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e1_*.gd", "tests/csim/test_VG_E1_*.py", "tests/qa/desktop/plays/E1/**"]
+owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "csrc/mission.c", "csrc/unit.c"]
+owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT"]
 status = { state = "in_flight" }
 tests_pending = true
-size_estimate = "lane E1, 20 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
+size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
 
 # Visible-game programme (2026-10-07), lane F T0: W8a static pipe build scripts per OS, W8d export
 # presets, the Steam depot script. Acceptance tests (tests/transport/test_vg_f_w8a_static_pipe.py,
@@ -1525,8 +1529,8 @@ size_estimate = "lane E1, 20 pieces in two workflows (vg-wave5-laneE1.js parts a
 id = "VG-F"
 manager = "M0"
 wave = 7
-owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf", "tests/transport/test_vg_f_w2_net_step_frame.py", "tests/transport/test_vg_f_w8a_static_pipe.py", "tests/transport/test_vg_f_w8d_presets.py", "tests/transport/test_vg_f_depot_script.py", "tests/transport/test_vg_f_park_depot_setlive.py", "tests/test_vg_f_w2_pipe_sim.gd", "tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_f5_hookup.gd", "autoload/net/pipe_sim.gd", "scenes/main_menu/main_menu.gd", "autoload/scene_router.gd", "tests/test_main_menu_items.gd"]  # main_menu.gd, scene_router.gd, test_main_menu_items.gd handed over from attached C1/C8 for the W4 landing (vg-f-land-2)
-owns_glob = ["tests/qa/desktop/plays/F/**", "scenes/lobby/**"]
+owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf", "tests/transport/test_vg_f_w2_net_step_frame.py", "tests/transport/test_vg_f_w8a_static_pipe.py", "tests/transport/test_vg_f_w8d_presets.py", "tests/transport/test_vg_f_depot_script.py", "tests/transport/test_vg_f_park_depot_setlive.py", "tests/test_vg_f_w2_pipe_sim.gd", "tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_f5_hookup.gd", "tests/qa/desktop/net_match_loopback.py", "scenes/shared/error_panel.gd", "autoload/net/pipe_sim.gd", "scenes/main_menu/main_menu.gd", "autoload/scene_router.gd", "tests/test_main_menu_items.gd"]
+owns_glob = ["tests/qa/desktop/plays/F/**", "autoload/net/**", "scenes/lobby/**"]
 acceptance = []
 depends_on = ["NET-wire-A"]
 status = { state = "in_flight" }
@@ -1567,3 +1571,80 @@ acceptance = []
 depends_on = ["VG-D6"]
 status = { state = "in_flight" }
 tests_pending = true
+# VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
+[[piece]]
+id = "VG-C-wire"
+status = "attached"  # landed 8e6ca39a
+depends_on = ["VG-C"]  # wiring on top of VG-C: its globs cover scenes/ground3d/** and tests/test_vg_c*.gd
+manager = "Architect"
+owns = [
+    "scenes/ground3d/ground3d.gd",  # wiring: add ground_units.gd and slope_view.gd as children, feed set_terrain/set_frame, add slope_view and units3d to qa_state
+    "tests/test_vg_c_wire_ground3d.gd",
+    "tests/test_vg_c_zoom_once.gd",
+]
+
+# Architect 2026-10-09: test-only daemon verb "project" x y so lane A plays get the view's own world-to-pixel projection.
+[[piece]]
+id = "G-project"
+manager = "Architect"
+wave = 4
+owns = ["tests/test_qa_daemon.gd", "autoload/qa_daemon.gd"]  # qa_daemon.gd shared with VG-GUARD: only the project verb lines
+owns_glob = []
+acceptance = ["tests/test_qa_daemon.gd"]
+depends_on = ["VG-GUARD"]
+status = "attached"  # landed f37a926f
+tests_pending = true
+size_estimate = "owns the 'project' verb lines in autoload/qa_daemon.gd (shared with VG-GUARD); dispatch case plus one helper calling the view's projection"
+
+# Merge-gate pieces ordered by Westley 2026-10-09. Tests written first (push/vg-gate-tests); a different agent builds.
+[[piece]]
+id = "HARNESS-gdreach"
+manager = "Architect"
+owns = ["scripts/specfactory/gd_reach_lint.py", "scripts/specfactory/gd_reach_stubs.txt", "tests/specfactory/test_gd_reach_lint.py"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "attached"  # landed fc986411
+tests_pending = true
+size_estimate = "one new file; also inserts the stage gd_reach in the SHARED scripts/specfactory/merge_gate.sh after reach_lint (one stage insert, queued)"
+
+[[piece]]
+id = "HARNESS-laneplays"
+manager = "Architect"
+owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/lane_plays_known_red.txt", "tests/specfactory/test_lane_plays_check.py"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "attached"  # landed fc986411
+tests_pending = true
+size_estimate = "lane_plays_check in the SHARED merge_gate_support.py plus the lane_plays stage in the SHARED merge_gate.sh after playthrough (queued edits)"
+
+[[piece]]
+id = "HARNESS-playsplit"
+manager = "Architect"
+owns = ["tests/specfactory/test_gate_playthrough.py"]
+owns_glob = []
+acceptance = []
+depends_on = ["HARNESS-laneplays"]
+status = "attached"  # landed 7bb1f5a2
+tests_pending = true
+size_estimate = "playthrough_check ignores tests/qa/desktop/plays; SHARES scripts/specfactory/merge_gate_support.py with HARNESS-laneplays (queued edit after it)"
+
+# K-c6 contract piece (Architect, 2026-10-09): terrain_dump carries layer_floors_wu and flyer_types.
+[[piece]]
+id = "K-c6"
+manager = "Architect"
+owns = [
+    "csrc/pipe/pipe_dumps.c",  # handle_terrain_dump lines only; SHARED with VG-CONTRACT
+    "csrc/pipe/om_pipe.c",  # g_roster_types (+2 lines) only; SHARED with VG-CONTRACT
+    "csrc/pipe/pipe_internal.h",  # g_roster_types extern (+1 line) only; SHARED with VG-CONTRACT
+    "autoload/bridge/dump_decode.gd",  # terrain_from_frame only; SHARED with VG-CONTRACT
+    "tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd",
+    "docs/architecture.md",  # terrain_dump bullet and dump lines only; SHARED with VG-CONTRACT
+]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"

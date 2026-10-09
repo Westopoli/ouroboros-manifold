@@ -1,5 +1,5 @@
 """S-132 play: walkers read as a force, not dots (shapes ship regardless of Q-132-02; seen-reachable lane C list).
-Moment 'force': ground3d present, units_px has one entry per unit in the frame, and no two own units project to the same
+Moment 'force': ground3d present, units_px covers the own units and the visible enemies (R-089-04), and no two own units project to the same
 pixel unless they share a position in the frame (a stack of models must not collapse to a point). CONTROL: the same
 check flags a doctored pair of units forced onto one pixel."""
 from __future__ import annotations
@@ -39,5 +39,10 @@ def test_s132_force_is_not_collapsed(game):
     _play.ground3d(game)
     q = _play.qa(game)
     _play.evidence(game, "s132", "force")
-    assert len(q["units_px"]) == q["unit_count"], "S-132: units_px %d vs unit_count %d" % (len(q["units_px"]), q["unit_count"])
+    # R-089-04: units_px lists only the local faction's visible set; the visible id list is not in qa_state, so pin
+    # own-faction ids <= units_px ids <= all unit ids (TD-VG-C-2).
+    own = {i for i, u in q["units"].items() if u["faction"] == q["local_faction"]}
+    drawn = set(q["units_px"])
+    assert own <= drawn, "S-132: own units not drawn: %s" % sorted(own - drawn)[:5]
+    assert drawn <= set(q["units"]), "S-132: units_px has ids not in the frame: %s" % sorted(drawn - set(q["units"]))[:5]
     assert _collapsed(q["units_px"], q["units"]) == [], "S-132: distinct units project to one pixel: %s" % _collapsed(q["units_px"], q["units"])

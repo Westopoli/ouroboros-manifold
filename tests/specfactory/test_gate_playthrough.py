@@ -75,3 +75,64 @@ def test_build_failure_rejects_and_suite_not_run(tmp_path, monkeypatch):
                                        target="test_flow_planted.py", force=True, setup=True)
     assert not ok and detail.startswith("playthrough setup failed: build") and "planted build break" in detail
     assert not (cand / "RAN").exists()
+
+
+# --- HARNESS-playsplit: the playthrough stage ignores tests/qa/desktop/plays/**; lane_plays owns the plays ---
+
+def _desktop_tree(tmp_path, spine_body, play_body, extra_body=None):
+    d = tmp_path / "tests/qa/desktop"
+    (d / "plays/A").mkdir(parents=True)
+    (d / "test_flow_spine.py").write_text(spine_body)
+    (d / "plays/A/test_S_001.py").write_text(play_body)
+    if extra_body is not None:
+        (d / "test_other_desktop.py").write_text(extra_body)
+    kr = tmp_path / "known_red.txt"
+    kr.write_text("")
+    return kr
+
+
+def _check(tmp_path, kr):
+    return mgs.playthrough_check(tmp_path, "HEAD", python_exe=PY, timeout=120, known_red_path=kr,
+                                 target="tests/qa/desktop", force=True, setup=False)
+
+
+def test_playthrough_command_ignores_plays_dir(tmp_path, monkeypatch):
+    """HARNESS-playsplit. Red now: playthrough_check builds `pytest ... tests/qa/desktop` with no
+    --ignore, so the flow spine and the play are both collected."""
+    kr = _desktop_tree(tmp_path, "def test_flow_spine_ok():\n    pass\n", "def test_S_001_play():\n    pass\n")
+    seen = []
+    real = mgs.subprocess.run
+
+    def spy(cmd, *a, **k):
+        if isinstance(cmd, list) and "pytest" in cmd:
+            seen.append(list(cmd))
+        return real(cmd, *a, **k)
+    monkeypatch.setattr(mgs.subprocess, "run", spy)
+    ok, detail = _check(tmp_path, kr)
+    assert ok, detail
+    assert len(seen) == 1
+    cmd = seen[0]
+    assert "tests/qa/desktop" in cmd
+    ign = [a for a in cmd if a.startswith("--ignore") and a.rstrip("/").endswith("tests/qa/desktop/plays")]
+    assert ign, f"no --ignore of tests/qa/desktop/plays in {cmd}"
+    assert "1 passed" in detail, detail  # the spine only, not the play
+
+
+def test_red_play_does_not_reject_playthrough(tmp_path):
+    """HARNESS-playsplit. Red now: a red play under plays/ is collected by the playthrough stage
+    and rejects it (ok=False), though only the lane_plays list may carry it."""
+    kr = _desktop_tree(tmp_path, "def test_flow_spine_ok():\n    pass\n",
+                       "def test_S_001_play():\n    assert False\n")
+    ok, detail = _check(tmp_path, kr)
+    assert ok, detail
+    assert "test_S_001_play" not in detail
+
+
+def test_red_desktop_test_outside_plays_still_rejects(tmp_path):
+    """HARNESS-playsplit positive control: a red desktop test outside plays/ still rejects.
+    Green now and must stay green after the split."""
+    kr = _desktop_tree(tmp_path, "def test_flow_spine_ok():\n    pass\n",
+                       "def test_S_001_play():\n    pass\n",
+                       extra_body="def test_other_broken():\n    assert False\n")
+    ok, detail = _check(tmp_path, kr)
+    assert not ok and "test_other_broken" in detail

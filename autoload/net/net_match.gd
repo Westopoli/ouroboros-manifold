@@ -8,6 +8,7 @@ var session = null
 var _record := {}
 var _sim = null
 var _chat: Callable
+var _transport = null
 var _ready_from := {}
 var _active := false
 var _sim_failed := false
@@ -35,6 +36,7 @@ var _guard := _SimGuard.new()
 func start(record: Dictionary, transport, sim, lobby_chat: Callable) -> void:
 	_record = record
 	_sim = sim
+	_transport = transport
 	_chat = lobby_chat
 	_guard.inner = sim
 	var ids: Array = []
@@ -88,6 +90,23 @@ func active() -> bool:
 
 func command(cmd: Dictionary) -> int:
 	return session.command(cmd)
+
+
+func last_frame() -> Dictionary:
+	if _sim == null:
+		return {}
+	return _sim.last_frame()
+
+
+# W5: End Mission in a match. Leaves the Steam lobby, ends the session, deactivates; the view then runs mission_end locally.
+func leave() -> void:
+	if _transport != null and _transport.has_method("leave_lobby"):
+		_transport.leave_lobby()
+	elif _record.has("lobby_id") and Engine.has_singleton("Steam"):
+		Engine.get_singleton("Steam").leaveLobby(int(_record["lobby_id"]))
+	if session != null:
+		session.end()
+	_active = false
 
 
 func drop(peer: int) -> void:

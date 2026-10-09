@@ -1,6 +1,6 @@
-# The visible game programme: workflow spec (rev 4, after audit round 3; rev 7: D8 spawn placement (Westley 2026-10-09))
+# The visible game programme: workflow spec (rev 7, after the lane E pre-flight 2026-10-09; D8 spawn placement (Westley 2026-10-09))
 
-Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 went to round 3 (Opus, 10 must-change items, all text; verdict "approve with the listed changes"); rev 4 applies them and is the launch text, pending Westley's go line.
+Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 went to round 3 (Opus, 10 must-change items, all text; verdict "approve with the listed changes"); rev 4 applies them and is the launch text, pending Westley's go line. Rev 5 adds the attach point rule to section 1 (from the 2026-10-09 drift check). Rev 6: lane E pre-flight 2026-10-09 (R-168-05 for the era building set; K-e bumps ABI and save versions with the three pin tests; place is a player command; E1j is the pins and ledger row; S-235 held; pipe split noted; 22 pieces).
 
 ## 0. What changed in rev 3 and why
 
@@ -97,13 +97,21 @@ As rev 2: `space_noise.c`, `space_plates.c`, `space_raster.c`, mask writer, miss
 
 - **D8** spawn placement: each faction's spawn slots in the pocket carved at its own anchor (CLEAR_RADIUS_WU 600 pool, enlarged until it holds the army's slot count with no index wrap), the objective pocket separate, pockets connected by the reachability carve; retires the D5-3 single-pocket placement; tests `tests/csim/test_VG_D_d8.py`; owner VG-D8 (`csrc/space_field.c`, `csrc/mission.c` spawn lines).
 
-### Lane E1: settlement and economy, buildable half (`VG-E1`, 20 pieces, two workflows; K-e first)
+### Lane E1: settlement and economy, buildable half (`VG-E1`, 22 pieces, two workflows; K-e first)
 
-Seen-reachable: S-193 (density, stages, waves; the slowdown and cover parts parked), S-218, S-237 (look), S-168 (placement). Blocked: S-219 (Q-219-02), S-235 (E2 beats), S-238 and S-167/S-169–S-182 (E2). E1a K-e; E1b density field (`csrc/economy_density.c`); E1c lot stages; E1d waves + rubble/rebuild (10 s); E1e placement + footprint clearing (R-193-03, R-168-01); E1f building set per era pack (manifest + validator, R-168-04); E1g doctrine list as data (R-179-01); E1h strongpoints (`csrc/strongpoint.c`); E1i the one `mission.c`/`unit.c` wiring piece (after K-a lands; lane D's D5 follows it); E1j (save pins beyond K-e: none; the piece is the ledger row and the Godot `load_game.gd` pin); E1k `scenes/settlement/settlement_layer.gd`; E1l `strongpoint_layer.gd`; E1m `scenes/economy/ticker_beats.gd` (emits the `TickerBeats` signal A8 listens to; no edit to `events_feed.gd`); E1n `map_markers.gd`; E1o placement UI (yield preview is E2); E1p the view wiring (VG-VIEW, after K-e); tests per piece. E2: rev 4 when the batches land.
+Seen-reachable: S-193 (density, stages, waves; the slowdown and cover parts parked), S-218, S-237 (look), S-168 (placement). Blocked: S-219 (Q-219-02), S-238 and S-167/S-169-S-182 (E2). **HELD: S-235** (E1m, E1n, the four beats): Q-235-01 is blocked; built only after Westley approves the beats. The pipe is split: frames are in `csrc/pipe/pipe_tactical.c`, dumps in `csrc/pipe/pipe_dumps.c`, dispatch lines in `om_pipe.c`; wherever this section names `om_pipe.c` for a frame, it means that split. The open-flag list in `preflight_2026-10-07/6-economy.md` is superseded by the register (batches 13 to 22 closed them).
+
+K-e bumps `OM_ABI_VERSION` 5 to 6 and `OM_SAVE_FORMAT_VERSION` 7 to 8; the three save-pin tests (`tests/test_load_game_wrong_version.gd:14`, `tests/csim/test_E16_B5_save_version.py:13`, `tests/csim/test_E16_C2_save_version.py:14` with `PRE_BUMP_VERSION`) move with it under one ledger row.
+
+Place verb: placing a building is a player command on the existing command path (kind "place", `unit_ids` empty, x, y, building type id), not the debug `place_structure` verb; K-e defines the command frame and the pipe handler, E1e consumes it.
+
+Pieces. Part a: E1a K-e; E1b density field (`csrc/economy_density.c`); E1c lot stages (`economy_lots.c`); E1d waves + rubble/rebuild (10 s); E1e placement + footprint clearing (R-193-03, R-168-01); E1f building set per era pack (manifest + validator, R-168-05); E1g doctrine list as data (R-179-01, `economy_doctrine.c`); E1h strongpoints (`csrc/strongpoint.c`); E1i the one `mission.c`/`unit.c` wiring piece (after K-a lands; lane D's D5 follows it); E1j save pins and the K-e ledger row (the three pin tests above and the Godot `load_game.gd` pin). K-e stubs `economy_density.c`, `economy_lots.c`, `economy_doctrine.c` and `strongpoint.c`. Part b: E1k `scenes/settlement/settlement_layer.gd`; E1l `strongpoint_layer.gd`; E1o placement UI (yield preview is E2); E1p the view wiring (VG-VIEW, after K-e); tests per piece. HELD behind Q-235-01, in part b: E1m `scenes/economy/ticker_beats.gd` (emits the `TickerBeats` signal A8 listens to; no edit to `events_feed.gd`); E1n `map_markers.gd`. E2: rev 4 when the batches land.
 
 ### Lane F: Steam phase B and shipping (`VG-F` + `VG-F5`, 8 pieces)
 
 Seen-reachable: S-139–S-143, S-241 (no E2 part), the tester guide. Blocked: S-144 (Q-144-03), S-159/S-242 (E2). T0: W8a, W8d, the depot script (land with B0). After K-f: W2 PipeSim, W4 lobby + menu, F5 the hookup right after A12, the loopback match, the Spacewar test.
+
+**Attach point rule (rev 5, from the 2026-10-09 drift check):** every client piece names the live scene node that adds it and the qa_state key that proves it, and ships an integration test that reads that key from the running scene, not from a fresh instance. A piece without an attach point is a stub and is listed as one.
 
 ## 2. Interfaces fixed (K0's `architecture.md` table; every test is written against this)
 
