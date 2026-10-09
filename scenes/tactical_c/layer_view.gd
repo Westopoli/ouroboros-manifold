@@ -90,10 +90,6 @@ func _draw() -> void:
 		if t != "":
 			var d := -1.0 if t == "rise" else 1.0
 			draw_colored_polygon(PackedVector2Array([p + Vector2(0, d * 22), p + Vector2(-6, d * 14), p + Vector2(6, d * 14)]), c)
-		var ring = sensor_ring(id)
-		if ring != null:
-			c.a = 0.5 * dim_alpha(layer)
-			draw_arc(ring["center"], ring["radius"], 0.0, TAU, 64, c, 1.0)
 	for i in _layers.size():
 		var l := int(_layers[i])
 		var r := Rect2(Vector2(STRIP_X, STRIP_Y + i * STRIP_STEP), STRIP_BOX)
