@@ -161,25 +161,38 @@ def nearest_enemy_px(client, q: dict) -> tuple:
         r = client.call("project", float(e["x"]), float(e["y"]))
         assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
-    # TD-VG-A-9d: the ground rig's zoom is capped, so a player scrolls: real pointer input parked 2 px inside the screen edge
-    # on the enemy's side (the 2D margin is 4 px, EDGE_SCROLL_ZONE is 60 px, so 2 px works for both), 30 s bound, no camera verb.
+    # TD-VG-A-9e: the ground rig's zoom is capped, so a player scrolls with real pointer input (no camera verb). The edge is
+    # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
+    # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so a small move is
+    # re-sent every 0.5 s. SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
+    # scroll only when both deltas exceed it; otherwise the larger one. on_screen must hold for two consecutive polls.
+    SCREEN_WU = 3000.0
     if not r["result"].get("on_screen"):
-        dx, dy = r["result"]["x"] - w / 2, r["result"]["y"] - h / 2
-        ex_ = 2 if dx < 0 else (w - 3 if dx > 0 else w // 2)
-        ey_ = 2 if dy < 0 else (h - 3 if dy > 0 else h // 2)
-        if abs(dx) <= w / 2:
-            ex_ = w // 2
-        if abs(dy) <= h / 2:
-            ey_ = h // 2
+        cam = q["camera"]
+        ddx, ddy = e["x"] - cam["x"], e["y"] - cam["y"]
+        both = abs(ddx) > SCREEN_WU and abs(ddy) > SCREEN_WU
+        ex_ = w // 2
+        ey_ = h // 2
+        if both or abs(ddx) >= abs(ddy):
+            ex_ = w - 3 if ddx > 0 else 2
+        if both or abs(ddy) > abs(ddx):
+            ey_ = h - 3 if ddy > 0 else 2
         client.call("input", "move", ex_, ey_)
         deadline = time.monotonic() + 30.0
-        while time.monotonic() < deadline:
+        last_nudge = time.monotonic()
+        hits = 0
+        while time.monotonic() < deadline and hits < 2:
             time.sleep(0.2)
+            if time.monotonic() - last_nudge >= 0.5:
+                client.call("input", "move", ex_ + (1 if ex_ < w // 2 else -1 if ex_ > w // 2 else 0), ey_ + (1 if ey_ < h // 2 else -1 if ey_ > h // 2 else 0))
+                client.call("input", "move", ex_, ey_)
+                last_nudge = time.monotonic()
             r = client.call("project", float(e["x"]), float(e["y"]))
             assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
-            if r["result"].get("on_screen"):
-                break
+            hits = hits + 1 if r["result"].get("on_screen") else 0
         client.call("input", "move", w // 2, h // 2)
+        if hits < 2:
+            r["result"]["on_screen"] = False
     assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after zoom-out and 30 s edge scroll toward it" % k
     px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
