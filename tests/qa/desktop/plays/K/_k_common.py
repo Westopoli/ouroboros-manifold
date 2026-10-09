@@ -34,7 +34,7 @@ STEP_TIMEOUT = 10.0
 
 def start_game(seed=1):
     port = pick_free_port()
-    g = GodotGame(qa_port=port, seed=seed, resolution="1920x1080")
+    g = GodotGame(qa_port=port, seed=seed, resolution="1920x1080", renderer="vulkan")
     g.start()
     g.wait_for_port(timeout=60.0)
     return g

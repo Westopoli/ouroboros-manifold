@@ -28,7 +28,7 @@ SHOT_DIR = REPO / "docs/northstar/story_reviews/shots" / RUN_ID
 
 
 def start_ground_game() -> GodotGame:
-    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution="1920x1080", extra_args=["--era", "greek_placeholder"])
+    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution="1920x1080", extra_args=["--era", "greek_placeholder"], renderer="vulkan")
     g.start()
     g.wait_for_port(timeout=60.0)
     _to_tactical(g)
