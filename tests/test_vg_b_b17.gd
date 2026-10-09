@@ -6,20 +6,20 @@ extends SceneTree
 # (res://scenes/galaxy/galaxy_view.tscn, driven=true, no pipe, seed1 tick10 fixture).
 #   - exactly ONE label per faction (every Label3D/Label under the view whose text equals the
 #     faction's name counts; a second label set makes the count 2);
-#   - its text is the faction's name from snapshot.factions[].name, never "Faction N" while a name
+#   - its text is the faction's name from the chronicle registry (chronicle_names.gd), never "Faction N" while a name
 #     exists; "Unknown" only for an owner that is not in the faction list.
 # Headless; needs no renderer.
-# OPEN (reported, not guessed): the fixture's factions carry NO "name" key, and docs/architecture.md
-# line 103 says a "name" entry in a payload is not read (names come from chronicle_names.gd). This
-# test injects "name" into a copy of snapshot.factions, as the B17 brief states the wire does.
+# Ruling TD-VG-B-9: the fixture's factions carry no "name" key and the wire does not send one
+# (docs/architecture.md line 103); the name of faction id N is what scenes/world/chronicle_names.gd
+# gives it from the tables in library/chronicle/fragments.json, so the fixture is fed UNCHANGED and
+# the expected text is read from that registry.
 # Run: scripts/run_godot_tests.sh tests/test_vg_b_b17.gd
 
 const SCENE_PATH := "res://scenes/galaxy/galaxy_view.tscn"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const UNKNOWN_OWNER := 9999
-const NAMES := ["Aurelian Concord", "Brine Hegemony", "Cobalt Reach", "Dunmark League",
-	"Ember Compact", "Fenwick Union", "Garnet Syndicate", "Hollow Crown", "Ivory Assembly",
-	"Jasper Dominion", "Kestrel Pact", "Lumen Circle", "Marrow Throne", "Nettle Court", "Opal Company"]
+const FRAGMENTS_PATH := "res://library/chronicle/fragments.json"
+const NAMES_SCRIPT := "res://scenes/world/chronicle_names.gd"
 
 var _pass := 0
 var _fail := 0
@@ -52,6 +52,13 @@ func _texts(n: Node, out: Array) -> void:
 		_texts(c, out)
 
 
+func _distinct(a: Array) -> int:
+	var d := {}
+	for x in a:
+		d[x] = true
+	return d.size()
+
+
 func _count(texts: Array, s: String) -> int:
 	var k := 0
 	for t in texts:
@@ -67,18 +74,27 @@ func _run() -> void:
 	if not (snap is Dictionary):
 		return
 	var factions: Array = snap.get("factions", [])
-	_check(factions.size() >= 3 and factions.size() <= NAMES.size(), "control: fixture has 3..%d factions, got %d" % [NAMES.size(), factions.size()])
+	_check(factions.size() >= 3, "control: fixture has at least 3 factions, got %d" % factions.size())
+	var tables = JSON.parse_string(FileAccess.get_file_as_string(FRAGMENTS_PATH))
+	_check(tables is Dictionary and tables.has("name_tables"), "control: fragments.json readable with name_tables")
+	if not (tables is Dictionary and tables.has("name_tables")):
+		return
+	var registry = load(NAMES_SCRIPT).new()
+	registry.load_tables(tables["name_tables"])
 	var named := (snap as Dictionary).duplicate(true)
+	_check(not named["factions"][0].has("name"), "control: the fixture's factions carry no name key")
 	var known: Array = []
-	for i in named["factions"].size():
-		named["factions"][i]["name"] = NAMES[i]
-		known.append(int(named["factions"][i]["id"]))
+	var chron := {}
+	for fc in named["factions"]:
+		known.append(int(fc["id"]))
+		chron[int(fc["id"])] = String(registry._faction_name(int(fc["id"])))
 	var owned := {}
 	for r in named["regions"]:
 		var o := int(r.get("owner", -1))
 		if known.has(o):
 			owned[o] = true
 	_check(owned.size() >= 3, "control: at least 3 factions own a region, got %d" % owned.size())
+	_check(chron.values().size() == _distinct(chron.values()), "control: the chronicle names of the fixture's factions are distinct")
 
 	var v: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	v.driven = true
@@ -92,7 +108,7 @@ func _run() -> void:
 	_texts(v, texts)
 
 	for o in owned:
-		var nm: String = NAMES[known.find(o)]
+		var nm: String = chron[o]
 		var k := _count(texts, nm)
 		_check(k == 1, "B17: faction %d name '%s' is drawn %d times, want exactly 1 (labels seen: %s)" % [o, nm, k, str(texts)])
 	for t in texts:

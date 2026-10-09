@@ -104,7 +104,7 @@ func set_frame(frame: Dictionary, mission: Dictionary) -> void:
 		if int(u.get("faction", 0)) == local or seen.has(int(u.get("id"))):
 			own.append(u)
 	_units_drawn = own.size()
-	_units3d.set_units(own, _terrain, [], [])
+	_units3d.set_units(own, _terrain, _terrain.get("layer_floors_wu", []), _terrain.get("flyer_types", []))
 	_slope_view.set_units(frame.get("units", []))
 
 
@@ -143,6 +143,8 @@ func qa_state() -> Dictionary:
 		"scale": q["scale"],
 		"slope_view": _slope_view.qa_state(),
 		"units3d": _units_drawn,
+		"units3d_heights": _units3d.heights(),
+		"units3d_shadows": _units3d.shadow_ids(),
 	}
 	var upx := {}
 	for u in _frame.get("units", []):
