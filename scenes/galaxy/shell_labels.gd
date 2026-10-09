@@ -22,7 +22,7 @@ func _init(host: Node3D, use_stand_in: bool) -> void:
 
 # factions: colour key -> {region_id: true}. One label per (colour key, faction_id): a region
 # mid-tween sits in its old owner's colour but carries its new owner's id, so it keeps its own label.
-func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
+func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dictionary = {}) -> void:
 	var live := {}
 	for key in factions:
 		var parts := {}
@@ -57,7 +57,7 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
 				label.font_size = LABEL_FONT_SIZE
 				_host.add_child(label)
 				_labels[lkey] = label
-			label.text = _text_for(fid, known_ids, _labels.size())
+			label.text = _text_for(fid, known_ids, _labels.size(), names)
 			label.position = parts[fid]["sum"] / parts[fid]["n"] + Vector3(0.0, LABEL_LIFT, 0.0)
 			label.modulate = Color(color.r, color.g, color.b, label.modulate.a)
 			label.outline_modulate = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, label.outline_modulate.a)
@@ -82,11 +82,13 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
 
 
 # A display name (non-numeric faction_id) reads as a name; a bare owner id goes through UnknownLabel.
-func _text_for(fid: String, known_ids: Array, ordinal: int) -> String:
+func _text_for(fid: String, known_ids: Array, ordinal: int, names: Dictionary) -> String:
 	if fid == "":
 		return "Faction %d" % ordinal
 	var num := fid.trim_prefix("faction_")
 	if fid.is_valid_int() or (fid.begins_with("faction_") and num.is_valid_int()):
+		if names.has(int(num)):
+			return names[int(num)]
 		return UnknownLabel.text_for(int(num), known_ids)
 	return fid.replace("_", " ").capitalize()
 

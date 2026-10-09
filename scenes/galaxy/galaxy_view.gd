@@ -17,7 +17,6 @@ const SimSession := preload("res://autoload/sim_session.gd")
 const GalaxyAdapter := preload("res://scenes/galaxy/galaxy_adapter.gd")
 const ConstellationRenderer := preload("res://scenes/galaxy/legacy_constellation_renderer.gd")
 const ShellRenderer := preload("res://scenes/galaxy/shell_renderer.gd")
-const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
 const DrivenModel := preload("res://scenes/galaxy/galaxy_view_driven.gd")
 const AmbientRig := preload("res://scenes/galaxy/ambient_rig.gd")
 const GalaxyQuality := preload("res://scenes/galaxy/galaxy_quality.gd")
@@ -31,7 +30,8 @@ const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 
 const DEFAULT_SEED := 1
 const LIVE_SNAPSHOT_TIMEOUT_MSEC := 8000
-const DEFAULT_DISTANCE := 180.0
+const DEFAULT_DISTANCE := 72.0
+const DEFAULT_TARGET := Vector3(7.0, 0.0, 0.0)
 const PICK_RADIUS_PX := 14.0
 const BAND_SPLIT_LOW := 32.5
 const BAND_SPLIT_HIGH := 70.0
@@ -42,9 +42,6 @@ const POINT_RADIUS := 1.2
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
 const OWNER_ALPHA := 1.0
-const LABEL_LIFT := 2.0
-const LABEL_PIXEL_SIZE := 0.08
-const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const GOLDEN_ANGLE := 0.6180339887498949
 const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
 # draft (no ruling gives a flash length or size): seconds a war flash lives, and its sphere radius
@@ -62,8 +59,6 @@ var _seed: int = DEFAULT_SEED
 var _hash: int = 0
 var _plants: Dictionary = {}
 var _frozen_band: String = ""
-var _names: RefCounted
-var _labels: Node3D
 
 var _gen := GalaxyGen.new()
 var _point_material: StandardMaterial3D
@@ -98,8 +93,7 @@ var _auto_camera := false
 func _ready() -> void:
 	_build_materials()
 	_build_renderers()
-	_build_labels()
-	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_camera_rig.set_view(DEFAULT_DISTANCE, DEFAULT_TARGET)
 	if not driven:
 		_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
@@ -139,42 +133,6 @@ func _build_renderers() -> void:
 			_quality["res_divisor"] = node.res_divisor
 		add_child(node)
 		node.setup(_adapter, _zoom)
-
-
-# R-106-03: faction names float at shell centroids in Overview. The wire carries
-# no names, so they come from chronicle_names.gd's placeholder table (indexed
-# modulo its size, not ruled).
-func _build_labels() -> void:
-	_names = ChronicleNames.new()
-	var lib = JSON.parse_string(FileAccess.get_file_as_string(LABEL_LIBRARY))
-	if lib is Dictionary:
-		_names.load_tables(lib.get("name_tables", {}))
-	_labels = Node3D.new()
-	_labels.name = "FactionLabels"
-	add_child(_labels)
-
-
-func _render_labels() -> void:
-	for child in _labels.get_children():
-		child.free()
-	var sums := {}
-	var counts := {}
-	for r in _regions:
-		var owner := int(r.get("owner", -1))
-		var i := int(r.get("i", -1))
-		if owner < 0 or not _positions.has(i):
-			continue
-		sums[owner] = sums.get(owner, Vector3.ZERO) + _positions[i]
-		counts[owner] = int(counts.get(owner, 0)) + 1
-	for owner in sums:
-		var label := Label3D.new()
-		label.text = _names.fill_template("{faction_name}", -1, owner)
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.no_depth_test = true
-		label.pixel_size = LABEL_PIXEL_SIZE
-		label.position = sums[owner] / float(counts[owner]) + Vector3(0.0, LABEL_LIFT, 0.0)
-		_labels.add_child(label)
-	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 
 
 func get_positions() -> Dictionary:
@@ -223,7 +181,6 @@ func _process(delta: float) -> void:
 	_zoom.update_from_distance(_camera_rig.get_distance())
 	_step_flashes(delta)
 	_feed_tween(Time.get_ticks_msec() / 1000.0)
-	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 	if _bridge == null:
 		return
 	_bridge.pump()
@@ -295,14 +252,18 @@ func _note_unknown_factions(snapshot: Dictionary) -> void:
 	for r in _regions:
 		owner_ids.append(int(r.get("owner", -1)))
 	var known: Array = []
+	var names := {}
 	if snapshot.has("factions"):
 		for f in snapshot["factions"]:
 			known.append(int(f.get("id", -1)) if f is Dictionary else int(f))
+			if f is Dictionary and str(f.get("name", "")) != "":
+				names[int(f["id"])] = str(f["name"])
 	else:
 		known = owner_ids.duplicate()
 	var shell := get_node_or_null("ShellRenderer")
 	if shell != null:
 		shell.known_faction_ids = known
+		shell.faction_names = names
 	_unknown_factions = []
 	for id in UnknownLabel.unknown_ids(owner_ids, known):
 		if id >= 0:
@@ -470,7 +431,6 @@ func _render() -> void:
 		_recompute_region_colours()
 	_render_filaments()
 	_render_points()
-	_render_labels()
 
 
 func _grow_owner_colours() -> void:
@@ -647,7 +607,7 @@ func move_camera_to_regions(region_ids: Array, duration: float) -> void:
 
 
 func move_camera_to_overview(_duration: float) -> void:
-	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_camera_rig.set_view(DEFAULT_DISTANCE, DEFAULT_TARGET)
 	_emit_camera_done()
 
 
