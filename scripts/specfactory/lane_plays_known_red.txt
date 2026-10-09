@@ -4,8 +4,3 @@ tests/qa/desktop/plays/C/s236.py::test_s236_zoom_range_changes_band_and_scale  #
 tests/qa/desktop/plays/C/s001.py::test_s001_slopes_have_midlines_and_blocked_ground_shows  # C7 unwired
 tests/qa/desktop/plays/C/s004.py::test_s004_transit_is_visible  # spec gap, no layer-change order
 tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # TD-VG-C-2 pending
-tests/qa/desktop/plays/A/test_S_095_movement_orders.py::test_s_095_group_moves_together  # TD-VG-A-9 pending
-tests/qa/desktop/plays/A/test_S_105_select_and_groups.py::test_s_105_box_select_shows_in_the_selection_panel  # TD-VG-A-9 pending
-tests/qa/desktop/plays/A/test_S_100_units_turn_not_snap.py::test_s_101_drawn_positions_between_ticks  # TD-VG-A-9 pending
-tests/qa/desktop/plays/A/test_S_096_commands.py::test_s_096_move_order_and_ability_button  # TD-VG-A-9 pending
-tests/qa/desktop/plays/A/test_S_135_abilities.py::test_s_135_ability_slots_and_fx_inventory  # TD-VG-A-9 pending

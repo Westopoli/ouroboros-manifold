@@ -159,7 +159,7 @@ def nearest_enemy_px(client, q: dict) -> tuple:
     r = client.call("project", float(e["x"]), float(e["y"]))
     assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
-    # TD-VG-A-9e/9g: no zoom-out step (the pan is 600 px/s over the view's world scale, fastest at the opening height); a player scrolls with real pointer input (no camera verb). The edge is
+    # TD-VG-A-9e/9g: no zoom-out step (the pan is a fixed 600 screen px/s, so the scroll budget scales with zoom: TD-VG-A-9h measured the A19 opening frame at scale 0.65, enemy about 15,278 px away, so a fixed 30 s ran out half way); a player scrolls with real pointer input (no camera verb). The edge is
     # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
     # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
     # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
@@ -176,7 +176,13 @@ def nearest_enemy_px(client, q: dict) -> tuple:
         if both or abs(ddy) > abs(ddx):
             ey_ = h - 3 if ddy > 0 else 2
         client.call("input", "move", ex_, ey_)
-        deadline = time.monotonic() + 30.0
+        # TD-VG-A-9h: budget_s = pixel distance from the screen centre / 600 px/s * 1.5 + 5 s, from the first project result.
+        # A mirrored pixel (behind the ground camera: sign disagrees with the world delta) uses world distance * qa_state scale.
+        px0, py0 = r["result"]["x"] - w / 2, r["result"]["y"] - h / 2
+        mirrored = (px0 * ddx < 0) or (py0 * ddy < 0)
+        dist_px = (ddx * ddx + ddy * ddy) ** 0.5 * float(q["scale"]) if mirrored else (px0 * px0 + py0 * py0) ** 0.5
+        budget_s = dist_px / 600.0 * 1.5 + 5.0
+        deadline = time.monotonic() + budget_s
         hits = 0
         while time.monotonic() < deadline and hits < 2:
             time.sleep(0.2)
@@ -186,6 +192,6 @@ def nearest_enemy_px(client, q: dict) -> tuple:
         client.call("input", "move", w // 2, h // 2)
         if hits < 2:
             r["result"]["on_screen"] = False
-    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after 30 s edge scroll toward it" % k
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after %.0f s edge scroll toward it (computed budget)" % (k, budget_s)
     px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
