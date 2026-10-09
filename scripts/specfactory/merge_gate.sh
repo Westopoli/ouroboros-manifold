@@ -495,6 +495,20 @@ else
     ok playthrough "$(sed 's/^OK //' "$PT_LOG" | tr '\n' ' ')"
 fi
 
+# -------------------------------------------------------------- 9b. lane_plays (per-lane desktop plays, real client under xvfb)
+# Runs the plays of each lane whose globs (lane_plays.toml) the diff touches; red outside
+# lane_plays_known_red.txt rejects. See merge_gate_support.py lane_plays_check.
+LP_LOG="$SCRATCH_ROOT/lane_plays.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject lane_plays "$(sed 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+elif grep -q '^OK skipped' "$LP_LOG"; then
+    warn lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
+else
+    ok lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
+fi
+
 # -------------------------------------------------------------- 10. checksum_trace O0 vs O2
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
     O0O2_LOG="$SCRATCH_ROOT/o0o2_build.log"
