@@ -139,7 +139,10 @@ func _check_project_verb(script) -> void:
 	get_root().add_child(view)
 	await process_frame
 	view.set_process(false)
-	view.load_frame(fx.frame())
+	var fr: Dictionary = fx.frame()
+	fr["player_faction"] = 0
+	fr["visible"] = {"0": [1, 2, 3, 4]}
+	view.load_frame(fr)
 	await process_frame
 	current_scene = view
 	var upx: Dictionary = view.qa_state().get("units_px", {})
