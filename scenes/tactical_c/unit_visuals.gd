@@ -8,6 +8,7 @@ const TYPE_NAMES := ["raider", "interceptor", "vanguard", "warden", "bombard", "
 const SHAPE_RADIUS := 12.0
 # draft: the manifest scale is for the 3D model (warden is 200.0); uncapped, one 2D body fills ~2400 px and 330 of them cost ~1.2 s a frame
 const MAX_VISUAL_SCALE := 1.0
+# draft: an HP bar shows only on a damaged or selected unit, so a full-health dense force shows shapes, not merged bars
 const BAR_SIZE := Vector2(20.0, 3.0)
 const OTHER_COLOR := Color(1.0, 0.3, 0.3)
 const FALLBACK_OWN := Color(0.2, 0.6, 1.0)
@@ -182,6 +183,7 @@ func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera
 		var frac := clampf(float(u.get("hp", 0.0)) / maxf(float(max_hp.get(type, 1.0)), 0.001), 0.0, 1.0)
 		_hp[id] = frac
 		_bars[id].get_node("Fill").size.x = BAR_SIZE.x * frac
+		_bars[id].visible = frac < 1.0 or _selected.has(id)
 		_nodes[id].position = _to_screen(Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0))))
 	for id in _nodes.keys().duplicate():
 		if not live.has(id):
@@ -226,6 +228,8 @@ func layer_ring_color(id: int) -> Color:
 
 func set_selected(ids: Array) -> void:
 	_selected = ids.duplicate()
+	for id in _bars:
+		_bars[id].visible = _hp.get(id, 1.0) < 1.0 or _selected.has(id)
 	for id in _rings.keys().duplicate():
 		if not _selected.has(id) or not _nodes.has(id):
 			_rings[id].free()

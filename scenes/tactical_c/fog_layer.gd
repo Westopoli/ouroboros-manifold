@@ -2,10 +2,9 @@ extends Node2D
 # See also: R-089-03 (outside sight is dimmed), R-089-04 (nothing remembered: discs are rebuilt from each frame).
 
 const OUTSIDE_ALPHA := 0.55
-const MAX_DISCS := 64
 const SHADER := """
 shader_type canvas_item;
-uniform vec3 discs[64];
+uniform sampler2D disc_tex : filter_nearest;
 uniform int count = 0;
 uniform float alpha = 0.55;
 varying vec2 pos;
@@ -13,7 +12,9 @@ void vertex() { pos = VERTEX; }
 void fragment() {
 	float a = alpha;
 	for (int i = 0; i < count; i++) {
-		if (distance(pos, discs[i].xy) <= discs[i].z) { a = 0.0; }
+		vec3 d = texelFetch(disc_tex, ivec2(i, 0), 0).rgb;
+		vec2 q = pos - d.xy;
+		if (dot(q, q) <= d.z * d.z) { a = 0.0; break; }
 	}
 	COLOR = vec4(0.0, 0.0, 0.0, a);
 }
@@ -55,16 +56,20 @@ func outside_alpha() -> float:
 	return OUTSIDE_ALPHA
 
 
+# One dim over the canvas, one hole per own unit (no cap, no outlines): the disc list rides in a one-row float texture.
 func _push_uniforms() -> void:
 	if _mat == null:
 		return
-	var arr := PackedVector3Array()
-	arr.resize(MAX_DISCS)
-	var n := mini(_discs.size(), MAX_DISCS)
+	var n := _discs.size()
+	var data := PackedFloat32Array()
+	data.resize(maxi(n, 1) * 3)
 	for i in n:
 		var c: Vector2 = _discs[i]["center"]
-		arr[i] = Vector3(c.x, c.y, float(_discs[i]["radius"]))
-	_mat.set_shader_parameter("discs", arr)
+		data[i * 3] = c.x
+		data[i * 3 + 1] = c.y
+		data[i * 3 + 2] = float(_discs[i]["radius"])
+	var img := Image.create_from_data(maxi(n, 1), 1, false, Image.FORMAT_RGBF, data.to_byte_array())
+	_mat.set_shader_parameter("disc_tex", ImageTexture.create_from_image(img))
 	_mat.set_shader_parameter("count", n)
 	_mat.set_shader_parameter("alpha", OUTSIDE_ALPHA)
 
