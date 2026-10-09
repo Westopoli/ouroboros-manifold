@@ -41,6 +41,28 @@ void handle_terrain_generate(const char *json) {
     jb_free(&j);
 }
 
+void handle_lots_dump(void) {
+    if (!W) {
+        write_error("lots_dump", "no world");
+        return;
+    }
+    jbuf j;
+    jb_init(&j);
+    jb_raw(&j, "{\"type\":\"lots\",\"lots\":[");
+    uint32_t n = om_lot_count(W);
+    int wrote = 0;
+    for (uint32_t i = 0; i < n; i++) {
+        om_lot l;
+        if (om_lot_get_at(W, i, &l) != 0) continue;
+        if (wrote) jb_putc(&j, ',');
+        wrote = 1;
+        write_lot_row(&j, &l);
+    }
+    jb_raw(&j, "]}");
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+}
+
 void handle_terrain_dump(void) {
     if (!W) {
         write_error("terrain_dump", "no world");

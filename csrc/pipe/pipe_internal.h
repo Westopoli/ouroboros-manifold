@@ -118,6 +118,8 @@ void handle_net_state_put(const char *json);
 void handle_net_state_diff(const char *json);
 void handle_terrain_generate(const char *json);
 void handle_terrain_dump(void);
+void handle_lots_dump(void);
+void write_lot_row(jbuf *j, const om_lot *l);
 void handle_terrain_probe(const char *json);
 
 #endif

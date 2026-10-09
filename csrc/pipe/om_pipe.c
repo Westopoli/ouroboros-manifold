@@ -1588,6 +1588,13 @@ static void handle_command(const char *json) {
         get_f64(json, "x", &x);
         get_f64(json, "y", &y);
         ret = (n_units < 1 || layer < 0) ? 1 : om_command_ping(W, unit_ids[0], (uint32_t)layer, x, y) != 0;
+    } else if (!strcmp(verb, "place")) {
+        double x = 0.0, y = 0.0;
+        int64_t building = -1;
+        ret = (n_units != 0 || !get_f64(json, "x", &x) || !get_f64(json, "y", &y) ||
+               !get_i64(json, "building", &building) || building < 0 || building > INT32_MAX)
+                  ? 1
+                  : om_economy_place(W, (int32_t)building, x, y) != 0;
     } else if (!strcmp(verb, "hold")) {
         /* No om_command_hold symbol; only om_unit_order_hold_node(w, unit_id,
          * node_id), which needs a node this command frame doesn't carry.
@@ -2006,6 +2013,8 @@ int main(void) {
             handle_terrain_generate(buf);
         } else if (!strcmp(name, "terrain_dump")) {
             handle_terrain_dump();
+        } else if (!strcmp(name, "lots_dump")) {
+            handle_lots_dump();
         } else if (!strcmp(name, "space_field_dump")) {
             handle_space_field_dump();
         } else if (!strcmp(name, "terrain_probe")) {

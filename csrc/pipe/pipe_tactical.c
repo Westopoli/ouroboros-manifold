@@ -208,6 +208,87 @@ static void write_tactical_structures(jbuf *j, int full) {
     free(ids);
 }
 
+/* VG K-e: the lot rows in the last tactical frame written, diffed for "lots_changed". */
+static om_lot *g_lots_prev;
+static uint32_t g_lots_prev_n, g_lots_prev_cap;
+
+void write_lot_row(jbuf *j, const om_lot *l) {
+    jb_putc(j, '[');
+    jb_uint(j, l->id);
+    jb_putc(j, ',');
+    jb_double(j, l->x);
+    jb_putc(j, ',');
+    jb_double(j, l->y);
+    jb_putc(j, ',');
+    jb_int(j, l->stage);
+    jb_putc(j, ',');
+    jb_int(j, l->building);
+    jb_putc(j, ',');
+    jb_int(j, l->owner);
+    jb_putc(j, ']');
+}
+
+/* VG K-e: delta "lots_changed" or full "strongpoints", then "economy"; each writes a trailing comma. */
+static void write_tactical_economy(jbuf *j, int full) {
+    if (full) {
+        jb_raw(j, "\"strongpoints\":[");
+        uint32_t n = om_strongpoint_count(W);
+        int wrote = 0;
+        for (uint32_t i = 0; i < n; i++) {
+            om_strongpoint sp;
+            if (om_strongpoint_get_at(W, i, &sp) != 0) continue;
+            if (wrote) jb_putc(j, ',');
+            wrote = 1;
+            jb_raw(j, "{\"id\":");
+            jb_uint(j, sp.id);
+            jb_raw(j, ",\"x\":");
+            jb_double(j, sp.x);
+            jb_raw(j, ",\"y\":");
+            jb_double(j, sp.y);
+            jb_raw(j, ",\"owner\":");
+            jb_int(j, sp.owner);
+            jb_raw(j, ",\"state\":");
+            jb_int(j, sp.state);
+            jb_putc(j, '}');
+        }
+        jb_raw(j, "],");
+    }
+    uint32_t n = om_lot_count(W);
+    if (n > g_lots_prev_cap) {
+        free(g_lots_prev);
+        g_lots_prev = malloc(sizeof(om_lot) * n);
+        g_lots_prev_cap = n;
+        g_lots_prev_n = 0;
+    }
+    om_lot *cur = malloc(sizeof(om_lot) * (n ? n : 1));
+    uint32_t nc = 0;
+    for (uint32_t i = 0; i < n; i++)
+        if (om_lot_get_at(W, i, &cur[nc]) == 0) nc++;
+    if (!full) {
+        jb_raw(j, "\"lots_changed\":[");
+        int wrote = 0;
+        for (uint32_t i = 0; i < nc; i++) {
+            const om_lot *p = NULL;
+            for (uint32_t k = 0; k < g_lots_prev_n; k++)
+                if (g_lots_prev[k].id == cur[i].id) {
+                    p = &g_lots_prev[k];
+                    break;
+                }
+            if (p && p->stage == cur[i].stage && p->building == cur[i].building && p->owner == cur[i].owner) continue;
+            if (wrote) jb_putc(j, ',');
+            wrote = 1;
+            write_lot_row(j, &cur[i]);
+        }
+        jb_raw(j, "],");
+    }
+    if (nc) memcpy(g_lots_prev, cur, sizeof(om_lot) * nc);
+    g_lots_prev_n = nc;
+    free(cur);
+    jb_raw(j, "\"economy\":{\"doctrine\":");
+    jb_int(j, om_doctrine_get(W));
+    jb_raw(j, ",\"resources\":{}},");
+}
+
 void write_tactical(int full) {
     jbuf j;
     jb_init(&j);
@@ -525,6 +606,7 @@ void write_tactical(int full) {
     g_tac.n_prev = n_ids;
 
     write_tactical_structures(&j, full);
+    write_tactical_economy(&j, full);
 
     jb_raw(&j, "\"events\":[");
     int ev_wrote = 0;
