@@ -6,9 +6,9 @@ extends RefCounted
 
 const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
 const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
-const LABEL_LIFT := 8.0   # draft: B4 retunes the label scale and offset
+const LABEL_LIFT := 6.0   # prototype scenes/mockups/galaxy/galaxy_view.gd line 163: +6 above the mean of the faction's system positions
 const LABEL_PIXEL_SIZE := 0.05
-const LABEL_FONT_SIZE := 64
+const LABEL_FONT_SIZE := 40   # prototype lines 166 to 170: font 40, pixel_size 0.05
 const STAND_IN_OPACITY_MULTIPLIER := 0.15   # draft: Architect ruling 2026-10-08, planes sit under the dots
 
 var stand_in: bool
@@ -67,7 +67,6 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
 			label.text = _text_for(fid, known_ids, _labels.size())
 			label.position = parts[fid]["sum"] / parts[fid]["n"] + Vector3(0.0, LABEL_LIFT, 0.0)
 			label.modulate = Color(color.r, color.g, color.b, label.modulate.a)
-			label.outline_modulate = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, label.outline_modulate.a)
 		if stand_in:
 			var reach := 0.0
 			for t in terr:
