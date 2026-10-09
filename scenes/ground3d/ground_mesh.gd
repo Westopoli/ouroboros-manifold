@@ -2,7 +2,7 @@ class_name GroundMesh
 extends RefCounted
 
 const CELL_WU := 100.0
-const TerrainLayer := preload("res://scenes/tactical_c/terrain_layer.gd")
+const GroundBands := preload("res://scenes/ground3d/ground_bands.gd")
 
 
 # Vertices sit at cell centres (i + 0.5) * CELL_WU, matching the sim's sampling (csrc/terrain.c ts_height_q);
@@ -16,7 +16,7 @@ static func build(terrain: Dictionary) -> MeshInstance3D:
 	var cols := PackedColorArray()
 	cols.resize(w * h)
 	for k in w * h:
-		cols[k] = TerrainLayer.BAND_COLOURS[clampi(bands[k], 1, 5) - 1] if walk[k] != 0 else TerrainLayer.STEEP_COLOUR
+		cols[k] = GroundBands.colour(bands[k], walk[k] != 0)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for j in h - 1:
@@ -33,6 +33,7 @@ static func build(terrain: Dictionary) -> MeshInstance3D:
 	mi.mesh = st.commit()
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
 	mat.roughness = 0.9
 	mi.material_override = mat
 	return mi

@@ -11,8 +11,9 @@ func _ready() -> void:
 	$ErrorPanel/V/MainMenu.pressed.connect(func(): SceneRouter.go_to("main_menu"))
 
 
-func show_error(reason: String) -> void:
+func show_error(reason: String, retry: bool = true) -> void:
 	_reason.text = reason
+	$ErrorPanel/V/Retry.visible = retry
 	_panel.visible = true
 
 

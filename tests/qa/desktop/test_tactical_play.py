@@ -69,7 +69,7 @@ def _to_tactical(game: GodotGame) -> None:
 
 @pytest.fixture()
 def tactical_game():
-    g = GodotGame(qa_port=pick_free_port(), seed=1)
+    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution="1920x1080")
     g.start()
     g.wait_for_port(timeout=60.0)
     try:
@@ -94,7 +94,12 @@ def test_c5_3_drawn_units_are_on_screen(tactical_game):
 def test_c5_3_real_drag_selects_and_right_click_orders_a_move(tactical_game):
     client = tactical_game.client
     drawn = len(_qa(client)["units_px"])
-    client.call("input", "drag", 0, 0, 1900, 140)
+    px = list(_qa(client)["units_px"].values())
+    xs = [p[0] for p in px]
+    ys = [p[1] for p in px]
+    x0, y0 = max(8, int(min(xs)) - 8), max(8, int(min(ys)) - 8)
+    x1, y1 = min(1920 - 8, int(max(xs)) + 8), min(1080 - 8, int(max(ys)) + 8)
+    client.call("input", "drag", x0, y0, x1, y1)
     time.sleep(0.5)
     selected = _qa(client)["selected"]
     assert len(selected) == drawn and drawn > 0, "drag selected %d of %d drawn units" % (len(selected), drawn)

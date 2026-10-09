@@ -24,13 +24,13 @@ def game():
 def test_s236_zoom_range_changes_band_and_scale(game):
     c = game.client
     for _ in range(40):
-        c.call("input", "wheel", -1)
+        c.call("input", "wheel", 1)
     _play.step(game, 2)
     g_in = _play.ground3d(game)
     _play.evidence(game, "s236", "micro")
     assert g_in["band"] == "micro", "R-236-01: fully zoomed in the band is %r, expected micro" % g_in["band"]
     for _ in range(80):
-        c.call("input", "wheel", 1)
+        c.call("input", "wheel", -1)
     _play.step(game, 2)
     g_out = _play.ground3d(game)
     shot = _play.evidence(game, "s236", "map")

@@ -881,7 +881,7 @@ def playthrough_trigger(files: list[str]) -> str:
 def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeout: int,
                       known_red_path: Path = DEFAULT_KNOWN_RED, target: str = "tests/qa/desktop",
                       force: bool = False, setup: bool = True) -> tuple[bool, str]:
-    """Run the desktop flow suite on the merged tree. ok=False on any red not in
+    """Run the desktop flow suite (not its lane plays directory) on the merged tree. ok=False on any red not in
     the known-red list, a suite that collects or runs nothing, or a timeout."""
     import time
     if not force:
@@ -901,7 +901,9 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
         subprocess.run(["godot", "--headless", "--path", str(candidate), "--import"],
                        capture_output=True, timeout=300)
     try:
-        proc = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "--color=no", target],
+        # lane story plays run in the lane_plays stage (HARNESS-laneplays), not here
+        proc = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "--color=no",
+                               "--ignore=" + target.rstrip("/") + "/plays", target],
                               cwd=str(candidate), capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return False, f"timed out after {timeout}s"
@@ -925,6 +927,54 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
     if bad:
         return False, f"red outside known-red list: {','.join(bad)} ({notes})"
     return True, f"{notes}; known red: {','.join(sorted(red)) or 'none'}"
+
+
+DEFAULT_LANE_KNOWN_RED = Path(__file__).resolve().parent / "lane_plays_known_red.txt"
+DEFAULT_LANE_MAP = Path(__file__).resolve().parent / "lane_plays.toml"
+
+
+def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout: int,
+                     known_red_path: Path = DEFAULT_LANE_KNOWN_RED, lane_map_path: Path = DEFAULT_LANE_MAP,
+                     plays_dir: str = "tests/qa/desktop/plays", changed: list[str] | None = None,
+                     setup: bool = True) -> tuple[bool, str]:
+    """Run each touched lane's play files alone; red outside the known-red list, or a listed
+    play that now passes, rejects."""
+    files = changed if changed is not None else changed_files(candidate, base_ref)
+    lanes = tomllib.loads(lane_map_path.read_text()).get("lanes", {})
+    touched = sorted(l for l, globs in lanes.items() if any(fnmatch.fnmatch(f, g) for f in files for g in globs))
+    plays = [p for l in touched if (candidate / plays_dir / l).is_dir()
+             for p in sorted((candidate / plays_dir / l).glob("*.py")) if p.name != "conftest.py"
+             and re.search(r"^def test_", p.read_text(), re.M)]
+    if not plays:
+        return True, "skipped: no lane plays touched"
+    prefix = ["xvfb-run", "-a"] if setup and shutil.which("xvfb-run") else []
+    env = {**os.environ, "OM_QA_RENDERER": "vulkan"}
+    passed, red = set(), set()
+    for play in plays:
+        rel = play.relative_to(candidate).as_posix()
+        try:
+            proc = subprocess.run([*prefix, python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA",
+                                   "--color=no", rel], cwd=str(candidate), env=env, capture_output=True,
+                                  text=True, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return False, f"timed out after {timeout}s: {rel}"
+        found = 0
+        for line in proc.stdout.splitlines():
+            m = re.match(r"(PASSED|FAILED|ERROR) (\S+)", line)
+            if m:
+                found += 1
+                (passed if m.group(1) == "PASSED" else red).add(m.group(2))
+        if not found:
+            red.add(rel + "::<nothing ran>")
+    known = {l.split("#")[0].strip() for l in known_red_path.read_text().splitlines()
+             if l.strip() and not l.startswith("#")} if known_red_path.exists() else set()
+    bad = sorted(red - known)
+    if bad:
+        return False, f"red outside known-red list: {','.join(bad)}"
+    stale = sorted(passed & known)
+    if stale:
+        return False, f"stale known-red, remove from list: {','.join(stale)}"
+    return True, f"{len(passed)} passed, {len(red)} known red"
 
 
 def main(argv: list[str]) -> int:
@@ -967,6 +1017,14 @@ def main(argv: list[str]) -> int:
     pt.add_argument("--target", default="tests/qa/desktop")
     pt.add_argument("--force", action="store_true")
     pt.add_argument("--no-setup", action="store_true")
+
+    lp = sub.add_parser("lane_plays")
+    lp.add_argument("candidate_dir")
+    lp.add_argument("base_ref")
+    lp.add_argument("--python", default=sys.executable)
+    lp.add_argument("--timeout", type=int, default=900)
+    lp.add_argument("--known-red", default=str(DEFAULT_LANE_KNOWN_RED))
+    lp.add_argument("--lane-map", default=str(DEFAULT_LANE_MAP))
 
     rl = sub.add_parser("regression-lab")
     rl.add_argument("candidate_dir")
@@ -1072,6 +1130,10 @@ def main(argv: list[str]) -> int:
         ok, detail = playthrough_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                        timeout=args.timeout, known_red_path=Path(args.known_red),
                                        target=args.target, force=args.force, setup=not args.no_setup)
+    elif args.cmd == "lane_plays":
+        ok, detail = lane_plays_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
+                                      timeout=args.timeout, known_red_path=Path(args.known_red),
+                                      lane_map_path=Path(args.lane_map))
     elif args.cmd == "regression-lab":
         ok, detail = regression_lab_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                           timeout=args.timeout,

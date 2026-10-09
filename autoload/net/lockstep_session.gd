@@ -89,12 +89,17 @@ func drop(peer: int) -> void:
 		_live.erase(peer)
 
 
+# Local leave: polling stops; the others see this peer go silent and drop it.
+func end() -> void:
+	_state = "left"
+
+
 func desync() -> Dictionary:
 	return _desync
 
 
 func poll() -> void:
-	if _state == "sim_failed":
+	if _state == "sim_failed" or _state == "left":
 		return
 	for p in _live:
 		if p != _local:

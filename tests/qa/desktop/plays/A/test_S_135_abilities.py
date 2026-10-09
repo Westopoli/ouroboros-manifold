@@ -4,12 +4,12 @@ arrives (abilities_fx). The ability trigger is the activate_ability verb wrapper
 inventory. Red on main: no abilities_fx inventory."""
 import time
 
-from play_support import count, has_key, moment, qa
+from play_support import count, has_key, moment, qa, select_own_by_drag
 
 
 def test_s_135_ability_slots_and_fx_inventory(tactical_game):
     client = tactical_game.client
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     time.sleep(0.5)
     state = moment(client, "S-135", "ability_slot")
     assert has_key(state, "abilities_fx"), "S-135: no abilities_fx in the inventory"

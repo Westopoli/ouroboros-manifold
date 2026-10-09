@@ -1,3 +1,5 @@
+Superseded 2026-10-09: the E-22 flags listed as open below were closed by Westley's batches 13 to 22; the register is the source.
+
 # Pre-flight scout 6-economy (2026-10-07, Sonnet, read-only)
 
 Scout 6 report. All figures are from origin/main at fetch time, and the worktree is removed. The headline: the brief's premise does not hold. Batches 1 to 12 settled none of the economy numbers.

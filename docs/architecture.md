@@ -464,3 +464,14 @@ and has no other caller anywhere in `csrc/`.
 ## Era manifest `kind` field (terrain stage 2)
 
 `assets/eras/<id>/manifest.json` may carry `"kind": "space"` or `"kind": "ground"` (Q-146-04 a). `space` is the default and the model every era used before; `ground` makes the world play on the terrain (walkers, ground vision). It is a declared property of the era, not a mechanical key: `scripts/specfactory/pack_validate.py` accepts it as optional and `--diff-mechanical` does not compare it (R-146-02). `settled_reach` and `test_era` are `space`; `greek_placeholder` is `ground`. The sim reads it through `om_set_era_kind` / `om_era_kind`; no client code reads the manifest field yet (stage 3).
+
+## QA daemon verbs and merge-gate stages (2026-10-09)
+
+Test-only daemon verbs (`autoload/qa_daemon.gd`), beside the `qa_state` report; never used in play:
+- `set_fog_filter <bool>`: test-only; turns the live mission load's fog filter off for a probe (R-089-03); never used in play.
+- `project <x> <y>`: test-only; returns the pixel the open tactical view draws the world point at (`{x, y, on_screen}`); 2D formula or the ground rig's unproject; a point behind the ground camera comes back mirrored (no `behind_camera` flag yet).
+
+Merge-gate stages (`scripts/specfactory/merge_gate.sh`):
+- `gd_reach`: every `.gd` under `scenes/**` and `autoload/**` must be reachable from the main scene or an autoload (preload, load, `res://` literal, `class_name` use, `.tscn` `ext_resource`); a new unreachable file rejects, the baseline list warns, declared stubs in `scripts/specfactory/gd_reach_stubs.txt`.
+- `lane_plays`: the story plays of each lane whose files (`scripts/specfactory/lane_plays.toml`) the diff touches run one file at a time under xvfb; red outside `scripts/specfactory/lane_plays_known_red.txt` rejects, a listed red that passes rejects as stale.
+- The playthrough stage ignores `tests/qa/desktop/plays/**` (`lane_plays` owns them).
