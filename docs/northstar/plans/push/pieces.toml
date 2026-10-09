@@ -1555,3 +1555,15 @@ acceptance = []
 depends_on = ["VG-D6"]
 status = { state = "in_flight" }
 tests_pending = true
+
+# Visible-game lane D, piece D8 (Westley 2026-10-09: armies spawn at their own home base): each faction's spawn slots in
+# the pocket carved at its own anchor. csrc/space_field.c spawn-placement lines and csrc/mission.c spawn lines
+# (om_mission_spawn_force, om_mission_instantiate_map) are shared with VG-D/VG-D6 and the mission.c owner for this change only.
+[[piece]]
+id = "VG-D8"
+manager = "Architect"
+owns = ["csrc/space_field.c", "csrc/mission.c", "tests/csim/test_VG_D_d8.py"]
+acceptance = []
+depends_on = ["VG-D6"]
+status = { state = "in_flight" }
+tests_pending = true

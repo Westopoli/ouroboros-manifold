@@ -394,6 +394,7 @@ Rules
 - R-246-04  Given a unit below an upper layer that hides it from the camera, When the player looks, Then a simple vision tube lets the player see through the covering layers around the cursor or selection, with a small effect that says so (Q-S3-01); the layer-visibility system of the layers prototype (`scenes/mockups/layers/`: with a unit sent to another layer, one circle moves with the unit and a second sits at the exact height of the layer it is moving to) is the one the spec follows (Q-S3-02).
 - R-246-05  Given an area units cannot leave, When a production building stands in it, Then in paired play that is the builder's problem, and in single player the rules place no production building in a section units cannot leave (Q-166-08).
 - R-246-06  Given the space-era roster, When it is read, Then one unit type is purposefully smaller, a group that can break formation and pass gaps other ships cannot (an animation later); sizes are decided with the roster (Q-166-05).
+- R-246-07  Given a space-era mission, When its field is generated, Then each faction's army spawns in a cleared pocket at its home base (the faction's anchor, where its first economy area and structures stand), the objective sits in its own pocket, and every pocket is carved reachable to the others, so an approach march separates the armies as open space did (Westley, 2026-10-09).
 
 Inputs: the seed; the mission archetype; the era kit (kits/space.json).
 Outputs: per layer the cell masks and plate polygons; blocked cells in the simulation's layer bits.
