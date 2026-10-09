@@ -96,9 +96,12 @@ func set_frame(frame: Dictionary, mission: Dictionary) -> void:
 		return
 	var local := int(frame.get("player_faction", 0))
 	_units3d.local_faction = local
+	var seen := {}
+	for v in frame.get("visible", {}).get(str(local), []):
+		seen[int(v)] = true
 	var own: Array = []
 	for u in frame.get("units", []):
-		if int(u.get("faction", 0)) == local:
+		if int(u.get("faction", 0)) == local or seen.has(int(u.get("id"))):
 			own.append(u)
 	_units_drawn = own.size()
 	_units3d.set_units(own, _terrain, [], [])
