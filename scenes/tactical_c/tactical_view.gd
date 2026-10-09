@@ -340,6 +340,8 @@ func _end_mission() -> void:
 		if String(frame.get("type", "")) == "debrief":
 			got.append(frame)
 	bridge.frame_received.connect(on_frame)
+	if NetMatch.active():
+		NetMatch.leave()
 	bridge.send_command({"type": "cmd", "name": "mission_end"})
 	var deadline: int = Time.get_ticks_msec() + bridge.LIVE_READ_TIMEOUT_MSEC
 	while got.is_empty() and Time.get_ticks_msec() < deadline:
@@ -632,6 +634,8 @@ func send_command(cmd: Dictionary) -> bool:
 	BugReportManager.log_command(cmd)
 	var bridge = SimSession.bridge()
 	var ok: bool
+	if NetMatch.active():
+		return _send_match_command(kind, unit_ids, cmd)
 	if _move_order_dropped:
 		# Plant: one pipe command per unit (trips the one-command invariant).
 		_commands_sent_last_order = unit_ids.size()
@@ -672,8 +676,85 @@ func _process(delta: float) -> void:
 	for n in ["Objectives", "Selection", "Events", "Reinforcements", "Clock"]:
 		_node(n).queue_redraw()
 	_since_load += delta
-	_step_live(delta)
+	if NetMatch.active():
+		_match_frame()
+	else:
+		_step_live(delta)
 	_apply_motion()
+
+
+# Wiring spec W5 / interface 5: in a match NetMatch owns the tick; the view only submits orders and shows frames.
+const MATCH_VERBS := {"move": 0, "attack_move": 1, "attack_target": 2}
+
+
+func _send_match_command(kind: String, unit_ids: Array, cmd: Dictionary) -> bool:
+	var ok := MATCH_VERBS.has(kind)
+	if ok:
+		var c := {"verb": MATCH_VERBS[kind], "units": unit_ids, "x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}
+		if kind == "attack_target":
+			c["arg"] = int(cmd.get("target", -1))
+		ok = NetMatch.command(c) >= 0
+	_commands_sent_last_order = 1
+	_units_in_last_command = unit_ids.size()
+	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size(),
+		"x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}
+	return ok
+
+
+func _match_frame() -> void:
+	var st: Dictionary = NetMatch.state()
+	var kind := String(st.get("kind", ""))
+	if kind == "desync":
+		_show_desync(int(st["tick"]), int(st["section"]))
+	_show_stall(st.get("peer", -1) if kind == "stalled" else -1)
+	if kind == "stalled" or not NetMatch.has_method("last_frame"):
+		return
+	var f: Dictionary = NetMatch.last_frame()
+	if f.is_empty() or int(f.get("tick", -1)) == int(_frame.get("tick", -2)):
+		return
+	_load_gap = _since_load
+	_since_load = 0.0
+	load_frame(f)
+	_live_stepped = true
+	_motion.push_frame(_frame)
+
+
+const SECTION_NAMES := ["regions", "factions", "rng", "units", "movement", "mission", "fog", "macro", "support_map"]
+
+
+func _show_desync(tick: int, section: int) -> void:
+	var name: String = SECTION_NAMES[section] if section >= 0 and section < SECTION_NAMES.size() else str(section)
+	_show_error("Desync at tick %d, section %s" % [tick, name])
+	var retry := _error_panel.find_child("Retry", true, false)
+	if retry != null:
+		retry.visible = false
+
+
+var _stall_overlay: Control
+var _stall_label: Label
+
+
+# Q-NET-02 b: a dimmed pause overlay naming the peer the match waits for; never a rewind.
+func _show_stall(peer) -> void:
+	if int(peer) < 0:
+		if _stall_overlay != null:
+			_stall_overlay.visible = false
+		return
+	if _stall_overlay == null:
+		_stall_overlay = Control.new()
+		_stall_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_stall_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var dim := ColorRect.new()
+		dim.color = Color(0, 0, 0, 0.5)
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_stall_overlay.add_child(dim)
+		_stall_label = Label.new()
+		_stall_label.set_anchors_preset(Control.PRESET_CENTER)
+		_stall_overlay.add_child(_stall_label)
+		$CanvasLayer.add_child(_stall_overlay)
+	_stall_label.text = "Paused, waiting for peer %d" % int(peer)
+	_stall_overlay.visible = true
 
 
 func _step_live(delta: float) -> void:
