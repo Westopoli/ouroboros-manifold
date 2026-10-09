@@ -1533,14 +1533,13 @@ status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
 
-# VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
+# VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D.
 [[piece]]
 id = "VG-C-wire"
 status = "in_flight"
 manager = "Architect"
 owns = [
     "scenes/ground3d/ground3d.gd",  # wiring: add ground_units.gd and slope_view.gd as children, feed set_terrain/set_frame, add slope_view and units3d to qa_state
-    "scenes/tactical_c/tactical_view.gd",  # note: only _unhandled_input / _zoom_by (about lines 865-922) if a zoom fix is needed; the double zoom did not reproduce (see test_vg_c_zoom_once.gd)
     "tests/test_vg_c_wire_ground3d.gd",
     "tests/test_vg_c_zoom_once.gd",
 ]
