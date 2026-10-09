@@ -1580,3 +1580,14 @@ depends_on = []
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane_plays_check in the SHARED merge_gate_support.py plus the lane_plays stage in the SHARED merge_gate.sh after playthrough (queued edits)"
+
+[[piece]]
+id = "HARNESS-playsplit"
+manager = "Architect"
+owns = ["tests/specfactory/test_gate_playthrough.py"]
+owns_glob = []
+acceptance = []
+depends_on = ["HARNESS-laneplays"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "playthrough_check ignores tests/qa/desktop/plays; SHARES scripts/specfactory/merge_gate_support.py with HARNESS-laneplays (queued edit after it)"

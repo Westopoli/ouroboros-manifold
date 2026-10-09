@@ -881,7 +881,7 @@ def playthrough_trigger(files: list[str]) -> str:
 def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeout: int,
                       known_red_path: Path = DEFAULT_KNOWN_RED, target: str = "tests/qa/desktop",
                       force: bool = False, setup: bool = True) -> tuple[bool, str]:
-    """Run the desktop flow suite on the merged tree. ok=False on any red not in
+    """Run the desktop flow suite (not its lane plays directory) on the merged tree. ok=False on any red not in
     the known-red list, a suite that collects or runs nothing, or a timeout."""
     import time
     if not force:
@@ -901,7 +901,9 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
         subprocess.run(["godot", "--headless", "--path", str(candidate), "--import"],
                        capture_output=True, timeout=300)
     try:
-        proc = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "--color=no", target],
+        # lane story plays run in the lane_plays stage (HARNESS-laneplays), not here
+        proc = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "--color=no",
+                               "--ignore=" + target.rstrip("/") + "/plays", target],
                               cwd=str(candidate), capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return False, f"timed out after {timeout}s"
