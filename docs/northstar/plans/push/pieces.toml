@@ -1536,7 +1536,7 @@ size_estimate = "W8a, W8d and the depot script: six new files, no edit to existi
 # VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
 [[piece]]
 id = "VG-C-wire"
-status = "in_flight"
+status = "attached"  # landed 8e6ca39a
 depends_on = ["VG-C"]  # wiring on top of VG-C: its globs cover scenes/ground3d/** and tests/test_vg_c*.gd
 manager = "Architect"
 owns = [
@@ -1550,11 +1550,11 @@ owns = [
 id = "G-project"
 manager = "Architect"
 wave = 4
-owns = ["tests/test_qa_daemon.gd"]
+owns = ["tests/test_qa_daemon.gd", "autoload/qa_daemon.gd"]  # qa_daemon.gd shared with VG-GUARD: only the project verb lines
 owns_glob = []
 acceptance = ["tests/test_qa_daemon.gd"]
-depends_on = []
-status = { state = "in_flight" }
+depends_on = ["VG-GUARD"]
+status = "attached"  # landed f37a926f
 tests_pending = true
 size_estimate = "owns the 'project' verb lines in autoload/qa_daemon.gd (shared with VG-GUARD); dispatch case plus one helper calling the view's projection"
 
@@ -1566,7 +1566,7 @@ owns = ["scripts/specfactory/gd_reach_lint.py", "scripts/specfactory/gd_reach_st
 owns_glob = []
 acceptance = []
 depends_on = []
-status = { state = "in_flight" }
+status = "attached"  # landed fc986411
 tests_pending = true
 size_estimate = "one new file; also inserts the stage gd_reach in the SHARED scripts/specfactory/merge_gate.sh after reach_lint (one stage insert, queued)"
 
@@ -1577,7 +1577,7 @@ owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/lane_plays_k
 owns_glob = []
 acceptance = []
 depends_on = []
-status = { state = "in_flight" }
+status = "attached"  # landed fc986411
 tests_pending = true
 size_estimate = "lane_plays_check in the SHARED merge_gate_support.py plus the lane_plays stage in the SHARED merge_gate.sh after playthrough (queued edits)"
 
@@ -1588,6 +1588,6 @@ owns = ["tests/specfactory/test_gate_playthrough.py"]
 owns_glob = []
 acceptance = []
 depends_on = ["HARNESS-laneplays"]
-status = { state = "in_flight" }
+status = "attached"  # landed 7bb1f5a2
 tests_pending = true
 size_estimate = "playthrough_check ignores tests/qa/desktop/plays; SHARES scripts/specfactory/merge_gate_support.py with HARNESS-laneplays (queued edit after it)"

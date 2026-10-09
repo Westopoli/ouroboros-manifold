@@ -2,12 +2,12 @@ extends "res://tests/support/vg_c_case.gd"
 
 # VG-C-wire (scenes/ground3d/ground3d.gd): the C6 Units3D (ground_units.gd) and C7 SlopeView (slope_view.gd) pieces
 # are built and tested alone but nothing attaches them to the Ground3D host. Proves S-001 R-001-06 and S-010/S-132.
-# RED NOW because ground3d.gd adds neither child, so its qa_state has no "slope_view" and no "units3d" key.
+# ground3d.gd adds both children, so its qa_state carries the "slope_view" and "units3d" keys.
 # Contract pinned: after set_terrain + set_frame (fixtures as tactical_view feeds them), qa_state()["ground3d"] carries
 #   "slope_view": {slopes, midlines, blocked_cells, in_transit} (the names the S-001 play reads)
 #   "units3d": int, the count of drawn 3D units = own units plus seen enemies (R-089-04, E-12; TD-VG-C-3): ids 1, 2, 4
 #   own and 3 seen enemy = 4; hidden enemy id 5 (not own, not in the visible list) is not counted.
-# RED NOW for units3d: the wiring feeds only own units (3), so the 4 expected here fails until enemies seen are fed.
+# units3d counts the own units plus the enemies seen (4 expected here; R-089-04).
 # CONTROL: the key finder says false for a state without the keys, and true for one with them.
 
 

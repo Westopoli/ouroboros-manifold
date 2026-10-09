@@ -1,4 +1,4 @@
 # Known-red lane plays for the lane_plays gate stage (HARNESS-laneplays). One pytest node id per line,
 # then "# reason". A red not listed rejects; a listed play that passes rejects too (trim the list).
 tests/qa/desktop/plays/C/s004.py::test_s004_transit_is_visible  # spec gap, no layer-change order
-tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # TD-VG-C-2 pending
+tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # S-132 finding: distinct units ('50','53'),('77','80') project to one pixel on the ground view; Q-132-03 (Architect 2026-10-09)
