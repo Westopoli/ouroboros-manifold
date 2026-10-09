@@ -1544,3 +1544,14 @@ owns = [
     "tests/test_vg_c_wire_ground3d.gd",
     "tests/test_vg_c_zoom_once.gd",
 ]
+
+# VG-C6b (Architect 2026-10-09): feed Units3D the layer floors and flyer types (set_frame passes [] today). Shared file with VG-C-wire.
+[[piece]]
+id = "VG-C6b"
+status = "in_flight"
+manager = "Architect"
+depends_on = ["VG-C-wire"]
+owns = [
+    "scenes/ground3d/ground3d.gd",  # shared with VG-C-wire: only the set_units feed lines and the units3d_heights / units3d_shadows qa keys; needs a contract piece for the floors and flyer types data first
+    "tests/test_vg_c6b_ground_units_layers.gd",
+]
