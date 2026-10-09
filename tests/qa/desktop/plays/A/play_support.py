@@ -24,6 +24,11 @@ from test_tactical_play import _to_tactical  # noqa: E402
 
 QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 RESOLUTION = "1920x1080"  # Westley's resolution (mission-plays rulings)
+# TD-VG-A-4: OM_PLAY_ERA picks the era the plays run in. Unset = the current space era; "ground" = the ground era the
+# lane C plays boot (tests/qa/desktop/plays/C/_play.py). Any other value is passed through as an --era value.
+PLAY_ERA = os.environ.get("OM_PLAY_ERA", "")
+ERA_ARG = {"ground": "greek_placeholder"}.get(PLAY_ERA, PLAY_ERA)
+ERA_SUFFIX = ("_" + PLAY_ERA) if PLAY_ERA else ""
 
 
 def _run_id() -> str:
@@ -41,7 +46,8 @@ SHOT_DIR = REPO / "docs/northstar/story_reviews/shots" / RUN_ID
 
 
 def start_tactical_game() -> GodotGame:
-    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution=RESOLUTION)
+    extra = {"extra_args": ["--era", ERA_ARG], "renderer": "vulkan"} if ERA_ARG else {}
+    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution=RESOLUTION, **extra)
     g.start()
     g.wait_for_port(timeout=60.0)
     _to_tactical(g)
@@ -87,7 +93,7 @@ def count(state: dict, key: str) -> int:
 
 def moment(client, story: str, label: str) -> dict:
     """Screenshot plus qa_state dump for one story moment; returns the qa_state."""
-    name = "%s_%s" % (story, label)
+    name = "%s_%s%s" % (story, label, ERA_SUFFIX)
     client.screenshot(name)
     SHOT_DIR.mkdir(parents=True, exist_ok=True)
     src = QA_SHOT_DIR / (name + ".png")
