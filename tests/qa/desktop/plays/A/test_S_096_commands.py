@@ -3,12 +3,12 @@ Moment: a real right-click move order is acknowledged and the order feedback and
 Red on main: no hud.selection / abilities_fx inventory (the order itself already works)."""
 import time
 
-from play_support import count, has_key, moment, qa
+from play_support import count, has_key, moment, qa, select_own_by_drag
 
 
 def test_s_096_move_order_and_ability_button(tactical_game):
     client = tactical_game.client
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     time.sleep(0.5)
     client.call("input", "click", 960, 540, 2)
     time.sleep(1.0)

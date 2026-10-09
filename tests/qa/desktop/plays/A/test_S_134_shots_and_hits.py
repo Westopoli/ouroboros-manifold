@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from play_support import count, has_key, moment, nearest_enemy_px, qa, start_tactical_game, step_until
+from play_support import count, has_key, moment, nearest_enemy_px, qa, select_own_by_drag, start_tactical_game, step_until
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +24,7 @@ CHUNK = 25  # TD-VG-A-1: 6730 ticks at chunk 5 does not fit the 900 s play timeo
 def test_s_134_a_shot_is_in_flight_during_combat(tactical_game):
     client = tactical_game.client
     assert has_key(qa(client), "shots_in_flight"), "S-134: no shots_in_flight in the inventory"
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     client.call("input", "key", "A")
     ex, ey = nearest_enemy_px(qa(client))
     client.call("input", "click", ex, ey, 1)
