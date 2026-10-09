@@ -116,7 +116,7 @@ def test_class_name_type_annotation_counts_as_reached(tmp_path):
     """HARNESS-gdreach: red because gd_reach_lint.py does not exist yet. helper.gd is reached only via class_name Helper
     (a type annotation and .new() in main.gd), never by path."""
     d, base = _repo(tmp_path)
-    _w(d, "scenes/main/main.gd", "extends Node\nfunc _ready():\n\tvar h: Helper = null\n")
+    _w(d, "scenes/main/main.gd", 'extends Node\nconst Chain = preload("res://scenes/main/chain_a.gd")\nfunc _ready():\n\tvar h: Helper = null\n')
     _commit(d)
     rc, out = _run(d, base)
     assert rc == 0, out
