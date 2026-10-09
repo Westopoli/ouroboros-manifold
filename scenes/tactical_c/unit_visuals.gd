@@ -7,7 +7,7 @@ const MANIFEST := "res://assets/eras/settled_reach/manifest.json"
 const TYPE_NAMES := ["raider", "interceptor", "vanguard", "warden", "bombard", "bastion"]
 const SHAPE_RADIUS := 12.0
 # draft: the manifest scale is for the 3D model (warden is 200.0); uncapped, one 2D body fills ~2400 px and 330 of them cost ~1.2 s a frame
-const MAX_VISUAL_SCALE := 3.0
+const MAX_VISUAL_SCALE := 1.0
 const BAR_SIZE := Vector2(20.0, 3.0)
 const OTHER_COLOR := Color(1.0, 0.3, 0.3)
 const FALLBACK_OWN := Color(0.2, 0.6, 1.0)
