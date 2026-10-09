@@ -1494,29 +1494,32 @@ status = { state = "in_flight" }
 tests_pending = false
 size_estimate = "K-d: om_space_field getters, space_field_dump verb, bridge decode (placeholder plates)"
 
+# VG-CONTRACT-E1 shares csrc/ouroboros_sim.h, csrc/om_internal.h, csrc/pipe/om_pipe.c, docs/architecture.md, signatures.toml and
+# autoload/c_bridge.gd with VG-CONTRACT-D and lands after it. K-e also stubs the four lane files (E1b, E1c, E1g, E1h fill them).
 [[piece]]
 id = "VG-CONTRACT-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/ouroboros_sim.h", "csrc/signatures.toml", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "docs/architecture.md"]
-owns_glob = ["tests/csim/test_VG_contract_e1*.py", "tests/transport/test_pipe_vg_e1*.py"]
-acceptance = []
+owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "csrc/pipe/pipe_tactical.c", "csrc/pipe/pipe_dumps.c", "csrc/pipe/om_pipe.c", "autoload/c_bridge.gd", "docs/architecture.md", "csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6"]
 status = { state = "in_flight" }
 tests_pending = true
-size_estimate = "K-e: lots, density, strongpoint getters and frame fields; save format 8"
+size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
 
+# E1i touches csrc/mission.c and csrc/unit.c: wiring lines only; shared with the attached owners.
 [[piece]]
 id = "VG-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py"]
-owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e1_*.gd", "tests/csim/test_VG_E1_*.py", "tests/qa/desktop/plays/E1/**"]
+owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "csrc/mission.c", "csrc/unit.c"]
+owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT"]
 status = { state = "in_flight" }
 tests_pending = true
-size_estimate = "lane E1, 20 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
+size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
 
 # Visible-game programme (2026-10-07), lane F T0: W8a static pipe build scripts per OS, W8d export
 # presets, the Steam depot script. Acceptance tests (tests/transport/test_vg_f_w8a_static_pipe.py,
