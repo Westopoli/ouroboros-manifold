@@ -1,6 +1,6 @@
-# The visible game programme: workflow spec (rev 4, after audit round 3)
+# The visible game programme: workflow spec (rev 5, after the 2026-10-09 drift check)
 
-Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 went to round 3 (Opus, 10 must-change items, all text; verdict "approve with the listed changes"); rev 4 applies them and is the launch text, pending Westley's go line.
+Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 went to round 3 (Opus, 10 must-change items, all text; verdict "approve with the listed changes"); rev 4 applies them and is the launch text, pending Westley's go line. Rev 5 adds the attach point rule to section 1 (from the 2026-10-09 drift check).
 
 ## 0. What changed in rev 3 and why
 
@@ -102,6 +102,8 @@ Seen-reachable: S-193 (density, stages, waves; the slowdown and cover parts park
 ### Lane F: Steam phase B and shipping (`VG-F` + `VG-F5`, 8 pieces)
 
 Seen-reachable: S-139–S-143, S-241 (no E2 part), the tester guide. Blocked: S-144 (Q-144-03), S-159/S-242 (E2). T0: W8a, W8d, the depot script (land with B0). After K-f: W2 PipeSim, W4 lobby + menu, F5 the hookup right after A12, the loopback match, the Spacewar test.
+
+**Attach point rule (rev 5, from the 2026-10-09 drift check):** every client piece names the live scene node that adds it and the qa_state key that proves it, and ships an integration test that reads that key from the running scene, not from a fresh instance. A piece without an attach point is a stub and is listed as one.
 
 ## 2. Interfaces fixed (K0's `architecture.md` table; every test is written against this)
 
