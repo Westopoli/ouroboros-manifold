@@ -1543,3 +1543,15 @@ acceptance = []
 depends_on = ["VG-D"]
 status = { state = "in_flight" }
 tests_pending = true
+
+# Visible-game lane D, piece D7 (Architect 2026-10-09): handle_mission_start regenerates the space field after
+# om_mission_setup (units spawn blocked, R-097-09 push-out moves every unit on tick 1).
+# csrc/pipe/om_pipe.c handle_mission_start lines are shared with VG-CONTRACT-D for this change only.
+[[piece]]
+id = "VG-D7"
+manager = "Architect"
+owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_vg_d7.py", "tests/csim/test_VG_D_d7.py"]
+acceptance = []
+depends_on = ["VG-D6"]
+status = { state = "in_flight" }
+tests_pending = true
