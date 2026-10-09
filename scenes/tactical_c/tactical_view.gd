@@ -25,16 +25,35 @@ const ZOOM_STEP := 1.25
 const PAN_SPEED_PX := 600.0
 
 # A6b HUD. The clock reads elapsed mission time (R-104-03) from the frame tick
-# at the sim's tactical rate; objective names follow csrc/mission.c
-# om_mission_objective_kind_name (kind ids R-075-01).
-const HUD_OBJECTIVE_NAMES := {
-	0: "Hold the zone", 1: "Destroy targets", 2: "Escort to extraction",
-	3: "Survive", 4: "Eliminate the enemy force",
-}
+# at the sim's tactical rate.
 const ATTACK_MOVE_FEEDBACK_SECONDS := 1.0
 const ATTACK_MOVE_FEEDBACK_COLOR := Color(1.0, 0.8, 0.2)
-const HUD_OBJECTIVE_FALLBACK := "Carry out the order"
 const EDGE_MARGIN_PX := 4.0
+# Named draft (nobody gave a letter, Q-232-01/03 leave the key open): the ping key. Ping = this key, then a click.
+const PING_KEY := KEY_P
+const PICK_RADIUS_PX := 16.0
+
+# VG-A A12: the shell. Pieces are instantiated by their section 2 node name; a piece whose script is not on main yet
+# (the Fx nodes, StructuresLayer, Reinforcements, LoadingOverlay) is a bare placeholder node of that name, replaced
+# by the piece's script when it lands (docs/northstar/plans/2026-10-07-visible-game-spec.md lane A).
+const PIECES := {
+	"MapLayer": "res://scenes/tactical_c/map_layer.gd",
+	"StructuresLayer": "res://scenes/tactical_c/structures_layer.gd",
+	"ObjectiveMarkers": "res://scenes/tactical_c/objective_markers.gd",
+	"FogLayer": "res://scenes/tactical_c/fog_layer.gd",
+	"LayerView": "res://scenes/tactical_c/layer_view.gd",
+	"UnitSquads": "res://scenes/tactical_c/unit_squads.gd",
+	"UnitVisuals": "res://scenes/tactical_c/unit_visuals.gd",
+	"Shots": "res://scenes/tactical_c/fx/shots.gd",
+	"Deaths": "res://scenes/tactical_c/fx/deaths.gd",
+	"Abilities": "res://scenes/tactical_c/fx/abilities.gd",
+	"Ambient": "res://scenes/tactical_c/fx/ambient.gd",
+	"Objectives": "res://scenes/tactical_c/hud/objectives_panel.gd",
+	"Selection": "res://scenes/tactical_c/hud/selection_panel.gd",
+	"Comb": "res://scenes/tactical_c/hud/comb.gd",
+	"Events": "res://scenes/tactical_c/hud/events_feed.gd",
+	"Reinforcements": "res://scenes/tactical_c/hud/reinforcements.gd",
+}
 
 # Real-time stepping (B9-N, 2026-09-28 QA-run wiring brief): before this, a
 # deployed mission only ever advanced through the qa_step() QA hook, so real
@@ -71,15 +90,21 @@ var _camera_unbounded := false
 var _zoom := 1.0
 var _attack_move_mode := false
 var _clock_label: Label
-var _objective_label: Label
 var _selection_label: Label
+var _hud: Control
+var _fx: Node2D
+var _motion: Node
+var _since_load := 0.0
+var _load_gap := 0.05
+var _live_stepped := false
+var _loading_overlay: Control # loading_overlay.gd
+var _ping_armed := false
 var _last_tick := -1
 var _fit_scale := WORLD_SCALE
 var _pointer_seen := false
 var _facing_fixed := false
 var _frozen_facing: Dictionary = {}
 var _selected: Array = []
-var _unit_visuals: Dictionary = {}
 var _display_px: Dictionary = {}
 var _last_command: Dictionary = {}
 
@@ -124,14 +149,76 @@ func _ready() -> void:
 	# view self-loads the first live tactical frame on a fresh route-in. A
 	# failed live load leaves the view empty and logs the reason; it never
 	# falls back to a fixture (C5-2).
+	_build_shell()
 	_load_live()
-	_clock_label = _make_hud_label(Vector2(1500.0, 20.0))
-	_objective_label = _make_hud_label(Vector2(20.0, 20.0))
-	_selection_label = _make_hud_label(Vector2(20.0, SCREEN_H - 60.0))
 	_update_hud()
 	var end_mission_btn := get_node_or_null("CanvasLayer/EndMission")
 	if end_mission_btn != null:
 		end_mission_btn.pressed.connect(_end_mission)
+
+
+func _build_shell() -> void:
+	_motion = load("res://scenes/tactical_c/unit_motion.gd").new()
+	add_child(_motion)
+	for n in ["MapLayer", "StructuresLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
+		add_child(_piece(n, false))
+	_fx = Node2D.new()
+	_fx.name = "Fx"
+	add_child(_fx)
+	for n in ["Shots", "Deaths", "Abilities", "Ambient"]:
+		_fx.add_child(_piece(n, false))
+	_hud = Control.new()
+	_hud.name = "Hud"
+	_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$CanvasLayer.add_child(_hud)
+	for n in ["Objectives", "Selection", "Comb", "Events", "Reinforcements"]:
+		_hud.add_child(_piece(n, true))
+	var strip := Control.new()
+	strip.name = "Strip"
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hud.add_child(strip)
+	var clock := Control.new()
+	clock.name = "Clock"
+	clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hud.add_child(clock)
+	_clock_label = _make_hud_label(Vector2(1500.0, 20.0), clock)
+	_selection_label = _make_hud_label(Vector2(20.0, SCREEN_H - 60.0), _hud.get_node("Selection"))
+	_loading_overlay = load("res://scenes/tactical_c/loading_overlay.gd").new()
+	$CanvasLayer.add_child(_loading_overlay)
+	var sel := _hud.get_node("Selection")
+	if sel.has_signal("selection_changed"):
+		sel.selection_changed.connect(_on_panel_selection)
+		sel.centre_requested.connect(func(w: Vector2): qa_pan(w.x, w.y))
+
+
+func _piece(node_name: String, control: bool) -> Node:
+	var path: String = PIECES[node_name]
+	var n: Node
+	if ResourceLoader.exists(path):
+		n = load(path).new()
+	else:
+		n = Control.new() if control else Node2D.new()
+		if n is Control:
+			n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	n.name = node_name
+	return n
+
+
+func _on_panel_selection(ids: Array) -> void:
+	_selected = ids.duplicate()
+	_node("UnitVisuals").set_selected(_selected)
+	_update_hud()
+
+
+func _node(node_name: String) -> Node:
+	return find_child(node_name, true, false)
+
+
+func _sync_selection() -> void:
+	var panel := _node("Selection")
+	if panel != null and panel.has_method("set_selection"):
+		panel.set_selection(_selected)
+	_node("UnitVisuals").set_selected(_selected)
 
 
 func _load_live() -> void:
@@ -238,26 +325,31 @@ func _end_mission() -> void:
 	SceneRouter.go_to("debrief")
 
 
-func _make_hud_label(pos: Vector2) -> Label:
+func _make_hud_label(pos: Vector2, parent: Node) -> Label:
 	var l := Label.new()
 	l.position = pos
-	$CanvasLayer.add_child(l)
+	parent.add_child(l)
 	return l
 
 
 func _update_hud() -> void:
 	if _clock_label == null:
 		return
-	var secs := int(_frame.get("tick", 0) / int(TACTICAL_BASE_TICKS_PER_SECOND))
-	_clock_label.text = "%02d:%02d" % [secs / 60, secs % 60]
-	var lines: Array[String] = []
-	var bridge = SimSession.bridge()
-	var mission: Dictionary = bridge.mission()
-	for o in mission.get("objectives", []):
-		if bool(o.get("primary", true)):
-			lines.append("%s %d%%" % [HUD_OBJECTIVE_NAMES.get(int(o.get("kind", -1)), HUD_OBJECTIVE_FALLBACK),
-				int(round(float(o.get("progress", 0.0)) * 100.0))])
-	_objective_label.text = "\n".join(lines)
+	var tick := int(_frame.get("tick", 0))
+	var events := _node("Events")
+	if events != null and events.has_method("clock_text"):
+		_clock_label.text = events.clock_text(tick)
+	else:
+		var secs := int(tick / int(TACTICAL_BASE_TICKS_PER_SECOND))
+		_clock_label.text = "%02d:%02d" % [secs / 60, secs % 60]
+	var mission_objectives: Array = []
+	var objs: Array = SimSession.bridge().mission().get("objectives", [])
+	for i in objs.size():
+		var o: Dictionary = objs[i].duplicate()
+		if not o.has("i"):
+			o["i"] = i
+		mission_objectives.append(o)
+	_node("Objectives").set_objectives(mission_objectives, _frame.get("objectives", []))
 	_selection_label.text = "%d selected" % _selected.size() if not _selected.is_empty() else ""
 
 
@@ -304,8 +396,22 @@ func load_frame(frame: Dictionary) -> void:
 				_frozen_facing[id] = float(u.get("facing", 0.0))
 	_prune_selected()
 	_update_display_px()
+	_loading_overlay.dismiss()
+	_node("Selection").set_frame(frame)
+	_node("Events").feed(frame, _get_local_faction())
 	_redraw()
+	_sync_selection()
 	_update_hud()
+
+
+# The read-only HUD readouts rebuild their children each frame with the default STOP filter; one at the top-left
+# swallowed the press of a box drag from (0,0) before _unhandled_input saw it. Run at the end of every _redraw: a camera
+# pan redraws without a load_frame and rebuilt Reinforcements with fresh STOP children under the edge-scrolling pointer.
+func _ignore_mouse(n: Node) -> void:
+	if n is Control:
+		n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for c in n.get_children():
+		_ignore_mouse(c)
 
 
 func qa_state() -> Dictionary:
@@ -345,7 +451,54 @@ func qa_state() -> Dictionary:
 		"units_in_last_command": _units_in_last_command,
 		"ground_layer": _ground_layer_state(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
+		"inventory": _inventory(),
 	}
+
+
+func _inventory() -> Dictionary:
+	var squads := 0
+	var squad_node := _node("UnitSquads")
+	for u in _frame.get("units", []):
+		if squad_node.squad_models(int(u.get("id"))).size() > 0:
+			squads += 1
+	var own_structures := 0
+	for st in _frame.get("structures", []):
+		if int(st.get("owner", -1)) == _get_local_faction():
+			own_structures += 1
+	var map_layer := _node("MapLayer")
+	var hud := {
+		"clock": _clock_label.text,
+		"objectives": _node("Objectives").rows().size(),
+		"selection": _node("Selection").summary().size(),
+		"events": _node("Events").lines().size(),
+		"strip": _node("LayerView").strip_layers().size(),
+		"comb": _node("Comb").is_open(),
+		"reinforcements": own_structures,
+	}
+	return {
+		"fog_layer": _node("FogLayer").sight_discs().size(),
+		"objective_markers": _node("ObjectiveMarkers").beacons().size(),
+		"cover_cells": map_layer.cover_cells().size(),
+		"obstacles": map_layer.obstacle_polygons().size(),
+		"structures": _frame.get("structures", []).size(),
+		"shots_in_flight": _piece_count("Shots", "in_flight"),
+		"wrecks": _piece_count("Deaths", "wrecks"),
+		"squads": squads,
+		"abilities_fx": _piece_count("Abilities", "active"),
+		"ambient": _piece_count("Ambient", "active"),
+		"loading_overlay": 1 if _loading_overlay.visible else 0,
+		"hud": hud,
+	}
+
+
+# A count a Fx piece reports through `method`; 0 while the piece is still a placeholder (see PIECES).
+func _piece_count(node_name: String, method: String) -> int:
+	var n := _node(node_name)
+	return _count_of(n.call(method)) if n.has_method(method) else 0
+
+
+func _count_of(v: Variant) -> int:
+	return v.size() if v is Array or v is Dictionary else int(v)
 
 
 func _objects_px() -> Array:
@@ -486,6 +639,12 @@ func send_command(cmd: Dictionary) -> bool:
 # scene has no pause/menu state to also gate on.
 func _process(delta: float) -> void:
 	_pan_input(delta)
+	_since_load += delta
+	_step_live(delta)
+	_apply_motion()
+
+
+func _step_live(delta: float) -> void:
 	if _mission_over_seen:
 		return
 	var bridge = SimSession.bridge()
@@ -499,6 +658,26 @@ func _process(delta: float) -> void:
 		k = TACTICAL_MAX_STEPS_PER_FRAME
 	_tactical_calls_due -= float(k)
 	qa_step(k)
+
+
+# S-101: between two loaded frames the units are drawn on the path from the previous frame to the current one
+# (UnitMotion), taking as long as the last gap between loads. Direct load_frame calls keep the raw positions.
+func _apply_motion() -> void:
+	if not _live_stepped or _mission_over_seen:
+		return
+	var alpha := clampf(_since_load / maxf(_load_gap, 0.001), 0.0, 1.0)
+	var visible_ids := _visible_ids()
+	var uv := _node("UnitVisuals")
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		if not visible_ids.has(id) or not _motion.has_unit(id):
+			continue
+		var w: Vector2 = _motion.position_at(id, alpha)
+		var px := _to_screen(w.x, w.y)
+		_display_px[str(id)] = px
+		var node: Node2D = uv.unit_node(id)
+		if node != null:
+			node.position = Vector2(px[0], px[1])
 
 
 # R-099-03: the tick period the engine is currently spanning per
@@ -523,7 +702,11 @@ func _live_unit_count() -> int:
 func qa_step(n: int) -> void:
 	var bridge = SimSession.bridge()
 	if bridge.tactical_step_n(n):
+		_load_gap = _since_load
+		_since_load = 0.0
 		load_frame(bridge.tactical_frame())
+		_live_stepped = true
+		_motion.push_frame(_frame)
 
 
 func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
@@ -539,6 +722,7 @@ func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
 		if sx >= rx0 and sx <= rx1 and sy >= ry0 and sy <= ry1:
 			out.append(int(id_str))
 	_selected = out.duplicate()
+	_sync_selection()
 	_update_hud()
 	return out
 
@@ -547,6 +731,7 @@ func qa_set_selected(ids: Array) -> void:
 	_selected = []
 	for v in ids:
 		_selected.append(int(v))
+	_sync_selection()
 	_update_hud()
 
 
@@ -638,8 +823,13 @@ func _pan_speed() -> float:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_pointer_seen = true
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_A:
-		_attack_move_mode = true
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_A:
+			_attack_move_mode = true
+		elif event.keycode == PING_KEY:
+			_ping_armed = true
+		elif event.keycode == KEY_TAB:
+			_node("LayerView").cycle_focus()
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -649,6 +839,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = mb.position
+				if mb.double_click:
+					var hit := _unit_at(mb.position)
+					if hit >= 0:
+						_node("Selection").select_same_type(hit)
+						_drag_start = Vector2(-1.0, -1.0)
+			elif _ping_armed:
+				_ping_armed = false
+				_drag_start = Vector2(-1.0, -1.0)
+				_send_ping(_to_world(mb.position))
 			elif _attack_move_mode:
 				_attack_move_mode = false
 				_drag_start = Vector2(-1.0, -1.0)
@@ -661,8 +860,37 @@ func _unhandled_input(event: InputEvent) -> void:
 					_drag_start = Vector2(-1.0, -1.0)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_attack_move_mode = false
+			_ping_armed = false
 			var w := _to_world(mb.position)
 			send_command({"kind": "move", "unit_ids": _selected.duplicate(), "x": w.x, "y": w.y})
+
+
+# Q-232-01: the ping is an ability on the shared card; with a group selected the unit closest to the click casts it.
+func _send_ping(w: Vector2) -> void:
+	var best := -1
+	var best_d := INF
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		if not _selected.has(id):
+			continue
+		var d := Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0))).distance_squared_to(w)
+		if d < best_d:
+			best_d = d
+			best = id
+	if best >= 0:
+		send_command({"kind": "activate_ability", "unit_ids": [best], "x": w.x, "y": w.y})
+
+
+func _unit_at(screen: Vector2) -> int:
+	var best := -1
+	var best_d := PICK_RADIUS_PX
+	for id_str in _display_px:
+		var p: Array = _display_px[id_str]
+		var d := Vector2(float(p[0]), float(p[1])).distance_to(screen)
+		if d <= best_d:
+			best_d = d
+			best = int(id_str)
+	return best
 
 
 func _to_world(screen: Vector2) -> Vector2:
@@ -674,7 +902,7 @@ func _to_world(screen: Vector2) -> Vector2:
 
 
 func _show_order_feedback(screen: Vector2) -> void:
-	var marker := _make_unit_visual(_get_local_faction())
+	var marker := _make_order_marker()
 	marker.color = ATTACK_MOVE_FEEDBACK_COLOR
 	marker.position = screen
 	add_child(marker)
@@ -740,36 +968,26 @@ func _redraw() -> void:
 		return
 	if _ground_layer != null:
 		_ground_layer.set_view(_world_scale, _camera)
-	# Build a faction lookup for color selection.
-	var faction_of: Dictionary = {}
-	for u in _frame.get("units", []):
-		faction_of[str(int(u.get("id")))] = int(u.get("faction", 0))
-
-	var seen := {}
-	for id_str in _display_px:
-		var id := int(id_str)
-		seen[id] = true
-		var px: Array = _display_px[id_str]
-		var faction := int(faction_of.get(id_str, 0))
-		var poly: Polygon2D
-		if _unit_visuals.has(id):
-			poly = _unit_visuals[id]
-		else:
-			poly = _make_unit_visual(faction)
-			add_child(poly)
-			_unit_visuals[id] = poly
-		poly.position = Vector2(float(px[0]), float(px[1]))
-	for id in _unit_visuals.keys().duplicate():
-		if not seen.has(id):
-			_unit_visuals[id].queue_free()
-			_unit_visuals.erase(id)
+	var lf := _get_local_faction()
+	var mission: Dictionary = SimSession.bridge().mission()
+	_node("MapLayer").set_frame(_frame, mission, lf, _world_scale, _camera)
+	_node("ObjectiveMarkers").set_frame(_frame, mission, lf, _world_scale, _camera)
+	for n in ["FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
+		_node(n).set_frame(_frame, lf, _world_scale, _camera)
+	for n in ["StructuresLayer", "Shots", "Deaths", "Abilities", "Ambient"]:
+		var piece := _node(n)
+		if piece.has_method("set_frame"):
+			piece.set_frame(_frame, lf, _world_scale, _camera)
+	var reinforcements := _node("Reinforcements")
+	if reinforcements.has_method("set_frame"):
+		reinforcements.set_frame(_frame, lf)
+	for n in ["Objectives", "Comb", "Events", "Reinforcements"]:
+		_ignore_mouse(_node(n))
 
 
-func _make_unit_visual(faction: int) -> Polygon2D:
+# The order marker: a small square at the click, faded out; not a unit drawing.
+func _make_order_marker() -> Polygon2D:
 	var poly := Polygon2D.new()
 	var h := UNIT_SIZE * 0.5
-	poly.polygon = PackedVector2Array([
-		Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h),
-	])
-	poly.color = Color(0.2, 0.6, 1.0) if faction == _get_local_faction() else Color(1.0, 0.3, 0.3)
+	poly.polygon = PackedVector2Array([Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h)])
 	return poly

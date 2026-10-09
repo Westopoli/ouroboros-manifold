@@ -399,7 +399,7 @@ func _collect_tree(node: Node, controls: Array, node3ds: Array, by_name: Diction
 				controls.append({
 					"path": String(ctrl.get_path()),
 					"class": ctrl.get_class(),
-					"text": ctrl.get("text"),
+					"text": "" if ctrl.get("text") == null else ctrl.get("text"),
 					"rect_px": [origin.x, origin.y, far.x - origin.x, far.y - origin.y],
 				})
 		elif child is Node3D:
