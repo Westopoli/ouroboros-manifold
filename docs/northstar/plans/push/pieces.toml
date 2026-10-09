@@ -1455,14 +1455,10 @@ size_estimate = "lane A battle screen, 20 pieces in two workflows (vg-wave3-lane
 id = "VG-C"
 manager = "M0"
 wave = 8
-owns = [
-    # handed from VG-A for lane C part b (vg-cb-land, 2026-10-08); VG-C depends_on VG-A for the landing; hand back (drop these five and the VG-A dep) after
-    "scenes/tactical_c/fog_layer.gd", "scenes/tactical_c/map_layer.gd", "scenes/tactical_c/objective_markers.gd",
-    "scenes/tactical_c/fx/shots.gd", "scenes/tactical_c/layer_view.gd",
-]
+owns = []
 owns_glob = ["scenes/ground3d/**", "tests/test_vg_c*.gd", "tests/support/vg_c_*.gd", "tests/csim/test_E01_*ground*.py", "tests/qa/desktop/plays/C/**", "tests/qa/desktop/test_vg_c_*.py"]
 acceptance = []
-depends_on = ["VG-CONTRACT", "TERRAIN-1", "VG-A"]
+depends_on = ["VG-CONTRACT", "TERRAIN-1"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane C 3D ground, 10 pieces in two workflows (vg-wave4-laneC.js parts a and b)"
