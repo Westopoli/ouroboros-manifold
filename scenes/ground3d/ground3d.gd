@@ -9,6 +9,8 @@ class_name Ground3D
 const GroundMesh := preload("res://scenes/ground3d/ground_mesh.gd")
 const CameraRig := preload("res://scenes/ground3d/camera_rig_3d.gd")
 const GroundProjection := preload("res://scenes/ground3d/projection.gd")
+const GroundUnits := preload("res://scenes/ground3d/ground_units.gd")
+const SlopeViewNode := preload("res://scenes/ground3d/slope_view.gd")
 
 const SCREEN_SIZE := Vector2(1920.0, 1080.0)
 const SKY_COLOUR := Color(0.55, 0.68, 0.82)
@@ -22,6 +24,9 @@ var _container: SubViewportContainer
 var _viewport: SubViewport
 var _mesh: MeshInstance3D
 var _rig: Node3D
+var _units3d: Node3D
+var _slope_view: Node3D
+var _units_drawn := 0
 
 
 func _ready() -> void:
@@ -49,6 +54,10 @@ func _ready() -> void:
 	_rig = CameraRig.new()
 	_rig.process_mode = Node.PROCESS_MODE_DISABLED
 	_viewport.add_child(_rig)
+	_units3d = GroundUnits.new()
+	_viewport.add_child(_units3d)
+	_slope_view = SlopeViewNode.new()
+	_viewport.add_child(_slope_view)
 
 
 func container() -> Control:
@@ -70,6 +79,7 @@ func set_terrain(t: Dictionary) -> void:
 		_viewport.remove_child(_mesh)
 		_mesh = null
 	_vertices = 0
+	_slope_view.set_terrain(t)
 	if t.is_empty():
 		_rig.set_terrain({})
 		return
@@ -82,6 +92,17 @@ func set_terrain(t: Dictionary) -> void:
 func set_frame(frame: Dictionary, mission: Dictionary) -> void:
 	_frame = frame
 	_mission = mission
+	if _terrain.is_empty():
+		return
+	var local := int(frame.get("player_faction", 0))
+	_units3d.local_faction = local
+	var own: Array = []
+	for u in frame.get("units", []):
+		if int(u.get("faction", 0)) == local:
+			own.append(u)
+	_units_drawn = own.size()
+	_units3d.set_units(own, _terrain, [], [])
+	_slope_view.set_units(frame.get("units", []))
 
 
 func to_screen(wx: float, wy: float) -> Vector2:
@@ -117,6 +138,8 @@ func qa_state() -> Dictionary:
 		"camera_height": _rig.camera_height(),
 		"camera": {"x": q["x"], "y": q["y"]},
 		"scale": q["scale"],
+		"slope_view": _slope_view.qa_state(),
+		"units3d": _units_drawn,
 	}
 	var upx := {}
 	for u in _frame.get("units", []):
