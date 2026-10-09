@@ -1537,6 +1537,7 @@ size_estimate = "W8a, W8d and the depot script: six new files, no edit to existi
 [[piece]]
 id = "VG-C-wire"
 status = "in_flight"
+depends_on = ["VG-C"]  # wiring on top of VG-C: its globs cover scenes/ground3d/** and tests/test_vg_c*.gd
 manager = "Architect"
 owns = [
     "scenes/ground3d/ground3d.gd",  # wiring: add ground_units.gd and slope_view.gd as children, feed set_terrain/set_frame, add slope_view and units3d to qa_state
