@@ -160,7 +160,26 @@ def nearest_enemy_px(client, q: dict) -> tuple:
         client.call("input", "wheel", 1)
         r = client.call("project", float(e["x"]), float(e["y"]))
         assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
-    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after 12 zoom-out notches" % k
     w, h = (int(v) for v in RESOLUTION.split("x"))
+    # TD-VG-A-9d: the ground rig's zoom is capped, so a player scrolls: real pointer input parked 2 px inside the screen edge
+    # on the enemy's side (the 2D margin is 4 px, EDGE_SCROLL_ZONE is 60 px, so 2 px works for both), 30 s bound, no camera verb.
+    if not r["result"].get("on_screen"):
+        dx, dy = r["result"]["x"] - w / 2, r["result"]["y"] - h / 2
+        ex_ = 2 if dx < 0 else (w - 3 if dx > 0 else w // 2)
+        ey_ = 2 if dy < 0 else (h - 3 if dy > 0 else h // 2)
+        if abs(dx) <= w / 2:
+            ex_ = w // 2
+        if abs(dy) <= h / 2:
+            ey_ = h // 2
+        client.call("input", "move", ex_, ey_)
+        deadline = time.monotonic() + 30.0
+        while time.monotonic() < deadline:
+            time.sleep(0.2)
+            r = client.call("project", float(e["x"]), float(e["y"]))
+            assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+            if r["result"].get("on_screen"):
+                break
+        client.call("input", "move", w // 2, h // 2)
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after zoom-out and 30 s edge scroll toward it" % k
     px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
