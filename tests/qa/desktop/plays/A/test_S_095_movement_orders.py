@@ -3,7 +3,7 @@ units advance together and settle. Moment: before and 60 ticks after a real righ
 position moved toward the target. Red on main: the control passes; the inventory squads key does not exist."""
 import time
 
-from play_support import has_key, moment, qa
+from play_support import has_key, moment, qa, select_own_by_drag
 
 
 def _mean(units, ids):
@@ -13,7 +13,7 @@ def _mean(units, ids):
 
 def test_s_095_group_moves_together(tactical_game):
     client = tactical_game.client
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     time.sleep(0.5)
     before = moment(client, "S-095", "before_move")
     ids = [str(i) for i in before["selected"]]

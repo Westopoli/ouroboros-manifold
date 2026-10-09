@@ -128,66 +128,64 @@ def step_until(client, pred, max_ticks: int, chunk: int = 5) -> bool:
     return pred(qa(client))
 
 
+def select_own_by_drag(client) -> None:
+    """TD-VG-A-9: a real drag over the bounding box of the own-faction entries of qa_state units_px, padded 8 px and clamped
+    at least 8 px inside the screen so the 4 px edge-scroll margin is never touched. Replaces the flat-view drag 0,0 to
+    1900,140, which selects nothing on the tilted 3D ground view. The play runs at 1920x1080, so driver pixels equal canvas pixels."""
+    q = qa(client)
+    me = q["local_faction"]
+    pts = [tuple(p) for uid, p in q["units_px"].items() if uid in q["units"] and q["units"][uid]["faction"] == me]
+    assert pts, "play_support: no own-faction unit in units_px; nothing to drag over"
+    w, h = (int(v) for v in RESOLUTION.split("x"))
+    x0 = int(max(min(p[0] for p in pts) - 8, 8))
+    y0 = int(max(min(p[1] for p in pts) - 8, 8))
+    x1 = int(min(max(p[0] for p in pts) + 8, w - 8))
+    y1 = int(min(max(p[1] for p in pts) + 8, h - 8))
+    client.call("input", "drag", x0, y0, x1, y1)
 
-_FOLLOW = False  # set by nearest_enemy_px: step_until then keeps the nearest enemy on screen
-_CLIENT = None  # set by start_tactical_game; nearest_enemy_px pans through it (TD-VG-A-3)
 
-
-def _enemy_screen(q: dict) -> tuple:
+def nearest_enemy_px(client, q: dict) -> tuple:
+    """TD-VG-A-9b: screen pixel of the enemy unit nearest (world distance) to the local faction's units. The enemy is found
+    in qa_state units (all units, fog filter off, TD-VG-A-7); its pixel comes from the test-only daemon verb "project"
+    (the view's own projection, flat or ground rig), because units_px holds only the visible set (R-089-04) so an unseen
+    enemy never has a pixel there. Clamped at least 70 px inside the screen: camera_rig_3d.gd EDGE_SCROLL_ZONE is 60 px,
+    so a click nearer the edge would scroll the camera."""
     units, me = q["units"], q["local_faction"]
     mine = [u for u in units.values() if u["faction"] == me]
     foes = [u for u in units.values() if u["faction"] != me]
     assert mine and foes, "play_support: no local or no enemy units in qa_state"
-    e = min(foes, key=lambda f: min((f["x"] - m["x"]) ** 2 + (f["y"] - m["y"]) ** 2 for m in mine))
+    k = min(range(len(foes)), key=lambda i: min((foes[i]["x"] - m["x"]) ** 2 + (foes[i]["y"] - m["y"]) ** 2 for m in mine))
+    e = foes[k]
+    r = client.call("project", float(e["x"]), float(e["y"]))
+    assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
-    cam, sc = q["camera"], q["scale"]
-    return (e["x"] - cam["x"]) * sc + w / 2, (e["y"] - cam["y"]) * sc + h / 2
-
-
-def _pan_enemy_into_view(c) -> tuple:
-    """Pans with the arrow keys (the view's own pan input; pointer parked mid-screen so edge scroll stays off) until the
-    nearest enemy sits in the central box; returns its screen position."""
-    w, h = (int(v) for v in RESOLUTION.split("x"))
-    box = (w * 0.2, w * 0.8, h * 0.2, h * 0.8)
-    ex, ey = _enemy_screen(qa(c))
-    if box[0] <= ex <= box[1] and box[2] <= ey <= box[3]:
-        return ex, ey
-    c.call("input", "move", w // 2, h // 2)
-    held = set()
-    try:
-        for _ in range(400):
-            ex, ey = _enemy_screen(qa(c))
-            if box[0] <= ex <= box[1] and box[2] <= ey <= box[3]:
-                break
-            want = set()
-            if ex < box[0]:
-                want.add("Left")
-            elif ex > box[1]:
-                want.add("Right")
-            if ey < box[2]:
-                want.add("Up")
-            elif ey > box[3]:
-                want.add("Down")
-            for k in held - want:
-                c.call("input", "key_up", k)
-            for k in want - held:
-                c.call("input", "key_down", k)
-            held = want
-    finally:
-        for k in held:
-            c.call("input", "key_up", k)
-    time.sleep(0.2)
-    return _enemy_screen(qa(c))
-
-
-def nearest_enemy_px(q: dict) -> tuple:
-    """Screen pixel of the enemy unit nearest (world distance) to the local faction's units, unclamped. Since A19 the
-    opening zoom frames the own force, so the enemy may be off screen (TD-VG-A-3): the camera is panned to it first, and
-    step_until then keeps it in view (shots are drawn, and counted, only on screen). Enemies are fogged at the start, so
-    units_px cannot be used."""
-    global _FOLLOW
-    w, h = (int(v) for v in RESOLUTION.split("x"))
-    ex, ey = _pan_enemy_into_view(_CLIENT) if _CLIENT is not None else _enemy_screen(q)
-    _FOLLOW = True
-    assert 0 <= ex < w and 0 <= ey < h, "play_support: the enemy at (%.0f, %.0f) is still off screen after panning" % (ex, ey)
-    return int(ex), int(ey)
+    # TD-VG-A-9e/9g: no zoom-out step (the pan is 600 px/s over the view's world scale, fastest at the opening height); a player scrolls with real pointer input (no camera verb). The edge is
+    # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
+    # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
+    # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
+    # scroll only when both deltas exceed it; otherwise the larger one. on_screen must hold for two consecutive polls.
+    SCREEN_WU = 3000.0
+    if not r["result"].get("on_screen"):
+        cam = q["camera"]
+        ddx, ddy = e["x"] - cam["x"], e["y"] - cam["y"]
+        both = abs(ddx) > SCREEN_WU and abs(ddy) > SCREEN_WU
+        ex_ = w // 2
+        ey_ = h // 2
+        if both or abs(ddx) >= abs(ddy):
+            ex_ = w - 3 if ddx > 0 else 2
+        if both or abs(ddy) > abs(ddx):
+            ey_ = h - 3 if ddy > 0 else 2
+        client.call("input", "move", ex_, ey_)
+        deadline = time.monotonic() + 30.0
+        hits = 0
+        while time.monotonic() < deadline and hits < 2:
+            time.sleep(0.2)
+            r = client.call("project", float(e["x"]), float(e["y"]))
+            assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+            hits = hits + 1 if r["result"].get("on_screen") else 0
+        client.call("input", "move", w // 2, h // 2)
+        if hits < 2:
+            r["result"]["on_screen"] = False
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after 30 s edge scroll toward it" % k
+    px, py = r["result"]["x"], r["result"]["y"]
+    return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))

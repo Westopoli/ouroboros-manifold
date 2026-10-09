@@ -1,7 +1,7 @@
 """Story plays S-005, S-091, S-092 (E-01/E-12, R-089-03/04): sight discs from unit sight; an elevated unit sees farther;
 the outside is dimmed; nothing is remembered. Moments: the opening frame; after 100 ticks of movement.
 Red on main: no fog_layer inventory."""
-from play_support import RESOLUTION, GodotGame, _to_tactical, count, has_key, moment, pick_free_port
+from play_support import GodotGame, RESOLUTION, _to_tactical, count, has_key, moment, pick_free_port, select_own_by_drag
 
 
 def test_s_005_sight_discs_exist(tactical_game):
@@ -12,7 +12,7 @@ def test_s_005_sight_discs_exist(tactical_game):
 
 def test_s_091_sight_discs_follow_the_units(tactical_game):
     client = tactical_game.client
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     client.call("input", "click", 960, 540, 2)
     client.call("step", 20)
     state = moment(client, "S-091", "sight_after_20_ticks")

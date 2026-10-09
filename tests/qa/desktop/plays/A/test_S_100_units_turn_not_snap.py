@@ -8,7 +8,7 @@ Red on main: the view draws sim positions only, so drawn equals the sim position
 import math
 import time
 
-from play_support import moment, qa
+from play_support import moment, qa, select_own_by_drag
 
 SAMPLES = 8
 
@@ -20,7 +20,7 @@ def _sim_px(q, uid):
 
 def test_s_101_drawn_positions_between_ticks(tactical_game):
     client = tactical_game.client
-    client.call("input", "drag", 0, 0, 1900, 140)
+    select_own_by_drag(client)
     client.call("input", "click", 960, 540, 2)
     time.sleep(0.3)
     moment(client, "S-101", "under_way")
