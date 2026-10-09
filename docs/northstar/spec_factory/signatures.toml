@@ -5,7 +5,7 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 4
+abi_version = 6
 symbol_count = 766
 struct_count = 45
 ambiguous_remaining = 0
@@ -7421,3 +7421,77 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint
 epics = ["E-17"]
 confidence = "likely"
 note = "Polygon i: layer 0..4, kind 0 plate / 1 mass / 2 rubble, vertices as x,y pairs in wu into xy. Returns the vertex count; 0 when i is out of range or cap_pts is smaller than the count."
+
+# ---- VG K-e: economy fields (lane E1 contract piece, 2026-10-07 spec rev 6; R-193-01..04, R-218-01/02, R-179-01, R-168-01) ----
+
+[[symbols]]
+name = "om_lot_count"
+module = "economy_lots.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of lots; 0 on a fresh world or null world. Ascending id; a lot is never removed."
+
+[[symbols]]
+name = "om_lot_get_at"
+module = "economy_lots.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "out", ctype = "om_lot *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Lot i into out: 0 and fills, 1 (nothing written) when i is out of range, out is null or w is null."
+
+[[symbols]]
+name = "om_density_at"
+module = "economy_density.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Density field at a world point, dimensionless, 0.0 or more; 0.0 with no field, outside the canvas or a null world. Stage thresholds 0.10, 0.22, 0.38, 0.58 (Q-193-02)."
+
+[[symbols]]
+name = "om_strongpoint_count"
+module = "strongpoint.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of strongpoints; 0 on a fresh world or null world."
+
+[[symbols]]
+name = "om_strongpoint_get_at"
+module = "strongpoint.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "out", ctype = "om_strongpoint *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Strongpoint i into out: 0 and fills, 1 (nothing written) when out of range, out null or w null. state 0 free, 1 held, 2 rubble."
+
+[[symbols]]
+name = "om_doctrine_get"
+module = "economy_doctrine.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Current doctrine: 0 boom, 1 fortify, 2 press, 3 balanced; a fresh world answers 3."
+
+[[symbols]]
+name = "om_wave_get_since"
+module = "economy_doctrine.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "tick", ctype = "uint32_t" }, { name = "out", ctype = "om_wave *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Wave events with tick >= tick, oldest first; writes at most cap rows (out may be null to only count); returns the match count. kind 0 shipment, 1 expansion, 2 season, 3 capture, 4 battle end."
+
+[[symbols]]
+name = "om_economy_place"
+module = "economy_lots.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "building", ctype = "int32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Player placement (R-168-01, R-193-03): 0 accepted, nonzero refused. K-e stub returns 0; E1e adds the refusals."

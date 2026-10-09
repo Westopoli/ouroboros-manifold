@@ -31,7 +31,7 @@
  *  * field order, F2i). * /
  * #define OM_SAVE_MAGIC "OMSV"
  * #define OM_SAVE_MAGIC_LEN 4
- * #define OM_SAVE_FORMAT_VERSION 7 / * bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
+ * #define OM_SAVE_FORMAT_VERSION 8 / * bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
  * #define OM_SAVE_BYTE_BITS 8
  * #define OM_SAVE_BYTE_MASK 0xFFu
  * #define OM_SAVE_SLOT_TACTICAL     0
@@ -377,6 +377,39 @@ static uint64_t ck_regions(const om_world *w) {
     return h;
 }
 
+static uint64_t ck_economy(uint64_t h, const om_economy_state *e) {
+    h = ck_word(h, e->n_lots);
+    for (uint32_t i = 0; i < e->n_lots; i++) {
+        h = ck_word(h, e->lots[i].id);
+        h = ck_dbl(h, e->lots[i].x);
+        h = ck_dbl(h, e->lots[i].y);
+        h = ck_word(h, (uint64_t)e->lots[i].stage);
+        h = ck_word(h, (uint64_t)e->lots[i].building);
+        h = ck_word(h, (uint64_t)e->lots[i].owner);
+    }
+    h = ck_word(h, e->density_present);
+    if (e->density_present)
+        for (uint32_t i = 0; i < OM_DENSITY_SIDE * OM_DENSITY_SIDE; i++) h = ck_dbl(h, e->density[i]);
+    h = ck_word(h, e->n_strongpoints);
+    for (uint32_t i = 0; i < e->n_strongpoints; i++) {
+        h = ck_word(h, e->strongpoints[i].id);
+        h = ck_dbl(h, e->strongpoints[i].x);
+        h = ck_dbl(h, e->strongpoints[i].y);
+        h = ck_word(h, (uint64_t)e->strongpoints[i].owner);
+        h = ck_word(h, (uint64_t)e->strongpoints[i].state);
+    }
+    h = ck_word(h, e->doctrine_chosen);
+    h = ck_word(h, (uint64_t)e->doctrine);
+    h = ck_word(h, e->n_waves);
+    for (uint32_t i = 0; i < e->n_waves; i++) {
+        h = ck_word(h, e->waves[i].tick);
+        h = ck_word(h, (uint64_t)e->waves[i].kind);
+        h = ck_dbl(h, e->waves[i].x);
+        h = ck_dbl(h, e->waves[i].y);
+    }
+    return h;
+}
+
 static uint64_t ck_factions(const om_world *w) {
     uint64_t h = OM_CK_SEED;
     h = ck_word(h, w->faction_n);
@@ -408,6 +441,7 @@ static uint64_t ck_factions(const om_world *w) {
             h = ck_word(h, w->faction_cooperative_since[i][j]);
         }
     }
+    h = ck_economy(h, &w->economy);
     return h;
 }
 

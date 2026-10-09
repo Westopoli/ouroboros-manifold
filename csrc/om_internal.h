@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 7 /* bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 8 /* bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -72,6 +72,27 @@ typedef struct {
 } om_region;
 
 #define OM_NET_SECTION_COUNT 9
+
+/* VG K-e (lane E1, ABI 6): economy fields held inline in om_world, saved at format 8 and hashed in the factions section.
+ * No spec number gives a cap for any of these; each is a liberty 2026-10-09, the smallest sensible, for E1b to E1h to
+ * revise. Density is a coarse grid of OM_DENSITY_SIDE x OM_DENSITY_SIDE cells over the 24000 wu canvas. */
+#define OM_LOT_CAP 256 /* liberty 2026-10-09 */
+#define OM_STRONGPOINT_CAP 32 /* liberty 2026-10-09 */
+#define OM_WAVE_LOG_CAP 128 /* liberty 2026-10-09 */
+#define OM_DENSITY_SIDE 120 /* liberty 2026-10-09: 200 wu cells */
+#define OM_DOCTRINE_BALANCED 3
+typedef struct om_economy_state {
+    uint32_t n_lots;
+    om_lot lots[OM_LOT_CAP];
+    uint8_t density_present;
+    double density[OM_DENSITY_SIDE * OM_DENSITY_SIDE];
+    uint32_t n_strongpoints;
+    om_strongpoint strongpoints[OM_STRONGPOINT_CAP];
+    uint8_t doctrine_chosen; /* 0: the world is calloc-zeroed, so a fresh world reads OM_DOCTRINE_BALANCED */
+    int32_t doctrine;
+    uint32_t n_waves;
+    om_wave waves[OM_WAVE_LOG_CAP];
+} om_economy_state;
 
 /* VG K-d (lane D, 2026-10-07 spec rev 4): five layers of 240 x 240 cells of 100 wu on a 24000 wu canvas. */
 #define OM_SPACE_FIELD_LAYERS 5
@@ -355,6 +376,8 @@ struct om_world {
      * field, polygons included, is a pure function of (seed, canvas), so a loaded world regenerates it from the seed at
      * mission_start; no save version bump. */
     om_space_field_state space_field;
+    /* VG K-e: lots, density grid, strongpoints, doctrine, wave log (csrc/economy_*.c, csrc/strongpoint.c). */
+    om_economy_state economy;
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage

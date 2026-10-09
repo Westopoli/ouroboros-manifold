@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 5
+#define OM_ABI_VERSION 6
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -1068,6 +1068,26 @@ typedef enum { OM_EMIT_SILENT = 0, OM_EMIT_ACTIVE = 1 } om_emission;
 /* Terrain stage 2 (spec 2026-10-06): how a unit type moves (om_roster_set_movement_kind). */
 typedef enum { OM_MOVE_FLYING = 0, OM_MOVE_WALKING = 1, OM_MOVE_SWIMMING = 2 } om_movement_kind;
 
+/* VG K-e: visible-game economy fields (docs/architecture.md "Visible-game economy fields"). */
+typedef struct om_lot {
+    uint32_t id;
+    double x, y;
+    int32_t stage;
+    int32_t building;
+    int32_t owner;
+} om_lot;
+typedef struct om_strongpoint {
+    uint32_t id;
+    double x, y;
+    int32_t owner;
+    int32_t state;
+} om_strongpoint;
+typedef struct om_wave {
+    uint32_t tick;
+    int32_t kind;
+    double x, y;
+} om_wave;
+
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
     uint64_t tick;
@@ -1459,6 +1479,21 @@ uint32_t om_tech_tier(double tech);
 int om_tier_transition_candidate_exists(const om_world *w, int32_t faction_id);
 /* ---- end generated: diplomacy.c ---- */
 
+/* ---- generated from signatures.toml: economy_density.c ---- */
+double om_density_at(const om_world *w, double x, double y);
+/* ---- end generated: economy_density.c ---- */
+
+/* ---- generated from signatures.toml: economy_doctrine.c ---- */
+int om_doctrine_get(const om_world *w);
+uint32_t om_wave_get_since(const om_world *w, uint32_t tick, om_wave *out, uint32_t cap);
+/* ---- end generated: economy_doctrine.c ---- */
+
+/* ---- generated from signatures.toml: economy_lots.c ---- */
+uint32_t om_lot_count(const om_world *w);
+int om_lot_get_at(const om_world *w, uint32_t i, om_lot *out);
+int om_economy_place(om_world *w, int32_t building, double x, double y);
+/* ---- end generated: economy_lots.c ---- */
+
 /* ---- generated from signatures.toml: enemy_macro.c ---- */
 void om_macro_bind_hook_flag(om_world *w, uint32_t p1, const char *p2);
 uint32_t om_macro_bus_get_active_flags_count(om_world *w);
@@ -1811,6 +1846,11 @@ void om_space_field_clear(om_world *w);
 uint32_t om_space_field_poly_count(const om_world *w);
 uint32_t om_space_field_poly_get(const om_world *w, uint32_t i, uint32_t *layer, uint32_t *kind, double *xy, uint32_t cap_pts);
 /* ---- end generated: space_field.c ---- */
+
+/* ---- generated from signatures.toml: strongpoint.c ---- */
+uint32_t om_strongpoint_count(const om_world *w);
+int om_strongpoint_get_at(const om_world *w, uint32_t i, om_strongpoint *out);
+/* ---- end generated: strongpoint.c ---- */
 
 /* ---- generated from signatures.toml: tactical_mapgen.c ---- */
 void om_fairness_evaluate(om_world *w, om_fairness_score *byref);

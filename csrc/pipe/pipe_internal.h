@@ -15,7 +15,7 @@
 #include "ouroboros_sim.h"
 #include "om_constants.h"
 
-#define OM_PIPE_SAVE_FORMAT_VERSION 7
+#define OM_PIPE_SAVE_FORMAT_VERSION 8
 
 /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
  * by ouroboros_sim.h. See the file-header comment above. */

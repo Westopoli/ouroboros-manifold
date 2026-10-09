@@ -2664,6 +2664,9 @@ def _bind_e17(lib):
     P = ctypes.POINTER
     V = ctypes.c_void_p
     W = OMWorldP
+    _bind(lib, "om_density_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "x", "y"))
+    _bind(lib, "om_doctrine_get", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_economy_place", [W, ctypes.c_int32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "building", "x", "y"))
     _bind(lib, "om_fairness_evaluate", [W, V], None, ("w", "byref"))
     _bind(lib, "om_fairness_force_score", [W, ctypes.c_double], None, ("w", "composite"))
     _bind(lib, "om_fairness_is_score_logged", [W], ctypes.c_int, ("w",))
@@ -2673,6 +2676,8 @@ def _bind_e17(lib):
     _bind(lib, "om_gradient_get_anchor_intensity", [ctypes.c_int, ctypes.c_int], ctypes.c_double, ("node", "gradient"))
     _bind(lib, "om_gradient_get_anchor_radius", [ctypes.c_int, ctypes.c_int], ctypes.c_double, ("p0", "p1"))
     _bind(lib, "om_gradient_sample_single", [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_double, ("p0", "p1", "p2", "p3"))
+    _bind(lib, "om_lot_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_lot_get_at", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
     _bind(lib, "om_map_add_layer_restriction_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], None, ("w", "p1", "zone", "p3"))
     _bind(lib, "om_map_archetype_canvas_category", [ctypes.c_uint32], ctypes.c_int, ("mission",))
     _bind(lib, "om_map_check_boundary_gradient_discontinuity", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "p1", "boundary"))
@@ -2726,6 +2731,8 @@ def _bind_e17(lib):
     _bind(lib, "om_space_field_poly_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_space_field_poly_get", [W, ctypes.c_uint32, P(ctypes.c_uint32), P(ctypes.c_uint32), P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("w", "i", "layer", "kind", "xy", "cap_pts"))
     _bind(lib, "om_space_field_present", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_strongpoint_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_strongpoint_get_at", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
     _bind(lib, "om_terrain_band_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
     _bind(lib, "om_terrain_band_heights", [W, P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
     _bind(lib, "om_terrain_cell_band", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "cx", "cy"))
@@ -2743,6 +2750,7 @@ def _bind_e17(lib):
     _bind(lib, "om_terrain_walkable_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
     _bind(lib, "om_unit_get_position", [W, ctypes.c_uint32, V], None, ("w", "unit_id", "byref"))
     _bind(lib, "om_unit_order_hold_node", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "unit_id", "node_id"))
+    _bind(lib, "om_wave_get_since", [W, ctypes.c_uint32, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "tick", "out", "cap"))
     lib._e17_bound = True
 
 
