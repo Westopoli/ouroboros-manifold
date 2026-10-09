@@ -1591,3 +1591,20 @@ depends_on = ["HARNESS-laneplays"]
 status = "attached"  # landed 7bb1f5a2
 tests_pending = true
 size_estimate = "playthrough_check ignores tests/qa/desktop/plays; SHARES scripts/specfactory/merge_gate_support.py with HARNESS-laneplays (queued edit after it)"
+
+# K-c6 contract piece (Architect, 2026-10-09): terrain_dump carries layer_floors_wu and flyer_types.
+[[piece]]
+id = "K-c6"
+manager = "Architect"
+owns = [
+    "csrc/pipe/pipe_dumps.c",  # handle_terrain_dump lines only; SHARED with VG-CONTRACT
+    "autoload/bridge/dump_decode.gd",  # terrain_from_frame only; SHARED with VG-CONTRACT
+    "tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd",
+    "docs/architecture.md",  # terrain_dump bullet and dump lines only; SHARED with VG-CONTRACT
+]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
+depends_on = ["VG-CONTRACT"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"
