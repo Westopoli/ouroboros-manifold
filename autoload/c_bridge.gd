@@ -326,6 +326,10 @@ func _reader_loop() -> void:
 		_mutex.unlock()
 
 
+func _read_live_frame(stdio: FileAccess) -> Variant:
+	return _FrameDecode.read_live_frame(stdio)
+
+
 func _apply_delta(delta: Dictionary) -> void:
 	if _snapshot.is_empty():
 		return
@@ -538,6 +542,36 @@ func tactical_step_n(n: int) -> bool:
 		return false
 	_tactical = _reconstruct_tactical(state["last"])
 	return true
+
+
+func net_reset() -> bool:
+	return not _request([{"type": "cmd", "name": "net_reset"}], ["net_ack"]).is_empty()
+
+
+# The net_ack code of the submitted command (0 accepted), -1 on a pipe failure.
+func net_submit(cmd: Dictionary) -> int:
+	var c := cmd.duplicate()
+	c["type"] = "cmd"
+	c["name"] = "net_submit"
+	var r := _request([c], ["net_ack"])
+	if r.is_empty():
+		return -1
+	return int(r["net_ack"].get("code", -1))
+
+
+# {"net_ack": ack, "tactical": frame} (frame only when asked); {} on failure.
+func net_step(n: int = 1, frame: bool = true) -> Dictionary:
+	var cmd := {"type": "cmd", "name": "net_step", "n": n}
+	var want := ["net_ack"]
+	if frame:
+		cmd["frame"] = true
+		want.append("tactical")
+	return _request([cmd], want)
+
+
+func net_checksum() -> Dictionary:
+	var r := _request([{"type": "cmd", "name": "net_checksum"}], ["net_ack"])
+	return r.get("net_ack", {})
 
 
 func _ensure_mission(fog_filter: bool = false) -> bool:

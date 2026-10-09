@@ -5,7 +5,7 @@ const SimSession := preload("res://autoload/sim_session.gd")
 const HOVER_GLYPH_CAP := 12
 const HOVER_GLYPHS := ["✦", "·"]
 const HOVER_GLYPH_COUNTS := {
-	"NEW CAMPAIGN": 4, "CONTINUE": 3, "ERA LIBRARY": 3, "SETTINGS": 2, "QUIT": 2,
+	"NEW CAMPAIGN": 4, "CONTINUE": 3, "ERA LIBRARY": 3, "MULTIPLAYER": 3, "SETTINGS": 2, "QUIT": 2,
 }
 const GLYPH_COLOR := Color("#FFFFFF")
 
@@ -71,6 +71,7 @@ func _build_ui() -> void:
 		{"label": "NEW CAMPAIGN", "action": "galaxy"},
 		{"label": "CONTINUE", "action": "load_game"},
 		{"label": "ERA LIBRARY", "action": "era_library"},
+		{"label": "MULTIPLAYER", "action": "lobby"},
 		{"label": "SETTINGS", "action": "settings"},
 		{"label": "QUIT", "action": "quit"},
 	]
