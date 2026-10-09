@@ -1606,7 +1606,7 @@ owns = [
 ]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
-depends_on = ["VG-CONTRACT"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
 status = { state = "in_flight" }
 tests_pending = false
 size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"
