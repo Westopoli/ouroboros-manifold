@@ -163,8 +163,8 @@ def nearest_enemy_px(client, q: dict) -> tuple:
     w, h = (int(v) for v in RESOLUTION.split("x"))
     # TD-VG-A-9e: the ground rig's zoom is capped, so a player scrolls with real pointer input (no camera verb). The edge is
     # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
-    # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so a small move is
-    # re-sent every 0.5 s. SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
+    # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
+    # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
     # scroll only when both deltas exceed it; otherwise the larger one. on_screen must hold for two consecutive polls.
     SCREEN_WU = 3000.0
     if not r["result"].get("on_screen"):
@@ -179,14 +179,9 @@ def nearest_enemy_px(client, q: dict) -> tuple:
             ey_ = h - 3 if ddy > 0 else 2
         client.call("input", "move", ex_, ey_)
         deadline = time.monotonic() + 30.0
-        last_nudge = time.monotonic()
         hits = 0
         while time.monotonic() < deadline and hits < 2:
             time.sleep(0.2)
-            if time.monotonic() - last_nudge >= 0.5:
-                client.call("input", "move", ex_ + (1 if ex_ < w // 2 else -1 if ex_ > w // 2 else 0), ey_ + (1 if ey_ < h // 2 else -1 if ey_ > h // 2 else 0))
-                client.call("input", "move", ex_, ey_)
-                last_nudge = time.monotonic()
             r = client.call("project", float(e["x"]), float(e["y"]))
             assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
             hits = hits + 1 if r["result"].get("on_screen") else 0
