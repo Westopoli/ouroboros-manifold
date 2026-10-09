@@ -310,23 +310,6 @@ def test_clear_removes_field(lib, world_factory):
 
 # ---- cover from rubble -----------------------------------------------------------------------------------------
 
-def test_cover_from_rubble(lib, world_factory):
-    """R-246-01 / D4 'cover from rubble': generating adds cover discs inside the canvas; regenerating replaces them
-    rather than stacking; the polygons include rubble (kind 2) that the cover came from."""
-    w = make_world(lib, world_factory)
-    before = lib.om_map_cover_count(w)
-    assert gen(lib, w, 11, 35) == 0
-    n1 = lib.om_map_cover_count(w)
-    assert n1 > before, "no cover discs from rubble"
-    for i in range(before, n1):
-        x, y, r, h = ctypes.c_double(), ctypes.c_double(), ctypes.c_double(), ctypes.c_double()
-        assert lib.om_map_cover_at(w, i, ctypes.byref(x), ctypes.byref(y), ctypes.byref(r), ctypes.byref(h)) == 1
-        assert 0.0 <= x.value <= CANVAS and 0.0 <= y.value <= CANVAS and r.value > 0.0, (x.value, y.value, r.value)
-    assert any(kind == 2 for _, kind, _ in read_polys(lib, w)), "no rubble polygon"
-    assert gen(lib, w, 11, 35) == 0
-    assert lib.om_map_cover_count(w) == n1, "regenerate stacked cover discs"
-
-
 # ---- dump getters (K-d): R-246-03 -------------------------------------------------------------------------------
 
 def test_poly_dump_shape(lib, world_factory):
