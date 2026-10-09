@@ -1613,8 +1613,10 @@ size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passth
 id = "VG-C6b"
 status = "in_flight"
 manager = "Architect"
-depends_on = ["VG-C-wire"]
+depends_on = ["VG-C-wire", "VG-A"]
 owns = [
     "scenes/ground3d/ground3d.gd",  # shared with VG-C-wire: only the set_units feed lines and the units3d_heights / units3d_shadows qa keys; needs a contract piece for the floors and flyer types data first
+    "scenes/ground3d/ground_units.gd",  # shared with VG-C: heights() and shadow_ids() only
+    "scenes/tactical_c/tactical_view.gd",  # shared with VG-A: only the Deaths.set_ground feed lines near set_terrain; depends_on VG-A and VG-C-wire
     "tests/test_vg_c6b_ground_units_layers.gd",
 ]
