@@ -5,4 +5,3 @@ tests/qa/desktop/plays/C/s001.py::test_s001_slopes_have_midlines_and_blocked_gro
 tests/qa/desktop/plays/C/s004.py::test_s004_transit_is_visible  # spec gap, no layer-change order
 tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # TD-VG-C-2 pending
 tests/qa/desktop/plays/A/test_S_134_shots_and_hits.py::test_s_134_a_shot_is_in_flight_during_combat  # A19 opening zoom: after the edge scroll the attack-move produces no shot within the 6730-tick window in the space era; TD-VG-A-9 chain, fix pending with the camera-pan piece (Architect 2026-10-09)
-tests/qa/desktop/plays/A/test_S_136_deaths.py::test_s_136_a_wreck_is_on_the_field  # A19 opening zoom: after the edge scroll the attack-move produces no shot within the 6730-tick window in the space era; TD-VG-A-9 chain, fix pending with the camera-pan piece (Architect 2026-10-09)
