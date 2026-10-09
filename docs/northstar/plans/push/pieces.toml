@@ -1598,6 +1598,8 @@ id = "K-c6"
 manager = "Architect"
 owns = [
     "csrc/pipe/pipe_dumps.c",  # handle_terrain_dump lines only; SHARED with VG-CONTRACT
+    "csrc/pipe/om_pipe.c",  # g_roster_types (+2 lines) only; SHARED with VG-CONTRACT
+    "csrc/pipe/pipe_internal.h",  # g_roster_types extern (+1 line) only; SHARED with VG-CONTRACT
     "autoload/bridge/dump_decode.gd",  # terrain_from_frame only; SHARED with VG-CONTRACT
     "tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd",
     "docs/architecture.md",  # terrain_dump bullet and dump lines only; SHARED with VG-CONTRACT
