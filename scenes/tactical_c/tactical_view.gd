@@ -286,6 +286,9 @@ func set_terrain(t: Dictionary) -> void:
 		move_child(_ground_layer, 0)
 	_ground_layer.set_terrain(t)
 	_ground_layer.set_view(_world_scale, _camera)
+	var deaths := _fx.get_node_or_null("Deaths")
+	if deaths != null and deaths.has_method("set_ground"):
+		deaths.set_ground(t, t.get("layer_floors_wu", []), t.get("flyer_types", []))
 	if _ground_era():
 		if _ground3d == null:
 			_ground3d = Ground3DHost.new()
