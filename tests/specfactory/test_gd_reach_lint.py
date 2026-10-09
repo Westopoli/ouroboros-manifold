@@ -140,12 +140,11 @@ def test_positive_control_planted_orphan_detected(tmp_path):
 
 
 def test_real_repo_lists_ground_units_and_slope_view():
-    """HARNESS-gdreach: red because gd_reach_lint.py does not exist yet. On the real tree at main 1398ba16 the drift
-    check found these two unreachable. Asserts the lint's list, not a count: once the C6/C7 wiring lands and they are
-    reached this test must be flipped to assert they are absent (retire it then)."""
+    """HARNESS-gdreach: real-repo positive proof. At main 1398ba16 these two files were unreachable; VG-C-wire attaches
+    them to Ground3D, so at HEAD they must NOT be in the lint's unreachable list. TD-HARNESS-gdreach-2."""
     p = subprocess.run([sys.executable, str(LINT), "--ref", "HEAD", "--base-ref", "HEAD", "--project", str(REPO)],
                        capture_output=True, text=True)
     out = p.stdout
     assert p.returncode == 0, out + p.stderr
     for f in ("scenes/ground3d/ground_units.gd", "scenes/ground3d/slope_view.gd"):
-        assert f"UNREACHABLE {f}" in out
+        assert f"UNREACHABLE {f}" not in out

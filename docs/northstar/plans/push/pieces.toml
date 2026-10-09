@@ -1533,6 +1533,18 @@ status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
 
+# VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
+[[piece]]
+id = "VG-C-wire"
+status = "in_flight"
+depends_on = ["VG-C"]  # wiring on top of VG-C: its globs cover scenes/ground3d/** and tests/test_vg_c*.gd
+manager = "Architect"
+owns = [
+    "scenes/ground3d/ground3d.gd",  # wiring: add ground_units.gd and slope_view.gd as children, feed set_terrain/set_frame, add slope_view and units3d to qa_state
+    "tests/test_vg_c_wire_ground3d.gd",
+    "tests/test_vg_c_zoom_once.gd",
+]
+
 # Architect 2026-10-09: test-only daemon verb "project" x y so lane A plays get the view's own world-to-pixel projection.
 [[piece]]
 id = "G-project"
