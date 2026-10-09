@@ -198,6 +198,16 @@ else
     ok reach_lint "$(tail_oneline "$REACH_LOG" 1)"
 fi
 
+# -------------------------------------------------------------- 5b-gd. Godot reach lint (HARNESS-gdreach)
+# Same regression mode as reach_lint: only a .gd newly unreachable from the main scene/autoloads rejects.
+GDREACH_LOG="$SCRATCH_ROOT/gd_reach_lint.log"
+"$PYTHON" "$GATE_DIR/gd_reach_lint.py" --ref "HEAD" --base-ref "$(git -C "$CANDIDATE" merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")" --project "$CANDIDATE" >"$GDREACH_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject gd_reach "$(grep '^NEW UNREACHABLE' "$GDREACH_LOG" | tr '\n' ' ')"
+else
+    warn gd_reach "$(tail_oneline "$GDREACH_LOG" 1)"
+fi
+
 # -------------------------------------------------------------- 5c. single-owner lint
 # Same gap-fix plan item: no file owned by two in-flight pieces. Reads
 # THIS repo's own pieces.toml ($PIECES_TOML), never the candidate's copy
