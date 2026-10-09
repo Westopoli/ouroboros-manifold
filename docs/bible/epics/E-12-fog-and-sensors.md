@@ -32,7 +32,7 @@ As a commander, I want the map revealed only around my units, so that scouting i
 Rules
 - R-089-01  Given an observer with sensor radius r at interference i, When visibility is computed, Then its effective radius is r × (1 − i), and an enemy on the same layer is visible if its distance ≤ that radius and no cover (E-01 S-007) or blocked cell (E-13 R-097-01) blocks the line.
 - R-089-02  Given every friendly unit's visible set, When the player's view is built, Then the player-visible enemy list is their union.
-- R-089-03  Given an enemy not in the union, When drawn, Then it is not drawn, its HP bar is not drawn, and its position is not in the client's data.
+- R-089-03  Given an enemy not in the union, When drawn, Then it is not drawn, its HP bar is not drawn, and its position is not in the client's data; the live game loads every mission with the fog filter on (the pipe's own default is off, and the briefing turns it on); a QA probe may turn it off for a test through the daemon's set_fog_filter verb, which never runs in play (Architect, 2026-10-09).
 - R-089-04  Given visibility, When computed, Then it is recomputed every tick from current positions; there is no memory of last-seen positions [Q-089-01].
 - R-089-05  Given a friendly unit, When visibility is computed, Then friendly units are always visible to the player regardless of distance.
 - R-089-06  Given visibility A sees B, When B's set is computed, Then B seeing A is computed independently (asymmetric sensors are normal).

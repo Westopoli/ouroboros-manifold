@@ -152,6 +152,7 @@ Rules
 - R-109-02  Given a mission ends, When the debrief shows, Then it is E-10 R-079-03 and offers Continue and Exit.
 - R-109-03  Given a new campaign, When it starts, Then the onboarding screen is E-08 S-063.
 - R-109-04  Given any of these screens, When rendered, Then no raw field numbers appear.
+- R-109-05  Given a live mission load the simulation refuses, When the player is on the briefing, Then an error panel names the reason and offers Retry; when the refusal cannot be retried (a desync, a missing peer) the Retry button is hidden (Architect, 2026-10-09, from the lane F landing).
 
 Inputs: mission setup, result, onboarding.
 Outputs: screens.

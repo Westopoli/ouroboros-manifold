@@ -31,8 +31,15 @@ var _fixture_path: String = ""
 var _injected_bugs: Dictionary = {}
 
 var _server: TCPServer = null
-var _conn: StreamPeerTCP = null
-var _conn_buffer: String = ""
+var _conns: Array = []  # {"peer": StreamPeerTCP, "buf": String}; the test client and, in a net match, the peer daemon
+var _fog_filter_override := -1  # -1 unset; 0/1 set by set_fog_filter
+
+var _nm = null  # net_loopback_start: own NetMatch (not in the tree, so only net_run polls it)
+var _nm_transport = null
+var _nm_local := 0
+var _nm_remote := 0
+var _nm_peer: StreamPeerTCP = null
+var _nm_budget := 0  # ticks this side has been asked to reach; the peer's net_run may already have driven it past
 
 var _script_actions: Array = []
 var _pointer := Vector2.ZERO
@@ -160,32 +167,31 @@ func _process(_delta: float) -> void:
 
 
 func _poll_server() -> void:
-	if _conn == null and _server.is_connection_available():
-		_conn = _server.take_connection()
-	if _conn == null:
-		return
-	_conn.poll()
-	if _conn.get_status() != StreamPeerTCP.STATUS_CONNECTED:
-		_conn = null
-		_conn_buffer = ""
-		return
-	var avail := _conn.get_available_bytes()
-	if avail <= 0:
-		return
-	var data: Array = _conn.get_data(avail)
-	if data[0] != OK:
-		return
-	var bytes: PackedByteArray = data[1]
-	_conn_buffer += bytes.get_string_from_utf8()
-	var nl := _conn_buffer.find("\n")
-	while nl != -1:
-		var line := _conn_buffer.substr(0, nl)
-		_conn_buffer = _conn_buffer.substr(nl + 1)
-		_handle_line(line)
-		nl = _conn_buffer.find("\n")
+	while _server.is_connection_available():
+		_conns.append({"peer": _server.take_connection(), "buf": ""})
+	for c in _conns.duplicate():
+		var peer: StreamPeerTCP = c["peer"]
+		peer.poll()
+		if peer.get_status() != StreamPeerTCP.STATUS_CONNECTED:
+			_conns.erase(c)
+			continue
+		var avail := peer.get_available_bytes()
+		if avail <= 0:
+			continue
+		var data: Array = peer.get_data(avail)
+		if data[0] != OK:
+			continue
+		var bytes: PackedByteArray = data[1]
+		c["buf"] += bytes.get_string_from_utf8()
+		var nl: int = c["buf"].find("\n")
+		while nl != -1:
+			var line: String = c["buf"].substr(0, nl)
+			c["buf"] = c["buf"].substr(nl + 1)
+			_handle_line(line, peer)
+			nl = c["buf"].find("\n")
 
 
-func _handle_line(line: String) -> void:
+func _handle_line(line: String, peer: StreamPeerTCP) -> void:
 	if line.strip_edges() == "":
 		return
 	var parsed = JSON.parse_string(line)
@@ -199,16 +205,16 @@ func _handle_line(line: String) -> void:
 		verb = String(parsed[0])
 		args = parsed.slice(1)
 	else:
-		_write_response({"ok": false, "error": "malformed request"})
+		_write_response({"ok": false, "error": "malformed request"}, peer)
 		return
 	var resp := await _dispatch(verb, args)
-	_write_response(resp)
+	_write_response(resp, peer)
 
 
-func _write_response(resp: Dictionary) -> void:
-	if _conn == null:
+func _write_response(resp: Dictionary, peer: StreamPeerTCP) -> void:
+	if peer == null:
 		return
-	_conn.put_data((JSON.stringify(resp) + "\n").to_utf8_buffer())
+	peer.put_data((JSON.stringify(resp) + "\n").to_utf8_buffer())
 
 
 func _dispatch(verb: String, args: Array) -> Dictionary:
@@ -242,6 +248,19 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			return await _dispatch_input(args)
 		"qa_select":
 			return _do_qa_select(args)
+		"set_fog_filter":
+			_fog_filter_override = 1 if (args.size() > 0 and bool(args[0])) else 0
+			return {"ok": true, "result": {"fog_filter": fog_filter()}}
+		"net_loopback_start":
+			return _net_loopback_start(args)
+		"net_run":
+			return _net_run(int(args[0]) if args.size() > 0 else 1)
+		"net_frame":
+			return _net_frame()
+		"net_command":
+			return _net_command(args[0] if args.size() > 0 and typeof(args[0]) == TYPE_DICTIONARY else {})
+		"net_peer_pump":
+			return _net_peer_pump(args[0] if args.size() > 0 and typeof(args[0]) == TYPE_ARRAY else [])
 		_:
 			return {"ok": false, "error": "unknown verb %s" % verb}
 
@@ -353,6 +372,142 @@ func _do_inject(bug_id: String) -> Dictionary:
 	var known := KNOWN_BUG_IDS.has(bug_id)
 	_injected_bugs[bug_id] = known
 	return {"bug_id": bug_id, "known": known}
+
+
+# The fog filter the live mission load asks for: the game default (R-089-03) unless a probe turned it off.
+func fog_filter() -> bool:
+	return _fog_filter_override != 0
+
+
+# Net verbs (tests/qa/desktop/net_match_loopback.py). Each process runs one NetMatch over an in-process loopback
+# transport; the daemons carry the packets between the two transports through the peer's qa port. net_run drives
+# both sessions in turn (peer first, so both end on the same tick), as lockstep needs both sides polling. net_run(steps)
+# raises this side's tick target by steps, so the peer's run having driven this side there already makes it a no-op.
+func _net_loopback_start(args: Array) -> Dictionary:
+	if args.size() < 3:
+		return {"ok": false, "error": "net_loopback_start: role peer_qa_port mission_seed"}
+	var host: bool = String(args[0]) == "host"
+	var bridge = load("res://autoload/sim_session.gd").bridge()
+	if not bridge.load_mission_live(int(args[2]), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES, fog_filter()) \
+			or not bridge.begin_mission_live(int(args[2]), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES) \
+			or not bridge.net_reset():
+		return {"ok": false, "error": "net_loopback_start: mission load failed: %s" % bridge.last_error()}
+	_nm_local = 1 if host else 2
+	_nm_remote = 2 if host else 1
+	_nm_transport = load("res://autoload/net/loopback_transport.gd").new()
+	_nm_transport.attach(_nm_local)
+	_nm_transport.attach(_nm_remote)
+	if _nm_peer != null:
+		_nm_peer.disconnect_from_host()
+	_nm_peer = StreamPeerTCP.new()
+	if _nm_peer.connect_to_host("127.0.0.1", int(args[1])) != OK:
+		return {"ok": false, "error": "net_loopback_start: cannot reach peer qa port"}
+	var deadline := Time.get_ticks_msec() + 10000
+	while _nm_peer.get_status() == StreamPeerTCP.STATUS_CONNECTING and Time.get_ticks_msec() < deadline:
+		_nm_peer.poll()
+		OS.delay_msec(2)
+	if _nm_peer.get_status() != StreamPeerTCP.STATUS_CONNECTED:
+		return {"ok": false, "error": "net_loopback_start: peer qa port did not connect"}
+	_nm_budget = 0
+	if _nm != null:
+		_nm.free()
+	_nm = load("res://autoload/net/net_match.gd").new()
+	var record := {"peers": [{"peer_id": 1}, {"peer_id": 2}], "local_peer": _nm_local, "host_peer": 1}
+	_nm.start(record, _nm_transport, load("res://autoload/net/pipe_sim.gd").new(bridge), func(_m): pass)
+	if host:
+		_nm.on_lobby_chat(2, {"t": "ready"})
+	else:
+		_nm.on_lobby_chat(1, {"t": "go"})
+	return {"ok": true, "result": {"active": _nm.active()}}
+
+
+func _net_exchange() -> bool:
+	var out: Array = []
+	for e in _nm_transport.poll(_nm_remote):
+		out.append((e["data"] as PackedByteArray).hex_encode())
+	var r := _peer_call("net_peer_pump", [out])
+	if not r.get("ok", false):
+		return false
+	for h in r["result"]["packets"]:
+		_nm_transport.send(_nm_remote, _nm_local, String(h).hex_decode())
+	return true
+
+
+func _net_peer_pump(packets: Array) -> Dictionary:
+	if _nm == null:
+		return {"ok": false, "error": "net_peer_pump: no match"}
+	for h in packets:
+		_nm_transport.send(_nm_remote, _nm_local, String(h).hex_decode())
+	_nm.session.poll()
+	var out: Array = []
+	for e in _nm_transport.poll(_nm_remote):
+		out.append((e["data"] as PackedByteArray).hex_encode())
+	return {"ok": true, "result": {"packets": out}}
+
+
+func _net_run(steps: int) -> Dictionary:
+	if _nm == null or not _nm.active():
+		return {"ok": false, "error": "net_run: no active match"}
+	_nm_budget += steps
+	var target: int = _nm_budget
+	var guard := steps * 6 + 200
+	if _nm.session._released >= target:
+		return {"ok": true, "result": {"steps": steps}}
+	while _nm.session._released < target and guard > 0:
+		if not _net_exchange():
+			return {"ok": false, "error": "net_run: peer exchange failed"}
+		_nm.session.poll()
+		guard -= 1
+	if _nm.session._released < target:
+		return {"ok": false, "error": "net_run: stalled at tick %d, wanted %d" % [_nm.session._released, target]}
+	if _nm._guard.failed:
+		return {"ok": false, "error": "net_run: sim step failed: %s" % load("res://autoload/sim_session.gd").bridge().last_error()}
+	if not _net_exchange():
+		return {"ok": false, "error": "net_run: peer exchange failed"}
+	return {"ok": true, "result": {"steps": steps}}
+
+
+func _net_frame() -> Dictionary:
+	if _nm == null:
+		return {"ok": false, "error": "net_frame: no match"}
+	var ack: Dictionary = load("res://autoload/sim_session.gd").bridge().net_checksum()
+	if ack.is_empty():
+		return {"ok": false, "error": "net_frame: net_checksum failed"}
+	var f: Dictionary = _nm.last_frame()
+	return {"ok": true, "result": {"tick": int(ack["tick"]), "checksum": ack["checksum"], "units": (f.get("units", []) as Array).size()}}
+
+
+func _net_command(cmd: Dictionary) -> Dictionary:
+	if _nm == null or not _nm.active():
+		return {"ok": false, "error": "net_command: no active match"}
+	var c := cmd.duplicate()
+	if c.has("units"):
+		var ids: Array = []
+		for u in c["units"]:
+			ids.append(int(u))
+		c["units"] = ids
+	return {"ok": true, "result": {"queued_for_tick": _nm.command(c)}}
+
+
+# One request to the peer daemon over _nm_peer; blocks (the peer is another process) until its reply line.
+func _peer_call(verb: String, args: Array) -> Dictionary:
+	if _nm_peer == null:
+		return {"ok": false, "error": "no peer link"}
+	_nm_peer.put_data((JSON.stringify({"verb": verb, "args": args}) + "\n").to_utf8_buffer())
+	var buf := ""
+	var deadline := Time.get_ticks_msec() + 15000
+	while Time.get_ticks_msec() < deadline:
+		_nm_peer.poll()
+		var avail := _nm_peer.get_available_bytes()
+		if avail > 0:
+			buf += _nm_peer.get_data(avail)[1].get_string_from_utf8()
+			var nl := buf.find("\n")
+			if nl != -1:
+				var parsed = JSON.parse_string(buf.substr(0, nl))
+				return parsed if typeof(parsed) == TYPE_DICTIONARY else {"ok": false, "error": "bad peer reply"}
+		else:
+			OS.delay_msec(1)
+	return {"ok": false, "error": "peer timed out"}
 
 
 func _do_qa_select(args: Array) -> Dictionary:

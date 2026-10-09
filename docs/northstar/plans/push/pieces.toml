@@ -867,7 +867,7 @@ size_estimate = "om_player_faction_reassign_on_collapse runs the restricted rota
 id = "G-errorpanel"
 manager = "M3"
 wave = 4
-owns = ["scenes/shared/error_panel.tscn", "scenes/shared/error_panel.gd"]
+owns = ["scenes/shared/error_panel.tscn", "scenes/shared/error_panel.gd", "tests/test_pipe_error_panels.gd"]
 owns_glob = []
 acceptance = ["tests/test_pipe_error_panels.gd"]
 depends_on = []
@@ -1408,6 +1408,7 @@ owns = [
     "tests/transport/test_pipe_vg_contract.py", "tests/transport/test_pipe_vg_park_dead_slot.py",
     "tests/transport/test_pipe_vg_identity.py", "tests/transport/test_pipe_place_structure.py", "tests/transport/test_pipe_tactical_tier_state_reserved.py",
     "tests/transport/test_pipe_tactical_delta_frame.py",  # handed to VG-CONTRACT 2026-10-08 (TD-VG-K-6/7)
+    "scenes/mission_briefing/mission_briefing.gd",  # handed to VG-CONTRACT for vg-f5-land (K-h wire)
     "scripts/specfactory/reach_lint.py",  # VG-split-land: pipe roots widened to every csrc/pipe/*.c after the om_pipe.c split
 ]
 owns_glob = ["tests/qa/desktop/plays/K/**"]
@@ -1524,8 +1525,8 @@ size_estimate = "lane E1, 20 pieces in two workflows (vg-wave5-laneE1.js parts a
 id = "VG-F"
 manager = "M0"
 wave = 7
-owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf", "tests/transport/test_vg_f_w2_net_step_frame.py", "tests/transport/test_vg_f_w8a_static_pipe.py", "tests/transport/test_vg_f_w8d_presets.py", "tests/transport/test_vg_f_depot_script.py", "tests/transport/test_vg_f_park_depot_setlive.py", "tests/test_vg_f_w2_pipe_sim.gd", "tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_f5_hookup.gd", "autoload/net/pipe_sim.gd", "scenes/main_menu/main_menu.gd", "autoload/scene_router.gd", "tests/test_main_menu_items.gd"]  # main_menu.gd, scene_router.gd, test_main_menu_items.gd handed over from attached C1/C8 for the W4 landing (vg-f-land-2)
-owns_glob = ["tests/qa/desktop/plays/F/**", "scenes/lobby/**"]
+owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe_macos.sh", "scripts/build_pipe_windows.sh", "scripts/codesign_macos.sh", "scripts/steam_app_build_5402100.vdf", "tests/transport/test_vg_f_w2_net_step_frame.py", "tests/transport/test_vg_f_w8a_static_pipe.py", "tests/transport/test_vg_f_w8d_presets.py", "tests/transport/test_vg_f_depot_script.py", "tests/transport/test_vg_f_park_depot_setlive.py", "tests/test_vg_f_w2_pipe_sim.gd", "tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_f5_hookup.gd", "tests/qa/desktop/net_match_loopback.py", "scenes/shared/error_panel.gd", "autoload/net/pipe_sim.gd", "scenes/main_menu/main_menu.gd", "autoload/scene_router.gd", "tests/test_main_menu_items.gd"]
+owns_glob = ["tests/qa/desktop/plays/F/**", "autoload/net/**", "scenes/lobby/**"]
 acceptance = []
 depends_on = ["NET-wire-A"]
 status = { state = "in_flight" }

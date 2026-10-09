@@ -2,7 +2,20 @@
 in flight after an attack-move toward the enemy. Red on main: no shots_in_flight inventory."""
 import time
 
-from play_support import count, has_key, moment, nearest_enemy_px, qa, step_until
+import pytest
+
+from play_support import count, has_key, moment, nearest_enemy_px, qa, start_tactical_game, step_until
+
+
+@pytest.fixture(scope="module")
+def tactical_game():
+    """TD-VG-A-5: this play reads enemy positions (nearest_enemy_px), so it runs with the fog filter off."""
+    g = start_tactical_game(fog_off=True)
+    try:
+        yield g
+    finally:
+        g.stop()
+
 
 MAX_TICKS = 6730  # TD-VG-A-1: first wreck measured at tick 5382 after the order (seed 1, attack-move to the nearest enemy) + 25%
 CHUNK = 25  # TD-VG-A-1: 6730 ticks at chunk 5 does not fit the 900 s play timeout (about 0.15 s per tick against 0.07 at chunk 25)

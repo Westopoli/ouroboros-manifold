@@ -56,7 +56,7 @@ class FailBridge:
 	func ensure_world(_s, _n, _f) -> bool:
 		return _refuse()
 
-	func load_mission_live(_s, _n, _f) -> bool:
+	func load_mission_live(_s, _n, _f, _fog_filter := false) -> bool:
 		return _refuse()
 
 	func load_debrief_live(_s, _n, _f) -> bool:
