@@ -252,18 +252,14 @@ func _note_unknown_factions(snapshot: Dictionary) -> void:
 	for r in _regions:
 		owner_ids.append(int(r.get("owner", -1)))
 	var known: Array = []
-	var names := {}
 	if snapshot.has("factions"):
 		for f in snapshot["factions"]:
 			known.append(int(f.get("id", -1)) if f is Dictionary else int(f))
-			if f is Dictionary and str(f.get("name", "")) != "":
-				names[int(f["id"])] = str(f["name"])
 	else:
 		known = owner_ids.duplicate()
 	var shell := get_node_or_null("ShellRenderer")
 	if shell != null:
 		shell.known_faction_ids = known
-		shell.faction_names = names
 	_unknown_factions = []
 	for id in UnknownLabel.unknown_ids(owner_ids, known):
 		if id >= 0:

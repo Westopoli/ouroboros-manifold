@@ -4,6 +4,8 @@ extends RefCounted
 # Compatibility renderer, a flat alpha-blended stand-in mesh per faction in place of the field shell.
 # Called from shell_renderer.gd.
 
+const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
+const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const LABEL_LIFT := 8.0   # draft: B4 retunes the label scale and offset
 const LABEL_PIXEL_SIZE := 0.05
 const LABEL_FONT_SIZE := 64
@@ -11,6 +13,7 @@ const STAND_IN_OPACITY_MULTIPLIER := 0.15   # draft: Architect ruling 2026-10-08
 
 var stand_in: bool
 var _host: Node3D
+var _names: RefCounted   # chronicle name table: the wire carries no faction names
 var _labels: Dictionary = {}    # colour key -> Label3D
 var _meshes: Dictionary = {}    # colour key -> MeshInstance3D (stand-in only)
 
@@ -18,11 +21,15 @@ var _meshes: Dictionary = {}    # colour key -> MeshInstance3D (stand-in only)
 func _init(host: Node3D, use_stand_in: bool) -> void:
 	_host = host
 	stand_in = use_stand_in
+	_names = ChronicleNames.new()
+	var lib = JSON.parse_string(FileAccess.get_file_as_string(LABEL_LIBRARY))
+	if lib is Dictionary:
+		_names.load_tables(lib.get("name_tables", {}))
 
 
 # factions: colour key -> {region_id: true}. One label per (colour key, faction_id): a region
 # mid-tween sits in its old owner's colour but carries its new owner's id, so it keeps its own label.
-func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dictionary = {}) -> void:
+func refresh(factions: Dictionary, data: Node, known_ids: Array = []) -> void:
 	var live := {}
 	for key in factions:
 		var parts := {}
@@ -57,7 +64,7 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dic
 				label.font_size = LABEL_FONT_SIZE
 				_host.add_child(label)
 				_labels[lkey] = label
-			label.text = _text_for(fid, known_ids, _labels.size(), names)
+			label.text = _text_for(fid, known_ids, _labels.size())
 			label.position = parts[fid]["sum"] / parts[fid]["n"] + Vector3(0.0, LABEL_LIFT, 0.0)
 			label.modulate = Color(color.r, color.g, color.b, label.modulate.a)
 			label.outline_modulate = Color(color.r * 0.5, color.g * 0.5, color.b * 0.5, label.outline_modulate.a)
@@ -82,13 +89,13 @@ func refresh(factions: Dictionary, data: Node, known_ids: Array = [], names: Dic
 
 
 # A display name (non-numeric faction_id) reads as a name; a bare owner id goes through UnknownLabel.
-func _text_for(fid: String, known_ids: Array, ordinal: int, names: Dictionary) -> String:
+func _text_for(fid: String, known_ids: Array, ordinal: int) -> String:
 	if fid == "":
 		return "Faction %d" % ordinal
 	var num := fid.trim_prefix("faction_")
 	if fid.is_valid_int() or (fid.begins_with("faction_") and num.is_valid_int()):
-		if names.has(int(num)):
-			return names[int(num)]
+		if known_ids.has(int(num)):
+			return _names.fill_template("{faction_name}", -1, int(num))
 		return UnknownLabel.text_for(int(num), known_ids)
 	return fid.replace("_", " ").capitalize()
 

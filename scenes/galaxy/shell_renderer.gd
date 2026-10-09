@@ -18,7 +18,6 @@ var res_divisor := SHELL_RES_DIVISOR
 # Set by galaxy_quality.gd (A54): 1 forces stand-in shells (tiers 1 and 2). -1 (tier 0, or unset) follows the rendering method.
 var stand_in_mode := -1
 var known_faction_ids: Array = []
-var faction_names: Dictionary = {}   # faction id -> name, from snapshot.factions
 
 var _wv_data: Node
 var _labels: RefCounted   # faction labels, and the flat stand-in under the Compatibility renderer
@@ -242,7 +241,7 @@ func _on_territory_removed(region_id: String) -> void:
 
 
 func _refresh_labels() -> void:
-	_labels.refresh(_faction_systems, _wv_data, known_faction_ids, faction_names)
+	_labels.refresh(_faction_systems, _wv_data, known_faction_ids)
 
 
 func _on_regions_cleared() -> void:
