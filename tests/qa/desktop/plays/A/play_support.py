@@ -154,14 +154,8 @@ def nearest_enemy_px(client, q: dict) -> tuple:
     e = foes[k]
     r = client.call("project", float(e["x"]), float(e["y"]))
     assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
-    for _ in range(12):  # TD-VG-A-9c: an off-screen enemy is zoomed into view as a player would; wheel +1 zooms out (plays/C/s236.py)
-        if r["result"].get("on_screen"):
-            break
-        client.call("input", "wheel", 1)
-        r = client.call("project", float(e["x"]), float(e["y"]))
-        assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
-    # TD-VG-A-9e: the ground rig's zoom is capped, so a player scrolls with real pointer input (no camera verb). The edge is
+    # TD-VG-A-9e/9g: no zoom-out step (the pan is 600 px/s over the view's world scale, fastest at the opening height); a player scrolls with real pointer input (no camera verb). The edge is
     # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
     # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
     # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
@@ -188,6 +182,6 @@ def nearest_enemy_px(client, q: dict) -> tuple:
         client.call("input", "move", w // 2, h // 2)
         if hits < 2:
             r["result"]["on_screen"] = False
-    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after zoom-out and 30 s edge scroll toward it" % k
+    assert r["result"].get("on_screen"), "play_support: FINDING: enemy %s off screen after 30 s edge scroll toward it" % k
     px, py = r["result"]["x"], r["result"]["y"]
     return int(min(max(px, 70), w - 70)), int(min(max(py, 70), h - 70))
