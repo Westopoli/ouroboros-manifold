@@ -265,6 +265,7 @@ func set_terrain(t: Dictionary) -> void:
 			move_child(_ground3d, 0)
 		_ground3d.set_terrain(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
+		_camera = _force_camera()
 		_ground3d.camera_rig().pan_to(_camera)
 		_sync_from_rig()
 		_update_display_px()
@@ -763,6 +764,8 @@ func _force_camera() -> Vector2:
 			hi = hi.max(p)
 	if lo.x == INF:
 		return centre
+	if _rig() != null:
+		return (lo + hi) * 0.5
 	var pad := UNIT_SIZE * 0.5 / _world_scale
 	var half := Vector2(SCREEN_W, SCREEN_H) * 0.5 / _world_scale
 	var cam := centre
@@ -963,6 +966,10 @@ func _update_display_px() -> void:
 		_display_px = current_px
 
 
+func _project_ground(w: Vector2) -> Vector2:
+	return _ground3d.to_screen(w.x, w.y)
+
+
 func _redraw() -> void:
 	if not is_inside_tree():
 		return
@@ -970,14 +977,27 @@ func _redraw() -> void:
 		_ground_layer.set_view(_world_scale, _camera)
 	var lf := _get_local_faction()
 	var mission: Dictionary = SimSession.bridge().mission()
+	var ground := _ground3d != null
+	if ground:
+		for n in ["MapLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "Shots"]:
+			var piece := _node(n)
+			if piece != null and piece.has_method("set_projector"):
+				piece.set_projector(_project_ground)
 	_node("MapLayer").set_frame(_frame, mission, lf, _world_scale, _camera)
 	_node("ObjectiveMarkers").set_frame(_frame, mission, lf, _world_scale, _camera)
-	for n in ["FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
+	if ground:
+		_node("FogLayer").set_frame(_frame, mission, lf)
+	else:
+		_node("FogLayer").set_frame(_frame, lf, _world_scale, _camera)
+	for n in ["LayerView", "UnitSquads", "UnitVisuals"]:
 		_node(n).set_frame(_frame, lf, _world_scale, _camera)
 	for n in ["StructuresLayer", "Shots", "Deaths", "Abilities", "Ambient"]:
 		var piece := _node(n)
 		if piece.has_method("set_frame"):
-			piece.set_frame(_frame, lf, _world_scale, _camera)
+			if ground and n == "Shots":
+				piece.set_frame(_frame, mission, lf)
+			else:
+				piece.set_frame(_frame, lf, _world_scale, _camera)
 	var reinforcements := _node("Reinforcements")
 	if reinforcements.has_method("set_frame"):
 		reinforcements.set_frame(_frame, lf)
