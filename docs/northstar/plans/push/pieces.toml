@@ -1503,7 +1503,7 @@ wave = 8
 owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "csrc/pipe/pipe_tactical.c", "csrc/pipe/pipe_dumps.c", "csrc/pipe/om_pipe.c", "autoload/c_bridge.gd", "docs/architecture.md", "csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
-depends_on = ["VG-CONTRACT-D", "K-c6"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
@@ -1594,3 +1594,22 @@ depends_on = ["HARNESS-laneplays"]
 status = "attached"  # landed 7bb1f5a2
 tests_pending = true
 size_estimate = "playthrough_check ignores tests/qa/desktop/plays; SHARES scripts/specfactory/merge_gate_support.py with HARNESS-laneplays (queued edit after it)"
+
+# K-c6 contract piece (Architect, 2026-10-09): terrain_dump carries layer_floors_wu and flyer_types.
+[[piece]]
+id = "K-c6"
+manager = "Architect"
+owns = [
+    "csrc/pipe/pipe_dumps.c",  # handle_terrain_dump lines only; SHARED with VG-CONTRACT
+    "csrc/pipe/om_pipe.c",  # g_roster_types (+2 lines) only; SHARED with VG-CONTRACT
+    "csrc/pipe/pipe_internal.h",  # g_roster_types extern (+1 line) only; SHARED with VG-CONTRACT
+    "autoload/bridge/dump_decode.gd",  # terrain_from_frame only; SHARED with VG-CONTRACT
+    "tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd",
+    "docs/architecture.md",  # terrain_dump bullet and dump lines only; SHARED with VG-CONTRACT
+]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"
