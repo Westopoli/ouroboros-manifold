@@ -14,6 +14,11 @@ var _visible := {}
 var _selection: Array = []
 var _groups := {}
 var _last_digit := -1
+var _readout := Label.new()
+
+
+func _ready() -> void:
+	add_child(_readout)
 
 
 func set_frame(frame: Dictionary) -> void:
@@ -34,7 +39,20 @@ func set_frame(frame: Dictionary) -> void:
 func set_selection(ids: Array) -> void:
 	_selection = ids.duplicate()
 	_last_digit = -1
+	_show_summary()
 	selection_changed.emit(_selection)
+
+
+# A19: the summary as a text readout, one "type xN" line per selected type, stacked upward from the selection count line.
+func _show_summary() -> void:
+	var names := {}
+	for n in EraConfig.TYPE_IDS:
+		names[EraConfig.TYPE_IDS[n]] = n
+	var lines: PackedStringArray = []
+	for row in summary():
+		lines.append("%s x%d" % [names.get(int(row["type"]), "unit"), int(row["count"])])
+	_readout.text = "\n".join(lines)
+	_readout.position = Vector2(20.0, 1015.0 - 24.0 * lines.size())
 
 
 func summary() -> Array:
