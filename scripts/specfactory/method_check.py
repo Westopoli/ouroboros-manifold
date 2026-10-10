@@ -14,6 +14,9 @@ AGENT_TOOLS = ("Agent", "Task")
 GIT_MUTATE = re.compile(r"\bgit\s+(?:add|commit|push|checkout|switch|merge|stash|reset|rm|mv)\b")
 REDIRECT = re.compile(r"(?:>>?|\btee\b(?:\s+-\w+)*)\s*[\"']?[^\s\"'|;&<>]*\.%s(?![\w.])" % CODE_EXT)
 MAIN_PUSH = re.compile(r"\bgit\s+push\b[^;&|\n]*(?:\s|:)main\b")
+HEREDOC = re.compile(r"(?<!<)<<-?\s*([\"']?)(\w+)\1")
+SEGMENT_SPLIT = re.compile(r"&&|\|\||;|\||\n")
+READERS = ("cat", "sed", "head", "tail", "grep", "ls", "wc", "echo", "git", "stat", "du", "find", "awk", "diff", "python3")
 
 # id, roles, kind, rule line
 CHECKS = [
@@ -49,6 +52,20 @@ NEXT = ("METHOD next: quote every DRIFT line to Westley in your first message af
 
 def under(path, base):
     return path == base or path.startswith(base + os.sep)
+
+
+def segments(s):
+    kept, end = [], None
+    for line in s.split("\n"):
+        if end is not None:
+            if line.strip() == end:
+                end = None
+            continue
+        kept.append(line)
+        m = HEREDOC.search(line)
+        if m:
+            end = m.group(2)
+    return [(seg, (seg.split() or [""])[0]) for seg in SEGMENT_SPLIT.split("\n".join(kept))]
 
 
 def resolve(path, cwd):
@@ -117,9 +134,11 @@ def matcher(cid, role, live):
         if cid == "wakeups":
             return n == "ScheduleWakeup"
         if cid == "polling":
-            return n == "Monitor" or (s is not None and (re.search(r"\bsleep\b", s) or "gate.lock" in s))
+            return n == "Monitor" or (s is not None and any(
+                w in ("sleep", "flock") or ("gate.lock" in g and w not in READERS) for g, w in segments(s)))
         if cid == "gate_runs":
-            return s is not None and ("merge_gate.sh" in s or "pre_gate.sh" in s)
+            return s is not None and any(
+                ("merge_gate.sh" in g or "pre_gate.sh" in g) and w not in READERS for g, w in segments(s))
         if cid == "spawn_model":
             return n in AGENT_TOOLS and not i.get("model")
         if cid == "fable_spawns":
@@ -132,11 +151,11 @@ def matcher(cid, role, live):
         if cid == "live_tree":
             if n in EDIT_TOOLS:
                 return bool(fp) and under_live(fp, cwd)
-            return bool(s) and bool(GIT_MUTATE.search(s)) and "om-push" not in s and under_live(cwd or "", "")
+            return bool(s) and any(GIT_MUTATE.search(g) for g, w in segments(s)) and "om-push" not in s and under_live(cwd or "", "")
         if cid == "code_edits":
             if n in EDIT_TOOLS:
                 return bool(fp) and re.search(r"\.%s$" % CODE_EXT, str(fp)) is not None
-            return bool(s) and REDIRECT.search(s) is not None
+            return bool(s) and any(REDIRECT.search(g) for g, w in segments(s))
         if cid == "repo_edits":
             return n in EDIT_TOOLS and bool(fp) and under_repo(fp, cwd)
         if cid == "main_push":
@@ -147,8 +166,8 @@ def matcher(cid, role, live):
             if n == "Read":
                 p = resolve(i.get("file_path") or "", cwd)
                 return bool(i.get("file_path")) and under(p, live) and not under(p, os.path.join(live, ".claude"))
-            return bool(s) and re.match(r"\s*(?:cat|sed|head|tail|grep)\b", s) is not None and any(
-                under_live(t.strip("\"'"), cwd) for t in s.split() if "/" in t or t.startswith("~"))
+            return bool(s) and any(w in READERS and any(
+                under_live(t.strip("\"'"), cwd) for t in g.split() if "/" in t or t.startswith("~")) for g, w in segments(s))
         if cid == "workflows":
             return n == "Workflow"
         return False
