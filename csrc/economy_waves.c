@@ -40,6 +40,6 @@ void om_waves_on_structure_owner(om_world *w, uint32_t structure, int32_t old_ow
 
 void om_waves_on_mission_end(om_world *w) {
     /* liberty 2026-10-10: the spec gives no place for a battle-end wave; it is logged at the canvas centre. */
-    double c = OM_DENSITY_SIDE * 100.0;
+    double c = OM_DENSITY_SIDE * OM_TERRAIN_CELL_WU;
     om_waves_log(w, (uint32_t)om_tactical_tick(w), WAVE_BATTLE_END, c, c);
 }
