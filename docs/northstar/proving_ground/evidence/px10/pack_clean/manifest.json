@@ -48,6 +48,15 @@
     "3": { "faction_color_treatment": "emissive" }
   },
 
+  "buildings": [
+    { "id": "bld_a", "role": "production",    "footprint": [3, 3], "hp": 200 },
+    { "id": "bld_b", "role": "house",         "footprint": [2, 2], "hp": 100 },
+    { "id": "bld_c", "role": "worker-hut",    "footprint": [2, 2], "hp": 80 },
+    { "id": "bld_d", "role": "forward-works", "footprint": [2, 2], "hp": 120 }
+  ],
+
+  "doctrines": ["boom", "fortify", "press", "balanced"],
+
   "faction_colors": {
     "0": "#00ffff",
     "1": "#ff4444",

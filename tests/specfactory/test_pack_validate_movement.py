@@ -31,6 +31,15 @@ def _text(rel: str) -> str:
     return p.read_text()
 
 
+_FIXTURE_BUILDINGS = [
+    {"id": "bld_a", "role": "production", "footprint": [3, 3], "hp": 200},
+    {"id": "bld_b", "role": "house", "footprint": [2, 2], "hp": 100},
+    {"id": "bld_c", "role": "worker-hut", "footprint": [2, 2], "hp": 80},
+    {"id": "bld_d", "role": "forward-works", "footprint": [2, 2], "hp": 120},
+]
+# TD-VG-E-4: R-168-05 makes the building set part of every manifest.
+
+
 def _manifest(units: dict):
     return {
         "era_id": "synth_era", "era_display_name": "Synth Era",
@@ -38,6 +47,8 @@ def _manifest(units: dict):
         "era_order": 1, "units": units, "structures": {},
         "environment": {}, "materials": {"1": {"faction_color_treatment": "matte"}},
         "faction_colors": {"0": "#00ffff"},
+        "buildings": [dict(b) for b in _FIXTURE_BUILDINGS],
+        "doctrines": ["boom", "fortify", "press", "balanced"],
     }
 
 
