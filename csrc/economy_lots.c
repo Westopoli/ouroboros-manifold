@@ -1,5 +1,5 @@
 /* csrc/economy_lots.c -- VG lane E1: lot table getters, lot stages by density (E1c), placement entry (stub; E1e fills it).
- * lots_tick below is the E1c step; it is reached only once E1i wires it into the tactical tick (this piece owns no other file). */
+ * om_lots_step below is the E1c step; E1i wires it into the tactical tick. */
 #include "ouroboros_sim.h"
 #include "economy_internal.h"
 #include <stddef.h>
@@ -31,8 +31,7 @@ static int lot_cell(uint32_t k, int *cx, int *cy) {
     return 0;
 }
 
-__attribute__((unused)) /* wired by E1i */
-static void lots_tick(om_world *w, uint64_t tick) {
+void om_lots_step(om_world *w, uint64_t tick) {
     om_economy_state *e = &w->economy;
     uint32_t i;
     int cx, cy;
@@ -63,6 +62,5 @@ int om_lot_get_at(const om_world *w, uint32_t i, om_lot *out) {
     return 0;
 }
 
-void om_lots_init(om_world *w) { (void)w; }
-void om_lots_step(om_world *w, uint64_t tick) { (void)w; (void)tick; }
+void om_lots_init(om_world *w) { w->economy.n_lots = 0; }
 void om_lots_on_area_hit(om_world *w, double x, double y, double radius) { (void)w; (void)x; (void)y; (void)radius; }
