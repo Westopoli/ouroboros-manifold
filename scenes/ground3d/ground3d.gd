@@ -26,6 +26,7 @@ var _mesh: MeshInstance3D
 var _rig: Node3D
 var _units3d: Node3D
 var _slope_view: Node3D
+var _layers: Array = []
 var _units_drawn := 0
 
 
@@ -60,6 +61,14 @@ func _ready() -> void:
 	_viewport.add_child(_slope_view)
 
 
+# E1p-a hook: a layer node (SettlementLayer, later StrongpointLayer) lives inside the SubViewport after SlopesView and is
+# handed the terrain and the frame when it has set_terrain / set_frame. Units3D is added before SlopesView in _ready, so
+# "after SlopesView" also places it after Units3D (3D sibling order has no depth effect); test_vg_e_e1p.gd pins this.
+func add_layer(node: Node3D) -> void:
+	_viewport.add_child(node)
+	_layers.append(node)
+
+
 func container() -> Control:
 	return _container
 
@@ -80,6 +89,9 @@ func set_terrain(t: Dictionary) -> void:
 		_mesh = null
 	_vertices = 0
 	_slope_view.set_terrain(t)
+	for n in _layers:
+		if n.has_method("set_terrain"):
+			n.set_terrain(t)
 	if t.is_empty():
 		_rig.set_terrain({})
 		return
@@ -92,6 +104,9 @@ func set_terrain(t: Dictionary) -> void:
 func set_frame(frame: Dictionary, mission: Dictionary) -> void:
 	_frame = frame
 	_mission = mission
+	for n in _layers:
+		if n.has_method("set_frame"):
+			n.set_frame(frame)
 	if _terrain.is_empty():
 		return
 	var local := int(frame.get("player_faction", 0))
