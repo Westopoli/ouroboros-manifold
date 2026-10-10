@@ -404,7 +404,7 @@ New C getters (`csrc/ouroboros_sim.h`, `docs/northstar/spec_factory/signatures.t
 - `uint32_t om_wave_get_since(const om_world *w, uint32_t tick, om_wave *out, uint32_t cap)`: the wave events (R-193-04) whose `tick` is `>= tick`, oldest first; writes at most `cap` rows to `out` (`out` may be null to only count) and returns the number that match. `om_wave` is `{uint32_t tick; int32_t kind; double x, y;}`; `kind` 0 shipment arrived, 1 expansion founded, 2 season turned, 3 capture, 4 battle end; `x`, `y` wu (0.0 when the wave has no place).
 - `int om_economy_place(om_world *w, int32_t building, double x, double y)`: the player's placement (R-168-01, R-193-03); returns 0 accepted, nonzero refused. The K-e stub returns 0; E1e adds the refusals (unwalkable or occupied cells).
 
-Saved state at format 8 (all hashed in `checksum_full.c`, new section): the lot table, the density grid, the strongpoint table, the doctrine, the wave log. A fresh world saves them empty (no lots, no strongpoints, no waves, doctrine 3).
+Saved state at format 8 (all hashed in `checksum_full.c`): the lot table, the density grid, the strongpoint table, the doctrine, the wave log. A fresh world saves them empty (no lots, no strongpoints, no waves, doctrine 3). The economy words (lots, density grid, strongpoints, doctrine, wave log) hash into the factions section of the checksum; `OM_NET_SECTION_COUNT` stays 9 (K-e, liberty 2026-10-09).
 
 **`lots_dump`** (verb, once per mission after `mission_begin`, the `terrain_dump` pattern) answers `{"type":"lots","lots":[[id,x,y,stage,building,owner],...]}` with the `om_lot` fields in that order, ascending `id`; an empty list when there are none; `error` `"no world"` with no world.
 
