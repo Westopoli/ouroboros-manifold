@@ -1512,15 +1512,28 @@ status = "attached"  # landed ec4436da
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
 
+# K-e4 (lane E1 part b, 2026-10-10): bridge send_place, place_result, strongpoints().
+[[piece]]
+id = "VG-CONTRACT-E4"
+manager = "M0"
+wave = 8
+owns = ["autoload/c_bridge.gd", "tests/test_c_bridge_vg_e.gd"]
+owns_glob = []
+acceptance = ["tests/test_c_bridge_vg_e.gd"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "K-e4: send_place, place_result, strongpoints()"
+
 # E1i touches csrc/mission.c and csrc/unit.c: wiring lines only; shared with the attached owners.
 [[piece]]
 id = "VG-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py"]
+owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "scenes/tactical_c/tactical_view.gd", "scenes/ground3d/ground3d.gd"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest", "VG-C6b", "VG-C-wire", "VG-CONTRACT-E4"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
