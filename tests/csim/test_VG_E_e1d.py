@@ -92,10 +92,10 @@ def mission(lib, world_factory, seed=7):
 
 
 def ticks(lib, w, n):
-    t = 0
-    for _ in range(n):
-        t = lib.om_tactical_tick(w)
-    return t
+    """TD-VG-E-11: om_tactical_tick is a getter; advance the clock with om_tactical_tick_to (as e1h _advance, TD-VG-E-7)."""
+    lib.om_tactical_tick.argtypes, lib.om_tactical_tick.restype = [W], ctypes.c_uint64
+    lib.om_tactical_tick_to.argtypes, lib.om_tactical_tick_to.restype = [W, ctypes.c_uint64], ctypes.c_uint64
+    return lib.om_tactical_tick_to(w, lib.om_tactical_tick(w) + n)
 
 
 def with_structure(lib, w, slot=5, x=1234.0, y=2345.0):
@@ -248,8 +248,14 @@ def test_rebuild_waits_ten_seconds_then_rises(lib, world_factory):
     ruined_at = lib.om_tactical_tick(w)
     ticks(lib, w, REBUILD_DELAY - 5)
     assert stage_of(lib, w, lid) == 0, f"lot rebuilt before 10 s ({lib.om_tactical_tick(w) - ruined_at} ticks)"
-    ticks(lib, w, 5 + RISE_WINDOW)
-    assert stage_of(lib, w, lid) >= 1, "lot still rubble after 10 s plus the rise window"
+    # TD-VG-E-11: the hit() units stay and keep fighting, so a later hit can ruin the risen lot again; watch for the rise tick by tick.
+    rose = False
+    for _ in range(5 + RISE_WINDOW):
+        ticks(lib, w, 1)
+        if stage_of(lib, w, lid) >= 1:
+            rose = True
+            break
+    assert rose, "lot still rubble after 10 s plus the rise window"
 
 
 def test_undamaged_lots_are_not_set_back(lib, world_factory):
