@@ -59,16 +59,16 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 ## 1. Now building
 
-Updated 2026-10-08. Branches only; main gets a piece only through the merge gate.
+Updated 2026-10-10. Branches only; main gets a piece only through the merge gate.
 
 | Lane | Branch | State | Next |
 |---|---|---|---|
 | **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | IN FLIGHT: stage 3, waves 1 and 2 landed, wave 2c (K-a pipe/bridge, split) running; see the programme file's stage table | each lane's gate plus the `look` stage; stories `Seen` by Westley | marked DONE in this row and in the plan header when the last lane lands |
 | Visible game lane A: battle screen (`plans/2026-10-07-visible-game-programme.md`) | landed (4d4babf8) | A1 to A21 landed with TD-VG-A-9 and TD-VG-A-10; all twelve lane A stories pass in both eras in the gate's lane_plays stage | the S-001 group acted out for Westley; owner: Architect chat |
-| Visible game lane B: galaxy (look approved 2026-10-07) | push/vg-b20-3 (B20), push/vg-b-reviews-2 | landed through B19 (vg-b-land-11, vg-b-look-land-2); B20 stopped on a pixel threshold for Westley (push/vg-b20-3) | Westley decides the threshold; S-106 to S-108 plays all no, re-run after B20 |
-| Visible game lane C: ground 3D | push/vg-c-reviews-2 | C1 to C11 landed (5026db37); VG-C-wire landed (8e6ca39a): Units3D and SlopesView attached, S-236 and S-001 plays pass | C6b waits on contract piece K-c6 (terrain layer floors and flyer types); S-004 is a spec gap, S-132 a finding (Q-132-01) |
-| Visible game lane D: space landscape | push/vg-d-land-2 | K-d contract landed; D2 to D5 built on push/vg-d-land-2 and held on the rubble cover discs decision | Westley decides the cover discs; E-17 stories, S-007 then |
-| Visible game lane E: settlement and economy | none yet | not started | after K-e; E1 first, E2 waits on Westley |
+| Visible game lane B: galaxy (look approved 2026-10-07) | push/vg-b-reviews-5 | landing 12 on main 5333e1a0: B20 names from the chronicle table, TD-VG-B-9/10/11, B21 one label per faction; the three B plays pass | Westley reads the reviews (verdicts no/no/unclear, two shots sent to him) |
+| Visible game lane C: ground 3D | push/vg-c-reviews-2 | C1 to C11 landed (5026db37); VG-C-wire landed (8e6ca39a); K-c6 landed 78185a63, C6b landed bcad1954 (3D bodies on layer floors, flyer shadows) | S-004 is a spec gap, S-132 a finding (Q-132-03) |
+| Visible game lane D: space landscape | none | K-d landed; landing 4 on main 1fdeb1c0: D6 rubble as blocked cells, the pipe-field fix, D8 pockets at the home anchors with the objective centred (Westley 2026-10-09, R-246-07); rulings TD-VG-D-6 to D-11 | E-17 stories, S-007 plays |
+| Visible game lane E: settlement and economy | wf_4b9a1642 (part a) | K-e landed ec4436da (ABI 6, save 8, the economy contract); part a Workflow running since 2026-10-09 23:49 (E1b to E1i tests-first) | S-235 beats HELD on Q-235-01; E2 waits on Westley |
 | Visible game lane F: Steam phase B | landed on main | phase B landed on main 1398ba16 (F5 match mode) | story plays for E-19; lobby and depot script as the programme file lists |
 | Programme guard pieces: GDScript reach lint and lane story plays in the gate (from the 2026-10-09 drift check) | the gate | landed: HARNESS-gdreach, HARNESS-laneplays (fc986411), HARNESS-playsplit (7bb1f5a2), G-project daemon verb (f37a926f) | the gate runs the reach lint and each lane's story plays; DONE |
 | Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | landed on main 008de465 (2026-10-07) after three sim defects found by the lab's ground scene were fixed with tests | gate clean | done |

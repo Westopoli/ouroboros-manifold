@@ -1414,7 +1414,7 @@ owns = [
 owns_glob = ["tests/qa/desktop/plays/K/**"]
 acceptance = ["tests/csim/test_VG_contract.py", "tests/transport/test_pipe_vg_contract.py", "tests/test_c_bridge_vg.gd"]
 depends_on = ["B10", "B10b", "B10c", "PP-unit", "B14", "A117-contract", "PP-capture", "B9", "B11", "PP-fog", "B12", "B12b", "PP-move", "B15m", "PP-mapgen", "TERRAIN-1", "core", "A2-contract", "A94-contract", "PP-contract", "SPEEDCAP-contract", "DOCS-arch", "A94-harness", "C2", "T2g", "C3", "C4", "C5", "C8", "NET-backend", "G-qadesktoptests"]
-status = { state = "in_flight" }
+status = "attached"  # landed fa243f75 (merge of push/vg-ka2-land-2, K-a landed)
 tests_pending = false
 size_estimate = "K0: eight getters stubbed, ABI 4 to 5, field table in architecture.md; K-a/K-f/K-h tests red until their pieces land"
 
