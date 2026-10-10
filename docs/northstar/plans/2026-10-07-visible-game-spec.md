@@ -1,4 +1,4 @@
-# The visible game programme: workflow spec (rev 6, after the lane E pre-flight 2026-10-09)
+# The visible game programme: workflow spec (rev 7, after the lane E pre-flight 2026-10-09; D8 spawn placement (Westley 2026-10-09))
 
 Programme plan: `2026-10-07-visible-game-programme.md`. Rev 1 from the ten pre-flight scouts (`preflight_2026-10-07/`); rev 2 folded audit round 1 (Opus 15 issues; parallelism cuts); rev 3 folds audit round 2 (Opus, 16 issues, "approve with the listed changes"; the three cited tests and the reach-lint exemption re-checked on main). Audit reports: `audits_2026-10-07/`. Rev 3 went to round 3 (Opus, 10 must-change items, all text; verdict "approve with the listed changes"); rev 4 applies them and is the launch text, pending Westley's go line. Rev 5 adds the attach point rule to section 1 (from the 2026-10-09 drift check). Rev 6: lane E pre-flight 2026-10-09 (R-168-05 for the era building set; K-e bumps ABI and save versions with the three pin tests; place is a player command; E1j is the pins and ledger row; S-235 held; pipe split noted; 22 pieces).
 
@@ -94,6 +94,8 @@ Seen-reachable: S-236, S-001, S-004, S-207, S-010, S-132 walkers. C2 `ground_mes
 ### Lane D: space landscape (`VG-D`, 9 pieces; HELD until Q-STAGE3-03, Q-166-02, R-188-05, S-246, the D8 band and the kit questions are answered)
 
 As rev 2: `space_noise.c`, `space_plates.c`, `space_raster.c`, mask writer, mission wiring (after E1i), K-d, `scenes/space_field/space_layer.gd` (2D, focus layer, polygons), the statistical tests. Launches on the answers.
+
+- **D8** spawn placement: each faction's spawn slots in the pocket carved at its own anchor (CLEAR_RADIUS_WU 600 pool, enlarged until it holds the army's slot count with no index wrap), the objective pocket separate, pockets connected by the reachability carve; retires the D5-3 single-pocket placement; tests `tests/csim/test_VG_D_d8.py`; owner VG-D8 (`csrc/space_field.c`, `csrc/mission.c` spawn lines).
 
 ### Lane E1: settlement and economy, buildable half (`VG-E1`, 22 pieces, two workflows; K-e first)
 

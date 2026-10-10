@@ -106,3 +106,14 @@ func unit_node(id: int) -> Node3D:
 
 func shadow_of(id: int) -> Node3D:
 	return _shadows.get(id)
+
+
+func heights() -> Dictionary:
+	var out := {}
+	for id in _nodes:
+		out[str(id)] = _nodes[id].position.y
+	return out
+
+
+func shadow_ids() -> Array:
+	return _shadows.keys()

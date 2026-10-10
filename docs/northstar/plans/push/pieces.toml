@@ -1471,7 +1471,11 @@ size_estimate = "lane C 3D ground, 10 pieces in two workflows (vg-wave4-laneC.js
 id = "VG-D"
 manager = "M0"
 wave = 8
-owns = ["csrc/space_noise.c", "csrc/space_plates.c", "csrc/space_raster.c", "csrc/space_field.c"]
+# D5 hands csrc/mission.c to VG-D for this landing (Architect ruling 2026-10-09).
+owns = [
+    "csrc/space_noise.c", "csrc/space_plates.c", "csrc/space_raster.c", "csrc/space_field.c", "tests/csim/test_core_objective_accessors.py",
+    "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_d7.py", "tests/transport/test_pipe_vg_identity.py",  # TD-VG-D-11 (identity on the ground era); TD-VG-D-7 re-pins and the pipe-field test; shared with the transport test owners
+]
 owns_glob = ["scenes/space_field/**", "tests/test_vg_d_*.gd", "tests/csim/test_VG_D_*.py", "tests/qa/desktop/plays/D/**"]
 acceptance = []
 depends_on = ["VG-CONTRACT", "VG-C", "VG-CONTRACT-D"]
@@ -1486,7 +1490,7 @@ size_estimate = "lane D space landscape, 9 pieces (vg-wave6-laneF-D.js lane D)"
 id = "VG-CONTRACT-D"
 manager = "M0"
 wave = 8
-owns = ["csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/pipe/om_pipe.c", "csrc/space_field.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "autoload/c_bridge.gd", "tests/csim/conftest.py", "tests/csim/test_VG_D_contract.py", "tests/test_c_bridge_vg_d.gd", "tests/transport/test_pipe_vg_d.py"]
+owns = ["csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/pipe/om_pipe.c", "csrc/space_field.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "autoload/c_bridge.gd", "tests/csim/conftest.py", "tests/csim/test_VG_D_contract.py", "csrc/space_internal.h", "tests/test_c_bridge_vg_d.gd", "tests/transport/test_pipe_vg_d.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_D_contract.py", "tests/transport/test_pipe_vg_d.py", "tests/test_c_bridge_vg_d.gd"]
 depends_on = ["VG-CONTRACT"]
@@ -1503,7 +1507,7 @@ wave = 8
 owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/checksum_full.c", "csrc/save.c", "csrc/pipe/pipe_tactical.c", "csrc/pipe/pipe_dumps.c", "csrc/pipe/om_pipe.c", "autoload/c_bridge.gd", "docs/architecture.md", "csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
-depends_on = ["VG-CONTRACT-D", "K-c6"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6", "VG-D-pipefix"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
@@ -1516,7 +1520,7 @@ wave = 8
 owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "csrc/mission.c", "csrc/unit.c"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
@@ -1536,6 +1540,43 @@ status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
 
+# Visible-game lane D, piece D6 (Westley 2026-10-09, option A): remove the rubble cover discs (R-246-01).
+# csrc/space_field.c is shared with VG-D and VG-CONTRACT-D for this change only.
+[[piece]]
+id = "VG-D6"
+manager = "Architect"
+owns = ["csrc/space_field.c", "tests/csim/test_VG_D_d6.py"]
+acceptance = []
+depends_on = ["VG-D"]
+status = { state = "in_flight" }
+tests_pending = true
+
+# Visible-game lane D, piece D7 (Architect 2026-10-09): handle_mission_start regenerates the space field after
+# om_mission_setup (units spawn blocked, R-097-09 push-out moves every unit on tick 1).
+# csrc/pipe/om_pipe.c handle_mission_start lines are shared with VG-CONTRACT-D for this change only.
+[[piece]]
+id = "VG-D-pipefix"
+manager = "Architect"
+owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_vg_d7.py", "tests/csim/test_VG_D_d7.py"]
+acceptance = []
+depends_on = ["VG-D6", "K-c6"]
+status = { state = "in_flight" }
+tests_pending = true
+
+# Visible-game lane D, piece D8 (Westley 2026-10-09: armies spawn at their own home base): each faction's spawn slots in
+# the pocket carved at its own anchor. csrc/space_field.c spawn-placement lines and csrc/mission.c spawn lines
+# (om_mission_spawn_force, om_mission_instantiate_map) are shared with VG-D/VG-D6 and the mission.c owner for this change only.
+[[piece]]
+id = "VG-D8"
+manager = "Architect"
+owns = [
+    "csrc/space_field.c", "csrc/mission.c", "tests/csim/test_VG_D_d8.py",
+    "docs/bible/epics/E-17-map-generation.md", "docs/northstar/plans/2026-10-07-visible-game-spec.md",  # R-246-07 and the D8 spec row (Architect 2026-10-09); shared with the programme docs
+]
+acceptance = []
+depends_on = ["VG-D6"]
+status = { state = "in_flight" }
+tests_pending = true
 # VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
 [[piece]]
 id = "VG-C-wire"
@@ -1601,13 +1642,27 @@ id = "K-c6"
 manager = "Architect"
 owns = [
     "csrc/pipe/pipe_dumps.c",  # handle_terrain_dump lines only; SHARED with VG-CONTRACT
+    "csrc/pipe/om_pipe.c",  # g_roster_types (+2 lines) only; SHARED with VG-CONTRACT
+    "csrc/pipe/pipe_internal.h",  # g_roster_types extern (+1 line) only; SHARED with VG-CONTRACT
     "autoload/bridge/dump_decode.gd",  # terrain_from_frame only; SHARED with VG-CONTRACT
     "tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd",
     "docs/architecture.md",  # terrain_dump bullet and dump lines only; SHARED with VG-CONTRACT
 ]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
-depends_on = ["VG-CONTRACT"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
 status = { state = "in_flight" }
 tests_pending = false
 size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"
+# VG-C6b (Architect 2026-10-09): feed Units3D the layer floors and flyer types (set_frame passes [] today). Shared file with VG-C-wire.
+[[piece]]
+id = "VG-C6b"
+status = "in_flight"
+manager = "Architect"
+depends_on = ["VG-C-wire", "VG-A"]
+owns = [
+    "scenes/ground3d/ground3d.gd",  # shared with VG-C-wire: only the set_units feed lines and the units3d_heights / units3d_shadows qa keys; needs a contract piece for the floors and flyer types data first
+    "scenes/ground3d/ground_units.gd",  # shared with VG-C: heights() and shadow_ids() only
+    "scenes/tactical_c/tactical_view.gd",  # shared with VG-A: only the Deaths.set_ground feed lines near set_terrain; depends_on VG-A and VG-C-wire
+    "tests/test_vg_c6b_ground_units_layers.gd",
+]

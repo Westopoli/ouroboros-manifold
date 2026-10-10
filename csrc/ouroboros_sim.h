@@ -978,6 +978,11 @@ typedef enum {
     OM_BUG_SAVE_SKIPS_RNG_STATE = 1600, /* save/load skips writing or restoring the PCG32 stream (test_E16_S111_saving.py's own control) */
     OM_BUG_SAVE_SKIPS_TICK = 1601 /* om_load_state_read restores everything but the tick counter, so a loaded world resumes stepping from tick 0 */
 } om_bug_save;
+
+/* VG K-d2 (lane D): debug-inject ids for the space field, passed to om_debug_inject before om_space_field_generate_nodes. */
+typedef enum {
+    OM_BUG_SPACE_NO_CARVE = 1700 /* space no-carve plant: the fill-and-carve join step is skipped (mockup QaPlants "space-no-carve"); the carve step reads w->inject */
+} om_bug_space;
 #endif
 
 /* A53 (R-069-07): one clickable name inside a chronicle entry's text. start and
@@ -1087,7 +1092,14 @@ typedef struct om_wave {
     int32_t kind;
     double x, y;
 } om_wave;
+/* VG-D8 R-246-07: the most clearing nodes om_space_field_generate_nodes takes (two faction anchors, the objective, extras). */
+#define OM_SPACE_FIELD_MAX_NODES 8
+#define OM_SPACE_FIELD_MIN_NODES 3 /* the two faction anchors and the objective; fewer takes the old diagonal nodes */
 
+/* ---- generated from signatures.toml: strongpoint.c ---- */
+uint32_t om_strongpoint_count(const om_world *w);
+int om_strongpoint_get_at(const om_world *w, uint32_t i, om_strongpoint *out);
+/* ---- end generated: strongpoint.c ---- */
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
     uint64_t tick;
@@ -1839,7 +1851,7 @@ void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
 /* ---- end generated: save.c ---- */
 
 /* ---- generated from signatures.toml: space_field.c ---- */
-int om_space_field_generate(om_world *w, uint32_t seed, double canvas_w, double canvas_h);
+int om_space_field_generate_nodes(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density, const double *node_xy, const uint32_t *node_slots, uint32_t n_nodes);
 int om_space_field_present(const om_world *w);
 uint32_t om_space_field_get_mask(const om_world *w, uint32_t layer, uint8_t *out, uint32_t cap);
 void om_space_field_clear(om_world *w);
@@ -1847,10 +1859,10 @@ uint32_t om_space_field_poly_count(const om_world *w);
 uint32_t om_space_field_poly_get(const om_world *w, uint32_t i, uint32_t *layer, uint32_t *kind, double *xy, uint32_t cap_pts);
 /* ---- end generated: space_field.c ---- */
 
-/* ---- generated from signatures.toml: strongpoint.c ---- */
-uint32_t om_strongpoint_count(const om_world *w);
-int om_strongpoint_get_at(const om_world *w, uint32_t i, om_strongpoint *out);
-/* ---- end generated: strongpoint.c ---- */
+/* ---- generated from signatures.toml: space_noise.c ---- */
+uint32_t om_space_hash32(int32_t ix, int32_t iy, int32_t iz, uint32_t seed);
+uint32_t om_space_noise_layer(uint32_t layer_seed, double canvas, uint32_t k, int independent, double *out, uint32_t cap);
+/* ---- end generated: space_noise.c ---- */
 
 /* ---- generated from signatures.toml: tactical_mapgen.c ---- */
 void om_fairness_evaluate(om_world *w, om_fairness_score *byref);

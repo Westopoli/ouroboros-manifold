@@ -56,9 +56,19 @@ def test_R_079_01_objective_radius_is_the_placed_cover_disc(lib, world_factory):
     w = world_factory(n_regions=1)
     _setup(lib, w)
     assert lib.om_map_cover_count(w) >= 1
-    x, y, r, h = (ctypes.c_double() for _ in range(4))
-    assert lib.om_map_cover_at(w, 0, ctypes.byref(x), ctypes.byref(y), ctypes.byref(r), ctypes.byref(h)) == 1
-    assert lib.om_objective_get_radius(w, 0) == r.value
+    # TD-VG-D-5: in a space era cover index 0 is a rubble disc; find the cover at the objective's position.
+    class OMVec2(ctypes.Structure):
+        _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+    ctr = OMVec2()
+    assert lib.om_objective_get_center(w, 0, ctypes.byref(ctr)) == 1
+    radii = []
+    for i in range(lib.om_map_cover_count(w)):
+        x, y, r, h = (ctypes.c_double() for _ in range(4))
+        assert lib.om_map_cover_at(w, i, ctypes.byref(x), ctypes.byref(y), ctypes.byref(r), ctypes.byref(h)) == 1
+        if x.value == ctr.x and y.value == ctr.y:
+            radii.append(r.value)
+    assert radii, "no cover disc at the objective's position"
+    assert lib.om_objective_get_radius(w, 0) in radii
 
 
 def test_R_079_01_objective_radius_out_of_range_is_zero(lib, world_factory):

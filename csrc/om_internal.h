@@ -100,8 +100,13 @@ typedef struct om_economy_state {
 #define OM_SPACE_FIELD_CELLS (OM_SPACE_FIELD_SIDE * OM_SPACE_FIELD_SIDE)
 #define OM_SPACE_FIELD_CELL_WU 100.0
 #define OM_SPACE_FIELD_CANVAS_WU 24000.0
-#define OM_SPACE_FIELD_MAX_POLYS 64 /* provisional: the stub body writes 20; lane D sets the real cap */
-#define OM_SPACE_FIELD_MAX_PTS 8 /* provisional, as above */
+#define OM_SPACE_FIELD_DENSITY_DEFAULT 35.0 /* field_map_space.gd default density; the era manifest may override later (lane D leftover) */
+/* Caps (K-d2). POLYS: tests/csim/test_VG_D_d2.py D2_POLYS_PER_LAYER hi 530 x 5 layers = 2650 (mockup field_map_space.gd
+ * plate_polygon_count 417 to 496 per layer = 2480), rounded up to a power of two. PTS: D2_MAX_PTS 16 in the same file (the
+ * mockup's rubble cells are 8-sided, _cell_polygon(..., 8, ...); plates are a square cut by bisectors); the D4 test's
+ * poly_get buffer (64) and the pipe's PIPE_SPACE_FIELD_POLY_PTS (64) are larger and unaffected. */
+#define OM_SPACE_FIELD_MAX_POLYS 4096
+#define OM_SPACE_FIELD_MAX_PTS 16
 typedef struct om_space_field_poly {
     uint8_t layer, kind, n_pts;
     double xy[2 * OM_SPACE_FIELD_MAX_PTS];
@@ -109,6 +114,9 @@ typedef struct om_space_field_poly {
 typedef struct om_space_field_state {
     uint8_t present;
     uint32_t seed;
+    uint32_t n_nodes; /* VG-D8: the clearing nodes the held field was generated with, so om_space_field_generate_nodes on the same seed repeats it */
+    double node_xy[2 * OM_SPACE_FIELD_MAX_NODES];
+    uint32_t node_slots[OM_SPACE_FIELD_MAX_NODES];
     uint8_t mask[OM_SPACE_FIELD_LAYERS][OM_SPACE_FIELD_CELLS / 8]; /* bit (i & 7) of byte (i >> 3), i = cy * side + cx, 1 blocked */
     uint32_t n_polys;
     om_space_field_poly polys[OM_SPACE_FIELD_MAX_POLYS];
