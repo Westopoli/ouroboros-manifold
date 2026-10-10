@@ -1521,7 +1521,7 @@ owns = ["autoload/c_bridge.gd", "tests/test_c_bridge_vg_e.gd"]
 owns_glob = []
 acceptance = ["tests/test_c_bridge_vg_e.gd"]
 depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT"]
-status = { state = "in_flight" }
+status = { state = "attached", attach_sha = "c9c7545f" }
 tests_pending = false
 size_estimate = "K-e4: send_place, place_result, strongpoints()"
 
