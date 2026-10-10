@@ -181,4 +181,80 @@ func _run_tests() -> void:
 	# not asked again on tactical frames
 	_assert(f.load_tactical_live(1, 10, []), "control: load_tactical_live through the stub failed")
 	_assert(f.count("lots_dump") == 1, "K-e: lots_dump re-requested on tactical frames (%d)" % f.count("lots_dump"))
+
+	_run_place_tests(gs)
 	_completed = true
+
+
+# K-e4 (docs/architecture.md, VG-CONTRACT-E4; spec lane E1 part b piece K-e4): send_place, place_result, strongpoints().
+# Frames are fed through the queue and pump(), the path the reader thread uses; sends are captured by the stub's send_command.
+func _run_place_tests(gs: GDScript) -> void:
+	var f = gs.new()
+	var seen: Array = []
+	var has_sig: bool = f.has_signal("place_result")
+	_assert(has_sig, "K-e4: c_bridge.gd has no signal place_result")
+	_assert(f.has_method("send_place"), "K-e4: c_bridge.gd has no send_place(x, y, building)")
+	_assert(f.has_method("strongpoints"), "K-e4: c_bridge.gd has no strongpoints()")
+	if has_sig:
+		f.connect("place_result", func(a, x, y, bl): seen.append([a, x, y, bl]))
+
+	# strongpoints(): [] before any frame, then ascending id from the reconstructed view
+	if f.has_method("strongpoints"):
+		_assert((f.strongpoints() as Array).is_empty(), "K-e4: strongpoints() is not [] before any frame")
+		f._reconstruct_tactical(_full_frame())
+		var sps: Array = f.strongpoints()
+		_assert(sps.size() == 2 and int(sps[0]["id"]) == 1 and int(sps[1]["id"]) == 2 and int(sps[0]["state"]) == 1,
+			"K-e4: strongpoints() is not the view's 2 strongpoints ascending by id: %s" % [sps])
+		f._reconstruct_tactical(_delta_frame())
+		_assert((f.strongpoints() as Array).size() == 2, "K-e4: strongpoints() lost its rows across a delta")
+	else:
+		_assert(false, "K-e4: strongpoints() positive control cannot run without the method")
+
+	# control: a move command still sends its frame and an ack for it emits no place_result
+	f.sent.clear()
+	_assert(f.send_unit_command({"kind": "move", "unit_ids": [1], "x": 10.0, "y": 20.0}), "control: send_unit_command(move) returned false")
+	_assert(f.sent.size() == 1 and String(f.sent[0].get("verb", "")) == "move", "control: the move frame was not sent: %s" % [f.sent])
+	f._queue.append({"type": "ack", "name": "command", "tick": 5})
+	f.pump()
+	_assert(seen.is_empty(), "K-e4: a move's ack emitted place_result: %s" % [seen])
+
+	if not f.has_method("send_place"):
+		_assert(false, "K-e4: the place checks cannot run without send_place")
+		return
+
+	# accepted: exact frame, true return, no result until the ack, then place_result(true, x, y, building)
+	f.sent.clear()
+	var ok: bool = f.send_place(1200.0, 800.0, 3)
+	_assert(ok, "K-e4: send_place returned false")
+	_assert(f.sent.size() == 1, "K-e4: send_place wrote %d frames, expected 1" % f.sent.size())
+	if f.sent.size() == 1:
+		var fr: Dictionary = f.sent[0]
+		_assert(String(fr.get("type", "")) == "cmd" and String(fr.get("name", "")) == "command" and String(fr.get("verb", "")) == "place"
+			and (fr.get("units", null) is Array) and (fr["units"] as Array).is_empty()
+			and float(fr.get("x", -1.0)) == 1200.0 and float(fr.get("y", -1.0)) == 800.0 and int(fr.get("building", -1)) == 3,
+			"K-e4: the place frame is not {cmd, command, verb place, units [], x 1200, y 800, building 3}: %s" % [fr])
+	f.pump()
+	_assert(seen.is_empty(), "K-e4: place_result emitted before any answer: %s" % [seen])
+	f._queue.append({"type": "ack", "name": "command", "tick": 6})
+	f.pump()
+	_assert(seen.size() == 1 and bool(seen[0][0]) == true and float(seen[0][1]) == 1200.0 and float(seen[0][2]) == 800.0 and int(seen[0][3]) == 3,
+		"K-e4: the ack did not emit place_result(true, 1200, 800, 3): %s" % [seen])
+	f._queue.append({"type": "ack", "name": "command", "tick": 7})
+	f.pump()
+	_assert(seen.size() == 1, "K-e4: a later ack re-emitted place_result (no place pending): %s" % [seen])
+
+	# refused: an error frame named command while pending
+	f.sent.clear()
+	seen.clear()
+	_assert(f.send_place(5.0, 6.0, 0), "K-e4: second send_place returned false")
+	f._queue.append({"type": "error", "name": "command", "reason": "command failed"})
+	f.pump()
+	_assert(seen.size() == 1 and bool(seen[0][0]) == false and float(seen[0][1]) == 5.0 and float(seen[0][2]) == 6.0 and int(seen[0][3]) == 0,
+		"K-e4: the error did not emit place_result(false, 5, 6, 0): %s" % [seen])
+	_assert(f.last_error() == "command failed", "K-e4: last_error() is not the refusal reason: '%s'" % f.last_error())
+
+	# control: an error for another verb with no place pending emits nothing
+	seen.clear()
+	f._queue.append({"type": "error", "name": "command", "reason": "command failed"})
+	f.pump()
+	_assert(seen.is_empty(), "K-e4: an error with no place pending emitted place_result: %s" % [seen])
