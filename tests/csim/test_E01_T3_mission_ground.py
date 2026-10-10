@@ -226,7 +226,10 @@ def test_structure_slots_are_on_walkable_ground(lib, world_factory, archetype):
         if p.x != 0.0 or p.y != 0.0:
             placed += 1
             assert lib.om_terrain_walkable_at(w, p.x, p.y) == 1, f"slot {slot} at {p.x},{p.y} is unwalkable"
-    assert placed > 0, "no structure placed; the scan proves nothing"
+    if lib.om_terrain_slope_count(w) > 0:  # TD-VG-E-5: R-218-01, no slopes means no strongpoints
+        assert placed > 0, "no structure placed; the scan proves nothing"
+    else:
+        assert placed == 0
 
 
 def test_flying_units_still_spawn_on_unwalkable_ground(lib, world_factory):
