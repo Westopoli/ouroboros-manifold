@@ -123,6 +123,20 @@ def _building_findings(manifest: dict) -> list[Finding]:
     return out
 
 
+# liberty 2026-10-10: E1g, R-179-01, the doctrine list as manifest data (four ids, no mix numbers).
+DOCTRINE_IDS = ("boom", "fortify", "press", "balanced")
+
+
+def _doctrine_findings(manifest: dict) -> list[Finding]:
+    d = manifest.get("doctrines")
+    if not isinstance(d, list):
+        return [Finding("FAIL", "MISSING_DOCTRINES", "manifest.json needs a `doctrines` list (R-179-01)")]
+    miss = [i for i in DOCTRINE_IDS if i not in d]
+    if miss:
+        return [Finding("FAIL", "BAD_DOCTRINES", f"doctrines list lacks {miss} (R-179-01)")]
+    return []
+
+
 def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS_FILE) -> list[Finding]:
     manifest_path = pack_dir / "manifest.json"
     if not manifest_path.is_file():
@@ -151,6 +165,7 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
     if "kind" in manifest and manifest["kind"] not in ERA_KINDS:
         findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", f"kind must be one of {ERA_KINDS} when present"))
 
+    findings.extend(_doctrine_findings(manifest))
     if not manifest.get("test_only"):
         findings.extend(_building_findings(manifest))
 

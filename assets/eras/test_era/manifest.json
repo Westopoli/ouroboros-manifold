@@ -6,6 +6,7 @@
   "era_tone": "placeholder: test fixture era with no real tone.",
   "era_order": 2,
   "kind": "space",
+  "doctrines": ["boom", "fortify", "press", "balanced"],
   "test_only": true,
 
   "units": {
