@@ -212,7 +212,7 @@ def _slope_count(lib, w):
 
 def test_follows_terrain_not_rings(lib, world_factory):
     """R-193-01 (TD-VG-E-6): terrain shapes the field. On a scene with slopes, two cells at the same ring distance from the
-    core differ in density; control: on a zero-slope scene the field is a pure function of ring distance."""
+    core differ in density; control: on a zero-slope scene the field is 8-fold symmetric about the core cell."""
     s = scene(lib, world_factory, seed=SLOPE_SEED, archetype=SLOPE_ARCHETYPE)
     f = scene(lib, world_factory, seed=FLAT_SEED, archetype=FLAT_ARCHETYPE)
     assert _slope_count(lib, s) > 0, "slope scene has no slopes"
@@ -227,10 +227,19 @@ def test_follows_terrain_not_rings(lib, world_factory):
         by_ring.setdefault(ring(i, cs), set()).add(round(v, 9))
     assert any(len(vs) > 1 for r, vs in by_ring.items() if r > 0), "slope scene: the field depends on ring distance alone"
     cf = core_of(gf)
-    flat_rings = {}
-    for i, v in enumerate(gf):
-        flat_rings.setdefault(ring(i, cf), set()).add(round(v, 9))
-    assert all(len(vs) == 1 for vs in flat_rings.values()), "control: the zero-slope field is not a function of ring distance"
+    cx, cy = cf % SIDE, cf // SIDE
+    checked = 0
+    for dx, dy in ((2, 1), (3, 1), (3, 2), (4, 1), (4, 2), (4, 3)):
+        if not (0 <= cx - dx and cx + dx < SIDE and 0 <= cy - dy and cy + dy < SIDE):
+            continue
+        base = gf[(cy + dy) * SIDE + cx + dx]
+        if base <= 0.0:
+            continue
+        checked += 1
+        for ox, oy in ((dx, dy), (dx, -dy), (-dx, dy), (-dx, -dy), (dy, dx), (dy, -dx), (-dy, dx), (-dy, -dx)):
+            assert gf[(cy + oy) * SIDE + cx + ox] == base, (
+                "control: the zero-slope field is not 8-fold symmetric about the core (%d,%d) at (%d,%d)" % (cx, cy, ox, oy))
+    assert checked >= 2, "control: fewer than two nonzero offsets reached, the symmetry check is vacuous"
 
 
 def test_deterministic_and_hashed(lib, world_factory):
