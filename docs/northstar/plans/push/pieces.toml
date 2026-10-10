@@ -1705,3 +1705,19 @@ owns = [
     "scenes/tactical_c/tactical_view.gd",  # shared with VG-A: only the Deaths.set_ground feed lines near set_terrain; depends_on VG-A and VG-C-wire
     "tests/test_vg_c6b_ground_units_layers.gd",
 ]
+
+# Method check at every compaction (Westley 2026-10-10): a SessionStart hook runs the chat's own
+# transcript against the method rev 2 rules and prints the counts and the rule list. Spec:
+# docs/northstar/plans/workflows_2026-10-07/method_check.md. A94-harness owns tests/specfactory/**
+# by glob; depends_on orders this row after it so the lint sees one owner at a time.
+[[piece]]
+id = "HARNESS-methodcheck"
+manager = "M0"
+wave = 9
+owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_check.py", ".claude/settings.json", "docs/northstar/plans/workflows_2026-10-07/method_check.md"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_check.py"]
+depends_on = ["A94-harness"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "method_check.py about 200 lines; one hook line; one spec page"

@@ -55,6 +55,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f \"$CLAUDE_PROJECT_DIR/scripts/specfactory/method_check.py\" && python3 \"$CLAUDE_PROJECT_DIR/scripts/specfactory/method_check.py\" || true"
+          }
+        ]
+      }
     ]
   }
 }
