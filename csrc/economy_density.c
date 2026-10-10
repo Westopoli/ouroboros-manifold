@@ -24,6 +24,7 @@
 #define OM_DENSITY_M_START 0.6     /* mockup M_START */
 #define OM_DENSITY_M_FULL_TICKS (300.0 * 20.0) /* mockup M_FULL_S 300 s at 20 Hz */
 #define OM_DENSITY_N (OM_DENSITY_SIDE * OM_DENSITY_SIDE)
+#define OM_DENSITY_Q16_ONE 65536.0 /* Q16 fixed-point scale, 2^16 */
 
 double om_density_at(const om_world *w, double x, double y) {
     if (!w || !w->economy.density_present) return 0.0;
@@ -37,7 +38,7 @@ static int core_cell(void) {
     return (OM_DENSITY_SIDE / 2) * OM_DENSITY_SIDE + OM_DENSITY_SIDE / 2;
 }
 
-static double q16(double v) { return (double)(int64_t)(v * 65536.0) / 65536.0; }
+static double q16(double v) { return (double)(int64_t)(v * OM_DENSITY_Q16_ONE) / OM_DENSITY_Q16_ONE; }
 
 static void steep_mark(const om_world *w, unsigned char *steep) {
     memset(steep, 0, OM_DENSITY_N);
