@@ -41,7 +41,7 @@ BLOB_MIN_MOVE = 300.0          # same bar as the lab twin
 FLYER_TICKS = 200
 # Recorded 2026-10-06 on push/t2-colmask bd169a90 (flyer blob, 16 Vanguards, lab scene, ordered to (600, 600), 200 ticks).
 # Re-recorded 2026-10-09 (TD-VG-E-1): K-e folds the economy words into the factions section; old 14299308082090419322.
-FLYER_CHECKSUM_200 = 1046090717449054662
+FLYER_CHECKSUM_200 = 2109990263532742758   # TD-VG-E-9: was 1046090717449054662
 
 
 def _dist(a, b):

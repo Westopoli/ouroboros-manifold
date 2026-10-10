@@ -132,8 +132,8 @@ def test_place_symbol_callable(lib, world_factory):
     assert r in (0, 1) or isinstance(r, int)
 
 
-def test_save_round_trip_at_format_8_keeps_empty_new_state(lib, world_factory):
-    """K-e: format 8 writes and re-reads; the version word is 8; the new state reads back empty / doctrine 3.
+def test_save_round_trip_at_format_9_keeps_empty_new_state(lib, world_factory):
+    """K-e3: format 9 writes and re-reads; the version word is 9; the new state reads back empty / doctrine 3.
     Red on main: the version word is 7 (and the symbols are missing)."""
     bind(lib)
     bind_save(lib)
@@ -141,7 +141,7 @@ def test_save_round_trip_at_format_8_keeps_empty_new_state(lib, world_factory):
     size = lib.om_save_state_size(src)
     buf = (ctypes.c_uint8 * size)()
     lib.om_save_state_write(src, buf, size)
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 8
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 9
     dst = world_factory(n_regions=1)
     assert lib.om_load_state_read(dst, buf, size) == 0
     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0

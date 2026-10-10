@@ -22,7 +22,7 @@ BLOB_N = 16
 BLOB_R = 60.0              # lab's shape: 16 units in a 60 wu blob
 # Recorded 2026-10-06 on push/terrain2-land-2 at 6ea6b26baf6e207d33c3213bdfeb3562bc6d9700: flyer blob, 50 ticks.
 # Re-recorded 2026-10-09 (TD-VG-E-1): K-e folds the economy words into the factions section; old 17656050431320828508.
-FLYER_CHECKSUM_50 = 6400998881059197604
+FLYER_CHECKSUM_50 = 3388087635923795345   # TD-VG-E-9: was 6400998881059197604
 
 
 def _world(lib, world_factory, kind):
