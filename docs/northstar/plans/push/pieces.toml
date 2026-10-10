@@ -1430,7 +1430,7 @@ owns = ["scenes/world/time_jump_sequencer.gd", "autoload/ui_data_bus.gd"]
 owns_glob = ["scenes/galaxy/**", "tests/galaxy_field/**", "tests/test_galaxy_*.gd", "tests/test_vg_b_*.gd", "tests/qa/desktop/galaxy_*", "tests/qa/desktop/probe_runner.py", "tests/qa/desktop/test_galaxy_*.py", "tests/qa/desktop/plays/B/**", "docs/northstar/story_reviews/B.md", "docs/northstar/story_reviews/shots/**", "docs/northstar/plans/push_2026-10-01/**"]
 acceptance = []
 depends_on = ["C2", "C8", "G-qadesktoptests"]
-status = { state = "in_flight" }
+status = "attached"  # landed 5333e1a0
 tests_pending = true
 size_estimate = "lane B galaxy field, shell, labels, wiring (11 pieces); B0 base from push/vg-b0, not landed"
 
@@ -1445,7 +1445,7 @@ owns = []
 owns_glob = ["scenes/tactical_c/**", "tests/test_vg_a_*.gd", "tests/qa/desktop/plays/A/**", "tests/qa/desktop/test_vg_a_*.py"]
 acceptance = []
 depends_on = ["VG-CONTRACT"]
-status = { state = "in_flight" }
+status = "attached"  # landed 4d4babf8
 tests_pending = true
 size_estimate = "lane A battle screen, 20 pieces in two workflows (vg-wave3-laneA.js parts a and b)"
 
@@ -1460,7 +1460,7 @@ owns = []
 owns_glob = ["scenes/ground3d/**", "tests/test_vg_c*.gd", "tests/support/vg_c_*.gd", "tests/csim/test_E01_*ground*.py", "tests/qa/desktop/plays/C/**", "tests/qa/desktop/test_vg_c_*.py"]
 acceptance = []
 depends_on = ["VG-CONTRACT", "TERRAIN-1"]
-status = { state = "in_flight" }
+status = "attached"  # landed bcad1954
 tests_pending = true
 size_estimate = "lane C 3D ground, 10 pieces in two workflows (vg-wave4-laneC.js parts a and b)"
 
@@ -1479,7 +1479,7 @@ owns = [
 owns_glob = ["scenes/space_field/**", "tests/test_vg_d_*.gd", "tests/csim/test_VG_D_*.py", "tests/qa/desktop/plays/D/**"]
 acceptance = []
 depends_on = ["VG-CONTRACT", "VG-C", "VG-CONTRACT-D"]
-status = { state = "in_flight" }
+status = "attached"  # landed 1fdeb1c0
 tests_pending = true
 size_estimate = "lane D space landscape, 9 pieces (vg-wave6-laneF-D.js lane D)"
 
@@ -1494,7 +1494,7 @@ owns = ["csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/pipe/om_pipe.c", "cs
 owns_glob = []
 acceptance = ["tests/csim/test_VG_D_contract.py", "tests/transport/test_pipe_vg_d.py", "tests/test_c_bridge_vg_d.gd"]
 depends_on = ["VG-CONTRACT"]
-status = { state = "in_flight" }
+status = "attached"  # landed 1fdeb1c0
 tests_pending = false
 size_estimate = "K-d: om_space_field getters, space_field_dump verb, bridge decode (placeholder plates)"
 
@@ -1508,7 +1508,7 @@ owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6", "VG-D-pipefix"]
-status = { state = "in_flight" }
+status = "attached"  # landed ec4436da
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
 
@@ -1536,7 +1536,7 @@ owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe
 owns_glob = ["tests/qa/desktop/plays/F/**", "autoload/net/**", "scenes/lobby/**"]
 acceptance = []
 depends_on = ["NET-wire-A"]
-status = { state = "in_flight" }
+status = "attached"  # landed 1398ba16
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
 
@@ -1548,7 +1548,7 @@ manager = "Architect"
 owns = ["csrc/space_field.c", "tests/csim/test_VG_D_d6.py"]
 acceptance = []
 depends_on = ["VG-D"]
-status = { state = "in_flight" }
+status = "attached"  # landed 1fdeb1c0
 tests_pending = true
 
 # Visible-game lane D, piece D7 (Architect 2026-10-09): handle_mission_start regenerates the space field after
@@ -1560,7 +1560,7 @@ manager = "Architect"
 owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_vg_d7.py", "tests/csim/test_VG_D_d7.py"]
 acceptance = []
 depends_on = ["VG-D6", "K-c6"]
-status = { state = "in_flight" }
+status = "attached"  # landed 1fdeb1c0
 tests_pending = true
 
 # Visible-game lane D, piece D8 (Westley 2026-10-09: armies spawn at their own home base): each faction's spawn slots in
@@ -1575,7 +1575,7 @@ owns = [
 ]
 acceptance = []
 depends_on = ["VG-D6"]
-status = { state = "in_flight" }
+status = "attached"  # landed 1fdeb1c0
 tests_pending = true
 # VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
 [[piece]]
@@ -1651,13 +1651,13 @@ owns = [
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
 depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
-status = { state = "in_flight" }
+status = "attached"  # landed 78185a63
 tests_pending = false
 size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"
 # VG-C6b (Architect 2026-10-09): feed Units3D the layer floors and flyer types (set_frame passes [] today). Shared file with VG-C-wire.
 [[piece]]
 id = "VG-C6b"
-status = "in_flight"
+status = "attached"  # landed bcad1954
 manager = "Architect"
 depends_on = ["VG-C-wire", "VG-A"]
 owns = [
