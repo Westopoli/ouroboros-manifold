@@ -59,7 +59,7 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 ## 1. Now building
 
-Updated 2026-10-10. Branches only; main gets a piece only through the merge gate.
+Updated 2026-10-10 (lane E1 part a landed 8f76be4d). Branches only; main gets a piece only through the merge gate.
 
 | Lane | Branch | State | Next |
 |---|---|---|---|
@@ -68,7 +68,8 @@ Updated 2026-10-10. Branches only; main gets a piece only through the merge gate
 | Visible game lane B: galaxy (look approved 2026-10-07) | push/vg-b-reviews-5 | landing 12 on main 5333e1a0: B20 names from the chronicle table, TD-VG-B-9/10/11, B21 one label per faction; the three B plays pass | Westley reads the reviews (verdicts no/no/unclear, two shots sent to him) |
 | Visible game lane C: ground 3D | push/vg-c-reviews-2 | C1 to C11 landed (5026db37); VG-C-wire landed (8e6ca39a); K-c6 landed 78185a63, C6b landed bcad1954 (3D bodies on layer floors, flyer shadows) | S-004 is a spec gap, S-132 a finding (Q-132-03) |
 | Visible game lane D: space landscape | none | K-d landed; landing 4 on main 1fdeb1c0: D6 rubble as blocked cells, the pipe-field fix, D8 pockets at the home anchors with the objective centred (Westley 2026-10-09, R-246-07); rulings TD-VG-D-6 to D-11 | E-17 stories, S-007 plays |
-| Visible game lane E: settlement and economy | wf_4b9a1642 (part a) | K-e landed ec4436da (ABI 6, save 8, the economy contract); part a Workflow running since 2026-10-09 23:49 (E1b to E1i tests-first) | S-235 beats HELD on Q-235-01; E2 waits on Westley |
+| Visible game lane E: settlement and economy | wf_4b9a1642 (part a) | K-e landed ec4436da (ABI 6, save 8, the economy contract); K-e2 and K-e3 landed; lane E1 part a landed at 8f76be4d (K-e2 entries and E1i wiring, K-e3 with save format 9, E1b density, E1c lots, E1d waves and rubble, E1e placement, E1g doctrines, E1h strongpoints, TD-VG-E-2 to E-12); next part b: E1k settlement_layer.gd, E1l strongpoint_layer.gd, E1o placement UI, E1p view wiring (after C5, landed); E1m and E1n held on Q-235-01; E1j pins | S-235 beats HELD on Q-235-01; E2 waits on Westley |
+| Walk-route fix piece (proposed, FINDING-walk-route-replan) | none yet | advance to the next stored waypoint instead of replanning, early exit at the goal, reused buffers; owner `csrc/walk_route.c` and `csrc/tactical_move.c` | waits for Westley's go |
 | Visible game lane F: Steam phase B | landed on main | phase B landed on main 1398ba16 (F5 match mode) | story plays for E-19; lobby and depot script as the programme file lists |
 | Programme guard pieces: GDScript reach lint and lane story plays in the gate (from the 2026-10-09 drift check) | the gate | landed: HARNESS-gdreach, HARNESS-laneplays (fc986411), HARNESS-playsplit (7bb1f5a2), G-project daemon verb (f37a926f) | the gate runs the reach lint and each lane's story plays; DONE |
 | Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | landed on main 008de465 (2026-10-07) after three sim defects found by the lab's ground scene were fixed with tests | gate clean | done |

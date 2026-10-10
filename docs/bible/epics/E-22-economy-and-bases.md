@@ -56,7 +56,7 @@ Rules
 - R-168-02  Given a base, When lots are counted, Then no count of lots limits the buildings, and only terrain limits where one may stand, as in E-17 R-166-01 (Westley, 2026-10-06). Direction for later, not for the beta: a very large base may be upgraded past its maximum into another tech level; there is no maximum in the beta, only terrain limits (Westley, 2026-10-07).
 - R-168-03  Given a building, When what stands beside it changes, Then what it yields changes; for the beta the effects are placeholders, and their kinds, size and range are set later in the lab (Westley, 2026-10-06).
 - R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished [Q-168-03: construction time, who builds it, and what it costs].
-- R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174); the set is small and fixed per era pack (E-20 R-146-01) and its names are era pack content (Westley, 2026-10-06).
+- R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174); the set is small and fixed per era pack (E-20 R-146-01) and its names are era pack content, and the pack manifest field that lists them is named "buildings", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
 
 Inputs: placement commands from the economy player; the terrain (E-17); the era's building set.
 Outputs: buildings with owner, footprint, stage and yield in the tick delta.
@@ -237,7 +237,7 @@ As a commander, I want the same economy to run itself well when nobody holds the
 Rules
 - R-179-01  Given any match, When nobody holds the economy seat, Then rules run the economy, run it well, need no intelligent agent, and call no model at play time.
 - R-179-02  Given a base in any mode, When the mission runs, Then buildings start under construction and rise, expansions are made, and population density changes over time (E-17 S-166).
-- R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, from the list boom, fortify, press and balanced, the player sets the first one in the lobby, and the player can change the doctrine on the fly to adapt to what the enemy is doing (Westley, 2026-10-06).
+- R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, from the list boom, fortify, press and balanced, the player sets the first one in the lobby, and the player can change the doctrine on the fly to adapt to what the enemy is doing; the pack manifest field that lists the doctrines is named "doctrines", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
 - R-179-04  Given a doctrine, When it is read, Then it is a build order with its own weights on a checklist of standing habits [Q-179-02: the habits on the checklist and the weights per doctrine].
 - R-179-05  Given the rules run an economy, When it runs, Then they have perfect hands: they never idle a worker, never hit the population cap and never leave resources unspent.
 - R-179-06  Given the rules run an economy, When it runs, Then they have no foresight: they do not scout, do not read the enemy, do not counter-pick technology and do not disguise anything. The one exception is that they counter what the commander's forces have seen, by the unit counter shift of E-22 S-180.

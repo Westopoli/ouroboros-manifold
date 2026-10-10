@@ -1520,7 +1520,7 @@ wave = 8
 owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
@@ -1533,8 +1533,8 @@ wave = 8
 owns = ["csrc/economy_internal.h", "csrc/economy.c", "csrc/mission.c", "csrc/unit.c", "csrc/tactical_support.c", "csrc/economy_waves.c", "csrc/economy_place.c", "tests/csim/test_VG_E_ke2.py", "tests/csim/test_E15_S126_most_of_my_force_is_out_there.py", "tests/csim/test_E15_S127_taking_a_garrison.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_ke2.py"]
-depends_on = ["VG-CONTRACT", "VG-CONTRACT-E1", "B9", "B10", "PP-unit"]
-status = { state = "in_flight" }
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-E1", "B9", "B10", "PP-unit", "VG-D8"]
+status = { state = "attached" }  # landed 8f76be4d
 tests_pending = true
 size_estimate = "K-e2: internal economy entry points + E1i wiring + R-218-01/05/06 rule edits"
 
@@ -1547,7 +1547,7 @@ owns = ["csrc/om_internal.h", "csrc/save.c", "csrc/checksum_full.c", "csrc/econo
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_ke3.py"]
 depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT-E2"]
-status = { state = "in_flight" }
+status = { state = "attached" }  # landed 8f76be4d
 tests_pending = true
 size_estimate = "K-e3: density_economy + lot_hit_tick fields, save 9, checksum, pins"
 
