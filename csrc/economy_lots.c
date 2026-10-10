@@ -63,4 +63,13 @@ int om_lot_get_at(const om_world *w, uint32_t i, om_lot *out) {
 }
 
 void om_lots_init(om_world *w) { w->economy.n_lots = 0; }
-void om_lots_on_area_hit(om_world *w, double x, double y, double radius) { (void)w; (void)x; (void)y; (void)radius; }
+void om_lots_on_area_hit(om_world *w, double x, double y, double radius) {
+    om_economy_state *e = &w->economy;
+    uint32_t i;
+    for (i = 0; i < e->n_lots; i++) {
+        double dx = e->lots[i].x - x, dy = e->lots[i].y - y;
+        if (dx * dx + dy * dy > radius * radius || e->lots[i].stage < 1) continue;
+        e->lots[i].stage--;
+        e->lot_hit_tick[i] = (uint32_t)om_tactical_tick(w);
+    }
+}
