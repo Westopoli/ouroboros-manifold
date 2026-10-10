@@ -11,8 +11,8 @@ import ctypes
 from conftest import OMTier, set_owner, set_region
 
 VERSION_OFFSET = 4
-EXPECTED_VERSION = 8
-PRE_BUMP_VERSION = 4
+EXPECTED_VERSION = 9
+PRE_BUMP_VERSION = 8
 
 
 def _bind_save(lib):

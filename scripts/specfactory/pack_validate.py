@@ -82,6 +82,47 @@ def _iter_scene_paths(entry) -> list[str]:
     return scenes
 
 
+BUILDING_ROLES = ("production", "house", "worker-hut", "forward-works")
+
+
+def _pos(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0
+
+
+# liberty 2026-10-07: Q-168-04 a, a small fixed building set per era pack as manifest data (R-168-05).
+def _building_findings(manifest: dict) -> list[Finding]:
+    rows = manifest.get("buildings")
+    if not isinstance(rows, list) or not rows:
+        return [Finding("FAIL", "MISSING_BUILDINGS", "manifest.json needs a non-empty `buildings` list (R-168-05)")]
+    out: list[Finding] = []
+    seen: set = set()
+    roles: set = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building row is not an object: {row!r}"))
+            continue
+        bid = row.get("id")
+        if not (isinstance(bid, str) and bid.strip()):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building row needs a text id: {row!r}"))
+        elif bid in seen:
+            out.append(Finding("FAIL", "BAD_BUILDING", f"duplicate building id {bid!r}"))
+        seen.add(bid)
+        if row.get("role") not in BUILDING_ROLES:
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building {bid!r}: role must be one of {BUILDING_ROLES}"))
+        else:
+            roles.add(row["role"])
+        fp = row.get("footprint")
+        if not (_pos(fp) or (isinstance(fp, list) and len(fp) == 2 and all(_pos(x) for x in fp))):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building {bid!r}: footprint must be a positive number or [w, h]"))
+        hp = row.get("hp")
+        if not (isinstance(hp, int) and not isinstance(hp, bool) and hp > 0):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building {bid!r}: hp must be a positive int"))
+    for r in BUILDING_ROLES:
+        if r not in roles:
+            out.append(Finding("FAIL", "BAD_BUILDING", f"buildings list has no {r!r} building"))
+    return out
+
+
 def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS_FILE) -> list[Finding]:
     manifest_path = pack_dir / "manifest.json"
     if not manifest_path.is_file():
@@ -109,6 +150,9 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
 
     if "kind" in manifest and manifest["kind"] not in ERA_KINDS:
         findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", f"kind must be one of {ERA_KINDS} when present"))
+
+    if not manifest.get("test_only"):
+        findings.extend(_building_findings(manifest))
 
     era_id = manifest.get("era_id")
     units = manifest.get("units")

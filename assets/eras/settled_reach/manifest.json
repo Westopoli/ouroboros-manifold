@@ -91,6 +91,13 @@
     }
   },
 
+  "buildings": [
+    { "id": "bld_workshop", "role": "production", "footprint": [3, 3], "hp": 200 },
+    { "id": "bld_dwelling", "role": "house", "footprint": [2, 2], "hp": 100 },
+    { "id": "bld_hut", "role": "worker-hut", "footprint": [2, 2], "hp": 80 },
+    { "id": "bld_outpost", "role": "forward-works", "footprint": [2, 2], "hp": 120 }
+  ],
+
   "faction_colors": {
     "0": "#4099FF",
     "1": "#FF4738",
