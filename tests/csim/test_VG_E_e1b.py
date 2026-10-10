@@ -53,7 +53,7 @@ def bind(lib):
     lib.om_world_get_state_checksum.argtypes = [W]
 
 
-def scene(lib, world_factory, *, seed=7, economy=10.0, population=10.0, terrain_seed=None, terrain=True):
+def scene(lib, world_factory, *, seed=7, economy=10.0, population=10.0, terrain_seed=None, terrain=True, archetype=3, setup=True):
     bind(lib)
     w = world_factory(n_regions=2, seed=seed)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
@@ -67,7 +67,9 @@ def scene(lib, world_factory, *, seed=7, economy=10.0, population=10.0, terrain_
     assert lib.om_set_era_kind(w, 1) == 0
     if terrain:
         assert lib.om_terrain_generate(w, terrain_seed if terrain_seed is not None else seed, CANVAS, CANVAS) in (0, 1)
-    lib.om_mission_setup(w, 0, 3, 0)
+    if not setup:
+        return w  # TD-VG-E-6: a fresh world before om_mission_setup
+    lib.om_mission_setup(w, 0, archetype, 0)
     lib.om_mission_begin.argtypes, lib.om_mission_begin.restype = [W], None
     lib.om_mission_begin(w)  # TD-VG-E-5: R-092 recon stops the clock until begin
     return w
@@ -141,10 +143,12 @@ def test_control_fresh_world_density_zero(lib, world_factory):
 
 # ---- isolation ----
 
-def test_no_terrain_no_density_reads_stay_safe(lib, world_factory):
-    """R-193-08 reads terrain; with none held the getter stays 0.0 and never faults, outside the canvas included."""
-    w = scene(lib, world_factory, terrain=False)
-    ticks(lib, w, 3)
+def test_before_setup_density_reads_stay_safe(lib, world_factory):
+    """TD-VG-E-6: a ground mission always generates terrain in om_mission_setup, so the no-terrain read is a fresh world
+    (before setup): om_density_at is 0.0 everywhere and never faults, outside the canvas included."""
+    w = scene(lib, world_factory, terrain=False, setup=False)
+    for _ in range(3 * TICK):
+        lib.om_world_step(w)
     for x, y in [(-1.0, -1.0), (CANVAS + 1.0, 5.0), (12000.0, 12000.0)]:
         assert lib.om_density_at(w, x, y) == 0.0
 
@@ -197,17 +201,36 @@ def test_q16_values(lib, world_factory):
     assert non_q16(g) == []
 
 
+FLAT_ARCHETYPE, FLAT_SEED = 4, 7  # TD-VG-E-6: verified 0 slopes via om_terrain_slope_count after om_mission_setup
+SLOPE_ARCHETYPE, SLOPE_SEED = 3, 7  # TD-VG-E-6: verified slopes > 0 (216)
+
+
+def _slope_count(lib, w):
+    lib.om_terrain_slope_count.restype, lib.om_terrain_slope_count.argtypes = ctypes.c_uint32, [W]
+    return lib.om_terrain_slope_count(w)
+
+
 def test_follows_terrain_not_rings(lib, world_factory):
-    """R-193-01: the field is shaped by terrain, so two terrain seeds give different fields and the same seed the same field."""
-    a = scene(lib, world_factory, seed=7, terrain_seed=7)
-    b = scene(lib, world_factory, seed=7, terrain_seed=7)
-    c = scene(lib, world_factory, seed=7, terrain_seed=19)
-    for w in (a, b, c):
+    """R-193-01 (TD-VG-E-6): terrain shapes the field. On a scene with slopes, two cells at the same ring distance from the
+    core differ in density; control: on a zero-slope scene the field is a pure function of ring distance."""
+    s = scene(lib, world_factory, seed=SLOPE_SEED, archetype=SLOPE_ARCHETYPE)
+    f = scene(lib, world_factory, seed=FLAT_SEED, archetype=FLAT_ARCHETYPE)
+    assert _slope_count(lib, s) > 0, "slope scene has no slopes"
+    assert _slope_count(lib, f) == 0, "flat scene has slopes"
+    for w in (s, f):
         ticks(lib, w, 8)
-    ga, gb, gc = grid(lib, a), grid(lib, b), grid(lib, c)
-    assert max(ga) > 0.0, "no density anywhere (stub)"
-    assert ga == gb, "same seed, different field"
-    assert ga != gc, "different terrain gave the identical field: terrain is not read"
+    gs, gf = grid(lib, s), grid(lib, f)
+    assert max(gs) > 0.0, "no density anywhere (stub)"
+    cs = core_of(gs)
+    by_ring = {}
+    for i, v in enumerate(gs):
+        by_ring.setdefault(ring(i, cs), set()).add(round(v, 9))
+    assert any(len(vs) > 1 for r, vs in by_ring.items() if r > 0), "slope scene: the field depends on ring distance alone"
+    cf = core_of(gf)
+    flat_rings = {}
+    for i, v in enumerate(gf):
+        flat_rings.setdefault(ring(i, cf), set()).add(round(v, 9))
+    assert all(len(vs) == 1 for vs in flat_rings.values()), "control: the zero-slope field is not a function of ring distance"
 
 
 def test_deterministic_and_hashed(lib, world_factory):

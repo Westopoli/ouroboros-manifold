@@ -225,6 +225,13 @@ def test_capture_changes_owner_and_state(lib, world_factory):
     assert (row[3], row[4]) == (PLAYER, STATE_HELD)
 
 
+def _advance(lib, w, interval):
+    """TD-VG-E-7: om_tactical_step returns before om_support_tick on a unit-less world (csrc/unit.c), so move the clock."""
+    lib.om_tactical_tick.argtypes, lib.om_tactical_tick.restype = [W], ctypes.c_uint64
+    lib.om_tactical_tick_to.argtypes, lib.om_tactical_tick_to.restype = [W, ctypes.c_uint64], ctypes.c_uint64
+    lib.om_tactical_tick_to(w, lib.om_tactical_tick(w) + interval)
+
+
 def test_held_strongpoint_produces_a_unit(lib, world_factory):
     """R-218-02 / R-218-03: a held strongpoint spawns a unit of its holder's faction within one production interval;
     control: a free (neutral) strongpoint spawns none."""
@@ -237,13 +244,11 @@ def test_held_strongpoint_produces_a_unit(lib, world_factory):
     lib.om_structure_set_owner(w, sid, owner)
     interval = lib.om_structure_production_interval_ticks(ctypes.c_double(10.0))
     before = lib.om_unit_count(w)
-    for _ in range(interval):
-        lib.om_tactical_step(w)
+    _advance(lib, w, interval)
     assert lib.om_unit_count(w) > before, "a held strongpoint produced nothing"
     lib.om_structure_set_owner(w, sid, -1)
     mid = lib.om_unit_count(w)
-    for _ in range(interval):
-        lib.om_tactical_step(w)
+    _advance(lib, w, interval)
     assert lib.om_unit_count(w) == mid, "control: a free strongpoint must not produce"
 
 
@@ -330,13 +335,13 @@ def test_save_roundtrip_keeps_table_and_checksum(lib, world_factory):
     lib.om_save_state_size.argtypes, lib.om_save_state_size.restype = [W], ctypes.c_uint32
     lib.om_save_state_write.argtypes, lib.om_save_state_write.restype = [W, P(ctypes.c_uint8), ctypes.c_uint32], None
     lib.om_load_state_read.argtypes, lib.om_load_state_read.restype = [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int
-    lib.om_world_checksum_full.argtypes, lib.om_world_checksum_full.restype = [W], ctypes.c_uint64
+    lib.om_world_checksum_full.argtypes, lib.om_world_checksum_full.restype = [W, P(ctypes.c_uint64), ctypes.c_uint32], ctypes.c_uint64  # TD-VG-E-7
     n = lib.om_save_state_size(w)
     buf = (ctypes.c_uint8 * n)()
     lib.om_save_state_write(w, buf, n)
-    h0 = lib.om_world_checksum_full(w)
+    h0 = lib.om_world_checksum_full(w, None, 0)
     _destroy(lib, w, rows[0][0])
-    assert lib.om_world_checksum_full(w) != h0, "checksum does not see a strongpoint going to rubble"
+    assert lib.om_world_checksum_full(w, None, 0) != h0, "checksum does not see a strongpoint going to rubble"
     assert lib.om_load_state_read(w, buf, n) == 0
     assert sps(lib, w) == rows
-    assert lib.om_world_checksum_full(w) == h0
+    assert lib.om_world_checksum_full(w, None, 0) == h0
