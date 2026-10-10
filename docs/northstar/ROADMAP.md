@@ -113,7 +113,7 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 | 3 | Q-235-01: the four settlement ticker beats | `ambiguity_register.md` | E1m, E1n, S-235 |
 | 4 | S-004 spec gap: no layer-change order in the client | `story_reviews/C.md` on `push/vg-c-reviews-2`; E-01 | lane C, S-004 |
 | 5 | Q-132-03: the S-132 walkers finding | `ambiguity_register.md` | lane C, S-132 |
-| 6 | The lane E1 skeleton shot: one lot drawn in the real view | `story_reviews/E.md`, queued by the skeleton landing | the E1 fan-out (E1k, E1l, E1o, E1p-b) |
+| 6 | The lane E1 skeleton shot: one lot drawn in the real view | `story_reviews/E.md`, the 20261010-1927 shot is not for review (space era, no ground); re-shot by fix piece VG-E1-SHOT | the E1 fan-out (E1k, E1l, E1o, E1p-b) |
 
 ### How the work is run
 
