@@ -53,7 +53,7 @@ def _missing(lib, names):
 
 def test_ke2_detector_names_a_missing_symbol(lib):
     """Positive control: the lookup detector reports a symbol that cannot exist."""
-    assert _missing(lib, ["om_economy_init", "om_no_such_entry_ke2_control"]) == ["om_no_such_entry_ke2_control"]
+    assert _missing(lib, ["om_no_such_entry_ke2_control", "om_world_new"]) == ["om_no_such_entry_ke2_control"]
 
 
 def test_ke2_entry_points_exist(lib):
