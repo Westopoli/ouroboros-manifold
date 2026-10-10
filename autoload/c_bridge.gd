@@ -28,6 +28,8 @@ const DEFAULT_FEATURES := [0, 1, 2, 3, 4, 5, 6, 7]
 
 signal frame_received(frame)
 signal snapshot_changed(tick)
+# K-e4: the answer to the oldest pending send_place (ack accepted, command error refused).
+signal place_result(accepted, x, y, building)
 
 var _snapshot: Dictionary = {}
 var _region_index: Dictionary = {}
@@ -57,6 +59,7 @@ var _space_field: Dictionary = {}
 var _lots: Array = []
 var _lots_fetched := false
 var _strongpoints: Array = []
+var _pending_places: Array = []
 var _era_kind: int = 0
 
 
@@ -302,8 +305,13 @@ func pump() -> int:
 				_mission_active = false
 				_mission_begun = false
 				_session_mission = {}
+			"ack":
+				if String(frame.get("name", "")) == "command":
+					_resolve_place(true)
 			"error":
 				_last_error = String(frame.get("reason", ""))
+				if String(frame.get("name", "")) == "command":
+					_resolve_place(false)
 		frame_received.emit(frame)
 		if changed:
 			snapshot_changed.emit(int(_snapshot.get("tick", 0)))
@@ -312,6 +320,7 @@ func pump() -> int:
 
 func close_session() -> void:
 	_session_args = []
+	_pending_places = []
 	if _session_pid > 0 and OS.is_process_running(_session_pid):
 		OS.kill(_session_pid)
 	if _reader != null:
@@ -471,6 +480,21 @@ func send_unit_command(cmd: Dictionary) -> bool:
 		pipe_cmd["y"] = float(cmd.get("y", 0.0))
 	send_command(pipe_cmd)
 	return true
+
+
+# Sends the K-e place command (docs/architecture.md, K-e4): `building` is the position of the building
+# in the era manifest's buildings list (liberty 2026-10-10). The answer arrives as place_result.
+func send_place(x: float, y: float, building: int) -> bool:
+	_pending_places.append([x, y, building])
+	send_command({"type": "cmd", "name": "command", "verb": "place", "units": [], "x": x, "y": y, "building": building})
+	return true
+
+
+func _resolve_place(accepted: bool) -> void:
+	if _pending_places.is_empty():
+		return
+	var p: Array = _pending_places.pop_front()
+	place_result.emit(accepted, p[0], p[1], p[2])
 
 
 # Folds a full or delta tactical frame (A7) into the id -> unit dictionary and
@@ -643,6 +667,11 @@ func _fetch_space_field() -> bool:
 # delta lots_changed rows: [{id, x, y, stage, building, owner}]; [] before the dump.
 func lots() -> Array:
 	return _lots
+
+
+# The strongpoints of the last full tactical frame (K-e4), ascending id: [{id, x, y, owner, state}].
+func strongpoints() -> Array:
+	return _strongpoints
 
 
 func _lot_row(r: Array) -> Dictionary:
