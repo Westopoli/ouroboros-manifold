@@ -8,6 +8,14 @@
  * and not checked. Q-168-05 base cap is open: not enforced. */
 #define E1E_CELL 100.0
 #define E1E_HALF 2
+/* om_economy_place return codes: accepted, no world, footprint on unwalkable ground, too close to a lot, lot table full. */
+#define E1E_OK 0
+#define E1E_NO_WORLD 1
+#define E1E_UNWALKABLE 2
+#define E1E_OVERLAP 3
+#define E1E_FULL 4
+/* a lot within this many cells of the target cell is an overlap */
+#define E1E_SPAN (2 * E1E_HALF)
 
 static int32_t e1e_cell(double v) { return (int32_t)floor(v / E1E_CELL); }
 
@@ -15,7 +23,7 @@ int om_economy_place(om_world *w, int32_t building, double x, double y) {
     int32_t cx, cy, dx, dy;
     uint32_t i;
     om_economy_state *e;
-    if (!w) return 1;
+    if (!w) return E1E_NO_WORLD;
     e = &w->economy;
     cx = e1e_cell(x);
     cy = e1e_cell(y);
@@ -27,17 +35,17 @@ int om_economy_place(om_world *w, int32_t building, double x, double y) {
             om_structure_refound(w, sp->id, pf);
             sp->owner = pf;
             sp->state = 1;
-            return 0;
+            return E1E_OK;
         }
     }
     for (dx = -E1E_HALF; dx <= E1E_HALF; dx++)
         for (dy = -E1E_HALF; dy <= E1E_HALF; dy++)
-            if (!om_terrain_walkable_at(w, (cx + dx + 0.5) * E1E_CELL, (cy + dy + 0.5) * E1E_CELL)) return 2;
+            if (!om_terrain_walkable_at(w, (cx + dx + 0.5) * E1E_CELL, (cy + dy + 0.5) * E1E_CELL)) return E1E_UNWALKABLE;
     for (i = 0; i < e->n_lots; i++) {
         int32_t lx = e1e_cell(e->lots[i].x), ly = e1e_cell(e->lots[i].y);
-        if (lx - cx >= -2 * E1E_HALF && lx - cx <= 2 * E1E_HALF && ly - cy >= -2 * E1E_HALF && ly - cy <= 2 * E1E_HALF) return 3;
+        if (lx - cx >= -E1E_SPAN && lx - cx <= E1E_SPAN && ly - cy >= -E1E_SPAN && ly - cy <= E1E_SPAN) return E1E_OVERLAP;
     }
-    if (e->n_lots >= OM_LOT_CAP) return 4;
+    if (e->n_lots >= OM_LOT_CAP) return E1E_FULL;
     {
         om_lot *l = &e->lots[e->n_lots];
         l->id = e->n_lots;
@@ -48,5 +56,5 @@ int om_economy_place(om_world *w, int32_t building, double x, double y) {
         l->owner = om_player_faction(w);
         e->n_lots++;
     }
-    return 0;
+    return E1E_OK;
 }
