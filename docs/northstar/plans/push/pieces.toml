@@ -1715,8 +1715,7 @@ owns = ["scripts/specfactory/pre_gate.sh", "tests/specfactory/test_pre_gate.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_pre_gate.py"]
 depends_on = []
-status = { state = "in_flight" }
-tests_pending = true
+status = { state = "attached", attach_sha = "f089fccb" }
 size_estimate = "pre_gate.sh: noise check, merge_gate --revert, the piece's tests; about 80 lines"
 
 [[piece]]
@@ -1727,8 +1726,7 @@ owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_status_ch
 owns_glob = []
 acceptance = ["tests/specfactory/test_status_check.py"]
 depends_on = []
-status = { state = "in_flight" }
-tests_pending = true
+status = { state = "attached", attach_sha = "f089fccb" }
 size_estimate = "status_check.py: lane table, pieces attach shas, Seen vs approved, ROADMAP copies; about 150 lines"
 
 [[piece]]
@@ -1739,6 +1737,5 @@ owns = ["scripts/journal.sh", "tests/specfactory/test_journal.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_journal.py"]
 depends_on = []
-status = { state = "in_flight" }
-tests_pending = true
+status = { state = "attached", attach_sha = "f089fccb" }
 size_estimate = "journal.sh: git log first-parent formatter; about 25 lines"

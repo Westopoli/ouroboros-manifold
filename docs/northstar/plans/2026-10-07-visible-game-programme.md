@@ -17,7 +17,7 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | Lane | On main | Next piece | First look | Westley row |
 |---|---|---|---|---|
 | Contracts | K0, K-a (sim, pipe, bridge, split), K-f, K-h, K-d, K-e (ABI 6), K-e2, K-e3 (save 9) landed; K-e4 red tests on `push/vg-k-e4-tests` | K-e4 lands in the E1 skeleton batch | n/a | none |
-| Harness, method rev 2 | nothing yet | `pre_gate.sh`, `status_check.py`, `journal.sh` (script `vg-harness-method.js`; no eyes needed) | n/a | none |
+| Harness, method rev 2 | `pre_gate.sh`, `status_check.py`, `journal.sh` at f089fccb | none | n/a | none |
 | A battle screen | A1 to A21 at 4d4babf8; twelve plays pass in both eras in the gate | one fix piece per verdict, nothing until then | 2026-10-08 22:30, 11 of 12 "no"; A19 to A21 since, not yet seen | 2 |
 | B galaxy | landing 12 at 5333e1a0; three plays pass | one fix piece per verdict | reviewer no, no, unclear (`story_reviews/B.md`, run 20261009-2217-5333e1a on `push/vg-b-reviews-5`); Westley pending | 1 |
 | C ground 3D | C1 to C11, VG-C-wire, K-c6, C6b at bcad1954; S-236 and S-001 plays pass | nothing until verdicts; S-004 is a spec gap, S-132 a finding | reviews on `push/vg-c-reviews-2` (run before the fixes) | 4, 5 |
