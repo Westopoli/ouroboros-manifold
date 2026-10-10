@@ -286,3 +286,30 @@ def test_next_line_is_last(tmp_path):
         assert out[-1].startswith("METHOD next:"), out[-1]
         assert "Westley" in out[-1]
         assert all(l.startswith("METHOD") or l.startswith("  ") or l.startswith("- ") for l in out), out
+
+
+def test_bash_words_in_heredoc_or_reader_segments_count_for_nothing(tmp_path):
+    # method_check.md: Bash text is matched after heredoc bodies are removed and per segment
+    entries = [
+        assistant(SONNET, tools=[bash("cat > x.md <<'EOF'\nsleep and merge_gate.sh are words\nEOF")]),
+        assistant(SONNET, tools=[bash("grep merge_gate.sh scripts/x")]),
+        assistant(SONNET, tools=[bash("git show origin/main:scripts/specfactory/merge_gate.sh")]),
+    ]
+    r = run(tmp_path, write_transcript(tmp_path, entries))
+    assert r.returncode == 0, r.stderr
+    got = checks(r.stdout)
+    assert got["polling"][:2] == ("OK", 0), got["polling"]
+    assert got["gate_runs"][:2] == ("OK", 0), got["gate_runs"]
+
+
+def test_bash_sleep_flock_and_gate_script_segments_count(tmp_path):
+    entries = [
+        assistant(SONNET, tools=[bash("sleep 120")]),
+        assistant(SONNET, tools=[bash("flock ~/Projects/om-push/gate.lock x")]),
+        assistant(SONNET, tools=[bash("cd /w && bash scripts/specfactory/merge_gate.sh wt main P")]),
+    ]
+    r = run(tmp_path, write_transcript(tmp_path, entries))
+    assert r.returncode == 0, r.stderr
+    got = checks(r.stdout)
+    assert got["polling"][:2] == ("DRIFT", 2), got["polling"]
+    assert got["gate_runs"][:2] == ("DRIFT", 1), got["gate_runs"]
