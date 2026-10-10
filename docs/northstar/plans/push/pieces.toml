@@ -1517,13 +1517,26 @@ size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6
 id = "VG-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_waves.c", "csrc/economy_place.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "csrc/mission.c", "csrc/unit.c"]
+owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
+
+# K-e2 (Architect amendment 2026-10-10): internal economy entry points, E1i wiring, R-218-01/05/06 rule edits.
+[[piece]]
+id = "VG-CONTRACT-E2"
+manager = "M0"
+wave = 8
+owns = ["csrc/economy_internal.h", "csrc/economy.c", "csrc/mission.c", "csrc/unit.c", "csrc/tactical_support.c", "csrc/economy_waves.c", "csrc/economy_place.c", "tests/csim/test_VG_E_ke2.py", "tests/csim/test_E15_S126_most_of_my_force_is_out_there.py", "tests/csim/test_E15_S127_taking_a_garrison.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_ke2.py"]
+depends_on = ["VG-CONTRACT", "VG-CONTRACT-E1", "B9", "B10", "PP-unit"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "K-e2: internal economy entry points + E1i wiring + R-218-01/05/06 rule edits"
 
 # Visible-game programme (2026-10-07), lane F T0: W8a static pipe build scripts per OS, W8d export
 # presets, the Steam depot script. Acceptance tests (tests/transport/test_vg_f_w8a_static_pipe.py,
