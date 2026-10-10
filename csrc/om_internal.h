@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 8 /* bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 9 /* bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -92,6 +92,8 @@ typedef struct om_economy_state {
     int32_t doctrine;
     uint32_t n_waves;
     om_wave waves[OM_WAVE_LOG_CAP];
+    double density_economy; /* VG K-e3: the player's home region economy, sampled once at om_economy_init */
+    uint32_t lot_hit_tick[OM_LOT_CAP]; /* VG K-e3: tick of the last area hit that knocked lot i back; 0 = never */
 } om_economy_state;
 
 /* VG K-d (lane D, 2026-10-07 spec rev 4): five layers of 240 x 240 cells of 100 wu on a 24000 wu canvas. */

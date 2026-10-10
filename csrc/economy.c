@@ -2,6 +2,16 @@
 #include "economy_internal.h"
 
 void om_economy_init(om_world *w) {
+    /* K-e3: the player's region is the first HOME-tier region owned by om_player_faction (the same owner test
+     * mission.c's mission_faction_is_player uses); no such region leaves density_economy 0. */
+    int32_t pf = om_player_faction(w);
+    w->economy.density_economy = 0.0;
+    for (uint32_t i = 0; pf >= 0 && i < w->n_regions; i++) {
+        if (w->regions[i].faction_id == pf && w->regions[i].tier == OM_TIER_HOME) {
+            w->economy.density_economy = w->regions[i].economy;
+            break;
+        }
+    }
     om_density_init(w);
     om_lots_init(w);
     om_waves_init(w);

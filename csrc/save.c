@@ -445,6 +445,8 @@ static void sv_write_body(sv_writer *sw, const om_world *w) {
             sv_put_f64(sw, e->waves[i].x);
             sv_put_f64(sw, e->waves[i].y);
         }
+        sv_put_f64(sw, e->density_economy);
+        for (uint32_t i = 0; i < OM_LOT_CAP; i++) sv_put_u32(sw, e->lot_hit_tick[i]);
     }
 
     sv_write_slots(sw, w);
@@ -754,6 +756,14 @@ static void sv_parse_body(sv_reader *sr, om_world *w, int apply) {
         }
         if (!sr->ok) return;
         if (apply) e->n_waves = n;
+
+        double density_economy = sv_get_f64(sr);
+        for (uint32_t i = 0; i < OM_LOT_CAP && sr->ok; i++) {
+            uint32_t ht = sv_get_u32(sr);
+            if (apply && sr->ok) e->lot_hit_tick[i] = ht;
+        }
+        if (!sr->ok) return;
+        if (apply) e->density_economy = density_economy;
     }
 
     sv_parse_slots(sr, w, apply);

@@ -407,6 +407,8 @@ static uint64_t ck_economy(uint64_t h, const om_economy_state *e) {
         h = ck_dbl(h, e->waves[i].x);
         h = ck_dbl(h, e->waves[i].y);
     }
+    h = ck_dbl(h, e->density_economy);
+    for (uint32_t i = 0; i < OM_LOT_CAP; i++) h = ck_word(h, e->lot_hit_tick[i]);
     return h;
 }
 
