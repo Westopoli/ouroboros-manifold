@@ -1,6 +1,6 @@
 # Shared RULES blocks for lane briefs and wave scripts
 
-Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resume-laneC-land2.js line 8, plus the 2026-10-09 lessons. Three roles: Builder, Landing clerk, Scout or auditor.
+Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resume-laneC-land2.js line 8, plus the 2026-10-09 lessons and method rev 2 (2026-10-10, `retro_2026-10-10/README.md` section 4). Six roles: Builder, Landing clerk, Scout or auditor, Test writer, Ruler, Dispatcher.
 
 ## (a) Builder (Doer)
 
@@ -12,7 +12,8 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 - Long runs: `systemd-run --user --scope -q -p MemoryMax=6G -p MemorySwapMax=0 -- nice -n 10 <cmd>`. Gates run detached, polled every 5 min.
 - Renderer split (2026-10-09): Godot tests and desktop tests run under the DEFAULT renderer. `OM_QA_RENDERER=vulkan` is for story plays only (Xvfb vulkan washes colours out). The galaxy pixel tests and the plays are pinned to that split. Desktop plays run one at a time: `xvfb-run -a timeout 900 .venv/bin/python -m pytest <play> -q`.
 - Determinism: integer or plain double arithmetic, no libm transcendentals (libm_lint), no wall clock, no hash-order iteration; new world state is hashed (checksum_full) and saved.
-- Builders never edit tests. A test that looks wrong is ruled by the rulebook (ledger row TD-<lane>-<n>) or the piece stops. A Westley threshold lives in a `*_park_*` file.
+- Builders never edit tests. A test that looks wrong stops the piece with `stop_reason` starting `test-defect:` followed by the test id, the failing assertion line and the spec line it contradicts; the script's ruler (section (e)) takes it from there. A Westley threshold lives in a `*_park_*` file.
+- Pre-gate before the push (method rev 2): `scripts/specfactory/pre_gate.sh <worktree> origin/main <piece ids> [<test paths>]` must end `PRE_GATE verdict OK`; until that script lands, run `scripts/specfactory/merge_gate.sh --revert <worktree> origin/main <piece ids>` (make, every lint, footprint, owner rows, about one minute) and `git -C <worktree> status --porcelain` with no `*.uid`, `*.import` or `.glb.import` line other than a `.uid` beside a new script of yours. A REJECT here is yours to fix; it never reaches the clerk.
 - Liberties named in the spec are taken as written and marked in a code comment; anything else undecided stops the piece.
 - Stop and report (ok=false, stop_reason) on a file outside your list, a number nobody gave (named mockup drafts allowed: cite), or a new public C symbol not in the frozen header.
 - Never stage `*.import` or `*.uid` noise. `godot --import` leaves untracked `*.uid`: delete them before any checkout or merge. (Exception: a `.uid` beside a new script you wrote is committed per NOTE-uid-files.)
@@ -28,10 +29,33 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 - Push: branch first. `git push origin HEAD:main` only on a clean gate and only when the brief authorises it; merge origin/main first if it moved and say so (ledger appends keep both sides).
 - Snapshot cleanup: delete only the `merge_gate_before_*` directories under your own TMPDIR, never a glob over /tmp.
 - Test-defect rule: a test changes only under a rulebook or ledger row. Thresholds, windows and tolerances are Westley's. A determinism golden moves once, with a ledger row naming old and new values.
-- Report schema: ok, branch, sha, summary (stage lines verbatim), red_ids, stop_reason. Write `.wt-done` after the push.
+- Pre-gate before the lock (method rev 2): after the merges, run the pre-gate line of section (a) on the landing worktree; only a `PRE_GATE verdict OK` (or a clean `--revert` run plus a clean noise check) takes `gate.lock`. A full gate is never spent on a lint, footprint, owner-row or noise reject.
+- Shots to the queue (method rev 2): for every player-facing piece in the landing, run its story play on the merged tree (xvfb, `OM_QA_RENDERER=vulkan`, timeout 900), copy the png and qa_state json to `docs/northstar/story_reviews/shots/<run id>/` (run id `YYYYMMDD-HHMM-<sha7>`), add the row to `docs/northstar/story_reviews/<lane>.md` (reviewer verdict yes/no/unclear with one line of evidence, Westley pending), and name every shot path in the report under `shots`.
+- Status row (method rev 2): in the landing commit, flip the lane's row in the programme file's lane table (On main sha, Next piece) and the pieces rows; write nothing about status anywhere else (no ROADMAP lane rows, no journal line: the commit subject is the journal, `scripts/journal.sh` prints it).
+- Report schema: ok, branch, sha, summary (stage lines verbatim), red_ids, stop_reason, shots. Write `.wt-done` after the push.
 
 ## (c) Read-only scout or auditor
 
 - Detached worktree (`git worktree add --detach <abs path> origin/main`); remove it after, even if removal is slow. Change nothing; no commits, no pushes, no ledger edits.
 - Evidence as file:line plus the sha read. Mark what was not run (Godot, pytest) as unverified.
 - Report once, at the end, findings numbered, with a blocking yes or no.
+
+## (d) Test writer (Engineer), method rev 2
+
+- Section (a)'s worktree, build and Godot lines apply. Write ONLY the test file the brief names; never a source file.
+- On the built tree, not from the spec alone: merge the branch that holds the stub or the previous piece (the brief names it; else `origin/main`), build, run the file. It must be red for the missing-feature reason the brief states, and the report pastes the failing assertion line verbatim (file:line and the message).
+- Positive control green first: before the new assertions, one assertion that passes today on the same scene or fixture (the node instantiates, the helper returns a value, the getter reads the fixture), so a red means the feature is missing and not that the harness is broken.
+- Scene premises are dumped, not assumed: a test that reads qa_state, a frame or a sim scene runs the scene once and pastes the keys and the values it relies on (region owner, economy, tick, era, unit count) into the report; a premise that does not hold (the economy is 0, no units so the tick returns early, the clock is stopped before `om_mission_begin`) is fixed in the test now, on the test branch, and said in the report. The 2026-10-10 part a run stopped six of seven builders on premises nobody had run.
+- Thresholds, windows and tolerances are Westley's: a value nobody gave goes in a `*_park_*` file with a comment naming the register row.
+- Report ok, branch, sha, summary (the failing line, the control line, the dumped premises), red_ids.
+
+## (e) Ruler (Engineer), method rev 2
+
+- Spawned by the script when a builder stops with `test-defect:`. Read-only on sources; edits ONLY the one test file the stop names, on a branch `push/vg-<lane>-rulings`, under a ledger row.
+- Apply `docs/northstar/plans/2026-10-07-visible-game-rulebook.md` "Decision procedure" word for word: a defect only if (1) the failing assertion matches a rulebook row or its pattern, (2) the spec names the replacing line and you quote it with file:line, (3) the edit changes only the pinned literal, key list or scene parameter, (4) no threshold, window or tolerance moves and no positive control is weakened, (5) the file is not on the do-not-touch list. Then edit, run the touched test alone and its control, append the ledger row (`TD-VG-<lane>-<n>`, the rulebook's template, old and new values named), push, report `ruled: true` with the row id and branch.
+- Anything else: `ruled: false` and a brief for the Architect, under one page: the test id and failing line, the builder's claim, the spec and bible lines that bear on it, two or three options with what each changes. No edit, no ledger row.
+- Never reclassify a real finding as a skip; never widen anything; never touch a second file.
+
+## (f) Dispatcher (Sonnet 5.5 main chat), method rev 2
+
+The runbook is `dispatcher.md` beside this file. In one line: launch the Architect's scripts after their pre-flight, wait on the Workflow notification (no polling, no scheduled wakeups), land through clerks, keep the programme file's lane table, queue shots, consult `subagent_type: architect` by a one-page brief, decide nothing about rules, thresholds, specs or tests, restart from memory past about 150k context.
