@@ -70,7 +70,7 @@ def scene(lib, world_factory, seed, steps=STEPS):
     set_owner(lib, w, 0, 1, held_since=-1)
     set_owner(lib, w, 1, 0, held_since=-1)
     set_edge(lib, w, 0, 1, OMEdge.BOTH)
-    set_region(lib, w, 0, tier=OMTier.HOME, military=20.0, faction_id=1)
+    set_region(lib, w, 0, tier=OMTier.HOME, military=20.0, economy=10.0, population=10.0, faction_id=0)  # TD-VG-E-10: player region, as the E1b scene
     assert lib.om_set_era_kind(w, 1) == 0
     for t in range(6):
         assert lib.om_roster_set_movement_kind(w, t, 1) == 0
