@@ -704,9 +704,16 @@ double om_structure_get_hp(om_world *w, uint32_t structure) {
     return om_sup_structure_at(w, structure)->hp;
 }
 
+void om_structure_refound(om_world *w, uint32_t structure, int32_t owner) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    s->destroyed = 0;
+    s->hp = (double)OM_REINFORCEMENT_STRUCTURE_HP;
+    s->owner = owner;
+}
+
 void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old_owner, int32_t new_owner) {
     int32_t pf, player;
-    (void)structure;
+    if (old_owner != new_owner) om_economy_on_structure_owner(w, structure, old_owner, new_owner);
     /* R-127-04/E-16 R-104-01: player perspective only. Legacy: faction 1 when
      * no player configured (HDR3; smaller than adding om_faction_set to those
      * fixtures). */

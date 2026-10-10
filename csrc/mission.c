@@ -1514,7 +1514,6 @@ static double om_mission_end_retention(const om_world *w, const om_mission_state
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
     om_gen_consequence_rearm(w);
-    om_economy_on_mission_end(w);
     st->tactical_ended = 1;
     double o = om_mission_get_objective_score(w);
     double r = om_mission_end_retention(w, st);
@@ -1535,6 +1534,7 @@ void om_mission_end(om_world *w) {
     }
     if (st->mission_set && !st->end_applied) {
         st->end_applied = 1;
+        om_economy_on_mission_end(w);
         om_mission_apply_consequences(w, st->mission_region, st->mission_archetype, st->band);
         /* R-058-05 */
         uint32_t commander = om_mission_main_commander(w);
@@ -2695,7 +2695,6 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
         om_mission_space_snap(free_cells, &sx, &sy, 1);
         om_structure_set_position(w, i, sx, sy);
     }
-    om_economy_init(w);
     free(free_cells);
 }
 
@@ -2765,6 +2764,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_macro_set_force_fallback_point(w, 0, ex, ey);
     om_mission_place_structures(w, st, cat, canvas, player, enemy, space_good);
     free(space_good);
+    om_economy_init(w);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {

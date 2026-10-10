@@ -15,6 +15,8 @@ void om_economy_on_structure_damage(om_world *w, uint32_t structure, double hp_a
 void om_economy_on_area_hit(om_world *w, double x, double y, double radius);
 void om_economy_on_mission_end(om_world *w);
 
+void om_structure_refound(om_world *w, uint32_t structure, int32_t owner); /* tactical_support.c */
+
 /* economy_density.c (E1b) */
 void om_density_init(om_world *w);
 void om_density_step(om_world *w, uint64_t tick);

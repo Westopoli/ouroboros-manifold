@@ -2302,6 +2302,7 @@ uint64_t om_tactical_step(om_world *w) {
      * units spawned must not advance the tactical tick counter at all. */
     const om_tac_state *ro = om_tac_ro(w);
     om_tac_state *st;
+    if (ro) om_economy_step(w, ro->current_tick);
     if (!ro || ro->n_units == 0) {
         if (ro) { om_tac(w)->n_events = 0; om_tac(w)->events_dropped = 0; om_tac(w)->ev_closed = 1; }
         return ro ? ro->current_tick : 0;
@@ -2321,7 +2322,6 @@ uint64_t om_tactical_step(om_world *w) {
     om_support_tick(w);
     om_mission_tactical_tick(w);
     om_tac_log_kills(st);
-    om_economy_step(w, st->current_tick);
     st->ev_tick = 0;
     st->ev_closed = 1;
     return st->current_tick;
