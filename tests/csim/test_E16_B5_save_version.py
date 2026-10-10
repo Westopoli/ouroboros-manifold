@@ -94,7 +94,7 @@ def test_R_111_03_a_version_6_save_is_refused_cleanly(lib, world_factory):
     """Given a save from a later build (version word 6), When loaded, Then it is refused: no migration either way, any other version is rejected."""
     src = _world(lib, world_factory, seed=37)
     buf, size = _save(lib, src)
-    newer = _with_version(buf, size, 8)
+    newer = _with_version(buf, size, 9)
     dst = world_factory(n_regions=4, seed=38)
     before = lib.om_world_get_state_checksum(dst)
     assert lib.om_load_state_read(dst, newer, size) != 0
