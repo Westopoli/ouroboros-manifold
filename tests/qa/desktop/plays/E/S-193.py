@@ -1,21 +1,27 @@
-"""Story play S-193 (settlement density), lane E1 piece E1b. Fenced. The density field is sim-side; its view arrives with
-E1k/E1p, so this play asserts only the qa_state key the settlement layer will publish. Red until then (key absent).
-Draft key name: settlement_density_cells (count of cells with density > 0)."""
-import sys
-from pathlib import Path
+"""Story play S-193 (E-17): "The settlement grows." Moment: a few hundred ticks into the first mission the base has
+lots at rising stages. Needs E1c (lot stages) and E1p (view wiring); qa_state `settlement.lots` is a list of
+{id,x,y,stage,owner} read from the running scene. Red on main: no `settlement` key. Screenshot and qa_state go to
+docs/northstar/story_reviews/shots/<run id>/."""
+import pytest
+from _k_common import moment, start_game, step_ticks, to_tactical
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "K"))
-from _k_common import moment, start_game, step_ticks, to_tactical  # noqa: E402
+STORY = "S-193"
 
 
-def test_s193_density_grows_in_play():
-    g = start_game(seed=1)
-    try:
-        to_tactical(g)
-        first = moment(g, "S193", "start")
-        step_ticks(g, 600)
-        later = moment(g, "S193", "after_30s")
-        assert "settlement_density_cells" in later, "settlement layer does not publish settlement_density_cells yet"
-        assert later["settlement_density_cells"] > first.get("settlement_density_cells", 0)
-    finally:
-        g.stop()
+@pytest.fixture(scope="module")
+def game():
+    g = start_game()
+    yield g
+    g.stop()
+
+
+def test_s_193_lots_rise_in_stages(game):
+    c = game.client
+    to_tactical(c)
+    qa = step_ticks(c, 600)
+    shot = moment(c, STORY, "lots_rising")
+    assert "settlement" in shot, "S-193: qa_state has no `settlement` (keys: %s)" % sorted(shot)
+    lots = shot["settlement"].get("lots", [])
+    assert lots, "S-193: no lots in the running scene"
+    assert all(0 <= int(l["stage"]) <= 5 for l in lots)
+    assert max(int(l["stage"]) for l in lots) >= 2, "S-193: nothing rose past the empty stage"
