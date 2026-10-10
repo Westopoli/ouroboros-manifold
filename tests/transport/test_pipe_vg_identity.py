@@ -17,7 +17,8 @@ SEED, TICKS = 8, 310
 NEW_KEYS = {"acd", "tl", "ld", "sight"}
 CMDS = [
     {"type": "cmd", "name": "set_seed", "seed": SEED, "n_regions": 80, "features": [0, 1, 2, 3, 4, 5, 6, 7]},
-    {"type": "cmd", "name": "mission_start", "faction": 0},
+    # TD-VG-D-11: era_kind 1 (ground), which lane D leaves unchanged; the space era differs by design (field, anchor spawns, objective pocket).
+    {"type": "cmd", "name": "mission_start", "faction": 0, "era_kind": 1},
     {"type": "cmd", "name": "mission_begin"},
 ] + [{"type": "cmd", "name": "tactical_step", "n": 1}] * TICKS + [
     {"type": "cmd", "name": "tactical_step", "n": 0},

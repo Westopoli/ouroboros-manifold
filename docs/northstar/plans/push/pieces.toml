@@ -1474,7 +1474,7 @@ wave = 8
 # D5 hands csrc/mission.c to VG-D for this landing (Architect ruling 2026-10-09).
 owns = [
     "csrc/space_noise.c", "csrc/space_plates.c", "csrc/space_raster.c", "csrc/space_field.c", "tests/csim/test_core_objective_accessors.py",
-    "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_d7.py",  # TD-VG-D-7 re-pins and the pipe-field test; shared with the transport test owners
+    "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_d7.py", "tests/transport/test_pipe_vg_identity.py",  # TD-VG-D-11 (identity on the ground era); TD-VG-D-7 re-pins and the pipe-field test; shared with the transport test owners
 ]
 owns_glob = ["scenes/space_field/**", "tests/test_vg_d_*.gd", "tests/csim/test_VG_D_*.py", "tests/qa/desktop/plays/D/**"]
 acceptance = []
