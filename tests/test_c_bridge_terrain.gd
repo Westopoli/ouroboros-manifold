@@ -79,6 +79,8 @@ func send_command(cmd: Dictionary) -> void:
 		"mission_end":
 			_reply({"type": "debrief", "band": 1})
 			_reply({"type": "snapshot", "regions": [{"i": 0}], "tick": 1})
+		"lots_dump":
+			_reply({"type": "lots", "lots": []})
 		"terrain_dump":
 			if not _ground:
 				_reply({"type": "error", "name": "terrain_dump", "reason": "no terrain"})
