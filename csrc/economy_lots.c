@@ -13,6 +13,7 @@
 #define LOT_STREET 3 /* liberty 2026-10-07: every third column and row is left open (R-193-09) */
 #define LOT_APPEAR_TICKS 10 /* liberty 2026-10-07: one new lot per 10 ticks */
 #define LOT_RISE_TICKS 20 /* liberty 2026-10-07: a lot rises one stage per 20 ticks */
+#define LOT_DCELL 200.0 /* density cell size in wu (OM_DENSITY_SIDE grid); a lot sits at its cell centre */
 
 static int32_t lot_target(double d) {
     return 1 + (d >= LOT_T1) + (d >= LOT_T2) + (d >= LOT_T3) + (d >= LOT_T4);
@@ -38,8 +39,8 @@ void om_lots_step(om_world *w, uint64_t tick) {
     if (tick % LOT_APPEAR_TICKS == 0 && e->n_lots < OM_LOT_CAP && lot_cell(e->n_lots, &cx, &cy)) {
         om_lot *l = &e->lots[e->n_lots];
         l->id = e->n_lots + 1;
-        l->x = cx * 200.0 + 100.0;
-        l->y = cy * 200.0 + 100.0;
+        l->x = (cx + 0.5) * LOT_DCELL;
+        l->y = (cy + 0.5) * LOT_DCELL;
         l->stage = 1;
         l->building = 0;
         l->owner = -1;
