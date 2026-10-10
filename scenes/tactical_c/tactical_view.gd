@@ -3,6 +3,7 @@ extends Node2D
 const SimSession := preload("res://autoload/sim_session.gd")
 const Ground3DHost := preload("res://scenes/ground3d/ground3d.gd")
 const GroundProjection := preload("res://scenes/ground3d/projection.gd")
+const SettlementLayerNode := preload("res://scenes/settlement/settlement_layer.gd")
 
 # Piece C5: minimal tactical view over a C transport v1 "tactical" snapshot
 # (docs/architecture.md "C transport v1"). Fresh scene, no legacy code. See
@@ -142,6 +143,7 @@ var _ending := false
 var _ground_layer: Node2D
 # Ground era (S-236): the 3D ground hosted under the 2D shell. The 2D terrain layer is demoted to the map band.
 var _ground3d: Node
+var _settlement: Node3D
 var _terrain: Dictionary = {}
 
 
@@ -279,6 +281,7 @@ func set_terrain(t: Dictionary) -> void:
 			_ground3d.queue_free()
 			remove_child(_ground3d)
 			_ground3d = null
+			_settlement = null
 		return
 	if _ground_layer == null:
 		_ground_layer = load("res://scenes/tactical_c/terrain_layer.gd").new()
@@ -296,12 +299,25 @@ func set_terrain(t: Dictionary) -> void:
 			add_child(_ground3d)
 			move_child(_ground3d, 0)
 		_ground3d.set_terrain(t)
+		_add_ground_layers(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
 		_camera = _force_camera()
 		_ground3d.camera_rig().pan_to(_camera)
 		_sync_from_rig()
 		_update_display_px()
 		_redraw()
+
+
+# E1p-a: the 3D layers go in through Ground3D.add_layer once the host has its terrain, so the layer is primed here with
+# the terrain and the frame already held (add_layer only fans later changes).
+func _add_ground_layers(t: Dictionary) -> void:
+	if _settlement != null:
+		return
+	_settlement = SettlementLayerNode.new()
+	_settlement.local_faction = _get_local_faction()
+	_ground3d.add_layer(_settlement)
+	_settlement.set_terrain(t)
+	_settlement.set_frame(_frame)
 
 
 func _rig() -> Node3D:
@@ -409,6 +425,8 @@ func load_frame(frame: Dictionary) -> void:
 	if _canvas > 0.0:
 		_fit_scale = SCREEN_H / _canvas
 		_world_scale = _fit_scale * _zoom
+	if _settlement != null:
+		_settlement.local_faction = _get_local_faction()
 	if _ground3d != null:
 		_ground3d.set_frame(frame, SimSession.bridge().mission())
 	var tick := int(frame.get("tick", 0))
@@ -487,6 +505,7 @@ func qa_state() -> Dictionary:
 		"ground_layer": _ground_layer_state(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 		"inventory": _inventory(),
+		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
 	}
 
 
@@ -523,6 +542,7 @@ func _inventory() -> Dictionary:
 		"ambient": _piece_count("Ambient", "active"),
 		"loading_overlay": 1 if _loading_overlay.visible else 0,
 		"hud": hud,
+		"settlement_lots": _settlement.lots_drawn().size() if _settlement != null else 0,
 	}
 
 
