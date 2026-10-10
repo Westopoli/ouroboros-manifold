@@ -145,6 +145,16 @@ Owner rows: `VG-CONTRACT-E2` owns `csrc/economy_internal.h`, `csrc/economy.c`, `
 
 Tests for K-e2 (`tests/csim/test_VG_E_ke2.py`, written first): the entry points exist in the built library with the stated signatures (ctypes lookup on `ouroboros_sim` symbols; internal functions are exported by the shared object); a ground mission's structure count never exceeds the slope count; `om_mission_compute_starting_force(1000.0) == 1000.0`; a structure at 0 HP is still listed; the sorted csim red ids otherwise equal main's.
 
+**K-e2 addendum (2026-10-10, after the audit and the first contract build push/vg-ke2 1c265472):**
+- `om_economy_init` is called once at the end of `om_mission_instantiate_map` (`mission.c`), after the terrain is generated and the structures are placed and positioned (the loop in `om_mission_place_structures` sets positions; the init runs after it so `om_strongpoint_init` can move structures onto slopes). The R-218-01 cap stays where `total` is computed.
+- `om_economy_step(w, st->current_tick)` runs on every `om_tactical_step` call, before the early return for a unit-less world. The economy does not run during the recon phase (R-092: the clock is stopped), so a test scene that expects growth calls `om_mission_begin` after `om_mission_setup` (TD-VG-E-5).
+- `om_economy_on_structure_owner` is called from `om_structure_set_owner` and from `om_structure_on_owner_changed` (a driven capture), only when `old_owner != new_owner`; every hook is a no-op on empty tables (before init).
+- `om_economy_on_mission_end` fires once per mission (guarded by `st->end_applied`); the two `om_mission_end` paths share it.
+- `om_economy_on_area_hit` takes the target's position (`center->x`, `center->y`) and the attack's radius.
+- R-218-05: the structure's `destroyed` flag means rubble (production and capture stop; the strongpoint state is 2). Refounding: `void om_structure_refound(om_world *w, uint32_t structure, int32_t owner)` (declared in `economy_internal.h`, defined in `tactical_support.c` by K-e2) clears `destroyed`, sets HP 3,000 and the owner; `om_economy_place` (E1e) calls it when the footprint's centre cell holds a rubble strongpoint; the placer is `om_player_faction(w)`.
+- A ground map with no slopes places no structures and no strongpoints (R-218-01, E-15 "a map with no slope places no strongpoint"). TD-VG-E-5 (test-defect, rule-changed): `tests/csim/test_E01_T3_mission_ground.py::test_structure_slots_are_on_walkable_ground` asserts `placed > 0` only when `om_terrain_slope_count > 0`; `tests/csim/test_VG_E_ke2.py::test_R_218_01_ground_structure_count_at_most_slope_count` drops its `slopes > 0` premise; the E1b, E1c, E1d and E1h scenes call `om_mission_begin` before stepping where they expect the clock to run.
+- Owner rows: VG-CONTRACT-E2 does not depend on VG-E1 (the cycle is removed); VG-E1 keeps its dependency on VG-CONTRACT-E2.
+
 ### Lane F: Steam phase B and shipping (`VG-F` + `VG-F5`, 8 pieces)
 
 Seen-reachable: S-139–S-143, S-241 (no E2 part), the tester guide. Blocked: S-144 (Q-144-03), S-159/S-242 (E2). T0: W8a, W8d, the depot script (land with B0). After K-f: W2 PipeSim, W4 lobby + menu, F5 the hookup right after A12, the loopback match, the Spacewar test.

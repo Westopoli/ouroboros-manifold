@@ -72,6 +72,8 @@ def scene(lib, world_factory, archetype=DEFENSIVE_STAND, military=0.0, seed=7, e
     set_edge(lib, w, 0, 1, OMEdge.BOTH)
     set_region(lib, w, 0, tier=OMTier.HOME, military=military, faction_id=ENEMY)
     lib.om_mission_setup(w, 0, archetype, 0)
+    lib.om_mission_begin.argtypes, lib.om_mission_begin.restype = [W], None
+    lib.om_mission_begin(w)  # TD-VG-E-5: R-092 recon stops the clock until begin
     return w
 
 

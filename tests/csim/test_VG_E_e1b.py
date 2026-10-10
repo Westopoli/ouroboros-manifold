@@ -68,6 +68,8 @@ def scene(lib, world_factory, *, seed=7, economy=10.0, population=10.0, terrain_
     if terrain:
         assert lib.om_terrain_generate(w, terrain_seed if terrain_seed is not None else seed, CANVAS, CANVAS) in (0, 1)
     lib.om_mission_setup(w, 0, 3, 0)
+    lib.om_mission_begin.argtypes, lib.om_mission_begin.restype = [W], None
+    lib.om_mission_begin(w)  # TD-VG-E-5: R-092 recon stops the clock until begin
     return w
 
 
