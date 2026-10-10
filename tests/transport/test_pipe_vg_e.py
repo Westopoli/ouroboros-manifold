@@ -116,10 +116,43 @@ def test_lots_dump_no_world():
     assert f == {"type": "error", "name": "lots_dump", "reason": "no world"}, f
 
 
+BEGUN_TERRAIN = [SET_SEED, cmd("mission_start", faction=0, era_kind=1), cmd("mission_begin")]  # era 1 generates terrain
+
+
+def _place(x, y):
+    return cmd("command", verb="place", units=[], x=x, y=y, building=3)
+
+
+def _candidates():
+    """Cell centres on the 100 wu grid, outward from the canvas centre (12000, 12000), the canvas being 24000 wide; first 64."""
+    cells = sorted(((i, j) for i in range(-12, 13) for j in range(-12, 13)), key=lambda c: (c[0] ** 2 + c[1] ** 2, c))
+    return [(12050.0 + 100.0 * i, 12050.0 + 100.0 * j) for i, j in cells[:64]]
+
+
+def _is_ack(f):
+    return f.get("type") == "ack" and f.get("name") == "command"
+
+
 def test_place_accepted_on_the_command_path():
-    """K-e: kind place, empty units, x, y, building -> ack (the K-e stub accepts; E1e adds terrain refusals)."""
-    f = frames(BEGUN + [cmd("command", verb="place", units=[], x=1200.0, y=800.0, building=3)])[-1]
-    assert f.get("type") == "ack" and f.get("name") == "command", f
+    """K-e/E1e (TD-VG-E-12): place (in an era-1 world, which has terrain) is acked at some walkable, unoccupied spot (E1e refuses unwalkable ground and
+    overlap, so a fixed spot is not promised); the lots dump then lists a lot there."""
+    cands = _candidates()
+    out = frames(BEGUN_TERRAIN + [_place(x, y) for x, y in cands] + [cmd("lots_dump")])
+    acks = [(c, f) for c, f in zip(cands, out[len(out) - 1 - len(cands):-1]) if _is_ack(f)]
+    assert acks, "none of the first 64 candidate spots was accepted"
+    lots = out[-1]
+    assert lots.get("type") == "lots" and lots["lots"], lots
+    (x, y), _ = acks[0]
+    assert any(abs(r[1] - x) < 100 and abs(r[2] - y) < 100 for r in lots["lots"]), (x, y, lots)
+
+
+def test_place_refused_off_canvas_returns_error_frame():
+    """Control (TD-VG-E-12): a spot the sim refuses (far off the canvas, unwalkable) returns the error frame.
+    Also: era 0 generates no terrain, so om_economy_place refuses every spot there (E1E_UNWALKABLE)."""
+    g = frames(BEGUN + [_place(12050.0, 12050.0)])[-1]
+    assert g == {"type": "error", "name": "command", "reason": "command failed"}, g
+    f = frames(BEGUN_TERRAIN + [_place(-50000.0, -50000.0)])[-1]
+    assert f == {"type": "error", "name": "command", "reason": "command failed"}, f
 
 
 @pytest.mark.parametrize("kw", [
