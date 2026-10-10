@@ -89,6 +89,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "economy_internal.h"
 #include "om_constants.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -1513,6 +1514,7 @@ static double om_mission_end_retention(const om_world *w, const om_mission_state
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
     om_gen_consequence_rearm(w);
+    om_economy_on_mission_end(w);
     st->tactical_ended = 1;
     double o = om_mission_get_objective_score(w);
     double r = om_mission_end_retention(w, st);
@@ -2679,6 +2681,7 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
     if (free_cells) memcpy(free_cells, good, OM_SPACE_FIELD_CELLS);
     uint32_t p = 0, e = 0, n = 0;
     uint32_t total = om_structure_compute_count(w->regions[st->mission_region].military, cat);
+    if (om_era_kind(w) == 1 && total > om_terrain_slope_count(w)) total = om_terrain_slope_count(w); /* R-218-01 */
     for (uint32_t i = 0; i < OM_MISSION_STRUCTURE_SLOTS; i++) om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, 0.0);
     om_structure_assign_owners((int)st->mission_archetype, total, &p, &e, &n);
     for (uint32_t i = 0; i < total; i++) {
@@ -2692,6 +2695,7 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
         om_mission_space_snap(free_cells, &sx, &sy, 1);
         om_structure_set_position(w, i, sx, sy);
     }
+    om_economy_init(w);
     free(free_cells);
 }
 

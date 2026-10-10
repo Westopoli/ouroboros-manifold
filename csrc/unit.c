@@ -34,6 +34,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "economy_internal.h"
 #include "om_constants.h"
 #include <math.h>
 #include <stddef.h>
@@ -2320,6 +2321,7 @@ uint64_t om_tactical_step(om_world *w) {
     om_support_tick(w);
     om_mission_tactical_tick(w);
     om_tac_log_kills(st);
+    om_economy_step(w, st->current_tick);
     st->ev_tick = 0;
     st->ev_closed = 1;
     return st->current_tick;
@@ -2769,6 +2771,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
     uint32_t ids[st->n_units + 1];
     uint32_t j, n;
     if (!attacker || !center) return;
+    om_economy_on_area_hit(w, center->x, center->y, radius);
     cap = attacker->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER;
     n = om_grid_query_st(st, center->x, center->y, radius, ids, st->n_units);
     for (j = 0; j < n; j++) {
