@@ -77,8 +77,8 @@ void om_density_init(om_world *w) {
 
 void om_density_step(om_world *w, uint64_t tick) {
     if (!w || !w->economy.density_present || (tick % OM_DENSITY_RING_TICKS) != 0) return;
-    uint32_t region = om_mission_last_region(w);
-    double econ = region < w->n_regions ? om_region_field(w, region, OM_F_ECONOMY) / (double)OM_FIELD_MAX : 0.0;
+    /* K-e3: the target reads the economy sampled once at om_economy_init, not the live region. */
+    double econ = w->economy.density_economy / (double)OM_FIELD_MAX;
     if (econ < 0.0) econ = 0.0;
     if (econ > 1.0) econ = 1.0;
     double mt = (double)tick / OM_DENSITY_M_FULL_TICKS;
