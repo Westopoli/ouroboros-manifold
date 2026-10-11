@@ -1706,7 +1706,6 @@ owns = [
     "tests/test_vg_c6b_ground_units_layers.gd",
 ]
 
-<<<<<<< HEAD
 # Method check at every compaction (Westley 2026-10-10): a SessionStart hook runs the chat's own
 # transcript against the method rev 2 rules and prints the counts and the rule list. Spec:
 # docs/northstar/plans/workflows_2026-10-07/method_check.md. A94-harness owns tests/specfactory/**
@@ -1724,7 +1723,6 @@ depends_on = ["A94-harness"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "method_check.py about 200 lines; one hook line; one spec page"
-=======
 # Method rev 2 harness pieces (2026-10-10): the pre-gate script, the status check and the journal formatter.
 [[piece]]
 id = "HARNESS-pregate"
@@ -1771,4 +1769,3 @@ depends_on = []
 status = { state = "attached", attach_sha = "c0d1cda8" }
 tests_pending = false
 size_estimate = "docs-only: one workflow script, two lines changed"
->>>>>>> origin/main
