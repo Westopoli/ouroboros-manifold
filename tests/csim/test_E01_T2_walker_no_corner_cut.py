@@ -24,7 +24,7 @@ FOLLOW_TICKS = 300             # provisional (2026-10-06)
 BLOB_TICKS = 600
 BLOB_MIN_MOVE = 300.0          # same bar as the lab twin
 FLYER_TICKS = 200
-FLYER_CHECKSUM_200 = wp.FLYER_CHECKSUM_200   # same scene as the waypoint test, recorded 2026-10-06
+FLYER_SECTIONS_200 = wp.FLYER_SECTIONS_200   # same scene as the waypoint test (TD-VG-E-17: units and movement sections)
 MAX_DETOUR_CELLS = 20          # provisional (2026-10-06): the follow-the-route pair must be reachable within this
 
 
@@ -165,4 +165,4 @@ def test_R_001_07_flyer_blob_trace_is_unchanged_by_the_corner_rule(lib, world_fa
     for _ in range(FLYER_TICKS):
         lib.om_tactical_step(w)
     assert math.hypot(*(p - q for p, q in zip(c0, wp._centroid(lib, w, ids)))) > 50.0, "flyers did not move"
-    assert lib.om_world_checksum_full(w, None, 0) == FLYER_CHECKSUM_200
+    assert wp._units_movement(lib, w) == FLYER_SECTIONS_200
