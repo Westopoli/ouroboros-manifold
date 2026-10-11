@@ -1,19 +1,28 @@
 extends RefCounted
 
-# Lays out one Vector3 per region id on a jittered disc, seeded. C5 rule
+# Lays out one Vector3 per region id in a uniform ball, seeded. C5 rule
 # (docs/architecture.md "C transport v1"): the server never transmits
 # positions, so the client owns layout. Same region-id set + same seed
 # always yields the same positions (determinism contract, CLAUDE.md).
 
-const DISC_RADIUS := 40.0
-const Y_JITTER := 3.0
-const MIN_SPACING := 3.0
-const PLACEMENT_ATTEMPTS := 250
+# liberty 2026-10-10: R_BALL 71 is the prototype's 100 (galaxy_gen.gd:8 on origin/push/galaxy-field,
+# unscaled) times the cube root of 80 / 220, so the star density per volume is the prototype's.
+const R_BALL := 71.0
+const MIN_SPACING := 22.0   # prototype galaxy_gen.gd:11 (unscaled), now in 3D
+const PLACEMENT_ATTEMPTS := 250   # prototype galaxy_gen.gd:48 (250 per system)
+
+var _fallbacks := 0
+
+
+# Count of ids the last layout() placed unchecked after PLACEMENT_ATTEMPTS misses.
+func last_fallbacks() -> int:
+	return _fallbacks
 
 
 func layout(region_ids: Array, p_seed: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = p_seed
+	_fallbacks = 0
 	var sorted_ids: Array = region_ids.duplicate()
 	sorted_ids.sort()
 	var placed: Array[Vector3] = []
@@ -26,24 +35,22 @@ func layout(region_ids: Array, p_seed: int) -> Dictionary:
 
 
 func _place_one(rng: RandomNumberGenerator, placed: Array[Vector3]) -> Vector3:
-	var attempts := 0
-	while attempts < PLACEMENT_ATTEMPTS:
-		attempts += 1
-		var r := DISC_RADIUS * pow(rng.randf(), 1.6)
+	var candidate := Vector3.ZERO
+	for _attempt in range(PLACEMENT_ATTEMPTS):
+		# prototype galaxy_gen.gd:50-54: uniform ball, r = R_BALL * cbrt(randf), uniform direction
+		var r := R_BALL * pow(rng.randf(), 1.0 / 3.0)
+		var cos_phi := rng.randf_range(-1.0, 1.0)
+		var sin_phi := sqrt(1.0 - cos_phi * cos_phi)
 		var theta := rng.randf() * TAU
-		var x := cos(theta) * r
-		var z := sin(theta) * r
+		candidate = Vector3(cos(theta) * sin_phi, cos_phi, sin(theta) * sin_phi) * r
 		var ok := true
 		for p in placed:
-			if Vector2(p.x, p.z).distance_to(Vector2(x, z)) < MIN_SPACING:
+			if p.distance_to(candidate) < MIN_SPACING:   # prototype galaxy_gen.gd:56-59
 				ok = false
 				break
 		if ok:
-			var y := rng.randf_range(-Y_JITTER, Y_JITTER)
-			return Vector3(x, y, z)
-	# Spacing rejection can exhaust its attempts on a dense id set; fall back
-	# to an unchecked sample rather than stall placement (still seeded and
-	# deterministic since it consumes the same rng stream either way).
-	var theta2 := rng.randf() * TAU
-	var r2 := DISC_RADIUS * rng.randf()
-	return Vector3(cos(theta2) * r2, rng.randf_range(-Y_JITTER, Y_JITTER), sin(theta2) * r2)
+			return candidate
+	# Every attempt hit a neighbour: keep the last sample unchecked rather than stall (still seeded and
+	# deterministic), and count it; qa_state reports it as layout_fallbacks.
+	_fallbacks += 1
+	return candidate
