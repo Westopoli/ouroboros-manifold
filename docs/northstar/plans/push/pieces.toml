@@ -72,7 +72,7 @@ acceptance = [
     "tests/csim/test_E03_S025_nobody_starts_on_your_doorstep.py",
 ]
 depends_on = ["freeze"]
-status = { state = "attached", attach_sha = "45c4441" }
+status = { state = "attached", attach_sha = "11f85426" }
 size_estimate = "217+ py lines, 28 tests (E-03); needs F2's weak om_world_generate attribute"
 
 [[piece]]
@@ -142,7 +142,7 @@ acceptance = [
     "tests/csim/test_E08_S064_what_carries_over.py",
 ]
 depends_on = ["freeze"]
-status = { state = "attached", attach_sha = "84bdfa5" }
+status = { state = "attached", attach_sha = "f0397c30" }
 size_estimate = "1263 py lines, 50 tests (E-08 minus S-055, held for B7b: needs chronicle.c and unit.c)"
 
 [[piece]]
