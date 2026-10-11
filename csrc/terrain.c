@@ -324,6 +324,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "economy_internal.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -696,6 +697,19 @@ static void tg_free(void *p) {
     free(st);
 }
 
+/* Bands the cells from the five floors: band k + 1 for the highest floor k whose range holds the cell, clamped, cells below
+ * floor 0 in band 1 (the generator's rule). Shared by om_terrain_generate, ts_save_read and om_terrain_set_heights.
+ * See also: the K-e5 paragraph of docs/architecture.md. */
+static void ts_bands_from_floors(const int32_t *h, size_t n, const int32_t floors[OM_TERRAIN_BANDS], uint8_t *band) {
+    int64_t lo = floors[0], step = (int64_t)floors[1] - lo;
+    size_t i;
+    if (step < 1) step = 1;
+    for (i = 0; i < n; i++) {
+        int64_t b = h[i] < lo ? 0 : (h[i] - lo) / step;
+        band[i] = (uint8_t)(tg_clamp(b, 0, OM_TERRAIN_BANDS - 1) + 1);
+    }
+}
+
 int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canvas_h) {
     om_terrain_state *st;
     tg_grid g;
@@ -747,10 +761,7 @@ int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canv
     step = (hi - lo) / TG_BAND_DIV;
     if (step < 1) step = 1;
     for (i = 0; i < OM_TERRAIN_BANDS; i++) st->band_floor_cm[i] = (int32_t)(lo + step * (int64_t)i);
-    for (i = 0; i < cells; i++) {
-        int64_t b = g.e[i] < lo ? 0 : (g.e[i] - lo) / step;
-        st->band[i] = (uint8_t)(tg_clamp(b, 0, OM_TERRAIN_BANDS - 1) + 1);
-    }
+    ts_bands_from_floors(g.e, cells, st->band_floor_cm, st->band);
     st->present = 1;
     st->seed = seed;
     st->cells_w = g.n;
@@ -1092,6 +1103,36 @@ void om_terrain_apply_ground(om_world *w) {
     om_move_terrain_changed(w);
 }
 
+/* K-e5 test hook (header: om_terrain_set_heights; reach_allowlist.toml): the generator's floor and band rules on given heights.
+ * See also: the call chain at the end of om_terrain_generate. */
+int om_terrain_set_heights(om_world *w, const int32_t *cm, uint32_t cells_w, uint32_t cells_h) {
+    om_terrain_state *st = w ? (om_terrain_state *)w->terrain_state : NULL;
+    int64_t lo = INT64_MAX, hi = INT64_MIN, step;
+    int32_t floors[OM_TERRAIN_BANDS];
+    size_t i, n;
+    int dry = 0;
+    if (!st || !st->present || !cm || cells_w != st->cells_w || cells_h != st->cells_h) return 0;
+    n = (size_t)cells_w * cells_h;
+    for (i = 0; i < n; i++) if (cm[i] > tg_cm(TG_DRY_LEVEL_WU)) {
+        dry = 1;
+        if (cm[i] < lo) lo = cm[i];
+        if (cm[i] > hi) hi = cm[i];
+    }
+    if (!dry) for (i = 0; i < n; i++) {
+        if (cm[i] < lo) lo = cm[i];
+        if (cm[i] > hi) hi = cm[i];
+    }
+    step = (hi - lo) / TG_BAND_DIV;
+    if (step < 1) step = 1;
+    for (i = 0; i < OM_TERRAIN_BANDS; i++) floors[i] = (int32_t)(lo + step * (int64_t)i);
+    memcpy(st->height_cm, cm, n * sizeof(int32_t));
+    memcpy(st->band_floor_cm, floors, sizeof floors);
+    ts_bands_from_floors(st->height_cm, n, st->band_floor_cm, st->band);
+    om_terrain_apply_ground(w);
+    om_density_rebuild_inputs(w);
+    return 1;
+}
+
 /* ---- net hooks (terrain stage 1 spec 2026-10-05) ---- */
 #define TS_NET_PRIME 1099511628211ULL
 #define TS_NET_SEED 0x74657272616e6eULL
@@ -1164,7 +1205,6 @@ static int ts_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     om_terrain_state *st;
     uint32_t cw, ch;
     size_t i, n;
-    int64_t lo, step;
     if (len == 0) return 0;
     if (!w || !buf || len < TS_SAVE_HEAD) return -1;
     cw = (uint32_t)ts_get(buf + TS_SAVE_OFF_W, TS_SAVE_I32);
@@ -1184,13 +1224,7 @@ static int ts_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     st->cells_h = ch;
     for (i = 0; i < OM_TERRAIN_BANDS; i++) st->band_floor_cm[i] = (int32_t)(uint32_t)ts_get(buf + TS_SAVE_OFF_FLOORS + TS_SAVE_I32 * i, TS_SAVE_I32);
     for (i = 0; i < n; i++) st->height_cm[i] = (int32_t)(uint32_t)ts_get(buf + TS_SAVE_HEAD + TS_SAVE_I32 * i, TS_SAVE_I32);
-    lo = st->band_floor_cm[0];
-    step = (int64_t)st->band_floor_cm[1] - lo;
-    if (step < 1) step = 1;
-    for (i = 0; i < n; i++) {
-        int64_t b = st->height_cm[i] < lo ? 0 : (st->height_cm[i] - lo) / step;
-        st->band[i] = (uint8_t)(tg_clamp(b, 0, OM_TERRAIN_BANDS - 1) + 1);
-    }
+    ts_bands_from_floors(st->height_cm, n, st->band_floor_cm, st->band);
     st->present = 1;
     ts_analyse(w, st);
     if (w->terrain_state && w->terrain_state_free) w->terrain_state_free(w->terrain_state);

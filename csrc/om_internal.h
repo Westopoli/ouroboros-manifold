@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 9 /* bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 10 /* bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -76,16 +76,23 @@ typedef struct {
 /* VG K-e (lane E1, ABI 6): economy fields held inline in om_world, saved at format 8 and hashed in the factions section.
  * No spec number gives a cap for any of these; each is a liberty 2026-10-09, the smallest sensible, for E1b to E1h to
  * revise. Density is a coarse grid of OM_DENSITY_SIDE x OM_DENSITY_SIDE cells over the 24000 wu canvas. */
-#define OM_LOT_CAP 256 /* liberty 2026-10-09 */
+#define OM_LOT_CAP 2048 /* DRAFT-lot-cap (K-e5; was 256, liberty 2026-10-09) */
 #define OM_STRONGPOINT_CAP 32 /* liberty 2026-10-09 */
 #define OM_WAVE_LOG_CAP 128 /* liberty 2026-10-09 */
-#define OM_DENSITY_SIDE 120 /* liberty 2026-10-09: 200 wu cells */
+#define OM_DENSITY_SIDE 120 /* legacy: liberty 2026-10-09, 200 wu cells. E1q deletes it. See also: Lane E1 part c (the settlement port). */
+#define OM_DENSITY_MAX_SIDE 240 /* K-e5: cells per side of the 100 wu terrain grid on a 24000 wu canvas */
+#define OM_DENSITY_MAX_CELLS (OM_DENSITY_MAX_SIDE * OM_DENSITY_MAX_SIDE)
 #define OM_DOCTRINE_BALANCED 3
 typedef struct om_economy_state {
     uint32_t n_lots;
     om_lot lots[OM_LOT_CAP];
     uint8_t density_present;
-    double density[OM_DENSITY_SIDE * OM_DENSITY_SIDE];
+    uint32_t density_side; /* K-e5, saved and hashed with density_present: cells per side, at most OM_DENSITY_MAX_SIDE (120 on the K-e5 tree) */
+    double density[OM_DENSITY_MAX_CELLS]; /* D: saved and hashed, density_side squared entries, Q16 */
+    double P[OM_DENSITY_MAX_CELLS]; /* P (K-e5; E1q-field grows it, all zero on the K-e5 tree): saved and hashed like D */
+    uint32_t n_active; /* K-e5: the growth frontier, saved and hashed */
+    uint32_t active[OM_DENSITY_MAX_CELLS];
+    uint32_t core_cell; /* K-e5: saved and hashed */
     uint32_t n_strongpoints;
     om_strongpoint strongpoints[OM_STRONGPOINT_CAP];
     uint8_t doctrine_chosen; /* 0: the world is calloc-zeroed, so a fresh world reads OM_DOCTRINE_BALANCED */
@@ -94,6 +101,14 @@ typedef struct om_economy_state {
     om_wave waves[OM_WAVE_LOG_CAP];
     double density_economy; /* VG K-e3: the player's home region economy, sampled once at om_economy_init */
     uint32_t lot_hit_tick[OM_LOT_CAP]; /* VG K-e3: tick of the last area hit that knocked lot i back; 0 = never */
+    uint32_t next_lot_id; /* K-e5, saved and hashed, always written; 1 on the K-e5 tree (the old code numbers lots n_lots + 1), E1q switches both lot creators to it */
+    /* K-e5: derived grids, density_side squared, unsaved and unhashed; E1q-field fills them in om_density_rebuild_inputs, E1q-lots writes lot_at when it creates a lot. */
+    int32_t elev_cm[OM_DENSITY_MAX_CELLS];
+    uint8_t water[OM_DENSITY_MAX_CELLS];
+    uint8_t wdist[OM_DENSITY_MAX_CELLS];
+    uint16_t slope_q[OM_DENSITY_MAX_CELLS];
+    uint8_t lane[OM_DENSITY_MAX_CELLS];
+    int32_t lot_at[OM_DENSITY_MAX_CELLS];
 } om_economy_state;
 
 /* VG K-d (lane D, 2026-10-07 spec rev 4): five layers of 240 x 240 cells of 100 wu on a 24000 wu canvas. */
