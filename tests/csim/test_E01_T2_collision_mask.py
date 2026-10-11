@@ -22,7 +22,16 @@ BLOB_N = 16
 BLOB_R = 60.0              # lab's shape: 16 units in a 60 wu blob
 # Recorded 2026-10-06 on push/terrain2-land-2 at 6ea6b26baf6e207d33c3213bdfeb3562bc6d9700: flyer blob, 50 ticks.
 # Re-recorded 2026-10-09 (TD-VG-E-1): K-e folds the economy words into the factions section; old 17656050431320828508.
-FLYER_CHECKSUM_50 = 3388087635923795345   # TD-VG-E-9: was 6400998881059197604
+# TD-VG-E-17: K-e5 hashes the economy block into the factions section, which moved the whole word (TD-VG-E-9 value
+# 3388087635923795345); the pin is now the (units, movement) sections, which K-e5 does not touch.
+FLYER_SECTIONS_50 = (5542676384425136191, 59688484827617401)   # recorded 2026-10-11 on the K-e5 tree 2747b283; identical on main c88cead2
+
+
+def _units_movement(lib, w):
+    """TD-VG-E-17: the trace is the "units" and "movement" sections (3, 4) of om_world_checksum_full, not the whole word."""
+    buf = (ctypes.c_uint64 * 9)()
+    lib.om_world_checksum_full(w, buf, 9)
+    return (buf[3], buf[4])
 
 
 def _world(lib, world_factory, kind):
@@ -113,6 +122,6 @@ def test_R_001_07_flyer_blob_trace_is_unchanged_by_the_walker_fix(lib, world_fac
     for _ in range(50):
         lib.om_tactical_step(w)
     assert [lib.om_unit_get_pos(w, u) for u in ids] != x0, "flyers did not move at all"
-    cs = lib.om_world_checksum_full(w, None, 0)
-    print("FLYER_CHECKSUM_50", cs)
-    assert cs == FLYER_CHECKSUM_50
+    cs = _units_movement(lib, w)
+    print("FLYER_SECTIONS_50", cs)
+    assert cs == FLYER_SECTIONS_50

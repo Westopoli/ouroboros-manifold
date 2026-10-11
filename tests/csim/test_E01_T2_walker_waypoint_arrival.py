@@ -41,7 +41,16 @@ BLOB_MIN_MOVE = 300.0          # same bar as the lab twin
 FLYER_TICKS = 200
 # Recorded 2026-10-06 on push/t2-colmask bd169a90 (flyer blob, 16 Vanguards, lab scene, ordered to (600, 600), 200 ticks).
 # Re-recorded 2026-10-09 (TD-VG-E-1): K-e folds the economy words into the factions section; old 14299308082090419322.
-FLYER_CHECKSUM_200 = 2109990263532742758   # TD-VG-E-9: was 1046090717449054662
+# TD-VG-E-17: K-e5 moved the whole word (TD-VG-E-9 value 2109990263532742758) via the economy block; the pin is now the
+# (units, movement) sections.
+FLYER_SECTIONS_200 = (1545777915625493498, 11290823588580758478)   # recorded 2026-10-11 on the K-e5 tree 2747b283; identical on main c88cead2
+
+
+def _units_movement(lib, w):
+    """TD-VG-E-17: the trace is the "units" and "movement" sections (3, 4) of om_world_checksum_full, not the whole word."""
+    buf = (ctypes.c_uint64 * 9)()
+    lib.om_world_checksum_full(w, buf, 9)
+    return (buf[3], buf[4])
 
 
 def _dist(a, b):
@@ -158,6 +167,6 @@ def test_R_001_07_flyer_blob_trace_is_unchanged_by_the_waypoint_fix(lib, world_f
     for _ in range(FLYER_TICKS):
         lib.om_tactical_step(w)
     assert _dist(c0, _centroid(lib, w, ids)) > 50.0, "flyers did not move"
-    cs = lib.om_world_checksum_full(w, None, 0)
-    print("FLYER_CHECKSUM_200", cs)
-    assert cs == FLYER_CHECKSUM_200
+    cs = _units_movement(lib, w)
+    print("FLYER_SECTIONS_200", cs)
+    assert cs == FLYER_SECTIONS_200
