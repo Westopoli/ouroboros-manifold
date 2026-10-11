@@ -1779,7 +1779,7 @@ owns = ["csrc/save.c", "csrc/checksum_full.c", "csrc/om_internal.h", "csrc/econo
 owns_glob = []
 acceptance = []
 depends_on = ["VG-CONTRACT-E3", "VG-CONTRACT-E2", "TERRAIN-3"]
-status = { state = "in_flight" }
+status = { state = "attached", attach_sha = "8bdb64f" }  # landed 8bdb64f
 tests_pending = true
 size_estimate = "K-e5 contract piece: save 10, sidecar 10, ABI 7, density_side fields, derived grids, om_terrain_set_heights; second-Fable audit"
 
