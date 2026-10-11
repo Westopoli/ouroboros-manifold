@@ -44,6 +44,7 @@ var _msgs: Array[String] = []
 func _initialize() -> void:
 	await _run()
 	print("\n=== B22 prototype geometry: PASS %d FAIL %d ===" % [_pass, _fail])
+	print("PASS: %d  FAIL: %d" % [_pass, _fail])   # the summary line scripts/run_godot_tests.sh reads
 	for m in _msgs:
 		print("  - " + m)
 	print("=== %s ===" % ("RED" if _fail > 0 else "GREEN"))
