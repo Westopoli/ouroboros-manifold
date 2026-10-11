@@ -20,9 +20,11 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | Harness, method rev 2 | `pre_gate.sh`, `status_check.py`, `journal.sh` at f089fccb | none | n/a | none |
 | A battle screen | A1 to A21 at 4d4babf8; twelve plays pass in both eras in the gate | one fix piece per verdict, nothing until then | 2026-10-08 22:30, 11 of 12 "no"; A19 to A21 since, not yet seen | 2 |
 | B galaxy | landing 12 at 5333e1a0; three plays pass | wire the approved prototype (audit first); the three B verdicts are rejected 2026-10-10 | reviewer no, no, unclear (`story_reviews/B.md`, run 20261009-2217-5333e1a on `push/vg-b-reviews-5`); Westley 2026-10-10: all three rejected | 1 |
+| B galaxy, B22 (`VG-B22`) | not started; spec paragraph "B22, the prototype's geometry" (rev 10d) on main | tests first, then the build (stage: ball layout, camera, field grid), one landing, the three B plays re-queued | none yet | 1 |
 | C ground 3D | C1 to C11, VG-C-wire, K-c6, C6b at bcad1954; S-236 and S-001 plays pass | nothing until verdicts; S-004 is a spec gap, S-132 a finding | reviews on `push/vg-c-reviews-2` (run before the fixes) | 4, 5 |
 | D space landscape | landing 4 at 1fdeb1c0 (D2 to D8, the pipe-field fix); rulings TD-VG-D-6 to D-11 | E-17 and S-007 plays (no eyes until the shots exist); the D view hook after E1p | none yet | none |
 | E settlement and economy | part a at 8f76be4d (K-e2, K-e3, E1b to E1h, E1i; TD-VG-E-2 to E-12); part b records on main (spec section, VG-CONTRACT-E4, TD-VG-E-13); skeleton K-e4 + E1k-skel + E1p-a at c9c7545f; S-193 re-shot (VG-E1-SHOT) at b5024dc9; four part b test branches on origin (E1k, E1l, E1o, E1p-b) | settlement port piece (the approved mockup's growth replaces E1b density and E1c lot block; spec by the Architect), then its skeleton shot; fan-out held | 2026-10-10 S-237 rejected ("far too circular") | 6; Q-235-01 is row 3 (E1m, E1n, S-235 held) |
+| E settlement and economy, part c (`VG-CONTRACT-E5`, K-e5 contract piece) | not started; spec lane E1 part c (rev 10e) on main | stage contract (`vg-wave9-laneE1q.js`, args stage contract): K-e5 tests, build, land; then E1q | none yet | 6 |
 | F Steam phase B | 1398ba16 (F5 match mode); phase A e63483f6 | E-19 plays; lobby and depot script | none yet | none |
 
 ## Method rev 2 (Westley picked all nine, 2026-10-10)

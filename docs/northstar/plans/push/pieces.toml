@@ -1530,10 +1530,10 @@ size_estimate = "K-e4: send_place, place_result, strongpoints()"
 id = "VG-E1"
 manager = "M0"
 wave = 8
-owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "scenes/tactical_c/tactical_view.gd", "scenes/ground3d/ground3d.gd"]
+owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "scenes/tactical_c/tactical_view.gd", "scenes/ground3d/ground3d.gd", "csrc/economy_place.c", "csrc/economy_waves.c"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest", "VG-C6b", "VG-C-wire", "VG-CONTRACT-E4"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest", "VG-C6b", "VG-C-wire", "VG-CONTRACT-E4", "VG-CONTRACT-E5"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
@@ -1762,10 +1762,36 @@ size_estimate = "journal.sh: git log first-parent formatter; about 25 lines"
 id = "VG-RECORD"
 manager = "M0"
 wave = 9
-owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js"]
+owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave9-laneE1q.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave2b13-laneB22.js"]
 owns_glob = []
 acceptance = []
 depends_on = []
 status = { state = "attached", attach_sha = "c0d1cda8" }
 tests_pending = false
 size_estimate = "docs-only: one workflow script, two lines changed"
+
+# K-e5 (Architect rev 10e, 2026-10-11): save 10, sidecar 10, ABI 7, density and lots paragraphs, derived grids, om_terrain_set_heights. Spec lane E1 part c.
+[[piece]]
+id = "VG-CONTRACT-E5"
+manager = "M0"
+wave = 9
+owns = ["csrc/save.c", "csrc/checksum_full.c", "csrc/om_internal.h", "csrc/economy_internal.h", "csrc/economy_density.c", "csrc/pipe/pipe_internal.h", "csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/terrain.c", "scenes/load_game/load_game.gd", "scripts/specfactory/reach_allowlist.toml", "docs/architecture.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["VG-CONTRACT-E3", "VG-CONTRACT-E2", "TERRAIN-3"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "K-e5 contract piece: save 10, sidecar 10, ABI 7, density_side fields, derived grids, om_terrain_set_heights; second-Fable audit"
+
+# B22 (Architect rev 10d, 2026-10-10): the prototype's galaxy geometry. Spec lane B paragraph "B22".
+[[piece]]
+id = "VG-B22"
+manager = "M0"
+wave = 9
+owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_view.gd", "scenes/galaxy/orbit_camera.gd", "scenes/galaxy/territory_field.gd", "scenes/galaxy/shell_labels.gd", "tests/test_vg_b_b22.gd", "tests/test_vg_b_b1.gd", "tests/test_vg_b_b18.gd", "tests/test_galaxy_view.gd"]
+owns_glob = []
+acceptance = []
+depends_on = ["VG-B", "C2", "C8"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "lane B piece B22: ball layout, camera, field grid, tests moved under TD-VG-B-12"
