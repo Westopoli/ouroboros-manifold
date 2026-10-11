@@ -181,8 +181,27 @@ func _check_systems_px_S106_R106_01() -> void:
 	var state: Dictionary = _root.qa_state()
 	var px: Dictionary = state.get("systems_px", {})
 	var expected_n: int = _snapshot.get("regions", []).size()
-	_assert(px.size() == expected_n,
-		"S-106/R-106-01: systems_px has %d entries, expected %d (one drawn point per region)" % [px.size(), expected_n])
+	# TD-VG-B-13 (assumption-changed, Architect 2026-10-11): old `px.size() == expected_n` assumed every system
+	# is in front of a camera outside the disc. With the camera inside the ball (B22) a system behind it has no
+	# pixel, so systems_px lists only systems in front (the pick rule, orbit_camera.gd:135). New: every key is a
+	# region id, and for every region id `id in px` equals `not camera.is_position_behind(position)`.
+	var cam: Camera3D = _root.get_node("OrbitCamera").get_camera()
+	var positions: Dictionary = _root.get_positions()
+	var region_ids := {}
+	for r in _snapshot.get("regions", []):
+		region_ids[int(r.get("i", -1))] = true
+	var bad_keys := 0
+	for k in px:
+		if not region_ids.has(int(k)):
+			bad_keys += 1
+	_assert(bad_keys == 0, "S-106/R-106-01: systems_px has %d key(s) that are not region ids" % bad_keys)
+	var wrong := 0
+	for id in region_ids:
+		var in_front: bool = positions.has(id) and not cam.is_position_behind(positions[id])
+		if px.has(id) != in_front:
+			wrong += 1
+	_assert(wrong == 0,
+		"S-106/R-106-01: %d region(s) where (id in systems_px) != not camera.is_position_behind(position)" % wrong)
 	var vp := Vector2(get_root().size)
 	if vp.x <= 0 or vp.y <= 0:
 		vp = Vector2(1920, 1080)
@@ -197,9 +216,10 @@ func _check_systems_px_S106_R106_01() -> void:
 	# of part of the galaxy: the approved prototype shows about 21 percent of its systems at its default,
 	# and the built geometry shows 23 of 80 at distance 50 (fewer when closer). The bound is the Architect's
 	# own spec number, not a Westley threshold; it guards against the empty "small cluster on grey" frame.
+	# TD-VG-B-13: the denominator is the region count, not systems_px.size() (behind-camera systems are absent).
 	var inside := px.size() - outside
-	_assert(inside * 5 >= px.size(),
-		"S-106/R-106-01: only %d/%d systems_px entries fall inside the %dx%d viewport, want at least a fifth (TD-VG-B-12)" % [inside, px.size(), int(vp.x), int(vp.y)])
+	_assert(inside * 5 >= expected_n,
+		"S-106/R-106-01: only %d/%d systems_px entries fall inside the %dx%d viewport, want at least a fifth of the regions (TD-VG-B-12, TD-VG-B-13)" % [inside, expected_n, int(vp.x), int(vp.y)])
 
 
 func _check_owner_colour_S106_R106_01_02() -> void:

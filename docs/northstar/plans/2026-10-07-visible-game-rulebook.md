@@ -26,7 +26,7 @@ A test is a defect only if ALL hold: (1) the failing assertion is in a row below
 | 14 | `tests/test_main_menu_items.gd:96-100` | exact five entries; no "tutorial"/"access key" | F | MULTIPLAYER: RP `want` to the spec's six; others ARCH | yes |
 | 15 | `tests/test_main_menu_continue.gd:13-18` | a control named `Continue` | F | keep | yes |
 | 16 | `tests/test_galaxy_view.gd:131` | `system_count == 80` | B | keep (sim-derived); ARCH if regions change | yes |
-| 17 | `tests/test_galaxy_view.gd:157-193` | `owners`, `region_colours`, `systems_px` per region; `edge_counts` | B | keep the contract; key renames RP together | yes |
+| 17 | `tests/test_galaxy_view.gd:157-193` | `owners`, `region_colours`, `systems_px` per region in front of the camera; `edge_counts` | B | keep the contract; key renames RP together | yes |
 | 18 | `tests/test_galaxy_view.gd:259-263` | `edges_3d == true`; plant flips it | B | keep the key and plant | yes |
 | 19 | `test_galaxy_pixels.py:131-197,231,273` | pixel at `systems_px` equals region colour within tolerance | B | ARCH (tolerance is Westley's) | yes |
 | 20 | `test_galaxy_conquest.py:90-126` | flipped owner colour within `COLOUR_TOLERANCE` | B | ARCH | yes |
