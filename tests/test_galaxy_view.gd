@@ -191,8 +191,12 @@ func _check_systems_px_S106_R106_01() -> void:
 		var p = px[i]
 		if typeof(p) != TYPE_ARRAY or p.size() != 2 or p[0] < 0 or p[0] > vp.x or p[1] < 0 or p[1] > vp.y:
 			outside += 1
-	_assert(outside == 0,
-		"S-106/R-106-01: %d/%d systems_px entries fall outside the %dx%d viewport" % [outside, px.size(), int(vp.x), int(vp.y)])
+	# TD-VG-B-12 (assumption-changed, Architect 2026-10-10): old `outside == 0` (every system inside the
+	# viewport), new "at least a third of the systems_px entries inside the viewport at the default camera".
+	# The prototype's regional default (distance 50, ball radius 71) is a close view of part of the galaxy.
+	var inside := px.size() - outside
+	_assert(inside * 3 >= px.size(),
+		"S-106/R-106-01: only %d/%d systems_px entries fall inside the %dx%d viewport, want at least a third (TD-VG-B-12)" % [inside, px.size(), int(vp.x), int(vp.y)])
 
 
 func _check_owner_colour_S106_R106_01_02() -> void:
