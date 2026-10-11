@@ -6,10 +6,12 @@ extends Node3D
 # system centres it and zooms to Local. The camera moves only on input or an
 # eased focus; it never drifts on its own.
 
-const DIST_MIN := 10.0
-const DIST_MAX := 220.0
+# B22 (spec rev 10d): the prototype's camera unscaled, orbit_camera.gd on origin/push/galaxy-field divided by CIV_SCALE:
+# DIST_MIN :7 (15), DIST_MAX :9 (120), LOCAL_DISTANCE is its FOCUS_DISTANCE :25 (28), default distance :14 (50).
+const DIST_MIN := 15.0
+const DIST_MAX := 120.0
 const PITCH_DEG := 55.0
-const LOCAL_DISTANCE := 25.0
+const LOCAL_DISTANCE := 28.0
 const ZOOM_STEP := 0.9
 const ORBIT_RAD_PER_PX := 0.005
 const CLICK_SLOP_PX := 4.0

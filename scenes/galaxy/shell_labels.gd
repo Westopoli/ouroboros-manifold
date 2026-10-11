@@ -6,7 +6,7 @@ extends RefCounted
 
 const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
 const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
-const LABEL_LIFT := 6.0   # prototype scenes/mockups/galaxy/galaxy_view.gd line 163: +6 above the mean of the faction's system positions
+const LABEL_LIFT := 6.0   # prototype scenes/mockups/galaxy/galaxy_view.gd line 164: +6 above the mean of the faction's system positions
 const LABEL_PIXEL_SIZE := 0.05
 const LABEL_FONT_SIZE := 40   # prototype lines 166 to 170: font 40, pixel_size 0.05
 const STAND_IN_OPACITY_MULTIPLIER := 0.15   # draft: Architect ruling 2026-10-08, planes sit under the dots

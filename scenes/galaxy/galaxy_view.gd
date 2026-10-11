@@ -30,15 +30,17 @@ const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 
 const DEFAULT_SEED := 1
 const LIVE_SNAPSHOT_TIMEOUT_MSEC := 8000
-const DEFAULT_DISTANCE := 72.0
-const DEFAULT_TARGET := Vector3(7.0, 0.0, 0.0)
+# B22 (spec rev 10d): the prototype's default camera unscaled (orbit_camera.gd:14 on origin/push/galaxy-field, 25 / CIV_SCALE);
+# Regional, where R-106-03 puts the default. Target the origin, the centre of the ball.
+const DEFAULT_DISTANCE := 50.0
+const DEFAULT_TARGET := Vector3.ZERO
 const PICK_RADIUS_PX := 14.0
 const BAND_SPLIT_LOW := 32.5
 const BAND_SPLIT_HIGH := 70.0
 const FLAT_COLOUR := Color(1.0, 1.0, 1.0, 1.0)
 const EDGE_2D_WIDTH := 1.5
 const EDGE_2D_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
-const POINT_RADIUS := 1.2
+const POINT_RADIUS := 1.4   # prototype's unscaled dot radius (spec rev 10d, B22); main's 1.2 was a draft
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
 const OWNER_ALPHA := 1.0
@@ -52,6 +54,7 @@ const FLASH_COLOURS := {"attack": Color(1.0, 0.45, 0.2), "conquest": Color(1.0, 
 var _regions: Array = []
 var _edges: Array = []
 var _positions: Dictionary = {}
+var _point_ids: Array = []   # region id of each dot instance, in MultiMesh order
 var _region_colours: Dictionary = {}
 var _significance: Dictionary = {}
 var _owner_colours_cache: Dictionary = {}
@@ -179,6 +182,7 @@ func _on_bridge_changed(_tick) -> void:
 
 func _process(delta: float) -> void:
 	_zoom.update_from_distance(_camera_rig.get_distance())
+	_update_dot_scales()
 	_step_flashes(delta)
 	_feed_tween(Time.get_ticks_msec() / 1000.0)
 	if _bridge == null:
@@ -352,6 +356,7 @@ func qa_state() -> Dictionary:
 		"quality_tier": _quality["tier"],
 		"camera_autonomous": _camera_rig.has_method("is_autonomous") and _camera_rig.is_autonomous(),
 		"flashes_active": _flashes.size(),
+		"layout_fallbacks": _gen.last_fallbacks(),
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
@@ -518,14 +523,29 @@ func _render_points() -> void:
 	sphere.radius = POINT_RADIUS
 	sphere.height = POINT_RADIUS * 2.0
 	mm.mesh = sphere
-	var ids := _positions.keys()
-	mm.instance_count = ids.size()
-	for idx in range(ids.size()):
-		var i = ids[idx]
-		mm.set_instance_transform(idx, Transform3D(Basis(), _positions[i]))
-		mm.set_instance_color(idx, _region_colours.get(i, FLAT_COLOUR))
+	_point_ids = _positions.keys()
+	mm.instance_count = _point_ids.size()
+	for idx in range(_point_ids.size()):
+		mm.set_instance_color(idx, _region_colours.get(_point_ids[idx], FLAT_COLOUR))
 	_points.multimesh = mm
 	_points.material_override = _point_material
+	_update_dot_scales()
+
+
+# Per-instance dot transform: the prototype's scale (0.6 + 1.4 * significance) * lerp(1, 0.6, overview_weight)
+# (galaxy_view.gd:228, 243 on origin/push/galaxy-field; the focus boost and flash factors are not ported).
+# overview_weight = 1 - blend_factor in the overview band, else 0 (legacy_zoom_disclosure_controller.gd:24-46);
+# blend_factor moves between 65 and 75 and band_changed fires only at the edges, so this runs every frame.
+func _update_dot_scales() -> void:
+	var mm: MultiMesh = _points.multimesh
+	if mm == null:
+		return
+	var overview_weight: float = 1.0 - _zoom.blend_factor if _zoom.current_band == "overview" else 0.0
+	var band_scale: float = lerpf(1.0, 0.6, overview_weight)
+	for idx in range(_point_ids.size()):
+		var i = _point_ids[idx]
+		var dot_scale: float = (0.6 + 1.4 * float(_significance.get(i, 1.0))) * band_scale
+		mm.set_instance_transform(idx, Transform3D(Basis().scaled(Vector3.ONE * dot_scale), _positions[i]))
 
 
 # --- driven mode (S-069): the old world_view_shell API, answered here ---

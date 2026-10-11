@@ -18,11 +18,13 @@ extends Node
 # See also: tests/test_vg_b_b1.gd (the contract this implements).
 
 const GRID_CELLS := 96
-# Retuned to the game layout (galaxy_gen.gd: disc radius 40, spacing 3): the cube holds disc + R.
-# INFLUENCE_RADIUS is a named draft: 16 (mockup 14); smaller bubbles fail the grid-vs-exact check at 3 probe points.
-const GRID_SIZE := 128.0
-const INFLUENCE_RADIUS := 16.0
-const GRID_MIN := Vector3(-GRID_SIZE * 0.5, -GRID_SIZE * 0.5, -GRID_SIZE * 0.5)
+# The cube holds the layout ball plus one influence radius on each side: 2 * (R_BALL + INFLUENCE_RADIUS),
+# the prototype's rule (territory_field.gd:19 on origin/push/galaxy-field); 2 * (71 + 28) = 198.
+# INFLUENCE_RADIUS 28 is the prototype's galaxy_gen.gd:17 value, unscaled. GRID_CELLS stays the texture size,
+# so a cell is 2.06 wu. R_BALL lives in galaxy_gen.gd; the values here are written out (spec rev 10d, B22).
+const GRID_SIZE := 198.0
+const INFLUENCE_RADIUS := 28.0
+const GRID_MIN := Vector3(-99.0, -99.0, -99.0)
 const MAX_SYSTEMS := 1024
 const MAX_FACTIONS := 16
 const GAP_STRENGTH := 0.5   # legacy_shell_renderer.gd's gap_strength (the shader default 0.8 was never used)
