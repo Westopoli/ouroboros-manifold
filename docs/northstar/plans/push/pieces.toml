@@ -1739,3 +1739,16 @@ acceptance = ["tests/specfactory/test_journal.py"]
 depends_on = []
 status = { state = "attached", attach_sha = "f089fccb" }
 size_estimate = "journal.sh: git log first-parent formatter; about 25 lines"
+
+# Record clerk 2026-10-10: the vg-harness-method.js preflight ruling (Architect, item 5 blocks only on in-flight owners) had no owner row.
+[[piece]]
+id = "VG-RECORD"
+manager = "M0"
+wave = 9
+owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "attached", attach_sha = "c0d1cda8" }
+tests_pending = false
+size_estimate = "docs-only: one workflow script, two lines changed"
