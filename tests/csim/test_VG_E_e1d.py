@@ -86,6 +86,11 @@ def mission(lib, world_factory, seed=7):
     set_owner(lib, w, 1, 0, held_since=-1)
     set_edge(lib, w, 0, 1, OMEdge.BOTH)
     set_region(lib, w, 0, tier=OMTier.HOME, military=500.0, faction_id=1)
+    # TD-VG-E-20: the premises a lot needs (as test_VG_E_e1c.py scene): a ground era and a HOME region of the player faction with
+    # economy (K-e3 samples the player's first HOME region). Not the walking movement kinds of the e1c scene: with them the Bombard
+    # that hit() spawns at x - 200 does not lower the lot (stage 1 -> 1 in the premise dump, K-e5 tree), so the kinds stay default.
+    set_region(lib, w, 1, tier=OMTier.HOME, military=20.0, economy=40.0, population=10.0, faction_id=0)
+    assert lib.om_set_era_kind(w, 1) == 0
     lib.om_mission_setup(w, 0, 0, 0)
     lib.om_mission_begin(w)
     return w

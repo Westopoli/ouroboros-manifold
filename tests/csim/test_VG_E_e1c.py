@@ -3,10 +3,11 @@ rev 6, lane E1; R-193-05 five stages by density, R-193-09 streets left open; con
 economy fields"). Fenced: builders never edit this file.
 
 Stage rule under test (thresholds 0.10/0.22/0.38/0.58 are the Q-193-02 liberty, applied to om_density_at at the lot):
-density < 0.10 -> stage 1 empty; < 0.22 -> 2 staked; < 0.38 -> 3 scaffold; < 0.58 -> 4 small; else 5 large. Stage 0 is
-rubble (E1d) and is skipped here. A lot "rises" a stage at a time, so the stage may lag the target but never exceeds it.
-Streets (R-193-09): the lot-free grid cells inside the settlement's bounding box (200 wu cells, the density grid) contain
-a 4-connected path from the left edge to the right edge and from the top edge to the bottom edge of that box.
+the target stage is the number of thresholds the density has passed: < 0.10 -> 0; < 0.22 -> 1 staked; < 0.38 -> 2 scaffold;
+< 0.58 -> 3 small; else 4 large (TD-VG-E-19: spec rev 10d, "empty" is no lot and stage 5 is reserved). Stage 0 is rubble (E1d)
+and is skipped here. A lot "rises" a stage at a time, so the stage may lag the target but never exceeds it.
+Streets (R-193-09): the lot-free grid cells inside the settlement's bounding box (100 wu cells, the terrain grid; TD-VG-E-19)
+contain a 4-connected path from the left edge to the right edge and from the top edge to the bottom edge of that box.
 
 How lots appear: no setter exists in K-e, so the tests start a ground-era mission (om_set_era_kind 1, walking kinds) and
 step om_tactical_step; E1b/E1c/E1i make lots exist there. Nothing here names a symbol outside K-e.
@@ -24,8 +25,8 @@ from conftest import (
 
 V = ctypes.c_void_p
 P = ctypes.POINTER
-CELL = 200.0            # density grid cell, om_internal.h OM_DENSITY_SIDE 120 over 24000 wu
-SIDE = 120
+CELL = 100.0            # density grid cell, the 100 wu terrain cell (TD-VG-E-19; was 200.0, OM_DENSITY_SIDE 120 over 24000 wu)
+SIDE = 240              # 24000 wu / 100 (TD-VG-E-19; was 120)
 THRESH = (0.10, 0.22, 0.38, 0.58)
 STEPS = 200            # draft: ticks stepped before reading lots
 SEEDS = (3, 7, 11)      # draft
@@ -37,8 +38,8 @@ class Lot(ctypes.Structure):
 
 
 def stage_of(d):
-    """R-193-05 target stage 1..5 for a density value."""
-    return 1 + sum(1 for t in THRESH if d >= t)
+    """R-193-05 target stage 0..4 for a density value: the number of thresholds passed (TD-VG-E-19; was 1 + that count)."""
+    return sum(1 for t in THRESH if d >= t)
 
 
 def bind(lib):
@@ -120,14 +121,15 @@ def street_cells_open(rows):
 # ---- controls (pass on main) ------------------------------------------------------------------------------------
 
 def test_control_stage_mapping_edges():
-    """CONTROL: the R-193-05 mapping at and around each threshold."""
-    assert [stage_of(d) for d in (0.0, 0.0999, 0.10, 0.2199, 0.22, 0.3799, 0.38, 0.5799, 0.58, 3.0)] == [1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+    """CONTROL: the R-193-05 mapping at and around each threshold (TD-VG-E-19: counts, were 1 + count)."""
+    assert [stage_of(d) for d in (0.0, 0.0999, 0.10, 0.2199, 0.22, 0.3799, 0.38, 0.5799, 0.58, 3.0)] == [0, 0, 1, 1, 2, 2, 3, 3, 4, 4]
 
 
 def test_control_stage_detector_trips():
-    """CONTROL: the stage detector flags a stage-5 lot at density 0.05 and passes a stage-2 lot at 0.15 and a rubble lot."""
+    """CONTROL: the stage detector flags a stage-5 lot at density 0.05 and passes a stage-1 lot at 0.15 (TD-VG-E-19: was a
+    stage-2 lot, the target of 0.15 under 1 + count) and a rubble lot."""
     assert stage_violations([(1, 0, 0, 5, 0, -1)], lambda x, y: 0.05)
-    assert not stage_violations([(1, 0, 0, 2, 0, -1), (2, 0, 0, 0, 0, -1)], lambda x, y: 0.15)
+    assert not stage_violations([(1, 0, 0, 1, 0, -1), (2, 0, 0, 0, 0, -1)], lambda x, y: 0.15)
     assert stage_violations([(1, 0, 0, 6, 0, -1)], lambda x, y: 9.0)
 
 
@@ -160,7 +162,7 @@ def test_lots_exist_after_a_ground_mission(lib, world_factory, seed):
 @pytest.mark.parametrize("seed", SEEDS)
 def test_lot_records_are_well_formed(lib, world_factory, seed):
     """Records (id, cell, stage, owner): ascending unique ids, stage 0..5, owner -1 or a faction, inside the canvas,
-    one lot per 200 wu cell, building >= 0."""
+    one lot per 100 wu cell (TD-VG-E-19; was 200 wu), building >= 0."""
     rows = lots(lib, scene(lib, world_factory, seed))
     assert rows, "no lots after a ground mission (E1c not built)"
     ids = [r[0] for r in rows]
@@ -190,7 +192,7 @@ def test_lots_rise_where_density_allows(lib, world_factory, seed):
     rows = lots(lib, w)
     assert rows, "no lots after a ground mission (E1c not built)"
     eligible = [r for r in rows if stage_of(lib.om_density_at(w, r[1], r[2])) >= 2]
-    assert eligible, "no lot sits on density >= 0.10"
+    assert eligible, "no lot sits on density >= 0.22"  # TD-VG-E-19: target >= 2 is now 0.22 (was 0.10 under 1 + count)
     assert max(r[3] for r in eligible) >= 2, "no eligible lot rose past stage 1"
 
 
