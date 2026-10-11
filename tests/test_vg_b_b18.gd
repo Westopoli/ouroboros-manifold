@@ -13,6 +13,10 @@ extends SceneTree
 #   does not share (DEFAULT_DISTANCE 180), so distance equality is NOT checkable. The checkable
 #   form is the projected extent: after set_snapshot the systems_px of qa_state() span between 60%
 #   and 90% of the viewport width (the review reads 40% today; the 60..90 band is the brief's).
+#   TD-VG-B-12 (assumption-changed, Architect 2026-10-10): the upper bound 90 is dropped (old: 60..90 percent,
+#   new: at least 60 percent). The prototype's regional default (distance 50 in a ball of radius 71) is a close
+#   view of part of the galaxy, so the span counting off-screen systems exceeds the viewport; the lower bound
+#   keeps the "small cluster on grey" failure caught.
 # NEEDS A DISPLAY: headless projection is not the windowed one (1.5% vs 24.6% on main), so run
 # under xvfb: xvfb-run -a godot.real --path . -s res://tests/test_vg_b_b18.gd
 
@@ -21,7 +25,6 @@ const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json
 const BG_COLOUR := Color(0.0392157, 0.0509804, 0.0705882, 1.0)   # galaxy_mockup.tscn:11
 const BG_MODE_COLOR := 1                                           # galaxy_mockup.tscn:10
 const WIDTH_MIN := 0.60
-const WIDTH_MAX := 0.90
 
 var _pass := 0
 var _fail := 0
@@ -93,6 +96,7 @@ func _run() -> void:
 			lo = minf(lo, x)
 			hi = maxf(hi, x)
 		var frac := (hi - lo) / vw
-		_check(frac >= WIDTH_MIN and frac <= WIDTH_MAX,
-			"B18: default framing spans %.1f%% of the viewport width (x %.0f..%.0f of %.0f), want %d..%d%%" % [frac * 100.0, lo, hi, vw, int(WIDTH_MIN * 100), int(WIDTH_MAX * 100)])
+		# TD-VG-B-12: old `frac >= WIDTH_MIN and frac <= WIDTH_MAX` (60..90 percent), new `frac >= WIDTH_MIN` (at least 60 percent).
+		_check(frac >= WIDTH_MIN,
+			"B18: default framing spans %.1f%% of the viewport width (x %.0f..%.0f of %.0f), want at least %d%%" % [frac * 100.0, lo, hi, vw, int(WIDTH_MIN * 100)])
 	v.queue_free()
