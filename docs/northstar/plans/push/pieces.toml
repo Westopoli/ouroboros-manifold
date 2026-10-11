@@ -1792,6 +1792,6 @@ owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_view.gd", "scenes/g
 owns_glob = []
 acceptance = []
 depends_on = ["VG-B", "C2", "C8"]
-status = { state = "in_flight" }
+status = { state = "attached", attach_sha = "a4573fec" }
 tests_pending = true
 size_estimate = "lane B piece B22: ball layout, camera, field grid, tests moved under TD-VG-B-12"
