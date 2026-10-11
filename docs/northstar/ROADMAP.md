@@ -108,12 +108,12 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Lane B look verdicts: S-106, S-107, S-108 (reviewer no, no, unclear) | `story_reviews/B.md`; shots under `story_reviews/shots/20261008-1234-dbd1372/`; the later run 20261009-2217-5333e1a on `push/vg-b-reviews-5` | lane B fix pieces |
+| 1 | Lane B: the galaxy audit (why rebuilt instead of wired) and its fix piece | Architect chat | lane B |
 | 2 | Lane A ground look: the S-001 group shots | run 20261009-0228-5026db3 on `push/vg-c-reviews-2` (before A19 to A21); the Dispatcher's first clerk re-runs the A plays on main and queues fresh shots in `story_reviews/A.md` | lane A fix pieces; the D view hook |
 | 3 | Q-235-01: the four settlement ticker beats | `ambiguity_register.md` | E1m, E1n, S-235 |
 | 4 | S-004 spec gap: no layer-change order in the client | `story_reviews/C.md` on `push/vg-c-reviews-2`; E-01 | lane C, S-004 |
 | 5 | Q-132-03: the S-132 walkers finding | `ambiguity_register.md` | lane C, S-132 |
-| 6 | The lane E1 skeleton shot: one lot drawn in the real view | `story_reviews/E.md` second S-237 row; shot docs/northstar/story_reviews/shots/20261010-1912-54b7c52/S-237.png (one lot drawn on the ground, ground era, camera on the lot) | the E1 fan-out (E1k, E1l, E1o, E1p-b) |
+| 6 | Lane E1: settlement port spec (mockup growth into the sim), then a banded-contour prototype | Architect chat | lane E1 fan-out |
 
 ### How the work is run
 

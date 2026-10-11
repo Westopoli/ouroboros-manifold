@@ -1705,3 +1705,37 @@ owns = [
     "scenes/tactical_c/tactical_view.gd",  # shared with VG-A: only the Deaths.set_ground feed lines near set_terrain; depends_on VG-A and VG-C-wire
     "tests/test_vg_c6b_ground_units_layers.gd",
 ]
+
+# Method rev 2 harness pieces (2026-10-10): the pre-gate script, the status check and the journal formatter.
+[[piece]]
+id = "HARNESS-pregate"
+manager = "M0"
+wave = 9
+owns = ["scripts/specfactory/pre_gate.sh", "tests/specfactory/test_pre_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_pre_gate.py"]
+depends_on = []
+status = { state = "attached", attach_sha = "f089fccb" }
+size_estimate = "pre_gate.sh: noise check, merge_gate --revert, the piece's tests; about 80 lines"
+
+[[piece]]
+id = "HARNESS-status"
+manager = "M0"
+wave = 9
+owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_status_check.py", "docs/northstar/plans/2026-10-07-visible-game-programme.md"]  # lane table: the clerk flips its row in each landing
+owns_glob = []
+acceptance = ["tests/specfactory/test_status_check.py"]
+depends_on = []
+status = { state = "attached", attach_sha = "f089fccb" }
+size_estimate = "status_check.py: lane table, pieces attach shas, Seen vs approved, ROADMAP copies; about 150 lines"
+
+[[piece]]
+id = "HARNESS-journal"
+manager = "M0"
+wave = 9
+owns = ["scripts/journal.sh", "tests/specfactory/test_journal.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_journal.py"]
+depends_on = []
+status = { state = "attached", attach_sha = "f089fccb" }
+size_estimate = "journal.sh: git log first-parent formatter; about 25 lines"
