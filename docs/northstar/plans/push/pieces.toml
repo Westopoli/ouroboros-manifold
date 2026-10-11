@@ -72,7 +72,7 @@ acceptance = [
     "tests/csim/test_E03_S025_nobody_starts_on_your_doorstep.py",
 ]
 depends_on = ["freeze"]
-status = { state = "attached", attach_sha = "45c4441" }
+status = { state = "attached", attach_sha = "11f85426" }
 size_estimate = "217+ py lines, 28 tests (E-03); needs F2's weak om_world_generate attribute"
 
 [[piece]]
@@ -142,7 +142,7 @@ acceptance = [
     "tests/csim/test_E08_S064_what_carries_over.py",
 ]
 depends_on = ["freeze"]
-status = { state = "attached", attach_sha = "84bdfa5" }
+status = { state = "attached", attach_sha = "f0397c30" }
 size_estimate = "1263 py lines, 50 tests (E-08 minus S-055, held for B7b: needs chronicle.c and unit.c)"
 
 [[piece]]
@@ -1706,18 +1706,69 @@ owns = [
     "tests/test_vg_c6b_ground_units_layers.gd",
 ]
 
+<<<<<<< HEAD
 # Method check at every compaction (Westley 2026-10-10): a SessionStart hook runs the chat's own
 # transcript against the method rev 2 rules and prints the counts and the rule list. Spec:
 # docs/northstar/plans/workflows_2026-10-07/method_check.md. A94-harness owns tests/specfactory/**
 # by glob; depends_on orders this row after it so the lint sees one owner at a time.
+# rules.md, dispatcher.md and the Architect context file had no owner row before this one (footprint
+# reject 2026-10-10); CLAUDE.md is VG-GUARD's, the programme file HARNESS-status's, pieces.toml PP-ledger's.
 [[piece]]
 id = "HARNESS-methodcheck"
 manager = "M0"
 wave = 9
-owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_check.py", ".claude/settings.json", "docs/northstar/plans/workflows_2026-10-07/method_check.md"]
+owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_check.py", ".claude/settings.json", "docs/northstar/plans/workflows_2026-10-07/method_check.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "docs/northstar/plans/workflows_2026-10-07/context_architect_2026-10-10.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py"]
 depends_on = ["A94-harness"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "method_check.py about 200 lines; one hook line; one spec page"
+=======
+# Method rev 2 harness pieces (2026-10-10): the pre-gate script, the status check and the journal formatter.
+[[piece]]
+id = "HARNESS-pregate"
+manager = "M0"
+wave = 9
+owns = ["scripts/specfactory/pre_gate.sh", "tests/specfactory/test_pre_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_pre_gate.py"]
+depends_on = []
+status = { state = "attached", attach_sha = "f089fccb" }
+size_estimate = "pre_gate.sh: noise check, merge_gate --revert, the piece's tests; about 80 lines"
+
+[[piece]]
+id = "HARNESS-status"
+manager = "M0"
+wave = 9
+owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_status_check.py", "docs/northstar/plans/2026-10-07-visible-game-programme.md"]  # lane table: the clerk flips its row in each landing
+owns_glob = []
+acceptance = ["tests/specfactory/test_status_check.py"]
+depends_on = []
+status = { state = "attached", attach_sha = "f089fccb" }
+size_estimate = "status_check.py: lane table, pieces attach shas, Seen vs approved, ROADMAP copies; about 150 lines"
+
+[[piece]]
+id = "HARNESS-journal"
+manager = "M0"
+wave = 9
+owns = ["scripts/journal.sh", "tests/specfactory/test_journal.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_journal.py"]
+depends_on = []
+status = { state = "attached", attach_sha = "f089fccb" }
+size_estimate = "journal.sh: git log first-parent formatter; about 25 lines"
+
+# Record clerk 2026-10-10: the vg-harness-method.js preflight ruling (Architect, item 5 blocks only on in-flight owners) had no owner row.
+[[piece]]
+id = "VG-RECORD"
+manager = "M0"
+wave = 9
+owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "attached", attach_sha = "c0d1cda8" }
+tests_pending = false
+size_estimate = "docs-only: one workflow script, two lines changed"
+>>>>>>> origin/main

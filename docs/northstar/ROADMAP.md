@@ -63,7 +63,7 @@ Updated 2026-10-10 (method rev 2). Branches only; main gets a piece only through
 
 | Lane | Branch | State | Next |
 |---|---|---|---|
-| **The visible game programme** (`plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | lane status: the programme file's lane table (the one status location) | IN FLIGHT, paused by Westley 2026-10-10 09:15; method rev 2 adopted 2026-10-10 (`plans/retro_2026-10-10/README.md`); resumes with the harness pieces and the lane E1 skeleton | marked DONE in this row and in the plan header when the last lane's stories are Seen |
+| **The visible game programme** (`docs/northstar/plans/2026-10-07-visible-game-programme.md`): every approved prototype into the game, the economy play, Steam phase B; stories acted out as acceptance; guards in CLAUDE.md | lane status: the programme file's lane table (the one status location) | IN FLIGHT, paused by Westley 2026-10-10 09:15; method rev 2 adopted 2026-10-10 (`plans/retro_2026-10-10/README.md`); resumes with the harness pieces and the lane E1 skeleton | marked DONE in this row and in the plan header when the last lane's stories are Seen |
 | Walk-route fix piece (proposed, FINDING-walk-route-replan) | none yet | advance to the next stored waypoint instead of replanning, early exit at the goal, reused buffers; owner `csrc/walk_route.c` and `csrc/tactical_move.c` | on the programme's "No eyes needed" list once the Architect specs it |
 | Programme guard pieces: GDScript reach lint and lane story plays in the gate (from the 2026-10-09 drift check) | the gate | landed: HARNESS-gdreach, HARNESS-laneplays (fc986411), HARNESS-playsplit (7bb1f5a2), G-project daemon verb (f37a926f) | the gate runs the reach lint and each lane's story plays; DONE |
 | Terrain stage 2: walkers, slopes, ground vision, era kind (`plans/2026-10-06-terrain-stage2-spec.md` rev 3) | landed on main 008de465 (2026-10-07) after three sim defects found by the lab's ground scene were fixed with tests | gate clean | done |
@@ -108,12 +108,12 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Lane B look verdicts: S-106, S-107, S-108 (reviewer no, no, unclear) | `story_reviews/B.md`; shots under `story_reviews/shots/20261008-1234-dbd1372/`; the later run 20261009-2217-5333e1a on `push/vg-b-reviews-5` | lane B fix pieces |
+| 1 | Lane B: the galaxy audit (why rebuilt instead of wired) and its fix piece | Architect chat | lane B |
 | 2 | Lane A ground look: the S-001 group shots | run 20261009-0228-5026db3 on `push/vg-c-reviews-2` (before A19 to A21); the Dispatcher's first clerk re-runs the A plays on main and queues fresh shots in `story_reviews/A.md` | lane A fix pieces; the D view hook |
 | 3 | Q-235-01: the four settlement ticker beats | `ambiguity_register.md` | E1m, E1n, S-235 |
 | 4 | S-004 spec gap: no layer-change order in the client | `story_reviews/C.md` on `push/vg-c-reviews-2`; E-01 | lane C, S-004 |
 | 5 | Q-132-03: the S-132 walkers finding | `ambiguity_register.md` | lane C, S-132 |
-| 6 | The lane E1 skeleton shot: one lot drawn in the real view | `story_reviews/E.md`, queued by the skeleton landing | the E1 fan-out (E1k, E1l, E1o, E1p-b) |
+| 6 | Lane E1: settlement port spec (mockup growth into the sim), then a banded-contour prototype | Architect chat | lane E1 fan-out |
 
 ### How the work is run
 

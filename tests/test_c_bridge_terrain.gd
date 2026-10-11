@@ -79,6 +79,12 @@ func send_command(cmd: Dictionary) -> void:
 		"mission_end":
 			_reply({"type": "debrief", "band": 1})
 			_reply({"type": "snapshot", "regions": [{"i": 0}], "tick": 1})
+		"lots_dump":
+			_reply({"type": "lots", "lots": []})
+		"space_field_dump":
+			# Stand-in: the real verb answers 240x240x5 masks or error "no space field"
+			# (docs/architecture.md:365); nothing here reads space_field(). TD-VG-E-15.
+			_reply({"type": "space_field", "cells_w": 1, "cells_h": 1, "layers": 0, "masks": [], "polys": []})
 		"terrain_dump":
 			if not _ground:
 				_reply({"type": "error", "name": "terrain_dump", "reason": "no terrain"})
