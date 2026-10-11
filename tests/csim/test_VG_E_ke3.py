@@ -79,7 +79,7 @@ def test_ke3_density_economy_is_saved(lib, world_factory):
     assert sums[0] != sums[1], "loaded economy sections for 1.0 and 40.0 are equal"
 
 
-def test_ke3_save_format_version_is_9(lib, world_factory):
-    """K-e3: OM_SAVE_FORMAT_VERSION is 9 (header bytes 4..8, the pin the save-pin tests use); red: 8."""
+def test_ke3_save_format_version_is_10(lib, world_factory):
+    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16): OM_SAVE_FORMAT_VERSION is 10 (header bytes 4..8, the pin the save-pin tests use); red: 9."""
     buf, _ = _save(lib, scene(lib, world_factory))
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 9
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 10
