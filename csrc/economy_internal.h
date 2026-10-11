@@ -20,6 +20,7 @@ void om_structure_refound(om_world *w, uint32_t structure, int32_t owner); /* ta
 /* economy_density.c (E1b) */
 void om_density_init(om_world *w);
 void om_density_step(om_world *w, uint64_t tick);
+void om_density_rebuild_inputs(om_world *w); /* K-e5: no-op stub, E1q-field fills it; see the K-e5 paragraph of docs/architecture.md */
 
 /* economy_lots.c (E1c; E1d fills om_lots_on_area_hit) */
 void om_lots_init(om_world *w);

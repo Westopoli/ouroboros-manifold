@@ -38,6 +38,7 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include "om_constants.h"
+#include "economy_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -426,8 +427,15 @@ static void sv_write_body(sv_writer *sw, const om_world *w) {
             sv_put_i32(sw, e->lots[i].owner);
         }
         sv_put_u32(sw, e->density_present);
-        if (e->density_present)
-            for (uint32_t i = 0; i < OM_DENSITY_SIDE * OM_DENSITY_SIDE; i++) sv_put_f64(sw, e->density[i]);
+        if (e->density_present) {
+            uint32_t cells = e->density_side * e->density_side;
+            sv_put_u32(sw, e->density_side);
+            for (uint32_t i = 0; i < cells; i++) sv_put_f64(sw, e->density[i]);
+            for (uint32_t i = 0; i < cells; i++) sv_put_f64(sw, e->P[i]);
+            sv_put_u32(sw, e->n_active);
+            for (uint32_t i = 0; i < e->n_active; i++) sv_put_u32(sw, e->active[i]);
+            sv_put_u32(sw, e->core_cell);
+        }
         sv_put_u32(sw, e->n_strongpoints);
         for (uint32_t i = 0; i < e->n_strongpoints; i++) {
             sv_put_u32(sw, e->strongpoints[i].id);
@@ -447,6 +455,7 @@ static void sv_write_body(sv_writer *sw, const om_world *w) {
         }
         sv_put_f64(sw, e->density_economy);
         for (uint32_t i = 0; i < OM_LOT_CAP; i++) sv_put_u32(sw, e->lot_hit_tick[i]);
+        sv_put_u32(sw, e->next_lot_id);
     }
 
     sv_write_slots(sw, w);
@@ -717,11 +726,29 @@ static void sv_parse_body(sv_reader *sr, om_world *w, int apply) {
 
         uint32_t present = sv_get_u32(sr);
         if (!sr->ok || present > 1) { sr->ok = 0; return; }
-        if (present)
-            for (uint32_t i = 0; i < OM_DENSITY_SIDE * OM_DENSITY_SIDE && sr->ok; i++) {
+        if (present) {
+            uint32_t side = sv_get_u32(sr), cells = 0, n_active = 0, core_cell = 0;
+            if (!sr->ok || side > OM_DENSITY_MAX_SIDE) { sr->ok = 0; return; }
+            cells = side * side;
+            for (uint32_t i = 0; i < cells && sr->ok; i++) {
                 double v = sv_get_f64(sr);
                 if (apply && sr->ok) e->density[i] = v;
             }
+            for (uint32_t i = 0; i < cells && sr->ok; i++) {
+                double v = sv_get_f64(sr);
+                if (apply && sr->ok) e->P[i] = v;
+            }
+            n_active = sv_get_u32(sr);
+            if (!sr->ok || n_active > cells) { sr->ok = 0; return; }
+            for (uint32_t i = 0; i < n_active && sr->ok; i++) {
+                uint32_t cell = sv_get_u32(sr);
+                if (sr->ok && cell >= cells) { sr->ok = 0; return; }
+                if (apply && sr->ok) e->active[i] = cell;
+            }
+            core_cell = sv_get_u32(sr);
+            if (!sr->ok || core_cell >= cells) { sr->ok = 0; return; }
+            if (apply) { e->density_side = side; e->n_active = n_active; e->core_cell = core_cell; }
+        }
         if (!sr->ok) return;
         if (apply) e->density_present = (uint8_t)present;
 
@@ -762,11 +789,14 @@ static void sv_parse_body(sv_reader *sr, om_world *w, int apply) {
             uint32_t ht = sv_get_u32(sr);
             if (apply && sr->ok) e->lot_hit_tick[i] = ht;
         }
+        uint32_t next_lot_id = sv_get_u32(sr);
         if (!sr->ok) return;
-        if (apply) e->density_economy = density_economy;
+        if (apply) { e->density_economy = density_economy; e->next_lot_id = next_lot_id; }
     }
 
     sv_parse_slots(sr, w, apply);
+    /* K-e5: the terrain slot has loaded; the derived grids follow it (a no-op until E1q-field fills the stub). */
+    if (apply && sr->ok) om_density_rebuild_inputs(w);
 }
 
 /* ------------------------------------------------------------ public ABI */

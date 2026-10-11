@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 6
+#define OM_ABI_VERSION 7
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -152,6 +152,15 @@ void om_region_set_adjacency(om_world *w, uint32_t idx,
 void om_region_set_faction_modifier(om_world *w, int32_t faction_id,
                                     om_field field, double value);   /* ALG-04 */
 uint32_t om_region_count(const om_world *w);
+/* Test hook (K-e5, ABI 7; docs/northstar/spec_factory/signatures.toml, scripts/specfactory/reach_allowlist.toml): replaces the
+ * height grid of a generated ground mission with `cm` (centimetres, row-major, cells_w * cells_h values) so a test can set a flat,
+ * sea or ridge terrain. Returns 0 and changes nothing when (cells_w, cells_h) differ from the terrain's cell dimensions or the
+ * world has no terrain. Otherwise it recomputes the five band floors as generation does (lo and hi over the cells above the dry
+ * level; when no cell is above it, lo and hi are the minimum and maximum of all cells), re-bands the cells, runs
+ * om_terrain_apply_ground (walkable, slopes, walk masks and the mapgen blocked bits are rewritten, so blocked rects laid after
+ * generation are erased; obstacle discs and cover rows survive; the move epoch is bumped) and rebuilds the density inputs; returns 1.
+ * The generator's dry-level rule is not enforced on `cm`: flat test terrains use heights above 6000 cm (the dry test is strict). */
+int om_terrain_set_heights(om_world *w, const int32_t *cm, uint32_t cells_w, uint32_t cells_h);
 
 /* ---- tick (7-step sequence, tick auto-increments from 1) ---- */
 uint64_t om_world_step(om_world *w);                 /* advance one tick, return new tick */

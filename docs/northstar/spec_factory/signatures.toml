@@ -5,8 +5,8 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 6
-symbol_count = 766
+abi_version = 7
+symbol_count = 767
 struct_count = 45
 ambiguous_remaining = 0
 
@@ -7364,6 +7364,16 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "in
 epics = ["E-12"]
 confidence = "likely"
 note = "K0: fills cap cells of heights in cm, row-major; returns the cell count."
+
+[[symbols]]
+name = "om_terrain_set_heights"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "cm", ctype = "const int32_t*" }, { name = "cells_w", ctype = "uint32_t" }, { name = "cells_h", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+internal = true
+note = "K-e5 test hook (hard-fixture path; listed in scripts/specfactory/reach_allowlist.toml): replaces the height grid of a generated ground mission with cm values (row-major, cells_w * cells_h). 0 and nothing changed when the dimensions differ from the terrain's or there is no terrain. Otherwise recomputes the five band floors as generation does (no cell above the dry level: lo and hi are the minimum and maximum of all cells), bands the cells with ts_bands_from_floors, runs om_terrain_apply_ground (walkable, slopes, walk masks and mapgen blocked bits rewritten; obstacle discs and cover rows survive; move epoch bumped), then om_density_rebuild_inputs; returns 1. Flat test terrains use heights above 6000 cm (the dry test is strict)."
 
 # ---- VG K-d: space field (lane D contract piece, 2026-10-07 spec rev 4; S-246 R-246-01..03, E-01 R-001-04) ----
 # Canvas 24000 wu only (240 x 240 cells of 100 wu, 5 layers). Mask byte: 1 blocked, 0 open (the blocked_bits sense).

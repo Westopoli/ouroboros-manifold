@@ -67,10 +67,10 @@ def test_control_existing_getter_still_works(lib, world_factory):
     assert lib.om_structure_count(world_factory(n_regions=1)) == 0
 
 
-def test_abi_version_is_6(lib):
-    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1). Red on main: the library reports 5."""
+def test_abi_version_is_7(lib):
+    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6."""
     lib.om_abi_version.argtypes, lib.om_abi_version.restype = [], ctypes.c_uint32
-    assert lib.om_abi_version() == 6
+    assert lib.om_abi_version() == 7
 
 
 def test_new_symbols_present_and_bind(lib):
@@ -132,16 +132,16 @@ def test_place_symbol_callable(lib, world_factory):
     assert r in (0, 1) or isinstance(r, int)
 
 
-def test_save_round_trip_at_format_9_keeps_empty_new_state(lib, world_factory):
-    """K-e3: format 9 writes and re-reads; the version word is 9; the new state reads back empty / doctrine 3.
-    Red on main: the version word is 7 (and the symbols are missing)."""
+def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
+    """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16): the version word is 10; the new state reads back empty / doctrine 3.
+    Red before K-e5: the version word is 9."""
     bind(lib)
     bind_save(lib)
     src = world_factory(n_regions=1)
     size = lib.om_save_state_size(src)
     buf = (ctypes.c_uint8 * size)()
     lib.om_save_state_write(src, buf, size)
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 9
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 10
     dst = world_factory(n_regions=1)
     assert lib.om_load_state_read(dst, buf, size) == 0
     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0

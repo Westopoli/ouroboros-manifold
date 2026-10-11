@@ -68,10 +68,25 @@ static void steep_mark(const om_world *w, unsigned char *steep) {
     }
 }
 
+/* K-e5 stub: E1q-field fills it (derived grids elev_cm, water, wdist, slope_q, lane and lot_at; clears the field when the terrain
+ * is missing or its cell dimensions differ from density_side). Called by om_terrain_set_heights and after a load. */
+void om_density_rebuild_inputs(om_world *w) {
+    (void)w;
+}
+
 void om_density_init(om_world *w) {
+    om_economy_state *e;
     if (!w) return;
-    memset(w->economy.density, 0, sizeof w->economy.density);
-    w->economy.density_present = 0;
+    e = &w->economy;
+    memset(e->density, 0, sizeof e->density);
+    memset(e->P, 0, sizeof e->P);
+    memset(e->active, 0, sizeof e->active);
+    e->density_present = 0;
+    /* K-e5: the old growth still runs on the legacy grid; E1q sets these from the terrain and the objective. */
+    e->density_side = OM_DENSITY_SIDE;
+    e->n_active = 0;
+    e->core_cell = (uint32_t)core_cell();
+    e->next_lot_id = 1; /* K-e5: nothing numbers lots from it yet (the old code uses n_lots + 1); E1q moves this to om_lots_init */
     if (om_era_kind(w) != 1 || !om_terrain_present(w)) return;
     w->economy.density_present = 1;
 }

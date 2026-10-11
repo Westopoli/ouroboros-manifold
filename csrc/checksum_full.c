@@ -31,7 +31,7 @@
  *  * field order, F2i). * /
  * #define OM_SAVE_MAGIC "OMSV"
  * #define OM_SAVE_MAGIC_LEN 4
- * #define OM_SAVE_FORMAT_VERSION 8 / * bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
+ * #define OM_SAVE_FORMAT_VERSION 10 / * bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
  * #define OM_SAVE_BYTE_BITS 8
  * #define OM_SAVE_BYTE_MASK 0xFFu
  * #define OM_SAVE_SLOT_TACTICAL     0
@@ -388,8 +388,15 @@ static uint64_t ck_economy(uint64_t h, const om_economy_state *e) {
         h = ck_word(h, (uint64_t)e->lots[i].owner);
     }
     h = ck_word(h, e->density_present);
-    if (e->density_present)
-        for (uint32_t i = 0; i < OM_DENSITY_SIDE * OM_DENSITY_SIDE; i++) h = ck_dbl(h, e->density[i]);
+    if (e->density_present) {
+        uint32_t cells = e->density_side * e->density_side;
+        h = ck_word(h, e->density_side);
+        for (uint32_t i = 0; i < cells; i++) h = ck_dbl(h, e->density[i]);
+        for (uint32_t i = 0; i < cells; i++) h = ck_dbl(h, e->P[i]);
+        h = ck_word(h, e->n_active);
+        for (uint32_t i = 0; i < e->n_active; i++) h = ck_word(h, e->active[i]);
+        h = ck_word(h, e->core_cell);
+    }
     h = ck_word(h, e->n_strongpoints);
     for (uint32_t i = 0; i < e->n_strongpoints; i++) {
         h = ck_word(h, e->strongpoints[i].id);
@@ -409,6 +416,7 @@ static uint64_t ck_economy(uint64_t h, const om_economy_state *e) {
     }
     h = ck_dbl(h, e->density_economy);
     for (uint32_t i = 0; i < OM_LOT_CAP; i++) h = ck_word(h, e->lot_hit_tick[i]);
+    h = ck_word(h, e->next_lot_id);
     return h;
 }
 
