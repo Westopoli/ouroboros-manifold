@@ -73,6 +73,10 @@ func get_hovered() -> int:
 	return _system_at(_mouse)
 
 
+func is_behind(pos: Vector3) -> bool:
+	return _camera.is_position_behind(pos)
+
+
 func project(pos: Vector3) -> Vector2:
 	var raw: Vector2 = _camera.unproject_position(pos)
 	var vp := get_viewport()

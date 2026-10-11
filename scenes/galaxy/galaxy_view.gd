@@ -318,6 +318,8 @@ func qa_state() -> Dictionary:
 
 	var systems_px := {}
 	for i in _positions:
+		if _camera_rig.is_behind(_positions[i]):
+			continue
 		var p: Vector2 = _camera_rig.project(_positions[i])
 		systems_px[i] = [p.x, p.y]
 
