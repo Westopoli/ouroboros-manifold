@@ -4,12 +4,19 @@ A play drives the real game over the QA daemon like a player (real clicks, live 
 and the qa_state JSON of the moment to docs/northstar/story_reviews/shots/<run id>/<story>_<moment>.{png,json}.
 Run id: env PLAY_RUN_ID, else a UTC timestamp fixed per process. Pattern: tests/qa/desktop/test_flow_spine.py.
 Run one play:  pytest tests/qa/desktop/plays/F/S-141.py
+
+Q-F-1 (Westley, 2026-10-11, closed): "allowed, so long as the test does everything it can to emulate the reality of
+two players joining and not taking shortcuts beyond what is strictly necessary given the limitation". So a match here
+is two real game processes (a host and a guest, each with its own lobby) on the Steam-less local test network
+(--net-local, VG-F-SKEL-A/B): the guest types the host's lobby id into its own lobby and joins, the host presses
+Start, both reach the battle screen. No solo-host start, no net_loopback_start, no call into the lobby or NetMatch.
 """
 from __future__ import annotations
 
 import json
 import os
 import shutil
+import socket
 import sys
 import time
 from datetime import datetime, timezone
@@ -31,15 +38,71 @@ PRIVACY = "res://scenes/privacy_modal/privacy_modal.tscn"
 LOBBY = "res://scenes/lobby/lobby.tscn"
 TACTICAL = "res://scenes/tactical_c/tactical_view.tscn"
 BOOT_S, STEP_S, PORT_S = 45.0, 10.0, 60.0
+PAIR_S, SETTLE_S = 45.0, 30.0  # harness waits (join, match start; order settle), liberty 2026-10-11
 # 1080p is Westley's review resolution (memory: QA plays like the user, 1080p).
 RESOLUTION = "1920x1080"
 
 
-def start_game(seed: int = 1) -> GodotGame:
-    g = GodotGame(qa_port=pick_free_port(), seed=seed, resolution=RESOLUTION, renderer="vulkan")
+def start_game(seed: int = 1, extra_args: list[str] | None = None) -> GodotGame:
+    g = GodotGame(qa_port=pick_free_port(), seed=seed, resolution=RESOLUTION, renderer="vulkan",
+                  extra_args=extra_args)
     g.start()
     g.wait_for_port(timeout=PORT_S)
     return g
+
+
+def note(*parts) -> None:
+    """Premise dump line (visible with pytest -s)."""
+    print("PREMISE", *parts, flush=True)
+
+
+def _udp_free(port: int) -> bool:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def draw_ports() -> tuple[int, int, int, int]:
+    """(host qa port, guest qa port, lobby port L, UDP base U) for one pair (batch-2 ruling 15). pick_free_port tests
+    TCP only, so the UDP bind is the real check: L and U..U+3 (peer ids 0..3) must be free, distinct from each other
+    and from the games' qa ports. The plays never use a hardcoded 47000 or 47100."""
+    for _ in range(200):
+        qa_h, qa_g, lobby, udp = (pick_free_port() for _ in range(4))
+        block = range(udp, udp + 4)
+        if len({qa_h, qa_g, lobby}) != 3 or lobby in block or qa_h in block or qa_g in block:
+            continue
+        if _udp_free(lobby) and all(_udp_free(p) for p in block):
+            return qa_h, qa_g, lobby, udp
+    raise RuntimeError("no free UDP ports found for the pair")
+
+
+def pair_games(seed: int = 1):
+    """Generator for a module-scoped pytest fixture: yields (host, guest) GodotGame instances, both running, neither
+    past the loading screen's privacy modal. Host 1920x1080 (the shots are the host's, review resolution); guest
+    1280x720 (memory cap, spec Rev 12b F-SKEL (8)). Both are started before either answers the privacy modal: a
+    privacy flag present at a game's boot leaves it on the loading screen (daemon_client.py GodotGame.start)."""
+    qa_h, qa_g, lobby, udp = draw_ports()
+    note("ports lobby L=%d udp base U=%d qa host=%d qa guest=%d" % (lobby, udp, qa_h, qa_g))
+    common = ["--net-local", "--net-local-lobby-port", str(lobby), "--net-local-udp-base", str(udp)]
+    host = GodotGame(qa_port=qa_h, seed=seed, resolution=RESOLUTION, renderer="vulkan",
+                     extra_args=[*common, "--net-local-id", "1"])
+    guest = GodotGame(qa_port=qa_g, seed=seed, resolution="1280x720", renderer="vulkan",
+                      extra_args=[*common, "--net-local-id", "2"])
+    host.lobby_port = lobby  # read by reach_pair_lobby
+    try:
+        host.start()
+        guest.start()
+        host.wait_for_port(timeout=PORT_S)
+        guest.wait_for_port(timeout=PORT_S)
+        yield host, guest
+    finally:
+        guest.stop()
+        host.stop()
 
 
 def reach_main_menu(client) -> dict:
@@ -56,6 +119,23 @@ def reach_main_menu(client) -> dict:
                 clicked = True
         time.sleep(0.5)
     raise AssertionError("never reached the main menu; controls: %r" % control_names(client.tree()))
+
+
+def reach_main_menu_pair(host, guest) -> None:
+    """Both games boot first; wait until both show the privacy modal, then accept on both."""
+    clients = [host.client, guest.client]
+    deadline = time.monotonic() + BOOT_S  # harness wait, liberty 2026-10-11
+    while time.monotonic() < deadline:
+        if all(c.state()["result"].get("scene") == PRIVACY for c in clients):
+            break
+        time.sleep(0.5)
+    else:
+        raise AssertionError("both games never showed the privacy modal: %r" %
+                             [c.state()["result"].get("scene") for c in clients])
+    for c in clients:
+        click_named(c, "AcceptButton", "privacy")
+    for c in clients:
+        reach_main_menu(c)
 
 
 def control_with_text(client, needle: str) -> dict | None:
@@ -83,13 +163,88 @@ def go_to_lobby(client) -> dict:
     return wait_for(client, lambda s: s.get("scene") == LOBBY, STEP_S, label="lobby")
 
 
-def start_solo_match(client) -> dict:
-    """Host a lobby alone and press Start: the loopback single-peer match (spec question Q-F-1)."""
-    go_to_lobby(client)
-    click_named(client, "HostButton", "lobby")
-    time.sleep(0.5)
-    click_named(client, "StartButton", "lobby")
-    return wait_for(client, lambda s: s.get("scene") == TACTICAL, STEP_S * 3, label="match start")
+def lobby_qa(res: dict) -> dict:
+    return res.get("qa", res)
+
+
+def wait_until(predicate, timeout: float, label: str, poll: float = 0.5, why=None):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        v = predicate()
+        if v:
+            return v
+        time.sleep(poll)
+    raise AssertionError("%s: timed out after %ss%s" % (label, timeout, "; " + why() if why else ""))
+
+
+def field_text(client, name: str) -> str | None:
+    c = find_control(client.tree(), name)
+    return None if c is None else str(c.get("text") or "")
+
+
+def reach_pair_lobby(host, guest) -> tuple[dict, dict]:
+    """Two players joining: stops at the two-member lobby (S-141 needs this far). Returns (host, guest) lobby results."""
+    reach_main_menu_pair(host, guest)
+    hc, gc = host.client, guest.client
+    for c in (hc, gc):
+        click_text(c, "multiplayer", "menu")
+    wait_for(hc, lambda s: s.get("scene") == LOBBY, STEP_S, label="host lobby")
+    wait_for(gc, lambda s: s.get("scene") == LOBBY, STEP_S, label="guest lobby")
+    lobby_id = str(host.lobby_port)
+    click_named(hc, "HostButton", "host lobby")
+    # The id appears only if the lobby-created event reached the lobby through the poll pump.
+    wait_until(lambda: field_text(hc, "LobbyIdField") == lobby_id, STEP_S, "host LobbyIdField shows the lobby id",
+               why=lambda: "LobbyIdField=%r, StatusLine=%r (a disabled HostButton leaves the field empty)" %
+               (field_text(hc, "LobbyIdField"), field_text(hc, "StatusLine")))
+    # The guest types the id as digit keys (there is no type-text verb); the digits are what a player would key in.
+    click_named(gc, "LobbyIdField", "guest lobby")
+    for ch in lobby_id:
+        gc.call("input", "key", ch)
+    typed = field_text(gc, "LobbyIdField")
+    assert typed == lobby_id, "spec-gap: no way to type the lobby id (typed %r, wanted %r)" % (typed, lobby_id)
+    note("digits typed into the guest LobbyIdField:", lobby_id)
+    click_named(gc, "JoinButton", "guest lobby")
+    h = wait_for(hc, lambda s: len(lobby_qa(s).get("members", [])) == 2, PAIR_S, label="host sees two members")
+    g = wait_for(gc, lambda s: len(lobby_qa(s).get("members", [])) == 2, PAIR_S, label="guest sees two members")
+    note("host lobby qa:", json.dumps(lobby_qa(h), sort_keys=True), "controls:", sorted(control_names(hc.tree())))
+    note("guest lobby qa:", json.dumps(lobby_qa(g), sort_keys=True), "controls:", sorted(control_names(gc.tree())))
+    return h, g
+
+
+def start_pair_match(host, guest) -> tuple[dict, dict]:
+    """Host presses Start in the two-member lobby; both games wait for the TACTICAL scene (the battle screen)."""
+    reach_pair_lobby(host, guest)
+    click_named(host.client, "StartButton", "host lobby")
+    h = wait_for(host.client, lambda s: s.get("scene") == TACTICAL, PAIR_S, label="host match start")
+    g = wait_for(guest.client, lambda s: s.get("scene") == TACTICAL, PAIR_S, label="guest match start")
+    for who, res in (("host", h), ("guest", g)):
+        qa = res["qa"]
+        note(who, "tactical qa keys:", sorted(qa.keys()), "units:", len(qa["units"]), "tick:", qa["tick"])
+    return h, g
+
+
+def tactical_qa(client) -> dict:
+    return client.state()["result"]["qa"]
+
+
+def positions(client, uids) -> dict:
+    units = tactical_qa(client)["units"]
+    return {u: (units[u]["x"], units[u]["y"]) for u in uids if u in units}
+
+
+def wait_settled(host, guest, uids, start: dict, cap: float = SETTLE_S) -> tuple[dict, dict]:
+    """After an order: wait until the ordered units have stopped moving on both processes (two consecutive samples one
+    second apart equal on each side; the host's units must also have left their start so a sample taken before the
+    order lands never counts as settled). Returns the settled (host, guest) positions."""
+    deadline = time.monotonic() + cap
+    prev = None
+    while time.monotonic() < deadline:
+        cur = (positions(host.client, uids), positions(guest.client, uids))
+        if prev == cur and cur[0] != start:
+            return cur
+        prev = cur
+        time.sleep(1.0)
+    raise AssertionError("spec-gap: order does not settle (last host %r, guest %r)" % (prev[0], prev[1]))
 
 
 def record(client, story: str, moment: str) -> dict:
