@@ -112,6 +112,9 @@ else
     done
 fi
 
+# See also: spec_provenance.py (method rev 3). DRAFT-pregate-spec-env
+[[ -n "${PRE_GATE_SPEC:-}" ]] && { "$VENV_PYTHON" "$HERE/spec_provenance.py" "$WT/$PRE_GATE_SPEC" && echo "PRE_GATE provenance OK $PRE_GATE_SPEC" || { echo "PRE_GATE provenance REJECT $PRE_GATE_SPEC"; REJECTED=1; }; }
+
 if (( REJECTED )); then
     echo "PRE_GATE verdict REJECT"
     exit 1

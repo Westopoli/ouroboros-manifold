@@ -1,6 +1,6 @@
 # Shared RULES blocks for lane briefs and wave scripts
 
-Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resume-laneC-land2.js line 8, plus the 2026-10-09 lessons and method rev 2 (2026-10-10, `retro_2026-10-10/README.md` section 4). Six roles: Builder, Landing clerk, Scout or auditor, Test writer, Ruler, Dispatcher.
+Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resume-laneC-land2.js line 8, plus the 2026-10-09 lessons, method rev 2 (2026-10-10, `retro_2026-10-10/README.md` section 4) and method rev 3 (sections (c) and (d), Westley 2026-10-11: "#14: approved"; the lint is lane H part 3 of the spec). Six roles: Builder, Landing clerk, Scout or auditor, Test writer, Ruler, Dispatcher.
 
 ## (a) Builder (Doer)
 
@@ -34,19 +34,22 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 - Status row (method rev 2): in the landing commit, flip the lane's row in the programme file's lane table (On main sha, Next piece) and the pieces rows; write nothing about status anywhere else (no ROADMAP lane rows, no journal line: the commit subject is the journal, `scripts/journal.sh` prints it).
 - Report schema: ok, branch, sha, summary (stage lines verbatim), red_ids, stop_reason, shots. Write `.wt-done` after the push.
 
-## (c) Read-only scout or auditor
+## (c) Read-only scout or auditor, method rev 3 addition below
 
 - Detached worktree (`git worktree add --detach <abs path> origin/main`); remove it after, even if removal is slow. Change nothing; no commits, no pushes, no ledger edits.
 - Evidence as file:line plus the sha read. Mark what was not run (Godot, pytest) as unverified.
 - Report once, at the end, findings numbered, with a blocking yes or no.
+- Audit provenance column (method rev 3): an audit of a spec carries a table with one row per behaviour sentence (a number with a unit, a bare number outside code spans, or the words when, then, shows, sees, draws, refuses, accepts, default) and the column `provenance`: `[W Q-... ]` or `[W <date>: "..."]` (Westley's words), `[B R-...]` (a bible rule that exists), `[P <path>:<line>]` (a prototype or mockup read), or `[DRAFT-<name>]` (a named draft with a ledger or register row). The auditor reports every untagged sentence as a finding, blocking, quoting the sentence and its section. Words that stand in for a source ("liberty", "as the builder drafted", "Architect default") are findings too. `scripts/specfactory/spec_provenance.py` does the mechanical half once it lands (HARNESS-provenance); until then the auditor does it by reading.
 
-## (d) Test writer (Engineer), method rev 2
+## (d) Test writer (Engineer), method rev 2 and rev 3
 
 - Section (a)'s worktree, build and Godot lines apply. Write ONLY the test file the brief names; never a source file.
 - On the built tree, not from the spec alone: merge the branch that holds the stub or the previous piece (the brief names it; else `origin/main`), build, run the file. It must be red for the missing-feature reason the brief states, and the report pastes the failing assertion line verbatim (file:line and the message).
 - Positive control green first: before the new assertions, one assertion that passes today on the same scene or fixture (the node instantiates, the helper returns a value, the getter reads the fixture), so a red means the feature is missing and not that the harness is broken.
 - Scene premises are dumped, not assumed: a test that reads qa_state, a frame or a sim scene runs the scene once and pastes the keys and the values it relies on (region owner, economy, tick, era, unit count) into the report; a premise that does not hold (the economy is 0, no units so the tick returns early, the clock is stopped before `om_mission_begin`) is fixed in the test now, on the test branch, and said in the report. The 2026-10-10 part a run stopped six of seven builders on premises nobody had run.
 - Thresholds, windows and tolerances are Westley's: a value nobody gave goes in a `*_park_*` file with a comment naming the register row.
+- Quote the rule (method rev 3): the brief for each test quotes, word for word, the bible rule `R-###-##` (or Westley's recorded words) the test proves, and the test file names the same id in its docstring or header comment. A test whose behaviour no quoted rule states is not written; the writer reports the gap and a register row is raised.
+- Prototype copies ship a parity test (method rev 3): a piece that copies numbers, geometry or behaviour from an approved prototype or mockup ships a test that reads each copied constant from the live script or scene and compares it to the prototype's as-run value, with the prototype file:line beside each row (the B23 table in `tests/test_vg_b_b23.gd` is the model). Rows already equal are the positive control (green today); the rest are red until built. Copying the prototype's pre-rescale values and changing only one of them is the failure this guards against (galaxy B22, 2026-10-11).
 - Report ok, branch, sha, summary (the failing line, the control line, the dumped premises), red_ids.
 
 ## (e) Ruler (Engineer), method rev 2
