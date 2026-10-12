@@ -20,11 +20,11 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | Harness, method rev 2 | `pre_gate.sh`, `status_check.py`, `journal.sh` at f089fccb | none | n/a | none |
 | A battle screen | A1 to A21 at 4d4babf8; twelve plays pass in both eras in the gate | one fix piece per verdict, nothing until then | 2026-10-08 22:30, 11 of 12 "no"; A19 to A21 since, not yet seen | 2 |
 | B galaxy | landing 12 at 5333e1a0; three plays pass | B22 done; the three new B looks (run 20261011-1505-a4573fe) wait for Westley's verdict; nothing more until then | reviewer no, no, unclear (`story_reviews/B.md`, run 20261009-2217-5333e1a on `push/vg-b-reviews-5`); Westley 2026-10-10: all three rejected | 1 |
-| B galaxy, B22 (`VG-B22`) | B22 at a4573fec (ball layout, camera, field grid; TD-VG-B-12, TD-VG-B-13); three plays pass | Westley's verdict on the three new B look rows (S-106, S-107, S-108) | reviewer no, no, unclear (`story_reviews/B.md`, run 20261011-1505-a4573fe); Westley pending | 1 |
+| B galaxy, B22 (`VG-B22`) | B22 at a4573fec (ball layout, camera, field grid; TD-VG-B-12, TD-VG-B-13), landed with shots and review rows at 5ad4e7df; three plays pass | Westley's verdict on the three new B look rows (S-106 no, S-107 no, S-108 unclear); camera-ratio decision open | reviewer no, no, unclear (`story_reviews/B.md`, run 20261011-1505-a4573fe); Westley pending | 1 |
 | C ground 3D | C1 to C11, VG-C-wire, K-c6, C6b at bcad1954; S-236 and S-001 plays pass | nothing until verdicts; S-004 is a spec gap, S-132 a finding | reviews on `push/vg-c-reviews-2` (run before the fixes) | 4, 5 |
 | D space landscape | landing 4 at 1fdeb1c0 (D2 to D8, the pipe-field fix); rulings TD-VG-D-6 to D-11 | E-17 and S-007 plays (no eyes until the shots exist); the D view hook after E1p | none yet | none |
-| E settlement and economy | part a at 8f76be4d (K-e2, K-e3, E1b to E1h, E1i; TD-VG-E-2 to E-12); part b records on main (spec section, VG-CONTRACT-E4, TD-VG-E-13); skeleton K-e4 + E1k-skel + E1p-a at c9c7545f; S-193 re-shot (VG-E1-SHOT) at b5024dc9; four part b test branches on origin (E1k, E1l, E1o, E1p-b); settlement port (K-e5, E1q-field, E1q-lots) at 34bbc3b | fan-out (E1k full, E1l, E1o, E1p-b) on the S-237 verdict (Now row 6) | 2026-10-10 S-237 rejected ("far too circular") | 6; Q-235-01 is row 3 (E1m, E1n, S-235 held) |
-| E settlement and economy, part c (`VG-CONTRACT-E5`, K-e5 contract piece) | K-e5 (save 10, ABI 7) at 8bdb64f; spec lane E1 part c (rev 10e) on main | E1q port (stage port of `vg-wave9-laneE1q.js`) | none yet | 6 |
+| E settlement and economy | part a at 8f76be4d (K-e2, K-e3, E1b to E1h, E1i; TD-VG-E-2 to E-12); part b records on main (spec section, VG-CONTRACT-E4, TD-VG-E-13); skeleton K-e4 + E1k-skel + E1p-a at c9c7545f; S-193 re-shot (VG-E1-SHOT) at b5024dc9; four part b test branches on origin (E1k, E1l, E1o, E1p-b); settlement port (K-e5 39927051, E1q-field, E1q-lots) at f79f91c; S-237 shot 20261012-0316-34bbc3b is a stop: the play saw 4 of 263 lots because full pipe frames carry no lot rows (Architect ruling pending; `FINDING-pipe-full-frame-lots`) | fan-out (E1k full, E1l, E1o, E1p-b) on the S-237 verdict (Now row 6) | 2026-10-10 S-237 rejected ("far too circular"); re-play after the port: S-237 row "no" | 6; Q-235-01 is row 3 (E1m, E1n, S-235 held) |
+| E settlement and economy, part c (`VG-CONTRACT-E5`, K-e5 contract piece) | K-e5 (save 10, ABI 7) at 8bdb64f; spec lane E1 part c (rev 10e) on main; settlement port (K-e5 39927051, E1q-field, E1q-lots) at f79f91c; S-237 shot 20261012-0316-34bbc3b is a stop: the play saw 4 of 263 lots because full pipe frames carry no lot rows (Architect ruling pending) | Architect ruling on the full-frame lot gap, then the S-237 re-play | S-237 row "no" | 6 |
 | F Steam phase B | 1398ba16 (F5 match mode); phase A e63483f6 | E-19 plays; lobby and depot script | none yet | none |
 
 ## Method rev 2 (Westley picked all nine, 2026-10-10)
@@ -43,16 +43,18 @@ The three-day record and the comparison with how large organisations build are i
 
 Scorecard, filled by the record clerk after each lane run (first column is the three-day value):
 
-| Metric | Rev 1 | E1 skeleton | E1 fan-out | next |
-|---|---|---|---|---|
-| Hours to first seen pixel | about 28 | | | |
-| Landing attempts per landing | up to 14 | | | |
-| Non-semantic full-gate rejects | about 15 | | | |
-| Rulings per landed piece | 0.46 | | | |
-| Pieces built before first look | 11 to 18 | | | |
-| Fable consults | about 340 turns per day | | | |
-| Concurrent workflows | 5 | | | |
-| Drift findings per check | 5 to 8 | | | |
+| Metric | Rev 1 | E1 skeleton | E1q port | E1 fan-out | next |
+|---|---|---|---|---|---|
+| Hours to first seen pixel | about 28 | |  | | |
+| Landing attempts per landing | up to 14 | |  | | |
+| Non-semantic full-gate rejects | about 15 | | 0 (gate clean) | | |
+| Rulings per landed piece | 0.46 | | 1.0 (TD-VG-E-23, TD-VG-E-24 over E1q-field and E1q-lots) | | |
+| Pieces built before first look | 11 to 18 | | 2 (E1q-field, E1q-lots) | | |
+| Fable consults | about 340 turns per day | |  | | |
+| Concurrent workflows | 5 | |  | | |
+| Drift findings per check | 5 to 8 | |  | | |
+
+E1 skeleton column: no run data was handed to the record clerk, left blank. E1q port column (`wf_3253958a-378`): 10 agents first pass, 6 second pass; subagent tokens 972,567 + 283,153; the join check failed first time on 11 unexpected reds (an argtypes leak and two superseded K-e5 pins), ruled as TD-VG-E-23 and TD-VG-E-24, landed at f79f91c1; gate clean; the play found the full-frame lot gap (`FINDING-pipe-full-frame-lots`). Other cells need data the clerk was not given.
 
 **No eyes needed** (runs while Westley is away, in this order): the three harness pieces (`vg-harness-method.js`); a worktree cleanup clerk (465 worktrees under `~/Projects/om-push/wt/`, 98 with `.wt-done`); a branch triage clerk (26 unmerged `push/vg-*` branches: landed, superseded or pending, one line each, no deletions); the 31 `pieces.py --check` owner overlaps without `depends_on` (record clerk, rows only); lane D and lane F story plays run and queued; the walk-route fix piece (FINDING-walk-route-replan) once the Architect specs it; lab runs in the night slot.
 
