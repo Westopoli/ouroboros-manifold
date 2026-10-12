@@ -52,7 +52,6 @@ CANVAS_WU = 24000.0
 TERRAIN_SIDE = 240            # 24000 wu / OM_TERRAIN_CELL_WU 100 (om_terrain_cells on the fixture)
 MAX_SIDE = 240                # OM_DENSITY_MAX_SIDE (K-e5)
 LEGACY_SIDE = 120             # OM_DENSITY_SIDE, legacy until E1q
-LEGACY_CORE = 60 * LEGACY_SIDE + 60
 LOT_CAP = 2048                # DRAFT-lot-cap (K-e5 paragraph)
 LEGACY_LOT_CAP = 256          # OM_LOT_CAP on the built tree (diagnostic only)
 Q16 = 65536.0
@@ -408,10 +407,17 @@ def test_ke5_density_side_is_saved_after_density_present(klib, kmake):
     assert blk["dp"] == 1 and 1 <= blk["side"] <= MAX_SIDE, blk
 
 
-def test_ke5_old_init_gives_legacy_side_n_active_and_core(klib, kmake):
-    """K-e5 (K-e5 tree only; E1q retires it): the old init sets density_side = 120, n_active = 0, core_cell = 60 * 120 + 60."""
+def test_ke5_init_gives_terrain_side_one_active_and_objective_core(klib, kmake):
+    """K-e5 as E1q re-pinned it (spec :216 E1q init): density_side = om_terrain_cells' width, n_active = 1 (the core), core_cell =
+    the objective cell, read at tick 0 (before any step). Derived from the fixture, no literal. Retires the K-e5 tree's legacy
+    init (120, 0, 60 * 120 + 60) under TD-VG-E-23."""
     w, data, blk = base_of(klib, kmake)
-    assert (blk["side"], blk["na"], blk["core"]) == (LEGACY_SIDE, 0, LEGACY_CORE), (blk["side"], blk["na"], blk["core"])
+    cw, ch = ctypes.c_uint32(), ctypes.c_uint32()
+    klib.om_terrain_cells(w, ctypes.byref(cw), ctypes.byref(ch))
+    v = C.OMVec2()
+    assert klib.om_objective_get_center(w, 0, ctypes.byref(v)) == 1
+    core = int(v.y // 100) * cw.value + int(v.x // 100)
+    assert (blk["side"], blk["na"], blk["core"]) == (cw.value, 1, core), (blk["side"], blk["na"], blk["core"])
 
 
 def test_ke5_d_and_p_are_side_squared_doubles_in_q16(klib, kmake):
@@ -540,14 +546,15 @@ def test_ke5_checksum_hashes_each_new_field(klib, kmake, field):
 
 
 def test_ke5_checksum_hashes_density_side(klib, kmake):
-    """K-e5: the checksum loops over density_side: a 240 block (zero fields) hashes differently from the native-side zero block."""
+    """K-e5: the checksum loops over density_side: a 240 block whose last cell holds one Q16 unit hashes differently from the
+    all-zero 240 block (E1q makes the native side 240, so the "other side" case became a last-cell case, TD-VG-E-23)."""
     w, data, blk = base_of(klib, kmake)
     f = read_block(data, blk)
     s = f["side"]
     f.update(D=zeros(s * s), P=zeros(s * s), active=[], core=0)
     a = scene(klib, kmake)
     assert load(klib, a, splice(data, blk, f)) == 0
-    f.update(side=MAX_SIDE, D=zeros(MAX_SIDE * MAX_SIDE), P=zeros(MAX_SIDE * MAX_SIDE))
+    f.update(side=MAX_SIDE, D=zeros(MAX_SIDE * MAX_SIDE)[:-1] + [1.0 / Q16], P=zeros(MAX_SIDE * MAX_SIDE))
     b = scene(klib, kmake)
     assert load(klib, b, splice(data, blk, f)) == 0
     assert sections(klib, a)[1] != sections(klib, b)[1]
