@@ -1985,6 +1985,6 @@ owns = ["docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_s
 owns_glob = []
 acceptance = ["tests/specfactory/test_signatures_internal.py"]
 depends_on = ["VG-CONTRACT-E5", "A94-harness"]  # Architect ruling 2026-10-12: lands BEFORE VG-CONTRACT-E7 (which lists it); E5 and A94-harness are the in-flight owners pieces.py --check asks for
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "c7906a01" }  # build sha c7906a01 (tests 81497c5e); landed with the merge gate clean
 tests_pending = false
 size_estimate = "two [[symbols]] rows in signatures.toml (om_tac_event_push unit.c, om_move_terrain_epoch tactical_move.c); the test table gains the same two names"
