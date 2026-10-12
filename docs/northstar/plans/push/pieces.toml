@@ -1936,3 +1936,16 @@ depends_on = ["VG-A"]  # attached owner of tests/qa/desktop/plays/A/**
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "A17: _edge_scroll_to measures game ticks (DRAFT-scroll-cap-ticks 400), zooms out first; contact budgets restored; no product change"
+
+# K-d1 (Architect ruling 2026-10-12): the non-stepping full request drops state bit 1 because handle_tactical_step calls ev_reset() even when n == 0. Ledger FINDING-delta-death-unit.
+[[piece]]
+id = "VG-K-D1"
+manager = "M0"
+wave = 9
+owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_tactical_delta_frame.py"]  # om_pipe.c: the handle_tactical_step function only; the new transport case goes in test_pipe_tactical_delta_frame.py (exists; test_pipe_shapes.py is the frame-shape file and stays)
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_tactical_delta_frame.py", "tests/test_tactical_delta_reconstruction.gd"]
+depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1"]  # attached owners of om_pipe.c and of test_pipe_tactical_delta_frame.py (take-over convention)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "K-d1: ev_reset() moves under n > 0 in handle_tactical_step (om_pipe.c:1486); one transport case"
