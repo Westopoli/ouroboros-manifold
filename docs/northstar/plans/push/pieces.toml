@@ -1533,7 +1533,7 @@ wave = 8
 owns = ["csrc/economy_density.c", "csrc/economy_lots.c", "csrc/economy_doctrine.c", "csrc/strongpoint.c", "scripts/specfactory/pack_validate.py", "scenes/tactical_c/tactical_view.gd", "scenes/ground3d/ground3d.gd", "csrc/economy_place.c", "csrc/economy_waves.c", "docs/northstar/story_reviews/E.md"]
 owns_glob = ["scenes/settlement/**", "scenes/economy/**", "assets/eras/*/manifest.json", "tests/test_vg_e_*.gd", "tests/csim/test_VG_E_*.py", "tests/qa/desktop/plays/E/**"]
 acceptance = []
-depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest", "VG-C6b", "VG-C-wire", "VG-CONTRACT-E4", "VG-CONTRACT-E5"]
+depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT", "VG-D8", "VG-CONTRACT-E2", "VG-CONTRACT-E3", "K2", "G-eramanifest", "VG-C6b", "VG-C-wire", "VG-CONTRACT-E4", "VG-CONTRACT-E5", "VG-A16"]
 status = { state = "in_flight" }
 tests_pending = true
 size_estimate = "lane E1, 22 pieces in two workflows (vg-wave5-laneE1.js parts a and b)"
@@ -1827,10 +1827,10 @@ size_estimate = "W1: scratch reuse, per-epoch height and mask cache keyed on gen
 id = "VG-W2"
 manager = "M0"
 wave = 9
-owns = ["csrc/tactical_move.c", "csrc/om_internal.h", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "csrc/checksum_full.c", "csrc/terrain.c", "csrc/save.c", "tests/csim/test_VG_W_w2_routes.py", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_E01_T3_contract.py", "tests/csim/test_VG_E_contract.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E01_T2_walker_waypoint_arrival.py"]
+owns = ["csrc/tactical_move.c", "csrc/om_internal.h", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "csrc/checksum_full.c", "csrc/terrain.c", "csrc/save.c", "tests/csim/test_VG_W_w2_routes.py", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_E01_T3_contract.py", "tests/csim/test_VG_E_contract.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E01_T2_walker_waypoint_arrival.py", "docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_signatures_internal.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_E01_T2_collision_mask.py", "tests/csim/test_PP_portability.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_W_w2_routes.py"]
-depends_on = ["VG-W1", "VG-CONTRACT-E5", "VG-CONTRACT-E1", "VG-E1", "VG-CONTRACT-E6"]  # spec: depends_on VG-W1; E5 and E1 are the attached owners of the save, header and pinned-test files; VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-CONTRACT-E6 owns docs/architecture.md (landed); the getter belongs to W1 (rev 12b)
+depends_on = ["VG-W1", "VG-CONTRACT-E5", "VG-CONTRACT-E1", "VG-E1", "VG-CONTRACT-E6", "HARNESS-sig-rows", "VG-K-D1", "PP-ledger", "NET-wire-A"]  # spec: depends_on VG-W1; E5 and E1 are the attached owners of the save, header and pinned-test files; VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-CONTRACT-E6 owns docs/architecture.md (landed); the getter belongs to W1 (rev 12b)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "W2 contract piece: stored routes, save format 10 to 11 (TD-VG-W-1, TD-VG-W-2), second-Fable audit; DRAFT-walk-tick-ms-w2 3 ms"
@@ -1860,6 +1860,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "F-SKEL-B: --net-local wiring in lobby.gd and the two-process start_pair_match play; shots to story_reviews/F.md for Westley; FU-F-net-qa-key"
 
+# Lane F part 1b (Architect 2026-10-12): the first tick of a networked match. Ledger FINDING-net-first-tick (arrives with the F-SKEL landing).
+[[piece]]
+id = "VG-F-NETTICK"
+manager = "M0"
+wave = 9
+owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_f_nettick.gd", "tests/qa/desktop/plays/F/_play.py", "tests/qa/desktop/plays/F/S-140.py"]  # tactical_view.gd: the _load_live function only
+owns_glob = []
+acceptance = ["tests/test_vg_f_nettick.gd"]
+depends_on = ["VG-F-SKEL-B", "VG-E1"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owns tactical_view.gd
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (empty frame at _ready: load none, _match_frame loads the first released one); S-140 green, ticks wait (DRAFT-s140-settle-ticks), known-red line out"
+
 # Lane E1 part e (spec "Lane E1 part e"): placement clears (E1r) and the starting force (E7).
 [[piece]]
 id = "VG-E1R"
@@ -1868,7 +1881,7 @@ wave = 9
 owns = ["csrc/economy_place.c", "csrc/economy_lots.c", "csrc/economy_internal.h", "docs/architecture.md", "tests/csim/test_VG_E_e1r.py", "tests/qa/desktop/plays/E/S-193.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e1r.py"]
-depends_on = ["VG-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E7"]  # spec: depends_on VG-E1; E7 orders architecture.md (chain W2, E7, E1R, Dispatcher may flip) (its files return to attached when E1q's lane finishes; the Dispatcher pre-flights); E5 is the attached owner of economy_internal.h and architecture.md
+depends_on = ["VG-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E7", "VG-K-D1"]  # spec: depends_on VG-E1; E7 orders architecture.md (chain W2, E7, E1R, Dispatcher may flip) (its files return to attached when E1q's lane finishes; the Dispatcher pre-flights); E5 is the attached owner of economy_internal.h and architecture.md
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "E1r: placement clears natural lots under the footprint (R-193-03), om_lots_remove_row; DRAFT-place-on-placed, Q-168-06"
@@ -1877,10 +1890,10 @@ size_estimate = "E1r: placement clears natural lots under the footprint (R-193-0
 id = "VG-CONTRACT-E7"
 manager = "M0"
 wave = 9
-owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "tests/csim/test_VG_E_ke2.py", "tests/csim/test_VG_E_e7.py"]  # rev 12c: mission.c also the mission slot save (om_mis_net_save_*, mission.c:3378-3380); om_internal.h the OM_SAVE_FORMAT_VERSION line only, after W2 (TD-VG-E-27, old 11 new 12); load_game.gd:5
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "tests/csim/test_VG_E_ke2.py", "tests/csim/test_VG_E_e7.py", "csrc/pipe/pipe_internal.h", "csrc/checksum_full.c", "csrc/terrain.c", "tests/csim/conftest.py", "docs/bible/epics/E-15-reinforcement-supply-and-hazards.md", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_E01_T3_contract.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py", "tests/transport/test_pipe_vg_e.py", "tests/csim/test_VG_E_e1h.py", "tests/csim/test_E01_T3_mission_ground.py", "tests/csim/test_F1_fog_per_faction_observers.py", "tests/csim/test_F2_nearest_hostile_search.py", "tests/csim/test_F3_macro_contact_skip.py", "tests/transport/test_pipe_vg_d.py", "tests/csim/test_PP_portability.py", "tests/csim/test_E01_T2_collision_mask.py", "tests/specfactory/test_signatures_internal.py", "tests/qa/desktop/plays/E/S-126.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # rev 12c: mission.c also the mission slot save (om_mis_net_save_*, mission.c:3378-3380); om_internal.h the OM_SAVE_FORMAT_VERSION line plus the two reinforce accessor prototypes, after W2 (TD-VG-E-27, old 11 new 12; TD-VG-E-28 pins); load_game.gd:5
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e7.py"]
-depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2", "HARNESS-sig-rows"]  # spec: depends_on VG-CONTRACT-E5; HARNESS-sig-rows (2026-10-12 ruling: it lands first, both own signatures.toml); VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)
+depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2", "HARNESS-sig-rows", "VG-K-D1", "PP-ledger", "NET-wire-A"]  # spec: depends_on VG-CONTRACT-E5; HARNESS-sig-rows (2026-10-12 ruling: it lands first, both own signatures.toml); VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-e7 contract piece: starting force by strongpoint share, header signature and ABI 7 to 8 (TD-VG-E-25, TD-VG-E-26), second-Fable audit; DRAFT-start-fraction, Q-218-07"
@@ -1916,10 +1929,10 @@ size_estimate = "spec_provenance.py: seven reasons, CLASH_PAIRS, acceptance on t
 id = "VG-A16"
 manager = "M0"
 wave = 9
-owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/layer_view.gd", "tests/test_vg_a_a16.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py"]
+owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/layer_view.gd", "tests/test_vg_a_a16.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py", "docs/northstar/story_reviews/A.md", "scenes/settings/settings.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_a_a16.gd"]
-depends_on = ["VG-E1", "VG-A"]  # spec: depends_on VG-E1 (tactical_view.gd after VG-E1 lands; the Dispatcher sequences); VG-A is the attached owner of scenes/tactical_c/**
+depends_on = ["VG-A", "G-settings", "VG-C6b", "VG-F-NETTICK"]  # Architect A16 ruling 2026-10-12: A16 lands BEFORE VG-E1's remaining pieces (no VG-E1 builder is editing tactical_view.gd; VG-E1 depends_on VG-A16 instead); VG-A is the attached owner of scenes/tactical_c/**; G-settings is the attached owner of scenes/settings/settings.gd (lines 195-199 only)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "A16: To-layer buttons in the layer strip, Q/E keys, qa_state focus_layer; DRAFT-a16-qe-relative, Q-A16-01"
@@ -1968,10 +1981,10 @@ size_estimate = "A17: _edge_scroll_to measures game ticks (DRAFT-scroll-cap-tick
 id = "VG-K-D1"
 manager = "M0"
 wave = 9
-owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_tactical_delta_frame.py"]  # om_pipe.c: the handle_tactical_step function only; the new transport case goes in test_pipe_tactical_delta_frame.py (exists; test_pipe_shapes.py is the frame-shape file and stays)
+owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_tactical_delta_frame.py", "docs/architecture.md"]  # om_pipe.c: the handle_tactical_step function only; docs/architecture.md: the two state-bit-1 lines (:376, :392) only; the new transport case goes in test_pipe_tactical_delta_frame.py (exists; test_pipe_shapes.py is the frame-shape file and stays)
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_tactical_delta_frame.py", "tests/test_tactical_delta_reconstruction.gd"]
-depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1"]  # attached owners of om_pipe.c and of test_pipe_tactical_delta_frame.py (take-over convention)
+depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6"]  # attached owners of om_pipe.c and of test_pipe_tactical_delta_frame.py (take-over convention)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-d1: ev_reset() moves under n > 0 in handle_tactical_step (om_pipe.c:1486); one transport case"
