@@ -189,7 +189,15 @@ def reach_pair_lobby(host, guest) -> tuple[dict, dict]:
     for c in (hc, gc):
         click_text(c, "multiplayer", "menu")
     wait_for(hc, lambda s: s.get("scene") == LOBBY, STEP_S, label="host lobby")
-    wait_for(gc, lambda s: s.get("scene") == LOBBY, STEP_S, label="guest lobby")
+    gl = wait_for(gc, lambda s: s.get("scene") == LOBBY, STEP_S, label="guest lobby")
+    # Positive control (green on any tree with a lobby): both games reached the lobby scene under --net-local, the
+    # lobby qa_state has a members list, and the Host button exists. A red after this line means the feature is missing.
+    hl = hc.state()["result"]
+    for who, res, cl in (("host", hl, hc), ("guest", gl, gc)):
+        assert "members" in lobby_qa(res), "CONTROL: %s lobby qa_state has no members list: %r" % (who, res)
+        assert find_control(cl.tree(), "HostButton") is not None, "CONTROL: %s lobby has no HostButton" % who
+        note(who, "lobby (before Host) qa:", json.dumps(lobby_qa(res), sort_keys=True),
+             "controls:", sorted(control_names(cl.tree())), "StatusLine:", field_text(cl, "StatusLine"))
     lobby_id = str(host.lobby_port)
     click_named(hc, "HostButton", "host lobby")
     # The id appears only if the lobby-created event reached the lobby through the poll pump.

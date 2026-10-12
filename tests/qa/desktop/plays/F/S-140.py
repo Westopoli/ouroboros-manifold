@@ -19,23 +19,47 @@ def pair():
     yield from P.pair_games()
 
 
+# The receiving peer rejects a command naming more units than this as a bad packet and the match stalls
+# (autoload/net/lockstep_session.gd UNITS_MAX 70, _valid), so the play orders a box of at most this many own units.
+# liberty 2026-10-11: the over-70 order is reported to the Architect as a finding, not tested here.
+UNITS_MAX = 70
+
+
+def box_select(hc, own: dict) -> list:
+    """A real drag over a box around the own unit nearest the screen centre (away from the edge-scroll margin), shrunk
+    until 1..UNITS_MAX units are selected; clamped at least 8 px inside the 1920x1080 screen (plays/A/play_support.py
+    TD-VG-A-9). Returns (the selected ids, the anchor pixel)."""
+    anchor = min(own, key=lambda u: (own[u][0] - 960) ** 2 + (own[u][1] - 540) ** 2)
+    cx, cy = own[anchor]
+    half = 240.0
+    while half >= 15.0:
+        x0, y0 = max(cx - half, 8), max(cy - half, 8)
+        x1, y1 = min(cx + half, 1912), min(cy + half, 1072)
+        hc.call("input", "drag", x0, y0, x1, y1, 8)
+        time.sleep(0.3)
+        sel = [str(u) for u in P.tactical_qa(hc)["selected"]]
+        if 1 <= len(sel) <= UNITS_MAX:
+            return sel, (cx, cy)
+        half *= 0.6  # liberty 2026-10-11: harness search step
+    raise AssertionError("spec-gap: no box of 1..%d own units found around unit %s" % (UNITS_MAX, anchor))
+
+
 def test_s140_move_order_in_a_match_moves_the_units_on_both_peers(pair):
     host, guest = pair
     hc, gc = host.client, guest.client
     P.start_pair_match(host, guest)
     qa = P.tactical_qa(hc)
-    own = [uid for uid, u in qa["units"].items() if u["faction"] == qa["local_faction"]]
-    assert own, "no own units in the match frame"
-    px = qa["units_px"]
-    ordered = [u for u in own if u in px]
-    assert ordered, "no own unit is on screen"
-    xs = [px[u][0] for u in ordered]
-    ys = [px[u][1] for u in ordered]
+    own = {uid: qa["units_px"][uid] for uid, u in qa["units"].items()
+           if u["faction"] == qa["local_faction"] and uid in qa["units_px"]}
+    assert own, "no own unit is on screen in the match frame"
+    ordered, (cx, cy) = box_select(hc, own)
+    P.note("own units on screen:", len(own), "box-selected and ordered:", len(ordered))
     tick0 = (int(qa["tick"]), int(P.tactical_qa(gc)["tick"]))
-    hc.call("input", "drag", min(xs) - 20, min(ys) - 20, max(xs) + 20, max(ys) + 20, 8)
     start_h = P.positions(hc, ordered)
     start_g = P.positions(gc, ordered)
-    hc.call("input", "click", 960, 540, 2)
+    # Right-click well away from the group (about 360 px, inside the screen, outside the edge-scroll margin) so the
+    # units have somewhere to walk to.
+    hc.call("input", "click", cx, 900 if cy < 600 else 180, 2)
     settled_h, settled_g = P.wait_settled(host, guest, ordered, start_h)
     after = P.record(hc, "S-140", "after_move_order")["qa"]
     P.note("ordered units:", len(ordered), "start host/guest:", start_h, start_g, "settled host/guest:", settled_h, settled_g)
