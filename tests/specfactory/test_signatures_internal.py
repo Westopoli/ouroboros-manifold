@@ -62,6 +62,7 @@ EXPECTED_MODULE = {
     "om_mission_on_begin": "mission.c",
     "om_mission_reset_started": "fog.c",
     "om_mission_tactical_tick": "mission.c",
+    "om_move_terrain_epoch": "tactical_move.c",
     "om_rng_draw": "sim.c",
     "om_rng_seed": "sim.c",
     "om_step_admin_revolts": "friction.c",
@@ -76,6 +77,7 @@ EXPECTED_MODULE = {
     "om_step_technology": "diplomacy.c",
     "om_step_telegraphs": "resolve.c",
     "om_support_tick": "tactical_support.c",
+    "om_tac_event_push": "unit.c",
     "om_tac_unit_sync_position": "unit.c",
     "om_unit_clear_target": "unit.c",
 }

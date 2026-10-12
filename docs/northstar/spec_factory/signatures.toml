@@ -5246,6 +5246,16 @@ confidence = "certain"
 note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
+name = "om_tac_event_push"
+module = "unit.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "kind", ctype = "int" }, { name = "a", ctype = "int" }, { name = "b", ctype = "int" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_tactical_category_multiplier"
 module = "unit.c"
 restype = "double"
@@ -7287,6 +7297,16 @@ note = "internal (om_internal.h); no ctypes binding"
 name = "om_move_walker_tick"
 module = "tactical_move.c"
 restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_terrain_epoch"
+module = "tactical_move.c"
+restype = "uint32_t"
 params = [{ name = "w", ctype = "om_world*" }]
 internal = true
 epics = ["internal"]
