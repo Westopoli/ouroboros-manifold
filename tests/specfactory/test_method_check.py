@@ -223,6 +223,21 @@ def test_unknown_role_prints_both_rule_lists(tmp_path):
     assert "names its model" in unknown and "lane table" in unknown and "writes no code" in unknown
 
 
+def test_mixed_models_role_comes_from_the_last_model(tmp_path):
+    # method_check.md "Role:": last assistant entry's model sets the role; header lists the others
+    opus = "claude-opus-5-5"
+    entries = [clean_turn(opus), clean_turn(opus), clean_turn(), clean_turn(), clean_turn()]
+    r = run(tmp_path, write_transcript(tmp_path, entries))
+    assert r.returncode == 0, r.stderr
+    header = next(l for l in r.stdout.splitlines() if l.startswith("METHOD role"))
+    assert header.startswith(f"METHOD role dispatcher model {SONNET} (session also {opus})"), header
+    got = checks(r.stdout)
+    assert got["repo_edits"][0] == "OK", got["repo_edits"]
+    assert got["main_push"][0] == "OK", got["main_push"]
+    assert "METHOD rules dispatcher" in r.stdout.splitlines()
+    assert "METHOD rules architect" not in r.stdout.splitlines()
+
+
 def test_threshold_option(tmp_path):
     t = write_transcript(tmp_path, [assistant(SONNET, ctx=5000)])
     assert checks(run(tmp_path, t).stdout)["context"] == ("OK", 0, 0)

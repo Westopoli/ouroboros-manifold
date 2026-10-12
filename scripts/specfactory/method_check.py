@@ -185,9 +185,15 @@ def report(entries, live, threshold, session):
     span = spans[k]
     asst_all = [e for e in entries if e["type"] == "assistant"]
     asst_span = [e for e in span if e["type"] == "assistant"]
-    models = sorted({(e.get("message") or {}).get("model") or "" for e in asst_all if not str((e.get("message") or {}).get("model") or "<").startswith("<")})
-    role = role_of(models)
-    model = models[0] if len(models) == 1 else ("mixed" if models else "none")
+    seen = []
+    for e in asst_all:
+        m = (e.get("message") or {}).get("model") or ""
+        if not m.startswith("<") and m not in seen:
+            seen.append(m)
+    last = next((m for m in ((e.get("message") or {}).get("model") or "" for e in reversed(asst_span)) if not m.startswith("<")), None)
+    role = role_of([last] if last is not None else [])
+    others = [m for m in seen if m != last]
+    model = "none" if last is None else last + (" (session also %s)" % ", ".join(others) if others else "")
     since = next((e["timestamp"] for e in span if e.get("timestamp")), "none")
     out = ["METHOD role %s model %s session %s span %d of %d turns %d since %s"
            % (role, model, session[:8], k + 1, len(spans), len(asst_span), since)]
