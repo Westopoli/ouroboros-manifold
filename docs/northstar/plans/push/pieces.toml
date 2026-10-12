@@ -1975,3 +1975,16 @@ depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1"]  # attached
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-d1: ev_reset() moves under n > 0 in handle_tactical_step (om_pipe.c:1486); one transport case"
+
+# Architect ruling 2026-10-12: two internal prototypes (om_tac_event_push, om_move_terrain_epoch) landed without EXPECTED_MODULE or signatures.toml rows; two tests were red on main at c5a06928 (TD-HARNESS-sig-1, FINDING-sig-rows-red-on-base).
+[[piece]]
+id = "HARNESS-sig-rows"
+manager = "M0"
+wave = 9
+owns = ["docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_signatures_internal.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_signatures_internal.py"]
+depends_on = ["VG-CONTRACT-E7"]  # in-flight owner of signatures.toml that owner_lint names; HARNESS-sig-rows lands after it
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "two [[symbols]] rows in signatures.toml (om_tac_event_push unit.c, om_move_terrain_epoch tactical_move.c); the test table gains the same two names"
