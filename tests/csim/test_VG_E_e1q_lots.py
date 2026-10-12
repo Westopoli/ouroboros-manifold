@@ -39,6 +39,7 @@ import re
 import struct
 
 
+import conftest as C
 from conftest import OMArchetype, OMEdge, OMFeature, OMTier, set_edge, set_faction, set_owner, set_region
 from test_VG_E_ke5 import LOT_CAP as KE5_LOT_CAP, locate, read_block
 
@@ -62,10 +63,6 @@ THRESH = (0.10, 0.22, 0.38, 0.58)
 OM_LOT_CAP = int(re.search(r"#define\s+OM_LOT_CAP\s+(\d+)", (REPO / "csrc/om_internal.h").read_text()).group(1))
 
 
-class Vec2(ctypes.Structure):
-    _fields_ = [("x", F64), ("y", F64)]
-
-
 class Lot(ctypes.Structure):
     _fields_ = [("id", U32), ("x", F64), ("y", F64), ("stage", I32), ("building", I32), ("owner", I32)]
 
@@ -81,7 +78,6 @@ def bind(lib):
         "om_terrain_set_heights": ([W, P(I32), U32, U32], ctypes.c_int),
         "om_world_step": ([W], ctypes.c_uint64),
         "om_mission_begin": ([W], None),
-        "om_objective_get_center": ([W, U32, P(Vec2)], ctypes.c_int),
         "om_save_state_size": ([W], U32),
         "om_save_state_write": ([W, P(ctypes.c_uint8), U32], None),
         "om_load_state_read": ([W, P(ctypes.c_uint8), U32], ctypes.c_int),
@@ -122,7 +118,7 @@ def scene(lib, make, *, seed=SEED, economy=40.0, terrain=None, setup=True):
 
 
 def objective_cell(lib, w):
-    v = Vec2()
+    v = C.OMVec2()
     assert lib.om_objective_get_center(w, 0, ctypes.byref(v)) == 1, "the mission has no objective node"
     return int(v.x // CELL_WU), int(v.y // CELL_WU)
 

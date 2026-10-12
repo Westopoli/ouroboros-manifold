@@ -20,17 +20,17 @@ om_economy_step is called with the tick before the increment): 60 * k world step
 Needs the new field (E1q-field) to be green? Marked "NEEDS E1q-field: yes" in each case; a "no" case is a guard that is already
 green on the K-e5 tree and must stay green. Positive controls (test_control_*) are green on the K-e5 tree.
 
-Cases the spec lists that this file narrows or parks (report to the Architect):
+Cases the spec lists that this file narrows (Architect ruling 2026-10-11):
  - 8-fold symmetry: the spec's growth order (in place, NW N NE W E SW S SE) keeps the transposition exactly but breaks the
    mirrors and quarter turns by 1 to 3 Q16 units (1.5e-5 each) from the order the float products and the Q16 truncation meet
-   (a Python model of the spec's formulas, checked 6, 12 and 30 steps, econ 0.4 and 1.0). No tolerance was given, so this file
-   asserts the transposition exactly and the full group sits in test_VG_E_e1q_park_field.py under a named draft tolerance.
- - "D == 0 in the sea": the spec's growth gives a water cell a reach P > 0 (WATER_CROSS 0.85) and every cell with P > 0 eases D
-   (S:184-185, 232-235; the mockup does the same), so D > 0 in the sea. That assertion sits in the same park file.
+   (a Python model of the spec's formulas, checked 6, 12 and 30 steps, econ 0.4 and 1.0). The exact transposition case is the
+   positive control of the full-group case, which asserts DRAFT_SYMMETRY_ULPS (a named draft, Q-193-08).
+ - "D == 0 in the sea": dropped; the spec is amended. The sea strip claim stays in test_a_sea_strip_lowers_density_just_across_it.
 Core cell. The spec reads the core from the mission objective (Q-193-07 (a)); this file takes the cell that holds the objective
 centre (floor(x / 100), floor(y / 100)); the mockup's round() has no sim counterpart because sim cells have their centres at
 (g + 0.5) * 100. test_core_cell_is_the_cell_holding_the_objective pins it.
-Named drafts: DRAFT-density-budget 2 ms per growth step, printed by the timing control, not asserted.
+Named drafts: DRAFT-density-budget 2 ms per growth step, printed by the timing control, not asserted; DRAFT-symmetry-ulps 4 Q16
+units (Q-193-08), asserted by the full-group symmetry case.
 """
 import ctypes
 import hashlib
@@ -55,15 +55,13 @@ CANVAS_WU = 24000.0
 CELL_WU = 100.0
 SIDE = 240                    # canvas / CELL_WU
 GROWTH_TICKS = 60             # OM_DENSITY_RING_TICKS
+DRAFT_SYMMETRY_ULPS = 4       # DRAFT-symmetry-ulps, 4 Q16 units, Q-193-08: a named draft, not a ruling
+Q16 = 65536.0
 FLAT_CM = 7000                # above TG_DRY_LEVEL_WU 60 (= 6000 cm); the dry test is strict
 SEA_CM = -500
 RIDGE_CM = 900 * 100          # a 900 wu ridge in cm
 LEGACY_SIDE = 120
 DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1))
-
-
-class Vec2(ctypes.Structure):
-    _fields_ = [("x", F64), ("y", F64)]
 
 
 # ------------------------------------------------------------------------------------------------ fixtures
@@ -77,7 +75,6 @@ def bind(lib):
         "om_terrain_set_heights": ([W, P(I32), U32, U32], ctypes.c_int),
         "om_world_step": ([W], ctypes.c_uint64),
         "om_mission_begin": ([W], None),
-        "om_objective_get_center": ([W, U32, P(Vec2)], ctypes.c_int),
         "om_save_state_size": ([W], U32),
         "om_save_state_write": ([W, P(ctypes.c_uint8), U32], None),
         "om_load_state_read": ([W, P(ctypes.c_uint8), U32], ctypes.c_int),
@@ -117,7 +114,7 @@ def scene(lib, make, *, seed=SEED, economy=40.0, terrain=None, setup=True):
 
 
 def objective_cell(lib, w):
-    v = Vec2()
+    v = C.OMVec2()
     assert lib.om_objective_get_center(w, 0, ctypes.byref(v)) == 1, "the mission has no objective node"
     return int(v.x // CELL_WU), int(v.y // CELL_WU)
 
@@ -270,7 +267,7 @@ def test_flat_land_reach_after_k_growth_steps_is_at_least_k(lib, world_factory):
 
 def test_flat_land_field_is_symmetric_about_the_core_under_transposition(lib, world_factory):
     """E1q-field Tests, narrowed (see the module note): on flat land the field is exactly equal at (dx, dy) and (dy, dx) about
-    the core, over the box of radius 10 after ten growth steps. The other symmetries hold to Q16 noise only (park file).
+    the core, over the box of radius 10 after ten growth steps. The other symmetries hold to Q16 noise only (the draft-tolerance case below).
     Control first: the box holds at least 100 nonzero cells. NEEDS E1q-field: yes. Red on the K-e5 tree: its field is centred
     on the canvas centre."""
     w = scene(lib, world_factory, terrain=flat)
@@ -281,6 +278,27 @@ def test_flat_land_field_is_symmetric_about_the_core_under_transposition(lib, wo
     assert nonzero >= 100, f"control: only {nonzero} nonzero cells in the box, the symmetry check would be vacuous"
     bad = transpose_violations(g_at, core, 10)
     assert bad == [], f"{len(bad)} cells differ from their transpose about the core {core}, first {bad[:3]}"
+
+
+def test_flat_land_field_is_eight_fold_symmetric_within_the_draft_tolerance(lib, world_factory):
+    """Spec Tests (E1q-field), 8-fold symmetry about the core with DRAFT-symmetry-ulps. Positive control: the exact transposition
+    case above, plus at least 100 nonzero cells in the box. NEEDS E1q-field: yes. Red on the K-e5 tree: its field is centred on
+    the canvas centre."""
+    radius = 10
+    w = scene(lib, world_factory, terrain=flat)
+    cx, cy = objective_cell(lib, w)
+    steps(lib, w, 60 * 10 + 1)
+    nonzero = sum(1 for dx in range(-radius, radius + 1) for dy in range(-radius, radius + 1) if d_at(lib, w, cx + dx, cy + dy) > 0.0)
+    assert nonzero >= 100, f"control: only {nonzero} nonzero cells in the box"
+    worst, where = 0.0, None
+    for dy in range(-radius, radius + 1):
+        for dx in range(-radius, radius + 1):
+            here = d_at(lib, w, cx + dx, cy + dy)
+            for ox, oy in ((dx, -dy), (-dx, dy), (-dx, -dy), (dy, dx), (dy, -dx), (-dy, dx), (-dy, -dx)):
+                gap = abs(here - d_at(lib, w, cx + ox, cy + oy))
+                if gap > worst:
+                    worst, where = gap, (dx, dy, ox, oy)
+    assert worst * Q16 <= DRAFT_SYMMETRY_ULPS, f"widest asymmetry {worst * Q16:.2f} Q16 units at {where} (draft {DRAFT_SYMMETRY_ULPS})"
 
 
 # ------------------------------------------------------------------------------------------------ water
