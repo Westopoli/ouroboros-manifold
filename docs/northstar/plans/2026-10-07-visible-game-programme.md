@@ -17,7 +17,7 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | Lane | On main | Next piece | First look | Westley row |
 |---|---|---|---|---|
 | Contracts | K0, K-a (sim, pipe, bridge, split), K-f, K-h, K-d, K-e (ABI 6), K-e2, K-e3 (save 9), K-e5 (save 10, ABI 7) at 8bdb64f, K-e6 (lots on full frames) at 3a2ffd9a landed; K-e4 red tests on `push/vg-k-e4-tests` | K-e4 lands in the E1 skeleton batch | n/a | none |
-| Harness, method rev 2 | `pre_gate.sh`, `status_check.py`, `journal.sh` at f089fccb | none | n/a | none |
+| Harness, method rev 2 | `pre_gate.sh`, `status_check.py`, `journal.sh` at f089fccb; spec_provenance.py at 573d00c | none | n/a | none |
 | A battle screen | A1 to A21 at 4d4babf8; twelve plays pass in both eras in the gate | one fix piece per verdict, nothing until then | 2026-10-08 22:30, 11 of 12 "no"; A19 to A21 since, not yet seen | 2 |
 | B galaxy | landing 12 at 5333e1a0; three plays pass | B22 done; the three new B looks (run 20261011-1505-a4573fe) wait for Westley's verdict; nothing more until then | reviewer no, no, unclear (`story_reviews/B.md`, run 20261009-2217-5333e1a on `push/vg-b-reviews-5`); Westley 2026-10-10: all three rejected | 1 |
 | B galaxy, B22 (`VG-B22`) | B22 at a4573fec (ball layout, camera, field grid; TD-VG-B-12, TD-VG-B-13); three plays pass | Westley's verdict on the three new B look rows (S-106, S-107, S-108) | reviewer no, no, unclear (`story_reviews/B.md`, run 20261011-1505-a4573fe); Westley pending | 1 |

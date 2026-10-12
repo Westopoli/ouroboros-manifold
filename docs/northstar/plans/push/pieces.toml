@@ -1907,7 +1907,7 @@ owns = ["scripts/specfactory/spec_provenance.py", "tests/specfactory/test_spec_p
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance.py"]
 depends_on = ["HARNESS-pregate", "A94-harness"]  # spec rev 12b: HARNESS-pregate and A94-harness (attached owners of pre_gate.sh, test_pre_gate.py, scripts/specfactory/ and tests/specfactory/)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "573d00c" }
 tests_pending = true
 size_estimate = "spec_provenance.py: seven reasons, CLASH_PAIRS, acceptance on the rev 10 fixture copy; one line in pre_gate.sh"
 
