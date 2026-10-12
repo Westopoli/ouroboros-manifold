@@ -22,6 +22,13 @@ extends SceneTree
 #   lobby.on_chat(from_steam_id, msg) -> net_match.on_lobby_chat(peer_id, msg);
 #   lobby.leave() -> backend.leave() then and sets `left` true.
 #   lobby.qa_state() -> {"scene": "lobby", "members": [steam ids], "max_members": 4, "friends_only": true, "tick": -1}.
+#
+# VG-F-SKEL-B (spec lane F part 1 + Rev 12b F-SKEL; Q-F-1 closed by Westley, 2026-10-11, "allowed, so long as the test
+# does everything it can to emulate the reality of two players joining"): with the user argument --net-local the lobby
+# attaches the Steam-less local backend, so HostButton and JoinButton are enabled and StatusLine reads "Local test
+# network (no Steam)". User args cannot be set in-process, so the case re-runs this file as a child (--child, the
+# pattern of tests/test_vg_b_b3b.gd) with and without the flag; the child with no flag is the control (no flag and no
+# Steam keeps Host and Join disabled, lobby.gd:85-88).
 
 const LOBBY_SCENE := "res://scenes/lobby/lobby.tscn"
 const MENU_SCENE := "res://scenes/main_menu/main_menu.tscn"
@@ -32,6 +39,9 @@ var _fail_count := 0
 var _fail_msgs: Array[String] = []
 var _completed := false
 var _cur := ""
+var _child := false
+
+const LOCAL_STATUS := "Local test network (no Steam)"
 
 
 class FakeBackend extends RefCounted:
@@ -64,6 +74,10 @@ class FakeNet extends Node:
 
 
 func _initialize() -> void:
+	_child = "--child" in OS.get_cmdline_user_args()
+	if _child:
+		await _child_probe()
+		return
 	await _run_tests()
 	_assert(_completed, "the checks did not run to the end (a script error aborted them)")
 	print("\n=== VG-F W4 Lobby Test Results ===")
@@ -108,6 +122,7 @@ func _run_tests() -> void:
 	await _t_menu_row_and_route()
 	if _have_lobby():
 		await _t_lobby()
+		_t_net_local_children()
 	_completed = true
 
 
@@ -197,3 +212,46 @@ func _t_lobby() -> void:
 	lobby.queue_free()
 	net.queue_free()
 	await process_frame
+
+
+# Child half of the --net-local case: instantiates the lobby with no setup() call, so it takes the real _attach path.
+func _child_probe() -> void:
+	var lobby: Node = (load(LOBBY_SCENE) as PackedScene).instantiate()
+	get_root().add_child(lobby)
+	await process_frame
+	await process_frame
+	var host := lobby.find_child("HostButton", true, false) as Button
+	var join := lobby.find_child("JoinButton", true, false) as Button
+	var status := lobby.find_child("StatusLine", true, false) as Label
+	print("CHILD-STATE net_local=%s host_disabled=%s join_disabled=%s status=%s" % [
+		"--net-local" in OS.get_cmdline_user_args(), host.disabled, join.disabled, status.text])
+	lobby.queue_free()
+	await process_frame
+	quit(0)
+
+
+func _run_child(flag: bool) -> String:
+	var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tests/test_vg_f_w4_lobby.gd", "--", "--child"]
+	if flag:
+		args.append("--net-local")
+	var out: Array = []
+	OS.execute(OS.get_executable_path(), args, out, true)
+	for line in "\n".join(out).split("\n"):
+		if line.begins_with("CHILD-STATE"):
+			return line
+	return ""
+
+
+func _t_net_local_children() -> void:
+	_cur = "net_local_flag"
+	var off := _run_child(false)
+	print(off)
+	_assert(off != "", "CONTROL: the child run (no flag) printed no CHILD-STATE line, so the child harness is broken")
+	_assert(off.contains("net_local=false") and off.contains("host_disabled=true") and off.contains("join_disabled=true"),
+		"CONTROL: with no --net-local and no Steam the lobby keeps HostButton and JoinButton disabled, got: %s" % off)
+	var on := _run_child(true)
+	print(on)
+	_assert(on != "", "the child run (--net-local) printed no CHILD-STATE line")
+	_assert(on.contains("net_local=true") and on.contains("host_disabled=false") and on.contains("join_disabled=false"),
+		"VG-F-SKEL-B: with --net-local HostButton and JoinButton are enabled (lobby.gd:85-88 disables them without Steam), got: %s" % on)
+	_assert(on.contains("status=" + LOCAL_STATUS), "VG-F-SKEL-B: with --net-local StatusLine reads \"%s\", got: %s" % [LOCAL_STATUS, on])
