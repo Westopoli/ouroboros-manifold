@@ -1907,7 +1907,7 @@ owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/territory_field.gd", "scen
 owns_glob = []
 acceptance = ["tests/test_vg_b_b23.gd"]
 depends_on = ["VG-B22"]  # spec: VG-B22 is attached
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "33e3bc2f" }
 tests_pending = true
 size_estimate = "B23: eight scene files set to the prototype's as-run constants, eight test and probe files (TD-VG-B-14), one bible line; DRAFT-b23-count, DRAFT-b23-viewport-frac"
 
