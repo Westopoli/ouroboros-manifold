@@ -17,8 +17,8 @@ def tactical_game():
         g.stop()
 
 
-MAX_TICKS = 6730  # TD-VG-A-1: first wreck measured at tick 5382 after the order (seed 1, attack-move to the nearest enemy) + 25%
-CHUNK = 25  # TD-VG-A-1: 6730 ticks at chunk 5 does not fit the 900 s play timeout (about 0.15 s per tick against 0.07 at chunk 25)
+MAX_TICKS = 4000  # TD-VG-A-11: the TD-VG-A-1 raise to 6730 was reverted (Westley 2026-10-11); old budget restored, play red until the scroll-speed piece lands
+CHUNK = 25  # TD-VG-A-1 step chunk (kept, not part of the reverted budget raise); see TD-VG-A-11
 WRECK_CAP = 150
 
 

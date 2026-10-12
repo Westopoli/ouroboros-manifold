@@ -410,7 +410,7 @@ Saved state at format 10 (all hashed in `checksum_full.c`, in the same order as 
 
 **`lots_dump`** (verb, once per mission after `mission_begin`, the `terrain_dump` pattern) answers `{"type":"lots","lots":[[id,x,y,stage,building,owner],...]}` with the `om_lot` fields in that order, ascending `id`; an empty list when there are none; `error` `"no world"` with no world.
 
-**`lots_changed`** (every delta tactical frame, always present, `[]` when nothing changed): the rows, in the `lots_dump` row form, of the lots whose `stage`, `building` or `owner` changed since the previous frame or that appeared since it. Full frames carry no lots; the client reads `lots_dump`.
+**`lots_changed`** (every delta tactical frame, always present, `[]` when nothing changed): the rows, in the `lots_dump` row form, of the lots whose `stage`, `building` or `owner` changed since the previous frame or that appeared since it. Full frames carry `lots`, the complete list in the same row form, ascending `id` (`[]` when none); the client replaces its table from it.
 
 **`strongpoints`** (every full tactical frame, always present): `[{id,x,y,owner,state}]`, the `om_strongpoint` fields. Deltas do not carry it.
 
