@@ -1720,7 +1720,7 @@ owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_ch
 owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py"]
 depends_on = ["A94-harness"]
-status = { state = "landed", sha = "0b5eb38" }
+status = { state = "landed", sha = "a853dac" }
 tests_pending = false
 size_estimate = "method_check.py about 200 lines; one hook line; one spec page"
 # Method rev 2 harness pieces (2026-10-10): the pre-gate script, the status check and the journal formatter.
