@@ -1844,7 +1844,7 @@ owns = ["autoload/net/udp_transport.gd", "autoload/net/local_lobby_backend.gd", 
 owns_glob = []
 acceptance = ["tests/test_udp_transport.gd", "tests/test_local_lobby_backend.gd"]
 depends_on = ["VG-F"]  # autoload/net/** is VG-F's glob; new files only, no existing file changes
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "dbe480a" }  # landed dbe480a
 tests_pending = true
 size_estimate = "F-SKEL-A: UDP transport and local lobby backend, new files only; DRAFT-udp-base-port 47100, DRAFT-lobby-port 47000"
 
@@ -1856,7 +1856,7 @@ owns = ["scenes/lobby/lobby.gd", "tests/qa/desktop/plays/F/_play.py", "tests/qa/
 owns_glob = []
 acceptance = ["tests/test_vg_f_w4_lobby.gd", "tests/test_vg_f_netmatch_backend.gd"]
 depends_on = ["VG-F-SKEL-A", "G-qadesktoptests", "VG-C-s004", "HARNESS-laneplays", "VG-CONTRACT-E3"]  # VG-CONTRACT-E3 (landed) orders the shared ambiguity_register.md; spec: VG-F-SKEL-A (one landing with it, rev 12b); VG-C-s004 and HARNESS-laneplays order the shared lane_plays_known_red.txt (the Dispatcher may flip); G-qadesktoptests is the attached owner of tests/qa/desktop/**; VG-F (attached owner of these files) is reached through VG-F-SKEL-A
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "dbe480a" }  # landed dbe480a
 tests_pending = true
 size_estimate = "F-SKEL-B: --net-local wiring in lobby.gd and the two-process start_pair_match play; shots to story_reviews/F.md for Westley; FU-F-net-qa-key"
 
