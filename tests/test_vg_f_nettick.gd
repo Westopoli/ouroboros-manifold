@@ -123,6 +123,10 @@ func _assert(cond: bool, msg: String) -> void:
 
 
 func _run_tests() -> void:
+	# pins the era; the live settings.cfg may hold greek_placeholder, TD-VG-F-NETTICK-2
+	# (after one frame: the UIDataBus autoload applies the saved era in its first-frame _ready, which would undo an earlier pin)
+	await process_frame
+	get_root().get_node("EraConfig").set_era("settled_reach")
 	_fixture = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
 	if get_root().get_node_or_null("NetMatch") == null:
 		_cur = "setup"
