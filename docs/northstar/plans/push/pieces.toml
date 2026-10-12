@@ -1880,7 +1880,7 @@ wave = 9
 owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "tests/csim/test_VG_E_ke2.py", "tests/csim/test_VG_E_e7.py"]  # rev 12c: mission.c also the mission slot save (om_mis_net_save_*, mission.c:3378-3380); om_internal.h the OM_SAVE_FORMAT_VERSION line only, after W2 (TD-VG-E-27, old 11 new 12); load_game.gd:5
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e7.py"]
-depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2"]  # spec: depends_on VG-CONTRACT-E5; VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)
+depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2", "HARNESS-sig-rows"]  # spec: depends_on VG-CONTRACT-E5; HARNESS-sig-rows (2026-10-12 ruling: it lands first, both own signatures.toml); VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-e7 contract piece: starting force by strongpoint share, header signature and ABI 7 to 8 (TD-VG-E-25, TD-VG-E-26), second-Fable audit; DRAFT-start-fraction, Q-218-07"
@@ -1984,7 +1984,7 @@ wave = 9
 owns = ["docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_signatures_internal.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_signatures_internal.py"]
-depends_on = ["VG-CONTRACT-E7"]  # in-flight owner of signatures.toml that owner_lint names; HARNESS-sig-rows lands after it
+depends_on = ["VG-CONTRACT-E5", "A94-harness"]  # Architect ruling 2026-10-12: lands BEFORE VG-CONTRACT-E7 (which lists it); E5 and A94-harness are the in-flight owners pieces.py --check asks for
 status = { state = "queued" }
-tests_pending = true
+tests_pending = false
 size_estimate = "two [[symbols]] rows in signatures.toml (om_tac_event_push unit.c, om_move_terrain_epoch tactical_move.c); the test table gains the same two names"
