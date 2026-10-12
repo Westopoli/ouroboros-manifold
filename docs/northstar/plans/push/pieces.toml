@@ -1788,11 +1788,11 @@ size_estimate = "K-e5 contract piece: save 10, sidecar 10, ABI 7, density_side f
 id = "VG-CONTRACT-E6"
 manager = "M0"
 wave = 9
-owns = ["csrc/pipe/pipe_tactical.c", "docs/architecture.md", "autoload/c_bridge.gd", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
+owns = ["csrc/pipe/pipe_tactical.c", "autoload/c_bridge.gd", "docs/architecture.md", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
-depends_on = ["VG-CONTRACT-E5", "VG-CONTRACT-E2", "VG-CONTRACT-E4"]
-status = { state = "in_flight" }
+depends_on = ["VG-CONTRACT-E5", "VG-CONTRACT-E4", "VG-CONTRACT-E1"]  # take-over of files owned by attached E1 and E4 (header convention)
+status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-e6: full frame carries lots, bridge replaces its table; about 20 lines of C and GDScript, one doc sentence, second-Fable audit"
 
