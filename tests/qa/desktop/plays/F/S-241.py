@@ -1,7 +1,10 @@
 """Story play S-241 "Teams, sub-commanders and sub-civilizations": the team-size choice in the lobby (no E2 part).
 Rule R-241-01..03 (teams of 2 or 4 at launch). The lobby offers a TeamSize choice whose options are exactly 2 and 4;
 qa_state lists them under `team_sizes`. Names fixed here (flagged to the Architect): control TeamSize, key team_sizes.
-Red on main: no MULTIPLAYER row, so no lobby.
+Reaches the lobby of one game on the Steam-less local test network (--net-local; Q-F-1 closed by Westley,
+2026-10-11); no second player is needed to see the team-size choice.
+Stays red by design until the later lane F piece that adds the team_sizes key and the TeamSize control (ledger row
+FU-F-s241-teamsize); it is on scripts/specfactory/lane_plays_known_red.txt.
 """
 import pytest
 
@@ -10,7 +13,7 @@ import _play as P
 
 @pytest.fixture(scope="module")
 def game():
-    g = P.start_game()
+    g = P.start_game(extra_args=["--net-local"])
     try:
         yield g
     finally:
