@@ -4,6 +4,7 @@
 
 #define WAVE_CAPTURE 3
 #define WAVE_BATTLE_END 4
+#define WAVE_FALLBACK_CENTRE_WU 12000.0 /* no terrain: the old canvas-centre constant (24000 wu canvas / 2) */
 #define REBUILD_TICKS 200 /* spec rev 8 E1d ruling: a hit lot waits 10 s (200 ticks) before it rises again */
 
 void om_waves_init(om_world *w) { w->economy.n_waves = 0; }
@@ -39,7 +40,12 @@ void om_waves_on_structure_owner(om_world *w, uint32_t structure, int32_t old_ow
 }
 
 void om_waves_on_mission_end(om_world *w) {
-    /* liberty 2026-10-10: the spec gives no place for a battle-end wave; it is logged at the canvas centre. */
-    double c = OM_DENSITY_SIDE * OM_TERRAIN_CELL_WU;
-    om_waves_log(w, (uint32_t)om_tactical_tick(w), WAVE_BATTLE_END, c, c);
+    /* liberty 2026-10-10: the spec gives no place for a battle-end wave; it is logged at the canvas centre, half the terrain map. */
+    uint32_t cw = 0, ch = 0;
+    double cx = WAVE_FALLBACK_CENTRE_WU, cy = WAVE_FALLBACK_CENTRE_WU;
+    if (om_terrain_cells(w, &cw, &ch) != 0) {
+        cx = cw * OM_TERRAIN_CELL_WU / 2.0;
+        cy = ch * OM_TERRAIN_CELL_WU / 2.0;
+    }
+    om_waves_log(w, (uint32_t)om_tactical_tick(w), WAVE_BATTLE_END, cx, cy);
 }
