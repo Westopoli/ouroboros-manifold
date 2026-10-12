@@ -46,6 +46,7 @@ VANGUARD = 2                    # a Vanguard, speed 80 wu/s; the unit type test_
 KIND_WALKING = 1                # OM_MOVE_WALKING
 BIG_CAP = 8192                  # points; R207_05 uses the same cap
 PAIR_KINDS = ("long", "short", "mid", "unwalkable-goal")
+STALE_ORDER = (0, 2, 3, 1)      # indices into PAIR_KINDS: long, mid, unwalkable-goal, short; see _route_all
 N_SECTIONS = 9                  # om_checksum_section_count(); the cap the csim section tests pass
 D_STEPS = 20                    # om_world_step calls before the (D) record
 D_SEEDS = (1, 3)
@@ -104,6 +105,15 @@ def _spawn_rows(lib, w, rows):
         assert lib.om_unit_get_layer(w, u) == r[2], "fixture %s: the walker stands on layer %d" % (r[:5], lib.om_unit_get_layer(w, u))
         units.append(u)
     return units
+
+
+def _route_all(lib, w, rows, units, tag):
+    """Route the four fixtures of one world in the order long, mid, unwalkable-goal, short: the first and the last
+    are both on the top layer, so a planner that keeps one cache entry per key and was last used on another world
+    of the same pointer, epoch and dimensions is hit stale by the first fixture of the next generation (a planner
+    with a cache entry per layer is hit by any of them). Used by the extra controls A2 and A3."""
+    for k in STALE_ORDER:
+        _check_row(lib, w, units[k], rows[k], tag)
 
 
 def _flat(pts):
@@ -238,8 +248,7 @@ def test_A2_free_and_recreate_twenty_rounds_alternating_seeds_1_and_2(lib):
         w = _world(lib, make, seed)
         addrs.append(_addr(w))
         rows = _rows(seed)
-        for r, u in zip(rows, _spawn_rows(lib, w, rows)):
-            _check_row(lib, w, u, r, "A2 round %d" % rnd)
+        _route_all(lib, w, rows, _spawn_rows(lib, w, rows), "A2 round %d" % rnd)
         lib.om_world_free(w)
     print("A2 world addresses:", [hex(a) for a in addrs])
     print("A2 address repeats:", len(addrs) - len(set(addrs)), "of", len(addrs), "rounds reuse an earlier address")
@@ -256,8 +265,7 @@ def test_A3_regenerate_in_place_seed_1_then_2_then_1(lib, world_factory):
     for step, seed in enumerate((1, 2, 1)):
         assert lib.om_terrain_generate(w, seed, CANVAS, CANVAS) == 0
         rows = _rows(seed)
-        for r, u in zip(rows, _spawn_rows(lib, w, rows)):
-            _check_row(lib, w, u, r, "A3 regenerate step %d" % step)
+        _route_all(lib, w, rows, _spawn_rows(lib, w, rows), "A3 regenerate step %d" % step)
 
 
 def test_A3_save_and_load_into_a_fresh_world(lib, world_factory):
@@ -271,8 +279,7 @@ def test_A3_save_and_load_into_a_fresh_world(lib, world_factory):
     dst = _prepare(lib, world_factory(n_regions=1))
     assert _load(lib, dst, buf, size) == 0
     assert routes._grid(lib, dst) == routes._grid(lib, src)
-    for r, u in zip(rows, units):
-        _check_row(lib, dst, u, r, "A3 loaded world")
+    _route_all(lib, dst, rows, units, "A3 loaded world")
 
 
 def test_A3_load_over_a_live_world_that_has_the_same_epoch(lib, world_factory):
@@ -284,18 +291,15 @@ def test_A3_load_over_a_live_world_that_has_the_same_epoch(lib, world_factory):
     for X before the load, 3 for S, and 3 for X after it, with the same X pointer: only gen_id differs."""
     x = _world(lib, world_factory, 1)
     x_units = _spawn_rows(lib, x, _rows(1))
-    for r, u in zip(_rows(1), x_units):
-        _check_row(lib, x, u, r, "A3b before the load")
+    _route_all(lib, x, _rows(1), x_units, "A3b before the load")
     x_buf, x_size = _save(lib, x)
     s = _world(lib, world_factory, 2)
     s_units = _spawn_rows(lib, s, _rows(2))
     s_buf, s_size = _save(lib, s)
     assert _load(lib, x, s_buf, s_size) == 0
-    for r, u in zip(_rows(2), s_units):
-        _check_row(lib, x, u, r, "A3b seed-2 world loaded over seed 1")
+    _route_all(lib, x, _rows(2), s_units, "A3b seed-2 world loaded over seed 1")
     assert _load(lib, x, x_buf, x_size) == 0
-    for r, u in zip(_rows(1), x_units):
-        _check_row(lib, x, u, r, "A3b seed-1 world loaded back")
+    _route_all(lib, x, _rows(1), x_units, "A3b seed-1 world loaded back")
 
 
 # ---------------------------------------------------------------- D: gen_id invisibility
