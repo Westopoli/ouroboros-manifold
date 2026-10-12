@@ -254,6 +254,20 @@ func _sync_selection() -> void:
 
 func _load_live() -> void:
 	var bridge = SimSession.bridge()
+	# FINDING-net-first-tick: load_tactical_live adds one tactical_step on each peer, so the C net tick runs one ahead
+	# of LockstepSession._released and every order is stamped tick == st->tick and refused OM_CMD_ERR_LATE
+	# (csrc/cmd_stream.c:161). The match owns the tick: load its last frame, step nothing. An empty last frame
+	# loads nothing here; the first frame arrives through _match_frame.
+	# See also: tests/test_vg_f_nettick.gd
+	if NetMatch.active():
+		if _error_panel != null:
+			_error_panel.hide_error()
+		if NetMatch.has_method("last_frame"):
+			var mf: Dictionary = NetMatch.last_frame()
+			if not mf.is_empty():
+				load_frame(mf)
+		set_terrain(bridge.terrain() if bridge.has_method("terrain") else {})
+		return
 	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 		if _error_panel != null:
 			_error_panel.hide_error()
