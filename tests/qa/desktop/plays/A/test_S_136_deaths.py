@@ -17,7 +17,7 @@ def tactical_game():
         g.stop()
 
 
-MAX_TICKS = 4000  # TD-VG-A-11: the TD-VG-A-1 raise to 6730 was reverted (Westley 2026-10-11); old budget restored, play red until the scroll-speed piece lands
+MAX_TICKS = 4000  # TD-VG-A-11: the TD-VG-A-1 raise to 6730 was reverted (Westley 2026-10-11); old budget restored. A17 (TD-VG-A-12) fixed the scroll, so a miss here is the army march, not the helper: FINDING-contact-distance (first contact past this budget stays red, budget and march are Westley's), Q-A17-01 (spawn near the home base stays)
 CHUNK = 25  # TD-VG-A-1 step chunk (kept, not part of the reverted budget raise); see TD-VG-A-11
 WRECK_CAP = 150
 
