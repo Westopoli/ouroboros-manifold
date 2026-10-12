@@ -1924,6 +1924,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "A16: To-layer buttons in the layer strip, Q/E keys, qa_state focus_layer; DRAFT-a16-qe-relative, Q-A16-01"
 
+# Lane A piece A18 (spec "The four red client tests on main", ruling 2026-10-12): the opening frame fits every own unit inside the viewport. Ledger FINDING-camera-start-framing.
+[[piece]]
+id = "VG-A18"
+manager = "M0"
+wave = 9
+owns = ["scenes/tactical_c/tactical_view.gd"]  # the _framing_zoom function only (:892-912)
+owns_glob = []
+acceptance = ["tests/test_tactical_camera.gd"]
+depends_on = ["VG-A16", "VG-E1", "VG-A"]  # spec: after VG-E1 and A16, depends_on VG-A16; VG-E1 and VG-A are the other owners of tactical_view.gd
+status = { state = "queued" }
+tests_pending = false  # the existing red test tests/test_tactical_camera.gd is the red test
+size_estimate = "A18: _framing_zoom fits every own unit inside the viewport with the edge margin, [B R-103-01]"
+
 # Lane C play fix (spec "C-s004"): the play picks a target on another layer from qa_state.
 [[piece]]
 id = "VG-C-s004"
