@@ -413,3 +413,72 @@ def test_same_seed_and_commands_give_byte_identical_frames():
     run2 = _run([SET_SEED, START, BEGIN] + cmds)
     assert "full" in _tacticals(run1)[1], "tactical frame carries no `full` key (A7)"
     assert json.dumps(run1, sort_keys=False) == json.dumps(run2, sort_keys=False)
+
+
+def test_kd1_nonstepping_full_request_keeps_state_bit_1():
+    """K-d1 (FINDING-delta-death-unit, piece VG-K-D1; also TD-VG-K-7): a non-stepping full request
+    after a stepping call that fired must repeat that call's state bit 1.
+
+    Rule, spec 2026-10-07-visible-game-spec.md rev 12c section 2 "Unit object", word for word:
+      "`state` int, always present (never omitted): value 1 fired during this call's steps (any of
+      the n), 2 braced (guard/hold, `om_unit_is_braced`), 4 in layer transit (`tl` set); OR-ed; 0
+      otherwise."
+    Ruling, same spec, section "The four red client tests on main", K-d1 sentence, word for word:
+      "`csrc/pipe/om_pipe.c` `handle_tactical_step` calls `ev_reset()` before the step loop even
+      when `n == 0` (`pipe_tactical.c:50-54` memsets `g_fired`, which drives state bit 1), so a
+      non-stepping full request loses the fired flag. Fix: guard `ev_reset` with `n > 0` (`n < 0` is
+      malformed and treated as 0, said so in a code comment). The same piece rewrites
+      `docs/architecture.md` :376 and :392 to \"bit 1: fired during the most recent stepping call
+      (n > 0). A call with n == 0 (a resync frame) repeats the previous stepping call's state bits
+      and events unchanged.\""
+    Bible R-133-06 (E-18), as the programme row cites it: "Given a unit in a mission, When it is
+    drawn, Then the tier it is drawn at is given by the simulation per unit, from the roster (ruling
+    A30; Westley, 2026-10-07)." It bears on `tier`, not on state bit 1; it is not what this case
+    proves. Acceptance: tests/test_tactical_delta_reconstruction.gd (client delta-built view equals
+    the server full frame after a death).
+
+    The existing death test masks `state & ~1` (TD-VG-K-7) and stays valid after the fix.
+    Events of the n == 0 frame are not asserted here.
+    """
+    first = _begin_units()
+    cmds = _death_script(first)
+    prefix = [c for c in cmds if c["name"] != "tactical_step"]
+    steps = [c for c in cmds if c["name"] == "tactical_step"]
+    # Pass 1: find the first stepping call whose frame lists a unit with state bit 1.
+    frames = _run([SET_SEED, START, BEGIN] + cmds)
+    _assert_drawn(frames)
+    tac = _tacticals(frames)
+    assert len(tac) == 1 + len(steps), (len(tac), len(steps))
+    k, fired_id = None, None
+    for i in range(1, len(tac)):
+        hit = [u for u in (tac[i]["units"] if tac[i]["full"] else tac[i]["units_changed"])
+               if u["state"] & 1]
+        if hit:
+            k, fired_id = i, hit[0]["id"]
+            break
+    assert k is not None, "positive control: no unit fired in %d stepping calls" % len(steps)
+    # Pass 2: stop after that stepping call, then two non-stepping full requests.
+    resync = {"type": "cmd", "name": "tactical_step", "n": 0, "full": True}
+    frames2 = _run([SET_SEED, START, BEGIN] + prefix + steps[:k] + [resync, resync])
+    tac2 = _tacticals(frames2)
+    assert len(tac2) == k + 3, (len(tac2), k)
+    stepped, z1, z2 = tac2[k], tac2[k + 1], tac2[k + 2]
+    assert stepped["tick"] == tac[k]["tick"]  # the replay reaches the same frame (determinism control)
+    state = {}
+    for f in tac2[:k + 1]:
+        state = _apply(state, f)
+    # (a) control, green today: the answer is a full frame at the same tick.
+    _assert_full(z1)
+    assert z1["tick"] == stepped["tick"], (z1["tick"], stepped["tick"])
+    by_id = {u["id"]: u for u in z1["units"]}
+    assert fired_id in by_id, "fixture drift: unit %d not in the n == 0 full frame" % fired_id
+    # (b) RED today: the n == 0 request clears the fired flag.
+    assert by_id[fired_id]["state"] & 1, (
+        "unit %d fired at tick %d but its state in the n == 0 full frame is %d (bit 1 cleared)" % (
+            fired_id, stepped["tick"], by_id[fired_id]["state"]))
+    # (c) K-d1 acceptance, no state masking; RED today by exactly the cleared bit.
+    assert state == by_id, "client view from the stepping call's frames differs from the n == 0 full frame"
+    # Control: a second consecutive n == 0 request lists the same units (state included).
+    _assert_full(z2)
+    assert z2["tick"] == z1["tick"]
+    assert z2["units"] == z1["units"]
