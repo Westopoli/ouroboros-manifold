@@ -11,6 +11,11 @@ Pinned here (the shapes are K-e's, flagged in the contract text):
                         a negative building or non-empty units; "not begun" in recon; "no world" with no world
 The refusals that depend on terrain (unwalkable, occupied) are E1e's and are not asserted here.
 On main none of the new fields or verbs exist, so those tests fail on that; "(control)" tests pass on main.
+
+K-e6 (spec rev 11, lane E1 part d; R-193-01, R-193-02): every FULL tactical frame also carries "lots", the complete lot list in
+the lots_dump row form, ascending id ([] when none); delta frames keep "lots_changed" as above; g_lots_prev advances on every
+frame. The K-e6 tests are the last block of this file (names test_ke6_*); the "(control)" ones pass on the K-e5 tree, the rest
+fail on the missing "lots" key.
 """
 import json
 import subprocess
@@ -95,8 +100,8 @@ def test_delta_frame_carries_lots_changed_and_economy_not_strongpoints():
     assert "strongpoints" not in d
 
 
-def test_full_frame_has_no_lots_key():
-    """K-e: lots reach the client by lots_dump once, not on full frames."""
+def test_full_frame_has_no_lots_changed_key():
+    """K-e6: full frames carry `lots`, never `lots_changed`."""
     assert "lots_changed" not in tactical(BEGUN)[-1]
 
 
@@ -187,3 +192,67 @@ def test_hello_abi_is_7():
     data = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60).stdout
     n = int.from_bytes(data[:4], "big")
     assert json.loads(data[4:4 + n])["abi"] == 7
+
+
+# ---- K-e6: lots on full frames (R-193-01, R-193-02) -------------------------------------------------------------------------
+# Fixture for the lot tests: BEGUN_TERRAIN (seed 8, ground era, terrain) grows lots; premise run on the real pipe: after
+# tactical_step 600 lots_dump lists 210 lots (so equality with the full frame's `lots` is not vacuous), 236 at tick 601.
+
+
+def _step(n):
+    return cmd("tactical_step", n=n)
+
+
+def _ids(rows):
+    return [r[0] for r in rows]
+
+
+def test_ke6_control_space_mission_lots_dump_empty_and_delta_has_lots_changed():
+    """Control (R-193-01; green on the K-e5 tree): on a space mission lots_dump is [] and a delta frame still has lots_changed ([])."""
+    out = frames(BEGUN + [_step(1), cmd("lots_dump")])
+    assert out[-1] == {"type": "lots", "lots": []}, out[-1]
+    deltas = [f for f in out if f.get("type") == "tactical" and f.get("full") is False]
+    assert deltas and deltas[-1].get("lots_changed") == [], deltas
+
+
+def test_ke6_full_frame_lots_equals_lots_dump_on_a_space_mission():
+    """K-e6 (R-193-01): the full frame answering mission_begin has a `lots` key equal to the lots_dump list (both [] on a space mission)."""
+    out = frames(BEGUN + [cmd("lots_dump")])
+    full = [f for f in out if f.get("type") == "tactical" and f.get("full") is True][-1]
+    assert "lots" in full, "full frame has no lots[]; K-e6 (keys: %s)" % sorted(full)
+    assert full["lots"] == out[-1]["lots"] == [], full["lots"]
+
+
+def test_ke6_full_frame_after_600_steps_equals_lots_dump_row_for_row():
+    """K-e6 (R-193-01, R-193-02): after tactical_step 600 (a full frame: 600 crosses the 20-tick period) the frame's `lots` equals the
+    lots_dump list that follows, row for row, ascending id, and is non-empty."""
+    out = frames(BEGUN_TERRAIN + [_step(600), cmd("lots_dump")])
+    dump = out[-1]
+    assert dump.get("type") == "lots" and len(dump["lots"]) > 0, "no lots grew on the fixture (premise): %s" % str(dump)[:200]
+    full = out[-2]
+    assert full.get("type") == "tactical" and full.get("full") is True and full.get("tick") == 600, str(full)[:200]
+    assert "lots" in full, "full frame has no lots[]; K-e6 (keys: %s)" % sorted(full)
+    assert len(full["lots"]) > 0 and _ids(full["lots"]) == sorted(_ids(full["lots"]))
+    for r in full["lots"]:
+        check_lot_row(r)
+    assert full["lots"] == dump["lots"], "full-frame lots differ from lots_dump"
+
+
+def test_ke6_control_delta_after_a_full_frame_carries_every_changed_row_and_then_none():
+    """Control (R-193-01, R-193-02; green on the K-e5 tree and after): after the full frame at tick 600 the first delta (601) lists every
+    lot whose stage, building or owner differs from that frame's row (lots change on ticks 60k+1 here), ascending id, each row as
+    lots_dump has it; the next delta (602) lists none. Not asserted: that 601 lists no UNCHANGED row. The lot count grows on 601
+    (210 -> 236) and the writer drops its previous-rows table when the count grows (csrc/pipe/pipe_tactical.c, g_lots_prev_cap), so 601
+    lists all 236 rows, 174 of them equal to the full frame's. Spec rev 11 does not rule on that."""
+    out = frames(BEGUN_TERRAIN + [_step(600), cmd("lots_dump"), _step(1), cmd("lots_dump"), _step(1)])
+    tac = [f for f in out if f.get("type") == "tactical"]
+    d600, d601 = [f["lots"] for f in out if f.get("type") == "lots"]
+    assert [(f["tick"], f["full"]) for f in tac[-3:]] == [(600, True), (601, False), (602, False)], [(f["tick"], f["full"]) for f in tac[-3:]]
+    old = {r[0]: r[3:] for r in d600}
+    want = [r for r in d601 if old.get(r[0]) != r[3:]]
+    assert want, "premise: lots change at tick 601"
+    got = tac[-2]["lots_changed"]
+    assert _ids(got) == sorted(_ids(got)) and all(r in d601 for r in got), got
+    assert all(r in got for r in want), [r for r in want if r not in got]
+    assert tac[-1]["lots_changed"] == [], tac[-1]["lots_changed"]
+    assert "lots" not in tac[-2], "deltas keep lots_changed only"

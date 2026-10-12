@@ -510,6 +510,11 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 		_strongpoints.sort_custom(func(a, b): return int(a["id"]) < int(b["id"]))
 		for st in frame.get("structures", []):
 			_tactical_structures[int(st["id"])] = st
+		if frame.has("lots"):
+			_lots = []
+			for r in frame["lots"]:
+				_lots.append(_lot_row(r))
+			_tactical["lots"] = _lots
 	else:
 		for id in frame.get("units_removed", []):
 			_tactical_units.erase(int(id))
@@ -664,7 +669,7 @@ func _fetch_space_field() -> bool:
 
 
 # The lots of the begun mission (K-e, docs/architecture.md lots_dump), ascending id, kept current by
-# delta lots_changed rows: [{id, x, y, stage, building, owner}]; [] before the dump.
+# delta lots_changed rows and replaced by a full frame's `lots` (K-e6): [{id, x, y, stage, building, owner}]; [] before the dump.
 func lots() -> Array:
 	return _lots
 
