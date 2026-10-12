@@ -203,3 +203,23 @@ def test_fewer_than_three_args_is_usage_exit_2(tmp_path):
                          capture_output=True, text=True)
     assert res.returncode == 2, res.stdout + res.stderr
     assert "usage" in (res.stdout + res.stderr).lower()
+
+
+# DRAFT-pregate-spec-env: the lint runs only when PRE_GATE_SPEC is set (piece HARNESS-provenance).
+# Spec: Rev 12b, HARNESS-provenance paragraph: "an untagged fixture under PRE_GATE_SPEC makes pre_gate.sh exit non-zero".
+def test_pre_gate_spec_env_runs_provenance_lint(tmp_path):
+    repo = _make_repo(tmp_path, head_add={
+        "spec.md": "The tile shows 5 wu of rubble when the player clicks.\n"})
+    stub = _stub_gate(tmp_path, "GATE make OK", 0)
+    # (a) PRE_GATE_SPEC unset (empty counts as unset): no provenance output at all.
+    unset = _run(repo, stub, env_extra={"PRE_GATE_SPEC": ""})
+    assert not any("provenance" in l for l in _lines(unset)), unset.stdout + unset.stderr
+    assert _lines(unset)[-1] == "PRE_GATE verdict OK"
+    assert unset.returncode == 0
+    # (b) PRE_GATE_SPEC=spec.md: the untagged paragraph is a reason (1) finding.
+    res = _run(repo, stub, env_extra={"PRE_GATE_SPEC": "spec.md"})
+    out = _lines(res)
+    assert any(l.startswith("PRE_GATE provenance REJECT spec.md") for l in out), res.stdout + res.stderr
+    assert any(":1: (1)" in l for l in out), res.stdout + res.stderr
+    assert out[-1] == "PRE_GATE verdict REJECT"
+    assert res.returncode != 0
