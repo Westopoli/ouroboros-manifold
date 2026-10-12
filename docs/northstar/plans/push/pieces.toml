@@ -1898,6 +1898,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-e7 contract piece: starting force by strongpoint share, header signature and ABI 7 to 8 (TD-VG-E-25, TD-VG-E-26), second-Fable audit; DRAFT-start-fraction, Q-218-07"
 
+# Lane E1 piece VG-E-prodslot (spec "VG-E-prodslot", rev 12d): production places each new unit in the nearest free 30 wu slot. Ledger FINDING-production-stack, TD-VG-E-29.
+[[piece]]
+id = "VG-E-prodslot"
+manager = "M0"
+wave = 9
+owns = ["csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_signatures_internal.py", "tests/csim/test_VG_E_prodslot.py"]  # tactical_support.c: the production spawn lines (:541-545); mission.c: the slot helper; om_internal.h: one prototype; signatures.toml row and EXPECTED_MODULE line in the same piece
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_prodslot.py"]
+depends_on = ["VG-CONTRACT-E7"]  # VG-CONTRACT-E7 owns all five shared files until it lands (spec rev 12d: after VG-CONTRACT-E7)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "prodslot: nearest free slot of the 30 wu lattice within 150 wu, fixed scan order, no RNG draw; goldens with production move once (TD-VG-E-29); closes FINDING-production-stack"
+
 # Lane B piece B23 (spec "B23"): the prototype's numbers exactly (Westley: "match the prototype").
 [[piece]]
 id = "VG-B23"
@@ -2037,7 +2050,7 @@ acceptance = ["tests/test_vg_b_b23b.gd"]
 depends_on = ["VG-B23", "VG-B"]  # VG-B23 owns galaxy_view.gd until it lands; VG-B owns tests/test_vg_b_*.gd by glob
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "dot material back to main's colouring (srgb flag and transparency reverted on the dots only); test_galaxy_pixels.py test_c2_5 green under Forward+"
+size_estimate = "dot material back to main's colouring (srgb flag and transparency reverted on the dots only); test_galaxy_pixels.py test_c2_5 green under Forward+; closes FINDING-dot-colour-pixels"
 
 [[piece]]
 id = "VG-B24"
