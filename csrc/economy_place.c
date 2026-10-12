@@ -48,7 +48,7 @@ int om_economy_place(om_world *w, int32_t building, double x, double y) {
     if (e->n_lots >= OM_LOT_CAP) return E1E_FULL;
     {
         om_lot *l = &e->lots[e->n_lots];
-        l->id = e->n_lots;
+        l->id = e->next_lot_id++; /* E1q-lots: the same counter as natural lots; n_lots duplicated an id */
         l->x = (cx + 0.5) * E1E_CELL;
         l->y = (cy + 0.5) * E1E_CELL;
         l->stage = 0;
