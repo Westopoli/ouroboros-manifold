@@ -8,6 +8,7 @@ var session = null
 var _record := {}
 var _sim = null
 var _chat: Callable
+var _backend = null  # the lobby's backend: this autoload outlives the lobby scene, a Callable alone does not keep a RefCounted alive (ledger row FINDING-netmatch-backend-lifetime)
 var _transport = null
 var _ready_from := {}
 var _active := false
@@ -33,8 +34,9 @@ class _SimGuard extends RefCounted:
 var _guard := _SimGuard.new()
 
 
-func start(record: Dictionary, transport, sim, lobby_chat: Callable) -> void:
+func start(record: Dictionary, transport, sim, lobby_chat: Callable, backend = null) -> void:
 	_record = record
+	_backend = backend
 	_sim = sim
 	_transport = transport
 	_chat = lobby_chat
@@ -107,6 +109,7 @@ func leave() -> void:
 	if session != null:
 		session.end()
 	_active = false
+	_backend = null
 
 
 func drop(peer: int) -> void:
@@ -156,5 +159,8 @@ func _resend_go() -> void:
 		return
 	for p in session.live_peers():
 		if p != _local() and int(session._silent[p]) >= _polls:
-			_chat.call({"t": "go", "tick": 0})
+			if _backend != null:
+				_backend.send_chat({"t": "go", "tick": 0})
+			else:
+				_chat.call({"t": "go", "tick": 0})
 			return

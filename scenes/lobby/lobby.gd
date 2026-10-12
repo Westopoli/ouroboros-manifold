@@ -72,10 +72,10 @@ func _ready() -> void:
 		_attach_steam()
 
 
-func setup(backend, local_steam_id: int, version: String) -> void:
-	_backend = backend
-	_local_steam = local_steam_id
-	_version = version
+func setup(params: Dictionary) -> void:
+	_backend = params.get("backend", _backend)
+	_local_steam = int(params.get("local_steam_id", _local_steam))
+	_version = String(params.get("version", _version))
 	_refresh()
 
 
@@ -98,7 +98,7 @@ func _attach_steam() -> void:
 		return
 	var steam = Engine.get_singleton("Steam")
 	var be := SteamBackend.new(steam)
-	setup(be, int(steam.getSteamID()), _version_string())
+	setup({"backend": be, "local_steam_id": int(steam.getSteamID()), "version": _version_string()})
 	steam.lobby_created.connect(_on_lobby_created.bind(be))
 	steam.lobby_joined.connect(_on_lobby_joined.bind(be))
 	steam.lobby_join_requested.connect(func(id, _friend): _join(int(id)))
@@ -113,7 +113,7 @@ func _attach_steam() -> void:
 # Steam-less test network (VG-F-SKEL-B, spec Rev 12b F-SKEL): the same handlers the Steam signals reach.
 func _attach_local() -> void:
 	var be = load("res://autoload/net/local_lobby_backend.gd").new()
-	setup(be, be.local_id(), _version_string())
+	setup({"backend": be, "local_steam_id": be.local_id(), "version": _version_string()})
 	be.lobby_created.connect(_on_lobby_created.bind(be))
 	be.lobby_joined.connect(_on_lobby_joined.bind(be))
 	be.lobby_chat_update.connect(_on_chat_update)
@@ -270,6 +270,15 @@ func on_chat(from_steam_id: int, msg) -> void:
 		net_match.on_lobby_chat(peer, msg)
 
 
+# Rule RULE-lobby-seed-arg (Architect 2026-10-12): `--seed <n>` fixes the match seed, randi() otherwise.
+func _match_seed() -> int:
+	var args := OS.get_cmdline_user_args()
+	var i := args.find("--seed")
+	if i >= 0 and i + 1 < args.size():
+		return int(args[i + 1])
+	return randi() & 0x7fffffff
+
+
 func build_record() -> Dictionary:
 	var era = get_node_or_null("/root/EraConfig")
 	var ground: bool = era != null and era.has_method("kind") and str(era.call("kind")) == "ground"
@@ -277,7 +286,7 @@ func build_record() -> Dictionary:
 	var ids: Array = _backend.members()
 	for i in ids.size():
 		peers.append({"peer_id": i, "steam_id": int(ids[i]), "faction": 0})
-	return {"seed": randi() & 0x7fffffff, "n_regions": 80, "features": [0, 1], "new_campaign": true,
+	return {"seed": _match_seed(), "n_regions": 80, "features": [0, 1], "new_campaign": true,
 		"archetype": 0, "era_kind": 1 if ground else 0,
 		"movement_kinds": era.call("movement_kinds") if era != null and era.has_method("movement_kinds") else [],
 		"faction": 0, "doctrine": DOCTRINES[_doctrine_idx], "peers": peers, "host_peer": 0,
@@ -330,7 +339,7 @@ func _launch(rec: Dictionary, local_peer: int) -> void:
 	transport.set_peers(record["peers"])
 	transport.attach(local_peer)  # UdpTransport binds its socket here; the base and Steam transports ignore it
 	var sim = load("res://autoload/net/pipe_sim.gd").new(bridge)
-	net_match.start(record, transport, sim, _backend.send_chat)
+	net_match.start(record, transport, sim, _backend.send_chat, _backend)
 	_status.text = "Waiting for every player to be ready."
 
 
