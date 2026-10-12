@@ -2001,3 +2001,52 @@ depends_on = ["VG-CONTRACT-E5", "A94-harness"]  # Architect ruling 2026-10-12: l
 status = { state = "attached", attach_sha = "c7906a01" }  # build sha c7906a01 (tests 81497c5e); landed with the merge gate clean
 tests_pending = false
 size_estimate = "two [[symbols]] rows in signatures.toml (om_tac_event_push unit.c, om_move_terrain_epoch tactical_move.c); the test table gains the same two names"
+
+# Westley 2026-10-12: sim viewer (docs/northstar/plans/2026-10-12-simviewer-spec.md). Tooling, never in the game loop. SV-1..SV-3 are new files only.
+[[piece]]
+id = "SV-1"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/__init__.py", "scripts/simviewer/pipe_session.py", "tests/simviewer/test_pipe_session.py"]
+owns_glob = []
+acceptance = ["tests/simviewer/test_pipe_session.py"]
+depends_on = []
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 120 lines + test"
+
+[[piece]]
+id = "SV-2"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/history.py", "tests/simviewer/test_history.py"]
+owns_glob = []
+acceptance = ["tests/simviewer/test_history.py"]
+depends_on = ["SV-1"]
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 150 lines + test"
+
+[[piece]]
+id = "SV-3"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_viewer_headless.py"]
+owns_glob = []
+acceptance = ["tests/simviewer/test_viewer_headless.py"]
+depends_on = ["SV-2"]
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 600 lines ported from simulation/strategic_viewer.py + test"
+
+[[piece]]
+id = "SV-0"
+manager = "M0"
+wave = 10
+owns = ["csrc/mission.c", "csrc/ouroboros_sim.h", "csrc/pipe/om_pipe.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "tests/transport/test_pipe_mission_end_retention.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
+depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R"]  # queued owners of mission.c, the header, architecture.md and signatures.toml
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "retention override setter in mission.c, pipe mission_end field, one architecture paragraph, one signatures row"
