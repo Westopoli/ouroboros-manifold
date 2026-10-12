@@ -25,6 +25,7 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 - Wait: poll `gate.log` for the `^GATE look ` line, one foreground command under 10 minutes at a time. Then `pgrep -f '^bash scripts/specfactory/merge_gate.sh'` to confirm no gate for the worktree still runs; never pgrep your own command line. There is no VERDICT line: the verdict is the set of `GATE <stage> REJECT` lines.
 - Flake rule: a lone playthrough or lane_plays red that passes twice alone gets one re-run.
 - Known-red: `scripts/specfactory/lane_plays_known_red.txt` holds exact ids with reasons; `scripts/specfactory/playthrough_known_red.txt` stays empty (a gate test enforces it).
+- Known-red rule (Architect 2026-10-12): a play that is red for a ruled reason with a ledger or finding row is listed in `lane_plays_known_red.txt` with that row id as the reason, so unrelated landings are not rejected on it; the row keeps it visible and the entry leaves when the row closes. A play is never listed without a row.
 - Ownership: every file in the diff is owned by a listed piece (`owns` or `owns_glob`; acceptance does not count). Two in-flight pieces sharing a file need `depends_on`. Park files (`*_park_*`) stay off the candidate and are listed.
 - Push: branch first. `git push origin HEAD:main` only on a clean gate and only when the brief authorises it; merge origin/main first if it moved and say so (ledger appends keep both sides).
 - Snapshot cleanup: delete only the `merge_gate_before_*` directories under your own TMPDIR, never a glob over /tmp.
