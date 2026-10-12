@@ -550,6 +550,12 @@ void om_move_terrain_changed(om_world *w) {
     if (w) om_ms(w)->terrain_epoch++;
 }
 
+/* Internal, not in the header: the route-cache epoch, part of the planner's cache key.
+ * See also: walk_route.c, the caller; om_move_terrain_changed above, the bump. */
+uint32_t om_move_terrain_epoch(om_world *w) {
+    return w ? om_ms(w)->terrain_epoch : 0;
+}
+
 /* Internal, not in the header: the canvas only lives in the private mapgen state, so om_map_set_canvas and
  * om_map_clear (tactical_mapgen.c) hand its size over; 0 x 0 = unset.
  * See also: om_map_set_canvas in csrc/tactical_mapgen.c, the caller. */
