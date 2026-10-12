@@ -33,12 +33,12 @@ PYTHON = sys.executable
 # Tick -> full checksum word, seed 3, measured by the probe route (TD-NET-probe-pins-2).
 # These move whenever a ruled sim change moves the hashed state; re-pin under a ledger row; the
 # cross-OS check compares each OS's probe output to these values.
-# Re-recorded 2026-10-11 (TD-VG-E-17): K-e5 hashes the economy block into the factions section; old values in the ledger row.
+# Re-recorded 2026-10-11 (TD-VG-E-21): E1q changes the growth hashed in the economy block; old values in the ledger row
 PINNED_FULL = {
-    100: 16317160208860422396,
-    500: 17830875825082803720,
-    1000: 14418944151961330414,
-    2000: 7517933992744160087,
+    100: 14414279078877383414,
+    500: 2462771596946682441,
+    1000: 2825217407474388049,
+    2000: 263473283203217348,
 }
 
 
