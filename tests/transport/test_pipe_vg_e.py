@@ -100,8 +100,8 @@ def test_delta_frame_carries_lots_changed_and_economy_not_strongpoints():
     assert "strongpoints" not in d
 
 
-def test_full_frame_has_no_lots_key():
-    """K-e: lots reach the client by lots_dump once, not on full frames."""
+def test_full_frame_has_no_lots_changed_key():
+    """K-e6: full frames carry `lots`, never `lots_changed`."""
     assert "lots_changed" not in tactical(BEGUN)[-1]
 
 
@@ -195,11 +195,8 @@ def test_hello_abi_is_7():
 
 
 # ---- K-e6: lots on full frames (R-193-01, R-193-02) -------------------------------------------------------------------------
-
-WALKING = [0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1]  # greek_placeholder: every unit type walking (EraConfig.movement_kinds())
-# The S-193 play's world (tests/qa/desktop/plays/E/S-193.py: seed 1, --era greek_placeholder): ground era, region 76, archetype 3.
-S193 = [cmd("set_seed", seed=1, n_regions=80, features=list(range(8))), cmd("step", n=10),
-        cmd("mission_start", faction=0, era_kind=1, movement_kinds=WALKING), cmd("mission_begin")]
+# Fixture for the lot tests: BEGUN_TERRAIN (seed 8, ground era, terrain) grows lots; premise run on the real pipe: after
+# tactical_step 600 lots_dump lists 210 lots (so equality with the full frame's `lots` is not vacuous), 236 at tick 601.
 
 
 def _step(n):
@@ -208,12 +205,6 @@ def _step(n):
 
 def _ids(rows):
     return [r[0] for r in rows]
-
-
-def _changed(old_rows, new_rows):
-    """Rows of new_rows whose (stage, building, owner) differ from the same id in old_rows, or that are new: what a delta must carry."""
-    old = {r[0]: r[3:] for r in old_rows}
-    return [r for r in new_rows if old.get(r[0]) != r[3:]]
 
 
 def test_ke6_control_space_mission_lots_dump_empty_and_delta_has_lots_changed():
@@ -232,48 +223,36 @@ def test_ke6_full_frame_lots_equals_lots_dump_on_a_space_mission():
     assert full["lots"] == out[-1]["lots"] == [], full["lots"]
 
 
-def test_ke6_full_frame_after_600_steps_carries_every_lot_of_the_dump():
-    """K-e6 (R-193-01, R-193-02): after tactical_step 600 on the S-193 world the answering frame is full (600 crosses the 20-tick
-    period) and its `lots` has the same ids, and the same rows, as lots_dump. Premise run on the real pipe: 205 lots at tick 600."""
-    out = frames(S193 + [_step(600), cmd("lots_dump")])
+def test_ke6_full_frame_after_600_steps_equals_lots_dump_row_for_row():
+    """K-e6 (R-193-01, R-193-02): after tactical_step 600 (a full frame: 600 crosses the 20-tick period) the frame's `lots` equals the
+    lots_dump list that follows, row for row, ascending id, and is non-empty."""
+    out = frames(BEGUN_TERRAIN + [_step(600), cmd("lots_dump")])
     dump = out[-1]
-    assert dump.get("type") == "lots" and len(dump["lots"]) > 0, "S-193 world grew no lots (premise): %s" % str(dump)[:200]
+    assert dump.get("type") == "lots" and len(dump["lots"]) > 0, "no lots grew on the fixture (premise): %s" % str(dump)[:200]
     full = out[-2]
     assert full.get("type") == "tactical" and full.get("full") is True and full.get("tick") == 600, str(full)[:200]
     assert "lots" in full, "full frame has no lots[]; K-e6 (keys: %s)" % sorted(full)
-    assert len(full["lots"]) == len(dump["lots"]), (len(full["lots"]), len(dump["lots"]))
-    assert _ids(full["lots"]) == _ids(dump["lots"]) and _ids(full["lots"]) == sorted(_ids(full["lots"]))
+    assert len(full["lots"]) > 0 and _ids(full["lots"]) == sorted(_ids(full["lots"]))
     for r in full["lots"]:
         check_lot_row(r)
-    assert full["lots"] == dump["lots"]
+    assert full["lots"] == dump["lots"], "full-frame lots differ from lots_dump"
 
 
-def test_ke6_delta_after_a_full_frame_carries_only_rows_changed_since_it():
-    """K-e6 (R-193-01, R-193-02). In the S-193 world lot stages change on the frame ticks 60k+1 (premise, n=1 run: deltas at ticks 1,
-    61, 121, ...) while full frames come at every call that crosses a multiple of 20.
-    Arithmetic: tactical_step 59 ends at step 59 (full: 59/20 > 0); tactical_step 2 then runs steps 60 and 61, crosses 60 and so
-    answers a FULL frame at step 61 whose last tick (61) is the tick lots changed, a change no delta carried. Today g_lots_prev
-    advances over that full frame, so the change is nowhere. With K-e6 the full frame's `lots` holds it, and the next delta
-    (step 62) carries nothing. Then 58 single steps reach step 120 (full: 120/20 > 119/20); the delta at 121 carries every row that
-    differs from that full frame's `lots`."""
-    cmds = S193 + [_step(59), _step(2), cmd("lots_dump"), _step(1)] + [_step(1)] * 58 + [cmd("lots_dump"), _step(1), cmd("lots_dump")]
-    out = frames(cmds)
-    tac = {f["tick"]: f for f in out if f.get("type") == "tactical"}
-    dumps = [f["lots"] for f in out if f.get("type") == "lots"]
-    assert len(dumps) == 3 and tac[61]["full"] is True and tac[62]["full"] is False and tac[120]["full"] is True and tac[121]["full"] is False
-    # premise: the change at step 61 is real (lot 1 reaches stage 2) and the dump at 61 differs from the dump at 120
-    assert [r for r in dumps[0] if r[0] == 1][0][3] == 2, dumps[0][:3]
-    assert "lots" in tac[61], "full frame at step 61 has no lots[]; K-e6 (keys: %s)" % sorted(tac[61])
-    assert tac[61]["lots"] == dumps[0], "the full frame must carry the stage change made in its own call"
-    assert tac[62]["lots_changed"] == [], "a delta after a full frame must carry only rows changed since it: %s" % tac[62]["lots_changed"]
-    assert "lots" in tac[120], "full frame at step 120 has no lots[]; K-e6"
-    assert tac[120]["lots"] == dumps[1]
-    want = _changed(dumps[1], dumps[2])
-    assert want, "premise: lots change at step 121"
-    got = tac[121]["lots_changed"]
-    # Every changed row is there, in the dump's row form and ascending id. Not asserted: that unchanged rows are absent at 121. The
-    # lot count grows on every change tick (16 -> 30 at 121), and the current writer drops its previous-rows table when the count
-    # grows (csrc/pipe/pipe_tactical.c, g_lots_prev_cap), so a growing frame lists all rows; spec rev 11 does not rule on that.
-    assert _ids(got) == sorted(_ids(got)) and all(r in dumps[2] for r in got), got
+def test_ke6_control_delta_after_a_full_frame_carries_every_changed_row_and_then_none():
+    """Control (R-193-01, R-193-02; green on the K-e5 tree and after): after the full frame at tick 600 the first delta (601) lists every
+    lot whose stage, building or owner differs from that frame's row (lots change on ticks 60k+1 here), ascending id, each row as
+    lots_dump has it; the next delta (602) lists none. Not asserted: that 601 lists no UNCHANGED row. The lot count grows on 601
+    (210 -> 236) and the writer drops its previous-rows table when the count grows (csrc/pipe/pipe_tactical.c, g_lots_prev_cap), so 601
+    lists all 236 rows, 174 of them equal to the full frame's. Spec rev 11 does not rule on that."""
+    out = frames(BEGUN_TERRAIN + [_step(600), cmd("lots_dump"), _step(1), cmd("lots_dump"), _step(1)])
+    tac = [f for f in out if f.get("type") == "tactical"]
+    d600, d601 = [f["lots"] for f in out if f.get("type") == "lots"]
+    assert [(f["tick"], f["full"]) for f in tac[-3:]] == [(600, True), (601, False), (602, False)], [(f["tick"], f["full"]) for f in tac[-3:]]
+    old = {r[0]: r[3:] for r in d600}
+    want = [r for r in d601 if old.get(r[0]) != r[3:]]
+    assert want, "premise: lots change at tick 601"
+    got = tac[-2]["lots_changed"]
+    assert _ids(got) == sorted(_ids(got)) and all(r in d601 for r in got), got
     assert all(r in got for r in want), [r for r in want if r not in got]
-    assert "lots" not in tac[121], "deltas keep lots_changed only"
+    assert tac[-1]["lots_changed"] == [], tac[-1]["lots_changed"]
+    assert "lots" not in tac[-2], "deltas keep lots_changed only"

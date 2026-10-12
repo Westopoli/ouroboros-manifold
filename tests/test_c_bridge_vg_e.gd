@@ -8,6 +8,8 @@ extends SceneTree
 #     any dump. It is not asked again on tactical frames.
 #   * a delta's lots_changed rows (same [id,x,y,stage,building,owner] row form) overlay lots() by id (new ids appended in
 #     ascending order); lots() never loses a lot to a delta.
+#   * K-e6: a full frame's `lots` (same row form) REPLACES the table (the dump's rows are not merged with it); a full frame
+#     without a `lots` key leaves the table alone.
 #   * _reconstruct_tactical's view carries: `lots` (the same list as lots()), `strongpoints` (Array of {id,x,y,owner,state}
 #     from the last full frame, kept across deltas), `economy` (the frame's own {doctrine, resources} dict); the view has
 #     no `lots_changed` key.
@@ -15,7 +17,8 @@ extends SceneTree
 #
 # K-e6 (spec rev 11, lane E1 part d; R-193-01, R-193-02): a FULL tactical frame carries `lots`, the complete list in the
 # lots_dump row form; _reconstruct_tactical's full branch REPLACES the table from it (not a merge), and the view's `lots` is
-# that table; the delta branch still folds lots_changed by id. The K-e6 checks are _run_ke6_tests at the end of this file.
+# that table; a full frame with no `lots` key leaves the table alone; the delta branch still folds lots_changed by id.
+# The K-e6 checks are _run_ke6_tests at the end of this file.
 
 var _pass_count := 0
 var _fail_count := 0
@@ -178,8 +181,8 @@ func _run_tests() -> void:
 	_assert(int(l2.get("stage", -1)) == 0 and int(l2.get("owner", 0)) == -1 and float(l2.get("x", 0.0)) == 50.5, "K-e: the decoded lot 2 differs from its row: %s" % [l2])
 
 	# a delta folds in: lot 5 changes stage, lot 9 appears, lot 2 stays
-	# K-e6: a full frame now replaces the table, so this one carries the dump's two rows (the same table the delta then folds into)
-	var v: Dictionary = f._reconstruct_tactical(_full_frame([[5, 100.0, 200.0, 3, 1, 0], [2, 50.5, 60.5, 0, 2, -1]]))
+	# (K-e6: a full frame WITHOUT a `lots` key leaves this table alone, so the fold below still starts from the dump's two rows)
+	var v: Dictionary = f._reconstruct_tactical(_full_frame())
 	v = f._reconstruct_tactical(_delta_frame())
 	var after: Array = f.lots()
 	_assert(after.size() == 3 and int(after[0]["id"]) == 2 and int(after[1]["id"]) == 5 and int(after[2]["id"]) == 9, "K-e: lots() after the delta is not ids 2, 5, 9: %s" % [after])
@@ -280,6 +283,17 @@ func _run_ke6_tests(gs: GDScript) -> void:
 	var cl: Array = c.lots()
 	_assert(cl.size() == 3 and int(cl[0]["id"]) == 2 and int(cl[1]["id"]) == 5 and int(cl[2]["id"]) == 9 and int(_lot_by_id(cl, 5).get("stage", -1)) == 4,
 		"control: a delta no longer folds lots_changed into the dump's table (ids 2, 5, 9, lot 5 stage 4): %s" % [cl])
+
+	# control (green on the K-e5 tree and after): a full frame WITHOUT the `lots` key leaves the dump's table alone
+	var k = gs.new()
+	k._session_pid = 2147483000
+	k._session_args = [1, 10, []]
+	_assert(k.load_mission_live(1, 10, []) and k.begin_mission_live(1, 10, []), "control: begin_mission_live through the stub failed")
+	var kv: Dictionary = k._reconstruct_tactical(_full_frame())
+	var kids: Array = []
+	for l in k.lots():
+		kids.append(int(l["id"]))
+	_assert(kids == [2, 5] and (kv.get("lots", []) as Array).size() == 2, "control: a full frame without `lots` changed the table (ids 2, 5 expected): %s" % [kids])
 
 	# a full frame with three rows replaces the two-row table: ids 2 and 5 are gone, ids 3, 7, 8 are in, ascending
 	var f = gs.new()
