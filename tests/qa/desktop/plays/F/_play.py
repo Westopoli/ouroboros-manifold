@@ -88,6 +88,8 @@ def pair_games(seed: int = 1):
     privacy flag present at a game's boot leaves it on the loading screen (daemon_client.py GodotGame.start)."""
     qa_h, qa_g, lobby, udp = draw_ports()
     note("ports lobby L=%d udp base U=%d qa host=%d qa guest=%d" % (lobby, udp, qa_h, qa_g))
+    # Both games get `--seed <seed>` (GodotGame, default 1): the lobby takes its match seed from it (ledger row
+    # RULE-lobby-seed-arg), so host and guest runs are repeatable.
     common = ["--net-local", "--net-local-lobby-port", str(lobby), "--net-local-udp-base", str(udp)]
     host = GodotGame(qa_port=qa_h, seed=seed, resolution=RESOLUTION, renderer="vulkan",
                      extra_args=[*common, "--net-local-id", "1"])
