@@ -280,6 +280,13 @@ static void write_tactical_economy(jbuf *j, int full) {
             write_lot_row(j, &cur[i]);
         }
         jb_raw(j, "],");
+    } else {
+        jb_raw(j, "\"lots\":[");
+        for (uint32_t i = 0; i < nc; i++) {
+            if (i) jb_putc(j, ',');
+            write_lot_row(j, &cur[i]);
+        }
+        jb_raw(j, "],");
     }
     if (nc) memcpy(g_lots_prev, cur, sizeof(om_lot) * nc);
     g_lots_prev_n = nc;
