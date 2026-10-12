@@ -1720,7 +1720,7 @@ owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_ch
 owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py"]
 depends_on = ["A94-harness"]
-status = { state = "landed", sha = "0b5eb38" }
+status = { state = "landed", sha = "a853dac" }
 tests_pending = false
 size_estimate = "method_check.py about 200 lines; one hook line; one spec page"
 # Method rev 2 harness pieces (2026-10-10): the pre-gate script, the status check and the journal formatter.
@@ -1985,7 +1985,7 @@ owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_tactical_delta_frame.p
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_tactical_delta_frame.py", "tests/test_tactical_delta_reconstruction.gd"]
 depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6"]  # attached owners of om_pipe.c and of test_pipe_tactical_delta_frame.py (take-over convention)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "daf6234" }  # landed daf6234
 tests_pending = true
 size_estimate = "K-d1: ev_reset() moves under n > 0 in handle_tactical_step (om_pipe.c:1486); one transport case"
 
