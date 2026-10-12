@@ -35,7 +35,7 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | E settlement and economy, part e (`VG-E1R`, `VG-CONTRACT-E7`) | nothing yet; queued (spec rev 12; Westley 2026-10-11 on the starting force) | E7 contract piece (starting force by strongpoint share), E1r placement clears; order against W2 by the Dispatcher; K-e6 is its own row above | none yet | none |
 | B galaxy, B23 (`VG-B23`) | nothing yet; queued (spec rev 12; Westley: "match the prototype") | B23 the prototype's numbers exactly, after the B22 verdict | none yet | none |
 | A battle screen, A16 and A17 (`VG-A16`, `VG-A17`) | nothing yet; both queued (spec rev 12) | A16 layer order control (after VG-E1 lands; S-002 play); A17 scroll plays measure game time (test writer only, no product file) | none yet | none |
-| C ground 3D, S-004 play fix (`VG-C-s004`) | nothing yet; queued (spec rev 12) | S-004 play picks a target on another layer from qa_state; the known-red line goes | none yet | none |
+| C ground 3D, S-004 play fix (`VG-C-s004`) | S-004 play fix at bfd7f1c: green, the play now aims at the top edge of the nearest slope and a walker reaches the upper layer past the midline (TD-VG-C-4); no finding | none for the play; if red, the finding goes to the Architect (no shot queued: no C.md, no owner row) | none yet | none |
 | Harness, method rev 3 (`HARNESS-provenance`) | nothing yet; queued (spec rev 12, lane H part 3; Westley 2026-10-11: "#14: approved"); rules.md sections (c) and (d) updated | `spec_provenance.py` lint and its test, then the Architect tags the whole spec (rev 13) | n/a | none |
 
 ## Method rev 2 (Westley picked all nine, 2026-10-10)

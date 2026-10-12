@@ -1959,7 +1959,7 @@ owns = ["tests/qa/desktop/plays/C/s004.py", "scripts/specfactory/lane_plays_know
 owns_glob = []
 acceptance = []
 depends_on = ["VG-C", "HARNESS-laneplays"]  # attached owners of the play and the known-red file
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "bfd7f1c" }  # landed bfd7f1c
 tests_pending = true
 size_estimate = "C-s004: one play changed (target from qa_state), one known-red line removed"
 
