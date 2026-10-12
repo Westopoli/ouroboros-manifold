@@ -1819,8 +1819,8 @@ owns = ["csrc/walk_route.c", "csrc/tactical_move.c", "csrc/om_internal.h", "csrc
 owns_glob = []
 acceptance = ["tests/csim/test_VG_W_w1_planner.py"]
 depends_on = ["TERRAIN-2", "TERRAIN-3", "VG-CONTRACT-E5"]  # walk_route.c last owner TERRAIN-2 (spec Lane W); TERRAIN-3 and VG-CONTRACT-E5 are the attached owners of tactical_move.c, om_internal.h and terrain.c
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "6621ef96" }  # landed 6621ef96
+tests_pending = false
 size_estimate = "W1: scratch reuse, per-epoch height and mask cache keyed on gen_id, pure Dijkstra with the same settle order (A* dropped, rev 12b); same routes byte for byte; DRAFT-walk-tick-ms-w1 10 ms wall-clock median"
 
 [[piece]]
