@@ -710,6 +710,10 @@ static void ts_bands_from_floors(const int32_t *h, size_t n, const int32_t floor
     }
 }
 
+/* Process-wide on purpose: a per-state counter would give a freed and recreated world at the same address the same gen_id.
+ * See also: gen_id in csrc/om_internal.h, the key in csrc/walk_route.c. */
+static uint32_t ts_gen_counter;
+
 int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canvas_h) {
     om_terrain_state *st;
     tg_grid g;
@@ -727,6 +731,7 @@ int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canv
     g.cv = tg_wu((int64_t)(canvas_w > canvas_h ? canvas_w : canvas_h));
     cells = (size_t)g.n * g.m;
     st = (om_terrain_state *)calloc(1, sizeof(*st));
+    st->gen_id = ++ts_gen_counter;
     g.e = (int32_t *)malloc(cells * sizeof(int32_t));
     st->band = (uint8_t *)calloc(cells, 1);
     st->walkable = (uint8_t *)calloc(cells, 1);
@@ -1214,6 +1219,7 @@ static int ts_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     if ((size_t)len != TS_SAVE_HEAD + TS_SAVE_I32 * n) return -1;
     st = (om_terrain_state *)calloc(1, sizeof(*st));
     if (!st) return -1;
+    st->gen_id = ++ts_gen_counter;
     st->height_cm = (int32_t *)malloc(n * sizeof(int32_t));
     st->band = (uint8_t *)calloc(n, 1);
     st->walkable = (uint8_t *)calloc(n, 1);
