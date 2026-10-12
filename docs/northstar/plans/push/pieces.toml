@@ -1893,7 +1893,7 @@ wave = 9
 owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "tests/csim/test_VG_E_ke2.py", "tests/csim/test_VG_E_e7.py", "csrc/pipe/pipe_internal.h", "csrc/checksum_full.c", "csrc/terrain.c", "tests/csim/conftest.py", "docs/bible/epics/E-15-reinforcement-supply-and-hazards.md", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_E01_T3_contract.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_E02_S020_abi.py", "tests/transport/test_pipe_shapes.py", "tests/transport/test_pipe_vg_e.py", "tests/csim/test_VG_E_e1h.py", "tests/csim/test_E01_T3_mission_ground.py", "tests/csim/test_F1_fog_per_faction_observers.py", "tests/csim/test_F2_nearest_hostile_search.py", "tests/csim/test_F3_macro_contact_skip.py", "tests/transport/test_pipe_vg_d.py", "tests/csim/test_PP_portability.py", "tests/csim/test_E01_T2_collision_mask.py", "tests/specfactory/test_signatures_internal.py", "tests/qa/desktop/plays/E/S-126.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # rev 12c: mission.c also the mission slot save (om_mis_net_save_*, mission.c:3378-3380); om_internal.h the OM_SAVE_FORMAT_VERSION line plus the two reinforce accessor prototypes, after W2 (TD-VG-E-27, old 11 new 12; TD-VG-E-28 pins); load_game.gd:5
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e7.py"]
-depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2", "HARNESS-sig-rows", "VG-K-D1", "PP-ledger", "NET-wire-A"]  # spec: depends_on VG-CONTRACT-E5; VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)
+depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2", "HARNESS-sig-rows", "VG-K-D1", "PP-ledger", "NET-wire-A"]  # spec: depends_on VG-CONTRACT-E5; HARNESS-sig-rows (2026-10-12 ruling: it lands first, both own signatures.toml); VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-e7 contract piece: starting force by strongpoint share, header signature and ABI 7 to 8 (TD-VG-E-25, TD-VG-E-26), second-Fable audit; DRAFT-start-fraction, Q-218-07"
@@ -1988,3 +1988,16 @@ depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRAC
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "K-d1: ev_reset() moves under n > 0 in handle_tactical_step (om_pipe.c:1486); one transport case"
+
+# Architect ruling 2026-10-12: two internal prototypes (om_tac_event_push, om_move_terrain_epoch) landed without EXPECTED_MODULE or signatures.toml rows; two tests were red on main at c5a06928 (TD-HARNESS-sig-1, FINDING-sig-rows-red-on-base).
+[[piece]]
+id = "HARNESS-sig-rows"
+manager = "M0"
+wave = 9
+owns = ["docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_signatures_internal.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_signatures_internal.py"]
+depends_on = ["VG-CONTRACT-E5", "A94-harness"]  # Architect ruling 2026-10-12: lands BEFORE VG-CONTRACT-E7 (which lists it); E5 and A94-harness are the in-flight owners pieces.py --check asks for
+status = { state = "attached", attach_sha = "c7906a01" }  # build sha c7906a01 (tests 81497c5e); landed with the merge gate clean
+tests_pending = false
+size_estimate = "two [[symbols]] rows in signatures.toml (om_tac_event_push unit.c, om_move_terrain_epoch tactical_move.c); the test table gains the same two names"
