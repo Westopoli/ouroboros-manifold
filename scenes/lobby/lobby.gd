@@ -79,19 +79,26 @@ func setup(backend, local_steam_id: int, version: String) -> void:
 	_refresh()
 
 
+func _version_string() -> String:
+	var ver := String(ProjectSettings.get_setting("application/config/version", ""))
+	if FileAccess.file_exists("res://build_hash.txt"):
+		ver = FileAccess.get_file_as_string("res://build_hash.txt").strip_edges()
+	return ver
+
+
 func _attach_steam() -> void:
 	var init := get_node_or_null("/root/SteamInit")
 	if init == null or not init.steam_ready or not Engine.has_singleton("Steam"):
+		if "--net-local" in OS.get_cmdline_user_args():
+			_attach_local()
+			return
 		_status.text = "Steam is not running. Start Steam to play multiplayer."
 		_host_btn.disabled = true
 		_join_btn.disabled = true
 		return
 	var steam = Engine.get_singleton("Steam")
 	var be := SteamBackend.new(steam)
-	var ver := String(ProjectSettings.get_setting("application/config/version", ""))
-	if FileAccess.file_exists("res://build_hash.txt"):
-		ver = FileAccess.get_file_as_string("res://build_hash.txt").strip_edges()
-	setup(be, int(steam.getSteamID()), ver)
+	setup(be, int(steam.getSteamID()), _version_string())
 	steam.lobby_created.connect(_on_lobby_created.bind(be))
 	steam.lobby_joined.connect(_on_lobby_joined.bind(be))
 	steam.lobby_join_requested.connect(func(id, _friend): _join(int(id)))
@@ -101,6 +108,17 @@ func _attach_steam() -> void:
 	var i := args.find("+connect_lobby")
 	if i != -1 and i + 1 < args.size():
 		_join(int(args[i + 1]))
+
+
+# Steam-less test network (VG-F-SKEL-B, spec Rev 12b F-SKEL): the same handlers the Steam signals reach.
+func _attach_local() -> void:
+	var be = load("res://autoload/net/local_lobby_backend.gd").new()
+	setup(be, be.local_id(), _version_string())
+	be.lobby_created.connect(_on_lobby_created.bind(be))
+	be.lobby_joined.connect(_on_lobby_joined.bind(be))
+	be.lobby_chat_update.connect(_on_chat_update)
+	be.lobby_message.connect(func(_id, user, message, _type): on_chat(int(user), str_to_var(String(message))))
+	_status.text = "Local test network (no Steam)"
 
 
 func _build_ui() -> void:
@@ -302,16 +320,23 @@ func _launch(rec: Dictionary, local_peer: int) -> void:
 		_status.text = "Could not open the match world: " + String(bridge.last_error())
 		return
 	var steam = Engine.get_singleton("Steam") if Engine.has_singleton("Steam") else null
-	var transport = load("res://autoload/net/steam_transport.gd").new()
-	if steam != null:
-		transport.set_steam(steam)
+	var transport
+	if _backend.has_method("poll"):
+		transport = load("res://autoload/net/udp_transport.gd").new()
+	else:
+		transport = load("res://autoload/net/steam_transport.gd").new()
+		if steam != null:
+			transport.set_steam(steam)
 	transport.set_peers(record["peers"])
+	transport.attach(local_peer)  # UdpTransport binds its socket here; the base and Steam transports ignore it
 	var sim = load("res://autoload/net/pipe_sim.gd").new(bridge)
 	net_match.start(record, transport, sim, _backend.send_chat)
 	_status.text = "Waiting for every player to be ready."
 
 
 func _process(_delta: float) -> void:
+	if _backend != null and _backend.has_method("poll"):
+		_backend.poll()
 	if _launched and net_match != null and net_match.active():
 		_launched = false
 		set_process(false)
