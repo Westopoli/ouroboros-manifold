@@ -1,15 +1,14 @@
 """Story play S-140 "Commands over the wire": an order given in a match goes through the session and the unit moves.
 Two real game processes on the Steam-less local test network (VG-F-SKEL-B; Q-F-1 closed by Westley, 2026-10-11): the
-host box-selects its own units and right-clicks a point; once the ordered units have stopped, the guest's qa_state shows
+host box-selects its own units and right-clicks a point; at a common tick after the settle ticks the guest's qa_state shows
 every ordered unit at the host's x and y (the order crossed to the guest). Both peers are faction 0 for the skeleton
 (ledger row FU-F-guest-faction), so the guest's faction-0 units are the units the host ordered. Rules R-140-02 (orders
 are applied at tick+3), R-140-03. The qa `net` key waits for a later piece (row FU-F-net-qa-key): the check here is the
 tick advancing on both processes plus the position match.
-Red under FINDING-net-first-tick until VG-F-NETTICK (ledger row; Architect 2026-10-12): scenes/tactical_c/tactical_view.gd
-_load_live calls load_tactical_live, which sends one extra tactical_step on each peer, so every move command is stamped
-tick == st->tick and net_submit answers OM_CMD_ERR_LATE (csrc/cmd_stream.c:161); the order never crosses. Listed in
-scripts/specfactory/lane_plays_known_red.txt under that row id. The settle wait counts game ticks, not seconds (A17's
-rule); its value waits for DRAFT-s140-settle-ticks, measured after VG-F-NETTICK.
+The settle wait counts game ticks, not seconds (A17's rule): _play.SETTLE_TICKS is DRAFT-s140-settle-ticks (ledger row,
+docs/northstar/plans/push_ledger_2026-09-22.md, measured 781 ticks x 1.5 = 1200). The condition is equality at a common
+tick, not rest (Architect 2026-10-12): at a tick T both peers have sampled, at least SETTLE_TICKS after the order, every
+ordered unit's (x, y, layer) is byte-equal on host and guest, and the units have made progress toward the click.
 """
 import time
 
