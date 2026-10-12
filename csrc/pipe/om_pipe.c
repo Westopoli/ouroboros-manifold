@@ -1483,7 +1483,11 @@ static void handle_tactical_step(const char *json) {
     int want_full = 0;
     get_bool(json, "full", &want_full);
     uint64_t before = g_tac.steps;
-    ev_reset();
+    /* K-d1 (FINDING-delta-death-unit): an n == 0 full request steps nothing, so it keeps the previous call's
+     * fired flags (state bit 1) and events; resetting here dropped bit 1 and made the client's delta-built view
+     * differ from the server's full frame. See also tests/transport/test_pipe_tactical_delta_frame.py
+     * test_kd1_nonstepping_full_request_keeps_state_bit_1 */
+    if (n != 0) ev_reset();
     for (int64_t i = 0; i < n; i++) {
         om_tactical_step(W);
         g_tactical_tick++;
