@@ -11,7 +11,9 @@ extends SceneTree
 # The spec leaves these shapes open; this test FIXES them (flagged to the Architect):
 #   Scene res://scenes/lobby/lobby.tscn, root script lobby.gd, with named nodes MemberList (ItemList, one row per
 #   member), LobbyIdField (LineEdit, paste a lobby id), HostButton, JoinButton, StartButton, a Label named EraLine.
-#   lobby.setup(backend, local_steam_id: int, version: String) wires the lobby; `net_match` property (default
+#   lobby.setup(params: Dictionary) wires the lobby (SceneRouter._swap_scene calls new_scene.setup(params);
+#   rulings 2026-10-12 (d), ledger row FINDING-lobby-setup-arity): params keys "backend", "local_steam_id", "version";
+#   a missing key keeps its default; `net_match` property (default
 #   /root/NetMatch) is the node that gets drop(peer) and on_lobby_chat(from_peer, msg).
 #   Backend (Steam wrapper): create_lobby(type: int, max_members: int), set_lobby_data(key, value: String),
 #   get_lobby_data(key) -> String, members() -> Array of steam ids, send_chat(msg: Dictionary), leave().
@@ -42,6 +44,13 @@ var _cur := ""
 var _child := false
 
 const LOCAL_STATUS := "Local test network (no Steam)"
+
+# Rulings 2026-10-12 (c), new rule (Architect): the lobby takes its match seed from the user argument `--seed <n>` when
+# given, randi() otherwise; the player's path (no flag) is unchanged. The pair plays already pass `--seed 1` to both
+# games (daemon_client.py GodotGame, seed=1 default), which c_bridge.gd and galaxy_view.gd read too.
+# Rulings 2026-10-12 (d): lobby.setup takes ONE Dictionary (the router's call). While setup still has the old three
+# arguments the helper _wire below calls it the old way, so every other case stays a live control; the arity case
+# is the red one.
 
 
 class FakeBackend extends RefCounted:
@@ -117,12 +126,29 @@ func _texts(node: Node, out: Array[String]) -> void:
 		_texts(c, out)
 
 
+# Calls setup in whichever shape the lobby currently has (see the header); the arity case asserts the target shape.
+func _setup_arity(lobby: Node) -> int:
+	for m in lobby.get_script().get_script_method_list():
+		if m["name"] == "setup":
+			return (m["args"] as Array).size()
+	return -1
+
+
+func _wire(lobby: Node, be, steam_id: int, version: String) -> void:
+	if _setup_arity(lobby) == 1:
+		lobby.setup({"backend": be, "local_steam_id": steam_id, "version": version})
+	else:
+		lobby.setup(be, steam_id, version)
+
+
 func _run_tests() -> void:
 	await _t_control_menu_texts_scan()
 	await _t_menu_row_and_route()
 	if _have_lobby():
 		await _t_lobby()
+		await _t_setup_params()
 		_t_net_local_children()
+		_t_seed_children()
 	_completed = true
 
 
@@ -170,7 +196,7 @@ func _t_lobby() -> void:
 	get_root().add_child(lobby)
 	var be := FakeBackend.new()
 	lobby.net_match = net
-	lobby.setup(be, 11, "abc123")
+	_wire(lobby, be, 11, "abc123")
 	await process_frame
 	for n in ["MemberList", "LobbyIdField", "HostButton", "JoinButton", "StartButton", "EraLine"]:
 		_assert(lobby.find_child(n, true, false) != null, "lobby scene lacks a node named %s" % n)
@@ -214,6 +240,35 @@ func _t_lobby() -> void:
 	await process_frame
 
 
+# Rulings 2026-10-12 (d): SceneRouter._swap_scene calls new_scene.setup(params) (scene_router.gd:94-95); the lobby's
+# setup took three positional arguments, so every route into the lobby logged "Invalid call to function 'setup'".
+# Callers of the three-argument form on the base tree: lobby.gd:101 (Steam), lobby.gd:116 (local backend) and this file.
+func _t_setup_params() -> void:
+	_cur = "setup_params"
+	var lobby: Node = (load(LOBBY_SCENE) as PackedScene).instantiate()
+	var net := FakeNet.new()
+	get_root().add_child(net)
+	get_root().add_child(lobby)
+	lobby.net_match = net
+	await process_frame
+	_assert(lobby.has_method("setup"), "CONTROL: the lobby has a setup method (the router calls it)")
+	var arity := _setup_arity(lobby)
+	_assert(arity == 1, "lobby.setup takes one Dictionary like every routed scene (scene_router.gd:94-95 calls new_scene.setup(params)); it has %d arguments" % arity)
+	if arity == 1:
+		lobby.setup({})
+		_assert(lobby.qa_state().get("scene", "") == "lobby", "setup({}) works with every default")
+		var be := FakeBackend.new()
+		be.member_ids = [11, 22]
+		lobby.setup({"backend": be, "local_steam_id": 11, "version": "abc123"})
+		_assert(lobby.qa_state().get("members", []) == [11, 22], "setup with the three values sets the backend (members), got %s" % str(lobby.qa_state()))
+		_assert(lobby.accept_record(_record("abc123")).get("ok", false) == true and lobby.accept_record(_record("deadbee")).get("ok", true) == false, "setup with the three values sets the version")
+		var ml := lobby.find_child("MemberList", true, false) as ItemList
+		_assert(ml.item_count == 2 and ml.get_item_text(0).contains("(you)") and not ml.get_item_text(1).contains("(you)"), "setup with the three values sets the local steam id: only member 11 reads (you)")
+	lobby.queue_free()
+	net.queue_free()
+	await process_frame
+
+
 # Child half of the --net-local case: instantiates the lobby with no setup() call, so it takes the real _attach path.
 func _child_probe() -> void:
 	var lobby: Node = (load(LOBBY_SCENE) as PackedScene).instantiate()
@@ -223,6 +278,15 @@ func _child_probe() -> void:
 	var host := lobby.find_child("HostButton", true, false) as Button
 	var join := lobby.find_child("JoinButton", true, false) as Button
 	var status := lobby.find_child("StatusLine", true, false) as Label
+	if "--child-rec" in OS.get_cmdline_user_args():
+		lobby._backend = FakeBackend.new()  # private on purpose: keeps this child independent of setup()'s shape
+		var a: int = lobby.build_record()["seed"]
+		var b: int = lobby.build_record()["seed"]
+		print("CHILD-REC seeds=%d,%d" % [a, b])
+		lobby.queue_free()
+		await process_frame
+		quit(0)
+		return
 	print("CHILD-STATE net_local=%s host_disabled=%s join_disabled=%s status=%s" % [
 		"--net-local" in OS.get_cmdline_user_args(), host.disabled, join.disabled, status.text])
 	lobby.queue_free()
@@ -230,14 +294,15 @@ func _child_probe() -> void:
 	quit(0)
 
 
-func _run_child(flag: bool) -> String:
+func _run_child(flag: bool, extra: Array = [], marker := "CHILD-STATE") -> String:
 	var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tests/test_vg_f_w4_lobby.gd", "--", "--child"]
 	if flag:
 		args.append("--net-local")
+	args.append_array(extra)
 	var out: Array = []
 	OS.execute(OS.get_executable_path(), args, out, true)
 	for line in "\n".join(out).split("\n"):
-		if line.begins_with("CHILD-STATE"):
+		if line.begins_with(marker):
 			return line
 	return ""
 
@@ -255,3 +320,17 @@ func _t_net_local_children() -> void:
 	_assert(on.contains("net_local=true") and on.contains("host_disabled=false") and on.contains("join_disabled=false"),
 		"VG-F-SKEL-B: with --net-local HostButton and JoinButton are enabled (lobby.gd:85-88 disables them without Steam), got: %s" % on)
 	_assert(on.contains("status=" + LOCAL_STATUS), "VG-F-SKEL-B: with --net-local StatusLine reads \"%s\", got: %s" % [LOCAL_STATUS, on])
+
+
+# Rulings 2026-10-12 (c): `--seed <n>` fixes the lobby's match seed (build_record), no flag leaves randi().
+func _t_seed_children() -> void:
+	_cur = "lobby_seed_arg"
+	var free_a := _run_child(false, ["--child-rec"], "CHILD-REC")
+	var free_b := _run_child(false, ["--child-rec"], "CHILD-REC")
+	print(free_a, " | ", free_b)
+	_assert(free_a != "" and free_b != "", "CONTROL: the --child-rec runs printed no CHILD-REC line, so the child harness is broken")
+	var sa: PackedStringArray = free_a.replace("CHILD-REC seeds=", "").split(",")
+	_assert(sa.size() == 2 and int(sa[0]) != int(sa[1]) and free_a != free_b, "CONTROL: without --seed the player's path is unchanged: build_record's seed is random (two records and two processes differ), got: %s | %s" % [free_a, free_b])
+	var forced := _run_child(false, ["--child-rec", "--seed", "1"], "CHILD-REC")
+	print(forced)
+	_assert(forced == "CHILD-REC seeds=1,1", "with `--seed 1` build_record's seed is 1 both times (lobby.gd:280 uses randi()), got: %s" % forced)

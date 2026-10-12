@@ -5,7 +5,11 @@ every ordered unit at the host's x and y (the order crossed to the guest). Both 
 (ledger row FU-F-guest-faction), so the guest's faction-0 units are the units the host ordered. Rules R-140-02 (orders
 are applied at tick+3), R-140-03. The qa `net` key waits for a later piece (row FU-F-net-qa-key): the check here is the
 tick advancing on both processes plus the position match.
-Red until VG-F-SKEL-B wires --net-local into lobby.gd: the Host button stays disabled.
+Red under FINDING-net-first-tick until VG-F-NETTICK (ledger row; Architect 2026-10-12): scenes/tactical_c/tactical_view.gd
+_load_live calls load_tactical_live, which sends one extra tactical_step on each peer, so every move command is stamped
+tick == st->tick and net_submit answers OM_CMD_ERR_LATE (csrc/cmd_stream.c:161); the order never crosses. Listed in
+scripts/specfactory/lane_plays_known_red.txt under that row id. The settle wait counts game ticks, not seconds (A17's
+rule); its value waits for DRAFT-s140-settle-ticks, measured after VG-F-NETTICK.
 """
 import time
 
