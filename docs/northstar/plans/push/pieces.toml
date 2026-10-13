@@ -1723,6 +1723,18 @@ depends_on = ["A94-harness"]
 status = { state = "landed", sha = "a853dac" }
 tests_pending = false
 size_estimate = "method_check.py about 200 lines; one hook line; one spec page"
+# Architect ruling 2026-10-12: the drift reports folder gets an owner so a docs-only branch (push/vg-w8-triage) can land.
+[[piece]]
+id = "HARNESS-driftreports"
+manager = "M0"
+wave = 9
+owns = []
+owns_glob = ["docs/northstar/plans/drift_checks/*"]
+acceptance = []
+depends_on = []
+status = { state = "attached", attach_sha = "68a5717" }  # owner of the drift reports folder; lets push/vg-w8-triage land docs-only
+tests_pending = false
+size_estimate = "ownership row only; the folder exists on main"
 # Method rev 2 harness pieces (2026-10-10): the pre-gate script, the status check and the journal formatter.
 [[piece]]
 id = "HARNESS-pregate"
@@ -2082,8 +2094,57 @@ manager = "M0"
 wave = 9
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/run_godot_tests.sh", "tests/qa/desktop/daemon_client.py", "tests/specfactory/test_gate_userdir.py"]
 owns_glob = []
-acceptance = ["tests/specfactory/test_gate_userdir.py"]
-depends_on = ["VG-GUARD", "HARNESS-runnertime", "G-qadesktoptests"]  # VG-GUARD owns merge_gate.sh and daemon_client.py until it is attached; HARNESS-runnertime owns run_godot_tests.sh; G-qadesktoptests owns tests/qa/desktop/** by glob
+acceptance = ["tests/specfactory/test_gate_userdir.py", "tests/transport/test_fetch_godotsteam.py", "tests/transport/test_vg_f_w8d_presets.py"]
+depends_on = ["VG-GUARD", "HARNESS-runnertime", "G-qadesktoptests"]  # VG-GUARD owns merge_gate.sh and daemon_client.py until it is attached; HARNESS-runnertime owns run_godot_tests.sh; G-qadesktoptests owns tests/qa/desktop/** by glob. Architect 2026-10-12: merge_gate.sh exports XDG_DATA_HOME=$SCRATCH_ROOT/xdg with $SCRATCH_ROOT/xdg/godot/export_templates symlinked to ~/.local/share/godot/export_templates and nothing else (never the data/ or app_userdir subtree), so the ambient settings.cfg is hidden while headless exports still build; acceptance = test_headless_linux_export_builds and test_windows_export_builds_headless green under the gate env, plus a positive control that a planted data/settings.cfg in the real home does not change qa_state() era.
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "gate, test runner and desktop driver boot on an empty XDG_DATA_HOME (FINDING-ambient-user-dir)"
+
+# Westley 2026-10-12: sim viewer (docs/northstar/plans/2026-10-12-simviewer-spec.md). Tooling, never in the game loop. SV-1..SV-3 are new files only.
+[[piece]]
+id = "SV-1"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/__init__.py", "scripts/simviewer/pipe_session.py", "tests/simviewer/test_pipe_session.py"]
+owns_glob = []
+acceptance = ["tests/simviewer/test_pipe_session.py"]
+depends_on = []
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 120 lines + test"
+
+[[piece]]
+id = "SV-2"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/history.py", "tests/simviewer/test_history.py"]
+owns_glob = ["tests/simviewer/fixtures/**"]
+acceptance = ["tests/simviewer/test_history.py"]
+depends_on = ["SV-1"]
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 150 lines + test"
+
+[[piece]]
+id = "SV-3"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_viewer_headless.py"]
+owns_glob = []
+acceptance = ["tests/simviewer/test_viewer_headless.py"]
+depends_on = ["SV-2"]
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 600 lines ported from simulation/strategic_viewer.py + test"
+
+[[piece]]
+id = "SV-0"
+manager = "M0"
+wave = 10
+owns = ["csrc/mission.c", "csrc/ouroboros_sim.h", "csrc/pipe/om_pipe.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "tests/transport/test_pipe_mission_end_retention.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
+depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R"]  # queued owners of mission.c, the header, architecture.md and signatures.toml
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "retention override setter in mission.c, pipe mission_end field, one architecture paragraph, one signatures row"
