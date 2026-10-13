@@ -2008,7 +2008,7 @@ owns = ["tests/test_tactical_camera.gd", "scripts/specfactory/gd_tests_known_red
 owns_glob = []
 acceptance = ["tests/test_tactical_camera.gd"]
 depends_on = ["VG-A18", "VG-B23"]  # A18 re-pins the camera tests first; VG-B23 owns gd_tests_known_red.txt (the entry leaves with FINDING-edge-scroll-xvfb)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "be1f8ab" }
 tests_pending = true
 size_estimate = "test-fix: two lines in _mouse_to (warp_mouse guarded by DisplayServer.get_name() != \"headless\", flush_buffered_events after the event), one known-red line removed; scout verdict 2026-10-13: harness, not product"
 
