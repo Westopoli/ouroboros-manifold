@@ -15,7 +15,7 @@ OM_QA_RENDERER=vulkan in the run line; the fixture also sets it when unset), hos
 fixture for the game process only; G1: the default space era stays 2D until Westley approves the shot). After the first tactical
 frame one part of the army is boxed and sent to engine layer 2 with the strip's "To layer 3" button (ToLayer2), another part to
 engine layer 4 with "To layer 5" (ToLayer4); the play waits for arrival, zooms out through the wheel until the rig reports a
-height of 5,400 (G2, 8 notches of 300 from 3,000), and puts the cursor over the army so the tube opens on the sheets above. The shot
+height of 5,400 (G2, 8 notches of 300 from 3,000), and puts the cursor on the focus-sheet screen position of the own-unit centroid (the pan target, Architect 2026-10-14) so the tube opens on the sheets above, centred on the army. The shot
 S-246.png and S-246.json are written to docs/northstar/story_reviews/shots/<run id>/ by this play itself.
 
 Control (green today): qa units_px is non-empty and the daemon "project" verb of one own unit lands within 1.5 px of its units_px
@@ -49,12 +49,13 @@ UNIT_LIFT_WU = 150.0  # Units3D FLYER_CLEARANCE_WU (ground_units.gd:11); Archite
 SHEET_THICKNESS_WU = 60.0  # plate sheet (rubble would be 30): space3d.sheets[i] carries no kind, and the sheets in this play are plate sheets
 TUBE_RADIUS_WU = 1500.0  # DRAFT-tube-radius
 CAM_HEIGHT_WU = 5400.0  # DRAFT-space-cam-height, gap ruling G2 (the play zooms out to it)
-FRAME_BUDGET_MS = 16.0  # DRAFT-space-frame-budget, Westley's; never widened
+FRAME_BUDGET_MS = 16.0  # DRAFT-space-frame-budget: REPORTED beside frame_ms, never asserted (Architect 2026-10-14: FINDING-space-view-frame-time; a later perf piece asserts on a real display)
 PROJECT_TOL_PX = 1.5  # the control's tolerance (the brief)
 TUBE_TOL_PX = 1.0  # the tube centre against the cursor
+TUBE_CENTROID_TOL_WU = TUBE_RADIUS_WU  # the tube centre against the own-unit centroid: within one tube radius (Architect 2026-10-14)
+CAM_CENTROID_TOL_WU = 25.0  # DRAFT-pan-centroid: at the first tactical frame the rig target is within this of the own-unit centroid (about 3 px at the start height; Architect 2026-10-14: pan target = centroid)
 STRIP_X = 1800  # the To-layer strip sits at x 1840 and up: nothing the play looks at is to the right of it
 MARGIN_PX = 80  # units must sit this far inside the screen (the rig's edge-scroll zone is 60 px)
-SOFTWARE_GPU = re.compile(r"llvmpipe|lavapipe|swiftshader|software", re.I)
 
 
 @pytest.fixture(scope="module")
@@ -110,6 +111,11 @@ def _arrived(ids, layer):
     return pred
 
 
+def _centroid(q, own):
+    """World centroid (x, y) of the own units in qa units (every own unit, in transit or not)."""
+    return (sum(float(q["units"][i]["x"]) for i in own) / len(own), sum(float(q["units"][i]["y"]) for i in own) / len(own))
+
+
 def _on_screen(p):
     return MARGIN_PX <= p[0] < STRIP_X and MARGIN_PX <= p[1] < H - MARGIN_PX
 
@@ -155,6 +161,9 @@ def test_s246_space_sheets_rings_tube(g):
     print("CONTROL: unit %s project (%.2f, %.2f) vs units_px (%.2f, %.2f), max delta %.3f px" % (
         probe, r["result"]["x"], r["result"]["y"], q["units_px"][probe][0], q["units_px"][probe][1], d))
     assert d <= PROJECT_TOL_PX, "S-246 CONTROL: project and units_px disagree by %.2f px for unit %s" % (d, probe)
+    # the rig target at the first tactical frame, kept for the pan assertion after the shot (the player's own panning and the zoom move it later)
+    cam0 = (q.get("space3d") or {}).get("camera")
+    cen0 = _centroid(q, own)
 
     # PREMISES, dumped
     groups = {k: v for k, v in q.items() if "group" in k.lower() and k != "ground3d"}
@@ -191,11 +200,16 @@ def test_s246_space_sheets_rings_tube(g):
             time.sleep(0.2)  # harness wait
         _pan_into_view(client, sel2 + sel4)
 
-    # THE CURSOR over the army, so the tube opens on the sheets above; 3 s of wall time for the frame-time average (G9)
-    px = qa(client)["units_px"]
-    pts = [px[i] for i in own if i in px and _on_screen(px[i])] or [px[i] for i in own if i in px]
-    cx = int(min(max(sum(p[0] for p in pts) / len(pts), MARGIN_PX), STRIP_X - 1))
-    cy = int(min(max(sum(p[1] for p in pts) / len(pts), MARGIN_PX), H - MARGIN_PX))
+    # THE CURSOR over the army (Architect 2026-10-14): the SpaceView pan target is the own-unit centroid at ground height, so the army sits at
+    # screen centre and the focus sheet under it is sheet 0. The cursor goes to the screen position of the centroid on the FOCUS sheet (the daemon
+    # project verb, which uses the focus plane), so the tube is centred on the army. 3 s of wall time for the frame-time average (G9).
+    q = qa(client)
+    cen = _centroid(q, own)
+    r = client.call("project", cen[0], cen[1])
+    assert r.get("ok") is True, "S-246: the project verb refused the own-unit centroid %r: %r" % (cen, r)
+    cx, cy = int(round(r["result"]["x"])), int(round(r["result"]["y"]))
+    print("CENTROID world (%.1f, %.1f) projects on the focus sheet (focus_layer %r) to px (%d, %d); screen centre (%d, %d)" % (
+        cen[0], cen[1], q["focus_layer"], cx, cy, W // 2, H // 2))
     client.call("input", "move", cx, cy)
     time.sleep(3.0)  # harness wait: wall time, the frame-time average is over the last 120 frames
 
@@ -218,6 +232,10 @@ def test_s246_space_sheets_rings_tube(g):
     # ASSERTIONS, in the order the spec lists them (qa_state space3d inventory, R-246-04, Q-S3-01, G2)
     s3 = q.get("space3d")
     assert s3 is not None and s3.get("present") is True, "S-246 R-246-03 Q-S3-01: qa_state space3d is %r, not present true (the SpaceView is not hosted: OM_SPACE_VIEW=1, G1)" % (s3,)
+    # the frame budget (DRAFT-space-frame-budget): REPORTED, never asserted (Architect 2026-10-14; FINDING-space-view-frame-time)
+    gpu = _gpu_line(g)
+    ms = s3.get("frame_ms")
+    print("FRAME_MS mean %r (draft budget %.1f ms, not asserted); renderer line: %s" % (ms, FRAME_BUDGET_MS, gpu))
     sheets = s3["sheets"]
     assert len(sheets) == 5, "S-246 R-246-01: %d sheets, not 5" % len(sheets)
     assert [s["y"] for s in sheets] == [0.0, 1000.0, 2000.0, 3000.0, 4000.0], "S-246 R-246-02 Q-246-01 (a): sheet y %r, not layer * 1,000 wu (engine layers 0 to 4)" % [s["y"] for s in sheets]
@@ -248,6 +266,11 @@ def test_s246_space_sheets_rings_tube(g):
         assert p is not None and 0 <= p[0] < W and 0 <= p[1] < H, "S-246 G2: unit %s (layer %d) is off screen at %r" % (uid, q["units"][uid]["layer"], p)
     cam = s3["camera"]
     print("CAMERA %r" % cam)
+    # the pan target is the own-unit centroid at ground height (Architect 2026-10-14), not the kind-7 spawn anchor: read at the first frame
+    assert cam0 is not None, "S-246 G2: qa_state space3d.camera is absent at the first tactical frame"
+    dpan = ((cam0["x"] - cen0[0]) ** 2 + (cam0["y"] - cen0[1]) ** 2) ** 0.5
+    print("PAN at the first frame: rig target (%.1f, %.1f) vs own-unit centroid (%.1f, %.1f): %.1f wu (tolerance %.0f wu)" % (cam0["x"], cam0["y"], cen0[0], cen0[1], dpan, CAM_CENTROID_TOL_WU))
+    assert dpan <= CAM_CENTROID_TOL_WU, "S-246 G2 (Architect 2026-10-14): the rig target at the first frame is %.1f wu from the own-unit centroid (tolerance %.0f wu): the pan target is not the centroid" % (dpan, CAM_CENTROID_TOL_WU)
     assert cam["height"] >= CAM_HEIGHT_WU, "S-246 G2: the rig reports height %r, below the 5,400 the play zooms to" % cam["height"]
     # the tube
     tube = s3["tube"]
@@ -258,20 +281,15 @@ def test_s246_space_sheets_rings_tube(g):
     assert all(l > focus for l in tube["faded_layers"]), "S-246 R-246-04: faded_layers %r holds a layer at or below the focus layer %r" % (tube["faded_layers"], focus)
     assert sorted(tube["faded_layers"]) == list(range(focus + 1, 5)), "S-246 R-246-04: faded_layers %r is not the sheets above the focus layer %r" % (tube["faded_layers"], focus)
     assert tube["radius_wu"] == TUBE_RADIUS_WU, "S-246 DRAFT-tube-radius: radius_wu %r" % tube["radius_wu"]
-    if focus == 0:  # the daemon project verb works on layer 0 (INTERFACE: the host's _to_screen for a bare world point)
-        r = client.call("project", float(tube["cx"]), float(tube["cy"]))
-        assert r.get("ok") is True, "S-246: the project verb refused: %r" % r
-        dx, dy = r["result"]["x"] - cx, r["result"]["y"] - cy
-        print("TUBE centre projects to (%.2f, %.2f), cursor (%d, %d)" % (r["result"]["x"], r["result"]["y"], cx, cy))
-        assert max(abs(dx), abs(dy)) <= TUBE_TOL_PX, "S-246 R-246-04: the tube centre projects %.2f px from the cursor (tolerance %.1f px)" % (max(abs(dx), abs(dy)), TUBE_TOL_PX)
-    else:
-        print("TUBE centre vs cursor: not checked, focus layer %r is not 0 and project works on layer 0" % focus)
-    # the frame budget (DRAFT-space-frame-budget): reported always; asserted on a hardware renderer only (the spec: not asserted under software xvfb)
-    gpu = _gpu_line(g)
-    ms = s3.get("frame_ms")
-    print("FRAME_MS mean %r (budget %.1f ms); renderer line: %s" % (ms, FRAME_BUDGET_MS, gpu))
-    assert isinstance(ms, (int, float)) and ms > 0.0, "S-246 DRAFT-space-frame-budget: space3d.frame_ms is %r, no frame sample" % (ms,)
-    if SOFTWARE_GPU.search(gpu):
-        print("FRAME_MS not asserted: the renderer line names a software device")
-    else:
-        assert ms < FRAME_BUDGET_MS, "S-246 DRAFT-space-frame-budget: frame_ms mean %.2f is not under %.1f ms (%s)" % (ms, FRAME_BUDGET_MS, gpu)
+    # the tube is centred on the army: its centre projects (focus sheet, the daemon project verb) onto the cursor, which was aimed at the
+    # own-unit centroid, and lies within one tube radius of that centroid in world units; the centroid sits near the screen centre (pan target)
+    r = client.call("project", float(tube["cx"]), float(tube["cy"]))
+    assert r.get("ok") is True, "S-246: the project verb refused: %r" % r
+    dx, dy = r["result"]["x"] - cx, r["result"]["y"] - cy
+    print("TUBE centre projects to (%.2f, %.2f), cursor (%d, %d)" % (r["result"]["x"], r["result"]["y"], cx, cy))
+    assert max(abs(dx), abs(dy)) <= TUBE_TOL_PX, "S-246 R-246-04: the tube centre projects %.2f px from the cursor (tolerance %.1f px)" % (max(abs(dx), abs(dy)), TUBE_TOL_PX)
+    cen = _centroid(q, own)
+    dw = ((tube["cx"] - cen[0]) ** 2 + (tube["cy"] - cen[1]) ** 2) ** 0.5
+    print("TUBE centre (%.1f, %.1f) vs own-unit centroid (%.1f, %.1f): %.1f wu (tolerance %.0f wu)" % (tube["cx"], tube["cy"], cen[0], cen[1], dw, TUBE_CENTROID_TOL_WU))
+    assert dw <= TUBE_CENTROID_TOL_WU, "S-246 R-246-04: the tube centre is %.1f wu from the own-unit centroid, more than one tube radius (%.0f wu): the tube is not centred on the army" % (dw, TUBE_CENTROID_TOL_WU)
+    assert isinstance(ms, (int, float)) and ms > 0.0, "S-246: space3d.frame_ms is %r, no frame sample" % (ms,)
