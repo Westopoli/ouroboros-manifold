@@ -108,12 +108,14 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Lane B: the galaxy audit (why rebuilt instead of wired) and its fix piece | Architect chat | lane B |
-| 2 | Lane A ground look: the S-001 group shots | run 20261009-0228-5026db3 on `push/vg-c-reviews-2` (before A19 to A21); the Dispatcher's first clerk re-runs the A plays on main and queues fresh shots in `story_reviews/A.md` | lane A fix pieces; the D view hook |
-| 3 | Q-235-01: the four settlement ticker beats | `ambiguity_register.md` | E1m, E1n, S-235 |
-| 4 | S-004 spec gap: no layer-change order in the client | `story_reviews/C.md` on `push/vg-c-reviews-2`; E-01 | lane C, S-004 |
-| 5 | Q-132-03: the S-132 walkers finding | `ambiguity_register.md` | lane C, S-132 |
-| 6 | Lane E1: settlement port spec (mockup growth into the sim), then a banded-contour prototype | Architect chat | lane E1 fan-out |
+| 1 | Galaxy density by eye (`Q-B24-01`): does the game's Overview need more star discs, like the prototype, or is the count as built right? Prototype beside game, overview and local zoom | `docs/northstar/story_reviews/westley/2026-10-13/galaxy-PROTOTYPE-overview.png` vs `galaxy-B23-overview.png`, `galaxy-PROTOTYPE-local.png` vs `galaxy-B23-local.png` (also `review-westley/` in your checkout) | `VG-B24` layout, then B25 |
+| 2 | Two of your own ground units drawn one pixel apart at the opening zoom (`Q-132-03`): (a) they really overlap at that zoom, the check compares finer than a pixel; (b) a closer opening camera or a minimum drawn body size | `docs/northstar/story_reviews/westley/2026-10-13/s132-pairs-full.png` (pairs circled red) and `s132-pairs-crop.png` (4x crop) | lane C, S-132 |
+| 3 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/B.md`, run 20261013-0216-5f3ee95 | `VG-B24` |
+| 4 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test, B24 |
+| 5 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/E.md`, latest S-237 row | lane E look pieces, the banded-contour prototype |
+| 6 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/F.md`, run 20261012-2033-b12b47a | lane F, A16 |
+
+Waiting behind the six: lane A's S-001 group shots (`story_reviews/A.md`), and a yes or no on a second worktree pass that removes unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`.
 
 ### How the work is run
 
@@ -132,6 +134,8 @@ Built 2026-10-03 while you were away. Each record lists the keys to fly it and t
 | Land terrain options page | `research/landscape_design/options_2026-10-03_walkable_land.md` | DECIDED 2026-10-04: option A (layout first, terrain obeys); walking limit 35 degrees |
 | Land mockup pass 5: the layout leads, the terrain obeys | `research/landscape_design/README.md` "Pass 5"; screenshots in `mockup/pass5/` | The prototype asked for under Q-191-04. Finding: carving a layout into finished terrain leaves broken edges and wide cut routes, and the old assault layouts cannot meet the equal-distance rule for the objective. Six questions in the record |
 | Settlement mockup pass 1 | `research/settlement_mockup/README.md` | Which events start a wave (Q-193-01), whether four lot stages is right (Q-193-02), whether one 300 wu route per direction is enough way through (Q-193-06) |
+| Galaxy density, 2026-10-13: the prototype beside the game (B23 on main) | `story_reviews/westley/2026-10-13/galaxy-PROTOTYPE-overview.png`, `galaxy-B23-overview.png`, `galaxy-PROTOTYPE-local.png`, `galaxy-B23-local.png` | `Q-B24-01`: enough star discs on the Overview, or add decoration systems up to the prototype's count (section 3 "Now" row 1) |
+| Ground opening view, 2026-10-13: two own units one pixel apart | `story_reviews/westley/2026-10-13/s132-pairs-full.png`, `s132-pairs-crop.png` | `Q-132-03`: (a) compare finer than a pixel, or (b) closer opening camera or a minimum body size (section 3 "Now" row 2) |
 
 Land mockup passes continue in a Sonnet chat working directly with Westley (`plans/briefs/2026-10-04-land-mockup-iteration-brief.md`, branch `push/proto-land-iter`); pass 6 fixes the cliff walls drawn on every contour and makes the layout shape the terrain as it is generated. View prototypes from `~/Projects/om-push/wt/view-main` (imported, kept at current main).
 
