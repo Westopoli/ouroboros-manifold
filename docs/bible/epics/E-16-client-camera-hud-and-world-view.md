@@ -92,7 +92,7 @@ Rules
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
 - R-105-05  Given Shift plus click, When pressed, Then the unit is added to or removed from the current selection.
-- R-105-07  Given a bound group that spans layers, When the player holds its digit, Then the layer strip blooms into one bar per layer the group occupies, sized by unit count; dragging across one or more bars and releasing makes those layers the selection, and releasing the digit collapses the strip (the Comb). Tap-to-recall and narrowing by layer hotkey (R-105-02, R-105-06) stay the default for control groups and multi-layer movement; the comb is how individual layers inside a group are moved.
+- R-105-07  Given a bound group that spans layers, When the player holds its digit, Then the layer strip blooms into one bar per layer the group occupies, sized by unit count; dragging across one or more bars and releasing makes those layers the selection, and releasing the digit collapses the strip (the Comb). Tap-to-recall stays the default for control groups and multi-layer movement; narrowing by layer hotkey is after the beta (R-105-06); the comb is how individual layers inside a group are moved.
 - R-105-08  Given a selection and a right-click move, When issued, Then every unit stays on its own layer; a layer change is a deliberate act on a manual selection.
 
 Inputs: mouse, keyboard.
