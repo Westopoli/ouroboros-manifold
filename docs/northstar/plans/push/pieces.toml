@@ -2011,8 +2011,8 @@ owns = ["scripts/simviewer/__init__.py", "scripts/simviewer/pipe_session.py", "t
 owns_glob = []
 acceptance = ["tests/simviewer/test_pipe_session.py"]
 depends_on = []
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "d7d01f40" }
+tests_pending = false
 size_estimate = "about 120 lines + test"
 
 [[piece]]
@@ -2023,8 +2023,8 @@ owns = ["scripts/simviewer/history.py", "tests/simviewer/test_history.py"]
 owns_glob = ["tests/simviewer/fixtures/**"]
 acceptance = ["tests/simviewer/test_history.py"]
 depends_on = ["SV-1"]
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "d7d01f40" }
+tests_pending = false
 size_estimate = "about 150 lines + test"
 
 [[piece]]
@@ -2035,8 +2035,8 @@ owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts
 owns_glob = []
 acceptance = ["tests/simviewer/test_viewer_headless.py"]
 depends_on = ["SV-2"]
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "d7d01f40" }
+tests_pending = false
 size_estimate = "about 600 lines ported from simulation/strategic_viewer.py + test"
 
 [[piece]]

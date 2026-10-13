@@ -37,6 +37,7 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | A battle screen, A16 and A17 (`VG-A16`, `VG-A17`) | nothing yet; both queued (spec rev 12) | A16 layer order control (after VG-E1 lands; S-002 play); A17 scroll plays measure game time (test writer only, no product file) | none yet | none |
 | C ground 3D, S-004 play fix (`VG-C-s004`) | S-004 play fix at bfd7f1c: green, the play now aims at the top edge of the nearest slope and a walker reaches the upper layer past the midline (TD-VG-C-4); no finding | none for the play; if red, the finding goes to the Architect (no shot queued: no C.md, no owner row) | none yet | none |
 | Harness, method rev 3 (`HARNESS-provenance`) | nothing yet; queued (spec rev 12, lane H part 3; Westley 2026-10-11: "#14: approved"); rules.md sections (c) and (d) updated | `spec_provenance.py` lint and its test, then the Architect tags the whole spec (rev 13) | n/a | none |
+| V sim viewer (SV-1..SV-3 landed; SV-0 retention override queued behind VG-CONTRACT-E7, VG-W2, VG-E1R) | SV-1 `pipe_session.py`, SV-2 `history.py`, SV-3 `viewer.py` at d7d01f40 (new files under `scripts/simviewer/`, spec `2026-10-12-simviewer-spec.md`); works: `tests/simviewer/` 67 passed, 1 xfailed (pick 0 / total failure, expected until SV-0); sees: tooling; first-look shots queued (`story_reviews/V.md`) | SV-0 (mission_end retention override on the pipe), queued behind VG-CONTRACT-E7, VG-W2 and VG-E1R | none yet | V.md rows pending |
 
 ## Method rev 2 (Westley picked all nine, 2026-10-10)
 
