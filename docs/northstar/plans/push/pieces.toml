@@ -2246,6 +2246,6 @@ owns = ["scripts/simviewer/build_pipe_dbg_macos.sh", "scripts/simviewer/__main__
 owns_glob = []
 acceptance = ["tests/simviewer/test_pipe_option.py"]
 depends_on = ["SV-3"]
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "4e4b2ae1" }
+tests_pending = false
 size_estimate = "about 15-line script, --pipe option (about 10 lines), README Mac section, one test file"
