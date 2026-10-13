@@ -1918,7 +1918,7 @@ wave = 9
 owns = ["csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "docs/northstar/spec_factory/signatures.toml", "tests/specfactory/test_signatures_internal.py", "tests/csim/test_VG_E_prodslot.py"]  # tactical_support.c: the production spawn lines (:541-545); mission.c: the slot helper; om_internal.h: one prototype; signatures.toml row and EXPECTED_MODULE line in the same piece
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_prodslot.py"]
-depends_on = ["VG-CONTRACT-E7"]  # VG-CONTRACT-E7 owns all five shared files until it lands (spec rev 12d: after VG-CONTRACT-E7)
+depends_on = ["VG-CONTRACT-E7", "SV-0"]  # VG-CONTRACT-E7 owns all five shared files until it lands (spec rev 12d: after VG-CONTRACT-E7); Architect 2026-10-12: SV-0 (one field, one hook) goes first; prodslot lands after SV-0 and E7
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "prodslot: nearest free slot of the 30 wu lattice within 150 wu, fixed scan order, no RNG draw; goldens with production move once (TD-VG-E-29); closes FINDING-production-stack"
