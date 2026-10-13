@@ -44,7 +44,7 @@ extends SceneTree
 # unit_node(id) (Body and LayerRing), UnitSquads.visible = false. Null actions standing (not ruled, marked "d-view spec rev 1, gap N null
 # action, Architect may veto on the shot"): g4 the rig's own pitch is reported, never asserted; g5 derived floors, unit y overridden after
 # Units3D.set_units; g6 the client records t0 at the first transit frame; g7 focus_layer() as is; g8 engine layer numbers; g9 frame_ms
-# (not asserted); g10 ring y = sheet y + 2.0, cell squares 100 x 100 x 60, fade when sheet y > focus_y + 0.5 * gap.
+# (not asserted); g10 ring y = sheet top + 2.0 (sheet top = sheet y + thickness 60), cell squares 100 x 100 x 60, fade when sheet y > focus_y + 0.5 * gap.
 #
 # DISPLAY: this file needs a real renderer. The headless dummy renderer stores no MultiMesh instance data (get_instance_transform returns
 # zeros), so the cell-square case could not read the squares under scripts/run_godot_tests.sh once the piece is built. Run it as
@@ -77,6 +77,10 @@ const LAYERS := 5
 const CELL_WU := 100.0
 # Q-246-01 (a), DRAFT-space-layer-gap, and the kit-mode spec P2.5 "darken the other layers by 55 percent" (DRAFT-sheet-dim).
 const GAP_WU := 1000.0
+# Architect FINAL ruling 2026-10-14 (d-view spec rev 3, Units bullet): unit y = sheet top + 150, sheet top = L * gap + sheet thickness
+# (plate 60, rubble 30); 150 = Units3D FLYER_CLEARANCE_WU (ground_units.gd:11). DRAFT-space-unit-lift (40) is STRUCK. The fixture sheets
+# are plate sheets (60), so a layer-2 unit is at 2,210.
+const PLATE_THICKNESS_WU := 60.0
 const SHEET_DIM := 0.55
 const TUBE_RADIUS_WU := 1500.0
 # G2 ruling (Architect FINAL): DRAFT-space-cam-height 5,400.
@@ -494,11 +498,13 @@ func _test_view_constants_and_parity() -> void:
 	_assert(c.has("LAYER_GAP_WU") and is_equal_approx(float(c["LAYER_GAP_WU"]), float(mock.get("LAYER_GAP_WU", -1.0))), "PARITY: SpaceView.LAYER_GAP_WU (%s) must equal field_map_space.gd:22 LAYER_GAP_WU (%s)" % [c.get("LAYER_GAP_WU", "missing"), mock.get("LAYER_GAP_WU", "missing")])
 	# INTERFACE constants, each with the draft it carries.
 	var want := {
-		"UNIT_LIFT_WU": 40.0, "TUBE_RADIUS_WU": 1500.0, "TUBE_ALPHA": 0.15, "TUBE_RIM_WU": 10.0, "SHEET_DIM": 0.55,
+		"UNIT_LIFT_WU": 150.0, "TUBE_RADIUS_WU": 1500.0, "TUBE_ALPHA": 0.15, "TUBE_RIM_WU": 10.0, "SHEET_DIM": 0.55,
 		"RING_RADIUS_FACTOR": 1.2, "RING_WIDTH_WU": 6.0, "CAM_HEIGHT_WU": 5400.0, "FRAME_BUDGET_MS": 16.0,
 	}
 	for k in want:
 		_assert(c.has(k) and is_equal_approx(float(c[k]), float(want[k])), "SpaceView.%s must be %s (INTERFACE / d-view spec Numbers; G2 for CAM_HEIGHT_WU); got %s" % [k, want[k], c.get(k, "missing")])
+	# Parity with Units3D: UNIT_LIFT_WU is Units3D.FLYER_CLEARANCE_WU (ground_units.gd:11), read live, not copied.
+	_assert(is_equal_approx(float(_constants(UNITS_GD).get("FLYER_CLEARANCE_WU", -1.0)), float(c.get("UNIT_LIFT_WU", -2.0))), "PARITY: SpaceView.UNIT_LIFT_WU (%s) must equal Units3D.FLYER_CLEARANCE_WU (%s)" % [c.get("UNIT_LIFT_WU", "missing"), _constants(UNITS_GD).get("FLYER_CLEARANCE_WU", "missing")])
 	# Parity with Units3D: the ring radius is RING_RADIUS_FACTOR times Units3D.BODY_RADIUS_WU (11.5), read live, not copied.
 	_assert(is_equal_approx(float(_constants(UNITS_GD).get("BODY_RADIUS_WU", -1.0)) * float(c.get("RING_RADIUS_FACTOR", -1.0)), 13.8), "PARITY: RING_RADIUS_FACTOR * Units3D.BODY_RADIUS_WU must be 1.2 * 11.5 = 13.8")
 
@@ -816,9 +822,9 @@ func _has_layer_colour_run(sm: ShaderMaterial) -> bool:
 
 # -- RINGS, built directly ---------------------------------------------------------------------------------------------------------
 
-# d-view spec "Layer indicators (R-246-04, the condition)": "`space_rings.gd`: a flat ring under every unit at its sheet top + 2, coloured by the
+# d-view spec "Layer indicators (R-246-04, the condition)": "`space_rings.gd`: a flat ring under every unit at its sheet top + 2 (sheet top = L * gap + 60), coloured by the
 # unit's layer with the strip's five colours (`scenes/tactical_c/layer_view.gd:13 LAYER_COLOURS`)"; "(`DRAFT-ring-radius` 1.2 × body radius ...)".
-# INTERFACE: "one flat ring (radius RING_RADIUS_FACTOR * 11.5, width RING_WIDTH_WU) per item at world (x, layer * LAYER_GAP_WU + 2.0 [G10], y) in
+# INTERFACE: "one flat ring (radius RING_RADIUS_FACTOR * 11.5, width RING_WIDTH_WU) per item at world (x, layer * LAYER_GAP_WU + sheet thickness 60 + 2.0 [G10, Architect FINAL 2026-10-14: sheet top + 2], y) in
 # LayerView.LAYER_COLOURS[layer]"; "ring_of(id) -> {layer, y, colour, radius, dashed: false}". Westley 2026-10-13: "layer indicators showing which
 # layer each unit is on". (LAYER_COLOURS is at layer_view.gd:12 in this tree; the line number in the spec is off by one.)
 # RING COLOURS: five units, one per layer 0..4, ring_of(id).colour == LayerView.LAYER_COLOURS[layer].
@@ -839,7 +845,7 @@ func _test_rings_geometry_and_colours() -> void:
 			continue
 		_assert(int(r.get("layer", -1)) == k, "RING: unit on layer %d has ring layer %s" % [k, r.get("layer")])
 		_assert(lc.size() == LAYERS and _near(r.get("colour", Color(0, 0, 0, 0)), lc[k]), "RING COLOURS: ring_of(%d).colour = %s, want LayerView.LAYER_COLOURS[%d] = %s" % [100 + k, r.get("colour"), k, lc[k] if lc.size() == LAYERS else "missing"])
-		_assert(is_equal_approx(float(r.get("y", -1.0)), k * GAP_WU + 2.0), "RING Y: ring_of(%d).y = %s, want sheet y + 2.0 = %s" % [100 + k, r.get("y"), k * GAP_WU + 2.0])
+		_assert(is_equal_approx(float(r.get("y", -1.0)), k * GAP_WU + PLATE_THICKNESS_WU + 2.0), "RING Y: ring_of(%d).y = %s, want sheet top + 2.0 = %s" % [100 + k, r.get("y"), k * GAP_WU + PLATE_THICKNESS_WU + 2.0])
 		_assert(is_equal_approx(float(r.get("radius", -1.0)), 1.2 * 11.5), "RING RADIUS: ring_of(%d).radius = %s, want 1.2 * 11.5 = 13.8" % [100 + k, r.get("radius")])
 		_assert(r.get("dashed", true) == false, "RING: the own-layer ring of unit %d is dashed" % [100 + k])
 		_assert(rings.dest_ring_of(100 + k) == null, "RING: unit %d is not in transit but dest_ring_of is %s" % [100 + k, rings.dest_ring_of(100 + k)])
@@ -849,7 +855,7 @@ func _test_rings_geometry_and_colours() -> void:
 
 # Q-S3-02 / R-246-04: "one circle moves with the moving unit, and another circle on the exact Y height of the layer it was moving to";
 # d-view spec: "a unit in transit shows a second, dashed ring on its destination sheet in the destination colour"; INTERFACE: "an item with
-# dest_layer >= 0 also gets a second, dashed ring at the same x/z on the destination sheet (dest_layer * gap + 2.0) in LAYER_COLOURS[dest_layer];
+# dest_layer >= 0 also gets a second, dashed ring at the same x/z on the destination sheet (dest_layer * gap + 60 + 2.0, sheet top + 2) in LAYER_COLOURS[dest_layer];
 # ... ring_count() -> int (one per drawn unit; the dest rings are counted apart by dest_ring_count())". One ring per item, replaced on update.
 func _test_rings_transit_and_count() -> void:
 	var rings = await _new_rings()
@@ -865,7 +871,7 @@ func _test_rings_transit_and_count() -> void:
 	var d = rings.dest_ring_of(7)
 	_assert(d is Dictionary, "TRANSIT RING: dest_ring_of(7) is %s, want the destination ring" % [d])
 	if d is Dictionary:
-		_assert(int(d.get("layer", -1)) == 3 and is_equal_approx(float(d.get("y", -1.0)), 3.0 * GAP_WU + 2.0), "TRANSIT RING: destination ring at layer %s y %s, want layer 3 y 3002.0" % [d.get("layer"), d.get("y")])
+		_assert(int(d.get("layer", -1)) == 3 and is_equal_approx(float(d.get("y", -1.0)), 3.0 * GAP_WU + PLATE_THICKNESS_WU + 2.0), "TRANSIT RING: destination ring at layer %s y %s, want layer 3 y 3062.0 (sheet top + 2)" % [d.get("layer"), d.get("y")])
 		_assert(d.get("dashed", false) == true, "TRANSIT RING: the destination ring is not dashed")
 		_assert(lc.size() == LAYERS and _near(d.get("colour", Color(0, 0, 0, 0)), lc[3]), "TRANSIT RING: destination ring colour %s, want LAYER_COLOURS[3]" % [d.get("colour")])
 	var own = rings.ring_of(7)
@@ -912,9 +918,9 @@ func _test_view_inventory() -> void:
 # -- VIEW: units, rings, the visible filter ----------------------------------------------------------------------------------------
 
 # Spec "Units": "Own units always; enemies only when visible, as `Ground3D.set_frame` filters." INTERFACE: "own units always; enemies only when in
-# frame.visible[str(player_faction)]"; "unit y = L * gap + UNIT_LIFT_WU" (the spec's older "sheet top + 150" line is superseded by the INTERFACE and
-# its tests list says y 2,210: the brief fixes 2040.0 = 2000 + 40); "ring_layer == layer; dest_ring_layer == tl for a unit in transit, else -1"; "a unit on
-# layer 2 has y 2040.0 (L * gap + 40) outside transit". ONE RING PER DRAWN UNIT: the rings node holds exactly the drawn units (own 1..5, visible
+# frame.visible[str(player_faction)]"; "unit y = sheet top + 150" (Architect FINAL 2026-10-14, spec rev 3: sheet top = L * gap + sheet thickness 60, 150 = Units3D
+# FLYER_CLEARANCE_WU; this REVERSES the older INTERFACE line "L * gap + UNIT_LIFT_WU 40", struck with DRAFT-space-unit-lift; y 2,210 on layer 2); "ring_layer == layer; dest_ring_layer == tl for a unit in transit, else -1"; "a plate-sheet unit on
+# layer 2 has y 2,210 (2000 + 60 + 150) outside transit". ONE RING PER DRAWN UNIT: the rings node holds exactly the drawn units (own 1..5, visible
 # enemy 11), not the unseen enemy 12.
 func _test_view_units_and_rings() -> void:
 	var v = await _new_view(_fixture_field())
@@ -926,16 +932,16 @@ func _test_view_units_and_rings() -> void:
 	var units: Dictionary = s3.get("units", {})
 	var drawn := ["1", "2", "3", "4", "5", "11"]
 	_assert(_str_sorted(units.keys()) == _str_sorted(drawn), "ONE RING PER UNIT: space3d.units keys %s, want exactly the drawn units %s (own always, enemy 11 visible, enemy 12 hidden)" % [units.keys(), drawn])
-	var lift_want := {"1": 40.0, "2": 1040.0, "3": 2040.0, "4": 3040.0, "5": 4040.0}
+	var lift_want := {"1": 210.0, "2": 1210.0, "3": 2210.0, "4": 3210.0, "5": 4210.0}
 	for id in lift_want:
 		var u: Dictionary = units.get(id, {})
-		_assert(is_equal_approx(float(u.get("y", -1.0)), float(lift_want[id])), "UNIT Y: unit %s (layer %s) y = %s, want %s (layer * 1000 + 40)" % [id, u.get("layer"), u.get("y"), lift_want[id]])
+		_assert(is_equal_approx(float(u.get("y", -1.0)), float(lift_want[id])), "UNIT Y: unit %s (layer %s) y = %s, want %s (layer * 1000 + 60 + 150)" % [id, u.get("layer"), u.get("y"), lift_want[id]])
 		_assert(int(u.get("ring_layer", -2)) == int(u.get("layer", -3)) and int(u.get("layer", -3)) == int(id) - 1, "RING LAYER: unit %s layer %s ring_layer %s, want both %d" % [id, u.get("layer"), u.get("ring_layer"), int(id) - 1])
 		_assert(int(u.get("dest_ring_layer", -2)) == -1, "RING: unit %s is not in transit but dest_ring_layer = %s, want -1" % [id, u.get("dest_ring_layer")])
 	var u2: Dictionary = units.get("3", {})
-	_assert(int(u2.get("layer", -1)) == 2 and is_equal_approx(float(u2.get("y", -1.0)), 2040.0) and int(u2.get("ring_layer", -1)) == 2 and int(u2.get("dest_ring_layer", -2)) == -1, "UNIT on layer 2: want ring_layer 2, y 2040.0, dest_ring_layer -1; got %s" % [u2])
+	_assert(int(u2.get("layer", -1)) == 2 and is_equal_approx(float(u2.get("y", -1.0)), 2210.0) and int(u2.get("ring_layer", -1)) == 2 and int(u2.get("dest_ring_layer", -2)) == -1, "UNIT on layer 2: want ring_layer 2, y 2210.0, dest_ring_layer -1; got %s" % [u2])
 	var u0: Dictionary = units.get("1", {})
-	_assert(is_equal_approx(float(u0.get("y", -1.0)), 40.0), "UNIT on layer 0 (control for the lift): y = %s, want 40.0" % [u0.get("y")])
+	_assert(is_equal_approx(float(u0.get("y", -1.0)), 210.0), "UNIT on layer 0 (control for the lift): y = %s, want 210.0 (sheet top 60 + 150)" % [u0.get("y")])
 	var rings = _find_by_script(v, _load_script(SPACE_RINGS_GD))
 	_assert(rings != null, "ONE RING PER UNIT: no SpaceRings node under the view")
 	if rings != null:
@@ -958,15 +964,15 @@ func _str_sorted(a: Array) -> Array:
 
 # TRANSIT: Q-S3-02 "another circle on the exact Y height of the layer it was moving to"; spec "Units": "in transit (state bit 4) `y` interpolates
 # linearly from its layer to `tl` between the current tick and `ld`"; INTERFACE: "a unit with state bit 4 (value 4) and tl: y interpolates linearly
-# between L * gap + 40 and tl * gap + 40 with frac per [G6]"; G6 null action (d-view spec rev 1, gap 6 null action, Architect may veto on the shot): "the
+# between top(L) + 150 and top(tl) + 150 (top(L) = L * gap + 60) with frac per [G6]"; G6 null action (d-view spec rev 1, gap 6 null action, Architect may veto on the shot): "the
 # client records t0 at the first transit frame", so frac = (tick - t0) / (ld - t0). Unit 6 on layer 1, tl 3, ld 200; frames at ticks 100, 140, 180:
-# frac 0, 0.4, 0.8, so y = 1040, 1840, 2640 (the ends of the range are 1040 and 3040). The destination ring is on sheet 3 in LAYER_COLOURS[3].
+# frac 0, 0.4, 0.8, so y = 1210, 2010, 2810 (the ends of the range are 1210 = 1000 + 60 + 150 and 3210 = 3000 + 60 + 150). The destination ring is on sheet 3 in LAYER_COLOURS[3].
 func _test_view_transit() -> void:
 	var v = await _new_view(_fixture_field())
 	if v == null:
 		return
 	var seen_y := []
-	var want_y := [1040.0, 1840.0, 2640.0]
+	var want_y := [1210.0, 2010.0, 2810.0]
 	var ticks := [100, 140, 180]
 	for i in range(3):
 		var u := _unit(6, 0, 12000.0, 500.0, 1, {"state": 4, "tl": 3, "ld": 200})
@@ -974,10 +980,10 @@ func _test_view_transit() -> void:
 		await process_frame
 		var e: Dictionary = _space3d(v).get("units", {}).get("6", {})
 		seen_y.append(float(e.get("y", -1.0)))
-		_assert(is_equal_approx(float(e.get("y", -1.0)), float(want_y[i])), "TRANSIT Y: tick %d y = %s, want %s (linear from 1040 at the first transit frame toward 3040 at ld 200)" % [ticks[i], e.get("y"), want_y[i]])
+		_assert(is_equal_approx(float(e.get("y", -1.0)), float(want_y[i])), "TRANSIT Y: tick %d y = %s, want %s (linear from 1210 at the first transit frame toward 3210 at ld 200)" % [ticks[i], e.get("y"), want_y[i]])
 		_assert(int(e.get("dest_ring_layer", -2)) == 3, "TRANSIT RING: tick %d dest_ring_layer = %s, want 3 (tl)" % [ticks[i], e.get("dest_ring_layer")])
 		_assert(int(e.get("ring_layer", -2)) == 1, "TRANSIT RING: tick %d ring_layer = %s, want the unit's own layer 1" % [ticks[i], e.get("ring_layer")])
-	_assert(seen_y.size() == 3 and seen_y[0] < seen_y[1] and seen_y[1] < seen_y[2] and seen_y[0] >= 1040.0 - EPS and seen_y[2] <= 3040.0 + EPS, "TRANSIT Y: the three frames give %s, want strictly rising within [1040, 3040]" % [seen_y])
+	_assert(seen_y.size() == 3 and seen_y[0] < seen_y[1] and seen_y[1] < seen_y[2] and seen_y[0] >= 1210.0 - EPS and seen_y[2] <= 3210.0 + EPS, "TRANSIT Y: the three frames give %s, want strictly rising within [1210, 3210]" % [seen_y])
 	var rings = _find_by_script(v, _load_script(SPACE_RINGS_GD))
 	if rings != null:
 		var d = rings.dest_ring_of(6)
@@ -985,11 +991,11 @@ func _test_view_transit() -> void:
 		_assert(d is Dictionary and int(d.get("layer", -1)) == 3 and d.get("dashed", false) == true and lc.size() == LAYERS and _near(d.get("colour", Color(0, 0, 0, 0)), lc[3]), "TRANSIT RING: the view's destination ring is %s, want a dashed ring on layer 3 in LAYER_COLOURS[3]" % [d])
 	else:
 		_assert(false, "TRANSIT RING: no SpaceRings node under the view")
-	# Out of transit again (state 0, layer 3): the destination ring goes, y is 3040.
+	# Out of transit again (state 0, layer 3): the destination ring goes, y is 3210.
 	v.set_frame(_frame(220, [_unit(6, 0, 12000.0, 500.0, 3), _unit(1, 0, 11900.0, 400.0, 0)]), {"objectives": []})
 	await process_frame
 	var e2: Dictionary = _space3d(v).get("units", {}).get("6", {})
-	_assert(is_equal_approx(float(e2.get("y", -1.0)), 3040.0) and int(e2.get("dest_ring_layer", -2)) == -1, "TRANSIT END: arrived on layer 3, y = %s dest_ring_layer = %s, want 3040.0 and -1" % [e2.get("y"), e2.get("dest_ring_layer")])
+	_assert(is_equal_approx(float(e2.get("y", -1.0)), 3210.0) and int(e2.get("dest_ring_layer", -2)) == -1, "TRANSIT END: arrived on layer 3, y = %s dest_ring_layer = %s, want 3210.0 and -1" % [e2.get("y"), e2.get("dest_ring_layer")])
 	await _drop(v)
 
 
