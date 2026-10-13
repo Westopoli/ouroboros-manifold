@@ -114,8 +114,10 @@ func _build_materials() -> void:
 	_point_material = StandardMaterial3D.new()
 	_point_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_point_material.vertex_color_use_as_albedo = true
-	_point_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA   # prototype galaxy_view.gd:115-118: alpha, vertex colour not sRGB
-	_point_material.vertex_color_is_srgb = false
+	# VG-B23b-dotcolour (FINDING-dot-colour-pixels): main's dot material from before B23 (sRGB vertex colour, no alpha
+	# transparency); B23's alpha / non-sRGB values lost the owner colours under the default renderer (Westley 2026-10-12).
+	# See also tests/test_vg_b_b23b.gd and TD-VG-B-15 in docs/northstar/plans/push_ledger_2026-09-22.md
+	_point_material.vertex_color_is_srgb = true
 
 
 # R-106-02: filament arcs and faction shells come from the prototype renderers,
