@@ -177,6 +177,7 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
     far = max(abs(ddx), abs(ddy)) > SCREEN_WU and not q0["ground3d"].get("present")
     notches, scale_out, scale_back, how, hits, ticked, edge = 0, scale0, scale0, "arrival", 0, False, None
     cam1, end_tick = q0["camera"], tick0
+    restored, polls = False, 0  # polls: near-pass polls run at the restored zoom (FINDING-edge-scroll-restore-overshoot)
     try:
         if far:
             notches, step = _zoom_out_fully(client)
@@ -193,7 +194,22 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
             if far:
                 sx, sy = abs(dx) > half_x, abs(dy) > half_y
                 if not (sx or sy):
-                    break
+                    # FINDING-edge-scroll-restore-overshoot: the pointer is released here, not in the finally (one qa plus one
+                    # input round trip later at 13,300 wu/s full zoom-out is the 445 wu overshoot). Restore the zoom, then
+                    # when the target is not on screen finish with the near pass below at the restored zoom (about 83 wu per poll).
+                    client.call("input", "move", w // 2, h // 2)
+                    edge = (w // 2, h // 2)
+                    _zoom_restore(client, notches)
+                    restored = True
+                    r = client.call("project", float(wx), float(wy))
+                    assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
+                    if r["result"].get("on_screen"):
+                        break
+                    c = qa(client)["camera"]
+                    far, both, hits = False, False, 0
+                    start = qa(client)["tick"]  # the near pass counts its stall and cap from here
+                    last, last_move_tick = (c["x"], c["y"]), start
+                    continue
             else:
                 sx = both or abs(dx) >= abs(dy)
                 sy = both or abs(dy) > abs(dx)
@@ -210,6 +226,7 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
                 assert tick > start, "play_support: premise: tick frozen (qa tick %d did not advance over the first poll window)" % tick
                 ticked = True
             if not far:
+                polls += 1
                 r = client.call("project", float(wx), float(wy))
                 assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
                 hits = hits + 1 if r["result"].get("on_screen") else 0
@@ -225,11 +242,11 @@ def _edge_scroll_to(client, wx: float, wy: float, cam: dict) -> bool:
                 break
     finally:
         client.call("input", "move", w // 2, h // 2)
-        if far:
+        if far and not restored:
             _zoom_restore(client, notches)
-        line = "SCROLL wall %.1f s, game %.1f s (%d ticks), notches %d, scale saved %.4f out %.4f restored %.4f, camera (%.0f, %.0f) to (%.0f, %.0f), ended by %s" % (
+        line = "SCROLL wall %.1f s, game %.1f s (%d ticks), notches %d, scale saved %.4f out %.4f restored %.4f, camera (%.0f, %.0f) to (%.0f, %.0f), ended by %s, converged %d polls" % (
             time.monotonic() - wall0, (end_tick - tick0) / 20.0, end_tick - tick0, notches, scale0, scale_out, qa(client)["scale"],
-            cam0[0], cam0[1], cam1["x"], cam1["y"], how)
+            cam0[0], cam0[1], cam1["x"], cam1["y"], how, polls)
         print(line)
         SCROLL_LOG.append(line)
     if how != "arrival":
