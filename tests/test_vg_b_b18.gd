@@ -9,14 +9,14 @@ extends SceneTree
 #   scenes/mockups/galaxy/galaxy_mockup.tscn:10-11 (background_mode = 1,
 #   background_color = Color(0.0392157, 0.0509804, 0.0705882, 1)).
 #   Framing: the mockup's default distance is 50 * CIV_SCALE (orbit_camera.gd DIST_DEFAULT;
-#   galaxy_gen.gd:7 CIV_SCALE 0.5) in the mockup's own world units, which the main view's layout
-#   does not share (DEFAULT_DISTANCE 180), so distance equality is NOT checkable. The checkable
-#   form is the projected extent: after set_snapshot the systems_px of qa_state() span between 60%
-#   and 90% of the viewport width (the review reads 40% today; the 60..90 band is the brief's).
+#   galaxy_gen.gd:7 CIV_SCALE 0.5) = 25, and since B23 the main view's layout shares the mockup's world units
+#   (ball radius 50, DEFAULT_DISTANCE 25), so distance equality is checkable but is pinned by
+#   tests/test_vg_b_b23.gd, not here. The form checked here is the projected extent: after set_snapshot the
+#   systems_px of qa_state() span at least 60% of the viewport width (the review read 40% on the flat-disc layout).
 #   TD-VG-B-12 (assumption-changed, Architect 2026-10-10): the upper bound 90 is dropped (old: 60..90 percent,
-#   new: at least 60 percent). The prototype's regional default (distance 50 in a ball of radius 71) is a close
-#   view of part of the galaxy, so the span counting off-screen systems exceeds the viewport; the lower bound
-#   keeps the "small cluster on grey" failure caught.
+#   new: at least 60 percent). The prototype's regional default (distance 25 in a ball of radius 50, TD-VG-B-14
+#   comment move; was 50 in a ball of 71) is a close view of part of the galaxy, so the span counting off-screen
+#   systems exceeds the viewport; the lower bound keeps the "small cluster on grey" failure caught.
 # NEEDS A DISPLAY: headless projection is not the windowed one (1.5% vs 24.6% on main), so run
 # under xvfb: xvfb-run -a godot.real --path . -s res://tests/test_vg_b_b18.gd
 
