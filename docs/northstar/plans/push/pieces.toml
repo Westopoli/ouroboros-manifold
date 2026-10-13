@@ -2233,8 +2233,8 @@ owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pip
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
 depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6", "VG-K-D1", "VG-W2", "VG-E1R", "VG-CONTRACT-E7"]  # attached owners of om_pipe.c (take-over convention, as VG-K-D1)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "50027e26" }
+tests_pending = false
 size_estimate = "SV-0: handle_mission_end reads optional retention, scales player unit HP, debug build only; one transport test file"
 
 # Westley 2026-10-13: run the sim viewer on his Mac (ssh'd Linux box builds nothing for him). New debug-pipe build script beside the viewer (build_pipe_macos.sh is VG-F's), plus a --pipe option.
