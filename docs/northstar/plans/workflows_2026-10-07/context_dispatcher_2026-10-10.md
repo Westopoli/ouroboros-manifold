@@ -45,7 +45,7 @@ For a stop the runbook routes to a consult: `Agent({ subagent_type: 'architect',
 
 ## Restart
 
-Past about 150k context: write `continuation-dispatcher.md` in the memory directory (one page: slots in flight with run ids and args, the last three steps, what waits on Westley, the next launch), index it in `MEMORY.md`, tell Westley "restart me", stop. The next Dispatcher reads this file, then that memory, then the lane table.
+Past about 400k context: write `continuation-dispatcher.md` in the memory directory (one page: slots in flight with run ids and args, the last three steps, what waits on Westley, the next launch), index it in `MEMORY.md`, tell Westley "restart me", stop. The next Dispatcher reads this file, then that memory, then the lane table.
 
 ## Never
 

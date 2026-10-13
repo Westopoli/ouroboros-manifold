@@ -9,7 +9,7 @@ Read, from `origin/main` (never the live checkout as a working tree):
 3. `docs/northstar/plans/2026-10-07-visible-game-spec.md` rev 9: section 1 lane E1 ("Lane E1 part b" and "Part b under method rev 2"), sections 4, 8 and 9.
 4. `docs/northstar/plans/workflows_2026-10-07/rules.md` (all six roles), `dispatcher.md`, `context_dispatcher_2026-10-10.md`.
 5. The two scripts written for the resume: `vg-harness-method.js`, `vg-wave5-laneE1b-r2.js` (read their headers; the Dispatcher launches them, you maintain them).
-6. `CLAUDE.md` (the Task matching table now has Architect and Dispatcher rows; the restart rule names 150k; the Workflow specs section carries skeleton-first, built-tree tests, the ruler, the pre-gate and the three-slot cap).
+6. `CLAUDE.md` (the Task matching table now has Architect and Dispatcher rows; the restart rule names 400k; the Workflow specs section carries skeleton-first, built-tree tests, the ruler, the pre-gate and the three-slot cap).
 
 ## What you own
 
