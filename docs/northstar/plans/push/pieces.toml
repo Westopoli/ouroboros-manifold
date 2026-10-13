@@ -1869,8 +1869,7 @@ owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_f_nettick.gd", "tes
 owns_glob = []
 acceptance = ["tests/test_vg_f_nettick.gd"]
 depends_on = ["VG-F-SKEL-B", "VG-E1"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owns tactical_view.gd
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "b12b47a" }  # landed b12b47a
 size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (empty frame at _ready: load none, _match_frame loads the first released one); S-140 green, ticks wait (DRAFT-s140-settle-ticks), known-red line out"
 
 # Lane E1 part e (spec "Lane E1 part e"): placement clears (E1r) and the starting force (E7).
