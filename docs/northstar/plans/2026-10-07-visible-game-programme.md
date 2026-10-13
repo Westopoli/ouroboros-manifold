@@ -48,6 +48,7 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | B galaxy, B26 chronicle one entry at a time (`VG-B26-chronicle-serial`) | nothing yet; queued (Westley's S-108 verdict 2026-10-13, R-069-03 rewritten, `FINDING-chronicle-concurrent-print`) | independent of B24/B25 (different files): the scroll panel prints the next entry only when the previous has finished; then the S-108 re-run | S-108 approved with this note (`story_reviews/B.md`, run 20261012-1716-33e3bc2) | none |
 | Harness, gate user directory (`HARNESS-userdir`) | nothing yet; queued (spec rev 12e) | a gate, a test run and a desktop play never read or write the machine's user directory | n/a | none |
 | V sim viewer (SV-1..SV-3 landed; SV-0 retention override queued behind VG-CONTRACT-E7, VG-W2, VG-E1R) | SV-1 `pipe_session.py`, SV-2 `history.py`, SV-3 `viewer.py` at d7d01f40 (new files under `scripts/simviewer/`, spec `2026-10-12-simviewer-spec.md`); works: `tests/simviewer/` 67 passed, 1 xfailed (pick 0 / total failure, expected until SV-0); sees: tooling; first-look shots queued (`story_reviews/V.md`) | SV-0 (mission_end retention override on the pipe), queued behind VG-CONTRACT-E7, VG-W2 and VG-E1R | none yet | V.md rows pending |
+| P layout engine and places | VG-P1 building | P2 next, P3 after the probe | none yet | none |
 
 ## Method rev 2 (Westley picked all nine, 2026-10-10)
 

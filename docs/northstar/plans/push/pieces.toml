@@ -2262,3 +2262,55 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "sim lane: findings ledger rows, mission-choice and chronicle-source runner scripts, no csrc change"
+
+# Lane P piece P1 (places lane spec rev 4a, docs/northstar/plans/2026-10-13-places-lane-spec.md): the layout engine, new files only. Nothing calls it until P3. Architect 2026-10-14: the test stub is tests/csim/layout_stub_terrain.c (not under csrc/).
+[[piece]]
+id = "VG-P1"
+manager = "M0"
+wave = 9
+owns = ["csrc/layout_engine.c", "csrc/layout_internal.h", "csrc/layout_terrain.c", "tests/csim/layout_stub_terrain.c"]
+owns_glob = ["tests/csim/test_VG_P_p1_*.py"]
+acceptance = ["tests/csim/test_VG_P_p1_layout.py"]
+depends_on = []  # new files; no shared file is touched (om_internal.h, ouroboros_sim.h, signatures.toml, symbol_modules.toml, mission.c, Makefile are not in the row)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built as three serial units), layout_internal.h and layout_terrain.c (about 90 lines), the stub (about 90 lines), one csim test file; no ABI, no save, no pipe change"
+
+# Lane P piece P2 (places lane spec rev 4a, 2026-10-13): lot-order noise, contour/water/fallback lanes and the C growth probe, all new files; P3 wires them. The probe reports the 4th+8th harmonic share per seed against DRAFT-shape-harm 0.5; P3 waits for that report.
+[[piece]]
+id = "VG-P2"
+manager = "M0"
+wave = 12
+owns = ["csrc/economy_lot_noise.c", "csrc/lot_noise.h", "csrc/growth_probe.c"]
+owns_glob = ["tests/csim/test_VG_P_p2_*.py"]  # test_VG_E_* is VG-E1's glob and test_VG_D_* VG-D's: neither matches test_VG_P_p2_*
+acceptance = ["tests/csim/test_VG_P_p2_lot_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
+depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noise_q16, om_lot_noise_range, om_lane_build; about 160 lines), growth_probe.c (om_growth_probe_run; about 200 lines), two pytest files; DRAFT-lot-noise-*, DRAFT-lane-*, DRAFT-shape-harm 0.5"
+
+# Lane E piece VG-E-startforce (spec lane E part e, starting force by control group; Architect 2026-10-14: lands right after VG-CONTRACT-E7). The accessor om_mission_get_force_group rides E7's header piece (header, signatures.toml row, symbol_modules.toml line, conftest block, one ABI bump 7 to 8); no separate header piece. Not owned here: csrc/ouroboros_sim.h, signatures.toml, symbol_modules.toml, tests/csim/conftest.py, every save-format file (derived at read time, nothing saved or hashed), the goldens (E7's re-record under TD-VG-E-26).
+[[piece]]
+id = "VG-E-startforce"
+manager = "M0"
+wave = 9
+owns = ["csrc/mission.c", "csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/transport/test_pipe_mission_frame_briefing_fields.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_startforce.py"]
+depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot"]  # these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "startforce: three control groups of the starting force carried on the mission frame (group per unit from om_mission_get_force_group), derived at read time; no save or hash change"
+
+# Lane A piece VG-A-startforce (Architect 2026-10-14): the client binds the three starting groups to control groups 1 to 3 and exposes qa_state control_groups; after VG-E-startforce and VG-A18.
+[[piece]]
+id = "VG-A-startforce"
+manager = "M0"
+wave = 9
+owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_startforce.gd", "tests/qa/desktop/plays/A/test_S_105_start_groups.py"]  # the test and the play are also covered by VG-A's globs; listing them keeps the owner explicit like the VG-E-prodslot row
+owns_glob = []
+acceptance = ["tests/test_vg_a_startforce.gd"]
+depends_on = ["VG-E-startforce", "VG-A18", "VG-A16", "VG-A", "VG-F-NETTICK"]  # VG-E-startforce: the frame field; VG-A18: the opening frame must fit all three groups; VG-A16 and VG-F-NETTICK own earlier edits of the same file
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "startforce client: bind groups 1 to 3 from the mission frame, qa_state control_groups key; selection panel not edited"
