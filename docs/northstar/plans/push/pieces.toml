@@ -1957,8 +1957,8 @@ owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/layer_view.gd",
 owns_glob = []
 acceptance = ["tests/test_vg_a_a16.gd"]
 depends_on = ["VG-A", "G-settings", "VG-C6b", "VG-F-NETTICK"]  # Architect A16 ruling 2026-10-12: A16 lands BEFORE VG-E1's remaining pieces (no VG-E1 builder is editing tactical_view.gd; VG-E1 depends_on VG-A16 instead); VG-A is the attached owner of scenes/tactical_c/**; G-settings is the attached owner of scenes/settings/settings.gd (lines 195-199 only)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "b7ea389" }
+tests_pending = false
 size_estimate = "A16: To-layer buttons in the layer strip, Q/E keys, qa_state focus_layer; DRAFT-a16-qe-relative, Q-A16-01"
 
 # Lane A piece A18 (spec "The four red client tests on main", ruling 2026-10-12): the opening frame fits every own unit inside the viewport. Ledger FINDING-camera-start-framing.
