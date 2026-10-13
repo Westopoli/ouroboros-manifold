@@ -1985,7 +1985,7 @@ acceptance = ["tests/test_vg_a_layerkeys.gd"]
 depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW"]  # VG-D-VIEW (queued) also owns scenes/tactical_c/tactical_view.gd, so it lands first (clerk addition 2026-10-13, Architect to confirm)
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "Alt (Cmd on macOS) plus layer number plus click sends the selection to that layer at the clicked spot (R-002-08, Westley 2026-10-13); the To-layer strip buttons go; the same orders reach qa_state"
+size_estimate = "Alt plus layer number arms a transfer for the whole selection, the next map click places it (R-002-08, R-105-06 rewritten 2026-10-13); no narrowing; the To-layer strip buttons go; re-shot S-002"
 
 [[piece]]
 id = "VG-A-routeline"
