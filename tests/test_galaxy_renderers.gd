@@ -1,5 +1,6 @@
 extends SceneTree
 # test-timeout: 20000
+# (TD-VG-B-17: frame budget for the SETTLE_SEC waits, the value tests/test_vg_b_b7.gd:2 declares for the same B7 tween)
 
 # Piece C5-G2 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md
 # "G-G2 renderers"): the live galaxy view draws through the prototype's shell and
@@ -77,8 +78,10 @@ func _run_tests() -> void:
 		return
 	_snap = parsed
 	_view.set_snapshot(_snap)
-	# TD-VG-B-17: was `for _i in range(3): await process_frame`; the B7 territory tween (territory_tween.gd DURATION_S 2.0)
-	# keeps the old owner's territory alive for its first second, so the territories are read after SETTLE_SEC (3.0, :31).
+	# TD-VG-B-17 (docs/northstar/plans/push_ledger_2026-09-22.md): the view joins the live
+	# session (not driven) and the B7 territory tween (territory_tween.gd DURATION_S 2.0)
+	# keeps a territory alive after its owner goes unowned.
+	# Old: `for _i in range(3): await process_frame`   New: await create_timer(SETTLE_SEC).timeout
 	await create_timer(SETTLE_SEC).timeout
 
 	var data := _find(_view, func(n): return n.get("regions") is Dictionary and n.get("connections") is Dictionary and n.get("territories") is Dictionary)
@@ -248,7 +251,8 @@ func _check_tier_sizes_A48_5(data: Node) -> void:
 		if int(r["tier"]) == 0:
 			r["owner"] = 0
 	_view.set_snapshot(snap)
-	# TD-VG-B-17: was a single `await process_frame`; the B7 tween (-1 to 0) keeps owner -1 for its first second
+	# TD-VG-B-17: B7 territory tween (DURATION_S 2.0) keeps the old owner for the first half.
+	# Old: `await process_frame` (one frame)   New: await create_timer(SETTLE_SEC).timeout
 	await create_timer(SETTLE_SEC).timeout
 	var territories: Dictionary = data.get("territories")
 	var regions: Dictionary = data.get("regions")
@@ -270,7 +274,8 @@ func _check_tier_sizes_A48_5(data: Node) -> void:
 	if size_by_tier[0].size() > 0 and size_by_tier[1].size() > 0 and size_by_tier[2].size() > 0:
 		_assert(size_by_tier[0].max() < size_by_tier[1].min() and size_by_tier[1].max() < size_by_tier[2].min(), "A48-5: point size does not rise strictly with tier (tier0 max %s, tier1 %s..%s, tier2 min %s)" % [size_by_tier[0].max(), size_by_tier[1].min(), size_by_tier[1].max(), size_by_tier[2].min()])
 	_view.set_snapshot(_snap)
-	await create_timer(SETTLE_SEC).timeout   # TD-VG-B-17: was `await process_frame`; the restore starts the same tween
+	# TD-VG-B-17: restoring flip tweens too (old: one frame; new: SETTLE_SEC) so later checks read settled territories.
+	await create_timer(SETTLE_SEC).timeout
 
 
 # The fixture's same-faction edges are all type 2 (both); give some of them

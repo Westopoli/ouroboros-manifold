@@ -47,7 +47,6 @@ const PLAYER_OWNER_VAL := 0.95   # prototype galaxy_view.gd:93-94, faction 0 = t
 const NEUTRAL_COLOUR := Color(0.55, 0.55, 0.58, 1.0)   # prototype galaxy_view.gd:6 NEUTRAL_COLOR, owner -1
 const OWNER_ALPHA := 1.0
 const GOLDEN_ANGLE := 0.6180339887498949
-const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
 # B23 (Rev 12b): the prototype's flash, a billboard quad (galaxy_view.gd:283, Vector2(3, 3) x CIV_SCALE 0.5) living
 # FLASH_DURATION 0.6 s (galaxy_view.gd:8)
 const FLASH_SECONDS := 0.6
@@ -413,7 +412,7 @@ func _relayout() -> void:
 	var ids := []
 	for r in _regions:
 		ids.append(int(r.get("i", -1)))
-	_positions = _gen.layout(ids, _seed)
+	_positions = _gen.layout(ids, _seed, _edges)   # B24: the layout follows the sim graph
 	_hash = _compute_hash(ids)
 
 
@@ -436,9 +435,7 @@ func _mix(h: int, v: int) -> int:
 
 
 func _render() -> void:
-	_significance.clear()
-	for r in _regions:
-		_significance[int(r.get("i", -1))] = TIER_SIGNIFICANCE[clampi(int(r.get("tier", 0)), 0, 2)]
+	_significance = GalaxyAdapter.significance_by_rank(_regions)   # DRAFT-b24-sig, shared with galaxy_adapter.gd
 	_grow_owner_colours()
 	if not _plants.get("conquest-no-recolour", false):
 		_recompute_region_colours()
