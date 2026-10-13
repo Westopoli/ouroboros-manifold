@@ -2166,10 +2166,10 @@ size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2
 id = "VG-B25"
 manager = "M0"
 wave = 9
-owns = ["scenes/galaxy/ambient_rig.gd", "scenes/galaxy/shaders/backdrop_wash.gdshader", "scenes/galaxy/shaders/backdrop_stars.gdshader", "scenes/galaxy/shaders/backdrop_dust.gdshader", "tests/test_vg_b_b25.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/b25_gpu_checks.gd", "tests/galaxy_field/b25_gpu_checks.tscn"]  # galaxy_view.gd: one qa_state line (g5); shader names from the B25 script (SHADERS constant); the three shaders are new files
+owns = ["scenes/galaxy/ambient_rig.gd", "scenes/galaxy/shaders/backdrop_wash.gdshader", "scenes/galaxy/shaders/backdrop_stars.gdshader", "scenes/galaxy/shaders/backdrop_dust.gdshader", "tests/test_vg_b_b25.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/b25_gpu_checks.gd", "tests/galaxy_field/b25_gpu_checks.tscn", "tests/test_vg_b_b23.gd", "scenes/galaxy/galaxy_view.tscn"]  # galaxy_view.gd: one qa_state line (g5); shader names from the B25 script (SHADERS constant); the three shaders are new files; tests/test_vg_b_b23.gd: :210 only (the far-plane pin 800 -> DRAFT-b25-far 3,000; TD-VG-B-20; VG-B24 attached at 59a24b49 so its :188 hold is history); scenes/galaxy/galaxy_view.tscn: the two wash/layer node lines only, the Environment (background mode, colour, fog) is untouched so test_vg_b_b18.gd:79-84 stays green
 owns_glob = []
 acceptance = ["tests/test_vg_b_b25.gd"]
-depends_on = ["VG-B24", "VG-B"]  # B24 is the last owner of galaxy_view.gd before this piece; VG-B owns tests/galaxy_field/** by glob
+depends_on = ["VG-B24", "VG-B23", "VG-B"]  # VG-B23 for clarity (transitive via VG-B24); B24 is the last owner of galaxy_view.gd before this piece; VG-B owns tests/galaxy_field/** by glob
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "B25: dim wash, four star layers at 50/125/400/1250, wrapping motes; DRAFT-b25-*; real GPU check on the RTX 3060 under Forward+"
