@@ -1731,7 +1731,7 @@ wave = 9
 owns = []
 owns_glob = ["docs/northstar/plans/drift_checks/*"]
 acceptance = []
-depends_on = []
+depends_on = ["VG-CONTRACT-E3"]  # E3 (attached, 8f76be4d) names two drift report files that the glob also covers; pieces.py --check wants the ordering
 status = { state = "attached", attach_sha = "68a5717" }  # owner of the drift reports folder; lets push/vg-w8-triage land docs-only
 tests_pending = false
 size_estimate = "ownership row only; the folder exists on main"
