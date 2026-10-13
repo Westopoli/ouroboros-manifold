@@ -2249,3 +2249,16 @@ depends_on = ["SV-3"]
 status = { state = "pending" }
 tests_pending = true
 size_estimate = "about 15-line script, --pipe option (about 10 lines), README Mac section, one test file"
+
+# Sim lane (Westley 2026-10-13: "continue with plan execution"; context docs/northstar/plans/2026-10-12-sim-lane-context.md): findings only, tooling scripts, no product change. Fixes are separate pieces after Westley reads the ledger row.
+[[piece]]
+id = "SIM-LANE"
+manager = "M0"
+wave = 10
+owns = ["docs/northstar/plans/sim_lane_2026-10-12/README.md"]
+owns_glob = ["docs/northstar/plans/sim_lane_2026-10-12/findings/**", "scripts/simlane/**"]
+acceptance = []
+depends_on = []
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "sim lane: findings ledger rows, mission-choice and chronicle-source runner scripts, no csrc change"
