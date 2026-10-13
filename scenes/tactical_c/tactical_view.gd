@@ -316,7 +316,8 @@ func set_terrain(t: Dictionary) -> void:
 		_ground3d.set_terrain(t)
 		_add_ground_layers(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
-		_camera = _force_camera()
+		# FU-A18-3d: the rig has no fit yet, so the ground-era centre is the own-unit box as on main; the spawn and lot terms come with the fit.
+		_camera = _force_camera(false)
 		_home_camera = _camera
 		_ground3d.camera_rig().pan_to(_camera)
 		_sync_from_rig()
@@ -989,7 +990,7 @@ var _home_zoom := 1.0
 
 # The bounding box of P as [lo, hi]; an empty array when there is no own unit (G8: the caller keeps zoom 1.0 and the
 # canvas centre).
-func _home_box() -> Array:
+func _home_box(anchors: bool = true) -> Array:
 	var lf := _get_local_faction()
 	var lo := Vector2(INF, INF)
 	var hi := Vector2(-INF, -INF)
@@ -1007,7 +1008,7 @@ func _home_box() -> Array:
 	var centroid := sum / float(count)
 	var best := INF
 	var spawn := Vector2.ZERO
-	for n in _frame.get("map", {}).get("nodes", []):
+	for n in _frame.get("map", {}).get("nodes", []) if anchors else []:
 		if int(n.get("kind", -1)) == SPAWN_NODE_KIND:
 			var np := Vector2(float(n.get("x", 0.0)), float(n.get("y", 0.0)))
 			var d := np.distance_squared_to(centroid)
@@ -1017,7 +1018,7 @@ func _home_box() -> Array:
 	if best < INF:
 		lo = lo.min(spawn)
 		hi = hi.max(spawn)
-	for l in _frame.get("lots", []):
+	for l in _frame.get("lots", []) if anchors else []:
 		if int(l.get("owner", -1)) == lf:
 			var lp := Vector2(float(l.get("x", 0.0)), float(l.get("y", 0.0)))
 			lo = lo.min(lp)
@@ -1041,8 +1042,8 @@ func _framing_zoom() -> float:
 
 
 # R-103-01 / R-103-02: the centre of the box of P, clamped to 0..canvas as qa_pan clamps; the canvas centre when P is empty.
-func _force_camera() -> Vector2:
-	var box := _home_box()
+func _force_camera(anchors: bool = true) -> Vector2:
+	var box := _home_box(anchors)
 	if box.is_empty():
 		return Vector2(_canvas * 0.5, _canvas * 0.5)
 	var c: Vector2 = (box[0] + box[1]) * 0.5
