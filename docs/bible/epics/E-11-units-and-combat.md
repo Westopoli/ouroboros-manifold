@@ -57,7 +57,7 @@ Rules
 - R-082-02  Given the roster, When ordered by speed, Then every Strike unit is faster than every Line unit, and every Line unit faster than every Siege unit.
 - R-082-03  Given the roster, When ordered by HP, Then the Bastion has the most by at least 2× the next, and the Raider the least.
 - R-082-04  Given the roster, When sensor radius is read, Then both Strike units see farther than both Siege units.
-- R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack.
+- R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack. Direction changed 2026-10-13, rewrite pending: area damage becomes a knob with its own range and shape, attachable to any role or a single unit (Westley, 2026-10-13; Q-082-06); the rule above is what the game does today.
 - R-082-06  Given an expansion pack adds a unit type, When loaded, Then it declares category, role, the stats above, and one ability, and no engine code changes.
 - R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, the declarations of R-082-09, and one ability, and the roster passes the balance scoring mechanism [Q-082-04]; an era built around a named conflict may weight its roster toward that conflict's sides [Q-082-05]; whether worker types count toward the 20 to 40 is Q-167-03.
 - R-082-08  Given Tier 1 and Tier 3, When profiles are read, Then HP and damage are 0.8× and 1.2× the Tier 2 values and all other ratios scale uniformly.

@@ -83,6 +83,13 @@ Conditions on a rule set, with draft pass marks that Westley has not yet confirm
 
 "Lines crossing", made concrete: a line is the edge, in the space of settings, of where one condition holds; the crossing is a region where all hold at once; there may be several such regions.
 
+Rulings of 2026-10-13 (Westley), binding on every batch from here:
+
+- Naive baseline for a defending play: reported both ways, against a naive attacker and against a naive defender placed at the same post ("#1: C").
+- Scan range: enemy headcount 8 to 48 against a force of 16, so a play can show up to three times its size ("#2: A"); a play that beats 48 is reported as a ceiling hit, never as no gain.
+- The fight ends by elimination only (register Q-LAB-03); both sides attack-move to one point, or the attacker's point lies inside the defender's reach.
+- Orientation returns to the variable list once the firing arc is in the engine (Q-100-01); area damage as a knob with its own range and shape, on any role or unit, is a lab variable (Q-082-06).
+
 ## 5. How results are read
 
 Small batches. One page of charts per batch, in the form of the sample Westley called "much better" on 2026-10-01 ("looks much better, especially the top graphic that makes it very clear") after the first draft read badly ("I had to stare at it to figure out what it meant"). The bullets below describe that sample; other forms are allowed "if the type of data we're looking at changes". The sample is at https://claude.ai/artifact/WtQDNnNZTR8hqx6LpxBaJ2 (private to Westley).
