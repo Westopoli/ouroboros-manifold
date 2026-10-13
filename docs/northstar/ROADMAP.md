@@ -30,7 +30,7 @@ $GODOT --path . res://scenes/mockups/settlement/settlement_mockup.tscn  # settle
 
 The first launch imports assets (about a minute). `mac/prototypes` is main plus the prototype branches (`push/proto-land-iter`, `push/proto-walkers`, `push/proto-layout`), merged read-only; it is rebuilt when a prototype moves, never edited directly. The Linux lines below keep their x11/opengl3 flags; a Mac does not need them.
 
-Shots waiting for a verdict (no scene to run, open the files): `docs/northstar/story_reviews/westley/2026-10-13/` holds the galaxy prototype beside the game and the two-units-one-pixel crops, both ruled 2026-10-13; the per-lane queues are `story_reviews/A.md` to `F.md`. The six that matter are section 3 "Now".
+Shots waiting for a verdict (no scene to run, open the files): `docs/northstar/story_reviews/westley/`, one plainly named png per pending row and a README that maps each to its queue row. Section 3 "Now" names the six that matter.
 
 Two folders hold what can be viewed:
 
@@ -104,15 +104,15 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 
 ### Now (at most six; Westley 2026-10-10)
 
-The Dispatcher keeps this table at six rows or fewer, ordered by what each unblocks, and adds a row only when one frees; everything else waits in the sections below. A verdict on a shot is one word per row (approved or rejected, with any note) in the Dispatcher chat. The shots named here are committed under `story_reviews/` (the `westley/2026-10-13/` folder holds the two side-by-side sets).
+The Dispatcher keeps this table at six rows or fewer, ordered by what each unblocks, and adds a row only when one frees; everything else waits in the sections below. A verdict on a shot is one word per row (approved or rejected, with any note) in the Dispatcher chat. The shots named here are plainly named copies in `story_reviews/westley/`.
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/B.md`, run 20261013-0216-5f3ee95 | `VG-B24` layout, then B25 |
-| 2 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/E.md`, latest S-237 row | lane E look pieces, the banded-contour prototype |
-| 3 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/F.md`, run 20261012-2033-b12b47a | lane F, A16 |
+| 1 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/westley/B-S106-galaxy-dot-colour-refix.png` | `VG-B24` layout, then B25 |
+| 2 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/westley/E-S237-settlement-look-after-E1k.png` | lane E look pieces, the banded-contour prototype |
+| 3 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/westley/F-S140-net-first-tick-after-move-order.png` (and `F-S141-lobby-two-members.png`) | lane F, A16 |
 | 4 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
-| 5 | Lane A's opening-battle group shots (S-001): approved or rejected per row | `story_reviews/A.md` | lane A fix pieces |
+| 5 | Lane A's opening-battle group shots (S-001): approved or rejected per row | `story_reviews/westley/A-S002-layer-transfer-buttons.png`; the S-001 group shots are not re-queued yet | lane A fix pieces |
 | 6 | A second worktree pass: remove unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`, yes or no | CLAUDE.md Git | housekeeping |
 
 Closed 2026-10-13 from Westley's 2026-10-12 verdicts, found in the transcript: galaxy density (Q-B24-01, as built) and the two-units-one-pixel pairs (Q-132-03, the A18 opening camera); their shots stay under `story_reviews/westley/2026-10-13/` as the record.
