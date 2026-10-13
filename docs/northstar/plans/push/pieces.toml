@@ -1983,8 +1983,8 @@ owns = ["tests/test_tactical_view.gd", "tests/test_settings_pan_speed.gd", "test
 owns_glob = []
 acceptance = ["tests/test_tactical_view.gd", "tests/test_settings_pan_speed.gd", "tests/test_qa_daemon.gd"]
 depends_on = ["VG-A18"]
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "c79d141" }
+tests_pending = false
 size_estimate = "TD-VG-A-13, TD-VG-A-14 and TD-VG-A-15 applied in the test files; branch push/vg-a18cam-tests"
 
 [[piece]]
@@ -1995,8 +1995,8 @@ owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/test_tacti
 owns_glob = []
 acceptance = []
 depends_on = ["VG-A18", "VG-A17"]
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "c79d141" }
+tests_pending = false
 size_estimate = "FINDING-edge-scroll-restore-overshoot: near pass at the restored zoom in _edge_scroll_to; branch push/vg-a18cam-play-tests"
 
 # Read-only scout (Architect 2026-10-13): FINDING-edge-scroll-xvfb, found in A18's pre-flight.
