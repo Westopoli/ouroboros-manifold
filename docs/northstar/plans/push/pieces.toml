@@ -1991,7 +1991,7 @@ size_estimate = "TD-VG-A-13, TD-VG-A-14 and TD-VG-A-15 applied in the test files
 id = "VG-A18-testfix-2"
 manager = "M0"
 wave = 9
-owns = ["tests/qa/desktop/plays/A/play_support.py"]
+owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/test_tactical_play.py"]  # TD-VG-A-16, overlap with the attached glob G-qadesktoptests (Architect 2026-10-13)
 owns_glob = []
 acceptance = []
 depends_on = ["VG-A18", "VG-A17"]
@@ -2126,6 +2126,18 @@ tests_pending = true
 size_estimate = "settings OptionButton full/standard/particles + label, APPLY writes [display] galaxy_quality (A54/A60); red-on-main finding FINDING-gd-red-main-2026-10-12b fixed here"
 
 [[piece]]
+id = "VG-B26-chronicle-serial"
+manager = "M0"
+wave = 9
+owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd: VG-B's file, VG-B is attached; the panel had no owner row
+owns_glob = []
+acceptance = ["tests/test_vg_b_b26.gd"]
+depends_on = ["VG-B"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2026-10-13; FINDING-chronicle-concurrent-print); a print queue in the panel, next entry on finished_printing plus the 3.0 s hold; the sequencer unchanged except that start_printing enqueues; Q-069-03 default (b)"
+
+[[piece]]
 id = "VG-B25"
 manager = "M0"
 wave = 9
@@ -2158,8 +2170,8 @@ owns = ["scripts/simviewer/__init__.py", "scripts/simviewer/pipe_session.py", "t
 owns_glob = []
 acceptance = ["tests/simviewer/test_pipe_session.py"]
 depends_on = []
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "d7d01f40" }
+tests_pending = false
 size_estimate = "about 120 lines + test"
 
 [[piece]]
@@ -2170,30 +2182,33 @@ owns = ["scripts/simviewer/history.py", "tests/simviewer/test_history.py"]
 owns_glob = ["tests/simviewer/fixtures/**"]
 acceptance = ["tests/simviewer/test_history.py"]
 depends_on = ["SV-1"]
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "d7d01f40" }
+tests_pending = false
 size_estimate = "about 150 lines + test"
 
 [[piece]]
 id = "SV-3"
 manager = "M0"
 wave = 10
-owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_viewer_headless.py"]
-owns_glob = []
+owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_viewer_headless.py", "docs/northstar/story_reviews/V.md"]
+owns_glob = ["docs/northstar/story_reviews/shots/20261012-2005-d5799f5/**"]
 acceptance = ["tests/simviewer/test_viewer_headless.py"]
 depends_on = ["SV-2"]
-status = { state = "pending" }
-tests_pending = true
+status = { state = "attached", attach_sha = "d7d01f40" }
+tests_pending = false
 size_estimate = "about 600 lines ported from simulation/strategic_viewer.py + test"
 
+# SV-0 (simviewer spec): the setter variant (mission.c, header, signatures row, behind VG-CONTRACT-E7 and VG-W2) is superseded by the row below: Westley 2026-10-13 "go ahead with (c)" chose the pipe-only variant (no core or header change).
+
+# SV-0 (simviewer plan, Westley 2026-10-13 "go ahead with (c)"): debug-only optional `retention` on mission_end, set through om_unit_set_hp; spec docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md.
 [[piece]]
 id = "SV-0"
 manager = "M0"
-wave = 10
-owns = ["csrc/mission.c", "csrc/ouroboros_sim.h", "csrc/pipe/om_pipe.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "tests/transport/test_pipe_mission_end_retention.py"]
+wave = 9
+owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_end_retention.py", "docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md"]  # om_pipe.c: handle_mission_end only; architecture.md: the mission_end paragraph only
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
-depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R"]  # queued owners of mission.c, the header, architecture.md and signatures.toml
-status = { state = "pending" }
+depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6", "VG-K-D1", "VG-W2", "VG-E1R", "VG-CONTRACT-E7"]  # attached owners of om_pipe.c (take-over convention, as VG-K-D1)
+status = { state = "queued" }
 tests_pending = true
-size_estimate = "retention override setter in mission.c, pipe mission_end field, one architecture paragraph, one signatures row"
+size_estimate = "SV-0: handle_mission_end reads optional retention, scales player unit HP, debug build only; one transport test file"

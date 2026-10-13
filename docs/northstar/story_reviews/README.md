@@ -28,3 +28,7 @@ Committed copies live under `docs/northstar/story_reviews/shots/<run id>/<story>
 ## Compound status
 
 Many status cells hold compound text such as "Spec'd, blocked on Q-009-02". `Seen` applies only once the flag is closed; a story whose epic has an open flag is not built, so it cannot be seen. A clerk who meets a compound cell leaves it alone and flags it in the queue row.
+
+## Westley's folder
+
+`docs/northstar/story_reviews/westley/` holds a plainly named copy of every shot that waits on Westley, with `README.md` as the page table (file here, story, lane, queue row, original path, what to judge). The clerk that writes a queue row adds the copy and the row; the clerk that records his verdict deletes both in the same commit. Run-id folders under `shots/` are never deleted; the folder is a view, not the record (Westley, 2026-10-13).

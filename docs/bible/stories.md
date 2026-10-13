@@ -109,7 +109,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-103 | E-16 | "A free camera I manage myself, with the Angle Rack, the Layer Peel, and a flip key." | Spec'd; keys decided 2026-10-07; idea only: Q-103-07 | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
 | S-104 | E-16 | "A lean HUD that shows what I need and stays out of the way." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-104 |
 | S-105 | E-16 | "Click, box-select, bind groups, and never an all-army button." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-105 |
-| S-106 | E-16 | "A 3D star map where territory glows, borders touch, and war flashes." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-106 |
+| S-106 | E-16 | "A 3D star map where territory glows, borders touch, and war flashes." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-106 |
 | S-107 | E-16 | "Pan, zoom, orbit, focus a system, pick out a faction." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-107 |
 | S-108 | E-16 | "Mission pulls back into the galaxy and pushes into the next mission without a cut." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-108 |
 | S-109 | E-16 | "The screens around a mission read as orders and reports from my civilization." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-109 |
@@ -144,7 +144,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-138 | E-18 | "The whole game looks like one thing, low-poly and stylized." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-138 |
 | S-139 | E-19 | "Every peer computes exactly the same galaxy and battle." | Spec'd | `epics/E-19-multiplayer.md` S-139 |
 | S-140 | E-19 | "My orders reach every peer with no server in the middle." | Spec'd | `epics/E-19-multiplayer.md` S-140 |
-| S-141 | E-19 | "I know what my friends and I are doing together in this galaxy." | Spec'd; co-op only at launch | `epics/E-19-multiplayer.md` S-141 |
+| S-141 | E-19 | "I know what my friends and I are doing together in this galaxy." | Seen; co-op only at launch | `epics/E-19-multiplayer.md` S-141 |
 | S-142 | E-19 | "A match nobody can pause or roll back." | Spec'd | `epics/E-19-multiplayer.md` S-142 |
 | S-143 | E-19 | "A match with friends who own the same packs moves chronologically through eras." | Spec'd | `epics/E-19-multiplayer.md` S-143 |
 | S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-03 | `epics/E-19-multiplayer.md` S-144 |
