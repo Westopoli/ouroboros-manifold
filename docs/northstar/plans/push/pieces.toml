@@ -1881,8 +1881,7 @@ owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_f_nettick.gd", "tes
 owns_glob = []
 acceptance = ["tests/test_vg_f_nettick.gd"]
 depends_on = ["VG-F-SKEL-B", "VG-E1"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owns tactical_view.gd
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "b12b47a" }  # landed b12b47a
 size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (empty frame at _ready: load none, _match_frame loads the first released one); S-140 green, ticks wait (DRAFT-s140-settle-ticks), known-red line out"
 
 # Lane E1 part e (spec "Lane E1 part e"): placement clears (E1r) and the starting force (E7).
@@ -1928,11 +1927,11 @@ size_estimate = "prodslot: nearest free slot of the 30 wu lattice within 150 wu,
 id = "VG-B23"
 manager = "M0"
 wave = 9
-owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/territory_field.gd", "scenes/galaxy/galaxy_view.gd", "scenes/galaxy/orbit_camera.gd", "scenes/galaxy/legacy_zoom_disclosure_controller.gd", "scenes/galaxy/legacy_constellation_renderer.gd", "scenes/galaxy/shell_labels.gd", "scenes/galaxy/galaxy_view.tscn", "tests/test_vg_b_b23.gd", "tests/test_galaxy_view.gd", "tests/test_vg_b_b22.gd", "tests/test_vg_b_b1.gd", "tests/test_vg_b_b18.gd", "tests/test_vg_b_b3a.gd", "tests/qa/desktop/galaxy_camera_probe.gd", "tests/qa/desktop/galaxy_labels_probe.gd", "docs/bible/epics/E-16-client-camera-hud-and-world-view.md"]  # rev 12b: pins moved under TD-VG-B-14 (b3a, the two probes) and the R-106-03 band rewrite at E-16 line 109
+owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/territory_field.gd", "scenes/galaxy/galaxy_view.gd", "scenes/galaxy/orbit_camera.gd", "scenes/galaxy/legacy_zoom_disclosure_controller.gd", "scenes/galaxy/legacy_constellation_renderer.gd", "scenes/galaxy/shell_labels.gd", "scenes/galaxy/galaxy_view.tscn", "tests/test_vg_b_b23.gd", "tests/test_galaxy_view.gd", "tests/test_vg_b_b22.gd", "tests/test_vg_b_b1.gd", "tests/test_vg_b_b18.gd", "tests/test_vg_b_b3a.gd", "tests/qa/desktop/galaxy_camera_probe.gd", "tests/qa/desktop/galaxy_labels_probe.gd", "docs/bible/epics/E-16-client-camera-hud-and-world-view.md", "scripts/specfactory/gd_tests_known_red.txt"]  # rev 12b: pins moved under TD-VG-B-14 (b3a, the two probes) and the R-106-03 band rewrite at E-16 line 109; gd_tests_known_red.txt: the clerk list of known-red GD tests (Architect 2026-10-12); rules.md stays HARNESS-methodcheck's, its known-red line is edited under that id
 owns_glob = []
 acceptance = ["tests/test_vg_b_b23.gd"]
-depends_on = ["VG-B22"]  # spec: VG-B22 is attached
-status = { state = "queued" }
+depends_on = ["VG-B22", "A94-harness"]  # spec: VG-B22 is attached; A94-harness is the attached owner of scripts/specfactory/[!m]* (gd_tests_known_red.txt)
+status = { state = "attached", attach_sha = "33e3bc2f" }
 tests_pending = true
 size_estimate = "B23: eight scene files set to the prototype's as-run constants, eight test and probe files (TD-VG-B-14), one bible line; DRAFT-b23-count, DRAFT-b23-viewport-frac"
 

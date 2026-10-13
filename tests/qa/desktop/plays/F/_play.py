@@ -14,8 +14,10 @@ Start, both reach the battle screen. No solo-host start, no net_loopback_start, 
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
+import signal
 import socket
 import sys
 import time
@@ -38,7 +40,10 @@ PRIVACY = "res://scenes/privacy_modal/privacy_modal.tscn"
 LOBBY = "res://scenes/lobby/lobby.tscn"
 TACTICAL = "res://scenes/tactical_c/tactical_view.tscn"
 BOOT_S, STEP_S, PORT_S = 45.0, 10.0, 60.0
-PAIR_S, SETTLE_S = 45.0, 30.0  # harness waits (join, match start; order settle), liberty 2026-10-11
+PAIR_S = 45.0  # harness wait (join, match start), liberty 2026-10-11
+# DRAFT-s140-settle-ticks (ledger docs/northstar/plans/push_ledger_2026-09-22.md): measured 781 game ticks x 1.5; game
+# ticks, not wall seconds, A17's rule
+SETTLE_TICKS = 1200
 # 1080p is Westley's review resolution (memory: QA plays like the user, 1080p).
 RESOLUTION = "1920x1080"
 
@@ -238,23 +243,77 @@ def tactical_qa(client) -> dict:
 
 
 def positions(client, uids) -> dict:
-    units = tactical_qa(client)["units"]
-    return {u: (units[u]["x"], units[u]["y"]) for u in uids if u in units}
+    """uid -> (x, y, layer) from the client's qa_state, exact values."""
+    return unit_sample(client, uids)[1]
 
 
-def wait_settled(host, guest, uids, start: dict, cap: float = SETTLE_S) -> tuple[dict, dict]:
-    """After an order: wait until the ordered units have stopped moving on both processes (two consecutive samples one
-    second apart equal on each side; the host's units must also have left their start so a sample taken before the
-    order lands never counts as settled). Returns the settled (host, guest) positions."""
-    deadline = time.monotonic() + cap
-    prev = None
-    while time.monotonic() < deadline:
-        cur = (positions(host.client, uids), positions(guest.client, uids))
-        if prev == cur and cur[0] != start:
-            return cur
-        prev = cur
-        time.sleep(1.0)
-    raise AssertionError("spec-gap: order does not settle (last host %r, guest %r)" % (prev[0], prev[1]))
+def unit_sample(client, uids) -> tuple[int, dict, dict]:
+    """(tick, uid -> (x, y, layer), last_command) from ONE qa_state call, so the positions and the tick are the same
+    frame."""
+    qa = tactical_qa(client)
+    units = qa["units"]
+    pos = {u: (units[u]["x"], units[u]["y"], units[u]["layer"]) for u in uids if u in units}
+    return int(qa["tick"]), pos, qa.get("last_command", {})
+
+
+def _centroid(pos: dict) -> tuple[float, float]:
+    n = len(pos)
+    return sum(p[0] for p in pos.values()) / n, sum(p[1] for p in pos.values()) / n
+
+
+def wait_settled(host, guest, uids, start: dict) -> tuple[dict, dict]:
+    """After the host's order: both peers must show the same thing at a common tick (Architect ruling 2026-10-12; the
+    story is that both peers see the same after an order, so the condition is equality, not rest). Settled = at a
+    common game tick T >= order_tick + SETTLE_TICKS (order_tick = the host's tick when this is called, right after the
+    right-click):
+      (a) every ordered unit's (x, y, layer) from qa_state at T is byte-equal on host and guest (exact, no tolerance:
+          determinism is the contract);
+      (b) the ordered units' centroid at T is nearer the click point (the host's last_command x, y, world coords) than
+          at the order tick (`start`) by at least half the starting distance, so a refused order cannot pass.
+    Both peers are sampled in turn with the plain `state` verb, every (tick -> positions) kept from the target tick on;
+    T is the lowest tick sampled on both. No pixel tolerance, no allowance list, no wall-clock deadline: the hang guard
+    is the gate's per-play timeout, whose SIGTERM turns into a failure naming both ticks. Returns the host and guest
+    positions at T."""
+    order_tick, _, cmd = unit_sample(host.client, uids)
+    target = order_tick + SETTLE_TICKS
+    seen = {"h": order_tick, "g": None}  # last tick read on each peer, for the failure message
+
+    def on_term(signum, frame):
+        raise AssertionError("no common tick T >= %d (order tick %d + %d) sampled on both peers before the play "
+                             "timeout: last host tick %r, last guest tick %r" %
+                             (target, order_tick, SETTLE_TICKS, seen["h"], seen["g"]))
+
+    old = signal.signal(signal.SIGTERM, on_term)
+    try:
+        hist_h, hist_g = {}, {}
+        while True:
+            for who, client, hist in (("h", host.client, hist_h), ("g", guest.client, hist_g)):
+                tick, pos, c = unit_sample(client, uids)
+                seen[who] = tick
+                if who == "h" and c.get("x") is not None:
+                    cmd = c
+                if tick >= target:
+                    hist[tick] = pos
+            common = set(hist_h) & set(hist_g)
+            if common:
+                break
+            time.sleep(0.005)
+    finally:
+        signal.signal(signal.SIGTERM, old)
+    T = min(common)
+    ph, pg = hist_h[T], hist_g[T]
+    note("settle: order tick %d, common tick T=%d (%d ticks after the order); latest read host %d guest %d" %
+         (order_tick, T, T - order_tick, seen["h"], seen["g"]))
+    assert cmd.get("ok") is True and cmd.get("kind") == "move", "the host's order was refused: last_command %r" % (cmd,)
+    for u in uids:
+        assert ph.get(u) == pg.get(u), "unit %s differs at common tick: host tick %d %r, guest tick %d %r" % (u, T, ph.get(u), T, pg.get(u))
+    assert set(ph) == set(pg) and ph, "tick %d: ordered units on host %r, on guest %r" % (T, sorted(ph), sorted(pg))
+    click = (float(cmd["x"]), float(cmd["y"]))
+    d0 = math.dist(_centroid(start), click)
+    d1 = math.dist(_centroid(ph), click)
+    assert d0 - d1 >= d0 / 2, ("the order made no progress: centroid %.1f from the click at the order tick, %.1f at "
+                               "tick %d (needs at most %.1f)" % (d0, d1, T, d0 / 2))
+    return ph, pg
 
 
 def record(client, story: str, moment: str) -> dict:

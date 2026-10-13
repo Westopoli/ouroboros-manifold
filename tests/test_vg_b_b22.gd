@@ -4,21 +4,29 @@ extends SceneTree
 # Piece B22, the prototype's geometry (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 10d,
 # lane B, paragraph "B22"; bible E-16 S-106 R-106-01..03; prototype origin/push/galaxy-field
 # 99f35887, scenes/mockups/galaxy/{galaxy_gen,galaxy_view,territory_field}.gd, approved 2026-10-07).
+# TD-VG-B-14 (test-defect, assumption-changed, Architect 2026-10-11, superseded by B23 prototype scale):
+# the numbers below moved from B22's 2x values to the prototype's as-run values (CIV_SCALE 0.5,
+# galaxy_gen.gd:7 on the branch): R_BALL 71 -> 50, spacing 22 -> 11, INFLUENCE_RADIUS 28 -> 14,
+# overview factor points 80 / 70 / 60 -> 40 / 35 / 30, qa_camera(60) -> qa_camera(30).
 # Fixture: res://scenes/galaxy/galaxy_view.tscn, driven=true, snapshot_seed1_tick10.json (80 regions),
 # the view's default layout seed 1 (galaxy_view.gd DEFAULT_SEED). Same fixture as test_vg_b_b18.gd.
 #
 # Control (green today): the view instantiates with the 80-region fixture, galaxy_gen.layout returns 80
 # positions, the view's dot MultiMesh holds 80 instances, qa_camera moves the distance.
 # Red until built (spec B22):
-#   (1) the minimum pairwise 3D distance of the fixture seed's positions >= MIN_SPACING 22
-#   (2) the Y spread (max y minus min y) exceeds 40 (a uniform ball of R_BALL 71, not a flat disc)
-#   (3) territory_field INFLUENCE_RADIUS == 28
+#   (1) the minimum pairwise 3D distance of the fixture seed's positions >= MIN_SPACING 11 (was 22, TD-VG-B-14)
+#   (2) the Y spread (max y minus min y) exceeds 40 (a uniform ball of R_BALL 50, not a flat disc; was R_BALL 71, TD-VG-B-14;
+#       measured at the fixture seed 1: 89.5, scratch run of the layout loop)
+#   (3) territory_field INFLUENCE_RADIUS == 14 (was 28, TD-VG-B-14)
 #   (4) a tier-1.0 dot's instance basis scale exceeds a tier-0.3 dot's at the same camera distance
 #   (5) overview scale factor = instance scale / (0.6 + 1.4 * sig) of one tier-1.0 dot is 0.6 at camera
-#       distance 80, 0.8 at 70, 1.0 at 60 (tolerance 0.001: a derived float compare, not a threshold)
+#       distance 40, 0.8 at 35, 1.0 at 30 (was 80 / 70 / 60 under the B22 controller thresholds 75 / 65;
+#       TD-VG-B-14: the controller blend is now 37.5 to 32.5, so 40 is full overview, 35 the midpoint, 30 regional;
+#       tolerance 0.001: a derived float compare, not a threshold)
 #   (6) galaxy_gen.last_fallbacks() exists and qa_state() carries layout_fallbacks; both 0 for the fixture seed
 # Fixture seed 1 needs 0 fallbacks: checked by a scratch run of the prototype loop (r = R_BALL * cbrt(randf),
-# spacing 22, 250 attempts per id, one RNG, sorted ids); the build's own run is the final proof.
+# R_BALL 50, spacing 11, 250 attempts per id, one RNG, sorted ids; seeds 1 to 5 all give 0 fallbacks, TD-VG-B-14);
+# the build's own run is the final proof.
 #
 # NEEDS A DISPLAY like test_vg_b_b18.gd: xvfb-run -a godot.real --path . --resolution 1920x1080 -s res://tests/test_vg_b_b22.gd
 
@@ -28,12 +36,13 @@ const FIELD_PATH := "res://scenes/galaxy/territory_field.gd"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const FIXTURE_SEED := 1
 const REGIONS := 80
-const MIN_SPACING := 22.0          # spec B22 (prototype galaxy_gen.gd:11)
+const MIN_SPACING := 11.0          # TD-VG-B-14: was 22.0 (spec B22); B23 prototype as-run value galaxy_gen.gd:11 (22 x CIV_SCALE 0.5)
 const Y_SPREAD_MIN := 40.0         # spec B22: "Y spread exceeds 40"
-const INFLUENCE_RADIUS_WANT := 28.0   # spec B22 (prototype galaxy_gen.gd:17 unscaled)
+const INFLUENCE_RADIUS_WANT := 14.0   # TD-VG-B-14: was 28.0 (spec B22); B23 prototype as-run value galaxy_gen.gd:17 (28 x CIV_SCALE 0.5)
 const FACTOR_TOL := 0.001          # derived float compare, brief: not a Westley threshold
-# [camera distance, overview scale factor] from spec B22: 0.6 at 80, 0.8 at 70, 1.0 at 60
-const FACTORS := [[80.0, 0.6], [70.0, 0.8], [60.0, 1.0]]
+# [camera distance, overview scale factor]: TD-VG-B-14 old [[80, 0.6], [70, 0.8], [60, 1.0]] (spec B22), new
+# [[40, 0.6], [35, 0.8], [30, 1.0]] against the controller's 37.5 / 32.5 thresholds (legacy_zoom_disclosure_controller.gd, B23)
+const FACTORS := [[40.0, 0.6], [35.0, 0.8], [30.0, 1.0]]
 const TIER_SIG := {0: 0.3, 2: 1.0}   # galaxy_view.gd TIER_SIGNIFICANCE
 
 var _pass := 0
@@ -121,10 +130,10 @@ func _run() -> void:
 	var vpos: Dictionary = v.get_positions()
 	var dots := _dot_index(mm, vpos)
 	_check(dots.has(tier2) and dots.has(tier0), "control: a dot instance sits at the position of region %d (tier 2) and %d (tier 0)" % [tier2, tier0])
-	v.qa_camera(60.0, -1)
+	v.qa_camera(30.0, -1)   # TD-VG-B-14: was 60.0 (the same Regional regime under splits 35 / 16.25)
 	await process_frame
 	await process_frame
-	_check(absf(float(v.qa_state().get("distance", -1.0)) - 60.0) < 0.001, "control: qa_camera(60) sets qa_state.distance to 60")
+	_check(absf(float(v.qa_state().get("distance", -1.0)) - 30.0) < 0.001, "control: qa_camera(30) sets qa_state.distance to 30")
 	if not (dots.has(tier2) and dots.has(tier0)):
 		v.queue_free()
 		return
@@ -147,15 +156,15 @@ func _run() -> void:
 	_check(is_equal_approx(r_infl, INFLUENCE_RADIUS_WANT), "B22 (3): territory_field INFLUENCE_RADIUS %s, want %s" % [r_infl, INFLUENCE_RADIUS_WANT])
 
 	# --- (4) tier-1.0 dot larger than a tier-0.3 dot at the same camera distance ---
-	v.qa_camera(60.0, -1)
+	v.qa_camera(30.0, -1)   # TD-VG-B-14: was 60.0
 	await process_frame
 	await process_frame
 	await process_frame
 	var big := _dot_scale(mm, dots[tier2])
 	var small := _dot_scale(mm, dots[tier0])
-	_check(big > small, "B22 (4): tier-1.0 dot (region %d) basis scale %.4f must exceed tier-0.3 dot (region %d) %.4f at camera distance 60 (today every dot has an identity basis)" % [tier2, big, tier0, small])
+	_check(big > small, "B22 (4): tier-1.0 dot (region %d) basis scale %.4f must exceed tier-0.3 dot (region %d) %.4f at camera distance 30 (today every dot has an identity basis)" % [tier2, big, tier0, small])
 
-	# --- (5) overview scale factor at camera distance 80, 70, 60 ---
+	# --- (5) overview scale factor at camera distance 40, 35, 30 (TD-VG-B-14, was 80, 70, 60) ---
 	var sig2: float = float(st.get("shell_renderer", {}).get("significance", {}).get(tier2, TIER_SIG[2]))
 	for pair in FACTORS:
 		var d: float = pair[0]

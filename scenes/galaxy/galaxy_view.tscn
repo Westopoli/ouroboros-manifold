@@ -3,10 +3,16 @@
 [ext_resource type="Script" path="res://scenes/galaxy/galaxy_view.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/galaxy/orbit_camera.gd" id="2"]
 
-; Background copied from scenes/mockups/galaxy/galaxy_mockup.tscn:10-11 (origin/push/galaxy-field).
+; Environment copied from scenes/mockups/galaxy/galaxy_mockup.tscn:10-17 (origin/push/galaxy-field at 99f35887), B23.
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
 background_color = Color(0.0392157, 0.0509804, 0.0705882, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.35, 0.37, 0.42, 1)
+ambient_light_energy = 0.4
+fog_enabled = true
+fog_light_color = Color(0.0392157, 0.0509804, 0.0705882, 1)
+fog_density = 0.0006
 
 [node name="GalaxyView" type="Node3D"]
 script = ExtResource("1")
@@ -16,6 +22,10 @@ environment = SubResource("Environment_1")
 
 [node name="World" type="Node3D" parent="."]
 
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
+rotation_degrees = Vector3(-55, -35, 0)
+light_energy = 0.5
+
 [node name="Points" type="MultiMeshInstance3D" parent="World"]
 
 [node name="OrbitCamera" type="Node3D" parent="."]
@@ -23,7 +33,7 @@ script = ExtResource("2")
 
 [node name="Camera3D" type="Camera3D" parent="OrbitCamera"]
 fov = 45.0
-near = 0.5
+near = 0.25
 far = 800.0
 
 [node name="UI" type="CanvasLayer" parent="."]

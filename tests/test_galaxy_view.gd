@@ -16,6 +16,7 @@ const BRIDGE_SCRIPT_PATH := "res://autoload/c_bridge.gd"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const FALLBACK_PATH := "user://test_galaxy_view_fallback_snapshot.json"
 const FALLBACK_N_REGIONS := 60
+const PLAYER_FACTION_FIXTURE := 0   # a faction id present in snapshot_seed1_tick10.json (3 regions) and in the 60-region fallback
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
 
@@ -52,6 +53,10 @@ func _assert(cond: bool, msg: String) -> void:
 func _run_tests() -> void:
 	_snapshot = _load_snapshot()
 	_assert(not _snapshot.is_empty(), "could not obtain a snapshot (fixture missing and fallback write failed)")
+	# B23 (Architect ruling 2026-10-12, Rev 12b): the view reads the player's faction from snapshot["player_faction"]
+	# (CBridge.player_faction()); the fixture has no such key (keys: type, tick, checksum, regions, factions, edges,
+	# telegraphs), so without this line the player-colour branch (value 0.95) is never reached by the colour checks below.
+	_snapshot["player_faction"] = PLAYER_FACTION_FIXTURE
 
 	var packed = load(SCENE_PATH)
 	_assert(packed != null, "cannot load %s (piece C2 not attached yet)" % SCENE_PATH)
@@ -211,15 +216,17 @@ func _check_systems_px_S106_R106_01() -> void:
 		if typeof(p) != TYPE_ARRAY or p.size() != 2 or p[0] < 0 or p[0] > vp.x or p[1] < 0 or p[1] > vp.y:
 			outside += 1
 	# TD-VG-B-12 (assumption-changed, Architect 2026-10-10, bound corrected 2026-10-11): old `outside == 0`
-	# (every system inside the viewport), new "at least a fifth of the systems_px entries inside the viewport
-	# at the default camera". The prototype's regional default (distance 50, ball radius 71) is a close view
-	# of part of the galaxy: the approved prototype shows about 21 percent of its systems at its default,
-	# and the built geometry shows 23 of 80 at distance 50 (fewer when closer). The bound is the Architect's
-	# own spec number, not a Westley threshold; it guards against the empty "small cluster on grey" frame.
+	# (every system inside the viewport), then "at least a fifth of the systems_px entries inside the viewport
+	# at the default camera" (`inside * 5 >= expected_n`, B22: distance 50, ball radius 71, 23 of 80 inside).
+	# TD-VG-B-14 (superseded by B23 prototype scale, Architect 2026-10-12): new `inside * 10 >= expected_n`, at
+	# least a tenth, DRAFT-b23-viewport-frac. The prototype's regional default (distance 25 in a ball of radius 50)
+	# is a close view of part of the galaxy. The bound is the Architect's own spec number, not a Westley threshold;
+	# it guards against the empty "small cluster on grey" frame. The measured count at the built geometry is
+	# filled in by the build checker (the ledger row), not by the test writer.
 	# TD-VG-B-13: the denominator is the region count, not systems_px.size() (behind-camera systems are absent).
 	var inside := px.size() - outside
-	_assert(inside * 5 >= expected_n,
-		"S-106/R-106-01: only %d/%d systems_px entries fall inside the %dx%d viewport, want at least a fifth of the regions (TD-VG-B-12, TD-VG-B-13)" % [inside, expected_n, int(vp.x), int(vp.y)])
+	_assert(inside * 10 >= expected_n,
+		"S-106/R-106-01: only %d/%d systems_px entries fall inside the %dx%d viewport, want at least a tenth of the regions (TD-VG-B-14, DRAFT-b23-viewport-frac)" % [inside, expected_n, int(vp.x), int(vp.y)])
 
 
 func _check_owner_colour_S106_R106_01_02() -> void:
@@ -300,32 +307,38 @@ func _check_plant_pick_radius_zero_R107_01() -> void:
 
 
 # A56 (suspends A48-3): the prototype's band splits stand until Westley has
-# compared it with the game. scenes/mockups/galaxy/orbit_camera.gd:27-28 splits
-# Overview/Regional at 70 and Regional/Local at 32.5 (BAND_SPLIT_HIGH/LOW); the
-# game's view uses the same numbers. R-106-03's text (75 / 40-65 / 25) is NOT
-# tested here; see docs/northstar/proving_ground/evidence/push_2026-10-01/c5_prototype_vs_rules.md.
+# compared it with the game. scenes/mockups/galaxy/orbit_camera.gd:28-29 splits
+# Overview/Regional at 70 * CIV_SCALE 0.5 = 35 and Regional/Local at 32.5 * 0.5 = 16.25
+# (BAND_SPLIT_HIGH/LOW); the game's view uses the same numbers since B23. The bible's
+# R-106-03 now carries 37.5 / 32.5 / 20 / 12.5 (its band edges, not these splits, which
+# are their midpoints); it is not tested here.
+# TD-VG-B-14 (superseded by B23 prototype scale): old pinned dict (splits 70 and 32.5)
+# {220: Overview, 100: Overview, 70: Overview, 69.9: Regional, 50: Regional, 32.5: Regional, 32.4: Local, 15: Local},
+# new: every distance halved (splits 35 and 16.25).
 func _check_bands_match_prototype_A56() -> void:
-	var pinned := {220.0: "Overview", 100.0: "Overview", 70.0: "Overview", 69.9: "Regional", 50.0: "Regional", 32.5: "Regional", 32.4: "Local", 15.0: "Local"}
+	var pinned := {110.0: "Overview", 50.0: "Overview", 35.0: "Overview", 34.95: "Regional", 25.0: "Regional", 16.25: "Regional", 16.2: "Local", 7.5: "Local"}
 	for d in pinned:
 		_root.qa_camera(d, -1)
 		_assert(str(_root.qa_state().get("band")) == pinned[d], "A56 prototype parity: band at distance %s should be %s, got %s" % [d, pinned[d], _root.qa_state().get("band")])
 
 
 func _check_plant_bands_frozen_R106_03() -> void:
-	_root.qa_camera(80.0, -1)
+	# TD-VG-B-14 (superseded by B23 prototype scale): qa_camera 80 / 20 / 80 / 20 -> 40 / 10 / 40 / 10; the relation is kept
+	# (40 is Overview and 10 is Local under splits 35 and 16.25, as 80 and 20 were under 70 and 32.5).
+	_root.qa_camera(40.0, -1)
 	var overview: String = str(_root.qa_state().get("band"))
-	_root.qa_camera(20.0, -1)
+	_root.qa_camera(10.0, -1)
 	var local_clean: String = str(_root.qa_state().get("band"))
 	_assert(local_clean != overview,
-		"R-106-03: clean band at distance 20 should differ from distance 80 (positive control), both %s" % overview)
+		"R-106-03: clean band at distance 10 should differ from distance 40 (positive control), both %s" % overview)
 
-	_root.qa_camera(80.0, -1)
+	_root.qa_camera(40.0, -1)
 	_assert(_root.qa_plant("bands-frozen"), "qa_plant(bands-frozen) must return true")
 	var frozen_overview: String = str(_root.qa_state().get("band"))
-	_root.qa_camera(20.0, -1)
+	_root.qa_camera(10.0, -1)
 	var frozen_local: String = str(_root.qa_state().get("band"))
 	_assert(frozen_local == frozen_overview,
-		"PLANT bands-frozen: band should stay %s at distance 20, got %s" % [frozen_overview, frozen_local])
+		"PLANT bands-frozen: band should stay %s at distance 10, got %s" % [frozen_overview, frozen_local])
 
 
 func _check_plant_conquest_no_recolour_R106_02_04() -> void:
