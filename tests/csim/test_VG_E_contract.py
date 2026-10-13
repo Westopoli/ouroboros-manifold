@@ -133,15 +133,15 @@ def test_place_symbol_callable(lib, world_factory):
 
 
 def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
-    """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16): the version word is 10; the new state reads back empty / doctrine 3.
-    Red before K-e5: the version word is 9."""
+    """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): the version word is 11; the new state reads back empty / doctrine 3.
+    Red before W2: the version word is 10."""
     bind(lib)
     bind_save(lib)
     src = world_factory(n_regions=1)
     size = lib.om_save_state_size(src)
     buf = (ctypes.c_uint8 * size)()
     lib.om_save_state_write(src, buf, size)
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 10
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 11
     dst = world_factory(n_regions=1)
     assert lib.om_load_state_read(dst, buf, size) == 0
     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0
