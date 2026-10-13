@@ -9,6 +9,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
 
 import pieces as pc  # noqa: E402
+import owner_lint  # noqa: E402
 
 PIECES_TOML = REPO / "docs" / "northstar" / "plans" / "push" / "pieces.toml"
 
@@ -219,9 +220,33 @@ def test_pieces_toml_parses_and_has_unique_ids():
 
 
 def test_pieces_toml_owns_disjoint():
+    # TD-W8-1: the rule since the 2026-10-09 owner_lint is "two IN-FLIGHT
+    # pieces never own the same file"; an attached piece's footprint may
+    # overlap. Old assertion: `pc.check_owns_disjoint(pieces) == []` over the
+    # whole file (32 overlaps, each involving an attached piece).
+    # See also: scripts/specfactory/owner_lint.py in_flight_overlaps.
     pieces = pc.load_pieces(PIECES_TOML)
-    findings = pc.check_owns_disjoint(pieces)
+    findings = owner_lint.in_flight_overlaps(pieces)
     assert findings == [], findings
+
+
+def test_positive_control_in_flight_owns_overlap_fails_the_in_flight_check():
+    # Positive control for the test above: two in-flight pieces owning one
+    # file must still be flagged by the same filter.
+    pieces = [
+        {"id": "X", "owns": ["csrc/foo.c"], "depends_on": [], "status": "pending"},
+        {"id": "Y", "owns": ["csrc/foo.c"], "depends_on": [], "status": "pending"},
+    ]
+    findings = owner_lint.in_flight_overlaps(pieces)
+    assert len([f for f in findings if f[0] == "FAIL"]) == 1
+
+
+def test_in_flight_check_ignores_an_overlap_with_an_attached_piece():
+    pieces = [
+        {"id": "X", "owns": ["csrc/foo.c"], "depends_on": [], "status": {"state": "attached"}},
+        {"id": "Y", "owns": ["csrc/foo.c"], "depends_on": [], "status": "pending"},
+    ]
+    assert owner_lint.in_flight_overlaps(pieces) == []
 
 
 def test_pieces_toml_is_valid_toml():

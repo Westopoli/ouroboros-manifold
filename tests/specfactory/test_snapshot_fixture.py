@@ -26,8 +26,11 @@ def _run(*args: str) -> subprocess.CompletedProcess:
 
 
 def _generate(out_path: Path, *, seed: int, regions: int, ticks: int,
-              populate: bool = False, generate: bool = False) -> subprocess.CompletedProcess:
+              populate: bool = False, generate: bool = False,
+              features: str | None = None) -> subprocess.CompletedProcess:
     args = ["--seed", str(seed), "--regions", str(regions), "--ticks", str(ticks), "--out", str(out_path)]
+    if features is not None:
+        args += ["--features", features]
     if populate:
         args.append("--populate")
     if generate:
@@ -82,7 +85,11 @@ def test_checked_in_fixture_matches_current_generator_output(tmp_path):
     csrc/worldgen.c); 80 clears it for any seed."""
     assert FIXTURE.exists()
     out = tmp_path / "regenerated.json"
-    proc = _generate(out, seed=1, regions=80, ticks=10, generate=True)
+    # TD-W8-2: the fixture was regenerated with --features 6 at c50ac4c9
+    # (2026-09-24) on purpose, to match the live pipe's checksum; the
+    # generator's DEFAULT_FEATURES ("1,2,3,6") differs. The fixture is not
+    # regenerated.
+    proc = _generate(out, seed=1, regions=80, ticks=10, generate=True, features="6")
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert out.read_bytes() == FIXTURE.read_bytes()
 
