@@ -2080,13 +2080,25 @@ size_estimate = "dot material back to main's colouring (srgb flag and transparen
 id = "VG-B24"
 manager = "M0"
 wave = 9
-owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/game_fixture.gd", "tests/test_vg_b_b24.gd", "tests/test_galaxy_quality_setting.gd", "tests/test_galaxy_renderers.gd"]  # galaxy_view.gd: the layout call at :402-407 only (Architect g1)
+owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/game_fixture.gd", "tests/test_vg_b_b24.gd", "tests/test_galaxy_renderers.gd", "tests/test_vg_b_b4.gd", "tests/test_vg_b_b23.gd"]  # galaxy_view.gd: the layout call _relayout at :412-416 only (on 536f7fd5; Architect g1); test_vg_b_b4.gd and test_vg_b_b23.gd: line :188 only (TD-VG-B-16); test_galaxy_quality_setting.gd moved to VG-B24b-quality-control
 owns_glob = ["tests/qa/desktop/plays/B/*"]  # the B plays re-shot
 acceptance = ["tests/test_vg_b_b24.gd"]
 depends_on = ["VG-B23", "VG-B23b-dotcolour", "VG-B"]  # VG-B23 owns galaxy_gen.gd and galaxy_view.gd; VG-B is the attached owner by glob of the rest
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "B24: placement follows the sim graph, continuous significance, parity test on edge lengths and the d25 frame; DRAFT-b24-sig, DRAFT-b24-filament-cover, DRAFT-b24-discs; Q-B24-01"
+
+[[piece]]
+id = "VG-B24b-quality-control"
+manager = "M0"
+wave = 9
+owns = ["scenes/settings/settings.gd", "tests/test_galaxy_quality_setting.gd"]
+owns_glob = []
+acceptance = ["tests/test_galaxy_quality_setting.gd"]
+depends_on = ["VG-A18", "VG-B24"]  # VG-A18 owns scenes/settings/settings.gd until it lands (G-settings glob and VG-A16 are attached); VG-B24 no longer owns the test file (Architect 2026-10-13)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "settings OptionButton full/standard/particles + label, APPLY writes [display] galaxy_quality (A54/A60); red-on-main finding FINDING-gd-red-main-2026-10-12b fixed here"
 
 [[piece]]
 id = "VG-B25"

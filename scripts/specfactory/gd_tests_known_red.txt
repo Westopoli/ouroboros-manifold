@@ -5,3 +5,4 @@
 res://tests/test_tactical_camera.gd :: FINDING-edge-scroll-xvfb
 res://tests/test_time_jump_replay.gd :: FINDING-gd-red-main-2026-10-12
 res://tests/test_vg_e_e1p.gd :: FINDING-gd-red-main-2026-10-12
+res://tests/test_galaxy_quality_setting.gd :: FINDING-gd-red-main-2026-10-12b
