@@ -6,7 +6,7 @@ extends SceneTree
 # the territory field grid and its GPU bake, ported from the mockup branch
 # origin/push/galaxy-field (scenes/mockups/galaxy/territory_field.gd,
 # shaders/field_bake.gdshader) into the game's galaxy scene, with the game's
-# layout constants (galaxy_gen.gd: ball radius R_BALL 71, spacing 22), and fed by the
+# layout constants (galaxy_gen.gd: ball radius R_BALL 50, spacing 11; TD-VG-B-14, were 71 and 22), and fed by the
 # galaxy adapter's territory signals (GalaxyAdapter -> world_view_data.set_territory /
 # remove_territory -> territory_set / territory_updated / territory_removed).
 # Checks: FIELD-GRID, FIELD-VALUES, FIELD-ORDER, FIELD-CONQUEST, FIELD-MEM on an
@@ -19,8 +19,8 @@ extends SceneTree
 #
 # Contract fixed here (the spec leaves signatures to the tests), res://scenes/galaxy/territory_field.gd,
 # extends Node:
-#   const GRID_CELLS := 96; const GRID_SIZE := 198.0; const GRID_MIN := Vector3(-99,-99,-99)
-#   const INFLUENCE_RADIUS: float     28, the prototype's (ball R_BALL 71 + R must fit the cube: R <= 28)
+#   const GRID_CELLS := 96; const GRID_SIZE := 128.0; const GRID_MIN := Vector3(-64,-64,-64)   (TD-VG-B-14, were 198.0 and -99)
+#   const INFLUENCE_RADIUS: float     14, the prototype's (ball R_BALL 50 + R must fit the cube: R <= 14; was 28 with R_BALL 71)
 #   func bind_world_view(wv: Node)    reads wv.territories now and follows its territory_set /
 #       territory_updated / territory_removed signals; a territory is {center, radius=significance, color};
 #       faction identity is the colour (distinct colours -> distinct ids, first seen first; same colour -> same id)
@@ -91,7 +91,7 @@ func _run() -> void:
 
 # ---- fixture and helpers (static: the park file preloads this script) ----------
 
-# 80 regions laid out by the game's own galaxy_gen.gd (ball radius R_BALL 71, spacing 22); each
+# 80 regions laid out by the game's own galaxy_gen.gd (ball radius R_BALL 50, spacing 11; TD-VG-B-14, were 71 and 22); each
 # region belongs to the nearest of FACTIONS capitals (ids 0, 13, 26, ...), every 7th
 # region is unowned; significance cycles 0.3 / 0.6 / 1.0 (the tier map).
 static func fixture(p_seed: int) -> Array:
@@ -398,14 +398,15 @@ class Grid extends RefCounted:
 
 func _check_grid_constants() -> void:
 	var f: Node = _field_script.new()
-	# TD-VG-B-12 (assumption-changed, Architect 2026-10-10): GRID_SIZE 128.0 -> 198.0 and GRID_MIN Vector3(-64,-64,-64) ->
-	# Vector3(-99,-99,-99) (2 * (R_BALL 71 + INFLUENCE_RADIUS 28), the prototype's rule territory_field.gd:19).
-	var ok: bool = f.GRID_CELLS == 96 and is_equal_approx(f.GRID_SIZE, 198.0) and f.GRID_MIN.is_equal_approx(Vector3(-99, -99, -99))
-	_check("FIELD-GRID", ok, "GRID_CELLS=%s GRID_SIZE=%s GRID_MIN=%s (96 cells over a 198-unit cube centred on the origin)" % [f.GRID_CELLS, f.GRID_SIZE, f.GRID_MIN])
+	# TD-VG-B-14 (assumption-changed, Architect 2026-10-11, superseded by B23 prototype scale; history TD-VG-B-12): GRID_SIZE 198.0 -> 128.0
+	# and GRID_MIN Vector3(-99,-99,-99) -> Vector3(-64,-64,-64) (2 * (R_BALL 50 + INFLUENCE_RADIUS 14), the prototype's rule
+	# territory_field.gd:19-20 on origin/push/galaxy-field).
+	var ok: bool = f.GRID_CELLS == 96 and is_equal_approx(f.GRID_SIZE, 128.0) and f.GRID_MIN.is_equal_approx(Vector3(-64, -64, -64))
+	_check("FIELD-GRID", ok, "GRID_CELLS=%s GRID_SIZE=%s GRID_MIN=%s (96 cells over a 128-unit cube centred on the origin)" % [f.GRID_CELLS, f.GRID_SIZE, f.GRID_MIN])
 	var r: float = f.INFLUENCE_RADIUS
-	# TD-VG-B-12: old pin `40.0 + r <= 64.0` (disc radius 40 + R inside the cube half-edge 64), new `R_BALL + r <= 99.0` (R_BALL 71 read from galaxy_gen.gd).
+	# TD-VG-B-14: old pin `R_BALL + r <= 99.0` (R_BALL 71 + R 28, B22), new `R_BALL + r <= 64.0` (R_BALL 50 read from galaxy_gen.gd, R 14 live).
 	var r_ball: float = float(load(GEN_PATH).get_script_constant_map().get("R_BALL", -1.0))
-	_check("FIELD-GRID-INFLUENCE", r > 0.0 and r_ball > 0.0 and r_ball + r <= 99.0, "INFLUENCE_RADIUS=%s, galaxy_gen R_BALL=%s: positive, ball radius + R inside the cube half-edge 99" % [r, r_ball])
+	_check("FIELD-GRID-INFLUENCE", r > 0.0 and r_ball > 0.0 and r_ball + r <= 64.0, "INFLUENCE_RADIUS=%s, galaxy_gen R_BALL=%s: positive, ball radius + R inside the cube half-edge 64" % [r, r_ball])
 	f.free()
 
 
