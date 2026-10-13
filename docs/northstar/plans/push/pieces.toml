@@ -2109,7 +2109,7 @@ owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scene
 owns_glob = ["tests/qa/desktop/plays/B/*"]  # the B plays re-shot
 acceptance = ["tests/test_vg_b_b24.gd"]
 depends_on = ["VG-B23", "VG-B23b-dotcolour", "VG-B"]  # VG-B23 owns galaxy_gen.gd and galaxy_view.gd; VG-B is the attached owner by glob of the rest
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "130e7100" }
 tests_pending = true
 size_estimate = "B24: placement follows the sim graph, continuous significance, parity test on edge lengths and the d25 frame; DRAFT-b24-sig, DRAFT-b24-filament-cover, DRAFT-b24-discs; Q-B24-01"
 
