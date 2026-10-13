@@ -189,7 +189,7 @@ As a commander, I want a base I must protect, set on a map where the rich resour
 
 Rules
 - R-177-01  Given a mission, When the sides are set up, Then every side has a base of operations it must protect, which is not always a city, and which receives resources from elsewhere, generates them on site, or both, depending on the simulation and the mission.
-- R-177-02  Given the mission archetype (E-10 S-073), When bases are given, Then the kind of base each side gets is decided by the archetype table below alone (Westley, 2026-10-06).
+- R-177-02  Given the mission archetype (E-10 S-073), When bases are given, Then the player's base of operations is a grown town only where the archetype gives the player a home or a defended settlement; an attacking archetype has a forward base, a camp and not a town (Westley, 2026-10-13: "depends on the archetype, an attacker can't have a full town since they're attacking, they have a forward base"). The kind of base each side gets is decided by the archetype table below alone (Westley, 2026-10-06).
 
 | Archetype | Player's base | Enemy's base |
 |---|---|---|

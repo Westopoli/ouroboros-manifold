@@ -185,7 +185,8 @@ func _run() -> void:
 
 	# ---- positive controls: rows already equal on main (green today) ----
 	_ctrl(int(_consts(FIELD_PATH).get("GRID_CELLS", -1)) == 96, "territory_field GRID_CELLS 96 (prototype territory_field.gd:18)")
-	_ctrl(int(_consts(GEN_PATH).get("PLACEMENT_ATTEMPTS", -1)) == 250, "galaxy_gen PLACEMENT_ATTEMPTS 250 (prototype galaxy_gen.gd:48)")
+	# TD-VG-B-16 (superseded by B24, spec VG-B24-layout, DRAFT-b24-relax): was `== 250, "galaxy_gen PLACEMENT_ATTEMPTS 250 (prototype galaxy_gen.gd:48)"`
+	_ctrl(int(_consts(GEN_PATH).get("PLACEMENT_ATTEMPTS", -1)) == 16, "galaxy_gen PLACEMENT_ATTEMPTS 16 (VG-B24 spec: up to 16 tries per region, DRAFT-b24-relax)")
 	_ctrl(_same(_consts(CAM_PATH).get("ZOOM_STEP", null), 0.9), "orbit_camera ZOOM_STEP 0.9 (prototype orbit_camera.gd:238-241 wheel up x0.9)")
 	_ctrl(_same(_consts(CAM_PATH).get("DIST_MAX", null), 120.0), "orbit_camera DIST_MAX 120 (prototype orbit_camera.gd:9, not scaled)")
 	_ctrl(_same(_consts(VIEW_PATH).get("PICK_RADIUS_PX", null), 14.0), "galaxy_view PICK_RADIUS_PX 14 (prototype orbit_camera.gd:19)")
