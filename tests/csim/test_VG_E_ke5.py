@@ -630,8 +630,8 @@ def test_ke5_load_rejects_core_cell_at_or_above_side_squared(klib, kmake):
 # ------------------------------------------------------------------------------------------------ version pins
 
 def test_ke5_save_format_version_is_10(klib, kmake):
-    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10, read as the moved pins read it (header bytes 4..8 of a save)."""
-    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 10
+    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), read as the moved pins read it (header bytes 4..8 of a save)."""
+    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 11
 
 
 def test_ke5_abi_version_is_7(klib):
@@ -640,8 +640,8 @@ def test_ke5_abi_version_is_7(klib):
 
 
 def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
-    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version). A save written through the
-    pipe has sidecar format_version 10 and a version word 10 (the sidecar is the key the load-game screen reads). Control
+    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1). A save written through the
+    pipe has sidecar format_version 11 and a version word 11 (the sidecar is the key the load-game screen reads). Control
     first: both exist and are integers."""
     if not PIPE.exists():
         pytest.fail("pipe/ouroboros_pipe is not built")
@@ -658,8 +658,8 @@ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
         side = json.load(open(path + ".json"))
         word = struct.unpack_from("<I", open(path, "rb").read(), 4)[0]
     assert isinstance(side.get("format_version"), int) and isinstance(word, int)
-    assert side["format_version"] == 10, f"sidecar format_version {side['format_version']} (save version word {word})"
-    assert word == 10
+    assert side["format_version"] == 11, f"sidecar format_version {side['format_version']} (save version word {word})"
+    assert word == 11
 
 
 # ------------------------------------------------------------------------------------------------ the hook om_terrain_set_heights
