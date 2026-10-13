@@ -54,7 +54,7 @@ extends SceneTree
 # lines red until tactical_view.gd hosts the view; the red-on-main run below is the same file on the tree without scenes/space3d.
 #
 # NOT covered by this file (said so, no case written, nothing invented):
-#   - Frame time (the play measures it; FRAME_BUDGET_MS is only checked as a constant).
+#   - Frame time (the play only REPORTS frame_ms, Architect 2026-10-14: nothing is asserted against 16 ms until a perf piece runs on a real display; FRAME_BUDGET_MS is only checked as a constant).
 #   - The fragment alpha TUBE_ALPHA and the rim pulse 0.6 to 1.0 over 1.5 s (shader pixels: needs a render; the play's shot judges them).
 #   - Ring width scaling with camera height / DRAFT-ring-px (spec "Layer indicators" bullet) against the interface's RING_WIDTH_WU 6.0: the
 #     two statements disagree and no ring-width accessor is in the INTERFACE.
@@ -148,6 +148,7 @@ func _run_tests() -> void:
 	await _test_view_units_and_rings()
 	await _test_view_transit()
 	await _test_view_camera()
+	await _test_view_camera_fallback()
 	await _test_view_projection_and_picking()
 	await _test_view_tube()
 	await _test_view_tube_inactive()
@@ -1001,11 +1002,13 @@ func _test_view_transit() -> void:
 
 # -- VIEW: camera ------------------------------------------------------------------------------------------------------------------
 
-# Spec "Camera (gap g2)": "the play pans to the player's spawn anchor and zooms out through the rig API until the rig reports a height of at least
-# `DRAFT-space-cam-height` 5,400"; INTERFACE: "the rig panned to the player's spawn anchor (the map.nodes kind 7 node nearest the local faction's units;
-# the army stands at the map edge, y near 150)"; A18 G3 (tests/test_tactical_camera.gd header): "the player's spawn point is the kind-7 map node nearest
-# the centroid of the own units". The fixture's own units stand near (11950, 400): nearest kind 7 node is (11950, 150), not (11950, 23850). G2: the
-# height is 5,400 once the rig is zoomed the way the play zooms it (3,000 plus 8 steps of 300; if the view already starts at 5,400 the loop adds none).
+# Spec "Camera (gap g2)": "the play ... zooms out through the rig API until the rig reports a height of at least `DRAFT-space-cam-height` 5,400" (G2).
+# PAN TARGET, Architect ruling 2026-10-14 (session ouroboros-manifold-fc, after the first D-VIEW build): the SpaceView pan target is the OWN-UNIT CENTROID at
+# ground height (x, y = the centroid of the local faction's units; the rig's look-at point stays on y 0), so the army sits at the screen centre and the focus
+# sheet under it is sheet 0; with NO own unit in the frame the fallback is the kind-7 spawn-anchor node (the old A18 G3 anchor). This supersedes the
+# earlier reading "the rig panned to the player's spawn anchor (the kind 7 node nearest the own units)". The fixture's own units (1 to 5) stand at
+# x 11900, 12000, 11950, 11980, 11920 and y 400, 420, 450, 380, 360: centroid (11950, 402); the old anchor (11950, 150) is 252 wu away, so the two
+# readings cannot be confused. G2: the height is 5,400 once the rig is zoomed the way the play zooms it (3,000 plus 8 steps of 300).
 # G4 null action (d-view spec rev 1, gap 4 null action, Architect may veto on the shot): the rig's own pitch is reported, so only that the key is a
 # number is asserted, never its value.
 func _test_view_camera() -> void:
@@ -1017,10 +1020,36 @@ func _test_view_camera() -> void:
 	_zoom_to_play_height(v)
 	await process_frame
 	var cam: Dictionary = _space3d(v).get("camera", {})
-	_assert(absf(float(cam.get("x", -1.0)) - 11950.0) < EPS and absf(float(cam.get("y", -1.0)) - 150.0) < EPS, "CAMERA: qa_state.space3d.camera x,y = (%s, %s), want the spawn anchor (11950, 150)" % [cam.get("x"), cam.get("y")])
+	var centroid := Vector2(11950.0, 402.0)
+	_assert(absf(float(cam.get("x", -1.0)) - centroid.x) < EPS and absf(float(cam.get("y", -1.0)) - centroid.y) < EPS, "CAMERA: qa_state.space3d.camera x,y = (%s, %s), want the own-unit centroid (11950, 402) (Architect 2026-10-14; the kind 7 anchor (11950, 150) is the no-own-unit fallback only)" % [cam.get("x"), cam.get("y")])
+	# the rig's look-at point is at ground height and the focus sheet is sheet 0: the camera ray through the middle of the screen meets sheet 0 at the centroid
+	var mid: Vector2 = v.camera_rig().get_camera().get_viewport().get_visible_rect().size * 0.5
+	var hit = v.to_world(mid)
+	_assert(hit != null and (Vector2(hit.x, hit.y) if hit is Vector2 else Vector2(hit.x, hit.z)).distance_to(centroid) < 1.0, "CAMERA: the ray through the screen centre %s meets the focus sheet (layer 0, y 0) at %s, want the own-unit centroid (11950, 402) within 1 wu: the army is not at screen centre" % [mid, hit])
+	_assert(v.to_screen(centroid.x, centroid.y, 0).distance_to(mid) < ONE_PX, "CAMERA: the centroid projects on sheet 0 to %s, more than one pixel from the screen centre %s" % [v.to_screen(centroid.x, centroid.y, 0), mid])
 	_assert(is_equal_approx(float(cam.get("height", -1.0)), PLAY_HEIGHT_WU), "CAMERA: qa_state.space3d.camera.height = %s after zooming through the rig API, want 5400.0 (G2)" % [cam.get("height")])
 	_assert(is_equal_approx(float(cam.get("height", -1.0)), float(v.camera_rig().camera_height())), "CAMERA: reported height %s differs from the rig's camera_height() %s" % [cam.get("height"), v.camera_rig().camera_height()])
 	_assert(cam.has("pitch") and typeof(cam["pitch"]) in [TYPE_FLOAT, TYPE_INT], "CAMERA (G4): qa_state.space3d.camera.pitch must be reported as a number; got %s" % [cam.get("pitch")])
+	await _drop(v)
+
+
+# Fallback of the pan target (Architect 2026-10-14): a frame with no own unit (only the enemy units 11 and 12 at the far anchor) pans the rig to a kind 7
+# spawn-anchor node of the frame's map, (11950, 150) or (11950, 23850); the ruling names no choice between the two, so either is accepted.
+func _test_view_camera_fallback() -> void:
+	var v = await _new_view(_fixture_field())
+	if v == null:
+		return
+	var enemies: Array = []
+	for u in _army():
+		if int(u["faction"]) != 0:
+			enemies.append(u)
+	v.set_frame(_frame(10, enemies, [11, 12]), {"objectives": []})
+	await process_frame
+	var cam: Dictionary = _space3d(v).get("camera", {})
+	var cx := float(cam.get("x", -1.0))
+	var cy := float(cam.get("y", -1.0))
+	var at_anchor: bool = absf(cx - 11950.0) < EPS and (absf(cy - 150.0) < EPS or absf(cy - 23850.0) < EPS)
+	_assert(at_anchor, "CAMERA FALLBACK: a frame with no own unit left the camera at (%s, %s), want a kind 7 spawn-anchor node, (11950, 150) or (11950, 23850)" % [cam.get("x"), cam.get("y")])
 	await _drop(v)
 
 
