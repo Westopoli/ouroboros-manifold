@@ -2150,6 +2150,30 @@ tests_pending = true
 size_estimate = "B25: dim wash, four star layers at 50/125/400/1250, wrapping motes; DRAFT-b25-*; real GPU check on the RTX 3060 under Forward+"
 
 [[piece]]
+id = "VG-D-VIEW"
+manager = "M0"
+wave = 9
+owns = ["scenes/space3d/space_view.gd", "scenes/space3d/space_view.tscn", "tests/test_vg_d_view.gd"]  # new files; the hook line in tactical_view.gd is a later wiring piece, after lane A's A18
+owns_glob = []
+acceptance = ["tests/test_vg_d_view.gd"]
+depends_on = ["VG-A18"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "D view skeleton: five sheets at DRAFT-space-layer-gap 1,000 wu, asteroid pieces on blocked cells from the sim's masks, units on their sheet, one shot; then the vision tube (Q-S3-01 (a)) as its own piece"
+
+[[piece]]
+id = "PROTO-space-density"
+manager = "M0"
+wave = 9
+owns = ["scenes/mockups/landscape/hud.gd", "scenes/mockups/landscape/field_map_space.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "prototype gate (Q-246-02): a selector in the landscape mockup's space kit HUD: one default 35 / region range (light 15, medium 35, heavy 55, tight 70) / mission type; Westley flies it on the Mac branch"
+
+[[piece]]
 id = "HARNESS-userdir"
 manager = "M0"
 wave = 9

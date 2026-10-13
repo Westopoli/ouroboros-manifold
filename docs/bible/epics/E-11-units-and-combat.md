@@ -158,7 +158,7 @@ The flinch also fires when the attacker is visible but out of range with no path
 As a commander, I want a Strike squad to read as a small group, a Siege unit as a single heavy asset, and every ability to have an unmistakable cue, so that I never misjudge what I am looking at.
 
 Rules
-- R-088-01  Given a Raider or Interceptor, When drawn, Then it appears as 3 to 5 small craft in formation sharing one HP bar and one position; the sim tracks one entity.
+- R-088-01  Given a Raider, When drawn, Then one unit is a squad of 5 to 10 small craft in formation sharing one HP bar and one position, much smaller than the other types and passing gaps they cannot (E-17 R-188-05, S-246); the sim tracks one entity, and its collision radius is DRAFT-raider-radius, set with the roster (Q-166-05; Westley 2026-10-13: "Raider T2 specifically, each "unit" will be a group of them, 5-10 and they'll be much smaller than the other units. (like halo wars marines)"). An Interceptor is drawn as 3 to 5 small craft in formation sharing one HP bar and one position.
 - R-088-02  Given an ability event, When received by the renderer, Then a cue plays at that tick for the event's duration (Barrage shows its telegraph ring at the target for 1.5 s before impact; Fortify shows its zone; Brace shows a planted state).
 - R-088-03  Given a T2 screenshot of a mixed force, When inspected, Then category is distinguishable by silhouette size: Strike smallest, Siege largest.
 
