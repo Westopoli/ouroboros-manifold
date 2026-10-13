@@ -1476,7 +1476,7 @@ owns = [
     "csrc/space_noise.c", "csrc/space_plates.c", "csrc/space_raster.c", "csrc/space_field.c", "tests/csim/test_core_objective_accessors.py",
     "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_d7.py",  # TD-VG-D-11 (identity on the ground era); TD-VG-D-7 re-pins and the pipe-field test; shared with the transport test owners
 ]
-owns_glob = ["scenes/space_field/**", "tests/test_vg_d_*.gd", "tests/csim/test_VG_D_*.py", "tests/qa/desktop/plays/D/**"]
+owns_glob = ["tests/csim/test_VG_D_*.py"]  # Architect 2026-10-14: owns_glob of an attached piece is released; scenes/space_field/** (never existed; the space view lives in scenes/space3d/, VG-D-VIEW), tests/test_vg_d_*.gd and tests/qa/desktop/plays/D/** (collide with VG-D-VIEW; no other files matched them) released
 acceptance = []
 depends_on = ["VG-CONTRACT", "VG-C", "VG-CONTRACT-D"]
 status = "attached"  # landed 1fdeb1c0
