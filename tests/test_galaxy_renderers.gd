@@ -1,4 +1,5 @@
 extends SceneTree
+# test-timeout: 20000
 
 # Piece C5-G2 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md
 # "G-G2 renderers"): the live galaxy view draws through the prototype's shell and
@@ -11,9 +12,10 @@ extends SceneTree
 #   A48-4     SUSPENDED by A56 (prototype wins until Westley has compared it):
 #             the same-faction-only check is replaced by a pin of what the
 #             prototype does, every edge drawn and the non-same-faction ones dim.
-#   A48-5     the size of a system comes from its wire tier: territory radius
-#             0.3 / 0.6 / 1.0 for tier 0 / 1 / 2 (provisional, no wire change),
-#             and the point size grows with the tier.
+#   A48-5     the size of a system comes from its significance: territory radius
+#             (B24, TD-VG-B-16: was 0.3 / 0.6 / 1.0 for tier 0 / 1 / 2) is 0.3 + 0.5 * rank / (n - 1)
+#             by capacity, ties by id, and the point size grows with the tier (tier order equals
+#             capacity order on the fixture).
 #   R-106-02/R-106-04 (conquest recolour, fenced today by test_galaxy_view.gd):
 #             a region that changes owner is recoloured through its shell.
 # The test finds the pieces by what they expose, not by file name, so the renderers
@@ -75,8 +77,9 @@ func _run_tests() -> void:
 		return
 	_snap = parsed
 	_view.set_snapshot(_snap)
-	for _i in range(3):
-		await process_frame
+	# TD-VG-B-17: was `for _i in range(3): await process_frame`; the B7 territory tween (territory_tween.gd DURATION_S 2.0)
+	# keeps the old owner's territory alive for its first second, so the territories are read after SETTLE_SEC (3.0, :31).
+	await create_timer(SETTLE_SEC).timeout
 
 	var data := _find(_view, func(n): return n.get("regions") is Dictionary and n.get("connections") is Dictionary and n.get("territories") is Dictionary)
 	var shell := _find(_view, func(n): return n.has_method("get_faction_shell_count"))
@@ -96,6 +99,18 @@ func _run_tests() -> void:
 	await _check_shells_R106_02(shell)
 	await _check_filaments_R106_02(constellation, data)
 	await _check_conquest_recolours_through_shell_R106_02(data, shell)
+
+
+# DRAFT-b24-sig: sig = 0.3 + 0.5 * rank / (n - 1), rank ascending by region capacity, ties by id (n of 1 gives 0.3).
+func _rank_sig(regions: Array) -> Dictionary:
+	var rows: Array = []
+	for r in regions:
+		rows.append([float(r.get("capacity", 0.0)), int(r.get("i", -1))])
+	rows.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
+	var out := {}
+	for rank in rows.size():
+		out[rows[rank][1]] = 0.3 + (0.5 * float(rank) / float(rows.size() - 1) if rows.size() > 1 else 0.0)
+	return out
 
 
 func _find(node: Node, pred: Callable) -> Node:
@@ -225,13 +240,16 @@ func _check_every_edge_drawn_dim_when_not_same_faction_A56(data: Node, snap: Dic
 # first; coverage is asserted so a snapshot without all three tiers cannot pass
 # vacuously.
 func _check_tier_sizes_A48_5(data: Node) -> void:
-	var want := [0.3, 0.6, 1.0]
+	# TD-VG-B-16 (superseded by B24, DRAFT-b24-sig): was `var want := [0.3, 0.6, 1.0]` indexed by tier; the territory radius is the
+	# region's rank-formula significance, 0.3 + 0.5 * rank / (n - 1), rank ascending by capacity, ties by id (see _rank_sig).
+	var want := _rank_sig(_snap["regions"])
 	var snap: Dictionary = _snap.duplicate(true)
 	for r in snap["regions"]:
 		if int(r["tier"]) == 0:
 			r["owner"] = 0
 	_view.set_snapshot(snap)
-	await process_frame
+	# TD-VG-B-17: was a single `await process_frame`; the B7 tween (-1 to 0) keeps owner -1 for its first second
+	await create_timer(SETTLE_SEC).timeout
 	var territories: Dictionary = data.get("territories")
 	var regions: Dictionary = data.get("regions")
 	var seen := [0, 0, 0]
@@ -243,14 +261,16 @@ func _check_tier_sizes_A48_5(data: Node) -> void:
 			size_by_tier[tier].append(float(regions[key]["size"]))
 		if int(r["owner"]) >= 0 and territories.has(key):
 			seen[tier] += 1
-			_assert(absf(float(territories[key]["radius"]) - want[tier]) < 0.001, "A48-5: tier %d region %s has territory radius %s, expected %s" % [tier, key, territories[key]["radius"], want[tier]])
+			# TD-VG-B-16: was `want[tier]` (0.3 / 0.6 / 1.0 by tier) and the message "tier %d region %s has territory radius %s, expected %s"
+			var want_r: float = float(want[int(r["i"])])
+			_assert(absf(float(territories[key]["radius"]) - want_r) < 0.001, "A48-5: region %s (tier %d) has territory radius %s, expected %s (rank formula 0.3 + 0.5 * rank / (n - 1) by capacity)" % [key, tier, territories[key]["radius"], want_r])
 	for t in range(3):
 		_assert(seen[t] > 0, "A48-5 (control): fixture has no owned region of tier %d" % t)
 		_assert(size_by_tier[t].size() > 0, "A48-5 (control): fixture has no region of tier %d" % t)
 	if size_by_tier[0].size() > 0 and size_by_tier[1].size() > 0 and size_by_tier[2].size() > 0:
 		_assert(size_by_tier[0].max() < size_by_tier[1].min() and size_by_tier[1].max() < size_by_tier[2].min(), "A48-5: point size does not rise strictly with tier (tier0 max %s, tier1 %s..%s, tier2 min %s)" % [size_by_tier[0].max(), size_by_tier[1].min(), size_by_tier[1].max(), size_by_tier[2].min()])
 	_view.set_snapshot(_snap)
-	await process_frame
+	await create_timer(SETTLE_SEC).timeout   # TD-VG-B-17: was `await process_frame`; the restore starts the same tween
 
 
 # The fixture's same-faction edges are all type 2 (both); give some of them
