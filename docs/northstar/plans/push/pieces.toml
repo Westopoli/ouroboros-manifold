@@ -2198,17 +2198,7 @@ status = { state = "attached", attach_sha = "d7d01f40" }
 tests_pending = false
 size_estimate = "about 600 lines ported from simulation/strategic_viewer.py + test"
 
-[[piece]]
-id = "SV-0"
-manager = "M0"
-wave = 10
-owns = ["csrc/mission.c", "csrc/ouroboros_sim.h", "csrc/pipe/om_pipe.c", "docs/architecture.md", "docs/northstar/spec_factory/signatures.toml", "tests/transport/test_pipe_mission_end_retention.py"]
-owns_glob = []
-acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
-depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R"]  # queued owners of mission.c, the header, architecture.md and signatures.toml
-status = { state = "pending" }
-tests_pending = true
-size_estimate = "retention override setter in mission.c, pipe mission_end field, one architecture paragraph, one signatures row"
+# SV-0 (simviewer spec): the setter variant (mission.c, header, signatures row, behind VG-CONTRACT-E7 and VG-W2) is superseded by the row below: Westley 2026-10-13 "go ahead with (c)" chose the pipe-only variant (no core or header change).
 
 # SV-0 (simviewer plan, Westley 2026-10-13 "go ahead with (c)"): debug-only optional `retention` on mission_end, set through om_unit_set_hp; spec docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md.
 [[piece]]
