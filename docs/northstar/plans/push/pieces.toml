@@ -1974,6 +1974,31 @@ status = { state = "attached", attach_sha = "c79d141" }
 tests_pending = true  # tests/test_tactical_camera.gd (existing red) gains cases; tests/test_tactical_view.gd :309, :314 re-pinned and :371 diagnosed by the test writer; the S-103 play is new
 size_estimate = "A18: the opening frame is the player's home, [B R-103-01], DRAFT-a18-margin, DRAFT-a18-home-key; acceptance = the three framing groups of tests/test_tactical_camera.gd green (live, top-edge, bottom-right-corner); the four A6a-2 edge-scroll cases are FINDING-edge-scroll-xvfb (not A18's); test_tactical_view.gd :309/:314 re-pinned under TD-VG-A-13; test_pan_speed_zoom.py :93 re-pinned under TD-VG-A-14; FU-A18-3d for the 3D rig"
 
+# Westley 2026-10-13 verdicts: S-002 rejected (the layer order is a keybind), S-140 re-shot after the route line.
+[[piece]]
+id = "VG-A-layerkeys"
+manager = "M0"
+wave = 9
+owns = ["scenes/tactical_c/layer_view.gd", "scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_layerkeys.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py"]  # tactical_view.gd: the input handler lines only
+owns_glob = []
+acceptance = ["tests/test_vg_a_layerkeys.gd"]
+depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW"]  # VG-D-VIEW (queued) also owns scenes/tactical_c/tactical_view.gd, so it lands first (clerk addition 2026-10-13, Architect to confirm)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "Alt (Cmd on macOS) plus layer number plus click sends the selection to that layer at the clicked spot (R-002-08, Westley 2026-10-13); the To-layer strip buttons go; the same orders reach qa_state"
+
+[[piece]]
+id = "VG-A-routeline"
+manager = "M0"
+wave = 9
+owns = ["scenes/tactical_c/route_line.gd", "tests/test_vg_a_routeline.gd", "tests/qa/desktop/plays/F/S-140.py"]
+owns_glob = []
+acceptance = ["tests/test_vg_a_routeline.gd"]
+depends_on = ["VG-A18", "VG-W2"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "copies the prototype's route line from scenes/mockups/walkers/walkers_mockup.gd (origin/push/proto-walkers, _draw), fed by the unit's stored route (W2) or the order target when none"
+
 # A18 test fixes (Architect 2026-10-13): TD-VG-A-13/14/15 applied by testfix-1; FINDING-edge-scroll-restore-overshoot by testfix-2.
 [[piece]]
 id = "VG-A18-testfix-1"

@@ -108,12 +108,10 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/westley/B-S106-galaxy-dot-colour-refix.png` | `VG-B24` layout, then B25 |
-| 2 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/westley/E-S237-settlement-look-after-E1k.png` | lane E look pieces, the banded-contour prototype |
-| 3 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/westley/F-S140-net-first-tick-after-move-order.png` (and `F-S141-lobby-two-members.png`) | lane F, A16 |
-| 4 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
-| 5 | Lane A's opening-battle group shots (S-001): approved or rejected per row | `story_reviews/westley/A-S002-layer-transfer-buttons.png`; the S-001 group shots are not re-queued yet | lane A fix pieces |
-| 6 | A second worktree pass: remove unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`, yes or no | CLAUDE.md Git | housekeeping |
+| 1 | S-103 opening frame: Westley asked what the blue shapes are and where the base is; answer pending | `story_reviews/westley/A-S103-start-view-opening-frame.png` | lane A |
+| 2 | Chronicle: does the map wait for the printing entry (`Q-069-03`, default run on) | `ambiguity_register.md` | chronicle map piece |
+| 3 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
+| 4 | Places on generated terrain (`Q-191-14`, default yes) | `ambiguity_register.md` | places on generated terrain |
 
 Closed 2026-10-13 from Westley's 2026-10-12 verdicts, found in the transcript: galaxy density (Q-B24-01, as built) and the two-units-one-pixel pairs (Q-132-03, the A18 opening camera); their shots stay under `story_reviews/westley/2026-10-13/` as the record.
 

@@ -54,8 +54,9 @@ Rules
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
 - R-002-06  Given a hard transfer to a layer outside the map's layer range, When it is issued, Then it is rejected and the unit's state does not change.
 - R-002-07  Given a hard transfer order for a mixed selection, When it is issued, Then every unit in the selection gets its own pending transfer and each resolves independently by its own position and duration.
+- R-002-08  Given one or more selected units, When the player holds Alt (Cmd on macOS), presses a layer number key and clicks the map, Then the selection receives a hard transfer (R-002-01) to that layer, the order taking the clicked spot as the place to make the change; the layer order is this keybind and no on-screen "To layer" button is the control (Westley 2026-10-13: "These are supposed to be keybinds, alt+#+click. (cmd on macOS)."). Provisional: how the key combination coexists with R-003-07's modifier and with control-group recall is not yet ruled.
 
-Inputs: layer command (target layer, integer in map range); selection (1 to N units); unit position; accessibility mask.
+Inputs: layer command (target layer, integer in map range, from Alt or Cmd plus a layer key plus a click, R-002-08); selection (1 to N units); unit position; accessibility mask.
 Outputs: per-unit pending transfer; per-unit layer field in the tick delta; transition start and end events.
 Open flags: none. The route-change readings it relies on (R-001-05) are provisional, held as runtime settings.
 

@@ -126,6 +126,7 @@ As a commander, I want to see units turn, slow behind blockers, and settle into 
 Rules
 - R-101-01  Given a T2 clip of a 20-unit move, When reviewed, Then no unit overlaps another, no unit teleports, and units arrive within 2 s of each other.
 - R-101-02  Given the renderer, When it draws between ticks, Then position and facing are linearly interpolated from the last two ticks.
+- R-101-03  Given a move order that has just been issued, When the selected group is on the way, Then the route the planner found is drawn on the map as a coloured line from the group to the ordered spot, and it stays until the group arrives (R-095-05); the line is the walkers prototype's route line, copied, not regenerated (Westley 2026-10-13: "Shows units clumped on bottom moving by the looks of it, hard to tell because it's just a photo, one of the prototypes showed a really clever 'path' colored line showing the route it found to get to the location I right clicked. That might be useful here, and the code is probably mostly copy+pastable, no re-generation needed.").
 
 Inputs: tick deltas.
 Outputs: screen.
