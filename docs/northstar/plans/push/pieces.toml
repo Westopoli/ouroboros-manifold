@@ -1991,7 +1991,7 @@ size_estimate = "TD-VG-A-13, TD-VG-A-14 and TD-VG-A-15 applied in the test files
 id = "VG-A18-testfix-2"
 manager = "M0"
 wave = 9
-owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/test_tactical_play.py"]  # TD-VG-A-16, overlap with the attached glob G-qadesktoptests (Architect 2026-10-13)
+owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/test_tactical_play.py"]  # TD-VG-A-16, overlap with the attached glob G-qadesktoptests (Architect 2026-10-13); plays/A/play_support.py :22,25 also take the TD-HARNESS-qadir import/assignment
 owns_glob = []
 acceptance = []
 depends_on = ["VG-A18", "VG-A17"]
@@ -2004,13 +2004,13 @@ size_estimate = "FINDING-edge-scroll-restore-overshoot: near pass at the restore
 id = "VG-A-edgescroll"
 manager = "M0"
 wave = 9
-owns = []  # a read-only scout: it owns no product file and writes nothing to the repo; it reports product vs harness
+owns = ["tests/test_tactical_camera.gd", "scripts/specfactory/gd_tests_known_red.txt"]  # TD-VG-A-17: _mouse_to warps the pointer like qa_driver.gd:390-405; the camera test is A18's until A18 attaches; the known-red line :5 leaves when the file is green under xvfb (B23 attached, A94-harness is the attached glob owner; Architect 2026-10-13)
 owns_glob = []
-acceptance = []
+acceptance = ["tests/test_tactical_camera.gd"]
 depends_on = ["VG-A18", "VG-B23"]  # A18 re-pins the camera tests first; VG-B23 owns gd_tests_known_red.txt (the entry leaves with FINDING-edge-scroll-xvfb)
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "scout: diagnoses whether the injected pointer under xvfb reaches _pan_input (tactical_view.gd:1041), with a positive control (a synthetic edge InputEventMouseMotion moves the camera); reports product vs harness; Architect 2026-10-13"
+size_estimate = "test-fix: two lines in _mouse_to (warp_mouse guarded by DisplayServer.get_name() != \"headless\", flush_buffered_events after the event), one known-red line removed; scout verdict 2026-10-13: harness, not product"
 
 # Lane C play fix (spec "C-s004"): the play picks a target on another layer from qa_state.
 [[piece]]
@@ -2106,7 +2106,7 @@ id = "VG-B24"
 manager = "M0"
 wave = 9
 owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/game_fixture.gd", "tests/test_vg_b_b24.gd", "tests/test_galaxy_renderers.gd", "tests/test_vg_b_b4.gd", "tests/test_vg_b_b23.gd", "tests/test_vg_b_b22.gd"]  # galaxy_view.gd: the layout call _relayout at :412-416 only (on 536f7fd5; Architect g1); test_vg_b_b4.gd and test_vg_b_b23.gd: line :188 only (TD-VG-B-16); test_galaxy_quality_setting.gd moved to VG-B24b-quality-control; test_vg_b_b22.gd: row (6) :189 and header :27-30 only (TD-VG-B-18)
-owns_glob = ["tests/qa/desktop/plays/B/*"]  # the B plays re-shot
+owns_glob = ["tests/qa/desktop/plays/B/*"]  # the B plays re-shot; plays/B/_play.py :22-28 also take the TD-HARNESS-qadir import/assignment
 acceptance = ["tests/test_vg_b_b24.gd"]
 depends_on = ["VG-B23", "VG-B23b-dotcolour", "VG-B"]  # VG-B23 owns galaxy_gen.gd and galaxy_view.gd; VG-B is the attached owner by glob of the rest
 status = { state = "attached", attach_sha = "59a24b49" }
@@ -2153,13 +2153,25 @@ size_estimate = "B25: dim wash, four star layers at 50/125/400/1250, wrapping mo
 id = "HARNESS-userdir"
 manager = "M0"
 wave = 9
-owns = ["scripts/specfactory/merge_gate.sh", "scripts/run_godot_tests.sh", "tests/qa/desktop/daemon_client.py", "tests/specfactory/test_gate_userdir.py"]
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/run_godot_tests.sh", "tests/qa/desktop/daemon_client.py", "tests/specfactory/test_gate_userdir.py", "tests/qa/desktop/test_galaxy_pixels.py", "tests/qa/desktop/test_flow_spine.py", "tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/plays/B/_play.py", "tests/qa/desktop/plays/C/_play.py", "tests/qa/desktop/plays/F/_play.py", "tests/qa/desktop/plays/K/_k_common.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_userdir.py", "tests/transport/test_fetch_godotsteam.py", "tests/transport/test_vg_f_w8d_presets.py"]
-depends_on = ["VG-GUARD", "HARNESS-runnertime", "G-qadesktoptests"]  # VG-GUARD owns merge_gate.sh and daemon_client.py until it is attached; HARNESS-runnertime owns run_godot_tests.sh; G-qadesktoptests owns tests/qa/desktop/** by glob. Architect 2026-10-12: merge_gate.sh exports XDG_DATA_HOME=$SCRATCH_ROOT/xdg with $SCRATCH_ROOT/xdg/godot/export_templates symlinked to ~/.local/share/godot/export_templates and nothing else (never the data/ or app_userdir subtree), so the ambient settings.cfg is hidden while headless exports still build; acceptance = test_headless_linux_export_builds and test_windows_export_builds_headless green under the gate env, plus a positive control that a planted data/settings.cfg in the real home does not change qa_state() era.
+depends_on = ["VG-GUARD", "HARNESS-runnertime", "G-qadesktoptests", "HARNESS-qadir", "VG-A18-testfix-2", "VG-B24"]  # converts the seven TD-HARNESS-qadir sites to the start-time user dir (spec :316); VG-GUARD owns merge_gate.sh and daemon_client.py until it is attached; HARNESS-runnertime owns run_godot_tests.sh; G-qadesktoptests owns tests/qa/desktop/** by glob. Architect 2026-10-12: merge_gate.sh exports XDG_DATA_HOME=$SCRATCH_ROOT/xdg with $SCRATCH_ROOT/xdg/godot/export_templates symlinked to ~/.local/share/godot/export_templates and nothing else (never the data/ or app_userdir subtree), so the ambient settings.cfg is hidden while headless exports still build; acceptance = test_headless_linux_export_builds and test_windows_export_builds_headless green under the gate env, plus a positive control that a planted data/settings.cfg in the real home does not change qa_state() era.
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "gate, test runner and desktop driver boot on an empty XDG_DATA_HOME (FINDING-ambient-user-dir)"
+
+[[piece]]
+id = "HARNESS-qadir"
+manager = "M0"
+wave = 9
+owns = ["tests/qa/desktop/test_galaxy_pixels.py", "tests/qa/desktop/test_flow_spine.py", "tests/qa/desktop/plays/C/_play.py", "tests/qa/desktop/plays/F/_play.py", "tests/qa/desktop/plays/K/_k_common.py", "tests/specfactory/test_qadir_userdir.py"]  # TD-HARNESS-qadir: QA_SHOT_DIR and the flow-spine saves root come from daemon_client._USER_DATA_DIR; overlap with the attached G-qadesktoptests glob and the attached VG-C, VG-F, VG-F-NETTICK owners (existing pattern; Architect 2026-10-13). plays/A/play_support.py is edited under the same TD inside VG-A18-testfix-2 and plays/B/_play.py inside VG-B24; daemon_client.py is not touched (VG-GUARD, then HARNESS-userdir)
+owns_glob = []
+acceptance = ["tests/specfactory/test_qadir_userdir.py"]
+depends_on = ["G-qadesktoptests", "VG-C", "VG-F-NETTICK"]  # all attached; runs now beside the A18 and B24 landings
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "5 test files, one import and one assignment each (about 10 lines) + one new pure test with a planted-stale-frame control; the clerk-brief symlink retires when VG-A18-testfix-2 and VG-B24 have also attached"
 
 # Westley 2026-10-12: sim viewer (docs/northstar/plans/2026-10-12-simviewer-spec.md). Tooling, never in the game loop. SV-1..SV-3 are new files only.
 [[piece]]
