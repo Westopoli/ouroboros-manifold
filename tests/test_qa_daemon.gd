@@ -142,6 +142,10 @@ func _check_project_verb(script) -> void:
 	var fr: Dictionary = fx.frame()
 	fr["player_faction"] = 0
 	fr["visible"] = {"0": [1, 2, 3, 4]}
+	# TD-VG-A-15: the fixture has no map.canvas, so load_frame never framed it and the
+	# units projected against the camera the view already held (A18 opening frame, zoom 32,
+	# unit 1 off screen). A canvas makes the view frame the fixture's own box. Was: no canvas.
+	fr["map"]["canvas"] = 1000.0
 	view.load_frame(fr)
 	await process_frame
 	current_scene = view

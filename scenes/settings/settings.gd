@@ -198,6 +198,7 @@ func _build_keybinds_card(parent: Control) -> void:
 		["Layer Up", "Q"],
 		["Layer Down", "E"],
 		["Sensor Pulse", "Space"],
+		["Home View", "Home"],
 	]
 
 	for bind in binds:
