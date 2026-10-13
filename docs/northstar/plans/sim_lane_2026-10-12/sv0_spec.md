@@ -9,7 +9,7 @@ Source: simviewer plan (`docs/northstar/plans/2026-10-12-simviewer-plan.md`, SV-
 
 ## Behaviour
 1. `mission_end` takes an optional number `retention`. Absent: byte-identical output and state to today (R-077-01 measured retention).
-2. Present, debug build (`OM_DEBUG_INJECT`): value outside 0..1 or not a number answers `{"type":"error","name":"mission_end","reason":"bad retention"}` and changes nothing (the mission stays running). Otherwise, before `om_mission_end`, every alive unit of the player faction gets `om_unit_set_hp(w, id, retention * om_unit_profile_max_hp(w, type))`; then the normal path runs. The debrief's `retention` equals the given value (tolerance 1e-9) and its `band` is the sim's own classification of 0.75 x objective score + 0.25 x that retention.
+2. Present, debug build (`OM_DEBUG_INJECT`): value outside 0..1 or not a number answers `{"type":"error","name":"mission_end","reason":"bad retention"}` and changes nothing (the mission stays running). Otherwise, before `om_mission_end`, every alive unit of the player faction gets `om_unit_set_hp(w, id, retention * om_unit_profile_max_hp(w, type))`; then the normal path runs. The debrief's `brought_home` (the frame has no `retention` key; `csrc/pipe/om_pipe.c:884`) equals the given value (tolerance 1e-9) and its `band` is the sim's own classification of 0.75 x objective score + 0.25 x that retention.
 3. Present, release build: `error` reason `debug build required`, nothing changes (same convention as `objective_complete`).
 4. Tooling artefact, documented: the HP write also sets commander fate (killed at 0 HP, wounded below 30%, R-077-03). Documented in `docs/architecture.md` beside `mission_end`; the game client never sends the field.
 
@@ -19,9 +19,9 @@ Source: simviewer plan (`docs/northstar/plans/2026-10-12-simviewer-plan.md`, SV-
 - Then a second Fable audit of the architecture.md paragraph before SV-1 builds.
 
 ## Tests (required)
-Seed 16, 80 regions, features 0-7 (as `test_pipe_debrief_region_delta.py`), `objective_complete` objective 0 completion 1.0:
-- T1 retention 0.0 answers debrief `retention` 0.0 and a band lower than the run without the field (positive control: without it, retention is 1.0).
-- T2 retention 0.5: debrief retention 0.5 (1e-9).
+Seed 16, 80 regions, features 0-7 (as `test_pipe_debrief_region_delta.py`), `objective_complete` objective 0. Amended 2026-10-13 after the test writer's stop: with completion 1.0 the final score is 0.75 at retention 0.0, which the classifier still calls band 4 (`mission.c:1307`), so no band can move. T1 and T6 use completion 0.9 (a fixture input, not a threshold; derived by the writer: band 4 at retention 1.0, band 3 at 0.0 for seed 16's archetype); T2 to T5 may keep 1.0:
+- T1 retention 0.0 answers debrief `brought_home` 0.0 and a band lower than the run without the field (positive control: without it, `brought_home` is 1.0).
+- T2 retention 0.5: debrief `brought_home` 0.5 (1e-9).
 - T3 absent: debrief frames equal a run recorded without the field (byte-identical to base).
 - T4 retention -0.1, 1.1, and "x": `error` `bad retention`, then a following `mission_end` without the field still answers a debrief (nothing was changed).
 - T5 release pipe `pipe/ouroboros_pipe` with `retention` present: `error` `debug build required`.
