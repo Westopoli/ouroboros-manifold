@@ -155,6 +155,10 @@
 #define OM_STEERING_SWEEP_DELTA_RAD_5X 1.3089969390
 #define OM_STEERING_SWEEP_DELTA_RAD_6X 1.5707963268
 
+/* Planner points a walker keeps (point 0 is the unit; a longer plan stores nothing and replans at each waypoint). */
+#define OM_MOVE_WALK_PTS 512
+#define OM_MOVE_ROUTE_HALF 0.5 /* walk_route.c WR_HALF: a cell centre is (cell + 1/2) * OM_TERRAIN_CELL_WU */
+
 typedef struct {
     int      in_use;
     uint32_t unit_id;
@@ -181,6 +185,7 @@ typedef struct {
     int      visible[OM_MAX_FACTIONS];
     int      plan_valid;                 /* PP-move route (ROUTE_AROUND_TERRAIN): aim_x/aim_y is the next waypoint */
     uint32_t plan_epoch;
+    uint32_t plan_layer;                 /* the walker's layer when the plan was made; a different layer replans */
     double   plan_dest_x, plan_dest_y, aim_x, aim_y;
     int      aim_is_waypoint;
     int      routed; /* this order's route had a waypoint: its final arrival radius is the waypoint's (R-099-04) */
@@ -190,6 +195,11 @@ typedef struct {
      * mass and it comes back down to transit_home; lay_route marks the pending order as the router's. */
     int      lay_state, lay_has_pend, lay_route, transit;
     uint32_t lay_to, lay_pend, lay_t, lay_dur, transit_home;
+    /* W2 stored walk route: the planner's points 1 .. route_n - 1 live as terrain cells in om_move_state.route_cx/route_cy
+     * (slot 0, the unit, is not stored); route_i is the slot the walker aims at. route_n 0 = nothing stored.
+     * See also: tests/csim/test_VG_W_w2_routes.py, om_move_walker_step */
+    uint16_t route_n, route_i;
+    uint8_t  route_ends_at_goal;
 } om_move_unit;
 
 typedef struct {
@@ -225,6 +235,8 @@ typedef struct {
 typedef struct {
     om_move_unit units[OM_MOVE_MAX_UNITS];
     uint32_t     discovery_max;
+    /* W2: [unit id][slot] terrain cells of the stored routes; each table is one calloc on the first stored plan (NULL until then). */
+    uint16_t     (*route_cx)[OM_MOVE_WALK_PTS], (*route_cy)[OM_MOVE_WALK_PTS];
 
     om_move_group groups[OM_MOVE_MAX_GROUPS];
     uint32_t      n_groups;
@@ -420,6 +432,8 @@ static void om_move_state_free_fn(void *p) {
         free(ms->bfs_queue);
         free(ms->bfs_scratch);
         free(ms->density);
+        free(ms->route_cx);
+        free(ms->route_cy);
     }
     free(p);
 }
@@ -586,6 +600,13 @@ static double om_move_clamp_axis(double v, double lim) {
 static om_move_unit *om_move_get(om_move_state *ms, uint32_t unit_id) {
     if (unit_id == 0 || unit_id >= OM_MOVE_MAX_UNITS) return NULL;
     return &ms->units[unit_id];
+}
+
+/* W2: both route tables, allocated together on first use; 0 when memory is short (the walker then stores nothing). */
+static int om_move_route_tables(om_move_state *ms) {
+    if (!ms->route_cx) ms->route_cx = (uint16_t (*)[OM_MOVE_WALK_PTS])calloc(OM_MOVE_MAX_UNITS, sizeof *ms->route_cx);
+    if (!ms->route_cy) ms->route_cy = (uint16_t (*)[OM_MOVE_WALK_PTS])calloc(OM_MOVE_MAX_UNITS, sizeof *ms->route_cy);
+    return ms->route_cx && ms->route_cy;
 }
 
 /* floor(t) as an int32, clamped to +-1e9 (NaN counts as -1e9); monotone in t.
@@ -1076,6 +1097,10 @@ static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit
         mu->deflect_origin_x = mu->x;
         mu->deflect_origin_y = mu->y;
         mu->waiting = 0;
+        mu->plan_layer = 0;
+        mu->route_n = 0;
+        mu->route_i = 0;
+        mu->route_ends_at_goal = 0;
         for (f = 0; f < OM_MAX_FACTIONS; f++) mu->visible[f] = 1;
         if (unit_id > ms->discovery_max) ms->discovery_max = unit_id;
         if (ms->grid_live && om_unit_alive(w, unit_id)) ms->grid_live = 0;
@@ -1406,6 +1431,7 @@ static void om_move_route_plan(const om_world *w, om_move_state *ms, om_move_uni
     if (!mu->plan_valid || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y) mu->routed = 0;
     mu->plan_valid = 1;
     mu->plan_epoch = ms->terrain_epoch;
+    mu->plan_layer = (uint32_t)om_move_layer(w, mu->unit_id);
     mu->aim_is_waypoint = 0;
     mu->aim_x = tx;
     mu->aim_y = ty;
@@ -2123,12 +2149,56 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     }
 }
 
-/* Terrain stage 2 (R-001-07, R-004-07): a walker follows om_walk_route one waypoint at a time, replanning from the
- * waypoint it reaches (the route is least time over cell-centre steps, so the replan agrees with the plan). A step
- * that rises in terrain height runs at 1/SLOPE_UP_DIV of the pace, one that falls at SLOPE_DOWN_MULT times it; the
- * rest of the tick's time carries over to the next waypoint. aim_is_waypoint is 1 while the aim is not the route's
- * last point. See also: om_move_walker_tick, which sets the layer after the step. */
-#define OM_MOVE_WALK_PTS 512
+/* W2: point k of the stored route of mu, rebuilt by the expression walk_route.c wrote it with: a cell centre, except the
+ * last point of a route that ended at the goal, which is the (clamped) destination the plan was made for. */
+static void om_move_route_pt(const om_move_state *ms, const om_move_unit *mu, uint32_t k, double *x, double *y) {
+    if (mu->route_ends_at_goal && k + 1u == mu->route_n) {
+        *x = om_move_clamp_axis(mu->plan_dest_x, ms->canvas_w);
+        *y = om_move_clamp_axis(mu->plan_dest_y, ms->canvas_h);
+        return;
+    }
+    *x = ((double)ms->route_cx[mu->unit_id][k] + OM_MOVE_ROUTE_HALF) * OM_TERRAIN_CELL_WU;
+    *y = ((double)ms->route_cy[mu->unit_id][k] + OM_MOVE_ROUTE_HALF) * OM_TERRAIN_CELL_WU;
+}
+
+/* W2: store the planner's points 1 .. n - 1 as terrain cells and start at point 1. Stores nothing (route_n 0, so the
+ * walker replans at each waypoint as before) for a plan longer than OM_MOVE_WALK_PTS, a cell outside the terrain grid,
+ * or a point that would not rebuild bit for bit. gx, gy is the clamped goal the planner was given. */
+static int om_move_route_store(om_move_state *ms, om_move_unit *mu, const double *pts, int n, double gx, double gy) {
+    const uint32_t id = mu->unit_id;
+    const int ends = n > 1 && pts[2 * (n - 1)] == gx && pts[2 * (n - 1) + 1] == gy;
+    int k;
+    mu->route_n = 0;
+    mu->route_i = 0;
+    mu->route_ends_at_goal = 0;
+    if (n < 2 || n > OM_MOVE_WALK_PTS || !om_move_route_tables(ms)) return 0;
+    for (k = 1; k < n; k++) {
+        const double fx = pts[2 * k] / OM_TERRAIN_CELL_WU, fy = pts[2 * k + 1] / OM_TERRAIN_CELL_WU;
+        if (!(fx >= 0.0 && fy >= 0.0 && fx < (double)OM_TERRAIN_MAX_CELLS && fy < (double)OM_TERRAIN_MAX_CELLS)) return 0;
+        ms->route_cx[id][k] = (uint16_t)(int)fx;
+        ms->route_cy[id][k] = (uint16_t)(int)fy;
+        if (!(ends && k == n - 1)
+            && (((double)ms->route_cx[id][k] + OM_MOVE_ROUTE_HALF) * OM_TERRAIN_CELL_WU != pts[2 * k]
+                || ((double)ms->route_cy[id][k] + OM_MOVE_ROUTE_HALF) * OM_TERRAIN_CELL_WU != pts[2 * k + 1])) return 0;
+    }
+    mu->route_n = (uint16_t)n;
+    mu->route_i = 1;
+    mu->route_ends_at_goal = (uint8_t)ends;
+    return 1;
+}
+
+/* W2: the aim is the stored point route_i; it is a waypoint unless it is the last one. */
+static void om_move_route_aim(const om_move_state *ms, om_move_unit *mu) {
+    om_move_route_pt(ms, mu, mu->route_i, &mu->aim_x, &mu->aim_y);
+    mu->aim_is_waypoint = (uint32_t)mu->route_i + 1u < mu->route_n;
+}
+
+/* Terrain stage 2 (R-001-07, R-004-07): a walker plans om_walk_route once per order and walks the stored points (W2).
+ * It plans again when the plan is invalid, the terrain epoch, its layer or the destination changed. A plan of more than
+ * OM_MOVE_WALK_PTS points is not stored: it replans from each waypoint it reaches, as before W2. A step that rises in
+ * terrain height runs at 1/SLOPE_UP_DIV of the pace, one that falls at SLOPE_DOWN_MULT times it; the rest of the
+ * tick's time carries over to the next waypoint. aim_is_waypoint is 1 while the aim is not the route's last point.
+ * See also: om_move_walker_tick, which sets the layer after the step; tests/csim/test_VG_W_w2_routes.py. */
 #define OM_MOVE_WALK_AIM_X 2 /* pts[0..1] is the unit; the next point follows */
 #define OM_MOVE_WALK_MAX_LEGS 16
 static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t period) {
@@ -2140,31 +2210,41 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
     mu->waiting = 0;
     for (legs = 0; legs < OM_MOVE_WALK_MAX_LEGS && left > 0.0 && mu->has_dest; legs++) {
         double dx, dy, d, v, f = 1.0;
-        if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y) {
+        if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_layer != (uint32_t)om_move_layer(w, id)
+            || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y) {
             double buf[2 * OM_MOVE_WALK_PTS], secs, *pts = buf;
+            const double gx = om_move_clamp_axis(mu->dest_x, ms->canvas_w), gy = om_move_clamp_axis(mu->dest_y, ms->canvas_h);
             /* om_walk_route reads the unit's row position, which this module hands over once per sync. */
             mu->pushed_x = mu->x;
             mu->pushed_y = mu->y;
             om_tac_unit_sync_position(w, id, mu->x, mu->y);
-            int n = om_walk_route(w, id, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), pts, OM_MOVE_WALK_PTS, &secs);
+            int n = om_walk_route(w, id, gx, gy, pts, OM_MOVE_WALK_PTS, &secs);
             if (n > OM_MOVE_WALK_PTS) {
                 pts = (double *)malloc(sizeof(double) * 2u * (size_t)n);
-                n = pts ? om_walk_route(w, id, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), pts, (uint32_t)n, &secs) : -1;
+                n = pts ? om_walk_route(w, id, gx, gy, pts, (uint32_t)n, &secs) : -1;
             }
             if (n < 2) {
                 if (pts != buf) free(pts);
                 mu->has_dest = 0;
                 mu->plan_valid = 0;
+                mu->route_n = 0;
+                mu->route_i = 0;
+                mu->route_ends_at_goal = 0;
                 return;
             }
-            mu->aim_x = pts[OM_MOVE_WALK_AIM_X];
-            mu->aim_y = pts[OM_MOVE_WALK_AIM_X + 1];
-            mu->aim_is_waypoint = n > 2;
+            mu->plan_dest_x = mu->dest_x;
+            mu->plan_dest_y = mu->dest_y;
+            if (om_move_route_store(ms, mu, pts, n, gx, gy)) {
+                om_move_route_aim(ms, mu);
+            } else {
+                mu->aim_x = pts[OM_MOVE_WALK_AIM_X];
+                mu->aim_y = pts[OM_MOVE_WALK_AIM_X + 1];
+                mu->aim_is_waypoint = n > 2;
+            }
             if (pts != buf) free(pts);
             mu->plan_valid = 1;
             mu->plan_epoch = ms->terrain_epoch;
-            mu->plan_dest_x = mu->dest_x;
-            mu->plan_dest_y = mu->dest_y;
+            mu->plan_layer = (uint32_t)om_move_layer(w, id);
         }
         dx = mu->aim_x - mu->x;
         dy = mu->aim_y - mu->y;
@@ -2178,13 +2258,22 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
         if (d > 0.0 && !(v > 0.0)) { mu->waiting = 1; return; }
         /* See also: tests/csim/test_E01_T2_walker_waypoint_arrival.py */
         if (mu->aim_is_waypoint && d < OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS) {
-            mu->plan_valid = 0;
+            if (mu->route_n > 1) { mu->route_i++; om_move_route_aim(ms, mu); }
+            else mu->plan_valid = 0;
         } else if (d == 0.0 || v * left >= d) {
             mu->x = mu->aim_x;
             mu->y = mu->aim_y;
             if (d > 0.0) left -= d / v;
-            mu->plan_valid = 0;
-            if (!mu->aim_is_waypoint) { mu->has_dest = 0; mu->deflecting = 0; }
+            if (mu->aim_is_waypoint && mu->route_n > 1) {
+                mu->route_i++;
+                om_move_route_aim(ms, mu);
+            } else {
+                mu->plan_valid = 0;
+                mu->route_n = 0;
+                mu->route_i = 0;
+                mu->route_ends_at_goal = 0;
+                if (!mu->aim_is_waypoint) { mu->has_dest = 0; mu->deflecting = 0; }
+            }
         } else {
             mu->x += dx / d * v * left;
             mu->y += dy / d * v * left;
@@ -2192,6 +2281,28 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
         }
         om_move_grid_update(ms, mu);
     }
+}
+
+/* Internal, not in the header (om_internal.h): the stored walk route of a unit. Returns route_n (0 without a movement
+ * row or a stored route), writes route_i, and fills min(route_n, cap) interleaved (x, y) pairs: slot 0 is the unit's
+ * own position (the planner's point 0, not stored), slots 1 .. route_n - 1 the stored points. Reads through
+ * om_move_get, never om_move_touch, so a call changes no checksum.
+ * See also: tests/csim/test_VG_W_w2_routes.py */
+uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_i, double *pts, uint32_t cap) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    const om_move_unit *mu;
+    uint32_t k, n;
+    if (route_i) *route_i = 0;
+    if (!ms) return 0;
+    mu = om_move_get((om_move_state *)ms, unit_id);
+    if (!mu || !mu->in_use || mu->route_n < 2) return 0;
+    if (route_i) *route_i = mu->route_i;
+    n = mu->route_n < cap ? mu->route_n : cap;
+    for (k = 0; k < n && pts; k++) {
+        if (k == 0) { pts[0] = mu->x; pts[1] = mu->y; }
+        else om_move_route_pt(ms, mu, k, &pts[2 * k], &pts[2 * k + 1]);
+    }
+    return mu->route_n;
 }
 
 static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint32_t period) {
@@ -3239,7 +3350,13 @@ void om_move_walker_tick(om_world *w) {
         if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) continue;
         dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
         band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
-        if (om_move_layer(w, id) != band) om_tac_unit_set_layer(w, id, (uint32_t)band);
+        if (om_move_layer(w, id) != band) {
+            /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
+             * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here.
+             * Not part of the Architect's W2 ruling; the layer trigger in om_move_walker_step covers every other change. */
+            if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) mu->plan_layer = (uint32_t)band;
+            om_tac_unit_set_layer(w, id, (uint32_t)band);
+        }
     }
 }
 
@@ -3345,7 +3462,8 @@ static int mv_row_is_fresh(const om_world *cw, const om_move_unit *mu) {
     return !mu->giveup_near && !mu->detour_remaining && !mu->detour_dx && !mu->detour_dy && !mu->plan_valid &&
            !mu->plan_epoch && !mu->plan_dest_x && !mu->plan_dest_y && !mu->aim_x && !mu->aim_y &&
            !mu->aim_is_waypoint && !mu->lay_state && !mu->lay_has_pend && !mu->lay_route && !mu->transit &&
-           !mu->lay_to && !mu->lay_pend && !mu->lay_t && !mu->lay_dur && !mu->transit_home;
+           !mu->lay_to && !mu->lay_pend && !mu->lay_t && !mu->lay_dur && !mu->transit_home &&
+           !mu->plan_layer && !mu->route_n && !mu->route_i && !mu->route_ends_at_goal;
 }
 static uint64_t om_move_section_hash(const om_world *w) {
     const om_move_state *ms = (const om_move_state *)w->move_state;
@@ -3387,6 +3505,7 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_word(h, bits);
         h = mv_word(h, (uint64_t)(int64_t)mu->plan_valid);
         h = mv_word(h, mu->plan_epoch);
+        h = mv_word(h, mu->plan_layer);
         h = mv_dbl(h, mu->plan_dest_x); h = mv_dbl(h, mu->plan_dest_y);
         h = mv_dbl(h, mu->aim_x); h = mv_dbl(h, mu->aim_y);
         h = mv_word(h, (uint64_t)(int64_t)mu->aim_is_waypoint);
@@ -3398,6 +3517,10 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_word(h, mu->lay_to); h = mv_word(h, mu->lay_pend);
         h = mv_word(h, mu->lay_t); h = mv_word(h, mu->lay_dur);
         h = mv_word(h, mu->transit_home);
+        h = mv_word(h, mu->route_n); h = mv_word(h, mu->route_i); h = mv_word(h, mu->route_ends_at_goal);
+        for (k = 1; k < mu->route_n; k++) {
+            h = mv_word(h, ms->route_cx[id][k]); h = mv_word(h, ms->route_cy[id][k]);
+        }
     }
     h = mv_word(h, ms->n_groups);
     h = mv_word(h, ms->next_group_id);
@@ -3490,6 +3613,7 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         for (k = 0; k < OM_MAX_FACTIONS; k++) mv_put_i32(s, mu->visible[k]);
         mv_put_i32(s, mu->plan_valid);
         mv_put_u32(s, mu->plan_epoch);
+        mv_put_u32(s, mu->plan_layer);
         mv_put_f64(s, mu->plan_dest_x); mv_put_f64(s, mu->plan_dest_y);
         mv_put_f64(s, mu->aim_x); mv_put_f64(s, mu->aim_y);
         mv_put_i32(s, mu->aim_is_waypoint);
@@ -3501,6 +3625,10 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_u32(s, mu->lay_to); mv_put_u32(s, mu->lay_pend);
         mv_put_u32(s, mu->lay_t); mv_put_u32(s, mu->lay_dur);
         mv_put_u32(s, mu->transit_home);
+        mv_put_u32(s, mu->route_n); mv_put_u32(s, mu->route_i); mv_put_u32(s, mu->route_ends_at_goal);
+        for (k = 1; k < mu->route_n; k++) {
+            mv_put_u32(s, ms->route_cx[id][k]); mv_put_u32(s, ms->route_cy[id][k]);
+        }
     }
     mv_put_u32(s, ms->n_groups);
     mv_put_u32(s, ms->next_group_id);
@@ -3604,6 +3732,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         mu->in_use = mv_get_i32(&r);
         if (!mu->in_use) continue;
         mu->unit_id = mv_get_u32(&r);
+        if (mu->unit_id != id) r.ok = 0;
         mu->x = mv_get_f64(&r); mu->y = mv_get_f64(&r);
         mu->pushed_x = mv_get_f64(&r); mu->pushed_y = mv_get_f64(&r);
         mu->facing = mv_get_f64(&r);
@@ -3627,6 +3756,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         for (k = 0; k < OM_MAX_FACTIONS; k++) mu->visible[k] = mv_get_i32(&r);
         mu->plan_valid = mv_get_i32(&r);
         mu->plan_epoch = mv_get_u32(&r);
+        mu->plan_layer = mv_get_u32(&r);
         mu->plan_dest_x = mv_get_f64(&r); mu->plan_dest_y = mv_get_f64(&r);
         mu->aim_x = mv_get_f64(&r); mu->aim_y = mv_get_f64(&r);
         mu->aim_is_waypoint = mv_get_i32(&r);
@@ -3638,6 +3768,15 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         mu->lay_to = mv_get_u32(&r); mu->lay_pend = mv_get_u32(&r);
         mu->lay_t = mv_get_u32(&r); mu->lay_dur = mv_get_u32(&r);
         mu->transit_home = mv_get_u32(&r);
+        mu->route_n = (uint16_t)mv_get_count(&r, OM_MOVE_WALK_PTS);
+        mu->route_i = (uint16_t)mv_get_count(&r, OM_MOVE_WALK_PTS);
+        mu->route_ends_at_goal = (uint8_t)mv_get_count(&r, 1);
+        if (mu->route_n ? mu->route_i >= mu->route_n : mu->route_i != 0) r.ok = 0;
+        if (r.ok && mu->route_n > 1 && !om_move_route_tables(ms)) r.ok = 0;
+        for (k = 1; k < mu->route_n && r.ok; k++) {
+            ms->route_cx[id][k] = (uint16_t)mv_get_count(&r, OM_TERRAIN_MAX_CELLS - 1);
+            ms->route_cy[id][k] = (uint16_t)mv_get_count(&r, OM_TERRAIN_MAX_CELLS - 1);
+        }
     }
     ms->n_groups = mv_get_count(&r, OM_MOVE_MAX_GROUPS);
     ms->next_group_id = mv_get_u32(&r);
@@ -3676,7 +3815,7 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         ms->kind_val[k] = mv_get_i32(&r);
     }
     if (!r.ok || r.pos != len) {
-        free(ms);
+        om_move_state_free_fn(ms);
         return 1;
     }
     if (w->move_state && w->move_state_free) w->move_state_free(w->move_state);
