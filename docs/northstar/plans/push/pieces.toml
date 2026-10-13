@@ -2169,9 +2169,10 @@ owns = ["scenes/mockups/landscape/hud.gd", "scenes/mockups/landscape/field_map_s
 owns_glob = []
 acceptance = []
 depends_on = []
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "b152260" }
 tests_pending = false
 size_estimate = "prototype gate (Q-246-02): a selector in the landscape mockup's space kit HUD: one default 35 / region range (light 15, medium 35, heavy 55, tight 70) / mission type; Westley flies it on the Mac branch"
+# PROTO-space-density landed 2026-10-13: scenes/mockups/landscape/qa/space_density.json (MK-harness glob) and no other file was added; field_map_space.gd was not touched.
 
 [[piece]]
 id = "HARNESS-userdir"
