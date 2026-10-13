@@ -329,7 +329,7 @@ def nearest_enemy_px(client, q: dict) -> tuple:
     assert r.get("ok") is True, "play_support: FINDING: the project verb refused: %r" % r
     w, h = (int(v) for v in RESOLUTION.split("x"))
     # TD-VG-A-9e/9g, A17: a player scrolls with real pointer input (no camera verb); before a scroll longer than one screen _edge_scroll_to zooms
-    # out with the wheel and restores the zoom, and it measures game ticks, not wall seconds (the pan is a screen rate, 600 px/s, and A19 zoomed the opening frame about 14.5x). The edge is
+    # out with the wheel and restores the zoom, and it measures game ticks, not wall seconds (the pan is a screen rate, 600 px/s, and A18 frames the opening view at the home fit, up to ZOOM_MAX/ZOOM_STEP). The edge is
     # chosen from the WORLD delta enemy minus camera, not from the projected pixel: a point behind the eye unprojects to a
     # mirrored pixel. The live pan (tactical_view.gd _pan_input) scrolls only after a mouse-motion event, so one move to the edge pixel is sent and the pointer stays there (TD-VG-A-9f: nudges
     # take it out of the margin and the pan runs in bursts). SCREEN_WU is a named draft (a screen's worth of world, 3000 wu at the start height): both axes
