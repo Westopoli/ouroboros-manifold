@@ -7,15 +7,55 @@ const STRIP_X := 1840.0
 const STRIP_Y := 120.0
 const STRIP_STEP := 56.0
 const STRIP_BOX := Vector2(48.0, 48.0)
+# A16 (R-104-09): the To-layer buttons sit under the focus markers; all five engine layers 0..4 get one, always.
+const LAYER_COUNT := 5
 const LAYER_COLOURS := [Color(0.55, 0.85, 0.45), Color(0.40, 0.80, 0.85), Color(0.45, 0.60, 0.95), Color(0.75, 0.50, 0.95), Color(0.95, 0.85, 0.95)]
+
+# Emitted when a To-layer button is pressed; layer is an engine number 0..4 (the button labelled N sends N - 1).
+signal layer_order_requested(layer: int)
 
 var _units: Dictionary = {}
 var _local_faction := 0
 var _scale := 1.0
 var _camera := Vector2.ZERO
-var _focus := 1
+var _focus := 0
+var _buttons: Array = []
 var _layers: Array = []
 var _projector := Callable()
+
+
+# Architect 2026-10-12 (G6): plain Buttons, the strip's constants, text "To layer N" (N = engine layer + 1, player text only).
+# R-103-04: a button press changes nothing about the camera; focus_mode NONE keeps Tab for the layer focus (R-105-03).
+func _ready() -> void:
+	_build_buttons()
+
+
+func _build_buttons() -> void:
+	if not _buttons.is_empty():
+		return
+	for l in LAYER_COUNT:
+		var b := Button.new()
+		b.name = "ToLayer%d" % l
+		b.text = "To layer %d" % (l + 1)
+		b.set_meta("layer", l)
+		b.focus_mode = Control.FOCUS_NONE
+		b.position = Vector2(STRIP_X, STRIP_Y + (LAYER_COUNT + l) * STRIP_STEP)
+		b.size = STRIP_BOX
+		b.pressed.connect(func() -> void: layer_order_requested.emit(l))
+		add_child(b)
+		_buttons.append(b)
+
+
+func to_layer_buttons() -> Array:
+	_build_buttons()
+	return _buttons.duplicate()
+
+
+# R-001-07: with only walkers selected the buttons are dimmed and inert.
+func set_orderable(on: bool) -> void:
+	_build_buttons()
+	for b in _buttons:
+		(b as Button).disabled = not on
 
 
 func set_projector(p: Callable) -> void:
@@ -42,7 +82,7 @@ func set_frame(frame: Dictionary, a: Variant = 0, b: Variant = 1.0, c: Variant =
 	var seen := {}
 	for u in frame.get("units", []):
 		_units[int(u["id"])] = u
-		seen[int(u.get("layer", 1))] = true
+		seen[int(u.get("layer", 0))] = true
 	_layers = seen.keys()
 	_layers.sort()
 	queue_redraw()
@@ -77,7 +117,7 @@ func transit(id: int) -> String:
 	var u = _units.get(id)
 	if u == null or not u.has("tl"):
 		return ""
-	return "rise" if int(u["tl"]) > int(u.get("layer", 1)) else "drop"
+	return "rise" if int(u["tl"]) > int(u.get("layer", 0)) else "drop"
 
 
 func sensor_ring(id: int) -> Variant:
@@ -94,13 +134,13 @@ func _screen(u: Dictionary) -> Vector2:
 
 
 func _colour(layer: int) -> Color:
-	return LAYER_COLOURS[clampi(layer, 1, LAYER_COLOURS.size()) - 1]
+	return LAYER_COLOURS[clampi(layer, 0, LAYER_COLOURS.size() - 1)]
 
 
 func _draw() -> void:
 	for id in _units:
 		var u: Dictionary = _units[id]
-		var layer := int(u.get("layer", 1))
+		var layer := int(u.get("layer", 0))
 		var c := _colour(layer)
 		c.a = dim_alpha(layer)
 		var p := _screen(u)

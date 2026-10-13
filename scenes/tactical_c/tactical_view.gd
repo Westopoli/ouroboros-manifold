@@ -166,6 +166,7 @@ func _build_shell() -> void:
 	add_child(_motion)
 	for n in ["MapLayer", "StructuresLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
 		add_child(_piece(n, false))
+	_node("LayerView").layer_order_requested.connect(order_layer)  # the To-layer buttons (R-002-01, R-104-09)
 	_fx = Node2D.new()
 	_fx.name = "Fx"
 	add_child(_fx)
@@ -398,6 +399,7 @@ func _make_hud_label(pos: Vector2, parent: Node) -> Label:
 
 
 func _update_hud() -> void:
+	_sync_orderable()
 	if _clock_label == null:
 		return
 	var tick := int(_frame.get("tick", 0))
@@ -499,6 +501,11 @@ func qa_state() -> Dictionary:
 			"x": float(u.get("x", 0.0)),
 			"y": float(u.get("y", 0.0)),
 		}
+		# A16 (S-002's visible half, G4): the transition target and load from the frame's unit object, absent when omitted.
+		if u.has("tl"):
+			units[str(id)]["tl"] = int(u["tl"])
+		if u.has("ld"):
+			units[str(id)]["ld"] = int(u["ld"])
 	return {
 		"scene": "tactical_view",
 		"tick": int(_frame.get("tick", 0)),
@@ -508,6 +515,7 @@ func qa_state() -> Dictionary:
 		"unit_count": _frame.get("units", []).size(),
 		"units": units,
 		"units_px": _display_px.duplicate(),
+		"focus_layer": int(_node("LayerView").focus_layer()),
 		"local_faction": _get_local_faction(),
 		"selected": _selected.duplicate(),
 		"camera": {"x": _camera.x, "y": _camera.y},
@@ -671,6 +679,8 @@ func send_command(cmd: Dictionary) -> bool:
 	BugReportManager.log_command(cmd)
 	var bridge = SimSession.bridge()
 	var ok: bool
+	# A16 (R-002-01): a layer order carries its engine layer to the bridge (c_bridge.gd:476-477 reads cmd["layer"]).
+	var layer_extra := {"layer": int(cmd.get("layer", 0))} if kind == "set_layer" else {}
 	if NetMatch.active():
 		return _send_match_command(kind, unit_ids, cmd)
 	if _move_order_dropped:
@@ -684,7 +694,7 @@ func send_command(cmd: Dictionary) -> bool:
 				"x": float(cmd.get("x", 0.0)),
 				"y": float(cmd.get("y", 0.0)),
 				"target": int(cmd.get("target", -1)),
-			})
+			}.merged(layer_extra))
 			ok = ok or r
 	else:
 		ok = bridge.send_unit_command({
@@ -693,12 +703,74 @@ func send_command(cmd: Dictionary) -> bool:
 			"x": float(cmd.get("x", 0.0)),
 			"y": float(cmd.get("y", 0.0)),
 			"target": int(cmd.get("target", -1)),
-		})
+		}.merged(layer_extra))
 		_commands_sent_last_order = 1
 	_units_in_last_command = unit_ids.size()
 	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size(),
-		"x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}
+		"x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}.merged(layer_extra)
 	return ok
+
+
+# A16, the layer order (S-002, R-002-01 a hard transfer begins on the same tick). The view holds engine layers 0..4.
+# Returns the ok of the order; a refusal never reaches the bridge. Walker source: EraConfig.movement_kinds() (G3).
+func order_layer(layer: int) -> bool:
+	if _selected.is_empty():
+		return false
+	if _selection_is_walkers():
+		# R-001-07: a walker takes no layer order; the buttons are dimmed (set_orderable) and the key does nothing.
+		_refuse_layer(layer, "walkers")
+		return false
+	if layer < 0 or layer >= _node("LayerView").LAYER_COUNT:
+		_refuse_layer(layer, "range")
+		return false
+	return send_command({"kind": "set_layer", "unit_ids": _selected.duplicate(), "layer": layer})
+
+
+# Q is dir +1 (one layer up), E is dir -1 (one layer down), from the lowest selected unit's layer.
+# DRAFT-a16-qe-relative (register Q-A16-01 (a), Westley decides). See also: the layers mockup
+# scenes/mockups/layers/layers_mockup.gd:94-97, where Q and E were absolute because it had two layers.
+func order_layer_step(dir: int) -> bool:
+	var lowest := _lowest_selected_layer()
+	if lowest < 0:
+		return false
+	return order_layer(lowest + dir)
+
+
+func _refuse_layer(layer: int, reason: String) -> void:
+	_last_command = {"ok": false, "kind": "set_layer", "units": _selected.size(), "x": 0.0, "y": 0.0, "layer": layer, "reason": reason}
+
+
+func _lowest_selected_layer() -> int:
+	var lowest := -1
+	for u in _frame.get("units", []):
+		if _selected.has(int(u.get("id"))):
+			var l := int(u.get("layer", 0))
+			lowest = l if lowest < 0 else mini(lowest, l)
+	return lowest
+
+
+# True when the selection is not empty and every selected unit's type walks (EraConfig.movement_kinds(): 0 flying, 1 walking).
+func _selection_is_walkers() -> bool:
+	if _selected.is_empty():
+		return false
+	var walks := {}
+	var mk: Array = EraConfig.movement_kinds()
+	for i in range(0, mk.size() - 1, 2):
+		walks[int(mk[i])] = int(mk[i + 1]) == 1
+	var seen := 0
+	for u in _frame.get("units", []):
+		if _selected.has(int(u.get("id"))):
+			seen += 1
+			if not walks.get(int(u.get("type", 0)), false):
+				return false
+	return seen > 0
+
+
+# R-001-07: dim the To-layer buttons while only walkers are selected; run on every selection and frame change.
+func _sync_orderable() -> void:
+	var lv := _node("LayerView")
+	if lv != null and lv.has_method("set_orderable"):
+		lv.set_orderable(not _selection_is_walkers())
 
 
 # Drives the live mission every frame once it has begun (see the constants
@@ -721,7 +793,7 @@ func _process(delta: float) -> void:
 
 
 # Wiring spec W5 / interface 5: in a match NetMatch owns the tick; the view only submits orders and shows frames.
-const MATCH_VERBS := {"move": 0, "attack_move": 1, "attack_target": 2}
+const MATCH_VERBS := {"move": 0, "attack_move": 1, "attack_target": 2, "set_layer": 4}  # 4 = OM_NET_VERB_SET_LAYER (csrc/ouroboros_sim.h:292), G12
 
 
 func _send_match_command(kind: String, unit_ids: Array, cmd: Dictionary) -> bool:
@@ -1008,6 +1080,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_ping_armed = true
 		elif event.keycode == KEY_TAB:
 			_node("LayerView").cycle_focus()
+		elif (event.keycode == KEY_Q or event.keycode == KEY_E) and not (event.alt_pressed or event.ctrl_pressed or event.shift_pressed or event.meta_pressed):
+			# DRAFT-a16-qe-relative (register Q-A16-01 (a), Westley decides): Q one layer up, E one layer down from the
+			# lowest selected unit's layer. See also: the layers mockup scenes/mockups/layers/layers_mockup.gd:94-97.
+			# A modifier held does nothing here (Alt+N is narrowing's, R-105-06, G7). R-103-04: never moves the camera.
+			order_layer_step(1 if event.keycode == KEY_Q else -1)
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
