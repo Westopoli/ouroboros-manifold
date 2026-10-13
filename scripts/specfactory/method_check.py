@@ -29,7 +29,7 @@ CHECKS = [
     ("code_edits", "architect", "DRIFT", "The Fable chat writes no code; Sonnet doers do. It writes specs, briefs, workflow scripts and docs (CLAUDE.md Task matching; `feedback-no-code-from-thinker`)."),
     ("repo_edits", "dispatcher", "DRIFT", "The Dispatcher edits nothing in the repo: tests, sources, bible, register, specs, scripts; record clerks do (dispatcher.md \"What it never does\")."),
     ("main_push", "dispatcher", "DRIFT", "The Dispatcher never pushes to main; the landing clerk does (dispatcher.md \"What it never does\")."),
-    ("context", "both", "DRIFT", "Restart from memory past about 150k context; the compaction is not the restart (CLAUDE.md Usage discipline; dispatcher.md step 8)."),
+    ("context", "both", "DRIFT", "Restart from memory past about 400k context; the compaction is not the restart (CLAUDE.md Usage discipline; dispatcher.md step 8)."),
     ("messages", "both", "REVIEW", "Cross-chat messages are relayed by Westley; a chat that receives one pauses for him except for small blockers (CLAUDE.md Task matching)."),
     ("live_reads", "both", "REVIEW", "Read `origin/main` (`git show origin/main:<path>`), not the live checkout, which lags main and carries Westley's uncommitted work (the two context files)."),
     ("workflows", "both", "REVIEW", "At most two build workflows and one landing in flight (CLAUDE.md Workflow specs)."),
@@ -246,7 +246,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--transcript")
     ap.add_argument("--live-checkout", default="~/Projects/ouroboros-manifold")
-    ap.add_argument("--threshold", type=int, default=150000)
+    ap.add_argument("--threshold", type=int, default=400000)
     a = ap.parse_args()
     live = os.path.realpath(os.path.expanduser(a.live_checkout))
     path, session = a.transcript, ""
