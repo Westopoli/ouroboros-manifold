@@ -270,7 +270,7 @@ Design decided 2026-10-02, not scheduled for building. Strongpoints and slopes a
 Rules
 - R-235-01  Given the map view (S-161) and the tactical view, When the economy's places are drawn, Then the economic locations, the neutral settlements, the objective, the side's base of operations, its expansions and forward works, and on land maps the strongpoints are marked (E-22 S-175, S-177; E-15).
 - R-235-02  Given an environmental trouble travelling across the map, When it is drawn, Then both sides see where it is as it moves (E-15 holds what it does).
-- R-235-03  Given the ticker (R-104-01), When a base is occupied, a side falls back to an expansion, an expansion is founded, or a weather trouble arrives, Then the ticker names it [Q-235-01: which other economy beats the ticker carries].
+- R-235-03  Given the ticker (R-104-01), When a base is occupied, a side falls back to an expansion, an expansion is founded, a weather trouble arrives, or a strongpoint is taken or lost, Then the ticker names it; no other economy beat reaches the ticker (Westley, 2026-10-12).
 - R-235-04  Given a shipment that does not arrive (E-22 S-176), When the ticker, the banners and the map are read, Then nothing on them explains why.
 
 Inputs: economy and weather events from the tick delta.
