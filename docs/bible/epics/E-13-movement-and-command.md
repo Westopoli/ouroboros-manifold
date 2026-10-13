@@ -11,11 +11,11 @@
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-096-01 (the guard stance, S-208), Q-097-02 (two units on one spot), Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written. S-207 and S-209 are design decided, not scheduled for building, apart from the movement rules R-207-06 and R-207-07, which are ruled and built with the tactical port; S-207 carries open flags.
+**Gate verdict: not passed.** Blocked on Q-097-02 (two units on one spot), Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written. S-207 and S-209 are design decided, not scheduled for building, apart from the movement rules R-207-06 and R-207-07, which are ruled and built with the tactical port; S-207 carries open flags.
 
 ## Purpose
 
-Four unit commands: move, attack-move, attack a target, use the ability. A guard stance is decided in principle and its design is open (S-208). Requests by pointing at the map and the economy seat's orders are a second channel beside these four, not unit commands (E-22 S-168, S-170, S-180). A selection moves together at its slowest member's pace and keeps its shape on arrival; a player who wants a fast element to run ahead splits it off. Movement is two-level: a coarse route around obstacles, buildings and, for walking units, ground too steep to cross (S-207), then local steering that flows around allies instead of shoving through them. A unit that has stopped to fight is immovable, so front ranks hold and later arrivals spill into flanking slots on their own. Everything is deterministic: same start, same commands, same movement tick for tick, which is what lockstep multiplayer needs.
+Five unit commands: move, attack-move, attack a target, guard, use the ability. Guard is a radius guard (S-208; Westley, 2026-10-13). Requests by pointing at the map and the economy seat's orders are a second channel beside these four, not unit commands (E-22 S-168, S-170, S-180). A selection moves together at its slowest member's pace and keeps its shape on arrival; a player who wants a fast element to run ahead splits it off. Movement is two-level: a coarse route around obstacles, buildings and, for walking units, ground too steep to cross (S-207), then local steering that flows around allies instead of shoving through them. A unit that has stopped to fight is immovable, so front ranks hold and later arrivals spill into flanking slots on their own. Everything is deterministic: same start, same commands, same movement tick for tick, which is what lockstep multiplayer needs.
 
 ## Obviously working in 60 seconds
 
@@ -46,13 +46,13 @@ Direction changed 2026-10-02, rewrite pending: a guard stance joins the commands
 
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
-- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march. A unit attack-moved alone is not a group: it resumes toward the point after every fight.
+- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point; his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The engine today ends a group once every member has engaged and never resumes it (the Architect's clause, A124 build); the resume for groups is a pending engine piece, measured 2026-10-13: two groups attack-moved to one point stalled 303 to 336 wu apart with range 300, while the same units ordered one by one fought to elimination.
 - R-096-03  Given an attack-move engagement, When the unit itself has pursued more than 200 wu from its anchor (its position at acquisition), Then it drops the target and resumes; a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance, which made a 300 wu weapon drop a target standing still in range).
 - R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
-- R-096-08  Given a guard order, When issued to a selection, Then each unit holds its position, fires at any target it can shoot in range, never pursues or marches, and resumes no earlier order; a move, attack-move, attack-target or layer order ends the guard, and return fire (R-087-06) may turn a guarding unit and give it a target in range but never a destination. (Q-096-01 closed provisionally, A170.)
+- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can see (E-12 R-093-02) within the guard radius of that post, `GUARD_RADIUS` = 200 wu (DRAFT-guard-radius: the attack-move leash of R-087-05, Westley's number to change), returning to the post when the target dies or leaves the radius; it never chases past the radius and never marches; a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". The engine's guard today (A170) holds and never steps forward; the step-and-return within the radius is an engine piece not yet built, and the lab's choke defence runs on the built order until it lands.
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
@@ -105,6 +105,8 @@ Outputs: positions.
 Open flags: none.
 
 ### S-100 — Facing
+
+Direction changed 2026-10-13, rewrite pending: facing gains a firing arc, a unit fires only at targets inside an arc about its facing (Westley: "add a firing-arc rule to the game"; Q-100-01 for width and the flanked case). The rules below are what the game does today.
 As a commander, I want units to face what they shoot and where they go, and to turn rather than snap, so that a retreat under fire looks like one.
 
 Direction changed 2026-10-02, rewrite pending: a unit faces its engaged target only within 1.5 times its range, else its move target, else its velocity, and a stationary firing unit turns. The rules below are what the game does today.
@@ -124,6 +126,7 @@ As a commander, I want to see units turn, slow behind blockers, and settle into 
 Rules
 - R-101-01  Given a T2 clip of a 20-unit move, When reviewed, Then no unit overlaps another, no unit teleports, and units arrive within 2 s of each other.
 - R-101-02  Given the renderer, When it draws between ticks, Then position and facing are linearly interpolated from the last two ticks.
+- R-101-03  Given a move order that has just been issued, When the selected group is on the way, Then the route the planner found is drawn on the map as a coloured line from the group to the ordered spot, and it stays until the group arrives (R-095-05); the line is the walkers prototype's route line, copied, not regenerated (Westley 2026-10-13: "Shows units clumped on bottom moving by the looks of it, hard to tell because it's just a photo, one of the prototypes showed a really clever 'path' colored line showing the route it found to get to the location I right clicked. That might be useful here, and the code is probably mostly copy+pastable, no re-generation needed.").
 
 Inputs: tick deltas.
 Outputs: screen.
@@ -162,10 +165,10 @@ Open flags: Q-174-02.
 ### S-208 — Guard
 As a commander, I want to put units on guard at a post, so that I can hold a choke, the top of a slope or a door without the units running out through it.
 
-The guard stance is decided in principle (Westley, 2026-10-01: "Yes a guard stance is fine"). How it works is open (Q-096-01) and is decided after the ruled movement is built and a choke defence has been looked at.
+The guard stance is decided (Westley, 2026-10-01: "Yes a guard stance is fine"; 2026-10-13: a radius guard, option (b), for the whole game). Its rule is R-096-08.
 
 Rules
-- R-208-01  Given selected units, When the player gives the guard stance at a post, Then the units hold the post and step up to engage what their side can see (E-12 R-093-02) [Q-096-01: how far they step up, whether and when they return, whether guard is a fifth command or a mode of attack-move, and how R-096-06 and "four commands" are reworded].
+- R-208-01  Given selected units, When the player gives the guard order at a post, Then the units hold the post and engage what their side can see (E-12 R-093-02) within `GUARD_RADIUS` of it, returning to the post when the target dies or leaves the radius, never chasing past it (R-096-08). Guard is the fifth unit command, not a mode of attack-move; R-096-06 keeps rejecting patrol, hold, stop and follow.
 - R-208-02  Given a force waiting for an enemy to come inside its ground, When the enemy is within its reach and has not seen it, Then [Q-208-01: whether a unit can be ordered to hold fire so that it stays unseen and the ambush is not spoiled, and whether that is the guard stance or a second order].
 - R-208-03  Given a guard command for tick t, When the tick runs, Then it is applied with every other command before any state advances, and recorded with the tick number (R-096-07).
 

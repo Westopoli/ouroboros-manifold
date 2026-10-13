@@ -108,12 +108,9 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/westley/B-S106-galaxy-dot-colour-refix.png` | `VG-B24` layout, then B25 |
-| 2 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/westley/E-S237-settlement-look-after-E1k.png` | lane E look pieces, the banded-contour prototype |
-| 3 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/westley/F-S140-net-first-tick-after-move-order.png` (and `F-S141-lobby-two-members.png`) | lane F, A16 |
-| 4 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
-| 5 | Lane A's opening-battle group shots (S-001): approved or rejected per row | `story_reviews/westley/A-S002-layer-transfer-buttons.png`; the S-001 group shots are not re-queued yet | lane A fix pieces |
-| 6 | A second worktree pass: remove unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`, yes or no | CLAUDE.md Git | housekeeping |
+| 1 | Chronicle: does the map wait for the printing entry (`Q-069-03`, default run on) | `ambiguity_register.md` | chronicle map piece |
+| 2 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
+| 3 | Places on generated terrain (`Q-191-14`, default yes) | `ambiguity_register.md` | places on generated terrain |
 
 Closed 2026-10-13 from Westley's 2026-10-12 verdicts, found in the transcript: galaxy density (Q-B24-01, as built) and the two-units-one-pixel pairs (Q-132-03, the A18 opening camera); their shots stay under `story_reviews/westley/2026-10-13/` as the record.
 
@@ -193,7 +190,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 - Land before space (Westley, 2026-10-03): the land design is further along and space is still in his design loop. Space output is the general form that land is a special case of, so the mask contract is written for both.
 - Both generators must use their own deterministic noise in C; the mockups use the engine's noise.
 - Economy after a generator: bases, resources and expansion sites are places the generator finds (S-191).
-- The landscape batch in the skill lab waits on the guard stance decision.
+- The guard stance is ruled (R-096-08, 2026-10-13); the landscape batch runs on the built guard until the step-and-return engine piece lands.
 
 ## 6. Recently finished
 

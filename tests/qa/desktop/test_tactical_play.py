@@ -181,15 +181,26 @@ def test_c5_4_move_order_single_command_and_units_move(tactical_game):
     mean_wx = sum(v[0] for v in pre_pos.values()) / len(pre_pos)
     mean_wy = sum(v[1] for v in pre_pos.values()) / len(pre_pos)
     target_wx = mean_wx
+    # TD-VG-A-16: before, the +200 wu target was always projected and, when it fell off-window, the fallback click (a nearer point)
+    # was taken, so the 90% pace assertion read an early arrival. A18 centres the camera on the home box, which puts the +Y
+    # target below the window (y=758 of 720); now the -200 wu target is tried first, and the fallback stays as the last resort.
+    _sign = "+"
     target_wy = mean_wy + 200.0
     target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
     target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
     target_px = target_cx * cw_scale
     target_py = target_cy * ch_scale
+    if not (0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H):
+        _sign = "-"
+        target_wy = mean_wy - 200.0
+        target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
+        target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
+        target_px = target_cx * cw_scale
+        target_py = target_cy * ch_scale
 
     if 0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H:
         client.click(target_px, target_py, 2)
-        _move_via = "right-click at window (%.0f, %.0f)" % (target_px, target_py)
+        _move_via = "right-click at window (%.0f, %.0f), target %s200 wu" % (target_px, target_py, _sign)
     else:
         safe_px, safe_py = WIN_W * 0.5, WIN_H * 0.02
         client.click(safe_px, safe_py, 2)

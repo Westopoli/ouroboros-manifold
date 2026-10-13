@@ -140,6 +140,10 @@ func _probe(mode: String) -> void:
 		view.set_process(false)
 		await process_frame
 		out["canvas"] = float(view.get("_canvas"))
+		# TD-VG-A-14 (amended): the opening zoom is the fit at ZOOM_MAX / ZOOM_STEP (32), so
+		# zoom1 was 32 and _zoom_by(2.0) clamped to 40 (a 1.25 ratio). Halve first: zoom1 = 16,
+		# zoom2 = 32 after the existing _zoom_by(2.0), unclamped.
+		view._zoom_by(0.5)
 		out["zoom1"] = {"scale": float(view.get("_world_scale")), "key": await _measure(view, "key"), "edge": await _measure(view, "edge")}
 		view._zoom_by(2.0)
 		out["zoom2"] = {"scale": float(view.get("_world_scale")), "key": await _measure(view, "key"), "edge": await _measure(view, "edge")}
