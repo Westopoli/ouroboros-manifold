@@ -2047,7 +2047,7 @@ owns = ["scenes/ground3d/ground_units.gd", "tests/test_vg_c_unitscale.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_c_unitscale.gd"]
 depends_on = ["VG-C6b", "VG-C"]  # VG-C6b lists ground_units.gd (heights() and shadow_ids() only); VG-C owns scenes/ground3d/** and tests/test_vg_c*.gd by glob
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "53ede72" }  # landed 53ede72
 tests_pending = true
 size_estimate = "unitscale: two constants in ground_units.gd (11.5 and 10) and one test; DRAFT-unit-body-radius; closes FINDING-unit-draw-overlap"
 
