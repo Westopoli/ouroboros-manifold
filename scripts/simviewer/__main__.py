@@ -4,10 +4,12 @@ import os
 import sys
 
 from scripts.simviewer.history import History
-from scripts.simviewer.pipe_session import DEFAULT_FEATURES, PipeError, PipeSession
+from scripts.simviewer.pipe_session import DEFAULT_FEATURES, PIPE_DBG, PipeError, PipeSession
 
 SHOT_WARMUP_STEPS = 30
 SHOT_MISSION_PICKS = (3, 2)
+MACOS_PIPE_DBG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                              "dist", "macos", "ouroboros_pipe_dbg")
 
 
 def _parse(argv):
@@ -16,12 +18,15 @@ def _parse(argv):
     p.add_argument("--n-regions", type=int, default=80)
     p.add_argument("--rate", type=int, default=5)
     p.add_argument("--mode", choices=("tick", "mission"), default="tick")
+    p.add_argument("--pipe", metavar="PATH",
+                   default=MACOS_PIPE_DBG if sys.platform == "darwin" else str(PIPE_DBG),
+                   help="debug pipe binary (default: dist/macos/ouroboros_pipe_dbg on macOS, else pipe/ouroboros_pipe_dbg)")
     p.add_argument("--shot", metavar="DIR", help="headless: write tick_mode.png and mission_mode.png")
     return p.parse_args(argv)
 
 
 def _open(args, viewer):
-    session = PipeSession()
+    session = PipeSession(argv=[args.pipe])
     session.send("set_seed", seed=args.seed, n_regions=args.n_regions, features=DEFAULT_FEATURES)
     history = History()
     state = viewer.ViewerState(history, session)

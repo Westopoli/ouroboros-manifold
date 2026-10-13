@@ -13,6 +13,14 @@ Launch: `.venv/bin/python -m scripts.simviewer --seed 1 --n-regions 80 --rate 10
 
 Headless screenshots (`tick_mode.png`, `mission_mode.png`): add `--shot DIR`.
 
+## On a Mac
+
+Build the debug pipe natively (arm64; `ARCH=x86_64` for Intel): `scripts/simviewer/build_pipe_dbg_macos.sh`
+
+Launch: `.venv/bin/python -m scripts.simviewer --seed 1 --n-regions 80 --rate 10` (`--pipe PATH` picks another binary; the macOS default is `dist/macos/ouroboros_pipe_dbg`).
+
+Over plain ssh no window can open: use `--shot DIR` there.
+
 ## Keys
 
 | Key | Does |
