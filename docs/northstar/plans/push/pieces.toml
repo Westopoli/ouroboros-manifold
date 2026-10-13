@@ -2153,8 +2153,8 @@ size_estimate = "about 150 lines + test"
 id = "SV-3"
 manager = "M0"
 wave = 10
-owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_viewer_headless.py"]
-owns_glob = []
+owns = ["scripts/simviewer/viewer.py", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_viewer_headless.py", "docs/northstar/story_reviews/V.md"]
+owns_glob = ["docs/northstar/story_reviews/shots/20261012-2005-d5799f5/**"]
 acceptance = ["tests/simviewer/test_viewer_headless.py"]
 depends_on = ["SV-2"]
 status = { state = "attached", attach_sha = "d7d01f40" }
