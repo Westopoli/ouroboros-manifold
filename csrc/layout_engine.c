@@ -1,6 +1,6 @@
-/* Places lane P1 units 2 and 3: argument validation, the objective and the two bases, the cached grid, the score,
- * the resource-hosting towns with their satellites, ages and richness
- * (docs/northstar/plans/2026-10-13-places-lane-spec.md, "P1 the engine", steps 1 to 4, 6, 8 and 9).
+/* Places lane P1 units 2 to 4: argument validation, the objective and the two bases, the cached grid, the score,
+ * the resource-hosting towns, the other towns by score, their ages, satellites, richness and the order
+ * (docs/northstar/plans/2026-10-13-places-lane-spec.md, "P1 the engine", steps 1 to 9).
  * Pure function of its arguments: no world, no global state. The engine calls nothing defined in layout_terrain.c
  * (gap 3): the grid is filled only through the t->height_at and t->walkable_at callbacks. */
 #include <math.h>
@@ -43,6 +43,10 @@
 #define LAYOUT_RICH_MID       0.5     /* DRAFT-richness-formula */
 #define LAYOUT_RICH_MAX       100     /* richness is 0..100 */
 #define LAYOUT_DEFENDER_SLANT 10      /* DRAFT-defender-slant */
+#define LAYOUT_FLOOR          0.35    /* DRAFT-places-floor: a further town needs a score above this (strict) */
+#define LAYOUT_TOWNS_MAX      6       /* DRAFT-towns-max: settlements and HOME bases together are fewer than this before one more */
+#define LAYOUT_SAT_AXES       4       /* satellite axis steps E, S, W, N (spec step 7) */
+#define LAYOUT_SAT_SHIFT      14      /* spec step 7: start index is (u_q16 >> 14) & 3 */
 
 /* R-177-02, a rule not a draft: base kind per archetype, player then enemy. HOME = a grown town, FORWARD = a camp. */
 static const int32_t layout_base_kind[LAYOUT_ARCHETYPES][2] = {
@@ -236,11 +240,17 @@ static int layout_resource_town(const layout_work *g, const om_layout_terrain *t
     return have;
 }
 
+/* The age noise at a town in Q16, 0..65536 (step 6); step 7 reads its start axis from the same value. */
+static int64_t layout_age_u(uint64_t seed, double x, double y)
+{
+    return ((int64_t)om_tn_fbm2(seed + LAYOUT_SALT_AGE, layout_noise_q16(x), layout_noise_q16(y),
+                                LAYOUT_NOISE_OCTAVES, LAYOUT_NOISE_GAIN) + LAYOUT_Q16_ONE) / 2;
+}
+
 /* Step 6: 10 to 40 growth steps from the age noise at the town. */
 static int32_t layout_town_age(uint64_t seed, double x, double y)
 {
-    int64_t u = ((int64_t)om_tn_fbm2(seed + LAYOUT_SALT_AGE, layout_noise_q16(x), layout_noise_q16(y),
-                                      LAYOUT_NOISE_OCTAVES, LAYOUT_NOISE_GAIN) + LAYOUT_Q16_ONE) / 2;
+    int64_t u = layout_age_u(seed, x, y);
     return (int32_t)(LAYOUT_AGE_MIN + (LAYOUT_AGE_SPAN * u + LAYOUT_Q16_ONE / 2) / LAYOUT_Q16_ONE);
 }
 
@@ -266,11 +276,10 @@ static void layout_push(om_layout_result *out, double x, double y, int32_t kind,
 /* Steps 3, 4, 6, 8 and 9 (the resource-hosting towns): one town and one resource site each side of the objective.
  * Liberty (spec step 8 says "the resource site nearer that base"): with only one site found there is no "nearer",
  * so the defender slant is applied only when both sites exist and their distances to the HOME base differ. */
-static int layout_resource_towns(uint64_t seed, double canvas, double region_economy, double objective_x, double objective_y,
-                                 const double *base_xy, const int32_t *base_kind, const om_layout_terrain *t,
-                                 om_layout_result *out)
+static void layout_resource_towns(const layout_work *g, uint64_t seed, double canvas, double region_economy, double objective_x,
+                                  double objective_y, const double *base_xy, const int32_t *base_kind, const om_layout_terrain *t,
+                                  om_layout_result *out)
 {
-    layout_work g;
     layout_geom geo;
     const double *enemy_xy = base_xy + 2;
     double bx = enemy_xy[0] - base_xy[0], by = enemy_xy[1] - base_xy[1];
@@ -278,7 +287,6 @@ static int layout_resource_towns(uint64_t seed, double canvas, double region_eco
     double px[2], py[2], qx[2], qy[2];
     int32_t rich[2];
     int found[2] = {0, 0}, k;
-    if (layout_work_fill(&g, seed, canvas, t) != 0) return -1;
     if (len >= 1.0) {
         geo.canvas = canvas;
         geo.b0x = base_xy[0];
@@ -291,10 +299,9 @@ static int layout_resource_towns(uint64_t seed, double canvas, double region_eco
         geo.dy = bx / len;
         for (k = 0; k < 2; k++) {
             double sigma = k == 0 ? -1.0 : 1.0;
-            found[k] = layout_resource_town(&g, t, &geo, sigma, &px[k], &py[k], &qx[k], &qy[k]);
+            found[k] = layout_resource_town(g, t, &geo, sigma, &px[k], &py[k], &qx[k], &qy[k]);
         }
     }
-    layout_work_free(&g);
     for (k = 0; k < 2; k++) rich[k] = found[k] ? layout_richness(seed, region_economy, qx[k], qy[k]) : 0;
     if (found[0] && found[1] && (base_kind[0] == OM_PLACE_BASE_HOME || base_kind[1] == OM_PLACE_BASE_HOME)) {
         int home = base_kind[0] == OM_PLACE_BASE_HOME ? 0 : 1;
@@ -308,7 +315,94 @@ static int layout_resource_towns(uint64_t seed, double canvas, double region_eco
         layout_push(out, px[k], py[k], OM_PLACE_NEUTRAL_SETTLEMENT, layout_town_age(seed, px[k], py[k]), 0);
         layout_push(out, qx[k], qy[k], OM_PLACE_RESOURCE_SITE, 0, rich[k]);
     }
+}
+
+/* Step 5: the next town, the valid candidate with the greatest score above the floor that is at least 4000 wu from every
+ * base, the objective and every place already in the first n_far entries of far[] (bases, objective, towns chosen).
+ * Returns 1 and fills x and y, else 0. */
+static int layout_next_town(const layout_work *g, const double *far, int n_far, double *tx, double *ty)
+{
+    int a, b, k, have = 0;
+    double bs = 0.0, by = 0.0, bx = 0.0;
+    for (b = 0; b < g->m; b++) {
+        for (a = 0; a < g->m; a++) {
+            double x, y, s;
+            if (!g->ok[b * g->m + a]) continue;
+            s = g->s[b * g->m + a];
+            if (!(s > LAYOUT_FLOOR)) continue;
+            x = layout_cell_centre(LAYOUT_GRID_STEP * a + 1);
+            y = layout_cell_centre(LAYOUT_GRID_STEP * b + 1);
+            if (!layout_better(s, y, x, have, bs, by, bx)) continue;
+            for (k = 0; k < n_far; k++) {
+                if (layout_dist(x, y, far[2 * k], far[2 * k + 1]) < LAYOUT_SPACING) break;
+            }
+            if (k < n_far) continue;
+            have = 1;
+            bs = s;
+            by = y;
+            bx = x;
+            *tx = x;
+            *ty = y;
+        }
+    }
+    return have;
+}
+
+/* Step 7: the satellite of the town (x, y): 300 wu on the first of E, S, W, N (S is +y) from the age-noise start axis
+ * that is inside the canvas on walkable dry ground. Returns 1 and fills sx and sy, else 0. */
+static int layout_satellite(uint64_t seed, double canvas, const om_layout_terrain *t, double x, double y, double *sx, double *sy)
+{
+    static const int axis_x[LAYOUT_SAT_AXES] = { 1, 0, -1, 0 };
+    static const int axis_y[LAYOUT_SAT_AXES] = { 0, 1, 0, -1 };
+    int start = (int)((layout_age_u(seed, x, y) >> LAYOUT_SAT_SHIFT) & (LAYOUT_SAT_AXES - 1)), k;
+    for (k = 0; k < LAYOUT_SAT_AXES; k++) {
+        int ax = (start + k) & (LAYOUT_SAT_AXES - 1);
+        double qx = x + LAYOUT_SAT_OFFSET * axis_x[ax], qy = y + LAYOUT_SAT_OFFSET * axis_y[ax];
+        if (qx < 0.0 || qx >= canvas || qy < 0.0 || qy >= canvas) continue;
+        if (t->height_at(t->ctx, qx, qy) < 0.0 || !t->walkable_at(t->ctx, qx, qy)) continue;
+        *sx = qx;
+        *sy = qy;
+        return 1;
+    }
     return 0;
+}
+
+/* Steps 5, 6, 7 and 9 for the towns that host no resource site: they follow the resource towns in the order chosen,
+ * then their satellites in the same order. Each pending satellite reserves a place (n + 2 <= OM_PLACE_CAP). */
+static void layout_other_towns(const layout_work *g, uint64_t seed, double canvas, const double *base_xy,
+                               const int32_t *base_kind, const om_layout_terrain *t, double objective_x, double objective_y,
+                               om_layout_result *out)
+{
+    double far[2 * OM_PLACE_CAP];
+    double tx[OM_PLACE_CAP], ty[OM_PLACE_CAP];
+    int n_far = 0, n_town = 0, settlements = 0, k;
+    for (k = 0; k < 2; k++) settlements += base_kind[k] == OM_PLACE_BASE_HOME;
+    far[2 * n_far] = objective_x;
+    far[2 * n_far++ + 1] = objective_y;
+    for (k = 0; k < 2; k++) {
+        far[2 * n_far] = base_xy[2 * k];
+        far[2 * n_far++ + 1] = base_xy[2 * k + 1];
+    }
+    for (k = 0; k < out->n; k++) {
+        if (out->places[k].kind != OM_PLACE_NEUTRAL_SETTLEMENT) continue;
+        far[2 * n_far] = out->places[k].x;
+        far[2 * n_far++ + 1] = out->places[k].y;
+        settlements++;
+    }
+    while (settlements < LAYOUT_TOWNS_MAX && out->n + n_town + 2 <= OM_PLACE_CAP) {
+        double x, y;
+        if (!layout_next_town(g, far, n_far, &x, &y)) break;
+        far[2 * n_far] = x;
+        far[2 * n_far++ + 1] = y;
+        tx[n_town] = x;
+        ty[n_town++] = y;
+        settlements++;
+        layout_push(out, x, y, OM_PLACE_NEUTRAL_SETTLEMENT, layout_town_age(seed, x, y), 0);
+    }
+    for (k = 0; k < n_town && out->n < OM_PLACE_CAP; k++) {
+        double sx, sy;
+        if (layout_satellite(seed, canvas, t, tx[k], ty[k], &sx, &sy)) layout_push(out, sx, sy, OM_PLACE_EXPANSION_SITE, 0, 0);
+    }
 }
 
 int om_layout_places(uint64_t seed, double canvas_w, double canvas_h, int32_t archetype, double region_economy,
@@ -316,6 +410,7 @@ int om_layout_places(uint64_t seed, double canvas_w, double canvas_h, int32_t ar
                      const om_layout_terrain *t, om_layout_result *out)
 {
     om_place obj;
+    layout_work g;
     const double *enemy_xy;
     if (!base_xy || !base_side || !t || !out) return -1;
     if (!layout_canvas_ok(canvas_w, canvas_h) || archetype < 0 || archetype >= LAYOUT_ARCHETYPES) return -1;
@@ -330,7 +425,10 @@ int om_layout_places(uint64_t seed, double canvas_w, double canvas_h, int32_t ar
     out->places[out->n++] = obj;
     out->places[out->n++] = layout_base(base_xy[0], base_xy[1], layout_base_kind[archetype][0], base_side[0]);
     out->places[out->n++] = layout_base(enemy_xy[0], enemy_xy[1], layout_base_kind[archetype][1], base_side[1]);
-    if (layout_resource_towns(seed, canvas_w, region_economy, objective_x, objective_y, base_xy,
-                              layout_base_kind[archetype], t, out) != 0) return -1;
+    if (layout_work_fill(&g, seed, canvas_w, t) != 0) return -1;
+    layout_resource_towns(&g, seed, canvas_w, region_economy, objective_x, objective_y, base_xy,
+                          layout_base_kind[archetype], t, out);
+    layout_other_towns(&g, seed, canvas_w, base_xy, layout_base_kind[archetype], t, objective_x, objective_y, out);
+    layout_work_free(&g);
     return out->n;
 }
