@@ -9,8 +9,9 @@ const GroundPick := preload("res://scenes/ground3d/ground_pick.gd")
 const UnitVisuals := preload("res://scenes/tactical_c/unit_visuals.gd")
 
 const FLYER_CLEARANCE_WU := 150.0
-const BODY_RADIUS_WU := 20.0 # draft
-const SHADOW_RADIUS_WU := 18.0 # draft
+# VG-C-unitscale (FINDING-unit-draw-overlap), DRAFT-unit-body-radius: the drawn mesh bounding box fits the 30 wu spawn lattice pitch (2 * OM_UNIT_COLLISION_RADIUS 15, csrc/om_constants.h:581, csrc/mission.c:2463); the body polygons reach 1.28 x the radius, so 11.5, not 15; shadow inside the body. Named draft, Westley may veto after the shot. See also tests/test_vg_c_unitscale.gd
+const BODY_RADIUS_WU := 11.5
+const SHADOW_RADIUS_WU := 10.0
 const SHADOW_LIFT_WU := 0.5
 const OWN_COLOUR := Color(0.2, 0.6, 1.0)
 const OTHER_COLOUR := Color(1.0, 0.3, 0.3)
