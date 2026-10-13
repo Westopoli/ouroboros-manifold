@@ -4,7 +4,7 @@ extends SceneTree
 # "G-G3 labels and hover"; mission-plays plan item C5): the live galaxy view
 # floats faction name labels from the snapshot's factions[] and tracks which
 # system the pointer is on.
-#   R-106-03  in Overview (camera distance >= 70) faction names float at the
+#   R-106-03  in Overview (camera distance >= 35, TD-VG-B-14: was 70) faction names float at the
 #             shell centres.
 #   R-107-05  a system hover gives the system under the pointer; off every
 #             system there is none.
@@ -28,7 +28,7 @@ const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json
 const NAMES_SCRIPT := "res://scenes/world/chronicle_names.gd"
 const LIBRARY_PATH := "res://library/chronicle/fragments.json"
 const CHECKS := ["labels_overview", "labels_at_centroid", "labels_follow_conquest", "hover_system", "hover_clear", "unknown_faction"]
-const OVERVIEW_DISTANCE := 150.0
+const OVERVIEW_DISTANCE := 75.0   # TD-VG-B-14: was 150.0 (B23 prototype scale, halved); still Overview, 75 >= split 35
 const SETTLE_SEC := 3.0
 
 var _check_name := ""

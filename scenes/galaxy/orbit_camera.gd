@@ -6,21 +6,28 @@ extends Node3D
 # system centres it and zooms to Local. The camera moves only on input or an
 # eased focus; it never drifts on its own.
 
-# B22 (spec rev 10d): the prototype's camera unscaled, orbit_camera.gd on origin/push/galaxy-field divided by CIV_SCALE:
-# DIST_MIN :7 (15), DIST_MAX :9 (120), LOCAL_DISTANCE is its FOCUS_DISTANCE :25 (28), default distance :14 (50).
-const DIST_MIN := 15.0
+# B23 (spec rev 12b): the prototype's camera as run, orbit_camera.gd on origin/push/galaxy-field at 99f35887:
+# DIST_MIN :7 (15 x CIV_SCALE 0.5), DIST_MAX :9 (120, not scaled), LOCAL_DISTANCE is its FOCUS_DISTANCE :25 (28 x 0.5),
+# FOCUS_SEC its FOCUS_DURATION :26, pitch :11-13 (20 to 85, default 55), wheel :238-241 (up x0.9, down x1.1),
+# right-drag :16-17, :279-283 (yaw 0.01 rad per px, pitch 0.1 degrees per px).
+const DIST_MIN := 7.5
 const DIST_MAX := 120.0
-const PITCH_DEG := 55.0
-const LOCAL_DISTANCE := 28.0
+const PITCH_MIN_DEG := 20.0
+const PITCH_MAX_DEG := 85.0
+const PITCH_DEFAULT_DEG := 55.0
+const LOCAL_DISTANCE := 14.0
 const ZOOM_STEP := 0.9
-const ORBIT_RAD_PER_PX := 0.005
+const ZOOM_OUT_STEP := 1.1
+const ORBIT_RAD_PER_PX := 0.01
+const ORBIT_PITCH_DEG_PER_PX := 0.1
 const CLICK_SLOP_PX := 4.0
 const GalaxyView := preload("res://scenes/galaxy/galaxy_view.gd")
-const FOCUS_SEC := 0.6
+const FOCUS_SEC := 1.5
 
 var _target: Vector3 = Vector3.ZERO
-var _distance: float = 50.0
+var _distance: float = GalaxyView.DEFAULT_DISTANCE
 var _yaw: float = 0.0
+var _pitch_deg: float = PITCH_DEFAULT_DEG
 var _mouse := Vector2(-1.0, -1.0)
 var _dragged := 0.0
 var _tween: Tween
@@ -99,6 +106,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pan(event.relative)
 		elif event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
 			_yaw -= event.relative.x * ORBIT_RAD_PER_PX
+			_pitch_deg = clampf(_pitch_deg + event.relative.y * ORBIT_PITCH_DEG_PER_PX, PITCH_MIN_DEG, PITCH_MAX_DEG)
 			_update_camera()
 	elif event is InputEventMouseButton:
 		_mouse = event.position
@@ -110,7 +118,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
 				set_view(_distance * ZOOM_STEP, _target)
 			elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				set_view(_distance / ZOOM_STEP, _target)
+				set_view(_distance * ZOOM_OUT_STEP, _target)
 		elif event.button_index == MOUSE_BUTTON_LEFT and _dragged < CLICK_SLOP_PX:
 			var hit := _system_at(event.position)
 			if hit != -1:
@@ -127,7 +135,7 @@ func _pan(rel: Vector2) -> void:
 	var right := _camera.global_transform.basis.x
 	right.y = 0.0
 	right = right.normalized()
-	_target += (-right * rel.x + fwd * rel.y / sin(deg_to_rad(PITCH_DEG))) * per_px
+	_target += (-right * rel.x + fwd * rel.y / sin(deg_to_rad(_pitch_deg))) * per_px
 	_update_camera()
 
 
@@ -176,7 +184,7 @@ func _canvas_to_real_scale(inflated: Vector2) -> Vector2:
 
 
 func _update_camera() -> void:
-	var pitch := deg_to_rad(PITCH_DEG)
+	var pitch := deg_to_rad(_pitch_deg)
 	var offset := Vector3(cos(_yaw) * cos(pitch), sin(pitch), sin(_yaw) * cos(pitch)) * _distance
 	_camera.position = _target + offset
 	_camera.look_at(_target, Vector3.UP)

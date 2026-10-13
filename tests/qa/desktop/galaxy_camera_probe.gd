@@ -196,7 +196,7 @@ func _settle_on(id: int) -> void:
 
 
 func _check_no_idle_drift_R107_02() -> void:
-	_view.qa_camera(120.0, int(_ids[0]))
+	_view.qa_camera(60.0, int(_ids[0]))   # TD-VG-B-14: was 120 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	var d0 := _distance()
 	var p0 := _px(int(_ids[1]))
@@ -206,7 +206,7 @@ func _check_no_idle_drift_R107_02() -> void:
 
 
 func _check_wheel_zoom_R107_01() -> void:
-	_view.qa_camera(100.0, int(_ids[0]))
+	_view.qa_camera(50.0, int(_ids[0]))   # TD-VG-B-14: was 100 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	var d0 := _distance()
 	await _wheel(MOUSE_BUTTON_WHEEL_UP)
@@ -221,7 +221,7 @@ func _check_wheel_zoom_R107_01() -> void:
 
 func _check_drag_pan_R107_01() -> void:
 	var focus := int(_ids[0])
-	_view.qa_camera(80.0, focus)
+	_view.qa_camera(40.0, focus)   # TD-VG-B-14: was 80 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	var d0 := _distance()
 	var p0 := _px(focus)
@@ -239,7 +239,7 @@ func _check_autonomous_flag_A48_1() -> void:
 	_assert(_rig.has_method("set_autonomous") and _rig.has_method("is_autonomous"), "A48-1: OrbitCamera has no set_autonomous(bool) / is_autonomous()")
 	if not (_rig.has_method("set_autonomous") and _rig.has_method("is_autonomous")):
 		return
-	_view.qa_camera(100.0, int(_ids[0]))
+	_view.qa_camera(50.0, int(_ids[0]))   # TD-VG-B-14: was 100 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	_assert(_view.qa_state().get("camera_autonomous", null) == false, "A48-1: qa_state camera_autonomous should be false by default (got %s)" % [_view.qa_state().get("camera_autonomous", null)])
 	_assert(not _rig.is_autonomous(), "A48-1: is_autonomous() true by default")
@@ -260,7 +260,7 @@ func _check_input_cancels_autonomy_A48_1() -> void:
 		return
 	var inputs := ["wheel", "left_drag", "right_drag"]
 	for kind in inputs:
-		_view.qa_camera(100.0, int(_ids[0]))
+		_view.qa_camera(50.0, int(_ids[0]))   # TD-VG-B-14: was 100 (B23 prototype scale, every distance halved)
 		await _frames(3)
 		_rig.set_autonomous(true)
 		await _frames(2)
@@ -279,7 +279,7 @@ func _check_input_cancels_autonomy_A48_1() -> void:
 func _check_right_drag_orbits_R107_01() -> void:
 	var focus := int(_ids[0])
 	var other := int(_ids[_ids.size() - 1])
-	_view.qa_camera(60.0, focus)
+	_view.qa_camera(30.0, focus)   # TD-VG-B-14: was 60 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	var d0 := _distance()
 	var f0 := _px(focus)
@@ -291,10 +291,10 @@ func _check_right_drag_orbits_R107_01() -> void:
 
 
 func _check_click_focuses_local_R107_01() -> void:
-	_view.qa_camera(120.0, -1)
+	_view.qa_camera(60.0, -1)   # TD-VG-B-14: was 120 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	var id := _isolated_system()
-	_assert(id != -1, "no isolated on-screen system at distance 120 to click")
+	_assert(id != -1, "no isolated on-screen system at distance 60 to click")
 	if id == -1:
 		return
 	var at := _px(id)
@@ -309,7 +309,7 @@ func _check_focus_region_R107_01() -> void:
 	_assert(_rig.has_method("focus_region"), "G-G1: OrbitCamera has no focus_region(i)")
 	if not _rig.has_method("focus_region"):
 		return
-	_view.qa_camera(140.0, -1)
+	_view.qa_camera(70.0, -1)   # TD-VG-B-14: was 140 (B23 prototype scale, every distance halved)
 	await _frames(3)
 	var id := int(_ids[_ids.size() / 2])
 	_rig.focus_region(id)

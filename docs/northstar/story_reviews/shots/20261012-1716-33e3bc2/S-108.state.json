@@ -1,0 +1,1331 @@
+{
+  "inventory": {
+    "hud_texts": {
+      "@Button@1655": "SKIP \u25b6\u25b6",
+      "@Button@1657": "PROCEED",
+      "@Button@1658": "EXIT TO MAIN MENU",
+      "@Label@1648": "CHRONICLE",
+      "@RichTextLabel@1663": "[color=#e8e5e08c]In[/color] [color=#e8e5e08c]a[/color] [color=#e8e5e08c]matter[/color] [color=#e8e5e08c]of[/color] [color=#e8e5e08b]days,[/color] [color=#e8e5e07b]the[/color] [color=#e8e5e03a]campaign[/color] [color=#e8e5e000]at[/color] [url=region:76][color=#e8e5e000]the[/color][/url] [url=region:76][color=#e8e5e000]Barwyn,[/color][/url] [color=#e8e5e000]held[/color] [color=#e8e5e000]by[/color] [url=faction:4][color=#e8e5e000]the[/color][/url] [url=faction:4][color=#e8e5e000]Free[/color][/url] [url=faction:4][color=#e8e5e000]Cities[/color][/url] [color=#e8e5e000]ground[/color] [color=#e8e5e000]toward[/color] [color=#e8e5e000]what[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]dispatches[/color] [color=#e8e5e000]would[/color] [color=#e8e5e000]call[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]mixed[/color] [color=#e8e5e000]result[/color] [color=#e8e5e000]\u2014[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]conclusion[/color] [color=#e8e5e000]that[/color] [color=#e8e5e000]satisfied[/color] [color=#e8e5e000]no[/color] [color=#e8e5e000]one[/color] [color=#e8e5e000]completely.[/color] [color=#e8e5e000]At[/color] [url=region:76][color=#e8e5e000]the[/color][/url] [url=region:76][color=#e8e5e000]Barwyn,[/color][/url] [color=#e8e5e000]the[/color] [color=#e8e5e000]terms[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]mixed[/color] [color=#e8e5e000]result[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]ratified[/color] [color=#e8e5e000]under[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]sky[/color] [color=#e8e5e000]that[/color] [color=#e8e5e000]offered[/color] [color=#e8e5e000]no[/color] [color=#e8e5e000]comment.[/color] [color=#e8e5e000]The[/color] [color=#e8e5e000]people[/color] [color=#e8e5e000]who[/color] [color=#e8e5e000]had[/color] [color=#e8e5e000]lived[/color] [color=#e8e5e000]through[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]campaign[/color] [color=#e8e5e000]signed[/color] [color=#e8e5e000]where[/color] [color=#e8e5e000]they[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]told[/color] [color=#e8e5e000]to[/color] [color=#e8e5e000]sign.[/color]",
+      "@RichTextLabel@1669": "[color=#e8e5e08c]Word[/color] [color=#e8e5e08c]of[/color] [color=#e8e5e08c]what[/color] [color=#e8e5e087]was[/color] [color=#e8e5e062]done[/color] [color=#e8e5e000]at[/color] [url=region:76][color=#e8e5e000]the[/color][/url] [url=region:76][color=#e8e5e000]Barwyn[/color][/url] [color=#e8e5e000]reached[/color] [url=region:12][color=#e8e5e000]the[/color][/url] [url=region:12][color=#e8e5e000]Hollow[/color][/url] [url=region:12][color=#e8e5e000]Crown,[/color][/url] [color=#e8e5e000]held[/color] [color=#e8e5e000]by[/color] [url=faction:3][color=#e8e5e000]the[/color][/url] [url=faction:3][color=#e8e5e000]Iron[/color][/url] [url=faction:3][color=#e8e5e000]Compact,[/color][/url] [color=#e8e5e000]where[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]echo[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]it[/color] [color=#e8e5e000]was[/color] [color=#e8e5e000]felt[/color] [color=#e8e5e000]across[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]border.[/color]",
+      "@RichTextLabel@1676": "[color=#e8e5e08c]Cat.[/color] [color=#e8e5e08c]3[/color] [color=#e8e5e08c]\u2014[/color] [color=#e8e5e08c]the[/color] [color=#e8e5e08c]Tordun[/color] [color=#e8e5e063]\u2014[/color] [color=#e8e5e000]t30\u2013t80[/color]",
+      "@RichTextLabel@1683": "[color=#e8e5e08c]In[/color] [url=region:76][color=#e8e5e08c]the[/color][/url] [url=region:76][color=#e8e5e08c]Barwyn,[/color][/url] [color=#e8e5e08c]where[/color] [color=#e8e5e08c]Marrow[/color] [color=#e8e5e087]had[/color] [color=#e8e5e03a]once[/color] [color=#e8e5e000]walked[/color] [color=#e8e5e000]with[/color] [color=#e8e5e000]authority,[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]quieter[/color] [color=#e8e5e000]era[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]diminishment[/color] [color=#e8e5e000]began.[/color] [color=#e8e5e000]Marrow[/color] [color=#e8e5e000]name[/color] [color=#e8e5e000]still[/color] [color=#e8e5e000]appeared[/color] [color=#e8e5e000]in[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]registries,[/color] [color=#e8e5e000]but[/color] [color=#e8e5e000]it[/color] [color=#e8e5e000]carried[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]different[/color] [color=#e8e5e000]weight[/color] [color=#e8e5e000]now.[/color] [color=#e8e5e000]Children[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]household[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]raised[/color] [color=#e8e5e000]on[/color] [color=#e8e5e000]stories[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]what[/color] [color=#e8e5e000]had[/color] [color=#e8e5e000]been,[/color] [color=#e8e5e000]and[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]silence[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]what[/color] [color=#e8e5e000]was.[/color]",
+      "@RichTextLabel@1690": "[color=#e8e5e08c]What[/color] [url=faction:4][color=#e8e5e08c]the[/color][/url] [url=faction:4][color=#e8e5e08c]Free[/color][/url] [url=faction:4][color=#e8e5e08b]Cities[/color][/url] [color=#e8e5e063]accomplished[/color] [color=#e8e5e000]in[/color] [url=region:76][color=#e8e5e000]the[/color][/url] [url=region:76][color=#e8e5e000]Barwyn[/color][/url] [color=#e8e5e000]during[/color] [color=#e8e5e000]this[/color] [color=#e8e5e000]period[/color] [color=#e8e5e000]was[/color] [color=#e8e5e000]less[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]conquest[/color] [color=#e8e5e000]than[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]reorganization[/color] [color=#e8e5e000]\u2014[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]same[/color] [color=#e8e5e000]territory,[/color] [color=#e8e5e000]different[/color] [color=#e8e5e000]loyalties,[/color] [color=#e8e5e000]different[/color] [color=#e8e5e000]logic.[/color] [color=#e8e5e000]The[/color] [color=#e8e5e000]transition[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]authority[/color] [color=#e8e5e000]in[/color] [url=region:76][color=#e8e5e000]the[/color][/url] [url=region:76][color=#e8e5e000]Barwyn[/color][/url] [color=#e8e5e000]was[/color] [color=#e8e5e000]conducted,[/color] [color=#e8e5e000]by[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]standards[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]such[/color] [color=#e8e5e000]things,[/color] [color=#e8e5e000]with[/color] [color=#e8e5e000]restraint.[/color] [color=#e8e5e000]Old[/color] [color=#e8e5e000]obligations[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]discharged;[/color] [color=#e8e5e000]new[/color] [color=#e8e5e000]ones[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]incurred.[/color] [color=#e8e5e000]The[/color] [color=#e8e5e000]exchange[/color] [color=#e8e5e000]was[/color] [color=#e8e5e000]transactional[/color] [color=#e8e5e000]in[/color] [color=#e8e5e000]form,[/color] [color=#e8e5e000]if[/color] [color=#e8e5e000]not[/color] [color=#e8e5e000]always[/color] [color=#e8e5e000]in[/color] [color=#e8e5e000]spirit.[/color]",
+      "@RichTextLabel@1697": "[color=#e8e5e08c]Cat.[/color] [color=#e8e5e08c]20[/color] [color=#e8e5e08c]\u2014[/color] [color=#e8e5e08c]the[/color] [color=#e8e5e08c]Tordun[/color] [color=#e8e5e063]\u2014[/color] [color=#e8e5e000]t30\u2013t80[/color]",
+      "@RichTextLabel@1704": "[color=#e8e5e08c]The[/color] [color=#e8e5e08c]chronicles[/color] [color=#e8e5e08c]of[/color] [url=region:64][color=#e8e5e08c]the[/color][/url] [url=region:64][color=#e8e5e08c]Rasvane,[/color][/url] [color=#e8e5e07a]held[/color] [color=#e8e5e000]by[/color] [url=faction:11][color=#e8e5e000]the[/color][/url] [url=faction:11][color=#e8e5e000]Northwind[/color][/url] [url=faction:11][color=#e8e5e000]Host[/color][/url] [color=#e8e5e000]offer[/color] [color=#e8e5e000]little[/color] [color=#e8e5e000]drama[/color] [color=#e8e5e000]for[/color] [color=#e8e5e000]this[/color] [color=#e8e5e000]stretch[/color] [color=#e8e5e000]\u2014[/color] [color=#e8e5e000]which[/color] [color=#e8e5e000]is,[/color] [color=#e8e5e000]in[/color] [color=#e8e5e000]its[/color] [color=#e8e5e000]own[/color] [color=#e8e5e000]way,[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]kind[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]record.[/color] [color=#e8e5e000]Local[/color] [color=#e8e5e000]governance[/color] [color=#e8e5e000]in[/color] [url=region:64][color=#e8e5e000]the[/color][/url] [url=region:64][color=#e8e5e000]Rasvane[/color][/url] [color=#e8e5e000]functioned[/color] [color=#e8e5e000]within[/color] [color=#e8e5e000]its[/color] [color=#e8e5e000]ordinary[/color] [color=#e8e5e000]tolerances.[/color] [color=#e8e5e000]Disputes[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]resolved[/color] [color=#e8e5e000]at[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]local[/color] [color=#e8e5e000]level;[/color] [color=#e8e5e000]appeals[/color] [color=#e8e5e000]to[/color] [color=#e8e5e000]higher[/color] [color=#e8e5e000]authority[/color] [color=#e8e5e000]were[/color] [color=#e8e5e000]rare[/color] [color=#e8e5e000]and,[/color] [color=#e8e5e000]when[/color] [color=#e8e5e000]made,[/color] [color=#e8e5e000]largely[/color] [color=#e8e5e000]procedural.[/color]",
+      "@RichTextLabel@1711": "[color=#e8e5e08c]A[/color] [color=#e8e5e08c]generation[/color] [color=#e8e5e08c]passed[/color] [color=#e8e5e08c]before[/color] [color=#e8e5e08c]the[/color] [color=#e8e5e07b]people[/color] [color=#e8e5e03b]of[/color] [url=region:64][color=#e8e5e000]the[/color][/url] [url=region:64][color=#e8e5e000]Rasvane[/color][/url] [color=#e8e5e000]allowed[/color] [color=#e8e5e000]themselves[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]word[/color] [color=#e8e5e000]they[/color] [color=#e8e5e000]had[/color] [color=#e8e5e000]long[/color] [color=#e8e5e000]been[/color] [color=#e8e5e000]avoiding.[/color] [color=#e8e5e000]In[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]matter[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]days,[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]population[/color] [color=#e8e5e000]of[/color] [url=region:64][color=#e8e5e000]the[/color][/url] [url=region:64][color=#e8e5e000]Rasvane[/color][/url] [color=#e8e5e000]contracted[/color] [color=#e8e5e000]\u2014[/color] [color=#e8e5e000]not[/color] [color=#e8e5e000]through[/color] [color=#e8e5e000]catastrophe[/color] [color=#e8e5e000]but[/color] [color=#e8e5e000]through[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]quiet[/color] [color=#e8e5e000]arithmetic[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]departures[/color] [color=#e8e5e000]exceeding[/color] [color=#e8e5e000]arrivals,[/color] [color=#e8e5e000]births[/color] [color=#e8e5e000]failing[/color] [color=#e8e5e000]to[/color] [color=#e8e5e000]replace[/color] [color=#e8e5e000]deaths,[/color] [color=#e8e5e000]and[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]general[/color] [color=#e8e5e000]sense[/color] [color=#e8e5e000]that[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]future[/color] [color=#e8e5e000]lay[/color] [color=#e8e5e000]elsewhere.[/color]",
+      "@RichTextLabel@1718": "[color=#e8e5e08c]In[/color] [color=#e8e5e08c]a[/color] [color=#e8e5e08c]matter[/color] [color=#e8e5e08c]of[/color] [color=#e8e5e086]days,[/color] [url=region:66][color=#e8e5e03a]the[/color][/url] [url=region:66][color=#e8e5e000]Quilmere,[/color][/url] [color=#e8e5e000]held[/color] [color=#e8e5e000]by[/color] [url=faction:0][color=#e8e5e000]the[/color][/url] [url=faction:0][color=#e8e5e000]Dominion[/color][/url] [color=#e8e5e000]continued[/color] [color=#e8e5e000]largely[/color] [color=#e8e5e000]as[/color] [color=#e8e5e000]it[/color] [color=#e8e5e000]had[/color] [color=#e8e5e000]\u2014[/color] [color=#e8e5e000]administered,[/color] [color=#e8e5e000]taxed,[/color] [color=#e8e5e000]and[/color] [color=#e8e5e000]otherwise[/color] [color=#e8e5e000]undisturbed.[/color] [color=#e8e5e000]The[/color] [color=#e8e5e000]population[/color] [color=#e8e5e000]of[/color] [url=region:66][color=#e8e5e000]the[/color][/url] [url=region:66][color=#e8e5e000]Quilmere[/color][/url] [color=#e8e5e000]neither[/color] [color=#e8e5e000]grew[/color] [color=#e8e5e000]nor[/color] [color=#e8e5e000]contracted[/color] [color=#e8e5e000]with[/color] [color=#e8e5e000]any[/color] [color=#e8e5e000]urgency[/color] [color=#e8e5e000]in[/color] [color=#e8e5e000]this[/color] [color=#e8e5e000]period.[/color] [color=#e8e5e000]Movement[/color] [color=#e8e5e000]in[/color] [color=#e8e5e000]and[/color] [color=#e8e5e000]out[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]region[/color] [color=#e8e5e000]followed[/color] [color=#e8e5e000]seasonal[/color] [color=#e8e5e000]patterns[/color] [color=#e8e5e000]and[/color] [color=#e8e5e000]left[/color] [color=#e8e5e000]no[/color] [color=#e8e5e000]structural[/color] [color=#e8e5e000]mark[/color] [color=#e8e5e000]on[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]record.[/color]",
+      "@RichTextLabel@1725": "[color=#e8e5e08c]A[/color] [color=#e8e5e08c]generation[/color] [color=#e8e5e08c]passed[/color] [color=#e8e5e08c]before[/color] [color=#e8e5e086]the[/color] [color=#e8e5e03b]people[/color] [color=#e8e5e000]of[/color] [url=region:66][color=#e8e5e000]the[/color][/url] [url=region:66][color=#e8e5e000]Quilmere[/color][/url] [color=#e8e5e000]allowed[/color] [color=#e8e5e000]themselves[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]word[/color] [color=#e8e5e000]they[/color] [color=#e8e5e000]had[/color] [color=#e8e5e000]long[/color] [color=#e8e5e000]been[/color] [color=#e8e5e000]avoiding.[/color] [color=#e8e5e000]The[/color] [color=#e8e5e000]dangerously[/color] [color=#e8e5e000]unstable[/color] [color=#e8e5e000]stability[/color] [color=#e8e5e000]that[/color] [color=#e8e5e000]characterized[/color] [url=region:66][color=#e8e5e000]the[/color][/url] [url=region:66][color=#e8e5e000]Quilmere[/color][/url] [color=#e8e5e000]in[/color] [color=#e8e5e000]those[/color] [color=#e8e5e000]years[/color] [color=#e8e5e000]was[/color] [color=#e8e5e000]not[/color] [color=#e8e5e000]the[/color] [color=#e8e5e000]stability[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]strength[/color] [color=#e8e5e000]but[/color] [color=#e8e5e000]of[/color] [color=#e8e5e000]exhaustion[/color] [color=#e8e5e000]\u2014[/color] [color=#e8e5e000]a[/color] [color=#e8e5e000]population[/color] [color=#e8e5e000]too[/color] [color=#e8e5e000]depleted[/color] [color=#e8e5e000]by[/color] [color=#e8e5e000]prior[/color] [color=#e8e5e000]hardship[/color] [color=#e8e5e000]to[/color] [color=#e8e5e000]mount[/color] [color=#e8e5e000]either[/color] [color=#e8e5e000]resistance[/color] [color=#e8e5e000]or[/color] [color=#e8e5e000]renewal.[/color]",
+      "Mission": "MISSION",
+      "Return": "RETURN"
+    },
+    "nodes_by_name": {
+      "@Button@1655": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "@Button@1657": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "@Button@1658": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "@Camera3D@1642": {
+        "class": "Camera3D",
+        "count": 1,
+        "visible": true
+      },
+      "@CanvasLayer@1644": {
+        "class": "CanvasLayer",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@1630": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@1639": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@1640": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@1654": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@Control@1653": {
+        "class": "Control",
+        "count": 1,
+        "visible": false
+      },
+      "@GPUParticles3D@1636": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@1656": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": false
+      },
+      "@Label3D@3322": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3323": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3324": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3325": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3326": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3327": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3328": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3329": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3330": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3331": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3332": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3333": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3334": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3335": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label3D@3336": {
+        "class": "Label3D",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@1648": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1646": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1671": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1678": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1685": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1692": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1699": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1706": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1713": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1720": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@1727": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@1634": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@1635": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@MeshInstance3D@1643": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1659": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1665": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1672": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1679": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1686": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1693": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1700": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1707": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1714": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@1721": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1663": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1669": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1676": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1683": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1690": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1697": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1704": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1711": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1718": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@RichTextLabel@1725": {
+        "class": "RichTextLabel",
+        "count": 1,
+        "visible": true
+      },
+      "@ScrollContainer@1651": {
+        "class": "ScrollContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@SubViewport@1632": {
+        "class": "SubViewport",
+        "count": 1,
+        "visible": true
+      },
+      "@SubViewport@1637": {
+        "class": "SubViewport",
+        "count": 1,
+        "visible": true
+      },
+      "@SubViewport@1638": {
+        "class": "SubViewport",
+        "count": 1,
+        "visible": true
+      },
+      "@SubViewport@1641": {
+        "class": "SubViewport",
+        "count": 1,
+        "visible": true
+      },
+      "@SubViewportContainer@1631": {
+        "class": "SubViewportContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@TextureRect@1645": {
+        "class": "TextureRect",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1664": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1670": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1677": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1684": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1691": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1698": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1705": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1712": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1719": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@Timer@1726": {
+        "class": "Timer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1647": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1652": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1660": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1666": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1673": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1680": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1687": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1694": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1701": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1708": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1715": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@1722": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@WorldEnvironment@1633": {
+        "class": "WorldEnvironment",
+        "count": 1,
+        "visible": true
+      },
+      "AmbientDust": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "AmbientRig": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "Camera3D": {
+        "class": "Camera3D",
+        "count": 1,
+        "visible": true
+      },
+      "ChronicleEntry": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "ChronicleScrollPanel": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "ConstellationRenderer": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "DirectionalLight3D": {
+        "class": "DirectionalLight3D",
+        "count": 1,
+        "visible": true
+      },
+      "GalaxyAdapter": {
+        "class": "Node",
+        "count": 1,
+        "visible": true
+      },
+      "GalaxyView": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "GridPlane": {
+        "class": "MeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "InfoPanelHost": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Mission": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "OrbitCamera": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "Points": {
+        "class": "MultiMeshInstance3D",
+        "count": 1,
+        "visible": true
+      },
+      "RadialStreams": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Return": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "Ring01": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring02": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring03": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring04": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring05": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring06": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring07": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring08": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring09": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring10": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring11": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "Ring12": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "ShellRenderer": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "Starfield": {
+        "class": "GPUParticles3D",
+        "count": 1,
+        "visible": true
+      },
+      "StreamPivot": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "TMBlinkingCursor": {
+        "class": "ColorRect",
+        "count": 10,
+        "visible": false
+      },
+      "TMDivider": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "TerritoryField": {
+        "class": "Node",
+        "count": 1,
+        "visible": true
+      },
+      "UI": {
+        "class": "CanvasLayer",
+        "count": 1,
+        "visible": true
+      },
+      "World": {
+        "class": "Node3D",
+        "count": 1,
+        "visible": true
+      },
+      "WorldEnvironment": {
+        "class": "WorldEnvironment",
+        "count": 1,
+        "visible": true
+      },
+      "ZoomDisclosureController": {
+        "class": "Node",
+        "count": 1,
+        "visible": true
+      }
+    }
+  },
+  "qa": {
+    "entries": [
+      {
+        "category": 2.0,
+        "cluster_type": 0.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 37.0
+          },
+          {
+            "id": 4.0,
+            "kind": "faction",
+            "len": 15.0,
+            "start": 57.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 185.0
+          }
+        ],
+        "expanded_text": "In a matter of days, the campaign at the Barwyn, held by the Free Cities ground toward what the dispatches would call a mixed result \u2014 a conclusion that satisfied no one completely. At the Barwyn, the terms of a mixed result were ratified under a sky that offered no comment. The people who had lived through the campaign signed where they were told to sign. The generation that came after accepted a mixed result as inheritance \u2014 the debts and the gains both, without the memory of choosing either.",
+        "fragment": 364.0,
+        "fragment_ids": [
+          364.0,
+          372.0,
+          378.0
+        ],
+        "id": 0.0,
+        "mentions": [
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 37.0
+          },
+          {
+            "id": 4.0,
+            "kind": "faction",
+            "len": 15.0,
+            "start": 57.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 185.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            4.0
+          ],
+          "regions": [
+            76.0
+          ]
+        },
+        "significance": 0.0,
+        "start_tick": 30.0,
+        "text": "In a matter of days, the campaign at the Barwyn, held by the Free Cities ground toward what the dispatches would call a mixed result \u2014 a conclusion that satisfied no one completely. At the Barwyn, the terms of a mixed result were ratified under a sky that offered no comment. The people who had lived through the campaign signed where they were told to sign."
+      },
+      {
+        "category": 3.0,
+        "cluster_type": 0.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 25.0
+          },
+          {
+            "id": 12.0,
+            "kind": "region",
+            "len": 16.0,
+            "start": 44.0
+          },
+          {
+            "id": 3.0,
+            "kind": "faction",
+            "len": 16.0,
+            "start": 70.0
+          }
+        ],
+        "expanded_text": "Word of what was done at the Barwyn reached the Hollow Crown, held by the Iron Compact, where the echo of it was felt across the border.",
+        "fragment": -1.0,
+        "fragment_ids": [
+          -1.0,
+          -1.0,
+          -1.0
+        ],
+        "id": 1.0,
+        "mentions": [
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 25.0
+          },
+          {
+            "id": 12.0,
+            "kind": "region",
+            "len": 16.0,
+            "start": 44.0
+          },
+          {
+            "id": 3.0,
+            "kind": "faction",
+            "len": 16.0,
+            "start": 70.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            3.0
+          ],
+          "regions": [
+            12.0
+          ]
+        },
+        "significance": 0.0,
+        "start_tick": 30.0,
+        "text": "Word of what was done at the Barwyn reached the Hollow Crown, held by the Iron Compact, where the echo of it was felt across the border."
+      },
+      {
+        "category": 3.0,
+        "cluster_type": 0.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [],
+        "expanded_text": "",
+        "fragment": -1.0,
+        "fragment_ids": [
+          -1.0,
+          -1.0,
+          -1.0
+        ],
+        "id": 2.0,
+        "mentions": [],
+        "refs": {
+          "factions": [],
+          "regions": [
+            57.0
+          ]
+        },
+        "significance": 0.0,
+        "start_tick": 30.0,
+        "text": ""
+      },
+      {
+        "category": 3.0,
+        "cluster_type": 1.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 3.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 281.0
+          }
+        ],
+        "expanded_text": "In the Barwyn, where Marrow had once walked with authority, a quieter era of diminishment began. Marrow name still appeared in the registries, but it carried a different weight now. Children of the household were raised on stories of what had been, and the silence of what was. In the Barwyn, the memory of Marrow decline served as cautionary scripture. Families who had once envied them now invoked their name as proof that nothing was guaranteed.",
+        "fragment": 20.0,
+        "fragment_ids": [
+          20.0,
+          32.0,
+          35.0
+        ],
+        "id": 3.0,
+        "mentions": [
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 3.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            4.0
+          ],
+          "regions": [
+            76.0
+          ]
+        },
+        "significance": 0.0,
+        "start_tick": 30.0,
+        "text": "In the Barwyn, where Marrow had once walked with authority, a quieter era of diminishment began. Marrow name still appeared in the registries, but it carried a different weight now. Children of the household were raised on stories of what had been, and the silence of what was."
+      },
+      {
+        "category": 20.0,
+        "cluster_type": 3.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 4.0,
+            "kind": "faction",
+            "len": 15.0,
+            "start": 5.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 37.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 200.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 428.0
+          }
+        ],
+        "expanded_text": "What the Free Cities accomplished in the Barwyn during this period was less a conquest than a reorganization \u2014 the same territory, different loyalties, different logic. The transition of authority in the Barwyn was conducted, by the standards of such things, with restraint. Old obligations were discharged; new ones were incurred. The exchange was transactional in form, if not always in spirit. Whether the new arrangement in the Barwyn was better than the one it replaced depended, as such judgments usually do, entirely on where one had stood in the arrangement it replaced.",
+        "fragment": 307.0,
+        "fragment_ids": [
+          307.0,
+          312.0,
+          318.0
+        ],
+        "id": 4.0,
+        "mentions": [
+          {
+            "id": 4.0,
+            "kind": "faction",
+            "len": 15.0,
+            "start": 5.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 37.0
+          },
+          {
+            "id": 76.0,
+            "kind": "region",
+            "len": 10.0,
+            "start": 200.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            4.0
+          ],
+          "regions": [
+            76.0
+          ]
+        },
+        "significance": 9.36,
+        "start_tick": 30.0,
+        "text": "What the Free Cities accomplished in the Barwyn during this period was less a conquest than a reorganization \u2014 the same territory, different loyalties, different logic. The transition of authority in the Barwyn was conducted, by the standards of such things, with restraint. Old obligations were discharged; new ones were incurred. The exchange was transactional in form, if not always in spirit."
+      },
+      {
+        "category": 20.0,
+        "cluster_type": 3.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [],
+        "expanded_text": "",
+        "fragment": -1.0,
+        "fragment_ids": [
+          -1.0,
+          -1.0,
+          -1.0
+        ],
+        "id": 5.0,
+        "mentions": [],
+        "refs": {
+          "factions": [],
+          "regions": [
+            57.0
+          ]
+        },
+        "significance": 5.2,
+        "start_tick": 30.0,
+        "text": ""
+      },
+      {
+        "category": 23.0,
+        "cluster_type": 3.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 18.0
+          },
+          {
+            "id": 11.0,
+            "kind": "faction",
+            "len": 18.0,
+            "start": 39.0
+          },
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 160.0
+          },
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 341.0
+          }
+        ],
+        "expanded_text": "The chronicles of the Rasvane, held by the Northwind Host offer little drama for this stretch \u2014 which is, in its own way, a kind of record. Local governance in the Rasvane functioned within its ordinary tolerances. Disputes were resolved at the local level; appeals to higher authority were rare and, when made, largely procedural. In this, the Rasvane was useful \u2014 not as a subject of history, but as a foundation beneath it.",
+        "fragment": 288.0,
+        "fragment_ids": [
+          288.0,
+          297.0,
+          299.0
+        ],
+        "id": 6.0,
+        "mentions": [
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 18.0
+          },
+          {
+            "id": 11.0,
+            "kind": "faction",
+            "len": 18.0,
+            "start": 39.0
+          },
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 160.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            11.0
+          ],
+          "regions": [
+            64.0
+          ]
+        },
+        "significance": 5.2,
+        "start_tick": 30.0,
+        "text": "The chronicles of the Rasvane, held by the Northwind Host offer little drama for this stretch \u2014 which is, in its own way, a kind of record. Local governance in the Rasvane functioned within its ordinary tolerances. Disputes were resolved at the local level; appeals to higher authority were rare and, when made, largely procedural."
+      },
+      {
+        "category": 22.0,
+        "cluster_type": 3.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 41.0
+          },
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 149.0
+          },
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 398.0
+          }
+        ],
+        "expanded_text": "A generation passed before the people of the Rasvane allowed themselves the word they had long been avoiding. In a matter of days, the population of the Rasvane contracted \u2014 not through catastrophe but through the quiet arithmetic of departures exceeding arrivals, births failing to replace deaths, and a general sense that the future lay elsewhere. Later administrations would attempt revivals of the Rasvane \u2014 some earnest, some merely rhetorical. None recovered what the long erosion had taken, because erosion does not leave the original shape intact beneath its work.",
+        "fragment": 252.0,
+        "fragment_ids": [
+          252.0,
+          260.0,
+          264.0
+        ],
+        "id": 7.0,
+        "mentions": [
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 41.0
+          },
+          {
+            "id": 64.0,
+            "kind": "region",
+            "len": 11.0,
+            "start": 149.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            11.0
+          ],
+          "regions": [
+            64.0
+          ]
+        },
+        "significance": 5.2,
+        "start_tick": 30.0,
+        "text": "A generation passed before the people of the Rasvane allowed themselves the word they had long been avoiding. In a matter of days, the population of the Rasvane contracted \u2014 not through catastrophe but through the quiet arithmetic of departures exceeding arrivals, births failing to replace deaths, and a general sense that the future lay elsewhere."
+      },
+      {
+        "category": 23.0,
+        "cluster_type": 3.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 21.0
+          },
+          {
+            "id": 0.0,
+            "kind": "faction",
+            "len": 12.0,
+            "start": 43.0
+          },
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 152.0
+          },
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 343.0
+          }
+        ],
+        "expanded_text": "In a matter of days, the Quilmere, held by the Dominion continued largely as it had \u2014 administered, taxed, and otherwise undisturbed. The population of the Quilmere neither grew nor contracted with any urgency in this period. Movement in and out of the region followed seasonal patterns and left no structural mark on the record. The quiet of the Quilmere during these years would not last indefinitely, but while it held, it required nothing and asked for nothing in return.",
+        "fragment": 287.0,
+        "fragment_ids": [
+          287.0,
+          298.0,
+          300.0
+        ],
+        "id": 8.0,
+        "mentions": [
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 21.0
+          },
+          {
+            "id": 0.0,
+            "kind": "faction",
+            "len": 12.0,
+            "start": 43.0
+          },
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 152.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            0.0
+          ],
+          "regions": [
+            66.0
+          ]
+        },
+        "significance": 5.2,
+        "start_tick": 30.0,
+        "text": "In a matter of days, the Quilmere, held by the Dominion continued largely as it had \u2014 administered, taxed, and otherwise undisturbed. The population of the Quilmere neither grew nor contracted with any urgency in this period. Movement in and out of the region followed seasonal patterns and left no structural mark on the record."
+      },
+      {
+        "category": 22.0,
+        "cluster_type": 3.0,
+        "end_tick": 80.0,
+        "expanded_mentions": [
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 41.0
+          },
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 165.0
+          },
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 368.0
+          }
+        ],
+        "expanded_text": "A generation passed before the people of the Quilmere allowed themselves the word they had long been avoiding. The dangerously unstable stability that characterized the Quilmere in those years was not the stability of strength but of exhaustion \u2014 a population too depleted by prior hardship to mount either resistance or renewal. The dangerously unstable condition of the Quilmere at the close of the period was, in its way, a kind of stability \u2014 the stability of a thing that has finished falling and lies where it landed.",
+        "fragment": 252.0,
+        "fragment_ids": [
+          252.0,
+          255.0,
+          265.0
+        ],
+        "id": 9.0,
+        "mentions": [
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 41.0
+          },
+          {
+            "id": 66.0,
+            "kind": "region",
+            "len": 12.0,
+            "start": 165.0
+          }
+        ],
+        "refs": {
+          "factions": [
+            0.0
+          ],
+          "regions": [
+            66.0
+          ]
+        },
+        "significance": 5.2,
+        "start_tick": 30.0,
+        "text": "A generation passed before the people of the Quilmere allowed themselves the word they had long been avoiding. The dangerously unstable stability that characterized the Quilmere in those years was not the stability of strength but of exhaustion \u2014 a population too depleted by prior hardship to mount either resistance or renewal."
+      }
+    ],
+    "entries_printed": 0,
+    "entries_total": 10,
+    "phase": 1,
+    "plants": [],
+    "replay": {
+      "active": true,
+      "entries_started": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "from_tick": 30,
+      "keyframes_hit": [],
+      "shown_owners": [
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        2.0,
+        2.0,
+        2.0,
+        3.0,
+        3.0,
+        3.0,
+        3.0,
+        4.0,
+        4.0,
+        4.0,
+        4.0,
+        5.0,
+        5.0,
+        5.0,
+        6.0,
+        6.0,
+        6.0,
+        6.0,
+        7.0,
+        7.0,
+        7.0,
+        7.0,
+        8.0,
+        8.0,
+        8.0,
+        9.0,
+        9.0,
+        9.0,
+        10.0,
+        10.0,
+        10.0,
+        10.0,
+        11.0,
+        11.0,
+        11.0,
+        11.0,
+        12.0,
+        12.0,
+        12.0,
+        13.0,
+        13.0,
+        13.0,
+        14.0,
+        14.0,
+        14.0,
+        7.0,
+        11.0,
+        1.0,
+        6.0,
+        6.0,
+        14.0,
+        0.0,
+        3.0,
+        12.0,
+        6.0,
+        3.0,
+        10.0,
+        9.0,
+        11.0,
+        -1.0,
+        0.0,
+        8.0,
+        5.0,
+        5.0,
+        13.0,
+        2.0,
+        12.0,
+        10.0,
+        0.0,
+        14.0,
+        0.0,
+        3.0,
+        -1.0,
+        12.0
+      ],
+      "snapshot_count": 26,
+      "tick": 31,
+      "to_tick": 80
+    },
+    "scene": "time_jump",
+    "tick": -1
+  },
+  "scene": "res://scenes/world/time_jump_sequencer.tscn",
+  "tick": 0
+}

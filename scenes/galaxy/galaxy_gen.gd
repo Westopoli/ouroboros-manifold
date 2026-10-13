@@ -5,10 +5,10 @@ extends RefCounted
 # positions, so the client owns layout. Same region-id set + same seed
 # always yields the same positions (determinism contract, CLAUDE.md).
 
-# liberty 2026-10-10: R_BALL 71 is the prototype's 100 (galaxy_gen.gd:8 on origin/push/galaxy-field,
-# unscaled) times the cube root of 80 / 220, so the star density per volume is the prototype's.
-const R_BALL := 71.0
-const MIN_SPACING := 22.0   # prototype galaxy_gen.gd:11 (unscaled), now in 3D
+# B23 (spec rev 12b): the prototype's values as run, origin/push/galaxy-field at 99f35887 (CIV_SCALE 0.5 at galaxy_gen.gd:7).
+const CIV_SCALE := 0.5   # prototype galaxy_gen.gd:7
+const R_BALL := 50.0   # prototype galaxy_gen.gd:8 BALL_RADIUS 100 x CIV_SCALE
+const MIN_SPACING := 11.0   # prototype galaxy_gen.gd:11, 22 x CIV_SCALE, now in 3D
 const PLACEMENT_ATTEMPTS := 250   # prototype galaxy_gen.gd:48 (250 per system)
 
 var _fallbacks := 0

@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from play_support import count, follow_army_on, has_key, moment, nearest_enemy_px, qa, select_own_by_drag, start_tactical_game, step_until
+from play_support import CONTACT_BUDGET_TICKS, count, follow_army_on, has_key, moment, nearest_enemy_px, qa, select_own_by_drag, start_tactical_game, step_until
 
 
 @pytest.fixture(scope="module")
@@ -17,7 +17,7 @@ def tactical_game():
         g.stop()
 
 
-MAX_TICKS = 3000  # TD-VG-A-11: the TD-VG-A-1 raise to 6730 was reverted (Westley 2026-10-11); old budget restored, play red until the scroll-speed piece lands
+MAX_TICKS = CONTACT_BUDGET_TICKS  # DRAFT-a17-contact-budget 5920 (Architect 2026-10-12 ruling 2, Westley keeps the march to first contact; his to change): replaces TD-VG-A-11's 3000. FINDING-contact-distance closes 'by design' (Q-A17-01)
 CHUNK = 25  # TD-VG-A-1 step chunk (kept, not part of the reverted budget raise); see TD-VG-A-11
 
 
