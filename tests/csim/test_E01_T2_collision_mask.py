@@ -24,7 +24,8 @@ BLOB_R = 60.0              # lab's shape: 16 units in a 60 wu blob
 # Re-recorded 2026-10-09 (TD-VG-E-1): K-e folds the economy words into the factions section; old 17656050431320828508.
 # TD-VG-E-17: K-e5 hashes the economy block into the factions section, which moved the whole word (TD-VG-E-9 value
 # 3388087635923795345); the pin is now the (units, movement) sections, which K-e5 does not touch.
-FLYER_SECTIONS_50 = (5542676384425136191, 59688484827617401)   # recorded 2026-10-11 on the K-e5 tree 2747b283; identical on main c88cead2
+# TD-VG-W-2: old movement word 59688484827617401, new 4844137259322561366 (W2 route block in the movement section); units word unmoved.
+FLYER_SECTIONS_50 = (5542676384425136191, 4844137259322561366)   # recorded 2026-10-13 on the VG-W2 tree
 
 
 def _units_movement(lib, w):
