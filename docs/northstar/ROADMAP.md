@@ -193,7 +193,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 - Land before space (Westley, 2026-10-03): the land design is further along and space is still in his design loop. Space output is the general form that land is a special case of, so the mask contract is written for both.
 - Both generators must use their own deterministic noise in C; the mockups use the engine's noise.
 - Economy after a generator: bases, resources and expansion sites are places the generator finds (S-191).
-- The landscape batch in the skill lab waits on the guard stance decision.
+- The guard stance is ruled (R-096-08, 2026-10-13); the landscape batch runs on the built guard until the step-and-return engine piece lands.
 
 ## 6. Recently finished
 
