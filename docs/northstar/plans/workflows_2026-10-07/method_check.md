@@ -4,7 +4,7 @@ The nine method rev 2 rules were written on 2026-10-10 and both chats followed t
 
 ## Script: `scripts/specfactory/method_check.py`
 
-Stdlib only. Exit status 0 always: a hook must never block a session. Input is the `SessionStart` hook's JSON on stdin (`transcript_path`, `session_id`, `source`) or `--transcript <path>`; options `--live-checkout <path>` (default `~/Projects/ouroboros-manifold`, resolved) and `--threshold <tokens>` (default 150000). Unreadable input prints one line, `METHOD error <reason>`, and exits 0.
+Stdlib only. Exit status 0 always: a hook must never block a session. Input is the `SessionStart` hook's JSON on stdin (`transcript_path`, `session_id`, `source`) or `--transcript <path>`; options `--live-checkout <path>` (default `~/Projects/ouroboros-manifold`, resolved) and `--threshold <tokens>` (default 400000). Unreadable input prints one line, `METHOD error <reason>`, and exits 0.
 
 The transcript is the session's `.jsonl`: one JSON object per line, skipped when it does not parse. Only entries with `type` `assistant` or `user` and `isSidechain` not true count (sub-agent turns live in their own files). A compaction marker is a `user` entry with `isCompactSummary` true. The entries split into spans at the markers; the reported **span** is the last span that holds at least one assistant entry, so a hook that fires right after a compaction reports the turns that led to it. **Session** is every entry in the file. An assistant entry's tool calls are the `tool_use` blocks of `message.content` (`name`, `input`); its context size is `message.usage` `input_tokens` plus `cache_read_input_tokens` plus `cache_creation_input_tokens`; its model is `message.model`.
 
