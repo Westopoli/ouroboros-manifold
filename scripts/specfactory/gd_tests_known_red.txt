@@ -5,5 +5,4 @@
 res://tests/test_tactical_camera.gd :: FINDING-gd-red-main-2026-10-12
 res://tests/test_time_jump_replay.gd :: FINDING-gd-red-main-2026-10-12
 res://tests/test_vg_e_e1p.gd :: FINDING-gd-red-main-2026-10-12
-tests/qa/desktop/test_galaxy_pixels.py::test_c2_5_owner_colours_reach_the_pixels :: FINDING-dot-colour-pixels
 res://tests/test_tactical_view.gd :: FINDING-view-c53-framing-pin

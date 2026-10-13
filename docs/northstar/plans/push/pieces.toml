@@ -2059,7 +2059,7 @@ owns = ["scenes/galaxy/galaxy_view.gd", "tests/test_vg_b_b23b.gd"]  # galaxy_vie
 owns_glob = []
 acceptance = ["tests/test_vg_b_b23b.gd"]
 depends_on = ["VG-B23", "VG-B"]  # VG-B23 owns galaxy_view.gd until it lands; VG-B owns tests/test_vg_b_*.gd by glob
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "5f3ee95" }  # landed 5f3ee95
 tests_pending = true
 size_estimate = "dot material back to main's colouring (srgb flag and transparency reverted on the dots only); test_galaxy_pixels.py test_c2_5 green under Forward+; closes FINDING-dot-colour-pixels"
 
