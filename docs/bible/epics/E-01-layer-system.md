@@ -222,7 +222,7 @@ The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
-Space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer"; was "space eras only, for now") (Westley, 2026-10-05: "going dark and reach by type are only space for now").
+Reach by type applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); going dark stays space only for now (Westley, 2026-10-05).
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer, its own included, see it from further away than they otherwise would; emitting widens how far it can be seen by more than it widens how far it sees (Westley, 2026-10-07: "emitting should extend the area that you can be seen beyond what you can see"). Provisional: cross-layer sight doubles, and the seen-from distance grows by more than that, held as runtime settings.
