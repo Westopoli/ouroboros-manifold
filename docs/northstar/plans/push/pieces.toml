@@ -2339,3 +2339,15 @@ depends_on = ["VG-E-startforce", "VG-A18", "VG-A16", "VG-A", "VG-F-NETTICK", "VG
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce client: bind groups 1 to 3 from the mission frame, qa_state control_groups key; selection panel not edited"
+
+[[piece]]
+id = "LAB-REV2"
+manager = "M0"
+wave = 10
+owns = ["docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "umbrella for the skill lab rev 2 workflow (spec 2026-10-14); the shard rows LAB-REV2-L1..L7 and LAB-REV2-E0..E3 are added by the workflow's records step and take over scripts/skilllab/** and tests/skilllab/** from SL-harness, SPACELAB-1 and LAB-SEARCH (all attached)"
