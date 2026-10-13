@@ -1966,13 +1966,38 @@ size_estimate = "A16: To-layer buttons in the layer strip, Q/E keys, qa_state fo
 id = "VG-A18"
 manager = "M0"
 wave = 9
-owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_tactical_camera.gd", "tests/test_tactical_view.gd", "tests/qa/desktop/plays/A/test_S_103_start_view.py", "tests/qa/desktop/test_pan_speed_zoom.py", "scenes/settings/settings.gd", "tests/test_settings_pan_speed.gd"]  # tactical_view.gd: _force_camera and _framing_zoom (spec rev 12d, gap g6); test_tactical_view.gd :309/:314 stale pins re-pinned under TD-VG-A-13 (FINDING-view-c53-framing-pin); test_pan_speed_zoom.py :93 re-pinned under TD-VG-A-14 (a two-owner overlap with the attached glob owner G-qadesktoptests, tests/qa/desktop/**, the existing pattern; Architect 2026-10-13); settings.gd: the Home key card row (Architect g4: A18 runs after A16 and takes the card line then); tests/test_settings_pan_speed.gd: probe for test_pan_speed_zoom.py, re-pinned under TD-VG-A-14 (Architect 2026-10-13)
+owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_tactical_camera.gd", "tests/test_tactical_view.gd", "tests/qa/desktop/plays/A/test_S_103_start_view.py", "tests/qa/desktop/test_pan_speed_zoom.py", "scenes/settings/settings.gd", "tests/test_settings_pan_speed.gd", "tests/test_qa_daemon.gd", "tests/qa/desktop/plays/A/play_support.py"]  # tests/test_qa_daemon.gd: TD-VG-A-15, a two-owner overlap with the attached G-project (Architect 2026-10-13); tests/qa/desktop/plays/A/play_support.py: FINDING-edge-scroll-restore-overshoot, an overlap with the attached VG-A17 and glob VG-A (Architect 2026-10-13); tactical_view.gd: _force_camera and _framing_zoom (spec rev 12d, gap g6); test_tactical_view.gd :309/:314 stale pins re-pinned under TD-VG-A-13 (FINDING-view-c53-framing-pin); test_pan_speed_zoom.py :93 re-pinned under TD-VG-A-14 (a two-owner overlap with the attached glob owner G-qadesktoptests, tests/qa/desktop/**, the existing pattern; Architect 2026-10-13); settings.gd: the Home key card row (Architect g4: A18 runs after A16 and takes the card line then); tests/test_settings_pan_speed.gd: probe for test_pan_speed_zoom.py, re-pinned under TD-VG-A-14 (Architect 2026-10-13)
 owns_glob = []
 acceptance = ["tests/test_tactical_camera.gd", "tests/test_tactical_view.gd"]
 depends_on = ["VG-A16", "VG-A"]  # Architect 2026-10-12: re-sequenced like A16, A18 lands after A16 and before VG-E1's remaining pieces when no E1 builder is on the file; VG-E1 depends_on VG-A18 instead; VG-A is the attached owner of scenes/tactical_c/**
 status = { state = "queued" }
 tests_pending = true  # tests/test_tactical_camera.gd (existing red) gains cases; tests/test_tactical_view.gd :309, :314 re-pinned and :371 diagnosed by the test writer; the S-103 play is new
 size_estimate = "A18: the opening frame is the player's home, [B R-103-01], DRAFT-a18-margin, DRAFT-a18-home-key; acceptance = the three framing groups of tests/test_tactical_camera.gd green (live, top-edge, bottom-right-corner); the four A6a-2 edge-scroll cases are FINDING-edge-scroll-xvfb (not A18's); test_tactical_view.gd :309/:314 re-pinned under TD-VG-A-13; test_pan_speed_zoom.py :93 re-pinned under TD-VG-A-14; FU-A18-3d for the 3D rig"
+
+# A18 test fixes (Architect 2026-10-13): TD-VG-A-13/14/15 applied by testfix-1; FINDING-edge-scroll-restore-overshoot by testfix-2.
+[[piece]]
+id = "VG-A18-testfix-1"
+manager = "M0"
+wave = 9
+owns = ["tests/test_tactical_view.gd", "tests/test_settings_pan_speed.gd", "tests/qa/desktop/test_pan_speed_zoom.py", "tests/test_qa_daemon.gd"]  # test_pan_speed_zoom.py docstring :7 only; test_qa_daemon.gd :144 under TD-VG-A-15
+owns_glob = []
+acceptance = ["tests/test_tactical_view.gd", "tests/test_settings_pan_speed.gd", "tests/test_qa_daemon.gd"]
+depends_on = ["VG-A18"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "TD-VG-A-13, TD-VG-A-14 and TD-VG-A-15 applied in the test files; branch push/vg-a18cam-tests"
+
+[[piece]]
+id = "VG-A18-testfix-2"
+manager = "M0"
+wave = 9
+owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/test_tactical_play.py"]  # TD-VG-A-16, overlap with the attached glob G-qadesktoptests (Architect 2026-10-13)
+owns_glob = []
+acceptance = []
+depends_on = ["VG-A18", "VG-A17"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "FINDING-edge-scroll-restore-overshoot: near pass at the restored zoom in _edge_scroll_to; branch push/vg-a18cam-play-tests"
 
 # Read-only scout (Architect 2026-10-13): FINDING-edge-scroll-xvfb, found in A18's pre-flight.
 [[piece]]
@@ -2080,7 +2105,7 @@ size_estimate = "dot material back to main's colouring (srgb flag and transparen
 id = "VG-B24"
 manager = "M0"
 wave = 9
-owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/game_fixture.gd", "tests/test_vg_b_b24.gd", "tests/test_galaxy_renderers.gd", "tests/test_vg_b_b4.gd", "tests/test_vg_b_b23.gd"]  # galaxy_view.gd: the layout call _relayout at :412-416 only (on 536f7fd5; Architect g1); test_vg_b_b4.gd and test_vg_b_b23.gd: line :188 only (TD-VG-B-16); test_galaxy_quality_setting.gd moved to VG-B24b-quality-control
+owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/game_fixture.gd", "tests/test_vg_b_b24.gd", "tests/test_galaxy_renderers.gd", "tests/test_vg_b_b4.gd", "tests/test_vg_b_b23.gd", "tests/test_vg_b_b22.gd"]  # galaxy_view.gd: the layout call _relayout at :412-416 only (on 536f7fd5; Architect g1); test_vg_b_b4.gd and test_vg_b_b23.gd: line :188 only (TD-VG-B-16); test_galaxy_quality_setting.gd moved to VG-B24b-quality-control; test_vg_b_b22.gd: row (6) :189 and header :27-30 only (TD-VG-B-18)
 owns_glob = ["tests/qa/desktop/plays/B/*"]  # the B plays re-shot
 acceptance = ["tests/test_vg_b_b24.gd"]
 depends_on = ["VG-B23", "VG-B23b-dotcolour", "VG-B"]  # VG-B23 owns galaxy_gen.gd and galaxy_view.gd; VG-B is the attached owner by glob of the rest
