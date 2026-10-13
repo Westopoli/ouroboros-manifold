@@ -308,8 +308,11 @@ func _run() -> void:
 	var mat = points.material_override if points != null else null
 	_check(mat is StandardMaterial3D, "B23 dots: World/Points material_override is not a StandardMaterial3D")
 	if mat is StandardMaterial3D:
-		_row("dot material transparency", int(mat.transparency), int(BaseMaterial3D.TRANSPARENCY_ALPHA), "galaxy_view.gd:117 TRANSPARENCY_ALPHA")
-		_row("dot material vertex_color_is_srgb", mat.vertex_color_is_srgb, false, "galaxy_view.gd:115-118 (not set, default false)")
+		# The two dot rows below pin main before B23, not the prototype (TD-VG-B-15, piece VG-B23b-dotcolour). Westley 2026-10-12:
+		# "I like the coloring of the MAIN-passing better, but other than that they both look exactly the same to me. My eyes approve, pending the color change."
+		# Spec :306: "the dot material and vertex-colour path as on origin/main before B23 (the srgb flag and the prototype's dot transparency are reverted on the dots only); every other B23 value stays".
+		_row("dot material transparency", int(mat.transparency), int(BaseMaterial3D.TRANSPARENCY_DISABLED), "main before B23: galaxy_view.gd at 33e3bc2f^ sets no transparency (default DISABLED); spec :306 ruling")
+		_row("dot material vertex_color_is_srgb", mat.vertex_color_is_srgb, true, "main before B23: galaxy_view.gd:114 at 33e3bc2f^ vertex_color_is_srgb = true; spec :306 ruling")
 		_ctrl(mat.vertex_color_use_as_albedo and mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED,
 			"dot material vertex_color_use_as_albedo true and unshaded (galaxy_view.gd:113-114)")
 
