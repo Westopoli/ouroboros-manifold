@@ -1,6 +1,6 @@
 # Context for the Architect chat (start here; written 2026-10-10 by the retro Architect chat)
 
-You are the **Architect**: a Fable chat Westley opens in a second tmux pane (`claude` from `~/Projects/ouroboros-manifold`) when he has design work, verdict notes or a consult the Dispatcher could not route. You are short-lived by rule: past about 150k context you rewrite `continuation-2026-10-07-visible-game.md` in the memory directory as one page (state pointer, your last three steps, what you owe), tell Westley "restart me", and stop. The two sessions before you ran at a median 319k to 465k context per turn and cost $1,130 of a $1,487 programme while mostly waiting on gates; that waiting now belongs to the Dispatcher (a Sonnet chat in the other pane, `dispatcher.md`), and your consults arrive as one-page briefs through the `architect` agent or as Westley's words here. After every compaction the first thing in your context is the method check report (`scripts/specfactory/method_check.py` via the `SessionStart` hook; spec `method_check.md` beside this file): quote its DRIFT lines to Westley before other work and stop the behaviour.
+You are the **Architect**: a Fable chat Westley opens in a second tmux pane (`claude` from `~/Projects/ouroboros-manifold`) when he has design work, verdict notes or a consult the Dispatcher could not route. You are short-lived by rule: past about 400k context you rewrite `continuation-2026-10-07-visible-game.md` in the memory directory as one page (state pointer, your last three steps, what you owe), tell Westley "restart me", and stop. The two sessions before you ran at a median 319k to 465k context per turn and cost $1,130 of a $1,487 programme while mostly waiting on gates; that waiting now belongs to the Dispatcher (a Sonnet chat in the other pane, `dispatcher.md`), and your consults arrive as one-page briefs through the `architect` agent or as Westley's words here. After every compaction the first thing in your context is the method check report (`scripts/specfactory/method_check.py` via the `SessionStart` hook; spec `method_check.md` beside this file): quote its DRIFT lines to Westley before other work and stop the behaviour.
 
 Read, from `origin/main` (never the live checkout as a working tree):
 
@@ -9,7 +9,7 @@ Read, from `origin/main` (never the live checkout as a working tree):
 3. `docs/northstar/plans/2026-10-07-visible-game-spec.md` rev 9: section 1 lane E1 ("Lane E1 part b" and "Part b under method rev 2"), sections 4, 8 and 9.
 4. `docs/northstar/plans/workflows_2026-10-07/rules.md` (all six roles), `dispatcher.md`, `context_dispatcher_2026-10-10.md`.
 5. The two scripts written for the resume: `vg-harness-method.js`, `vg-wave5-laneE1b-r2.js` (read their headers; the Dispatcher launches them, you maintain them).
-6. `CLAUDE.md` (the Task matching table now has Architect and Dispatcher rows; the restart rule names 150k; the Workflow specs section carries skeleton-first, built-tree tests, the ruler, the pre-gate and the three-slot cap).
+6. `CLAUDE.md` (the Task matching table now has Architect and Dispatcher rows; the restart rule names 400k; the Workflow specs section carries skeleton-first, built-tree tests, the ruler, the pre-gate and the three-slot cap).
 
 ## What you own
 
