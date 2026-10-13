@@ -8,4 +8,3 @@ Name form: `<lane>-<story>-<what it shows>.png`. One row per file.
 
 | File here | Story | Lane | Queue row (run id) | Original | What to judge |
 |---|---|---|---|---|---|
-| `A-S103-start-view-opening-frame.png` | S-103 | A | `A.md` 20261013-1625-c79d141 | `shots/20261013-1625-c79d141/S-103_start_view.png` | The first battle frame after Deploy (space era): is your army framed in the middle with a visible margin, "of your base", nothing under the panels? |

@@ -106,7 +106,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-100 | E-13 | "Units face what they shoot and where they go, and turn rather than snap." | Spec'd | `epics/E-13-movement-and-command.md` S-100 |
 | S-101 | E-13 | "I see units turn, slow behind blockers, and settle into their slots." | Spec'd, needs reference | `epics/E-13-movement-and-command.md` S-101 |
 | S-102 | E-13 | "Every peer computes the same movement from the same commands." | Spec'd | `epics/E-13-movement-and-command.md` S-102 |
-| S-103 | E-16 | "A free camera I manage myself, with the Angle Rack, the Layer Peel, and a flip key." | Spec'd; keys decided 2026-10-07; idea only: Q-103-07 | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
+| S-103 | E-16 | "A free camera I manage myself, with the Angle Rack, the Layer Peel, and a flip key." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
 | S-104 | E-16 | "A lean HUD that shows what I need and stays out of the way." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-104 |
 | S-105 | E-16 | "Click, box-select, bind groups, and never an all-army button." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-105 |
 | S-106 | E-16 | "A 3D star map where territory glows, borders touch, and war flashes." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-106 |
