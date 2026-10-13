@@ -4,7 +4,8 @@
 Real display (Xvfb, software GL). Boots tests/test_settings_pan_speed.gd in its `--probe pan`
 child mode on a settings.cfg fixture in a throwaway XDG_DATA_HOME, mounts the live tactical_c view
 and measures camera travel over 5 fixed-step pan frames (1/30 s) for a held arrow key and for the
-pointer resting on the right viewport edge, at zoom 1.0 and at zoom 2.0 (`_zoom_by(2.0)`).
+pointer resting on the right viewport edge, at two zooms: the zoom is halved first (`_zoom_by(0.5)`, zoom1) and then doubled
+(`_zoom_by(2.0)`, zoom2), so the opening fit (ZOOM_MAX / ZOOM_STEP) is never clamped.
 
 Zoom direction: in tactical_view.gd zoom 1.0 is zoomed OUT (the whole canvas fits the screen
 height, ZOOM_MIN) and zoom 4.0 is zoomed IN, so doubling the zoom halves the world distance:

@@ -306,10 +306,19 @@ func _run_c53_tests() -> void:
 	view.load_frame(big)
 	await process_frame
 	var st: Dictionary = view.qa_state()
-	_assert(st.has("scale") and is_equal_approx(float(st["scale"]), 1080.0 / 24000.0), "qa_state().scale = %s, expected the canvas fitted to the screen height (%s)" % [st.get("scale"), 1080.0 / 24000.0])
+	# TD-VG-A-13 (premise-changed, Architect 2026-10-13): was
+	# `is_equal_approx(float(st["scale"]), 1080.0 / 24000.0)`; A18 frames the own box
+	# (units, spawn, own lots), not the whole canvas, so the scale is the canvas fit
+	# times the framing zoom (clamped to ZOOM_MIN..ZOOM_MAX / ZOOM_STEP), read after load_frame.
+	var fit_scale: float = (1080.0 / 24000.0) * view._framing_zoom()
+	_assert(st.has("scale") and is_equal_approx(float(st["scale"]), fit_scale), "qa_state().scale = %s, expected the canvas fit times the framing zoom (%s)" % [st.get("scale"), fit_scale])
 	var px: Dictionary = st.get("units_px", {})
 	_assert(px.size() == 3, "expected 3 drawn units on the 24000 canvas, got %d" % px.size())
+	# TD-VG-A-13: was every entry of px; now own-faction ids only (units 1 and 2,
+	# faction 0): the enemy at y=23985 is outside the own box and may sit off screen.
 	for k in px:
+		if int(big["units"][int(k) - 1]["faction"]) != 0:
+			continue
 		var p: Array = px[k]
 		_assert(p[0] >= 0.0 and p[0] <= 1920.0 and p[1] >= 0.0 and p[1] <= 1080.0, "unit %s drawn at %s, outside the 1920x1080 screen on a real-size canvas" % [k, str(p)])
 
@@ -553,7 +562,17 @@ func _check_units_count_and_px_in_viewport() -> void:
 	if vp.x < 200.0 or vp.y < 200.0:
 		vp = Vector2(1920, 1080)
 	var outside := 0
+	# TD-VG-A-13: was every px entry; now own-faction ids only (the frame's
+	# player_faction, default LOCAL_FACTION); A18 frames the own box, so enemy
+	# units may sit off screen. The count assertion above is unchanged.
+	var own_faction: int = int(_frame0.get("player_faction", LOCAL_FACTION))
+	var own_ids: Dictionary = {}
+	for u in _frame0.get("units", []):
+		if int(u.get("faction", -1)) == own_faction:
+			own_ids[str(int(u.get("id")))] = true
 	for id in px:
+		if not own_ids.has(str(id)):
+			continue
 		var p = px[id]
 		if typeof(p) != TYPE_ARRAY or p.size() != 2 or p[0] < 0 or p[0] > vp.x or p[1] < 0 or p[1] > vp.y:
 			outside += 1

@@ -161,9 +161,7 @@ Not verified from the files in the folder: the 8 workers and the wall-clock time
 
 Open for Westley, after he reads the chart:
 
-1. The draft constants of Q-LAB-03: hold 1,200 ticks, 400 blind ticks, 5 percent draw band, 300 wu hold radius.
-2. The held share, 29.8 percent: is a held outcome the depth signal he wants, or noise?
-3. The 143 always-capped groups: which plays are they, and is a fight that never ends a layout fault or a play fault?
+1. Ruled 2026-10-13 (register Q-LAB-03): a fight ends when one side is eliminated. Both sides attack-move to one point; a defender that must hold a feature gets the attacker's attack-move point inside its vision and fire. Hold timer, hold radius, blind window and draw band are retired as end rules; the tick cap stays as a bug detector only, and a capped fight is a lab defect to trace (run 1's 143 always-capped groups had no contact at all: the attacker never reached the defender), never a result. Run 1's `held` class falls away with it.
 4. The composition category table for run 2.
 
 ## 9. Two machines

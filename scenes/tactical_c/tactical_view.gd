@@ -316,7 +316,9 @@ func set_terrain(t: Dictionary) -> void:
 		_ground3d.set_terrain(t)
 		_add_ground_layers(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
-		_camera = _force_camera()
+		# FU-A18-3d: the rig has no fit yet, so the ground-era centre is the own-unit box as on main; the spawn and lot terms come with the fit.
+		_camera = _force_camera(false)
+		_home_camera = _camera
 		_ground3d.camera_rig().pan_to(_camera)
 		_sync_from_rig()
 		_update_display_px()
@@ -452,6 +454,8 @@ func load_frame(frame: Dictionary) -> void:
 		_zoom = _framing_zoom()
 		_world_scale = _fit_scale * _zoom
 		_camera = _force_camera()
+		_home_camera = _camera
+		_home_zoom = _zoom
 		_camera_initialized = true
 		_camera_canvas = _canvas
 		if _rig() != null:
@@ -969,63 +973,90 @@ func qa_pan(x: float, y: float) -> void:
 	_redraw()
 
 
-# A19: the zoom at which every own and visible unit fits the screen with the edge of its sight disc, so the dimming outside
-# it shows too; 1.0 when they span the canvas, at most one wheel notch under ZOOM_MAX.
-# Draft: the share of a sight radius kept in view around the units (nobody gave a number).
-const FRAMING_SIGHT_SHARE := 1.0
+# A18 replaced the A19 framing (visible enemy units and the sight term). See also: ledger FINDING-camera-start-framing.
+# The opening frame (spec Rev 12d A18, R-103-01, R-246-07): the box of the point set P = the local faction's units, the
+# player's spawn point and the lots owned by the local faction, inset by a margin on each side.
+# spec Rev 12d A18, DRAFT-a18-margin (untagged in the spec): the margin is a tenth of the viewport per side (Architect
+# gap ruling G2, 2026-10-12).
+const FRAMING_MARGIN_SHARE := 0.1
+# The map node kind of a player spawn (Architect gap ruling G3, 2026-10-12: the kind-7 node nearest the own-unit centroid).
+const SPAWN_NODE_KIND := 7
+# DRAFT-a18-home-key (Architect gap ruling G4, 2026-10-12): Home restores the stored opening camera and zoom.
+const HOME_KEY := KEY_HOME
+
+var _home_camera := Vector2.ZERO
+var _home_zoom := 1.0
 
 
+# The bounding box of P as [lo, hi]; an empty array when there is no own unit (G8: the caller keeps zoom 1.0 and the
+# canvas centre).
+func _home_box(anchors: bool = true) -> Array:
+	var lf := _get_local_faction()
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	var sum := Vector2.ZERO
+	var count := 0
+	for u in _frame.get("units", []):
+		if int(u.get("faction", -1)) == lf:
+			var p := Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+			lo = lo.min(p)
+			hi = hi.max(p)
+			sum += p
+			count += 1
+	if count == 0:
+		return []
+	var centroid := sum / float(count)
+	var best := INF
+	var spawn := Vector2.ZERO
+	for n in _frame.get("map", {}).get("nodes", []) if anchors else []:
+		if int(n.get("kind", -1)) == SPAWN_NODE_KIND:
+			var np := Vector2(float(n.get("x", 0.0)), float(n.get("y", 0.0)))
+			var d := np.distance_squared_to(centroid)
+			if d < best:
+				best = d
+				spawn = np
+	if best < INF:
+		lo = lo.min(spawn)
+		hi = hi.max(spawn)
+	for l in _frame.get("lots", []) if anchors else []:
+		if int(l.get("owner", -1)) == lf:
+			var lp := Vector2(float(l.get("x", 0.0)), float(l.get("y", 0.0)))
+			lo = lo.min(lp)
+			hi = hi.max(lp)
+	return [lo, hi]
+
+
+# R-103-01: the zoom at which the box of P, inset by the margin, fills the viewport (clamped to ZOOM_MIN .. ZOOM_MAX / ZOOM_STEP,
+# G8); an empty set keeps zoom 1.0.
 func _framing_zoom() -> float:
-	var lf := _get_local_faction()
-	var seen := _visible_ids()
-	var lo := Vector2(INF, INF)
-	var hi := Vector2(-INF, -INF)
-	var sight := 0.0
-	for u in _frame.get("units", []):
-		if int(u.get("faction", -1)) == lf or seen.has(int(u.get("id"))):
-			var p := Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
-			lo = lo.min(p)
-			hi = hi.max(p)
-			sight = maxf(sight, float(u.get("sight", 0.0)))
-	if lo.x == INF:
+	var box := _home_box()
+	if box.is_empty():
 		return 1.0
-	var size := hi - lo + Vector2.ONE * sight * FRAMING_SIGHT_SHARE
-	var room := Vector2(SCREEN_W, SCREEN_H) - Vector2.ONE * UNIT_SIZE * 4.0
-	var z := minf(room.x / maxf(size.x * _fit_scale, 1.0), room.y / maxf(size.y * _fit_scale, 1.0))
-	return clampf(z, 1.0, ZOOM_MAX / ZOOM_STEP)
-
-
-# Frames what the player sees at mission start: shifts the canvas-centred camera
-# just enough to bring every visible unit's sprite on screen; if they cannot all
-# fit, centres on their bounding box.
-func _force_camera() -> Vector2:
-	var centre := Vector2(_canvas * 0.5, _canvas * 0.5)
-	var lf := _get_local_faction()
-	var seen := _visible_ids()
-	var lo := Vector2(INF, INF)
-	var hi := Vector2(-INF, -INF)
-	for u in _frame.get("units", []):
-		if int(u.get("faction", -1)) == lf or seen.has(int(u.get("id"))):
-			var p := Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
-			lo = lo.min(p)
-			hi = hi.max(p)
-	if lo.x == INF:
-		return centre
-	if _rig() != null:
-		return (lo + hi) * 0.5
-	var pad := UNIT_SIZE * 0.5 / _world_scale
-	var half := Vector2(SCREEN_W, SCREEN_H) * 0.5 / _world_scale
-	var cam := centre
+	var size: Vector2 = box[1] - box[0]
+	var room := Vector2(SCREEN_W, SCREEN_H) * (1.0 - 2.0 * FRAMING_MARGIN_SHARE)
+	var z := ZOOM_MAX / ZOOM_STEP
 	for axis in 2:
-		var lo_a := lo[axis] - pad
-		var hi_a := hi[axis] + pad
-		if hi_a - lo_a >= half[axis] * 2.0:
-			cam[axis] = (lo_a + hi_a) * 0.5
-		elif lo_a < centre[axis] - half[axis]:
-			cam[axis] = lo_a + half[axis]
-		elif hi_a > centre[axis] + half[axis]:
-			cam[axis] = hi_a - half[axis]
-	return cam
+		if size[axis] > 0.0:
+			z = minf(z, room[axis] / (size[axis] * _fit_scale))
+	return clampf(z, ZOOM_MIN, ZOOM_MAX / ZOOM_STEP)
+
+
+# R-103-01 / R-103-02: the centre of the box of P, clamped to 0..canvas as qa_pan clamps; the canvas centre when P is empty.
+func _force_camera(anchors: bool = true) -> Vector2:
+	var box := _home_box(anchors)
+	if box.is_empty():
+		return Vector2(_canvas * 0.5, _canvas * 0.5)
+	var c: Vector2 = (box[0] + box[1]) * 0.5
+	return Vector2(clampf(c.x, 0.0, _canvas), clampf(c.y, 0.0, _canvas))
+
+
+# R-103-01: the one auto-anchor home, restored by the Home key. In the ground era the rig owns the zoom (FU-A18-3d), so
+# only the camera is restored there.
+func _go_home() -> void:
+	if _rig() == null:
+		_zoom = _home_zoom
+		_world_scale = _fit_scale * _zoom
+	qa_pan(_home_camera.x, _home_camera.y)
 
 
 func _zoom_by(factor: float) -> void:
@@ -1080,6 +1111,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_ping_armed = true
 		elif event.keycode == KEY_TAB:
 			_node("LayerView").cycle_focus()
+		elif event.keycode == HOME_KEY:
+			_go_home()
 		elif (event.keycode == KEY_Q or event.keycode == KEY_E) and not (event.alt_pressed or event.ctrl_pressed or event.shift_pressed or event.meta_pressed):
 			# DRAFT-a16-qe-relative (register Q-A16-01 (a), Westley decides): Q one layer up, E one layer down from the
 			# lowest selected unit's layer. See also: the layers mockup scenes/mockups/layers/layers_mockup.gd:94-97.
