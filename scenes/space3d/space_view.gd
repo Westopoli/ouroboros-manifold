@@ -208,29 +208,22 @@ func set_frame(frame: Dictionary, _mission: Dictionary) -> void:
 	_rings.update(items)
 
 
-# The player's spawn anchor: the kind-7 map node nearest the centroid of the own units (A18 gap ruling G3, tactical_view.gd).
-# Only once per field, so the player's own panning is never undone. No own unit or no such node leaves the rig where it is
-# (nothing ruled for that case; it does not arise in a live space mission).
+# Architect ruling 2026-10-14: the pan target is the centroid of the own units at ground height (the rig has no terrain here, so
+# height 0), which puts the army at screen centre over sheet 0. A frame with no own unit falls back to the first kind-7 spawn
+# anchor (tactical_view.gd SPAWN_NODE_KIND); no such node leaves the rig where it is. Only once per field, so the player's own
+# panning is never undone.
 func _pan_to_spawn(frame: Dictionary, own: Array) -> bool:
-	if own.is_empty():
-		return false
-	var c := Vector2.ZERO
-	for u in own:
-		c += Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
-	c /= own.size()
-	var best := Vector2.ZERO
-	var best_d := INF
+	if not own.is_empty():
+		var c := Vector2.ZERO
+		for u in own:
+			c += Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+		_rig.pan_to(c / own.size())
+		return true
 	for n in frame.get("map", {}).get("nodes", []):
-		if int(n.get("kind", -1)) != SPAWN_NODE_KIND:
-			continue
-		var p := Vector2(float(n.get("x", 0.0)), float(n.get("y", 0.0)))
-		if p.distance_squared_to(c) < best_d:
-			best_d = p.distance_squared_to(c)
-			best = p
-	if best_d == INF:
-		return false
-	_rig.pan_to(best)
-	return true
+		if int(n.get("kind", -1)) == SPAWN_NODE_KIND:
+			_rig.pan_to(Vector2(float(n.get("x", 0.0)), float(n.get("y", 0.0))))
+			return true
+	return false
 
 
 # The camera projection of the world point (wx, wy) on the sheet of `layer` (y = layer * gap); a negative layer is the FOCUS sheet
