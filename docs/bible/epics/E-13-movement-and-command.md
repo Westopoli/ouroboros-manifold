@@ -105,6 +105,8 @@ Outputs: positions.
 Open flags: none.
 
 ### S-100 — Facing
+
+Direction changed 2026-10-13, rewrite pending: facing gains a firing arc, a unit fires only at targets inside an arc about its facing (Westley: "add a firing-arc rule to the game"; Q-100-01 for width and the flanked case). The rules below are what the game does today.
 As a commander, I want units to face what they shoot and where they go, and to turn rather than snap, so that a retreat under fire looks like one.
 
 Direction changed 2026-10-02, rewrite pending: a unit faces its engaged target only within 1.5 times its range, else its move target, else its velocity, and a stationary firing unit turns. The rules below are what the game does today.
