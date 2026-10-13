@@ -45,7 +45,8 @@ from daemon_client import control_center, find_control  # noqa: E402
 W, H = 1920, 1080
 # d-view spec rev 1 / lane D INTERFACE draft numbers (named drafts; Westley owns the thresholds and may veto on the shot)
 LAYER_GAP_WU = 1000.0  # DRAFT-space-layer-gap, Q-246-01 (a)
-UNIT_LIFT_WU = 40.0  # DRAFT-space-unit-lift
+UNIT_LIFT_WU = 150.0  # Units3D FLYER_CLEARANCE_WU (ground_units.gd:11); Architect FINAL 2026-10-14, d-view spec rev 3: unit y = sheet top + 150 (DRAFT-space-unit-lift 40 is struck)
+SHEET_THICKNESS_WU = 60.0  # plate sheet (rubble would be 30): space3d.sheets[i] carries no kind, and the sheets in this play are plate sheets
 TUBE_RADIUS_WU = 1500.0  # DRAFT-tube-radius
 CAM_HEIGHT_WU = 5400.0  # DRAFT-space-cam-height, gap ruling G2 (the play zooms out to it)
 FRAME_BUDGET_MS = 16.0  # DRAFT-space-frame-budget, Westley's; never widened
@@ -234,8 +235,10 @@ def test_s246_space_sheets_rings_tube(g):
         e = units3[uid]
         assert e["ring_layer"] == u["layer"], "S-246 R-246-04: unit %s ring_layer %r != its layer %r" % (uid, e["ring_layer"], u["layer"])
         if not (u.get("state", 0) & 4):
-            assert abs(e["y"] - (u["layer"] * LAYER_GAP_WU + UNIT_LIFT_WU)) < 0.01, "S-246 R-246-02: unit %s on layer %d is drawn at y %r, not %r (layer * 1,000 + 40, G5)" % (
-                uid, u["layer"], e["y"], u["layer"] * LAYER_GAP_WU + UNIT_LIFT_WU)
+            sheet_y = u["layer"] * LAYER_GAP_WU
+            want_y = sheet_y + SHEET_THICKNESS_WU + UNIT_LIFT_WU
+            assert abs(e["y"] - want_y) < 0.01, "S-246 R-246-02: unit %s on layer %d is drawn at y %r, not %r (sheet top + 150 = layer * 1,000 + 60 + 150; layer 2 is 2,210)" % (
+                uid, u["layer"], e["y"], want_y)
             assert e["dest_ring_layer"] == -1, "S-246 R-246-04: unit %s is not in transit but shows a destination ring %r" % (uid, e["dest_ring_layer"])
     layers_present = {q["units"][i]["layer"] for i in own}
     assert {2, 4} <= layers_present, "S-246 premise: layers present among own units %r, not both 2 and 4" % sorted(layers_present)
