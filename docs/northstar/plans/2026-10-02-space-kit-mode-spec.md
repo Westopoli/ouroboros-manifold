@@ -138,7 +138,7 @@ As section 3.4, with one change: a cut-off region is joined to the main region b
 Replace section 4.
 
 - **Plates.** Every blocked cell of layer k is one flat square tile, `flat_box` sized `[100, PLATE_THICKNESS_WU]` (thickness 60), at height `(k - 1) * LAYER_GAP_WU`, no jitter, so plates read as continuous sheets with straight edges. Tile colour per layer from the kit's `layers` array (five colours, pale blue-white for layer 1 grading to brighter white-blue for layer 5; the kit gives the five hex values). No shards, no asteroid pieces, no borders drawn.
-- **Layer gap.** `LAYER_GAP_WU` default 1,400, so from the tactical camera the sheets separate. The HUD gets a gap slider (400 to 3,000) so Westley can find the spacing that reads.
+- **Layer gap.** `LAYER_GAP_WU` default 1,000 (Q-246-01 (a), DRAFT-space-layer-gap), so from the tactical camera the sheets separate. The HUD gets a gap slider (400 to 3,000) so Westley can find the spacing that reads.
 - **Water.** Under each layer, nothing. Under layer 1 only, a single dark plane the size of the canvas at height -40, colour from the kit's `palette.water`, so open space reads as water in the photo's way. Fog or sky unchanged.
 - **The large mass** is drawn with the same tiles, in the kit's `mass` colour (dark grey-brown).
 - **Rubble** uses the plate tiles at half thickness.
