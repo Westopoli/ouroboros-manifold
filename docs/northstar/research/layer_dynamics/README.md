@@ -89,6 +89,8 @@ Rulings of 2026-10-13 (Westley), binding on every batch from here:
 - Scan range: enemy headcount 8 to 48 against a force of 16, so a play can show up to three times its size ("#2: A"); a play that beats 48 is reported as a ceiling hit, never as no gain.
 - The fight ends by elimination only (register Q-LAB-03); both sides attack-move to one point, or the attacker's point lies inside the defender's reach.
 - Same units, same values, on both sides, always (Westley, 2026-10-13: "Each 'era' will have both sides fighting the same units, same values"). A skilled play differs from the naive play only in arrangement, orders and which roster types stand where; the stat-scaled Vanguard variants in `plays_space.py` (double hit points, +20 percent range, half hit points) are retired and replaced by roster types. The only asymmetry allowed is a labelled positive control (the planted 20 percent damage scan), never a play.
+- Emitting (S-163) is a lab knob, two multipliers, sight and seen-from, with seen-from always above sight (R-163-01); the sweep finds the crossing. Starting pair: sight x2.0, seen x3.0 (Westley, 2026-10-13: "let's make that a knob, let the sweep find the crossing").
+- No absurd outliers (Westley, 2026-10-13): every sweep starts at the bible's value and steps by a named factor inside a bounded band (draft: 0.25x to 4x of the base, three to five points per knob), coarse grid first, then refined only around a crossing the coarse grid showed; a point outside the band needs a reason written in the batch spec.
 - Orientation returns to the variable list once the firing arc is in the engine (Q-100-01); area damage as a knob with its own range and shape, on any role or unit, is a lab variable (Q-082-06).
 
 ## 5. How results are read
