@@ -3350,7 +3350,13 @@ void om_move_walker_tick(om_world *w) {
         if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) continue;
         dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
         band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
-        if (om_move_layer(w, id) != band) om_tac_unit_set_layer(w, id, (uint32_t)band);
+        if (om_move_layer(w, id) != band) {
+            /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
+             * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here.
+             * Not part of the Architect's W2 ruling; the layer trigger in om_move_walker_step covers every other change. */
+            if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) mu->plan_layer = (uint32_t)band;
+            om_tac_unit_set_layer(w, id, (uint32_t)band);
+        }
     }
 }
 
