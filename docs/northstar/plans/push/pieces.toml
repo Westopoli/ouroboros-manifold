@@ -1971,7 +1971,7 @@ owns = ["tests/qa/desktop/plays/A/play_support.py", "tests/qa/desktop/plays/A/te
 owns_glob = []
 acceptance = []
 depends_on = ["VG-A"]  # attached owner of tests/qa/desktop/plays/A/**
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "9c690a0" }  # landed 9c690a0
 tests_pending = true
 size_estimate = "A17: _edge_scroll_to measures game ticks (DRAFT-scroll-cap-ticks 400), zooms out first; contact budgets restored; no product change"
 
