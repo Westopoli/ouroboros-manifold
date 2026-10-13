@@ -985,3 +985,30 @@ def test_real_repo_scale_list_names_every_scale_gated_test_present_today():
     assert present - listed == set()
     siege = [i for i in present if "test_scale_E13_siege_breaking.py" in i]
     assert len(siege) == 3 and set(siege) <= listed
+
+
+# Architect 2026-10-14, HARNESS-westley-folder: docs/northstar/story_reviews/westley/* is a
+# shared record like the ledger: the copy and README row are written by the landing clerk, so
+# the footprint fence ignores them. See also: pieces.SHARED_RECORD_GLOBS,
+# test_owner_lint.py::test_westley_folder_listed_by_two_in_flight_pieces_is_not_a_finding.
+def test_westley_folder_files_are_not_a_footprint(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+
+    # Positive control: an unrelated unowned file is still a footprint reject.
+    (repo / "docs" / "northstar" / "story_reviews").mkdir(parents=True)
+    (repo / "docs" / "northstar" / "story_reviews" / "A.md").write_text("row\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "queue file")
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
+    assert ok is False and "story_reviews/A.md" in detail
+
+    wdir = repo / "docs" / "northstar" / "story_reviews" / "westley"
+    wdir.mkdir()
+    (wdir / "README.md").write_text("| row |\n")
+    (wdir / "A-S103-x.png").write_bytes(b"png")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "westley copy")
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
+    assert ok is True, detail
