@@ -20,7 +20,7 @@ from test_net_section_hashes import MOVEMENT, _battle, _run, _secs
 SAVE_TICK = 150
 AFTER_TICKS = 500
 SLOT_MOVE_ID = 6
-SLOT_COUNT = 10
+SLOT_COUNT = 11
 
 
 def _target(lib, world_factory):
@@ -41,8 +41,8 @@ def _full(lib, w):
 
 def _move_slot_len_offset(buf, size):
     """Offset of the u32 length of slot 6. Slots are the last part of the
-    buffer: find the start p where ten (id, u32 len, blob) records chain
-    exactly to the end, ids 0..9 in order."""
+    buffer: find the start p where eleven (id, u32 len, blob) records chain
+    exactly to the end, ids 0..10 in order."""
     b = bytes(buf)
     for p in range(size):
         q, ok, off = p, True, None

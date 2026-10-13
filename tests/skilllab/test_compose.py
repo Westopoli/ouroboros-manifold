@@ -16,9 +16,10 @@ from tests.skilllab.fakes_batches import fake_sensors  # noqa: E402
 
 
 @pytest.fixture
-def s3_registered():
-    """A fake S3 skilled play, removed again afterwards."""
-    skills.register("S3", "skilled", lambda ctx: ("blob", {"radius": 100}, ctx.facing_deg), skills.DRAFT)
+def s3_registered(strip):
+    """A fake S3 skilled play (status "fake"); the real S3 entry, if any, is saved and restored afterwards."""
+    strip("S3")
+    skills.register("S3", "skilled", lambda ctx: ("blob", {"radius": 100}, ctx.facing_deg), "fake")
     try:
         yield
     finally:
@@ -43,13 +44,15 @@ def test_compose_one_registered_skill():
     assert c.slots == {"where": None, "shape": "S2", "layer": None, "info": None, "matchup": None}
 
 
-def test_compose_one_skill_without_a_play():
+def test_compose_one_skill_without_a_play(strip):
+    strip("S1")
     c = compose.compose(["S1"])
     assert c.skills == ("S1",) and c.missing == ("S1",) and c.expressible is False
     assert c.slots["where"] == "S1" and c.note == "no skilled play for S1"
 
 
-def test_compose_several_sorts_and_names_the_missing():
+def test_compose_several_sorts_and_names_the_missing(strip):
+    strip("S1", "S3", "S5")
     c = compose.compose(("S5", "S1", "S3"))
     assert c.skills == ("S1", "S3", "S5") and c.missing == ("S1", "S3", "S5") and c.expressible is False
     assert c.note == "no skilled play for S1, S3, S5"
@@ -60,13 +63,15 @@ def test_compose_accepts_sets_and_frozensets_alike():
     assert compose.compose({"S4", "S2"}) == compose.compose(frozenset({"S2", "S4"})) == compose.compose(["S4", "S2"])
 
 
-def test_compose_all_five():
+def test_compose_all_five(strip):
+    strip("S1", "S3", "S4", "S5")
     c = compose.compose(["S1", "S2", "S3", "S4", "S5"])
     assert c.missing == ("S1", "S3", "S4", "S5") and c.note == "no skilled play for S1, S3, S4, S5"
     assert c.slots == {"where": "S1", "shape": "S2", "layer": "S3", "info": "S4", "matchup": "S5"}
 
 
-def test_missing_skill_beats_the_several_skills_note():
+def test_missing_skill_beats_the_several_skills_note(strip):
+    strip("S1")
     c = compose.compose(["S1", "S2"])
     assert c.missing == ("S1",) and c.note == "no skilled play for S1" and c.expressible is False
 
@@ -84,7 +89,8 @@ def test_composition_is_frozen():
         c.note = "x"
 
 
-def test_registry_driven_register_and_restore(s3_registered):
+def test_registry_driven_register_and_restore(s3_registered, strip):
+    strip("S1")
     c = compose.compose(["S3"])
     assert c.missing == () and c.expressible is True and c.note == "" and c.slots["layer"] == "S3"
     assert compose.compose(["S1", "S3"]).missing == ("S1",)
@@ -96,10 +102,14 @@ def test_registry_driven_register_and_restore(s3_registered):
 
 
 def test_registry_restored_after_the_fixture():
-    c = compose.compose(["S3"])
-    assert c.missing == ("S3",) and c.expressible is False
-    with pytest.raises(ValueError):
-        skills.get("S3", "skilled")
+    """The fake S3 is gone: S3 has either no entry or its real one, never the status "fake"."""
+    try:
+        play = skills.get("S3", "skilled")
+    except ValueError:
+        assert compose.compose(["S3"]).missing == ("S3",)
+    else:
+        assert play.status != "fake"
+        assert compose.compose(["S3"]).missing == ()
 
 
 def test_build_none_is_blob_v_blob(monkeypatch):
@@ -124,7 +134,8 @@ def test_build_a_registered_s3(s3_registered, monkeypatch):
     assert setup.groups[0].formation == "blob" and setup.groups[0].params == {"radius": 100}
 
 
-def test_build_raises_not_implemented_with_the_note(s3_registered):
+def test_build_raises_not_implemented_with_the_note(s3_registered, strip):
+    strip("S1")
     for names in (["S1"], ["S1", "S2", "S3"], ["S2", "S3"]):
         c = compose.compose(names)
         with pytest.raises(NotImplementedError, match=c.note):

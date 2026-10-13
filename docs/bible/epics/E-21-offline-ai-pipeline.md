@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 30 rules, numbers from the bible's pipeline and naming sections and config; S-244 leaves the sources of the economy's names and text to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 9 open flags: Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01, Q-244-02. |
+| Implied-but-unstated behavior turned into flags | 8 open flags: Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01. |
 | Every visible-surface story has a reference | Not applicable; asset looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -124,11 +124,11 @@ Design decided 2026-10-02, not scheduled for building (E-22).
 
 Rules
 - R-244-01  Given the economy's named things (the three resources, the doctrines, the building kinds and the pieces of a settlement), When the builder runs, Then it can produce their names for an era, to be carried in the era pack (E-20 S-243) [Q-244-01: whether these names are generated library content or authored by hand].
-- R-244-02  Given the economy seat and the solo commander's dial, doctrine switch, unit-mix switches and pointing (E-16 S-230, S-231), When the tutorial library is built, Then it carries text that teaches them, since nothing on the seat's screen lists what the commander needs (E-19 R-159-01) [Q-244-02: where the player meets that text, in onboarding (E-08 S-063) or at the paired queue].
+- R-244-02  Given the economy seat and the solo commander's dial, doctrine switch, unit-mix switches and pointing (E-16 S-230, S-231), When the tutorial library is built, Then it carries text that teaches them, since nothing on the seat's screen lists what the commander needs (E-19 R-159-01) The player meets that text in onboarding (E-08 S-063; Westley, 2026-10-07: "#17: A").
 
 Inputs: the economy's names and teaching needs; the library builder.
 Outputs: names and tutorial text in the libraries and packs.
-Open flags: Q-244-01, Q-244-02.
+Open flags: Q-244-01.
 
 ## Inputs
 
@@ -173,7 +173,7 @@ Not applicable.
 
 ## Open ambiguity flags
 
-Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01, Q-244-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

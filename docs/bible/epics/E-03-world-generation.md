@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 31 rules, numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on this epic's stories, Q-224-01 (S-224); Q-177-05 (E-22 S-177) is cited and held elsewhere. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on this epic's stories, Q-224-01 (S-224). |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -101,15 +101,15 @@ Open flags: none. The buffer is player-to-NPC only, checked at generation time o
 ### S-223 — How far a region is from the civilization
 As a commander, I want the galaxy's graph to say how far a mission's region lies from the civilization's land, so that where a mission happens can help decide what kind of base each side is given.
 
-Design decided 2026-10-02 (E-22 S-177 names "the supply distance"; Westley, 2026-10-02: "keep"). Not scheduled for building.
+Design decided 2026-10-02 (Westley, 2026-10-02: "keep"). Since 2026-10-06 (Westley) nothing reads the supply distance: the kind of base no longer changes with it. Not scheduled for building.
 
 Rules
 - R-223-01  Given any two regions, When a distance between them is read, Then the only measure the simulation defines is the number of hops along the graph's edges of any type, as E-08 R-057-01 and E-10 R-072-08 use it.
-- R-223-02  Given the kind of base a mission gives each side (E-22 S-177), When the supply distance is read, Then it is the number of regions between the mission's region and the nearest region the civilization owns.
+- R-223-02  Given a distance to the civilization's ground is wanted, When the supply distance is read, Then it is the number of regions between the mission's region and the nearest region the civilization owns.
 
 Inputs: the graph (S-021, S-023); region ownership.
-Outputs: the supply distance to the mission generator (E-10) and to E-22 S-177.
-Open flags: none here. The numbers of regions at which the base kind changes are Q-177-05 (E-22 S-177).
+Outputs: the supply distance, which no rule reads today.
+Open flags: none here.
 
 ### S-224 — A galaxy at its full size
 As the build, I want generation held to a time budget at the top of the region range, so that a campaign with a 400-region galaxy starts within a time Westley has confirmed.
@@ -173,7 +173,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-224-01 (S-224). S-223 has none; the numbers of regions its supply distance is read against are Q-177-05 (E-22 S-177). S-021 to S-025 have none.
+Q-224-01 (S-224). S-223 has none. S-021 to S-025 have none.
 
 ## Depends on
 

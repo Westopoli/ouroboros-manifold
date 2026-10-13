@@ -875,6 +875,20 @@ int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, u
     om_move_terrain_changed(w);
     return 0;
 }
+
+uint32_t om_map_obstacle_count(const om_world *w) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    return st ? st->n_obstacles : 0;
+}
+
+int om_map_get_obstacle_at(const om_world *w, uint32_t i, double *x, double *y, double *r) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st || i >= st->n_obstacles) return 1;
+    if (x) *x = st->obstacles[i].x;
+    if (y) *y = st->obstacles[i].y;
+    if (r) *r = st->obstacles[i].radius;
+    return 0;
+}
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */

@@ -1,0 +1,89 @@
+{
+  "inventory": {
+    "hud_texts": {
+      "@Label@134": "MULTIPLAYER",
+      "BackButton": "BACK",
+      "DoctrineButton": "DOCTRINE: BALANCED",
+      "EraLine": "Limited to the era set every player has.",
+      "HostButton": "HOST",
+      "JoinButton": "JOIN",
+      "LobbyIdField": "47543",
+      "StartButton": "START",
+      "StatusLine": "Lobby id 47543 (friends only). Invite friends or share the id."
+    },
+    "nodes_by_name": {
+      "@HBoxContainer@137": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@134": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@133": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "BackButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "DoctrineButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "EraLine": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "HostButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "JoinButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "LobbyIdField": {
+        "class": "LineEdit",
+        "count": 1,
+        "visible": true
+      },
+      "MemberList": {
+        "class": "ItemList",
+        "count": 1,
+        "visible": true
+      },
+      "StartButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "StatusLine": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      }
+    }
+  },
+  "qa": {
+    "friends_only": true,
+    "max_members": 4,
+    "members": [
+      1,
+      2
+    ],
+    "scene": "lobby",
+    "tick": -1
+  },
+  "scene": "res://scenes/lobby/lobby.tscn",
+  "tick": 0
+}

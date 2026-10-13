@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ping search batch ping_search</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#6b675f;--grid:#dedad0;--rule:#cfcabd;--c-ahead:#2f5fb3;--c-sweep:#b36a1f;--c-reactive:#2a7f62;--c-none:#8a8578;}
+@media (prefers-color-scheme: dark){:root{--bg:#161614;--fg:#ecebe6;--muted:#9c978c;--grid:#35332e;--rule:#4a4740;--c-ahead:#7fa8f0;--c-sweep:#e8a35c;--c-reactive:#58c9a1;--c-none:#9c978c;}}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.6rem}h2{font-size:1.15rem;margin:1.4rem 0 .4rem}
+svg{width:100%;height:auto}svg text{fill:var(--fg);font-size:11px}svg .muted{fill:var(--muted)}
+.grid{stroke:var(--grid);stroke-width:1}.line{stroke-width:2}.s-ahead{stroke:var(--c-ahead);fill:none}circle.s-ahead{fill:var(--c-ahead);stroke:none}.s-sweep{stroke:var(--c-sweep);fill:none}circle.s-sweep{fill:var(--c-sweep);stroke:none}.s-reactive{stroke:var(--c-reactive);fill:none}circle.s-reactive{fill:var(--c-reactive);stroke:none}.s-none{stroke:var(--c-none);fill:none}circle.s-none{fill:var(--c-none);stroke:none}
+.legend span{margin-right:1rem;font-size:.85rem}.legend i{display:inline-block;width:.9rem;height:.25rem;margin-right:.3rem;vertical-align:middle}
+table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.4rem 0 1.2rem}
+th,td{border-bottom:1px solid var(--rule);padding:.2rem .5rem;text-align:left}
+</style>
+</head>
+<body>
+<h1>Ping search batch: ping_search</h1>
+<p>Every number here is a provisional lab draft. The alert is off, every unit casts, and the reveal follows units for reveal_ticks.</p>
+<p>Open ground, nobody fires. Vanguard sight 700 wu; 60 placements per setting and policy.</p>
+<h2>Found before contact against coverage rate</h2>
+<div class="legend"><span><i style="background:var(--c-ahead)"></i>ahead</span><span><i style="background:var(--c-sweep)"></i>sweep</span><span><i style="background:var(--c-reactive)"></i>reactive</span><span><i style="background:var(--c-none)"></i>none</span></div>
+<svg viewBox="0 0 640 340" role="img" aria-label="Found before contact against coverage rate">
+<line class="grid" x1="56" x2="530" y1="296.0" y2="296.0"/>
+<text x="50" y="300.0" text-anchor="end" class="muted">0.00</text>
+<line class="grid" x1="56" x2="530" y1="227.0" y2="227.0"/>
+<text x="50" y="231.0" text-anchor="end" class="muted">0.25</text>
+<line class="grid" x1="56" x2="530" y1="158.0" y2="158.0"/>
+<text x="50" y="162.0" text-anchor="end" class="muted">0.50</text>
+<line class="grid" x1="56" x2="530" y1="89.0" y2="89.0"/>
+<text x="50" y="93.0" text-anchor="end" class="muted">0.75</text>
+<line class="grid" x1="56" x2="530" y1="20.0" y2="20.0"/>
+<text x="50" y="24.0" text-anchor="end" class="muted">1.00</text>
+<line class="grid" x1="221.4" x2="221.4" y1="20" y2="296"/>
+<text x="221.4" y="310" text-anchor="middle" class="muted">0.01</text>
+<line class="grid" x1="396.4" x2="396.4" y1="20" y2="296"/>
+<text x="396.4" y="310" text-anchor="middle" class="muted">0.1</text>
+<text x="293" y="334" text-anchor="middle" class="muted">Coverage rate (log scale)</text>
+<text x="12" y="14" class="muted">Found before contact</text>
+<polyline class="line s-ahead" points="56.0,291.4 108.7,291.4 117.6,296.0 161.3,296.0 161.3,291.4 161.3,286.8 170.3,296.0 214.0,296.0 214.0,291.4 214.0,286.8 222.9,296.0 222.9,291.4 266.7,296.0 266.7,296.0 266.7,286.8 266.7,273.0 275.6,291.4 275.6,291.4 319.3,296.0 319.3,296.0 319.3,286.8 319.3,273.0 328.3,282.2 328.3,273.0 372.0,286.8 372.0,273.0 372.0,273.0 380.9,282.2 380.9,273.0 424.7,282.2 424.7,273.0 424.7,273.0 433.6,268.4 477.3,268.4 486.3,268.4 530.0,268.4"/>
+<circle class="dot s-ahead" cx="56.0" cy="291.4" r="3.5"><title>ahead: reach 2100, radius 250, cooldown 800, coverage 0.001, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="108.7" cy="291.4" r="3.5"><title>ahead: reach 2100, radius 250, cooldown 400, coverage 0.002, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="117.6" cy="296.0" r="3.5"><title>ahead: reach 1400, radius 250, cooldown 800, coverage 0.003, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="161.3" cy="296.0" r="3.5"><title>ahead: reach 1050, radius 250, cooldown 800, coverage 0.005, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="161.3" cy="291.4" r="3.5"><title>ahead: reach 2100, radius 250, cooldown 200, coverage 0.005, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="161.3" cy="286.8" r="3.5"><title>ahead: reach 2100, radius 500, cooldown 800, coverage 0.005, found 0.03</title></circle>
+<circle class="dot s-ahead" cx="170.3" cy="296.0" r="3.5"><title>ahead: reach 1400, radius 250, cooldown 400, coverage 0.005, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="214.0" cy="296.0" r="3.5"><title>ahead: reach 1050, radius 250, cooldown 400, coverage 0.009, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="214.0" cy="291.4" r="3.5"><title>ahead: reach 2100, radius 250, cooldown 100, coverage 0.009, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="214.0" cy="286.8" r="3.5"><title>ahead: reach 2100, radius 500, cooldown 400, coverage 0.009, found 0.03</title></circle>
+<circle class="dot s-ahead" cx="222.9" cy="296.0" r="3.5"><title>ahead: reach 1400, radius 250, cooldown 200, coverage 0.010, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="222.9" cy="291.4" r="3.5"><title>ahead: reach 1400, radius 500, cooldown 800, coverage 0.010, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="266.7" cy="296.0" r="3.5"><title>ahead: reach 1050, radius 250, cooldown 200, coverage 0.018, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="266.7" cy="296.0" r="3.5"><title>ahead: reach 1050, radius 500, cooldown 800, coverage 0.018, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="266.7" cy="286.8" r="3.5"><title>ahead: reach 2100, radius 500, cooldown 200, coverage 0.018, found 0.03</title></circle>
+<circle class="dot s-ahead" cx="266.7" cy="273.0" r="3.5"><title>ahead: reach 2100, radius 1000, cooldown 800, coverage 0.018, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="275.6" cy="291.4" r="3.5"><title>ahead: reach 1400, radius 250, cooldown 100, coverage 0.020, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="275.6" cy="291.4" r="3.5"><title>ahead: reach 1400, radius 500, cooldown 400, coverage 0.020, found 0.02</title></circle>
+<circle class="dot s-ahead" cx="319.3" cy="296.0" r="3.5"><title>ahead: reach 1050, radius 250, cooldown 100, coverage 0.036, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="319.3" cy="296.0" r="3.5"><title>ahead: reach 1050, radius 500, cooldown 400, coverage 0.036, found 0.00</title></circle>
+<circle class="dot s-ahead" cx="319.3" cy="286.8" r="3.5"><title>ahead: reach 2100, radius 500, cooldown 100, coverage 0.036, found 0.03</title></circle>
+<circle class="dot s-ahead" cx="319.3" cy="273.0" r="3.5"><title>ahead: reach 2100, radius 1000, cooldown 400, coverage 0.036, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="328.3" cy="282.2" r="3.5"><title>ahead: reach 1400, radius 500, cooldown 200, coverage 0.041, found 0.05</title></circle>
+<circle class="dot s-ahead" cx="328.3" cy="273.0" r="3.5"><title>ahead: reach 1400, radius 1000, cooldown 800, coverage 0.041, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="372.0" cy="286.8" r="3.5"><title>ahead: reach 1050, radius 500, cooldown 200, coverage 0.073, found 0.03</title></circle>
+<circle class="dot s-ahead" cx="372.0" cy="273.0" r="3.5"><title>ahead: reach 1050, radius 1000, cooldown 800, coverage 0.073, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="372.0" cy="273.0" r="3.5"><title>ahead: reach 2100, radius 1000, cooldown 200, coverage 0.073, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="380.9" cy="282.2" r="3.5"><title>ahead: reach 1400, radius 500, cooldown 100, coverage 0.082, found 0.05</title></circle>
+<circle class="dot s-ahead" cx="380.9" cy="273.0" r="3.5"><title>ahead: reach 1400, radius 1000, cooldown 400, coverage 0.082, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="424.7" cy="282.2" r="3.5"><title>ahead: reach 1050, radius 500, cooldown 100, coverage 0.145, found 0.05</title></circle>
+<circle class="dot s-ahead" cx="424.7" cy="273.0" r="3.5"><title>ahead: reach 1050, radius 1000, cooldown 400, coverage 0.145, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="424.7" cy="273.0" r="3.5"><title>ahead: reach 2100, radius 1000, cooldown 100, coverage 0.145, found 0.08</title></circle>
+<circle class="dot s-ahead" cx="433.6" cy="268.4" r="3.5"><title>ahead: reach 1400, radius 1000, cooldown 200, coverage 0.163, found 0.10</title></circle>
+<circle class="dot s-ahead" cx="477.3" cy="268.4" r="3.5"><title>ahead: reach 1050, radius 1000, cooldown 200, coverage 0.290, found 0.10</title></circle>
+<circle class="dot s-ahead" cx="486.3" cy="268.4" r="3.5"><title>ahead: reach 1400, radius 1000, cooldown 100, coverage 0.327, found 0.10</title></circle>
+<circle class="dot s-ahead" cx="530.0" cy="268.4" r="3.5"><title>ahead: reach 1050, radius 1000, cooldown 100, coverage 0.580, found 0.10</title></circle>
+<polyline class="line s-sweep" points="56.0,268.4 108.7,240.8 117.6,268.4 161.3,277.6 161.3,227.0 161.3,222.4 170.3,245.4 214.0,259.2 214.0,190.2 214.0,167.2 222.9,250.0 222.9,217.8 266.7,254.6 266.7,245.4 266.7,167.2 266.7,153.4 275.6,213.2 275.6,208.6 319.3,231.6 319.3,227.0 319.3,125.8 319.3,125.8 328.3,204.0 328.3,171.8 372.0,208.6 372.0,185.6 372.0,79.8 380.9,144.2 380.9,144.2 424.7,158.0 424.7,148.8 424.7,75.2 433.6,121.2 477.3,139.6 486.3,102.8 530.0,116.6"/>
+<circle class="dot s-sweep" cx="56.0" cy="268.4" r="3.5"><title>sweep: reach 2100, radius 250, cooldown 800, coverage 0.001, found 0.10</title></circle>
+<circle class="dot s-sweep" cx="108.7" cy="240.8" r="3.5"><title>sweep: reach 2100, radius 250, cooldown 400, coverage 0.002, found 0.20</title></circle>
+<circle class="dot s-sweep" cx="117.6" cy="268.4" r="3.5"><title>sweep: reach 1400, radius 250, cooldown 800, coverage 0.003, found 0.10</title></circle>
+<circle class="dot s-sweep" cx="161.3" cy="277.6" r="3.5"><title>sweep: reach 1050, radius 250, cooldown 800, coverage 0.005, found 0.07</title></circle>
+<circle class="dot s-sweep" cx="161.3" cy="227.0" r="3.5"><title>sweep: reach 2100, radius 500, cooldown 800, coverage 0.005, found 0.25</title></circle>
+<circle class="dot s-sweep" cx="161.3" cy="222.4" r="3.5"><title>sweep: reach 2100, radius 250, cooldown 200, coverage 0.005, found 0.27</title></circle>
+<circle class="dot s-sweep" cx="170.3" cy="245.4" r="3.5"><title>sweep: reach 1400, radius 250, cooldown 400, coverage 0.005, found 0.18</title></circle>
+<circle class="dot s-sweep" cx="214.0" cy="259.2" r="3.5"><title>sweep: reach 1050, radius 250, cooldown 400, coverage 0.009, found 0.13</title></circle>
+<circle class="dot s-sweep" cx="214.0" cy="190.2" r="3.5"><title>sweep: reach 2100, radius 500, cooldown 400, coverage 0.009, found 0.38</title></circle>
+<circle class="dot s-sweep" cx="214.0" cy="167.2" r="3.5"><title>sweep: reach 2100, radius 250, cooldown 100, coverage 0.009, found 0.47</title></circle>
+<circle class="dot s-sweep" cx="222.9" cy="250.0" r="3.5"><title>sweep: reach 1400, radius 500, cooldown 800, coverage 0.010, found 0.17</title></circle>
+<circle class="dot s-sweep" cx="222.9" cy="217.8" r="3.5"><title>sweep: reach 1400, radius 250, cooldown 200, coverage 0.010, found 0.28</title></circle>
+<circle class="dot s-sweep" cx="266.7" cy="254.6" r="3.5"><title>sweep: reach 1050, radius 500, cooldown 800, coverage 0.018, found 0.15</title></circle>
+<circle class="dot s-sweep" cx="266.7" cy="245.4" r="3.5"><title>sweep: reach 1050, radius 250, cooldown 200, coverage 0.018, found 0.18</title></circle>
+<circle class="dot s-sweep" cx="266.7" cy="167.2" r="3.5"><title>sweep: reach 2100, radius 1000, cooldown 800, coverage 0.018, found 0.47</title></circle>
+<circle class="dot s-sweep" cx="266.7" cy="153.4" r="3.5"><title>sweep: reach 2100, radius 500, cooldown 200, coverage 0.018, found 0.52</title></circle>
+<circle class="dot s-sweep" cx="275.6" cy="213.2" r="3.5"><title>sweep: reach 1400, radius 250, cooldown 100, coverage 0.020, found 0.30</title></circle>
+<circle class="dot s-sweep" cx="275.6" cy="208.6" r="3.5"><title>sweep: reach 1400, radius 500, cooldown 400, coverage 0.020, found 0.32</title></circle>
+<circle class="dot s-sweep" cx="319.3" cy="231.6" r="3.5"><title>sweep: reach 1050, radius 250, cooldown 100, coverage 0.036, found 0.23</title></circle>
+<circle class="dot s-sweep" cx="319.3" cy="227.0" r="3.5"><title>sweep: reach 1050, radius 500, cooldown 400, coverage 0.036, found 0.25</title></circle>
+<circle class="dot s-sweep" cx="319.3" cy="125.8" r="3.5"><title>sweep: reach 2100, radius 500, cooldown 100, coverage 0.036, found 0.62</title></circle>
+<circle class="dot s-sweep" cx="319.3" cy="125.8" r="3.5"><title>sweep: reach 2100, radius 1000, cooldown 400, coverage 0.036, found 0.62</title></circle>
+<circle class="dot s-sweep" cx="328.3" cy="204.0" r="3.5"><title>sweep: reach 1400, radius 1000, cooldown 800, coverage 0.041, found 0.33</title></circle>
+<circle class="dot s-sweep" cx="328.3" cy="171.8" r="3.5"><title>sweep: reach 1400, radius 500, cooldown 200, coverage 0.041, found 0.45</title></circle>
+<circle class="dot s-sweep" cx="372.0" cy="208.6" r="3.5"><title>sweep: reach 1050, radius 1000, cooldown 800, coverage 0.073, found 0.32</title></circle>
+<circle class="dot s-sweep" cx="372.0" cy="185.6" r="3.5"><title>sweep: reach 1050, radius 500, cooldown 200, coverage 0.073, found 0.40</title></circle>
+<circle class="dot s-sweep" cx="372.0" cy="79.8" r="3.5"><title>sweep: reach 2100, radius 1000, cooldown 200, coverage 0.073, found 0.78</title></circle>
+<circle class="dot s-sweep" cx="380.9" cy="144.2" r="3.5"><title>sweep: reach 1400, radius 500, cooldown 100, coverage 0.082, found 0.55</title></circle>
+<circle class="dot s-sweep" cx="380.9" cy="144.2" r="3.5"><title>sweep: reach 1400, radius 1000, cooldown 400, coverage 0.082, found 0.55</title></circle>
+<circle class="dot s-sweep" cx="424.7" cy="158.0" r="3.5"><title>sweep: reach 1050, radius 500, cooldown 100, coverage 0.145, found 0.50</title></circle>
+<circle class="dot s-sweep" cx="424.7" cy="148.8" r="3.5"><title>sweep: reach 1050, radius 1000, cooldown 400, coverage 0.145, found 0.53</title></circle>
+<circle class="dot s-sweep" cx="424.7" cy="75.2" r="3.5"><title>sweep: reach 2100, radius 1000, cooldown 100, coverage 0.145, found 0.80</title></circle>
+<circle class="dot s-sweep" cx="433.6" cy="121.2" r="3.5"><title>sweep: reach 1400, radius 1000, cooldown 200, coverage 0.163, found 0.63</title></circle>
+<circle class="dot s-sweep" cx="477.3" cy="139.6" r="3.5"><title>sweep: reach 1050, radius 1000, cooldown 200, coverage 0.290, found 0.57</title></circle>
+<circle class="dot s-sweep" cx="486.3" cy="102.8" r="3.5"><title>sweep: reach 1400, radius 1000, cooldown 100, coverage 0.327, found 0.70</title></circle>
+<circle class="dot s-sweep" cx="530.0" cy="116.6" r="3.5"><title>sweep: reach 1050, radius 1000, cooldown 100, coverage 0.580, found 0.65</title></circle>
+<polyline class="line s-reactive" points="56.0,268.4 108.7,240.8 117.6,268.4 161.3,277.6 161.3,227.0 161.3,222.4 170.3,245.4 214.0,259.2 214.0,190.2 214.0,167.2 222.9,250.0 222.9,217.8 266.7,254.6 266.7,245.4 266.7,167.2 266.7,153.4 275.6,213.2 275.6,208.6 319.3,231.6 319.3,227.0 319.3,125.8 319.3,125.8 328.3,204.0 328.3,171.8 372.0,208.6 372.0,185.6 372.0,79.8 380.9,144.2 380.9,144.2 424.7,158.0 424.7,148.8 424.7,75.2 433.6,121.2 477.3,139.6 486.3,102.8 530.0,116.6"/>
+<circle class="dot s-reactive" cx="56.0" cy="268.4" r="3.5"><title>reactive: reach 2100, radius 250, cooldown 800, coverage 0.001, found 0.10</title></circle>
+<circle class="dot s-reactive" cx="108.7" cy="240.8" r="3.5"><title>reactive: reach 2100, radius 250, cooldown 400, coverage 0.002, found 0.20</title></circle>
+<circle class="dot s-reactive" cx="117.6" cy="268.4" r="3.5"><title>reactive: reach 1400, radius 250, cooldown 800, coverage 0.003, found 0.10</title></circle>
+<circle class="dot s-reactive" cx="161.3" cy="277.6" r="3.5"><title>reactive: reach 1050, radius 250, cooldown 800, coverage 0.005, found 0.07</title></circle>
+<circle class="dot s-reactive" cx="161.3" cy="227.0" r="3.5"><title>reactive: reach 2100, radius 500, cooldown 800, coverage 0.005, found 0.25</title></circle>
+<circle class="dot s-reactive" cx="161.3" cy="222.4" r="3.5"><title>reactive: reach 2100, radius 250, cooldown 200, coverage 0.005, found 0.27</title></circle>
+<circle class="dot s-reactive" cx="170.3" cy="245.4" r="3.5"><title>reactive: reach 1400, radius 250, cooldown 400, coverage 0.005, found 0.18</title></circle>
+<circle class="dot s-reactive" cx="214.0" cy="259.2" r="3.5"><title>reactive: reach 1050, radius 250, cooldown 400, coverage 0.009, found 0.13</title></circle>
+<circle class="dot s-reactive" cx="214.0" cy="190.2" r="3.5"><title>reactive: reach 2100, radius 500, cooldown 400, coverage 0.009, found 0.38</title></circle>
+<circle class="dot s-reactive" cx="214.0" cy="167.2" r="3.5"><title>reactive: reach 2100, radius 250, cooldown 100, coverage 0.009, found 0.47</title></circle>
+<circle class="dot s-reactive" cx="222.9" cy="250.0" r="3.5"><title>reactive: reach 1400, radius 500, cooldown 800, coverage 0.010, found 0.17</title></circle>
+<circle class="dot s-reactive" cx="222.9" cy="217.8" r="3.5"><title>reactive: reach 1400, radius 250, cooldown 200, coverage 0.010, found 0.28</title></circle>
+<circle class="dot s-reactive" cx="266.7" cy="254.6" r="3.5"><title>reactive: reach 1050, radius 500, cooldown 800, coverage 0.018, found 0.15</title></circle>
+<circle class="dot s-reactive" cx="266.7" cy="245.4" r="3.5"><title>reactive: reach 1050, radius 250, cooldown 200, coverage 0.018, found 0.18</title></circle>
+<circle class="dot s-reactive" cx="266.7" cy="167.2" r="3.5"><title>reactive: reach 2100, radius 1000, cooldown 800, coverage 0.018, found 0.47</title></circle>
+<circle class="dot s-reactive" cx="266.7" cy="153.4" r="3.5"><title>reactive: reach 2100, radius 500, cooldown 200, coverage 0.018, found 0.52</title></circle>
+<circle class="dot s-reactive" cx="275.6" cy="213.2" r="3.5"><title>reactive: reach 1400, radius 250, cooldown 100, coverage 0.020, found 0.30</title></circle>
+<circle class="dot s-reactive" cx="275.6" cy="208.6" r="3.5"><title>reactive: reach 1400, radius 500, cooldown 400, coverage 0.020, found 0.32</title></circle>
+<circle class="dot s-reactive" cx="319.3" cy="231.6" r="3.5"><title>reactive: reach 1050, radius 250, cooldown 100, coverage 0.036, found 0.23</title></circle>
+<circle class="dot s-reactive" cx="319.3" cy="227.0" r="3.5"><title>reactive: reach 1050, radius 500, cooldown 400, coverage 0.036, found 0.25</title></circle>
+<circle class="dot s-reactive" cx="319.3" cy="125.8" r="3.5"><title>reactive: reach 2100, radius 500, cooldown 100, coverage 0.036, found 0.62</title></circle>
+<circle class="dot s-reactive" cx="319.3" cy="125.8" r="3.5"><title>reactive: reach 2100, radius 1000, cooldown 400, coverage 0.036, found 0.62</title></circle>
+<circle class="dot s-reactive" cx="328.3" cy="204.0" r="3.5"><title>reactive: reach 1400, radius 1000, cooldown 800, coverage 0.041, found 0.33</title></circle>
+<circle class="dot s-reactive" cx="328.3" cy="171.8" r="3.5"><title>reactive: reach 1400, radius 500, cooldown 200, coverage 0.041, found 0.45</title></circle>
+<circle class="dot s-reactive" cx="372.0" cy="208.6" r="3.5"><title>reactive: reach 1050, radius 1000, cooldown 800, coverage 0.073, found 0.32</title></circle>
+<circle class="dot s-reactive" cx="372.0" cy="185.6" r="3.5"><title>reactive: reach 1050, radius 500, cooldown 200, coverage 0.073, found 0.40</title></circle>
+<circle class="dot s-reactive" cx="372.0" cy="79.8" r="3.5"><title>reactive: reach 2100, radius 1000, cooldown 200, coverage 0.073, found 0.78</title></circle>
+<circle class="dot s-reactive" cx="380.9" cy="144.2" r="3.5"><title>reactive: reach 1400, radius 500, cooldown 100, coverage 0.082, found 0.55</title></circle>
+<circle class="dot s-reactive" cx="380.9" cy="144.2" r="3.5"><title>reactive: reach 1400, radius 1000, cooldown 400, coverage 0.082, found 0.55</title></circle>
+<circle class="dot s-reactive" cx="424.7" cy="158.0" r="3.5"><title>reactive: reach 1050, radius 500, cooldown 100, coverage 0.145, found 0.50</title></circle>
+<circle class="dot s-reactive" cx="424.7" cy="148.8" r="3.5"><title>reactive: reach 1050, radius 1000, cooldown 400, coverage 0.145, found 0.53</title></circle>
+<circle class="dot s-reactive" cx="424.7" cy="75.2" r="3.5"><title>reactive: reach 2100, radius 1000, cooldown 100, coverage 0.145, found 0.80</title></circle>
+<circle class="dot s-reactive" cx="433.6" cy="121.2" r="3.5"><title>reactive: reach 1400, radius 1000, cooldown 200, coverage 0.163, found 0.63</title></circle>
+<circle class="dot s-reactive" cx="477.3" cy="139.6" r="3.5"><title>reactive: reach 1050, radius 1000, cooldown 200, coverage 0.290, found 0.57</title></circle>
+<circle class="dot s-reactive" cx="486.3" cy="102.8" r="3.5"><title>reactive: reach 1400, radius 1000, cooldown 100, coverage 0.327, found 0.70</title></circle>
+<circle class="dot s-reactive" cx="530.0" cy="116.6" r="3.5"><title>reactive: reach 1050, radius 1000, cooldown 100, coverage 0.580, found 0.65</title></circle>
+<polyline class="line s-none" points="56.0,296.0 108.7,296.0 117.6,296.0 161.3,296.0 161.3,296.0 161.3,296.0 170.3,296.0 214.0,296.0 214.0,296.0 214.0,296.0 222.9,296.0 222.9,296.0 266.7,296.0 266.7,296.0 266.7,296.0 266.7,296.0 275.6,296.0 275.6,296.0 319.3,296.0 319.3,296.0 319.3,296.0 319.3,296.0 328.3,296.0 328.3,296.0 372.0,296.0 372.0,296.0 372.0,296.0 380.9,296.0 380.9,296.0 424.7,296.0 424.7,296.0 424.7,296.0 433.6,296.0 477.3,296.0 486.3,296.0 530.0,296.0"/>
+<circle class="dot s-none" cx="56.0" cy="296.0" r="3.5"><title>none: reach 2100, radius 250, cooldown 800, coverage 0.001, found 0.00</title></circle>
+<circle class="dot s-none" cx="108.7" cy="296.0" r="3.5"><title>none: reach 2100, radius 250, cooldown 400, coverage 0.002, found 0.00</title></circle>
+<circle class="dot s-none" cx="117.6" cy="296.0" r="3.5"><title>none: reach 1400, radius 250, cooldown 800, coverage 0.003, found 0.00</title></circle>
+<circle class="dot s-none" cx="161.3" cy="296.0" r="3.5"><title>none: reach 1050, radius 250, cooldown 800, coverage 0.005, found 0.00</title></circle>
+<circle class="dot s-none" cx="161.3" cy="296.0" r="3.5"><title>none: reach 2100, radius 250, cooldown 200, coverage 0.005, found 0.00</title></circle>
+<circle class="dot s-none" cx="161.3" cy="296.0" r="3.5"><title>none: reach 2100, radius 500, cooldown 800, coverage 0.005, found 0.00</title></circle>
+<circle class="dot s-none" cx="170.3" cy="296.0" r="3.5"><title>none: reach 1400, radius 250, cooldown 400, coverage 0.005, found 0.00</title></circle>
+<circle class="dot s-none" cx="214.0" cy="296.0" r="3.5"><title>none: reach 1050, radius 250, cooldown 400, coverage 0.009, found 0.00</title></circle>
+<circle class="dot s-none" cx="214.0" cy="296.0" r="3.5"><title>none: reach 2100, radius 250, cooldown 100, coverage 0.009, found 0.00</title></circle>
+<circle class="dot s-none" cx="214.0" cy="296.0" r="3.5"><title>none: reach 2100, radius 500, cooldown 400, coverage 0.009, found 0.00</title></circle>
+<circle class="dot s-none" cx="222.9" cy="296.0" r="3.5"><title>none: reach 1400, radius 250, cooldown 200, coverage 0.010, found 0.00</title></circle>
+<circle class="dot s-none" cx="222.9" cy="296.0" r="3.5"><title>none: reach 1400, radius 500, cooldown 800, coverage 0.010, found 0.00</title></circle>
+<circle class="dot s-none" cx="266.7" cy="296.0" r="3.5"><title>none: reach 1050, radius 250, cooldown 200, coverage 0.018, found 0.00</title></circle>
+<circle class="dot s-none" cx="266.7" cy="296.0" r="3.5"><title>none: reach 1050, radius 500, cooldown 800, coverage 0.018, found 0.00</title></circle>
+<circle class="dot s-none" cx="266.7" cy="296.0" r="3.5"><title>none: reach 2100, radius 500, cooldown 200, coverage 0.018, found 0.00</title></circle>
+<circle class="dot s-none" cx="266.7" cy="296.0" r="3.5"><title>none: reach 2100, radius 1000, cooldown 800, coverage 0.018, found 0.00</title></circle>
+<circle class="dot s-none" cx="275.6" cy="296.0" r="3.5"><title>none: reach 1400, radius 250, cooldown 100, coverage 0.020, found 0.00</title></circle>
+<circle class="dot s-none" cx="275.6" cy="296.0" r="3.5"><title>none: reach 1400, radius 500, cooldown 400, coverage 0.020, found 0.00</title></circle>
+<circle class="dot s-none" cx="319.3" cy="296.0" r="3.5"><title>none: reach 1050, radius 250, cooldown 100, coverage 0.036, found 0.00</title></circle>
+<circle class="dot s-none" cx="319.3" cy="296.0" r="3.5"><title>none: reach 1050, radius 500, cooldown 400, coverage 0.036, found 0.00</title></circle>
+<circle class="dot s-none" cx="319.3" cy="296.0" r="3.5"><title>none: reach 2100, radius 500, cooldown 100, coverage 0.036, found 0.00</title></circle>
+<circle class="dot s-none" cx="319.3" cy="296.0" r="3.5"><title>none: reach 2100, radius 1000, cooldown 400, coverage 0.036, found 0.00</title></circle>
+<circle class="dot s-none" cx="328.3" cy="296.0" r="3.5"><title>none: reach 1400, radius 500, cooldown 200, coverage 0.041, found 0.00</title></circle>
+<circle class="dot s-none" cx="328.3" cy="296.0" r="3.5"><title>none: reach 1400, radius 1000, cooldown 800, coverage 0.041, found 0.00</title></circle>
+<circle class="dot s-none" cx="372.0" cy="296.0" r="3.5"><title>none: reach 1050, radius 500, cooldown 200, coverage 0.073, found 0.00</title></circle>
+<circle class="dot s-none" cx="372.0" cy="296.0" r="3.5"><title>none: reach 1050, radius 1000, cooldown 800, coverage 0.073, found 0.00</title></circle>
+<circle class="dot s-none" cx="372.0" cy="296.0" r="3.5"><title>none: reach 2100, radius 1000, cooldown 200, coverage 0.073, found 0.00</title></circle>
+<circle class="dot s-none" cx="380.9" cy="296.0" r="3.5"><title>none: reach 1400, radius 500, cooldown 100, coverage 0.082, found 0.00</title></circle>
+<circle class="dot s-none" cx="380.9" cy="296.0" r="3.5"><title>none: reach 1400, radius 1000, cooldown 400, coverage 0.082, found 0.00</title></circle>
+<circle class="dot s-none" cx="424.7" cy="296.0" r="3.5"><title>none: reach 1050, radius 500, cooldown 100, coverage 0.145, found 0.00</title></circle>
+<circle class="dot s-none" cx="424.7" cy="296.0" r="3.5"><title>none: reach 1050, radius 1000, cooldown 400, coverage 0.145, found 0.00</title></circle>
+<circle class="dot s-none" cx="424.7" cy="296.0" r="3.5"><title>none: reach 2100, radius 1000, cooldown 100, coverage 0.145, found 0.00</title></circle>
+<circle class="dot s-none" cx="433.6" cy="296.0" r="3.5"><title>none: reach 1400, radius 1000, cooldown 200, coverage 0.163, found 0.00</title></circle>
+<circle class="dot s-none" cx="477.3" cy="296.0" r="3.5"><title>none: reach 1050, radius 1000, cooldown 200, coverage 0.290, found 0.00</title></circle>
+<circle class="dot s-none" cx="486.3" cy="296.0" r="3.5"><title>none: reach 1400, radius 1000, cooldown 100, coverage 0.327, found 0.00</title></circle>
+<circle class="dot s-none" cx="530.0" cy="296.0" r="3.5"><title>none: reach 1050, radius 1000, cooldown 100, coverage 0.580, found 0.00</title></circle>
+<text x="538.0" y="120.6">sweep</text>
+<text x="538.0" y="132.6">reactive</text>
+<text x="538.0" y="272.4">ahead</text>
+<text x="538.0" y="300.0">none</text>
+</svg>
+<table>
+<tr><th>setting</th><th>policy</th><th>coverage rate</th><th>found before contact</th></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>ahead</td><td>0.036</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>ahead</td><td>0.018</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>ahead</td><td>0.009</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>ahead</td><td>0.005</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>ahead</td><td>0.145</td><td>0.05</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>ahead</td><td>0.073</td><td>0.03</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>ahead</td><td>0.036</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>ahead</td><td>0.018</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>ahead</td><td>0.580</td><td>0.10</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>ahead</td><td>0.290</td><td>0.10</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>ahead</td><td>0.145</td><td>0.08</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>ahead</td><td>0.073</td><td>0.08</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>ahead</td><td>0.020</td><td>0.02</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>ahead</td><td>0.010</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>ahead</td><td>0.005</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>ahead</td><td>0.003</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>ahead</td><td>0.082</td><td>0.05</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>ahead</td><td>0.041</td><td>0.05</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>ahead</td><td>0.020</td><td>0.02</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>ahead</td><td>0.010</td><td>0.02</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>ahead</td><td>0.327</td><td>0.10</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>ahead</td><td>0.163</td><td>0.10</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>ahead</td><td>0.082</td><td>0.08</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>ahead</td><td>0.041</td><td>0.08</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>ahead</td><td>0.009</td><td>0.02</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>ahead</td><td>0.005</td><td>0.02</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>ahead</td><td>0.002</td><td>0.02</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>ahead</td><td>0.001</td><td>0.02</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>ahead</td><td>0.036</td><td>0.03</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>ahead</td><td>0.018</td><td>0.03</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>ahead</td><td>0.009</td><td>0.03</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>ahead</td><td>0.005</td><td>0.03</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>ahead</td><td>0.145</td><td>0.08</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>ahead</td><td>0.073</td><td>0.08</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>ahead</td><td>0.036</td><td>0.08</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>ahead</td><td>0.018</td><td>0.08</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>sweep</td><td>0.036</td><td>0.23</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>sweep</td><td>0.018</td><td>0.18</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>sweep</td><td>0.009</td><td>0.13</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>sweep</td><td>0.005</td><td>0.07</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>sweep</td><td>0.145</td><td>0.50</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>sweep</td><td>0.073</td><td>0.40</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>sweep</td><td>0.036</td><td>0.25</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>sweep</td><td>0.018</td><td>0.15</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>sweep</td><td>0.580</td><td>0.65</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>sweep</td><td>0.290</td><td>0.57</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>sweep</td><td>0.145</td><td>0.53</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>sweep</td><td>0.073</td><td>0.32</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>sweep</td><td>0.020</td><td>0.30</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>sweep</td><td>0.010</td><td>0.28</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>sweep</td><td>0.005</td><td>0.18</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>sweep</td><td>0.003</td><td>0.10</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>sweep</td><td>0.082</td><td>0.55</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>sweep</td><td>0.041</td><td>0.45</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>sweep</td><td>0.020</td><td>0.32</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>sweep</td><td>0.010</td><td>0.17</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>sweep</td><td>0.327</td><td>0.70</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>sweep</td><td>0.163</td><td>0.63</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>sweep</td><td>0.082</td><td>0.55</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>sweep</td><td>0.041</td><td>0.33</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>sweep</td><td>0.009</td><td>0.47</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>sweep</td><td>0.005</td><td>0.27</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>sweep</td><td>0.002</td><td>0.20</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>sweep</td><td>0.001</td><td>0.10</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>sweep</td><td>0.036</td><td>0.62</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>sweep</td><td>0.018</td><td>0.52</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>sweep</td><td>0.009</td><td>0.38</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>sweep</td><td>0.005</td><td>0.25</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>sweep</td><td>0.145</td><td>0.80</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>sweep</td><td>0.073</td><td>0.78</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>sweep</td><td>0.036</td><td>0.62</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>sweep</td><td>0.018</td><td>0.47</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>reactive</td><td>0.036</td><td>0.23</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>reactive</td><td>0.018</td><td>0.18</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>reactive</td><td>0.009</td><td>0.13</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>reactive</td><td>0.005</td><td>0.07</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>reactive</td><td>0.145</td><td>0.50</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>reactive</td><td>0.073</td><td>0.40</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>reactive</td><td>0.036</td><td>0.25</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>reactive</td><td>0.018</td><td>0.15</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>reactive</td><td>0.580</td><td>0.65</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>reactive</td><td>0.290</td><td>0.57</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>reactive</td><td>0.145</td><td>0.53</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>reactive</td><td>0.073</td><td>0.32</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>reactive</td><td>0.020</td><td>0.30</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>reactive</td><td>0.010</td><td>0.28</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>reactive</td><td>0.005</td><td>0.18</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>reactive</td><td>0.003</td><td>0.10</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>reactive</td><td>0.082</td><td>0.55</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>reactive</td><td>0.041</td><td>0.45</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>reactive</td><td>0.020</td><td>0.32</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>reactive</td><td>0.010</td><td>0.17</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>reactive</td><td>0.327</td><td>0.70</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>reactive</td><td>0.163</td><td>0.63</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>reactive</td><td>0.082</td><td>0.55</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>reactive</td><td>0.041</td><td>0.33</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>reactive</td><td>0.009</td><td>0.47</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>reactive</td><td>0.005</td><td>0.27</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>reactive</td><td>0.002</td><td>0.20</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>reactive</td><td>0.001</td><td>0.10</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>reactive</td><td>0.036</td><td>0.62</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>reactive</td><td>0.018</td><td>0.52</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>reactive</td><td>0.009</td><td>0.38</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>reactive</td><td>0.005</td><td>0.25</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>reactive</td><td>0.145</td><td>0.80</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>reactive</td><td>0.073</td><td>0.78</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>reactive</td><td>0.036</td><td>0.62</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>reactive</td><td>0.018</td><td>0.47</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>none</td><td>0.036</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>none</td><td>0.018</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>none</td><td>0.009</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>none</td><td>0.005</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>none</td><td>0.145</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>none</td><td>0.073</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>none</td><td>0.036</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>none</td><td>0.018</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>none</td><td>0.580</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>none</td><td>0.290</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>none</td><td>0.145</td><td>0.00</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>none</td><td>0.073</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>none</td><td>0.020</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>none</td><td>0.010</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>none</td><td>0.005</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>none</td><td>0.003</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>none</td><td>0.082</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>none</td><td>0.041</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>none</td><td>0.020</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>none</td><td>0.010</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>none</td><td>0.327</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>none</td><td>0.163</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>none</td><td>0.082</td><td>0.00</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>none</td><td>0.041</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>none</td><td>0.009</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>none</td><td>0.005</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>none</td><td>0.002</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>none</td><td>0.001</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>none</td><td>0.036</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>none</td><td>0.018</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>none</td><td>0.009</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>none</td><td>0.005</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>none</td><td>0.145</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>none</td><td>0.073</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>none</td><td>0.036</td><td>0.00</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>none</td><td>0.018</td><td>0.00</td></tr>
+</table>
+
+<h2>Per setting and policy</h2>
+<table>
+<tr><th>setting</th><th>policy</th><th>coverage rate</th><th>found before contact</th><th>median warning (ticks)</th><th>median warning (s)</th><th>mean share revealed</th><th>mean picture age (ticks)</th><th>pings per find</th></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>ahead</td><td>0.036</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>sweep</td><td>0.036</td><td>0.23</td><td>352</td><td>17.6</td><td>0.13</td><td>812</td><td>594.8</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>reactive</td><td>0.036</td><td>0.23</td><td>352</td><td>17.6</td><td>0.20</td><td>751</td><td>163.8</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>none</td><td>0.036</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>ahead</td><td>0.018</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>sweep</td><td>0.018</td><td>0.18</td><td>1199</td><td>60.0</td><td>0.10</td><td>1047</td><td>458.1</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>reactive</td><td>0.018</td><td>0.18</td><td>1199</td><td>60.0</td><td>0.12</td><td>956</td><td>202.3</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>none</td><td>0.018</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>ahead</td><td>0.009</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>sweep</td><td>0.009</td><td>0.13</td><td>341</td><td>17.1</td><td>0.07</td><td>723</td><td>372.0</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>reactive</td><td>0.009</td><td>0.13</td><td>341</td><td>17.1</td><td>0.07</td><td>723</td><td>372.0</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>none</td><td>0.009</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>ahead</td><td>0.005</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>sweep</td><td>0.005</td><td>0.07</td><td>341</td><td>17.1</td><td>0.02</td><td>696</td><td>386.7</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>reactive</td><td>0.005</td><td>0.07</td><td>341</td><td>17.1</td><td>0.02</td><td>696</td><td>386.7</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>none</td><td>0.005</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>ahead</td><td>0.145</td><td>0.05</td><td>133</td><td>6.7</td><td>0.02</td><td>701</td><td>861.8</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>sweep</td><td>0.145</td><td>0.50</td><td>1349</td><td>67.5</td><td>0.42</td><td>960</td><td>198.3</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>reactive</td><td>0.145</td><td>0.50</td><td>1349</td><td>67.5</td><td>0.46</td><td>920</td><td>71.9</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>none</td><td>0.145</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>ahead</td><td>0.073</td><td>0.03</td><td>1166</td><td>58.3</td><td>0.02</td><td>1050</td><td>656.2</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>sweep</td><td>0.073</td><td>0.40</td><td>1399</td><td>70.0</td><td>0.32</td><td>1050</td><td>167.4</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>reactive</td><td>0.073</td><td>0.40</td><td>1399</td><td>70.0</td><td>0.36</td><td>986</td><td>90.6</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>none</td><td>0.073</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>ahead</td><td>0.036</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>sweep</td><td>0.036</td><td>0.25</td><td>1199</td><td>60.0</td><td>0.21</td><td>1019</td><td>135.3</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>reactive</td><td>0.036</td><td>0.25</td><td>1199</td><td>60.0</td><td>0.21</td><td>1019</td><td>135.3</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>none</td><td>0.036</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>ahead</td><td>0.018</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>sweep</td><td>0.018</td><td>0.15</td><td>561</td><td>28.1</td><td>0.12</td><td>1076</td><td>128.9</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>reactive</td><td>0.018</td><td>0.15</td><td>561</td><td>28.1</td><td>0.12</td><td>1076</td><td>128.9</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>none</td><td>0.018</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>ahead</td><td>0.580</td><td>0.10</td><td>338</td><td>16.9</td><td>0.10</td><td>647</td><td>84.4</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>sweep</td><td>0.580</td><td>0.65</td><td>1599</td><td>80.0</td><td>0.62</td><td>975</td><td>62.5</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>reactive</td><td>0.580</td><td>0.65</td><td>1599</td><td>80.0</td><td>0.62</td><td>983</td><td>34.3</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>none</td><td>0.580</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>ahead</td><td>0.290</td><td>0.10</td><td>288</td><td>14.4</td><td>0.10</td><td>653</td><td>82.0</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>sweep</td><td>0.290</td><td>0.57</td><td>1699</td><td>85.0</td><td>0.54</td><td>1022</td><td>60.9</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>reactive</td><td>0.290</td><td>0.57</td><td>1699</td><td>85.0</td><td>0.54</td><td>1022</td><td>41.7</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>none</td><td>0.290</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>ahead</td><td>0.145</td><td>0.08</td><td>333</td><td>16.6</td><td>0.07</td><td>793</td><td>105.9</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>sweep</td><td>0.145</td><td>0.53</td><td>1999</td><td>100.0</td><td>0.44</td><td>1185</td><td>49.6</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>reactive</td><td>0.145</td><td>0.53</td><td>1999</td><td>100.0</td><td>0.44</td><td>1185</td><td>49.6</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>none</td><td>0.145</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>ahead</td><td>0.073</td><td>0.08</td><td>333</td><td>16.6</td><td>0.07</td><td>838</td><td>77.1</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>sweep</td><td>0.073</td><td>0.32</td><td>1599</td><td>80.0</td><td>0.28</td><td>1272</td><td>45.5</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>reactive</td><td>0.073</td><td>0.32</td><td>1599</td><td>80.0</td><td>0.28</td><td>1272</td><td>45.5</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>none</td><td>0.073</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>ahead</td><td>0.020</td><td>0.02</td><td>2299</td><td>115.0</td><td>0.00</td><td>2200</td><td>5339.3</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>sweep</td><td>0.020</td><td>0.30</td><td>880</td><td>44.0</td><td>0.21</td><td>924</td><td>507.3</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>reactive</td><td>0.020</td><td>0.30</td><td>880</td><td>44.0</td><td>0.26</td><td>800</td><td>107.3</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>none</td><td>0.020</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>ahead</td><td>0.010</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>sweep</td><td>0.010</td><td>0.28</td><td>1199</td><td>60.0</td><td>0.22</td><td>1021</td><td>310.9</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>reactive</td><td>0.010</td><td>0.28</td><td>1199</td><td>60.0</td><td>0.26</td><td>895</td><td>107.4</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>none</td><td>0.010</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>ahead</td><td>0.005</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>sweep</td><td>0.005</td><td>0.18</td><td>561</td><td>28.1</td><td>0.14</td><td>872</td><td>248.0</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>reactive</td><td>0.005</td><td>0.18</td><td>561</td><td>28.1</td><td>0.14</td><td>872</td><td>248.0</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>none</td><td>0.005</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>ahead</td><td>0.003</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>sweep</td><td>0.003</td><td>0.10</td><td>341</td><td>17.1</td><td>0.08</td><td>848</td><td>232.0</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>reactive</td><td>0.003</td><td>0.10</td><td>341</td><td>17.1</td><td>0.08</td><td>848</td><td>232.0</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>none</td><td>0.003</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>ahead</td><td>0.082</td><td>0.05</td><td>233</td><td>11.7</td><td>0.03</td><td>720</td><td>762.8</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>sweep</td><td>0.082</td><td>0.55</td><td>561</td><td>28.1</td><td>0.48</td><td>867</td><td>164.3</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>reactive</td><td>0.082</td><td>0.55</td><td>561</td><td>28.1</td><td>0.49</td><td>788</td><td>47.8</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>none</td><td>0.082</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>ahead</td><td>0.041</td><td>0.05</td><td>133</td><td>6.7</td><td>0.02</td><td>720</td><td>1180.0</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>sweep</td><td>0.041</td><td>0.45</td><td>1599</td><td>80.0</td><td>0.38</td><td>1076</td><td>152.7</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>reactive</td><td>0.041</td><td>0.45</td><td>1599</td><td>80.0</td><td>0.43</td><td>980</td><td>66.9</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>none</td><td>0.041</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>ahead</td><td>0.020</td><td>0.02</td><td>124</td><td>6.2</td><td>0.00</td><td>25</td><td>2198.0</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>sweep</td><td>0.020</td><td>0.32</td><td>1199</td><td>60.0</td><td>0.26</td><td>1006</td><td>114.5</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>reactive</td><td>0.020</td><td>0.32</td><td>1199</td><td>60.0</td><td>0.26</td><td>1006</td><td>114.5</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>none</td><td>0.020</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>ahead</td><td>0.010</td><td>0.02</td><td>124</td><td>6.2</td><td>0.00</td><td>25</td><td>1141.5</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>sweep</td><td>0.010</td><td>0.17</td><td>341</td><td>17.1</td><td>0.15</td><td>969</td><td>110.5</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>reactive</td><td>0.010</td><td>0.17</td><td>341</td><td>17.1</td><td>0.15</td><td>969</td><td>110.5</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>none</td><td>0.010</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>ahead</td><td>0.327</td><td>0.10</td><td>388</td><td>19.4</td><td>0.09</td><td>676</td><td>91.5</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>sweep</td><td>0.327</td><td>0.70</td><td>1949</td><td>97.5</td><td>0.67</td><td>1043</td><td>59.7</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>reactive</td><td>0.327</td><td>0.70</td><td>1949</td><td>97.5</td><td>0.68</td><td>1013</td><td>26.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>none</td><td>0.327</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>ahead</td><td>0.163</td><td>0.10</td><td>388</td><td>19.4</td><td>0.09</td><td>686</td><td>78.7</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>sweep</td><td>0.163</td><td>0.63</td><td>1999</td><td>100.0</td><td>0.60</td><td>1109</td><td>56.5</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>reactive</td><td>0.163</td><td>0.63</td><td>1999</td><td>100.0</td><td>0.60</td><td>1072</td><td>30.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>none</td><td>0.163</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>ahead</td><td>0.082</td><td>0.08</td><td>442</td><td>22.1</td><td>0.07</td><td>867</td><td>78.5</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>sweep</td><td>0.082</td><td>0.55</td><td>1999</td><td>100.0</td><td>0.48</td><td>1218</td><td>48.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>reactive</td><td>0.082</td><td>0.55</td><td>1999</td><td>100.0</td><td>0.48</td><td>1218</td><td>48.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>none</td><td>0.082</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>ahead</td><td>0.041</td><td>0.08</td><td>442</td><td>22.1</td><td>0.07</td><td>867</td><td>40.8</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>sweep</td><td>0.041</td><td>0.33</td><td>1999</td><td>100.0</td><td>0.31</td><td>1363</td><td>43.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>reactive</td><td>0.041</td><td>0.33</td><td>1999</td><td>100.0</td><td>0.31</td><td>1363</td><td>43.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>none</td><td>0.041</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>ahead</td><td>0.009</td><td>0.02</td><td>2399</td><td>120.0</td><td>0.02</td><td>2200</td><td>1205.7</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>sweep</td><td>0.009</td><td>0.47</td><td>1349</td><td>67.5</td><td>0.26</td><td>963</td><td>383.3</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>reactive</td><td>0.009</td><td>0.47</td><td>1349</td><td>67.5</td><td>0.38</td><td>754</td><td>48.1</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>none</td><td>0.009</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>ahead</td><td>0.005</td><td>0.02</td><td>2399</td><td>120.0</td><td>0.02</td><td>2270</td><td>674.0</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>sweep</td><td>0.005</td><td>0.27</td><td>980</td><td>49.0</td><td>0.14</td><td>1060</td><td>414.5</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>reactive</td><td>0.005</td><td>0.27</td><td>980</td><td>49.0</td><td>0.20</td><td>847</td><td>98.9</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>none</td><td>0.005</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>ahead</td><td>0.002</td><td>0.02</td><td>2399</td><td>120.0</td><td>0.02</td><td>2270</td><td>352.0</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>sweep</td><td>0.002</td><td>0.20</td><td>1599</td><td>80.0</td><td>0.09</td><td>1182</td><td>297.6</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>reactive</td><td>0.002</td><td>0.20</td><td>1599</td><td>80.0</td><td>0.09</td><td>1182</td><td>297.6</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>none</td><td>0.002</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>ahead</td><td>0.001</td><td>0.02</td><td>2399</td><td>120.0</td><td>0.02</td><td>2270</td><td>189.9</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>sweep</td><td>0.001</td><td>0.10</td><td>1480</td><td>74.0</td><td>0.04</td><td>1227</td><td>257.8</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>reactive</td><td>0.001</td><td>0.10</td><td>1480</td><td>74.0</td><td>0.04</td><td>1227</td><td>257.8</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>none</td><td>0.001</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>ahead</td><td>0.036</td><td>0.03</td><td>1366</td><td>68.3</td><td>0.02</td><td>1202</td><td>602.8</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>sweep</td><td>0.036</td><td>0.62</td><td>1599</td><td>80.0</td><td>0.61</td><td>1034</td><td>158.2</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>reactive</td><td>0.036</td><td>0.62</td><td>1599</td><td>80.0</td><td>0.61</td><td>838</td><td>26.6</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>none</td><td>0.036</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>ahead</td><td>0.018</td><td>0.03</td><td>1366</td><td>68.3</td><td>0.02</td><td>1252</td><td>475.8</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>sweep</td><td>0.018</td><td>0.52</td><td>1999</td><td>100.0</td><td>0.46</td><td>1174</td><td>142.7</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>reactive</td><td>0.018</td><td>0.52</td><td>1999</td><td>100.0</td><td>0.50</td><td>950</td><td>33.3</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>none</td><td>0.018</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>ahead</td><td>0.009</td><td>0.03</td><td>1366</td><td>68.3</td><td>0.02</td><td>1252</td><td>248.5</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>sweep</td><td>0.009</td><td>0.38</td><td>1599</td><td>80.0</td><td>0.32</td><td>1201</td><td>117.5</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>reactive</td><td>0.009</td><td>0.38</td><td>1599</td><td>80.0</td><td>0.32</td><td>1201</td><td>117.5</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>none</td><td>0.009</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>ahead</td><td>0.005</td><td>0.03</td><td>1366</td><td>68.3</td><td>0.02</td><td>1252</td><td>134.1</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>sweep</td><td>0.005</td><td>0.25</td><td>2399</td><td>120.0</td><td>0.21</td><td>1512</td><td>96.7</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>reactive</td><td>0.005</td><td>0.25</td><td>2399</td><td>120.0</td><td>0.21</td><td>1512</td><td>96.7</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>none</td><td>0.005</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>ahead</td><td>0.145</td><td>0.08</td><td>442</td><td>22.1</td><td>0.08</td><td>898</td><td>161.6</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>sweep</td><td>0.145</td><td>0.80</td><td>2149</td><td>107.5</td><td>0.79</td><td>1142</td><td>56.4</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>reactive</td><td>0.145</td><td>0.80</td><td>2149</td><td>107.5</td><td>0.80</td><td>1012</td><td>15.7</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>none</td><td>0.145</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>ahead</td><td>0.073</td><td>0.08</td><td>442</td><td>22.1</td><td>0.08</td><td>938</td><td>128.4</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>sweep</td><td>0.073</td><td>0.78</td><td>1999</td><td>100.0</td><td>0.75</td><td>1182</td><td>52.8</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>reactive</td><td>0.073</td><td>0.78</td><td>1999</td><td>100.0</td><td>0.76</td><td>1050</td><td>18.6</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>none</td><td>0.073</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>ahead</td><td>0.036</td><td>0.08</td><td>442</td><td>22.1</td><td>0.08</td><td>1012</td><td>74.1</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>sweep</td><td>0.036</td><td>0.62</td><td>1999</td><td>100.0</td><td>0.59</td><td>1325</td><td>46.5</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>reactive</td><td>0.036</td><td>0.62</td><td>1999</td><td>100.0</td><td>0.59</td><td>1325</td><td>46.5</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>none</td><td>0.036</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>ahead</td><td>0.018</td><td>0.08</td><td>442</td><td>22.1</td><td>0.08</td><td>1012</td><td>40.0</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>sweep</td><td>0.018</td><td>0.47</td><td>2399</td><td>120.0</td><td>0.46</td><td>1464</td><td>36.2</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>reactive</td><td>0.018</td><td>0.47</td><td>2399</td><td>120.0</td><td>0.46</td><td>1464</td><td>36.2</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>none</td><td>0.018</td><td>0.00</td><td>-</td><td>-</td><td>0.00</td><td>-</td><td>-</td></tr>
+</table>
+
+<h2>Policy spread (best policy&#x27;s found rate minus ahead&#x27;s)</h2>
+<table>
+<tr><th>setting</th><th>spread</th></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>0.23</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>0.18</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>0.13</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>0.07</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>0.45</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>0.37</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>0.25</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>0.15</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>0.55</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>0.47</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>0.45</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>0.23</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>0.28</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>0.28</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>0.18</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>0.10</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>0.50</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>0.40</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>0.30</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>0.15</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>0.60</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>0.53</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>0.47</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>0.25</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>0.45</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>0.25</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>0.18</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>0.08</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>0.58</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>0.48</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>0.35</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>0.22</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>0.72</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>0.70</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>0.53</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>0.38</td></tr>
+</table>
+
+<h2>Found rate by hider script</h2>
+<table>
+<tr><th>policy</th><th>still</th><th>drift</th><th>shift</th></tr>
+<tr><td>ahead</td><td>0.06</td><td>0.03</td><td>0.03</td></tr>
+<tr><td>sweep</td><td>0.42</td><td>0.34</td><td>0.41</td></tr>
+<tr><td>reactive</td><td>0.42</td><td>0.34</td><td>0.41</td></tr>
+<tr><td>none</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+</table>
+
+<h2>Found rate by hider layer</h2>
+<table>
+<tr><th>policy</th><th>same layer</th><th>other layer</th></tr>
+<tr><td>ahead</td><td>0.25</td><td>0.00</td></tr>
+<tr><td>sweep</td><td>0.39</td><td>0.39</td></tr>
+<tr><td>reactive</td><td>0.39</td><td>0.39</td></tr>
+<tr><td>none</td><td>0.00</td><td>0.00</td></tr>
+</table>
+
+<h2>Why not found (runs where the seeker never found the hider before contact; start distance is the hider&#x27;s at the start, against ping reach)</h2>
+<table>
+<tr><th>policy</th><th>hider layer</th><th>start distance</th><th>runs</th><th>not found</th><th>ended at the cap, no contact, no find</th><th>ended in contact, no earlier find</th></tr>
+<tr><td>ahead</td><td>same layer</td><td>within reach</td><td>72</td><td>60</td><td>0</td><td>60</td></tr>
+<tr><td>ahead</td><td>same layer</td><td>beyond reach</td><td>288</td><td>210</td><td>107</td><td>103</td></tr>
+<tr><td>ahead</td><td>other layer</td><td>within reach</td><td>480</td><td>480</td><td>312</td><td>168</td></tr>
+<tr><td>ahead</td><td>other layer</td><td>beyond reach</td><td>1320</td><td>1320</td><td>1056</td><td>264</td></tr>
+<tr><td>sweep</td><td>same layer</td><td>within reach</td><td>72</td><td>54</td><td>0</td><td>54</td></tr>
+<tr><td>sweep</td><td>same layer</td><td>beyond reach</td><td>288</td><td>166</td><td>93</td><td>73</td></tr>
+<tr><td>sweep</td><td>other layer</td><td>within reach</td><td>480</td><td>134</td><td>106</td><td>28</td></tr>
+<tr><td>sweep</td><td>other layer</td><td>beyond reach</td><td>1320</td><td>965</td><td>828</td><td>137</td></tr>
+<tr><td>reactive</td><td>same layer</td><td>within reach</td><td>72</td><td>54</td><td>0</td><td>54</td></tr>
+<tr><td>reactive</td><td>same layer</td><td>beyond reach</td><td>288</td><td>166</td><td>93</td><td>73</td></tr>
+<tr><td>reactive</td><td>other layer</td><td>within reach</td><td>480</td><td>134</td><td>106</td><td>28</td></tr>
+<tr><td>reactive</td><td>other layer</td><td>beyond reach</td><td>1320</td><td>965</td><td>828</td><td>137</td></tr>
+<tr><td>none</td><td>same layer</td><td>within reach</td><td>72</td><td>72</td><td>0</td><td>72</td></tr>
+<tr><td>none</td><td>same layer</td><td>beyond reach</td><td>288</td><td>288</td><td>144</td><td>144</td></tr>
+<tr><td>none</td><td>other layer</td><td>within reach</td><td>480</td><td>480</td><td>312</td><td>168</td></tr>
+<tr><td>none</td><td>other layer</td><td>beyond reach</td><td>1320</td><td>1320</td><td>1056</td><td>264</td></tr>
+</table>
+
+<h2>Reactive against sweep (found rates are equal by construction)</h2>
+<table>
+<tr><th>setting</th><th>sweep: mean picture age (ticks)</th><th>reactive: mean picture age (ticks)</th><th>sweep: pings per find</th><th>reactive: pings per find</th></tr>
+<tr><td>reach 1050, radius 250, cooldown 100</td><td>812</td><td>751</td><td>594.8</td><td>163.8</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 200</td><td>1047</td><td>956</td><td>458.1</td><td>202.3</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 400</td><td>723</td><td>723</td><td>372.0</td><td>372.0</td></tr>
+<tr><td>reach 1050, radius 250, cooldown 800</td><td>696</td><td>696</td><td>386.7</td><td>386.7</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 100</td><td>960</td><td>920</td><td>198.3</td><td>71.9</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 200</td><td>1050</td><td>986</td><td>167.4</td><td>90.6</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 400</td><td>1019</td><td>1019</td><td>135.3</td><td>135.3</td></tr>
+<tr><td>reach 1050, radius 500, cooldown 800</td><td>1076</td><td>1076</td><td>128.9</td><td>128.9</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 100</td><td>975</td><td>983</td><td>62.5</td><td>34.3</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 200</td><td>1022</td><td>1022</td><td>60.9</td><td>41.7</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 400</td><td>1185</td><td>1185</td><td>49.6</td><td>49.6</td></tr>
+<tr><td>reach 1050, radius 1000, cooldown 800</td><td>1272</td><td>1272</td><td>45.5</td><td>45.5</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 100</td><td>924</td><td>800</td><td>507.3</td><td>107.3</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 200</td><td>1021</td><td>895</td><td>310.9</td><td>107.4</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 400</td><td>872</td><td>872</td><td>248.0</td><td>248.0</td></tr>
+<tr><td>reach 1400, radius 250, cooldown 800</td><td>848</td><td>848</td><td>232.0</td><td>232.0</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 100</td><td>867</td><td>788</td><td>164.3</td><td>47.8</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 200</td><td>1076</td><td>980</td><td>152.7</td><td>66.9</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 400</td><td>1006</td><td>1006</td><td>114.5</td><td>114.5</td></tr>
+<tr><td>reach 1400, radius 500, cooldown 800</td><td>969</td><td>969</td><td>110.5</td><td>110.5</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 100</td><td>1043</td><td>1013</td><td>59.7</td><td>26.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 200</td><td>1109</td><td>1072</td><td>56.5</td><td>30.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 400</td><td>1218</td><td>1218</td><td>48.0</td><td>48.0</td></tr>
+<tr><td>reach 1400, radius 1000, cooldown 800</td><td>1363</td><td>1363</td><td>43.0</td><td>43.0</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 100</td><td>963</td><td>754</td><td>383.3</td><td>48.1</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 200</td><td>1060</td><td>847</td><td>414.5</td><td>98.9</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 400</td><td>1182</td><td>1182</td><td>297.6</td><td>297.6</td></tr>
+<tr><td>reach 2100, radius 250, cooldown 800</td><td>1227</td><td>1227</td><td>257.8</td><td>257.8</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 100</td><td>1034</td><td>838</td><td>158.2</td><td>26.6</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 200</td><td>1174</td><td>950</td><td>142.7</td><td>33.3</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 400</td><td>1201</td><td>1201</td><td>117.5</td><td>117.5</td></tr>
+<tr><td>reach 2100, radius 500, cooldown 800</td><td>1512</td><td>1512</td><td>96.7</td><td>96.7</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 100</td><td>1142</td><td>1012</td><td>56.4</td><td>15.7</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 200</td><td>1182</td><td>1050</td><td>52.8</td><td>18.6</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 400</td><td>1325</td><td>1325</td><td>46.5</td><td>46.5</td></tr>
+<tr><td>reach 2100, radius 1000, cooldown 800</td><td>1464</td><td>1464</td><td>36.2</td><td>36.2</td></tr>
+</table>
+
+<h2>What the instrument could not express</h2>
+<ul>
+<li><b>The &quot;likely places&quot; policy</b>: it needs terrain to say where a hider would sit, and the scene is open ground.</li>
+<li><b>The hider&#x27;s decoy</b>: the hider only moves and changes layer; it has no way to put out a false picture.</li>
+<li><b>Stage B (what knowing is worth)</b>: nobody fires here, so what the picture is worth in a fight is not measured.</li>
+<li><b>Both sides pinging at once (the detection ratio)</b>: the hider side is on policy none; the ratio needs both casting.</li>
+</ul>
+</body>
+</html>

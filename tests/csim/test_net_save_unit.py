@@ -29,7 +29,7 @@ from test_net_section_hashes import UNITS, N_SECTIONS, _battle, _run, _secs
 SAVE_TICK = 150
 MORE_TICKS = 500
 OM_SAVE_SLOT_TACTICAL = 0
-OM_SAVE_SLOT_COUNT = 10
+OM_SAVE_SLOT_COUNT = 11
 
 
 def _bind(lib):
@@ -71,8 +71,8 @@ def _battle_saved(lib, world_factory):
 
 
 def _slot0_len_offset(buf, size):
-    """Offset of the u32 length of the tactical slot: the one place from which the ten
-    slot headers (id u8, len u32 LE, blob) 0..9 in order end exactly at the buffer end."""
+    """Offset of the u32 length of the tactical slot: the one place from which the eleven
+    slot headers (id u8, len u32 LE, blob) 0..10 in order end exactly at the buffer end."""
     raw = bytes(buf)
     for t in range(0, size - 4):
         pos, ok = t, True

@@ -18,6 +18,8 @@ extends RefCounted
 
 const PIPE_BIN_RES_PATH := "res://pipe/ouroboros_pipe"
 const LIVE_READ_TIMEOUT_MSEC := 5000
+const _FrameDecode := preload("res://autoload/bridge/frame_decode.gd")
+const _DumpDecode := preload("res://autoload/bridge/dump_decode.gd")
 const DEFAULT_N_REGIONS := 80
 # Every strategic om_feature id (csrc/ouroboros_sim.h OM_FEAT_EVENTS ..
 # OM_FEAT_LIFECYCLE); OM_FEAT_TACTICAL (8) stays off. With [6] alone nothing
@@ -26,6 +28,8 @@ const DEFAULT_FEATURES := [0, 1, 2, 3, 4, 5, 6, 7]
 
 signal frame_received(frame)
 signal snapshot_changed(tick)
+# K-e4: the answer to the oldest pending send_place (ack accepted, command error refused).
+signal place_result(accepted, x, y, building)
 
 var _snapshot: Dictionary = {}
 var _region_index: Dictionary = {}
@@ -42,12 +46,21 @@ var _chronicle_snapshot: Dictionary = {}
 var _tactical: Dictionary = {}
 var _tactical_units: Dictionary = {}
 var _tactical_map: Dictionary = {}
+var _tactical_structures: Dictionary = {}
+var _tactical_profiles: Array = []
 var _session_args: Array = []
 var _session_id: int = 0
 var _player_faction: int = -1
 var _mission_active := false
 var _mission_begun := false
 var _session_mission: Dictionary = {}
+var _terrain: Dictionary = {}
+var _space_field: Dictionary = {}
+var _lots: Array = []
+var _lots_fetched := false
+var _strongpoints: Array = []
+var _pending_places: Array = []
+var _era_kind: int = 0
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -187,6 +200,19 @@ func _autosave() -> bool:
 	return not _request([{"type": "cmd", "name": "save", "path": path}], ["ack:save"]).is_empty()
 
 
+# The pipe binary: OM_PIPE override, else next to the game executable, else
+# (editor run) res://pipe.
+func _pipe_path() -> String:
+	var override := OS.get_environment("OM_PIPE")
+	if override != "":
+		return override
+	var suffix := ".exe" if OS.get_name() == "Windows" else ""
+	var beside := OS.get_executable_path().get_base_dir().path_join("ouroboros_pipe" + suffix)
+	if not OS.has_feature("editor") and FileAccess.file_exists(beside):
+		return beside
+	return ProjectSettings.globalize_path(PIPE_BIN_RES_PATH) + suffix
+
+
 # Persistent session (docs/architecture.md "persistent client session
 # (v1.1)"): one pipe process for the whole run. A reader Thread decodes
 # frames into a mutex-guarded queue (reads block, so they cannot run on the
@@ -204,7 +230,7 @@ func _autosave() -> bool:
 func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool = true) -> bool:
 	close_session()
 	_last_error = ""
-	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
+	var exe := _pipe_path()
 	if not FileAccess.file_exists(exe):
 		_last_error = "pipe binary missing"
 		return false
@@ -239,7 +265,7 @@ func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool
 
 func send_command(cmd: Dictionary) -> void:
 	if _session_stdio != null:
-		_session_stdio.store_buffer(_frame_cmd(cmd))
+		_session_stdio.store_buffer(_FrameDecode.frame_cmd(cmd))
 
 
 func step(n: int) -> void:
@@ -269,6 +295,8 @@ func pump() -> int:
 			"mission":
 				_mission_active = true
 				_mission_begun = false
+				_lots = []
+				_lots_fetched = false
 				_session_mission = frame
 			"tactical":
 				_mission_begun = true
@@ -277,8 +305,13 @@ func pump() -> int:
 				_mission_active = false
 				_mission_begun = false
 				_session_mission = {}
+			"ack":
+				if String(frame.get("name", "")) == "command":
+					_resolve_place(true)
 			"error":
 				_last_error = String(frame.get("reason", ""))
+				if String(frame.get("name", "")) == "command":
+					_resolve_place(false)
 		frame_received.emit(frame)
 		if changed:
 			snapshot_changed.emit(int(_snapshot.get("tick", 0)))
@@ -287,6 +320,7 @@ func pump() -> int:
 
 func close_session() -> void:
 	_session_args = []
+	_pending_places = []
 	if _session_pid > 0 and OS.is_process_running(_session_pid):
 		OS.kill(_session_pid)
 	if _reader != null:
@@ -298,12 +332,16 @@ func close_session() -> void:
 
 func _reader_loop() -> void:
 	while true:
-		var msg: Variant = _read_live_frame(_session_stdio)
+		var msg: Variant = _FrameDecode.read_live_frame(_session_stdio)
 		if msg == null:
 			return
 		_mutex.lock()
 		_queue.append(msg)
 		_mutex.unlock()
+
+
+func _read_live_frame(stdio: FileAccess) -> Variant:
+	return _FrameDecode.read_live_frame(stdio)
 
 
 func _apply_delta(delta: Dictionary) -> void:
@@ -420,7 +458,9 @@ func _request(cmds: Array, want: Array) -> Dictionary:
 func send_unit_command(cmd: Dictionary) -> bool:
 	var kind := str(cmd.get("kind", ""))
 	var unit_ids: Array = cmd.get("unit_ids", [])
-	if not kind in ["move", "attack_move", "attack_target"]:
+	if not kind in ["move", "attack_move", "attack_target", "set_layer", "activate_ability"]:
+		return false
+	if kind == "set_layer" and unit_ids.is_empty():
 		return false
 	var pipe_cmd := {
 		"type": "cmd",
@@ -433,8 +473,28 @@ func send_unit_command(cmd: Dictionary) -> bool:
 		pipe_cmd["y"] = float(cmd.get("y", 0.0))
 	elif kind == "attack_target":
 		pipe_cmd["target"] = int(cmd.get("target", -1))
+	elif kind == "set_layer":
+		pipe_cmd["layer"] = int(cmd.get("layer", 0))
+	elif kind == "activate_ability":
+		pipe_cmd["x"] = float(cmd.get("x", 0.0))
+		pipe_cmd["y"] = float(cmd.get("y", 0.0))
 	send_command(pipe_cmd)
 	return true
+
+
+# Sends the K-e place command (docs/architecture.md, K-e4): `building` is the position of the building
+# in the era manifest's buildings list (liberty 2026-10-10). The answer arrives as place_result.
+func send_place(x: float, y: float, building: int) -> bool:
+	_pending_places.append([x, y, building])
+	send_command({"type": "cmd", "name": "command", "verb": "place", "units": [], "x": x, "y": y, "building": building})
+	return true
+
+
+func _resolve_place(accepted: bool) -> void:
+	if _pending_places.is_empty():
+		return
+	var p: Array = _pending_places.pop_front()
+	place_result.emit(accepted, p[0], p[1], p[2])
 
 
 # Folds a full or delta tactical frame (A7) into the id -> unit dictionary and
@@ -444,9 +504,28 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 	if bool(frame.get("full", true)):
 		_tactical_units = {}
 		_tactical_map = frame.get("map", {})
+		_tactical_structures = {}
+		_tactical_profiles = frame.get("profiles", [])
+		_strongpoints = frame.get("strongpoints", [])
+		_strongpoints.sort_custom(func(a, b): return int(a["id"]) < int(b["id"]))
+		for st in frame.get("structures", []):
+			_tactical_structures[int(st["id"])] = st
+		if frame.has("lots"):
+			_lots = []
+			for r in frame["lots"]:
+				_lots.append(_lot_row(r))
+			_tactical["lots"] = _lots
 	else:
 		for id in frame.get("units_removed", []):
 			_tactical_units.erase(int(id))
+		for id in frame.get("structures_removed", []):
+			_tactical_structures.erase(int(id))
+		for ch in frame.get("structures_changed", []):
+			var sid := int(ch["id"])
+			var row: Dictionary = _tactical_structures.get(sid, {}).duplicate()
+			row.merge(ch, true)
+			_tactical_structures[sid] = row
+		_fold_lots(frame.get("lots_changed", []))
 	for u in frame.get("units", frame.get("units_changed", [])):
 		_tactical_units[int(u["id"])] = u
 	var ids := _tactical_units.keys()
@@ -455,8 +534,18 @@ func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
 	for id in ids:
 		units.append(_tactical_units[id])
 	var view := frame.duplicate()
-	for k in ["units_changed", "units_removed"]:
+	var sids := _tactical_structures.keys()
+	sids.sort()
+	var structures: Array = []
+	for id in sids:
+		structures.append(_tactical_structures[id])
+	for k in ["units_changed", "units_removed", "structures_changed", "structures_removed", "lots_changed"]:
 		view.erase(k)
+	view["structures"] = structures
+	view["profiles"] = _tactical_profiles
+	view["lots"] = _lots
+	view["strongpoints"] = _strongpoints
+	view["economy"] = frame.get("economy", {"doctrine": 3, "resources": {}})
 	view["full"] = true
 	view["units"] = units
 	view["map"] = _tactical_map
@@ -495,17 +584,143 @@ func tactical_step_n(n: int) -> bool:
 	return true
 
 
-func _ensure_mission() -> bool:
+func net_reset() -> bool:
+	return not _request([{"type": "cmd", "name": "net_reset"}], ["net_ack"]).is_empty()
+
+
+# The net_ack code of the submitted command (0 accepted), -1 on a pipe failure.
+func net_submit(cmd: Dictionary) -> int:
+	var c := cmd.duplicate()
+	c["type"] = "cmd"
+	c["name"] = "net_submit"
+	var r := _request([c], ["net_ack"])
+	if r.is_empty():
+		return -1
+	return int(r["net_ack"].get("code", -1))
+
+
+# {"net_ack": ack, "tactical": frame} (frame only when asked); {} on failure.
+func net_step(n: int = 1, frame: bool = true) -> Dictionary:
+	var cmd := {"type": "cmd", "name": "net_step", "n": n}
+	var want := ["net_ack"]
+	if frame:
+		cmd["frame"] = true
+		want.append("tactical")
+	return _request([cmd], want)
+
+
+func net_checksum() -> Dictionary:
+	var r := _request([{"type": "cmd", "name": "net_checksum"}], ["net_ack"])
+	return r.get("net_ack", {})
+
+
+func _ensure_mission(fog_filter: bool = false) -> bool:
 	if _mission_active:
 		return true
-	return not _request([{"type": "cmd", "name": "mission_start", "faction": 0}], ["mission"]).is_empty()
+	_terrain = {}
+	_space_field = {}
+	var era: Node = (Engine.get_main_loop() as SceneTree).root.get_node_or_null("EraConfig")
+	var cmd := {"type": "cmd", "name": "mission_start", "faction": 0, "era_kind": 0, "movement_kinds": []}
+	if era != null and era.has_method("kind") and era.has_method("movement_kinds"):
+		cmd["era_kind"] = 1 if str(era.call("kind")) == "ground" else 0
+		cmd["movement_kinds"] = era.call("movement_kinds")
+	if fog_filter:
+		cmd["fog_filter"] = true
+	_era_kind = int(cmd["era_kind"])
+	return not _request([cmd], ["mission"]).is_empty()
+
+
+# The ground terrain of the begun mission; {} in a space era (spec 3c).
+func terrain() -> Dictionary:
+	return _terrain
+
+
+func _fetch_terrain() -> bool:
+	var t: Dictionary = _request([{"type": "cmd", "name": "terrain_dump"}], ["terrain"])
+	if t.is_empty():
+		return false
+	_terrain = _DumpDecode.terrain_from_frame(t["terrain"])
+	return true
+
+
+# The space field of the begun mission (K-d, docs/architecture.md space_field_dump): {cells_w, cells_h, layers,
+# masks: 5 PackedByteArray (8 cells per byte, LSB first, 1 = blocked), polys: [{layer, kind, points}]}; {} in a ground era.
+func space_field() -> Dictionary:
+	return _space_field
+
+
+func _fetch_space_field() -> bool:
+	var t: Dictionary = _request([{"type": "cmd", "name": "space_field_dump"}], ["space_field"])
+	if t.is_empty():
+		return false
+	var f: Dictionary = t["space_field"]
+	var masks: Array = []
+	for m in f.get("masks", []):
+		masks.append(String(m).hex_decode())
+	var polys: Array = []
+	for p in f.get("polys", []):
+		var pts := PackedVector2Array()
+		var xy: Array = p[2]
+		for i in range(0, xy.size() - 1, 2):
+			pts.append(Vector2(float(xy[i]), float(xy[i + 1])))
+		polys.append({"layer": int(p[0]), "kind": int(p[1]), "points": pts})
+	_space_field = {"cells_w": int(f.get("cells_w", 0)), "cells_h": int(f.get("cells_h", 0)), "layers": int(f.get("layers", 0)), "masks": masks, "polys": polys}
+	return true
+
+
+# The lots of the begun mission (K-e, docs/architecture.md lots_dump), ascending id, kept current by
+# delta lots_changed rows and replaced by a full frame's `lots` (K-e6): [{id, x, y, stage, building, owner}]; [] before the dump.
+func lots() -> Array:
+	return _lots
+
+
+# The strongpoints of the last full tactical frame (K-e4), ascending id: [{id, x, y, owner, state}].
+func strongpoints() -> Array:
+	return _strongpoints
+
+
+func _lot_row(r: Array) -> Dictionary:
+	return {"id": int(r[0]), "x": float(r[1]), "y": float(r[2]), "stage": int(r[3]), "building": int(r[4]), "owner": int(r[5])}
+
+
+func _fold_lots(rows: Array) -> void:
+	if rows.is_empty():
+		return
+	var by_id := {}
+	for l in _lots:
+		by_id[int(l["id"])] = l
+	for r in rows:
+		by_id[int(r[0])] = _lot_row(r)
+	var ids := by_id.keys()
+	ids.sort()
+	_lots = []
+	for id in ids:
+		_lots.append(by_id[id])
+	_tactical["lots"] = _lots
+
+
+func _fetch_lots() -> bool:
+	var t: Dictionary = _request([{"type": "cmd", "name": "lots_dump"}], ["lots"])
+	if t.is_empty():
+		return false
+	_lots_fetched = true
+	_lots = []
+	_fold_lots_dump(t["lots"].get("lots", []))
+	return true
+
+
+func _fold_lots_dump(rows: Array) -> void:
+	for r in rows:
+		_lots.append(_lot_row(r))
+	_lots.sort_custom(func(a, b): return int(a["id"]) < int(b["id"]))
+	_tactical["lots"] = _lots
 
 
 # The mission frame of the shared world: a mission is started if none is
 # running (one already running is reused), then autosaved (R-111-01).
-func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
+func load_mission_live(seed: int, n_regions: int, features: Array, fog_filter: bool = false) -> bool:
 	_mission = {}
-	if not ensure_world(seed, n_regions, features) or not _ensure_mission() or not _autosave():
+	if not ensure_world(seed, n_regions, features) or not _ensure_mission(fog_filter) or not _autosave():
 		return false
 	_mission = _session_mission
 	return true
@@ -550,7 +765,10 @@ func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	if frames.is_empty():
 		return false
 	_tactical = _reconstruct_tactical(frames["tactical"])
-	return true
+	var ok := _fetch_terrain() if _era_kind == 1 else _fetch_space_field()
+	if not _lots_fetched:
+		_fetch_lots()
+	return ok
 
 
 # ... one tactical_step of the begun mission (begun here if the player has
@@ -564,125 +782,3 @@ func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
 		return false
 	_tactical = _reconstruct_tactical(frames["tactical"])
 	return true
-
-
-func _frame_cmd(cmd: Dictionary) -> PackedByteArray:
-	var body := JSON.stringify(cmd).to_utf8_buffer()
-	var n := body.size()
-	var framed := PackedByteArray()
-	framed.push_back((n >> 24) & 0xFF)
-	framed.push_back((n >> 16) & 0xFF)
-	framed.push_back((n >> 8) & 0xFF)
-	framed.push_back(n & 0xFF)
-	framed.append_array(body)
-	return framed
-
-
-func _read_live_frame(stdio: FileAccess) -> Variant:
-	var header := PackedByteArray()
-	while header.size() < 4:
-		var chunk: PackedByteArray = stdio.get_buffer(4 - header.size())
-		if chunk.size() > 0:
-			header.append_array(chunk)
-		elif stdio.eof_reached():
-			return null
-		elif stdio.get_error() != OK:
-			return null
-		else:
-			OS.delay_msec(5)
-
-	var length: int = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3]
-	if length <= 0 or length > 10 * 1024 * 1024:
-		return null
-
-	var body := PackedByteArray()
-	while body.size() < length:
-		var chunk: PackedByteArray = stdio.get_buffer(length - body.size())
-		if chunk.size() > 0:
-			body.append_array(chunk)
-		elif stdio.eof_reached():
-			return null
-		elif stdio.get_error() != OK:
-			return null
-		else:
-			OS.delay_msec(5)
-
-	var text := body.get_string_from_utf8()
-	var json := JSON.new()
-	if json.parse(text) != OK:
-		return null
-	var data: Variant = json.get_data()
-
-	# om_pipe.c writes "checksum" as a decimal uint64 (jb_uint, om_pipe.c).
-	# Godot's JSON parser has no uint64/int64-overflow-safe integer type: a
-	# literal above INT64_MAX (as the real checksum here is) silently
-	# round-trips through a double first, which is nowhere near precise
-	# enough to hold a 19-20 digit integer, then int()-casting that garbled
-	# double saturates to INT64_MIN. Re-read the checksum digits straight
-	# off the wire text and store the exact value as its int64 two's-
-	# complement bit pattern instead (the same bits the C uint64_t has),
-	# since GDScript has no native unsigned 64-bit type to hold it directly.
-	# "delta" frames carry the same "checksum" field (nonzero on cadence
-	# ticks, per docs/architecture.md "C transport v1"), so the same
-	# precision-loss bug and fix apply there too.
-	if data is Dictionary and (data.get("type", "") == "snapshot" or data.get("type", "") == "delta"):
-		var raw_checksum := _extract_raw_checksum(text)
-		if raw_checksum != "":
-			data["checksum"] = _decimal_to_i64(raw_checksum)
-
-	return data
-
-
-func _extract_raw_checksum(text: String) -> String:
-	var re := RegEx.new()
-	re.compile("\"checksum\"\\s*:\\s*(-?\\d+)")
-	var m := re.search(text)
-	if m == null:
-		return ""
-	return m.get_string(1)
-
-
-const _INT64_MAX_STR := "9223372036854775807"
-const _UINT64_MOD_STR := "18446744073709551616"  # 2^64
-
-
-func _decimal_to_i64(s: String) -> int:
-	if s.is_empty():
-		return -1
-	if not _decimal_gt(s, _INT64_MAX_STR):
-		return int(s)
-	# s is in (INT64_MAX, 2^64): the int64 bit pattern equals s - 2^64,
-	# computed as -(2^64 - s) via string subtraction (both fit in int64).
-	return -int(_decimal_sub(_UINT64_MOD_STR, s))
-
-
-func _decimal_gt(a: String, b: String) -> bool:
-	if a.length() != b.length():
-		return a.length() > b.length()
-	return a > b
-
-
-func _decimal_sub(a: String, b: String) -> String:
-	# a - b, decimal digit strings, a >= b >= 0.
-	var ai := a.length() - 1
-	var bi := b.length() - 1
-	var borrow := 0
-	var digits := PackedStringArray()
-	while ai >= 0:
-		var da := a.unicode_at(ai) - 48
-		var db := (b.unicode_at(bi) - 48) if bi >= 0 else 0
-		var d := da - db - borrow
-		if d < 0:
-			d += 10
-			borrow = 1
-		else:
-			borrow = 0
-		digits.append(str(d))
-		ai -= 1
-		bi -= 1
-	digits.reverse()
-	var result := "".join(digits)
-	var start := 0
-	while start < result.length() - 1 and result[start] == "0":
-		start += 1
-	return result.substr(start)

@@ -89,6 +89,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "economy_internal.h"
 #include "om_constants.h"
 #include <stddef.h>
 #include <stdlib.h>
@@ -466,7 +467,7 @@ void om_enemy_production_adapt_target(const om_composition_ratio *target, const 
 /* ---- R-126-02/03/04/05/06: structures ---- */
 
 double om_mission_compute_starting_force(double full_force) {
-    return full_force * OM_SUP_STARTING_FORCE_FRACTION;
+    return full_force; /* R-218-06, liberty 2026-10-10 until E-10 S-211 */
 }
 
 /* Pure by design (no world, no structure/military context): the game is
@@ -477,8 +478,9 @@ double om_mission_compute_starting_force(double full_force) {
  * out of a (double, uint64_t) function's reach). time_limit_ticks is kept
  * as a parameter (0 rejected) so a future per-duration model can use it. */
 double om_mission_compute_reinforcement_capacity(double full_force, uint64_t time_limit_ticks) {
-    if (time_limit_ticks == 0) return 0.0;
-    return full_force * (1.0 - OM_SUP_STARTING_FORCE_FRACTION);
+    (void)full_force;
+    (void)time_limit_ticks;
+    return 0.0; /* R-218-06: strongpoint production is paid by the holder's economy (R-218-03) */
 }
 
 uint32_t om_structure_production_interval_ticks(double power) {
@@ -604,7 +606,10 @@ double om_structure_get_matchup_multiplier(uint32_t attacker) {
 }
 
 void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner) {
-    om_sup_structure_at(w, structure)->owner = owner;
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    int32_t old_owner = s->owner;
+    s->owner = owner;
+    if (old_owner != owner) om_economy_on_structure_owner(w, structure, old_owner, owner);
 }
 
 int om_structure_set_position(om_world *w, uint32_t slot, double x, double y) {
@@ -670,6 +675,7 @@ static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven, 
         s->capture_accruing = 0;
         s->capture_driven = 0;
         if (driven) om_structure_on_owner_changed(w, idx, old_owner, s->owner);
+        om_tac_event_push(w, OM_TAC_EV_CAPTURE, (int)idx, s->owner);
     }
 }
 
@@ -685,8 +691,9 @@ void om_structure_apply_damage(om_world *w, uint32_t structure, double damage, u
     s->hp -= damage * mult;
     if (s->hp <= 0.0) {
         s->hp = 0.0;
-        s->destroyed = 1; /* R-127-03: removed for the rest of the mission, never rebuilt */
+        s->destroyed = 1; /* R-218-05: stays listed at 0 HP, production stopped (flag), refounded by om_economy_place */
     }
+    om_economy_on_structure_damage(w, structure, s->hp);
 }
 
 int om_structure_is_destroyed(om_world *w, uint32_t structure) {
@@ -697,9 +704,16 @@ double om_structure_get_hp(om_world *w, uint32_t structure) {
     return om_sup_structure_at(w, structure)->hp;
 }
 
+void om_structure_refound(om_world *w, uint32_t structure, int32_t owner) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    s->destroyed = 0;
+    s->hp = (double)OM_REINFORCEMENT_STRUCTURE_HP;
+    s->owner = owner;
+}
+
 void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old_owner, int32_t new_owner) {
     int32_t pf, player;
-    (void)structure;
+    if (old_owner != new_owner) om_economy_on_structure_owner(w, structure, old_owner, new_owner);
     /* R-127-04/E-16 R-104-01: player perspective only. Legacy: faction 1 when
      * no player configured (HDR3; smaller than adding om_faction_set to those
      * fixtures). */
@@ -1428,3 +1442,27 @@ void om_support_install_net_hooks(om_world *w) {
     w->support_state_write = om_sup_save_write;
     w->support_state_read = om_sup_save_read;
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+/* Slots mission.c pre-inits at power 0 are placeholders, not structures. */
+uint32_t om_structure_count(const om_world *w) {
+    const om_sup_state *st = (const om_sup_state *)w->support_state;
+    uint32_t i, n = 0;
+    if (!st) return 0;
+    for (i = 0; i < OM_SUP_MAX_STRUCTURES; i++) {
+        if (st->structures[i].in_use && st->structures[i].power > 0.0) n++;
+    }
+    return n;
+}
+
+uint32_t om_structure_get_at(const om_world *w, uint32_t i) {
+    const om_sup_state *st = (const om_sup_state *)w->support_state;
+    uint32_t slot, n = 0;
+    if (!st) return UINT32_MAX;
+    for (slot = 0; slot < OM_SUP_MAX_STRUCTURES; slot++) {
+        if (!st->structures[slot].in_use || st->structures[slot].power <= 0.0) continue;
+        if (n++ == i) return slot;
+    }
+    return UINT32_MAX;
+}
+/* ---- end generated stubs ---- */

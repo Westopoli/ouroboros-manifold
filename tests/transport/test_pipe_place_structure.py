@@ -147,15 +147,14 @@ def test_place_structure_rejected_by_non_debug_pipe():
 # ---- (d) tactical frame does not expose structures ----
 
 def test_tactical_frame_has_no_structures_key():
-    """The tactical frame (type='tactical') has keys type/tick/map/units/visible.
-    No 'structures' key is emitted. The effect is observed through produced units
-    (see test_pipe_structure_production.py).
+    """Name kept for history (TD-VG-K-5): spec section 2 adds `structures` to full frames, so the first
+    tactical frame after mission_begin (a full frame) carries `structures` as a list.
     """
     cmds = [SET_SEED, START, BEGIN, PLACE,
             {"type": "cmd", "name": "tactical_step", "n": 1}]
     frames = _run(PIPE_DBG, cmds)
     tacticals = [f for f in frames if f.get("type") == "tactical"]
     assert tacticals, "no tactical frame received"
-    for t in tacticals:
-        assert "structures" not in t, (
-            "tactical frame must not expose structures; got keys: %r" % list(t.keys()))
+    full = tacticals[0]
+    assert "structures" in full, "full tactical frame must carry structures; got keys: %r" % list(full.keys())
+    assert isinstance(full["structures"], list), type(full["structures"])

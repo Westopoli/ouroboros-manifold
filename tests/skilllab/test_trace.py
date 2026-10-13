@@ -82,7 +82,7 @@ def test_old_constructors_still_work():
                     first_contact_tick=-1, firing=[], firing_unit_seconds=(0.0, 0.0))
     assert r.trace is None
     names = [f.name for f in dataclasses.fields(FightResult)]
-    assert names.index("trace") == 9      # trace stays where it was; every later field follows it, so positional use is untouched
+    assert names.index("trace") == 10     # Rev 3 put winner (default None) at 9, so trace is 10; fields after trace keep their order
 
 
 def test_one_entry_per_unit_per_recorded_tick():

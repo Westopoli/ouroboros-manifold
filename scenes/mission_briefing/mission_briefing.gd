@@ -53,7 +53,7 @@ func _ready() -> void:
 
 func _load_live() -> void:
 	var bridge = SimSession.bridge()
-	if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+	if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES, _fog_filter()):
 		if _error_panel != null:
 			_error_panel.hide_error()
 		load_frame(bridge.mission_frame())
@@ -65,6 +65,12 @@ func _load_live() -> void:
 		_error_panel.retry_pressed.connect(_load_live)
 		add_child(_error_panel)
 	_error_panel.show_error(reason if reason != "" else "briefing load failed")
+
+
+# The QA daemon can turn the fog filter off for probes that need enemy positions; the game default is on (R-089-03).
+func _fog_filter() -> bool:
+	var qa = get_node_or_null("/root/QADaemon")
+	return qa == null or not qa.has_method("fog_filter") or qa.fog_filter()
 
 
 func _input(event: InputEvent) -> void:

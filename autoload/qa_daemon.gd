@@ -31,13 +31,23 @@ var _fixture_path: String = ""
 var _injected_bugs: Dictionary = {}
 
 var _server: TCPServer = null
-var _conn: StreamPeerTCP = null
-var _conn_buffer: String = ""
+var _conns: Array = []  # {"peer": StreamPeerTCP, "buf": String}; the test client and, in a net match, the peer daemon
+var _fog_filter_override := -1  # -1 unset; 0/1 set by set_fog_filter
+
+var _nm = null  # net_loopback_start: own NetMatch (not in the tree, so only net_run polls it)
+var _nm_transport = null
+var _nm_local := 0
+var _nm_remote := 0
+var _nm_peer: StreamPeerTCP = null
+var _nm_budget := 0  # ticks this side has been asked to reach; the peer's net_run may already have driven it past
 
 var _script_actions: Array = []
+var _pointer := Vector2.ZERO
+var _pointer_set := false
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(false)
 	var args := OS.get_cmdline_user_args()
 	var port_str := _arg_value(args, "--qa-port")
@@ -66,6 +76,10 @@ func state() -> Dictionary:
 			scene_name = cur.scene_file_path if cur.scene_file_path != "" else String(cur.name)
 			if cur.has_method("qa_state"):
 				result["qa"] = cur.qa_state()
+			var nodes_by_name := {}
+			var hud_texts := {}
+			_collect_tree(cur, [], [], nodes_by_name, hud_texts)
+			result["inventory"] = {"nodes_by_name": nodes_by_name, "hud_texts": hud_texts}
 		var tb := get_node_or_null("/root/TacticalBridge")
 		if tb != null and "current_tick" in tb:
 			tick_val = tb.current_tick
@@ -77,11 +91,35 @@ func state() -> Dictionary:
 func tree() -> Dictionary:
 	var t := get_tree()
 	if t == null or t.current_scene == null:
-		return {"controls": [], "node3ds": []}
+		return {"controls": [], "node3ds": [], "hover": ""}
 	var controls: Array = []
 	var node3ds: Array = []
 	_collect_tree(t.current_scene, controls, node3ds)
-	return {"controls": controls, "node3ds": node3ds}
+	return {"controls": controls, "node3ds": node3ds, "hover": _hover_path(t.current_scene)}
+
+
+func _hover_path(scene: Node) -> String:
+	var vp := scene.get_viewport()
+	var hovered := vp.gui_get_hovered_control()
+	if hovered != null:
+		return String(hovered.get_path())
+	# Headless viewports do not track the hovered control; fall back to the topmost visible one under the pointer.
+	var pos := _pointer if _pointer_set else vp.get_mouse_position()
+	var best: Control = null
+	var stack: Array = [scene]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for c in n.get_children():
+			stack.push_back(c)
+		if n is Control and n != scene and n.is_visible_in_tree() and n.mouse_filter != Control.MOUSE_FILTER_IGNORE \
+				and n.get_global_rect().has_point(pos):
+			if best == null or _later(n, best):
+				best = n
+	return String(best.get_path()) if best != null else ""
+
+
+func _later(a: Node, b: Node) -> bool:
+	return a.is_greater_than(b) or b.is_ancestor_of(a)
 
 
 func _start_server(port: int) -> void:
@@ -129,32 +167,31 @@ func _process(_delta: float) -> void:
 
 
 func _poll_server() -> void:
-	if _conn == null and _server.is_connection_available():
-		_conn = _server.take_connection()
-	if _conn == null:
-		return
-	_conn.poll()
-	if _conn.get_status() != StreamPeerTCP.STATUS_CONNECTED:
-		_conn = null
-		_conn_buffer = ""
-		return
-	var avail := _conn.get_available_bytes()
-	if avail <= 0:
-		return
-	var data: Array = _conn.get_data(avail)
-	if data[0] != OK:
-		return
-	var bytes: PackedByteArray = data[1]
-	_conn_buffer += bytes.get_string_from_utf8()
-	var nl := _conn_buffer.find("\n")
-	while nl != -1:
-		var line := _conn_buffer.substr(0, nl)
-		_conn_buffer = _conn_buffer.substr(nl + 1)
-		_handle_line(line)
-		nl = _conn_buffer.find("\n")
+	while _server.is_connection_available():
+		_conns.append({"peer": _server.take_connection(), "buf": ""})
+	for c in _conns.duplicate():
+		var peer: StreamPeerTCP = c["peer"]
+		peer.poll()
+		if peer.get_status() != StreamPeerTCP.STATUS_CONNECTED:
+			_conns.erase(c)
+			continue
+		var avail := peer.get_available_bytes()
+		if avail <= 0:
+			continue
+		var data: Array = peer.get_data(avail)
+		if data[0] != OK:
+			continue
+		var bytes: PackedByteArray = data[1]
+		c["buf"] += bytes.get_string_from_utf8()
+		var nl: int = c["buf"].find("\n")
+		while nl != -1:
+			var line: String = c["buf"].substr(0, nl)
+			c["buf"] = c["buf"].substr(nl + 1)
+			_handle_line(line, peer)
+			nl = c["buf"].find("\n")
 
 
-func _handle_line(line: String) -> void:
+func _handle_line(line: String, peer: StreamPeerTCP) -> void:
 	if line.strip_edges() == "":
 		return
 	var parsed = JSON.parse_string(line)
@@ -168,16 +205,16 @@ func _handle_line(line: String) -> void:
 		verb = String(parsed[0])
 		args = parsed.slice(1)
 	else:
-		_write_response({"ok": false, "error": "malformed request"})
+		_write_response({"ok": false, "error": "malformed request"}, peer)
 		return
 	var resp := await _dispatch(verb, args)
-	_write_response(resp)
+	_write_response(resp, peer)
 
 
-func _write_response(resp: Dictionary) -> void:
-	if _conn == null:
+func _write_response(resp: Dictionary, peer: StreamPeerTCP) -> void:
+	if peer == null:
 		return
-	_conn.put_data((JSON.stringify(resp) + "\n").to_utf8_buffer())
+	peer.put_data((JSON.stringify(resp) + "\n").to_utf8_buffer())
 
 
 func _dispatch(verb: String, args: Array) -> Dictionary:
@@ -202,12 +239,30 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			var name: String = String(args[0]) if args.size() > 0 else "screenshot"
 			if _driver == null:
 				return {"ok": false, "error": "screenshot: only available in --qa-port mode"}
-			await _driver.call("_do_screenshot", name)
+			if args.size() > 1 and String(args[1]) != "":
+				await _driver.call("_do_screenshot", name, String(args[1]))
+			else:
+				await _driver.call("_do_screenshot", name)
 			return {"ok": true, "result": name}
 		"input":
 			return await _dispatch_input(args)
 		"qa_select":
 			return _do_qa_select(args)
+		"project":
+			return _do_project(args)
+		"set_fog_filter":
+			_fog_filter_override = 1 if (args.size() > 0 and bool(args[0])) else 0
+			return {"ok": true, "result": {"fog_filter": fog_filter()}}
+		"net_loopback_start":
+			return _net_loopback_start(args)
+		"net_run":
+			return _net_run(int(args[0]) if args.size() > 0 else 1)
+		"net_frame":
+			return _net_frame()
+		"net_command":
+			return _net_command(args[0] if args.size() > 0 and typeof(args[0]) == TYPE_DICTIONARY else {})
+		"net_peer_pump":
+			return _net_peer_pump(args[0] if args.size() > 0 and typeof(args[0]) == TYPE_ARRAY else [])
 		_:
 			return {"ok": false, "error": "unknown verb %s" % verb}
 
@@ -221,23 +276,35 @@ func _dispatch_input(args: Array) -> Dictionary:
 	var rest: Array = args.slice(1)
 	match sub:
 		"move":
+			_track_pointer(float(rest[0]), float(rest[1]))
 			await _driver.call("_do_move", float(rest[0]), float(rest[1]))
 		"click":
+			_track_pointer(float(rest[0]), float(rest[1]))
 			var button: int = int(rest[2]) if rest.size() > 2 else MOUSE_BUTTON_LEFT
 			await _driver.call("_do_click", float(rest[0]), float(rest[1]), button)
 		"click_node":
 			await _driver.call("_do_click_node", String(rest[0]))
 		"drag":
+			_track_pointer(float(rest[2]), float(rest[3]))
 			var steps: int = int(rest[4]) if rest.size() > 4 else 8
 			await _driver.call("_do_drag", float(rest[0]), float(rest[1]), float(rest[2]), float(rest[3]), steps)
 		"wheel":
 			await _driver.call("_do_wheel", int(rest[0]))
 		"key":
-			await _driver.call("_do_key", String(rest[0]))
+			if _has_mods(rest):
+				await _key_with_mods(String(rest[0]), rest[1], [true, false])
+			else:
+				await _driver.call("_do_key", String(rest[0]))
 		"key_down":
-			await _driver.call("_do_key_hold", String(rest[0]), true)
+			if _has_mods(rest):
+				await _key_with_mods(String(rest[0]), rest[1], [true])
+			else:
+				await _driver.call("_do_key_hold", String(rest[0]), true)
 		"key_up":
-			await _driver.call("_do_key_hold", String(rest[0]), false)
+			if _has_mods(rest):
+				await _key_with_mods(String(rest[0]), rest[1], [false])
+			else:
+				await _driver.call("_do_key_hold", String(rest[0]), false)
 		"wait_frames":
 			var t := get_tree()
 			if t != null:
@@ -246,6 +313,35 @@ func _dispatch_input(args: Array) -> Dictionary:
 		_:
 			return {"ok": false, "error": "input: unknown sub-verb %s" % sub}
 	return {"ok": true, "result": sub}
+
+
+func _track_pointer(x: float, y: float) -> void:
+	_pointer = Vector2(x, y)
+	_pointer_set = true
+
+
+func _has_mods(rest: Array) -> bool:
+	return rest.size() > 1 and typeof(rest[1]) == TYPE_ARRAY and not rest[1].is_empty()
+
+
+func _key_with_mods(key_name: String, mods: Array, phases: Array) -> void:
+	var keycode := OS.find_keycode_from_string(key_name)
+	if keycode == KEY_NONE:
+		return
+	for pressed in phases:
+		var e := InputEventKey.new()
+		e.keycode = keycode
+		e.physical_keycode = keycode
+		e.unicode = keycode
+		e.pressed = pressed
+		e.ctrl_pressed = mods.has("ctrl")
+		e.shift_pressed = mods.has("shift")
+		e.alt_pressed = mods.has("alt")
+		e.meta_pressed = mods.has("meta")
+		Input.parse_input_event(e)
+		var t := get_tree()
+		if t != null:
+			await t.process_frame
 
 
 func _do_seed(n: int) -> Dictionary:
@@ -280,6 +376,154 @@ func _do_inject(bug_id: String) -> Dictionary:
 	return {"bug_id": bug_id, "known": known}
 
 
+# The fog filter the live mission load asks for: the game default (R-089-03) unless a probe turned it off.
+func fog_filter() -> bool:
+	return _fog_filter_override != 0
+
+
+# Net verbs (tests/qa/desktop/net_match_loopback.py). Each process runs one NetMatch over an in-process loopback
+# transport; the daemons carry the packets between the two transports through the peer's qa port. net_run drives
+# both sessions in turn (peer first, so both end on the same tick), as lockstep needs both sides polling. net_run(steps)
+# raises this side's tick target by steps, so the peer's run having driven this side there already makes it a no-op.
+func _net_loopback_start(args: Array) -> Dictionary:
+	if args.size() < 3:
+		return {"ok": false, "error": "net_loopback_start: role peer_qa_port mission_seed"}
+	var host: bool = String(args[0]) == "host"
+	var bridge = load("res://autoload/sim_session.gd").bridge()
+	if not bridge.load_mission_live(int(args[2]), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES, fog_filter()) \
+			or not bridge.begin_mission_live(int(args[2]), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES) \
+			or not bridge.net_reset():
+		return {"ok": false, "error": "net_loopback_start: mission load failed: %s" % bridge.last_error()}
+	_nm_local = 1 if host else 2
+	_nm_remote = 2 if host else 1
+	_nm_transport = load("res://autoload/net/loopback_transport.gd").new()
+	_nm_transport.attach(_nm_local)
+	_nm_transport.attach(_nm_remote)
+	if _nm_peer != null:
+		_nm_peer.disconnect_from_host()
+	_nm_peer = StreamPeerTCP.new()
+	if _nm_peer.connect_to_host("127.0.0.1", int(args[1])) != OK:
+		return {"ok": false, "error": "net_loopback_start: cannot reach peer qa port"}
+	var deadline := Time.get_ticks_msec() + 10000
+	while _nm_peer.get_status() == StreamPeerTCP.STATUS_CONNECTING and Time.get_ticks_msec() < deadline:
+		_nm_peer.poll()
+		OS.delay_msec(2)
+	if _nm_peer.get_status() != StreamPeerTCP.STATUS_CONNECTED:
+		return {"ok": false, "error": "net_loopback_start: peer qa port did not connect"}
+	_nm_budget = 0
+	if _nm != null:
+		_nm.free()
+	_nm = load("res://autoload/net/net_match.gd").new()
+	var record := {"peers": [{"peer_id": 1}, {"peer_id": 2}], "local_peer": _nm_local, "host_peer": 1}
+	_nm.start(record, _nm_transport, load("res://autoload/net/pipe_sim.gd").new(bridge), func(_m): pass)
+	if host:
+		_nm.on_lobby_chat(2, {"t": "ready"})
+	else:
+		_nm.on_lobby_chat(1, {"t": "go"})
+	return {"ok": true, "result": {"active": _nm.active()}}
+
+
+func _net_exchange() -> bool:
+	var out: Array = []
+	for e in _nm_transport.poll(_nm_remote):
+		out.append((e["data"] as PackedByteArray).hex_encode())
+	var r := _peer_call("net_peer_pump", [out])
+	if not r.get("ok", false):
+		return false
+	for h in r["result"]["packets"]:
+		_nm_transport.send(_nm_remote, _nm_local, String(h).hex_decode())
+	return true
+
+
+func _net_peer_pump(packets: Array) -> Dictionary:
+	if _nm == null:
+		return {"ok": false, "error": "net_peer_pump: no match"}
+	for h in packets:
+		_nm_transport.send(_nm_remote, _nm_local, String(h).hex_decode())
+	_nm.session.poll()
+	var out: Array = []
+	for e in _nm_transport.poll(_nm_remote):
+		out.append((e["data"] as PackedByteArray).hex_encode())
+	return {"ok": true, "result": {"packets": out}}
+
+
+func _net_run(steps: int) -> Dictionary:
+	if _nm == null or not _nm.active():
+		return {"ok": false, "error": "net_run: no active match"}
+	_nm_budget += steps
+	var target: int = _nm_budget
+	var guard := steps * 6 + 200
+	if _nm.session._released >= target:
+		return {"ok": true, "result": {"steps": steps}}
+	while _nm.session._released < target and guard > 0:
+		if not _net_exchange():
+			return {"ok": false, "error": "net_run: peer exchange failed"}
+		_nm.session.poll()
+		guard -= 1
+	if _nm.session._released < target:
+		return {"ok": false, "error": "net_run: stalled at tick %d, wanted %d" % [_nm.session._released, target]}
+	if _nm._guard.failed:
+		return {"ok": false, "error": "net_run: sim step failed: %s" % load("res://autoload/sim_session.gd").bridge().last_error()}
+	if not _net_exchange():
+		return {"ok": false, "error": "net_run: peer exchange failed"}
+	return {"ok": true, "result": {"steps": steps}}
+
+
+func _net_frame() -> Dictionary:
+	if _nm == null:
+		return {"ok": false, "error": "net_frame: no match"}
+	var ack: Dictionary = load("res://autoload/sim_session.gd").bridge().net_checksum()
+	if ack.is_empty():
+		return {"ok": false, "error": "net_frame: net_checksum failed"}
+	var f: Dictionary = _nm.last_frame()
+	return {"ok": true, "result": {"tick": int(ack["tick"]), "checksum": ack["checksum"], "units": (f.get("units", []) as Array).size()}}
+
+
+func _net_command(cmd: Dictionary) -> Dictionary:
+	if _nm == null or not _nm.active():
+		return {"ok": false, "error": "net_command: no active match"}
+	var c := cmd.duplicate()
+	if c.has("units"):
+		var ids: Array = []
+		for u in c["units"]:
+			ids.append(int(u))
+		c["units"] = ids
+	return {"ok": true, "result": {"queued_for_tick": _nm.command(c)}}
+
+
+# One request to the peer daemon over _nm_peer; blocks (the peer is another process) until its reply line.
+func _peer_call(verb: String, args: Array) -> Dictionary:
+	if _nm_peer == null:
+		return {"ok": false, "error": "no peer link"}
+	_nm_peer.put_data((JSON.stringify({"verb": verb, "args": args}) + "\n").to_utf8_buffer())
+	var buf := ""
+	var deadline := Time.get_ticks_msec() + 15000
+	while Time.get_ticks_msec() < deadline:
+		_nm_peer.poll()
+		var avail := _nm_peer.get_available_bytes()
+		if avail > 0:
+			buf += _nm_peer.get_data(avail)[1].get_string_from_utf8()
+			var nl := buf.find("\n")
+			if nl != -1:
+				var parsed = JSON.parse_string(buf.substr(0, nl))
+				return parsed if typeof(parsed) == TYPE_DICTIONARY else {"ok": false, "error": "bad peer reply"}
+		else:
+			OS.delay_msec(1)
+	return {"ok": false, "error": "peer timed out"}
+
+
+## Verb "project" x y (world): the screen pixel the open tactical view draws that world point at.
+func _do_project(args: Array) -> Dictionary:
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	if scene == null or not scene.has_method("_to_screen"):
+		return {"ok": false, "error": "project: no tactical view"}
+	var p: Array = scene._to_screen(float(args[0]) if args.size() > 0 else 0.0, float(args[1]) if args.size() > 1 else 0.0)
+	var px := float(p[0])
+	var py := float(p[1])
+	return {"ok": true, "result": {"x": px, "y": py, "on_screen": px >= 0.0 and px < scene.SCREEN_W and py >= 0.0 and py < scene.SCREEN_H}}
+
+
 func _do_qa_select(args: Array) -> Dictionary:
 	var t := get_tree()
 	var scene: Node = t.current_scene if t != null else null
@@ -299,8 +543,15 @@ func _do_plant(id: String) -> Dictionary:
 	return {"ok": true, "result": {"id": id, "activated": activated}}
 
 
-func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
+func _collect_tree(node: Node, controls: Array, node3ds: Array, by_name: Dictionary = {}, texts: Dictionary = {}) -> void:
 	for child in node.get_children():
+		var nm := String(child.name)
+		if by_name.has(nm):
+			by_name[nm]["count"] += 1
+		else:
+			by_name[nm] = {"class": child.get_class(), "visible": child.visible if "visible" in child else true, "count": 1}
+		if child is Control and "text" in child and not texts.has(nm):
+			texts[nm] = String(child.get("text"))
 		if child is Control:
 			var ctrl: Control = child
 			if ctrl.visible:
@@ -317,7 +568,7 @@ func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
 				controls.append({
 					"path": String(ctrl.get_path()),
 					"class": ctrl.get_class(),
-					"text": ctrl.get("text"),
+					"text": "" if ctrl.get("text") == null else ctrl.get("text"),
 					"rect_px": [origin.x, origin.y, far.x - origin.x, far.y - origin.y],
 				})
 		elif child is Node3D:
@@ -325,7 +576,7 @@ func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
 				"path": String(child.get_path()),
 				"class": child.get_class(),
 			})
-		_collect_tree(child, controls, node3ds)
+		_collect_tree(child, controls, node3ds, by_name, texts)
 
 
 func _arg_value(args: PackedStringArray, flag: String) -> String:

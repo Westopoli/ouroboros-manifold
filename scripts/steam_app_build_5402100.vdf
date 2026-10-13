@@ -1,0 +1,68 @@
+"AppBuild"
+{
+	"AppID" "5402100"
+	"Desc" "Ouroboros Manifold build"
+	"BuildOutput" "../steam_out/"
+	"ContentRoot" "../dist/"
+	"SetLive" ""
+	"Depots"
+	{
+		"5402101"
+		{
+			"ContentRoot" "../dist/windows/"
+			"FileMapping"
+			{
+				"LocalPath" "*.exe"
+				"DepotPath" "."
+			}
+			"FileMapping"
+			{
+				"LocalPath" "ouroboros_pipe.exe"
+				"DepotPath" "."
+			}
+			"FileMapping"
+			{
+				"LocalPath" "*.pck"
+				"DepotPath" "."
+			}
+		}
+		"5402102"
+		{
+			"ContentRoot" "../dist/linux/"
+			"FileMapping"
+			{
+				"LocalPath" "*.x86_64"
+				"DepotPath" "."
+			}
+			"FileMapping"
+			{
+				"LocalPath" "*.pck"
+				"DepotPath" "."
+			}
+			"FileMapping"
+			{
+				"LocalPath" "ouroboros_pipe"
+				"DepotPath" "."
+			}
+		}
+		"5402103"
+		{
+			"ContentRoot" "../dist/macos/"
+			"FileMapping"
+			{
+				"LocalPath" "*.app"
+				"DepotPath" "."
+			}
+			"FileMapping"
+			{
+				"LocalPath" "*.pck"
+				"DepotPath" "."
+			}
+			"FileMapping"
+			{
+				"LocalPath" "ouroboros_pipe"
+				"DepotPath" "."
+			}
+		}
+	}
+}

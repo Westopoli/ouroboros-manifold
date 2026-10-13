@@ -126,6 +126,12 @@ def _move_cmd(ids, dx=500.0):
     return {"type": "cmd", "name": "command", "verb": "move", "units": ids, "x": dx, "y": 5000.0}
 
 
+# TD-VG-K-6: bastions auto-fortify at tick 1 (csrc/unit.c om_ability_autotrigger_scan -> om_ability_start_fortify,
+# run each tactical tick), so `acd` and `state` bit 2 change on the first step. Four tests step once past
+# tick 1 (one n=SETTLE_TICKS call, one frame) before their assertions.
+SETTLE_TICKS = 2
+
+
 def _begin_units():
     _, tac = _begin_frames([])
     return tac[0]
@@ -163,19 +169,20 @@ def test_delta_frame_has_the_delta_shape_and_only_changed_units():
     never rides units_changed."""
     first = _begin_units()
     mover = _player_ids(first)[0]
-    _, tac = _begin_frames([_move_cmd([mover]), _step(1)])
+    _, tac = _begin_frames([_step(SETTLE_TICKS), _move_cmd([mover]), _step(1)])
     delta = tac[-1]
     _assert_delta(delta)
-    assert delta["tick"] == 1
+    assert delta["tick"] == SETTLE_TICKS + 1
     assert [u["id"] for u in delta["units_changed"]] == [mover], [u["id"] for u in delta["units_changed"]][:10]
-    assert set(delta["units_changed"][0]) == UNIT_KEYS
+    # TD-VG-K-1: UNIT_KEYS exact -> superset (rulebook row 21; spec section 2 unit object)
+    assert UNIT_KEYS <= set(delta["units_changed"][0])
     assert delta["units_removed"] == []
     before = next(u for u in first["units"] if u["id"] == mover)
     assert (delta["units_changed"][0]["x"], delta["units_changed"][0]["y"]) != (before["x"], before["y"])
 
 
 def test_idle_step_writes_an_empty_delta():
-    _, tac = _begin_frames([_step(1)])
+    _, tac = _begin_frames([_step(SETTLE_TICKS), _step(1)])
     _assert_delta(tac[-1])
     assert tac[-1]["units_changed"] == [] and tac[-1]["units_removed"] == []
 
@@ -196,13 +203,13 @@ def test_full_frame_on_every_20th_step_counted_from_mission_begin():
 def test_n_greater_than_one_writes_only_the_last_frame_against_the_last_frame_written():
     first = _begin_units()
     mover = _player_ids(first)[0]
-    _, tac = _begin_frames([_move_cmd([mover]), _step(5), _step(0)])
-    assert len(tac) == 3, "n=5 must write one frame, got ticks %r" % [f["tick"] for f in tac]
-    delta, probe = tac[1], tac[2]
+    _, tac = _begin_frames([_step(SETTLE_TICKS), _move_cmd([mover]), _step(5), _step(0)])
+    assert len(tac) == 4, "n=5 must write one frame, got ticks %r" % [f["tick"] for f in tac]
+    delta, probe = tac[2], tac[3]
     _assert_delta(delta)
-    assert delta["tick"] == 5
+    assert delta["tick"] == SETTLE_TICKS + 5
     assert [u["id"] for u in delta["units_changed"]] == [mover]
-    state = _apply(_apply({}, tac[0]), delta)
+    state = _apply(_apply(_apply({}, tac[0]), tac[1]), delta)
     assert state == {u["id"]: u for u in probe["units"]}, "reconstruction after an n=5 call differs from the full state"
 
 
@@ -267,7 +274,8 @@ def test_objectives_ride_every_frame_full_and_delta():
         assert "objectives" in f, "tactical frame at tick %d has no objectives (A6/A7)" % f["tick"]
         assert [o["i"] for o in f["objectives"]] == want
         for o in f["objectives"]:
-            assert set(o) == {"i", "progress"}
+            # TD-VG-K-3: objectives exactly {i, progress} -> superset (rulebook row 23; spec section 2 `objectives`)
+            assert {"i", "progress"} <= set(o)
             assert 0.0 <= o["progress"] <= 1.0
     assert tac[1]["full"] is False and "objectives" in tac[1]
 
@@ -327,9 +335,9 @@ def test_reconstruction_check_detects_a_dropped_change():
     delta breaks the equality the tests above assert."""
     first = _begin_units()
     movers = _player_ids(first)[:3]
-    frames = _run([SET_SEED, START, BEGIN, _move_cmd(movers), _step(1), _step(0)])
+    frames = _run([SET_SEED, START, BEGIN, _step(SETTLE_TICKS), _move_cmd(movers), _step(1), _step(0)])
     tac = _tacticals(frames)
-    base, delta, probe = _apply({}, tac[0]), tac[1], tac[2]
+    base, delta, probe = _apply(_apply({}, tac[0]), tac[1]), tac[2], tac[3]
     assert "full" in delta, "tactical frame carries no `full` key (A7)"
     honest = _apply(base, delta)
     assert honest == {u["id"]: u for u in probe["units"]}
@@ -373,7 +381,10 @@ def test_a_death_shows_in_units_removed_and_the_full_frame_agrees():
     _assert_full(final)
     assert not (set(removed_at["units_removed"]) & {u["id"] for u in final["units"]}), (
         "a unit reported in units_removed is still listed in the full frame (dead units must leave both)")
-    assert state == {u["id"]: u for u in final["units"]}
+    # TD-VG-K-7: `state` bit 1 (fired this call) is call-scoped; a step(0) frame has no fires. Mask it only.
+    def _mask(units):
+        return {uid: dict(u, state=u["state"] & ~1) for uid, u in units.items()}
+    assert _mask(state) == _mask({u["id"]: u for u in final["units"]})
 
 
 def test_death_positive_control_every_removed_id_belonged_to_the_previous_state():
@@ -402,3 +413,72 @@ def test_same_seed_and_commands_give_byte_identical_frames():
     run2 = _run([SET_SEED, START, BEGIN] + cmds)
     assert "full" in _tacticals(run1)[1], "tactical frame carries no `full` key (A7)"
     assert json.dumps(run1, sort_keys=False) == json.dumps(run2, sort_keys=False)
+
+
+def test_kd1_nonstepping_full_request_keeps_state_bit_1():
+    """K-d1 (FINDING-delta-death-unit, piece VG-K-D1; also TD-VG-K-7): a non-stepping full request
+    after a stepping call that fired must repeat that call's state bit 1.
+
+    Rule, spec 2026-10-07-visible-game-spec.md rev 12c section 2 "Unit object", word for word:
+      "`state` int, always present (never omitted): value 1 fired during this call's steps (any of
+      the n), 2 braced (guard/hold, `om_unit_is_braced`), 4 in layer transit (`tl` set); OR-ed; 0
+      otherwise."
+    Ruling, same spec, section "The four red client tests on main", K-d1 sentence, word for word:
+      "`csrc/pipe/om_pipe.c` `handle_tactical_step` calls `ev_reset()` before the step loop even
+      when `n == 0` (`pipe_tactical.c:50-54` memsets `g_fired`, which drives state bit 1), so a
+      non-stepping full request loses the fired flag. Fix: guard `ev_reset` with `n > 0` (`n < 0` is
+      malformed and treated as 0, said so in a code comment). The same piece rewrites
+      `docs/architecture.md` :376 and :392 to \"bit 1: fired during the most recent stepping call
+      (n > 0). A call with n == 0 (a resync frame) repeats the previous stepping call's state bits
+      and events unchanged.\""
+    Bible R-133-06 (E-18), as the programme row cites it: "Given a unit in a mission, When it is
+    drawn, Then the tier it is drawn at is given by the simulation per unit, from the roster (ruling
+    A30; Westley, 2026-10-07)." It bears on `tier`, not on state bit 1; it is not what this case
+    proves. Acceptance: tests/test_tactical_delta_reconstruction.gd (client delta-built view equals
+    the server full frame after a death).
+
+    The existing death test masks `state & ~1` (TD-VG-K-7) and stays valid after the fix.
+    Events of the n == 0 frame are not asserted here.
+    """
+    first = _begin_units()
+    cmds = _death_script(first)
+    prefix = [c for c in cmds if c["name"] != "tactical_step"]
+    steps = [c for c in cmds if c["name"] == "tactical_step"]
+    # Pass 1: find the first stepping call whose frame lists a unit with state bit 1.
+    frames = _run([SET_SEED, START, BEGIN] + cmds)
+    _assert_drawn(frames)
+    tac = _tacticals(frames)
+    assert len(tac) == 1 + len(steps), (len(tac), len(steps))
+    k, fired_id = None, None
+    for i in range(1, len(tac)):
+        hit = [u for u in (tac[i]["units"] if tac[i]["full"] else tac[i]["units_changed"])
+               if u["state"] & 1]
+        if hit:
+            k, fired_id = i, hit[0]["id"]
+            break
+    assert k is not None, "positive control: no unit fired in %d stepping calls" % len(steps)
+    # Pass 2: stop after that stepping call, then two non-stepping full requests.
+    resync = {"type": "cmd", "name": "tactical_step", "n": 0, "full": True}
+    frames2 = _run([SET_SEED, START, BEGIN] + prefix + steps[:k] + [resync, resync])
+    tac2 = _tacticals(frames2)
+    assert len(tac2) == k + 3, (len(tac2), k)
+    stepped, z1, z2 = tac2[k], tac2[k + 1], tac2[k + 2]
+    assert stepped["tick"] == tac[k]["tick"]  # the replay reaches the same frame (determinism control)
+    state = {}
+    for f in tac2[:k + 1]:
+        state = _apply(state, f)
+    # (a) control, green today: the answer is a full frame at the same tick.
+    _assert_full(z1)
+    assert z1["tick"] == stepped["tick"], (z1["tick"], stepped["tick"])
+    by_id = {u["id"]: u for u in z1["units"]}
+    assert fired_id in by_id, "fixture drift: unit %d not in the n == 0 full frame" % fired_id
+    # (b) RED today: the n == 0 request clears the fired flag.
+    assert by_id[fired_id]["state"] & 1, (
+        "unit %d fired at tick %d but its state in the n == 0 full frame is %d (bit 1 cleared)" % (
+            fired_id, stepped["tick"], by_id[fired_id]["state"]))
+    # (c) K-d1 acceptance, no state masking; RED today by exactly the cleared bit.
+    assert state == by_id, "client view from the stepping call's frames differs from the n == 0 full frame"
+    # Control: a second consecutive n == 0 request lists the same units (state included).
+    _assert_full(z2)
+    assert z2["tick"] == z1["tick"]
+    assert z2["units"] == z1["units"]

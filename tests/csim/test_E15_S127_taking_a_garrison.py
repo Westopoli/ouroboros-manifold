@@ -53,7 +53,7 @@ def test_R_127_02_progress_resets_to_0(lib, world_factory):
 
 
 def test_R_127_03_it_takes_damage_like_unit(lib, world_factory):
-    """Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it is removed for the rest of the mission and never rebuilt."""
+    """Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it stays listed at 0 HP (R-218-05)."""
     w = world_factory(n_regions=1)
     lib.om_structure_init(w, 0, 0, ctypes.c_double(100.0))
     assert ctypes.c_double(lib.om_structure_get_hp(w, 0)).value == pytest.approx(3000.0, abs=1e-5)
@@ -67,9 +67,10 @@ def test_R_127_03_it_takes_damage_like_unit(lib, world_factory):
     lib.om_structure_apply_damage(w, 0, ctypes.c_double(3000.0), 0)
     assert lib.om_structure_is_destroyed(w, 0) == 1
 
-    # Never rebuilt
+    # Stays listed at 0 HP (R-218-05, TD-VG-E-3)
     lib.om_tactical_tick(w)
     assert lib.om_structure_is_destroyed(w, 0) == 1
+    assert ctypes.c_double(lib.om_structure_get_hp(w, 0)).value == pytest.approx(0.0, abs=1e-5)
 
 
 def test_R_127_04_structure_captured_or_structure_lost(lib, world_factory):

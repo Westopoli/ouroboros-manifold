@@ -16,7 +16,7 @@ from b1_macro_scene import tactical_world
 from test_net_section_hashes import MACRO, N_SECTIONS, _battle, _run, _secs
 
 OM_SAVE_SLOT_MACRO = 7
-SLOT_COUNT = 10
+SLOT_COUNT = 11
 RNG = 2
 NULL_MACRO = 28001
 
@@ -48,8 +48,8 @@ def _load(lib, w, buf, size):
 
 
 def _macro_slot(buf, size):
-    """(offset of the macro slot's u32 length, its length). The ten slots are the
-    last thing in a save: id u8, length u32 LE, blob; ids 0..9 in order."""
+    """(offset of the macro slot's u32 length, its length). The eleven slots are the
+    last thing in a save: id u8, length u32 LE, blob; ids 0..10 in order."""
     raw = bytes(buf)
     for start in range(size - 5, -1, -1):
         pos, ok, found = start, True, None
@@ -63,7 +63,7 @@ def _macro_slot(buf, size):
             pos += 5 + blen
         if ok and pos == size:
             return found
-    raise AssertionError("could not find the ten save slots at the end of the buffer")
+    raise AssertionError("could not find the eleven save slots at the end of the buffer")
 
 
 def _saved_at_150(lib, world_factory):

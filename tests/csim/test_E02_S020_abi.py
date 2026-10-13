@@ -19,7 +19,7 @@ from conftest import OMTier, OmCollision, OmDriftRow, OmTraceRow, set_region
 
 
 def test_R_020_abi_version_is_4(lib):
-    assert lib.om_abi_version() == 4
+    assert lib.om_abi_version() == 7
 
 
 def test_R_020_layout_check_matches_caller_sizes(lib):

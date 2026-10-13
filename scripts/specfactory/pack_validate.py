@@ -34,6 +34,9 @@ import re
 import sys
 from pathlib import Path
 
+# Terrain stage 2 (Q-146-04 a): the optional "kind" is a declared property, not a mechanical key, so
+# mechanical_keys below leaves it out of the R-146-02 diff.
+ERA_KINDS = ("space", "ground")
 REQUIRED_KEYS = (
     "era_id", "era_display_name", "era_accent_color",
     "era_spatial_scale", "era_tone", "era_order",
@@ -79,6 +82,61 @@ def _iter_scene_paths(entry) -> list[str]:
     return scenes
 
 
+BUILDING_ROLES = ("production", "house", "worker-hut", "forward-works")
+
+
+def _pos(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0
+
+
+# liberty 2026-10-07: Q-168-04 a, a small fixed building set per era pack as manifest data (R-168-05).
+def _building_findings(manifest: dict) -> list[Finding]:
+    rows = manifest.get("buildings")
+    if not isinstance(rows, list) or not rows:
+        return [Finding("FAIL", "MISSING_BUILDINGS", "manifest.json needs a non-empty `buildings` list (R-168-05)")]
+    out: list[Finding] = []
+    seen: set = set()
+    roles: set = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building row is not an object: {row!r}"))
+            continue
+        bid = row.get("id")
+        if not (isinstance(bid, str) and bid.strip()):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building row needs a text id: {row!r}"))
+        elif bid in seen:
+            out.append(Finding("FAIL", "BAD_BUILDING", f"duplicate building id {bid!r}"))
+        seen.add(bid)
+        if row.get("role") not in BUILDING_ROLES:
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building {bid!r}: role must be one of {BUILDING_ROLES}"))
+        else:
+            roles.add(row["role"])
+        fp = row.get("footprint")
+        if not (_pos(fp) or (isinstance(fp, list) and len(fp) == 2 and all(_pos(x) for x in fp))):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building {bid!r}: footprint must be a positive number or [w, h]"))
+        hp = row.get("hp")
+        if not (isinstance(hp, int) and not isinstance(hp, bool) and hp > 0):
+            out.append(Finding("FAIL", "BAD_BUILDING", f"building {bid!r}: hp must be a positive int"))
+    for r in BUILDING_ROLES:
+        if r not in roles:
+            out.append(Finding("FAIL", "BAD_BUILDING", f"buildings list has no {r!r} building"))
+    return out
+
+
+# liberty 2026-10-10: E1g, R-179-01, the doctrine list as manifest data (four ids, no mix numbers).
+DOCTRINE_IDS = ("boom", "fortify", "press", "balanced")
+
+
+def _doctrine_findings(manifest: dict) -> list[Finding]:
+    d = manifest.get("doctrines")
+    if not isinstance(d, list):
+        return [Finding("FAIL", "MISSING_DOCTRINES", "manifest.json needs a `doctrines` list (R-179-01)")]
+    miss = [i for i in DOCTRINE_IDS if i not in d]
+    if miss:
+        return [Finding("FAIL", "BAD_DOCTRINES", f"doctrines list lacks {miss} (R-179-01)")]
+    return []
+
+
 def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS_FILE) -> list[Finding]:
     manifest_path = pack_dir / "manifest.json"
     if not manifest_path.is_file():
@@ -104,6 +162,13 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
     if "test_only" in manifest and not isinstance(manifest["test_only"], bool):
         findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", "test_only must be a bool when present"))
 
+    if "kind" in manifest and manifest["kind"] not in ERA_KINDS:
+        findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", f"kind must be one of {ERA_KINDS} when present"))
+
+    findings.extend(_doctrine_findings(manifest))
+    if not manifest.get("test_only"):
+        findings.extend(_building_findings(manifest))
+
     era_id = manifest.get("era_id")
     units = manifest.get("units")
     if isinstance(era_id, str) and era_id and isinstance(units, dict):
@@ -112,6 +177,14 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
                 findings.append(Finding(
                     "FAIL", "ERA_ID_IN_UNIT_ID",
                     f"unit id {unit_id!r} contains the era id {era_id!r}",
+                ))
+
+    if isinstance(units, dict):
+        for unit_id, row in units.items():
+            if not isinstance(row, dict) or row.get("movement") not in ("walking", "flying"):
+                findings.append(Finding(
+                    "FAIL", "BAD_MOVEMENT",
+                    f"units.{unit_id}: movement must be \"walking\" or \"flying\"",
                 ))
 
     for class_name in ("units", "structures", "environment"):

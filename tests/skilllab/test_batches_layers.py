@@ -15,14 +15,14 @@ from scripts.skilllab.terrain import shift_terrain  # noqa: E402
 from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
-DRAFT = "unconfirmed draft"
-SCENES = ("mirror", "high_ground", "choke", "choke_phase_b")
+DRAFT = "draft"
+SCENES = ("mirror", "choke", "choke_phase_b")
 UPS = ((0.5, 0.25), (0.5, 0.5), (0.75, 0.25), (0.75, 0.5), (1.0, 0.25), (1.0, 0.5))
 SWEEP_NOTE = "settings are draft sweep points (A174)"
-HIGH_NOTE = "units on different layers cannot fire until reach by type lands (Phase C G5)"
-REACH_NOTE = "needs reach by type (om_roster_set_reach) and Phase C G5"
+REACH_NOTE = ("reach set per the reach table (Vanguard 0 up 0 down); every unit is on layer 0, so the "
+              "layer settings have no effect in this scene (a layered scene is still needed)")
 REACH_TABLE_TEXT = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
-                    "Bombard and Bastion 0 up 2 down (needs om_roster_set_reach bound in the harness and Phase C G5)")
+                    "Bombard and Bastion 0 up 2 down (set per cell on the unit type through om_roster_set_reach)")
 
 
 def _la():
@@ -53,14 +53,14 @@ def _expected():
     """[(label, settings, expressed, note_ok)] in the spec's order."""
     out = []
     for scene in SCENES:
-        out.append(("LA:" + scene, _la(), scene != "high_ground"))
+        out.append(("LA:" + scene, _la(), True))
     for scene in SCENES:
         for u1, u2 in UPS:
-            out.append(("LB:%s:up1=%s,up2=%s" % (scene, u1, u2), _lb(u1, u2), False))
+            out.append(("LB:%s:up1=%s,up2=%s" % (scene, u1, u2), _lb(u1, u2), True))
     for scene in SCENES:
         for d in (0.5, 0.75):
             for u1, u2 in UPS:
-                out.append(("LC:%s:up1=%s,up2=%s,dmg1=%s" % (scene, u1, u2, d), _lc(u1, u2, d), False))
+                out.append(("LC:%s:up1=%s,up2=%s,dmg1=%s" % (scene, u1, u2, d), _lc(u1, u2, d), True))
     for r in (10, 15, 20, 30):
         for a in (150, 200, 300, 450):
             out.append(("body%d_range%d_ratio%.1f" % (2 * r, a, a / (2 * r)), {"OM_TP_UNIT_COLLISION_RADIUS": r}, True))
@@ -95,7 +95,7 @@ def _run(tmp_path, fake=None, sub="out", real=False, mutate=None):
 def test_counts_and_order_and_labels():
     d = batches.get("layers")
     assert d.name == "layers" and d.title and d.scene
-    assert len(EXPECTED) == 4 + 24 + 48 + 16 == 92
+    assert len(EXPECTED) == 3 + 18 + 36 + 16 == 73
     assert [c.label for c in d.cells] == [e[0] for e in EXPECTED]
     assert d.variants == (("default", {}),) and d.weighted is False
 
@@ -130,7 +130,7 @@ def test_which_cells_are_expressed():
     d = batches.get("layers")
     assert [c.label for c in d.cells if c.build is not None] == EXPRESSED
     assert [c.label for c in d.cells if c.build is None] == NOT_EXPRESSED
-    assert len(EXPRESSED) == 3 + 16 and "LA:mirror" in EXPRESSED and "LA:choke" in EXPRESSED
+    assert len(EXPRESSED) == 3 + 54 + 16 and "LA:mirror" in EXPRESSED and "LA:choke" in EXPRESSED
     assert "LA:choke_phase_b" in EXPRESSED
     for c in d.cells:
         if c.build is not None:
@@ -143,13 +143,9 @@ def test_notes():
     d = {c.label: c for c in batches.get("layers").cells}
     assert d["LA:mirror"].note == SWEEP_NOTE and d["LA:choke"].note == SWEEP_NOTE
     assert d["LA:choke_phase_b"].note == SWEEP_NOTE
-    assert d["LA:high_ground"].note == HIGH_NOTE
     for label, c in d.items():
         if label.startswith(("LB:", "LC:")):
-            if ":high_ground:" in label:
-                assert c.note in (HIGH_NOTE, REACH_NOTE) or (HIGH_NOTE in c.note and REACH_NOTE in c.note), label
-            else:
-                assert c.note == REACH_NOTE, label
+            assert c.note == REACH_NOTE, label
     for label, settings, _ in BODY:
         r, c = settings["OM_TP_UNIT_COLLISION_RADIUS"], d[label]
         body, rng = int(label[4:].split("_")[0]), int(label.split("_range")[1].split("_")[0])
@@ -157,6 +153,20 @@ def test_notes():
         assert body == 2 * r
         for token in (str(r), str(body), str(rng), ratio):
             assert token in c.note, (label, token, c.note)
+
+
+def test_lb_lc_cells_are_expressed_with_reach_per_the_table(monkeypatch):
+    """test-defect fix: the stale gate said LB/LC need set_reach, which engine.py binds and G5 provides."""
+    fake_sensors(monkeypatch)
+    d = {c.label: c for c in batches.get("layers").cells}
+    for label, c in d.items():
+        if label.startswith(("LB:", "LC:")):
+            assert c.build is not None and c.status == DRAFT, label
+            setup = c.build(8 if "phase_b" in label else 16, False)
+            names = {g.unit for g in setup.groups}
+            assert len(names) == 1, label
+            (name,) = names
+            assert setup.unit_types[name] == {"base": "Vanguard", "reach": (0, 0)}, label
 
 
 def test_body_cells_are_raider_mirrors_with_ranged_unit_types(monkeypatch):
@@ -225,7 +235,8 @@ def test_unexpressed_lines():
     d = batches.get("layers")
     joined = " ".join(d.unexpressed)
     assert "tall" in joined and "reach" in joined
-    assert "high ground and the LB and LC tables wait for reach" in d.unexpressed
+    assert "om_roster_set_reach" in joined and "Phase C G5" not in joined
+    assert "the LB and LC tables wait for reach" not in d.unexpressed   # test-defect fix: the binding exists
     assert "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in d.unexpressed
     assert any(REACH_TABLE_TEXT in u for u in d.unexpressed)
 
@@ -247,25 +258,23 @@ def test_run_file(tmp_path):
     results = _section(t, "Results")
     line = [ln for ln in results.splitlines() if ln.startswith("- body20_range150_ratio7.5")][0]
     assert "(unconfirmed draft)" in line and "16 units beat 21, lose to 22" in line
-    assert sum(ln.startswith("- ") for ln in results.splitlines()) == 19
+    assert sum(ln.startswith("- ") for ln in results.splitlines()) == 73
     sec = _section(t, "What the instrument could not express")
-    assert "high ground and the LB and LC tables wait for reach" in sec
+    assert "the LB and LC tables wait for reach" not in sec
     assert REACH_TABLE_TEXT in sec and "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b" in sec
-    for label in ("LA:high_ground", "LB:mirror:up1=0.5,up2=0.25", "LC:choke:up1=1.0,up2=0.5,dmg1=0.75"):
-        assert label in sec
+    assert "LB:mirror:up1=0.5,up2=0.25" not in sec
     assert "None" not in t
 
 
 def test_page_and_csv(tmp_path):
     _, _, paths = _run(tmp_path)
     page = _text(paths["page"])
-    assert PROVISIONAL in page and page.count("<svg") >= 19
+    assert PROVISIONAL in page and page.count("<svg") >= 73
     for label in EXPRESSED:
         assert label in page
-    assert REACH_NOTE in page and HIGH_NOTE in page
     with open(paths["csv"], newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    assert len(rows) == 18 * 17 * 2 + 6 * 2
+    assert len(rows) == 54 * 17 * 2 + 19 * 6 * 2
     assert {r["cell"] for r in rows} == set(EXPRESSED)
     assert {r["status"] for r in rows} == {DRAFT}
 

@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 6 /* bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 10 /* bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -46,7 +46,8 @@
 #define OM_SAVE_SLOT_MACRO        7
 #define OM_SAVE_SLOT_SUPPORT      8
 #define OM_SAVE_SLOT_MAPGEN       9
-#define OM_SAVE_SLOT_COUNT        10
+#define OM_SAVE_SLOT_TERRAIN      10
+#define OM_SAVE_SLOT_COUNT        11
 
 typedef struct {
     om_tier  tier;
@@ -71,6 +72,72 @@ typedef struct {
 } om_region;
 
 #define OM_NET_SECTION_COUNT 9
+
+/* VG K-e (lane E1, ABI 6): economy fields held inline in om_world, saved at format 8 and hashed in the factions section.
+ * No spec number gives a cap for any of these; each is a liberty 2026-10-09, the smallest sensible, for E1b to E1h to
+ * revise. Density is a coarse grid of OM_DENSITY_SIDE x OM_DENSITY_SIDE cells over the 24000 wu canvas. */
+#define OM_LOT_CAP 2048 /* DRAFT-lot-cap (K-e5; was 256, liberty 2026-10-09) */
+#define OM_STRONGPOINT_CAP 32 /* liberty 2026-10-09 */
+#define OM_WAVE_LOG_CAP 128 /* liberty 2026-10-09 */
+#define OM_DENSITY_SIDE 120 /* legacy: liberty 2026-10-09, 200 wu cells. E1q deletes it. See also: Lane E1 part c (the settlement port). */
+#define OM_DENSITY_MAX_SIDE 240 /* K-e5: cells per side of the 100 wu terrain grid on a 24000 wu canvas */
+#define OM_DENSITY_MAX_CELLS (OM_DENSITY_MAX_SIDE * OM_DENSITY_MAX_SIDE)
+#define OM_DOCTRINE_BALANCED 3
+typedef struct om_economy_state {
+    uint32_t n_lots;
+    om_lot lots[OM_LOT_CAP];
+    uint8_t density_present;
+    uint32_t density_side; /* K-e5, saved and hashed with density_present: cells per side, at most OM_DENSITY_MAX_SIDE (120 on the K-e5 tree) */
+    double density[OM_DENSITY_MAX_CELLS]; /* D: saved and hashed, density_side squared entries, Q16 */
+    double P[OM_DENSITY_MAX_CELLS]; /* P (K-e5; E1q-field grows it, all zero on the K-e5 tree): saved and hashed like D */
+    uint32_t n_active; /* K-e5: the growth frontier, saved and hashed */
+    uint32_t active[OM_DENSITY_MAX_CELLS];
+    uint32_t core_cell; /* K-e5: saved and hashed */
+    uint32_t n_strongpoints;
+    om_strongpoint strongpoints[OM_STRONGPOINT_CAP];
+    uint8_t doctrine_chosen; /* 0: the world is calloc-zeroed, so a fresh world reads OM_DOCTRINE_BALANCED */
+    int32_t doctrine;
+    uint32_t n_waves;
+    om_wave waves[OM_WAVE_LOG_CAP];
+    double density_economy; /* VG K-e3: the player's home region economy, sampled once at om_economy_init */
+    uint32_t lot_hit_tick[OM_LOT_CAP]; /* VG K-e3: tick of the last area hit that knocked lot i back; 0 = never */
+    uint32_t next_lot_id; /* K-e5, saved and hashed, always written; 1 on the K-e5 tree (the old code numbers lots n_lots + 1), E1q switches both lot creators to it */
+    /* K-e5: derived grids, density_side squared, unsaved and unhashed; E1q-field fills them in om_density_rebuild_inputs, E1q-lots writes lot_at when it creates a lot. */
+    int32_t elev_cm[OM_DENSITY_MAX_CELLS];
+    uint8_t water[OM_DENSITY_MAX_CELLS];
+    uint8_t wdist[OM_DENSITY_MAX_CELLS];
+    uint16_t slope_q[OM_DENSITY_MAX_CELLS];
+    uint8_t lane[OM_DENSITY_MAX_CELLS];
+    int32_t lot_at[OM_DENSITY_MAX_CELLS];
+} om_economy_state;
+
+/* VG K-d (lane D, 2026-10-07 spec rev 4): five layers of 240 x 240 cells of 100 wu on a 24000 wu canvas. */
+#define OM_SPACE_FIELD_LAYERS 5
+#define OM_SPACE_FIELD_SIDE 240
+#define OM_SPACE_FIELD_CELLS (OM_SPACE_FIELD_SIDE * OM_SPACE_FIELD_SIDE)
+#define OM_SPACE_FIELD_CELL_WU 100.0
+#define OM_SPACE_FIELD_CANVAS_WU 24000.0
+#define OM_SPACE_FIELD_DENSITY_DEFAULT 35.0 /* field_map_space.gd default density; the era manifest may override later (lane D leftover) */
+/* Caps (K-d2). POLYS: tests/csim/test_VG_D_d2.py D2_POLYS_PER_LAYER hi 530 x 5 layers = 2650 (mockup field_map_space.gd
+ * plate_polygon_count 417 to 496 per layer = 2480), rounded up to a power of two. PTS: D2_MAX_PTS 16 in the same file (the
+ * mockup's rubble cells are 8-sided, _cell_polygon(..., 8, ...); plates are a square cut by bisectors); the D4 test's
+ * poly_get buffer (64) and the pipe's PIPE_SPACE_FIELD_POLY_PTS (64) are larger and unaffected. */
+#define OM_SPACE_FIELD_MAX_POLYS 4096
+#define OM_SPACE_FIELD_MAX_PTS 16
+typedef struct om_space_field_poly {
+    uint8_t layer, kind, n_pts;
+    double xy[2 * OM_SPACE_FIELD_MAX_PTS];
+} om_space_field_poly;
+typedef struct om_space_field_state {
+    uint8_t present;
+    uint32_t seed;
+    uint32_t n_nodes; /* VG-D8: the clearing nodes the held field was generated with, so om_space_field_generate_nodes on the same seed repeats it */
+    double node_xy[2 * OM_SPACE_FIELD_MAX_NODES];
+    uint32_t node_slots[OM_SPACE_FIELD_MAX_NODES];
+    uint8_t mask[OM_SPACE_FIELD_LAYERS][OM_SPACE_FIELD_CELLS / 8]; /* bit (i & 7) of byte (i >> 3), i = cy * side + cx, 1 blocked */
+    uint32_t n_polys;
+    om_space_field_poly polys[OM_SPACE_FIELD_MAX_POLYS];
+} om_space_field_state;
 
 struct om_world {
     uint32_t n_regions;
@@ -321,6 +388,21 @@ struct om_world {
     /* csrc/cmd_stream.c per-world state, same convention as tactical_state. */
     void *net_state;
     void (*net_state_free)(void *);
+    /* Terrain stage 1 (spec 2026-10-05): per-world terrain field (csrc/terrain.c),
+     * NULL until om_terrain_generate; freed through terrain_state_free. */
+    void *terrain_state;
+    void (*terrain_state_free)(void *);
+    /* Save hooks beside terrain_state_free (same convention as mapgen_state_*); see csrc/save.c OM_SAVE_SLOT_TERRAIN. */
+    uint32_t (*terrain_state_size)(const om_world *w);
+    void (*terrain_state_write)(const om_world *w, uint8_t *out);
+    int (*terrain_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
+    /* VG K-d: the space field (csrc/space_field.c), held inline so om_world_free needs no hook. Not hashed or saved on its
+     * own: the masks reach routing through the mapgen blocked_bits (hashed and saved in the mapgen slot), and the whole
+     * field, polygons included, is a pure function of (seed, canvas), so a loaded world regenerates it from the seed at
+     * mission_start; no save version bump. */
+    om_space_field_state space_field;
+    /* VG K-e: lots, density grid, strongpoints, doctrine, wave log (csrc/economy_*.c, csrc/strongpoint.c). */
+    om_economy_state economy;
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage
@@ -348,6 +430,49 @@ void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out);
  * first time state is actually needed, so this only pre-wires the hooks;
  * it never allocates the state itself. */
 void om_events_install_save_hooks(om_world *w);
+
+/* Terrain stage 1 (spec 2026-10-05). Sizes are provisional (2026-10-05). */
+#define OM_TERRAIN_CELL_WU 100.0 /* R-186-05: one cell is 100 wu */
+#define OM_TERRAIN_BANDS 5 /* R-200-01 */
+#define OM_TERRAIN_MAX_CELLS 280 /* cells a side: OM_MAP_MAX_CANVAS / OM_TERRAIN_CELL_WU */
+#define OM_TERRAIN_SLOPE_CAP 4096 /* most slopes held; provisional (2026-10-05) */
+typedef struct om_terrain_state {
+    uint8_t present;
+    uint64_t seed;
+    uint32_t cells_w, cells_h;
+    int32_t band_floor_cm[OM_TERRAIN_BANDS]; /* band floors, cm */
+    int32_t *height_cm;   /* cells_w * cells_h, row-major, cm (fixed point) */
+    uint8_t *band;        /* 1 to OM_TERRAIN_BANDS per cell */
+    uint8_t *walkable;    /* 0 or 1 per cell */
+    uint8_t *walk[OM_TERRAIN_BANDS]; /* terrain stage 2: per engine layer, 1 where a walker may stand; NULL until derived */
+    om_slope *slopes;     /* OM_TERRAIN_SLOPE_CAP entries allocated */
+    uint32_t slope_count;
+    uint32_t gen_id;      /* unsaved, unhashed: identifies a generation for the walk-route caches. See also: csrc/walk_route.c, csrc/terrain.c */
+} om_terrain_state;
+void om_terrain_state_free(void *state);
+void om_terrain_install_net_hooks(om_world *w);
+/* Writes the blocked bits for the ground (R-200-02): layers 1..k-1 blocked at every cell; cleared on regenerate. */
+void om_terrain_apply_ground(om_world *w);
+
+/* Terrain stage 2 (spec 2026-10-06). Route for a walking unit over the walk mask of its layer, crossing layers only
+ * by slope links; see the spec for the return values. Body in csrc/walk_route.c. */
+int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double *pts, uint32_t cap, double *seconds);
+/* Steers every walking unit one tick along its om_walk_route; body in csrc/tactical_move.c. */
+void om_move_walker_tick(om_world *w);
+/* The route-cache epoch om_move_terrain_changed and om_move_set_canvas_size bump; body in csrc/tactical_move.c, caller csrc/walk_route.c. */
+uint32_t om_move_terrain_epoch(om_world *w);
+
+/* Terrain noise (csrc/terrain_noise.c), integer only, no libm, no world rng.
+ * Fixed point is Q16.16 (1.0 = 65536). Lattice spacing is 1.0 in input units.
+ *  om_tn_value2: value noise at (x_q16, y_q16), output in [-65536, 65536].
+ *  om_tn_fbm2: octaves summed, octave i has amplitude gain_q16^i and double the frequency;
+ *    output normalised by the amplitude sum so it stays in [-65536, 65536].
+ *  om_tn_sin_q16 / om_tn_cos_q16: angle is a turn fraction in Q16 (65536 = one full turn);
+ *    output in [-65536, 65536], exact at the quarter points. */
+int32_t om_tn_value2(uint64_t seed, int32_t x_q16, int32_t y_q16);
+int32_t om_tn_fbm2(uint64_t seed, int32_t x_q16, int32_t y_q16, int octaves, int32_t gain_q16);
+int32_t om_tn_sin_q16(uint32_t turn_q16);
+int32_t om_tn_cos_q16(uint32_t turn_q16);
 
 /* Lockstep spec 2026-10-05: net hooks and the per-tick command apply. */
 void om_cmd_apply_tick(om_world *w);
@@ -439,6 +564,10 @@ void     om_grid_iter_begin_faction(om_grid_iter *it, om_world *w, int32_t facti
  * state: no-op. Call it after every write of a unit's position outside
  * om_tactical_step (teleport, set_pos, move sync). */
 void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y);
+
+/* VG K-a: append one event (kind 0 fire, 1 ability, 2 kill, 3 capture) to the tactical event ring (csrc/unit.c). */
+#define OM_TAC_EV_CAPTURE 3
+void om_tac_event_push(om_world *w, int kind, int a, int b);
 /* For fog.c: clear only target_id, no order change. Unknown id: no-op. */
 void om_unit_clear_target(om_world *w, uint32_t unit_id);
 

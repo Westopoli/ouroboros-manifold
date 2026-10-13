@@ -1,0 +1,441 @@
+"""The high-ground instrument (pass 1): what holding the top of a slope is worth, in whole units.
+Spec: docs/northstar/plans/2026-10-05-proto-highground-spec.md. Disposable prototype, a lab draft.
+A slope is stood in for by a timed layer change at one place: 16 Vanguards guard on layer 3; N climbers (a clone of the
+Vanguard whose layer-change time is the climb time) start 1,500 wu away on layer 2, attack-move to the foot (300 wu short
+of the defenders), then are ordered to layer 3. There is no ground. The control is the lab's own open-ground fight.
+Height rules: reach through om_roster_set_reach (up, down in layers) and OM_TP_RANGE/DAMAGE_UP_1 / _DOWN_1. Reading of
+the header (csrc/unit.c G5): "up" is the shooter firing at a HIGHER layer, "down" the shooter firing at a lower one."""
+import argparse
+import csv
+import datetime
+import html
+import math
+import multiprocessing
+import random
+from dataclasses import dataclass
+from pathlib import Path
+
+from scripts.skilllab.contract import SHIFT_MAX
+from scripts.skilllab.formations import place
+from scripts.skilllab.mopup import mopup_goal
+
+ROOT = Path(__file__).resolve().parents[3]
+RUNS = ROOT / "docs/northstar/research/layer_dynamics/runs"
+VANGUARD, CLIMBER_TYPE, TPS = 2, 100, 20
+CLIMB_SECONDS = (2, 4, 8, 15)               # provisional (prototype draft, 2026-10-05)
+SPEED = 80.0                                # a Vanguard, wu/s
+DEFENDERS = 16                              # provisional (prototype draft, 2026-10-05)
+DISTANCE = 1500.0                           # provisional (prototype draft, 2026-10-05)
+FOOT_SHORT = 300.0                          # provisional (prototype draft, 2026-10-05)
+CANVAS = 12000.0
+CENTRE = 6000.0
+DEFENDER_X = CENTRE + 1000.0
+ARRIVE_WU = 100.0                           # provisional (prototype draft, 2026-10-05)
+ARRIVE_CAP_TICKS = 700                      # provisional (prototype draft, 2026-10-05)
+MAX_TICKS = 12000                           # the lab default (Setup.max_ticks)
+STALEMATE_TICKS = 400                       # provisional (prototype draft, 2026-10-05)
+MOPUP_TICKS = 200                           # provisional (prototype draft, 2026-10-05)
+SAMPLE_EVERY = 5                            # provisional (prototype draft, 2026-10-05)
+N_MAX = 48                                  # provisional (prototype draft, 2026-10-05)
+REPLICATES = 5                              # provisional (prototype draft, 2026-10-05)
+SEED = 1                                    # provisional (prototype draft, 2026-10-05)
+SMOKE_RULES, SMOKE_CLIMBS, SMOKE_REPLICATES = ("H0", "H2"), (2, 8), 1
+
+_H = dict(reach_up=1, reach_down=1, range_down=1.0, range_up=1.0, damage_down=1.0, damage_up=1.0)
+HEIGHT_RULES = {                            # provisional (prototype draft, 2026-10-05)
+    "H0": dict(reach_up=0, reach_down=0, range_down=1.0, range_up=1.0, damage_down=1.0, damage_up=1.0),
+    "H1": dict(_H),
+    "H2": dict(_H, range_down=1.25, range_up=0.75),
+    "H3": dict(_H, damage_down=1.25, damage_up=0.75),
+    "H4": dict(_H, range_down=1.25, range_up=0.75, damage_down=1.25, damage_up=0.75),
+    "H5": {"not_expressed": True},
+}
+RULE_TEXT = {"H0": "no fire between layers", "H1": "fire one layer up or down, equal", "H2": "H1, range down 1.25, up 0.75",
+             "H3": "H1, damage down 1.25, up 0.75", "H4": "H2 and H3 together"}
+RULES = ("H0", "H1", "H2", "H3", "H4")
+COLOURS = {"H0": ("#2f5fb3", "#7fa8f0"), "H1": ("#b36a1f", "#e8a35c"), "H2": ("#2a7f62", "#58c9a1"),
+           "H3": ("#9a3b7a", "#d98cc0"), "H4": ("#b3342f", "#f08a85"), "control": ("#6b675f", "#9c978c")}
+NOT_EXPRESSED = (
+    ("Real ground", "sight and movement are not blocked by the hill; there is no ground."),
+    ("Walking units", "every climber changes layer at one spot; nobody walks up."),
+    ("More than one way up", "there is one crossing place."),
+    ("A slope wider than one crossing place", "all climbers cross at the same spot."),
+    ("The defender standing back from the edge", "the defenders hold at the top, 300 wu past the foot."),
+    ("H5 (sight bonus per layer of height, R-091-02)", "the engine's cross-layer vision settings (OM_TP_VISION_UP_n and "
+     "DOWN_n) are a fraction of the sensor radius, capped at 1.0, so they cannot give +15 percent; not expressed."),
+)
+HEADER = ("The slope is stood in for by a timed layer change at one place: the climbers walk to the foot and are ordered "
+          "up, and the engine treats them as crossing for the climb time. There is no ground: nothing blocks sight or "
+          "movement, and every climber crosses at the same spot. Every number on this page is a provisional lab draft.")
+QUESTIONS = (
+    "Should height give anything beyond the climb itself (H0), and if so which: range, damage, sight, or a mix?",
+    "Is the size of the advantage about right, too small to matter, or large enough that nobody would ever attack uphill?",
+    "Should firing up be worse, or only firing down better?",
+    "Does the long slope (15 s) feel like it should be this much harder than the short one?",
+)
+
+_engine = None
+
+
+def _get_engine():
+    global _engine
+    if _engine is None:
+        from scripts.skilllab.engine import Engine
+        _engine = Engine()
+    return _engine
+
+
+@dataclass(frozen=True)
+class RunResult:
+    winner: str
+    survivors: tuple
+    ticks: int
+    first_damage_tick: object
+    first_shot_side: object
+    climbers_halfway_tick: object
+    layer_order_tick: object
+    firing_unit_seconds: tuple
+
+
+def _control(attackers, seed):
+    from scripts.skilllab.asym import Side, asym_play
+    from scripts.skilllab.fight import fight
+    from scripts.skilllab.scenes import guard_defenders
+    ref = fight(guard_defenders(asym_play(attackers, Side("blob"), Side("blob")))(DEFENDERS, False), seed, False,
+                _get_engine())
+    word = {"side0": "attackers", "side1": "defenders"}.get(ref.outcome, ref.outcome)
+    return RunResult(word, tuple(ref.survivors), ref.ticks, None, None, None, None, tuple(ref.firing_unit_seconds))
+
+
+def _able(e, w, shooters, targets, rule, alive):
+    """Shooters with a target within the rule's reach and range (stock Vanguard range 300) that can_shoot."""
+    n = 0
+    for u in shooters:
+        if u not in alive:
+            continue
+        x, y = e.unit_pos(w, u)
+        lu = e.unit_layer(w, u)
+        for t in targets:
+            if t not in alive:
+                continue
+            lt = e.unit_layer(w, t)
+            if lt > lu and lt - lu > rule["reach_up"] or lt < lu and lu - lt > rule["reach_down"]:
+                continue
+            mult = 1.0 if lt == lu else rule["range_up"] if lt > lu else rule["range_down"]
+            tx, ty = e.unit_pos(w, t)
+            if (tx - x) ** 2 + (ty - y) ** 2 <= (300.0 * mult) ** 2 and e.can_shoot(w, u, t):
+                n += 1
+                break
+    return n
+
+
+def run_fight(rule, climb_seconds, attackers, seed, control=False):
+    if control:
+        return _control(attackers, seed)
+    r = HEIGHT_RULES[rule]
+    e = _get_engine()
+    w = e.new_world(seed)
+    try:
+        e.disable_abilities(w)
+        e.set_canvas(w, CANVAS, CANVAS)
+        for name, v in (("OM_TP_RANGE_UP_1", r["range_up"]), ("OM_TP_RANGE_DOWN_1", r["range_down"]),
+                        ("OM_TP_DAMAGE_UP_1", r["damage_up"]), ("OM_TP_DAMAGE_DOWN_1", r["damage_down"])):
+            e.set_param(w, e.param_id(name), float(v))
+        stats = dict(e.type_stats(w, VANGUARD), role="Vanguard", ability_id=0,
+                     layer_transition_time=float(climb_seconds))
+        e.register_unit_type(w, CLIMBER_TYPE, stats)
+        for tid in (VANGUARD, CLIMBER_TYPE):
+            e.set_reach(w, tid, r["reach_up"], r["reach_down"])
+        rng = random.Random(seed)
+        dx = DEFENDER_X
+        ax = dx - DISTANCE
+        foot = (dx - FOOT_SHORT, CENTRE)
+        sides = ([], [])
+        for side, tid, n, cx, facing, layer in ((0, CLIMBER_TYPE, attackers, ax, 0.0, 2),
+                                                (1, VANGUARD, DEFENDERS, dx, 180.0, 3)):
+            for px, py in place("blob", n, cx, CENTRE, facing, {"radius": 80 + 12 * math.sqrt(n)}):
+                sides[side].append(e.spawn(w, tid, side, px + rng.uniform(-SHIFT_MAX, SHIFT_MAX),
+                                           py + rng.uniform(-SHIFT_MAX, SHIFT_MAX), layer))
+        e.order_guard(w, sides[1])
+        e.order_attack_move(w, sides[0], foot[0], foot[1])
+        everyone = sides[0] + sides[1]
+        hp = {u: e.unit_hp(w, u) for u in everyone}
+        alive = set(everyone)
+        ranges = {u: 300.0 for u in everyone}
+        order_tick = halfway = first_damage = first_shot = None
+        fire = [0, 0]
+        quiet, tick, outcome = 0, 0, None
+        before = {u: e.unit_pos(w, u) for u in everyone}
+        while outcome is None:
+            e.step(w)
+            tick += 1
+            hurt = [False, False]
+            for u in list(alive):
+                h = e.unit_hp(w, u)
+                if h != hp[u]:
+                    hp[u] = h
+                    hurt[0 if u in sides[0] else 1] = True
+                    if h <= 0:
+                        alive.discard(u)
+            if any(hurt):
+                quiet = 0
+                if first_damage is None:
+                    first_damage = tick
+                    first_shot = "defenders" if hurt[0] and not hurt[1] else "attackers" if hurt[1] and not hurt[0] else "both"
+            elif order_tick is not None:
+                quiet += 1
+            mine = [u for u in sides[0] if u in alive]
+            if order_tick is None and mine and (tick >= ARRIVE_CAP_TICKS or any(hurt[:1]) or (
+                    sum(math.hypot(e.unit_pos(w, u)[0] - foot[0], e.unit_pos(w, u)[1] - foot[1]) for u in mine)
+                    / len(mine) <= ARRIVE_WU)):
+                order_tick = tick
+                e.set_layer(w, mine, 3)
+                goal = [e.unit_pos(w, u) for u in sides[1] if u in alive]
+                e.order_attack_move(w, mine, sum(p[0] for p in goal) / len(goal), sum(p[1] for p in goal) / len(goal))
+            if order_tick is not None and halfway is None and any(e.unit_layer(w, u) == 3 for u in mine):
+                halfway = tick
+                goal = [e.unit_pos(w, u) for u in sides[1] if u in alive]
+                e.order_attack_move(w, mine, sum(p[0] for p in goal) / len(goal), sum(p[1] for p in goal) / len(goal))
+            if tick % SAMPLE_EVERY == 0:
+                fire[0] += _able(e, w, sides[0], sides[1], r, alive)
+                fire[1] += _able(e, w, sides[1], sides[0], r, alive)
+            if order_tick is not None and tick % MOPUP_TICKS == 0 and mine:
+                goal = mopup_goal(e, w, mine, [u for u in sides[1] if u in alive], ranges, alive, before)
+                if goal is not None:
+                    e.order_attack_move(w, mine, goal[0], goal[1])
+                before = {u: e.unit_pos(w, u) for u in alive}
+            a, d = (sum(1 for u in s if u in alive) for s in sides)
+            if a == 0 and d == 0:
+                outcome = "draw"
+            elif d == 0:
+                outcome = "attackers"
+            elif a == 0:
+                outcome = "defenders"
+            elif quiet >= STALEMATE_TICKS:
+                outcome = "stalemate"
+            elif tick >= MAX_TICKS:
+                outcome = "cap"
+        return RunResult(outcome, (a, d), tick, first_damage, first_shot, halfway, order_tick,
+                         tuple(f * SAMPLE_EVERY / TPS for f in fire))
+    finally:
+        e.free_world(w)
+
+
+def break_even_cell(rule, climb_seconds, seed, control=False, replicates=REPLICATES):
+    """(break-even, attackers firing s, defenders firing s): the largest attacking force the 16 defenders beat
+    (a majority of the replicates), by bisection; the firing seconds are the mean over the replicates at that size."""
+    def fights(n):
+        return [run_fight(rule, climb_seconds, n, seed + i, control) for i in range(replicates)]
+    lo, hi = 0, N_MAX + 1
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if sum(r.winner == "defenders" for r in fights(mid)) * 2 > replicates:
+            lo = mid
+        else:
+            hi = mid
+    runs = fights(max(lo, 1))
+    return (lo,) + tuple(sum(r.firing_unit_seconds[s] for r in runs) / len(runs) for s in (0, 1))
+
+
+def break_even(rule, climb_seconds, seed, control=False):
+    return break_even_cell(rule, climb_seconds, seed, control)[0]
+
+
+def _job(job):
+    rule, secs, seed, control, reps = job
+    return break_even_cell(rule, secs, seed, control, reps)
+
+
+def _init_worker(path):
+    global _engine
+    from scripts.skilllab.engine import Engine
+    _engine = Engine(path)
+
+
+HEAD = ["rule", "climb_s", "slope_wu", "break_even", "attackers_firing_s", "defenders_firing_s", "clipped"]
+
+
+def run_batch(seed, workers, out_dir=None, smoke=False, name="highground"):
+    if workers < 1:
+        raise ValueError("workers must be at least 1")
+    rules, climbs, reps = (SMOKE_RULES, SMOKE_CLIMBS, SMOKE_REPLICATES) if smoke else (RULES, CLIMB_SECONDS, REPLICATES)
+    cells = [(r, c) for r in rules for c in climbs]
+    jobs = [(r, c, seed, False, reps) for r, c in cells] + [("H0", climbs[0], seed, True, reps)]
+    out = Path(out_dir) if out_dir is not None else RUNS / (datetime.date.today().isoformat() + "_" + name)
+    out.mkdir(parents=True, exist_ok=True)
+    paths = {"csv": out / (name + ".csv"), "run": out / (name + "_run.md"), "page": out / (name + "_page.html")}
+    pool = None
+    if workers == 1:
+        results = map(_job, jobs)
+    else:
+        from scripts.skilllab import engine as engine_module
+        pool = multiprocessing.get_context("spawn").Pool(
+            workers, initializer=_init_worker, initargs=(engine_module._cached_library(),))
+        results = pool.imap(_job, jobs)
+    try:
+        with open(paths["csv"], "w", newline="", encoding="utf-8") as fh:
+            w = csv.writer(fh, lineterminator="\n")
+            w.writerow(HEAD)
+            for (r, c, _, control, _), (be, fa, fd) in zip(jobs, results):
+                w.writerow(["control" if control else r, "" if control else c, "" if control else int(c * SPEED),
+                            be, repr(fa), repr(fd), int(be in (0, N_MAX))])
+    finally:
+        if pool is not None:
+            pool.close()
+            pool.join()
+    _write_reports(paths, name)
+    return paths
+
+
+def _read(csv_path):
+    with open(csv_path, newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    ctrl = next(r for r in rows if r["rule"] == "control")
+    return [r for r in rows if r["rule"] != "control"], ctrl
+
+
+def _sentences(cells, ctrl):
+    base = int(ctrl["break_even"])
+    out = []
+    for r in cells:
+        worth = int(r["break_even"]) - base
+        out.append("Holding the top of a %s wu slope is worth %d units under %s (%s)." % (
+            r["slope_wu"], worth, r["rule"], RULE_TEXT[r["rule"]]))
+    return out
+
+
+def _tables(cells, ctrl):
+    head = ["rule", "climb (s)", "slope (wu)", "break-even (units)", "attackers firing (unit-s)", "defenders firing (unit-s)"]
+    rows = [[r["rule"], r["climb_s"], r["slope_wu"], r["break_even"] + ("*" if r["clipped"] == "1" else ""),
+             "%.1f" % float(r["attackers_firing_s"]), "%.1f" % float(r["defenders_firing_s"])] for r in cells]
+    rows.append(["control", "-", "-", ctrl["break_even"] + ("*" if ctrl["clipped"] == "1" else ""),
+                 "%.1f" % float(ctrl["attackers_firing_s"]), "%.1f" % float(ctrl["defenders_firing_s"])])
+    return head, rows
+
+
+def _run_md(cells, ctrl, name):
+    head, rows = _tables(cells, ctrl)
+    out = ["# High-ground instrument: %s" % name, "", HEADER, "", "| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
+    out += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
+    out += ["", "* the search hit its bound (0 or %d)." % N_MAX, ""] + ["- " + s for s in _sentences(cells, ctrl)]
+    out += ["", "## What the instrument could not express", ""] + ["- %s: %s" % x for x in NOT_EXPRESSED]
+    out += ["", "## Questions for Westley", ""] + ["%d. %s" % (i + 1, q) for i, q in enumerate(QUESTIONS)] + [""]
+    return "\n".join(out)
+
+
+def _table_html(head, rows):
+    esc = html.escape
+    return ("<table>\n<tr>" + "".join("<th>%s</th>" % esc(h) for h in head) + "</tr>\n"
+            + "".join("<tr>" + "".join("<td>%s</td>" % esc(str(c)) for c in r) + "</tr>\n" for r in rows) + "</table>\n")
+
+
+def _chart(cells, ctrl):
+    W, H, L, R, T, B = 640, 340, 56, 60, 20, 44
+    climbs = sorted({int(r["climb_s"]) for r in cells})
+    rules = [k for k in RULES if any(r["rule"] == k for r in cells)]
+    ymax = max([int(r["break_even"]) for r in cells] + [int(ctrl["break_even"])] + [1])
+    ymax = int(math.ceil(ymax / 4.0) * 4)
+    xmax = max(climbs)
+    px = lambda v: L + v / xmax * (W - L - R)
+    py = lambda v: T + (1 - v / ymax) * (H - T - B)
+    o = ['<svg viewBox="0 0 %d %d" role="img" aria-label="Break-even against climb time">' % (W, H)]
+    for k in range(5):
+        v = ymax * k / 4.0
+        o.append('<line class="grid" x1="%d" x2="%d" y1="%.1f" y2="%.1f"/>' % (L, W - R, py(v), py(v)))
+        o.append('<text x="%d" y="%.1f" text-anchor="end" class="muted">%g</text>' % (L - 6, py(v) + 4, v))
+    for c in climbs:
+        o.append('<text x="%.1f" y="%d" text-anchor="middle" class="muted">%d</text>' % (px(c), H - B + 16, c))
+    o.append('<text x="%d" y="%d" text-anchor="middle" class="muted">Climb time (s)</text>' % ((L + W - R) // 2, H - 6))
+    o.append('<text x="12" y="14" class="muted">Break-even (units the 16 defenders beat)</text>')
+    cy = py(int(ctrl["break_even"]))
+    o.append('<line class="line s-control" stroke-dasharray="6 4" x1="%d" x2="%d" y1="%.1f" y2="%.1f"/>' % (L, W - R, cy, cy))
+    o.append('<text x="%d" y="%.1f">control</text>' % (W - R + 6, cy + 4))
+    ends = []
+    for k in rules:
+        pts = sorted((int(r["climb_s"]), int(r["break_even"])) for r in cells if r["rule"] == k)
+        o.append('<polyline class="line s-%s" points="%s"/>' % (k, " ".join("%.1f,%.1f" % (px(x), py(y)) for x, y in pts)))
+        for x, y in pts:
+            o.append('<circle class="dot s-%s" cx="%.1f" cy="%.1f" r="3.5"><title>%s, %d s: %d units</title></circle>'
+                     % (k, px(x), py(y), k, x, y))
+        ends.append((k, px(pts[-1][0]), py(pts[-1][1])))
+    placed = []
+    for k, x, y in sorted(ends, key=lambda t: t[2]):
+        y = max(y, placed[-1] + 12) if placed else y
+        placed.append(y)
+        o.append('<text x="%.1f" y="%.1f">%s</text>' % (x + 8, y + 4, k))
+    o.append("</svg>")
+    return "\n".join(o)
+
+
+def _page(cells, ctrl, name):
+    keys = [k for k in RULES if any(r["rule"] == k for r in cells)] + ["control"]
+    css_l = "".join("--c-%s:%s;" % (k, COLOURS[k][0]) for k in keys)
+    css_d = "".join("--c-%s:%s;" % (k, COLOURS[k][1]) for k in keys)
+    css_s = "".join(".s-%s{stroke:var(--c-%s);fill:none}circle.s-%s{fill:var(--c-%s);stroke:none}" % (k, k, k, k)
+                    for k in keys)
+    legend = "".join('<span><i style="background:var(--c-%s)"></i>%s</span>' % (k, html.escape(
+        k + (": " + RULE_TEXT[k] if k in RULE_TEXT else " (no climb, open ground, dashed)"))) for k in keys)
+    head, rows = _tables(cells, ctrl)
+    body = ["<h1>High-ground instrument: %s</h1>" % html.escape(name), "<p>%s</p>" % html.escape(HEADER),
+            "<h2>Break-even against climb time</h2>", '<div class="legend">%s</div>' % legend, _chart(cells, ctrl),
+            "<h2>The same numbers</h2>", _table_html(head, rows),
+            "<p>* the search hit its bound (0 or %d).</p>" % N_MAX,
+            "<h2>What each rule is worth</h2>", "<ul>"]
+    body += ["<li>%s</li>" % html.escape(s) for s in _sentences(cells, ctrl)] + ["</ul>"]
+    body += ["<h2>What the instrument could not express</h2>", "<ul>"]
+    body += ["<li><b>%s</b>: %s</li>" % (html.escape(a), html.escape(b)) for a, b in NOT_EXPRESSED] + ["</ul>"]
+    body += ["<h2>Questions for Westley</h2>", "<ol>"] + ["<li>%s</li>" % html.escape(q) for q in QUESTIONS] + ["</ol>"]
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>High-ground instrument %s</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1c1b19;--muted:#6b675f;--grid:#dedad0;--rule:#cfcabd;%s}
+@media (prefers-color-scheme: dark){:root{--bg:#161614;--fg:#ecebe6;--muted:#9c978c;--grid:#35332e;--rule:#4a4740;%s}}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.6rem}h2{font-size:1.15rem;margin:1.4rem 0 .4rem}
+svg{width:100%%;height:auto}svg text{fill:var(--fg);font-size:11px}svg .muted{fill:var(--muted)}
+.grid{stroke:var(--grid);stroke-width:1}.line{stroke-width:2}%s
+.legend span{margin-right:1rem;font-size:.85rem}.legend i{display:inline-block;width:.9rem;height:.25rem;margin-right:.3rem;vertical-align:middle}
+table{border-collapse:collapse;width:100%%;font-size:.85rem;margin:.4rem 0 1.2rem}
+th,td{border-bottom:1px solid var(--rule);padding:.2rem .5rem;text-align:left}
+</style>
+</head>
+<body>
+%s
+</body>
+</html>
+""" % (html.escape(name), css_l, css_d, css_s, "\n".join(body))
+
+
+def _write_reports(paths, name):
+    cells, ctrl = _read(paths["csv"])
+    paths["run"].write_text(_run_md(cells, ctrl, name), encoding="utf-8")
+    paths["page"].write_text(_page(cells, ctrl, name), encoding="utf-8")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="highground")
+    ap.add_argument("--name", required=True)
+    ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--date", default=datetime.date.today().isoformat())
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--from-csv", default=None, help="rebuild the run file and page from an existing csv")
+    a = ap.parse_args(argv)
+    out = Path(a.out) if a.out else RUNS / ("%s_%s" % (a.date, a.name))
+    if a.from_csv:
+        out.mkdir(parents=True, exist_ok=True)
+        paths = {"csv": Path(a.from_csv), "run": out / (a.name + "_run.md"), "page": out / (a.name + "_page.html")}
+        _write_reports(paths, a.name)
+    else:
+        paths = run_batch(SEED, a.workers, out, a.smoke, a.name)
+    for p in paths.values():
+        print(p)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

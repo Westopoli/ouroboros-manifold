@@ -13,7 +13,7 @@ from scripts.skilllab import batches  # noqa: E402
 from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
-DRAFT = "unconfirmed draft"
+DRAFT = "draft"
 SCANNED = ["blob", "bait", "ambush", "fall_back"]
 NOTES = {"bait_hold_fire": "needs hold-fire, not built", "ambush_hold_fire": "needs hold-fire, not built",
          "dark_approach": "going dark, emission per unit, needs Phase C G6",

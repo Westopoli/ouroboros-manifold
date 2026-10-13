@@ -67,9 +67,9 @@ IDS = [p["name"] for p in PARAMS]
 
 
 def test_control_table_has_every_member_and_the_six_named_defaults():
-    """The table this file reads is whole: 61 members in order, the plan's six switches at their defaults.
+    """The table this file reads is whole: 66 members in order, the plan's six switches at their defaults.
     If the parser read nothing, every parametrized test below would silently vanish; this one would not."""
-    assert COUNT == 61
+    assert COUNT == 66
     assert [p["value"] for p in PARAMS] == list(range(COUNT))
     for name, default in (("OM_TP_PURSUE_BY_STEERING", 1), ("OM_TP_ROUTE_AROUND_TERRAIN", 1),
                           ("OM_TP_LEASH_BEFORE_DAMAGE", 0), ("OM_TP_TARGET_POLICY", 0),

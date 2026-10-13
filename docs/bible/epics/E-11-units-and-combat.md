@@ -57,7 +57,7 @@ Rules
 - R-082-02  Given the roster, When ordered by speed, Then every Strike unit is faster than every Line unit, and every Line unit faster than every Siege unit.
 - R-082-03  Given the roster, When ordered by HP, Then the Bastion has the most by at least 2× the next, and the Raider the least.
 - R-082-04  Given the roster, When sensor radius is read, Then both Strike units see farther than both Siege units.
-- R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack.
+- R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack. Direction changed 2026-10-13, rewrite pending: area damage becomes a knob with its own range and shape, attachable to any role or a single unit (Westley, 2026-10-13; Q-082-06); the rule above is what the game does today.
 - R-082-06  Given an expansion pack adds a unit type, When loaded, Then it declares category, role, the stats above, and one ability, and no engine code changes.
 - R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, the declarations of R-082-09, and one ability, and the roster passes the balance scoring mechanism [Q-082-04]; an era built around a named conflict may weight its roster toward that conflict's sides [Q-082-05]; whether worker types count toward the 20 to 40 is Q-167-03.
 - R-082-08  Given Tier 1 and Tier 3, When profiles are read, Then HP and damage are 0.8× and 1.2× the Tier 2 values and all other ratios scale uniformly.
@@ -65,7 +65,7 @@ Rules
 
 Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
-Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), Q-167-03 (whether worker types sit in the roster).
+Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), workers sit outside the roster for the beta (Westley, 2026-10-07).
 
 ### S-083 — Stats, trait cards, ability
 As a commander, I want to unlock trait cards and build a force that plays my way, so that units differ in kind, and never in a way that beats positioning.
@@ -142,11 +142,12 @@ Rules
 - R-087-01  Given a unit taking damage from an attacker it cannot see or cannot reach, When the loop runs, Then it moves 200 wu directly away from the damage direction and stops; once the attacker is visible and in range it stands and fights.
 - R-087-02  Given a unit with an active player order, When the loop runs, Then the order wins over auto-engagement; a plain move never acquires or returns fire.
 - R-087-03  Given an idle or attack-moving unit with an enemy within attack range on its layer, When targets are evaluated, Then it attacks the nearest such enemy; an engaged target still alive and in range is kept.
-- R-087-04  Given an attack-moving unit with no target within its attack range, When evaluated, Then it keeps marching on its slot and route (R-095-02, R-097-03), steering around units in its way, and does not walk toward an enemy it merely sees in sensor range; the formation holds until shooting, not until sight (Westley, 2026-10-03, A199; marked for review in playtesting). It halts and fires when an enemy is within its attack range and it can shoot it (a target behind cover, a wall or a blocked cell does not stop the march: it keeps walking its route and fires when the line clears), and pursues an acquired target that leaves that range under the leash (R-087-05).
+- R-087-04  Given an attack-moving unit with no target within its attack range, When evaluated, Then it keeps marching on its slot and route (R-095-02, R-097-03), steering around units in its way, and does not walk toward an enemy it merely sees in sensor range; the formation holds until shooting, not until sight (Westley, 2026-10-03, A199; marked for review in playtesting). It halts and fires when an enemy is within its attack range and it can shoot it (a target behind cover, a wall or a blocked cell does not stop the march: it keeps walking its route and fires when the line clears, or seeks a firing spot under R-087-09), and pursues an acquired target that leaves that range under the leash (R-087-05).
 - R-087-05  Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the unit itself pursues more than 200 wu from the anchor it drops the target and resumes its attack-move (R-096-03). The leash measures the pursuer's own distance from its anchor, never the target's, so a unit holding and firing from its anchor keeps its target at any weapon range (A188, 2026-10-03).
 - R-087-06  Given an idle or attack-moving unit with no target taking damage, When hit, Then it targets the attacker (return fire); if the attacker is out of range it attack-moves to the attacker, dropping its earlier destination; a plain-moving unit and an already-engaged unit ignore incoming damage for targeting.
 - R-087-07  Given a supply or evacuation unit, When the loop runs, Then it never attacks; it flinches and otherwise holds.
 - R-087-08  Given target acquisition, When it runs, Then each unit re-acquires on every 4th tick (cohort stagger) and validates its current target every tick.
+- R-087-09  Given an idle or attack-moving unit with a target within its attack range whose line of fire is blocked by units, cover or ground, When evaluated, Then it steers around the blockers by the probe of blocked movement (R-097-03) until it reaches a spot with a clear line, and if it finds none within 1 s (20 ticks) it drops the target and acquires another (Westley, 2026-10-07: blocked fire is handled like blocked movement; "a unit gives up to pick another target if it can't find a firing spot within 1 second"). An obstacle is a detour, never a full stop (E-17 R-190-07).
 
 Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
@@ -157,7 +158,7 @@ The flinch also fires when the attacker is visible but out of range with no path
 As a commander, I want a Strike squad to read as a small group, a Siege unit as a single heavy asset, and every ability to have an unmistakable cue, so that I never misjudge what I am looking at.
 
 Rules
-- R-088-01  Given a Raider or Interceptor, When drawn, Then it appears as 3 to 5 small craft in formation sharing one HP bar and one position; the sim tracks one entity.
+- R-088-01  Given a Raider, When drawn, Then one unit is a squad of 5 to 10 small craft in formation sharing one HP bar and one position, much smaller than the other types and passing gaps they cannot (E-17 R-188-05, S-246); the sim tracks one entity, and its collision radius is DRAFT-raider-radius, set with the roster (Q-166-05; Westley 2026-10-13: "Raider T2 specifically, each "unit" will be a group of them, 5-10 and they'll be much smaller than the other units. (like halo wars marines)"). An Interceptor is drawn as 3 to 5 small craft in formation sharing one HP bar and one position.
 - R-088-02  Given an ability event, When received by the renderer, Then a cue plays at that tick for the event's duration (Barrage shows its telegraph ring at the target for 1.5 s before impact; Fortify shows its zone; Brace shows a planted state).
 - R-088-03  Given a T2 screenshot of a mixed force, When inspected, Then category is distinguishable by silhouette size: Strike smallest, Siege largest.
 
@@ -185,13 +186,13 @@ Design decided 2026-10-02, not scheduled for building. What workers gather and c
 
 Rules
 - R-202-01  Given a worker, When the decision loop of S-087 runs, Then it never acquires a target and never returns fire, it flinches from damage, and otherwise holds, follows its move order or does its work (R-087-07, E-15 R-129-01).
-- R-202-02  Given a worker that an enemy's side can see within that enemy's reach, When targets are evaluated, Then it is a target as any enemy unit is (R-087-03), and at 0 HP it is dead (Invariants below) [Q-167-03: worker statistics, including hit points and the category it is hit as; whether raids target workers first is Q-159-10].
+- R-202-02  Given a worker that an enemy's side can see within that enemy's reach, When targets are evaluated, Then it is a target as any enemy unit is (R-087-03), and at 0 HP it is dead (Invariants below) (worker statistics, including hit points and the category it is hit as, are placeholders for the beta; workers are outside the roster for the beta, Westley, 2026-10-07).
 - R-202-03  Given a side's units, When the population is counted, Then every worker counts in the one population cap with the soldiers (E-22 S-169, S-167).
 - R-202-04  Given the unit budgets (the scale requirements of this epic, E-12 and E-13), When workers are counted, Then they count as units with the soldiers, and each figure covers both together.
 
 Inputs: worker type profile (era pack); unit states.
 Outputs: worker hit points and position in the tick delta; kills.
-Open flags: Q-167-03 (worker statistics and whether workers are in the roster), Q-159-10 (workers under raid, not yet picked).
+Open flags: none on workers; workers under raid (a later idea, Westley, 2026-10-07).
 
 ### S-203 — What a unit costs
 As an economy player, I want each unit type to cost the three resources by its category, so that what a side builds and what it gathers match.
@@ -199,7 +200,7 @@ As an economy player, I want each unit type to cost the three resources by its c
 Design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in the three resources set by its category, Strike, Line or Siege, which are the unit families (E-22 S-171) [Q-159-08: which resource each category needs and how much; roles inside a category are Q-082-03].
+- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in two of the three resources, by its role, in the fixed pattern of E-22 R-171-03; Strike, Line and Siege are the unit families (E-22 S-171) [Q-159-08: the amounts; roles inside a category are Q-082-03].
 - R-203-02  Given a unit type, When it counts against the population cap, Then it counts by its population weight (E-22 S-169) [Q-169-01: the weight per type].
 
 Inputs: era pack cost table; population weights.
@@ -212,14 +213,14 @@ As a commander, I want walls, gates, towers and production buildings to be thing
 Design decided 2026-10-02, not scheduled for building. Walls, gates and towers are written for land maps (E-22 S-174). That they block is E-13 S-097, and that they are seen is E-12 S-205.
 
 Rules
-- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points [Q-204-01: which layers a structure occupies and blocks; Q-174-02: its statistics].
+- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points; it occupies and blocks its own layer and some layers above it, up to a height, as cover does (E-01 R-007-01; Westley, 2026-10-07: "#4: B") [Q-174-02: its statistics].
 - R-204-02  Given an enemy that can see a structure and has it within reach, When it attacks the structure, Then the structure takes damage, and at 0 HP it falls: it stops blocking (E-13 S-097) and stops being seen (E-12 S-205) [Q-174-02: the damage a structure takes from each category].
-- R-204-03  Given an idle or attack-moving unit with an enemy structure within its reach and visible to its side, When targets are evaluated, Then [Q-204-02: whether an idle unit targets structures, and whether before or after units].
+- R-204-03  Given an idle or attack-moving unit with an enemy structure within its reach and visible to its side, When targets are evaluated, Then it attacks an enemy unit in reach first, and an enemy structure only when no enemy unit is in reach (Westley, 2026-10-07: "#5: B").
 - R-204-04  Given a tower with an enemy within its range that its side sees, When its turn comes, Then [Q-174-02: whether a tower fires, and its damage, range and interval].
 
 Inputs: structure records (E-22 S-168, S-170, S-174); unit states; visibility (E-12).
 Outputs: structure hit points and destroyed events in the tick delta.
-Open flags: Q-204-01, Q-204-02, Q-174-02.
+Open flags: Q-174-02.
 
 ## Inputs
 
@@ -272,7 +273,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-082-03, Q-082-04, Q-082-05, Q-083-03, Q-087-01, Q-008-05, Q-201-01, Q-204-01, Q-204-02, and from E-22 Q-159-08, Q-159-10, Q-167-01, Q-167-03, Q-169-01, Q-174-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-082-03, Q-082-04, Q-082-05, Q-083-03, Q-087-01, Q-008-05, Q-201-01, and from E-22 Q-159-08, Q-159-10, Q-167-01, Q-167-03, Q-169-01, Q-174-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

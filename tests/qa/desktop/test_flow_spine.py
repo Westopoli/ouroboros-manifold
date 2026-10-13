@@ -442,10 +442,13 @@ def test_s_c8_09_next_chapter_after_chronicle(game):
     units = tqa.get("units", {})
     assert len(units) > 0, "S-C8-09: mission 2 has no units; qa = %r" % sorted(tqa.keys())
     factions = {int(u["faction"]) for u in units.values()}
-    assert int(tqa.get("local_faction", -1)) in factions and len(factions) >= 2, (
-        "S-C8-09: mission 2 needs player and enemy units; factions present = %r, local_faction = %r"
+    # Rulebook row 38 (K-h: "this assertion reads own units ... (RP, quoting K-h)"): the live game filters hidden units
+    # (fog_filter, R-089-03), so qa.units holds the local faction's own units; enemies are not asserted.
+    assert int(tqa.get("local_faction", -1)) in factions, (
+        "S-C8-09: mission 2 needs own units present; factions present = %r, local_faction = %r"
         % (sorted(factions), tqa.get("local_faction"))
     )
+    assert client.state()["result"].get("scene") == TACTICAL_SCENE, "S-C8-09: mission 2 is not running on the tactical scene"
 
 
 def test_s_c8_07_boot_reaches_main_menu_with_privacy_flag_present():

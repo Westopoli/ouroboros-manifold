@@ -1,0 +1,9 @@
+# Lane -> owned path globs for the lane_plays gate stage (HARNESS-laneplays).
+# A lane's plays under tests/qa/desktop/plays/<L>/ run when the diff touches one of its globs.
+[lanes]
+A = ["scenes/tactical_c/**"]
+B = ["scenes/galaxy/**"]
+C = ["scenes/ground3d/**"]
+D = ["scenes/space_field/**"]
+E = ["scenes/settlement/**"]
+F = ["autoload/net/**", "scenes/lobby/**"]

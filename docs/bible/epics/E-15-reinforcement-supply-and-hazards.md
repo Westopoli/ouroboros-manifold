@@ -99,7 +99,7 @@ Rules
 
 Inputs: drift specs from the map seed.
 Outputs: positions per tick in the delta.
-Open flags: none. See also: Q-118-03 (whether a strongpoint may drift off its slope, against R-130-01 and R-130-03) and S-219 (a region's trouble travels; R-130-04's interference source is one kind of moving source).
+Open flags: none. See also: R-218-07 (a strongpoint does not drift, against R-130-01 and R-130-03) and S-219 (a region's trouble travels; R-130-04's interference source is one kind of moving source).
 
 ### S-131 — Reading hazards and structures
 
@@ -120,18 +120,18 @@ As a commander on a land map, I want the reinforcement structures to stand at th
 Status: design decided 2026-10-02, not scheduled for building. It applies to land maps; the space-era landscape is not designed (Q-166-02), so there is no space version. The built rules of S-126 and S-127 stay as they are until this story is built.
 
 Rules
-- R-218-01  Given a land map whose ground has height bands fitted to it (E-17 R-166-04 and R-166-06) and slopes that join layers (E-01 R-001-07), When strongpoints are placed, Then they stand at the slopes between height bands The count is R-126-01's, capped by the slopes there are, placed on the best slopes, with its archetype owner split (Westley, 2026-10-06; E-17 R-192-01).
+- R-218-01  Given a land map whose ground has height bands fitted to it (E-17 R-166-04 and R-166-06) and slopes that join layers (E-01 R-001-07), When strongpoints are placed, Then they stand at the slopes between height bands, each strongpoint at its slope's midpoint. The count is R-126-01's, capped by the slopes there are, placed on the best slopes, with its archetype owner split (Westley, 2026-10-06; E-17 R-192-01; midpoint, Architect 2026-10-10).
 - R-218-02  Given a strongpoint, When a side holds it, Then it holds the way up or down at that slope (Westley, 2026-10-02, option D4: "Holding one holds the way up or down, and gives production on that band") Holding does nothing to passage beyond a position to fight from and production (Westley, 2026-10-06).
 - R-218-03  Given a held strongpoint, When it produces, Then the units appear on the strongpoint's band, and the production is paid for by the holder's economy (E-22 S-167 and S-170), not free.
 - R-218-04  Given a held strongpoint, When what it makes is chosen, Then the economy rules choose it on the schedule of E-22 S-170, changing what it makes takes a while, and when nobody holds the economy seat the rules and the commander's override of E-22 S-179 and S-180 decide.
-- R-218-05  Given a strongpoint, When it is attacked or taken, Then it is captured as S-127 says, and when destroyed it falls to rubble and can be refounded (Westley, 2026-10-06; this replaces R-127-03's "never rebuilt").
-- R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then the split of R-126-04 (a fifth at the start, the rest from structures) is dropped and the situation (E-10 S-211) decides (Westley, 2026-10-06).
-- R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then [Q-118-03: whether a strongpoint may drift off its slope].
+- R-218-05  Given a strongpoint, When it is attacked or taken, Then it is captured as S-127 says, and when destroyed it falls to rubble; a strongpoint at 0 HP stays listed as rubble, and the place command at its cell refounds it for the placer at full HP (Westley, 2026-10-06, this replaces R-127-03's "never rebuilt"; listing and refounding, Architect 2026-10-10).
+- R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then the split of R-126-04 (a fifth at the start, the rest from structures) is dropped and the situation (E-10 S-211) decides; until S-211 the starting force is the whole force and the reinforcement capacity is 0 (Westley, 2026-10-06; liberty, Architect 2026-10-10).
+- R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then a strongpoint does not drift: it is fixed at its slope for now (Westley, 2026-10-07).
 - R-218-08  Given a T2 screenshot, When inspected, Then a strongpoint is distinguishable by owner color from every unit silhouette and from a base, an expansion and forward works The mechanic is called "strongpoint", with an era-skinned visual, so it does not clash with "settlement" for the neutral populace and for self-built cities (Westley, 2026-10-06).
 
 Inputs: the fitted height bands and slopes (E-17); the holder's economy (E-22).
 Outputs: strongpoints (owner, HP, progress, band, position) in the tick delta; production on the band; HUD panel and minimap.
-Open flags: Q-118-03.
+Open flags: none.
 
 ### S-219 — Weather that travels
 As a commander, I want my region's environmental trouble to travel across the map where both sides can see it and to shut down what it passes over, so that the map has a danger and a clock that is not an enemy.
@@ -178,7 +178,7 @@ Open flags: Q-219-02 (to be designed), Q-219-04 (parked).
 
 - A structure has exactly one owner or is neutral.
 - Capture progress in [0, 1]; resets on contest.
-- A destroyed structure never returns (today's rule, R-127-03; R-218-05 replaces it for strongpoints).
+- A destroyed non-strongpoint structure never returns (R-127-03); a strongpoint at 0 HP stays listed as rubble and the place command at its cell refounds it at full HP (R-218-05, Architect 2026-10-10).
 - A strongpoint stands at a slope between height bands on land maps.
 - A trouble shuts down only what it is passing over, and both sides can see it.
 - Same seed, same spawns and drift, all platforms (every draw comes from the world stream, R-126-02).
@@ -208,7 +208,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-03, Q-219-02, Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-219-02, Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

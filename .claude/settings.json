@@ -55,6 +55,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/scripts/specfactory/method_check.py\" 2>/dev/null || echo \"METHOD error hook: method_check.py did not run from $CLAUDE_PROJECT_DIR (script missing or failed); run it by hand on this session and tell Westley\""
+          }
+        ]
+      }
     ]
   }
 }

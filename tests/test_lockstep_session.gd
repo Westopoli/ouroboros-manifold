@@ -219,18 +219,19 @@ func _test_repetition() -> void:
 			got = e[0] == 2
 	_assert(got, "a dropped packet is covered by repetition: command still applied at its tick (%s)" % str(log))
 	_assert(env["sim"][2].steps > 10, "a dropped packet does not stop the barrier")
-	# the repetition window is 5 ticks: ticks 3..7 lost, packet 8 covers only 4..8
+	# TD-NET-packet-shape: the old 5-tick repetition window is gone; each packet carries the
+	# window max(peer_released+1, n-63)..n, so a 5-packet loss self-heals instead of stalling.
 	var env2 := _mk([1, 2])
 	env2["net"].drop_indices(1, 2, [2, 3, 4, 5, 6])
 	env2["s"][1].command({"verb": 0, "arg": 42})
 	_spin(env2, [1, 2], 15)
-	_assert(env2["sim"][2].steps == 2, "tick 3 stays unreleased when 5 packets in a row are lost (steps %d)" % env2["sim"][2].steps)
+	_assert(env2["sim"][2].steps > 10, "tick 3 is recovered after 5 packets in a row are lost (steps %d)" % env2["sim"][2].steps)
 	# four lost in a row: the fifth still carries it
 	var env3 := _mk([1, 2])
 	env3["net"].drop_indices(1, 2, [2, 3, 4, 5])
 	env3["s"][1].command({"verb": 0, "arg": 42})
 	_spin(env3, [1, 2], 15)
-	_assert(env3["sim"][2].steps > 10, "each packet repeats the commands of the last 5 ticks (4 lost, 5th covers)")
+	_assert(env3["sim"][2].steps > 10, "each packet repeats the commands of the last 5 ticks (4 lost, a later packet covers)")
 
 
 func _test_reorder_delay_session() -> void:

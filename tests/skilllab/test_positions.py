@@ -47,7 +47,7 @@ def test_defaults_are_the_documented_draft_numbers():
 def test_labels(name, fn):
     labels = fn(16).labels
     assert name in labels["play_side0"]
-    assert labels["status_side0"] == "unconfirmed draft"
+    assert labels["status_side0"] == "draft"
     assert labels["play_side1"] == "blob" and labels["status_side1"] == "naive"
 
 

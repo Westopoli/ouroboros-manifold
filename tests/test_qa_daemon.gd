@@ -75,6 +75,7 @@ func _run_tests() -> void:
 		_assert(d.has("tick"), "qa daemon state() missing key 'tick'")
 
 	await _check_step_reaches_the_scene_qa_step(script)
+	await _check_project_verb(script)
 
 	if daemon is Node:
 		(daemon as Node).free()
@@ -110,3 +111,75 @@ func _check_step_reaches_the_scene_qa_step(script) -> void:
 	current_scene = null
 	for n in [d, stub, plain]:
 		n.free()
+
+
+# Piece G-project (Architect 2026-10-09): the test-only daemon verb "project" x y (world coordinates) answers
+# {"ok": true, "result": {"x", "y", "on_screen"}}, the screen pixel the open tactical view draws that world point at
+# (2D view: inverse of TacticalView._to_world; ground 3D view: the rig camera's unproject_position), on_screen true
+# inside the 1920x1080 viewport; with no tactical view open {"ok": false, "error": "project: no tactical view"}.
+# RED now because the verb is missing: _dispatch answers "unknown verb project".
+func _check_project_verb(script) -> void:
+	var d = (script as Script).new()
+	get_root().add_child(d)
+	await process_frame
+
+	# G-project test 1: no tactical view -> the error.
+	var plain := Node.new()
+	get_root().add_child(plain)
+	current_scene = plain
+	var r0: Dictionary = await d._dispatch("project", [10.0, 10.0])
+	_assert(not bool(r0.get("ok", true)) and String(r0.get("error", "")) == "project: no tactical view",
+		"G-project: project with no tactical view must answer the 'project: no tactical view' error (verb missing); got %s" % str(r0))
+	current_scene = null
+	plain.free()
+
+	# G-project test 2: 2D view; project(unit world pos) == units_px within 1 px; far point is off screen.
+	var fx = load("res://tests/support/vg_c_fixture.gd")
+	var view: Node = load("res://scenes/tactical_c/tactical_view.tscn").instantiate()
+	get_root().add_child(view)
+	await process_frame
+	view.set_process(false)
+	var fr: Dictionary = fx.frame()
+	fr["player_faction"] = 0
+	fr["visible"] = {"0": [1, 2, 3, 4]}
+	# TD-VG-A-15: the fixture has no map.canvas, so load_frame never framed it and the
+	# units projected against the camera the view already held (A18 opening frame, zoom 32,
+	# unit 1 off screen). A canvas makes the view frame the fixture's own box. Was: no canvas.
+	fr["map"]["canvas"] = 1000.0
+	view.load_frame(fr)
+	await process_frame
+	current_scene = view
+	var upx: Dictionary = view.qa_state().get("units_px", {})
+	_assert(upx.size() > 0, "G-project: the 2D view lists no units_px for the fixture frame (test setup)")
+	var checked := 0
+	for u in fx.frame()["units"]:
+		var p = upx.get(str(u["id"]), upx.get(u["id"]))
+		if p == null:
+			continue
+		var want := Vector2(float(p[0]), float(p[1])) if p is Array else Vector2(p)
+		var r: Dictionary = await d._dispatch("project", [float(u["x"]), float(u["y"])])
+		var res: Dictionary = r.get("result", {})
+		var got := Vector2(float(res.get("x", -1.0e9)), float(res.get("y", -1.0e9)))
+		_assert(bool(r.get("ok", false)) and got.distance_to(want) <= 1.0,
+			"G-project: 2D project of unit %d = %s, units_px says %s (verb missing); reply %s" % [u["id"], got, want, str(r)])
+		checked += 1
+	_assert(checked > 0, "G-project: no fixture unit had a units_px entry to compare")
+	# Positive control: a point one screen-width (1920 px) away in world units is off screen.
+	var scale_w: float = float(view.get("_world_scale"))
+	var u0: Dictionary = fx.frame()["units"][0]
+	var far: Dictionary = await d._dispatch("project", [float(u0["x"]) + 1920.0 / maxf(scale_w, 0.0001), float(u0["y"])])
+	_assert(bool(far.get("ok", false)) and not bool(far.get("result", {}).get("on_screen", true)),
+		"G-project control: a point one screen-width away must be on_screen=false (verb missing); got %s" % str(far))
+	var near: Dictionary = await d._dispatch("project", [float(u0["x"]), float(u0["y"])])
+	_assert(bool(near.get("ok", false)) and bool(near.get("result", {}).get("on_screen", false)),
+		"G-project control: the unit's own point must be on_screen=true (verb missing); got %s" % str(near))
+	current_scene = null
+	view.free()
+
+	# G-project test 3: ground 3D view. SKIPPED: the ground view needs the /root/EraConfig autoload
+	# (TacticalView._ground_era) and SimSession.bridge().mission(), neither exists under a --script SceneTree
+	# (no autoload bootstrap), so Ground3DHost is never created by the view here. The builder verifies it live:
+	# rig.project_to_screen(Vector2) (scenes/ground3d camera rig) must equal the verb's x,y within 1 px.
+	print("SKIP G-project test 3 (ground3d): needs EraConfig/SimSession autoloads, absent in --script mode")
+
+	d.free()

@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 4
+#define OM_ABI_VERSION 7
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -152,6 +152,15 @@ void om_region_set_adjacency(om_world *w, uint32_t idx,
 void om_region_set_faction_modifier(om_world *w, int32_t faction_id,
                                     om_field field, double value);   /* ALG-04 */
 uint32_t om_region_count(const om_world *w);
+/* Test hook (K-e5, ABI 7; docs/northstar/spec_factory/signatures.toml, scripts/specfactory/reach_allowlist.toml): replaces the
+ * height grid of a generated ground mission with `cm` (centimetres, row-major, cells_w * cells_h values) so a test can set a flat,
+ * sea or ridge terrain. Returns 0 and changes nothing when (cells_w, cells_h) differ from the terrain's cell dimensions or the
+ * world has no terrain. Otherwise it recomputes the five band floors as generation does (lo and hi over the cells above the dry
+ * level; when no cell is above it, lo and hi are the minimum and maximum of all cells), re-bands the cells, runs
+ * om_terrain_apply_ground (walkable, slopes, walk masks and the mapgen blocked bits are rewritten, so blocked rects laid after
+ * generation are erased; obstacle discs and cover rows survive; the move epoch is bumped) and rebuilds the density inputs; returns 1.
+ * The generator's dry-level rule is not enforced on `cm`: flat test terrains use heights above 6000 cm (the dry test is strict). */
+int om_terrain_set_heights(om_world *w, const int32_t *cm, uint32_t cells_w, uint32_t cells_h);
 
 /* ---- tick (7-step sequence, tick auto-increments from 1) ---- */
 uint64_t om_world_step(om_world *w);                 /* advance one tick, return new tick */
@@ -978,6 +987,11 @@ typedef enum {
     OM_BUG_SAVE_SKIPS_RNG_STATE = 1600, /* save/load skips writing or restoring the PCG32 stream (test_E16_S111_saving.py's own control) */
     OM_BUG_SAVE_SKIPS_TICK = 1601 /* om_load_state_read restores everything but the tick counter, so a loaded world resumes stepping from tick 0 */
 } om_bug_save;
+
+/* VG K-d2 (lane D): debug-inject ids for the space field, passed to om_debug_inject before om_space_field_generate_nodes. */
+typedef enum {
+    OM_BUG_SPACE_NO_CARVE = 1700 /* space no-carve plant: the fill-and-carve join step is skipped (mockup QaPlants "space-no-carve"); the carve step reads w->inject */
+} om_bug_space;
 #endif
 
 /* A53 (R-069-07): one clickable name inside a chronicle entry's text. start and
@@ -1054,12 +1068,47 @@ typedef enum {
     OM_TP_AREA_DOWN_4,
     OM_TP_TARGET_POLICY_FACTION_1,
     OM_TP_PING_ALERT,
+    OM_TP_TERRAIN_STEEP_DEG,
+    OM_TP_SLOPE_UP_DIV,
+    OM_TP_SLOPE_DOWN_MULT,
+    OM_TP_SIGHT_EYE_HEIGHT,
+    OM_TP_GROUND_FLYER_SEEN_MULT,
     OM_TP__COUNT
 } om_tac_param;
 
 /* PP-contract: a unit's active-emission mode (om_command_set_emission). */
 typedef enum { OM_EMIT_SILENT = 0, OM_EMIT_ACTIVE = 1 } om_emission;
 
+/* Terrain stage 2 (spec 2026-10-06): how a unit type moves (om_roster_set_movement_kind). */
+typedef enum { OM_MOVE_FLYING = 0, OM_MOVE_WALKING = 1, OM_MOVE_SWIMMING = 2 } om_movement_kind;
+
+/* VG K-e: visible-game economy fields (docs/architecture.md "Visible-game economy fields"). */
+typedef struct om_lot {
+    uint32_t id;
+    double x, y;
+    int32_t stage;
+    int32_t building;
+    int32_t owner;
+} om_lot;
+typedef struct om_strongpoint {
+    uint32_t id;
+    double x, y;
+    int32_t owner;
+    int32_t state;
+} om_strongpoint;
+typedef struct om_wave {
+    uint32_t tick;
+    int32_t kind;
+    double x, y;
+} om_wave;
+/* VG-D8 R-246-07: the most clearing nodes om_space_field_generate_nodes takes (two faction anchors, the objective, extras). */
+#define OM_SPACE_FIELD_MAX_NODES 8
+#define OM_SPACE_FIELD_MIN_NODES 3 /* the two faction anchors and the objective; fewer takes the old diagonal nodes */
+
+/* ---- generated from signatures.toml: strongpoint.c ---- */
+uint32_t om_strongpoint_count(const om_world *w);
+int om_strongpoint_get_at(const om_world *w, uint32_t i, om_strongpoint *out);
+/* ---- end generated: strongpoint.c ---- */
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
     uint64_t tick;
@@ -1280,6 +1329,18 @@ typedef struct om_selection_record {
     uint32_t _pad;
 } om_selection_record;
 
+typedef struct om_slope {
+    double x0;
+    double y0;
+    double x1;
+    double y1;
+    double mx;
+    double my;
+    double length;
+    int32_t lower_band;
+    int32_t upper_band;
+} om_slope;
+
 typedef struct om_structure_hud {
     double timer_progress;
     uint32_t next_unit_type;
@@ -1439,6 +1500,21 @@ uint32_t om_tech_tier(double tech);
 int om_tier_transition_candidate_exists(const om_world *w, int32_t faction_id);
 /* ---- end generated: diplomacy.c ---- */
 
+/* ---- generated from signatures.toml: economy_density.c ---- */
+double om_density_at(const om_world *w, double x, double y);
+/* ---- end generated: economy_density.c ---- */
+
+/* ---- generated from signatures.toml: economy_doctrine.c ---- */
+int om_doctrine_get(const om_world *w);
+uint32_t om_wave_get_since(const om_world *w, uint32_t tick, om_wave *out, uint32_t cap);
+/* ---- end generated: economy_doctrine.c ---- */
+
+/* ---- generated from signatures.toml: economy_lots.c ---- */
+uint32_t om_lot_count(const om_world *w);
+int om_lot_get_at(const om_world *w, uint32_t i, om_lot *out);
+int om_economy_place(om_world *w, int32_t building, double x, double y);
+/* ---- end generated: economy_lots.c ---- */
+
 /* ---- generated from signatures.toml: enemy_macro.c ---- */
 void om_macro_bind_hook_flag(om_world *w, uint32_t p1, const char *p2);
 uint32_t om_macro_bus_get_active_flags_count(om_world *w);
@@ -1542,6 +1618,8 @@ int om_unit_get_emission(const om_world *w, uint32_t unit);
 int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, double y);
 uint32_t om_ping_alert_count(const om_world *w, int32_t faction);
 int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_ping_alert *out);
+int om_set_era_kind(om_world *w, int kind);
+int om_era_kind(const om_world *w);
 /* ---- end generated: fog.c ---- */
 
 /* ---- generated from signatures.toml: generational.c ---- */
@@ -1772,6 +1850,7 @@ int32_t om_region_get_owner(const om_world *w, uint32_t idx);
 void om_set_neighbors(om_world *w, uint32_t a, uint32_t b);
 int om_unit_get_profile(uint32_t unit_type, int difficulty, om_unit_profile *out);
 double om_unit_power(uint32_t unit_type);
+int om_objective_get_done(const om_world *w, uint32_t idx);
 /* ---- end generated: mission.c ---- */
 
 /* ---- generated from signatures.toml: save.c ---- */
@@ -1779,6 +1858,20 @@ int om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length);
 uint32_t om_save_state_size(const om_world *w);
 void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
 /* ---- end generated: save.c ---- */
+
+/* ---- generated from signatures.toml: space_field.c ---- */
+int om_space_field_generate_nodes(om_world *w, uint32_t seed, double canvas_w, double canvas_h, double density, const double *node_xy, const uint32_t *node_slots, uint32_t n_nodes);
+int om_space_field_present(const om_world *w);
+uint32_t om_space_field_get_mask(const om_world *w, uint32_t layer, uint8_t *out, uint32_t cap);
+void om_space_field_clear(om_world *w);
+uint32_t om_space_field_poly_count(const om_world *w);
+uint32_t om_space_field_poly_get(const om_world *w, uint32_t i, uint32_t *layer, uint32_t *kind, double *xy, uint32_t cap_pts);
+/* ---- end generated: space_field.c ---- */
+
+/* ---- generated from signatures.toml: space_noise.c ---- */
+uint32_t om_space_hash32(int32_t ix, int32_t iy, int32_t iz, uint32_t seed);
+uint32_t om_space_noise_layer(uint32_t layer_seed, double canvas, uint32_t k, int independent, double *out, uint32_t cap);
+/* ---- end generated: space_noise.c ---- */
 
 /* ---- generated from signatures.toml: tactical_mapgen.c ---- */
 void om_fairness_evaluate(om_world *w, om_fairness_score *byref);
@@ -1848,6 +1941,8 @@ void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref);
 void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id);
 int om_map_set_canvas(om_world *w, double width, double height);
 int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, uint32_t layer_lo, uint32_t layer_hi);
+uint32_t om_map_obstacle_count(const om_world *w);
+int om_map_get_obstacle_at(const om_world *w, uint32_t i, double *x, double *y, double *r);
 /* ---- end generated: tactical_mapgen.c ---- */
 
 /* ---- generated from signatures.toml: tactical_move.c ---- */
@@ -1898,6 +1993,8 @@ int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32
 uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit);
 int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y);
 int om_unit_get_engaged(const om_world *w, uint32_t unit);
+int om_roster_set_movement_kind(om_world *w, int type, int kind);
+int om_unit_profile_movement_kind(const om_world *w, int type);
 /* ---- end generated: tactical_move.c ---- */
 
 /* ---- generated from signatures.toml: tactical_support.c ---- */
@@ -1959,7 +2056,30 @@ int om_unit_is_non_combat_supported(int p0);
 void om_unit_order_move(om_world *w, uint32_t unit, double p2, double c_double);
 uint32_t om_unit_spawn_non_combat(om_world *w, int p1, double p2, double c_double);
 void om_unit_tick_decision_loop(om_world *w, uint32_t unit);
+uint32_t om_structure_count(const om_world *w);
+uint32_t om_structure_get_at(const om_world *w, uint32_t i);
 /* ---- end generated: tactical_support.c ---- */
+
+/* ---- generated from signatures.toml: terrain.c ---- */
+int om_terrain_generate(om_world *w, uint64_t seed, double canvas_w, double canvas_h);
+int om_terrain_present(const om_world *w);
+double om_terrain_height_at(const om_world *w, double x, double y);
+int om_terrain_band_at(const om_world *w, double x, double y);
+int om_terrain_walkable_at(const om_world *w, double x, double y);
+int om_terrain_ground_at(const om_world *w, int layer, double x, double y);
+uint32_t om_terrain_band_heights(const om_world *w, double *out, uint32_t cap);
+uint32_t om_terrain_slope_count(const om_world *w);
+int om_terrain_slope_get(const om_world *w, uint32_t i, om_slope *out);
+uint32_t om_terrain_cells(const om_world *w, uint32_t *w_cells, uint32_t *h_cells);
+int om_terrain_cell_band(const om_world *w, uint32_t cx, uint32_t cy);
+uint32_t om_terrain_dump_bands(const om_world *w, uint8_t *out, uint32_t cap);
+uint32_t om_terrain_walk_mask(const om_world *w, int layer, uint8_t *out, uint32_t cap);
+int om_terrain_slope_at(const om_world *w, double x, double y, om_slope *out);
+int om_terrain_sight_blocks(const om_world *w, int layer0, double x0, double y0, int layer1, double x1, double y1);
+int om_terrain_nearest_walkable(const om_world *w, double x, double y, double *ox, double *oy);
+void om_terrain_clear(om_world *w);
+uint32_t om_terrain_get_heights(const om_world *w, int32_t *out, uint32_t cap);
+/* ---- end generated: terrain.c ---- */
 
 /* ---- generated from signatures.toml: unit.c ---- */
 int om_command_activate_ability(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double target_x, double target_y);
@@ -1993,6 +2113,7 @@ uint32_t om_unit_count(const om_world *w);
 double om_unit_damage_reduction(om_world *w, uint32_t unit_id);
 void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3);
 double om_unit_effective_speed(om_world *w, uint32_t unit_id);
+double om_unit_order_speed(om_world *w, uint32_t unit_id);
 void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_id, double radius);
 int32_t om_unit_get_faction(const om_world *w, uint32_t unit_id);
 double om_unit_get_hp(const om_world *w, uint32_t unit);
@@ -2032,6 +2153,8 @@ uint32_t om_unit_spawn_combat(om_world *w, int32_t p1, double p2, double x);
 uint32_t om_unit_spawn_for_category(om_world *w, int category, int32_t faction_id, double x, double y, uint32_t layer);
 int32_t om_unit_target(om_world *w, uint32_t unit_id);
 uint32_t om_unit_targeting_cohort(om_world *w, uint32_t unit_id);
+uint32_t om_tactical_event_count(om_world *w);
+int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a, int32_t *b, uint64_t *tick);
 /* ---- end generated: unit.c ---- */
 
 #ifdef __cplusplus

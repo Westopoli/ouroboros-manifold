@@ -17,7 +17,7 @@ from scripts.skilllab import batches, skills  # noqa: E402
 from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
-DRAFT = "unconfirmed draft"
+DRAFT = "draft"
 SKILLS_UNEXPRESSED = ["S1", "S3", "S4", "S5"]
 
 
@@ -42,9 +42,15 @@ def _section(text, head):
 
 
 def test_names_and_get():
-    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
+    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
     assert batches.BASE_SETTINGS == {"OM_TP_PURSUE_BY_STEERING": 1}
     for n in batches.NAMES:
+        if n == "layout_search":
+            # P4 adds layout_search by design; it is dispatched through batches.layout_search, not get().
+            assert callable(batches.layout_search)
+            with pytest.raises(ValueError):
+                batches.get(n)
+            continue
         d = batches.get(n)
         assert d.name == n and d.title and d.scene
         assert dataclasses.is_dataclass(d)
@@ -64,7 +70,8 @@ FORMATION = [(f"{k}@{n}{suffix}", n, kind, st, p0, p1, unit)
                                          ("counter", "counter", DRAFT, "S2:counter", "line"))]
 
 
-def test_formation_cells_in_order_with_exact_fields():
+def test_formation_cells_in_order_with_exact_fields(strip):
+    strip("S1", "S3", "S4", "S5")
     d = batches.get("formation")
     assert [c.label for c in d.cells] == [f[0] for f in FORMATION]
     assert len(d.cells) == 24
@@ -85,7 +92,8 @@ def test_formation_unexpressed_list_names_the_gaps():
     assert "first anchor" in joined
 
 
-def test_formation_status_comes_from_the_registered_play():
+def test_formation_status_comes_from_the_registered_play(strip):
+    strip("S1", "S3", "S4", "S5")
     orig_s, orig_c = skills.get("S2", "skilled"), skills.get("S2", "counter")
     try:
         for role, orig in (("skilled", orig_s), ("counter", orig_c)):
@@ -106,7 +114,8 @@ FOCUS = [("identical", "naive"), ("damage", "naive"), ("reach", "naive"),
          ("S2_skilled", DRAFT), ("S2_counter", DRAFT)]
 
 
-def test_focus_fire_cells_and_variants():
+def test_focus_fire_cells_and_variants(strip):
+    strip("S1", "S3", "S4", "S5")
     d = batches.get("focus_fire")
     assert [c.label for c in d.cells] == [f[0] for f in FOCUS] + ["S1_skilled", "S3_skilled", "S4_skilled", "S5_skilled"]
     for c, (label, st) in zip(d.cells, FOCUS):
@@ -145,7 +154,7 @@ def test_default_scan_fn_is_looked_up_at_call_time(tmp_path, monkeypatch):
     fake = FakeScan()
     monkeypatch.setattr(scan_mod, "scan", fake)
     paths = batches.run(faked(batches.get("formation")), tmp_path / "late")
-    assert len(fake.calls) == 24 and set(paths) == {"csv", "run", "page"}
+    assert len(fake.calls) == 24 and set(paths) == {"csv", "run", "page", "summary"}
 
 
 def test_not_expressed_cells_are_never_scanned_and_are_listed(tmp_path):
@@ -172,10 +181,11 @@ def test_paths_and_out_dir_created(tmp_path):
     assert paths == {"csv": out / "formation.csv", "run": out / "formation_run.md",
                      "page": out / "formation_page.html"} or \
         {k: Path(v) for k, v in paths.items()} == {"csv": out / "formation.csv", "run": out / "formation_run.md",
-                                                  "page": out / "formation_page.html"}
+                                                  "page": out / "formation_page.html", "summary": out / "summary.json"}
 
 
-def test_csv_rows_carry_labels(tmp_path):
+def test_csv_rows_carry_labels(tmp_path, strip):
+    strip("S1", "S3", "S4", "S5")
     d, fake, paths = _run("focus_fire", tmp_path)
     with open(paths["csv"], newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
@@ -213,7 +223,8 @@ def test_run_file_sections_in_fixed_order_with_provisional_line(tmp_path):
         assert n in files
 
 
-def test_cells_table_lists_every_cell_with_status(tmp_path):
+def test_cells_table_lists_every_cell_with_status(tmp_path, strip):
+    strip("S1", "S3", "S4", "S5")
     d, _, paths = _run("focus_fire", tmp_path)
     sec = _section(_text(paths["run"]), "Cells")
     for c in d.cells:

@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable; conflict reaches the player through the world view (E-16), chronicle (E-09), and missions (E-10). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-032 to S-041 have no open flags and passed 2026-09-14. S-226 (added 2026-10-02) has not been through the gate and is blocked on Q-226-01 and Q-226-02.
+**Gate verdict: not passed.** S-032 to S-041 have no open flags and passed 2026-09-14. S-226 (added 2026-10-02) has not been through the gate and is blocked only on the parked Q-226-02.
 
 ## Purpose
 
@@ -181,13 +181,13 @@ As a commander, I want a faction's standing in the galaxy to carry into the econ
 Direction decided in part 2026-10-02 (E-22 S-178, E-22 S-179, E-22 S-181; E-22 S-179 and S-181 hold the economy); how it meets this epic is open. Not scheduled for building.
 
 Rules
-- R-226-01  Given a mission in which a side's economy runs (E-22), When it is set up, Then [Q-226-01: whether and how the owning faction's budget (S-033), its economy or its technology tier sets it; today the budget sets only the enemy's power, E-10 R-074-01].
-- R-226-02  Given a faction's archetype, attack weight, expand weight and attack confidence (S-032), When the doctrine that runs its economy is chosen (E-22 S-179, S-181), Then [Q-226-02: whether any of them links to a doctrine, for the enemy and for the player's civilization; this epic knows archetype only as combat and expansion behaviour].
+- R-226-01  Given a mission in which a side's economy runs (E-22), When it is set up, Then the owning faction's economy and technology tier set its starting scale, and the region's situation slants it too (Westley, 2026-10-07; E-22 R-177-06); today the budget (S-033) sets only the enemy's power, E-10 R-074-01.
+- R-226-02  Given a faction's archetype, attack weight, expand weight and attack confidence (S-032), When the doctrine that runs its economy is chosen (E-22 S-179, S-181), Then no link to a doctrine is made in the beta; the individual playstyles of enemy characters are post-beta (Westley, 2026-10-07) [Q-226-02: parked].
 - R-226-03  Given a region is conquered here (S-038), When a base of operations is occupied in a mission (E-22 S-178), Then the two are separate: S-038 is a region-level ownership change resolved on a strategic tick, and occupation inside a mission has no stated link to it (E-02 S-220, Q-220-01).
 
 Inputs: faction budget, archetype, tier; mission setup (E-10).
 Outputs: none until the flags are answered.
-Open flags: Q-226-01, Q-226-02.
+Open flags: Q-226-02 (parked for the beta).
 
 ## Inputs
 

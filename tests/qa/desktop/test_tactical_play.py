@@ -69,7 +69,7 @@ def _to_tactical(game: GodotGame) -> None:
 
 @pytest.fixture()
 def tactical_game():
-    g = GodotGame(qa_port=pick_free_port(), seed=1)
+    g = GodotGame(qa_port=pick_free_port(), seed=1, resolution="1920x1080")
     g.start()
     g.wait_for_port(timeout=60.0)
     try:
@@ -94,7 +94,12 @@ def test_c5_3_drawn_units_are_on_screen(tactical_game):
 def test_c5_3_real_drag_selects_and_right_click_orders_a_move(tactical_game):
     client = tactical_game.client
     drawn = len(_qa(client)["units_px"])
-    client.call("input", "drag", 0, 0, 1900, 140)
+    px = list(_qa(client)["units_px"].values())
+    xs = [p[0] for p in px]
+    ys = [p[1] for p in px]
+    x0, y0 = max(8, int(min(xs)) - 8), max(8, int(min(ys)) - 8)
+    x1, y1 = min(1920 - 8, int(max(xs)) + 8), min(1080 - 8, int(max(ys)) + 8)
+    client.call("input", "drag", x0, y0, x1, y1)
     time.sleep(0.5)
     selected = _qa(client)["selected"]
     assert len(selected) == drawn and drawn > 0, "drag selected %d of %d drawn units" % (len(selected), drawn)
@@ -176,15 +181,26 @@ def test_c5_4_move_order_single_command_and_units_move(tactical_game):
     mean_wx = sum(v[0] for v in pre_pos.values()) / len(pre_pos)
     mean_wy = sum(v[1] for v in pre_pos.values()) / len(pre_pos)
     target_wx = mean_wx
+    # TD-VG-A-16: before, the +200 wu target was always projected and, when it fell off-window, the fallback click (a nearer point)
+    # was taken, so the 90% pace assertion read an early arrival. A18 centres the camera on the home box, which puts the +Y
+    # target below the window (y=758 of 720); now the -200 wu target is tried first, and the fallback stays as the last resort.
+    _sign = "+"
     target_wy = mean_wy + 200.0
     target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
     target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
     target_px = target_cx * cw_scale
     target_py = target_cy * ch_scale
+    if not (0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H):
+        _sign = "-"
+        target_wy = mean_wy - 200.0
+        target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
+        target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
+        target_px = target_cx * cw_scale
+        target_py = target_cy * ch_scale
 
     if 0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H:
         client.click(target_px, target_py, 2)
-        _move_via = "right-click at window (%.0f, %.0f)" % (target_px, target_py)
+        _move_via = "right-click at window (%.0f, %.0f), target %s200 wu" % (target_px, target_py, _sign)
     else:
         safe_px, safe_py = WIN_W * 0.5, WIN_H * 0.02
         client.click(safe_px, safe_py, 2)

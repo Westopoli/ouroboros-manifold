@@ -61,7 +61,7 @@ _build_libs()
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 4
+EXPECTED_ABI_VERSION = 7
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -531,7 +531,12 @@ class OMTacParam:
     AREA_DOWN_4 = 58
     TARGET_POLICY_FACTION_1 = 59
     PING_ALERT = 60
-    _COUNT = 61
+    TERRAIN_STEEP_DEG = 61
+    SLOPE_UP_DIV = 62
+    SLOPE_DOWN_MULT = 63
+    SIGHT_EYE_HEIGHT = 64
+    GROUND_FLYER_SEEN_MULT = 65
+    _COUNT = 66
 
 
 class OMEmission:
@@ -1772,6 +1777,20 @@ class OmSelectionRecord(ctypes.Structure):
     ]
 
 
+class OMSlope(ctypes.Structure):
+    _fields_ = [
+        ("x0", ctypes.c_double),
+        ("y0", ctypes.c_double),
+        ("x1", ctypes.c_double),
+        ("y1", ctypes.c_double),
+        ("mx", ctypes.c_double),
+        ("my", ctypes.c_double),
+        ("length", ctypes.c_double),
+        ("lower_band", ctypes.c_int32),
+        ("upper_band", ctypes.c_int32),
+    ]
+
+
 class OMStructureHUD(ctypes.Structure):
     _fields_ = [
         ("timer_progress", ctypes.c_double),
@@ -1872,6 +1891,7 @@ STRUCT_C_NAMES = {
     "OmRevoltRecord": "om_revolt_record",
     "om_revolt_record": "om_revolt_record",
     "OmSelectionRecord": "om_selection_record",
+    "OMSlope": "om_slope",
     "OMStructureHUD": "om_structure_hud",
     "om_structure_hud": "om_structure_hud",
     "OmTimeJumpReport": "om_time_jump_report",
@@ -1893,11 +1913,18 @@ def _bind_e01(lib):
     _bind(lib, "om_command_ping", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "caster", "layer", "x", "y"))
     _bind(lib, "om_command_set_emission", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_int], ctypes.c_int, ("w", "unit_ids", "n_units", "mode"))
     _bind(lib, "om_command_set_layer", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_ids", "n_units", "layer"))
+    _bind(lib, "om_era_kind", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_ping_alert_count", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction"))
     _bind(lib, "om_ping_alert_get", [W, ctypes.c_int32, ctypes.c_uint32, V], ctypes.c_int, ("w", "faction", "index", "out"))
+    _bind(lib, "om_roster_set_movement_kind", [W, ctypes.c_int, ctypes.c_int], ctypes.c_int, ("w", "type", "kind"))
     _bind(lib, "om_roster_set_reach", [W, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_type", "layers_up", "layers_down"))
+    _bind(lib, "om_set_era_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "kind"))
+    _bind(lib, "om_space_field_get_mask", [W, ctypes.c_uint32, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32, ("w", "layer", "out", "cap"))
+    _bind(lib, "om_terrain_clear", [W], None, ("w",))
+    _bind(lib, "om_terrain_nearest_walkable", [W, ctypes.c_double, ctypes.c_double, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "x", "y", "ox", "oy"))
     _bind(lib, "om_unit_get_emission", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
     _bind(lib, "om_unit_get_target_layer", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit"))
+    _bind(lib, "om_unit_profile_movement_kind", [W, ctypes.c_int], ctypes.c_int, ("w", "type"))
     _bind(lib, "om_unit_profile_reach", [W, ctypes.c_int, P(ctypes.c_uint32), P(ctypes.c_uint32)], ctypes.c_int, ("w", "unit_type", "up", "down"))
     _bind(lib, "om_unit_transition_progress", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit"))
     lib._e01_bound = True
@@ -2345,6 +2372,7 @@ def _bind_e11(lib):
     _bind(lib, "om_unit_hp", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_in_backswing", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
     _bind(lib, "om_unit_in_flinch", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_unit_order_speed", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_output_multiplier", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_position_x", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_position_y", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
@@ -2395,11 +2423,14 @@ def _bind_e12(lib):
     _bind(lib, "om_map_add_spine_node", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_uint32, ("w", "x", "y", "p2"))
     _bind(lib, "om_map_add_structure", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int32], ctypes.c_uint32, ("w", "x", "y", "owner_faction"))
     _bind(lib, "om_map_add_vantage_node", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "radius"))
+    _bind(lib, "om_map_get_obstacle_at", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "i", "x", "y", "r"))
+    _bind(lib, "om_map_obstacle_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_mission_begin", [W], None, ("w",))
     _bind(lib, "om_mission_get_clock", [W], ctypes.c_uint64, ("w",))
     _bind(lib, "om_mission_get_phase", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_mission_is_started", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_mission_set_phase", [W, ctypes.c_int], None, ("w", "phase"))
+    _bind(lib, "om_objective_get_done", [W, ctypes.c_uint32], ctypes.c_int, ("w", "idx"))
     _bind(lib, "om_player_can_see", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "faction_id", "unit"))
     _bind(lib, "om_player_can_see_friendly", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "faction_id", "unit"))
     _bind(lib, "om_player_can_see_unit", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "unit"))
@@ -2411,6 +2442,11 @@ def _bind_e12(lib):
     _bind(lib, "om_set_era_flag", [W, ctypes.c_char_p, ctypes.c_int], None, ("w", "name", "on"))
     _bind(lib, "om_set_era_name", [W, ctypes.c_char_p], None, ("w", "name"))
     _bind(lib, "om_strategic_agent_read_region_field", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "p0", "region_idx", "field"))
+    _bind(lib, "om_structure_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_structure_get_at", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "i"))
+    _bind(lib, "om_tactical_event_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_tactical_event_get_at", [W, ctypes.c_uint32, P(ctypes.c_int32), P(ctypes.c_uint32), P(ctypes.c_int32), P(ctypes.c_uint64)], ctypes.c_int, ("w", "i", "kind", "a", "b", "tick"))
+    _bind(lib, "om_terrain_get_heights", [W, P(ctypes.c_int32), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
     _bind(lib, "om_unit_acquire_target", [W, ctypes.c_uint32], None, ("w", "unit"))
     _bind(lib, "om_unit_attack", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "attacker", "target"))
     _bind(lib, "om_unit_brace_phase", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "unit_id"))
@@ -2627,6 +2663,9 @@ def _bind_e17(lib):
     P = ctypes.POINTER
     V = ctypes.c_void_p
     W = OMWorldP
+    _bind(lib, "om_density_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "x", "y"))
+    _bind(lib, "om_doctrine_get", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_economy_place", [W, ctypes.c_int32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "building", "x", "y"))
     _bind(lib, "om_fairness_evaluate", [W, V], None, ("w", "byref"))
     _bind(lib, "om_fairness_force_score", [W, ctypes.c_double], None, ("w", "composite"))
     _bind(lib, "om_fairness_is_score_logged", [W], ctypes.c_int, ("w",))
@@ -2636,6 +2675,8 @@ def _bind_e17(lib):
     _bind(lib, "om_gradient_get_anchor_intensity", [ctypes.c_int, ctypes.c_int], ctypes.c_double, ("node", "gradient"))
     _bind(lib, "om_gradient_get_anchor_radius", [ctypes.c_int, ctypes.c_int], ctypes.c_double, ("p0", "p1"))
     _bind(lib, "om_gradient_sample_single", [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_double, ("p0", "p1", "p2", "p3"))
+    _bind(lib, "om_lot_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_lot_get_at", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
     _bind(lib, "om_map_add_layer_restriction_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], None, ("w", "p1", "zone", "p3"))
     _bind(lib, "om_map_archetype_canvas_category", [ctypes.c_uint32], ctypes.c_int, ("mission",))
     _bind(lib, "om_map_check_boundary_gradient_discontinuity", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "p1", "boundary"))
@@ -2685,8 +2726,33 @@ def _bind_e17(lib):
     _bind(lib, "om_proc_arch_section_is_era_agnostic", [ctypes.c_int], ctypes.c_int, ("section_type",))
     _bind(lib, "om_render_detect_repeated_tile_boundary", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_route_grid_is_cell_blocked", [ctypes.c_double], ctypes.c_int, ("obstacle",))
+    _bind(lib, "om_space_field_clear", [W], None, ("w",))
+    _bind(lib, "om_space_field_generate_nodes", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double, P(ctypes.c_double), P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_int, ("w", "seed", "canvas_w", "canvas_h", "density", "node_xy", "node_slots", "n_nodes"))
+    _bind(lib, "om_space_field_poly_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_space_field_poly_get", [W, ctypes.c_uint32, P(ctypes.c_uint32), P(ctypes.c_uint32), P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("w", "i", "layer", "kind", "xy", "cap_pts"))
+    _bind(lib, "om_space_field_present", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_space_hash32", [ctypes.c_int32, ctypes.c_int32, ctypes.c_int32, ctypes.c_uint32], ctypes.c_uint32, ("ix", "iy", "iz", "seed"))
+    _bind(lib, "om_space_noise_layer", [ctypes.c_uint32, ctypes.c_double, ctypes.c_uint32, ctypes.c_int, P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("layer_seed", "canvas", "k", "independent", "out", "cap"))
+    _bind(lib, "om_strongpoint_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_strongpoint_get_at", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
+    _bind(lib, "om_terrain_band_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
+    _bind(lib, "om_terrain_band_heights", [W, P(ctypes.c_double), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
+    _bind(lib, "om_terrain_cell_band", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "cx", "cy"))
+    _bind(lib, "om_terrain_cells", [W, P(ctypes.c_uint32), P(ctypes.c_uint32)], ctypes.c_uint32, ("w", "w_cells", "h_cells"))
+    _bind(lib, "om_terrain_dump_bands", [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "cap"))
+    _bind(lib, "om_terrain_generate", [W, ctypes.c_uint64, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "seed", "canvas_w", "canvas_h"))
+    _bind(lib, "om_terrain_ground_at", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "layer", "x", "y"))
+    _bind(lib, "om_terrain_height_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "x", "y"))
+    _bind(lib, "om_terrain_present", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_terrain_sight_blocks", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "layer0", "x0", "y0", "layer1", "x1", "y1"))
+    _bind(lib, "om_terrain_slope_at", [W, ctypes.c_double, ctypes.c_double, V], ctypes.c_int, ("w", "x", "y", "out"))
+    _bind(lib, "om_terrain_slope_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_terrain_slope_get", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "out"))
+    _bind(lib, "om_terrain_walk_mask", [W, ctypes.c_int, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_uint32, ("w", "layer", "out", "cap"))
+    _bind(lib, "om_terrain_walkable_at", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
     _bind(lib, "om_unit_get_position", [W, ctypes.c_uint32, V], None, ("w", "unit_id", "byref"))
     _bind(lib, "om_unit_order_hold_node", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "unit_id", "node_id"))
+    _bind(lib, "om_wave_get_since", [W, ctypes.c_uint32, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "tick", "out", "cap"))
     lib._e17_bound = True
 
 

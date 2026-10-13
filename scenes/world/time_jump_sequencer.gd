@@ -172,10 +172,9 @@ func _build_layout() -> void:
 	env.environment = sky_env
 	_world_sub_viewport.add_child(env)
 
-	_shell = load("res://scenes/shared/world_view/world_view_shell.tscn").instantiate()
+	_shell = load("res://scenes/galaxy/galaxy_view.tscn").instantiate()
+	_shell.driven = true
 	_world_sub_viewport.add_child(_shell)
-	_shell.set_viewport(_world_sub_viewport)
-	_shell.setup_era(EraConfig.ACTIVE_ERA_ID)
 	if _shell.has_signal("region_clicked"):
 		_shell.region_clicked.connect(_on_shell_region_clicked)
 	if _shell.has_signal("empty_space_clicked"):
@@ -362,6 +361,7 @@ func _apply_keyframe(kf: Dictionary) -> void:
 			if not timeline_active:
 				_shell.update_region_node(rid, sig * 1.5, color)
 				if faction_id != "":
+					_shell.set_region_owner(rid, faction_id)
 					_shell.update_territory(rid, sig * 6.0, color)
 				else:
 					_shell.remove_territory(rid)
@@ -488,6 +488,7 @@ func _apply_ownership_tick(ownership: Dictionary) -> void:
 						_regions_state[rid].get("x", 0.0),
 						_regions_state[rid].get("y", 0.0),
 						_regions_state[rid].get("z", 0.0))
+					_shell.set_region_owner(rid, faction_id)
 					_shell.set_territory(rid, pos, sig * 6.0, color)
 				else:
 					_shell.remove_territory(rid)

@@ -5,35 +5,37 @@
   "era_spatial_scale": "placeholder: test fixture era with no real spatial scale.",
   "era_tone": "placeholder: test fixture era with no real tone.",
   "era_order": 2,
+  "kind": "space",
+  "doctrines": ["boom", "fortify", "press", "balanced"],
   "test_only": true,
 
   "units": {
-    "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "vanguard":    { "category": "line",   "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/line_unit.tscn" },
       "2": { "scene": "units/line_unit.tscn" },
       "3": { "scene": "units/line_unit.tscn" }
     }},
-    "warden":      { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "warden":      { "category": "line",   "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/line_unit.tscn" },
       "2": { "scene": "units/line_unit.tscn" },
       "3": { "scene": "units/line_unit.tscn" }
     }},
-    "bombard":     { "category": "siege",  "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "bombard":     { "category": "siege",  "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/siege_unit.tscn" },
       "2": { "scene": "units/siege_unit.tscn" },
       "3": { "scene": "units/siege_unit.tscn" }
     }},
-    "bastion":     { "category": "siege",  "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "bastion":     { "category": "siege",  "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/siege_unit.tscn" },
       "2": { "scene": "units/siege_unit.tscn" },
       "3": { "scene": "units/siege_unit.tscn" }
     }},
-    "raider":      { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+    "raider":      { "category": "strike", "movement": "flying", "squad_count": 4, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/strike_unit.tscn" },
       "2": { "scene": "units/strike_unit.tscn" },
       "3": { "scene": "units/strike_unit.tscn" }
     }},
-    "interceptor": { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+    "interceptor": { "category": "strike", "movement": "flying", "squad_count": 4, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/strike_unit.tscn" },
       "2": { "scene": "units/strike_unit.tscn" },
       "3": { "scene": "units/strike_unit.tscn" }

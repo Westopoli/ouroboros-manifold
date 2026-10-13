@@ -162,6 +162,12 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     om_support_install_net_hooks(w);
     om_mission_install_net_hooks(w);
     om_mapgen_install_net_hooks(w);
+    w->terrain_state = NULL;
+    w->terrain_state_free = NULL;
+    w->terrain_state_size = NULL;
+    w->terrain_state_write = NULL;
+    w->terrain_state_read = NULL;
+    om_terrain_install_net_hooks(w);
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes
      * faction_stance_counter/faction_cooperative_since (0 = never-counted /
@@ -203,6 +209,9 @@ void om_world_free(om_world *w) {
     }
     if (w->net_state && w->net_state_free) {
         w->net_state_free(w->net_state);
+    }
+    if (w->terrain_state && w->terrain_state_free) {
+        w->terrain_state_free(w->terrain_state);
     }
     if (w->mission_state && w->mission_state_free) {
         w->mission_state_free(w->mission_state);
@@ -346,7 +355,6 @@ __attribute__((weak)) uint64_t om_world_step(om_world *w) { if (!w) return 0; w-
 __attribute__((weak)) uint64_t om_world_run(om_world *w, uint64_t n) { (void)n; return w ? w->tick : 0; }
 __attribute__((weak)) int om_region_drift(const om_world *w, uint32_t idx, om_drift_row *out) { (void)w;(void)idx;(void)out; return -1; }
 __attribute__((weak)) uint64_t om_world_checksum(const om_world *w) { (void)w; return 0; }
-__attribute__((weak)) double om_sin(double x) { return sin(x); }
 __attribute__((weak)) void om_trace_enable(om_world *w, int on) { if (w) w->trace_on = on ? 1 : 0; }
 __attribute__((weak)) uint64_t om_trace_len(const om_world *w) { return w ? w->trace_len : 0; }
 __attribute__((weak)) uint64_t om_trace_read(const om_world *w, uint64_t s, uint64_t c, om_trace_row *o) { (void)w;(void)s;(void)c;(void)o; return 0; }

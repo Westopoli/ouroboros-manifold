@@ -102,7 +102,10 @@ class GodotGame:
     module (see the `game` fixture in test_flow_spine.py)."""
 
     def __init__(self, qa_port: int, seed: int = 1, resolution: str = "1280x720",
-                 reset_privacy_flag: bool = True):
+                 reset_privacy_flag: bool = True, extra_args: list[str] | None = None,
+                 renderer: str | None = None):
+        self.renderer = os.environ.get("OM_QA_RENDERER") or renderer or "opengl3"
+        self.extra_args = list(extra_args or [])
         self.qa_port = qa_port
         self.seed = seed
         self.resolution = resolution
@@ -118,6 +121,17 @@ class GodotGame:
         self.proc: subprocess.Popen | None = None
         self._stdout_f = None
         self._stderr_f = None
+
+    def godot_args(self, godot: str = "godot") -> list[str]:
+        return [
+            "xvfb-run", "-a", "-s", "-screen 0 %sx24" % self.resolution,
+            godot, "--path", str(REPO_ROOT),
+            "--display-driver", "x11", "--rendering-driver", self.renderer,
+            "-w", "--position", "0,0", "--resolution", self.resolution,
+            "--fixed-fps", "30",
+            "--", "--qa-port", str(self.qa_port), "--seed", str(self.seed),
+            *self.extra_args,
+        ]
 
     def start(self) -> None:
         # Reproducible bug (see docs/northstar/plans/push/specs/C8.md "Findings"):
@@ -145,14 +159,7 @@ class GodotGame:
         env["OM_SAVE_DIR"] = str(self.save_dir)
         env["LIBGL_ALWAYS_SOFTWARE"] = "1"
         env["GALLIUM_DRIVER"] = "llvmpipe"
-        cmd = [
-            "xvfb-run", "-a", "-s", "-screen 0 %sx24" % self.resolution,
-            godot, "--path", str(REPO_ROOT),
-            "--display-driver", "x11", "--rendering-driver", "opengl3",
-            "-w", "--position", "0,0", "--resolution", self.resolution,
-            "--fixed-fps", "30",
-            "--", "--qa-port", str(self.qa_port), "--seed", str(self.seed),
-        ]
+        cmd = self.godot_args(godot)
         self._stdout_f = open(self.out_dir / "stdout.log", "wb")
         self._stderr_f = open(self.out_dir / "stderr.log", "wb")
         # start_new_session=True puts xvfb-run and the real godot process it

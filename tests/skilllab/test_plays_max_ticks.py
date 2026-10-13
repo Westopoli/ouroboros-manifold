@@ -1,4 +1,4 @@
-# spec: ruling A201 (b): plays set max_ticks 8000 when max(size, enemy_heads) >= 32, else the 6000 default
+# spec: ruling A201 (b) as changed 2026-10-06 (Westley, tick cap, provisional; TD-LAB-tick-cap): one cap of 12000 for big and small cells alike
 import sys
 from pathlib import Path
 
@@ -16,30 +16,30 @@ from scripts.skilllab.positions import ambush_play, bait_play, fall_back_play  #
 
 
 def test_constant():
-    assert plays.MAX_TICKS_BIG == 8000
+    assert plays.MAX_TICKS_BIG == 12000
 
 
-@pytest.mark.parametrize("size,heads,want", [(16, 24, 6000), (32, 8, 8000), (16, 32, 8000), (31, 31, 6000),
-                                             (32, 32, 8000), (1, 1, 6000)])
+@pytest.mark.parametrize("size,heads,want", [(16, 24, 12000), (32, 8, 12000), (16, 32, 12000), (31, 31, 12000),
+                                             (32, 32, 12000), (1, 1, 12000)])
 def test_max_ticks_for(size, heads, want):
     assert max_ticks_for(size, heads) == want
 
 
 @pytest.mark.parametrize("play", [blob_play, line_play, reach_play, damage_play])
 def test_plain_plays_big_and_small(play):
-    assert play(32)(8, False).max_ticks == 8000
-    assert play(16)(32, False).max_ticks == 8000
-    assert play(16)(24, False).max_ticks == 6000
+    assert play(32)(8, False).max_ticks == 12000
+    assert play(16)(32, False).max_ticks == 12000
+    assert play(16)(24, False).max_ticks == 12000
 
 
 def test_asym_play_big_and_small():
     mk = lambda n: asym_play(n, Side("blob"), Side("line"))
-    assert mk(32)(8, False).max_ticks == 8000
-    assert mk(16)(32, False).max_ticks == 8000
-    assert mk(16)(24, False).max_ticks == 6000
+    assert mk(32)(8, False).max_ticks == 12000
+    assert mk(16)(32, False).max_ticks == 12000
+    assert mk(16)(24, False).max_ticks == 12000
 
 
 @pytest.mark.parametrize("play", [bait_play, ambush_play, fall_back_play])
-def test_position_plays_at_32_get_8000(play):
-    assert play(32)(8, False).max_ticks == 8000
-    assert play(16)(8, False).max_ticks == 6000
+def test_position_plays_at_32_get_12000(play):
+    assert play(32)(8, False).max_ticks == 12000
+    assert play(16)(8, False).max_ticks == 12000

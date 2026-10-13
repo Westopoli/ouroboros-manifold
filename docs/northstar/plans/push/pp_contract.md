@@ -152,7 +152,12 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 | 58 | `OM_TP_AREA_DOWN_4` | real | 1.0 | 0 | 10 | plan Phase C (area multipliers by signed offset); no number given, 1.0 by analogy with RANGE and DAMAGE (writer) | writer: non-negative, top 10 |
 | 59 | `OM_TP_TARGET_POLICY_FACTION_1` | int | -1 | -1 | 1 | A196: faction 1's target policy; -1 = unset, faction 1 follows `OM_TP_TARGET_POLICY` (faction 0's, range 0 to 1); 0 nearest, 1 most damaged | lab only; whole numbers -1 to 1 |
 | 60 | `OM_TP_PING_ALERT` | bool | 0 | 0 | 1 | R-162-03 (Westley 2026-10-05): 0 the pinged side is told nothing, 1 it gets the 60-degree alert | switch: exactly 0 or 1 |
-| 61 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
+| 61 | `OM_TP_TERRAIN_STEEP_DEG` | real | 35 | 0 | 90 | R-200-03, Q-189-02 (30 to 35; the approved mockups used 35); terrain stage 1 spec 2026-10-05 | writer: degrees, 0 to 90 |
+| 62 | `OM_TP_SLOPE_UP_DIV` | real | 1.1 | 1 | 10 | R-004-07 (Westley 2026-10-06): speed on a slope is divided by this going up; provisional (2026-10-06); terrain stage 2 spec | writer: 1 to 10 |
+| 63 | `OM_TP_SLOPE_DOWN_MULT` | real | 1.1 | 1 | 10 | R-004-07 (Westley 2026-10-06): speed on a slope is multiplied by this going down; provisional (2026-10-06) | writer: 1 to 10 |
+| 64 | `OM_TP_SIGHT_EYE_HEIGHT` | real | 50 | 0 | 1000 | R-005-10: eye height in wu above the ground at both ends of a sight line; lab draft, provisional (2026-10-06) | writer: wu, 0 to 1000 |
+| 65 | `OM_TP_GROUND_FLYER_SEEN_MULT` | real | 1.5 | 1 | 10 | R-005-11: a ground-era flyer is seen from max(observer, flyer sensor radius) times this, so from farther than it sees; lab draft, provisional (2026-10-06) | writer: 1 to 10 |
+| 66 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
 
 Order: the six switches first (Phase A needs the first four, Phase C the last two), then the brief G1 numbers, then the section 6 numbers, then the four families by signed offset (up 1 to 4, then down 1 to 4, each family in the order VISION, RANGE, DAMAGE, AREA). A later member is only ever appended before `OM_TP__COUNT`, never inserted.
 
@@ -178,7 +183,7 @@ Returns follow the existing `om_command_*` convention: 0 ok, nonzero otherwise. 
 - **`om_unit_profile_reach`** (`tactical_move.c`, G5): writes the type's reach to `*up` and `*down` (either may be NULL). 0 ok; -1 for an unknown type. Declared `const om_world *` here, the brief's sketch has a non-const world for a read-only call.
 - **`om_command_set_emission`** (`fog.c`, G6): `OM_EMIT_SILENT` (0, default, today's behaviour) or `OM_EMIT_ACTIVE` (1). 0 ok; -1 for any other mode, nothing changed. Unknown ids skipped. Takes effect on the next tick, costs nothing.
 - **`om_unit_get_emission`** (`fog.c`, G6): the unit's mode; 0 for an unknown unit.
-- **`om_command_ping`** (`fog.c`, G7): 0 ok and the ping is cast. A refused ping changes nothing and returns a reason: 1 caster unknown or dead, 2 point beyond `PING_REACH`, 3 caster on cooldown, 4 layer at or above `OM_LAYER_COUNT` (reason numbers proposed by writer; the brief names the four reasons only).
+- **`om_command_ping`** (`fog.c`, G7): 0 ok and the ping is cast. A refused ping changes nothing and returns a reason: 1 caster unknown or dead, 2 point beyond `PING_REACH`, 3 caster on cooldown, 4 layer at or above `OM_LAYER_COUNT`, 5 the world's era kind is ground (`om_era_kind` 1; terrain stage 2, R-005-09: checked after the caster check and before the reach check, so an unknown or dead caster still returns 1) (reason numbers proposed by writer; the brief names the four reasons only).
 - **`om_ping_alert_count`** (`fog.c`, G7): alerts held for `faction`; 0 for an unknown faction.
 - **`om_ping_alert_get`** (`fog.c`, G7): copies alert `index` (0 oldest) into `*out`; 0 ok, -1 when `index` is out of range or `out` is NULL. `om_ping_alert`: `{ uint64_t tick; int32_t faction; int32_t sector; }`, sector 0 to 5 counter-clockwise from +x.
 
@@ -207,6 +212,8 @@ Addendum 46 of `docs/northstar/plans/2026-10-01-architect-rulings-2.md`. The ope
 - **A170**: the guard call, row 18 (section 6, above); R-096-05 written into E-13 by the landing.
 - **A196**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 59): `OM_TP_TARGET_POLICY_FACTION_1`, int, default -1 (unset: faction 1 follows `OM_TP_TARGET_POLICY`), range -1 to 1, lab only. `OM_TP_TARGET_POLICY` keeps range 0 to 1 and means faction 0. `OM_TP__COUNT` becomes 60.
 - **R-162-03**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 60, no existing number moves): `OM_TP_PING_ALERT`, bool, default 0. `OM_TP__COUNT` becomes 61. R-162-01 also moves the `OM_TP_PING_REVEAL_TICKS` default from 40 to 100 (5 s); its range is unchanged.
+- **TERRAIN-1**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 61, no existing number moves): `OM_TP_TERRAIN_STEEP_DEG`, real, default 35, range 0 to 90. `OM_TP__COUNT` becomes 62. `OM_TP_PING_ALERT` landed first and holds 60, so this one is 61.
+- **TERRAIN-2**: four settings join the enum, appended last before `OM_TP__COUNT` (rows 62 to 65, no existing number moves): `OM_TP_SLOPE_UP_DIV`, `OM_TP_SLOPE_DOWN_MULT`, `OM_TP_SIGHT_EYE_HEIGHT`, `OM_TP_GROUND_FLYER_SEEN_MULT`, all real, defaults 1.1, 1.1, 50, 1.5. `OM_TP__COUNT` becomes 66. Defaults are Westley's 2026-10-06 rulings (slope) and lab drafts (sight), provisional (2026-10-06); the ranges are the writer's refusal bounds. The ping refusal reason 5 is added to section 6.
 - **A136**: the parity tolerances (1e-6 wu, 2e-3 rad) are provisional and Westley's; they are not part of this contract.
 
 ## 8. Tests that prove this piece

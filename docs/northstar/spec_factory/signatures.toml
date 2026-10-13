@@ -5,9 +5,9 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 4
-symbol_count = 634
-struct_count = 39
+abi_version = 7
+symbol_count = 767
+struct_count = 45
 ambiguous_remaining = 0
 
 [[symbols]]
@@ -5246,6 +5246,16 @@ confidence = "certain"
 note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
+name = "om_tac_event_push"
+module = "unit.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "kind", ctype = "int" }, { name = "a", ctype = "int" }, { name = "b", ctype = "int" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_tactical_category_multiplier"
 module = "unit.c"
 restype = "double"
@@ -5725,6 +5735,15 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint
 epics = ["E-11"]
 confidence = "likely"
 note = "approx base_speed * 2.5, == 0.0, > 0.0 -> double."
+
+[[symbols]]
+name = "om_unit_order_speed"
+module = "unit.c"
+restype = "double"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-11", "E-13"]
+confidence = "likely"
+note = "The speed a move order fixes for this unit: om_unit_effective_speed without the momentary backswing stop. Lasting modifiers apply (a player-cast Fortify's 0.4 x, R-086-06; a Vanguard that is immobile by R-086-03 reads 0). Used for the group speed cap, which is fixed at order time (E-13 R-095-01). Contract piece SPEEDCAP-contract."
 
 [[symbols]]
 name = "om_unit_engage"
@@ -6780,6 +6799,184 @@ epics = ["internal"]
 confidence = "certain"
 note = "internal (om_internal.h); no ctypes binding"
 
+[[symbols]]
+name = "om_terrain_generate"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint64_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Fill the terrain field from the seed alone; 0 on success, nonzero for a canvas the mapgen grid cannot hold. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_present"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "1 when a terrain field exists. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_height_at"
+module = "terrain.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Ground height in wu at a point; 0 outside the canvas. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_band_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Band 1 to 5 at a point; 0 when absent or outside. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_walkable_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "1 when the cell is walkable (slope within OM_TP_TERRAIN_STEEP_DEG). Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_ground_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer", ctype = "int" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "R-200-02: 1 on the ground band only; on a slope cell 1 on both bands it joins. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_band_heights"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "double *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "The five band floors (R-190-04); returns how many written. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_slope_count"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of slopes. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_slope_get"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "out", ctype = "OMSlope *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Slope i (R-001-06); 0 on success. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_cells"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "w_cells", ctype = "uint32_t *" }, { name = "h_cells", ctype = "uint32_t *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Grid size in cells; returns the cell count. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_cell_band"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "cx", ctype = "uint32_t" }, { name = "cy", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Band of one cell; 0 when absent or outside. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_dump_bands"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "uint8_t *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Whole-grid band bytes, row-major; returns how many written. Terrain stage 1 spec 2026-10-05, base stub."
+
+[[symbols]]
+name = "om_terrain_install_net_hooks"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_terrain_apply_ground"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_value2"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "seed", ctype = "uint64_t" }, { name = "x_q16", ctype = "int32_t" }, { name = "y_q16", ctype = "int32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_fbm2"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "seed", ctype = "uint64_t" }, { name = "x_q16", ctype = "int32_t" }, { name = "y_q16", ctype = "int32_t" }, { name = "octaves", ctype = "int" }, { name = "gain_q16", ctype = "int32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_sin_q16"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "turn_q16", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tn_cos_q16"
+module = "terrain_noise.c"
+restype = "int32_t"
+params = [{ name = "turn_q16", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_terrain_state_free"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "state", ctype = "void*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
 [[structs]]
 name = "OMAbilityEvent"
 source_test = "tests/csim/test_E11_S086_one_ability_each.py"
@@ -6999,3 +7196,351 @@ fields = [{ name = "tick", ctype = "uint64_t" }, { name = "faction", ctype = "in
 name = "OMNetCommand"
 source_test = "tests/csim/test_net_cmd_stream.py"
 fields = [{ name = "tick", ctype = "uint64_t" }, { name = "seq", ctype = "uint32_t" }, { name = "arg", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "peer", ctype = "uint8_t" }, { name = "verb", ctype = "uint8_t" }, { name = "layer", ctype = "uint8_t" }, { name = "n_units", ctype = "uint8_t" }]
+
+[[structs]]
+name = "OMSlope"
+source_test = "tests/csim/test_E01_R001_06_slopes.py"
+fields = [{ name = "x0", ctype = "double" }, { name = "y0", ctype = "double" }, { name = "x1", ctype = "double" }, { name = "y1", ctype = "double" }, { name = "mx", ctype = "double" }, { name = "my", ctype = "double" }, { name = "length", ctype = "double" }, { name = "lower_band", ctype = "int32_t" }, { name = "upper_band", ctype = "int32_t" }]
+
+[[symbols]]
+name = "om_roster_set_movement_kind"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "type", ctype = "int" }, { name = "kind", ctype = "int" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: movement kind (om_movement_kind) of a unit type; 0 ok, 1 unknown type, 2 unknown kind. Working body in the contract piece."
+
+[[symbols]]
+name = "om_unit_profile_movement_kind"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "type", ctype = "int" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: the type's movement kind; 0 (flying) for an unknown type. Working body in the contract piece."
+
+[[symbols]]
+name = "om_set_era_kind"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "kind", ctype = "int" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: era kind, 0 space or 1 ground (pack field, Q-146-04 a); 0 ok, 1 bad kind. Working body in the contract piece."
+
+[[symbols]]
+name = "om_era_kind"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: the era kind; default 0. Working body in the contract piece."
+
+[[symbols]]
+name = "om_terrain_walk_mask"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer", ctype = "int" }, { name = "out", ctype = "uint8_t *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: one byte per cell, 1 where a walker may stand on engine layer 0..4; returns the cell count; out NULL counts only. Contract stub writes zeros."
+
+[[symbols]]
+name = "om_terrain_slope_at"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "out", ctype = "OMSlope *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: lowest-index slope whose run contains the cell and whose bands match the cell's band; its index or -1. Contract stub returns -1."
+
+[[symbols]]
+name = "om_terrain_sight_blocks"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer0", ctype = "int" }, { name = "x0", ctype = "double" }, { name = "y0", ctype = "double" }, { name = "layer1", ctype = "int" }, { name = "x1", ctype = "double" }, { name = "y1", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Terrain stage 2 spec 2026-10-06: 1 when terrain stands in the sight line between two eyes (R-005-10); 0 when none or no terrain. Contract stub returns 0."
+
+[[symbols]]
+name = "om_terrain_nearest_walkable"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "ox", ctype = "double *" }, { name = "oy", ctype = "double *" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 3 spec 2026-10-06: centre of the nearest walkable cell to (x, y), ring search, lowest cell index on a tie; (x, y) itself when it is walkable or no terrain stands; -1 (outputs untouched) when no walkable cell exists or x or y is NaN."
+
+[[symbols]]
+name = "om_terrain_clear"
+module = "terrain.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+epics = ["E-01"]
+confidence = "likely"
+note = "Terrain stage 3 spec 2026-10-06: frees the terrain state so om_terrain_present is 0; a space mission after a ground one calls it."
+
+[[symbols]]
+name = "om_walk_route"
+module = "walk_route.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }, { name = "gx", ctype = "double" }, { name = "gy", ctype = "double" }, { name = "pts", ctype = "double*" }, { name = "cap", ctype = "uint32_t" }, { name = "seconds", ctype = "double*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_walker_tick"
+module = "tactical_move.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_move_terrain_epoch"
+module = "tactical_move.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tactical_event_count"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: events produced by the last om_tactical_step call (cap 512 per call); fire and kill in unit.c, capture in tactical_support.c."
+
+[[symbols]]
+name = "om_tactical_event_get_at"
+module = "unit.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "kind", ctype = "int32_t*" }, { name = "a", ctype = "uint32_t*" }, { name = "b", ctype = "int32_t*" }, { name = "tick", ctype = "uint64_t*" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: 0 ok, -1 out of range. kinds 0 fire, 1 ability, 2 kill, 3 capture."
+
+[[symbols]]
+name = "om_structure_count"
+module = "tactical_support.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: structures in the world."
+
+[[symbols]]
+name = "om_structure_get_at"
+module = "tactical_support.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: the i-th structure slot id, UINT32_MAX out of range."
+
+[[symbols]]
+name = "om_objective_get_done"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "idx", ctype = "uint32_t" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: 0 open, 1 complete, 2 failed, -1 no such objective."
+
+[[symbols]]
+name = "om_map_obstacle_count"
+module = "tactical_mapgen.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: recorded obstacles."
+
+[[symbols]]
+name = "om_map_get_obstacle_at"
+module = "tactical_mapgen.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "x", ctype = "double*" }, { name = "y", ctype = "double*" }, { name = "r", ctype = "double*" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: 0 ok, -1 out of range; mirrors om_map_cover_at."
+
+[[symbols]]
+name = "om_terrain_get_heights"
+module = "terrain.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "int32_t*" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-12"]
+confidence = "likely"
+note = "K0: fills cap cells of heights in cm, row-major; returns the cell count."
+
+[[symbols]]
+name = "om_terrain_set_heights"
+module = "terrain.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "cm", ctype = "const int32_t*" }, { name = "cells_w", ctype = "uint32_t" }, { name = "cells_h", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+internal = true
+note = "K-e5 test hook (hard-fixture path; listed in scripts/specfactory/reach_allowlist.toml): replaces the height grid of a generated ground mission with cm values (row-major, cells_w * cells_h). 0 and nothing changed when the dimensions differ from the terrain's or there is no terrain. Otherwise recomputes the five band floors as generation does (no cell above the dry level: lo and hi are the minimum and maximum of all cells), bands the cells with ts_bands_from_floors, runs om_terrain_apply_ground (walkable, slopes, walk masks and mapgen blocked bits rewritten; obstacle discs and cover rows survive; move epoch bumped), then om_density_rebuild_inputs; returns 1. Flat test terrains use heights above 6000 cm (the dry test is strict)."
+
+# ---- VG K-d: space field (lane D contract piece, 2026-10-07 spec rev 4; S-246 R-246-01..03, E-01 R-001-04) ----
+# Canvas 24000 wu only (240 x 240 cells of 100 wu, 5 layers). Mask byte: 1 blocked, 0 open (the blocked_bits sense).
+
+[[symbols]]
+name = "om_space_field_generate_nodes"
+module = "space_field.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint32_t" }, { name = "canvas_w", ctype = "double" }, { name = "canvas_h", ctype = "double" }, { name = "density", ctype = "double" }, { name = "node_xy", ctype = "const double*" }, { name = "node_slots", ctype = "const uint32_t*" }, { name = "n_nodes", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Generates the five-layer open-or-blocked field from the seed, replacing any held one; writes the masks to the route grid (blocked_bits) when the mapgen canvas is 24000 x 24000 wu. 0 ok, nonzero refused (null world, canvas not 24000 x 24000). density 0..90 (clamped), the plate keep share in percent; the pipe passes 35.0 (field_map_space.gd default).  VG-D8 R-246-07: the clearing nodes. node_xy is n_nodes x,y pairs (faction 0 anchor, faction 1 anchor, objective, then any extra, n_nodes capped at OM_SPACE_FIELD_MAX_NODES 8); node_slots[i] is the army slot count the pocket at node i must hold (0 for the objective): the pocket grows ring by ring until its open cells hold it. n_nodes below 3 or null node_xy takes the old 15/85 percent diagonal nodes. (The 5-argument wrapper om_space_field_generate was removed, TD-VG-D-10: it was reachable only from tests.)"
+
+[[symbols]]
+name = "om_space_field_present"
+module = "space_field.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "1 when a field is held, else 0 (also for a null world)."
+
+[[symbols]]
+name = "om_space_field_get_mask"
+module = "space_field.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "layer", ctype = "uint32_t" }, { name = "out", ctype = "uint8_t *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17", "E-01"]
+confidence = "likely"
+note = "One byte per cell of layer 0..4, row-major (cy * 240 + cx), 1 blocked 0 open; returns the cell count (57600); 0 and nothing written when no field, layer >= 5 or cap < 57600."
+
+[[symbols]]
+name = "om_space_field_clear"
+module = "space_field.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Drops the held field (a ground mission holds none). Does not touch the route grid."
+
+[[symbols]]
+name = "om_space_field_poly_count"
+module = "space_field.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of plate polygons held; 0 when no field."
+
+[[symbols]]
+name = "om_space_field_poly_get"
+module = "space_field.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "layer", ctype = "uint32_t *" }, { name = "kind", ctype = "uint32_t *" }, { name = "xy", ctype = "double *" }, { name = "cap_pts", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Polygon i: layer 0..4, kind 0 plate / 1 mass / 2 rubble, vertices as x,y pairs in wu into xy. Returns the vertex count; 0 when i is out of range or cap_pts is smaller than the count."
+
+# ---- VG K-e: economy fields (lane E1 contract piece, 2026-10-07 spec rev 6; R-193-01..04, R-218-01/02, R-179-01, R-168-01) ----
+
+[[symbols]]
+name = "om_lot_count"
+module = "economy_lots.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of lots; 0 on a fresh world or null world. Ascending id; a lot is never removed."
+
+[[symbols]]
+name = "om_lot_get_at"
+module = "economy_lots.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "out", ctype = "om_lot *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Lot i into out: 0 and fills, 1 (nothing written) when i is out of range, out is null or w is null."
+
+[[symbols]]
+name = "om_density_at"
+module = "economy_density.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Density field at a world point, dimensionless, 0.0 or more; 0.0 with no field, outside the canvas or a null world. Stage thresholds 0.10, 0.22, 0.38, 0.58 (Q-193-02)."
+
+[[symbols]]
+name = "om_strongpoint_count"
+module = "strongpoint.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Number of strongpoints; 0 on a fresh world or null world."
+
+[[symbols]]
+name = "om_strongpoint_get_at"
+module = "strongpoint.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "out", ctype = "om_strongpoint *" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Strongpoint i into out: 0 and fills, 1 (nothing written) when out of range, out null or w null. state 0 free, 1 held, 2 rubble."
+
+[[symbols]]
+name = "om_doctrine_get"
+module = "economy_doctrine.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Current doctrine: 0 boom, 1 fortify, 2 press, 3 balanced; a fresh world answers 3."
+
+[[symbols]]
+name = "om_wave_get_since"
+module = "economy_doctrine.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "tick", ctype = "uint32_t" }, { name = "out", ctype = "om_wave *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Wave events with tick >= tick, oldest first; writes at most cap rows (out may be null to only count); returns the match count. kind 0 shipment, 1 expansion, 2 season, 3 capture, 4 battle end."
+
+[[symbols]]
+name = "om_economy_place"
+module = "economy_lots.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "building", ctype = "int32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Player placement (R-168-01, R-193-03): 0 accepted, nonzero refused. K-e stub returns 0; E1e adds the refusals."
+# ---- VG K-d2: D1's symbols (space_noise.c), declared; density argument above ----
+
+[[symbols]]
+name = "om_space_hash32"
+module = "space_noise.c"
+restype = "uint32_t"
+params = [{ name = "ix", ctype = "int32_t" }, { name = "iy", ctype = "int32_t" }, { name = "iz", ctype = "int32_t" }, { name = "seed", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Integer lattice hash of field_map_space.gd hash32; the iz argument names the hash channel."
+
+[[symbols]]
+name = "om_space_noise_layer"
+module = "space_noise.c"
+restype = "uint32_t"
+params = [{ name = "layer_seed", ctype = "uint32_t" }, { name = "canvas", ctype = "double" }, { name = "k", ctype = "uint32_t" }, { name = "independent", ctype = "int" }, { name = "out", ctype = "double *" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "Smoothed two-octave value noise of layer k over the canvas (field_map_space.gd _sample_layer, _smooth); fills out with (canvas/100+1)^2 grid samples, row-major; independent nonzero samples the layer alone (z fixed at 0.5), zero samples the shared stack at depth k. Returns the sample count, 0 when cap is too small or allocation fails."

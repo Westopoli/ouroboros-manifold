@@ -16,7 +16,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
 import scripts.skilllab.asym as asym_mod  # noqa: E402
 import scripts.skilllab.plays as plays_mod  # noqa: E402
 from scripts.skilllab.contract import Block, Cover, Terrain  # noqa: E402
-from scripts.skilllab.maps import KINDS, sample_map, sample_maps  # noqa: E402
+from scripts.skilllab.maps import KINDS, LANE_CENTRE, LANE_HALF, LANE_LENGTH_PAST, LANE_THICK, sample_map, sample_maps  # noqa: E402
 from scripts.skilllab.plays import blob_play  # noqa: E402
 from scripts.skilllab.terrain import with_terrain  # noqa: E402
 
@@ -185,19 +185,20 @@ def _lane_walls(t):
 
 
 def test_lane_ranges():
-    """lane: two Blocks along x, one layer range, each length in [1200, 2400], thickness in [60, 120],
-    x centre in [-300, 300]; lane half-width in [100, 250], lane centre y in [-100, 100]."""
+    """lane: two Blocks along x, one layer range; each wall spans both spawns (x = -445, 445 in the default
+    frame) plus a drawn extra past each end in LANE_LENGTH_PAST; thickness in LANE_THICK; lane half-width in
+    LANE_HALF; lane centre y within LANE_CENTRE of 0."""
     for seed in SEEDS:
         t = sample_map("lane", seed)
         assert len(t.blocks) == 2 and t.covers == ()
         lower, upper = _lane_walls(t)
         assert (lower.layer_lo, lower.layer_hi) == (upper.layer_lo, upper.layer_hi) and _layers_ok(lower)
         for w in (lower, upper):
-            assert _in(w.x1 - w.x0, 1200, 2400) and _in(w.y1 - w.y0, 60, 120), (seed, w)
-            assert _in((w.x0 + w.x1) / 2, -300, 300), (seed, w)
+            assert _in(-445 - w.x0, *LANE_LENGTH_PAST) and _in(w.x1 - 445, *LANE_LENGTH_PAST), (seed, w)
+            assert _in(w.y1 - w.y0, *LANE_THICK), (seed, w)
         lane_lo, lane_hi = lower.y1, upper.y0
-        assert _in((lane_hi - lane_lo) / 2, 100, 250), seed
-        assert _in((lane_lo + lane_hi) / 2, -100, 100), seed
+        assert _in((lane_hi - lane_lo) / 2, *LANE_HALF), seed
+        assert _in((lane_lo + lane_hi) / 2, -LANE_CENTRE, LANE_CENTRE), seed
 
 
 def test_lane_walls_do_not_overlap_the_lane_or_each_other():

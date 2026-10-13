@@ -36,14 +36,16 @@ Start a mission with nobody in the economy seat. At the base, buildings stand un
 As a commander, I want literal workers who walk to a source and bring back one of three resources, so that the base is a place with people in it that I can protect or lose.
 
 Rules
-- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3 [Q-159-08: what the three resources are and how each is gathered].
+- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3: two common ones that together are about 75 percent of what lies on the map, and one rare one, about 25 percent, that technology draws on most (Westley, 2026-10-06); the names are Food, Wood and Coin in the ground era and Metal, Water and Uranium in the space era (Westley, 2026-10-07) ; the rare one is Coin in the ground era and Uranium in the space era (Westley, 2026-10-07) [Q-159-08: how each is gathered, and the amounts: placeholders for the beta].
 - R-167-02  Given a base, When a worker is trained, Then it appears at the base as a literal unit, walks to a source, gathers, and walks back to a drop-off, visible to the enemy and able to be killed [Q-167-01: training time, cost and the load a worker carries].
 - R-167-03  Given economic buildings, When the base is built, Then they include drop-off points, and Given a worker with a load, When it walks to a drop-off, Then the farther it walked the less it brings in [Q-167-02: how the yield falls with distance].
-- R-167-04  Given a worker, When units are counted, Then it counts against the one population cap (E-22 S-169) and in the unit budgets, and it cannot fight: it never acquires a target, never returns fire, and flinches from damage (E-15 R-129-01) [Q-167-03: worker statistics, and whether workers sit in the roster of E-11 S-082].
+- R-167-04  Given a worker, When units are counted, Then it counts against the one population cap (E-22 S-169) and in the unit budgets, and it cannot fight: it never acquires a target, never returns fire, and flinches from damage (E-15 R-129-01); for the beta workers are not part of the roster of E-11 S-082 and post-beta will decide (Westley, 2026-10-07).
+
+- R-167-05  Given the sources of a base, When a side gathers, Then natural sources are fast and finite and built sources are slow and permanent and take lots, so the timing of the switch from foraging to farming is a skill (Westley, 2026-10-07).
 
 Inputs: the base; sources (E-22 S-177); the era's resources.
 Outputs: resource counts per side; worker positions in the tick delta.
-Open flags: Q-159-08, Q-167-01, Q-167-02, Q-167-03. Unpicked pieces that touch this story, listed under Open ambiguity flags: foraging to farming, workers under raid.
+Open flags: Q-159-08, Q-167-01, Q-167-02. Unpicked pieces that touch this story, listed under Open ambiguity flags: workers under raid.
 
 ### S-168 — Building and placement
 
@@ -51,14 +53,14 @@ As an economy player, I want to place buildings where I choose and see the city 
 
 Rules
 - R-168-01  Given a paired economy player, When he places a building, Then it claims its footprint and the self-built pieces around it are cleared and refilled, so the city reshapes around what he placed (E-17 R-166-03).
-- R-168-02  Given a base, When lots are counted, Then lots are limited [Q-168-01: what a lot is, how many a base has, where a building may not be placed, and how limited lots meet "the player can place buildings wherever they want" of E-17 R-166-01].
-- R-168-03  Given a building, When what stands beside it changes, Then what it yields changes [Q-168-02: which buildings affect which, by how much, and within what range].
+- R-168-02  Given a base, When lots are counted, Then no count of lots limits the buildings, and only terrain limits where one may stand, as in E-17 R-166-01 (Westley, 2026-10-06). Direction for later, not for the beta: a very large base may be upgraded past its maximum into another tech level; there is no maximum in the beta, only terrain limits (Westley, 2026-10-07).
+- R-168-03  Given a building, When what stands beside it changes, Then what it yields changes; for the beta the effects are placeholders, and their kinds, size and range are set later in the lab (Westley, 2026-10-06).
 - R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished [Q-168-03: construction time, who builds it, and what it costs].
-- R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174) [Q-168-04: the full building set per era and the names].
+- R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174); the set is small and fixed per era pack (E-20 R-146-01) and its names are era pack content, and the pack manifest field that lists them is named "buildings", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
 
 Inputs: placement commands from the economy player; the terrain (E-17); the era's building set.
 Outputs: buildings with owner, footprint, stage and yield in the tick delta.
-Open flags: Q-168-01, Q-168-02, Q-168-03, Q-168-04. Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
+Open flags: Q-168-03. Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
 
 ### S-169 — One population cap
 
@@ -84,7 +86,7 @@ Rules
 - R-170-03  Given a production building, When it is set up, Then it is focused on one family at a time, Strike, Line or Siege (E-22 S-171).
 - R-170-04  Given a building focused on one family, When it is changed to another, Then the change takes a while [Q-170-01: how long, and whether the building makes nothing meanwhile].
 - R-170-05  Given the economy player, When he plans production, Then it is laid out ahead on a timeline for each production building [Q-170-02: how far ahead the timeline reaches and what changing a slot costs].
-- R-170-06  Given a unit is queued, When it is made, Then it costs resources by its role (Q-159-08) and takes time [Q-170-03: build time per unit and how many a building makes at once].
+- R-170-06  Given a unit is queued, When it is made, Then it costs resources by its role (R-171-03) and takes time [Q-170-03: build time per unit and how many a building makes at once].
 
 Inputs: the economy player's production and schedule commands; resources; the cap.
 Outputs: units in the tick delta; each building's focus and timeline.
@@ -97,25 +99,25 @@ As a commander, I want the three families to counter each other and each role to
 Rules
 - R-171-01  Given a unit, When it is classed for counters, Then its family is its category: Strike, Line or Siege (E-11 S-081).
 - R-171-02  Given two families in a fight, When damage is dealt, Then they counter each other by the triangle of E-11 S-081: Strike flanks Siege, Siege crushes Line, Line absorbs Strike.
-- R-171-03  Given a unit role, When it is trained, Then it needs specific resources of the three [Q-159-08: which role needs which].
-- R-171-04  Given a side gathers heavily from one resource, When the other side sees it, Then it shows which role the first side is making more of, and the other side needs the counter [Q-171-01: what shows heavy gathering to the other side, and how heavy counts as heavy].
+- R-171-03  Given a unit role, When it is trained, Then it costs two of the three resources in a fixed pattern (Westley, 2026-10-06): Strike and Line roles cost the two common resources, and each Siege role costs the rare one plus one common one, not the same common one for every Siege role [Q-159-08: the exact pattern per role and the amounts, with the E-11 roster, Q-082-03].
+- R-171-04  Given a side gathers heavily from one resource, When the other side sees it, Then it shows which role the first side is making more of, and the other side needs the counter; what shows it is workers seen at the sources through the fog (Westley, 2026-10-07), and how heavy counts as heavy is a placeholder for the lab.
 
 Inputs: unit category and role; resource costs.
 Outputs: none of its own. The effect is the damage of E-11 S-081 and the fog-limited picture of E-12.
-Open flags: Q-159-08, Q-171-01. The roles inside a category are E-11 Q-082-03.
+Open flags: Q-159-08. The roles inside a category are E-11 Q-082-03.
 
 ### S-172 — Disguise
 
 As an economy player, I want to hide what my production is doing, so that the enemy cannot read my next push from the buildings he can see.
 
 Rules
-- R-172-01  Given an enemy sees a production building, When he looks, Then he can see what it is doing [Q-172-01: what a seen building reveals, and what a building shows from a distance unseen].
+- R-172-01  Given an enemy sees a production building, When he looks, Then he can see its focus family, Strike, Line or Siege, which is also what it is doing since production buildings are split by family (Westley, 2026-10-07); what a building shows from a distance unseen waits on the parked disguise question Q-159-09.
 - R-172-02  Given a player wants to hide a building, When he uses the way the game gives, Then the building is disguised or hidden [Q-159-09: how disguising or hiding works and what it costs].
-- R-172-03  Given the rules run an economy, When they decide what to build, Then they disguise nothing, unless the player chose that the enemy's economy also disguises (E-22 S-181).
+- R-172-03  Given the rules run an economy, When they decide what to build, Then they disguise nothing, unless the difficulty has the enemy's economy disguise (E-22 S-181).
 
 Inputs: the enemy's sight (E-12); the disguise command.
 Outputs: what a side can read of an enemy building.
-Open flags: Q-159-09, Q-172-01. Unpicked: worker scouting. How structures appear in fog is E-12.
+Open flags: Q-159-09 (parked). Unpicked: worker scouting. How structures appear in fog is E-12.
 
 ### S-173 — Technology
 
@@ -130,54 +132,56 @@ Rules
 
 Inputs: the simulation's technology level (E-06); the economy player's choices.
 Outputs: a side's technology level in the tick delta.
-Open flags: Q-159-12, Q-173-01, Q-173-02. Unpicked: ages by landmark, the Contested Tree.
+Open flags: Q-159-12, Q-173-01 and Q-173-02 (parked, post-beta). Unpicked: ages by landmark, the Contested Tree.
 
 ### S-174 — Defenses and raid lanes
 
 As an economy player, I want to build walls, gates and towers where raids will come, so that my workers and shipments reach the base.
 
-This story is written for land maps. Space eras wait on Q-166-02.
+This story is written for land maps. Space eras wait on a space reading of this story; the space landscape is E-17 S-246.
 
 Rules
 - R-174-01  Given a paired economy player, When he builds defenses, Then they are walls, gates and towers.
-- R-174-02  Given the terrain, When raiders go for workers or shipments, Then they come along lanes the terrain sets, for both sides [Q-174-01: where the lanes come from, and how a side sees its own and the enemy's lanes].
+- R-174-02  Given the terrain, When raiders go for workers or shipments, Then they come along lanes the terrain sets, for both sides; the lanes are an output of the map generator (E-17; Westley, 2026-10-06) [Q-174-01 closed; how a side sees its own and the enemy's lanes is E-16].
 - R-174-03  Given the lanes, When the economy player places defenses, Then he covers his own lanes, and he reads the enemy's lanes to tell the commander where a raid would hurt.
 - R-174-04  Given a wall, a gate or a tower, When it stands, Then it does [Q-174-02: what each does, whether it blocks, fires or sees, and its statistics].
 - R-174-05  Given a wall or gate is placed or destroyed, When units route, Then the cells that block movement have changed for every route (E-13 S-097).
 
 Inputs: placement commands; the terrain.
 Outputs: defenses in the tick delta; raid events.
-Open flags: Q-174-01, Q-174-02. Unpicked: workers under raid. With nobody in the seat the rules wall a lane only when the commander asks (E-22 S-180).
+Open flags: Q-174-02. Unpicked: workers under raid. With nobody in the seat the rules wall a lane only when the commander asks (E-22 S-180).
 
 ### S-175 — Expansions and forward works
 
 As an economy player, I want to grow a settlement into a further base and to build production near the front, so that my side out-produces the side that stays home.
 
 Rules
-- R-175-01  Given a settlement on the map, When a side works it hard enough, Then it grows into a further base with its own main building, worker production and lots [Q-175-01: what hard enough is].
-- R-175-02  Given a main base, When the mission runs, Then its sources never run dry, and a side that stays home and does not expand outward for resources is out-produced and overrun [Q-175-02: what makes a side that stays home lose, since its main base never runs dry].
-- R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from [Q-175-03: what forward works consist of, and their cost and build time].
+- R-175-01  Given a settlement on the map, When a side holds it uncontested for a length of time (Westley, 2026-10-06; for now), Then it grows into a further base with its own main building, worker production and lots.
+- R-175-02  Given a main base, When the mission runs, Then its sources never run dry but yield less over time, so a side that stays home and does not expand outward is out-produced and overrun; the resources of an expansion are quick to collect and fizzle out quickly (Westley, 2026-10-06; the rates are for the lab).
+- R-175-03  Given the economy player, When he builds production near the front or at an expansion, Then it is forward works, where units reinforce fast and which are exposed, and where they stand shows where the next push comes from; forward works can be production only, or also houses and workers if the side wants them, in the manner of Age of Empires 3, and the commander can flag "forward base here" to the economy player (Westley, 2026-10-06; cost and build time are Q-168-03).
+- R-175-05  Given trade caravans (Westley, 2026-10-07: in, and distinct from shipments), When they run, Then they walk visibly between a base and settlements, longer routes pay more and are easier to raid; the rules send them in solo play and the economy player in paired mode (Westley, 2026-10-07).
 - R-175-04  Given a unit is made at forward works, When it is finished, Then it stands there and walks to the fight, so the walk is longer from a base kept home.
 
 Inputs: settlements (E-17); the economy player's build commands.
 Outputs: bases and forward works in the tick delta.
-Open flags: Q-175-01, Q-175-02, Q-175-03. Unpicked: trading posts at neutral settlements, trade caravans. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations and is supplied by supply lines, is E-22 S-177. Forward works are not a forward base.
+Open flags: none. Unpicked: trading posts at neutral settlements. What a side does when its base of operations falls is E-22 S-178. The attacker's forward base, which is its base of operations, is E-22 S-177 (supply lines are not an attacker-only rule, Westley, 2026-10-07). Forward works are not a forward base.
 
 ### S-176 — Shipments
 
-As an economy player, I want shipments from the civilization that I cannot see on the road, so that waiting for one is a risk I plan around.
+As an economy player, I want shipments from the civilization and from my own forward posts that cross the map as visible objects with no sight of their own, so that waiting for one is a risk I plan around.
 
-This story is written for land maps. Space eras wait on Q-166-02.
+This story is written for land maps. Space eras wait on a space reading of this story; the space landscape is E-17 S-246.
 
 Rules
-- R-176-01  Given a mission, When time passes, Then the civilization sends shipments to the base [Q-176-01: what a shipment carries, how often one is sent, and whether it is earned or called in].
-- R-176-02  Given a shipment on its way, When the receiving side looks, Then it cannot see its own shipment: it has no vision of it at all.
-- R-176-03  Given a shipment that is killed on the way, When it does not arrive, Then the side gets no indication that it was killed and no explanation, since it has "no idea what happened".
+- R-176-01  Given a mission, When time passes, Then the civilization sends shipments to the base, and a side that holds a forward base or economic post away from its main city may also choose to send a shipment of resources to the main base, the farther the post is from the main city the better the resources it carries; in solo play the rules send them automatically; the amounts are for playtest and balance (Westley, 2026-10-06).
+- R-176-02  Given a shipment on its way, When the receiving side looks, Then it sees it on the map like any unit, as the enemy does (it is visible to both sides), but the shipment gives its own side no vision (Westley, 2026-10-06).
+- R-176-03  Given a shipment that is killed on the way, When it does not arrive, Then the side gets no ticker line that it was killed and no explanation, since it has "no idea what happened".
 - R-176-04  Given a shipment on its way, When raiders hold its lane (E-22 S-174), Then it can be stopped.
+- R-176-05  Given a shipment, When it is sent, Then it looks like a unit on the map but behaves like an event: it has no vision of its own and cannot be moved or given orders once it is sent (Westley, 2026-10-06).
 
 Inputs: the civilization's state (E-02, E-06); lanes.
-Outputs: arrivals at the base. No output shows a shipment in transit or tells a side that one was killed.
-Open flags: Q-176-01, Q-176-02 (is a shipment a unit, and so does it meet E-12 R-089-05; where does it start, and how long is its journey). Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
+Outputs: arrivals at the base; a shipment in transit shows on the map to both sides. No output tells a side that one was killed.
+Open flags: none. Unpicked: demands from the civilization, the shared market, and a deck of shipments as a candidate of Q-159-07.
 
 ### S-177 — Bases, resources and the situation
 
@@ -185,7 +189,7 @@ As a commander, I want a base I must protect, set on a map where the rich resour
 
 Rules
 - R-177-01  Given a mission, When the sides are set up, Then every side has a base of operations it must protect, which is not always a city, and which receives resources from elsewhere, generates them on site, or both, depending on the simulation and the mission.
-- R-177-02  Given the mission archetype (E-10 S-073), When bases are given, Then the kind of base each side gets is decided by the archetype and by the supply distance together [Q-177-01: how the two combine, since the archetype table below and the supply-distance reading of R-177-03 each give a kind of base].
+- R-177-02  Given the mission archetype (E-10 S-073), When bases are given, Then the player's base of operations is a grown town only where the archetype gives the player a home or a defended settlement; an attacking archetype has a forward base, a camp and not a town (Westley, 2026-10-13: "depends on the archetype, an attacker can't have a full town since they're attacking, they have a forward base"). The kind of base each side gets is decided by the archetype table below alone (Westley, 2026-10-06).
 
 | Archetype | Player's base | Enemy's base |
 |---|---|---|
@@ -196,18 +200,18 @@ Rules
 | Suppression, Counterinsurgency | garrison in a city | hidden cells among the settlements |
 | Rear Guard / Evacuation | the place being left | pursuing forward base |
 
-- R-177-03  Given the supply distance, which is the number of regions between the mission's region and the nearest region the civilization owns (E-03 S-223), When a base is given, Then a mission in a region the civilization owns gets a home base that generates on site, one next to such a region gets a base that both generates and is supplied, and one deep in foreign ground gets an expedition camp that lives on shipments (E-22 S-176) [Q-177-05: the numbers of regions at which the base kind changes, and what "next to" and "deep in foreign ground" are in regions].
+- R-177-03  Removed 2026-10-06 (Westley): the kind of base does not change with how far into foreign ground the mission lies, and no base lives on shipments by distance.
 - R-177-04  Given a map, When economic locations are placed, Then they are spread throughout the map, and each side is at the same distance from the objective and from each significant resource whatever shape the map takes (E-17 R-191-04), so a side picks one or fights for both.
 - R-177-05  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places, not always.
-- R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard [Q-177-02: what the situation record gives, and how limited, abundant and slanted are read from it].
+- R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard; richness is derived from the simulation's existing region fields and composites (E-02), so a region with a big economy gives a mission big resources (Westley, 2026-10-06).
 - R-177-07  Given the resources, When the mission is scored, Then they are not scored separately, and a side that ignores them is overrun unless it rushes and finishes fast.
 - R-177-08  Given a side's spending, When it spends, Then it is balanced between economy, technology and army, as in StarCraft 2.
-- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job [Q-177-03: what winning a settlement's populace means and gives].
-- R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization [Q-177-04: how much more, and what a pair's economy shares with the other pairs of its team, if anything].
+- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) [Q-177-06: the timer, and whether it is the same event as R-175-01].
+- R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization; pairs on a team share shipments and technology (Westley, 2026-10-06); how much more a big match has is a placeholder.
 
-Inputs: mission archetype (E-10); the region's situation (E-02); supply distance (E-03 S-223); the map (E-17).
+Inputs: mission archetype (E-10); the region's situation (E-02); the map (E-17).
 Outputs: each side's base kind and place; economic locations and significant resources on the map.
-Open flags: Q-177-01, Q-177-02, Q-177-03, Q-177-04, Q-177-05. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
+Open flags: none. The strongpoints on the slopes between height bands (E-15) and a base that spans several layers (E-17 R-166-02) are written for land maps (Q-166-02 for space). The five outcomes are E-10 S-077.
 
 ### S-178 — When a base falls
 
@@ -215,16 +219,16 @@ As a commander, I want a fallen base to be occupied and not destroyed, so that a
 
 Rules
 - R-178-01  Given a base of operations, When an enemy takes it, Then it is occupied, not destroyed, and the side that takes it gets its production and its people.
-- R-178-02  Given a base, When it is counted as occupied, Then [Q-178-01: what occupying is, how many forces for how long, and what ends it].
-- R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end [Q-178-02: how that meets the transfers of E-10 R-073-01].
-- R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations, at a cost [Q-178-03: the cost].
-- R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then [Q-178-04: whether the mission ends for that side or the fight goes on with what is on the field, and how this meets the end conditions of E-10 R-075-07].
-- R-178-06  Given a side's original main base, When it is named, Then it is the base of operations the side was given at the start of the mission, and for an attacker it is the forward base from which it produces and to which resources come by supply lines. Expansions and forward works built later are never an original main base.
-- R-178-07  Given the player's side has lost its original main base, When the mission is scored, Then the best result it can reach is partial failure (E-10 S-077) [Q-178-05: whether retaking the original main base lifts that limit].
+- R-178-02  Given a base, When it is counted as occupied, Then enemy forces hold its central zone for a time and its main building is destroyed or captured, as the archetype sets (Westley, 2026-10-06); the taker may have to rebuild the building to take the location.
+- R-178-03  Given an occupied base, When the mission runs, Then the side that lost it can take it back, a base can change hands more than once, and the region follows whoever holds it at the end: the side that takes the enemy's base gets that region (Westley, 2026-10-06).
+- R-178-04  Given a side holds an expansion or forward works, When its base of operations falls, Then it falls back to that one as its base of operations at no cost beyond the position; a side that loses an expansion loses the income it produced and its position (Westley, 2026-10-06).
+- R-178-05  Given a side has no expansion and no forward works, When its base of operations falls, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against E-10 R-075-07 and S-077).
+- R-178-06  Given a side's original main base, When it is named, Then it is the base of operations the side was given at the start of the mission, and for an attacker it is the forward base from which it produces. Expansions and forward works built later are never an original main base.
+- R-178-07  Given the player's side has lost its original main base, When the mission is scored, Then the best result it can reach is partial failure (E-10 S-077), and retaking the original main base lifts that limit (Westley, 2026-10-06).
 
 Inputs: base ownership and occupation; the mission archetype.
 Outputs: base owner and kind in the tick delta; the result band's ceiling to E-10; the region's owner at the mission's end.
-Open flags: Q-178-01, Q-178-02, Q-178-03, Q-178-04, Q-178-05.
+Open flags: none.
 
 ### S-179 — The economy without a player
 
@@ -233,14 +237,14 @@ As a commander, I want the same economy to run itself well when nobody holds the
 Rules
 - R-179-01  Given any match, When nobody holds the economy seat, Then rules run the economy, run it well, need no intelligent agent, and call no model at play time.
 - R-179-02  Given a base in any mode, When the mission runs, Then buildings start under construction and rise, expansions are made, and population density changes over time (E-17 S-166).
-- R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, such as boom, fortify, press or balanced, and the player can change the doctrine on the fly to adapt to what the enemy is doing [Q-179-01: the list of doctrines, and what sets the first doctrine].
+- R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, from the list boom, fortify, press and balanced, the player sets the first one in the lobby, and the player can change the doctrine on the fly to adapt to what the enemy is doing; the pack manifest field that lists the doctrines is named "doctrines", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
 - R-179-04  Given a doctrine, When it is read, Then it is a build order with its own weights on a checklist of standing habits [Q-179-02: the habits on the checklist and the weights per doctrine].
 - R-179-05  Given the rules run an economy, When it runs, Then they have perfect hands: they never idle a worker, never hit the population cap and never leave resources unspent.
 - R-179-06  Given the rules run an economy, When it runs, Then they have no foresight: they do not scout, do not read the enemy, do not counter-pick technology and do not disguise anything. The one exception is that they counter what the commander's forces have seen, by the unit counter shift of E-22 S-180.
 
 Inputs: the economy's state; the doctrine; the dial and requests of E-22 S-180.
 Outputs: the economy's commands, which are the same kind a human economy player's are; ticker lines.
-Open flags: Q-179-01, Q-179-02.
+Open flags: Q-179-02.
 
 ### S-180 — The commander alone
 
@@ -249,15 +253,15 @@ As a solo commander, I want one dial and the ability to ask by pointing, so that
 Rules
 - R-180-01  Given a solo commander, When he sets the dial, Then the rules carry out the balance he chose between economy, technology and army [Q-180-01: the form of the dial and how much it moves spending].
 - R-180-02  Given a solo commander, When he sets the dial, Then he may also name the unit family he wants more of, Strike, Line or Siege.
-- R-180-03  Given a solo commander marks the map, When he asks as he would ask a partner, such as expand here, fortify this pass or I need siege at this gate, Then the rules answer and say in the ticker what they will do and when, with no menu and no queue [Q-180-02: the kinds of request, and what the rules do with one they cannot carry out].
+- R-180-03  Given a solo commander marks the map, When he asks as he would ask a partner, the requests at launch are the three examples, expand here, fortify this pass and I need siege at this gate (Westley, 2026-10-06), Then the rules answer and say in the ticker what they will do and when, with no menu and no queue.
 - R-180-04  Given a solo commander, When the economy runs, Then he places and queues nothing himself.
-- R-180-05  Given production is run by the rules, When units are chosen, Then the rules make the mix the mission archetype calls for [Q-180-03: the mix per archetype], and the commander can change the choice of any building.
+- R-180-05  Given production is run by the rules, When units are chosen, Then the rules make the mix the doctrine calls for (Westley, 2026-10-06; the mix per doctrine goes with Q-179-02), and the commander can change the choice of any building.
 - R-180-06  Given the commander's forces have seen enemy units, When production is chosen, Then the rules shift production toward what counters them, using only what the fog has revealed to that side (E-12). This is the one exception to the rules having no foresight (E-22 S-179).
-- R-180-07  Given the commander, When he turns the unit-mix behaviour off, the counter behaviour off, or both, Then the rules stop that behaviour [Q-180-04: when the switches can be changed, and who picks the mix when the rules do not].
+- R-180-07  Given the commander, When he turns the unit-mix behaviour off, the counter behaviour off, or both, Then the rules stop that behaviour; the switches can be changed at any time during a mission (Westley, 2026-10-06), and when the mix behaviour is off the commander picks at the building.
 
 Inputs: the dial; pointing requests; override choices; the two switches.
 Outputs: ticker lines; the economy's commands. The requests are a second channel beside the four commands of E-13.
-Open flags: Q-180-01, Q-180-02, Q-180-03, Q-180-04. Screens for these are E-16.
+Open flags: Q-180-01. Screens for these are E-16.
 
 ### S-181 — The enemy's economy
 
@@ -266,42 +270,42 @@ As a commander, I want the enemy's economy to run on the same rules as mine, so 
 Rules
 - R-181-01  Given an enemy, When its economy runs, Then it runs on the same rules as the solo player's.
 - R-181-02  Given the difficulty, When the enemy is set up, Then its prosperity scales with it (E-14 S-125).
-- R-181-03  Given the player's choice, When the match is set up, Then he chooses whether the enemy's economy also scouts, counters and disguises [Q-181-01: whether this is one switch or three, whether difficulty sets its start, and where it is set].
-- R-181-04  Given the enemy's economy scouts or counters, When it reads the player's side, Then it reads only what that side's fog has revealed [Q-181-02: whether the standing rule of E-14 R-125-02, that the macro layer never sees what a player could not see, binds the economy rules].
+- R-181-03  Given the difficulty, When the match is set up, Then the difficulty decides whether the enemy's economy also scouts, counters and disguises; it is not the player's choice (Westley, 2026-10-07).
+- R-181-04  Given the enemy's economy scouts or counters, When it reads the player's side, Then it reads only what that side's fog has revealed, as E-14 R-125-02 says of the macro layer (Westley, 2026-10-07).
 - R-181-05  Given a human economy player drops out of a mission, When the seat is empty, Then the same rules take his seat (E-19 S-159 holds the paired mode's drop-out).
 
 Inputs: difficulty; the player's choice.
 Outputs: the enemy's economy state and commands.
-Open flags: Q-181-01, Q-181-02. The enemy's macro behaviour around its bases, expansions and raids on workers and shipments is E-14.
+Open flags: none. The enemy's macro behaviour around its bases, expansions and raids on workers and shipments is E-14.
 
 ### S-182 — What carries forward
 
 As a pair of players, I want to take something from one mission into the next, so that a campaign builds up without making the fifteenth mission a lopsided one.
 
 Rules
-- R-182-01  Given a time jump between two missions, When the next mission is set up, Then the economy is not assumed to persist through it, and what the pair carries forward is [Q-159-07: what carries forward, with abilities and unlocks, a deck of shipments, and nothing as candidates].
-- R-182-02  Given a mission the simulation picks on a poor planet with a small force, When the pair brings what it carried forward, Then the result is consistent with a small mission on very limited resources and not a "crazy good economy on the 15th mission together" [Q-159-07: the fit between what carries forward and the rest of the game].
+- R-182-01  Given a time jump between two missions, When the next mission is set up, Then the economy is not assumed to persist through it, and nothing carries forward in the beta; abilities, unlocks or a deck of shipments are a post-beta idea (Westley, 2026-10-07).
+- R-182-02  Given a mission the simulation picks on a poor planet with a small force, When the pair brings what it carried forward, Then the result is consistent with a small mission on very limited resources and not a "crazy good economy on the 15th mission together".
 - R-182-03  Given a base took damage in a mission, When a time jump follows, Then [Q-159-13: whether the damage persists and how fast it is rebuilt, which depends on the situation and is simulation work].
 - R-182-04  Given anything is carried forward, When the campaign is saved, Then it is in the save, written identically on every peer (E-19 R-144-03), and enters the checksum.
 
 Inputs: the end of a mission; the time jump (E-08).
 Outputs: what the next mission starts with.
-Open flags: Q-159-07, Q-159-13. What the mission leaves in the region is E-10 and E-02.
+Open flags: Q-159-13 (to be designed with the simulation). What the mission leaves in the region is E-10 and E-02.
 
 ## Inputs
 
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Seed | Campaign | integer | |
-| Region state and situation | E-02 | fields and composites; the richness and slant of R-177-06 | [Q-177-02] |
+| Region state and situation | E-02 | fields and composites; the richness and slant of R-177-06 | |
 | Mission archetype | E-10 | 10 archetypes | unknown fails |
-| Supply distance | E-03 S-223 | a count of regions: those between the mission's region and the nearest region the civilization owns | [Q-177-05] |
 | Starting technology level | E-06 | | [Q-173-01] |
 | Economy player commands (place, schedule, focus, technology, defenses) | E-19 peers | tick-stamped | wrong tick, unknown peer, malformed: dropped and logged (E-19). The command set is E-19's to fix. |
-| Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01, Q-180-02] |
-| Settings: unit-mix behaviour, counter behaviour, enemy foresight | Player | on or off | [Q-180-04, Q-181-01] |
+| Dial, doctrine, pointing request, overrides | Solo commander | | [Q-180-01] |
+| Settings: unit-mix behaviour, counter behaviour | Player | on or off | |
+| Enemy foresight (scout, counter, disguise) | Difficulty | on or off per behaviour | |
 | Difficulty | Player | E-14 | |
-| Terrain, lots, lanes | E-17 | | [Q-168-01, Q-174-01] |
+| Terrain, lots, lanes | E-17 | | |
 
 ## Outputs
 
@@ -339,7 +343,6 @@ None confirmed for the economy. The direction is thousands of units and workers 
 - A shipment that is a unit would be visible under E-12 R-089-05 and break its blindness.
 - The rules' habits (E-22 S-179) and the counter shift (E-22 S-180) read as foresight and break "no foresight" if the fog is not kept apart for the economy.
 - A fall-back at a cost, with no number, can make losing a base either trivial or final.
-- Two readings of the base kind (archetype, supply distance) disagree for some archetype.
 - Forward works counted as a forward base, so losing them caps the result at partial failure.
 - Technology that does nothing leaves the spending balance with only two real choices.
 - Carry-forward that grows without a bound makes a late mission lopsided.
@@ -363,4 +366,4 @@ Q-166-02 (the space-era landscape) is open in E-17 and bounds the land-map rules
 - E-02 (region fields, the situation and richness), E-06 (the technology number and tier), E-10 (archetypes S-073, the five outcomes S-077, mission end R-075-07, region transfers).
 - E-11 (categories, roster, workers as units), E-12 (fog, structures in fog, shipments against R-089-05), E-13 (route grid and routes that change with buildings, unit budgets and tick rate).
 - E-14 (difficulty S-125, enemy behaviour around bases, expansions and raids), E-15 (strongpoints, moving weather, non-combat units S-129).
-- E-03 (S-223, the supply distance), E-17 (terrain, height bands, settlements, economic locations, a city that reshapes S-166), E-16 (economy screen, the dial and pointing), E-18 (drawing workers, shipments, buildings at scale), E-20 (era contents), E-21 (library content).
+- E-17 (terrain, height bands, settlements, economic locations, a city that reshapes S-166), E-16 (economy screen, the dial and pointing), E-18 (drawing workers, shipments, buildings at scale), E-20 (era contents), E-21 (library content).

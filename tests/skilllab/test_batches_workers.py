@@ -94,7 +94,7 @@ def test_outputs_byte_identical_between_one_and_three_workers(tmp_path, rec):
     serial = batches.run(_defn(), tmp_path / "a", scan_fn=FakeScan(), workers=1)
     par = batches.run(_defn(), tmp_path / "b", scan_fn=FakeScan(), workers=3)
     assert len(rec.created) == 1
-    assert _bytes(serial).keys() == _bytes(par).keys() and len(serial) == 3
+    assert _bytes(serial).keys() == _bytes(par).keys() and len(serial) == 4
     for k in serial:
         assert Path(serial[k]).name == Path(par[k]).name
         assert Path(serial[k]).read_bytes() == Path(par[k]).read_bytes()

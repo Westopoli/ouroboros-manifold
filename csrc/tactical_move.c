@@ -234,6 +234,7 @@ typedef struct {
 
     uint64_t last_synced_tick;
     uint32_t period_seen;
+    int      syncing; /* transient: set while om_move_sync runs ticks, so a read from inside a tick (om_walk_route) does not re-enter */
 
     om_move_field        fields[OM_MOVE_FIELD_POOL];
     uint32_t             field_next, terrain_epoch;
@@ -314,6 +315,11 @@ uint32_t col_cur;
     uint32_t reach_n;
     int32_t  reach_type[OM_PP_REACH_MAX];
     uint32_t reach_up[OM_PP_REACH_MAX], reach_down[OM_PP_REACH_MAX];
+    /* Terrain stage 2: movement kind per unit type (om_movement_kind), a sparse list keyed by type like reach; an
+     * unset type reads flying. Kept and carried across om_tactical_reset like reach. See also: om_roster_set_movement_kind. */
+    uint32_t kind_n;
+    int32_t  kind_type[OM_PP_REACH_MAX];
+    int32_t  kind_val[OM_PP_REACH_MAX];
 } om_move_state;
 
 enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
@@ -335,6 +341,12 @@ static void om_move_transit_cancel(om_move_unit *mu) {
  * section 4). The ranges are the writer's refusal bounds for the lab's setting call, never game values (A133 Q-C9);
  * they are named here because om_constants.h has no home for them. */
 #define OM_PP_MULT_HI 10.0
+#define OM_PP_TERRAIN_STEEP_DEFAULT 35.0 /* provisional (2026-10-05) */
+#define OM_PP_TERRAIN_STEEP_HI 90.0
+#define OM_PP_SLOPE_FACTOR_DEFAULT 1.1 /* R-004-07: Westley 2026-10-06; provisional (2026-10-06) */
+#define OM_PP_SIGHT_EYE_DEFAULT 50.0 /* wu above the ground; provisional (2026-10-06) lab draft */
+#define OM_PP_SIGHT_EYE_HI 1000.0
+#define OM_PP_FLYER_SEEN_DEFAULT 1.5 /* provisional (2026-10-06) lab draft; Westley: longer than the flyer's own vision */
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
 /* R-162-01: 5 s at the tactical rate; om_constants.h OM_PULSE_REVEAL_TICKS (40) is the bible's old 2 s */
@@ -378,6 +390,15 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     { OM_PP_INT, -1.0, -1.0, 1.0 },
     /* R-162-03: the pinged side's alert, 0 off (default), 1 on */
     OM_PP_SWITCH(0.0),
+    /* R-200-03, Q-189-02: steepest walkable slope in degrees, 35 default (provisional 2026-10-05; Westley owns) */
+    { OM_PP_REAL, OM_PP_TERRAIN_STEEP_DEFAULT, 0.0, OM_PP_TERRAIN_STEEP_HI },
+    /* R-004-07: slope speed divided going up, multiplied going down (1.1 each; Westley 2026-10-06; provisional) */
+    { OM_PP_REAL, OM_PP_SLOPE_FACTOR_DEFAULT, 1.0, OM_PP_MULT_HI },
+    { OM_PP_REAL, OM_PP_SLOPE_FACTOR_DEFAULT, 1.0, OM_PP_MULT_HI },
+    /* R-005-10: eye height above the ground at both ends of a sight line, wu (lab draft) */
+    { OM_PP_REAL, OM_PP_SIGHT_EYE_DEFAULT, 0.0, OM_PP_SIGHT_EYE_HI },
+    /* R-005-11: ground-era flyer seen from max(sensor radii) x this; at least 1 so it is seen from farther than it sees */
+    { OM_PP_REAL, OM_PP_FLYER_SEEN_DEFAULT, 1.0, OM_PP_MULT_HI },
 };
 
 static void om_pp_load_defaults(double *out) {
@@ -527,6 +548,12 @@ static int om_move_param_on(const om_move_state *ms, om_tac_param p) {
  * so every kept route is stale (R-207-03). See also: om_map_block_rect in csrc/tactical_mapgen.c, the caller to be. */
 void om_move_terrain_changed(om_world *w) {
     if (w) om_ms(w)->terrain_epoch++;
+}
+
+/* Internal, not in the header: the route-cache epoch, part of the planner's cache key.
+ * See also: walk_route.c, the caller; om_move_terrain_changed above, the bump. */
+uint32_t om_move_terrain_epoch(om_world *w) {
+    return w ? om_ms(w)->terrain_epoch : 0;
 }
 
 /* Internal, not in the header: the canvas only lives in the private mapgen state, so om_map_set_canvas and
@@ -944,13 +971,9 @@ static uint64_t om_move_near_mask(const om_move_state *ms, uint32_t lo, uint32_t
 
 /* Index of the lowest set bit of a nonzero mask. */
 static uint32_t om_move_lowest_bit(uint64_t mask) {
-#if defined(__GNUC__)
-    return (uint32_t)__builtin_ctzll(mask);
-#else
     uint32_t i = 0;
     while (!(mask & 1u)) { mask >>= 1; i++; }
     return i;
-#endif
 }
 
 /* The scans below test slots [lo, hi) for a unit within sqrt(r2) of
@@ -1141,6 +1164,24 @@ static double om_move_density_cell_get(om_move_state *ms, int32_t cx, int32_t cy
  * the canvas edge) or its density is above the threshold (R-097-01). */
 static int om_move_cell_blocked(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy) {
     return om_mapgen_cell_blocked(w, layer, cx, cy) || om_move_density_cell_get(ms, cx, cy, layer) > OM_NAVMESH_OBSTACLE_THRESHOLD;
+}
+
+/* Terrain stage 2 (R-001-07): a walker's cell test reads the terrain's walk mask of its layer in place; with no
+ * terrain generated it falls back to the mapgen grid, as om_walk_route treats the canvas as open. */
+static int om_move_walk_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy) {
+    const om_terrain_state *st = (const om_terrain_state *)w->terrain_state;
+    if (!st || !st->present) return om_mapgen_cell_blocked(w, layer, cx, cy);
+    if (layer >= OM_TERRAIN_BANDS || !st->walk[layer] || cx < 0 || cy < 0 || cx >= (int32_t)st->cells_w || cy >= (int32_t)st->cells_h) return 1;
+    return !st->walk[layer][(size_t)cy * st->cells_w + (size_t)cx];
+}
+
+static int om_move_is_walker(const om_world *w, uint32_t id) {
+    int t = om_unit_get_unit_type(w, id);
+    return t >= 0 && om_unit_profile_movement_kind(w, t) == OM_MOVE_WALKING;
+}
+
+static int om_move_cell_blocked_for(const om_world *w, om_move_state *ms, int walk, uint32_t layer, int32_t cx, int32_t cy) {
+    return walk ? om_move_walk_blocked(w, layer, cx, cy) : om_move_cell_blocked(w, ms, layer, cx, cy);
 }
 
 static double om_move_density_at_pos(om_move_state *ms, double x, double y, uint32_t layer) {
@@ -1523,15 +1564,15 @@ static int om_move_probe_sure_blocked(const om_move_state *ms, uint32_t n_near, 
 
 /* PP-move (ROUTE_AROUND_TERRAIN): a push that would end in a blocked cell of the unit's layer, or in an obstacle
  * disc, slides along one axis, else reverts (Python _resolve_collisions, R-099-04). */
-static int om_move_slide_blocked(om_world *w, om_move_state *ms, uint32_t layer, double x, double y) {
-    return om_move_cell_blocked(w, ms, layer, (int32_t)floor(x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(y / OM_NAVMESH_CELL_SIZE))
+static int om_move_slide_blocked(om_world *w, om_move_state *ms, int walk, uint32_t layer, double x, double y) {
+    return om_move_cell_blocked_for(w, ms, walk, layer, (int32_t)floor(x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(y / OM_NAVMESH_CELL_SIZE))
         || om_map_sample_obstacle_density(w, x, y) > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
-static void om_move_slide(om_world *w, om_move_state *ms, uint32_t layer, double ox, double oy, double *nx, double *ny) {
-    if ((*nx == ox && *ny == oy) || !om_move_slide_blocked(w, ms, layer, *nx, *ny)) return;
-    if (!om_move_slide_blocked(w, ms, layer, *nx, oy)) *ny = oy;
-    else if (!om_move_slide_blocked(w, ms, layer, ox, *ny)) *nx = ox;
+static void om_move_slide(om_world *w, om_move_state *ms, int walk, uint32_t layer, double ox, double oy, double *nx, double *ny) {
+    if ((*nx == ox && *ny == oy) || !om_move_slide_blocked(w, ms, walk, layer, *nx, *ny)) return;
+    if (!om_move_slide_blocked(w, ms, walk, layer, *nx, oy)) *ny = oy;
+    else if (!om_move_slide_blocked(w, ms, walk, layer, ox, *ny)) *nx = ox;
     else { *nx = ox; *ny = oy; }
 }
 
@@ -1543,7 +1584,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     double ax = om_move_grid_x(ms, ia), ay = om_move_grid_y(ms, ia);
     double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
     const double oax = ax, oay = ay, obx = bx, oby = by;
-    int changed = 0;
+    int changed = 0, routed = 0;
     if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
     target = 2.0 * OM_UNIT_COLLISION_RADIUS;
@@ -1583,9 +1624,15 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
             bx = om_move_clamp_axis(bx, ms->canvas_w); by = om_move_clamp_axis(by, ms->canvas_h);
         }
         if (ms->col_route && !ms->col_open) {
-            om_move_slide(w, ms, (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
-            om_move_slide(w, ms, (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
+            om_move_slide(w, ms, om_move_is_walker(w, ia), (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
+            om_move_slide(w, ms, om_move_is_walker(w, ib), (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
+            routed = 1;
         }
+    }
+    /* R-001-07: a walker's push result stays on its walk mask. See also: tests/csim/test_E01_T2_collision_mask.py */
+    if (changed && !routed) {
+        if (om_move_is_walker(w, ia)) om_move_slide(w, ms, 1, (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
+        if (om_move_is_walker(w, ib)) om_move_slide(w, ms, 1, (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
     }
     om_move_grid_set(ms, ia, ax, ay);
     om_move_grid_set(ms, ib, bx, by);
@@ -1932,7 +1979,7 @@ static uint32_t om_move_across_plan(om_world *w, om_move_state *ms, om_move_unit
 }
 
 /* The open cell of `layer` nearest to (px, py) within max_r rings; ties go to the lower row, then column. */
-static int om_move_nearest_open(const om_world *w, om_move_state *ms, uint32_t layer, double px, double py, int32_t max_r, int32_t *out_x, int32_t *out_y) {
+static int om_move_nearest_open(const om_world *w, om_move_state *ms, int walk, uint32_t layer, double px, double py, int32_t max_r, int32_t *out_x, int32_t *out_y) {
     int32_t nx, ny, cx, cy, r, best_x = -1, best_y = -1;
     double best = OM_MOVE_GRID_FAR;
     om_move_cell_at(ms, px, py, &cx, &cy);
@@ -1944,7 +1991,7 @@ static int om_move_nearest_open(const om_world *w, om_move_state *ms, uint32_t l
             int32_t step = (y == cy - r || y == cy + r) ? 1 : 2 * r;
             for (x = cx - r; x <= cx + r; x += step) {
                 double x0, y0, qx, qy, d2;
-                if (x < 0 || y < 0 || x >= nx || y >= ny || om_move_cell_blocked(w, ms, layer, x, y)) continue;
+                if (x < 0 || y < 0 || x >= nx || y >= ny || om_move_cell_blocked_for(w, ms, walk, layer, x, y)) continue;
                 x0 = (double)x * OM_NAVMESH_CELL_SIZE;
                 y0 = (double)y * OM_NAVMESH_CELL_SIZE;
                 qx = px < x0 ? x0 : (px > x0 + OM_NAVMESH_CELL_SIZE ? x0 + OM_NAVMESH_CELL_SIZE : px);
@@ -1964,11 +2011,12 @@ static int om_move_nearest_open(const om_world *w, om_move_state *ms, uint32_t l
  * cell id. See also: om_move_tick_unit, which calls this each tick while ROUTE_AROUND_TERRAIN is on. */
 static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_unit *mu) {
     const uint32_t layer = (uint32_t)om_move_layer(w, mu->unit_id);
+    const int walk = om_move_is_walker(w, mu->unit_id);
     int32_t nx, ny, cx, cy, best_x, best_y;
     om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
-    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
+    if (!om_move_cell_blocked_for(w, ms, walk, layer, cx, cy)) return;
     om_move_window(ms, &nx, &ny);
-    if (!om_move_nearest_open(w, ms, layer, mu->x, mu->y, nx + ny, &best_x, &best_y)) return;
+    if (!om_move_nearest_open(w, ms, walk, layer, mu->x, mu->y, nx + ny, &best_x, &best_y)) return;
     {
         const double lo = OM_UNIT_COLLISION_RADIUS, hi = OM_NAVMESH_CELL_SIZE - OM_UNIT_COLLISION_RADIUS;
         double rx = mu->x - (double)best_x * OM_NAVMESH_CELL_SIZE, ry = mu->y - (double)best_y * OM_NAVMESH_CELL_SIZE;
@@ -2075,9 +2123,81 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     }
 }
 
+/* Terrain stage 2 (R-001-07, R-004-07): a walker follows om_walk_route one waypoint at a time, replanning from the
+ * waypoint it reaches (the route is least time over cell-centre steps, so the replan agrees with the plan). A step
+ * that rises in terrain height runs at 1/SLOPE_UP_DIV of the pace, one that falls at SLOPE_DOWN_MULT times it; the
+ * rest of the tick's time carries over to the next waypoint. aim_is_waypoint is 1 while the aim is not the route's
+ * last point. See also: om_move_walker_tick, which sets the layer after the step. */
+#define OM_MOVE_WALK_PTS 512
+#define OM_MOVE_WALK_AIM_X 2 /* pts[0..1] is the unit; the next point follows */
+#define OM_MOVE_WALK_MAX_LEGS 16
+static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t period) {
+    const uint32_t id = mu->unit_id;
+    const double speed = om_move_member_pace(w, mu, id);
+    const int terrain = om_terrain_present(w);
+    double left = (double)period / (double)OM_TACTICAL_TICK_RATE;
+    int legs;
+    mu->waiting = 0;
+    for (legs = 0; legs < OM_MOVE_WALK_MAX_LEGS && left > 0.0 && mu->has_dest; legs++) {
+        double dx, dy, d, v, f = 1.0;
+        if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y) {
+            double buf[2 * OM_MOVE_WALK_PTS], secs, *pts = buf;
+            /* om_walk_route reads the unit's row position, which this module hands over once per sync. */
+            mu->pushed_x = mu->x;
+            mu->pushed_y = mu->y;
+            om_tac_unit_sync_position(w, id, mu->x, mu->y);
+            int n = om_walk_route(w, id, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), pts, OM_MOVE_WALK_PTS, &secs);
+            if (n > OM_MOVE_WALK_PTS) {
+                pts = (double *)malloc(sizeof(double) * 2u * (size_t)n);
+                n = pts ? om_walk_route(w, id, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), pts, (uint32_t)n, &secs) : -1;
+            }
+            if (n < 2) {
+                if (pts != buf) free(pts);
+                mu->has_dest = 0;
+                mu->plan_valid = 0;
+                return;
+            }
+            mu->aim_x = pts[OM_MOVE_WALK_AIM_X];
+            mu->aim_y = pts[OM_MOVE_WALK_AIM_X + 1];
+            mu->aim_is_waypoint = n > 2;
+            if (pts != buf) free(pts);
+            mu->plan_valid = 1;
+            mu->plan_epoch = ms->terrain_epoch;
+            mu->plan_dest_x = mu->dest_x;
+            mu->plan_dest_y = mu->dest_y;
+        }
+        dx = mu->aim_x - mu->x;
+        dy = mu->aim_y - mu->y;
+        d = sqrt(dx * dx + dy * dy);
+        if (terrain) {
+            double h0 = om_terrain_height_at(w, mu->x, mu->y), h1 = om_terrain_height_at(w, mu->aim_x, mu->aim_y);
+            if (h1 > h0) f = 1.0 / om_tactical_get_param(w, OM_TP_SLOPE_UP_DIV);
+            else if (h1 < h0) f = om_tactical_get_param(w, OM_TP_SLOPE_DOWN_MULT);
+        }
+        v = speed * f;
+        if (d > 0.0 && !(v > 0.0)) { mu->waiting = 1; return; }
+        /* See also: tests/csim/test_E01_T2_walker_waypoint_arrival.py */
+        if (mu->aim_is_waypoint && d < OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS) {
+            mu->plan_valid = 0;
+        } else if (d == 0.0 || v * left >= d) {
+            mu->x = mu->aim_x;
+            mu->y = mu->aim_y;
+            if (d > 0.0) left -= d / v;
+            mu->plan_valid = 0;
+            if (!mu->aim_is_waypoint) { mu->has_dest = 0; mu->deflecting = 0; }
+        } else {
+            mu->x += dx / d * v * left;
+            mu->y += dy / d * v * left;
+            left = 0.0;
+        }
+        om_move_grid_update(ms, mu);
+    }
+}
+
 static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint32_t period) {
     om_move_unit *mu = om_move_get(ms, id);
     double heading, speed, dist_to_dest, step_dist;
+    int walker;
 
     if (!mu || !mu->in_use || !om_unit_alive(w, id)) return;
 
@@ -2085,7 +2205,8 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     mu->prev_y = mu->y;
     mu->prev_facing = mu->facing;
 
-    if (om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) om_move_leave_blocked(w, ms, mu);
+    walker = om_move_is_walker(w, id);
+    if (walker || om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) om_move_leave_blocked(w, ms, mu);
 
     if (mu->kiting) {
         om_move_unit *tgt = om_move_touch(w, ms, mu->kite_target);
@@ -2106,6 +2227,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     }
 
     if (om_move_is_stationary(mu)) { mu->waiting = 0; return; }
+    if (walker) { om_move_walker_step(w, ms, mu, period); return; }
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) { om_move_steer_step(w, ms, mu, period); return; }
     /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
     /* See also: om_move_steer_step, which replaces everything below when OM_TP_PURSUE_BY_STEERING is 1 */
@@ -2258,7 +2380,7 @@ static void om_move_layer_unit(om_world *w, om_move_state *ms, om_move_unit *mu,
             if (!mu->has_dest && om_move_cell_blocked(w, ms, mu->transit_home, cx, cy)) {
                 /* R-001-05, R-097-09: the cell under the unit is blocked on its home layer; it walks on to the nearest open one before it descends. */
                 int32_t ox, oy;
-                if (om_move_nearest_open(w, ms, mu->transit_home, mu->x, mu->y, OM_MOVE_DESCENT_SEARCH_RINGS, &ox, &oy)) {
+                if (om_move_nearest_open(w, ms, 0, mu->transit_home, mu->x, mu->y, OM_MOVE_DESCENT_SEARCH_RINGS, &ox, &oy)) {
                     mu->has_dest = 1;
                     mu->dest_x = ((double)ox + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
                     mu->dest_y = ((double)oy + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
@@ -2351,6 +2473,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     for (id = 1; id <= ms->discovery_max; id++) {
         om_move_tick_unit(w, ms, id, period);
     }
+    om_move_walker_tick(w);
     om_move_collision_pass_internal(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
@@ -2392,9 +2515,12 @@ static void om_move_sync(om_world *w) {
         ms->period_seen = now;
         return;
     }
+    if (ms->syncing) return;
+    ms->syncing = 1;
     for (t = ms->last_synced_tick + 1; t <= target; t++) {
         om_move_tick_once(w, ms, t, period);
     }
+    ms->syncing = 0;
     if (ms->last_synced_tick < target) om_move_push_positions(w, ms);
     ms->last_synced_tick = target;
     ms->period_seen = now;
@@ -2478,6 +2604,8 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
         if (om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
         if (!om_move_los_clear(w, ms, x0, y0, x0 + dx, y0 + dy, (uint32_t)om_move_layer(w, p0) < (uint32_t)om_move_layer(w, p1) ? (uint32_t)om_move_layer(w, p0) : (uint32_t)om_move_layer(w, p1))) return 0;
     }
+    /* Terrain stage 2: in a ground era the ground between the two stands in the line, the same test as fog.c's. See also: om_fog_can_see_at. */
+    if (om_era_kind(w) == 1 && om_terrain_present(w) && om_terrain_sight_blocks(w, om_move_layer(w, p0), x0, y0, om_move_layer(w, p1), x0 + dx, y0 + dy)) return 0;
     /* Nothing to sample: no density cell, no canvas or obstacle disc, no cover disc, so every sample reads zero. */
     if (!ms->density && om_mapgen_terrain_free(w) && om_map_cover_count(w) == 0) return 1;
     for (i = 1; i < steps; i++) {
@@ -2549,7 +2677,7 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
     cx /= (double)n;
     cy /= (double)n;
     for (i = 0; i < n; i++) {
-        double sp = om_unit_effective_speed(w, ids[i]);
+        double sp = om_unit_order_speed(w, ids[i]);
         if (i == 0 || sp < min_speed) min_speed = sp;
     }
     for (i = 0; i < n; i++) {
@@ -3010,6 +3138,7 @@ int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units
     for (i = 0; i < n_units; i++) {
         om_move_unit *mu;
         if (om_unit_get_layer(w, unit_ids[i]) < 0 || !om_unit_alive(w, unit_ids[i])) continue;
+        if (om_move_is_walker(w, unit_ids[i])) continue; /* R-001-07: a walker takes no layer order */
         mu = om_move_touch(w, ms, unit_ids[i]);
         if (!mu) continue;
         ms->lay_any = 1;
@@ -3061,6 +3190,57 @@ int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t
     ms->reach_up[i] = layers_up;
     ms->reach_down[i] = layers_down;
     return 0;
+}
+
+/* Terrain stage 2: 0 ok; 1 unknown type (or the kind list is full); 2 unknown kind. */
+int om_roster_set_movement_kind(om_world *w, int type, int kind) {
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || type < 0 || om_unit_profile_ability_count(w, type) == 0u) return 1;
+    if (kind != OM_MOVE_FLYING && kind != OM_MOVE_WALKING && kind != OM_MOVE_SWIMMING) return 2;
+    ms = om_ms(w);
+    for (i = 0; i < ms->kind_n && ms->kind_type[i] != type; i++) {}
+    if (kind == OM_MOVE_FLYING) {
+        for (; i + 1u < ms->kind_n; i++) { ms->kind_type[i] = ms->kind_type[i + 1u]; ms->kind_val[i] = ms->kind_val[i + 1u]; }
+        if (i < ms->kind_n) ms->kind_n--;
+        return 0;
+    }
+    if (i == ms->kind_n) {
+        if (i >= OM_PP_REACH_MAX) return 1;
+        ms->kind_n++;
+        ms->kind_type[i] = type;
+    }
+    ms->kind_val[i] = kind;
+    return 0;
+}
+
+int om_unit_profile_movement_kind(const om_world *w, int type) {
+    const om_move_state *ms;
+    uint32_t i;
+    if (!w || type < 0 || om_unit_profile_ability_count((om_world *)w, type) == 0u) return OM_MOVE_FLYING;
+    ms = (const om_move_state *)w->move_state;
+    for (i = 0; ms && i < ms->kind_n; i++) {
+        if (ms->kind_type[i] == type) return ms->kind_val[i];
+    }
+    return OM_MOVE_FLYING;
+}
+
+/* R-004-06: a walker on a slope is on the lower band below the slope's midline and the upper band at or above it.
+ * See also: om_move_walker_step, which moves the walker. */
+void om_move_walker_tick(om_world *w) {
+    om_move_state *ms = om_ms(w);
+    uint32_t id;
+    if (!om_terrain_present(w)) return;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        om_slope s;
+        double dot;
+        int32_t band;
+        if (!mu->in_use || !om_unit_alive(w, id) || !om_move_is_walker(w, id) || om_terrain_slope_at(w, mu->x, mu->y, &s) < 0) continue;
+        dot = (mu->x - s.mx) * (s.x1 - s.x0) + (mu->y - s.my) * (s.y1 - s.y0);
+        band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
+        if (om_move_layer(w, id) != band) om_tac_unit_set_layer(w, id, (uint32_t)band);
+    }
 }
 
 int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down) {
@@ -3250,6 +3430,11 @@ static uint64_t om_move_section_hash(const om_world *w) {
         h = mv_word(h, ms->reach_up[k]);
         h = mv_word(h, ms->reach_down[k]);
     }
+    h = mv_word(h, ms->kind_n);
+    for (k = 0; k < ms->kind_n && k < OM_PP_REACH_MAX; k++) {
+        h = mv_word(h, (uint64_t)(int64_t)ms->kind_type[k]);
+        h = mv_word(h, (uint64_t)(int64_t)ms->kind_val[k]);
+    }
     return h;
 }
 typedef struct {
@@ -3347,6 +3532,11 @@ static void mv_save_all(const om_move_state *ms, mv_sw *s) {
         mv_put_i32(s, ms->reach_type[k]);
         mv_put_u32(s, ms->reach_up[k]);
         mv_put_u32(s, ms->reach_down[k]);
+    }
+    mv_put_u32(s, ms->kind_n);
+    for (k = 0; k < ms->kind_n && k < OM_PP_REACH_MAX; k++) {
+        mv_put_i32(s, ms->kind_type[k]);
+        mv_put_i32(s, ms->kind_val[k]);
     }
 }
 static uint32_t om_move_save_size(const om_world *w) {
@@ -3479,6 +3669,11 @@ static int om_move_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
         ms->reach_type[k] = mv_get_i32(&r);
         ms->reach_up[k] = mv_get_u32(&r);
         ms->reach_down[k] = mv_get_u32(&r);
+    }
+    ms->kind_n = mv_get_count(&r, OM_PP_REACH_MAX);
+    for (k = 0; k < ms->kind_n && r.ok; k++) {
+        ms->kind_type[k] = mv_get_i32(&r);
+        ms->kind_val[k] = mv_get_i32(&r);
     }
     if (!r.ok || r.pos != len) {
         free(ms);

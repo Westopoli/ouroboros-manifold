@@ -22,7 +22,7 @@ from test_net_section_hashes import N_SECTIONS, _battle, _run, _secs
 
 MISSION = 5
 SLOT_MISSION = 3
-N_SLOTS = 10
+N_SLOTS = 11
 SAVE_TICK = 150
 AFTER_TICKS = 500
 
@@ -39,8 +39,8 @@ def _battle_at_save(lib, world_factory):
 
 
 def _slot_blen_offset(buf, slot):
-    """Offset of a slot's 4-byte length. Slots are the buffer's tail: ten of
-    (u8 id, u32 len, blob), ids 0..9 in order. Find the start whose chain ends exactly
+    """Offset of a slot's 4-byte length. Slots are the buffer's tail: eleven of
+    (u8 id, u32 len, blob), ids 0..10 in order. Find the start whose chain ends exactly
     at the end of the buffer."""
     data = bytes(buf)
     n = len(data)

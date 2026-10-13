@@ -50,15 +50,25 @@ PIECE_ID="$3"
 MERGE_ROOT="$(dirname "$CANDIDATE")"
 
 SCRATCH_ROOT="$(mktemp -d -t merge_gate.XXXXXX)"
-cleanup() { rm -rf "$SCRATCH_ROOT"; }
+cleanup() {
+    [[ -d "$SCRATCH_ROOT/mainpipe_base" ]] && git -C "$CANDIDATE" worktree remove --force "$SCRATCH_ROOT/mainpipe_base" >/dev/null 2>&1
+    rm -rf "$SCRATCH_ROOT"
+}
 trap cleanup EXIT
 
 REJECTED=0
 
+STAGE_MARK_US="${EPOCHREALTIME/./}"
+
 gate_line() {
-    local name="$1" status="$2"
+    local name="$1" status="$2" detail now_us el
     shift 2
-    echo "GATE $name $status $*"
+    detail="$*"
+    while [[ "$detail" == *$'\n' ]]; do detail="${detail%$'\n'}"; done
+    now_us="${EPOCHREALTIME/./}"
+    el=$(( (now_us - STAGE_MARK_US + 50000) / 100000 ))
+    STAGE_MARK_US="$now_us"
+    echo "GATE $name $status $detail [$((el / 10)).$((el % 10))s]"
 }
 
 reject() { gate_line "$1" REJECT "${*:2}"; REJECTED=1; }
@@ -72,7 +82,7 @@ tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
     MAKE_ARGS=(OPT=-O2 WERROR=1)
 else
-    warn make "Makefile does not reference \$(OPT) yet (F2 not landed); falling back to plain make"
+    MAKE_OPT_WARN="Makefile does not reference \$(OPT) yet (F2 not landed); falling back to plain make"
     MAKE_ARGS=()
 fi
 
@@ -87,6 +97,7 @@ elif [[ $MAKE_RC -ne 0 ]]; then
     harness make "COMPILE ERROR (rc=$MAKE_RC): $(tail_oneline "$MAKE_LOG")"
     exit 3
 fi
+[[ -n "${MAKE_OPT_WARN:-}" ]] && warn make "$MAKE_OPT_WARN"
 ok make ""
 
 # -------------------------------------------------------------- 2. libm_lint
@@ -180,11 +191,21 @@ fi
 # regression_csim/regression_qa_t1 above compare failing-id sets rather than
 # absolute pass/fail counts.
 REACH_LOG="$SCRATCH_ROOT/reach_lint.log"
-"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --base-ref "$BASE_REF" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
+"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --base-ref "$(git -C "$CANDIDATE" merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
     reject reach_lint "$(tail_oneline "$REACH_LOG" 10)"
 else
     ok reach_lint "$(tail_oneline "$REACH_LOG" 1)"
+fi
+
+# -------------------------------------------------------------- 5b-gd. Godot reach lint (HARNESS-gdreach)
+# Same regression mode as reach_lint: only a .gd newly unreachable from the main scene/autoloads rejects.
+GDREACH_LOG="$SCRATCH_ROOT/gd_reach_lint.log"
+"$PYTHON" "$GATE_DIR/gd_reach_lint.py" --ref "HEAD" --base-ref "$(git -C "$CANDIDATE" merge-base "$BASE_REF" HEAD 2>/dev/null || echo "$BASE_REF")" --project "$CANDIDATE" >"$GDREACH_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject gd_reach "$(grep '^NEW UNREACHABLE' "$GDREACH_LOG" | tr '\n' ' ')"
+else
+    warn gd_reach "$(tail_oneline "$GDREACH_LOG" 1)"
 fi
 
 # -------------------------------------------------------------- 5c. single-owner lint
@@ -237,6 +258,15 @@ if [[ $? -ne 0 ]]; then
     reject regression_csim "$(cat "$REG_CSIM_LOG")"
 else
     ok regression_csim "$(cat "$REG_CSIM_LOG")"
+fi
+
+REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject regression_lab "$(cat "$REG_LAB_LOG")"
+else
+    ok regression_lab "$(cat "$REG_LAB_LOG")"
 fi
 
 REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
@@ -401,6 +431,21 @@ ok qa_t1 "covered by regression_qa_t1"
 # -------------------------------------------------------------- 9. tests/transport, if present and the pipe builds
 if [[ -d "$CANDIDATE/tests/transport" ]]; then
     PIPE_LOG="$SCRATCH_ROOT/pipe_build.log"
+    # See also: tests/transport/test_pipe_vg_identity.py skips without OM_MAIN_PIPE
+    # Build base-ref's pipe once and export it so the candidate and base runs see the same env;
+    # a separate baseline cache keeps skip counts cached without it from leaking in.
+    if [[ -z "${OM_MAIN_PIPE:-}" ]]; then
+        MAINPIPE_DIR="$SCRATCH_ROOT/mainpipe_base"
+        if git -C "$CANDIDATE" worktree add --detach "$MAINPIPE_DIR" "$BASE_REF" >"$SCRATCH_ROOT/mainpipe.log" 2>&1 \
+            && ( cd "$MAINPIPE_DIR" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >>"$SCRATCH_ROOT/mainpipe.log" 2>&1 \
+            && [[ -x "$MAINPIPE_DIR/pipe/ouroboros_pipe" ]]; then
+            export OM_MAIN_PIPE="$MAINPIPE_DIR/pipe/ouroboros_pipe"
+            export MERGE_GATE_BASELINE_CACHE="${MERGE_GATE_BASELINE_CACHE:-$MERGE_ROOT/baseline_cache_mainpipe}"
+            mkdir -p "$MERGE_GATE_BASELINE_CACHE"
+        else
+            warn transport "OM_MAIN_PIPE not set, base pipe did not build: $(tail_oneline "$SCRATCH_ROOT/mainpipe.log")"
+        fi
+    fi
     ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PIPE_LOG" 2>&1
     if [[ $? -eq 0 ]]; then
         PIPE_DBG_LOG="$SCRATCH_ROOT/pipe_dbg_build.log"
@@ -448,6 +493,20 @@ if [[ $? -ne 0 ]]; then
     reject playthrough "$(sed 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
 else
     ok playthrough "$(sed 's/^OK //' "$PT_LOG" | tr '\n' ' ')"
+fi
+
+# -------------------------------------------------------------- 9b. lane_plays (per-lane desktop plays, real client under xvfb)
+# Runs the plays of each lane whose globs (lane_plays.toml) the diff touches; red outside
+# lane_plays_known_red.txt rejects. See merge_gate_support.py lane_plays_check.
+LP_LOG="$SCRATCH_ROOT/lane_plays.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject lane_plays "$(sed 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+elif grep -q '^OK skipped' "$LP_LOG"; then
+    warn lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
+else
+    ok lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
 fi
 
 # -------------------------------------------------------------- 10. checksum_trace O0 vs O2
@@ -533,6 +592,21 @@ SIZE_LOG="$SCRATCH_ROOT/size_lint.log"
 "$PYTHON" "$GATE_DIR/size_lint.py" HEAD "$BASE_REF" --piece-id "$PIECE_ID" \
     --pieces "$PIECES_TOML" --project "$CANDIDATE" >"$SIZE_LOG" 2>&1
 warn size_lint "$(tail_oneline "$SIZE_LOG" 3)"
+
+# -------------------------------------------------------------- 13. look (WARN only until Westley's threshold lands)
+# Frames of the candidate vs main's at the same play moment, dirs from env;
+# merge_gate_support.py look never rejects. See also: spec G1.
+if [[ -d "${MERGE_GATE_LOOK_CANDIDATE:-}" && -d "${MERGE_GATE_LOOK_BASE:-}" ]]; then
+    LOOK_LOG="$SCRATCH_ROOT/look.log"
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" look "$MERGE_GATE_LOOK_CANDIDATE" "$MERGE_GATE_LOOK_BASE" >"$LOOK_LOG" 2>&1
+    if [[ "$(head -c4 "$LOOK_LOG")" == "WARN" ]]; then
+        warn look "$(sed 's/^WARN //' "$LOOK_LOG" | tr '\n' ' ')"
+    else
+        ok look "$(sed 's/^OK //' "$LOOK_LOG" | tr '\n' ' ')"
+    fi
+else
+    warn look "no frame dirs (MERGE_GATE_LOOK_CANDIDATE / MERGE_GATE_LOOK_BASE unset); skipped"
+fi
 
 # --------------------------------------------------------------
 if [[ "$REJECTED" -eq 1 ]]; then

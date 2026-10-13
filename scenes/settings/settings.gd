@@ -194,10 +194,11 @@ func _build_keybinds_card(parent: Control) -> void:
 		["Control Group Assign", "Ctrl+1-9"],
 		["Control Group Select", "1-9"],
 		["All Army", "F1"],
-		["Ability", "Q"],
-		["Layer Up", "PageUp"],
-		["Layer Down", "PageDown"],
+		["Ability", "P"],
+		["Layer Up", "Q"],
+		["Layer Down", "E"],
 		["Sensor Pulse", "Space"],
+		["Home View", "Home"],
 	]
 
 	for bind in binds:

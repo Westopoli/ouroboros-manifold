@@ -30,26 +30,34 @@ On 2026-10-01 he added that there is more than one answer: "The *lines* can cros
 
 Skill is represented by scripted plays: a skilled play and a naive play. The naive play is measured two ways, side by side: a blob, and a line abreast (Westley, 2026-10-01). Plays and their counters, accepted in outline ("your list looks good", "Everything else looks good"). The counter to S2's spread line is the one he said he could not picture; he was shown a diagram and has not confirmed it:
 
-| Skill | Skilled play | Counter |
-|---|---|---|
-| S1 | Hold a choke: stand just behind a narrow passage so few enemies can fire at once | Go around or over it on another layer; or stand outside and outrange it |
-| S1 | Hold the top of a slope, far enough past the midline that climbers cannot reach | Take another way up, or fly; or shell the top from below with a type that fires upward |
-| S1 | Fight from behind tall cover | Get sight first: ping behind the cover, or move to a layer above its height |
-| S2 | Concave around the point where the enemy arrives | Stop at the edge of range; or throw the whole force at one horn of the arc |
-| S2 | Spread to full width so every unit is in range together | Mass the whole force on one end of the line, so only the few defenders at that end can fire, and work along it |
-| S2 | Long-range units behind a screen of tough ones | Reach the back line from another layer; or send fast units around the screen |
-| S3 | Ping the layer and place that matters before committing | Move after being pinged so the picture is stale (later); or show a decoy to be pinged |
-| S3 | A silent striking force with an emitting decoy | Ping the likely approaches; do not chase the emitter (later) |
-| S3 | Place each type where its reach covers the enemy and the enemy's does not | Change layer to leave their reach and enter yours; bring the type that fires upward |
-| S4 | Find the enemy with pings and fire first | Go silent so less is found; relocate after the alert (later) |
-| S4 | Take the route or layer the enemy is not watching | Watch more routes with pings; hold a reserve in the middle |
-| S4 | Bait: a small group engages and falls back, the main force closes a surround (later) | Do not chase, or chase with a small detachment only (later) |
-| S4 | Ambush: wait unseen and hold fire until the enemy is inside the concave (later) | Ping ahead before advancing; send a vanguard first (later) |
-| S5 | Line each type up against the type it beats | Mix types evenly so there is no clean matchup; re-shuffle to mirror (later; the reactive idea) |
-| S5 | Each type shoots the type it beats first | Keep the targeted type behind a screen |
-| S5 | Keep the vulnerable type away from its counter | Reach it from another layer, or flank it |
+| Skill | Skilled play | Counter | Kind |
+|---|---|---|---|
+| S1 | Hold a choke: stand just behind a narrow passage so few enemies can fire at once | Go around or over it on another layer; or stand outside and outrange it | both |
+| S1 | Hold the top of a slope, far enough past the midline that climbers cannot reach | Take another way up, or fly; or shell the top from below with a type that fires upward | ground |
+| S1 | Fight from behind tall cover | Get sight first: ping behind the cover, or move to a layer above its height | ground |
+| S2 | Concave around the point where the enemy arrives | Stop at the edge of range; or throw the whole force at one horn of the arc | both |
+| S2 | Spread to full width so every unit is in range together | Mass the whole force on one end of the line, so only the few defenders at that end can fire, and work along it | both |
+| S2 | Long-range units behind a screen of tough ones | Reach the back line from another layer; or send fast units around the screen | both |
+| S3 | Ping the layer and place that matters before committing | Move after being pinged so the picture is stale (later); or show a decoy to be pinged | space |
+| S3 | A silent striking force with an emitting decoy | Ping the likely approaches; do not chase the emitter (later) | space |
+| S3 | Place each type where its reach covers the enemy and the enemy's does not | Change layer to leave their reach and enter yours; bring the type that fires upward | space |
+| S4 | Find the enemy with pings and fire first | Go silent so less is found; relocate after the alert (later) | space |
+| S4 | Take the route or layer the enemy is not watching | Watch more routes with pings; hold a reserve in the middle | both |
+| S4 | Bait: a small group engages and falls back, the main force closes a surround (later) | Do not chase, or chase with a small detachment only (later) | both |
+| S4 | Ambush: wait unseen and hold fire until the enemy is inside the concave (later) | Ping ahead before advancing; send a vanguard first (later) | both |
+| S5 | Line each type up against the type it beats | Mix types evenly so there is no clean matchup; re-shuffle to mirror (later; the reactive idea) | both |
+| S5 | Each type shoots the type it beats first | Keep the targeted type behind a screen | both |
+| S5 | Keep the vulnerable type away from its counter | Reach it from another layer, or flank it | both |
 
 Refusing a fight is a counter: "a skilled player only takes a battle that they can win, skilled players make it so that the opponent doesn't have a choice." A play needs a counter on most maps, not all; "some situations are unbeatable (like a full surround or a trap where the door gets closed)". "Later" marks plays that need orders to change during a fight. After the prototype, if it works, a reactive version: one side or both re-form mid-fight to keep their rocks on the enemy's scissors.
+
+## Two labs
+
+Westley, 2026-10-05: every era is space or ground, a formal property of the era pack (E-01), and the two kinds are a clean separation (flying units in ground eras may borrow from space). So there are two labs, one per kind.
+
+- The space lab is `scripts/skilllab/`: five free layers, every unit flies, terrain blocks per layer range, cover discs, the ping; passive cross-layer sight is very limited (Q-005-07). It is the one being built and run.
+- The ground lab waits for the sim to have ground. What was written for it is parked in `scripts/skilllab/ground/` and `tests/skilllab/ground/`: the height-rule sweep (`highground.py`) and the tall-cover scenes. It is not a ground answer; on the space engine a slope is only a timed layer change.
+- The Kind column of the plays table in section 3 says which lab a play belongs to: space, ground, or both. The S1 slope-top and tall-cover plays are ground. The kinds are a first reading by the 2026-10-05 split step, not confirmed by Westley.
 
 ## 4. The measure
 
@@ -74,6 +82,21 @@ Conditions on a rule set, with draft pass marks that Westley has not yet confirm
 | C9 | Fights stay readable | reported: fight length against E-11 S-085 |
 
 "Lines crossing", made concrete: a line is the edge, in the space of settings, of where one condition holds; the crossing is a region where all hold at once; there may be several such regions.
+
+Rulings of 2026-10-13 (Westley), binding on every batch from here:
+
+- Naive baseline for a defending play: reported both ways, against a naive attacker and against a naive defender placed at the same post ("#1: C").
+- Scan range: enemy headcount 8 to 48 against a force of 16, so a play can show up to three times its size ("#2: A"); a play that beats 48 is reported as a ceiling hit, never as no gain.
+- The fight ends by elimination only (register Q-LAB-03); both sides attack-move to one point, or the attacker's point lies inside the defender's reach.
+- Same units, same values, on both sides, always (Westley, 2026-10-13: "Each 'era' will have both sides fighting the same units, same values"). A skilled play differs from the naive play only in arrangement, orders and which roster types stand where; the stat-scaled Vanguard variants in `plays_space.py` (double hit points, +20 percent range, half hit points) are retired and replaced by roster types. The only asymmetry allowed is a labelled positive control (the planted 20 percent damage scan), never a play.
+- Emitting (S-163) is a lab knob, two multipliers, sight and seen-from, with seen-from always above sight (R-163-01); the sweep finds the crossing. Starting pair: sight x2.0, seen x3.0 (Westley, 2026-10-13: "let's make that a knob, let the sweep find the crossing").
+- No absurd outliers (Westley, 2026-10-13): every sweep starts at the bible's value and steps by a named factor inside a bounded band (draft: 0.25x to 4x of the base, three to five points per knob), coarse grid first, then refined only around a crossing the coarse grid showed; a point outside the band needs a reason written in the batch spec.
+- Firing up is a penalty (Westley, 2026-10-13: "let's go with penalty for multipliers firing up"): the coarse grid for the cross-layer range and damage multipliers runs from the bible's 1.0 down to 0.25; a single point above 1.0 may appear only as a labelled sign-flip control, never as a sweep point.
+- Cross-layer vision: asymmetric in ground eras (high ground sees down, low never sees up, R-005-09) and symmetric in space eras (R-005-05) (Westley, 2026-10-13: "it should only be asymmetrical in Ground eras ... whereas it needs to be symmetrical on space since there's more freedom of movement and ping system"). A space play never sets the up and down factors apart; the S3 play's down factor of 1.0 against up 0.5 is retired.
+- Cross-layer fire works in ground eras too (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug"): the reach table of S-164 applies in every era; E-01 S-164's "space eras only, for now" is withdrawn, and a walker that cannot fire up a slope under reach (0, 0) is a finding, not a rule.
+- Attack-move resumes (Westley, 2026-10-13, option (a)): an attack-move, group or lone, is not finished until the unit reaches its point and resumes after every engagement (R-096-02 rewritten). Until the group resume lands in the engine, the lab issues attack-moves one unit per order, which the engine already resumes (measured 2026-10-13: one group order stalled at 303 to 336 wu, single orders fought to elimination).
+- The type-weighted prediction's target (Westley, 2026-10-13, option (a)): the unit's engine target when that target is able-to-fire-eligible, else the nearest eligible enemy; the weight is the category multiplier of the attacker's category against that target's category and nothing else. Draft definition to be approved by Westley before plan mode.
+- Orientation returns to the variable list once the firing arc is in the engine (Q-100-01); area damage as a knob with its own range and shape, on any role or unit, is a lab variable (Q-082-06).
 
 ## 5. How results are read
 
@@ -129,6 +152,32 @@ Until the port parity lands, two armies sent at each other end as two flat rows 
 8. When a working configuration is found and read: the layer interactions go into the MVP.
 
 The harness contract and the engine brief are `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
+
+### Layout run 1 (space lab)
+
+Landed 2026-10-08 (`a9ee5897`); the chart waits for Westley. Record: `runs/2026-10-08_layout_run1/` (`depth_summary.json`, `depth_page.html`, `depth.csv.gz`).
+
+- What ran: 200 layouts sampled from the 648-layout grid, 12 scans each (seven skilled plays, three counters, a naive blob, a naive spread line), Rev 4 placed formations, 8 workers, 3 h 18 m wall (00:11 to 03:29). That is 244,800 fights.
+- Outcomes over all fights: decided 37.2 percent, held 29.8, side 0 13.7, side 1 12.4, capped 6.9, draw 5 rows. 294 of the 2,400 (layout, play, variant) groups have at least one capped fight; 143 are capped in every fight.
+- Skilled score, layouts per score 0 to 5: 40, 66, 46, 29, 13, 6. Naive line: 109, 75, 4, 7, 4, 1. The score is the skilled-beats-naive depth signal, so the naive line scoring 0 or 1 on 184 of 200 layouts is the result that matters.
+- Six layouts score 5. Five of them (81, 78, 68, 151, 169; naive line 5, 3, 1, 1, 1) share blocked_layer_top 4 and start_distance 1400. The sixth (192) has blocked_layer_top 0 and start_distance 2800, naive 1.
+- Mean skilled score by feature value:
+
+| Feature | Values: mean score |
+|---|---|
+| blocked_layer_top | 0: 1.52, 2: 1.82, 4: 1.56 |
+| choke_width_bodies | 0: 1.22, 2: 1.88, 4: 1.84, 8: 1.60 |
+| cover_density_corridor | 0: 1.78, 0.1: 1.63, 0.3: 1.50 |
+| detour_ratio | 0: 1.61, 1.5: 1.84, 3: 1.45 |
+| lane_count | 0: 1.36, 1: 1.66, 2: 1.89 |
+| start_distance | 1400: 2.08, 2800: 1.19 |
+
+Not verified from the files in the folder: the 8 workers and the wall-clock times (they come from the run's brief, not from the json or csv). Everything else above was recomputed from the json and the csv.
+
+Open for Westley, after he reads the chart:
+
+1. Ruled 2026-10-13 (register Q-LAB-03): a fight ends when one side is eliminated. Both sides attack-move to one point; a defender that must hold a feature gets the attacker's attack-move point inside its vision and fire. Hold timer, hold radius, blind window and draw band are retired as end rules; the tick cap stays as a bug detector only, and a capped fight is a lab defect to trace (run 1's 143 always-capped groups had no contact at all: the attacker never reached the defender), never a result. Run 1's `held` class falls away with it.
+4. The composition category table for run 2.
 
 ## 9. Two machines
 

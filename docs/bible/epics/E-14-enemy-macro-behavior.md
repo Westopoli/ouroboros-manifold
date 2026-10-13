@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-120 to S-125: yes, 6 stories, 22 rules, numbers from `algorithms.md` ALG-74 and config. S-215 to S-217: 3 stories, 17 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-120 to S-125, Q-125-03, and 8 on S-215 to S-217 (Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01), plus Q-178-04 carried. |
+| Implied-but-unstated behavior turned into flags | 2 open flags on S-215 to S-217 (Q-215-04, Q-217-01), plus Q-178-04 carried. |
 | Every visible-surface story has a reference | Not applicable. Enemy behavior is observed through units (E-11, E-13). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-125-03 (S-125) and on the open flags of S-215 to S-217. S-120 to S-124 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** Blocked on the open flags of S-215 to S-217 (Q-215-04, Q-217-01). S-120 to S-124 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -31,7 +31,7 @@ Direction changed 2026-10-02, rewrite pending: the macro layer also issues the l
 As a commander, I want enemy forces to advance, hold, patrol, ambush, or retreat, cautiously, aggressively, or in echelons, so that I can read what they are doing and plan against it.
 
 Rules
-- R-120-01  Given a script state, When read, Then its behavior is one of advance, defend, patrol, ambush, retreat and its modifier one of cautious, aggressive, phased; any other value fails script validation.
+- R-120-01  Given a script state, When read, Then its behavior is one of advance, defend, patrol, ambush, retreat and its modifier one of cautious, aggressive, phased; any other value fails script validation. The behaviours for defending a base, founding an expansion and raiding are added by S-216.
 - R-120-02  Given advance, When executed, Then the force attack-moves toward the mission's primary objective (its node center, via `om_objective_get_center` or the spine node the mission places); once the force has contact -- any of its units has a visible player unit in range or took damage this evaluation -- it re-targets the nearest player unit group centroid; given defend, Then it holds position and units auto-engage without pursuit; given patrol, Then it plain-moves through its waypoints in a cycle and auto-engages on contact; given ambush, Then it holds hidden until an enemy enters its trigger radius, then becomes advance_aggressive toward the trigger and never resets; given retreat, Then it plain-moves to its fallback point (the mission's enemy spawn edge). Decided by Westley, 2026-09-28 (Q-120-02).
 - R-120-03  Given cautious, When executed, Then the force moves at baseline speed and it transitions to retreat or defend when force HP lost since state entry exceeds the contact threshold; given aggressive, Then baseline speed, no break-off; given phased, Then the force is split into 2 or 3 sub-groups that advance one at a time, each starting when the previous engages or reaches its waypoint.
 - R-120-04  Given a macro evaluation, When it runs, Then it runs every 40 ticks (2 s) and issues commands only through move, attack_move, attack_target, activate_ability.
@@ -101,33 +101,33 @@ Direction changed 2026-10-02, rewrite pending: a third thing differs between the
 As a player, I want a difficulty knob that changes how much the enemy has and how well it reads the layers, never how its units fight, so that I always lose to my own limits.
 
 Rules
-- R-125-01  Given difficulty, When the enemy is set up, Then two things scale: its economic prosperity (more resources to field and replenish) and its multi-layer intelligence (positional awareness: which units on which layers trump the player's units on theirs, informed surrounds the player cannot see until too late) [Q-125-03: how each scales and what hard mode strives for].
+- R-125-01  Given difficulty, When the enemy is set up, Then two things scale: its economic prosperity (more resources to field and replenish) and its multi-layer intelligence (positional awareness: which units on which layers trump the player's units on theirs, informed surrounds the player cannot see until too late) The numbers by which each scales are set by the skill lab (Westley, 2026-10-07: "#8: C").
 - R-125-02  Given any difficulty, When the enemy's units act, Then their stats and abilities are identical to the player's, and the macro layer never sees what a player could not see; only how much the enemy has and how well it reads layers differs.
 - R-125-03  Given external playtesters, When sessions run, Then command streams and outcomes are captured for the future learned-opponent target (A-156, data capture only).
 
 Inputs: difficulty.
 Outputs: enemy force size and prosperity; macro layer awareness; captured session logs.
-Open flags: Q-125-03 (its register candidate (a) ties prosperity to the reinforcement structures' rate, which the economy replaces: prosperity is now the enemy economy's resources, S-215).
+Open flags: none; the scaling numbers are the skill lab's (Q-125-03, liberty: Architect).
 Prosperity and multi-layer intelligence were chosen through the options pass, `docs/northstar/research/options/difficulty-knobs/`.
 
 ### S-215 — The enemy runs an economy too
-As a commander, I want the enemy's base to be run by the same economy rules as mine, richer or poorer by difficulty, and farsighted only if I choose, so that what the enemy builds is what a player could build and I decide how much foresight it has.
+As a commander, I want the enemy's base to be run by the same economy rules as mine, richer or poorer by difficulty, and farsighted as the difficulty sets, so that what the enemy builds is what a player could build and the difficulty decides how much foresight it has.
 
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-215-01  Given an enemy with a base (E-10 S-210), When the mission runs, Then its economy is run by the rules that run a side's economy with nobody in the seat (E-22 S-179 and S-181): the same rules as the player's side, under the same one population cap (E-22 S-169), with perfect hands and no foresight.
-- R-215-02  Given difficulty, When the enemy's economy is set up, Then its prosperity is scaled by difficulty (R-125-01) [Q-125-03: how].
-- R-215-03  Given the player has left enemy foresight off, When the enemy's economy runs, Then it does not scout, read the player, counter-pick technology or disguise anything.
-- R-215-04  Given the player has turned enemy foresight on, When the enemy's economy runs, Then it also scouts, counters and disguises, and it reads the player only through what its own side's sight has revealed (E-12 R-093-02), as the player's side does.
+- R-215-02  Given difficulty, When the enemy's economy is set up, Then its prosperity is scaled by difficulty (R-125-01).
+- R-215-03  Given the difficulty has enemy foresight off, When the enemy's economy runs, Then it does not scout, read the player, counter-pick technology or disguise anything.
+- R-215-04  Given the difficulty has enemy foresight on, When the enemy's economy runs, Then it also scouts, counters and disguises, and it reads the player only through what its own side's sight has revealed (E-12 R-093-02), as the player's side does.
 - R-215-05  Given the enemy's production target (E-15 S-128), When foresight is off, Then production follows the target ratio and never shifts toward a counter; and When foresight is on, Then the counter-shift of E-15 R-128-02 applies, reading only the player's units the enemy has seen.
-- R-215-06  Given the foresight choice, When a mission is set up, Then it is the player's choice [Q-215-01: its default, whether it is made per mission, per campaign or live, and where E-10 receives it].
-- R-215-07  Given the enemy's production, When its mix is chosen, Then [Q-215-02: which doctrine the enemy runs and who picks it, and how the doctrine and the script's target ratio (E-15 S-128) together decide the mix].
-- R-215-08  Given the enemy's foresight and its multi-layer intelligence (R-125-01), When both are set, Then [Q-215-03: whether they are independent, or hard difficulty turns foresight on].
+- R-215-06  Given the difficulty, When a mission is set up, Then it decides which of scouting, countering and disguising the enemy's economy does, and the player has no switch for it (Westley, 2026-10-07; E-22 R-181-03). Foresight is off on easy only and on at medium and hard (Westley, 2026-10-07: "Only easy should have foresight off honestly.").
+- R-215-07  Given the enemy's production, When its mix is chosen, Then the difficulty picks the doctrine, rolled from the mission seed among those the difficulty allows; and where foresight is on the enemy changes its priorities from what its side has seen of the player, so its playstyle is not fixed (Westley, 2026-10-07: "#10: C with a random roll (but enemy can be reactive and change their priorities based on the player)"). How the doctrine and the script's target ratio (E-15 S-128) combine is the Architect's.
+- R-215-08  Given the enemy's foresight and its multi-layer intelligence (R-125-01), When both are set, Then the difficulty sets foresight (E-22 R-181-03) and the lab sets the multi-layer intelligence, as separate steps (Westley, 2026-10-07).
 
-Inputs: difficulty; the foresight choice; the doctrine; the enemy's base and economy state; what the enemy's side has seen.
+Inputs: difficulty, which also sets foresight; the doctrine; the enemy's base and economy state; what the enemy's side has seen.
 Outputs: the enemy economy's orders, in the command log (S-217); production choices in the T1 trace.
-Open flags: Q-125-03, Q-215-01, Q-215-02, Q-215-03, Q-215-04 (whether the macro evaluation budget under Scale requirements holds when the enemy runs thousands of workers).
+Open flags: Q-215-04 (whether the macro evaluation budget under Scale requirements holds when the enemy runs thousands of workers).
 
 ### S-216 — The enemy fights over its bases
 As a commander, I want the enemy's forces to defend its base and its expansions, to fall back to what it still holds, and to raid my workers and shipments, so that the enemy plays the same war over the economy that I do.
@@ -135,14 +135,14 @@ As a commander, I want the enemy's forces to defend its base and its expansions,
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-216-01  Given an enemy base of operations, expansion or forward works (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them [Q-216-01: whether this is done with the five behaviours of R-120-01 or with new ones, or belongs to the economy rules].
-- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward works the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-178-04: what happens to a side with no base].
-- R-216-03  Given the enemy economy founds an expansion or builds production forward, When it chooses where and when, Then [Q-216-02: whether the economy rules or the behaviour script decide; Westley: "Where it stands shows where the next push comes from"].
-- R-216-04  Given raid lanes set by the terrain (E-22 S-174), When the enemy raids, Then a force travels along a lane to the player's workers or shipments [Q-216-01: which behaviour does this; Q-216-03: whether raiding needs foresight on, since shipments are blind (E-22 S-176)].
+- R-216-01  Given an enemy base of operations, expansion or forward works (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them, with new behaviours added beside the five of R-120-01 for defending a base, founding an expansion and raiding (Westley, 2026-10-07: "#11: B").
+- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward works the enemy held; where the enemy holds no base, its mission ends and is scored (E-22 R-178-05; Westley, 2026-10-06).
+- R-216-03  Given the enemy economy founds an expansion or builds production forward, When it chooses where and when, Then the behaviour script (the authored per-mission plan of states, hooks and timers) names the push and the economy rules pick the site (Westley, 2026-10-07: "#12: C"; Westley: "Where it stands shows where the next push comes from").
+- R-216-04  Given raid lanes set by the terrain (E-22 S-174), When the enemy raids, Then a force travels along a lane to the player's workers or shipments; raids are scripted and do not need foresight, though shipments are blind (E-22 S-176; Westley, 2026-10-07: "No enemy doesn't need foresight on to raid you.").
 
 Inputs: the enemy's bases (E-22 S-175, S-178); raid lanes (E-17); the script.
 Outputs: enemy commands in the command log; force state in the T1 trace.
-Open flags: Q-216-01, Q-216-02, Q-216-03, Q-178-04.
+Open flags: none.
 
 ### S-217 — The enemy uses the layers
 As a commander, I want the enemy to move between layers, ping and go quiet as I can, so that the layers are as much its ground as mine.
@@ -151,14 +151,14 @@ Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-217-01  Given a force that should change layer, When the macro layer acts, Then it may issue the hard layer transfer of E-01 S-002, on the same rules as the player's.
-- R-217-02  Given the era has the technology for it, When the macro layer wants to see another layer, Then it may issue the targeted ping of E-01 S-162 on the same limits as the player's, and the pinged player is alerted as R-162-03 says; where the era uses scouts (R-162-04) the ping is carried by them.
+- R-217-02  Given the era has the technology for it, When the macro layer wants to see another layer, Then it may issue the targeted ping of E-01 S-162 on the same limits as the player's; the pinged player is told nothing (R-162-03, alert off for now); where the era uses scouts (R-162-04) the ping is carried by them.
 - R-217-03  Given a force, When the macro layer sets it to emit or to silent (E-01 S-163), Then the same costs and sight apply as for the player's forces.
-- R-217-04  Given difficulty, When the macro layer is set up, Then which of these commands it may use scales with its multi-layer intelligence (R-125-01) [Q-125-03: how].
+- R-217-04  Given difficulty, When the macro layer is set up, Then which of these commands it may use scales with its multi-layer intelligence (R-125-01), by numbers the skill lab sets.
 - R-217-05  Given the enemy economy issues orders to build, train or gather (S-215), When they are issued, Then they are orders a player could issue and they appear in the same replay stream as the enemy's other commands (R-123-02) [Q-217-01: the economy's commands are not yet in the command vocabulary].
 
 Inputs: the macro layer's state; the era pack.
 Outputs: enemy layer and economy commands in the command log and replay.
-Open flags: Q-125-03, Q-217-01.
+Open flags: Q-217-01.
 
 ## Inputs
 
@@ -214,7 +214,7 @@ None required.
 
 ## Open ambiguity flags
 
-Q-125-03, Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01, Q-178-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-215-04, Q-217-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

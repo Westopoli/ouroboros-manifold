@@ -75,6 +75,7 @@ class Engine:
         self._bind()
         self._px, self._py = ctypes.c_double(), ctypes.c_double()
         self._pbx, self._pby = ctypes.byref(self._px), ctypes.byref(self._py)
+        self._own = {}      # (world address, faction) -> unit ids spawned through this wrapper
 
     def _bind(self):
         c, V, u32, u64, d, i = (ctypes, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double,
@@ -118,6 +119,20 @@ class Engine:
             "om_map_set_canvas": ([V, d, d], i),
             "om_map_block_rect": ([V, d, d, d, d, u32, u32], i),
             "om_map_add_cover": ([V, d, d, d, d], u32),
+            "om_command_ping": ([V, u32, u32, d, d], i),
+            "om_command_set_layer": ([V, c.POINTER(u32), u32, u32], i),
+            "om_command_set_emission": ([V, c.POINTER(u32), u32, i], i),
+            "om_player_can_see": ([V, c.c_int32, u32], i),
+            "om_terrain_generate": ([V, u64, d, d], i),
+            "om_terrain_band_at": ([V, d, d], i),
+            "om_terrain_walkable_at": ([V, d, d], i),
+            "om_terrain_cells": ([V, c.POINTER(u32), c.POINTER(u32)], u32),
+            "om_terrain_dump_bands": ([V, c.c_char_p, u32], u32),
+            "om_terrain_walk_mask": ([V, i, c.c_char_p, u32], u32),
+            "om_terrain_slope_at": ([V, d, d, V], i),
+            "om_set_era_kind": ([V, i], i),
+            "om_roster_set_movement_kind": ([V, i, i], i),
+            "om_unit_profile_movement_kind": ([V, i], i),
         }
         for name, (argtypes, restype) in sigs.items():
             fn = getattr(self._lib, name)
@@ -131,6 +146,8 @@ class Engine:
         return ctypes.c_void_p(w)
 
     def free_world(self, w):
+        for k in [k for k in self._own if k[0] == w.value]:
+            del self._own[k]
         self._lib.om_world_free(w)
 
     def register_unit_type(self, w, type_id, stats):
@@ -172,7 +189,34 @@ class Engine:
         self._lib.om_tactical_disable_abilities(w)
 
     def spawn(self, w, type_id, faction, x, y, layer):
-        return int(self._lib.om_unit_spawn(w, int(type_id), int(faction), float(x), float(y), int(layer)))
+        uid = int(self._lib.om_unit_spawn(w, int(type_id), int(faction), float(x), float(y), int(layer)))
+        if uid:
+            self._own.setdefault((w.value, int(faction)), []).append(uid)
+        return uid
+
+    def ping(self, w, caster, layer, x, y):
+        return int(self._lib.om_command_ping(w, int(caster), int(layer), float(x), float(y)))
+
+    def set_layer(self, w, ids, layer):
+        ids = [int(u) for u in ids]
+        self._lib.om_command_set_layer(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), int(layer))
+
+    def set_emission(self, w, ids, on):
+        ids = [int(u) for u in ids]
+        self._lib.om_command_set_emission(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), 1 if on else 0)
+
+    def visible_enemies(self, w, side, enemy_ids):
+        return {int(e) for e in enemy_ids if self._lib.om_player_can_see(w, int(side), int(e))}
+
+    def seen_by_sight(self, w, side, enemy_ids):
+        own = [o for o in self._own.get((w.value, int(side)), []) if self.unit_alive(w, o)]
+        return {int(e) for e in enemy_ids if any(self._lib.om_unit_can_see(w, o, int(e)) for o in own)}
+
+    def set_ping_params(self, w, radius=None, reach=None, reveal_ticks=None, cooldown_ticks=None):
+        for name, v in (("OM_TP_PING_RADIUS", radius), ("OM_TP_PING_REACH", reach),
+                        ("OM_TP_PING_REVEAL_TICKS", reveal_ticks), ("OM_TP_PING_COOLDOWN_TICKS", cooldown_ticks)):
+            if v is not None:
+                self.set_param(w, self.param_id(name), v)
 
     def order_attack_move(self, w, unit_ids, x, y):
         self._order(self._lib.om_command_attack_move, w, unit_ids, x, y)
@@ -267,3 +311,38 @@ class Engine:
         if idx == 0:
             raise ValueError("om_map_add_cover(%r, %r, %r, %r) refused (add_cover)" % (x, y, radius, height))
         return idx
+
+    def terrain_generate(self, w, seed, canvas):
+        return int(self._lib.om_terrain_generate(w, int(seed), float(canvas), float(canvas)))
+
+    def terrain_band_at(self, w, x, y):
+        return int(self._lib.om_terrain_band_at(w, float(x), float(y)))
+
+    def terrain_walkable_at(self, w, x, y):
+        return bool(self._lib.om_terrain_walkable_at(w, float(x), float(y)))
+
+    def terrain_dump_bands(self, w):
+        cw, ch = ctypes.c_uint32(), ctypes.c_uint32()
+        n = int(self._lib.om_terrain_cells(w, ctypes.byref(cw), ctypes.byref(ch)))
+        buf = ctypes.create_string_buffer(n)
+        self._lib.om_terrain_dump_bands(w, buf, n)
+        return int(cw.value), int(ch.value), buf.raw
+
+    def terrain_walk_mask(self, w, layer):
+        cw, ch = ctypes.c_uint32(), ctypes.c_uint32()
+        n = int(self._lib.om_terrain_cells(w, ctypes.byref(cw), ctypes.byref(ch)))
+        buf = ctypes.create_string_buffer(n)
+        self._lib.om_terrain_walk_mask(w, int(layer), buf, n)
+        return buf.raw
+
+    def terrain_slope_at(self, w, x, y):
+        return int(self._lib.om_terrain_slope_at(w, float(x), float(y), None))
+
+    def set_era_kind(self, w, kind):
+        return int(self._lib.om_set_era_kind(w, int(kind)))
+
+    def set_movement_kind(self, w, type_id, kind):
+        return int(self._lib.om_roster_set_movement_kind(w, int(type_id), int(kind)))
+
+    def movement_kind(self, w, type_id):
+        return int(self._lib.om_unit_profile_movement_kind(w, int(type_id)))

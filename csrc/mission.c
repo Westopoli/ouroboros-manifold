@@ -89,6 +89,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "economy_internal.h"
 #include "om_constants.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -1533,6 +1534,7 @@ void om_mission_end(om_world *w) {
     }
     if (st->mission_set && !st->end_applied) {
         st->end_applied = 1;
+        om_economy_on_mission_end(w);
         om_mission_apply_consequences(w, st->mission_region, st->mission_archetype, st->band);
         /* R-058-05 */
         uint32_t commander = om_mission_main_commander(w);
@@ -2335,6 +2337,92 @@ static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, 
     return player == 0 ? 1 : 0;
 }
 
+/* Ground-era spawn layout, no bible number: reach flood neighbours, and a side x side block of slots per 100 wu cell
+ * at 2 * OM_UNIT_COLLISION_RADIUS spacing (3 x 3 fits inside a cell). */
+#define OM_MISSION_REACH_NEIGHBOURS 8
+#define OM_MISSION_SLOT_SIDE 3u
+#define OM_MISSION_SLOTS_PER_CELL (OM_MISSION_SLOT_SIDE * OM_MISSION_SLOT_SIDE)
+
+/* Ground era: a walker's route runs on one layer's walk mask (csrc/walk_route.c), so the objective and both spawns
+ * must share one connected component of one layer. This returns the component over all layers that comes closest to
+ * both spawn anchors (one with slots-per-cell * cells >= need (both forces) first, then least sum of squared distances to its nearest cell; 8-neighbour, no corner cutting; larger,
+ * then first layer and lowest cell win a tie) and its layer; NULL when there is no terrain or no
+ * walkable cell. See also: om_mission_reach_snap, om_mission_spawn_force. */
+static uint8_t *om_mission_reach_set(const om_world *w, double px, double py, double ex, double ey, uint32_t need, uint32_t *cw, uint32_t *ch, int *layer) {
+    static const int dxs[OM_MISSION_REACH_NEIGHBOURS] = {-1, 0, 1, -1, 1, -1, 0, 1}, dys[OM_MISSION_REACH_NEIGHBOURS] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    uint32_t n = om_terrain_cells(w, cw, ch), best_n = 0;
+    double best_score = 0.0;
+    int best_fits = 0;
+    uint8_t *mask = (uint8_t *)malloc(n ? n : 1), *done = (uint8_t *)malloc(n ? n : 1);
+    uint8_t *best = (uint8_t *)calloc(n ? n : 1, 1);
+    uint32_t *queue = (uint32_t *)malloc(sizeof(uint32_t) * (n ? n : 1));
+    if (!om_terrain_present(w) || n == 0 || !mask || !done || !best || !queue) { free(mask); free(done); free(best); free(queue); return NULL; }
+    for (int b = 0; b < OM_TERRAIN_BANDS; b++) {
+        if (om_terrain_walk_mask(w, b, mask, n) != n) continue;
+        memset(done, 0, n);
+        for (uint32_t i0 = 0; i0 < n; i0++) {
+            uint32_t head = 0, tail = 0;
+            if (!mask[i0] || done[i0]) continue;
+            done[i0] = 1; queue[tail++] = i0;
+            while (head < tail) {
+                uint32_t cur = queue[head++], cx = cur % *cw, cy = cur / *cw;
+                for (int d = 0; d < OM_MISSION_REACH_NEIGHBOURS; d++) {
+                    int64_t ax = (int64_t)cx + dxs[d], ay = (int64_t)cy + dys[d];
+                    if (ax < 0 || ay < 0 || ax >= (int64_t)*cw || ay >= (int64_t)*ch) continue;
+                    uint32_t nb = (uint32_t)ay * *cw + (uint32_t)ax;
+                    if (!mask[nb] || done[nb]) continue;
+                    if (dxs[d] && dys[d] && (!mask[cy * *cw + (uint32_t)ax] || !mask[(uint32_t)ay * *cw + cx])) continue;
+                    done[nb] = 1; queue[tail++] = nb;
+                }
+            }
+            double dp = -1.0, de = -1.0;
+            for (uint32_t q = 0; q < tail; q++) {
+                double cx = ((double)(queue[q] % *cw) + 0.5) * OM_TERRAIN_CELL_WU, cy = ((double)(queue[q] / *cw) + 0.5) * OM_TERRAIN_CELL_WU;
+                double d = (cx - px) * (cx - px) + (cy - py) * (cy - py);
+                if (dp < 0.0 || d < dp) dp = d;
+                d = (cx - ex) * (cx - ex) + (cy - ey) * (cy - ey);
+                if (de < 0.0 || d < de) de = d;
+            }
+            int fits = OM_MISSION_SLOTS_PER_CELL * tail >= need;
+            if (best_n == 0 || fits > best_fits || (fits == best_fits && (dp + de < best_score || (dp + de == best_score && tail > best_n)))) {
+                best_fits = fits;
+                best_score = dp + de;
+                best_n = tail;
+                memset(best, 0, n);
+                for (uint32_t q = 0; q < tail; q++) best[queue[q]] = 1;
+                *layer = b;
+            }
+        }
+    }
+    free(mask); free(done); free(queue);
+    if (best_n == 0) { free(best); return NULL; }
+    return best;
+}
+
+/* Nearest cell centre in the reach set (lowest index on a tie); leaves (x, y) when the set is empty. */
+static void om_mission_reach_snap(const uint8_t *seen, uint32_t cw, uint32_t ch, double *x, double *y) {
+    double best = -1.0;
+    uint32_t bi = 0;
+    if (!seen) return;
+    for (uint32_t i = 0; i < cw * ch; i++) {
+        if (!seen[i]) continue;
+        double dx = ((double)(i % cw) + 0.5) * OM_TERRAIN_CELL_WU - *x, dy = ((double)(i / cw) + 0.5) * OM_TERRAIN_CELL_WU - *y;
+        double d = dx * dx + dy * dy;
+        if (best < 0.0 || d < best) { best = d; bi = i; }
+    }
+    if (best < 0.0) return;
+    *x = ((double)(bi % cw) + 0.5) * OM_TERRAIN_CELL_WU;
+    *y = ((double)(bi / cw) + 0.5) * OM_TERRAIN_CELL_WU;
+}
+
+/* A grid slot is usable when its cell is in the reach set on the reach layer's own band (not a slope shared with another band). */
+static int om_mission_slot_in_reach(const om_world *w, const uint8_t *reach, uint32_t rcw, uint32_t rch, int rlayer, double x, double y) {
+    if (x < 0.0 || y < 0.0) return 0;
+    uint32_t cx = (uint32_t)(x / OM_TERRAIN_CELL_WU), cy = (uint32_t)(y / OM_TERRAIN_CELL_WU);
+    if (cx >= rcw || cy >= rch) return 0;
+    return reach[cy * rcw + cx] && om_terrain_slope_at(w, x, y, NULL) < 0 && om_terrain_band_at(w, x, y) == rlayer + 1;
+}
+
 /* B9-6 fixed MVP layout (the E-17 generator is out of scope): a square canvas of the archetype's base dimension,
  * one objective node at its centre, one spawn point per side on opposite
  * edges (inset by one unit collision radius), and each force in a square-ish
@@ -2342,18 +2430,86 @@ static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, 
  * point. The player is faction 0 when no player faction is configured
  * (csrc/fog.c OM_FOG_PLAYER_FACTION). See also: csrc/tactical_mapgen.c for
  * the node storage these calls fill. */
-static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint32_t *counts, int32_t faction, double x0, double y0, double dir) {
+typedef struct { int64_t d2; uint32_t cell; } om_mission_reach_cell;
+
+/* Bottom-up merge sort by (d2, cell): qsort is not in the deterministic libm set. */
+static void om_mission_reach_cell_sort(om_mission_reach_cell *a, uint32_t n) {
+    om_mission_reach_cell *tmp = (om_mission_reach_cell *)malloc(sizeof(*a) * (n ? n : 1));
+    if (!tmp) return;
+    for (uint32_t width = 1; width < n; width *= 2) {
+        for (uint32_t lo = 0; lo < n; lo += 2 * width) {
+            uint32_t mid = lo + width < n ? lo + width : n, hi = lo + 2 * width < n ? lo + 2 * width : n;
+            uint32_t i = lo, j = mid, o = lo;
+            while (i < mid && j < hi) {
+                int right = a[j].d2 < a[i].d2 || (a[j].d2 == a[i].d2 && a[j].cell < a[i].cell);
+                tmp[o++] = right ? a[j++] : a[i++];
+            }
+            while (i < mid) tmp[o++] = a[i++];
+            while (j < hi) tmp[o++] = a[j++];
+        }
+        memcpy(a, tmp, sizeof(*a) * n);
+    }
+    free(tmp);
+}
+
+/* Ground era grid: the reach cells nearest the anchor first, side x side slots at collision spacing in each; slots on
+ * slope cells or another band are skipped. The space-era grid below is unchanged. */
+static int om_mission_spawn_force(om_world *w, om_mission_state *st, const uint32_t *counts, int32_t faction, double x0, double y0, double dir,
+                                    const uint8_t *reach, uint32_t rcw, uint32_t rch, int rlayer, const uint8_t *good) {
     uint32_t total = 0;
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) total += counts[t];
     uint32_t cols = 1;
     while (cols * cols < total) cols++;
     double spacing = 2.0 * OM_UNIT_COLLISION_RADIUS;
-    uint32_t k = 0;
+    uint32_t k = 0, n_order = 0;
+    int short_pocket = 0;
+    om_mission_reach_cell *order = NULL;
+    if (reach) {
+        int64_t ax = (int64_t)(x0 / OM_TERRAIN_CELL_WU), ay = (int64_t)(y0 / OM_TERRAIN_CELL_WU);
+        order = (om_mission_reach_cell *)malloc(sizeof(*order) * (size_t)rcw * rch);
+        for (uint32_t i = 0; order && i < rcw * rch; i++) {
+            if (!reach[i]) continue;
+            int64_t dx = (int64_t)(i % rcw) - ax, dy = (int64_t)(i / rcw) - ay;
+            order[n_order].d2 = dx * dx + dy * dy;
+            order[n_order++].cell = i;
+        }
+        if (order) om_mission_reach_cell_sort(order, n_order);
+    } else if (good) {
+        /* Space era: the cleared cells nearest the anchor first, the same 3x3 slots in each (cell is 100 wu, slots span +-30). */
+        int64_t ax = (int64_t)(x0 / OM_SPACE_FIELD_CELL_WU), ay = (int64_t)(y0 / OM_SPACE_FIELD_CELL_WU);
+        order = (om_mission_reach_cell *)malloc(sizeof(*order) * OM_SPACE_FIELD_CELLS);
+        for (uint32_t i = 0; order && i < OM_SPACE_FIELD_CELLS; i++) {
+            if (!good[i]) continue;
+            int64_t dx = (int64_t)(i % OM_SPACE_FIELD_SIDE) - ax, dy = (int64_t)(i / OM_SPACE_FIELD_SIDE) - ay;
+            order[n_order].d2 = dx * dx + dy * dy;
+            order[n_order++].cell = i;
+        }
+        if (order) om_mission_reach_cell_sort(order, n_order);
+    }
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
         for (uint32_t c = 0; c < counts[t]; c++, k++) {
-            double x = x0 + ((double)(k % cols) - (double)(cols - 1) / 2.0) * spacing;
-            double y = y0 + dir * (double)(k / cols) * spacing;
-            uint32_t id = om_unit_spawn(w, (int)t, faction, x, y, 0);
+            uint32_t id = 0;
+            if (order && !reach && n_order) {
+                if (k / OM_MISSION_SLOTS_PER_CELL >= n_order) { short_pocket = 1; goto out; } /* VG-D8 R-246-07: never wrap onto a used slot */
+                const om_mission_reach_cell *rc = &order[k / OM_MISSION_SLOTS_PER_CELL];
+                double x = ((double)(rc->cell % OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU + ((double)(k % OM_MISSION_SLOT_SIDE) - 1.0) * spacing;
+                double y = ((double)(rc->cell / OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU + ((double)((k / OM_MISSION_SLOT_SIDE) % OM_MISSION_SLOT_SIDE) - 1.0) * spacing;
+                id = om_unit_spawn(w, (int)t, faction, x, y, 0);
+            } else if (order && reach) {
+                /* A walker refused on a slot takes the next one. */
+                for (; k < OM_MISSION_SLOTS_PER_CELL * n_order && id == 0; k++) {
+                    const om_mission_reach_cell *rc = &order[k / OM_MISSION_SLOTS_PER_CELL];
+                    double x = ((double)(rc->cell % rcw) + 0.5) * OM_TERRAIN_CELL_WU + ((double)(k % OM_MISSION_SLOT_SIDE) - 1.0) * spacing;
+                    double y = ((double)(rc->cell / rcw) + 0.5) * OM_TERRAIN_CELL_WU + ((double)((k / OM_MISSION_SLOT_SIDE) % OM_MISSION_SLOT_SIDE) - 1.0) * spacing;
+                    if (!om_mission_slot_in_reach(w, reach, rcw, rch, rlayer, x, y)) continue;
+                    id = om_unit_spawn(w, (int)t, faction, x, y, 0);
+                }
+                k--; /* the loop's own increment follows */
+            } else {
+                double x = x0 + ((double)(k % cols) - (double)(cols - 1) / 2.0) * spacing;
+                double y = y0 + dir * (double)(k / cols) * spacing;
+                id = om_unit_spawn(w, (int)t, faction, x, y, 0);
+            }
             if (id != 0 && st->n_force_units < OM_MISSION_FORCE_ARRAY_MAX) {
                 st->force_units[st->n_force_units].unit_id = id;
                 st->force_units[st->n_force_units].faction = faction;
@@ -2362,6 +2518,156 @@ static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint
             }
         }
     }
+out:
+    free(order);
+    return short_pocket;
+}
+
+/* E-17 S-246 R-246-05 / Q-166-08: in a space era every anchor (objective, spawns, structure slots) sits on a cell that is
+ * open on all five layers with OM_MISSION_SPACE_CLEAR_CELLS of margin and joined to the objective on every layer, so no
+ * production building or unit stands in an enclosed section. The routing grid has no unblock verb, so anchors move to the
+ * mask instead of the mask moving to the anchors. Ties break by the lower cell index. */
+#define OM_MISSION_SPACE_CLEAR_CELLS 3
+#define OM_MISSION_SPACE_BYTE_SHIFT 3
+#define OM_MISSION_SPACE_BIT_MASK 7u
+#define OM_MISSION_SPACE_NEIGHBOURS 4
+
+static int om_mission_space_blocked(const om_space_field_state *f, uint32_t k, uint32_t i) {
+    return (f->mask[k][i >> OM_MISSION_SPACE_BYTE_SHIFT] >> (i & OM_MISSION_SPACE_BIT_MASK)) & 1u;
+}
+
+static int32_t om_mission_space_nearest(const uint8_t *ok, double x, double y) {
+    int32_t best = -1;
+    double bd = 0.0;
+    for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++) {
+        if (!ok[i]) continue;
+        double dx = ((double)(i % OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU - x;
+        double dy = ((double)(i / OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU - y;
+        double d = dx * dx + dy * dy;
+        if (best < 0 || d < bd) { best = (int32_t)i; bd = d; }
+    }
+    return best;
+}
+
+/* Marks the 4-connected ok cells reachable from start in seen (queue is scratch); returns how many. */
+static uint32_t om_mission_space_flood(const uint8_t *ok, uint8_t *seen, uint32_t *queue, uint32_t start) {
+    const int32_t side = OM_SPACE_FIELD_SIDE;
+    uint32_t head = 0, tail = 0;
+    seen[start] = 1;
+    queue[tail++] = start;
+    while (head < tail) {
+        uint32_t c = queue[head++];
+        int32_t cx = (int32_t)(c % OM_SPACE_FIELD_SIDE), cy = (int32_t)(c / OM_SPACE_FIELD_SIDE);
+        const int32_t nx[OM_MISSION_SPACE_NEIGHBOURS] = {cx + 1, cx - 1, cx, cx}, ny[OM_MISSION_SPACE_NEIGHBOURS] = {cy, cy, cy + 1, cy - 1};
+        for (int j = 0; j < OM_MISSION_SPACE_NEIGHBOURS; j++) {
+            if (nx[j] < 0 || ny[j] < 0 || nx[j] >= side || ny[j] >= side) continue;
+            uint32_t n = (uint32_t)(ny[j] * side + nx[j]);
+            if (ok[n] && !seen[n]) { seen[n] = 1; queue[tail++] = n; }
+        }
+    }
+    return tail;
+}
+
+/* A cell with r cells of margin inside the canvas and open on all five layers. */
+static int om_mission_space_cell_ok(const om_space_field_state *f, int32_t cx, int32_t cy, int32_t r) {
+    const int32_t side = OM_SPACE_FIELD_SIDE;
+    if (cx < r || cy < r || cx >= side - r || cy >= side - r) return 0;
+    for (uint32_t k = 0; k < OM_SPACE_FIELD_LAYERS; k++)
+        for (int32_t dy = -r; dy <= r; dy++)
+            for (int32_t dx = -r; dx <= r; dx++)
+                if (om_mission_space_blocked(f, k, (uint32_t)((cy + dy) * side + cx + dx))) return 0;
+    return 1;
+}
+
+/* Returns the good-cell map (caller frees) and moves the objective onto it; NULL leaves everything as it was. */
+static uint8_t *om_mission_space_good(const om_world *w, double *ox, double *oy) {
+    const om_space_field_state *f = &w->space_field;
+    const int32_t side = OM_SPACE_FIELD_SIDE, r = OM_MISSION_SPACE_CLEAR_CELLS;
+    if (!f->present) return NULL;
+    uint8_t *ok = (uint8_t *)malloc(OM_SPACE_FIELD_CELLS);
+    uint8_t *good = (uint8_t *)malloc(OM_SPACE_FIELD_CELLS);
+    uint8_t *seen = (uint8_t *)malloc(OM_SPACE_FIELD_CELLS);
+    uint32_t *queue = (uint32_t *)malloc(sizeof(uint32_t) * OM_SPACE_FIELD_CELLS);
+    int32_t oc = -1;
+    if (!ok || !good || !seen || !queue) goto fail;
+    for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++) {
+        int32_t cx = (int32_t)(i % OM_SPACE_FIELD_SIDE), cy = (int32_t)(i / OM_SPACE_FIELD_SIDE);
+        ok[i] = (uint8_t)om_mission_space_cell_ok(f, cx, cy, r);
+    }
+    /* The objective sits in the largest cleared section (first by cell index on a tie), at its cell nearest the requested point:
+     * a pocket nearest the canvas centre would leave a handful of cells for the whole mission. */
+    {
+        uint32_t best_size = 0, best_start = 0;
+        memset(seen, 0, OM_SPACE_FIELD_CELLS);
+        for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++) {
+            if (!ok[i] || seen[i]) continue;
+            uint32_t size = om_mission_space_flood(ok, seen, queue, i);
+            if (size > best_size) { best_size = size; best_start = i; }
+        }
+        if (best_size == 0) goto fail;
+        memset(good, 0, OM_SPACE_FIELD_CELLS);
+        om_mission_space_flood(ok, good, queue, best_start);
+        oc = om_mission_space_nearest(good, *ox, *oy);
+    }
+    if (oc < 0) goto fail;
+    memset(good, 1, OM_SPACE_FIELD_CELLS);
+    for (uint32_t k = 0; k < OM_SPACE_FIELD_LAYERS; k++) {
+        uint32_t head = 0, tail = 0;
+        memset(seen, 0, OM_SPACE_FIELD_CELLS);
+        seen[oc] = 1;
+        queue[tail++] = (uint32_t)oc;
+        while (head < tail) {
+            uint32_t c = queue[head++];
+            int32_t cx = (int32_t)(c % OM_SPACE_FIELD_SIDE), cy = (int32_t)(c / OM_SPACE_FIELD_SIDE);
+            const int32_t nx[OM_MISSION_SPACE_NEIGHBOURS] = {cx + 1, cx - 1, cx, cx}, ny[OM_MISSION_SPACE_NEIGHBOURS] = {cy, cy, cy + 1, cy - 1};
+            for (int j = 0; j < OM_MISSION_SPACE_NEIGHBOURS; j++) {
+                if (nx[j] < 0 || ny[j] < 0 || nx[j] >= side || ny[j] >= side) continue;
+                uint32_t n = (uint32_t)(ny[j] * side + nx[j]);
+                if (ok[n] && !seen[n]) { seen[n] = 1; queue[tail++] = n; }
+            }
+        }
+        for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++) good[i] = (uint8_t)(good[i] && seen[i]);
+    }
+    *ox = ((double)(oc % side) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    *oy = ((double)(oc / side) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    free(ok); free(seen); free(queue);
+    return good;
+fail:
+    free(ok); free(good); free(seen); free(queue);
+    return NULL;
+}
+
+/* VG-D8 R-246-07: a faction's own pocket: the section of cells open on all layers (OM_MISSION_POCKET_MARGIN_CELLS of margin, so
+ * an anchor on the canvas edge keeps a pocket) holding the cell nearest its anchor, the anchor moved onto that cell. Not tied
+ * to the objective's section: the field's carve joins the pockets, the army needs only its own cells. NULL when none. */
+#define OM_MISSION_POCKET_MARGIN_CELLS 1
+static uint8_t *om_mission_space_pocket(const om_world *w, double *x, double *y) {
+    const om_space_field_state *f = &w->space_field;
+    uint8_t *ok = f->present ? (uint8_t *)malloc(OM_SPACE_FIELD_CELLS) : NULL;
+    uint8_t *pocket = ok ? (uint8_t *)calloc(OM_SPACE_FIELD_CELLS, 1) : NULL;
+    uint32_t *queue = pocket ? (uint32_t *)malloc(sizeof(uint32_t) * OM_SPACE_FIELD_CELLS) : NULL;
+    int32_t c = -1;
+    if (queue) {
+        for (uint32_t i = 0; i < OM_SPACE_FIELD_CELLS; i++)
+            ok[i] = (uint8_t)om_mission_space_cell_ok(f, (int32_t)(i % OM_SPACE_FIELD_SIDE), (int32_t)(i / OM_SPACE_FIELD_SIDE), OM_MISSION_POCKET_MARGIN_CELLS);
+        c = om_mission_space_nearest(ok, *x, *y);
+    }
+    if (c < 0) { free(ok); free(pocket); free(queue); return NULL; }
+    om_mission_space_flood(ok, pocket, queue, (uint32_t)c);
+    free(ok); free(queue);
+    *x = ((double)(c % OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    *y = ((double)(c / OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    return pocket;
+}
+
+/* take: clear the chosen cell so the next anchor snapped against the same map lands on another one. */
+static void om_mission_space_snap(uint8_t *good, double *x, double *y, int take) {
+    if (!good) return;
+    int32_t c = om_mission_space_nearest(good, *x, *y);
+    if (c < 0) return;
+    if (take) good[c] = 0;
+    *x = ((double)(c % OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU;
+    *y = ((double)(c / OM_SPACE_FIELD_SIDE) + 0.5) * OM_SPACE_FIELD_CELL_WU;
 }
 
 /* R-126-01 layout, no bible number: structures sit on the spine between the two
@@ -2370,9 +2676,12 @@ static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint
 #define OM_MISSION_STRUCTURE_LATERAL 0.25
 #define OM_MISSION_STRUCTURE_SLOTS 64
 
-static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy) {
+static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy, const uint8_t *good) {
+    uint8_t *free_cells = good ? (uint8_t *)malloc(OM_SPACE_FIELD_CELLS) : NULL;
+    if (free_cells) memcpy(free_cells, good, OM_SPACE_FIELD_CELLS);
     uint32_t p = 0, e = 0, n = 0;
     uint32_t total = om_structure_compute_count(w->regions[st->mission_region].military, cat);
+    if (om_era_kind(w) == 1 && total > om_terrain_slope_count(w)) total = om_terrain_slope_count(w); /* R-218-01 */
     for (uint32_t i = 0; i < OM_MISSION_STRUCTURE_SLOTS; i++) om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, 0.0);
     om_structure_assign_owners((int)st->mission_archetype, total, &p, &e, &n);
     for (uint32_t i = 0; i < total; i++) {
@@ -2380,9 +2689,13 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
         double side = (i % 2 == 0) ? -1.0 : 1.0;
         om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, om_unit_power(OM_MISSION_POWER_ANCHOR_UNIT_TYPE));
         om_structure_set_owner(w, i, owner);
-        om_structure_set_position(w, i, canvas / 2.0 + side * canvas * OM_MISSION_STRUCTURE_LATERAL,
-                                  canvas * (double)(i + 1) / (double)(total + 1));
+        double sx = canvas / 2.0 + side * canvas * OM_MISSION_STRUCTURE_LATERAL;
+        double sy = canvas * (double)(i + 1) / (double)(total + 1);
+        om_terrain_nearest_walkable(w, sx, sy, &sx, &sy);
+        om_mission_space_snap(free_cells, &sx, &sy, 1);
+        om_structure_set_position(w, i, sx, sy);
     }
+    free(free_cells);
 }
 
 static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
@@ -2398,14 +2711,49 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_tactical_reset(w);
     om_map_clear(w);
     om_map_set_canvas(w, canvas, canvas); /* clear unsets the canvas; movement clamps to it */
+    double px = canvas / 2.0, py = edge, ex = canvas / 2.0, ey = canvas - edge;
+    uint32_t n_player = 0, n_enemy = 0;
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) { n_player += st->player_units[t]; n_enemy += st->enemy_units[t]; }
+    if (om_era_kind(w) == 1) {
+        uint64_t seed = om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype;
+        om_space_field_clear(w);
+        if (om_terrain_generate(w, seed, canvas, canvas) != 0) om_terrain_clear(w);
+    } else {
+        om_terrain_clear(w);
+        /* E-17 S-246 R-246-01: the space field, after the canvas is set (om_map_clear unsets it). */
+        /* VG-D8 R-246-07: the clearing nodes are the pre-snap anchors and the objective; the field serves the mission. */
+        const double node_xy[6] = {px, py, ex, ey, canvas / 2.0, canvas / 2.0};
+        const uint32_t node_slots[3] = {n_player, n_enemy, 0};
+        if (om_space_field_generate_nodes(w, (uint32_t)(om_world_seed(w) ^ ((uint64_t)st->mission_region * 0x9E3779B1ULL) ^ (uint64_t)st->mission_archetype), canvas, canvas, OM_SPACE_FIELD_DENSITY_DEFAULT, node_xy, node_slots, OM_SPACE_FIELD_MIN_NODES) != 0)
+            om_space_field_clear(w);
+    }
     memset(st->objective_center_set, 0, sizeof(st->objective_center_set));
     st->n_force_units = 0;
-    om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
-    om_map_add_cover(w, canvas / 2.0, canvas / 2.0, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
-    om_map_add_spawn_point(w, canvas / 2.0, edge, player);
-    om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
-    om_mission_spawn_force(w, st, st->player_units, player, canvas / 2.0, edge, 1.0);
-    om_mission_spawn_force(w, st, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
+    double ox = canvas / 2.0, oy = canvas / 2.0;
+    uint32_t rcw = 0, rch = 0, need = 0;
+    int rlayer = 0;
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) need += st->player_units[t] + st->enemy_units[t];
+    uint8_t *reach = om_mission_reach_set(w, px, py, ex, ey, need, &rcw, &rch, &rlayer);
+    om_mission_reach_snap(reach, rcw, rch, &px, &py);
+    om_mission_reach_snap(reach, rcw, rch, &ex, &ey);
+    if (reach) { ox = (px + ex) / 2.0; oy = (py + ey) / 2.0; } /* the reach set may not span the canvas: objective between the spawns */
+    om_mission_reach_snap(reach, rcw, rch, &ox, &oy);
+    double gx = ox, gy = oy; /* the structures' pool still centres on the largest cleared section; the objective stays at its own carved pocket */
+    uint8_t *space_good = om_mission_space_good(w, &gx, &gy);
+    free(om_mission_space_pocket(w, &ox, &oy)); /* VG-D8 R-246-07: the objective moves to the open cell nearest its anchor */
+    uint8_t *player_pocket = om_mission_space_pocket(w, &px, &py);
+    uint8_t *enemy_pocket = om_mission_space_pocket(w, &ex, &ey);
+    om_map_add_spine_node(w, ox, oy, OM_MISSION_SPINE_NODE_OBJECTIVE);
+    om_map_add_cover(w, ox, oy, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
+    om_map_add_spawn_point(w, px, py, player);
+    om_map_add_spawn_point(w, ex, ey, enemy);
+    if (om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
+        fprintf(stderr, "mission: player spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+    if (om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, enemy_pocket))
+        fprintf(stderr, "mission: enemy spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
+    free(reach);
+    free(player_pocket);
+    free(enemy_pocket);
     /* B9-13/Q-123-01: the mission's enemy units are macro force 0 (enemy
      * macro forces are indexed separately from the player's force -- the
      * player is never a macro force). Fallback point is the enemy's own
@@ -2413,8 +2761,10 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
      * See also: csrc/enemy_macro.c om_macro_tick / om_macro_issue_group_orders,
      * the only reader of this registration. */
     om_macro_init_force(w, 0, enemy);
-    om_macro_set_force_fallback_point(w, 0, canvas / 2.0, canvas - edge);
-    om_mission_place_structures(w, st, cat, canvas, player, enemy);
+    om_macro_set_force_fallback_point(w, 0, ex, ey);
+    om_mission_place_structures(w, st, cat, canvas, player, enemy, space_good);
+    free(space_good);
+    om_economy_init(w);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
@@ -2699,6 +3049,13 @@ int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, doubl
     st->objective_center[objective_idx].y = y;
     st->objective_center_set[objective_idx] = 1;
     return 1;
+}
+int om_objective_get_done(const om_world *w, uint32_t idx) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || idx >= st->n_objectives) return -1;
+    const om_mission_objective *o = &st->objectives[idx];
+    if (o->spec.is_failed) return 2;
+    return (o->spec.is_complete || o->spec.completion >= 1.0) ? 1 : 0;
 }
 /* ---- end generated stubs ---- */
 

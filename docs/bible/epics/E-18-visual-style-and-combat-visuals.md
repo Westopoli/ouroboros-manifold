@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 49 rules; numbers from the bible's combat visuals and animation sections and the Stage 1 A-368, A-369, A-372 rewrites; the world, settlement, economy, layer-action and scale stories (S-236 to S-240) leave numbers and looks to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes; every output is a screen, T2-checkable. |
-| Implied-but-unstated behavior turned into flags | 8 open flags: Q-132-02 (S-132), Q-133-01 (S-133), and Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01 on S-236 to S-240 (Q-236-02 is also listed on S-132). |
+| Implied-but-unstated behavior turned into flags | 6 open flags: Q-132-02 (S-132), Q-133-01 (S-133), and Q-236-02, Q-237-01, Q-238-01, Q-239-01 on S-236 to S-240 (Q-236-02 is also listed on S-132). |
 | Every visible-surface story has a reference | **No.** This entire epic is a visible surface. Art of Rally (look), the opening battle of Revenge of the Sith (combat weight), Halo CE (world-building), and Claude Code's spinner (glyph animation) are the bible's named references; none is attached as a screenshot yet. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -31,7 +31,7 @@ As a commander, I want every unit type to have a shape I can read at a glance in
 Rules
 - R-132-01  Given the six Settled Reach baseline types, When drawn in any era, Then Raider is narrow, elongated, swept back and the smallest; Interceptor wider and flatter than Raider; Vanguard a front-heavy wedge or slab; Warden vertical or radial with a central projection; Bombard the longest, dominated by one linear axis; Bastion the widest and most compact, wider than long.
 - R-132-02  Given a T2 screenshot at tactical zoom with the six baseline types, When inspected, Then each type is identifiable from silhouette alone.
-- R-132-05  Given an era roster of 20 to 40 types, When drawn at tactical zoom, Then each type is identifiable [Q-132-02: one persistent silhouette per type, or silhouette families per category with variants read by size and detail].
+- R-132-05  Given an era roster of 20 to 40 types, When drawn at tactical zoom, Then each type is identifiable [Q-132-02: one persistent silhouette per type, or silhouette families per category; parked for the beta, Westley, 2026-10-07].
 - R-132-03  Given a Strike unit, When drawn, Then it is 3 to 5 small models moving as one (E-11 R-088-01).
 - R-132-04  Given any model, When counted, Then it is 150 to 300 polygons for Strike squad members, 300 to 500 for Line, 400 to 600 for Siege, 200 to 800 for structures, 100 to 300 for environment.
 - R-132-06  Given a worker or a building piece of a self-built settlement, When counted, Then it is within [Q-236-02: the polygon budget for workers and for the many pieces of a settlement; Westley's numbers].
@@ -48,6 +48,7 @@ Rules
 - R-133-02  Given Tier 2, When drawn, Then smooth, integrated, polished: deliberate curves, flush weapons, bilateral symmetry, cleaner metallics, faction color as plating, subtle seam glow.
 - R-133-03  Given Tier 3, When drawn, Then flowing, luminous, abstract: organic-geometric forms, minimal surface detail, emissive materials, faction color as a property of the material.
 - R-133-04  Given a faction that fell from Tier 3 to Tier 1, When its forces are drawn next to a Tier 3 neighbor, Then the contrast is immediate at tactical zoom.
+- R-133-06  Given a unit in a mission, When it is drawn, Then the tier it is drawn at is given by the simulation per unit, from the roster (ruling A30; Westley, 2026-10-07).
 - R-133-05  Given an era pack, When authored, Then it defines every type in its roster at all three tiers (one model per type per tier), 3 to 6 tiered point-of-interest structures, 5 to 10 universal environment objects, and the building pieces that settlements are built from, with their stages of construction [Q-133-01: how many building pieces; the 3 to 6 structures are points of interest, and the pieces of S-237 are not counted among them].
 
 Inputs: tier; era manifest.
@@ -113,7 +114,7 @@ As a player, I want the whole game to look like one thing, low-poly and stylized
 Rules
 - R-138-01  Given any scene, When rendered, Then models are flat or minimally shaded low-poly with clean geometric forms; no photoreal textures; no PBR detail passes.
 - R-138-02  Given a T2 screenshot from any screen, When compared against the reference set, Then it passes a manual review against the reference set; there is no automated register check at launch.
-- R-138-03  Given the Settled Reach, When rendered, Then the tactical space reads as a lived-in frontier: asteroids, derelicts, cargo, nebula volumes, beacons [Q-236-01: how the landforms of S-236 read here; the space landscape is Q-166-02].
+- R-138-03  Given the Settled Reach, When rendered, Then the tactical space reads as a lived-in frontier: asteroids, derelicts, cargo, nebula volumes, beacons (the landforms of S-236 do not appear in space, R-236-03; the space landscape is Q-166-02).
 
 Inputs: era manifests; reference set.
 Outputs: screen.
@@ -127,11 +128,11 @@ Design decided 2026-10-02, not scheduled for building (E-17 S-166). These rules 
 Rules
 - R-236-01  Given the camera at any zoom between a single unit and the battlefield's map view, When the world is drawn, Then it is one world drawn at continuous detail: deep detail fully zoomed in, the shape of the land zoomed out, with smooth transitions between very different zoom levels and no pop from one level of detail to the next (E-17 R-166-05, E-16 S-234).
 - R-236-02  Given ground fitted to five height bands (E-17 R-166-04, R-166-06), When it is drawn, Then a step between bands is drawn as the real difference in height it is, benched and natural ground are both drawn, and cliffs, waterfalls and mountainsides read as the landforms they are.
-- R-236-03  Given the Settled Reach, When a landform such as a cliff or a waterfall would appear, Then [Q-236-01: how it reads in an era whose units all fly, and what the space landscape draws; Q-166-02].
+- R-236-03  Given the Settled Reach, When a landform such as a cliff or a waterfall would appear, Then it does not appear: cliffs and waterfalls do not exist in space, and the space and ground eras are kept separate (E-17 R-188-05; Westley, 2026-10-06). What the space landscape draws is Q-166-02.
 
 Inputs: the map's fields and height bands; era manifest.
 Outputs: screen.
-Open flags: Q-236-01.
+Open flags: none.
 
 ### S-237 — Settlements that rise
 As a player, I want a base to start as ground under construction and rise stage by stage, spreading and thickening as it grows, so that the base I fight over is a spectacle to watch being built.
@@ -140,14 +141,14 @@ Design decided 2026-10-02, not scheduled for building (E-17 S-166, E-22). The ba
 
 Rules
 - R-237-01  Given a self-built building, When it first appears, Then it is drawn under construction and rises to complete over time, and nothing about it snaps into place (E-17 R-166-01).
-- R-237-02  Given a lot whose population density passes a threshold, When it is drawn, Then it shows its next stage, from under construction upward [Q-237-01: how many stages there are and what each looks like].
+- R-237-02  Given a lot whose population density passes a threshold, When it is drawn, Then it shows its next stage, from under construction upward (five stages: empty, staked, scaffold, small, large; E-17 Q-193-02, Westley, 2026-10-06).
 - R-237-03  Given a wave of growth tied to an event (E-17 R-166-03), When it arrives, Then new buildings appear a little at a time across the settlement, and an expansion that is made appears as a new settlement growing in the same way.
 - R-237-04  Given the player places a building, When it is drawn, Then the self-built pieces on its footprint are cleared and the settlement fills in around it.
 - R-237-05  Given a settlement on a cliff, beside a waterfall or on a steep mountainside (E-17 R-166-03), When it is drawn, Then its buildings sit in those places and the settlement does not stop at difficult ground.
 
 Inputs: growth and density events; the player's placed buildings; era pack building pieces (E-20 S-243).
 Outputs: screen.
-Open flags: Q-237-01.
+Open flags: none.
 
 ### S-238 — Work on the map: workers, shipments, weather and disguise
 As a player, I want to see workers walk to a source and gather, weather cross the map, and disguised buildings look like what they pretend to be, so that the economy is something I watch happen.
@@ -168,13 +169,13 @@ Open flags: Q-238-01.
 As a commander, I want a ping, an emitting force and a ping alert to read at a glance, so that the three layer actions are visible things.
 
 Rules
-- R-239-01  Given a ping (E-01 R-162-01), When it lands, Then a burst is drawn at the place for as long as the layer is revealed there, and the units it revealed are drawn hidden again when it ends (E-01 R-162-05); the burst slows into place and never snaps [Q-239-01: the look in each manifest].
+- R-239-01  Given a ping (E-01 R-162-01), When it lands, Then a burst is drawn at the place for as long as the layer is revealed there, and the units it revealed are drawn hidden again when it ends (E-01 R-162-05); the burst slows into place and never snaps; every unit caught in the ping shows a small circle for about 5 seconds that shows the unit itself, its features and where it is moving, and is not vision of its surroundings (Westley, 2026-10-07).
 - R-239-02  Given a force set to emit (E-01 S-163), When it is drawn, Then it reads as emitting from a silent force at tactical zoom, using the mark of E-16 S-232.
-- R-239-03  Given the alert that a side was pinged (E-01 R-162-03), When it is drawn, Then a sector of about 60 degrees points toward where the ping came from, and nothing more precise is drawn (E-16 S-232).
+- R-239-03  Given a side is pinged (E-01 R-162-03), When the ping lands, Then nothing is drawn for the pinged side: the alert is switched off for now (Westley, 2026-10-05); if it returns, a sector of about 60 degrees toward the caster and nothing more precise (E-16 S-232).
 
 Inputs: ping, emit and alert events (tick delta); manifest fields for the looks.
 Outputs: screen.
-Open flags: Q-239-01.
+Open flags: none.
 
 ### S-240 — Thousands on one screen
 As a player, I want a screen of thousands of units, workers and buildings to stay smooth, so that a busy world is a feature and not a cost.
@@ -184,11 +185,11 @@ Design decided in part 2026-10-01: the long-term goal is thousands of units and 
 Rules
 - R-240-01  Given units, workers, buildings and settlement pieces under budget pressure, When they are drawn, Then each degrades by distance and by count: full detail near, simpler far, culled beyond a count threshold; what happens in the sim is unaffected (as R-134-04 and R-136-03 for projectiles and wrecks).
 - R-240-02  Given any new visual, When it is designed, Then it is built so that it does not stand in the way of the long-term goal of thousands.
-- R-240-03  Given the client budgets, When the long-term goal is read against them, Then [Q-240-01: the frame-rate budgets for thousands of units, workers and buildings on the minimum-spec machine; Westley's numbers].
+- R-240-03  Given the client budgets, When the long-term goal is read against them, Then the client's budgets for thousands of units, workers and buildings are a direction, with no frame-rate number, until the simulation's budgets (10,000) are reached (Westley, 2026-10-06).
 
 Inputs: frame budget; counts on screen.
 Outputs: screen.
-Open flags: Q-240-01.
+Open flags: none.
 
 ## Inputs
 
@@ -215,7 +216,7 @@ Open flags: Q-240-01.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060). E-16 states 60 fps at 1,000 units where this epic states a 30 fps floor, and neither covers the long-term goal of thousands of units and workers; both are Q-240-01.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060). E-16 states 60 fps at 1,000 units where this epic states a 30 fps floor, and neither covers the long-term goal of thousands of units and workers, which stays a direction until the simulation's budgets (10,000) are reached (Westley, 2026-10-06).
 
 ## Look and behavior references
 
@@ -232,7 +233,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-132-02, Q-133-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-132-02, Q-133-01, Q-236-02, Q-238-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

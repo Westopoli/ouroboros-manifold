@@ -170,7 +170,11 @@ def _detector_failures(samples) -> list[str]:
             % (hits, len(samples), frac, MIN_MATCH_FRACTION, first[0],
                tuple(round(c) for c in first[1]), tuple(int(c) for c in first[2]))
         )
-    distinct = {tuple(int(c) // DISTINCT_STEP for c in got) for _, _, got in samples}
+    # TD-VG-B-11: count the distinct EXPECTED owner colours among samples that matched within
+    # CHANNEL_TOLERANCE of their own region's colour (not screen-colour buckets, which label glow smears).
+    matched = [exp for _, exp, got in samples
+               if max(abs(exp[k] - float(got[k])) for k in range(3)) <= CHANNEL_TOLERANCE]
+    distinct = {tuple(int(round(c)) for c in exp) for exp in matched}
     if len(distinct) < MIN_DISTINCT_SCREEN_COLOURS:
         problems.append(
             "C2-5-02: owned systems show %d distinct screen colours, need >= %d"

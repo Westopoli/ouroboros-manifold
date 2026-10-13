@@ -36,7 +36,7 @@ Rules use concrete values, never adjectives. "Sees further" is not a rule; "sees
 
 ## Status vocabulary
 
-Story status in `stories.md` and the backlog: Spec'd (written, gate not run), Ready (gate passed, flags empty, references attached), Tested (tests written and red), Queued (Agora task exists), Building (Agora worktree active), Built (merged, tests green), Revised (built, then the story changed; goes back to Spec'd for the changed rules), Killed.
+Story status in `stories.md` and the backlog: Spec'd (written, gate not run), Ready (gate passed, flags empty, references attached), Tested (tests written and red), Queued (Agora task exists), Building (Agora worktree active), Built (merged, tests green), Revised (built, then the story changed; goes back to Spec'd for the changed rules), Killed, Seen (Built, and the player has been shown it and Westley approved).
 
 ## Definition-completeness gate (Stage 2 exit per epic)
 

@@ -6,8 +6,12 @@ _FIXED = ("outcome", "margin", "strength_left_0", "strength_left_1", "survivors_
           "heads_0", "heads_1", "ticks", "first_contact_tick", "firing_unit_seconds_0",
           "firing_unit_seconds_1")
 
+# Features field order, matching scripts.skilllab.maps.Features
+_FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
+                   "fight_layer_blocked", "cover_density_corridor", "start_distance", "detour_ratio", "blocked_layer_top")
 
-def fight_row(result, **labels):
+
+def fight_row(result, features=None, **labels):
     clash = [k for k in labels if k in _FIXED]
     if clash:
         raise ValueError("label names collide with fixed row keys: %s" % clash)
@@ -24,6 +28,9 @@ def fight_row(result, **labels):
         row["mopup_orders"] = result.mopup_orders
     if result.weighted is not None:
         row["weighted_unit_seconds_0"], row["weighted_unit_seconds_1"] = result.weighted_unit_seconds
+    if features is not None:
+        for name in _FEATURE_FIELDS:
+            row["feat_" + name] = getattr(features, name)
     return row
 
 

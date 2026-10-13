@@ -1,5 +1,8 @@
 # Settlement mockup pass 1 (prototype record, 2026-10-03)
 
+**Approved 2026-10-06.** Westley, verbatim: "Settlements mockup approved". The approval covers the look of pass 1; its five questions and Q-193-01 to Q-193-06 keep their candidates until he answers them.
+
+
 Spec: `docs/northstar/plans/2026-10-03-settlement-mockup-pass1-spec.md`. Prototype under agile.md, never loaded by the game. Placeholder boxes. Every number below is a CANDIDATE, picked to make the thing visible; none is a rule.
 
 ## Run

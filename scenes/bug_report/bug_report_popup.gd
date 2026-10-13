@@ -71,6 +71,20 @@ func _build_ui() -> void:
 	also.custom_minimum_size.x = 500
 	vbox.add_child(also)
 
+	var words := TextEdit.new()
+	words.name = "WordsField"
+	words.placeholder_text = "What happened? (optional)"
+	words.custom_minimum_size = Vector2(500, 80)
+	vbox.add_child(words)
+
+	var send := Button.new()
+	send.name = "SendButton"
+	send.text = "SEND"
+	send.custom_minimum_size = Vector2(120, 36)
+	send.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	send.pressed.connect(_send_words.bind(words))
+	vbox.add_child(send)
+
 	var btn := Button.new()
 	btn.text = "DISMISS"
 	btn.custom_minimum_size = Vector2(120, 36)
@@ -84,6 +98,17 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_ESCAPE or event.keycode == KEY_F12:
 			_dismiss()
 			get_viewport().set_input_as_handled()
+
+
+func _send_words(field: TextEdit) -> void:
+	if field.text.is_empty():
+		return
+	for zip_path in [_downloads_path, _reports_path]:
+		var f := FileAccess.open(zip_path.get_basename() + ".words.txt", FileAccess.WRITE)
+		if f:
+			f.store_string(field.text)
+			f.close()
+	_dismiss()
 
 
 func _dismiss() -> void:

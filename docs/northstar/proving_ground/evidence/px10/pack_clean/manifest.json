@@ -7,32 +7,32 @@
   "era_order": 99,
 
   "units": {
-    "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "vanguard":    { "category": "line",   "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/line_unit.tscn" },
       "2": { "scene": "units/line_unit.tscn" },
       "3": { "scene": "units/line_unit.tscn" }
     }},
-    "warden":      { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "warden":      { "category": "line",   "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/line_unit.tscn" },
       "2": { "scene": "units/line_unit.tscn" },
       "3": { "scene": "units/line_unit.tscn" }
     }},
-    "bombard":     { "category": "siege",  "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "bombard":     { "category": "siege",  "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/siege_unit.tscn" },
       "2": { "scene": "units/siege_unit.tscn" },
       "3": { "scene": "units/siege_unit.tscn" }
     }},
-    "bastion":     { "category": "siege",  "squad_count": 1, "visual_scale": 1.0, "tiers": {
+    "bastion":     { "category": "siege",  "movement": "flying", "squad_count": 1, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/siege_unit.tscn" },
       "2": { "scene": "units/siege_unit.tscn" },
       "3": { "scene": "units/siege_unit.tscn" }
     }},
-    "raider":      { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+    "raider":      { "category": "strike", "movement": "flying", "squad_count": 4, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/strike_unit.tscn" },
       "2": { "scene": "units/strike_unit.tscn" },
       "3": { "scene": "units/strike_unit.tscn" }
     }},
-    "interceptor": { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+    "interceptor": { "category": "strike", "movement": "flying", "squad_count": 4, "visual_scale": 1.0, "tiers": {
       "1": { "scene": "units/strike_unit.tscn" },
       "2": { "scene": "units/strike_unit.tscn" },
       "3": { "scene": "units/strike_unit.tscn" }
@@ -47,6 +47,15 @@
     "2": { "faction_color_treatment": "metallic" },
     "3": { "faction_color_treatment": "emissive" }
   },
+
+  "buildings": [
+    { "id": "bld_a", "role": "production",    "footprint": [3, 3], "hp": 200 },
+    { "id": "bld_b", "role": "house",         "footprint": [2, 2], "hp": 100 },
+    { "id": "bld_c", "role": "worker-hut",    "footprint": [2, 2], "hp": 80 },
+    { "id": "bld_d", "role": "forward-works", "footprint": [2, 2], "hp": 120 }
+  ],
+
+  "doctrines": ["boom", "fortify", "press", "balanced"],
 
   "faction_colors": {
     "0": "#00ffff",

@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-072 to S-080: yes, 9 stories, 48 rules, numbers from `algorithms.md` ALG-54 through ALG-59 and config tables. S-210 to S-214: 5 stories, 22 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 15 on S-210 to S-214 (Q-210-03, Q-210-04, Q-210-06, and Q-177-01 held in E-22, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 15 on S-210 to S-214 (Q-210-03, Q-210-04, Q-210-06, Q-211-02 to Q-211-04, Q-212-04, Q-212-05, Q-173-01, Q-214-02), plus Q-159-12 and Q-177-07 carried from E-22. |
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -23,7 +23,7 @@ Force size is set by parity: the enemy's strength comes from the simulation, the
 
 Put the player's frontier under a telegraphed attack and run the generator. The candidate pool contains (frontier, defensive_stand); its urgency is high, so it is in the top-5 draw pool, and the weighted draw (R-072-05) picks it on the example seed; another seed may draw a different candidate from the pool. The briefing has three sections and names the attacker. Forces: an enemy force worth the attacker's budget × 300 in power, a player force at parity 0.90 of that for capacity 0.5 on medium. Play it out: hold the zone for the required time, lose a third of the force. Final score 0.75 · 1.0 + 0.25 · 0.67 = 0.917, band total_success, region military +15 percent of its deficit, tension −10 percent of current. Same seed, same mission, same forces.
 
-Decided, not built (S-210 to S-214): in an Assault the player's base is a forward base supplied by supply lines and is its original main base; let the enemy occupy it and a result that would classify as strong_success is classified partial_failure, while a held expansion becomes the base and the mission goes on.
+Decided, not built (S-210 to S-214): in an Assault the player's base is a forward base and is its original main base; let the enemy occupy it and a result that would classify as strong_success is classified partial_failure, while a held expansion becomes the base and the mission goes on.
 
 ## Stories
 
@@ -133,7 +133,7 @@ Rules
 
 Inputs: objectives; unit store; initial power; commander unit id.
 Outputs: mission result (band, objective score, retention, per-objective, commander fate, ticks elapsed) in the save file and debrief.
-Open flags: none here (the cap and the retention question are S-212's, Q-178-05 and Q-212-04).
+Open flags: none here (the retention question is S-212's, Q-212-04).
 
 ### S-078 — A battle becomes history
 Flag closed, rule text pending: Q-078-01, the targets `home` and `exposed` stay and both resolve to the mission region, so consequences apply to the mission region itself. The rule below is what the tests read today.
@@ -150,7 +150,7 @@ Rules
 
 Inputs: mission result; consequence tables; world.
 Outputs: applied deltas in the T1 trace; region fields; ownership.
-Open flags: none here. See also: S-212 and Q-178-02 (how a base occupied at mission end relates to R-078-04's transfer).
+Open flags: none here. See also: S-212 R-212-05 (the region follows whoever holds the base at the end, superseding R-078-04's transfer band).
 
 ### S-079 — Orders, not menus
 As a commander, I want to receive my orders as a superior officer would give them, three parts and no haggling, and to see afterward how it went and what it cost, so that the civilization feels like a chain of command.
@@ -163,7 +163,7 @@ Rules
 
 Inputs: mission setup; result.
 Outputs: briefing and debrief screens.
-Open flags: none beyond the missing reference. Reference required: `references/E-10/notes.md`, missing. See also: Q-210-04 (whether and where the briefing states each side's base kind and the resource situation) and Q-210-06 (where the economy settings are chosen, given that Accept and Refuse are the only controls).
+Open flags: none beyond the missing reference. Reference required: `references/E-10/notes.md`, missing. The briefing states each side's base kind and the resource situation inside Situation (Westley, 2026-10-07), and the economy settings are chosen live, per setting, so Accept and Refuse stay the only controls.
 
 ### S-080 — Difficulty is scarcity, not stronger enemies
 As a commander, I want hard mode to give me less to work with, never to give the enemy better units, so that I always lose to my own limits.
@@ -177,7 +177,7 @@ Rules
 Inputs: difficulty; onboarding.
 Outputs: parity; candidate scores.
 Open flags: Q-080-03 (the compression values; Westley 2026-09-30: stays open past the MVP, so R-080-02's compression is a no-op until it closes and no piece builds it).
-The full difficulty ramp ships. The complication, Crossed Signals, was chosen through the options pass, `docs/northstar/research/options/complications/`. The host owns difficulty and preferences (single-player team model). See also: Q-211-04 (who owns resource generosity, with the situation's slant in S-211 and the enemy's prosperity in E-14 S-215).
+The full difficulty ramp ships. The complication, Crossed Signals, was chosen through the options pass, `docs/northstar/research/options/complications/`. The host owns difficulty and preferences (single-player team model). Difficulty acts on the player's side through parity only; the situation's slant (S-211) and the enemy's prosperity (E-14 S-215) are separate (Westley, 2026-10-07).
 
 ### S-210 — Each side starts from the base its situation calls for
 As a commander, I want the kind of base each side begins with to follow from the kind of mission and from how far the region lies from the civilization's supply, so that a defender, an attacker and a relief force each fight from a place that makes sense.
@@ -185,7 +185,7 @@ As a commander, I want the kind of base each side begins with to follow from the
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-210-01  Given a mission, When its setup is built, Then each side is given one base of operations at the start, and the kind of base is decided by the mission archetype (S-073) together with the supply distance, which is the number of regions between the mission's region and the nearest region the civilization owns (E-03 S-223) [Q-177-01: how the two combine]. The kinds a base can be (generating on site, supplied from elsewhere, or both) and the numbers of regions at which the kind changes are E-22 S-177's [Q-177-05].
+- R-210-01  Given a mission, When its setup is built, Then each side is given one base of operations at the start, and the kind of base is decided by the mission archetype (S-073) alone, from the table below; it does not change with how far into foreign ground the mission lies (Westley, 2026-10-06).
 - R-210-02  Given an archetype, When its entry is read, Then it carries a base kind for each side, read from the library as the asset profile is (R-073-02) and not hard-coded. The approach is decided (Westley, 2026-10-02: "B1+2") and the table below, taken from `docs/northstar/research/economy_design/base_and_objective_options.md` part B1, stands as written (Westley, 2026-10-02: "looks good, no changes needed").
 
 | Archetype | Player's base | Enemy's base |
@@ -197,12 +197,12 @@ Rules
 | Suppression, Counterinsurgency | garrison in a city | hidden cells among the settlements |
 | Rear Guard / Evacuation | the place being left | pursuing forward base |
 
-- R-210-03  Given a side that the archetype makes the attacker, When its base is given, Then it is a forward base, from which the side produces and to which resources come by supply lines (E-22 S-177 and S-176) [Q-210-03: which side attacks in each archetype].
-- R-210-04  Given the base a side is given at the start, When the mission runs, Then that base is the side's original main base for S-212, and a forward base given to an attacker by R-210-03 is its original main base (Westley, 2026-10-02: "attackers get a *forward* base from which they produce and recieve resources from supply lines"); expansions and forward works built later are not [Q-210-03: the original main base of a side that neither attacks nor defends].
+- R-210-03  Given a side that the archetype makes the attacker, When its base is given, Then it is a forward base from which the side produces; supply lines, the shipments of E-22 S-176, are not an attacker-only rule and either side may have them (Westley, 2026-10-07) [Q-210-03: which side attacks in each archetype; Westley, 2026-10-07: named per mission type by him].
+- R-210-04  Given the base a side is given at the start, When the mission runs, Then that base is the side's original main base for S-212, and a forward base given to an attacker by R-210-03 is its original main base (Westley, 2026-10-02: "attackers get a *forward* base from which they produce and recieve resources from supply lines"); expansions and forward works built later are not for the beta only mission types in which the sides start with a base launch, and there the base a side starts with is its original main base (Westley, 2026-10-07; which types launch is Q-210-07).
 
-Inputs: archetype library; the supply distance (E-03 S-223); the mission's region.
+Inputs: archetype library; the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
-Open flags: Q-177-05 (carried from E-22 S-177), Q-177-01, Q-210-03, Q-210-04 (whether and where the briefing states each side's base kind), Q-210-06 (where the economy settings are chosen). Where a base stands is whatever the terrain gives (E-17 R-166-03).
+Open flags: Q-210-07 (liberty: Architect: which mission types launch in the beta). Where a base stands is whatever the terrain gives (E-17 R-166-03).
 
 ### S-211 — The resources fit the situation
 As a commander, I want the resources on the map to be scarce or plentiful as the simulation's situation says, tilted toward the side with the better position, and never so thin that I cannot do the job, so that the economy is part of the mission and never a trap.
@@ -210,14 +210,14 @@ As a commander, I want the resources on the map to be scarce or plentiful as the
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-211-01  Given a mission, When its resources are set, Then they are limited or abundant consistent with the situation the simulation gives the mission's region, and slanted by it (a defender has the better position) [Q-177-02: which parts of the situation decide, and how big the slant is].
-- R-211-02  Given any mission, When it is generated, Then the player has the means to accomplish it even when it is hard (Westley, 2026-10-02: "the player always has the means to do the mission") [Q-211-02: how the means are guaranteed, and how that sits beside the shortfall of R-074-05].
-- R-211-03  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places and not always, and the significant resources sit opposite the objective, so a side picks one or fights for both (E-22 S-177 holds the rule; E-17 places them) [Q-211-03: for each archetype, where the objective sits against each side's base].
+- R-211-01  Given a mission, When its resources are set, Then they are limited or abundant consistent with the situation the simulation gives the mission's region, and slanted by it (a defender has the better position); the richness is derived from the simulation's existing region fields and composites (Westley, 2026-10-06).
+- R-211-02  Given any mission, When it is generated, Then the player has the means to accomplish it even when it is hard (Westley, 2026-10-02: "the player always has the means to do the mission") [Q-211-02: how the means are guaranteed; Westley wants option (a), a generator check, written up before deciding].
+- R-211-03  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places and not always, and the significant resources sit opposite the objective, so a side picks one or fights for both (E-22 S-177 holds the rule; E-17 places them) (left to the generator, Westley, 2026-10-07).
 - R-211-04  Given the final score, When the result is classified (S-077), Then the resources are not scored separately: a side that ignores them is overrun unless it rushes and finishes fast.
 
 Inputs: the region's simulation situation; the archetype; difficulty.
-Outputs: the resource situation in the mission setup, for the briefing to state [Q-210-04].
-Open flags: Q-177-02, Q-211-02, Q-211-03, Q-211-04 (who owns "resource generosity" in R-080-02, among difficulty, this story's slant and the enemy's prosperity in E-14 S-215).
+Outputs: the resource situation in the mission setup, for the briefing to state inside Situation.
+Open flags: Q-211-02.
 
 ### S-212 — When a base falls
 As a commander, I want losing my main base to cost me the result but not always the fight, so that I can fall back to what I still hold and save something.
@@ -227,15 +227,15 @@ Status: design decided 2026-10-02, not scheduled for building. Occupying and ret
 Rules
 - R-212-01  Given the player's side has lost its original main base (S-210), When the result is classified (R-077-02), Then the best band it can get is partial_failure: a final score that would classify higher is classified partial_failure (Westley, 2026-10-02: "at the point they've lost their original main base it's partial failure at maximum"). The cap concerns a forward base only when it is the side's original main base (R-210-04), never forward works.
 - R-212-02  Given a side loses its base of operations while it holds an expansion or forward works, When the loss is applied, Then that expansion or forward works becomes its base of operations and the mission goes on (E-22 S-178, S-175).
-- R-212-03  Given a side loses its base of operations and holds no expansion and no forward works, When the loss is applied, Then [Q-178-04: whether the mission ends at once and is scored, or goes on with what is on the field].
-- R-212-04  Given a side has lost its original main base and retakes it before the mission ends, When the result is classified, Then [Q-178-05: whether the cap of R-212-01 lifts].
-- R-212-05  Given the mission ends while a base is held by the other side, When the region's ownership is set (R-078-04), Then [Q-178-02: whether the region follows the side that holds the base at the end, or the S-073 transfer column decides].
-- R-212-06  Given the end conditions of R-075-07, When the player's force is judged eliminated, Then [Q-212-05: whether a side with no units in the field but a base with production or workers is eliminated].
-- R-212-07  Given workers and units made during the mission, When retention is computed (R-077-01), Then [Q-212-04: whether they count in deployed power and surviving power].
+- R-212-03  Given a side loses its base of operations and holds no expansion and no forward works, When the loss is applied, Then the mission ends for that side and is scored (Westley, 2026-10-06; to be checked archetype by archetype against R-075-07 and S-077).
+- R-212-04  Given a side has lost its original main base and retakes it before the mission ends, When the result is classified, Then the cap of R-212-01 lifts (Westley, 2026-10-06).
+- R-212-05  Given the mission ends while a base is held by the other side, When the region's ownership is set (R-078-04), Then the region follows the side that holds the base at the end (Westley, 2026-10-06); the transfer column of R-073-01 and R-078-04 are superseded and are to be rewritten to follow base ownership.
+- R-212-06  Given the end conditions of R-075-07, When the player's force is judged eliminated, Then it is eliminated when no units remain; buildings do not keep a side alive and any unit that remains does (Westley, 2026-10-07).
+- R-212-07  Given workers and units made during the mission, When retention is computed (R-077-01), Then every unit made counts in both deployed power and surviving power (Westley, 2026-10-07).
 
 Inputs: base ownership during the mission (E-22 S-178); the result of S-077.
 Outputs: the band cap and the mission end in the mission result.
-Open flags: Q-178-05, Q-178-04, Q-178-02, Q-212-04, Q-212-05.
+Open flags: none.
 
 ### S-213 — The technology a mission starts with
 As a commander, I want the technology each side starts a mission with to follow, only slightly, from how advanced the civilization is, so that a mission feels of its time and there is still room to climb during it.
@@ -259,12 +259,12 @@ Status: design decided 2026-10-02, not scheduled for building. The team sizes an
 Rules
 - R-214-01  Given a mission with 4 to 6 players, When the canvas is chosen (E-17 S-116), Then its dimension is 64,000 wu (Westley, 2026-10-02: "64k if there's 4-6 players").
 - R-214-02  Given a mission with fewer than 4 players, When the canvas is chosen, Then it keeps the sizes of the S-073 table.
-- R-214-03  Given more players on a team, When the mission is built, Then there are more enemies and more to do, and the player units rise with the players and are never fewer than in single player (E-19 R-141-02) Enemy force and the amount to do scale in step with the number of pairs (Westley, 2026-10-06) [Q-214-02: whether each pair has its own objective and parity].
+- R-214-03  Given more players on a team, When the mission is built, Then there are more enemies and more to do, and the player units rise with the players and are never fewer than in single player (E-19 R-141-02) Enemy force and the amount to do scale in step with the number of pairs (Westley, 2026-10-06) the team has one shared objective and parity, and the enemies scale (Westley, 2026-10-07).
 - R-214-04  Given more players on a team, When the resources are set (S-211), Then there are more of them, in step with the number of pairs (Westley, 2026-10-06).
 
 Inputs: the team's player count (E-19 S-159).
 Outputs: canvas size, enemy forces and resources in the mission setup.
-Open flags: Q-214-02.
+Open flags: none.
 
 ## Inputs
 
@@ -278,8 +278,8 @@ Open flags: Q-214-02.
 | Accept or refuse | Player | | |
 | Team's player count | E-19 S-159 | 2 or 4 (6 is a desired future feature, E-19 S-241) | |
 | Technology level of the faction | E-06 S-045 | 0 to 100 | |
-| Supply distance | E-03 S-223 | a count of regions: those between the mission's region and the nearest region the civilization owns | [Q-177-05] |
-| Economy settings (doctrine, dial, unit-mix toggles, enemy foresight) | Player (E-19 S-159, E-22 S-180, S-181) | | [Q-210-06: where chosen] |
+| Economy settings (doctrine, dial, unit-mix toggles) | Player, live, per setting (E-19 S-159, E-22 S-180) | | |
+| Enemy foresight | Difficulty (E-22 S-181) | | |
 | Tactical result | E-11 through E-15 | objectives, unit store, commander unit | |
 
 ## Outputs
@@ -322,7 +322,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Time limit on a minutes-scale table (3 to 4.5 minutes, or seconds) instead of 30 to 60 minutes.
 - Refusal deploys a force.
 - The partial-failure cap applied to the enemy's side, or applied when only an expansion or forward works was lost.
-- Base kind read from the archetype alone, ignoring supply distance, or the reverse.
+- Base kind changed by how far into foreign ground the mission lies.
 - An attacker given a home city instead of a forward base.
 - Resources scored as a separate objective.
 - The 64,000 wu canvas used for matches of fewer than 4 players, or today's canvas used for 4 to 6.
@@ -330,7 +330,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-080-03, Q-159-12, Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 held in E-22, Q-211-02 to Q-211-04, and Q-177-02 held in E-22, Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22, Q-173-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-080-03, Q-159-12, Q-177-07, Q-210-03, Q-210-04, Q-210-06, Q-211-02 to Q-211-04, Q-212-04, Q-212-05, Q-173-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

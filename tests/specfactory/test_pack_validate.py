@@ -22,6 +22,15 @@ PACK_VALIDATE = REPO / "scripts" / "specfactory" / "pack_validate.py"
 PX10_EVIDENCE = REPO / "docs" / "northstar" / "proving_ground" / "evidence" / "px10"
 
 
+_FIXTURE_BUILDINGS = [
+    {"id": "bld_a", "role": "production", "footprint": [3, 3], "hp": 200},
+    {"id": "bld_b", "role": "house", "footprint": [2, 2], "hp": 100},
+    {"id": "bld_c", "role": "worker-hut", "footprint": [2, 2], "hp": 80},
+    {"id": "bld_d", "role": "forward-works", "footprint": [2, 2], "hp": 120},
+]
+# TD-VG-E-4: R-168-05 makes the building set part of every manifest.
+
+
 def _base_manifest(era_id="synth_era", era_display_name="Synth Era"):
     return {
         "era_id": era_id,
@@ -32,7 +41,7 @@ def _base_manifest(era_id="synth_era", era_display_name="Synth Era"):
         "era_order": 1,
         "units": {
             "vanguard": {
-                "category": "line", "squad_count": 1, "visual_scale": 1.0,
+                "category": "line", "squad_count": 1, "visual_scale": 1.0, "movement": "flying",
                 "tiers": {"1": {"scene": "units/line_unit.tscn"}},
             },
         },
@@ -40,6 +49,8 @@ def _base_manifest(era_id="synth_era", era_display_name="Synth Era"):
         "environment": {},
         "materials": {"1": {"faction_color_treatment": "matte"}},
         "faction_colors": {"0": "#00ffff"},
+        "buildings": [dict(b) for b in _FIXTURE_BUILDINGS],
+        "doctrines": ["boom", "fortify", "press", "balanced"],
     }
 
 

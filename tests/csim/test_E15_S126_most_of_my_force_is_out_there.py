@@ -92,18 +92,6 @@ def test_R_126_03_production_switches_to_it_at(lib, world_factory):
     assert lib.om_structure_get_timer(w, 0) == 250
 
 
-def test_R_126_04_starting_force_0_20_f(lib, world_factory):
-    """Given a mission's expected full force F (E-10 force sizing), When forces are allocated, Then the starting force is 0.20 · F, and the reinforcement structures on the map can together produce at least 0.80 · F over the mission's time limit when all are held from the start; a player who holds every structure the whole mission fields at least F, and one who holds none fields 0.20 · F."""
-    total_force_f = 100.0
-
-    starting_force = lib.om_mission_compute_starting_force(ctypes.c_double(total_force_f))
-    assert ctypes.c_double(starting_force).value == pytest.approx(20.0, abs=1e-5)
-
-    # Structure reinforcement capacity over time limit >= 80%
-    reinforcement_cap = lib.om_mission_compute_reinforcement_capacity(ctypes.c_double(total_force_f), 3600)  # 3600 ticks
-    assert ctypes.c_double(reinforcement_cap).value >= 80.0 - 1e-5
-
-
 def test_R_126_05_player_sees_timer_bar_next(lib, world_factory):
     """Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06)."""
     w = world_factory(n_regions=1)

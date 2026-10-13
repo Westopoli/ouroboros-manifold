@@ -38,6 +38,7 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include "om_constants.h"
+#include "economy_internal.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -131,7 +132,7 @@ static double sv_get_f64(sv_reader *sr) { return sv_bits_f64(sv_get_u64(sr)); }
  * use either way, the same lazy-alloc-on-first-access pattern every module
  * already uses for these pointers (e.g. csrc/generational.c's
  * gen_get_state). */
-/* The ten slots' hook fields differ in type per slot (void* state vs.
+/* The eleven slots' hook fields differ in type per slot (void* state vs.
  * function pointers of distinct signatures), which is not safely tabled
  * without incompatible-pointer casts under -Wall -Werror, so each slot
  * below is one explicit call instead of a generic loop over a descriptor
@@ -161,6 +162,7 @@ static void sv_write_slots(sv_writer *sw, const om_world *w) {
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_MACRO,        w->macro_state_size,        w->macro_state_write);
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_SUPPORT,      w->support_state_size,      w->support_state_write);
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_MAPGEN,       w->mapgen_state_size,       w->mapgen_state_write);
+    sv_write_one_slot(sw, w, OM_SAVE_SLOT_TERRAIN,      w->terrain_state_size,      w->terrain_state_write);
 }
 
 /* F2m (R-111-03 atomic refusal): apply == 0 (the validate pass) used to
@@ -205,7 +207,7 @@ static void sv_parse_slots(sv_reader *sr, om_world *w, int apply) {
     /* Only the validate pass (apply == 0) needs a shadow target; the apply
      * pass reads straight into w as before. One shadow, calloc'd so the
      * (large, OM_MAX_REGIONS/OM_MAX_FACTIONS-sized) om_world is never put
-     * on the stack, covers all ten slot calls below -- each call only ever
+     * on the stack, covers all eleven slot calls below -- each call only ever
      * touches its own module's pair of fields on it. */
     om_world *shadow = NULL;
     if (!apply) {
@@ -262,6 +264,11 @@ static void sv_parse_slots(sv_reader *sr, om_world *w, int apply) {
                        shadow ? &shadow->mapgen_state : NULL,
                        shadow ? &shadow->mapgen_state_free : NULL,
                        w->mapgen_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_TERRAIN,
+                       &w->terrain_state, w->terrain_state_free,
+                       shadow ? &shadow->terrain_state : NULL,
+                       shadow ? &shadow->terrain_state_free : NULL,
+                       w->terrain_state_read);
     if (shadow) free(shadow);
 }
 
@@ -406,6 +413,49 @@ static void sv_write_body(sv_writer *sw, const om_world *w) {
         sv_put_u32(sw, t->target_idx);
         sv_put_u32(sw, t->source_idx);
         sv_put_f64(sw, t->commit);
+    }
+
+    {
+        const om_economy_state *e = &w->economy;
+        sv_put_u32(sw, e->n_lots);
+        for (uint32_t i = 0; i < e->n_lots; i++) {
+            sv_put_u32(sw, e->lots[i].id);
+            sv_put_f64(sw, e->lots[i].x);
+            sv_put_f64(sw, e->lots[i].y);
+            sv_put_i32(sw, e->lots[i].stage);
+            sv_put_i32(sw, e->lots[i].building);
+            sv_put_i32(sw, e->lots[i].owner);
+        }
+        sv_put_u32(sw, e->density_present);
+        if (e->density_present) {
+            uint32_t cells = e->density_side * e->density_side;
+            sv_put_u32(sw, e->density_side);
+            for (uint32_t i = 0; i < cells; i++) sv_put_f64(sw, e->density[i]);
+            for (uint32_t i = 0; i < cells; i++) sv_put_f64(sw, e->P[i]);
+            sv_put_u32(sw, e->n_active);
+            for (uint32_t i = 0; i < e->n_active; i++) sv_put_u32(sw, e->active[i]);
+            sv_put_u32(sw, e->core_cell);
+        }
+        sv_put_u32(sw, e->n_strongpoints);
+        for (uint32_t i = 0; i < e->n_strongpoints; i++) {
+            sv_put_u32(sw, e->strongpoints[i].id);
+            sv_put_f64(sw, e->strongpoints[i].x);
+            sv_put_f64(sw, e->strongpoints[i].y);
+            sv_put_i32(sw, e->strongpoints[i].owner);
+            sv_put_i32(sw, e->strongpoints[i].state);
+        }
+        sv_put_u32(sw, e->doctrine_chosen);
+        sv_put_i32(sw, e->doctrine);
+        sv_put_u32(sw, e->n_waves);
+        for (uint32_t i = 0; i < e->n_waves; i++) {
+            sv_put_u32(sw, e->waves[i].tick);
+            sv_put_i32(sw, e->waves[i].kind);
+            sv_put_f64(sw, e->waves[i].x);
+            sv_put_f64(sw, e->waves[i].y);
+        }
+        sv_put_f64(sw, e->density_economy);
+        for (uint32_t i = 0; i < OM_LOT_CAP; i++) sv_put_u32(sw, e->lot_hit_tick[i]);
+        sv_put_u32(sw, e->next_lot_id);
     }
 
     sv_write_slots(sw, w);
@@ -657,7 +707,96 @@ static void sv_parse_body(sv_reader *sr, om_world *w, int apply) {
     if (!sr->ok) return;
     if (apply) w->telegraphs_n = telegraphs_n;
 
+    {
+        om_economy_state *e = &w->economy;
+        uint32_t n = sv_get_u32(sr);
+        if (!sr->ok || n > OM_LOT_CAP) { sr->ok = 0; return; }
+        for (uint32_t i = 0; i < n && sr->ok; i++) {
+            om_lot l;
+            l.id = sv_get_u32(sr);
+            l.x = sv_get_f64(sr);
+            l.y = sv_get_f64(sr);
+            l.stage = sv_get_i32(sr);
+            l.building = sv_get_i32(sr);
+            l.owner = sv_get_i32(sr);
+            if (apply && sr->ok) e->lots[i] = l;
+        }
+        if (!sr->ok) return;
+        if (apply) e->n_lots = n;
+
+        uint32_t present = sv_get_u32(sr);
+        if (!sr->ok || present > 1) { sr->ok = 0; return; }
+        if (present) {
+            uint32_t side = sv_get_u32(sr), cells = 0, n_active = 0, core_cell = 0;
+            if (!sr->ok || side > OM_DENSITY_MAX_SIDE) { sr->ok = 0; return; }
+            cells = side * side;
+            for (uint32_t i = 0; i < cells && sr->ok; i++) {
+                double v = sv_get_f64(sr);
+                if (apply && sr->ok) e->density[i] = v;
+            }
+            for (uint32_t i = 0; i < cells && sr->ok; i++) {
+                double v = sv_get_f64(sr);
+                if (apply && sr->ok) e->P[i] = v;
+            }
+            n_active = sv_get_u32(sr);
+            if (!sr->ok || n_active > cells) { sr->ok = 0; return; }
+            for (uint32_t i = 0; i < n_active && sr->ok; i++) {
+                uint32_t cell = sv_get_u32(sr);
+                if (sr->ok && cell >= cells) { sr->ok = 0; return; }
+                if (apply && sr->ok) e->active[i] = cell;
+            }
+            core_cell = sv_get_u32(sr);
+            if (!sr->ok || core_cell >= cells) { sr->ok = 0; return; }
+            if (apply) { e->density_side = side; e->n_active = n_active; e->core_cell = core_cell; }
+        }
+        if (!sr->ok) return;
+        if (apply) e->density_present = (uint8_t)present;
+
+        n = sv_get_u32(sr);
+        if (!sr->ok || n > OM_STRONGPOINT_CAP) { sr->ok = 0; return; }
+        for (uint32_t i = 0; i < n && sr->ok; i++) {
+            om_strongpoint p;
+            p.id = sv_get_u32(sr);
+            p.x = sv_get_f64(sr);
+            p.y = sv_get_f64(sr);
+            p.owner = sv_get_i32(sr);
+            p.state = sv_get_i32(sr);
+            if (apply && sr->ok) e->strongpoints[i] = p;
+        }
+        if (!sr->ok) return;
+        if (apply) e->n_strongpoints = n;
+
+        uint32_t chosen = sv_get_u32(sr);
+        int32_t doctrine = sv_get_i32(sr);
+        if (!sr->ok || chosen > 1) { sr->ok = 0; return; }
+        if (apply) { e->doctrine_chosen = (uint8_t)chosen; e->doctrine = doctrine; }
+
+        n = sv_get_u32(sr);
+        if (!sr->ok || n > OM_WAVE_LOG_CAP) { sr->ok = 0; return; }
+        for (uint32_t i = 0; i < n && sr->ok; i++) {
+            om_wave wv;
+            wv.tick = sv_get_u32(sr);
+            wv.kind = sv_get_i32(sr);
+            wv.x = sv_get_f64(sr);
+            wv.y = sv_get_f64(sr);
+            if (apply && sr->ok) e->waves[i] = wv;
+        }
+        if (!sr->ok) return;
+        if (apply) e->n_waves = n;
+
+        double density_economy = sv_get_f64(sr);
+        for (uint32_t i = 0; i < OM_LOT_CAP && sr->ok; i++) {
+            uint32_t ht = sv_get_u32(sr);
+            if (apply && sr->ok) e->lot_hit_tick[i] = ht;
+        }
+        uint32_t next_lot_id = sv_get_u32(sr);
+        if (!sr->ok) return;
+        if (apply) { e->density_economy = density_economy; e->next_lot_id = next_lot_id; }
+    }
+
     sv_parse_slots(sr, w, apply);
+    /* K-e5: the terrain slot has loaded; the derived grids follow it (a no-op until E1q-field fills the stub). */
+    if (apply && sr->ok) om_density_rebuild_inputs(w);
 }
 
 /* ------------------------------------------------------------ public ABI */

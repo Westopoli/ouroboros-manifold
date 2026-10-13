@@ -1,0 +1,147 @@
+{
+ "G": 2,
+ "feature_means": {
+  "blocked_layer_top": {
+   "0": 0.0,
+   "2": 3.0,
+   "4": 4.0
+  },
+  "choke_width_bodies": {
+   "0": 0.0,
+   "2": 3.0,
+   "4": 4.0
+  },
+  "cover_density_corridor": {
+   "0": 0.0,
+   "0.1": 3.0,
+   "0.3": 4.0
+  },
+  "detour_ratio": {
+   "0": 3.0,
+   "1.5": 4.0,
+   "3": 0.0
+  },
+  "lane_count": {
+   "0": 0.0,
+   "1": 4.0,
+   "2": 3.0
+  },
+  "start_distance": {
+   "1400": 3.5,
+   "2800": 0.0
+  }
+ },
+ "layouts": [
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": false,
+    "S3": null,
+    "S4": true,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 0,
+    "choke_width_bodies": 0,
+    "cover_density_corridor": 0,
+    "detour_ratio": 3,
+    "lane_count": 0,
+    "start_distance": 2800
+   },
+   "gains": {
+    "S1": -3,
+    "S2": 0,
+    "S3": null,
+    "S4": -3,
+    "S5": -6
+   },
+   "gains_naive_line": {
+    "S1": -7,
+    "S2": -4,
+    "S3": null,
+    "S4": -7,
+    "S5": -10
+   },
+   "index": 0,
+   "no_gain": [
+    "S3"
+   ],
+   "score": 0,
+   "score_naive_line": 0
+  },
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": true,
+    "S3": null,
+    "S4": true,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 4,
+    "choke_width_bodies": 4,
+    "cover_density_corridor": 0.3,
+    "detour_ratio": 1.5,
+    "lane_count": 1,
+    "start_distance": 1400
+   },
+   "gains": {
+    "S1": 6,
+    "S2": 6,
+    "S3": null,
+    "S4": 7,
+    "S5": 4
+   },
+   "gains_naive_line": {
+    "S1": 2,
+    "S2": 2,
+    "S3": null,
+    "S4": 3,
+    "S5": 0
+   },
+   "index": 1,
+   "no_gain": [
+    "S3"
+   ],
+   "score": 4,
+   "score_naive_line": 3
+  },
+  {
+   "counter_works": {
+    "S1": true,
+    "S2": true,
+    "S3": null,
+    "S4": false,
+    "S5": null
+   },
+   "features": {
+    "blocked_layer_top": 2,
+    "choke_width_bodies": 2,
+    "cover_density_corridor": 0.1,
+    "detour_ratio": 0,
+    "lane_count": 2,
+    "start_distance": 1400
+   },
+   "gains": {
+    "S1": 3,
+    "S2": 2,
+    "S3": null,
+    "S4": -6,
+    "S5": 2
+   },
+   "gains_naive_line": {
+    "S1": 0,
+    "S2": -1,
+    "S3": null,
+    "S4": -9,
+    "S5": -1
+   },
+   "index": 2,
+   "no_gain": [
+    "S3"
+   ],
+   "score": 3,
+   "score_naive_line": 0
+  }
+ ]
+}

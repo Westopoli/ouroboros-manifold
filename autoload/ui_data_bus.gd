@@ -91,8 +91,11 @@ func _load_settings() -> void:
 			"resolution_index": config.get_value("display", "resolution_index", 2),
 			"fullscreen": config.get_value("display", "fullscreen", false),
 			"vsync": config.get_value("display", "vsync", true),
+			"galaxy_quality": clampi(int(config.get_value("display", "galaxy_quality", 0)), 0, 2),
 			"pan_speed": clampf(float(config.get_value("camera", "pan_speed", 1.0)), 0.5, 2.0),
+			"era_id": str(config.get_value("game", "era_id", "settled_reach")),
 		}
+		EraConfig.apply_saved(_settings["era_id"])
 		_apply_stored_settings()
 	else:
 		_settings = {
@@ -103,7 +106,9 @@ func _load_settings() -> void:
 			"resolution_index": 2,
 			"fullscreen": false,
 			"vsync": true,
+			"galaxy_quality": 0,
 			"pan_speed": 1.0,
+			"era_id": "settled_reach",
 		}
 
 
@@ -135,7 +140,9 @@ func save_settings(settings: Dictionary) -> void:
 		"resolution_index": clampi(int(settings.get("resolution_index", 2)), 0, VALID_RESOLUTION_COUNT - 1),
 		"fullscreen": bool(settings.get("fullscreen", false)),
 		"vsync": bool(settings.get("vsync", true)),
+		"galaxy_quality": clampi(int(settings.get("galaxy_quality", 0)), 0, 2),
 		"pan_speed": clampf(float(settings.get("pan_speed", 1.0)), 0.5, 2.0),
+		"era_id": str(settings.get("era_id", "settled_reach")),
 	}
 	_settings = clamped
 	var config := ConfigFile.new()
@@ -146,5 +153,7 @@ func save_settings(settings: Dictionary) -> void:
 	config.set_value("display", "resolution_index", clamped["resolution_index"])
 	config.set_value("display", "fullscreen", clamped["fullscreen"])
 	config.set_value("display", "vsync", clamped["vsync"])
+	config.set_value("display", "galaxy_quality", clamped["galaxy_quality"])
 	config.set_value("camera", "pan_speed", clamped["pan_speed"])
+	config.set_value("game", "era_id", clamped["era_id"])
 	config.save(SETTINGS_PATH)

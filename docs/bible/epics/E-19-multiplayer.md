@@ -13,6 +13,8 @@
 
 **Gate verdict: not passed.** Blocked on the 1 open flag listed at the foot and one missing reference (S-144). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); a match is co-op only at launch (R-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
 
+Built ahead of the gate under the visible game programme's waiver (Westley, 2026-10-07).
+
 ## Purpose
 
 Ouroboros Manifold is a multiplayer strategic RTS. Every peer runs the same deterministic C simulation and exchanges only commands, so a match costs nothing to host and every player sees one galaxy and one battle. Matched players who all own the same era packs can play a match that traverses eras chronologically. Teams of 2 and 4 play together, and teams of 6 are a desired future feature: each player is a sub-commander, each pair a sub-civilization inside the over-arching civilization, and more players means a bigger map with more to do, more resources and more enemies. What a match is, who commands what, and how the single-player generational loop becomes a shared one are the questions this epic exists to get answered.
@@ -48,9 +50,11 @@ As a player, I want my orders to reach every peer with no server in the middle, 
 Rules
 - R-140-01  Given a match, When peers connect, Then they connect peer to peer over the Steam Datagram Relay with a direct-connect fallback negotiated by the API.
 - R-140-02  Given a tactical tick, When commands are exchanged, Then each peer's commands for tick t + d are sent on a reliable channel and every peer applies all peers' commands for tick t in a fixed peer order before advancing The input delay d is 3 tactical ticks (150 ms) (Westley, 2026-10-06).
-- R-140-03  Given a peer that has not delivered its commands for tick t, When the deadline passes, Then every peer stalls until they arrive or the peer is dropped after 30 seconds (Westley, 2026-10-06; the deadline is 1 second) [the lockstep backend spec of 2026-10-05 holds the drop at 60 seconds as a provisional setting: to be reconciled].
+- R-140-03  Given a peer that has not delivered its commands for tick t, When the deadline passes, Then every peer stalls until they arrive or the peer is dropped after 30 seconds (Westley, 2026-10-06; the deadline is 1 second). The lockstep backend spec of 2026-10-05 holds the drop at 60 seconds as a provisional setting, which this supersedes.
 - R-140-04  Given a dropped peer that held an economy seat, When the match continues, Then the rules that run an economy with nobody in the seat take the seat (E-22 S-179, S-181); Given any other dropped peer, Then its units stand idle, and every other player is alerted to the disconnection; a disconnected player's problem is theirs, not the team's to solve (Westley, 2026-10-06).
 - R-140-05  Given the handshake, When measured, Then it completes within 5 s in the common case.
+- R-140-06  Given a lockstep match, When the two simulations disagree on a tick's checksum, Then the view shows 'Desync at tick N, section S' with no Retry and the match ends (Architect, 2026-10-09).
+- R-140-07  Given a match, When the player chooses End Mission, Then the view leaves the match (NetMatch.leave) and the peer sees the stall overlay until the drop timer of R-140-03; the orders a player can send in a match are move, attack-move and attack a target (the match verbs), no others (Architect, 2026-10-09).
 
 Inputs: peer commands; relay.
 Outputs: lockstep tick advance; stall and drop events.

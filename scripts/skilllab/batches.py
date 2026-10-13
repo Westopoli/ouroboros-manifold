@@ -5,16 +5,16 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import compose, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills
+from scripts.skilllab import compose, depth, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
 from scripts.skilllab.asym import Side, asym_play
-from scripts.skilllab.scenes import guard_defenders, phase_b_choke, tall_cover, tall_cover_terrain
+from scripts.skilllab.contract import trim_series
+from scripts.skilllab.ground.scenes_ground import tall_cover, tall_cover_terrain
+from scripts.skilllab.scenes import guard_defenders, phase_b_choke
 from scripts.skilllab.terrain import with_terrain
 
-NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers")
+NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
-MOPUP_NOTE = ("Lab rule, provisional: mop-up order. A side whose units have stopped, none with an enemy in attack range, "
-              "that sees an enemy, re-issues its attack-move at the centroid of the enemies it sees, at most once per "
-              "mopup_interval_ticks. Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
+MOPUP_NOTE = (mopup.RULE_TEXT + " Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
               % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
 NOT_SINGLE = "not a single group order"
 REFINE_FACTOR = 3
@@ -28,12 +28,12 @@ _STALLED = ("stalemate",)   # quiet stalemate only; caps and draws are counted a
 PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
-LAYER_SCENES = ("mirror", "high_ground", "choke", "choke_phase_b")
-LAYER_NOTES = {"LA": "units on different layers cannot fire until reach by type lands (Phase C G5)",
-               "LB": "needs reach by type (om_roster_set_reach) and Phase C G5",
-               "LC": "needs reach by type (om_roster_set_reach) and Phase C G5"}
+LAYER_SCENES = ("mirror", "choke", "choke_phase_b")
+LAYER_REACH = {"Vanguard": (0, 0)}   # the reach table's Vanguard row (REACH_TABLE); the type's reach goes in through set_reach
+REACH_NOTE = ("reach set per the reach table (Vanguard 0 up 0 down); every unit is on layer 0, so the "
+              "layer settings have no effect in this scene (a layered scene is still needed)")
 REACH_TABLE = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
-               "Bombard and Bastion 0 up 2 down (needs om_roster_set_reach bound in the harness and Phase C G5)")
+               "Bombard and Bastion 0 up 2 down (set per cell on the unit type through om_roster_set_reach)")
 
 
 @dataclass(frozen=True)
@@ -214,6 +214,19 @@ def _layer_settings(u1=None, u2=None, d=None):
     return s
 
 
+def _with_reach(build):
+    """Side units become a Vanguard-based type that carries its table reach (stale gate removed: set_reach is bound)."""
+    name = "VanguardL"
+
+    def wrapped(enemy_heads, swap):
+        setup = build(enemy_heads, swap)
+        groups = tuple(dataclasses.replace(g, unit=name) if g.unit == "Vanguard" else g for g in setup.groups)
+        types = {**setup.unit_types, name: {"base": "Vanguard", "reach": LAYER_REACH["Vanguard"]}}
+        return dataclasses.replace(setup, groups=groups, unit_types=types)
+    wrapped.labels = getattr(build, "labels", None)
+    return wrapped
+
+
 def _layers():
     scenes = {"mirror": asym_play(16, Side("blob"), Side("blob")),
               "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0)),
@@ -222,16 +235,11 @@ def _layers():
     cells = []
 
     def add(table, scene, suffix, settings):
-        build = scenes.get(scene) if table == "LA" else None
+        build = scenes[scene] if table == "LA" else _with_reach(scenes[scene])
         label = "%s:%s%s" % (table, scene, suffix)
         size, enemy = (8, (7, 12)) if scene == "choke_phase_b" else (16, (8, 24))
-        if build is not None:
-            cells.append(_cell(label, size, build, skills.DRAFT, "settings are draft sweep points (A174)",
-                               enemy=enemy, settings=settings))
-            return
-        note = LAYER_NOTES[table] if scene != "high_ground" else (
-            LAYER_NOTES["LA"] if table == "LA" else "%s; %s" % (LAYER_NOTES["LA"], LAYER_NOTES[table]))
-        cells.append(_cell(label, size, None, NOT_EXPRESSED, note, enemy=enemy, settings=settings))
+        note = "settings are draft sweep points (A174)" if table == "LA" else REACH_NOTE
+        cells.append(_cell(label, size, build, skills.DRAFT, note, enemy=enemy, settings=settings))
 
     for scene in LAYER_SCENES:
         add("LA", scene, "", _layer_settings())
@@ -254,17 +262,16 @@ def _layers():
     return BatchDef(
         name="layers",
         title="Skill lab layers batch",
-        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by four scenes: a "
-               "mirror, high ground and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
+        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by three scenes: a "
+               "mirror and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
                "proposed by the Architect as drafts (A174), not confirmed by Westley. The sampled choke is a sampled wall from "
                "maps.sample_map and the Phase B choke is its own cell: a 3000 by 1600 canvas with a gap in the wall, "
                "where the defenders attack-move (the idle version is in the landscape batch) and side 0 is the 8 "
                "defenders against 7 to 12 attackers. The last 16 cells are a Raider mirror over collision radius "
                "and attack range (reach against body size), also drafts."),
         cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("the tall-cover scene (needs reach)", REACH_TABLE,
-                     "high ground and the LB and LC tables wait for reach",
-                     "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
+        unexpressed=("the tall-cover scene (units on different layers; reach is bound but this batch has no layered scene, see the landscape batch)", REACH_TABLE,
+                                          "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
 
 
 def get(name):
@@ -295,6 +302,26 @@ def _with_settings(build, settings, weighted=False):
 
 def _mean(values):
     return sum(values) / len(values) if values else 0.0
+
+
+def terrain_had_no_effect(cell_result, open_result):
+    """True when the two scans agree on break-even and on every fight's outcome, margin, survivors and ticks."""
+    key = lambda sc: (sc.beats, sc.loses_to, [(c.enemy_heads, c.won, [(f.outcome, f.margin, f.survivors, f.ticks)
+                                                                  for f in c.fights]) for c in sc.cells])
+    return key(cell_result) == key(open_result)
+
+
+def _no_effect_lines(defn, scans):
+    """Landscape: each non-open cell whose scan equals the open cell's of the same role, per variant."""
+    out = []
+    for c in defn.cells:
+        kind, _, rest = c.label.partition(":")
+        if c.build is None or kind == "open" or "_v_defenders" not in rest or kind not in maps.KINDS:
+            continue
+        for v, _ in defn.variants:
+            if terrain_had_no_effect(scans[(c.label, v)], scans[("open:" + rest, v)]):
+                out.append("- %s, %s: the sampled map did not change the fight against the open map" % (c.label, v))
+    return out
 
 
 def _tag(cell):
@@ -413,6 +440,8 @@ def _run_file(defn, scans, names):
                   for c, a, b, word in changes]
     lines += ["", "## What the instrument could not express", ""]
     lines += ["- " + u for u in defn.unexpressed]
+    if defn.name == "landscape":
+        lines += _no_effect_lines(defn, scans)
     lines += ["- %s: %s" % (c.label, c.note) for c in defn.cells if c.build is None or NOT_SINGLE in c.note]
     lines += ["", "## Files", ""] + ["- " + n for n in names] + [""]
     return "\n".join(lines)
@@ -486,8 +515,15 @@ def run(defn, out_dir, scan_fn=None, workers=1):
         raise ValueError("workers must be at least 1")
     if workers == 1:
         return _run(defn, out_dir, scan_fn)
-    with pool.FightPool(workers) as p:
+    with pool.FightPool(workers, lean=True) as p:
         return _run(defn, out_dir, scan_fn, map_fn=p.map)
+
+
+def _trimmed(result, keep):
+    """Drop the per-tick series from every fight of the scan except `keep` (the charted example); row values stay."""
+    for cell in result.cells:
+        cell.fights = [f if f is keep else trim_series(f) for f in cell.fights]
+    return result
 
 
 def _run(defn, out_dir, scan_fn=None, map_fn=None):
@@ -501,22 +537,29 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
         if c.build is None:
             continue
         if c.reference is not None:
-            scans[(c.label, REFERENCE)] = scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
+            scans[(c.label, REFERENCE)] = _trimmed(scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
                                                   c.size, c.enemy_from, c.enemy_to, replicates=c.replicates,
-                                                  refine_factor=REFINE_FACTOR, **more)
+                                                  refine_factor=REFINE_FACTOR, **more), None)
         for v, overlay in defn.variants:
             result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
                              replicates=c.replicates, refine_factor=REFINE_FACTOR, **more)
             scans[(c.label, v)] = result
+            keep = None
             for cell in result.cells:
                 if cell.enemy_heads == c.size and c.label not in examples:
-                    examples[c.label] = cell.fights[0]
+                    examples[c.label] = keep = cell.fights[0]
                 for f in cell.fights:
                     fight_rows.append(rows.fight_row(f, cell=c.label, variant=v, size=c.size,
                                                      enemy_heads=cell.enemy_heads, status=c.status, **extra))
+            _trimmed(result, keep)
     paths = {"csv": out / (defn.name + ".csv"), "run": out / (defn.name + "_run.md"),
-             "page": out / (defn.name + "_page.html")}
+             "page": out / (defn.name + "_page.html"), "summary": out / "summary.json"}
     rows.write_rows(fight_rows, paths["csv"])
     paths["run"].write_text(_run_file(defn, scans, [p.name for p in paths.values()]), encoding="utf-8")
     paths["page"].write_text(_page(defn, scans, examples), encoding="utf-8")
+    summary.write(defn, scans, paths["summary"], MOPUP_NOTE)
     return paths
+
+
+def layout_search(n_layouts, seed, workers, out_dir, replicates=3):
+    return depth.run(n_layouts, seed, workers, out_dir, replicates=replicates)
