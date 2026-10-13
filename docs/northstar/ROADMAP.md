@@ -30,7 +30,7 @@ $GODOT --path . res://scenes/mockups/settlement/settlement_mockup.tscn  # settle
 
 The first launch imports assets (about a minute). `mac/prototypes` is main plus the prototype branches (`push/proto-land-iter`, `push/proto-walkers`, `push/proto-layout`), merged read-only; it is rebuilt when a prototype moves, never edited directly. The Linux lines below keep their x11/opengl3 flags; a Mac does not need them.
 
-Shots waiting for a verdict (no scene to run, open the files): `docs/northstar/story_reviews/westley/2026-10-13/` holds the galaxy prototype beside the game (overview and local) and the two-units-one-pixel crops; the per-lane queues are `story_reviews/A.md` to `F.md`. The six that matter are section 3 "Now".
+Shots waiting for a verdict (no scene to run, open the files): `docs/northstar/story_reviews/westley/2026-10-13/` holds the galaxy prototype beside the game and the two-units-one-pixel crops, both ruled 2026-10-13; the per-lane queues are `story_reviews/A.md` to `F.md`. The six that matter are section 3 "Now".
 
 Two folders hold what can be viewed:
 
@@ -108,14 +108,14 @@ The Dispatcher keeps this table at six rows or fewer, ordered by what each unblo
 
 | # | Item | Where | Unblocks |
 |---|---|---|---|
-| 1 | Galaxy density by eye (`Q-B24-01`): does the game's Overview need more star discs, like the prototype, or is the count as built right? Prototype beside game, overview and local zoom | `docs/northstar/story_reviews/westley/2026-10-13/galaxy-PROTOTYPE-overview.png` vs `galaxy-B23-overview.png`, `galaxy-PROTOTYPE-local.png` vs `galaxy-B23-local.png` (also `review-westley/` in your checkout) | `VG-B24` layout, then B25 |
-| 2 | Two of your own ground units drawn one pixel apart at the opening zoom (`Q-132-03`): (a) they really overlap at that zoom, the check compares finer than a pixel; (b) a closer opening camera or a minimum drawn body size | `docs/northstar/story_reviews/westley/2026-10-13/s132-pairs-full.png` (pairs circled red) and `s132-pairs-crop.png` (4x crop) | lane C, S-132 |
-| 3 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/B.md`, run 20261013-0216-5f3ee95 | `VG-B24` |
-| 4 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test, B24 |
-| 5 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/E.md`, latest S-237 row | lane E look pieces, the banded-contour prototype |
-| 6 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/F.md`, run 20261012-2033-b12b47a | lane F, A16 |
+| 1 | Galaxy dot colour re-shot after the colour fix: approved or rejected | `story_reviews/B.md`, run 20261013-0216-5f3ee95 | `VG-B24` layout, then B25 |
+| 2 | Settlement look re-shot after E1k: approved or rejected | `story_reviews/E.md`, latest S-237 row | lane E look pieces, the banded-contour prototype |
+| 3 | Net first tick shot (S-140, reviewer unclear): approved or rejected | `story_reviews/F.md`, run 20261012-2033-b12b47a | lane F, A16 |
+| 4 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
+| 5 | Lane A's opening-battle group shots (S-001): approved or rejected per row | `story_reviews/A.md` | lane A fix pieces |
+| 6 | A second worktree pass: remove unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`, yes or no | CLAUDE.md Git | housekeeping |
 
-Waiting behind the six: lane A's S-001 group shots (`story_reviews/A.md`), and a yes or no on a second worktree pass that removes unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`.
+Closed 2026-10-13 from Westley's 2026-10-12 verdicts, found in the transcript: galaxy density (Q-B24-01, as built) and the two-units-one-pixel pairs (Q-132-03, the A18 opening camera); their shots stay under `story_reviews/westley/2026-10-13/` as the record.
 
 ### Parked questions (not asked until the work before them is reached)
 
@@ -128,7 +128,6 @@ Waiting behind the six: lane A's S-001 group shots (`story_reviews/A.md`), and a
 | Balance and housekeeping | B1 rates for the balance simulation; B2 E-17 reds; B4 constants promotion, snapshot fixture policy, generation budget at 400 regions (Q-224-01) | rulings-2 | the simulation lane |
 | Economy and bases, open flags | Q-159-07 to -13, Q-167-01 to Q-181-02, Q-177-01 to -05, Q-178-01 to -05, Q-168-06, Q-193-04/05/07/08/09, Q-219-04, Q-E1-01 to -03 | register, E-22 and E-17 | lane E asks each as its piece reaches it, with a shot |
 | Multiplayer | Q-144-03 who hosts the next sitting of a locked universe | register | lane F's lobby piece |
-| Housekeeping | a yes or no on a second worktree pass (remove unmarked, merged, clean worktrees under `~/Projects/om-push/wt/`) | CLAUDE.md Git | any time |
 
 ## 3b. Parallel work (the TODO list)
 
