@@ -23,10 +23,12 @@ extends SceneTree
 #       distance 40, 0.8 at 35, 1.0 at 30 (was 80 / 70 / 60 under the B22 controller thresholds 75 / 65;
 #       TD-VG-B-14: the controller blend is now 37.5 to 32.5, so 40 is full overview, 35 the midpoint, 30 regional;
 #       tolerance 0.001: a derived float compare, not a threshold)
-#   (6) galaxy_gen.last_fallbacks() exists and qa_state() carries layout_fallbacks; both 0 for the fixture seed
-# Fixture seed 1 needs 0 fallbacks: checked by a scratch run of the prototype loop (r = R_BALL * cbrt(randf),
-# R_BALL 50, spacing 11, 250 attempts per id, one RNG, sorted ids; seeds 1 to 5 all give 0 fallbacks, TD-VG-B-14);
-# the build's own run is the final proof.
+#   (6) galaxy_gen.last_fallbacks() exists and qa_state() carries layout_fallbacks; layout(ids, seed) with no edges
+#       gives 0 (every region is its own component, placed by _free_position, never a G4 fallback); the view's
+#       edge-aware layout (the sim edges, spec VG-B24-layout, G4) reports the placement exhaustion count, 6 at the
+#       fixture seed 1 on aba6468b (TD-VG-B-18: was 0 under the B22 random ball)
+# The B22 scratch-run note (seeds 1 to 5 give 0 fallbacks, TD-VG-B-14) described the random ball and is retired;
+# under B24 the no-edge count is 0 by construction and the edge-aware 6 is the built run's own figure.
 #
 # NEEDS A DISPLAY like test_vg_b_b18.gd: xvfb-run -a godot.real --path . --resolution 1920x1080 -s res://tests/test_vg_b_b22.gd
 
@@ -186,5 +188,6 @@ func _run() -> void:
 		_check(int(gen.last_fallbacks()) == 0, "B22 (6): galaxy_gen.last_fallbacks() = %s after layout(fixture ids, seed %d), want 0" % [gen.last_fallbacks(), FIXTURE_SEED])
 	_check(st.has("layout_fallbacks"), "B22 (6): qa_state() has no layout_fallbacks key")
 	if st.has("layout_fallbacks"):
-		_check(int(st["layout_fallbacks"]) == 0, "B22 (6): qa_state().layout_fallbacks = %s for the fixture seed, want 0" % st["layout_fallbacks"])
+		# TD-VG-B-18: was `== 0 ... want 0` (B22 random ball); the view's edge-aware layout (VG-B24-layout, G4) counts 6 at seed 1.
+		_check(int(st["layout_fallbacks"]) == 6, "B22 (6): qa_state().layout_fallbacks = %s for the fixture seed, want 6" % st["layout_fallbacks"])
 	v.queue_free()

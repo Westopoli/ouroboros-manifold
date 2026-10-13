@@ -159,7 +159,7 @@ Decided or partly decided in the bible, with no plan doc. Groups that entered th
 | Group | Stories | Epic | State | Why parked |
 |---|---|---|---|---|
 | Layout library audit and archetype pairing | none | E-17, E-10, E-21 | Not written | Westley 2026-10-03: the eight old layouts (`simulation/layout_library/`) predate the game's change; audited against the lab's layout search before any pairing |
-| Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided, Q-191-05 open | The lab's layout search (run 2) supplies the data Westley asked for instead of a places prototype |
+| Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided; towns rulings 2026-10-13 (R-191-06, R-193-01, R-177-02); spec next (Architect), launch on Westley's go | The lane that builds economic locations, neutral towns grown to a seeded age, resources and the base kinds in the sim; lane E's settlement look follows it |
 | Space generator in C | none in the bible yet | E-17 | Mockup pass 6 approved; lane D holds the sim side (D2 to D8 on main) | Waits on S1 to S4, the space stories, lane D's resume |
 | A second era to play | S-147 | E-20 | Q-147-01 open; the era pack form (3b T9) | After the beta |
 | Cross-epic follow-ons | S-220, S-223 to S-228, S-239, S-241 to S-244 | several | Q-220-01/02, Q-224-01, Q-225-01/02, Q-226-02, Q-227-02/03, Q-228-01/02 open | Each follows its parent group; the simulation lane reads the sim-side ones |
@@ -193,7 +193,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 - Land before space (Westley, 2026-10-03): the land design is further along and space is still in his design loop. Space output is the general form that land is a special case of, so the mask contract is written for both.
 - Both generators must use their own deterministic noise in C; the mockups use the engine's noise.
 - Economy after a generator: bases, resources and expansion sites are places the generator finds (S-191).
-- The landscape batch in the skill lab waits on the guard stance decision.
+- The guard stance is ruled (R-096-08, 2026-10-13); the landscape batch runs on the built guard until the step-and-return engine piece lands.
 
 ## 6. Recently finished
 

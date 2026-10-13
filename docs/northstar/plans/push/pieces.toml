@@ -2109,7 +2109,7 @@ owns = ["scenes/galaxy/galaxy_gen.gd", "scenes/galaxy/galaxy_adapter.gd", "scene
 owns_glob = ["tests/qa/desktop/plays/B/*"]  # the B plays re-shot
 acceptance = ["tests/test_vg_b_b24.gd"]
 depends_on = ["VG-B23", "VG-B23b-dotcolour", "VG-B"]  # VG-B23 owns galaxy_gen.gd and galaxy_view.gd; VG-B is the attached owner by glob of the rest
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "59a24b49" }
 tests_pending = true
 size_estimate = "B24: placement follows the sim graph, continuous significance, parity test on edge lengths and the d25 frame; DRAFT-b24-sig, DRAFT-b24-filament-cover, DRAFT-b24-discs; Q-B24-01"
 
@@ -2148,6 +2148,30 @@ depends_on = ["VG-B24", "VG-B"]  # B24 is the last owner of galaxy_view.gd befor
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "B25: dim wash, four star layers at 50/125/400/1250, wrapping motes; DRAFT-b25-*; real GPU check on the RTX 3060 under Forward+"
+
+[[piece]]
+id = "VG-D-VIEW"
+manager = "M0"
+wave = 9
+owns = ["scenes/space3d/space_view.gd", "scenes/space3d/space_view.tscn", "tests/test_vg_d_view.gd"]  # new files; the hook line in tactical_view.gd is a later wiring piece, after lane A's A18
+owns_glob = []
+acceptance = ["tests/test_vg_d_view.gd"]
+depends_on = ["VG-A18"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "D view skeleton: five sheets at DRAFT-space-layer-gap 1,000 wu, asteroid pieces on blocked cells from the sim's masks, units on their sheet, one shot; then the vision tube (Q-S3-01 (a)) as its own piece"
+
+[[piece]]
+id = "PROTO-space-density"
+manager = "M0"
+wave = 9
+owns = ["scenes/mockups/landscape/hud.gd", "scenes/mockups/landscape/field_map_space.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "prototype gate (Q-246-02): a selector in the landscape mockup's space kit HUD: one default 35 / region range (light 15, medium 35, heavy 55, tight 70) / mission type; Westley flies it on the Mac branch"
 
 [[piece]]
 id = "HARNESS-userdir"
@@ -2209,6 +2233,32 @@ owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pip
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
 depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6", "VG-K-D1", "VG-W2", "VG-E1R", "VG-CONTRACT-E7"]  # attached owners of om_pipe.c (take-over convention, as VG-K-D1)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "50027e26" }
+tests_pending = false
 size_estimate = "SV-0: handle_mission_end reads optional retention, scales player unit HP, debug build only; one transport test file"
+
+# Westley 2026-10-13: run the sim viewer on his Mac (ssh'd Linux box builds nothing for him). New debug-pipe build script beside the viewer (build_pipe_macos.sh is VG-F's), plus a --pipe option.
+[[piece]]
+id = "SV-4"
+manager = "M0"
+wave = 10
+owns = ["scripts/simviewer/build_pipe_dbg_macos.sh", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_pipe_option.py"]
+owns_glob = []
+acceptance = ["tests/simviewer/test_pipe_option.py"]
+depends_on = ["SV-3"]
+status = { state = "pending" }
+tests_pending = true
+size_estimate = "about 15-line script, --pipe option (about 10 lines), README Mac section, one test file"
+
+# Sim lane (Westley 2026-10-13: "continue with plan execution"; context docs/northstar/plans/2026-10-12-sim-lane-context.md): findings only, tooling scripts, no product change. Fixes are separate pieces after Westley reads the ledger row.
+[[piece]]
+id = "SIM-LANE"
+manager = "M0"
+wave = 10
+owns = ["docs/northstar/plans/sim_lane_2026-10-12/README.md"]
+owns_glob = ["docs/northstar/plans/sim_lane_2026-10-12/findings/**", "scripts/simlane/**"]
+acceptance = []
+depends_on = []
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "sim lane: findings ledger rows, mission-choice and chronicle-source runner scripts, no csrc change"
