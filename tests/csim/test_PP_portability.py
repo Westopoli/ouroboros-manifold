@@ -34,11 +34,13 @@ PYTHON = sys.executable
 # These move whenever a ruled sim change moves the hashed state; re-pin under a ledger row; the
 # cross-OS check compares each OS's probe output to these values.
 # Re-recorded 2026-10-11 (TD-VG-E-21): E1q changes the growth hashed in the economy block; old values in the ledger row
+# TD-VG-W-2: W2 stored routes add the route block to the movement section; old values 100: 14414279078877383414,
+# 500: 2462771596946682441, 1000: 2825217407474388049, 2000: 263473283203217348 (new values below).
 PINNED_FULL = {
-    100: 14414279078877383414,
-    500: 2462771596946682441,
-    1000: 2825217407474388049,
-    2000: 263473283203217348,
+    100: 15870404153552538785,
+    500: 5368266331726284326,
+    1000: 1335582271474088983,
+    2000: 6505739661716914864,
 }
 
 
