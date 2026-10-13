@@ -2126,6 +2126,18 @@ tests_pending = true
 size_estimate = "settings OptionButton full/standard/particles + label, APPLY writes [display] galaxy_quality (A54/A60); red-on-main finding FINDING-gd-red-main-2026-10-12b fixed here"
 
 [[piece]]
+id = "VG-B26-chronicle-serial"
+manager = "M0"
+wave = 9
+owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd: VG-B's file, VG-B is attached; the panel had no owner row
+owns_glob = []
+acceptance = ["tests/test_vg_b_b26.gd"]
+depends_on = ["VG-B"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2026-10-13; FINDING-chronicle-concurrent-print); a print queue in the panel, next entry on finished_printing plus the 3.0 s hold; the sequencer unchanged except that start_printing enqueues; Q-069-03 default (b)"
+
+[[piece]]
 id = "VG-B25"
 manager = "M0"
 wave = 9
