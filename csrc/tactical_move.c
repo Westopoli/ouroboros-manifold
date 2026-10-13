@@ -2032,6 +2032,14 @@ static int om_move_nearest_open(const om_world *w, om_move_state *ms, int walk, 
     return best_x >= 0;
 }
 
+/* W2: a stored walk route belongs to the order and the plan that made it; every event that clears the plan or the order drops it
+ * too, so a stale route is never saved or hashed as live. See also: om_move_route_store, tests/csim/test_VG_W_w2_routes.py (N3). */
+static void om_move_route_drop(om_move_unit *mu) {
+    mu->route_n = 0;
+    mu->route_i = 0;
+    mu->route_ends_at_goal = 0;
+}
+
 /* R-097-09 (Westley, 2026-10-02): a unit found inside a blocked cell of its layer is moved to the nearest open
  * cell, not stalled: the nearest point of that cell at least a collision radius inside it; ties go to the lower
  * cell id. See also: om_move_tick_unit, which calls this each tick while ROUTE_AROUND_TERRAIN is on. */
@@ -2050,6 +2058,7 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
         mu->y = (double)best_y * OM_NAVMESH_CELL_SIZE + (ry < lo ? lo : (ry > hi ? hi : ry));
     }
     mu->plan_valid = 0;
+    om_move_route_drop(mu);
     om_move_grid_update(ms, mu);
 }
 
@@ -2060,6 +2069,7 @@ static void om_move_terrain_guard(const om_world *w, om_move_state *ms, om_move_
     om_move_cell_at(ms, *nx, *ny, &cx, &cy);
     if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
     mu->plan_valid = 0;
+    om_move_route_drop(mu);
     om_move_cell_at(ms, *nx, mu->y, &cx, &cy);
     if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *ny = mu->y; return; }
     om_move_cell_at(ms, mu->x, *ny, &cx, &cy);
@@ -2104,6 +2114,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     if (sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y))
         < (route && mu->routed && mu->group_id == 0 ? OM_WAYPOINT_ARRIVE_MULT : OM_ARRIVAL_TOLERANCE_MULT) * OM_UNIT_COLLISION_RADIUS) {
         mu->has_dest = 0;
+        om_move_route_drop(mu);
         mu->deflecting = 0;
         return;
     }
@@ -2404,6 +2415,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
         mu->x = mu->dest_x;
         mu->y = mu->dest_y;
         mu->has_dest = 0;
+        om_move_route_drop(mu);
     } else if (step_dist > 0.0) {
         mu->x += step_dist * (found ? move_cos : om_cos(heading));
         mu->y += step_dist * (found ? move_sin : om_sin(heading));
@@ -2497,6 +2509,7 @@ static void om_move_layer_unit(om_world *w, om_move_state *ms, om_move_unit *mu,
                     mu->dest_y = ((double)oy + OM_MOVE_CELL_MID) * OM_NAVMESH_CELL_SIZE;
                     mu->direct_move = 1;
                     mu->plan_valid = 0;
+                    om_move_route_drop(mu);
                 }
             } else if (!mu->has_dest || (!om_move_cell_blocked(w, ms, mu->transit_home, cx, cy)
                 && om_move_los_clear(w, ms, mu->x, mu->y, om_move_clamp_axis(mu->dest_x, ms->canvas_w), om_move_clamp_axis(mu->dest_y, ms->canvas_h), mu->transit_home))) {
@@ -2556,6 +2569,7 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
         if (dx * dx + dy * dy > (double)OM_GROUP_GIVEUP_RADIUS * (double)OM_GROUP_GIVEUP_RADIUS) { mu->giveup_near = 0; continue; }
         if (++mu->giveup_near >= OM_GROUP_GIVEUP_TICKS) {
             mu->has_dest = 0;
+            om_move_route_drop(mu);
             mu->deflecting = 0;
             mu->giveup_near = 0;
         }
@@ -3045,6 +3059,7 @@ void om_unit_clear_orders(om_world *w, uint32_t p0) {
     mu = om_move_touch(w, ms, p0);
     if (!mu) return;
     mu->has_dest = 0;
+    om_move_route_drop(mu);
     mu->engaged = 0;
     mu->kiting = 0;
     mu->direct_move = 0;
@@ -3352,9 +3367,13 @@ void om_move_walker_tick(om_world *w) {
         band = (dot < 0.0 ? s.lower_band : s.upper_band) - 1;
         if (om_move_layer(w, id) != band) {
             /* The walker's own crossing of a slope: its route already runs over the link, and a replan from mid-slope on the
-             * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here.
-             * Not part of the Architect's W2 ruling; the layer trigger in om_move_walker_step covers every other change. */
-            if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) mu->plan_layer = (uint32_t)band;
+             * new layer finds no route (tests/csim/test_E01_R004_07_slope_time.py). So the plan follows the layer here and the
+             * stored route is dropped (Architect 2026-10-14): route_n 0 with the aim kept is the pre-W2 plan, which replans at the
+             * next waypoint arrival; the layer trigger in om_move_walker_step covers every other change. */
+            if (mu->plan_valid && mu->plan_layer == (uint32_t)om_move_layer(w, id)) {
+                mu->plan_layer = (uint32_t)band;
+                om_move_route_drop(mu); /* stale: the aim stays, the next waypoint arrival replans on this layer like the old walker */
+            }
             om_tac_unit_set_layer(w, id, (uint32_t)band);
         }
     }
