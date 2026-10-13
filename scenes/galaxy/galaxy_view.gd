@@ -30,25 +30,28 @@ const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 
 const DEFAULT_SEED := 1
 const LIVE_SNAPSHOT_TIMEOUT_MSEC := 8000
-# B22 (spec rev 10d): the prototype's default camera unscaled (orbit_camera.gd:14 on origin/push/galaxy-field, 25 / CIV_SCALE);
-# Regional, where R-106-03 puts the default. Target the origin, the centre of the ball.
-const DEFAULT_DISTANCE := 50.0
+# B23 (spec rev 12b): the prototype's default camera as run (orbit_camera.gd:14 DIST_DEFAULT 50 x CIV_SCALE 0.5 on
+# origin/push/galaxy-field at 99f35887); Regional, where R-106-03 puts the default. Target the origin, the centre of the ball.
+const DEFAULT_DISTANCE := 25.0
 const DEFAULT_TARGET := Vector3.ZERO
 const PICK_RADIUS_PX := 14.0
-const BAND_SPLIT_LOW := 32.5
-const BAND_SPLIT_HIGH := 70.0
+const BAND_SPLIT_LOW := 16.25   # prototype orbit_camera.gd:28, 32.5 x CIV_SCALE 0.5 (B23)
+const BAND_SPLIT_HIGH := 35.0   # prototype orbit_camera.gd:29, 70 x CIV_SCALE 0.5 (B23)
 const FLAT_COLOUR := Color(1.0, 1.0, 1.0, 1.0)
 const EDGE_2D_WIDTH := 1.5
 const EDGE_2D_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
-const POINT_RADIUS := 1.4   # prototype's unscaled dot radius (spec rev 10d, B22); main's 1.2 was a draft
+const POINT_RADIUS := 0.7   # prototype galaxy_view.gd:5 POINT_BASE_RADIUS 1.4 x CIV_SCALE 0.5 (B23)
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
+const PLAYER_OWNER_VAL := 0.95   # prototype galaxy_view.gd:93-94, faction 0 = the player's faction (Rev 12b)
+const NEUTRAL_COLOUR := Color(0.55, 0.55, 0.58, 1.0)   # prototype galaxy_view.gd:6 NEUTRAL_COLOR, owner -1
 const OWNER_ALPHA := 1.0
 const GOLDEN_ANGLE := 0.6180339887498949
 const TIER_SIGNIFICANCE := [0.3, 0.6, 1.0]
-# draft (no ruling gives a flash length or size): seconds a war flash lives, and its sphere radius
-const FLASH_SECONDS := 1.0
-const FLASH_RADIUS := 3.0
+# B23 (Rev 12b): the prototype's flash, a billboard quad (galaxy_view.gd:283, Vector2(3, 3) x CIV_SCALE 0.5) living
+# FLASH_DURATION 0.6 s (galaxy_view.gd:8)
+const FLASH_SECONDS := 0.6
+const FLASH_SIZE := 1.5
 const FLASH_COLOURS := {"attack": Color(1.0, 0.45, 0.2), "conquest": Color(1.0, 0.9, 0.3), "revolt": Color(0.6, 0.8, 1.0)}
 
 var _regions: Array = []
@@ -58,6 +61,7 @@ var _point_ids: Array = []   # region id of each dot instance, in MultiMesh orde
 var _region_colours: Dictionary = {}
 var _significance: Dictionary = {}
 var _owner_colours_cache: Dictionary = {}
+var _player_faction: int = -1   # snapshot["player_faction"], -1 when the key is absent
 var _seed: int = DEFAULT_SEED
 var _hash: int = 0
 var _plants: Dictionary = {}
@@ -104,13 +108,15 @@ func _ready() -> void:
 		mission_btn.pressed.connect(func(): SceneRouter.go_to("mission_briefing"))
 
 
-# The scene has no light or environment, so a default lit material draws
-# every mesh black (look 4, first_look/README.md): the point material is
-# unshaded, and the points read the per-instance owner colour as albedo.
+# The point material is unshaded (a default lit material drew the dots black before the scene had a light,
+# look 4, first_look/README.md), and the points read the per-instance owner colour as albedo.
 func _build_materials() -> void:
 	_point_material = StandardMaterial3D.new()
 	_point_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_point_material.vertex_color_use_as_albedo = true
+	# VG-B23b-dotcolour (FINDING-dot-colour-pixels): main's dot material from before B23 (sRGB vertex colour, no alpha
+	# transparency); B23's alpha / non-sRGB values lost the owner colours under the default renderer (Westley 2026-10-12).
+	# See also tests/test_vg_b_b23b.gd and TD-VG-B-15 in docs/northstar/plans/push_ledger_2026-09-22.md
 	_point_material.vertex_color_is_srgb = true
 
 
@@ -215,6 +221,10 @@ func _arg_value(args: PackedStringArray, flag: String) -> String:
 func set_snapshot(snapshot: Dictionary) -> void:
 	_regions = snapshot.get("regions", [])
 	_edges = snapshot.get("edges", [])
+	var player_faction := int(snapshot.get("player_faction", -1))
+	if player_faction != _player_faction:
+		_player_faction = player_faction
+		_owner_colours_cache.clear()
 	_note_owner_changes()
 	_note_unknown_factions(snapshot)
 	_relayout()
@@ -281,11 +291,11 @@ func flash_from_delta(delta: Dictionary) -> int:
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		mat.albedo_color = FLASH_COLOURS.get(f["kind"], Color.WHITE)
-		var sphere := SphereMesh.new()
-		sphere.radius = FLASH_RADIUS
-		sphere.height = FLASH_RADIUS * 2.0
+		mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		var quad := QuadMesh.new()
+		quad.size = Vector2(FLASH_SIZE, FLASH_SIZE)
 		var mesh := MeshInstance3D.new()
-		mesh.mesh = sphere
+		mesh.mesh = quad
 		mesh.material_override = mat
 		mesh.position = _positions[region]
 		add_child(mesh)
@@ -455,8 +465,11 @@ func _grow_owner_colours() -> void:
 # (region_colours[i] == owner_colours[owner_of(i)]), so this satisfies the
 # contract while actually giving distinct owners distinct colours.
 func _colour_for_owner(owner: int) -> Color:
+	if owner < 0:
+		return NEUTRAL_COLOUR
 	var hue := fposmod(float(owner) * GOLDEN_ANGLE, 1.0)
-	return Color.from_hsv(hue, OWNER_SAT, OWNER_VAL, OWNER_ALPHA)
+	var val := PLAYER_OWNER_VAL if owner == _player_faction else OWNER_VAL
+	return Color.from_hsv(hue, OWNER_SAT, val, OWNER_ALPHA)
 
 
 # Clean path: region_colours[i] = owner_colours[owner_of(i)]. Fault
@@ -524,6 +537,8 @@ func _render_points() -> void:
 	var sphere := SphereMesh.new()
 	sphere.radius = POINT_RADIUS
 	sphere.height = POINT_RADIUS * 2.0
+	sphere.radial_segments = 12   # prototype galaxy_view.gd:109-110
+	sphere.rings = 8
 	mm.mesh = sphere
 	_point_ids = _positions.keys()
 	mm.instance_count = _point_ids.size()
@@ -642,7 +657,7 @@ func stop_auto_camera() -> void:
 
 
 func _emit_camera_done() -> void:
-	await get_tree().create_timer(0.6).timeout
+	await get_tree().create_timer(_camera_rig.FOCUS_SEC).timeout
 	camera_move_completed.emit()
 
 

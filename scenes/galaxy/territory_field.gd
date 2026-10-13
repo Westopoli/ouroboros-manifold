@@ -19,12 +19,12 @@ extends Node
 
 const GRID_CELLS := 96
 # The cube holds the layout ball plus one influence radius on each side: 2 * (R_BALL + INFLUENCE_RADIUS),
-# the prototype's rule (territory_field.gd:19 on origin/push/galaxy-field); 2 * (71 + 28) = 198.
-# INFLUENCE_RADIUS 28 is the prototype's galaxy_gen.gd:17 value, unscaled. GRID_CELLS stays the texture size,
-# so a cell is 2.06 wu. R_BALL lives in galaxy_gen.gd; the values here are written out (spec rev 10d, B22).
-const GRID_SIZE := 198.0
-const INFLUENCE_RADIUS := 28.0
-const GRID_MIN := Vector3(-99.0, -99.0, -99.0)
+# the prototype's rule (territory_field.gd:19-20 on origin/push/galaxy-field); 2 * (50 + 14) = 128.
+# INFLUENCE_RADIUS 14 is the prototype's galaxy_gen.gd:17 value, 28 x CIV_SCALE 0.5 (B23, spec rev 12b).
+# GRID_CELLS stays the texture size, so a cell is 1.33 wu. R_BALL lives in galaxy_gen.gd; the values here are written out.
+const GRID_SIZE := 128.0
+const INFLUENCE_RADIUS := 14.0
+const GRID_MIN := Vector3(-64.0, -64.0, -64.0)
 const MAX_SYSTEMS := 1024
 const MAX_FACTIONS := 16
 const GAP_STRENGTH := 0.5   # legacy_shell_renderer.gd's gap_strength (the shader default 0.8 was never used)

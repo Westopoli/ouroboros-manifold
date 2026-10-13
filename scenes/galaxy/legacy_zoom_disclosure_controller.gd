@@ -1,20 +1,21 @@
 extends Node
 
 # Copied from scenes/shared/world_view/zoom_disclosure_controller.gd
-# (2026-09-22) for the pass-2 galaxy mockup. Thresholds reconciled with pass
-# 1's own band math (galaxy_view.gd's _band_weights() and orbit_camera.gd's
-# BAND_SPLIT_LOW/HIGH): 25/40/65/75 are exactly the numbers _band_weights()
-# already used, and their midpoints (32.5, 70) are exactly BAND_SPLIT_LOW/
+# (2026-09-22) for the pass-2 galaxy mockup. Thresholds reconciled with the
+# camera's band math (galaxy_view.gd and orbit_camera.gd's BAND_SPLIT_LOW/HIGH):
+# B23 (spec rev 12b) takes the prototype's as-run values, each x CIV_SCALE 0.5
+# (legacy_zoom_disclosure_controller.gd:14-17 on origin/push/galaxy-field):
+# 12.5/20/32.5/37.5, and their midpoints (16.25, 35) are exactly BAND_SPLIT_LOW/
 # HIGH — so this drives filament/shell alpha through the same three bands
 # (Overview/Regional/Local) the camera and HUD already report, just lower-
 # cased to match this controller's own band-name convention.
 
 signal band_changed(new_band: String, old_band: String)
 
-var overview_min := 75.0
-var overview_regional_blend := 65.0
-var regional_min := 40.0
-var regional_local_blend := 25.0
+var overview_min := 37.5
+var overview_regional_blend := 32.5
+var regional_min := 20.0
+var regional_local_blend := 12.5
 
 var current_band: String = "regional"
 var blend_factor: float = 0.0

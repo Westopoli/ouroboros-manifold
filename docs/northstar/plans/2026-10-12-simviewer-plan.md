@@ -1,5 +1,7 @@
 # Simulation viewer: port the old 2D strategic viewer onto the C sim
 
+> **Spec with pre-flight corrections: `2026-10-12-simviewer-spec.md` (wins where it differs: binary framing, dbg pipe, core retention hook, SV-0 queued behind E7/W2/E1R).**
+
 ## Context
 
 ROADMAP "Three steps" step 1 (docs/northstar/ROADMAP.md:97) asks for exactly this: verify the C simulation still follows the bible's stochastic rules by watching it, because the legacy Python sim had a pygame viewer and the C sim has none. Westley's ask (2026-10-12): a 2D view of every civilization and its regions, one colour per civ, per-region graphs of the current variables, a line graph over time, the events that hit each region; two modes, tick mode at a rate he sets and mission mode that jumps to the sim's next chosen mission, shows the chosen location, and lets him press "continue" and set a mission success level to see the effect on that region and the galaxy. The viewer is tooling: it never enters the game loop, so the no-runtime-API and determinism contracts are untouched. Goal of the tool: find regressions in mission choice and in the source of the chronicle.

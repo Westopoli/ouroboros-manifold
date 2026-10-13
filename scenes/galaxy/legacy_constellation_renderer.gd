@@ -6,11 +6,13 @@ extends Node3D
 # and the zoom controller lookup (direct injection via setup(), since this
 # mockup's tree shape differs from the live scene's sibling-search pattern).
 
+const GalaxyGen := preload("res://scenes/galaxy/galaxy_gen.gd")
+
 const TUBE_SIDES := 8
 const CURVE_SEGMENTS := 16
 const ARC_HEIGHT_FRACTION := 0.15
-const FILAMENT_WIDTH_BORDER := 0.075
-const FILAMENT_WIDTH_TRADE := 0.035
+const FILAMENT_WIDTH_BORDER := 0.0375   # prototype legacy_constellation_renderer.gd:12, 0.075 x CIV_SCALE 0.5 (B23)
+const FILAMENT_WIDTH_TRADE := 0.0175   # prototype legacy_constellation_renderer.gd:13, 0.035 x CIV_SCALE 0.5 (B23)
 
 var _wv_data: Node
 var _zoom_controller: Node
@@ -146,7 +148,8 @@ func _compute_bezier_arc(from_pos: Vector3, to_pos: Vector3) -> PackedVector3Arr
 		up = Vector3.RIGHT
 	var perp := dir.cross(up).normalized()
 
-	var hash_val := from_pos.x * 73.0 + from_pos.z * 137.0 + to_pos.x * 97.0 + to_pos.z * 53.0
+	# prototype legacy_constellation_renderer.gd:149 divides by CIV_SCALE (B23, W3)
+	var hash_val := (from_pos.x * 73.0 + from_pos.z * 137.0 + to_pos.x * 97.0 + to_pos.z * 53.0) / GalaxyGen.CIV_SCALE
 	var perp_offset := sin(hash_val) * arc_height * 0.5
 
 	var cp1 := from_pos.lerp(mid, 0.5) + Vector3(0, arc_height, 0) + perp * perp_offset
@@ -178,7 +181,7 @@ func _build_tube_mesh(curve: PackedVector3Array, radius: float) -> ArrayMesh:
 		total_length += seg_len
 		segment_lengths.append(total_length)
 
-	if total_length < 0.001:
+	if total_length < 0.001 * GalaxyGen.CIV_SCALE:   # prototype :181 (B23, W3)
 		return mesh
 
 	for i in range(curve.size()):
