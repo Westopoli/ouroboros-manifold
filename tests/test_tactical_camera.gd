@@ -24,12 +24,52 @@ extends SceneTree
 # wheel notch applied the other way moves the distance the other way).
 #
 # Not covered here: the "enemy visible" bullet of A6 (waits on A2).
+#
+# VG-A18 (2026-10-12), the camera at mission start (spec 2026-10-07-visible-game-spec.md
+# Rev 12d, paragraph "A18, the camera at mission start"; ledger FINDING-camera-start-framing).
+# Rules the new cases prove, word for word:
+#   R-103-01 (docs/bible/epics/E-16-client-camera-hud-and-world-view.md:32): "Given a mission, When the player
+#     pans, zooms, or edge-scrolls, Then the camera moves freely with no forced follow; the classic view has one
+#     auto-anchor home the player returns to by key, and the designed views of R-103-05 and R-103-06 are the only
+#     camera modes."
+#   R-103-02 (E-16:33): "Given any zoom level, When the viewport is read, Then the mission canvas edges bound the
+#     camera; it never leaves the map."
+#   R-246-07 (docs/bible/epics/E-17, :397): "each faction's army spawns in a cleared pocket at its home base (the
+#     faction's anchor, where its first economy area and structures stand)"
+#   Westley 2026-10-12 on the camera at mission start: "yes, of your base" (spec A18: the opening view is "of your base").
+# The bible has NO rule that names the margin or the home key: R-103-01 says only "one auto-anchor home the player
+# returns to by key". The margin and the key come from the Architect's gap rulings of 2026-10-12, which are used here:
+#   G2: the margin is 10% of the viewport per side (DRAFT-a18-margin), zoom clamp ZOOM_MAX / ZOOM_STEP, R-103-02 binds
+#       the camera centre (not the view rectangle). Read as 10% of the viewport dimension along each axis:
+#       192 px on the left and right edges, 108 px on the top and bottom edges of the 1920 x 1080 design space.
+#   G3: the player's spawn point is the kind-7 map node nearest the centroid of the own units.
+#   G4: the home key is KEY_HOME (DRAFT-a18-home-key); Home restores the stored opening camera and zoom.
+#   G5: the 2D path only (these fixtures are space-era frames); the 3D rig fit is FU-A18-3d, not tested here.
+#   G6: no existing assertion of this file changes; only the groups below are added.
+#   G7 / G8 (not ruled, the null actions stand): the framed set is the local faction's own units only (no visible
+#       enemy, no sight term) plus the spawn point plus the own lots; an empty set keeps today's zoom 1.0 and canvas centre.
+# The framed set P: own units, the spawn point, every frame["lots"] row whose owner == the local faction (owner -1 is
+# neutral and not in P). The box B is the bounding box of P; the zoom is the one at which B, inset by the margin on
+# each side, fills the viewport (clamped 1.0 .. ZOOM_MAX / ZOOM_STEP); the camera centre is the centre of B, clamped to
+# 0..canvas. A world point is on screen when 0 <= sx < 1920 and 0 <= sy < 1080 (the daemon verb "project"); an own unit
+# is inside when its px +- UNIT_SIZE / 2 is (_not_inside, unchanged).
+# New groups (controls first): C-A, C-B, C-D controls; MARGIN (R-103-01 + G2), SPAWN (R-246-07 + G3), OWN LOTS
+# (R-246-07 + R-103-01), OWN UNITS ONLY (G7), HOME KEY (R-103-01 + G4), CANVAS BOUND (R-103-02), EMPTY SET (G8).
 
 const SCENE_PATH := "res://scenes/tactical_c/tactical_view.tscn"
 const DESIGN_W := 1920.0
 const DESIGN_H := 1080.0
 const HOLD_FRAMES := 20
 const WHEEL_NOTCHES_TO_CLAMP := 400
+# spec Rev 12d A18, DRAFT-a18-margin (untagged in the spec): the margin around the framed box is 10% of the viewport on
+# each side (Architect gap ruling G2, 2026-10-12): x edges at 0.1 * 1920 = 192 px, y edges at 0.1 * 1080 = 108 px.
+const MARGIN_SHARE := 0.1
+# One display pixel: the allowed slack when comparing a screen position or a camera or scale difference with a number
+# the rulings give. It comes from the float of the screen formula (sx = (wx - cam.x) * scale + SCREEN_W / 2, double
+# arithmetic: the real error is far below it); no tolerance wider than this is used.
+const ONE_PX := 1.0
+const SPAWN_KIND := 7  # the map node kind of a player spawn (the live mission frame: nodes of kind 7 at (11950, 150) and (11950, 23850))
+const ZOOM_CEIL := 40.0 / 1.25  # ZOOM_MAX / ZOOM_STEP of tactical_view.gd:26-27 (G8 clamp)
 
 var _pass_count := 0
 var _fail_count := 0
@@ -69,6 +109,14 @@ func _run_tests() -> void:
 	await _test_keys_pan_R103_01()
 	await _test_edge_scroll_pans_R103_01()
 	await _test_wheel_zoom_bounded_R103_01_R103_02()
+	await _test_a18_controls()
+	await _test_a18_margin_R103_01()
+	await _test_a18_spawn_R246_07()
+	await _test_a18_own_lots_R246_07()
+	await _test_a18_own_units_only_G7()
+	await _test_a18_home_key_R103_01()
+	await _test_a18_canvas_bound_R103_02()
+	await _test_a18_empty_set_G8()
 
 
 # -- helpers ---------------------------------------------------------------
@@ -391,4 +439,276 @@ func _test_wheel_zoom_bounded_R103_01_R103_02() -> void:
 	var cam_out := _cam(v)
 	_assert(cam_out.x >= 0.0 and cam_out.y >= 0.0 and cam_out.x <= canvas and cam_out.y <= canvas,
 		"A6a-3 R-103-02: camera %s outside the 0..%s canvas at max zoom-out" % [str(cam_out), str(canvas)])
+	await _unmount(v)
+
+
+# -- VG-A18: the camera at mission start ------------------------------------
+
+# A fixture frame (space era, 2D). own: Array of Vector2 (faction 0, ids 1..n, all visible to faction 0); enemies:
+# Array of Vector2 (faction 1, ids 100..; `enemy_seen` puts them in the local faction's visible list); nodes: map
+# nodes; lots: lot rows; sight: a "sight" field on every own unit (0.0 = absent, as the other fixtures). tick 0 and a
+# canvas that differs from the live one make the view treat it as a new mission, as _frame() does.
+func _frame_ex(canvas: float, own: Array, enemies: Array, nodes: Array, lots: Array, enemy_seen := false, sight := 0.0) -> Dictionary:
+	var units: Array = []
+	var seen: Array = []
+	for i in range(own.size()):
+		var u := _unit(i + 1, 0, own[i].x, own[i].y)
+		if sight > 0.0:
+			u["sight"] = sight
+		units.append(u)
+		seen.append(i + 1)
+	var foes: Array = []
+	for i in range(enemies.size()):
+		units.append(_unit(100 + i, 1, enemies[i].x, enemies[i].y))
+		foes.append(100 + i)
+		if enemy_seen:
+			seen.append(100 + i)
+	return {"type": "tactical", "tick": 0, "mission_over": false, "band": -1, "player_faction": 0,
+		"map": {"canvas": canvas, "nodes": nodes, "cover": [], "obstacles": []},
+		"units": units, "visible": {"0": seen, "1": foes}, "lots": lots}
+
+
+func _map_node(i: int, kind: int, x: float, y: float) -> Dictionary:
+	return {"i": i, "kind": kind, "x": x, "y": y}
+
+
+# A lot row as c_bridge.gd _lot_row builds it: {id, x, y, stage, building, owner}.
+func _lot(id: int, x: float, y: float, owner: int) -> Dictionary:
+	return {"id": id, "x": x, "y": y, "stage": 2, "building": 0, "owner": owner}
+
+
+# A fixture canvas that differs from the live mission's canvas (24000 at the dump of 2026-10-13).
+func _fixture_canvas(v: Node) -> float:
+	var live_canvas := float(v.qa_state().get("canvas", 0.0))
+	return 9000.0 if not is_equal_approx(live_canvas, 9000.0) else 9100.0
+
+
+# The 2D screen formula of tactical_view.gd _to_screen (assumption b), read from the qa_state camera and scale.
+func _screen_of(v: Node, wx: float, wy: float) -> Vector2:
+	var st: Dictionary = v.qa_state()
+	var c: Dictionary = st["camera"]
+	var s := float(st["scale"])
+	return Vector2((wx - float(c["x"])) * s + DESIGN_W * 0.5, (wy - float(c["y"])) * s + DESIGN_H * 0.5)
+
+
+# A world point is on screen when 0 <= sx < 1920 and 0 <= sy < 1080 (the daemon verb "project").
+func _on_screen(p: Vector2) -> bool:
+	return p.x >= 0.0 and p.x < DESIGN_W and p.y >= 0.0 and p.y < DESIGN_H
+
+
+func _scale(v: Node) -> float:
+	return float(v.qa_state().get("scale", 0.0))
+
+
+# Controls: the predicate for a lot is trustworthy and the harness reaches the view.
+func _test_a18_controls() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var p := Vector2(3000.0, 4200.0)
+	v.load_frame(_frame_ex(cv, [p], [], [], [_lot(1, p.x, p.y, 0)]))
+	await process_frame
+	var st: Dictionary = v.qa_state()
+	var era := get_root().get_node_or_null("/root/EraConfig")
+	var era_kind: String = era.kind() if era != null else "missing"
+	_assert(era_kind == "space", "A18 setup: EraConfig.kind() is %s; these fixtures are space-era (2D path, G5)" % era_kind)
+	# C-A: a lot at the same world point as an own unit lands on the unit's px by the 2D formula (and by the view's own
+	# _to_screen, which the daemon verb "project" calls), so the on-screen predicate of a lot can be trusted.
+	var unit_px: Array = st["units_px"].get("1", [])
+	_assert(unit_px.size() == 2, "A18 control C-A: unit 1 is not drawn on the control fixture (units_px %s)" % str(st["units_px"]))
+	if unit_px.size() == 2:
+		var lot_px := _screen_of(v, p.x, p.y)
+		_assert(lot_px.distance_to(Vector2(unit_px[0], unit_px[1])) <= ONE_PX,
+			"A18 control C-A: the screen formula puts the lot at %s but units_px puts the unit at the same world point at %s" % [str(lot_px), str(unit_px)])
+		var proj: Array = v._to_screen(p.x, p.y)
+		_assert(Vector2(proj[0], proj[1]).distance_to(lot_px) <= ONE_PX,
+			"A18 control C-A: the view's _to_screen (the verb project) gives %s, the formula %s" % [str(proj), str(lot_px)])
+	# C-B: the predicate reports a point 5000 wu away as NOT on screen (this fixture's scale is the zoom ceiling, 3.84 px/wu).
+	var cam := _cam(v)
+	_assert(_scale(v) * 5000.0 > DESIGN_W,
+		"A18 control C-B setup: scale %s puts 5000 wu inside the viewport width, the point could never be off screen" % _scale(v))
+	_assert(not _on_screen(_screen_of(v, cam.x + 5000.0, cam.y)),
+		"A18 control C-B: a point 5000 wu to the right of the camera is reported on screen at %s" % str(_screen_of(v, cam.x + 5000.0, cam.y)))
+	_assert(not _on_screen(_screen_of(v, cam.x, cam.y - 5000.0)),
+		"A18 control C-B: a point 5000 wu above the camera is reported on screen at %s" % str(_screen_of(v, cam.x, cam.y - 5000.0)))
+	_assert(_on_screen(_screen_of(v, cam.x, cam.y)), "A18 control C-B: the camera centre itself is reported off screen")
+	await _unmount(v)
+	# C-D: an injected key press reaches the view's _unhandled_input (KEY_A arms the attack-move mode), so a Home key
+	# that does nothing is the feature missing and not the injection broken.
+	var v2 := await _mount(true)
+	_assert(not bool(v2.get("_attack_move_mode")), "A18 control C-D setup: attack-move mode is already armed")
+	_key(KEY_A, true)
+	await process_frame
+	_key(KEY_A, false)
+	await process_frame
+	_assert(bool(v2.get("_attack_move_mode")), "A18 control C-D: an injected KEY_A press did not reach the view (the key injection is broken)")
+	await _unmount(v2)
+
+
+# MARGIN. R-103-01 (the camera frames the player's base at mission start) with the G2 ruling "10% of the viewport per
+# side (DRAFT-a18-margin)": the box of own units stands exactly 192 px (x) or 108 px (y) from the viewport edges on the
+# limiting axis. Red today: the camera sits flush (A19 leaves 48 px, V2) and the sight term would shift it further.
+func _test_a18_margin_R103_01() -> void:
+	var cases := [
+		# [name, own box lo, own box hi, expected inset of the limiting axis in px, limiting axis]
+		["wider than tall", Vector2(3000.0, 4000.0), Vector2(4800.0, 4400.0), MARGIN_SHARE * DESIGN_W, 0],
+		["taller than wide", Vector2(4000.0, 3000.0), Vector2(4400.0, 4800.0), MARGIN_SHARE * DESIGN_H, 1]]
+	for c in cases:
+		var v := await _mount(true)
+		var cv := _fixture_canvas(v)
+		var lo: Vector2 = c[1]
+		var hi: Vector2 = c[2]
+		var mid := (lo + hi) * 0.5
+		# Four corners and two mid points of the box; the spawn node stands inside the box so it does not move it.
+		var own := [lo, hi, Vector2(lo.x, hi.y), Vector2(hi.x, lo.y), Vector2(mid.x, lo.y), Vector2(mid.x, hi.y)]
+		v.load_frame(_frame_ex(cv, own, [], [_map_node(0, SPAWN_KIND, mid.x, mid.y)], []))
+		await process_frame
+		var a: int = c[4]
+		var inset: float = c[3]
+		var p_lo := _screen_of(v, lo.x, lo.y)
+		var p_hi := _screen_of(v, hi.x, hi.y)
+		var extent: float = DESIGN_W if a == 0 else DESIGN_H
+		_assert(absf(p_lo[a] - inset) <= ONE_PX,
+			"A18 MARGIN G2 R-103-01 [%s]: the box low edge is at %s px on axis %d, expected the margin %s px (10%% of the viewport)" % [c[0], p_lo[a], a, inset])
+		_assert(absf(p_hi[a] - (extent - inset)) <= ONE_PX,
+			"A18 MARGIN G2 R-103-01 [%s]: the box high edge is at %s px on axis %d, expected %s px (the viewport edge less 10%%)" % [c[0], p_hi[a], a, extent - inset])
+		# The other axis is centred on the box (the camera centre is the centre of B).
+		var b := 1 - a
+		var cam := _cam(v)
+		_assert(absf((p_lo[b] + p_hi[b]) * 0.5 - (DESIGN_W if b == 0 else DESIGN_H) * 0.5) <= ONE_PX and cam.distance_to(mid) * _scale(v) <= ONE_PX,
+			"A18 MARGIN G2 [%s]: the camera %s is not the centre of the box %s" % [c[0], str(cam), str(mid)])
+		_assert(_not_inside(v).is_empty(), "A18 MARGIN R-103-01 [%s]: own units not fully inside the viewport: %s" % [c[0], str(_not_inside(v))])
+		await _unmount(v)
+
+
+# SPAWN. R-246-07 (the army spawns at its home base) and G3 (the player's spawn point is the kind-7 node nearest the own
+# centroid): a spawn node placed away from the units is on screen after load_frame, the farther kind-7 node and a kind-0
+# node are not framed (the scale equals a twin frame that carries only the spawn node). Red today: map nodes are not read.
+func _test_a18_spawn_R246_07() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var own := [Vector2(2000.0, 4500.0), Vector2(2400.0, 4500.0), Vector2(2000.0, 4600.0), Vector2(2400.0, 4600.0)]
+	var spawn := Vector2(2200.0, 800.0)  # 3700 wu from the own centroid (2200, 4550): the nearest kind-7 node
+	var far_kind7 := _map_node(2, SPAWN_KIND, 6800.0, 4550.0)  # 4600 wu from the centroid
+	var kind0 := _map_node(0, 0, 8500.0, 8500.0)
+	v.load_frame(_frame_ex(cv, own, [], [kind0, _map_node(1, SPAWN_KIND, spawn.x, spawn.y), far_kind7], []))
+	await process_frame
+	var p := _screen_of(v, spawn.x, spawn.y)
+	_assert(_on_screen(p), "A18 SPAWN R-246-07 G3: the spawn node (%s, %s) is off screen at %s after load_frame (camera %s, scale %s)" % [spawn.x, spawn.y, str(p), str(_cam(v)), _scale(v)])
+	_assert(_not_inside(v).is_empty(), "A18 SPAWN R-246-07: own units not fully inside the viewport: %s" % str(_not_inside(v)))
+	var scale_full := _scale(v)
+	var cam_full := _cam(v)
+	# Twin: only the spawn node. The farther kind-7 node and the kind-0 node must not change the framing.
+	v.load_frame(_frame_ex(cv, own, [], [_map_node(1, SPAWN_KIND, spawn.x, spawn.y)], []))
+	await process_frame
+	_assert(is_equal_approx(_scale(v), scale_full) and _cam(v).is_equal_approx(cam_full),
+		"A18 SPAWN G3: with a farther kind-7 node and a kind-0 node the framing is scale %s camera %s; without them scale %s camera %s (only the nearest kind-7 node is the spawn point)" % [scale_full, str(cam_full), _scale(v), str(_cam(v))])
+	await _unmount(v)
+
+
+# OWN LOTS. R-246-07 (home base: where the faction's first economy area and structures stand) and Westley "yes, of your
+# base": two own lots placed away from the units are on screen; an enemy lot and a neutral lot (owner -1) far on the
+# opposite side are not in the box (scale and camera equal a twin without those two rows). Red today: lots are not read.
+func _test_a18_own_lots_R246_07() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var own := [Vector2(2000.0, 4500.0), Vector2(2400.0, 4500.0), Vector2(2000.0, 4600.0), Vector2(2400.0, 4600.0)]
+	var mine_a := _lot(10, 3800.0, 3000.0, 0)
+	var mine_b := _lot(11, 1500.0, 5600.0, 0)
+	var foe := _lot(12, 8200.0, 8200.0, 1)
+	var neutral := _lot(13, 8400.0, 8000.0, -1)
+	v.load_frame(_frame_ex(cv, own, [], [], [mine_a, mine_b, foe, neutral]))
+	await process_frame
+	for l in [mine_a, mine_b]:
+		var p := _screen_of(v, l["x"], l["y"])
+		_assert(_on_screen(p), "A18 OWN LOTS R-246-07: own lot %d at (%s, %s) is off screen at %s after load_frame (camera %s, scale %s)" % [l["id"], l["x"], l["y"], str(p), str(_cam(v)), _scale(v)])
+	_assert(_not_inside(v).is_empty(), "A18 OWN LOTS R-246-07: own units not fully inside the viewport: %s" % str(_not_inside(v)))
+	var scale_all := _scale(v)
+	var cam_all := _cam(v)
+	v.load_frame(_frame_ex(cv, own, [], [], [mine_a, mine_b]))
+	await process_frame
+	_assert(is_equal_approx(_scale(v), scale_all) and _cam(v).is_equal_approx(cam_all),
+		"A18 OWN LOTS: with an enemy lot and a neutral lot the framing is scale %s camera %s; without them scale %s camera %s (only owner == local faction lots are framed)" % [scale_all, str(cam_all), _scale(v), str(_cam(v))])
+	await _unmount(v)
+
+
+# OWN UNITS ONLY (G7, not ruled: the null action stands). A visible enemy unit far away and a sight field on the own
+# units change nothing: the framing equals a twin without them. Red today: the framing includes visible units and a sight term.
+func _test_a18_own_units_only_G7() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var own := [Vector2(3000.0, 4000.0), Vector2(4800.0, 4400.0), Vector2(3900.0, 4200.0)]
+	var nodes := [_map_node(0, SPAWN_KIND, 3900.0, 4200.0)]
+	v.load_frame(_frame_ex(cv, own, [Vector2(7500.0, 7500.0)], nodes, [], true, 300.0))
+	await process_frame
+	var scale_busy := _scale(v)
+	var cam_busy := _cam(v)
+	v.load_frame(_frame_ex(cv, own, [], nodes, []))
+	await process_frame
+	_assert(is_equal_approx(_scale(v), scale_busy) and _cam(v).is_equal_approx(cam_busy),
+		"A18 OWN UNITS ONLY G7: with a visible enemy unit and a sight field the framing is scale %s camera %s; the own units alone give scale %s camera %s" % [scale_busy, str(cam_busy), _scale(v), str(_cam(v))])
+	await _unmount(v)
+
+
+# HOME KEY. R-103-01 "the classic view has one auto-anchor home the player returns to by key" with G4: KEY_HOME restores
+# the stored opening camera and zoom. Red today: no key is bound.
+func _test_a18_home_key_R103_01() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var lo := Vector2(3000.0, 4000.0)
+	var hi := Vector2(4800.0, 4400.0)
+	var mid := (lo + hi) * 0.5
+	v.load_frame(_frame_ex(cv, [lo, hi], [], [_map_node(0, SPAWN_KIND, mid.x, mid.y)], []))
+	await process_frame
+	var cam0 := _cam(v)
+	var scale0 := _scale(v)
+	# Move away: pan with qa_pan and zoom with the wheel (a control: the camera and the scale really did move).
+	v.qa_pan(cam0.x + 2500.0, cam0.y - 1500.0)
+	var centre := _viewport_size() * 0.5
+	for i in range(3):
+		_wheel(true, centre)
+	await _frames(2)
+	_assert((_cam(v) - cam0).length() * scale0 > ONE_PX and absf(_scale(v) - scale0) * (hi.x - lo.x) > ONE_PX,
+		"A18 HOME KEY control: the pan and the wheel left camera %s (opening %s) and scale %s (opening %s)" % [str(_cam(v)), str(cam0), _scale(v), scale0])
+	_key(KEY_HOME, true)
+	await process_frame
+	_key(KEY_HOME, false)
+	await _frames(2)
+	var cam1 := _cam(v)
+	var scale1 := _scale(v)
+	_assert((cam1 - cam0).length() * scale0 <= ONE_PX,
+		"A18 HOME KEY R-103-01 G4: after KEY_HOME the camera is %s, the opening camera was %s" % [str(cam1), str(cam0)])
+	_assert(absf(scale1 - scale0) * (hi.x - lo.x) <= ONE_PX,
+		"A18 HOME KEY R-103-01 G4: after KEY_HOME the scale is %s, the opening scale was %s" % [scale1, scale0])
+	await _unmount(v)
+
+
+# CANVAS BOUND. R-103-02: the camera centre stays inside 0..canvas at the opening zoom, and the own units stand on
+# screen, for a box at the canvas corner (the view rectangle reaches past the canvas edge; the ruling G2 binds the
+# centre, not the rectangle, so own units must still be on screen). Green or red today: see the report.
+func _test_a18_canvas_bound_R103_02() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var own := [Vector2(20.0, 20.0), Vector2(1520.0, 20.0), Vector2(20.0, 420.0), Vector2(1520.0, 420.0)]
+	v.load_frame(_frame_ex(cv, own, [], [], []))
+	await process_frame
+	var cam := _cam(v)
+	_assert(cam.x >= 0.0 and cam.y >= 0.0 and cam.x <= cv and cam.y <= cv,
+		"A18 CANVAS BOUND R-103-02: camera %s outside 0..%s at the opening zoom" % [str(cam), cv])
+	_assert(_not_inside(v).is_empty(),
+		"A18 CANVAS BOUND R-103-02: %d of 4 own units at the canvas corner are not fully inside the viewport (camera %s, scale %s)" % [_not_inside(v).size(), str(cam), _scale(v)])
+	await _unmount(v)
+
+
+# EMPTY SET (G8, not ruled: the null action stands). No unit of the local faction, no spawn node, no own lot: today's
+# result stays, zoom 1.0 (scale == 1080 / canvas) and the canvas centre. A pin, green today.
+func _test_a18_empty_set_G8() -> void:
+	var v := await _mount(true)
+	var cv := _fixture_canvas(v)
+	var frame := _frame_ex(cv, [], [Vector2(2000.0, 2000.0)], [], [_lot(20, 3000.0, 3000.0, 1)])
+	v.load_frame(frame)
+	await process_frame
+	_assert(absf(_scale(v) - DESIGN_H / cv) <= 1e-9 * (DESIGN_H / cv),
+		"A18 EMPTY SET G8: scale %s with no own unit, expected zoom 1.0 (scale %s)" % [_scale(v), DESIGN_H / cv])
+	_assert(_cam(v).is_equal_approx(Vector2(cv * 0.5, cv * 0.5)),
+		"A18 EMPTY SET G8: camera %s with no own unit, expected the canvas centre %s" % [str(_cam(v)), str(Vector2(cv * 0.5, cv * 0.5))])
 	await _unmount(v)
