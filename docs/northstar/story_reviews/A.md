@@ -1,0 +1,5 @@
+# Story reviews, lane A (battle screen)
+
+| story | lane | run id | screenshot path | qa_state file | reviewer | reviewer verdict (yes/no/unclear + evidence) | Westley verdict (pending/approved/rejected) | date |
+|---|---|---|---|---|---|---|---|---|
+| S-002 | A | 20261013-0103-00d5637 | docs/northstar/story_reviews/shots/20261013-0103-00d5637/S-002_hard_transfer.png | docs/northstar/story_reviews/shots/20261013-0103-00d5637/S-002_hard_transfer.json | sonnet | yes. 1920x1080, 330 own units selected: five buttons "To layer 1" to "To layer 5" stand in a column at the right edge; the qa_state after Q has last_command {kind: set_layer, layer: 1, ok: true, units: 330}, focus_layer 0, and all 330 selected units carry state 4 (in a layer transit) with tl 1 while still on layer 0, so the order is sent and the units begin to rise; one frame cannot show a unit arrive, and the strip is not yet the approved layers mockup (scenes/mockups/layers/). The To-layer buttons read low-contrast (dark grey on dark grey) and their text ends at x~1918, at the screen edge, as the checker observed | pending | 2026-10-13 |
