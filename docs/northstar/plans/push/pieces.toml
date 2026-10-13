@@ -2035,7 +2035,7 @@ owns = ["scenes/settlement/settlement_layer.gd", "scenes/settlement/settlement_l
 owns_glob = []
 acceptance = ["tests/test_vg_e_e1k.gd", "tests/test_vg_e_e1k_parity.gd"]
 depends_on = ["VG-E1", "VG-E1R", "VG-C-s004", "HARNESS-laneplays"]  # VG-E1 (in flight) owns scenes/settlement/**, tests/test_vg_e_*.gd and plays/E/**; VG-E1R (queued) also owns plays/E/S-193.py, so E1k lands after E1r; VG-C-s004 and HARNESS-laneplays are the attached owners of lane_plays_known_red.txt
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "bb6d652" }  # landed bb6d652
 tests_pending = true
 size_estimate = "E1k: the settlement look from the mockup in three scene files (look, streets, layer), three tests, the S-193 play; DRAFT-e1k-streets; the S-237 re-run shot"
 
