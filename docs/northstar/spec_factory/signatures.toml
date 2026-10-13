@@ -7314,6 +7314,16 @@ confidence = "certain"
 note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
+name = "om_move_route_get"
+module = "tactical_move.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit_id", ctype = "uint32_t" }, { name = "route_i", ctype = "uint32_t*" }, { name = "pts", ctype = "double*" }, { name = "cap", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_tactical_event_count"
 module = "unit.c"
 restype = "uint32_t"
