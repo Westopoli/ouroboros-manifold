@@ -1889,7 +1889,7 @@ size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (e
 id = "VG-E1R"
 manager = "M0"
 wave = 9
-owns = ["csrc/economy_place.c", "csrc/economy_lots.c", "csrc/economy_internal.h", "docs/architecture.md", "tests/csim/test_VG_E_e1r.py", "tests/qa/desktop/plays/E/S-193.py"]
+owns = ["csrc/economy_place.c", "csrc/economy_lots.c", "csrc/economy_internal.h", "docs/architecture.md", "tests/csim/test_VG_E_e1r.py"]  # Architect 2026-10-13: the S-193 play is E1k's (look); E1R is sim-side and proven by tests/csim/test_VG_E_e1r.py
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e1r.py"]
 depends_on = ["VG-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E7", "VG-K-D1"]  # spec: depends_on VG-E1; E7 orders architecture.md (chain W2, E7, E1R, Dispatcher may flip) (its files return to attached when E1q's lane finishes; the Dispatcher pre-flights); E5 is the attached owner of economy_internal.h and architecture.md
@@ -2034,8 +2034,8 @@ wave = 9
 owns = ["scenes/settlement/settlement_layer.gd", "scenes/settlement/settlement_look.gd", "scenes/settlement/settlement_streets.gd", "tests/test_vg_e_e1k.gd", "tests/test_vg_e_e1k_parity.gd", "tests/test_vg_e_e1k_park_parity.gd", "tests/qa/desktop/plays/E/S-193.py", "scripts/specfactory/lane_plays_known_red.txt"]  # the clerk deletes line 4 of lane_plays_known_red.txt (the S-193 play), Architect gap g9
 owns_glob = []
 acceptance = ["tests/test_vg_e_e1k.gd", "tests/test_vg_e_e1k_parity.gd"]
-depends_on = ["VG-E1", "VG-E1R", "VG-C-s004", "HARNESS-laneplays"]  # VG-E1 (in flight) owns scenes/settlement/**, tests/test_vg_e_*.gd and plays/E/**; VG-E1R (queued) also owns plays/E/S-193.py, so E1k lands after E1r; VG-C-s004 and HARNESS-laneplays are the attached owners of lane_plays_known_red.txt
 status = { state = "attached", attach_sha = "bb6d652" }  # landed bb6d652
+depends_on = ["VG-E1", "VG-C-s004", "HARNESS-laneplays"]  # Architect 2026-10-13: the S-193 play is E1k's (look); E1R is sim-side and proven by tests/csim/test_VG_E_e1r.py, so E1k no longer waits on VG-E1R. VG-E1 (in flight) owns scenes/settlement/**, tests/test_vg_e_*.gd and plays/E/**; VG-C-s004 and HARNESS-laneplays are the attached owners of lane_plays_known_red.txt
 tests_pending = true
 size_estimate = "E1k: the settlement look from the mockup in three scene files (look, streets, layer), three tests, the S-193 play; DRAFT-e1k-streets; the S-237 re-run shot"
 
