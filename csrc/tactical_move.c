@@ -2151,7 +2151,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
 
 /* W2: point k of the stored route of mu, rebuilt by the expression walk_route.c wrote it with: a cell centre, except the
  * last point of a route that ended at the goal, which is the (clamped) destination the plan was made for. */
-static void om_move_route_point(const om_move_state *ms, const om_move_unit *mu, uint32_t k, double *x, double *y) {
+static void om_move_route_pt(const om_move_state *ms, const om_move_unit *mu, uint32_t k, double *x, double *y) {
     if (mu->route_ends_at_goal && k + 1u == mu->route_n) {
         *x = om_move_clamp_axis(mu->plan_dest_x, ms->canvas_w);
         *y = om_move_clamp_axis(mu->plan_dest_y, ms->canvas_h);
@@ -2189,7 +2189,7 @@ static int om_move_route_store(om_move_state *ms, om_move_unit *mu, const double
 
 /* W2: the aim is the stored point route_i; it is a waypoint unless it is the last one. */
 static void om_move_route_aim(const om_move_state *ms, om_move_unit *mu) {
-    om_move_route_point(ms, mu, mu->route_i, &mu->aim_x, &mu->aim_y);
+    om_move_route_pt(ms, mu, mu->route_i, &mu->aim_x, &mu->aim_y);
     mu->aim_is_waypoint = (uint32_t)mu->route_i + 1u < mu->route_n;
 }
 
@@ -2300,7 +2300,7 @@ uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_
     n = mu->route_n < cap ? mu->route_n : cap;
     for (k = 0; k < n && pts; k++) {
         if (k == 0) { pts[0] = mu->x; pts[1] = mu->y; }
-        else om_move_route_point(ms, mu, k, &pts[2 * k], &pts[2 * k + 1]);
+        else om_move_route_pt(ms, mu, k, &pts[2 * k], &pts[2 * k + 1]);
     }
     return mu->route_n;
 }
