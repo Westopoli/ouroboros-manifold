@@ -8,5 +8,3 @@ Name form: `<lane>-<story>-<what it shows>.png`. One row per file.
 
 | File here | Story | Lane | Queue row (run id) | Original | What to judge |
 |---|---|---|---|---|---|
-| `F-S140-net-first-tick-after-move-order.png` | S-140 | F | `F.md` 20261012-2033-b12b47a | `shots/20261012-2033-b12b47a/S-140_after_move_order.png` | Host frame after a move order over the network: 56 units ordered; does the frame show them moving? |
-| `A-S002-layer-transfer-buttons.png` | S-002 | A | `A.md` 20261013-0103-00d5637 | `shots/20261013-0103-00d5637/S-002_hard_transfer.png` | Battle screen with 330 units selected and the five "To layer" buttons at the right edge; the look of the strip |

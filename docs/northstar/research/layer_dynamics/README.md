@@ -83,6 +83,16 @@ Conditions on a rule set, with draft pass marks that Westley has not yet confirm
 
 "Lines crossing", made concrete: a line is the edge, in the space of settings, of where one condition holds; the crossing is a region where all hold at once; there may be several such regions.
 
+Rulings of 2026-10-13 (Westley), binding on every batch from here:
+
+- Naive baseline for a defending play: reported both ways, against a naive attacker and against a naive defender placed at the same post ("#1: C").
+- Scan range: enemy headcount 8 to 48 against a force of 16, so a play can show up to three times its size ("#2: A"); a play that beats 48 is reported as a ceiling hit, never as no gain.
+- The fight ends by elimination only (register Q-LAB-03); both sides attack-move to one point, or the attacker's point lies inside the defender's reach.
+- Same units, same values, on both sides, always (Westley, 2026-10-13: "Each 'era' will have both sides fighting the same units, same values"). A skilled play differs from the naive play only in arrangement, orders and which roster types stand where; the stat-scaled Vanguard variants in `plays_space.py` (double hit points, +20 percent range, half hit points) are retired and replaced by roster types. The only asymmetry allowed is a labelled positive control (the planted 20 percent damage scan), never a play.
+- Emitting (S-163) is a lab knob, two multipliers, sight and seen-from, with seen-from always above sight (R-163-01); the sweep finds the crossing. Starting pair: sight x2.0, seen x3.0 (Westley, 2026-10-13: "let's make that a knob, let the sweep find the crossing").
+- No absurd outliers (Westley, 2026-10-13): every sweep starts at the bible's value and steps by a named factor inside a bounded band (draft: 0.25x to 4x of the base, three to five points per knob), coarse grid first, then refined only around a crossing the coarse grid showed; a point outside the band needs a reason written in the batch spec.
+- Orientation returns to the variable list once the firing arc is in the engine (Q-100-01); area damage as a knob with its own range and shape, on any role or unit, is a lab variable (Q-082-06).
+
 ## 5. How results are read
 
 Small batches. One page of charts per batch, in the form of the sample Westley called "much better" on 2026-10-01 ("looks much better, especially the top graphic that makes it very clear") after the first draft read badly ("I had to stare at it to figure out what it meant"). The bullets below describe that sample; other forms are allowed "if the type of data we're looking at changes". The sample is at https://claude.ai/artifact/WtQDNnNZTR8hqx6LpxBaJ2 (private to Westley).
@@ -161,9 +171,7 @@ Not verified from the files in the folder: the 8 workers and the wall-clock time
 
 Open for Westley, after he reads the chart:
 
-1. The draft constants of Q-LAB-03: hold 1,200 ticks, 400 blind ticks, 5 percent draw band, 300 wu hold radius.
-2. The held share, 29.8 percent: is a held outcome the depth signal he wants, or noise?
-3. The 143 always-capped groups: which plays are they, and is a fight that never ends a layout fault or a play fault?
+1. Ruled 2026-10-13 (register Q-LAB-03): a fight ends when one side is eliminated. Both sides attack-move to one point; a defender that must hold a feature gets the attacker's attack-move point inside its vision and fire. Hold timer, hold radius, blind window and draw band are retired as end rules; the tick cap stays as a bug detector only, and a capped fight is a lab defect to trace (run 1's 143 always-capped groups had no contact at all: the attacker never reached the defender), never a result. Run 1's `held` class falls away with it.
 4. The composition category table for run 2.
 
 ## 9. Two machines
