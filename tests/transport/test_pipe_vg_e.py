@@ -183,15 +183,15 @@ def test_place_no_world():
     assert f == {"type": "error", "name": "command", "reason": "no world"}, f
 
 
-def test_hello_abi_is_7():
-    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16)."""
+def test_hello_abi_is_8():
+    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16); VG-CONTRACT-E7 moves it to 8 (TD-VG-E-28)."""
     script = b""
     for c in [QUIT]:
         body = json.dumps(c).encode()
         script += len(body).to_bytes(4, "big") + body
     data = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60).stdout
     n = int.from_bytes(data[:4], "big")
-    assert json.loads(data[4:4 + n])["abi"] == 7
+    assert json.loads(data[4:4 + n])["abi"] == 8
 
 
 # ---- K-e6: lots on full frames (R-193-01, R-193-02) -------------------------------------------------------------------------

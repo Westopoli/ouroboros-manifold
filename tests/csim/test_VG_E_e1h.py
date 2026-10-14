@@ -305,11 +305,13 @@ def test_rubble_can_be_refounded(lib, world_factory):
 # ---- R-218-06 / R-218-07 ----
 
 def test_no_fixed_force_split(lib, world_factory):
-    """R-218-06: R-126-04's 0.20 starting-force split is dropped, so om_mission_compute_starting_force(F) != 0.20 F."""
+    """R-218-06: R-126-04's 0.20 starting-force split is dropped, so om_mission_compute_starting_force(F, share) != 0.20 F
+    at a middling share. TD-VG-E-28: the signature takes share (0.5 here; share 0 would give exactly the fifth by
+    DRAFT-start-fraction, so it is not the probe); the assertion is unchanged."""
     bind(lib)
-    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double]
+    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double, ctypes.c_double]
     lib.om_mission_compute_starting_force.restype = ctypes.c_double
-    got = lib.om_mission_compute_starting_force(100.0)
+    got = lib.om_mission_compute_starting_force(100.0, 0.5)
     assert not math.isclose(got, 20.0, abs_tol=1e-5), "the fixed fifth is still applied (R-126-04 retired by R-218-06)"
 
 

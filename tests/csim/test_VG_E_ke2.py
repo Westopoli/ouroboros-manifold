@@ -2,7 +2,7 @@
 
 Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a2: the K-e2 amendment".
 Rules: R-218-01 (ground structure count capped at the slope count), R-218-05 (a structure at 0 HP stays
-listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10).
+listed), R-218-06 (starting force by the player's share of strongpoints, capacity the rest; Westley 2026-10-11, TD-VG-E-28; was the whole force and 0, liberty 2026-10-10).
 The entry points are internal (csrc/economy_internal.h) but exported by the shared object, so ctypes finds them.
 """
 import ctypes
@@ -107,18 +107,28 @@ def test_R_218_01_ground_structure_count_at_most_slope_count(lib, world_factory,
     assert not _over_cap(count, slopes), f"{count} structures over {slopes} slopes"
 
 
-def test_R_218_06_starting_force_is_the_whole_force(lib):
-    """R-218-06 (liberty 2026-10-10): om_mission_compute_starting_force(F) == F."""
-    lib.om_mission_compute_starting_force.argtypes = [D]
+def test_R_218_06_starting_force_follows_the_share(lib):
+    """R-218-06 (Westley 2026-10-11, TD-VG-E-28): om_mission_compute_starting_force(F, share) is F * (0.2 + 0.6 * share),
+    DRAFT-start-fraction (START_MIN 0.2, START_SPAN 0.6, register row Q-218-07): (1000, 0.5) -> 500, (1000, 0) -> 200,
+    (1000, 1) -> 800. Was (1000) == 1000 (the whole force, liberty 2026-10-10). Red before E7: the one-argument body ignores share."""
+    lib.om_mission_compute_starting_force.argtypes = [D, D]
     lib.om_mission_compute_starting_force.restype = D
-    assert lib.om_mission_compute_starting_force(1000.0) == 1000.0
+    assert lib.om_mission_compute_starting_force(1000.0, 0.5) == 500.0
+    assert lib.om_mission_compute_starting_force(1000.0, 0.0) == 200.0
+    assert lib.om_mission_compute_starting_force(1000.0, 1.0) == 800.0
 
 
-def test_R_218_06_reinforcement_capacity_is_zero(lib):
-    """R-218-06: om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0."""
-    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, U64]
+def test_R_218_06_reinforcement_capacity_is_the_rest(lib):
+    """R-218-06 (TD-VG-E-28): om_mission_compute_reinforcement_capacity(F, share) is F minus the starting force:
+    (1000, 0.5) -> 500, was (1000, 1200) == 0. Red before E7: the second argument is a tick count and the body returns 0."""
+    lib.om_mission_compute_starting_force.argtypes = [D, D]
+    lib.om_mission_compute_starting_force.restype = D
+    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, D]
     lib.om_mission_compute_reinforcement_capacity.restype = D
-    assert lib.om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0
+    assert lib.om_mission_compute_reinforcement_capacity(1000.0, 0.5) == 500.0
+    for share in (0.0, 0.25, 1.0):
+        assert (lib.om_mission_compute_starting_force(1000.0, share)
+                + lib.om_mission_compute_reinforcement_capacity(1000.0, share)) == 1000.0
 
 
 def test_R_218_06_detector_control(lib):

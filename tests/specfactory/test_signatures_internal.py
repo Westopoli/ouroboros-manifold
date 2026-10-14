@@ -60,6 +60,8 @@ EXPECTED_MODULE = {
     "om_grid_query_circle": "unit.c",
     "om_grid_query_circle_faction": "unit.c",
     "om_mission_on_begin": "mission.c",
+    "om_mission_reinforce_cap": "mission.c",
+    "om_mission_reinforce_note_spawn": "mission.c",
     "om_mission_reset_started": "fog.c",
     "om_mission_tactical_tick": "mission.c",
     "om_move_route_get": "tactical_move.c",
