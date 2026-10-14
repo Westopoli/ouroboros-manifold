@@ -1,10 +1,12 @@
-# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-24; 2026-10-14-skill-lab-rev2-spec.md::L1
-"""AC 24 firing count against the real engine, hand-built geometry; rev 2 count of LAB-REV2-L1 (below the AC-24 cases).
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L1; harness-spec AC-24 (hand-built count)
+"""The rev 2 count of LAB-REV2-L1 against the real engine, hand-built geometry, no fight loop.
 
-Side 0: three units in a row, A, B, C along +x. Side 1: one enemy E behind A on the -x side.
-Distances from E, as fractions of the Vanguard attack range R: A 0.3, B 0.7, C 1.2.
-Replicate shifts are at most 10 world units per axis, far inside every margin (R is read from
-the engine, so no position is a magic number).
+This file imports neither `fight` nor `plays`: it needs only L1 (firing.py and the engine bindings), so it can be green
+before L2 exists. The fight-level cases (the old AC-24 series through fight.fight, the 16 v 16 control read on the
+fight's own series, the parity run over fight.fight) live in test_fight_firing_real.py, owned by L2.
+
+Expected numbers come from the geometry and the engine's own tables, never from firing.py. Each case also reads what
+the engine DID (hit points after 60 to 100 ticks), so a count that disagrees with the fight is caught here.
 """
 import ctypes
 import sys
@@ -17,28 +19,10 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab import engine, fight, firing  # noqa: E402
-from scripts.skilllab.contract import Group, Setup  # noqa: E402
+from scripts.skilllab import engine, firing  # noqa: E402
 
 UNIT = "Vanguard"
 BASE_X, BASE_Y = 400.0, 400.0   # keeps every point positive
-
-
-class _BlockerEngine:
-    """Real Engine plus blockers added to each new world; every other call passes through."""
-
-    def __init__(self, real, blockers):
-        self._real = real
-        self._blockers = blockers
-
-    def __getattr__(self, name):
-        return getattr(self._real, name)
-
-    def new_world(self, *args, **kwargs):
-        w = self._real.new_world(*args, **kwargs)
-        for x, y, r in self._blockers:
-            self._real.add_blocker(w, x, y, r)
-        return w
 
 
 @pytest.fixture(scope="module")
@@ -55,68 +39,6 @@ def reach(real_engine):
         real_engine.free_world(w)
     return float(stats["attack_range"])
 
-
-def _points(reach):
-    a = (BASE_X, BASE_Y)
-    b = (BASE_X + 0.4 * reach, BASE_Y)
-    c = (BASE_X + 0.9 * reach, BASE_Y)
-    e = (BASE_X - 0.3 * reach, BASE_Y)
-    return a, b, c, e
-
-
-def _setup(reach):
-    a, b, c, e = _points(reach)
-    side0 = Group(side=0, unit=UNIT, count=3, formation="points", x=BASE_X, y=BASE_Y,
-                  facing_deg=0.0, layer=0, order="idle", params={"points": [a, b, c]})
-    side1 = Group(side=1, unit=UNIT, count=1, formation="points", x=e[0], y=e[1],
-                  facing_deg=180.0, layer=0, order="idle", params={"points": [e]})
-    return Setup(groups=(side0, side1), unit_types={}, abilities=False, max_ticks=10, sample_every=5)
-
-
-def _tick0(result):
-    tick, able0, able1 = result.firing[0]
-    assert tick == 0
-    return able0, able1
-
-
-def test_two_of_three_within_reach_reads_2_and_1(real_engine, reach):
-    """AC 24 base case, also the no-blocker count the blocker cases compare against."""
-    result = fight.fight(_setup(reach), 0, False, engine=real_engine)
-    assert _tick0(result) == (2, 1)
-    assert result.first_contact_tick == 0
-
-
-@pytest.mark.parametrize("seed", [1, 2, 3])
-def test_count_holds_across_replicate_shifts(real_engine, reach, seed):
-    """AC 24 / AC 6: the replicate shift (<= 10 wu per axis) does not change the hand-built count."""
-    assert _tick0(fight.fight(_setup(reach), seed, True, engine=real_engine)) == (2, 1)
-
-
-def test_blocker_between_one_pair_removes_one_shooter_from_the_losing_side(real_engine, reach):
-    """AC 24 blocker case: disc between A and B blocks the E-B line only. Side 0 loses B (2 -> 1);
-    side 1 still fires through A, so its count is unchanged."""
-    a, b, c, e = _points(reach)
-    assert _tick0(fight.fight(_setup(reach), 0, False, engine=real_engine)) == (2, 1)   # no-blocker count first
-    blocker = ((a[0] + b[0]) / 2.0, BASE_Y, 0.08 * reach)
-    blocked = _BlockerEngine(real_engine, [blocker])
-    assert _tick0(fight.fight(_setup(reach), 0, False, engine=blocked)) == (1, 1)
-
-
-def test_blocker_on_every_line_to_the_enemy_removes_the_enemys_shot_too(real_engine, reach):
-    """AC 24 blocker case: disc between E and A lies on both E-A and E-B. Side 0 drops 2 -> 0,
-    side 1 drops 1 -> 0 (it loses its only pair)."""
-    a, b, c, e = _points(reach)
-    assert _tick0(fight.fight(_setup(reach), 0, False, engine=real_engine)) == (2, 1)   # no-blocker count first
-    blocker = ((a[0] + e[0]) / 2.0, BASE_Y, 0.07 * reach)
-    blocked = _BlockerEngine(real_engine, [blocker])
-    assert _tick0(fight.fight(_setup(reach), 0, False, engine=blocked)) == (0, 0)
-
-
-# ======================================================================= rev 2 (LAB-REV2-L1)
-# The new seam: firing.count_able / count_weighted / states / parity (engine, w, units0, units1, arc_deg).
-# Cases are built by hand on the real library; the expected numbers come from the geometry and the engine's own
-# tables, never from firing.py. Each case also reads what the engine DID (hit points after 60 to 100 ticks), so a count
-# that disagrees with the fight is caught here and not only by the lab's own parity check.
 
 ARC_OFF = 360.0
 CATMULT_NAMES = ["OM_TP_CATMULT_%s_%s" % (a, d) for a in ("LINE", "SIEGE", "STRIKE") for d in ("LINE", "SIEGE", "STRIKE")]
@@ -167,13 +89,43 @@ def damage_done(lib, w, ids, ticks=FIGHT_TICKS):
     return before - hp_total(lib, w, ids)
 
 
-def test_control_same_layer_16_v_16_blob_reads_16_16_on_the_lab_series(real_engine):
-    """Positive control (green before and after L1): two Vanguard blobs of 16 on one layer, inside every range and
-    sensor, read 16 and 16 on the fight's own firing series at tick 0, as they do today."""
-    blob = lambda side, x, f: Group(side=side, unit=UNIT, count=16, formation="blob", x=x, y=1000.0, facing_deg=f,
-                                    layer=0, order="idle", params={"radius": 60.0})
-    setup = Setup(groups=(blob(0, 1000.0, 0.0), blob(1, 1150.0, 180.0)), unit_types={}, max_ticks=10, sample_every=5)
-    assert fight.fight(setup, 0, False, engine=real_engine).firing[0] == (0, 16, 16)
+# ---------------------------------------------------------------- AC 24 hand-built case, read through count_able
+# Side 0: three units in a row A, B, C along +x; side 1: one enemy E behind A on the -x side. Distances from E, as
+# fractions of the Vanguard attack range R: A 0.3, B 0.7, C 1.2 (R is read from the engine: no magic position).
+
+def _ac24_units(lib, w, reach):
+    t = lib.type_id(UNIT)
+    a = [lib.spawn(w, t, 0, BASE_X + f * reach, BASE_Y, 0) for f in (0.0, 0.4, 0.9)]
+    e = lib.spawn(w, t, 1, BASE_X - 0.3 * reach, BASE_Y, 0)
+    return a, e
+
+
+def test_ac24_two_of_three_within_reach_reads_2_and_1_through_count_able(real_engine, reach):
+    """AC 24 base case (positive control for the two blocker cases below): the hand-built row reads (2, 1)."""
+    with world(real_engine) as w:
+        a, e = _ac24_units(real_engine, w, reach)
+        assert firing.count_able(real_engine, w, a, [e], ARC_OFF) == (2, 1)
+
+
+def test_ac24_blocker_between_one_pair_removes_one_shooter_from_the_losing_side(real_engine, reach):
+    """AC 24 blocker case: a disc between A and B blocks the E-B line only. Side 0 loses B (2 -> 1); side 1 still
+    fires through A, so its count is unchanged. The code of B is 5 (line blocked)."""
+    with world(real_engine) as w:
+        a, e = _ac24_units(real_engine, w, reach)
+        assert firing.count_able(real_engine, w, a, [e], ARC_OFF) == (2, 1)           # no-blocker count first
+        real_engine.add_blocker(w, BASE_X + 0.2 * reach, BASE_Y, 0.08 * reach)
+        assert firing.count_able(real_engine, w, a, [e], ARC_OFF) == (1, 1)
+        assert dict(firing.states(real_engine, w, a, [e], ARC_OFF))[a[1]] == 5
+
+
+def test_ac24_blocker_on_every_line_to_the_enemy_removes_the_enemys_shot_too(real_engine, reach):
+    """AC 24 blocker case: a disc between E and A lies on both E-A and E-B. Side 0 drops 2 -> 0 and side 1 drops
+    1 -> 0 (it loses its only pair)."""
+    with world(real_engine) as w:
+        a, e = _ac24_units(real_engine, w, reach)
+        assert firing.count_able(real_engine, w, a, [e], ARC_OFF) == (2, 1)           # no-blocker count first
+        real_engine.add_blocker(w, BASE_X - 0.15 * reach, BASE_Y, 0.07 * reach)
+        assert firing.count_able(real_engine, w, a, [e], ARC_OFF) == (0, 0)
 
 
 def test_same_layer_16_v_16_reads_16_16_through_the_new_count(real_engine):
@@ -204,17 +156,6 @@ def test_r005_05_cross_layer_16_v_16_side_0_one_layer_up(real_engine, vision, re
         assert firing.count_able(real_engine, w, s0, s1, ARC_OFF) == expected
         done = damage_done(real_engine, w, s0 + s1)
         assert (done > 0) == (expected != (0, 0)), "the count and the fight disagree: %r, damage %r" % (expected, done)
-
-
-def test_r164_01_vision_zero_and_half_differ_only_in_vision(real_engine):
-    """Control for the case above: with reach (1, 1) and vision 0.5 the count is positive for BOTH sides, so the 0 in
-    the vision-0 row is the vision gate and nothing else."""
-    with world(real_engine) as w:
-        real_engine.set_reach(w, real_engine.type_id(UNIT), 1, 1)
-        s0 = grid(real_engine, w, UNIT, 0, 1000.0, 1000.0, 1)
-        s1 = grid(real_engine, w, UNIT, 1, 1150.0, 1000.0, 0)
-        able0, able1 = firing.count_able(real_engine, w, s0, s1, ARC_OFF)
-        assert able0 > 0 and able1 > 0
 
 
 @pytest.mark.parametrize("spotter,expected,damaged", [(False, (0, 0), False), (True, (1, 0), True)])
@@ -324,7 +265,50 @@ def test_ruling5_target_of_record_follows_the_engines_own_target_once_it_has_one
         assert got[0] == pytest.approx(cat_mult(real_engine, w, cr, ct))
 
 
+
+
+# ---------------------------------------------------------------- states (the code is the first failing gate)
+
+def _layered(lib, w, reach, vision):
+    """16 v 16 Vanguards, side 0 on layer 1 and side 1 on layer 0, 150 wu apart in x (the cross-layer case above)."""
+    lib.set_reach(w, lib.type_id(UNIT), *reach)
+    for name in VISION_PARAMS:
+        lib.set_param(w, lib.param_id(name), vision)
+    return grid(lib, w, UNIT, 0, 1000.0, 1000.0, 1), grid(lib, w, UNIT, 1, 1150.0, 1000.0, 0)
+
+
+def test_states_cross_layer_control_all_32_units_read_code_zero(real_engine):
+    """Positive control for the two rows below: reach (1, 1) and vision 0.5 give code 0 for all 32 units (and the
+    count above reads 16 and 16 for the same scene)."""
+    with world(real_engine) as w:
+        s0, s1 = _layered(real_engine, w, (1, 1), 0.5)
+        codes = dict(firing.states(real_engine, w, s0, s1, ARC_OFF))
+        assert sorted(codes) == sorted(s0 + s1) and set(codes.values()) == {0}
+
+
+def test_states_vision_zero_reads_code_2_not_seen_for_all_32_units(real_engine):
+    """Spec L1 row: vision 0 (symmetric, ruling 10) with reach one each way passes the reach gate and fails the side's
+    visible set: the first failing reason is 2 for every one of the 32 units, on both sides."""
+    with world(real_engine) as w:
+        s0, s1 = _layered(real_engine, w, (1, 1), 0.0)
+        got = firing.states(real_engine, w, s0, s1, ARC_OFF)
+        assert len(got) == 32 and {c for _, c in got} == {2}
+
+
+def test_states_reach_zero_with_vision_half_reads_code_1_out_of_reach_for_all_32_units(real_engine):
+    """Spec L1 row: reach (0, 0) with the default vision 0.5 fails the first gate: code 1 for all 32 units, whatever the
+    sight and range say (the cross-layer count above reads 0 and 0 for the same scene)."""
+    with world(real_engine) as w:
+        s0, s1 = _layered(real_engine, w, (0, 0), 0.5)
+        got = firing.states(real_engine, w, s0, s1, ARC_OFF)
+        assert len(got) == 32 and {c for _, c in got} == {1}
+
+
 # ---------------------------------------------------------------- parity (goes live when E0 is on main)
+
+SAMPLE_EVERY = 5      # Setup.sample_every: the lab checks parity on every sampled tick
+MAX_PARITY_TICKS = 300
+
 
 def _e0_on_main(lib):
     """E0 adds OM_TP_FIRING_ARC_DEG to the header (parameter enum) and om_combat_can_engage to the library."""
@@ -332,8 +316,8 @@ def _e0_on_main(lib):
 
 
 class _ParitySpy(engine.Engine):
-    """Real Engine whose step() checks firing.parity every 20 ticks (every sampled tick of the lab) over the units this
-    wrapper spawned, and keeps every unit the check names."""
+    """Real Engine whose step() checks firing.parity on every sampled tick (every SAMPLE_EVERY steps, tick 0 included)
+    over the units this wrapper spawned, and keeps every unit the check names. Needs no fight loop: see the scenes."""
 
     def __init__(self):
         super().__init__()
@@ -342,7 +326,7 @@ class _ParitySpy(engine.Engine):
         self._n = 0
 
     def step(self, w):
-        if self._n % 20 == 0:
+        if self._n % SAMPLE_EVERY == 0:
             sides = [[u for u in self._own.get((w.value, f), []) if self.unit_alive(w, u)] for f in (0, 1)]
             if sides[0] and sides[1]:
                 self.parity_checks += 1
@@ -351,17 +335,42 @@ class _ParitySpy(engine.Engine):
         super().step(w)
 
 
-@pytest.mark.parametrize("control", ["mirror", "numbers", "planted"])
-def test_parity_is_empty_on_every_sampled_tick_of_the_three_controls(control):
-    """Spec L1 row (after E0): the composed set equals the can_engage set on every sampled tick of the controls
-    (mirror 16 v 16, numbers 16 v 8, planted 20 percent damage), fog on. The test is skipped until E0 is on main;
-    with the E0 stub (can_engage = -1) it passes trivially, and E2 makes it bite. A non-empty list is a defect."""
-    from scripts.skilllab import plays
+def _parity_scene(spy, w, scene):
+    """The three controls, inline (no plays.py): mirror 16 v 16, numbers 16 v 8, and a cross-layer fog case (side 0 one
+    layer up, reach one each way, vision 0.5) so the reach, sight and range gates all run. Every unit attack-moves at the
+    enemy's start centroid; OM_TP_TARGET_BY_SIGHT is 1, the only setting tested (overseer default)."""
+    spy.disable_abilities(w)
+    spy.set_param(w, spy.param_id("OM_TP_TARGET_BY_SIGHT"), 1.0)
+    n1 = 8 if scene == "numbers" else 16
+    layer0 = 1 if scene == "fog_layers" else 0
+    if scene == "fog_layers":
+        spy.set_reach(w, spy.type_id(UNIT), 1, 1)
+    s0 = grid(spy, w, UNIT, 0, 1000.0, 1000.0, layer0)
+    s1 = grid(spy, w, UNIT, 1, 1500.0, 1000.0, 0, n=n1)
+    for u in s0:
+        spy.order_attack_move(w, [u], 1545.0, 1045.0)
+    for u in s1:
+        spy.order_attack_move(w, [u], 1045.0, 1045.0)
+    return s0, s1
+
+
+@pytest.mark.parametrize("scene", ["mirror", "numbers", "fog_layers"])
+def test_parity_is_empty_on_every_sampled_tick_of_the_controls(scene):
+    """Spec L1 row (after E0): the composed set equals the can_engage set on every sampled tick (every 5th) of the
+    controls, fog on; a non-empty list is a defect. The third control is the cross-layer fog case, not the planted
+    damage scene (that one differs only in a damage multiplier, which no gate reads). Skipped until E0 is on main; with
+    the E0 stub (can_engage = -1) it passes trivially and E2 makes it bite."""
     spy = _ParitySpy()
     if not _e0_on_main(spy):
         pytest.skip("E0 not on main")
-    play = plays.damage_play(16) if control == "planted" else plays.blob_play(16)
-    setup = play(8 if control == "numbers" else 16, False)
-    fight.fight(setup, 0, False, engine=spy)
-    assert spy.parity_checks > 0
+    w = spy.new_world(0)
+    try:
+        s0, s1 = _parity_scene(spy, w, scene)
+        for _ in range(MAX_PARITY_TICKS):
+            if not any(spy.unit_alive(w, u) for u in s0) or not any(spy.unit_alive(w, u) for u in s1):
+                break
+            spy.step(w)
+    finally:
+        spy.free_world(w)
+    assert spy.parity_checks >= 10
     assert spy.parity_differences == []

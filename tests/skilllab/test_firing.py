@@ -18,6 +18,13 @@ Retired here, with the ruling:
   - test_ac24_different_layers_do_not_count (AC 24 / AC 10 "its own layer only"): retired by R-008-02 and the landed
     cascade (R-164-01 reach table); replaced by the reach tests below, which keep its geometry as the reach (0, 0) case.
   - test_ac10_a_living_unit_missing_from_ranges_raises_keyerror: the `ranges` argument is gone (spec seam).
+  - test_firing_alive.py, test_firing_weighted_target.py, test_firing_weighted.py (count_able_weighted, unit_weight, the
+    `alive` set, the engine-target-only weighted rule), test_states.py (unit_states strings, order_ends) and their fakes,
+    integration/test_weighted_reads_engine_real.py, test_firing_weighted_real.py, test_states_real.py: deleted with the
+    L1 seam (ruling 5: the weight is the category multiplier, not damage over interval; the code is a can_engage reason,
+    not a string state). Kept: the Engine.profile_reach binding tests (bottom of this file). Their fight-level halves
+    (no Setup.weighted, weighted_unit_seconds always populated, Setup.states giving (tick, unit, code)) are re-stated
+    for L2 in test_fight_wiring_firing.py and integration/test_fight_firing_real.py.
 
 Engine methods this file fixes for the fake (and so for the builder; the spec's seam names neither):
   unit_type(w, u) -> type id               om_unit_get_unit_type; the count reads the shooter's type, category and range
@@ -214,13 +221,15 @@ def test_ac10_empty_side_reads_zero_and_result_is_an_int_pair():
 
 
 def test_ac10_count_asks_the_engine_with_the_world_and_shooter_first():
-    """AC 10 interaction: can_shoot is asked as can_shoot(w, shooter, enemy), for shooters of both sides."""
+    """AC 10 interaction (minimum pin, deliberately loose: a builder may order the gates as it likes): whenever
+    can_shoot is asked it is can_shoot(w, shooter, enemy) with the world first and the two units on opposite sides,
+    and both directions are asked at least once (side 0 at the enemy, the enemy at side 0)."""
     fake, w, a, e = row_world()
     firing.count_able(fake, w, a, [e], ARC_OFF)
     asked = [c[1:] for c in fake.calls_named("can_shoot")]
     assert asked and all(c[0] == w for c in asked)
-    pairs = {(c[1], c[2]) for c in asked}
-    assert {(a[1], e), (a[2], e)} <= pairs and any(p[0] == e and p[1] in a for p in pairs)
+    assert all((c[1] in a) != (c[2] in a) for c in asked), "a pair must be one unit of each side"
+    assert any(c[1] in a and c[2] == e for c in asked) and any(c[1] == e and c[2] in a for c in asked)
 
 
 @pytest.mark.parametrize("enemy_x,expected", [(100.0, (1, 1)), (100.0001, (0, 0)), (99.9999, (1, 1))])
@@ -340,13 +349,14 @@ def test_r005_05_visibility_is_per_target_and_per_side():
 
 
 def test_r005_05_the_visible_set_is_asked_for_the_side_and_the_enemy_ids():
-    """Gate 2 interaction: visible_enemies(w, side, enemy_ids) with the shooter's own side number (0 or 1)."""
+    """Gate 2 interaction (minimum pin, deliberately loose): visible_enemies(w, side, enemy_ids) is asked with the
+    world first, the shooter's own side number, and ids that are only the OTHER side's units; both sides are asked."""
     fake, w, a, e = row_world()
     firing.count_able(fake, w, a, [e], ARC_OFF)
     asked = fake.calls_named("visible_enemies")
-    assert {c[2] for c in asked} == {0, 1}
-    assert e in {x for c in asked if c[2] == 0 for x in c[3]}
-    assert set(a) <= {x for c in asked if c[2] == 1 for x in c[3]}
+    assert {c[2] for c in asked} == {0, 1} and all(c[1] == w for c in asked)
+    assert all(set(c[3]) <= {e} for c in asked if c[2] == 0)
+    assert all(set(c[3]) <= set(a) for c in asked if c[2] == 1)
 
 
 # ---------------------------------------------------------------- the firing arc (ruling 8; spec gate 4)
@@ -415,6 +425,22 @@ def test_r100_04_the_arc_gate_composes_with_the_other_gates():
     assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (0, 1)
     fake, w, a, e = arc_world(90.0)
     assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (0, 1)
+
+
+def test_r100_04_boundary_is_inclusive_and_arc_360_or_more_is_off():
+    """Overseer defaults (Architect to confirm): the arc boundary is inclusive, so a target exactly half the arc off the
+    facing (90 degrees of a 180 arc, built at exact coordinates (0, 90)) counts; arc_deg >= 360 means the arc is off,
+    even with the target straight behind."""
+    fake = CountFake()
+    w = fake.new_world(0)
+    vg = fake.type_id("Vanguard")
+    a = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
+    e = fake.spawn(w, vg, 1, 0.0, 90.0, 0)
+    assert firing.count_able(fake, w, [a], [e], 180.0)[0] == 1
+    fake, w, a, e = arc_world(180.0)
+    for arc in (360.0, 400.0, 720.0):
+        assert firing.count_able(fake, w, [a], [e], arc)[0] == 1, arc
+    assert firing.count_able(fake, w, [a], [e], 359.0)[0] == 0     # control: 359 is not off (half-width 179.5 < 180)
 
 
 # ---------------------------------------------------------------- the type weight (ruling 5)
@@ -550,15 +576,24 @@ def test_ruling5_weight_and_count_agree_on_who_is_able():
 
 
 # ---------------------------------------------------------------- states
+# Architect ruling on the target of record (LAB-REV2-L1): per unit per sample the target of record is the engine's
+# target if can_engage against it is 0; else the nearest living enemy of a hostile faction with can_engage 0; else the
+# nearest living hostile enemy (so the code is the first failing reason 1..5 against it); -1 only when no living
+# hostile exists. Overseer defaults, pending the Architect's confirmation: nearest = planar x, y distance, tie to the
+# lowest unit id; the list is ordered by unit id with dead units omitted. Codes: 1 out of reach, 2 not seen by the side,
+# 3 out of range at this offset, 4 outside the arc, 5 line blocked. Diagnostic order is that order: the lowest failing
+# gate is the one reported.
 
 def test_states_gives_code_zero_to_a_unit_that_can_engage_and_minus_one_when_no_enemy_lives():
     """Spec seam: states -> [(unit, code)] with code the can_engage result against the target of record, -1 when none.
-    Row world: a[1], a[2] and the enemy can engage (0); a[0] is out of range (no eligible target); lone side: -1."""
+    Row world: a[1], a[2] and the enemy can engage (0); a[0] is 140 wu from the enemy, out of range 100 (code 3);
+    lone side: -1."""
     fake, w, a, e = row_world()
     got = firing.states(fake, w, a, [e], ARC_OFF)
     assert isinstance(got, list) and all(isinstance(t, tuple) and len(t) == 2 for t in got)
     assert all(type(u) is int and type(c) is int for u, c in got)
     codes = dict(got)
+    assert codes[a[0]] == 3
     assert codes[a[1]] == 0 and codes[a[2]] == 0 and codes[e] == 0
     fake, w, a, e = row_world()
     codes = dict(firing.states(fake, w, a, [], ARC_OFF))
@@ -569,9 +604,234 @@ def test_states_code_zero_exactly_where_count_able_counts():
     """Spec seam: the zero-code units of states are the units count_able counts (same composition, one source)."""
     fake, w, a, e = row_world(enemy_layer=1, reach=vg_reach(1, 0))   # side 0 fires up: two of three; the enemy cannot
     codes = dict(firing.states(fake, w, a, [e], ARC_OFF))
-    zeros0 = sum(1 for u in a if codes.get(u, -1) == 0)
-    zeros1 = 1 if codes.get(e, -1) == 0 else 0
+    zeros0 = sum(1 for u in a if codes[u] == 0)
+    zeros1 = 1 if codes[e] == 0 else 0
     assert (zeros0, zeros1) == firing.count_able(fake, w, a, [e], ARC_OFF) == (2, 0)
+
+
+def fail_world(code):
+    """One shooter a (side 0) at the origin, one enemy e (side 1) 60 wu away on the same layer; exactly the gate named by
+    `code` fails for a (0: none). Returns (fake, w, a, e, arc_deg). Range 100, reach (0, 0), full sight, facing 0."""
+    fake = CountFake()
+    w = fake.new_world(0)
+    vg = fake.type_id("Vanguard")
+    a = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
+    e = fake.spawn(w, vg, 1, 60.0, 0.0, 0)
+    arc = ARC_OFF
+    if code == 1:
+        fake.units[e]["layer"] = 1                                     # reach (0, 0): out of reach
+    elif code == 2:
+        fake.sees = lambda side, target: not (side == 0 and target == e)
+    elif code == 3:
+        fake.units[e]["x"] = 400.0
+    elif code == 4:
+        arc, fake.facings[a] = ARC_DRAFT, math.pi                      # the enemy is straight behind a
+    elif code == 5:
+        fake.block(a, e)
+    return fake, w, a, e, arc
+
+
+@pytest.mark.parametrize("code", [0, 1, 2, 3, 4, 5])
+def test_states_code_is_the_one_failing_gate_exact_ints(code):
+    """Each of the five reasons alone, on its own geometry, reads its exact int: 1 out of reach, 2 not seen, 3 out of
+    range, 4 outside the arc, 5 blocked; 0 when nothing fails (the positive control of the five)."""
+    fake, w, a, e, arc = fail_world(code)
+    got = dict(firing.states(fake, w, [a], [e], arc))[a]
+    assert got == code and type(got) is int
+
+
+@pytest.mark.parametrize("code", [0, 1, 2, 3, 4, 5])
+def test_count_able_counts_exactly_the_code_zero_units_across_the_five_failure_geometries(code):
+    """Spec: a unit counts when its code is 0. For side 0 the count is 1 for the control (0) and 0 for each failure
+    geometry 1..5; for every geometry the counted units are exactly the zero-code units of states, both sides."""
+    fake, w, a, e, arc = fail_world(code)
+    states = dict(firing.states(fake, w, [a], [e], arc))
+    zeros = (1 if states[a] == 0 else 0, 1 if states[e] == 0 else 0)
+    got = firing.count_able(fake, w, [a], [e], arc)
+    assert got == zeros and got[0] == (1 if code == 0 else 0)
+
+
+@pytest.mark.parametrize("code", [1, 2, 3, 4, 5])
+def test_weight_is_zero_for_every_unable_code(code):
+    """Ruling 5: the type weight sums over code-0 units only; codes 1..5 contribute 0.0 to side 0."""
+    fake, w, a, e, arc = fail_world(code)
+    assert dict(firing.states(fake, w, [a], [e], arc))[a] == code
+    assert firing.count_weighted(fake, w, [a], [e], arc)[0] == 0.0
+
+
+def test_weight_is_zero_for_code_minus_one_and_the_control_weighs_the_multiplier():
+    """Ruling 5: -1 (no living hostile) contributes 0.0 as well; the code-0 control weighs mult(1, 1), so the zeros
+    above are not a function that always returns 0."""
+    fake, w, a, e, arc = fail_world(0)
+    assert firing.count_weighted(fake, w, [a], [e], arc)[0] == mult(1, 1)
+    fake.set_hp(e, 0)
+    assert dict(firing.states(fake, w, [a], [e], arc))[a] == -1
+    assert firing.count_weighted(fake, w, [a], [e], arc) == (0.0, 0.0)
+
+
+@pytest.mark.parametrize("fails,code", [
+    ("reach+range", 1), ("unseen+range", 2), ("range+arc", 3), ("arc+blocked", 4),
+    ("unseen+arc+blocked", 2), ("all", 1),
+])
+def test_states_code_is_the_lowest_failing_gate_when_several_fail(fails, code):
+    """Diagnostic order 1 reach, 2 seen, 3 range, 4 arc, 5 line: with several gates failing at once the lowest number
+    is reported."""
+    fake, w, a, e, arc = fail_world(0)
+    parts = fails.split("+") if fails != "all" else ["reach", "unseen", "range", "arc", "blocked"]
+    if "reach" in parts:
+        fake.units[e]["layer"] = 1
+    if "unseen" in parts:
+        fake.sees = lambda side, target: not (side == 0 and target == e)
+    if "range" in parts:
+        fake.units[e]["x"] = 400.0
+    if "arc" in parts:
+        arc, fake.facings[a] = ARC_DRAFT, math.pi
+    if "blocked" in parts:
+        fake.block(a, e)
+    assert dict(firing.states(fake, w, [a], [e], arc))[a] == code
+
+
+def test_states_range_failure_at_a_layer_offset_is_code_3_not_1():
+    """Gate 3 is 'out of range at this offset': reach (1, 1) passes gate 1, and RANGE_UP_1 = 0.3 shrinks 100 to 30, so
+    the enemy 60 wu away on the next layer up is code 3."""
+    fake, w, a, e, arc = fail_world(0)
+    fake.units[e]["layer"] = 1
+    fake.reach_by_type = vg_reach(1, 1)
+    assert dict(firing.states(fake, w, [a], [e], arc))[a] == 0
+    fake.params["OM_TP_RANGE_UP_1"] = 0.3
+    assert dict(firing.states(fake, w, [a], [e], arc))[a] == 3
+
+
+def two_enemy_world(near_x, far_x):
+    """Shooter s (side 0) at the origin, two enemies on the +x axis: near at near_x, far at far_x. ids: s 1, near 2, far 3."""
+    fake = CountFake()
+    w = fake.new_world(0)
+    vg = fake.type_id("Vanguard")
+    s = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
+    near = fake.spawn(w, vg, 1, near_x, 0.0, 0)
+    far = fake.spawn(w, vg, 1, far_x, 0.0, 0)
+    return fake, w, s, near, far
+
+
+def test_states_code_is_against_the_nearest_hostile_when_none_is_able():
+    """Ruling: nobody able -> the code is the first failing reason against the NEAREST living hostile. Near (30) is
+    blocked (5), far (400) is out of range (3): the code is 5, not 3."""
+    fake, w, s, near, far = two_enemy_world(30.0, 400.0)
+    fake.block(s, near)
+    assert dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s] == 5
+
+
+def test_states_code_follows_the_nearest_when_the_reasons_are_swapped():
+    """The swapped case: near (120) is out of range (3), far (140) is not seen by the side (2): the code is 3."""
+    fake, w, s, near, far = two_enemy_world(120.0, 140.0)
+    fake.sees = lambda side, target: target != far
+    assert dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s] == 3
+
+
+def test_states_nearest_is_found_wherever_it_is_listed():
+    """The nearest enemy listed LAST (and a list in descending distance) still decides the code."""
+    fake, w, s, near, far = two_enemy_world(30.0, 400.0)
+    fake.block(s, near)
+    assert dict(firing.states(fake, w, [s], [far, near], ARC_OFF))[s] == 5
+    fake, w, s, near, far = two_enemy_world(120.0, 140.0)
+    fake.sees = lambda side, target: target != far
+    assert dict(firing.states(fake, w, [s], [far, near], ARC_OFF))[s] == 3
+
+
+def test_states_nearest_is_planar_distance_whatever_the_layer():
+    """Overseer default: nearest by planar x, y distance. The enemy at 50 wu on layer 1 (out of reach, code 1) is nearer
+    than the enemy at 60 wu on layer 0 (blocked, code 5), though they are on different layers: the code is 1."""
+    fake = CountFake()
+    w = fake.new_world(0)
+    vg = fake.type_id("Vanguard")
+    s = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
+    up = fake.spawn(w, vg, 1, 50.0, 0.0, 1)
+    level = fake.spawn(w, vg, 1, 0.0, 60.0, 0)
+    fake.block(s, level)
+    assert dict(firing.states(fake, w, [s], [level, up], ARC_OFF))[s] == 1
+
+
+def test_states_equal_distance_goes_to_the_lowest_unit_id():
+    """Overseer default: a tie in distance goes to the lowest unit id, wherever it is listed. Both enemies 40 wu away
+    (one each side of the shooter); the lower id is blocked (5), the higher is not seen (2): the code is 5."""
+    fake = CountFake()
+    w = fake.new_world(0)
+    vg = fake.type_id("Vanguard")
+    s = fake.spawn(w, vg, 0, 0.0, 0.0, 0)
+    low = fake.spawn(w, vg, 1, 40.0, 0.0, 0)
+    high = fake.spawn(w, vg, 1, -40.0, 0.0, 0)
+    assert low < high
+    fake.block(s, low)
+    fake.sees = lambda side, target: target != high
+    assert dict(firing.states(fake, w, [s], [high, low], ARC_OFF))[s] == 5
+
+
+def test_states_a_dead_nearest_enemy_is_skipped():
+    """Only LIVING hostiles can be the target of record: the nearer enemy is dead, the far one (blocked) decides: 5, not -1."""
+    fake, w, s, near, far = two_enemy_world(30.0, 60.0)
+    fake.set_hp(near, 0)
+    fake.block(s, far)
+    assert dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s] == 5
+
+
+def test_states_unable_engine_target_does_not_pick_the_code_when_nobody_is_able():
+    """The engine's target drives the code only through can_engage 0. Here it targets the far enemy (out of range, 3),
+    nobody is able, and the code is the first failing reason against the NEAREST living hostile (blocked, 5)."""
+    fake, w, s, near, far = two_enemy_world(30.0, 400.0)
+    fake.targets[s] = far
+    fake.block(s, near)
+    assert dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s] == 5
+
+
+def test_states_is_code_zero_when_the_engine_target_is_unable_but_another_enemy_is_able():
+    """The engine's target (far, blocked) is not able; the nearest able enemy makes it code 0, and the unit is counted."""
+    fake, w, s, near, far = two_enemy_world(30.0, 60.0)
+    fake.targets[s] = far
+    fake.block(s, far)
+    assert dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s] == 0
+    assert firing.count_able(fake, w, [s], [near, far], ARC_OFF)[0] == 1
+
+
+def test_states_minus_one_only_when_no_living_hostile_exists():
+    """-1 means no living hostile: all enemies dead, or none listed. One living enemy that cannot be engaged is never -1:
+    it reads its reason 1..5 (here out of range, 3)."""
+    fake, w, s, near, far = two_enemy_world(30.0, 60.0)
+    fake.set_hp(near, 0); fake.set_hp(far, 0)
+    assert dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s] == -1
+    fake, w, s, near, far = two_enemy_world(30.0, 400.0)
+    fake.set_hp(near, 0)
+    got = dict(firing.states(fake, w, [s], [near, far], ARC_OFF))[s]
+    assert got == 3 and got != -1
+
+
+def test_states_an_engine_target_outside_the_enemy_list_is_ignored():
+    """A target the engine names that is not in units1 (here a third side-1 unit, closer and able, not passed in) is not
+    an enemy of this call: the code is read against the listed enemy only (blocked, 5), the count is 0."""
+    fake, w, s, near, far = two_enemy_world(30.0, 60.0)
+    fake.targets[s] = near
+    fake.block(s, far)
+    assert dict(firing.states(fake, w, [s], [far], ARC_OFF))[s] == 5
+    assert firing.count_able(fake, w, [s], [far], ARC_OFF)[0] == 0
+    assert firing.count_weighted(fake, w, [s], [far], ARC_OFF)[0] == 0.0
+
+
+def test_states_are_ordered_by_unit_id_and_omit_the_dead():
+    """The list is ordered by unit id across both sides whatever order the lists come in; dead units are omitted."""
+    fake, w, a, e = row_world()
+    ids = firing.states(fake, w, [a[2], a[0], a[1]], [e], ARC_OFF)
+    assert [u for u, _ in ids] == sorted(a + [e])
+    fake.set_hp(a[1], 0)
+    fake.set_hp(e, 0)
+    assert [u for u, _ in firing.states(fake, w, a, [e], ARC_OFF)] == [a[0], a[2]]
+
+
+def test_states_use_can_engage_for_the_code_when_the_engine_has_it():
+    """After E0 the code is the engine's own can_engage answer against the target of record: every pair says 4, so the
+    states read 4 (the composed gates would say 0 or 3 here). A value from the engine is passed through unchanged."""
+    fake, w, a, e = row_world(engage_fn=lambda x, y: 4)
+    codes = dict(firing.states(fake, w, a, [e], ARC_OFF))
+    assert codes[a[1]] == 4 and codes[e] == 4
+    assert ("can_engage", w, a[1], e) in fake.calls
 
 
 # ---------------------------------------------------------------- parity (spec: "after E0 ... a difference is a defect")
@@ -597,6 +857,20 @@ def test_parity_lists_every_unit_where_the_two_answers_differ():
     able = {1, 2, 4}                                           # a[0] = 1, a[1] = 2, e = 4 engage; a[2] = 3 does not
     fake, w, a, e = row_world(engage_fn=lambda x, y: 0 if x in able else 1)
     assert sorted(firing.parity(fake, w, a, [e], ARC_OFF)) == [a[0], a[2]]
+
+
+def test_parity_is_evaluated_live_on_every_call_so_a_difference_that_appears_later_is_caught():
+    """The lab calls parity on every sampled tick (Setup.sample_every, 5 by default), so the result must follow the
+    world, not a cache: the engine and the composition agree at tick 0; at tick 5 a[2] steps out of range (composed:
+    unable) while the engine still says it can engage, and a[2] is named; at tick 10 it steps back and parity is empty.
+    Fake-engine twin of the real-engine parity test in integration/test_firing_real.py."""
+    fake, w, a, e = row_world(engage_fn=lambda x, y: 0 if x in (a_ids[1], a_ids[2], e_id) else 1)
+    a_ids, e_id = a, e
+    assert firing.parity(fake, w, a, [e], ARC_OFF) == []
+    fake.set_pos(a[2], 400.0, 0.0)
+    assert firing.parity(fake, w, a, [e], ARC_OFF) == [a[2]]
+    fake.set_pos(a[2], 100.0, 0.0)
+    assert firing.parity(fake, w, a, [e], ARC_OFF) == []
 
 
 def test_parity_is_a_list_of_ints_and_asks_the_engine_with_the_world_first():
@@ -642,7 +916,12 @@ class _FakeLib:
 
 
 def make_engine(**kw):
-    """An Engine whose library is the fake: Engine.__new__ skips the CDLL load, _bind runs for real."""
+    """An Engine whose library is the fake: Engine.__new__ skips the CDLL load, _bind runs for real.
+
+    FRAGILE BY DESIGN, read before changing engine.py: only _bind runs, so Engine.can_engage must tolerate a missing
+    om_combat_can_engage using ONLY state that _bind set (or getattr(self._lib, ..., None) at call time). Anything set in
+    __init__ (caches, flags such as a `_has_can_engage` computed there) does not exist on this object and raises
+    AttributeError; do not move such state to __init__ without moving this helper with it."""
     eng = engine_mod.Engine.__new__(engine_mod.Engine)
     eng._lib = _FakeLib(**kw)
     eng._bind()
@@ -696,3 +975,43 @@ def test_binding_unit_type_and_category_multiplier_wrap_their_library_functions(
     assert got == 5 and type(got) is int and t.calls == [(W, 3)]
     got = eng.category_multiplier(W, 2, 1)
     assert got == 1.5 and type(got) is float and m.calls == [(W, 2, 1)]
+
+
+# ---------------------------------------------------------------- Engine.profile_reach binding (moved from the retired
+# test_firing_weighted.py: the binding is unchanged, only its caller changed; the count composes reach from it)
+
+class _ReachLib:
+    def __init__(self, ret=0, write=None):
+        self.ret, self.write, self.seen = ret, write, None
+        self.om_unit_profile_reach = self._call
+
+    def _call(self, w, t, up, down):
+        self.seen = (t, up, down)
+        ref = lambda p: p._obj if hasattr(p, "_obj") else p.contents
+        if self.write:
+            ref(up).value, ref(down).value = self.write
+        return self.ret
+
+
+def _reach_engine(lib):
+    e = engine_mod.Engine.__new__(engine_mod.Engine)
+    e._lib = lib
+    return e
+
+
+def test_profile_reach_returns_the_pair_the_library_wrote():
+    """profile_reach returns (up, down) as ints."""
+    lib = _ReachLib(write=(2, 1))
+    out = _reach_engine(lib).profile_reach(None, 4)
+    assert out == (2, 1) and all(type(v) is int for v in out) and lib.seen[0] == 4
+
+
+def test_profile_reach_initialises_up_and_down_to_zero_for_the_inert_stub():
+    """A library that writes nothing reads (0, 0), not garbage."""
+    assert _reach_engine(_ReachLib()).profile_reach(None, 0) == (0, 0)
+
+
+def test_profile_reach_nonzero_return_raises_value_error():
+    """A nonzero return (unknown type) is a ValueError."""
+    with pytest.raises(ValueError):
+        _reach_engine(_ReachLib(ret=-1)).profile_reach(None, 999)
