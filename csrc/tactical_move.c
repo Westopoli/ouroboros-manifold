@@ -106,6 +106,8 @@
 #define OM_MOVE_NET_LARGE 16
 #define OM_MOVE_MASK_BITS 64
 
+/* The neighbour list of the collision sweep (om_move_collision_once) reaches this many collision radii. */
+#define OM_MOVE_LIST_REACH_RADII 4.0
 /* Marking stops, and every unit takes its turn, once this fraction (1 / the divisor) of the units have been
  * marked in one collision call: past that a dense scene revisits nearly everyone and the marking costs more
  * than it saves. A turn the marks would have skipped writes nothing, so results are bit-identical. */
@@ -1733,7 +1735,7 @@ static void om_move_collide_pair_marked(om_world *w, om_move_state *ms, uint32_t
  * when queried. It stays complete while a is within slack of that position,
  * and a is re-queried once it has moved further.
  *
- * Kept from the sweep this replaced (its list reach is 4 radii): that sweep
+ * Kept from the sweep this replaced (see also: OM_MOVE_LIST_REACH_RADII): that sweep
  * built its list at twice the reach and examined a's drift only before its
  * next listed candidate, so a unit that drifted past the slack after its last
  * listed candidate ended its turn without a re-query, whatever it now
@@ -1762,7 +1764,7 @@ static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int
             om_move_collide_pair_marked(w, ms, id_i, id_j);
             mx = om_move_grid_x(ms, id_i) - ax0; my = om_move_grid_y(ms, id_i) - ay0;
             if (mx * mx + my * my > drift2) {
-                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, 4.0 * ms->radius, id_j)) break;
+                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH_RADII * ms->radius, id_j)) break;
                 ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
                 n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_j);
                 k = (uint32_t)-1;
