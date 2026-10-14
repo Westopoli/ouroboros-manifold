@@ -21,21 +21,37 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # project.godot: config/use_custom_user_dir=true, config/custom_user_dir_name="data"
-# -- user:// resolves to this OS-level dir (NOT the launch's scratch cwd), so it
-# persists across every --qa-port launch on a given machine, first-ever-run
-# included. scenes/privacy_modal/privacy_modal.gd's FLAG_PATH
-# ("user://privacy_accepted") lives here.
-_USER_DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))) / "data"
-PRIVACY_FLAG_PATH = _USER_DATA_DIR / "privacy_accepted"
+# -- user:// resolves to <XDG_DATA_HOME>/data, so the user dir is computed PER
+# INSTANCE at construction (GodotGame.user_dir, DaemonClient.user_dir) from the
+# child environment godot_env() builds: the caller's XDG_DATA_HOME when it has a
+# non-empty one, else <scratch>/xdg. Never at import, never the machine's
+# ~/.local/share/data (FINDING-ambient-user-dir). scenes/privacy_modal/
+# privacy_modal.gd's FLAG_PATH ("user://privacy_accepted") lives there.
+# See also: scripts/specfactory/merge_gate.sh (the gate exports the same variable)
 
 
-def write_privacy_flag() -> None:
-    """Creates user://privacy_accepted the way privacy_modal.gd's
-    _on_accept_pressed() does: FileAccess.open(FLAG_PATH, FileAccess.WRITE)
-    then close() -- an empty file. Used by S-C8-07 to force the flag-present
-    boot path (see GodotGame's reset_privacy_flag=False)."""
-    _USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    PRIVACY_FLAG_PATH.touch()
+def godot_env(base_env: dict, scratch: Path, save_dir: Path | None) -> dict:
+    """The whole child environment of the game: a copy of base_env without the
+    seat's display variables, OM_SAVE_DIR (when save_dir is given), software GL,
+    and XDG_DATA_HOME = <scratch>/xdg unless base_env already has a non-empty one.
+    Pure: writes nothing."""
+    env = dict(base_env)
+    for var in ("DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY"):
+        env.pop(var, None)
+    if save_dir is not None:
+        env["OM_SAVE_DIR"] = str(save_dir)
+    env["LIBGL_ALWAYS_SOFTWARE"] = "1"
+    env["GALLIUM_DRIVER"] = "llvmpipe"
+    if not env.get("XDG_DATA_HOME"):
+        env["XDG_DATA_HOME"] = str(scratch / "xdg")
+    return env
+
+
+def _user_dir_for(env: dict, scratch: Path) -> Path:
+    xdg = Path(env["XDG_DATA_HOME"])
+    if xdg == scratch / "xdg":
+        xdg.mkdir(parents=True, exist_ok=True)
+    return xdg / "data"
 
 
 def find_godot() -> str:
@@ -64,9 +80,14 @@ class DaemonClient:
     """One TCP round trip per call, matching autoload/qa_daemon.gd's
     newline-delimited-JSON protocol (see its _handle_line/_dispatch)."""
 
-    def __init__(self, port: int, timeout: float = 10.0):
+    def __init__(self, port: int, timeout: float = 10.0, user_dir: Path | None = None):
         self.port = port
         self.timeout = timeout
+        if user_dir is None:
+            # liberty 2026-10-13: a client built alone has no game scratch; it gets its own.
+            scratch = Path(tempfile.mkdtemp(prefix="qa_client."))
+            user_dir = _user_dir_for(godot_env(os.environ, scratch, None), scratch)
+        self.user_dir = user_dir
 
     def call(self, verb: str, *args) -> dict:
         with socket.create_connection(("127.0.0.1", self.port), timeout=self.timeout) as sock:
@@ -117,10 +138,19 @@ class GodotGame:
         # never in the player's real save directory.
         self.save_dir = self.scratch / "saves"
         self.save_dir.mkdir(parents=True, exist_ok=True)
-        self.client = DaemonClient(qa_port)
+        self.user_dir = _user_dir_for(godot_env(os.environ, self.scratch, self.save_dir), self.scratch)
+        self.client = DaemonClient(qa_port, user_dir=self.user_dir)
         self.proc: subprocess.Popen | None = None
         self._stdout_f = None
         self._stderr_f = None
+
+    def write_privacy_flag(self) -> None:
+        """Creates user://privacy_accepted the way privacy_modal.gd's
+        _on_accept_pressed() does: FileAccess.open(FLAG_PATH, FileAccess.WRITE)
+        then close() -- an empty file. Used by S-C8-07 to force the flag-present
+        boot path (see reset_privacy_flag=False)."""
+        self.user_dir.mkdir(parents=True, exist_ok=True)
+        (self.user_dir / "privacy_accepted").touch()
 
     def godot_args(self, godot: str = "godot") -> list[str]:
         return [
@@ -148,17 +178,12 @@ class GodotGame:
         # prove the bug rather than dodge it.
         if self.reset_privacy_flag:
             try:
-                PRIVACY_FLAG_PATH.unlink()
+                (self.user_dir / "privacy_accepted").unlink()
             except FileNotFoundError:
                 pass
 
         godot = find_godot()
-        env = dict(os.environ)
-        for var in ("DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY"):
-            env.pop(var, None)
-        env["OM_SAVE_DIR"] = str(self.save_dir)
-        env["LIBGL_ALWAYS_SOFTWARE"] = "1"
-        env["GALLIUM_DRIVER"] = "llvmpipe"
+        env = godot_env(os.environ, self.scratch, self.save_dir)
         cmd = self.godot_args(godot)
         self._stdout_f = open(self.out_dir / "stdout.log", "wb")
         self._stderr_f = open(self.out_dir / "stderr.log", "wb")
