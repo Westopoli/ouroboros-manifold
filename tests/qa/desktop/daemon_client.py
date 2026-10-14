@@ -114,6 +114,9 @@ class DaemonClient:
         return self.call("input", "click", x, y, button)
 
     def screenshot(self, name: str) -> dict:
+        # liberty 2026-10-13: the game's qa-port mode never creates user://qa (qa_driver.gd makes it
+        # only under --qa-script), and a fresh per-instance user dir has none: make it here.
+        (self.user_dir / "qa").mkdir(parents=True, exist_ok=True)
         return self.call("screenshot", name)
 
 
