@@ -2276,6 +2276,7 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_get_deployed_force_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_mission_get_enemy_power", [W], ctypes.c_double, ("w",))
     _bind(lib, "om_mission_get_force_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_get_force_group", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "i"))
     _bind(lib, "om_mission_get_force_unit", [W, ctypes.c_uint32, P(ctypes.c_int32), P(ctypes.c_int32)], ctypes.c_int, ("w", "i", "type", "tier"))
     _bind(lib, "om_mission_get_objective_completion", [W, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx"))
     _bind(lib, "om_mission_get_objective_score", [W], ctypes.c_double, ("w",))

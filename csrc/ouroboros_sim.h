@@ -1805,6 +1805,7 @@ int32_t om_mission_get_enemy_faction(const om_world *w);
 double om_mission_get_enemy_power(const om_world *w);
 uint32_t om_mission_get_force_count(const om_world *w);
 int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier);
+int32_t om_mission_get_force_group(const om_world *w, uint32_t i);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);
 uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);

@@ -3057,6 +3057,11 @@ int om_objective_get_done(const om_world *w, uint32_t idx) {
     if (o->spec.is_failed) return 2;
     return (o->spec.is_complete || o->spec.completion >= 1.0) ? 1 : 0;
 }
+int32_t om_mission_get_force_group(const om_world *w, uint32_t i) {
+    /* STUB */
+    (void)w; (void)i;
+    return 0;
+}
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
