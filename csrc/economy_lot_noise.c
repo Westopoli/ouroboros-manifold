@@ -31,4 +31,8 @@ void om_lot_noise_range(int32_t *lo_q16, int32_t *hi_q16) {
     if (hi_q16) *hi_q16 = LOT_NOISE_HI_Q16;
 }
 
-/* om_lane_build goes here (unit B2L; R-193-09) */
+/* placeholder for unit B2L: B2L replaces this body (VG-P2 ordering, see the P2 Build brief) */
+void om_lane_build(const om_layout_terrain *t, uint64_t seed, int32_t side, const uint32_t *core_cells, uint32_t n_cores,
+                   uint8_t *lane, uint8_t *level_out) {
+    (void)t; (void)seed; (void)side; (void)core_cells; (void)n_cores; (void)lane; (void)level_out;
+}
