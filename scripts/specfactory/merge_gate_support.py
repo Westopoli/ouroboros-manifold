@@ -29,6 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import suite_regression as sr  # noqa: E402
 from red_check import is_placeholder_control  # noqa: E402
+from pieces import SHARED_RECORD_GLOBS  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
@@ -44,6 +45,9 @@ DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
     # commit sometimes sweeps this in from the shared worktree; never a piece's
     # own footprint. See also: B10-1 merge reject 2026-09-22, owns ['csrc/...']
     ".claude-swarm.toml",
+    # the Westley shot page and its copies: written by every shot-carrying piece in turn,
+    # shared by rule. See also: pieces.SHARED_RECORD_GLOBS, HARNESS-westley-folder
+    *SHARED_RECORD_GLOBS,
 )
 # A C return type: any run of qualifier/type words (const, static, unsigned,
 # a `_t` typedef, an om_-prefixed struct/enum name, ...) plus optional
