@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 10 /* bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 11 /* bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -461,6 +461,10 @@ int om_walk_route(const om_world *w, uint32_t unit, double gx, double gy, double
 void om_move_walker_tick(om_world *w);
 /* The route-cache epoch om_move_terrain_changed and om_move_set_canvas_size bump; body in csrc/tactical_move.c, caller csrc/walk_route.c. */
 uint32_t om_move_terrain_epoch(om_world *w);
+/* Internal, not in the header: the stored walk route of a unit (W2); returns route_n, writes route_i and min(route_n, cap)
+ * interleaved (x, y) pairs, a read that changes no checksum. Body in csrc/tactical_move.c.
+ * See also: tests/csim/test_VG_W_w2_routes.py */
+uint32_t om_move_route_get(const om_world *w, uint32_t unit_id, uint32_t *route_i, double *pts, uint32_t cap);
 
 /* Terrain noise (csrc/terrain_noise.c), integer only, no libm, no world rng.
  * Fixed point is Q16.16 (1.0 = 65536). Lattice spacing is 1.0 in input units.
