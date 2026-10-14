@@ -46,7 +46,7 @@ Direction changed 2026-10-02, rewrite pending: a guard stance joins the commands
 
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
-- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march. A unit attack-moved alone is not a group: it resumes toward the point after every fight.
+- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point; his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The engine today ends a group once every member has engaged and never resumes it (the Architect's clause, A124 build); the resume for groups is a pending engine piece, measured 2026-10-13: two groups attack-moved to one point stalled 303 to 336 wu apart with range 300, while the same units ordered one by one fought to elimination.
 - R-096-03  Given an attack-move engagement, When the unit itself has pursued more than 200 wu from its anchor (its position at acquisition), Then it drops the target and resumes; a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance, which made a 300 wu weapon drop a target standing still in range).
 - R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
@@ -115,6 +115,7 @@ Rules
 - R-100-01  Given a unit attacking a target, When facing updates, Then it faces the target; given moving with no target, it faces its heading; given idle with no target, it keeps its last facing.
 - R-100-02  Given a facing change, When it turns, Then the turn rate is capped at 6.0 rad/s for Strike, 4.0 for Line, 2.5 for Siege.
 - R-100-03  Given a unit retreating from a pursuer under attack-target, When facing updates, Then it faces the pursuer.
+- R-100-04  DRAFT (Westley, 2026-10-13: "add a firing-arc rule to the game"; Q-100-01): Given a unit with a target, When the target lies outside the arc of `FIRING_ARC_DEG` (DRAFT-firing-arc-deg 120; 360 is no arc) about the unit's facing, Then the unit does not fire; it keeps the target, turns toward it at the R-100-02 rate, and fires once the target is inside. Acquisition, the hold and return fire are untouched; a unit kiting under attack-target faces its target directly. The width, and whether it differs by category, are Westley's after the skill lab shows the effect.
 
 Inputs: target; heading.
 Outputs: facing in the tick delta; renderer interpolates.
@@ -126,6 +127,7 @@ As a commander, I want to see units turn, slow behind blockers, and settle into 
 Rules
 - R-101-01  Given a T2 clip of a 20-unit move, When reviewed, Then no unit overlaps another, no unit teleports, and units arrive within 2 s of each other.
 - R-101-02  Given the renderer, When it draws between ticks, Then position and facing are linearly interpolated from the last two ticks.
+- R-101-03  Given a move order that has just been issued, When the selected group is on the way, Then the route the planner found is drawn on the map as a coloured line from the group to the ordered spot, and it stays until the group arrives (R-095-05); the line is the walkers prototype's route line, copied, not regenerated (Westley 2026-10-13: "Shows units clumped on bottom moving by the looks of it, hard to tell because it's just a photo, one of the prototypes showed a really clever 'path' colored line showing the route it found to get to the location I right clicked. That might be useful here, and the code is probably mostly copy+pastable, no re-generation needed.").
 
 Inputs: tick deltas.
 Outputs: screen.
