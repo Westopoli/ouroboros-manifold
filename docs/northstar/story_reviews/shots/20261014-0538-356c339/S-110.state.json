@@ -1,0 +1,577 @@
+{
+  "inventory": {
+    "hud_texts": {
+      "@Button@192": "BACK",
+      "@CheckButton@104": "",
+      "@CheckButton@107": "",
+      "@Label@103": "Fullscreen",
+      "@Label@106": "VSync",
+      "@Label@109": "Galaxy Quality",
+      "@Label@121": "CAMERA",
+      "@Label@124": "Pan Speed",
+      "@Label@126": "1.0x",
+      "@Label@129": "AUDIO",
+      "@Label@132": "Master Volume",
+      "@Label@134": "80%",
+      "@Label@136": "Music Volume",
+      "@Label@138": "70%",
+      "@Label@140": "SFX Volume",
+      "@Label@142": "80%",
+      "@Label@144": "Narration Volume",
+      "@Label@146": "90%",
+      "@Label@149": "KEYBINDS",
+      "@Label@152": "Select",
+      "@Label@153": "LMB",
+      "@Label@155": "Box Select",
+      "@Label@156": "LMB Drag",
+      "@Label@158": "Move",
+      "@Label@159": "RMB",
+      "@Label@161": "Attack Move",
+      "@Label@162": "A, then left-click",
+      "@Label@164": "Stop",
+      "@Label@165": "S",
+      "@Label@167": "Control Group Assign",
+      "@Label@168": "Ctrl+1-9",
+      "@Label@170": "Control Group Select",
+      "@Label@171": "1-9",
+      "@Label@173": "All Army",
+      "@Label@174": "F1",
+      "@Label@176": "Ability",
+      "@Label@177": "P",
+      "@Label@179": "Layer Up",
+      "@Label@180": "Q",
+      "@Label@182": "Layer Down",
+      "@Label@183": "E",
+      "@Label@185": "Sensor Pulse",
+      "@Label@186": "Space",
+      "@Label@188": "Home View",
+      "@Label@189": "Home",
+      "@Label@190": "Keybind customization coming soon.",
+      "@Label@194": "ESC to return",
+      "@Label@83": "SETTINGS",
+      "@Label@89": "DISPLAY",
+      "@Label@92": "Resolution",
+      "@OptionButton@101": "1920x1080",
+      "@OptionButton@118": "Full",
+      "TMButton": "APPLY"
+    },
+    "nodes_by_name": {
+      "@Button@192": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "@CheckButton@104": {
+        "class": "CheckButton",
+        "count": 1,
+        "visible": true
+      },
+      "@CheckButton@107": {
+        "class": "CheckButton",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@80": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@Control@193": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@102": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@105": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@108": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@123": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@131": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@135": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@139": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@143": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@151": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@154": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@157": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@160": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@163": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@166": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@169": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@172": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@175": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@178": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@181": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@184": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@187": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@191": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@91": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HSlider@125": {
+        "class": "HSlider",
+        "count": 1,
+        "visible": true
+      },
+      "@HSlider@133": {
+        "class": "HSlider",
+        "count": 1,
+        "visible": true
+      },
+      "@HSlider@137": {
+        "class": "HSlider",
+        "count": 1,
+        "visible": true
+      },
+      "@HSlider@141": {
+        "class": "HSlider",
+        "count": 1,
+        "visible": true
+      },
+      "@HSlider@145": {
+        "class": "HSlider",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@103": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@106": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@109": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@121": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@124": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@126": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@129": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@132": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@134": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@136": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@138": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@140": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@142": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@144": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@146": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@149": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@152": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@153": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@155": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@156": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@158": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@159": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@161": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@162": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@164": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@165": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@167": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@168": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@170": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@171": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@173": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@174": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@176": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@177": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@179": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@180": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@182": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@183": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@185": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@186": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@188": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@189": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@190": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@194": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@83": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@89": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@92": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@MarginContainer@81": {
+        "class": "MarginContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@OptionButton@101": {
+        "class": "OptionButton",
+        "count": 1,
+        "visible": true
+      },
+      "@OptionButton@118": {
+        "class": "OptionButton",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@119": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@127": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@PanelContainer@147": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@ScrollContainer@86": {
+        "class": "ScrollContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@120": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@122": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@128": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@130": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@148": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@150": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@82": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@87": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@88": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@90": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "TMButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "TMCard": {
+        "class": "PanelContainer",
+        "count": 1,
+        "visible": true
+      },
+      "TMDivider": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      }
+    }
+  },
+  "qa": {
+    "fullscreen": false,
+    "galaxy_quality": 0,
+    "galaxy_quality_items": [
+      "Full",
+      "Stand-in",
+      "Fewer particles"
+    ],
+    "plants": [],
+    "resolution_index": 2,
+    "scene": "settings",
+    "tick": -1,
+    "vsync": true
+  },
+  "scene": "res://scenes/settings/settings.tscn",
+  "tick": 0
+}
