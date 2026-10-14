@@ -43,7 +43,9 @@ FLYER_TICKS = 200
 # Re-recorded 2026-10-09 (TD-VG-E-1): K-e folds the economy words into the factions section; old 14299308082090419322.
 # TD-VG-E-17: K-e5 moved the whole word (TD-VG-E-9 value 2109990263532742758) via the economy block; the pin is now the
 # (units, movement) sections.
-FLYER_SECTIONS_200 = (1545777915625493498, 11290823588580758478)   # recorded 2026-10-11 on the K-e5 tree 2747b283; identical on main c88cead2
+# TD-VG-W-2: old 11290823588580758478, new 12903589747027128004 (movement word only; units word 1545777915625493498 unchanged):
+# W2 stored routes add the route block to the movement section.
+FLYER_SECTIONS_200 = (1545777915625493498, 12903589747027128004)   # re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
 
 
 def _units_movement(lib, w):
