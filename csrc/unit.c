@@ -3092,6 +3092,11 @@ int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a
     if (tick) *tick = st->events[i].tick;
     return 0;
 }
+int om_combat_can_engage(const om_world *w, uint32_t attacker, uint32_t target) {
+    /* LAB-REV2 E0 contract stub: -1 (not built) until LAB-REV2-E2 writes the gates. See also: om_roster_set_cone. */
+    (void)w; (void)attacker; (void)target;
+    return -1;
+}
 /* ---- end generated stubs ---- */
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */

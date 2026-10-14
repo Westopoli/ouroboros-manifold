@@ -358,6 +358,9 @@ static void om_move_transit_cancel(om_move_unit *mu) {
 #define OM_PP_SLOPE_FACTOR_DEFAULT 1.1 /* R-004-07: Westley 2026-10-06; provisional (2026-10-06) */
 #define OM_PP_SIGHT_EYE_DEFAULT 50.0 /* wu above the ground; provisional (2026-10-06) lab draft */
 #define OM_PP_SIGHT_EYE_HI 1000.0
+#define OM_PP_ARC_DEFAULT 360.0 /* LAB-REV2 E0: no arc; provisional draft, Westley owns */
+#define OM_PP_ARC_LO 10.0
+#define OM_PP_ARC_HI 360.0
 #define OM_PP_FLYER_SEEN_DEFAULT 1.5 /* provisional (2026-10-06) lab draft; Westley: longer than the flyer's own vision */
 #define OM_PP_AOE_CAP_HI 100.0
 #define OM_PP_PING_REACH_DEFAULT 2000.0
@@ -411,6 +414,8 @@ static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
     { OM_PP_REAL, OM_PP_SIGHT_EYE_DEFAULT, 0.0, OM_PP_SIGHT_EYE_HI },
     /* R-005-11: ground-era flyer seen from max(sensor radii) x this; at least 1 so it is seen from farther than it sees */
     { OM_PP_REAL, OM_PP_FLYER_SEEN_DEFAULT, 1.0, OM_PP_MULT_HI },
+    /* LAB-REV2 E0 (R-100 draft): firing arc in degrees, 360 = no arc (default); read by the fire pass from LAB-REV2-E2 */
+    { OM_PP_REAL, OM_PP_ARC_DEFAULT, OM_PP_ARC_LO, OM_PP_ARC_HI },
 };
 
 static void om_pp_load_defaults(double *out) {
@@ -3235,7 +3240,9 @@ void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t l
 }
 
 /* ---- generated stubs from signatures.toml ---- */
-/* A133 Q-C4: settings are configuration, not simulation state: not saved, not hashed.
+/* A133 Q-C4: settings survive om_tactical_reset and a new world starts at defaults. They are saved in the
+ * movement slot and hashed in the movement section of the full checksum (every member, OM_TP__COUNT of them);
+ * only the light om_world_get_state_checksum leaves them out.
  * # See also: om_tactical_reset (csrc/unit.c) frees w->move_state, which holds them. */
 double om_tactical_get_param(const om_world *w, om_tac_param p) {
     const om_move_state *ms;
@@ -3444,6 +3451,11 @@ int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
         om_tac_unit_set_guard(w, unit_ids[i], 1);
     }
     return 0;
+}
+int om_roster_set_cone(om_world *w, int unit_type, double range, double half_angle_deg, double share) {
+    /* LAB-REV2 E0 contract stub: -1 (not built) until LAB-REV2-E2 writes the cone table. See also: om_combat_can_engage. */
+    (void)w; (void)unit_type; (void)range; (void)half_angle_deg; (void)share;
+    return -1;
 }
 /* ---- end generated stubs ---- */
 

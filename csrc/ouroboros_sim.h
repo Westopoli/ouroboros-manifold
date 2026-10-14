@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 7
+#define OM_ABI_VERSION 8
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -1073,8 +1073,21 @@ typedef enum {
     OM_TP_SLOPE_DOWN_MULT,
     OM_TP_SIGHT_EYE_HEIGHT,
     OM_TP_GROUND_FLYER_SEEN_MULT,
+    OM_TP_FIRING_ARC_DEG,
     OM_TP__COUNT
 } om_tac_param;
+
+/* LAB-REV2 E0 (R-082-06 draft): per-type cone area attack, replacing the disc when range > 0. range 0 clears the cone.
+ * half_angle_deg is in [1, 180], share in [0, 10], range >= 0. Returns 0 ok, -1 unknown type, -2 refused value.
+ * Stub: returns -1 until LAB-REV2-E2 writes the body. */
+int om_roster_set_cone(om_world *w, int unit_type, double range, double half_angle_deg, double share);
+
+/* LAB-REV2 E0 (R-100 draft): could the attacker fire at the target this tick if ready. -1 for an unknown id, a dead
+ * unit, the same or a neutral faction, attacker == target, or a non-combat attacker; else the first failing reason:
+ * 1 out of reach, 2 not seen by the side, 3 out of range at this offset, 4 outside the arc (arc below 360 only),
+ * 5 line blocked; 0 when every gate passes. Ignores cooldown, backswing, the cohort slot and the order kind.
+ * Stub: returns -1 until LAB-REV2-E2 writes the body. */
+int om_combat_can_engage(const om_world *w, uint32_t attacker, uint32_t target);
 
 /* PP-contract: a unit's active-emission mode (om_command_set_emission). */
 typedef enum { OM_EMIT_SILENT = 0, OM_EMIT_ACTIVE = 1 } om_emission;

@@ -161,7 +161,7 @@ def test_save_round_trip_keeps_era_kind_and_movement_kinds(lib, world_factory):
     assert lib.om_roster_set_movement_kind(src, TYPE_A, MOVE_WALKING) == 0
     assert lib.om_roster_set_movement_kind(src, TYPE_B, MOVE_WALKING) == 0
     buf, n = _save(lib, src)
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 11, "K-e5 bumps OM_SAVE_FORMAT_VERSION to 10 (TD-VG-E-16); W2 bumps it to 11 (TD-VG-W-1)"
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 12, "K-e5 bumps OM_SAVE_FORMAT_VERSION to 10 (TD-VG-E-16); W2 bumps it to 11 (TD-VG-W-1); LAB-REV2 E0 bumps it to 12"
     dst = world_factory(n_regions=1)
     assert lib.om_era_kind(dst) == 0   # control: a fresh world is space, kinds default flying
     assert lib.om_unit_profile_movement_kind(dst, TYPE_A) == MOVE_FLYING

@@ -61,7 +61,7 @@ _build_libs()
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 7
+EXPECTED_ABI_VERSION = 8
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -536,7 +536,8 @@ class OMTacParam:
     SLOPE_DOWN_MULT = 63
     SIGHT_EYE_HEIGHT = 64
     GROUND_FLYER_SEEN_MULT = 65
-    _COUNT = 66
+    FIRING_ARC_DEG = 66
+    _COUNT = 67
 
 
 class OMEmission:
@@ -2344,6 +2345,7 @@ def _bind_e11(lib):
     _bind(lib, "om_era_elevation_damage_bonus_enabled", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_map_add_cover", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "x", "y", "radius", "height"))
     _bind(lib, "om_roster_register_custom_unit", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_int, ("w", "type_id", "category", "role", "max_hp", "base_damage", "attack_interval", "attack_range", "speed", "sensor_radius", "layer_transition_time", "aoe_radius", "ability_id"))
+    _bind(lib, "om_roster_set_cone", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "unit_type", "range", "half_angle_deg", "share"))
     _bind(lib, "om_tactical_category_multiplier", [W, ctypes.c_int, ctypes.c_int], ctypes.c_double, ("w", "attacker_category", "target_category"))
     _bind(lib, "om_tactical_disable_abilities", [W], None, ("w",))
     _bind(lib, "om_tactical_get_param", [W, ctypes.c_int], ctypes.c_double, ("w", "p"))
@@ -2477,6 +2479,7 @@ def _bind_e13(lib):
     V = ctypes.c_void_p
     W = OMWorldP
     _bind(lib, "om_collision_pass", [W], None, ("w",))
+    _bind(lib, "om_combat_can_engage", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "attacker", "target"))
     _bind(lib, "om_combat_can_shoot", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "p1"))
     _bind(lib, "om_command_attack_target_kiting", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2", "p3"))
     _bind(lib, "om_command_direct_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))

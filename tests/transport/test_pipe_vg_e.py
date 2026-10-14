@@ -191,7 +191,7 @@ def test_hello_abi_is_7():
         script += len(body).to_bytes(4, "big") + body
     data = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60).stdout
     n = int.from_bytes(data[:4], "big")
-    assert json.loads(data[4:4 + n])["abi"] == 7
+    assert json.loads(data[4:4 + n])["abi"] == 8
 
 
 # ---- K-e6: lots on full frames (R-193-01, R-193-02) -------------------------------------------------------------------------
