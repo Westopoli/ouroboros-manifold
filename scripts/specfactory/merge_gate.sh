@@ -56,6 +56,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# FINDING-ambient-user-dir: no stage reads or writes the machine's ~/.local/share/data.
+# project.godot's custom_user_dir_name="data" puts user:// at $XDG_DATA_HOME/data, so every
+# stage inherits a scratch XDG_DATA_HOME (dies with SCRATCH_ROOT). Only the export templates
+# are linked in (the headless export tests need them); nothing else lives under it.
+# See also: scripts/run_godot_tests.sh, tests/qa/desktop/daemon_client.py
+export XDG_DATA_HOME="$SCRATCH_ROOT/xdg"
+mkdir -p "$SCRATCH_ROOT/xdg/godot"
+if [[ -n "${HOME:-}" && -d "$HOME/.local/share/godot/export_templates" ]]; then
+    ln -s "$HOME/.local/share/godot/export_templates" "$SCRATCH_ROOT/xdg/godot/export_templates"
+fi
+
 REJECTED=0
 
 STAGE_MARK_US="${EPOCHREALTIME/./}"
