@@ -6,8 +6,8 @@ OM_TP_PURSUE_BY_STEERING switch of P1 (the half of it that lives in the movement
 by the ordinary step, with steering and collision).
 
 Group orders go through `om_command_group_move` (a move) and `om_command_attack_move` with two or more units
-(an attack-move: slots, as R-095-02 to R-095-04). A unit attack-moved alone is not a group (R-096-02, Westley:
-"It should resume its prior goal after the fight is completed.").
+(an attack-move: slots, as R-095-02 to R-095-04). A unit attack-moved alone is not a group and a group resumes after every fight just as the lone unit does (R-096-02,
+Westley: "It should resume its prior goal after the fight is completed.", rewritten 2026-10-13).
 
 Not written here: the leash (R-096-03, unit.c), pursuit target choice and the first-shot timing (P1, P2, P6; PP-unit).
 Not written, needs the grid: R-095-04 (a blocked slot falls back to the click point), in test_PP_move_route.py.
@@ -184,7 +184,7 @@ def test_R_095_03_attack_move_scatter_fallback_beyond_450(lib, tw):
     assert lib.om_unit_get_destination(tw, d) == pytest.approx((1400.0, 500.0), abs=POS_TOL)
 
 
-# ---------------------------------------------------------------- the group ends / the lone unit resumes (R-096-02)
+# ---------------------------------------------------------------- the group and the lone unit both resume (R-096-02)
 
 def _fight_scene(lib, w, friend_positions, enemy_positions, unit_type=VANGUARD):
     friends = [lib.om_unit_spawn(w, unit_type, FRIEND, x, y, 0) for (x, y) in friend_positions]
@@ -205,11 +205,12 @@ def _kill(lib, w, ids):
         lib.om_unit_set_hp(w, e, 0.0)
 
 
-def test_R_096_02_group_ends_when_every_member_has_engaged_and_does_not_resume(lib, tw):
-    """R-096-02: once every member of an attack-move group has engaged, the group ends and its members do not resume
-    the march. Vanguards A (0,0) and B (0,60), attack-moved together to (1000,0); enemy Raiders 150 wu ahead of each,
-    inside the Vanguard's 300 wu range. Both engage; the enemies are then removed; for the next 10 ticks neither
-    Vanguard moves. (The C resumes the march.)"""
+def test_R_096_02_group_resumes_after_every_member_has_engaged(lib, tw):
+    """R-096-02 (rewritten 2026-10-13, option (a); TD-LAB-REV2-E1-1 replaces the old group-ends test): once every member
+    of an attack-move group has engaged, the group still resumes toward its point after the fight, as a unit attack-moved
+    alone does. Vanguards A (0,0) and B (0,60), attack-moved together to (1000,0); enemy Raiders 150 wu ahead of each,
+    inside the Vanguard's 300 wu range. Both engage; the enemies are then removed; within 10 ticks both Vanguards march
+    on toward the point (+x)."""
     (a, b), (e1, e2) = _fight_scene(lib, tw, [(0.0, 0.0), (0.0, 60.0)], [(150.0, 0.0), (150.0, 60.0)])
     lib.om_command_attack_move(tw, [a, b], 2, 1000.0, 0.0)
     assert _run_until(lib, tw, lambda: lib.om_unit_get_target(tw, a) != 0 and lib.om_unit_get_target(tw, b) != 0), \
@@ -217,15 +218,15 @@ def test_R_096_02_group_ends_when_every_member_has_engaged_and_does_not_resume(l
     _kill(lib, tw, [e1, e2])
     lib.om_tactical_step(tw)
     lib.om_tactical_step(tw)
-    pa, pb = lib.om_unit_get_pos(tw, a), lib.om_unit_get_pos(tw, b)
+    xa, xb = lib.om_unit_get_pos(tw, a)[0], lib.om_unit_get_pos(tw, b)[0]
     for _ in range(10):
         lib.om_tactical_step(tw)
-    assert lib.om_unit_get_pos(tw, a) == pytest.approx(pa, abs=POS_TOL), "member A resumed the march after the group ended"
-    assert lib.om_unit_get_pos(tw, b) == pytest.approx(pb, abs=POS_TOL), "member B resumed the march after the group ended"
+    assert lib.om_unit_get_pos(tw, a)[0] > xa + 10.0, "member A did not resume the march after the fight"
+    assert lib.om_unit_get_pos(tw, b)[0] > xb + 10.0, "member B did not resume the march after the fight"
 
 
 def test_R_096_02_group_has_not_ended_while_a_member_has_not_engaged(lib, tw):
-    """R-096-02 (control for the group-end test): while one member has never engaged, the group has not ended, and an
+    """R-096-02 (control for the group-resume test): while one member has never engaged, the group marches on, and an
     engaged member resumes toward its slot when its target dies. Vanguards A (0,0) and B (0,-800) (centroid (0,-400),
     each 400 from it, so slots apply); one enemy Raider at (200,0): in A's range, 824 from B (beyond its sensor 700),
     so only A engages. After the enemy is removed A marches on (+x)."""
@@ -244,9 +245,9 @@ def test_R_096_02_group_has_not_ended_while_a_member_has_not_engaged(lib, tw):
 
 def test_R_096_02_lone_attack_moved_unit_resumes_after_the_fight(lib, tw):
     """R-096-02, Westley 2026-10-02: "It should resume its prior goal after the fight is completed." A unit
-    attack-moved alone is not a group and resumes toward its point after every fight. Vanguard A (0,0) to (3000,0);
-    an enemy Raider at (150,0) is engaged then removed; within 10 ticks A is marching again. Green today; the
-    positive control of the group-end test."""
+    attack-moved alone resumes toward its point after every fight, and since 2026-10-13 a group does too. Vanguard A
+    (0,0) to (3000,0); an enemy Raider at (150,0) is engaged then removed; within 10 ticks A is marching again. The
+    lone-unit twin of the group-resume test."""
     (a,), (e,) = _fight_scene(lib, tw, [(0.0, 0.0)], [(150.0, 0.0)])
     lib.om_command_attack_move(tw, a, 3000.0, 0.0)
     assert _run_until(lib, tw, lambda: lib.om_unit_get_target(tw, a) != 0), "scene error: A did not engage"

@@ -246,7 +246,8 @@ typedef struct {
     double   issued_x, issued_y;
     int      halted;
     /* R-096-02 (PURSUE_BY_STEERING): the move group an attack-move of two or more units formed (0 for a lone
-     * unit) and whether this member has held a target since; the group ends once every member has. */
+     * unit) and whether this member has held a target since (R-096-02 rewritten 2026-10-13: nothing ends the group on it;
+     * a member resumes toward the point after every engagement). */
     uint32_t am_gid;
     int      am_engaged;
     /* R-096-08: set by om_command_guard (tactical_move.c); the unit holds, fires in range, never walks */
