@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab import engine, scenes  # noqa: E402
+from scripts.skilllab import engine, maps, plays_space, scenes  # noqa: E402
 from scripts.skilllab.contract import Block, Group, Setup, Terrain  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 from scripts.skilllab.formations import place  # noqa: E402
@@ -202,3 +202,144 @@ def test_the_preflight_runs_no_tick_and_does_not_move_a_unit(library):
     again = _wall_scene([Block(1400.0, 0.0, 1600.0, 1600.0, 0, 4)])
     assert _preflight(setup, library) == _preflight(setup, library) == "unroutable"
     assert setup == again
+
+
+# ---------------------------------------------------------------- audit fixes (D9): asymmetric reach, several groups, the label, precedence
+
+PLAYS_PLACED = ["s1_hold_choke", "s1_outrange", "s2_concave", "s2_spread_line", "s2_screen", "s3_types_by_reach", "s4_bait",
+                "s5_vulnerable_away", "s2_mass_one_end", "s4_do_not_chase", "naive"]       # as in test_placed_by_feature.py
+UP_REACH = {"UpR": {"base": "Interceptor", "reach": (2, 0)}}       # reaches two layers up, none down
+DOWN_REACH = {"DownR": {"base": "Bombard", "reach": (0, 2)}}       # reaches two layers down, none up (spec roster mix M3)
+
+
+def _holder_at(layer, x=700.0, y=0.0):
+    return _blob(1, "Vanguard", 8, x, y, order="guard", layer=layer)
+
+
+def _reach_scene(unit, types, attacker_layer, holder_layer):
+    holder = _holder_at(holder_layer)
+    return Setup(groups=(_blob(0, unit, 8, -700.0, 0.0, layer=attacker_layer), holder), unit_types=dict(types), point=_centroid([holder]))
+
+
+@pytest.mark.parametrize("holder_layer,expected", [(0, "ok"), (1, "ok"), (2, "ok"), (3, "no_reach"), (4, "no_reach")])
+def test_an_attacker_that_reaches_two_down_covers_the_layers_below_it_and_not_above(library, holder_layer, expected):
+    """Reach (up, down) is read in its own direction: a (0, 2) type on layer 2 reaches layers 2, 1 and 0 and not 3 or 4."""
+    assert _preflight(_reach_scene("DownR", DOWN_REACH, 2, holder_layer), library) == expected
+
+
+@pytest.mark.parametrize("holder_layer,expected", [(0, "no_reach"), (1, "no_reach"), (2, "ok"), (3, "ok"), (4, "ok")])
+def test_an_attacker_that_reaches_two_up_covers_the_layers_above_it_and_not_below(library, holder_layer, expected):
+    """The mirror: a (2, 0) type on layer 2 reaches layers 2, 3 and 4 and not 1 or 0 (so a swap of up and down is caught)."""
+    assert _preflight(_reach_scene("UpR", UP_REACH, 2, holder_layer), library) == expected
+
+
+def _pocket_walls(door):
+    """A ring of walls 100 wu thick round the box x 150..450, y 650..950, every layer. `door` opens a 100 wu gap in the right wall."""
+    right = [Block(450.0, 650.0, 550.0, 750.0, 0, 4), Block(450.0, 850.0, 550.0, 950.0, 0, 4)] if door else \
+        [Block(450.0, 650.0, 550.0, 950.0, 0, 4)]
+    return [Block(50.0, 550.0, 550.0, 650.0, 0, 4), Block(50.0, 950.0, 550.0, 1050.0, 0, 4), Block(50.0, 650.0, 150.0, 950.0, 0, 4)] + right
+
+
+def _pocket_scene(sealed_first, door=False, with_pocket_group=True):
+    """Two attacker groups and a guarding holder at (2700, 800): one attacker blob inside the walled box at (300, 800), one in the open
+    at (300, 250). `sealed_first` puts the boxed group first or second in Setup.groups."""
+    boxed = _blob(0, "Vanguard", 8, 300.0, 800.0)
+    free = _blob(0, "Vanguard", 8, 300.0, 250.0)
+    holder = _blob(1, "Vanguard", 8, 2700.0, 800.0, order="guard")
+    attackers = ((boxed, free) if sealed_first else (free, boxed)) if with_pocket_group else (free,)
+    return Setup(groups=attackers + (holder,), unit_types={}, point=_centroid([holder]),
+                 terrain=Terrain(canvas=(3000.0, 1600.0), blocks=tuple(_pocket_walls(door))))
+
+
+@pytest.mark.parametrize("sealed_first", [True, False])
+def test_one_sealed_attacker_group_among_several_makes_the_scene_unroutable(library, sealed_first):
+    """Spec L2: 'no path from EACH attacker': the boxed group cannot leave, whether it is listed first or last (a check of the first
+    attacker group only, or of any one routable group, passes one of the two orders)."""
+    assert _preflight(_pocket_scene(sealed_first), library) == "unroutable"
+
+
+@pytest.mark.parametrize("sealed_first", [True, False])
+def test_the_same_pocket_with_a_door_is_routable_control(library, sealed_first):
+    assert _preflight(_pocket_scene(sealed_first, door=True), library) == "ok"
+
+
+def test_the_walls_alone_do_not_make_a_scene_unroutable_control(library):
+    """Control: the same walls with no group inside them (only the open attacker group) are 'ok'."""
+    assert _preflight(_pocket_scene(True, with_pocket_group=False), library) == "ok"
+
+
+def test_a_meeting_has_no_holder_so_it_is_never_no_reach(library):
+    """Spec: no `no_reach` for a meeting (no group on guard). Side 0 on layer 0 and side 1 on layer 4, both attack-moved to a point
+    on open ground, Vanguards (reach 0, 0): 'ok'. Control: the same sides with side 1 on guard are refused 'no_reach'."""
+    meeting = Setup(groups=(_blob(0, "Vanguard", 8, -700.0, 0.0), _blob(1, "Vanguard", 8, 700.0, 0.0, layer=4)), unit_types={},
+                    point=(0.0, 0.0))
+    assert _preflight(meeting, library) == "ok"
+    holder = _holder_at(4)
+    assault = Setup(groups=(_blob(0, "Vanguard", 8, -700.0, 0.0), holder), unit_types={}, point=_centroid([holder]))
+    assert _preflight(assault, library) == "no_reach"
+
+
+def test_several_holders_one_reachable_holder_is_enough_so_the_scene_is_ok(library):
+    """Reading of 'the holder is any group with order guard': the scene is `no_reach` only when no attacker type reaches ANY holder
+    (the placed s3 scene stands a Vanguard-High group on layer 1 beside Vanguards on layer 0, against Vanguard attackers on layer 0,
+    and is a fightable scene). Holders on layers 0 and 1 against Vanguards on layer 0: ok. Holders on layers 1 and 2: no_reach."""
+    def two_holders(layers):
+        holders = tuple(_blob(1, "Vanguard", 4, 700.0, y, order="guard", layer=l) for l, y in zip(layers, (-90.0, 90.0)))
+        return Setup(groups=(_blob(0, "Vanguard", 8, -700.0, 0.0),) + holders, unit_types={}, point=_centroid(list(holders)))
+    assert _preflight(two_holders((0, 1)), library) == "ok"
+    assert _preflight(two_holders((1, 0)), library) == "ok"
+    assert _preflight(two_holders((1, 2)), library) == "no_reach"
+
+
+def _precedence_scene(wall, holder_block, holder_layer):
+    """Vanguard attackers on layer 0 at x = 300, a guarding holder on `holder_layer` at x = 2700. `wall` closes the canvas between
+    them on every layer; `holder_block` is a block over the holder's formation on every layer."""
+    holder = _blob(1, "Vanguard", 8, 2700.0, 800.0, order="guard", layer=holder_layer)
+    blocks = ([Block(1400.0, 0.0, 1600.0, 1600.0, 0, 4)] if wall else []) + ([Block(2650.0, 750.0, 2750.0, 850.0, 0, 4)] if holder_block else [])
+    return Setup(groups=(_blob(0, "Vanguard", 8, 300.0, 800.0), holder), unit_types={}, point=_centroid([holder]),
+                 terrain=Terrain(canvas=(3000.0, 1600.0), blocks=tuple(blocks)))
+
+
+@pytest.mark.parametrize("wall,holder_block,holder_layer,expected", [
+    # each refusal alone (controls: the scene builder produces each answer)
+    (False, True, 0, "no_fit"), (True, False, 0, "unroutable"), (False, False, 2, "no_reach"), (False, False, 0, "ok"),
+    # precedence: no_fit, then unroutable, then no_reach
+    (True, True, 0, "no_fit"), (False, True, 2, "no_fit"), (True, False, 2, "unroutable"), (True, True, 2, "no_fit"),
+])
+def test_refusal_precedence_is_no_fit_then_unroutable_then_no_reach(library, wall, holder_block, holder_layer, expected):
+    assert _preflight(_precedence_scene(wall, holder_block, holder_layer), library) == expected
+
+
+def _features(choke=4, lane=1, cover=0.1, sd=1400.0):
+    return maps.Features(choke_count=1 if choke else 0, choke_width_wu=choke * maps.LAYOUT_BODY_WU, choke_width_bodies=float(choke),
+                         lane_count=lane, blocked_layer_ranges=(), fight_layer_blocked=False, cover_density_corridor=cover,
+                         start_distance=sd, detour_ratio=0.0, blocked_layer_top=4)
+
+
+def test_the_placed_scene_label_is_the_preflight_of_the_setup_it_built(library):
+    """Decision: build.labels["prefight"] is set by placed_scene on every build, and is scenes.preflight of that Setup. Read for
+    every play on an open layout, on a choke layout with a lane and on an open layout with a block laid over the hold; the blocked
+    layout is also the control that the label is not always 'ok'."""
+    import dataclasses
+    seen = set()
+    open_f = _features(choke=0, lane=0, cover=0.0)
+    open_layout = maps.layout_map(open_f, 7)
+    blocked = dataclasses.replace(open_layout, blocks=open_layout.blocks + (Block(-100.0, -100.0, 100.0, 100.0, 0, 4),))
+    choke_f = _features()
+    cases = [(open_layout, open_f), (blocked, open_f), (maps.layout_map(choke_f, 7), choke_f)]
+    for layout, f in cases:
+        for play in PLAYS_PLACED:
+            build = scenes.placed_scene(layout, play, f.start_distance, f)
+            setup = build(16, False)
+            assert build.labels["prefight"] == _preflight(setup, library), play
+            seen.add(build.labels["prefight"])
+    assert {"ok", "no_fit"} <= seen
+
+
+def test_the_label_follows_the_latest_build(library):
+    """'On every build': the same build function called again with other arguments refreshes the label to that Setup's pre-flight."""
+    f = _features(choke=0, lane=0, cover=0.0)
+    build = scenes.placed_scene(maps.layout_map(f, 7), "s1_hold_choke", f.start_distance, f)
+    for heads, swap in ((16, False), (8, True), (24, False)):
+        setup = build(heads, swap)
+        assert build.labels["prefight"] == _preflight(setup, library), (heads, swap)

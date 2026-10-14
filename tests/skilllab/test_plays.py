@@ -440,3 +440,17 @@ def test_ruling_2_damage_play_is_the_one_labelled_asymmetry():
         assert s.unit_types == {} and s.groups[0].unit == s.groups[1].unit
     d = damage_play(16)(8, False)
     assert list(d.unit_types) == ["VanguardStrong"] and d.groups[0].unit != d.groups[1].unit
+
+
+# ---- LAB-REV2-L2 (Q-LAB-03): plays_space.scan_build loses its mop-up / quiet-from-first-damage flags (the two-line change L2 owns) ----
+
+def test_scan_build_adds_no_stall_flags_to_the_space_play_setups():
+    """The three stall flags scan_build used to add (mopup, mopup_interval_ticks, quiet_from_first_damage) are retired with the
+    stalemate window: the 16 v 16 scan build IS the play's own setup_fn() and carries none of those fields. (test_plays_space_scan.py,
+    owned by LAB-REV2-L3, still asserts the flags; its writer retires those three tests.)"""
+    from scripts.skilllab import plays_space
+    assert plays_space.PLAYS
+    for name in sorted(plays_space.PLAYS):
+        built = plays_space.scan_build(name)(None, 16, False)
+        assert built == plays_space.PLAYS[name].setup_fn(), name
+        assert not any(hasattr(built, f) for f in ("mopup", "mopup_interval_ticks", "quiet_from_first_damage", "stalemate_ticks")), name
