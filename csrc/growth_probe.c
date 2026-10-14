@@ -23,7 +23,11 @@
 /* OM_LOT_CAP is 2048 at csrc/om_internal.h:79; P3 raises it to 8192 (DRAFT-lot-cap). The probe does not include
  * om_internal.h, so it carries the raised value. A lot_cap argument of 0 or less selects it (gap 2 ruling). */
 #define PROBE_LOT_CAP 8192
-#define PROBE_MAX_CORES 6           /* DRAFT-towns-max 6, spec rev 4a */
+#define PROBE_LOT_FILL 0.6          /* DRAFT-lot-fill */
+#define PROBE_LOTS_PER_AGE 15       /* DRAFT-lots-per-age */
+#define PROBE_SCAN_RADIUS 48        /* DRAFT-lot-scan-radius: the scan square is 2 * 48 + 1 cells a side */
+#define PROBE_SCAN_SIDE 97          /* 2 * DRAFT-lot-scan-radius + 1 */
+#define PROBE_MAX_CORES 6          /* DRAFT-towns-max 6, spec rev 4a */
 #define PROBE_MAX_SIDE 240          /* spec rev 4a: the probe's largest grid */
 #define PROBE_MAX_AGE 400           /* spec rev 4a: ages 0..400 growth steps */
 #define PROBE_NO_LOT 255            /* spec rev 4a: out_lot_core 255 = no lot */
@@ -92,10 +96,77 @@ static void probe_step(probe_t *p, int64_t tick, uint32_t *act, uint32_t *n_act,
     }
 }
 
-/* One lot step; returns the lots standing afterwards. B3 fills this. */
+typedef struct { uint64_t key; uint32_t cell; } scan_t;
+
+/* Ascending by key, ties by lower cell index (gap 6 ruling). */
+static int scan_less(const scan_t *a, const scan_t *b) {
+    return a->key < b->key || (a->key == b->key && a->cell < b->cell);
+}
+
+/* Hand-written bottom-up merge sort (no qsort, determinism contract); tmp has n entries. */
+static void scan_sort(scan_t *a, scan_t *tmp, uint32_t n) {
+    for (uint32_t w = 1; w < n; w *= 2) {
+        for (uint32_t lo = 0; lo < n; lo += 2 * w) {
+            uint32_t mid = lo + w < n ? lo + w : n, hi = lo + 2 * w < n ? lo + 2 * w : n;
+            uint32_t i = lo, j = mid, o = lo;
+            while (i < mid && j < hi) tmp[o++] = scan_less(&a[j], &a[i]) ? a[j++] : a[i++];
+            while (i < mid) tmp[o++] = a[i++];
+            while (j < hi) tmp[o++] = a[j++];
+        }
+        memcpy(a, tmp, (size_t)n * sizeof(scan_t));
+    }
+}
+
+/* One lot step (spec rev 4a, P3 "Lots"; gap 6 key; gap 7 quota as written); returns the lots standing afterwards. */
 static int32_t lot_step(probe_t *p, uint64_t seed, int32_t lot_cap) {
-    (void)p; (void)seed; (void)lot_cap;
-    return 0;
+    int32_t side = p->side;
+    uint32_t n = (uint32_t)side * (uint32_t)side;
+    int64_t sum_age = 0;
+    for (uint32_t c = 0; c < p->n_cores; c++) sum_age += p->ages[c];
+    scan_t *scan = malloc((size_t)PROBE_SCAN_SIDE * PROBE_SCAN_SIDE * sizeof(scan_t));
+    scan_t *tmp = malloc((size_t)PROBE_SCAN_SIDE * PROBE_SCAN_SIDE * sizeof(scan_t));
+    if (scan && tmp) {
+        for (uint32_t c = 0; c < p->n_cores; c++) {
+            int64_t eligible = 0, standing = 0;
+            for (uint32_t i = 0; i < n; i++) {
+                if (p->core_of[i] == c && p->density[i] >= THRESHOLD_1) eligible++;
+                if (p->lot_core[i] == c) standing++;
+            }
+            int64_t age = p->ages[c];
+            int64_t fill = (int64_t)floor(PROBE_LOT_FILL * (double)eligible);   /* DRAFT-lot-fill */
+            int64_t quota = fill;
+            if (!(p->n_cores == 1 && p->ages[0] == 0)) {   /* gap 7: the single age-0 core has only the fill term */
+                int64_t share = sum_age > 0 ? (int64_t)lot_cap * age / sum_age : (c == 0 ? lot_cap : 0);
+                if (share < quota) quota = share;
+                if (PROBE_LOTS_PER_AGE * age < quota) quota = PROBE_LOTS_PER_AGE * age;   /* DRAFT-lots-per-age */
+            }
+            if (standing >= quota) continue;
+            int32_t cx = (int32_t)(p->core_cells[c] % (uint32_t)side), cy = (int32_t)(p->core_cells[c] / (uint32_t)side);
+            uint32_t ns = 0;
+            for (int32_t dy = -PROBE_SCAN_RADIUS; dy <= PROBE_SCAN_RADIUS; dy++)
+                for (int32_t dx = -PROBE_SCAN_RADIUS; dx <= PROBE_SCAN_RADIUS; dx++) {
+                    int32_t gx = cx + dx, gy = cy + dy;
+                    if (gx < 0 || gy < 0 || gx >= side || gy >= side) continue;
+                    uint64_t g = om_lot_noise_q16(seed, gx, gy);
+                    uint64_t d2 = (uint64_t)((int64_t)dx * dx + (int64_t)dy * dy);
+                    scan[ns].key = d2 * g * g;   /* gap 6: exact integers, order-equivalent to dist * g */
+                    scan[ns].cell = (uint32_t)gy * (uint32_t)side + (uint32_t)gx;
+                    ns++;
+                }
+            scan_sort(scan, tmp, ns);
+            for (uint32_t k = 0; k < ns && standing < quota; k++) {
+                uint32_t i = scan[k].cell;
+                if (p->core_of[i] == c && p->density[i] >= THRESHOLD_1 && p->lot_core[i] == PROBE_NO_LOT) {
+                    p->lot_core[i] = (uint8_t)c;
+                    standing++;
+                }
+            }
+        }
+    }
+    free(scan); free(tmp);
+    int32_t lots = 0;
+    for (uint32_t i = 0; i < n; i++) if (p->lot_core[i] != PROBE_NO_LOT) lots++;
+    return lots;
 }
 
 int32_t om_growth_probe_run(uint64_t seed, int32_t side, uint32_t n_cores, const uint32_t *core_cells, const int32_t *ages,
