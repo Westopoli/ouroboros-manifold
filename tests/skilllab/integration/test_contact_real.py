@@ -206,8 +206,9 @@ def test_the_preflight_runs_no_tick_and_does_not_move_a_unit(library):
 
 # ---------------------------------------------------------------- audit fixes (D9): asymmetric reach, several groups, the label, precedence
 
-PLAYS_PLACED = ["s1_hold_choke", "s1_outrange", "s2_concave", "s2_spread_line", "s2_screen", "s3_types_by_reach", "s4_bait",
-                "s5_vulnerable_away", "s2_mass_one_end", "s4_do_not_chase", "naive"]       # as in test_placed_by_feature.py
+PLAYS_PLACED = ["s1_hold_choke", "s1_outrange", "s2_concave", "s2_spread_line", "s2_screen", "s3_layer_above", "s3_types_by_reach",
+                "s3_over_the_choke", "s3_dark_striker", "s3_ping_then_commit", "s4_bait", "s5_vulnerable_away", "s2_mass_one_end",
+                "s4_do_not_chase", "naive"]       # as in test_placed_by_feature.py
 UP_REACH = {"UpR": {"base": "Interceptor", "reach": (2, 0)}}       # reaches two layers up, none down
 DOWN_REACH = {"DownR": {"base": "Bombard", "reach": (0, 2)}}       # reaches two layers down, none up (spec roster mix M3)
 
