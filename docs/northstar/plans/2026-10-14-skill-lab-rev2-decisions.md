@@ -46,3 +46,9 @@ L1 (built), L2, L3, L4, L5, L6, S, L7, serially on ONE integration branch push/l
 
 ## 15. Harness spec
 The stale clauses 5, 11, 12 and 13 of the harness spec (stalemate, win margin, approach) are rewritten by L7.
+
+## 16. Mix M3b
+`s3_over_the_choke` uses mix M3b = 7 Vanguard + 1 Raider + 8 Bombard on both sides (Architect 2026-10-14); plain M3 stays for `s2_screen`; `s3_types_by_reach` puts its Interceptors on layer 1; scaling at 8 to 48 uses largest-remainder rounding.
+
+## 17. Placement of the new plays
+The four new plays are placed with the anchor kinds pinned in `tests/skilllab/test_plays_space.py`; placed scenes use the play's own side 1 (ruling 2).
