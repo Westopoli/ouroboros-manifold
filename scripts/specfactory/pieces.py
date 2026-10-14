@@ -39,6 +39,11 @@ REPO = Path(__file__).resolve().parents[2]
 DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
 DEFAULT_PYTHON = "/home/westopoli/Projects/agora/.venv/bin/python"
 ROOTS = ("tests/csim", "tests/qa/t1", "tests/qa/desktop", "tests/transport", "tests/specfactory")
+# Record folders every shot-carrying piece writes into (the Westley shot page and its
+# copies, docs/northstar/story_reviews/westley/README.md): shared by rule, so a piece
+# may list them in owns without an owns-overlap finding, and the footprint fence ignores
+# them (merge_gate_support.DEFAULT_IGNORES). See also: HARNESS-westley-folder.
+SHARED_RECORD_GLOBS = ("docs/northstar/story_reviews/westley/*",)
 
 
 def load_pieces(path: Path) -> list[dict]:
@@ -55,7 +60,13 @@ def _glob_prefix(pattern: str) -> str:
     return pattern if idx == -1 else pattern[:idx]
 
 
+def is_shared_record(pattern: str) -> bool:
+    return any(fnmatch.fnmatch(pattern, g) for g in SHARED_RECORD_GLOBS)
+
+
 def patterns_overlap(a: str, b: str) -> bool:
+    if is_shared_record(a) and is_shared_record(b):
+        return False
     if a == b:
         return True
     a_glob, b_glob = "*" in a, "*" in b
