@@ -1913,8 +1913,6 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
     return d <= step;
 }
 
-static void om_tac_drop_orders(om_unit_row *u);
-
 /* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */
 int om_tac_move_resume(om_world *w, uint32_t unit_id);
 
@@ -1925,31 +1923,16 @@ static void om_tac_hold(om_world *w, om_unit_row *u, uint32_t target_id) {
     u->am_engaged = 1;
 }
 
-/* R-096-02: an attack-move group has ended once every living member still in it has engaged. */
-static int om_tac_am_group_done(om_world *w, om_tac_state *st, const om_unit_row *u) {
-    uint32_t i;
-    for (i = 0; i < st->n_units; i++) {
-        const om_unit_row *m = &st->units[i];
-        if (!m->in_use || m->hp <= 0.0 || m->am_gid != u->am_gid || m->am_engaged) continue;
-        if (om_unit_get_group_id(w, m->unit_id) == u->am_gid) return 0;
-    }
-    return 1;
-}
-
 /* Hands a held unit its route back: an attack-move resumes toward its
- * recorded point (a plain om_command_move, since tactical_move.c has no
- * immediate attack-move; unit.c's own `order` still says attack-move), any
- * other order simply clears. */
+ * recorded point after every engagement, group member or lone unit alike
+ * (R-096-02); any other order simply clears. A lone unit goes through a plain
+ * om_command_move, since tactical_move.c has no immediate attack-move; unit.c's
+ * own `order` still says attack-move. */
 static void om_tac_release(om_world *w, om_unit_row *u) {
     if (!u->halted) return;
     u->halted = 0;
     if (u->order == OM_ORDER_ATTACK_MOVE && u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
-        if (om_tac_am_group_done(w, om_tac(w), u)) {
-            om_tac_drop_orders(u);
-            om_unit_clear_orders(w, u->unit_id);
-        } else {
-            om_tac_move_resume(w, u->unit_id);
-        }
+        om_tac_move_resume(w, u->unit_id);
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
         u->issued_x = u->order_x;
