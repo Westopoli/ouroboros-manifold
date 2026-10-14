@@ -404,8 +404,8 @@ def test_every_play_declares_anchors(play):
 
 # ---- (7) existing scenes untouched -------------------------------------------------------------------------------
 
-# TODO-ruler (LAB-REV2-L3): this hash is of the pre-L3 plays; the ruler re-records it AFTER the L3 builder lands (any L3 build changes it).
-PLAYS_SPACE_HASH = "1f357bfc6f827628405b3cf74d8f7f32d23cbf202a2980a4f1be82ed73997897"   # recorded on main f6dc9959
+# Re-recorded for LAB-REV2-L3 (ledger TD-LAB-REV2-L3-hash): the rev 2 plays (stat variants retired, four new plays, M3b, scan rounding).
+PLAYS_SPACE_HASH = "c5c0965e153370fa9640bec596efaae0c8a6b6667a8776543d2173fb8a29f511"   # recorded on the L3 build 6826dd09
 
 
 def test_registered_space_plays_keep_their_setups():
