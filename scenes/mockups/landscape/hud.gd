@@ -8,6 +8,11 @@ const DEFAULT_KIT := "greek"
 const SPACE_KIT := "space"
 const DEFAULT_DENSITY := 35.0
 const MAX_DENSITY := 90.0
+# DRAFT-space-density-classes (Architect 2026-10-13/14, Q-246-02 prototype; Westley rules): per region.
+const REGION_CLASSES := [["Light", 15.0], ["Medium", 35.0], ["Heavy", 55.0], ["Tight", 70.0]]
+# DRAFT-density-by-archetype (Architect 2026-10-13/14, Q-246-02 prototype; Westley rules): the class decides the number.
+const MISSION_DENSITY := [["Defensive Stand", 1], ["Siege Breaking", 2], ["Reconquest", 1], ["Assault", 0], ["Suppression", 3], ["Multi-Front Defense", 2], ["Interception", 0], ["Evacuation", 1], ["Containment", 3], ["Counterinsurgency", 2]]
+const DENSITY_SOURCES := ["one default", "region", "mission type"]
 const GAP_RANGE := Vector2(200.0, 3000.0)
 const SPREAD_RANGE := Vector2(0.0, 1.0)
 const SWING_RANGE := Vector2(0.0, 1.2)
@@ -30,6 +35,9 @@ var _seed: int = 11
 var _canvas: float = DEFAULT_CANVAS
 var _stability: float = 60.0
 var _density: float = DEFAULT_DENSITY
+var _density_source := 0
+var _density_choice := 0
+var _density_override := false
 var _layer_gap: float = SpaceFieldMap.LAYER_GAP_WU
 var _plate_cell: float = SpaceFieldMap.PLATE_CELL_WU
 var _size_spread: float = SpaceFieldMap.SIZE_SPREAD
@@ -76,6 +84,8 @@ var _small_label: Label
 var _small_slider: HSlider
 var _layout_button: Button
 var _join_button: Button
+var _density_mode_button: Button
+var _density_choice_button: Button
 var _view_label: Label
 var _top_down_button: Button
 var _focus_label: Label
@@ -288,6 +298,8 @@ func _on_density_drag_ended(value_changed: bool) -> void:
 	if not value_changed:
 		return
 	_density = _density_slider.value
+	_density_override = true
+	_refresh_density_pick_text()
 	_regenerate()
 
 
@@ -317,6 +329,10 @@ func _build_space_controls() -> void:
 	_layout_button.name = "SectionsNearLayoutButton"
 	_join_button = Button.new()
 	_join_button.name = "JoinButton"
+	_density_mode_button = Button.new()
+	_density_mode_button.name = "DensityModeButton"
+	_density_choice_button = Button.new()
+	_density_choice_button.name = "DensityChoiceButton"
 	_view_label = Label.new()
 	_view_label.name = "ViewLabel"
 	_top_down_button = Button.new()
@@ -327,7 +343,7 @@ func _build_space_controls() -> void:
 	_solo_label.name = "SoloLabel"
 	_space_stats_label = Label.new()
 	_space_stats_label.name = "SpaceStatsLabel"
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _small_label, _small_slider, _layout_button, _join_button, _top_down_button, _view_label, _focus_label, _solo_label, _space_stats_label]:
+	for control in [_density_label, _density_slider, _density_mode_button, _density_choice_button, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _small_label, _small_slider, _layout_button, _join_button, _top_down_button, _view_label, _focus_label, _solo_label, _space_stats_label]:
 		box.add_child(control)
 	# Same debounce as stability: regenerate on release, not per drag tick.
 	_density_slider.drag_ended.connect(_on_density_drag_ended)
@@ -345,6 +361,9 @@ func _build_space_controls() -> void:
 	_shared_button.pressed.connect(_on_shared_pressed)
 	_layout_button.pressed.connect(_on_layout_pressed)
 	_join_button.pressed.connect(_on_join_pressed)
+	_density_mode_button.pressed.connect(_on_density_mode_pressed)
+	_density_choice_button.pressed.connect(_on_density_choice_pressed)
+	_refresh_density_pick_text()
 	_top_down_button.pressed.connect(_on_top_down_pressed)
 	_on_density_value_changed(_density)
 	_on_gap_value_changed(_layer_gap)
@@ -373,6 +392,47 @@ func _make_slider(slider_name: String, low: float, high: float, step: float, val
 
 func _on_density_value_changed(value: float) -> void:
 	_density_label.text = "Density: %d%% blocked" % int(value)
+
+
+func _density_choices() -> Array:
+	return REGION_CLASSES if _density_source == 1 else MISSION_DENSITY
+
+
+func _on_density_mode_pressed() -> void:
+	_density_source = (_density_source + 1) % DENSITY_SOURCES.size()
+	_density_choice = 0
+	_apply_density_pick()
+
+
+func _on_density_choice_pressed() -> void:
+	_density_choice = (_density_choice + 1) % _density_choices().size()
+	_apply_density_pick()
+
+
+func _apply_density_pick() -> void:
+	var value := DEFAULT_DENSITY
+	if _density_source == 1:
+		value = REGION_CLASSES[_density_choice][1]
+	elif _density_source == 2:
+		value = REGION_CLASSES[MISSION_DENSITY[_density_choice][1]][1]
+	_density = clamp(value, 0.0, MAX_DENSITY)
+	_density_override = false
+	_density_slider.value = _density
+	_refresh_density_pick_text()
+	_regenerate()
+
+
+func _refresh_density_pick_text() -> void:
+	var text := "Density source: one default %d" % int(DEFAULT_DENSITY)
+	if _density_source == 1:
+		text = "Density source: region - %s %d" % [REGION_CLASSES[_density_choice][0], int(REGION_CLASSES[_density_choice][1])]
+	elif _density_source == 2:
+		var pick: Array = MISSION_DENSITY[_density_choice]
+		var cls: Array = REGION_CLASSES[pick[1]]
+		text = "Density source: mission type - %s (%s) %d" % [pick[0], String(cls[0]).to_lower(), int(cls[1])]
+	# liberty 2026-10-13: a hand-dragged slider is flagged on the button so the source text never lies.
+	_density_mode_button.text = text + (" (slider override %d)" % int(_density) if _density_override else "")
+	_density_choice_button.text = "Next choice"
 
 
 func _on_gap_value_changed(value: float) -> void:
@@ -516,8 +576,9 @@ func _update_space_controls(field_map: FieldMap) -> void:
 	var is_space := field_map is SpaceFieldMap
 	_stability_label.visible = not is_space
 	_stability_slider.visible = not is_space
-	for control in [_density_label, _density_slider, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _small_label, _small_slider, _layout_button, _join_button, _view_label]:
+	for control in [_density_label, _density_slider, _density_mode_button, _gap_label, _gap_slider, _plate_label, _plate_slider, _spread_label, _spread_slider, _swing_label, _swing_slider, _shared_button, _small_label, _small_slider, _layout_button, _join_button, _view_label]:
 		control.visible = is_space
+	_density_choice_button.visible = is_space and _density_source != 0
 	_focus_label.visible = is_space
 	_solo_label.visible = is_space and _camera_rig.is_top_down() and _focus_layer != 0
 	_space_stats_label.visible = is_space

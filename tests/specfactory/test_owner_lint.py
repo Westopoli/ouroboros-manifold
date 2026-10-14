@@ -121,3 +121,41 @@ def test_real_pieces_toml_on_main_is_clean():
     data = tomllib.loads(real_pieces.read_text())
     findings = ol.in_flight_overlaps(list(data.get("piece", [])))
     assert findings == [], findings
+
+
+# Architect 2026-10-14, HARNESS-westley-folder: docs/northstar/story_reviews/westley/* is a
+# shared record like the ledger: no piece owns it, so two in-flight pieces listing it are no
+# overlap. See also: pieces.SHARED_RECORD_GLOBS, test_merge_gate_support.py::
+# test_westley_folder_files_are_not_a_footprint.
+def test_westley_folder_listed_by_two_in_flight_pieces_is_not_a_finding(tmp_path):
+    # Positive control first: an ordinary file listed twice with no ordering still fails.
+    control_toml = _write_pieces(tmp_path, """
+[[piece]]
+id = "X"
+owns = ["docs/northstar/story_reviews/A.md"]
+status = "pending"
+
+[[piece]]
+id = "Y"
+owns = ["docs/northstar/story_reviews/A.md"]
+status = "pending"
+""")
+    control = _run(control_toml)
+    assert control.returncode == 1, control.stdout + control.stderr
+
+    shared_dir = tmp_path / "shared"
+    shared_dir.mkdir()
+    pieces_toml = _write_pieces(shared_dir, """
+[[piece]]
+id = "X"
+owns = ["docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S1-x.png"]
+status = "pending"
+
+[[piece]]
+id = "Y"
+owns = ["docs/northstar/story_reviews/westley/README.md"]
+owns_glob = ["docs/northstar/story_reviews/westley/**"]
+status = "pending"
+""")
+    proc = _run(pieces_toml)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
