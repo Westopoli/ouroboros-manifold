@@ -141,6 +141,10 @@ class Engine:
             fn = getattr(self._lib, name)
             fn.argtypes = argtypes
             fn.restype = restype
+        fn = getattr(self._lib, "om_roster_set_cone", None)    # absent until E0 lands
+        if fn is not None:
+            fn.argtypes = [V, i, d, d, d]
+            fn.restype = i
         fn = getattr(self._lib, "om_combat_can_engage", None)    # absent until E0 lands
         if fn is not None:
             fn.argtypes = [V, u32, u32]
@@ -191,6 +195,11 @@ class Engine:
         rc = self._lib.om_roster_set_reach(w, int(type_id), int(up), int(down))
         if rc != 0:
             raise ValueError("om_roster_set_reach(%r, %r, %r) returned %d" % (type_id, up, down, rc))
+
+    def set_cone(self, w, type_id, range, half_angle, share):
+        rc = self._lib.om_roster_set_cone(w, int(type_id), float(range), float(half_angle), float(share))
+        if rc != 0:
+            raise ValueError("om_roster_set_cone(%r, %r, %r, %r) returned %d" % (type_id, range, half_angle, share, rc))
 
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)
