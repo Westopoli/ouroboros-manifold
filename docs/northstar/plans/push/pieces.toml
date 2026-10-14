@@ -1843,8 +1843,8 @@ owns = ["csrc/tactical_move.c", "csrc/om_internal.h", "csrc/pipe/pipe_internal.h
 owns_glob = []
 acceptance = ["tests/csim/test_VG_W_w2_routes.py"]
 depends_on = ["VG-W1", "VG-CONTRACT-E5", "VG-CONTRACT-E1", "VG-CONTRACT-E6", "HARNESS-sig-rows", "VG-K-D1", "PP-ledger", "NET-wire-A"]  # spec: depends_on VG-W1; E5 and E1 are the attached owners of the save, header and pinned-test files; VG-E1 no longer listed: W2 lands before VG-E1's remaining pieces and VG-E1 depends_on VG-W2 (Architect 2026-10-12); VG-CONTRACT-E6 owns docs/architecture.md (landed); the getter belongs to W1 (rev 12b)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "9bcb463" }
+tests_pending = false
 size_estimate = "W2 contract piece: stored routes, save format 10 to 11 (TD-VG-W-1, TD-VG-W-2), second-Fable audit; DRAFT-walk-tick-ms-w2 3 ms"
 
 # Lane F part 1 (spec "Lane F part 1"): the Steam-less lobby skeleton. Q-F-1 closed by Westley 2026-10-11.
