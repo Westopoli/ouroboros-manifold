@@ -2314,6 +2314,19 @@ status = { state = "queued" }
 tests_pending = false
 size_estimate = "min-of-7 helper and the 600-walker test body (about 45 lines), one control test file (about 25 lines)"
 
+# Perf-test flake, W2 half (TD-VG-W-6, Architect 2026-10-14): the 3 ms 600-walker test takes the minimum of 7 repeats through the W1 helper; threshold untouched. Lands after HARNESS-perf-minof-n (the helper w1.perf_repeats_ms and the W1 control file).
+[[piece]]
+id = "HARNESS-perf-minof-n-w2"
+manager = "M0"
+wave = 9
+owns = ["tests/csim/test_VG_W_w2_routes.py", "tests/csim/test_VG_W_w2_perf_control.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_W_w2_routes.py", "tests/csim/test_VG_W_w2_perf_control.py"]
+depends_on = ["VG-W2", "HARNESS-perf-minof-n"]  # VG-W2 is attached and owns test_VG_W_w2_routes.py; only test_P_a_tick_with_600_walkers_costs_less_than_the_w2_draft changes here. No queued row owns that file, so no other depends_on edge was added
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "the W2 600-walker test body (about 20 lines) and one control test file (about 30 lines)"
+
 # Lane P piece P1 (places lane spec rev 4a, docs/northstar/plans/2026-10-13-places-lane-spec.md): the layout engine, new files only. Nothing calls it until P3. Architect 2026-10-14: the test stub is tests/csim/layout_stub_terrain.c (not under csrc/).
 [[piece]]
 id = "VG-P1"
