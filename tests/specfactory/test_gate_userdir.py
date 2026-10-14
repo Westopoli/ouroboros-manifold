@@ -165,6 +165,25 @@ def _site_violations(text: str) -> list[str]:
     return out
 
 
+_PIPE_BUILD_RE = re.compile(r"\bmake\s+-s\s+pipe/ouroboros_pipe(?![\w])")
+_FIRST_REGRESSION_RE = re.compile(r'merge_gate_support\.py"\s+regression\b')
+
+
+def _pipe_before_regression_problems(text: str) -> list[str]:
+    """Ruling 2026-10-14 (A): the `make -s pipe/ouroboros_pipe` line comes before the first
+    regression stage line in merge_gate.sh (non-comment lines only)."""
+    code = _code_lines(text)
+    build_at = next((i for i, ln in code if _PIPE_BUILD_RE.search(ln)), None)
+    reg_at = next((i for i, ln in code if _FIRST_REGRESSION_RE.search(ln)), None)
+    if build_at is None:
+        return ["no `make -s pipe/ouroboros_pipe` line"]
+    if reg_at is None:
+        return ["no regression stage line (merge_gate_support.py regression)"]
+    if not build_at < reg_at:
+        return ["pipe build line %d is not before the first regression stage line %d" % (build_at, reg_at)]
+    return []
+
+
 def _env_xdg_ok(fn, scratch: Path) -> tuple[bool, bool]:
     """The two XDG assertions of spec test (3) for a godot_env-like callable: (base without
     XDG_DATA_HOME gets the scratch dir, base with an EMPTY one gets the scratch dir)."""
@@ -327,6 +346,20 @@ def _listing(d: Path) -> dict:
                 continue
             out[p] = (st.st_mtime_ns, st.st_size)
     return out
+
+
+def test_c5_pipe_before_regression_detector_fails_when_the_build_line_moves_after():
+    # Positive control for test_7: a copy of the real gate text with the build block moved
+    # after the first regression stage must fail the detector; the real text must pass it.
+    text = GATE.read_text()
+    assert _pipe_before_regression_problems(text) == []
+    lines = text.splitlines()
+    build_idx = next(i for i, ln in enumerate(lines) if _PIPE_BUILD_RE.search(ln) and not ln.lstrip().startswith("#"))
+    moved = lines[:build_idx] + lines[build_idx + 1:]
+    reg_idx = next(i for i, ln in enumerate(moved) if _FIRST_REGRESSION_RE.search(ln))
+    moved.insert(reg_idx + 1, lines[build_idx])
+    problems = _pipe_before_regression_problems("\n".join(moved))
+    assert problems and "is not before" in problems[0], problems
 
 
 # ===========================================================================
@@ -620,3 +653,10 @@ def test_6b_detector_control_planted_settings_change_the_era_when_visible(visibl
     # gives a NON-empty _ground_keys(qa): the plant works, so the isolation case can fail.
     gk = _ground_keys(visible_qa)
     assert gk, "detector control: planted era_id greek_placeholder produced no ground layer; keys=%s" % sorted(visible_qa)
+
+
+def test_7_merge_gate_builds_the_pipe_before_the_first_regression_stage():
+    # Architect ruling 2026-10-14 (A): specfactory_regression boots Godot (test_6/6b), which
+    # needs pipe/ouroboros_pipe; the transport stage builds it too late. By text.
+    problems = _pipe_before_regression_problems(GATE.read_text())
+    assert not problems, "merge_gate.sh: " + "; ".join(problems)

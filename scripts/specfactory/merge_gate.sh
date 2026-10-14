@@ -261,6 +261,13 @@ else
     ok placeholder_controls "$(sed 's/^OK //' "$PC_LOG" | tr '\n' ' ')"
 fi
 
+# -------------------------------------------------------------- 5d. pipe binary before the first regression stage
+# See also: FINDING-ambient-user-dir; specfactory_regression boots Godot (test_gate_userdir test_6/6b) and needs pipe/ouroboros_pipe before it runs
+# The transport stage (section 9) builds it again later; that make is then a no-op. A build
+# failure is not rejected here: the transport stage reports it as it always did.
+PRE_PIPE_LOG="$SCRATCH_ROOT/pipe_build_pre_regression.log"
+( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PRE_PIPE_LOG" 2>&1
+
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
