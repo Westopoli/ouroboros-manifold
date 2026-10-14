@@ -137,6 +137,13 @@
 #define OM_PI 3.14159265358979323846
 #define OM_PI_2 1.57079632679489661923
 #define OM_PI_4 0.78539816339744830962
+/* LAB-REV2 E2: degrees in a half turn; the bounds of om_roster_set_cone (spec Contract / Engine) and the arc that means no arc. */
+#define OM_PP_HALF_TURN_DEG 180.0
+#define OM_PP_CONE_HALF_MIN_DEG 1.0
+#define OM_PP_CONE_HALF_MAX_DEG 180.0
+#define OM_PP_CONE_SHARE_MAX 10.0
+#define OM_PP_CONE_REFUSED (-2)
+#define OM_PP_ARC_FULL_DEG 360.0
 
 /* Deterministic atan(x) on [-1, 1] (Anderson's cheap-trig rational
  * approximation, |error| < 0.005 rad); every test tolerance in this suite
@@ -332,6 +339,11 @@ uint32_t col_cur;
     uint32_t kind_n;
     int32_t  kind_type[OM_PP_REACH_MAX];
     int32_t  kind_val[OM_PP_REACH_MAX];
+    /* LAB-REV2 E2 (R-082-06 draft): the cone area attack per unit type, a sparse list keyed by type like reach; a type
+     * absent here has no cone. Not hashed or saved (a contract piece would be needed). See also: om_roster_set_cone. */
+    uint32_t cone_n;
+    int32_t  cone_type[OM_PP_REACH_MAX];
+    double   cone_range[OM_PP_REACH_MAX], cone_share[OM_PP_REACH_MAX], cone_cos[OM_PP_REACH_MAX];
 } om_move_state;
 
 enum { OM_LAY_NONE, OM_LAY_PENDING, OM_LAY_FLIGHT };
@@ -3452,10 +3464,56 @@ int om_command_guard(om_world *w, const uint32_t *unit_ids, uint32_t n_units) {
     }
     return 0;
 }
+/* LAB-REV2 E2 (R-082-06 draft, Q-082-06): 0 ok, -1 unknown type, -2 refused value; range 0 clears the cone. The cosine
+ * of the half-angle is taken once, with the engine's own om_cos. Read through om_roster_cone. */
 int om_roster_set_cone(om_world *w, int unit_type, double range, double half_angle_deg, double share) {
-    /* LAB-REV2 E0 contract stub: -1 (not built) until LAB-REV2-E2 writes the cone table. See also: om_combat_can_engage. */
-    (void)w; (void)unit_type; (void)range; (void)half_angle_deg; (void)share;
-    return -1;
+    om_move_state *ms;
+    uint32_t i;
+    if (!w || unit_type < 0 || om_unit_profile_ability_count(w, unit_type) == 0u) return -1;
+    if (range < 0.0 || half_angle_deg < OM_PP_CONE_HALF_MIN_DEG || half_angle_deg > OM_PP_CONE_HALF_MAX_DEG
+        || share < 0.0 || share > OM_PP_CONE_SHARE_MAX) return OM_PP_CONE_REFUSED;
+    ms = om_ms(w);
+    for (i = 0; i < ms->cone_n && ms->cone_type[i] != unit_type; i++) {}
+    if (i == ms->cone_n) {
+        if (range == 0.0) return 0;
+        if (i >= OM_PP_REACH_MAX) return -1;
+        ms->cone_n++;
+        ms->cone_type[i] = unit_type;
+    }
+    ms->cone_range[i] = range;
+    ms->cone_share[i] = share;
+    ms->cone_cos[i] = om_cos(half_angle_deg * (OM_PI / OM_PP_HALF_TURN_DEG));
+    return 0;
+}
+
+int om_roster_cone(const om_world *w, int unit_type, double *range, double *share, double *cos_half) {
+    const om_move_state *ms = w ? (const om_move_state *)w->move_state : NULL;
+    uint32_t i;
+    for (i = 0; ms && i < ms->cone_n; i++) {
+        if (ms->cone_type[i] != unit_type || ms->cone_range[i] <= 0.0) continue;
+        *range = ms->cone_range[i];
+        *share = ms->cone_share[i];
+        *cos_half = ms->cone_cos[i];
+        return 1;
+    }
+    return 0;
+}
+
+/* LAB-REV2 E2: 1 when (dx, dy), seen from the unit, lies within the angle whose cosine is cos_half either side of the
+ * unit's facing (the facing after this tick's face pass; boundary inclusive); a cosine of -1 or less is every direction. */
+int om_unit_in_sector(const om_world *w, uint32_t unit, double dx, double dy, double cos_half) {
+    double f;
+    if (cos_half <= -1.0) return 1;
+    f = om_unit_get_facing(w, unit);
+    return dx * om_cos(f) + dy * om_sin(f) >= sqrt(dx * dx + dy * dy) * cos_half;
+}
+
+/* LAB-REV2 E2 (R-100-04 draft): the firing arc of OM_TP_FIRING_ARC_DEG about the facing; 360 is no arc and does no
+ * arithmetic at all, so the trace at 360 is byte-identical to the trace before the arc existed. */
+int om_unit_in_firing_arc(const om_world *w, uint32_t unit, double dx, double dy) {
+    double arc = om_tactical_get_param(w, OM_TP_FIRING_ARC_DEG);
+    if (arc >= OM_PP_ARC_FULL_DEG) return 1;
+    return om_unit_in_sector(w, unit, dx, dy, om_cos(arc * (OM_PI / OM_PP_ARC_FULL_DEG)));
 }
 /* ---- end generated stubs ---- */
 

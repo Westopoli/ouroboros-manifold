@@ -1013,7 +1013,7 @@ static void om_tac_note_attacker(om_world *w, om_tac_state *st, om_unit_row *tar
     target->last_attacker = attacker->unit_id;
 }
 
-static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_row *target) {
+static double om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_row *target) {
     double mult = om_resolve_hit_multiplier(w, attacker->category, target);
     double output_mult = om_unit_output_multiplier(w, attacker->unit_id);
     double reduction = om_unit_damage_reduction(w, target->unit_id);
@@ -1026,6 +1026,7 @@ static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_ro
     attacker->fired = 1;
     attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
     attacker->backswing_active = 1;
+    return dmg;
 }
 
 static double om_tactical_total_hp(const om_tac_state *st) {
@@ -1959,12 +1960,52 @@ static void om_tac_release(om_world *w, om_unit_row *u) {
     }
 }
 
+/* ALG-61 per-victim damage of an area hit (the disc's, and a cone's before its share): ALG-60 through the category
+ * multiplier, the attacker's output multiplier, the victim's damage reduction and the area offset multiplier. */
+static double om_tac_aoe_victim_damage(om_world *w, const om_unit_row *attacker, const om_unit_row *cand) {
+    double mult = om_resolve_hit_multiplier(w, attacker->category, cand);
+    return attacker->base_damage * mult * om_unit_output_multiplier(w, attacker->unit_id)
+           * (1.0 - om_unit_damage_reduction(w, cand->unit_id)) * om_tac_offset_mult(w, OM_REACH_AREA, attacker, cand);
+}
+
+/* LAB-REV2 E2 (R-082-06 draft, Q-082-06): a cone replaces the disc. The target of record takes the direct ALG-60 hit
+ * first and it counts toward the cap; then every other enemy in reach inside the sector of `range` about the attacker's
+ * facing (centre test, boundary inclusive), in ascending unit id, takes the disc victim's damage times `share`, until
+ * the running total reaches base * OM_AOE_DAMAGE_CAP_MULTIPLIER (ALG-61). No sight, stealth or line check for victims, as
+ * the disc. See also: om_unit_fire_aoe_attack, the disc, which calls om_economy_on_area_hit; a cone does not. */
+static void om_tac_fire_cone(om_world *w, om_unit_row *u, om_unit_row *t, double range, double share, double cos_half) {
+    om_tac_state *st = om_tac(w);
+    double cap = u->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER;
+    double total = om_tactical_apply_hit(w, u, t);
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *cand = &st->units[i];
+        double dmg, remaining;
+        if (!cand->in_use || cand->hp <= 0.0 || cand == t) continue;
+        if (cand->faction_id == u->faction_id) continue;
+        if (!om_tac_in_reach(w, u, cand) || !om_tac_within(u, cand, range)) continue;
+        if (!om_unit_in_sector(w, u->unit_id, cand->x - u->x, cand->y - u->y, cos_half)) continue;
+        if (total >= cap) break;
+        dmg = om_tac_aoe_victim_damage(w, u, cand) * share;
+        remaining = cap - total;
+        if (dmg > remaining) dmg = remaining;
+        cand->hp -= dmg;
+        if (cand->hp < 0.0) cand->hp = 0.0;
+        om_grid_sync(st, cand->unit_id - 1);
+        om_tac_note_attacker(w, st, cand, u);
+        total += dmg;
+    }
+}
+
 static void om_tac_fire(om_world *w, om_unit_row *u, om_unit_row *t) {
     om_tac_state *st = om_tac(w);
     om_tac_ev_emit(st, OM_TAC_EV_FIRE, u->unit_id, (int32_t)t->unit_id);
     u->fired_tick = st->ev_tick ? st->ev_tick : st->current_tick + 1;
     const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
-    if (prof && prof->aoe_radius > 0.0) {
+    double cone_range, cone_share, cone_cos;
+    if (om_roster_cone(w, u->unit_type, &cone_range, &cone_share, &cone_cos)) {
+        om_tac_fire_cone(w, u, t, cone_range, cone_share, cone_cos);
+    } else if (prof && prof->aoe_radius > 0.0) {
         om_unit_fire_aoe_attack(w, u->unit_id, t->unit_id, prof->aoe_radius);
     } else {
         om_tactical_apply_hit(w, u, t);
@@ -2253,8 +2294,11 @@ static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
         u->fire_pending = 0;
         if (!pending || !u->in_use || u->hp <= 0.0 || u->target_id == 0) continue;
         t = om_registry_find_in(st, u->target_id);
+        /* R-100-04 (draft): the arc gates the shot only; acquisition, the hold and return fire do not consult it.
+         * See also: om_combat_can_engage, reason 4 */
         if (t && t->hp > 0.0 && om_tac_in_range(w, u, t)
             && (u->cooldown >= u->attack_interval * (double)OM_TACTICAL_TICK_RATE - OM_TIE_EPSILON || !u->fired)
+            && om_unit_in_firing_arc(w, u->unit_id, t->x - u->x, t->y - u->y)
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
             u->fire_pending = 2;
         }
@@ -2771,19 +2815,18 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
     uint32_t ids[st->n_units + 1];
     uint32_t j, n;
     if (!attacker || !center) return;
+    /* See also: om_tac_fire_cone, the cone area attack, which does not call this */
     om_economy_on_area_hit(w, center->x, center->y, radius);
     cap = attacker->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER;
     n = om_grid_query_st(st, center->x, center->y, radius, ids, st->n_units);
     for (j = 0; j < n; j++) {
         om_unit_row *cand = &st->units[ids[j] - 1];
-        double mult, dmg, remaining;
+        double dmg, remaining;
         if (cand->hp <= 0.0) continue;
         if (cand->faction_id == attacker->faction_id) continue;
         if (!om_tac_in_reach(w, attacker, cand)) continue;
         if (total >= cap) break;
-        mult = om_resolve_hit_multiplier(w, attacker->category, cand);
-        dmg = attacker->base_damage * mult * om_unit_output_multiplier(w, attacker_id)
-              * (1.0 - om_unit_damage_reduction(w, cand->unit_id)) * om_tac_offset_mult(w, OM_REACH_AREA, attacker, cand);
+        dmg = om_tac_aoe_victim_damage(w, attacker, cand);
         remaining = cap - total;
         if (dmg > remaining) dmg = remaining;
         cand->hp -= dmg;
@@ -3092,10 +3135,24 @@ int om_tactical_event_get_at(om_world *w, uint32_t i, int32_t *kind, uint32_t *a
     if (tick) *tick = st->events[i].tick;
     return 0;
 }
+/* LAB-REV2 E2: could this attacker fire at this target this tick if it were ready (cooldown, backswing, the cohort slot
+ * and the order kind are not consulted). -1 for no pair (unknown id, dead, same or neutral faction, the same unit, a
+ * non-combat attacker); else the first failing gate in reading order: 1 out of reach, 2 not seen by the side, 3 out of
+ * range, 4 outside the firing arc, 5 line blocked; 0 when all pass. The gates are the fire pass's own.
+ * See also: om_tac_fire_pass. */
+enum { OM_ENGAGE_NO_REACH = 1, OM_ENGAGE_NOT_SEEN, OM_ENGAGE_OUT_OF_RANGE, OM_ENGAGE_OUTSIDE_ARC, OM_ENGAGE_LINE_BLOCKED };
+
 int om_combat_can_engage(const om_world *w, uint32_t attacker, uint32_t target) {
-    /* LAB-REV2 E0 contract stub: -1 (not built) until LAB-REV2-E2 writes the gates. See also: om_roster_set_cone. */
-    (void)w; (void)attacker; (void)target;
-    return -1;
+    om_tac_state *st = om_tac_ro(w);
+    const om_unit_row *a = st ? om_registry_find_in(st, attacker) : NULL;
+    const om_unit_row *t = st ? om_registry_find_in(st, target) : NULL;
+    if (!a || !t || a == t || a->hp <= 0.0 || t->hp <= 0.0 || !om_tac_hostile(a, t) || om_tac_noncombat(a)) return -1;
+    if (!om_tac_in_reach(w, a, t)) return OM_ENGAGE_NO_REACH;
+    if (t->stealth || (om_tac_by_sight(w) && !om_tac_faction_sees((om_world *)w, a, t))) return OM_ENGAGE_NOT_SEEN;
+    if (!om_tac_in_range(w, a, t)) return OM_ENGAGE_OUT_OF_RANGE;
+    if (!om_unit_in_firing_arc(w, attacker, t->x - a->x, t->y - a->y)) return OM_ENGAGE_OUTSIDE_ARC;
+    if (!om_combat_can_shoot(w, attacker, target)) return OM_ENGAGE_LINE_BLOCKED;
+    return 0;
 }
 /* ---- end generated stubs ---- */
 

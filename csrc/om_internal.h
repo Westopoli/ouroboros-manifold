@@ -588,4 +588,11 @@ double om_rng_draw(om_world *w);
  * to avoid that setter's RNG-consuming confidence roll, R-022-04). */
 void om_faction_tech_multipliers_recalc(om_world *w, int32_t faction_id);
 
+/* LAB-REV2 E2 (csrc/tactical_move.c). om_roster_cone: 1 and the cone of a unit type when one is set (range above 0),
+ * else 0. om_unit_in_sector: the direction (dx, dy) from the unit lies within the angle whose cosine is cos_half either
+ * side of its facing. om_unit_in_firing_arc: the same against OM_TP_FIRING_ARC_DEG, always 1 at 360 with no arithmetic. */
+int om_roster_cone(const om_world *w, int unit_type, double *range, double *share, double *cos_half);
+int om_unit_in_sector(const om_world *w, uint32_t unit, double dx, double dy, double cos_half);
+int om_unit_in_firing_arc(const om_world *w, uint32_t unit, double dx, double dy);
+
 #endif /* OM_INTERNAL_H */
