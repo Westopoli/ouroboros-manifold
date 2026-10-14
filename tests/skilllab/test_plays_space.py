@@ -39,11 +39,13 @@ M1 = {V: 8, R: 8}
 M2 = {V: 8, I: 8}
 M3 = {V: 8, B: 8}
 M4 = {V: 8, A: 8}
+M3B = {V: 7, R: 1, B: 8}             # s3_over_the_choke (Architect ruling 2026-10-14): M3 with one Vanguard swapped for the Raider spotter, BOTH sides
+# s3_over_the_choke scaled enemy side at 8 and 48 (largest-remainder rounding: 7, 1, 8 over 16 give 3.5, 0.5, 4 at 8 and exactly 21, 3, 24 at 48)
+OVER_THE_CHOKE_SCALED = {8: {V: 3, R: 1, B: 4}, 48: {V: 21, R: 3, B: 24}}
 # play -> mix of side 0 (the spec table). The six M0 plays are "controls, formation plays" (spec M0): flagged to the overseer as a reading.
-# s3_over_the_choke is M3 plus "a Raider spotter" in the spec text; the spec does not say how the spotter fits M3, so it is checked as
-# "contains the M3 types" only (see test_over_the_choke_*).
+# Plain M3 (8 Vanguard + 8 Bombard) stays for s2_screen; s3_over_the_choke is M3b.
 PLAY_MIX = {"s1_hold_choke": M0, "s2_concave": M0, "s2_spread_line": M0, "s2_mass_one_end": M0, "s4_bait": M0, "s4_do_not_chase": M0,
-            "s2_screen": M3, "s3_layer_above": M1, "s3_types_by_reach": M2, "s3_dark_striker": M1, "s3_ping_then_commit": M1,
+            "s2_screen": M3, "s3_over_the_choke": M3B, "s3_layer_above": M1, "s3_types_by_reach": M2, "s3_dark_striker": M1, "s3_ping_then_commit": M1,
             "s5_vulnerable_away": M1, "s1_outrange": M4}
 
 
@@ -310,9 +312,8 @@ def test_types_by_reach_interceptors_up_vanguards_level():
     assert {g.layer for g in s.groups if g.side == 1} == {0}
 
 
-def test_over_the_choke_bombards_above_the_wall_top_with_a_spotter_past_the_choke():
-    """Bombards (reach 0 up, 2 down) on a layer above every wall block's top and within two layers of the enemy's; a non-Bombard
-    side-0 group stands past the wall (on the enemy's side of it). Spec text: 'a Raider spotter'; the type is not asserted (see report)."""
+def test_over_the_choke_bombards_above_the_wall_top():
+    """Bombards (reach 0 up, 2 down) on a layer above every wall block's top and within two layers of the enemy's."""
     s = plays_space.PLAYS["s3_over_the_choke"].setup_fn()
     blocks = s.terrain.blocks
     assert blocks, "the choke is a wall"
@@ -322,9 +323,36 @@ def test_over_the_choke_bombards_above_the_wall_top_with_a_spotter_past_the_chok
     bombards = groups_of(s, 0, B)
     assert bombards and all(g.layer > top and 0 < g.layer - next(iter(enemy_layer)) <= 2 for g in bombards), ([g.layer for g in bombards], top)
     assert groups_of(s, 0, V), "Vanguards stay in the mix"
-    wall_right = max(b.x1 for b in blocks)
-    spotters = [g for g in s.groups if g.side == 0 and resolve(s, g)[0] != B and g.x > wall_right]
-    assert spotters, "a spotter stands past the choke"
+
+
+def test_over_the_choke_bombards_stand_behind_the_wall_and_only_the_raider_spotter_stands_past_it():
+    """Side 0 is on the left. The Bombards stand on the attacker's own side of the wall (mutant 'Bombards on the enemy's side' is red);
+    the enemy is past the wall; the one side-0 group past the wall is the Raider spotter (Architect ruling 2026-10-14), and its reach
+    covers the enemy's layer from its own, so it can see what the Bombards shoot at."""
+    s = plays_space.PLAYS["s3_over_the_choke"].setup_fn()
+    left, right = min(b.x0 for b in s.terrain.blocks), max(b.x1 for b in s.terrain.blocks)
+    assert groups_of(s, 0, B) and all(g.x < left for g in groups_of(s, 0, B)), [(g.x, left) for g in groups_of(s, 0, B)]
+    assert all(g.x > right for g in s.groups if g.side == 1), "the enemy stands past the wall"
+    past = [g for g in s.groups if g.side == 0 and g.x > right]
+    assert past and {resolve(s, g)[0] for g in past} == {R}, [(g.unit, g.x) for g in past]
+    assert sum(g.count for g in past) == 1
+    enemy_layer = {g.layer for g in s.groups if g.side == 1}.pop()
+    assert all(reaches(resolve(s, g)[1], g.layer, enemy_layer) for g in past)
+
+
+@pytest.mark.parametrize("heads", (UNITS,) + HEADS)
+def test_over_the_choke_mix_is_m3b_on_both_sides_and_scales_exactly(heads):
+    """16: 7 Vanguard + 1 Raider + 8 Bombard on both sides (side 0 stays 16 at every scan size); 8 and 48 give V3 R1 B4 and V21 R3 B24
+    (the largest-remainder rounding; scan_build's plain rounding gives V4 R1 B3 at 8). Reach is the roster's for each type."""
+    s = plays_space.scan_build("s3_over_the_choke")(None, heads, False)
+    want = {t: n for t, n in (M3B if heads == UNITS else OVER_THE_CHOKE_SCALED[heads]).items()}
+    side1 = collections.Counter()
+    for g in s.groups:
+        if g.side == 1:
+            assert resolve(s, g)[1] == ROSTER_REACH[resolve(s, g)[0]], g.unit
+            side1[resolve(s, g)[0]] += g.count
+    assert dict(side1) == want
+    assert mix(s, 0) == collections.Counter({(t, ROSTER_REACH[t]): n for t, n in M3B.items()})
 
 
 def test_over_the_choke_wall_has_an_opening_and_a_top_below_the_top_layer():
@@ -370,11 +398,48 @@ def test_screen_vanguards_stand_in_front_of_the_bombards():
     assert all(g.order == "attack_move" for g in van + bom)
 
 
-def test_vulnerable_away_raiders_stand_behind_the_vanguards():
+def test_vulnerable_away_raiders_stand_behind_the_vanguards_by_at_least_frail_back():
+    """Not just 'lower x': the frail type stands FRAIL_BACK (draft 400) or more behind the strong line (scenes.py places the far-side
+    anchor FRAIL_BACK behind the choke and reads plays_space.FRAIL_BACK)."""
     s = plays_space.PLAYS["s5_vulnerable_away"].setup_fn()
     van, rai = groups_of(s, 0, V), groups_of(s, 0, R)
-    assert van and rai and min(g.x for g in van) > max(g.x for g in rai)
+    assert van and rai
+    assert min(g.x for g in van) - max(g.x for g in rai) >= plays_space.FRAIL_BACK, ([g.x for g in van], [g.x for g in rai])
     assert {g.layer for g in van + rai} == {0}
+
+
+# The group order scenes._defender_positions (scenes.py, the placed path, L2's file) expects for each defender anchor kind: it places
+# defender groups by index, so the order of the play's own side-0 groups is part of the play's contract. exit_screen: [front, behind];
+# behind_cover: [long-reach type at the cover, short-reach type BEHIND_COVER in front]; far_side: [the strong line at the choke mouth,
+# the vulnerable type FRAIL_BACK behind]. (lane_mouth, s4_bait: [bait, ambush] is already pinned by test_placed_by_feature.)
+GROUP_ORDER = {"s2_screen": (V, B), "s3_layer_above": (R, V), "s3_types_by_reach": (I, V), "s5_vulnerable_away": (V, R)}
+
+
+@pytest.mark.parametrize("name", sorted(GROUP_ORDER))
+def test_side_0_groups_come_in_the_order_the_placed_path_expects(name):
+    s = plays_space.PLAYS[name].setup_fn()
+    assert tuple(resolve(s, g)[0] for g in s.groups if g.side == 0) == GROUP_ORDER[name]
+
+
+@pytest.mark.parametrize("name", [n for n in NAMES if n not in ("s2_mass_one_end", "s4_do_not_chase", "s1_outrange")])
+def test_the_attacking_side_is_a_blob(name):
+    """Every play but the three counters has a blob attacker: anchors.attacker == 'blob' and every group of the attacking side (side 1
+    for a defender play, side 0 for an attacker play) is a blob. Left out: s2_mass_one_end (a column) and s4_do_not_chase (a hold), and
+    s1_outrange, whose own side 1 is the held line it attacks (registered as a defender play, so the placed path reuses that line as
+    the attacker; its attacker kind is 'blob' by the existing anchor table but the play's own side 1 is a line: flagged in the report)."""
+    a = plays_space.PLAYS[name].anchors
+    assert a.attacker == "blob"
+    attacking = 1 if a.role == "defender" else 0
+    s = plays_space.PLAYS[name].setup_fn()
+    assert {g.formation for g in s.groups if g.side == attacking} == {"blob"}
+
+
+def test_mass_one_end_enemy_is_the_spread_line():
+    """The counter to the spread line faces a line at SPREAD_SPACING (the naive side 'in a blob or a line')."""
+    s = plays_space.PLAYS["s2_mass_one_end"].setup_fn()
+    enemy = [g for g in s.groups if g.side == 1]
+    assert {g.formation for g in enemy} == {"line"} and {g.params["spacing"] for g in enemy} == {plays_space.SPREAD_SPACING}
+    assert {g.formation for g in s.groups if g.side == 0} == {"column"}
 
 
 def test_outrange_bastions_attack_the_held_wall():
