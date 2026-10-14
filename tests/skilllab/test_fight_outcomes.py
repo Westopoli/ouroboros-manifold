@@ -723,6 +723,17 @@ def test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only(seam):
 
 # ---------------------------------------------------------------- mopup.py and approach.py are gone
 
+@pytest.mark.parametrize("name", ["DRAW_BAND", "SILENCE_TICKS", "REISSUE_TICKS", "BLIND_TICKS", "HOLD_RADIUS"])
+def test_contract_loses_the_retired_constants(name):
+    """Decision 12 (Q-LAB-03): the constants of the retired draw band, silence, re-issue, blind and hold rules are deleted from
+    contract.py. Control below: WIN_MARGIN stays until L4, and the new window constant is there."""
+    assert not hasattr(contract_mod, name)
+
+
+def test_contract_keeps_win_margin_until_l4():
+    assert contract_mod.WIN_MARGIN == 0.05 and hasattr(contract_mod, "TICKS_PER_SECOND") and hasattr(contract_mod, "SHIFT_MAX")
+
+
 @pytest.mark.parametrize("name", ["mopup", "approach"])
 def test_the_retired_lab_modules_are_deleted(name):
     """Spec L2: `mopup.py` and `approach.py` deleted (Q-LAB-03). Control: a module that is there is found."""
