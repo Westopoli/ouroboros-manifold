@@ -9,6 +9,11 @@ const RESOLUTIONS := [
 	Vector2i(3840, 2160),
 ]
 
+# Galaxy quality item texts in index order (R-110-02, A54); one place for the control and qa_state.
+# See also: tests/test_galaxy_quality_setting.gd
+# liberty 2026-10-13: the item texts "Full", "Stand-in", "Fewer particles" come from the gap-2 null action.
+const GALAXY_QUALITY_ITEMS := ["Full", "Stand-in", "Fewer particles"]
+
 var _settings: Dictionary = {}
 
 func _ready() -> void:
@@ -139,6 +144,30 @@ func _build_display_card(parent: Control) -> void:
 		else:
 			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	)
+
+	# R-110-02, A54/A60: the player sets galaxy quality by hand and the game never changes it. It is stored only by
+	# APPLY (UIDataBus.save_settings, which clamps 0..2) and read by scenes/galaxy/galaxy_quality.gd when the galaxy
+	# view is built, so no live re-apply here. See also: tests/test_galaxy_quality_setting.gd
+	# liberty 2026-10-13: last row of the DISPLAY card after VSync, label "Galaxy Quality", an OptionButton (no toggle).
+	var quality_row := HBoxContainer.new()
+	quality_row.add_theme_constant_override("separation", 12)
+	content.add_child(quality_row)
+	var quality_label := Label.new()
+	quality_label.text = "Galaxy Quality"
+	quality_label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+	quality_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
+	quality_label.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
+	quality_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	quality_row.add_child(quality_label)
+
+	var quality_option := OptionButton.new()
+	for i in range(GALAXY_QUALITY_ITEMS.size()):
+		quality_option.add_item(GALAXY_QUALITY_ITEMS[i], i)
+	quality_option.selected = int(_settings.get("galaxy_quality", 0))
+	quality_option.item_selected.connect(func(idx: int):
+		_settings["galaxy_quality"] = idx
+	)
+	quality_row.add_child(quality_option)
 
 
 func _build_camera_card(parent: Control) -> void:
@@ -292,5 +321,7 @@ func qa_state() -> Dictionary:
 		"resolution_index": int(_settings.get("resolution_index", 2)),
 		"fullscreen": bool(_settings.get("fullscreen", false)),
 		"vsync": bool(_settings.get("vsync", true)),
+		"galaxy_quality": int(_settings.get("galaxy_quality", 0)),
+		"galaxy_quality_items": GALAXY_QUALITY_ITEMS.duplicate(),
 		"plants": [],
 	}
