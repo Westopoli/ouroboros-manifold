@@ -62,6 +62,7 @@ EXPECTED_MODULE = {
     "om_mission_on_begin": "mission.c",
     "om_mission_reset_started": "fog.c",
     "om_mission_tactical_tick": "mission.c",
+    "om_move_route_get": "tactical_move.c",
     "om_move_terrain_epoch": "tactical_move.c",
     "om_rng_draw": "sim.c",
     "om_rng_seed": "sim.c",
