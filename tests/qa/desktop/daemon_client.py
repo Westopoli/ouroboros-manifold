@@ -80,13 +80,9 @@ class DaemonClient:
     """One TCP round trip per call, matching autoload/qa_daemon.gd's
     newline-delimited-JSON protocol (see its _handle_line/_dispatch)."""
 
-    def __init__(self, port: int, timeout: float = 10.0, user_dir: Path | None = None):
+    def __init__(self, port: int, user_dir: Path, timeout: float = 10.0):
         self.port = port
         self.timeout = timeout
-        if user_dir is None:
-            # liberty 2026-10-13: a client built alone has no game scratch; it gets its own.
-            scratch = Path(tempfile.mkdtemp(prefix="qa_client."))
-            user_dir = _user_dir_for(godot_env(os.environ, scratch, None), scratch)
         self.user_dir = user_dir
 
     def call(self, verb: str, *args) -> dict:
@@ -114,8 +110,8 @@ class DaemonClient:
         return self.call("input", "click", x, y, button)
 
     def screenshot(self, name: str) -> dict:
-        # liberty 2026-10-13: the game's qa-port mode never creates user://qa (qa_driver.gd makes it
-        # only under --qa-script), and a fresh per-instance user dir has none: make it here.
+        # qa_daemon never creates user://qa in --qa-port mode (only qa_driver.gd:30 under
+        # --qa-script does); FU: GD-side fix in the lane K harness.
         (self.user_dir / "qa").mkdir(parents=True, exist_ok=True)
         return self.call("screenshot", name)
 
