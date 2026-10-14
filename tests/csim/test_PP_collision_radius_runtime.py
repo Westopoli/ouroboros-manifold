@@ -7,7 +7,9 @@ the runtime value is the body size the sim uses, at the collision pass, the stee
 the arrival tolerances. Spawn spacing (mission.c, enemy_macro.c, unit.c) and the broad-phase grid layout stay
 compile-time and are not tested here.
 
-Rules proved: R-097-03 (the 40 wu steering probe is blocked by a unit closer than two collision radii),
+Rules proved: ALG-68 and spec ruling 15 (the 40 wu steering probe: gather and blocked test at two collision radii; the
+blocking radius is code-derived, om_move_probe_clear in csrc/tactical_move.c, ALG-68 only says "within blocking radius"
+and R-097-03 only that a unit on the layer blocks the probe),
 R-097-10 (the push pass separates a pair to two collision radii), R-099-04 (arrival is within 1.5 collision radii of
 a destination), and ruling 15 itself. Every test sets the radius with om_tactical_set_param before the first step.
 
@@ -22,10 +24,14 @@ parameter unset, so the compile-time 15), 300 ticks of the mixed scene below, sh
 x, y of every unit in id order after every tick. Determinism is a contract (no platform transcendentals), so the
 constant is portable. Not recorded from a modified tree: if it ever changes, a landing changed the radius-15 path.
 
-Sites not reachable by behaviour from here (untested): list reach (4 r), collision slack (r), collision mark and
-sweep reach (2 r), probe gather radius, sure-blocked margin test, the navmesh margins in csrc/tactical_move.c
-(nearest-free-cell snap; needs a terrain scene) and the route-waypoint arrival (2.0 r; needs a routed move) and the
-group-centroid arrival (tol 1.5 r, shadowed by each unit's own 1.5 r arrival). Where the gap scene at radius 30
+Sites covered by a behaviour test: pair push (2 r), arrival (1.5 r), probe blocked and probe gather (2 r; the radius-30
+probe scene fails for a builder who scales either alone), the navmesh margins of om_move_leave_blocked and
+om_move_nearest_reachable, the route-waypoint reach (2.0 r) and the routed move's last-leg arrival (2.0 r). Each was
+checked green with a compile-time stand-in radius of 10 or 30 (OM_UNIT_COLLISION_RADIUS in om_constants.h).
+
+Known holes (no behaviour test): list reach (4 r), collision slack (r), collision mark and sweep reach (2 r), the
+sure-blocked margin test (a fast path in front of the probe-blocked test; leaving it at 15 changes no result), and
+the group-centroid arrival (tol 1.5 r, shadowed by each unit's own 1.5 r arrival). Where the gap scene at radius 30
 would fail only because one of these was missed, that is the builder's failure to find, not a hole in a test.
 """
 import ctypes
@@ -274,3 +280,173 @@ def test_R_097_03_control_probe_deflects_a_unit_inside_two_radii(lib):
     """Control (green today and after): at 15 the same 25 wu pass is inside 30 and the walker veers, so a
     straight pass above is a measurement and not a scene that never deflects."""
     assert _pass_by(lib, DEFAULT_RADIUS, 25.0) > 1.0
+
+
+def _probe_ahead(lib, radius):
+    """A blocker stands 90 wu dead ahead of a walker; the walker takes one step. The 40 wu probe point is 50 wu from
+    the blocker. Returns the walker's sideways drift |x - 1000| after the step."""
+    w = _world(lib, radius)
+    try:
+        _spawn(lib, w, 1000.0, 1090.0)
+        m = _spawn(lib, w, 1000.0, 1000.0)
+        lib.om_command_move(w, m, 1000.0, 1400.0)
+        lib.om_tactical_step(w)
+        return abs(_pos(lib, w, m)[0] - 1000.0)
+    finally:
+        lib.om_world_free(w)
+
+
+def test_R_097_03_probe_is_blocked_by_a_unit_inside_two_radii_at_radius_30(lib):
+    """Radius 30: the probe point 40 wu ahead is 50 wu from the blocker, inside 2 x 30 = 60 (outside the radius-15
+    figure 30), so the first step sweeps off the straight line. The blocker is 90 wu away, so no push is involved:
+    only the probe gather (the blocker must be gathered, 40 + 2 r out) and the blocked test (2 r) see it. Red today
+    (the walker goes straight), and it stays red for a builder who scales the blocked test but not the probe
+    gather radius, or the gather but not the blocked test. The blocking radius is code-derived (ALG-68 says only
+    'within blocking radius'; R-097-03 says a unit on the layer blocks the probe): om_move_probe_clear in
+    csrc/tactical_move.c, two collision radii. Spec ruling 15: 'probe gather and blocked'."""
+    assert _probe_ahead(lib, 30.0) > 1.0
+
+
+def test_R_097_03_control_probe_goes_straight_at_radius_15_with_the_blocker_90_ahead(lib):
+    """Control (green today and after): at 15 the probe point is 50 wu from the blocker, outside 30, so the same
+    scene walks straight; the test above measures a deflection and not a scene that always veers."""
+    assert _probe_ahead(lib, DEFAULT_RADIUS) < STEP_TOL
+    assert _probe_ahead(lib, None) < STEP_TOL
+
+
+# ---- site family: navmesh margins and route-waypoint arrival (terrain scenes, built with om_map_block_rect) --------
+# The scenes follow tests/csim/test_PP_move_route.py: a 2000 x 2000 canvas, the 100 wu route grid, a wall in column 5.
+
+CANVAS = 2000.0
+WALL_FULL = (510.0, 10.0, 590.0, 1990.0)    # column 5, every row: cuts the map
+WALL_LOW = (510.0, 10.0, 590.0, 790.0)      # column 5, rows 0..7: open above y = 800
+ALL_LAYERS = (0, 4)
+
+
+def _terrain_world(lib, radius, wall):
+    w = _world(lib, radius)
+    assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
+    assert lib.om_map_block_rect(w, *wall, *ALL_LAYERS) == 0
+    return w
+
+
+@pytest.mark.parametrize("radius, expect", [(10.0, (490.0, 420.0)), (30.0, (470.0, 430.0))])
+def test_ruling_15_navmesh_margin_unit_inside_a_blocked_cell_is_moved_out_by_the_radius(lib, radius, expect):
+    """R-097-09 with the margin of ruling 15 (csrc/tactical_move.c om_move_leave_blocked: 'the nearest point of that
+    cell at least a collision radius inside it'). An idle unit at (520, 420) is inside the wall (column 5, row 4); the
+    nearest open cell is column 4, row 4 (x 400..500, y 400..500) and the unit lands at x = 500 - r, y = clamped to
+    [400 + r, 500 - r]: (490, 420) at radius 10 and (470, 430) at radius 30. Red today: (485, 420) at both."""
+    w = _terrain_world(lib, radius, WALL_LOW)
+    try:
+        u = _spawn(lib, w, 520.0, 420.0)
+        lib.om_tactical_step(w)
+        assert _pos(lib, w, u) == pytest.approx(expect, abs=STEP_TOL)
+    finally:
+        lib.om_world_free(w)
+
+
+def test_ruling_15_navmesh_margin_control_radius_15_unit_lands_at_485_420(lib):
+    """Control (green today and after): at 15 the same scene lands at (485, 420)."""
+    w = _terrain_world(lib, DEFAULT_RADIUS, WALL_LOW)
+    try:
+        u = _spawn(lib, w, 520.0, 420.0)
+        lib.om_tactical_step(w)
+        assert _pos(lib, w, u) == pytest.approx((485.0, 420.0), abs=STEP_TOL)
+    finally:
+        lib.om_world_free(w)
+
+
+def _unreachable_destination(lib, radius):
+    """A wall the full height of the canvas; a unit at (300, 400) ordered to (900, 400). The destination has no route
+    and is replaced (csrc/tactical_move.c om_move_nearest_reachable) by the nearest reachable point, a radius inside
+    its cell. Ties go to the lower cell id, so the cell is column 4, row 3 (x 400..500, y 300..400): the point is
+    (500 - r, 400 - r). Read back with om_unit_get_destination after the first tick plans the route."""
+    w = _terrain_world(lib, radius, WALL_FULL)
+    try:
+        u = _spawn(lib, w, 300.0, 400.0)
+        lib.om_command_move(w, u, 900.0, 400.0)
+        lib.om_tactical_step(w)
+        return tuple(lib.om_unit_get_destination(w, u))[-2:]
+    finally:
+        lib.om_world_free(w)
+
+
+@pytest.mark.parametrize("radius", [10.0, 30.0])
+def test_ruling_15_navmesh_margin_nearest_reachable_point_is_a_radius_inside_its_cell(lib, radius):
+    """Radius 10: (490, 390); radius 30: (470, 370). Red today: (485, 385) at both."""
+    assert _unreachable_destination(lib, radius) == pytest.approx((500.0 - radius, 400.0 - radius), abs=STEP_TOL)
+
+
+def test_ruling_15_navmesh_margin_control_nearest_reachable_point_at_radius_15(lib):
+    """Control (green today and after): at 15 the replaced destination is (485, 385)."""
+    assert _unreachable_destination(lib, DEFAULT_RADIUS) == pytest.approx((485.0, 385.0), abs=STEP_TOL)
+
+
+def _routed_run(lib, radius, ticks=300):
+    """A unit at (300, 400) ordered to (900, 400) behind a wall open above y = 800: it follows route waypoints.
+    Returns the per-tick positions. The first waypoint is the centre of cell (4, 8), (450, 850)."""
+    w = _terrain_world(lib, radius, WALL_LOW)
+    try:
+        u = _spawn(lib, w, 300.0, 400.0)
+        lib.om_command_move(w, u, 900.0, 400.0)
+        trace = []
+        for _ in range(ticks):
+            lib.om_tactical_step(w)
+            trace.append(_pos(lib, w, u))
+        return trace
+    finally:
+        lib.om_world_free(w)
+
+
+FIRST_WAYPOINT = (450.0, 850.0)
+DEST = (900.0, 400.0)
+WAYPOINT_MULT = 2.0   # R-099-04 / ALG-68 WAYPOINT_ARRIVE_MULT: a routed move is within 2.0 radii of a waypoint
+
+
+def _heading(a, b):
+    return math.atan2(b[1] - a[1], b[0] - a[0])
+
+
+def _first_turn(trace, start=(300.0, 400.0)):
+    """(index, position, step length) of the first tick whose heading differs from the one before by more than 0.02
+    rad: the tick the unit took its next waypoint."""
+    pts = [start] + trace
+    step = math.hypot(pts[2][0] - pts[1][0], pts[2][1] - pts[1][1])
+    for i in range(2, len(pts)):
+        if abs(_heading(pts[i - 1], pts[i]) - _heading(pts[i - 2], pts[i - 1])) > 0.02:
+            return i, pts[i], step
+    raise AssertionError("scene error: the routed unit never turned")
+
+
+@pytest.mark.parametrize("radius", [10.0, 30.0])
+def test_R_099_04_unit_takes_a_route_waypoint_inside_two_radii(lib, radius):
+    """A unit on a route takes its next waypoint the first tick it is within 2.0 x radius of it (R-099-04, ALG-68
+    WAYPOINT_ARRIVE_MULT), so it turns there: just under 20 wu from the first waypoint at radius 10, just under 60 at radius 30 (the turn is
+    seen up to two 7.5 wu steps inside the reach: the tick it takes the waypoint it also moves). Red today: it turns
+    24.2 from the waypoint at either radius."""
+    _, pos, step = _first_turn(_routed_run(lib, radius))
+    reach = WAYPOINT_MULT * radius
+    d = math.hypot(pos[0] - FIRST_WAYPOINT[0], pos[1] - FIRST_WAYPOINT[1])
+    assert reach - 2.0 * step <= d < reach, f"radius {radius}: turned {d:.1f} from the waypoint, expected within [{reach - 2.0 * step:.1f}, {reach})"
+
+
+def test_R_099_04_control_unit_takes_a_route_waypoint_at_radius_15_inside_30(lib):
+    """Control (green today and after): at 15 the turn is 24.2 wu from the waypoint, inside 30 and within two steps
+    of it."""
+    _, pos, step = _first_turn(_routed_run(lib, DEFAULT_RADIUS))
+    d = math.hypot(pos[0] - FIRST_WAYPOINT[0], pos[1] - FIRST_WAYPOINT[1])
+    assert 30.0 - 2.0 * step <= d < 30.0, f"turned {d:.1f} from the waypoint, step {step:.1f}"
+
+
+@pytest.mark.parametrize("radius", [10.0, 30.0])
+def test_R_099_04_routed_move_ends_within_two_radii_of_its_destination(lib, radius):
+    """The routed move's last leg ends the first tick the unit is within 2.0 x radius of the destination (not the
+    1.5 of a direct move): where it stops is at least 2 r - one step and under 2 r from (900, 400). Red today: 24.7
+    at both radii."""
+    trace = _routed_run(lib, radius)
+    stop = trace[-1]
+    assert trace[-1] == trace[-2], "scene error: the unit was still moving"
+    step = math.hypot(trace[1][0] - trace[0][0], trace[1][1] - trace[0][1])
+    d = math.hypot(stop[0] - DEST[0], stop[1] - DEST[1])
+    reach = WAYPOINT_MULT * radius
+    assert reach - step <= d < reach, f"radius {radius}: stopped {d:.1f} from the destination, expected [{reach - step:.1f}, {reach})"
