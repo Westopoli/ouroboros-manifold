@@ -111,6 +111,12 @@
 #define OM_UNIT_FALLBACK_INTERVAL 1.0
 #define OM_UNIT_FALLBACK_RANGE 100.0
 
+/* R-096-08 (Q-096-01 option b): how far a guard may walk from its post, measured post to the guard's own centre.
+ * DRAFT-guard-radius: 200 wu is the R-087-05 leash figure, an Architect draft that Westley rules on; a separate name so
+ * the guard's number can change without moving the attack-move leash. No simulation/config.py counterpart (the Python
+ * has no guard). */
+#define OM_GUARD_RADIUS 200.0
+
 /* OM_RETURN_FIRE_FLEE_DIST, OM_ATTACK_MOVE_LEASH_DIST promoted to
  * csrc/om_constants.h (ALG-62/68, CONST-1). */
 
@@ -249,7 +255,9 @@ typedef struct {
      * unit) and whether this member has held a target since; the group ends once every member has. */
     uint32_t am_gid;
     int      am_engaged;
-    /* R-096-08: set by om_command_guard (tactical_move.c); the unit holds, fires in range, never walks */
+    /* R-096-08: set by om_command_guard (tactical_move.c); the unit's post is anchor_x/y (set with it, cleared with it,
+     * so no field is added to the save or the checksum); it steps for a seen target no farther than OM_GUARD_RADIUS
+     * from the post, fires in range, and walks back to the post when it has no target */
     int      guard;
     int      anchor_set;
     double   anchor_x, anchor_y;
@@ -2064,12 +2072,74 @@ static void om_tac_drop_orders(om_unit_row *u) {
 void om_tac_unit_set_guard(om_world *w, uint32_t unit_id, int on) {
     om_unit_row *u = om_registry_find_in(om_tac(w), unit_id);
     if (!u) return;
-    if (!on) { u->guard = 0; return; }
+    if (!on) {
+        /* the anchor is the guard's post only while it guards: an attack-move leash must not inherit it */
+        if (u->guard) u->anchor_set = 0;
+        u->guard = 0;
+        return;
+    }
     if (u->guard) return;
     om_tac_drop_orders(u);
     u->flinching = 0;
     u->last_attacker = 0;
     u->guard = 1;
+    if (om_unit_get_pos(w, unit_id, &u->x, &u->y)) {
+        u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
+    }
+}
+
+/* R-096-08: a guard walks only from a post (a guard whose post was never recorded keeps the old hold). */
+static int om_tac_guard_walks(const om_unit_row *u) {
+    return u->guard && u->anchor_set;
+}
+
+/* R-096-08: engaging t would need the guard to be no more than its range plus OM_GUARD_RADIUS from the post, so
+ * the guard can stand inside the radius with t in range. The target's position decides only this. */
+static int om_tac_guard_can_engage(const om_world *w, const om_unit_row *u, const om_unit_row *t) {
+    double r = u->attack_range * om_tac_offset_mult(w, OM_REACH_RANGE, u, t) + OM_GUARD_RADIUS;
+    return om_tac_dist_le(t->x - u->anchor_x, t->y - u->anchor_y, r);
+}
+
+/* R-096-08: nearest (to the guard) enemy on its layer that its side sees and that can be engaged from inside the
+ * radius, lowest id on a tie. Run only when nothing is in range, so a guard never walks past a target it can shoot. */
+static om_unit_row *om_tac_guard_pick(om_world *w, om_tac_state *st, const om_unit_row *self) {
+    om_unit_row *best = NULL;
+    double best_d2 = 0.0;
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_other_st(&it, st, self->faction_id, self->anchor_x, self->anchor_y,
+                                self->attack_range + OM_GUARD_RADIUS);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        om_unit_row *cand = &st->units[id - 1];
+        double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
+        if (cand->hp <= 0.0 || cand->stealth || cand->layer != self->layer || !om_tac_hostile(self, cand)) continue;
+        if (best && (d2 > best_d2 || (d2 == best_d2 && id > best->unit_id))) continue;
+        if (!om_tac_guard_can_engage(w, self, cand) || !om_tac_may_act_on(w, self, cand)) continue;
+        best = cand; best_d2 = d2;
+    }
+    return best;
+}
+
+/* R-096-08: one tick of a guard's walking. With a target out of range it steps toward it, then is put back on the
+ * radius circle if the step left it (a projection, so it slides along the edge toward the nearest reachable point and
+ * never crosses); with a target in range it stands; with none it walks home. A transient move: no order, no
+ * destination, so nothing is left over after the return. */
+static void om_tac_guard_walk(om_world *w, om_unit_row *u, const om_unit_row *t) {
+    double dx, dy, d;
+    if (!t) {
+        om_tac_step_toward(w, u, u->anchor_x, u->anchor_y);
+        return;
+    }
+    if (om_tac_in_range(w, u, t)) return;
+    om_tac_step_toward(w, u, t->x, t->y);
+    dx = u->x - u->anchor_x; dy = u->y - u->anchor_y;
+    d = sqrt(dx * dx + dy * dy);
+    if (d > OM_GUARD_RADIUS) {
+        u->x = u->anchor_x + dx / d * OM_GUARD_RADIUS;
+        u->y = u->anchor_y + dy / d * OM_GUARD_RADIUS;
+        om_grid_move(om_tac(w), u->unit_id - 1);
+        om_unit_set_pos(w, u->unit_id, u->x, u->y);
+    }
 }
 
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
@@ -2141,7 +2211,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
             && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
             if (u->guard) {
-                /* R-096-08: a guard answers only what it can shoot, and never flees or walks */
+                /* R-096-08: return fire is untouched: a guard answers an attacker it can shoot from where it stands and
+                 * never flees; what it must walk for is found by the acquisition below, and only if its side sees it */
                 if (!noncombat && om_tac_in_reach(w, u, atk) && !atk->stealth && om_tac_in_range(w, u, atk)) u->target_id = atk->unit_id;
             } else if (noncombat || !om_tac_in_reach(w, u, atk) || atk->stealth) {
                 if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
@@ -2180,8 +2251,12 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         /* G3 (R-008-04): a held target the side no longer sees is dropped on the spot, one sight check per held target */
         if (!drop && u->order != OM_ORDER_ATTACK_TARGET && !om_tac_may_act_on(w, u, t)) drop = 1;
         if (!drop && u->order != OM_ORDER_ATTACK_TARGET) {
-            /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another */
-            if (!om_tac_in_reach(w, u, t) || t->stealth || ((!pursue || u->guard) && !om_tac_in_range(w, u, t))) {
+            /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another.
+             * R-096-08: a walking guard keeps a target out of range as long as it can still be engaged from inside the
+             * radius (post to target within range + OM_GUARD_RADIUS), and drops it the moment it cannot. */
+            int too_far = om_tac_guard_walks(u) ? !om_tac_guard_can_engage(w, u, t)
+                                                : ((!pursue || u->guard) && !om_tac_in_range(w, u, t));
+            if (!om_tac_in_reach(w, u, t) || t->stealth || too_far) {
                 drop = 1;
             } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
                        && om_tac_leash_broken(w, u, t)) {
@@ -2191,7 +2266,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         if (drop) {
             int gone = !t || t->hp <= 0.0 || (u->order == OM_ORDER_ATTACK_TARGET && !om_tac_in_reach(w, u, t));
             u->target_id = 0;
-            u->anchor_set = 0;
+            if (!u->guard) u->anchor_set = 0;
             if (u->order == OM_ORDER_ATTACK_TARGET && gone) {
                 u->order = OM_ORDER_NONE;
                 u->halted = 0;
@@ -2202,11 +2277,13 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     most_damaged = om_tac_most_damaged_for(w, u);
-    if ((u->target_id == 0 || most_damaged || (pursue && t && !om_tac_in_range(w, u, t))) && u->order != OM_ORDER_ATTACK_TARGET
+    if ((u->target_id == 0 || most_damaged || ((pursue || om_tac_guard_walks(u)) && t && !om_tac_in_range(w, u, t)))
+        && u->order != OM_ORDER_ATTACK_TARGET
         && (uint64_t)(om_unit_cohort_slot(w, u->unit_id)) == tick % OM_TARGETING_COHORT_COUNT) {
         t = most_damaged
             ? om_tac_most_damaged_hostile(w, st, u, u->attack_range)
             : om_tac_nearest_actable(w, st, u, u->attack_range);
+        if (!t && om_tac_guard_walks(u)) t = om_tac_guard_pick(w, st, u);
         t = om_tac_pick_across(w, st, u, t);
         if (t) {
             u->target_id = t->unit_id;
@@ -2230,6 +2307,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     }
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
+    if (om_tac_guard_walks(u)) om_tac_guard_walk(w, u, t);
     if (t) {
         int in_range = om_tac_in_range(w, u, t);
         if (u->order == OM_ORDER_ATTACK_TARGET) {
@@ -3076,7 +3154,7 @@ int32_t om_unit_brace_phase(const om_world *w, uint32_t unit_id) {
  * before tactical_move.c can call it. */
 int om_tac_unit_leash_anchor(const om_world *w, uint32_t unit_id, double *x, double *y) {
     const om_unit_row *row = om_registry_find_in(om_tac_ro(w), unit_id);
-    if (!row || !row->anchor_set) return 0;
+    if (!row || !row->anchor_set || row->guard) return 0;
     if (x) *x = row->anchor_x;
     if (y) *y = row->anchor_y;
     return 1;
