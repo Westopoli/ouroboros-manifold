@@ -1,4 +1,5 @@
 # spec: Architect ruling A198 - the fact the stop line depends on: a unit on a move order never fires while walking
+# LAB-REV2-L2 inventory (Q-LAB-03): KEPT unchanged. 'closest approach' is a distance, not the retired approach opening.
 """A group on a move order walks through idle enemies without targeting or hurting them; the attack-move control fires.
 
 Measured 2026-10-03 with the production library: move order, closest approach 30 wu, zero damage, no target at any tick;

@@ -1,4 +1,5 @@
 # spec: docs/northstar/plans/2026-10-05-space-lab-stage1-spec.md::features lane
+# LAB-REV2-L2 inventory (Q-LAB-03): KEPT unchanged. `start_distance` here is the layout Feature (maps.sample_features), not the retired Setup.start_distance.
 """maps.sample_features and the feat_<field> columns of rows.fight_row. No Engine, no compiler."""
 import dataclasses
 import math

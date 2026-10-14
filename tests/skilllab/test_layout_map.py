@@ -1,4 +1,5 @@
 # spec: docs/northstar/plans/2026-10-06-layout-search-spec.md::1. A layout is a feature vector, 4. Pieces (P1)
+# LAB-REV2-L2 inventory (Q-LAB-03): KEPT unchanged. `start_distance` here is the layout Feature (spawn distance of maps.layout_map), not the retired Setup.start_distance; the 'residual stalemate' remark is the 2026-10-06 layout-geometry ruling.
 """maps.layout_map(features, seed): a feature-controlled layout beside sample_map. No Engine, no compiler.
 Geometry is measured here from the returned Terrain with test-local code, never with the generator's own helpers.
 Body = 2R = 30 wu (hardcoded until D1). `none` for choke width and detour ratio is 0 / 0.0; wall tests use
