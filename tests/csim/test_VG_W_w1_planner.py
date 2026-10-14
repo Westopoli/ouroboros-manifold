@@ -32,6 +32,7 @@ chooses and lists the fixture parameters").
 """
 import ctypes
 import hashlib
+import time
 
 import pytest
 
@@ -421,31 +422,52 @@ def test_B_routes_unchanged_every_walker_after_200_ticks(lib, world_factory):
         len(bad), WALK_TICKS_B, bad[0], (*pos[bad[0]], lib.om_unit_get_layer(w, ids[bad[0]])), GOLDEN_B[bad[0]])
 
 
+DRAFT_PERF_REPEATS = 7   # DRAFT-perf-repeats (Architect 2026-10-14, TD-VG-W-5), vetoable by Westley
+
+
+def perf_repeats_ms(lib, make, repeats=DRAFT_PERF_REPEATS, inject_ms=0.0):
+    """Run the C measurement `repeats` times, each on a fresh 600-walker world in this process: the median of 20
+    om_world_step after 5 warm-up through median_ns. Returns (medians in ms, marching counts). `inject_ms` is the
+    positive control: a busy-wait of that many ms inside the timed step (0 in the real test; no sleep, no load hiding)."""
+    medians, marchings = [], []
+    for _ in range(repeats):
+        w, ids = _walker_world(lib, make)
+        calls, snap = [], {}
+
+        def op():
+            calls.append(1)
+            if inject_ms:
+                t_end = time.perf_counter() + inject_ms / 1e3
+                while time.perf_counter() < t_end:
+                    pass
+            lib.om_world_step(w)
+            if len(calls) == WALK_MEDIAN_WARMUP:
+                snap["step5"] = _positions(lib, w, ids)
+
+        medians.append(median_ns(op, n=WALK_MEDIAN_N, warmup=WALK_MEDIAN_WARMUP) / 1e6)
+        assert len(calls) == WALK_MEDIAN_WARMUP + WALK_MEDIAN_N
+        end = _positions(lib, w, ids)
+        marchings.append(sum(1 for a, b in zip(snap["step5"], end) if a != b))
+    return medians, marchings
+
+
 def test_C_a_tick_with_600_walkers_costs_less_than_the_draft(lib, world_factory):
     """THE RED CASE (spec W1: "median of 20 om_world_step after 5 warm-up through median_ns, asserted under
-    DRAFT-walk-tick-ms-w1"): wall-clock, run on a quiet machine. Red today: the median is far above 10 ms (the spec
-    measured about 150 ms on 2026-10-10). The premise (walkers still marching through the measured steps) is
-    asserted before the perf line."""
-    w, ids = _walker_world(lib, world_factory)
-    calls, ticks, snap = [], [], {}
-
-    def op():
-        calls.append(1)
-        ticks.append(lib.om_world_step(w))
-        if len(calls) == WALK_MEDIAN_WARMUP:
-            snap["step5"] = _positions(lib, w, ids)
-
-    median_ms = median_ns(op, n=WALK_MEDIAN_N, warmup=WALK_MEDIAN_WARMUP) / 1e6
-    end = _positions(lib, w, ids)
-    marching = sum(1 for a, b in zip(snap["step5"], end) if a != b)
-    print("C premise: %d of %d walkers changed position between step %d and step %d; the first step returned tick %d, "
-          "the last tick %d" % (marching, len(ids), WALK_MEDIAN_WARMUP, len(calls), ticks[0], ticks[-1]))
-    print("C median om_world_step: %.3f ms" % median_ms)
-    assert len(calls) == WALK_MEDIAN_WARMUP + WALK_MEDIAN_N
-    assert marching >= PREMISE_MIN_MOVED, "premise: only %d walkers still marching" % marching
-    assert median_ms < DRAFT_WALK_TICK_MS_W1, (
-        "median of %d om_world_step with 600 walkers is %.3f ms, DRAFT-walk-tick-ms-w1 is %.1f ms" % (
-            WALK_MEDIAN_N, median_ms, DRAFT_WALK_TICK_MS_W1))
+    DRAFT-walk-tick-ms-w1"): wall-clock. TD-VG-W-5 (Architect 2026-10-14): the box runs gates at load about 14 of 16
+    cores, so one 20-step median is load noise; the test takes the MINIMUM of DRAFT-perf-repeats (7) such medians, each
+    on a fresh world, and asserts it under the unchanged draft. Positive control: test_VG_W_w1_perf_control.py (an
+    injected busy-wait fails every repeat). Red today: the median is far above 10 ms (the spec measured about 150 ms
+    on 2026-10-10). The premise (walkers still marching through the measured steps) is asserted before the perf line."""
+    medians, marchings = perf_repeats_ms(lib, world_factory)
+    print("C premise: %s of 600 walkers changed position between step %d and the last step, per repeat" % (
+        marchings, WALK_MEDIAN_WARMUP))
+    print("C median om_world_step per repeat (ms): %s" % ", ".join("%.3f" % m for m in medians))
+    best = min(medians)
+    print("C minimum of %d repeats: %.3f ms" % (len(medians), best))
+    assert min(marchings) >= PREMISE_MIN_MOVED, "premise: only %d walkers still marching" % min(marchings)
+    assert best < DRAFT_WALK_TICK_MS_W1, (
+        "minimum of %d medians of %d om_world_step with 600 walkers is %.3f ms, DRAFT-walk-tick-ms-w1 is %.1f ms" % (
+            len(medians), WALK_MEDIAN_N, best, DRAFT_WALK_TICK_MS_W1))
 
 
 # ==== GOLDEN TABLES (begin): recorded 2026-10-12 on origin/main d563d9dc, the unmodified planner ====
