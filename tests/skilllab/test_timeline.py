@@ -28,6 +28,8 @@ from fakes_timeline import TimelineFakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup, Step  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 A0, A1 = (-300.0, 0.0), (300.0, 0.0)     # anchors of side 0 and side 1
 
 
@@ -47,8 +49,8 @@ def G(side, count=2, order="attack_move", goal=None, anchor=None):
 
 
 def S(timeline=(), groups=None, max_ticks=10, **kw):
-    return Setup(groups=groups or (G(0), G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=1000,
-                 sample_every=5, timeline=tuple(timeline), **kw)
+    return Setup(groups=groups or (G(0), G(1)), unit_types={}, max_ticks=max_ticks,
+                 sample_every=5, timeline=tuple(timeline), orders_per_unit=False, **kw)   # group-level order log under test
 
 
 def run(setup, seed=0, swap=False, **fake_kw):
@@ -384,8 +386,8 @@ def test_idle_step_ignores_its_goal_and_a_valid_step_is_accepted():
 # ---- unaffectedness, determinism, swap ----------------------------------------------------------------------
 
 def recorded_setup():
-    return Setup(groups=(G(0, 2), G(1, 3)), unit_types={}, max_ticks=50, stalemate_ticks=1000, sample_every=2,
-                 trace=True, timeline=())
+    return Setup(groups=(G(0, 2), G(1, 3)), unit_types={}, max_ticks=50, sample_every=2,
+                 trace=True, timeline=(), orders_per_unit=False)
 
 
 def recorded_script(tick, fake):

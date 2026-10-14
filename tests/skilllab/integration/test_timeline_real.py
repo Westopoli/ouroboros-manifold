@@ -35,16 +35,22 @@ def setup(timeline):
 
 def test_delayed_attack_move_fires_once_and_the_fight_ends(library):
     """Group 0 idles far from group 1; the tick-20 step sends it attack_move at the enemy. It fires at tick 20
-    exactly once, the fight is not a cap, and a second run is identical."""
+    exactly once, the order takes effect (first contact after tick 20, damage dealt), and a second run is identical.
+
+    LAB-REV2-L2 (Q-LAB-03): the old assertion "the fight is not a cap" is dropped. A timeline step issues a GROUP attack-move, and
+    until LAB-REV2-E1 lands the engine ends a group's attack-move after its first engagement (R-096-02, rewritten 2026-10-13), so
+    this scene can end `cap` on today's engine; E1's test pins elimination. The outcome must still be one of the four names."""
     s = setup((Step(0, ("tick", 20), "attack_move"),))
     first, second = fight.fight(s, 1, False, engine=library), fight.fight(s, 1, False, engine=library)
     assert first.steps_fired == ((0, 20),)
-    assert first.outcome != "cap"
+    assert first.outcome in ("side0", "side1", "draw", "cap")
+    assert first.first_contact_tick > 20 and first.strength_left != (1.0, 1.0)
     assert first == second
 
 
 def test_no_timeline_fires_nothing(library):
     """Control: the same two idle groups with timeline () report steps_fired == (), and swap fires the same steps."""
-    assert fight.fight(setup(()), 1, False, engine=library).steps_fired == ()
+    quiet = fight.fight(setup(()), 1, False, engine=library)
+    assert quiet.steps_fired == () and quiet.first_contact_tick == -1
     s = setup((Step(0, ("tick", 20), "attack_move"),))
     assert fight.fight(s, 1, True, engine=library).steps_fired == ((0, 20),)

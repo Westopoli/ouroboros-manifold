@@ -18,6 +18,8 @@ from scripts.skilllab.contract import Group, Setup, Step  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 from scripts.skilllab.timeline import validate  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 A0, A1 = (-300.0, 0.0), (300.0, 0.0)
 
 
@@ -36,8 +38,8 @@ def G(side, count=2, order="attack_move", goal=None, spacing=7.0):
 
 
 def S(timeline_=(), groups=None, max_ticks=10):
-    return Setup(groups=groups or (G(0), G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=1000,
-                 sample_every=5, timeline=tuple(timeline_))
+    return Setup(groups=groups or (G(0), G(1)), unit_types={}, max_ticks=max_ticks,
+                 sample_every=5, timeline=tuple(timeline_), orders_per_unit=False)   # group-level order log under test
 
 
 def run(setup, **kw):

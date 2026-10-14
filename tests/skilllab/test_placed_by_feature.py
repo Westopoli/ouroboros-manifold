@@ -8,10 +8,12 @@ Names the spec leaves open, fixed here (the builder must match, or the test-writ
     naive side as in the scans; the defender is side 0 when the play's role is "defender", side 1 when "attacker".
   - plays_space.PLAYS[name].anchors has attributes `.role` ("defender" | "attacker"), `.defender` and `.attacker` (kind strings,
     the KINDS table below).
-  - The returned Setup: decided_by_survivors True, defender_side = the defender's side, hold_anchor = the defender's anchor,
-    terrain = the layout (maybe moved as a whole: the tests read geometry from setup.terrain, offset from the first block or cover).
-  - build.labels["placement_shift"]: signed wu along +x (the corridor axis) the defender's formation was moved from its
-    nominal anchor to fit the walkable mask; 0.0 when it was not moved.
+  - The returned Setup: terrain = the layout (moved as a whole: the tests read geometry from setup.terrain, offset from the first
+    block or cover) and, LAB-REV2-L2 (Q-LAB-03, ruling 6), `point` = the holder's centre of mass (the mean of the holder's placed
+    unit positions, on the holder's layer). decided_by_survivors, defender_side and hold_anchor are retired with the hold rule.
+  - build.labels["prefight"] (LAB-REV2-L2; the label name is this test writer's reading of "the pre-fight record", the spec names
+    no symbol): "ok", or "no_fit" when a placed unit stands inside a blocked cell on its layer. Nothing is shifted any more
+    (the placement_shift of Rev 4, FIT_STEP and FIT_LIMIT, is retired with it); a build that still sets the label may set 0.0.
 Anchors the spec table leaves ambiguous, chosen here:
   - "choke mouth" and "choke exit" are the same point: the defender-side opening of the gap, (C.x + side * wall_thickness / 2, C.y)
     with C the gap midpoint; with no choke, C is the corridor midpoint and mouth = exit = C.
@@ -170,15 +172,15 @@ def expected(play, geo, ds):
 @pytest.mark.parametrize("sd", [1400.0, 2800.0])
 @pytest.mark.parametrize("play", PLAYS_PLACED)
 def test_defender_stands_at_its_declared_anchor(play, sd):
-    """Rev 4 rule 1: the defender's formation (the group the anchor names) is within 150 wu of the anchor plus the recorded
-    placement_shift (TD-LAB-fit-after-shift: the whole-formation fit can move a line up to FIT_LIMIT along the corridor axis)."""
+    """Rev 4 rule 1: the defender's formation (the group the anchor names) is within 150 wu of the anchor (LAB-REV2-L2: nothing
+    is shifted to fit any more, so a recorded placement_shift, when the build still sets one, is 0.0)."""
     f = feats(sd=sd)
     layout, build, setup = scene(play, f)
     ds = dside_of(play)
     geo = Geo(setup, layout, f)
     got = centroid(anchor_units(play, setup, ds))
     ex = expected(play, geo, ds)
-    shift = build.labels["placement_shift"] or 0.0
+    shift = build.labels.get("placement_shift") or 0.0
     assert dist(got, (ex[0] + shift, ex[1])) <= TOL
 
 
@@ -215,11 +217,35 @@ def test_defender_guards_attacker_attack_moves_toward_the_defender(play):
     first = (dgs[0].x, dgs[0].y)
     for g in movers:
         assert g.order == "attack_move"
-        aim = g.goal if g.goal is not None else first
+        aim = g.goal if g.goal is not None else setup.point
         assert dist(aim, anchor) <= 300.0 or (play == "s2_mass_one_end" and abs(aim[0] - anchor[0]) <= 300.0)
-    assert setup.decided_by_survivors is True
-    assert setup.defender_side == ds
-    assert dist(setup.hold_anchor, anchor) <= 300.0
+    assert not any(hasattr(setup, name) for name in ("decided_by_survivors", "defender_side", "hold_anchor", "hold_ticks"))
+    assert setup.orders_per_unit is True
+
+
+@pytest.mark.parametrize("sd", [1400.0, 2800.0])
+@pytest.mark.parametrize("play", PLAYS_PLACED)
+def test_ruling_6_the_point_is_the_holders_centre_of_mass(play, sd):
+    """Ruling 6 (centroid rule): an assault is the attacker attack-moved onto the holder's centre of mass, the mean of the
+    holder's placed positions (every holder group, on the holder's layer), while the holder guards. Setup.point is that mean."""
+    f = feats(sd=sd)
+    _l, _b, setup = scene(play, f)
+    ds = dside_of(play)
+    pts = units(setup, defender_groups(setup, ds))
+    assert setup.point == pytest.approx(centroid(pts), abs=1e-6)
+
+
+@pytest.mark.parametrize("play", PLAYS_PLACED)
+def test_ruling_6_the_holder_guards_and_every_naive_attacker_group_aims_at_the_point(play):
+    """Control for the test above: with no goal of its own a mover is sent to Setup.point (the fight reads it)."""
+    f = feats()
+    _l, _b, setup = scene(play, f)
+    ds = dside_of(play)
+    movers = [g for g in setup.groups if g.side != ds and g.order == "attack_move" and g.goal is None]
+    if play in ("naive", "s1_hold_choke", "s1_outrange", "s2_concave", "s2_spread_line", "s2_screen"):
+        assert movers, play
+    assert all(g.goal is None for g in movers)
+    assert setup.point is not None
 
 
 @pytest.mark.parametrize("play", ["s4_bait", "s4_do_not_chase"])
@@ -305,32 +331,34 @@ def _walkable(terrain, x, y):
     return not any(b.x0 <= x <= b.x1 and b.y0 <= y <= b.y1 and b.layer_lo <= 0 <= b.layer_hi for b in terrain.blocks)
 
 
-def test_a_formation_that_does_not_fit_shifts_along_the_corridor_axis_and_the_row_records_it():
-    """Rev 4: an anchor cell blocked on the play's layer shifts the formation along the corridor axis (y unchanged) until the
-    whole formation is walkable, and build.labels['placement_shift'] records the signed x shift."""
+def test_a_formation_on_a_blocked_cell_is_refused_no_fit_and_is_not_shifted():
+    """Ruling 6 / spec L2: no shifting; a placed point inside a blocked cell makes the pre-fight record 'no_fit'. The same layout
+    without the extra block is 'ok', and the defender stands in the same place in both (red on the old code: it slid the
+    formation 50 wu at a time along the corridor axis to find a fit). Open layout: the hold play stands at the layout centre (0, 0)."""
     import dataclasses
-    f = feats(lane=0, cover=0.0)
+    f = feats(choke=0, lane=0, cover=0.0)
     base = maps.layout_map(f, SEED)
-    blocked = dataclasses.replace(base, blocks=base.blocks + (Block(-420.0, -400.0, -40.0, 400.0, 0, 4),))
+    blocked = dataclasses.replace(base, blocks=base.blocks + (Block(-100.0, -100.0, 100.0, 100.0, 0, 4),))
     s0 = scenes.placed_scene(base, "s1_hold_choke", 1400.0, f)
     s1 = scenes.placed_scene(blocked, "s1_hold_choke", 1400.0, f)
     a, b = s0(16, False), s1(16, False)
+    assert s0.labels["prefight"] == "ok" and s1.labels["prefight"] == "no_fit"
     ca = centroid(units(a, defender_groups(a, 0)))
     cb = centroid(units(b, defender_groups(b, 0)))
-    assert all(_walkable(b.terrain, *p) for p in units(b, defender_groups(b, 0)))
-    assert cb[0] < ca[0] - 100.0 and cb[1] == pytest.approx(ca[1])
-    assert s1.labels["placement_shift"] - s0.labels["placement_shift"] == pytest.approx(cb[0] - ca[0])
-    assert s1.labels["placement_shift"] < s0.labels["placement_shift"]
+    assert cb == pytest.approx(ca)
+    assert any(not _walkable(b.terrain, *p) for p in units(b, defender_groups(b, 0)))
+    assert (s1.labels.get("placement_shift") or 0.0) == 0.0
 
 
-def test_a_formation_that_fits_records_zero_shift_on_a_clear_layout():
-    """Rev 4: control for the shift: an open layout (no wall, no lane, no cover) places every play unshifted, label 0.0."""
+def test_a_formation_that_fits_is_ok_on_a_clear_layout():
+    """Control: an open layout (no wall, no lane, no cover) places every play 'ok' and unshifted."""
     f = feats(choke=0, lane=0, cover=0.0)
     layout = maps.layout_map(f, SEED)
     for play in PLAYS_PLACED:
         build = scenes.placed_scene(layout, play, 1400.0, f)
         build(16, False)
-        assert build.labels["placement_shift"] == 0.0, play
+        assert build.labels["prefight"] == "ok", play
+        assert (build.labels.get("placement_shift") or 0.0) == 0.0, play
 
 
 FIT_GRID = [(c, l, v) for c in (0, 2, 4, 8) for l in (0, 1, 2) for v in (0.0, 0.3)]
@@ -338,17 +366,24 @@ FIT_GRID = [(c, l, v) for c in (0, 2, 4, 8) for l in (0, 1, 2) for v in (0.0, 0.
 
 @pytest.mark.parametrize("choke,lane,cover", FIT_GRID)
 @pytest.mark.parametrize("play", PLAYS_PLACED)
-def test_every_placed_defender_unit_stands_on_a_walkable_cell_of_its_layer(play, choke, lane, cover):
-    """TD-LAB-fit-after-shift: the fit covers the whole formation, not the anchor cells only: no defender unit stands inside a
-    block that covers its group's layer (red before: the builder checked each group's anchor point alone)."""
+def test_the_prefight_record_follows_whether_any_unit_stands_in_a_block(play, choke, lane, cover):
+    """Spec L2 (no_fit): a unit of either side placed inside a blocked cell on its layer makes the record 'no_fit'; with every
+    unit at least 20 wu clear of every block (more than the replicate shift of 10) it is 'ok'. Between the two, nothing is
+    asserted (the border). Replaces TD-LAB-fit-after-shift (the fit by shifting is retired)."""
     f = feats(choke=choke, lane=lane, cover=cover)
     _l, build, setup = scene(play, f)
-    ds = dside_of(play)
-    if build.labels["placement_shift"] is None:
-        pytest.skip("no fit found: the scene records None")
-    bad = [(g.unit, p) for g in defender_groups(setup, ds) for p in units(setup, [g])
-           if any(b.x0 <= p[0] <= b.x1 and b.y0 <= p[1] <= b.y1 and b.layer_lo <= g.layer <= b.layer_hi for b in setup.terrain.blocks)]
-    assert not bad, bad[:3]
+    pts = [(g.layer, p) for g in setup.groups for p in units(setup, [g])]
+
+    def within(margin):
+        return any(b.layer_lo <= layer <= b.layer_hi and b.x0 - margin <= p[0] <= b.x1 + margin and b.y0 - margin <= p[1] <= b.y1 + margin
+                   for layer, p in pts for b in setup.terrain.blocks)
+
+    if within(0.0):
+        assert build.labels["prefight"] == "no_fit"
+    elif not within(20.0):
+        assert build.labels["prefight"] == "ok"
+    else:
+        assert build.labels["prefight"] in ("ok", "no_fit")
 
 
 # ---- (6) the declarations ----------------------------------------------------------------------------------------
@@ -367,7 +402,8 @@ PLAYS_SPACE_HASH = "1f357bfc6f827628405b3cf74d8f7f32d23cbf202a2980a4f1be82ed7399
 
 def test_registered_space_plays_keep_their_setups():
     """Rev 4: adding anchors changes no registered setup (hash of groups, unit_types, timeline, settings, terrain of setup_fn() per play, recorded before the change).
-    The Rev 3 rows hash (existing contact-distance plays) is in test_decided_by_survivors.py."""
+    (The Rev 3 rows hash of the contact-distance plays is retired with test_decided_by_survivors.py, Q-LAB-03; the goldens of
+    integration/test_cross_machine.py guard the rows now.)"""
     def key(n):
         s = plays_space.PLAYS[n].setup_fn()
         return (n, repr((s.groups, s.unit_types, s.timeline, s.settings, s.terrain)))
