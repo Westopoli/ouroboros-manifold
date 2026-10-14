@@ -22,6 +22,10 @@ Nothing here imports tests/csim/conftest.py (it builds the libraries on import a
 the table, the contract document and the conftest are read as text, in the style of test_pp_contract.py, and
 the built-library checks bind the handful of symbols they need themselves.
 
+Also pinned (audit fixes): the ABI and save pins in the tests and docs E0 owns, the PP-table row-count pins, the
+"later build" save word in test_E16_B5, the stale "settings not saved, not hashed" comment, the unit row's
+am_engaged field (E0 must not touch it), and the dropped OM_TP_ATTACK_MOVE_RESUME (absent everywhere).
+
 Every detector below that reads text has a positive control on synthetic input; every refusal check has an
 in-range set on the same parameter that must return 0 and read back."""
 import ast
@@ -46,12 +50,39 @@ ARCH = REPO / "docs" / "architecture.md"
 LOAD_GAME_GD = REPO / "scenes" / "load_game" / "load_game.gd"
 LOAD_GAME_TEST_GD = REPO / "tests" / "test_load_game_wrong_version.gd"
 
-# The values on main before E0 landed. The ABI and save numbers are not named after E0 (never pre-claimed): the
-# clerk who lands VG-CONTRACT-E7 (ABI 8, save 12) raises BASE_ABI_BEFORE_E0 and BASE_SAVE_BEFORE_E0 to the numbers
-# E7 took, in the same landing, so "strictly greater" keeps meaning "E0 bumped it". COUNT is E0's alone.
+# The values on main before E0 landed. After E0 lands the base is DERIVED FROM GIT (see base_numbers): the first
+# first-parent commit that adds OM_TP_FIRING_ARC_DEG to the header, and the ABI and save numbers at its first parent.
+# The literals below are only the PRE-LANDING fallback (no such commit yet, or a shallow clone), and they go stale
+# when VG-CONTRACT-E7 lands (ABI 8, save 12): test_base_literals_equal_the_numbers_on_origin_main_before_e0 then
+# fails loudly on any tree that does not have E0 yet, so a clerk raises the literals in the E7 landing. COUNT is E0's
+# alone (66 to 67) and is never stale.
 BASE_ABI_BEFORE_E0 = 7
 BASE_SAVE_BEFORE_E0 = 11
 BASE_COUNT_BEFORE_E0 = 66
+
+
+def _git(repo, *args):
+    res = subprocess.run(["git", *args], cwd=str(repo), capture_output=True, text=True)
+    return res.stdout if res.returncode == 0 else None
+
+
+def base_numbers(repo, fallback):
+    """(abi, save) on main before the commit that added OM_TP_FIRING_ARC_DEG to csrc/ouroboros_sim.h, read at that
+    commit's first parent with `git show`; `fallback` when no such commit exists (pre-landing) or the clone is too
+    shallow to hold the parent. The pickaxe is limited to the header so this file's own text never matches."""
+    if (_git(repo, "rev-parse", "--is-shallow-repository") or "").strip() == "true":
+        return fallback
+    log = _git(repo, "log", "--first-parent", "--reverse", "--format=%H", f"-S{ARC}", "--", "csrc/ouroboros_sim.h")
+    if not log or not log.split():
+        return fallback
+    parent = log.split()[0] + "^1"
+    header, internal = (_git(repo, "show", f"{parent}:csrc/ouroboros_sim.h"),
+                        _git(repo, "show", f"{parent}:csrc/om_internal.h"))
+    if header is None or internal is None:
+        return fallback
+    abi, save = define_value(header, "OM_ABI_VERSION"), define_value(internal, "OM_SAVE_FORMAT_VERSION")
+    return (abi, save) if abi is not None and save is not None else fallback
+
 
 ARC = "OM_TP_FIRING_ARC_DEG"
 ARC_DEFAULT, ARC_LO, ARC_HI = 360.0, 10.0, 360.0
@@ -320,6 +351,7 @@ def _abi_pins():
         ("tests/csim/test_VG_E_ke5.py", REPO / "tests/csim/test_VG_E_ke5.py", r"om_abi_version\(\)\s*==\s*(\d+)"),
         ("docs/architecture.md hello frame", ARCH, r'"type":"hello","abi":(\d+)'),
         ("docs/architecture.md abi sentence", ARCH, r"`abi` is `om_abi_version\(\)` \((\d+) since"),
+        ("docs/architecture.md visible-game heading abi", ARCH, r"\(VG-K-e, ABI (\d+), save format \d+;"),
     ]:
         found = re.findall(pattern, path.read_text(), re.M)
         assert found, f"{label}: no ABI pin found by /{pattern}/ in {path.relative_to(REPO)}"
@@ -332,9 +364,10 @@ def test_every_abi_pin_equals_the_header_and_is_above_main_before_e0():
     pins = _abi_pins()
     header_abi = pins["csrc/ouroboros_sim.h OM_ABI_VERSION"]
     assert header_abi is not None
-    assert header_abi > BASE_ABI_BEFORE_E0, (
+    base_abi = base_numbers(REPO, (BASE_ABI_BEFORE_E0, BASE_SAVE_BEFORE_E0))[0]
+    assert header_abi > base_abi, (
         f"OM_ABI_VERSION is {header_abi}: E0 adds two symbols and a hashed setting, so it takes the next free number "
-        f"above {BASE_ABI_BEFORE_E0}")
+        f"above {base_abi}")
     bad = {k: v for k, v in pins.items() if v != header_abi}
     assert not bad, f"ABI pins that disagree with the header ({header_abi}): {bad}"
 
@@ -368,6 +401,9 @@ def _save_pins():
          r"^EXPECTED_VERSION\s*=\s*(\d+)"),
         ("tests/csim/test_E01_T3_contract.py version word", "tests/csim/test_E01_T3_contract.py",
          r'buf\[4:8\]\),\s*"little"\)\s*==\s*(\d+)'),
+        ("tests/csim/test_VG_E_contract.py version word", "tests/csim/test_VG_E_contract.py",
+         r'buf\[4:8\]\),\s*"little"\)\s*==\s*(\d+)'),
+        ("tests/csim/test_VG_E_ke5.py word", "tests/csim/test_VG_E_ke5.py", r"^\s*assert word == (\d+)"),
         ("tests/csim/test_VG_E_ke3.py version word", "tests/csim/test_VG_E_ke3.py",
          r'buf\[4:8\]\),\s*"little"\)\s*==\s*(\d+)'),
         ("tests/csim/test_VG_E_ke5.py version word", "tests/csim/test_VG_E_ke5.py",
@@ -376,6 +412,7 @@ def _save_pins():
          r'side\["format_version"\]\s*==\s*(\d+)'),
         ("docs/architecture.md visible-game heading", "docs/architecture.md",
          r"\(VG-K-e, ABI \d+, save format (\d+);"),
+        ("docs/architecture.md saved-state text", "docs/architecture.md", r"Saved state at format (\d+)"),
     ]:
         found = re.findall(pattern, (REPO / rel).read_text(), re.M)
         assert found, f"{label}: no save-format pin found by /{pattern}/ in {rel}"
@@ -388,11 +425,168 @@ def test_every_save_format_pin_equals_om_internal_and_is_above_main_before_e0():
     pins = _save_pins()
     declared = pins["csrc/om_internal.h OM_SAVE_FORMAT_VERSION"]
     assert declared is not None
-    assert declared > BASE_SAVE_BEFORE_E0, (
+    base_save = base_numbers(REPO, (BASE_ABI_BEFORE_E0, BASE_SAVE_BEFORE_E0))[1]
+    assert declared > base_save, (
         f"OM_SAVE_FORMAT_VERSION is {declared}: E0 writes one more setting into the movement slot, so it takes the "
-        f"next free number above {BASE_SAVE_BEFORE_E0}")
+        f"next free number above {base_save}")
     bad = {k: v for k, v in pins.items() if v != declared}
     assert not bad, f"save-format pins that disagree with om_internal.h ({declared}): {bad}"
+
+
+# ---- the base numbers: derived from git once E0 is in, literals only before (audit fix 1) ----
+
+def _commit(repo, abi, save, arc, n):
+    (repo / "csrc").mkdir(exist_ok=True)
+    (repo / "n.txt").write_text(str(n))  # every step is a real change, even when the numbers repeat
+    (repo / "csrc" / "ouroboros_sim.h").write_text(
+        f"#define OM_ABI_VERSION {abi}\n" + (f"    {ARC},\n" if arc else "") + "    OM_TP__COUNT\n")
+    (repo / "csrc" / "om_internal.h").write_text(f"#define OM_SAVE_FORMAT_VERSION {save} /* c */\n")
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "c"], cwd=repo,
+                   check=True, capture_output=True)
+
+
+def _tmp_repo(tmp_path, steps):
+    repo = tmp_path / "r"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True, capture_output=True)
+    for n, (abi, save, arc) in enumerate(steps):
+        _commit(repo, abi, save, arc, n)
+    return repo
+
+
+def test_control_base_numbers_come_from_the_parent_of_the_commit_that_adds_the_arc(tmp_path):
+    """Positive control for the git reader: E7 landed (8, 12), then E0 added the arc and took (9, 13), then a later
+    commit moved on. The base is E0's first parent: (8, 12), whatever the literals say."""
+    repo = _tmp_repo(tmp_path, [(7, 11, False), (8, 12, False), (9, 13, True), (9, 13, True)])
+    assert base_numbers(repo, (1, 1)) == (8, 12)
+
+
+def test_control_base_numbers_fall_back_before_the_arc_exists_and_in_a_shallow_clone(tmp_path):
+    repo = _tmp_repo(tmp_path, [(7, 11, False), (8, 12, False)])
+    assert base_numbers(repo, (7, 11)) == (7, 11), "no commit adds the arc: the pre-landing literals apply"
+    (tmp_path / "x").mkdir()
+    repo2 = _tmp_repo(tmp_path / "x", [(8, 12, False), (9, 13, True)])
+    shallow = tmp_path / "s"
+    subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{repo2}", str(shallow)], check=True,
+                   capture_output=True)
+    assert base_numbers(shallow, (7, 11)) == (7, 11), "a shallow clone cannot see the parent: fall back"
+
+
+def test_base_numbers_on_this_tree_are_at_least_the_literals():
+    """On the real repo: pre-landing the answer IS the literals; after E0 it is read from git and (since E7 is
+    ahead of E0) never below them."""
+    abi, save = base_numbers(REPO, (BASE_ABI_BEFORE_E0, BASE_SAVE_BEFORE_E0))
+    assert abi >= BASE_ABI_BEFORE_E0 and save >= BASE_SAVE_BEFORE_E0
+
+
+def test_base_literals_equal_the_numbers_on_origin_main_before_e0():
+    """Landing guard against a stale literal. Meaningful only while E0 is absent: when this tree already has the arc
+    the base comes from git and the literals are not used, so the test is skipped. Otherwise origin/main's own
+    numbers must equal the literals; when VG-CONTRACT-E7 (ABI 8, save 12) lands first they differ, this fails, and
+    the clerk raises BASE_ABI_BEFORE_E0 and BASE_SAVE_BEFORE_E0 in the E7 landing."""
+    if ARC in HEADER.read_text():
+        pytest.skip("E0 is on this tree: the base is derived from git, the literals are not used")
+    header = _git(REPO, "show", "origin/main:csrc/ouroboros_sim.h")
+    internal = _git(REPO, "show", "origin/main:csrc/om_internal.h")
+    if header is None or internal is None:
+        pytest.skip("no origin/main ref in this clone")
+    if ARC in header:
+        pytest.skip("origin/main already has E0 and this tree has not merged it: rebase, then the base is derived")
+    assert (define_value(header, "OM_ABI_VERSION"), define_value(internal, "OM_SAVE_FORMAT_VERSION")) == (
+        BASE_ABI_BEFORE_E0, BASE_SAVE_BEFORE_E0), "origin/main moved past the pre-E0 literals: raise them"
+
+
+# ---- more pins of the same numbers (audit fix 2) ----
+
+def test_later_build_save_word_in_test_e16_b5_is_above_the_current_save_format():
+    """test_E16_B5 writes a save 'from a later build' and expects a refusal: its word (and the docstring's) must
+    stay strictly above the current format, or the test stops proving anything when the format moves."""
+    text = (REPO / "tests/csim/test_E16_B5_save_version.py").read_text()
+    declared = define_value(INTERNAL.read_text(), "OM_SAVE_FORMAT_VERSION")
+    code = re.findall(r"newer = _with_version\(buf, size, (\d+)\)", text)
+    doc = re.findall(r"later build \(version word (\d+)\)", text)
+    assert code and doc, "test_E16_B5_save_version.py: the later-build word is no longer where this check looks"
+    assert {int(v) for v in code} == {int(v) for v in doc}, f"docstring {doc} differs from the code {code}"
+    assert all(int(v) > declared for v in code), f"later-build word {code} is not above the save format {declared}"
+
+
+def test_row_count_pins_equal_the_header_count():
+    """test_pp_contract.py hard-codes the section 4 row count (COUNT members plus the OM_TP__COUNT sentinel row, so
+    COUNT + 1, and range(COUNT + 1)); test_PP_settings.py hard-codes COUNT itself."""
+    count = dict(header_enum())["OM_TP__COUNT"]
+    contract = (REPO / "tests/specfactory/test_pp_contract.py").read_text()
+    start = contract.index("def test_param_table_in_the_contract_document_is_well_formed")
+    body = contract[start:contract.index("\ndef ", start + 1)]
+    rows = re.findall(r"assert len\(rows\) == (\d+)", body)
+    ranges = re.findall(r"== list\(range\((\d+)\)\)", body)
+    assert rows and ranges, "test_pp_contract.py: the row-count pins moved"
+    assert {int(v) for v in rows + ranges} == {count + 1}, (
+        f"test_pp_contract.py pins {rows + ranges}, header COUNT {count} plus the sentinel row is {count + 1}")
+    settings = re.findall(r"assert COUNT == (\d+)", (REPO / "tests/csim/test_PP_settings.py").read_text())
+    assert settings and {int(v) for v in settings} == {count}, (
+        f"test_PP_settings.py pins COUNT == {settings}, header COUNT {count}")
+
+
+def test_the_stale_settings_not_saved_comment_is_gone():
+    """tactical_move.c said 'settings are configuration ... not saved, not hashed'. The arc is saved and hashed
+    (spec), so the comment is a stale doc claim and E0 rewrites it in the same change."""
+    text = TACTICAL_MOVE.read_text()
+    assert re.search(r"not\s+saved,\s*not\s+hashed", text) is None, (
+        "csrc/tactical_move.c still says settings are 'not saved, not hashed'")
+
+
+# ---- things E0 must not touch or bring back (audit fix 3) ----
+
+UNIT_C = REPO / "csrc" / "unit.c"
+
+
+def brace_block(text: str, start_pattern: str):
+    """The text from the first `{` after start_pattern to its matching `}`, comments stripped, else None."""
+    clean = strip_c_comments(text)
+    m = re.search(start_pattern, clean)
+    if not m:
+        return None
+    i = clean.index("{", m.end())
+    depth, j = 0, i
+    while j < len(clean):
+        depth += clean[j] == "{"
+        depth -= clean[j] == "}"
+        j += 1
+        if depth == 0:
+            return clean[i:j]
+    return None
+
+
+def test_control_brace_block_reads_a_nested_body():
+    t = "/* x { */ static int f(int a) { if (a) { a = 1; } return a; }\nint g(void) { return 2; }"
+    assert brace_block(t, r"static int f\(int a\)") == "{ if (a) { a = 1; } return a; }"
+    assert brace_block(t, r"int h\(") is None
+
+
+def test_am_engaged_is_still_in_the_unit_row_the_checksum_list_and_the_save_row_list():
+    text = UNIT_C.read_text()
+    clean = strip_c_comments(text)
+    struct_end = clean.index("} om_unit_row;")
+    row = clean[clean.rindex("typedef struct", 0, struct_end):struct_end]
+    assert len(re.findall(r"\bint\s+am_engaged\s*;", row)) == 1, "om_unit_row lost its am_engaged field"
+    ck = brace_block(text, r"static uint64_t om_unit_ck_row\(const om_unit_row \*r\)")
+    assert ck is not None and len(re.findall(r"\bW\(am_engaged\)", ck)) == 1, \
+        "am_engaged is not in the checksum list of om_unit_ck_row"
+    fields = re.search(r"#define OM_UNIT_ROW_FIELDS\(U, I, D\)(?:[^\n]*\\\n)*[^\n]*", strip_c_comments(text))
+    assert fields and len(re.findall(r"\bI\(am_engaged\)", fields.group(0))) == 1, \
+        "am_engaged is not in OM_UNIT_ROW_FIELDS (the save row list)"
+    assert re.search(r"^int\s+om_unit_get_engaged\s*\(", strip_c_comments(TACTICAL_MOVE.read_text()), re.M), \
+        "om_unit_get_engaged is no longer defined in csrc/tactical_move.c"
+    assert count_declarations(HEADER.read_text(), "om_unit_get_engaged") == 1
+
+
+def test_attack_move_resume_was_dropped_and_is_absent_everywhere():
+    """Rev 2 dropped OM_TP_ATTACK_MOVE_RESUME (the resume rule answers the blind cross-layer cell). It must not
+    reappear in the header, the conftest mirror, tactical_move.c or pp_contract.md."""
+    for path in (HEADER, CONFTEST, TACTICAL_MOVE, DOC):
+        assert "OM_TP_ATTACK_MOVE_RESUME" not in path.read_text(), f"{path.relative_to(REPO)} names the dropped setting"
+        assert "ATTACK_MOVE_RESUME" not in path.read_text(), f"{path.relative_to(REPO)} names the dropped setting"
 
 
 # ---- built library ----
@@ -531,7 +725,7 @@ def test_saved_version_word_equals_the_declared_save_format(lib, world):
     buf, _ = _save(lib, world(seed=4))
     word = int.from_bytes(bytes(buf[4:8]), "little")
     assert word == define_value(INTERNAL.read_text(), "OM_SAVE_FORMAT_VERSION")
-    assert word > BASE_SAVE_BEFORE_E0
+    assert word > base_numbers(REPO, (BASE_ABI_BEFORE_E0, BASE_SAVE_BEFORE_E0))[1]
 
 
 def test_arc_is_in_the_net_hash_and_back_to_360_restores_it(lib, world):
