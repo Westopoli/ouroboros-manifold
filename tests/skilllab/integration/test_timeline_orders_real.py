@@ -178,13 +178,20 @@ def test_all_three_new_steps_are_in_the_order_log_with_their_ticks():
 
 # ---- no new steps: nothing changes --------------------------------------------------------------------------
 
+def _old_columns(result):
+    """LAB-REV2-L2 (Q-LAB-03, spec "CSV columns"): the row gained the window, weighted, prediction and supplied columns; the twelve
+    recorded values are compared unchanged (max_ticks 400 is a deliberate cap here, not a defect)."""
+    row = fight_row(result, knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok")
+    return {k: row[k] for k in BASELINE_ROW}
+
+
 def test_a_fight_without_the_new_steps_gives_the_recorded_row(lib):
     def side(s, x, f):
         return Group(side=s, unit="Vanguard", count=3, formation="line", x=x, y=400.0, facing_deg=f, layer=0,
                      order="attack_move", params={"spacing": 30.0})
     setup = Setup(groups=(side(0, 400.0, 0.0), side(1, 1200.0, 180.0)), unit_types={}, max_ticks=400)
     result = fight(setup, 3, False, engine=lib)
-    assert fight_row(result) == BASELINE_ROW
-    assert repr(fight_row(result)) == repr(BASELINE_ROW)
+    assert _old_columns(result) == BASELINE_ROW
+    assert repr(_old_columns(result)) == repr(BASELINE_ROW)
     assert result.steps_fired == ()
-    assert fight_row(fight(dataclasses.replace(setup, timeline=()), 3, False, engine=lib)) == BASELINE_ROW
+    assert _old_columns(fight(dataclasses.replace(setup, timeline=()), 3, False, engine=lib)) == BASELINE_ROW
