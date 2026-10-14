@@ -13,9 +13,13 @@ after the return; the radius is measured from the post to the GUARD'S OWN centre
 only decides whether a step is needed. So a target is stepped for when (post to target) <= attack range + GUARD_RADIUS.
 
 Numbers. GUARD_RADIUS_DRAFT is the DRAFT-guard-radius (200 wu, the R-087-05 leash; Architect draft, Westley to rule). The
-Raider (range 200, sensor 800, speed 150 wu/s = 7.5 wu per tick) and the Bastion (range 800, sensor 300, speed 40) come
-from csrc/om_constants.h; the Interceptor spotter (sensor 1000, range 250) likewise. Fixture distances keep a margin of
-10 wu or more from every boundary (range + radius = 400 for the Raider, 1000 for the Bastion). Targets are Supply units
+Raider (range 200, sensor 800, speed 150 wu/s, so an ORDERED move advances 7.5 wu per tick) and the Bastion (range 800,
+sensor 300, speed 40) come from csrc/om_constants.h; the Interceptor spotter (sensor 1000, range 250) likewise. The
+guard's own steps and its return run on the idle tick period, which scales a step about 2.5x, so no test asserts a
+per-tick wu figure for the guard. Fixture distances keep a margin of 10 wu or more from every boundary (range + radius
+= 400 for the Raider, 1000 for the Bastion). "Home" is within HOME_TOLERANCE_WU of the post: a return through the move
+system parks up to the arrival tolerance short, so the invariants that matter are the two after it (no destination
+left, no further movement). Targets are Supply units
 with 5000 hp (never fire, do not die by accident); a test that needs a death calls kill().
 
 Observables: positions each tick (distance from the post), hp of the target, om_unit_get_destination (has_dest) and the
@@ -33,11 +37,12 @@ SUPERSEDED / RECHECK LIST (docstring-only; none of these files is edited here):
       (Vanguard, enemy 450 wu, range 300: the step needed is 150 <= 200) is SUPERSEDED by R-096-08 (2026-10-13).
   tests/csim/test_PP_unit_guard.py::test_R_096_05_guard_holds_while_an_enemy_stands_beyond_range
       (Vanguard, enemy 500 wu: the step needed is 200, the radius edge) is SUPERSEDED by R-096-08 (2026-10-13).
-  tests/csim/test_PP_unit_guard.py::test_R_096_05_guard_that_loses_its_target_does_not_resume_any_march
-      needs a RECHECK after E4 (its guard now returns to its post after the kill; the scene was built on a guard that
-      never leaves it).
   tests/csim/test_PP_unit_guard.py::test_R_096_05_choke_guard_holds_the_gap_against_a_larger_line
-      needs a RECHECK after E4 (defenders may now step out of the gap toward a line 600 wu off).
+      flips RED after E4 (defender 1 left the gap: defenders now step out of the gap toward a line 600 wu off).
+  tests/csim/test_PP_unit_guard.py::test_R_096_05_guard_that_loses_its_target_does_not_resume_any_march
+      stays GREEN after E4 (checked on the reference: the guard returns to its post and resumes no march).
+  tests/skilllab/integration/test_guard_real.py::test_guard_unit_has_no_destination_and_stays_put
+      flips RED after E4 (R-096-08, 2026-10-13: a guard walks and returns); a lab test for the L-pieces to rewrite.
   tests/skilllab/test_guard_order.py and tests/skilllab/fakes_guard.py are lab fakes on the built order: not edited
       here; re-run after E4.
 """
@@ -48,6 +53,7 @@ from test_PP_C_g3_support import can_see, dist
 INTERCEPTOR = 1
 GUARD_RADIUS_DRAFT = 200.0   # Architect draft (DRAFT-guard-radius, the R-087-05 leash), Westley to rule
 FLOAT_SLACK_WU = 0.01        # float rounding only
+HOME_TOLERANCE_WU = 16.0     # arrival tolerance 1.5 x 15 wu collision radius plus slack (Architect small-decision default 2026-10-14)
 BIG_HP = 5000.0
 POST = (0.0, 0.0)
 
@@ -80,13 +86,13 @@ def run_until_hit(lib, w, u, enemy, limit, post=POST):
 
 
 def assert_home_and_clean(lib, w, u, why, post=POST):
-    """The guard is back on its post (within a wu), holds no goal, and stays put: nothing is left over."""
+    """The guard is back on its post (within HOME_TOLERANCE_WU), holds no goal, and stays put: nothing is left over."""
     here = pos(lib, w, u)
-    assert dist(here, post) <= 1.0, f"{why}: the guard is at {here}, not back on its post {post}"
+    assert dist(here, post) <= HOME_TOLERANCE_WU, f"{why}: the guard is at {here}, not back on its post {post}"
     assert dest(lib, w, u)[0] == 0, f"{why}: a destination is left after the return: {dest(lib, w, u)}"
     step(lib, w, 60)
-    assert dist(pos(lib, w, u), post) <= 1.0 and dest(lib, w, u)[0] == 0, \
-        f"{why}: the guard moved or took a goal after it was home: {pos(lib, w, u)}, {dest(lib, w, u)}"
+    assert dist(pos(lib, w, u), here) <= FLOAT_SLACK_WU and dest(lib, w, u)[0] == 0, \
+        f"{why}: the guard moved or took a goal after it was home: {here} -> {pos(lib, w, u)}, {dest(lib, w, u)}"
 
 
 # ---- (1) the step, the engagement, the return ----
@@ -216,7 +222,7 @@ def test_R_096_08_Q_096_01_an_enemy_the_side_does_not_see_is_not_stepped_for(lib
 
 def test_R_096_08_Q_096_01_an_enemy_seen_by_a_spotter_is_stepped_for(lib, world_factory):
     """Positive control for the unseen test (same scene plus a friendly spotter that sees the enemy): "engages any
-    target its side can see" (R-096-08, R-093-02), so the Bastion steps the 150 wu it needs (2 wu per tick), hits
+    target its side can see" (R-096-08, R-093-02), so the Bastion steps the 150 wu it needs, hits
     the enemy, and never crosses the radius. Red today: the guard never steps."""
     w = world_factory(n_regions=1)
     u, enemy = _bastion_scene(lib, w, spotter=True)
@@ -288,3 +294,47 @@ def test_R_096_08_Q_096_01_two_visible_enemies_nearest_actable_is_taken_first(li
     kill(lib, w, far_a)
     walk(lib, w, u, 120)
     assert_home_and_clean(lib, w, u, "after both targets died")
+
+
+# ---- (7) the return is walked, not teleported ----
+
+def test_R_096_08_Q_096_01_the_return_is_walked_at_the_units_own_speed(lib, world_factory):
+    """Guard 150 wu from the post (it stepped to engage an enemy 350 wu off) whose target then dies: it is NOT home
+    3 ticks later (a teleport home, or a snap, would be) and it is home by 120 ticks. No per-tick figure is asserted
+    (the idle tick period scales the step). Red today only at the fixture (the guard never steps, so it never gets
+    150 wu out); the return half is vacuous until a build steps."""
+    w = world_factory(n_regions=1)
+    u = spawn(lib, w, RAIDER, 0, *POST)
+    enemy = inert(lib, w, 350.0, 0.0)
+    assert guard(lib, w, [u]) == 0
+    ds, hit = run_until_hit(lib, w, u, enemy, 200)
+    assert hit, "R-096-08: fixture: the guard should have stepped out and hit the enemy"
+    walk(lib, w, u, 30)
+    out = dist(pos(lib, w, u), POST)
+    assert out >= 140.0, f"fixture: the guard should be 150 wu out when the target dies, it is {out}"
+    kill(lib, w, enemy)
+    walk(lib, w, u, 3)
+    near = dist(pos(lib, w, u), POST)
+    assert near > HOME_TOLERANCE_WU, f"R-096-08: the guard was home {near} wu from the post 3 ticks after the kill: the return is not walked"
+    walk(lib, w, u, 117)
+    assert_home_and_clean(lib, w, u, "120 ticks after the kill")
+
+
+# ---- (8) nearest ACTABLE, not nearest ----
+
+def test_R_096_08_Q_096_01_a_nearer_stealthed_enemy_does_not_block_a_visible_one(lib, world_factory):
+    """Stealthed enemy 300 wu south (nearer, unseen by the side), visible enemy 350 wu east: the guard takes the
+    actable one. The east enemy's hp falls, the south one stays at 5000. Red today: the guard never steps, so the east
+    enemy is never hit. Catches a build that picks the nearest hostile and then finds it unactable."""
+    w = world_factory(n_regions=1)
+    u = spawn(lib, w, RAIDER, 0, *POST)
+    hidden = inert(lib, w, 0.0, -300.0)
+    lib.om_unit_set_stealth(w, hidden, 1)
+    seen = inert(lib, w, 350.0, 0.0)
+    assert can_see(lib, w, u, seen) == 1, "fixture: the Raider (sensor 800) must see the east enemy"
+    assert guard(lib, w, [u]) == 0
+    ds, hit = run_until_hit(lib, w, u, seen, 200)
+    assert hit, f"R-096-08: the visible enemy (350 wu east) should be engaged; the guard is at {pos(lib, w, u)}"
+    ds += walk(lib, w, u, 60)
+    assert hp(lib, w, hidden) == BIG_HP, "the guard hit the stealthed enemy"
+    assert max(ds) <= GUARD_RADIUS_DRAFT + FLOAT_SLACK_WU, f"crossed the radius: {max(ds)}"
