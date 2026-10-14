@@ -23,6 +23,9 @@ Every scene: one subject (Vanguard unless named, faction 0, origin, facing set a
 one Supply unit of faction 1 (never fires, so nothing else moves hp or the subject's state) 200 wu out along +x,
 inside every subject's attack range and sensor. The return-fire scene replaces the Supply with a Vanguard.
 
+The arc gates the FIRE PASS only. The baseline path with OM_TP_PURSUE_BY_STEERING = 0 is not gated by the arc and is not
+tested here (a note, not a claim: nothing below reads that path).
+
 Red on the E0 tree (the setting exists and is stored but unread): every gated scene fires on the acquisition tick
 at arc 90; the trace of the fixed fight at arc 90 equals the arc-360 trace. Green on the E0 tree: every arc-360
 control (fires on the acquisition tick), the kiting scene (the snap), the in-arc scenes, the byte-identity of the
@@ -107,10 +110,12 @@ def tw(lib, world_factory):
     return w
 
 
-def scene(lib, w, *, arc, order="idle", subject=VANGUARD, facing=math.pi, dist=DIST, enemy_combat=False):
+def scene(lib, w, *, arc, order="idle", subject=VANGUARD, facing=math.pi, dist=DIST, enemy_combat=False, query=False):
     """Build one subject-and-enemy scene and watch WINDOW ticks. Returns a dict:
     ids, per-tick log [(tick, subject_target, subject_facing, subject_fired, subject_pos)], acquired (first tick the
-    subject holds the enemy), shot (first tick the subject fires), enemy_shot (first tick the enemy fires)."""
+    subject holds the enemy), shot (first tick the subject fires), enemy_shot (first tick the enemy fires).
+    With query=True each log row also carries om_combat_can_engage(subject, enemy) read after the tick (index 5); it is
+    off by default so the other scenes run exactly as they did."""
     if arc is not None:
         assert set_param(lib, w, ARC, arc) == 0, f"setting {ARC} refused {arc}"
     s = spawn(lib, w, subject, FRIEND, 0.0, 0.0)
@@ -130,7 +135,8 @@ def scene(lib, w, *, arc, order="idle", subject=VANGUARD, facing=math.pi, dist=D
         fires = _fires(lib, w)
         fired = any(a == s for a, _b in fires)
         tgt = lib.om_unit_target(w, s)
-        log.append((k, tgt, lib.om_unit_get_facing(w, s), fired, (lib.om_unit_position_x(w, s), lib.om_unit_position_y(w, s))))
+        row = (k, tgt, lib.om_unit_get_facing(w, s), fired, (lib.om_unit_position_x(w, s), lib.om_unit_position_y(w, s)))
+        log.append(row + (lib.om_combat_can_engage(w, s, e),) if query else row)
         if acquired is None and tgt == e:
             acquired = k
         if shot is None and fired:
@@ -222,6 +228,29 @@ def test_R_100_04_flanked_unit_turns_then_fires_on_the_derived_tick(lib, world_f
     assert abs(_row(gated, expect)[2]) <= half + 1e-9, "fired with the target outside the arc"
     if expect > gated["acquired"]:
         assert abs(_row(gated, expect - 1)[2]) > half, "the tick before the shot already had the target inside the arc"
+
+
+@pytest.mark.parametrize("order,arc,facing", FLANK_CASES,
+                         ids=[f"{o}-a{a}-f{round(math.degrees(f))}" for o, a, f in FLANK_CASES])
+def test_R_100_04_can_engage_reads_4_while_turning_and_0_on_the_shot_tick(lib, world_factory, order, arc, facing):
+    """R-100-04 with the can_engage gate order (arc is reason 4): in each flank scene om_combat_can_engage(subject,
+    enemy), read after every tick, is 4 on every tick from the acquisition tick to the tick before the first shot (the
+    target is in reach, seen and in range, only the arc fails) and 0 on the shot tick. This ties can_engage's arc test to
+    the fire pass's: a can_engage without the arc gate reads 0 while turning, a fire pass without it shoots on the
+    acquisition tick (the test above). Control: at arc 360 the same scene reads 0 on the acquisition tick. Red on the E0
+    tree: the stub answers -1."""
+    def go(a):
+        w = world_factory(n_regions=1)
+        lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
+        return scene(lib, w, arc=a, order="idle" if order == "return_fire" else order,
+                     enemy_combat=order == "return_fire", facing=facing, query=True)
+    free, gated = go(360), go(arc)
+    assert _row(free, free["acquired"])[5] == 0, "arc 360: the target is engageable on the acquisition tick"
+    shot, acq = gated["shot"], gated["acquired"]
+    assert _row(gated, shot)[5] == 0, f"can_engage on the shot tick {shot} reads {_row(gated, shot)[5]}, not 0"
+    assert shot > acq, "setup: a flanked unit must spend at least one tick turning"
+    for k in range(acq, shot):
+        assert _row(gated, k)[5] == 4, f"tick {k} (before the shot on {shot}): can_engage reads {_row(gated, k)[5]}, not 4"
 
 
 def test_R_100_04_attack_move_unit_stops_and_turns_in_place(lib, world_factory):

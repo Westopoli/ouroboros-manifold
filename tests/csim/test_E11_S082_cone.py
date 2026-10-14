@@ -4,27 +4,33 @@
 
 The rule (spec ruling 9 and the Pieces row E2): a type with a cone set (range above 0) attacks like this. Its target
 of record takes the direct ALG-60 hit first, counted toward the cap; then every other enemy inside the circular
-sector of `range` and `half_angle` about the attacker's facing (centre test, boundary inclusive, a dot product
-against the stored cosine), within the attacker's reach offsets, takes base x share x the area offset multiplier, in
-ascending unit id, until the running total reaches the cap, base x OM_AOE_DAMAGE_CAP_MULTIPLIER (the last hit is
-truncated). No sight, stealth or line check for victims (as the disc). om_economy_on_area_hit is not called for a
-cone. A half-angle of 180 is a disc about the ATTACKER (R-084-03's is about the target). Range 0 restores the disc.
-om_roster_set_cone returns 0 ok, -1 unknown type, -2 refused value (range < 0, half-angle outside [1, 180], share
-outside [0, 10]); range 0 clears.
+sector of `range` and `half_angle` about the attacker's FACING (the facing after this tick's face pass, not the line to
+the target; centre test, boundary inclusive, a dot product against the stored cosine), within the attacker's reach
+offsets, takes the DISC VICTIM's per-victim damage times the share, in ascending unit id, until the running total reaches
+the cap, base x OM_AOE_DAMAGE_CAP_MULTIPLIER (the last hit is truncated). The per-victim damage is ALG-60 through the
+disc's victim function: the category multiplier, the output multiplier, the target's damage reduction and the area
+offset multiplier (Architect ruling 2026-10-14, binding for the builder; spec row E2). No sight, stealth or line check for
+victims (as the disc). om_economy_on_area_hit is not called for a cone. A half-angle of 180 is a disc about the ATTACKER
+(R-084-03's is about the target). Range 0 restores the disc. om_roster_set_cone returns 0 ok, -1 unknown type, -2 refused
+value (range < 0, half-angle outside [1, 180], share outside [0, 10]); range 0 clears.
 
 Fixture numbers (named, not thresholds): cone range 400, half-angle 30 degrees, shares 0.5 / 1.0 / adaptive;
 victims are Supply units (never fire, so nothing but the volley moves a hit-point total and the target of record is
 the nearest one), each set to 1000 hit points so no hit is an overkill; the attacker is a Bombard (range 1200,
 sensor 300, disc 150) facing +x with the target of record on the facing axis 200 wu out, so the face pass leaves the
-facing untouched and the sector is where the fixture says. Damage is hit points lost on the tick of the attacker's
-first shot.
+facing untouched and the sector is where the fixture says (the facing scenes below set the facing away on purpose).
+Damage is hit points lost on the tick of the attacker's first shot.
 
-What is deliberately NOT pinned: whether a cone victim also takes the category multiplier, the output multiplier and
-the target's damage reduction (R-082-06 says "base damage times the share"; the spec row says "base x share x area
-offset multiplier"; ALG-61 says the disc victims take ALG-60 damage). Every assertion below is relative: victims
-against victims, a share against share 1.0, a victim on another layer against the same-layer victim, the target of
-record against the disc control's target (which is a plain ALG-60 hit), and the cap in absolute terms only through
-base x OM_AOE_DAMAGE_CAP_MULTIPLIER read from the headers. Reported as an open question, not guessed.
+What the assertions compare: a cone victim against the DISC control's victim on the same shot (the disc control is
+the measuring rig and is green on the E0 tree), times the share; a victim of another category against the same-category
+victim (the category multiplier ratio, read from csrc/om_constants.h); the cap in absolute terms through
+base x OM_AOE_DAMAGE_CAP_MULTIPLIER read from the headers.
+
+Limits of the tests: the exact angular boundary of the sector is not tested (the engine has om_sin only and takes the
+cosine as om_sin(x + pi/2); a victim exactly on the boundary or exactly behind the attacker at half-angle 180 passes or
+fails by a rounding coincidence), so every angular case stands a degree or more off the boundary; the range boundary IS
+exact (a victim at 400 wu on a coordinate axis) and is tested in a scene of its own so the collision pass cannot push
+the pair apart.
 
 Red on the E0 tree: om_roster_set_cone is the stub and answers -1 (not built), so every scene that sets a cone stops
 at the first assertion (the message names the -1). Green on the E0 tree: the three disc controls (the same scenes
@@ -40,6 +46,7 @@ from test_PP_unit_support import set_param, spawn, step
 
 RAIDER, INTERCEPTOR, VANGUARD, WARDEN, BOMBARD, BASTION, SUPPLY = 0, 1, 2, 3, 4, 5, 6
 FRIEND, ENEMY = 0, 1
+ARC = "OM_TP_FIRING_ARC_DEG"
 
 
 def _const(name):
@@ -79,12 +86,14 @@ def set_cone(lib, w, utype, rng, half, share):
 
 
 def volley(lib, world_factory, *, attacker=BOMBARD, cone=None, victims=SCENE, attacker_layer=0, layers=None,
-           reach=None, params=None, stealth=(), cover=(), friendlies=(), cones_on=(), facing=0.0, fixture=None):
+           reach=None, params=None, stealth=(), cover=(), friendlies=(), cones_on=(), facing=0.0, fixture=None, kinds=None):
     """One shot of the attacker at the origin. `cone` is (range, half-angle degrees, share) set on the attacker's type
     (the call must return 0: on the E0 tree it returns -1 and the test fails here); `cones_on` is a list of
-    (type, range, half, share) set on other types. `layers` maps a victim name to its layer (default the attacker's).
+    (type, range, half, share) set on other types. `layers` maps a victim name to its layer (default the attacker's);
+    `kinds` maps a victim name to its unit type (default Supply).
     `fixture` is called with (w, ids) after spawning, for setup a scene needs. Returns {name: hit points lost on the
-    tick of the first shot, 'tick': that tick, 'T_is_target': whether the nearest victim named T was the target}."""
+    tick of the first shot, 'tick': that tick, 'target': the attacker's target, 'facing': its facing after that tick,
+    'ids': name -> unit id}."""
     w = world_factory(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
     for name, value in (params or {}).items():
@@ -100,7 +109,7 @@ def volley(lib, world_factory, *, attacker=BOMBARD, cone=None, victims=SCENE, at
     lib.om_unit_set_facing(w, a, facing)
     ids = {}
     for name, x, y in victims:
-        u = spawn(lib, w, SUPPLY, ENEMY, float(x), float(y), layer=(layers or {}).get(name, attacker_layer))
+        u = spawn(lib, w, (kinds or {}).get(name, SUPPLY), ENEMY, float(x), float(y), layer=(layers or {}).get(name, attacker_layer))
         lib.om_unit_set_hp(w, u, HP)
         if name in stealth:
             lib.om_unit_set_stealth(w, u, 1)
@@ -120,6 +129,7 @@ def volley(lib, world_factory, *, attacker=BOMBARD, cone=None, victims=SCENE, at
             out = {n: before[n] - lib.om_unit_get_hp(w, u) for n, u in watch.items()}
             out["tick"] = tick
             out["target"] = lib.om_unit_target(w, a)
+            out["facing"] = lib.om_unit_get_facing(w, a)
             out["ids"] = ids
             return out
     pytest.fail("the attacker never fired in 39 ticks (scene setup)")
@@ -214,9 +224,10 @@ def test_R_082_06_three_in_the_sector_are_hit_at_share_one_outside_is_not(lib, w
     hit points and O1..O4 lose none (O1 and O2 are inside the disc but 1.1 degrees outside the sector; O3 is 20 wu
     beyond the range; O4 is behind). The three sector victims lose identical amounts, in proportion to the share
     (s times what they lose at share 1.0), and the target of record loses exactly what the disc control's target
-    loses: a single direct hit, not a direct hit plus a cone hit. Shares stay at or below 1.0 so that even the largest
-    reading of a per-victim hit (base x share, no category multiplier) leaves the volley under the cap
-    (T + 3 hits <= 3.5 + 3 x 17.5 = 56 < 70) and the whole sector is hit. Red on the E0 tree (the cone call answers -1)."""
+    loses: a single direct hit, not a direct hit plus a cone hit. A sector victim loses share x the disc control's victim
+    on the same shot (the absolute anchor: the disc victim is a full ALG-60 hit, which for a Bombard on a Supply unit is
+    base x OM_CATEGORY_MULTIPLIER_SIEGE_STRIKE). Shares stay at or below 1.0 so the volley (T + 3 hits <= 4 x 3.5 = 14) is
+    far under the cap and the whole sector is hit. Red on the E0 tree (the cone call answers -1)."""
     disc = volley(lib, world_factory)
     one = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, 1.0))
     r = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, share))
@@ -225,8 +236,9 @@ def test_R_082_06_three_in_the_sector_are_hit_at_share_one_outside_is_not(lib, w
     assert r["T"] == pytest.approx(disc["T"], rel=1e-12), "the target of record was not hit by exactly one direct hit"
     x1 = one["S1"]
     assert x1 > 0 and one["S2"] == pytest.approx(x1, rel=1e-12) and one["S3"] == pytest.approx(x1, rel=1e-12)
+    assert x1 == pytest.approx(disc["S1"], rel=1e-12), f"a share-1 cone victim took {x1}, the disc victim {disc['S1']}"
     for n in ("S1", "S2", "S3"):
-        assert r[n] == pytest.approx(share * x1, rel=1e-12), f"{n}: {r[n]} is not {share} x {x1}"
+        assert r[n] == pytest.approx(share * disc["S1"], rel=1e-12), f"{n}: {r[n]} is not {share} x the disc victim {disc['S1']}"
 
 
 def test_R_082_06_share_zero_hits_only_the_target(lib, world_factory):
@@ -249,11 +261,14 @@ def test_R_082_06_victims_are_hit_across_both_sides_of_the_facing_axis_and_insid
 
 
 def test_R_082_06_the_range_edge_is_inclusive(lib, world_factory):
-    """R-082-06 'boundary inclusive': a victim exactly 400 wu out on the axis (the cone range) is hit, one at 401 is
-    not. Red on the E0 tree (cone call -1)."""
-    victims = [("T", 200, 0), ("edge", 400, 0), ("past", 401, 0.0)]
-    r = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, 1.0), victims=victims)
-    assert r["edge"] > 0 and r["past"] == 0.0
+    """R-082-06 'boundary inclusive': a victim exactly 400 wu out on the axis (the cone range, an exact squared distance)
+    is hit, one at 401 is not. Two scenes, because two victims 1 wu apart would be pushed apart by the collision pass
+    before the shot and the boundary would not be what is measured; each scene has only T (200 wu out) and the one
+    victim. Red on the E0 tree (cone call -1)."""
+    edge = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, 1.0), victims=[("T", 200, 0), ("edge", 400, 0)])
+    past = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, 1.0), victims=[("T", 200, 0), ("past", 401, 0)])
+    assert edge["edge"] > 0, "a victim exactly at the cone range was spared (the boundary is inclusive)"
+    assert past["past"] == 0.0, "a victim 1 wu past the cone range was hit"
 
 
 def test_R_082_06_friendlies_in_the_sector_are_not_hit(lib, world_factory):
@@ -320,13 +335,21 @@ def test_R_082_06_cap_binds_even_at_the_largest_share(lib, world_factory):
 
 def test_R_082_06_half_angle_180_is_a_disc_about_the_attacker(lib, world_factory):
     """spec Contract: 'half-angle 180 is a disc about the attacker, which differs from R-084-03's disc about the target'.
-    With the cone (400 wu, 180 degrees) a victim exactly behind the attacker at 150 wu (350 wu from T, so no disc about
-    T would reach it) is hit, as is one at 400 wu exactly (inclusive); one at 401 is not, and O3 at 420 neither.
-    Red on the E0 tree (cone call -1)."""
-    victims = [("T", 200, 0), ("behind", -150, 0), ("side", 0, 380), ("edge_back", -400, 0), ("past_back", -401, 0)]
+    With the cone (400 wu, 180 degrees) victims BEHIND the attacker, 1 degree short of straight back (179 degrees), at 150
+    wu (about 350 wu from T, so no disc about T would reach them) and at 390 wu are hit, as is one abeam at 380 wu;
+    exactly-behind is deliberately not used (the cosine of 180 degrees is om_sin(3 pi / 2), a rounding coincidence). The
+    range edge at 180 is tested abeam in scenes of their own (400 wu hit, 401 wu not; see the range-edge test for why
+    separate scenes). Red on the E0 tree (cone call -1)."""
+    def polar(r, deg):
+        return (r * math.cos(math.radians(deg)), r * math.sin(math.radians(deg)))
+    victims = [("T", 200, 0), ("behind", *polar(150.0, 179.0)), ("far_behind", *polar(390.0, 179.0)), ("side", 0, 380)]
     r = volley(lib, world_factory, cone=(CONE_RANGE, 180.0, 1.0), victims=victims)
-    assert r["behind"] > 0 and r["side"] > 0 and r["edge_back"] > 0
-    assert r["past_back"] == 0.0
+    assert r["behind"] > 0 and r["far_behind"] > 0 and r["side"] > 0
+    edge = volley(lib, world_factory, cone=(CONE_RANGE, 180.0, 1.0), victims=[("T", 200, 0), ("edge", 0, 400)])
+    past = volley(lib, world_factory, cone=(CONE_RANGE, 180.0, 1.0), victims=[("T", 200, 0), ("past", 0, 401)])
+    assert edge["edge"] > 0 and past["past"] == 0.0
+    past_back = volley(lib, world_factory, cone=(CONE_RANGE, 180.0, 1.0), victims=[("T", 200, 0), ("past", *polar(402.0, 179.0))])
+    assert past_back["past"] == 0.0
 
 
 def test_R_082_06_range_zero_restores_the_disc(lib, world_factory):
@@ -351,6 +374,94 @@ def test_R_082_06_a_cone_attaches_to_any_type(lib, world_factory):
     r = volley(lib, world_factory, attacker=VANGUARD, cone=(CONE_RANGE, CONE_HALF, 1.0), victims=victims)
     assert r["T"] == pytest.approx(plain["T"], rel=1e-12)
     assert r["S1"] > 0 and r["S2"] > 0 and r["O4"] == 0.0
+
+
+# ---------------------------------------------------------------- the per-victim damage (Architect ruling 2026-10-14)
+
+SIEGE_STRIKE = _const("OM_CATEGORY_MULTIPLIER_SIEGE_STRIKE")
+SIEGE_LINE = _const("OM_CATEGORY_MULTIPLIER_SIEGE_LINE")
+
+
+def test_control_the_disc_victim_is_a_full_alg60_hit(lib, world_factory):
+    """Anchor for the cone damage tests (green on the E0 tree): the Bombard's disc takes base x category multiplier off a
+    Supply (Strike) unit, 17.5 x 0.20 = 3.5 with the header numbers, and the same off a Vanguard (Line) with 1.5. The
+    cone tests compare with this control; the category ratio they expect (7.5) is the headers' SIEGE_LINE / SIEGE_STRIKE."""
+    r = volley(lib, world_factory)
+    assert r["T"] == pytest.approx(BOMBARD_BASE * SIEGE_STRIKE, rel=1e-12)
+    victims = [("T", 200, 0), ("S1", 300, 100)]
+    mixed = volley(lib, world_factory, victims=victims, kinds={"S1": VANGUARD})
+    assert mixed["S1"] == pytest.approx(BOMBARD_BASE * SIEGE_LINE, rel=1e-12)
+
+
+@pytest.mark.parametrize("share", [0.5, 1.0], ids=["share0.5", "share1"])
+def test_R_082_06_a_cone_victim_takes_the_disc_victims_alg60_hit_times_the_share_by_category(lib, world_factory, share):
+    """R-082-06 (Architect ruling 2026-10-14): a cone victim takes exactly the disc victim's per-victim damage (ALG-60:
+    category multiplier, output multiplier, the target's damage reduction, the area offset multiplier) times the share.
+    Scene: T and S2 are Supply (Strike) units, V is a Vanguard (Line), all three inside both the 150 wu disc about T and
+    the 400 wu, 30 degree sector. The disc control and the cone run give: S2(cone) = share x S2(disc) and V(cone) =
+    share x V(disc), and V takes the category multiplier ratio SIEGE_LINE / SIEGE_STRIKE (7.5) times S2 in both. Red on
+    the E0 tree (cone call -1)."""
+    kinds = {"V": VANGUARD}
+    victims = [("T", 200, 0), ("V", 300, 100), ("S2", 250, -120)]
+    disc = volley(lib, world_factory, victims=victims, kinds=kinds)
+    r = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, share), victims=victims, kinds=kinds)
+    assert disc["V"] == pytest.approx(disc["S2"] * SIEGE_LINE / SIEGE_STRIKE, rel=1e-12), "setup: the disc control's category ratio"
+    assert r["T"] == pytest.approx(disc["T"], rel=1e-12)
+    assert r["S2"] == pytest.approx(share * disc["S2"], rel=1e-12), f"S2: {r['S2']} is not {share} x the disc victim {disc['S2']}"
+    assert r["V"] == pytest.approx(share * disc["V"], rel=1e-12), f"V: {r['V']} is not {share} x the disc victim {disc['V']}"
+    assert r["V"] == pytest.approx(r["S2"] * SIEGE_LINE / SIEGE_STRIKE, rel=1e-12), "the category multiplier ratio was lost"
+
+
+# ---------------------------------------------------------------- the sector is about the facing
+
+def _polar(r, rad):
+    return (r * math.cos(rad), r * math.sin(rad))
+
+
+def _facing_scene(probe_facing):
+    """Victims for a shot with the attacker's facing at `probe_facing` rad after the face pass and the target T on the +x
+    axis: T; V_face at that bearing (inside the 30 degree sector about the facing, far outside the one about the line to
+    T); V_line behind T on the line to T (inside a sector about the bearing to T, outside the one about the facing)."""
+    return [("T", 200, 0), ("V_face", *_polar(300.0, probe_facing)), ("V_line", 330, 0)]
+
+
+def test_R_082_06_the_sector_is_about_the_facing_after_the_face_pass_not_the_line_to_the_target(lib, world_factory):
+    """R-082-06 'about the attacker's facing': the Bombard starts facing 1.2 rad off its target (it turns 0.125 rad a
+    tick, the Siege rate; at arc 360 it fires on the acquisition tick with the facing only partly turned). A probe run
+    (no cone, T alone) reads the facing at the shot; the cone run then puts V_face on that bearing and V_line on the
+    line to T. V_face is hit and V_line is not: the sector follows the facing the attacker has at the shot. A cone
+    centred on the line to the target would hit V_line and spare V_face. Setup assertions: the facing at the shot is
+    more than 35 degrees off the line to T. Red on the E0 tree (cone call -1)."""
+    probe = volley(lib, world_factory, victims=[("T", 200, 0)], facing=1.2)
+    f = probe["facing"]
+    assert math.degrees(f) > CONE_HALF + 5.0, f"setup: facing at the shot {math.degrees(f):.1f} degrees is not clear of the 30 degree sector about T's bearing"
+    victims = _facing_scene(f)
+    r = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, 1.0), victims=victims, facing=1.2)
+    assert r["facing"] == pytest.approx(f, abs=1e-12), "setup: the shot-tick facing differs from the probe run"
+    assert r["target"] == r["ids"]["T"]
+    assert r["T"] > 0
+    assert r["V_face"] > 0, "a victim on the attacker's facing bearing was spared (the sector is not about the facing)"
+    assert r["V_line"] == 0.0, "a victim on the line to the target, outside the facing's sector, was hit (the sector follows the bearing to T)"
+
+
+def test_R_082_06_arc_gates_the_shot_then_the_cone_resolves_on_the_facing(lib, world_factory):
+    """R-100-04 with R-082-06: a Bombard facing away (pi) from its target with arc 90 does not fire until the target is
+    inside the arc, 19 face-pass steps at the Siege rate (the same arithmetic as the S100 file: ceil((pi - pi/4) /
+    (2.5 / 20)), shot on acquired + 19 - 1), and the shot tick is the arc-360 acquisition tick plus 18. The cone then
+    resolves on the facing the Bombard has at that tick (about 44 degrees off T, just inside the arc), not the bearing
+    to T: V_face on the facing bearing is hit, V_line on the line to T (44 degrees off the facing) is not; T is hit as
+    the target of record although it lies outside the sector about the facing. Red on the E0 tree (cone call -1)."""
+    rate = _const("OM_SIEGE") / _const("OM_TACTICAL_TICK_RATE")
+    steps = math.ceil((math.pi - math.radians(90.0) / 2.0) / rate - 1e-9)
+    free = volley(lib, world_factory, victims=[("T", 200, 0)], facing=math.pi, params={ARC: 360})
+    probe = volley(lib, world_factory, victims=[("T", 200, 0)], facing=math.pi, params={ARC: 90})
+    f = probe["facing"]
+    assert steps == 19
+    victims = _facing_scene(f)
+    r = volley(lib, world_factory, cone=(CONE_RANGE, CONE_HALF, 1.0), victims=victims, facing=math.pi, params={ARC: 90})
+    assert r["tick"] == free["tick"] + steps - 1, f"first shot on tick {r['tick']}, expected {free['tick'] + steps - 1}"
+    assert math.degrees(f) > CONE_HALF + 5.0 and f <= math.radians(45.0) + 1e-9, "setup: facing at the shot is inside the arc and clear of T's sector"
+    assert r["T"] > 0 and r["V_face"] > 0 and r["V_line"] == 0.0
 
 
 # ---------------------------------------------------------------- reach offsets

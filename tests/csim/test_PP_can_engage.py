@@ -14,8 +14,13 @@
    5 line blocked (om_combat_can_shoot)
    0 every gate passes.
   It ignores cooldown, backswing, the cohort slot and the order kind: it answers "could fire this tick if ready".
-  Parity is one-way: after tick t every fire event of tick t has can_engage 0, or -1 with the target dead; 0 never
-  implies a shot.
+  Parity is one-way: after tick t every fire event of tick t has can_engage 0, or -1 (Architect 2026-10-14, accepted
+  wording: "-1 is allowed when either unit of the pair is dead after the tick"); 0 never implies a shot.
+  Reason 5 needs a spotter in every scene that reaches it: a cover disc across the line blocks SIGHT before it blocks
+  fire, so a lone attacker reads 2 (not seen), not 5; a friendly with a clear line to the target keeps the side's set
+  holding it. Arc parity (the fire pass and can_engage agree on reason 4) is pinned in
+  tests/csim/test_E13_S100_firing_arc.py (can_engage reads 4 on every turning tick and 0 on the shot tick of each flank
+  scene); the fight-wide parity below is insensitive to the fire-pass arc gate, because a unit that shot anyway still reads 0.
 
 Red on the E0 tree: the stub answers -1 for everything, so every test that expects a value other than -1 fails with
 that value in the message (the pairs that expect -1 are written so that a base pair expecting 0 comes first, which is
@@ -422,8 +427,9 @@ def parity_run(lib, w, ids, max_ticks, query=True):
 @pytest.mark.parametrize("arc", [360, 120], ids=["arc360", "arc120"])
 def test_R_can_engage_parity_one_way_over_the_lab_controls(lib, world_factory, name, arc):
     """After every tick of each lab control (mirror, numbers, planted damage), every fire event of the tick has
-    can_engage 0, or -1 because a unit of the pair is dead (that 0 does not imply a shot is the spec's one-way
-    parity, so nothing asserts the converse). Run at the default arc (360) and at the DRAFT arc 120, so the arc gate of the fire pass and of can_engage agree.
+    can_engage 0, or -1 because a unit of the pair is dead ("-1 is allowed when either unit of the pair is dead after
+    the tick", Architect 2026-10-14; that 0 does not imply a shot is the spec's one-way parity, so nothing asserts the
+    converse). Run at the default arc (360) and at the DRAFT arc 120, so the arc gate of the fire pass and of can_engage agree.
     Control inside: events were checked (a fight with no shots would pass vacuously). Querying does not change the
     fight: the final hit points equal a run with no queries. Red on the E0 tree (the stub answers -1 with both
     units alive)."""
