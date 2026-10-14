@@ -410,15 +410,22 @@ def test_shape_harmonic_share(work):
 
 
 def test_shape_seeds_differ(work):
-    """For each age, seeds s and s+1 (1..10) give lot sets whose symmetric difference is at least DRAFT-seed-differ 10
-    percent of their union."""
+    """For each age of 20 and up, seeds s and s+1 (1..10) give lot sets whose symmetric difference is at least
+    DRAFT-seed-differ 10 percent of their union. Age 10 is reported only (PROBE_DIFFER lines are printed, nothing is
+    asserted for it); its shape is held by the harmonic control (0.17 max at age 10).
+
+    Scope narrowed by Architect ruling 2026-10-14 (TD-VG-P-1; the threshold DRAFT-seed-differ 0.10 is unchanged): a
+    hamlet of radius 7 cells sits inside one 8-cell noise lattice unit, so two seeds differ little by construction;
+    the small-town look is Westley's to judge on the shot."""
     for age in SHAPE_AGES:
         for seed in range(1, 10):
             a = set(lot_cells(lots_of(work, age, seed)["L"]))
             b = set(lot_cells(lots_of(work, age, seed + 1)["L"]))
             ratio = len(a ^ b) / float(len(a | b))
-            print(f"PROBE_DIFFER age={age} seeds={seed},{seed + 1} symdiff_over_union={ratio:.3f}")
-            assert ratio >= SEED_DIFFER, (age, seed, ratio)
+            print(f"PROBE_DIFFER age={age} seeds={seed},{seed + 1} symdiff_over_union={ratio:.3f}"
+                  f"{'' if age >= 20 else ' (reported only)'}")
+            if age >= 20:
+                assert ratio >= SEED_DIFFER, (age, seed, ratio)
 
 
 # ----------------------------------------------------------------------------- divergence control
