@@ -2310,8 +2310,8 @@ owns = ["csrc/layout_engine.c", "csrc/layout_internal.h", "csrc/layout_terrain.c
 owns_glob = ["tests/csim/test_VG_P_p1_*.py"]
 acceptance = ["tests/csim/test_VG_P_p1_layout.py"]
 depends_on = []  # new files; no shared file is touched (om_internal.h, ouroboros_sim.h, signatures.toml, symbol_modules.toml, mission.c, Makefile are not in the row)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "85ef4e96" }
+tests_pending = false
 size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built as three serial units), layout_internal.h and layout_terrain.c (about 90 lines), the stub (about 90 lines), one csim test file; no ABI, no save, no pipe change"
 
 # Lane P piece P2 (places lane spec rev 4a, 2026-10-13): lot-order noise, contour/water/fallback lanes and the C growth probe, all new files; P3 wires them. The probe reports the 4th+8th harmonic share per seed against DRAFT-shape-harm 0.5; P3 waits for that report.
