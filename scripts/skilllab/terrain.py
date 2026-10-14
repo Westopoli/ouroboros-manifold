@@ -63,7 +63,10 @@ def with_terrain(build, terrain):
             if goal is not None:
                 _check_inside(goal, terrain.canvas, "step goal")
             steps.append(dataclasses.replace(s, goal=goal))
-        return dataclasses.replace(setup, groups=tuple(groups), timeline=tuple(steps),
+        point = None if setup.point is None else _shift_point(setup.point, dx, dy)
+        if point is not None:
+            _check_inside(point, terrain.canvas, "setup point")
+        return dataclasses.replace(setup, groups=tuple(groups), timeline=tuple(steps), point=point,
                                    terrain=shift_terrain(terrain, dx, dy))
 
     return wrapped
