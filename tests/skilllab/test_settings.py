@@ -28,6 +28,8 @@ from fakes_trace import PARAMS, TraceFakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 
 @pytest.fixture(autouse=True)
 def place_stub(monkeypatch):
@@ -46,7 +48,7 @@ def G(side, count=2):
 
 def S(settings=None, max_ticks=10):
     kw = {} if settings is None else {"settings": settings}
-    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=1000, **kw)
+    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=max_ticks, **kw)
 
 
 def run(setup, **fake_kw):

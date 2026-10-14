@@ -27,7 +27,7 @@ def _setup(guard_order="guard", steps=(), max_ticks=300):
                   order=guard_order, params={"spacing": 30.0})
     walker = Group(side=1, unit="Vanguard", count=1, formation="line", x=1400.0, y=400.0, facing_deg=180.0, layer=0,
                    order="attack_move", goal=(400.0, 400.0), params={"spacing": 30.0})
-    return Setup(groups=(guard, walker), unit_types={}, max_ticks=max_ticks, stalemate_ticks=2000, settings=SETTINGS,
+    return Setup(groups=(guard, walker), unit_types={}, max_ticks=max_ticks, settings=SETTINGS,
                  timeline=tuple(steps))
 
 

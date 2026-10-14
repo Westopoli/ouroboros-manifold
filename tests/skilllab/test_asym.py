@@ -174,7 +174,7 @@ def test_single_name_mix_matches_plays_groups_where_roles_coincide():
         assert (ga.side, ga.unit, ga.count, ga.formation, ga.facing_deg, ga.layer, ga.order, ga.goal, ga.params) == (
             gb.side, gb.unit, gb.count, gb.formation, gb.facing_deg, gb.layer, gb.order, gb.goal, gb.params)
         assert ga.formation != "points"
-    assert (a.abilities, a.max_ticks, a.stalemate_ticks, a.sample_every) == (b.abilities, b.max_ticks, b.stalemate_ticks, b.sample_every)
+    assert (a.abilities, a.max_ticks, a.sample_every, a.point) == (b.abilities, b.max_ticks, b.sample_every, b.point)
 
 
 def test_layered_puts_first_unit_nearer_the_enemy():
@@ -317,8 +317,8 @@ def test_unit_types_copied_and_swap_ignored():
     s.unit_types["extra"] = {}
     assert "extra" not in types
     d = Setup(groups=(), unit_types={})
-    assert (s.abilities, s.max_ticks, s.stalemate_ticks, s.sample_every, s.trace, s.settings) == (
-        d.abilities, d.max_ticks, d.stalemate_ticks, d.sample_every, d.trace, d.settings)
+    assert (s.abilities, s.max_ticks, s.sample_every, s.trace, s.settings) == (
+        d.abilities, d.max_ticks, d.sample_every, d.trace, d.settings)
     play = asym_play(6, Side("blob"), Side("line"))
     assert play(6, True) == play(6, False)
     assert asym_play(6, Side("blob"), Side("line"))(6, False).unit_types == {}
@@ -395,3 +395,37 @@ def test_importing_asym_does_not_load_the_engine():
             "assert 'scripts.skilllab.engine' not in sys.modules;" % str(ROOT))
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+
+# ---------------------------------------------------------------- LAB-REV2-L2 (Q-LAB-03, rulings 2 and 6)
+
+@pytest.mark.parametrize("a,b", [("blob", "blob"), ("line", "line"), ("blob", "line"), ("line", "blob")])
+@pytest.mark.parametrize("heads", [8, 16, 48])
+def test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts(a, b, heads):
+    """Ruling 6: both sides attack-move to one point; for blob and line sides it is the point midway between the fronts, which
+    asym_play places `gap` apart about x = 0. Each group's goal stays None."""
+    s = asym_play(16, Side(a), Side(b))(heads, False)
+    assert s.point == pytest.approx((0.0, 0.0), abs=1e-6)
+    assert all(g.goal is None for g in s.groups)
+    assert s.orders_per_unit is True
+
+
+@pytest.mark.parametrize("kw", ["approach", "mopup"])
+def test_q_lab_03_asym_play_no_longer_takes_approach_or_mopup(kw):
+    with pytest.raises(TypeError):
+        asym_play(6, Side("blob"), Side("line"), **{kw: True})
+    assert asym_play(6, Side("blob"), Side("line"))(6, False).groups
+
+
+@pytest.mark.parametrize("name", ["APPROACH", "APPROACH_STOP", "MOPUP", "MOPUP_INTERVAL_TICKS"])
+def test_q_lab_03_asym_module_does_not_re_export_the_retired_constants(name):
+    assert not hasattr(asym, name)
+
+
+def test_ruling_2_both_sides_of_a_mix_play_use_the_same_unit_names_and_no_stat_variants():
+    """Ruling 2: same units, same values, both sides. With one mix for both sides and no unit_types, no stat variant exists."""
+    mix = (("Vanguard", 1), ("Warden", 1))
+    s = asym_play(8, Side("blob", mix=mix), Side("blob", mix=mix))(8, False)
+    assert s.unit_types == {}
+    assert {g.unit for g in s.groups if g.side == 0} == {g.unit for g in s.groups if g.side == 1}

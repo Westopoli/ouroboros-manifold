@@ -72,10 +72,9 @@ def test_ac12_setup_shape_two_groups_facing_each_other(play):
 
 @pytest.mark.parametrize("play", ALL_PLAYS)
 def test_ac12_setup_flags_default_to_contract_defaults(play):
-    """AC-12: abilities off, max_ticks / stalemate_ticks / sample_every left at the Setup defaults."""
+    """AC-12: abilities off, max_ticks / sample_every left at the Setup defaults (Q-LAB-03: no stalemate_ticks, no mop-up, no approach)."""
     s = play(4)(4, False)
-    assert (s.abilities, s.max_ticks, s.stalemate_ticks, s.sample_every) == (
-        False, DEFAULTS.max_ticks, DEFAULTS.stalemate_ticks, DEFAULTS.sample_every)
+    assert (s.abilities, s.max_ticks, s.sample_every) == (False, DEFAULTS.max_ticks, DEFAULTS.sample_every)
 
 
 def test_ac12_blob_and_line_params_follow_the_brief():
@@ -111,8 +110,8 @@ def test_ac12_modified_and_blob_plays_differ_only_in_side_0_unit(play, heads):
         assert (gp.side, gp.count, gp.formation, gp.params, gp.x, gp.y, gp.facing_deg, gp.layer, gp.order, gp.goal) == (
             gm.side, gm.count, gm.formation, gm.params, gm.x, gm.y, gm.facing_deg, gm.layer, gm.order, gm.goal)
     assert plain.groups[1].unit == modified.groups[1].unit and plain.groups[0].unit != modified.groups[0].unit
-    assert (plain.abilities, plain.max_ticks, plain.stalemate_ticks, plain.sample_every) == (
-        modified.abilities, modified.max_ticks, modified.stalemate_ticks, modified.sample_every)
+    assert (plain.abilities, plain.max_ticks, plain.sample_every) == (
+        modified.abilities, modified.max_ticks, modified.sample_every)
 
 
 def test_ac12_reach_play_derives_a_long_type_on_side_0_only():
@@ -398,3 +397,46 @@ def test_ac12_importing_plays_does_not_import_engine():
 def test_ac12_import_check_detects_an_engine_import():
     """Positive control for the import check above: the same probe reports True once engine is imported."""
     assert _modules_after_import("import scripts.skilllab.engine") == "True"
+
+
+
+# ---------------------------------------------------------------- LAB-REV2-L2 (Q-LAB-03, ruling 6)
+
+@pytest.mark.parametrize("play", ALL_PLAYS)
+@pytest.mark.parametrize("heads", [8, 16, 48])
+def test_ruling_6_a_meeting_sends_both_sides_to_one_point_between_them(play, heads):
+    """Ruling 6: a meeting is both sides attack-moved to one point. The plays carry Setup.point, the midpoint of the two
+    anchors (the sides stand symmetric about x = 0 at the contact distance), and leave each group's own goal None."""
+    s = play(16)(heads, False)
+    g0, g1 = s.groups
+    assert s.point == pytest.approx(((g0.x + g1.x) / 2, (g0.y + g1.y) / 2))
+    assert (g0.goal, g1.goal) == (None, None)
+
+
+@pytest.mark.parametrize("play", ALL_PLAYS)
+def test_ruling_6_plays_use_per_unit_orders(play):
+    assert play(16)(8, False).orders_per_unit is True
+
+
+@pytest.mark.parametrize("play", [blob_play, line_play, reach_play, damage_play])
+@pytest.mark.parametrize("kw", ["approach", "mopup"])
+def test_q_lab_03_plays_no_longer_take_approach_or_mopup(play, kw):
+    """Q-LAB-03: the approach opening and the mop-up are retired; the keywords are gone (positive control: the play builds)."""
+    with pytest.raises(TypeError):
+        play(16, **{kw: True})
+    assert play(16)(8, False).groups
+
+
+@pytest.mark.parametrize("name", ["APPROACH", "APPROACH_STOP", "MOPUP", "MOPUP_INTERVAL_TICKS"])
+def test_q_lab_03_plays_module_drops_the_approach_and_mopup_constants(name):
+    assert not hasattr(plays, name)
+
+
+def test_ruling_2_damage_play_is_the_one_labelled_asymmetry():
+    """Ruling 2: the planted damage scan (damage_play, +20 percent) is the only stat difference between the sides; reach_play is
+    kept as the same kind of labelled control. A naive play has none."""
+    for naive in (blob_play, line_play):
+        s = naive(16)(8, False)
+        assert s.unit_types == {} and s.groups[0].unit == s.groups[1].unit
+    d = damage_play(16)(8, False)
+    assert list(d.unit_types) == ["VanguardStrong"] and d.groups[0].unit != d.groups[1].unit
