@@ -27,7 +27,7 @@ def _fight(tag):
 def _scan_result():
     cells = [CellResult(enemy_heads=n, fights=[_fight(2 * n), _fight(2 * n + 1)], mean_margin=0.1, won=True)
              for n in range(8, 25)]
-    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
+    return ScanResult(size=16, cells=cells, beats=None, loses_to=None)
 
 
 class World:
@@ -49,9 +49,9 @@ class World:
             self.damage_args.append((args, kwargs))
             return lambda enemy_heads, swap: "damage-setup"
 
-        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, win_margin=0.05, fight_fn=None):
+        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, fight_fn=None, map_fn=None, full_scan=False, **kw):
             self.scan_calls.append(dict(build=build, size=size, enemy_from=enemy_from, enemy_to=enemy_to,
-                                        replicates=replicates))
+                                        replicates=replicates, full_scan=full_scan))
             return self.result
 
         def fake_fight_row(result, **labels):
@@ -146,3 +146,8 @@ def test_unknown_command_still_returns_two(world, tmp_path):
     code = run_main(["frobnicate", "--out", str(tmp_path)])
     assert code == 2
     assert world.scan_calls == []
+
+
+def test_reach_command_scans_every_headcount_not_the_bisection(world, tmp_path):
+    main(["reach", "--out", str(tmp_path)])
+    assert [c["full_scan"] for c in world.scan_calls] == [True]

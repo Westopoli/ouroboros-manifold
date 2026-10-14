@@ -10,7 +10,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from fakes_batches import fake_sensors  # noqa: E402
+from fakes_batches import fake_sensors, stub_summary_write  # noqa: E402,F401
 from scripts.skilllab import batches  # noqa: E402
 
 TALL = ("tall_cover", "tall_cover_counter")

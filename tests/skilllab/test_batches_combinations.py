@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches, profile, skills  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 DRAFT = "draft"
@@ -63,7 +63,7 @@ def test_33_cells_in_order_with_fields():
     assert d.name == "combinations" and d.title and d.scene
     assert len(LABELS) == 33 and LABELS[0] == "combo:none" and LABELS[-1] == "counter:S2"
     assert [c.label for c in d.cells] == LABELS
-    assert d.variants == (("default", {}),) and d.weighted is False
+    assert d.variants == (("default", {}),)
     for c in d.cells:
         assert (c.size, c.enemy_from, c.enemy_to, c.replicates) == (16, 8, 24, 10), c.label
 

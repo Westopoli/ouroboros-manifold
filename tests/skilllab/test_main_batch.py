@@ -47,7 +47,7 @@ def run_main(argv):
         return exc.code
 
 
-@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"])
+@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations"])
 def test_valid_name_runs_once_and_prints_three_paths(world, tmp_path, capsys, name):
     assert main(["batch", name, "--out", str(tmp_path / "o")]) == 0
     assert world.get_calls == [name]
@@ -64,7 +64,7 @@ def test_unknown_or_missing_name_returns_two_and_prints_names(world, capsys, arg
     assert run_main(argv) == 2
     assert world.run_calls == []
     out = capsys.readouterr().out
-    assert all(n in out for n in ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"))
+    assert all(n in out for n in ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations"))
 
 
 def test_other_commands_do_not_reach_batches(world, tmp_path):

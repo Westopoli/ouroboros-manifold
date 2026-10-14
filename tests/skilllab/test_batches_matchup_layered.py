@@ -14,7 +14,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
 import scripts.skilllab.asym as asym  # noqa: E402
 from scripts.skilllab import batches  # noqa: E402
 from scripts.skilllab.matchup import matchup_grid_html  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
 from tests.skilllab.test_batches_matchup import AXIS, EXPECTED, MIXED, PURE, _beats, _label, _section, _text  # noqa: E402
 
 RANGES = {"Raider": 200.0, "Vanguard": 300.0, "Bombard": 500.0, "Bastion": 250.0}
