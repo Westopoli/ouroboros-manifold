@@ -2289,6 +2289,18 @@ status = { state = "queued" }
 tests_pending = false
 size_estimate = "sim lane: findings ledger rows, mission-choice and chronicle-source runner scripts, no csrc change"
 
+# Shot page shared by rule (Architect 2026-10-14): every shot-carrying piece writes its copy and its row in docs/northstar/story_reviews/westley/; the footprint fence ignores the folder and owner_lint/pieces.py exempt it. VG-A18 keeps its two westley entries (harmless).
+[[piece]]
+id = "HARNESS-westley-folder"
+manager = "M0"
+owns = ["scripts/specfactory/merge_gate_support.py", "scripts/specfactory/pieces.py", "tests/specfactory/test_owner_lint.py", "tests/specfactory/test_merge_gate_support.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_owner_lint.py", "tests/specfactory/test_merge_gate_support.py"]
+depends_on = ["VG-GUARD", "HARNESS-symown", "A94-harness"]  # VG-GUARD: in-flight status owner of merge_gate_support.py; pieces.py, owner_lint.py and the tests are A94-harness glob (attached)
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "SHARED_RECORD_GLOBS in pieces.py (11 lines), one import and the ignore entry in merge_gate_support.py (4 lines), two positive-control tests (57 lines)"
+
 # Lane P piece P1 (places lane spec rev 4a, docs/northstar/plans/2026-10-13-places-lane-spec.md): the layout engine, new files only. Nothing calls it until P3. Architect 2026-10-14: the test stub is tests/csim/layout_stub_terrain.c (not under csrc/).
 [[piece]]
 id = "VG-P1"
