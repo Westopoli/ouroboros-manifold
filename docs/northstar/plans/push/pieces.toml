@@ -2332,10 +2332,10 @@ size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noi
 id = "VG-E-startforce"
 manager = "M0"
 wave = 9
-owns = ["csrc/mission.c", "csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/transport/test_pipe_mission_frame_briefing_fields.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]
+owns = ["csrc/mission.c", "csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/transport/test_pipe_mission_frame_briefing_fields.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "scripts/specfactory/reach_allowlist.toml", "scripts/specfactory/gd_tests_known_red.txt", "tests/csim/test_E01_T3_mission_ground.py", "tests/csim/test_F1_fog_per_faction_observers.py", "tests/csim/test_F2_nearest_hostile_search.py", "tests/csim/test_F3_macro_contact_skip.py"]  # records batch 8 (Architect 2026-10-13/14): reach_allowlist.toml drops the E7 stub entry for om_mission_get_force_group (Architect 2026-10-13 accessor); gd_tests_known_red.txt: deletes the TD-VG-E-26 entries it clears (overlap with the attached owners is the sanctioned pattern); the four golden test files (SPACE_GOLDEN, F1/F2/F3) are re-recorded once under TD-VG-E-26 (VG-CONTRACT-E7 also lists them and lands first)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_startforce.py"]
-depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot"]  # these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
+depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot", "VG-E1"]  # these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce: three control groups of the starting force carried on the mission frame (group per unit from om_mission_get_force_group), derived at read time; no save or hash change"
