@@ -46,3 +46,15 @@ L1 (built), L2, L3, L4, L5, L6, S, L7, serially on ONE integration branch push/l
 
 ## 15. Harness spec
 The stale clauses 5, 11, 12 and 13 of the harness spec (stalemate, win margin, approach) are rewritten by L7.
+
+## 16. Mix M3b
+`s3_over_the_choke` uses mix M3b = 7 Vanguard + 1 Raider + 8 Bombard on both sides (Architect 2026-10-14); plain M3 stays for `s2_screen`; `s3_types_by_reach` puts its Interceptors on layer 1; scaling at 8 to 48 uses largest-remainder rounding.
+
+## 17. Placement of the new plays
+The four new plays are placed with the anchor kinds pinned in `tests/skilllab/test_plays_space.py`; placed scenes use the play's own side 1 (ruling 2).
+
+## 18. Ground scene
+`s1_slope_top` runs on CANVAS 12000 (seed 11 has no slope at 4000). Walking units are set through `unit_types[name]['movement']='walking'` (fight.py, L6). A spawn returning unit id 0 is a lab defect (raise). Eye-height and flyer-seen knobs may be inert in the natural scene and are declared in `scenes_ground.INERT_KNOBS` (reported inert in the first batch; making them live is a later design call for the Architect/Westley).
+
+## 19. Build order
+L3 first; then L4 and L6 in parallel (disjoint files; L6 touches fight.py/scenes.py/terrain.py/ground/*, L4 batches/sweep/scan/depth/breakeven/pool/__main__); then L5, S, L7.
