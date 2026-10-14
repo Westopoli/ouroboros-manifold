@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from scripts.skilllab.contract import Block, Group, Setup, Step, Terrain
-from scripts.skilllab import plays
 from scripts.skilllab.terrain import shift_terrain, with_terrain
 
 STATUS = "unconfirmed draft, not measured, for Westley's look"
@@ -255,8 +254,7 @@ def scan_build(name):
     def build(terrain, enemy_heads, swap, start_distance=None):
         if enemy_heads < 1:
             raise ValueError("enemy_heads must be at least 1, got %r" % (enemy_heads,))
-        setup = dataclasses.replace(fn(), mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
-                                    quiet_from_first_damage=True)
+        setup = fn()
         enemy = [g for g in setup.groups if g.side == 1]
         if len(enemy) > enemy_heads:
             raise ValueError("%s has %d enemy groups, needs at least that many heads" % (name, len(enemy)))
