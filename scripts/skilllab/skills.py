@@ -70,12 +70,12 @@ def _hold(ctx):
 
 
 def _types_by_reach(ctx):
-    """Draft S3: a blob; the layer split is in plays_space.s3_types_by_reach."""
+    """Draft S3: a blob; the layer split and roster mix are in plays_space (s3_layer_above, s3_types_by_reach, s3_over_the_choke, s3_dark_striker, s3_ping_then_commit)."""
     return "blob", {"radius": 80 + 12 * math.sqrt(ctx.n)}, ctx.facing_deg
 
 
 register("S1", "skilled", _hold, DRAFT)
-register("S1", "counter", _types_by_reach, DRAFT)   # draft: a blob of long-range units; see plays_space.s1_outrange
+register("S1", "counter", _types_by_reach, DRAFT)   # draft: a blob; the Bastion mix is in plays_space.s1_outrange
 register("S3", "skilled", _types_by_reach, DRAFT)
 register("S4", "skilled", _types_by_reach, DRAFT)   # draft: the bait orders are in plays_space.s4_bait
 register("S4", "counter", _types_by_reach, DRAFT)   # draft: the guard orders are in plays_space.s4_do_not_chase

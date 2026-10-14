@@ -135,10 +135,7 @@ def _groups_and_timeline(play, anchors, heads, swap):
     if play in NAIVE_PLAYS:
         return (_blob_group(0, "Vanguard", plays_space.UNITS, 0.0, 0.0, 0.0, "attack_move"), _naive_defender(play, heads)), (), {}, {}
     setup = plays_space.scan_build(play)(None, heads, False)
-    groups = setup.groups
-    if anchors.role == "defender":
-        groups = tuple(g for g in groups if g.side == 0) + (_blob_group(1, "Vanguard", heads, 0.0, 0.0, 180.0, "attack_move"),)
-    return groups, setup.timeline, setup.unit_types, setup.settings
+    return setup.groups, setup.timeline, setup.unit_types, setup.settings
 
 
 ROUTE_CELL = 50.0        # decision 7 (2026-10-14): wu of the lab-side breadth-first search grid; a cell is open when its centre is
@@ -296,13 +293,20 @@ def placed_scene(layout, play, start_distance, features, counter=False):
             goal = None
             if anchors.attacker == "mass_one_end":
                 goal = (placed[d_idx[0]].x, placed[d_idx[0]].y + end_y)
-            placed[i] = dataclasses.replace(g, x=attack_x, y=centre[1] + end_y, facing_deg=face_a, goal=goal)
-        steps = tuple(dataclasses.replace(
-            t, when=("seen",) if play == "s4_bait" else t.when, goal=None if t.goal is None else (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x),
-                                                 placed[t.group].y + t.goal[1] - groups[t.group].y)) for t in steps_in)
+            placed[i] = dataclasses.replace(g, x=attack_x, y=centre[1] + end_y, facing_deg=face_a, goal=goal,
+                                            order=g.order if anchors.attacker == "hold" else "attack_move")
         hold = _placed_mean([placed[i] for i in d_idx])
         final = tuple(dataclasses.replace(g, x=g.x + tx, y=g.y + ty, goal=None if g.goal is None else (g.goal[0] + tx, g.goal[1] + ty))
                       for g in placed)
+        enemy_anchor = next((g.x, g.y) for g in final if g.side == 1)
+
+        def step_goal(t):
+            if t.goal is None:
+                return None
+            if t.order == "ping":
+                return enemy_anchor
+            return (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x) + tx, placed[t.group].y + t.goal[1] - groups[t.group].y + ty)
+        steps = tuple(dataclasses.replace(t, when=("seen",) if play == "s4_bait" else t.when, goal=step_goal(t)) for t in steps_in)
         setup = Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain,
                       point=(hold[0] + tx, hold[1] + ty))
         build.labels["prefight"] = preflight(setup, None)
