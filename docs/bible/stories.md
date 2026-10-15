@@ -150,11 +150,11 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-03 | `epics/E-19-multiplayer.md` S-144 |
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
 | S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
-| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd, blocked on Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
+| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd; both eras exist as packs (Settled Reach, Greek placeholder "The Marble Reach"); the land era's final name and brief are Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
 | S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-04, Q-148-05 | `epics/E-20-multi-era-and-monetization.md` S-148 |
 | S-149 | E-20 | "A fair price and the chance to earn expansions by playing." | Spec'd, blocked on Q-149-02 | `epics/E-20-multi-era-and-monetization.md` S-149 |
 | S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd, blocked on Q-150-01 | `epics/E-20-multi-era-and-monetization.md` S-150 |
-| S-151 | E-20 | "Someday, eras that feel different." | Deferred (A-321) | `epics/E-20-multi-era-and-monetization.md` S-151 |
+| S-151 | E-20 | "Eras that feel different." | Spec'd; values come from the simulation lab's crossings (Westley, 2026-10-15), not scheduled | `epics/E-20-multi-era-and-monetization.md` S-151 |
 | S-152 | E-21 | "The game works with no network and no model." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-152 |
 | S-153 | E-21 | "One pipeline produces every text library the game reads." | Spec'd, blocked on Q-153-01 | `epics/E-21-offline-ai-pipeline.md` S-153 |
 | S-154 | E-21 | "People, places, units, and factions have names that sound like they belong together." | Spec'd, blocked on Q-155-01 | `epics/E-21-offline-ai-pipeline.md` S-154 |
