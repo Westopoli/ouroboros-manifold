@@ -27,6 +27,21 @@ New files only: `scenes/mockups/landscape/obey_layer.gd` (the request builder an
 
 Whether a choke the layout asked for reads as a real choke of that width on the land; whether pads look like places rather than stamps; whether two routes of the two widths exist and read as such; the small canvas. His verdict and the measured table become lane P rev 6: the C pieces (P0, T-OBEY, P3) are written from the mockup's procedure, with the cell arithmetic, the band-fit ordering and the snap rule taken from what worked.
 
+## Pass 1 result (2026-10-16, Doer report; branch `push/proto-terrain-obeys` 804f666b)
+
+Measured on the mockup's real per-band data (routes small/big per point, roll in brackets):
+
+| canvas | seed | choke asked / measured | base_b | objective | site_0 | site_1 | ring max | result | check ms |
+|---|---|---|---|---|---|---|---|---|---|
+| 16000 | 1 | 467 / 410 | 2/0 (4) | 2/0 | 2/0 | 2/0 | 33.6 | FAIL routes | 111 |
+| 16000 | 2 | 502 / 510 | 2/0 (2) | 4/1 | 4/1 | 4/1 | 31.2 | FAIL routes (base_b big 0) | 133 |
+| 16000 | 3 | 264 / 190 | 4/1 (2) | 4/1 | 4/1 | 4/1 | 31.9 | PASS | 124 |
+| 8000 | 1 | 467 / 420 | 4/1 (4) | 4/3 | 4/2 | 4/1 | 56.6 | FAIL ring (objective) | 47 |
+| 8000 | 2 | 502 / 510 | 4/1 (2) | 4/3 | 4/3 | 4/2 | 61.8 | FAIL ring | 52 |
+| 8000 | 3 | 264 / 290 | 4/2 (2) | 4/0 | 4/1 | 4/3 | 58.9 | FAIL ring, routes | 41 |
+
+Facts for lane P rev 6: (1) pads, the choke and the vantage are produced and measured within one cell, with pad rings under 35 degrees on the 16,000 canvas; (2) they do not make routes: only about 59 percent of cells walk at 35 degrees, base exits are 1 to 2 cells wide, and a big-width route (5 cells) past a 466 wu choke needs a bypass beyond the 900 wu wall that terraced ground never has; raising the ramp reach to 8,000 wu changed nothing; so **the engine must carve routes** (a corridor of width W along a found path, widened and graded) as a fourth edit, and the check is then a proof, not a hope; (3) the choke on the base line crosses the objective pad for most rolls, so the request geometry needs the objective off the line or the choke range narrowed (the pass slid the choke inside [0.35, 0.65] to clear pads; on 8,000 no clear spot exists); (4) on the 8,000 canvas the pads overlap the walls and the ring slopes reach 57 to 62 degrees: insets and pads must scale with the canvas; (5) the drafts the C spec lacked: choke-length 600, wall-gap 125, wall-face 100, ramp-grade 28, ramp-reach 2,400, vantage-radius 250; (6) the mockup had no hook between the landform stages and the band fit, so the edits run after generate and re-run the band fit and ramps; the C hook sits after the landforms and before `_build_slope`, which matches the draft's insertion point. Without the edits every case fails everything (the positive control).
+
 ## Out of scope
 
 Space maps (Q-191-10 (a), deferred to lane D), the beside-the-defender objective, neutral towns and lots (P1 as specced), the C sim, saves.
