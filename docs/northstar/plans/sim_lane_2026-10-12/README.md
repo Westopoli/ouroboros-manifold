@@ -28,6 +28,17 @@ One row per finding class. `Piece` is a name only until Westley reads the row; `
 | 16 | constants verbatim (`om_constants.h`) | `OM_BUDGET_PRESSURE_THRESHOLD`, `OM_REINFORCE_*`, `OM_ATTACK_CONFIDENCE_*` never used in any `.c`; literals 0.8, 0.5, 1.5 inline in `agent.c`, `resolve.c` | `coverage_algorithms.md` | verbatim-constants question | CONST-2 | |
 | 17 | ALG-57 text | read as "shortfall confirmed at 25" against `CAPACITY_SHORTFALL_THRESHOLD = 0.4`; the 25 is the insurgent population threshold (Q-057-02), the sentence sat after the shortfall sentence | `coverage_algorithms.md` | wording, fixed 2026-10-15 in `algorithms.md` | none | closed |
 
+## Westley's reading, 2026-10-15
+
+Checked against the Python reference (`simulation/mission_generator.py`, `chronicle_distiller.py`, `chronicle_assembler.py`, `generational.py`): the Python kept three logs over the jump (an action log of attacks with `budget_committed`, an event log with `chain_length` and `mission_consequence`, a conquest log), and the C port dropped them (`csrc/mission.c:509-511`: "the C ABI has no event/conquest log, so this reads the live region graph and faction stance only"). Rows 3, 5, 6, 11 and 12 are that one gap, not five rule questions. Westley, 2026-10-15: "go" on this order for the Linux box:
+
+1. **SIM-LOGS**: the three logs as fixed ring buffers in the world state, saved and hashed, deterministic; a contract piece with a second-Fable audit. Spec from the pre-flight scout of 2026-10-15.
+2. The five call sites read them as the Python did: the Defensive Stand trigger and its force (row 3), the urgency chain term (row 6, Q-072-02 expected to close on candidate (a)), adjacent-lost and `times_run` (row 5), the chronicle context multiplier (row 11), the faction-shift flag (row 12).
+3. `chronicle.c`'s own bugs: the dropped family entry (row 7), chain clusters at score 0 (row 8), blank shells on the pipe (row 9, contract).
+4. Both sweeps re-run.
+
+Still his to rule: row 10 (the Python had no ripple cluster; adjacent events competed as regional entries: (a) drop ripples to match, (b) keep, capped at 2), row 13 (the Python deduped within one scroll only, 40 percent overlap; R-071 asks for the campaign: (a) campaign-level dedup with a fallback fragment, (b) relax the rule to per scroll, (c) grow the library), row 4 (the Python seated the first lineage through onboarding before the first mission; the C opening jump has none; verified when the fix is built).
+
 Passes worth recording: urgency, preference and score match the rule in all 1,196 candidate rows; the draw is a weighted draw over the top 5 as written; 22 of 22 mission jumps open with the mission result in the right category; no entry without an event behind it; at most 10 entries, never a digit, never over 90 words.
 
 ## Pipe gaps (candidate SV pieces)
