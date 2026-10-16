@@ -81,7 +81,7 @@ Scorecard, filled by the record clerk after each lane run (first column is the t
 
 E1 skeleton column: no run data was handed to the record clerk, left blank. E1q port column (`wf_3253958a-378`): 10 agents first pass, 6 second pass; subagent tokens 972,567 + 283,153; the join check failed first time on 11 unexpected reds (an argtypes leak and two superseded K-e5 pins), ruled as TD-VG-E-23 and TD-VG-E-24, landed at f79f91c1; gate clean; the play found the full-frame lot gap (`FINDING-lots-full-frame`). Other cells need data the clerk was not given.
 
-**No eyes needed** (runs while Westley is away, in this order): the three harness pieces (`vg-harness-method.js`); a worktree cleanup clerk (465 worktrees under `~/Projects/om-push/wt/`, 98 with `.wt-done`); a branch triage clerk (26 unmerged `push/vg-*` branches: landed, superseded or pending, one line each, no deletions); the 31 `pieces.py --check` owner overlaps without `depends_on` (record clerk, rows only); lane D and lane F story plays run and queued; the walk-route fix piece (FINDING-walk-route-replan) once the Architect specs it; lab runs in the night slot.
+**No eyes needed** (runs while Westley is away, in this order): the three harness pieces (`vg-harness-method.js`); a worktree cleanup clerk (done: `~/Projects/om-push/wt/` held one entry on 2026-10-15); a branch triage clerk (26 unmerged `push/vg-*` branches: landed, superseded or pending, one line each, no deletions); the 31 `pieces.py --check` owner overlaps without `depends_on` (record clerk, rows only); lane D and lane F story plays run and queued; the walk-route fix piece (FINDING-walk-route-replan) once the Architect specs it; lab runs in the night slot.
 
 ---
 
@@ -97,7 +97,7 @@ This file is the programme design. Stages 1 and 2 produce the workflow spec and 
 
 | Decision | Source |
 |---|---|
-| All five approved prototypes in the beta, the settlement with its economy play (lots, workers, placement, the economy screens); Westley answered the economy questions in batches 1 to 12 (on main: e.g. 464c2505 settlements, 829f2444 strongpoints and weather, b928b937, a3d15377); small open rules may be decided by the Architect in the interest of time, each documented as a liberty in the spec's "Liberties taken" table and the register | Westley 2026-10-07 |
+| All five approved prototypes in the beta, the settlement with its economy play (lots, workers, placement, the economy screens); Westley answered the economy questions in batches 1 to 12 (on main: e.g. 594952ae settlements, 829f2444 strongpoints and weather, b928b937, a3d15377); small open rules may be decided by the Architect in the interest of time, each documented as a liberty in the spec's "Liberties taken" table and the register | Westley 2026-10-07 |
 | No date deadline: "done right than fast"; efficiency, parallelism and staying on the goal outrank any date; the beta ships when every lane's stories are Seen | Westley 2026-10-07 |
 | Lab stays first: its reports are answered before integration's; lab runs at 8 workers by day, 12 by night | this plan |
 | Stories are the acceptance spec; a lane is done when its stories are acted out and seen | Westley 2026-10-07 |

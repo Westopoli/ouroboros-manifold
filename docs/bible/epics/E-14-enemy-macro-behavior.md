@@ -38,7 +38,7 @@ Rules
 
 Inputs: script (states, transitions, hooks, forces); tactical state.
 Outputs: enemy commands in the command log; force state in the T1 trace.
-See also: E-11 R-087-04 and E-13 R-096-02 (pursuit and group endings at the unit level overlap the re-targeting of R-120-02), and the guard stance of the movement plan if it is ruled (it may replace or sit under defend).
+See also: E-11 R-087-04 and E-13 R-096-02 (pursuit and group endings at the unit level overlap the re-targeting of R-120-02), and the guard stance (E-13 R-096-08, ruled 2026-10-13; it may replace or sit under defend).
 Q-120-01 closed: AI postures deferred; enemy macro scripts use baseline movement speeds for every modifier (no modifier-based speed or spacing change). Decided by Westley, 2026-09-16.
 
 ### S-121 — Timers and thresholds, with noise

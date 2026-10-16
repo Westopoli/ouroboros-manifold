@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 16 stories, 91 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values; the economy and layer-action stories (S-230 to S-235) state what must be shown and leave numbers and layout to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
-| Implied-but-unstated behavior turned into flags | 15 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 10 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-235-01. |
+| Implied-but-unstated behavior turned into flags | 14 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 9 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01 (Q-235-01 closed 2026-10-12). |
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -275,7 +275,7 @@ Rules
 
 Inputs: economy and weather events from the tick delta.
 Outputs: marks on the map view; ticker lines, T2-checkable.
-Open flags: Q-235-01.
+Open flags: none (Q-235-01 closed 2026-10-12, R-235-03).
 
 ## Inputs
 
@@ -328,7 +328,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-02, Q-231-01, Q-231-02, Q-232-03, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-02, Q-231-01, Q-231-02, Q-232-03. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
