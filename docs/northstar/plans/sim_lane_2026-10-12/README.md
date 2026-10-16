@@ -26,7 +26,7 @@ One row per finding class. `Piece` is a name only until Westley reads the row; `
 | 14 | architecture: `mission_start` falls back to a quiet-world mission | `no viable mission` in 3 of 25 chapters | `finding_chronicle_source.md` | sim defect, overlaps F-rulings | MC-4 | |
 | 15 | ALG rows each have a test | 78 rows: 38 covered, 37 uncovered, 3 no C site; E-08, E-09, E-10 cores nearly untested; 92 control stubs raise NotImplementedError | `coverage_algorithms.md` | coverage gap | TEST-ALG batch (test writer) | Westley's thresholds per row |
 | 16 | constants verbatim (`om_constants.h`) | `OM_BUDGET_PRESSURE_THRESHOLD`, `OM_REINFORCE_*`, `OM_ATTACK_CONFIDENCE_*` never used in any `.c`; literals 0.8, 0.5, 1.5 inline in `agent.c`, `resolve.c` | `coverage_algorithms.md` | verbatim-constants question | CONST-2 | |
-| 17 | ALG-57 text | says shortfall "confirmed at 25", states `CAPACITY_SHORTFALL_THRESHOLD = 0.4` | `coverage_algorithms.md` | bible row contradicts itself | none | Westley |
+| 17 | ALG-57 text | read as "shortfall confirmed at 25" against `CAPACITY_SHORTFALL_THRESHOLD = 0.4`; the 25 is the insurgent population threshold (Q-057-02), the sentence sat after the shortfall sentence | `coverage_algorithms.md` | wording, fixed 2026-10-15 in `algorithms.md` | none | closed |
 
 Passes worth recording: urgency, preference and score match the rule in all 1,196 candidate rows; the draw is a weighted draw over the top 5 as written; 22 of 22 mission jumps open with the mission result in the right category; no entry without an event behind it; at most 10 entries, never a digit, never over 90 words.
 
