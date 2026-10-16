@@ -23,7 +23,7 @@ Evidence
 
 | rule says | sim did | seed/tick | classification | proposed piece |
 |---|---|---|---|---|
-| Strike-vs-Strike resolves before Line-vs-Line before Siege-vs-Siege | Strike 2170, Line 4226, Siege 1800 ticks. Strike < Line holds; Line < Siege fails (`assert 4226 < 1800`) | single deterministic fight each, no seed in the test | Threshold/measurement never had a bible source: Q-085-01 (algorithms register :246) and Q-085-02 (:247), both open, say the engagement layout and composition are inventions. Not a Mac float issue, not a drift from an ALG row | TACT-ORDER-RULING (Westley answers Q-085-01/02 and the engagement the order is measured on) |
+| Strike-vs-Strike resolves before Line-vs-Line before Siege-vs-Siege | Strike 2170, Line 4226, Siege 1800 ticks. Strike < Line holds; Line < Siege fails (`assert 4226 < 1800`) | single deterministic fight each, no seed in the test | Threshold/measurement never had a bible source: Q-085-03 (algorithms register :246) and Q-085-04 (:247), both open, say the engagement layout and composition are inventions. Not a Mac float issue, not a drift from an ALG row | TACT-ORDER-RULING (Westley answers Q-085-03/04 and the engagement the order is measured on) |
 
 Evidence
 - Rule: `docs/bible/epics/E-11-units-and-combat.md:110` (R-085-04); line 115 "launch pacing targets (A-340)". The rule gives no counts, distance or orders.
