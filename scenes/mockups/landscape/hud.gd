@@ -3,7 +3,7 @@ extends CanvasLayer
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const KITS_DIR := "res://scenes/mockups/landscape/kits/"
 const DEFAULT_CANVAS := 24000.0
-const CANVAS_OPTIONS := [16000.0, 24000.0, 32000.0, 64000.0, 128000.0]
+const CANVAS_OPTIONS := [8000.0, 16000.0, 24000.0, 32000.0, 64000.0, 128000.0]
 const DEFAULT_KIT := "greek"
 const SPACE_KIT := "space"
 const DEFAULT_DENSITY := 35.0

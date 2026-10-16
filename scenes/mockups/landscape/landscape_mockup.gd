@@ -26,6 +26,10 @@ func _ready() -> void:
 	_map_view = get_node("HUD/MapView")
 
 
+func obey_report() -> Dictionary:
+	return get_node("ObeyLayer").obey_report()
+
+
 func qa_state() -> Dictionary:
 	var fm: FieldMap = _hud.get_field_map()
 	var camera: Camera3D = _camera_rig.get_camera()

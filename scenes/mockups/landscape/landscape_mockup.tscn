@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scenes/mockups/landscape/hud.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/mockups/landscape/camera_rig.gd" id="2"]
 [ext_resource type="Script" path="res://scenes/mockups/landscape/map_view.gd" id="3"]
 [ext_resource type="Script" path="res://scenes/mockups/landscape/landscape_mockup.gd" id="4"]
 [ext_resource type="Script" path="res://scenes/mockups/_shared/qa_driver.gd" id="5"]
+[ext_resource type="Script" path="res://scenes/mockups/landscape/obey_layer.gd" id="6"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -42,6 +43,9 @@ canvas_size = 16000.0
 fov = 55.0
 near = 1.0
 far = 60000.0
+
+[node name="ObeyLayer" type="Node" parent="."]
+script = ExtResource("6")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("1")
