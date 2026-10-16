@@ -147,6 +147,7 @@ Work that does not wait on the build lanes. Written 2026-10-06 from Westley's li
 | T13 | Body size per type from the runtime collision radius (Q-LAB-02 a) | unit scale on main for the client (`VG-C-unitscale`); the sim's per-type radius follows the era rosters | lab, with the rosters |
 | T14 | Fight tick cap 12,000 and never-engaged fights not read as ties (Q-LAB-01) | cap raised (brief B2); outcome classes not yet recorded | lab spec |
 | T16 | Feedback and bug reports: in-game F12 capture, website feedback, classification | piece built 2026-10-06, awaiting its gate; the lockstep save it replays through is lane F | after lane F's tactical hookup |
+| T18 | Branch triage: 225 unmerged `origin/push/*` branches of 09-22 to 09-24 (B1 to B15m, C1 to C8, T1, F2, HDR, INV) and old tooling branches, nothing deleted; Westley 2026-10-15 chose (c): delete only what a second audit proves landed by another route | report in this chat 2026-10-15; second audit not run | Engineer, a second audit that proves each branch's patches landed by another sha before any deletion |
 | T17 | Steam onboarding, public track (app fee, tax and identity, Coming Soon page) | Westley by hand; no report yet | Westley |
 
 ## 4. Not planned yet
@@ -178,6 +179,7 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Economy and bases, rules | Instrument, needed | None exists; the number flags are asked piece by piece in lane E |
 | Economy and bases, look | In the game, not a mockup | Lane E (E1k, the economy screens); Westley judges shots per piece |
 | Layout engine | No prototype (Westley 2026-10-06) | The lab's layout search supplies the data; `push/proto-layout` is reference only |
+| Mission-to-galaxy transition (S-108) | Mockup `scenes/mockups/transition/` on `push/proto-transition` | Needed (Westley, 2026-10-15); spec `plans/2026-10-15-transition-mockup-spec.md`; a Doer builds it on the Mac |
 | Multiplayer lobby | Mockup needed for the lobby screens | Lane F's skeleton lobby (S-141 shot) stands in; Westley's verdict pending |
 | Simulation | The sim viewer (2b step 1) | Specced 2026-10-12, not built |
 
