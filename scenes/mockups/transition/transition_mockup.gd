@@ -19,6 +19,8 @@ const LINES := [
 ]
 
 var DRAFT_pullback_s := 6.0
+var DRAFT_star_count := 4000
+var DRAFT_star_size_frac := 0.004
 var camera_path_samples: Array = []
 var panel_width_fraction := 0.0
 
@@ -236,30 +238,39 @@ func _make_stars() -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
-	var sm := SphereMesh.new()
-	sm.radius = 1.0
-	sm.height = 2.0
-	sm.radial_segments = 6
-	sm.rings = 3
+	var sm := QuadMesh.new()
+	sm.size = Vector2(2.0, 2.0)
+	var disc := GradientTexture2D.new()
+	disc.fill = GradientTexture2D.FILL_RADIAL
+	disc.fill_from = Vector2(0.5, 0.5)
+	disc.fill_to = Vector2(1.0, 0.5)
+	disc.gradient = Gradient.new()
+	disc.gradient.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
+	disc.gradient.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0.8), Color(1, 1, 1, 0)])
 	_star_mat = StandardMaterial3D.new()
+	_star_mat.albedo_texture = disc
+	_star_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	_star_mat.billboard_keep_scale = true
 	_star_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_star_mat.vertex_color_use_as_albedo = true
 	_star_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	sm.material = _star_mat
 	mm.mesh = sm
-	mm.instance_count = 2600
+	mm.instance_count = DRAFT_star_count
 	for k in range(mm.instance_count):
 		var arm := rng.randi_range(0, 2)
 		var r := 4.0e5 + 3.6e6 * pow(rng.randf(), 0.7)
-		if k % 4 == 0:
+		if k % 2 == 0:
 			r = 6.0e4 + 9.4e5 * pow(rng.randf(), 1.5)
 		var a := r * 1.2e-6 + arm * TAU / 3.0 + rng.randfn(0.0, 0.25)
 		var pos := Vector3(cos(a) * r, rng.randfn(0.0, 6.0e4), sin(a) * r)
 		var s := rng.randf_range(15000.0, 40000.0)
-		if k % 4 == 0:
-			s = minf(s, r * 0.03)
+		var dim := 1.0
+		if k % 2 == 0:
+			s = minf(s, r * DRAFT_star_size_frac)
+			dim = lerpf(1.0, 0.25, smoothstep(6.0e4, 1.0e6, r))
 		mm.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(s, s, s)), pos))
-		mm.set_instance_color(k, Color(1, 0.9, 0.75).lerp(Color(0.7, 0.8, 1.0), rng.randf()))
+		mm.set_instance_color(k, Color(1, 0.9, 0.75).lerp(Color(0.7, 0.8, 1.0), rng.randf()) * dim)
 	_stars = MultiMeshInstance3D.new()
 	_stars.multimesh = mm
 	_sv.add_child(_stars)
