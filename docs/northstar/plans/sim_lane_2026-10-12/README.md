@@ -39,6 +39,20 @@ Checked against the Python reference (`simulation/mission_generator.py`, `chroni
 
 Still his to rule: row 10 (the Python had no ripple cluster; adjacent events competed as regional entries: (a) drop ripples to match, (b) keep, capped at 2), row 13 (the Python deduped within one scroll only, 40 percent overlap; R-071 asks for the campaign: (a) campaign-level dedup with a fallback fragment, (b) relax the rule to per scroll, (c) grow the library), row 4 (the Python seated the first lineage through onboarding before the first mission; the C opening jump has none; verified when the fix is built).
 
+## ALG coverage tests, E-08 to E-10 (2026-10-18, `push/alg-cover-e08-e10` d1be855a; 11 rows, 311 green, 1 red)
+
+| # | Rule says | Sim did | Evidence | Class | Piece | Needs |
+|---|---|---|---|---|---|---|
+| 18 | ALG-49: a supreme commander's successor is created in the faction's first region | created in the dead commander's region (`om_process_natural_deaths`) | `tests/csim/test_ALG_49_lifespan_and_succession.py` (1 red) | sim defect or row wording ("first region" read as lowest-index owned) | ALG-49-FIX after Westley reads the row | Westley: which region |
+| 19 | ALG-77: history weight in the commander pools decays 0.75 per generation | the decay applies only to the rotation probability's chapter counter (Q-057-01 (a)); pool scoring has no decay | `test_ALG_77_selector_history_decay.py` | row ahead of the ruling, or sim gap | none until read | Westley |
+| 20 | ALG-46: the home-region delta term varies | `om_character_selector_run_for_lineage` hard-codes delta 0.0 (comment admits it); rotation also forced whenever no living member is within 2 hops, the row wants the commander dead too | `test_ALG_46_rotation_decision.py` | sim gap, two points | SEL-DELTA | with row 4's selector-order piece |
+| 21 | ALG-52: the min-fill step adds skipped clusters while a category has fewer than 2 | can never apply (a skipped cluster is in a full category); the C has no such step, as the Q-065-01 ruling (cap wins) | `test_ALG_52_selection.py` | row text vacuous; rewrite the row | none | Westley or Architect: row rewrite |
+| 22 | ALG-53: 90- and 140-word warnings | constants defined, used nowhere; the slot-echo seam never compares the two slot values | `test_ALG_53_assembly.py` | dead code and a seam | CHRON-ASSEMBLY | after CH-1..3 |
+| 23 | ALG-48: a uniform parent draw | skipped when one member lives (same result, different draw sequence than the row) | `test_ALG_48_lineage_generation.py` | row wording | none | row note |
+| 24 | `om_process_natural_deaths` with a tick far ahead of the world tick | successors are born at the world tick and die at once, cascading until the table fills; latent (a real jump passes the world tick) | the ALG-49 tests set the tick first | latent defect | guard the call | low |
+
+Note: the test writer added `tests/csim/alg_consts.py`, a reader of `OM_*` defines by name from `om_constants.h`, `chronicle.c` and `mission.c` (the 0.40 dedup, the 6-word echo and the `MISSION_SCORE_*` weights are file-local defines, which is itself a constants finding beside row 16).
+
 Passes worth recording: urgency, preference and score match the rule in all 1,196 candidate rows; the draw is a weighted draw over the top 5 as written; 22 of 22 mission jumps open with the mission result in the right category; no entry without an event behind it; at most 10 entries, never a digit, never over 90 words.
 
 ## Pipe gaps (candidate SV pieces)

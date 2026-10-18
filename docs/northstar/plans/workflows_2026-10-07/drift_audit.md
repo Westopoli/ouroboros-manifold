@@ -43,3 +43,4 @@ A ruling recorded in the register and the epic but not yet in a spec that has no
 |---|---|---|---|
 | 2026-10-07 | the first week of the programme | stale status copies (rev 1 retro) | the one-table rule, method rev 2 |
 | 2026-10-15 | 2026-10-08 to 10-15 | 15 drift lines, 7 scope candidates (brief then in chat only; this file written 2026-10-18) | `fe5fe84e`, `0f0c6b4b` |
+| 2026-10-18 | 2026-10-15 to 10-18 | 13 drift lines (12 stale copies of the 10-15 closings, 3 malformed register rows), 3 scope candidates (all asked, under-cited), 0 threshold violations (`drift_audits/2026-10-18.md`) | the commit after the report |
