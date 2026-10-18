@@ -102,17 +102,11 @@ Three steps, in this order. Step 1 and step 2 run at the same time; step 3 start
 
 Every decision waiting on Westley, in the order that unblocks the most work. Candidates for each `Q-` flag are in `ambiguity_register.md`. An answer is recorded in the register and the epic, and its row is deleted here.
 
-### Now (at most six; Westley 2026-10-10)
+### Now (the 2026-10-18 batch; the six-row cap is suspended for it, Westley 2026-10-18)
 
-The Dispatcher keeps this table at six rows or fewer, ordered by what each unblocks, and adds a row only when one frees; everything else waits in the sections below. A verdict on a shot is one word per row (approved or rejected, with any note) in the Dispatcher chat. The shots named here are plainly named copies in `story_reviews/westley/`.
+Everything waiting on Westley is in one pack: `plans/decision_pack_2026-10-18/README.md` (how to answer; what each answer unblocks on the Linux box this week), with its appendices: the shots in `story_reviews/westley/` (one row per file in its README), the Architect's rulings of the week (B1 to B19 in the pack), the register extract (`register_extract.md`, every open flag grouped, full text), and the five doc branches digested (`doc_branches_digest.md`). After the batch the Dispatcher rebuilds this table at six rows or fewer from what is left.
 
-| # | Item | Where | Unblocks |
-|---|---|---|---|
-| 1 | Chronicle: does the map wait for the printing entry (`Q-069-03`, default run on) | `ambiguity_register.md` | chronicle map piece |
-| 2 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
-| 3 | Places on generated terrain (`Q-191-14`, default yes) | `ambiguity_register.md` | places on generated terrain |
-
-Closed 2026-10-13 from Westley's 2026-10-12 verdicts, found in the transcript: galaxy density (Q-B24-01, as built) and the two-units-one-pixel pairs (Q-132-03, the A18 opening camera); their shots stay under `story_reviews/westley/2026-10-13/` as the record.
+Closed since the last rewrite: Q-191-14 (b), Q-191-05, Q-191-08/09/10, Q-188-01, Q-189-04, Q-082-06 (2026-10-15, Westley); Q-NET-05 measured on the Mac 2026-10-18 (`plans/2026-10-18-macos-pipe-probe.md`), its closing is pack item B12.
 
 ### Parked questions (not asked until the work before them is reached)
 
