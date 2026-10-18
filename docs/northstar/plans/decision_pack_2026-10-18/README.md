@@ -1,5 +1,7 @@
 # Decision pack, 2026-10-18 (Westley's offline batch)
 
+**Read `batch.md` instead of this page: it is the same batch rewritten in the stories' voice, with every picture and question explained from the player's side and the ids kept only as keys.** This page stays as the index and the record.
+
 One sitting, offline, as many as you can. Everything here is a decision only you can make or a shot only you can judge; each says what it unblocks on the Linux box this week. Answer in one file (`answers.md` beside this one, or a message): shots as `<file>: approved | rejected — <note>`, questions as `<id>: <letter> — <words if any>`. The Architect folds every answer into the register, the epics and the queue, and the Dispatcher orders the week from them.
 
 The four appendices: **A** the shots (`../../story_reviews/westley/README.md`, one row per file, plain names); **B** the Architect's rulings of this week (below, with context); **C** the register extract (`register_extract.md`, every open flag with its full question and candidates, grouped); **D** the five doc branches waiting on your reading (`doc_branches_digest.md`).

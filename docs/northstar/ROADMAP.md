@@ -108,7 +108,7 @@ Every decision waiting on Westley, in the order that unblocks the most work. Can
 
 ### Now (the 2026-10-18 batch; the six-row cap is suspended for it, Westley 2026-10-18)
 
-Everything waiting on Westley is in one pack: `plans/decision_pack_2026-10-18/README.md` (how to answer; what each answer unblocks on the Linux box this week), with its appendices: the shots in `story_reviews/westley/` (one row per file in its README), the Architect's rulings of the week (B1 to B19 in the pack), the register extract (`register_extract.md`, every open flag grouped, full text), and the five doc branches digested (`doc_branches_digest.md`). After the batch the Dispatcher rebuilds this table at six rows or fewer from what is left.
+Everything waiting on Westley is in one pack: `plans/decision_pack_2026-10-18/batch.md` (the stories' voice; `README.md` beside it is the index and the record) (how to answer; what each answer unblocks on the Linux box this week), with its appendices: the shots in `story_reviews/westley/` (one row per file in its README), the Architect's rulings of the week (B1 to B19 in the pack), the register extract (`register_extract.md`, every open flag grouped, full text), and the five doc branches digested (`doc_branches_digest.md`). After the batch the Dispatcher rebuilds this table at six rows or fewer from what is left.
 
 Closed since the last rewrite: Q-191-14 (b), Q-191-05, Q-191-08/09/10, Q-188-01, Q-189-04, Q-082-06 (2026-10-15, Westley); Q-NET-05 measured on the Mac 2026-10-18 (`plans/2026-10-18-macos-pipe-probe.md`), its closing is pack item B12.
 
