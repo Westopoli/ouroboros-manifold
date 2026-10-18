@@ -33,6 +33,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
 #include <string.h>
 #include <float.h>
@@ -195,8 +196,8 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
     double effective_confidence = w->faction_confidence[faction_id];
     if (break_even > 0.0) {
         double ratio = (potential_commit / 0.70) / break_even;
-        if (ratio > 0.8) {
-            effective_confidence *= 0.8 / ratio;
+        if (ratio > OM_BUDGET_PRESSURE_THRESHOLD) { /* ALG-12 OM_BUDGET_PRESSURE_THRESHOLD */
+            effective_confidence *= OM_BUDGET_PRESSURE_THRESHOLD / ratio;
         }
     }
 
@@ -329,7 +330,8 @@ void om_step_decisions(om_world *w) {
         double effective_confidence = w->faction_confidence[f];
         if (break_even > 0.0) {
             double ratio = (potential_commit / 0.70) / break_even;
-            if (ratio > 0.8) effective_confidence *= 0.8 / ratio;
+            /* ALG-12 OM_BUDGET_PRESSURE_THRESHOLD */
+            if (ratio > OM_BUDGET_PRESSURE_THRESHOLD) effective_confidence *= OM_BUDGET_PRESSURE_THRESHOLD / ratio;
         }
 
         // Archetype weights

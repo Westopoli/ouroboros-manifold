@@ -107,14 +107,14 @@ int om_faction_set(om_world *w, int32_t faction_id, om_archetype archetype, doub
         w->faction_n++;
     }
     
-    if (attack_confidence < 0) {
+    if (attack_confidence < 0) { /* ALG-12 OM_ATTACK_CONFIDENCE_RANGE_* */
         double lo, hi;
         switch (archetype) {
-            case OM_ARCH_CONQUEROR:     lo = 2.0; hi = 6.0; break;
-            case OM_ARCH_FORTIFIER:     lo = 4.0; hi = 10.0; break;
-            case OM_ARCH_PLAYER:        lo = 3.0; hi = 8.0; break;
-            case OM_ARCH_BREAKAWAY:     lo = 2.0; hi = 5.0; break;
-            default:                    lo = 4.0; hi = 8.0; break;
+            case OM_ARCH_CONQUEROR:     lo = OM_ATTACK_CONFIDENCE_RANGE_CONQUEROR_LO; hi = OM_ATTACK_CONFIDENCE_RANGE_CONQUEROR_HI; break;
+            case OM_ARCH_FORTIFIER:     lo = OM_ATTACK_CONFIDENCE_RANGE_FORTIFIER_LO; hi = OM_ATTACK_CONFIDENCE_RANGE_FORTIFIER_HI; break;
+            case OM_ARCH_PLAYER:        lo = OM_ATTACK_CONFIDENCE_RANGE_PLAYER_CIVILIZATION_LO; hi = OM_ATTACK_CONFIDENCE_RANGE_PLAYER_CIVILIZATION_HI; break;
+            case OM_ARCH_BREAKAWAY:     lo = OM_ATTACK_CONFIDENCE_RANGE_BREAKAWAY_LO; hi = OM_ATTACK_CONFIDENCE_RANGE_BREAKAWAY_HI; break;
+            default:                    lo = OM_ATTACK_CONFIDENCE_DEFAULT_RANGE_LO; hi = OM_ATTACK_CONFIDENCE_DEFAULT_RANGE_HI; break;
         }
         
         double u = om_rng_draw(w);

@@ -33,6 +33,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <math.h>
 #include <stddef.h>
 #include <string.h>
@@ -290,18 +291,19 @@ void om_step_reinforce(om_world *w) {
 
         if (u > reinforce_prob) continue;
         
-        double commit = fmin(w->faction_budget_snapshot[f] * 0.30, t->commit * 0.5);
+        double commit = fmin(w->faction_budget_snapshot[f] * OM_REACTIVE_REINFORCE_BUDGET_FRACTION, /* ALG-18 OM_REACTIVE_REINFORCE_BUDGET_FRACTION */ t->commit * 0.5);
         if (commit < 1.0) continue;
         
         w->faction_budget[f] -= commit;
         
-        double tier_cap = (w->regions[t->target_idx].tier == OM_TIER_HOME) ? 100.0 : 60.0;
+        double tier_cap = (w->regions[t->target_idx].tier == OM_TIER_HOME) ? OM_REINFORCE_MIL_CAP_HOME : OM_REINFORCE_MIL_CAP_FRONTIER; /* ALG-19 OM_REINFORCE_MIL_CAP_* */
         double headroom = fmax(0.0, (tier_cap - w->regions[t->target_idx].military) / tier_cap);
-        double base = commit * 0.5 * headroom;
+        double base = commit * OM_REINFORCE_EFFICIENCY * headroom; /* ALG-19 OM_REINFORCE_EFFICIENCY */
         
         double tension = w->regions[t->target_idx].tension;
-        double lo = 0.85 - (tension / 100.0) * 0.20;
-        double hi = 1.15 + (tension / 100.0) * 0.20;
+        /* ALG-19 OM_REINFORCE_VARIANCE_BASE_*, OM_REINFORCE_VARIANCE_TENSION_SCALE */
+        double lo = OM_REINFORCE_VARIANCE_BASE_LO - (tension / 100.0) * OM_REINFORCE_VARIANCE_TENSION_SCALE;
+        double hi = OM_REINFORCE_VARIANCE_BASE_HI + (tension / 100.0) * OM_REINFORCE_VARIANCE_TENSION_SCALE;
         
         double u2 = om_rng_draw(w);
 
