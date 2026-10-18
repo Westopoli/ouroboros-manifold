@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-126 to S-131: yes, 6 stories, 27 rules, numbers from `algorithms.md` ALG-75 and config. S-218 and S-219: 2 stories, 14 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | No open flags on S-126 to S-131, and 3 on S-218 and S-219 (Q-118-03, Q-219-02, Q-219-04). Q-219-02 is to be designed and Q-219-04 is parked. |
+| Implied-but-unstated behavior turned into flags | No open flags on S-126 to S-131, and 2 on S-218 and S-219 (Q-118-03, Q-219-02). Q-219-02 is to be designed. |
 | Every visible-surface story has a reference | **No.** S-131 (how structures, convoys, and hazards read on screen) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -148,7 +148,7 @@ Rules
 
 Inputs: the region's trouble (seed, E-17); the trouble's path.
 Outputs: the trouble's position per tick in the delta; which things it has shut down; screen.
-Open flags: Q-219-02 (to be designed), Q-219-04 (parked).
+Open flags: Q-219-02 (to be designed).
 
 ## Inputs
 
@@ -208,7 +208,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-219-02, Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-219-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

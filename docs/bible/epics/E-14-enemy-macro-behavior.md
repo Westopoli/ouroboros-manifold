@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-120 to S-125: yes, 6 stories, 22 rules, numbers from `algorithms.md` ALG-74 and config. S-215 to S-217: 3 stories, 17 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags on S-215 to S-217 (Q-215-04, Q-217-01), plus Q-178-04 carried. |
+| Implied-but-unstated behavior turned into flags | No open flags on S-215 to S-217, plus Q-178-04 carried. |
 | Every visible-surface story has a reference | Not applicable. Enemy behavior is observed through units (E-11, E-13). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags of S-215 to S-217 (Q-215-04, Q-217-01). S-120 to S-124 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** No open flags remain on S-215 to S-217. S-120 to S-124 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -127,7 +127,7 @@ Rules
 
 Inputs: difficulty, which also sets foresight; the doctrine; the enemy's base and economy state; what the enemy's side has seen.
 Outputs: the enemy economy's orders, in the command log (S-217); production choices in the T1 trace.
-Open flags: Q-215-04 (whether the macro evaluation budget under Scale requirements holds when the enemy runs thousands of workers).
+Open flags: none.
 
 ### S-216 — The enemy fights over its bases
 As a commander, I want the enemy's forces to defend its base and its expansions, to fall back to what it still holds, and to raid my workers and shipments, so that the enemy plays the same war over the economy that I do.
@@ -158,7 +158,7 @@ Rules
 
 Inputs: the macro layer's state; the era pack.
 Outputs: enemy layer and economy commands in the command log and replay.
-Open flags: Q-217-01.
+Open flags: none.
 
 ## Inputs
 
@@ -214,7 +214,7 @@ None required.
 
 ## Open ambiguity flags
 
-Q-215-04, Q-217-01. Details in `docs/northstar/ambiguity_register.md`.
+None. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

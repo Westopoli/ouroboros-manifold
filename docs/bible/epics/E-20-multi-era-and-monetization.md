@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 8 stories, 28 rules; the architecture rules are concrete, the pricing, era-transition and unlock rules carry flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 12 open flags: Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-150-02, Q-151-02, Q-243-01. |
+| Implied-but-unstated behavior turned into flags | 9 open flags: Q-146-02, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-151-02. |
 | Every visible-surface story has a reference | Not applicable in this epic; era looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -52,7 +52,7 @@ Rules
 
 Inputs: pack manifest.
 Outputs: validation report; loaded pack.
-Open flags: Q-146-02 (whether resource names, doctrine names and environmental troubles are names or mechanics), Q-146-03 (what the elevation flag of R-146-01 means once every map has ground on all five layers, E-17 R-166-06).
+Open flags: Q-146-02 (whether resource names, doctrine names and environmental troubles are names or mechanics).
 
 ### S-147 — Two eras, one skeleton
 As a player, I want an era in space and an era on land to play, all one game, so that the smallest version I buy already spans two ages.
@@ -104,7 +104,7 @@ Rules
 
 Inputs: content libraries.
 Outputs: cross-era validity tests.
-Open flags: Q-150-02. Q-150-01 (what "civilization" content transfers across eras beyond archetypes and names; the Fortnite analogy names skins, dances, maps, and Westley extends it to civilizations).
+Open flags: Q-150-01 (what "civilization" content transfers across eras beyond archetypes and names; the Fortnite analogy names skins, dances, maps, and Westley extends it to civilizations).
 
 ### S-151 — Eras that feel different
 As a player, I want the ancient era to be scout-blind and the future era all-seeing, so that time changes how war feels.
@@ -132,7 +132,7 @@ Rules
 
 Inputs: pack manifest.
 Outputs: validation report.
-Open flags: Q-243-01; Q-159-08, Q-146-02, Q-146-03.
+Open flags: Q-159-08, Q-146-02.
 
 ## Inputs
 
@@ -173,7 +173,7 @@ Not applicable; see E-18 per era.
 
 ## Open ambiguity flags
 
-Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-150-02, Q-151-02, Q-243-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-146-02, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-151-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

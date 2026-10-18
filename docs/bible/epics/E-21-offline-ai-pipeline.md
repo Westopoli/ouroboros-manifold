@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 30 rules, numbers from the bible's pipeline and naming sections and config; S-244 leaves the sources of the economy's names and text to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 8 open flags: Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01. |
+| Implied-but-unstated behavior turned into flags | 2 open flags: Q-155-01, Q-156-02. |
 | Every visible-surface story has a reference | Not applicable; asset looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -50,7 +50,7 @@ Rules
 
 Inputs: prompts; category and slot definitions; model.
 Outputs: libraries; reports.
-Open flags: Q-153-01 (which libraries exist today: chronicle, naming, tutorial are on disk; archetype prose, briefing fragments, behavior scripts, and hints are in code or config, not libraries), Q-153-02 (whether an archetype's base kind and resource slant live in its library entry or in config). The enemy's economy runs on the same rules as the player's (E-22 S-181), which bears on the behavior scripts per archetype (E-14); the layout hints stay, and the terrain accounts for the layouts they belong to (E-17 S-191 R-191-10).
+The enemy's economy runs on the same rules as the player's (E-22 S-181), which bears on the behavior scripts per archetype (E-14); the layout hints stay, and the terrain accounts for the layouts they belong to (E-17 S-191 R-191-10).
 
 ### S-154 — Every name
 As a player, I want people, places, units, and factions to have names that sound like they belong together, so that the galaxy feels peopled.
@@ -66,7 +66,7 @@ Rules
 
 Inputs: faction subsets; pools.
 Outputs: names in the ledger and on screen.
-Open flags: Q-155-01, Q-154-01.
+Open flags: Q-155-01.
 
 ### S-155 — Models for a new era
 As an era designer, I want a repeatable pipeline that turns concept art into clean low-poly models, so that an era costs weeks, not years.
@@ -80,7 +80,7 @@ Rules
 
 Inputs: concept art; tools.
 Outputs: pack assets.
-Open flags: Q-155-02. Q-156-01 (tool choices are dated "early 2026"; the pipeline is tool-agnostic, confirm nothing in the game depends on a specific tool).
+Open flags: none.
 
 ### S-156 — Balance without playtesters
 As a designer, I want headless fights on the real engine to measure how much a force beats another by and flag broken rules automatically, so that tuning has evidence.
@@ -128,7 +128,7 @@ Rules
 
 Inputs: the economy's names and teaching needs; the library builder.
 Outputs: names and tutorial text in the libraries and packs.
-Open flags: Q-244-01.
+Open flags: none.
 
 ## Inputs
 
@@ -173,7 +173,7 @@ Not applicable.
 
 ## Open ambiguity flags
 
-Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-155-01, Q-156-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
