@@ -62,3 +62,7 @@ From the two sweeps, in the order they would have saved the most work: the candi
 ## Method notes
 
 `jump` streams no deltas: the chronicle run used a twin (`save`, `step` 50, `load`, `jump` 50), checksums equal in 25 of 25. The mission run used a shadow world over `libouroboros_dbg.so` to see the pool; its checksum matched the pipe before every `mission_start`. The debug pipe already sets unit HP from `retention`, so the band pick works without SV-0. Scratch scripts were under `/tmp/` and are not kept; the next pass writes them under `scripts/simviewer/probes/` as a piece.
+
+## Control stubs (2026-10-18, `controls_triage.md`; Architect's rulings, implementation)
+
+92 generated stubs: 75 fill, 7 retire, 10 defer. None of the expected ids exists under its long name; every stub fails on `OMBug.<name>` before its `NotImplementedError`. Taken: the 7 retires go under one ledger row `TD-CTRL-1` (each is covered by a named existing test or is client-side or cross-platform); the 10 defers wait on the rules' rewrites (6 are E-17 under the terrain-first rebuild); the first fill batch is E-08, E-09, E-10 (25 stubs) as one contract piece `CONTROLS-IDS-1` (25 `OM_BUG_*` ids in the existing 6xx/7xx/8xx blocks, their `OMBug` mirrors in conftest, one C injection hook each), second-Fable audit for the header, then a test-writer batch fills the 25 against their clean-case tests. The E-03 nine reuse the 300 to 310 block and need only a C hook and a rename.
