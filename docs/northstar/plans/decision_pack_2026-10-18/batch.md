@@ -8,7 +8,7 @@ You are offline for two hours with no way to ask. Everything in this file is a d
 
 **What your answers set in motion on the Linux box this week:** the pictures decide which screens get their next fix and which prototypes move into the game; the questions in part B decide the chronicle's pacing, the galaxy's look, the camera in space, the land era's identity and the era roster, and the shape of generated maps; the flags in part C decide the roster of units, how missions and the chronicle read the simulation, the difficulty knobs and the lab's pass marks. Everything that was only an implementation choice has already been taken by the Architect and is listed in `README.md` section C for your veto.
 
-Three parts: **A** 22 pictures (the files are beside this folder in `docs/northstar/story_reviews/westley/`); **B** 27 design questions; **C** 111 open flags from the register, grouped. The economy numbers are not asked (you tune those by feel). Part C is long; the first three sections unblock the most.
+Three parts: **A** 24 pictures (the files are beside this folder in `docs/northstar/story_reviews/westley/`); **B** 27 design questions; **C** 111 open flags from the register, grouped. The economy numbers are not asked (you tune those by feel). Part C is long; the first three sections unblock the most.
 
 ---
 
@@ -155,6 +155,18 @@ A "layer" is a height band units sit in; "ground era" is the land-map look.
 **Known flaws, not for judging.** The camera was off the map, so the wreck was never seen.
 <sub>key: A-S136-ground-no-wreck-camera-off-map.png | stories S-136</sub>
 
+
+### 23. Terrain obeys the layout, pass 2, carved routes — `P-S191-terrain-obeys-pass2-carved-routes.png`
+**Story.** "Bases, objectives and resources sit where the land puts them." [S-191] "Some ground is too steep to walk, and slopes are the ways between layers." [S-189]
+**What you are looking at.** The same map as picture 3, after the generator was taught to carve routes instead of only checking for them. Every point now has its four narrow routes (orange) and a wide one (blue); the magenta dots are the cells it cut. All six test maps pass with no number loosened. The flaw to judge: the carved routes run as parallel lanes side by side, a rail yard, not roads that follow the land.
+**What approved means here.** Yes means carving is the right direction and the next pass makes the lanes diverge and use valleys; no means routes should come from the landforms themselves and carving only fills the last gap, or a direction of yours.
+<sub>key: P-S191-terrain-obeys-pass2-carved-routes.png | stories S-191, S-189</sub>
+
+### 24. Terrain obeys the layout, pass 2, the small map — `P-S191-terrain-obeys-pass2-small-canvas.png`
+**Story.** As above.
+**What you are looking at.** The small map (about 350 units wide) that failed in pass 1 because pads and walls overlapped: pads are now kept apart, slopes around them stay walkable, the same carved lanes.
+**What approved means here.** Yes accepts the small-map scaling; no says what is wrong at this size.
+<sub>key: P-S191-terrain-obeys-pass2-small-canvas.png | stories S-191, S-189</sub>
 
 ---
 

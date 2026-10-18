@@ -40,3 +40,5 @@ Notes on the 2026-10-18 batch.
 ## Missing on this machine (Linux has them)
 
 None found: every path named by a pending row exists on main or on `push/vg-c-reviews-2`. Not yet existing anywhere: the S-140 and S-005 route-line re-shots (VG-A-routeline, not built).
+| `P-S191-terrain-obeys-pass2-carved-routes.png` | S-191, S-189 | prototype (terrain obeys, pass 2, route carving) | `../P.md` row 2 (`push/proto-terrain-obeys-2` f57af240) | `../shots/proto-terrain-obeys-2/obey_16000_1.png` | Routes are now carved: every point has 4 narrow and 1 to 2 wide routes, pads and choke as before, all six cases pass. The look: the carved routes run as parallel lanes side by side (magenta), a rail yard rather than roads across the land. Is carving the right direction with a better path rule, or should routes come from the landforms |
+| `P-S191-terrain-obeys-pass2-small-canvas.png` | S-191, S-189 | prototype, same pass | `../P.md` row 2 | `../shots/proto-terrain-obeys-2/obey_8000_1.png` | The small map (about 350 units wide): pads kept apart by scaling, ring slopes under 35 degrees, the same carved lanes |
