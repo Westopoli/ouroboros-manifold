@@ -154,7 +154,7 @@ Rules
 - R-217-02  Given the era has the technology for it, When the macro layer wants to see another layer, Then it may issue the targeted ping of E-01 S-162 on the same limits as the player's; the pinged player is told nothing (R-162-03, alert off for now); where the era uses scouts (R-162-04) the ping is carried by them.
 - R-217-03  Given a force, When the macro layer sets it to emit or to silent (E-01 S-163), Then the same costs and sight apply as for the player's forces.
 - R-217-04  Given difficulty, When the macro layer is set up, Then which of these commands it may use scales with its multi-layer intelligence (R-125-01), by numbers the skill lab sets.
-- R-217-05  Given the enemy economy issues orders to build, train or gather (S-215), When they are issued, Then they are orders a player could issue and they appear in the same replay stream as the enemy's other commands (R-123-02) [Q-217-01: the economy's commands are not yet in the command vocabulary].
+- R-217-05  Given the enemy economy issues orders to build, train or gather (S-215), When they are issued, Then they are orders a player could issue and they appear in the same replay stream as the enemy's other commands (R-123-02) (the economy's commands are not yet in the command vocabulary; Q-217-01 closed 2026-10-18, Architect, implementation).
 
 Inputs: the macro layer's state; the era pack.
 Outputs: enemy layer and economy commands in the command log and replay.

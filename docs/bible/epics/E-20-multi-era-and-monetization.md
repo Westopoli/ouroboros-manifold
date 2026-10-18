@@ -97,7 +97,7 @@ Open flags: Q-149-01, Q-149-02.
 As an era designer, I want maps, civilizations, and era systems to transfer between eras like skins, so that content compounds instead of forking.
 
 Rules
-- R-150-01  Given a layout in the library, When used, Then it is valid in every era with no era tag [Q-150-02: which parts of map generation stay era-agnostic now that the land and space landscapes are sister systems with different objects, E-17 S-166, Q-166-02].
+- R-150-01  Given a layout in the library, When used, Then it is valid in every era with no era tag (which parts of map generation stay era-agnostic now that the land and space landscapes are sister systems with different objects, E-17 S-166, Q-166-02; Q-150-02 closed 2026-10-18, Architect, implementation).
 - R-150-02  Given a civilization (archetype weights, naming subset, colors), When used, Then it is valid in every era.
 - R-150-03  Given a skin (unit model set), When applied, Then it maps to the six abstract types and three tiers, and to the worker, a unit that cannot fight (E-15 S-129, E-22 S-167), and nothing else.
 - R-150-04  Given the settlement generator (E-17 S-166), When it builds, Then the generator is era-agnostic and the building pieces are era-specific (S-243).
@@ -126,7 +126,7 @@ As an era designer, I want the checklist to name everything the economy and the 
 Design decided 2026-10-02, not scheduled for building (E-22, E-17 S-166). This adds to S-146's list and does not replace it.
 
 Rules
-- R-243-01  Given an era pack, When validated, Then beyond the entries of S-146 it contains: the building pieces that settlements are built from, with their stages of construction (E-18 S-237); the names of the three resources (E-22 S-167); the mapping from each unit category (Strike, Line, Siege) to the resources it needs (E-22 S-171) [Q-159-08: what the three resources are and which category needs which]; the doctrines the rules can follow [Q-243-01: whether a doctrine's name, description and parameters are pack content or engine config]; the landforms of the era's landscape (E-17 R-166-03); the environmental troubles of its regions (E-15); the worker's model and animation (E-22 S-167); and, for each unit type, whether it walks or flies (E-01 R-001-07).
+- R-243-01  Given an era pack, When validated, Then beyond the entries of S-146 it contains: the building pieces that settlements are built from, with their stages of construction (E-18 S-237); the names of the three resources (E-22 S-167); the mapping from each unit category (Strike, Line, Siege) to the resources it needs (E-22 S-171) [Q-159-08: what the three resources are and which category needs which]; the doctrines the rules can follow (whether a doctrine's name, description and parameters are pack content or engine config; Q-243-01 closed 2026-10-18, Architect, implementation); the landforms of the era's landscape (E-17 R-166-03); the environmental troubles of its regions (E-15); the worker's model and animation (E-22 S-167); and, for each unit type, whether it walks or flies (E-01 R-001-07).
 - R-243-02  Given the space era, When the pack is validated, Then its landform and environmental-trouble entries wait for the space landscape to be designed (Q-166-02); no rule is written for them yet.
 - R-243-03  Given the economy entries of two packs, When compared, Then [Q-146-02: which of resource names, doctrine names and environmental troubles count as names, which may differ, and which as mechanics, which may not].
 

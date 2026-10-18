@@ -60,7 +60,7 @@ Rules
 - R-154-02  Given a name request (faction, category), When served, Then a name from the faction's pool for that category is returned and marked in use; era-agnostic and era-specific pools are drawn from equally.
 - R-154-03  Given a Schism breakaway, When its subset is derived, Then it is the parent's subset with exactly one value swapped.
 - R-154-04  Given a name in use, When its character dies, Then it returns to the pool after 500 ticks (4,500 for a main character).
-- R-154-05  Given pool sizes at launch, When counted, Then per faction at least 500 people, 200 places, 200 units, 100 factions, half era-agnostic and half era-specific [Q-154-01: whether workers are named, and what the 200 units count].
+- R-154-05  Given pool sizes at launch, When counted, Then per faction at least 500 people, 200 places, 200 units, 100 factions, half era-agnostic and half era-specific (whether workers are named, and what the 200 units count; Q-154-01 closed 2026-10-18, Architect, implementation).
 - R-154-06  Given the build, When deduplicated, Then no two names in a batch are within 3 edits.
 - R-154-07  Given a pool is exhausted, When a name is requested, Then [Q-155-01: reuse the oldest historical name, or generate a numbered fallback].
 
@@ -76,7 +76,7 @@ Rules
 - R-155-02  Given the Settled Reach, When produced, Then the order is Tier 2 units, Tier 1, Tier 3, structures, environment.
 - R-155-03  Given a humanoid era, When produced, Then bodies are generated in T-pose without weapons, auto-rigged, and weapons are separate props attached at hand bones at runtime; spaceship eras use rigid transforms and VFX only.
 - R-155-04  Given a finished asset, When checked, Then it conforms to its type's silhouette archetype at tactical zoom.
-- R-155-05  Given the building pieces of a settlement with their stages of construction (E-18 S-237) and the worker (E-22 S-167), When an era is produced, Then they are made by the same sequence [Q-155-02: their place in the order of R-155-02, and whether an era still costs weeks, not years, with them].
+- R-155-05  Given the building pieces of a settlement with their stages of construction (E-18 S-237) and the worker (E-22 S-167), When an era is produced, Then they are made by the same sequence (their place in the order of R-155-02, and whether an era still costs weeks, not years, with them; Q-155-02 closed 2026-10-18, Architect, implementation).
 
 Inputs: concept art; tools.
 Outputs: pack assets.
@@ -123,7 +123,7 @@ As a designer, I want the names and the teaching text for the economy made by th
 Design decided 2026-10-02, not scheduled for building (E-22).
 
 Rules
-- R-244-01  Given the economy's named things (the three resources, the doctrines, the building kinds and the pieces of a settlement), When the builder runs, Then it can produce their names for an era, to be carried in the era pack (E-20 S-243) [Q-244-01: whether these names are generated library content or authored by hand].
+- R-244-01  Given the economy's named things (the three resources, the doctrines, the building kinds and the pieces of a settlement), When the builder runs, Then it can produce their names for an era, to be carried in the era pack (E-20 S-243) (whether these names are generated library content or authored by hand; Q-244-01 closed 2026-10-18, Architect, implementation).
 - R-244-02  Given the economy seat and the solo commander's dial, doctrine switch, unit-mix switches and pointing (E-16 S-230, S-231), When the tutorial library is built, Then it carries text that teaches them, since nothing on the seat's screen lists what the commander needs (E-19 R-159-01) The player meets that text in onboarding (E-08 S-063; Westley, 2026-10-07: "#17: A").
 
 Inputs: the economy's names and teaching needs; the library builder.

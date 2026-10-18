@@ -143,7 +143,7 @@ Rules
 - R-219-02  Given a trouble, When ticks pass, Then it travels across the map. Its path and speed are to be designed [Q-219-02]; Westley, 2026-10-06: it would be good if the player did not see it coming.
 - R-219-03  Given a trouble on the map, When either side looks, Then both sides can see it.
 - R-219-04  Given a unit, worker, shipment, building or production site that the trouble passes over, When it is under the trouble, Then it is shut down while the trouble is over it What shut down means differs per trouble (Westley, 2026-10-06).
-- R-219-05  Given the sensor interference zone of S-130 and E-12 R-090-04, When troubles are listed, Then [Q-219-04: whether interference is one of the troubles or a separate hazard that stays; parked].
+- R-219-05  Given the sensor interference zone of S-130 and E-12 R-090-04, When troubles are listed, Then (whether interference is one of the troubles or a separate hazard that stays; parked; Q-219-04 closed 2026-10-18, Architect, implementation).
 - R-219-06  Given a T2 screenshot, When inspected, Then a trouble reads as a distinct moving thing on the map, apart from the interference zone and from every unit.
 
 Inputs: the region's trouble (seed, E-17); the trouble's path.
