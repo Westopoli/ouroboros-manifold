@@ -1,6 +1,6 @@
 extends SceneTree
 
-# Terrain-obeys mockup, pass 1 (docs/northstar/plans/2026-10-15-terrain-obeys-mockup-spec.md).
+# Terrain-obeys mockup, pass 1 and pass 2 (docs/northstar/plans/2026-10-15-terrain-obeys-mockup-spec.md).
 # Tests first: every check below is RED until scenes/mockups/landscape/obey_layer.gd exists and the
 # landscape mockup root exposes obey_report().
 #
@@ -13,6 +13,38 @@ extends SceneTree
 #  CONTROL-ROUTE a hand-built grid with the corridor walled on both sides: the test's own reference BFS
 #                reports 0 routes (and finds the route when one exists), independent of the mockup
 #  CONTROL-SLOPE a pad ring built at 60 degrees reads > 35 by the test's own slope arithmetic
+#
+#  PASS 2 (Architect 2026-10-18; pass 1 proved pads, choke and vantage are produced but routes are not):
+#  P2-ROUTES   route carving is a fourth edit: on ALL THREE seeds at 16,000 and ALL THREE at 8,000,
+#              pass is true, routes_small[x] >= route_count and routes_big[x] >= 1 for base_b, objective,
+#              site_0, site_1 from base_a (same reference semantics as pass 1: 4-connected erosion BFS,
+#              greedy separate count, one-cell margin); carved_cells > 0 and carved_routes > 0 on seed 1
+#              at 16,000; every carved cell is walkable in the finished per-band data
+#  P2-OFFLINE  the objective is at least DRAFT-objective-offset 1,500 wu from the base_a-base_b line
+#  P2-CANVAS   on 8,000 the pad ring max slope <= 35 degrees (pass 1 read 57-62) and no two request pads
+#              overlap (pairwise centre distance >= sum of radii); checked on every seed and canvas
+#  P2-CHOKE    choke measured within one cell (100 wu) of asked on every seed and canvas, and the choke
+#              corridor lies on at least one of the small routes (choke_on_route)
+#  P2-BUDGET   check_ms < 2000 (4x DRAFT-obey-budget-2 500 ms, carving included), printed per case
+#  CONTROL-CARVE-SKIPPED  a hand-built grid where carving is skipped leaves 0 routes (reference BFS);
+#                         the same grid with the corridor carved has >= 1
+#  CONTROL-CARVED-WALK    a 3-cell carved route with one unwalkable cell fails the every-carved-cell-
+#                         walkable check; the same route fully walkable passes
+#
+# Pass 2 contract added to the pass-1 contract below:
+#   obey_report() gains keys (all read from the root, CURRENT terrain):
+#       carved_cells     int   cells whose height the route carving changed
+#       carved_routes    int   routes the carving cut (>= 1 when carved_cells > 0)
+#       choke_on_route   bool  true when the choke corridor lies on at least one of the small routes
+#   the ObeyLayer node (direct child "ObeyLayer" of the root) gains, for the CURRENT terrain:
+#       request_positions() -> Dictionary  String -> Vector2, world wu, keys "base_a","base_b",
+#                                          "objective","site_0","site_1"
+#       request_pads()      -> Dictionary  String -> float, pad radius wu, same five keys
+#       carved_cell_list()  -> PackedInt32Array  indices gy * dim + gx of every carved cell
+#   (the test reads walkability itself, as pass 1 documents below, from root._hud.get_field_map().)
+#   the objective is no longer on the base line: distance from the base_a-base_b line >= 1,500 wu
+#   (DRAFT-objective-offset, a named draft in the panel). The pass-1 clause "pass is true" now also
+#   requires the objective offset, the pad non-overlap and the carved-cell walkability.
 #
 # Contract this test defines for the builder (the spec names only --shot and the panel numbers):
 #   - after _ready, the landscape mockup root (landscape_mockup.tscn) has a direct child node named
@@ -63,6 +95,9 @@ const WALK_LIMIT_DEG := 35.0
 const BUDGET_MS := 250.0
 const BUDGET_FACTOR := 4.0
 const SHOT_TIMEOUT_S := 60
+const OBJECTIVE_OFFSET_WU := 1500.0
+const BUDGET2_MS := 500.0
+const PAD_NAMES := ["base_a", "base_b", "objective", "site_0", "site_1"]
 
 var _pass_count := 0
 var _fail_count := 0
@@ -124,6 +159,7 @@ func _run_tests() -> void:
 	await process_frame
 	var rep: Dictionary = inst.obey_report()
 	_check_report(rep)
+	await _test_pass2(inst, hud)
 	inst.queue_free()
 
 
@@ -149,6 +185,118 @@ func _check_report(rep: Dictionary) -> void:
 	var ms := float(rep["check_ms"])
 	print("O4 check_ms (seed 1, 16000) = %.1f (draft %.0f, asserted at %.0fx)" % [ms, BUDGET_MS, BUDGET_FACTOR])
 	_assert(ms > 0.0 and ms < BUDGET_MS * BUDGET_FACTOR, "O4 [DRAFT-obey-budget] check_ms %.1f not in (0, %.0f)" % [ms, BUDGET_MS * BUDGET_FACTOR])
+
+
+# ---------------------------------------------------------------- pass 2
+
+func _test_pass2(inst: Node, hud) -> void:
+	var layer := inst.get_node_or_null("ObeyLayer")
+	for c in CANVASES:
+		for sd in SEEDS:
+			hud.qa_set_canvas(float(c))
+			inst.qa_seed(sd)
+			await process_frame
+			await process_frame
+			var tag := "seed %d at %d" % [sd, c]
+			var rep: Dictionary = inst.obey_report()
+			for k in ["pass", "choke_asked_wu", "choke_measured_wu", "routes_small", "routes_big", "pad_ring_max_deg", "route_count", "check_ms", "carved_cells", "carved_routes", "choke_on_route"]:
+				_assert(rep.has(k), "P2 obey_report() lacks key '%s' (%s)" % [k, tag])
+			if not (rep.has("pass") and rep.has("routes_small") and rep.has("routes_big") and rep.has("route_count")):
+				continue
+			# routes, all seeds and canvases
+			_assert(bool(rep["pass"]), "P2-ROUTES [R-189-07] %s: pass is false (routes_small %s, routes_big %s, route_count %s)" % [tag, rep["routes_small"], rep["routes_big"], rep["route_count"]])
+			var rc := int(rep["route_count"])
+			for p in POINTS:
+				var sm := int(rep["routes_small"].get(p, -1))
+				var bg := int(rep["routes_big"].get(p, -1))
+				_assert(sm >= rc, "P2-ROUTES [R-189-07] %s: routes_small[%s] = %d < route_count %d" % [tag, p, sm, rc])
+				_assert(bg >= 1, "P2-ROUTES [R-189-07] %s: routes_big[%s] = %d < 1" % [tag, p, bg])
+			# choke still a choke
+			if rep.has("choke_measured_wu") and rep.has("choke_asked_wu"):
+				var d := absf(float(rep["choke_measured_wu"]) - float(rep["choke_asked_wu"]))
+				_assert(d <= CHOKE_TOL_WU, "P2-CHOKE [R-191-10] %s: choke measured %.1f vs asked %.1f wu, off by %.1f (max %.0f)" % [tag, rep["choke_measured_wu"], rep["choke_asked_wu"], d, CHOKE_TOL_WU])
+			_assert(bool(rep.get("choke_on_route", false)), "P2-CHOKE [R-191-10] %s: choke_on_route is %s, the choke corridor is on none of the small routes" % [tag, rep.get("choke_on_route", "missing")])
+			# ring slope (the 8,000 canvas is the pass-1 failure; asserted on both)
+			if rep.has("pad_ring_max_deg"):
+				_assert(float(rep["pad_ring_max_deg"]) <= WALK_LIMIT_DEG, "P2-CANVAS [R-189-02] %s: pad ring max slope %.2f deg exceeds %.0f" % [tag, rep["pad_ring_max_deg"], WALK_LIMIT_DEG])
+			# budget
+			if rep.has("check_ms"):
+				var ms := float(rep["check_ms"])
+				print("P2-BUDGET check_ms (%s) = %.1f (draft %.0f, asserted at %.0fx)" % [tag, ms, BUDGET2_MS, BUDGET_FACTOR])
+				_assert(ms > 0.0 and ms < BUDGET2_MS * BUDGET_FACTOR, "P2-BUDGET %s: check_ms %.1f not in (0, %.0f)" % [tag, ms, BUDGET2_MS * BUDGET_FACTOR])
+			# layer accessors: objective off the line, pads apart, carved cells walkable
+			var has_acc: bool = layer != null and layer.has_method("request_positions") and layer.has_method("request_pads") and layer.has_method("carved_cell_list")
+			_assert(has_acc, "P2 the ObeyLayer lacks request_positions()/request_pads()/carved_cell_list() (%s)" % tag)
+			if has_acc:
+				_check_geometry(layer.request_positions(), layer.request_pads(), tag)
+				if sd == 1 and c == 16000:
+					_check_carved(inst, layer, rep)
+				else:
+					_check_carved_walkable(inst, layer.carved_cell_list(), tag)
+
+
+func _check_geometry(pos: Dictionary, pads: Dictionary, tag: String) -> void:
+	for n in PAD_NAMES:
+		_assert(pos.has(n) and pads.has(n), "P2 request_positions()/request_pads() lack '%s' (%s)" % [n, tag])
+	if not (pos.has("base_a") and pos.has("base_b") and pos.has("objective")):
+		return
+	var a: Vector2 = pos["base_a"]
+	var b: Vector2 = pos["base_b"]
+	var o: Vector2 = pos["objective"]
+	var line := (b - a).normalized()
+	var off := absf((o - a).cross(line))
+	_assert(off >= OBJECTIVE_OFFSET_WU, "P2-OFFLINE [R-189-07] %s: objective is %.1f wu from the base line, need >= %.0f (DRAFT-objective-offset)" % [tag, off, OBJECTIVE_OFFSET_WU])
+	for i in range(PAD_NAMES.size()):
+		for j in range(i + 1, PAD_NAMES.size()):
+			var n1: String = PAD_NAMES[i]
+			var n2: String = PAD_NAMES[j]
+			if not (pos.has(n1) and pos.has(n2) and pads.has(n1) and pads.has(n2)):
+				continue
+			var dist: float = (pos[n1] as Vector2).distance_to(pos[n2])
+			var rr: float = float(pads[n1]) + float(pads[n2])
+			_assert(dist >= rr, "P2-CANVAS %s: pads %s and %s overlap (centres %.1f wu apart, radii sum %.1f)" % [tag, n1, n2, dist, rr])
+
+
+func _check_carved(inst: Node, layer: Node, rep: Dictionary) -> void:
+	var cc := int(rep.get("carved_cells", 0))
+	var cr := int(rep.get("carved_routes", 0))
+	_assert(cc > 0, "P2-ROUTES seed 1 at 16000: carved_cells = %d, the carving did not run" % cc)
+	_assert(cr > 0, "P2-ROUTES seed 1 at 16000: carved_routes = %d, the carving cut no route" % cr)
+	var cells: PackedInt32Array = layer.carved_cell_list()
+	_assert(cells.size() == cc, "P2-ROUTES seed 1 at 16000: carved_cell_list() has %d cells, carved_cells says %d" % [cells.size(), cc])
+	_check_carved_walkable(inst, cells, "seed 1 at 16000")
+
+
+func _check_carved_walkable(inst: Node, cells: PackedInt32Array, tag: String) -> void:
+	var fm = inst.get_node("HUD").get_field_map()
+	var walk := _walk_of(fm)
+	var bad := _unwalkable_in(walk, cells)
+	_assert(bad.is_empty(), "P2-ROUTES %s: %d of %d carved cells are not walkable in the finished data (first: index %s)" % [tag, bad.size(), cells.size(), str(bad[0]) if not bad.is_empty() else ""])
+
+
+# The walk mask as the pass-1 header documents it: dry and tan <= tan(35), or a ramp cell, or a bridge cell.
+func _walk_of(fm) -> PackedByteArray:
+	var p4: Dictionary = fm.p4
+	var n: int = fm.dim * fm.dim
+	var land: PackedByteArray = p4.land
+	var tn: PackedFloat32Array = p4.tan
+	var ramp: PackedByteArray = p4.ramp_cells
+	var bridge: PackedByteArray = fm.p5_info.get("bridge", PackedByteArray())
+	var lim := tan(deg_to_rad(WALK_LIMIT_DEG))
+	var walk := PackedByteArray()
+	walk.resize(n)
+	for i in range(n):
+		if (land[i] == 1 and tn[i] <= lim) or (ramp.size() == n and ramp[i] == 1) or (bridge.size() == n and bridge[i] == 1):
+			walk[i] = 1
+	return walk
+
+
+func _unwalkable_in(walk: PackedByteArray, cells: PackedInt32Array) -> Array:
+	var bad: Array = []
+	for i in cells:
+		if i < 0 or i >= walk.size() or walk[i] == 0:
+			bad.append(i)
+	return bad
 
 
 # ---------------------------------------------------------------- O2
@@ -326,6 +474,32 @@ func _test_controls() -> void:
 		cut[y * dim + 10] = false
 	_assert(_ref_routes(cut, dim, a, b, 1, 4) == 0, "CONTROL-ROUTE a corridor cut across its width still reported routes")
 	print("CONTROL-ROUTE small=%d big=%d (expected >=1, 0), walled=0, cut=0" % [small, big])
+	# pass-2 control: carving skipped. The two rooms with the wall between them left solid: 0 routes at any
+	# width; the same grid with a 3-wide corridor carved through the wall: >= 1 small route, 0 big (5-wide).
+	var solid: Array = []
+	solid.resize(dim * dim)
+	for y in range(dim):
+		for x in range(dim):
+			solid[y * dim + x] = x < 8 or x > 12
+	var uncarved := _ref_routes(solid, dim, a, b, 1, 4)
+	_assert(uncarved == 0, "CONTROL-CARVE-SKIPPED a grid with no carving reported %d routes, expected 0" % uncarved)
+	var carved := solid.duplicate()
+	for x in range(8, 13):
+		for y in range(8, 11):
+			carved[y * dim + x] = true
+	var after := _ref_routes(carved, dim, a, b, 1, 4)
+	_assert(after >= 1, "CONTROL-CARVE-SKIPPED the same grid with the corridor carved reported %d routes, expected >= 1" % after)
+	print("CONTROL-CARVE-SKIPPED uncarved=%d carved=%d (expected 0, >=1)" % [uncarved, after])
+	# pass-2 control: a 3-cell carved route with one unwalkable cell fails the every-carved-cell-walkable check
+	var wm := PackedByteArray()
+	wm.resize(9)
+	wm.fill(1)
+	var route := PackedInt32Array([3, 4, 5])
+	_assert(_unwalkable_in(wm, route).is_empty(), "CONTROL-CARVED-WALK a fully walkable 3-cell route was flagged")
+	wm[4] = 0
+	var flagged := _unwalkable_in(wm, route)
+	_assert(flagged.size() == 1 and flagged[0] == 4, "CONTROL-CARVED-WALK a 3-cell route with an unwalkable middle cell was not flagged (%s)" % str(flagged))
+	print("CONTROL-CARVED-WALK flagged cells with one unwalkable: %s (expected [4])" % str(flagged))
 	# slope control: a pad ring ramp built at 60 degrees (rise 173.2 wu per 100 wu) must read > 35
 	var spacing := 100.0
 	var ring60: Array = []
