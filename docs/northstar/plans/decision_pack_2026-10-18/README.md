@@ -76,3 +76,9 @@ The first mission of every campaign scores relevance 0 because the generator run
 
 ### B19. Lab run on the Mac during the offline window
 `scripts/simviewer/probes/offline_run.sh` (landing today) runs the mission-choice sweep at 50 seeds, the chronicle twin at 20, the csim suite, and a skill-lab layout-search batch at 8 workers as a Mac-vs-Linux parity run. Nothing to rule; the results are read when you are back.
+
+### B20. The camera among five stacked sheets, and the layer read from the map (T3; Q-103-06)
+`docs/northstar/research/options/space-camera/options.md`. The vision tube is ruled; what is open is the camera beyond it. T3-1: the lane D shot shows first (A) peel to the focus layer, (B) camera stays above the stack, or (C) the gap grows with pitch. T3-2: which two of (a) pins, (b) stacked slices, (c) colour bands, (d) sheet silhouettes to mock up beside pins for Q-103-06. T3-3: is C's exploded view worth its picking cost (yes keeps it, no retires it). Lean: A first, mock up (b) and (d), C yes.
+
+### B21. Layout library pairing (T19, section 4 row 1)
+`docs/northstar/research/layout_engine/library_audit_2026-10-18.md` (landing today): per-layout keep/reference/retire and a proposed archetype pairing; its questions for you are listed at its end.
