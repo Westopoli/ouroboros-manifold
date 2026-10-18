@@ -82,3 +82,6 @@ The first mission of every campaign scores relevance 0 because the generator run
 
 ### B21. Layout library pairing (T19, section 4 row 1)
 `docs/northstar/research/layout_engine/library_audit_2026-10-18.md` (landing today): per-layout keep/reference/retire and a proposed archetype pairing; its questions for you are listed at its end.
+
+### B22. Website refresh draft (T8)
+Branch `refresh-2026-10-18` in `~/Projects/ouroboros-site` (local only, never pushed, `npm run build` green, 21 pages): `/galaxy/`, `/landscapes/`, `/walkers/`, `/method/` plus nav links. Read it with `cd ~/Projects/ouroboros-site && git switch refresh-2026-10-18 && npm run dev`. Thirteen claims the writer flagged for checking are in its report (the Architect holds them); two are yours: (a) does `/method/` publish internal programme figures (83 percent of pieces landed, 0 of 240 stories Seen, 62 test-defect rulings, three quarters of cost in two planning sessions) or keep them in the repo; (b) are your name and verbatim quotes on the site. The site is still `noindex` behind the private-playtest banner. Publish is a separate yes.
