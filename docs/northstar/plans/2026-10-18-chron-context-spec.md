@@ -8,7 +8,7 @@ E-09 R-066-02 and R-066-04, ALG-50: an event's significance is its base (tier pl
 
 The reference never set `chain_length` (dead there too) and set a character only on the commander-death event; the bible is the rule, so the terms are implemented as written and the reference's silence is noted, not copied.
 
-## Ruling needed from Westley
+## Ruling (taken by the Architect 2026-10-18: **W3 (b)**, the bible's rule implemented; Westley may veto)
 
 - **W3 chain length.** (a) stays 0 (the reference's effective behaviour); (b) **the number of events in the jump sharing the event's `chain_tag`, from the per-jump chain table `chains[].n_events` (`generational.c:2008-2022`), read after the loop; untagged events (tag 0) and events whose chain fell past `GEN_JUMP_CHAIN_CAP` (32, silently skipped today) count as length 1**. Lean (b): R-066-02, R-066-04 and ALG-50 say it.
 

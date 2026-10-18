@@ -37,7 +37,7 @@ Checked against the Python reference (`simulation/mission_generator.py`, `chroni
 3. `chronicle.c`'s own bugs: the dropped family entry (row 7), chain clusters at score 0 (row 8), blank shells on the pipe (row 9, contract).
 4. Both sweeps re-run.
 
-Still his to rule: row 10 (the Python had no ripple cluster; adjacent events competed as regional entries: (a) drop ripples to match, (b) keep, capped at 2), row 13 (the Python deduped within one scroll only, 40 percent overlap; R-071 asks for the campaign: (a) campaign-level dedup with a fallback fragment, (b) relax the rule to per scroll, (c) grow the library), row 4 (the Python seated the first lineage through onboarding before the first mission; the C opening jump has none; verified when the fix is built).
+Taken by the Architect 2026-10-18 (implementation of the bible as written; Westley may veto): row 10 ripple entries kept and capped at 2 per E-09 R-065-05, selected with the scored clusters, ripple only on flagged consequence events (CH-4); row 13 campaign-level dedup with a fallback fragment per R-071 (CH-7), the library grown later through E-21; fix order: CH-1, CH-2, CH-3 and the mission swap (SIM-LOGS) as a skeleton seen in the sim viewer, then the rest; row 4 the selector-order fix as its own piece after SIM-LOGS (SEL-ORDER); the A99 harness reds are a test-defect (TD-SIM-5: the harness uses the sim's own distance, hashes re-recorded on Linux); CONST-2 launched; the control stubs triaged for retire-or-fill (`controls_triage.md`).
 
 ## ALG coverage tests, E-08 to E-10 (2026-10-18, `push/alg-cover-e08-e10` d1be855a; 11 rows, 311 green, 1 red)
 
