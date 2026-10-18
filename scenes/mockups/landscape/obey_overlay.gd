@@ -1,10 +1,11 @@
 extends Control
 
 # Terrain-obeys overlay: requests (pads, choke bar, wall span, vantage, sites), the found routes in two
-# colours, the failing clause in red, and the panel. Data comes from obey_layer.gd (layer).
+# colours, the carved cells in a third, the failing clause in red, and the panel. Data comes from obey_layer.gd (layer).
 
 const SMALL_COLOR := Color(1.0, 0.65, 0.15, 0.95)
 const BIG_COLOR := Color(0.3, 0.75, 1.0, 0.95)
+const CARVED_COLOR := Color(0.95, 0.2, 0.85, 0.8)
 const FAIL_COLOR := Color(1.0, 0.1, 0.1, 1.0)
 const PAD_COLOR := {"base_a": Color(0.4, 0.6, 1.0), "base_b": Color(0.4, 0.6, 1.0), "objective": Color(1.0, 0.9, 0.2), "site_0": Color(0.3, 1.0, 0.9), "site_1": Color(0.3, 1.0, 0.9)}
 
@@ -85,6 +86,9 @@ func _draw() -> void:
 	var res: Dictionary = layer.res
 	var fails: Array = res.fails
 	var font := ThemeDB.fallback_font
+	var cell_wu: float = FieldMap.SPACING
+	for i in layer.carved:
+		draw_circle(_proj(Vector2(i % layer.fm.dim, i / layer.fm.dim) * cell_wu), 3.0, CARVED_COLOR)
 	for name in layer.POINTS:
 		for line in res.paths_big[name]:
 			var pts := PackedVector2Array()
@@ -111,11 +115,11 @@ func _draw() -> void:
 	var hw: float = req.choke_w * 0.5
 	var half_len: float = req.choke_len * 0.5
 	_box(req.choke, req.dir, Vector2(half_len, hw), FAIL_COLOR if choke_bad else Color(0.5, 1.0, 0.2), 3.0)
-	var span: float = layer.draft["choke-wall"]
+	var span: float = req.span
 	for side in [1.0, -1.0]:
 		_box(req.choke + req.perp * side * (hw + span * 0.5), req.dir, Vector2(half_len, span * 0.5), FAIL_COLOR if choke_bad else Color(1.0, 0.5, 0.1), 1.5)
 	draw_string(font, _proj(req.choke) + Vector2(8, 16), "choke asked %d  measured %d" % [int(req.choke_w), int(res.report.choke_measured_wu)], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, FAIL_COLOR if choke_bad else Color(0.7, 1.0, 0.4))
 	var v := _proj(req.vantage)
 	_circle(req.vantage, layer.draft["vantage-radius"], Color(1.0, 0.4, 0.9), 2.0)
 	draw_string(font, v + Vector2(6, -6), "vantage", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.6, 0.95))
-	draw_string(font, Vector2(16, 14), "orange = small-width routes, blue = big-width routes, red = failing clause", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+	draw_string(font, Vector2(16, 14), "orange = small-width routes, blue = big-width routes, magenta dots = carved cells, red = failing clause", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
