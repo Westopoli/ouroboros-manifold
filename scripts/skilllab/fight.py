@@ -10,6 +10,7 @@ from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
 FIRST_CUSTOM_TYPE_ID = 100
 SLOT_RADIUS = 440
+WALKING_KIND = 1       # om_roster_set_movement_kind: 0 flying (the default), 1 walking
 
 
 def _check_reach(setup):
@@ -40,10 +41,12 @@ def _register_types(engine, w, setup):
                     stats[stat] = stats[stat] * value if op == "scale" else value
             stats["role"], stats["ability_id"] = entry["base"], 0
         else:
-            stats = {k: v for k, v in entry.items() if k != "reach"}
+            stats = {k: v for k, v in entry.items() if k not in ("reach", "movement")}
         engine.register_unit_type(w, next_id, stats)
         if "reach" in entry:
             engine.set_reach(w, next_id, *entry["reach"])
+        if entry.get("movement") == "walking":
+            engine.set_movement_kind(w, next_id, WALKING_KIND)
         types[name] = (next_id, stats["attack_range"])
         next_id += 1
     return types
@@ -58,6 +61,9 @@ def _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges):
         for px, py in place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params):
             dx, dy = rng.uniform(-SHIFT_MAX, SHIFT_MAX), rng.uniform(-SHIFT_MAX, SHIFT_MAX)
             u = engine.spawn(w, tid, side, px + dx, py + dy, g.layer)
+            if u == 0:
+                raise RuntimeError("lab defect: spawn of %s at (%.0f, %.0f) layer %d returned unit id 0 (ground a walker cannot stand on); "
+                                   "id 0 would be counted dead" % (g.unit, px + dx, py + dy, g.layer))
             ranges[u] = reach
             ids.append(u)
         ids_by_group[gi] = ids

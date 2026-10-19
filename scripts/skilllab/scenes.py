@@ -154,12 +154,27 @@ def _in_block(b, layer, x, y):
     return b.layer_lo <= layer <= b.layer_hi and b.x0 <= x <= b.x1 and b.y0 <= y <= b.y1
 
 
-def _no_fit(setup):
-    """A placed unit stands inside a block on its layer (no shifting, ruling 6)."""
-    if setup.terrain is None:
+def _placed(g):
+    return formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)
+
+
+def _no_fit(setup, engine):
+    """A placed unit stands inside a block on its layer, or on ground a generated field says is not walkable (no shifting, ruling 6)."""
+    t = setup.terrain
+    if t is None:
         return False
-    return any(_in_block(b, g.layer, x, y) for g in setup.groups
-               for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params) for b in setup.terrain.blocks)
+    if any(_in_block(b, g.layer, x, y) for g in setup.groups for x, y in _placed(g) for b in t.blocks):
+        return True
+    if t.field_seed is None:
+        return False
+    engine = _lazy_engine(engine)
+    w = engine.new_world(0)
+    try:
+        engine.set_canvas(w, t.canvas[0], t.canvas[1])
+        engine.terrain_generate(w, t.field_seed, t.canvas[0])
+        return any(not engine.terrain_walkable_at(w, x, y) for g in setup.groups for x, y in _placed(g))
+    finally:
+        engine.free_world(w)
 
 
 def _field_masks(engine, setup, layers):
@@ -177,6 +192,17 @@ def _field_masks(engine, setup, layers):
         engine.free_world(w)
 
 
+def _walks(setup, g):
+    return setup.unit_types.get(g.unit, {}).get("movement") == "walking"
+
+
+def _blocked_on_line(t, layer, a, b):
+    """The straight line from a to b crosses a 50 wu cell whose centre is in a block reaching `layer` (a flyer's own-layer route)."""
+    n = max(1, int(math.dist(a, b) // (ROUTE_CELL / 2)))
+    cells = {(int((a[0] + (b[0] - a[0]) * i / n) // ROUTE_CELL), int((a[1] + (b[1] - a[1]) * i / n) // ROUTE_CELL)) for i in range(n + 1)}
+    return any(_in_block(blk, layer, (cx + 0.5) * ROUTE_CELL, (cy + 0.5) * ROUTE_CELL) for cx, cy in cells for blk in t.blocks)
+
+
 def _unroutable(setup, engine):
     """Some moving group has no path of open 50 wu cells from its placed positions to its target on its own layer."""
     t = setup.terrain
@@ -185,6 +211,11 @@ def _unroutable(setup, engine):
     cols, rows = math.ceil(t.canvas[0] / ROUTE_CELL), math.ceil(t.canvas[1] / ROUTE_CELL)
     anchors = timeline.first_anchors(setup)
     movers = [g for g in setup.groups if g.order in _MOVING]
+    # See also: tests/skilllab/test_scenes_preflight_flyer.py, ground/test_slope_top_variants.py (s1_slope_top_flyer). Only a walker is
+    # routed (breadth-first, over the ground's walk mask on a generated field); a flyer (unit type not "walking") needs no path on the
+    # ground, so its placed mean is checked by a straight line over blocks on its own layer (Architect, 2026-10-19).
+    flyers = [g for g in movers if not _walks(setup, g)]
+    movers = [g for g in movers if g not in flyers]
     masks = _field_masks(_lazy_engine(engine), setup, sorted({g.layer for g in movers})) if movers and t.field_seed is not None else {}
 
     def cell(x, y):
@@ -217,6 +248,10 @@ def _unroutable(setup, engine):
             c = cell(x, y)
             if c not in seen and not any(n in seen for n in ((c[0] + 1, c[1]), (c[0] - 1, c[1]), (c[0], c[1] + 1), (c[0], c[1] - 1))):
                 return True
+    for g in flyers:
+        target = g.goal if g.goal is not None else setup.point if setup.point is not None else anchors[1 - g.side]
+        if _blocked_on_line(t, g.layer, _placed_mean([g]), target):
+            return True
     return False
 
 
@@ -240,9 +275,10 @@ def _no_reach(setup, engine):
 def preflight(setup, engine):
     """"ok", or the first refusal in the order no_fit, unroutable, no_reach (decision 7, 2026-10-14). Runs no tick, moves nothing.
     no_fit: a placed point inside a blocked cell. unroutable: a moving group cannot reach its target over the open cells of its
-    layer. no_reach: no type facing a holder (a group on guard) reaches the holder's layer; a meeting has no holder. The engine is
-    needed only for a reach read or a generated field and is built when None."""
-    if _no_fit(setup):
+    layer (a flyer, a type not "walking", is checked by a straight line over the blocks of its layer instead). no_reach: no type facing a holder (a group
+    on guard) reaches the holder's layer; a meeting has no holder. no_fit also covers a placed point on ground a generated field
+    says is not walkable. The engine is needed only for a reach read or a generated field and is built when None."""
+    if _no_fit(setup, engine):
         return "no_fit"
     if _unroutable(setup, engine):
         return "unroutable"
