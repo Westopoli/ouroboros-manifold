@@ -28,7 +28,7 @@ On 2026-10-01 he added that there is more than one answer: "The *lines* can cros
 | S4 Enemy position | finds the enemy first and fires first; draws the enemy into a trap with a lesser force | "the other players current position"; "induces traps" |
 | S5 Unit-type matchup | puts its own rocks on the enemy's scissors | "it's bigger than just a subset of S2" |
 
-Skill is represented by scripted plays: a skilled play and a naive play. The naive play is measured two ways, side by side: a blob, and a line abreast (Westley, 2026-10-01). Plays and their counters, accepted in outline ("your list looks good", "Everything else looks good"). The counter to S2's spread line is the one he said he could not picture; he was shown a diagram and has not confirmed it:
+Skill is represented by scripted plays (fourteen, registered in `scripts/skilllab/plays_space.py`): a skilled play and a naive play. A skilled play differs from the naive play only in arrangement, orders and which roster types stand where; both sides field the same units with the same values. The naive play is a blob or a line abreast (Westley, 2026-10-01); the baselines a play is read against are in section 4. Plays and their counters, accepted in outline ("your list looks good", "Everything else looks good"). The counter to S2's spread line is the one he said he could not picture; he was shown a diagram and has not confirmed it:
 
 | Skill | Skilled play | Counter | Kind |
 |---|---|---|---|
@@ -51,28 +51,36 @@ Skill is represented by scripted plays: a skilled play and a naive play. The nai
 
 Refusing a fight is a counter: "a skilled player only takes a battle that they can win, skilled players make it so that the opponent doesn't have a choice." A play needs a counter on most maps, not all; "some situations are unbeatable (like a full surround or a trap where the door gets closed)". "Later" marks plays that need orders to change during a fight. After the prototype, if it works, a reactive version: one side or both re-form mid-fight to keep their rocks on the enemy's scissors.
 
+Rosters of the plays:
+
+- Roster mixes M0 to M4 and M3b are DRAFT numbers (Architect, 2026-10-14; Westley to set); both sides always field the same mix, and the counts scale by largest-remainder rounding for 8 to 48 against 16. M0 all Vanguard (the controls and the formation plays); M1 8 Vanguard and 8 Raider (Raider reach one up, one down; `s3_layer_above`, `s3_dark_striker`, `s3_ping_then_commit`, `s5_vulnerable_away`); M2 8 Vanguard and 8 Interceptor (reach two up, one down; `s3_types_by_reach`); M3 8 Vanguard and 8 Bombard (reach two down, sensor 300, so a spotter or a ping is the only way it fires beyond 300; `s2_screen`); M3b 7 Vanguard, 1 Raider and 8 Bombard (the Raider is the spotter past the choke; `s3_over_the_choke`); M4 8 Vanguard and 8 Bastion (range 800, sensor 300; `s1_outrange`).
+- No play sets a vision factor; the layer plays put a reach-capable type on another layer and the vision family sweeps the factor.
+
 ## Two labs
 
 Westley, 2026-10-05: every era is space or ground, a formal property of the era pack (E-01), and the two kinds are a clean separation (flying units in ground eras may borrow from space). So there are two labs, one per kind.
 
 - The space lab is `scripts/skilllab/`: five free layers, every unit flies, terrain blocks per layer range, cover discs, the ping; passive cross-layer sight is very limited (Q-005-07). It is the one being built and run.
-- The ground lab waits for the sim to have ground. What was written for it is parked in `scripts/skilllab/ground/` and `tests/skilllab/ground/`: the height-rule sweep (`highground.py`) and the tall-cover scenes. It is not a ground answer; on the space engine a slope is only a timed layer change.
+- The ground lab is `scripts/skilllab/ground/` (`scenes_ground.py`, with its own README): the scene `s1_slope_top` on the generated field of seed 11, canvas 12000 (seed 11 generates no slope at 4000), walking Vanguards and Raiders on both sides, the holder guarding the slope's upper band past the midline and the attacker walking up to the holder's centre of mass. Its knobs are `OM_TP_SIGHT_EYE_HEIGHT`, `OM_TP_GROUND_FLYER_SEEN_MULT` and `OM_TP_SLOPE_UP_DIV`; the first two are inert in the natural scene (the batch summary reports them inert) and two variants carry their controls. The height-rule sweep `ground/highground.py` is deleted (retired by R-005-09 and S-164: a slope is a climb under `OM_TP_SLOPE_UP_DIV`, not a timed layer change). The tall-cover scenes stay parked for the landscape batch.
 - The Kind column of the plays table in section 3 says which lab a play belongs to: space, ground, or both. The S1 slope-top and tall-cover plays are ground. The kinds are a first reading by the 2026-10-05 split step, not confirmed by Westley.
 
 ## 4. The measure
 
-- **Margin.** One signed number per fight: the share of one side's strength left, minus the other's. It replaces win rate, which is a probability in a system that has no dice.
-- **Break-even, in whole units.** For example: 16 units beat 17 enemies and lose to 18. By headcount, both sides fielding the same mix of unit types. Beating means "ending ahead by a margin", not a wipe-out.
-- **Units firing, per side, through the fight.** Recorded for every fight; the firing advantage is reported beside every result. Weighted by unit type where types differ.
-- **Maps.** Space maps (every unit flies; "it does have very free layers that can be taken advantage of") must pass. Land maps (ramps, walking units) are to be reported and do not block. The engine cascade does not build walking units or slopes, so land maps are not measured until a later cascade.
+- **The result is who was left standing.** A fight ends by elimination only: `side0`, `side1`, or `draw` (both sides die on one tick). A tick cap of 12000 stays as a bug detector; a `cap` is a lab defect to trace, never a result (register Q-LAB-03).
+- **A cell is won by elimination.** A cell is one enemy headcount fought in both spawn orders over the replicate seeds; it is won when every fight is `side0`. A `draw` or a `cap` in a cell marks the cell `defect` and the scan goes on.
+- **Break-even, in whole units.** For example: 16 units beat 17 enemies and lose to 18. By headcount, both sides fielding the same mix of unit types, scanned over 8 to 48 against 16 (bisection by default, every headcount with `--full-scan`). A play that wins every scanned cell is a ceiling hit: it beats 48, and that is never read as no gain.
+- **Margin.** Reported beside every fight: the share of one side's strength left, minus the other's. It is not the result: win rate misleads in a system without dice, so who was left standing decides.
+- **Units firing, per side, through the fight.** A living unit is firing when the engine's `can_engage` against some living enemy reads 0: it could fire this tick if ready (reach at the layer offset, seen by its side, in range at the offset, inside the firing arc, line not blocked). The target of record, per unit per sample, is the engine's target if `can_engage` against it is 0, else the nearest living hostile enemy with code 0, else the nearest living hostile enemy, so the recorded code carries the first failing reason (1 out of reach, 2 not seen, 3 out of range, 4 outside the arc, 5 line blocked); -1 only when no living hostile exists. The firing advantage is reported beside every result.
+- **Two predictions per fight, both from the opening window after first contact.** The count-only prediction is the side with more unit-seconds firing. The type-weighted prediction weights each firing unit by the category multiplier of its category against its target of record's category and nothing else (never damage, interval, health or a cross-layer damage multiplier; a unit that cannot fire contributes 0). The `agreement` column says which prediction matched the outcome: `both_right`, `count_wrong_type_right`, `count_right_type_wrong`, `both_wrong`, or `n/a` (a draw, a cap, or a tie in either prediction). A mismatch is a finding, never smoothed over. Whole-fight totals are kept beside the window as the chart.
+- **Maps.** Space maps (every unit flies; "it does have very free layers that can be taken advantage of") must pass. Land maps (ramps, walking units) are reported and do not block; the ground scene `s1_slope_top` (Two labs, above) is the first of them.
 
 Conditions on a rule set, with draft pass marks that Westley has not yet confirmed:
 
 | # | Condition | Draft mark |
 |---|---|---|
 | C0 | Control: a mirrored fight | the larger force wins and the break-even sits at equal numbers (tolerance to be set by Westley) |
-| C1 | Skill wins the firing count | the skilled side's firing advantage is above the mirror control's noise, on at least 80 percent of the maps that offer the play; how large is not a fixed ratio and is Westley's to set |
-| C2 | The result follows the firing count | results rise with firing advantage (rank agreement at least 0.8); no more than one fight in five more than 25 percent off the trend |
+| C1 | Skill wins the firing count | the skilled side's firing advantage is above the noise of the baseline, on at least 80 percent of the maps that offer the play; read against the mirror control, the naive attacker and the naive defender, one verdict per baseline and no combined verdict; how large is not a fixed ratio and is Westley's to set |
+| C2 | The result follows the firing count | results rise with firing advantage (rank agreement at least 0.8); no more than one fight in five more than 25 percent off the trend; judged on the opening window first and on the whole fight beside it, and a verdict that changes between the two is listed |
 | C3 | Skills stack | a combination beats its best part by at least 5 percent |
 | C4 | No dominant skill | no single skill gives more than 60 percent of the full set's advantage |
 | C5 | No dead skill | removing any one skill from the full set costs at least 10 percent |
@@ -81,22 +89,27 @@ Conditions on a rule set, with draft pass marks that Westley has not yet confirm
 | C8 | Robust | C1 to C6 hold on 80 percent of space maps |
 | C9 | Fights stay readable | reported: fight length against E-11 S-085 |
 
-"Lines crossing", made concrete: a line is the edge, in the space of settings, of where one condition holds; the crossing is a region where all hold at once; there may be several such regions.
+"Lines crossing", made concrete: a line is the edge, in the space of settings, of where one condition holds; the crossing is a region where all hold at once; there may be several such regions. In a sweep, a crossing is a knob value pair between which the play's gain over a baseline (its break-even minus the baseline's) changes sign.
 
 Rulings of 2026-10-13 (Westley), binding on every batch from here:
 
-- Naive baseline for a defending play: reported both ways, against a naive attacker and against a naive defender placed at the same post ("#1: C").
-- Scan range: enemy headcount 8 to 48 against a force of 16, so a play can show up to three times its size ("#2: A"); a play that beats 48 is reported as a ceiling hit, never as no gain.
-- The fight ends by elimination only (register Q-LAB-03); both sides attack-move to one point, or the attacker's point lies inside the defender's reach.
-- Same units, same values, on both sides, always (Westley, 2026-10-13: "Each 'era' will have both sides fighting the same units, same values"). A skilled play differs from the naive play only in arrangement, orders and which roster types stand where; the stat-scaled Vanguard variants in `plays_space.py` (double hit points, +20 percent range, half hit points) are retired and replaced by roster types. The only asymmetry allowed is a labelled positive control (the planted 20 percent damage scan), never a play.
+- Naive baselines for a defending play, reported both ways: `naive_attacker` (the naive blob attacking the same post) and `naive_defender` (side 0 replaced by one blob per unit type at that type's mean anchor, same units and counts, the play's timeline dropped) ("#1: C").
+- For a layer play the naive defender runs twice (DRAFT, Architect): `naive_defender_attacker_layer` puts every type on the attacker's layer (the same-layer fight) and `naive_defender_play_layer` keeps each type on the layer the play gave it. A baseline refused by the pre-flight (`no_reach`, `unroutable`) drops only itself and is listed with its role; the play still runs.
+- A naive blob is the arrangement with no skill in it: where its next cell is blocked, placement takes the next free cell of its fill order inside the anchor's connected region. When the region cannot hold the count at some headcount, the scan stops at the last headcount where both baselines placed and the cell is marked `baseline_no_fit`; it is neither a ceiling hit nor a finding, and the artifact says "won through K, scan cut by baseline_no_fit" so it is never read as "no crossing exists".
+- A baseline that wins every scanned headcount is listed as `baseline_ceiling`: no crossing is possible there, and it is not a notable.
+- Scan range: enemy headcount 8 to 48 against a force of 16, so a play can show up to three times its size ("#2: A"); a play that beats 48 is reported as a ceiling hit (`ceiling_hit` 1), never as no gain.
+- The fight ends by elimination only (register Q-LAB-03). A meeting is both sides attack-moved to one point (`Setup.point`, the midpoint of the two anchors). An assault is the attacker attack-moved onto the holder's centre of mass (the mean of the holder's placed positions, on the holder's layer) while the holder is on guard; each side keeps its own layer. The play `s2_mass_one_end` aims its attackers at one end of the holder's line instead. The pre-flight refuses a cell it cannot run (section 7).
+- Same units, same values, on both sides, always (Westley, 2026-10-13: "Each 'era' will have both sides fighting the same units, same values"). A skilled play differs from the naive play only in arrangement, orders and which roster types stand where; the stat-scaled Vanguard variants are retired and replaced by roster types. The only asymmetry allowed is a labelled positive control (the planted 20 percent damage scan, `damage_play`), never a play.
 - Emitting (S-163) is a lab knob, two multipliers, sight and seen-from, with seen-from always above sight (R-163-01); the sweep finds the crossing. Starting pair: sight x2.0, seen x3.0 (Westley, 2026-10-13: "let's make that a knob, let the sweep find the crossing").
-- No absurd outliers (Westley, 2026-10-13): every sweep starts at the bible's value and steps by a named factor inside a bounded band (draft: 0.25x to 4x of the base, three to five points per knob), coarse grid first, then refined only around a crossing the coarse grid showed; a point outside the band needs a reason written in the batch spec.
-- Firing up is a penalty (Westley, 2026-10-13: "let's go with penalty for multipliers firing up"): the coarse grid for the cross-layer range and damage multipliers runs from the bible's 1.0 down to 0.25; a single point above 1.0 may appear only as a labelled sign-flip control, never as a sweep point.
-- Cross-layer vision: asymmetric in ground eras (high ground sees down, low never sees up, R-005-09) and symmetric in space eras (R-005-05) (Westley, 2026-10-13: "it should only be asymmetrical in Ground eras ... whereas it needs to be symmetrical on space since there's more freedom of movement and ping system"). A space play never sets the up and down factors apart; the S3 play's down factor of 1.0 against up 0.5 is retired.
-- Cross-layer fire works in ground eras too (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug"): the reach table of S-164 applies in every era; E-01 S-164's "space eras only, for now" is withdrawn, and a walker that cannot fire up a slope under reach (0, 0) is a finding, not a rule.
-- Attack-move resumes (Westley, 2026-10-13, option (a)): an attack-move, group or lone, is not finished until the unit reaches its point and resumes after every engagement (R-096-02 rewritten). Until the group resume lands in the engine, the lab issues attack-moves one unit per order, which the engine already resumes (measured 2026-10-13: one group order stalled at 303 to 336 wu, single orders fought to elimination).
-- The type-weighted prediction's target (Westley, 2026-10-13, option (a)): the unit's engine target when that target is able-to-fire-eligible, else the nearest eligible enemy; the weight is the category multiplier of the attacker's category against that target's category and nothing else. Draft definition to be approved by Westley before plan mode.
-- Orientation returns to the variable list once the firing arc is in the engine (Q-100-01); area damage as a knob with its own range and shape, on any role or unit, is a lab variable (Q-082-06).
+- No absurd outliers (Westley, 2026-10-13): every sweep starts at the bible's value and steps by a named factor inside a bounded band of 0.25x to 4x of the base (a ruling, not a draft number; three to five points per knob, clipped where the engine refuses), coarse grid first, then refined only around a crossing the coarse grid showed, halving the step between the two coarse points that bracket a sign change, at most two rounds; a point outside the band needs a reason written in the batch spec.
+- Firing up is a penalty (Westley, 2026-10-13: "let's go with penalty for multipliers firing up"): the coarse grid for the cross-layer range and damage multipliers runs from the bible's 1.0 down to 0.25; a single point above 1.0 appears only as a labelled sign-flip control (family `sign_flip`), never as a sweep point.
+- Cross-layer vision: asymmetric in ground eras (high ground sees down, low never sees up, R-005-09) and symmetric in space eras (R-005-05) (Westley, 2026-10-13: "it should only be asymmetrical in Ground eras ... whereas it needs to be symmetrical on space since there's more freedom of movement and ping system"). A space play never sets the up and down factors apart.
+- Cross-layer fire works in ground eras too (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug"): the reach table of S-164 applies in every era; a walker that cannot fire up a slope under reach (0, 0) is a finding, not a rule.
+- Attack-move resumes (Westley, 2026-10-13, option (a)): an attack-move, group or lone, is not finished until the unit reaches its point and resumes after every engagement (R-096-02 rewritten). The engine resumes a group's attack-move after every engagement (piece E1).
+- A return-fire redirect is one engagement (R-087-06 rewritten in E-11): the unit pursues the attacker that hit it from out of range and, when the pursuit ends (the attacker dies, the pursuer reaches the attacker's place, passes the 200 wu leash of R-096-03, or its side no longer sees the attacker), resumes at once toward its original point, which the redirect never overwrites (piece E1b).
+- Re-engage (lab rule, decision 28): when a side has had no unit fire or move for `REENGAGE_SILENCE_TICKS` while an enemy is visible to it, every idle unit of that side holding an attack-move role is attack-moved onto the centroid of the enemies that side sees (each unit keeps its own layer); a guard-stance holder never gets it. It applies to both sides, naive included, fires once per silence period (a side re-arms only after one of its own units fires or moves), and the count per side is the CSV column `reengage_0` and `reengage_1`. The engine's R-099-05 give-up ends a group's attack-move where the unit stands and an idle unit does not chase, so a fight whose survivors stop out of range would otherwise run to the cap. A cap after a re-engage stays a defect.
+- The type-weighted prediction's target (Westley, 2026-10-13, option (a); ruling 5 of the rev 2 spec): the target of record defined above; the weight is the category multiplier of the attacker's category against that target's category and nothing else.
+- Orientation returns to the variable list once the firing arc is in the engine (Q-100-01): the lab side is built (`Setup.firing_arc_deg`, family `arc`); area damage as a knob with its own range and shape, on any role or unit, is a lab variable (Q-082-06): the lab side is built (`Setup.cone`, family `cone`). Section 7 says when they run.
 
 ## 5. How results are read
 
@@ -107,6 +120,17 @@ Small batches. One page of charts per batch, in the form of the sample Westley c
 - Units firing through the fight, each line labelled on the chart, the gap shaded.
 - A table with a plain-words column in place of any scatter plot.
 - For many rule sets: a map of two settings at a time, shaded where every condition holds; a short decision-tree summary in words.
+
+Output rule (Westley, rev 2 spec ruling 12, 2026-10-13): the lab's output is data (CSV, JSON, run metadata). Claude analyses the data; thresholds are Westley's. The artifact Westley sees shows the notable layouts, matches and configurations as top-down diagrams with arrows marking the evidence for each assertion, explains what the data means, and above all where the lines cross. A number without its diagram is not evidence.
+
+The artifact page (`python3 -m scripts.skilllab artifact <dir>`) reads `sweep_summary.json`, the family CSVs and `smoke.csv` of a sweep or smoke directory and writes `artifact.html` and one SVG per notable under `diagrams/`. Its sections, in order: drafts, findings, baseline ceiling, agreement, both wrong, refinement, cone grid, conditions.
+
+- A diagram exists for every crossing (the play's gain over a baseline changes sign between two knob values), every ceiling hit (the play beat every enemy size to 48; the notable comes from the play's own rows only) and every `both_wrong` fight. Each is a top-down map of the placed units by side and layer, the walls, the covers and the choke gap, and the shared point, drawn from the same setup the fight ran. A fake sweep with no crossing produces no diagram.
+- A `both_wrong` fight (both predictions wrong) is a finding of the measure, never discarded. Control and baseline rows are included with the role in the label; a `both_wrong` on a control is the strongest finding against the measure.
+- A crossing diagram carries the bracketing arrows: for each of the two bracketing knob values, for the play and for its baseline, an arrow to the first row of the break-even cell and one to the first lost cell, each labelled (enemy_heads, outcome); a ceiling scan has only its top cell and a lost-everywhere scan only its first. The sentence under the diagram gives the counts, and every arrow label equals a CSV value.
+- The legend of a diagram marks the DRAFT numbers its rows touch (the opening window, the arc family, the cone family). The drafts section lists every DRAFT number in force once.
+- `artifact` takes an optional `--thresholds <json>` file of Westley's pass marks (every field of `evidence.Thresholds`; there are no defaults). Given it, the conditions section shows each verdict the CSV rows alone support (C2 on the window and the whole fight, C1 against each baseline) with its threshold name beside it. Without it the section says "no condition verdicts: thresholds not supplied" and still lists the raw agreement counts and the C1 advantages as numbers with no pass or fail. The mirror C1 is not computed here; it lives in the engine-run `evaluate_all`.
+- A scan cut by `baseline_no_fit` is listed with its last headcount, and an always-won cut scan says "won through K, scan cut by baseline_no_fit".
 
 Research behind the form: `docs/research/topics/charts_for_combat_simulation_data.md`.
 
@@ -126,28 +150,36 @@ Canonical text is E-01 (`docs/bible/epics/E-01-layer-system.md`) and the registe
 
 ## 7. The instrument
 
-The toy simulator (`toys/layerlab/`) is frozen: its unit behaviour is not the game's, and results kept turning on that. Measuring is done by the **skill lab**, `scripts/skilllab/`, a harness that only calls the real C sim (`csrc/`): it runs fights, counts the units able to fire on each side through the fight, finds break-evens in whole units, and writes the chart page. It is on `main` with its tests (`tests/skilllab/`) and three controls: the mirror, numbers, and a planted 20 percent damage advantage.
+The toy simulator (`toys/layerlab/`) is frozen: its unit behaviour is not the game's, and results kept turning on that. Measuring is done by the **skill lab**, `scripts/skilllab/`, a harness that only calls the real C sim (`csrc/`): it runs fights, counts the units able to fire on each side through the fight, finds break-evens in whole units, sweeps the cross-layer knobs, and writes the chart page and the artifact. Its tests are `tests/skilllab/` and three controls: the mirror, numbers, and a planted 20 percent damage advantage. The harness contract is `docs/northstar/plans/skilllab-harness-spec.md`; the rev 2 spec and its decisions are `docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md` and `2026-10-14-skill-lab-rev2-decisions.md`.
 
-The real engine is deterministic and runs the game's own unit rules. What it lacks:
+- Commands (`python3 -m scripts.skilllab <command>`): `controls` and `reach` (the three controls and the range study, 16 units against 8 to 24 enemies at every headcount, one chart page), `batch` (the older named batches and the layout search), `sweep` (one knob family, or all, writes `sweep_<family>.csv` and `sweep_summary.json`), `smoke` (the landing check: vision 0.5 alone on the layouts 81, 78 and 192 of the run-1 draw, both vision plays with their baselines, and the three controls, at 12 workers; writes `smoke.csv` and `smoke_summary.json` with the sha256 of the rows, which must be the same at 1 and 12 workers) and `artifact` (section 5). `--workers` sets the process pool and `--full-scan` fights every headcount instead of bisecting. The families, in order: `vision`, `range_up`, `damage_up`, `emitting`, `arc`, `cone`, `sign_flip`.
+- Pre-flight: before a cell runs, `scenes.preflight` runs no tick, moves nothing, and returns `ok` or the first refusal in this order: `no_fit` (a placed unit stands inside a blocked cell on its layer, or on ground a generated field says is not walkable), `unroutable` (a moving group has no path of open 50 wu cells from its placed positions to its point on its own layer; a flyer's open cells are those no block reaching its layer covers, a walker's also need walkable ground), `no_reach` (no type facing a holder reaches the holder's layer from its own). A refused cell is listed with its word in the `prefight` column, never run to a cap.
+- The count: a unit is firing when the engine's `can_engage` reads 0 against some living enemy. Until the E0 contract piece is on main the library has no `om_combat_can_engage` and the lab composes the same five gates from public queries; after E0 that composition becomes the parity check (`firing.parity` lists the units where the composed and the engine's answers differ, and a difference is a defect). `fight` does not call it; the integration tests do. Limit: the composed count assumes target-by-sight on.
+- Rows: one CSV row per fight. Beside the fight's own values (outcome, margin, strength left, survivors, ticks, first contact, the whole-fight and window firing and weighted unit-seconds, the two predictions and `agreement`) a sweep row carries `knob`, `knob_value`, `baseline`, `ceiling_hit`, `prefight`, `baseline_no_fit`, `reengage_0` and `reengage_1`, the labels `family`, `play`, `layout`, `kind` and `enemy_heads`, and the column `point`: the family-local series a row belongs to along its knob. A cone row has `knob_value` = range and `point` = `half=<degrees>`; an emitting row has `knob_value` = sight and `point` = `vision=<value>`; every other family writes `-`. A crossing is found within one (family, play, layout, point) series.
+- Orders: `Setup.orders_per_unit` is True by default, so the opening attack-move is one `order_attack_move` call per unit; timeline steps stay group-level. With E1 and E1b on main the default flips to group attack-move in the lab landing, and only once the smoke caps zero fights under group orders; until both hold `orders_per_unit` stays True (`FINDING-group-orders-cap`, section 12).
+- Arc and cone: the lab side is built (`Setup.firing_arc_deg` set on the world through `OM_TP_FIRING_ARC_DEG`; `Setup.cone` set through `om_roster_set_cone`; the sweep families `arc` and `cone`, run on `s2_concave` and `s2_mass_one_end`). The engine side lands with E2 (the E0 contract carries the parameter and the symbols, E2 the behaviour), so while the library lacks `OM_TP_FIRING_ARC_DEG` or a usable `om_roster_set_cone` the family is skipped with a recorded reason; the arc and cone families are batch two, and L7B updates their behaviour docs after the E2 and E4 landings.
+- Ground scene: `s1_slope_top` (section 3, Two labs) runs from `scripts/skilllab/ground/scenes_ground.py` on the generated field of seed 11 at canvas 12000; its knobs `OM_TP_SIGHT_EYE_HEIGHT` and `OM_TP_GROUND_FLYER_SEEN_MULT` are inert in the natural scene, which the summary reports.
+- Cone state: the engine keeps the per-type cone as lab-only state (`FINDING-cone-state`), so the lab applies `Setup.cone` on the fresh world of every fight.
+
+Plays start the sides at contact distance (`runs/2026-10-02_harness_check.md`; harness spec clause 12): two armies walked straight at each other from far apart collapse into flat rows, and the number measured is the walk's.
+
+The real engine is deterministic and runs the game's own unit rules. What it still lacks for the lab:
 
 | Gap | Where it is closed |
 |---|---|
-| The C port lost Python behaviour: pursuit that steers around units, routing around terrain, map content, attack-move groups, return fire on the march, facing, the steering sweep, the first shot, capture | `docs/northstar/plans/2026-10-02-tactical-port-parity-requirements.md`, P1 to P9; audit in `port_gap_audit_2026-10-02.md` |
-| Targeting ignores fog and line of sight | build brief, G3 |
-| No layer changes, slopes, ping, going dark or reach by type; same-layer fire only | build brief, G4 to G7 |
-| Rule numbers are fixed when the library is compiled | build brief, G1 |
+| The firing arc and the cone area damage, and the radius guard's step-and-return (the built guard holds and never steps) | pieces E0, E2 and E4 of the rev 2 spec |
 | The root `Makefile` does not build on an arm64 Mac (the harness compiles its own copy) | build brief, G0 |
 
-Until the port parity lands, two armies sent at each other end as two flat rows at weapon range, so the plays start the sides at contact distance (`runs/2026-10-02_harness_check.md`).
+The pursuit through ordinary movement, routing around terrain, attack-move groups, return fire on the march and the other Python behaviours the C port had lost (P1 to P9) are in the engine (the `PP-*` pieces of `pieces.toml`); the requirements are `docs/northstar/plans/2026-10-02-tactical-port-parity-requirements.md` and the audit `port_gap_audit_2026-10-02.md`.
 
 ## 8. The plan
 
 1. This record. Done.
-2. The skill lab harness. Done.
-3. **Port parity** (P1 to P9), planned and built on the Linux machine.
-4. One **controls batch** on the engine as it then is, with the chart page, read by Westley.
-5. The **engine cascade** for the layer system: a portable build; rule numbers settable at run time; targeting by sight; layer changes; reach by type; going dark; the ping. Tests first, Sonnet sub-agents throughout, with separate test writers and auditors.
-6. **Small batches** on the finished engine, one skill at a time, each read by Westley: formation, matchup, landscape, enemy position, layers, then the knobs, then combinations and counters.
+2. The skill lab harness. Done. Rev 2 (`docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md`) closes the measure's blind spots and builds the 2026-10-13 rulings; its pieces are built on one integration branch and land as one lab landing, together with the engine pieces E1 and E1b and the golden re-record (`TD-LAB-REV2-golden`). The smoke run is the landing's check.
+3. Port parity (P1 to P9). Done (the `PP-*` pieces).
+4. The first **coarse knob batch** of the rev 2 spec, automatic after the landing: the smoke layouts 81, 78 and 192 only, verdict-less (no `--thresholds` file until Westley supplies one after reading the first artifact), at 12 workers, in a night slot; families in order: vision on `s3_layer_above` and `s3_types_by_reach`, range-up, damage-up, emitting, the controls in every family, the sign-flip points last. It is a method check of the lab, not a sweep: width comes in batch two. The artifact is drafted from the data, reviewed by the Architect and read by Westley.
+5. The **engine cascade** for the layer system. Done: rule numbers settable at run time, targeting by sight, layer changes, reach by type, going dark, the ping. The firing arc, the cone and the radius guard's step-and-return are the rev 2 engine pieces E0, E2 and E4 and land after the lab landing.
+6. **Batch two** and later small batches on the finished engine, one skill at a time, each read by Westley: the arc and cone families with E2, formation, matchup, landscape, enemy position, layers, then the knobs, then combinations and counters.
 7. The **search** for every region of settings where the conditions hold, two ways side by side: all settings at once, and step by step ("start the prototype with 2 variables, tune them until the expected behavior is exhibited, and then just keep iteratively adding and tuning"), to "see which one performs better for our goals".
 8. When a working configuration is found and read: the layer interactions go into the MVP.
 
@@ -210,7 +242,25 @@ Kept as leads, to be re-measured on the real engine (transfer class T2 or T3):
 
 ## 12. Open
 
-Register: `Q-008-02`, `Q-008-03` (close when the lab's numbers fold into E-01 S-008 and `algorithms.md`), `Q-009-02`, `Q-165-01`. Provisional, to be tuned: `Q-001-05`, `Q-005-04`. Not yet ruled by Westley: the draft pass marks in section 4; how refusing a fight is checked when the larger side is made to attack; whether abilities join the acceptance bar.
+Register: `Q-008-02`, `Q-008-03` (the cross-layer parameter families; stays open, closes when the ALG rows exist, after batch one's analysis and Westley's numbers), `Q-009-02`, `Q-165-01`. Provisional, to be tuned: `Q-001-05`, `Q-005-04`. Not yet ruled by Westley: the draft pass marks in section 4; how refusing a fight is checked when the larger side is made to attack; whether abilities join the acceptance bar.
+
+Draft numbers in force (DRAFT; Westley sets what the first chart shows matters, and the list goes in front of him beside the artifact):
+
+- Opening window: 40 ticks after first contact (DRAFT-opening-window-ticks, `OPENING_WINDOW_TICKS`), half-open; the primary prediction window.
+- Guard radius: 200 wu (`GUARD_RADIUS`, DRAFT-guard-radius); the built guard holds and never steps, the step-and-return is piece E4, and lab tests on the guard are re-run after E4.
+- Firing arc: 120 degrees (DRAFT-firing-arc-deg; 360 is today's behaviour and the control). The arc gates the shot only, never acquisition or the hold: a flanked unit acquires, stops, turns at the R-100-02 rate and fires once the target is inside the arc (DRAFT reading, Architect; Westley to change).
+- Cone: range 300, half-angle 45, share 1.0 (DRAFT-aoe-cone-range, DRAFT-aoe-cone-deg, DRAFT-aoe-cone-share); off when range is 0.
+- Roster mixes M0 to M4 and M3b (section 3).
+- Re-engage silence: `REENGAGE_SILENCE_TICKS` 40 (DRAFT, the R-099-05 window; Westley's number).
+- Scale marks (DRAFT, Westley's): one 16 v 48 fight under 1.5 s on one worker; one play scan 8 to 48 at 3 replicates under 90 s at 12 workers; the first coarse knob batch under 4 h wall at 12 workers; rows byte-identical at 1 and 12 workers.
+- The slope divisor points of the ground scene (1.0, 1.1, 1.3, 2.0).
+
+Findings open at the lab landing (status as the ledger holds it):
+
+- `FINDING-speed-marks-unmet`: the full-scan guard (harness spec clause 28) runs about 180 s CPU against its 30 s mark and a 16 v 48 fight 1.50 to 1.55 s CPU against 1.5 s; the 90 s scan mark holds (14.2 s). The lab lands with the two tests known red under the finding, not skipped and not widened; whether to keep the marks and queue a speed-up piece or set new marks is Westley's.
+- `FINDING-damage-up-layer-above`: margins on `s3_layer_above` are identical at damage-up 1.0 and 0.5 while `s3_types_by_reach` responds; no rule makes the knob inert there, so it is traced before batch one.
+- `FINDING-attackmove-idle-cap`: an attack-moving unit whose route ends short of its point goes idle with the enemy just outside range and the fight caps; fixed by E1b (the redirect resumes the original point) and by the lab re-engage; open until the smoke caps zero.
+- `FINDING-group-orders-cap`: the caps seen under group orders, traced to `FINDING-attackmove-idle-cap`; it holds `orders_per_unit` at True until the smoke caps zero under group orders.
 
 ## 13. Where things are
 
