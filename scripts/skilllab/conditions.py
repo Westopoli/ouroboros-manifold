@@ -291,7 +291,7 @@ def evaluate_all(maps, t, basis=DEFAULT_BASIS) -> list:
         validate(m)
     out = [_c0_all(maps, t)]
     for skill in PROFILE_SKILLS:
-        offering = [MapFiring(m.map_id, m.offers, m.scans[_EMPTY], m.scans[frozenset({skill})], m.size, getattr(m, "baselines", {}))
+        offering = [MapFiring(m.map_id, m.offers, m.scans[_EMPTY], m.scans[frozenset({skill})], m.size, m.baselines)
                     for m in maps if skill in m.offers]
         if offering:
             out.append(replace(check_c1(offering, skill, t, basis), code="C1:" + skill))
