@@ -1,7 +1,14 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces row L7 (LAB-REV2-L7)
 """Doc tests for the skill lab rev 2 record: README output rule (ruling 12), the retired gap-table
 rows (E3 fog and cross-layer fire land in the engine), register rows Q-008-03 / Q-008-07 (ruling 5)
-and the Q-LAB-03 note, the ROADMAP section 1 row, and the LAB-REV2 owner rows."""
+and the Q-LAB-03 note, the ROADMAP section 1 row, and the LAB-REV2 owner rows.
+
+Refresh 2026-10-19 (L7-tests-refresh): the Architect decisions 22 to 37
+(docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md) add the checks below the 'decisions 22-37'
+banner: DRAFT numbers stay marked DRAFT, superseded README / harness-spec / ROADMAP sentences are gone,
+the instrument section names the built commands and refusals. A check pins presence or absence of named
+words in one README bullet, paragraph or table row (see _blocks); no number is invented here, every
+number comes from the spec's rulings or the decisions file."""
 import re
 import tomllib
 from pathlib import Path
@@ -11,6 +18,7 @@ README = REPO / "docs" / "northstar" / "research" / "layer_dynamics" / "README.m
 REGISTER = REPO / "docs" / "northstar" / "ambiguity_register.md"
 ROADMAP = REPO / "docs" / "northstar" / "ROADMAP.md"
 PIECES = REPO / "docs" / "northstar" / "plans" / "push" / "pieces.toml"
+HARNESS = REPO / "docs" / "northstar" / "plans" / "skilllab-harness-spec.md"
 
 
 def _section(text: str, number: int) -> str:
@@ -29,6 +37,42 @@ def _register_row(qid: str) -> list[str]:
 
 # Register columns: id, epic/story, question, candidates, status, answer
 STATUS, ANSWER = 4, 5
+
+
+def _blocks(text: str) -> list[str]:
+    """Units a claim lives in: a paragraph (text between blank lines), or one bullet / numbered item /
+    table row (a line starting '- ', '* ', '| ' or 'N. ' opens its own block). Heading lines are not blocks."""
+    out, cur = [], []
+    for ln in text.splitlines():
+        if not ln.strip() or ln.startswith("#"):
+            if cur:
+                out.append(" ".join(cur))
+            cur = []
+        elif re.match(r"(- |\* |\| |\d+\. )", ln):
+            if cur:
+                out.append(" ".join(cur))
+            cur = [ln.strip()]
+        else:
+            cur.append(ln.strip())
+    if cur:
+        out.append(" ".join(cur))
+    return out
+
+
+def _has_block(text: str, *tokens) -> bool:
+    """True when ONE block holds every token, case-insensitive. A token is a string or a tuple of alternatives."""
+    for b in _blocks(text):
+        low = b.lower()
+        if all(any(a.lower() in low for a in (t if isinstance(t, tuple) else (t,))) for t in tokens):
+            return True
+    return False
+
+
+def _clause(n: int) -> str:
+    """Harness-spec acceptance clause n: the line starting 'n. ' under 'Acceptance criteria'."""
+    m = re.search(rf"^{n}\. .*$", HARNESS.read_text(), re.M)
+    assert m, f"harness spec has no clause {n}"
+    return m.group(0)
 
 
 def _lab_rev2_rows():
@@ -52,7 +96,7 @@ def test_control_register_rows_exist_with_status_column():
 # --- ruling 12: output rule in README section 5 ---
 
 def test_ruling12_readme_section5_has_output_rule():
-    body = _section(README.read_text(), 5).lower()
+    body = _section(README.read_text(), 5)
     phrases = [
         "csv", "json",                     # the lab's output is data (CSV, JSON, run metadata)
         "run metadata",
@@ -62,8 +106,8 @@ def test_ruling12_readme_section5_has_output_rule():
         "where the lines cross",
         "a number without its diagram is not evidence",
     ]
-    missing = [p for p in phrases if p not in body]
-    assert not missing, f"README section 5 lacks the ruling 12 output rule phrases: {missing}"
+    assert _has_block(body, *phrases), \
+        f"README section 5 has no single paragraph carrying the ruling 12 output rule phrases: {phrases}"
 
 
 # --- gap table rows retired (spec L7 row) ---
@@ -125,3 +169,169 @@ def test_l7_depends_on_every_other_lab_rev2_row():
     others = {p["id"] for p in rows if p["id"] not in ("LAB-REV2", "LAB-REV2-L7")}
     missing = sorted(others - set(l7["depends_on"]))
     assert not missing, f"LAB-REV2-L7 depends_on lacks {missing}"
+
+
+# =====================================================================================================
+# Decisions 22 to 37 (Architect, 2026-10-19), added by the L7-tests-refresh. Presence / absence of named
+# words per bullet, paragraph or table row; the builder writes the sentences, the rulings give the words.
+# =====================================================================================================
+
+import pytest  # noqa: E402  (kept beside the block it serves)
+
+# --- controls for the helpers (green today) ---
+
+def test_control_blocks_helper_splits_bullets_rows_and_paragraphs():
+    sample = "# H\n\npara one\nsecond line\n\n- bullet a\n- bullet b with CSV\n| C1 | row |\n1. numbered\n"
+    assert _blocks(sample) == ["para one second line", "- bullet a", "- bullet b with CSV", "| C1 | row |", "1. numbered"]
+    assert _has_block(sample, "bullet b", ("csv", "json"))
+    assert not _has_block(sample, "bullet a", "csv")      # two blocks never satisfy one claim together
+
+
+def test_control_present_readme_and_harness_blocks_parse():
+    text = README.read_text()
+    assert _has_block(text, "five layers, always")              # a section 6 bullet that stays
+    assert _has_block(_section(text, 4), "| C1", "firing advantage")   # the C1 table row stays a table row
+    assert _clause(5).startswith("5. ") and _clause(15).startswith("15. ")   # clause lookup does not confuse 5 and 15
+
+
+# --- README claims: one bullet, paragraph or table row (see _blocks) must carry all the words.
+# id -> (README section or None for the whole file, tokens). Sources: the rulings in the spec, decisions 22 to 37.
+
+_README_CLAIMS = {
+    # DRAFT numbers stay marked DRAFT (decision 29 item 4, decision 31 F, the spec's open list)
+    "draft-opening-window": (None, ("opening window", "40", "draft")),
+    "draft-guard-radius": (None, (("guard radius", "guard_radius"), "200", "draft", "E4")),
+    "draft-firing-arc": (None, ("firing arc", "120", "draft", "flanked")),
+    "draft-cone": (None, ("cone", "300", "45", "1.0", "draft")),
+    "draft-mixes": (None, ("M3b", "M4", "draft")),
+    "draft-reengage-silence": (None, ("REENGAGE_SILENCE_TICKS", "40", "draft")),
+    "draft-scale-marks": (None, ("scale marks", "1.5", "90", "4 h", "draft", "Westley")),
+    # section 4, the measure (ruling 1, 5, 6; decisions 28, 29, 31)
+    "target-of-record": (4, ("target of record", "can_engage")),
+    "two-predictions": (4, ("count-only", "type-weighted", "agreement")),
+    "cell-won-by-elimination": (4, ("cell", "won", "every fight")),
+    "c1-row": (4, ("| C1", "naive attacker", "naive defender", "mirror")),
+    "c2-row": (4, ("| C2", "opening window", "whole fight")),
+    "assault-contact": (None, ("assault", ("centre of mass", "center of mass", "centroid"), "guard")),
+    "r-087-06-original-point": (None, ("R-087-06", "original point")),
+    "reengage-onto-centroid": (None, (("re-engage", "reengage"), "REENGAGE_SILENCE_TICKS", "centroid")),
+    # baselines (decisions 25, 26, 29, 32)
+    "naive-baselines": (None, ("naive_attacker", "naive_defender", "blob per unit type")),
+    "naive-defender-layer-variants": (None, ("naive_defender_play_layer", "naive_defender_attacker_layer", "draft")),
+    "baseline-no-fit": (None, ("baseline_no_fit", "ceiling", "finding")),
+    "baseline-ceiling-label": (None, ("baseline_ceiling",)),
+    # section 5, the artifact (decisions 29, 31, 34)
+    "artifact-thresholds": (5, ("artifact", "--thresholds", "thresholds not supplied")),
+    "artifact-both-wrong": (5, ("both_wrong", "finding")),
+    "artifact-diagram-per-crossing": (5, ("ceiling hit", "crossing", "diagram")),
+    "artifact-bracketing-arrows": (5, ("bracketing", "arrows", "break-even")),
+    "artifact-legend-draft": (5, ("draft", "legend")),
+    "point-column": (None, ("`point`", "half=", "vision=")),
+    # section 7, the instrument
+    "commands": (7, ("`smoke`", "`sweep`", "`artifact`")),
+    "preflight-refusals": (7, ("`no_fit`", "`unroutable`", "`no_reach`")),
+    "count-is-can-engage": (7, ("can_engage", "parity")),
+    # section 12, open
+    "speed-marks-finding": (12, ("FINDING-speed-marks-unmet", "Westley")),
+}
+
+
+@pytest.mark.parametrize("claim", sorted(_README_CLAIMS))
+def test_readme_claim(claim):
+    section, tokens = _README_CLAIMS[claim]
+    text = README.read_text()
+    if section is not None:
+        text = _section(text, section)
+    assert _has_block(text, *tokens), \
+        f"README{'' if section is None else f' section {section}'} has no single bullet, paragraph or row carrying {tokens}"
+
+
+# --- README: superseded sentences are gone ---
+
+def test_readme_band_is_a_ruling_not_a_draft():
+    # decision 31 F: the 0.25x to 4x band is a ruling, not a draft number, and is not marked.
+    hits = re.findall(r"draft\W{0,3}0\.25x", README.read_text(), re.I)
+    assert not hits, "README still marks the 0.25x to 4x band as a draft"
+
+
+@pytest.mark.parametrize("stale", [
+    "able-to-fire-eligible",                          # ruling 5 replaced the 'option (a)' target rule
+    "draft definition to be approved",                # ruling 5 settled it
+    "ending ahead by a margin",                       # ruling 1: a cell is won by elimination, no margin
+    "waits for the sim to have ground",               # spec L6: the ground scene s1_slope_top is built
+    "close when the lab's numbers fold",              # Q-008-03 closed to (a) by ruling 5
+])
+def test_readme_stale_sentence_is_gone(stale):
+    assert stale not in README.read_text().lower(), f"README still says: {stale!r}"
+
+
+def test_readme_names_the_ground_scene_and_does_not_present_highground_as_live():
+    text = README.read_text()
+    live = [ln for ln in text.splitlines()
+            if "highground.py" in ln and "deleted" not in ln.lower() and "retired" not in ln.lower()]
+    assert not live, f"README presents ground/highground.py (deleted by L6) as existing: {live[0][:100]}"
+    assert "s1_slope_top" in text, "README never names the ground scene s1_slope_top"
+
+
+def test_readme_section8_points_at_rev2_spec_and_first_batch():
+    sec = _section(README.read_text(), 8)
+    assert "2026-10-14-skill-lab-rev2-spec.md" in sec, "section 8 does not point at the rev 2 spec"
+    assert "coarse knob batch" in sec.lower(), "section 8 does not name the first coarse knob batch"
+
+
+# --- register: the Q-LAB-03 note names the new lab drafts (decisions 4, 28) ---
+
+def test_q_lab_03_note_names_the_new_lab_drafts():
+    row = " | ".join(_register_row("Q-LAB-03"))
+    for name in ("DRAFT-opening-window-ticks", "REENGAGE_SILENCE_TICKS"):
+        assert name in row, f"Q-LAB-03 row does not name {name}"
+
+
+# --- ROADMAP rows that the elimination ruling and L6 make stale ---
+
+def test_roadmap_t14_row_follows_q_lab_03():
+    rows = [ln for ln in ROADMAP.read_text().splitlines() if ln.startswith("| T14 |")]
+    assert rows, "ROADMAP has no T14 row"
+    assert "not yet recorded" not in rows[0], "T14 still says outcome classes are not yet recorded"
+    assert "Q-LAB-03" in rows[0], "T14 does not cite Q-LAB-03 (elimination only, cap as defect)"
+
+
+def test_roadmap_highground_instrument_is_not_listed_as_live():
+    stale = [ln for ln in ROADMAP.read_text().splitlines()
+             if "highground.py" in ln and "deleted" not in ln.lower() and "retired" not in ln.lower()]
+    assert not stale, f"ROADMAP still lists highground.py (deleted by L6) as existing: {stale[0][:120]}"
+
+
+# --- harness spec: the clauses decision 15 names (5, 11, 12, 13) are rewritten; each loses 'stalemate' / the win margin ---
+
+_CLAUSE_WORDS = {   # clause -> words it must carry (rev 2 contract: elimination only, cap a defect, FightResult and Setup fields)
+    5: ("elimination", "`cap`", "`orders_per_unit`", "`Setup.point`"),
+    11: ("`draw`", "`cap`", "firing_window", "weighted_unit_seconds", "weighted_window",
+         "predicted_count", "predicted_type", "agreement", "states"),
+    12: ("`Setup.point`", "meeting"),
+    13: ("every fight", "side0", "defect"),
+}
+
+
+@pytest.mark.parametrize("n", [5, 11, 12])
+def test_harness_clause_has_no_stalemate(n):
+    assert "stalemate" not in _clause(n).lower(), f"clause {n} still mentions a stalemate (retired by Q-LAB-03)"
+
+
+def test_harness_clause13_has_no_win_margin():
+    c = _clause(13)
+    assert "win margin" not in c.lower() and "0.05" not in c, "clause 13 still defines a won cell by a win margin"
+
+
+@pytest.mark.parametrize("n,word", [(n, w) for n in sorted(_CLAUSE_WORDS) for w in _CLAUSE_WORDS[n]])
+def test_harness_clause_carries_rev2_word(n, word):
+    assert word in _clause(n), f"clause {n} lacks {word}"
+
+
+# --- pieces.toml: L7 must own every file its tests make it edit ---
+
+def test_l7_owns_the_harness_spec():
+    l7 = next(p for p in _lab_rev2_rows() if p["id"] == "LAB-REV2-L7")
+    owned = set(l7["owns"])
+    assert "docs/northstar/plans/skilllab-harness-spec.md" in owned, \
+        "LAB-REV2-L7 does not own the harness spec it must rewrite (clauses 5, 11, 12, 13; decision 15)"
