@@ -118,6 +118,7 @@ class FightResult:
     predicted_count: str = "tie"            # "side0" | "side1" | "tie": the larger window total
     predicted_type: str = "tie"
     agreement: str = "n/a"    # "both_right" | "count_wrong_type_right" | "both_wrong" | "count_right_type_wrong" | "n/a"
+    reengage: tuple = (0, 0)  # (side 0, side 1) re-engage events: a silent side with an idle attack-move unit and a visible enemy was ordered onto the enemy centroid
 
 
 def trim_series(result: "FightResult") -> "FightResult":
@@ -155,6 +156,7 @@ class Batch:
 
 TICKS_PER_SECOND = 20
 OPENING_WINDOW_TICKS = 40     # DRAFT-opening-window-ticks (Westley to confirm): the primary prediction window after first contact
+REENGAGE_SILENCE_TICKS = 40   # DRAFT-reengage-silence-ticks (Westley's number, the R-099-05 window): silent ticks of a side before the lab re-engages it
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
 BuildFn = Callable[[int, bool], "Setup"]
 
