@@ -26,4 +26,4 @@ def naive_break_even(kind, seed, terrain, size, enemy_from, enemy_to, replicates
 
 def map_labels(report):
     return {"map_kind": report.kind, "map_seed": report.seed, "naive_beats": report.naive.beats,
-            "naive_loses_to": report.naive.loses_to, "naive_multi_flip": report.naive.multi_flip}
+            "naive_loses_to": report.naive.loses_to, "naive_multi_flip": report.naive.multi_flip, "baseline_ceiling": report.naive.ceiling_hit}
