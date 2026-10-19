@@ -50,7 +50,8 @@ Rules
 - R-002-01  Given a selected unit on layer 3 at a position where layer 5 is open, When the player issues a hard transfer to layer 5, Then the unit begins its transition on the same tick and finishes on layer 5 after its transition duration (S-004).
 - R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if the unit's route (R-001-05) changes its layer first, the transfer stays pending.
 - R-002-03  Given a unit with a pending hard transfer, When the player issues a second hard transfer to a different layer, Then the first transfer is discarded and only the second is pending.
-- R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer.
+- R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer. The spot transfer (`set_layer` with a spot) is queued, not pending: R-002-03 and R-002-04 apply from the moment it fires.
+  - Note: the spot-transfer sentence is the Architect's interpretation (2026-10-14, relayed), not yet Westley's; he may veto it.
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
 - R-002-06  Given a hard transfer to a layer outside the map's layer range, When it is issued, Then it is rejected and the unit's state does not change.
 - R-002-07  Given a hard transfer order for a mixed selection, When it is issued, Then every unit in the selection gets its own pending transfer and each resolves independently by its own position and duration.
