@@ -2345,10 +2345,10 @@ size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built
 id = "VG-P2"
 manager = "M0"
 wave = 12
-owns = ["csrc/economy_lot_noise.c", "csrc/lot_noise.h", "csrc/growth_probe.c"]
+owns = ["csrc/economy_field_noise.c", "csrc/field_noise.h", "csrc/growth_probe.c"]
 owns_glob = ["tests/csim/test_VG_P_p2_*.py"]  # test_VG_E_* is VG-E1's glob and test_VG_D_* VG-D's: neither matches test_VG_P_p2_*
-acceptance = ["tests/csim/test_VG_P_p2_lot_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
-depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot
+acceptance = ["tests/csim/test_VG_P_p2_field_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
+depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot; rev 6 (Architect 2026-10-19): field noise, files renamed from economy_lot_noise.c and lot_noise.h
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noise_q16, om_lot_noise_range, om_lane_build; about 160 lines), growth_probe.c (om_growth_probe_run; about 200 lines), two pytest files; DRAFT-lot-noise-*, DRAFT-lane-*, DRAFT-shape-harm 0.5"
