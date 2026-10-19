@@ -100,6 +100,7 @@ Report schema (one per agent, at the end): `{piece, branch, sha, tests: {red_bef
 - Any DRAFT number the first chart shows matters (opening window 40; GUARD_RADIUS 200; arc 120; cone 300, 45, 1.0; the mixes M0 to M4; the slope divisor points; the scale marks).
 - The flanked-unit draft of ruling 8 (fire-only gate, turn to target) if the arc batch shows it decides a result.
 - A `both_wrong` fight whose explanation needs a rule, not a number.
+- The speed marks (ruling 13, `FINDING-speed-marks-unmet`, 2026-10-19): the full-scan guard AC 28 runs about 180 s CPU against its 30 s mark and a 16 v 48 fight 1.50 to 1.55 s CPU against 1.5 s; the 90 s scan mark holds (14.2 s). Keep the marks and queue a speed-up piece, or set new marks.
 
 ## Audit and pre-flight (2026-10-13, Architect)
 
