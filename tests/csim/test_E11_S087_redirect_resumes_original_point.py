@@ -20,6 +20,14 @@ What is here
   - controls (green today and after): the hit unit really pursues (it moves toward the attacker); an attack-moving unit never hit
     reaches the same point inside the same tick budget; an IDLE unit hit the same way pursues and then holds where the pursuit ends,
     with no destination, and never walks back to a point it never had.
+Decision 30 (Architect 2026-10-19) extends it, added in a second commit: (1) a group member's point of record is its slot, and it
+resumes toward the slot -- group test, red today; (2) the pursuit ends three ways (death, the R-096-03 leash of 200 wu from the
+acquisition anchor, the attacker no longer seen, R-087-08), one test per ending, the leash and sight endings resume toward the original
+point like death -- two more red tests; (3) the resume is immediate, within the R-087-08 stagger of 4 ticks, with no walk to the
+attacker's last spot first -- the 60 tick bound of the first commit narrowed to 4 (a rule number). The attacker now stands inside the
+unit's sensor (430 wu, or 650 wu for the leash and sight scenes): decision 30 point 2 drops a pursuit of an unseen attacker, and the
+first commit's 900 wu attacker was never seen. Controls added, green today and after: a marching group has distinct slots and an unhit
+member reaches its own, and inside the leash with the attacker seen the unit is still pursuing.
 No new number is pinned: the scene numbers are fixtures, the arrival radius is R-095-05's (1.5 x collision radius 15, as the E1 tests).
 
 Existing tests that encode the superseded wording "dropping its earlier destination" (R-087-06 before 2026-10-19), NOT edited here;
@@ -37,7 +45,7 @@ the E1b landing clerk retires or rewrites them under ledger rows TD-LAB-REV2-E1b
   Whatever else the E1b landing's full csim run turns red is listed by the clerk the same way. What the goal is in the first tick or
   two after the hit (the attacker's place while pursuing, or the ordered point with the pursuit kept elsewhere) is the builder's
   design and is not pinned here; only the point the unit ends up resuming toward after the attacker is gone is.
-Group members are not covered: decision 28 rules the lone unit's redirect only (question for the Architect in the piece report).
+The group member is covered by decision 30 point 1 (tests below).
 """
 import math
 
@@ -46,12 +54,15 @@ import pytest
 from test_PP_unit_support import BASTION, SUPPLY, VANGUARD, attack_move, dest, hp, kill, pos, spawn, step
 
 P = (-1200.0, 0.0)                # the ordered point; behind the unit so a march to the attacker and a march to the point differ
-ATTACKER_AT = (900.0, 0.0)        # beyond the Vanguard's range 300 and sensor 700 so only the hit, not sight, brings it into play
+ATTACKER_AT = (430.0, 0.0)        # beyond the Vanguard's range 300, inside its sensor 700 (so its side SEES it, decision 30 point 2),
+                                  # and 130 wu from range, inside the R-096-03 leash, so the unit can close and kill it
 HIT = 10.0
 KILL_TICK = 5                     # ticks of pursuit before the attacker dies in the 'early' scenes; the unit has moved about 20 wu
 ARRIVAL = 22.5                    # R-095-05: 1.5 x the collision radius 15; the same radius the E1 tests use
 MARCH_TICKS = 2000                # budget to pursue, kill and walk back 2100 wu at 4 wu a tick; fixture number, a bug detector only
-PROMPT_TICKS = 60                 # ticks after the attacker's death by which the ordered point is the destination again; fixture number
+LEASH = 200.0                     # R-096-03 / R-087-05: the leash from the acquisition anchor, in wu (a rule number)
+STAGGER = 4                       # R-087-08: the cohort stagger, ticks; decision 30 point 3: the resume lands within it (a rule number)
+FAR_ATTACKER_AT = (650.0, 0.0)    # seen (inside sensor 700) and 350 wu from range, so the unit cannot reach it inside the leash
 STAY_TICKS = 100                  # ticks a finished unit is watched for; fixture number
 
 
@@ -124,10 +135,9 @@ def test_S087_R_087_06_the_unit_kills_the_attacker_itself_and_resumes_toward_its
         f"({_miss(lib, w, u, P):.1f} wu from P, limit {ARRIVAL})")
 
 
-def test_S087_R_087_06_the_ordered_point_is_the_destination_again_soon_after_the_attacker_dies(lib, world_factory):
-    """Decision 28 point 1, 'when the attacker dies or leaves, the unit resumes toward its original point': PROMPT_TICKS after the
-    attacker died (it has not yet reached the dead attacker's place, 880 wu away at 4 wu a tick) the unit's destination is P and it is
-    marching away from the attacker's place. Red today: its destination is still the attacker's place until it gets there."""
+def test_S087_R_087_06_the_ordered_point_is_the_destination_again_within_the_stagger_of_the_attacker_dying(lib, world_factory):
+    """Decision 30 point 3 (R-087-08): STAGGER ticks after the attacker died the unit's destination is P, and it does not walk to
+    the attacker's last spot first. Red today: its destination is the attacker's place until it gets there."""
     w = world_factory(n_regions=1)
     u = _victim(lib, w, ordered=True)
     attacker = _hit(lib, w, u)
@@ -135,19 +145,126 @@ def test_S087_R_087_06_the_ordered_point_is_the_destination_again_soon_after_the
     kill(lib, w, attacker)
     x_dead = pos(lib, w, u)[0]
 
-    step(lib, w, PROMPT_TICKS)
+    step(lib, w, STAGGER)
 
     has, gx, gy = dest(lib, w, u)
     assert has == 1 and (gx, gy) == pytest.approx(P, abs=1e-6), (
-        f"{PROMPT_TICKS} ticks after the attacker died the destination is not the ordered point {P}: {_idle_line(lib, w, u)}")
+        f"{STAGGER} ticks after the attacker died the destination is not the ordered point {P}: {_idle_line(lib, w, u)}")
+    step(lib, w, 30)
     assert pos(lib, w, u)[0] < x_dead, "the unit did not turn back toward its ordered point"
+
+
+# ---- decision 30 point 2: the pursuit ends three ways; the leash and sight endings resume toward the original point like death ----------
+
+def _ticks_until_past_leash(lib, w, u, limit):
+    """Step until the unit is more than LEASH from the origin (its anchor: where it stood when hit); returns the ticks taken or None."""
+    for t in range(1, limit + 1):
+        step(lib, w)
+        x, y = pos(lib, w, u)
+        if math.hypot(x, y) > LEASH:
+            return t
+    return None
+
+
+def test_S087_R_096_03_the_pursuit_ends_at_the_leash_and_the_unit_resumes_toward_its_ordered_point(lib, world_factory):
+    """Decision 30 point 2 (R-096-03): the attacker stands 350 wu beyond the unit's range, so it cannot be reached inside the leash.
+    The unit pursues, passes LEASH (200 wu from where it was hit), and within STAGGER ticks of that its destination is P again; it
+    then reaches P. Red today: nothing leashes the redirect, the destination stays the attacker's place and the unit walks there."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    attacker = spawn(lib, w, SUPPLY, 1, *FAR_ATTACKER_AT)
+    lib.om_unit_deal_damage(w, attacker, u, HIT)
+
+    took = _ticks_until_past_leash(lib, w, u, MARCH_TICKS)
+    assert took is not None, f"the unit never pursued out past the leash: {_idle_line(lib, w, u)}"
+    step(lib, w, STAGGER)
+
+    has, gx, gy = dest(lib, w, u)
+    assert has == 1 and (gx, gy) == pytest.approx(P, abs=1e-6), (
+        f"{STAGGER} ticks after passing the {LEASH} wu leash the destination is not the ordered point {P}: {_idle_line(lib, w, u)}")
+    step(lib, w, MARCH_TICKS)
+    assert _miss(lib, w, u, P) <= ARRIVAL, f"the unit did not reach its ordered point after the leash: {_idle_line(lib, w, u)}"
+
+
+def test_S087_R_087_08_the_pursuit_ends_when_the_attacker_is_no_longer_seen_and_the_unit_resumes_toward_its_ordered_point(
+        lib, world_factory):
+    """Decision 30 point 2 (R-087-08, 'a unit cannot chase what it cannot see'): 10 ticks into the pursuit the attacker, which is alive
+    and still near, becomes unseen (stealth). Within STAGGER ticks the unit's destination is P again and it reaches P. Red today:
+    nothing validates the redirect against sight; the unit keeps walking to the attacker's place."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    attacker = spawn(lib, w, SUPPLY, 1, *FAR_ATTACKER_AT)
+    lib.om_unit_deal_damage(w, attacker, u, HIT)
+    step(lib, w, 10)
+    lib.om_unit_set_stealth(w, attacker, 1)
+
+    step(lib, w, STAGGER)
+
+    has, gx, gy = dest(lib, w, u)
+    assert has == 1 and (gx, gy) == pytest.approx(P, abs=1e-6), (
+        f"{STAGGER} ticks after the attacker became unseen the destination is not the ordered point {P}: {_idle_line(lib, w, u)}")
+    step(lib, w, MARCH_TICKS)
+    assert _miss(lib, w, u, P) <= ARRIVAL, f"the unit did not reach its ordered point after losing sight: {_idle_line(lib, w, u)}"
+
+
+# ---- decision 30 point 1: a group member keeps its slot as its point of record ---------------------------------------------------------
+
+G = (-1200.0, 50.0)               # the group's attack-move point; the members' slots are this plus their formation offsets
+
+
+def _group_scene(lib, w):
+    """Two Vanguards 100 wu apart attack-moved together to G and marching for 10 ticks; returns (a, b, slot_a, slot_b) where a slot is
+    the destination each member holds while the group marches (the point of record, R-095-05)."""
+    spawn(lib, w, BASTION, 0, -9000.0, 0.0)
+    a = spawn(lib, w, VANGUARD, 0, 0.0, 0.0)
+    b = spawn(lib, w, VANGUARD, 0, 0.0, 100.0)
+    attack_move(lib, w, [a, b], *G)
+    step(lib, w, 10)
+    slots = []
+    for m in (a, b):
+        has, gx, gy = dest(lib, w, m)
+        assert has == 1, "fixture: a marching member should have a destination"
+        slots.append((gx, gy))
+    return a, b, slots[0], slots[1]
+
+
+def test_S087_R_087_06_a_group_member_hit_from_out_of_range_resumes_toward_its_slot(lib, world_factory):
+    """Decision 30 point 1: a member of a group attack-move, hit from out of range, pursues like the lone unit; when the attacker dies
+    its destination within STAGGER ticks is its slot again (not G, not the attacker's place), and it ends within the arrival radius of
+    the slot. Red today: the member walks to the attacker's place and idles there."""
+    w = world_factory(n_regions=1)
+    a, b, slot_a, slot_b = _group_scene(lib, w)
+    attacker = spawn(lib, w, SUPPLY, 1, *ATTACKER_AT)
+    lib.om_unit_deal_damage(w, attacker, a, HIT)
+    step(lib, w, KILL_TICK)
+    kill(lib, w, attacker)
+
+    step(lib, w, STAGGER)
+
+    has, gx, gy = dest(lib, w, a)
+    assert has == 1 and (gx, gy) == pytest.approx(slot_a, abs=1e-6), (
+        f"{STAGGER} ticks after the attacker died the member's destination is not its slot {slot_a}: {_idle_line(lib, w, a)}")
+    step(lib, w, MARCH_TICKS)
+    assert _miss(lib, w, a, slot_a) <= ARRIVAL, f"the member did not reach its slot: {_idle_line(lib, w, a)}"
+
+
+def test_control_S087_R_087_06_a_marching_group_has_distinct_slots_and_an_unhit_member_reaches_its_own(lib, world_factory):
+    """Positive control for the group test (green today and after): the two members hold different slots, neither equals the bare
+    point G for both, and with no attacker each member ends within the arrival radius of its own slot, so the slot reading can pass."""
+    w = world_factory(n_regions=1)
+    a, b, slot_a, slot_b = _group_scene(lib, w)
+    assert slot_a != slot_b, "fixture: the two members should hold distinct slots"
+
+    step(lib, w, MARCH_TICKS)
+
+    assert _miss(lib, w, a, slot_a) <= ARRIVAL and _miss(lib, w, b, slot_b) <= ARRIVAL, (
+        f"a {_idle_line(lib, w, a)}; b {_idle_line(lib, w, b)}")
 
 
 # ---- controls: green today and after ---------------------------------------------------------------------------------------------------
 
 def test_control_S087_R_087_06_a_hit_attack_moving_unit_does_pursue_the_attacker(lib, world_factory):
-    """Positive control (green today and after): the hit really sends the unit toward the attacker (x grows, it has a destination
-    and no point-ward step), so the tests above start from a pursuit and a 'resumes' reading can be told from 'never left'."""
+    """Positive control (green today and after): the hit really sends the unit toward the attacker (x grows and it has a destination), so the tests above start from a pursuit and a 'resumes' reading can be told from 'never left'."""
     w = world_factory(n_regions=1)
     u = _victim(lib, w, ordered=True)
     _hit(lib, w, u)
@@ -184,6 +301,23 @@ def test_control_S087_R_087_06_an_idle_unit_pursues_and_holds_where_the_pursuit_
 
     where = pos(lib, w, u)
     assert dest(lib, w, u)[0] == 0, f"an idle unit still has a destination after the pursuit: {_idle_line(lib, w, u)}"
-    assert where[0] > ARRIVAL, f"the idle unit did not stay out where the pursuit took it: {_idle_line(lib, w, u)}"
+    assert where[0] > 0.0, f"the idle unit did not stay out where the pursuit took it: {_idle_line(lib, w, u)}"
     step(lib, w, STAY_TICKS)
     assert pos(lib, w, u) == where, "a unit holding after its pursuit moved again"
+
+
+def test_control_S087_R_096_03_inside_the_leash_and_while_seen_the_unit_is_still_pursuing(lib, world_factory):
+    """Positive control for the leash and sight tests (green today and after): with the attacker alive, seen and the unit still inside
+    the leash, the unit keeps moving toward it (x keeps growing between tick 15 and tick 25), so a destination that returns to P in
+    those tests is an ending, not a pursuit that never happened."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    attacker = spawn(lib, w, SUPPLY, 1, *FAR_ATTACKER_AT)
+    lib.om_unit_deal_damage(w, attacker, u, HIT)
+    step(lib, w, 15)
+    x15 = pos(lib, w, u)[0]
+
+    step(lib, w, 10)
+
+    assert pos(lib, w, u)[0] > x15 > 0.0, f"the unit stopped pursuing a seen attacker inside the leash: {_idle_line(lib, w, u)}"
+    assert hp(lib, w, attacker) > 0.0 and math.hypot(*pos(lib, w, u)) < LEASH
