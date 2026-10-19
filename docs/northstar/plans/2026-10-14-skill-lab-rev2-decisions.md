@@ -111,3 +111,10 @@ D. A crossing diagram carries arrows to the break-even rows at both bracketing h
 E. The map-report label is kept under the name `baseline_ceiling` (decision 29 item 3), six labels; the ruler row `TD-LAB-REV2-L5-maplabels` is confirmed with the rename.
 F. Confirmed: the artifact header lists every DRAFT number in force once; the slope divisor joins that list only in a batch that runs the ground scene; the 0.25x to 4x band is a ruling, not a draft number, and is not marked; the legend marks only what its rows touch.
 G. Stands (decision 29 item 7).
+
+## 32. BASE readings (Architect 2026-10-19)
+1. A baseline refused by pre-flight (no_reach, unroutable) drops only that baseline; the play runs against the remaining ones and the refusal is listed with its role. A no_reach on a layer play's attacker-layer variant is expected, not a defect.
+2. A baseline that cannot be placed at headcount 8 lists the layout as `baseline_no_fit` with last_headcount None, no scan rows for the play on that layout, no defect.
+3. A scan cut at K by `baseline_no_fit` that the play wins throughout 8 to K is an always-won cut scan: not a ceiling hit (a ceiling hit is beating 48), not a finding; refinement runs only inside 8 to K; the artifact says "won through K, scan cut by baseline_no_fit" so it is never read as "no crossing exists".
+4. The blob's fill order continues over free cells without a fixed limit; "cannot hold the count" means no free cell remains inside the layout bounds (the existing radius check against free cells). The order is deterministic (rows identical at 1 and 12 workers).
+5. A blob of one unit follows the same rule with no special case: the anchor is radius zero; if blocked, the nearest free cell by increasing radius. One test.
