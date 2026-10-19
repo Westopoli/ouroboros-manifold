@@ -9,6 +9,11 @@ it (`sweep.default_builds` then `sweep.Applied`). Measured on the unfixed tree: 
 at tick 315. The lone survivor of the attacking side (unit id 13, a Vanguard) is idle with no destination 128 wu short of its point,
 where a defender's hit sent it after an attacker and the engine overwrote its ordered point (R-087-06 before 2026-10-19).
 
+THIS FILE IS A CAP REGRESSION GUARD, NOT A SPEC PROOF: it shows that the one scene that capped no longer caps. The spec of the redirect
+(the point of record, the three pursuit endings, the group slot, the immediate resume) is carried by
+tests/csim/test_E11_S087_redirect_resumes_original_point.py. The minimal fix 'keep the issued point, let om_tac_release resume' turns
+this file green and leaves five of those csim tests red (the auditor's measurement); a green here alone does not mean E1b is done.
+
 What is here (all gated OM_LAB_SLOW=1, about a second each, like the smoke they come from):
   - the scene ends side0, side1 or draw, not cap -- RED on the unfixed tree: `cap (5, 1) at 12000`, and the message carries the idle
     line (a living attacker with no destination and no target);

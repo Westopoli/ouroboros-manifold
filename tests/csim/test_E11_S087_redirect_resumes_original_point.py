@@ -11,12 +11,19 @@ Why: the lab's caps (decision 28) all end with an attack-moving unit idle, no de
 because the engine overwrote the ordered point with the attacker's position (order_x/y and issued_x/y in unit.c) and the unit
 "arrived" at the dead attacker's place. Westley's 2026-10-13 ruling: an attack-move is not finished until the unit reaches its point.
 
+NOTE FOR THE BUILDER (auditor's measurement, 2026-10-19): the minimal fix 'keep the issued point and let om_tac_release resume' makes
+the layout 192 lab test (tests/skilllab/integration/test_attackmove_idle_cap_real.py) pass and fails five of these tests. Decision 30
+point 3 is what they demand: the destination is the original point again on the tick the pursuit ends (the attacker dies mid-walk with
+no hold, the leash is passed, the attacker is unseen), within the 4 tick cohort stagger of R-087-08, with no walk to the attacker's
+last spot first. The kill tick of the stagger test runs over eight consecutive ticks so a delay of more than 4 ticks at any phase of
+the cohort is caught.
+
 What is here
   - isolation, the attacker killed early (tick 5), the unit ends within the arrival radius of its ORDERED point -- red today: it ends
     at the attacker's old place with no destination (the idle line is pasted in the failure message);
   - isolation, the unit's own fire kills the attacker, then the same -- red today;
   - the unit has its ordered point as its destination again some ticks after the attacker died, not only on arrival at the attacker's
-    place -- red today (fixture number: see PROMPT_TICKS);
+    place -- red today (the bound is STAGGER, 4 ticks, R-087-08);
   - controls (green today and after): the hit unit really pursues (it moves toward the attacker); an attack-moving unit never hit
     reaches the same point inside the same tick budget; an IDLE unit hit the same way pursues and then holds where the pursuit ends,
     with no destination, and never walks back to a point it never had.
@@ -61,6 +68,8 @@ KILL_TICK = 5                     # ticks of pursuit before the attacker dies in
 ARRIVAL = 22.5                    # R-095-05: 1.5 x the collision radius 15; the same radius the E1 tests use
 MARCH_TICKS = 2000                # budget to pursue, kill and walk back 2100 wu at 4 wu a tick; fixture number, a bug detector only
 LEASH = 200.0                     # R-096-03 / R-087-05: the leash from the acquisition anchor, in wu (a rule number)
+IDLE_KILL_TICK = 15               # ticks of pursuit before the idle unit's attacker dies: the unit is then about 60 wu out, beyond the arrival
+                                  # radius of its start, so 'holds out here' and 'walked back to the start' read differently
 STAGGER = 4                       # R-087-08: the cohort stagger, ticks; decision 30 point 3: the resume lands within it (a rule number)
 FAR_ATTACKER_AT = (650.0, 0.0)    # seen (inside sensor 700) and 350 wu from range, so the unit cannot reach it inside the leash
 STAY_TICKS = 100                  # ticks a finished unit is watched for; fixture number
@@ -101,7 +110,7 @@ def _miss(lib, w, u, point):
 def test_S087_R_087_06_attacker_dies_early_and_the_unit_resumes_toward_its_ordered_point(lib, world_factory):
     """R-087-06 (2026-10-19) / R-096-02: an attack-moving unit is hit from out of range, pursues for KILL_TICK ticks, the attacker
     dies, and the unit ends within the arrival radius of its ORDERED point P. Red today: it walks on to the attacker's old place
-    (900, 0), arrives there, and idles with no destination (the idle line in the message)."""
+    (430, 0), arrives there, and idles with no destination (the idle line in the message)."""
     w = world_factory(n_regions=1)
     u = _victim(lib, w, ordered=True)
     attacker = _hit(lib, w, u)
@@ -135,13 +144,15 @@ def test_S087_R_087_06_the_unit_kills_the_attacker_itself_and_resumes_toward_its
         f"({_miss(lib, w, u, P):.1f} wu from P, limit {ARRIVAL})")
 
 
-def test_S087_R_087_06_the_ordered_point_is_the_destination_again_within_the_stagger_of_the_attacker_dying(lib, world_factory):
+@pytest.mark.parametrize("kill_tick", range(KILL_TICK, KILL_TICK + 8))
+def test_S087_R_087_06_the_ordered_point_is_the_destination_again_within_the_stagger_of_the_attacker_dying(lib, world_factory, kill_tick):
     """Decision 30 point 3 (R-087-08): STAGGER ticks after the attacker died the unit's destination is P, and it does not walk to
-    the attacker's last spot first. Red today: its destination is the attacker's place until it gets there."""
+    the attacker's last spot first. The attacker dies at each of eight consecutive ticks, so every phase of the 4 tick cohort (and of
+    a period of 8) is hit. Red today: its destination is the attacker's place until it gets there."""
     w = world_factory(n_regions=1)
     u = _victim(lib, w, ordered=True)
     attacker = _hit(lib, w, u)
-    step(lib, w, KILL_TICK)
+    step(lib, w, kill_tick)
     kill(lib, w, attacker)
     x_dead = pos(lib, w, u)[0]
 
@@ -293,15 +304,15 @@ def test_control_S087_R_087_06_an_idle_unit_pursues_and_holds_where_the_pursuit_
     w = world_factory(n_regions=1)
     u = _victim(lib, w, ordered=False)
     attacker = _hit(lib, w, u)
-    step(lib, w, KILL_TICK)
-    assert pos(lib, w, u)[0] > 0.0 and dest(lib, w, u)[0] == 1, "fixture: the idle unit should be pursuing"
+    step(lib, w, IDLE_KILL_TICK)
+    assert pos(lib, w, u)[0] > ARRIVAL and dest(lib, w, u)[0] == 1, "fixture: the idle unit should be pursuing, out past its start's arrival radius"
     kill(lib, w, attacker)
 
     step(lib, w, MARCH_TICKS)
 
     where = pos(lib, w, u)
     assert dest(lib, w, u)[0] == 0, f"an idle unit still has a destination after the pursuit: {_idle_line(lib, w, u)}"
-    assert where[0] > 0.0, f"the idle unit did not stay out where the pursuit took it: {_idle_line(lib, w, u)}"
+    assert where[0] > ARRIVAL, f"the idle unit did not stay out where the pursuit took it: {_idle_line(lib, w, u)}"
     step(lib, w, STAY_TICKS)
     assert pos(lib, w, u) == where, "a unit holding after its pursuit moved again"
 
@@ -321,3 +332,81 @@ def test_control_S087_R_096_03_inside_the_leash_and_while_seen_the_unit_is_still
 
     assert pos(lib, w, u)[0] > x15 > 0.0, f"the unit stopped pursuing a seen attacker inside the leash: {_idle_line(lib, w, u)}"
     assert hp(lib, w, attacker) > 0.0 and math.hypot(*pos(lib, w, u)) < LEASH
+
+
+# ---- audit additions: a second hit, a new player order, and the resumed order is still an attack-move -----------------------------------
+
+SECOND_AT = (430.0, 100.0)        # where a second attacker stands (also seen, also out of range)
+Q = (-600.0, 800.0)               # a new point the player orders mid-pursuit, away from P and from the attackers
+
+
+@pytest.mark.parametrize("second", ["same_attacker", "other_attacker"])
+def test_S087_R_087_06_a_second_hit_during_the_pursuit_does_not_move_the_point_of_record(lib, world_factory, second):
+    """Decision 28 point 1: the pursuit is ONE engagement of the order, whatever hits the unit while it lasts. Hit again 5 ticks in, by
+    the same attacker or by a second one, then both attackers die: the unit still ends within the arrival radius of P and not at an
+    attacker's spot (a second hit must not reset the point of record to the attacker). Red today: it walks to the attacker's place."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    first = _hit(lib, w, u)
+    step(lib, w, KILL_TICK)
+    other = first if second == "same_attacker" else spawn(lib, w, SUPPLY, 1, *SECOND_AT)
+    lib.om_unit_deal_damage(w, other, u, HIT)
+    step(lib, w, 3)
+    kill(lib, w, first)
+    kill(lib, w, other)
+
+    step(lib, w, MARCH_TICKS)
+
+    assert _miss(lib, w, u, P) <= ARRIVAL, (
+        f"after a second hit ({second}) and both attackers dying the unit did not end at its ordered point {P}: {_idle_line(lib, w, u)}")
+
+
+@pytest.mark.parametrize("order", ["attack_move", "move"])
+def test_S087_R_087_02_a_new_player_order_during_the_pursuit_wins_over_the_stale_point(lib, world_factory, order):
+    """R-087-02 (the player's own order wins): 5 ticks into the pursuit the player orders a new attack-move (or a plain move) to Q;
+    the attacker then dies. The unit ends within the arrival radius of Q, not of the stale P. GREEN today and after, a guard (not a red
+    test): today's engine honours the new order; it goes red on a build that resumes to the saved point after the player re-ordered."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    attacker = _hit(lib, w, u)
+    step(lib, w, KILL_TICK)
+    if order == "attack_move":
+        attack_move(lib, w, [u], *Q)
+    else:
+        lib.om_command_move(w, u, Q[0], Q[1])
+    step(lib, w, 3)
+    kill(lib, w, attacker)
+
+    step(lib, w, MARCH_TICKS)
+
+    assert _miss(lib, w, u, Q) <= ARRIVAL, (
+        f"after a new {order} to {Q} the unit did not end at Q: {_idle_line(lib, w, u)} ({_miss(lib, w, u, P):.1f} wu from the stale P)")
+
+
+def test_S087_R_087_06_the_resumed_order_is_still_an_attack_move_and_engages_an_enemy_on_the_way(lib, world_factory):
+    """After the pursuit the unit resumes an ATTACK-move toward P, not a plain move: an enemy that comes into range on the way is
+    engaged and killed before the unit goes on to P. A Supply stands on the line to P at x = -600 (out of range of the start, 300);
+    the attacker dies 5 ticks in. Red today: the unit idles at the dead attacker's place and never meets it."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    attacker = _hit(lib, w, u)
+    on_the_way = spawn(lib, w, SUPPLY, 1, -600.0, 0.0)
+    step(lib, w, KILL_TICK)
+    kill(lib, w, attacker)
+
+    step(lib, w, MARCH_TICKS)
+
+    assert hp(lib, w, on_the_way) <= 0.0, f"the resumed unit did not engage the enemy on its way: {_idle_line(lib, w, u)}"
+    assert _miss(lib, w, u, P) <= ARRIVAL, f"and it did not go on to P afterwards: {_idle_line(lib, w, u)}"
+
+
+def test_control_S087_R_087_06_an_attack_moving_unit_never_hit_engages_an_enemy_on_its_way_and_goes_on(lib, world_factory):
+    """Positive control for the engage test (green today and after): the same Supply on the line, no attacker; the unit kills it and
+    goes on to P, so the scene can be passed and 'engaged' reads from the Supply's hp."""
+    w = world_factory(n_regions=1)
+    u = _victim(lib, w, ordered=True)
+    on_the_way = spawn(lib, w, SUPPLY, 1, -600.0, 0.0)
+
+    step(lib, w, MARCH_TICKS)
+
+    assert hp(lib, w, on_the_way) <= 0.0 and _miss(lib, w, u, P) <= ARRIVAL, _idle_line(lib, w, u)
