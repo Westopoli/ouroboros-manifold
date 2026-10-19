@@ -1,0 +1,199 @@
+{
+ "totals": {
+  "chapters": 100,
+  "entries": 969,
+  "events": 88875,
+  "attacks": 48807,
+  "revolts": 316383,
+  "collisions": 24060,
+  "blank_entries": 204,
+  "ripple_entries": 218,
+  "ct0": 302,
+  "ct1": 5,
+  "ct3": 659,
+  "uncovered_above_cutoff_budget_full": 5560,
+  "tier5plus_events": 2952,
+  "tier5plus_events_total_uncovered": 2500,
+  "conquests": 11600,
+  "conquest_owner_change_no_entry": 6917,
+  "ownership_changes": 7027,
+  "ownership_change_no_entry": 6764,
+  "own_change_no_entry_budget_full": 5846,
+  "revolt_rolls": 316383,
+  "revolt_region_no_entry": 309358,
+  "creates_faction_events": 2952,
+  "creates_faction_no_entry": 2500,
+  "conquest_net_reverted": 4137,
+  "sentence_repeat_instances": 589,
+  "sentence_repeat_same_scroll": 12,
+  "fragment_ids_reused_in_campaign": 517,
+  "fragment_ids_used": 1304,
+  "uncovered_above_cutoff_category_capped": 2321,
+  "own_change_no_entry_category_capped": 918,
+  "ct2": 3
+ },
+ "mismatch_classes": {
+  "R065-05_ripple_exceeds_cap2": 42,
+  "R071_sentence_repeat": 589,
+  "blank_text": 91,
+  "family_entry_missing": 97,
+  "lineage_gt2": 1,
+  "owner_change_not_faction_shift": 3,
+  "significance_below_recomputed_lowerbound": 438,
+  "under5_readable": 1
+ },
+ "examples": {
+  "R065-05_ripple_exceeds_cap2": [
+   [
+    "seed1 ch1",
+    "4 ripple entries"
+   ],
+   [
+    "seed1 ch2",
+    "3 ripple entries"
+   ],
+   [
+    "seed2 ch1",
+    "4 ripple entries"
+   ],
+   [
+    "seed3 ch1",
+    "4 ripple entries"
+   ]
+  ],
+  "R071_sentence_repeat": [
+   [
+    "seed1 ch2",
+    "'Word of what was done at the Rasmar reached the Salt Hollow, held by t' first at (1, 1)"
+   ],
+   [
+    "seed1 ch2",
+    "'Word of what was done at the Rasmar reached the Salt Hollow, held by t' first at (1, 1)"
+   ],
+   [
+    "seed1 ch2",
+    "'Disputes were resolved at the local level; appeals to higher authority' first at (1, 8)"
+   ],
+   [
+    "seed1 ch2",
+    "'Disputes were resolved at the local level; appeals to higher authority' first at (1, 8)"
+   ]
+  ],
+  "blank_text": [
+   [
+    "seed1 ch1",
+    "4 blank of 10 (ids [2, 3, 4, 7])"
+   ],
+   [
+    "seed1 ch2",
+    "2 blank of 10 (ids [2, 3])"
+   ],
+   [
+    "seed1 ch3",
+    "1 blank of 10 (ids [9])"
+   ],
+   [
+    "seed1 ch4",
+    "1 blank of 10 (ids [3])"
+   ]
+  ],
+  "family_entry_missing": [
+   [
+    "seed1 ch2",
+    ""
+   ],
+   [
+    "seed1 ch3",
+    ""
+   ],
+   [
+    "seed1 ch4",
+    ""
+   ],
+   [
+    "seed1 ch5",
+    ""
+   ]
+  ],
+  "lineage_gt2": [
+   [
+    "seed6 ch5",
+    "3"
+   ]
+  ],
+  "owner_change_not_faction_shift": [
+   [
+    "seed2 ch1",
+    "id5 region 271 cat23"
+   ],
+   [
+    "seed9 ch1",
+    "id7 region 215 cat23"
+   ],
+   [
+    "seed18 ch1",
+    "id5 region 325 cat23"
+   ]
+  ],
+  "significance_below_recomputed_lowerbound": [
+   [
+    "seed1 ch1",
+    "id6 sig 5.20 vs 7.28"
+   ],
+   [
+    "seed1 ch1",
+    "id7 sig 5.20 vs 6.76"
+   ],
+   [
+    "seed1 ch1",
+    "id8 sig 5.20 vs 7.28"
+   ],
+   [
+    "seed1 ch1",
+    "id9 sig 5.20 vs 7.28"
+   ]
+  ],
+  "under5_readable": [
+   [
+    "seed14 ch2",
+    "4 readable, 10 total"
+   ]
+  ]
+ },
+ "groups": {
+  "family_entries": {
+   "entries_cluster_lineage": 5,
+   "missing": 97,
+   "blank": 0
+  },
+  "chain_entries": {
+   "entries_cluster_chain": 3,
+   "no_chain_event": 0
+  },
+  "blank_shells": {
+   "blank_entries": 204,
+   "scrolls_with_blank": 91
+  },
+  "ripple_over_cap": {
+   "ripple_entries": 218,
+   "scrolls_over_cap": 42
+  },
+  "repeats": {
+   "sentence_repeat_instances": 589,
+   "same_scroll": 12,
+   "fragment_ids_reused": 517,
+   "fragment_ids_used": 1304
+  },
+  "significance_threshold_explanations": {
+   "uncovered_budget_full": 5560,
+   "uncovered_category_capped": 2321,
+   "uncovered_UNEXPLAINED": 0,
+   "owner_change_no_entry_budget_full": 5846,
+   "owner_change_no_entry_category_capped": 918,
+   "owner_change_no_entry_UNEXPLAINED": 0,
+   "significance_below_recomputed_lowerbound": 438
+  }
+ },
+ "seeds": "1-20",
+ "chapters": 5
+}

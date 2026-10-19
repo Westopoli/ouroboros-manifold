@@ -2,6 +2,5 @@
 # (FAIL: res://tests/<file>.gd, or a pytest node id), then " :: ", then the ledger or finding row id that keeps it visible. A GATE REJECT line that names a test
 # listed here does not stop the clerk pushing main; a reject outside this file and lane_plays_known_red.txt does. The entry leaves when the row closes.
 # See also: scripts/specfactory/lane_plays_known_red.txt (plays); the merge gate itself does not read this file.
-res://tests/test_tactical_camera.gd :: FINDING-edge-scroll-xvfb
 res://tests/test_time_jump_replay.gd :: FINDING-gd-red-main-2026-10-12
 res://tests/test_vg_e_e1p.gd :: FINDING-gd-red-main-2026-10-12

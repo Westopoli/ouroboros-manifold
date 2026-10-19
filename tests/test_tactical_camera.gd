@@ -222,11 +222,17 @@ func _wheel(up: bool, at: Vector2) -> void:
 	Input.parse_input_event(e)
 
 
+# Under xvfb Viewport.get_mouse_position() follows the display server pointer, not the synthetic event, so the pointer is warped first
+# (the guard and the flush copy scenes/mockups/_shared/qa_driver.gd _make_motion and _push). Headless has no pointer to warp; the event alone suffices.
+# See also: TD-VG-A-17 (docs/northstar/plans/push_ledger_2026-09-22.md).
 func _mouse_to(p: Vector2) -> void:
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.warp_mouse(Vector2i(_win(p)))
 	var e := InputEventMouseMotion.new()
 	e.position = _win(p)
 	e.global_position = e.position
 	Input.parse_input_event(e)
+	Input.flush_buffered_events()
 
 
 func _frames(n: int) -> void:
