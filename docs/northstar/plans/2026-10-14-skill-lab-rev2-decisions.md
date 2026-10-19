@@ -132,3 +132,9 @@ Golden hashes: the mirror control's hash is stale on the lab tip because lab-sid
 3. The artifact learns that a batch ran the ground scene from the rows (any row whose play is a ground scene), with a positive test.
 4. The cone 3 by 3 grid is a table of signed gain per range and half-angle, one per (play, layout, baseline role).
 `point` is written by `sweep.py` as a fight-row label and reaches the CSV as the column `point`; the fixed-key list in `rows.py` is unchanged.
+
+## 35. Artifact verdict rules (Architect 2026-10-19)
+1. C2 verdict = the existing `check_c2` statistics (rank agreement rho at or above `c2_rank_agreement`; off-trend share at or below `c2_off_trend_share` with `c2_off_trend_margin`), over every CSV row pooled and per headcount cell in the order of `conditions.c2_table`, the raw counts of the five agreement words beside, per basis.
+2. The row's `predicted_count`, `predicted_type` and `agreement` columns are the window basis (decision 29). Whole-fight words are re-derived from the totals: `predicted_count` from `firing_unit_seconds_0/1` (larger side; equal = `tie`, agreement n/a), `predicted_type` from `weighted_unit_seconds_0/1` (never from the count), outcome as in the row. (The writer's header read predicted_type from the count totals; corrected here.)
+3. C1 per (family, play, layout, point, knob value) and baseline role, at the equal-numbers cell (enemy_heads 16): the mean advantage of the play's rows there against the largest absolute advantage of the role's rows there, plus `c1_min_firing_advantage`, strict greater-than. A scan without that cell (cut below 16) has no C1 and says so.
+4. The mirror C1 is not computed by the artifact command (a CSV row does not carry the mirror scan); the artifact lists the naive_attacker and naive_defender C1 and says the mirror C1 lives in the engine-run `evaluate_all`.
