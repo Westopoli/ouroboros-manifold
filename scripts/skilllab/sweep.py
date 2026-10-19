@@ -303,9 +303,11 @@ def _naive_side(build, role):
             counts[(g.unit, g.layer if role == "naive_defender_play_layer" else enemy[0].layer)] += g.count
         blobs = tuple(Group(side=0, unit=u, count=n, formation="blob", x=ax, y=ay, facing_deg=own[0].facing_deg, layer=layer,
                             order=order, params={"radius": 80 + 12 * math.sqrt(n)}) for (u, layer), n in counts.items())
+        blobs = tuple(scenes.skip_blocked(g, setup.terrain) for g in blobs)
         point = _mean_point(blobs) if order == "guard" else setup.point
-        wrapped.labels["prefight"] = build.labels.get("prefight")
-        return dataclasses.replace(setup, groups=blobs + tuple(enemy), timeline=(), point=point)
+        out = dataclasses.replace(setup, groups=blobs + tuple(enemy), timeline=(), point=point)
+        wrapped.labels["prefight"] = scenes.preflight(out, None)
+        return out
     wrapped.labels = {}
     return wrapped
 
@@ -342,28 +344,41 @@ def _refusal(builds_by_role):
 
 
 def _usable_baselines(by_role, refused, family, play, layout):
-    """The baseline roles whose build fits the cell; one that is refused is listed and left out, the play still runs."""
-    roles = []
+    """(roles, top): the baseline roles whose build fits the cell, and the last headcount at which every one of them placed (decision
+    26): ENEMY_TO when none ran out, None when one cannot be placed at ENEMY_FROM. A baseline refused no_reach or unroutable at the
+    smallest or largest headcount, or that runs out of room, is listed with its role and left out; the play still runs."""
+    roles, top = [], ENEMY_TO
     for r in by_role:
         if r in ("play", "reach_zero"):
             continue
         bad = _refusal({r: by_role[r]})
-        if bad:
+        if bad and bad[1] != "no_fit":
             refused.append({"family": family, "play": play, "layout": layout, "role": r, "reason": bad[1]})
-        else:
-            roles.append(r)
-    return tuple(roles)
+            continue
+        build = by_role[r]
+        words = {}
+        for heads in range(ENEMY_FROM, ENEMY_TO + 1):
+            build(heads, False)
+            words[heads] = getattr(build, "labels", {}).get("prefight")
+        short = [heads for heads, word in words.items() if word == "no_fit"]
+        if short:
+            refused.append({"family": family, "play": play, "layout": layout, "role": r, "reason": "no_fit"})
+            top = None if top is None or min(short) <= ENEMY_FROM else min(top, min(short) - 1)
+        roles.append(r)
+    return tuple(roles), top
 
 
-def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, fight_fn, map_fn, full_scan):
+def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, fight_fn, map_fn, full_scan, top=ENEMY_TO):
+    """Scan ENEMY_FROM..top. A scan cut short of ENEMY_TO by a baseline that ran out of room is neither a ceiling hit nor a finding."""
     applied = Applied(build, point)
-    result = scan_mod.scan(applied, SIZE, ENEMY_FROM, ENEMY_TO, replicates=replicates, fight_fn=fight_fn, map_fn=map_fn,
+    cut = top < ENEMY_TO
+    result = scan_mod.scan(applied, SIZE, ENEMY_FROM, top, replicates=replicates, fight_fn=fight_fn, map_fn=map_fn,
                            full_scan=full_scan)
     for c in result.cells:
         for f in c.fights:
             rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), baseline=baseline,
-                                           ceiling_hit=int(result.ceiling_hit), prefight=applied.prefight.get(c.enemy_heads, "ok"),
-                                           family=family, play=play, layout=layout, kind=point.kind, enemy_heads=c.enemy_heads))
+                                           ceiling_hit=0 if cut else int(result.ceiling_hit),
+                                           prefight=applied.prefight.get(c.enemy_heads, "ok"), baseline_no_fit=int(cut), family=family, play=play, layout=layout, kind=point.kind, enemy_heads=c.enemy_heads))
     return result
 
 
@@ -372,13 +387,13 @@ def _control_rows(rows, family, play, layout, point, build, replicates, fight_fn
     cell = scan_mod.cell(applied, SIZE, replicates, fight_fn=fight_fn, map_fn=map_fn)
     for f in cell.fights:
         rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), prefight=applied.prefight.get(SIZE, "ok"),
-                                       family=family, play=play, layout=layout, kind=point.kind, enemy_heads=SIZE))
+                                       baseline_no_fit=0, family=family, play=play, layout=layout, kind=point.kind, enemy_heads=SIZE))
     return cell.fights
 
 
 def _break_even(result):
     """The break-even a gain is read from: a ceiling hit is the top of the range, no break-even is 0."""
-    return ENEMY_TO if result.ceiling_hit else (result.beats or 0)
+    return result.cells[-1].enemy_heads if result.ceiling_hit else (result.beats or 0)
 
 
 def _defects(rows):
@@ -397,7 +412,7 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
     if caps is None:
         caps = detect() if family in ("arc", "cone") else Capabilities(True, True)
     entry = {"family": family, "skipped": skip_reason(family, caps), "csv": None, "rows": 0, "refined": [], "refined_vs": {},
-             "refused": [], "controls": {}}
+             "refused": [], "baseline_no_fit": [], "controls": {}}
     if entry["skipped"]:
         return entry
     rows, refined, refined_vs, verdicts = [], set(), {}, {}
@@ -421,15 +436,19 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
             if bad:
                 entry["refused"].append({"family": family, "play": play, "layout": layout, "role": bad[0], "reason": bad[1]})
                 continue
-            roles = _usable_baselines(by_role, entry["refused"], family, play, layout)
+            roles, top = _usable_baselines(by_role, entry["refused"], family, play, layout)
+            if top is None or top < ENEMY_TO:
+                entry["baseline_no_fit"].append({"family": family, "play": play, "layout": layout, "last_headcount": top})
+            if top is None:
+                continue
             for r in roles:
                 refined_vs.setdefault(r, set())
             results = {}
 
             def fight_point(point):
-                got = {"play": _scan_rows(rows, family, play, layout, point, "none", by_role["play"], *scan_args)}
+                got = {"play": _scan_rows(rows, family, play, layout, point, "none", by_role["play"], *scan_args, top)}
                 for r in roles:
-                    got[r] = _scan_rows(rows, family, play, layout, point, r, by_role[r], *scan_args)
+                    got[r] = _scan_rows(rows, family, play, layout, point, r, by_role[r], *scan_args, top)
                 return got
 
             if family in REFINABLE:
@@ -500,7 +519,7 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
     out.mkdir(parents=True, exist_ok=True)
 
     def work(**more):
-        rows, refused, words = [], [], collections.Counter()
+        rows, refused, words, cuts = [], [], collections.Counter(), []
         point = next(p for p in grid("vision") if p.value == 0.5)
         control_set = control_builds or default_control_builds()
         for layout, features in layouts.items():
@@ -512,23 +531,27 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
                     words[bad[1]] += 1
                     continue
                 listed = []
-                roles = _usable_baselines(by_role, listed, "vision", play, layout)
+                roles, top = _usable_baselines(by_role, listed, "vision", play, layout)
                 refused += [{k: v for k, v in r.items() if k != "family"} for r in listed]
                 words.update(r["reason"] for r in listed)
+                if top is None or top < ENEMY_TO:
+                    cuts.append({"play": play, "layout": layout, "last_headcount": top})
+                if top is None:
+                    continue
                 words["ok"] += 1
                 for r in ("play",) + roles:
                     _scan_rows(rows, "vision", play, layout, point, "none" if r == "play" else r, by_role[r], replicates,
-                               more.get("fight_fn"), more.get("map_fn"), full_scan)
+                               more.get("fight_fn"), more.get("map_fn"), full_scan, top)
         for name, heads in SMOKE_CONTROLS:
             applied = Applied(control_set[name], dataclasses.replace(point, settings={}, kind="control_smoke"))
             for f in scan_mod.cell(applied, heads, replicates, fight_fn=more.get("fight_fn"), map_fn=more.get("map_fn")).fights:
                 rows.append(rows_mod.fight_row(f, family="controls", play=name, layout="none", kind="control_smoke",
-                                               enemy_heads=heads))
+                                               enemy_heads=heads, baseline_no_fit=0))
             words["ok"] += 1
         rows_mod.write_rows(rows, out / "smoke.csv")
         summary = {"rows_sha256": hashlib.sha256((out / "smoke.csv").read_bytes()).hexdigest(), "rows": len(rows),
                    "outcomes": dict(sorted(collections.Counter(r["outcome"] for r in rows).items())),
-                   "prefight": dict(sorted(words.items())), "refused": refused, "defects": _defects(rows)}
+                   "prefight": dict(sorted(words.items())), "refused": refused, "baseline_no_fit": cuts, "defects": _defects(rows)}
         (out / "smoke_summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
         return summary
 
