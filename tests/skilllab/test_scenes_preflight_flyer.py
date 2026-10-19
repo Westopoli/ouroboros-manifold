@@ -1,14 +1,14 @@
-# spec: LAB-REV2-L6 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, the L6 row: scenes.py; Architect ruling 2026-10-14); R-001-07, R-004-01
-"""scenes.preflight does not route-check a flyer on the ground walk mask, but still checks it against walls on its own layer.
+# spec: LAB-REV2-L6 / L2 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md; decisions 20 and 27 of 2026-10-14-skill-lab-rev2-decisions.md); R-001-07, R-004-01
+"""scenes.preflight routes a flyer on the 50 wu grid like a walker; only the mask differs (decisions 20 and 27, Architect 2026-10-19).
 
-Ruling (Architect, 2026-10-14, binding): a mover whose unit type is not walking is exempt from the generated field's walk mask in the
-unroutable read (R-001-07, R-004-01: flyers change layer anywhere nothing blocks). It still gets no_fit and no_reach. It is checked
-against blocked cells on its own flight layer by a straight-line cell walk from its placed point to the target; a wall whose layer
-span (Block.layer_lo..layer_hi; blocked_layer_top is layer_hi) reaches the flyer's layer makes it unroutable, so the exemption is from
-the ground mask, not from walls. Walking movers are unchanged (breadth-first search over open 50 wu cells).
+Ruling (binding): every mover is breadth-first routed on the 50 wu grid from its start to the point. A flyer's mask is the cells not
+blocked at its layer (a block whose blocked_layer_top, Block.layer_hi, reaches the flyer's layer blocks it; one below passes); the
+terrain-walk mask does not apply to it (R-001-07, R-004-01). A walker's mask is the terrain-walkable cells that are not blocked. On a
+space scene (no terrain) the two masks coincide, so a flyer goes round a wall through its gap exactly as a walker does. The earlier
+straight-line cell walk is RETIRED (TD-LAB-REV2-L6-flyer). A flyer still gets no_fit and no_reach.
 
-How a type is a walker (fixed here, from tests/skilllab/test_fight_movement.py): Setup.unit_types[name]["movement"] == "walking".
-A built-in type, or a custom one with no "movement" key, is a flyer.
+How a type is a walker (decision 27): Setup.unit_types[name]["movement"] == "walking" when the play gives it, else the engine's own
+reading (Engine.movement_kind; an unset type reads flying). A built-in type, or a custom one with no "movement" key, is a flyer.
 
 Geometry (seed 11, 12000 canvas, layer 0 = band 1, measured 2026-10-19): (10250, 2750) is walkable ground in an 81-cell pocket of
 the layer 0 walk mask that is not connected to the main ground, where (2100, 2000) lies; a walker there cannot reach it. Hand-built
@@ -84,10 +84,10 @@ def test_control_the_pocket_is_cut_off_from_the_main_ground(lib):
     assert _components_differ(lib)
 
 
-# --- the ground mask exemption (case 1) and its positive control (case 4) ---
+# --- the terrain-walk mask does not apply to a flyer (case 1); the positive pair is the walker from the same pocket (case 4) ---
 
 def test_a_flyer_whose_start_is_cut_off_on_the_ground_mask_is_ok(lib):
-    """Red on the lab branch: preflight reads the walk mask for every mover, so it answers "unroutable"."""
+    """A non-walkable band cuts the pocket off on the walk mask; the flyer's mask is unblocked cells only, so it reads ok."""
     assert scenes.preflight(_setup("Vanguard", POCKET, MAIN, FIELD), lib) == "ok"
 
 
@@ -119,20 +119,41 @@ def test_control_a_walker_on_the_same_layer_reads_the_same_walls(lib):
     assert scenes.preflight(_walk(_wall(layer_hi=FLY_LAYER - 1)), lib) == "ok"
 
 
-# --- the straight-line cell walk (the ruling's mechanism) ---
+# --- the flyer is routed on the grid, round a gap (decisions 20 and 27) ---
 
-def test_a_flyer_is_not_routed_around_a_wall_with_a_gap(lib):
-    """The wall spans y 0..700 and the line from (500, 500) to (3500, 500) crosses it: unroutable for a flyer even though a gap at
-    y 700..1000 exists. Red on the lab branch (the breadth-first search goes round the gap and answers "ok")."""
-    assert scenes.preflight(_fly(_wall(FLY_LAYER, y0=0.0, y1=700.0)), lib) == "unroutable"
+def test_a_flyer_is_routed_round_a_wall_through_its_gap(lib):
+    """The wall spans y 0..700, so a gap at y 700..1000 exists at the flyer's layer: the grid search goes round it and reads ok. Red
+    while the source walks a straight line from (500, 500) to (3500, 500) across the wall and answers "unroutable"."""
+    assert scenes.preflight(_fly(_wall(FLY_LAYER, y0=0.0, y1=700.0)), lib) == "ok"
 
 
-def test_control_a_walker_is_routed_around_the_same_gap(lib):
+def test_a_flyer_with_no_gap_at_its_layer_is_unroutable(lib):
+    """Positive control for the gap case: the same wall over the full height (no gap) at the flyer's layer refuses it."""
+    assert scenes.preflight(_fly(_wall(FLY_LAYER, y0=0.0, y1=1000.0)), lib) == "unroutable"
+
+
+def test_a_flyer_whose_gap_is_closed_by_a_second_block_at_its_layer_is_unroutable(lib):
+    """Two blocks at the flyer's layer leave no gap: y 0..700 and y 700..1000 in the same wall column."""
+    t = Terrain(canvas=(4000.0, 1000.0), blocks=(
+        Block(x0=1800.0, y0=0.0, x1=2000.0, y1=700.0, layer_lo=0, layer_hi=FLY_LAYER),
+        Block(x0=1800.0, y0=700.0, x1=2000.0, y1=1000.0, layer_lo=0, layer_hi=FLY_LAYER)))
+    assert scenes.preflight(_fly(t), lib) == "unroutable"
+
+
+def test_a_flyer_whose_gap_block_stops_below_its_layer_is_ok(lib):
+    """The upper piece of the wall (y 700..1000) tops out below the flyer's layer, so it is a gap for the flyer."""
+    t = Terrain(canvas=(4000.0, 1000.0), blocks=(
+        Block(x0=1800.0, y0=0.0, x1=2000.0, y1=700.0, layer_lo=0, layer_hi=FLY_LAYER),
+        Block(x0=1800.0, y0=700.0, x1=2000.0, y1=1000.0, layer_lo=0, layer_hi=FLY_LAYER - 1)))
+    assert scenes.preflight(_fly(t), lib) == "ok"
+
+
+def test_control_a_walker_is_routed_round_the_same_gap(lib):
     assert scenes.preflight(_walk(_wall(FLY_LAYER, y0=0.0, y1=700.0)), lib) == "ok"
 
 
-def test_a_flyer_whose_line_misses_the_wall_is_ok(lib):
-    """A wall at y 800..1000 reaches the flyer's layer but is off the straight line at y 500."""
+def test_a_flyer_whose_route_misses_the_wall_is_ok(lib):
+    """A wall at y 800..1000 reaches the flyer's layer but is off the way at y 500."""
     assert scenes.preflight(_fly(_wall(FLY_LAYER, y0=800.0, y1=1000.0)), lib) == "ok"
 
 
@@ -156,7 +177,6 @@ def test_a_flyer_that_cannot_reach_a_holders_layer_is_no_reach_on_open_blank_gro
 
 
 def test_a_cut_off_flyer_that_cannot_reach_a_holders_layer_is_no_reach_not_unroutable(lib):
-    """The exemption must reach no_reach: the pocket flyer is not unroutable, so the answer is no_reach. Red on the lab branch
-    (it answers "unroutable")."""
+    """The flyer's mask must reach no_reach: the pocket flyer is not unroutable, so the answer is no_reach."""
     s = _setup("Vanguard", POCKET, MAIN, FIELD, layer=0, holder_order="guard", holder_layer=3)
     assert scenes.preflight(s, lib) == "no_reach"
