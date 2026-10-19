@@ -102,3 +102,33 @@ Wiring: L5 takes ownership of `__main__.py` for the `artifact` command (reads th
 1. A member of a group attack-move hit from out of range pursues as the lone-unit branch does and its point of record is its slot (the group's point plus its formation offset); when the pursuit ends it resumes toward the slot. Tested: a group of two or more, one member hit by a long-range attacker, attacker dies, the member's destination is its slot again.
 2. The pursuit ends when the attacker dies, when the pursuer passes the R-096-03 leash (200 wu from its acquisition anchor), or when the attacker is no longer seen by the pursuer's side (a unit cannot chase what it cannot see; the per-tick validation of R-087-08 drops it). "Moves N wu away" is not a trigger. Three tests, one per ending; the leash and sight endings resume toward the original point like the death.
 3. The resume is immediate: on the tick the pursuit ends the destination is the original point again, within the 4-tick cohort stagger of R-087-08; the unit does not walk to the attacker's last spot first. The writer's 60-tick bound narrows to 4 (a rule number, not a fixture).
+
+## 31. L5 audit items (Architect 2026-10-19)
+A. Sweep rows carry a `point` column (string, family-local label of the series the row belongs to): cone rows have `knob_value` = range and `point` = `half=<deg>`; emitting rows have `knob_value` = sight and `point` = `vision=<v>`; every other family writes `point` = `-`. Crossing detection groups by (family, play, layout, point), so each half-angle is its own series along range and each vision level its own series along sight; the artifact also shows the cone 3 by 3 grid. L4 follow-on on `sweep.py` and `rows.py` (tiny), L5 reads it.
+B. The mirror C1 is kept beside the per-baseline C1 as its own row; the artifact lists mirror, naive_attacker and naive_defender.
+C. C1 uses the opening window like C2 (decision 29), whole fight beside it. The noise reference against a naive defender at its post is the largest |advantage| over that baseline's fights, strict greater-than, plus the minimum.
+D. A crossing diagram carries arrows to the break-even rows at both bracketing headcounts for the play and for the baseline, each labelled with (enemy_heads, outcome), and draws the placed units of the fight at the bracketing cell; the artifact sentence under it gives the counts. A number without its diagram is not evidence (Westley 2026-10-13).
+E. The map-report label is kept under the name `baseline_ceiling` (decision 29 item 3), six labels; the ruler row `TD-LAB-REV2-L5-maplabels` is confirmed with the rename.
+F. Confirmed: the artifact header lists every DRAFT number in force once; the slope divisor joins that list only in a batch that runs the ground scene; the 0.25x to 4x band is a ruling, not a draft number, and is not marked; the legend marks only what its rows touch.
+G. Stands (decision 29 item 7).
+
+## 32. BASE readings (Architect 2026-10-19)
+1. A baseline refused by pre-flight (no_reach, unroutable) drops only that baseline; the play runs against the remaining ones and the refusal is listed with its role. A no_reach on a layer play's attacker-layer variant is expected, not a defect.
+2. A baseline that cannot be placed at headcount 8 lists the layout as `baseline_no_fit` with last_headcount None, no scan rows for the play on that layout, no defect.
+3. A scan cut at K by `baseline_no_fit` that the play wins throughout 8 to K is an always-won cut scan: not a ceiling hit (a ceiling hit is beating 48), not a finding; refinement runs only inside 8 to K; the artifact says "won through K, scan cut by baseline_no_fit" so it is never read as "no crossing exists".
+4. The blob's fill order continues over free cells without a fixed limit; "cannot hold the count" means no free cell remains inside the layout bounds (the existing radius check against free cells). The order is deterministic (rows identical at 1 and 12 workers).
+5. A blob of one unit follows the same rule with no special case: the anchor is radius zero; if blocked, the nearest free cell by increasing radius. One test.
+
+## 33. L8 re-engage readings (Architect 2026-10-19)
+1. A side re-arms only after one of its own units fires or moves and then another `REENGAGE_SILENCE_TICKS` of silence. An unbroken silence is one event; a re-engage that produces no movement stays silent and the fight caps, which is a defect to trace.
+2. `reengage_0/1` counts events (one ordered call per trigger), not units ordered.
+3. The order is an (x, y); each unit keeps its own layer (decision 2's contact rule). The centroid is taken over the enemy units in the set of item 4 on every layer.
+4. The centroid set is the living enemy units visible to the ordering side, never all living units (fog would leak into the orders). The tests change from all-living to visible in the fix pass.
+Golden hashes: the mirror control's hash is stale on the lab tip because lab-side pieces (orders, fight end, placement) legitimately changed the control fight. The re-record under `TD-LAB-REV2-golden` is the landing clerk's and the row is written at the landing; before re-recording, the clerk runs the engine-only proof of the spec's golden procedure (the old lab's three controls against the new engine at arc 360 and cone off reproduce the old hashes; E1 and E1b excluded by design) and pastes the three hashes in the ledger row.
+
+## 34. L5 fix-pass readings (Architect 2026-10-19)
+1. Bracketing headcounts: per knob value and per scan (play, baseline) an arrow to the first row of the break-even cell and one to the first lost cell, labelled (enemy_heads, outcome); a ceiling scan has only its top cell, a lost-everywhere scan only its first cell.
+2. The `artifact` command computes the condition verdicts itself with the conditions module's existing thresholds (all pinned by earlier rulings; no new number) and shows each verdict with its threshold name.
+3. The artifact learns that a batch ran the ground scene from the rows (any row whose play is a ground scene), with a positive test.
+4. The cone 3 by 3 grid is a table of signed gain per range and half-angle, one per (play, layout, baseline role).
+`point` is written by `sweep.py` as a fight-row label and reaches the CSV as the column `point`; the fixed-key list in `rows.py` is unchanged.
