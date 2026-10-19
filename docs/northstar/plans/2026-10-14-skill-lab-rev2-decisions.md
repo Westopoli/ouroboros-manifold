@@ -58,3 +58,7 @@ The four new plays are placed with the anchor kinds pinned in `tests/skilllab/te
 
 ## 19. Build order
 L3 first; then L4 and L6 in parallel (disjoint files; L6 touches fight.py/scenes.py/terrain.py/ground/*, L4 batches/sweep/scan/depth/breakeven/pool/__main__); then L5, S, L7.
+
+## 20. Flyers in preflight (Architect 2026-10-19): a mover whose type is not walking is not route-checked on the ground walk mask (still no_fit, no_reach); it is route-checked against blocked cells on its own flight layer by a straight-line cell walk (a wall whose blocked_layer_top reaches its layer blocks it). no_fit on field_seed terrain reads terrain_walkable_at for every mover.
+
+## 21. L4 (Architect 2026-10-14/19): sweep reports ruling-3 baselines in the baseline column; depth keeps blob and line; ceiling_hit = won everywhere; cone on Vanguard only; arc and cone families skipped with a recorded reason when the library lacks the symbols; refinement sign vs naive_attacker (and a second listed crossing vs naive_defender for defending plays); the orders_per_unit default flips to False only because E1 lands in the same landing (revert the flip in the same commit if E1 is pulled).

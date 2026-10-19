@@ -260,7 +260,7 @@ Rules
 - R-180-07  Given the commander, When he turns the unit-mix behaviour off, the counter behaviour off, or both, Then the rules stop that behaviour; the switches can be changed at any time during a mission (Westley, 2026-10-06), and when the mix behaviour is off the commander picks at the building.
 
 Inputs: the dial; pointing requests; override choices; the two switches.
-Outputs: ticker lines; the economy's commands. The requests are a second channel beside the four commands of E-13.
+Outputs: ticker lines; the economy's commands. The requests are a second channel beside the five commands of E-13.
 Open flags: Q-180-01. Screens for these are E-16.
 
 ### S-181 — The enemy's economy
