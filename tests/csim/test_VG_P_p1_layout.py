@@ -37,9 +37,11 @@ E-17 (docs/bible/epics/E-17-map-generation.md):
 
 R-191-02  Given a land map, When places are found, Then each side has a base of operations (E-22 S-177), and the map has the objective. An attacker's base is the forward base from which he produces (E-22 S-177); supply lines are not an attacker-only rule (Westley, 2026-10-07).
 
-R-191-03  Given a land map, When economic locations are found, Then they are placed throughout the map (E-22 S-177), in numbers that scale with the players and the canvas (Westley, 2026-10-03) [Q-191-05: the counts and the spacing].
+R-191-03  Given a land map, When economic locations are found, Then they are placed throughout the map (E-22 S-177), in numbers that scale with the players and the canvas (Westley, 2026-10-03) (the counts and the spacing come from the lab's layout search; Q-191-05 closed 2026-10-15).
 
-R-191-04  Given the objective, When the significant resources are placed, Then each side is at the same distance from the objective and from each significant resource, whatever shape the map takes (Westley, 2026-10-03: only those distances matter, and the more the shapes vary under that constraint the better), except where an archetype's slant says otherwise (Westley, 2026-10-03), so a side picks one or fights for both (E-22 S-177) [Q-191-05: what the distance is measured by, its tolerance, and how much the distances differ on a slanted archetype].
+R-191-04  Given the objective, When the significant resources are placed, Then each side is at the same distance from the objective and from each significant resource, whatever shape the map takes (Westley, 2026-10-03: only those distances matter, and the more the shapes vary under that constraint the better), except where an archetype's slant says otherwise (Westley, 2026-10-03), so a side picks one or fights for both (E-22 S-177) (measured along the walking route; the tolerance and the slant per archetype come from the lab's layout search, stated as the measured worth of the situations each side holds, walking-distance difference as the interim unit; Westley, 2026-10-15, Q-191-05 and Q-191-09 closed).
+
+Q-191-15 (docs/northstar/ambiguity_register.md, open): beside R-191-04 above, this piece's equal-distance detector measures the straight line, D(p) = |p - B0| - |p - B1| within DRAFT-resource-fairness 600 wu, on the stub terrain where routes are straight; R-191-04's walking distance arrives with the lab's layout search and the route planner on real terrain, and VG-P3 (wiring) or a P1b fix piece closes Q-191-15.
 
 R-191-05  Given the terrain, When expansion sites are found, Then they are settlements that can be grown into further bases (E-22 S-175 and S-177).
 
