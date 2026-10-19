@@ -158,6 +158,85 @@ def _placed(g):
     return formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)
 
 
+def _fill_cells(n, x, y, radius):
+    """formations._blob's fill order (anchor first when n is odd, then each pair) continued without end: i = pairs, pairs + 1, ...
+    Decision 36. See also: formations._blob. n >= 2."""
+    pairs = n // 2
+    if n % 2:
+        yield float(x), float(y)
+    i = 0
+    while True:
+        d = radius * math.sqrt((i + 0.5) / pairs)
+        a = i * formations._GOLDEN_ANGLE
+        dx, dy = round(d * math.cos(a), 6), round(d * math.sin(a), 6)
+        yield float(x + dx), float(y + dy)
+        yield float(x - dx), float(y - dy)
+        i += 1
+
+
+def _route_region(terrain, layer, x, y):
+    """(cells, cell_of, start): the 50 wu route cells connected over open cells (centre in no block reaching `layer`) to the cell of
+    (x, y), or to the nearest open cell when that one is blocked (decision 38); start is None when no cell is open."""
+    cols, rows = math.ceil(terrain.canvas[0] / ROUTE_CELL), math.ceil(terrain.canvas[1] / ROUTE_CELL)
+
+    def cell_of(px, py):
+        return min(max(int(px // ROUTE_CELL), 0), cols - 1), min(max(int(py // ROUTE_CELL), 0), rows - 1)
+
+    def centre(c):
+        return (c[0] + 0.5) * ROUTE_CELL, (c[1] + 0.5) * ROUTE_CELL
+
+    def open_cell(c):
+        cx, cy = centre(c)
+        return not any(_in_block(b, layer, cx, cy) for b in terrain.blocks)
+
+    start = cell_of(x, y)
+    if not open_cell(start):
+        near = [(math.hypot(centre((i, j))[0] - x, centre((i, j))[1] - y), i, j)
+                for i in range(cols) for j in range(rows) if open_cell((i, j))]
+        if not near:
+            return set(), cell_of, None
+        start = min(near)[1:]
+    seen, queue = {start}, collections.deque([start])
+    while queue:
+        cx, cy = queue.popleft()
+        for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+            if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and open_cell(n):
+                seen.add(n)
+                queue.append(n)
+    return seen, cell_of, start
+
+
+def skip_blocked(g, terrain):
+    """A naive blob whose next cell is blocked takes the next free cell of its fill order (decisions 26, 36, 38): a point inside the
+    canvas, in no block reaching the group's layer, whose route cell is open and in the anchor's connected region. A blob of one unit
+    that cannot stand on its anchor takes the centre of the nearest open cell. A region that cannot hold the count leaves the
+    open-ground placement, which the pre-flight then reads as no_fit."""
+    if g.formation != "blob" or terrain is None or g.count < 1:
+        return g
+    width, height = terrain.canvas
+    inside = lambda p: 0.0 <= p[0] <= width and 0.0 <= p[1] <= height
+    if not terrain.blocks and all(inside(p) for p in _placed(g)):
+        return g
+    seen, cell_of, start = _route_region(terrain, g.layer, g.x, g.y)
+    free = lambda p: (inside(p) and cell_of(*p) in seen and not any(_in_block(b, g.layer, p[0], p[1]) for b in terrain.blocks))
+    if g.count == 1:
+        if free((g.x, g.y)) or start is None:
+            return g
+        return dataclasses.replace(g, formation="points", params={"points": [((start[0] + 0.5) * ROUTE_CELL, (start[1] + 0.5) * ROUTE_CELL)]})
+    reach = math.hypot(width, height) + 1.0
+    points = []
+    for p in _fill_cells(g.count, g.x, g.y, g.params["radius"]):
+        if math.hypot(p[0] - g.x, p[1] - g.y) > reach:
+            return g
+        if free(p):
+            points.append(p)
+            if len(points) == g.count:
+                break
+    if points == _placed(g):
+        return g
+    return dataclasses.replace(g, formation="points", params={"points": points})
+
+
 def _no_fit(setup, engine):
     """A placed unit stands inside a block on its layer, or on ground a generated field says is not walkable (no shifting, ruling 6)."""
     t = setup.terrain
@@ -334,6 +413,11 @@ def placed_scene(layout, play, start_distance, features, counter=False):
         hold = _placed_mean([placed[i] for i in d_idx])
         final = tuple(dataclasses.replace(g, x=g.x + tx, y=g.y + ty, goal=None if g.goal is None else (g.goal[0] + tx, g.goal[1] + ty))
                       for g in placed)
+        point = (hold[0] + tx, hold[1] + ty)
+        if play == "naive":
+            skipped = tuple(skip_blocked(g, terrain) for g in final)
+            if skipped != final:
+                final, point = skipped, _placed_mean([g for g in skipped if g.side == ds])
         enemy_anchor = next((g.x, g.y) for g in final if g.side == 1)
 
         def step_goal(t):
@@ -344,7 +428,7 @@ def placed_scene(layout, play, start_distance, features, counter=False):
             return (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x) + tx, placed[t.group].y + t.goal[1] - groups[t.group].y + ty)
         steps = tuple(dataclasses.replace(t, when=("seen",) if play == "s4_bait" else t.when, goal=step_goal(t)) for t in steps_in)
         setup = Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain,
-                      point=(hold[0] + tx, hold[1] + ty))
+                      point=point)
         build.labels["prefight"] = preflight(setup, None)
         return setup
     build.labels = {"placement_shift": 0.0, "prefight": None}
