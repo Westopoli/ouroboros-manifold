@@ -1,0 +1,30 @@
+OBEY pass 1   seed 2   canvas 8000   FAIL (ring)
+check 51 ms (draft 250)   route_count 2 (2 + floor(u*3))
+choke asked 501 wu, measured 510 wu   at 0.56 of the base line (rolled 0.56)
+per point: routes small / big (need 2 / 1), pad ring max slope (limit 35 deg)
+  base_b    small 4  big 1  ring 30.7 deg  ok
+  objective small 4  big 3  ring 61.8 deg  FAIL
+  site_0    small 4  big 3  ring 59.7 deg  FAIL
+  site_1    small 4  big 2  ring 33.8 deg  ok
+  base_a                         ring 33.3 deg  ok
+keys: V overlay  F1-F3 seed  C canvas  R regenerate
+drafts: , . select  [ ] nudge
+> base-inset 2400
+  resource-clearance 2400
+  route-small-width 180
+  route-big-width 600
+  vantage-offset 1500
+  base-pad 1200
+  objective-pad 600
+  site-pad 400
+  choke-wall 900
+  wall-rise 400
+  vantage-rise 300
+  route-max-count 4
+  obey-budget 250
+  choke-length 600
+  wall-gap 125
+  wall-face 100
+  ramp-grade 28
+  ramp-reach 2400
+  vantage-radius 250

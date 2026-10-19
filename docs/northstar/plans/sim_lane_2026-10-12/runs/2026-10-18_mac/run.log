@@ -1,0 +1,19 @@
+2026-10-18 20:47:04 offline run begins (smoke=0) out=/Users/westley/offline_2026-10-18
+2026-10-18 20:47:04 START make
+2026-10-18 20:47:04 make wall=0s exit=0
+2026-10-18 20:47:04 START mission_choice
+2026-10-18 20:47:57 mission_choice wall=53s exit=0
+2026-10-18 20:47:57 START chronicle_twin
+2026-10-18 20:48:25 chronicle_twin wall=28s exit=0
+2026-10-18 20:48:25 START csim_controls
+2026-10-18 20:49:01 csim_controls wall=36s exit=1
+2026-10-18 20:49:01 START csim_parity
+2026-10-18 20:49:47 csim_parity wall=46s exit=0
+2026-10-18 20:49:47 START csim_scale
+2026-10-18 20:49:47 csim_scale wall=0s exit=0
+2026-10-18 20:49:47 START csim_top
+2026-10-18 20:57:58 csim_top wall=491s exit=1
+2026-10-18 20:57:58 START lab
+2026-10-18 21:57:58 lab killed or crashed (signal 15; cap 3600s)
+2026-10-18 21:57:58 lab wall=3600s exit=143
+2026-10-18 21:57:58 DONE

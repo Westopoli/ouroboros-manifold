@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-120 to S-125: yes, 6 stories, 22 rules, numbers from `algorithms.md` ALG-74 and config. S-215 to S-217: 3 stories, 17 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags on S-215 to S-217 (Q-215-04, Q-217-01), plus Q-178-04 carried. |
+| Implied-but-unstated behavior turned into flags | No open flags on S-215 to S-217, plus Q-178-04 carried. |
 | Every visible-surface story has a reference | Not applicable. Enemy behavior is observed through units (E-11, E-13). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags of S-215 to S-217 (Q-215-04, Q-217-01). S-120 to S-124 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** No open flags remain on S-215 to S-217. S-120 to S-124 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -32,13 +32,13 @@ As a commander, I want enemy forces to advance, hold, patrol, ambush, or retreat
 
 Rules
 - R-120-01  Given a script state, When read, Then its behavior is one of advance, defend, patrol, ambush, retreat and its modifier one of cautious, aggressive, phased; any other value fails script validation. The behaviours for defending a base, founding an expansion and raiding are added by S-216.
-- R-120-02  Given advance, When executed, Then the force attack-moves toward the mission's primary objective (its node center, via `om_objective_get_center` or the spine node the mission places); once the force has contact -- any of its units has a visible player unit in range or took damage this evaluation -- it re-targets the nearest player unit group centroid; given defend, Then it holds position and units auto-engage without pursuit; given patrol, Then it plain-moves through its waypoints in a cycle and auto-engages on contact; given ambush, Then it holds hidden until an enemy enters its trigger radius, then becomes advance_aggressive toward the trigger and never resets; given retreat, Then it plain-moves to its fallback point (the mission's enemy spawn edge). Decided by Westley, 2026-09-28 (Q-120-02).
+- R-120-02  Given advance, When executed, Then the force attack-moves toward the mission's primary objective (its node center, via `om_objective_get_center` or the spine node the mission places); once the force has contact -- any of its units has a visible player unit in range or took damage this evaluation -- it re-targets the nearest player unit group centroid; given defend, Then it holds position and units auto-engage without pursuit; given patrol, Then it plain-moves through its waypoints in a cycle and auto-engages on contact; given ambush, Then it holds hidden until an enemy enters its trigger radius, then becomes advance_aggressive toward the trigger and never resets; given retreat, Then it plain-moves to its fallback point (the mission's enemy spawn edge). Decided by Westley, 2026-09-28 (Q-120-04).
 - R-120-03  Given cautious, When executed, Then the force moves at baseline speed and it transitions to retreat or defend when force HP lost since state entry exceeds the contact threshold; given aggressive, Then baseline speed, no break-off; given phased, Then the force is split into 2 or 3 sub-groups that advance one at a time, each starting when the previous engages or reaches its waypoint.
 - R-120-04  Given a macro evaluation, When it runs, Then it runs every 40 ticks (2 s) and issues commands only through move, attack_move, attack_target, activate_ability.
 
 Inputs: script (states, transitions, hooks, forces); tactical state.
 Outputs: enemy commands in the command log; force state in the T1 trace.
-See also: E-11 R-087-04 and E-13 R-096-02 (pursuit and group endings at the unit level overlap the re-targeting of R-120-02), and the guard stance of the movement plan if it is ruled (it may replace or sit under defend).
+See also: E-11 R-087-04 and E-13 R-096-02 (pursuit and group endings at the unit level overlap the re-targeting of R-120-02), and the guard stance (E-13 R-096-08, ruled 2026-10-13; it may replace or sit under defend).
 Q-120-01 closed: AI postures deferred; enemy macro scripts use baseline movement speeds for every modifier (no modifier-based speed or spacing change). Decided by Westley, 2026-09-16.
 
 ### S-121 — Timers and thresholds, with noise
@@ -127,7 +127,7 @@ Rules
 
 Inputs: difficulty, which also sets foresight; the doctrine; the enemy's base and economy state; what the enemy's side has seen.
 Outputs: the enemy economy's orders, in the command log (S-217); production choices in the T1 trace.
-Open flags: Q-215-04 (whether the macro evaluation budget under Scale requirements holds when the enemy runs thousands of workers).
+Open flags: none.
 
 ### S-216 — The enemy fights over its bases
 As a commander, I want the enemy's forces to defend its base and its expansions, to fall back to what it still holds, and to raid my workers and shipments, so that the enemy plays the same war over the economy that I do.
@@ -154,11 +154,11 @@ Rules
 - R-217-02  Given the era has the technology for it, When the macro layer wants to see another layer, Then it may issue the targeted ping of E-01 S-162 on the same limits as the player's; the pinged player is told nothing (R-162-03, alert off for now); where the era uses scouts (R-162-04) the ping is carried by them.
 - R-217-03  Given a force, When the macro layer sets it to emit or to silent (E-01 S-163), Then the same costs and sight apply as for the player's forces.
 - R-217-04  Given difficulty, When the macro layer is set up, Then which of these commands it may use scales with its multi-layer intelligence (R-125-01), by numbers the skill lab sets.
-- R-217-05  Given the enemy economy issues orders to build, train or gather (S-215), When they are issued, Then they are orders a player could issue and they appear in the same replay stream as the enemy's other commands (R-123-02) [Q-217-01: the economy's commands are not yet in the command vocabulary].
+- R-217-05  Given the enemy economy issues orders to build, train or gather (S-215), When they are issued, Then they are orders a player could issue and they appear in the same replay stream as the enemy's other commands (R-123-02) (the economy's commands are not yet in the command vocabulary; Q-217-01 closed 2026-10-18, Architect, implementation).
 
 Inputs: the macro layer's state; the era pack.
 Outputs: enemy layer and economy commands in the command log and replay.
-Open flags: Q-217-01.
+Open flags: none.
 
 ## Inputs
 
@@ -214,7 +214,7 @@ None required.
 
 ## Open ambiguity flags
 
-Q-215-04, Q-217-01. Details in `docs/northstar/ambiguity_register.md`.
+None. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
