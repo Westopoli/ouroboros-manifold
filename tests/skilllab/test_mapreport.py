@@ -150,10 +150,10 @@ def _canned(beats, loses_to, multi):
 
 
 def test_map_labels_values():
-    """map_labels returns exactly the six labels, taken from the report (TD-LAB-REV2-L5-maplabels: ruling 4 adds naive_ceiling_hit)."""
+    """map_labels returns exactly the six labels, taken from the report (TD-LAB-REV2-L5-maplabels: ruling 4 adds baseline_ceiling; decision 31 E names it so)."""
     rep = MapReport(kind="wall", seed=4004, terrain=T, naive=_canned(3, 5, True))
     assert map_labels(rep) == {"map_kind": "wall", "map_seed": 4004, "naive_beats": 3, "naive_loses_to": 5,
-                               "naive_multi_flip": True, "naive_ceiling_hit": False}
+                               "naive_multi_flip": True, "baseline_ceiling": False}
 
 
 def test_map_labels_keep_none():
@@ -161,7 +161,7 @@ def test_map_labels_keep_none():
     rep = MapReport(kind="open", seed=0, terrain=T, naive=_canned(None, None, False))
     got = map_labels(rep)
     assert got["naive_beats"] is None and got["naive_loses_to"] is None and got["naive_multi_flip"] is False
-    assert set(got) == {"map_kind", "map_seed", "naive_beats", "naive_loses_to", "naive_multi_flip", "naive_ceiling_hit"}
+    assert set(got) == {"map_kind", "map_seed", "naive_beats", "naive_loses_to", "naive_multi_flip", "baseline_ceiling"}
 
 
 def test_map_labels_do_not_collide_with_fixed_row_keys_and_feed_fight_row():
@@ -182,7 +182,8 @@ def test_works_on_a_sampled_map():
 
 # ---------- LAB-REV2-L5 (spec: 2026-10-14-skill-lab-rev2-spec.md::Pieces::L5; ruling 4: a play that beats the top headcount is a ceiling
 # hit, never "no gain", so the naive baseline of a map says so too) ----------
-# INTERFACE: map_labels(report) gains the key "naive_ceiling_hit" = report.naive.ceiling_hit (bool); the other five keys are unchanged.
+# INTERFACE: map_labels(report) gains the key "baseline_ceiling" = report.naive.ceiling_hit (bool; decision 31 E: the name of the label for
+# "the naive baseline also wins at the top headcount", six labels in all, no crossing is possible there); the other five keys are unchanged.
 
 class AlwaysWins:
     """fight_fn: side 0 wins every fight, so the naive baseline beats the top headcount (a ceiling hit)."""
@@ -195,15 +196,15 @@ def test_l5_map_labels_say_ceiling_hit_when_the_naive_baseline_beats_the_top_hea
     rep = naive_break_even("open", 0, Terrain(canvas=CANVAS), SIZE, 3, 7, fight_fn=AlwaysWins(), **KW)
     assert rep.naive.ceiling_hit is True and rep.naive.beats == 7 and rep.naive.loses_to is None
     got = map_labels(rep)
-    assert got["naive_ceiling_hit"] is True and got["naive_beats"] == 7 and got["naive_loses_to"] is None
+    assert got["baseline_ceiling"] is True and got["naive_beats"] == 7 and got["naive_loses_to"] is None
 
 
 def test_l5_map_labels_say_no_ceiling_hit_for_a_crossing_baseline_negative_control():
     rep = naive_break_even("block", 7, T, SIZE, 3, 7, fight_fn=Recorder(), **KW)
-    assert rep.naive.ceiling_hit is False and map_labels(rep)["naive_ceiling_hit"] is False
+    assert rep.naive.ceiling_hit is False and map_labels(rep)["baseline_ceiling"] is False
 
 
 def test_l5_the_new_label_feeds_fight_row_without_a_collision():
     got = map_labels(MapReport(kind="open", seed=0, terrain=T, naive=_canned(3, 5, False)))
     row = rows.fight_row(_result(0.5), **got)
-    assert row["naive_ceiling_hit"] is False
+    assert row["baseline_ceiling"] is False

@@ -92,9 +92,9 @@ def test_labels_reach_fight_row_and_are_deterministic():
 
 
 # ---------- LAB-REV2-L5 (spec: 2026-10-14-skill-lab-rev2-spec.md::Pieces::L5 owns transfer.py; contract Setup gains firing_arc_deg and cone) ----------
-# QUESTION (Architect): the module docstring's own definition is "a tunable number changed or not". The two new Setup fields are tunable numbers
-# (DRAFT-firing-arc-deg, DRAFT-aoe-cone-range/-deg/-share): a Setup with firing_arc_deg below 360 or a non-empty cone is MAGNITUDES. Drop these
-# three tests if the Architect rules the arc and the cone are geometry.
+# RULED (Architect decision 29 item 7, restated in decision 31 G): the swept values of the arc and cone families are magnitudes (they will be
+# retuned); the mechanisms themselves (the arc gate, the sector) are rule geometry already ruled by Westley. The writer's reading stands for
+# the values: a Setup with firing_arc_deg below 360 or a non-empty cone is MAGNITUDES. The tests below stay.
 
 def test_l5_a_narrowed_firing_arc_is_a_magnitude():
     assert transfer_class(setup(firing_arc_deg=120.0)) == MAGNITUDES

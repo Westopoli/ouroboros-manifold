@@ -477,3 +477,111 @@ def test_l5_agreement_table_unknown_word_raises_and_empty_group_is_all_zeros():
         charts.agreement_html({"a": ["often_right"]})
     row = _table_rows(charts.agreement_html({"a": []}))[1]
     assert [c[1] for c in row] == ["a", "0", "0", "0", "0", "0", "0"]
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 fix pass (audit of the first L5 tests; decision 31 A "the artifact also shows the cone 3 by 3 grid"; item 9 of the audit).
+#
+# INTERFACE FIXED HERE:
+#   charts.cone_grid_html(rows, title=None) -> str     rows = typed rows (diagram.read_rows). Only rows with family "cone" and kind grid or
+#       refined are read; "" when there are none. For each (play, layout, baseline role) among them, sorted as strings, one
+#       <table class="words cone-grid" data-play data-layout data-role>: the header row is "Range" then one cell per `point` label
+#       (half=22.5 ...) ordered by the number after "=", ascending; then one row per range (knob_value) ascending numerically: first
+#       cell the range as format(v, "g"), then one <td data-range data-point data-gain> per header point whose text is the signed gain
+#       ("+16", "-8", "0"), gain = break-even(play) - break-even(role) in that series at that range, with the break-even of diagram.py
+#       (top headcount when every cell is won, else the headcount before the first won-to-lost step, else 0); a (range, point) that
+#       has no rows for the play or for the role reads "-" with data-gain "". Counts, never ratios.
+#   charts.refinement_html: the values of a role are listed ascending whatever order they come in, each formatted with format(v, "g")
+#       (1.0 reads "1", 360.0 reads "360", 0.1875 stays "0.1875": not str(v)).
+# =====================================================================================================================
+def _scan_cells(family, play, layout, point, knob, baseline, beats, won=None, kind="grid", heads=(8, 16, 24, 32, 40, 48)):
+    """Typed rows (what diagram.read_rows returns, only the columns the grid reads): one row per headcount, won up to `beats`."""
+    is_won = (lambda h: h in won) if won is not None else (lambda h: beats is not None and h <= beats)
+    return [dict(family=family, play=play, layout=layout, point=point, kind=kind, baseline=baseline, knob_value=float(knob), enemy_heads=h,
+                 outcome="side0" if is_won(h) else "side1", ceiling_hit=int(all(is_won(x) for x in heads))) for h in heads]
+
+
+def _cone_rows(play_be_by_half, role="naive_attacker", base=16, play="s2_concave", layout="81", roles=None):
+    rows = []
+    for half, per_range in play_be_by_half.items():
+        for rng, beats in per_range.items():
+            rows += _scan_cells("cone", play, layout, "half=%s" % half, rng, "none", beats)
+            for r, b in ((roles(per_range) if roles else {role: {k: base for k in per_range}}).items()):
+                rows += _scan_cells("cone", play, layout, "half=%s" % half, rng, r, b[rng])
+    return rows
+
+
+_PLAY_CONE = {22.5: {150: 8, 300: 8, 600: 32}, 45: {150: 8, 300: 32, 600: 40}, 90: {150: 32, 300: 32, 600: 40}}
+
+
+def _grid_cells(html):
+    out = {}
+    for tr in re.findall(r"<tr>(.*?)</tr>", html, flags=re.S)[1:]:
+        for attrs, text in re.findall(r"<td([^>]*)>(.*?)</td>", tr, flags=re.S):
+            rng = re.search(r"data-range=[\"']?([0-9.]+)", attrs)
+            if rng:
+                pt = re.search(r"data-point=[\"']?(half=[0-9.]+)", attrs).group(1)
+                gain = re.search(r"data-gain=[\"']?([-+0-9]*)", attrs).group(1)
+                out[(float(rng.group(1)), pt)] = (gain, re.sub(r"<[^>]+>", "", text).strip())
+    return out
+
+
+def test_l5_cone_grid_is_one_table_of_signed_gains_range_by_half_angle():
+    html = charts.cone_grid_html(_cone_rows(_PLAY_CONE))
+    assert html.count("cone-grid") >= 1 and len(re.findall(r"<table", html)) == 1
+    head = [c for _, c in _table_rows(html)[0]]
+    assert head == ["Range", "half=22.5", "half=45", "half=90"]
+    body = [[c for _, c in r] for r in _table_rows(html)[1:]]
+    assert [r[0] for r in body] == ["150", "300", "600"]
+    gains = {(150, "half=22.5"): -8, (150, "half=45"): -8, (150, "half=90"): 16, (300, "half=22.5"): -8, (300, "half=45"): 16,
+             (300, "half=90"): 16, (600, "half=22.5"): 16, (600, "half=45"): 24, (600, "half=90"): 24}
+    cells = _grid_cells(html)
+    assert set(cells) == {(float(r), p) for r, p in gains}
+    for (r, p), g in gains.items():
+        data, text = cells[(float(r), p)]
+        assert int(data) == g and int(text) == g, (r, p)
+    assert re.search(r"data-play=[\"']?s2_concave", html) and re.search(r"data-layout=[\"']?81", html) and re.search(r"data-role=[\"']?naive_attacker", html)
+
+
+def test_l5_cone_grid_has_a_table_per_baseline_role_and_ignores_other_families_and_kinds():
+    roles = lambda per: {"naive_attacker": {r: 16 for r in per}, "naive_defender": {r: 24 for r in per}}
+    rows = _cone_rows({45: {150: 8, 300: 32, 600: 40}}, roles=roles)
+    rows += _scan_cells("range_up", "s2_concave", "81", "-", 0.5, "none", 8) + _scan_cells("range_up", "s2_concave", "81", "-", 0.5, "naive_attacker", 16)    # another family: not read
+    rows += _scan_cells("cone", "s2_concave", "81", "half=45", 150.0, "none", 48, kind="control_positive")   # a control: not read
+    html = charts.cone_grid_html(rows)
+    assert sorted(re.findall(r"data-role=[\"']?(naive_\w+)", html)) == ["naive_attacker", "naive_defender"]
+    by_role = {role: _grid_cells(t) for role, t in zip(("naive_attacker", "naive_defender"), re.findall(r"<table.*?</table>", html, flags=re.S))}
+    assert int(by_role["naive_attacker"][(150.0, "half=45")][0]) == -8 and int(by_role["naive_defender"][(150.0, "half=45")][0]) == -16
+
+
+def test_l5_cone_grid_a_missing_series_cell_reads_a_dash_and_zero_gain_reads_zero():
+    rows = _cone_rows({45: {150: 16, 300: 32}, 90: {300: 16}})        # (150, half=90) has no rows; (150, half=45) is level with the baseline
+    cells = _grid_cells(charts.cone_grid_html(rows))
+    assert cells[(150.0, "half=90")] == ("", "-")
+    assert int(cells[(150.0, "half=45")][0]) == 0 and cells[(150.0, "half=45")][1] in ("0", "+0", "-0")
+    assert int(cells[(300.0, "half=90")][0]) == 0
+
+
+def test_l5_cone_grid_without_cone_rows_is_empty_and_deterministic():
+    assert charts.cone_grid_html(_scan_cells("range_up", "p", "81", "-", 0.5, "none", 8)) == "" and charts.cone_grid_html([]) == ""
+    rows = _cone_rows(_PLAY_CONE)
+    assert charts.cone_grid_html(rows) == charts.cone_grid_html(list(rows))
+
+
+def test_l5_cone_grid_reads_the_first_won_to_lost_step_and_a_ceiling_as_the_top():
+    """Same break-even as diagram.py: a play that wins 8, loses 16, wins 24 has break-even 8; one that wins everywhere has 48."""
+    rows = (_scan_cells("cone", "s2_concave", "81", "half=45", 150, "none", None, won={8, 24}) +
+            _scan_cells("cone", "s2_concave", "81", "half=45", 150, "naive_attacker", 16) +
+            _scan_cells("cone", "s2_concave", "81", "half=45", 300, "none", 48) +
+            _scan_cells("cone", "s2_concave", "81", "half=45", 300, "naive_attacker", 16))
+    cells = _grid_cells(charts.cone_grid_html(rows))
+    assert int(cells[(150.0, "half=45")][0]) == 8 - 16 and int(cells[(300.0, "half=45")][0]) == 48 - 16
+
+
+def test_l5_refinement_values_are_listed_ascending_and_formatted_with_g_not_str():
+    entries = {"damage_up": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": [1.0, 0.5, 0.1875, 360.0, 22.5],
+                                                                          "naive_defender": [0.75]}}}
+    body = {r[0][1]: r[1][1] for r in _table_rows(charts.refinement_html(entries))[1:]}
+    clause = body["damage_up"]
+    assert "naive_attacker: 0.1875, 0.5, 1, 22.5, 360" in clause and "naive_defender: 0.75" in clause
+    assert "1.0" not in clause and "360.0" not in clause

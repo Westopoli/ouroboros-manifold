@@ -47,7 +47,12 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
     reach) selects the linear scan; controls and reach are always linear.
 Files: sweep_<family>.csv per run family, sweep_summary.json; smoke.csv, smoke_summary.json.
 CSV columns (labels on the rows beside rows.fight_row's own): family, play, layout, kind, enemy_heads, knob, knob_value, baseline
-(`none` for the play itself), ceiling_hit (0 or 1, of the row's scan), prefight.
+(`none` for the play itself), ceiling_hit (0 or 1, of the row's scan), prefight, point.
+`point` (decision 31 A, LAB-REV2-L8 follow-on; string): the family-local label of the series a row belongs to. Cone rows have knob_value =
+range and point = "half=<deg>"; emitting rows have knob_value = sight and point = "vision=<v>" (v = the joint vision value); every row of
+every other family, controls and the smoke included, has point = "-". The number after "=" is read as a float (the text format of the
+degree or the vision is the builder's). The control rows of the cone and emitting families are not pinned. Crossing detection in
+diagram.py groups by (family, play, layout, point).
 """
 import ast
 import csv
@@ -807,6 +812,56 @@ def test_control_rows_are_in_the_csv_with_their_kind(tmp_path):
     rows = read(tmp_path, "vision")
     assert {r["kind"] for r in rows} >= {"control_positive", "control_null", "grid"}
     assert {r["enemy_heads"] for r in rows if r["kind"].startswith("control_")} == {"16"}
+
+
+# ---- the `point` column (decision 31 A): the series a row belongs to, so a crossing is read along one series -----------------------
+
+def test_point_is_a_column_of_every_family_csv(tmp_path):
+    """Positive control of the column itself: the header of a family csv names `point`, once, and every row has a cell for it."""
+    run(tmp_path, "range_up")
+    with open(tmp_path / "sweep_range_up.csv", newline="") as fh:
+        header = next(csv.reader(fh))
+    assert header.count("point") == 1
+    assert all(r["point"] not in (None, "") for r in read(tmp_path, "range_up"))
+
+
+@pytest.mark.parametrize("family", ["vision", "range_up", "damage_up", "arc", "sign_flip"])
+def test_point_is_a_dash_on_every_row_of_a_family_with_one_series(tmp_path, family):
+    """Negative control of the two labelled families: grid, refined, sign_flip and control rows alike write `-`."""
+    plays_ = ("s2_concave",) if family == "arc" else ("p2",)
+    run(tmp_path, family, plays=plays_)
+    rows = read(tmp_path, family)
+    assert rows and {r["point"] for r in rows} == {"-"}
+
+
+def test_cone_rows_carry_the_half_angle_as_the_point_and_the_range_as_the_knob_value(tmp_path):
+    run(tmp_path, "cone", plays=("s2_concave",))
+    grid = [r for r in read(tmp_path, "cone") if r["kind"] == "grid"]
+    got = set()
+    for r in grid:
+        label, _, number = r["point"].partition("=")
+        assert label == "half" and number, r["point"]
+        got.add((float(r["knob_value"]), float(number)))
+    assert got == {(float(rng), float(half)) for rng in (150, 300, 600) for half in (22.5, 45, 90)}      # the 3 by 3 grid, nine series
+    assert len({r["point"] for r in grid}) == 3                                                          # three half-angles, each a series along range
+
+
+def test_emitting_rows_carry_the_vision_as_the_point_and_the_sight_as_the_knob_value(tmp_path):
+    run(tmp_path, "emitting", plays=("s3_dark_striker",))
+    grid = [r for r in read(tmp_path, "emitting") if r["kind"] == "grid"]
+    got = set()
+    for r in grid:
+        label, _, number = r["point"].partition("=")
+        assert label == "vision" and number, r["point"]
+        got.add((float(r["knob_value"]), float(number)))
+    assert got == {(sight, vision) for sight in (1.0, 2.0, 4.0) for vision in (0.125, 0.25)}
+    assert len({r["point"] for r in grid}) == 2
+
+
+def test_the_smoke_csv_has_a_point_column_and_it_is_a_dash(tmp_path):
+    """The smoke families (vision, controls) have one series each."""
+    _, _, rows = _smoke(tmp_path, control_builds=control_builds())
+    assert rows and {r["point"] for r in rows} == {"-"}
 
 
 def test_emitting_is_reported_saturated_at_the_base_vision_not_swept(tmp_path):

@@ -32,7 +32,8 @@ def thresholds(**over):
 def fight(adv=0.0, ticks=100):
     """One fight whose firing advantage is exactly adv."""
     return FightResult(outcome="side0", margin=0.0, strength_left=(0.0, 0.0), survivors=(0, 0), heads=(0, 0),
-                       ticks=ticks, first_contact_tick=0, firing=[], firing_unit_seconds=(1 + adv, 1 - adv))
+                       ticks=ticks, first_contact_tick=0, firing=[], firing_unit_seconds=(1 + adv, 1 - adv),
+                       firing_window=(1 + adv, 1 - adv))     # window == whole: the default basis is the window (TD-LAB-REV2-L5-basis)
 
 
 def cell(heads, fights, won=True):
