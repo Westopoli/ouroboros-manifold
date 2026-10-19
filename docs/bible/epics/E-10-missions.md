@@ -202,7 +202,7 @@ Rules
 
 Inputs: archetype library; the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
-Open flags: Q-210-07 (liberty: Architect: which mission types launch in the beta). Where a base stands is whatever the terrain gives (E-17 R-166-03).
+Where a base stands is whatever the terrain gives (E-17 R-166-03).
 
 ### S-211 — The resources fit the situation
 As a commander, I want the resources on the map to be scarce or plentiful as the simulation's situation says, tilted toward the side with the better position, and never so thin that I cannot do the job, so that the economy is part of the mission and never a trap.

@@ -1,0 +1,379 @@
+push/B1|c1f06bbb|6|NOT|.swarm/b1-events/NEEDS-HEADER.md|swarm(b1-events): leaf-01 — Replace every `/* STUB */` body in `csrc/e
+push/B1-1|c87955a4|1|PROVEN|i|feat(B1-1): epsilon by name; admin-chain step table fenced
+push/B1-2|bab547f0|1|PROVEN|i|feat(B1-2): om_event_fire_manual and character attachment per ALG-49
+push/B1-3|38f9f01f|1|PROVEN|i|feat(B1-3): events state lives in om_world's events_state slot
+push/B1-4|e957cbde|1|PROVEN|i|feat(B1-4): events state in om_world's events_state slot (re-based on 
+push/B1-5|68937645|1|PROVEN|i|feat(B1-5): external named templates, admin prune for external queues,
+push/B1-7|110d8d00|1|PROVEN|i|events: save hooks (size/write/read), chain tags start at 1
+push/B1-8|29a9e9da|12|NOT|csrc/chronicle.c|B1-8: events tier getter from OM_EVENT_TIER table, lineage member atta
+push/B1-8-r|a8270b5e|1|PROVEN|i|B1-7 rebuilt on main: events.c significance tier body (keep F2m hook)
+push/B1-9|14177117|13|NOT|csrc/events.c|B1-9: lineage attach via om_character_count/id_at, id probe gone
+push/B1-9-r|1c97bc6a|1|PROVEN|i|B1-9 rebuilt on B1-8-r: events.c lineage attach via character enumerat
+push/B1-9-r2|0aa757cf|1|PROVEN|i|B1-9 rebuilt on main: events.c lineage attach by character enumeration
+push/B1-impl|b7879145|0|PROVEN||B1: macro tick runs transitions, patrol loop orders, ambush trigger to
+push/B1-tests|79b6045e|0|PROVEN||B1-5 tests: rout at 35 percent and objective-contested flag live throu
+push/B10-1|a2a55e06|6|NOT|.claude-swarm.toml|swarm(b10): leaf-01 — Extend `csrc/unit.c` (a generated STUB file, tic
+push/B10-2|10ce7e50|13|NOT|.claude-swarm.toml|swarm(b10): leaf-02 — Extend `csrc/unit.c` (already carries B10-1's S-
+push/B10-3|f527b8a0|19|NOT|.claude-swarm.toml|fix(unit): om_tactical_step no-ops with no active tactical battle
+push/B10-4|9172a573|24|NOT|.claude-swarm.toml|swarm(b10): leaf-04 — Extend `csrc/unit.c` (carries B10-1/2/3's work) 
+push/B10-5|a53ceab4|1|PROVEN|i|feat(unit): B10-4 render reads (S-088) on current origin/main
+push/B10b|38bd0dd9|1|PROVEN|i|unit.c: S-084 flat damage -- reduction, aoe cap, backswing, dps
+push/B10c|8d4eebfc|10|NOT|csrc/om_internal.h|unit.c: F2l accessors real, om_support_tick, brace auto-cancel on orde
+push/B10c-10|a7f0496a|2|PROVEN|i|feat(B10c-10): auto-Fortify yields to move order (R-087-02)
+push/B10c-11|b61b5b50|2|PROVEN|i|fix(B10c-11): auto-Fortify cancel leaves cooldown at 0; add no-cooldow
+push/B10c-11-r|7de51d74|2|PROVEN|i|B10c-11: no cooldown on auto-Fortify cancel; complete group-pace tests
+push/B10c-2|e9690cef|12|NOT|csrc/om_internal.h|unit.c: drop w->tick bump, activate-ability skips unready units
+push/B10c-2-r|780809bf|2|PROVEN|i|B10c rebuilt on main: unit.c real bodies, drop om_unit_get_position st
+push/B10c-3|ee9277a7|12|NOT|csrc/om_internal.h|unit.c: attack-target drops unseen target, attack-moves to last seen
+push/B10c-3-r|dc858a27|1|PROVEN|i|fix(S-093): get_target returns 0 for invisible target
+push/B10c-4|7804d56f|12|NOT|csrc/om_internal.h|unit.c: spatial hash grid in tactical_state; targeting, aura, ability,
+push/B10c-5|fb731634|12|NOT|csrc/om_internal.h|unit.c: om_tac_unit_sync_position for tactical_move position writes
+push/B10c-5-r|309d4e19|2|NOT|csrc/om_internal.h|B10c-5 rebuilt on main: unit.c spatial grid and sync_position, grid de
+push/B10c-6|cfee0a04|3|NOT|csrc/fog.c|B10c-6: om_tac_faction_sees calls om_fog_faction_sees, stealth check k
+push/B10c-6-r|6ec2bf4a|3|PROVEN|i|B10c-6 rebuilt on B11-7-r: om_tac_faction_sees calls om_fog_faction_se
+push/B10c-7|c8f5b433|3|NOT|csrc/fog.c|B10c-7: unit.c AI scans cell-pruned and unsorted, damage_reduction ski
+push/B10c-7-r|8d3f7f5b|3|PROVEN|i|B10c-7 rebuilt on B10c-6-r: unit.c dense-cluster targeting, single-pas
+push/B10c-8|50816bfd|7|NOT|csrc/fog.c|unit.c: tactical tick period from live count, per-step quantities scal
+push/B10c-8-decl|81241865|7|NOT|csrc/fog.c|decl: om_tactical_tick_period, header, tables, ctypes bind, unit.c stu
+push/B10c-9|5ecac162|7|NOT|csrc/fog.c|unit.c: base_tick accumulator adds period per step, om_tactical_base_t
+push/B10c-9-decl|fc117e80|7|NOT|csrc/fog.c|decl: om_tactical_base_tick, header, tables, ctypes bind, unit.c stub 
+push/B10c-9-decl-r|6f59981c|5|PROVEN|i|bt-decl: om_tactical_base_tick declared, tables, ctypes bind, unit.c s
+push/B10c-9-r|a44bcb90|7|PROVEN|i|B10c-9 rebuilt on tp-decl-r: unit.c tactical period from live count, b
+push/B10c-9-r2|433ded69|5|PROVEN|i|B10c-9 rebuilt on bt-decl-r: base_tick accumulator body, run helpers f
+push/B10c-9-r3|a7a168c4|1|PROVEN|i|B10c-9 rebuilt on main: unit.c base_tick accumulator, run helpers use 
+push/B11|dc18a4e2|1|PROVEN|i|fog.c: E-12 fog and sensors impl
+push/B11-10|fb741e2b|3|PROVEN|i|fix(S-093): om_unit_clear_target replaces attack-move substitution (B1
+push/B11-2|2feaaf39|6|PROVEN|i|fog: faction/type via unit accessors, cover LOS, friend/enemy grouping
+push/B11-3|6bf740be|9|NOT|csrc/ouroboros_sim.h|fog: get_phase -1 when no fog slot
+push/B11-5|8a3cb277|11|NOT|csrc/om_internal.h|B11-5: om_mission_on_begin internal hook sets exact deadline baseline 
+push/B11-5-r|8967b6df|3|PROVEN|i|B11-5 rebuilt on main: om_mission_on_begin hook, baseline pending in m
+push/B11-6|ca9048fd|12|NOT|csrc/fog.c|fog: om_visibility_compute primes sensor bound
+push/B11-6-r|e8232789|3|NOT|csrc/fog.c|B11-6 rebuilt on B10c-5-r: fog.c grid neighbour queries, sensor bound 
+push/B11-7|9ddf548b|3|NOT|csrc/fog.c|B11-7: om_fog_faction_sees internal decl in om_internal.h, non-static
+push/B11-7-r|98b9ac48|2|PROVEN|i|B11-7 rebuilt on main: om_fog_faction_sees non-static, decl in om_inte
+push/B11-8|a66424cb|1|PROVEN|i|fog: mission clock in base ticks since Begin (om_tactical_base_tick), 
+push/B11-9|ec3ae54e|2|PROVEN|i|fix(S-093): acquire_target clears stale target; remove getter mask (B1
+push/B12|82d59108|1|PROVEN|i|merge(B12): catch up push/B12 to origin/main
+push/B12-10|1da29389|1|PROVEN|i|B12-10: tactical_move.c per-step distance and turn rate scale by tick 
+push/B12-11|536fbd00|1|PROVEN|i|B12-11: tactical_move.c dense-moving cost cut, results bit-identical
+push/B12-11-r|1dd06b7a|1|PROVEN|i|B12-11 rebuilt on main: dense slot-array grid + SSE2 row scan, displac
+push/B12-12|eb16dbb1|1|PROVEN|i|perf(B12-12): skip rebuild2 when grid live, cache probe cos/sin for st
+push/B12-14|ab065128|2|PROVEN|i|perf(B12-14): cell_group skip in probe_gather, early-out for stat-stat
+push/B12-14-r|88d13daa|1|PROVEN|i|B12-14 rebuilt on fresh main: cell_group probe skip, both-stationary e
+push/B12-15|361e2948|2|NOT|csrc/tactical_move.c|fix(B12-15): group speed_cap uses native_speed not effective_speed
+push/B12-16|128f9dd7|2|PROVEN|i|move(B12-16): arrival clears has_dest; arrived unit stops and holds
+push/B12-3|1b22552a|1|NOT|csrc/tactical_move.c|move(B12-3): no movement while mission phase is recon (R-092-02)
+push/B12-4|99fd2c1e|10|NOT|csrc/ouroboros_sim.h|Merge remote-tracking branch 'origin/push/B11-3' into push/B12-4
+push/B12-5|83ea40ed|12|NOT|csrc/om_internal.h|move(B12-5): is_braced and buff read brace phase, only active(2) brace
+push/B12-6|b8efe31d|12|NOT|csrc/om_internal.h|move(B12-5b): braced = brace phase 1 or 2 (M0 ruling)
+push/B12-6-r|1c2bdfca|1|PROVEN|i|B12-5 rebuilt on main: tactical_move.c recon gate, tactical tick clock
+push/B12-7|1bea90b2|12|NOT|csrc/om_internal.h|move(B12-7): collision and probe via own spatial hash, bit-identical t
+push/B12-8|a83653e6|12|NOT|csrc/om_internal.h|move(B12-8): push changed positions to unit.c via om_tac_unit_sync_pos
+push/B12-8-r|6b336035|3|NOT|csrc/om_internal.h|B12-8 rebuilt on B10c-5-r: tactical_move.c own spatial hash, sync_posi
+push/B12-9|c7ff3843|3|NOT|csrc/om_internal.h|B12-9 tactical_move: skip collision passes once a pass writes nothing,
+push/B12-9-r|85086407|1|PROVEN|i|B12-9 rebuilt on main: tactical_move.c skip idle collision passes, set
+push/B12b|cdbe35d1|1|PROVEN|i|move(B12b): slot obstacle fallback via mapgen sampler, shot LOS blocke
+push/B13|e243ba22|1|PROVEN|i|merge: origin/main into push/B13
+push/B13-2|b726ebc6|1|PROVEN|i|B13-3: speed mults 1.0 per Q-120-01(b), mark wave window guess
+push/B13-4|f37e685b|1|PROVEN|i|enemy macro: log each issued command to replay stream (R-123-02)
+push/B13-4-r|37584df8|1|PROVEN|i|B13-2 rebuilt on main: enemy_macro.c tip bodies
+push/B13-5|61d6fd3a|8|NOT|csrc/tactical_mapgen.c|merge push/B10c-2 into B13-5, stub conflicts resolved to real bodies
+push/B13-6|2dc7ae2c|6|PROVEN|i|enemy_macro: tick clocks run on base ticks
+push/B14|8a146e53|3|PROVEN|i|feat(support): B14 E-15 struct/garrison/noncombat/hazard math
+push/B14-2|2ab78fa1|1|PROVEN|i|B14-2: tactical_support extraction completion, unit pos via om_unit_po
+push/B14-3|ab816784|9|NOT|csrc/ouroboros_sim.h|B14-3: drifting objective centre pushed to mission.c via om_objective_
+push/B14-4|d183730b|10|NOT|csrc/om_internal.h|B14-4: om_support_tick per-tick drift push, seed drifting centre from 
+push/B14-5|328a49d3|12|NOT|csrc/om_internal.h|B14-5: drop private objective centre, read/write mission.c centre only
+push/B14-5-r|a76706db|1|PROVEN|i|B14-2 rebuilt on main: tactical_support.c drop private objective centr
+push/B14-6|f2319dbe|6|PROVEN|i|B14-6: support clocks in base ticks: drift, hazard travel, capture acc
+push/B14-7|8070777c|1|PROVEN|i|B14-7: om_support_tick drives capture + production per base tick
+push/B14-7-r|06e79d47|1|PROVEN|i|B14-7 rebuilt on main: tactical_support.c capture and production drive
+push/B14-8|b24c9c1a|1|PROVEN|i|fix(B14-8): driven capture flip raises ticker via om_structure_on_owne
+push/B15m|323d075c|1|PROVEN|i|B15m-2: cover/obstacle geometry recorded in w->mapgen_state (F2k)
+push/B15m-3|c870bc03|8|NOT|csrc/ouroboros_sim.h|F2n fixup: correct block placement so regen matches committed files
+push/B15m-4|098842bb|9|NOT|csrc/ouroboros_sim.h|B15m-4: move add_spine/spawn/structure to mapgen, canvas category + mo
+push/B15m-5|c1a5a760|11|NOT|csrc/chronicle.c|B15m-5: om_map_clear, 1-based add ids for nodes and structures
+push/B15m-5-r|b32d7d17|1|PROVEN|i|B15m-5 rebuilt on main: mapgen 1-based add ids, om_map_clear body, dro
+push/B2|9eb34965|14|NOT|.swarm/b1-events/NEEDS-HEADER.md|swarm(b2-collision): leaf-01 — Replace both `/* STUB */` bodies in `cs
+push/B2-1|4344df46|1|PROVEN|i|feat(B2-1): ALG-23 constants by name; OM_MAX_REGIONS cap
+push/B2B3|c0617d43|0|PROVEN||B3: mission_end tags rivals of main commander (R-058-05)
+push/B2B3-tests|0ed0fbd2|0|PROVEN||B2/B3-rivals: red tests for 12000-tick hold zone and rivals tagged via
+push/B3|12e19cbf|21|NOT|.swarm/b1-events/NEEDS-HEADER.md|swarm(b3-friction): leaf-01 — Replace all four `/* STUB */` bodies in 
+push/B3-1|0d14b5a3|1|PROVEN|i|feat(B3-1): ALG-25/ALG-29 constants by name
+push/B3-chronicle-tests|e5d9952a|0|PROVEN||B3-chronicle-tests: chronicle refusal test, land after B5
+push/B3-mission|c4b0a114|0|PROVEN||B3-mission: refusal records tension delta for debrief region_delta
+push/B3-pipe|51fefe9c|0|PROVEN||B3-pipe: mission_refuse command, no-mission guard after refusal
+push/B3-split|204b01f9|0|PROVEN||B3-split: chronicle test leaves landing file, pending B5
+push/B3-verbs-docs|41820a84|0|PROVEN||B3: mission_refuse and activate_ability pipe verb contract docs
+push/B3ability-tests|0a7c4599|0|PROVEN||B3 ability: failing transport tests for activate_ability verb
+push/B3refuse-client-tests|ae4a155a|0|PROVEN||B3 refuse client: failing briefing Refuse test, ledger row for A5 test
+push/B3refuse-client-tests2|d6672259|0|PROVEN||B3 Refuse client tests refreshed to A39; A5 Refuse-disabled test-defec
+push/B3refuse-tests|68f7bd7e|0|PROVEN||B3 refuse: failing transport tests for mission_refuse verb
+push/B4|45c4441d|1|PROVEN|i|feat(B4): drawn region count lifted to the feasible minimum (Q-021-07)
+push/B4-2|c89fe362|3|NOT|csrc/om_internal.h|fix(B4-2): worldgen calls the ALG-26 recalc, generated factions grow b
+push/B4-2-test|ed85f5b3|1|PROVEN|i|test(B4-2): pin generated-faction tech multiplier cache bug
+push/B4-b14|7926f8ed|0|PROVEN||B14-N: support_tick pops spawned unit, drains pending spawn
+push/B4-b9|825bab78|0|PROVEN||B9-N: place structures per archetype at mission setup, owners per R-12
+push/B4-split-pin|b6f2c4dc|0|PROVEN||B4 split pin: R-126-01 owner split for all ten archetypes, independent
+push/B4-td|9201dac4|0|PROVEN||B4-td: support_driver production period tests prove materialised unit 
+push/B4-tests|99fc57b6|0|PROVEN||B4 tests: structures placed at mission setup, owners per R-126-01, pro
+push/B5|960fa08f|1|PROVEN|i|feat(B5-2): S-024 edge redraw on stance change; Knowledge Lost as a re
+push/B5-3|1b5d2420|1|PROVEN|i|feat(B5-3): S-024 edge redraw; Knowledge Lost as a registered external
+push/B5-chr|0e92629a|0|PROVEN||B5-4: cap wins over minimum in chronicle selection; band constants nam
+push/B5-chr2|a506813a|0|PROVEN||B5: mission result save hooks, installed in om_world_new
+push/B5-loadscreen|49e688e1|0|PROVEN||load_game: CURRENT_SAVE_VERSION 3
+push/B5-tests|132ee1ba|0|PROVEN||B5 tests: consequence entry one and chain clusters after jump, red on 
+push/B5-tests2|49e51a6b|0|PROVEN||ledger: A3 test row (rule changed)
+push/B5-tests3|95652bb2|0|PROVEN||B5-tests3: red tests for save version 3, flag accessor, mission-result
+push/B5-transport-tests|11731eb3|0|PROVEN||B5: transport tests, mission result survives save/load/jump
+push/B5b|692f4abd|1|PROVEN|i|S-048 three tiers of tech. diplomacy.c fill stubs.
+push/B5c-1|b655f9b0|3|NOT|csrc/diplomacy.c|fix(B5c-1): off-by-one in pop-drop ring; rm brace block; add 50-vs-49 
+push/B6|7d746947|1|PROVEN|i|feat(B6): pre-effect creation fields, admin breakaway by name, externa
+push/B6-collapse-pick|eb3b4e6a|0|PROVEN||B6-collapse-pick: previous pool skips lineages not played a chapter ag
+push/B6-collapse-tests|04a7eb92|0|PROVEN||B6-collapse-pick tests: R-062-02 pool pick after collapse, red on base
+push/B6-collapse-tests2|8d065514|0|PROVEN||B6 collapse tests2: last-region hop tests, previous pool chapter-ago t
+push/B6-contract|ea57def8|5|NOT|csrc/ouroboros_sim.h|B6-contract: snapshot chapter+commander, chronicle chapter_end_reason,
+push/B6-contract2|0b8d3095|0|PROVEN||B6 contract2: chapter lifecycle getters, lineage event category param,
+push/B6-contract3|5773bbd4|0|PROVEN||B6 contract3: om_lineage_chapter_count, per-jump end reason comment, A
+push/B6-lineage-frame|4333f1d2|0|PROVEN||B6 lineage frame: arch doc line, 3 transport tests (red), allowlist om
+push/B6-lineage-pipe|ab633165|0|PROVEN||B6 pipe: snapshot writes lineage beside commander
+push/B6-loadscreen|271c2eaa|0|PROVEN||load_game: CURRENT_SAVE_VERSION 4
+push/B6-pipe|707df8d6|0|PROVEN||B6 pipe: chapter/commander in snapshot, chapter_end_reason in jump, mi
+push/B6-sim|61277731|0|PROVEN||B6 story D: save new gen_state lifecycle fields, OM_SAVE_FORMAT_VERSIO
+push/B6-td|0429b57e|0|PROVEN||B6 td: five pipe tests follow the drawn mission, ledger rows
+push/B6-tests|2a949e87|2|NOT|tests/csim/test_core_chapter_lifecycle.py|B6 tests: core fixture seats a lineage in every region, record check f
+push/B6-tests2|c6963115|2|NOT|tests/csim/test_core_chapter_lifecycle.py|B6 tests2: chapter lifecycle core 26 + transport 16, reworked to rulin
+push/B6-tests3|2c7fc409|1|NOT|tests/csim/test_core_chapter_lifecycle.py|B6 tests3: docstring says why the A15 tests are red
+push/B6-vers-td|609981b3|0|PROVEN||B6-vers-td: save version tests 3 to 4, test-defect assumption-changed 
+push/B7|7c52389a|1|NOT|csrc/generational.c|feat(B7-2): mission-phase tick gate (R-055-02)
+push/B7-10|5e021039|12|NOT|csrc/chronicle.c|B7-10: regional growth/decline chronicle events from jump net eco+pop 
+push/B7-10-r|0434be72|1|PROVEN|i|B7-7 rebuilt on main: generational.c B7-10 tip bodies (keep F2m hook a
+push/B7-3|84bdfa55|1|PROVEN|i|fix(B7-3): om_time_jump_run refuses during mission phase (R-055-02)
+push/B7-3-test|67a44204|1|PROVEN|i|test(B7-3): pin R-055-02 time jump refusal during mission phase
+push/B7-4|216d2837|1|PROVEN|i|B7-4: generational save hooks, ledger round trip, pristine state saves
+push/B7-5|82b2fa30|3|NOT|csrc/om_internal.h|freeze(B7-5): drop save/load stubs from generational.c
+push/B7-6|dc4d93c5|5|PROVEN|i|freeze(B7-6): drop save/load stubs from generational.c
+push/B7-7|77b699aa|12|NOT|csrc/chronicle.c|B7-7: fill lineage history region and member-in-region accessors
+push/B7-8|7d7c4e92|13|NOT|csrc/events.c|B7-8: character and lineage enumerators, first member region
+push/B7-8-r|265b7e6d|1|PROVEN|i|B7-8 rebuilt on B7-10-r: generational.c character/lineage enumerators
+push/B7-9|5b2e97b7|12|NOT|csrc/chronicle.c|B7-9: mission generator run via mission.c pool/select, fallback region
+push/B7-assign-docs|d2d98798|0|PROVEN||B7: assign_commander verb, commander_unit, debrief commander_fate cont
+push/B7-contract|3ace980a|0|PROVEN||merge origin/main into B7-contract
+push/B7-mission|6518a6a5|0|PROVEN||B7: om_mission_assign_commander, fate from assigned unit, setup clears
+push/B7-tests|f48e8f12|0|PROVEN||B7-1: red test for R-061-04 commander death ledger
+push/B7pipe-tests|ed420198|0|PROVEN||B7 pipe tests: assign_commander, commander_fate, killed commander via 
+push/B8|d072ca7c|3|NOT|csrc/chronicle.c|feat(B8): E-09 chronicle full impl, S065-S071
+push/B8-3|55144efb|1|PROVEN|i|fix(B8): chronicle.c snprintf bound copies, drop -Werror=stringop-trun
+push/B8-4|a8828405|2|NOT|csrc/chronicle.c|time jump feeds chronicle: owner-change/event regions scored, lineage 
+push/B8-5|e90a9b05|9|NOT|csrc/chronicle.c|B8-5c: entries index-aligned with clusters, get 0 for failed or dedupe
+push/B8-6|4435e54f|14|NOT|csrc/chronicle.c|B8-6: entries carry fragment table indices, region/faction/lineage ref
+push/B8-7|d018631f|12|NOT|csrc/chronicle.c|B8-7: regional event add, lineage-aware score/is_lineage_event, quiet 
+push/B8-8|4a123b2f|14|NOT|csrc/events.c|B8-8: lineage enumeration via count/id_at, quiet cluster in first memb
+push/B8-8-r|b6ba168f|1|PROVEN|i|B8-4 rebuilt on main: chronicle.c real bodies (entry_get, regional eve
+push/B8-9|318edb59|4|NOT|csrc/pipe/om_pipe.c|feat(B8-9): entry ticks fallback to jump window when cluster has no ev
+push/B8-9-r|073b5c95|9|NOT|csrc/pipe/om_pipe.c|B8-9 rebuilt on T1-9-r: cluster with no event ticks takes the jump win
+push/B8-9-r2|b9f55eff|4|NOT|csrc/pipe/om_pipe.c|B8-9 rebuilt on T1-9-r2: cluster with no event ticks takes the jump wi
+push/B9-1|2a65e2ed|1|PROVEN|i|feat(mission): S-072 candidate scoring, S-073 launch library
+push/B9-1-2|7073b19a|1|PROVEN|i|fix(mission): urgency deficit stability term uses OM_C_STABILITY compo
+push/B9-10|c3a71cb8|11|NOT|csrc/om_internal.h|B9-10: one objective cover disc (ALG-71 radius 400, height Q-098-01 pl
+push/B9-10-r|721a5633|1|PROVEN|i|B9-4 rebuilt on main: mission.c map/cover/baseline bodies from B9-10 t
+push/B9-11|32bab4a9|2|PROVEN|i|B9-11: mission deadline + hold timer count base ticks, baseline via om
+push/B9-2|5c61315c|1|PROVEN|i|merge origin/main into push/B9-2 (round 2)
+push/B9-3|406ad0e3|1|PROVEN|i|B9-3: E-10 S-077..S-080 mission outcome, consequences, briefing, diffi
+push/B9-4|0385c1e3|1|NOT|csrc/mission.c|mission: consequences in mission_end, debrief region prose, force comp
+push/B9-4-r2|6c201dc3|1|PROVEN|i|B9-4 rebuilt on main again: mission.c objective cover disc only, rest 
+push/B9-5|fba8c002|8|NOT|csrc/ouroboros_sim.h|B9-5b: om_mission_setup sets phase RECON via set_phase; begin stays on
+push/B9-6|e4890bd6|11|NOT|csrc/mission.c|B9-6: setup instantiates fixed MVP tactical map, spawns both forces vi
+push/B9-7|29c7b7a7|11|NOT|csrc/mission.c|B9-7: is_ended frozen in recon; 2nd setup resets units via om_tactical
+push/B9-8|8d720a52|11|NOT|csrc/mission.c|B9-8: deadline baseline taken lazily at first non-recon read, not at s
+push/B9-9|8673fbe0|13|NOT|csrc/chronicle.c|B9-9: every setup clears units and map, re-lays canvas, node, cover, s
+push/B9-9-r|2e7bb276|1|PROVEN|i|B9-9 rebuilt on B9-10-r: every mission setup clears units and map, re-
+push/B9-9-r2|994ac69a|1|PROVEN|i|B9-9 rebuilt: mission.c every setup clears map and relays, drop map_in
+push/B9-9-r3|29a9cd76|1|PROVEN|i|B9-9 rebuilt on current main: mission.c every setup clears map and rel
+push/C1-1|596b5005|2|PROVEN|i|swarm(c1-1): fix the main menu title never rendering
+push/C1-2|12203e37|33|NOT|autoload/c_bridge.gd|feat(C1-2): CONTINUE enabled by the live save list, LOAD opens the sav
+push/C1-2-tests|c72b3ffd|32|NOT|autoload/c_bridge.gd|test(C1-2): the dim is read from the Continue label (the entrance twee
+push/C1-3|d8c7187f|35|NOT|csrc/pipe/om_pipe.c|feat(C1-3): OM_SAVE_DIR redirects the save directory; QA harness and d
+push/C1-3-tests|c6758927|35|NOT|autoload/c_bridge.gd|test(C1-3): OM_SAVE_DIR redirects autosaves; the desktop flow leaves t
+push/C1-3b|5daeb79c|33|NOT|csrc/pipe/om_pipe.c|feat(C1-3b): OM_SAVE_DIR redirects the save directory (qa_harness.sh m
+push/C1-3b-r|c945583f|9|PROVEN|i|feat(C1-3b-r): client chain tip (shared SimSession, live frames, Begin
+push/C1-docs|24623694|0|PROVEN||C1 S3/S4/S5 docs: chronicle refs.factions filled, list_saves sorted + 
+push/C1-docs-s6|e1af2688|0|PROVEN||arch doc: tactical unit tier/state reserved always 0 (A30), examples f
+push/C1-pipe|85eeac18|0|PROVEN||S4: insertion sort, qsort banned by libm lint
+push/C1-s6-test|0e80917e|0|PROVEN||C1 S6 A30: transport test pins tactical tier and state at 0
+push/C1-tests|cc677acd|0|PROVEN||C1 tests: S3 faction refs, S4 sorted list_saves, S5 STUB labels (red o
+push/C2|06b0eb0e|27|NOT|.swarm/c2/PLAN-CHECK.md|swarm(c2): merge leaf-02 (galaxy_view scene) into integration for push
+push/C2-1|9169bb22|32|NOT|.swarm/c2/PLAN-CHECK.md|swarm(c2-1): extend int64 checksum fix to delta frames
+push/C2-2|30fdc82e|1|PROVEN|i|fix(galaxy): drop global class_name GalaxyGen, resolve import-cache co
+push/C2-3|5cc8a20a|7|PROVEN|i|fix(C2-3): live load fail on error frame or empty regions, add last_er
+push/C2-3-tests|c87a49fd|5|PROVEN|i|test(C2-3): fenced tests catch empty-galaxy live-pipe bug, red on main
+push/C2-4|cf97d810|16|PROVEN|i|feat(C2-4): persistent pipe session in c_bridge, galaxy redraws from s
+push/C2-4-tests|059e5d03|15|PROVEN|i|test(C2-4): persistent pipe session and live conquest recolour, red on
+push/C2-4b|bdf117ad|17|PROVEN|i|merge C7-3 test fix
+push/C2-4b-tests|94773928|16|PROVEN|i|merge C7-3 test fix
+push/C2-5|d916033c|4|NOT|scenes/galaxy/galaxy_view.gd|fix(C2-5): galaxy dots and edges get unshaded materials, owner colours
+push/C2-5-tests|7d6e9ee4|3|PROVEN|i|test(C2-5): galaxy owner colours must reach the pixels, red on main
+push/C2-5b|f604ef89|22|NOT|autoload/c_bridge.gd|feat(C2-5b): galaxy unshaded materials on the shared session; owner-co
+push/C2-5b-r|b3c12b5b|9|PROVEN|i|feat(C2-5b-r): galaxy unshaded materials, owner-colour-flat plant re-r
+push/C2-5b-tests|e6a2888d|22|NOT|autoload/c_bridge.gd|test(C2-5b): the owner-colour-flat plant must reach the pixels; red on
+push/C2-6|eb6388af|21|NOT|autoload/c_bridge.gd|feat(C2-6): one shared pipe session (SimSession) for galaxy, briefing,
+push/C2-6-tests|e1ca981a|20|PROVEN|i,ii|test(C2-6): fresh world for the scene under test, saves at tick 0, has
+push/C2-7|c0320153|3|PROVEN|i|fix(C2-7): edges-2d-overlay plant now draws Line2D overlay (QA-002)
+push/C2-8|0d4abe69|10|PROVEN|i|feat(C2-8): read player faction from pipe; replace literal 0 across ta
+push/C3|6cd77487|39|NOT|.swarm/c2-1/worktrees/leaf-01|swarm(c3): merge leaf-01 (chronicle scroll rebind) into integration fo
+push/C3-1|add374c6|2|PROVEN|i|swarm(c3-1): wire bible pace (0.08/0.20) into the real scroll timer
+push/C3-2|7031ce1e|1|PROVEN|i|swarm(c3-2): render load_frame()'s entries on screen
+push/C3-3|86a06022|7|PROVEN|i|feat(C3-3): chronicle panel reads the live jump frame; c_bridge live_s
+push/C3-3-tests|ef1c055b|6|PROVEN|i|test(C3-3): chronicle panel reads the live jump frame, red on C4-3
+push/C3-4|e42f66d2|7|NOT|scenes/world/chronicle_scroll_panel.gd|feat(C3-4): chronicle prose from fragment library GREEN
+push/C3-4b|33b76d82|26|NOT|scenes/debrief/debrief.gd|feat(C3-4b): add scene/tick/plants to chronicle qa_state -- GREEN
+push/C3-6|e5983067|3|PROVEN|i|fix(C3-6): chronicle -1 handling via fragment_ids (GREEN)
+push/C3-G2-tests|22c62e3a|0|PROVEN||C3-G2 tests: error panel on pipe failure in galaxy, briefing, debrief,
+push/C3-G2-tests2|5bd84c91|0|PROVEN||G2 tests2: assert shared scenes/shared/error_panel.tscn instance, merg
+push/C3-G3|3bf409e7|0|PROVEN||C3-G3: main menu drops replay tutorial + access key hint, label New Ca
+push/C3-G3-tests|d6198e91|0|PROVEN||C3-G3 tests: main menu items per decision, no tutorial replay or acces
+push/C3-G3-tests2|87a63994|0|PROVEN||C3-G3 tests2: menu exactly five entries, label New Campaign
+push/C3-G4|4daebc83|0|PROVEN||G4: debug overlay gated by ENABLE_DEBUG_OVERLAY, reads live tactical f
+push/C3-G4-tests|ad5dd905|0|PROVEN||C3-G4 tests: debug overlay gated off by flag, reads tactical frame not
+push/C3-G4-tests2|41f7808c|0|PROVEN||ledger: TD-G4-H2 test-defect row
+push/C3-G5-2|c92e9137|0|PROVEN||C3-G5: edge scroll toggle, stored audio and display applied at boot
+push/C3-G5-tests|f123eb71|0|PROVEN||C3-G5 tests: stored audio and edge-scroll settings applied at boot
+push/C3-G5-tests2|eed50691|0|PROVEN||C3-G5 tests2: edge scroll toggle, boot display desktop test, ledger no
+push/C3-G6-g4|158a7ab2|0|PROVEN||C3-G6 ratchet: G4 swaps debug_overlay.gd for its own test in recorded 
+push/C3-G6-land|99d33cd4|0|PROVEN||ledger: G6 ratchet recount 25, green on main
+push/C3-G6-tests|eef812f0|0|PROVEN||C3-G6 tests: TacticalBridge reference ratchet and conditional autoload
+push/C4|0e4591df|38|NOT|.swarm/c2/PLAN-CHECK.md|swarm(c4): merge leaf-02 (debrief rebind) into integration for push/C4
+push/C4-1|3055c9dc|49|NOT|.swarm/c2-1/worktrees/leaf-01|swarm(c4-1): wire load_frame into on-screen UI (mission_briefing, debr
+push/C4-2|399ca41e|46|NOT|.swarm/c2-1/worktrees/leaf-01|swarm(c4-2): neutral placeholder instead of mock-001 backfill on the f
+push/C4-3|ae750e6a|5|PROVEN|i|feat(C4-3): briefing and debrief read the live mission and debrief fra
+push/C4-3-tests|7b243e79|2|PROVEN|i|test(C4-3): briefing and debrief read the live mission and debrief fra
+push/C4-4|be433f7e|30|NOT|autoload/c_bridge.gd|feat(C4-4): the briefing's Begin sends mission_begin over the shared s
+push/C4-4-tests|f7172db7|30|NOT|autoload/c_bridge.gd|test(C4-4): Begin ends recon over the shared session, Deploy leaves th
+push/C4-5|86a06022|7|PROVEN|i|feat(C3-3): chronicle panel reads the live jump frame; c_bridge live_s
+push/C4-6|85637885|2|PROVEN|i|fix(C4-6): Deploy button disabled until mission in recon; error on scr
+push/C4-8|ff51b3bf|4|PROVEN|i|feat(C4-8): region_delta_text in qa_state, "no change" for zeros, GREE
+push/C4-9|80920315|2|PROVEN|i|drop dead SimBridge send in debrief _on_continue (C4-9 G1)
+push/C4-E1-tests|5ced3f37|0|PROVEN||C4-E1: failing Era Library tests (R-110-05..07) and doer unit plan
+push/C4-E1-tests2|443a6ced|0|PROVEN||C4-E1 tests: mastery and tier progress removed from the screen (A51, R
+push/C4-E1-tests3|ae5992c1|0|PROVEN||C4-E1 tests: Era Library answers 04-08 (A58): ownership seam, era_orde
+push/C4-E2-impl|a74ccaaa|0|PROVEN||C4-E2-b: send_command logs to bug report
+push/C4-E2-tests|66ea6d06|0|PROVEN||C4-E2 tests: keep the test off the ratchet scan
+push/C4-E2-tests2|faf0f390|0|PROVEN||C4-E2 tests2: F12 only handled once, ZIP name carries milliseconds (A4
+push/C4-E3-impl|009c99ac|0|PROVEN||E3-b: delete legacy tactical scene, visibility autoload, impact-origin
+push/C4-E3-tests|144da602|0|PROVEN||C4-E3 tests: legacy scenes/tactical deleted, classification note
+push/C4-E3-tests2|21ae23db|0|PROVEN||C4-E3 tests2: b3 drops obsolete Replay Tutorial asserts, E3-5 ignores 
+push/C4C5-questions|0ede6b63|1|NOT|docs/northstar/plans/2026-10-01-c4-c5-architect-questions.md|docs: C4 and C5 questions for the Architect
+push/C5|76d87668|49|NOT|.swarm/c2-1/worktrees/leaf-01|swarm(c5): merge leaf-01 (minimal tactical view) into integration for 
+push/C5-2|acffb9b0|9|PROVEN|i|feat(C5-2): tactical view reads the first live tactical frame; camera 
+push/C5-2-tests|577974f5|8|PROVEN|i|test(C5-2): tactical view reads the live tactical frame, red on C3-3
+push/C5-3-r|b51eaffa|5|PROVEN|i|fix(C5-3): step strategic world 10 ticks before live-mission assertion
+push/C5-3-tests|64a2952e|47|NOT|csrc/mission.c|test(C5-3): real-size canvas fits the screen, unit commands over the s
+push/C5-4|5c207d4d|3|NOT|scenes/tactical_c/tactical_view.gd|feat(C5-4): GREEN -- group move counter + move-order-dropped plant
+push/C5-4b|75f29f5c|4|NOT|tests/qa/desktop/test_tactical_play.py|test(C5-4): world-coord edge selection, qa_select verb
+push/C5-4c|1fba0da0|4|PROVEN|i|test(C5-4): group move pace assertion from Q-E03-01, red on sim: 0.4 o
+push/C5-A48-impl|4c1814d8|3|NOT|scenes/galaxy/galaxy_adapter.gd|A48-4 adapter draws same-faction edges only Co-Authored-By: Claude Son
+push/C5-A56-impl|05337ba4|2|NOT|scenes/galaxy/galaxy_view.gd|A56-6 camera_autonomous + unknown_factions qa_state, Unknown label (ba
+push/C5-C1-impl|2851f313|11|NOT|autoload/scene_router.gd|C8-N: chronicle route to composite
+push/C5-C1-tests|759d99a3|1|NOT|tests/test_chronicle_composite.gd|C5-C1 tests: chronicle route is galaxy plus scroll panel, 62 percent m
+push/C5-G1-impl|9429a73e|0|PROVEN||C5-G1 impl: orbit_camera input pan/zoom/orbit, click focus, focus_regi
+push/C5-G1-tests|0187769c|0|PROVEN||C5-G1 tests: galaxy camera input, click focus, focus_region, pan speed
+push/C5-G2-impl|62707653|0|PROVEN||C2-G2.3: galaxy view draws shells and filament arcs via adapter, drop 
+push/C5-G2-tests|cd3982fc|0|PROVEN||C5-G2 tests: galaxy renderers fed by snapshot adapter (R-106-02)
+push/C5-G3-impl|4302f0ad|0|PROVEN||C2-G3.1: faction labels at shell centroids in Overview, get_positions 
+push/C5-G3-tests|2e82ec2e|0|PROVEN||C5-G3 tests: galaxy faction labels, conquest lifecycle, system hover (
+push/C5-tests2|224f7ba6|0|PROVEN||C5 tests2: A48-1..6 galaxy camera autonomy, grab pan, bands, same-fact
+push/C5-tests3|ea195b94|0|PROVEN||ledger: C5 tests3 rows (A55, A56 suspended checks, differences list)
+push/C6-1|e9815bef|3|PROVEN|i|feat(C6-1): debrief reads live frame; remove dead _params[debrief] pri
+push/C6-gap-rows|7b6b729e|0|PROVEN||work-list: four E3 client gap rows under C6
+push/C7|a0eeecfa|11|PROVEN|i|swarm(c7): leaf-01 — Build `autoload/qa_daemon.gd` (extends Node) and 
+push/C7-1|f4ba0946|1|PROVEN|i|swarm(c7-1): add a "plant" verb to qa_daemon.gd's --qa-port protocol
+push/C7-2|bae7ca5f|7|PROVEN|i|fix(C7-2): daemon state merges scene qa_state, harness sets up fresh w
+push/C7-3|2762e9fe|8|PROVEN|i|test(C7-3): step case awaits a frame so the daemon is in the tree; red
+push/C7-4|aa2c6e15|8|PROVEN|i|feat(C7-4): qa_harness runs the game with a per-run OM_SAVE_DIR
+push/C7-5|38bb42f9|19|NOT|scenes/debrief/debrief.gd|feat(C7-5): qa_state() on all 18 required scenes, green 244 passes
+push/C8|07dd5eb1|82|NOT|.swarm/c2-1/worktrees/leaf-01|swarm(c8): merge swarm/t2g/leaf-01 in — T2g wasn't in this wave's base
+push/C8-10|4c4b86d3|2|PROVEN|i|fix(C8-10): remove SimBridge from loading_screen _ready, route direct
+push/C8-10-revert|7f92d08e|2|PROVEN|i,ii|revert(C8-10): loading screen raced SceneRouter and hung boot
+push/C8-look|bdcc5b7d|10|PROVEN|i|docs(push): C8-look -- first-look evidence for the flow spine
+push/C8-look-2|bb361a36|16|PROVEN|i|docs(push): C8-look-2 -- retake the six galaxy plant screenshots
+push/C8-look-3|5b3a7132|8|PROVEN|i|look3 evidence: galaxy still empty live, root cause pinned
+push/C8-look-4|7e52a2a3|11|PROVEN|i|C8-look-4: galaxy live, data correct, pixels black (owner colours not 
+push/C8-look-5|efef499f|18|PROVEN|i|C8-look-5: live client end to end, tactical view draws nothing at real
+push/CONST-1|8baad88c|11|PROVEN|i|const(CONST-1): chronicle.c, unit.c
+push/F2|33a0508a|0|PROVEN||A7 profile: fix 2 re-measure
+push/F2-tests|10c6e1c4|0|PROVEN||F2 tests: nearest-hostile search equivalence, goldens, distance-test b
+push/F2h|bf4a1edd|0|PROVEN||freeze(F2h): om_event_register_external for module-owned named events 
+push/F2i|14ff4d84|2|PROVEN|i|freeze(F2i): fog_state, chronicle_state, move_state, macro_state, supp
+push/F2j|c5d46698|4|NOT|csrc/om_internal.h|fix(save-abi): om_load_state_read returns int, not void
+push/F2j-2|2068d58f|4|PROVEN|i|freeze(F2j-2): save hooks per om_world slot, save.c format constants
+push/F2k|bd794519|2|PROVEN|i|freeze(F2k): mapgen_state slot in om_world
+push/F2l|7c8cde14|5|PROVEN|i|F2l: unit.c header accessors, fog/movement/support leaves need them
+push/F2m|a5002eaf|6|NOT|csrc/ouroboros_sim.h|F2m: wire save hooks at world-new, atomic slot refusal
+push/F2n|c870bc03|8|NOT|csrc/ouroboros_sim.h|F2n fixup: correct block placement so regen matches committed files
+push/F2o|dffef720|12|NOT|csrc/chronicle.c|F2o: generational/chronicle/events header syms, event tier constants t
+push/F2q|b68f0a9f|10|NOT|csrc/chronicle.c|F2q test-fix: S068 drops local OmChronicleEntry, imports conftest's
+push/F2qs|55c40525|14|NOT|csrc/chronicle.c|freeze(F2qs): F2q + F2s rebuilt on F2o
+push/F2s|e6fc83ff|10|NOT|csrc/chronicle.c|F2s: generational.c character/lineage enumeration, mapgen full clear
+push/F2t|aeb32889|12|PROVEN|i|F2t: rebuild F2qs (F2o+F2q+F2s) on main, F2n already landed
+push/HARNESS-consplit-tests|4ca88789|2|NOT|tests/specfactory/fixtures/om_constants_macros.txt|consplit tests: macro golden, exact emit, extra header, controls
+push/HARNESS-consplit-tests2|3996a85b|2|NOT|tests/specfactory/fixtures/om_constants_macros.txt|consplit tests2: exact macro golden, skip-list tests, planted-name con
+push/HDR3|ced7e187|21|PROVEN|i|HDR3 chk3: OM_ABI_VERSION macro, test_core_player_faction, ABI 3 call 
+push/HDR4|29c08926|7|PROVEN|i|feat(HDR4): om_chapter_get_number public accessor
+push/HDR4-2|5ea0cf68|13|NOT|csrc/mission.c|HDR4-2: mission force accessors + objective node accessor (after: B9-6
+push/HDR4-2-r2|a065fc13|0|PROVEN||HDR4-2-r: declare objective node/radius, force count/unit, commander u
+push/HDR4-2-r2-impl|943ece22|0|PROVEN||HDR4-2-r2: mission force, commander, objective node/radius accessors
+push/HDR4-2-r2-tests|c0d45c98|0|PROVEN||HDR4-2-r2 tests: force/objective/commander accessor isolation tests, r
+push/HDR5|e3b6de2d|0|PROVEN||HDR5 save: format version 4 to 5
+push/HDR5-ctl|55a8ef76|0|PROVEN||HDR5-ctl: E03 control planted delay, ledger rows A37 A38
+push/HDR5-ctl2|b7121a01|0|PROVEN||HDR5-ctl2: friction golden private ctypes binding (order-independent),
+push/HDR5-follow|3a70639f|0|PROVEN||load screen current save version 4 to 5
+push/HDR5-td|bf3c28d1|0|PROVEN||HDR5-td: save version test to 5, scale controls capped at 512 regions 
+push/HDR5-tests|c75aee45|0|PROVEN||C2-1: red tests for HDR5 region scale (cap 512, range 250-400, frictio
+push/HDR5-tests2|e5bfba5a|0|PROVEN||ledger: fix golden hash tail
+push/HDR5-tests3|3199e98c|0|PROVEN||HDR5-tests3: R-021-06 corridor test scale-robust with cut-link positiv
+push/HDR5-ver-td|46db3f71|0|PROVEN||HDR5-ver-td: load-game wrong-version test pins save version 5, ledger 
+push/INV-algemit|37bfc9c6|1|NOT|docs/northstar/plans/2026-10-02-alg-emit-lossy.md|diag: alg_constants --emit lossy, cause and fix proposal
+push/INV-algemit2|a71e3e91|2|NOT|docs/northstar/plans/2026-10-02-alg-emit-lossy.md|diag: alg_constants --emit, the 20 UNPARSED names and emitter-only nam
+push/INV-debrief|09b38f4d|0|PROVEN||INV-debrief: briefing/debrief reds diagnosed, test-defect
+push/INV-savesize|53789142|1|NOT|docs/northstar/plans/2026-10-02-save-size-breakdown.md|INV-savesize: save-size breakdown by slot, edge matrix cap-sized, test
+push/INV-tickrate|032e0ece|1|NOT|docs/northstar/plans/2026-10-02-tactical-view-tick-red.md|INV-tickrate: diagnose tactical_view realtime tick red, fixture seed d
+push/SAVE-1|60f06b94|5|PROVEN|i|save(SAVE-1): bump OM_SAVE_FORMAT_VERSION 1->2; fix ring comment
+push/T1-1|284c93ff|1|PROVEN|i|swarm(t1-1): set_seed generates the world (B4 attach)
+push/T1-1-tests|d030882d|2|PROVEN|i|fix(tests): derive region count from snapshot, not hardcoded 60
+push/T1-11|ebc1f2be|4|NOT|csrc/pipe/om_pipe.c|pipe: objective_complete verb + region_delta test (T1-11)
+push/T1-12|032e4836|2|PROVEN|i|mission(T1-12): fill consequence table all 50 cells (ALG-59)
+push/T1-13|69540d43|5|PROVEN|i|T1-13: pipe entry ticks, unit command cap, objective_complete verb, co
+push/T1-14|897a19a9|3|PROVEN|i|pipe: snapshot emits real player_faction (T1-14)
+push/T1-15|ca9b023a|4|PROVEN|i|test(T1-15): place_structure transport tests; un-xfail structure produ
+push/T1-2|355c2f73|1|PROVEN|i|pipe(T1-2): session commands -- mission, jump, tactical, command, save
+push/T1-2-tests|42ebddf8|6|PROVEN|i|swarm(T1-2-tests): session command frame tests + schemas
+push/T1-3|9b3b31da|2|NOT|csrc/pipe/om_pipe.c|fix(T1-3): pipe load reports the loaded world's tick
+push/T1-3b|2d20f59d|2|PROVEN|i|fix(T1-3b): pipe load reports the loaded world's tick (rebuilt on push
+push/T1-4|22d0346c|9|NOT|csrc/pipe/om_pipe.c|fix(T1-4): declare in_recon before its first use
+push/T1-4-tests|d836ec09|9|PROVEN|i|test(T1-4): tactical_step and command are refused in recon; the T1-2 s
+push/T1-5|1108ca76|21|NOT|csrc/mission.c|feat(T1-5): tactical frame reads the real canvas, nodes, cover, units 
+push/T1-5-r|d7d71852|1|PROVEN|i|feat(T1-5-r): pipe = T1-3b + T1-4 + T1-5 bodies rebuilt by copy on mai
+push/T1-5-tests|93b7f3fc|21|NOT|csrc/mission.c|test(T1-5): the tactical frame carries the real canvas, nodes, cover, 
+push/T1-7|f4d9699e|2|NOT|csrc/pipe/om_pipe.c|fix(pipe): handle_command uses om_command_group_move for move verb (T1
+push/T1-7-2|1a2ad8da|2|NOT|csrc/tactical_move.c|fix(T1-7-2): stuck units in dense spawn now move
+push/T1-7-2-r|b255ad0a|2|PROVEN|i|move(T1-7-2-r): probe skip same-group mates (group_id nonzero match)
+push/T1-7-3|3ffbe5a8|2|NOT|csrc/pipe/om_pipe.c|pipe: raise command unit cap 256->OM_MAX_UNITS (T1-7-3)
+push/T1-8|c0ea99d9|6|PROVEN|i|wire(T1-8): om_mission_get_region_delta into write_debrief; fix header
+push/T1-9|2388ab71|3|NOT|csrc/pipe/om_pipe.c|feat(T1-9): emit fragment_ids[3] in chronicle frame via om_chronicle_e
+push/T1-9-r|77f71739|8|NOT|csrc/pipe/om_pipe.c|T1-9 rebuilt on T1-8: fragment_ids in chronicle frame, header comment 
+push/T1-9-r2|4968cf24|3|PROVEN|i|T1-9 rebuilt on fresh main: fragment_ids in chronicle frame
+push/T1-b7|332291a7|0|PROVEN||pipe: assign_commander cmd, debrief commander_fate
+push/T1-b7-td|758a008f|0|PROVEN||T1-b7-td: assign_commander dead ids via full-frame id diff (A7 filters
+push/T2g|6ef7d8a4|58|NOT|.swarm/c2-1/worktrees/leaf-01|swarm(t2g): merge leaf-01 (save-slots rebind) into integration for pus
+push/T2g-2|26cac011|12|PROVEN|i|feat(T2g-2): live save slots, autosave from the live mission, debrief 
+push/T2g-2-tests|1c452bc1|10|PROVEN|i|test(T2g-2): save slots over the live pipe, autosave, refusal, rows on
+push/T2g-3|2fab312d|11|PROVEN|i|feat(T2g-3): live save slots, autosave from the live mission, debrief 
+push/T2g-3-tests|b974382d|10|PROVEN|i|test(T2g-3): save slots over the live pipe, autosave, refusal, rows on
+push/T2g-4|2342e38d|2|PROVEN|i|T2g-4: drop dead legacy save-card path and delete-confirm overlay
+push/W-1|74324257|4|NOT|csrc/tactical_support.c|wire(W-1): enemy wave roll/check + structure production spawn
+push/W-1a|b0cc5e87|2|PROVEN|i|wire(W-1a): enemy wave roll + arrival check in om_macro_tick (R-124-01
+push/W-1b|e8f97086|3|PROVEN|i|W-1b: structure production spawns player-faction unit; faction map com
+push/W-1c|7f140080|6|PROVEN|i|feat(W-1c): om_mission_get_enemy_faction public accessor
+push/W-1d|7cabdd21|6|NOT|docs/northstar/spec_factory/signatures.toml|test-literals(W-1d): update 0/1/2 owner convention to E-05 faction ids
+push/W-1e|7346f843|9|PROVEN|i|feat(W-1e): om_structure_set_position; pipe place_structure applies x/
+push/W-1f|c46afcdf|3|PROVEN|i|W-1f: enemy wave spawns 50 units, ALG-75 composition
