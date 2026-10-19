@@ -2166,7 +2166,7 @@ size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2
 id = "VG-B25"
 manager = "M0"
 wave = 9
-owns = ["scenes/galaxy/ambient_rig.gd", "scenes/galaxy/shaders/backdrop_wash.gdshader", "scenes/galaxy/shaders/backdrop_stars.gdshader", "scenes/galaxy/shaders/backdrop_dust.gdshader", "tests/test_vg_b_b25.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/b25_gpu_checks.gd", "tests/galaxy_field/b25_gpu_checks.tscn", "tests/test_vg_b_b23.gd", "scenes/galaxy/galaxy_view.tscn"]  # galaxy_view.gd: one qa_state line (g5); shader names from the B25 script (SHADERS constant); the three shaders are new files; tests/test_vg_b_b23.gd: :210 only (the far-plane pin 800 -> DRAFT-b25-far 3,000; TD-VG-B-20; VG-B24 attached at 59a24b49 so its :188 hold is history); scenes/galaxy/galaxy_view.tscn: the two wash/layer node lines only, the Environment (background mode, colour, fog) is untouched so test_vg_b_b18.gd:79-84 stays green
+owns = ["scenes/galaxy/ambient_rig.gd", "scenes/galaxy/shaders/backdrop_wash.gdshader", "scenes/galaxy/shaders/backdrop_stars.gdshader", "scenes/galaxy/shaders/backdrop_dust.gdshader", "tests/test_vg_b_b25.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/b25_gpu_checks.gd", "tests/galaxy_field/b25_gpu_checks.tscn", "tests/test_vg_b_b23.gd", "docs/bible/epics/E-16-client-camera-hud-and-world-view.md", "tests/test_vg_b_b11.gd", "tests/qa/desktop/test_galaxy_ambient.py"]  # galaxy_view.gd: one qa_state line (g5); shader names from the B25 script (SHADERS constant); the three shaders are new files; tests/test_vg_b_b23.gd: :210 only (the far-plane pin 800 -> DRAFT-b25-far 3,000; TD-VG-B-20; VG-B24 attached at 59a24b49 so its :188 hold is history); no galaxy_view.tscn edit (Architect 2026-10-19, spec :310): the wash and the star layers are built at runtime by ambient_rig.gd and the Environment (background mode, colour, fog) is untouched, so test_vg_b_b18.gd:79-84 stays green; the E-16 epic, tests/test_vg_b_b11.gd and tests/qa/desktop/test_galaxy_ambient.py: spec Rev 12d :312 stale-doc rewrites inside B25 (R-106-05 text, the two test headers); VG-B23 attached owns E-16 (test_galaxy_ambient.py is under the VG-B glob tests/qa/desktop/test_galaxy_*.py, the brief named it without the qa/desktop path)
 owns_glob = []
 acceptance = ["tests/test_vg_b_b25.gd"]
 depends_on = ["VG-B24", "VG-B23", "VG-B"]  # VG-B23 for clarity (transitive via VG-B24); B24 is the last owner of galaxy_view.gd before this piece; VG-B owns tests/galaxy_field/** by glob
@@ -2310,7 +2310,7 @@ owns = ["tests/csim/test_VG_W_w1_planner.py", "tests/csim/test_VG_W_w1_perf_cont
 owns_glob = []
 acceptance = ["tests/csim/test_VG_W_w1_planner.py", "tests/csim/test_VG_W_w1_perf_control.py"]
 depends_on = ["VG-W2"]  # VG-W2 is attached and also edited test_VG_W_w1_planner.py (goldens); only test_C_a_tick_with_600_walkers_costs_less_than_the_draft changes here, plus the helper perf_repeats_ms above it
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "1efb8902" }
 tests_pending = false
 size_estimate = "min-of-7 helper and the 600-walker test body (about 45 lines), one control test file (about 25 lines)"
 
