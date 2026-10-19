@@ -11,7 +11,8 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
         setup {Setup field: value} (firing_arc_deg, cone), kind, label
         kind in {"grid", "refined", "sign_flip", "control_positive", "control_null"}
     grid(family) -> list[Point]            the coarse points in the spec's order (kind "grid"; sign_flip family: kind "sign_flip")
-    controls(family) -> {"positive": Control, "null": Control}   Control: points (list[Point]), reach (None or (0, 0)), check(results)
+    controls(family) -> {"positive": Control, "null": Control}   Control: points (list[Point]), reach (None or (0, 0)), check(results),
+        max_ticks (CONTROL_MAX_TICKS for a control that needs no result, None for one that does: the fight runs to its own cap)
         check(results_by_point) -> bool, results_by_point = [[FightResult, ...] per control point, in points order]
     refine(values, differs, max_rounds=2) -> [(round, value), ...]    differs(value) -> bool, called once per value
     Capabilities(arc, cone) (namedtuple of bool); detect(engine) -> Capabilities; skip_reason(family, caps) -> str | None
@@ -361,6 +362,16 @@ def test_cone_null_control_is_a_cone_of_range_zero_against_no_cone():
     assert c.check([[a], [a]]) is True and c.check([[a], [_res("side0", margin=0.1)]]) is False
 
 
+def test_control_lengths_only_the_damage_control_needs_a_finished_fight():
+    """Vision zero and every null control read rows that do not need a result: they stop at CONTROL_MAX_TICKS. The damage control
+    reads a result (damage-up 0.5 changes it) and a capped fight at 600 ticks shows the same margin at both points on the real
+    play (measured on the reference: s3_layer_above, six fights, identical margins), so it runs to elimination (max_ticks None)."""
+    assert sweep.controls("vision")["positive"].max_ticks == sweep.CONTROL_MAX_TICKS
+    for fam in ("vision", "range_up", "damage_up", "emitting", "arc", "cone"):
+        assert sweep.controls(fam)["null"].max_ticks == sweep.CONTROL_MAX_TICKS, fam
+    assert sweep.controls("damage_up")["positive"].max_ticks is None
+
+
 def test_vision_positive_control_is_vision_zero_both_directions():
     c = sweep.controls("vision")["positive"]
     assert len(c.points) == 1 and c.points[0].kind == "control_positive" and c.points[0].value == 0.0
@@ -384,15 +395,24 @@ def test_null_check_wants_byte_identical_rows_across_the_points():
     assert check([[a, b], [a, b], [a, b], [a]]) is False                                  # a different number of fights
 
 
+def _lean(result, window=(12.75, 9.25)):
+    """A result as the pool's lean mode returns it: the per-tick series are gone (trim_series), the window counts are row values."""
+    return dataclasses.replace(result, firing=[], firing_window=window, weighted_window=window)
+
+
 def test_damage_positive_control_changes_the_result_and_not_the_count():
+    """The count is the opening-window firing count (a row value), not the per-tick firing series: the series is empty on a lean
+    result (the pool, workers > 1), and the check must still work."""
     c = sweep.controls("damage_up")["positive"]
     assert [p.value for p in c.points] == [1.0, 0.5] and all(p.kind == "control_positive" for p in c.points)
-    base = [_res("side0", margin=0.5, firing=((0, 16, 16),)) for _ in range(2)]
-    half = [_res("side0", margin=0.25, firing=((0, 16, 16),)) for _ in range(2)]
+    base = [_lean(_res("side0", margin=0.5)) for _ in range(2)]
+    half = [_lean(_res("side0", margin=0.25)) for _ in range(2)]
     assert c.check([base, half]) is True
     assert c.check([base, base]) is False                                                  # nothing changed
-    moved = [_res("side0", margin=0.25, firing=((0, 12, 16),)) for _ in range(2)]
+    moved = [_lean(_res("side0", margin=0.25), window=(9.0, 9.25)) for _ in range(2)]
     assert c.check([base, moved]) is False                                                 # the count moved too
+    full = [dataclasses.replace(r, firing=[(0, 16, 16)]) for r in base]
+    assert c.check([full, [dataclasses.replace(r, firing=[(0, 16, 16)]) for r in half]]) is True        # with the series present as well
 
 
 # ---- run_family with fakes ----------------------------------------------------------------------------------------------------
@@ -432,8 +452,9 @@ class World(ScriptedFight):
         out = _fr("side0" if be is not None and enemy <= be else "side1", enemy)
         d = s.get("OM_TP_DAMAGE_UP_1")
         if role == "play" and d is not None and enemy == 16:
-            out = dataclasses.replace(out, margin=0.5 if self.flags.get("damage_blind") else 0.5 * d,
-                                      firing=[(0, int(16 * d), 16)] if self.flags.get("damage_count_moves") else [(0, 16, 16)])
+            window = (12.75 * d, 9.25) if self.flags.get("damage_count_moves") else (12.75, 9.25)
+            out = dataclasses.replace(out, margin=0.5 if self.flags.get("damage_blind") else 0.5 * d, firing=[],
+                                      firing_window=window, weighted_window=window)
         return out
 
 
@@ -464,7 +485,7 @@ def test_run_family_writes_the_csv_with_the_pinned_columns_and_the_summary_entry
 
 def test_every_cell_is_three_replicates_in_both_orders_and_no_fight_repeats(tmp_path):
     """3 replicates per cell: 6 fights per (point, role, headcount), each (seed, swap) once."""
-    _, world = run(tmp_path, "damage_up")
+    _, world = run(tmp_path, "range_up")          # not damage_up: its positive control may repeat a grid cell's fights
     groups = {}
     for c in world.calls:
         if c["max_ticks"] == sweep.CONTROL_MAX_TICKS:
@@ -475,7 +496,7 @@ def test_every_cell_is_three_replicates_in_both_orders_and_no_fight_repeats(tmp_
 
 
 def test_replicates_keyword_changes_the_cell_size(tmp_path):
-    _, world = run(tmp_path, "damage_up", replicates=2)
+    _, world = run(tmp_path, "range_up", replicates=2)
     sizes = {}
     for c in world.calls:
         if c["max_ticks"] == sweep.CONTROL_MAX_TICKS:
@@ -729,8 +750,10 @@ def test_the_cone_null_control_runs_the_real_play_with_a_zero_range_cone_and_wit
 
 
 def test_the_damage_controls(tmp_path):
-    entry, _ = run(tmp_path, "damage_up")
+    entry, world = run(tmp_path, "damage_up")
     assert entry["controls"]["positive"]["ok"] is True
+    assert {c["max_ticks"] for c in world.calls if c["role"] != "reach_zero"} == {12000}          # no fight but the null control is cut short
+    assert {c["max_ticks"] for c in world.calls if c["role"] == "reach_zero"} == {sweep.CONTROL_MAX_TICKS}
     assert run(tmp_path, "damage_up", world=World(damage_blind=True))[0]["controls"]["positive"]["ok"] is False
     assert run(tmp_path, "damage_up", world=World(damage_count_moves=True))[0]["controls"]["positive"]["ok"] is False
 
@@ -783,11 +806,11 @@ def test_a_cap_in_a_control_kind_alone_is_not_a_defect_but_a_draw_in_one_is_coun
     class W(World):
         def __call__(self, setup, seed, swap):
             out = super().__call__(setup, seed, swap)
-            if setup.max_ticks == sweep.CONTROL_MAX_TICKS and seed == 0 and not swap and out.outcome != "cap":
+            if setup.max_ticks == sweep.CONTROL_MAX_TICKS and seed == 0 and not swap:
                 return _fr("draw", setup.unit_types["enemy"], fus=out.firing_unit_seconds)
             return out
-    entry, _ = run(tmp_path, "damage_up", world=W())
-    rows = read(tmp_path, "damage_up")
+    entry, _ = run(tmp_path, "vision", world=W())
+    rows = read(tmp_path, "vision")
     assert entry["defects"]["cap_rows"] == 0 and entry["defects"]["draw_rows"] == sum(r["outcome"] == "draw" for r in rows) > 0
     assert entry["defects"]["cells"] == 0 and entry["defects"] == _defects_of(rows)
 
