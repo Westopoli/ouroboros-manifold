@@ -1,0 +1,1495 @@
+{
+ "seeds": "1-50",
+ "missions_requested": 10,
+ "missions_run": 500,
+ "candidate_rows": 5655,
+ "draws_checked": 500,
+ "draws_in_pool": 500,
+ "draws_in_top5": 500,
+ "argmax_count": 129,
+ "argmax_rate": 0.258,
+ "rank_histogram": {
+  "0": 129,
+  "1": 116,
+  "2": 96,
+  "3": 89,
+  "4": 70
+ },
+ "swapped_count": 70,
+ "swapped": [
+  {
+   "seed": 2,
+   "tick": 300,
+   "mission": 5,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 2,
+   "tick": 400,
+   "mission": 7,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 3,
+   "tick": 144,
+   "mission": 2,
+   "drawn": [
+    62,
+    0
+   ],
+   "played": [
+    64,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 6,
+   "tick": 72,
+   "mission": 1,
+   "drawn": [
+    75,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 6,
+   "tick": 322,
+   "mission": 6,
+   "drawn": [
+    75,
+    0
+   ],
+   "played": [
+    66,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 7,
+   "tick": 74,
+   "mission": 1,
+   "drawn": [
+    62,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 7,
+   "tick": 424,
+   "mission": 8,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 7,
+   "tick": 474,
+   "mission": 9,
+   "drawn": [
+    69,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 8,
+   "tick": 93,
+   "mission": 1,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    63,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 8,
+   "tick": 393,
+   "mission": 7,
+   "drawn": [
+    71,
+    0
+   ],
+   "played": [
+    74,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 8,
+   "tick": 493,
+   "mission": 9,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 10,
+   "tick": 197,
+   "mission": 3,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    66,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 10,
+   "tick": 347,
+   "mission": 6,
+   "drawn": [
+    66,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 10,
+   "tick": 397,
+   "mission": 7,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    66,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 11,
+   "tick": 141,
+   "mission": 2,
+   "drawn": [
+    58,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 11,
+   "tick": 341,
+   "mission": 6,
+   "drawn": [
+    71,
+    0
+   ],
+   "played": [
+    60,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 11,
+   "tick": 391,
+   "mission": 7,
+   "drawn": [
+    71,
+    0
+   ],
+   "played": [
+    60,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 13,
+   "tick": 290,
+   "mission": 5,
+   "drawn": [
+    66,
+    5
+   ],
+   "played": [
+    68,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 13,
+   "tick": 340,
+   "mission": 6,
+   "drawn": [
+    65,
+    0
+   ],
+   "played": [
+    64,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 13,
+   "tick": 440,
+   "mission": 8,
+   "drawn": [
+    64,
+    5
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 14,
+   "tick": 222,
+   "mission": 4,
+   "drawn": [
+    73,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 15,
+   "tick": 91,
+   "mission": 1,
+   "drawn": [
+    75,
+    0
+   ],
+   "played": [
+    57,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 16,
+   "tick": 36,
+   "mission": 0,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 18,
+   "tick": 277,
+   "mission": 5,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    62,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 18,
+   "tick": 327,
+   "mission": 6,
+   "drawn": [
+    3,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 18,
+   "tick": 377,
+   "mission": 7,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    63,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 18,
+   "tick": 427,
+   "mission": 8,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 19,
+   "tick": 244,
+   "mission": 4,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 19,
+   "tick": 494,
+   "mission": 9,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 22,
+   "tick": 478,
+   "mission": 9,
+   "drawn": [
+    65,
+    0
+   ],
+   "played": [
+    66,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 23,
+   "tick": 499,
+   "mission": 9,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    77,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 24,
+   "tick": 489,
+   "mission": 9,
+   "drawn": [
+    4,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 25,
+   "tick": 140,
+   "mission": 2,
+   "drawn": [
+    66,
+    0
+   ],
+   "played": [
+    69,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 25,
+   "tick": 190,
+   "mission": 3,
+   "drawn": [
+    69,
+    0
+   ],
+   "played": [
+    59,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 25,
+   "tick": 390,
+   "mission": 7,
+   "drawn": [
+    69,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 25,
+   "tick": 490,
+   "mission": 9,
+   "drawn": [
+    66,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 26,
+   "tick": 198,
+   "mission": 3,
+   "drawn": [
+    70,
+    5
+   ],
+   "played": [
+    69,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 27,
+   "tick": 150,
+   "mission": 2,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    71,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 27,
+   "tick": 450,
+   "mission": 8,
+   "drawn": [
+    73,
+    0
+   ],
+   "played": [
+    64,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 28,
+   "tick": 21,
+   "mission": 0,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 28,
+   "tick": 171,
+   "mission": 3,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 28,
+   "tick": 221,
+   "mission": 4,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    60,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 29,
+   "tick": 35,
+   "mission": 0,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 30,
+   "tick": 342,
+   "mission": 6,
+   "drawn": [
+    75,
+    5
+   ],
+   "played": [
+    73,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 30,
+   "tick": 492,
+   "mission": 9,
+   "drawn": [
+    62,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 31,
+   "tick": 96,
+   "mission": 1,
+   "drawn": [
+    71,
+    0
+   ],
+   "played": [
+    62,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 31,
+   "tick": 246,
+   "mission": 4,
+   "drawn": [
+    72,
+    0
+   ],
+   "played": [
+    71,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 31,
+   "tick": 296,
+   "mission": 5,
+   "drawn": [
+    64,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 31,
+   "tick": 446,
+   "mission": 8,
+   "drawn": [
+    9,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 32,
+   "tick": 45,
+   "mission": 0,
+   "drawn": [
+    66,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 32,
+   "tick": 95,
+   "mission": 1,
+   "drawn": [
+    65,
+    0
+   ],
+   "played": [
+    62,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 32,
+   "tick": 445,
+   "mission": 8,
+   "drawn": [
+    63,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 33,
+   "tick": 200,
+   "mission": 3,
+   "drawn": [
+    79,
+    0
+   ],
+   "played": [
+    62,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 34,
+   "tick": 500,
+   "mission": 9,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 35,
+   "tick": 42,
+   "mission": 0,
+   "drawn": [
+    3,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 36,
+   "tick": 279,
+   "mission": 5,
+   "drawn": [
+    77,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 36,
+   "tick": 379,
+   "mission": 7,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 36,
+   "tick": 429,
+   "mission": 8,
+   "drawn": [
+    2,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 38,
+   "tick": 485,
+   "mission": 9,
+   "drawn": [
+    69,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 39,
+   "tick": 90,
+   "mission": 1,
+   "drawn": [
+    63,
+    0
+   ],
+   "played": [
+    66,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 39,
+   "tick": 140,
+   "mission": 2,
+   "drawn": [
+    3,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 39,
+   "tick": 240,
+   "mission": 4,
+   "drawn": [
+    60,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 41,
+   "tick": 121,
+   "mission": 2,
+   "drawn": [
+    70,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 44,
+   "tick": 342,
+   "mission": 6,
+   "drawn": [
+    54,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 44,
+   "tick": 442,
+   "mission": 8,
+   "drawn": [
+    72,
+    0
+   ],
+   "played": [
+    54,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 45,
+   "tick": 287,
+   "mission": 5,
+   "drawn": [
+    79,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 45,
+   "tick": 387,
+   "mission": 7,
+   "drawn": [
+    69,
+    0
+   ],
+   "played": [
+    74,
+    0
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 47,
+   "tick": 383,
+   "mission": 7,
+   "drawn": [
+    59,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 47,
+   "tick": 433,
+   "mission": 8,
+   "drawn": [
+    73,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  },
+  {
+   "seed": 50,
+   "tick": 437,
+   "mission": 8,
+   "drawn": [
+    74,
+    0
+   ],
+   "played": [
+    0,
+    1
+   ],
+   "replaced": [
+    0,
+    0.0
+   ]
+  }
+ ],
+ "first_mission_rows": 507,
+ "first_mission_relevance_zero_rows": 507,
+ "first_mission_pools_all_zero": 50,
+ "archetypes_seen": [
+  "assault",
+  "containment",
+  "defensive_stand",
+  "evacuation",
+  "interception",
+  "multi_front_defense",
+  "reconquest",
+  "siege_breaking",
+  "suppression"
+ ],
+ "archetypes_played": [
+  "assault",
+  "containment",
+  "defensive_stand",
+  "evacuation",
+  "multi_front_defense",
+  "siege_breaking",
+  "suppression"
+ ],
+ "max_urgency": 0.7850332579573384,
+ "quiet_world": 0,
+ "retries": 0,
+ "band_asked_ne_got": 0,
+ "recompute_mismatches": {
+  "recompute_mismatch_relevance": 947,
+  "recompute_mismatch_score": 947
+ },
+ "shadow_problems": [],
+ "campaigns": [
+  {
+   "seed": 1,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 2,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 3,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 4,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 5,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 6,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 7,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 8,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 9,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 10,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 11,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 12,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 13,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 14,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 15,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 16,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 17,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 18,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 19,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 20,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 21,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 22,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 23,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 24,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 25,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 26,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 27,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 28,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 29,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 30,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 31,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 32,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 33,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 34,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 35,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 36,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 37,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 38,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 39,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 40,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 41,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 42,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 43,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 44,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 45,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 46,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 47,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 48,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 49,
+   "missions": 10,
+   "ended": null
+  },
+  {
+   "seed": 50,
+   "missions": 10,
+   "ended": null
+  }
+ ]
+}

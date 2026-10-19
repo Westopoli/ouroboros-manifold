@@ -1,0 +1,37 @@
+OBEY pass 2   seed 1   canvas 16000   PASS
+check 728 ms incl. carving 572 (draft 500)   route_count 4 (2 + floor(u*3))
+carved 3680 cells in 20 routes   choke on a route: true   pad scale 1.00   span 900 wu
+choke asked 466 wu, measured 410 wu   at 0.60 of the base line (rolled 0.60)
+per point: routes small / big (need 4 / 1), pad ring max slope (limit 35 deg)
+  base_b    small 4  big 1  ring 28.0 deg  ok
+  objective small 4  big 2  ring 28.0 deg  ok
+  site_0    small 4  big 1  ring 28.0 deg  ok
+  site_1    small 4  big 2  ring 28.0 deg  ok
+  base_a                         ring 33.1 deg  ok
+keys: V overlay  F1-F3 seed  C canvas  R regenerate
+drafts: , . select  [ ] nudge
+> base-inset 2400.0
+  resource-clearance 2400.0
+  route-small-width 180.0
+  route-big-width 600.0
+  vantage-offset 1500.0
+  base-pad 1200.0
+  objective-pad 600.0
+  site-pad 400.0
+  choke-wall 900.0
+  wall-rise 400.0
+  vantage-rise 300.0
+  route-max-count 4.0
+  obey-budget 250.0
+  choke-length 600.0
+  wall-gap 125.0
+  wall-face 100.0
+  ramp-grade 28.0
+  ramp-reach 2400.0
+  vantage-radius 250.0
+  objective-offset 1500.0
+  pad-scale-floor 0.6
+  carve-cost 6.0
+  carve-shoulder 150.0
+  obey-budget-2 500.0
+  site-line-clearance 900.0
