@@ -208,28 +208,23 @@ def test_C0_positive_control_world_runs_and_the_epoch_getter_reads(lib, world_fa
 def test_P_a_tick_with_600_walkers_costs_less_than_the_w2_draft(lib, world_factory):
     """Spec W2: "the 600-walker median under 3 ms", "Named draft DRAFT-walk-tick-ms-w2 3 ms for the same 600-walker
     fixture": median of 20 om_world_step after 5 warm-up through median_ns (tests/csim/scale/_scale_helpers.py:93) on the
-    W1 fixture. Wall clock, quiet machine; never loosen it. Red today: W1 landed at about 10 ms. The premise (walkers still
-    marching through the measured steps) is asserted before the perf line. Run five times and paste each median."""
-    w, ids = w1._walker_world(lib, world_factory)
-    calls, snap = [], {}
-
-    def op():
-        calls.append(1)
-        lib.om_world_step(w)
-        if len(calls) == w1.WALK_MEDIAN_WARMUP:
-            snap["step5"] = w1._positions(lib, w, ids)
-
-    median_ms = median_ns(op, n=w1.WALK_MEDIAN_N, warmup=w1.WALK_MEDIAN_WARMUP) / 1e6
-    end = w1._positions(lib, w, ids)
-    marching = sum(1 for a, b in zip(snap["step5"], end) if a != b)
-    print("P premise: %d of %d walkers changed position between step %d and step %d" % (
-        marching, len(ids), w1.WALK_MEDIAN_WARMUP, len(calls)))
-    print("P median om_world_step: %.3f ms" % median_ms)
-    assert len(calls) == w1.WALK_MEDIAN_WARMUP + w1.WALK_MEDIAN_N
-    assert marching >= w1.PREMISE_MIN_MOVED, "premise: only %d walkers still marching" % marching
-    assert median_ms < DRAFT_WALK_TICK_MS_W2, (
-        "median of %d om_world_step with 600 walkers is %.3f ms, DRAFT-walk-tick-ms-w2 is %.1f ms" % (
-            w1.WALK_MEDIAN_N, median_ms, DRAFT_WALK_TICK_MS_W2))
+    W1 fixture. Wall clock; never loosen the 3 ms. TD-VG-W-6 (Architect 2026-10-14): the box runs gates at load 14 to 23
+    of 16 cores, so one median is load noise; the test takes the MINIMUM of DRAFT-perf-repeats (7) such medians through
+    w1.perf_repeats_ms (the same helper as the W1 test, TD-VG-W-5), prints all seven, and asserts the minimum under the
+    unchanged 3 ms. Positive control: test_VG_W_w2_perf_control.py runs this very test with a 5 ms busy-wait injected
+    into the timed step and expects it to fail. The premise (walkers still marching through the measured steps) is
+    asserted before the perf line."""
+    medians, marchings = w1.perf_repeats_ms(lib, world_factory)
+    print("P premise: %s of 600 walkers changed position between step %d and the last step, per repeat" % (
+        marchings, w1.WALK_MEDIAN_WARMUP))
+    print("P median om_world_step per repeat (ms): %s" % ", ".join("%.3f" % m for m in medians))
+    best = min(medians)
+    print("P minimum of %d repeats: %.3f ms" % (len(medians), best))
+    assert len(medians) == w1.DRAFT_PERF_REPEATS
+    assert min(marchings) >= w1.PREMISE_MIN_MOVED, "premise: only %d walkers still marching" % min(marchings)
+    assert best < DRAFT_WALK_TICK_MS_W2, (
+        "minimum of %d medians of %d om_world_step with 600 walkers is %.3f ms, DRAFT-walk-tick-ms-w2 is %.1f ms" % (
+            len(medians), w1.WALK_MEDIAN_N, best, DRAFT_WALK_TICK_MS_W2))
 
 
 # ---------------------------------------------------------------- S: the save round trip, red today
