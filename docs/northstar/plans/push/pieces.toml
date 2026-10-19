@@ -2323,7 +2323,7 @@ owns = ["tests/csim/test_VG_W_w2_routes.py", "tests/csim/test_VG_W_w2_perf_contr
 owns_glob = []
 acceptance = ["tests/csim/test_VG_W_w2_routes.py", "tests/csim/test_VG_W_w2_perf_control.py"]
 depends_on = ["VG-W2", "HARNESS-perf-minof-n"]  # VG-W2 is attached and owns test_VG_W_w2_routes.py; only test_P_a_tick_with_600_walkers_costs_less_than_the_w2_draft changes here. No queued row owns that file, so no other depends_on edge was added
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "e1d9ce68" }
 tests_pending = false
 size_estimate = "the W2 600-walker test body (about 20 lines) and one control test file (about 30 lines)"
 
