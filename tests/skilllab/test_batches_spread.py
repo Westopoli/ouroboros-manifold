@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.skilllab import batches  # noqa: E402
 from scripts.skilllab.contract import CellResult, FightResult, ScanResult  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
 
 
 def _f(margin):
@@ -28,8 +28,7 @@ def _scan(beats):
     """Cells 14, 15, 16; beats names the last won cell. Each cell has a different spread."""
     spec = {14: [0.1, 0.1, 0.1, 0.1], 15: [0.1, -0.3, 0.3, 0.5], 16: [-0.4, 0.2, -0.2, 0.6]}
     cells = [_cell(h, m, beats is not None and h <= beats) for h, m in spec.items()]
-    return ScanResult(size=16, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1,
-                      win_margin=0.05)
+    return ScanResult(size=16, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1)
 
 
 def _cd():

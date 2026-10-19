@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from scripts.skilllab import batches, plays, report, rows, scan
+from scripts.skilllab import batches, plays, report, rows, scan, sweep
 from scripts.skilllab.contract import Batch
 
 SIZE = 16
@@ -14,7 +14,7 @@ def _scan_plays(out_dir, plays_by_label, csv_name, title):
     out_dir.mkdir(parents=True, exist_ok=True)
     scans, firing_example, fight_rows = {}, {}, []
     for label, build in plays_by_label.items():
-        result = scan.scan(build, SIZE, ENEMY_FROM, ENEMY_TO, replicates=REPLICATES)
+        result = scan.scan(build, SIZE, ENEMY_FROM, ENEMY_TO, replicates=REPLICATES, full_scan=True)
         scans[label] = result
         for cell in result.cells:
             if cell.enemy_heads == SIZE:
@@ -57,6 +57,29 @@ def _batch(name, out_dir, workers=1, layouts=200):
     return 0
 
 
+def _sweep(name, out_dir, workers):
+    if name in (None, "all"):
+        families = list(sweep.FAMILY_ORDER)
+    elif name in sweep.FAMILY_ORDER:
+        families = [name]
+    else:
+        print("sweep needs one of: all, " + ", ".join(sweep.FAMILY_ORDER))
+        return 2
+    summary = sweep.run(families, out_dir, workers=workers)
+    for entry in summary["families"].values():
+        if entry.get("csv"):
+            print(out_dir / entry["csv"])
+    print(out_dir / "sweep_summary.json")
+    return 0
+
+
+def _smoke(out_dir, workers):
+    summary = sweep.run_smoke(out_dir, workers=workers)
+    print(out_dir / "smoke.csv")
+    print(out_dir / "smoke_summary.json")
+    return 0
+
+
 def _workers(text):
     try:
         value = int(text)
@@ -80,7 +103,7 @@ def main(argv=None) -> int:
     parser.add_argument("name", nargs="?")
     parser.add_argument("--out", default="./skilllab_out")
     parser.add_argument("--factor", type=_positive, default=1.2)
-    parser.add_argument("--workers", type=_workers, default=1,
+    parser.add_argument("--workers", type=_workers, default=None,
                         help="batch only: fight in this many worker processes (default 1; try the number of idle cores)")
     parser.add_argument("--layouts", type=_workers, default=200, help="batch layout_search only: how many layouts to draw (default 200)")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
@@ -89,7 +112,11 @@ def main(argv=None) -> int:
     if args.command == "reach":
         return _reach(Path(args.out), args.factor)
     if args.command == "batch":
-        return _batch(args.name, Path(args.out), args.workers, args.layouts)
+        return _batch(args.name, Path(args.out), args.workers or 1, args.layouts)
+    if args.command == "sweep":
+        return _sweep(args.name, Path(args.out), args.workers or 1)
+    if args.command == "smoke":
+        return _smoke(Path(args.out), args.workers or 12)
     return 2
 
 

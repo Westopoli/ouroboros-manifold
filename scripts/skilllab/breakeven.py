@@ -5,7 +5,7 @@ import dataclasses
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, Setup, WIN_MARGIN
+from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, Setup
 from scripts.skilllab.scan import cell_jobs, cell_result, run_jobs, scan
 
 
@@ -25,6 +25,7 @@ class BreakEven:
     loses_to: Optional[int]
     refined: list
     rounds: int
+    ceiling_hit: bool = False
 
 
 @dataclass
@@ -41,7 +42,7 @@ def _flips(cells: list) -> list:
 
 
 def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
-                    near_replicates: int = 30, max_rounds: int = 2, win_margin: float = WIN_MARGIN,
+                    near_replicates: int = 30, max_rounds: int = 2,
                     fight_fn: Any = None, map_fn: Any = None) -> BreakEven:
     if near_replicates < replicates:
         raise ValueError("near_replicates must be at least replicates")
@@ -49,7 +50,7 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
         raise ValueError("max_rounds must not be negative")
     if fight_fn is not None and map_fn is not None:
         raise ValueError("pass fight_fn or map_fn, not both")
-    result = scan(build, size, enemy_from, enemy_to, replicates, win_margin, fight_fn, map_fn)
+    result = scan(build, size, enemy_from, enemy_to, replicates, fight_fn=fight_fn, map_fn=map_fn, full_scan=True)
     cells = result.cells
     flips = _flips(cells)
     refined: set = set()
@@ -65,8 +66,7 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
                 results = run_jobs([j for jobs in per_cell for j in jobs], fight_fn, map_fn)
                 pos = 0
                 for i, jobs in zip(idx, per_cell):
-                    cells[i] = cell_result(cells[i].enemy_heads, cells[i].fights + results[pos:pos + len(jobs)],
-                                           win_margin)
+                    cells[i] = cell_result(cells[i].enemy_heads, cells[i].fights + results[pos:pos + len(jobs)])
                     pos += len(jobs)
             refined |= near
         flips = _flips(cells)
@@ -75,9 +75,12 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
     first = next((f for f in flips if f.direction == "win_to_loss"), None)
     beats = first.before if first else None
     loses_to = first.after if first else None
-    final = dataclasses.replace(result, cells=cells, beats=beats, loses_to=loses_to)
+    ceiling = all(c.won for c in cells)
+    if ceiling:
+        beats = cells[-1].enemy_heads
+    final = dataclasses.replace(result, cells=cells, beats=beats, loses_to=loses_to, ceiling_hit=ceiling)
     return BreakEven(scan=final, flips=flips, multi_flip=len(flips) > 1, beats=beats,
-                     loses_to=loses_to, refined=sorted(refined), rounds=rounds)
+                     loses_to=loses_to, refined=sorted(refined), rounds=rounds, ceiling_hit=ceiling)
 
 
 def flip_sides(setup: Setup) -> Setup:

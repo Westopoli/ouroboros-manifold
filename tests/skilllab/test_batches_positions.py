@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 DRAFT = "draft"
@@ -50,7 +50,6 @@ def test_definition_cells_in_order_with_fields():
         assert c.status == DRAFT and c.build is not None, c.label
     for c in d.cells[4:]:
         assert c.build is None and c.status == "not expressed" and c.note == NOTES[c.label], c.label
-    assert d.weighted is False
 
 
 def test_unexpressed_lists_the_four_and_the_draft_numbers():
@@ -78,7 +77,7 @@ def test_scans_only_the_four_expressed_cells_never_the_not_expressed(tmp_path):
     assert not {c["label"] for c in fake.calls} & set(NOTES)
     for c in fake.calls:
         assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == (16, 8, 24, 10)
-        assert c["setup"].settings == batches.BASE_SETTINGS and c["setup"].weighted is False
+        assert c["setup"].settings == batches.BASE_SETTINGS
 
 
 def test_scan_sees_the_timeline_of_each_real_build(tmp_path, monkeypatch):

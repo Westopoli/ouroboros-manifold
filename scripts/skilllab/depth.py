@@ -13,7 +13,7 @@ from scripts.skilllab import maps, plays_space, pool, report, rows, scan, scenes
 from scripts.skilllab.contract import Batch
 
 G = 2                       # draft gain threshold in units (Q-LS-01, Westley's)
-UNITS, ENEMY_FROM, ENEMY_TO = 16, 8, 24
+UNITS, ENEMY_FROM, ENEMY_TO = 16, 8, 48
 SKILL_NAMES = ("S1", "S2", "S3", "S4", "S5")
 VALUES = {"choke_width_bodies": (0, 2, 4, 8), "detour_ratio": (0, 1.5, 3), "lane_count": (0, 1, 2),
           "blocked_layer_top": (0, 2, 4), "cover_density_corridor": (0, 0.1, 0.3), "start_distance": (1400, 2800)}
@@ -82,7 +82,7 @@ def run_layout(values, seed, replicates, scan_fn):
     builds.update({name: scenes.placed_scene(layout, name, d, features, counter=True) for name in COUNTERS})
     builds.update({name: scenes.placed_scene(layout, name, d, features) for name in scenes.NAIVE_PLAYS})
     results = {label: scan_fn(label, build, replicates) for label, build in builds.items()}
-    be = {label: r.beats for label, r in results.items()}
+    be = {label: ENEMY_TO if r.ceiling_hit else r.beats for label, r in results.items()}
     skilled, counters = skill_break_evens({n: be[n] for n in SKILLED}), skill_break_evens({n: be[n] for n in COUNTERS})
     scored = score_layout(skilled, be["naive"], counters)
     scored_line = score_layout(skilled, be["naive_line"], counters)
@@ -94,8 +94,9 @@ def run_layout(values, seed, replicates, scan_fn):
             for f in c.fights:
                 out.append(rows.fight_row(f, features, play=label, variant=variant, enemy_heads=c.enemy_heads,
                                           break_even=r.beats, no_gain=skill in scored["no_gain"], winner=f.winner,
-                                          placement_shift=builds[label].labels["placement_shift"]))
-    return {"features": dict(values), "rows": out, **scored,
+                                          ceiling_hit=int(r.ceiling_hit)))
+    ceiling = sorted({plays_space.PLAYS[l].skill for l, r in results.items() if r.ceiling_hit and l not in scenes.NAIVE_PLAYS})
+    return {"features": dict(values), "rows": out, **scored, "ceiling_hits": ceiling,
             "gains_naive_line": scored_line["gains"], "score_naive_line": scored_line["score"]}
 
 
