@@ -2146,8 +2146,7 @@ owns = ["scenes/settings/settings.gd", "tests/test_galaxy_quality_setting.gd", "
 owns_glob = []
 acceptance = ["tests/test_galaxy_quality_setting.gd"]
 depends_on = ["VG-A18", "VG-B24"]  # VG-A18 owns scenes/settings/settings.gd until it lands (G-settings glob and VG-A16 are attached); VG-B24 no longer owns the test file (Architect 2026-10-13)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "2ae09a5" }
 size_estimate = "settings OptionButton full/standard/particles + label, APPLY writes [display] galaxy_quality (A54/A60); red-on-main finding FINDING-gd-red-main-2026-10-12b fixed here"
 
 [[piece]]
