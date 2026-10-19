@@ -118,3 +118,10 @@ G. Stands (decision 29 item 7).
 3. A scan cut at K by `baseline_no_fit` that the play wins throughout 8 to K is an always-won cut scan: not a ceiling hit (a ceiling hit is beating 48), not a finding; refinement runs only inside 8 to K; the artifact says "won through K, scan cut by baseline_no_fit" so it is never read as "no crossing exists".
 4. The blob's fill order continues over free cells without a fixed limit; "cannot hold the count" means no free cell remains inside the layout bounds (the existing radius check against free cells). The order is deterministic (rows identical at 1 and 12 workers).
 5. A blob of one unit follows the same rule with no special case: the anchor is radius zero; if blocked, the nearest free cell by increasing radius. One test.
+
+## 33. L8 re-engage readings (Architect 2026-10-19)
+1. A side re-arms only after one of its own units fires or moves and then another `REENGAGE_SILENCE_TICKS` of silence. An unbroken silence is one event; a re-engage that produces no movement stays silent and the fight caps, which is a defect to trace.
+2. `reengage_0/1` counts events (one ordered call per trigger), not units ordered.
+3. The order is an (x, y); each unit keeps its own layer (decision 2's contact rule). The centroid is taken over the enemy units in the set of item 4 on every layer.
+4. The centroid set is the living enemy units visible to the ordering side, never all living units (fog would leak into the orders). The tests change from all-living to visible in the fix pass.
+Golden hashes: the mirror control's hash is stale on the lab tip because lab-side pieces (orders, fight end, placement) legitimately changed the control fight. The re-record under `TD-LAB-REV2-golden` is the landing clerk's and the row is written at the landing; before re-recording, the clerk runs the engine-only proof of the spec's golden procedure (the old lab's three controls against the new engine at arc 360 and cone off reproduce the old hashes; E1 and E1b excluded by design) and pastes the three hashes in the ledger row.
