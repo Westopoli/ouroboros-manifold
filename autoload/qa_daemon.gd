@@ -250,6 +250,8 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			return _do_qa_select(args)
 		"project":
 			return _do_project(args)
+		"qa_pan":
+			return _do_qa_pan(args)
 		"set_fog_filter":
 			_fog_filter_override = 1 if (args.size() > 0 and bool(args[0])) else 0
 			return {"ok": true, "result": {"fog_filter": fog_filter()}}
@@ -522,6 +524,18 @@ func _do_project(args: Array) -> Dictionary:
 	var px := float(p[0])
 	var py := float(p[1])
 	return {"ok": true, "result": {"x": px, "y": py, "on_screen": px >= 0.0 and px < scene.SCREEN_W and py >= 0.0 and py < scene.SCREEN_H}}
+
+
+## Probe branch push/ans-11-ground-zoomed-shots only (decision-batch point 11): the ground rig is not panned by the
+## harness's edge-scroll or key events (rig process disabled, ground3d.gd), so the probe pans through the view's own
+## qa_pan hook, the one the selection panel's centre request calls. See also: tests/qa/desktop/plays/C/ans11_zoomed.py
+func _do_qa_pan(args: Array) -> Dictionary:
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	if scene == null or not scene.has_method("qa_pan") or args.size() < 2:
+		return {"ok": false, "error": "qa_pan: scene has no qa_pan or fewer than two args"}
+	scene.call("qa_pan", float(args[0]), float(args[1]))
+	return {"ok": true, "result": {"x": float(args[0]), "y": float(args[1])}}
 
 
 func _do_qa_select(args: Array) -> Dictionary:

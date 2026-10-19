@@ -1,0 +1,174 @@
+{
+ "groups": [
+  {
+   "x": 12533.372093023256,
+   "y": 1091.7441860465117,
+   "n": 86,
+   "type": 0
+  },
+  {
+   "x": 16507.237569060773,
+   "y": 1580.8839779005525,
+   "n": 181,
+   "type": 3
+  },
+  {
+   "x": 10550.0,
+   "y": 4200.0,
+   "n": 36,
+   "type": 3
+  },
+  {
+   "x": 14883.333333333334,
+   "y": 4583.333333333333,
+   "n": 27,
+   "type": 3
+  }
+ ],
+ "shots": [
+  {
+   "name": "g1_h900",
+   "group": 1,
+   "camera": [
+    12533.3720703125,
+    1091.744140625
+   ],
+   "height": 900.0,
+   "px_per_wu": 0.598997132997998,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g1_h600",
+   "group": 1,
+   "camera": [
+    12533.3720703125,
+    1091.744140625
+   ],
+   "height": 600.0,
+   "px_per_wu": 0.898495699496997,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g1_h300",
+   "group": 1,
+   "camera": [
+    12533.3720703125,
+    1091.744140625
+   ],
+   "height": 300.0,
+   "px_per_wu": 1.79699139899399,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g2_h900",
+   "group": 2,
+   "camera": [
+    16507.23828125,
+    1580.88403320312
+   ],
+   "height": 900.0,
+   "px_per_wu": 0.598997132997998,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g2_h600",
+   "group": 2,
+   "camera": [
+    16507.23828125,
+    1580.88403320312
+   ],
+   "height": 600.0,
+   "px_per_wu": 0.898495699496997,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g2_h300",
+   "group": 2,
+   "camera": [
+    16507.23828125,
+    1580.88403320312
+   ],
+   "height": 300.0,
+   "px_per_wu": 1.79699139899399,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g3_h900",
+   "group": 3,
+   "camera": [
+    10550.0,
+    4200.0
+   ],
+   "height": 900.0,
+   "px_per_wu": 0.598997132997998,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g3_h600",
+   "group": 3,
+   "camera": [
+    10550.0,
+    4200.0
+   ],
+   "height": 600.0,
+   "px_per_wu": 0.898495699496997,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g3_h300",
+   "group": 3,
+   "camera": [
+    10550.0,
+    4200.0
+   ],
+   "height": 300.0,
+   "px_per_wu": 1.79699139899399,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g4_h900",
+   "group": 4,
+   "camera": [
+    14883.3330078125,
+    4583.33349609375
+   ],
+   "height": 900.0,
+   "px_per_wu": 0.598997132997998,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g4_h600",
+   "group": 4,
+   "camera": [
+    14883.3330078125,
+    4583.33349609375
+   ],
+   "height": 600.0,
+   "px_per_wu": 0.898495699496997,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  },
+  {
+   "name": "g4_h300",
+   "group": 4,
+   "camera": [
+    14883.3330078125,
+    4583.33349609375
+   ],
+   "height": 300.0,
+   "px_per_wu": 1.79699139899399,
+   "band": "micro",
+   "inventory_fog_layer": 330
+  }
+ ]
+}
