@@ -148,7 +148,7 @@ Commander or god? Chronicle material? Era-agnostic? Is losing interesting? Does 
 
 ## Monetization
 
-Steam, one base SKU at $15, which buys 3 to 5 eras to start. The first build starts with two eras, one in space and one on land. Each new era is $3 to $5; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The launch eras' units and rules are the same within an era kind; between space and ground the vision model, the ping and the vision units differ (E-01), and landscape, visuals, art, names, and prose differ. Eras that feel different come after launch, through per-era fog, pace, and the pace of production (E-20 S-151).
+Steam, one base SKU at $15, which buys 3 to 5 eras to start. The first build starts with two eras, one in space and one on land. Each new era is $3 to $5; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The launch eras' units and rules are the same within an era kind; between space and ground the vision model, the ping and the vision units differ (E-01), and landscape, visuals, art, names, and prose differ. Eras that feel different come through per-era fog, pace, and the pace of production (E-20 S-151), with each era's values taken from a distinct region of settings where the simulation lab finds strategic depth holds: the lab looks for several crossings, not one.
 
 ## Reference Hardware
 

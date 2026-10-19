@@ -34,7 +34,7 @@ Rules
 - R-065-03  Given the player's lineage, When clusters are ranked, Then every lineage cluster is included regardless of score, one per region the lineage touched.
 - R-065-04  Given no event touched the lineage, When clusters are ranked, Then one `lineage_quiet` cluster is included, placed in the lineage's most recent region.
 - R-065-05  Given the remaining clusters, When the budget is filled, Then they are taken in descending peak score, skipping any category that already has 2 entries, until 10 entries.
-- R-065-06  Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order only from categories that still have fewer than 2 entries; the cap wins over the minimum, so a quiet jump may show 4 entries (Q-065-01, Westley 2026-10-01).
+- R-065-06  Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order only from categories that still have fewer than 2 entries; the cap wins over the minimum, so a quiet jump may show 4 entries (Q-065-03, Westley 2026-10-01).
 - R-065-07  Given the opening jump of a campaign, When the scroll is built, Then it has 3 to 5 entries and no consequence or lineage cluster.
 
 Inputs: time jump event log; mission outcome; ledger.
