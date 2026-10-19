@@ -13,7 +13,7 @@ from scripts.skilllab import maps, plays_space, pool, report, rows, scan, scenes
 from scripts.skilllab.contract import Batch
 
 G = 2                       # draft gain threshold in units (Q-LS-01, Westley's)
-UNITS, ENEMY_FROM, ENEMY_TO = 16, 8, 24
+UNITS, ENEMY_FROM, ENEMY_TO = 16, 8, 48     # ruling 4: enemy headcount 8 to 48 against 16
 SKILL_NAMES = ("S1", "S2", "S3", "S4", "S5")
 VALUES = {"choke_width_bodies": (0, 2, 4, 8), "detour_ratio": (0, 1.5, 3), "lane_count": (0, 1, 2),
           "blocked_layer_top": (0, 2, 4), "cover_density_corridor": (0, 0.1, 0.3), "start_distance": (1400, 2800)}
@@ -71,6 +71,22 @@ def _features(v):
         detour_ratio=v["detour_ratio"], blocked_layer_top=k)
 
 
+def _recorded(build):
+    """The build, remembering the prefight word of each headcount it built (for the rows)."""
+    def wrapped(enemy_heads, swap):
+        setup = build(enemy_heads, swap)
+        wrapped.prefight[enemy_heads] = build.labels.get("prefight") or "ok"
+        return setup
+    wrapped.prefight = {}
+    wrapped.labels = build.labels
+    return wrapped
+
+
+def _break_even(r):
+    """A scan won all the way scores as the top of the range, never as no gain (ruling 4)."""
+    return ENEMY_TO if r.ceiling_hit else r.beats
+
+
 def run_layout(values, seed, replicates, scan_fn):
     """scan_fn(label, build, replicates) -> ScanResult; the map is built once and passed to every placed scene (Rev 4).
     12 scans: 7 skilled, 3 counters, the naive blob and the naive spread line; gains are scored against each baseline."""
@@ -81,21 +97,24 @@ def run_layout(values, seed, replicates, scan_fn):
     builds = {name: scenes.placed_scene(layout, name, d, features) for name in SKILLED}
     builds.update({name: scenes.placed_scene(layout, name, d, features, counter=True) for name in COUNTERS})
     builds.update({name: scenes.placed_scene(layout, name, d, features) for name in scenes.NAIVE_PLAYS})
+    builds = {label: _recorded(build) for label, build in builds.items()}
     results = {label: scan_fn(label, build, replicates) for label, build in builds.items()}
-    be = {label: r.beats for label, r in results.items()}
+    be = {label: _break_even(r) for label, r in results.items()}
     skilled, counters = skill_break_evens({n: be[n] for n in SKILLED}), skill_break_evens({n: be[n] for n in COUNTERS})
     scored = score_layout(skilled, be["naive"], counters)
     scored_line = score_layout(skilled, be["naive_line"], counters)
+    ceiling_hits = sorted({plays_space.PLAYS[n].skill for n in SKILLED if results[n].ceiling_hit})
     out = []
     for label, r in results.items():
         skill = None if label in scenes.NAIVE_PLAYS else plays_space.PLAYS[label].skill
         variant = "naive" if label in scenes.NAIVE_PLAYS else "skilled" if label in SKILLED else "counter"
         for c in r.cells:
             for f in c.fights:
-                out.append(rows.fight_row(f, features, play=label, variant=variant, enemy_heads=c.enemy_heads,
-                                          break_even=r.beats, no_gain=skill in scored["no_gain"], winner=f.winner,
-                                          placement_shift=builds[label].labels["placement_shift"]))
-    return {"features": dict(values), "rows": out, **scored,
+                out.append(rows.fight_row(f, features, baseline="naive_attacker" if variant == "naive" else "none",
+                                          ceiling_hit=int(r.ceiling_hit), prefight=builds[label].prefight.get(c.enemy_heads, "ok"),
+                                          play=label, variant=variant, enemy_heads=c.enemy_heads, break_even=be[label],
+                                          no_gain=skill in scored["no_gain"], winner=f.winner))
+    return {"features": dict(values), "rows": out, **scored, "ceiling_hits": ceiling_hits,
             "gains_naive_line": scored_line["gains"], "score_naive_line": scored_line["score"]}
 
 

@@ -131,7 +131,8 @@ class CellResult:
     enemy_heads: int
     fights: list              # [FightResult, ...]
     mean_margin: float
-    won: bool
+    won: bool                 # every fight is side0
+    defect: bool = False      # a draw or a cap sits in the cell (a lab defect to trace, never a result)
 
 
 @dataclass
@@ -140,7 +141,8 @@ class ScanResult:
     cells: list               # [CellResult, ...] in increasing enemy_heads
     beats: Optional[int]
     loses_to: Optional[int]
-    win_margin: float
+    ceiling_hit: bool = False   # won at every scanned headcount: beats is the top of the range, loses_to None
+    multi_flip: bool = False    # the won/lost sequence over the scanned cells changes more than once
 
 
 @dataclass
@@ -151,7 +153,6 @@ class Batch:
     rows: list                # [dict, ...] one per fight, from fight_row
 
 
-WIN_MARGIN = 0.05
 TICKS_PER_SECOND = 20
 OPENING_WINDOW_TICKS = 40     # DRAFT-opening-window-ticks (Westley to confirm): the primary prediction window after first contact
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
@@ -204,13 +205,12 @@ def unit_stats(name: str) -> dict:
 
 
 # scan.py
-def cell(build: BuildFn, enemy_heads: int, replicates: int,
-         win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> CellResult:
+def cell(build: BuildFn, enemy_heads: int, replicates: int, fight_fn: Any = None) -> CellResult:
     raise NotImplementedError
 
 
 def scan(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
-         win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> ScanResult:
+         fight_fn: Any = None, full_scan: bool = False) -> ScanResult:
     raise NotImplementedError
 
 
