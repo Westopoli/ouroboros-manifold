@@ -18,8 +18,15 @@ hide a hash finding.
 Fast cases: the same two entry points through the fakes, always on. They fight in-process, with the real code path of sweep (pool
 reached as `pool.FightPool`) replaced by a fake that stands in for the 12 workers.
 
+FOR L4/L7 (after S lands): test_sweep_real.py::test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_clean and
+test_sweep.py::test_smoke_rows_are_the_same_bytes_at_one_and_twelve_workers carry hash lines that this file now guards on its own;
+drop the duplicate hash lines there (keep the cap and defect assertions). Nothing here edits those files.
+
 Controls (each proves the detector `assert_same_rows` fires, and each has a complement that proves it does not fire on honest runs):
   - order: a pool that returns results in completion order, not job order. The run's rows move to the wrong cells.
+  - row permutation: the same set of rows written in reverse order on the 12-worker run (rows.write_rows patched). A detector that
+    compared sorted lines, or only a count, would pass it; the control also asserts the sorted lines are equal, so the plant moves rows
+    and changes nothing else.
   - worker identity: a pool whose results carry the index of the worker that ran the job (job index modulo the worker count). One
     worker and twelve workers then write different rows.
 The planted controls assert that the plant really changed what it claims to (the pool says it reordered, the results differ), so a
@@ -45,7 +52,7 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
 from fakes_scans import FakePool, ScriptedFight, _fr, fake_builds  # noqa: E402
-from scripts.skilllab import pool, sweep  # noqa: E402
+from scripts.skilllab import fight as fight_module, pool, rows as rows_mod, sweep  # noqa: E402
 from scripts.skilllab.contract import Setup  # noqa: E402
 
 SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="real fights, a 12-worker pool; set OM_LAB_SLOW=1")
@@ -158,20 +165,48 @@ def _install(monkeypatch, cls):
     monkeypatch.setattr(pool, "FightPool", cls)
 
 
-def _smoke_pair(tmp_path, monkeypatch, cls):
-    """workers=1 in-process, workers=12 through the (fake) pool `cls`."""
+def _one_worker(monkeypatch):
+    """The 1-worker run takes the default in-process path: no fight_fn is passed, fight.fight is replaced by the stand-in (scan reaches
+    it as the attribute `fight.fight`), and afterwards no pool was built, so a 1-worker run that slipped into a pool would show."""
+    monkeypatch.setattr(fight_module, "fight", world())
+
+
+def _no_pool_yet():
+    assert FakePool.instances == [], "the 1-worker run built a pool"
+
+
+def _smoke_pair(tmp_path, monkeypatch, cls, twelve_patch=None):
+    """workers=1 in-process, workers=12 through the (fake) pool `cls`; `twelve_patch(monkeypatch)` plants something on the 12 only."""
     _install(monkeypatch, cls)
-    sweep.run_smoke(tmp_path / "w1", workers=1, builds=fake_builds(), control_builds=control_builds(), fight_fn=world())
-    sweep.run_smoke(tmp_path / "w12", workers=12, builds=fake_builds(), control_builds=control_builds())
+    with monkeypatch.context() as m:
+        _one_worker(m)
+        sweep.run_smoke(tmp_path / "w1", workers=1, builds=fake_builds(), control_builds=control_builds())
+    _no_pool_yet()
+    with monkeypatch.context() as m:
+        if twelve_patch:
+            twelve_patch(m)
+        sweep.run_smoke(tmp_path / "w12", workers=12, builds=fake_builds(), control_builds=control_builds())
     assert FakePool.instances and FakePool.instances[-1].workers == 12 and FakePool.instances[-1].maps        # the pool was used
 
 
-def _sweep_pair(tmp_path, monkeypatch, cls):
+def _sweep_pair(tmp_path, monkeypatch, cls, twelve_patch=None):
     _install(monkeypatch, cls)
     kw = dict(builds=fake_builds(), layouts={"A": {}}, plays=("p2",))
-    sweep.run([REAL_SWEEP_FAMILY], tmp_path / "w1", workers=1, fight_fn=world(), **kw)
-    sweep.run([REAL_SWEEP_FAMILY], tmp_path / "w12", workers=12, **kw)
+    with monkeypatch.context() as m:
+        _one_worker(m)
+        sweep.run([REAL_SWEEP_FAMILY], tmp_path / "w1", workers=1, **kw)
+    _no_pool_yet()
+    with monkeypatch.context() as m:
+        if twelve_patch:
+            twelve_patch(m)
+        sweep.run([REAL_SWEEP_FAMILY], tmp_path / "w12", workers=12, **kw)
     assert FakePool.instances and FakePool.instances[-1].workers == 12 and FakePool.instances[-1].maps
+
+
+def reverse_row_order(m):
+    """Planted pure permutation: write_rows writes the same rows, last first."""
+    real = rows_mod.write_rows
+    m.setattr(rows_mod, "write_rows", lambda rows, path: real(list(rows)[::-1], path))
 
 
 def test_fake_smoke_rows_hash_identically_at_1_and_12_workers(tmp_path, monkeypatch):
@@ -185,6 +220,11 @@ def test_fake_sweep_family_rows_hash_identically_at_1_and_12_workers(tmp_path, m
     _sweep_pair(tmp_path, monkeypatch, FakePool)
     assert_same_rows(tmp_path / "w1", tmp_path / "w12", sweep_files(REAL_SWEEP_FAMILY))
     assert json.loads((tmp_path / "w1" / "sweep_summary.json").read_text())["families"][REAL_SWEEP_FAMILY]["rows"] > 0
+
+
+def test_the_compared_files_include_the_summaries_not_only_the_csv():
+    assert SMOKE_FILES == ("smoke.csv", "smoke_summary.json")
+    assert sweep_files("damage_up") == ("sweep_damage_up.csv", "sweep_summary.json")
 
 
 def test_the_fake_results_vary_by_cell_so_a_moved_row_would_show():
@@ -214,6 +254,28 @@ def test_planted_completion_order_pool_is_caught_in_a_sweep_family(tmp_path, mon
         assert_same_rows(tmp_path / "w1", tmp_path / "w12", sweep_files(REAL_SWEEP_FAMILY))
 
 
+def _sorted_lines(path):
+    return sorted(Path(path).read_text().splitlines())
+
+
+def test_planted_row_permutation_is_caught_in_the_smoke_rows(tmp_path, monkeypatch):
+    """The same rows in the reverse order: only the order differs, and the detector must still fire."""
+    _smoke_pair(tmp_path, monkeypatch, FakePool, twelve_patch=reverse_row_order)
+    assert _sorted_lines(tmp_path / "w1" / "smoke.csv") == _sorted_lines(tmp_path / "w12" / "smoke.csv")      # a pure permutation
+    assert (tmp_path / "w1" / "smoke.csv").read_bytes() != (tmp_path / "w12" / "smoke.csv").read_bytes()
+    with pytest.raises(AssertionError, match="differs between"):
+        assert_same_rows(tmp_path / "w1", tmp_path / "w12", SMOKE_FILES)
+
+
+def test_planted_row_permutation_is_caught_in_a_sweep_family(tmp_path, monkeypatch):
+    _sweep_pair(tmp_path, monkeypatch, FakePool, twelve_patch=reverse_row_order)
+    name = sweep_files(REAL_SWEEP_FAMILY)[0]
+    assert _sorted_lines(tmp_path / "w1" / name) == _sorted_lines(tmp_path / "w12" / name)
+    assert (tmp_path / "w1" / name).read_bytes() != (tmp_path / "w12" / name).read_bytes()
+    with pytest.raises(AssertionError, match="differs between"):
+        assert_same_rows(tmp_path / "w1", tmp_path / "w12", sweep_files(REAL_SWEEP_FAMILY))
+
+
 def test_planted_worker_identity_in_the_results_is_caught_in_the_smoke_rows(tmp_path, monkeypatch):
     WorkerIdentityPool.leaked = 0
     _smoke_pair(tmp_path, monkeypatch, WorkerIdentityPool)
@@ -228,6 +290,14 @@ def test_planted_worker_identity_in_the_results_is_caught_in_a_sweep_family(tmp_
     assert WorkerIdentityPool.leaked > 0
     with pytest.raises(AssertionError, match="differs between"):
         assert_same_rows(tmp_path / "w1", tmp_path / "w12", sweep_files(REAL_SWEEP_FAMILY))
+
+
+def test_a_one_worker_run_that_went_through_a_pool_is_noticed(tmp_path, monkeypatch):
+    """Control for the in-process check: a 1-worker run with a pool built (here forced by building one) trips _no_pool_yet."""
+    _install(monkeypatch, FakePool)
+    FakePool(1)
+    with pytest.raises(AssertionError, match="built a pool"):
+        _no_pool_yet()
 
 
 def test_the_detector_reports_a_missing_file_and_passes_identical_directories(tmp_path):

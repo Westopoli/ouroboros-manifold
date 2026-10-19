@@ -54,6 +54,15 @@ FIGHT_SIZE, FIGHT_ENEMY = 16, 48
 SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="12 workers, a real scan 8 to 48; set OM_LAB_SLOW=1")
 
 
+def test_the_marks_and_sizes_are_the_specs_numbers():
+    """Pins ruling 13 and AC 28 so a loosened mark or a shrunk scan cannot pass unnoticed (the planted controls would still fail at
+    a mark loosened to a few seconds, and the 1.5 s control sleeps about 19 s virtually, so only this pin sees a mark moved to ~19).
+    The marks are Westley's; this changes only with his word."""
+    assert (LIMIT_SECONDS, FIGHT_MARK_SECONDS, SCAN_MARK_SECONDS) == (30.0, 1.5, 90.0)
+    assert (SCAN_WORKERS, SCAN_REPLICATES, SCAN_FROM, SCAN_TO) == (12, 3, 8, 48)
+    assert (FIGHT_SIZE, FIGHT_ENEMY) == (16, 48)
+
+
 @pytest.fixture(scope="module")
 def library():
     return engine.Engine()
