@@ -32,6 +32,7 @@ chooses and lists the fixture parameters").
 """
 import ctypes
 import hashlib
+import time
 
 import pytest
 
@@ -421,31 +422,52 @@ def test_B_routes_unchanged_every_walker_after_200_ticks(lib, world_factory):
         len(bad), WALK_TICKS_B, bad[0], (*pos[bad[0]], lib.om_unit_get_layer(w, ids[bad[0]])), GOLDEN_B[bad[0]])
 
 
+DRAFT_PERF_REPEATS = 7   # DRAFT-perf-repeats (Architect 2026-10-14, TD-VG-W-5), vetoable by Westley
+
+
+def perf_repeats_ms(lib, make, repeats=DRAFT_PERF_REPEATS, inject_ms=0.0):
+    """Run the C measurement `repeats` times, each on a fresh 600-walker world in this process: the median of 20
+    om_world_step after 5 warm-up through median_ns. Returns (medians in ms, marching counts). `inject_ms` is the
+    positive control: a busy-wait of that many ms inside the timed step (0 in the real test; no sleep, no load hiding)."""
+    medians, marchings = [], []
+    for _ in range(repeats):
+        w, ids = _walker_world(lib, make)
+        calls, snap = [], {}
+
+        def op():
+            calls.append(1)
+            if inject_ms:
+                t_end = time.perf_counter() + inject_ms / 1e3
+                while time.perf_counter() < t_end:
+                    pass
+            lib.om_world_step(w)
+            if len(calls) == WALK_MEDIAN_WARMUP:
+                snap["step5"] = _positions(lib, w, ids)
+
+        medians.append(median_ns(op, n=WALK_MEDIAN_N, warmup=WALK_MEDIAN_WARMUP) / 1e6)
+        assert len(calls) == WALK_MEDIAN_WARMUP + WALK_MEDIAN_N
+        end = _positions(lib, w, ids)
+        marchings.append(sum(1 for a, b in zip(snap["step5"], end) if a != b))
+    return medians, marchings
+
+
 def test_C_a_tick_with_600_walkers_costs_less_than_the_draft(lib, world_factory):
     """THE RED CASE (spec W1: "median of 20 om_world_step after 5 warm-up through median_ns, asserted under
-    DRAFT-walk-tick-ms-w1"): wall-clock, run on a quiet machine. Red today: the median is far above 10 ms (the spec
-    measured about 150 ms on 2026-10-10). The premise (walkers still marching through the measured steps) is
-    asserted before the perf line."""
-    w, ids = _walker_world(lib, world_factory)
-    calls, ticks, snap = [], [], {}
-
-    def op():
-        calls.append(1)
-        ticks.append(lib.om_world_step(w))
-        if len(calls) == WALK_MEDIAN_WARMUP:
-            snap["step5"] = _positions(lib, w, ids)
-
-    median_ms = median_ns(op, n=WALK_MEDIAN_N, warmup=WALK_MEDIAN_WARMUP) / 1e6
-    end = _positions(lib, w, ids)
-    marching = sum(1 for a, b in zip(snap["step5"], end) if a != b)
-    print("C premise: %d of %d walkers changed position between step %d and step %d; the first step returned tick %d, "
-          "the last tick %d" % (marching, len(ids), WALK_MEDIAN_WARMUP, len(calls), ticks[0], ticks[-1]))
-    print("C median om_world_step: %.3f ms" % median_ms)
-    assert len(calls) == WALK_MEDIAN_WARMUP + WALK_MEDIAN_N
-    assert marching >= PREMISE_MIN_MOVED, "premise: only %d walkers still marching" % marching
-    assert median_ms < DRAFT_WALK_TICK_MS_W1, (
-        "median of %d om_world_step with 600 walkers is %.3f ms, DRAFT-walk-tick-ms-w1 is %.1f ms" % (
-            WALK_MEDIAN_N, median_ms, DRAFT_WALK_TICK_MS_W1))
+    DRAFT-walk-tick-ms-w1"): wall-clock. TD-VG-W-5 (Architect 2026-10-14): the box runs gates at load about 14 of 16
+    cores, so one 20-step median is load noise; the test takes the MINIMUM of DRAFT-perf-repeats (7) such medians, each
+    on a fresh world, and asserts it under the unchanged draft. Positive control: test_VG_W_w1_perf_control.py (an
+    injected busy-wait fails every repeat). Red today: the median is far above 10 ms (the spec measured about 150 ms
+    on 2026-10-10). The premise (walkers still marching through the measured steps) is asserted before the perf line."""
+    medians, marchings = perf_repeats_ms(lib, world_factory)
+    print("C premise: %s of 600 walkers changed position between step %d and the last step, per repeat" % (
+        marchings, WALK_MEDIAN_WARMUP))
+    print("C median om_world_step per repeat (ms): %s" % ", ".join("%.3f" % m for m in medians))
+    best = min(medians)
+    print("C minimum of %d repeats: %.3f ms" % (len(medians), best))
+    assert min(marchings) >= PREMISE_MIN_MOVED, "premise: only %d walkers still marching" % min(marchings)
+    assert best < DRAFT_WALK_TICK_MS_W1, (
+        "minimum of %d medians of %d om_world_step with 600 walkers is %.3f ms, DRAFT-walk-tick-ms-w1 is %.1f ms" % (
+            len(medians), WALK_MEDIAN_N, best, DRAFT_WALK_TICK_MS_W1))
 
 
 # ==== GOLDEN TABLES (begin): recorded 2026-10-12 on origin/main d563d9dc, the unmodified planner ====
@@ -499,10 +521,13 @@ GOLDEN_ROUTES = (
     (6, 'unwalkable-goal', 2, 20606, 14561, 3, 2.272735595703125,
      (20650.0, 8550.0, 20650.0, 8450.0, 20650.0, 8350.0)),
 )
+# TD-VG-W-2: save_sha256 only (save format 10 -> 11; checksum, full_ret, sections and save_len unchanged). Old -> new:
+# seed 1 plain and loaded a68c1462...bf06033 -> 0db78a2e...a9df46, seed 1 twice 531c51fe...ed81061 -> 9d55a380...a351519,
+# seed 3 plain and loaded 56b3eafd...9a85af -> 4e5a354a...e6771d7b, seed 3 twice e7185fcc...4754322e -> 9d1d36ea...fd96af64.
 GOLDEN_D = {1: {'loaded': {'checksum': '1c894c9eab51b351',
                 'full_ret': '4891708e5d777dcb',
                 'save_len': 1423472,
-                'save_sha256': 'a68c146293cd54e6338e8c552339623e3a7cd052be9b718fb95a782e8bf06033',
+                'save_sha256': '0db78a2e14325151d1e85887836b347192758851f53e4043c1a00737a1a9df46',
                 'sections': ['13259bb6ab30dba9',
                              '57d5e28a158df70e',
                              'bb36e4bc65405e92',
@@ -515,7 +540,7 @@ GOLDEN_D = {1: {'loaded': {'checksum': '1c894c9eab51b351',
      'plain': {'checksum': '1c894c9eab51b351',
                'full_ret': '4891708e5d777dcb',
                'save_len': 1423472,
-               'save_sha256': 'a68c146293cd54e6338e8c552339623e3a7cd052be9b718fb95a782e8bf06033',
+               'save_sha256': '0db78a2e14325151d1e85887836b347192758851f53e4043c1a00737a1a9df46',
                'sections': ['13259bb6ab30dba9',
                             '57d5e28a158df70e',
                             'bb36e4bc65405e92',
@@ -528,7 +553,7 @@ GOLDEN_D = {1: {'loaded': {'checksum': '1c894c9eab51b351',
      'twice': {'checksum': '1c894c9eab51b351',
                'full_ret': '7a0f9990688ddd9d',
                'save_len': 1423472,
-               'save_sha256': '531c51fe565a044b5a31f80006901d85c48dbdcee42148a7e2d329a4eed81061',
+               'save_sha256': '9d55a380fcee0d875748853ef4dd4beef7c27ccef2088591520ea5324a351519',
                'sections': ['13259bb6ab30dba9',
                             '57d5e28a158df70e',
                             'bb36e4bc65405e92',
@@ -541,7 +566,7 @@ GOLDEN_D = {1: {'loaded': {'checksum': '1c894c9eab51b351',
  3: {'loaded': {'checksum': '1c894c9eab51b351',
                 'full_ret': '2f2426b73cdee6db',
                 'save_len': 1423472,
-                'save_sha256': '56b3eaafda000c819de7c6877498d2276c5c66f46820b8d91b27bb39309a85af',
+                'save_sha256': '4e5a354a095cc276ac63a4ccbdbe92afed66568703e403e4eda457c9e6771d7b',
                 'sections': ['13259bb6ab30dba9',
                              '57d5e28a158df70e',
                              'bb36e4bc65405e92',
@@ -554,7 +579,7 @@ GOLDEN_D = {1: {'loaded': {'checksum': '1c894c9eab51b351',
      'plain': {'checksum': '1c894c9eab51b351',
                'full_ret': '2f2426b73cdee6db',
                'save_len': 1423472,
-               'save_sha256': '56b3eaafda000c819de7c6877498d2276c5c66f46820b8d91b27bb39309a85af',
+               'save_sha256': '4e5a354a095cc276ac63a4ccbdbe92afed66568703e403e4eda457c9e6771d7b',
                'sections': ['13259bb6ab30dba9',
                             '57d5e28a158df70e',
                             'bb36e4bc65405e92',
@@ -567,7 +592,7 @@ GOLDEN_D = {1: {'loaded': {'checksum': '1c894c9eab51b351',
      'twice': {'checksum': '1c894c9eab51b351',
                'full_ret': 'dead590dc62dd5b7',
                'save_len': 1423472,
-               'save_sha256': 'e7185fccb808cee36abb8bf6aeb53904dd56299894cec811fc606ec94754322e',
+               'save_sha256': '9d1d36ead93a4a874e4422795b29ffce47d9b759fdc83271584df6ab696eaf64',
                'sections': ['13259bb6ab30dba9',
                             '57d5e28a158df70e',
                             'bb36e4bc65405e92',

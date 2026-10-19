@@ -1409,7 +1409,7 @@ static void handle_mission_refuse(void) {
     write_snapshot();
 }
 
-static void handle_mission_end(void) {
+static void handle_mission_end(const char *json) {
     if (!W) {
         write_error("mission_end", "no world");
         return;
@@ -1417,6 +1417,24 @@ static void handle_mission_end(void) {
     if (mission_refused()) {
         write_error("mission_end", "no mission");
         return;
+    }
+    const char *rp = find_key(json, "retention");
+    if (rp) {
+#ifdef OM_DEBUG_INJECT
+        double retention = 0.0;
+        if (!get_f64(json, "retention", &retention) || !(retention >= 0.0 && retention <= 1.0)) {
+            write_error("mission_end", "bad retention");
+            return;
+        }
+        uint32_t n = om_unit_count(W);
+        for (uint32_t id = 1; id <= n; id++) {
+            if (om_unit_alive(W, id) && om_unit_get_faction(W, id) == om_player_faction(W))
+                om_unit_set_hp(W, id, retention * om_unit_profile_max_hp(W, om_unit_get_unit_type(W, id)));
+        }
+#else
+        write_error("mission_end", "debug build required");
+        return;
+#endif
     }
     om_mission_end(W);
     write_debrief();
@@ -1980,7 +1998,7 @@ int main(void) {
         } else if (!strcmp(name, "mission_refuse")) {
             handle_mission_refuse();
         } else if (!strcmp(name, "mission_end")) {
-            handle_mission_end();
+            handle_mission_end(buf);
         } else if (!strcmp(name, "assign_commander")) {
             handle_assign_commander(buf);
         } else if (!strcmp(name, "jump")) {

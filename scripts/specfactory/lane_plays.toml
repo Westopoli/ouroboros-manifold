@@ -4,6 +4,6 @@
 A = ["scenes/tactical_c/**"]
 B = ["scenes/galaxy/**"]
 C = ["scenes/ground3d/**"]
-D = ["scenes/space_field/**"]
+D = ["scenes/space3d/**"]
 E = ["scenes/settlement/**"]
 F = ["autoload/net/**", "scenes/lobby/**"]

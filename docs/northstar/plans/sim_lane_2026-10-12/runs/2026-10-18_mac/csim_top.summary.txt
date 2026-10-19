@@ -1,0 +1,49 @@
+>       assert r.returncode == 0, "probe build failed:\n" + r.stderr
+E       AssertionError: probe build failed:
+>       assert r.returncode == 0, "probe build failed:\n" + r.stderr
+E       AssertionError: probe build failed:
+>       assert r.returncode == 0, "probe build failed:\n" + r.stderr
+E       AssertionError: probe build failed:
+>       assert r.returncode == 0, "probe build failed:\n" + r.stderr
+E       AssertionError: probe build failed:
+>       assert r.returncode == 0, "probe build failed:\n" + r.stderr
+E       AssertionError: probe build failed:
+>       assert r.returncode == 0, "probe build failed:\n" + r.stderr
+E       AssertionError: probe build failed:
+E         comparison failed
+E         comparison failed
+E         comparison failed
+E         comparison failed
+E         comparison failed
+FAILED tests/csim/test_E06_S045_a_faction_s_technology_is_one_number.py::test_R_045_09_mean_over_all_windows_between
+FAILED tests/csim/test_E11_S085_long_enough_to_think.py::test_R_085_04_strike_vs_strike_resolves_before
+FAILED tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes[fight_990_gap300]
+FAILED tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes[fight_990_gap1500]
+FAILED tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes[fight_990_gap3000]
+FAILED tests/csim/test_E17_S112_bones_from_the_library.py::test_R_112_01_every_layout_satisfying_at_least
+FAILED tests/csim/test_E17_S112_bones_from_the_library.py::test_R_112_02_it_drawn_uniformly_at_random
+FAILED tests/csim/test_E17_S112_bones_from_the_library.py::test_R_112_03_its_zone_positions_percentages_canvas
+FAILED tests/csim/test_E17_S112_bones_from_the_library.py::test_R_112_04_layout_s_connectivity_honored_there
+FAILED tests/csim/test_E17_S112_bones_from_the_library.py::test_R_112_05_it_holds_between_10_20
+FAILED tests/csim/test_E17_S112_bones_from_the_library.py::test_R_112_06_it_contains_only_zone_positions
+FAILED tests/csim/test_E17_S113_nine_kinds_of_place.py::test_R_113_01_it_exactly_one_objective_staging
+FAILED tests/csim/test_E17_S113_nine_kinds_of_place.py::test_R_113_02_it_has_at_least_one
+FAILED tests/csim/test_E17_S113_nine_kinds_of_place.py::test_R_113_03_at_least_one_flank_route
+FAILED tests/csim/test_E17_S113_nine_kinds_of_place.py::test_R_113_04_it_reachable_from_both_staging
+FAILED tests/csim/test_E17_S113_nine_kinds_of_place.py::test_R_113_05_passable_width_w_200_wu
+FAILED tests/csim/test_E17_S114_texture_from_gradients.py::test_R_114_01_each_obstacle_density_cover_density
+FAILED tests/csim/test_E17_S114_texture_from_gradients.py::test_R_114_02_its_contribution_intensity_falloff_r
+FAILED tests/csim/test_E17_S114_texture_from_gradients.py::test_R_114_03_obstacle_density_anchors_at_chokepoints
+FAILED tests/csim/test_E17_S114_texture_from_gradients.py::test_R_114_04_every_layer_not_listed_gets
+FAILED tests/csim/test_E17_S115_the_region_shapes_the_terrain.py::test_R_115_01_interference_hazard_anchor_count_cover
+FAILED tests/csim/test_E17_S115_the_region_shapes_the_terrain.py::test_R_115_02_economy_lowers_obstacle_density_along
+FAILED tests/csim/test_E17_S115_the_region_shapes_the_terrain.py::test_R_115_03_layouts_hints_alone_produce_valid
+FAILED tests/csim/test_E17_S117_fair_enough.py::test_R_117_01_it_scores_route_count_staging
+FAILED tests/csim/test_E17_S117_fair_enough.py::test_R_117_02_q_113_01_map_regenerated
+FAILED tests/csim/test_E17_S117_fair_enough.py::test_R_117_03_it_passes_hard_constraints_no
+FAILED tests/csim/test_E17_S118_the_battlefield_moves.py::test_R_118_01_its_position_follows_path_ping
+FAILED tests/csim/test_E17_S118_the_battlefield_moves.py::test_R_118_02_its_position_moves_every_sampled
+FAILED tests/csim/test_E17_S119_terrain_that_reads_like_a_place.py::test_R_119_01_no_repeated_tile_boundary_visible
+FAILED tests/csim/test_E17_S119_terrain_that_reads_like_a_place.py::test_R_119_02_it_era_agnostic_at_section
+FAILED tests/csim/test_PP_portability.py::test_W7_library_imports_no_sin - su...
+31 failed, 2838 passed, 7 skipped, 1 deselected, 2 xfailed, 8 errors in 489.90s (0:08:09)

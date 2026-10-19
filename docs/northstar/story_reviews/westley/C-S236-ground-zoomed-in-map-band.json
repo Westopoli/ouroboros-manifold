@@ -1,0 +1,8873 @@
+{
+ "camera": {
+  "x": 13600.0,
+  "y": 2800.0
+ },
+ "canvas": 24000.0,
+ "commands_sent_last_order": 0,
+ "error_panel": false,
+ "ground3d": {
+  "band": "map",
+  "camera": {
+   "x": 13600.0,
+   "y": 2800.0
+  },
+  "camera_height": 15000.0,
+  "cells_h": 240,
+  "cells_w": 240,
+  "present": true,
+  "scale": 0.0393134521776999,
+  "vertices": 342726
+ },
+ "ground_layer": {
+  "cells_h": 240,
+  "cells_w": 240,
+  "present": true,
+  "ticks": 351
+ },
+ "inventory": {
+  "abilities_fx": 0,
+  "ambient": 0,
+  "cover_cells": 1,
+  "fog_layer": 330,
+  "hud": {
+   "clock": "00:06",
+   "comb": false,
+   "events": 0,
+   "objectives": 1,
+   "reinforcements": 1,
+   "selection": 0,
+   "strip": 1
+  },
+  "loading_overlay": 0,
+  "objective_markers": 1,
+  "obstacles": 0,
+  "shots_in_flight": 0,
+  "squads": 67,
+  "structures": 4,
+  "wrecks": 0
+ },
+ "last_command": {},
+ "local_faction": 0,
+ "objects_px": [
+  [
+   991.541442871094,
+   711.296630859375
+  ]
+ ],
+ "plants": [
+  "facing-fixed",
+  "camera-unbounded",
+  "move-order-dropped"
+ ],
+ "scale": 0.0393134521776999,
+ "scene": "tactical_view",
+ "selected": [],
+ "tick": 136,
+ "unit_count": 680,
+ "units": {
+  "1": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12220.0,
+   "y": 920.0
+  },
+  "10": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12320.0,
+   "y": 920.0
+  },
+  "100": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4150.0
+  },
+  "101": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4150.0
+  },
+  "102": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4180.0
+  },
+  "103": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4180.0
+  },
+  "104": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4180.0
+  },
+  "105": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4220.0
+  },
+  "106": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4220.0
+  },
+  "107": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4220.0
+  },
+  "108": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4250.0
+  },
+  "109": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4250.0
+  },
+  "11": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12350.0,
+   "y": 920.0
+  },
+  "110": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4250.0
+  },
+  "111": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4280.0
+  },
+  "112": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4280.0
+  },
+  "113": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4280.0
+  },
+  "114": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4320.0
+  },
+  "115": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4320.0
+  },
+  "116": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4320.0
+  },
+  "117": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4350.0
+  },
+  "118": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4350.0
+  },
+  "119": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4350.0
+  },
+  "12": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12380.0,
+   "y": 920.0
+  },
+  "120": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4380.0
+  },
+  "121": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4380.0
+  },
+  "122": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4380.0
+  },
+  "123": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16220.0,
+   "y": 1620.0
+  },
+  "124": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16250.0,
+   "y": 1620.0
+  },
+  "125": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16280.0,
+   "y": 1620.0
+  },
+  "126": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16220.0,
+   "y": 1650.0
+  },
+  "127": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16250.0,
+   "y": 1650.0
+  },
+  "128": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16280.0,
+   "y": 1650.0
+  },
+  "129": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16220.0,
+   "y": 1680.0
+  },
+  "13": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12320.0,
+   "y": 950.0
+  },
+  "130": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16250.0,
+   "y": 1680.0
+  },
+  "131": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16280.0,
+   "y": 1680.0
+  },
+  "132": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1520.0
+  },
+  "133": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1520.0
+  },
+  "134": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1550.0
+  },
+  "135": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1550.0
+  },
+  "136": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1550.0
+  },
+  "137": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1580.0
+  },
+  "138": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1580.0
+  },
+  "139": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1580.0
+  },
+  "14": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12350.0,
+   "y": 950.0
+  },
+  "140": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1620.0
+  },
+  "141": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1620.0
+  },
+  "142": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1620.0
+  },
+  "143": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1650.0
+  },
+  "144": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1650.0
+  },
+  "145": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1650.0
+  },
+  "146": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1680.0
+  },
+  "147": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1680.0
+  },
+  "148": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1680.0
+  },
+  "149": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1720.0
+  },
+  "15": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12380.0,
+   "y": 950.0
+  },
+  "150": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1720.0
+  },
+  "151": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1720.0
+  },
+  "152": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1750.0
+  },
+  "153": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1750.0
+  },
+  "154": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1750.0
+  },
+  "155": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16320.0,
+   "y": 1780.0
+  },
+  "156": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16350.0,
+   "y": 1780.0
+  },
+  "157": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16380.0,
+   "y": 1780.0
+  },
+  "158": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1420.0
+  },
+  "159": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1420.0
+  },
+  "16": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12320.0,
+   "y": 980.0
+  },
+  "160": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1450.0
+  },
+  "161": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1450.0
+  },
+  "162": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1450.0
+  },
+  "163": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1480.0
+  },
+  "164": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1480.0
+  },
+  "165": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1480.0
+  },
+  "166": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1520.0
+  },
+  "167": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1520.0
+  },
+  "168": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1520.0
+  },
+  "169": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1550.0
+  },
+  "17": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12350.0,
+   "y": 980.0
+  },
+  "170": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1550.0
+  },
+  "171": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1550.0
+  },
+  "172": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1580.0
+  },
+  "173": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1580.0
+  },
+  "174": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1580.0
+  },
+  "175": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1620.0
+  },
+  "176": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1620.0
+  },
+  "177": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1620.0
+  },
+  "178": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1650.0
+  },
+  "179": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1650.0
+  },
+  "18": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12380.0,
+   "y": 980.0
+  },
+  "180": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1650.0
+  },
+  "181": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1680.0
+  },
+  "182": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1680.0
+  },
+  "183": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1680.0
+  },
+  "184": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1720.0
+  },
+  "185": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1720.0
+  },
+  "186": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1720.0
+  },
+  "187": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1750.0
+  },
+  "188": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1750.0
+  },
+  "189": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1750.0
+  },
+  "19": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12220.0,
+   "y": 1120.0
+  },
+  "190": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16420.0,
+   "y": 1780.0
+  },
+  "191": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16450.0,
+   "y": 1780.0
+  },
+  "192": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16480.0,
+   "y": 1780.0
+  },
+  "193": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1120.0
+  },
+  "194": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1120.0
+  },
+  "195": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1120.0
+  },
+  "196": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1150.0
+  },
+  "197": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1150.0
+  },
+  "198": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1150.0
+  },
+  "199": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1180.0
+  },
+  "2": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12250.0,
+   "y": 920.0
+  },
+  "20": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12250.0,
+   "y": 1120.0
+  },
+  "200": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1180.0
+  },
+  "201": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1180.0
+  },
+  "202": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1220.0
+  },
+  "203": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1220.0
+  },
+  "204": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1220.0
+  },
+  "205": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1250.0
+  },
+  "206": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1250.0
+  },
+  "207": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1250.0
+  },
+  "208": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1280.0
+  },
+  "209": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1280.0
+  },
+  "21": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12280.0,
+   "y": 1120.0
+  },
+  "210": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1280.0
+  },
+  "211": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1320.0
+  },
+  "212": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1320.0
+  },
+  "213": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1320.0
+  },
+  "214": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1350.0
+  },
+  "215": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1350.0
+  },
+  "216": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1350.0
+  },
+  "217": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1380.0
+  },
+  "218": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1380.0
+  },
+  "219": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1380.0
+  },
+  "22": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12250.0,
+   "y": 1150.0
+  },
+  "220": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1420.0
+  },
+  "221": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1420.0
+  },
+  "222": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1420.0
+  },
+  "223": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1450.0
+  },
+  "224": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1450.0
+  },
+  "225": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1450.0
+  },
+  "226": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1480.0
+  },
+  "227": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1480.0
+  },
+  "228": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1480.0
+  },
+  "229": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1520.0
+  },
+  "23": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12280.0,
+   "y": 1150.0
+  },
+  "230": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1520.0
+  },
+  "231": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1520.0
+  },
+  "232": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1550.0
+  },
+  "233": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1550.0
+  },
+  "234": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1550.0
+  },
+  "235": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1580.0
+  },
+  "236": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1580.0
+  },
+  "237": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1580.0
+  },
+  "238": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1620.0
+  },
+  "239": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1620.0
+  },
+  "24": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12320.0,
+   "y": 1120.0
+  },
+  "240": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1620.0
+  },
+  "241": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1650.0
+  },
+  "242": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1650.0
+  },
+  "243": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1650.0
+  },
+  "244": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1680.0
+  },
+  "245": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1680.0
+  },
+  "246": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1680.0
+  },
+  "247": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14820.0,
+   "y": 4520.0
+  },
+  "248": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14850.0,
+   "y": 4520.0
+  },
+  "249": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14880.0,
+   "y": 4520.0
+  },
+  "25": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12350.0,
+   "y": 1120.0
+  },
+  "250": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14820.0,
+   "y": 4550.0
+  },
+  "251": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14850.0,
+   "y": 4550.0
+  },
+  "252": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14880.0,
+   "y": 4550.0
+  },
+  "253": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14820.0,
+   "y": 4580.0
+  },
+  "254": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14850.0,
+   "y": 4580.0
+  },
+  "255": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 14880.0,
+   "y": 4580.0
+  },
+  "256": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1720.0
+  },
+  "257": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1720.0
+  },
+  "258": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1720.0
+  },
+  "259": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1750.0
+  },
+  "26": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12380.0,
+   "y": 1120.0
+  },
+  "260": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1750.0
+  },
+  "261": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1750.0
+  },
+  "262": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1780.0
+  },
+  "263": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1780.0
+  },
+  "264": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1780.0
+  },
+  "265": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1820.0
+  },
+  "266": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1820.0
+  },
+  "267": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1820.0
+  },
+  "268": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1850.0
+  },
+  "269": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1850.0
+  },
+  "27": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12320.0,
+   "y": 1150.0
+  },
+  "270": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1850.0
+  },
+  "271": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1880.0
+  },
+  "272": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16620.0,
+   "y": 1420.0
+  },
+  "273": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16650.0,
+   "y": 1420.0
+  },
+  "274": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16620.0,
+   "y": 1450.0
+  },
+  "275": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16650.0,
+   "y": 1450.0
+  },
+  "276": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16680.0,
+   "y": 1450.0
+  },
+  "277": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16620.0,
+   "y": 1480.0
+  },
+  "278": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16650.0,
+   "y": 1480.0
+  },
+  "279": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16680.0,
+   "y": 1480.0
+  },
+  "28": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12350.0,
+   "y": 1150.0
+  },
+  "280": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1950.0
+  },
+  "281": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1950.0
+  },
+  "282": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16520.0,
+   "y": 1980.0
+  },
+  "283": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16550.0,
+   "y": 1980.0
+  },
+  "284": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 16580.0,
+   "y": 1980.0
+  },
+  "285": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14920.0,
+   "y": 4520.0
+  },
+  "286": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14950.0,
+   "y": 4520.0
+  },
+  "287": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14980.0,
+   "y": 4520.0
+  },
+  "288": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14920.0,
+   "y": 4550.0
+  },
+  "289": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14950.0,
+   "y": 4550.0
+  },
+  "29": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12380.0,
+   "y": 1150.0
+  },
+  "290": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14980.0,
+   "y": 4550.0
+  },
+  "291": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14920.0,
+   "y": 4580.0
+  },
+  "292": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14950.0,
+   "y": 4580.0
+  },
+  "293": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14980.0,
+   "y": 4580.0
+  },
+  "294": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16620.0,
+   "y": 1520.0
+  },
+  "295": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16650.0,
+   "y": 1520.0
+  },
+  "296": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16680.0,
+   "y": 1520.0
+  },
+  "297": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16620.0,
+   "y": 1550.0
+  },
+  "298": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16650.0,
+   "y": 1550.0
+  },
+  "299": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16680.0,
+   "y": 1550.0
+  },
+  "3": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12280.0,
+   "y": 920.0
+  },
+  "30": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12380.0,
+   "y": 1180.0
+  },
+  "300": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16620.0,
+   "y": 1580.0
+  },
+  "301": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16650.0,
+   "y": 1580.0
+  },
+  "302": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16680.0,
+   "y": 1580.0
+  },
+  "303": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14820.0,
+   "y": 4620.0
+  },
+  "304": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14850.0,
+   "y": 4620.0
+  },
+  "305": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14880.0,
+   "y": 4620.0
+  },
+  "306": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14820.0,
+   "y": 4650.0
+  },
+  "307": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14850.0,
+   "y": 4650.0
+  },
+  "308": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14880.0,
+   "y": 4650.0
+  },
+  "309": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14820.0,
+   "y": 4680.0
+  },
+  "31": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12420.0,
+   "y": 920.0
+  },
+  "310": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14850.0,
+   "y": 4680.0
+  },
+  "311": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 14880.0,
+   "y": 4680.0
+  },
+  "312": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16620.0,
+   "y": 1620.0
+  },
+  "313": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16650.0,
+   "y": 1620.0
+  },
+  "314": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16680.0,
+   "y": 1620.0
+  },
+  "315": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16620.0,
+   "y": 1650.0
+  },
+  "316": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16650.0,
+   "y": 1650.0
+  },
+  "317": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 16680.0,
+   "y": 1650.0
+  },
+  "318": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16620.0,
+   "y": 1680.0
+  },
+  "319": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16650.0,
+   "y": 1680.0
+  },
+  "32": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12420.0,
+   "y": 950.0
+  },
+  "320": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16680.0,
+   "y": 1680.0
+  },
+  "321": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16620.0,
+   "y": 1720.0
+  },
+  "322": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16650.0,
+   "y": 1720.0
+  },
+  "323": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16680.0,
+   "y": 1720.0
+  },
+  "324": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16620.0,
+   "y": 1750.0
+  },
+  "325": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16650.0,
+   "y": 1750.0
+  },
+  "326": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16680.0,
+   "y": 1750.0
+  },
+  "327": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16620.0,
+   "y": 1780.0
+  },
+  "328": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16650.0,
+   "y": 1780.0
+  },
+  "329": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16680.0,
+   "y": 1780.0
+  },
+  "33": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12450.0,
+   "y": 950.0
+  },
+  "330": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 16620.0,
+   "y": 1820.0
+  },
+  "331": {
+   "facing": -2.02512377158504,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17489.8827944213,
+   "y": 13254.4710707005
+  },
+  "332": {
+   "facing": -2.02865357644854,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17505.2190709728,
+   "y": 13228.7835738359
+  },
+  "333": {
+   "facing": -2.03263302117947,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17537.710599372,
+   "y": 13230.5901546475
+  },
+  "334": {
+   "facing": -2.0289018924982,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17520.0054485924,
+   "y": 13254.6818563909
+  },
+  "335": {
+   "facing": -2.03242410296957,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17549.7040108036,
+   "y": 13257.9364954491
+  },
+  "336": {
+   "facing": -2.02634413046584,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17514.1406864249,
+   "y": 13284.1030451899
+  },
+  "337": {
+   "facing": -2.02361459245144,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17435.7988619115,
+   "y": 13168.2297902622
+  },
+  "338": {
+   "facing": -2.02731769950718,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17465.8603313904,
+   "y": 13170.4072241793
+  },
+  "339": {
+   "facing": -2.03102561707197,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17495.8153280931,
+   "y": 13172.0703470549
+  },
+  "34": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12420.0,
+   "y": 980.0
+  },
+  "340": {
+   "facing": -2.02358637305314,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17448.6950924324,
+   "y": 13195.0885665525
+  },
+  "341": {
+   "facing": -2.02721676051411,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17478.4482130615,
+   "y": 13197.5539737401
+  },
+  "342": {
+   "facing": -2.03472563850333,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17525.7070446456,
+   "y": 13173.5158419968
+  },
+  "343": {
+   "facing": -2.0198816503907,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17431.6362157159,
+   "y": 13219.8383049231
+  },
+  "344": {
+   "facing": -2.02353188417666,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17461.5157069901,
+   "y": 13222.2203416804
+  },
+  "345": {
+   "facing": -2.03088949205255,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17508.1885084521,
+   "y": 13199.0984932341
+  },
+  "346": {
+   "facing": -2.03615931531606,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17567.453610701,
+   "y": 13233.8687751438
+  },
+  "347": {
+   "facing": -2.04010179437855,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17602.9234453398,
+   "y": 13241.62084859
+  },
+  "348": {
+   "facing": -2.04293734310085,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17632.6412101405,
+   "y": 13255.18009187
+  },
+  "349": {
+   "facing": -2.03595864448562,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17579.4509210164,
+   "y": 13260.8644811371
+  },
+  "35": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12450.0,
+   "y": 980.0
+  },
+  "350": {
+   "facing": -2.03878372309668,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17607.4059725018,
+   "y": 13271.2826417986
+  },
+  "351": {
+   "facing": -2.04112747267306,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17633.6101374707,
+   "y": 13285.6356298873
+  },
+  "352": {
+   "facing": -2.02987285007517,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17543.9601143124,
+   "y": 13287.3815451458
+  },
+  "353": {
+   "facing": -2.03341229802347,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17573.8148509981,
+   "y": 13290.3302223799
+  },
+  "354": {
+   "facing": -2.03697749794202,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17608.0290973816,
+   "y": 13301.2761696902
+  },
+  "355": {
+   "facing": -2.0162498042399,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17363.0373371918,
+   "y": 13136.1479592841
+  },
+  "356": {
+   "facing": -2.01993944251719,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17392.8821679974,
+   "y": 13138.8060526459
+  },
+  "357": {
+   "facing": -2.01991930039029,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17405.7807311845,
+   "y": 13165.7880856061
+  },
+  "358": {
+   "facing": -2.01622530789079,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17375.925571117,
+   "y": 13163.4335741879
+  },
+  "359": {
+   "facing": -2.0199127619713,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17418.7986849526,
+   "y": 13192.7997235312
+  },
+  "36": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12480.0,
+   "y": 980.0
+  },
+  "360": {
+   "facing": -2.01622508967678,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17388.8882646477,
+   "y": 13190.4830972808
+  },
+  "361": {
+   "facing": -2.03858954305136,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17543.4504958619,
+   "y": 13148.2292272966
+  },
+  "362": {
+   "facing": -2.04344920145351,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17568.7643741317,
+   "y": 13122.6597352503
+  },
+  "363": {
+   "facing": -2.04693592551191,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17598.3589680968,
+   "y": 13126.5791725386
+  },
+  "364": {
+   "facing": -2.03831500390391,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17555.5326600574,
+   "y": 13176.349804966
+  },
+  "365": {
+   "facing": -2.0420934761995,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17573.1511119962,
+   "y": 13152.1493319066
+  },
+  "366": {
+   "facing": -2.04557781502872,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17602.8123483974,
+   "y": 13156.0612939793
+  },
+  "367": {
+   "facing": -2.03453815253333,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17537.8975526111,
+   "y": 13200.7503789032
+  },
+  "368": {
+   "facing": -2.03805870284606,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17567.5643623296,
+   "y": 13204.1212454022
+  },
+  "369": {
+   "facing": -2.04183755157605,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17585.3332247943,
+   "y": 13179.9496189218
+  },
+  "37": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12420.0,
+   "y": 1120.0
+  },
+  "370": {
+   "facing": -2.02862636783937,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17421.366936098,
+   "y": 13059.6873163289
+  },
+  "371": {
+   "facing": -2.0276456950263,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17428.1822418461,
+   "y": 13088.8270663778
+  },
+  "372": {
+   "facing": -2.03186186276238,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17449.9858212457,
+   "y": 13066.9568659109
+  },
+  "373": {
+   "facing": -2.02369436861966,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17410.0850623881,
+   "y": 13114.3145121448
+  },
+  "374": {
+   "facing": -2.02737176048055,
+   "faction": 3,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 17439.6687244525,
+   "y": 13116.4257732278
+  },
+  "375": {
+   "facing": -2.03102728114838,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17469.2951170218,
+   "y": 13118.7472113525
+  },
+  "376": {
+   "facing": -2.02363545479575,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17422.7910540813,
+   "y": 13141.2636281881
+  },
+  "377": {
+   "facing": -2.02732411161314,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17452.6484169909,
+   "y": 13143.5057671063
+  },
+  "378": {
+   "facing": -2.03101124521854,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17482.4773396592,
+   "y": 13145.4916596845
+  },
+  "379": {
+   "facing": -2.04525807360257,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17658.8908045456,
+   "y": 13269.7943707659
+  },
+  "38": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12450.0,
+   "y": 1120.0
+  },
+  "380": {
+   "facing": -2.05043495404851,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17690.739538852,
+   "y": 13250.3682912989
+  },
+  "381": {
+   "facing": -2.05486288089898,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17742.3961515618,
+   "y": 13280.1185435869
+  },
+  "382": {
+   "facing": -2.04805286769497,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17686.9220637632,
+   "y": 13280.1762706436
+  },
+  "383": {
+   "facing": -2.05218710846201,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17714.6385138231,
+   "y": 13268.8472861489
+  },
+  "384": {
+   "facing": -2.06304136397235,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17792.9380400068,
+   "y": 13249.3099764364
+  },
+  "385": {
+   "facing": -2.03937263141109,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17634.6750675363,
+   "y": 13315.6284222947
+  },
+  "386": {
+   "facing": -2.04352581170482,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17660.1770367579,
+   "y": 13299.5910007307
+  },
+  "387": {
+   "facing": -2.04630955066884,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17688.2571969945,
+   "y": 13310.1505746372
+  },
+  "388": {
+   "facing": -2.01777372646671,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17342.5729786855,
+   "y": 13069.1279276754
+  },
+  "389": {
+   "facing": -2.02185195366188,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17363.4386999814,
+   "y": 13047.7199015159
+  },
+  "39": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12480.0,
+   "y": 1120.0
+  },
+  "390": {
+   "facing": -2.02864279706858,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17408.1200425984,
+   "y": 13032.6496299402
+  },
+  "391": {
+   "facing": -2.02018733123874,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17368.3214374978,
+   "y": 13084.1066424845
+  },
+  "392": {
+   "facing": -2.02489447989932,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17391.6027750743,
+   "y": 13057.6032745089
+  },
+  "393": {
+   "facing": -2.02390069340605,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17398.2631023776,
+   "y": 13086.8545999526
+  },
+  "394": {
+   "facing": -2.01344330925087,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17316.7417250242,
+   "y": 13084.3877029856
+  },
+  "395": {
+   "facing": -2.01586819601137,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17342.5794915379,
+   "y": 13099.5826755333
+  },
+  "396": {
+   "facing": -2.02000450464698,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17380.2390839417,
+   "y": 13111.6378920609
+  },
+  "397": {
+   "facing": -2.03304946946783,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17470.1066462302,
+   "y": 13088.7886757962
+  },
+  "398": {
+   "facing": -2.03478046905569,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17499.1436332242,
+   "y": 13119.7674910932
+  },
+  "399": {
+   "facing": -2.03680885818895,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17499.9271878001,
+   "y": 13089.8288687299
+  },
+  "4": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12220.0,
+   "y": 950.0
+  },
+  "40": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12420.0,
+   "y": 1150.0
+  },
+  "400": {
+   "facing": -2.03672094165829,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17485.8170542876,
+   "y": 13063.2312291579
+  },
+  "401": {
+   "facing": -2.03474177124819,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17512.4152774888,
+   "y": 13146.7964623313
+  },
+  "402": {
+   "facing": -2.03844293833906,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17529.0047334547,
+   "y": 13122.0110543927
+  },
+  "403": {
+   "facing": -2.04244884184072,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17549.2942682381,
+   "y": 13100.0432274852
+  },
+  "404": {
+   "facing": -2.05066780754732,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17628.3324311089,
+   "y": 13127.2587932814
+  },
+  "405": {
+   "facing": -2.049280869337,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17632.6529320215,
+   "y": 13156.7322566886
+  },
+  "406": {
+   "facing": -2.05321541449549,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17662.6515174035,
+   "y": 13153.9768983797
+  },
+  "407": {
+   "facing": -2.04145043151326,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17598.5908658757,
+   "y": 13211.942434001
+  },
+  "408": {
+   "facing": -2.04564623602142,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17623.8789748806,
+   "y": 13195.8407675567
+  },
+  "409": {
+   "facing": -2.04848168519798,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17654.3285171292,
+   "y": 13210.7262999376
+  },
+  "41": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12450.0,
+   "y": 1150.0
+  },
+  "410": {
+   "facing": -2.04428245643127,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17628.2319203854,
+   "y": 13225.5157055066
+  },
+  "411": {
+   "facing": -2.04733171451912,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17660.2497757151,
+   "y": 13239.9965163726
+  },
+  "412": {
+   "facing": -2.05625892695703,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17737.7498505245,
+   "y": 13249.7661524597
+  },
+  "413": {
+   "facing": -2.06597562271469,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17801.3833597506,
+   "y": 13220.4348984167
+  },
+  "414": {
+   "facing": -2.0696090959677,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17835.2261183618,
+   "y": 13227.8561867049
+  },
+  "415": {
+   "facing": -2.07345923798001,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17865.9368166661,
+   "y": 13226.0377779148
+  },
+  "416": {
+   "facing": -2.06624009328386,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17822.3360230444,
+   "y": 13255.0913250357
+  },
+  "417": {
+   "facing": -2.07002427615114,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17852.2384805191,
+   "y": 13252.7160615769
+  },
+  "418": {
+   "facing": -2.07401595087271,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17883.8383761555,
+   "y": 13250.1390625411
+  },
+  "419": {
+   "facing": -2.05898804387323,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17770.2178774413,
+   "y": 13268.9176548677
+  },
+  "42": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12480.0,
+   "y": 1150.0
+  },
+  "420": {
+   "facing": -2.06175345816897,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17798.4076130793,
+   "y": 13279.181124294
+  },
+  "421": {
+   "facing": -2.07057787234344,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17870.0367225381,
+   "y": 13276.8639059226
+  },
+  "422": {
+   "facing": -2.00678226471231,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17260.9693357715,
+   "y": 13073.7542834685
+  },
+  "423": {
+   "facing": -2.00797198373889,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17256.1235709864,
+   "y": 13044.163236141
+  },
+  "424": {
+   "facing": -2.01468518920179,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17285.5826398166,
+   "y": 12999.2151531323
+  },
+  "425": {
+   "facing": -2.00929459586405,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17287.0475300007,
+   "y": 13088.5878414739
+  },
+  "426": {
+   "facing": -2.01115291242187,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17287.0438978387,
+   "y": 13058.599247378
+  },
+  "427": {
+   "facing": -2.0123513863741,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17282.1165653118,
+   "y": 13029.0087054679
+  },
+  "428": {
+   "facing": -2.01533251582207,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17316.6790312671,
+   "y": 13054.0213629579
+  },
+  "429": {
+   "facing": -2.01943280731158,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17337.5866711916,
+   "y": 13032.5069354083
+  },
+  "43": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12420.0,
+   "y": 1180.0
+  },
+  "430": {
+   "facing": -2.0167327227278,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17309.7482622081,
+   "y": 13017.3292445637
+  },
+  "431": {
+   "facing": -2.04985921616618,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17649.9115583579,
+   "y": 13180.9887813166
+  },
+  "432": {
+   "facing": -2.05144023573649,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17683.6411136723,
+   "y": 13221.2225931311
+  },
+  "433": {
+   "facing": -2.05263260787122,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17677.8097197646,
+   "y": 13191.7499823966
+  },
+  "434": {
+   "facing": -2.05557580931586,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17706.3413583385,
+   "y": 13200.8631541095
+  },
+  "435": {
+   "facing": -2.06041276148788,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17765.2585080021,
+   "y": 13237.7964505511
+  },
+  "436": {
+   "facing": -2.054476392329,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17712.9035561877,
+   "y": 13230.1584427941
+  },
+  "437": {
+   "facing": -2.05853889781088,
+   "faction": 3,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 17735.0137952321,
+   "y": 13209.68876245
+  },
+  "438": {
+   "facing": -2.05696789599435,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17790.1953379367,
+   "y": 13337.7747655302
+  },
+  "439": {
+   "facing": -2.06152776612539,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17827.2084083631,
+   "y": 13336.3691230527
+  },
+  "44": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12450.0,
+   "y": 1180.0
+  },
+  "440": {
+   "facing": -2.0677547647411,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17871.0839841763,
+   "y": 13321.7602736803
+  },
+  "441": {
+   "facing": -2.05784419464709,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17809.5992354759,
+   "y": 13360.6558337409
+  },
+  "442": {
+   "facing": -2.064186973701,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17855.1648936878,
+   "y": 13347.2360173787
+  },
+  "443": {
+   "facing": -2.06770553775687,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17885.1391122493,
+   "y": 13348.3502310826
+  },
+  "444": {
+   "facing": -2.06050894757185,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17837.5598375817,
+   "y": 13371.5272091877
+  },
+  "445": {
+   "facing": -2.06416500674943,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17869.3386288238,
+   "y": 13373.8493878473
+  },
+  "446": {
+   "facing": -2.07753443380069,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17898.2216460762,
+   "y": 13223.5206398856
+  },
+  "447": {
+   "facing": -2.08124410566977,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17928.9268906897,
+   "y": 13223.4067907002
+  },
+  "448": {
+   "facing": -2.08492947844727,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17958.9575555198,
+   "y": 13222.2624861962
+  },
+  "449": {
+   "facing": -2.07768328641541,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17913.8274615842,
+   "y": 13249.3298931513
+  },
+  "45": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12480.0,
+   "y": 1180.0
+  },
+  "450": {
+   "facing": -2.08145695559223,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17944.959546204,
+   "y": 13248.7954997504
+  },
+  "451": {
+   "facing": -2.0850475860139,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17974.9588975017,
+   "y": 13248.7695412799
+  },
+  "452": {
+   "facing": -2.07424492135452,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17900.0224642341,
+   "y": 13275.9999240196
+  },
+  "453": {
+   "facing": -2.07792140384873,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17929.9983581177,
+   "y": 13274.7975156523
+  },
+  "454": {
+   "facing": -2.08154069898666,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17960.3747623109,
+   "y": 13274.984685565
+  },
+  "455": {
+   "facing": -2.00998399711291,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17234.9995733899,
+   "y": 12967.0795011637
+  },
+  "456": {
+   "facing": -2.00762116156421,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17231.3954746998,
+   "y": 12997.0694008283
+  },
+  "457": {
+   "facing": -2.01216279392958,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17259.5154003066,
+   "y": 12984.3675467996
+  },
+  "458": {
+   "facing": -2.00544891586104,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17230.0771706024,
+   "y": 13029.184001397
+  },
+  "459": {
+   "facing": -2.00983032648292,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17256.048727332,
+   "y": 13014.1665766242
+  },
+  "46": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12520.0,
+   "y": 1120.0
+  },
+  "460": {
+   "facing": -2.0712962771246,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17901.0730120966,
+   "y": 13322.5715716482
+  },
+  "461": {
+   "facing": -2.07487721417378,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17932.0462975721,
+   "y": 13324.3691653901
+  },
+  "462": {
+   "facing": -2.07880506433022,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17964.1694073387,
+   "y": 13322.7772142605
+  },
+  "463": {
+   "facing": -2.07123387041775,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17915.1269151405,
+   "y": 13349.1422585094
+  },
+  "464": {
+   "facing": -2.07530710819363,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17949.2603621696,
+   "y": 13348.9386134952
+  },
+  "465": {
+   "facing": -2.07887638368049,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17979.2593185418,
+   "y": 13348.7227567002
+  },
+  "466": {
+   "facing": -2.06772310973788,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17899.8637939944,
+   "y": 13375.1461646648
+  },
+  "467": {
+   "facing": -2.07167730634821,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17932.3406866484,
+   "y": 13373.7122823285
+  },
+  "468": {
+   "facing": -2.0754162646092,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17964.5481338,
+   "y": 13374.8756637157
+  },
+  "469": {
+   "facing": -2.01974894416491,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17257.5484053653,
+   "y": 12862.0268965169
+  },
+  "47": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12550.0,
+   "y": 1120.0
+  },
+  "470": {
+   "facing": -2.02079583393269,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17280.1981038333,
+   "y": 12892.7247546597
+  },
+  "471": {
+   "facing": -2.01912929860336,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17283.3704550847,
+   "y": 12925.0148347136
+  },
+  "472": {
+   "facing": -2.01541412535154,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17253.6534966808,
+   "y": 12920.9473066229
+  },
+  "473": {
+   "facing": -2.01437915052495,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17259.9186289953,
+   "y": 12950.2573873081
+  },
+  "474": {
+   "facing": -2.01688183932713,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17250.3108268219,
+   "y": 12891.1685727818
+  },
+  "475": {
+   "facing": -2.0123255412307,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17225.6070976337,
+   "y": 12910.3277309905
+  },
+  "476": {
+   "facing": -2.08852508467436,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 17988.9863282886,
+   "y": 13222.2517804334
+  },
+  "477": {
+   "facing": -2.09210742135927,
+   "faction": 3,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 18018.9850586168,
+   "y": 13222.1933919275
+  },
+  "478": {
+   "facing": -2.09579105059354,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18048.9298702737,
+   "y": 13220.3836127153
+  },
+  "479": {
+   "facing": -2.08913498225452,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18010.5166555528,
+   "y": 13250.9733377883
+  },
+  "48": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12580.0,
+   "y": 1120.0
+  },
+  "480": {
+   "facing": -2.09293148158035,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18041.7276322456,
+   "y": 13249.6151398246
+  },
+  "481": {
+   "facing": -2.09704789579314,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18071.2205869845,
+   "y": 13240.4610199674
+  },
+  "482": {
+   "facing": -2.08528810751613,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17991.2630002377,
+   "y": 13273.9797910277
+  },
+  "483": {
+   "facing": -2.08942757871607,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18027.233410623,
+   "y": 13275.8841808075
+  },
+  "484": {
+   "facing": -2.09424579835332,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18064.442991765,
+   "y": 13269.6853338895
+  },
+  "485": {
+   "facing": -2.08239050757101,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17994.2744363042,
+   "y": 13322.5414052417
+  },
+  "486": {
+   "facing": -2.0859956841668,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18025.2529895057,
+   "y": 13323.3641157149
+  },
+  "487": {
+   "facing": -2.08954793552571,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18055.288574147,
+   "y": 13323.1203376788
+  },
+  "488": {
+   "facing": -2.08241616146947,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18009.2592824727,
+   "y": 13348.7692770874
+  },
+  "489": {
+   "facing": -2.08605697403027,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18040.4551870864,
+   "y": 13349.2212621787
+  },
+  "49": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12520.0,
+   "y": 1150.0
+  },
+  "490": {
+   "facing": -2.08957145145455,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18070.4472845316,
+   "y": 13349.2515223132
+  },
+  "491": {
+   "facing": -2.07894738208337,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17994.5463780417,
+   "y": 13375.0174470167
+  },
+  "492": {
+   "facing": -2.08249956563008,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18024.5441690707,
+   "y": 13374.653395672
+  },
+  "493": {
+   "facing": -2.08611570718487,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18055.8569562937,
+   "y": 13375.4609412544
+  },
+  "494": {
+   "facing": -2.00682135907382,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17169.7462987306,
+   "y": 12878.1015445344
+  },
+  "495": {
+   "facing": -2.00904873990865,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17172.093439488,
+   "y": 12848.2424643632
+  },
+  "496": {
+   "facing": -2.01111150634452,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17173.0866180824,
+   "y": 12818.3452023356
+  },
+  "497": {
+   "facing": -2.00929595156054,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17195.3223686431,
+   "y": 12893.7329893278
+  },
+  "498": {
+   "facing": -2.01155237683606,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17197.6877210062,
+   "y": 12863.4918688087
+  },
+  "499": {
+   "facing": -2.0136383025981,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17198.821243423,
+   "y": 12833.5788922256
+  },
+  "5": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12250.0,
+   "y": 950.0
+  },
+  "50": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12550.0,
+   "y": 1150.0
+  },
+  "500": {
+   "facing": -2.01379344490338,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17222.3460864055,
+   "y": 12880.5788526219
+  },
+  "501": {
+   "facing": -2.01662201030653,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17229.2786251633,
+   "y": 12851.3546269488
+  },
+  "502": {
+   "facing": -2.0181655492912,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17225.5411959197,
+   "y": 12819.9288830861
+  },
+  "503": {
+   "facing": -2.10051343263167,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18101.2035734803,
+   "y": 13241.4712282575
+  },
+  "504": {
+   "facing": -2.10443313959493,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18132.2234762508,
+   "y": 13237.4932022274
+  },
+  "505": {
+   "facing": -2.10811331374476,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18162.6394183021,
+   "y": 13235.7743581645
+  },
+  "506": {
+   "facing": -2.10109844542001,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18119.945422806,
+   "y": 13264.9009279989
+  },
+  "507": {
+   "facing": -2.10473515511494,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18149.8817648893,
+   "y": 13262.9476339067
+  },
+  "508": {
+   "facing": -2.10828075820209,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18179.8731509989,
+   "y": 13262.2287742359
+  },
+  "509": {
+   "facing": -2.09306504048489,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18085.27177454,
+   "y": 13323.1218951833
+  },
+  "51": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12580.0,
+   "y": 1150.0
+  },
+  "510": {
+   "facing": -2.09656172220412,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18115.2475023364,
+   "y": 13323.2261589712
+  },
+  "511": {
+   "facing": -2.10006736444175,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18145.2159986081,
+   "y": 13323.0006768176
+  },
+  "512": {
+   "facing": -2.09307151870327,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18100.4433469612,
+   "y": 13349.3175445265
+  },
+  "513": {
+   "facing": -2.09681511132828,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18133.30202762,
+   "y": 13350.5156559822
+  },
+  "514": {
+   "facing": -2.10049604166575,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18163.1265266338,
+   "y": 13347.2343238821
+  },
+  "515": {
+   "facing": -2.08961417628355,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18085.8635751033,
+   "y": 13375.5419597047
+  },
+  "516": {
+   "facing": -2.09315266217888,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18115.9588264215,
+   "y": 13374.9944911708
+  },
+  "517": {
+   "facing": -2.09749479943551,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18153.8798011203,
+   "y": 13375.775811574
+  },
+  "518": {
+   "facing": -2.00476922855599,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17117.6574747872,
+   "y": 12798.5566752173
+  },
+  "519": {
+   "facing": -2.01066321531687,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17148.6292183931,
+   "y": 12773.5109403777
+  },
+  "52": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12520.0,
+   "y": 1180.0
+  },
+  "520": {
+   "facing": -2.01554576448805,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17177.0066516753,
+   "y": 12758.6962871767
+  },
+  "521": {
+   "facing": -2.00272027410099,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17116.7239767711,
+   "y": 12828.5917118482
+  },
+  "522": {
+   "facing": -2.00857210331961,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17147.3340155311,
+   "y": 12802.9867197924
+  },
+  "523": {
+   "facing": -2.01324592312905,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17174.4884398764,
+   "y": 12788.4741089677
+  },
+  "524": {
+   "facing": -2.00428403676226,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17143.990551584,
+   "y": 12862.7902320745
+  },
+  "525": {
+   "facing": -2.00652460191937,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17146.431919932,
+   "y": 12832.8897350788
+  },
+  "526": {
+   "facing": -2.01580321425798,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17200.3841134739,
+   "y": 12803.620530622
+  },
+  "527": {
+   "facing": -2.0849908315269,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18086.2161902375,
+   "y": 13446.0254283328
+  },
+  "528": {
+   "facing": -2.09062484544127,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18128.7942327526,
+   "y": 13435.2387392031
+  },
+  "529": {
+   "facing": -2.09421225948118,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18159.184180338,
+   "y": 13433.9309704882
+  },
+  "53": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12550.0,
+   "y": 1180.0
+  },
+  "530": {
+   "facing": -2.08724579063563,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18114.6126466359,
+   "y": 13461.6751272926
+  },
+  "531": {
+   "facing": -2.09100290340939,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18147.0870347198,
+   "y": 13461.3838222142
+  },
+  "532": {
+   "facing": -2.09473461086319,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18178.2110194217,
+   "y": 13458.9342081883
+  },
+  "533": {
+   "facing": -2.11207013153389,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18198.1911541905,
+   "y": 13238.4588055902
+  },
+  "534": {
+   "facing": -2.11571217805841,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18228.6497148006,
+   "y": 13236.9467904021
+  },
+  "535": {
+   "facing": -2.11931584640876,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18258.5824442959,
+   "y": 13234.9388798061
+  },
+  "536": {
+   "facing": -2.11225198892965,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18214.9167352833,
+   "y": 13263.6189720448
+  },
+  "537": {
+   "facing": -2.11598187655244,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18246.4647659162,
+   "y": 13262.4340938202
+  },
+  "538": {
+   "facing": -2.11959694348593,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18276.365451728,
+   "y": 13259.9950391067
+  },
+  "539": {
+   "facing": -2.10375586926715,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18174.9970938053,
+   "y": 13319.6050742118
+  },
+  "54": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12580.0,
+   "y": 1180.0
+  },
+  "540": {
+   "facing": -2.10681091545889,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18204.5175311538,
+   "y": 13324.831526789
+  },
+  "541": {
+   "facing": -2.11056324537688,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18234.1008949485,
+   "y": 13319.8388117777
+  },
+  "542": {
+   "facing": -2.10355271842469,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18192.666019776,
+   "y": 13352.4705768268
+  },
+  "543": {
+   "facing": -2.10739869565957,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18223.4693022093,
+   "y": 13348.0775315388
+  },
+  "544": {
+   "facing": -2.11138020817896,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18254.4555519744,
+   "y": 13341.868070652
+  },
+  "545": {
+   "facing": -2.10416920458974,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18211.7627836975,
+   "y": 13375.7032671346
+  },
+  "546": {
+   "facing": -2.10818823473487,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18243.615322775,
+   "y": 13370.303994247
+  },
+  "547": {
+   "facing": -2.11191003561262,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18273.1890126453,
+   "y": 13365.2946155222
+  },
+  "548": {
+   "facing": -2.01167902427898,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17121.6393973189,
+   "y": 12700.9833307663
+  },
+  "549": {
+   "facing": -2.01639191851356,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17147.5780796083,
+   "y": 12684.5049417801
+  },
+  "55": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12620.0,
+   "y": 1120.0
+  },
+  "550": {
+   "facing": -2.02169949389596,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17178.4378691775,
+   "y": 12669.4836811007
+  },
+  "551": {
+   "facing": -2.00997343576519,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17123.6484888468,
+   "y": 12731.1423037565
+  },
+  "552": {
+   "facing": -2.01457468107832,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17148.6226634786,
+   "y": 12713.9893684239
+  },
+  "553": {
+   "facing": -2.01916852531997,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17174.4830042682,
+   "y": 12698.9231690953
+  },
+  "554": {
+   "facing": -2.0070284413993,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17119.2930680592,
+   "y": 12767.0457374339
+  },
+  "555": {
+   "facing": -2.01293236299753,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17151.0232450699,
+   "y": 12743.903307669
+  },
+  "556": {
+   "facing": -2.01751586936025,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17176.9507240054,
+   "y": 12728.8113947337
+  },
+  "557": {
+   "facing": -2.09853215432348,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18198.4717224183,
+   "y": 13436.7321234597
+  },
+  "558": {
+   "facing": -2.10207823695371,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18228.938311486,
+   "y": 13435.748362893
+  },
+  "559": {
+   "facing": -2.10561182664751,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18258.8805458163,
+   "y": 13433.8875557259
+  },
+  "56": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12650.0,
+   "y": 1120.0
+  },
+  "560": {
+   "facing": -2.09869209348074,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18214.7415265212,
+   "y": 13462.1765920554
+  },
+  "561": {
+   "facing": -2.10238954917351,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18246.7574596183,
+   "y": 13461.3479618804
+  },
+  "562": {
+   "facing": -2.10599093364313,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18277.374780011,
+   "y": 13459.3959448051
+  },
+  "563": {
+   "facing": -2.12356011902013,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18298.2057947475,
+   "y": 13239.4280894838
+  },
+  "564": {
+   "facing": -2.12724426843369,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18328.8226588489,
+   "y": 13236.965351473
+  },
+  "565": {
+   "facing": -2.13081741351876,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18358.7525999982,
+   "y": 13234.7853675421
+  },
+  "566": {
+   "facing": -2.12383583972663,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18315.792856135,
+   "y": 13263.9880130968
+  },
+  "567": {
+   "facing": -2.12748727133838,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18346.7487992306,
+   "y": 13262.3171828626
+  },
+  "568": {
+   "facing": -2.13104279580575,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18376.6712883566,
+   "y": 13260.1620391556
+  },
+  "569": {
+   "facing": -2.11509579189055,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18284.2589462465,
+   "y": 13337.4125757234
+  },
+  "57": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12680.0,
+   "y": 1120.0
+  },
+  "570": {
+   "facing": -2.11978299918413,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18316.4587214431,
+   "y": 13322.7811256553
+  },
+  "571": {
+   "facing": -2.12342223162059,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18346.4518421755,
+   "y": 13319.4727561027
+  },
+  "572": {
+   "facing": -2.11706042300075,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18310.4937142337,
+   "y": 13352.1983352757
+  },
+  "573": {
+   "facing": -2.1206758605045,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18340.3033806359,
+   "y": 13348.8341442591
+  },
+  "574": {
+   "facing": -2.12433629571416,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18369.9914284933,
+   "y": 13344.4758506526
+  },
+  "575": {
+   "facing": -2.11384927248795,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18299.2205876035,
+   "y": 13380.195957943
+  },
+  "576": {
+   "facing": -2.11747080505699,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18328.9989678525,
+   "y": 13376.6277254809
+  },
+  "577": {
+   "facing": -2.12111088400834,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18358.705626548,
+   "y": 13372.5250299996
+  },
+  "578": {
+   "facing": -2.01967527680165,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17122.9431066941,
+   "y": 12584.7764579408
+  },
+  "579": {
+   "facing": -2.02292691399718,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17151.0546581439,
+   "y": 12595.2147282068
+  },
+  "58": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12620.0,
+   "y": 1150.0
+  },
+  "580": {
+   "facing": -2.02770311493682,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17177.5033824471,
+   "y": 12579.9260821592
+  },
+  "581": {
+   "facing": -2.01711995866321,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17121.6022767103,
+   "y": 12619.5562305772
+  },
+  "582": {
+   "facing": -2.02089628458775,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17151.0764733053,
+   "y": 12624.9706316486
+  },
+  "583": {
+   "facing": -2.02562264739612,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17177.3113882492,
+   "y": 12609.6532463854
+  },
+  "584": {
+   "facing": -2.01426417952384,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17123.6303694225,
+   "y": 12666.2679104529
+  },
+  "585": {
+   "facing": -2.01896212058079,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17151.7843532706,
+   "y": 12654.9765091977
+  },
+  "586": {
+   "facing": -2.02360481535312,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 17177.566437458,
+   "y": 12639.6375348202
+  },
+  "587": {
+   "facing": -2.10974188419764,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18296.9666964467,
+   "y": 13436.6594530976
+  },
+  "588": {
+   "facing": -2.11322785904222,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18327.0718025936,
+   "y": 13435.37075332
+  },
+  "589": {
+   "facing": -2.11674795373833,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18356.9851871113,
+   "y": 13433.0956104948
+  },
+  "59": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12650.0,
+   "y": 1150.0
+  },
+  "590": {
+   "facing": -2.10987400100487,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18313.3553616491,
+   "y": 13462.0514438623
+  },
+  "591": {
+   "facing": -2.11341293995426,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18343.8244220684,
+   "y": 13460.380066707
+  },
+  "592": {
+   "facing": -2.11692597996262,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18373.7283476355,
+   "y": 13457.9882970615
+  },
+  "593": {
+   "facing": -2.13498211185368,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18398.2680053247,
+   "y": 13239.3394116509
+  },
+  "594": {
+   "facing": -2.1386095083157,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18428.8254831609,
+   "y": 13236.9684370112
+  },
+  "595": {
+   "facing": -2.14213782492874,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18458.759829054,
+   "y": 13234.8224144596
+  },
+  "596": {
+   "facing": -2.13519445131979,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18415.7559845367,
+   "y": 13263.9719220772
+  },
+  "597": {
+   "facing": -2.13879525584016,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18446.6609463583,
+   "y": 13262.3100682043
+  },
+  "598": {
+   "facing": -2.14228893965517,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18476.6034894127,
+   "y": 13260.4542353926
+  },
+  "599": {
+   "facing": -2.12830179169712,
+   "faction": 3,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 18393.831123809,
+   "y": 13326.2634221694
+  },
+  "6": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12280.0,
+   "y": 950.0
+  },
+  "60": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12680.0,
+   "y": 1150.0
+  },
+  "600": {
+   "facing": -2.13209062653634,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18426.0362316246,
+   "y": 13323.8942145183
+  },
+  "601": {
+   "facing": -2.1354948271389,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18456.0296796396,
+   "y": 13323.2685805001
+  },
+  "602": {
+   "facing": -2.12863136884879,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18411.769882851,
+   "y": 13350.2902200302
+  },
+  "603": {
+   "facing": -2.13203136786875,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18441.7190899898,
+   "y": 13349.6449020899
+  },
+  "604": {
+   "facing": -2.13539593774702,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18471.681230382,
+   "y": 13349.343609424
+  },
+  "605": {
+   "facing": -2.12469518877091,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18388.5126893909,
+   "y": 13369.2402319659
+  },
+  "606": {
+   "facing": -2.12857998756774,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18427.3912429082,
+   "y": 13376.0256029181
+  },
+  "607": {
+   "facing": -2.13194974216486,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18457.38828447,
+   "y": 13375.6995855634
+  },
+  "608": {
+   "facing": -2.02656134678653,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17125.0732473852,
+   "y": 12489.8672094246
+  },
+  "609": {
+   "facing": -2.02913698646916,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17150.7615146549,
+   "y": 12505.322926683
+  },
+  "61": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12620.0,
+   "y": 1180.0
+  },
+  "610": {
+   "facing": -2.03395619302355,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17177.0957354063,
+   "y": 12490.1438700267
+  },
+  "611": {
+   "facing": -2.02435054907969,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17124.7666686448,
+   "y": 12520.8117316172
+  },
+  "612": {
+   "facing": -2.0270720680664,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17151.0157360223,
+   "y": 12535.2713924708
+  },
+  "613": {
+   "facing": -2.03180981798804,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17176.8968969691,
+   "y": 12520.0199520448
+  },
+  "614": {
+   "facing": -2.02195745832884,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17123.7866867205,
+   "y": 12553.3004651365
+  },
+  "615": {
+   "facing": -2.02502476077734,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17151.2934958332,
+   "y": 12565.2744140438
+  },
+  "616": {
+   "facing": -2.02974310430629,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17177.19166961,
+   "y": 12550.018503828
+  },
+  "617": {
+   "facing": -2.12027756769273,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18387.3529924181,
+   "y": 13431.2607089404
+  },
+  "618": {
+   "facing": -2.12544487516475,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18428.4329381709,
+   "y": 13422.8219547633
+  },
+  "619": {
+   "facing": -2.12892066137663,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18459.1260948654,
+   "y": 13421.9055936477
+  },
+  "62": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12650.0,
+   "y": 1180.0
+  },
+  "620": {
+   "facing": -2.1218987035284,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18412.2035810077,
+   "y": 13448.069486303
+  },
+  "621": {
+   "facing": -2.12549093124113,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18444.5488427658,
+   "y": 13448.1254744764
+  },
+  "622": {
+   "facing": -2.12883581703587,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18474.5467840252,
+   "y": 13447.7962086005
+  },
+  "623": {
+   "facing": -2.1185419991053,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18398.5161426674,
+   "y": 13474.8864045233
+  },
+  "624": {
+   "facing": -2.12197043889598,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18428.482224034,
+   "y": 13473.4602321883
+  },
+  "625": {
+   "facing": -2.12540878263017,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18459.8754353917,
+   "y": 13474.0210980418
+  },
+  "626": {
+   "facing": -2.14618058553048,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18497.3839725289,
+   "y": 13238.816963812
+  },
+  "627": {
+   "facing": -2.14969759217522,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18527.7597839632,
+   "y": 13237.086233683
+  },
+  "628": {
+   "facing": -2.15314570761293,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18557.7169092014,
+   "y": 13235.4829098042
+  },
+  "629": {
+   "facing": -2.14624824869697,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18514.2591625938,
+   "y": 13263.8767772131
+  },
+  "63": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12680.0,
+   "y": 1180.0
+  },
+  "630": {
+   "facing": -2.14972354196286,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18544.6639713753,
+   "y": 13262.5723628146
+  },
+  "631": {
+   "facing": -2.15319817677757,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18574.5820236817,
+   "y": 13260.3564778861
+  },
+  "632": {
+   "facing": -2.13886390587604,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18486.0281425118,
+   "y": 13322.9648943034
+  },
+  "633": {
+   "facing": -2.14223442533539,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18516.0438281516,
+   "y": 13322.4860424723
+  },
+  "634": {
+   "facing": -2.14561741483376,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18546.0591129707,
+   "y": 13321.6517116623
+  },
+  "635": {
+   "facing": -2.13875889005785,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18501.6417089725,
+   "y": 13348.8819506719
+  },
+  "636": {
+   "facing": -2.14212876761616,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18531.6017332751,
+   "y": 13348.1427167499
+  },
+  "637": {
+   "facing": -2.14549108555702,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18561.5689125042,
+   "y": 13347.342793181
+  },
+  "638": {
+   "facing": -2.13531112963722,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18487.385189611,
+   "y": 13375.3121817184
+  },
+  "639": {
+   "facing": -2.13868499112145,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18517.37571783,
+   "y": 13374.5583799254
+  },
+  "64": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12720.0,
+   "y": 1120.0
+  },
+  "640": {
+   "facing": -2.14267968325323,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18554.954608251,
+   "y": 13376.6494608647
+  },
+  "641": {
+   "facing": -2.03307066500621,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17124.8932416138,
+   "y": 12398.2262586454
+  },
+  "642": {
+   "facing": -2.0360239263512,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17151.9775205331,
+   "y": 12411.3752083135
+  },
+  "643": {
+   "facing": -2.04037898567847,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17170.1604885379,
+   "y": 12387.5066687237
+  },
+  "644": {
+   "facing": -2.03120358250141,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17126.8849407299,
+   "y": 12428.1559906605
+  },
+  "645": {
+   "facing": -2.03355300608549,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17151.6721945935,
+   "y": 12445.0387479948
+  },
+  "646": {
+   "facing": -2.03833245584548,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17176.6779119234,
+   "y": 12428.4119467769
+  },
+  "647": {
+   "facing": -2.0287216917887,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17125.3231417401,
+   "y": 12459.8030350024
+  },
+  "648": {
+   "facing": -2.03133604018638,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17151.1583377718,
+   "y": 12475.0523840378
+  },
+  "649": {
+   "facing": -2.03617134085056,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 17177.5869420925,
+   "y": 12460.1525119887
+  },
+  "65": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12750.0,
+   "y": 1120.0
+  },
+  "650": {
+   "facing": -2.13251357972928,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18492.8435498355,
+   "y": 13423.9238030447
+  },
+  "651": {
+   "facing": -2.1359031006021,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18524.0992380405,
+   "y": 13424.7336116995
+  },
+  "652": {
+   "facing": -2.13930015816164,
+   "faction": 3,
+   "hp": 400.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 4,
+   "x": 18554.35664928,
+   "y": 13423.6730673849
+  },
+  "653": {
+   "facing": -2.13235952071378,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18507.8438628099,
+   "y": 13449.9479176001
+  },
+  "654": {
+   "facing": -2.13591110583878,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18540.3375667934,
+   "y": 13450.1959865788
+  },
+  "655": {
+   "facing": -2.14091881810298,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18579.5711765912,
+   "y": 13439.9281548501
+  },
+  "656": {
+   "facing": -2.12872189256231,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18489.8753788438,
+   "y": 13473.9715223246
+  },
+  "657": {
+   "facing": -2.13237042587669,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18523.9163078694,
+   "y": 13475.3026043389
+  },
+  "658": {
+   "facing": -2.13755416028542,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18565.7738224626,
+   "y": 13466.5670928742
+  },
+  "659": {
+   "facing": -2.15712422085056,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18596.7627373234,
+   "y": 13240.1570733814
+  },
+  "66": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12780.0,
+   "y": 1120.0
+  },
+  "660": {
+   "facing": -2.16071308632212,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18627.3768726087,
+   "y": 13237.1961273438
+  },
+  "661": {
+   "facing": -2.16414787868376,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18657.3057092836,
+   "y": 13235.131003806
+  },
+  "662": {
+   "facing": -2.15731689947333,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18614.6219585082,
+   "y": 13264.392362818
+  },
+  "663": {
+   "facing": -2.16075269502453,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18644.54874464,
+   "y": 13262.2977335384
+  },
+  "664": {
+   "facing": -2.16515029691111,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18679.8500215216,
+   "y": 13254.9237799053
+  },
+  "665": {
+   "facing": -2.14922582682176,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18580.1995102156,
+   "y": 13323.8172170576
+  },
+  "666": {
+   "facing": -2.15206533498483,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18609.7590606146,
+   "y": 13329.4417947498
+  },
+  "667": {
+   "facing": -2.15563294548532,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18639.4091744725,
+   "y": 13324.9137403289
+  },
+  "668": {
+   "facing": -2.148332892029,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18591.0427815057,
+   "y": 13352.8851696534
+  },
+  "669": {
+   "facing": -2.15244218168349,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18628.6570474804,
+   "y": 13352.9326109956
+  },
+  "67": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 325.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 1,
+   "x": 12720.0,
+   "y": 1150.0
+  },
+  "670": {
+   "facing": -2.15724167542139,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18664.7952986699,
+   "y": 13340.8995058168
+  },
+  "671": {
+   "facing": -2.14871450360271,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18609.8045961494,
+   "y": 13376.2944479695
+  },
+  "672": {
+   "facing": -2.15405940257907,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18654.0487094903,
+   "y": 13368.9095788048
+  },
+  "673": {
+   "facing": -2.15904988773824,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18692.0070033717,
+   "y": 13356.7021806369
+  },
+  "674": {
+   "facing": -2.04075651839589,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 17135.7697876158,
+   "y": 12314.893925019
+  },
+  "675": {
+   "facing": -2.04541543969842,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 17156.6567201717,
+   "y": 12293.282396703
+  },
+  "676": {
+   "facing": -2.03902576528612,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 17139.0408063076,
+   "y": 12344.7143346353
+  },
+  "677": {
+   "facing": -2.04402242603463,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 17163.7974363418,
+   "y": 12325.7690370056
+  },
+  "678": {
+   "facing": -2.03744146502248,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 17143.1605107972,
+   "y": 12374.4303641805
+  },
+  "679": {
+   "facing": -2.04221880324754,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 17166.8515191285,
+   "y": 12356.0255788177
+  },
+  "68": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12750.0,
+   "y": 1150.0
+  },
+  "680": {
+   "facing": -2.14361405040629,
+   "faction": 3,
+   "hp": 1050.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 5,
+   "x": 18608.7657379228,
+   "y": 13446.833050842
+  },
+  "69": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12780.0,
+   "y": 1150.0
+  },
+  "7": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12220.0,
+   "y": 980.0
+  },
+  "70": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12720.0,
+   "y": 1180.0
+  },
+  "71": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12750.0,
+   "y": 1180.0
+  },
+  "72": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12780.0,
+   "y": 1180.0
+  },
+  "73": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12820.0,
+   "y": 1120.0
+  },
+  "74": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12850.0,
+   "y": 1120.0
+  },
+  "75": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12880.0,
+   "y": 1120.0
+  },
+  "76": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12820.0,
+   "y": 1150.0
+  },
+  "77": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12850.0,
+   "y": 1150.0
+  },
+  "78": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12880.0,
+   "y": 1150.0
+  },
+  "79": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12820.0,
+   "y": 1180.0
+  },
+  "8": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12250.0,
+   "y": 980.0
+  },
+  "80": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12850.0,
+   "y": 1180.0
+  },
+  "81": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12920.0,
+   "y": 1120.0
+  },
+  "82": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12950.0,
+   "y": 1120.0
+  },
+  "83": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12980.0,
+   "y": 1120.0
+  },
+  "84": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12920.0,
+   "y": 1150.0
+  },
+  "85": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12950.0,
+   "y": 1150.0
+  },
+  "86": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 12980.0,
+   "y": 1150.0
+  },
+  "87": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 10520.0,
+   "y": 4020.0
+  },
+  "88": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 10550.0,
+   "y": 4020.0
+  },
+  "89": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 10580.0,
+   "y": 4020.0
+  },
+  "9": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 250.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 0,
+   "x": 12280.0,
+   "y": 980.0
+  },
+  "90": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 500.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 2,
+   "x": 10520.0,
+   "y": 4050.0
+  },
+  "91": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4050.0
+  },
+  "92": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4050.0
+  },
+  "93": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4080.0
+  },
+  "94": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4080.0
+  },
+  "95": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4080.0
+  },
+  "96": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4120.0
+  },
+  "97": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10550.0,
+   "y": 4120.0
+  },
+  "98": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10580.0,
+   "y": 4120.0
+  },
+  "99": {
+   "facing": 0.0,
+   "faction": 0,
+   "hp": 375.0,
+   "layer": 2,
+   "state": 0,
+   "tier": 1,
+   "type": 3,
+   "x": 10520.0,
+   "y": 4150.0
+  }
+ },
+ "units_in_last_command": 0,
+ "units_px": {
+  "1": [
+   911.553649902344,
+   510.289123535156
+  ],
+  "10": [
+   914.988037109375,
+   509.461242675781
+  ],
+  "100": [
+   841.196166992188,
+   606.967529296875
+  ],
+  "101": [
+   842.311767578125,
+   606.79150390625
+  ],
+  "102": [
+   840.039001464844,
+   608.399230957031
+  ],
+  "103": [
+   841.150024414062,
+   608.210754394531
+  ],
+  "104": [
+   842.263610839844,
+   608.026916503906
+  ],
+  "105": [
+   839.980163574219,
+   610.068115234375
+  ],
+  "106": [
+   841.088500976562,
+   609.869873046875
+  ],
+  "107": [
+   842.199279785156,
+   609.675720214844
+  ],
+  "108": [
+   839.935974121094,
+   611.32080078125
+  ],
+  "109": [
+   841.042358398438,
+   611.115295410156
+  ],
+  "11": [
+   916.020568847656,
+   509.211822509766
+  ],
+  "110": [
+   842.151000976562,
+   610.913452148438
+  ],
+  "111": [
+   839.897521972656,
+   612.592895507812
+  ],
+  "112": [
+   841.0009765625,
+   612.377624511719
+  ],
+  "113": [
+   842.106811523438,
+   612.165832519531
+  ],
+  "114": [
+   839.84619140625,
+   614.290283203125
+  ],
+  "115": [
+   840.945861816406,
+   614.062072753906
+  ],
+  "116": [
+   842.0478515625,
+   613.837158203125
+  ],
+  "117": [
+   839.807678222656,
+   615.564208984375
+  ],
+  "118": [
+   840.904418945312,
+   615.326477050781
+  ],
+  "119": [
+   842.003601074219,
+   615.091674804688
+  ],
+  "12": [
+   917.06640625,
+   509.101898193359
+  ],
+  "120": [
+   839.779663085938,
+   616.872497558594
+  ],
+  "121": [
+   840.871215820312,
+   616.617980957031
+  ],
+  "122": [
+   841.965209960938,
+   616.366149902344
+  ],
+  "123": [
+   1056.59899902344,
+   516.568542480469
+  ],
+  "124": [
+   1057.74267578125,
+   516.383666992188
+  ],
+  "125": [
+   1058.8544921875,
+   516.357360839844
+  ],
+  "126": [
+   1056.72790527344,
+   517.247314453125
+  ],
+  "127": [
+   1057.84069824219,
+   517.221923828125
+  ],
+  "128": [
+   1058.95288085938,
+   517.200012207031
+  ],
+  "129": [
+   1056.81640625,
+   518.130187988281
+  ],
+  "13": [
+   914.930908203125,
+   510.101684570312
+  ],
+  "130": [
+   1057.93627929688,
+   518.075134277344
+  ],
+  "131": [
+   1059.04858398438,
+   518.057556152344
+  ],
+  "132": [
+   1061.09936523438,
+   513.572143554688
+  ],
+  "133": [
+   1062.2177734375,
+   513.498962402344
+  ],
+  "134": [
+   1060.10815429688,
+   514.3486328125
+  ],
+  "135": [
+   1061.21997070312,
+   514.311889648438
+  ],
+  "136": [
+   1062.33142089844,
+   514.277465820312
+  ],
+  "137": [
+   1060.20617675781,
+   515.193359375
+  ],
+  "138": [
+   1061.31823730469,
+   515.161071777344
+  ],
+  "139": [
+   1062.42944335938,
+   515.133178710938
+  ],
+  "14": [
+   915.96533203125,
+   509.858734130859
+  ],
+  "140": [
+   1060.33728027344,
+   516.322204589844
+  ],
+  "141": [
+   1061.44946289062,
+   516.2958984375
+  ],
+  "142": [
+   1062.56030273438,
+   516.276611328125
+  ],
+  "143": [
+   1060.43579101562,
+   517.170776367188
+  ],
+  "144": [
+   1061.54821777344,
+   517.14892578125
+  ],
+  "145": [
+   1062.65869140625,
+   517.136108398438
+  ],
+  "146": [
+   1060.53186035156,
+   518.034057617188
+  ],
+  "147": [
+   1061.64440917969,
+   518.016418457031
+  ],
+  "148": [
+   1062.75476074219,
+   518.009094238281
+  ],
+  "149": [
+   1060.66015625,
+   519.187622070312
+  ],
+  "15": [
+   917.003295898438,
+   509.644226074219
+  ],
+  "150": [
+   1061.77294921875,
+   519.175720214844
+  ],
+  "151": [
+   1062.88317871094,
+   519.175659179688
+  ],
+  "152": [
+   1060.75659179688,
+   520.054748535156
+  ],
+  "153": [
+   1061.86950683594,
+   520.047058105469
+  ],
+  "154": [
+   1062.97973632812,
+   520.052429199219
+  ],
+  "155": [
+   1060.84997558594,
+   520.938903808594
+  ],
+  "156": [
+   1061.96313476562,
+   520.93505859375
+  ],
+  "157": [
+   1063.07336425781,
+   520.944702148438
+  ],
+  "158": [
+   1064.50830078125,
+   510.433319091797
+  ],
+  "159": [
+   1065.62268066406,
+   510.367645263672
+  ],
+  "16": [
+   914.869567871094,
+   510.698913574219
+  ],
+  "160": [
+   1063.466796875,
+   511.470336914062
+  ],
+  "161": [
+   1064.60278320312,
+   511.306091308594
+  ],
+  "162": [
+   1065.716796875,
+   511.246978759766
+  ],
+  "163": [
+   1063.57067871094,
+   512.296813964844
+  ],
+  "164": [
+   1064.69946289062,
+   512.171569824219
+  ],
+  "165": [
+   1065.81262207031,
+   512.120666503906
+  ],
+  "166": [
+   1063.70935058594,
+   513.401306152344
+  ],
+  "167": [
+   1064.82849121094,
+   513.328063964844
+  ],
+  "168": [
+   1065.94067382812,
+   513.288024902344
+  ],
+  "169": [
+   1063.81359863281,
+   514.231689453125
+  ],
+  "17": [
+   915.905883789062,
+   510.462219238281
+  ],
+  "170": [
+   1064.92553710938,
+   514.197265625
+  ],
+  "171": [
+   1066.03698730469,
+   514.165405273438
+  ],
+  "172": [
+   1063.91125488281,
+   515.095947265625
+  ],
+  "173": [
+   1065.02270507812,
+   515.068054199219
+  ],
+  "174": [
+   1066.13342285156,
+   515.044372558594
+  ],
+  "175": [
+   1064.04162597656,
+   516.250915527344
+  ],
+  "176": [
+   1065.15258789062,
+   516.231628417969
+  ],
+  "177": [
+   1066.26232910156,
+   516.21875
+  ],
+  "178": [
+   1064.13952636719,
+   517.119018554688
+  ],
+  "179": [
+   1065.25024414062,
+   517.106140136719
+  ],
+  "18": [
+   916.945739746094,
+   510.253662109375
+  ],
+  "180": [
+   1066.35913085938,
+   517.101379394531
+  ],
+  "181": [
+   1064.23547363281,
+   517.999328613281
+  ],
+  "182": [
+   1065.34594726562,
+   517.991943359375
+  ],
+  "183": [
+   1066.45446777344,
+   517.993591308594
+  ],
+  "184": [
+   1064.36352539062,
+   519.175537109375
+  ],
+  "185": [
+   1065.47375488281,
+   519.175476074219
+  ],
+  "186": [
+   1066.58178710938,
+   519.185729980469
+  ],
+  "187": [
+   1064.45983886719,
+   520.059631347656
+  ],
+  "188": [
+   1065.56994628906,
+   520.065002441406
+  ],
+  "189": [
+   1066.67749023438,
+   520.081604003906
+  ],
+  "19": [
+   911.0869140625,
+   514.046936035156
+  ],
+  "190": [
+   1064.55358886719,
+   520.95751953125
+  ],
+  "191": [
+   1065.66381835938,
+   520.967163085938
+  ],
+  "192": [
+   1066.77124023438,
+   520.988342285156
+  ],
+  "193": [
+   1066.19860839844,
+   501.406951904297
+  ],
+  "194": [
+   1067.31469726562,
+   501.291015625
+  ],
+  "195": [
+   1068.48950195312,
+   500.908355712891
+  ],
+  "196": [
+   1066.28540039062,
+   502.303558349609
+  ],
+  "197": [
+   1067.40222167969,
+   502.189025878906
+  ],
+  "198": [
+   1068.53955078125,
+   501.983001708984
+  ],
+  "199": [
+   1066.37561035156,
+   503.187255859375
+  ],
+  "2": [
+   912.582885742188,
+   510.042266845703
+  ],
+  "20": [
+   912.127807617188,
+   513.820007324219
+  ],
+  "200": [
+   1067.4921875,
+   503.078155517578
+  ],
+  "201": [
+   1068.62329101562,
+   502.905029296875
+  ],
+  "202": [
+   1066.49597167969,
+   504.367828369141
+  ],
+  "203": [
+   1067.6123046875,
+   504.265930175781
+  ],
+  "204": [
+   1068.73510742188,
+   504.136566162109
+  ],
+  "205": [
+   1066.58642578125,
+   505.255065917969
+  ],
+  "206": [
+   1067.70251464844,
+   505.158538818359
+  ],
+  "207": [
+   1068.81921386719,
+   505.061920166016
+  ],
+  "208": [
+   1066.67761230469,
+   506.140930175781
+  ],
+  "209": [
+   1067.79382324219,
+   506.049072265625
+  ],
+  "21": [
+   913.171020507812,
+   513.606506347656
+  ],
+  "210": [
+   1068.91027832031,
+   505.957061767578
+  ],
+  "211": [
+   1066.79956054688,
+   507.324432373047
+  ],
+  "212": [
+   1067.91564941406,
+   507.238708496094
+  ],
+  "213": [
+   1069.03210449219,
+   507.152954101562
+  ],
+  "214": [
+   1066.89111328125,
+   508.213806152344
+  ],
+  "215": [
+   1068.00720214844,
+   508.132720947266
+  ],
+  "216": [
+   1069.12365722656,
+   508.051635742188
+  ],
+  "217": [
+   1066.984375,
+   509.098266601562
+  ],
+  "218": [
+   1068.09997558594,
+   509.023773193359
+  ],
+  "219": [
+   1069.21594238281,
+   508.949401855469
+  ],
+  "22": [
+   912.053405761719,
+   514.338684082031
+  ],
+  "220": [
+   1067.10888671875,
+   510.279998779297
+  ],
+  "221": [
+   1068.22387695312,
+   510.214263916016
+  ],
+  "222": [
+   1069.33911132812,
+   510.148773193359
+  ],
+  "223": [
+   1067.20239257812,
+   511.168060302734
+  ],
+  "224": [
+   1068.31689453125,
+   511.108917236328
+  ],
+  "225": [
+   1069.431640625,
+   511.050140380859
+  ],
+  "226": [
+   1067.29724121094,
+   512.052734375
+  ],
+  "227": [
+   1068.41088867188,
+   512.001770019531
+  ],
+  "228": [
+   1069.52478027344,
+   511.951171875
+  ],
+  "229": [
+   1067.42395019531,
+   513.234680175781
+  ],
+  "23": [
+   913.098571777344,
+   514.128540039062
+  ],
+  "230": [
+   1068.53649902344,
+   513.194641113281
+  ],
+  "231": [
+   1069.64929199219,
+   513.154907226562
+  ],
+  "232": [
+   1067.51916503906,
+   514.122985839844
+  ],
+  "233": [
+   1068.630859375,
+   514.091125488281
+  ],
+  "234": [
+   1069.74279785156,
+   514.0595703125
+  ],
+  "235": [
+   1067.61450195312,
+   515.012817382812
+  ],
+  "236": [
+   1068.72546386719,
+   514.989074707031
+  ],
+  "237": [
+   1069.83654785156,
+   514.965637207031
+  ],
+  "238": [
+   1067.74194335938,
+   516.201599121094
+  ],
+  "239": [
+   1068.85180664062,
+   516.188720703125
+  ],
+  "24": [
+   914.563354492188,
+   513.321472167969
+  ],
+  "240": [
+   1069.96166992188,
+   516.176208496094
+  ],
+  "241": [
+   1067.83776855469,
+   517.095092773438
+  ],
+  "242": [
+   1068.94677734375,
+   517.090270996094
+  ],
+  "243": [
+   1070.05578613281,
+   517.0859375
+  ],
+  "244": [
+   1067.93249511719,
+   517.995849609375
+  ],
+  "245": [
+   1069.041015625,
+   517.997497558594
+  ],
+  "246": [
+   1070.1494140625,
+   517.999633789062
+  ],
+  "247": [
+   1009.39190673828,
+   609.440246582031
+  ],
+  "248": [
+   1010.59381103516,
+   609.537658691406
+  ],
+  "249": [
+   1011.80187988281,
+   609.583740234375
+  ],
+  "25": [
+   915.608703613281,
+   513.107543945312
+  ],
+  "250": [
+   1009.38885498047,
+   610.913818359375
+  ],
+  "251": [
+   1010.59204101562,
+   611.000183105469
+  ],
+  "252": [
+   1011.80102539062,
+   611.039306640625
+  ],
+  "253": [
+   1009.38586425781,
+   612.386535644531
+  ],
+  "254": [
+   1010.59039306641,
+   612.461608886719
+  ],
+  "255": [
+   1011.80023193359,
+   612.493957519531
+  ],
+  "256": [
+   1068.05895996094,
+   519.199340820312
+  ],
+  "257": [
+   1069.16687011719,
+   519.209594726562
+  ],
+  "258": [
+   1070.27453613281,
+   519.220336914062
+  ],
+  "259": [
+   1068.15405273438,
+   520.103820800781
+  ],
+  "26": [
+   916.657470703125,
+   512.9208984375
+  ],
+  "260": [
+   1069.26147460938,
+   520.120483398438
+  ],
+  "261": [
+   1070.36865234375,
+   520.137634277344
+  ],
+  "262": [
+   1068.24780273438,
+   521.016479492188
+  ],
+  "263": [
+   1069.35510253906,
+   521.037658691406
+  ],
+  "264": [
+   1070.46215820312,
+   521.059265136719
+  ],
+  "265": [
+   1068.373046875,
+   522.235900878906
+  ],
+  "266": [
+   1069.48022460938,
+   522.263000488281
+  ],
+  "267": [
+   1070.58715820312,
+   522.290649414062
+  ],
+  "268": [
+   1068.46716308594,
+   523.15234375
+  ],
+  "269": [
+   1069.57434082031,
+   523.183898925781
+  ],
+  "27": [
+   914.493469238281,
+   513.84814453125
+  ],
+  "270": [
+   1070.68115234375,
+   523.216003417969
+  ],
+  "271": [
+   1070.90368652344,
+   523.592895507812
+  ],
+  "272": [
+   1070.82653808594,
+   510.061492919922
+  ],
+  "273": [
+   1071.94250488281,
+   509.995910644531
+  ],
+  "274": [
+   1070.91845703125,
+   510.9716796875
+  ],
+  "275": [
+   1072.03381347656,
+   510.912872314453
+  ],
+  "276": [
+   1073.17858886719,
+   510.728210449219
+  ],
+  "277": [
+   1071.01037597656,
+   511.883666992188
+  ],
+  "278": [
+   1072.12475585938,
+   511.832977294922
+  ],
+  "279": [
+   1073.26000976562,
+   511.693786621094
+  ],
+  "28": [
+   915.540710449219,
+   513.6376953125
+  ],
+  "280": [
+   1070.37390136719,
+   524.181457519531
+  ],
+  "281": [
+   1071.42663574219,
+   524.478210449219
+  ],
+  "282": [
+   1069.423828125,
+   524.775329589844
+  ],
+  "283": [
+   1070.47436523438,
+   525.090515136719
+  ],
+  "284": [
+   1071.52319335938,
+   525.407287597656
+  ],
+  "285": [
+   1013.41229248047,
+   609.645141601562
+  ],
+  "286": [
+   1014.61975097656,
+   609.691162109375
+  ],
+  "287": [
+   1015.83477783203,
+   609.682250976562
+  ],
+  "288": [
+   1013.41259765625,
+   611.091369628906
+  ],
+  "289": [
+   1014.62103271484,
+   611.130493164062
+  ],
+  "29": [
+   916.591369628906,
+   513.454528808594
+  ],
+  "290": [
+   1015.83630371094,
+   611.120178222656
+  ],
+  "291": [
+   1013.41302490234,
+   612.537109375
+  ],
+  "292": [
+   1014.62237548828,
+   612.569458007812
+  ],
+  "293": [
+   1015.83782958984,
+   612.55810546875
+  ],
+  "294": [
+   1071.13317871094,
+   513.101928710938
+  ],
+  "295": [
+   1072.24633789062,
+   513.062133789062
+  ],
+  "296": [
+   1073.36889648438,
+   512.983337402344
+  ],
+  "297": [
+   1071.22546386719,
+   514.017395019531
+  ],
+  "298": [
+   1072.33776855469,
+   513.98583984375
+  ],
+  "299": [
+   1073.45056152344,
+   513.9521484375
+  ],
+  "3": [
+   913.612976074219,
+   509.793426513672
+  ],
+  "30": [
+   916.51708984375,
+   513.900817871094
+  ],
+  "300": [
+   1071.31799316406,
+   514.934448242188
+  ],
+  "301": [
+   1072.42919921875,
+   514.911010742188
+  ],
+  "302": [
+   1073.54150390625,
+   514.883972167969
+  ],
+  "303": [
+   1009.3818359375,
+   614.349914550781
+  ],
+  "304": [
+   1010.58825683594,
+   614.409912109375
+  ],
+  "305": [
+   1011.79919433594,
+   614.433410644531
+  ],
+  "306": [
+   1009.37884521484,
+   615.822204589844
+  ],
+  "307": [
+   1010.58666992188,
+   615.871032714844
+  ],
+  "308": [
+   1011.79846191406,
+   615.887939453125
+  ],
+  "309": [
+   1009.37902832031,
+   617.270080566406
+  ],
+  "31": [
+   918.461669921875,
+   508.955322265625
+  ],
+  "310": [
+   1010.58758544922,
+   617.31298828125
+  ],
+  "311": [
+   1011.79986572266,
+   617.326049804688
+  ],
+  "312": [
+   1071.44152832031,
+   516.159484863281
+  ],
+  "313": [
+   1072.55151367188,
+   516.14697265625
+  ],
+  "314": [
+   1073.66284179688,
+   516.128662109375
+  ],
+  "315": [
+   1071.53430175781,
+   517.080078125
+  ],
+  "316": [
+   1072.64331054688,
+   517.07568359375
+  ],
+  "317": [
+   1073.75402832031,
+   517.06396484375
+  ],
+  "318": [
+   1071.62731933594,
+   518.002380371094
+  ],
+  "319": [
+   1072.73571777344,
+   518.004516601562
+  ],
+  "32": [
+   918.388671875,
+   509.35791015625
+  ],
+  "320": [
+   1073.84594726562,
+   517.998352050781
+  ],
+  "321": [
+   1071.75146484375,
+   519.234558105469
+  ],
+  "322": [
+   1072.85900878906,
+   519.245239257812
+  ],
+  "323": [
+   1073.96887207031,
+   519.24658203125
+  ],
+  "324": [
+   1071.8447265625,
+   520.160461425781
+  ],
+  "325": [
+   1072.95178222656,
+   520.177612304688
+  ],
+  "326": [
+   1074.06115722656,
+   520.184448242188
+  ],
+  "327": [
+   1071.93811035156,
+   521.088134765625
+  ],
+  "328": [
+   1073.04504394531,
+   521.109802246094
+  ],
+  "329": [
+   1074.154296875,
+   521.120727539062
+  ],
+  "33": [
+   919.428771972656,
+   509.142974853516
+  ],
+  "330": [
+   1072.06286621094,
+   522.327453613281
+  ],
+  "34": [
+   918.333618164062,
+   509.975311279297
+  ],
+  "35": [
+   919.375549316406,
+   509.766357421875
+  ],
+  "36": [
+   920.422302246094,
+   509.605407714844
+  ],
+  "37": [
+   918.057006835938,
+   512.671813964844
+  ],
+  "38": [
+   919.107604980469,
+   512.48486328125
+  ],
+  "39": [
+   920.162048339844,
+   512.334289550781
+  ],
+  "4": [
+   911.490417480469,
+   510.910949707031
+  ],
+  "40": [
+   917.993408203125,
+   513.210083007812
+  ],
+  "41": [
+   919.0458984375,
+   513.026611328125
+  ],
+  "42": [
+   920.101989746094,
+   512.877136230469
+  ],
+  "43": [
+   917.921508789062,
+   513.656066894531
+  ],
+  "44": [
+   918.975708007812,
+   513.472351074219
+  ],
+  "45": [
+   920.033569335938,
+   513.322204589844
+  ],
+  "46": [
+   921.568908691406,
+   512.133361816406
+  ],
+  "47": [
+   922.624877929688,
+   511.982604980469
+  ],
+  "48": [
+   923.684814453125,
+   511.876281738281
+  ],
+  "49": [
+   921.511108398438,
+   512.677734375
+  ],
+  "5": [
+   912.521301269531,
+   510.667724609375
+  ],
+  "50": [
+   922.568725585938,
+   512.528076171875
+  ],
+  "51": [
+   923.630187988281,
+   512.420959472656
+  ],
+  "52": [
+   921.445007324219,
+   513.121887207031
+  ],
+  "53": [
+   922.50439453125,
+   512.971496582031
+  ],
+  "54": [
+   923.567565917969,
+   512.863037109375
+  ],
+  "55": [
+   925.098754882812,
+   511.734375
+  ],
+  "56": [
+   926.159729003906,
+   511.6279296875
+  ],
+  "57": [
+   927.223754882812,
+   511.559356689453
+  ],
+  "58": [
+   925.046142578125,
+   512.278076171875
+  ],
+  "59": [
+   926.108703613281,
+   512.1708984375
+  ],
+  "6": [
+   913.553344726562,
+   510.42529296875
+  ],
+  "60": [
+   927.174194335938,
+   512.099975585938
+  ],
+  "61": [
+   924.98583984375,
+   512.71826171875
+  ],
+  "62": [
+   926.050109863281,
+   512.609619140625
+  ],
+  "63": [
+   927.117248535156,
+   512.536926269531
+  ],
+  "64": [
+   928.642944335938,
+   511.467926025391
+  ],
+  "65": [
+   929.707641601562,
+   511.399322509766
+  ],
+  "66": [
+   930.775329589844,
+   511.374359130859
+  ],
+  "67": [
+   928.595275878906,
+   512.005310058594
+  ],
+  "68": [
+   929.661437988281,
+   511.934295654297
+  ],
+  "69": [
+   930.730407714844,
+   511.904602050781
+  ],
+  "7": [
+   911.422668457031,
+   511.490081787109
+  ],
+  "70": [
+   928.540649414062,
+   512.43994140625
+  ],
+  "71": [
+   929.608581542969,
+   512.367126464844
+  ],
+  "72": [
+   930.679321289062,
+   512.335021972656
+  ],
+  "73": [
+   932.198974609375,
+   511.341125488281
+  ],
+  "74": [
+   933.266906738281,
+   511.316162109375
+  ],
+  "75": [
+   934.3369140625,
+   511.329711914062
+  ],
+  "76": [
+   932.155944824219,
+   511.864959716797
+  ],
+  "77": [
+   933.225219726562,
+   511.835266113281
+  ],
+  "78": [
+   934.296569824219,
+   511.84228515625
+  ],
+  "79": [
+   932.107116699219,
+   512.292175292969
+  ],
+  "8": [
+   912.455261230469,
+   511.250305175781
+  ],
+  "80": [
+   933.178161621094,
+   512.260009765625
+  ],
+  "81": [
+   935.763549804688,
+   511.347778320312
+  ],
+  "82": [
+   936.833435058594,
+   511.361297607422
+  ],
+  "83": [
+   937.90478515625,
+   511.407196044922
+  ],
+  "84": [
+   935.725036621094,
+   511.851593017578
+  ],
+  "85": [
+   936.796325683594,
+   511.858642578125
+  ],
+  "86": [
+   937.869018554688,
+   511.897338867188
+  ],
+  "87": [
+   840.304565429688,
+   601.841979980469
+  ],
+  "88": [
+   841.422241210938,
+   601.680786132812
+  ],
+  "89": [
+   842.542236328125,
+   601.524230957031
+  ],
+  "9": [
+   913.489318847656,
+   511.01416015625
+  ],
+  "90": [
+   840.248718261719,
+   603.049072265625
+  ],
+  "91": [
+   841.365905761719,
+   602.885009765625
+  ],
+  "92": [
+   842.485412597656,
+   602.725463867188
+  ],
+  "93": [
+   840.199096679688,
+   604.277770996094
+  ],
+  "94": [
+   841.315063476562,
+   604.108520507812
+  ],
+  "95": [
+   842.433410644531,
+   603.944030761719
+  ],
+  "96": [
+   840.132873535156,
+   605.917602539062
+  ],
+  "97": [
+   841.247131347656,
+   605.741516113281
+  ],
+  "98": [
+   842.363952636719,
+   605.570434570312
+  ],
+  "99": [
+   840.083129882812,
+   607.148681640625
+  ]
+ }
+}

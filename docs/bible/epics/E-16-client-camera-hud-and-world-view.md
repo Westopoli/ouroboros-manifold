@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 16 stories, 91 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values; the economy and layer-action stories (S-230 to S-235) state what must be shown and leave numbers and layout to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
-| Implied-but-unstated behavior turned into flags | 15 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 10 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-235-01. |
+| Implied-but-unstated behavior turned into flags | 14 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 9 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01 (Q-235-01 closed 2026-10-12). |
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -87,12 +87,12 @@ As a commander, I want to click, box-select, and bind groups, and never to have 
 
 Rules
 - R-105-01  Given the player clicks a friendly unit, When released, Then it is the selection; Given a drag box, Then every friendly unit inside it on every layer is the selection.
-- R-105-06  Given a selection that spans layers, When the player presses the hotkey for layer N, Then the selection narrows to its units on layer N; the hotkey is Alt plus the number N, and plain digits stay with control groups (Westley, 2026-10-07); the layer strip's focus is unchanged by this.
+- R-105-06  Given a selection, When the player presses Alt plus a layer number (Cmd on macOS), Then a layer transfer to that layer is armed for the whole selection and the next map click places it (E-01 R-002-08); plain digits stay with control groups, and the layer strip's focus is unchanged by this. Narrowing a selection to one layer is not in the beta (Westley 2026-10-13, overturning 2026-10-07: "Alt + number remove this ruling, I'm overturning it now. Alt + number queues up alt + number + click for the entire selection to be clicked somewhere. Skip narrowing selection for now, we'll get into that after beta."); it comes after the beta.
 - R-105-02  Given a selection and Ctrl plus a digit, When pressed, Then the group is bound to that digit and the units leave any other group (exclusive membership); pressing the digit recalls the group; pressing it twice centers the camera on it.
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
 - R-105-05  Given Shift plus click, When pressed, Then the unit is added to or removed from the current selection.
-- R-105-07  Given a bound group that spans layers, When the player holds its digit, Then the layer strip blooms into one bar per layer the group occupies, sized by unit count; dragging across one or more bars and releasing makes those layers the selection, and releasing the digit collapses the strip (the Comb). Tap-to-recall and narrowing by layer hotkey (R-105-02, R-105-06) stay the default for control groups and multi-layer movement; the comb is how individual layers inside a group are moved.
+- R-105-07  Given a bound group that spans layers, When the player holds its digit, Then the layer strip blooms into one bar per layer the group occupies, sized by unit count; dragging across one or more bars and releasing makes those layers the selection, and releasing the digit collapses the strip (the Comb). Tap-to-recall stays the default for control groups and multi-layer movement; narrowing by layer hotkey is after the beta (R-105-06); the comb is how individual layers inside a group are moved.
 - R-105-08  Given a selection and a right-click move, When issued, Then every unit stays on its own layer; a layer change is a deliberate act on a manual selection.
 
 Inputs: mouse, keyboard.
@@ -143,7 +143,7 @@ Rules
 
 Inputs: time jump report; chronicle entries; player buttons.
 Outputs: screen; menu.
-Open flags: none beyond references. Reference required (No Man's Sky planetary transition is the named model).
+Open flags: none beyond references. Reference required (No Man's Sky planetary transition is the named model). Prototype gate (Westley, 2026-10-15): the visual move is prototyped as a mockup and approved before it is built in the game ("we're going for a No Man's Sky sort of transition, so players really get the sense of scale"); the simulation jump and the next map are pre-loaded behind the move, so the move never waits on them. Spec: `docs/northstar/plans/2026-10-15-transition-mockup-spec.md`.
 
 ### S-109 — Briefing, debrief, onboarding
 As a player, I want the screens around a mission to read as orders and after-action reports from my civilization, so that the chain of command is felt.
@@ -275,7 +275,7 @@ Rules
 
 Inputs: economy and weather events from the tick delta.
 Outputs: marks on the map view; ticker lines, T2-checkable.
-Open flags: Q-235-01.
+Open flags: none (Q-235-01 closed 2026-10-12, R-235-03).
 
 ## Inputs
 
@@ -328,7 +328,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-02, Q-231-01, Q-231-02, Q-232-03, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-02, Q-231-01, Q-231-02, Q-232-03. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

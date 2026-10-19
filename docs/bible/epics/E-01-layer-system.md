@@ -54,8 +54,9 @@ Rules
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
 - R-002-06  Given a hard transfer to a layer outside the map's layer range, When it is issued, Then it is rejected and the unit's state does not change.
 - R-002-07  Given a hard transfer order for a mixed selection, When it is issued, Then every unit in the selection gets its own pending transfer and each resolves independently by its own position and duration.
+- R-002-08  Given one or more selected units, When the player presses Alt plus a layer number (Cmd on macOS) and then clicks the map, Then the whole selection receives a hard transfer (R-002-01) to that layer, the clicked spot being where the change is made; Alt plus the number arms the order and the click completes it (Westley 2026-10-13: "Alt + number queues up alt + number + click for the entire selection to be clicked somewhere."); no on-screen "To layer" button is the control; Ctrl plus a digit is control groups (Westley 2026-10-13: "Alt is for layers, control is for groups, shift is still free"); R-003-07's modifier is open (Q-003-02).
 
-Inputs: layer command (target layer, integer in map range); selection (1 to N units); unit position; accessibility mask.
+Inputs: layer command (target layer, integer in map range, from Alt (Cmd on macOS) plus a layer key, armed for the whole selection, then a map click, R-002-08); selection (1 to N units); unit position; accessibility mask.
 Outputs: per-unit pending transfer; per-unit layer field in the tick delta; transition start and end events.
 Open flags: none. The route-change readings it relies on (R-001-05) are provisional, held as runtime settings.
 
@@ -221,7 +222,7 @@ The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
-Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now").
+Going dark is space only for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"; the reach half of that ruling was superseded 2026-10-13, S-164).
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer, its own included, see it from further away than they otherwise would; emitting widens how far it can be seen by more than it widens how far it sees (Westley, 2026-10-07: "emitting should extend the area that you can be seen beyond what you can see"). Provisional: cross-layer sight doubles, and the seen-from distance grows by more than that, held as runtime settings.
@@ -235,7 +236,7 @@ Silent is the default. The numbers are provisional runtime settings, tuned by th
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
-Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"); a ground era fights by the ground model (S-005 R-005-09 to R-005-12).
+Applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); a ground era's sight still follows the ground model (S-005 R-005-09 to R-005-12), its fire reaches by type.
 
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].
