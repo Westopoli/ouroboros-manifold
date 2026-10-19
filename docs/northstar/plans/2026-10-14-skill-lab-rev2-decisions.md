@@ -125,3 +125,10 @@ G. Stands (decision 29 item 7).
 3. The order is an (x, y); each unit keeps its own layer (decision 2's contact rule). The centroid is taken over the enemy units in the set of item 4 on every layer.
 4. The centroid set is the living enemy units visible to the ordering side, never all living units (fog would leak into the orders). The tests change from all-living to visible in the fix pass.
 Golden hashes: the mirror control's hash is stale on the lab tip because lab-side pieces (orders, fight end, placement) legitimately changed the control fight. The re-record under `TD-LAB-REV2-golden` is the landing clerk's and the row is written at the landing; before re-recording, the clerk runs the engine-only proof of the spec's golden procedure (the old lab's three controls against the new engine at arc 360 and cone off reproduce the old hashes; E1 and E1b excluded by design) and pastes the three hashes in the ledger row.
+
+## 34. L5 fix-pass readings (Architect 2026-10-19)
+1. Bracketing headcounts: per knob value and per scan (play, baseline) an arrow to the first row of the break-even cell and one to the first lost cell, labelled (enemy_heads, outcome); a ceiling scan has only its top cell, a lost-everywhere scan only its first cell.
+2. The `artifact` command computes the condition verdicts itself with the conditions module's existing thresholds (all pinned by earlier rulings; no new number) and shows each verdict with its threshold name.
+3. The artifact learns that a batch ran the ground scene from the rows (any row whose play is a ground scene), with a positive test.
+4. The cone 3 by 3 grid is a table of signed gain per range and half-angle, one per (play, layout, baseline role).
+`point` is written by `sweep.py` as a fight-row label and reaches the CSV as the column `point`; the fixed-key list in `rows.py` is unchanged.
