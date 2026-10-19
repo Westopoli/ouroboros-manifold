@@ -26,7 +26,8 @@ OLD12 = ["outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0
 FROM_RESULT = OLD12 + ["firing_window_0", "firing_window_1", "weighted_unit_seconds_0", "weighted_unit_seconds_1",
                        "weighted_window_0", "weighted_window_1", "predicted_count", "predicted_type", "agreement"]
 SUPPLIED = ["knob", "knob_value", "baseline", "ceiling_hit", "prefight"]
-FIXED = FROM_RESULT + SUPPLIED
+REENGAGE = ["reengage_0", "reengage_1"]   # LAB-REV2-L8 (TD-LAB-REV2-L8-columns): the spec lists them after prefight
+FIXED = FROM_RESULT + SUPPLIED + REENGAGE
 PLAIN = dict(knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok")
 
 
@@ -146,8 +147,8 @@ def test_write_rows_bytes_depend_only_on_rows(tmp_path):
     assert p1.read_bytes() == Path(p2).read_bytes()
     assert p1.read_bytes() == (
         b"play,enemy_heads," + ",".join(FIXED).encode() + b"\n"
-        b"p,8,side0,0.5,0.75,0.25,12,3,16,12,340,35,10.5,7.25,4.0,2.5,9.0,6.0,3.5,2.0,side0,side0,both_right,none,,none,0,ok\n"
-        b"p,9,side0,-0.25,0.75,0.25,12,3,16,12,99,35,10.5,7.25,4.0,2.5,9.0,6.0,3.5,2.0,side0,side0,both_right,none,,none,0,ok\n")
+        b"p,8,side0,0.5,0.75,0.25,12,3,16,12,340,35,10.5,7.25,4.0,2.5,9.0,6.0,3.5,2.0,side0,side0,both_right,none,,none,0,ok,0,0\n"
+        b"p,9,side0,-0.25,0.75,0.25,12,3,16,12,99,35,10.5,7.25,4.0,2.5,9.0,6.0,3.5,2.0,side0,side0,both_right,none,,none,0,ok,0,0\n")
 
 
 def test_write_rows_overwrites_an_existing_file(tmp_path):
@@ -182,7 +183,7 @@ def test_fight_rows_pass_through_write_rows(tmp_path):
     got = _read(path)
     assert got[0] == ["play", "enemy_heads", "replicate"] + FIXED
     assert got[1] == ["reach", "8", "0", "side0", "0.5", "0.75", "0.25", "12", "3", "16", "12", "340", "35", "10.5", "7.25",
-                      "4.0", "2.5", "9.0", "6.0", "3.5", "2.0", "side0", "side0", "both_right", "none", "", "none", "0", "ok"]
+                      "4.0", "2.5", "9.0", "6.0", "3.5", "2.0", "side0", "side0", "both_right", "none", "", "none", "0", "ok", "0", "0"]
     assert got[2][:3] == ["reach", "9", "1"]
     assert len(got) == 3
 
@@ -268,7 +269,7 @@ def test_supplied_columns_carry_what_the_caller_gave():
                     ceiling_hit=1, prefight="no_reach")
     assert (row["knob"], row["knob_value"], row["baseline"], row["ceiling_hit"], row["prefight"]) == \
         ("OM_TP_VISION_UP_1", 0.25, "naive_defender_play_layer", 1, "no_reach")
-    assert list(row)[-5:] == SUPPLIED
+    assert list(row)[-7:-2] == SUPPLIED   # TD-LAB-REV2-L8-columns: reengage_0/1 follow prefight
 
 
 @pytest.mark.parametrize("baseline", ["naive_attacker", "naive_defender", "naive_defender_attacker_layer",

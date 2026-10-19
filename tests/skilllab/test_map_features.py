@@ -29,7 +29,8 @@ PLAIN = dict(knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefi
 REV2_FIXED = ["outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0", "survivors_1", "heads_0", "heads_1", "ticks",
               "first_contact_tick", "firing_unit_seconds_0", "firing_unit_seconds_1", "firing_window_0", "firing_window_1",
               "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
-              "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight"]
+              "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight",
+              "reengage_0", "reengage_1"]   # LAB-REV2-L8 (TD-LAB-REV2-L8-columns)
 
 
 def _result():

@@ -153,6 +153,16 @@ class FakeEngine:
     def add_blocker(self, w, x, y, radius):
         self.calls.append(("add_blocker", w, x, y, radius))
 
+    # LAB-REV2-L8 (re-engage): the two reads fight() makes once a side has been silent for REENGAGE_SILENCE_TICKS.
+    # Defaults keep every older fake fight unchanged: no unit has a destination, no side sees an enemy, so no re-engage can fire.
+    def unit_destination(self, w, u):
+        self.calls.append(("unit_destination", w, u))
+        return None
+
+    def visible_enemies(self, w, side, enemy_ids):
+        self.calls.append(("visible_enemies", w, side, list(enemy_ids)))
+        return set()
+
 
 # ---- the L1/L2 seam (spec 2026-10-14 "Lab data contract": the four firing.py functions fight.py calls) ----
 # LAB-REV2-L2: fight() reads the firing count, the weighted count, the unit states and the parity only through
