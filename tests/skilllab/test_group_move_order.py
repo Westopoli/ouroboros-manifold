@@ -1,4 +1,4 @@
-# spec: Architect ruling A198 (approach walks as a group move, R-095-02) - scripts/skilllab/{fight,timeline}.py
+# spec: Architect ruling A198 (R-095-02, the group_move order kind) - scripts/skilllab/{fight,timeline}.py; LAB-REV2-L2: the approach opening A198 first served is retired (Q-LAB-03), the order kind stays for timeline steps
 """Group.order and Step.order accept "group_move": one Engine.order_group_move per group. Fake engine; no library."""
 import sys
 from pathlib import Path
@@ -16,6 +16,8 @@ from fakes_group_move import GroupMoveFakeEngine  # noqa: E402
 from scripts.skilllab import timeline  # noqa: E402
 from scripts.skilllab.contract import Group, Setup, Step  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
+
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
 
 A0, A1 = (-300.0, 0.0), (300.0, 0.0)
 
@@ -36,7 +38,7 @@ def G(side, count=2, order="group_move", goal=None):
 
 
 def S(timeline=(), groups=None, max_ticks=10):
-    return Setup(groups=groups or (G(0), G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=1000,
+    return Setup(groups=groups or (G(0), G(1)), unit_types={}, max_ticks=max_ticks,
                  sample_every=5, timeline=tuple(timeline))
 
 

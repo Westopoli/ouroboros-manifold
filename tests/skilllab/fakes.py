@@ -152,3 +152,85 @@ class FakeEngine:
 
     def add_blocker(self, w, x, y, radius):
         self.calls.append(("add_blocker", w, x, y, radius))
+
+
+# ---- the L1/L2 seam (spec 2026-10-14 "Lab data contract": the four firing.py functions fight.py calls) ----
+# LAB-REV2-L2: fight() reads the firing count, the weighted count, the unit states and the parity only through
+#   firing.count_able(engine, w, units0, units1, arc_deg) -> (int, int)
+#   firing.count_weighted(engine, w, units0, units1, arc_deg) -> (float, float)
+#   firing.states(engine, w, units0, units1, arc_deg) -> [(unit, code)]
+#   firing.parity(engine, w, units0, units1, arc_deg) -> [unit]
+# L1 builds firing.py against the public engine queries; L2's fight tests stand a Seam in for it, so they need no
+# fake of visible_enemies, profile_reach and the rest. Each reading call is logged; a Seam never edits engine.calls.
+class Seam:
+    def __init__(self):
+        self.calls = []        # [(name, engine, w, units0, units1, arc_deg, tick)]
+        self.able = None       # fn(tick) -> (a0, a1); default: the old same-layer in-range can_shoot rule on the fake's units
+        self.weighted = None   # fn(tick) -> (w0, w1); default: one per able unit
+        self.codes = None      # fn(tick, unit) -> int; default: 0 for an able unit, -1 otherwise
+        self.parity_units = []
+
+    def _peek(self, engine, fn):
+        n = len(engine.calls)
+        try:
+            return fn()
+        finally:
+            del engine.calls[n:]
+
+    def _able_units(self, engine, w, units0, units1):
+        def compute():
+            live = [[u for u in us if engine.unit_hp(w, u) > 0] for us in (units0, units1)]
+            out = [set(), set()]
+            for s in (0, 1):
+                for u in live[s]:
+                    x, y = engine.unit_pos(w, u)
+                    rng = engine._types[engine.units[u]["type"]]["attack_range"]
+                    for e in live[1 - s]:
+                        ex, ey = engine.unit_pos(w, e)
+                        if (engine.unit_layer(w, u) == engine.unit_layer(w, e)
+                                and (ex - x) ** 2 + (ey - y) ** 2 <= rng * rng and engine.can_shoot(w, u, e)):
+                            out[s].add(u)
+                            break
+            return out, live
+        return self._peek(engine, compute)
+
+    def _log(self, name, engine, w, units0, units1, arc_deg):
+        self.calls.append((name, engine, w, list(units0), list(units1), arc_deg, engine.step_count))
+
+    def count_able(self, engine, w, units0, units1, arc_deg):
+        self._log("count_able", engine, w, units0, units1, arc_deg)
+        if self.able is not None:
+            return tuple(self.able(engine.step_count))
+        able, _ = self._able_units(engine, w, units0, units1)
+        return len(able[0]), len(able[1])
+
+    def count_weighted(self, engine, w, units0, units1, arc_deg):
+        self._log("count_weighted", engine, w, units0, units1, arc_deg)
+        if self.weighted is not None:
+            return tuple(float(v) for v in self.weighted(engine.step_count))
+        able, _ = self._able_units(engine, w, units0, units1)
+        return float(len(able[0])), float(len(able[1]))
+
+    def states(self, engine, w, units0, units1, arc_deg):
+        self._log("states", engine, w, units0, units1, arc_deg)
+        able, live = self._able_units(engine, w, units0, units1)
+        mine = able[0] | able[1]
+        code = self.codes or (lambda tick, u: 0 if u in mine else -1)
+        return [(u, code(engine.step_count, u)) for u in sorted(live[0] + live[1])]
+
+    def parity(self, engine, w, units0, units1, arc_deg):
+        self._log("parity", engine, w, units0, units1, arc_deg)
+        return list(self.parity_units)
+
+    def calls_named(self, name):
+        return [c for c in self.calls if c[0] == name]
+
+
+def install_seam(monkeypatch, seam):
+    """Replace the four firing functions on scripts.skilllab.firing and, when fight.py imported them by name, on fight."""
+    import scripts.skilllab.fight as fight_mod
+    import scripts.skilllab.firing as firing_mod
+    for name in ("count_able", "count_weighted", "states", "parity"):
+        monkeypatch.setattr(firing_mod, name, getattr(seam, name), raising=False)
+        monkeypatch.setattr(fight_mod, name, getattr(seam, name), raising=False)
+    return seam

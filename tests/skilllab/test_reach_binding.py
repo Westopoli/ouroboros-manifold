@@ -16,6 +16,8 @@ from fakes_reach import ReachFakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam), not the fake's engine
+
 FULL = {"category": 1, "role": "x", "max_hp": 55.0, "base_damage": 3.0, "attack_interval": 10.0,
         "attack_range": 77.0, "speed": 2.0, "sensor_radius": 100.0, "layer_transition_time": 0.0,
         "aoe_radius": 0.0, "ability_id": 0}

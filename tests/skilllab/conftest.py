@@ -30,3 +30,14 @@ def strip():
     yield _strip
     for play in saved:
         skills.register(play.skill, play.role, play.fn, play.status)
+
+
+@pytest.fixture
+def seam(monkeypatch):
+    """The L1/L2 seam (LAB-REV2-L2): the four firing.py functions fight() calls, replaced by fakes.Seam.
+    A fight test on a FakeEngine takes this fixture; the Seam's `able`, `weighted`, `codes` hooks script the counts by tick."""
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import fakes
+    return fakes.install_seam(monkeypatch, fakes.Seam())

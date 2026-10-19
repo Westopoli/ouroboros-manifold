@@ -110,6 +110,9 @@ class Engine:
             "om_unit_alive": ([V, u32], i),
             "om_unit_get_target": ([V, u32], u32),
             "om_unit_get_facing": ([V, u32], d),
+            "om_unit_get_unit_type": ([V, u32], c.c_int32),
+            "om_unit_transition_progress": ([V, u32], d),
+            "om_tactical_category_multiplier": ([V, i, i], d),
             "om_tactical_get_param": ([V, i], d),
             "om_tactical_set_param": ([V, i, d], i),
             "om_combat_can_shoot": ([V, u32, u32], i),
@@ -138,6 +141,14 @@ class Engine:
             fn = getattr(self._lib, name)
             fn.argtypes = argtypes
             fn.restype = restype
+        fn = getattr(self._lib, "om_roster_set_cone", None)    # absent until E0 lands
+        if fn is not None:
+            fn.argtypes = [V, i, d, d, d]
+            fn.restype = i
+        fn = getattr(self._lib, "om_combat_can_engage", None)    # absent until E0 lands
+        if fn is not None:
+            fn.argtypes = [V, u32, u32]
+            fn.restype = i
 
     def new_world(self, seed):
         w = self._lib.om_world_new(1, int(seed))
@@ -184,6 +195,11 @@ class Engine:
         rc = self._lib.om_roster_set_reach(w, int(type_id), int(up), int(down))
         if rc != 0:
             raise ValueError("om_roster_set_reach(%r, %r, %r) returned %d" % (type_id, up, down, rc))
+
+    def set_cone(self, w, type_id, range, half_angle, share):
+        rc = self._lib.om_roster_set_cone(w, int(type_id), float(range), float(half_angle), float(share))
+        if rc != 0:
+            raise ValueError("om_roster_set_cone(%r, %r, %r, %r) returned %d" % (type_id, range, half_angle, share, rc))
 
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)
@@ -274,6 +290,20 @@ class Engine:
 
     def unit_facing(self, w, u):
         return float(self._lib.om_unit_get_facing(w, int(u)))
+
+    def unit_type(self, w, u):
+        return int(self._lib.om_unit_get_unit_type(w, int(u)))
+
+    def transition_progress(self, w, u):
+        return float(self._lib.om_unit_transition_progress(w, int(u)))
+
+    def category_multiplier(self, w, attacker_category, target_category):
+        return float(self._lib.om_tactical_category_multiplier(w, int(attacker_category), int(target_category)))
+
+    def can_engage(self, w, a, b):
+        """om_combat_can_engage; -1 when the library has no such symbol (before E0), as the E0 stub answers."""
+        fn = getattr(self._lib, "om_combat_can_engage", None)
+        return -1 if fn is None else int(fn(w, int(a), int(b)))
 
     def param_id(self, name):
         ids = _load_param_ids()

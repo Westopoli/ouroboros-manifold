@@ -65,8 +65,17 @@ def _centroid_miss(trace, tick=-1):
     return math.hypot(sum(last[i][1] for i in range(len(XS))) / len(XS) - CLICK[0], sum(last[i][2] for i in range(len(XS))) / len(XS) - CLICK[1])
 
 
-def _misses(trace):
-    last = trace.frames[-1]
+def _first_halt_tick(trace):
+    """TD-LAB-REV2-E1-3: the first tick on which no unit of the line moves, that is the halt at the first engagement."""
+    fr = trace.frames
+    for k in range(1, len(fr)):
+        if all(fr[k][i][1:3] == fr[k - 1][i][1:3] for i in range(len(XS))):
+            return k
+    return len(fr) - 1
+
+
+def _misses(trace, tick=-1):
+    last = trace.frames[tick]
     return [math.hypot(last[i][1] - (CLICK[0] + XS[i] - CX), last[i][2] - CLICK[1]) for i in range(len(XS))]
 
 
@@ -97,7 +106,10 @@ def test_A199_R087_04_c_and_python_both_end_at_the_slots_past_a_seen_enemy():
 
 def test_control_A199_the_slot_miss_reading_trips_when_the_enemy_is_on_the_route():
     """Positive control (green now and after): with the enemy on the route in range, both engines halt and fire
-    short of the slots, so the measurement above reads a miss over the arrival radius."""
+    short of the slots, so the measurement above reads a miss over the arrival radius. The miss is read at the first
+    halt, not at the end of the run: since E1 (R-096-02 rewritten 2026-10-13, TD-LAB-REV2-E1-3) the C group resumes
+    after the fight and reaches its slots, so only the first engagement still shows the halt in both engines."""
     parity_c.build()
     for name, tr in (("python", parity_python.run_scene(ON_ROUTE)), ("c", parity_c.run_scene(ON_ROUTE))):
-        assert max(_misses(tr)) > ARRIVAL, "%s: control did not trip (miss %.1f)" % (name, max(_misses(tr)))
+        miss = max(_misses(tr, _first_halt_tick(tr)))
+        assert miss > ARRIVAL, "%s: control did not trip (miss %.1f at the first halt)" % (name, miss)

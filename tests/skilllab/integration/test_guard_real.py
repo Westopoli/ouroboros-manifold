@@ -27,7 +27,7 @@ def _setup(guard_order="guard", steps=(), max_ticks=300):
                   order=guard_order, params={"spacing": 30.0})
     walker = Group(side=1, unit="Vanguard", count=1, formation="line", x=1400.0, y=400.0, facing_deg=180.0, layer=0,
                    order="attack_move", goal=(400.0, 400.0), params={"spacing": 30.0})
-    return Setup(groups=(guard, walker), unit_types={}, max_ticks=max_ticks, stalemate_ticks=2000, settings=SETTINGS,
+    return Setup(groups=(guard, walker), unit_types={}, max_ticks=max_ticks, settings=SETTINGS,
                  timeline=tuple(steps))
 
 
@@ -81,15 +81,14 @@ def test_whole_fight_through_fight_runs_with_guard_defender(lib):
 
 
 def test_guard_step_at_tick_20_stops_an_attack_move_unit(lib):
-    """Through fight(): walking (a destination) before the step, none and not moving after it."""
+    """Through fight(): walking before the step, not moving after it. LAB-REV2-L2: FightResult.states is (tick, unit, code) now,
+    never a "walking" string, so the walk and the stop are read from the trace positions alone."""
     s = dataclasses.replace(_setup(guard_order="attack_move", steps=[Step(group=0, when=("tick", 20), order="guard")],
-                                   max_ticks=80), trace=True, states=True)
+                                   max_ticks=80), trace=True)
     r = fight.fight(s, 0, False, engine=lib)
     assert r.steps_fired == ((0, 20),)
-    state = {(t, u): st for t, u, st in r.states}
-    assert state[(19, 1)] == "walking"
-    assert all(state[(t, 1)] != "walking" for t in range(21, 81) if (t, 1) in state)
     pos = {t: (x, y) for t, u, x, y, *_ in r.trace if u == 1}
     x0, y0 = pos[21]
     assert all(math.hypot(x - x0, y - y0) <= 1.0 for t, (x, y) in pos.items() if t >= 21)
     assert math.hypot(pos[19][0] - pos[0][0], pos[19][1] - pos[0][1]) > 1.0, "it should have walked before the step"
+    assert math.hypot(pos[19][0] - pos[15][0], pos[19][1] - pos[15][1]) > 1.0, "it was still walking just before the step"
