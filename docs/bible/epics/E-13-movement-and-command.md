@@ -39,20 +39,20 @@ Inputs: selection; click point; unit speeds and positions.
 Outputs: per-unit move targets and group ids in the tick delta.
 Open flags: none.
 
-### S-096 — Four commands
+### S-096 — Five commands
 As a commander, I want move to be movement and nothing else, attack-move to fight along the way, attack-target to commit, and ability to be a button, so that every order means one thing.
 
-Direction changed 2026-10-02, rewrite pending: a guard stance joins the commands (S-208), and an attack-moving unit engages what is within its type's reach and visible to its side, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
+The guard stance joined the commands 2026-10-13 (S-208, R-096-08). An attack-moving unit engages what is within its type's reach and visible to its side, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
 
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
-- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march. A unit attack-moved alone is not a group: it resumes toward the point after every fight.
+- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after every fight the group resumes toward the point as a unit attack-moved alone does (Westley, 2026-10-13, option (a): an attack-move is not finished until the unit reaches its point; his 2026-10-02 words for the lone unit, "It should resume its prior goal after the fight is completed", now hold for a group too). The engine today ends a group once every member has engaged and never resumes it (the Architect's clause, A124 build); the resume for groups is a pending engine piece, measured 2026-10-13: two groups attack-moved to one point stalled 303 to 336 wu apart with range 300, while the same units ordered one by one fought to elimination.
 - R-096-03  Given an attack-move engagement, When the unit itself has pursued more than 200 wu from its anchor (its position at acquisition), Then it drops the target and resumes; a unit holding and firing from its anchor never drops a target for the leash, whatever its weapon range (ruled A188, 2026-10-03; the earlier text measured the target's distance, which made a 300 wu weapon drop a target standing still in range).
 - R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
-- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can see (E-12 R-093-02) within the guard radius of that post, `GUARD_RADIUS` = 200 wu (DRAFT-guard-radius: the attack-move leash of R-087-05, Westley's number to change), returning to the post when the target dies or leaves the radius; it never chases past the radius and never marches; a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". The engine's guard today (A170) holds and never steps forward; the step-and-return within the radius is an engine piece not yet built, and the lab's choke defence runs on the built order until it lands.
+- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can see (E-12 R-093-02), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius: the attack-move leash of R-087-05, Westley's number to change; the radius bounds the guard's own walk, measured post to the guard's centre, ruled 2026-10-14 for E4), firing whenever the target is in range, returning to the post when the target dies or when engaging it would take the guard past the radius; it never crosses the radius and never marches; as built 2026-10-14 the walk is toward same-layer targets only, a cross-layer target is engaged in place when reach and range allow (DRAFT: cross-layer walking is Westley's to add); a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". The engine's guard today (A170) holds and never steps forward; the step-and-return within the radius is an engine piece not yet built, and the lab's choke defence runs on the built order until it lands.
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
@@ -115,6 +115,7 @@ Rules
 - R-100-01  Given a unit attacking a target, When facing updates, Then it faces the target; given moving with no target, it faces its heading; given idle with no target, it keeps its last facing.
 - R-100-02  Given a facing change, When it turns, Then the turn rate is capped at 6.0 rad/s for Strike, 4.0 for Line, 2.5 for Siege.
 - R-100-03  Given a unit retreating from a pursuer under attack-target, When facing updates, Then it faces the pursuer.
+- R-100-04  DRAFT (Westley, 2026-10-13: "add a firing-arc rule to the game"; Q-100-01): Given a unit with a target, When the target lies outside the arc of `FIRING_ARC_DEG` (DRAFT-firing-arc-deg 120; 360 is no arc) about the unit's facing, Then the unit does not fire; it keeps the target, turns toward it at the R-100-02 rate, and fires once the target is inside. Acquisition, the hold and return fire are untouched; a unit kiting under attack-target faces its target directly. The width, and whether it differs by category, are Westley's after the skill lab shows the effect.
 
 Inputs: target; heading.
 Outputs: facing in the tick delta; renderer interpolates.
@@ -174,7 +175,7 @@ Rules
 
 Inputs: guard command (selection, post).
 Outputs: unit order state in the tick delta.
-Open flags: Q-096-01, Q-208-01.
+Open flags: Q-208-01.
 
 ### S-209 — Workers move like any unit
 As a commander, I want workers to walk the same ground and take the same room as soldiers, so that a base with thousands of them is a real crowd on the real map.
@@ -240,7 +241,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-096-01, Q-097-02, Q-101-02, Q-207-01, Q-174-02, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-097-02, Q-101-02, Q-207-01, Q-174-02, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
