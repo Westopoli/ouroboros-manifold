@@ -1,6 +1,6 @@
 # The visible game programme (plan, 2026-10-07; method rev 2, 2026-10-10)
 
-**Status: IN FLIGHT since 2026-10-07; method rev 2 since 2026-10-10; sprint 2026-10-13 to 2026-10-15 under EXC-sprint-2026-10-13 (docs/northstar/plans/2026-10-13-sprint-48h.md).** The lane table below is the programme's only status; ROADMAP section 1 points here, the journal is `git log` (`scripts/journal.sh`), and no chat memory carries lane state beyond a pointer. When every lane's stories are `Seen` this header becomes DONE with the date.
+**Status: IN FLIGHT since 2026-10-07; method rev 2 since 2026-10-10; four build workflows under EXC-sprint-2026-10-13, extended by Westley 2026-10-19 until he says two (docs/northstar/plans/2026-10-13-sprint-48h.md).** The lane table below is the programme's only status; ROADMAP section 1 points here, the journal is `git log` (`scripts/journal.sh`), and no chat memory carries lane state beyond a pointer. When every lane's stories are `Seen` this header becomes DONE with the date.
 
 | Stage | State | Date |
 |---|---|---|
