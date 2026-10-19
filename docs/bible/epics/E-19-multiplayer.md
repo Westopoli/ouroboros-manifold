@@ -127,7 +127,7 @@ Open flags: none here; the economy's own flags are E-22's.
 ### S-241 — Teams, sub-commanders and sub-civilizations
 As a player in a team, I want my pair to be a sub-civilization inside the over-arching civilization, with the map, the resources and the enemies growing as players join, so that more friends make a bigger game.
 
-Design decided 2026-10-02 (DECISIONS H7, H13), not scheduled for building. Teams of 6 are a desired future feature that waits on a higher peer count than the confirmed 4 (R-241-04). Westley, 2026-10-02: "more teammates = bigger maps and more to do, more resources, more enemies, each player is their own "sub-commander" and we can fabricate "alliances" where each pair of players is their own "sub-civlization" inside the over-arching civlization. essentially the game turned up to 11."
+Design decided 2026-10-02 (DECISIONS H7, H13); the lobby's team-size choice builds as VG-F-S241 (visible-game spec rev 13, 2026-10-19), a stub until R-241-03 scaling (ledger row FU-F-teamsize-scaling). Teams of 6 are a desired future feature that waits on a higher peer count than the confirmed 4 (R-241-04). Westley, 2026-10-02: "more teammates = bigger maps and more to do, more resources, more enemies, each player is their own "sub-commander" and we can fabricate "alliances" where each pair of players is their own "sub-civlization" inside the over-arching civlization. essentially the game turned up to 11."
 
 Rules
 - R-241-01  Given the paired queue, When a team forms, Then it has 2 or 4 players, in pairs (R-159-01). Teams of 6 are a desired future feature (R-241-04).
