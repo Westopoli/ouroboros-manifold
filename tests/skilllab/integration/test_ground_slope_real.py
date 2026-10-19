@@ -102,12 +102,14 @@ def test_two_runs_of_one_seed_are_equal(library):
 
 # ---------------------------------------------------------------- spawns, walkers, the reach table
 
+@pytest.mark.parametrize("heads", [8, 16, 48])
 @pytest.mark.parametrize("seed", range(5))
-def test_every_unit_spawns(seed):
-    """The replicate jitter (contract.SHIFT_MAX) moves each unit a little; none may land on ground a walker cannot stand on."""
+def test_every_unit_spawns(seed, heads):
+    """The replicate jitter (contract.SHIFT_MAX) moves each unit a little; none may land on ground a walker cannot stand on.
+    The holder runs at 8, 16 and 48 units (ruling 4): the audit found a 48-head blob can reach unwalkable ground."""
     spy = Spy()
-    fight.fight(dataclasses.replace(_setup(), max_ticks=1), seed, False, engine=spy)
-    assert len(spy.spawned) == 32 and all(u != 0 for (*_x, u) in spy.spawned), [s for s in spy.spawned if s[3] == 0]
+    fight.fight(dataclasses.replace(_setup(heads=heads), max_ticks=1), seed, False, engine=spy)
+    assert len(spy.spawned) == 16 + heads and all(u != 0 for (*_x, u) in spy.spawned), [s for s in spy.spawned if s[3] == 0]
 
 
 def test_attackers_and_holders_walk_and_the_reach_table_applies():

@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import engine, formations  # noqa: E402
+from scripts.skilllab.contract import SHIFT_MAX  # noqa: E402
 from scripts.skilllab.ground import scenes_ground as sg  # noqa: E402
 
 SEED = 11
@@ -189,11 +190,18 @@ def test_the_shared_point_is_past_the_slopes_midline_on_the_top_band_and_higher_
 @pytest.mark.parametrize("size,heads", [(16, 16), (16, 8), (16, 48), (24, 12)])
 def test_every_placed_unit_stands_on_walkable_ground(lib, field, size, heads):
     """A walker spawned on ground it cannot walk gets id 0 and is silently counted dead (measured 2026-10-14: 4 of 16
-    attackers lost that way in a first sketch of this scene). The scan runs the holder at 8 to 48 units (ruling 4)."""
+    attackers lost that way in a first sketch of this scene). The scan runs the holder at 8 to 48 units (ruling 4).
+    fight() shifts every unit by up to contract.SHIFT_MAX per axis, so the four corners of that square are checked too: the
+    audit found a 48-head blob can reach unwalkable ground at the jitter extremes.
+    Hint for the builder: the shared point must sit on or beside slope 2 of seed 11 (e.g. holder centre (9050, 3180), with a
+    smaller blob radius than the natural one), because routing over the attackers' layer-1 mask leaves only a thin ribbon of
+    slope; do not widen preflight to make a wide blob pass."""
     setup = sg.slope_top(size)(heads, False)
     for g in setup.groups:
         for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params):
-            assert lib.terrain_walkable_at(field, x, y), "unit at (%.0f, %.0f) is not walkable ground" % (x, y)
+            for dx, dy in ((0.0, 0.0), (-SHIFT_MAX, -SHIFT_MAX), (-SHIFT_MAX, SHIFT_MAX), (SHIFT_MAX, -SHIFT_MAX), (SHIFT_MAX, SHIFT_MAX)):
+                assert lib.terrain_walkable_at(field, x + dx, y + dy), \
+                    "unit at (%.0f, %.0f) shifted by (%+.0f, %+.0f) is not walkable ground" % (x, y, dx, dy)
 
 
 # ---------------------------------------------------------------- the knob grid (rulings 10 and 11)
@@ -208,7 +216,7 @@ def test_each_grid_is_ascending_inside_the_parameter_range_and_holds_the_default
     values = tuple(sg.SLOPE_TOP_KNOBS[name])
     lo, hi = RANGES[name]
     assert list(values) == sorted(set(values)) and 3 <= len(values) <= 5          # ruling 11: three to five points
-    assert all(lo <= v <= hi for v in values) and DEFAULTS[name] in values        # the sweep starts at the bible's value
+    assert all(lo <= v <= hi for v in values) and DEFAULTS[name] in values        # the default is the 2nd point of every grid (50 in 25..200, 1.5 in 1.25..3, 1.1 in 1.0..2.0)
 
 
 def test_the_defaults_in_the_test_are_the_engines(lib):

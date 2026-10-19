@@ -41,3 +41,7 @@ def seam(monkeypatch):
         sys.path.insert(0, here)
     import fakes
     return fakes.install_seam(monkeypatch, fakes.Seam())
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "variant: a ground-scene variant (LAB-REV2-L6); it may fail without blocking the natural scene")
