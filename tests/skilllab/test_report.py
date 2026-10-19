@@ -744,3 +744,1001 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
     assert any("mirror: 18 units beat 14." in t for t in texts)
     assert any("No break-even found between 3 and 6 enemy units." in t for t in texts)
     assert not any("With longer reach" in t for t in texts)
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 additions. spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L5 (test_report.py; "the artifact template of
+# the README section 5 form"; "lists the both_wrong fights as findings, and marks every DRAFT number the data touched"); ruling 4 (ceiling
+# hit, never "no gain"); ruling 1 and CellResult.defect; ruling 5; ruling 12 (output rule: diagrams with arrows, a number without its
+# diagram is not evidence); decisions 29 and 31 (the audit items). Existing tests above stay: a scan without ceiling_hit and without
+# defect reads exactly as before.
+#
+# INTERFACE FIXED HERE:
+#   report.report(batch, out_dir) -> str    (unchanged signature and page) now also reads ScanResult.ceiling_hit and CellResult.defect:
+#       - a ceiling-hit scan's finding sentence is one <h2> naming the label, the words "ceiling hit" and the top headcount
+#         (scan.beats); the text "No break-even found" never appears for it; its scan chart carries an element with class token
+#         "ceiling" and no element with class token "marker"
+#       - a defect cell's dot has class tokens "cell defect" (neither won nor lost); its table row has Result "defect" and an
+#         In-words cell containing "defect"
+#   report.artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact", thresholds=None) -> str
+#       summary = the sweep_summary.json dict ({"order": [...], "replicates": n, "families": {family: L4 entry}}); rows = the typed rows
+#       of diagram.notables (the family and smoke CSVs read by diagram.read_rows, concatenated); setup_for(notable) -> Setup;
+#       thresholds = None, or an evidence.Thresholds (Westley's pass marks, an input the `artifact` command reads from its optional
+#       --thresholds file; decision 34 item 2, corrected). The earlier `verdicts=` parameter (conditions.evaluate_bases output) is
+#       RETIRED: the sweep files do not hold the engine-run scans evaluate_bases reads, so nothing could supply it
+#       (TD-LAB-REV2-L5-verdicts).
+#       Writes <out_dir>/artifact.html (out_dir created with parents) and <out_dir>/diagrams/<notable.id>.svg (diagram.write_all) and
+#       returns the artifact path as str. The page is read as parsed HTML, never as text (quote style, attribute order and whitespace
+#       are free). One <h1> = title (escaped: a title with markup characters reads back as that text and adds no element). Then eight
+#       <section id=...> elements, SIBLINGS (none inside another, none inside an <h2>), in this order:
+#         drafts, findings, baseline-ceiling, agreement, both-wrong, refinement, cone-grid, conditions
+#       <section id="drafts"> (the header): one <li data-draft="NAME"> per DRAFT number in force, each name ONCE:
+#           DRAFT-opening-window-ticks (text holds contract.OPENING_WINDOW_TICKS) only when rows is not empty;
+#           DRAFT-firing-arc-deg when the arc family is in summary["families"] and not skipped; DRAFT-aoe-cone-range, DRAFT-aoe-cone-deg
+#           and DRAFT-aoe-cone-share when the cone family is, likewise (a skipped family touched nothing);
+#           DRAFT-guard-radius, DRAFT-mixes, DRAFT-reengage-silence-ticks and DRAFT-scale-marks always (names are the test writer's
+#           reading of decision 29 item 4; no value is pinned for them). No name containing "slope" (the slope divisor joins only in a
+#           batch that runs the ground scene; nothing here says how the artifact would know, so no positive test) and none containing
+#           "band" (the 0.25x to 4x band is a ruling, decision 31 F, not a draft number).
+#       <section id="findings">: for each notable, in diagram.notables order: one <h2 data-notable="<id>"> holding the sentence, then the
+#           exact diagram.render svg text (its root id = the notable id) as the NEXT element sibling of the h2 and a child of the section,
+#           then, for a crossing only, a <p class="counts" data-notable="<id>"> (the sentence under the diagram) holding one
+#           <span class="count" data-scan data-knob data-beats data-loses-to> per knob value (knob_lo, knob_hi) and per scan (data-scan
+#           "play" or the baseline role): data-knob the CSV text of the knob value, data-beats the break-even headcount, data-loses-to the
+#           first lost headcount after it ("" when the scan has none); the p's text holds those numbers.
+#           crossing:    family, play, layout, role, the CSV text of knob_lo and knob_hi, and the word "crosses"
+#           ceiling_hit: play, layout, the CSV text of the knob value and the words "ceiling hit" (never "no gain")
+#           both_wrong:  play, layout and the words "both predictions were wrong"; for a control or a baseline row also the role and the kind
+#           with no notable at all: the section reads "no crossing", "no ceiling hit" and "no both_wrong fight" and the page holds no <svg>
+#       <section id="baseline-ceiling">: one <li data-role data-family data-play data-layout data-point data-knob> per
+#           diagram.baseline_ceilings(rows) entry, the text holding "baseline_ceiling" and the role; none: "no baseline_ceiling"
+#       <section id="agreement">: charts.agreement_html(groups) where groups maps "<family>/<play>" (first appearance in rows) to the
+#           list of that group's row `agreement` words
+#       <section id="both-wrong">: one <li data-row="<row index>"> per both_wrong notable (ALL of them), whose text holds the CSV text of
+#           that row's outcome, predicted_count, predicted_type, firing_window_0 and firing_window_1 (and the role, and the kind of a
+#           control row); with none: "no both_wrong fight", no <li>
+#       <section id="refinement">: charts.refinement_html(summary["families"]) verbatim
+#       <section id="cone-grid">: charts.cone_grid_html(rows) verbatim; with no cone rows the text "no cone family"
+#       <section id="conditions"> (decisions 29 item 2, 31 C, 34 item 2): ONLY what the CSV rows alone support: the C2 agreement
+#           (conditions.c2_table's statistics, on the CSV fights) and the C1 advantage against each naive baseline. Per basis
+#           ("window" then "whole") ONE <table data-basis="window|whole"> holding, in this order:
+#             (a) five <tr class="c2-count" data-basis data-word data-count> in evidence.AGREEMENTS order (both_right,
+#                 count_wrong_type_right, both_wrong, count_right_type_wrong, n/a), data-count an integer: the raw agreement counts over
+#                 EVERY row (any family, kind, baseline; as the agreement section tallies). window: the row's `agreement` word (its
+#                 predicted_count, predicted_type and agreement columns are the WINDOW basis, decision 29). whole (decision 35 item 2,
+#                 which corrects the first header): both words are re-derived from the totals, never taken from the columns:
+#                 predicted_count = the larger side of firing_unit_seconds_0/1, predicted_type = the larger side of
+#                 weighted_unit_seconds_0/1 (NEVER the firing totals: the type is not the count), equal = "tie" for either; outcome as the
+#                 row has it; the word is fight._agreement's (a tie, or an outcome that is not side0 or side1, gives "n/a").
+#             (b) with thresholds only: C2 verdict lines <tr class="c2-verdict" data-code="C2" data-basis data-scope="pooled|cell"
+#                 data-enemy-heads ("" for pooled, else the headcount) data-fights data-holds="true|false"> in conditions.c2_table order
+#                 (pooled first, then the cells ascending), computed by the check_c2 statistics on the CSV fights of that basis (window
+#                 reads firing_window_0/1, whole firing_unit_seconds_0/1; margin is the row's `margin`); holds = rho >=
+#                 c2_rank_agreement AND off_trend_share <= c2_off_trend_share; c2_off_trend_margin is the statistic's margin.
+#             (c) one <tr class="c1" data-code="C1@<role>" data-basis data-family data-play data-layout data-point data-knob
+#                 data-baseline="<role>" data-advantage data-baseline-max> per (family, play, layout, point, knob value) and baseline role
+#                 present among those rows, AT THE EQUAL-NUMBERS CELL ONLY (decision 35 item 3: rows whose enemy_heads is 16; rows at any
+#                 other headcount are never read for C1), sorted by (family, play, layout, point) as strings, then knob value ascending
+#                 (numeric), then role (string). data-knob = the knob value (a float text). data-advantage = the MEAN firing advantage
+#                 of the play rows there (baseline "none"; (f0 - f1) / (f0 + f1), 0.0 when the sum is 0; window or whole as the table's
+#                 basis); data-baseline-max = the LARGEST |firing advantage| over that role's rows there (decision 31 C). Knob values are
+#                 never pooled. With thresholds the tr also holds data-holds="true|false": advantage > baseline-max +
+#                 c1_min_firing_advantage, STRICT.
+#             (d) C1 needs the cell: for a (family, play, layout, point, knob value) and role where the play has no row at enemy_heads
+#                 16 or the role has none (a scan cut below 16, baseline_no_fit), there is NO C1 line (no tr class c1) and, outside the
+#                 per-basis tables, ONE <p class="c1-none" data-family data-play data-layout data-point data-knob data-baseline> whose
+#                 text holds exactly `no C1: no equal-numbers cell`, in the same sort order, with or without thresholds.
+#                 (e) The section always holds exactly `mirror C1: not computed here, it lives in the engine-run evaluate_all` (decision 35
+#                 item 4: a CSV row does not carry the mirror scan), with or without thresholds.
+#           With thresholds every verdict tr (b, c) holds <span class="threshold" data-name="<Thresholds field name>" data-value="<the
+#           value used>"> children, one per field the verdict used: C1: c1_min_firing_advantage; C2: c2_rank_agreement,
+#           c2_off_trend_margin, c2_off_trend_share; and its text holds those names. After the tables, with thresholds: <ul
+#           class="basis-differences"> with one <li data-code data-window data-whole> per verdict (data-code; C1 lines also data-family
+#           data-play data-layout data-point data-knob) whose data-holds differs between the two bases, or the text "no verdict differs between
+#           the bases" and no <li>.
+#           WITHOUT thresholds (None): the section text holds exactly `no condition verdicts: thresholds not supplied`, still holds the
+#           (a) and (c) lines as numbers (data-count, data-advantage, data-baseline-max), and has NO data-holds, no span.threshold and
+#           none of the words pass, fail, holds (text, attribute names or values). The mirror C1 (decision 31 B) needs the mirror scan,
+#           which a CSV row does not carry as such: not computed here (decision 35 item 4; sentence in (e)).
+#       Deterministic (same bytes for the same input); self-contained (every url/href/src is a #fragment, a data: URI or a
+#       fonts.googleapis.com URL, as test_page_is_self_contained).
+#   summary.write (summary.json): per variant scan summary gains "ceiling_hit" (bool) and "multi_flip" (bool); "break_even" reads
+#       "ceiling hit: ... up to <top>" for a ceiling-hit scan (today it formats loses_to=None with %d and raises TypeError); every
+#       by_enemy_size entry gains "defect" (bool: a draw or a cap sits in the cell)
+# =====================================================================================================================
+import json  # noqa: E402
+import re as _re  # noqa: E402
+
+from scripts.skilllab import charts as _charts, summary as _summary  # noqa: E402
+
+
+def _td():
+    """test_diagram's fixtures; importing it raises until diagram.py exists, so only the L5 tests below are red, never the older ones."""
+    import test_diagram
+    return test_diagram
+
+
+def _ceiling_scan_report(top=48):
+    cells = [CellResult(n, [_fight()], 0.5, True) for n in (8, 16, 24, 32, 40, top)]
+    return ScanResult(size=16, cells=cells, beats=top, loses_to=None, ceiling_hit=True)
+
+
+def _html(batch, tmp_path):
+    return Path(report(batch, tmp_path)).read_text(encoding="utf-8")
+
+
+def _h2s(html):
+    return [" ".join(_re.sub(r"<[^>]+>", "", h).split()) for h in _re.findall(r"<h2[^>]*>(.*?)</h2>", html, flags=_re.S)]
+
+
+def _classes(svg):
+    return [set(m.split()) for m in _re.findall(r'class="([^"]*)"', svg)]
+
+
+def test_l5_report_ceiling_hit_sentence_chart_and_no_no_break_even(tmp_path):
+    batch = Batch(title="Ceiling", scans={"s3_layer_above": _ceiling_scan_report()}, firing_example={"s3_layer_above": _fight()}, rows=[])
+    html = _html(batch, tmp_path)
+    sentences = [h for h in _h2s(html) if "s3_layer_above" in h]
+    assert len(sentences) == 1 and "ceiling hit" in sentences[0] and "48" in sentences[0]
+    assert "No break-even found" not in html
+    chart = _re.findall(r"<svg.*?</svg>", html, flags=_re.S)[0]
+    assert any("ceiling" in c for c in _classes(chart)) and not any("marker" in c for c in _classes(chart))
+
+
+def test_l5_report_a_scan_without_ceiling_hit_keeps_its_break_even_and_marker(tmp_path):
+    """Negative control: a crossing scan and a no-break-even scan read as before and carry no ceiling mark."""
+    cross = _scan(16, 10, 14, 12)
+    nothing = _flat(10, 14, -0.5)
+    html = _html(Batch(title="Plain", scans={"cross": cross, "nothing": nothing}, firing_example={}, rows=[]), tmp_path)
+    assert "No break-even found" in html and "ceiling hit" not in html
+    charts_ = _re.findall(r"<svg.*?</svg>", html, flags=_re.S)
+    assert any("marker" in c for c in _classes(charts_[0])) and not any("ceiling" in c for ch in charts_ for c in _classes(ch))
+
+
+def test_l5_report_defect_cell_is_a_defect_in_chart_and_table(tmp_path):
+    sc = _scan(16, 10, 14, 12)
+    cells = list(sc.cells)
+    cells[2] = CellResult(enemy_heads=12, fights=[_fight()], mean_margin=0.0, won=False, defect=True)
+    html = _html(Batch(title="Defect", scans={"d": ScanResult(size=16, cells=cells, beats=None, loses_to=None)}, firing_example={}, rows=[]),
+                 tmp_path)
+    dots = [c for c in _classes(_re.findall(r"<svg.*?</svg>", html, flags=_re.S)[0]) if "cell" in c]
+    assert len(dots) == 5 and sum("defect" in c for c in dots) == 1
+    assert all(not ({"won", "lost"} & c) for c in dots if "defect" in c)
+    row = [r for r in _re.findall(r"<tr>(.*?)</tr>", html, flags=_re.S) if "<td>12</td>" in r][0]
+    cells_text = [_re.sub(r"<[^>]+>", "", c) for c in _re.findall(r"<td>(.*?)</td>", row, flags=_re.S)]
+    assert cells_text[2] == "defect" and "defect" in cells_text[3]
+
+
+# ---------- summary.json ----------
+
+def _summary_defn(names=("cellA",)):
+    from types import SimpleNamespace
+    cells = [SimpleNamespace(label=n, status="ok", size=16, enemy_from=8, enemy_to=48, build=object(), reference=None, note=None) for n in names]
+    return SimpleNamespace(name="formation", cells=cells, variants=[("naive", None)])
+
+
+def _fr_for_summary(outcome):
+    return FightResult(outcome=outcome, margin=0.5 if outcome == "side0" else -0.5, strength_left=(0.5, 0.5), survivors=(4, 0), heads=(16, 16),
+                       ticks=100, first_contact_tick=5, firing=[(0, 1, 1)], firing_unit_seconds=(2.0, 1.0))
+
+
+def test_l5_summary_write_reads_a_ceiling_hit_scan_without_raising(tmp_path):
+    """Ruling 4: today `%d units beat %d, lose to %d` meets loses_to=None and raises TypeError."""
+    cells = [CellResult(n, [_fr_for_summary("side0")], 0.5, True) for n in (8, 24, 48)]
+    sc = ScanResult(size=16, cells=cells, beats=48, loses_to=None, ceiling_hit=True)
+    path = tmp_path / "s.json"
+    _summary.write(_summary_defn(), {("cellA", "naive"): sc}, path, "elimination only")
+    v = json.loads(path.read_text(encoding="utf-8"))["cells"][0]["variants"]["naive"]
+    assert v["ceiling_hit"] is True and v["multi_flip"] is False and v["beats"] == 48 and v["loses_to"] is None
+    assert "ceiling hit" in v["break_even"] and "48" in v["break_even"] and "no break-even" not in v["break_even"]
+
+
+def test_l5_summary_write_keeps_the_plain_strings_for_the_other_scans_and_flags_defect_cells(tmp_path):
+    """Negative control: a crossing scan reads 'N units beat A, lose to B', a no-crossing one 'no break-even in range'; defect marks the cell."""
+    ok = ScanResult(size=16, cells=[CellResult(8, [_fr_for_summary("side0")], 0.5, True), CellResult(24, [_fr_for_summary("side1"), _fr_for_summary("cap")], -0.5, False, defect=True)],
+                    beats=8, loses_to=24)
+    none = ScanResult(size=16, cells=[CellResult(8, [_fr_for_summary("side1")], -0.5, False)], beats=None, loses_to=None)
+    path = tmp_path / "s.json"
+    _summary.write(_summary_defn(("a", "b")), {("a", "naive"): ok, ("b", "naive"): none}, path, "r")
+    cells = json.loads(path.read_text(encoding="utf-8"))["cells"]
+    a, b = cells[0]["variants"]["naive"], cells[1]["variants"]["naive"]
+    assert a["break_even"] == "16 units beat 8, lose to 24" and a["ceiling_hit"] is False
+    assert b["break_even"] == "no break-even in range" and b["ceiling_hit"] is False
+    assert [a["by_enemy_size"]["8"]["defect"], a["by_enemy_size"]["24"]["defect"], b["by_enemy_size"]["8"]["defect"]] == [False, True, False]
+
+
+
+
+def test_l5_summary_write_carries_multi_flip_true_and_false_apart(tmp_path):
+    """multi_flip True case (the first tests only pinned False): won, lost, won, lost -> two flips -> True; the plain crossing -> False."""
+    flips = ScanResult(size=16, cells=[CellResult(n, [_fr_for_summary("side0" if w else "side1")], 0.0, w) for n, w in
+                                       ((8, True), (16, False), (24, True), (32, False))], beats=8, loses_to=16, multi_flip=True)
+    plain = ScanResult(size=16, cells=[CellResult(8, [_fr_for_summary("side0")], 0.5, True), CellResult(16, [_fr_for_summary("side1")], -0.5, False)],
+                       beats=8, loses_to=16)
+    path = tmp_path / "s.json"
+    _summary.write(_summary_defn(("flips", "plain")), {("flips", "naive"): flips, ("plain", "naive"): plain}, path, "r")
+    cells = json.loads(path.read_text(encoding="utf-8"))["cells"]
+    assert cells[0]["variants"]["naive"]["multi_flip"] is True and cells[1]["variants"]["naive"]["multi_flip"] is False
+
+
+def test_l5_summary_write_flags_a_cell_holding_only_a_draw_as_a_defect(tmp_path):
+    """A draw-only cell (no cap): defect True, neither won nor lost counted, the draw counted; a plain lost cell is not a defect."""
+    draw = ScanResult(size=16, cells=[CellResult(8, [_fr_for_summary("draw")], 0.0, False, defect=True),
+                                      CellResult(16, [_fr_for_summary("side1")], -0.5, False)], beats=None, loses_to=None)
+    path = tmp_path / "s.json"
+    _summary.write(_summary_defn(), {("cellA", "naive"): draw}, path, "r")
+    sizes = json.loads(path.read_text(encoding="utf-8"))["cells"][0]["variants"]["naive"]["by_enemy_size"]
+    assert sizes["8"]["defect"] is True and (sizes["8"]["draw"], sizes["8"]["won"], sizes["8"]["lost"], sizes["8"]["cap"]) == (1, 0, 0, 0)
+    assert sizes["16"]["defect"] is False and sizes["16"]["lost"] == 1
+
+
+# ---------- the artifact: read as parsed HTML, never as text ----------
+
+VOID = {"meta", "link", "br", "hr", "img", "input", "col", "base", "area", "wbr"}
+
+
+class Node:
+    def __init__(self, name, attrs, parent):
+        self.name, self.attrs, self.parent, self.children = name, dict(attrs), parent, []
+
+    def elements(self):
+        return [c for c in self.children if isinstance(c, Node)]
+
+    def iter(self):
+        yield self
+        for c in self.children:
+            if isinstance(c, Node):
+                yield from c.iter()
+
+    def text(self):
+        return " ".join("".join(c if isinstance(c, str) else c.text() for c in self.children).split())
+
+    def find(self, name, **attrs):
+        return [n for n in self.iter() if n.name == name and all(n.attrs.get(k.replace("_", "-")) == v for k, v in attrs.items())]
+
+
+class _Tree(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.root = Node("#root", {}, None)
+        self.cur = self.root
+
+    def handle_starttag(self, tag, attrs):
+        node = Node(tag, [(k, v if v is not None else "") for k, v in attrs], self.cur)
+        self.cur.children.append(node)
+        if tag not in VOID:
+            self.cur = node
+
+    def handle_startendtag(self, tag, attrs):
+        self.cur.children.append(Node(tag, [(k, v if v is not None else "") for k, v in attrs], self.cur))
+
+    def handle_endtag(self, tag):
+        n = self.cur
+        while n is not None and n.name != tag:
+            n = n.parent
+        if n is not None and n.parent is not None:
+            self.cur = n.parent
+
+    def handle_data(self, data):
+        self.cur.children.append(data)
+
+
+def _tree(html):
+    t = _Tree()
+    t.feed(html)
+    t.close()
+    return t.root
+
+
+SECTIONS = ["drafts", "findings", "baseline-ceiling", "agreement", "both-wrong", "refinement", "cone-grid", "conditions"]
+
+
+def _td():
+    """test_diagram's fixtures; importing it raises until diagram.py exists, so only the L5 tests below are red, never the older ones."""
+    import test_diagram
+    return test_diagram
+
+
+def _artifact_inputs():
+    t = _td()
+    rows = t.crossing_rows() + t.ceiling_rows(play="s3_types_by_reach") + [t.both_wrong_row()]
+    summary = {"order": ["range_up", "vision"], "replicates": 3, "families": {
+        "range_up": {"skipped": None, "refined": [0.625], "refined_vs": {"naive_attacker": [0.625]}},
+        "vision": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": []}},
+        "arc": {"skipped": "the library has no OM_TP_FIRING_ARC_DEG (LAB-REV2-E0 not built)", "refined": [], "refined_vs": {}}}}
+    return t, rows, summary
+
+
+def _page(tmp_path, rows=None, summary=None, title="Skill lab artifact", thresholds=None):
+    from scripts.skilllab import report as report_mod
+    t, base_rows, base_summary = _artifact_inputs()
+    rows = base_rows if rows is None else rows
+    path = report_mod.artifact(base_summary if summary is None else summary, rows, t.setup_for, tmp_path, title=title, thresholds=thresholds)
+    return t, rows, Path(path).read_text(encoding="utf-8"), path
+
+
+def _sec(root, name):
+    found = root.find("section", id=name)
+    assert len(found) == 1, "section %r: %d found" % (name, len(found))
+    return found[0]
+
+
+def _lis(sec, attr):
+    return {li.attrs[attr]: li.text() for li in sec.find("li") if attr in li.attrs}
+
+
+def test_l5_artifact_writes_the_page_and_one_svg_per_notable(tmp_path):
+    from scripts.skilllab import diagram
+    t, rows, html, path = _page(tmp_path)
+    assert Path(path) == tmp_path / "artifact.html" and isinstance(path, str)
+    ids = [n.id for n in diagram.notables(rows)]
+    assert len(ids) == 3
+    assert sorted(p.name for p in (tmp_path / "diagrams").glob("*.svg")) == sorted(i + ".svg" for i in ids)
+    h1 = _tree(html).find("h1")
+    assert len(h1) == 1 and h1[0].text() == "Skill lab artifact"
+
+
+def test_l5_artifact_title_is_escaped_not_markup(tmp_path):
+    """The title is text: markup characters read back as themselves and add no element."""
+    _, _, html, _ = _page(tmp_path, title="A <b>bold</b> & \"quoted\" title")
+    root = _tree(html)
+    assert [h.text() for h in root.find("h1")] == ["A <b>bold</b> & \"quoted\" title"]
+    assert not [n for n in root.iter() if n.name == "b"]
+
+
+def test_l5_artifact_sections_are_siblings_in_the_fixed_order(tmp_path):
+    """'Sections are siblings': eight sections with one parent, none nested in another, none inside a heading, in the header's order."""
+    _, _, html, _ = _page(tmp_path)
+    root = _tree(html)
+    sections = root.find("section")
+    assert [s.attrs["id"] for s in sections] == SECTIONS
+    assert len({id(s.parent) for s in sections}) == 1
+    for s in sections:
+        assert not [n for n in s.iter() if n is not s and n.name == "section"]
+        assert not [a for a in [s.parent] if a.name in ("h1", "h2")]
+    assert not [n for n in root.find("h2") if n.find("svg") or n.find("section")]
+
+
+def test_l5_artifact_findings_one_sentence_the_exact_diagram_and_the_counts_per_notable(tmp_path):
+    from scripts.skilllab import diagram
+    t, rows, html, _ = _page(tmp_path)
+    ns = diagram.notables(rows)
+    rendered = diagram.render_all(rows, t.setup_for)
+    findings = _sec(_tree(html), "findings")
+    h2 = findings.find("h2")
+    assert [h.attrs["data-notable"] for h in h2] == [n.id for n in ns]
+    kids = findings.elements()
+    for n, h in zip(ns, h2):
+        assert rendered[n.id] in html                                       # the exact diagram.render text
+        i = kids.index(h)
+        svg = kids[i + 1]                                                   # the svg is the h2's NEXT element sibling, not inside it
+        assert svg.name == "svg" and svg.attrs.get("id") == n.id and svg.parent is findings
+    cross, ceil, wrong = ns
+    words = h2[0].text()
+    for w in (cross.family, cross.play, cross.layout, cross.role, repr(cross.knob_lo), repr(cross.knob_hi), "crosses"):
+        assert w in words, w
+    words = h2[1].text()
+    for w in (ceil.play, ceil.layout, repr(ceil.knob_lo), "ceiling hit"):
+        assert w in words, w
+    assert "no gain" not in words
+    assert "both predictions were wrong" in h2[2].text()
+
+
+def test_l5_artifact_crossing_counts_sit_under_the_diagram_with_the_break_even_of_each_scan(tmp_path):
+    """Decision 31 D: the sentence under the diagram gives the counts. PLAY_BE (8 at 0.5, 32 at 0.75) against a flat baseline of 16: each
+    scan's break-even and first lost headcount, per knob value."""
+    from scripts.skilllab import diagram
+    t, rows, html, _ = _page(tmp_path)
+    cross = [n for n in diagram.notables(rows) if n.kind == diagram.CROSSING][0]
+    findings = _sec(_tree(html), "findings")
+    kids = findings.elements()
+    svg = [k for k in kids if k.name == "svg" and k.attrs.get("id") == cross.id][0]
+    counts = [k for k in kids if k.name == "p" and k.attrs.get("data-notable") == cross.id]
+    assert len(counts) == 1 and "counts" in counts[0].attrs.get("class", "").split()
+    assert kids.index(counts[0]) > kids.index(svg)
+    got = {(sp.attrs["data-scan"], float(sp.attrs["data-knob"])): (sp.attrs["data-beats"], sp.attrs["data-loses-to"]) for sp in counts[0].find("span")
+           if "count" in sp.attrs.get("class", "").split()}
+    assert got == {("play", 0.5): ("8", "16"), ("naive_attacker", 0.5): ("16", "24"), ("play", 0.75): ("32", "40"), ("naive_attacker", 0.75): ("16", "24")}
+    text = counts[0].text()
+    for number in ("8", "16", "24", "32", "40"):
+        assert re.search(r"(?<![\d.])%s(?![\d.])" % number, text), number
+
+
+def test_l5_artifact_crossing_counts_of_a_ceiling_scan_have_no_lost_headcount(tmp_path):
+    """A scan that won everywhere has beats = the top and data-loses-to empty (negative control of the lost headcount)."""
+    t = _td()
+    rows = t.sweep_rows({0.5: None, 0.75: 48}, {"naive_attacker": {0.5: 16, 0.75: 16}})
+    _, _, html, _ = _page(tmp_path, rows=rows)
+    spans = {(sp.attrs["data-scan"], float(sp.attrs["data-knob"])): (sp.attrs["data-beats"], sp.attrs["data-loses-to"])
+             for sp in _tree(html).find("span") if "count" in sp.attrs.get("class", "").split()}
+    assert spans[("play", 0.75)] == ("48", "") and spans[("play", 0.5)] == ("0", "8")
+
+
+def test_l5_artifact_agreement_section_is_the_charts_table_over_family_play_groups(tmp_path):
+    t, rows, html, _ = _page(tmp_path)
+    groups = {}
+    for r in rows:
+        groups.setdefault("%s/%s" % (r["family"], r["play"]), []).append(r["agreement"])
+    assert list(groups) == ["range_up/s3_layer_above", "range_up/s3_types_by_reach", "vision/s3_layer_above"]
+    want = _tree(_charts.agreement_html(groups)).find("table")[0]
+    got = _sec(_tree(html), "agreement").find("table")
+    assert len(got) == 1 and got[0].text() == want.text()
+    assert _charts.agreement_html(groups) in html                                # verbatim
+
+
+def test_l5_artifact_lists_every_both_wrong_fight_with_its_csv_values(tmp_path):
+    """Several both_wrong rows (a play row, a baseline row, a control row): the list is not truncated; the role and a control's kind show."""
+    t = _td()
+    wrong = [t.both_wrong_row(), t.both_wrong_row(baseline="naive_attacker", ticks=301), t.both_wrong_row(kind="control_null", firing_window=(7.0, 9.0))]
+    rows = t.crossing_rows() + wrong
+    _, _, html, _ = _page(tmp_path, rows=rows)
+    items = _lis(_sec(_tree(html), "both-wrong"), "data-row")
+    idx = [i for i, r in enumerate(rows) if r["agreement"] == "both_wrong"]
+    assert list(items) == [str(i) for i in idx] and len(idx) == 3
+    for i in idx:
+        r = rows[i]
+        text = items[str(i)].split()
+        for col in ("outcome", "predicted_count", "predicted_type", "firing_window_0", "firing_window_1"):
+            assert str(r[col]) in text, (i, col)
+    assert "naive_attacker" in items[str(idx[1])] and "control_null" in items[str(idx[2])]
+    assert "naive_attacker" not in items[str(idx[0])] and "control_" not in items[str(idx[0])]
+
+
+def test_l5_artifact_with_nothing_notable_has_no_diagram_and_says_so(tmp_path):
+    """The control of the spec row: a fake with no crossing, no ceiling hit and no both_wrong produces no diagram."""
+    t = _td()
+    rows = t.sweep_rows({0.25: 32, 0.5: 32, 0.75: 40, 1.0: 40}, {"naive_attacker": t.FLAT16})
+    _, _, html, _ = _page(tmp_path, rows=rows)
+    root = _tree(html)
+    text = _sec(root, "findings").text()
+    for w in ("no crossing", "no ceiling hit", "no both_wrong fight"):
+        assert w in text, w
+    assert not root.find("svg") and not list((tmp_path / "diagrams").glob("*.svg"))
+    both = _sec(root, "both-wrong")
+    assert not both.find("li") and "no both_wrong fight" in both.text()
+
+
+def test_l5_artifact_lists_a_baseline_that_also_wins_everywhere_as_baseline_ceiling_not_a_notable(tmp_path):
+    """Decision 29 item 3: naive_attacker beats 48 at 0.5; listed with its role, and it makes no finding of its own."""
+    from scripts.skilllab import diagram
+    t = _td()
+    rows = t.sweep_rows({0.5: 24, 1.0: 24}, {"naive_attacker": {0.5: 48, 1.0: 48}})
+    assert [n for n in diagram.notables(rows) if n.kind != diagram.CROSSING] == []
+    _, _, html, _ = _page(tmp_path, rows=rows)
+    root = _tree(html)
+    items = _sec(root, "baseline-ceiling").find("li")
+    assert [(li.attrs["data-role"], float(li.attrs["data-knob"])) for li in items] == [("naive_attacker", 0.5), ("naive_attacker", 1.0)]
+    assert all("baseline_ceiling" in li.text() and "naive_attacker" in li.text() for li in items)
+    assert not [h for h in _sec(root, "findings").find("h2") if "ceiling hit" in h.text()]
+
+
+def test_l5_artifact_baseline_ceiling_section_says_none_when_there_is_none(tmp_path):
+    _, _, html, _ = _page(tmp_path)
+    sec = _sec(_tree(html), "baseline-ceiling")
+    assert not sec.find("li") and "no baseline_ceiling" in sec.text()
+
+
+def test_l5_artifact_refinement_section_is_the_charts_listing(tmp_path):
+    t, rows, html, _ = _page(tmp_path)
+    _, _, summary = _artifact_inputs()
+    want = _tree(_charts.refinement_html(summary["families"])).find("table")[0]
+    got = _sec(_tree(html), "refinement").find("table")
+    assert len(got) == 1 and got[0].text() == want.text()
+
+
+def test_l5_artifact_cone_grid_section_is_the_charts_grid_or_says_there_is_no_cone_family(tmp_path):
+    t = _td()
+    root = _tree(_page(tmp_path / "none")[2])
+    assert "no cone family" in _sec(root, "cone-grid").text() and not _sec(root, "cone-grid").find("table")
+    rows = t.cone_series("half=22.5", {150: 8, 300: 32, 600: 40}) + t.cone_series("half=45", {150: 8, 300: 32, 600: 40})
+    _, _, html, _ = _page(tmp_path / "cone", rows=rows)
+    tables = _sec(_tree(html), "cone-grid").find("table")
+    assert len(tables) == 1 and tables[0].text() == _tree(_charts.cone_grid_html(rows)).find("table")[0].text()
+
+
+def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
+    """Decision 29 item 4, 31 F. Arc skipped -> no arc; opening window because there are rows; the four always-in-force numbers present;
+    each name once; no slope divisor and no band (the 0.25x to 4x band is a ruling, not a draft number)."""
+    from scripts.skilllab import contract
+    t, rows, summary = _artifact_inputs()
+    root = _tree(_page(tmp_path)[2])
+    names = [li.attrs["data-draft"] for li in _sec(root, "drafts").find("li") if "data-draft" in li.attrs]
+    assert sorted(names) == sorted(["DRAFT-opening-window-ticks", "DRAFT-guard-radius", "DRAFT-mixes", "DRAFT-reengage-silence-ticks",
+                                    "DRAFT-scale-marks"])
+    assert not [n for n in names if "slope" in n or "band" in n]
+    opening = [li for li in _sec(root, "drafts").find("li") if li.attrs.get("data-draft") == "DRAFT-opening-window-ticks"][0]
+    assert str(contract.OPENING_WINDOW_TICKS) in opening.text().split()
+    live = {**summary, "families": {**summary["families"], "arc": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": []}},
+                                     "cone": {"skipped": None, "refined": [], "refined_vs": {}}}}
+    root2 = _tree(_page(tmp_path / "live", summary=live)[2])
+    names2 = [li.attrs["data-draft"] for li in _sec(root2, "drafts").find("li") if "data-draft" in li.attrs]
+    assert sorted(names2) == sorted(names + ["DRAFT-firing-arc-deg", "DRAFT-aoe-cone-range", "DRAFT-aoe-cone-deg", "DRAFT-aoe-cone-share"])
+    assert len(names2) == len(set(names2))
+
+
+def test_l5_artifact_without_rows_does_not_mark_the_opening_window(tmp_path):
+    """Negative control: no row means the opening window touched nothing; the other numbers in force stay listed."""
+    root = _tree(_page(tmp_path, rows=[])[2])
+    names = {li.attrs["data-draft"] for li in _sec(root, "drafts").find("li") if "data-draft" in li.attrs}
+    assert "DRAFT-opening-window-ticks" not in names and {"DRAFT-guard-radius", "DRAFT-mixes", "DRAFT-reengage-silence-ticks", "DRAFT-scale-marks"} <= names
+    assert not root.find("svg")
+
+
+# ---- the conditions section: only what the CSV rows support (decision 34 item 2); placeholders from fixtures_conditions ----------------
+import fixtures_conditions as fx  # noqa: E402
+
+NO_VERDICTS = "no condition verdicts: thresholds not supplied"
+MIRROR_SENTENCE = "mirror C1: not computed here, it lives in the engine-run evaluate_all"
+NO_C1 = "no C1: no equal-numbers cell"
+BASIS_NAMES = ("window", "whole")
+
+
+def _cls(node, name, token):
+    """Node.find by one class token (Node.find matches an attribute exactly, a class list is not one token)."""
+    return [n for n in node.find(name) if token in n.attrs.get("class", "").split()]
+
+
+def _conditions(tmp_path, rows, thresholds=None):
+    return _sec(_tree(_page(tmp_path, rows=rows, thresholds=thresholds)[2]), "conditions")
+
+
+def _attr_blob(sec):
+    """Every word a reader or a parser could see in the section: the text and every attribute name and value, lower-cased."""
+    return " ".join([sec.text()] + ["%s=%s" % kv for n in sec.iter() for kv in n.attrs.items()]).lower()
+
+
+def check_no_verdicts_with_raw_numbers(sec, counts=None, c1=None):
+    """Without thresholds: the exact sentence, the raw numbers, and no verdict anywhere."""
+    assert NO_VERDICTS in sec.text() and MIRROR_SENTENCE in sec.text()
+    blob = _attr_blob(sec)
+    for word in ("pass", "fail", "holds"):                       # whole words: the mandated sentence has "thresholds" in it
+        assert not _re.search(r"\b%s\b" % word, blob), word
+    assert not _cls(sec, "span", "threshold") and not [n for n in sec.iter() if "data-holds" in n.attrs]
+    assert not _cls(sec, "ul", "basis-differences")
+    if counts is not None:
+        got = {(tr.attrs["data-basis"], tr.attrs["data-word"]): int(tr.attrs["data-count"]) for tr in _cls(sec, "tr", "c2-count")}
+        assert got == {(b, w): n for b, per in counts.items() for w, n in per.items()}
+    if c1 is not None:
+        check_c1_numbers(sec, c1)
+
+
+def check_c1_numbers(sec, c1):
+    """c1[basis][(knob value, role)] = (advantage, baseline max); lines are in (basis, knob ascending, role) order, one per key."""
+    lines = _cls(sec, "tr", "c1")
+    assert [(tr.attrs["data-basis"], float(tr.attrs["data-knob"]), tr.attrs["data-baseline"]) for tr in lines] == [
+        (b, k, r) for b in BASIS_NAMES for (k, r) in sorted(c1[b])]
+    for tr in lines:
+        adv, noise = c1[tr.attrs["data-basis"]][(float(tr.attrs["data-knob"]), tr.attrs["data-baseline"])]
+        assert tr.attrs["data-code"] == "C1@" + tr.attrs["data-baseline"]
+        assert (tr.attrs["data-family"], tr.attrs["data-play"], tr.attrs["data-layout"], tr.attrs["data-point"]) == ("range_up", "s3_layer_above", "81", "-")
+        assert float(tr.attrs["data-advantage"]) == adv and float(tr.attrs["data-baseline-max"]) == noise
+
+
+def test_l5_artifact_conditions_without_thresholds_say_so_and_list_the_raw_agreement_counts(tmp_path):
+    """Decision 34 item 2: no thresholds -> the exact sentence, the counts per basis (window: the agreement column; whole: type re-read
+    from firing_unit_seconds), no verdict, none of the words pass / fail / holds. Positive control of the counts: rows 1 to 4 of c2_rows."""
+    check_no_verdicts_with_raw_numbers(_conditions(tmp_path, fx.c2_rows()), counts=fx.C2_COUNTS)
+
+
+def test_l5_artifact_conditions_without_thresholds_list_the_c1_advantages_as_numbers(tmp_path):
+    """The play's mean advantage and the baseline's largest |advantage| per basis and role, as numbers only; the two bases differ in sign."""
+    sec = _conditions(tmp_path, fx.c1_rows())
+    check_no_verdicts_with_raw_numbers(sec, c1=fx.C1_NUMBERS)
+
+
+def test_l5_artifact_conditions_without_baseline_rows_have_no_c1_line_negative_control(tmp_path):
+    """The play rows alone carry no baseline: no C1 line (counts are still listed)."""
+    sec = _conditions(tmp_path, fx.c2_rows())
+    assert not _cls(sec, "tr", "c1")
+
+
+def test_l5_artifact_conditions_with_thresholds_drop_the_not_supplied_sentence(tmp_path):
+    """Negative control of the sentence: with thresholds the section does not say that none were supplied."""
+    sec = _conditions(tmp_path, fx.c2_rows(), fx.thresholds())
+    assert "no condition verdicts" not in sec.text() and "not supplied" not in sec.text()
+
+
+def _c1_verdicts(sec):
+    return {(tr.attrs["data-basis"], tr.attrs["data-baseline"]): tr for tr in _cls(sec, "tr", "c1")}      # one knob value in the fixture
+
+
+def _c1_by_knob(sec):
+    return {(tr.attrs["data-basis"], float(tr.attrs["data-knob"]), tr.attrs["data-baseline"]): tr.attrs["data-holds"] for tr in _cls(sec, "tr", "c1")}
+
+
+def test_l5_artifact_c1_verdict_is_advantage_over_baseline_maximum_plus_the_minimum_strictly(tmp_path):
+    """Plumbing of decision 34 item 2: advantage 0.375 (window) against max 0.25 (attacker) / 0.5 (defender). Minimum 0.0625 -> 0.375 >
+    0.3125 holds for the attacker, 0.375 > 0.5625 does not for the defender; whole advantage is -0.375: neither holds. Minimum 0.125 ->
+    0.375 > 0.375 is FALSE (strict, equal is not enough). Each line names c1_min_firing_advantage and the value used."""
+    for sub, mn, want in (("lo", 0.0625, {("window", "naive_attacker"): "true", ("window", "naive_defender"): "false",
+                                          ("whole", "naive_attacker"): "false", ("whole", "naive_defender"): "false"}),
+                          ("eq", 0.125, {("window", "naive_attacker"): "false", ("window", "naive_defender"): "false",
+                                         ("whole", "naive_attacker"): "false", ("whole", "naive_defender"): "false"}),
+                          ("zero", 0.0, {("window", "naive_attacker"): "true", ("window", "naive_defender"): "false",
+                                         ("whole", "naive_attacker"): "false", ("whole", "naive_defender"): "false"})):
+        sec = _conditions(tmp_path / sub, fx.c1_rows(), fx.thresholds(c1_min_firing_advantage=mn))
+        check_c1_numbers(sec, fx.C1_NUMBERS)
+        got = _c1_verdicts(sec)
+        assert {k: tr.attrs["data-holds"] for k, tr in got.items()} == want, sub
+        for tr in got.values():
+            spans = _cls(tr, "span", "threshold")
+            assert [(s.attrs["data-name"], float(s.attrs["data-value"])) for s in spans] == [("c1_min_firing_advantage", mn)]
+            assert "c1_min_firing_advantage" in tr.text()
+
+
+def test_l5_artifact_c1_verdict_uses_the_value_it_was_given_not_a_default(tmp_path):
+    """The threshold value shown is the one supplied: a minimum of 0.5 flips the attacker's window line (0.375 > 0.75 is false)."""
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds(c1_min_firing_advantage=0.5))
+    got = _c1_verdicts(sec)
+    assert got[("window", "naive_attacker")].attrs["data-holds"] == "false"
+    assert float(_cls(got[("window", "naive_attacker")], "span", "threshold")[0].attrs["data-value"]) == 0.5
+
+
+def test_l5_artifact_whole_fight_words_come_from_the_firing_count_and_the_weighted_type(tmp_path):
+    """Decision 35 item 2. Rows 3 and 6 of c2_rows have firing and weighted totals that DISAGREE: the whole-fight type is read from
+    weighted_unit_seconds, the count from firing_unit_seconds. Rows 4 and 5 are a count tie and a type tie (n/a). The whole counts differ
+    from the window counts, and a type read from the firing totals would turn row 3 into both_right and row 6 into both_wrong."""
+    sec = _conditions(tmp_path, fx.c2_rows())
+    got = {(tr.attrs["data-basis"], tr.attrs["data-word"]): int(tr.attrs["data-count"]) for tr in _cls(sec, "tr", "c2-count")}
+    assert got[("whole", "count_right_type_wrong")] == 1 and got[("whole", "count_wrong_type_right")] == 1      # rows 3 and 6
+    assert got[("whole", "both_right")] == 2 and got[("whole", "n/a")] == 2 and got[("whole", "both_wrong")] == 0
+    assert got[("window", "both_wrong")] == 2 and got[("window", "n/a")] == 0                                   # the window words are the column
+    assert {(b, w): n for (b, w), n in got.items()} == {(b, w): n for b, per in fx.C2_COUNTS.items() for w, n in per.items()}
+
+
+def test_l5_artifact_c1_reads_only_the_equal_numbers_cell(tmp_path):
+    """Decision 35 item 3, negative control: rows at enemy_heads 24 (the play loses, the baselines win) change no C1 number or verdict."""
+    t = fx.thresholds()
+    base = _conditions(tmp_path / "a", fx.c1_rows(), t)
+    more = _conditions(tmp_path / "b", fx.c1_rows() + fx.c1_off_cell_rows(), t)
+    check_c1_numbers(more, fx.C1_NUMBERS)
+    assert {k: v for k, v in _c1_by_knob(more).items()} == _c1_by_knob(base)
+
+
+def test_l5_artifact_c1_is_per_knob_value_never_pooled(tmp_path):
+    """Two knob values of one series: separate lines in (knob ascending, role) order with their own numbers and verdicts. Minimum 0.0625:
+    attacker window true at 0.5 and false at 0.25, whole true at 0.25 and false at 0.5 (pooled they would match neither)."""
+    sec = _conditions(tmp_path, fx.c1_two_knob_rows(), fx.thresholds())
+    check_c1_numbers(sec, fx.C1_TWO_KNOB_NUMBERS)
+    got = _c1_by_knob(sec)
+    assert got[("window", 0.25, "naive_attacker")] == "false" and got[("window", 0.5, "naive_attacker")] == "true"
+    assert got[("whole", 0.25, "naive_attacker")] == "true" and got[("whole", 0.5, "naive_attacker")] == "false"
+    assert got[("window", 0.5, "naive_defender")] == "false" and got[("whole", 0.5, "naive_defender")] == "false"
+    diff = _cls(sec, "ul", "basis-differences")[0].find("li")                      # the two attacker lines flip between the bases, per knob
+    assert sorted((li.attrs["data-code"], float(li.attrs["data-knob"]), li.attrs["data-window"], li.attrs["data-whole"]) for li in diff) == [
+        ("C1@naive_attacker", 0.25, "false", "true"), ("C1@naive_attacker", 0.5, "true", "false")]
+
+
+def _none_lines(sec):
+    return [(p.attrs["data-knob"], p.attrs["data-baseline"], p.text()) for p in _cls(sec, "p", "c1-none")]
+
+
+def test_l5_artifact_a_scan_cut_below_the_equal_numbers_cell_has_no_c1_and_says_so(tmp_path):
+    """Decision 35 item 3: play and attacker rows at enemy_heads 8 only. No C1 line, one 'no C1' paragraph naming the series, knob and
+    role; with and without thresholds; and the not-computed mirror sentence is there too. Negative to the c1_rows controls above."""
+    for sub, thr in (("none", None), ("thr", fx.thresholds())):
+        sec = _conditions(tmp_path / sub, fx.c1_cut_rows(), thr)
+        assert not _cls(sec, "tr", "c1") and MIRROR_SENTENCE in sec.text()
+        paras = _cls(sec, "p", "c1-none")
+        assert len(paras) == 1 and NO_C1 in paras[0].text()
+        p = paras[0]
+        assert (p.attrs["data-family"], p.attrs["data-play"], p.attrs["data-layout"], p.attrs["data-point"], float(p.attrs["data-knob"]),
+                p.attrs["data-baseline"]) == ("range_up", "s3_layer_above", "81", "-", 0.5, "naive_attacker")
+
+
+def test_l5_artifact_a_role_missing_the_cell_loses_its_c1_and_keeps_the_others(tmp_path):
+    """The attacker has no row at 16: its line is replaced by a 'no C1' paragraph; the defender, which has the cell, keeps its C1 line."""
+    sec = _conditions(tmp_path, fx.c1_baseline_missing_rows(), fx.thresholds())
+    assert sorted({tr.attrs["data-baseline"] for tr in _cls(sec, "tr", "c1")}) == ["naive_defender"]
+    assert [(k, r) for k, r, _ in _none_lines(sec)] == [("0.5", "naive_attacker")] and NO_C1 in _none_lines(sec)[0][2]
+
+
+def test_l5_artifact_a_scan_with_the_cell_has_no_no_c1_paragraph_negative_control(tmp_path):
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds())
+    assert not _cls(sec, "p", "c1-none") and NO_C1 not in sec.text()
+
+
+def test_l5_artifact_says_the_mirror_c1_lives_in_the_engine_run_evaluate_all(tmp_path):
+    """Decision 35 item 4, with and without thresholds, with and without baseline rows."""
+    for sub, rows, thr in (("a", fx.c1_rows(), None), ("b", fx.c1_rows(), fx.thresholds()), ("c", fx.c2_rows(), fx.thresholds())):
+        assert MIRROR_SENTENCE in _conditions(tmp_path / sub, rows, thr).text(), sub
+
+
+def _c2_lines(sec):
+    return _cls(sec, "tr", "c2-verdict")
+
+
+def test_l5_artifact_c2_verdict_lines_are_pooled_then_cells_on_each_basis_with_their_threshold_names(tmp_path):
+    """The C2 lines of c2_rows(): per basis the pooled line (4 fights) then the cells 16 (3) and 24 (1), window then whole; each names the
+    three C2 fields with the values used. Pass marks met whatever the rows are (placeholders): every line holds."""
+    t = fx.thresholds()
+    sec = _conditions(tmp_path, fx.c2_rows(), t)
+    lines = _c2_lines(sec)
+    assert [(tr.attrs["data-basis"], tr.attrs["data-scope"], tr.attrs["data-enemy-heads"], int(tr.attrs["data-fights"])) for tr in lines] == fx.C2_LINES
+    assert all(tr.attrs["data-code"] == "C2" and tr.attrs["data-holds"] == "true" for tr in lines)
+    want = {"c2_rank_agreement": t.c2_rank_agreement, "c2_off_trend_margin": t.c2_off_trend_margin, "c2_off_trend_share": t.c2_off_trend_share}
+    for tr in lines:
+        assert {s.attrs["data-name"]: float(s.attrs["data-value"]) for s in _cls(tr, "span", "threshold")} == want
+        for name in want:
+            assert name in tr.text()
+    for b, per in fx.C2_COUNTS.items():                                            # the raw counts stay beside the verdicts
+        assert {tr.attrs["data-word"]: int(tr.attrs["data-count"]) for tr in _cls(sec, "tr", "c2-count") if tr.attrs["data-basis"] == b} == per
+
+
+def test_l5_artifact_c2_verdict_follows_each_of_its_two_supplied_marks_negative_controls(tmp_path):
+    """A rank mark above every possible correlation makes every line fail; a share mark below every possible share does too; the value
+    shown is the value supplied."""
+    for sub, over in (("rank", dict(c2_rank_agreement=fx.DRAFT_UNCONFIRMED_C2_RANK_AGREEMENT_NEVER_MET)),
+                      ("share", dict(c2_off_trend_share=fx.DRAFT_UNCONFIRMED_C2_OFF_TREND_SHARE_NEVER_MET))):
+        sec = _conditions(tmp_path / sub, fx.c2_rows(), fx.thresholds(**over))
+        lines = _c2_lines(sec)
+        assert len(lines) == len(fx.C2_LINES) and all(tr.attrs["data-holds"] == "false" for tr in lines), sub
+        name, value = next(iter(over.items()))
+        assert all(float(s.attrs["data-value"]) == value for tr in lines for s in _cls(tr, "span", "threshold") if s.attrs["data-name"] == name)
+
+
+def _differences(sec):
+    uls = _cls(sec, "ul", "basis-differences")
+    assert len(uls) == 1
+    return {li.attrs["data-code"]: (li.attrs["data-window"], li.attrs["data-whole"]) for li in uls[0].find("li")}
+
+
+def test_l5_artifact_lists_the_verdicts_that_differ_between_the_bases_and_only_those(tmp_path):
+    """Minimum 0.0625: the attacker line holds on the window and not on the whole fight (listed); the defender line fails on both and every
+    C2 line is met on both (placeholders): only the attacker line is listed. Positive and negative controls in one."""
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds())
+    assert _differences(sec) == {"C1@naive_attacker": ("true", "false")}
+    li = _cls(sec, "ul", "basis-differences")[0].find("li")[0]
+    assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-point"]) == ("range_up", "s3_layer_above", "81", "-")
+    assert float(li.attrs["data-knob"]) == 0.5
+
+
+def test_l5_artifact_says_no_verdict_differs_when_the_bases_agree(tmp_path):
+    """A minimum no advantage can exceed: every C1 line fails on both bases, every C2 line is met on both -> no difference."""
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds(c1_min_firing_advantage=100.0))
+    assert "no verdict differs between the bases" in sec.text() and not sec.find("li")
+
+
+def test_l5_artifact_is_deterministic_and_self_contained(tmp_path):
+    _, _, a, _ = _page(tmp_path / "a", rows=fx.c1_rows() + fx.c2_rows(), thresholds=fx.thresholds())
+    _, _, b, _ = _page(tmp_path / "b", rows=fx.c1_rows() + fx.c2_rows(), thresholds=fx.thresholds())
+    assert a == b
+    for url in re.findall(r'(?:href|src)=["\']([^"\']+)', a) + re.findall(r"url\(\s*['\"]?([^)'\"]+)", a):
+        assert url.startswith(("#", "data:", "https://fonts.googleapis.com")), url
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 fix pass 2 (decision 32 item 3, decision 26): a scan cut by baseline_no_fit is never read as "no crossing exists".
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 32 items 2 and 3, decision 26; interface of the entry key
+# fixed by tests/skilllab/test_sweep_baselines.py on push/labrev2-base-tests (header: "The entry (sweep) ... carry `baseline_no_fit`").
+#
+# INTERFACE FIXED HERE (additions to report.artifact; nothing earlier changes):
+#   summary["families"][family]["baseline_no_fit"] = [ {"family", "play", "layout", "last_headcount"}, ... ]  (sweep's entry key; the key
+#       may be missing (an older summary) or empty: nothing was cut). last_headcount K is an int (the last headcount the play was scanned
+#       at) or None (the baseline could not be placed even at headcount 8: no scan rows of that play on that layout exist).
+#   CUT SCANS ARE READ FROM THE SUMMARY ENTRIES ONLY. Rows of a cut scan carry the label column `baseline_no_fit` = 1 (decision 26) and
+#       ceiling_hit 0; the artifact neither needs nor reads that column (the CSV text of it is "1", which diagram.read_rows may or may not
+#       type), and a row is never turned into a notable by it.
+#   In <section id="findings">, AFTER the last notable block (after every h2/svg/p of the notables), when at least one entry of any family
+#       is cut: ONE <ul class="cut-scans"> (class token "cut-scans"), last element child of the section, holding one
+#           <li data-cut-scan data-family="<family>" data-play="<play>" data-layout="<layout>" data-last-headcount="<K or empty>">
+#       per cut entry, in summary["order"] family order and, inside a family, in the entry's list order (a family in the summary but not
+#       in "order" is not read, as everywhere else). The li text holds the family, the play and the layout, and
+#           K an int, the play WON EVERY CELL of the pair (an always-won cut scan, decision 32 item 3):
+#                      the exact sentence  "won through K, scan cut by baseline_no_fit"   (K as an integer: "24", never "24.0")
+#           K an int, the play LOST some cell of the pair (decision 32 item 3, second sentence; fix pass 3):
+#                      the exact sentence  "scan cut by baseline_no_fit at K"   and NO "won through" in the li or anywhere on the page
+#                      (it was false for such a scan); the scan's normal result is unchanged beside it: a crossing keeps its notable,
+#                      h2, svg and counts; no extra sentence says "no crossing"
+#           K None:    the layout listed as `baseline_no_fit` and the exact sentence  "no scan: baseline_no_fit at the smallest headcount"
+#                      (data-last-headcount is the empty string; the words "won through" do not appear)
+#       HOW THE ARTIFACT KNOWS "always won" (K an int only): from the CSV rows of that (family, play, layout) -- every row with baseline
+#       "none" and kind grid or refined, whatever its point and knob value; baseline-role rows are not looked at. Always won = every
+#       such row has outcome "side0" (every cell won, as diagram.notables reads a cell). A single row of any other outcome (a loss, a
+#       draw, a cap), at any headcount including K, makes the scan "lost some cell". A pair is judged by its own rows only: another
+#       play's or layout's loss never changes it. The two li data attributes and the entry order are the same for both sentences.
+#       When nothing is cut there is no <ul class="cut-scans"> and the page holds the text "baseline_no_fit" nowhere.
+#   An ALWAYS-WON cut scan is NOT a ceiling hit and not a notable: it adds no h2, no svg, no <p class="counts">, no row to the baseline-ceiling list,
+#       and the text of its li holds neither "ceiling hit" nor "no crossing". Notables of other (play, layout) pairs are unchanged.
+#   (Ruled: decision 32 item 3 is read as above, Architect 2026-10-19; the earlier "NOT PINNED" question is closed. The case of K an int
+#   with no rows at all for the pair is NOT pinned: no test builds it.)
+#   Fakes: rows written with rows.fight_row (the label baseline_no_fit=1 on the cut rows, ceiling_hit 0), one knob value (so no crossing
+#   can exist), headcounts 8..K only.
+# =====================================================================================================================
+from scripts.skilllab import rows as _rows_mod  # noqa: E402
+
+CUT = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": 24}
+CUT_SENTENCE = "won through 24, scan cut by baseline_no_fit"
+NO_SCAN_SENTENCE = "no scan: baseline_no_fit at the smallest headcount"
+
+
+def _cut_rows(play="s3_layer_above", layout="192", family="range_up", top=24, baseline_roles=("none", "naive_attacker"), lost=()):
+    """The rows of a cut scan: headcounts 8..top, the play wins every cell except those in `lost` (default: always won), one knob value,
+    ceiling_hit 0, label baseline_no_fit 1."""
+    t = _td()
+    out = []
+    for role in baseline_roles:
+        for h in (8, 16, 24, 32, 40, 48):
+            if h > top:
+                continue
+            won = role == "none" and h not in lost
+            row = _rows_mod.fight_row(t.fr("side0" if won else "side1"), knob=t.KNOB[family], knob_value=0.5, baseline=role,
+                                               ceiling_hit=0, prefight="ok", family=family, play=play, layout=layout, kind="grid",
+                                               enemy_heads=h, baseline_no_fit=1)
+            row["point"] = "-"
+            out.append(row)
+    return out
+
+
+def _summary_with(*cuts, family="range_up"):
+    """The artifact fixture's summary with `cuts` as the baseline_no_fit list of `family`'s entry."""
+    _, _, summary = _artifact_inputs()
+    summary["families"][family] = dict(summary["families"][family], baseline_no_fit=list(cuts))
+    return summary
+
+
+def _cut_lis(html):
+    sec = _sec(_tree(html), "findings")
+    uls = [u for u in sec.find("ul") if "cut-scans" in u.attrs.get("class", "").split()]
+    return sec, uls, [li for u in uls for li in u.find("li")]
+
+
+def test_l5_artifact_says_won_through_k_for_a_scan_cut_by_baseline_no_fit(tmp_path):
+    """Decision 32 item 3, positive control: the cut (play, layout) reads 'won through 24, scan cut by baseline_no_fit', K an integer."""
+    t, base_rows, _ = _artifact_inputs()
+    _, _, html, _ = _page(tmp_path, rows=base_rows + _cut_rows(), summary=_summary_with(CUT))
+    sec, uls, lis = _cut_lis(html)
+    assert len(uls) == 1 and len(lis) == 1
+    li = lis[0]
+    assert "data-cut-scan" in li.attrs
+    assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) == ("range_up", "s3_layer_above", "192", "24")
+    text = li.text()
+    assert CUT_SENTENCE in text and "24.0" not in text
+    assert "scan cut by baseline_no_fit at" not in text                     # the other sentence is for a scan that lost a cell
+    for w in ("range_up", "s3_layer_above", "192"):
+        assert w in text, w
+    assert sec.elements()[-1] is uls[0]                                   # after the last notable block
+
+
+LOST_SENTENCE = "scan cut by baseline_no_fit at 24"
+
+
+def test_l5_artifact_cut_scan_with_a_loss_below_k_says_cut_at_k_and_never_won_through(tmp_path):
+    """Decision 32 item 3, second sentence: the play lost the cell at 16 (won 8 and 24): 'scan cut by baseline_no_fit at 24', and no
+    'won through' in the li or on the page; the other li data and the no-notable result are unchanged. Negative to the positive control above."""
+    from scripts.skilllab import diagram
+    rows = _cut_rows(lost=(16,))
+    assert diagram.notables(rows) == []                                    # fixture sanity: a single knob value makes no crossing
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(CUT))
+    sec, uls, lis = _cut_lis(html)
+    assert len(uls) == 1 and len(lis) == 1
+    li = lis[0]
+    assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) == ("range_up", "s3_layer_above", "192", "24")
+    text = li.text()
+    assert LOST_SENTENCE in text and "24.0" not in text
+    for w in ("range_up", "s3_layer_above", "192"):
+        assert w in text, w
+    assert "won through" not in text and "won through" not in html and CUT_SENTENCE not in html
+    assert "ceiling hit" not in text and "no crossing" not in text
+    assert sec.elements()[-1] is uls[0]
+
+
+def test_l5_artifact_cut_scan_with_a_loss_keeps_its_crossing_notable_and_diagram(tmp_path):
+    """A cut scan that lost cells keeps its normal result beside the sentence: crossing_rows (range_up, s3_layer_above, layout 81) cut at
+    headcount 40 still gives the crossing notable with its h2, its svg and its counts, and the li reads 'scan cut by baseline_no_fit at 40'."""
+    from scripts.skilllab import diagram
+    t = _td()
+    rows = [r for r in t.crossing_rows() if r["enemy_heads"] <= 40]
+    cut = {"family": "range_up", "play": "s3_layer_above", "layout": "81", "last_headcount": 40}
+    ns = diagram.notables(rows)
+    assert [n.kind for n in ns] == [diagram.CROSSING]                      # fixture sanity: the cut rows still cross once
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(cut))
+    root = _tree(html)
+    findings = _sec(root, "findings")
+    assert [h.attrs["data-notable"] for h in findings.find("h2")] == [n.id for n in ns]
+    assert len(findings.find("svg")) == 1 and len(root.find("svg")) == 1
+    assert [p.attrs["data-notable"] for p in findings.find("p") if "counts" in p.attrs.get("class", "").split()] == [ns[0].id]
+    _, _, lis = _cut_lis(html)
+    assert len(lis) == 1 and "scan cut by baseline_no_fit at 40" in lis[0].text()
+    assert "won through" not in html and "no crossing" not in lis[0].text()
+
+
+def test_l5_artifact_each_cut_pair_is_judged_by_its_own_rows_only(tmp_path):
+    """Two cuts on one page: s3_layer_above won everything (won through 24), s3_types_by_reach lost the cell at 16 (cut at 24). The
+    loss of one does not leak into the other, in either direction (the sentence follows the pair's own rows)."""
+    won = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": 24}
+    lost = {"family": "range_up", "play": "s3_types_by_reach", "layout": "192", "last_headcount": 24}
+    rows = _cut_rows() + _cut_rows(play="s3_types_by_reach", lost=(16,))
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(won, lost))
+    _, _, lis = _cut_lis(html)
+    assert [li.attrs["data-play"] for li in lis] == ["s3_layer_above", "s3_types_by_reach"]
+    assert CUT_SENTENCE in lis[0].text() and "baseline_no_fit at" not in lis[0].text()
+    assert LOST_SENTENCE in lis[1].text() and "won through" not in lis[1].text()
+    swapped = _page(tmp_path / "s", rows=_cut_rows(lost=(16,)) + _cut_rows(play="s3_types_by_reach"), summary=_summary_with(won, lost))[2]
+    lis2 = _cut_lis(swapped)[2]
+    assert LOST_SENTENCE in lis2[0].text() and "won through" not in lis2[0].text()
+    assert CUT_SENTENCE in lis2[1].text()
+
+
+def test_l5_artifact_cut_scan_is_not_a_ceiling_hit_and_not_a_notable(tmp_path):
+    """A cut scan the play won throughout adds no notable, no svg, no baseline-ceiling entry; the other notables are unchanged (ceiling hit
+    of another play stays a ceiling hit)."""
+    from scripts.skilllab import diagram
+    t, base_rows, _ = _artifact_inputs()
+    rows = base_rows + _cut_rows()
+    assert [n.kind for n in diagram.notables(rows)] == [n.kind for n in diagram.notables(base_rows)]          # fixture sanity: rows make no notable
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(CUT))
+    root = _tree(html)
+    findings = _sec(root, "findings")
+    assert [h.attrs["data-notable"] for h in findings.find("h2")] == [n.id for n in diagram.notables(base_rows)]
+    assert len(findings.find("svg")) == 3 and len(root.find("svg")) == 3
+    assert [p.attrs["data-notable"] for p in findings.find("p") if "counts" in p.attrs.get("class", "").split()] == [diagram.notables(base_rows)[0].id]
+    assert "ceiling hit" in findings.find("h2")[1].text()                  # the other play's ceiling hit still reads as one
+    _, _, lis = _cut_lis(html)
+    assert "ceiling hit" not in lis[0].text() and "no crossing" not in lis[0].text()
+    assert not _sec(root, "baseline-ceiling").find("li")
+
+
+def test_l5_artifact_cut_scan_alone_leaves_the_findings_with_no_notable(tmp_path):
+    """Only the cut scan's rows: no h2, no svg, the section still says 'no crossing', 'no ceiling hit', 'no both_wrong fight', and lists the cut."""
+    from scripts.skilllab import diagram
+    rows = _cut_rows()
+    assert diagram.notables(rows) == []
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(CUT))
+    root = _tree(html)
+    findings = _sec(root, "findings")
+    assert not findings.find("h2") and not root.find("svg")
+    ftext = findings.text()
+    for w in ("no crossing", "no ceiling hit", "no both_wrong fight"):
+        assert w in ftext, w
+    assert CUT_SENTENCE in ftext
+
+
+def test_l5_artifact_without_a_cut_has_no_cut_list_and_no_baseline_no_fit_text(tmp_path):
+    """Negative control: an entry with an empty list, an entry without the key (older summary) and no key anywhere read alike."""
+    for summary in (_summary_with(), _artifact_inputs()[2]):
+        _, _, html, _ = _page(tmp_path / ("s%d" % id(summary)), summary=summary)
+        _, uls, lis = _cut_lis(html)
+        assert not uls and not lis
+        assert "baseline_no_fit" not in html and "scan cut by" not in html
+
+
+def test_l5_artifact_cut_with_no_scan_at_the_smallest_headcount_says_so(tmp_path):
+    """Decision 32 item 2: last_headcount None, no scan rows of that play on that layout: the layout is listed as baseline_no_fit with the
+    sentence 'no scan: baseline_no_fit at the smallest headcount' and never 'won through'."""
+    t, base_rows, _ = _artifact_inputs()
+    none_cut = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": None}
+    assert not [r for r in base_rows if (r["play"], r["layout"]) == ("s3_layer_above", "192")]            # no scan rows of the pair
+    _, _, html, _ = _page(tmp_path, rows=base_rows, summary=_summary_with(none_cut))
+    sec, uls, lis = _cut_lis(html)
+    assert len(lis) == 1
+    li = lis[0]
+    assert li.attrs["data-last-headcount"] == "" and li.attrs["data-layout"] == "192"
+    text = li.text()
+    assert NO_SCAN_SENTENCE in text and "baseline_no_fit" in text and "192" in text and "s3_layer_above" in text
+    assert "won through" not in text and "None" not in text
+    assert "won through" not in html
+
+
+def test_l5_artifact_cut_list_is_in_family_order_then_entry_order_and_each_k_is_its_own(tmp_path):
+    """Two families, one with two cuts: summary['order'] family order, then the entry's order; each li carries its own K (and the None
+    case beside an int case on the same page)."""
+    a = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": 24}
+    b = {"family": "range_up", "play": "s3_layer_above", "layout": "78", "last_headcount": None}
+    c = {"family": "vision", "play": "s3_types_by_reach", "layout": "81", "last_headcount": 40}
+    summary = _summary_with(a, b)
+    summary["families"]["vision"] = dict(summary["families"]["vision"], baseline_no_fit=[c])
+    _, _, html, _ = _page(tmp_path, rows=_cut_rows(top=24) + _cut_rows(play="s3_types_by_reach", layout="81", family="vision", top=40), summary=summary)
+    _, uls, lis = _cut_lis(html)
+    assert len(uls) == 1
+    assert [(li.attrs["data-family"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) for li in lis] == [
+        ("range_up", "192", "24"), ("range_up", "78", ""), ("vision", "81", "40")]
+    assert "won through 24, scan cut by baseline_no_fit" in lis[0].text() and NO_SCAN_SENTENCE in lis[1].text()
+    assert "won through 40, scan cut by baseline_no_fit" in lis[2].text()
+    assert "won through 40" not in lis[0].text() and "won through" not in lis[1].text()
+
+
+def test_l5_artifact_cut_list_is_deterministic(tmp_path):
+    t, base_rows, _ = _artifact_inputs()
+    pages = [_page(tmp_path / n, rows=base_rows + _cut_rows(), summary=_summary_with(CUT))[2] for n in ("a", "b")]
+    assert pages[0] == pages[1]

@@ -38,12 +38,17 @@ def _cell_summary(result):
         mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
         sizes[str(cell.enemy_heads)] = {
             "fights": k, "won": count("side0"), "lost": count("side1"),
-            "cap": count("cap"), "draw": count("draw"), "mean_margin": mean([f.margin for f in fights]),
+            "cap": count("cap"), "draw": count("draw"), "defect": cell.defect, "mean_margin": mean([f.margin for f in fights]),
             "firing_unit_seconds_side0": mean([f.firing_unit_seconds[0] for f in fights]),
             "firing_unit_seconds_side1": mean([f.firing_unit_seconds[1] for f in fights])}
-    return {"break_even": ("no break-even in range" if result.beats is None
-                           else "%d units beat %d, lose to %d" % (result.size, result.beats, result.loses_to)),
-            "beats": result.beats, "loses_to": result.loses_to, "by_enemy_size": sizes}
+    if result.ceiling_hit:
+        words = "ceiling hit: %d units beat every headcount up to %d" % (result.size, result.beats)
+    elif result.beats is None:
+        words = "no break-even in range"
+    else:
+        words = "%d units beat %d, lose to %d" % (result.size, result.beats, result.loses_to)
+    return {"break_even": words, "beats": result.beats, "loses_to": result.loses_to, "ceiling_hit": result.ceiling_hit,
+            "multi_flip": result.multi_flip, "by_enemy_size": sizes}
 
 
 def write(defn, scans, path, rule, reference_key="reference"):
