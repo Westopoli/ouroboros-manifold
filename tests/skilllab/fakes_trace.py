@@ -22,6 +22,7 @@ PARAMS = {
     "OM_TP_ROUTE_ACROSS_LAYERS": (44, 1.0, 0.0, 1.0),
     "OM_TP_LEASH_BEFORE_DAMAGE": (45, 0.0, 0.0, 1.0),
     "OM_TP_TARGET_POLICY": (46, 0.0, 0.0, 1.0),
+    "OM_TP_FIRING_ARC_DEG": (47, 360.0, 10.0, 360.0),   # LAB-REV2-E0 (spec 2026-10-14): real, default 360, lo 10, hi 360
 }
 _BY_ID = {v[0]: (k,) + v[1:] for k, v in PARAMS.items()}
 MUTATING = ("new_world", "free_world", "register_unit_type", "disable_abilities", "spawn", "order_attack_move",

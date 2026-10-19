@@ -1,5 +1,12 @@
-# spec: docs/northstar/plans/2026-10-06-layout-search-spec.md rev 2, piece P4 (LAB-SEARCH); sections 1 to 4
+# spec: docs/northstar/plans/2026-10-06-layout-search-spec.md rev 2, piece P4 (LAB-SEARCH); sections 1 to 4; LAB-REV2-L4
 """scripts/skilllab/depth.py and batches.layout_search: the Latin-hypercube draw, the depth score, the csv, summary and pages.
+
+LAB-REV2-L4 changes to this file: the scan range is 8 to 48 (ruling 4); a scan that beats the top of the range is a CEILING HIT
+and scores as one (its break-even is ENEMY_TO and it is listed in `ceiling_hits`, never in `no_gain`), including a fake or
+legacy ScanResult that says `ceiling_hit=True` with `beats=None`; BOTH naive baselines (the blob and the spread line) are
+reported for every layout (`gains` and `gains_naive_line`, `score` and `score_naive_line`); depth no longer reads
+`labels["placement_shift"]` and nothing in the Setup it builds names a retired field (decided_by_survivors, hold_anchor,
+defender_side).
 
 Seam under test: depth.run_layout(values, seed, replicates, scan_fn) calls scan_fn(label, build, replicates) once per
 play and returns a ScanResult (break-even = result.beats). Labels are the plays_space.PLAYS names for the seven skilled
@@ -43,11 +50,17 @@ def counters_s1_s2_s4(monkeypatch):
     monkeypatch.setattr(skills, "has_counter", lambda s: s in HAS_COUNTER)
 
 
+CEILING = "ceiling"      # a table value: the scan beats the top of the range
+
+
 def fake_scan(table, calls=None):
-    """table: label -> break-even or None; every label must be present."""
+    """table: label -> break-even, None (lost everywhere) or CEILING (won everywhere, beats = depth.ENEMY_TO);
+    every label must be present."""
     def scan_fn(label, build, replicates):
         if calls is not None:
             calls.append((label, build, replicates))
+        if table[label] == CEILING:
+            return scan_of(16, depth.ENEMY_TO, [cell(8, [fight(), fight()])], ceiling_hit=True)
         return scan_of(16, table[label], [cell(8, [fight(), fight()])])
     return scan_fn
 
@@ -174,7 +187,7 @@ def test_run_layout_builds_the_map_from_features_and_passes_it_to_every_build(mo
     for label in ("naive", "naive_line", "s1_hold_choke"):
         want = real(WALLED, label, 2800, f)(16, False).terrain       # the layout moved as a whole into the canvas
         assert by[label](16, False).terrain == want
-        assert by[label](16, False).decided_by_survivors is True
+        assert by[label](16, False).point is not None       # ruling 6: the shared point, set by the placed scene
 
 
 def test_run_layout_scores_from_the_scans(monkeypatch):
@@ -196,6 +209,68 @@ def test_run_layout_flags_none_break_even_as_no_gain_in_the_row(monkeypatch):
     assert rows and all(x["no_gain"] is True and x["break_even"] is None for x in rows)
     other = [x for x in r["rows"] if x["play"] == "s1_hold_choke"]
     assert all(not x.get("no_gain") for x in other)
+
+
+def test_run_layout_scores_a_ceiling_hit_as_the_top_of_the_range_not_as_no_gain(monkeypatch):
+    """Spec L4: a None break-even from a won-everywhere scan scores as a ceiling hit. The fake says ceiling_hit with beats None
+    (what a legacy or hand-built ScanResult looks like) and with beats = ENEMY_TO; both give gain ENEMY_TO - naive."""
+    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+    top = depth.ENEMY_TO
+    t = table_all()
+    t["s5_vulnerable_away"] = CEILING
+    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
+    assert r["gains"]["S5"] == top - 7 and "S5" not in r["no_gain"] and r["ceiling_hits"] == ["S5"]
+    rows = [x for x in r["rows"] if x["play"] == "s5_vulnerable_away"]
+    assert rows and all(x["break_even"] == top and x["ceiling_hit"] == 1 and not x.get("no_gain") for x in rows)
+    legacy = lambda label, build, replicates: scan_of(16, None, [cell(8, [fight(), fight()])], ceiling_hit=True)
+    scans = fake_scan(table_all())
+    r2 = depth.run_layout(values_of(), 5, 3, lambda label, b, n: legacy(label, b, n) if label == "s5_vulnerable_away" else scans(label, b, n))
+    assert r2["gains"]["S5"] == top - 7 and r2["ceiling_hits"] == ["S5"] and "S5" not in r2["no_gain"]
+
+
+def test_run_layout_positive_control_a_lost_everywhere_scan_is_still_no_gain_and_no_ceiling(monkeypatch):
+    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+    t = table_all()
+    t["s5_vulnerable_away"] = None
+    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
+    assert "S5" in r["no_gain"] and r["ceiling_hits"] == [] and all(
+        x["ceiling_hit"] == 0 for x in r["rows"] if x["play"] == "s5_vulnerable_away")
+
+
+def test_a_ceiling_hit_counts_toward_the_score_when_the_gain_reaches_g(monkeypatch):
+    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+    t = table_all(skilled=CEILING, naive=7, counter=8)
+    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
+    assert r["score"] == 5 and r["ceiling_hits"] == sorted(SKILLS)
+
+
+def test_both_naive_baselines_are_reported_per_layout(monkeypatch):
+    """gains/score against the naive blob and gains_naive_line/score_naive_line against the spread line, side by side."""
+    monkeypatch.setattr(maps, "layout_map", lambda f, s, *a, **k: FLAT)
+    t = table_all(skilled=12, naive=7, counter=8)
+    t["naive_line"] = 11
+    r = depth.run_layout(values_of(), 5, 3, fake_scan(t))
+    assert r["gains"] == {s: 5 for s in SKILLS} and r["gains_naive_line"] == {s: 1 for s in SKILLS}
+    assert r["score"] == 5 and r["score_naive_line"] == 0
+
+
+def test_depth_scan_range_is_eight_to_forty_eight():
+    """Ruling 4: enemy headcount 8 to 48 against 16."""
+    assert (depth.UNITS, depth.ENEMY_FROM, depth.ENEMY_TO) == (16, 8, 48)
+
+
+def test_real_scan_runs_the_ruled_range_with_the_default_bisection(monkeypatch):
+    from scripts.skilllab import scan as scan_module
+    seen = []
+    monkeypatch.setattr(scan_module, "scan", lambda build, size, lo, hi, **kw: seen.append((size, lo, hi, kw)) or scan_of(16, 10, []))
+    depth._real_scan(None)("naive", lambda e, sw: None, 3)
+    assert seen[0][:3] == (16, 8, 48) and seen[0][3]["replicates"] == 3 and not seen[0][3].get("full_scan")
+
+
+def test_depth_reads_no_retired_field():
+    src = (ROOT / "scripts/skilllab/depth.py").read_text()
+    for name in ("placement_shift", "decided_by_survivors", "hold_anchor", "defender_side", "stalemate", "WIN_MARGIN"):
+        assert name not in src, name
 
 
 def test_run_layout_rows_one_per_fight_with_feat_columns_play_variant_break_even(monkeypatch):
@@ -233,7 +308,9 @@ def test_run_writes_csv_with_one_row_per_fight(run_small):
     with open(csv_path, newline="") as fh:
         rows = list(csv.DictReader(fh))
     assert len(rows) == 18 * 12 * 2
-    assert {"play", "variant", "break_even", "feat_choke_width_bodies", "feat_start_distance"} <= set(rows[0])
+    assert {"play", "variant", "break_even", "feat_choke_width_bodies", "feat_start_distance", "ceiling_hit",
+            "baseline", "prefight"} <= set(rows[0])
+    assert "placement_shift" not in rows[0]
 
 
 def test_depth_summary_json_shape(run_small):
@@ -241,7 +318,8 @@ def test_depth_summary_json_shape(run_small):
     s = json.loads((out / "depth_summary.json").read_text())
     assert s["G"] == 2 and len(s["layouts"]) == 18
     lay = s["layouts"][0]
-    assert set(lay) >= {"features", "gains", "score", "no_gain"} and set(lay["features"]) == set(KEYS)
+    assert set(lay) >= {"features", "gains", "score", "no_gain", "ceiling_hits", "gains_naive_line", "score_naive_line"}
+    assert set(lay["features"]) == set(KEYS)
     assert set(lay["gains"]) == set(SKILLS) and isinstance(lay["score"], int) and 0 <= lay["score"] <= 5
     means = s["feature_means"]
     assert set(means) == set(KEYS)
@@ -344,8 +422,8 @@ def test_run_layout_naive_build_is_a_placed_scene_inside_the_canvas(monkeypatch,
     setup = {c[0]: c[1] for c in calls}[label](16, False)
     cw, ch = FLAT.canvas
     g0, g1 = [next(g for g in setup.groups if g.side == s) for s in (0, 1)]
-    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.hold_anchor]:
+    for x, y in [(g.x, g.y) for g in setup.groups] + [setup.point]:
         assert 0 <= x <= cw and 0 <= y <= ch, (x, y)
     assert g1.x - g0.x == pytest.approx(2800) and g0.y == g1.y       # the naive defender is side 1, at the choke
-    assert setup.decided_by_survivors is True and setup.defender_side == 1
-    assert setup.hold_anchor == pytest.approx((g1.x, g1.y), abs=200.0)
+    assert g1.order == "guard"                                      # it holds; the shared point is its centre of mass
+    assert setup.point == pytest.approx((g1.x, g1.y), abs=200.0)

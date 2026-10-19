@@ -1,9 +1,10 @@
 """Hand-built scenes in canvas coordinates."""
+import collections
 import dataclasses
 import math
 
-from scripts.skilllab import formations, maps, plays, plays_space
-from scripts.skilllab.contract import SHIFT_MAX, SILENCE_TICKS, Block, Group, Setup, Terrain
+from scripts.skilllab import formations, maps, plays, plays_space, timeline
+from scripts.skilllab.contract import Block, Group, Setup, Terrain
 from scripts.skilllab.terrain import shift_terrain
 
 _CANVAS = (3000.0, 1600.0)
@@ -23,23 +24,30 @@ def phase_b_choke(defenders=8):
                   layer=0, order="attack_move", params={"spacing": 30}),
             Group(side=1, unit="Vanguard", count=enemy_heads, formation="blob", x=800.0, y=800.0, facing_deg=0.0,
                   layer=0, order="attack_move", params={"radius": 80 + 12 * math.sqrt(enemy_heads)})),
-            unit_types={}, terrain=terrain)
+            unit_types={}, terrain=terrain, point=((_WALL[0] + _WALL[1]) / 2, (_GAP[0] + _GAP[1]) / 2))
     build.labels = {"play_side0": "defenders line", "play_side1": "attackers blob",
                     "status_side0": "naive", "status_side1": "naive"}
     return build
 
 
+def _placed_mean(groups):
+    """The mean of the placed unit positions of `groups` (the centre of mass of a holder, ruling 6)."""
+    pts = [p for g in groups for p in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)]
+    return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
+
+
 def guard_defenders(build):
-    """Side 1 of the built setup holds the guard order (R-096-08)."""
+    """Side 1 of the built setup holds the guard order (R-096-08); the attacker's point is the guards' placed mean (ruling 6)."""
     def wrapped(enemy_heads, swap):
         setup = build(enemy_heads, swap)
         groups = tuple(dataclasses.replace(g, order="guard") if g.side == 1 else g for g in setup.groups)
-        return dataclasses.replace(setup, groups=groups)
+        guards = [g for g in groups if g.order == "guard"]
+        return dataclasses.replace(setup, groups=groups, point=_placed_mean(guards) if guards else setup.point)
     return wrapped
 
 
 def objective_scene(start_distance, unit="Vanguard", size=16):
-    """Both groups start start_distance apart and attack-move to an objective midway between them."""
+    """Both groups start start_distance apart and attack-move to a point midway between them (a meeting, ruling 6)."""
     def build(enemy_heads, swap):
         if size < 1 or enemy_heads < 1:
             raise ValueError("size and enemy_heads must be >= 1")
@@ -48,15 +56,11 @@ def objective_scene(start_distance, unit="Vanguard", size=16):
             Group(side=side, unit=unit, count=count, formation="blob", x=x, y=0.0, facing_deg=facing, layer=0,
                   order="attack_move", goal=objective, params={"radius": 80 + 12 * math.sqrt(count)})
             for side, count, x, facing in ((0, size, -start_distance / 2, 0.0), (1, enemy_heads, start_distance / 2, 180.0)))
-        return Setup(groups=groups, unit_types={}, start_distance=start_distance, objective=objective,
-                     mopup=plays.MOPUP, mopup_interval_ticks=plays.MOPUP_INTERVAL_TICKS,
-                     max_ticks=plays.max_ticks_for(size, enemy_heads), quiet_from_first_damage=True)
+        return Setup(groups=groups, unit_types={}, point=objective, max_ticks=plays.max_ticks_for(size, enemy_heads))
     return build
 
 
 # Placed scenes (spec docs/northstar/plans/2026-10-06-layout-search-spec.md Rev 3 and Rev 4)
-FIT_STEP = 50.0          # ruled (Architect 2026-10-07): wu a formation is moved along the corridor axis per fit attempt, both directions, nearest first
-FIT_LIMIT = 800.0        # ruled (Architect 2026-10-07): the farthest it is moved before the scene gives up and records None
 BEHIND_COVER = 150.0     # provisional (2026-10-07): short-reach types stand this far in front of the long-reach ones
 AMBUSH_BEHIND = 200.0    # provisional (2026-10-07): the ambush group stands this far behind the bait group, as plays_space
 NAIVE_PLAYS = ("naive", "naive_line")
@@ -80,13 +84,6 @@ def _resolve(layout, features):
         centre, thick = (0.0, 0.0), 0.0
     lane_x = (min(b.x0 for b in lanes), max(b.x1 for b in lanes)) if features.lane_count and lanes else None
     return centre, thick, lane_x, layout.covers
-
-
-def _walkable(layout, groups, margin):
-    """Every unit of every group stands outside the layout's blocks on the group's layer."""
-    return not any(b.layer_lo <= g.layer <= b.layer_hi and b.x0 - margin <= x <= b.x1 + margin and b.y0 - margin <= y <= b.y1 + margin
-                   for g in groups for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)
-                   for b in layout.blocks)
 
 
 def _anchor_points(kind, s, centre, thick, lane_x, covers, reach):
@@ -138,17 +135,243 @@ def _groups_and_timeline(play, anchors, heads, swap):
     if play in NAIVE_PLAYS:
         return (_blob_group(0, "Vanguard", plays_space.UNITS, 0.0, 0.0, 0.0, "attack_move"), _naive_defender(play, heads)), (), {}, {}
     setup = plays_space.scan_build(play)(None, heads, False)
-    groups = setup.groups
-    if anchors.role == "defender":
-        groups = tuple(g for g in groups if g.side == 0) + (_blob_group(1, "Vanguard", heads, 0.0, 0.0, 180.0, "attack_move"),)
-    return groups, setup.timeline, setup.unit_types, setup.settings
+    return setup.groups, setup.timeline, setup.unit_types, setup.settings
+
+
+ROUTE_CELL = 50.0        # decision 7 (2026-10-14): wu of the lab-side breadth-first search grid; a cell is open when its centre is
+TERRAIN_CELL = 100.0     # OM_TERRAIN_CELL_WU (csrc/om_internal.h): the cell of the generated field's walk mask
+_MOVING = ("attack_move", "move", "group_move")
+
+
+def _lazy_engine(engine):
+    if engine is None:
+        from scripts.skilllab.engine import Engine
+        engine = Engine()
+    return engine
+
+
+def _in_block(b, layer, x, y):
+    return b.layer_lo <= layer <= b.layer_hi and b.x0 <= x <= b.x1 and b.y0 <= y <= b.y1
+
+
+def _placed(g):
+    return formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)
+
+
+def _fill_cells(n, x, y, radius):
+    """formations._blob's fill order (anchor first when n is odd, then each pair) continued without end: i = pairs, pairs + 1, ...
+    Decision 36. See also: formations._blob. n >= 2."""
+    pairs = n // 2
+    if n % 2:
+        yield float(x), float(y)
+    i = 0
+    while True:
+        d = radius * math.sqrt((i + 0.5) / pairs)
+        a = i * formations._GOLDEN_ANGLE
+        dx, dy = round(d * math.cos(a), 6), round(d * math.sin(a), 6)
+        yield float(x + dx), float(y + dy)
+        yield float(x - dx), float(y - dy)
+        i += 1
+
+
+def _route_region(terrain, layer, x, y):
+    """(cells, cell_of, start): the 50 wu route cells connected over open cells (centre in no block reaching `layer`) to the cell of
+    (x, y), or to the nearest open cell when that one is blocked (decision 38); start is None when no cell is open."""
+    cols, rows = math.ceil(terrain.canvas[0] / ROUTE_CELL), math.ceil(terrain.canvas[1] / ROUTE_CELL)
+
+    def cell_of(px, py):
+        return min(max(int(px // ROUTE_CELL), 0), cols - 1), min(max(int(py // ROUTE_CELL), 0), rows - 1)
+
+    def centre(c):
+        return (c[0] + 0.5) * ROUTE_CELL, (c[1] + 0.5) * ROUTE_CELL
+
+    def open_cell(c):
+        cx, cy = centre(c)
+        return not any(_in_block(b, layer, cx, cy) for b in terrain.blocks)
+
+    start = cell_of(x, y)
+    if not open_cell(start):
+        near = [(math.hypot(centre((i, j))[0] - x, centre((i, j))[1] - y), i, j)
+                for i in range(cols) for j in range(rows) if open_cell((i, j))]
+        if not near:
+            return set(), cell_of, None
+        start = min(near)[1:]
+    seen, queue = {start}, collections.deque([start])
+    while queue:
+        cx, cy = queue.popleft()
+        for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+            if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and open_cell(n):
+                seen.add(n)
+                queue.append(n)
+    return seen, cell_of, start
+
+
+def skip_blocked(g, terrain):
+    """A naive blob whose next cell is blocked takes the next free cell of its fill order (decisions 26, 36, 38): a point inside the
+    canvas, in no block reaching the group's layer, whose route cell is open and in the anchor's connected region. A blob of one unit
+    that cannot stand on its anchor takes the centre of the nearest open cell. A region that cannot hold the count leaves the
+    open-ground placement, which the pre-flight then reads as no_fit."""
+    if g.formation != "blob" or terrain is None or g.count < 1:
+        return g
+    width, height = terrain.canvas
+    inside = lambda p: 0.0 <= p[0] <= width and 0.0 <= p[1] <= height
+    if not terrain.blocks and all(inside(p) for p in _placed(g)):
+        return g
+    seen, cell_of, start = _route_region(terrain, g.layer, g.x, g.y)
+    free = lambda p: (inside(p) and cell_of(*p) in seen and not any(_in_block(b, g.layer, p[0], p[1]) for b in terrain.blocks))
+    if g.count == 1:
+        if free((g.x, g.y)) or start is None:
+            return g
+        return dataclasses.replace(g, formation="points", params={"points": [((start[0] + 0.5) * ROUTE_CELL, (start[1] + 0.5) * ROUTE_CELL)]})
+    reach = math.hypot(width, height) + 1.0
+    points = []
+    for p in _fill_cells(g.count, g.x, g.y, g.params["radius"]):
+        if math.hypot(p[0] - g.x, p[1] - g.y) > reach:
+            return g
+        if free(p):
+            points.append(p)
+            if len(points) == g.count:
+                break
+    if points == _placed(g):
+        return g
+    return dataclasses.replace(g, formation="points", params={"points": points})
+
+
+def _no_fit(setup, engine):
+    """A placed unit stands inside a block on its layer, or on ground a generated field says is not walkable (no shifting, ruling 6)."""
+    t = setup.terrain
+    if t is None:
+        return False
+    if any(_in_block(b, g.layer, x, y) for g in setup.groups for x, y in _placed(g) for b in t.blocks):
+        return True
+    if t.field_seed is None:
+        return False
+    engine = _lazy_engine(engine)
+    w = engine.new_world(0)
+    try:
+        engine.set_canvas(w, t.canvas[0], t.canvas[1])
+        engine.terrain_generate(w, t.field_seed, t.canvas[0])
+        return any(not engine.terrain_walkable_at(w, x, y) for g in setup.groups for x, y in _placed(g))
+    finally:
+        engine.free_world(w)
+
+
+def _field_masks(engine, setup, layers):
+    """{layer: walk mask bytes} of the generated field, or {} for a hand-built terrain."""
+    t = setup.terrain
+    if t.field_seed is None:
+        return {}
+    w = engine.new_world(0)
+    try:
+        engine.set_canvas(w, t.canvas[0], t.canvas[1])
+        engine.terrain_generate(w, t.field_seed, t.canvas[0])
+        cols, _rows, _bands = engine.terrain_dump_bands(w)
+        return {layer: (cols, engine.terrain_walk_mask(w, layer)) for layer in layers}
+    finally:
+        engine.free_world(w)
+
+
+def _walking_names(setup, engine, groups):
+    """Unit names among `groups` that walk: the play's own "movement" key, else the engine's reading (an unset type reads flying)."""
+    names = {g.unit for g in groups}
+    walking = {n for n in names if setup.unit_types.get(n, {}).get("movement") == "walking"}
+    builtin = sorted(n for n in names if n not in setup.unit_types)
+    if builtin:
+        engine = _lazy_engine(engine)
+        w = engine.new_world(0)
+        try:
+            walking |= {n for n in builtin if engine.movement_kind(w, engine.type_id(n)) == 1}
+        finally:
+            engine.free_world(w)
+    return walking
+
+
+def _unroutable(setup, engine):
+    """Some moving group has no path of open 50 wu cells from its placed positions to its target on its own layer. Every mover is routed
+    the same way; only the mask differs: a flyer's open cells are those no block reaching its layer covers, a walker's also need walkable ground."""
+    t = setup.terrain
+    if t is None:
+        return False
+    cols, rows = math.ceil(t.canvas[0] / ROUTE_CELL), math.ceil(t.canvas[1] / ROUTE_CELL)
+    anchors = timeline.first_anchors(setup)
+    movers = [g for g in setup.groups if g.order in _MOVING]
+    # See also: tests/skilllab/test_scenes_preflight_flyer.py, ground/test_slope_top_variants.py (s1_slope_top_flyer).
+    walking = _walking_names(setup, engine, movers) if movers else set()
+    walk_layers = sorted({g.layer for g in movers if g.unit in walking})
+    masks = _field_masks(_lazy_engine(engine), setup, walk_layers) if walk_layers and t.field_seed is not None else {}
+
+    def cell(x, y):
+        return min(max(int(x // ROUTE_CELL), 0), cols - 1), min(max(int(y // ROUTE_CELL), 0), rows - 1)
+
+    def open_cell(layer, walks, c):
+        x, y = (c[0] + 0.5) * ROUTE_CELL, (c[1] + 0.5) * ROUTE_CELL
+        if any(_in_block(b, layer, x, y) for b in t.blocks):
+            return False
+        if walks and layer in masks:
+            width, mask = masks[layer]
+            return bool(mask[int(y // TERRAIN_CELL) * width + int(x // TERRAIN_CELL)])
+        return True
+
+    reached = {}
+    for g in movers:
+        walks = g.unit in walking
+        target = g.goal if g.goal is not None else setup.point if setup.point is not None else anchors[1 - g.side]
+        key = (g.layer, walks, cell(*target))
+        if key not in reached:
+            seen, queue = {key[2]}, collections.deque([key[2]])
+            while queue:
+                cx, cy = queue.popleft()
+                for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and open_cell(g.layer, walks, n):
+                        seen.add(n)
+                        queue.append(n)
+            reached[key] = seen
+        seen = reached[key]
+        for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params):
+            c = cell(x, y)
+            if c not in seen and not any(n in seen for n in ((c[0] + 1, c[1]), (c[0] - 1, c[1]), (c[0], c[1] + 1), (c[0], c[1] - 1))):
+                return True
+    return False
+
+
+def _no_reach(setup, engine):
+    """Holders are the groups on guard. No type of the groups facing a holder reaches the holder's layer from its own layer."""
+    holders = [g for g in setup.groups if g.order == "guard"]
+    pairs = [(a, h) for h in holders for a in setup.groups if a.side != h.side and a.order != "guard"]
+    if not pairs or any(a.layer == h.layer for a, h in pairs):
+        return False
+    engine = _lazy_engine(engine)
+    from scripts.skilllab.fight import _register_types
+    w = engine.new_world(0)
+    try:
+        types = _register_types(engine, w, setup)
+        reach = {name: engine.profile_reach(w, tid) for name, (tid, _range) in types.items()}
+    finally:
+        engine.free_world(w)
+    return not any(-reach[a.unit][1] <= h.layer - a.layer <= reach[a.unit][0] for a, h in pairs)
+
+
+def preflight(setup, engine):
+    """"ok", or the first refusal in the order no_fit, unroutable, no_reach (decision 7, 2026-10-14). Runs no tick, moves nothing.
+    no_fit: a placed point inside a blocked cell. unroutable: a moving group cannot reach its target over the open cells of its
+    layer, a flyer's open cells being those no block reaching its layer covers and a walker's also the walkable ground). no_reach: no type facing a holder (a group
+    on guard) reaches the holder's layer; a meeting has no holder. no_fit also covers a placed point on ground a generated field
+    says is not walkable. The engine is needed only for a reach read or a generated field and is built when None."""
+    if _no_fit(setup, engine):
+        return "no_fit"
+    if _unroutable(setup, engine):
+        return "unroutable"
+    if _no_reach(setup, engine):
+        return "no_reach"
+    return "ok"
 
 
 def placed_scene(layout, play, start_distance, features, counter=False):
     """build(enemy_heads, swap) for `play` placed on `layout` (Rev 4): the defender stands already in shape at its anchor on guard,
     the attacker `start_distance` from the choke on the other side attack-moves at it. Side 0 is the skilled, counter or naive side;
     the defender is side 0 for a defender play and side 1 for an attacker play. `counter` uses a play as the counter it is
-    (plays_space.COUNTER_USE). build.labels['placement_shift'] is the signed wu the defender was moved along the corridor axis."""
+    (plays_space.COUNTER_USE). Setup.point is the defender's centre of mass (ruling 6). Nothing is shifted to fit (Q-LAB-03):
+    build.labels['prefight'] is scenes.preflight of the built Setup, and build.labels['placement_shift'] stays 0.0."""
     if play in NAIVE_PLAYS:
         anchors = _NAIVE_ANCHORS
     else:
@@ -168,23 +391,13 @@ def placed_scene(layout, play, start_distance, features, counter=False):
     def build(enemy_heads, swap):
         if enemy_heads < 1:
             raise ValueError("enemy_heads must be at least 1")
-        groups, timeline, unit_types, settings = _groups_and_timeline(play, anchors, enemy_heads, swap)
+        groups, steps_in, unit_types, settings = _groups_and_timeline(play, anchors, enemy_heads, swap)
         is_def = [g.side == ds for g in groups]
         d_idx = [i for i, g in enumerate(groups) if g.side == ds]
         positions = _defender_positions(anchors.defender, len(d_idx), mouth, anchor, s)
         placed = list(groups)
         for i, (x, y) in zip(d_idx, positions):
             placed[i] = dataclasses.replace(groups[i], x=x, y=y, facing_deg=face_d, order="guard")
-        shift = None
-        steps_out = [0] + [k * sign for k in range(1, int(FIT_LIMIT / FIT_STEP) + 1) for sign in (s, -s)]
-        for k in steps_out:
-            moved = [dataclasses.replace(placed[i], x=placed[i].x + k * FIT_STEP) for i in d_idx]
-            if _walkable(layout, moved, SHIFT_MAX) and all(
-                    abs(placed[i].x - centre[0]) < 1e-9 or (placed[i].x - centre[0]) * (g.x - centre[0]) > 0 for i, g in zip(d_idx, moved)):
-                shift = k * FIT_STEP
-                for i, g in zip(d_idx, moved):
-                    placed[i] = g
-                break
         end_y = 0.0
         if anchors.attacker == "mass_one_end":
             line = next(g for g in placed if g.side == ds)
@@ -195,17 +408,28 @@ def placed_scene(layout, play, start_distance, features, counter=False):
             goal = None
             if anchors.attacker == "mass_one_end":
                 goal = (placed[d_idx[0]].x, placed[d_idx[0]].y + end_y)
-            placed[i] = dataclasses.replace(g, x=attack_x, y=centre[1] + end_y, facing_deg=face_a, goal=goal)
-        steps = tuple(dataclasses.replace(
-            t, when=("seen",) if play == "s4_bait" else t.when, goal=None if t.goal is None else (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x),
-                                                 placed[t.group].y + t.goal[1] - groups[t.group].y)) for t in timeline)
-        points = [p for i in d_idx for p in formations.place(placed[i].formation, placed[i].count, placed[i].x, placed[i].y,
-                                                              placed[i].facing_deg, placed[i].params)]
-        hold = (sum(p[0] for p in points) / len(points) + tx, sum(p[1] for p in points) / len(points) + ty)
-        build.labels["placement_shift"] = shift
+            placed[i] = dataclasses.replace(g, x=attack_x, y=centre[1] + end_y, facing_deg=face_a, goal=goal,
+                                            order=g.order if anchors.attacker == "hold" else "attack_move")
+        hold = _placed_mean([placed[i] for i in d_idx])
         final = tuple(dataclasses.replace(g, x=g.x + tx, y=g.y + ty, goal=None if g.goal is None else (g.goal[0] + tx, g.goal[1] + ty))
                       for g in placed)
-        return Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain,
-                     decided_by_survivors=True, silence_ticks=SILENCE_TICKS, defender_side=ds, hold_anchor=hold)
-    build.labels = {"placement_shift": None}
+        point = (hold[0] + tx, hold[1] + ty)
+        if play == "naive":
+            skipped = tuple(skip_blocked(g, terrain) for g in final)
+            if skipped != final:
+                final, point = skipped, _placed_mean([g for g in skipped if g.side == ds])
+        enemy_anchor = next((g.x, g.y) for g in final if g.side == 1)
+
+        def step_goal(t):
+            if t.goal is None:
+                return None
+            if t.order == "ping":
+                return enemy_anchor
+            return (placed[t.group].x + s * abs(t.goal[0] - groups[t.group].x) + tx, placed[t.group].y + t.goal[1] - groups[t.group].y + ty)
+        steps = tuple(dataclasses.replace(t, when=("seen",) if play == "s4_bait" else t.when, goal=step_goal(t)) for t in steps_in)
+        setup = Setup(groups=final, unit_types=dict(unit_types), settings=dict(settings), timeline=steps, terrain=terrain,
+                      point=point)
+        build.labels["prefight"] = preflight(setup, None)
+        return setup
+    build.labels = {"placement_shift": 0.0, "prefight": None}
     return build

@@ -4,6 +4,9 @@
 The control is damage, not reach: on today's engine more reach made a side worse (docs/northstar/research/
 layer_dynamics/runs/2026-10-02_harness_check.md). `reach_play` stays as a knob to study; nothing here asserts
 that a reach scan beats more.
+
+LAB-REV2-L4 ruler (TD-LAB-REV2-L4-fullscan): bisection is the scan default now, so the four fixtures ask for the linear sweep (full_scan=True)
+and the comparisons read the exact break-even of each play.
 """
 import sys
 from pathlib import Path
@@ -26,22 +29,22 @@ def library():
 
 @pytest.fixture(scope="module")
 def identical_scan(library):
-    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO)
+    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
 
 
 @pytest.fixture(scope="module")
 def identical_scan_again(library):
-    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO)
+    return scan.scan(plays.blob_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
 
 
 @pytest.fixture(scope="module")
 def null_damage_scan(library):
-    return scan.scan(plays.damage_play(SIZE, factor=1.0), SIZE, ENEMY_FROM, ENEMY_TO)
+    return scan.scan(plays.damage_play(SIZE, factor=1.0), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
 
 
 @pytest.fixture(scope="module")
 def damage_scan(library):
-    return scan.scan(plays.damage_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO)
+    return scan.scan(plays.damage_play(SIZE), SIZE, ENEMY_FROM, ENEMY_TO, full_scan=True)
 
 
 def test_damage_beats_strictly_more_enemies_than_identical(damage_scan, identical_scan):

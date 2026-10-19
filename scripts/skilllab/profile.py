@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 PROFILE_SKILLS = ("S1", "S2", "S3", "S4", "S5")
@@ -20,6 +20,7 @@ class ProfileMap:
     size: int
     scans: dict      # skill subset -> ScanResult, side 0 applying exactly those skills; scans[frozenset()] is the naive control
     counters: dict   # skill -> ScanResult: that skill alone against the counter play
+    baselines: dict = field(default_factory=dict)
 
 
 def beats(scan) -> Optional[int]:

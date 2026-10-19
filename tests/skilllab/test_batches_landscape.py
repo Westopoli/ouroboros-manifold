@@ -12,7 +12,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.skilllab import batches, maps  # noqa: E402
 from scripts.skilllab.terrain import shift_terrain  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 KINDS = ("open", "block", "wall", "lane", "cover_field")
@@ -46,7 +46,7 @@ def test_landscape_cells_in_order_with_fields():
     assert d.name == "landscape" and d.title and d.scene
     assert [c.label for c in d.cells] == SCANNED
     assert d.variants == (("guard", {}),)
-    assert d.weighted is False and batches.DEFENDER_ORDER == "guard"
+    assert batches.DEFENDER_ORDER == "guard"
     for c in d.cells[:10]:
         assert (c.size, c.enemy_from, c.enemy_to, c.replicates, c.status) == (16, 8, 24, 10, "naive"), c.label
         assert c.build is not None and c.reference is not None and c.reference is not c.build
@@ -96,7 +96,6 @@ def test_scan_once_per_cell_and_once_per_reference(tmp_path):
     assert sorted(c["label"][:-4] for c in refs) == sorted(SCANNED)
     for c in fake.calls:
         assert (c["size"], c["enemy_from"], c["enemy_to"], c["replicates"]) == (16, 8, 24, 10)
-        assert c["setup"].weighted is False
     assert {c["label"] for c in fake.calls} >= set(TALL)
 
 
