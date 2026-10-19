@@ -96,6 +96,15 @@ def _cone(rng, half):
     return Point("cone", "cone", rng, {}, {"cone": {"Vanguard": (rng, half, 1.0)}}, "grid", "cone range %s half-angle %s" % (rng, half))
 
 
+def point_label(point):
+    """Decision 31 A: the series a row belongs to along its knob: a cone's half-angle, an emitting point's vision, else '-'."""
+    if point.family == "cone" and point.setup.get("cone"):
+        return "half=%s" % next(iter(point.setup["cone"].values()))[1]
+    if point.family == "emitting":
+        return "vision=%s" % point.settings["OM_TP_VISION_UP_1"]
+    return "-"
+
+
 def grid(family):
     """The coarse points of a family in the spec's order."""
     if family == "vision":
@@ -378,7 +387,7 @@ def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, f
         for f in c.fights:
             rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), baseline=baseline,
                                            ceiling_hit=0 if cut else int(result.ceiling_hit),
-                                           prefight=applied.prefight.get(c.enemy_heads, "ok"), baseline_no_fit=int(cut), family=family, play=play, layout=layout, kind=point.kind, enemy_heads=c.enemy_heads))
+                                           prefight=applied.prefight.get(c.enemy_heads, "ok"), baseline_no_fit=int(cut), family=family, play=play, layout=layout, kind=point.kind, point=point_label(point), enemy_heads=c.enemy_heads))
     return result
 
 
@@ -387,7 +396,7 @@ def _control_rows(rows, family, play, layout, point, build, replicates, fight_fn
     cell = scan_mod.cell(applied, SIZE, replicates, fight_fn=fight_fn, map_fn=map_fn)
     for f in cell.fights:
         rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), prefight=applied.prefight.get(SIZE, "ok"),
-                                       baseline_no_fit=0, family=family, play=play, layout=layout, kind=point.kind, enemy_heads=SIZE))
+                                       baseline_no_fit=0, family=family, play=play, layout=layout, kind=point.kind, point=point_label(point), enemy_heads=SIZE))
     return cell.fights
 
 
@@ -546,7 +555,7 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
             applied = Applied(control_set[name], dataclasses.replace(point, settings={}, kind="control_smoke"))
             for f in scan_mod.cell(applied, heads, replicates, fight_fn=more.get("fight_fn"), map_fn=more.get("map_fn")).fights:
                 rows.append(rows_mod.fight_row(f, family="controls", play=name, layout="none", kind="control_smoke",
-                                               enemy_heads=heads, baseline_no_fit=0))
+                                               point="-", enemy_heads=heads, baseline_no_fit=0))
             words["ok"] += 1
         rows_mod.write_rows(rows, out / "smoke.csv")
         summary = {"rows_sha256": hashlib.sha256((out / "smoke.csv").read_bytes()).hexdigest(), "rows": len(rows),
