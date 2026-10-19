@@ -1943,6 +1943,23 @@ static void om_tac_release(om_world *w, om_unit_row *u) {
     }
 }
 
+/* R-087-06 (2026-10-19): a return-fire redirect of an attack-moving unit is one engagement of its order. While it lasts
+ * order_x/y stays the point to go back to (a group member's slot; am_gid is cleared, the member left the group) and
+ * issued_x/y is the attacker's place; a lone attack-move otherwise has the two equal. */
+static int om_tac_pursuing(const om_world *w, const om_unit_row *u) {
+    return om_tac_pursue(w) && u->order == OM_ORDER_ATTACK_MOVE && u->am_gid == 0
+        && (u->issued_x != u->order_x || u->issued_y != u->order_y);
+}
+
+static void om_tac_end_pursuit(om_world *w, om_unit_row *u) {
+    u->target_id = 0;
+    u->anchor_set = 0;
+    u->halted = 0;
+    om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
+    u->issued_x = u->order_x;
+    u->issued_y = u->order_y;
+}
+
 static void om_tac_fire(om_world *w, om_unit_row *u, om_unit_row *t) {
     om_tac_state *st = om_tac(w);
     om_tac_ev_emit(st, OM_TAC_EV_FIRE, u->unit_id, (int32_t)t->unit_id);
@@ -2092,8 +2109,21 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
                 u->target_id = atk->unit_id;
             } else {
                 u->halted = 0;
-                u->order = OM_ORDER_ATTACK_MOVE;
-                u->order_x = atk->x; u->order_y = atk->y;
+                if (u->order == OM_ORDER_ATTACK_MOVE) {
+                    /* one engagement of the order: keep the point of record and hold the attacker as the target, so
+                     * its death, the leash and sight end it through the target checks below (R-087-06, R-087-08) */
+                    if (u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
+                        if (!om_unit_get_destination(w, u->unit_id, &u->order_x, &u->order_y)) {
+                            u->order_x = u->issued_x; u->order_y = u->issued_y;
+                        }
+                    }
+                    u->am_gid = 0;
+                    u->target_id = atk->unit_id;
+                    u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
+                } else {
+                    u->order = OM_ORDER_ATTACK_MOVE;
+                    u->order_x = atk->x; u->order_y = atk->y;
+                }
                 u->issued_x = atk->x; u->issued_y = atk->y;
                 om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
             }
@@ -2206,7 +2236,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             om_tac_fire(w, u, t);
         }
     } else if (u->order == OM_ORDER_ATTACK_MOVE && pursue) {
-        om_tac_release(w, u);
+        if (om_tac_pursuing(w, u)) om_tac_end_pursuit(w, u);
+        else om_tac_release(w, u);
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
         /* old path kept as baseline only, deleted at end of Phase E. See also: A199 (R-087-04), the pursue branch above */
@@ -2258,6 +2289,13 @@ static void om_tactical_ai_tick(om_world *w, om_tac_state *st) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
+        if (om_tac_pursuing(w, u)) {
+            /* arrival at the attacker's place ends the pursuit too */
+            double px, py;
+            if (!om_unit_get_destination(w, u->unit_id, &px, &py) || om_tac_dist_le(px - u->x, py - u->y, OM_TIE_EPSILON)) {
+                om_tac_end_pursuit(w, u);
+            }
+        }
         om_tac_unit_ai(w, st, u, tick);
     }
     st->validated_tick = tick;
