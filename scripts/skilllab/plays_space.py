@@ -1,5 +1,5 @@
 """Registered space-lab draft plays (spec: docs/northstar/plans/2026-10-05-space-lab-stage1-spec.md, lane "plays").
-Ten plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
+Fourteen plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
 is a named draft constant, provisional (2026-10-05), for Westley's look at docs/northstar/research/layer_dynamics/plays_drafts.md.
 Regenerate the page: python -m scripts.skilllab.plays_space"""
 import dataclasses
@@ -30,14 +30,10 @@ SPREAD_SPACING = 60.0           # spread line: wider than LINE_SPACING
 COLUMN_SPACING = 30.0
 COLUMN_COLS = 3
 SCREEN_COUNT = 8                # tough units in front; the rest are long-range behind
-SCREEN_HP_FACTOR = 2.0
-SCREEN_RANGE_FACTOR = 1.2
 SCREEN_AHEAD = 60.0
 SCREEN_BEHIND = 60.0
 # provisional (2026-10-05): S3 reach by layer
-HIGH_COUNT = 8                  # units on layer 1 that fire down one layer
 HIGH_LAYER = 1
-HIGH_DOWN_STRENGTH = 1.0        # OM_TP_{RANGE,DAMAGE,VISION}_DOWN_1
 # provisional (2026-10-05): S4 bait
 BAIT_COUNT = 4
 BAIT_FALLBACK_TICK = 100
@@ -45,17 +41,15 @@ BAIT_FALLBACK_X = -300.0        # offset behind the bait's own anchor
 CLOSE_TICK = 150                # main force attack-moves
 DETACH_COUNT = 2                # do-not-chase counter: only this many follow the bait
 # provisional (2026-10-05): S5 keep the vulnerable type away
-FRAIL_COUNT = 6
-FRAIL_HP_FACTOR = 0.5
 FRAIL_BACK = 400.0              # how far behind the strong line the frail type stands
 # provisional (2026-10-05): S1 outrange counter
 OUTRANGE_FACTOR = 1.2
 
-_LONG = {"base": "Vanguard", "scale": {"attack_range": SCREEN_RANGE_FACTOR}, "set": {}}
-_TOUGH = {"base": "Vanguard", "scale": {"max_hp": SCREEN_HP_FACTOR}, "set": {}}
-_FRAIL = {"base": "Vanguard", "scale": {"max_hp": FRAIL_HP_FACTOR}, "set": {}}
-_HIGH = {"base": "Vanguard", "scale": {}, "set": {}, "reach": (0, HIGH_LAYER)}
-_OUT = {"base": "Vanguard", "scale": {"attack_range": OUTRANGE_FACTOR}, "set": {}}
+_REACH = {"Vanguard": (0, 0), "Raider": (1, 1), "Interceptor": (2, 1), "Bombard": (0, 2), "Bastion": (0, 2)}
+
+
+def _types(*names):
+    return {n: {"base": n, "reach": _REACH[n]} for n in names if n != "Vanguard"}
 
 
 @dataclass(frozen=True)
@@ -90,13 +84,14 @@ def _line(side, unit, count, x, y=0.0, order="attack_move", spacing=LINE_SPACING
     return _g(side, unit, count, "line", x, y, order, goal, spacing=spacing)
 
 
-def _enemy(x=START_GAP / 2):
-    return _blob(1, "Vanguard", UNITS, x)
+def _enemy(mix, x=START_GAP / 2, layer=0, order="attack_move"):
+    """Side 1 fields the same mix as side 0, one blob per type, on one layer."""
+    return [_g(1, t, n, "blob", x, layer=layer, order=order, radius=80 + 12 * math.sqrt(n)) for t, n in mix]
 
 
-def _wall():
-    return Terrain(canvas=CANVAS, blocks=(Block(-WALL_HALF, -CANVAS[1] / 2, WALL_HALF, -GAP_HALF, 0, 4),
-                                          Block(-WALL_HALF, GAP_HALF, WALL_HALF, CANVAS[1] / 2, 0, 4)))
+def _wall(top=4):
+    return Terrain(canvas=CANVAS, blocks=(Block(-WALL_HALF, -CANVAS[1] / 2, WALL_HALF, -GAP_HALF, 0, top),
+                                          Block(-WALL_HALF, GAP_HALF, WALL_HALF, CANVAS[1] / 2, 0, top)))
 
 
 def _setup(groups, timeline=(), unit_types=None, terrain=None, settings=None):
@@ -106,30 +101,57 @@ def _setup(groups, timeline=(), unit_types=None, terrain=None, settings=None):
 
 
 def _hold_choke():
-    return _setup([_line(0, "Vanguard", UNITS, HOLD_X, order="guard"), _blob(1, "Vanguard", UNITS, START_GAP / 2)],
+    return _setup([_line(0, "Vanguard", UNITS, HOLD_X, order="guard"), *_enemy([("Vanguard", UNITS)])],
                   terrain=_wall())
 
 
 def _concave():
-    return _setup([_g(0, "Vanguard", UNITS, "concave", -START_GAP / 2, arc_deg=CONCAVE_ARC_DEG, radius=CONCAVE_RADIUS), _enemy()])
+    return _setup([_g(0, "Vanguard", UNITS, "concave", -START_GAP / 2, arc_deg=CONCAVE_ARC_DEG, radius=CONCAVE_RADIUS), *_enemy([("Vanguard", UNITS)])])
 
 
 def _spread_line():
-    return _setup([_line(0, "Vanguard", UNITS, -START_GAP / 2, spacing=SPREAD_SPACING), _enemy()])
+    return _setup([_line(0, "Vanguard", UNITS, -START_GAP / 2, spacing=SPREAD_SPACING), *_enemy([("Vanguard", UNITS)])])
+
+
+M1 = (("Vanguard", 8), ("Raider", 8))
+M2 = (("Vanguard", 8), ("Interceptor", 8))
+M3 = (("Vanguard", 8), ("Bombard", 8))
+M4 = (("Vanguard", 8), ("Bastion", 8))
 
 
 def _screen():
-    return _setup([_line(0, "VanguardTough", SCREEN_COUNT, -START_GAP / 2 + SCREEN_AHEAD),
-                   _line(0, "VanguardLong", UNITS - SCREEN_COUNT, -START_GAP / 2 - SCREEN_BEHIND), _enemy()],
-                  unit_types={"VanguardTough": _TOUGH, "VanguardLong": _LONG})
+    return _setup([_line(0, "Vanguard", 8, -START_GAP / 2 + SCREEN_AHEAD), _line(0, "Bombard", 8, -START_GAP / 2 - SCREEN_BEHIND)]
+                  + _enemy(M3), unit_types=_types("Bombard"))
+
+
+def _layer_above():
+    return _setup([_g(0, "Raider", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
+                   _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M1), unit_types=_types("Raider"))
 
 
 def _types_by_reach():
-    settings = {"OM_TP_%s_DOWN_1" % k: HIGH_DOWN_STRENGTH for k in ("RANGE", "DAMAGE", "VISION")}
-    return _setup([_g(0, "VanguardHigh", HIGH_COUNT, "blob", -START_GAP / 2, layer=HIGH_LAYER,
-                      radius=80 + 12 * math.sqrt(HIGH_COUNT)),
-                   _blob(0, "Vanguard", UNITS - HIGH_COUNT, -START_GAP / 2), _enemy()],
-                  unit_types={"VanguardHigh": _HIGH}, settings=settings)
+    return _setup([_g(0, "Interceptor", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
+                   _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M2), unit_types=_types("Interceptor"))
+
+
+def _over_the_choke():
+    mix = (("Vanguard", 7), ("Raider", 1), ("Bombard", 8))
+    return _setup([_g(0, "Bombard", 8, "blob", HOLD_X, layer=2, radius=80 + 12 * math.sqrt(8)),
+                   _blob(0, "Vanguard", 7, HOLD_X),
+                   _g(0, "Raider", 1, "blob", WALL_HALF + 100.0, radius=10.0)] + _enemy(mix),
+                  unit_types=_types("Raider", "Bombard"), terrain=_wall(top=1))
+
+
+def _dark_striker():
+    groups = [_g(0, "Raider", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
+              _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M1)
+    return _setup(groups, timeline=[Step.set_emission(0, False), Step.set_emission(1, False)], unit_types=_types("Raider"))
+
+
+def _ping_then_commit():
+    groups = [_g(0, "Raider", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
+              _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M1)
+    return _setup(groups, timeline=[Step.ping(0, START_GAP / 2, 0.0)], unit_types=_types("Raider"))
 
 
 def _bait_steps(bait, main, x):
@@ -141,14 +163,13 @@ def _bait():
     x = -START_GAP / 2
     return _setup([_blob(0, "Vanguard", BAIT_COUNT, x),
                    _g(0, "Vanguard", UNITS - BAIT_COUNT, "concave", x - 200, order="guard",
-                      arc_deg=CONCAVE_ARC_DEG, radius=CONCAVE_RADIUS), _enemy()],
+                      arc_deg=CONCAVE_ARC_DEG, radius=CONCAVE_RADIUS), *_enemy([("Vanguard", UNITS)])],
                   timeline=_bait_steps(0, 1, x))
 
 
 def _vulnerable_away():
-    return _setup([_line(0, "Vanguard", UNITS - FRAIL_COUNT, -START_GAP / 2),
-                   _line(0, "VanguardFrail", FRAIL_COUNT, -START_GAP / 2 - FRAIL_BACK), _enemy()],
-                  unit_types={"VanguardFrail": _FRAIL})
+    return _setup([_line(0, "Vanguard", 8, -START_GAP / 2), _line(0, "Raider", 8, -START_GAP / 2 - FRAIL_BACK)] + _enemy(M1),
+                  unit_types=_types("Raider"))
 
 
 def _mass_one_end():
@@ -169,9 +190,9 @@ def _do_not_chase():
 
 
 def _outrange():
-    return _setup([_blob(0, "VanguardOut", UNITS, -START_GAP / 2),
-                   _line(1, "Vanguard", UNITS, -HOLD_X, order="guard")],
-                  unit_types={"VanguardOut": _OUT}, terrain=_wall())
+    return _setup([_blob(0, "Bastion", 8, -START_GAP / 2), _blob(0, "Vanguard", 8, -START_GAP / 2),
+                   _line(1, "Vanguard", 8, -HOLD_X, order="guard"), _line(1, "Bastion", 8, -HOLD_X, order="guard")],
+                  unit_types=_types("Bastion"), terrain=_wall())
 
 
 def _play(fn, skill, numbers, words):
@@ -186,21 +207,24 @@ PLAYS = {
         "Side 0 forms a 120-degree arc curved around the point where the enemy arrives and attack-moves."),
     "s2_spread_line": _play(_spread_line, "S2", {"SPREAD_SPACING": SPREAD_SPACING},
         "Side 0 spreads in one wide line, twice the naive spacing, so every unit is in range together."),
-    "s2_screen": _play(_screen, "S2", {"SCREEN_COUNT": SCREEN_COUNT, "SCREEN_HP_FACTOR": SCREEN_HP_FACTOR,
-                                       "SCREEN_RANGE_FACTOR": SCREEN_RANGE_FACTOR, "SCREEN_AHEAD": SCREEN_AHEAD,
-                                       "SCREEN_BEHIND": SCREEN_BEHIND},
-        "Eight tough units (double hit points) stand in front; eight long-range units stand in a line behind them. All attack-move."),
-    "s3_types_by_reach": _play(_types_by_reach, "S3", {"HIGH_COUNT": HIGH_COUNT, "HIGH_LAYER": HIGH_LAYER,
-                                                      "HIGH_DOWN_STRENGTH": HIGH_DOWN_STRENGTH},
-        "Eight units sit one layer above the enemy and fire down at full strength, which the enemy cannot return; "
-        "the other eight fight on the enemy's layer."),
+    "s2_screen": _play(_screen, "S2", {"SCREEN_AHEAD": SCREEN_AHEAD, "SCREEN_BEHIND": SCREEN_BEHIND},
+        "Eight Vanguards stand in front; eight Bombards stand in a line behind them. All attack-move."),
+    "s3_layer_above": _play(_layer_above, "S3", {"HIGH_LAYER": HIGH_LAYER},
+        "Eight Raiders sit one layer above the enemy and fire down; the eight Vanguards fight on the enemy's layer."),
+    "s3_types_by_reach": _play(_types_by_reach, "S3", {"HIGH_LAYER": HIGH_LAYER},
+        "Eight Interceptors sit one layer above the enemy; the eight Vanguards fight on the enemy's layer."),
+    "s3_over_the_choke": _play(_over_the_choke, "S3", {"WALL_HALF": WALL_HALF, "GAP_HALF": GAP_HALF},
+        "Bombards fire over the wall top; a Raider past the choke spots for them."),
+    "s3_dark_striker": _play(_dark_striker, "S3", {"HIGH_LAYER": HIGH_LAYER},
+        "Side 0 goes silent at tick 0; the enemy keeps emitting."),
+    "s3_ping_then_commit": _play(_ping_then_commit, "S3", {"HIGH_LAYER": HIGH_LAYER},
+        "Side 0 pings the enemy layer at the enemy anchor at tick 0, then attack-moves."),
     "s4_bait": _play(_bait, "S4", {"BAIT_COUNT": BAIT_COUNT, "BAIT_FALLBACK_TICK": BAIT_FALLBACK_TICK,
                                    "BAIT_FALLBACK_X": BAIT_FALLBACK_X, "CLOSE_TICK": CLOSE_TICK},
         "Four units attack-move at the enemy. At tick 100 they move back; the other twelve guard in an arc behind "
         "them and at tick 150 attack-move, closing around whoever followed."),
-    "s5_vulnerable_away": _play(_vulnerable_away, "S5", {"FRAIL_COUNT": FRAIL_COUNT, "FRAIL_HP_FACTOR": FRAIL_HP_FACTOR,
-                                                         "FRAIL_BACK": FRAIL_BACK},
-        "Ten full-strength units form the front line; six frail units (half hit points) stand 400 behind it, away from the enemy."),
+    "s5_vulnerable_away": _play(_vulnerable_away, "S5", {"FRAIL_BACK": FRAIL_BACK},
+        "Eight Vanguards form the front line; eight Raiders stand 400 behind it, away from the enemy."),
     "s2_mass_one_end": _play(_mass_one_end, "S2", {"SPREAD_SPACING": SPREAD_SPACING, "COLUMN_SPACING": COLUMN_SPACING,
                                                    "COLUMN_COLS": COLUMN_COLS},
         "Counter to the spread line. The enemy is spread wide; side 0 masses in a three-wide column at one end of it "
@@ -209,8 +233,7 @@ PLAYS = {
                                                    "BAIT_FALLBACK_TICK": BAIT_FALLBACK_TICK, "CLOSE_TICK": CLOSE_TICK},
         "Counter to the bait. The enemy plays the bait; fourteen of side 0 guard and do not move, two attack-move as a small detachment."),
     "s1_outrange": _play(_outrange, "S1", {"OUTRANGE_FACTOR": OUTRANGE_FACTOR, "HOLD_X": HOLD_X},
-        "Counter to the held choke. The enemy holds behind the wall; side 0 are all long-range units (reach x1.2) "
-        "and attack-move, to fire from outside the holders' range."),
+        "Counter to the held choke. The enemy holds behind the wall; side 0 mixes Bastions and Vanguards and attack-moves."),
 }
 
 
@@ -221,6 +244,10 @@ _ANCHORS = {
     "s2_spread_line": Anchors("defender", "exit_line", "blob"),
     "s2_screen": Anchors("defender", "exit_screen", "blob"),
     "s3_types_by_reach": Anchors("defender", "behind_cover", "blob"),
+    "s3_layer_above": Anchors("defender", "behind_cover", "blob"),
+    "s3_over_the_choke": Anchors("defender", "choke_mouth", "blob"),
+    "s3_dark_striker": Anchors("attacker", "exit_line", "blob"),
+    "s3_ping_then_commit": Anchors("attacker", "exit_line", "blob"),
     "s4_bait": Anchors("defender", "lane_mouth", "blob"),
     "s5_vulnerable_away": Anchors("defender", "far_side", "blob"),
     "s2_mass_one_end": Anchors("attacker", "exit_line", "mass_one_end"),
@@ -241,9 +268,22 @@ def _spread(setup, start_distance):
     groups = tuple(dataclasses.replace(g, x=g.x + delta[g.side],
                                        goal=None if g.goal is None else (g.goal[0] + near(g.goal[0]), g.goal[1]))
                    for g in setup.groups)
-    steps = tuple(dataclasses.replace(t, goal=(t.goal[0] + delta[setup.groups[t.group].side], t.goal[1]))
+    steps = tuple(dataclasses.replace(t, goal=(t.goal[0] + delta[1 if t.order == "ping" else setup.groups[t.group].side], t.goal[1]))
                   if t.goal is not None else t for t in setup.timeline)
     return dataclasses.replace(setup, groups=groups, timeline=steps)
+
+
+def _scale(enemy, heads):
+    """Largest-remainder scaling of the side-1 group counts to `heads`, every group at least 1."""
+    want = [g.count * heads / UNITS for g in enemy]
+    counts = [max(1, int(w)) for w in want]
+    while sum(counts) < heads:
+        i = max(range(len(want)), key=lambda i: want[i] - counts[i])
+        counts[i] += 1
+    while sum(counts) > heads:
+        i = min((i for i in range(len(want)) if counts[i] > 1), key=lambda i: want[i] - counts[i])
+        counts[i] -= 1
+    return counts
 
 
 def scan_build(name):
@@ -258,10 +298,7 @@ def scan_build(name):
         enemy = [g for g in setup.groups if g.side == 1]
         if len(enemy) > enemy_heads:
             raise ValueError("%s has %d enemy groups, needs at least that many heads" % (name, len(enemy)))
-        counts = [max(1, round(g.count * enemy_heads / UNITS)) for g in enemy]
-        for i in range(len(counts) - 1):
-            counts[i] = min(counts[i], enemy_heads - (len(counts) - 1 - i) - sum(counts[:i]))
-        counts[-1] = enemy_heads - sum(counts[:-1])
+        counts = _scale(enemy, enemy_heads)
         new = {}
         for g, c in zip(enemy, counts):
             params = dict(g.params)
