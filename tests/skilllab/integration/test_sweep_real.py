@@ -16,7 +16,20 @@ workers and every fight ends side0, side1 or draw; the sweep command writes swee
 only in control_* kinds (controls cap by design, CONTROL_MAX_TICKS < 12000), and the pinned defect count (non-control caps, draws and
 the cells holding them) is recounted from the CSV and must match the entry or summary; non-control caps are pinned at zero.
 SATISFIABILITY of the gated cases: the first revision of this file was written before L3's plays existed, so they were unverified.
-L3 is on the lab branch now; the fix pass ran them on the scratch reference (see the report of LAB-REV2-L4-tests-fix for the result).
+L3 is on the lab branch now; the fix pass ran them (OM_LAB_SLOW=1) on a scratch copy of the reference sweep.py with approximate real
+builds (every baseline the play's own placed scene; the three smoke controls blob/blob, blob 8 and damage_play). Measured, layouts 81
+78 192, three replicates, group orders (the flipped default), E1 on:
+  - smoke at 1 and 12 workers: the rows are the same bytes (holds). Not every fight ends clean: 7 of the 108 play fights cap outside
+    the controls (s3_layer_above 5, s3_types_by_reach 2, all on layout 192; the other layouts are refused; the csv shows 28 because
+    the approximate baselines repeat the play's rows four times) and the mirror control caps once in six (seed 0, swapped, 1 v 1 left,
+    12000 ticks). With orders_per_unit=True the same run has 1 non-control cap fight (s3_layer_above) and no mirror cap.
+    So `set(outcomes) <= {side0, side1, draw}` and `defects.cap_rows == 0` below are RED on the lab branch for an engine reason, not a
+    builder one; a ruling on the straggler caps (or on the flip) is owed.
+  - sweep damage_up: the null control holds. The positive control (damage-up 0.5 changes the result and not the count) is False
+    because s3_layer_above is inert to the knob (identical margins and windows at 1.0 and 0.5; s3_types_by_reach does change: side1 wins
+    at 1.0, side0 at 0.5), and the entry ANDs the control over plays. The assertion `positive ok is True` below is red on the real plays
+    until the aggregation over plays is ruled (all, any, or one designated play).
+  - a 600-tick damage control shows identical margins at both points on the real play, so the damage control runs to elimination.
 
 Capability-gated cases (skipped on a library without OM_TP_FIRING_ARC_DEG or a usable om_roster_set_cone): the arc null control
 (parameter pushed at 360 against never set) and the cone null control (range 0 against no cone) read byte-identical rows on the real
