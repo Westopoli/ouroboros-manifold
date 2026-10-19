@@ -2182,7 +2182,7 @@ owns = ["scenes/space3d/space_view.gd", "scenes/space3d/space_view.tscn", "scene
 owns_glob = []
 acceptance = ["tests/test_vg_d_view.gd"]
 depends_on = ["VG-A18", "VG-E1"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "a3495155" }
 tests_pending = true
 size_estimate = "D view, one piece, one shot: sheets, asteroid slabs, units with layer rings, the cursor vision tube (Westley's condition on the kit approval); five sheets at DRAFT-space-layer-gap 1,000 wu"
 
