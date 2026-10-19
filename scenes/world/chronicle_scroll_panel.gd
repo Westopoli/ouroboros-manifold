@@ -217,6 +217,11 @@ func _try_start_next() -> void:
 		return
 
 
+# R-069-03 / Q-069-03 (a): true from start_printing until entry_finished_printing plus the hold.
+func is_busy() -> bool:
+	return _printing_id != "" or _hold_left_s > 0.0 or not _print_queue.is_empty()
+
+
 func _clear_print_state() -> void:
 	_print_queue.clear()
 	_printed_order.clear()
