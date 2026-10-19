@@ -227,6 +227,7 @@ _README_CLAIMS = {
     "artifact-bracketing-arrows": (5, ("bracketing", "arrows", "break-even")),
     "artifact-legend-draft": (5, ("draft", "legend")),
     "point-column": (None, ("`point`", "half=", "vision=")),
+    "ground-scene-inert-knobs": (None, ("s1_slope_top", "12000", "inert")),   # decision 18
     # section 7, the instrument
     "commands": (7, ("`smoke`", "`sweep`", "`artifact`")),
     "preflight-refusals": (7, ("`no_fit`", "`unroutable`", "`no_reach`")),
