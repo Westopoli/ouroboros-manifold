@@ -14,7 +14,7 @@ if str(ROOT) not in sys.path:
 
 import scripts.skilllab.scan as scan_mod  # noqa: E402
 from scripts.skilllab import batches, skills  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 DRAFT = "draft"
@@ -42,7 +42,7 @@ def _section(text, head):
 
 
 def test_names_and_get():
-    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
+    assert batches.NAMES == ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layout_search")
     assert batches.BASE_SETTINGS == {"OM_TP_PURSUE_BY_STEERING": 1}
     for n in batches.NAMES:
         if n == "layout_search":
@@ -259,14 +259,71 @@ def test_no_break_even_in_range_when_beats_is_none(tmp_path):
     assert other and "no break-even in range" not in "\n".join(other)
 
 
-def test_stalled_count_beside_each_result(tmp_path):
+def test_caps_and_defect_cells_beside_each_result(tmp_path):
+    """LAB-REV2-L4: the stalled count is gone (no quiet stalemate exists); caps, draws and defect cells are counted."""
     fake = FakeScan({("blob@16", None): (15, 2)})
     _, _, paths = _run("formation", tmp_path, fake)
     res = _section(_text(paths["run"]), "Results")
     block = "\n".join(ln for ln in res.splitlines() if "blob@16" in ln)
-    assert re.search(r"stalled\D{0,15}2\b|\b2\D{0,15}stalled", block)
+    assert "caps 2; draws 0; defect cells 1" in block
     block0 = "\n".join(ln for ln in res.splitlines() if "line@16" in ln)
-    assert re.search(r"stalled\D{0,15}0\b|\b0\D{0,15}stalled", block0)
+    assert "caps 0; draws 0; defect cells 0" in block0
+    assert "stalled" not in res and "stalemate" not in res
+
+
+def test_run_file_states_the_elimination_rule_and_not_the_retired_ones(tmp_path):
+    _, _, paths = _run("formation", tmp_path)
+    for text in (_text(paths["run"]), _text(paths["page"])):
+        assert "one side is eliminated" in text
+        low = text.lower()
+        for gone in ("mopup", "mop-up", "re-issue", "reissue", "quiet stalemate"):
+            assert gone not in low, gone
+
+
+def test_a_ceiling_hit_is_reported_as_one_never_as_no_break_even(tmp_path):
+    fake = FakeScan({("line@16", None): None})
+    _, _, p = _run("formation", tmp_path, fake, sub="none")
+    none_line = "\n".join(ln for ln in _section(_text(p["run"]), "Results").splitlines() if "line@16" in ln)
+    assert "no break-even in range" in none_line and "ceiling hit" not in none_line
+    from tests.skilllab.fakes_batches import make_scan
+
+    class Ceiling(FakeScan):
+        def __call__(self, build, size, enemy_from, enemy_to, replicates=10, **kw):
+            got = super().__call__(build, size, enemy_from, enemy_to, replicates, **kw)
+            return make_scan(size, enemy_from, enemy_to, None, ceiling=True) if self.calls[-1]["label"] == "line@16" else got
+
+    _, _, p2 = _run("formation", tmp_path, Ceiling(), sub="ceil")
+    res = _section(_text(p2["run"]), "Results")
+    line = "\n".join(ln for ln in res.splitlines() if "line@16" in ln and ":Raider" not in ln)
+    assert "ceiling hit" in line and "no break-even in range" not in line and "lose to" not in line
+
+
+def test_layers_batch_is_retired_with_tables_la_lb_lc_and_the_body_size_table():
+    """Spec L4: tables LA, LB, LC and the body-size table are deleted; they were the whole 'layers' batch, and the sweep command
+    replaces them. The batch name, its scene constants and its builders go with them."""
+    assert "layers" not in batches.NAMES
+    with pytest.raises(ValueError):
+        batches.get("layers")
+    for gone in ("LAYER_SCENES", "LAYER_REACH", "REACH_NOTE", "REACH_TABLE", "_layer_settings", "_with_reach", "_layers",
+                 "MOPUP_NOTE", "_STALLED"):
+        assert not hasattr(batches, gone), gone
+
+
+def test_batches_module_imports_no_retired_module():
+    import ast
+    src = (ROOT / "scripts/skilllab/batches.py").read_text()
+    imported = {a.name for n in ast.walk(ast.parse(src)) if isinstance(n, (ast.Import, ast.ImportFrom)) for a in n.names}
+    assert not imported & {"mopup", "approach"}
+    assert "plays.MOPUP" not in src and "MOPUP_INTERVAL_TICKS" not in src
+
+
+def test_run_hands_the_summary_to_summary_write_with_the_rule_note(tmp_path, monkeypatch):
+    """summary.json content is L5's (summary.py); batches only has to call summary.write(defn, scans, path, rule_note)."""
+    from scripts.skilllab import summary
+    seen = []
+    monkeypatch.setattr(summary, "write", lambda defn, scans, path, rule, *a, **k: seen.append((defn.name, path.name, rule)))
+    _, _, paths = _run("formation", tmp_path)
+    assert len(seen) == 1 and seen[0][:2] == ("formation", "summary.json") and "eliminated" in seen[0][2]
 
 
 FOCUS_RESULTS = {("identical", 0): 14, ("identical", 1): 16,      # gains
@@ -322,7 +379,6 @@ def test_formation_raider_cells_scanned_with_same_range_and_statuses(tmp_path):
     got = {c["label"]: (c["size"], c["enemy_from"], c["enemy_to"]) for c in fake.calls}
     for label, n, *_ in FORMATION:
         assert got[label] == (n, n // 2, n * 3 // 2), label
-    assert all(not c["weighted"] for c in fake.calls)
 
 
 RAIDER_RESULTS = {("line@16", None): 15, ("line@16:Raider", None): 16,       # Raider larger
@@ -378,7 +434,7 @@ def test_vanguard_against_raider_in_page_and_not_in_other_batches(tmp_path):
     assert "Vanguard against Raider" not in _text(p2["run"]) + _text(p2["page"])
 
 
-@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers"])
+@pytest.mark.parametrize("name", ["formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations"])
 def test_deterministic_byte_identical(tmp_path, name):
     _, _, a = _run(name, tmp_path, FakeScan(FOCUS_RESULTS), sub="one")
     _, _, b = _run(name, tmp_path, FakeScan(FOCUS_RESULTS), sub="two")

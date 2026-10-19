@@ -149,7 +149,7 @@ def _t(tol=DRAFT_UNCONFIRMED_GUARD_TOLERANCE_UNITS):
 
 
 def _scan(beats):
-    return ScanResult(size=10, cells=[], beats=beats, loses_to=None if beats is None else beats + 1, win_margin=0.05)
+    return ScanResult(size=10, cells=[], beats=beats, loses_to=None if beats is None else beats + 1)
 
 
 def test_guard_flag_positive_control():

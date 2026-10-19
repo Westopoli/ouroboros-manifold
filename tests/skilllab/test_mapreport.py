@@ -117,13 +117,6 @@ def test_call_set_equals_find_break_even_on_the_wrapped_build():
     assert rep.naive == ref
 
 
-def test_win_margin_default_is_used():
-    """The default win margin is passed on: scan.win_margin is the contract WIN_MARGIN."""
-    from scripts.skilllab.contract import WIN_MARGIN
-    rep = naive_break_even("open", 0, Terrain(canvas=CANVAS), SIZE, 3, 5, fight_fn=Recorder(), **KW)
-    assert rep.naive.scan.win_margin == WIN_MARGIN
-
-
 def test_deterministic_for_equal_calls():
     """Two calls with equal arguments and a deterministic fake give equal reports."""
     a = naive_break_even("block", 1, T, SIZE, 3, 7, fight_fn=Recorder(), **KW)
@@ -152,7 +145,7 @@ def test_fight_fn_and_map_fn_together_raise():
 
 
 def _canned(beats, loses_to, multi):
-    scan = ScanResult(size=SIZE, cells=[], beats=beats, loses_to=loses_to, win_margin=0.05)
+    scan = ScanResult(size=SIZE, cells=[], beats=beats, loses_to=loses_to)
     return BreakEven(scan=scan, flips=[], multi_flip=multi, beats=beats, loses_to=loses_to, refined=[], rounds=0)
 
 

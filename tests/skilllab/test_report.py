@@ -65,7 +65,7 @@ def _fight(firing=None):
                        firing_unit_seconds=(2.0, 1.0))
 
 
-def _scan(size, first, last, won_up_to, win_margin=0.05):
+def _scan(size, first, last, won_up_to):
     """Cells first..last; won (margin +0.5) up to won_up_to, lost (-0.5) above; None breaks even if no change."""
     cells = []
     for n in range(first, last + 1):
@@ -73,8 +73,7 @@ def _scan(size, first, last, won_up_to, win_margin=0.05):
         cells.append(CellResult(enemy_heads=n, fights=[_fight()], mean_margin=0.5 if won else -0.5, won=won))
     changed = any(a.won and not b.won for a, b in zip(cells, cells[1:]))
     beats = won_up_to if changed else None
-    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1,
-                      win_margin=win_margin)
+    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1)
 
 
 def _batch(title="Controls"):
@@ -86,7 +85,7 @@ def _batch(title="Controls"):
 
 def _flat(first, last, margin):
     cells = [CellResult(n, [_fight()], margin, margin > 0.05) for n in range(first, last + 1)]
-    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
+    return ScanResult(size=16, cells=cells, beats=None, loses_to=None)
 
 
 class Page(HTMLParser):
@@ -403,7 +402,7 @@ GRADED = [0.9126, 0.3, -0.1234, -0.7]
 
 def _graded_batch():
     cells = [CellResult(20 + i, [_fight()], m, m > 0.05) for i, m in enumerate(GRADED)]
-    sc = ScanResult(size=17, cells=cells, beats=21, loses_to=22, win_margin=0.05)
+    sc = ScanResult(size=17, cells=cells, beats=21, loses_to=22)
     return Batch(title="t", scans={"graded": sc}, firing_example={"graded": _fight()}, rows=[])
 
 
@@ -676,8 +675,7 @@ def test_batch_title_is_the_pages_h1(tmp_path):
 
 def test_one_cell_scan_and_one_sample_series_draw_without_raising(tmp_path):
     """AC-18 Reading: a series with one point is drawn (finite coordinates), never raising."""
-    one = ScanResult(size=16, cells=[CellResult(12, [_fight()], 0.5, True)], beats=None, loses_to=None,
-                     win_margin=0.05)
+    one = ScanResult(size=16, cells=[CellResult(12, [_fight()], 0.5, True)], beats=None, loses_to=None)
     batch = Batch(title="t", scans={"solo": one}, firing_example={"solo": _fight([(0, 2, 1)])}, rows=[])
     _, _, page = _render(batch, tmp_path)
     scan_svg = _scan_svg(page, 1)

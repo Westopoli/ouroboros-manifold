@@ -13,7 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, faked, make_scan  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, faked, make_scan, stub_summary_write  # noqa: E402,F401
 
 
 def test_equal_scans_had_no_effect_and_different_ones_did():

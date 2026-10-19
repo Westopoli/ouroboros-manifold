@@ -54,7 +54,7 @@ def _cell(heads, fights, won=True):
 
 
 def _scan(size, cells, beats=None, loses_to=None):
-    return ScanResult(size=size, cells=list(cells), beats=beats, loses_to=loses_to, win_margin=0.05)
+    return ScanResult(size=size, cells=list(cells), beats=beats, loses_to=loses_to)
 
 
 def _pts_scan(xs, ys, size=5):

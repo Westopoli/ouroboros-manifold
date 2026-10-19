@@ -655,7 +655,7 @@ def test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point(se
 
 
 def test_ruling_6_orders_per_unit_false_is_one_order_for_the_group_at_the_point(seam):
-    """Control: the group order (still available until E1 is on main and L4 flips the default) is one call per group."""
+    """Control: the group order (the default stays per-unit until E1 is in the landing and the smoke caps zero under group orders, decisions 23) is one call per group."""
     setup = S(count=3, max_ticks=2, point=(25.0, -40.0), orders_per_unit=False)
     _, fake = run(setup)
     got = _orders(fake)
@@ -726,12 +726,13 @@ def test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only(seam):
 @pytest.mark.parametrize("name", ["DRAW_BAND", "SILENCE_TICKS", "REISSUE_TICKS", "BLIND_TICKS", "HOLD_RADIUS"])
 def test_contract_loses_the_retired_constants(name):
     """Decision 12 (Q-LAB-03): the constants of the retired draw band, silence, re-issue, blind and hold rules are deleted from
-    contract.py. Control below: WIN_MARGIN stays until L4, and the new window constant is there."""
+    contract.py. Control below: the window constant and the time constants stay."""
     assert not hasattr(contract_mod, name)
 
 
-def test_contract_keeps_win_margin_until_l4():
-    assert contract_mod.WIN_MARGIN == 0.05 and hasattr(contract_mod, "TICKS_PER_SECOND") and hasattr(contract_mod, "SHIFT_MAX")
+def test_contract_keeps_the_time_and_shift_constants_and_loses_win_margin():
+    """LAB-REV2-L4 ruler (TD-LAB-REV2-L4-winmargin): spec 'WIN_MARGIN deleted'; the L2 control kept it until L4."""
+    assert not hasattr(contract_mod, "WIN_MARGIN") and hasattr(contract_mod, "TICKS_PER_SECOND") and hasattr(contract_mod, "SHIFT_MAX")
 
 
 @pytest.mark.parametrize("name", ["mopup", "approach"])

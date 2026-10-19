@@ -222,7 +222,7 @@ The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
-Reach by type applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); going dark stays space only for now (Westley, 2026-10-05).
+Going dark is space only for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"; the reach half of that ruling was superseded 2026-10-13, S-164).
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer, its own included, see it from further away than they otherwise would; emitting widens how far it can be seen by more than it widens how far it sees (Westley, 2026-10-07: "emitting should extend the area that you can be seen beyond what you can see"). Provisional: cross-layer sight doubles, and the seen-from distance grows by more than that, held as runtime settings.
@@ -236,7 +236,7 @@ Silent is the default. The numbers are provisional runtime settings, tuned by th
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
-Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"); a ground era fights by the ground model (S-005 R-005-09 to R-005-12).
+Applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); a ground era's sight still follows the ground model (S-005 R-005-09 to R-005-12), its fire reaches by type.
 
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].
