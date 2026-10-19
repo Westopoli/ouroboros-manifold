@@ -39,10 +39,10 @@ Inputs: selection; click point; unit speeds and positions.
 Outputs: per-unit move targets and group ids in the tick delta.
 Open flags: none.
 
-### S-096 — Four commands
+### S-096 — Five commands
 As a commander, I want move to be movement and nothing else, attack-move to fight along the way, attack-target to commit, and ability to be a button, so that every order means one thing.
 
-Direction changed 2026-10-02, rewrite pending: a guard stance joins the commands (S-208), and an attack-moving unit engages what is within its type's reach and visible to its side, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
+The guard stance joined the commands 2026-10-13 (S-208, R-096-08). An attack-moving unit engages what is within its type's reach and visible to its side, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
 
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
@@ -52,7 +52,7 @@ Rules
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
-- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can see (E-12 R-093-02), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius: the attack-move leash of R-087-05, Westley's number to change; the radius bounds the guard's own walk, measured post to the guard's centre, ruled 2026-10-14 for E4), firing whenever the target is in range, returning to the post when the target dies or when engaging it would take the guard past the radius; it never crosses the radius and never marches; a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". The engine's guard today (A170) holds and never steps forward; the step-and-return within the radius is an engine piece not yet built, and the lab's choke defence runs on the built order until it lands.
+- R-096-08  Given a guard order, When issued to a selection, Then each unit takes its position as its post and engages any target its side can see (E-12 R-093-02), stepping toward it no farther than `GUARD_RADIUS` = 200 wu from the post (DRAFT-guard-radius: the attack-move leash of R-087-05, Westley's number to change; the radius bounds the guard's own walk, measured post to the guard's centre, ruled 2026-10-14 for E4), firing whenever the target is in range, returning to the post when the target dies or when engaging it would take the guard past the radius; it never crosses the radius and never marches; as built 2026-10-14 the walk is toward same-layer targets only, a cross-layer target is engaged in place when reach and range allow (DRAFT: cross-layer walking is Westley's to add); a move, attack-move, attack-target or layer order ends the guard; return fire (R-087-06) is untouched. Ruled by Westley, 2026-10-13: a guard stance as a radius (option b of Q-096-01), "for the whole game, not just the simulator". The engine's guard today (A170) holds and never steps forward; the step-and-return within the radius is an engine piece not yet built, and the lab's choke defence runs on the built order until it lands.
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
@@ -175,7 +175,7 @@ Rules
 
 Inputs: guard command (selection, post).
 Outputs: unit order state in the tick delta.
-Open flags: Q-096-01, Q-208-01.
+Open flags: Q-208-01.
 
 ### S-209 — Workers move like any unit
 As a commander, I want workers to walk the same ground and take the same room as soldiers, so that a base with thousands of them is a real crowd on the real map.
@@ -241,7 +241,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-096-01, Q-097-02, Q-101-02, Q-207-01, Q-174-02, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-097-02, Q-101-02, Q-207-01, Q-174-02, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

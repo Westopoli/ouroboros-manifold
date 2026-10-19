@@ -87,7 +87,7 @@ three missing save symbols block each test. Red for right reason, zero
 
 ## Q- candidates (full text in module docstring)
 
-- **Q-111-01**, buffer format: S-111 silent on layout. (a) flat memcpy,
+- **Q-111-03**, buffer format: S-111 silent on layout. (a) flat memcpy,
   version word first — assumed here, matches the bare-`uint8_t*` signature
   with no chunk/framing calls; (b) versioned TLV stream; (c) other opaque
   layout. Version-word test only checks refusal on a first-4-byte mismatch,

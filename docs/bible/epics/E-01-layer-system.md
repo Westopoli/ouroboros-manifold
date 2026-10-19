@@ -50,7 +50,8 @@ Rules
 - R-002-01  Given a selected unit on layer 3 at a position where layer 5 is open, When the player issues a hard transfer to layer 5, Then the unit begins its transition on the same tick and finishes on layer 5 after its transition duration (S-004).
 - R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if the unit's route (R-001-05) changes its layer first, the transfer stays pending.
 - R-002-03  Given a unit with a pending hard transfer, When the player issues a second hard transfer to a different layer, Then the first transfer is discarded and only the second is pending.
-- R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer.
+- R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer. The spot transfer (`set_layer` with a spot) is queued, not pending: R-002-03 and R-002-04 apply from the moment it fires.
+  - Note: the spot-transfer sentence is the Architect's interpretation (2026-10-14, relayed), not yet Westley's; he may veto it.
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
 - R-002-06  Given a hard transfer to a layer outside the map's layer range, When it is issued, Then it is rejected and the unit's state does not change.
 - R-002-07  Given a hard transfer order for a mixed selection, When it is issued, Then every unit in the selection gets its own pending transfer and each resolves independently by its own position and duration.
@@ -222,7 +223,7 @@ The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
-Reach by type applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); going dark stays space only for now (Westley, 2026-10-05).
+Going dark is space only for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"; the reach half of that ruling was superseded 2026-10-13, S-164).
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer, its own included, see it from further away than they otherwise would; emitting widens how far it can be seen by more than it widens how far it sees (Westley, 2026-10-07: "emitting should extend the area that you can be seen beyond what you can see"). Provisional: cross-layer sight doubles, and the seen-from distance grows by more than that, held as runtime settings.
@@ -236,7 +237,7 @@ Silent is the default. The numbers are provisional runtime settings, tuned by th
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
-Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"); a ground era fights by the ground model (S-005 R-005-09 to R-005-12).
+Applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); a ground era's sight still follows the ground model (S-005 R-005-09 to R-005-12), its fire reaches by type.
 
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].
