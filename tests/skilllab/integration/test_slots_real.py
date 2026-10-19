@@ -21,7 +21,8 @@ def library():
 
 def _destinations(library, n, per_unit=False):
     setup = plays.line_play(n)(n, False)
-    setup = dataclasses.replace(setup, orders_per_unit=per_unit)      # spelled out: L4 flipped the Setup default to False
+    if not per_unit:
+        setup = dataclasses.replace(setup, orders_per_unit=False)
     w = library.new_world(0)
     try:
         library.disable_abilities(w)
@@ -47,11 +48,10 @@ def test_line_destinations_are_distinct_and_spread(library, n, spread):
 
 @pytest.mark.parametrize("n", [16, 32])
 def test_per_unit_orders_all_head_for_the_shared_point(library, n):
-    """LAB-REV2-L2 (ruling 6, Q-LAB-03): with orders_per_unit=True it is one attack-move per unit to Setup.point, so every destination
-    is that point (the control for the slot test above, which asks for the group order). LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the
-    default is now the group order, so this test asks for the per-unit order explicitly."""
+    """LAB-REV2-L2 (ruling 6, Q-LAB-03): the default is one attack-move per unit to Setup.point, so every destination is that point
+    (the control for the slot test above, which asks for the group order)."""
     setup = plays.line_play(n)(n, False)
-    assert setup.orders_per_unit is False and setup.point is not None
+    assert setup.orders_per_unit is True and setup.point is not None
     dests = _destinations(library, n, per_unit=True)
     assert all(d is not None for d in dests)
     assert set(dests) == {tuple(float(v) for v in setup.point)}

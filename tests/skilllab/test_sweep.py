@@ -12,17 +12,26 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
         kind in {"grid", "refined", "sign_flip", "control_positive", "control_null"}
     grid(family) -> list[Point]            the coarse points in the spec's order (kind "grid"; sign_flip family: kind "sign_flip")
     controls(family) -> {"positive": Control, "null": Control}   Control: points (list[Point]), reach (None or (0, 0)), check(results),
-        max_ticks (CONTROL_MAX_TICKS for a control that needs no result, None for one that does: the fight runs to its own cap)
+        max_ticks (CONTROL_MAX_TICKS for a control that needs no result, None for one that does: the fight runs to its own cap),
+        play (str or None; decisions 22)
         check(results_by_point) -> bool, results_by_point = [[FightResult, ...] per control point, in points order]
+        play: None means the control is fought on every play the run covers (the vision and the null controls). A name means the
+        control is ONE DESIGNATED FIGHT on that play, whatever `plays` the run was given: the entry's "ok" comes from that fight alone,
+        never from a conjunction over plays (decisions 22). Damage-up's positive control is designated on "s3_types_by_reach". The
+        control's rows are in the csv with kind "control_positive" and play = the designated play. A play on which a knob is inert is
+        never the designated fight; an inert observation with no rule behind it is a finding (ledger FINDING-damage-up-layer-above),
+        not an exemption: no test here asserts a damage-up response on s3_layer_above.
     refine(values, differs, max_rounds=2) -> [(round, value), ...]    differs(value) -> bool, called once per value
     Capabilities(arc, cone) (namedtuple of bool); detect(engine) -> Capabilities; skip_reason(family, caps) -> str | None
     baseline_roles(play) -> tuple of roles; the roles for sweep rows: "play", "reach_zero" (the null control's build), and the
         baselines "naive_attacker", "naive_defender" (a play whose name starts "s3_" has "naive_defender_attacker_layer" and
-        "naive_defender_play_layer" in place of "naive_defender", ruling 3 DRAFT)
+        "naive_defender_play_layer" in place of "naive_defender", ruling 3 DRAFT). Decisions 24: a play with a holder carries a
+        `naive_defender*` role and gets the second listed crossing against it; a meeting (both sides attack-moved, no holder) carries
+        none and has none. refined_vs has one key per role that some run play's baseline_roles lists, and no other.
     run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES,
                full_scan=False) -> dict    full_scan False (the default) scans by bisection, True fights every headcount 8 to 48
         the entry: family, skipped, csv, rows, refined (sorted values added by refinement, all baselines), refined_vs ({baseline role:
-        sorted values refined for the sign change of the gain against that baseline}), refused, controls ({"positive"/"null": {"ok"}}),
+        sorted values refined for the sign change of the gain against that baseline}), refused, controls ({"positive"/"null": {"ok"}}; the positive one also carries "play": the designated play, or None),
         defects ({"cap_rows": cap fights outside control_* kinds, "draw_rows": draw fights, "cells": distinct (play, layout, kind,
         knob_value, baseline, enemy_heads) non-control cells holding a cap or a draw}), saturated_at_vision (emitting)
         builds(play, role, layout_features) -> BuildFn (build.labels["prefight"] is set when the build is called, as
@@ -364,8 +373,8 @@ def test_cone_null_control_is_a_cone_of_range_zero_against_no_cone():
 
 def test_control_lengths_only_the_damage_control_needs_a_finished_fight():
     """Vision zero and every null control read rows that do not need a result: they stop at CONTROL_MAX_TICKS. The damage control
-    reads a result (damage-up 0.5 changes it) and a capped fight at 600 ticks shows the same margin at both points on the real
-    play (measured on the reference: s3_layer_above, six fights, identical margins), so it runs to elimination (max_ticks None)."""
+    reads a result (damage-up 0.5 changes it) and a capped fight at 600 ticks hides the effect, so it runs to elimination (max_ticks
+    None; decisions 23). The 12000-tick cap is a threshold and does not move."""
     assert sweep.controls("vision")["positive"].max_ticks == sweep.CONTROL_MAX_TICKS
     for fam in ("vision", "range_up", "damage_up", "emitting", "arc", "cone"):
         assert sweep.controls(fam)["null"].max_ticks == sweep.CONTROL_MAX_TICKS, fam
@@ -405,6 +414,8 @@ def test_damage_positive_control_changes_the_result_and_not_the_count():
     result (the pool, workers > 1), and the check must still work."""
     c = sweep.controls("damage_up")["positive"]
     assert [p.value for p in c.points] == [1.0, 0.5] and all(p.kind == "control_positive" for p in c.points)
+    assert c.play == "s3_types_by_reach"                                                   # decisions 22: one designated fight
+    assert sweep.controls("vision")["positive"].play is None and all(sweep.controls(f)["null"].play is None for f in ("vision", "damage_up"))
     base = [_lean(_res("side0", margin=0.5)) for _ in range(2)]
     half = [_lean(_res("side0", margin=0.25)) for _ in range(2)]
     assert c.check([base, half]) is True
@@ -451,7 +462,7 @@ class World(ScriptedFight):
             be = self.cone_be(role, setup.cone)
         out = _fr("side0" if be is not None and enemy <= be else "side1", enemy)
         d = s.get("OM_TP_DAMAGE_UP_1")
-        if role == "play" and d is not None and enemy == 16:
+        if role == "play" and d is not None and enemy == 16 and setup.unit_types["_play"] not in self.flags.get("damage_inert_plays", ()):
             window = (12.75 * d, 9.25) if self.flags.get("damage_count_moves") else (12.75, 9.25)
             out = dataclasses.replace(out, margin=0.5 if self.flags.get("damage_blind") else 0.5 * d, firing=[],
                                       firing_window=window, weighted_window=window)
@@ -510,7 +521,8 @@ def test_the_scan_range_is_eight_to_forty_eight_by_bisection_not_forty_one_cells
     most 14 of the 41 headcounts per scan."""
     _, world = run(tmp_path, "damage_up")
     for role in ("play", "naive_attacker"):
-        heads = sorted({c["enemy"] for c in world.calls if c["role"] == role and c["settings"].get("OM_TP_DAMAGE_UP_1") == 1.0})
+        heads = sorted({c["enemy"] for c in world.calls if c["role"] == role and c["settings"].get("OM_TP_DAMAGE_UP_1") == 1.0
+                        and c["play"] == "p2"})            # not the designated control fight on s3_types_by_reach (decisions 22)
         assert heads[0] == 8 and heads[-1] == 48 and len(heads) <= 14, (role, heads)
 
 
@@ -596,6 +608,21 @@ def test_the_naive_defender_alone_flipping_does_not_move_the_attacker_refinement
     entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
     assert entry["refined_vs"]["naive_attacker"] == [] and entry["refined_vs"]["naive_defender"] == [0.875, 0.9375]
     assert entry["refined"] == [0.875, 0.9375]
+
+
+def test_a_meeting_has_no_holder_so_no_second_crossing_and_a_play_with_a_holder_has_one(tmp_path, monkeypatch):
+    """Decisions 24: the second listed crossing goes to every play whose baseline_roles carries a naive_defender* role (a holder), and
+    to no other. p_meet is a meeting (no holder): its roles are the naive attacker alone. The defender's gain changes sign, the
+    attacker's never does, so the second crossing exists exactly where a defender baseline is run."""
+    real = sweep.baseline_roles
+    monkeypatch.setattr(sweep, "baseline_roles", lambda play: ("naive_attacker",) if play == "p_meet" else real(play))
+    be = _be_range(lambda v: 20, attacker=10, defender=lambda v: 18 if v >= 0.9 else 22)
+    entry, world = run(tmp_path / "meet", "range_up", world=World(be_of=be), plays=("p_meet",))
+    assert set(entry["refined_vs"]) == {"naive_attacker"} and entry["refined"] == [] and entry["refined_vs"]["naive_attacker"] == []
+    assert not [c for c in world.calls if c["role"].startswith("naive_defender")]
+    assert {r["baseline"] for r in read(tmp_path / "meet", "range_up")} <= {"none", "naive_attacker"}
+    entry, _ = run(tmp_path / "both", "range_up", world=World(be_of=be), plays=("p_meet", "p2"))        # positive control: a holder play adds it
+    assert entry["refined_vs"]["naive_defender"] == [0.875, 0.9375] and set(entry["refined_vs"]) == {"naive_attacker", "naive_defender"}
 
 
 def test_a_layer_play_lists_a_crossing_per_defender_baseline(tmp_path):
@@ -758,6 +785,23 @@ def test_the_damage_controls(tmp_path):
     assert run(tmp_path, "damage_up", world=World(damage_count_moves=True))[0]["controls"]["positive"]["ok"] is False
 
 
+def test_the_damage_positive_control_is_one_designated_fight_not_a_conjunction_over_plays(tmp_path):
+    """Decisions 22. The control fights s3_types_by_reach whatever plays the run covers; a play that does not respond to damage-up
+    (the real s3_layer_above, FINDING-damage-up-layer-above) does not turn the control off; the designated fight not responding does."""
+    both = ("s3_layer_above", "s3_types_by_reach")
+    entry, world = run(tmp_path / "a", "damage_up", plays=both, world=World(damage_inert_plays=("s3_layer_above",)))
+    assert entry["controls"]["positive"]["ok"] is True and entry["controls"]["positive"]["play"] == "s3_types_by_reach"
+    rows = read(tmp_path / "a", "damage_up")
+    assert {r["play"] for r in rows if r["kind"] == "control_positive"} == {"s3_types_by_reach"}
+    assert {r["play"] for r in rows if r["kind"] == "grid"} == set(both)
+    entry, world = run(tmp_path / "b", "damage_up", plays=("p2",), world=World())                  # the designated play is not in `plays`
+    assert entry["controls"]["positive"]["ok"] is True
+    assert {c["play"] for c in world.calls if c["settings"].get("OM_TP_DAMAGE_UP_1") == 0.5 and c["role"] == "play"
+            and c["enemy"] == 16 and c["play"] != "p2"} == {"s3_types_by_reach"}
+    entry, _ = run(tmp_path / "c", "damage_up", plays=both, world=World(damage_inert_plays=("s3_types_by_reach",)))
+    assert entry["controls"]["positive"]["ok"] is False                                           # positive control: the detector still fires
+
+
 def test_control_rows_are_in_the_csv_with_their_kind(tmp_path):
     run(tmp_path, "vision")
     rows = read(tmp_path, "vision")
@@ -819,7 +863,7 @@ def test_a_cap_in_a_control_kind_alone_is_not_a_defect_but_a_draw_in_one_is_coun
 
 def _play_heads(world, setting="OM_TP_DAMAGE_UP_1", value=1.0):
     return sorted({c["enemy"] for c in world.calls if c["role"] == "play" and c["settings"].get(setting) == value
-                   and c["max_ticks"] != sweep.CONTROL_MAX_TICKS})
+                   and c["max_ticks"] != sweep.CONTROL_MAX_TICKS and c["play"] == "p2"})      # p2: not the designated damage control
 
 
 def test_run_family_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp_path):
@@ -866,7 +910,7 @@ def test_a_refused_cell_is_not_fought_and_is_listed_the_other_plays_still_run(tm
     assert not [c for c in world.calls if c["play"] == "p_bad"]
     assert [c for c in world.calls if c["play"] == "p_ok"]
     assert [(r["play"], r["layout"], r["reason"]) for r in entry["refused"]] == [("p_bad", "A", "no_reach")]
-    assert {r["play"] for r in read(tmp_path, "damage_up")} == {"p_ok"}
+    assert {r["play"] for r in read(tmp_path, "damage_up") if not r["kind"].startswith("control_")} == {"p_ok"}
 
 
 def test_positive_control_with_nothing_refused_the_list_is_empty(tmp_path):
@@ -887,7 +931,7 @@ def test_prefight_is_checked_at_the_smallest_and_largest_headcount(tmp_path):
         return build
 
     entry, world = run(tmp_path, "damage_up", builds=builds)
-    assert {8, 48} <= set(seen) and not world.calls and entry["refused"] and entry["refused"][0]["reason"] == "no_fit"
+    assert {8, 48} <= set(seen) and not [c for c in world.calls if c["play"] == "p2"] and entry["refused"] and entry["refused"][0]["reason"] == "no_fit"
 
 
 # ---- skipped families ---------------------------------------------------------------------------------------------------------
@@ -1004,8 +1048,10 @@ def test_smoke_counts_its_defects_like_a_sweep_entry(tmp_path):
     A faithful world has none."""
     summary, _, rows = _smoke(tmp_path / "clean", control_builds=control_builds())
     assert summary["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+    assert not [r for r in rows if r["outcome"] == "cap" and not r["kind"].startswith("control_")]      # decisions 23: read from the rows
     summary, _, rows = _smoke(tmp_path / "bad", world=World(defects=True), control_builds=control_builds())
     assert summary["defects"] == {"cap_rows": 6, "draw_rows": 6, "cells": 6} == _defects_of(rows)
+    assert len([r for r in rows if r["outcome"] == "cap" and not r["kind"].startswith("control_")]) == 6      # positive control for the row check
     assert json.loads((tmp_path / "bad" / "smoke_summary.json").read_text())["defects"] == summary["defects"]
 
 
@@ -1091,69 +1137,38 @@ def test_an_unknown_option_is_still_refused(tmp_path, capsys):
     assert exc.value.code == 2
 
 
-# ---- the orders_per_unit default flip (decisions 13) --------------------------------------------------------------------------------
+# ---- the orders_per_unit default stays True (decisions 23, superseding the L4 flip of decisions 13 and 21) ------------------------------
 
-# Decisions 13: L4 flips the Setup default to False once E1 (the attack-move resume) is on the lab branch (it is: e721da83), and
-# only because E1 lands in the same landing (decisions 21: revert the flip in the same commit if E1 is pulled). The tests that read
-# the old default were MEASURED, not copied from decisions 13: a reference build with the default at False was run over tests/skilllab
-# including integration, and exactly these tests fail because of the flip alone: 13 functions, 42 pytest items. The ruler executed
-# the flip in this piece (ledger row TD-LAB-REV2-L4-flip): a test about the default now asserts False; a test about per-unit
-# behaviour passes orders_per_unit=True explicitly. RULER_ROWS maps file -> ((old name, name now, pytest items), ...).
-RULER_ROWS = {
-    "tests/skilllab/test_fight_outcomes.py": (
-        ("test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default",) * 2 + (1,),     # Setup defaults (decisions 13)
-        ("test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point",
-         "test_ruling_6_orders_per_unit_true_issues_one_attack_move_per_unit_to_the_shared_point", 1),   # per-unit, asked for
-        ("test_ruling_6_a_group_goal_overrides_the_point_for_that_group",) * 2 + (1,),
-        ("test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move",) * 2 + (1,),
-        ("test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side",) * 2 + (1,),
-        ("test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only",) * 2 + (1,),                 # per-unit, asked for
-        ("test_no_mop_up_or_reissue_orders_after_the_opening_orders",) * 2 + (1,),
-    ),
-    "tests/skilllab/test_plays.py": (("test_ruling_6_plays_use_per_unit_orders", "test_ruling_6_plays_use_the_group_order_default", 4),),
-    "tests/skilllab/test_asym.py": (("test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts",) * 2 + (12,),),
-    "tests/skilllab/test_placed_by_feature.py": (("test_defender_guards_attacker_attack_moves_toward_the_defender",) * 2 + (15,),),
-    "tests/skilllab/test_objective_scene.py": (("test_objective_scene_sends_both_groups_to_the_point_between_them",) * 2 + (1,),
-                                               ("test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet",) * 2 + (1,)),
-    "tests/skilllab/integration/test_slots_real.py": (("test_per_unit_orders_all_head_for_the_shared_point",) * 2 + (2,),),
-}
-RULER_FUNCTIONS, RULER_ITEMS = 13, 42
-
-
-def test_the_orders_per_unit_default_is_false_after_the_flip():
-    assert Setup(groups=(), unit_types={}).orders_per_unit is False
+# Decisions 13 and 21 flipped the Setup default to False in the L4 landing, only because E1 lands in the same landing. Decisions 23
+# tightened that: the default flips to the group attack-move only when E1 is in the landing AND the smoke caps zero under group orders.
+# Until both hold `orders_per_unit` stays True. The smoke does not (7 of 108 play fights cap on layout 192 under group orders:
+# ledger FINDING-group-orders-cap), so the earlier fix pass's ruler rows (ledger TD-LAB-REV2-L4-flip, 13 functions, 42 items) are
+# undone: every test about the default asserts True again, and a test about the group order asks for orders_per_unit=False.
+def test_the_orders_per_unit_default_is_true_until_e1_is_landed_and_the_smoke_caps_zero_under_group_orders():
+    assert Setup(groups=(), unit_types={}).orders_per_unit is True
     f = {f.name: f for f in dataclasses.fields(Setup)}["orders_per_unit"]
-    assert f.default is False
+    assert f.default is True
 
 
-def test_the_ruler_list_names_files_and_tests_that_exist_and_pins_the_count():
-    """Pins the measured list: the count is 13 functions and 42 items, every file defines the new name of each test and no longer
-    defines a renamed old name. A test that is dropped from the list or from its file changes the count."""
-    assert sum(len(v) for v in RULER_ROWS.values()) == RULER_FUNCTIONS == 13
-    assert sum(n for v in RULER_ROWS.values() for _o, _n, n in v) == RULER_ITEMS == 42
-    for rel, rows in RULER_ROWS.items():
+def test_the_undone_flip_left_no_test_asserting_the_group_order_as_the_default():
+    """The flip rows are undone: no test file asserts `orders_per_unit is False` as the Setup default on a play, a scene or a Setup
+    (positive control: the explicit per-unit and group-order calls are still there)."""
+    for rel in ("tests/skilllab/test_fight_outcomes.py", "tests/skilllab/test_plays.py", "tests/skilllab/test_asym.py",
+                "tests/skilllab/test_placed_by_feature.py", "tests/skilllab/test_objective_scene.py",
+                "tests/skilllab/integration/test_slots_real.py", "tests/skilllab/integration/test_sweep_real.py"):
         text = (ROOT / rel).read_text()
-        assert "orders_per_unit" in text or rel.endswith(("test_fight_outcomes.py", "test_plays.py")), rel
-        for old, now, _n in rows:
-            assert "def %s(" % now in text, (rel, now)
-            assert old == now or "def %s(" % old not in text, (rel, old)
-
-
-def test_the_flip_left_no_test_asserting_the_old_default():
-    """The ruler rows are executed: no test file asserts `orders_per_unit is True` on a play or a scene, which is the old default
-    (positive control: the explicit per-unit calls are still there)."""
-    for rel in RULER_ROWS:
-        text = (ROOT / rel).read_text()
-        assert ".orders_per_unit is True" not in text, rel
+        assert ".orders_per_unit is False" not in text, rel
+        assert "TD-LAB-REV2-L4-flip" not in text, rel
     assert "orders_per_unit=True" in (ROOT / "tests/skilllab/test_fight_outcomes.py").read_text()
-    assert "per_unit=True" in (ROOT / "tests/skilllab/integration/test_slots_real.py").read_text()
+    assert "orders_per_unit=False" in (ROOT / "tests/skilllab/test_fight_outcomes.py").read_text()
+    assert "orders_per_unit=True" in (ROOT / "tests/skilllab/test_objective_scene.py").read_text()      # the far-open-ground fight stays per-unit
 
 
 def _orders(fake):
     return sorted(c[2] for c in fake.calls_named("order_attack_move"))
 
 
-def test_a_default_setup_issues_one_group_order_and_orders_per_unit_true_one_per_unit(seam, monkeypatch):
+def test_a_default_setup_issues_one_order_per_unit_and_orders_per_unit_false_one_per_group(seam, monkeypatch):
     """Fight-level proof of both paths on the fake engine (the same harness test_fight_outcomes.py uses)."""
     import scripts.skilllab.fight as fight_mod
     import scripts.skilllab.formations as formations_mod
@@ -1163,13 +1178,13 @@ def test_a_default_setup_issues_one_group_order_and_orders_per_unit_true_one_per
     monkeypatch.setattr(fight_mod, "place", stub, raising=False)
     base = dict(groups=(G(0, 3), G(1, 3)), unit_types={}, max_ticks=2, point=(25.0, -40.0))
     _, fake = run(Setup(**base))
-    assert _orders(fake) == [[1, 2, 3], [4, 5, 6]]
-    _, fake = run(Setup(**base, orders_per_unit=True))
     assert _orders(fake) == [[1], [2], [3], [4], [5], [6]]
+    _, fake = run(Setup(**base, orders_per_unit=False))
+    assert _orders(fake) == [[1, 2, 3], [4, 5, 6]]
 
 
 def test_the_sweep_and_smoke_builds_do_not_set_orders_per_unit():
-    """The flip is the default's; sweep.py never overrides it per cell."""
+    """The orders default is Setup's; sweep.py never overrides it per cell."""
     tree = ast.parse((ROOT / "scripts/skilllab/sweep.py").read_text())
     names = {n.arg for n in ast.walk(tree) if isinstance(n, ast.keyword)} | {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
     assert "orders_per_unit" not in names

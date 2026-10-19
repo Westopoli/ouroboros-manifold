@@ -18,17 +18,19 @@ the cells holding them) is recounted from the CSV and must match the entry or su
 SATISFIABILITY of the gated cases: the first revision of this file was written before L3's plays existed, so they were unverified.
 L3 is on the lab branch now; the fix pass ran them (OM_LAB_SLOW=1) on a scratch copy of the reference sweep.py with approximate real
 builds (every baseline the play's own placed scene; the three smoke controls blob/blob, blob 8 and damage_play). Measured, layouts 81
-78 192, three replicates, group orders (the flipped default), E1 on:
-  - smoke at 1 and 12 workers: the rows are the same bytes (holds). Not every fight ends clean: 7 of the 108 play fights cap outside
-    the controls (s3_layer_above 5, s3_types_by_reach 2, all on layout 192; the other layouts are refused; the csv shows 28 because
-    the approximate baselines repeat the play's rows four times) and the mirror control caps once in six (seed 0, swapped, 1 v 1 left,
-    12000 ticks). With orders_per_unit=True the same run has 1 non-control cap fight (s3_layer_above) and no mirror cap.
-    So `set(outcomes) <= {side0, side1, draw}` and `defects.cap_rows == 0` below are RED on the lab branch for an engine reason, not a
-    builder one; a ruling on the straggler caps (or on the flip) is owed.
-  - sweep damage_up: the null control holds. The positive control (damage-up 0.5 changes the result and not the count) is False
-    because s3_layer_above is inert to the knob (identical margins and windows at 1.0 and 0.5; s3_types_by_reach does change: side1 wins
-    at 1.0, side0 at 0.5), and the entry ANDs the control over plays. The assertion `positive ok is True` below is red on the real plays
-    until the aggregation over plays is ruled (all, any, or one designated play).
+78 192, three replicates, E1 on:
+  - smoke at 1 and 12 workers: the rows are the same bytes (holds). Under GROUP orders not every fight ends clean: 7 of the 108 play
+    fights cap outside the controls (s3_layer_above 5, s3_types_by_reach 2, all on layout 192; the other layouts are refused; the csv
+    shows 28 because the approximate baselines repeat the play's rows four times) and the mirror control caps once in six (seed 0,
+    swapped, 1 v 1 left, 12000 ticks): ledger FINDING-group-orders-cap, for the E1 gate (decisions 23). With orders_per_unit=True (the
+    Setup default, which stays True until E1 is in the landing AND this smoke caps zero under group orders) the same run has 1
+    non-control cap fight (s3_layer_above) and no mirror cap. That one cap is traced before the lab landing. The assertion below that
+    no row outside control_* kinds is a cap (read from the csv rows; defects.cap_rows is the trace, not a substitute) is therefore RED
+    on the lab branch for an engine reason, not a builder one, and stays red until the cap is traced (decisions 23).
+  - sweep damage_up: the null control holds. The positive control is ONE designated fight, s3_types_by_reach (decisions 22): side1
+    wins at damage-up 1.0, side0 at 0.5, so `positive ok is True` below does not depend on any other play. s3_layer_above reads
+    identical margins and windows at 1.0 and 0.5; that is not an exemption, it is ledger FINDING-damage-up-layer-above (unexplained,
+    to be traced), and no assertion in this file or in test_sweep.py is made on that play for damage-up.
   - a 600-tick damage control shows identical margins at both points on the real play, so the damage control runs to elimination.
 
 Capability-gated cases (skipped on a library without OM_TP_FIRING_ARC_DEG or a usable om_roster_set_cone): the arc null control
@@ -188,9 +190,10 @@ def test_the_controls_command_plays_have_states_off(library):
         assert build(16, False).states is False and build(8, True).states is False
 
 
-def test_a_default_setup_has_the_flipped_orders_default_and_states_off():
+def test_a_default_setup_has_per_unit_orders_and_states_off():
+    """Decisions 23: the orders default stays True until E1 is in the landing and the smoke caps zero under group orders."""
     s = Setup(groups=(), unit_types={})
-    assert (s.states, s.orders_per_unit) == (False, False)
+    assert (s.states, s.orders_per_unit) == (False, True)
 
 
 # ---- gated: the smoke and sweep commands -----------------------------------------------------------------------------------------------------
@@ -216,8 +219,10 @@ def test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_
     a = json.loads((tmp_path / "w1" / "smoke_summary.json").read_text())
     b = json.loads((tmp_path / "w12" / "smoke_summary.json").read_text())
     assert a["rows_sha256"] == b["rows_sha256"]
-    assert set(a["outcomes"]) <= {"side0", "side1", "draw"}, a["outcomes"]          # no cap: a capped fight is a lab defect
     smoke_rows = _read(tmp_path / "w1" / "smoke.csv")
+    capped = [(r["play"], r["layout"], r["kind"], r["enemy_heads"]) for r in smoke_rows
+              if r["outcome"] == "cap" and not r["kind"].startswith("control_")]
+    assert not capped, capped          # decisions 23: a cap outside the control kinds is a defect to trace, never a tolerated row
     assert a["defects"] == _defects_of(smoke_rows) == b["defects"] and a["defects"]["cap_rows"] == 0
     assert {r["prefight"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] != "controls"} == {"ok"}
     assert isinstance(a["refused"], list) and set(a["prefight"]) <= {"ok", "no_fit", "unroutable", "no_reach"}

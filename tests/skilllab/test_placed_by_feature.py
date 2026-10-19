@@ -227,7 +227,7 @@ def test_defender_guards_attacker_attack_moves_toward_the_defender(play):
         aim = g.goal if g.goal is not None else setup.point
         assert dist(aim, anchor) <= 300.0 or (play == "s2_mass_one_end" and abs(aim[0] - anchor[0]) <= 300.0)
     assert not any(hasattr(setup, name) for name in ("decided_by_survivors", "defender_side", "hold_anchor", "hold_ticks"))
-    assert setup.orders_per_unit is False      # LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the group order is the default
+    assert setup.orders_per_unit is True
 
 
 @pytest.mark.parametrize("sd", [1400.0, 2800.0])
