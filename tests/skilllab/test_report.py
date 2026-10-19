@@ -1277,3 +1277,169 @@ def test_l5_artifact_is_deterministic_and_self_contained(tmp_path):
     assert a == b
     for url in re.findall(r'(?:href|src)=["\']([^"\']+)', a) + re.findall(r"url\(\s*['\"]?([^)'\"]+)", a):
         assert url.startswith(("#", "data:", "https://fonts.googleapis.com")), url
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 fix pass 2 (decision 32 item 3, decision 26): a scan cut by baseline_no_fit is never read as "no crossing exists".
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 32 items 2 and 3, decision 26; interface of the entry key
+# fixed by tests/skilllab/test_sweep_baselines.py on push/labrev2-base-tests (header: "The entry (sweep) ... carry `baseline_no_fit`").
+#
+# INTERFACE FIXED HERE (additions to report.artifact; nothing earlier changes):
+#   summary["families"][family]["baseline_no_fit"] = [ {"family", "play", "layout", "last_headcount"}, ... ]  (sweep's entry key; the key
+#       may be missing (an older summary) or empty: nothing was cut). last_headcount K is an int (the last headcount the play was scanned
+#       at) or None (the baseline could not be placed even at headcount 8: no scan rows of that play on that layout exist).
+#   CUT SCANS ARE READ FROM THE SUMMARY ENTRIES ONLY. Rows of a cut scan carry the label column `baseline_no_fit` = 1 (decision 26) and
+#       ceiling_hit 0; the artifact neither needs nor reads that column (the CSV text of it is "1", which diagram.read_rows may or may not
+#       type), and a row is never turned into a notable by it.
+#   In <section id="findings">, AFTER the last notable block (after every h2/svg/p of the notables), when at least one entry of any family
+#       is cut: ONE <ul class="cut-scans"> (class token "cut-scans"), last element child of the section, holding one
+#           <li data-cut-scan data-family="<family>" data-play="<play>" data-layout="<layout>" data-last-headcount="<K or empty>">
+#       per cut entry, in summary["order"] family order and, inside a family, in the entry's list order (a family in the summary but not
+#       in "order" is not read, as everywhere else). The li text holds the family, the play and the layout, and
+#           K an int:  the exact sentence  "won through K, scan cut by baseline_no_fit"   (K as an integer: "24", never "24.0")
+#           K None:    the layout listed as `baseline_no_fit` and the exact sentence  "no scan: baseline_no_fit at the smallest headcount"
+#                      (data-last-headcount is the empty string; the words "won through" do not appear)
+#       When nothing is cut there is no <ul class="cut-scans"> and the page holds the text "baseline_no_fit" nowhere.
+#   A cut scan is NOT a ceiling hit and not a notable: it adds no h2, no svg, no <p class="counts">, no row to the baseline-ceiling list,
+#       and the text of its li holds neither "ceiling hit" nor "no crossing". Notables of other (play, layout) pairs are unchanged.
+#   NOT PINNED (QUESTION for the Architect): decision 32 item 3 says the sentence is for a play that WON throughout 8 to K. A cut scan
+#       in which the play lost a cell below K has a break-even inside 8..K; whether the artifact then still says "won through K" (false
+#       for it) or another sentence is not pinned; the fakes below are always-won.
+#   Fakes: rows written with rows.fight_row (the label baseline_no_fit=1 on the cut rows, ceiling_hit 0), one knob value (so no crossing
+#   can exist), headcounts 8..K only.
+# =====================================================================================================================
+from scripts.skilllab import rows as _rows_mod  # noqa: E402
+
+CUT = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": 24}
+CUT_SENTENCE = "won through 24, scan cut by baseline_no_fit"
+NO_SCAN_SENTENCE = "no scan: baseline_no_fit at the smallest headcount"
+
+
+def _cut_rows(play="s3_layer_above", layout="192", family="range_up", top=24, baseline_roles=("none", "naive_attacker")):
+    """The rows of a cut, always-won scan: headcounts 8..top, the play wins every cell, one knob value, ceiling_hit 0, label baseline_no_fit 1."""
+    t = _td()
+    out = []
+    for role in baseline_roles:
+        for h in (8, 16, 24, 32, 40, 48):
+            if h > top:
+                continue
+            won = role == "none"
+            row = _rows_mod.fight_row(t.fr("side0" if won else "side1"), knob=t.KNOB[family], knob_value=0.5, baseline=role,
+                                               ceiling_hit=0, prefight="ok", family=family, play=play, layout=layout, kind="grid",
+                                               enemy_heads=h, baseline_no_fit=1)
+            row["point"] = "-"
+            out.append(row)
+    return out
+
+
+def _summary_with(*cuts, family="range_up"):
+    """The artifact fixture's summary with `cuts` as the baseline_no_fit list of `family`'s entry."""
+    _, _, summary = _artifact_inputs()
+    summary["families"][family] = dict(summary["families"][family], baseline_no_fit=list(cuts))
+    return summary
+
+
+def _cut_lis(html):
+    sec = _sec(_tree(html), "findings")
+    uls = [u for u in sec.find("ul") if "cut-scans" in u.attrs.get("class", "").split()]
+    return sec, uls, [li for u in uls for li in u.find("li")]
+
+
+def test_l5_artifact_says_won_through_k_for_a_scan_cut_by_baseline_no_fit(tmp_path):
+    """Decision 32 item 3, positive control: the cut (play, layout) reads 'won through 24, scan cut by baseline_no_fit', K an integer."""
+    t, base_rows, _ = _artifact_inputs()
+    _, _, html, _ = _page(tmp_path, rows=base_rows + _cut_rows(), summary=_summary_with(CUT))
+    sec, uls, lis = _cut_lis(html)
+    assert len(uls) == 1 and len(lis) == 1
+    li = lis[0]
+    assert "data-cut-scan" in li.attrs
+    assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) == ("range_up", "s3_layer_above", "192", "24")
+    text = li.text()
+    assert CUT_SENTENCE in text and "24.0" not in text
+    for w in ("range_up", "s3_layer_above", "192"):
+        assert w in text, w
+    assert sec.elements()[-1] is uls[0]                                   # after the last notable block
+
+
+def test_l5_artifact_cut_scan_is_not_a_ceiling_hit_and_not_a_notable(tmp_path):
+    """A cut scan the play won throughout adds no notable, no svg, no baseline-ceiling entry; the other notables are unchanged (ceiling hit
+    of another play stays a ceiling hit)."""
+    from scripts.skilllab import diagram
+    t, base_rows, _ = _artifact_inputs()
+    rows = base_rows + _cut_rows()
+    assert [n.kind for n in diagram.notables(rows)] == [n.kind for n in diagram.notables(base_rows)]          # fixture sanity: rows make no notable
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(CUT))
+    root = _tree(html)
+    findings = _sec(root, "findings")
+    assert [h.attrs["data-notable"] for h in findings.find("h2")] == [n.id for n in diagram.notables(base_rows)]
+    assert len(findings.find("svg")) == 3 and len(root.find("svg")) == 3
+    assert [p.attrs["data-notable"] for p in findings.find("p") if "counts" in p.attrs.get("class", "").split()] == [diagram.notables(base_rows)[0].id]
+    assert "ceiling hit" in findings.find("h2")[1].text()                  # the other play's ceiling hit still reads as one
+    _, _, lis = _cut_lis(html)
+    assert "ceiling hit" not in lis[0].text() and "no crossing" not in lis[0].text()
+    assert not _sec(root, "baseline-ceiling").find("li")
+
+
+def test_l5_artifact_cut_scan_alone_leaves_the_findings_with_no_notable(tmp_path):
+    """Only the cut scan's rows: no h2, no svg, the section still says 'no crossing', 'no ceiling hit', 'no both_wrong fight', and lists the cut."""
+    from scripts.skilllab import diagram
+    rows = _cut_rows()
+    assert diagram.notables(rows) == []
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(CUT))
+    root = _tree(html)
+    findings = _sec(root, "findings")
+    assert not findings.find("h2") and not root.find("svg")
+    ftext = findings.text()
+    for w in ("no crossing", "no ceiling hit", "no both_wrong fight"):
+        assert w in ftext, w
+    assert CUT_SENTENCE in ftext
+
+
+def test_l5_artifact_without_a_cut_has_no_cut_list_and_no_baseline_no_fit_text(tmp_path):
+    """Negative control: an entry with an empty list, an entry without the key (older summary) and no key anywhere read alike."""
+    for summary in (_summary_with(), _artifact_inputs()[2]):
+        _, _, html, _ = _page(tmp_path / ("s%d" % id(summary)), summary=summary)
+        _, uls, lis = _cut_lis(html)
+        assert not uls and not lis
+        assert "baseline_no_fit" not in html and "scan cut by" not in html
+
+
+def test_l5_artifact_cut_with_no_scan_at_the_smallest_headcount_says_so(tmp_path):
+    """Decision 32 item 2: last_headcount None, no scan rows of that play on that layout: the layout is listed as baseline_no_fit with the
+    sentence 'no scan: baseline_no_fit at the smallest headcount' and never 'won through'."""
+    t, base_rows, _ = _artifact_inputs()
+    none_cut = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": None}
+    assert not [r for r in base_rows if (r["play"], r["layout"]) == ("s3_layer_above", "192")]            # no scan rows of the pair
+    _, _, html, _ = _page(tmp_path, rows=base_rows, summary=_summary_with(none_cut))
+    sec, uls, lis = _cut_lis(html)
+    assert len(lis) == 1
+    li = lis[0]
+    assert li.attrs["data-last-headcount"] == "" and li.attrs["data-layout"] == "192"
+    text = li.text()
+    assert NO_SCAN_SENTENCE in text and "baseline_no_fit" in text and "192" in text and "s3_layer_above" in text
+    assert "won through" not in text and "None" not in text
+    assert "won through" not in html
+
+
+def test_l5_artifact_cut_list_is_in_family_order_then_entry_order_and_each_k_is_its_own(tmp_path):
+    """Two families, one with two cuts: summary['order'] family order, then the entry's order; each li carries its own K (and the None
+    case beside an int case on the same page)."""
+    a = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": 24}
+    b = {"family": "range_up", "play": "s3_layer_above", "layout": "78", "last_headcount": None}
+    c = {"family": "vision", "play": "s3_types_by_reach", "layout": "81", "last_headcount": 40}
+    summary = _summary_with(a, b)
+    summary["families"]["vision"] = dict(summary["families"]["vision"], baseline_no_fit=[c])
+    _, _, html, _ = _page(tmp_path, rows=_cut_rows(top=24) + _cut_rows(play="s3_types_by_reach", layout="81", family="vision", top=40), summary=summary)
+    _, uls, lis = _cut_lis(html)
+    assert len(uls) == 1
+    assert [(li.attrs["data-family"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) for li in lis] == [
+        ("range_up", "192", "24"), ("range_up", "78", ""), ("vision", "81", "40")]
+    assert "won through 24, scan cut by baseline_no_fit" in lis[0].text() and NO_SCAN_SENTENCE in lis[1].text()
+    assert "won through 40, scan cut by baseline_no_fit" in lis[2].text()
+    assert "won through 40" not in lis[0].text() and "won through" not in lis[1].text()
+
+
+def test_l5_artifact_cut_list_is_deterministic(tmp_path):
+    t, base_rows, _ = _artifact_inputs()
+    pages = [_page(tmp_path / n, rows=base_rows + _cut_rows(), summary=_summary_with(CUT))[2] for n in ("a", "b")]
+    assert pages[0] == pages[1]
