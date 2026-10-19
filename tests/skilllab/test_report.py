@@ -804,31 +804,42 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
 #           ("window" then "whole") ONE <table data-basis="window|whole"> holding, in this order:
 #             (a) five <tr class="c2-count" data-basis data-word data-count> in evidence.AGREEMENTS order (both_right,
 #                 count_wrong_type_right, both_wrong, count_right_type_wrong, n/a), data-count an integer: the raw agreement counts over
-#                 EVERY row (any family, kind, baseline; as the agreement section tallies). window: the rows' `agreement` word. whole:
-#                 the same rule with predicted_type re-read from the whole fight: the larger of firing_unit_seconds_0/1 wins, equal is
-#                 "tie"; predicted_count and outcome as the row has them; the word is fight._agreement's (a tie, or an outcome that is not
-#                 side0 or side1, gives "n/a").
+#                 EVERY row (any family, kind, baseline; as the agreement section tallies). window: the row's `agreement` word (its
+#                 predicted_count, predicted_type and agreement columns are the WINDOW basis, decision 29). whole (decision 35 item 2,
+#                 which corrects the first header): both words are re-derived from the totals, never taken from the columns:
+#                 predicted_count = the larger side of firing_unit_seconds_0/1, predicted_type = the larger side of
+#                 weighted_unit_seconds_0/1 (NEVER the firing totals: the type is not the count), equal = "tie" for either; outcome as the
+#                 row has it; the word is fight._agreement's (a tie, or an outcome that is not side0 or side1, gives "n/a").
 #             (b) with thresholds only: C2 verdict lines <tr class="c2-verdict" data-code="C2" data-basis data-scope="pooled|cell"
 #                 data-enemy-heads ("" for pooled, else the headcount) data-fights data-holds="true|false"> in conditions.c2_table order
 #                 (pooled first, then the cells ascending), computed by the check_c2 statistics on the CSV fights of that basis (window
 #                 reads firing_window_0/1, whole firing_unit_seconds_0/1; margin is the row's `margin`); holds = rho >=
 #                 c2_rank_agreement AND off_trend_share <= c2_off_trend_share; c2_off_trend_margin is the statistic's margin.
-#             (c) one <tr class="c1" data-code="C1@<role>" data-basis data-family data-play data-layout data-point data-baseline="<role>"
-#                 data-advantage data-baseline-max> per (series, baseline role present among the series' rows), series = (family, play,
-#                 layout, point), sorted by series then role (strings). data-advantage = the MEAN firing advantage of the series' play rows
-#                 (baseline "none"; (f0 - f1) / (f0 + f1), 0.0 when the sum is 0; window or whole as the table's basis);
-#                 data-baseline-max = the LARGEST |firing advantage| over that role's rows of the series (decision 31 C). With thresholds
-#                 the tr also holds data-holds="true|false": advantage > baseline-max + c1_min_firing_advantage, STRICT.
+#             (c) one <tr class="c1" data-code="C1@<role>" data-basis data-family data-play data-layout data-point data-knob
+#                 data-baseline="<role>" data-advantage data-baseline-max> per (family, play, layout, point, knob value) and baseline role
+#                 present among those rows, AT THE EQUAL-NUMBERS CELL ONLY (decision 35 item 3: rows whose enemy_heads is 16; rows at any
+#                 other headcount are never read for C1), sorted by (family, play, layout, point) as strings, then knob value ascending
+#                 (numeric), then role (string). data-knob = the knob value (a float text). data-advantage = the MEAN firing advantage
+#                 of the play rows there (baseline "none"; (f0 - f1) / (f0 + f1), 0.0 when the sum is 0; window or whole as the table's
+#                 basis); data-baseline-max = the LARGEST |firing advantage| over that role's rows there (decision 31 C). Knob values are
+#                 never pooled. With thresholds the tr also holds data-holds="true|false": advantage > baseline-max +
+#                 c1_min_firing_advantage, STRICT.
+#             (d) C1 needs the cell: for a (family, play, layout, point, knob value) and role where the play has no row at enemy_heads
+#                 16 or the role has none (a scan cut below 16, baseline_no_fit), there is NO C1 line (no tr class c1) and, outside the
+#                 per-basis tables, ONE <p class="c1-none" data-family data-play data-layout data-point data-knob data-baseline> whose
+#                 text holds exactly `no C1: no equal-numbers cell`, in the same sort order, with or without thresholds.
+#                 (e) The section always holds exactly `mirror C1: not computed here, it lives in the engine-run evaluate_all` (decision 35
+#                 item 4: a CSV row does not carry the mirror scan), with or without thresholds.
 #           With thresholds every verdict tr (b, c) holds <span class="threshold" data-name="<Thresholds field name>" data-value="<the
 #           value used>"> children, one per field the verdict used: C1: c1_min_firing_advantage; C2: c2_rank_agreement,
 #           c2_off_trend_margin, c2_off_trend_share; and its text holds those names. After the tables, with thresholds: <ul
 #           class="basis-differences"> with one <li data-code data-window data-whole> per verdict (data-code; C1 lines also data-family
-#           data-play data-layout data-point) whose data-holds differs between the two bases, or the text "no verdict differs between
+#           data-play data-layout data-point data-knob) whose data-holds differs between the two bases, or the text "no verdict differs between
 #           the bases" and no <li>.
 #           WITHOUT thresholds (None): the section text holds exactly `no condition verdicts: thresholds not supplied`, still holds the
 #           (a) and (c) lines as numbers (data-count, data-advantage, data-baseline-max), and has NO data-holds, no span.threshold and
 #           none of the words pass, fail, holds (text, attribute names or values). The mirror C1 (decision 31 B) needs the mirror scan,
-#           which a CSV row does not carry as such: not computed here (QUESTION, see the ledger row).
+#           which a CSV row does not carry as such: not computed here (decision 35 item 4; sentence in (e)).
 #       Deterministic (same bytes for the same input); self-contained (every url/href/src is a #fragment, a data: URI or a
 #       fonts.googleapis.com URL, as test_page_is_self_contained).
 #   summary.write (summary.json): per variant scan summary gains "ceiling_hit" (bool) and "multi_flip" (bool); "break_even" reads
@@ -1257,6 +1268,8 @@ def test_l5_artifact_without_rows_does_not_mark_the_opening_window(tmp_path):
 import fixtures_conditions as fx  # noqa: E402
 
 NO_VERDICTS = "no condition verdicts: thresholds not supplied"
+MIRROR_SENTENCE = "mirror C1: not computed here, it lives in the engine-run evaluate_all"
+NO_C1 = "no C1: no equal-numbers cell"
 BASIS_NAMES = ("window", "whole")
 
 
@@ -1276,7 +1289,7 @@ def _attr_blob(sec):
 
 def check_no_verdicts_with_raw_numbers(sec, counts=None, c1=None):
     """Without thresholds: the exact sentence, the raw numbers, and no verdict anywhere."""
-    assert NO_VERDICTS in sec.text()
+    assert NO_VERDICTS in sec.text() and MIRROR_SENTENCE in sec.text()
     blob = _attr_blob(sec)
     for word in ("pass", "fail", "holds"):                       # whole words: the mandated sentence has "thresholds" in it
         assert not _re.search(r"\b%s\b" % word, blob), word
@@ -1290,10 +1303,12 @@ def check_no_verdicts_with_raw_numbers(sec, counts=None, c1=None):
 
 
 def check_c1_numbers(sec, c1):
+    """c1[basis][(knob value, role)] = (advantage, baseline max); lines are in (basis, knob ascending, role) order, one per key."""
     lines = _cls(sec, "tr", "c1")
-    assert [(tr.attrs["data-basis"], tr.attrs["data-baseline"]) for tr in lines] == [(b, r) for b in BASIS_NAMES for r in sorted(c1[b])]
+    assert [(tr.attrs["data-basis"], float(tr.attrs["data-knob"]), tr.attrs["data-baseline"]) for tr in lines] == [
+        (b, k, r) for b in BASIS_NAMES for (k, r) in sorted(c1[b])]
     for tr in lines:
-        adv, noise = c1[tr.attrs["data-basis"]][tr.attrs["data-baseline"]]
+        adv, noise = c1[tr.attrs["data-basis"]][(float(tr.attrs["data-knob"]), tr.attrs["data-baseline"])]
         assert tr.attrs["data-code"] == "C1@" + tr.attrs["data-baseline"]
         assert (tr.attrs["data-family"], tr.attrs["data-play"], tr.attrs["data-layout"], tr.attrs["data-point"]) == ("range_up", "s3_layer_above", "81", "-")
         assert float(tr.attrs["data-advantage"]) == adv and float(tr.attrs["data-baseline-max"]) == noise
@@ -1324,7 +1339,11 @@ def test_l5_artifact_conditions_with_thresholds_drop_the_not_supplied_sentence(t
 
 
 def _c1_verdicts(sec):
-    return {(tr.attrs["data-basis"], tr.attrs["data-baseline"]): tr for tr in _cls(sec, "tr", "c1")}
+    return {(tr.attrs["data-basis"], tr.attrs["data-baseline"]): tr for tr in _cls(sec, "tr", "c1")}      # one knob value in the fixture
+
+
+def _c1_by_knob(sec):
+    return {(tr.attrs["data-basis"], float(tr.attrs["data-knob"]), tr.attrs["data-baseline"]): tr.attrs["data-holds"] for tr in _cls(sec, "tr", "c1")}
 
 
 def test_l5_artifact_c1_verdict_is_advantage_over_baseline_maximum_plus_the_minimum_strictly(tmp_path):
@@ -1353,6 +1372,76 @@ def test_l5_artifact_c1_verdict_uses_the_value_it_was_given_not_a_default(tmp_pa
     got = _c1_verdicts(sec)
     assert got[("window", "naive_attacker")].attrs["data-holds"] == "false"
     assert float(_cls(got[("window", "naive_attacker")], "span", "threshold")[0].attrs["data-value"]) == 0.5
+
+
+def test_l5_artifact_whole_fight_words_come_from_the_firing_count_and_the_weighted_type(tmp_path):
+    """Decision 35 item 2. Rows 3 and 6 of c2_rows have firing and weighted totals that DISAGREE: the whole-fight type is read from
+    weighted_unit_seconds, the count from firing_unit_seconds. Rows 4 and 5 are a count tie and a type tie (n/a). The whole counts differ
+    from the window counts, and a type read from the firing totals would turn row 3 into both_right and row 6 into both_wrong."""
+    sec = _conditions(tmp_path, fx.c2_rows())
+    got = {(tr.attrs["data-basis"], tr.attrs["data-word"]): int(tr.attrs["data-count"]) for tr in _cls(sec, "tr", "c2-count")}
+    assert got[("whole", "count_right_type_wrong")] == 1 and got[("whole", "count_wrong_type_right")] == 1      # rows 3 and 6
+    assert got[("whole", "both_right")] == 2 and got[("whole", "n/a")] == 2 and got[("whole", "both_wrong")] == 0
+    assert got[("window", "both_wrong")] == 2 and got[("window", "n/a")] == 0                                   # the window words are the column
+    assert {(b, w): n for (b, w), n in got.items()} == {(b, w): n for b, per in fx.C2_COUNTS.items() for w, n in per.items()}
+
+
+def test_l5_artifact_c1_reads_only_the_equal_numbers_cell(tmp_path):
+    """Decision 35 item 3, negative control: rows at enemy_heads 24 (the play loses, the baselines win) change no C1 number or verdict."""
+    t = fx.thresholds()
+    base = _conditions(tmp_path / "a", fx.c1_rows(), t)
+    more = _conditions(tmp_path / "b", fx.c1_rows() + fx.c1_off_cell_rows(), t)
+    check_c1_numbers(more, fx.C1_NUMBERS)
+    assert {k: v for k, v in _c1_by_knob(more).items()} == _c1_by_knob(base)
+
+
+def test_l5_artifact_c1_is_per_knob_value_never_pooled(tmp_path):
+    """Two knob values of one series: separate lines in (knob ascending, role) order with their own numbers and verdicts. Minimum 0.0625:
+    attacker window true at 0.5 and false at 0.25, whole true at 0.25 and false at 0.5 (pooled they would match neither)."""
+    sec = _conditions(tmp_path, fx.c1_two_knob_rows(), fx.thresholds())
+    check_c1_numbers(sec, fx.C1_TWO_KNOB_NUMBERS)
+    got = _c1_by_knob(sec)
+    assert got[("window", 0.25, "naive_attacker")] == "false" and got[("window", 0.5, "naive_attacker")] == "true"
+    assert got[("whole", 0.25, "naive_attacker")] == "true" and got[("whole", 0.5, "naive_attacker")] == "false"
+    assert got[("window", 0.5, "naive_defender")] == "false" and got[("whole", 0.5, "naive_defender")] == "false"
+    diff = _cls(sec, "ul", "basis-differences")[0].find("li")                      # the two attacker lines flip between the bases, per knob
+    assert sorted((li.attrs["data-code"], float(li.attrs["data-knob"]), li.attrs["data-window"], li.attrs["data-whole"]) for li in diff) == [
+        ("C1@naive_attacker", 0.25, "false", "true"), ("C1@naive_attacker", 0.5, "true", "false")]
+
+
+def _none_lines(sec):
+    return [(p.attrs["data-knob"], p.attrs["data-baseline"], p.text()) for p in _cls(sec, "p", "c1-none")]
+
+
+def test_l5_artifact_a_scan_cut_below_the_equal_numbers_cell_has_no_c1_and_says_so(tmp_path):
+    """Decision 35 item 3: play and attacker rows at enemy_heads 8 only. No C1 line, one 'no C1' paragraph naming the series, knob and
+    role; with and without thresholds; and the not-computed mirror sentence is there too. Negative to the c1_rows controls above."""
+    for sub, thr in (("none", None), ("thr", fx.thresholds())):
+        sec = _conditions(tmp_path / sub, fx.c1_cut_rows(), thr)
+        assert not _cls(sec, "tr", "c1") and MIRROR_SENTENCE in sec.text()
+        paras = _cls(sec, "p", "c1-none")
+        assert len(paras) == 1 and NO_C1 in paras[0].text()
+        p = paras[0]
+        assert (p.attrs["data-family"], p.attrs["data-play"], p.attrs["data-layout"], p.attrs["data-point"], float(p.attrs["data-knob"]),
+                p.attrs["data-baseline"]) == ("range_up", "s3_layer_above", "81", "-", 0.5, "naive_attacker")
+
+
+def test_l5_artifact_a_role_missing_the_cell_loses_its_c1_and_keeps_the_others(tmp_path):
+    """The attacker has no row at 16: its line is replaced by a 'no C1' paragraph; the defender, which has the cell, keeps its C1 line."""
+    sec = _conditions(tmp_path, fx.c1_baseline_missing_rows(), fx.thresholds())
+    assert sorted({tr.attrs["data-baseline"] for tr in _cls(sec, "tr", "c1")}) == ["naive_defender"]
+    assert [(k, r) for k, r, _ in _none_lines(sec)] == [("0.5", "naive_attacker")] and NO_C1 in _none_lines(sec)[0][2]
+
+
+def test_l5_artifact_a_scan_with_the_cell_has_no_no_c1_paragraph_negative_control(tmp_path):
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds())
+    assert not _cls(sec, "p", "c1-none") and NO_C1 not in sec.text()
+
+
+def test_l5_artifact_says_the_mirror_c1_lives_in_the_engine_run_evaluate_all(tmp_path):
+    """Decision 35 item 4, with and without thresholds, with and without baseline rows."""
+    for sub, rows, thr in (("a", fx.c1_rows(), None), ("b", fx.c1_rows(), fx.thresholds()), ("c", fx.c2_rows(), fx.thresholds())):
+        assert MIRROR_SENTENCE in _conditions(tmp_path / sub, rows, thr).text(), sub
 
 
 def _c2_lines(sec):
@@ -1401,6 +1490,7 @@ def test_l5_artifact_lists_the_verdicts_that_differ_between_the_bases_and_only_t
     assert _differences(sec) == {"C1@naive_attacker": ("true", "false")}
     li = _cls(sec, "ul", "basis-differences")[0].find("li")[0]
     assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-point"]) == ("range_up", "s3_layer_above", "81", "-")
+    assert float(li.attrs["data-knob"]) == 0.5
 
 
 def test_l5_artifact_says_no_verdict_differs_when_the_bases_agree(tmp_path):
