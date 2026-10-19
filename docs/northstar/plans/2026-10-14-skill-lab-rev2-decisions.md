@@ -71,3 +71,9 @@ The smoke asserts zero caps outside the control kinds; the spec's verification l
 
 ## 24. Second crossing (Architect 2026-10-19)
 "Defending plays" means plays with a holder: every play whose baseline column carries a `naive_defender_*` role gets the second listed crossing against it; a meeting (no holder) has none. The test as written (a second crossing for every defender-baseline role) is the right reading.
+
+## 25. Naive defender construction (Architect 2026-10-19)
+Confirmed as built: naive_attacker is `scenes.placed_scene(..., "naive")`; naive_defender replaces side 0 by one blob per unit type at that type's mean anchor, same units and counts, the play's timeline dropped. The layer rule of ruling 3: the `_play_layer` variant keeps each type on the layer the play gave it (a layer play's arrangement minus its skill); the `_attacker_layer` variant puts every type on the attacker's layer (the same-layer fight). Moving the whole blob to one raised layer is neither variant. A baseline variant in which no type on either side can reach the other's offset is refused `no_reach` in pre-flight like any scene, never run to a cap; the 35 caps of the first try say the pre-flight was not applied to baseline variants, which L2's refusals must cover.
+
+## 26. Naive blob that does not fit (Architect 2026-10-19)
+A naive blob is the arrangement with no skill in it, not an arrangement packed where the map has no room: where the blob's next cell is blocked, placement skips to the next free cell in its existing fill order, so the blob keeps today's shape on open ground (golden hashes unchanged) and fits wherever the play's own units fit. When a layout cannot hold the count at all, the refusal is listed with its role, the play's scan on that layout stops at the last headcount where both baselines placed, and the cell is marked `baseline_no_fit`, which is neither a ceiling hit nor a finding.
