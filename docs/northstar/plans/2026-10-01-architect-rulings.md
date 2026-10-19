@@ -1,6 +1,6 @@
 # Architect rulings, 2026-10-01 (mission-plays plan, Waves A and B)
 
-Answers every item under "Architect rulings needed" in the coordinator's 2026-10-01 continuation note. Rule text changed in the same commit: E-10 R-072-08, E-09 R-065-01/02/06, E-08 R-055-06, E-16 R-103-08, E-13 pipe budget, register Q-065-01. Where a ruling says "contract piece", the shape below is approved: land it as a docs-profile piece (header, `signatures.toml`, `symbol_modules.toml`, conftest binding, `docs/architecture.md`) before its consumers.
+Answers every item under "Architect rulings needed" in the coordinator's 2026-10-01 continuation note. Rule text changed in the same commit: E-10 R-072-08, E-09 R-065-01/02/06, E-08 R-055-06, E-16 R-103-08, E-13 pipe budget, register Q-065-03. Where a ruling says "contract piece", the shape below is approved: land it as a docs-profile piece (header, `signatures.toml`, `symbol_modules.toml`, conftest binding, `docs/architecture.md`) before its consumers.
 
 Four of these were Westley's decisions (2026-10-01): the pipe budget, the attack-move input, the chronicle cap, the band mapping. The rest are implementation rulings from the existing rules.
 
@@ -28,7 +28,7 @@ Four of these were Westley's decisions (2026-10-01): the pipe budget, the attack
 2. **`om_chronicle_distill_candidates`** yields no entry of its own. It is the scored candidate list that ranking (R-065-03 to R-065-06) consumes; `gen_time_jump` calls it between scoring and cluster building.
 3. **No repeat.** The consequence cluster appears only in the jump that directly follows the mission; the flag is cleared once that scroll is built. A retry jump or a second jump has none.
 4. **Wiring, no header change.** `gen_time_jump` feeds chain events, calls `om_chronicle_build_chain_clusters` and the three categorize functions, adds the consequence event from the last mission's result (`om_mission_last_region`), and builds the `consequence_ripple` cluster from flagged events in adjacent regions (Q-067-01). `om_chronicle_consequence_entry_count` and `om_mission_has_mission_consequence_flag` stop being stubs.
-5. **Cap wins** (Westley, Q-065-01): never more than 2 entries per category; a quiet jump may show 4. The earlier test fix that expected 5 is reversed by the Engineer as a test-defect with a ledger row.
+5. **Cap wins** (Westley, Q-065-03): never more than 2 entries per category; a quiet jump may show 4. The earlier test fix that expected 5 is reversed by the Engineer as a test-defect with a ledger row.
 6. **`pieces.toml`:** `B5-chronicle` depends on `A2-contract`, not on B7b.
 
 ## B6: the chapter lifecycle (new rule R-055-06)
