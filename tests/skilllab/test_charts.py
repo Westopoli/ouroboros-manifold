@@ -339,3 +339,141 @@ def test_sm_escaping_css_no_script_determinism():
     assert "<script" not in html.lower() and 'style="' not in html
     assert "fill=" not in html.replace("text-anchor", "")
     assert html == charts.small_multiples_html(panels, title="T <u>")
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 additions. spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L5 ("the agreement table; the region map and
+# the refinement listing"); ruling 4 (a play that beats 48 is a ceiling hit, never "no gain"); ruling 1 and contract.CellResult.defect
+# (a draw or a cap in a cell is a lab defect, never a result); ruling 5 (a mismatch is a finding); README section 5 chart rules.
+#
+# INTERFACE FIXED HERE:
+#   charts.small_multiples_html(panels, title=None)   (unchanged signature) now reads ScanResult.ceiling_hit and CellResult.defect:
+#       - a panel whose scan has ceiling_hit draws its own mark, an svg element with class "ceiling" and the svg text "ceiling hit",
+#         instead of the text "no break-even in range" and without the dashed `marker` line; its table row contains "ceiling hit"
+#         and its Beats cell holds the top headcount (scan.beats)
+#       - a panel without a break-even that is not a ceiling hit keeps "no break-even in range" (negative control)
+#       - a defect cell's dot has the class tokens "cell defect" and neither "won" nor "lost"
+#   charts.refinement_html(entries, title=None) -> str     entries = sweep_summary.json["families"] (dict family -> L4 entry with
+#       "skipped", "refined", "refined_vs" {role: [values]}); one <table class="words"> with a header row and one row per family in
+#       dict order: cell 1 the family; cell 2 for a skipped family "skipped: <the reason>"; else one clause per role in refined_vs
+#       order "<role>: v1, v2" (values ascending, formatted with format(v, "g")) or "<role>: no crossing" when the role's list is empty;
+#       a family with no role at all reads "no crossing"
+#   charts.agreement_html(groups, title=None) -> str       groups = dict label -> iterable of agreement words; one <table class="words">
+#       header "Group", the five words of evidence.AGREEMENTS in order, "Fights"; a row per label in dict order with the counts (never
+#       ratios or percents) and the total; a count cell of "both_wrong" above zero has class "finding"
+# =====================================================================================================================
+def _ceiling_scan(top=48, heads=(8, 16, 24, 32, 40, 48)):
+    cells = [CellResult(enemy_heads=h, fights=[], mean_margin=0.5, won=True) for h in heads]
+    return ScanResult(size=16, cells=cells, beats=top, loses_to=None, ceiling_hit=True)
+
+
+def _svgs(html):
+    return re.findall(r"<svg.*?</svg>", html, flags=re.S)
+
+
+def _visible(html):
+    """The text a reader sees: no <style> block, no tags."""
+    return re.sub(r"<[^>]+>", " ", re.sub(r"<style>.*?</style>", "", html, flags=re.S))
+
+
+def _has_class(svg, token):
+    return any(token in m.split() for m in re.findall(r'class="([^"]*)"', svg))
+
+
+def _table_rows(html):
+    out = []
+    for tr in re.findall(r"<tr>(.*?)</tr>", html, flags=re.S):
+        out.append([(m.group(1).strip(), re.sub(r"<[^>]+>", "", m.group(2)).strip())
+                    for m in re.finditer(r"<t[hd]([^>]*)>(.*?)</t[hd]>", tr, flags=re.S)])
+    return out
+
+
+def test_l5_ceiling_hit_panel_says_ceiling_hit_not_no_break_even():
+    html = charts.small_multiples_html([("up", _ceiling_scan()), ("cross", scan({8: True, 16: True, 24: False})),
+                                        ("never", scan({8: False, 16: False, 24: False}))])
+    s = _svgs(html)
+    assert len(s) == 3
+    assert _has_class(s[0], "ceiling") and "ceiling hit" in s[0] and "no break-even in range" not in s[0] and not _has_class(s[0], "marker")
+    assert not _has_class(s[1], "ceiling") and not _has_class(s[2], "ceiling")        # negative controls: only the ceiling scan
+    assert "no break-even in range" in s[2] and "ceiling hit" not in s[2]
+    assert _has_class(s[1], "marker")                                                 # a real crossing keeps its marker
+
+
+def test_l5_ceiling_hit_table_row_names_it_and_shows_the_top_headcount():
+    html = charts.small_multiples_html([("up", _ceiling_scan()), ("cross", scan({8: True, 16: True, 24: False}))])
+    rows = {r[0][1]: [c[1] for c in r] for r in _table_rows(html) if r and r[0][1] in ("up", "cross")}
+    assert "48" in rows["up"] and any("ceiling hit" in c for c in rows["up"])
+    assert not any("ceiling hit" in c for c in rows["cross"])
+
+
+def test_l5_defect_cell_is_drawn_as_a_defect_not_as_a_result():
+    """Ruling 1: a draw or a cap in a cell is a lab defect; the dot is neither won nor lost."""
+    sc = scan({8: True, 16: True, 24: False})
+    cells = list(sc.cells)
+    cells[1] = CellResult(enemy_heads=16, fights=[], mean_margin=0.0, won=False, defect=True)
+    html = charts.small_multiples_html([("d", ScanResult(size=10, cells=cells, beats=None, loses_to=None)), ("plain", sc)])
+    s = _svgs(html)
+    classes = [set(m.split()) for m in re.findall(r'<circle class="([^"]*)"', s[0])]
+    assert sum("defect" in c for c in classes) == 1
+    assert all(not ({"won", "lost"} & c) for c in classes if "defect" in c)
+    assert all("defect" not in c for c in [set(m.split()) for m in re.findall(r'<circle class="([^"]*)"', s[1])])
+
+
+_ENTRIES = {
+    "vision": {"skipped": None, "refined": [0.1875, 0.375], "refined_vs": {"naive_attacker": [0.1875, 0.375], "naive_defender": []}},
+    "range_up": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": []}},
+    "arc": {"skipped": "the library has no OM_TP_FIRING_ARC_DEG (LAB-REV2-E0 not built)", "refined": [], "refined_vs": {}},
+    "emitting": {"skipped": None, "refined": [], "refined_vs": {}},
+}
+
+
+def test_l5_refinement_listing_one_row_per_family_with_the_refined_values_per_role():
+    rows = _table_rows(charts.refinement_html(_ENTRIES))
+    body = {r[0][1]: r[1][1] for r in rows[1:]}
+    assert list(body) == ["vision", "range_up", "arc", "emitting"]
+    assert "naive_attacker: 0.1875, 0.375" in body["vision"] and "naive_defender: no crossing" in body["vision"]
+    assert body["range_up"] == "naive_attacker: no crossing"
+    assert body["arc"] == "skipped: the library has no OM_TP_FIRING_ARC_DEG (LAB-REV2-E0 not built)"
+    assert body["emitting"] == "no crossing"
+
+
+def test_l5_refinement_listing_negative_control_nothing_refined_lists_no_value():
+    quiet = {"vision": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": []}}}
+    html = charts.refinement_html(quiet)
+    assert "no crossing" in html and not re.search(r"\d\.\d", _visible(html))
+
+
+def test_l5_refinement_listing_is_deterministic():
+    assert charts.refinement_html(_ENTRIES) == charts.refinement_html(_ENTRIES)
+
+
+_WORDS = ["both_right", "count_wrong_type_right", "both_wrong", "count_right_type_wrong", "n/a"]
+
+
+def test_l5_agreement_table_counts_each_word_per_group():
+    rows = _table_rows(charts.agreement_html({"vision/s3_layer_above": ["both_right", "both_right", "both_wrong", "n/a"],
+                                              "vision/s3_types_by_reach": ["both_right"]}))
+    assert [c[1] for c in rows[0]] == ["Group"] + _WORDS + ["Fights"]
+    assert [c[1] for c in rows[1]] == ["vision/s3_layer_above", "2", "0", "1", "0", "1", "4"]
+    assert [c[1] for c in rows[2]] == ["vision/s3_types_by_reach", "1", "0", "0", "0", "0", "1"]
+
+
+def test_l5_agreement_table_marks_a_both_wrong_count_as_a_finding_and_only_that():
+    """Ruling 5: a mismatch is a finding. Positive control: both_wrong > 0 is marked; negative: zero is not, nor any other word."""
+    rows = _table_rows(charts.agreement_html({"a": ["both_wrong", "count_right_type_wrong"], "b": ["both_right"]}))
+    a, b = rows[1], rows[2]
+    assert "finding" in a[1 + _WORDS.index("both_wrong")][0]
+    assert not any("finding" in attrs for attrs, _ in b)
+    assert not any("finding" in a[1 + i][0] for i, w in enumerate(_WORDS) if w != "both_wrong")
+
+
+def test_l5_agreement_table_has_counts_not_ratios():
+    html = charts.agreement_html({"a": ["both_right"] * 3 + ["both_wrong"]})
+    assert "%" not in _visible(html) and "0.75" not in _visible(html) and "0.25" not in _visible(html)
+
+
+def test_l5_agreement_table_unknown_word_raises_and_empty_group_is_all_zeros():
+    with pytest.raises(ValueError):
+        charts.agreement_html({"a": ["often_right"]})
+    row = _table_rows(charts.agreement_html({"a": []}))[1]
+    assert [c[1] for c in row] == ["a", "0", "0", "0", "0", "0", "0"]

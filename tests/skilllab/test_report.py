@@ -744,3 +744,260 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
     assert any("mirror: 18 units beat 14." in t for t in texts)
     assert any("No break-even found between 3 and 6 enemy units." in t for t in texts)
     assert not any("With longer reach" in t for t in texts)
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 additions. spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L5 (test_report.py; "the artifact template of
+# the README section 5 form"; "lists the both_wrong fights as findings, and marks every DRAFT number the data touched"); ruling 4 (ceiling
+# hit, never "no gain"); ruling 1 and CellResult.defect; ruling 5; ruling 12 (output rule: diagrams with arrows, a number without its
+# diagram is not evidence). Existing tests above stay: a scan without ceiling_hit and without defect reads exactly as before.
+#
+# INTERFACE FIXED HERE:
+#   report.report(batch, out_dir) -> str    (unchanged signature and page) now also reads ScanResult.ceiling_hit and CellResult.defect:
+#       - a ceiling-hit scan's finding sentence is one <h2> naming the label, the words "ceiling hit" and the top headcount
+#         (scan.beats); the text "No break-even found" never appears for it; its scan chart carries an element with class token
+#         "ceiling" and no element with class token "marker"
+#       - a defect cell's dot has class tokens "cell defect" (neither won nor lost); its table row has Result "defect" and an
+#         In-words cell containing "defect"
+#   report.artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact") -> str
+#       summary = the sweep_summary.json dict ({"order": [...], "replicates": n, "families": {family: L4 entry}}); rows = the typed rows
+#       of diagram.notables (the family and smoke CSVs read by diagram.read_rows, concatenated); setup_for(notable) -> Setup.
+#       Writes <out_dir>/artifact.html (out_dir created with parents) and <out_dir>/diagrams/<notable.id>.svg (diagram.write_all) and
+#       returns the artifact path as str. The page, sections are siblings (never nested):
+#         one <h1> = title; <section id="findings">: for each notable, in diagram.notables order, one <h2 data-notable="<id>"> holding
+#           the sentence, followed by the exact diagram.render svg text (its root id = the notable id).
+#           crossing:    family, play, layout, role, the CSV text of knob_lo and knob_hi, and the word "crosses"
+#           ceiling_hit: play, layout, the CSV text of the knob value and the words "ceiling hit" (never "no gain")
+#           both_wrong:  play, layout and the words "both predictions were wrong"
+#           with no notable at all: the section reads "no crossing", "no ceiling hit" and "no both_wrong fight" and the page holds no <svg>
+#         <section id="agreement">: charts.agreement_html(groups) where groups maps "<family>/<play>" (first appearance in rows) to the
+#           list of that group's row `agreement` words
+#         <section id="both-wrong">: one <li data-row="<row index>"> per both_wrong notable, whose text holds the CSV text of that row's
+#           outcome, predicted_count, predicted_type, firing_window_0 and firing_window_1; with none: "no both_wrong fight", no <li>
+#         <section id="refinement">: charts.refinement_html(summary["families"]) verbatim
+#         <section id="drafts">: <li data-draft="NAME"> per DRAFT number the data touched: DRAFT-opening-window-ticks whenever there is
+#           any row (its text holds contract.OPENING_WINDOW_TICKS); DRAFT-firing-arc-deg when the arc family is in summary["families"]
+#           and not skipped; DRAFT-aoe-cone-range, -deg and -share when the cone family is, likewise; a skipped family touched nothing
+#       Deterministic (same bytes for the same input); self-contained (every url/href/src is a #fragment, a data: URI or a
+#       fonts.googleapis.com URL, as test_page_is_self_contained).
+#   summary.write (summary.json): per variant scan summary gains "ceiling_hit" (bool) and "multi_flip" (bool); "break_even" reads
+#       "ceiling hit: ... up to <top>" for a ceiling-hit scan (today it formats loses_to=None with %d and raises TypeError); every
+#       by_enemy_size entry gains "defect" (bool: a draw or a cap sits in the cell)
+# =====================================================================================================================
+import json  # noqa: E402
+import re as _re  # noqa: E402
+
+from scripts.skilllab import charts as _charts, summary as _summary  # noqa: E402
+
+
+def _td():
+    """test_diagram's fixtures; importing it raises until diagram.py exists, so only the L5 tests below are red, never the older ones."""
+    import test_diagram
+    return test_diagram
+
+
+def _ceiling_scan_report(top=48):
+    cells = [CellResult(n, [_fight()], 0.5, True) for n in (8, 16, 24, 32, 40, top)]
+    return ScanResult(size=16, cells=cells, beats=top, loses_to=None, ceiling_hit=True)
+
+
+def _html(batch, tmp_path):
+    return Path(report(batch, tmp_path)).read_text(encoding="utf-8")
+
+
+def _h2s(html):
+    return [" ".join(_re.sub(r"<[^>]+>", "", h).split()) for h in _re.findall(r"<h2[^>]*>(.*?)</h2>", html, flags=_re.S)]
+
+
+def _classes(svg):
+    return [set(m.split()) for m in _re.findall(r'class="([^"]*)"', svg)]
+
+
+def test_l5_report_ceiling_hit_sentence_chart_and_no_no_break_even(tmp_path):
+    batch = Batch(title="Ceiling", scans={"s3_layer_above": _ceiling_scan_report()}, firing_example={"s3_layer_above": _fight()}, rows=[])
+    html = _html(batch, tmp_path)
+    sentences = [h for h in _h2s(html) if "s3_layer_above" in h]
+    assert len(sentences) == 1 and "ceiling hit" in sentences[0] and "48" in sentences[0]
+    assert "No break-even found" not in html
+    chart = _re.findall(r"<svg.*?</svg>", html, flags=_re.S)[0]
+    assert any("ceiling" in c for c in _classes(chart)) and not any("marker" in c for c in _classes(chart))
+
+
+def test_l5_report_a_scan_without_ceiling_hit_keeps_its_break_even_and_marker(tmp_path):
+    """Negative control: a crossing scan and a no-break-even scan read as before and carry no ceiling mark."""
+    cross = _scan(16, 10, 14, 12)
+    nothing = _flat(10, 14, -0.5)
+    html = _html(Batch(title="Plain", scans={"cross": cross, "nothing": nothing}, firing_example={}, rows=[]), tmp_path)
+    assert "No break-even found" in html and "ceiling hit" not in html
+    charts_ = _re.findall(r"<svg.*?</svg>", html, flags=_re.S)
+    assert any("marker" in c for c in _classes(charts_[0])) and not any("ceiling" in c for ch in charts_ for c in _classes(ch))
+
+
+def test_l5_report_defect_cell_is_a_defect_in_chart_and_table(tmp_path):
+    sc = _scan(16, 10, 14, 12)
+    cells = list(sc.cells)
+    cells[2] = CellResult(enemy_heads=12, fights=[_fight()], mean_margin=0.0, won=False, defect=True)
+    html = _html(Batch(title="Defect", scans={"d": ScanResult(size=16, cells=cells, beats=None, loses_to=None)}, firing_example={}, rows=[]),
+                 tmp_path)
+    dots = [c for c in _classes(_re.findall(r"<svg.*?</svg>", html, flags=_re.S)[0]) if "cell" in c]
+    assert len(dots) == 5 and sum("defect" in c for c in dots) == 1
+    assert all(not ({"won", "lost"} & c) for c in dots if "defect" in c)
+    row = [r for r in _re.findall(r"<tr>(.*?)</tr>", html, flags=_re.S) if "<td>12</td>" in r][0]
+    cells_text = [_re.sub(r"<[^>]+>", "", c) for c in _re.findall(r"<td>(.*?)</td>", row, flags=_re.S)]
+    assert cells_text[2] == "defect" and "defect" in cells_text[3]
+
+
+# ---------- summary.json ----------
+
+def _summary_defn(names=("cellA",)):
+    from types import SimpleNamespace
+    cells = [SimpleNamespace(label=n, status="ok", size=16, enemy_from=8, enemy_to=48, build=object(), reference=None, note=None) for n in names]
+    return SimpleNamespace(name="formation", cells=cells, variants=[("naive", None)])
+
+
+def _fr_for_summary(outcome):
+    return FightResult(outcome=outcome, margin=0.5 if outcome == "side0" else -0.5, strength_left=(0.5, 0.5), survivors=(4, 0), heads=(16, 16),
+                       ticks=100, first_contact_tick=5, firing=[(0, 1, 1)], firing_unit_seconds=(2.0, 1.0))
+
+
+def test_l5_summary_write_reads_a_ceiling_hit_scan_without_raising(tmp_path):
+    """Ruling 4: today `%d units beat %d, lose to %d` meets loses_to=None and raises TypeError."""
+    cells = [CellResult(n, [_fr_for_summary("side0")], 0.5, True) for n in (8, 24, 48)]
+    sc = ScanResult(size=16, cells=cells, beats=48, loses_to=None, ceiling_hit=True)
+    path = tmp_path / "s.json"
+    _summary.write(_summary_defn(), {("cellA", "naive"): sc}, path, "elimination only")
+    v = json.loads(path.read_text(encoding="utf-8"))["cells"][0]["variants"]["naive"]
+    assert v["ceiling_hit"] is True and v["multi_flip"] is False and v["beats"] == 48 and v["loses_to"] is None
+    assert "ceiling hit" in v["break_even"] and "48" in v["break_even"] and "no break-even" not in v["break_even"]
+
+
+def test_l5_summary_write_keeps_the_plain_strings_for_the_other_scans_and_flags_defect_cells(tmp_path):
+    """Negative control: a crossing scan reads 'N units beat A, lose to B', a no-crossing one 'no break-even in range'; defect marks the cell."""
+    ok = ScanResult(size=16, cells=[CellResult(8, [_fr_for_summary("side0")], 0.5, True), CellResult(24, [_fr_for_summary("side1"), _fr_for_summary("cap")], -0.5, False, defect=True)],
+                    beats=8, loses_to=24)
+    none = ScanResult(size=16, cells=[CellResult(8, [_fr_for_summary("side1")], -0.5, False)], beats=None, loses_to=None)
+    path = tmp_path / "s.json"
+    _summary.write(_summary_defn(("a", "b")), {("a", "naive"): ok, ("b", "naive"): none}, path, "r")
+    cells = json.loads(path.read_text(encoding="utf-8"))["cells"]
+    a, b = cells[0]["variants"]["naive"], cells[1]["variants"]["naive"]
+    assert a["break_even"] == "16 units beat 8, lose to 24" and a["ceiling_hit"] is False
+    assert b["break_even"] == "no break-even in range" and b["ceiling_hit"] is False
+    assert [a["by_enemy_size"]["8"]["defect"], a["by_enemy_size"]["24"]["defect"], b["by_enemy_size"]["8"]["defect"]] == [False, True, False]
+
+
+# ---------- the artifact ----------
+
+def _artifact_inputs():
+    t = _td()
+    rows = t.crossing_rows() + t.ceiling_rows(play="s3_types_by_reach") + [t.both_wrong_row()]
+    summary = {"order": ["range_up", "vision"], "replicates": 3, "families": {
+        "range_up": {"skipped": None, "refined": [0.625], "refined_vs": {"naive_attacker": [0.625]}},
+        "vision": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": []}},
+        "arc": {"skipped": "the library has no OM_TP_FIRING_ARC_DEG (LAB-REV2-E0 not built)", "refined": [], "refined_vs": {}}}}
+    return t, rows, summary
+
+
+def _section(html, name):
+    m = _re.search(r'<section id="%s"[^>]*>(.*?)</section>' % name, html, flags=_re.S)
+    assert m, "no <section id=%r>" % name
+    return m.group(1)
+
+
+def _page(tmp_path, rows=None, summary=None, title="Skill lab artifact"):
+    from scripts.skilllab import report as report_mod
+    t, base_rows, base_summary = _artifact_inputs()
+    rows = base_rows if rows is None else rows
+    path = report_mod.artifact(base_summary if summary is None else summary, rows, t.setup_for, tmp_path, title=title)
+    return t, rows, Path(path).read_text(encoding="utf-8"), path
+
+
+def test_l5_artifact_writes_the_page_and_one_svg_per_notable(tmp_path):
+    from scripts.skilllab import diagram
+    t, rows, html, path = _page(tmp_path)
+    assert Path(path) == tmp_path / "artifact.html" and isinstance(path, str)
+    ids = [n.id for n in diagram.notables(rows)]
+    assert len(ids) == 3
+    assert sorted(p.name for p in (tmp_path / "diagrams").glob("*.svg")) == sorted(i + ".svg" for i in ids)
+    assert len(_re.findall(r"<h1>", html)) == 1 and "<h1>Skill lab artifact</h1>" in html
+
+
+def test_l5_artifact_findings_one_sentence_and_the_exact_diagram_per_notable(tmp_path):
+    from scripts.skilllab import diagram
+    t, rows, html, _ = _page(tmp_path)
+    findings = _section(html, "findings")
+    ns = diagram.notables(rows)
+    h2 = {m.group(1): _re.sub(r"<[^>]+>", " ", m.group(2)) for m in _re.finditer(r'<h2 data-notable="([^"]+)"[^>]*>(.*?)</h2>', findings, flags=_re.S)}
+    assert list(h2) == [n.id for n in ns]
+    rendered = diagram.render_all(rows, t.setup_for)
+    for n in ns:
+        assert rendered[n.id] in findings
+        assert ('id="%s"' % n.id) in rendered[n.id]
+    cross, ceil, wrong = ns
+    words = " ".join(h2[cross.id].split())
+    for w in (cross.family, cross.play, cross.layout, cross.role, repr(cross.knob_lo), repr(cross.knob_hi), "crosses"):
+        assert w in words, w
+    words = " ".join(h2[ceil.id].split())
+    for w in (ceil.play, ceil.layout, repr(ceil.knob_lo), "ceiling hit"):
+        assert w in words, w
+    assert "no gain" not in words
+    assert "both predictions were wrong" in " ".join(h2[wrong.id].split())
+
+
+def test_l5_artifact_agreement_section_is_the_charts_table_over_family_play_groups(tmp_path):
+    t, rows, html, _ = _page(tmp_path)
+    groups = {}
+    for r in rows:
+        groups.setdefault("%s/%s" % (r["family"], r["play"]), []).append(r["agreement"])
+    assert list(groups) == ["range_up/s3_layer_above", "range_up/s3_types_by_reach", "vision/s3_layer_above"]
+    assert _charts.agreement_html(groups) in _section(html, "agreement")
+
+
+def test_l5_artifact_lists_the_both_wrong_fights_with_their_csv_values(tmp_path):
+    t, rows, html, _ = _page(tmp_path)
+    items = _re.findall(r'<li data-row="(\d+)"[^>]*>(.*?)</li>', _section(html, "both-wrong"), flags=_re.S)
+    wrong_rows = [i for i, r in enumerate(rows) if r["agreement"] == "both_wrong"]
+    assert [int(i) for i, _ in items] == wrong_rows == [len(rows) - 1]
+    text = _re.sub(r"<[^>]+>", " ", items[0][1])
+    r = rows[wrong_rows[0]]
+    for col in ("outcome", "predicted_count", "predicted_type", "firing_window_0", "firing_window_1"):
+        assert str(r[col]) in text, col
+
+
+def test_l5_artifact_with_nothing_notable_has_no_diagram_and_says_so(tmp_path):
+    """The control of the spec row: a fake with no crossing, no ceiling hit and no both_wrong produces no diagram."""
+    t = _td()
+    rows = t.sweep_rows({0.25: 32, 0.5: 32, 0.75: 40, 1.0: 40}, {"naive_attacker": t.FLAT16})
+    _, _, html, _ = _page(tmp_path, rows=rows)
+    text = _re.sub(r"<[^>]+>", " ", _section(html, "findings"))
+    for w in ("no crossing", "no ceiling hit", "no both_wrong fight"):
+        assert w in text, w
+    assert "<svg" not in html and not list((tmp_path / "diagrams").glob("*.svg"))
+    assert "<li data-row" not in _section(html, "both-wrong") and "no both_wrong fight" in _section(html, "both-wrong")
+
+
+def test_l5_artifact_refinement_section_is_the_charts_listing(tmp_path):
+    t, rows, html, _ = _page(tmp_path)
+    _, _, summary = _artifact_inputs()
+    assert _charts.refinement_html(summary["families"]) in _section(html, "refinement")
+
+
+def test_l5_artifact_marks_the_draft_numbers_the_data_touched(tmp_path):
+    from scripts.skilllab import contract
+    t, rows, summary = _artifact_inputs()
+    _, _, html, _ = _page(tmp_path)
+    marks = dict(_re.findall(r'<li data-draft="([^"]+)"[^>]*>(.*?)</li>', _section(html, "drafts"), flags=_re.S))
+    assert set(marks) == {"DRAFT-opening-window-ticks"}                  # the arc family is skipped: it touched nothing (negative control)
+    assert str(contract.OPENING_WINDOW_TICKS) in marks["DRAFT-opening-window-ticks"]
+    live = {**summary, "families": {**summary["families"], "arc": {"skipped": None, "refined": [], "refined_vs": {"naive_attacker": []}},
+                                     "cone": {"skipped": None, "refined": [], "refined_vs": {}}}}
+    _, _, html2, _ = _page(tmp_path / "live", summary=live)
+    marks2 = set(_re.findall(r'<li data-draft="([^"]+)"', _section(html2, "drafts")))
+    assert marks2 == {"DRAFT-opening-window-ticks", "DRAFT-firing-arc-deg", "DRAFT-aoe-cone-range", "DRAFT-aoe-cone-deg", "DRAFT-aoe-cone-share"}
+
+
+def test_l5_artifact_is_deterministic_and_self_contained(tmp_path):
+    _, _, a, _ = _page(tmp_path / "a")
+    _, _, b, _ = _page(tmp_path / "b")
+    assert a == b
+    for url in _re.findall(r'(?:href|src)="([^"]+)"', a) + _re.findall(r"url\(\s*['\"]?([^)'\"]+)", a):
+        assert url.startswith(("#", "data:", "https://fonts.googleapis.com")), url
