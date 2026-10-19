@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-126 to S-131: yes, 6 stories, 27 rules, numbers from `algorithms.md` ALG-75 and config. S-218 and S-219: 2 stories, 14 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | No open flags on S-126 to S-131, and 3 on S-218 and S-219 (Q-118-03, Q-219-02, Q-219-04). Q-219-02 is to be designed and Q-219-04 is parked. |
+| Implied-but-unstated behavior turned into flags | No open flags on S-126 to S-131, and 2 on S-218 and S-219 (Q-118-03, Q-219-02). Q-219-02 is to be designed. |
 | Every visible-surface story has a reference | **No.** S-131 (how structures, convoys, and hazards read on screen) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -143,12 +143,12 @@ Rules
 - R-219-02  Given a trouble, When ticks pass, Then it travels across the map. Its path and speed are to be designed [Q-219-02]; Westley, 2026-10-06: it would be good if the player did not see it coming.
 - R-219-03  Given a trouble on the map, When either side looks, Then both sides can see it.
 - R-219-04  Given a unit, worker, shipment, building or production site that the trouble passes over, When it is under the trouble, Then it is shut down while the trouble is over it What shut down means differs per trouble (Westley, 2026-10-06).
-- R-219-05  Given the sensor interference zone of S-130 and E-12 R-090-04, When troubles are listed, Then [Q-219-04: whether interference is one of the troubles or a separate hazard that stays; parked].
+- R-219-05  Given the sensor interference zone of S-130 and E-12 R-090-04, When troubles are listed, Then (whether interference is one of the troubles or a separate hazard that stays; parked; Q-219-04 closed 2026-10-18, Architect, implementation).
 - R-219-06  Given a T2 screenshot, When inspected, Then a trouble reads as a distinct moving thing on the map, apart from the interference zone and from every unit.
 
 Inputs: the region's trouble (seed, E-17); the trouble's path.
 Outputs: the trouble's position per tick in the delta; which things it has shut down; screen.
-Open flags: Q-219-02 (to be designed), Q-219-04 (parked).
+Open flags: Q-219-02 (to be designed).
 
 ## Inputs
 
@@ -208,7 +208,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-219-02, Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-219-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
