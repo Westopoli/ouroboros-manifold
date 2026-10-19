@@ -192,54 +192,58 @@ def _field_masks(engine, setup, layers):
         engine.free_world(w)
 
 
-def _walks(setup, g):
-    return setup.unit_types.get(g.unit, {}).get("movement") == "walking"
-
-
-def _blocked_on_line(t, layer, a, b):
-    """The straight line from a to b crosses a 50 wu cell whose centre is in a block reaching `layer` (a flyer's own-layer route)."""
-    n = max(1, int(math.dist(a, b) // (ROUTE_CELL / 2)))
-    cells = {(int((a[0] + (b[0] - a[0]) * i / n) // ROUTE_CELL), int((a[1] + (b[1] - a[1]) * i / n) // ROUTE_CELL)) for i in range(n + 1)}
-    return any(_in_block(blk, layer, (cx + 0.5) * ROUTE_CELL, (cy + 0.5) * ROUTE_CELL) for cx, cy in cells for blk in t.blocks)
+def _walking_names(setup, engine, groups):
+    """Unit names among `groups` that walk: the play's own "movement" key, else the engine's reading (an unset type reads flying)."""
+    names = {g.unit for g in groups}
+    walking = {n for n in names if setup.unit_types.get(n, {}).get("movement") == "walking"}
+    builtin = sorted(n for n in names if n not in setup.unit_types)
+    if builtin:
+        engine = _lazy_engine(engine)
+        w = engine.new_world(0)
+        try:
+            walking |= {n for n in builtin if engine.movement_kind(w, engine.type_id(n)) == 1}
+        finally:
+            engine.free_world(w)
+    return walking
 
 
 def _unroutable(setup, engine):
-    """Some moving group has no path of open 50 wu cells from its placed positions to its target on its own layer."""
+    """Some moving group has no path of open 50 wu cells from its placed positions to its target on its own layer. Every mover is routed
+    the same way; only the mask differs: a flyer's open cells are those no block reaching its layer covers, a walker's also need walkable ground."""
     t = setup.terrain
     if t is None:
         return False
     cols, rows = math.ceil(t.canvas[0] / ROUTE_CELL), math.ceil(t.canvas[1] / ROUTE_CELL)
     anchors = timeline.first_anchors(setup)
     movers = [g for g in setup.groups if g.order in _MOVING]
-    # See also: tests/skilllab/test_scenes_preflight_flyer.py, ground/test_slope_top_variants.py (s1_slope_top_flyer). Only a walker is
-    # routed (breadth-first, over the ground's walk mask on a generated field); a flyer (unit type not "walking") needs no path on the
-    # ground, so its placed mean is checked by a straight line over blocks on its own layer (Architect, 2026-10-19).
-    flyers = [g for g in movers if not _walks(setup, g)]
-    movers = [g for g in movers if g not in flyers]
-    masks = _field_masks(_lazy_engine(engine), setup, sorted({g.layer for g in movers})) if movers and t.field_seed is not None else {}
+    # See also: tests/skilllab/test_scenes_preflight_flyer.py, ground/test_slope_top_variants.py (s1_slope_top_flyer).
+    walking = _walking_names(setup, engine, movers) if movers else set()
+    walk_layers = sorted({g.layer for g in movers if g.unit in walking})
+    masks = _field_masks(_lazy_engine(engine), setup, walk_layers) if walk_layers and t.field_seed is not None else {}
 
     def cell(x, y):
         return min(max(int(x // ROUTE_CELL), 0), cols - 1), min(max(int(y // ROUTE_CELL), 0), rows - 1)
 
-    def open_cell(layer, c):
+    def open_cell(layer, walks, c):
         x, y = (c[0] + 0.5) * ROUTE_CELL, (c[1] + 0.5) * ROUTE_CELL
         if any(_in_block(b, layer, x, y) for b in t.blocks):
             return False
-        if layer in masks:
+        if walks and layer in masks:
             width, mask = masks[layer]
             return bool(mask[int(y // TERRAIN_CELL) * width + int(x // TERRAIN_CELL)])
         return True
 
     reached = {}
     for g in movers:
+        walks = g.unit in walking
         target = g.goal if g.goal is not None else setup.point if setup.point is not None else anchors[1 - g.side]
-        key = (g.layer, cell(*target))
+        key = (g.layer, walks, cell(*target))
         if key not in reached:
-            seen, queue = {key[1]}, collections.deque([key[1]])
+            seen, queue = {key[2]}, collections.deque([key[2]])
             while queue:
                 cx, cy = queue.popleft()
                 for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
-                    if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and open_cell(g.layer, n):
+                    if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and open_cell(g.layer, walks, n):
                         seen.add(n)
                         queue.append(n)
             reached[key] = seen
@@ -248,10 +252,6 @@ def _unroutable(setup, engine):
             c = cell(x, y)
             if c not in seen and not any(n in seen for n in ((c[0] + 1, c[1]), (c[0] - 1, c[1]), (c[0], c[1] + 1), (c[0], c[1] - 1))):
                 return True
-    for g in flyers:
-        target = g.goal if g.goal is not None else setup.point if setup.point is not None else anchors[1 - g.side]
-        if _blocked_on_line(t, g.layer, _placed_mean([g]), target):
-            return True
     return False
 
 
@@ -275,7 +275,7 @@ def _no_reach(setup, engine):
 def preflight(setup, engine):
     """"ok", or the first refusal in the order no_fit, unroutable, no_reach (decision 7, 2026-10-14). Runs no tick, moves nothing.
     no_fit: a placed point inside a blocked cell. unroutable: a moving group cannot reach its target over the open cells of its
-    layer (a flyer, a type not "walking", is checked by a straight line over the blocks of its layer instead). no_reach: no type facing a holder (a group
+    layer, a flyer's open cells being those no block reaching its layer covers and a walker's also the walkable ground). no_reach: no type facing a holder (a group
     on guard) reaches the holder's layer; a meeting has no holder. no_fit also covers a placed point on ground a generated field
     says is not walkable. The engine is needed only for a reach read or a generated field and is built when None."""
     if _no_fit(setup, engine):
