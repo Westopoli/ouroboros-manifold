@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decisions 26 and 36 (naive blob that does not fit, its bounds), 32 item 5 (one unit), 25 for the baseline builds
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decisions 26, 36 and 38 (naive blob that does not fit, its bounds), 32 item 5 (one unit), 25 for the baseline builds
 """LAB-REV2-BASE, part 1 of 3: a naive blob skips cells it cannot stand on (scenes.placed_scene(..., "naive") here; sweep._naive_side in
 test_sweep_baselines.py). No fight, no engine of ours (the pre-flight of a same-layer scene builds the library lazily for the built-in
 types' movement; the sweep file's `library` fixture is the shared one).
@@ -18,16 +18,19 @@ case (the anchor is radius zero; if blocked, the nearest free cell by increasing
 READINGS (the test writer's; each is one assertion that can be argued with, kept apart from the invariants):
   - A cell is blocked when the unit's position stands in a Block that reaches the group's layer (layer_lo <= layer <= layer_hi), bounds
     inclusive, the same reading as scenes.preflight's no_fit. A block that does not reach the group's layer does not block it.
-  - "Region" is read at the route grid's own resolution (fakes_baselines.route_region): a point is in the region when its 50 wu cell
-    is reached from the anchor's cell over open cells. Every wall these tests build for the region rule has bounds on multiples of 50
-    wu (fakes_baselines.aligned) so that a cell is wholly in a wall or wholly out of it and the cell and the point readings agree. QUESTION
-    for the Architect (report): a free point in a cell whose centre is blocked (an unaligned wall) is "outside" at cell resolution and
-    "inside" at point resolution; decision 36 does not say which. The anchor cell itself starts the search even when it is blocked.
+  - "Region" is read at CELL resolution on the decision 20 grid (decision 38 item 1; fakes_baselines.route_region): a continuation point
+    is accepted when it is inside the canvas, in no block of its layer, and its 50 wu route cell is open (centre in no block) and
+    reached from the anchor's cell over open cells. A free point inside a blocked cell (a "sliver", beside a wall that is not on 50 wu
+    bounds) is OUT. Most walls here have bounds on multiples of 50 wu (fakes_baselines.aligned) so that the cell and point readings agree;
+    the sliver tests (test_sweep_baselines.py, integration/test_baselines_real.py) use walls that are not. Decision 38 item 2: when the
+    anchor's cell is blocked the region is that of the nearest open route cell to the anchor (nearest_free_cell).
   - The "existing fill order" is the Fermat-spiral order of formations._blob (anchor first when the count is odd, then the pairs
     p_i / reflection of p_i in order), CONTINUED without end (pairs count and radius unchanged, i = pairs, pairs + 1, ...). A blocked
     cell is skipped alone (its partner stays). fakes_baselines.fill_order is that sequence; expected_skipping applies canvas, block and
-    region. A blob of ONE unit has no pairs to count: its cell after the anchor is checked by properties (free, inside the canvas, in
-    the region, not nearer for a wider wall), not against a sequence.
+    region. A blob of ONE unit (decision 38 item 3): it stands on its anchor when that is acceptable,
+    else in the nearest open in-region route cell (increasing radius in 50 wu steps); the tests pin the CELL the unit stands in
+    (fakes_baselines.single_unit_cell, an exhaustive scan written from the ruling), not a coordinate inside it, and use anchors with a
+    unique nearest cell (the naive scene's anchors are route cell corners, a four-way tie until three of the cells are walled). Exact distance ties ("ties by angle in the existing spiral order") are not pinned.
   - The group keeps Group.x, Group.y as the blob anchor and the radius 80 + 12 * sqrt(count) (the tests rebuild the fill order from them);
     the units are read where fight() reads them: formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params). HOW the skip
     reaches place() (a "points" formation, a param on "blob", a new formation kind) is the builder's, but nothing else of the group
@@ -67,7 +70,8 @@ for _p in (ROOT, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from fakes_baselines import aligned, expected_skipping, in_block, inside_canvas, keyed, positions, radius_of, rounded, route_region  # noqa: E402
+from fakes_baselines import (aligned, cell_of, cell_open, expected_skipping, in_block, inside_canvas, keyed, positions, radius_of, rounded,  # noqa: E402
+                             route_region, single_unit_cell)
 from scripts.skilllab import formations, maps, scenes  # noqa: E402
 from scripts.skilllab.contract import Block  # noqa: E402
 
@@ -343,27 +347,47 @@ def test_a_blob_of_one_unit_stands_on_its_anchor_when_the_anchor_is_free():
     assert positions(g) == [(g.x, g.y)]
 
 
-def test_a_blob_of_one_unit_on_a_blocked_anchor_takes_the_nearest_free_cell_by_increasing_radius():
-    """(a) Decision 32 item 5: the anchor is blocked, the unit takes the nearest free cell: free, inside the canvas, in the anchor's
-    region, near the anchor, and never nearer for a wider wall (the order is by increasing radius). No sequence is pinned (header)."""
+def corner_wall(g):
+    """Three of the four route cells that meet at the anchor (a cell corner) are blocked and the anchor stands on the blocked boundary:
+    the nearest open cell is the fourth, 35.4 wu away, and nothing else is as near. Returns (Blocks, expected cell)."""
+    cx, cy = int(g.x // 50), int(g.y // 50)
+    assert g.x == cx * 50.0 and g.y == cy * 50.0, "fixture: the anchor must be a route cell corner"
+    bl = [aligned(g.x - 50, g.y - 50, g.x + 50, g.y), aligned(g.x, g.y, g.x + 50, g.y + 50)]      # SW, SE, NE cells blocked
+    return bl, (cx - 1, cy)                                                                         # NW cell open
+
+
+def test_a_blob_of_one_unit_whose_cell_is_blocked_takes_the_nearest_open_cell():
+    """(a) Decision 38 items 2 and 3: the anchor's cell is blocked (so is the point). The unit stands in the nearest open in-region cell,
+    here the one open cell of the four around the anchor (unique nearest), computed by an exhaustive scan in the test helper and
+    pinned by cell. The nearest open cell must also be the region start: the unit is in the region."""
     plain = open_setup(1)
     g0 = groups_of(plain)["defender"]
-    cx, cy = (g0.x // 50 + 0.5) * 50, (g0.y // 50 + 0.5) * 50
-    got = []
-    for half in (5.0, 15.0):
-        assert abs(g0.x - cx) > half or abs(g0.y - cy) > half, "fixture: the block must leave the anchor cell's centre open"
-        wall = Block(g0.x - half, g0.y - half, g0.x + half, g0.y + half, 0, 4)
-        _, setup, build = scene_with(wall, 1)
-        g = groups_of(setup)["defender"]
-        (p,) = positions(g)
-        seen, cell_of = route_region(setup.terrain, g.layer, (g.x, g.y))
-        assert not in_block(setup.terrain.blocks, g.layer, p) and inside_canvas(setup.terrain, p) and cell_of(p) in seen
-        assert p != (g.x, g.y)
-        d = math.hypot(p[0] - g.x, p[1] - g.y)
-        assert d > half and d < 150.0
-        assert build.labels["prefight"] == scenes.preflight(setup, None) and (g.x, g.y) == (g0.x, g0.y)
-        got.append(d)
-    assert got[0] <= got[1]
+    walls, want = corner_wall(g0)
+    _, setup, build = scene_with(walls, 1)
+    g = groups_of(setup)["defender"]
+    (p,) = positions(g)
+    assert single_unit_cell(setup.terrain, g.layer, (g.x, g.y)) == want
+    assert cell_of(setup.terrain, p) == want and not in_block(setup.terrain.blocks, g.layer, p)
+    seen, _ = route_region(setup.terrain, g.layer, (g.x, g.y))
+    assert want in seen and build.labels["prefight"] == scenes.preflight(setup, None)
+
+
+@pytest.mark.parametrize("heads", [16, 17])
+def test_a_blob_whose_anchor_cell_is_blocked_fills_the_region_of_the_nearest_open_cell(heads):
+    """(a) Decision 38 item 2: a wall of 4 x 4 route cells over the anchor (bigger than a route cell, so the anchor cell's centre is
+    blocked, as is the anchor). The region search starts at the nearest open cell (it would be empty from a blocked cell), so the blob
+    is skipped round the wall: no unit in a block, positions equal the fill order over the region (unsorted). Red before; for 'the
+    search fails or is empty on a blocked anchor cell' the blob cannot hold the count and the label reads no_fit."""
+    plain = open_setup(heads)
+    g0 = groups_of(plain)["defender"]
+    wall = aligned(g0.x - 75.0, g0.y - 75.0, g0.x + 75.0, g0.y + 75.0)
+    _, setup, build = scene_with(wall, heads)
+    g = groups_of(setup)["defender"]
+    assert not cell_open(setup.terrain, g.layer, cell_of(setup.terrain, (g.x, g.y))), "fixture: the anchor cell is blocked"
+    expected = expected_skipping(g, setup.terrain)
+    assert expected is not None and rounded(positions(g)) == rounded(expected) and len(positions(g)) == heads
+    assert not [p for p in positions(g) if in_block(setup.terrain.blocks, g.layer, p)]
+    assert build.labels["prefight"] == scenes.preflight(setup, None) != "no_fit"
 
 
 # ---- positive controls: the same wall that does not catch the blob changes nothing -------------------------------------------

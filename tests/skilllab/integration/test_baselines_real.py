@@ -26,7 +26,7 @@ for _p in (ROOT, ROOT / "tests" / "skilllab"):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from fakes_baselines import expected_skipping, in_block, inside_canvas, positions, rounded, route_region  # noqa: E402
+from fakes_baselines import cell_of, cell_open, expected_skipping, in_block, inside_canvas, positions, rounded, route_region  # noqa: E402
 from fakes_scans import _fr  # noqa: E402
 from scripts.skilllab import engine, scenes, sweep  # noqa: E402
 
@@ -60,10 +60,8 @@ def test_every_build_is_labelled_with_the_preflight_of_its_own_setup(library, la
 def test_layout_192_places_every_baseline_in_open_cells_at_every_headcount(library, play, heads):
     """The 192 / 48 case: the play fits on 192 at every headcount, so every baseline fits (decision 26): label 'ok', no unit in a block,
     inside the canvas and in its anchor's region (decision 36), and every naive blob (both blobs of naive_attacker, the holders of the
-    naive defender variants) equals the fill order over the free cells, UNSORTED (the helper's walk). The real layout's walls are NOT on
-    50 wu bounds, so a free point can sit in a route cell whose centre is blocked (3139.97, 2117.59 beside the wall's gap edge at y 2120): the
-    region read at cell resolution drops it, a read at point resolution keeps it, and decision 36 does not say which. The test accepts
-    either list (cell reading, or block-and-canvas at point resolution) and nothing else; QUESTION for the Architect in the report.
+    naive defender variants) equals the fill order over the free cells at CELL resolution (decision 38 item 1), UNSORTED, exactly. The
+    real layout's walls are not on 50 wu bounds, so slivers exist (free points in a route cell whose centre is blocked); they are out.
     The unit at x = 3277 of the 48-unit naive_attacker defender blob is IN the anchor's region (the east side connects to the anchor
     through the choke wall's gap rows 1880 to 2120 and round the wall's ends) and stays."""
     features = sweep.smoke_layouts()["192"]
@@ -76,12 +74,11 @@ def test_layout_192_places_every_baseline_in_open_cells_at_every_headcount(libra
         assert sum(g.count for g in setup.groups if g.side == 1) == heads
         naive = [g for g in setup.groups if role == "naive_attacker" or (role.startswith("naive_defender") and g.side == 0)]
         for g in naive:
-            seen, cell_of = route_region(setup.terrain, g.layer, (g.x, g.y))
+            seen, cell_fn = route_region(setup.terrain, g.layer, (g.x, g.y))
             pts = positions(g)
-            assert all(inside_canvas(setup.terrain, p) and cell_of(p) in seen for p in pts), (play, role, heads, g.unit)
-            cell_reading = expected_skipping(g, setup.terrain)                          # the region at 50 wu cell resolution
-            point_reading = expected_skipping(g, setup.terrain, connected=False)       # the block-and-canvas reading, no region
-            assert rounded(pts) in (rounded(cell_reading), rounded(point_reading)), (play, role, heads, g.unit)
+            assert all(inside_canvas(setup.terrain, p) and cell_fn(p) in seen for p in pts), (play, role, heads, g.unit)
+            expected = expected_skipping(g, setup.terrain)                              # the region at 50 wu cell resolution (decision 38)
+            assert expected is not None and rounded(pts) == rounded(expected), (play, role, heads, g.unit)
 
 
 def test_layout_192_48_the_unit_at_x_3277_stays_because_it_is_in_the_anchors_region(library):
@@ -91,9 +88,26 @@ def test_layout_192_48_the_unit_at_x_3277_stays_because_it_is_in_the_anchors_reg
     features = sweep.smoke_layouts()["192"]
     setup = sweep.default_builds("s3_layer_above", "naive_attacker", features)(48, False)
     g = next(g for g in setup.groups if g.side == 1)
-    seen, cell_of = route_region(setup.terrain, g.layer, (g.x, g.y))
+    seen, _cell_fn = route_region(setup.terrain, g.layer, (g.x, g.y))
     mine = [p for p in positions(g) if abs(p[0] - 3277.0) < 1.0 and abs(p[1] - 2143.0) < 1.0]
-    assert len(mine) == 1 and cell_of(mine[0]) in seen and mine[0][0] > max(b.x1 for b in setup.terrain.blocks)
+    assert len(mine) == 1 and _cell_fn(mine[0]) in seen and mine[0][0] > max(b.x1 for b in setup.terrain.blocks)
+
+
+@pytest.mark.parametrize("heads", [24, 48])
+def test_layout_192_the_sliver_beside_the_gap_edge_is_not_used(library, heads):
+    """Decision 38 item 1: (3139.97, 2117.59) is free (the wall's lower block starts at y = 2120) but its route cell (62, 42) has its
+    centre (3125, 2125) inside that block, so it is a sliver and is OUT. The point reading (block and canvas only) would take it as the
+    22nd unit; the cell reading does not. Positive: the list is the cell-resolution list exactly, and it differs from the point list."""
+    features = sweep.smoke_layouts()["192"]
+    setup = sweep.default_builds("s3_layer_above", "naive_attacker", features)(heads, False)
+    g = next(g for g in setup.groups if g.side == 1)
+    point_list = rounded(expected_skipping(g, setup.terrain, connected=False))
+    slivers = [p for p in point_list if not cell_open(setup.terrain, g.layer, cell_of(setup.terrain, p))]
+    assert slivers, "fixture: the point reading uses sliver points"
+    if heads == 24:
+        assert (3139.9746, 2117.5861) in slivers
+    pts = rounded(positions(g))
+    assert not [p for p in pts if p in slivers] and pts == rounded(expected_skipping(g, setup.terrain)) and pts != point_list
 
 
 def test_ruling_25_variants_on_a_real_layer_play(library):

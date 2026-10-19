@@ -53,22 +53,63 @@ def aligned(x0, y0, x1, y1, layer_lo=0, layer_hi=4):
     return Block(math.floor(x0 / r) * r, math.floor(y0 / r) * r, math.ceil(x1 / r) * r, math.ceil(y1 / r) * r, layer_lo, layer_hi)
 
 
+def _grid(terrain):
+    return math.ceil(terrain.canvas[0] / ROUTE_CELL), math.ceil(terrain.canvas[1] / ROUTE_CELL)
+
+
+def cell_of(terrain, p):
+    """The route cell (column, row) of a point, clamped to the canvas grid."""
+    cols, rows = _grid(terrain)
+    return min(max(int(p[0] // ROUTE_CELL), 0), cols - 1), min(max(int(p[1] // ROUTE_CELL), 0), rows - 1)
+
+
+def cell_centre(c):
+    return (c[0] + 0.5) * ROUTE_CELL, (c[1] + 0.5) * ROUTE_CELL
+
+
+def cell_open(terrain, layer, c):
+    """Decision 20: a route cell is open when its CENTRE is in no block that reaches `layer`."""
+    return not in_block(terrain.blocks, layer, cell_centre(c))
+
+
+def nearest_free_cell(terrain, layer, anchor):
+    """The open route cell whose centre is nearest the anchor (decision 38 items 2 and 3); None when no cell is open. Written here
+    from the words of the ruling, not from any builder: an exhaustive scan of the grid. Exact ties are broken by (column, row) and
+    are NOT part of what the tests pin: every test that uses this has a unique nearest cell, or only needs the region it starts."""
+    cols, rows = _grid(terrain)
+    cands = [(math.hypot(cell_centre((i, j))[0] - anchor[0], cell_centre((i, j))[1] - anchor[1]), i, j)
+             for i in range(cols) for j in range(rows) if cell_open(terrain, layer, (i, j))]
+    return None if not cands else min(cands)[1:]
+
+
 def route_region(terrain, layer, anchor):
-    """(cells, cell_of): the 50 wu cells connected to the anchor's cell (four neighbours) over open cells of the mover's route mask
-    (decision 36 item 1 and decision 20). On a hand-built terrain the mask of a flyer and a walker agree: a cell is open when its centre
-    is in no block that reaches `layer`. The anchor's own cell starts the search whether or not it is open."""
-    cols, rows = math.ceil(terrain.canvas[0] / ROUTE_CELL), math.ceil(terrain.canvas[1] / ROUTE_CELL)
-    cell_of = lambda p: (min(max(int(p[0] // ROUTE_CELL), 0), cols - 1), min(max(int(p[1] // ROUTE_CELL), 0), rows - 1))
-    start = cell_of(anchor)
+    """(cells, cell_of): the route cells connected (four neighbours) over open cells to the anchor's cell; when the anchor's own cell
+    is not open, to the nearest open cell (decision 38 item 2). On a hand-built terrain the mask of a flyer and a walker agree. The
+    second item is a function point -> cell. Empty when no cell is open."""
+    cols, rows = _grid(terrain)
+    start = cell_of(terrain, anchor)
+    if not cell_open(terrain, layer, start):
+        start = nearest_free_cell(terrain, layer, anchor)
+        if start is None:
+            return set(), (lambda p: cell_of(terrain, p))
     seen, queue = {start}, [start]
     while queue:
         cx, cy = queue.pop()
         for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
-            if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and not in_block(
-                    terrain.blocks, layer, ((n[0] + 0.5) * ROUTE_CELL, (n[1] + 0.5) * ROUTE_CELL)):
+            if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and cell_open(terrain, layer, n):
                 seen.add(n)
                 queue.append(n)
-    return seen, cell_of
+    return seen, (lambda p: cell_of(terrain, p))
+
+
+def single_unit_cell(terrain, layer, anchor):
+    """Where a blob of ONE unit stands (decision 38 item 3), as a route cell: its own anchor's cell when the anchor point is free and
+    its cell open and in the region, else the nearest open in-region cell. (The nearest open cell is the start of the region, so it is
+    in the region.) The tests pin the CELL the unit stands in, not a coordinate inside it."""
+    seen, cell_fn = route_region(terrain, layer, anchor)
+    if inside_canvas(terrain, anchor) and not in_block(terrain.blocks, layer, anchor) and cell_fn(anchor) in seen:
+        return cell_fn(anchor)
+    return nearest_free_cell(terrain, layer, anchor)
 
 
 def inside_canvas(terrain, p):

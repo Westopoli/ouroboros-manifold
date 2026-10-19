@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decisions 25, 26, 32 and 36 (baseline variants, pre-flight coverage, baseline_no_fit, blob bounds); spec L4 (sweep.py)
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decisions 25, 26, 32, 36 and 38 (baseline variants, pre-flight coverage, baseline_no_fit, blob bounds); spec L4 (sweep.py)
 """LAB-REV2-BASE, part 2 of 3: the sweep's baselines (scripts/skilllab/sweep.py, scan.py). Fakes for the fights; the real scenes only where
 a test says so (they need the library for the pre-flight's reach read: the `library` fixture).
 
@@ -41,7 +41,7 @@ Decision 32 (Architect 2026-10-19, the BASE readings), pinned below:
     and not a finding; refinement runs only inside 8 to K (no fight above K, refined points included).
   - item 4: the order is deterministic: rows identical at 1 and 12 workers for a cut run.
   - item 5: a blob of one unit follows the same rule (the anchor is radius zero; if blocked the nearest free cell).
-Decision 36: the continuation stays inside the canvas and the anchor's connected region (the walls and pockets are in test_naive_blob_skip.py;
+Decision 36 and 38: the continuation stays inside the canvas and the anchor's connected region, read at ROUTE-CELL resolution (a free point in a blocked cell is out; a blocked anchor cell starts the search from the nearest open cell; a blob of one stands in the nearest open in-region cell, pinned by cell) (the walls and pockets are in test_naive_blob_skip.py;
 here the sweep's `_naive_side` builds are checked with a canvas-edge anchor and a wall across the canvas).
 Decision 25's earlier-role case: when the EARLIER-listed role binds, K is still the minimum and BOTH roles are listed (exact set).
 Seams the tests rely on (the builder must keep them): `sweep.run_family(..., builds=)` / `sweep.run_smoke(..., builds=)` take builds(play, role,
@@ -66,7 +66,8 @@ for _p in (ROOT, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from fakes_baselines import aligned, expected_skipping, fake_base, in_block, inside_canvas, keyed, positions, rounded, route_region, vg  # noqa: E402
+from fakes_baselines import (aligned, cell_of, cell_open, expected_skipping, fake_base, in_block, inside_canvas, keyed,  # noqa: E402
+                             nearest_free_cell, positions, rounded, route_region, single_unit_cell, vg)
 from fakes_scans import _fr  # noqa: E402
 from scripts.skilllab import scenes, sweep  # noqa: E402
 from scripts.skilllab.contract import Block, Setup  # noqa: E402
@@ -605,37 +606,91 @@ def test_d_a_cell_exactly_on_a_block_edge_is_blocked(fake_scene, library, edge):
     assert edge_cell not in new and len(new) == 8 and not [p for p in new if in_block(setup.terrain.blocks, 0, p)]
 
 
+ANCHOR = (1013.0, 1007.0)       # inside route cell (20, 20), 21.6 wu from its centre: the nearest cell to the anchor is its own, unique
+
+
 @pytest.mark.parametrize("count", [1, 7, 9])
 @pytest.mark.parametrize("role", ["naive_defender_attacker_layer", "naive_defender"])
 def test_d_an_odd_or_single_blob_on_a_blocked_anchor_skips_like_any_other(fake_scene, library, role, count):
-    """Decision 32 item 5 and the odd-count blob: a 10 x 10 wu block on the anchor (1000, 1000) takes the anchor cell. The odd blobs
-    (7, 9) have a unit there on open ground and lose it to the next free cell of the fill order (unsorted); the blob of ONE unit
-    (radius zero) takes the nearest free cell by increasing radius (properties: free, in the canvas, in the region, outside the
-    wall, near, and never nearer for a wider wall). Setup.point is the mean of the skipped positions."""
+    """Decision 32 item 5 / 38 item 3 and the odd-count blob: a block on the anchor point (its cell's centre stays open, +-5 and +-15 wu).
+    The odd blobs (7, 9) have a unit there on open ground and lose it to the next free cell of the fill order (unsorted); the blob of
+    ONE unit stands in the nearest open in-region cell, which is the anchor's own cell (pinned by cell, from an independent scan), and
+    not in the block. Setup.point is the mean of the skipped positions."""
+    ax, ay = ANCHOR
+
     def groups():
-        return [vg(0, "Vanguard", count, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
+        return [vg(0, "Vanguard", count, ax, ay, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
     open_setup = fake_scene(fake_base(groups()))(role)(8, False)
-    assert positions(next(g for g in open_setup.groups if g.side == 0))[0] == (1000.0, 1000.0)       # an odd count puts a unit on the anchor, first
-    distances = []
+    assert positions(next(g for g in open_setup.groups if g.side == 0))[0] == ANCHOR       # an odd count puts a unit on the anchor, first
     for half in (5.0, 15.0):
-        wall = Block(1000.0 - half, 1000.0 - half, 1000.0 + half, 1000.0 + half, 0, 4)
+        wall = Block(ax - half, ay - half, ax + half, ay + half, 0, 4)
         build = fake_scene(fake_base(groups(), blocks=(wall,)))(role)
         setup = build(8, False)
         g = next(g for g in setup.groups if g.side == 0)
         pts = positions(g)
-        assert len(pts) == count and not [p for p in pts if in_block(setup.terrain.blocks, g.layer, p)]
-        assert (1000.0, 1000.0) not in pts
+        assert len(pts) == count and not [p for p in pts if in_block(setup.terrain.blocks, g.layer, p)] and ANCHOR not in pts
         if count == 1:
-            seen, cell_of = route_region(setup.terrain, g.layer, (g.x, g.y))
-            d = math.hypot(pts[0][0] - 1000.0, pts[0][1] - 1000.0)
-            assert cell_of(pts[0]) in seen and inside_canvas(setup.terrain, pts[0]) and half < d < 150.0
-            distances.append(d)
+            assert cell_of(setup.terrain, pts[0]) == single_unit_cell(setup.terrain, g.layer, ANCHOR) == (20, 20)
         else:
             assert rounded(pts) == rounded(expected_skipping(g, setup.terrain))
         assert setup.point == pytest.approx(mean(own_points(setup)), abs=1e-6)
         assert build.labels["prefight"] == scenes.preflight(setup, library) == "ok"
-    if count == 1:
-        assert distances[0] <= distances[1]
+
+
+@pytest.mark.parametrize("role", ["naive_defender_attacker_layer", "naive_defender"])
+def test_d_a_blob_of_one_whose_own_cell_is_blocked_stands_in_the_nearest_open_cell(fake_scene, library, role):
+    """Decision 38 items 2 and 3: the route cell (20, 20) holding the anchor is blocked (one 50 x 50 wu wall). The nearest open cell to
+    the anchor (1013, 1007) is the one below it, (20, 19) (34.2 wu; the cell to the west is 42.0, to the east 64.4, above 69.1), so the
+    unit stands in cell (20, 19). The expected cell comes from the helper's exhaustive scan and is also written out."""
+    ax, ay = ANCHOR
+    groups = [vg(0, "Vanguard", 1, ax, ay, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
+    build = fake_scene(fake_base(groups, blocks=(aligned(1000.0, 1000.0, 1050.0, 1050.0),)))(role)
+    setup = build(8, False)
+    g = next(g for g in setup.groups if g.side == 0)
+    (p,) = positions(g)
+    assert nearest_free_cell(setup.terrain, g.layer, ANCHOR) == (20, 19)
+    assert cell_of(setup.terrain, p) == (20, 19) and not in_block(setup.terrain.blocks, g.layer, p)
+    assert setup.point == pytest.approx(p, abs=1e-6) and build.labels["prefight"] == scenes.preflight(setup, library)
+
+
+@pytest.mark.parametrize("count", [16, 17])
+@pytest.mark.parametrize("role", ["naive_defender_attacker_layer", "naive_defender"])
+def test_d_a_blob_on_a_blocked_anchor_cell_fills_the_region_of_the_nearest_open_cell(fake_scene, library, role, count):
+    """Decision 38 item 2 on the sweep's builder: a 150 x 150 wu wall (3 x 3 route cells, aligned) over the anchor (1000, 1000)
+    blocks the anchor's cell and its centre. The search starts from the nearest open cell, so the blob is skipped round the wall and
+    equals the fill order over that region (unsorted). A search that fails or is empty from a blocked anchor cell cannot hold the count
+    (label no_fit) and is red."""
+    groups = [vg(0, "Vanguard", count, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
+    build = fake_scene(fake_base(groups, blocks=(aligned(925.0, 925.0, 1075.0, 1075.0),)))(role)
+    setup = build(8, False)
+    g = next(g for g in setup.groups if g.side == 0)
+    assert not cell_open(setup.terrain, g.layer, cell_of(setup.terrain, (g.x, g.y))), "fixture: the anchor cell is blocked"
+    expected = expected_skipping(g, setup.terrain)
+    assert expected is not None and rounded(positions(g)) == rounded(expected)
+    assert not [p for p in positions(g) if in_block(setup.terrain.blocks, g.layer, p)]
+    assert build.labels["prefight"] == scenes.preflight(setup, library) != "no_fit"       # the point (the ring's mean) is walled in: 'unroutable'
+
+
+@pytest.mark.parametrize("role", ["naive_defender_attacker_layer", "naive_defender_play_layer"])
+def test_d_a_free_point_inside_a_blocked_route_cell_is_not_used(fake_scene, library, role):
+    """Decision 38 item 1 (cell resolution): a wall x 1070 to 1230, y 800 to 1200 is NOT on 50 wu bounds. Cells with a centre inside it
+    are closed, so the strip x 1050 to 1070 of cell column 21 is a sliver: free points, closed cell. Negative: no unit stands in a
+    sliver (every unit's route cell is open) and the blob equals the fill order over open cells (unsorted). Positive: the units on the
+    anchor's side of the wall stand in open cells next to it (the first free cells are still taken). Fixture guard: the point reading
+    (block and canvas only) WOULD use sliver points, so the case separates the readings. Red for a point-resolution builder."""
+    wall = Block(1070.0, 800.0, 1230.0, 1200.0, 0, 4)
+    groups = [vg(0, "Vanguard", 16, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
+    build = fake_scene(fake_base(groups, blocks=(wall,)))(role)
+    setup = build(8, False)
+    g = next(g for g in setup.groups if g.side == 0)
+    cell_list = expected_skipping(g, setup.terrain)
+    point_list = expected_skipping(g, setup.terrain, connected=False)
+    sliver = lambda p: not cell_open(setup.terrain, g.layer, cell_of(setup.terrain, p))
+    assert [p for p in point_list if sliver(p) and not in_block(setup.terrain.blocks, g.layer, p)], "fixture: sliver points exist"
+    pts = positions(g)
+    assert not [p for p in pts if sliver(p)] and rounded(pts) == rounded(cell_list) and rounded(pts) != rounded(point_list)
+    assert [p for p in pts if 1000.0 <= p[0] < 1050.0] and not [p for p in pts if in_block(setup.terrain.blocks, g.layer, p)]
+    assert build.labels["prefight"] == scenes.preflight(setup, library)
 
 
 @pytest.mark.parametrize("bound", ["canvas edge", "closed wall", "wall with a gap"])
