@@ -18,12 +18,23 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
     baseline_roles(play) -> tuple of roles; the roles for sweep rows: "play", "reach_zero" (the null control's build), and the
         baselines "naive_attacker", "naive_defender" (a play whose name starts "s3_" has "naive_defender_attacker_layer" and
         "naive_defender_play_layer" in place of "naive_defender", ruling 3 DRAFT)
-    run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES) -> dict
+    run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES,
+               full_scan=False) -> dict    full_scan False (the default) scans by bisection, True fights every headcount 8 to 48
+        the entry: family, skipped, csv, rows, refined (sorted values added by refinement, all baselines), refined_vs ({baseline role:
+        sorted values refined for the sign change of the gain against that baseline}), refused, controls ({"positive"/"null": {"ok"}}),
+        defects ({"cap_rows": cap fights outside control_* kinds, "draw_rows": draw fights, "cells": distinct (play, layout, kind,
+        knob_value, baseline, enemy_heads) non-control cells holding a cap or a draw}), saturated_at_vision (emitting)
         builds(play, role, layout_features) -> BuildFn (build.labels["prefight"] is set when the build is called, as
         scenes.placed_scene does); layouts {name: features}; caps None means detect the real library.
-    run(families, out_dir, workers=1, **same keywords) -> dict; calls sweep.run_family(name, out_dir, **kw) once per family, in the
+    run(families, out_dir, workers=1, full_scan=False, **same keywords) -> dict; calls sweep.run_family(name, out_dir, **kw) once per family, in the
         given order; with workers > 1 and no map_fn it fights through pool.FightPool(workers, lean=True).map
-    SMOKE_LAYOUTS = ("81", "78", "192"); smoke_layouts() -> {name: features}; run_smoke(out_dir, workers=12, **same keywords) -> dict
+    SMOKE_LAYOUTS = ("81", "78", "192"); smoke_layouts() -> {name: features}; run_smoke(out_dir, workers=12, full_scan=False, **same keywords)
+    -> dict; its summary carries "defects" with the same three counts as a sweep entry. Smoke control rows have a kind starting
+    "control_"; the vision rows do not.
+    Refinement (families vision, range_up, damage_up, arc only): the sign of a point is "gain > 0", gain = break-even of the play minus the
+    break-even of the baseline at the same knob value, a ceiling hit counting as the top of the range (48) and a scan with no break-even
+    (lost everywhere) as 0; gain exactly 0 is not positive. Midpoints are arithmetic. The CLI flag `--full-scan` (sweep, smoke, controls,
+    reach) selects the linear scan; controls and reach are always linear.
 Files: sweep_<family>.csv per run family, sweep_summary.json; smoke.csv, smoke_summary.json.
 CSV columns (labels on the rows beside rows.fight_row's own): family, play, layout, kind, enemy_heads, knob, knob_value, baseline
 (`none` for the play itself), ceiling_hit (0 or 1, of the row's scan), prefight.
@@ -314,12 +325,40 @@ def _res(outcome="side0", **kw):
 
 
 def test_every_family_has_a_null_control_and_vision_and_damage_have_a_positive_one():
-    for fam in ("vision", "range_up", "damage_up", "emitting", "arc", "cone"):
+    for fam in ("vision", "range_up", "damage_up", "emitting"):
         c = sweep.controls(fam)["null"]
         assert c.reach == (0, 0) and len(c.points) >= 2 and {p.kind for p in c.points} == {"control_null"}
         assert [p.settings for p in c.points] == [p.settings for p in points(fam)] and [p.setup for p in c.points] == [p.setup for p in points(fam)]
+    for fam in ("arc", "cone"):
+        assert "null" in sweep.controls(fam)
     assert sweep.controls("vision")["positive"].reach is None and sweep.controls("damage_up")["positive"].reach is None
     assert set(sweep.controls("sign_flip")) <= {"null", "positive"}
+
+
+def test_arc_null_control_is_the_parameter_set_to_360_against_the_parameter_never_set():
+    """Overseer default (DRAFT): arc 360 equals unset. The reach (0, 0) pin does not apply to arc: the two points are the real play with
+    OM_TP_FIRING_ARC_DEG pushed to the world at 360 against the play with the parameter untouched (the lab skips the parameter at 360
+    in the arc grid, so only an explicit setting can show the engine's 360 gate leaks)."""
+    c = sweep.controls("arc")["null"]
+    assert c.reach is None and len(c.points) == 2 and {p.kind for p in c.points} == {"control_null"}
+    explicit, unset = sorted(c.points, key=lambda p: -len(p.settings))
+    assert explicit.settings == {"OM_TP_FIRING_ARC_DEG": 360.0} and explicit.setup == {}
+    assert unset.settings == {} and unset.setup == {}
+    a, b = _res("side0", margin=0.5), _res("side0", margin=0.5)
+    assert c.check([[a, b], [a, b]]) is True
+    assert c.check([[a, b], [a, _res("side0", margin=0.25)]]) is False            # positive control: a differing row is caught
+    assert c.check([[a, b], [a]]) is False
+
+
+def test_cone_null_control_is_a_cone_of_range_zero_against_no_cone():
+    """Overseer default (DRAFT): cone range 0 equals no cone (range 0 clears the cone, spec om_roster_set_cone)."""
+    c = sweep.controls("cone")["null"]
+    assert c.reach is None and len(c.points) == 2 and {p.kind for p in c.points} == {"control_null"}
+    zero, none = sorted(c.points, key=lambda p: -len(p.setup))
+    assert zero.setup == {"cone": {"Vanguard": (0.0, 45.0, 1.0)}} and zero.settings == {}
+    assert none.setup == {} and none.settings == {}
+    a = _res("side0", margin=0.5)
+    assert c.check([[a], [a]]) is True and c.check([[a], [_res("side0", margin=0.1)]]) is False
 
 
 def test_vision_positive_control_is_vision_zero_both_directions():
@@ -361,9 +400,9 @@ def test_damage_positive_control_changes_the_result_and_not_the_count():
 class World(ScriptedFight):
     """Scripted fights keyed on role and settings. be_of(role, settings) -> break-even. Flags plant defects for the controls."""
 
-    def __init__(self, be_of=None, **flags):
+    def __init__(self, be_of=None, arc_be=None, cone_be=None, **flags):
         super().__init__(be_of=lambda setup: be_of(setup.unit_types["_role"], setup.settings) if be_of else 20)
-        self.flags = flags
+        self.flags, self.arc_be, self.cone_be = flags, arc_be, cone_be
 
     def __call__(self, setup, seed, swap):
         role, s, enemy = setup.unit_types["_role"], setup.settings, setup.unit_types["enemy"]
@@ -374,11 +413,22 @@ class World(ScriptedFight):
             leak = (sum(v for v in s.values() if isinstance(v, (int, float))) + setup.firing_arc_deg
                     + sum(c[0] for c in setup.cone.values())) if self.flags.get("null_leaks") else 0.0
             return _fr("cap", enemy, firing=((0, 0, 0),), fus=(leak, 0.0), survivors=(16, 16))
+        if role == "play" and self.flags.get("arc_param_leaks") and "OM_TP_FIRING_ARC_DEG" in s:
+            return _fr("side0", enemy, margin=0.9)
+        if role == "play" and self.flags.get("cone_zero_leaks") and any(c[0] == 0 for c in setup.cone.values()):
+            return _fr("side0", enemy, margin=0.9)
+        if (self.flags.get("defects") and role == "play" and enemy == sweep.ENEMY_FROM and setup.max_ticks != sweep.CONTROL_MAX_TICKS
+                and setup.unit_types["_play"] not in ("mirror", "numbers", "planted") and seed < 2 and not swap):
+            return _fr("cap" if seed == 0 else "draw", enemy)           # one cap and one draw in the smallest cell of every play scan
         if role == "play" and s.get(V1) == 0.0:
             if self.flags.get("vision_zero_shoots"):
                 return _fr("cap", enemy, fus=(1.0, 1.0), survivors=(10, 12))
             return _fr("cap", enemy, firing=((0, 0, 0),), fus=(0.0, 0.0), survivors=(16, 16))
         be = self.be_of(setup)
+        if self.arc_be is not None:
+            be = self.arc_be(role, setup.firing_arc_deg)
+        if self.cone_be is not None:
+            be = self.cone_be(role, setup.cone)
         out = _fr("side0" if be is not None and enemy <= be else "side1", enemy)
         d = s.get("OM_TP_DAMAGE_UP_1")
         if role == "play" and d is not None and enemy == 16:
@@ -444,8 +494,8 @@ def test_the_scan_range_is_eight_to_forty_eight_by_bisection_not_forty_one_cells
 
 
 def test_both_baselines_are_run_and_reported_for_a_plain_play(tmp_path):
-    entry, world = run(tmp_path, "arc", plays=("s2_concave",))
-    rows = read(tmp_path, "arc")
+    entry, world = run(tmp_path, "range_up", plays=("s2_concave",))
+    rows = read(tmp_path, "range_up")
     assert {c["role"] for c in world.calls} == {"play", "reach_zero", "naive_attacker", "naive_defender"}
     assert {r["baseline"] for r in rows if r["kind"] == "grid"} == {"none", "naive_attacker", "naive_defender"}
     assert {r["baseline"] for r in rows if r["kind"] == "control_null"} == {"none"}
@@ -496,6 +546,132 @@ def test_no_sign_change_means_no_refined_row(tmp_path):
         assert entry["refined"] == [] and "refined" not in {r["kind"] for r in read(tmp_path, "range_up")}
 
 
+def _be_range(play, attacker=16, defender=lambda v: 16):
+    """A range_up world: the play's break-even follows `play(v)` (None: lost everywhere; 99: beats the top of 8 to 48), the naive
+    attacker's is `attacker` and the naive defender's `defender(v)`, v being the range-up value of the cell."""
+    def be(role, s):
+        v = s.get("OM_TP_RANGE_UP_1", 1.0)
+        return play(v) if role == "play" else defender(v) if role.startswith("naive_defender") else attacker
+    return be
+
+
+def test_a_gain_against_the_naive_attacker_that_is_positive_but_negative_against_the_naive_defender_lists_a_second_crossing(tmp_path):
+    """Decisions 21: refinement follows the sign against the naive attacker; the crossing against the naive defender is listed in
+    its own entry. Play break-even 20 from range-up 0.7 up, 12 below; attacker 16; defender 18 from 0.9 up, 22 below. Gains against
+    the attacker: +4 +4 -4 -4 (1.0 .. 0.25), against the defender +2 -2 -10 -10. Attacker crossing: 0.75|0.5, refined 0.625 and
+    0.6875. Defender crossing: 1.0|0.75, refined 0.875 (still negative) and 0.9375 (positive)."""
+    be = _be_range(lambda v: 20 if v >= 0.7 else 12, defender=lambda v: 18 if v >= 0.9 else 22)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
+    assert entry["refined_vs"] == {"naive_attacker": [0.625, 0.6875], "naive_defender": [0.875, 0.9375]}
+    assert entry["refined"] == [0.625, 0.6875, 0.875, 0.9375]
+    rows = read(tmp_path, "range_up")
+    assert {float(r["knob_value"]) for r in rows if r["kind"] == "refined"} == {0.625, 0.6875, 0.875, 0.9375}
+    assert {r["baseline"] for r in rows if r["kind"] == "refined"} == {"none", "naive_attacker", "naive_defender"}
+
+
+def test_the_naive_defender_alone_flipping_does_not_move_the_attacker_refinement(tmp_path):
+    """Positive control for the test above, the other way round: the defender's gain changes sign and the attacker's never does."""
+    be = _be_range(lambda v: 20, attacker=10, defender=lambda v: 18 if v >= 0.9 else 22)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
+    assert entry["refined_vs"]["naive_attacker"] == [] and entry["refined_vs"]["naive_defender"] == [0.875, 0.9375]
+    assert entry["refined"] == [0.875, 0.9375]
+
+
+def test_a_layer_play_lists_a_crossing_per_defender_baseline(tmp_path):
+    be = _be_range(lambda v: 20 if v >= 0.7 else 12, defender=lambda v: 16)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=be), plays=("s3_layer_above",))
+    assert set(entry["refined_vs"]) == set(sweep.baseline_roles("s3_layer_above")) == {
+        "naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer"}
+    assert all(v == [0.625, 0.6875] for v in entry["refined_vs"].values())
+
+
+def test_a_gain_of_exactly_zero_is_not_a_sign_change(tmp_path):
+    """Strictly greater: a play that ties its baseline (gain 0) is not ahead. Tie above the line, loss below: no change at all;
+    tie below the line, win above: the one change is between the win and the tie (0.75|0.5)."""
+    tie_then_loss = _be_range(lambda v: 16 if v >= 0.7 else 12)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=tie_then_loss))
+    assert entry["refined"] == [] and entry["refined_vs"]["naive_attacker"] == []
+    win_then_tie = _be_range(lambda v: 20 if v >= 0.7 else 16)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=win_then_tie))
+    assert entry["refined_vs"]["naive_attacker"] == [0.625, 0.6875] and entry["refined"] == [0.625, 0.6875]
+
+
+def test_a_play_with_no_break_even_counts_as_no_gain_not_as_a_gain(tmp_path):
+    """A play lost at every headcount (beats None) below range-up 0.7 and 20 above: against a naive attacker at 16 the gain is positive
+    above and not positive below, so the change is found and refined. (A None counted as a gain would hide it.)"""
+    be = _be_range(lambda v: 20 if v >= 0.7 else None)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
+    assert entry["refined_vs"]["naive_attacker"] == [0.625, 0.6875]
+
+
+def test_a_baseline_with_no_break_even_is_no_gain_for_the_baseline_too(tmp_path):
+    """The other side of the None rule: a play at 20 against a naive attacker that loses everywhere (None) is ahead at every point,
+    and a play that also loses everywhere is level (gain 0): no sign change in either, nothing refined."""
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=_be_range(lambda v: 20, attacker=None)))
+    assert entry["refined"] == []
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=_be_range(lambda v: None, attacker=None)))
+    assert entry["refined"] == []
+
+
+def test_a_ceiling_hit_at_one_coarse_point_counts_as_the_top_of_the_range(tmp_path):
+    """Range-up 1.0 beats every headcount (ceiling hit, break-even 48); 0.75 is 20, below 0.7 it is 12, attacker 16. Gains +32 +4 -4 -4:
+    the one change is 0.75|0.5. (A ceiling hit read as 'no break-even' would invent a second change between 0.75 and 1.0.)"""
+    be = _be_range(lambda v: 99 if v >= 0.9 else 20 if v >= 0.7 else 12)
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=be))
+    rows = read(tmp_path, "range_up")
+    assert {r["ceiling_hit"] for r in rows if r["baseline"] == "none" and r["kind"] == "grid" and float(r["knob_value"]) == 1.0} == {"1"}
+    assert entry["refined_vs"]["naive_attacker"] == [0.625, 0.6875] and entry["refined"] == [0.625, 0.6875]
+
+
+def test_a_play_and_a_baseline_both_at_the_ceiling_are_level(tmp_path):
+    entry, _ = run(tmp_path, "range_up", world=World(be_of=_be_range(lambda v: 99, attacker=99)))
+    assert entry["refined"] == []
+
+
+def test_vision_refines_between_the_bracketing_pair_with_both_layers_at_the_ratio(tmp_path):
+    """Play break-even 20 from vision 0.35 up, 12 below; attacker 16. The change is 0.25|0.5: the arithmetic midpoint 0.375 (ahead),
+    then 0.3125 (behind). A refined vision point carries the same two-layer settings as a grid point."""
+    be = lambda role, s: (20 if s.get(V1, 0.5) >= 0.35 else 12) if role == "play" else 16
+    entry, world = run(tmp_path, "vision", world=World(be_of=be))
+    assert entry["refined"] == [0.3125, 0.375]
+    for v in (0.3125, 0.375):
+        calls = [c for c in world.calls if c["settings"].get(V1) == v and c["role"] == "play"]
+        assert calls and all(c["settings"][V2] == pytest.approx(0.4 * v) and c["settings"]["OM_TP_VISION_DOWN_1"] == v for c in calls)
+        assert all(sweep.in_band(c["settings"][V1], 0.5) for c in calls)
+
+
+def test_damage_up_refines_by_the_arithmetic_midpoint(tmp_path):
+    be = lambda role, s: (20 if s.get("OM_TP_DAMAGE_UP_1", 1.0) >= 0.7 else 12) if role == "play" else 16
+    entry, _ = run(tmp_path, "damage_up", world=World(be_of=be))
+    assert entry["refined"] == [0.625, 0.6875]
+
+
+def test_arc_refines_between_the_bracketing_arcs_by_the_arithmetic_midpoint(tmp_path):
+    """Play break-even 20 from an arc of 200 degrees up, 12 below; attacker 16. Coarse 360, 270, 180, 120, 90: the change is
+    270|180, so 225 (ahead), then 202.5 (ahead). The refined points go to the world as firing_arc_deg."""
+    arc_be = lambda role, arc: (20 if arc >= 200 else 12) if role == "play" else 16
+    entry, world = run(tmp_path, "arc", world=World(arc_be=arc_be), plays=("s2_concave",))
+    assert entry["refined"] == [202.5, 225.0]
+    assert {c["extra"]["arc"] for c in world.calls if c["role"] == "play"} >= {225.0, 202.5}
+    assert all(sweep.in_band(v, 360.0) for v in entry["refined"])
+    assert {float(r["knob_value"]) for r in read(tmp_path, "arc") if r["kind"] == "refined"} == {202.5, 225.0}
+
+
+@pytest.mark.parametrize("family,world_kw", [
+    ("emitting", dict(be_of=lambda role, s: (20 if s.get("OM_TP_EMIT_SIGHT_MULT", 2.0) >= 2.0 else 12) if role == "play" else 16)),
+    ("cone", dict(cone_be=lambda role, cone: (20 if cone and cone["Vanguard"][0] >= 300 else 12) if role == "play" else 16)),
+    ("sign_flip", dict(be_of=lambda role, s: (20 if "OM_TP_RANGE_UP_1" in s and s["OM_TP_RANGE_UP_1"] > 1.0 else 12) if role == "play" else 16)),
+])
+def test_emitting_cone_and_sign_flip_never_refine_even_with_a_sign_change(tmp_path, family, world_kw):
+    """Only vision, range_up, damage_up and arc refine. Each world here has a gain that changes sign across the family's points."""
+    plays_ = ("s3_dark_striker",) if family == "emitting" else ("s2_concave",) if family == "cone" else ("p2",)
+    entry, _ = run(tmp_path, family, world=World(**world_kw), plays=plays_)
+    rows = read(tmp_path, family)
+    assert entry["refined"] == [] and "refined" not in {r["kind"] for r in rows}
+    gains = {(r["knob"], r["knob_value"]) for r in rows if r["kind"] in ("grid", "sign_flip")}
+    assert len(gains) >= 2          # positive control: the family has several points the gain could change across
+
+
 def test_the_sign_flip_family_writes_its_own_labelled_file(tmp_path):
     entry, _ = run(tmp_path, "sign_flip")
     rows = read(tmp_path, "sign_flip")
@@ -523,11 +699,33 @@ def test_the_vision_positive_control_detector_fires_when_vision_zero_still_shoot
 
 
 def test_the_null_control_detector_fires_when_reach_zero_rows_differ_across_the_points(tmp_path):
-    for fam in ("vision", "range_up", "arc"):
+    for fam in ("vision", "range_up"):
         entry, _ = run(tmp_path, fam, world=World(null_leaks=True), plays=("s2_concave",))
         assert entry["controls"]["null"]["ok"] is False, fam
         entry, _ = run(tmp_path, fam, plays=("s2_concave",))
         assert entry["controls"]["null"]["ok"] is True, fam
+
+
+def test_the_arc_null_control_runs_the_real_play_at_360_set_and_unset_and_its_detector_fires(tmp_path):
+    entry, world = run(tmp_path, "arc", plays=("s2_concave",))
+    assert entry["controls"]["null"]["ok"] is True and "positive" not in entry["controls"]
+    ctl = [c for c in world.calls if c["max_ticks"] == sweep.CONTROL_MAX_TICKS]
+    assert ctl and {c["role"] for c in ctl} == {"play"} and {c["enemy"] for c in ctl} == {16}        # no reach-zero build for arc
+    assert {"OM_TP_FIRING_ARC_DEG" in c["settings"] for c in ctl} == {True, False}
+    assert {c["settings"]["OM_TP_FIRING_ARC_DEG"] for c in ctl if "OM_TP_FIRING_ARC_DEG" in c["settings"]} == {360.0}
+    assert {c["extra"]["arc"] for c in ctl} == {360.0}
+    leaky, _ = run(tmp_path, "arc", world=World(arc_param_leaks=True), plays=("s2_concave",))
+    assert leaky["controls"]["null"]["ok"] is False
+
+
+def test_the_cone_null_control_runs_the_real_play_with_a_zero_range_cone_and_without_and_its_detector_fires(tmp_path):
+    entry, world = run(tmp_path, "cone", plays=("s2_concave",))
+    assert entry["controls"]["null"]["ok"] is True and "positive" not in entry["controls"]
+    ctl = [c for c in world.calls if c["max_ticks"] == sweep.CONTROL_MAX_TICKS]
+    assert ctl and {c["role"] for c in ctl} == {"play"} and {c["enemy"] for c in ctl} == {16}
+    assert {tuple(sorted(c["extra"]["cone"].items())) for c in ctl} == {(), (("Vanguard", (0.0, 45.0, 1.0)),)}
+    leaky, _ = run(tmp_path, "cone", world=World(cone_zero_leaks=True), plays=("s2_concave",))
+    assert leaky["controls"]["null"]["ok"] is False
 
 
 def test_the_damage_controls(tmp_path):
@@ -548,6 +746,92 @@ def test_emitting_is_reported_saturated_at_the_base_vision_not_swept(tmp_path):
     entry, _ = run(tmp_path, "emitting", plays=("s3_dark_striker",))
     assert entry["saturated_at_vision"] == [0.5]
     assert {float(r["knob_value"]) for r in read(tmp_path, "emitting") if r["kind"] == "grid"} == {1.0, 2.0, 4.0}
+
+
+# ---- defects: caps outside the controls, draws, and the cells that hold them ----------------------------------------------------
+
+CONTROL_KINDS = ("control_positive", "control_null")
+
+
+def _defects_of(rows):
+    """Recount from the CSV: the pinned definition of entry["defects"] (header)."""
+    cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
+    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
+    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
+            "cells": len({cell(r) for r in bad})}
+
+
+def test_a_faithful_world_has_no_defects_and_its_only_caps_are_in_control_kinds(tmp_path):
+    """Controls cap by design (CONTROL_MAX_TICKS < 12000): a cap is allowed in a control_* kind and in no other. The vision-zero
+    control caps here, so the exclusion is exercised (positive control), and the pinned defect count is still zero."""
+    entry, _ = run(tmp_path, "vision")
+    rows = read(tmp_path, "vision")
+    caps = {r["kind"] for r in rows if r["outcome"] == "cap"}
+    assert caps and caps <= set(CONTROL_KINDS)
+    assert entry["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+
+
+def test_a_cap_or_a_draw_outside_the_controls_is_counted_as_a_defect(tmp_path):
+    """The smallest cell of every play scan holds one cap (seed 0) and one draw (seed 1): 4 grid points, so 4 caps, 4 draws, 4 cells."""
+    entry, _ = run(tmp_path, "damage_up", world=World(defects=True))
+    rows = read(tmp_path, "damage_up")
+    assert entry["defects"] == {"cap_rows": 4, "draw_rows": 4, "cells": 4} == _defects_of(rows)
+    assert {r["kind"] for r in rows if r["outcome"] == "cap"} - set(CONTROL_KINDS) == {"grid"}      # the detector's input is really there
+
+
+def test_a_cap_in_a_control_kind_alone_is_not_a_defect_but_a_draw_in_one_is_counted(tmp_path):
+    class W(World):
+        def __call__(self, setup, seed, swap):
+            out = super().__call__(setup, seed, swap)
+            if setup.max_ticks == sweep.CONTROL_MAX_TICKS and seed == 0 and not swap and out.outcome != "cap":
+                return _fr("draw", setup.unit_types["enemy"], fus=out.firing_unit_seconds)
+            return out
+    entry, _ = run(tmp_path, "damage_up", world=W())
+    rows = read(tmp_path, "damage_up")
+    assert entry["defects"]["cap_rows"] == 0 and entry["defects"]["draw_rows"] == sum(r["outcome"] == "draw" for r in rows) > 0
+    assert entry["defects"]["cells"] == 0 and entry["defects"] == _defects_of(rows)
+
+
+# ---- --full-scan: the linear scan; bisection is the default -------------------------------------------------------------------------
+
+def _play_heads(world, setting="OM_TP_DAMAGE_UP_1", value=1.0):
+    return sorted({c["enemy"] for c in world.calls if c["role"] == "play" and c["settings"].get(setting) == value
+                   and c["max_ticks"] != sweep.CONTROL_MAX_TICKS})
+
+
+def test_run_family_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp_path):
+    _, world = run(tmp_path / "bis", "damage_up")
+    assert len(_play_heads(world)) <= 14
+    _, world = run(tmp_path / "lin", "damage_up", full_scan=True)
+    assert _play_heads(world) == list(range(8, 49))
+    _, world = run(tmp_path / "off", "damage_up", full_scan=False)
+    assert len(_play_heads(world)) <= 14
+
+
+def test_the_full_scan_rows_are_a_superset_of_the_bisection_rows(tmp_path):
+    run(tmp_path / "bis", "damage_up")
+    run(tmp_path / "lin", "damage_up", full_scan=True)
+    key = lambda r: (r["play"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
+    bis = {key(r) for r in read(tmp_path / "bis", "damage_up")}
+    lin = {key(r) for r in read(tmp_path / "lin", "damage_up")}
+    assert bis < lin
+
+
+def test_run_hands_full_scan_to_every_family(tmp_path, monkeypatch):
+    got = []
+    monkeypatch.setattr(sweep, "run_family", lambda name, out_dir, **kw: got.append((name, kw.get("full_scan", False))) or {"family": name, "csv": None})
+    sweep.run(["damage_up", "arc"], tmp_path / "a", builds=fake_builds(), layouts={"A": {}}, fight_fn=World(), full_scan=True)
+    sweep.run(["damage_up"], tmp_path / "b", builds=fake_builds(), layouts={"A": {}}, fight_fn=World())
+    assert got == [("damage_up", True), ("arc", True), ("damage_up", False)]
+
+
+def test_smoke_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp_path):
+    _, world, _ = _smoke(tmp_path / "bis", control_builds=control_builds())
+    plays_ = set(sweep.PLAYS_BY_FAMILY["vision"])
+    heads = lambda w: sorted({c["enemy"] for c in w.calls if c["play"] in plays_ and c["role"] == "play"})
+    assert len(heads(world)) <= 14
+    _, world, _ = _smoke(tmp_path / "lin", control_builds=control_builds(), full_scan=True)
+    assert heads(world) == list(range(8, 49))
 
 
 # ---- prefight refusals -------------------------------------------------------------------------------------------------------
@@ -675,6 +959,7 @@ def test_smoke_runs_vision_half_only_on_the_three_layouts_plus_the_three_control
     assert {r["layout"] for r in vision} == {"81", "78", "192"} and {float(r["knob_value"]) for r in vision} == {0.5}
     assert {r["play"] for r in vision} == set(sweep.PLAYS_BY_FAMILY["vision"]) == {"s3_layer_above", "s3_types_by_reach"}
     ctl = [r for r in rows if r["family"] == "controls"]
+    assert all(r["kind"].startswith("control_") for r in ctl) and not any(r["kind"].startswith("control_") for r in vision)
     assert {r["play"] for r in ctl} == {"mirror", "numbers", "planted"}
     assert {(r["play"], r["enemy_heads"]) for r in ctl} == {("mirror", "16"), ("numbers", "8"), ("planted", "16")}
     assert {c["settings"].get(V1) for c in world.calls if c["play"] in sweep.PLAYS_BY_FAMILY["vision"]} == {0.5}
@@ -689,6 +974,16 @@ def test_smoke_has_states_on_and_writes_the_summary_with_the_row_hash_outcomes_a
     assert on_disk["rows_sha256"] == hashlib.sha256((tmp_path / "smoke.csv").read_bytes()).hexdigest()
     assert set(on_disk["outcomes"]) <= {"side0", "side1", "draw", "cap"} and sum(on_disk["outcomes"].values()) == len(rows)
     assert list(on_disk["prefight"]) == ["ok"] and on_disk["prefight"]["ok"] > 0 and on_disk["refused"] == []
+
+
+def test_smoke_counts_its_defects_like_a_sweep_entry(tmp_path):
+    """The smallest cell of each of the 3 layouts x 2 plays holds one cap and one draw (the play role only): 6 of each, 6 cells.
+    A faithful world has none."""
+    summary, _, rows = _smoke(tmp_path / "clean", control_builds=control_builds())
+    assert summary["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+    summary, _, rows = _smoke(tmp_path / "bad", world=World(defects=True), control_builds=control_builds())
+    assert summary["defects"] == {"cap_rows": 6, "draw_rows": 6, "cells": 6} == _defects_of(rows)
+    assert json.loads((tmp_path / "bad" / "smoke_summary.json").read_text())["defects"] == summary["defects"]
 
 
 def test_smoke_lists_the_refused_cells(tmp_path):
@@ -742,31 +1037,64 @@ def test_the_sweep_command_prints_the_files_it_wrote(tmp_path, capsys, monkeypat
     assert "sweep_summary.json" in capsys.readouterr().out
 
 
+def test_the_sweep_and_smoke_commands_accept_full_scan_and_default_to_bisection(tmp_path, monkeypatch):
+    """Overseer default: `--full-scan` is a CLI flag selecting the linear scan; without it the commands pass nothing or False."""
+    got = []
+    monkeypatch.setattr(sweep, "run", lambda families, out_dir, workers=1, **kw: got.append(("sweep", bool(kw.get("full_scan", False)))) or {"families": {}})
+    monkeypatch.setattr(sweep, "run_smoke", lambda out_dir, workers=12, **kw: got.append(("smoke", bool(kw.get("full_scan", False)))) or {"rows_sha256": "x"})
+    assert cli.main(["sweep", "damage_up", "--out", str(tmp_path)]) == 0
+    assert cli.main(["sweep", "damage_up", "--out", str(tmp_path), "--full-scan"]) == 0
+    assert cli.main(["smoke", "--out", str(tmp_path)]) == 0
+    assert cli.main(["smoke", "--out", str(tmp_path), "--full-scan", "--workers", "2"]) == 0
+    assert got == [("sweep", False), ("sweep", True), ("smoke", False), ("smoke", True)]
+
+
+def test_the_controls_and_reach_commands_accept_full_scan_and_stay_linear(tmp_path, monkeypatch):
+    """controls and reach chart a dot per fight at every headcount, so they scan linearly with or without the flag
+    (test_main.py and test_main_reach.py pin the default; this pins that the flag is accepted and changes nothing)."""
+    from scripts.skilllab import scan as scan_mod
+    seen = []
+    monkeypatch.setattr(scan_mod, "scan", lambda build, size, lo, hi, **kw: seen.append(kw.get("full_scan")) or (_ for _ in ()).throw(RuntimeError("stop")))
+    for argv in (["controls", "--out", str(tmp_path), "--full-scan"], ["reach", "--out", str(tmp_path), "--full-scan"]):
+        with pytest.raises(RuntimeError):
+            cli.main(argv)
+    assert seen == [True, True]
+
+
+def test_an_unknown_option_is_still_refused(tmp_path, capsys):
+    """Positive control for the two tests above: argparse does refuse what it does not know, so 'accepted' means something."""
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["smoke", "--out", str(tmp_path), "--no-such-flag"])
+    assert exc.value.code == 2
+
+
 # ---- the orders_per_unit default flip (decisions 13) --------------------------------------------------------------------------------
 
-# Decisions 13: L4 flips the Setup default to False once E1 (the attack-move resume) is on the lab branch (it is: e721da83).
-# Tests outside L4's files that read the old default become ruler rows (test-defect, ledger row quoting decisions 13); the L4 builder
-# does not edit them. The list below is MEASURED, not copied from decisions 13: a reference build with the default at False was run
-# over tests/skilllab, and exactly these tests (and no others) fail because of the flip alone. It is longer than decisions 13's
-# six lines because the lines there are the explicit `orders_per_unit is True` asserts; the others read per-unit orders off the default.
+# Decisions 13: L4 flips the Setup default to False once E1 (the attack-move resume) is on the lab branch (it is: e721da83), and
+# only because E1 lands in the same landing (decisions 21: revert the flip in the same commit if E1 is pulled). The tests that read
+# the old default were MEASURED, not copied from decisions 13: a reference build with the default at False was run over tests/skilllab
+# including integration, and exactly these tests fail because of the flip alone: 13 functions, 42 pytest items. The ruler executed
+# the flip in this piece (ledger row TD-LAB-REV2-L4-flip): a test about the default now asserts False; a test about per-unit
+# behaviour passes orders_per_unit=True explicitly. RULER_ROWS maps file -> ((old name, name now, pytest items), ...).
 RULER_ROWS = {
     "tests/skilllab/test_fight_outcomes.py": (
-        "test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default",     # Setup defaults (decisions 13)
-        "test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point",
-        "test_ruling_6_a_group_goal_overrides_the_point_for_that_group",
-        "test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move",
-        "test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side",
-        "test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only",
-        "test_no_mop_up_or_reissue_orders_after_the_opening_orders",
-        "test_contract_keeps_win_margin_until_l4",            # not the flip: WIN_MARGIN is deleted in this piece (spec Cell and scan)
+        ("test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default",) * 2 + (1,),     # Setup defaults (decisions 13)
+        ("test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point",
+         "test_ruling_6_orders_per_unit_true_issues_one_attack_move_per_unit_to_the_shared_point", 1),   # per-unit, asked for
+        ("test_ruling_6_a_group_goal_overrides_the_point_for_that_group",) * 2 + (1,),
+        ("test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move",) * 2 + (1,),
+        ("test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side",) * 2 + (1,),
+        ("test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only",) * 2 + (1,),                 # per-unit, asked for
+        ("test_no_mop_up_or_reissue_orders_after_the_opening_orders",) * 2 + (1,),
     ),
-    "tests/skilllab/test_plays.py": ("test_ruling_6_plays_use_per_unit_orders",),                     # line 418 (decisions 13)
-    "tests/skilllab/test_asym.py": ("test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts",),     # line 411 (decisions 13)
-    "tests/skilllab/test_placed_by_feature.py": ("test_defender_guards_attacker_attack_moves_toward_the_defender",),     # line 223
-    "tests/skilllab/test_objective_scene.py": ("test_objective_scene_sends_both_groups_to_the_point_between_them",
-                                               "test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet"),     # line 54
-    "tests/skilllab/integration/test_slots_real.py": (),        # line 54 (decisions 13); real engine, not run in the measurement
+    "tests/skilllab/test_plays.py": (("test_ruling_6_plays_use_per_unit_orders", "test_ruling_6_plays_use_the_group_order_default", 4),),
+    "tests/skilllab/test_asym.py": (("test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts",) * 2 + (12,),),
+    "tests/skilllab/test_placed_by_feature.py": (("test_defender_guards_attacker_attack_moves_toward_the_defender",) * 2 + (15,),),
+    "tests/skilllab/test_objective_scene.py": (("test_objective_scene_sends_both_groups_to_the_point_between_them",) * 2 + (1,),
+                                               ("test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet",) * 2 + (1,)),
+    "tests/skilllab/integration/test_slots_real.py": (("test_per_unit_orders_all_head_for_the_shared_point",) * 2 + (2,),),
 }
+RULER_FUNCTIONS, RULER_ITEMS = 13, 42
 
 
 def test_the_orders_per_unit_default_is_false_after_the_flip():
@@ -775,13 +1103,27 @@ def test_the_orders_per_unit_default_is_false_after_the_flip():
     assert f.default is False
 
 
-def test_the_ruler_list_names_files_and_tests_that_exist():
-    """Pins the list: every file exists and defines each named test. A ruler row removes its entry in the same ledger row."""
-    for rel, names in RULER_ROWS.items():
+def test_the_ruler_list_names_files_and_tests_that_exist_and_pins_the_count():
+    """Pins the measured list: the count is 13 functions and 42 items, every file defines the new name of each test and no longer
+    defines a renamed old name. A test that is dropped from the list or from its file changes the count."""
+    assert sum(len(v) for v in RULER_ROWS.values()) == RULER_FUNCTIONS == 13
+    assert sum(n for v in RULER_ROWS.values() for _o, _n, n in v) == RULER_ITEMS == 42
+    for rel, rows in RULER_ROWS.items():
         text = (ROOT / rel).read_text()
-        assert "orders_per_unit" in text or rel.endswith("test_fight_outcomes.py"), rel
-        for name in names:
-            assert "def %s" % name in text, (rel, name)
+        assert "orders_per_unit" in text or rel.endswith(("test_fight_outcomes.py", "test_plays.py")), rel
+        for old, now, _n in rows:
+            assert "def %s(" % now in text, (rel, now)
+            assert old == now or "def %s(" % old not in text, (rel, old)
+
+
+def test_the_flip_left_no_test_asserting_the_old_default():
+    """The ruler rows are executed: no test file asserts `orders_per_unit is True` on a play or a scene, which is the old default
+    (positive control: the explicit per-unit calls are still there)."""
+    for rel in RULER_ROWS:
+        text = (ROOT / rel).read_text()
+        assert ".orders_per_unit is True" not in text, rel
+    assert "orders_per_unit=True" in (ROOT / "tests/skilllab/test_fight_outcomes.py").read_text()
+    assert "per_unit=True" in (ROOT / "tests/skilllab/integration/test_slots_real.py").read_text()
 
 
 def _orders(fake):

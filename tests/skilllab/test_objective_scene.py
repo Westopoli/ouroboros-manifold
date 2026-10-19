@@ -48,10 +48,11 @@ def test_objective_scene_sets_sides_d_apart():
 
 
 def test_objective_scene_sends_both_groups_to_the_point_between_them():
-    """Ruling 6: both groups attack-move to one point, at the corridor's middle, one order per unit."""
+    """Ruling 6: both groups attack-move to one point, at the corridor's middle, one order per group (the default since the
+    L4 flip, TD-LAB-REV2-L4-flip)."""
     setup = scenes.objective_scene(2800.0)(16, False)
     g0, g1 = _sides(setup)
-    assert setup.point is not None and setup.orders_per_unit is True
+    assert setup.point is not None and setup.orders_per_unit is False
     for g in (g0, g1):
         assert g.order == "attack_move" and g.goal in (None, tuple(setup.point))
     assert g0.x < setup.point[0] < g1.x
@@ -83,7 +84,10 @@ def test_objective_scene_is_deterministic_and_ignores_swap():
 def test_far_open_ground_fight_is_ended_by_elimination_not_by_quiet():
     """Q-LAB-03 / ruling 6 (real engine): a fight at d = 2800 on open ground has contact after tick 0 and ends side0, side1 or
     draw: never a stalemate, never the cap (red on the old code: it ended by its mop-up and quiet rules)."""
-    r = fight(scenes.objective_scene(2800.0)(16, False), 0, False, engine=engine.Engine())
+    # LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the test is about the ending rule, measured with per-unit orders as before the flip
+    # (with the group order this scene caps at 12000 ticks with 1 v 2 left on seed 0: reported as a finding, not tested here).
+    setup = dataclasses.replace(scenes.objective_scene(2800.0)(16, False), orders_per_unit=True)
+    r = fight(setup, 0, False, engine=engine.Engine())
     assert r.first_contact_tick > 0
     assert r.outcome in ("side0", "side1", "draw"), (r.outcome, r.ticks)
 

@@ -12,7 +12,15 @@ cap with (16, 16) alive, firing unit-seconds (0, 0) against (152.5, 110.75); dam
 (margin 0.312), damage-up 0.5 with 14 left (margin 0.670), both with an opening window of (12.75, 9.25).
 
 Gated cases (OM_LAB_SLOW=1; they need L3's plays and sweep.py's real builds): the smoke command's rows are the same bytes at 1 and 12
-workers and every fight ends side0, side1 or draw; the sweep command writes sweep_<family>.csv and sweep_summary.json.
+workers and every fight ends side0, side1 or draw; the sweep command writes sweep_<family>.csv and sweep_summary.json. A cap appears
+only in control_* kinds (controls cap by design, CONTROL_MAX_TICKS < 12000), and the pinned defect count (non-control caps, draws and
+the cells holding them) is recounted from the CSV and must match the entry or summary; non-control caps are pinned at zero.
+SATISFIABILITY of the gated cases: the first revision of this file was written before L3's plays existed, so they were unverified.
+L3 is on the lab branch now; the fix pass ran them on the scratch reference (see the report of LAB-REV2-L4-tests-fix for the result).
+
+Capability-gated cases (skipped on a library without OM_TP_FIRING_ARC_DEG or a usable om_roster_set_cone): the arc null control
+(parameter pushed at 360 against never set) and the cone null control (range 0 against no cone) read byte-identical rows on the real
+engine. They skip today (E0 and E2 are not built) and are unverified for satisfiability until those land.
 """
 import csv
 import dataclasses
@@ -109,6 +117,32 @@ def test_positive_control_the_damage_detector_fires_on_two_identical_runs(librar
     assert sweep.controls("damage_up")["positive"].check([[a], [b]]) is False
 
 
+# ---- arc and cone null controls (gated on the library) ------------------------------------------------------------------------------
+
+def test_the_arc_null_control_reads_360_pushed_against_never_set_as_byte_identical_rows(library):
+    if not sweep.detect(library).arc:
+        pytest.skip("the library has no OM_TP_FIRING_ARC_DEG (E0 not built): unverified for satisfiability until it lands")
+    ctl = sweep.controls("arc")["null"]
+    got = []
+    for p in sorted(ctl.points, key=lambda p: -len(p.settings)):
+        setup = scene(vision=0.5)
+        setup = dataclasses.replace(setup, settings={**setup.settings, **p.settings}, **p.setup)
+        got.append([fought(library, setup)])
+    assert ctl.check(got) is True
+    assert got[0][0].firing_unit_seconds[0] > 0                 # positive control: the scene does shoot, so identical rows mean something
+
+
+def test_the_cone_null_control_reads_range_zero_against_no_cone_as_byte_identical_rows(library):
+    if not sweep.detect(library).cone:
+        pytest.skip("the library has no usable om_roster_set_cone (E2 not built): unverified for satisfiability until it lands")
+    ctl = sweep.controls("cone")["null"]
+    got = []
+    for p in sorted(ctl.points, key=lambda p: -len(p.setup)):
+        got.append([fought(library, dataclasses.replace(scene(vision=0.5), **p.setup))])
+    assert ctl.check(got) is True
+    assert got[0][0].firing_unit_seconds[0] > 0
+
+
 # ---- capabilities: arc and cone are skipped with a reason when the library lacks them ------------------------------------------------
 
 def test_detect_matches_the_header_and_the_symbol(library):
@@ -153,6 +187,14 @@ def _read(path):
         return list(csv.DictReader(fh))
 
 
+def _defects_of(rows):
+    """The pinned definition of the defect count (test_sweep.py header), recounted from the CSV rows."""
+    cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
+    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
+    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
+            "cells": len({cell(r) for r in bad})}
+
+
 @SLOW
 def test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_clean(tmp_path):
     assert cli.main(["smoke", "--out", str(tmp_path / "w1"), "--workers", "1"]) == 0
@@ -162,6 +204,8 @@ def test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_
     b = json.loads((tmp_path / "w12" / "smoke_summary.json").read_text())
     assert a["rows_sha256"] == b["rows_sha256"]
     assert set(a["outcomes"]) <= {"side0", "side1", "draw"}, a["outcomes"]          # no cap: a capped fight is a lab defect
+    smoke_rows = _read(tmp_path / "w1" / "smoke.csv")
+    assert a["defects"] == _defects_of(smoke_rows) == b["defects"] and a["defects"]["cap_rows"] == 0
     assert {r["prefight"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] != "controls"} == {"ok"}
     assert isinstance(a["refused"], list) and set(a["prefight"]) <= {"ok", "no_fit", "unroutable", "no_reach"}
     layouts = {r["layout"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] == "vision"}
@@ -179,3 +223,5 @@ def test_the_sweep_command_writes_the_family_csv_and_the_summary(tmp_path):
     assert entry["skipped"] is None and entry["csv"] == "sweep_damage_up.csv"
     assert entry["controls"]["positive"]["ok"] is True and entry["controls"]["null"]["ok"] is True
     assert {r["outcome"] for r in rows} <= {"side0", "side1", "draw", "cap"}
+    assert {r["kind"] for r in rows if r["outcome"] == "cap"} <= {"control_positive", "control_null"}      # a cap is allowed in a control only
+    assert entry["defects"] == _defects_of(rows) and entry["defects"]["cap_rows"] == 0

@@ -408,7 +408,7 @@ def test_ruling_6_a_naive_meeting_has_one_point_between_the_fronts(a, b, heads):
     s = asym_play(16, Side(a), Side(b))(heads, False)
     assert s.point == pytest.approx((0.0, 0.0), abs=1e-6)
     assert all(g.goal is None for g in s.groups)
-    assert s.orders_per_unit is True
+    assert s.orders_per_unit is False      # LAB-REV2-L4 ruler (TD-LAB-REV2-L4-flip): the group order is the default
 
 
 @pytest.mark.parametrize("kw", ["approach", "mopup"])

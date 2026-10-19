@@ -229,7 +229,7 @@ def test_region_map_css_classes_only_and_safe():
 
 # small multiples
 
-def scan(label_won, size=10, win=0.05):
+def scan(label_won, size=10):
     """label_won: {enemy_heads: won}; break-even computed as scan() does (first won -> lost step)."""
     heads = sorted(label_won)
     cells = [CellResult(enemy_heads=h, fights=[], mean_margin=0.5 if label_won[h] else -0.5, won=label_won[h])
@@ -239,7 +239,7 @@ def scan(label_won, size=10, win=0.05):
         if a.won and not b.won:
             beats, loses = a.enemy_heads, b.enemy_heads
             break
-    return ScanResult(size=size, cells=cells, beats=beats, loses_to=loses, win_margin=win)
+    return ScanResult(size=size, cells=cells, beats=beats, loses_to=loses)
 
 
 A = scan({1: True, 2: True, 3: False, 4: False})
@@ -324,7 +324,7 @@ def test_sm_panel_count_limits():
 
 def test_sm_empty_cells_is_valueerror():
     """A panel with no cells is a ValueError."""
-    empty = ScanResult(size=1, cells=[], beats=None, loses_to=None, win_margin=0.05)
+    empty = ScanResult(size=1, cells=[], beats=None, loses_to=None)
     with pytest.raises(ValueError):
         charts.small_multiples_html([("a", A), ("e", empty)])
 
