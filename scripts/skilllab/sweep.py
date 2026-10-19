@@ -554,8 +554,8 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         for name, heads in SMOKE_CONTROLS:
             applied = Applied(control_set[name], dataclasses.replace(point, settings={}, kind="control_smoke"))
             for f in scan_mod.cell(applied, heads, replicates, fight_fn=more.get("fight_fn"), map_fn=more.get("map_fn")).fights:
-                rows.append(rows_mod.fight_row(f, family="controls", play=name, layout="none", kind="control_smoke",
-                                               point="-", enemy_heads=heads, baseline_no_fit=0))
+                rows.append(rows_mod.fight_row(f, baseline_no_fit=0, family="controls", play=name, layout="none", kind="control_smoke",
+                                               point="-", enemy_heads=heads))
             words["ok"] += 1
         rows_mod.write_rows(rows, out / "smoke.csv")
         summary = {"rows_sha256": hashlib.sha256((out / "smoke.csv").read_bytes()).hexdigest(), "rows": len(rows),
