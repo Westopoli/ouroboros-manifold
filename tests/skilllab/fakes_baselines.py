@@ -24,12 +24,13 @@ def in_block(blocks, layer, p):
 
 
 def fill_order(n, x, y, radius):
-    """The existing fill order of a blob of n units (n >= 2), CONTINUED past its last cell: the anchor first when n is odd, then the
+    """The existing fill order of a blob of n units, CONTINUED past its last cell (decision 36 item 2: "the existing Fermat spiral
+    continued without end, same pair count and radius formula, i = pairs, pairs + 1, ..."): the anchor first when n is odd, then the
     pairs (p_i, reflection of p_i) of formations._blob, with d_i = radius * sqrt((i + 0.5) / (n // 2)) and angle i * golden angle, for i
-    = 0, 1, 2, ... without end. Positions rounded to 6 places as formations._blob rounds. THE TEST WRITER'S READING of decision 26
-    ("skips to the next free cell in its existing fill order"): the order is not reshuffled by a skip, the cells beyond the last one of
-    the open-ground blob are the next ones of the same spiral (same pairs count, same radius)."""
-    pairs = n // 2
+    = 0, 1, 2, ... without end. Positions rounded to 6 places as formations._blob rounds. A blob of ONE unit has no pairs to count
+    (n // 2 = 0): the helper reads its continuation as the anchor, then a one-pair spiral (pairs 1); the tests use that only for "the
+    anchor comes first" and check the cell after the anchor by properties, not by this sequence."""
+    pairs = max(n // 2, 1)
     if n % 2:
         yield (float(x), float(y))
     i = 0
@@ -42,19 +43,68 @@ def fill_order(n, x, y, radius):
         i += 1
 
 
-def expected_skipping(g, blocks):
-    """The positions a naive blob group g holds when its next cell is skipped while blocked: the first g.count free cells of fill_order."""
+ROUTE_CELL = 50.0      # decision 20 / scenes.ROUTE_CELL: wu of the breadth-first search grid; a cell is open when its CENTRE is in no block
+
+
+def aligned(x0, y0, x1, y1, layer_lo=0, layer_hi=4):
+    """A Block whose bounds are multiples of the 50 wu route cell (x0, y0 rounded down, x1, y1 up): every route cell is then wholly
+    inside or wholly outside it, so "this point is in the anchor's region" reads the same at cell and at point resolution."""
+    r = ROUTE_CELL
+    return Block(math.floor(x0 / r) * r, math.floor(y0 / r) * r, math.ceil(x1 / r) * r, math.ceil(y1 / r) * r, layer_lo, layer_hi)
+
+
+def route_region(terrain, layer, anchor):
+    """(cells, cell_of): the 50 wu cells connected to the anchor's cell (four neighbours) over open cells of the mover's route mask
+    (decision 36 item 1 and decision 20). On a hand-built terrain the mask of a flyer and a walker agree: a cell is open when its centre
+    is in no block that reaches `layer`. The anchor's own cell starts the search whether or not it is open."""
+    cols, rows = math.ceil(terrain.canvas[0] / ROUTE_CELL), math.ceil(terrain.canvas[1] / ROUTE_CELL)
+    cell_of = lambda p: (min(max(int(p[0] // ROUTE_CELL), 0), cols - 1), min(max(int(p[1] // ROUTE_CELL), 0), rows - 1))
+    start = cell_of(anchor)
+    seen, queue = {start}, [start]
+    while queue:
+        cx, cy = queue.pop()
+        for n in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+            if 0 <= n[0] < cols and 0 <= n[1] < rows and n not in seen and not in_block(
+                    terrain.blocks, layer, ((n[0] + 0.5) * ROUTE_CELL, (n[1] + 0.5) * ROUTE_CELL)):
+                seen.add(n)
+                queue.append(n)
+    return seen, cell_of
+
+
+def inside_canvas(terrain, p):
+    """Decision 36 item 1: a cell outside the layout's canvas counts as blocked (bounds inclusive)."""
+    return 0.0 <= p[0] <= terrain.canvas[0] and 0.0 <= p[1] <= terrain.canvas[1]
+
+
+def expected_skipping(g, terrain, canvas=True, connected=True):
+    """The positions, IN FILL ORDER, a naive blob group g holds when its next cell is skipped while it is blocked, outside the canvas
+    or outside the anchor's connected region (decisions 26 and 36): the first g.count such free cells of fill_order. None when the
+    region has no free cell left for the count ("cannot hold the count"; the sequence is walked out to the canvas diagonal, past
+    which nothing is inside the canvas). `canvas=False` / `connected=False` give the readings of a builder that ignores that rule (the
+    tests' fixture guards use them to show a case really separates the rules)."""
+    anchor = (g.x, g.y)
+    seen, cell_of = route_region(terrain, g.layer, anchor)
+    reach = math.hypot(*terrain.canvas) + 1.0
     out = []
     for p in fill_order(g.count, g.x, g.y, radius_of(g.count)):
-        if not in_block(blocks, g.layer, p):
-            out.append(p)
-            if len(out) == g.count:
-                return out
-    raise AssertionError("fill order exhausted")      # unreachable: the sequence never ends
+        if math.hypot(p[0] - g.x, p[1] - g.y) > reach:
+            return None
+        if (canvas and not inside_canvas(terrain, p)) or in_block(terrain.blocks, g.layer, p) or (connected and cell_of(p) not in seen):
+            continue
+        out.append(p)
+        if len(out) == g.count:
+            return out
+    return None
 
 
 def keyed(pts, nd=4):
-    return sorted((round(p[0], nd), round(p[1], nd)) for p in pts)
+    """Sorted, rounded: for SET comparisons only. Skipped cells are compared in fill order with rounded()."""
+    return sorted(rounded(pts, nd))
+
+
+def rounded(pts, nd=4):
+    """The points to `nd` decimals in the order given (decision 36 item 3: the skipped cells are compared unsorted, in fill order)."""
+    return [(round(p[0], nd), round(p[1], nd)) for p in pts]
 
 
 def slab_through(g, dx0, dx1, dy0, dy1, layer_lo=0, layer_hi=4):
