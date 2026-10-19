@@ -115,7 +115,7 @@ G. Stands (decision 29 item 7).
 ## 32. BASE readings (Architect 2026-10-19)
 1. A baseline refused by pre-flight (no_reach, unroutable) drops only that baseline; the play runs against the remaining ones and the refusal is listed with its role. A no_reach on a layer play's attacker-layer variant is expected, not a defect.
 2. A baseline that cannot be placed at headcount 8 lists the layout as `baseline_no_fit` with last_headcount None, no scan rows for the play on that layout, no defect.
-3. A scan cut at K by `baseline_no_fit` that the play wins throughout 8 to K is an always-won cut scan: not a ceiling hit (a ceiling hit is beating 48), not a finding; refinement runs only inside 8 to K; the artifact says "won through K, scan cut by baseline_no_fit" so it is never read as "no crossing exists".
+3. A scan cut at K by `baseline_no_fit` that the play wins throughout 8 to K is an always-won cut scan: not a ceiling hit (a ceiling hit is beating 48), not a finding; refinement runs only inside 8 to K; the artifact says "won through K, scan cut by baseline_no_fit" so it is never read as "no crossing exists". A cut scan with a loss below K shows "scan cut by baseline_no_fit at K" beside its normal result (crossing or not).
 4. The blob's fill order continues over free cells without a fixed limit; "cannot hold the count" means no free cell remains inside the layout bounds (the existing radius check against free cells). The order is deterministic (rows identical at 1 and 12 workers).
 5. A blob of one unit follows the same rule with no special case: the anchor is radius zero; if blocked, the nearest free cell by increasing radius. One test.
 
@@ -128,7 +128,7 @@ Golden hashes: the mirror control's hash is stale on the lab tip because lab-sid
 
 ## 34. L5 fix-pass readings (Architect 2026-10-19)
 1. Bracketing headcounts: per knob value and per scan (play, baseline) an arrow to the first row of the break-even cell and one to the first lost cell, labelled (enemy_heads, outcome); a ceiling scan has only its top cell, a lost-everywhere scan only its first cell.
-2. The `artifact` command computes the condition verdicts itself with the conditions module's existing thresholds (all pinned by earlier rulings; no new number) and shows each verdict with its threshold name.
+2. (Corrected the same day: the conditions module holds no thresholds; `evidence.Thresholds` has no defaults because every pass mark is Westley's and an input, and the sweep files do not hold the engine-run scans `conditions.evaluate_bases` reads.) The `artifact` command takes an optional `--thresholds <json>` of Westley's pass marks. Given it, the command computes the verdicts that the CSV rows alone support (C2 agreement counts on the window and the whole fight; C1 advantage against the baseline maximum) and shows each verdict with its threshold name. Without it the conditions section says "no condition verdicts: thresholds not supplied" and still lists the raw agreement counts and C1 advantages as numbers with no pass or fail. No number is invented.
 3. The artifact learns that a batch ran the ground scene from the rows (any row whose play is a ground scene), with a positive test.
 4. The cone 3 by 3 grid is a table of signed gain per range and half-angle, one per (play, layout, baseline role).
 `point` is written by `sweep.py` as a fight-row label and reaches the CSV as the column `point`; the fixed-key list in `rows.py` is unchanged.
