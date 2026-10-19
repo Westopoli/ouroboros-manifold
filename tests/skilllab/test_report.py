@@ -760,11 +760,13 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
 #         "ceiling" and no element with class token "marker"
 #       - a defect cell's dot has class tokens "cell defect" (neither won nor lost); its table row has Result "defect" and an
 #         In-words cell containing "defect"
-#   report.artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact", verdicts=None) -> str
+#   report.artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact", thresholds=None) -> str
 #       summary = the sweep_summary.json dict ({"order": [...], "replicates": n, "families": {family: L4 entry}}); rows = the typed rows
 #       of diagram.notables (the family and smoke CSVs read by diagram.read_rows, concatenated); setup_for(notable) -> Setup;
-#       verdicts = None, or {"window": [Verdict, ...], "whole": [Verdict, ...]} (conditions.evaluate_bases; the thresholds are Westley's
-#       and are not the artifact's business, so the caller computes them).
+#       thresholds = None, or an evidence.Thresholds (Westley's pass marks, an input the `artifact` command reads from its optional
+#       --thresholds file; decision 34 item 2, corrected). The earlier `verdicts=` parameter (conditions.evaluate_bases output) is
+#       RETIRED: the sweep files do not hold the engine-run scans evaluate_bases reads, so nothing could supply it
+#       (TD-LAB-REV2-L5-verdicts).
 #       Writes <out_dir>/artifact.html (out_dir created with parents) and <out_dir>/diagrams/<notable.id>.svg (diagram.write_all) and
 #       returns the artifact path as str. The page is read as parsed HTML, never as text (quote style, attribute order and whitespace
 #       are free). One <h1> = title (escaped: a title with markup characters reads back as that text and adds no element). Then eight
@@ -797,12 +799,36 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
 #           control row); with none: "no both_wrong fight", no <li>
 #       <section id="refinement">: charts.refinement_html(summary["families"]) verbatim
 #       <section id="cone-grid">: charts.cone_grid_html(rows) verbatim; with no cone rows the text "no cone family"
-#       <section id="conditions"> (decisions 29 item 2, 31 B, C): with verdicts None the text "no condition verdicts"; else, per basis
-#           ("window" then "whole") one <table data-basis> with one <tr data-code data-baseline data-holds> per C1 verdict (the mirror
-#           "C1:<skill>" has data-baseline "mirror"; "C1@<role>:<skill>" has the role; data-holds "true", "false" or "none"), the
-#           mirror, naive_attacker and naive_defender rows all listed; then <ul class="basis-differences"> with one
-#           <li data-code data-window data-whole> per verdict code whose holds differ between the two bases (both bool), or the text
-#           "no verdict differs between the bases".
+#       <section id="conditions"> (decisions 29 item 2, 31 C, 34 item 2): ONLY what the CSV rows alone support: the C2 agreement
+#           (conditions.c2_table's statistics, on the CSV fights) and the C1 advantage against each naive baseline. Per basis
+#           ("window" then "whole") ONE <table data-basis="window|whole"> holding, in this order:
+#             (a) five <tr class="c2-count" data-basis data-word data-count> in evidence.AGREEMENTS order (both_right,
+#                 count_wrong_type_right, both_wrong, count_right_type_wrong, n/a), data-count an integer: the raw agreement counts over
+#                 EVERY row (any family, kind, baseline; as the agreement section tallies). window: the rows' `agreement` word. whole:
+#                 the same rule with predicted_type re-read from the whole fight: the larger of firing_unit_seconds_0/1 wins, equal is
+#                 "tie"; predicted_count and outcome as the row has them; the word is fight._agreement's (a tie, or an outcome that is not
+#                 side0 or side1, gives "n/a").
+#             (b) with thresholds only: C2 verdict lines <tr class="c2-verdict" data-code="C2" data-basis data-scope="pooled|cell"
+#                 data-enemy-heads ("" for pooled, else the headcount) data-fights data-holds="true|false"> in conditions.c2_table order
+#                 (pooled first, then the cells ascending), computed by the check_c2 statistics on the CSV fights of that basis (window
+#                 reads firing_window_0/1, whole firing_unit_seconds_0/1; margin is the row's `margin`); holds = rho >=
+#                 c2_rank_agreement AND off_trend_share <= c2_off_trend_share; c2_off_trend_margin is the statistic's margin.
+#             (c) one <tr class="c1" data-code="C1@<role>" data-basis data-family data-play data-layout data-point data-baseline="<role>"
+#                 data-advantage data-baseline-max> per (series, baseline role present among the series' rows), series = (family, play,
+#                 layout, point), sorted by series then role (strings). data-advantage = the MEAN firing advantage of the series' play rows
+#                 (baseline "none"; (f0 - f1) / (f0 + f1), 0.0 when the sum is 0; window or whole as the table's basis);
+#                 data-baseline-max = the LARGEST |firing advantage| over that role's rows of the series (decision 31 C). With thresholds
+#                 the tr also holds data-holds="true|false": advantage > baseline-max + c1_min_firing_advantage, STRICT.
+#           With thresholds every verdict tr (b, c) holds <span class="threshold" data-name="<Thresholds field name>" data-value="<the
+#           value used>"> children, one per field the verdict used: C1: c1_min_firing_advantage; C2: c2_rank_agreement,
+#           c2_off_trend_margin, c2_off_trend_share; and its text holds those names. After the tables, with thresholds: <ul
+#           class="basis-differences"> with one <li data-code data-window data-whole> per verdict (data-code; C1 lines also data-family
+#           data-play data-layout data-point) whose data-holds differs between the two bases, or the text "no verdict differs between
+#           the bases" and no <li>.
+#           WITHOUT thresholds (None): the section text holds exactly `no condition verdicts: thresholds not supplied`, still holds the
+#           (a) and (c) lines as numbers (data-count, data-advantage, data-baseline-max), and has NO data-holds, no span.threshold and
+#           none of the words pass, fail, holds (text, attribute names or values). The mirror C1 (decision 31 B) needs the mirror scan,
+#           which a CSV row does not carry as such: not computed here (QUESTION, see the ledger row).
 #       Deterministic (same bytes for the same input); self-contained (every url/href/src is a #fragment, a data: URI or a
 #       fonts.googleapis.com URL, as test_page_is_self_contained).
 #   summary.write (summary.json): per variant scan summary gains "ceiling_hit" (bool) and "multi_flip" (bool); "break_even" reads
@@ -1012,11 +1038,11 @@ def _artifact_inputs():
     return t, rows, summary
 
 
-def _page(tmp_path, rows=None, summary=None, title="Skill lab artifact", verdicts=None):
+def _page(tmp_path, rows=None, summary=None, title="Skill lab artifact", thresholds=None):
     from scripts.skilllab import report as report_mod
     t, base_rows, base_summary = _artifact_inputs()
     rows = base_rows if rows is None else rows
-    path = report_mod.artifact(base_summary if summary is None else summary, rows, t.setup_for, tmp_path, title=title, verdicts=verdicts)
+    path = report_mod.artifact(base_summary if summary is None else summary, rows, t.setup_for, tmp_path, title=title, thresholds=thresholds)
     return t, rows, Path(path).read_text(encoding="utf-8"), path
 
 
@@ -1227,53 +1253,165 @@ def test_l5_artifact_without_rows_does_not_mark_the_opening_window(tmp_path):
     assert not root.find("svg")
 
 
-def test_l5_artifact_conditions_say_so_when_no_verdicts_were_given(tmp_path):
-    sec = _sec(_tree(_page(tmp_path)[2]), "conditions")
-    assert "no condition verdicts" in sec.text() and not sec.find("table")
+# ---- the conditions section: only what the CSV rows support (decision 34 item 2); placeholders from fixtures_conditions ----------------
+import fixtures_conditions as fx  # noqa: E402
+
+NO_VERDICTS = "no condition verdicts: thresholds not supplied"
+BASIS_NAMES = ("window", "whole")
 
 
-def _verdicts():
-    from scripts.skilllab.evidence import Verdict
-    def v(code, holds):
-        return Verdict(code, holds, 0.5, 0.5, "unconfirmed definition: test")
-    window = [v("C0", True), v("C1:S2", True), v("C1@naive_attacker:S2", True), v("C1@naive_defender:S2", False), v("C2", True), v("C7", None)]
-    whole = [v("C0", True), v("C1:S2", False), v("C1@naive_attacker:S2", True), v("C1@naive_defender:S2", False), v("C2", False), v("C7", None)]
-    return {"window": window, "whole": whole}
+def _cls(node, name, token):
+    """Node.find by one class token (Node.find matches an attribute exactly, a class list is not one token)."""
+    return [n for n in node.find(name) if token in n.attrs.get("class", "").split()]
 
 
-def test_l5_artifact_conditions_list_the_mirror_and_both_baselines_on_both_bases(tmp_path):
-    """Decision 31 B and C: the mirror C1, the naive attacker C1 and the naive defender C1 are all listed, for the window and the whole fight."""
-    _, _, html, _ = _page(tmp_path, verdicts=_verdicts())
-    sec = _sec(_tree(html), "conditions")
-    tables = sec.find("table")
-    assert [t.attrs["data-basis"] for t in tables] == ["window", "whole"]
-    for table in tables:
-        rows = {tr.attrs["data-code"]: tr for tr in table.find("tr") if tr.attrs.get("data-code", "").startswith("C1")}
-        assert list(rows) == ["C1:S2", "C1@naive_attacker:S2", "C1@naive_defender:S2"]
-        assert [tr.attrs["data-baseline"] for tr in rows.values()] == ["mirror", "naive_attacker", "naive_defender"]
-    holds = {(t.attrs["data-basis"], tr.attrs["data-code"]): tr.attrs["data-holds"] for t in tables for tr in t.find("tr") if "data-code" in tr.attrs}
-    assert holds[("window", "C1:S2")] == "true" and holds[("whole", "C1:S2")] == "false" and holds[("window", "C1@naive_defender:S2")] == "false"
+def _conditions(tmp_path, rows, thresholds=None):
+    return _sec(_tree(_page(tmp_path, rows=rows, thresholds=thresholds)[2]), "conditions")
+
+
+def _attr_blob(sec):
+    """Every word a reader or a parser could see in the section: the text and every attribute name and value, lower-cased."""
+    return " ".join([sec.text()] + ["%s=%s" % kv for n in sec.iter() for kv in n.attrs.items()]).lower()
+
+
+def check_no_verdicts_with_raw_numbers(sec, counts=None, c1=None):
+    """Without thresholds: the exact sentence, the raw numbers, and no verdict anywhere."""
+    assert NO_VERDICTS in sec.text()
+    blob = _attr_blob(sec)
+    for word in ("pass", "fail", "holds"):                       # whole words: the mandated sentence has "thresholds" in it
+        assert not _re.search(r"\b%s\b" % word, blob), word
+    assert not _cls(sec, "span", "threshold") and not [n for n in sec.iter() if "data-holds" in n.attrs]
+    assert not _cls(sec, "ul", "basis-differences")
+    if counts is not None:
+        got = {(tr.attrs["data-basis"], tr.attrs["data-word"]): int(tr.attrs["data-count"]) for tr in _cls(sec, "tr", "c2-count")}
+        assert got == {(b, w): n for b, per in counts.items() for w, n in per.items()}
+    if c1 is not None:
+        check_c1_numbers(sec, c1)
+
+
+def check_c1_numbers(sec, c1):
+    lines = _cls(sec, "tr", "c1")
+    assert [(tr.attrs["data-basis"], tr.attrs["data-baseline"]) for tr in lines] == [(b, r) for b in BASIS_NAMES for r in sorted(c1[b])]
+    for tr in lines:
+        adv, noise = c1[tr.attrs["data-basis"]][tr.attrs["data-baseline"]]
+        assert tr.attrs["data-code"] == "C1@" + tr.attrs["data-baseline"]
+        assert (tr.attrs["data-family"], tr.attrs["data-play"], tr.attrs["data-layout"], tr.attrs["data-point"]) == ("range_up", "s3_layer_above", "81", "-")
+        assert float(tr.attrs["data-advantage"]) == adv and float(tr.attrs["data-baseline-max"]) == noise
+
+
+def test_l5_artifact_conditions_without_thresholds_say_so_and_list_the_raw_agreement_counts(tmp_path):
+    """Decision 34 item 2: no thresholds -> the exact sentence, the counts per basis (window: the agreement column; whole: type re-read
+    from firing_unit_seconds), no verdict, none of the words pass / fail / holds. Positive control of the counts: rows 1 to 4 of c2_rows."""
+    check_no_verdicts_with_raw_numbers(_conditions(tmp_path, fx.c2_rows()), counts=fx.C2_COUNTS)
+
+
+def test_l5_artifact_conditions_without_thresholds_list_the_c1_advantages_as_numbers(tmp_path):
+    """The play's mean advantage and the baseline's largest |advantage| per basis and role, as numbers only; the two bases differ in sign."""
+    sec = _conditions(tmp_path, fx.c1_rows())
+    check_no_verdicts_with_raw_numbers(sec, c1=fx.C1_NUMBERS)
+
+
+def test_l5_artifact_conditions_without_baseline_rows_have_no_c1_line_negative_control(tmp_path):
+    """The play rows alone carry no baseline: no C1 line (counts are still listed)."""
+    sec = _conditions(tmp_path, fx.c2_rows())
+    assert not _cls(sec, "tr", "c1")
+
+
+def test_l5_artifact_conditions_with_thresholds_drop_the_not_supplied_sentence(tmp_path):
+    """Negative control of the sentence: with thresholds the section does not say that none were supplied."""
+    sec = _conditions(tmp_path, fx.c2_rows(), fx.thresholds())
+    assert "no condition verdicts" not in sec.text() and "not supplied" not in sec.text()
+
+
+def _c1_verdicts(sec):
+    return {(tr.attrs["data-basis"], tr.attrs["data-baseline"]): tr for tr in _cls(sec, "tr", "c1")}
+
+
+def test_l5_artifact_c1_verdict_is_advantage_over_baseline_maximum_plus_the_minimum_strictly(tmp_path):
+    """Plumbing of decision 34 item 2: advantage 0.375 (window) against max 0.25 (attacker) / 0.5 (defender). Minimum 0.0625 -> 0.375 >
+    0.3125 holds for the attacker, 0.375 > 0.5625 does not for the defender; whole advantage is -0.375: neither holds. Minimum 0.125 ->
+    0.375 > 0.375 is FALSE (strict, equal is not enough). Each line names c1_min_firing_advantage and the value used."""
+    for sub, mn, want in (("lo", 0.0625, {("window", "naive_attacker"): "true", ("window", "naive_defender"): "false",
+                                          ("whole", "naive_attacker"): "false", ("whole", "naive_defender"): "false"}),
+                          ("eq", 0.125, {("window", "naive_attacker"): "false", ("window", "naive_defender"): "false",
+                                         ("whole", "naive_attacker"): "false", ("whole", "naive_defender"): "false"}),
+                          ("zero", 0.0, {("window", "naive_attacker"): "true", ("window", "naive_defender"): "false",
+                                         ("whole", "naive_attacker"): "false", ("whole", "naive_defender"): "false"})):
+        sec = _conditions(tmp_path / sub, fx.c1_rows(), fx.thresholds(c1_min_firing_advantage=mn))
+        check_c1_numbers(sec, fx.C1_NUMBERS)
+        got = _c1_verdicts(sec)
+        assert {k: tr.attrs["data-holds"] for k, tr in got.items()} == want, sub
+        for tr in got.values():
+            spans = _cls(tr, "span", "threshold")
+            assert [(s.attrs["data-name"], float(s.attrs["data-value"])) for s in spans] == [("c1_min_firing_advantage", mn)]
+            assert "c1_min_firing_advantage" in tr.text()
+
+
+def test_l5_artifact_c1_verdict_uses_the_value_it_was_given_not_a_default(tmp_path):
+    """The threshold value shown is the one supplied: a minimum of 0.5 flips the attacker's window line (0.375 > 0.75 is false)."""
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds(c1_min_firing_advantage=0.5))
+    got = _c1_verdicts(sec)
+    assert got[("window", "naive_attacker")].attrs["data-holds"] == "false"
+    assert float(_cls(got[("window", "naive_attacker")], "span", "threshold")[0].attrs["data-value"]) == 0.5
+
+
+def _c2_lines(sec):
+    return _cls(sec, "tr", "c2-verdict")
+
+
+def test_l5_artifact_c2_verdict_lines_are_pooled_then_cells_on_each_basis_with_their_threshold_names(tmp_path):
+    """The C2 lines of c2_rows(): per basis the pooled line (4 fights) then the cells 16 (3) and 24 (1), window then whole; each names the
+    three C2 fields with the values used. Pass marks met whatever the rows are (placeholders): every line holds."""
+    t = fx.thresholds()
+    sec = _conditions(tmp_path, fx.c2_rows(), t)
+    lines = _c2_lines(sec)
+    assert [(tr.attrs["data-basis"], tr.attrs["data-scope"], tr.attrs["data-enemy-heads"], int(tr.attrs["data-fights"])) for tr in lines] == fx.C2_LINES
+    assert all(tr.attrs["data-code"] == "C2" and tr.attrs["data-holds"] == "true" for tr in lines)
+    want = {"c2_rank_agreement": t.c2_rank_agreement, "c2_off_trend_margin": t.c2_off_trend_margin, "c2_off_trend_share": t.c2_off_trend_share}
+    for tr in lines:
+        assert {s.attrs["data-name"]: float(s.attrs["data-value"]) for s in _cls(tr, "span", "threshold")} == want
+        for name in want:
+            assert name in tr.text()
+    for b, per in fx.C2_COUNTS.items():                                            # the raw counts stay beside the verdicts
+        assert {tr.attrs["data-word"]: int(tr.attrs["data-count"]) for tr in _cls(sec, "tr", "c2-count") if tr.attrs["data-basis"] == b} == per
+
+
+def test_l5_artifact_c2_verdict_follows_each_of_its_two_supplied_marks_negative_controls(tmp_path):
+    """A rank mark above every possible correlation makes every line fail; a share mark below every possible share does too; the value
+    shown is the value supplied."""
+    for sub, over in (("rank", dict(c2_rank_agreement=fx.DRAFT_UNCONFIRMED_C2_RANK_AGREEMENT_NEVER_MET)),
+                      ("share", dict(c2_off_trend_share=fx.DRAFT_UNCONFIRMED_C2_OFF_TREND_SHARE_NEVER_MET))):
+        sec = _conditions(tmp_path / sub, fx.c2_rows(), fx.thresholds(**over))
+        lines = _c2_lines(sec)
+        assert len(lines) == len(fx.C2_LINES) and all(tr.attrs["data-holds"] == "false" for tr in lines), sub
+        name, value = next(iter(over.items()))
+        assert all(float(s.attrs["data-value"]) == value for tr in lines for s in _cls(tr, "span", "threshold") if s.attrs["data-name"] == name)
+
+
+def _differences(sec):
+    uls = _cls(sec, "ul", "basis-differences")
+    assert len(uls) == 1
+    return {li.attrs["data-code"]: (li.attrs["data-window"], li.attrs["data-whole"]) for li in uls[0].find("li")}
 
 
 def test_l5_artifact_lists_the_verdicts_that_differ_between_the_bases_and_only_those(tmp_path):
-    """Mirror C1 and C2 differ (True/False), the attacker C1 and defender C1 and C0 do not, C7 is None on both: positive and negative controls."""
-    _, _, html, _ = _page(tmp_path, verdicts=_verdicts())
-    diff = _sec(_tree(html), "conditions").find("ul")
-    assert len(diff) == 1 and "basis-differences" in diff[0].attrs.get("class", "").split()
-    got = {li.attrs["data-code"]: (li.attrs["data-window"], li.attrs["data-whole"]) for li in diff[0].find("li")}
-    assert got == {"C1:S2": ("true", "false"), "C2": ("true", "false")}
+    """Minimum 0.0625: the attacker line holds on the window and not on the whole fight (listed); the defender line fails on both and every
+    C2 line is met on both (placeholders): only the attacker line is listed. Positive and negative controls in one."""
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds())
+    assert _differences(sec) == {"C1@naive_attacker": ("true", "false")}
+    li = _cls(sec, "ul", "basis-differences")[0].find("li")[0]
+    assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-point"]) == ("range_up", "s3_layer_above", "81", "-")
 
 
 def test_l5_artifact_says_no_verdict_differs_when_the_bases_agree(tmp_path):
-    same = _verdicts()
-    same["whole"] = same["window"]
-    sec = _sec(_tree(_page(tmp_path, verdicts=same)[2]), "conditions")
+    """A minimum no advantage can exceed: every C1 line fails on both bases, every C2 line is met on both -> no difference."""
+    sec = _conditions(tmp_path, fx.c1_rows(), fx.thresholds(c1_min_firing_advantage=100.0))
     assert "no verdict differs between the bases" in sec.text() and not sec.find("li")
 
 
 def test_l5_artifact_is_deterministic_and_self_contained(tmp_path):
-    _, _, a, _ = _page(tmp_path / "a", verdicts=_verdicts())
-    _, _, b, _ = _page(tmp_path / "b", verdicts=_verdicts())
+    _, _, a, _ = _page(tmp_path / "a", rows=fx.c1_rows() + fx.c2_rows(), thresholds=fx.thresholds())
+    _, _, b, _ = _page(tmp_path / "b", rows=fx.c1_rows() + fx.c2_rows(), thresholds=fx.thresholds())
     assert a == b
     for url in re.findall(r'(?:href|src)=["\']([^"\']+)', a) + re.findall(r"url\(\s*['\"]?([^)'\"]+)", a):
         assert url.startswith(("#", "data:", "https://fonts.googleapis.com")), url
@@ -1296,15 +1434,24 @@ def test_l5_artifact_is_deterministic_and_self_contained(tmp_path):
 #           <li data-cut-scan data-family="<family>" data-play="<play>" data-layout="<layout>" data-last-headcount="<K or empty>">
 #       per cut entry, in summary["order"] family order and, inside a family, in the entry's list order (a family in the summary but not
 #       in "order" is not read, as everywhere else). The li text holds the family, the play and the layout, and
-#           K an int:  the exact sentence  "won through K, scan cut by baseline_no_fit"   (K as an integer: "24", never "24.0")
+#           K an int, the play WON EVERY CELL of the pair (an always-won cut scan, decision 32 item 3):
+#                      the exact sentence  "won through K, scan cut by baseline_no_fit"   (K as an integer: "24", never "24.0")
+#           K an int, the play LOST some cell of the pair (decision 32 item 3, second sentence; fix pass 3):
+#                      the exact sentence  "scan cut by baseline_no_fit at K"   and NO "won through" in the li or anywhere on the page
+#                      (it was false for such a scan); the scan's normal result is unchanged beside it: a crossing keeps its notable,
+#                      h2, svg and counts; no extra sentence says "no crossing"
 #           K None:    the layout listed as `baseline_no_fit` and the exact sentence  "no scan: baseline_no_fit at the smallest headcount"
 #                      (data-last-headcount is the empty string; the words "won through" do not appear)
+#       HOW THE ARTIFACT KNOWS "always won" (K an int only): from the CSV rows of that (family, play, layout) -- every row with baseline
+#       "none" and kind grid or refined, whatever its point and knob value; baseline-role rows are not looked at. Always won = every
+#       such row has outcome "side0" (every cell won, as diagram.notables reads a cell). A single row of any other outcome (a loss, a
+#       draw, a cap), at any headcount including K, makes the scan "lost some cell". A pair is judged by its own rows only: another
+#       play's or layout's loss never changes it. The two li data attributes and the entry order are the same for both sentences.
 #       When nothing is cut there is no <ul class="cut-scans"> and the page holds the text "baseline_no_fit" nowhere.
-#   A cut scan is NOT a ceiling hit and not a notable: it adds no h2, no svg, no <p class="counts">, no row to the baseline-ceiling list,
+#   An ALWAYS-WON cut scan is NOT a ceiling hit and not a notable: it adds no h2, no svg, no <p class="counts">, no row to the baseline-ceiling list,
 #       and the text of its li holds neither "ceiling hit" nor "no crossing". Notables of other (play, layout) pairs are unchanged.
-#   NOT PINNED (QUESTION for the Architect): decision 32 item 3 says the sentence is for a play that WON throughout 8 to K. A cut scan
-#       in which the play lost a cell below K has a break-even inside 8..K; whether the artifact then still says "won through K" (false
-#       for it) or another sentence is not pinned; the fakes below are always-won.
+#   (Ruled: decision 32 item 3 is read as above, Architect 2026-10-19; the earlier "NOT PINNED" question is closed. The case of K an int
+#   with no rows at all for the pair is NOT pinned: no test builds it.)
 #   Fakes: rows written with rows.fight_row (the label baseline_no_fit=1 on the cut rows, ceiling_hit 0), one knob value (so no crossing
 #   can exist), headcounts 8..K only.
 # =====================================================================================================================
@@ -1315,15 +1462,16 @@ CUT_SENTENCE = "won through 24, scan cut by baseline_no_fit"
 NO_SCAN_SENTENCE = "no scan: baseline_no_fit at the smallest headcount"
 
 
-def _cut_rows(play="s3_layer_above", layout="192", family="range_up", top=24, baseline_roles=("none", "naive_attacker")):
-    """The rows of a cut, always-won scan: headcounts 8..top, the play wins every cell, one knob value, ceiling_hit 0, label baseline_no_fit 1."""
+def _cut_rows(play="s3_layer_above", layout="192", family="range_up", top=24, baseline_roles=("none", "naive_attacker"), lost=()):
+    """The rows of a cut scan: headcounts 8..top, the play wins every cell except those in `lost` (default: always won), one knob value,
+    ceiling_hit 0, label baseline_no_fit 1."""
     t = _td()
     out = []
     for role in baseline_roles:
         for h in (8, 16, 24, 32, 40, 48):
             if h > top:
                 continue
-            won = role == "none"
+            won = role == "none" and h not in lost
             row = _rows_mod.fight_row(t.fr("side0" if won else "side1"), knob=t.KNOB[family], knob_value=0.5, baseline=role,
                                                ceiling_hit=0, prefight="ok", family=family, play=play, layout=layout, kind="grid",
                                                enemy_heads=h, baseline_no_fit=1)
@@ -1356,9 +1504,70 @@ def test_l5_artifact_says_won_through_k_for_a_scan_cut_by_baseline_no_fit(tmp_pa
     assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) == ("range_up", "s3_layer_above", "192", "24")
     text = li.text()
     assert CUT_SENTENCE in text and "24.0" not in text
+    assert "scan cut by baseline_no_fit at" not in text                     # the other sentence is for a scan that lost a cell
     for w in ("range_up", "s3_layer_above", "192"):
         assert w in text, w
     assert sec.elements()[-1] is uls[0]                                   # after the last notable block
+
+
+LOST_SENTENCE = "scan cut by baseline_no_fit at 24"
+
+
+def test_l5_artifact_cut_scan_with_a_loss_below_k_says_cut_at_k_and_never_won_through(tmp_path):
+    """Decision 32 item 3, second sentence: the play lost the cell at 16 (won 8 and 24): 'scan cut by baseline_no_fit at 24', and no
+    'won through' in the li or on the page; the other li data and the no-notable result are unchanged. Negative to the positive control above."""
+    from scripts.skilllab import diagram
+    rows = _cut_rows(lost=(16,))
+    assert diagram.notables(rows) == []                                    # fixture sanity: a single knob value makes no crossing
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(CUT))
+    sec, uls, lis = _cut_lis(html)
+    assert len(uls) == 1 and len(lis) == 1
+    li = lis[0]
+    assert (li.attrs["data-family"], li.attrs["data-play"], li.attrs["data-layout"], li.attrs["data-last-headcount"]) == ("range_up", "s3_layer_above", "192", "24")
+    text = li.text()
+    assert LOST_SENTENCE in text and "24.0" not in text
+    for w in ("range_up", "s3_layer_above", "192"):
+        assert w in text, w
+    assert "won through" not in text and "won through" not in html and CUT_SENTENCE not in html
+    assert "ceiling hit" not in text and "no crossing" not in text
+    assert sec.elements()[-1] is uls[0]
+
+
+def test_l5_artifact_cut_scan_with_a_loss_keeps_its_crossing_notable_and_diagram(tmp_path):
+    """A cut scan that lost cells keeps its normal result beside the sentence: crossing_rows (range_up, s3_layer_above, layout 81) cut at
+    headcount 40 still gives the crossing notable with its h2, its svg and its counts, and the li reads 'scan cut by baseline_no_fit at 40'."""
+    from scripts.skilllab import diagram
+    t = _td()
+    rows = [r for r in t.crossing_rows() if r["enemy_heads"] <= 40]
+    cut = {"family": "range_up", "play": "s3_layer_above", "layout": "81", "last_headcount": 40}
+    ns = diagram.notables(rows)
+    assert [n.kind for n in ns] == [diagram.CROSSING]                      # fixture sanity: the cut rows still cross once
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(cut))
+    root = _tree(html)
+    findings = _sec(root, "findings")
+    assert [h.attrs["data-notable"] for h in findings.find("h2")] == [n.id for n in ns]
+    assert len(findings.find("svg")) == 1 and len(root.find("svg")) == 1
+    assert [p.attrs["data-notable"] for p in findings.find("p") if "counts" in p.attrs.get("class", "").split()] == [ns[0].id]
+    _, _, lis = _cut_lis(html)
+    assert len(lis) == 1 and "scan cut by baseline_no_fit at 40" in lis[0].text()
+    assert "won through" not in html and "no crossing" not in lis[0].text()
+
+
+def test_l5_artifact_each_cut_pair_is_judged_by_its_own_rows_only(tmp_path):
+    """Two cuts on one page: s3_layer_above won everything (won through 24), s3_types_by_reach lost the cell at 16 (cut at 24). The
+    loss of one does not leak into the other, in either direction (the sentence follows the pair's own rows)."""
+    won = {"family": "range_up", "play": "s3_layer_above", "layout": "192", "last_headcount": 24}
+    lost = {"family": "range_up", "play": "s3_types_by_reach", "layout": "192", "last_headcount": 24}
+    rows = _cut_rows() + _cut_rows(play="s3_types_by_reach", lost=(16,))
+    _, _, html, _ = _page(tmp_path, rows=rows, summary=_summary_with(won, lost))
+    _, _, lis = _cut_lis(html)
+    assert [li.attrs["data-play"] for li in lis] == ["s3_layer_above", "s3_types_by_reach"]
+    assert CUT_SENTENCE in lis[0].text() and "baseline_no_fit at" not in lis[0].text()
+    assert LOST_SENTENCE in lis[1].text() and "won through" not in lis[1].text()
+    swapped = _page(tmp_path / "s", rows=_cut_rows(lost=(16,)) + _cut_rows(play="s3_types_by_reach"), summary=_summary_with(won, lost))[2]
+    lis2 = _cut_lis(swapped)[2]
+    assert LOST_SENTENCE in lis2[0].text() and "won through" not in lis2[0].text()
+    assert CUT_SENTENCE in lis2[1].text()
 
 
 def test_l5_artifact_cut_scan_is_not_a_ceiling_hit_and_not_a_notable(tmp_path):
