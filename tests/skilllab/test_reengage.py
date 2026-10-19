@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order); E-13 R-096-02, R-096-08, R-099-05
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order) and decision 33 (readings 1 to 4); E-13 R-096-02, R-096-08, R-099-05
 """LAB-REV2-L8: fight() re-engages a silent side. Fake-engine tests of the trigger (tests only; the builder writes scripts/skilllab).
 
 THE RULE (Architect decision 28 point 3). When a side has had NO unit fire or move for REENGAGE_SILENCE_TICKS while an enemy is
@@ -33,11 +33,30 @@ INTERFACE FOR THE BUILDER (every name below is what these tests import or read; 
       REENGAGE_SILENCE_TICKS, a visible enemy exists and at least one living idle attack-move unit exists, the side re-engages at
       once (the order is issued in the loop iteration after engine.step number N, so a fake engine's step_count reads N for the first
       one): ONE engine.order_attack_move(w, ids, x, y) call, ids = every such unit, (x, y) = the mean of engine.unit_pos over the
-      side's living enemy units at that moment. reengage[s] += 1 (events, not units). The side then waits for activity: no further
-      re-engage for that side until a fire or a move of that side has zeroed the counter and it has again counted
-      REENGAGE_SILENCE_TICKS silent ticks ("once per silence period"). If no enemy is visible, or no unit is idle, the counter keeps
-      counting and the re-engage fires on the first tick all three conditions hold.
+      side's living enemy units THAT ARE VISIBLE to it, i.e. the set engine.visible_enemies returned (decision 33 item 4: never all the
+      living enemies, fog would leak into the orders). The order is an (x, y): each unit keeps its own layer and the enemy's layer is
+      ignored (decision 33 item 3). reengage[s] += 1: events, one ordered call per trigger, not units ordered (decision 33 item 2).
+      The side then waits for activity: no further re-engage for that side until a fire or a move of that side has zeroed the counter
+      and it has again counted REENGAGE_SILENCE_TICKS silent ticks ("once per silence period", decision 33 item 1: an unbroken silence
+      is one event, and a re-engage that produces no movement leaves the side silent, so the fight caps). If no enemy is visible, or no
+      unit is idle, the counter keeps counting and the re-engage fires on the first tick all three conditions hold (an idle unit that
+      appears late, or an enemy that comes into sight late, is ordered at that tick).
+    THE RE-ENGAGE IGNORES Setup.orders_per_unit AND THE fight._chunks 450 wu SPLIT (decision 33 item 2): one call per trigger with every
+      idle attack-move unit, whatever orders_per_unit says and however far apart the units stand (tests below).
     The fight ends only as today (elimination, or the cap): a re-engage never ends a fight or hides a cap.
+
+    NOT PINNED (the builder's choice; no test here decides them): the order of the re-engage against timeline.check on the same tick
+      (a Step that fires on tick t and a re-engage due on tick t); whether a re-engage is issued on the cap tick itself (the fight is
+      over); a unit that dies on the very tick of the re-engage (a dead unit is never ordered, pinned by
+      test_a_kill_is_a_hit_and_a_dead_unit_is_not_ordered only for a unit dead the tick before).
+
+    ROWS (test_reengage_rows.py): reengage_0 and reengage_1 join rows._FIXED, as the spec "CSV columns" list says. Decision 34's
+      "the fixed-key list in rows.py is unchanged" means only the `point` label (a sweep.py label, not a fixed key); it does not
+      forbid these two names.
+
+    SPEED (FINDING-speed-marks-unmet; test_speed.py's 30 s test is pre-existing red and Westley's number, untouched here): read
+      positions sparingly. A naive per-tick unit_pos read of every living unit adds about 19% to a fight's time. The move observable
+      needs only a cheap read (for instance the sides' units only, and none once a side's counter cannot matter).
 """
 import dataclasses
 import sys
@@ -66,13 +85,14 @@ def G(side, count=2, order="attack_move", unit="Vanguard"):
                  facing_deg=0.0 if side == 0 else 180.0, layer=0, order=order, goal=None, params={"spacing": 30.0})
 
 
-def run(groups, cap, fake=None, timeline=(), swap=False, script_events=None):
+def run(groups, cap, fake=None, timeline=(), swap=False, script_events=None, orders_per_unit=True):
     """fight() on a ReengageFakeEngine; script_events {k: callable(fake)} runs inside step number k+1 (k steps already taken)."""
     if fake is None:
         fake = ReengageFakeEngine()
     if script_events:
         fake.script = lambda t, f: [fn(f) for fn in script_events.get(t, [])]
-    setup = Setup(groups=tuple(groups), unit_types={}, abilities=False, max_ticks=cap, sample_every=5, timeline=tuple(timeline))
+    setup = Setup(groups=tuple(groups), unit_types={}, abilities=False, max_ticks=cap, sample_every=5, timeline=tuple(timeline),
+                  orders_per_unit=orders_per_unit)
     return fight(setup, 0, swap, engine=fake), fake
 
 
@@ -98,6 +118,25 @@ def kill(side, index=0):
     def fn(f):
         f.set_hp(f.units_of(side)[index], 0.0)
     return fn
+
+
+def clear_dest(side):
+    def fn(f):
+        for u in f.units_of(side):
+            f.set_dest(u, None)
+    return fn
+
+
+def give_dest(side):
+    def fn(f):
+        for u in f.units_of(side):
+            f.set_dest(u, (0.0, 0.0))
+    return fn
+
+
+def reengages(fake, side, step_ticks=()):
+    """The re-engage orders of `side`, without the orders its own attack_move STEPS issued (those are at `step_ticks`)."""
+    return [o for o in fake.reengage_orders(side) if o[0] not in step_ticks]
 
 
 def only(orders):
@@ -148,6 +187,17 @@ def test_unbroken_silence_for_several_windows_is_still_one_event():
     res, fake = run([G(0), G(1)], cap=3 * N + 5)
     assert len(fake.reengage_orders(0)) == 1 and len(fake.reengage_orders(1)) == 1
     assert tuple(res.reengage) == (1, 1)
+
+
+@pytest.mark.parametrize("side", (0, 1))
+def test_a_hit_dealt_after_a_reengage_rearms_the_shooter_like_a_move(side):
+    """Decision 33 item 1 for fire: after its first re-engage at N, `side` deals a hit (an enemy unit loses hp in step N + 5, so at
+    tick N + 6): its second order is at hit tick + N. The wounded side did not fire and stays at its single one."""
+    hit_at = N + 6
+    res, fake = run([G(0), G(1)], cap=2 * N + 20, script_events={N + 5: [wound(1 - side)]})
+    assert [t for t, _i, _g in fake.reengage_orders(side)] == [N, hit_at + N]
+    assert [t for t, _i, _g in fake.reengage_orders(1 - side)] == [N]
+    assert tuple(res.reengage)[side] == 2 and tuple(res.reengage)[1 - side] == 1
 
 
 @pytest.mark.parametrize("side", (0, 1))
@@ -228,14 +278,45 @@ def test_only_the_attack_move_group_of_a_mixed_side_is_ordered():
     ("group_move", None, False),
     ("idle", None, False),
     ("guard", None, False),
+    ("attack_move", "ping", True),
+    ("attack_move", "set_layer", True),
+    ("attack_move", "set_emission", True),
+    ("guard", "ping", False),
 ])
 def test_only_a_unit_whose_latest_order_is_attack_move_holds_the_role(opening, step, ordered):
     """The lab tracks each group's role from its opening order and its timeline steps. Side 1 (plain attack-move) is the control in
-    every run and is always ordered at N; side 0's group is ordered exactly when its latest order is an attack-move."""
-    timeline = [] if step is None else [Step(group=0, when=("tick", 0), order=step)]
+    every run and is always ordered at N; side 0's group is ordered exactly when its latest order is an attack-move. A ping, a
+    set_layer and a set_emission are not orders of movement: they leave the role as it was (the attack-move holder is still
+    ordered at N; the guard holder stays unordered)."""
+    extra = dict(ping=dict(goal=(0.0, 0.0), layer=0), set_layer=dict(layer=1), set_emission=dict(on=True)).get(step, {})
+    timeline = [] if step is None else [Step(group=0, when=("tick", 0), order=step, **extra)]
     res, fake = run([G(0, 2, order=opening), G(1, 2)], cap=N + 5, timeline=timeline)
     assert only(fake.reengage_orders(1))[0] == N
     got = fake.reengage_orders(0)
+    if ordered:
+        assert only(got)[0] == N and sorted(only(got)[1]) == sorted(fake.units_of(0))
+    else:
+        assert got == []
+    assert res.reengage[0] == (1 if ordered else 0)
+
+
+@pytest.mark.parametrize("opening,step,ordered", [
+    ("attack_move", "guard", False),
+    ("guard", "attack_move", True),
+    ("attack_move", "idle", False),
+    ("attack_move", "move", False),
+    ("idle", "attack_move", True),
+])
+@pytest.mark.parametrize("when", [("tick", 10), ("seen",)])
+def test_a_later_step_changes_the_role_too_by_tick_or_by_sight(opening, step, ordered, when):
+    """Steps after tick 0 count: a Step at ("tick", 10) or ("seen",) (can_see on, so it fires at tick 1) takes the role away from
+    an attack-move holder (guard, idle, move) or gives it to a guard or idle holder (attack_move), before the window N. The
+    attack_move STEP's own order is not a re-engage (filtered by its tick); side 1 is the control, ordered at N."""
+    k = when[1] if when[0] == "tick" else 1
+    fake = ReengageFakeEngine(can_see_fn=lambda f, o, t: True)
+    res, fake = run([G(0, 2, order=opening), G(1, 2)], cap=N + 5, fake=fake, timeline=[Step(group=0, when=when, order=step)])
+    assert only(fake.reengage_orders(1))[0] == N
+    got = reengages(fake, 0, step_ticks=(k,))
     if ordered:
         assert only(got)[0] == N and sorted(only(got)[1]) == sorted(fake.units_of(0))
     else:
@@ -261,10 +342,20 @@ def test_a_side_with_no_idle_unit_gets_no_order_and_no_count():
     assert tuple(res.reengage) == (0, 1)
 
 
-def test_the_goal_is_the_centroid_of_the_living_enemies_where_they_stand_when_the_order_is_issued():
-    """Side 1 has three units. At step 4 one is killed (a hit by side 0) and another walks 200 wu (a move by side 1): both sides'
-    silence restarts at tick 4, so both orders come at 4 + N. Side 0's goal is the mean of the two living side-1 units at their new
-    places, not of three, not of where they started."""
+def test_an_idle_unit_that_appears_after_the_window_is_ordered_at_the_first_tick_it_is_idle():
+    """Side 0 sees an enemy at N but every one of its units still has a destination; at tick V > N its destinations are cleared and
+    it is ordered at V (the silence period was not used up by the tick that found nobody idle). Side 1 is idle throughout: N."""
+    v = N + 9
+    res, fake = run([G(0), G(1)], cap=v + 10, script_events={0: [give_dest(0)], v - 1: [clear_dest(0)]})
+    assert only(fake.reengage_orders(0))[0] == v
+    assert only(fake.reengage_orders(1))[0] == N
+    assert tuple(res.reengage) == (1, 1)
+
+
+def test_the_goal_is_the_centroid_of_the_living_visible_enemies_where_they_stand_when_the_order_is_issued():
+    """Side 1 has three units, all visible to side 0 here. At step 4 one is killed (a hit by side 0) and another walks 200 wu (a move
+    by side 1): both sides' silence restarts at tick 4, so both orders come at 4 + N. Side 0's goal is the mean of the two living
+    side-1 units at their new places, not of three, not of where they started. (What fog takes out of the set: the next test.)"""
     start = None
 
     def snapshot(f):
@@ -283,14 +374,46 @@ def test_the_goal_is_the_centroid_of_the_living_enemies_where_they_stand_when_th
     assert tick1 == 4 + N and goal1 == pytest.approx(mean_pos(fake, fake.units_of(0)))
 
 
+def test_the_centroid_is_taken_over_the_enemies_the_ordering_side_can_see_never_all_the_living():
+    """Decision 33 item 4. Side 1 has three units; side 0 sees only two of them (the third stands behind the fog). Side 0's goal is
+    the mean of the two it sees; the mean of all three living (which would leak what side 0 cannot see) must not be the goal.
+    Side 1 sees all of side 0 and gets the plain mean of side 0 (control: the visible set equals the living set)."""
+    hidden = {}
+
+    def visible(f, side, e):
+        hidden.setdefault("u", f.units_of(1)[2])
+        return not (side == 0 and e == hidden["u"])
+
+    res, fake = run([G(0, 2), G(1, 3)], cap=N + 5, fake=ReengageFakeEngine(visible_fn=visible))
+    seen, fogged = fake.units_of(1)[:2], fake.units_of(1)[2]
+    tick, _ids, goal = only(fake.reengage_orders(0))
+    assert tick == N and goal == pytest.approx(mean_pos(fake, seen))
+    assert goal != pytest.approx(mean_pos(fake, fake.units_of(1))) and fogged not in seen
+    assert only(fake.reengage_orders(1))[2] == pytest.approx(mean_pos(fake, fake.units_of(0)))
+
+
 def test_the_enemy_centroid_is_taken_on_a_raised_enemy_layer_too():
-    """Decision 2's point is an (x, y); an enemy side standing on layer 2 still gets its plain mean (the order carries no layer)."""
+    """Decision 33 item 3: the order is an (x, y) and each unit keeps its own layer; an enemy side standing on layer 2 still gets its
+    plain mean over all its visible units on every layer (the order carries no layer, and no layer filters the set)."""
     raised = dataclasses.replace(G(1, 3), layer=2)
     res, fake = run([G(0, 2), raised], cap=N + 5)
     assert only(fake.reengage_orders(0))[2] == pytest.approx(mean_pos(fake, fake.units_of(1)))
 
 
 # ---------------------------------------------------------------------------------------------------------- counts, caps, no-op runs
+
+@pytest.mark.parametrize("per_unit", (True, False))
+def test_the_reengage_is_one_call_whatever_orders_per_unit_says_and_however_spread_the_units_are(per_unit):
+    """Decision 33 item 2: one ordered call per trigger, never split per unit (orders_per_unit=True) and never split in chunks by
+    fight._chunks (units further apart than 450 wu from their centroid would be). Side 0 is four units 600 wu apart (the opening
+    order is split into chunks or per unit as today and is tick 0, not listed); the re-engage is ONE call with all four ids, and
+    the count is 1."""
+    wide = dataclasses.replace(G(0, 4), params={"spacing": 600.0})
+    res, fake = run([wide, G(1, 2)], cap=N + 5, orders_per_unit=per_unit)
+    tick, ids, _goal = only(fake.reengage_orders(0))
+    assert tick == N and sorted(ids) == sorted(fake.units_of(0)) and len(ids) == 4
+    assert res.reengage[0] == 1 and only(fake.reengage_orders(1))[0] == N
+
 
 def test_the_count_follows_the_side_not_the_spawn_order():
     """swap=True spawns side 1 first; reengage[0] is still side 0's (side 0 sees nobody, side 1 sees all)."""

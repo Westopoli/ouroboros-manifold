@@ -1,5 +1,5 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (re-engage) and decision 23 (FINDING-group-orders-cap)
-"""LAB-REV2-L8 against the real engine (OM_LAB_SLOW=1: two capped fights today, about ten seconds each).
+"""LAB-REV2-L8 against the real engine (OM_LAB_SLOW=1: two capped fights today, about a second each).
 
 The cap trace of 2026-10-19 (docs/northstar/research/layer_dynamics/audits/attackmove_idle_cap_2026-10-19/, cf3.py): under GROUP
 attack-move orders (Setup.orders_per_unit=False) two fights end at the 12000-tick cap: the objective scene at start distance 2800,
@@ -10,6 +10,15 @@ their point, they went idle holding the attack-move with the enemy just outside 
 
 Red today: both fights are outcome "cap" at 12000 ticks. The mechanism assertion (the counts) ties the elimination to the re-engage
 and not to luck; no tick count, survivor count or count of re-engage events is pinned beyond "at least one".
+
+WHY "at least one" SURVIVES THE ENGINE FOLLOW-ON E1b (measured 2026-10-19 with a throwaway ~35-line reference of the trigger, in scratch
+worktrees only, nothing committed; E1b = origin/push/labrev2-e1b 59416a00, R-087-06 return-fire resume): on the E1b engine, with the
+trigger switched off, both group-order fights still end at the cap, identically to the lab tip without E1b (objective: cap, 12000
+ticks, survivors (1, 2); mirror swapped: cap, survivors (1, 1)); with the trigger on, both end by elimination (objective: side1 at
+tick 5328, reengage (0, 1); mirror: side1 at tick 4370, reengage (0, 1)), on the lab tip and on E1b alike. The cap is the group
+give-up pass (R-099-05), which E1b does not touch (E1b changes the return-fire redirect, R-087-06, which a group order never
+reaches here), so these two fights are still re-engage-only eliminations and the count assertion stays. A fight that E1b makes end
+without any re-engage would be a different scene, not these two. A fight takes about one second.
 """
 import dataclasses
 import os

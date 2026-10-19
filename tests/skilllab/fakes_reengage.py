@@ -3,6 +3,7 @@
 TimelineFakeEngine (order_log, clear_orders, can_see) plus:
   order_guard / order_group_move   logged in `calls` and in `order_log` as kinds "guard" (goal None) and "group_move"
   set_canvas / block_rect / add_cover   logged and ignored (a placed naive scene carries terrain)
+  ping / set_layer / set_emission   logged in `calls` only (never in `order_log`, never a destination): the non-order timeline steps
   unit_destination(w, u) -> (x, y) | None   the unit's scripted destination; None is idle (om_unit_get_destination returns 0)
   visible_enemies(w, side, enemy_ids) -> set   {e for e in enemy_ids if visible_fn(self, side, e)}; default: every enemy is visible
 
@@ -12,7 +13,8 @@ fight stays "idle" through every order (the lab-side role record, not the destin
 Visibility is a function of the fake's step_count, so a test can make an enemy appear at a chosen tick.
 
 `reengage_orders(side)` is the post-opening attack-move orders aimed at `side`'s units: [(tick, unit_ids, (x, y))], tick = engine
-steps taken when the order was issued. The opening orders and timeline steps at ("tick", 0) are tick 0 and never listed.
+steps taken when the order was issued. The opening orders and timeline steps at ("tick", 0) are tick 0 and never listed; an attack_move STEP at a later tick is listed
+like any other (a test that has one filters it out by its tick).
 """
 from fakes_timeline import TimelineFakeEngine
 
@@ -69,6 +71,15 @@ class ReengageFakeEngine(TimelineFakeEngine):
         if self.visible_fn is None:
             return set(enemy_ids)
         return {e for e in enemy_ids if self.visible_fn(self, side, e)}
+
+    def ping(self, w, caster, layer, x, y):
+        self.calls.append(("ping", w, caster, layer, x, y))
+
+    def set_layer(self, w, unit_ids, layer):
+        self.calls.append(("set_layer", w, list(unit_ids), layer))
+
+    def set_emission(self, w, unit_ids, on):
+        self.calls.append(("set_emission", w, list(unit_ids), on))
 
     def set_canvas(self, w, width, height):
         self.calls.append(("set_canvas", w, width, height))
