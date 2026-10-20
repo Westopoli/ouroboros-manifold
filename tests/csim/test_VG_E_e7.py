@@ -42,7 +42,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import (OMArchetype, OMEdge, OMFeature, OMTier, set_edge, set_faction, set_owner, set_region)
+from conftest import (OMArchetype, OMEdge, OMFeature, OMTier, load_lib, set_edge, set_faction, set_owner, set_region)
 from test_E16_S111_saving import _load, _save
 from test_net_section_hashes import N_SECTIONS, _secs
 from test_VG_E_e1h import ENEMY, PLAYER, bind as e1h_bind, scene as e1h_scene
@@ -103,6 +103,16 @@ def oracle_cut(roster, start_units):
 
 
 # ------------------------------------------------------------------------------------------------ world helpers
+
+@pytest.fixture(scope="module")
+def lib(lib):
+    """A private handle on the built library for this module: _bind() below retypes shared functions (om_terrain_slope_at
+    among them), which would break other modules' tests on the session `lib`. A second ctypes.CDLL of the same file has its
+    own function objects; the worlds are plain pointers and the library state is shared."""
+    # See also: test_E01_T3_mission_ground.py test_every_unit_spawns_... (TD-VG-E-34): the second site that binds e7_bind on a
+    # private load_lib() handle.
+    return load_lib()
+
 
 def _bind(lib):
     e1h_bind(lib)
