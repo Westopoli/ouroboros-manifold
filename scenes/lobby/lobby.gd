@@ -14,6 +14,7 @@ const DOCTRINES := ["balanced", "boom", "fortify", "press"]
 const TEAM_SIZES := [2, 4]
 const TEAM_SIZE_DEFAULT := 2
 const CHAT_LEFT_STATES := [2, 4, 8, 16]  # left, disconnected, kicked, banned
+const ERA_PACK_SOURCE := "res://scenes/era_library/era_pack_source.gd"
 
 var net_match: Node = null
 var left := false
@@ -36,6 +37,18 @@ var _doctrine_btn: Button
 var _team_btn: OptionButton
 var _team_size := TEAM_SIZE_DEFAULT
 var _team_raw := ""
+# R-143-01, R-143-03 (Architect gap rulings 2026-10-14, S-143): the common era set. _peer_eras holds the other members'
+# rows by member id (String); the host fills it from "eras" chat messages, a guest from the host's era_table key.
+var _owned_eras: Array = []
+var _installed_eras: Array = []
+var _owned_ready := false
+var _peer_eras := {}
+var _key_playable: Array = []
+var _has_key_playable := false
+var _playable_raw := ""
+var _table_raw := ""
+var _pub_playable := ""
+var _pub_table := ""
 
 
 class SteamBackend extends RefCounted:
@@ -141,7 +154,7 @@ func _build_ui() -> void:
 	box.add_child(title)
 	_era_line = Label.new()
 	_era_line.name = "EraLine"
-	_era_line.text = "Limited to the era set every player has."
+	_era_line.text = _era_line_text()
 	box.add_child(_era_line)
 	var team_row := HBoxContainer.new()
 	box.add_child(team_row)
@@ -202,6 +215,7 @@ func _refresh() -> void:
 	_doctrine_btn.text = "DOCTRINE: " + String(DOCTRINES[_doctrine_idx]).to_upper()
 	_start_btn.disabled = not _hosting
 	_refresh_team_size()
+	_refresh_eras()
 
 
 # Gap 5: only the host changes the team size; a guest reads the host's choice from lobby data "team_size" and refuses
@@ -251,6 +265,8 @@ func _on_lobby_created(result: int, lobby_id: int, be) -> void:
 	_status.text = "Lobby id %d (friends only). Invite friends or share the id." % lobby_id
 	_lobby_id_field.text = str(lobby_id)
 	_publish_team_size()
+	_pub_playable = ""
+	_pub_table = ""
 	_refresh()
 
 
@@ -259,6 +275,8 @@ func _on_lobby_joined(lobby_id: int, _perm, _locked, response: int, be) -> void:
 		_status.text = "Could not join the lobby (code %d)." % response
 		return
 	be.lobby_id = lobby_id
+	if not _hosting:
+		be.send_chat({"t": "eras", "ids": _owned().duplicate()})  # R-143-03, gap 2: one message on joining
 	_refresh()
 
 
@@ -306,6 +324,9 @@ func on_member_left(steam_id: int) -> void:
 
 func on_chat(from_steam_id: int, msg) -> void:
 	if not msg is Dictionary:
+		return
+	if msg.get("t", "") == "eras":
+		_on_eras_message(from_steam_id, msg)
 		return
 	var peer := _peer_of(from_steam_id)
 	if msg.get("t", "") == "start":
@@ -393,7 +414,8 @@ func _process(_delta: float) -> void:
 	if _backend != null and _backend.has_method("poll"):
 		_backend.poll()
 	if _backend != null and not _hosting and _backend.has_method("get_lobby_data") \
-			and _backend.get_lobby_data("team_size") != _team_raw:
+			and (_backend.get_lobby_data("team_size") != _team_raw or _backend.get_lobby_data("playable_eras") != _playable_raw \
+			or _backend.get_lobby_data("era_table") != _table_raw):
 		_refresh()
 	if _launched and net_match != null and net_match.active():
 		_launched = false
@@ -409,4 +431,144 @@ func leave() -> void:
 
 func qa_state() -> Dictionary:
 	return {"scene": "lobby", "members": _backend.members() if _backend != null else [], "max_members": MAX_MEMBERS,
-		"friends_only": true, "tick": -1, "team_sizes": TEAM_SIZES.duplicate(), "team_size": _team_size}
+		"friends_only": true, "tick": -1, "team_sizes": TEAM_SIZES.duplicate(), "team_size": _team_size,
+		"eras": _eras_view(), "playable_eras": _playable(), "owned_eras": _owned().duplicate(), "common_eras": _playable()}
+
+
+# --- the common era set (R-143-01 "only eras every peer owns", R-143-03 "the lobby says so"; gaps 1 to 3, 2026-10-14) ---
+
+# Gap 1: the installed packs (era_pack_source manifests(): era_order, test_only skipped) filtered to owned by
+# UIDataBus.is_era_accessible. Gap 2 seam: --net-local-eras <id,id> overrides the list (read like --net-local-id).
+func _owned() -> Array:
+	if _owned_ready:
+		return _owned_eras
+	_owned_ready = true
+	var bus := get_node_or_null("/root/UIDataBus")
+	var ids := []
+	for m in load(ERA_PACK_SOURCE).new().manifests():
+		ids.append(String(m["era_id"]))
+		if bus != null and bus.is_era_accessible(String(m["era_id"])):
+			_owned_eras.append(String(m["era_id"]))
+	_installed_eras = ids
+	var args := OS.get_cmdline_user_args()
+	var i := args.find("--net-local-eras")
+	if i != -1 and i + 1 < args.size():
+		var seam := []
+		for id in String(args[i + 1]).split(","):
+			var t := id.strip_edges()
+			if t != "" and not seam.has(t):
+				seam.append(t)
+		if not seam.is_empty():
+			_owned_eras = _sorted_eras(seam)
+	return _owned_eras
+
+
+# Gap 3: known ids in era_order, then unknown ids alphabetically (liberty 2026-10-14).
+func _sorted_eras(ids: Array) -> Array:
+	_owned()
+	var out := ids.duplicate()
+	var known := _installed_eras
+	out.sort_custom(func(a, b):
+		var ra := known.find(a)
+		var rb := known.find(b)
+		if ra >= 0 and rb >= 0:
+			return ra < rb
+		if ra >= 0 or rb >= 0:
+			return ra >= 0
+		return String(a) < String(b))
+	return out
+
+
+func _eras_view() -> Dictionary:
+	var out := {}
+	for k in _peer_eras:
+		out[k] = _peer_eras[k]
+	out[str(_local_steam)] = _owned().duplicate()
+	return out
+
+
+# The intersection over every row, local included (R-143-01); a guest takes the host's key once it arrives.
+func _playable() -> Array:
+	if not _hosting and _has_key_playable:
+		return _key_playable.duplicate()
+	var rows := _eras_view().values()
+	var out := []
+	for e in rows[0]:
+		var all := true
+		for r in rows:
+			all = all and r.has(e)
+		if all:
+			out.append(e)
+	return _sorted_eras(out)
+
+
+func _era_line_text() -> String:
+	var local := str(_local_steam)
+	var peers := []
+	for k in _eras_view():
+		if k != local:
+			for e in _eras_view()[k]:
+				if not peers.has(e):
+					peers.append(e)
+	return "Eras: you %s · peers %s · playable %s" % [_era_list(_owned()), _era_list(_sorted_eras(peers)), _era_list(_playable())]
+
+
+# liberty 2026-10-14: an empty list reads "none" everywhere on the line (gap 3 gives "none" for peers only).
+func _era_list(ids: Array) -> String:
+	return ", ".join(PackedStringArray(ids)) if not ids.is_empty() else "none"
+
+
+# Gap 2: the host's table is the chat messages, a guest's is the host's keys; the host publishes after every change.
+func _refresh_eras() -> void:
+	if _era_line == null:
+		return
+	if _hosting:
+		var present := {}
+		if _backend != null:
+			for m in _backend.members():
+				present[str(int(m))] = true
+		for k in _peer_eras.keys():
+			if not present.has(k):
+				_peer_eras.erase(k)
+		var table := var_to_str(_eras_view())
+		var playable := var_to_str(_playable())
+		# get(): the w4 FakeBackend has no lobby_id (it never created a lobby, so nothing is published)
+		var lid = _backend.get("lobby_id") if _backend != null else null
+		if lid != null and int(lid) != 0 and (table != _pub_table or playable != _pub_playable):
+			_pub_table = table
+			_pub_playable = playable
+			_backend.set_lobby_data("era_table", table)
+			_backend.set_lobby_data("playable_eras", playable)
+	elif _backend != null and _backend.has_method("get_lobby_data"):
+		_playable_raw = _backend.get_lobby_data("playable_eras")
+		_table_raw = _backend.get_lobby_data("era_table")
+		var pl = str_to_var(_playable_raw) if _playable_raw != "" else null
+		_has_key_playable = _valid_ids(pl, true)
+		_key_playable = pl if _has_key_playable else []
+		var tab = str_to_var(_table_raw) if _table_raw != "" else null
+		_peer_eras.clear()
+		if tab is Dictionary:
+			for k in tab:
+				if k is String and k != str(_local_steam) and _valid_ids(tab[k], false):
+					_peer_eras[k] = tab[k]
+	_era_line.text = _era_line_text()
+
+
+# Malformed (gap 2): not an Array, an item not a String, or (unless the intersection may be empty) an empty Array.
+func _valid_ids(ids, may_be_empty: bool) -> bool:
+	if not ids is Array or (ids.is_empty() and not may_be_empty):
+		return false
+	for e in ids:
+		if not e is String:
+			return false
+	return true
+
+
+func _on_eras_message(from_steam_id: int, msg: Dictionary) -> void:
+	if not _hosting or _backend == null or from_steam_id == _local_steam or not _backend.members().has(from_steam_id):
+		return
+	var ids = msg.get("ids", null)
+	if not _valid_ids(ids, false):
+		return
+	_peer_eras[str(from_steam_id)] = _sorted_eras(ids)
+	_refresh()
