@@ -341,7 +341,7 @@ _ANCHORS = {
     "s3_bombard_bastion_level": Anchors("defender", "behind_cover", "blob"),
     "s3_interceptor_bombard": Anchors("defender", "behind_cover", "blob"),
     "s3_interceptor_raider": Anchors("defender", "behind_cover", "blob"),
-    "s3_bombard_bastion": Anchors("defender", "behind_cover", "blob"),
+    "s3_bombard_bastion": Anchors("attacker", "exit_line", "blob"),
     "s2_warden_line": Anchors("defender", "exit_screen", "blob"),
     "s3_over_the_choke": Anchors("defender", "choke_mouth", "blob"),
     "s3_dark_striker": Anchors("attacker", "exit_line", "blob"),
