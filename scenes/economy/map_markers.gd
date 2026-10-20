@@ -22,6 +22,7 @@ var _local := 0
 var _scale := 1.0
 var _camera := Vector2.ZERO
 var _rows: Array = []
+var _home: Dictionary = {}
 
 
 func _ready() -> void:
@@ -55,6 +56,9 @@ func markers() -> Array:
 
 
 func _home_base(frame: Dictionary) -> Dictionary:
+	# Remembered from the first frame with own units (per local faction) so the marker does not follow the army; pinned by tests/test_vg_e_e1w.gd [HOME].
+	if not _home.is_empty() and int(_home["owner"]) == _local:
+		return _home
 	var sum := Vector2.ZERO
 	var count := 0
 	for u in frame.get("units", []):
@@ -75,7 +79,8 @@ func _home_base(frame: Dictionary) -> Dictionary:
 				spawn = np
 	if best == INF:
 		return {}
-	return {"kind": "home_base", "x": spawn.x, "y": spawn.y, "owner": _local, "state": STATE_HELD}
+	_home = {"kind": "home_base", "x": spawn.x, "y": spawn.y, "owner": _local, "state": STATE_HELD}
+	return _home
 
 
 func _colour(owner: int) -> Color:
