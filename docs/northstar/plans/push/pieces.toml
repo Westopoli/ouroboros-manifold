@@ -1872,6 +1872,18 @@ status = { state = "attached", attach_sha = "dbe480a" }  # landed dbe480a
 tests_pending = true
 size_estimate = "F-SKEL-B: --net-local wiring in lobby.gd and the two-process start_pair_match play; shots to story_reviews/F.md for Westley; FU-F-net-qa-key"
 
+[[piece]]
+id = "VG-F-S140-CLICK"
+manager = "M0"
+wave = 13
+owns = ["tests/qa/desktop/plays/F/S-140.py", "tests/qa/desktop/plays/F/_play.py", "scripts/specfactory/lane_plays_known_red.txt"]  # TD-VG-F-s140-click (Architect 2026-10-20): rewrites the play after VG-A18; VG-F-SKEL-B keeps its listing (attached)
+owns_glob = []
+acceptance = ["tests/qa/desktop/plays/F/S-140.py"]
+depends_on = ["VG-F-SKEL-B", "VG-F-S143", "VG-F-S241", "VG-A-routeline"]  # VG-A-routeline (queued) also owns S-140.py: ordering edge added by the clerk on owner_lint
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "F-S140-CLICK: S-140 play selects every own unit and right-clicks the first clear corridor; DRAFT-s140-click-offset 360, DRAFT-s140-box-pad 12"
+
 # Lane F part 1b (Architect 2026-10-12): the first tick of a networked match. Ledger FINDING-net-first-tick (arrives with the F-SKEL landing).
 [[piece]]
 id = "VG-F-NETTICK"
