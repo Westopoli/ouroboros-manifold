@@ -230,17 +230,22 @@ def assert_did_not_fire(case, atype, offset):
 
 # ---- the bible rows ----
 
+# Strict xfail until VG-T-REACH-WIRE lands (FINDING-reach-not-wired): the wiring turns these into XPASS(strict)
+# failures, and the wiring piece removes the mark. The failing line above is the evidence.
+XFAIL = pytest.mark.xfail(strict=True, reason="VG-T-REACH-WIRE: R-164-01 reach not wired, FINDING-reach-not-wired")
 FIRES = [
-    ("raider_up_1", RAIDER, +1), ("raider_down_1", RAIDER, -1),
-    ("interceptor_up_2", INTERCEPTOR, +2), ("interceptor_down_1", INTERCEPTOR, -1),
-    ("bombard_down_2", BOMBARD, -2),
+    pytest.param("raider_up_1", RAIDER, +1, marks=XFAIL, id="raider_up_1"),
+    pytest.param("raider_down_1", RAIDER, -1, marks=XFAIL, id="raider_down_1"),
+    pytest.param("interceptor_up_2", INTERCEPTOR, +2, marks=XFAIL, id="interceptor_up_2"),
+    pytest.param("interceptor_down_1", INTERCEPTOR, -1, marks=XFAIL, id="interceptor_down_1"),
+    pytest.param("bombard_down_2", BOMBARD, -2, marks=XFAIL, id="bombard_down_2"),
 ]
 DOES_NOT = [
     ("raider_up_2", RAIDER, +2), ("interceptor_down_2", INTERCEPTOR, -2), ("bombard_up_1", BOMBARD, +1),
 ]
 
 
-@pytest.mark.parametrize("case,atype,offset", FIRES, ids=[c[0] for c in FIRES])
+@pytest.mark.parametrize("case,atype,offset", FIRES)
 def test_R_164_01_the_type_fires_at_the_offsets_its_reach_names(case, atype, offset):
     """R-164-01 (PIPE): the type fires at an enemy `offset` layers from it, the attacker's layer differing from the
     target's. RED today: reach (0, 0), the enemy loses no hp."""

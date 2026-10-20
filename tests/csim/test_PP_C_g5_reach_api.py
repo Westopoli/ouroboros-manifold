@@ -29,6 +29,12 @@ BIBLE_REACH = {
     BOMBARD: (0, 0, 2), BASTION: (0, 0, 2),
 }
 FEATURES = [1, 2, 3, 4, 5, 6, 7]
+# Strict xfail until VG-T-REACH-WIRE lands (FINDING-reach-not-wired): the four types the table gives a non-zero reach.
+# The wiring turns them into XPASS(strict) failures and removes the mark. Vanguard and Warden (0, 0) are green today.
+XFAIL = pytest.mark.xfail(strict=True, reason="VG-T-REACH-WIRE: R-164-01 reach not wired, FINDING-reach-not-wired")
+STARTED_WORLD_TYPES = [
+    pytest.param(t, marks=XFAIL) if t in (RAIDER, INTERCEPTOR, BOMBARD, BASTION) else t for t in BUILTIN_COMBAT
+]
 
 
 @pytest.mark.parametrize("utype", BUILTIN_COMBAT)
@@ -76,7 +82,7 @@ def _started_world(lib, world_factory):
     return w
 
 
-@pytest.mark.parametrize("utype", BUILTIN_COMBAT)
+@pytest.mark.parametrize("utype", STARTED_WORLD_TYPES)
 def test_R_164_01_a_world_after_the_games_own_mission_start_reads_the_bible_reach_table(lib, world_factory, utype):
     """R-164-01: 'Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own
     layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up
