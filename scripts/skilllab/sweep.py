@@ -20,7 +20,7 @@ from scripts.skilllab.contract import Group
 
 FAMILY_ORDER = ("vision", "range_up", "damage_up", "emitting", "arc", "cone", "sign_flip")
 SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
-CONTROL_MAX_TICKS = 600     # DRAFT (Westley's number): controls that need no result stop here; a 12000-tick no-shot fight is wasted time
+CONTROL_MAX_TICKS = 600     # DRAFT-control-max-ticks (Westley's number): controls that need no result stop here; a 12000-tick no-shot fight is wasted time
 LAYER2_RATIO = 0.4          # spec: vision at two layers is 0.4 of the one-layer value
 DAMAGE_CONTROL_PLAY = "s3_types_by_reach"   # decisions 22: damage-up's positive control is this one designated fight
 SMOKE_LAYOUTS = ("81", "78", "192")         # layout indices of the run-1 draw (depth.lhs_draw(200, 0))
@@ -35,7 +35,7 @@ BASES = {
     "OM_TP_RANGE_UP_1": 1.0, "OM_TP_RANGE_UP_2": 1.0, "OM_TP_RANGE_DOWN_1": 1.0, "OM_TP_RANGE_DOWN_2": 1.0,
     "OM_TP_DAMAGE_UP_1": 1.0, "OM_TP_DAMAGE_UP_2": 1.0,
     "OM_TP_EMIT_SIGHT_MULT": 2.0, "OM_TP_EMIT_SEEN_MULT": 3.0,      # Westley's start (2026-10-13)
-    "OM_TP_FIRING_ARC_DEG": 360.0, "cone_range": 300.0, "cone_half_angle": 45.0,      # DRAFT bases
+    "OM_TP_FIRING_ARC_DEG": 30.0, "cone_range": 300.0, "cone_half_angle": 45.0,      # DRAFT-firing-arc-deg: Westley's ruling 30 deg (decision 46); DRAFT cone bases
 }
 REFINABLE = ("vision", "range_up", "damage_up", "arc")
 Capabilities = collections.namedtuple("Capabilities", "arc cone")
@@ -117,7 +117,7 @@ def grid(family):
     if family == "emitting":
         return [_emitting(s, t, v) for v in (0.125, 0.25) for s, t in ((1.0, 1.5), (2.0, 3.0), (4.0, 6.0))]
     if family == "arc":
-        return [_arc(v) for v in (360, 270, 180, 120, 90)]
+        return [_arc(v) for v in (7.5, 15, 30, 60, 120)]
     if family == "cone":
         return [_cone(r, h) for r in (150, 300, 600) for h in (22.5, 45, 90)]
     if family == "sign_flip":
@@ -377,11 +377,13 @@ def _refusal(builds_by_role):
     return None
 
 
-def _usable_baselines(by_role, refused, family, play, layout):
+def _usable_baselines(by_role, refused, family, play, layout, shifted=None):
     """(roles, top): the baseline roles whose build fits the cell, and the last headcount at which every one of them placed (decision
     26): ENEMY_TO when none ran out, None when one cannot be placed at ENEMY_FROM. A baseline refused no_reach or unroutable at the
-    smallest or largest headcount, or that runs out of room, is listed with its role and left out; the play still runs."""
-    roles, top = [], ENEMY_TO
+    smallest or largest headcount, or that runs out of room, is listed with its role and left out; the play still runs. `shifted`, when
+    given, gets one {family, play, layout, role, shift_wu} per baseline that runs and moved a post: shift_wu is the largest
+    labels['placement_shift'] over the headcounts it runs at (decision 45 item 1, decision 47)."""
+    roles, top, shifts = [], ENEMY_TO, {}
     for r in by_role:
         if r in ("play", "reach_zero"):
             continue
@@ -394,11 +396,17 @@ def _usable_baselines(by_role, refused, family, play, layout):
         for heads in range(ENEMY_FROM, ENEMY_TO + 1):
             build(heads, False)
             words[heads] = getattr(build, "labels", {}).get("prefight")
+            shifts[(r, heads)] = getattr(build, "labels", {}).get("placement_shift", 0.0)
         short = [heads for heads, word in words.items() if word == "no_fit"]
         if short:
             refused.append({"family": family, "play": play, "layout": layout, "role": r, "reason": "no_fit"})
             top = None if top is None or min(short) <= ENEMY_FROM else min(top, min(short) - 1)
         roles.append(r)
+    if shifted is not None and top is not None:
+        for r in roles:
+            wu = max(shifts[(r, heads)] for heads in range(ENEMY_FROM, top + 1))
+            if wu > 0.0:
+                shifted.append({"family": family, "play": play, "layout": layout, "role": r, "shift_wu": wu})
     return tuple(roles), top
 
 
@@ -453,7 +461,7 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
     if caps is None:
         caps = detect() if family in ("arc", "cone") else Capabilities(True, True)
     entry = {"family": family, "skipped": skip_reason(family, caps), "csv": None, "rows": 0, "refined": [], "refined_vs": {},
-             "refused": [], "baseline_no_fit": [], "controls": {}}
+             "refused": [], "baseline_no_fit": [], "controls": {}, "shifted_posts": []}
     if entry["skipped"]:
         return entry
     rows, refined, refined_vs, verdicts = [], set(), {}, {}
@@ -479,7 +487,7 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
             if bad:
                 entry["refused"].append({"family": family, "play": play, "layout": layout, "role": bad[0], "reason": bad[1]})
                 continue
-            roles, top = _usable_baselines(by_role, entry["refused"], family, play, layout)
+            roles, top = _usable_baselines(by_role, entry["refused"], family, play, layout, entry["shifted_posts"])
             if top is None or top < ENEMY_TO:
                 entry["baseline_no_fit"].append({"family": family, "play": play, "layout": layout, "last_headcount": top})
             if top is None:
@@ -586,7 +594,7 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
     out.mkdir(parents=True, exist_ok=True)
 
     def work(**more):
-        rows, refused, words, cuts = [], [], collections.Counter(), []
+        rows, refused, words, cuts, shifted = [], [], collections.Counter(), [], []
         point = next(p for p in grid("vision") if p.value == 0.5)
         control_set = control_builds or default_control_builds()
         for layout, features in layouts.items():
@@ -599,7 +607,9 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
                     words[bad[1]] += 1
                     continue
                 listed = []
-                roles, top = _usable_baselines(by_role, listed, "vision", play, layout)
+                moved = []
+                roles, top = _usable_baselines(by_role, listed, "vision", play, layout, moved)
+                shifted += [{k: v for k, v in m.items() if k != "family"} for m in moved]
                 refused += [{k: v for k, v in r.items() if k != "family"} for r in listed]
                 words.update(r["reason"] for r in listed)
                 if top is None or top < ENEMY_TO:
@@ -619,8 +629,8 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         rows_mod.write_rows(rows, out / "smoke.csv")
         summary = {"rows_sha256": hashlib.sha256((out / "smoke.csv").read_bytes()).hexdigest(), "rows": len(rows),
                    "outcomes": dict(sorted(collections.Counter(r["outcome"] for r in rows).items())),
-                   "prefight": dict(sorted(words.items())), "refused": refused, "baseline_no_fit": cuts, "defects": _defects(rows),
-                   "parity": (parity_fn or _default_parity)() if caps.arc else "skipped: E0 absent"}
+                   "prefight": dict(sorted(words.items())), "refused": refused, "baseline_no_fit": cuts, "shifted_posts": shifted,
+                   "defects": _defects(rows), "parity": (parity_fn or _default_parity)() if caps.arc else "skipped: E0 absent"}
         (out / "smoke_summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
         return summary
 
