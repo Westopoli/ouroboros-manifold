@@ -44,9 +44,23 @@ if [[ -z "${OM_SAVE_DIR:-}" ]]; then
     export OM_SAVE_DIR
     OM_SAVE_DIR_CREATED="$OM_SAVE_DIR"
 fi
+# FINDING-ambient-user-dir: same pattern for the user dir (project.godot's
+# custom_user_dir_name="data" puts user:// at $XDG_DATA_HOME/data), so a test run
+# never reads or writes the machine's ~/.local/share/data. A non-empty
+# XDG_DATA_HOME from the caller (the merge gate's) wins and is never removed.
+# See also: the OM_SAVE_DIR block above, scripts/specfactory/merge_gate.sh
+XDG_DATA_HOME_CREATED=""
+if [[ -z "${XDG_DATA_HOME:-}" ]]; then
+    XDG_DATA_HOME="$(mktemp -d)"
+    export XDG_DATA_HOME
+    XDG_DATA_HOME_CREATED="$XDG_DATA_HOME"
+fi
 cleanup() {
     if [[ -n "$OM_SAVE_DIR_CREATED" ]]; then
         rm -rf "$OM_SAVE_DIR_CREATED"
+    fi
+    if [[ -n "$XDG_DATA_HOME_CREATED" ]]; then
+        rm -rf "$XDG_DATA_HOME_CREATED"
     fi
 }
 trap cleanup EXIT
