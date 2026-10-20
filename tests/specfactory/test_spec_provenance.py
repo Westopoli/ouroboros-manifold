@@ -45,7 +45,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 SCRIPT = REPO / "scripts" / "specfactory" / "spec_provenance.py"
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "spec_rev10.md"
 
-FINDING_RE = re.compile(r":(\d+): \((\d)\)")
+FINDING_RE = re.compile(r":(\d+): \((\d+)\)")
 TAG_RE = re.compile(r"\[W Q-|\[W \d{4}-\d\d-\d\d|\[B R-|\[P |\[DRAFT-")
 
 EPIC_TEXT = (
