@@ -92,7 +92,7 @@ class Setup:
     states: bool = False      # True records FightResult.states
     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
     point: Optional[tuple] = None   # (x, y) the shared attack-move point; None: each group aims at the first anchor of the other side
-    orders_per_unit: bool = True    # one order_attack_move call per unit at the opening; later timeline steps stay group-level (a flip of the default is conditional, decision 43 item 1)
+    orders_per_unit: bool = False   # default: one group attack-move (decisions 40 and 43; E1 and E1b are in the landing); True is the opt-in, one order_attack_move call per unit at the opening, timeline steps stay group-level
     firing_arc_deg: float = 360.0   # set on the world through OM_TP_FIRING_ARC_DEG when below 360 and the library has the parameter
     cone: dict = field(default_factory=dict)   # type name -> (range, half-angle degrees, share), applied through Engine.set_cone
 

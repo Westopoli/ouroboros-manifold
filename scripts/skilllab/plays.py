@@ -1,5 +1,5 @@
 """Plays: builders of the two-sided Setups the scans fight.
-A meeting (ruling 6): both sides are attack-moved to Setup.point, the midpoint of the two anchors, one order per unit."""
+A meeting (ruling 6): both sides are attack-moved to Setup.point, the midpoint of the two anchors, one order per group (orders_per_unit False; True is the per-unit opt-in)."""
 import math
 
 from scripts.skilllab.contract import Group, Setup
