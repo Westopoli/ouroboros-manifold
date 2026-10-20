@@ -14,11 +14,9 @@ What "covered" means here (the test writer's reading of R5, flagged to the Archi
     and a group of the other side whose layer is the shooter's layer plus the offset.
   - LAYER n in 0..4 (OM_LAYER_COUNT 5): covered when any group of a swept Setup stands on it.
 
-THE STRICT EXPECTED FAILURE. `test_t1_*_real_tables` is `xfail(strict=True)` as the plan says (decision 47 of
-docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md is the plan's pointer; the plan file is the authority): a documented red
-carrying FINDING-lab-d1 and FINDING-lab-d2, not a skip. LAB-REV3-B removes the marker and the test passes plain; if it passes while
-the marker is still on, strict xfail fails the run, which is the signal to remove it. `raises=AssertionError` keeps a missing module
-or a typo from masquerading as the documented red.
+THE STRICT EXPECTED FAILURE (retired). `test_t1_*_real_tables` was `xfail(strict=True)` in piece A, carrying FINDING-lab-d1 and
+FINDING-lab-d2. LAB-REV3-B added the mixes M5 to M9 and the all-layer plays; the ruler removed the marker (ledger TD-LAB-REV3-B-a-tests)
+and the test passes plain.
 
 BUILDER CONTRACT (the only names pinned; everything else in coverage.py is the builder's):
   scripts/skilllab/coverage.py (NEW)
@@ -129,14 +127,13 @@ def test_positive_control_the_sweep_today_fixture_is_named_item_by_item():
                                      + [("Bombard", d) for d in (-2, -1, 0)] + [("Bastion", d) for d in (-2, -1, 0)])
 
 
-def test_the_real_swept_plays_are_the_layer_0_and_1_vanguard_raider_interceptor_set_today():
-    """D1 and D2 premise, green on the lab tip: every swept play stands on layers 0 and 1 and the only types are those three (the
-    Interceptor with no +2 pairing), so the real tables are what the T1 failure below reports.
-    TRIPWIRE: this test goes red when LAB-REV3-B adds the all-layer plays and the mixes M5 to M9 to the swept set; it is retired by
-    piece B under a TD row (it states a fact about the lab as it is today, not a requirement)."""
+def test_the_real_swept_plays_now_stand_on_layers_0_to_4():
+    """D1 and D2 premise as of LAB-REV3-B (ledger TD-LAB-REV3-B-a-tests): the swept set holds the all-layer plays and the mixes M5 to M9, so
+    it stands on every layer 0..4 and fields all six types. Replaces the piece A tripwire that pinned layers 0 and 1 and three types, whose
+    docstring said piece B retires it; the positive controls above and the T1 test below are unchanged."""
     setups = swept_setups()
-    assert {g.layer for s in setups for g in s.groups} <= {0, 1}
-    assert {g.unit for s in setups for g in s.groups} <= {"Vanguard", "Raider", "Interceptor"}
+    assert {g.layer for s in setups for g in s.groups} == {0, 1, 2, 3, 4}
+    assert {g.unit for s in setups for g in s.groups} == set(TYPES)
 
 
 # ---- the module (builder contract) against the fixtures --------------------------------------------------------------------------
@@ -193,16 +190,11 @@ def test_t1_module_uses_the_reach_it_is_given():
     assert not any(p[0] == "Raider" and p[1] != 0 for p in coverage.uncovered(today_fixture(), reach=flat)["pairings"])
 
 
-# ---- T1 itself: the strict expected failure --------------------------------------------------------------------------------------
+# ---- T1 itself (piece A's strict xfail marker was removed by the LAB-REV3-B ruler: coverage is complete) ----
 
-@pytest.mark.xfail(strict=True, raises=AssertionError,
-                   reason="FINDING-lab-d1 and FINDING-lab-d2: the swept plays fight on layers 0 and 1 only (layers 2, 3, 4 uncovered), "
-                          "no Siege type fights (five Siege category cells uncovered), the Warden is in no mix and no Interceptor "
-                          "+2, Bombard -2, Bastion -2 or one-layer-below pairing is played; LAB-REV3-B adds the mixes M5 to M9 and "
-                          "the all-layer plays, and removes this marker")
 def test_t1_every_category_cell_reach_pairing_and_layer_is_covered_by_the_real_tables():
-    """T1 (R5, D1, D2, D10): the real swept plays leave nothing uncovered. The oracle line is the failing line today; the second
-    assertion holds the module to the same answer once it exists."""
+    """T1 (R5, D1, D2, D10): the real swept plays leave nothing uncovered. The first assertion is the oracle's answer; the second
+    holds the module to the same answer."""
     left = oracle(swept_setups())
     assert left == {"cells": [], "pairings": [], "layers": []}, "uncovered: %s" % left
     from scripts.skilllab import coverage

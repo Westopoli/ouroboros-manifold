@@ -1244,7 +1244,9 @@ def test_l5_artifact_cone_grid_section_is_the_charts_grid_or_says_there_is_no_co
 
 FIX_DRAFTS = ("DRAFT-coarse-step", "DRAFT-control-max-ticks", "DRAFT-probe-count-bound", "DRAFT-ground-geometry", "DRAFT-reengage-moved-wu")
 # Decision 45 item 5 (names) and decision 47 item 3 (they join the artifact header DRAFT list): always listed, once each (TD-LAB-REV2-FIX5-header-names).
-SCENE_MIX_DRAFTS = ("DRAFT-behind-cover", "DRAFT-ambush-behind", "DRAFT-mix-M1", "DRAFT-mix-M2", "DRAFT-mix-M3", "DRAFT-mix-M4", "DRAFT-mix-M3b")
+SCENE_MIX_DRAFTS = ("DRAFT-behind-cover", "DRAFT-ambush-behind", "DRAFT-mix-M1", "DRAFT-mix-M2", "DRAFT-mix-M3", "DRAFT-mix-M4", "DRAFT-mix-M3b",
+                     # LAB-REV3-B: the rows M5 to M9 join the header (report.DRAFT_TEXT; ledger TD-LAB-REV3-B-report)
+                     "DRAFT-mix-M5", "DRAFT-mix-M6", "DRAFT-mix-M7", "DRAFT-mix-M8", "DRAFT-mix-M9")
 
 
 def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
@@ -1268,9 +1270,9 @@ def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
 
 
 def test_l5_artifact_header_lists_the_scene_and_mix_draft_names_once_and_no_diagram_legend_carries_them(tmp_path):
-    """Decision 45 item 5, decision 47 item 3: each of the seven names is exactly one header <li data-draft>, in the page with rows
+    """Decision 45 item 5, decision 47 item 3: each of the twelve names is exactly one header <li data-draft>, in the page with rows
     and in the page without; and none is a data-draft element inside any diagram (the legend lists the draft numbers a diagram's own
-    arrows touch, these seven touch none)."""
+    arrows touch, these twelve touch none)."""
     for sub, kw in (("rows", {}), ("norows", {"rows": []})):
         root = _tree(_page(tmp_path / sub, **kw)[2])
         names = [li.attrs["data-draft"] for li in _sec(root, "drafts").find("li") if "data-draft" in li.attrs]

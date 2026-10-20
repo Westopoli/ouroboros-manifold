@@ -116,7 +116,12 @@ def test_vision_control_play_units_are_all_raiders_with_reach_one_up_and_one_dow
             assert tuple(entry.get("reach", plays_space._REACH.get(base))) == (1, 1), (layout, g.side, g.unit, entry)
 
 
-@pytest.mark.parametrize("play", sweep.PLAYS_BY_FAMILY["vision"])
+# The two mixed same-layer plays this control was written for. LAB-REV3-B changed the members of PLAYS_BY_FAMILY["vision"] (mix plays on layers
+# 2 to 4 joined; they are not mixed same-layer plays), so the list is named here (ledger TD-LAB-REV3-B-a-tests).
+MIXED_SAME_LAYER_PLAYS = ("s3_layer_above", "s3_types_by_reach")
+
+
+@pytest.mark.parametrize("play", MIXED_SAME_LAYER_PLAYS)
 def test_positive_control_the_structural_check_flags_the_mixed_sweep_plays(play):
     """Positive control of the two structural tests above: the pair counter finds same-layer pairs in the real mixed sweep plays
     (side 1 all on layer 0 and 8 side-0 Vanguards on layer 0), which is exactly why the control cannot run on them."""

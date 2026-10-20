@@ -182,9 +182,9 @@ def test_control_a_label_named_like_a_result_column_is_refused():
 
 
 def test_every_registered_space_play_has_a_draft_registry_entry():
-    """Each plays_space play (the 14 of rev 2 and the vision control fixture s3_vision_control) points at a registered skills entry with status draft; S3 and S5 have no counter."""
+    """Each plays_space play (the 14 of rev 2, the vision control fixture s3_vision_control and the six of LAB-REV3-B) points at a registered skills entry with status draft; S3 and S5 have no counter."""
     from scripts.skilllab import plays_space
-    assert len(plays_space.PLAYS) == 15
+    assert len(plays_space.PLAYS) == 21
     for name, p in plays_space.PLAYS.items():
         role = "counter" if name in ("s2_mass_one_end", "s4_do_not_chase", "s1_outrange") else "skilled"
         assert skills.get(p.skill, role).status == DRAFT, name

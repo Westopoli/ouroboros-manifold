@@ -409,7 +409,10 @@ def test_every_play_declares_anchors(play):
 # Re-recorded for LAB-VISION-CONTROL (ledger TD-LAB-VISION-CONTROL-registry): the registered control fixture s3_vision_control is enumerated.
 # Re-recorded for the merge of the two (ledger TD-LAB-REV3-A-vc-merge): the combined tree differs from the vision-control tree only in s3_dark_striker
 # and from the piece A tree only by the added s3_vision_control entry (per-play setup hashes compared).
-PLAYS_SPACE_HASH = "c9cfcc697cb0ef92232c1e4956186c457b54f9903e84a61490215364d4af1ee3"   # merge of REV3-A 26e3b2db and LAB-VISION-CONTROL 07b7aad4
+# Re-recorded for LAB-REV3-B (ledger TD-LAB-REV3-B-registry): per-play setup hashes of the piece A tree (fb0874cc, 15 plays) against this tree: the 15
+# are byte-identical and the six plays B added (s3_raider_bombard, s3_interceptor_bombard, s3_interceptor_raider, s3_bombard_bastion,
+# s3_bombard_bastion_level, s2_warden_line) are the only new entries.
+PLAYS_SPACE_HASH = "575b3f847747a6e7026e4fa978843310175f6d80b44262f42fa41edf65e581ec"   # REV3-A fb0874cc plus the six REV3-B plays
 
 
 def test_registered_space_plays_keep_their_setups():

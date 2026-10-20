@@ -20,11 +20,16 @@ from scripts.skilllab import plays_space, scenes, skills, timeline  # noqa: E402
 from scripts.skilllab.contract import Block, Group, Setup, Terrain  # noqa: E402
 
 SKILLED = ("s1_hold_choke", "s2_concave", "s2_spread_line", "s2_screen", "s3_layer_above", "s3_types_by_reach",
-           "s3_over_the_choke", "s3_dark_striker", "s3_ping_then_commit", "s4_bait", "s5_vulnerable_away")
+           "s3_over_the_choke", "s3_dark_striker", "s3_ping_then_commit", "s4_bait", "s5_vulnerable_away",
+           "s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider", "s3_bombard_bastion", "s3_bombard_bastion_level",
+           "s2_warden_line")      # the last six: LAB-REV3-B (mixes M5 to M9)
 COUNTERS = ("s2_mass_one_end", "s4_do_not_chase", "s1_outrange")
 CONTROL_FIXTURES = ("s3_vision_control",)     # LAB-VISION-CONTROL: registered, but the vision positive control, not an ordinary sweep play
 NAMES = SKILLED + COUNTERS + CONTROL_FIXTURES
-S3 = tuple(n for n in NAMES if n.startswith("s3_"))
+LEVEL_CONTROL = "s3_bombard_bastion_level"     # LAB-REV3-B: M8 with every unit on the enemy's layer (fire level); it stands on no other layer by design
+S3 = tuple(n for n in NAMES if n.startswith("s3_") and n != LEVEL_CONTROL)
+# LAB-REV3-B layer-stack plays: placed by the layers in their words (builder: numbers {}), so the named-number rule does not apply to them
+LAYER_STACKS = ("s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider", "s3_bombard_bastion", LEVEL_CONTROL)
 STATUS = "unconfirmed draft, not measured"
 UNITS = 16
 TICKS = 50
@@ -33,13 +38,19 @@ VARIANT_NAMES = ("_HIGH", "_TOUGH", "_LONG", "_FRAIL", "_OUT")      # the retire
 RETIRED_TYPES = ("VanguardTough", "VanguardLong", "VanguardHigh", "VanguardFrail", "VanguardOut")
 
 # the reach table (batches.REACH_TABLE): (layers up, layers down) per roster type; Bombard and Bastion fire down two, Raider both ways one
-ROSTER_REACH = {"Vanguard": (0, 0), "Raider": (1, 1), "Interceptor": (2, 1), "Bombard": (0, 2), "Bastion": (0, 2)}
+ROSTER_REACH = {"Vanguard": (0, 0), "Raider": (1, 1), "Interceptor": (2, 1), "Warden": (0, 0), "Bombard": (0, 2), "Bastion": (0, 2)}
 V, R, I, B, A = "Vanguard", "Raider", "Interceptor", "Bombard", "Bastion"
+W = "Warden"
 M0 = {V: 16}
 M1 = {V: 8, R: 8}
 M2 = {V: 8, I: 8}
 M3 = {V: 8, B: 8}
 M4 = {V: 8, A: 8}
+M5 = {R: 8, B: 8}                    # LAB-REV3-B mixes M5 to M9 (plays_space.MIXES)
+M6 = {I: 8, B: 8}
+M7 = {R: 8, I: 8}
+M8 = {B: 8, A: 8}
+M9 = {V: 12, W: 4}
 M3B = {V: 7, R: 1, B: 8}             # s3_over_the_choke (Architect ruling 2026-10-14): M3 with one Vanguard swapped for the Raider spotter, BOTH sides
 # s3_over_the_choke scaled enemy side at 8 and 48 (largest-remainder rounding: 7, 1, 8 over 16 give 3.5, 0.5, 4 at 8 and exactly 21, 3, 24 at 48)
 OVER_THE_CHOKE_SCALED = {8: {V: 3, R: 1, B: 4}, 48: {V: 21, R: 3, B: 24}}
@@ -47,7 +58,9 @@ OVER_THE_CHOKE_SCALED = {8: {V: 3, R: 1, B: 4}, 48: {V: 21, R: 3, B: 24}}
 # Plain M3 (8 Vanguard + 8 Bombard) stays for s2_screen; s3_over_the_choke is M3b.
 PLAY_MIX = {"s1_hold_choke": M0, "s2_concave": M0, "s2_spread_line": M0, "s2_mass_one_end": M0, "s4_bait": M0, "s4_do_not_chase": M0,
             "s2_screen": M3, "s3_over_the_choke": M3B, "s3_layer_above": M1, "s3_types_by_reach": M2, "s3_dark_striker": M1, "s3_ping_then_commit": M1,
-            "s5_vulnerable_away": M1, "s1_outrange": M4}
+            "s5_vulnerable_away": M1, "s1_outrange": M4,
+            "s3_raider_bombard": M5, "s3_interceptor_bombard": M6, "s3_interceptor_raider": M7, "s3_bombard_bastion": M8,
+            "s3_bombard_bastion_level": M8, "s2_warden_line": M9}
 
 
 # ---------------------------------------------------------------- the checks (helpers, each with a control below)
@@ -209,7 +222,7 @@ def test_play_has_words_skill_status_and_a_named_number(name):
     assert isinstance(p.words, str) and p.words.strip()
     assert p.skill in ("S1", "S2", "S3", "S4", "S5") and name.startswith(p.skill.lower() + "_")
     assert p.status.startswith(STATUS)
-    assert isinstance(p.numbers, dict) and len(p.numbers) >= 1
+    assert isinstance(p.numbers, dict) and (len(p.numbers) >= 1 or name in LAYER_STACKS)
     assert all(isinstance(k, str) and k and isinstance(v, (int, float)) for k, v in p.numbers.items())
     assert isinstance(p.timeline, tuple)
 
@@ -255,7 +268,7 @@ def test_odd_headcounts_keep_the_mix_within_one_unit(name):
 
 @pytest.mark.parametrize("name", sorted(PLAY_MIX))
 def test_the_play_uses_its_roster_mix(name):
-    """Spec roster mixes M0 to M4 (16 units, half each of the two types), by (type, reach)."""
+    """Spec roster mixes M0 to M4 and LAB-REV3-B M5 to M9 (16 units; M9 is 12 Vanguards and 4 Wardens), by (type, reach)."""
     want = collections.Counter({(t, ROSTER_REACH[t]): n for t, n in PLAY_MIX[name].items()})
     assert mix(plays_space.PLAYS[name].setup_fn(), 0) == want
 
@@ -294,6 +307,16 @@ def test_no_play_sets_a_vision_factor(name):
 @pytest.mark.parametrize("heads", HEADS)
 def test_every_s3_play_puts_a_reach_capable_type_on_another_layer(name, heads):
     assert reach_on_another_layer(plays_space.scan_build(name)(None, heads, False)), name
+
+
+def test_the_level_control_stands_on_the_enemys_layer():
+    """Control for the S3 exclusion above: the level control has no group on another layer than the enemy's; the other four layer stacks have."""
+    for heads in HEADS:
+        level = plays_space.scan_build(LEVEL_CONTROL)(None, heads, False)
+        assert {g.layer for g in level.groups} == {4}
+        assert not reach_on_another_layer(level)
+    for name in LAYER_STACKS[:-1]:
+        assert reach_on_another_layer(plays_space.scan_build(name)(None, 16, False)), name
 
 
 # ---------------------------------------------------------------- the plays one by one
