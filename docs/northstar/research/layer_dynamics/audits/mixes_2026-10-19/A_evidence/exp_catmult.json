@@ -1,0 +1,1665 @@
+{
+ "M1_SIEGE_STRIKE_0.2": {
+  "outcomes": {
+   "side1": 8
+  },
+  "agreement": {
+   "both_right": 3,
+   "both_wrong": 5
+  },
+  "mean_margin": -0.277,
+  "mean_ticks": 2019,
+  "rows": [
+   {
+    "outcome": "side1",
+    "margin": -0.269,
+    "surv": [
+     0,
+     7
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2001,
+    "fw": [
+     13.0,
+     15.5
+    ],
+    "ww": [
+     15.5,
+     19.6
+    ],
+    "fs": [
+     619.5,
+     822.5
+    ],
+    "ws": [
+     710.4,
+     878.0
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.227,
+    "surv": [
+     0,
+     6
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2205,
+    "fw": [
+     18.0,
+     15.2
+    ],
+    "ww": [
+     22.0,
+     18.4
+    ],
+    "fs": [
+     684.5,
+     829.5
+    ],
+    "ws": [
+     768.0,
+     887.7
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 25
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.281,
+    "surv": [
+     0,
+     7
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2076,
+    "fw": [
+     14.0,
+     14.5
+    ],
+    "ww": [
+     16.8,
+     18.0
+    ],
+    "fs": [
+     602.0,
+     816.2
+    ],
+    "ws": [
+     695.6,
+     862.4
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.314,
+    "surv": [
+     0,
+     9
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 1786,
+    "fw": [
+     16.5,
+     11.5
+    ],
+    "ww": [
+     19.9,
+     14.1
+    ],
+    "fs": [
+     547.0,
+     811.8
+    ],
+    "ws": [
+     639.6,
+     859.1
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.321,
+    "surv": [
+     0,
+     9
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 1834,
+    "fw": [
+     15.5,
+     16.8
+    ],
+    "ww": [
+     18.4,
+     20.4
+    ],
+    "fs": [
+     541.8,
+     812.2
+    ],
+    "ws": [
+     639.4,
+     861.2
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 25
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.304,
+    "surv": [
+     0,
+     8
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2028,
+    "fw": [
+     13.8,
+     12.2
+    ],
+    "ww": [
+     17.5,
+     14.5
+    ],
+    "fs": [
+     569.8,
+     809.5
+    ],
+    "ws": [
+     670.1,
+     850.6
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.252,
+    "surv": [
+     0,
+     8
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2241,
+    "fw": [
+     19.5,
+     17.0
+    ],
+    "ww": [
+     23.9,
+     20.2
+    ],
+    "fs": [
+     645.2,
+     819.8
+    ],
+    "ws": [
+     734.2,
+     866.5
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 25
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.251,
+    "surv": [
+     0,
+     8
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 1978,
+    "fw": [
+     19.0,
+     16.2
+    ],
+    "ww": [
+     23.4,
+     20.1
+    ],
+    "fs": [
+     652.0,
+     815.0
+    ],
+    "ws": [
+     746.9,
+     863.6
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 25
+   }
+  ]
+ },
+ "M1_SIEGE_STRIKE_0.8": {
+  "outcomes": {
+   "side1": 8
+  },
+  "agreement": {
+   "both_right": 3,
+   "both_wrong": 5
+  },
+  "mean_margin": -0.277,
+  "mean_ticks": 2019,
+  "rows": [
+   {
+    "outcome": "side1",
+    "margin": -0.269,
+    "surv": [
+     0,
+     7
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2001,
+    "fw": [
+     13.0,
+     15.5
+    ],
+    "ww": [
+     15.5,
+     19.6
+    ],
+    "fs": [
+     619.5,
+     822.5
+    ],
+    "ws": [
+     710.4,
+     878.0
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.227,
+    "surv": [
+     0,
+     6
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2205,
+    "fw": [
+     18.0,
+     15.2
+    ],
+    "ww": [
+     22.0,
+     18.4
+    ],
+    "fs": [
+     684.5,
+     829.5
+    ],
+    "ws": [
+     768.0,
+     887.7
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 25
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.281,
+    "surv": [
+     0,
+     7
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2076,
+    "fw": [
+     14.0,
+     14.5
+    ],
+    "ww": [
+     16.8,
+     18.0
+    ],
+    "fs": [
+     602.0,
+     816.2
+    ],
+    "ws": [
+     695.6,
+     862.4
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.314,
+    "surv": [
+     0,
+     9
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 1786,
+    "fw": [
+     16.5,
+     11.5
+    ],
+    "ww": [
+     19.9,
+     14.1
+    ],
+    "fs": [
+     547.0,
+     811.8
+    ],
+    "ws": [
+     639.6,
+     859.1
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.321,
+    "surv": [
+     0,
+     9
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 1834,
+    "fw": [
+     15.5,
+     16.8
+    ],
+    "ww": [
+     18.4,
+     20.4
+    ],
+    "fs": [
+     541.8,
+     812.2
+    ],
+    "ws": [
+     639.4,
+     861.2
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 25
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.304,
+    "surv": [
+     0,
+     8
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2028,
+    "fw": [
+     13.8,
+     12.2
+    ],
+    "ww": [
+     17.5,
+     14.5
+    ],
+    "fs": [
+     569.8,
+     809.5
+    ],
+    "ws": [
+     670.1,
+     850.6
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 20
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.252,
+    "surv": [
+     0,
+     8
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 2241,
+    "fw": [
+     19.5,
+     17.0
+    ],
+    "ww": [
+     23.9,
+     20.2
+    ],
+    "fs": [
+     645.2,
+     819.8
+    ],
+    "ws": [
+     734.2,
+     866.5
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 25
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.251,
+    "surv": [
+     0,
+     8
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 1978,
+    "fw": [
+     19.0,
+     16.2
+    ],
+    "ww": [
+     23.4,
+     20.1
+    ],
+    "fs": [
+     652.0,
+     815.0
+    ],
+    "ws": [
+     746.9,
+     863.6
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_wrong",
+    "contact": 25
+   }
+  ]
+ },
+ "N1_RBo_SIEGE_STRIKE_0.2": {
+  "outcomes": {
+   "side1": 8
+  },
+  "agreement": {
+   "both_right": 6,
+   "count_right_type_wrong": 2
+  },
+  "mean_margin": -0.472,
+  "mean_ticks": 515,
+  "rows": [
+   {
+    "outcome": "side1",
+    "margin": -0.484,
+    "surv": [
+     0,
+     15
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 542,
+    "fw": [
+     18.5,
+     21.8
+    ],
+    "ww": [
+     9.9,
+     20.3
+    ],
+    "fs": [
+     215.8,
+     425.8
+    ],
+    "ws": [
+     144.1,
+     352.1
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.412,
+    "surv": [
+     0,
+     13
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 538,
+    "fw": [
+     19.0,
+     22.2
+    ],
+    "ww": [
+     17.6,
+     13.8
+    ],
+    "fs": [
+     238.2,
+     367.8
+    ],
+    "ws": [
+     203.8,
+     310.1
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.539,
+    "surv": [
+     0,
+     18
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 482,
+    "fw": [
+     19.0,
+     22.0
+    ],
+    "ww": [
+     9.0,
+     10.2
+    ],
+    "fs": [
+     213.5,
+     396.8
+    ],
+    "ws": [
+     116.3,
+     322.4
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.418,
+    "surv": [
+     0,
+     13
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 523,
+    "fw": [
+     18.2,
+     22.0
+    ],
+    "ww": [
+     18.2,
+     12.0
+    ],
+    "fs": [
+     240.2,
+     367.5
+    ],
+    "ws": [
+     212.2,
+     309.0
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.453,
+    "surv": [
+     0,
+     15
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 543,
+    "fw": [
+     17.8,
+     21.8
+    ],
+    "ww": [
+     12.2,
+     21.8
+    ],
+    "fs": [
+     231.0,
+     418.5
+    ],
+    "ws": [
+     166.4,
+     335.1
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.507,
+    "surv": [
+     0,
+     17
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 502,
+    "fw": [
+     19.0,
+     21.8
+    ],
+    "ww": [
+     9.0,
+     10.0
+    ],
+    "fs": [
+     231.5,
+     398.2
+    ],
+    "ws": [
+     129.9,
+     323.9
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.465,
+    "surv": [
+     0,
+     14
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 483,
+    "fw": [
+     18.2,
+     22.2
+    ],
+    "ww": [
+     14.1,
+     17.6
+    ],
+    "fs": [
+     215.5,
+     384.2
+    ],
+    "ws": [
+     164.1,
+     319.8
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.499,
+    "surv": [
+     0,
+     15
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 510,
+    "fw": [
+     18.5,
+     21.5
+    ],
+    "ww": [
+     9.9,
+     14.5
+    ],
+    "fs": [
+     228.8,
+     395.8
+    ],
+    "ws": [
+     148.1,
+     317.5
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   }
+  ]
+ },
+ "N1_RBo_SIEGE_STRIKE_0.8": {
+  "outcomes": {
+   "side1": 8
+  },
+  "agreement": {
+   "both_right": 6,
+   "count_right_type_wrong": 2
+  },
+  "mean_margin": -0.472,
+  "mean_ticks": 515,
+  "rows": [
+   {
+    "outcome": "side1",
+    "margin": -0.484,
+    "surv": [
+     0,
+     15
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 542,
+    "fw": [
+     18.5,
+     21.8
+    ],
+    "ww": [
+     9.9,
+     20.3
+    ],
+    "fs": [
+     215.8,
+     425.8
+    ],
+    "ws": [
+     144.1,
+     352.1
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.412,
+    "surv": [
+     0,
+     13
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 538,
+    "fw": [
+     19.0,
+     22.2
+    ],
+    "ww": [
+     17.6,
+     13.8
+    ],
+    "fs": [
+     238.2,
+     367.8
+    ],
+    "ws": [
+     203.8,
+     310.1
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.539,
+    "surv": [
+     0,
+     18
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 482,
+    "fw": [
+     19.0,
+     22.0
+    ],
+    "ww": [
+     9.0,
+     10.2
+    ],
+    "fs": [
+     213.5,
+     396.8
+    ],
+    "ws": [
+     116.3,
+     322.4
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.418,
+    "surv": [
+     0,
+     13
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 523,
+    "fw": [
+     18.2,
+     22.0
+    ],
+    "ww": [
+     18.2,
+     12.0
+    ],
+    "fs": [
+     240.2,
+     367.5
+    ],
+    "ws": [
+     212.2,
+     309.0
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.453,
+    "surv": [
+     0,
+     15
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 543,
+    "fw": [
+     17.8,
+     21.8
+    ],
+    "ww": [
+     12.2,
+     21.8
+    ],
+    "fs": [
+     231.0,
+     418.5
+    ],
+    "ws": [
+     166.4,
+     335.1
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.507,
+    "surv": [
+     0,
+     17
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 502,
+    "fw": [
+     19.0,
+     21.8
+    ],
+    "ww": [
+     9.0,
+     10.0
+    ],
+    "fs": [
+     231.5,
+     398.2
+    ],
+    "ws": [
+     129.9,
+     323.9
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.465,
+    "surv": [
+     0,
+     14
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 483,
+    "fw": [
+     18.2,
+     22.2
+    ],
+    "ww": [
+     14.1,
+     17.6
+    ],
+    "fs": [
+     215.5,
+     384.2
+    ],
+    "ws": [
+     164.1,
+     319.8
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.499,
+    "surv": [
+     0,
+     15
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 510,
+    "fw": [
+     18.5,
+     21.5
+    ],
+    "ww": [
+     9.9,
+     14.5
+    ],
+    "fs": [
+     228.8,
+     395.8
+    ],
+    "ws": [
+     148.1,
+     317.5
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   }
+  ]
+ },
+ "N3_VRBo_SIEGE_STRIKE_0.2": {
+  "outcomes": {
+   "side1": 8
+  },
+  "agreement": {
+   "both_right": 5,
+   "count_right_type_wrong": 3
+  },
+  "mean_margin": -0.419,
+  "mean_ticks": 703,
+  "rows": [
+   {
+    "outcome": "side1",
+    "margin": -0.39,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 781,
+    "fw": [
+     12.2,
+     15.5
+    ],
+    "ww": [
+     8.2,
+     9.4
+    ],
+    "fs": [
+     274.8,
+     451.0
+    ],
+    "ws": [
+     218.4,
+     447.6
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.384,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 782,
+    "fw": [
+     11.8,
+     15.0
+    ],
+    "ww": [
+     7.9,
+     8.7
+    ],
+    "fs": [
+     270.0,
+     459.2
+    ],
+    "ws": [
+     248.7,
+     445.2
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.48,
+    "surv": [
+     0,
+     13
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 613,
+    "fw": [
+     12.0,
+     15.2
+    ],
+    "ww": [
+     7.6,
+     8.6
+    ],
+    "fs": [
+     236.0,
+     412.2
+    ],
+    "ws": [
+     189.6,
+     421.5
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.423,
+    "surv": [
+     0,
+     14
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 663,
+    "fw": [
+     11.8,
+     14.8
+    ],
+    "ww": [
+     12.8,
+     9.8
+    ],
+    "fs": [
+     262.5,
+     422.8
+    ],
+    "ws": [
+     273.9,
+     428.5
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.441,
+    "surv": [
+     0,
+     12
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 662,
+    "fw": [
+     12.2,
+     15.0
+    ],
+    "ww": [
+     7.2,
+     6.4
+    ],
+    "fs": [
+     254.0,
+     431.5
+    ],
+    "ws": [
+     196.5,
+     423.2
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.42,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 721,
+    "fw": [
+     12.8,
+     14.8
+    ],
+    "ww": [
+     5.8,
+     11.4
+    ],
+    "fs": [
+     266.8,
+     436.2
+    ],
+    "ws": [
+     183.7,
+     445.7
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.412,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 700,
+    "fw": [
+     11.8,
+     15.2
+    ],
+    "ww": [
+     4.2,
+     10.4
+    ],
+    "fs": [
+     268.2,
+     416.0
+    ],
+    "ws": [
+     191.3,
+     423.9
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.403,
+    "surv": [
+     0,
+     12
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 701,
+    "fw": [
+     12.5,
+     15.2
+    ],
+    "ww": [
+     7.5,
+     6.4
+    ],
+    "fs": [
+     269.2,
+     441.5
+    ],
+    "ws": [
+     213.7,
+     439.8
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   }
+  ]
+ },
+ "N3_VRBo_SIEGE_STRIKE_0.8": {
+  "outcomes": {
+   "side1": 8
+  },
+  "agreement": {
+   "both_right": 5,
+   "count_right_type_wrong": 3
+  },
+  "mean_margin": -0.419,
+  "mean_ticks": 703,
+  "rows": [
+   {
+    "outcome": "side1",
+    "margin": -0.39,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 781,
+    "fw": [
+     12.2,
+     15.5
+    ],
+    "ww": [
+     8.2,
+     9.4
+    ],
+    "fs": [
+     274.8,
+     451.0
+    ],
+    "ws": [
+     218.4,
+     447.6
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.384,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 782,
+    "fw": [
+     11.8,
+     15.0
+    ],
+    "ww": [
+     7.9,
+     8.7
+    ],
+    "fs": [
+     270.0,
+     459.2
+    ],
+    "ws": [
+     248.7,
+     445.2
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.48,
+    "surv": [
+     0,
+     13
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 613,
+    "fw": [
+     12.0,
+     15.2
+    ],
+    "ww": [
+     7.6,
+     8.6
+    ],
+    "fs": [
+     236.0,
+     412.2
+    ],
+    "ws": [
+     189.6,
+     421.5
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.423,
+    "surv": [
+     0,
+     14
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 663,
+    "fw": [
+     11.8,
+     14.8
+    ],
+    "ww": [
+     12.8,
+     9.8
+    ],
+    "fs": [
+     262.5,
+     422.8
+    ],
+    "ws": [
+     273.9,
+     428.5
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.441,
+    "surv": [
+     0,
+     12
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 662,
+    "fw": [
+     12.2,
+     15.0
+    ],
+    "ww": [
+     7.2,
+     6.4
+    ],
+    "fs": [
+     254.0,
+     431.5
+    ],
+    "ws": [
+     196.5,
+     423.2
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.42,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 721,
+    "fw": [
+     12.8,
+     14.8
+    ],
+    "ww": [
+     5.8,
+     11.4
+    ],
+    "fs": [
+     266.8,
+     436.2
+    ],
+    "ws": [
+     183.7,
+     445.7
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.412,
+    "surv": [
+     0,
+     11
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 700,
+    "fw": [
+     11.8,
+     15.2
+    ],
+    "ww": [
+     4.2,
+     10.4
+    ],
+    "fs": [
+     268.2,
+     416.0
+    ],
+    "ws": [
+     191.3,
+     423.9
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_right",
+    "contact": 0
+   },
+   {
+    "outcome": "side1",
+    "margin": -0.403,
+    "surv": [
+     0,
+     12
+    ],
+    "heads": [
+     16,
+     20
+    ],
+    "ticks": 701,
+    "fw": [
+     12.5,
+     15.2
+    ],
+    "ww": [
+     7.5,
+     6.4
+    ],
+    "fs": [
+     269.2,
+     441.5
+    ],
+    "ws": [
+     213.7,
+     439.8
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_right_type_wrong",
+    "contact": 0
+   }
+  ]
+ },
+ "_wall_s": 24.3
+}

@@ -25,7 +25,6 @@ GALAXY = "res://scenes/galaxy/galaxy_view.tscn"
 BRIEFING = "res://scenes/mission_briefing/mission_briefing.tscn"
 TACTICAL = "res://scenes/tactical_c/tactical_view.tscn"
 PRIVACY = "res://scenes/privacy_modal/privacy_modal.tscn"
-QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 RUN_ID = os.environ.get("VG_RUN_ID") or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 SHOT_DIR = REPO / "docs/northstar/story_reviews/shots" / RUN_ID
 BOOT_TIMEOUT = 45.0
@@ -83,7 +82,7 @@ def moment(client, story, name):
     client.screenshot(shot)
     time.sleep(0.5)
     SHOT_DIR.mkdir(parents=True, exist_ok=True)
-    src = QA_SHOT_DIR / (shot + ".png")
+    src = client.user_dir / "qa" / (shot + ".png")
     if src.exists():
         shutil.copy2(src, SHOT_DIR / (shot + ".png"))
     qa = client.state()["result"].get("qa", {})
