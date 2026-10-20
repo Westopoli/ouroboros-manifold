@@ -19,7 +19,7 @@ Knobs (`SLOPE_TOP_KNOBS`; the second point of each grid is the engine default):
 ## Variants carrying the two controls
 
 - `s1_slope_top_marginal`: the attackers lie along the thin ribbon of band 2 north of the foot, and the holders' post at (8900, 3220) sees none of them at eye 25 and 50 and all of them at eye 100 and 200.
-- `s1_slope_top_flyer` (R-005-11): the Raider flies on both sides. The attacker Raiders hover on layer 2 over band 2 ground 1900 wu from the holders, so the holders see them from 2400 wu at multiplier 3 and not at 1.25 to 2. `scenes.preflight` routes a flyer (a type that does not walk) by a straight line over blocks of its own layer, since it has no path on the ground's walk mask.
+- `s1_slope_top_flyer` (R-005-11): the Raider flies on both sides. The attacker Raiders hover on layer 2 over band 2 ground 1900 wu from the holders, so the holders see them from 2400 wu at multiplier 3 and not at 1.25 to 2. `scenes.preflight` routes every mover by the breadth-first search on the 50 wu grid with a mask per movement kind: a flyer's mask is the cells no block reaching its layer covers, so the Raiders are routed over ground a walker cannot cross.
 
 `INERT_KNOBS_BY_SCENE` lists what each scene leaves inert. In both variants the carried knob changes who is seen first but not the fight's result.
 

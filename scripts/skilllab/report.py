@@ -198,7 +198,13 @@ DRAFT_TEXT = {
     "DRAFT-mixes": "the roster mixes M0 to M4 of the plays",
     "DRAFT-reengage-silence-ticks": "the silence after which an idle side is attack-moved onto the enemy centroid",
     "DRAFT-scale-marks": "the speed marks of the scale guards",
+    "DRAFT-reengage-moved-wu": "the displacement over the silence window above which a side counts as having moved (1 wu)",
+    "DRAFT-coarse-step": "the headcount step of the first coarse pass of a scan (scan.COARSE_STEP)",
+    "DRAFT-control-max-ticks": "the tick cap of a control fight (sweep.CONTROL_MAX_TICKS)",
+    "DRAFT-probe-count-bound": "the bound on the probes of a bisected scan (at most 14)",
+    "DRAFT-ground-geometry": "the coordinates and radii of the ground scenes",
 }
+NO_DEFENDER = "C1 for plays without a naive defender baseline rests on naive_attacker only"
 
 
 _csv = diagram.csv_text
@@ -257,9 +263,36 @@ def _cut_list(summary, rows) -> str:
     return '<ul class="cut-scans">\n' + "\n".join(items) + "\n</ul>" if items else ""
 
 
+def _refused(summary) -> list:
+    families = summary.get("families", {})
+    out = []
+    for family in summary.get("order", ()):
+        mine = [e for e in families.get(family, {}).get("refused") or () if e["role"].startswith("naive_")]
+        out += sorted(mine, key=lambda e: (e["play"], e["layout"], e["role"]))
+    return out
+
+
+def _refused_ul(entries, cls, **attrs) -> str:
+    items = ['<li data-refused-baseline=""%s>no naive %s: %s</li>' % (
+        _attrs(family=e["family"], play=e["play"], layout=e["layout"], role=e["role"], reason=e["reason"]),
+        escape(e["role"][len("naive_"):].replace("_", " ")), escape(e["reason"].replace("_", " "))) for e in entries]
+    return '<ul class="%s"%s>\n' % (cls, _attrs(**attrs)) + "\n".join(items) + "\n</ul>"
+
+
+def _refused_blocks(refused) -> dict:
+    by_play = {}
+    for e in refused:
+        by_play.setdefault((e["family"], e["play"]), []).append(e)
+    return {k: _refused_ul(sorted(v, key=lambda e: (e["layout"], e["role"])), "refused-play", family=k[0], play=k[1]) for k, v in by_play.items()}
+
+
 def _findings(summary, rows, ns, svgs) -> list:
     out = []
+    refused = _refused(summary)
+    blocks = _refused_blocks(refused)
     for n in ns:
+        if (n.family, n.play) in blocks:
+            out.append(blocks.pop((n.family, n.play)))
         out.append("<h2%s>%s</h2>" % (_attrs(notable=n.id), escape(_sentence(n, rows))))
         out.append(svgs[n.id])
         if n.kind == "crossing":
@@ -267,7 +300,10 @@ def _findings(summary, rows, ns, svgs) -> list:
     if not ns:
         out += ["<p>no crossing</p>", "<p>no ceiling hit</p>", "<p>no both_wrong fight</p>"]
     cuts = _cut_list(summary, rows)
-    return out + ([cuts] if cuts else [])
+    out += [cuts] if cuts else []
+    order = {f: i for i, f in enumerate(summary.get("order", ()))}
+    out += [blocks[k] for k in sorted(blocks, key=lambda k: (order[k[0]], k[1]))]
+    return out + ([_refused_ul(refused, "refused-baselines")] if refused else [])
 
 
 def _drafts(summary, rows) -> list:
@@ -282,7 +318,12 @@ def _drafts(summary, rows) -> list:
         items += [("DRAFT-aoe-cone-range", "the swept cone ranges"), ("DRAFT-aoe-cone-deg", "the swept cone half-angles"),
                   ("DRAFT-aoe-cone-share", "the cone damage share")]
     items += list(DRAFT_TEXT.items())
-    return ['<ul class="drafts">'] + ['<li data-draft="%s">%s: %s</li>' % (name, name, escape(words)) for name, words in items] + ["</ul>"]
+    out = ['<ul class="drafts">'] + ['<li data-draft="%s">%s: %s</li>' % (name, name, escape(words)) for name, words in items] + ["</ul>"]
+    plays = sorted({e["play"] for e in _refused(summary) if e["role"].startswith("naive_defender")})
+    if plays:
+        out.append('<p class="no-defender-baseline" data-plays-without-defender="%s">%s: %s</p>' % (
+            escape(",".join(plays), quote=True), NO_DEFENDER, escape(", ".join(plays))))
+    return out
 
 
 def _threshold_spans(t, names) -> str:
