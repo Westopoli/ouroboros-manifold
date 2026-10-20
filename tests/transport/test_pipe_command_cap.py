@@ -1,12 +1,17 @@
 """T1-7-3: handle_command unit cap raised from 256 to OM_MAX_UNITS (10100).
 
-A mission spawns 490 player units; with the old cap of 256 the last 234 unit
+A mission spawns 294 player units; with the old cap of 256 the last 38 unit
 IDs in the sorted list are silently dropped by get_int_array, so a select-all
-move command misses 234 units.
+move command misses 38 units.
 
-Red on unmodified code: unit 490 is at sorted position 490 (beyond old cap of
+Red on unmodified code: unit 294 is at sorted position 294 (beyond old cap of
 256) and receives no move command; after 20 tactical steps it stays at spawn.
-Green after fix: unit 490 is included in the group move and must move >= 5 wu.
+Green after fix: unit 294 is included in the group move and must move >= 5 wu.
+
+TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the mission composes
+F 490 player units (it was all spawned: 490 and unit id 490), and the player spawns start_units of them. Premise (seed 1, 80
+regions, region 66, archetype 8): F 490, p 1, e 1, n 2, share 0.5, frac 0.6, start 294.0, start_units 294. The player's units
+are ids 1..294, so the last in ascending ID order is now 294, still beyond the old cap of 256.
 """
 import json
 import subprocess
@@ -23,13 +28,13 @@ STEP10 = {"type": "cmd", "name": "step", "n": 10}
 START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
 
-# The mission spawns 490 player units with these seed/region/step params.
-EXPECTED_UNIT_COUNT = 490
+# The mission spawns 294 player units (start_units of F 490, TD-VG-E-34) with these seed/region/step params.
+EXPECTED_UNIT_COUNT = 294
 
-# Unit 490 (Bastion, type 5): last in ascending ID order; spawn at (11850, 645).
-# At sorted position 490 it falls beyond old cap=256 and is dropped.
+# Unit 294: last in ascending ID order (was unit 490 when all of F 490 spawned).
+# At sorted position 294 it falls beyond old cap=256 and is dropped.
 # After the fix it receives the group move and must move >= MIN_DIST_WU.
-CAP_PROOF_UNIT_ID = 490
+CAP_PROOF_UNIT_ID = 294
 CAP_PROOF_DEST_X = 13045.0
 CAP_PROOF_DEST_Y = 1255.0
 MIN_DIST_WU = 5.0
@@ -60,7 +65,7 @@ def _get_player_unit_ids(begin_frame, player_faction=0):
 
 @pytest.fixture(scope="module")
 def cap_proof_frames():
-    """Run mission with a select-all move command carrying all 490 unit IDs."""
+    """Run mission with a select-all move command carrying all 294 unit IDs."""
     # First pass: discover unit IDs from the begin frame.
     discover = _run([SET_SEED, STEP10, START, BEGIN])
     tactical_begin = [f for f in discover if f["type"] == "tactical"]

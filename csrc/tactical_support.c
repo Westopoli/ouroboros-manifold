@@ -466,21 +466,26 @@ void om_enemy_production_adapt_target(const om_composition_ratio *target, const 
 
 /* ---- R-126-02/03/04/05/06: structures ---- */
 
-double om_mission_compute_starting_force(double full_force) {
-    return full_force; /* R-218-06, liberty 2026-10-10 until E-10 S-211 */
+/* DRAFT-e7-floor-knee (register Q-218-07; Westley owns the number; See also the visible-game spec, E7 paragraph): the
+ * share at which the starting fraction is half of F. Below it the fraction slides from a fifth at share 0. */
+#define OM_START_KNEE 0.25
+#define OM_START_FRAC_FLOOR 0.2
+#define OM_START_FRAC_SLOPE_LOW 1.2
+#define OM_START_FRAC_AT_KNEE 0.5
+#define OM_START_FRAC_SLOPE_HIGH 0.4
+
+/* R-218-06: the player starts with F * frac(share), share being p / (p + e) of the contested strongpoints at tick 0. */
+double om_mission_compute_starting_force(double F, double share) {
+    double frac;
+    if (share < 0.0) share = 0.0;
+    if (share > 1.0) share = 1.0;
+    if (share <= OM_START_KNEE) frac = OM_START_FRAC_FLOOR + OM_START_FRAC_SLOPE_LOW * share;
+    else frac = OM_START_FRAC_AT_KNEE + OM_START_FRAC_SLOPE_HIGH * (share - OM_START_KNEE);
+    return F * frac;
 }
 
-/* Pure by design (no world, no structure/military context): the game is
- * tuned so the map's structures, held from the start, deliver the
- * remaining 0.80 * F by whatever time_limit_ticks the caller's mission
- * actually runs -- this contract value is what R-126-04 asserts, not a
- * per-tick production simulation (that needs a real structure roster,
- * out of a (double, uint64_t) function's reach). time_limit_ticks is kept
- * as a parameter (0 rejected) so a future per-duration model can use it. */
-double om_mission_compute_reinforcement_capacity(double full_force, uint64_t time_limit_ticks) {
-    (void)full_force;
-    (void)time_limit_ticks;
-    return 0.0; /* R-218-06: strongpoint production is paid by the holder's economy (R-218-03) */
+double om_mission_compute_reinforcement_capacity(double F, double share) {
+    return F - om_mission_compute_starting_force(F, share);
 }
 
 uint32_t om_structure_production_interval_ticks(double power) {
@@ -860,8 +865,17 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
     om_sup_structure_refresh_position(w, s);
     while (s->timer >= interval) {
         om_structure_tick_production(w, idx);
-        if (om_structure_pop_spawned_unit(w, idx))
+        if (om_structure_pop_spawned_unit(w, idx)) {
+            /* VG-CONTRACT-E7: the player's production stops once reinforce_spawned reaches reinforce_cap (F minus the units
+             * spawned at tick 0); the enemy's is unchanged. Payment (R-218-03) is NOT done here: FU-E7-production-paid,
+             * lane E2. See also: om_mission_reinforce_cap in csrc/mission.c (the allowance left; UINT32_MAX on a bare world,
+             * so uncapped there) and the spec E7 paragraph. */
+            if (s->owner == om_player_faction(w)) {
+                if (om_mission_reinforce_cap(w) == 0) continue;
+                om_mission_reinforce_note_spawn(w);
+            }
             om_unit_spawn(w, (int)s->unit_type, s->owner, s->last_spawn_x, s->last_spawn_y, 0);
+        }
     }
 }
 
