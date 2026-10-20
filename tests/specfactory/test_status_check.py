@@ -313,8 +313,8 @@ def _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=None, fu_state=None):
 
 
 def test_control_pins_fixture_builds_and_the_other_four_checks_stay_ok(tmp_path):
-    """Green today: the fixture with a stale test and an attached FU row changes none of the four old checks."""
-    _pins_fixture(tmp_path, test_pin=STALE_PIN, fu_state="attached")
+    """With a current pin and the attached FU row, pins is OK, the four old checks are OK and rc is 0."""
+    _pins_fixture(tmp_path, test_pin=RULE_PIN, fu_state="attached")
     res = run_check(tmp_path)
     for name in ("lane_table", "pieces", "seen", "roadmap"):
         assert all(LINE_RE.match(ln).group(2) == "OK" for ln in line_for(res, name)), res.stdout
