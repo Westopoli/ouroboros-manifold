@@ -47,8 +47,7 @@ _PINNED = r"R-\d+-\d+(?:@[0-9a-f]{6})?"
 B_TAG = re.compile(r"\[B ((?:" + _PINNED + r")(?:,\s*" + _PINNED + r")*)([^\]]*)\]")
 _ID = r"(?:Q-[A-Za-z0-9-]+|\d{4}-\d\d-\d\d)"
 # Group 1 first id or date, 2 further ids or dates, 3 a double-quoted quote, 4 an unquoted quote.
-# Liberty (spec gives no flags): re.S so a double-quoted quote can wrap over the lines of its unit.
-W_TAG = re.compile(r"\[W (" + _ID + r")((?:,\s*" + _ID + r")*)(?:\s*\([^)]*\))?:?\s*(?:\"(.*?)\"\]|([^\]]*)\])", re.S)
+W_TAG = re.compile(r"\[W (" + _ID + r")((?:,\s*" + _ID + r")*)(?:\s*\([^)]*\))?:?\s*(?:\"(.*?)\"\]|([^\]]*)\])")
 Q_ID = re.compile(r"Q-[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
 ASSERT_TAG = re.compile(r"\[ASSERT ([^\]]*)\]")
 OPEN_TAG = re.compile(r"\[OPEN (Q-[A-Za-z0-9-]+)\]")
