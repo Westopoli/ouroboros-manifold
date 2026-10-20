@@ -4,7 +4,7 @@
 """Static and built-library checks of the LAB-REV2-E0 contract piece.
 
 What E0 lands (spec, Contract / Engine):
-  * one setting, OM_TP_FIRING_ARC_DEG (real, default 360, bounds 10 to 360), appended before OM_TP__COUNT,
+  * one setting, OM_TP_FIRING_ARC_DEG (real, default 360, bounds 5 to 360; lo was 10 until Architect decision 48), appended before OM_TP__COUNT,
     with its OM_PP_ROWS row, its pp_contract.md section 4 row and its line in the conftest OMTacParam mirror;
   * two stubbed symbols, om_roster_set_cone (module tactical_move.c) and om_combat_can_engage (module unit.c),
     declared with the spec's exact signatures, with signatures.toml rows; both answer -1 ("not built")
@@ -85,7 +85,7 @@ def base_numbers(repo, fallback):
 
 
 ARC = "OM_TP_FIRING_ARC_DEG"
-ARC_DEFAULT, ARC_LO, ARC_HI = 360.0, 10.0, 360.0
+ARC_DEFAULT, ARC_LO, ARC_HI = 360.0, 5.0, 360.0   # lo 5: Architect decision 48 (was 10), so the lab's 7.5 grid point is in range
 
 SET_CONE_SIG = "int om_roster_set_cone(om_world *w, int unit_type, double range, double half_angle_deg, double share);"
 CAN_ENGAGE_SIG = "int om_combat_can_engage(const om_world *w, uint32_t attacker, uint32_t target);"
@@ -692,13 +692,13 @@ def test_arc_defaults_to_360(lib, world):
 def test_arc_accepts_the_bounds_and_reads_back(lib, world):
     arc = arc_member()
     w = world()
-    for v in (ARC_LO, 120.0, 90.5, ARC_HI):  # real: a fraction is fine
+    for v in (ARC_LO, 7.5, 120.0, 90.5, ARC_HI):  # real: a fraction is fine
         assert lib.om_tactical_set_param(w, arc, v) == 0, v
         assert lib.om_tactical_get_param(w, arc) == v, v
 
 
-@pytest.mark.parametrize("bad", [9.999, 0.0, -1.0, 360.001, 720.0, math.nan, math.inf])
-def test_arc_refuses_a_value_outside_10_to_360_and_changes_nothing(lib, world, bad):
+@pytest.mark.parametrize("bad", [4.9, 4.999, 0.0, -1.0, 360.001, 720.0, math.nan, math.inf])
+def test_arc_refuses_a_value_outside_5_to_360_and_changes_nothing(lib, world, bad):
     arc = arc_member()
     w = world()
     assert lib.om_tactical_set_param(w, arc, 120.0) == 0, "control: an in-range set must be accepted"
