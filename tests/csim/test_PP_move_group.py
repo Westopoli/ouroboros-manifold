@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@edc84b, R-095-01@d24419, R-095-02@47ddf5, R-095-03@f360de, R-095-04@d31828, R-095-06@efed7d, R-095-07@9c81ee, R-096-02@dbc10f, R-096-03@915cb9
 """PP-move rule tests, groups (P5), the movement switches, and the settings contract.
 
 Proves E-13 R-095-01, R-095-02, R-095-03, R-095-06, R-096-02 (S-095, S-096), as reworded by Addendum 45

@@ -1,3 +1,4 @@
+# Rule pins: R-008-02@a53fb0, R-164-01@511d57
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Contract::The count + Pieces::L1; rulings 5, 8, 10
 """The firing count (scripts/skilllab/firing.py) on a fake engine: no compiler, no library.
 

@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-004-01@61a9b6
 # spec: LAB-REV2-L6 / L2 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md; decisions 20 and 27 of 2026-10-14-skill-lab-rev2-decisions.md); R-001-07, R-004-01
 """scenes.preflight routes a flyer on the 50 wu grid like a walker; only the mask differs (decisions 20 and 27, Architect 2026-10-19).
 

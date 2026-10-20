@@ -1,3 +1,4 @@
+# Rule pins: R-096-08@629328
 # spec: R-096-08 (the unit holds, fires in range, never walks) - guard order through the production library
 """A guard unit never gets a destination, never walks, and fires once an enemy is in range."""
 import dataclasses

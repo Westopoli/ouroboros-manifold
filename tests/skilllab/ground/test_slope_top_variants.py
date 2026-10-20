@@ -1,3 +1,4 @@
+# Rule pins: R-005-09@dd0832, R-005-11@be28f0
 # spec: LAB-REV2-L6 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, the L6 row: the two variants; Architect design call 2026-10-14); R-005-09 (ground vision)
 """The two ground-scene variants of LAB-REV2-L6, each carrying the control of a knob that is inert in the natural scene s1_slope_top:
 s1_slope_top_marginal (OM_TP_SIGHT_EYE_HEIGHT) and s1_slope_top_flyer (OM_TP_GROUND_FLYER_SEEN_MULT, R-005-11). Marked `variant`: they may

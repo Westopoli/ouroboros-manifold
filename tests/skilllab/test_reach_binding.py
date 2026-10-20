@@ -1,3 +1,4 @@
+# Rule pins: R-096-04@1876c2
 # spec: R-096-04 layer reach by unit type - Engine.set_reach and the "reach" key of Setup.unit_types
 """fight() calls engine.set_reach for a custom type that carries "reach": (up, down); stub-library wrapper test."""
 import sys

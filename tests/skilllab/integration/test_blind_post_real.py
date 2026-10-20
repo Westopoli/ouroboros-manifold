@@ -1,3 +1,4 @@
+# Rule pins: R-098-02@118a82
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 43 item 6 and decision 44 (Architect, 2026-10-19): blind naive-defender posts, shift then refuse
 """LAB-REV2-FIX round 3, real layouts. Interface in tests/skilllab/test_drift_fix_blind_post.py's header.
 
