@@ -2870,3 +2870,89 @@ depends_on = ["VG-E1M", "VG-E1N", "VG-A-routeline", "VG-CONTRACT-layerspot"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the bridge passes structures_changed through (or the feed diffs owners from the full list, the builder picks the smaller); tests first by a different writer: a live-path test feeds a full frame then a delta with one owner flip through the bridge and expects exactly one captured line; no edit to the A8 test; shot = the S-235 play re-run with one flip in frame"
+
+# Lane T (Architect 2026-10-20): expected behaviour proved through the game; spec section in 2026-10-07-visible-game-spec.md
+
+[[piece]]
+id = "VG-T-REACH-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/csim/test_PP_C_g5_support.py", "tests/csim/test_PP_C_g5_area_return_fire.py", "tests/csim/test_PP_C_g4_transfer.py", "tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/test_PP_C_g5_reach_api.py", "tests/csim/test_PP_C_g5_direct_fire.py", "tests/transport/test_pipe_reach_cross_layer.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_reach_cross_layer.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T1: reach tests rewritten to run through the game, plus a cross-layer fire test over the pipe (harness numbers DRAFT-t1-steps)"
+
+[[piece]]
+id = "VG-T-REACH-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/reach_table.c", "csrc/om_internal.h", "csrc/mission.c", "docs/architecture.md", "tests/qa/desktop/plays/T/S-164.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_reach_cross_layer.py"]
+depends_on = ["VG-T-REACH-TESTS", "VG-CONTRACT-E7", "VG-E-prodslot", "VG-E1R", "VG-E-startforce", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "LAB-REV2-E2"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T2: the bible reach table (R-164-01) applied as a constant at mission start from reach_table.c; one call in mission.c, one prototype, one architecture sentence, S-164 play"
+
+[[piece]]
+id = "VG-T-EMIT-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/csim/test_PP_C_g67_emission.py", "tests/csim/test_PP_settings.py", "tests/transport/test_pipe_emission.py", "tests/net/test_emission_lockstep.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_emission.py"]
+depends_on = ["LAB-REV2-E0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T3: emitting tests through the game over the pipe and lockstep; DRAFT-emit-sight-mult, DRAFT-emit-seen-mult"
+
+[[piece]]
+id = "VG-T-EMIT-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/pipe/om_pipe.c", "csrc/tactical_move.c", "docs/northstar/plans/push/pp_contract.md", "docs/architecture.md", "autoload/c_bridge.gd", "tests/qa/desktop/plays/T/S-163.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_emission.py"]
+depends_on = ["VG-T-EMIT-TESTS", "VG-A-layerkeys", "VG-A-routeline", "VG-CONTRACT-route", "LAB-REV2-E2", "VG-E-a8feed", "VG-T-REACH-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T4: emit verb in the command table, OM_TP_EMIT_SIGHT_MULT 2.0 and OM_TP_EMIT_SEEN_MULT 3.0 defaults, keybind in c_bridge.gd, S-163 play"
+
+[[piece]]
+id = "VG-T-R087-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/csim/test_R_087_09_blocked_line.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/csim/test_R_087_09_blocked_line.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T5: steer or drop a blocked target (R-087-09) test"
+
+[[piece]]
+id = "VG-T-R087-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/unit.c"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/csim/test_R_087_09_blocked_line.py"]
+depends_on = ["VG-T-R087-TESTS", "LAB-REV2", "LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E2", "LAB-REV2-E4"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T6: the blocked-line rule in the target-acquisition block of unit.c"
+
+[[piece]]
+id = "VG-T-ELEV-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/csim/test_E11_S084_flat_damage.py", "tests/csim/test_E12_S091_standing_high.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
+owns_glob = []
+acceptance = ["tests/csim/test_E11_S084_flat_damage.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "T7: elevation tests made honest (R-091-03)"
