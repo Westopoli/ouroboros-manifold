@@ -25,8 +25,10 @@
 extern "C" {
 #endif
 
-/* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 7
+/* ABI version reported by om_abi_version(). Bump when signatures change.
+ * 8 (VG-CONTRACT-E7): om_mission_compute_starting_force and om_mission_compute_reinforcement_capacity take (F, share);
+ * om_mission_get_force_group is declared. */
+#define OM_ABI_VERSION 8
 
 /* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
 #define OM_LAYER_COUNT 5
@@ -1805,6 +1807,7 @@ int32_t om_mission_get_enemy_faction(const om_world *w);
 double om_mission_get_enemy_power(const om_world *w);
 uint32_t om_mission_get_force_count(const om_world *w);
 int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier);
+int32_t om_mission_get_force_group(const om_world *w, uint32_t i);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);
 uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);
@@ -2007,8 +2010,8 @@ uint32_t om_hazard_launch_type_count(void);
 double om_hazard_sample_interference(om_world *w, double p1, double c_double);
 uint32_t om_hazard_spawn_moving_interference(om_world *w, double p1, double p2, double p3, double c_double, uint64_t p5);
 void om_mission_check_extraction_objectives(om_world *w);
-double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time);
-double om_mission_compute_starting_force(double c_double);
+double om_mission_compute_reinforcement_capacity(double F, double share);
+double om_mission_compute_starting_force(double F, double share);
 uint32_t om_mission_get_reinforcement_trickle(om_world *w);
 void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held);
 void om_mission_setup_extraction_point(om_world *w, double x, double y, double radius);

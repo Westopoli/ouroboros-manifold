@@ -26,7 +26,7 @@ CONFTEST = REPO / "tests" / "csim" / "conftest.py"
 TABLE = REPO / "docs" / "northstar" / "spec_factory" / "signatures.toml"
 DOC = REPO / "docs" / "northstar" / "plans" / "push" / "pp_contract.md"
 
-EXPECTED_ABI = 7
+EXPECTED_ABI = 8
 
 # name -> (module, restype, [(param name, ctype), ...]); the contract document section 1 and 6 (17 calls).
 W = "om_world*"
