@@ -2956,3 +2956,245 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "T7: elevation tests made honest (R-091-03)"
+
+# Lane U / Lane M / HARNESS-coverage (Architect 2026-10-20, Westley go on the coverage audit)
+[[piece]]
+id = "VG-U-PIPE-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_u_observable.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_u_observable.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: the 16 observable mechanisms plus the place, ping and hold verbs, green except hold"
+
+[[piece]]
+id = "VG-CONTRACT-U0"
+manager = "M0"
+wave = 13
+owns = ["csrc/pipe/om_pipe.c", "csrc/pipe/pipe_dump_state.c", "docs/architecture.md", "tests/transport/test_pipe_dump_state.py", "autoload/bridge/frame_decode.gd"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_dump_state.py"]
+depends_on = ["VG-U-PIPE-TESTS", "VG-T-EMIT-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "contract piece: the qa_dump_state frame fields Lane U tests read, the hold verb decision, documented in architecture.md"
+
+[[piece]]
+id = "VG-U1-DIPLO-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_diplomacy_live.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_diplomacy_live.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: stances at tick 20 and over 2000 ticks, positive control"
+
+[[piece]]
+id = "VG-U1-DIPLO-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/worldgen.c", "csrc/faction.c", "csrc/diplomacy.c", "docs/bible/epics/E-06-diplomacy-and-technology.md"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_diplomacy_live.py"]
+depends_on = ["VG-U1-DIPLO-TESTS", "B5"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "om_world_generate calls om_diplomacy_init; R-032-04 rewritten; under 40 lines of C"
+
+[[piece]]
+id = "VG-U2-PROD-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_enemy_production_adapt.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_enemy_production_adapt.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: enemy production adapts to the player's force mix, with control"
+
+[[piece]]
+id = "VG-U2-PROD-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/tactical_support.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_enemy_production_adapt.py"]
+depends_on = ["VG-U2-PROD-TESTS", "VG-CONTRACT-E7", "VG-E-prodslot", "VG-E-startforce"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one call from the tactical tick into the production adapt step"
+
+[[piece]]
+id = "VG-U3-CHRON-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_chronicle_context.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_chronicle_context.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: region, character and chain bonuses rank events, with control"
+
+[[piece]]
+id = "VG-U3-CHRON-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/chronicle.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_chronicle_context.py"]
+depends_on = ["VG-U3-CHRON-TESTS", "VG-U4-EVCHAR-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "chron_score_event computes the three context terms instead of passing zero"
+
+[[piece]]
+id = "VG-U4-EVCHAR-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_event_characters.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_event_characters.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: events fired by the tick carry a character id, with control"
+
+[[piece]]
+id = "VG-U4-EVCHAR-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/events.c", "csrc/generational.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_event_characters.py"]
+depends_on = ["VG-U4-EVCHAR-TESTS"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the tick's fire path calls the attach step the manual path uses"
+
+[[piece]]
+id = "VG-U5-BREAKAWAY-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_breakaway_skip.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_breakaway_skip.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: conquest then breakaway shows the skip, with control"
+
+[[piece]]
+id = "VG-U5-BREAKAWAY-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/lifecycle.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_breakaway_skip.py"]
+depends_on = ["VG-U5-BREAKAWAY-TESTS"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the conquest path sets the skip flag"
+
+[[piece]]
+id = "VG-U6-STRUCTDMG-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_structure_damage.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_structure_damage.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: structures take damage in play, with control"
+
+[[piece]]
+id = "VG-U6-STRUCTDMG-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/tactical_support.c", "csrc/unit.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_structure_damage.py"]
+depends_on = ["VG-U6-STRUCTDMG-TESTS", "VG-U2-PROD-WIRE", "LAB-REV2", "VG-T-R087-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "structure damage reachable from the tactical tick"
+
+[[piece]]
+id = "VG-U7-OBJECTIVES-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_objective_kinds.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_objective_kinds.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: the objective kinds other than eliminate-force, with control"
+
+[[piece]]
+id = "VG-U7-OBJECTIVES-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/mission.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_objective_kinds.py"]
+depends_on = ["VG-U7-OBJECTIVES-TESTS", "VG-CONTRACT-E7", "VG-E-prodslot", "VG-E1R", "VG-E-startforce", "VG-T-REACH-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "mission objective kinds wired into mission generation and the end check"
+
+[[piece]]
+id = "VG-U8-PREF-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_preferences.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_preferences.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: player preferences reach the sim through the pipe, with control"
+
+[[piece]]
+id = "VG-U8-PREF-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/pipe/om_pipe.c", "csrc/mission.c", "csrc/generational.c", "docs/architecture.md"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_preferences.py"]
+depends_on = ["VG-U8-PREF-TESTS", "VG-U7-OBJECTIVES-WIRE", "VG-CONTRACT-U0", "VG-U4-EVCHAR-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "pipe handler for preferences and the two sim reads"
+
+[[piece]]
+id = "VG-M-SKEL"
+manager = "M0"
+wave = 13
+owns = ["tests/qa/desktop/plays/M/S-flow.py", "autoload/era_theme_resolver.gd", "autoload/input_sanitizer.gd", "autoload/scanline_overlay.gd"]
+owns_glob = ["scenes/shared/world_view/*.gd"]
+acceptance = ["tests/qa/desktop/plays/M/S-flow.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "Lane M menus skeleton: one play and three autoload scripts, thinnest end-to-end path"
+
+[[piece]]
+id = "HARNESS-coverage"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
+owns_glob = ["docs/northstar/plans/drift_audits/coverage_runs/*"]
+acceptance = ["tests/specfactory/test_coverage_check.py"]
+depends_on = ["HARNESS-C235", "HARNESS-C4"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "coverage_run.sh, coverage_report.py, status_check.py check coverage, baseline file; under 250 lines"
+
