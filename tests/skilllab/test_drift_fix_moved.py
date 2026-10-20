@@ -3,7 +3,7 @@
 
 THE RULE (Architect, 2026-10-20; rulings on the audit, same day). A side's silence counter ADVANCES on a tick when (i) no unit of THAT side
 fired this tick (a unit fires when an enemy unit's hp falls; a side that is shot at and does not reply is NOT delayed by the hits it
-takes: a lone shooter must not silence its idle victims forever; FINDING-lab-d11, decision 49 condition (i) as amended 2026-10-20), and (ii) no IDLE-ELIGIBLE
+takes: a lone shooter must not silence its idle victims forever; FINDING-lab-d11, decision 49 as amended by decision 50, condition (i)), and (ii) no IDLE-ELIGIBLE
 LIVING unit of that side is displaced by MORE than contract.REENGAGE_MOVED_WU (strictly; Euclidean; DRAFT-reengage-moved-wu, 1 wu, Westley's
 number) from its position at the WINDOW START. Otherwise the counter is zeroed and a new window starts. The WINDOW START is the tick the
 counter was last zeroed (not a rolling reference; at the very start, the spawn). EVERY zeroing takes a fresh reference for the side's
@@ -19,8 +19,9 @@ a bug. A holder that marches away from the window start and then drops its desti
 is tested against the window start, so its large displacement zeroes the counter on the arrival tick: the first order lands at the arrival
 tick + N. (Reading B, a reference refreshed while the unit holds a destination, would order at N.)
 Why: a unit that holds an unreachable destination and shuttles in a ~70 wu loop (period ~40 ticks) zeroed the old counter forever (old
-reading: ANY living unit displaced above 1 wu from its position at the last reset, destination or not, and a hit zeroed only the shooter's
-side): the capped damage_up fight (tests/skilllab/integration/test_reengage_moved_real.py).
+reading: ANY living unit displaced above 1 wu from its position at the last reset, destination or not). The old reading differed from the
+pre-L8M code only on movement, condition (ii); condition (i), the side's own fire, is the pre-L8M reading kept (decision 49 as amended by
+decision 50; the L8M tip's 'either side fired' is retired): the capped damage_up fight (tests/skilllab/integration/test_reengage_moved_real.py).
 
 BUILDER MUST UPDATE THESE TWO TEXTS (they state the old reading; no test reads them): scripts/skilllab/contract.py line ~160, the comment
 on REENGAGE_MOVED_WU ('the last reset of the silence counter': say the window start, idle-eligible units only); and
@@ -205,7 +206,7 @@ def test_a_creep_of_an_idle_unit_is_measured_from_the_window_start_not_from_the_
 
 @pytest.mark.parametrize("victim", (0, 1))
 def test_a_hit_on_a_side_that_never_fired_does_not_zero_its_counter(victim):
-    """Condition (i) as amended 2026-10-20, FINDING-lab-d11 (decision 49: the side's own counter; TD-LAB-REV2-L8M-moved: the L8M tip delayed the
+    """Decision 49 as amended by decision 50 (condition (i): the side's own counter), FINDING-lab-d11 (TD-LAB-REV2-L8M-moved: the L8M tip delayed the
     victim to 2N - 4). A unit of `victim` loses hp at tick N - 4 (the other side fired; `victim` did not): the victim is re-engaged at N, the
     shooter's counter restarts and it is re-engaged at 2N - 4. Side 0 carries a looping holder, so a late order cannot be the holder's doing."""
     def hit(f):
@@ -310,7 +311,7 @@ def test_a_unit_displaced_earlier_and_killed_later_is_not_tested_after_its_death
 @pytest.mark.parametrize("shooter", (0, 1))
 def test_a_displacement_split_across_a_hit_the_side_dealt_does_not_add_up(shooter):
     """Every zeroing takes a fresh reference (TD-LAB-REV2-L8M-moved: the fixture was a hit dealt by the other side to the displaced unit's side;
-    under the amended condition (i) that hit zeroes nothing, so it now zeroes with the side's OWN hit). An idle unit (index 1) of `shooter`'s
+    under condition (i) as amended by decision 50 that hit zeroes nothing, so it now zeroes with the side's OWN hit). An idle unit (index 1) of `shooter`'s
     side is displaced 0.6 wu at tick N - 9 (not a move), then `shooter` deals a hit at tick N - 4 (an enemy unit loses hp), then the unit is
     displaced another 0.6 wu at tick N + 6. The hit restarted the window with the displaced position as reference, so the second 0.6 wu is
     0.6 wu from it and not a move: `shooter` is ordered at (N - 4) + N = 2N - 4. A reference refreshed only by a move leaves it at 1.2 wu

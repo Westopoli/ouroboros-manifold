@@ -2,7 +2,7 @@
 """LAB-REV2-L8: fight() re-engages a silent side. Fake-engine tests of the trigger (tests only; the builder writes scripts/skilllab).
 
 THE RULE (Architect decision 28 point 3, 'moved' semantics as ruled 2026-10-20, L8M, and amended the same day: the counter is the side's OWN; decision 49
-condition (i); the full rule is in test_drift_fix_moved.py, ledger TD-LAB-REV2-L8M-moved). A side with no ACTIVITY for REENGAGE_SILENCE_TICKS
+as amended by decision 50 (condition (i)); the full rule is in test_drift_fix_moved.py, ledger TD-LAB-REV2-L8M-moved). A side with no ACTIVITY for REENGAGE_SILENCE_TICKS
 while an enemy is visible to it has every idle unit holding an attack-move role attack-moved onto the enemy centroid; a guard-stance holder
 never gets it (R-096-08). Both sides, naive baselines included. A cap after a re-engage stays a defect (outcome "cap"). ACTIVITY on a tick,
 for a side, is: a unit of THAT side fired (a hit dealt by the side zeroes the side's counter and no other: a side that is shot at and does
@@ -202,7 +202,7 @@ def test_unbroken_silence_for_several_windows_is_still_one_event():
 
 @pytest.mark.parametrize("side", (0, 1))
 def test_a_hit_dealt_after_a_reengage_rearms_the_shooter_like_a_move(side):
-    """Decision 33 item 1 for fire, decision 49 condition (i) as amended 2026-10-20 (the side's own counter; FINDING-lab-d11): after its first
+    """Decision 33 item 1 for fire, decision 49 as amended by decision 50 (condition (i)) (the side's own counter; FINDING-lab-d11): after its first
     re-engage at N, `side` deals a hit (an enemy unit loses hp in step N + 5, so at tick N + 6): its second order is at hit tick + N. The
     wounded side did not fire and stays at its single one (TD-LAB-REV2-L8M-moved: the L8M tip had both at hit tick + N and (2, 2))."""
     hit_at = N + 6
@@ -224,7 +224,7 @@ def test_a_move_by_a_side_restarts_only_that_sides_silence(side):
 
 @pytest.mark.parametrize("side", (0, 1))
 def test_a_hit_dealt_restarts_the_shooters_silence_not_the_targets(side):
-    """Decision 49 condition (i) as amended 2026-10-20 (the side's own counter; FINDING-lab-d11; TD-LAB-REV2-L8M-moved: the L8M tip delayed the
+    """Decision 49 as amended by decision 50 (condition (i)) (the side's own counter; FINDING-lab-d11; TD-LAB-REV2-L8M-moved: the L8M tip delayed the
     target too). A side fires when an enemy unit loses hp. The wounded side did not fire: it re-engages at N; the shooter at hit tick + N."""
     k = N - 5
     res, fake = run([G(0), G(1)], cap=2 * N + 5, script_events={k: [wound(1 - side)]})
@@ -233,7 +233,7 @@ def test_a_hit_dealt_restarts_the_shooters_silence_not_the_targets(side):
 
 
 def test_a_kill_is_a_hit_and_a_dead_unit_is_not_ordered():
-    """Decision 49 condition (i) as amended 2026-10-20 (TD-LAB-REV2-L8M-moved: the L8M tip had side 0 at N + 1). The unit killed on the first
+    """Decision 49 as amended by decision 50 (condition (i)) (TD-LAB-REV2-L8M-moved: the L8M tip had side 0 at N + 1). The unit killed on the first
     step is side 0's: side 1 fired at tick 1 (re-engages at 1 + N), side 0 did nothing (at N) and its order lists only the survivor."""
     res, fake = run([G(0, 2), G(1, 2)], cap=N + 10, script_events={0: [kill(0, 0)]})
     dead, alive = fake.units_of(0)

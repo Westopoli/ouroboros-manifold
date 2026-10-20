@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 49 condition (i) as AMENDED by the Architect's ruling of 2026-10-20 (a side's silence counter advances when no unit of THAT side fired); FINDING-lab-d11
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 49 as amended by decision 50 (condition (i)), the Architect's ruling of 2026-10-20 (a side's silence counter advances when no unit of THAT side fired); FINDING-lab-d11
 """LAB-REV2-L8M2 against the real engine (OM_LAB_SLOW=1; a few seconds a fight): the range_up fights that the L8M tip capped or stretched
 through the lone-shooter silence now end by a re-engage.
 
@@ -12,11 +12,13 @@ Measured (scratch runs of 2026-10-20, same scene, same library):
                                                                      seed 2 swap False: side1 wins at tick 8860, survivors (0, 28), reengage (0, 0)
   a scratch of the amended rule (own-side counter + the L8M 'moved'; not committed): seed 1 swap True: side1, (0, 38), tick 2045, reengage (0, 1)
                                                                      seed 2 swap False: side1, (0, 36), tick 2395, reengage (0, 1)
-The end ticks and survivor counts are NOT asserted: the pre-L8M ticks (3630, 6424) are not reproduced by the amended rule (the L8M 'moved'
-changes the re-engage timing; the scratch ends at 2045 and 2395), and the engine and the lab are free to move them. What is asserted is what
-the amended condition (i) forces: a lone shooter that fires every 16 ticks at idle enemies who never reply must not silence them (decision 49
-as amended, FINDING-lab-d11), so side 1 (the side shot at) re-engages exactly once (reengage (0, 1)), the fight does not cap, and side 1 wins.
-Red on b35c4576: the survivor of side 0 fires on, side 1's counter is zeroed by every shot, reengage stays (0, 0) (seed 1: the cap)."""
+The numbers above are OBSERVATIONS, not guarantees. The end ticks, survivor counts and the winner are NOT asserted: the pre-L8M ticks (3630,
+6424) are not reproduced by the amended rule (the L8M 'moved' changes the re-engage timing; the scratch ends at 2045 and 2395), and the
+engine and the lab are free to move them. What decision 49 as amended by decision 50 (FINDING-lab-d11) forces is only this: a lone shooter that
+fires every 16 ticks at idle enemies who never reply must not silence them, so the side shot at (side 1) re-engages at least once
+(reengage[1] >= 1) and the fight does not stay capped (outcome != "cap"). Nothing is asserted about side 0's count or about who wins.
+Red on b35c4576: side 1's counter is zeroed by every shot of the survivor, reengage stays (0, 0); seed 1 caps at 12000 (outcome != "cap"
+fails), seed 2 ends at 8860 without a re-engage (reengage[1] >= 1 fails)."""
 import os
 import sys
 from pathlib import Path
@@ -55,9 +57,9 @@ def test_the_scene_is_the_traced_one():
 @SLOW
 @pytest.mark.parametrize("seed,swap", [(1, True), (2, False)])
 def test_the_range_up_fight_with_a_lone_shooter_ends_by_a_reengage_of_the_side_shot_at(library, seed, swap):
-    """Decision 49 condition (i) as amended 2026-10-20, FINDING-lab-d11. Side 1 wins by elimination of side 0, and its single re-engage is
-    what ended the stall: reengage (0, 1). Pre-L8M ticks 3630 and 6424 are in the module docstring, not asserted."""
+    """Decision 49 as amended by decision 50 (condition (i)), FINDING-lab-d11. The side shot at re-engages at least once and the fight does not
+    stay capped. The observed outcomes (side 1 wins; pre-L8M ticks 3630 and 6424) are in the module docstring, not asserted."""
     r = fight(_setup(swap), seed, swap, engine=library)
     where = f"seed {seed} swap {swap}: outcome {r.outcome}, survivors {r.survivors}, ticks {r.ticks}, reengage {r.reengage}"
-    assert r.outcome == "side1", where
-    assert tuple(r.reengage) == (0, 1), where
+    assert r.outcome != "cap", where
+    assert r.reengage[1] >= 1, where

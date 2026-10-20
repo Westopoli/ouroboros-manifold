@@ -1,7 +1,7 @@
-# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 49 condition (i), AMENDED by the Architect's ruling of 2026-10-20 (a side's silence counter advances when no unit of THAT side fired this tick; not "no unit of either side"); FINDING-lab-d11
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 49 as amended by decision 50 (condition (i)), the Architect's ruling of 2026-10-20 (a side's silence counter advances when no unit of THAT side fired this tick; not "no unit of either side"); FINDING-lab-d11
 """LAB-REV2-L8M2: the lone shooter must not silence its idle victims (scripts/skilllab/fight.py, _Reengage). Tests only; fake engine.
 
-Decision 49 (amended 2026-10-20), condition (i), FINDING-lab-d11: a side's re-engage silence counter advances on a tick when no unit of THAT
+Decision 49 as amended by decision 50 (condition (i)), FINDING-lab-d11: a side's re-engage silence counter advances on a tick when no unit of THAT
 side fired (the pre-L8M own-side reading), and condition (ii) (idle-eligible movement only) stands. The L8M tip read (i) as "no unit of either
 side fired": one survivor firing every 16 ticks at idle enemies it can hit and they cannot (they stand outside their own range, so they never
 reply) zeroed the victims' counter every 16 ticks, the victims never completed their 40-tick window, and the fight capped with a re-engage
@@ -64,7 +64,7 @@ def merged(*scripts):
 
 
 def test_a_lone_shooter_firing_every_16_ticks_does_not_silence_the_idle_victims_it_never_gets_a_reply_from():
-    """Decision 49 condition (i), amended 2026-10-20; FINDING-lab-d11. Side 0: the lone shooter, one unit, hitting a side-1 unit every 16
+    """Decision 49 as amended by decision 50 (condition (i)); FINDING-lab-d11. Side 0: the lone shooter, one unit, hitting a side-1 unit every 16
     ticks from tick 16 to the cap. Side 1: four idle attack-move victims whose last (only) shot is at tick 10. The victims' counter is their
     own: it completes at 10 + N, so side 1 is re-engaged by 10 + N + SLACK and its reengage count is at least 1. The shooter fires every 16
     ticks, so its own counter never completes (reengage[0] == 0: the control that the fixture is a shooter that keeps firing). Red on the L8M
