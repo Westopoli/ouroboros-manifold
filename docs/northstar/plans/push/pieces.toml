@@ -1882,7 +1882,7 @@ acceptance = ["tests/qa/desktop/plays/F/S-140.py"]
 depends_on = ["VG-F-SKEL-B", "VG-F-S143", "VG-F-S241"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "F-S140-CLICK: S-140 play selects every own unit and right-clicks the first clear corridor; DRAFT-s140-click-offset 360, DRAFT-s140-box-pad 12"
+size_estimate = "one play file: select the front UNITS_MAX own units on the side with the most room, click 360 px past their leading edge with a clear corridor, progress check unchanged"
 
 # Lane F part 1b (Architect 2026-10-12): the first tick of a networked match. Ledger FINDING-net-first-tick (arrives with the F-SKEL landing).
 [[piece]]
