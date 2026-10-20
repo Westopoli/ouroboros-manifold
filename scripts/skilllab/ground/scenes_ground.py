@@ -33,7 +33,7 @@ INERT_KNOBS = {
 
 
 def _holder_radius(n):
-    return 30 + 3 * math.sqrt(n)        # small on purpose: the natural 80 + 12 sqrt(n) blob spills off the narrow ribbon of the slope
+    return 30 + 3 * math.sqrt(n)        # DRAFT (measured): small on purpose: the natural 80 + 12 sqrt(n) blob spills off the narrow ribbon of the slope
 
 
 def _types(flyer_raider=False):
@@ -82,8 +82,8 @@ def _both(shape):
     return {"Vanguard": shape, "Raider": shape}
 
 
-NATURAL_ATTACKERS = _both(_blob_at(9330.0, 3135.0, 20.0))      # the slope's foot, band 2
-NATURAL_HOLDERS = _both(_blob_at(9050.0, 3180.0, _holder_radius))     # on the slope, past its midline, band 3
+NATURAL_ATTACKERS = _both(_blob_at(9330.0, 3135.0, 20.0))      # DRAFT (measured): the slope's foot, band 2
+NATURAL_HOLDERS = _both(_blob_at(9050.0, 3180.0, _holder_radius))     # DRAFT (measured): on the slope, past its midline, band 3
 
 
 def slope_top(size=16):
@@ -94,8 +94,8 @@ def slope_top(size=16):
 # post at (8900, 3220) sees none of them at eye heights 25 and 50 and all of them at 100 and 200 (measured 2026-10-19). Lines, because
 # a blob does not fit the ribbon (a unit shifts by up to contract.SHIFT_MAX per axis and must stay on walkable ground).
 # See also: slope_top, whose attackers stand where eye height changes nothing (INERT_KNOBS).
-MARGINAL_ATTACKERS = {"Vanguard": _line_at(9220.0, 2954.0, 12.0), "Raider": _line_at(9320.0, 2954.0, 12.0)}
-MARGINAL_HOLDERS = _both(_blob_at(8900.0, 3220.0, _holder_radius))
+MARGINAL_ATTACKERS = {"Vanguard": _line_at(9220.0, 2954.0, 12.0), "Raider": _line_at(9320.0, 2954.0, 12.0)}   # DRAFT (measured)
+MARGINAL_HOLDERS = _both(_blob_at(8900.0, 3220.0, _holder_radius))   # DRAFT (measured)
 
 
 def slope_top_marginal(size=16):
@@ -105,8 +105,9 @@ def slope_top_marginal(size=16):
 # s1_slope_top_flyer: the flyer-seen control (R-005-11). The Raider flies on both sides; the attacker Raiders hover on layer 2 over band 2
 # ground 1900 wu from the holders, who see a flyer from the larger sensor radius (800) times OM_TP_GROUND_FLYER_SEEN_MULT: not at 1.25
 # to 2 (1000 to 1600), at 3 (2400). The holder Raiders hover on layer 3 over band 3, so the multiplier applies to them as well.
-# See also: scenes.preflight, which routes a flyer by a straight line, since a flyer over lower ground has no path on the walk mask.
-FLYER_ATTACKERS = {"Vanguard": NATURAL_ATTACKERS["Vanguard"], "Raider": (_blob_at(10550.0, 4350.0, 8.0), ATTACK_LAYER + 1)}
+# See also: scenes.preflight (decisions 20 and 27), which routes a flyer over the cells no block reaching its layer covers, not the walk mask,
+# and reads terrain_walkable_at for walking movers only.
+FLYER_ATTACKERS = {"Vanguard": NATURAL_ATTACKERS["Vanguard"], "Raider": (_blob_at(10550.0, 4350.0, 8.0), ATTACK_LAYER + 1)}   # DRAFT (measured)
 FLYER_HOLDERS = {"Vanguard": NATURAL_HOLDERS["Vanguard"], "Raider": (NATURAL_HOLDERS["Raider"], HOLD_LAYER + 1)}
 
 

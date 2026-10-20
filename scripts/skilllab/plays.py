@@ -5,13 +5,12 @@ import math
 from scripts.skilllab.contract import Group, Setup
 
 _LINE_SPACING = 30
-MAX_TICKS_BIG = 12000   # A201: cells of 32 a side and above get the cap named here; same as the Setup default since 2026-10-06 (TD-LAB-tick-cap)
 _STATS = {}
 
 
 def max_ticks_for(size, enemy_heads):
-    """max_ticks of a play: MAX_TICKS_BIG when either side has 32 or more units, else the Setup default."""
-    return MAX_TICKS_BIG if max(size, enemy_heads) >= 32 else Setup.__dataclass_fields__["max_ticks"].default
+    """max_ticks of a play: the Setup default (12000) for every cell, big or small (A201 as changed 2026-10-06, TD-LAB-tick-cap)."""
+    return Setup.__dataclass_fields__["max_ticks"].default
 
 
 def unit_stats(name):
