@@ -1,6 +1,12 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order) and decision 33 (readings 1 to 4), amended by decision 43 items 2 to 4 (per-unit orders, no-op retry, the 1 wu moved threshold: tests in test_drift_fix_reengage.py); E-13 R-096-02, R-096-08, R-099-05
 """LAB-REV2-L8: fight() re-engages a silent side. Fake-engine tests of the trigger (tests only; the builder writes scripts/skilllab).
 
+AMENDED by the Architect's 2026-10-20 ruling (L8M, 'moved' semantics; corrects decision 43 item 4; tests in test_drift_fix_moved.py, ledger
+TD-LAB-REV2-L8M-moved): a side's silence counter advances on a tick only when NO unit of EITHER side fired (a hit dealt by either side zeroes
+both counters) and no IDLE-ELIGIBLE unit of that side is displaced more than DRAFT-reengage-moved-wu from its position at the window start.
+A unit holding a destination is never tested for movement. Where the paragraphs below say 'a fire or a move of s zeroes it', read that;
+the three fire tests below were rewritten (ledger row).
+
 THE RULE (Architect decision 28 point 3). When a side has had NO unit fire or move for REENGAGE_SILENCE_TICKS while an enemy is
 visible to it, every idle unit of that side holding an attack-move role is attack-moved onto the enemy centroid; a guard-stance
 holder never gets it (R-096-08). Both sides, naive baselines included. A cap after a re-engage stays a defect (outcome "cap").
@@ -196,14 +202,15 @@ def test_unbroken_silence_for_several_windows_is_still_one_event():
 
 
 @pytest.mark.parametrize("side", (0, 1))
-def test_a_hit_dealt_after_a_reengage_rearms_the_shooter_like_a_move(side):
-    """Decision 33 item 1 for fire: after its first re-engage at N, `side` deals a hit (an enemy unit loses hp in step N + 5, so at
-    tick N + 6): its second order is at hit tick + N. The wounded side did not fire and stays at its single one."""
+def test_a_hit_dealt_after_a_reengage_rearms_both_sides(side):
+    """TD-LAB-REV2-L8M-moved (was: rearms the shooter only; the wounded side stayed at its single one). After the first re-engage of both sides
+    at N, `side` deals a hit (an enemy unit loses hp in step N + 5, so at tick N + 6): a hit by EITHER side zeroes BOTH counters, so both sides'
+    second order is at hit tick + N and both counts are 2."""
     hit_at = N + 6
     res, fake = run([G(0), G(1)], cap=2 * N + 20, script_events={N + 5: [wound(1 - side)]})
     assert [t for t, _i, _g in fake.reengage_orders(side)] == [N, hit_at + N]
-    assert [t for t, _i, _g in fake.reengage_orders(1 - side)] == [N]
-    assert tuple(res.reengage)[side] == 2 and tuple(res.reengage)[1 - side] == 1
+    assert [t for t, _i, _g in fake.reengage_orders(1 - side)] == [N, hit_at + N]
+    assert tuple(res.reengage) == (2, 2)
 
 
 @pytest.mark.parametrize("side", (0, 1))
@@ -217,21 +224,22 @@ def test_a_move_by_a_side_restarts_only_that_sides_silence(side):
 
 
 @pytest.mark.parametrize("side", (0, 1))
-def test_a_hit_dealt_restarts_the_shooters_silence_not_the_targets(side):
-    """A side fires when an enemy unit loses hp. The wounded side did not fire: it re-engages at N; the shooter at hit tick + N."""
+def test_a_hit_dealt_by_either_side_restarts_both_sides_silence(side):
+    """TD-LAB-REV2-L8M-moved (was: a hit restarts the shooter's silence, not the target's). Whichever side deals the hit, both sides wait to
+    hit tick + N."""
     k = N - 5
     res, fake = run([G(0), G(1)], cap=2 * N + 5, script_events={k: [wound(1 - side)]})
     assert only(fake.reengage_orders(side))[0] == k + 1 + N
-    assert only(fake.reengage_orders(1 - side))[0] == N
+    assert only(fake.reengage_orders(1 - side))[0] == k + 1 + N
 
 
 def test_a_kill_is_a_hit_and_a_dead_unit_is_not_ordered():
-    """The unit killed on the first step is side 0's: side 1 fired at tick 1 (re-engages at 1 + N), side 0 did nothing (at N) and
-    its order lists only the survivor."""
+    """TD-LAB-REV2-L8M-moved (side 0 was N, now N + 1). The unit killed on the first step is side 0's: side 1 fired at tick 1, which zeroes both
+    counters (either side), so both re-engage at 1 + N, and side 0's order lists only the survivor."""
     res, fake = run([G(0, 2), G(1, 2)], cap=N + 10, script_events={0: [kill(0, 0)]})
     dead, alive = fake.units_of(0)
     tick, ids, _goal = only(fake.reengage_orders(0))
-    assert tick == N and list(ids) == [alive]
+    assert tick == N + 1 and list(ids) == [alive]
     assert only(fake.reengage_orders(1))[0] == N + 1
 
 

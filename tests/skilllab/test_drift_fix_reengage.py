@@ -17,7 +17,11 @@ INTERFACE FOR THE BUILDER
       retries after another REENGAGE_SILENCE_TICKS silent ticks. The retry tick is NOT PINNED between 2N and 2N + 1 (counted from the
       order or from the tick that found the no-op); each retry is one more event (reengage[s] += 1: every trigger is one event). An
       engage after which at least one ordered unit has a destination is not a no-op and is not retried inside the same silence period.
-    ITEM 4 (moved). A side has MOVED only when a living unit of it is displaced by MORE THAN contract.REENGAGE_MOVED_WU (strictly)
+    ITEM 4 (moved) IS AMENDED by the Architect's 2026-10-20 ruling (L8M, ledger TD-LAB-REV2-L8M-moved, tests in test_drift_fix_moved.py): the
+      reference is the position at the WINDOW START (the tick the counter was last zeroed), the tested set is the side's IDLE-ELIGIBLE units
+      (no destination, attack-move role) and a unit holding a destination is never tested; the strict > at 1 wu and the Euclidean distance
+      stand; a hit by either side zeroes both counters. Where the text below says 'a living unit of it' or 'ANY living unit', read 'any
+      idle-eligible unit'. ORIGINAL TEXT: A side has MOVED only when a living unit of it is displaced by MORE THAN contract.REENGAGE_MOVED_WU (strictly)
       from its reference position; a fire still zeroes the counter at once. PINNED REFERENCE (audit of 32039a0f: the earlier text said
       the tests hold for any reference; a rolling 'position REENGAGE_SILENCE_TICKS ago' reading fails 5 tests of test_reengage.py and
       7+ cases here, the first re-engage landing at 2N instead of N + 1): the reference of a unit is its position at the LAST RESET of
@@ -86,7 +90,7 @@ def test_only_idle_living_attack_move_units_are_ordered_one_each():
         f.set_dest(f.units_of(0)[0], (0.0, 0.0))
     res, fake = run([G(0, 3), G(1, 2)], cap=N + 5, script_events={0: [busy, kill(0, 1)]})
     calls = fake.reengage_calls(0)
-    assert [ids for _t, ids, _g in calls] == [[fake.units_of(0)[2]]] and calls[0][0] == N
+    assert [ids for _t, ids, _g in calls] == [[fake.units_of(0)[2]]] and calls[0][0] == N + 1    # TD-LAB-REV2-L8M-moved: was N; the kill zeroes both counters
 
 
 # ---------------------------------------------------------------------------------------------------------- item 3: a no-op engage is retried
@@ -204,13 +208,13 @@ def test_a_slide_of_more_than_one_wu_over_the_window_is_a_move():
 
 
 def settle_then(dx, dy=0.0, k=N - 5):
-    """Side 0's first unit is put at (0, 0) in step 1 (a move: the silence counts from tick 1), then displaced by (dx, dy) in step k + 1."""
-    def to_origin(f):
-        f.set_pos(f.units_of(0)[0], 0.0, 0.0)
-
+    """TD-LAB-REV2-L8M-moved (was: the first unit jumped to the origin in step 1, a 'move' that zeroed the counter at tick 1 and made the
+    unmoved order N + 1; under the L8M ruling a unit still holding its opening destination is never tested, and the window starts at the
+    spawn). Side 0's first idle unit is displaced by (dx, dy) from where it stands in step k + 1 (tick N - 4)."""
     def displace(f):
-        f.set_pos(f.units_of(0)[0], dx, dy)
-    return {0: [to_origin], k: [displace]}
+        u = f.units_of(0)[0]
+        f.set_pos(u, f.units[u]["x"] + dx, f.units[u]["y"] + dy)
+    return {k: [displace]}
 
 
 @pytest.mark.parametrize("dx,dy,moved", [
@@ -225,10 +229,10 @@ def settle_then(dx, dy=0.0, k=N - 5):
     (0.6, 0.6, False),        # 0.85 wu Euclid: not moved (L1 would read 1.2: moved)
 ])
 def test_a_displacement_counts_as_a_move_only_above_one_wu(dx, dy, moved):
-    """Silence counts from tick 1 (the first unit jumped from its spawn to the origin). A later displacement of (dx, dy) at tick N - 4
-    restarts the silence (order at 2N - 4) when it is above 1 wu and does not (order at N + 1) when it is not. Side 1 is the control."""
+    """A displacement of (dx, dy) of the first unit from its spawn at tick N - 4 restarts the silence (order at 2N - 4) when it is above 1 wu
+    and does not (order at N) when it is not. Side 1 is the control."""
     res, fake = run([G(0), G(1)], cap=2 * N + 5, script_events=settle_then(dx, dy))
-    assert only(fake.reengage_orders(0))[0] == (2 * N - 4 if moved else N + 1)
+    assert only(fake.reengage_orders(0))[0] == (2 * N - 4 if moved else N)
     assert only(fake.reengage_orders(1))[0] == N
 
 
