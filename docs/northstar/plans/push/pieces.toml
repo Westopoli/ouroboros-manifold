@@ -2974,10 +2974,10 @@ size_estimate = "one test file: the 16 observable mechanisms plus the place, pin
 id = "VG-CONTRACT-U0"
 manager = "M0"
 wave = 13
-owns = ["csrc/pipe/om_pipe.c", "csrc/pipe/pipe_dump_state.c", "docs/architecture.md", "tests/transport/test_pipe_dump_state.py", "autoload/bridge/frame_decode.gd"]
+owns = ["csrc/pipe/om_pipe.c", "csrc/pipe/pipe_dump_state.c", "csrc/pipe/pipe_internal.h", "Makefile", "csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "docs/architecture.md", "tests/transport/test_pipe_dump_state.py", "tests/test_frame_decode.gd", "autoload/bridge/frame_decode.gd"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_dump_state.py"]
-depends_on = ["VG-U-PIPE-TESTS", "VG-T-EMIT-WIRE"]
+depends_on = ["VG-U-PIPE-TESTS", "VG-T-EMIT-WIRE", "VG-CONTRACT-E7", "LAB-REV2-E0", "VG-CONTRACT-layerspot", "VG-CONTRACT-route"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "contract piece: the qa_dump_state frame fields Lane U tests read, the hold verb decision, documented in architecture.md"
@@ -2998,37 +2998,13 @@ size_estimate = "one test file: stances at tick 20 and over 2000 ticks, positive
 id = "VG-U1-DIPLO-WIRE"
 manager = "M0"
 wave = 13
-owns = ["csrc/worldgen.c", "csrc/faction.c", "csrc/diplomacy.c", "docs/bible/epics/E-06-diplomacy-and-technology.md"]
+owns = ["csrc/worldgen.c", "csrc/faction.c", "csrc/diplomacy.c", "docs/bible/epics/E-06-diplomacy-and-technology.md", "docs/bible/algorithms.md"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_diplomacy_live.py"]
 depends_on = ["VG-U1-DIPLO-TESTS", "B5"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "om_world_generate calls om_diplomacy_init; R-032-04 rewritten; under 40 lines of C"
-
-[[piece]]
-id = "VG-U2-PROD-TESTS"
-manager = "M0"
-wave = 13
-owns = ["tests/transport/test_pipe_enemy_production_adapt.py"]
-owns_glob = []
-acceptance = ["tests/transport/test_pipe_enemy_production_adapt.py"]
-depends_on = ["VG-CONTRACT-U0"]
-status = { state = "queued" }
-tests_pending = true
-size_estimate = "one test file: enemy production adapts to the player's force mix, with control"
-
-[[piece]]
-id = "VG-U2-PROD-WIRE"
-manager = "M0"
-wave = 13
-owns = ["csrc/tactical_support.c"]
-owns_glob = []
-acceptance = ["tests/transport/test_pipe_enemy_production_adapt.py"]
-depends_on = ["VG-U2-PROD-TESTS", "VG-CONTRACT-E7", "VG-E-prodslot", "VG-E-startforce"]
-status = { state = "queued" }
-tests_pending = true
-size_estimate = "one call from the tactical tick into the production adapt step"
 
 [[piece]]
 id = "VG-U3-CHRON-TESTS"
@@ -3046,7 +3022,7 @@ size_estimate = "one test file: region, character and chain bonuses rank events,
 id = "VG-U3-CHRON-WIRE"
 manager = "M0"
 wave = 13
-owns = ["csrc/chronicle.c"]
+owns = ["csrc/chronicle.c", "csrc/generational.c"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_chronicle_context.py"]
 depends_on = ["VG-U3-CHRON-TESTS", "VG-U4-EVCHAR-WIRE"]
@@ -3073,7 +3049,7 @@ wave = 13
 owns = ["csrc/events.c", "csrc/generational.c"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_event_characters.py"]
-depends_on = ["VG-U4-EVCHAR-TESTS"]
+depends_on = ["VG-U4-EVCHAR-TESTS", "VG-U1-DIPLO-WIRE"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the tick's fire path calls the attach step the manual path uses"
@@ -3094,37 +3070,13 @@ size_estimate = "one test file: conquest then breakaway shows the skip, with con
 id = "VG-U5-BREAKAWAY-WIRE"
 manager = "M0"
 wave = 13
-owns = ["csrc/lifecycle.c"]
+owns = ["csrc/collision.c", "csrc/resolve.c", "csrc/faction.c"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_breakaway_skip.py"]
-depends_on = ["VG-U5-BREAKAWAY-TESTS"]
+depends_on = ["VG-U5-BREAKAWAY-TESTS", "VG-U3-CHRON-WIRE"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the conquest path sets the skip flag"
-
-[[piece]]
-id = "VG-U6-STRUCTDMG-TESTS"
-manager = "M0"
-wave = 13
-owns = ["tests/transport/test_pipe_structure_damage.py"]
-owns_glob = []
-acceptance = ["tests/transport/test_pipe_structure_damage.py"]
-depends_on = ["VG-CONTRACT-U0"]
-status = { state = "queued" }
-tests_pending = true
-size_estimate = "one test file: structures take damage in play, with control"
-
-[[piece]]
-id = "VG-U6-STRUCTDMG-WIRE"
-manager = "M0"
-wave = 13
-owns = ["csrc/tactical_support.c", "csrc/unit.c"]
-owns_glob = []
-acceptance = ["tests/transport/test_pipe_structure_damage.py"]
-depends_on = ["VG-U6-STRUCTDMG-TESTS", "VG-U2-PROD-WIRE", "LAB-REV2", "VG-T-R087-WIRE"]
-status = { state = "queued" }
-tests_pending = true
-size_estimate = "structure damage reachable from the tactical tick"
 
 [[piece]]
 id = "VG-U7-OBJECTIVES-TESTS"
@@ -3145,7 +3097,7 @@ wave = 13
 owns = ["csrc/mission.c"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_objective_kinds.py"]
-depends_on = ["VG-U7-OBJECTIVES-TESTS", "VG-CONTRACT-E7", "VG-E-prodslot", "VG-E1R", "VG-E-startforce", "VG-T-REACH-WIRE"]
+depends_on = ["VG-U7-OBJECTIVES-TESTS", "VG-U5-BREAKAWAY-WIRE", "VG-CONTRACT-E7", "VG-E-prodslot", "VG-E1R", "VG-E-startforce", "VG-T-REACH-WIRE"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "mission objective kinds wired into mission generation and the end check"
@@ -3169,7 +3121,7 @@ wave = 13
 owns = ["csrc/pipe/om_pipe.c", "csrc/mission.c", "csrc/generational.c", "docs/architecture.md"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_preferences.py"]
-depends_on = ["VG-U8-PREF-TESTS", "VG-U7-OBJECTIVES-WIRE", "VG-CONTRACT-U0", "VG-U4-EVCHAR-WIRE"]
+depends_on = ["VG-U8-PREF-TESTS", "VG-U7-OBJECTIVES-WIRE", "VG-U3-CHRON-WIRE", "VG-CONTRACT-U0"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "pipe handler for preferences and the two sim reads"
@@ -3178,8 +3130,8 @@ size_estimate = "pipe handler for preferences and the two sim reads"
 id = "VG-M-SKEL"
 manager = "M0"
 wave = 13
-owns = ["tests/qa/desktop/plays/M/S-flow.py", "autoload/era_theme_resolver.gd", "autoload/input_sanitizer.gd", "autoload/scanline_overlay.gd"]
-owns_glob = ["scenes/shared/world_view/*.gd"]
+owns = ["tests/qa/desktop/plays/M/S-flow.py", "scenes/loading_screen/loading_screen.gd", "scenes/new_game/new_game.gd", "autoload/era_theme_resolver.gd", "autoload/input_sanitizer.gd", "autoload/scanline_overlay.gd"]
+owns_glob = ["scenes/shared/world_view/**"]
 acceptance = ["tests/qa/desktop/plays/M/S-flow.py"]
 depends_on = []
 status = { state = "queued" }
@@ -3190,7 +3142,7 @@ size_estimate = "Lane M menus skeleton: one play and three autoload scripts, thi
 id = "HARNESS-coverage"
 manager = "M0"
 wave = 13
-owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
+owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md", "scripts/specfactory/reach_lint.py"]
 owns_glob = ["docs/northstar/plans/drift_audits/coverage_runs/*"]
 acceptance = ["tests/specfactory/test_coverage_check.py"]
 depends_on = ["HARNESS-C235", "HARNESS-C4"]
