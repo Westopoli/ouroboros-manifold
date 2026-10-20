@@ -3079,6 +3079,30 @@ tests_pending = true
 size_estimate = "the conquest path sets the skip flag"
 
 [[piece]]
+id = "VG-U9-ADMIN-TESTS"
+manager = "M0"
+wave = 13
+owns = ["tests/transport/test_pipe_admin_chain.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_admin_chain.py"]
+depends_on = ["VG-CONTRACT-U0"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one test file: a triggered admin revolt spawns a chain event with the library template and the root's tag, with control"
+
+[[piece]]
+id = "VG-U9-ADMIN-WIRE"
+manager = "M0"
+wave = 13
+owns = ["csrc/friction.c", "csrc/events.c"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_admin_chain.py"]
+depends_on = ["VG-U9-ADMIN-TESTS", "VG-CONTRACT-U4-EVCHAR"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the admin chain queues the library template the rule names"
+
+[[piece]]
 id = "VG-U7-OBJECTIVES-TESTS"
 manager = "M0"
 wave = 13
