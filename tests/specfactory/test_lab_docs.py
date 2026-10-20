@@ -246,8 +246,12 @@ _README_CLAIMS = {
     "count-is-can-engage": (7, ("can_engage", "parity")),
     # section 12, open
     "speed-marks-finding": (12, ("FINDING-speed-marks-unmet", "Westley")),
-    # decision 39
-    "orders-per-unit-default": (None, ("`orders_per_unit`", "True", "E1b", "smoke", "zero")),
+    # decision 39 item 3 as superseded by decision 40 (the flip rides the lab landing; TD-LAB-REV2-L7-3)
+    "orders-per-unit-default": (None, ("orders_per_unit", "False", ("flipped", "flips"), "group attack-move", "lab landing",
+                                       "E1", "E1b", "smoke", "zero")),
+    # decision 41 item 6: ruling 4's 8..48 is the scan of the plays; the golden-hash controls keep their own range (TD-LAB-REV2-FIX-docs)
+    "scan-range-plays-not-golden-controls": (None, (("8 to 48", "8..48"), "plays", "golden", ("8 to 24", "8..24"),
+                                                    ("10 replicates", "ten replicates"))),
     "arc-cone-batch-two": (None, ("arc", "cone", "built", "E2", "batch two")),
 }
 
@@ -287,6 +291,39 @@ def test_readme_names_the_ground_scene_and_does_not_present_highground_as_live()
             if "highground.py" in ln and "deleted" not in ln.lower() and "retired" not in ln.lower()]
     assert not live, f"README presents ground/highground.py (deleted by L6) as existing: {live[0][:100]}"
     assert "s1_slope_top" in text, "README never names the ground scene s1_slope_top"
+
+
+def test_readme_no_longer_holds_orders_per_unit_at_true():
+    """Decision 40 item 1: the flip rides the lab landing, so no README block says the default stays True or waits on the flip
+    (TD-LAB-REV2-L7-3; it said 'until both hold orders_per_unit stays True')."""
+    stale = [b for b in _blocks(README.read_text())
+             if "orders_per_unit" in b.lower() and re.search(r"stays true|true by default|until both hold|holds? [^.]*at true", b, re.I)]
+    assert not stale, "README still holds orders_per_unit at True: " + stale[0][:160]
+
+
+def test_control_the_stale_orders_check_would_catch_the_old_sentence():
+    """Positive control for the check above: the sentence it retires does match."""
+    old = "`Setup.orders_per_unit` is True by default; until both hold `orders_per_unit` stays True."
+    assert [b for b in _blocks(old) if re.search(r"stays true|true by default|until both hold|holds? [^.]*at true", b, re.I)]
+
+
+GROUND = REPO / "scripts" / "skilllab" / "ground"
+
+
+def test_ground_files_no_longer_say_a_flyer_is_routed_by_a_straight_line():
+    """Decisions 20 and 27: a flyer is routed on the 50 wu grid like a walker, only the mask differs; the straight-line walk is retired.
+    ground/README.md and the scenes_ground.py comment said otherwise (decision 41 item 6; TD-LAB-REV2-FIX-docs)."""
+    files = [p for p in sorted(GROUND.iterdir()) if p.is_file() and p.suffix in (".py", ".md")]
+    assert any(p.name == "README.md" for p in files) and any(p.name == "scenes_ground.py" for p in files)
+    hits = [(p.name, ln.strip()[:120]) for p in files for ln in p.read_text().splitlines()
+            if re.search(r"straight[- ]line", ln, re.I) or re.search(r"routes? a flyer .*straight", ln, re.I)]
+    assert not hits, hits
+
+
+def test_ground_readme_still_describes_the_flyer_variant():
+    """Positive control for the grep above: the variant is still described, only the retired routing sentence goes."""
+    text = (GROUND / "README.md").read_text()
+    assert "s1_slope_top_flyer" in text and "scenes.preflight" in text
 
 
 @pytest.mark.parametrize("fid", ["FINDING-damage-up-layer-above", "FINDING-group-orders-cap", "FINDING-attackmove-idle-cap"])

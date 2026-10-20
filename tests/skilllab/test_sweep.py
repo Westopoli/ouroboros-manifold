@@ -23,11 +23,15 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
         not an exemption: no test here asserts a damage-up response on s3_layer_above.
     refine(values, differs, max_rounds=2) -> [(round, value), ...]    differs(value) -> bool, called once per value
     Capabilities(arc, cone) (namedtuple of bool); detect(engine) -> Capabilities; skip_reason(family, caps) -> str | None
-    baseline_roles(play) -> tuple of roles; the roles for sweep rows: "play", "reach_zero" (the null control's build), and the
-        baselines "naive_attacker", "naive_defender" (a play whose name starts "s3_" has "naive_defender_attacker_layer" and
-        "naive_defender_play_layer" in place of "naive_defender", ruling 3 DRAFT). Decisions 24: a play with a holder carries a
-        `naive_defender*` role and gets the second listed crossing against it; a meeting (both sides attack-moved, no holder) carries
-        none and has none. refined_vs has one key per role that some run play's baseline_roles lists, and no other.
+    baseline_roles(setup) -> tuple of roles (LAB-REV2-FIX, Architect decision 41 ruling 3; was baseline_roles(play): the play's NAME is never
+        read). `setup` is the play's own Setup (the sweep passes builds(play, "play", layout)(ENEMY_FROM, False)). The roles for sweep
+        rows: "play", "reach_zero" (the null control's build), and the baselines "naive_attacker" always, then, only for a HOLDER (side 0
+        has a group on order "guard"): "naive_defender"; or, when a side-0 group stands on a layer no side-1 group stands on (a layer
+        holder), "naive_defender_attacker_layer" and "naive_defender_play_layer" in place of "naive_defender" (ruling 3 DRAFT; the
+        layer reading is the test writer's, question Q-FIX-1). A meeting (no side-0 guard group, an empty Setup included) carries
+        "naive_attacker" alone and has no second crossing (decisions 24). refined_vs has one key per role that some run play's
+        baseline_roles lists, and no other. The fakes (fakes_scans.fake_groups) give a Setup a guard group by default; `meeting=` plays
+        have none. Details: test_drift_fix_holder.py.
     run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES,
                full_scan=False) -> dict    full_scan False (the default) scans by bisection, True fights every headcount 8 to 48
         the entry: family, skipped, csv, rows, refined (sorted values added by refinement, all baselines), refined_vs ({baseline role:
@@ -544,9 +548,11 @@ def test_a_layer_play_gets_the_naive_defender_twice_on_the_attackers_layer_and_o
     rows = read(tmp_path, "range_up")
     assert {r["baseline"] for r in rows if r["kind"] == "grid"} == {"none", "naive_attacker", "naive_defender_attacker_layer",
                                                                      "naive_defender_play_layer"}
-    assert sweep.baseline_roles("s3_layer_above") == ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
-    assert sweep.baseline_roles("s2_concave") == ("naive_attacker", "naive_defender")
-    assert sweep.baseline_roles("s3_types_by_reach")[1:] == ("naive_defender_attacker_layer", "naive_defender_play_layer")
+    holder = lambda play, **kw: sweep.baseline_roles(fake_builds(**kw)(play, "play", {})(16, False))
+    assert holder("s3_layer_above") == ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
+    assert holder("s2_concave") == ("naive_attacker", "naive_defender")
+    assert holder("s3_types_by_reach")[1:] == ("naive_defender_attacker_layer", "naive_defender_play_layer")
+    assert holder("s3_layer_above", meeting=("s3_layer_above",)) == ("naive_attacker",)       # control: the guard group is what decides
 
 
 def test_states_are_on_for_every_sweep_fight_controls_included(tmp_path):
@@ -619,22 +625,20 @@ def test_a_meeting_has_no_holder_so_no_second_crossing_and_a_play_with_a_holder_
     """Decisions 24: the second listed crossing goes to every play whose baseline_roles carries a naive_defender* role (a holder), and
     to no other. p_meet is a meeting (no holder): its roles are the naive attacker alone. The defender's gain changes sign, the
     attacker's never does, so the second crossing exists exactly where a defender baseline is run."""
-    real = sweep.baseline_roles
-    monkeypatch.setattr(sweep, "baseline_roles", lambda play: ("naive_attacker",) if play == "p_meet" else real(play))
     be = _be_range(lambda v: 20, attacker=10, defender=lambda v: 18 if v >= 0.9 else 22)
-    entry, world = run(tmp_path / "meet", "range_up", world=World(be_of=be), plays=("p_meet",))
+    meet = fake_builds(meeting=("p_meet",))                       # LAB-REV2-FIX: a meeting is a Setup with no guard group, not a monkeypatched role list
+    entry, world = run(tmp_path / "meet", "range_up", world=World(be_of=be), plays=("p_meet",), builds=meet)
     assert set(entry["refined_vs"]) == {"naive_attacker"} and entry["refined"] == [] and entry["refined_vs"]["naive_attacker"] == []
     assert not [c for c in world.calls if c["role"].startswith("naive_defender")]
     assert {r["baseline"] for r in read(tmp_path / "meet", "range_up")} <= {"none", "naive_attacker"}
-    entry, _ = run(tmp_path / "both", "range_up", world=World(be_of=be), plays=("p_meet", "p2"))        # positive control: a holder play adds it
+    entry, _ = run(tmp_path / "both", "range_up", world=World(be_of=be), plays=("p_meet", "p2"), builds=meet)        # positive control: a holder play adds it
     assert entry["refined_vs"]["naive_defender"] == [0.875, 0.9375] and set(entry["refined_vs"]) == {"naive_attacker", "naive_defender"}
 
 
 def test_a_layer_play_lists_a_crossing_per_defender_baseline(tmp_path):
     be = _be_range(lambda v: 20 if v >= 0.7 else 12, defender=lambda v: 16)
     entry, _ = run(tmp_path, "range_up", world=World(be_of=be), plays=("s3_layer_above",))
-    assert set(entry["refined_vs"]) == set(sweep.baseline_roles("s3_layer_above")) == {
-        "naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer"}
+    assert set(entry["refined_vs"]) == {"naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer"}
     assert all(v == [0.625, 0.6875] for v in entry["refined_vs"].values())
 
 

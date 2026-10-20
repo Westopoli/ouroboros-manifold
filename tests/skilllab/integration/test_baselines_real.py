@@ -40,8 +40,9 @@ def library():
     return engine.Engine()
 
 
-def roles_of(play):
-    return ("play",) + sweep.baseline_roles(play)
+def roles_of(play, features):
+    """LAB-REV2-FIX: the roles come from the play's placed Setup, not from its name (TD-LAB-REV2-FIX-roles-arg)."""
+    return ("play",) + sweep.baseline_roles(sweep.default_builds(play, "play", features)(16, False))
 
 
 @pytest.mark.parametrize("heads", [8, 48])
@@ -49,7 +50,7 @@ def roles_of(play):
 @pytest.mark.parametrize("layout", sweep.SMOKE_LAYOUTS)
 def test_every_build_is_labelled_with_the_preflight_of_its_own_setup(library, layout, play, heads):
     features = sweep.smoke_layouts()[layout]
-    for role in roles_of(play):
+    for role in roles_of(play, features):
         build = sweep.default_builds(play, role, features)
         setup = build(heads, False)
         assert build.labels["prefight"] == scenes.preflight(setup, library), (layout, play, role, heads)
@@ -65,7 +66,7 @@ def test_layout_192_places_every_baseline_in_open_cells_at_every_headcount(libra
     The unit at x = 3277 of the 48-unit naive_attacker defender blob is IN the anchor's region (the east side connects to the anchor
     through the choke wall's gap rows 1880 to 2120 and round the wall's ends) and stays."""
     features = sweep.smoke_layouts()["192"]
-    for role in roles_of(play):
+    for role in roles_of(play, features):
         build = sweep.default_builds(play, role, features)
         setup = build(heads, False)
         assert build.labels["prefight"] == "ok", (play, role, heads)
@@ -145,7 +146,7 @@ def test_e_the_sweep_over_the_real_builds_on_layout_192_reaches_48_with_nothing_
         rows = list(csv.DictReader(fh))
     assert entry["refused"] == [] and entry["baseline_no_fit"] == []
     for play in S3:
-        for baseline in ("none",) + sweep.baseline_roles(play):
+        for baseline in ("none",) + sweep.baseline_roles(sweep.default_builds(play, "play", layouts["192"])(16, False)):
             heads = [int(r["enemy_heads"]) for r in rows if r["play"] == play and r["baseline"] == baseline and r["kind"] == "grid"]
             assert heads and max(heads) == 48, (play, baseline)
     assert {r["baseline_no_fit"] for r in rows} == {"0"} and {r["prefight"] for r in rows} == {"ok"}

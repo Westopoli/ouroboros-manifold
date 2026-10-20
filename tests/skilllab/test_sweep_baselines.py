@@ -68,7 +68,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
 
 from fakes_baselines import (aligned, cell_of, cell_open, expected_skipping, fake_base, in_block, inside_canvas, keyed,  # noqa: E402
                              nearest_free_cell, positions, rounded, route_region, single_unit_cell, vg)
-from fakes_scans import _fr  # noqa: E402
+from fakes_scans import _fr, fake_groups  # noqa: E402
 from scripts.skilllab import scenes, sweep  # noqa: E402
 from scripts.skilllab.contract import Block, Setup  # noqa: E402
 
@@ -100,7 +100,7 @@ def limited_builds(limits=None, refuse=None, refuse_at=None):
             if word == "ok" and k is not None and enemy_heads > k:
                 word = "no_fit"
             build.labels["prefight"] = word
-            return Setup(groups=(), unit_types={"enemy": enemy_heads, "swap": swap, "_play": play, "_role": role, "_layout": layout.get("id")})
+            return Setup(groups=fake_groups(play), unit_types={"enemy": enemy_heads, "swap": swap, "_play": play, "_role": role, "_layout": layout.get("id")})
         build.labels = {"placement_shift": 0.0, "prefight": None}
         return build
     return builds
@@ -148,7 +148,7 @@ def test_c_a_baseline_variant_refused_by_the_preflight_is_not_fought_and_is_list
     assert not [c for c in fights.calls if c["role"] == role]
     got = [r for r in entry["refused"] if r["play"] == play]
     assert [(r["family"], r["layout"], r["role"], r["reason"]) for r in got] == [("damage_up", l, role, word) for l in LAYOUTS]
-    others = [r for r in sweep.baseline_roles(play) if r != role] + ["play"]
+    others = [r for r in sweep.baseline_roles(Setup(groups=fake_groups(play), unit_types={})) if r != role] + ["play"]
     for other in others:
         assert heads_of(fights, play, 1, other)[-1] == 48, other
     assert not [r for r in rows if r["outcome"] == "cap"] and entry["defects"]["cap_rows"] == 0
@@ -171,7 +171,7 @@ def test_c_a_baseline_refused_at_the_smallest_or_the_largest_headcount_only_is_n
     assert not [c for c in fights.calls if c["role"] == role]
     got = [r for r in entry["refused"] if r["play"] == play]
     assert [(r["layout"], r["role"], r["reason"]) for r in got] == [(l, role, word) for l in LAYOUTS]
-    for other in [r for r in sweep.baseline_roles(play) if r != role] + ["play"]:
+    for other in [r for r in sweep.baseline_roles(Setup(groups=fake_groups(play), unit_types={})) if r != role] + ["play"]:
         assert heads_of(fights, play, 1, other)[-1] == 48, other
     assert entry.get("baseline_no_fit", []) == [] and not [r for r in rows if r["outcome"] == "cap"]
 
@@ -512,8 +512,11 @@ def test_c_a_baseline_variant_is_preflighted_on_its_own_setup_not_on_the_plays_l
 # ---- (d) a baseline built by sweep._naive_side skips blocked cells (decisions 26, 32, 36) ------------------------------------------
 
 def mixed_side0():
-    """Side 0 holds with two types, Vanguards on layer 0 and Raiders on layer 1 (a layer play's shape); side 1 attacks from layer 0."""
-    return [vg(0, "Vanguard", 8, 1100.0, 1000.0, layer=0, order="guard", facing=0.0), vg(0, "Raider", 8, 900.0, 1000.0, layer=1, order="guard", facing=0.0),
+    """Side 0 holds with two types, Vanguards on layer 0 and Raiders on layer 1 (a layer play's shape), both anchored at (1000, 1000);
+    side 1 attacks from layer 0. (LAB-REV2-FIX, decision 41 ruling 2: the naive defender puts each TYPE at that type's mean anchor, so
+    the two types share one anchor here and the mean-anchor tests below keep their meaning; two anchors: test_drift_fix_holder.py.
+    TD-LAB-REV2-FIX-anchor: the Vanguards were at 1100 and the Raiders at 900.)"""
+    return [vg(0, "Vanguard", 8, 1000.0, 1000.0, layer=0, order="guard", facing=0.0), vg(0, "Raider", 8, 1000.0, 1000.0, layer=1, order="guard", facing=0.0),
             vg(1, "Vanguard", 8, 3000.0, 1000.0, layer=0, order="attack_move", facing=180.0)]
 
 
@@ -728,21 +731,22 @@ def test_d_the_continuation_stays_in_the_canvas_and_the_anchors_region(fake_scen
 
 # ---- (b) open ground: the baselines are byte-identical to the built tree ----------------------------------------------------------
 
-# sha256 over repr((play, role, heads, side, unit, layer, order, positions)) of default_builds for s2_concave and s3_layer_above on an open
-# layout (features FEATS), heads 8, 17, 48, every baseline role but naive_attacker. Recorded on the built tree 2741d544.
-OPEN_BASELINE_HASH = "dfc06c36b51bc7663c5a1de087c4d3508a389b6d507c82a9bac3a2fefd0613a5"
+# sha256 over repr((play, role, heads, side, unit, layer, order, positions)) of default_builds for s2_concave (ONE unit type) and its
+# naive_defender role on an open layout (features FEATS), heads 8, 17, 48. LAB-REV2-FIX (decision 41 ruling 2: one blob per unit type at
+# that type's mean anchor): a side of one type puts its blob where it always did, so the hash is the old one restricted to this row;
+# s3_layer_above (two types at different anchors) left the hash, its blobs move by design. TD-LAB-REV2-FIX-hash.
+OPEN_BASELINE_HASH = "cdb5f5c17f6d834c0318b4cc69a408aadf4dbc677293ef7b6d55906bc526bc1f"
 
 
-def test_b_open_ground_baseline_blobs_are_byte_identical_to_the_built_tree(library):
+def test_b_open_ground_baseline_blobs_of_a_one_type_side_are_byte_identical_to_the_built_tree(library):
     import hashlib
     h = hashlib.sha256()
-    for play in (PLAY, S3):
-        for role in sweep.baseline_roles(play)[1:]:
-            build = sweep.default_builds(play, role, FEATS)
-            for n in (8, 17, 48):
-                for g in build(n, False).groups:
-                    h.update(repr((play, role, n, g.side, g.unit, g.layer, g.order, positions(g))).encode())
-                assert build.labels["prefight"] == "ok", (play, role, n)
+    for play, role in ((PLAY, "naive_defender"),):
+        build = sweep.default_builds(play, role, FEATS)
+        for n in (8, 17, 48):
+            for g in build(n, False).groups:
+                h.update(repr((play, role, n, g.side, g.unit, g.layer, g.order, positions(g))).encode())
+            assert build.labels["prefight"] == "ok", (play, role, n)
     assert h.hexdigest() == OPEN_BASELINE_HASH
 
 

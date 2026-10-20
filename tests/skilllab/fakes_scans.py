@@ -1,7 +1,7 @@
 """Hand-built ProfileMap/ScanResult objects for the profile and conditions-all tests. No engine."""
 import dataclasses
 
-from scripts.skilllab.contract import CellResult, FightResult, ScanResult, Setup
+from scripts.skilllab.contract import CellResult, FightResult, Group, ScanResult, Setup
 from scripts.skilllab.evidence import Thresholds
 from scripts.skilllab.profile import PROFILE_SKILLS, ProfileMap, subsets
 
@@ -91,10 +91,23 @@ def _fr(outcome, enemy_heads, firing=((0, 16, 16),), fus=(1.0, 1.0), margin=None
                        winner="side0" if won0 else "side1" if outcome == "side1" else None)
 
 
-def fake_builds(refuse=None, log=None):
+def fake_groups(play, meeting=False):
+    """The two groups a fake play's Setup carries (LAB-REV2-FIX, ruling 3: sweep.baseline_roles reads the Setup, never the play's name).
+    A HOLDER (the default) has a side-0 group on guard; `meeting=True` has both sides attack-moving and no guard group. For the fakes
+    only, a name starting "s3_" puts the holder one layer above the enemy (a layer holder: the two layer variants of the naive
+    defender), as the real s3 plays once did by name; the sweep never reads the name."""
+    layer = 1 if play.startswith("s3_") and not meeting else 0
+    return (Group(side=0, unit="Vanguard", count=8, formation="blob", x=-700.0, y=0.0, facing_deg=0.0, layer=layer,
+                  order="attack_move" if meeting else "guard", params={"radius": 114.0}),
+            Group(side=1, unit="Vanguard", count=8, formation="blob", x=700.0, y=0.0, facing_deg=180.0, layer=0,
+                  order="attack_move", params={"radius": 114.0}))
+
+
+def fake_builds(refuse=None, log=None, meeting=()):
     """builds(play, role, layout) -> BuildFn, the sweep's seam (test_sweep.py header). The Setup carries what the sweep put on it;
     unit_types holds the cell's identity so a fight_fn can read it. `refuse`: {(play, role): prefight word}. `log`: appended
-    (play, role) per builds call. build.labels['prefight'] is set at call time, as scenes.placed_scene does."""
+    (play, role) per builds call. `meeting`: the plays with no guard group (fake_groups). build.labels['prefight'] is set at call time,
+    as scenes.placed_scene does."""
     refuse = refuse or {}
 
     def builds(play, role, layout):
@@ -104,7 +117,7 @@ def fake_builds(refuse=None, log=None):
 
         def build(enemy_heads, swap):
             build.labels["prefight"] = word
-            return Setup(groups=(), unit_types={"enemy": enemy_heads, "swap": swap, "_play": play, "_role": role})
+            return Setup(groups=fake_groups(play, play in meeting), unit_types={"enemy": enemy_heads, "swap": swap, "_play": play, "_role": role})
         build.labels = {"placement_shift": 0.0, "prefight": None}
         return build
     return builds
