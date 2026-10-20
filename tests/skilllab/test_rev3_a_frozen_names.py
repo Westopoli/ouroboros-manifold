@@ -59,3 +59,31 @@ def test_the_unavailable_family_is_read_from_the_frozen_names(tmp_path):
     summary = sweep.run(list(sweep.FAMILY_ORDER), tmp_path / "all", builds=fake_builds(), layouts={"A": {}}, plays=("p",),
                         fight_fn=ScriptedFight(be_of=lambda s: 20), caps=CAPS)
     assert list(summary["unavailable"]) == [family]
+
+
+# ---- Q4 (Architect, 2026-10-20, implementation; Westley may veto): the probe's names are frozen too ----------------------------------------
+
+PROBE_NAMES = ("survey", "checked", "seeds", "probed")
+REFUSED_KEYS = {"family", "play", "layout", "role", "reason", "checked", "seeds"}      # the frozen shape of an `inert_knob` refusal
+PROBED_KEYS = {"family", "play", "layout", "first_differing", "line"}                   # the frozen shape of a `probed` record
+
+
+@pytest.mark.parametrize("name", PROBE_NAMES)
+def test_the_probe_names_are_frozen(name):
+    """contract.FROZEN_NAMES gains `survey` (probe.survey), `checked` and `seeds` (the refused entry's keys) and `probed` (the entry and
+    summary key): membership only, no length, and the first two positions stay. Red today: not in the tuple."""
+    assert name in contract.FROZEN_NAMES
+    assert contract.FROZEN_NAMES[:2] == ("inert_knob", "category")
+
+
+def test_the_refused_entry_and_the_probed_record_have_the_frozen_keys(tmp_path):
+    """The `inert_knob` entry's keys are exactly REFUSED_KEYS, the `probed` record's exactly PROBED_KEYS, and the names in them that are
+    FROZEN_NAMES come from the constant. Red today: no `checked`/`seeds`, no `probed`."""
+    def result(setup, seed, swap):
+        return _fr("side0" if setup.unit_types["enemy"] <= 24 else "side1", setup.unit_types["enemy"])
+
+    entry = sweep.run_family("range_up", tmp_path, builds=fake_builds(), layouts={"A": {"id": 1}}, plays=("p1",),
+                             fight_fn=ScriptedFight(result_of=result), caps=CAPS, probe=True)
+    assert [set(r) for r in entry["refused"]] == [REFUSED_KEYS]
+    assert [set(r) for r in entry["probed"]] == [PROBED_KEYS]
+    assert {"checked", "seeds", "probed"} <= set(contract.FROZEN_NAMES) and entry["refused"][0]["reason"] == contract.FROZEN_NAMES[0]
