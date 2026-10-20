@@ -184,3 +184,28 @@ After a fresh drift audit of `push/labrev2-lab-m4`. All fixes are tests first, i
 8. Accepted as implementation (extras), each with its file: `contract.trim_series` and the lean pool path (`scripts/skilllab/contract.py`, `scripts/skilllab/pool.py`); the E3 settle-cache clearing in `om_move_load_radius` and the 2R > margin clamp in `om_move_probe_sure_blocked` (`csrc/tactical_move.c`); `sweep.in_band` (`scripts/skilllab/sweep.py`).
 
 Two heads-ups from the Architect: Westley asked whether a unit that sees an enemy should attack it (a report is with him; if he rules yes, L8 re-engage and mop-up become unnecessary and the E1 row grows, so L8 gets no more work than it needs to land). Westley asked two Opus analysts for wider roster mixes (M0-M4 use only four of six types), so the mix table must stay data-driven.
+
+## 43. The orders flip, re-engage and blind posts (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto; item 4's number and item 7 are Westley's)
+Evidence (the overseer's): the orders flip fails decision 23's zero-cap condition. Under `orders_per_unit=False` the smoke keeps 3 baseline-row caps and the flyer scene caps; under per-unit control there are zero caps. Two mechanisms. A: the re-engage group order is a no-op, because group slots are the click plus each unit's own offset from the group centroid (units already at the centroid get a destination equal to where they stand), and the trigger never re-arms after a no-op. B: survivors are blind to each other at the layout-192 doorway, so "while an enemy is visible" (decision 28) never holds.
+1. Flip, conditional. Mechanism A is fixed first inside the FIX piece (items 2 and 3, two small `fight.py` changes with tests), then the 3-layout smoke is rerun under `orders_per_unit=False`. If every remaining non-control cap is a mechanism-B row, the flip rides the landing and those rows are listed under one finding (item 6), so there is one golden re-record. If any other cap remains, the lab lands without the flip (default True, flip tests parked on `push/labrev2-flip-tests`) and the flip is its own later piece; the second re-record is then the price. Decision 23's condition now reads "zero caps outside `control_*` that are not blind-post findings".
+2. Re-engage issues a per-unit attack-move for every idle unit, one order each, onto the centroid. Re-engage is a lab-issued order and is exempt from the play's orders mode.
+3. A no-op engage (every ordered unit has dest None one tick later) re-arms at once and retries after another `REENGAGE_SILENCE_TICKS`. No new number.
+4. "Moved" for re-arming is displacement over the silence window greater than `DRAFT-reengage-moved-wu` 1 wu, marked DRAFT in code and in the artifact header. Westley's number, on his list.
+5. No walking toward an unseen enemy; "while an enemy is visible" stands (decision 28). A fight whose survivors cannot see each other is a finding row, not a cap defect of the lab. Pre-flight gains the reason `blind_post` (item 6).
+6. Shift, then refuse. The baseline builder moves a naive-defender post that is blind to the play's side start to the nearest free cell on the route grid from which that start is visible (same region, increasing radius, ties by the existing spiral order) and reports the shift in the row. If no such cell lies within the guard radius (200 wu, DRAFT), pre-flight refuses the baseline with reason `blind_post` and the artifact says "no naive defender: blind post". Tests first.
+7. A guard stepping out to shoot a visible out-of-range enemy is not ruled here: it is Westley's (one of the three cases of his "sees it, attacks it" question).
+8. His "sees it, attacks it" question is not ruled yet; the report is with Westley. FIX and the merge proceed, with no L8 change beyond items 2 and 3. If he rules "sees it, attacks it", L8 and mop-up fall away in a later piece.
+
+## 44. The blind-post probe and its shift (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+Makes decision 43 item 6 testable (the "Q6" of that decision).
+1. A naive-defender post is blind iff no clear sightline exists under R-098-02 (a blocked 100 wu cell on a layer at or below the viewer's layer crossing the segment) between the post and the nearest point of the opposing side's route start region, range ignored. The probe is pure lab-side geometry on the Setup's blocks in `scripts/skilllab/scenes.py`: no engine call and no spawned world.
+2. Shift: the nearest free route-grid cell in the same region with a clear sightline, by increasing radius, ties by the spiral order, within the guard radius 200 wu (DRAFT). None found: pre-flight refuses with reason `blind_post`, the fifth reason after `no_fit`, `unroutable`, `no_reach`.
+3. Tests, first: a wall cell on the segment makes the probe say blind, and the shift lands on the first cell past the wall's shadow; a clear segment says not blind; the shadow test is on layer offsets (a block whose top is below the viewer's layer does not block).
+4. The artifact lists every refused baseline, for every reason, as one line "no naive <role>: <reason>" with the reason one of `no_fit`, `unroutable`, `no_reach`, `blind_post`. It is built in L5's report. This replaces decision 43 item 6's wording "no naive defender: blind post".
+
+Smaller readings confirmed:
+5. The retry tick of decision 43 item 3 is N after the no-op is detected.
+6. `defects.cells` excludes blind caps.
+7. Unequal-count groups of one type use the plain mean.
+8. One blob per (type, layer) only when a type's layers differ, else one per type (decision 25 reads so).
+9. The parity default world is the open-ground mirror blob, 16 v 16, tick 0, arc 360.
