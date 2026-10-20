@@ -195,3 +195,17 @@ Evidence (the overseer's): the orders flip fails decision 23's zero-cap conditio
 6. Shift, then refuse. The baseline builder moves a naive-defender post that is blind to the play's side start to the nearest free cell on the route grid from which that start is visible (same region, increasing radius, ties by the existing spiral order) and reports the shift in the row. If no such cell lies within the guard radius (200 wu, DRAFT), pre-flight refuses the baseline with reason `blind_post` and the artifact says "no naive defender: blind post". Tests first.
 7. A guard stepping out to shoot a visible out-of-range enemy is not ruled here: it is Westley's (one of the three cases of his "sees it, attacks it" question).
 8. His "sees it, attacks it" question is not ruled yet; the report is with Westley. FIX and the merge proceed, with no L8 change beyond items 2 and 3. If he rules "sees it, attacks it", L8 and mop-up fall away in a later piece.
+
+## 44. The blind-post probe and its shift (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+Makes decision 43 item 6 testable (the "Q6" of that decision).
+1. A naive-defender post is blind iff no clear sightline exists under R-098-02 (a blocked 100 wu cell on a layer at or below the viewer's layer crossing the segment) between the post and the nearest point of the opposing side's route start region, range ignored. The probe is pure lab-side geometry on the Setup's blocks in `scripts/skilllab/scenes.py`: no engine call and no spawned world.
+2. Shift: the nearest free route-grid cell in the same region with a clear sightline, by increasing radius, ties by the spiral order, within the guard radius 200 wu (DRAFT). None found: pre-flight refuses with reason `blind_post`, the fifth reason after `no_fit`, `unroutable`, `no_reach`.
+3. Tests, first: a wall cell on the segment makes the probe say blind, and the shift lands on the first cell past the wall's shadow; a clear segment says not blind; the shadow test is on layer offsets (a block whose top is below the viewer's layer does not block).
+4. The artifact lists every refused baseline, for every reason, as one line "no naive <role>: <reason>" with the reason one of `no_fit`, `unroutable`, `no_reach`, `blind_post`. It is built in L5's report. This replaces decision 43 item 6's wording "no naive defender: blind post".
+
+Smaller readings confirmed:
+5. The retry tick of decision 43 item 3 is N after the no-op is detected.
+6. `defects.cells` excludes blind caps.
+7. Unequal-count groups of one type use the plain mean.
+8. One blob per (type, layer) only when a type's layers differ, else one per type (decision 25 reads so).
+9. The parity default world is the open-ground mirror blob, 16 v 16, tick 0, arc 360.
