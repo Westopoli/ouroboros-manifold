@@ -1,4 +1,6 @@
 # spec: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
+#       and docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1 HARNESS-C1b (rev 3a)
+# Rule pins: R-990-01@?
 """Tests for scripts/specfactory/status_check.py.
 
 Method rev 2, guard 7: the status copies (programme lane table, pieces.toml
@@ -11,6 +13,18 @@ branch named "base" at the first, one unrelated commit on a side branch) and
 runs the script by its repo path with --repo tmp_path --base base. Relative
 fixture paths are passed with cwd = tmp_path = --repo, so either resolution
 rule (against cwd or against --repo) finds the same file.
+
+HARNESS-C1b extends this file at the bottom with check `pins`: "`status_check.py` on the fixture repo prints
+`STATUS pins WARN 1 stale` with no `FU-HARNESS-findings` row and `DRIFT` with an attached one (the four-line
+assertion of `test_status_check.py` becomes a per-line check, `TD-HARNESS-C1`)"; "prints `STATUS pins WARN <n>
+stale|missing` while the row `FU-HARNESS-findings` is not attached in `pieces.toml` and `STATUS pins DRIFT ...`
+after ... exit 0 on WARN"; check `pins` is "whole-tree `rule_pins_tests.py check` plus `rule_pins.py check` over
+the specs named by every row's `spec` key". Fixture id R-990-01 (rule line in the fixture epics only): pinned @?
+above. Moved under TD-HARNESS-C1: LINE_RE gains WARN; test_clean_fixtures_give_four_ok_lines_and_exit_0 checks
+the four original lines one by one instead of the whole list of lines (a fifth line `STATUS pins` appears).
+UNSTATED INTERFACE (reported): the pins check runs the two tools that sit beside status_check.py on --repo; a row
+of pieces.toml names its spec with `spec = "<md path>"`, relative to --repo; the row is `FU-HARNESS-findings`,
+state `attached` (only that state flips the switch, as owner_lint reads it).
 
 Controls: the fixture builds (base sha is an ancestor of base, the side sha is
 not) and the STATUS line format regex matches a hand-written line; both pass
@@ -30,7 +44,7 @@ STORIES = "docs/bible/stories.md"
 REVIEWS = "docs/northstar/story_reviews"
 ROADMAP = "docs/northstar/ROADMAP.md"
 
-LINE_RE = re.compile(r"^STATUS (\w+) (OK|DRIFT)\b.*$")
+LINE_RE = re.compile(r"^STATUS (\w+) (OK|WARN|DRIFT)\b.*$")
 
 REVIEW_HEADER = (
     "| story | lane | run id | screenshot path | qa_state file | reviewer | "
@@ -168,6 +182,7 @@ def line_for(res, check):
 def test_control_status_line_format_regex():
     assert LINE_RE.match("STATUS lane_table OK 3 shas checked")
     assert LINE_RE.match("STATUS seen DRIFT 3 approved vs 2 Seen")
+    assert LINE_RE.match("STATUS pins WARN 1 stale")
     assert not LINE_RE.match("status seen drift")
 
 
@@ -183,12 +198,14 @@ def test_control_fixture_build_has_base_and_side_shas(tmp_path):
 # ---------------------------------------------------------------- positive control for the script
 
 def test_clean_fixtures_give_four_ok_lines_and_exit_0(tmp_path):
+    # TD-HARNESS-C1: was `[m.group(1) for m in map(LINE_RE.match, lines)] == ["lane_table", "pieces", "seen",
+    # "roadmap"]` and `all(LINE_RE.match(ln).group(2) == "OK" for ln in lines)`; the pins line is a fifth one now.
     build_fixture(tmp_path)
     res = run_check(tmp_path)
-    lines = status_lines(res)
-    assert [m.group(1) for m in map(LINE_RE.match, lines)] == \
-        ["lane_table", "pieces", "seen", "roadmap"], res.stdout + res.stderr
-    assert all(LINE_RE.match(ln).group(2) == "OK" for ln in lines), res.stdout
+    for name in ("lane_table", "pieces", "seen", "roadmap"):
+        hits = line_for(res, name)
+        assert len(hits) == 1 and LINE_RE.match(hits[0]).group(2) == "OK", (name, res.stdout)
+    assert all(LINE_RE.match(ln) for ln in status_lines(res)), res.stdout
     assert res.returncode == 0, res.stdout + res.stderr
 
 
@@ -259,3 +276,94 @@ def test_roadmap_programme_row_without_path_is_drift(tmp_path):
     assert drift, res.stdout
     assert res.returncode == 1
 
+
+
+# ---------------------------------------------------------------- HARNESS-C1b: check pins
+
+EPIC_TEXT = "# E-99 Test epic\n\n- R-990-01  Given a town, When it grows, Then it never form rings around the core.\n"
+RULE_PIN = "b2a3c8"  # section 3 formula on the rule line above (proved by the control below)
+STALE_PIN = "000000"
+FU_ROW = "FU-HARNESS-findings"
+
+
+def _put(repo, rel, text):
+    p = repo / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text)
+
+
+def _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=None, fu_state=None):
+    """build_fixture plus the fixture epics, one test citing R-990-01 with `Rule pins: R-990-01@<test_pin>`, an
+    optional spec named by a pieces row (`spec_tag` is the text of its [B] tag), an optional FU-HARNESS-findings row."""
+    build_fixture(tmp_path)
+    _put(tmp_path, "docs/bible/epics/E-99-test.md", EPIC_TEXT)
+    _put(tmp_path, "tests/test_x.py",
+         f"# Rule pins: R-990-01@{test_pin}\ndef test_x():\n    \"\"\"R-990-01\"\"\"\n    assert True\n")
+    pieces = (tmp_path / PIECES).read_text()
+    if spec_tag is not None:
+        _put(tmp_path, "docs/spec.md", f"# Spec\n\nThe lot draws 7 rows. {spec_tag}\n")
+        pieces += ('\n[[piece]]\nid = "P-SPEC"\nmanager = "M0"\nowns = ["d.c"]\nowns_glob = []\n'
+                   'acceptance = ["t.py"]\ndepends_on = []\nspec = "docs/spec.md"\n'
+                   'status = { state = "in_flight" }\ntests_pending = true\n')
+    if fu_state is not None:
+        pieces += (f'\n[[piece]]\nid = "{FU_ROW}"\nmanager = "M0"\nowns = ["e.c"]\nowns_glob = []\n'
+                   f'acceptance = ["t.py"]\ndepends_on = []\nstatus = {{ state = "{fu_state}" }}\n'
+                   f'tests_pending = false\n')
+    (tmp_path / PIECES).write_text(pieces)
+
+
+def test_control_pins_fixture_builds_and_the_other_four_checks_stay_ok(tmp_path):
+    """Green today: the fixture with a stale test and an attached FU row changes none of the four old checks."""
+    _pins_fixture(tmp_path, test_pin=STALE_PIN, fu_state="attached")
+    res = run_check(tmp_path)
+    for name in ("lane_table", "pieces", "seen", "roadmap"):
+        assert all(LINE_RE.match(ln).group(2) == "OK" for ln in line_for(res, name)), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_pins_ok_when_every_pin_is_right(tmp_path):
+    _pins_fixture(tmp_path, test_pin=RULE_PIN)
+    res = run_check(tmp_path)
+    hits = line_for(res, "pins")
+    assert len(hits) == 1 and hits[0].startswith("STATUS pins OK"), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_pins_stale_test_pin_warns_without_an_attached_follow_up_row(tmp_path):
+    _pins_fixture(tmp_path, test_pin=STALE_PIN)
+    res = run_check(tmp_path)
+    assert "STATUS pins WARN 1 stale" in line_for(res, "pins")[0], res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_pins_stale_test_pin_is_drift_with_an_attached_follow_up_row(tmp_path):
+    _pins_fixture(tmp_path, test_pin=STALE_PIN, fu_state="attached")
+    res = run_check(tmp_path)
+    assert line_for(res, "pins")[0].startswith("STATUS pins DRIFT"), res.stdout
+    assert res.returncode == 1, res.stdout + res.stderr
+
+
+def test_pins_follow_up_row_that_is_not_attached_still_warns(tmp_path):
+    """The switch reads the row state the way owner_lint does: only `attached` flips it (queued or in flight do not)."""
+    for state in ("queued", "in_flight"):
+        sub = tmp_path / state
+        sub.mkdir()
+        _pins_fixture(sub, test_pin=STALE_PIN, fu_state=state)
+        res = run_check(sub)
+        assert line_for(res, "pins")[0].startswith("STATUS pins WARN 1 stale"), (state, res.stdout)
+        assert res.returncode == 0, (state, res.stdout + res.stderr)
+
+
+def test_pins_missing_pin_in_a_row_spec_warns_as_missing(tmp_path):
+    """The specs named by every row's spec key are checked too (rule_pins.py check)."""
+    _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag="[B R-990-01: words]")
+    res = run_check(tmp_path)
+    assert line_for(res, "pins")[0].startswith("STATUS pins WARN 1 missing"), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_pins_right_pin_in_a_row_spec_is_ok(tmp_path):
+    _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=f"[B R-990-01@{RULE_PIN}: words]")
+    res = run_check(tmp_path)
+    assert line_for(res, "pins")[0].startswith("STATUS pins OK"), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
