@@ -13,6 +13,14 @@ INTERFACE FROZEN FOR THE BUILDER
       caps.arc False -> the exact string "skipped: E0 absent"; parity_fn is NOT called.
       caps.arc True  -> parity_fn()'s return value, written as given (the ints firing.parity returns: the units whose composed answer
                         differs from the engine's, [] when parity holds; a dict of such lists is as good: the value is not reshaped).
+  THE DEFAULT parity_fn (parity_fn=None with caps.arc True; frozen by the audit of 013370a4, Architect's coordinator 2026-10-19): a dedicated
+    16 v 16 mirror world, NOT one of the smoke's fights: Setup = sweep.default_control_builds()["mirror"](16, False), i.e. the lab's own
+    mirror blob play plays.blob_play(16) (open ground, so no smoke layout shapes it; the key is simply written once per smoke, with the first
+    smoke layout's run), both sides placed in the real engine exactly as fight() places them (same type registration, spawn and opening
+    orders, seed 0), then firing.parity(engine, w, units0, units1, 360.0) is run ONCE at the first sample tick (tick 0, before any
+    engine step) and its return value is the summary value. The unit tests never use it (they pass parity_fn); the SLOW integration test
+    integration/test_drift_fix_parity_real.py runs it on the real library (skipped with reason 'E0 absent' without OM_TP_FIRING_ARC_DEG and
+    om_combat_can_engage). The README (or the harness spec) documents the `parity` key of smoke_summary.json (tests/specfactory/test_lab_docs.py).
   Nothing else in the summary or in smoke.csv changes: rows_sha256 is the same in both states.
 The fake engine is sweep's own FakeLib convention (test_sweep.py): param_id raises ValueError for an unknown parameter."""
 import json

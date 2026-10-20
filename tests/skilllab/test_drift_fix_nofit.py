@@ -121,3 +121,27 @@ def test_control_a_walker_on_unwalkable_ground_beside_a_guard_on_walkable_ground
 def test_the_flyer_rule_needs_no_engine_argument():
     assert scenes.preflight(_setup("Vanguard", UNWALKABLE, "move"), None) == "ok"
     assert scenes.preflight(_setup("Walker", UNWALKABLE, "move"), None) == "no_fit"
+
+
+# ---- side 1 moves too (audit of 013370a4, item D): the rule reads the group, not its side ----------------------------------------------
+
+def _setup_side1(unit, at, order):
+    """Side 1: one `unit` at `at` with `order` (a mover goes to FOE); side 0: an idle Vanguard on walkable ground at FOE."""
+    mover = _group(1, unit, at, order, goal=FOE if order in ("move", "attack_move", "group_move") else None)
+    return Setup(groups=(_group(0, "Vanguard", FOE, "idle"), mover), unit_types=dict(WALKER),
+                 terrain=Terrain(canvas=CANVAS, blocks=(), field_seed=11))
+
+
+@pytest.mark.parametrize("order", ["move", "attack_move", "group_move"])
+def test_a_side_1_walking_mover_on_unwalkable_ground_is_no_fit(lib, order):
+    """Control (green before): the side-1 walker is read like the side-0 one."""
+    assert scenes.preflight(_setup_side1("Walker", UNWALKABLE, order), lib) == "no_fit"
+
+
+@pytest.mark.parametrize("order", ["move", "attack_move", "group_move"])
+def test_a_side_1_flyer_over_unwalkable_ground_is_ok(lib, order):
+    assert scenes.preflight(_setup_side1("Vanguard", UNWALKABLE, order), lib) == "ok"
+
+
+def test_control_a_side_1_walker_on_walkable_ground_is_ok(lib):
+    assert scenes.preflight(_setup_side1("Walker", WALKABLE, "move"), lib) == "ok"

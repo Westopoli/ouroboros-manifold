@@ -780,7 +780,7 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
 #           reading of decision 29 item 4; no value is pinned for them). LAB-REV2-FIX (decision 41 ruling 7, TD-LAB-REV2-FIX-drafts) adds
 #           four more, always listed, once each: DRAFT-coarse-step (scan.COARSE_STEP), DRAFT-control-max-ticks (sweep.CONTROL_MAX_TICKS),
 #           DRAFT-probe-count-bound (the at-most-14 probes of a bisected scan) and DRAFT-ground-geometry (the ground scenes' coordinates
-#           and radii); always, because the artifact cannot tell from the rows which scans or scenes a batch ran (Q-FIX-2). No name containing "slope" (the slope divisor joins only in a
+#           and radii) and, from decision 43 item 4 (TD-LAB-REV2-FIX-moved), DRAFT-reengage-moved-wu (contract.REENGAGE_MOVED_WU, 1 wu); always, because the artifact cannot tell from the rows which scans or scenes a batch ran (Q-FIX-2). No name containing "slope" (the slope divisor joins only in a
 #           batch that runs the ground scene; nothing here says how the artifact would know, so no positive test) and none containing
 #           "band" (the 0.25x to 4x band is a ruling, decision 31 F, not a draft number).
 #       <section id="findings">: for each notable, in diagram.notables order: one <h2 data-notable="<id>"> holding the sentence, then the
@@ -1239,7 +1239,7 @@ def test_l5_artifact_cone_grid_section_is_the_charts_grid_or_says_there_is_no_co
     assert len(tables) == 1 and tables[0].text() == _tree(_charts.cone_grid_html(rows)).find("table")[0].text()
 
 
-FIX_DRAFTS = ("DRAFT-coarse-step", "DRAFT-control-max-ticks", "DRAFT-probe-count-bound", "DRAFT-ground-geometry")
+FIX_DRAFTS = ("DRAFT-coarse-step", "DRAFT-control-max-ticks", "DRAFT-probe-count-bound", "DRAFT-ground-geometry", "DRAFT-reengage-moved-wu")
 
 
 def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):

@@ -247,9 +247,8 @@ _README_CLAIMS = {
     "count-is-can-engage": (7, ("can_engage", "parity")),
     # section 12, open
     "speed-marks-finding": (12, ("FINDING-speed-marks-unmet", "Westley")),
-    # decision 39 item 3 as superseded by decision 40 (the flip rides the lab landing; TD-LAB-REV2-L7-3)
-    "orders-per-unit-default": (None, ("orders_per_unit", "False", ("flipped", "flips"), "group attack-move", "lab landing",
-                                       "E1", "E1b", "smoke", "zero")),
+    # the orders_per_unit default is no longer a mandatory-text claim: decision 43 item 1 makes the flip conditional on a smoke rerun, so
+    # test_readme_states_the_orders_per_unit_default_the_code_has (below) reads the default and checks the README against it (TD-LAB-REV2-L7-3)
     # decision 41 item 6: ruling 4's 8..48 is the scan of the plays; the golden-hash controls keep their own range (TD-LAB-REV2-FIX-docs)
     "scan-range-plays-not-golden-controls": (None, (("8 to 48", "8..48"), "plays", "golden", ("8 to 24", "8..24"),
                                                     ("10 replicates", "ten replicates"))),
@@ -294,18 +293,60 @@ def test_readme_names_the_ground_scene_and_does_not_present_highground_as_live()
     assert "s1_slope_top" in text, "README never names the ground scene s1_slope_top"
 
 
-def test_readme_no_longer_holds_orders_per_unit_at_true():
-    """Decision 40 item 1: the flip rides the lab landing, so no README block says the default stays True or waits on the flip
-    (TD-LAB-REV2-L7-3; it said 'until both hold orders_per_unit stays True')."""
-    stale = [b for b in _blocks(README.read_text())
-             if "orders_per_unit" in b.lower() and re.search(r"stays true|true by default|until both hold|holds? [^.]*at true", b, re.I)]
-    assert not stale, "README still holds orders_per_unit at True: " + stale[0][:160]
+CONTRACT = REPO / "scripts" / "skilllab" / "contract.py"
+
+_STALE_TRUE = r"stays true|true by default|until both hold|holds? [^.]*at true|per-unit by default"
+_STALE_FALSE = r"flipped|false by default|default is false|default flipped"
+_STATE_TOKENS = {   # what ONE README block must carry for each state of the default
+    True: ("orders_per_unit", "True", ("per-unit", "per unit"), "flip"),
+    False: ("orders_per_unit", "False", "group attack-move", "flipped", "lab landing"),
+}
 
 
-def test_control_the_stale_orders_check_would_catch_the_old_sentence():
-    """Positive control for the check above: the sentence it retires does match."""
-    old = "`Setup.orders_per_unit` is True by default; until both hold `orders_per_unit` stays True."
-    assert [b for b in _blocks(old) if re.search(r"stays true|true by default|until both hold|holds? [^.]*at true", b, re.I)]
+def _orders_default() -> bool:
+    """Setup.orders_per_unit's default as contract.py writes it, read at test time (no import: the doc test runs without the package path)."""
+    m = re.search(r"^\s+orders_per_unit:\s*bool\s*=\s*(True|False)\b", CONTRACT.read_text(), re.M)
+    assert m, "contract.py has no 'orders_per_unit: bool = ...' field line"
+    return m.group(1) == "True"
+
+
+def orders_default_problems(text: str, default: bool) -> list[str]:
+    """README-style `text` against the code's `default`: [] when one block states exactly that default and no orders_per_unit block states
+    the other. Decision 43 item 1 (TD-LAB-REV2-L7-3): the flip is conditional, so the doc follows the code, whichever it is."""
+    problems = []
+    if not _has_block(text, *_STATE_TOKENS[default]):
+        problems.append(f"no single block carries {_STATE_TOKENS[default]} (the default is {default})")
+    stale = _STALE_FALSE if default else _STALE_TRUE
+    bad = [b for b in _blocks(text) if "orders_per_unit" in b.lower() and re.search(stale, b, re.I)]
+    if bad:
+        problems.append("a block states the other default: " + bad[0][:140])
+    return problems
+
+
+def test_readme_states_the_orders_per_unit_default_the_code_has():
+    default = _orders_default()
+    assert orders_default_problems(README.read_text(), default) == []
+
+
+TRUE_TEXT = "- Orders: `Setup.orders_per_unit` is True by default, so the opening is per-unit; the default flips to group attack-move once the smoke caps zero fights."
+FALSE_TEXT = "- Orders: `Setup.orders_per_unit` is False; the default was flipped to group attack-move in the lab landing, per-unit stays the opt-in."
+
+
+def test_control_the_consistency_check_passes_each_state_against_its_own_text():
+    assert orders_default_problems(TRUE_TEXT, True) == [] and orders_default_problems(FALSE_TEXT, False) == []
+
+
+def test_mutant_a_readme_that_says_flipped_while_the_code_default_is_true_fails():
+    assert orders_default_problems(FALSE_TEXT, True)
+
+
+def test_mutant_a_readme_that_says_true_while_the_code_default_is_false_fails():
+    assert orders_default_problems(TRUE_TEXT, False)
+
+
+def test_mutant_a_readme_that_says_nothing_about_the_default_fails_both_ways():
+    silent = "- Orders: the opening attack-move goes out as the setup says."
+    assert orders_default_problems(silent, True) and orders_default_problems(silent, False)
 
 
 GROUND = REPO / "scripts" / "skilllab" / "ground"
@@ -427,3 +468,20 @@ def test_l1_no_longer_owns_the_harness_spec():
     # decision 39 item 7: two in-flight rows never own one file; L1 is built and has no further edit to it.
     l1 = next(p for p in _lab_rev2_rows() if p["id"] == "LAB-REV2-L1")
     assert "docs/northstar/plans/skilllab-harness-spec.md" not in l1["owns"], "LAB-REV2-L1 still owns the harness spec"
+
+
+# --- LAB-REV2-FIX audit item B: the smoke's `parity` key is documented (decision 41 ruling 1; TD-LAB-REV2-FIX-parity-doc) ---
+
+_PARITY_TOKENS = ("smoke_summary.json", "`parity`", "skipped: E0 absent")
+
+
+def test_the_smoke_summary_parity_key_is_documented_in_the_readme_or_the_harness_spec():
+    """One README block or one harness-spec block names smoke_summary.json, the `parity` key and its E0-absent string. The text is the
+    builder's; the tokens are the interface (tests/skilllab/test_drift_fix_parity.py header)."""
+    assert _has_block(README.read_text(), *_PARITY_TOKENS) or _has_block(HARNESS.read_text(), *_PARITY_TOKENS)
+
+
+def test_control_the_parity_doc_check_accepts_a_block_that_has_the_tokens_and_refuses_one_that_lacks_them():
+    good = "- Smoke: `smoke_summary.json` carries `parity`: the units where the composed and the engine's answers differ, or skipped: E0 absent."
+    assert _has_block(good, *_PARITY_TOKENS)
+    assert not _has_block(good.replace("skipped: E0 absent", "n/a"), *_PARITY_TOKENS)
