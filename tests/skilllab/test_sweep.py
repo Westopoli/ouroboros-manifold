@@ -1215,28 +1215,27 @@ def test_an_unknown_option_is_still_refused(tmp_path, capsys):
     assert exc.value.code == 2
 
 
-# ---- the orders_per_unit default stays True (decisions 23, superseding the L4 flip of decisions 13 and 21) ------------------------------
+# ---- the orders_per_unit default is False: the group attack-move (decisions 13, 21, 23, 40; ledger TD-LAB-REV2-flip) -----------------
 
-# Decisions 13 and 21 flipped the Setup default to False in the L4 landing, only because E1 lands in the same landing. Decisions 23
-# tightened that: the default flips to the group attack-move only when E1 is in the landing AND the smoke caps zero under group orders.
-# Until both hold `orders_per_unit` stays True. The smoke does not (7 of 108 play fights cap on layout 192 under group orders:
-# ledger FINDING-group-orders-cap), so the earlier fix pass's ruler rows (ledger TD-LAB-REV2-L4-flip, 13 functions, 42 items) are
-# undone: every test about the default asserts True again, and a test about the group order asks for orders_per_unit=False.
-def test_the_orders_per_unit_default_is_true_until_e1_is_landed_and_the_smoke_caps_zero_under_group_orders():
-    assert Setup(groups=(), unit_types={}).orders_per_unit is True
+# Decisions 13 and 21: the Setup default flips to the group attack-move only because E1 lands in the same landing. Decision 23: only when
+# E1 is in the landing AND the smoke caps zero under group orders. Decision 40 item 1: the flip rides the lab landing with E1 and E1b,
+# before the single golden re-record (TD-LAB-REV2-golden), and the six pin tests of decision 13 become ruler rows (TD-LAB-REV2-flip).
+# The earlier undo (TD-LAB-REV2-L4-flip, superseded by decision 23) is itself undone here: every test about the default asserts False
+# again, and a test about the per-unit order asks for orders_per_unit=True.
+def test_the_orders_per_unit_default_is_false_the_group_attack_move():
+    assert Setup(groups=(), unit_types={}).orders_per_unit is False
     f = {f.name: f for f in dataclasses.fields(Setup)}["orders_per_unit"]
-    assert f.default is True
+    assert f.default is False
 
 
-def test_the_undone_flip_left_no_test_asserting_the_group_order_as_the_default():
-    """The flip rows are undone: no test file asserts `orders_per_unit is False` as the Setup default on a play, a scene or a Setup
-    (positive control: the explicit per-unit and group-order calls are still there)."""
+def test_the_flip_left_no_test_asserting_the_old_default():
+    """The six pin tests of decision 13 assert the group order as the default: no listed file asserts `orders_per_unit is True` as the
+    Setup default on a play, a scene or a Setup (positive control: the explicit per-unit and group-order calls are still there)."""
     for rel in ("tests/skilllab/test_fight_outcomes.py", "tests/skilllab/test_plays.py", "tests/skilllab/test_asym.py",
                 "tests/skilllab/test_placed_by_feature.py", "tests/skilllab/test_objective_scene.py",
                 "tests/skilllab/integration/test_slots_real.py", "tests/skilllab/integration/test_sweep_real.py"):
         text = (ROOT / rel).read_text()
-        assert ".orders_per_unit is False" not in text, rel
-        assert "TD-LAB-REV2-L4-flip" not in text, rel
+        assert ".orders_per_unit is True" not in text, rel
     assert "orders_per_unit=True" in (ROOT / "tests/skilllab/test_fight_outcomes.py").read_text()
     assert "orders_per_unit=False" in (ROOT / "tests/skilllab/test_fight_outcomes.py").read_text()
     assert "orders_per_unit=True" in (ROOT / "tests/skilllab/test_objective_scene.py").read_text()      # the far-open-ground fight stays per-unit
@@ -1246,7 +1245,7 @@ def _orders(fake):
     return sorted(c[2] for c in fake.calls_named("order_attack_move"))
 
 
-def test_a_default_setup_issues_one_order_per_unit_and_orders_per_unit_false_one_per_group(seam, monkeypatch):
+def test_a_default_setup_issues_one_order_per_group_and_orders_per_unit_true_one_per_unit(seam, monkeypatch):
     """Fight-level proof of both paths on the fake engine (the same harness test_fight_outcomes.py uses)."""
     import scripts.skilllab.fight as fight_mod
     import scripts.skilllab.formations as formations_mod
@@ -1256,9 +1255,9 @@ def test_a_default_setup_issues_one_order_per_unit_and_orders_per_unit_false_one
     monkeypatch.setattr(fight_mod, "place", stub, raising=False)
     base = dict(groups=(G(0, 3), G(1, 3)), unit_types={}, max_ticks=2, point=(25.0, -40.0))
     _, fake = run(Setup(**base))
-    assert _orders(fake) == [[1], [2], [3], [4], [5], [6]]
-    _, fake = run(Setup(**base, orders_per_unit=False))
     assert _orders(fake) == [[1, 2, 3], [4, 5, 6]]
+    _, fake = run(Setup(**base, orders_per_unit=True))
+    assert _orders(fake) == [[1], [2], [3], [4], [5], [6]]
 
 
 def test_the_sweep_and_smoke_builds_do_not_set_orders_per_unit():

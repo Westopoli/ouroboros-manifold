@@ -414,8 +414,9 @@ def test_ruling_6_a_meeting_sends_both_sides_to_one_point_between_them(play, hea
 
 
 @pytest.mark.parametrize("play", ALL_PLAYS)
-def test_ruling_6_plays_use_per_unit_orders(play):
-    assert play(16)(8, False).orders_per_unit is True
+def test_ruling_6_plays_use_the_group_order_default(play):
+    """LAB-REV2 flip ruler (TD-LAB-REV2-flip, decision 40): plays leave orders_per_unit at the Setup default, which is False since the flip."""
+    assert play(16)(8, False).orders_per_unit is False
 
 
 @pytest.mark.parametrize("play", [blob_play, line_play, reach_play, damage_play])

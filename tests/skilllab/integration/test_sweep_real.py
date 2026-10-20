@@ -190,10 +190,10 @@ def test_the_controls_command_plays_have_states_off(library):
         assert build(16, False).states is False and build(8, True).states is False
 
 
-def test_a_default_setup_has_per_unit_orders_and_states_off():
-    """Decisions 23: the orders default stays True until E1 is in the landing and the smoke caps zero under group orders."""
+def test_a_default_setup_has_group_orders_and_states_off():
+    """Decisions 13, 21, 23, 40 (ledger TD-LAB-REV2-flip): the orders default is the group attack-move; the flip rides the lab landing with E1."""
     s = Setup(groups=(), unit_types={})
-    assert (s.states, s.orders_per_unit) == (False, True)
+    assert (s.states, s.orders_per_unit) == (False, False)
 
 
 # ---- gated: the smoke and sweep commands -----------------------------------------------------------------------------------------------------
