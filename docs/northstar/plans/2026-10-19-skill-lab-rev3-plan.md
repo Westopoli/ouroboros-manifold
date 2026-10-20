@@ -45,11 +45,11 @@ Westley: "tests written first, agent that wrote tests will not write implementat
 
 | Id | Proves | Statement |
 |---|---|---|
-| T1 | R5, D1, D2, D10 | Coverage test over the mix table, the play table and the reach table; fails naming each uncovered category cell, reach pairing and layer. Red today on D1 and D2. |
-| T2 | R6, D1, D10 | The probe on `s3_layer_above` with the two-layer families says inert (identical hash). Positive control: the one-layer family changes the hash. |
-| T3 | D3 | A fight with 8 built-in Wardens against 8 lab-registered Wardens is a mirror (same outcome distribution), red today. The Bastion cap: a lab Bastion takes at most 1.0x from a Strike attacker, red today. |
+| T1 | R5, D1, D2, D10 | Coverage test over the mix table, the play table and the reach table; fails naming each uncovered category cell, reach pairing and layer. Red today on D1 and D2. Covered means a play named in sweep.PLAYS_BY_FAMILY. The coverage claim is about what the sweep runs, not what is registered; a play nobody sweeps covers nothing. Piece B turns T1 green by adding plays to PLAYS_BY_FAMILY. |
+| T2 | R6, D1, D10 | The probe on `s3_layer_above` with the two-layer families says inert (identical hash). Positive control: the one-layer family changes the hash. Probe defaults to False in run_family; the CLI and the batch runner turn it on; the batch header says probe=on; a batch run with probe=off is refused by the batch runner, not by run_family. Frozen names: reason string inert_knob, family name category (added to the lab contract file's names list: a rename is a contract change). |
+| T3 | D3 | A fight with 12 Vanguards plus 4 Wardens a side (the M9 shape), built-in against lab-registered, is a mirror (same outcome distribution), red today. The Bastion cap: a lab Bastion takes at most 1.0x from a Strike attacker, red today. 8 v 8 built-in Wardens cap at 12000 in 8 of 8 fights (D9 stall), so they answer nothing. |
 | T4 | D4 | The naive attacker's roster equals the play's mix for every play. |
-| T5 | D5 | The dark-striker fight changes under the emitting knob. |
+| T5 | D5 | The dark-striker fight changes under the emitting knob. The dark striker keeps its row: the D5 fix makes the enemy emit at the emitting family's grid values; test_placed_dark_striker_keeps_its_silent_steps_on_side_0 is rewritten to 'side 1 emits at the family's values' under a TD row written by the ruler. Warden joins plays_space._REACH as (0, 0) (R-164-01: Line, own layer only). |
 | T6 | R2, D1 | Plays exist on layers 3 and 4 and below the enemy; the layer-symmetry control. |
 | T7 | R3 | The reach table is a swept input: a sweep with Raider reach up 2 produces a different break-even than reach up 1 on `s3_layer_above`. |
 | T8 | R4, D8 | The paper prediction exists in the CSV and the artifact and names the winner on the three audited setups of D8 (layout 192). |
