@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f, R-168-01@c6cd6c
 """Visible-game lane E1, contract piece K-e5 (VG-CONTRACT-E5): the saved density block, the load rejections, format 10, ABI 7
 and the test hook om_terrain_set_heights. Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 10d, "Lane E1 part c:
 the settlement port", the K-e5 paragraph (every case names the K-e5 clause it proves). Rules R-168-01/05 (new world state is

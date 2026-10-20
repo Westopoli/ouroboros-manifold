@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f
 """C2 / HDR5 (gap-fix plan, "HDR5, region scale"): the save writes the region_edge matrix at
 OM_MAX_REGIONS x OM_MAX_REGIONS (csrc/save.c), so 128 -> 512 changes the layout and
 OM_SAVE_FORMAT_VERSION goes 4 -> 5; save.c refuses any other version cleanly (R-111-03, no migration).

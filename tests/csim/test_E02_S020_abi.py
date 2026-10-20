@@ -1,3 +1,4 @@
+# Rule pins: R-045-07@5f208d
 """S-020 -- ABI version and layout check.
 
 The header's own comment on om_abi_version (csrc/ouroboros_sim.h): "The test

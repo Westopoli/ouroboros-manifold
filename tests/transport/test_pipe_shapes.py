@@ -1,3 +1,4 @@
+# Rule pins: R-055-02@c048d6, R-111-01@6d7943, R-111-03@d25a6f, R-111-04@38c30d
 """C transport v1 shape tests (docs/architecture.md, "C transport v1"). Red until piece T1
 lands pipe/ouroboros_pipe; the fixture half passes as soon as snapshot_fixture.py has run."""
 import json

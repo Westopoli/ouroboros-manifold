@@ -1,3 +1,4 @@
+# Rule pins: R-079-01@7bf432
 """S-079 / R-079-01 (briefing assets), A4 ruling 5-6: om_mission_get_force_count
 and om_mission_get_force_unit report the player's spawned force only.
 

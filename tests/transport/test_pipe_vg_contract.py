@@ -1,3 +1,4 @@
+# Rule pins: R-086-01@f6f61d, R-087-04@edc84b, R-089-02@d379f6, R-089-03@c09d1f, R-096-05@1a9979, R-104-01@d9c166, R-104-09@b27177, R-205-02@1abaf8
 """Visible-game programme lane K, pieces K-a (om_pipe.c frame fields), K-f (net_step frame, _setmode)
 and K-h (mission_start fog_filter). Written against docs/northstar/plans/2026-10-07-visible-game-spec.md
 rev 4 section 2 (the field table) and the rulebook rev 2. Fenced: builders never edit this file.

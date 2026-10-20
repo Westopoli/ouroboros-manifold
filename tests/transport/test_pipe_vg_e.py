@@ -1,3 +1,4 @@
+# Rule pins: R-193-01@451aaa, R-193-02@a4522c
 """Visible-game programme lane E1, contract amendment K-e, pipe side (docs/northstar/plans/2026-10-07-visible-game-spec.md
 rev 6, lane E1 section, piece E1a; contract text: docs/architecture.md "Visible-game economy fields"). Fenced: builders
 never edit this file.

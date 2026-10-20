@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f, R-168-01@c6cd6c
 """VG-CONTRACT-E3 (K-e3): density_economy is set at init, hashed by checksum_full and saved; save format 9.
 
 Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a3" (Part a3 rulings, Q-222-01 a).

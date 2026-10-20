@@ -1,3 +1,4 @@
+# Rule pins: R-001-05@95c063, R-004-07@c7c723, R-200-04@8681b2
 """VG-W1 (visible-game spec rev 12, Lane W, W1 paragraph; amended by the Rev 12b "W1." paragraph and the rev 12c
 batch-2 ruling on gen_id): the walk-route planner changes cost, never routes.
 

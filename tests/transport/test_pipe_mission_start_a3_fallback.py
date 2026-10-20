@@ -1,3 +1,4 @@
+# Rule pins: R-072-07@d416e5, R-072-08@8db565, R-074-01@1c190d, R-074-02@c01ed7, R-074-03@93d2b7, R-074-04@10d3c7, R-074-05@22817d, R-080-03@92ae5a
 """A3 (Q-072-01 retry then Defensive Stand fallback) tests for handle_mission_start.
 Split out of test_pipe_mission_start_context_and_fallback.py; red until A3 is built.
 See that file's docstring for the fixture rationale. Rulings (Westley 2026-09-30):

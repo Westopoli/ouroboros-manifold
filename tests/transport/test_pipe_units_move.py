@@ -1,3 +1,4 @@
+# Rule pins: R-095-01@d24419, R-095-07@9c81ee
 """T1-7: units must move over the pipe after a move command (blocks real play).
 
 Before this piece there was no transport test proving that a move command followed by

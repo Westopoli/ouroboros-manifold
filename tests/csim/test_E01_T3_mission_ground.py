@@ -1,3 +1,4 @@
+# Rule pins: R-218-01@ecb14c
 """E-01 terrain stage 3, piece 3a (spec 2026-10-06-terrain-stage3-spec.md rev 3, piece "3a", csrc/mission.c).
 
 Proves: in a ground era (om_set_era_kind 1, walking kinds) om_mission_setup generates terrain (seed
