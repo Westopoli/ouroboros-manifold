@@ -1917,7 +1917,7 @@ owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e7.py"]
 depends_on = ["VG-CONTRACT-E5", "VG-E1", "VG-W2", "HARNESS-sig-rows", "VG-K-D1", "PP-ledger", "NET-wire-A", "VG-A-edgescroll", "VG-B24b-quality-control", "HARNESS-perf-minof-n"]  # owner_lint: VG-A-edgescroll (queued, small test fix) also owns gd_tests_known_red.txt, so it lands first; clerk addition 2026-10-13, Architect to confirm. spec: depends_on VG-CONTRACT-E5; HARNESS-sig-rows (2026-10-12 ruling: it lands first, both own signatures.toml); VG-E1 (in flight) owns tests/csim/test_VG_E_*.py; VG-W2 orders architecture.md and the save-format bump (spec: whichever lands second takes 12; the Dispatcher may flip this chain)  # owner_lint 2026-10-20: HARNESS-perf-minof-n (queued) also owns test_VG_W_w1_planner.py, which E7 now lists for the save_sha256 literals (TD-VG-E-27); ordering edge added so it lands first, flip it if the Dispatcher lands E7 first
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "7e463db3" }  # landed 7e463db3
 tests_pending = true
 size_estimate = "K-e7 contract piece: starting force by strongpoint share, header signature and ABI 7 to 8 (TD-VG-E-25, TD-VG-E-26), second-Fable audit; DRAFT-start-fraction, Q-218-07"
 
