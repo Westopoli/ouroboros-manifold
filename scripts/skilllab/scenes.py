@@ -452,21 +452,34 @@ def _unroutable(setup, engine):
     return False
 
 
-def _no_reach(setup, engine):
-    """Holders are the groups on guard. No type of the groups facing a holder reaches the holder's layer from its own layer."""
-    holders = [g for g in setup.groups if g.order == "guard"]
-    pairs = [(a, h) for h in holders for a in setup.groups if a.side != h.side and a.order != "guard"]
-    if not pairs or any(a.layer == h.layer for a, h in pairs):
-        return False
+def _reach_table(setup, engine):
+    """{unit name: (up, down)} of the groups' types as fight() registers them; a type with no entry reads (0, 0) like the engine."""
     engine = _lazy_engine(engine)
     from scripts.skilllab.fight import _register_types
     w = engine.new_world(0)
     try:
         types = _register_types(engine, w, setup)
-        reach = {name: engine.profile_reach(w, tid) for name, (tid, _range) in types.items()}
+        return {name: engine.profile_reach(w, tid) for name, (tid, _range) in types.items()}
     finally:
         engine.free_world(w)
-    return not any(-reach[a.unit][1] <= h.layer - a.layer <= reach[a.unit][0] for a, h in pairs)
+
+
+def _no_reach(setup, engine):
+    """Holders are the groups on guard. No type of the groups facing a holder reaches the holder's layer from its own layer.
+    Then mutual no-reach (LAB-REV3-C, R7): no group of either side reaches the layer of any enemy group, so the fight would be a
+    no_reach_stall at tick 1. A scene where reach runs one way is not refused: it starts decided_one_way_reach (see fight.py)."""
+    holders = [g for g in setup.groups if g.order == "guard"]
+    pairs = [(a, h) for h in holders for a in setup.groups if a.side != h.side and a.order != "guard"]
+    reach = None
+    if pairs and not any(a.layer == h.layer for a, h in pairs):
+        reach = _reach_table(setup, engine)
+        if not any(-reach[a.unit][1] <= h.layer - a.layer <= reach[a.unit][0] for a, h in pairs):
+            return True
+    meetings = [(a, b) for a in setup.groups for b in setup.groups if a.side != b.side]
+    if not meetings or any(a.layer == b.layer for a, b in meetings):
+        return False
+    reach = reach or _reach_table(setup, engine)
+    return not any(-reach[a.unit][1] <= b.layer - a.layer <= reach[a.unit][0] for a, b in meetings)
 
 
 def _blind_holder(setup):
@@ -480,7 +493,7 @@ def preflight(setup, engine, naive_defender=False):
     no_fit: a placed point inside a blocked cell, or a walking mover on ground a generated field says is not walkable. unroutable:
     a moving group cannot reach its target over the open cells of its layer, a flyer's open cells being those no block reaching its
     layer covers and a walker's also the walkable ground. no_reach: no type facing a holder (a group on guard) reaches the holder's
-    layer; a meeting has no holder. blind_post, asked for with naive_defender=True only: a side-0 guard group's anchor sees no
+    layer, or no group of either side reaches the layer of any enemy group (a one-way reach is not refused). blind_post, asked for with naive_defender=True only: a side-0 guard group's anchor sees no
     clear line to the nearest unit of side 1. The engine is needed only for a reach read, a generated field or a unit type's
     movement and is built when None."""
     if _no_fit(setup, engine):

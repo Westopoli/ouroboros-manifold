@@ -10,7 +10,8 @@ import dataclasses
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
-FROZEN_NAMES = ("inert_knob", "category", "survey", "checked", "seeds", "probed")      # names other code and the artifact match on; adding is fine, renaming or removing is a contract change
+FROZEN_NAMES = ("inert_knob", "category", "survey", "checked", "seeds", "probed",
+                "no_reach_stall", "decided_one_way_reach", "paper_prediction", "reach", "--reach")      # names other code and the artifact match on; adding is fine, renaming or removing is a contract change
 
 
 @dataclass(frozen=True)
@@ -101,7 +102,7 @@ class Setup:
 
 @dataclass
 class FightResult:
-    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "cap" (max_ticks reached: a lab defect, never a result)
+    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "cap" (max_ticks reached: a lab defect, never a result) | "no_reach_stall" (nobody can reach anybody: a finding)
     margin: float
     strength_left: tuple
     survivors: tuple
@@ -123,6 +124,10 @@ class FightResult:
     reengage: tuple = (0, 0)  # (side 0, side 1) re-engage events: a silent side with an idle attack-move unit and a visible enemy was ordered onto the enemy centroid
     blind_cap: bool = False   # outcome "cap" and, at the cap tick, neither side sees any living enemy: a finding (blind post), not a lab cap defect
     living: tuple = ({}, {})  # ({side 0 Group.unit: count}, {side 1 Group.unit: count}) alive at the end of the fight, zero counts omitted
+    verdict: Optional[str] = None       # None, "no_reach_stall" or "decided_one_way_reach" (the FROZEN_NAMES entries): the structural end of the fight, R-164-01
+    decided_tick: Optional[int] = None  # the tick the fight became decided; set with "decided_one_way_reach" only
+    paper_score: tuple = (0.0, 0.0)     # DRAFT: the paper score of (side 0, side 1) from scenes.paper_score (filled by the sweep, LAB-REV3-C part 2)
+    predicted_paper: str = "tie"        # DRAFT: "side0" | "side1" | "tie" from scenes.paper_prediction (filled by the sweep)
 
 
 def trim_series(result: "FightResult") -> "FightResult":

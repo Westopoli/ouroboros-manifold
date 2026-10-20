@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 from scripts.skilllab import depth, formations, maps, plays_space, pool, probe as probe_mod, rows as rows_mod, scan as scan_mod, scenes
 from scripts.skilllab.contract import FROZEN_NAMES, Group, Setup
+from scripts.skilllab.fight import DECIDED_ONE_WAY_REACH, NO_REACH_STALL
 
 FAMILY_ORDER = ("vision", "range_up", "damage_up", "emitting", "arc", "cone", "sign_flip")
 SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
@@ -506,13 +507,17 @@ def _break_even(result):
 
 def _defects(rows):
     """Caps outside the control kinds are the lab's defects to trace unless the survivors were blind to each other (decision 43: a
-    finding, counted apart in blind_post_rows and making no defect cell)."""
+    finding, counted apart in blind_post_rows and making no defect cell). A no_reach_stall or decided_one_way_reach row (R-164-01) is
+    a finding or a win, never a cap: counted in its own *_rows key and making no defect cell."""
     cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
     live = lambda r: not r["kind"].startswith("control_")
     blind = lambda r: r["outcome"] == "cap" and r["blind_post"] == 1
     bad = [r for r in rows if live(r) and (r["outcome"] == "draw" or (r["outcome"] == "cap" and not blind(r)))]
+    tagged = lambda r, name: live(r) and r.get("verdict") == name
     return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": sum(live(r) and blind(r) for r in rows),
-            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad}),
+            "no_reach_stall_rows": sum(tagged(r, NO_REACH_STALL) for r in rows),
+            "decided_one_way_reach_rows": sum(tagged(r, DECIDED_ONE_WAY_REACH) for r in rows)}
 
 
 def _probe_args(family):

@@ -1,13 +1,15 @@
 """One tactical fight of one setup, stepped tick by tick (spec AC 5-11; rev 2 spec 2026-10-14).
-A fight ends by elimination only; reaching Setup.max_ticks is a cap, a lab defect to trace, never a result (Q-LAB-03)."""
+A fight ends by elimination, or structurally (no_reach_stall, decided_one_way_reach: R-164-01 reach and live layers, LAB-REV3-C);
+reaching Setup.max_ticks is a cap, a lab defect to trace, never a result (Q-LAB-03)."""
 import math
 import random
 
-from scripts.skilllab.contract import OPENING_WINDOW_TICKS, REENGAGE_MOVED_WU, REENGAGE_SILENCE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
+from scripts.skilllab.contract import OPENING_WINDOW_TICKS, REENGAGE_MOVED_WU, REENGAGE_SILENCE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FROZEN_NAMES, FightResult
 from scripts.skilllab.firing import count_able, count_weighted, states
 from scripts.skilllab.formations import place
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
+NO_REACH_STALL, DECIDED_ONE_WAY_REACH = FROZEN_NAMES[6], FROZEN_NAMES[7]
 FIRST_CUSTOM_TYPE_ID = 100
 SLOT_RADIUS = 440
 WALKING_KIND = 1       # om_roster_set_movement_kind: 0 flying (the default), 1 walking
@@ -237,6 +239,34 @@ def _agreement(outcome, predicted_count, predicted_type):
     return "count_right_type_wrong" if count_ok else "both_wrong"
 
 
+def _structural(engine, w, side_ids, hp, unit_types, reaches):
+    """The structural end of a fight with both sides alive: None, (NO_REACH_STALL, None) when no living unit can reach a living enemy,
+    (DECIDED_ONE_WAY_REACH, side) when only `side` has a unit that can reach a living enemy (so every unit of `side` is unreachable).
+    A unit on layer la with reach (up, down) reaches lb iff -down <= lb - la <= up (R-164-01); range, vision and knobs never enter.
+    unit_types and reaches cache the per-unit type id and the per-type reach for the world."""
+    cells = (set(), set())
+    layers = (set(), set())
+    for s in (0, 1):
+        for u in side_ids[s]:
+            if hp[u] <= 0:
+                continue
+            ty = unit_types.get(u)
+            if ty is None:
+                ty = unit_types[u] = engine.unit_type(w, u)
+            reach = reaches.get(ty)
+            if reach is None:
+                reach = reaches[ty] = engine.profile_reach(w, ty)
+            layer = engine.unit_layer(w, u)
+            cells[s].add((reach[0], reach[1], layer))
+            layers[s].add(layer)
+    can = [any(-down <= lb - la <= up for up, down, la in cells[s] for lb in layers[1 - s]) for s in (0, 1)]
+    if not can[0] and not can[1]:
+        return NO_REACH_STALL, None
+    if can[0] != can[1]:
+        return DECIDED_ONE_WAY_REACH, 0 if can[0] else 1
+    return None
+
+
 ROLE_STEPS = ("attack_move", "move", "group_move", "idle", "guard")   # the timeline orders that set or clear the attack-move role
 
 
@@ -351,7 +381,7 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
     reengage = _Reengage(engine, w, setup, side_ids, ids_by_group, timeline)
     side_of = {u: s for s in (0, 1) for u in side_ids[s]}
     fired = [False, False]
-    blind = False
+    blind, verdict, decided_tick, caches = False, None, None, ({}, {})
     while outcome is None:
         step(w)
         tick += 1
@@ -377,7 +407,15 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
             outcome = "side0"
         elif alive[0] == 0:
             outcome = "side1"
-        elif tick >= setup.max_ticks:
+        else:
+            end = _structural(engine, w, side_ids, hp, *caches)
+            if end is not None:
+                verdict = end[0]
+                if end[1] is None:
+                    outcome = verdict
+                else:
+                    outcome, decided_tick = "side%d" % end[1], tick
+        if outcome is None and tick >= setup.max_ticks:
             outcome = "cap"
             blind = not any(engine.visible_enemies(w, s, [u for u in side_ids[1 - s] if hp[u] > 0]) for s in (0, 1))
         if tick % setup.sample_every == 0:
@@ -401,4 +439,5 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
                        steps_fired=tuple(timeline.fired), weighted_unit_seconds=wsec, states=state_rows,
                        winner=outcome if outcome in ("side0", "side1") else None, firing_window=fwin,
                        weighted_window=wwin, predicted_count=pcount, predicted_type=ptype,
-                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count), blind_cap=blind, living=living_roster)
+                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count), blind_cap=blind, living=living_roster,
+                       verdict=verdict, decided_tick=decided_tick)
