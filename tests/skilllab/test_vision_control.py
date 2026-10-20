@@ -84,17 +84,35 @@ def test_vision_control_play_is_16_v_16_with_side_0_on_layer_1_and_side_1_on_lay
 
 
 @pytest.mark.parametrize("heads", [8, 16, 48])
-@pytest.mark.parametrize("swap", [False, True])
-def test_vision_control_play_as_the_sweep_builds_it_is_all_cross_layer_on_every_smoke_layout(heads, swap):
-    """The built scene (sweep.default_builds, the one the control is fought on) keeps side 0 on layer 1 and side 1 on layer 0, and the
-    build is not refused (prefight ok) at the headcounts the sweep's refusal check builds (8 and 48) nor at the control's 16."""
+def test_vision_control_play_as_the_sweep_builds_it_is_all_cross_layer_on_every_smoke_layout(heads):
+    """FINDING-lab-vision-poscontrol, spec clause 24. The built scene (sweep.default_builds, the one the control is fought on) keeps
+    side 0 on layer 1 and side 1 on layer 0, and the build is not refused (prefight ok) at the headcounts the sweep's refusal check
+    builds (8 and 48) nor at the control's 16. No swap case: scenes._groups_and_timeline always passes swap False to scan_build, so the
+    swap flag never changes the groups."""
     for layout, features in sweep.smoke_layouts().items():
         build = sweep.default_builds(sweep.VISION_CONTROL_PLAY, "play", features)
-        setup = build(heads, swap)
-        assert build.labels.get("prefight") in (None, "ok"), (layout, heads, swap, build.labels.get("prefight"))
+        setup = build(heads, False)
+        assert build.labels.get("prefight") in (None, "ok"), (layout, heads, build.labels.get("prefight"))
         got = sides(setup.groups)
-        assert got[0] == (16, [1]) and got[1] == (heads, [0]), (layout, heads, swap, got)
-        assert pairs(setup.groups)[1] == 0, (layout, heads, swap)
+        assert got[0] == (16, [1]) and got[1] == (heads, [0]), (layout, heads, got)
+        assert pairs(setup.groups)[1] == 0, (layout, heads)
+
+
+@pytest.mark.parametrize("heads", [16, 48])
+def test_vision_control_play_units_are_all_raiders_with_reach_one_up_and_one_down(heads):
+    """FINDING-lab-vision-poscontrol, spec clause 24 as ruled by the Architect 2026-10-20: the fixture is 16 Raiders a side (Raider
+    reach (1, 1), R-164-01). Read from the built scene, not the play's name: every group's unit type, on both sides, resolves to base
+    Raider (the Setup.unit_types entry's "base", else the unit's own name) with reach (1, 1) (the entry's "reach", else
+    plays_space._REACH). Fast tier trap for the unit-type choice: a Vanguard given reach (1, 1) does not fire within the control's 600
+    ticks at vision 1.0 (the slow vision-1.0 test also catches it)."""
+    for layout, features in sweep.smoke_layouts().items():
+        setup = sweep.default_builds(sweep.VISION_CONTROL_PLAY, "play", features)(heads, False)
+        assert setup.groups, layout
+        for g in setup.groups:
+            entry = setup.unit_types.get(g.unit, {})
+            base = entry.get("base", g.unit)
+            assert base == "Raider", (layout, g.side, g.unit, base)
+            assert tuple(entry.get("reach", plays_space._REACH.get(base))) == (1, 1), (layout, g.side, g.unit, entry)
 
 
 @pytest.mark.parametrize("play", sweep.PLAYS_BY_FAMILY["vision"])

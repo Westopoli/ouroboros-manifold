@@ -33,6 +33,8 @@ FIRST = "81"        # the first smoke layout: the discrimination cases run on it
 MIXED_LAYOUT = "192"    # the only smoke layout the mixed sweep plays are not refused on (81 and 78 read no_fit), so the finding's 12 rows are all here
 
 
+# A Vanguard given reach (1, 1) never fires within the control's 600 ticks at vision 1.0 on these layouts; the likely cause is range at a
+# layer offset, not reach (not chased, no ledger row). That is why the control's unit is the Raider (clause 24, Architect 2026-10-20).
 def fights(play, settings, layout):
     """The six fights (3 seeds, both orders) of `play` at `settings` on a smoke layout, as the control fights them."""
     point = sweep.Point("vision", KNOBS[0], settings[KNOBS[0]], settings, {}, "control_positive", "vision test")
@@ -83,7 +85,7 @@ def test_the_control_rows_are_on_the_designated_play_on_every_smoke_layout_and_s
 @SLOW
 @pytest.mark.parametrize("layout", sorted(sweep.SMOKE_LAYOUTS))
 def test_the_same_scene_at_vision_one_fires_on_both_sides_in_every_fight(layout):
-    """Test 2, the control's own positive control (clause 24: vision 0.5 reads (16, 16) on the cross-layer fixture): all four vision
+    """Test 2 (FINDING-lab-vision-poscontrol), the control's own positive control (spec clause 24: vision 0.5 reads (16, 16) on the cross-layer fixture): all four vision
     knobs at 1.0 on VISION_CONTROL_PLAY, every fight has firing unit-seconds above 0 on BOTH sides (measured 2026-10-20: 8 to 138 a
     side on the three layouts, 16 Raiders a side), and `_vision_zero_ok` reads False."""
     got = fights(sweep.VISION_CONTROL_PLAY, at(**{k: 1.0 for k in KNOBS}), layout)
@@ -97,7 +99,7 @@ def test_the_same_scene_at_vision_one_fires_on_both_sides_in_every_fight(layout)
 @SLOW
 @pytest.mark.parametrize("knob,firing_side", [("OM_TP_VISION_UP_1", 1), ("OM_TP_VISION_DOWN_1", 0)])
 def test_a_vision_knob_left_at_one_on_the_cross_layer_scene_fails_the_check(knob, firing_side):
-    """Negative control: vision 0 on three knobs and 1.0 on `knob` (UP_1: the side below sees up; DOWN_1: the side above sees down).
+    """FINDING-lab-vision-poscontrol, spec clause 24. Negative control: vision 0 on three knobs and 1.0 on `knob` (UP_1: the side below sees up; DOWN_1: the side above sees down).
     The side that sees fires, so `_vision_zero_ok` reads False. A control that read True here would pass whatever the knobs do."""
     got = fights(sweep.VISION_CONTROL_PLAY, at(**{knob: 1.0}), FIRST)
     assert any(f.firing_unit_seconds[firing_side] > 0 for f in got), [f.firing_unit_seconds for f in got]
