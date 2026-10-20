@@ -75,7 +75,7 @@ Rules
 - R-083-01  Given a unit type, When its profile is read, Then it has the stats of S-082, zero to two trait cards the player has chosen, and exactly one ability.
 - R-083-02  Given a trait card, When applied, Then it changes a stat or a rule; no card or ability ever outweighs positioning: layer position and cross-layer geometry weigh more than any trait or ability, and cards granting vision across layers are kept to a minimum [Q-083-03: the weighting test].
 - R-083-04  Given a player, When they play, Then trait cards are unlocked through play, in the register of Dead by Daylight and Age of Empires 3, and abused cards are nerfed after launch [Q-083-03: what earns a card, where it persists, whether the enemy fields cards].
-- R-083-03  Given a Warden, When any friendly unit is within 300 wu, Then that unit takes 10 percent less damage and regains 0.075 HP per tick (the Warden's passive aura); a second Warden in range adds 0.05 reduction, not 0.10, and healing stacks per Warden.
+- R-083-03  Given a Warden, When any friendly unit is within 300 wu, Then that unit takes 10 percent less damage and regains 0.075 HP per tick (the Warden's passive aura); a second Warden in range adds nothing: the aura does not stack, so a player who spreads Wardens out covers more of the army; the player sees each Warden's 300 wu radius as a circle on the field (Westley, 2026-10-20: "they do not stack, but they have a visible circular radius of influence and if a player spreads them out better they'll get better healing coverage over more of their army").
 
 Inputs: profile table.
 Outputs: effective stats.
@@ -267,7 +267,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Intercept triggers on Line or Siege units.
 - Return fire overrides an existing engagement.
 - Cohort stagger skips validation, so a dead target is shot at.
-- Warden aura applies to enemies or stacks without bound.
+- Warden aura applies to enemies or stacks at all.
 - Backswing pauses attacking as well as moving.
 - Workers left out of the unit count, so the budgets pass with a base that holds thousands of them.
 - A unit fires at a layer outside its reach, or at a structure or worker its side cannot see.
