@@ -42,6 +42,8 @@ const PICK_RADIUS_PX := 16.0
 const PIECES := {
 	"MapLayer": "res://scenes/tactical_c/map_layer.gd",
 	"StructuresLayer": "res://scenes/tactical_c/structures_layer.gd",
+	"MapMarkers": "res://scenes/economy/map_markers.gd",
+	"TickerBeats": "res://scenes/economy/ticker_beats.gd",
 	"ObjectiveMarkers": "res://scenes/tactical_c/objective_markers.gd",
 	"FogLayer": "res://scenes/tactical_c/fog_layer.gd",
 	"LayerView": "res://scenes/tactical_c/layer_view.gd",
@@ -166,8 +168,9 @@ func _ready() -> void:
 func _build_shell() -> void:
 	_motion = load("res://scenes/tactical_c/unit_motion.gd").new()
 	add_child(_motion)
-	for n in ["MapLayer", "StructuresLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
+	for n in ["MapLayer", "StructuresLayer", "MapMarkers", "ObjectiveMarkers", "FogLayer", "LayerView", "UnitSquads", "UnitVisuals"]:
 		add_child(_piece(n, false))
+	add_child(_piece("TickerBeats", false))  # a child of the view, not of Hud: events_feed.gd finds it by name (S-235)
 	_node("LayerView").layer_order_requested.connect(order_layer)  # the To-layer buttons (R-002-01, R-104-09)
 	_fx = Node2D.new()
 	_fx.name = "Fx"
@@ -524,6 +527,7 @@ func load_frame(frame: Dictionary) -> void:
 	_loading_overlay.dismiss()
 	_node("Selection").set_frame(frame)
 	_node("Events").feed(frame, _get_local_faction())
+	_node("TickerBeats").feed(frame, _get_local_faction())
 	_redraw()
 	_sync_selection()
 	_update_hud()
@@ -585,6 +589,7 @@ func qa_state() -> Dictionary:
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 		"inventory": _inventory(),
 		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
+		"map_markers": _node("MapMarkers").markers(),
 	}
 
 
@@ -622,6 +627,7 @@ func _inventory() -> Dictionary:
 		"loading_overlay": 1 if _loading_overlay.visible else 0,
 		"hud": hud,
 		"settlement_lots": _settlement.lots_drawn().size() if _settlement != null else 0,
+		"map_markers": _node("MapMarkers").markers().size(),
 	}
 
 
@@ -1334,7 +1340,7 @@ func _redraw() -> void:
 		_node(n).set_frame(_frame, lf, _world_scale, _camera)
 	if _space_hosted:
 		_hide_2d_units()
-	for n in ["StructuresLayer", "Shots", "Deaths", "Abilities", "Ambient"]:
+	for n in ["StructuresLayer", "MapMarkers", "Shots", "Deaths", "Abilities", "Ambient"]:
 		var piece := _node(n)
 		if piece.has_method("set_frame"):
 			if ground and n == "Shots":
