@@ -64,11 +64,12 @@ class Notable:
     knob_hi: float
     heads: int
     row: Optional[int]
+    reach: Optional[str] = None   # the rows' `reach` configuration (LAB-REV3-C, R3); None when the rows have no such column
 
     @property
     def id(self) -> str:
         fields = (self.kind, self.family, self.play, self.layout, self.point, self.role, repr(self.knob_lo), repr(self.knob_hi),
-                  str(self.heads), str(self.row))
+                  str(self.heads), str(self.row)) + (() if self.reach is None else (self.reach,))
         slug = re.sub(r"[^A-Za-z0-9_]+", "_", "-".join(fields[:6]) + "-" + fields[6] + "-" + fields[7])
         return slug + "-" + hashlib.sha1("\x1f".join(fields).encode("utf-8")).hexdigest()[:10]
 
@@ -76,11 +77,11 @@ class Notable:
 # ---- scans read from rows ---------------------------------------------------------------------------------------------------------
 
 def _series_key(r):
-    return (r["family"], r["play"], r["layout"], r.get("point") or "-")
+    return (r["family"], r["play"], r["layout"], r.get("point") or "-", r.get("reach"))
 
 
 def _index(rows):
-    """{series: {baseline: {knob value: {enemy_heads: [row index, ...]}}}} over the grid and refined rows."""
+    """{series (family, play, layout, point, reach): {baseline: {knob value: {enemy_heads: [row index, ...]}}}} over the grid and refined rows."""
     out = {}
     for i, r in enumerate(rows):
         if r.get("kind") not in SCAN_KINDS or r.get("knob_value") is None:
@@ -109,7 +110,7 @@ def break_even(rows, cells) -> int:
 
 def _crossings(rows, index):
     out = []
-    for (family, play, layout, point), by_role in index.items():
+    for (family, play, layout, point, reach), by_role in index.items():
         ours = by_role.get("none")
         if not ours:
             continue
@@ -121,7 +122,7 @@ def _crossings(rows, index):
             for lo, hi in zip(knobs, knobs[1:]):
                 if ahead[lo] != ahead[hi]:
                     where = lo if ahead[lo] else hi
-                    out.append(Notable(CROSSING, family, play, layout, point, role, lo, hi, break_even(rows, ours[where]), None))
+                    out.append(Notable(CROSSING, family, play, layout, point, role, lo, hi, break_even(rows, ours[where]), None, reach))
     return out
 
 
@@ -137,13 +138,13 @@ def _ceiling_rows(rows, baseline_is_none):
 
 def notables(rows) -> list:
     rows = list(rows)
-    crossings = sorted(_crossings(rows, _index(rows)), key=lambda n: (n.family, n.play, n.layout, n.point, n.role, n.knob_lo))
+    crossings = sorted(_crossings(rows, _index(rows)), key=lambda n: (n.family, n.play, n.layout, n.point, n.reach or "", n.role, n.knob_lo))
     ceilings = []
-    for ((family, play, layout, point), role, knob), idx in _ceiling_rows(rows, True).items():
-        ceilings.append(Notable(CEILING_HIT, family, play, layout, point, role, knob, knob, max(rows[i]["enemy_heads"] for i in idx), None))
-    ceilings.sort(key=lambda n: (n.family, n.play, n.layout, n.point, n.knob_lo))
+    for ((family, play, layout, point, reach), role, knob), idx in _ceiling_rows(rows, True).items():
+        ceilings.append(Notable(CEILING_HIT, family, play, layout, point, role, knob, knob, max(rows[i]["enemy_heads"] for i in idx), None, reach))
+    ceilings.sort(key=lambda n: (n.family, n.play, n.layout, n.point, n.reach or "", n.knob_lo))
     wrong = [Notable(BOTH_WRONG, r["family"], r["play"], r["layout"], r.get("point") or "-", r["baseline"], r["knob_value"],
-                     r["knob_value"], r["enemy_heads"], i) for i, r in enumerate(rows) if r.get("agreement") == "both_wrong"]
+                     r["knob_value"], r["enemy_heads"], i, r.get("reach")) for i, r in enumerate(rows) if r.get("agreement") == "both_wrong"]
     return crossings + ceilings + wrong
 
 
@@ -156,7 +157,7 @@ def baseline_ceilings(rows) -> list:
 
 def _scan_for(rows, index, n, scan, knob):
     role = "none" if scan == "play" else n.role
-    return index[(n.family, n.play, n.layout, n.point)][role][knob]
+    return index[(n.family, n.play, n.layout, n.point, n.reach)][role][knob]
 
 
 def scan_counts(rows, n) -> list:
@@ -223,7 +224,7 @@ def _arrows(n, rows, index):
                 for h in [beats] * (beats > 0) + [loses_to] * (loses_to is not None):
                     out.append((scan, "enemy_heads", min(cells[h]), "0", "(%s, %s)" % (h, rows[min(cells[h])]["outcome"])))
     elif n.kind == CEILING_HIT:
-        idx = _ceiling_rows(rows, True)[((n.family, n.play, n.layout, n.point), "none", n.knob_lo)]
+        idx = _ceiling_rows(rows, True)[((n.family, n.play, n.layout, n.point, n.reach), "none", n.knob_lo)]
         top = max(rows[i]["enemy_heads"] for i in idx)
         out.append(("ceiling", "ceiling_hit", idx[0], "0", None))
         out.append(("ceiling", "enemy_heads", next(i for i in idx if rows[i]["enemy_heads"] == top), "1", None))
@@ -233,6 +234,8 @@ def _arrows(n, rows, index):
             out.append(("window", col, n.row, col[-1], None))
         out.append(("prediction", "predicted_count", n.row, str(_side(r["predicted_count"])), None))
         out.append(("prediction", "predicted_type", n.row, str(_side(r["predicted_type"])), None))
+        if r.get("predicted_paper") not in (None, "tie", "no_reach"):
+            out.append(("prediction", "predicted_paper", n.row, str(_side(r["predicted_paper"])), None))
         out.append(("outcome", "outcome", n.row, str(_side(r["outcome"])), None))
     return out
 

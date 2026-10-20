@@ -318,6 +318,35 @@ def _reach_zero(build):
     return wrapped
 
 
+REACH_VALUES = (0, 1, 2)   # R3: per type, reach up and reach down are swept at these values; wider values are Westley's
+REACH_KEY = FROZEN_NAMES[9]
+
+
+def with_reach(build, table):
+    """The build with Setup.unit_types[name]["reach"] = (up, down) for every group unit named in `table` ({type name: (up, down)}, values
+    in REACH_VALUES, else ValueError). An entry the play wrote none for is made as {"base": name}; the entry's other keys are kept; a
+    type no group uses adds no entry. `.labels` is the inner build's labels dict (the sweep reads labels["prefight"] to refuse a cell)."""
+    table = {name: tuple(reach) for name, reach in table.items()}
+    for name, reach in table.items():
+        if len(reach) != 2 or not all(type(v) is int and v in REACH_VALUES for v in reach):
+            raise ValueError("reach of %r must be (up, down) with each value one of %r, got %r" % (name, REACH_VALUES, reach))
+
+    def wrapped(enemy_heads, swap):
+        setup = build(enemy_heads, swap)
+        types = {k: dict(v) for k, v in setup.unit_types.items()}
+        for g in setup.groups:
+            if g.unit in table:
+                types.setdefault(g.unit, {"base": g.unit})["reach"] = table[g.unit]
+        return dataclasses.replace(setup, unit_types=types)
+    wrapped.labels = getattr(build, "labels", {})
+    return wrapped
+
+
+def reach_label(table):
+    """The `reach` column and summary string: "none" without a table, else "Type=up,down" sorted by type name, joined by ";"."""
+    return "none" if not table else ";".join("%s=%d,%d" % (name, *table[name]) for name in sorted(table))
+
+
 def _mean_point(groups):
     pts = [p for g in groups for p in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)]
     return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
@@ -551,8 +580,11 @@ def _probe_play(family, play, layout, build, probe_args, fight_fn, base_cache):
 
 
 def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_fn=None, map_fn=None, caps=None,
-               replicates=REPLICATES, full_scan=False, probe=False, base_cache=None):
+               replicates=REPLICATES, full_scan=False, probe=False, base_cache=None, reach=None):
     builds = builds or default_builds
+    if reach:
+        inner = builds
+        builds = lambda play, role, features: inner(play, role, features) if role == "reach_zero" else with_reach(inner(play, role, features), reach)
     layouts = smoke_layouts() if layouts is None else layouts
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -643,6 +675,8 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
     if family == "emitting":
         entry["saturated_at_vision"] = [BASES["OM_TP_VISION_UP_1"]]
     entry["csv"], entry["rows"] = "sweep_%s.csv" % family, len(rows)
+    for r in rows:
+        r[REACH_KEY] = reach_label(reach)
     rows_mod.write_rows(rows, out / entry["csv"])
     return entry
 
@@ -664,7 +698,7 @@ def run(families, out_dir, workers=1, full_scan=False, **kw):
     base_cache = {}
 
     def work(**more):
-        summary = {"order": list(families), "replicates": kw.get("replicates", REPLICATES), "families": {},
+        summary = {"order": list(families), "replicates": kw.get("replicates", REPLICATES), REACH_KEY: reach_label(kw.get("reach")), "families": {},
                    "unavailable": {FROZEN_NAMES[1]: skip_reason(FROZEN_NAMES[1], None)}}
         if kw.get("probe"):
             summary["probe"] = "on"

@@ -187,12 +187,12 @@ def cone_grid_html(rows, title=None) -> str:
     rows = [r for r in rows if r.get("family") == "cone" and r.get("kind") in diagram.SCAN_KINDS]
     index = diagram._index(rows)
     tables = {}
-    for (family, play, layout, point), by_role in index.items():
+    for (family, play, layout, point, reach), by_role in index.items():
         for role in by_role:
             if role != "none" and "none" in by_role:
-                tables.setdefault((play, layout, role), {})[point] = (by_role["none"], by_role[role])
+                tables.setdefault((play, layout, role, reach or ""), {})[point] = (by_role["none"], by_role[role])
     out = []
-    for (play, layout, role), series in sorted(tables.items()):
+    for (play, layout, role, reach), series in sorted(tables.items()):
         points = sorted(series, key=lambda p: (float(p.split("=")[-1]) if "=" in p else 0.0, p))
         ranges = sorted({k for p in points for scans in series[p] for k in scans})
         head = "<tr><th>Range</th>" + "".join(f"<th>{escape(p)}</th>" for p in points) + "</tr>"
@@ -208,5 +208,6 @@ def cone_grid_html(rows, title=None) -> str:
                     cells.append(f'<td data-range="{format(rng, "g")}" data-point="{escape(p)}" data-gain="">-</td>')
             body.append(f'<tr><th>{format(rng, "g")}</th>{"".join(cells)}</tr>')
         out.append(_table([head] + body, "words cone-grid",
-                          f' data-play="{escape(play)}" data-layout="{escape(layout)}" data-role="{escape(role)}"'))
+                          f' data-play="{escape(play)}" data-layout="{escape(layout)}" data-role="{escape(role)}"'
+                          + (f' data-reach="{escape(reach)}"' if reach else "")))
     return _page(title, "\n".join(out)) if out else ""

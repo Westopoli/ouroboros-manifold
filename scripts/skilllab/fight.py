@@ -4,6 +4,7 @@ reaching Setup.max_ticks is a cap, a lab defect to trace, never a result (Q-LAB-
 import math
 import random
 
+from scripts.skilllab import scenes
 from scripts.skilllab.contract import OPENING_WINDOW_TICKS, REENGAGE_MOVED_WU, REENGAGE_SILENCE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FROZEN_NAMES, FightResult
 from scripts.skilllab.firing import count_able, count_weighted, states
 from scripts.skilllab.formations import place
@@ -207,7 +208,8 @@ def fight(setup, seed=0, swap=False, engine=None):
                          for s in (0, 1))
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
         timeline = Timeline(engine, w, setup, ids_by_group, goals)
-        return _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group)
+        paper = scenes.paper_reading(setup)
+        return _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group, paper)
     finally:
         engine.free_world(w)
 
@@ -349,7 +351,7 @@ class _Reengage:
         self.ordered[s] = idle
 
 
-def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
+def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group, paper):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, weighted, tick, outcome = [], [], 0, None
@@ -440,4 +442,4 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
                        winner=outcome if outcome in ("side0", "side1") else None, firing_window=fwin,
                        weighted_window=wwin, predicted_count=pcount, predicted_type=ptype,
                        agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count), blind_cap=blind, living=living_roster,
-                       verdict=verdict, decided_tick=decided_tick)
+                       verdict=verdict, decided_tick=decided_tick, paper_score=paper[0], predicted_paper=paper[1])

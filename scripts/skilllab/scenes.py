@@ -482,6 +482,77 @@ def _no_reach(setup, engine):
     return not any(-reach[a.unit][1] <= b.layer - a.layer <= reach[a.unit][0] for a, b in meetings)
 
 
+_ALG60 = {}
+
+
+def _alg60(engine=None):
+    """The category multiplier table [attacker][target] over Strike, Line, Siege as the library answers it (R-ALG-60), read once."""
+    if not _ALG60:
+        engine = _lazy_engine(engine)
+        w = engine.new_world(0)
+        try:
+            _ALG60.update({(a, t): engine.category_multiplier(w, a, t) for a in range(3) for t in range(3)})
+        finally:
+            engine.free_world(w)
+    return _ALG60
+
+
+def _entry_reach(setup, name):
+    """The reach the engine registers for a type: the Setup's own entry, else (0, 0) (not plays_space._REACH)."""
+    reach = setup.unit_types.get(name, {}).get("reach")
+    return tuple(reach) if reach is not None else (0, 0)
+
+
+def _entry_category(setup, name):
+    entry = setup.unit_types.get(name, {})
+    if "base" not in entry and "category" in entry:
+        return entry["category"]
+    return plays.unit_stats(entry.get("base", name))["category"]
+
+
+def _mutual_no_reach(setup):
+    """True when no group of either side has an enemy group at a layer offset inside its reach (sightlines and range are not part of it)."""
+    return not any(-_entry_reach(setup, a.unit)[1] <= b.layer - a.layer <= _entry_reach(setup, a.unit)[0]
+                   for a in setup.groups for b in setup.groups if a.side != b.side)
+
+
+def paper_score(setup, engine=None):
+    """(score of side 0, score of side 1), from the Setup before anyone moves (LAB-REV3-C, R4): a unit counts when some enemy unit is at a
+    layer offset inside its reach (R-164-01) and sight_clear sees it; a counting unit adds the best category multiplier (R-ALG-60) it has
+    against the enemies it reaches and sees, not the sum. Range and movement are ignored. Setup sides, so a swap changes nothing."""
+    table = _alg60(engine)
+    placed = {side: [(x, y, g.layer, _entry_category(setup, g.unit), _entry_reach(setup, g.unit)) for g in setup.groups if g.side == side
+                     for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)] for side in (0, 1)}
+    scores = []
+    for side in (0, 1):
+        total = 0.0
+        for x, y, layer, cat, (up, down) in placed[side]:
+            best = 0.0
+            for ex, ey, elayer, ecat, _reach in placed[1 - side]:
+                value = table[(cat, ecat)]
+                if value > best and -down <= elayer - layer <= up and sight_clear(setup.terrain, (x, y), layer, (ex, ey), elayer):
+                    best = value
+            total += best
+        scores.append(total)
+    return scores[0], scores[1]
+
+
+def paper_word(score):
+    """"side0", "side1" or "tie" (equal) from a paper score; a score alone cannot say "no_reach"."""
+    return "side0" if score[0] > score[1] else "side1" if score[1] > score[0] else "tie"
+
+
+def paper_reading(setup, engine=None):
+    """(paper_score, paper_prediction) of a Setup in one pass; fight() fills FightResult.paper_score and .predicted_paper from it."""
+    score = paper_score(setup, engine)
+    return score, "no_reach" if _mutual_no_reach(setup) else paper_word(score)
+
+
+def paper_prediction(setup, engine=None):
+    """"no_reach" when nobody can reach anybody at tick 0 (R7), else the paper word of paper_score. A tick-0 reading only."""
+    return paper_reading(setup, engine)[1]
+
+
 def _blind_holder(setup):
     """Some side-0 group on guard has an anchor from which the nearest placed unit of side 1 is not seen (decision 44)."""
     starts = [(x, y, g.layer) for g in setup.groups if g.side == 1 for x, y in _placed(g)]

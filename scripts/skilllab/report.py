@@ -239,13 +239,25 @@ def _where(family, play, layout, point) -> str:
 def _sentence(n, rows) -> str:
     where = _where(n.family, n.play, n.layout, n.point)
     if n.kind == "crossing":
-        return "%s: against %s the gain crosses between %r and %r" % (where, n.role, n.knob_lo, n.knob_hi)
+        reach = "" if n.reach is None or len({r.get("reach") for r in rows}) < 2 else " with reach %s" % n.reach
+        return "%s: against %s the gain crosses between %r and %r%s" % (where, n.role, n.knob_lo, n.knob_hi, reach)
     if n.kind == "ceiling_hit":
         return "%s: ceiling hit at %r, the play beat every enemy size up to %d" % (where, n.knob_lo, n.heads)
     r = rows[n.row]
     extra = "" if n.role == "none" else ", baseline %s" % n.role
     extra += ", %s" % r["kind"] if r["kind"].startswith("control_") else ""
     return "%s%s: both predictions were wrong (outcome %s)" % (where, extra, r["outcome"])
+
+
+def _called(rows) -> str:
+    """Per reading (window, paper, whole), how many of the fights that ended side0 or side1 it named the winner of (LAB-REV3-C, R4). A tie,
+    a paper word of no_reach, a cap, a draw and a no_reach_stall name or ask no winner, so they are no call."""
+    fights = [r for r in rows if r["outcome"] in ("side0", "side1")]
+    whole = lambda r: "side0" if r["firing_unit_seconds_0"] > r["firing_unit_seconds_1"] else "side1" if r["firing_unit_seconds_1"] > r["firing_unit_seconds_0"] else "tie"
+    readings = (("window", lambda r: r["predicted_count"]), ("paper", lambda r: r.get("predicted_paper")), ("whole", whole))
+    return "".join('<p class="called"%s>%s: right in %d of %d fights</p>'
+                   % (_attrs(reading=name, right=sum(read(r) == r["outcome"] for r in fights), fights=len(fights)), name,
+                      sum(read(r) == r["outcome"] for r in fights), len(fights)) for name, read in readings)
 
 
 def _counts(n, rows) -> str:
@@ -502,7 +514,7 @@ def artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact", thre
         "baseline-ceiling": ['<ul>'] + ['<li%s>baseline_ceiling: %s, the baseline beat every enemy size at %s</li>' % (
             _attrs(role=c["role"], family=c["family"], play=c["play"], layout=c["layout"], point=c["point"], knob=_csv(c["knob_value"])),
             escape(c["role"]), _csv(c["knob_value"])) for c in ceilings] + ["</ul>"] if ceilings else ["<p>no baseline_ceiling</p>"],
-        "agreement": [charts.agreement_html(groups)],
+        "agreement": [charts.agreement_html(groups), _called(rows)],
         "both-wrong": ['<ul>'] + ['<li%s>%s | outcome %s | predicted_count %s | predicted_type %s | firing_window_0 %s | firing_window_1 %s</li>'
                                   % (_attrs(row=n.row), escape(_sentence(n, rows).split(":")[0]), *(escape(_csv(rows[n.row][c])) for c in (
                                       "outcome", "predicted_count", "predicted_type", "firing_window_0", "firing_window_1")))

@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from scripts.skilllab import batches, diagram, plays, report, rows, scan, sweep
+from scripts.skilllab.contract import FROZEN_NAMES
 from scripts.skilllab.contract import Batch
 from scripts.skilllab.evidence import Thresholds
 
@@ -60,7 +61,19 @@ def _batch(name, out_dir, workers=1, layouts=200):
     return 0
 
 
-def _sweep(name, out_dir, workers, full_scan):
+def _reach_pair(text):
+    """argparse type of the repeatable sweep flag: TYPE=UP,DOWN with each value one of sweep.REACH_VALUES."""
+    name, _eq, values = text.partition("=")
+    try:
+        up, down = (int(v) for v in values.split(","))
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be TYPE=UP,DOWN, got %r" % (text,)) from None
+    if not name or up not in sweep.REACH_VALUES or down not in sweep.REACH_VALUES:
+        raise argparse.ArgumentTypeError("must be TYPE=UP,DOWN with each value one of %r, got %r" % (sweep.REACH_VALUES, text))
+    return name, (up, down)
+
+
+def _sweep(name, out_dir, workers, full_scan, reach):
     if name in (None, "all"):
         families = list(sweep.FAMILY_ORDER)
     elif name in sweep.FAMILY_ORDER:
@@ -68,7 +81,7 @@ def _sweep(name, out_dir, workers, full_scan):
     else:
         print("sweep needs one of: all, " + ", ".join(sweep.FAMILY_ORDER))
         return 2
-    summary = sweep.run(families, out_dir, workers=workers, full_scan=full_scan, probe=True)
+    summary = sweep.run(families, out_dir, workers=workers, full_scan=full_scan, probe=True, reach=reach)
     for entry in summary["families"].values():
         if entry.get("csv"):
             print(out_dir / entry["csv"])
@@ -163,6 +176,8 @@ def main(argv=None) -> int:
                         help="sweep and smoke: fight every headcount 8 to 48 instead of bisecting (controls and reach always do)")
     parser.add_argument("--thresholds", default=None, help="artifact only: a JSON file of Westley's pass marks (every Thresholds field)")
     parser.add_argument("--layouts", type=_workers, default=200, help="batch layout_search only: how many layouts to draw (default 200)")
+    parser.add_argument(FROZEN_NAMES[10], action="append", type=_reach_pair, dest="reach", metavar="TYPE=UP,DOWN",
+                        help="sweep only, repeatable: the reach of a type for every build of the run (values 0 to 2)")
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
     if args.command == "controls":
         return _controls(Path(args.out))
@@ -171,7 +186,7 @@ def main(argv=None) -> int:
     if args.command == "batch":
         return _batch(args.name, Path(args.out), args.workers or 1, args.layouts)
     if args.command == "sweep":
-        return _sweep(args.name, Path(args.out), args.workers or 1, args.full_scan)
+        return _sweep(args.name, Path(args.out), args.workers or 1, args.full_scan, dict(args.reach) if args.reach else None)
     if args.command == "smoke":
         return _smoke(Path(args.out), args.workers or 12, args.full_scan)
     if args.command == "artifact":
