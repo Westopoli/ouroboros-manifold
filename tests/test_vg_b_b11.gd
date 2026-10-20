@@ -1,8 +1,11 @@
 extends SceneTree
 
 # Piece B11 tests (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 4, lane B; bible E-16
-# S-106 R-106-05: "When idle, an ambient particle field (rings, inflow streams, dust, starfield,
-# central glow) fills the space behind the territory at low opacity"). The tier expectations are
+# S-106 R-106-05, as B11 read it: "When idle, an ambient particle field (rings, inflow streams, dust,
+# starfield, central glow) fills the space behind the territory at low opacity". B25 (rev 12d) moves the
+# starfield and dust off particles onto a wash, four star-layer meshes and a MultiMesh of motes
+# (tests/test_vg_b_b25.gd owns those); this file still counts the remaining GPUParticles3D: rings, streams,
+# central glow, which keep the contract below). The tier expectations are
 # the A60 stack's (ruling A54/A60, origin/push/A54-ambient-tests tests/qa/desktop/test_galaxy_ambient.py):
 #   tier 0 full field; tier 1 same field (only the shells change); tier 2 HALF the amount (+-0.02).
 # Names chosen by this test (the builder must match): the field is the subtree under a node named
