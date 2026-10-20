@@ -2157,7 +2157,7 @@ owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequen
 owns_glob = []
 acceptance = ["tests/test_vg_b_b26.gd"]
 depends_on = ["VG-B"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "40736b0" }
 tests_pending = true
 size_estimate = "B26 chronicle one entry at a time: the panel's print queue and hold, and the sequencer's hold at the next keyframe while an entry prints (Q-069-03 (a), status reading, Westley to confirm; ledger FINDING-chronicle-concurrent-print); then the S-108 re-run"
 
@@ -2818,7 +2818,7 @@ owns = ["scripts/specfactory/rule_pins_tests.py", "scripts/specfactory/rule_pins
 owns_glob = []
 acceptance = ["tests/specfactory/test_rule_pins_tests.py"]
 depends_on = ["HARNESS-C1a", "HARNESS-userdir", "HARNESS-pregate", "HARNESS-status"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "7cf6358" }
 tests_pending = true
 size_estimate = "C1b pins in tests and where the checks run: rule_pins_tests.py and the rule_pins.toml sidecar (new), pre_gate.sh step pins, merge_gate.sh stages rule_pins and status, status_check.py check pins"
 
