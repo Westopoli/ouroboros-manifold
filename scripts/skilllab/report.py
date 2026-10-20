@@ -201,9 +201,17 @@ DRAFT_TEXT = {
     "DRAFT-reengage-moved-wu": "the displacement over the silence window above which a side counts as having moved (1 wu)",
     "DRAFT-coarse-step": "the headcount step of the first coarse pass of a scan (scan.COARSE_STEP)",
     "DRAFT-control-max-ticks": "the tick cap of a control fight (sweep.CONTROL_MAX_TICKS)",
-    "DRAFT-probe-count-bound": "the bound on the probes of a bisected scan (at most 14)",
+    "DRAFT-probe-count-bound": "the bound on the probes of a bisected scan (at most 9 at COARSE_STEP 8, derived)",
     "DRAFT-ground-geometry": "the coordinates and radii of the ground scenes",
+    "DRAFT-behind-cover": "how far short-reach types stand in front of the long-reach ones (scenes.BEHIND_COVER 150)",
+    "DRAFT-ambush-behind": "how far the ambush group stands behind the bait group (scenes.AMBUSH_BEHIND 200)",
+    "DRAFT-mix-M1": "the composition of roster mix M1, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M2": "the composition of roster mix M2, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M3": "the composition of roster mix M3, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M4": "the composition of roster mix M4, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M3b": "the composition of roster mix M3b, a row of the MIXES table in plays_space.py",
 }
+STANDIN = "re-engage is a lab stand-in for the engine's pending sight-engagement rule"
 NO_DEFENDER = "C1 for plays without a naive defender baseline rests on naive_attacker only"
 
 
@@ -286,13 +294,40 @@ def _refused_blocks(refused) -> dict:
     return {k: _refused_ul(sorted(v, key=lambda e: (e["layout"], e["role"])), "refused-play", family=k[0], play=k[1]) for k, v in by_play.items()}
 
 
+def _shifted(summary) -> list:
+    families = summary.get("families", {})
+    out = []
+    for family in summary.get("order", ()):
+        mine = [e for e in families.get(family, {}).get("shifted_posts") or () if e["role"].startswith("naive_")]
+        out += sorted(mine, key=lambda e: (e["play"], e["layout"], e["role"]))
+    return out
+
+
+def _shifted_ul(entries, cls, **attrs) -> str:
+    items = []
+    for e in entries:
+        wu = "%.1f" % e["shift_wu"]
+        items.append('<li data-shifted-post=""%s>naive %s: post shifted %s wu</li>' % (
+            _attrs(family=e["family"], play=e["play"], layout=e["layout"], role=e["role"], shift_wu=wu),
+            escape(e["role"][len("naive_"):].replace("_", " ")), wu))
+    return '<ul class="%s"%s>\n' % (cls, _attrs(**attrs)) + "\n".join(items) + "\n</ul>"
+
+
+def _shifted_blocks(shifted) -> dict:
+    by_play = {}
+    for e in shifted:
+        by_play.setdefault((e["family"], e["play"]), []).append(e)
+    return {k: _shifted_ul(sorted(v, key=lambda e: (e["layout"], e["role"])), "shifted-play", family=k[0], play=k[1]) for k, v in by_play.items()}
+
+
 def _findings(summary, rows, ns, svgs) -> list:
     out = []
-    refused = _refused(summary)
-    blocks = _refused_blocks(refused)
+    refused, shifted = _refused(summary), _shifted(summary)
+    blocks, sblocks = _refused_blocks(refused), _shifted_blocks(shifted)
     for n in ns:
-        if (n.family, n.play) in blocks:
-            out.append(blocks.pop((n.family, n.play)))
+        for b in (blocks, sblocks):
+            if (n.family, n.play) in b:
+                out.append(b.pop((n.family, n.play)))
         out.append("<h2%s>%s</h2>" % (_attrs(notable=n.id), escape(_sentence(n, rows))))
         out.append(svgs[n.id])
         if n.kind == "crossing":
@@ -302,8 +337,29 @@ def _findings(summary, rows, ns, svgs) -> list:
     cuts = _cut_list(summary, rows)
     out += [cuts] if cuts else []
     order = {f: i for i, f in enumerate(summary.get("order", ()))}
-    out += [blocks[k] for k in sorted(blocks, key=lambda k: (order[k[0]], k[1]))]
-    return out + ([_refused_ul(refused, "refused-baselines")] if refused else [])
+    for k in sorted(set(blocks) | set(sblocks), key=lambda k: (order[k[0]], k[1])):
+        out += [b[k] for b in (blocks, sblocks) if k in b]
+    out += [_refused_ul(refused, "refused-baselines")] if refused else []
+    return out + ([_shifted_ul(shifted, "shifted-posts")] if shifted else [])
+
+
+def _vision_layouts(summary, rows) -> str:
+    refused = [e for e in summary.get("families", {}).get("vision", {}).get("refused") or ()
+               if e["role"] == "play" and e["reason"] == "no_fit"] if "vision" in summary.get("order", ()) else []
+    ran = sorted({str(r["layout"]) for r in rows if r["family"] == "vision"})
+    gone = list(dict.fromkeys(str(e["layout"]) for e in refused if str(e["layout"]) not in ran))
+    if not gone or not ran:
+        return ""
+    lead = "layout %s only" % ran[0] if len(ran) == 1 else "layouts %s only" % ", ".join(ran)
+    who = ("%s refuses" % gone[0] if len(gone) == 1 else "%s and %s refuse" % (", ".join(gone[:-1]), gone[-1]))
+    return '<p class="vision-layouts"%s>vision cells: %s; %s the play: no_fit</p>' % (
+        _attrs(layouts_run=",".join(ran), layouts_refused=",".join(gone)), lead, who)
+
+
+def _reengage_standin(rows) -> str:
+    if any((r.get("reengage_0") or 0) > 0 or (r.get("reengage_1") or 0) > 0 for r in rows):
+        return '<p class="reengage-standin">%s</p>' % escape(STANDIN)
+    return ""
 
 
 def _drafts(summary, rows) -> list:
@@ -313,12 +369,13 @@ def _drafts(summary, rows) -> list:
     if rows:
         items.append(("DRAFT-opening-window-ticks", "%d ticks after first contact: the primary prediction window" % OPENING_WINDOW_TICKS))
     if live("arc"):
-        items.append(("DRAFT-firing-arc-deg", "the swept firing arcs (magnitudes, they will retune)"))
+        items.append(("DRAFT-firing-arc-deg", "the swept firing arcs, grid from Westley's ruling 30 deg (magnitudes, they will retune)"))
     if live("cone"):
         items += [("DRAFT-aoe-cone-range", "the swept cone ranges"), ("DRAFT-aoe-cone-deg", "the swept cone half-angles"),
                   ("DRAFT-aoe-cone-share", "the cone damage share")]
     items += list(DRAFT_TEXT.items())
     out = ['<ul class="drafts">'] + ['<li data-draft="%s">%s: %s</li>' % (name, name, escape(words)) for name, words in items] + ["</ul>"]
+    out += [p for p in (_vision_layouts(summary, rows), _reengage_standin(rows)) if p]
     plays = sorted({e["play"] for e in _refused(summary) if e["role"].startswith("naive_defender")})
     if plays:
         out.append('<p class="no-defender-baseline" data-plays-without-defender="%s">%s: %s</p>' % (

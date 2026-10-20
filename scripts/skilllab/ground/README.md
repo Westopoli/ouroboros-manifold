@@ -1,6 +1,6 @@
 # Ground lab
 
-Ground scenes on the generated field of seed 11 (canvas 12000, era kind ground; seed 11 generates no slope at 4000). Code: `scenes_ground.py`. Tests: `tests/skilllab/ground/`, `tests/skilllab/integration/test_ground_slope_real.py`.
+Ground scenes on the generated field of seed 11 (canvas 12000, era kind ground; seed 11 generates no slope at 4000). The ground scene is batch two's: batch one runs the space lab only. Code: `scenes_ground.py`. Tests: `tests/skilllab/ground/`, `tests/skilllab/integration/test_ground_slope_real.py`.
 
 ## s1_slope_top
 
@@ -14,7 +14,7 @@ Knobs (`SLOPE_TOP_KNOBS`; the second point of each grid is the engine default):
 | `OM_TP_GROUND_FLYER_SEEN_MULT` | 1.25, 1.5, 2, 3 |
 | `OM_TP_SLOPE_UP_DIV` | 1.0, 1.1, 1.3, 2.0 (DRAFT: the 0.25x band means nothing for a divisor near 1) |
 
-`OM_TP_SLOPE_UP_DIV` is the knob that moves this scene (walkers climb slower with a larger divisor). `OM_TP_SIGHT_EYE_HEIGHT` and `OM_TP_GROUND_FLYER_SEEN_MULT` are inert here (`INERT_KNOBS`; the first batch reports them inert): every sight line from the top of the slope to its foot is clear at eye 25 and up, and the multiplier acts only on a flyer above the ground's layer, and these Raiders walk. Making them live in the natural scene is a later design call for the Architect and Westley.
+`OM_TP_SLOPE_UP_DIV` is the knob that moves this scene (walkers climb slower with a larger divisor). `OM_TP_SIGHT_EYE_HEIGHT` and `OM_TP_GROUND_FLYER_SEEN_MULT` are inert here (`INERT_KNOBS`; batch two reports the inert knobs): every sight line from the top of the slope to its foot is clear at eye 25 and up, and the multiplier acts only on a flyer above the ground's layer, and these Raiders walk. Making them live in the natural scene is a later design call for the Architect and Westley.
 
 ## Variants carrying the two controls
 
