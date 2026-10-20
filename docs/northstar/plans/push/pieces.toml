@@ -2146,21 +2146,20 @@ owns = ["scenes/settings/settings.gd", "tests/test_galaxy_quality_setting.gd", "
 owns_glob = []
 acceptance = ["tests/test_galaxy_quality_setting.gd"]
 depends_on = ["VG-A18", "VG-B24"]  # VG-A18 owns scenes/settings/settings.gd until it lands (G-settings glob and VG-A16 are attached); VG-B24 no longer owns the test file (Architect 2026-10-13)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "2ae09a5" }
 size_estimate = "settings OptionButton full/standard/particles + label, APPLY writes [display] galaxy_quality (A54/A60); red-on-main finding FINDING-gd-red-main-2026-10-12b fixed here"
 
 [[piece]]
 id = "VG-B26-chronicle-serial"
 manager = "M0"
 wave = 9
-owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd: VG-B's file, VG-B is attached; the panel had no owner row
+owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd is VG-B's (attached); chronicle_scroll_panel.gd is under the attached C3/C8 globs scenes/world/chronicle_*; rev 2026-10-19: both files are edited by this piece (Q-069-03 (a))
 owns_glob = []
 acceptance = ["tests/test_vg_b_b26.gd"]
 depends_on = ["VG-B"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2026-10-13; FINDING-chronicle-concurrent-print); a print queue in the panel, next entry on finished_printing plus the 3.0 s hold; the sequencer unchanged except that start_printing enqueues; Q-069-03 default (b)"
+size_estimate = "B26 chronicle one entry at a time: the panel's print queue and hold, and the sequencer's hold at the next keyframe while an entry prints (Q-069-03 (a), status reading, Westley to confirm; ledger FINDING-chronicle-concurrent-print); then the S-108 re-run"
 
 [[piece]]
 id = "VG-B25"
@@ -2345,10 +2344,10 @@ size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built
 id = "VG-P2"
 manager = "M0"
 wave = 12
-owns = ["csrc/economy_lot_noise.c", "csrc/lot_noise.h", "csrc/growth_probe.c"]
+owns = ["csrc/economy_field_noise.c", "csrc/field_noise.h", "csrc/growth_probe.c"]
 owns_glob = ["tests/csim/test_VG_P_p2_*.py"]  # test_VG_E_* is VG-E1's glob and test_VG_D_* VG-D's: neither matches test_VG_P_p2_*
-acceptance = ["tests/csim/test_VG_P_p2_lot_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
-depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot
+acceptance = ["tests/csim/test_VG_P_p2_field_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
+depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot; rev 6 (Architect 2026-10-19): field noise, files renamed from economy_lot_noise.c and lot_noise.h
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noise_q16, om_lot_noise_range, om_lane_build; about 160 lines), growth_probe.c (om_growth_probe_run; about 200 lines), two pytest files; DRAFT-lot-noise-*, DRAFT-lane-*, DRAFT-shape-harm 0.5"
@@ -2698,3 +2697,52 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "contract piece: the per-type cone table (om_roster_set_cone, LAB-REV2-E2) is saved, hashed like reach and carried across om_tactical_reset; save-format bump; closes FINDING-cone-state; lands before any roster type ships with a cone"
+
+# Harness enforcement (Architect 2026-10-19, spec 2026-10-19-harness-enforcement-spec.md rev 3a, audited three rounds): C1a -> C1b -> C235 -> C4 serial, then HARNESS-REPIN (its row is added attached in its own landing) and FU-HARNESS-findings.
+[[piece]]
+id = "HARNESS-C1a"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/rule_pins.py", "scripts/specfactory/spec_provenance.py", "tests/specfactory/test_rule_pins.py", "tests/specfactory/test_spec_provenance.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_rule_pins.py"]
+depends_on = ["A94-harness", "HARNESS-provenance"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C1a rule pins: rule_pins.py (new) prints and checks the 6-hex pin of a rule line, and spec_provenance.py gains reason 8 and the heading exemption"
+
+[[piece]]
+id = "HARNESS-C1b"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/rule_pins_tests.py", "scripts/specfactory/rule_pins.toml", "scripts/specfactory/pre_gate.sh", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/status_check.py", "tests/specfactory/test_rule_pins_tests.py", "tests/specfactory/test_pre_gate.py", "tests/specfactory/test_status_check.py", "tests/specfactory/test_merge_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_rule_pins_tests.py"]
+depends_on = ["HARNESS-C1a", "HARNESS-userdir", "HARNESS-pregate", "HARNESS-status"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C1b pins in tests and where the checks run: rule_pins_tests.py and the rule_pins.toml sidecar (new), pre_gate.sh step pins, merge_gate.sh stages rule_pins and status, status_check.py check pins"
+
+[[piece]]
+id = "HARNESS-C235"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_spec_provenance.py", "tests/specfactory/test_status_check.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_spec_provenance.py"]
+depends_on = ["HARNESS-C1b"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C235 quotes, numbers, set-asides: spec_provenance.py reasons 9, 10, 11, the [ASSERT] and [OPEN] tags, register status reading, status_check.py checks register and reviews"
+
+[[piece]]
+id = "HARNESS-C4"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/launch_check.sh", "scripts/specfactory/status_check.py", "scripts/specfactory/pre_gate.sh", "tests/specfactory/test_launch_check.py", "tests/specfactory/test_status_check.py", "tests/specfactory/test_pre_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_launch_check.py"]
+depends_on = ["HARNESS-C235"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys script, args, launch, spec, status_check.py known keys and check launch, the script header line"
