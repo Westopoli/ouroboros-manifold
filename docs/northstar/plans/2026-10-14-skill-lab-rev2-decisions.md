@@ -168,3 +168,78 @@ A real cut at K of 8 or more on a closed pocket is not buildable through the nai
 Architect's rationale: batch one is a method check of the lab, not a sweep; width comes in batch two, after the artifact form is approved. The six pin tests of decision 13 become ruler rows in the landing. E7 launches today on the visible-game side with ABI 8 and save 12, and the places lane P3 is written for save 13, so E0's numbers are the next free at its landing, taken from the Dispatcher (ouroboros-manifold-d0 owns the numbering); E0's text must not pin a number before the clerk asks. A built piece that reads queued in `pieces.toml` is a status_check drift.
 
 Answered without a decision number: speed marks stay Westley's (decision 37 stands); DRAFT numbers are used as DRAFT, with the list in front of Westley alongside the artifact; a drift auditor runs before the lab landing (drift_audit.md pattern, report to Westley unedited); the artifact form is reviewed by the Architect before Westley.
+
+## 41. Drift audit of push/labrev2-lab-m4: smoke parity, anchors, holder, no_fit, reach, replicates, states (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+After a fresh drift audit of `push/labrev2-lab-m4`. All fixes are tests first, in the post-merge fix piece LAB-REV2-FIX.
+1. The smoke command runs `firing.parity` and writes it to `smoke_summary.json` once E0 is in the landing; until then the field reads "skipped: E0 absent".
+2. Per-type anchor, as decision 25 says: one naive blob per unit type at that type's mean anchor. `sweep.py:308` (one anchor for all blobs) is the defect.
+3. Holder = side 0 has a guard-stance group in the Setup, derived from the Setup, never from the play name (`sweep.py:184` `baseline_roles` keys off the `s3_` prefix: defect). A meeting (no guard group) gets no `naive_defender` baseline.
+4. Only walking movers read `terrain_walkable_at` for no_fit; flyers and guards are checked against blocks only (decision 20 as rewritten). `scenes.py:254` is the defect.
+5. `reach_play` and the `reach` command stay until a later piece; no change now. L7's "kept only for the reach command" sentence stands.
+6. 8..24 stays at 10 replicates for the golden-hash controls and the `reach` command. The README says ruling 4's 8..48 is the scan of plays, not of the hash controls.
+9. `FightResult.states = []` when off, per decision 1; fixed with the next build. A test that pins None is a ruler row (assumption changed by decision 1).
+
+## 42. Drafts marked and extras accepted (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+7. Every one is marked DRAFT in code and in the artifact header: `scan.COARSE_STEP` 8, the probe-count bounds (at most 14), `sweep.CONTROL_MAX_TICKS` 600, the ground-scene geometry in `scripts/skilllab/ground/scenes_ground.py` (30 + 3*sqrt(n), radii 20/12/8, the five coordinates, "measured"). `plays.MAX_TICKS_BIG` is deleted as dead logic. `COARSE_STEP` and `CONTROL_MAX_TICKS` go to Westley with the other marks (the Architect carries them).
+8. Accepted as implementation (extras), each with its file: `contract.trim_series` and the lean pool path (`scripts/skilllab/contract.py`, `scripts/skilllab/pool.py`); the E3 settle-cache clearing in `om_move_load_radius` and the 2R > margin clamp in `om_move_probe_sure_blocked` (`csrc/tactical_move.c`); `sweep.in_band` (`scripts/skilllab/sweep.py`).
+
+Two heads-ups from the Architect: Westley asked whether a unit that sees an enemy should attack it (a report is with him; if he rules yes, L8 re-engage and mop-up become unnecessary and the E1 row grows, so L8 gets no more work than it needs to land). Westley asked two Opus analysts for wider roster mixes (M0-M4 use only four of six types), so the mix table must stay data-driven.
+
+## 43. The orders flip, re-engage and blind posts (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto; item 4's number and item 7 are Westley's)
+Evidence (the overseer's): the orders flip fails decision 23's zero-cap condition. Under `orders_per_unit=False` the smoke keeps 3 baseline-row caps and the flyer scene caps; under per-unit control there are zero caps. Two mechanisms. A: the re-engage group order is a no-op, because group slots are the click plus each unit's own offset from the group centroid (units already at the centroid get a destination equal to where they stand), and the trigger never re-arms after a no-op. B: survivors are blind to each other at the layout-192 doorway, so "while an enemy is visible" (decision 28) never holds.
+1. Flip, conditional. Mechanism A is fixed first inside the FIX piece (items 2 and 3, two small `fight.py` changes with tests), then the 3-layout smoke is rerun under `orders_per_unit=False`. If every remaining non-control cap is a mechanism-B row, the flip rides the landing and those rows are listed under one finding (item 6), so there is one golden re-record. If any other cap remains, the lab lands without the flip (default True, flip tests parked on `push/labrev2-flip-tests`) and the flip is its own later piece; the second re-record is then the price. Decision 23's condition now reads "zero caps outside `control_*` that are not blind-post findings".
+2. Re-engage issues a per-unit attack-move for every idle unit, one order each, onto the centroid. Re-engage is a lab-issued order and is exempt from the play's orders mode.
+3. A no-op engage (every ordered unit has dest None one tick later) re-arms at once and retries after another `REENGAGE_SILENCE_TICKS`. No new number.
+4. "Moved" for re-arming is displacement over the silence window greater than `DRAFT-reengage-moved-wu` 1 wu, marked DRAFT in code and in the artifact header. Westley's number, on his list.
+5. No walking toward an unseen enemy; "while an enemy is visible" stands (decision 28). A fight whose survivors cannot see each other is a finding row, not a cap defect of the lab. Pre-flight gains the reason `blind_post` (item 6).
+6. Shift, then refuse. The baseline builder moves a naive-defender post that is blind to the play's side start to the nearest free cell on the route grid from which that start is visible (same region, increasing radius, ties by the existing spiral order) and reports the shift in the row. If no such cell lies within the guard radius (200 wu, DRAFT), pre-flight refuses the baseline with reason `blind_post` and the artifact says "no naive defender: blind post". Tests first.
+7. A guard stepping out to shoot a visible out-of-range enemy is not ruled here: it is Westley's (one of the three cases of his "sees it, attacks it" question).
+8. His "sees it, attacks it" question is not ruled yet; the report is with Westley. FIX and the merge proceed, with no L8 change beyond items 2 and 3. If he rules "sees it, attacks it", L8 and mop-up fall away in a later piece.
+
+## 44. The blind-post probe and its shift (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+Makes decision 43 item 6 testable (the "Q6" of that decision).
+1. A naive-defender post is blind iff no clear sightline exists under R-098-02 (a blocked 100 wu cell on a layer at or below the viewer's layer crossing the segment) between the post and the nearest point of the opposing side's route start region, range ignored. The probe is pure lab-side geometry on the Setup's blocks in `scripts/skilllab/scenes.py`: no engine call and no spawned world.
+2. Shift: the nearest free route-grid cell in the same region with a clear sightline, by increasing radius, ties by the spiral order, within the guard radius 200 wu (DRAFT). None found: pre-flight refuses with reason `blind_post`, the fifth reason after `no_fit`, `unroutable`, `no_reach`.
+3. Tests, first: a wall cell on the segment makes the probe say blind, and the shift lands on the first cell past the wall's shadow; a clear segment says not blind; the shadow test is on layer offsets (a block whose top is below the viewer's layer does not block).
+4. The artifact lists every refused baseline, for every reason, as one line "no naive <role>: <reason>" with the reason one of `no_fit`, `unroutable`, `no_reach`, `blind_post`. It is built in L5's report. This replaces decision 43 item 6's wording "no naive defender: blind post".
+
+Smaller readings confirmed:
+5. The retry tick of decision 43 item 3 is N after the no-op is detected.
+6. `defects.cells` excludes blind caps.
+7. Unequal-count groups of one type use the plain mean.
+8. One blob per (type, layer) only when a type's layers differ, else one per type (decision 25 reads so).
+9. The parity default world is the open-ground mirror blob, 16 v 16, tick 0, arc 360.
+
+## 45. Rulings after the second drift audit of push/labrev2-lab c2d9bce8 (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+1. D1: the blind-post shift (decision 43 item 6, decision 44 item 2) is reported as artifact lines "naive <role>: post shifted <wu> wu", one per (play, layout, role), and as a `shifted_posts` field in the smoke and sweep summaries. No CSV column.
+2. D2: decision 34 item 3 (ground-scene detection, the slope-divisor header line, its positive test) is withdrawn for batch one. The ground scene, its slope-divisor header line, the detection and its positive test are batch two's, built with the ground family. The README says so.
+3. D3: the README and the ground README reword "the first batch reports the inert knobs" to "batch two".
+4. X1: layouts 81 and 78 refuse the two vision plays (`s3_layer_above`, `s3_types_by_reach`) at the play's own pre-flight (`no_fit`), so batch one's vision cells effectively run on layout 192 only. Accepted for the first run. The artifact header and the README say so: "vision cells: layout 192 only; 81 and 78 refuse the play: no_fit". A probe report goes to Westley: a short table of which draw layouts fit the vision plays (and `s3_over_the_choke`, `s2_concave`), with a count per layout of how many of batch one's plays fit, so he can pick replacements that fit the most. No layout swap without Westley.
+5. N1 to N4: names and the roster table.
+   - DRAFT-* names in code: DRAFT-mix-M1..M4, DRAFT-mix-M3b, DRAFT-behind-cover 150, DRAFT-ambush-behind 200, DRAFT-coarse-step, DRAFT-control-max-ticks, DRAFT-probe-count-bound.
+   - The probe-count bound 14 is derived from `COARSE_STEP` in the tests, not written as a literal.
+   - The roster mixes become ONE data table in `plays_space.py` with a `used_in` column (plays) and an `enabled` flag. New mixes M5 to M9 are added there once Westley says go on the roster analysis (decision 42's heads-up).
+   - A small refactor piece, tests first, no number changes.
+6. Docs: every stale documentation item of the audit is fixed, tests first where a test reads the doc.
+7. G2: the Architect edits the stale "the engine today" sentences in E-13 R-096-02 and E-11 R-087-06 once told the E1 landing sha; the rule bodies stay as rewritten.
+8. P2: the 24 ownerless files the audit found are added to the owning rows (LAB-REV2-FIX, -E1B, -L8, and the rows owning `summary.py` and `guard.py`) in `pieces.toml` before the landing. `owner_lint` and `status_check` are OK before every push.
+
+## 46. Firing arc number (Westley 2026-10-19)
+DRAFT-firing-arc-deg is 30 (Westley: "#5 yes 30 degrees"), no longer 120; the arc family's sweep band is read from 30. Recorded by the Architect; the overseer's code and artifact header follow.
+
+## 47. Arc grid from 30, T1 as a strict expected failure, five small readings (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+1. Arc family, following decision 46: base 30 degrees (Westley's firing arc). Grid 30 x {0.25, 0.5, 1, 2, 4} = 7.5, 15, 30, 60, 120 degrees, the band as for every family (ruling 11: start at the bible's value, step inside 0.25x to 4x). The null control stays 360 = unset. The tests that pin the 360-based grid (360, 270, 180, 120, 90) move under one ruler row (assumption changed by decision 46), rewritten by the test writer, not the builder. The family stays skipped in batch one while E2 is absent.
+2. LAB-REV3 T1 (the coverage test) lands with piece A as a strict expected failure whose reason names every uncovered cell, reach pairing and layer: a documented red with its finding rows `FINDING-lab-d1` and `FINDING-lab-d2`, not a skip. Piece B removes the marker and T1 passes plain. The landing report of A lists T1 under known red with that reason. The LAB-REV3 plan file is updated: its DRAFT line saying A lands T1 expected-red is this ruling.
+3. Smaller readings confirmed:
+   - `shift_wu` in `shifted_posts` is the largest `placement_shift` over the headcounts built for that baseline.
+   - The vision-layouts header sentence (decision 45 item 4) reads the layouts that ran from the vision family rows, not a fixed list.
+   - `DRAFT-probe-count-bound` has no code line (the bound is derived in the tests); the header text "(at most 14)" becomes "(at most 9 at COARSE_STEP 8, derived)".
+   - `DRAFT-behind-cover`, `DRAFT-ambush-behind` and `DRAFT-mix-*` names join the artifact header DRAFT list.
+   - The arc header name stays `DRAFT-firing-arc-deg`, but the entry reads "Westley's ruling 30 deg".
+
+## 48. Firing arc lower bound 5 (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+Numbered 48: the highest decision on origin/main is 47.
+1. `OM_TP_FIRING_ARC_DEG` lo becomes 5 (was 10), hi stays 360, default 360. It is an engine-safety bound, not a design number: a 5 degree arc still contains a facing direction and the sin/cos tables hold at that width. Westley's number is the 30 degree base (decision 46); the band gives 7.5 as the grid's floor (decision 47), and the bound sits under it.
+2. lo is rewritten in E0's spec row, in `tests/skilllab/fakes_trace.py` and in the E0 branch tests under a ruler row (assumption changed by decision 47), before E0 lands.
+3. The engine refuses a value below lo as today: no clamp. An out-of-band value is a settings error, not a silent change.
+4. The grid order ascending (7.5 to 120) stands.
