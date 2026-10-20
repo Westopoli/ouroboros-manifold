@@ -51,7 +51,11 @@ def test_control_a_holder_that_the_attackers_cannot_reach_is_still_refused():
 def test_control_a_holder_the_attackers_cannot_reach_is_refused_by_the_holder_rule_even_when_the_holder_reaches_them():
     """Green today (characterisation, F3; see the module docstring): an Interceptor on guard on layer 0 against Vanguards on layer 2 is one-way
     reach (the Interceptor reaches up 2), yet today's holder rule, which reads the attackers' reach only, refuses it. It stays as it is: the
-    word is the existing "no_reach". The same scene as a meeting (no guard) is "ok" (the decided case)."""
+    word is the existing "no_reach". The same scene as a meeting (no guard) is "ok" (the decided case).
+    ARCHITECT'S NOTE (2026-10-20): the pre-flight refusal stays as it is for now. A one-way reach in the guard's favour is a decided fight for
+    the guard under d11, and the pre-flight refuses it before it can say so. The first batch artifact lists how many scenes the refusal removed
+    (NOT TESTED YET; DRAFT); if that number is not small, the holder rule changes in a later piece under a TD row, and this test is then retired
+    by that row."""
     assert word([G(0, "Interceptor", 4, 0, order="guard"), G(1, "Vanguard", 4, 2)]) == "no_reach"
     assert word([G(1, "Interceptor", 4, 0, order="guard"), G(0, "Vanguard", 4, 2)]) == "no_reach"
     assert word([G(0, "Interceptor", 4, 0), G(1, "Vanguard", 4, 2)]) == "ok"
