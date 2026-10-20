@@ -304,9 +304,10 @@ def _put(repo, rel, text):
     p.write_text(text)
 
 
-def _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=None, fu_state=None):
+def _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=None, fu_state=None, fu_bare=False):
     """build_fixture plus the fixture epics, one test citing R-990-01 with `Rule pins: R-990-01@<test_pin>`, an
-    optional spec named by a pieces row (`spec_tag` is the text of its [B] tag), an optional FU-HARNESS-findings row."""
+    optional spec named by a pieces row (`spec_tag` is the text of its [B] tag), an optional FU-HARNESS-findings row
+    (`fu_bare` writes its status as the bare string `status = "<state>"` instead of the inline table)."""
     build_fixture(tmp_path)
     _put(tmp_path, "docs/bible/epics/E-99-test.md", EPIC_TEXT)
     _put(tmp_path, "tests/test_x.py",
@@ -318,8 +319,9 @@ def _pins_fixture(tmp_path, test_pin=RULE_PIN, spec_tag=None, fu_state=None):
                    'acceptance = ["t.py"]\ndepends_on = []\nspec = "docs/spec.md"\n'
                    'status = { state = "in_flight" }\ntests_pending = true\n')
     if fu_state is not None:
+        status = f'"{fu_state}"' if fu_bare else f'{{ state = "{fu_state}" }}'
         pieces += (f'\n[[piece]]\nid = "{FU_ROW}"\nmanager = "M0"\nowns = ["e.c"]\nowns_glob = []\n'
-                   f'acceptance = ["t.py"]\ndepends_on = []\nstatus = {{ state = "{fu_state}" }}\n'
+                   f'acceptance = ["t.py"]\ndepends_on = []\nstatus = {status}\n'
                    f'tests_pending = false\n')
     (tmp_path / PIECES).write_text(pieces)
 
@@ -364,6 +366,22 @@ def test_pins_follow_up_row_that_is_not_attached_still_warns(tmp_path):
         res = run_check(sub)
         assert line_for(res, "pins")[0].startswith("STATUS pins WARN 1 stale"), (state, res.stdout)
         assert res.returncode == 0, (state, res.stdout + res.stderr)
+
+
+def test_pins_stale_test_pin_is_drift_with_a_bare_string_attached_follow_up_row(tmp_path):
+    """owner_lint.py:37-44 reads both status shapes; 37 rows on main use the bare string `status = "attached"`."""
+    _pins_fixture(tmp_path, test_pin=STALE_PIN, fu_state="attached", fu_bare=True)
+    res = run_check(tmp_path)
+    assert line_for(res, "pins")[0].startswith("STATUS pins DRIFT"), res.stdout
+    assert res.returncode == 1, res.stdout + res.stderr
+
+
+def test_pins_bare_string_follow_up_row_that_is_not_attached_still_warns(tmp_path):
+    """Control of the bare-string case: `status = "queued"` does not flip the switch."""
+    _pins_fixture(tmp_path, test_pin=STALE_PIN, fu_state="queued", fu_bare=True)
+    res = run_check(tmp_path)
+    assert line_for(res, "pins")[0].startswith("STATUS pins WARN 1 stale"), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
 
 
 def test_pins_missing_pin_in_a_row_spec_warns_as_missing(tmp_path):
