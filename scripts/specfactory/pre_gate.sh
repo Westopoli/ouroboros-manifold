@@ -146,10 +146,10 @@ if (( ${#spec_paths[@]} )); then
 fi
 
 # ---- (5) provenance ----------------------------------------------------------
-# A row without a spec key is a WARN; REJECT once FU-HARNESS-findings is attached (the C1b switch, as owner_lint reads it).
+# A row without a spec key is a WARN; REJECT once FU-HARNESS-findings is attached (the C1b switch, as owner_lint reads it: bare string or inline table; See also: owner_lint.py:37-44).
 # See also: spec_provenance.py (method rev 3). DRAFT-pregate-spec-env keeps PRE_GATE_SPEC as an extra path.
 no_spec="WARN"
-if [[ -f "$PIECES_TOML" ]] && "$VENV_PYTHON" -c 'import sys, tomllib; rows = tomllib.load(open(sys.argv[1], "rb")).get("piece", []); sys.exit(0 if any(r.get("id") == "FU-HARNESS-findings" and r.get("status", {}).get("state") == "attached" for r in rows) else 1)' "$PIECES_TOML"; then
+if [[ -f "$PIECES_TOML" ]] && "$VENV_PYTHON" -c 'import sys, tomllib; rows = tomllib.load(open(sys.argv[1], "rb")).get("piece", []); st = lambda r: (r.get("status") or {}).get("state") if isinstance(r.get("status"), dict) else r.get("status"); sys.exit(0 if any(r.get("id") == "FU-HARNESS-findings" and st(r) == "attached" for r in rows) else 1)' "$PIECES_TOML"; then
     no_spec="REJECT"
 fi
 if [[ ! -f "$PIECES_TOML" ]]; then

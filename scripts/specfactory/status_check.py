@@ -99,7 +99,8 @@ def parse_pieces(path):
         if m:
             cur["spec"] = m.group(1)
         if re.match(r"status\s*=", s):
-            m = re.search(r'state\s*=\s*"([^"]*)"', s)
+            # Bare string or inline table. See also: owner_lint.py:37-44
+            m = re.match(r'status\s*=\s*"([^"]*)"', s) or re.search(r'state\s*=\s*"([^"]*)"', s)
             if m:
                 cur["state"] = m.group(1)
             m = re.search(r'attach_sha\s*=\s*"([0-9a-fA-F]{7,})"', s)
