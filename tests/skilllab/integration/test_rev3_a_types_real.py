@@ -44,36 +44,42 @@ def blob(side, unit, n, x):
                  order="attack_move", params={"radius": 80 + 12 * n ** 0.5})
 
 
-def winners(side0, side1, types):
-    """Outcomes of eight fights of 12 Vanguards + 4 `side0` Wardens against 12 Vanguards + 4 `side1` Wardens."""
+LAB = {"Warden": {"base": "Warden", "reach": (0, 0)}}
+
+
+def fights(side0, side1, types):
+    """(outcome, ticks, survivors) of eight fights of 12 Vanguards + 4 `side0` Wardens against 12 Vanguards + 4 `side1` Wardens."""
     out = []
     for seed in SEEDS:
         setup = Setup(groups=(blob(0, "Vanguard", 12, -350.0), blob(0, side0, 4, -350.0),
                               blob(1, "Vanguard", 12, 350.0), blob(1, side1, 4, 350.0)), unit_types=types)
-        out.append(fight(setup, seed, False, engine=AliasEngine()).outcome)
+        r = fight(setup, seed, False, engine=AliasEngine())
+        out.append((r.outcome, r.ticks, r.survivors))
     return out
 
 
 @SLOW
 def test_positive_control_two_builtin_wardens_split_the_wins():
-    """Green on the lab tip: with no copy on either side the same eight fights are not one-sided, so the mirror check below can tell."""
-    got = winners("Warden", "WardenB", {})
-    assert {"side0", "side1"} <= set(got), got
+    """Green on the lab tip: with no copy on either side the same eight fights are not one-sided (side 0 wins 3, side 1 wins 5), and
+    the same call twice gives the same eight tuples (the fights are deterministic, which the equality tests below rely on)."""
+    got = fights("Warden", "WardenB", {})
+    assert {o for o, _, _ in got} == {"side0", "side1"}, got
+    assert got == fights("Warden", "WardenB", {})
 
 
 @SLOW
 def test_t3_a_lab_registered_warden_is_a_mirror_of_a_builtin_one():
-    """T3 (D3): the lab Warden against the built-in Warden, eight seeds: both sides win at least once. Red today: side 1 (the built-in
-    Wardens, whose aura heals) wins 8 of 8, the lab copy has no aura."""
-    got = winners("Warden", "WardenB", {"Warden": {"base": "Warden", "reach": (0, 0)}})
-    assert {"side0", "side1"} <= set(got), "outcomes by seed: %s" % got
+    """T3 (D3; W4 of the audit): once the lab Warden IS the built-in type, the fight is the built-in-against-built-in fight: the
+    (outcome, ticks, survivors) of all eight seeds equal the control's exactly. Red today: side 1 (built-in, aura heals) wins 8 of 8
+    in about 2,300 ticks, the control splits 3 : 5 in 5,000 to 7,000."""
+    assert fights("Warden", "WardenB", LAB) == fights("Warden", "WardenB", {})
 
 
 @SLOW
 def test_t3_the_mirror_does_not_depend_on_the_side():
-    """T3 (D3): the built-in Warden on side 0 and the lab one on side 1 splits too. Red today: side 0 (built-in) wins 8 of 8."""
-    got = winners("WardenB", "Warden", {"Warden": {"base": "Warden", "reach": (0, 0)}})
-    assert {"side0", "side1"} <= set(got), "outcomes by seed: %s" % got
+    """T3 (D3): the built-in Wardens on side 0 and the lab ones on side 1 equal the control with the sides' names swapped, seed by seed.
+    Red today: side 0 (built-in) wins 8 of 8."""
+    assert fights("WardenB", "Warden", LAB) == fights("WardenB", "Warden", {})
 
 
 def bastion_left(target):

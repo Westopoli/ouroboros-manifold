@@ -4,12 +4,12 @@ a group index is an index into `Setup.groups`, groups 0 and 1 are BOTH side 0 (t
 default, so nobody ever emits and the family `emitting` (sweep.PLAYS_BY_FAMILY["emitting"] == ("s3_dark_striker",)) has nothing to act on.
 Fast half, no fight: the play's own Setup. The fight half is tests/skilllab/integration/test_rev3_a_dark_striker_real.py.
 
-The plan allows two fixes (R8): "the dark-striker play makes the enemy emit at the knob's values, or is deleted with its row". Both are
-accepted here:
-  - the play stays: at least one `set_emission` step with on=True addresses a group of side 1 (the enemy), and side 0 is not set to emit
-    by any step; or
-  - the play is deleted: "s3_dark_striker" is in neither plays_space.PLAYS nor any value of sweep.PLAYS_BY_FAMILY, and the emitting family
-    names no play that cannot respond (it is then the Architect's/B's to give the family another play; the family list may be empty).
+Architect ruling 2026-10-20 (plan T5): the play STAYS; the D5 fix makes the enemy emit at the emitting family's grid values (the family
+sets the multipliers; the play turns the enemy's emission on). Deleting the play is no longer accepted, so a deleted play fails here.
+The fast checks: the play is in `plays_space.PLAYS` and in `sweep.PLAYS_BY_FAMILY["emitting"]`; at least one `set_emission` step with on=True
+addresses a group of side 1; no step turns side 0 on (the striker stays dark). `test_plays_space.py::test_dark_striker_side_0_goes_silent_at_tick_0_
+and_the_naive_side_does_not` and `test_scenes_mix.py::test_placed_dark_striker_keeps_its_silent_steps_on_side_0` are the existing tests the
+ruler retires or rewrites under TD rows; this file does not touch them.
 BUILDER CONTRACT: nothing is named; the Setup's groups and timeline are read."""
 import sys
 from pathlib import Path
@@ -36,18 +36,18 @@ def test_positive_control_the_ping_play_has_a_working_timeline_step_on_its_own_s
     assert ping and setup.groups[ping[0].group].side == 0
 
 
-def test_t5_the_dark_striker_makes_the_enemy_emit_or_the_play_is_gone():
+def test_t5_the_dark_striker_stays_in_the_registry_and_the_emitting_family():
+    """T5 (ruling): the play is kept. Green on the lab tip, red if the builder deletes it."""
+    assert PLAY in plays_space.PLAYS and PLAY in sweep.PLAYS_BY_FAMILY["emitting"]
+
+
+def test_t5_the_dark_striker_makes_the_enemy_emit():
     """T5 (D5): some step turns emission ON for a side 1 group. Red today: both steps address side 0 groups and turn emission off."""
-    if PLAY not in plays_space.PLAYS:
-        assert not any(PLAY in plays for plays in sweep.PLAYS_BY_FAMILY.values())
-        return
     steps = emission_steps(plays_space.PLAYS[PLAY].setup_fn())
     assert [(s.on, side) for s, side in steps if s.on and side == 1], "emission steps (on, side): %s" % [(s.on, side) for s, side in steps]
 
 
 def test_t5_side_0_does_not_emit():
     """T5 (D5): the striker stays dark. Holds today, and must hold after the fix: no step turns emission on for side 0."""
-    if PLAY not in plays_space.PLAYS:
-        return
     steps = emission_steps(plays_space.PLAYS[PLAY].setup_fn())
     assert not [1 for s, side in steps if s.on and side == 0]

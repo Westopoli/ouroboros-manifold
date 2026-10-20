@@ -1,3 +1,4 @@
+# Rule pins: R-164-01@511d57
 # spec: docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md (requirement R8, test T3; defect D3); ledger FINDING-lab-d3; piece LAB-REV3-A
 """LAB-REV3-A, T3 (R8, D3): no copied types. The library keys the Warden aura and the Bastion damage cap on the BUILT-IN type ids
 (csrc/unit.c, om_grid_kind and om_resolve_hit_multiplier), so a type the lab copies into a custom id (100 and up) loses both. Fast half:
@@ -64,15 +65,23 @@ def test_t3_the_reach_is_set_on_the_builtin_id(engine, name):
     assert got == plays_space._REACH[name]
 
 
+def test_t3_the_warden_is_in_the_reach_table_as_line_own_layer_only():
+    """Architect ruling 2026-10-20 (ruling 6): the Warden joins `plays_space._REACH` as (0, 0) (Line, own layer only, R-164-01). Red today:
+    KeyError 'Warden' (so `plays_space._types("Warden")` raises too)."""
+    assert plays_space._REACH["Warden"] == (0, 0)
+    assert plays_space._types("Warden") == {"Warden": {"base": "Warden", "reach": (0, 0)}}
+
+
 def test_t3_the_warden_gets_a_builtin_id_too_with_the_reach_it_is_given(engine):
-    """T3 (D3): the Warden (aura) is the type the copy hurt first; a reach entry on it keeps id 3. Red today: id 100."""
+    """T3 (D3): the Warden (aura) is the type the copy hurt first; the entry `plays_space._types("Warden")` will give (reach (0, 0), the
+    library default) keeps id 3. Red today for the id only: `(100, (0, 0)) == (3, (0, 0))`, the reach reads (0, 0) either way."""
     w = engine.new_world(0)
     try:
-        types = fight_mod._register_types(engine, w, setup_of({"Warden": {"base": "Warden", "reach": (1, 0)}}, "Warden", "Vanguard"))
+        types = fight_mod._register_types(engine, w, setup_of({"Warden": {"base": "Warden", "reach": (0, 0)}}, "Warden", "Vanguard"))
         got = engine.profile_reach(w, engine.type_id("Warden"))
     finally:
         engine.free_world(w)
-    assert (types["Warden"][0], got) == (engine.type_id("Warden"), (1, 0))
+    assert (types["Warden"][0], got) == (engine.type_id("Warden"), (0, 0))
 
 
 def test_t3_no_custom_type_is_registered_for_a_play_with_only_builtin_names(engine):
@@ -100,6 +109,26 @@ def test_t3_the_reach_does_not_leak_into_the_next_world(engine):
         assert engine.profile_reach(w, engine.type_id("Bombard")) == (0, 0)
     finally:
         engine.free_world(w)
+
+
+@pytest.mark.parametrize("movement, kind", [("flying", 0), ("walking", 1)])
+@pytest.mark.parametrize("reach", [(0, 0), (0, 1)])
+def test_a_name_equals_base_entry_with_movement_and_reach_keeps_both(engine, movement, kind, reach):
+    """W5 of the audit, positive control (green on the lab tip, must stay green): the entry shape tests/skilllab/test_drift_fix_blind_post.py
+    uses (`{"Vanguard": {"base": "Vanguard", "movement": "flying", "reach": (0, 1)}}`) is a name-equals-base entry with a `movement`
+    key. Whether the builder keeps it custom or collapses it onto the built-in id is the builder's; what is pinned is that the id
+    `_register_types` returns reads back the entry's reach (`profile_reach`) and movement kind (`movement_kind`: 0 flying, 1 walking),
+    so a collapse that drops either key goes red here. (Why not pin 'stays custom': the sweep's `_reach_zero` writes exactly this
+    shape for every unit, and the plan wants no copies; both readings satisfy the observable.)"""
+    w = engine.new_world(0)
+    try:
+        types = fight_mod._register_types(engine, w, setup_of({"Vanguard": {"base": "Vanguard", "movement": movement, "reach": reach}},
+                                                               "Vanguard", "Raider"))
+        tid = types["Vanguard"][0]
+        got = (engine.profile_reach(w, tid), engine.movement_kind(w, tid))
+    finally:
+        engine.free_world(w)
+    assert got == (reach, kind)
 
 
 def test_a_genuinely_custom_entry_keeps_its_custom_id(engine):

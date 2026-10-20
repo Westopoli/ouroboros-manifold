@@ -7,7 +7,7 @@ The fights are the sweep's: `sweep.default_builds("s3_dark_striker", "play", swe
 Measured on the lab tip (2026-10-20, this file's author, layout 192): the three settings give the same row at vision 0.125 (1633 ticks,
 15:0) and at vision 0.25 (1669 ticks, 14:0), the finding's line. With the enemy groups (2 and 3) set to emit, the vision 0.125 rows
 differ (1571, 1669, 1669 ticks): the control below builds that scene by hand.
-If the play is deleted (the plan's other fix) the defect test passes as soon as the play is gone; see the fast half's docstring."""
+The play stays (Architect ruling 2026-10-20); the fast half pins that."""
 import dataclasses
 import os
 import sys
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab import fight as fight_mod, plays_space, rows as rows_mod, sweep  # noqa: E402
+from scripts.skilllab import fight as fight_mod, rows as rows_mod, sweep  # noqa: E402
 from scripts.skilllab.contract import Step  # noqa: E402
 
 SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="real fights over the real plays; set OM_LAB_SLOW=1")
@@ -62,8 +62,6 @@ def test_positive_control_when_the_enemy_emits_the_emitting_knob_changes_the_fig
 @SLOW
 def test_t5_the_dark_striker_fight_changes_under_the_emitting_knob():
     """T5 (D5): the play as the registry builds it gives rows that are not all identical across the three emitting settings. Red today:
-    one row per seed. Passes when the play is deleted."""
-    if PLAY not in plays_space.PLAYS:
-        return
+    one row per seed."""
     got = rows(sweep.default_builds(PLAY, "play", sweep.smoke_layouts()[LAYOUT]), trio())
     assert moves(got), "identical rows under sight 1.0, 2.0 and 4.0 at every seed: %s" % {s: len(set(r)) for s, r in got.items()}

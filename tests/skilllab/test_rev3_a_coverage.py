@@ -2,8 +2,10 @@
 """LAB-REV3-A, T1 (R5, D1, D2, D10): the coverage test over the swept plays, the mix table and the reach table. Fast half: no fight.
 
 What "covered" means here (the test writer's reading of R5, flagged to the Architect; the plan gives no definition):
-  - SWEPT PLAYS are the plays named in `sweep.PLAYS_BY_FAMILY` (the analyses count "4 of 9 cells in the sweep", and M3, M4, M3b are
-    in `plays_space.MIXES` but their plays are in no family). Each play's `Setup` comes from `plays_space.PLAYS[name].setup_fn()`.
+  - SWEPT PLAYS (Architect ruling 2026-10-20 on the writer's reading): "covered" means exercised by a play named in
+    `sweep.PLAYS_BY_FAMILY`; a play registered in `plays_space.PLAYS` or a mix row of `plays_space.MIXES` that no family sweeps does NOT
+    cover anything (the analyses count "4 of 9 cells in the sweep", and M3, M4, M3b are in `plays_space.MIXES` but their plays are in
+    no family). Each play's `Setup` comes from `plays_space.PLAYS[name].setup_fn()`.
   - CATEGORY CELL (attacker category, target category) over ALG-60's three categories Strike (Raider, Interceptor), Line (Vanguard,
     Warden), Siege (Bombard, Bastion): covered when a swept Setup holds a unit of the first category on one side and a unit of the
     second on the other (so a mix of {A, B} yields every cell among A and B, as the mix analyses count). Nine cells.
@@ -25,7 +27,8 @@ BUILDER CONTRACT (the only names pinned; everything else in coverage.py is the b
         the items of the three kinds NOT covered by the given Setups, each list possibly empty (an empty report is "all covered").
         Category names are the strings "Strike", "Line", "Siege". `reach` is a {type name: (up, down)} dict over the six built-in
         types and defaults to plays_space._REACH with the Warden at (0, 0).
-    report() -> the same dict, for the swept plays of the real tables (sweep.PLAYS_BY_FAMILY, plays_space.PLAYS).
+    report() -> the same dict, for the swept plays of the real tables: it reads `sweep.PLAYS_BY_FAMILY` and `plays_space.PLAYS` at call
+        time (module attributes, not copies taken at import), so the fixtures of the report() tests below can replace them.
 Positive controls (green on the lab tip, fixtures only): the oracle below reports nothing for a fixture that covers everything, and
 names exactly the expected items for a fixture that covers what the sweep covers today."""
 import sys
@@ -128,7 +131,9 @@ def test_positive_control_the_sweep_today_fixture_is_named_item_by_item():
 
 def test_the_real_swept_plays_are_the_layer_0_and_1_vanguard_raider_interceptor_set_today():
     """D1 and D2 premise, green on the lab tip: every swept play stands on layers 0 and 1 and the only types are those three (the
-    Interceptor with no +2 pairing), so the real tables are what the T1 failure below reports."""
+    Interceptor with no +2 pairing), so the real tables are what the T1 failure below reports.
+    TRIPWIRE: this test goes red when LAB-REV3-B adds the all-layer plays and the mixes M5 to M9 to the swept set; it is retired by
+    piece B under a TD row (it states a fact about the lab as it is today, not a requirement)."""
     setups = swept_setups()
     assert {g.layer for s in setups for g in s.groups} <= {0, 1}
     assert {g.unit for s in setups for g in s.groups} <= {"Vanguard", "Raider", "Interceptor"}
@@ -146,6 +151,38 @@ def test_t1_module_names_each_uncovered_cell_pairing_and_layer_of_the_today_fixt
     """T1 detector (D1, D2, D10): the module's report equals the item-by-item expectation of the oracle test above."""
     from scripts.skilllab import coverage
     assert names(coverage.uncovered(today_fixture())) == names(oracle(today_fixture()))
+
+
+class _Play:
+    def __init__(self, setup):
+        self.setup_fn = lambda: setup
+
+
+def fake_tables(monkeypatch, swept, unswept=()):
+    """Replace the real tables by fixtures: `swept` are Setups of plays named in PLAYS_BY_FAMILY (two families, one play in both),
+    `unswept` are Setups registered in PLAYS that no family names."""
+    plays = {"sw%d" % i: _Play(s) for i, s in enumerate(swept)}
+    plays.update({"un%d" % i: _Play(s) for i, s in enumerate(unswept)})
+    by_family = {"fam_a": tuple(k for k in plays if k.startswith("sw")), "fam_b": tuple(k for k in plays if k.startswith("sw"))[:1]}
+    monkeypatch.setattr(plays_space, "PLAYS", plays)
+    monkeypatch.setattr(sweep, "PLAYS_BY_FAMILY", by_family)
+
+
+def test_t1_report_reads_the_swept_plays_of_the_tables_and_nothing_else(monkeypatch):
+    """T1 (W1 of the audit): `coverage.report()` on a fixture of the real tables' shape: the swept plays cover the today fixture, and an
+    unswept play in PLAYS that would cover Siege, layers 3 and 4 and the Warden adds nothing. Red today: no coverage module."""
+    from scripts.skilllab import coverage
+    extra = [S("Bombard", 4, "Warden", 2), S("Bastion", 3, "Interceptor", 3)]
+    fake_tables(monkeypatch, today_fixture(), unswept=extra)
+    assert names(coverage.report()) == names(oracle(today_fixture()))
+    assert names(coverage.report()) != names(oracle(today_fixture() + extra))
+
+
+def test_t1_report_is_empty_when_the_swept_plays_cover_everything(monkeypatch):
+    """T1 positive control for report() (W1): a fixture whose swept plays are the full fixture reports nothing. Red today: no module."""
+    from scripts.skilllab import coverage
+    fake_tables(monkeypatch, full_fixture())
+    assert names(coverage.report()) == {"cells": [], "pairings": [], "layers": []}
 
 
 def test_t1_module_uses_the_reach_it_is_given():

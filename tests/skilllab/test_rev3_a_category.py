@@ -10,6 +10,11 @@ BUILDER CONTRACT (the family's name is the test writer's: "category"):
   - `sweep.run_family("category", out_dir, ...)` returns the skipped entry (entry["skipped"] is that string, csv None, rows 0), fights
     nothing, writes no sweep_category.csv.
   - `sweep.run(["category"], out_dir, ...)` puts the same entry under summary["families"]["category"] and in sweep_summary.json.
+  - A normal run lists it (W8 of the audit): `sweep.run(list(sweep.FAMILY_ORDER), ...)`, the "all" of the CLI, puts
+    `summary["unavailable"]["category"]` (a string naming FINDING-lab-d6) in the summary and in sweep_summary.json, WITHOUT "category"
+    joining `sweep.FAMILY_ORDER` or `summary["families"]`. Why FAMILY_ORDER stays as it is: test_sweep.py loops `grid(fam)` and
+    `controls(fam)` over FAMILY_ORDER (lines 184-223, and 1032-1036 pins the summary's family keys to it), and grid("category")
+    raises ValueError (sweep.py:126); adding the name there would break all of them for a family that can never run.
 Positive control (green on the lab tip): the existing unavailable families keep their reasons."""
 import json
 import sys
@@ -58,3 +63,15 @@ def test_t10_the_summary_lists_it_unavailable(tmp_path):
     on_disk = json.loads((tmp_path / "sweep_summary.json").read_text())
     for got in (summary, on_disk):
         assert "FINDING-lab-d6" in got["families"]["category"]["skipped"]
+
+
+def test_t10_a_normal_run_lists_the_category_family_as_unavailable(tmp_path):
+    """T10 (W8): the default family order's summary carries the unavailable family and its finding, and FAMILY_ORDER and the families
+    key are unchanged. Red today: KeyError 'unavailable'."""
+    order = list(sweep.FAMILY_ORDER)
+    summary = sweep.run(order, tmp_path, builds=fake_builds(), layouts={"A": {}}, plays=("p",),
+                        fight_fn=ScriptedFight(be_of=lambda setup: 20), caps=sweep.Capabilities(arc=True, cone=True))
+    on_disk = json.loads((tmp_path / "sweep_summary.json").read_text())
+    for got in (summary, on_disk):
+        assert "FINDING-lab-d6" in got["unavailable"]["category"]
+        assert list(got["families"]) == order and "category" not in order

@@ -5,18 +5,25 @@ driven by fakes (no engine). The real-engine half (s3_layer_above, the two-layer
 
 BUILDER CONTRACT (the names are the test writer's; the plan names only the files probe.py and sweep.py):
   scripts/skilllab/probe.py (NEW)
-    inert(build, settings, enemy_heads=16, seed=0, swap=False, fight_fn=None) -> bool
-        fights `build(enemy_heads, swap)` exactly twice through `fight_fn(setup, seed, swap)` (default fight.fight): once as built (base),
-        once with `settings` merged into `setup.settings` ({**setup.settings, **settings}); True when `rows.fight_row` of the two results
-        is identical (the row hash did not change), False otherwise. Nothing else is fought.
+    inert(build, settings, enemy_heads=16, seed=0, swap=False, fight_fn=None, base_settings=None) -> bool
+        fights `build(enemy_heads, swap)` exactly twice through `fight_fn(setup, seed, swap)` (default fight.fight): once as built plus
+        `base_settings` merged into `setup.settings` (None: nothing added; the base fight), once with `settings` merged
+        ({**setup.settings, **settings}); True when `rows.fight_row` of the two results is identical (the row hash did not change),
+        False otherwise. Nothing else is fought. `base_settings` exists for families whose point sets a CO-SETTING besides the knob:
+        the emitting point sets the joint vision (0.125 or 0.25) as well as OM_TP_EMIT_SIGHT_MULT / OM_TP_EMIT_SEEN_MULT, and a base
+        fight at the default vision would differ from the extreme through the vision alone and never read inert (measured: sight 1.0,
+        2.0, 4.0 at vision 0.125 give one row; the vision alone moves it). The probe of a family fights, as its base, the extreme point
+        with the family's own knob keys at sweep.BASES (emitting: the two EMIT_* keys only; every other family: all its keys).
   scripts/skilllab/sweep.py
-    run_family(..., probe=False) gains the keyword `probe`. With probe=True, before scanning a (play, layout) the family's extreme grid
-    point (the one farthest from the base inside the band, the test fakes react to any change from base) is fought through
-    probe.inert on the play's own "play" build; when inert the (play, layout) is not scanned, no row of that play is written (control
+    run_family(..., probe=False) gains the keyword `probe` (default False, Architect ruling 2026-10-20: the batch runner and the CLI turn
+    it on, see tests/skilllab/test_rev3_a_batch.py; fakes driving run_family elsewhere stay untouched). With probe=True, before scanning
+    a (play, layout) the family's EXTREME grid point is fought through probe.inert on the play's own "play" build. PINNED (W2 of the
+    audit): the extreme is the grid point with the SMALLEST value, the band's low edge 0.25 x base (range_up and damage_up 0.25,
+    vision 0.125); a knob that only bites near base (0.75) is inert for the probe, a knob that bites at the extreme is not; when inert the (play, layout) is not scanned, no row of that play is written (control
     rows included), the probe's own fights are the only fights of that play, and `entry["refused"]` gains
     {"family", "play", "layout", "role": "play", "reason": "inert_knob"}. A play that is not inert runs as without the probe.
-    The DEFAULT of `probe` is left to the Architect: tests/skilllab/test_sweep.py and its neighbours drive run_family with fakes whose
-    result does not depend on the knob, and those would read "inert_knob" if the default were True (see the writer's report).
+    Real families set the one-layer and two-layer knobs together (sweep._range_up, _vision_settings), so range_up's extreme point bites on
+    s3_layer_above even though the two-layer knobs alone do not (tests/skilllab/integration/test_rev3_a_probe_real.py).
 Red today: `scripts.skilllab.probe` does not exist and run_family has no `probe` keyword."""
 import csv
 import sys
@@ -94,6 +101,17 @@ def test_t2_the_probe_fights_base_unchanged_and_the_extreme_with_the_settings_me
     assert {(c["enemy"], c["seed"], c["swap"]) for c in calls} == {(20, 3, True)}
 
 
+def test_t2_the_base_fight_carries_the_base_settings_when_given():
+    """T2 (W3 support): base_settings go into the base fight only, so a co-setting shared by both fights cannot make the knob look live.
+    Red today: no probe module."""
+    from scripts.skilllab import probe
+    fight_fn, calls = fought(sensitive_plays("p"))
+    probe.inert(plain_build, {"OM_TP_VISION_UP_1": 0.125, "OM_TP_EMIT_SIGHT_MULT": 1.0}, fight_fn=fight_fn,
+                base_settings={"OM_TP_VISION_UP_1": 0.125, "OM_TP_EMIT_SIGHT_MULT": 2.0})
+    assert sorted(c["settings"]["OM_TP_EMIT_SIGHT_MULT"] for c in calls) == [1.0, 2.0]
+    assert {c["settings"]["OM_TP_VISION_UP_1"] for c in calls} == {0.125}
+
+
 def run(tmp_path, plays, result_of, **kw):
     fight_fn = ScriptedFight(result_of=result_of)
     entry = sweep.run_family("range_up", tmp_path, builds=fake_builds(), layouts={"A": {"id": 1}}, plays=plays, fight_fn=fight_fn,
@@ -110,6 +128,31 @@ def test_t2_a_family_inert_on_a_play_is_refused_there_and_run_on_the_others(tmp_
     with open(tmp_path / entry["csv"], newline="") as fh:
         plays = {r["play"] for r in csv.DictReader(fh)}
     assert plays == {"p2"}
+
+
+def only_at(value, *plays):
+    """A fight function that reacts to OM_TP_RANGE_UP_1 == `value` only (not to any other change from base)."""
+    def result(setup, seed, swap):
+        enemy = setup.unit_types["enemy"]
+        hit = setup.settings.get("OM_TP_RANGE_UP_1") == value and setup.unit_types["_play"] in plays
+        return _fr("side0" if enemy <= 24 else "side1", enemy, margin=0.25 if hit else 0.5)
+    return result
+
+
+def test_t2_the_probe_uses_the_extreme_grid_point_and_a_knob_that_bites_there_is_not_refused(tmp_path):
+    """T2 (W2): the fake reacts at 0.25 (the grid point with the smallest value) and nowhere else: the play is not refused. Red today:
+    no `probe` keyword."""
+    assert min(p.value for p in sweep.grid("range_up")) == 0.25
+    entry, _ = run(tmp_path, ("p1",), only_at(0.25, "p1"), probe=True)
+    assert entry["refused"] == []
+
+
+def test_t2_a_knob_that_bites_only_near_base_is_inert_for_the_probe(tmp_path):
+    """T2 (W2): the fake reacts at 0.75 only; the probe fights the extreme 0.25, sees no change and refuses the play, although the
+    coarse grid would have shown a change at 0.75. Red today: no `probe` keyword."""
+    entry, fight_fn = run(tmp_path, ("p1",), only_at(0.75, "p1"), probe=True)
+    assert [(r["play"], r["reason"]) for r in entry["refused"]] == [("p1", "inert_knob")]
+    assert len(fight_fn.calls) <= 2
 
 
 def test_t2_a_family_that_bites_everywhere_refuses_nothing(tmp_path):
