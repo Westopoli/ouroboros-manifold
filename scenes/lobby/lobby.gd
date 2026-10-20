@@ -9,6 +9,10 @@ const SimSession := preload("res://autoload/sim_session.gd")
 const MAX_MEMBERS := 4
 const FRIENDS_ONLY := 1
 const DOCTRINES := ["balanced", "boom", "fortify", "press"]
+# Architect 2026-10-14 gap 5 (R-141-01, R-241-01): the team-size choices are 2 and 4 only, default 2 (liberty 2026-10-14,
+# DRAFT-team-size-default); gap 4: the member cap stays MAX_MEMBERS, the choice is a stub until R-241-03 scaling.
+const TEAM_SIZES := [2, 4]
+const TEAM_SIZE_DEFAULT := 2
 const CHAT_LEFT_STATES := [2, 4, 8, 16]  # left, disconnected, kicked, banned
 
 var net_match: Node = null
@@ -29,6 +33,9 @@ var _host_btn: Button
 var _join_btn: Button
 var _start_btn: Button
 var _doctrine_btn: Button
+var _team_btn: OptionButton
+var _team_size := TEAM_SIZE_DEFAULT
+var _team_raw := ""
 
 
 class SteamBackend extends RefCounted:
@@ -136,6 +143,17 @@ func _build_ui() -> void:
 	_era_line.name = "EraLine"
 	_era_line.text = "Limited to the era set every player has."
 	box.add_child(_era_line)
+	var team_row := HBoxContainer.new()
+	box.add_child(team_row)
+	var team_label := Label.new()
+	team_label.text = "Team size"
+	team_row.add_child(team_label)
+	_team_btn = OptionButton.new()
+	_team_btn.name = "TeamSize"
+	for n in TEAM_SIZES:
+		_team_btn.add_item(str(n), n)
+	_team_btn.item_selected.connect(_on_team_selected)
+	team_row.add_child(_team_btn)
 	_member_list = ItemList.new()
 	_member_list.name = "MemberList"
 	_member_list.custom_minimum_size.y = 160
@@ -183,6 +201,33 @@ func _refresh() -> void:
 			_member_list.add_item(str(m) + ("  (you)" if int(m) == _local_steam else ""))
 	_doctrine_btn.text = "DOCTRINE: " + String(DOCTRINES[_doctrine_idx]).to_upper()
 	_start_btn.disabled = not _hosting
+	_refresh_team_size()
+
+
+# Gap 5: only the host changes the team size; a guest reads the host's choice from lobby data "team_size" and refuses
+# any value that is not a choice. A lobby data frame emits no signal, so _process calls this when the key changed (spec Rev 13a).
+func _refresh_team_size() -> void:
+	if _team_btn == null:
+		return
+	if not _hosting and _backend != null and _backend.has_method("get_lobby_data"):
+		_team_raw = _backend.get_lobby_data("team_size")
+		if _team_raw.is_valid_int() and int(_team_raw) in TEAM_SIZES and str(int(_team_raw)) == _team_raw:
+			_team_size = int(_team_raw)
+	_team_btn.select(_team_btn.get_item_index(_team_size))
+	_team_btn.disabled = not _hosting
+
+
+func _on_team_selected(index: int) -> void:
+	if not _hosting:
+		_refresh_team_size()
+		return
+	_team_size = _team_btn.get_item_id(index)
+	_publish_team_size()
+
+
+func _publish_team_size() -> void:
+	if _backend != null and _backend.lobby_id != 0:
+		_backend.set_lobby_data("team_size", str(_team_size))
 
 
 func host_create() -> void:
@@ -205,6 +250,7 @@ func _on_lobby_created(result: int, lobby_id: int, be) -> void:
 	be.lobby_id = lobby_id
 	_status.text = "Lobby id %d (friends only). Invite friends or share the id." % lobby_id
 	_lobby_id_field.text = str(lobby_id)
+	_publish_team_size()
 	_refresh()
 
 
@@ -346,6 +392,9 @@ func _launch(rec: Dictionary, local_peer: int) -> void:
 func _process(_delta: float) -> void:
 	if _backend != null and _backend.has_method("poll"):
 		_backend.poll()
+	if _backend != null and not _hosting and _backend.has_method("get_lobby_data") \
+			and _backend.get_lobby_data("team_size") != _team_raw:
+		_refresh()
 	if _launched and net_match != null and net_match.active():
 		_launched = false
 		set_process(false)
@@ -360,4 +409,4 @@ func leave() -> void:
 
 func qa_state() -> Dictionary:
 	return {"scene": "lobby", "members": _backend.members() if _backend != null else [], "max_members": MAX_MEMBERS,
-		"friends_only": true, "tick": -1}
+		"friends_only": true, "tick": -1, "team_sizes": TEAM_SIZES.duplicate(), "team_size": _team_size}
