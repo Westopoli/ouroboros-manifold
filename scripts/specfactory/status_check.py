@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """status_check.py: method rev 2, guard 7. The status copies must agree.
 
-Four checks, one `STATUS <check> OK|DRIFT <detail>` line each (a check may
-print several DRIFT lines); exit 1 when any check is DRIFT, else 0.
+Five checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
+print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0).
 
   lane_table  every sha in the programme lane table's "On main" cells is an
               ancestor of --base
@@ -12,6 +12,10 @@ print several DRIFT lines); exit 1 when any check is DRIFT, else 0.
               whose Status is "Seen" or starts with "Seen"
   roadmap     ROADMAP "## 1. Now building" holds no lane status copy and its
               programme row names the programme file
+  pins        rule_pins_tests.py check over the whole tree and rule_pins.py
+              check over the specs named by every piece row's `spec` key;
+              WARN until the row FU-HARNESS-findings is attached in
+              pieces.toml, DRIFT after (HARNESS-C1b)
 
 See also: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
 """
@@ -21,12 +25,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
 D_PROGRAMME = "docs/northstar/plans/2026-10-07-visible-game-programme.md"
 D_PIECES = "docs/northstar/plans/push/pieces.toml"
 D_STORIES = "docs/bible/stories.md"
 D_REVIEWS = "docs/northstar/story_reviews"
 D_ROADMAP = "docs/northstar/ROADMAP.md"
+SWITCH_ROW = "FU-HARNESS-findings"
 
 SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
 # Column 8 of the queue format in docs/northstar/story_reviews/README.md.
@@ -81,7 +87,7 @@ def parse_pieces(path):
         if s.startswith("#"):
             continue
         if s == "[[piece]]":
-            cur = {"id": "", "state": "", "sha": ""}
+            cur = {"id": "", "state": "", "sha": "", "spec": ""}
             pieces.append(cur)
             continue
         if cur is None:
@@ -89,8 +95,12 @@ def parse_pieces(path):
         m = re.match(r'id\s*=\s*"([^"]+)"', s)
         if m:
             cur["id"] = m.group(1)
+        m = re.match(r'spec\s*=\s*"([^"]+)"', s)
+        if m:
+            cur["spec"] = m.group(1)
         if re.match(r"status\s*=", s):
-            m = re.search(r'state\s*=\s*"([^"]*)"', s)
+            # Bare string or inline table. See also: owner_lint.py:37-44
+            m = re.match(r'status\s*=\s*"([^"]*)"', s) or re.search(r'state\s*=\s*"([^"]*)"', s)
             if m:
                 cur["state"] = m.group(1)
             m = re.search(r'attach_sha\s*=\s*"([0-9a-fA-F]{7,})"', s)
@@ -109,6 +119,27 @@ def check_pieces(repo, base, pieces_path):
         return out
     fly = [p["id"] for p in pieces if p["state"] == "in_flight"]
     return [("pieces", True, "in_flight: " + ", ".join(fly))]
+
+
+PINS_FINDING = re.compile(r"^PINS REJECT \S+ R-\d+-\d+ (stale|missing) ")
+
+
+def check_pins(repo, pieces_path):
+    """Whole-tree pins; WARN while the switch row is not attached, DRIFT after. See also: rule_pins_tests.py, rule_pins.py."""
+    pieces = parse_pieces(pieces_path)
+    specs = sorted({p["spec"] for p in pieces if p["spec"] and (repo / p["spec"]).is_file()})
+    runs = [[sys.executable, str(HERE / "rule_pins_tests.py"), "check", str(repo)]]
+    if specs:
+        runs.append([sys.executable, str(HERE / "rule_pins.py"), "check", *specs])
+    found = []
+    for cmd in runs:
+        found += subprocess.run(cmd, cwd=repo, capture_output=True, text=True).stdout.splitlines()
+    kinds = [m.group(1) for m in map(PINS_FINDING.match, found) if m]
+    if not kinds:
+        return [("pins", True, "every pin is right")]
+    detail = ", ".join(f"{kinds.count(k)} {k}" for k in ("stale", "missing") if k in kinds)
+    attached = any(p["id"] == SWITCH_ROW and p["state"] == "attached" for p in pieces)
+    return [("pins", False if attached else "warn", detail)]
 
 
 def check_seen(reviews, stories):
@@ -184,8 +215,9 @@ def main(argv):
     results += check_pieces(repo, a.base, at(a.pieces))
     results += check_seen(at(a.reviews), at(a.stories))
     results += check_roadmap(at(a.roadmap), a.programme)
+    results += check_pins(repo, at(a.pieces))
     for name, ok, detail in results:
-        print(f"STATUS {name} {'OK' if ok else 'DRIFT'} {detail}")
+        print(f"STATUS {name} {'WARN' if ok == 'warn' else 'OK' if ok else 'DRIFT'} {detail}")
     return 0 if all(ok for _, ok, _ in results) else 1
 
 
