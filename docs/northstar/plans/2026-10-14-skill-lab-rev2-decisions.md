@@ -226,3 +226,13 @@ Smaller readings confirmed:
 
 ## 46. Firing arc number (Westley 2026-10-19)
 DRAFT-firing-arc-deg is 30 (Westley: "#5 yes 30 degrees"), no longer 120; the arc family's sweep band is read from 30. Recorded by the Architect; the overseer's code and artifact header follow.
+
+## 47. Arc grid from 30, T1 as a strict expected failure, five small readings (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+1. Arc family, following decision 46: base 30 degrees (Westley's firing arc). Grid 30 x {0.25, 0.5, 1, 2, 4} = 7.5, 15, 30, 60, 120 degrees, the band as for every family (ruling 11: start at the bible's value, step inside 0.25x to 4x). The null control stays 360 = unset. The tests that pin the 360-based grid (360, 270, 180, 120, 90) move under one ruler row (assumption changed by decision 46), rewritten by the test writer, not the builder. The family stays skipped in batch one while E2 is absent.
+2. LAB-REV3 T1 (the coverage test) lands with piece A as a strict expected failure whose reason names every uncovered cell, reach pairing and layer: a documented red with its finding rows `FINDING-lab-d1` and `FINDING-lab-d2`, not a skip. Piece B removes the marker and T1 passes plain. The landing report of A lists T1 under known red with that reason. The LAB-REV3 plan file is updated: its DRAFT line saying A lands T1 expected-red is this ruling.
+3. Smaller readings confirmed:
+   - `shift_wu` in `shifted_posts` is the largest `placement_shift` over the headcounts built for that baseline.
+   - The vision-layouts header sentence (decision 45 item 4) reads the layouts that ran from the vision family rows, not a fixed list.
+   - `DRAFT-probe-count-bound` has no code line (the bound is derived in the tests); the header text "(at most 14)" becomes "(at most 9 at COARSE_STEP 8, derived)".
+   - `DRAFT-behind-cover`, `DRAFT-ambush-behind` and `DRAFT-mix-*` names join the artifact header DRAFT list.
+   - The arc header name stays `DRAFT-firing-arc-deg`, but the entry reads "Westley's ruling 30 deg".
