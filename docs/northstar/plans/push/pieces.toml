@@ -2756,7 +2756,7 @@ acceptance = []
 depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "C reach and prediction: R3 reach and vision up/down as swept knobs, crossings per reach configuration (T7); R4 paper prediction beside the window and the totals (T8); R7 no_reach_stall end and pre-flight refusal, D7 (T9) (DRAFT)"
+size_estimate = "C reach and prediction: R3 reach and vision up/down as swept knobs, crossings per reach configuration (T7); R4 paper prediction beside the window and the totals (T8); R7 no_reach_stall end and pre-flight refusal, D7 (T9) (DRAFT); includes verdict decided_one_way_reach (FINDING-lab-d11)"
 
 # Architect ruling 2026-10-14 (FINDING-cone-state): save the per-type cone and hash it like reach. Files are chosen when it launches (owns is empty until then).
 # Must land before any roster type ships with a cone. Manager is M0 (Architect rulings go through M0).
