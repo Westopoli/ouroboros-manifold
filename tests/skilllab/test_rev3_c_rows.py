@@ -11,8 +11,8 @@ BUILDER CONTRACT (names DRAFT where marked):
       `no_reach_stall_rows` and `decided_one_way_reach_rows` (DRAFT key names: the frozen name plus _rows), counted over the live (non-control)
       rows whose `verdict` is that name; a stall row is in neither cap_rows nor cells (a fight that ends at a stall never reached the cap).
   A decided_one_way_reach row is an ordinary win for its side (outcome side0 or side1): a cell it fills is won when all its rows are side0.
-OPEN (not asserted, plan silent): the outcome STRING of a stall (test_rev3_c_stall.py reads 'ends as a finding row' as outcome == "no_reach_stall");
-the controls below use the same string. Red today: FightResult has no verdict field; the counters and columns do not exist."""
+RULED (Architect 2026-10-20, implementation; Westley may veto): the outcome STRING of a stall is "no_reach_stall" (test_rev3_c_stall.py); the
+controls below use the same string. Red today: FightResult has no verdict field; the counters and columns do not exist."""
 import csv
 import dataclasses
 import sys

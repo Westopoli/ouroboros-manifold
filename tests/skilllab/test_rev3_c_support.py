@@ -137,7 +137,7 @@ def test_oracle_reach_is_by_layer_offset_not_by_type_name():
 
 @pytest.mark.usefixtures("seam")
 def test_the_fake_reports_the_reach_the_setup_set_and_the_default_zero_for_the_rest():
-    """The fake's profile_reach answers what fight() sets through Setup.unit_types (custom types from id 100) and (0, 0) for a built-in."""
+    """The fake's profile_reach answers what fight() sets through Setup.unit_types (registered types: built-in ids for same-name entries, from 100 otherwise) and (0, 0) for a type with no reach set."""
     from scripts.skilllab.fight import fight
     fake = ReachLayerFake()
     setup = Setup(groups=(G(0, "Interceptor", 1, 0), G(1, "Vanguard", 1, 2)), unit_types=dict(TYPES), max_ticks=3, sample_every=5)

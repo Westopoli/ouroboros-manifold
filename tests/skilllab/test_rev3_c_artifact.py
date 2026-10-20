@@ -7,6 +7,8 @@ BUILDER CONTRACT (names DRAFT; the plan fixes the content, not the markup):
       configurations never merge into one scan. diagram.Notable gets a field `reach` (the row's `reach` string, None when the rows have no such
       column). A crossing is found per configuration; ids stay unique. report.artifact names the configuration in a crossing's h2 sentence
       when the rows hold MORE THAN ONE configuration (with one, or with no `reach` column, the sentences are exactly today's).
+  R4  (Architect ruling 2026-10-20, implementation; Westley may veto: no reading names the winner by itself, so the artifact only COUNTS; the paper
+      word "no_reach" names no winner, like "tie"; a stall row, outcome no_reach_stall, is not a call.)
   R4  report.artifact's section "agreement" gains, for each reading in ("window", "paper", "whole"), one element with class "called" and the
       attributes data-reading, data-right, data-fights: over the rows whose outcome is side0 or side1 (a cap or draw is not a call), data-fights
       is their number and data-right the number of them in which that reading named the winner. window: the row's predicted_count (the
@@ -119,30 +121,35 @@ def called_row(outcome, window, paper, whole):
                                   weighted_unit_seconds=wus), knob="OM_TP_RANGE_UP_1", knob_value=0.5, baseline="none", ceiling_hit=0,
                              prefight="ok", family="range_up", play="s3_layer_above", layout="81", kind="grid", enemy_heads=16)
     row["point"] = "-"
-    row["paper_score_0"], row["paper_score_1"] = (20.0, 16.0) if paper == "side0" else (16.0, 20.0) if paper == "side1" else (18.0, 18.0)
+    row["paper_score_0"], row["paper_score_1"] = ((20.0, 16.0) if paper == "side0" else (16.0, 20.0) if paper == "side1" else
+                                                  (0.0, 0.0) if paper == "no_reach" else (18.0, 18.0))
     row["predicted_paper"] = paper
     return row
 
 
 # outcome, window, paper, whole
-CALLS = [("side0", "side0", "side0", "side0"),     # all three right
-         ("side1", "side0", "side1", "side0"),     # only paper right
-         ("side0", "side1", "side0", "side1"),     # only paper right
-         ("side1", "side1", "side0", "side0"),     # only window right
-         ("cap", "side0", "side1", "side0"),       # a cap is not a call
-         ("side0", "tie", "tie", "side0")]         # a tie names no winner; whole right
+CALLS = [("side0", "side0", "side0", "side0"),         # all three right
+         ("side1", "side0", "side1", "side0"),         # only paper right
+         ("side0", "side1", "side0", "side1"),         # only paper right
+         ("side1", "side1", "side0", "side0"),         # only window right
+         ("cap", "side0", "side1", "side0"),           # a cap is not a call
+         ("side0", "tie", "tie", "side0"),             # a tie names no winner; whole right
+         ("side1", "side0", "no_reach", "side1"),      # "no_reach" names no winner either; only whole right
+         ("side0", "side1", "no_reach", "side0"),      # only whole right
+         ("no_reach_stall", "tie", "no_reach", "side0")]   # a stall is not a call (ruling 2026-10-20: outcome no_reach_stall)
 
 
 def test_the_artifact_says_which_reading_called_the_winner(tmp_path):
-    """R4: window right 2 of 5 (rows 1 and 4), paper right 3 of 5 (rows 1, 2, 3), whole right 2 of 5 (rows 1 and 6); the cap is out of the five.
-    Red today: no `called` element in the agreement section."""
+    """R4: of the 7 fights that ended side0 or side1 (the cap and the stall are out), the window was right in 2 (rows 1 and 4), the paper in 3
+    (rows 1, 2, 3; a tie and a no_reach name no winner) and the whole-fight totals in 4 (rows 1, 6, 7, 8). The three counts differ, so a
+    builder that swaps two labels fails. Red today: no `called` element in the agreement section."""
     import test_report
     rows = [called_row(*c) for c in CALLS]
     _t, _r, html, _p = test_report._page(tmp_path, rows=rows)
     sec = test_report._sec(test_report._tree(html), "agreement")
     called = {n.attrs["data-reading"]: (int(n.attrs["data-right"]), int(n.attrs["data-fights"]))
               for n in sec.iter() if "called" in (n.attrs.get("class") or "").split()}
-    assert called == {"window": (2, 5), "paper": (3, 5), "whole": (2, 5)}
+    assert called == {"window": (2, 7), "paper": (3, 7), "whole": (4, 7)}
 
 
 # ---- R4: the diagram's prediction arrows ----------------------------------------------------------------------------------------------

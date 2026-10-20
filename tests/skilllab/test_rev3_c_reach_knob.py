@@ -20,8 +20,14 @@ BUILDER CONTRACT (names and shapes this file pins; DRAFT where marked):
   Every CSV row of the family (grid, refined and control rows) has a column `reach`: a string naming the configuration. Rows of one run
         share one value; the value of a run with reach=None differs from the value of a run with a table; the value of a table run
         names the type (contains "Raider" for {"Raider": (2, 1)}). DRAFT format; the tests pin equality, difference and that.
-Red today: sweep.with_reach does not exist; run_family takes no `reach` (TypeError)."""
+  Wiring (audit gap F7; the SHAPE IS A DRAFT, the plan names the knob and not the plumbing): sweep.run(families, out_dir, ..., reach=None) passes
+        `reach=<its value>` on to every run_family call, and the summary (the returned dict and sweep_summary.json) records the configuration under
+        the key "reach": the string "none" when reach is None, else a string naming the types (contains "Raider" for {"Raider": (2, 1)}). The CLI
+        command `sweep` takes `--reach TYPE=UP,DOWN` (DRAFT syntax, repeatable: `--reach Raider=2,1 --reach Interceptor=2,1`) and calls
+        sweep.run(..., reach={"Raider": (2, 1), ...}); without the flag it passes reach=None.
+Red today: sweep.with_reach does not exist; run_family takes no `reach` (TypeError); the summary has no "reach" (sweep.run already passes any keyword on to run_family, so the forwarding assertions are controls)."""
 import csv
+import json
 import sys
 from pathlib import Path
 
@@ -129,6 +135,67 @@ def test_every_row_names_its_reach_configuration(tmp_path):
     base_labels, labels = {r["reach"] for r in base_rows}, {r["reach"] for r in rows}
     assert len(base_labels) == 1 and len(labels) == 1 and base_labels != labels
     assert "Raider" in next(iter(labels))
+
+
+# ------------------------------------------------------------------------------------------------------ wiring: sweep.run and the CLI (DRAFT shape)
+
+def _recording_run_family(monkeypatch):
+    """Replace sweep.run_family by a recorder returning an empty entry; returns the list of keyword dicts it was called with."""
+    calls = []
+
+    def fake(family, out_dir, **kw):
+        calls.append({"family": family, **kw})
+        return {"family": family, "skipped": None, "csv": None, "rows": 0}
+    monkeypatch.setattr(sweep, "run_family", fake)
+    return calls
+
+
+def test_sweep_run_forwards_the_reach_table_to_every_family_and_records_it_in_the_summary(tmp_path, monkeypatch):
+    """F7 (DRAFT shape): sweep.run(..., reach=table) reaches every run_family call and the summary header names the configuration. Red today:
+    the summary has no "reach" key (the forwarding half is green on the base: sweep.run passes its keywords on)."""
+    calls = _recording_run_family(monkeypatch)
+    table = {"Raider": (2, 1)}
+    summary = sweep.run(["range_up", "damage_up"], tmp_path, reach=table)
+    assert [c["family"] for c in calls] == ["range_up", "damage_up"]
+    assert all(c.get("reach") == table for c in calls), [c.get("reach", "<absent>") for c in calls]
+    assert isinstance(summary.get("reach"), str) and "Raider" in summary["reach"], summary.get("reach")
+    assert json.loads((tmp_path / "sweep_summary.json").read_text(encoding="utf-8"))["reach"] == summary["reach"]
+
+
+def test_sweep_run_without_a_table_forwards_none_and_says_none(tmp_path, monkeypatch):
+    """F7: reach=None (the default) is today's behaviour: every run_family call gets no table (None, or no keyword) and the header says "none".
+    Red today only on the header: no "reach" key."""
+    calls = _recording_run_family(monkeypatch)
+    summary = sweep.run(["range_up"], tmp_path)
+    assert calls and all(c.get("reach") is None for c in calls)
+    assert summary.get("reach") == "none"
+
+
+@pytest.mark.parametrize("argv, want", [
+    (["--reach", "Raider=2,1"], {"Raider": (2, 1)}),
+    (["--reach", "Raider=0,1", "--reach", "Interceptor=2,1"], {"Raider": (0, 1), "Interceptor": (2, 1)}),
+    ([], None),
+], ids=["one-type", "two-types", "no-flag"])
+def test_the_cli_sweep_command_accepts_a_reach_configuration(tmp_path, monkeypatch, argv, want):
+    """F7 (DRAFT syntax): `python -m scripts.skilllab sweep damage_up --reach Raider=2,1` calls sweep.run with reach={"Raider": (2, 1)}; without
+    the flag it passes reach=None. Red today: argparse refuses --reach (SystemExit 2)."""
+    from scripts.skilllab import __main__ as cli
+    got = []
+    monkeypatch.setattr(sweep, "run", lambda families, out_dir, workers=1, **kw: got.append(kw) or {"families": {}})
+    assert cli.main(["sweep", "damage_up", "--out", str(tmp_path)] + argv) == 0
+    assert got and got[0].get("reach") == want
+
+
+def test_the_cli_refuses_a_reach_value_outside_the_rules(tmp_path, monkeypatch):
+    """F7: the CLI hands the table to with_reach's rules (0, 1, 2 only); a malformed or wider value is an error, never a run."""
+    from scripts.skilllab import __main__ as cli
+    got = []
+    monkeypatch.setattr(sweep, "run", lambda families, out_dir, workers=1, **kw: got.append(kw) or {"families": {}})
+    assert cli.main(["sweep", "damage_up", "--out", str(tmp_path), "--reach", "Raider=2,1"]) == 0 and len(got) == 1   # the flag exists (red today)
+    for bad in ("Raider=3,1", "Raider=1", "Raider", "=1,1"):
+        with pytest.raises((SystemExit, ValueError)):
+            cli.main(["sweep", "damage_up", "--out", str(tmp_path), "--reach", bad])
+    assert len(got) == 1
 
 
 # ------------------------------------------------------------------------------------------------------------- with_reach itself

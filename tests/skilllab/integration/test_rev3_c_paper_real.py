@@ -12,11 +12,11 @@ tests/skilllab/test_rev3_c_paper.py and are recomputed here by the reference ora
     play                                20.0 : 16.0    -> side0   (measured: side0 wins)
     reach_zero                          12.0 : 14.0    -> side1   (measured: cap)
     naive_defender_attacker_layer       20.0 : 20.0    -> tie     (measured: side1 wins)
-OPEN (stopped on, not guessed): T8 says the prediction "names the winner on the three audited setups". With the audit's definition it names the
-winner on the first only: the second ended at the cap (there is no winner) and the third ended side1 with the paper score a tie. This file pins
-what the definition gives (the three readings are different, which is what the window could not do) and does NOT assert that the paper word equals
-the outcome on the second and third. Which reading must hold there is a rule meaning for the Architect (and 'paper prediction primary' is
-Westley's)."""
+RULED (Architect 2026-10-20, implementation; Westley may veto): no reading names the winner by itself, so T8's "names the winner on the three
+audited setups" is NOT asserted for the second and third: the file pins what the definition gives (the three readings differ, which is what the
+window could not do). The paper word folds in R7's structural oracle: "no_reach" only when nobody can reach anybody at tick 0. NONE of the three
+audited setups is that: reach_zero is NOT mutual at tick 0 (its layer-0 Vanguards reach each other and score 12 : 14, side 1), so its paper
+word is "side1" here, and the paper reading agrees with its no_reach_stall only at an END state (nothing asserted about that)."""
 import sys
 from pathlib import Path
 
@@ -28,7 +28,7 @@ for _p in (ROOT, ROOT / "tests" / "skilllab"):
         sys.path.insert(0, str(_p))
 
 from scripts.skilllab import scenes, sweep  # noqa: E402
-from test_rev3_c_paper import ref  # noqa: E402
+from test_rev3_c_paper import ref, ref_word  # noqa: E402
 
 AUDIT = {"play": (20.0, 16.0), "reach_zero": (12.0, 14.0), "naive_defender_attacker_layer": (20.0, 20.0)}
 WORDS = {"play": "side0", "reach_zero": "side1", "naive_defender_attacker_layer": "tie"}
@@ -42,6 +42,7 @@ def scene(role):
 def test_control_the_reference_oracle_reproduces_the_audit_scores(role):
     """Green today: the oracle (the audit's definition, in test_rev3_c_paper.py) gives the audit's measured numbers on the real placed scenes."""
     assert ref(scene(role)) == AUDIT[role]
+    assert ref_word(scene(role)) == WORDS[role]     # the structural oracle is not mutual at tick 0 on any of the three (reach_zero included)
 
 
 @pytest.mark.parametrize("role", sorted(AUDIT))
@@ -50,6 +51,7 @@ def test_the_paper_score_of_each_audited_setup(role):
     s = scene(role)
     assert tuple(scenes.paper_score(s)) == AUDIT[role]
     assert scenes.paper_word(scenes.paper_score(s)) == WORDS[role]
+    assert scenes.paper_prediction(s) == WORDS[role], "none of the audited setups is mutual no-reach at tick 0"
 
 
 def test_the_three_setups_get_three_different_paper_readings():

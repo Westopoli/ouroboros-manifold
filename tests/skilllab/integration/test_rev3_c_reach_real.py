@@ -3,7 +3,10 @@
 """LAB-REV3-C, T7 on the real engine (OM_LAB_SLOW=1; about 15 s): the reach table is a swept input and a changed reach changes a real fight.
 
 The scene: s3_layer_above on layout 192 (sweep.default_builds, the sweep's own build), 24 side-1 heads, seed 0, swap False. Raiders stand on
-layer 1 and the enemy on layer 0, so a Raider fires DOWN one layer: it is the DOWN value of the Raider's reach that decides this play.
+layer 1 and the enemy on layer 0, so a Raider of side 0 fires DOWN one layer. Reach is a per-TYPE table and with_reach rewrites it for BOTH sides: the enemy is 12 Vanguards and
+12 Raiders on layer 0, and it is those Raiders' UPWARD fire that decides this play. What flips the fight is up 0: it strips the enemy Raiders on
+layer 0 of their fire at layer 1 (the side-0 Raiders keep their down 1); down 0 moves the fight a little (tick 1796 against 1759, same winner) and up 2 or
+down 2 change nothing here. (The first draft of this docstring said the DOWN value decides; the measurements below say otherwise.)
 Measured 2026-10-20 on this tree (Raider reach written into Setup.unit_types, one fight each):
     (1, 1) the bible's base     side1 wins at tick 1759, survivors (0, 16)
     (2, 1) up 2                 byte-identical to (1, 1)      <- T7 as worded in the plan ("Raider reach up 2 against up 1")

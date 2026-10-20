@@ -16,8 +16,8 @@ BUILDER CONTRACT (the observable names; the tests pin these and nothing else abo
       verdict: Optional[str] = None        None, or exactly "no_reach_stall" or "decided_one_way_reach" (the strings of
                                            contract.FROZEN_NAMES, see test_rev3_c_frozen_names.py)
       decided_tick: Optional[int] = None   the tick the fight became decided; set only with "decided_one_way_reach", else None
-  A no_reach_stall fight:   outcome == "no_reach_stall" (OPEN: the plan names the finding, not the outcome string; this file reads
-                            'ends as a finding row `no_reach_stall`' as the outcome string too), winner None, verdict "no_reach_stall",
+  A no_reach_stall fight:   outcome == "no_reach_stall" (RULED, Architect 2026-10-20, implementation, Westley may veto: the plan names the
+                            finding; the outcome string is the finding's name), winner None, verdict "no_reach_stall",
                             ticks == the tick the condition first holds (read after the step that made it hold; a scene that starts
                             that way ends at tick 1 at the latest).
   A decided fight:          outcome "side0" or "side1" (the decided side, so every consumer of outcome is unchanged), winner the same,
@@ -102,6 +102,33 @@ def test_a_layer_change_mid_fight_is_read_live():
     assert oracle(f.living()) == ("mutual",)
     assert r.ticks < CAP, "the fight ran to the cap (%s at tick %d)" % (r.outcome, r.ticks)
     assert (r.outcome, verdict_of(r), r.ticks) == (STALL, STALL, 20)
+
+
+# ----------------------------------------------------------------------- the reach is the engine's (audit gap F4)
+
+def test_a_setup_reach_override_of_zero_stalls_where_the_plays_table_would_not():
+    """F4: a Raider whose Setup.unit_types entry says reach (0, 0), on layer 1 against Vanguards on layer 0: nobody can reach anybody, so the
+    fight is a no_reach_stall at the first tick. plays_space._REACH says Raider (1, 1) and would see a fight (a builder that reads the static
+    table instead of engine.profile_reach runs to the cap). Positive control in the same test: with the bible's (1, 1) the same scene is no stall.
+    Red today: cap."""
+    zero = {"Raider": {"base": "Raider", "reach": (0, 0)}}
+    r, f = run([G(0, "Raider", 2, 1), G(1, "Vanguard", 2, 0)], cap=CAP, unit_types=zero)
+    assert oracle(f.living()) == ("mutual",)
+    assert r.ticks < CAP, "the fight ran to the cap (%s at tick %d)" % (r.outcome, r.ticks)
+    assert (r.outcome, verdict_of(r), r.winner) == (STALL, STALL, None) and r.ticks <= 1
+    base, fb = run([G(0, "Raider", 2, 1), G(1, "Vanguard", 2, 0)], cap=CAP)
+    assert oracle(fb.living()) is None and (base.outcome, base.ticks, verdict_of(base)) == ("cap", CAP, None)
+
+
+def test_a_setup_reach_override_that_raises_a_default_zero_type_decides_instead_of_stalling():
+    """F4, the other direction: Vanguards on layer 0 against Vanguards on layer 2 are a mutual stall at the default (0, 0) (the first test of this
+    file); a Setup entry giving the Vanguard reach (0, 2) lets the layer-2 side shoot down and nobody on layer 0 reach up: decided for side 1,
+    never a stall. Red today: cap."""
+    wide = {"Vanguard": {"base": "Vanguard", "reach": (0, 2)}}
+    r, f = run([G(0, "Vanguard", 2, 0), G(1, "Vanguard", 2, 2)], cap=CAP, unit_types=wide)
+    assert oracle(f.living()) == ("decided", 1)
+    assert r.ticks < CAP, "the fight ran to the cap (%s at tick %d)" % (r.outcome, r.ticks)
+    assert (r.outcome, r.winner, verdict_of(r), decided_tick_of(r)) == ("side1", "side1", DECIDED, r.ticks) and r.ticks <= 1
 
 
 # ---------------------------------------------------------------------------------------- FINDING-lab-d11: decided one way

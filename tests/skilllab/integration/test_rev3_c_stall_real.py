@@ -114,11 +114,21 @@ def test_the_null_control_scene_ends_as_no_reach_stall_when_what_is_left_cannot_
     assert (r.outcome, r.winner, verdict_of(r)) == (STALL, None, STALL)
 
 
+# RETIRED positive control (Architect's named fight, FINDING-lab-d11 first trace): s3_types_by_reach, range_up 0.25, 20 side-1 heads, SEED 1, swap
+# False, survivors (1, 3), capped at 12000, the survivor untouchable from tick 7411. It was measured on the LAB-REV2-L8M tip b35c4576. After
+# LAB-REV2-L8M2 (decision 50: a side that is shot at but out of range re-engages) the same fight ends side 1 at tick 5932 with no decided moment
+# (the oracle never fires), so it is no longer a positive control; it stays in this file only as this comment, and test_control_the_same_scene_
+# without_a_decided_moment_is_an_ordinary_win below keeps seed 1 as a negative control. The stand-in is SEED 2, below.
 @SLOW
 @pytest.mark.parametrize("swap", [False, True])
 def test_the_decided_one_way_fight_stops_at_the_tick_it_became_decided(swap):
-    """FINDING-lab-d11 positive control (see the module docstring for the stand-in seed). The fight is decided for side 0 at the oracle's tick,
-    tagged, and stopped there, well before the fight's own end (the lone-survivor shooting that took the cap in the first trace).
+    """FINDING-lab-d11 positive control (stand-in seed 2; see the comment above and the module docstring). The fight is decided for side 0 at
+    the oracle's tick, tagged, and stopped there, well before the fight's own end.
+    PREMISE DUMP (measured 2026-10-20 on this tree, one fight per process, oracle_engine().first read after the fight):
+        swap False: outcome side0 by elimination at tick 7281, survivors (3, 0), first = {("decided", 0): 5554}
+        swap True : outcome side0 by elimination at tick 5469, survivors (5, 0), first = {("decided", 0): 4466}
+    so the builder's fight must stop at tick 5554 (swap False) and 4466 (swap True), ticks 1727 and 1003 before the elimination the base reaches.
+    The observed ticks are not asserted (the oracle's own tick is); the precondition below fails loudly if a later tree stops showing the moment.
     Red today: no stop (outcome side0 at the elimination tick, verdict None)."""
     eng = oracle_engine()
     r = fight(scene("s3_types_by_reach", "play", sweep._range_up(0.25), 20, swap), 2, swap, engine=eng)
