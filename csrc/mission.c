@@ -2793,10 +2793,9 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
         start_units = (uint32_t)(start + 0.5);
         if (start_units > f_units) start_units = f_units;
     }
-    /* Liberty 2026-10-19 (builder): no composed force (F_units 0, e.g. a mission region with military 0) leaves nothing to cap
-     * against, so production there stays uncapped as on a bare world; tests/csim/test_VG_E_e1h.py::test_held_strongpoint_produces_a_unit
-     * (R-218-02) needs a held strongpoint to produce in exactly that scene. */
-    st->reinforce_cap = f_units ? f_units - start_units : UINT32_MAX;
+    /* B14N-empty-roster-cap (Architect 2026-10-19, TD-VG-E-33): F_units 0 gives start_units 0 and reinforce_cap 0, never a
+     * wrapped uint32. See also: tests/csim/test_VG_E_e7.py::test_h_empty_roster_start_0_cap_0_no_production. */
+    st->reinforce_cap = f_units >= start_units ? f_units - start_units : 0;
     st->reinforce_spawned = 0;
     uint32_t start_counts[OM_MISSION_N_UNIT_TYPES];
     om_mission_cut_roster(st->player_units, start_units, start_counts);
