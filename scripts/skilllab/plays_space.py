@@ -76,8 +76,8 @@ def _g(side, unit, count, formation, x, y=0.0, order="attack_move", goal=None, l
                  facing_deg=0.0 if side == 0 else 180.0, layer=layer, order=order, goal=goal, params=params)
 
 
-def _blob(side, unit, count, x, order="attack_move"):
-    return _g(side, unit, count, "blob", x, order=order, radius=80 + 12 * math.sqrt(count))
+def _blob(side, unit, count, x, order="attack_move", layer=0):
+    return _g(side, unit, count, "blob", x, order=order, layer=layer, radius=80 + 12 * math.sqrt(count))
 
 
 def _line(side, unit, count, x, y=0.0, order="attack_move", spacing=LINE_SPACING, goal=None):
@@ -113,44 +113,68 @@ def _spread_line():
     return _setup([_line(0, "Vanguard", UNITS, -START_GAP / 2, spacing=SPREAD_SPACING), *_enemy([("Vanguard", UNITS)])])
 
 
-M1 = (("Vanguard", 8), ("Raider", 8))
-M2 = (("Vanguard", 8), ("Interceptor", 8))
-M3 = (("Vanguard", 8), ("Bombard", 8))
-M4 = (("Vanguard", 8), ("Bastion", 8))
+# The roster mixes as one table. The units' order is the order of the side-1 groups. M0 (all Vanguard) is not a row.
+# M5 to M9 are added here after Westley's go on the roster analysis (decision 45 ruling 5).
+MIXES = [
+    {"name": "M1", "units": {"Vanguard": 8, "Raider": 8}, "used_in": ("s3_layer_above", "s3_dark_striker", "s3_ping_then_commit", "s5_vulnerable_away"), "enabled": True},   # DRAFT-mix-M1
+    {"name": "M2", "units": {"Vanguard": 8, "Interceptor": 8}, "used_in": ("s3_types_by_reach",), "enabled": True},   # DRAFT-mix-M2
+    {"name": "M3", "units": {"Vanguard": 8, "Bombard": 8}, "used_in": ("s2_screen",), "enabled": True},   # DRAFT-mix-M3
+    {"name": "M3b", "units": {"Vanguard": 7, "Raider": 1, "Bombard": 8}, "used_in": ("s3_over_the_choke",), "enabled": True},   # DRAFT-mix-M3b
+    {"name": "M4", "units": {"Vanguard": 8, "Bastion": 8}, "used_in": ("s1_outrange",), "enabled": True},   # DRAFT-mix-M4
+]
+
+
+def _mix(play):
+    """The units of the one enabled row of MIXES that names `play`, read at each call."""
+    rows = [r for r in MIXES if play in r["used_in"]]
+    if not rows:
+        raise ValueError("%s has no mix: no row of MIXES names it" % play)
+    on = [r for r in rows if r["enabled"]]
+    if not on:
+        raise ValueError("%s: mix %s is disabled" % (play, rows[0]["name"]))
+    if len(on) > 1:
+        raise ValueError("%s has two mixes: %s" % (play, ", ".join(r["name"] for r in on)))
+    return dict(on[0]["units"])
 
 
 def _screen():
-    return _setup([_line(0, "Vanguard", 8, -START_GAP / 2 + SCREEN_AHEAD), _line(0, "Bombard", 8, -START_GAP / 2 - SCREEN_BEHIND)]
-                  + _enemy(M3), unit_types=_types("Bombard"))
+    m = _mix("s2_screen")
+    return _setup([_line(0, "Vanguard", m["Vanguard"], -START_GAP / 2 + SCREEN_AHEAD),
+                   _line(0, "Bombard", m["Bombard"], -START_GAP / 2 - SCREEN_BEHIND)]
+                  + _enemy(m.items()), unit_types=_types("Bombard"))
 
 
 def _layer_above():
-    return _setup([_g(0, "Raider", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
-                   _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M1), unit_types=_types("Raider"))
+    m = _mix("s3_layer_above")
+    return _setup([_blob(0, "Raider", m["Raider"], -START_GAP / 2, layer=1),
+                   _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items()), unit_types=_types("Raider"))
 
 
 def _types_by_reach():
-    return _setup([_g(0, "Interceptor", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
-                   _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M2), unit_types=_types("Interceptor"))
+    m = _mix("s3_types_by_reach")
+    return _setup([_blob(0, "Interceptor", m["Interceptor"], -START_GAP / 2, layer=1),
+                   _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items()), unit_types=_types("Interceptor"))
 
 
 def _over_the_choke():
-    mix = (("Vanguard", 7), ("Raider", 1), ("Bombard", 8))
-    return _setup([_g(0, "Bombard", 8, "blob", HOLD_X, layer=2, radius=80 + 12 * math.sqrt(8)),
-                   _blob(0, "Vanguard", 7, HOLD_X),
-                   _g(0, "Raider", 1, "blob", WALL_HALF + 100.0, radius=10.0)] + _enemy(mix),
+    m = _mix("s3_over_the_choke")
+    return _setup([_blob(0, "Bombard", m["Bombard"], HOLD_X, layer=2),
+                   _blob(0, "Vanguard", m["Vanguard"], HOLD_X),
+                   _g(0, "Raider", m["Raider"], "blob", WALL_HALF + 100.0, radius=10.0)] + _enemy(m.items()),
                   unit_types=_types("Raider", "Bombard"), terrain=_wall(top=1))
 
 
 def _dark_striker():
-    groups = [_g(0, "Raider", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
-              _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M1)
+    m = _mix("s3_dark_striker")
+    groups = [_blob(0, "Raider", m["Raider"], -START_GAP / 2, layer=1),
+              _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items())
     return _setup(groups, timeline=[Step.set_emission(0, False), Step.set_emission(1, False)], unit_types=_types("Raider"))
 
 
 def _ping_then_commit():
-    groups = [_g(0, "Raider", 8, "blob", -START_GAP / 2, layer=1, radius=80 + 12 * math.sqrt(8)),
-              _blob(0, "Vanguard", 8, -START_GAP / 2)] + _enemy(M1)
+    m = _mix("s3_ping_then_commit")
+    groups = [_blob(0, "Raider", m["Raider"], -START_GAP / 2, layer=1),
+              _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items())
     return _setup(groups, timeline=[Step.ping(0, START_GAP / 2, 0.0)], unit_types=_types("Raider"))
 
 
@@ -168,8 +192,9 @@ def _bait():
 
 
 def _vulnerable_away():
-    return _setup([_line(0, "Vanguard", 8, -START_GAP / 2), _line(0, "Raider", 8, -START_GAP / 2 - FRAIL_BACK)] + _enemy(M1),
-                  unit_types=_types("Raider"))
+    m = _mix("s5_vulnerable_away")
+    return _setup([_line(0, "Vanguard", m["Vanguard"], -START_GAP / 2), _line(0, "Raider", m["Raider"], -START_GAP / 2 - FRAIL_BACK)]
+                  + _enemy(m.items()), unit_types=_types("Raider"))
 
 
 def _mass_one_end():
@@ -190,8 +215,9 @@ def _do_not_chase():
 
 
 def _outrange():
-    return _setup([_blob(0, "Bastion", 8, -START_GAP / 2), _blob(0, "Vanguard", 8, -START_GAP / 2),
-                   _line(1, "Vanguard", 8, -HOLD_X, order="guard"), _line(1, "Bastion", 8, -HOLD_X, order="guard")],
+    m = _mix("s1_outrange")
+    return _setup([_blob(0, "Bastion", m["Bastion"], -START_GAP / 2), _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2),
+                   _line(1, "Vanguard", m["Vanguard"], -HOLD_X, order="guard"), _line(1, "Bastion", m["Bastion"], -HOLD_X, order="guard")],
                   unit_types=_types("Bastion"), terrain=_wall())
 
 

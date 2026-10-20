@@ -63,8 +63,8 @@ def objective_scene(start_distance, unit="Vanguard", size=16):
 
 
 # Placed scenes (spec docs/northstar/plans/2026-10-06-layout-search-spec.md Rev 3 and Rev 4)
-BEHIND_COVER = 150.0     # provisional (2026-10-07): short-reach types stand this far in front of the long-reach ones
-AMBUSH_BEHIND = 200.0    # provisional (2026-10-07): the ambush group stands this far behind the bait group, as plays_space
+BEHIND_COVER = 150.0     # DRAFT-behind-cover, provisional (2026-10-07): short-reach types stand this far in front of the long-reach ones
+AMBUSH_BEHIND = 200.0    # DRAFT-ambush-behind, provisional (2026-10-07): the ambush group stands this far behind the bait group, as plays_space
 NAIVE_PLAYS = ("naive", "naive_line")
 _NAIVE_ANCHORS = plays_space.Anchors("attacker", "choke_mouth", "blob")
 
