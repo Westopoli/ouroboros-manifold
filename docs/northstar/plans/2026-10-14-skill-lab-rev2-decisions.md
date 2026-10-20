@@ -236,3 +236,10 @@ DRAFT-firing-arc-deg is 30 (Westley: "#5 yes 30 degrees"), no longer 120; the ar
    - `DRAFT-probe-count-bound` has no code line (the bound is derived in the tests); the header text "(at most 14)" becomes "(at most 9 at COARSE_STEP 8, derived)".
    - `DRAFT-behind-cover`, `DRAFT-ambush-behind` and `DRAFT-mix-*` names join the artifact header DRAFT list.
    - The arc header name stays `DRAFT-firing-arc-deg`, but the entry reads "Westley's ruling 30 deg".
+
+## 48. Firing arc lower bound 5 (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+Numbered 48: the highest decision on origin/main is 47.
+1. `OM_TP_FIRING_ARC_DEG` lo becomes 5 (was 10), hi stays 360, default 360. It is an engine-safety bound, not a design number: a 5 degree arc still contains a facing direction and the sin/cos tables hold at that width. Westley's number is the 30 degree base (decision 46); the band gives 7.5 as the grid's floor (decision 47), and the bound sits under it.
+2. lo is rewritten in E0's spec row, in `tests/skilllab/fakes_trace.py` and in the E0 branch tests under a ruler row (assumption changed by decision 47), before E0 lands.
+3. The engine refuses a value below lo as today: no clamp. An out-of-band value is a settings error, not a silent change.
+4. The grid order ascending (7.5 to 120) stands.
