@@ -1,4 +1,4 @@
-# Rule pins: R-087-05@6cbf99, R-087-09@47a492, R-097-03@6780d8, R-098-01@9bd56a, R-190-07@25c4a2
+# Rule pins: R-087-05@6cbf99, R-087-08@d94418, R-087-09@47a492, R-097-03@6780d8, R-098-01@9bd56a, R-190-07@25c4a2
 """VG-T-R087-TESTS (Lane T, T5): R-087-09, steer to a clear line or drop a blocked target. PATH: PIPE.
 
 Rule (docs/bible/epics/E-11-units-and-combat.md, word for word):
@@ -42,7 +42,8 @@ sim change that moves the scene fails with "PREMISE", never with a rule failure)
   first (tick 5024 or 5026) and E1 five or six ticks later (5030, 5031), so U (idle, no order, nothing visible before) takes
   E0, the nearer enemy (650 to 697 against 669 to 720), as its first target on its next 4-tick cohort turn.
   "The block" starts at t_b, the first tick the frame shows U with a target (tick 5028 in every scene; always E0, id 52);
-  the rule's deadline is t_b + 20 = 5048.
+  the assertions' deadline is
+  t_b + 20 + OM_TARGETING_COHORT_COUNT = t_b + 24 = 5052 (see Deadline).
 Attack-move (`am`) scenes send `attack_move` for U a few ticks before the reveal, to a point 400 wu beyond E0 on the
 line from U through E0, so U is walking its route when it takes E0.
 
@@ -55,6 +56,18 @@ Red list (per the brief; pasted failing lines are in the VG-T-R087-TESTS report)
   test_R_087_09_unit_steers_to_a_clear_line_and_fires_at_the_first_target[idle] and [am]       (gap under 20 ticks)
 If the gap pair is also red the rule is not built (unit.c holds a blocked target for ever, nothing steers, nothing
 gives up) and VG-T-R087-WIRE (T6) is the build.
+
+Deadline (a reading, Westley to confirm; Architect 2026-10-20): the rule's 20 ticks is the give-up timer. Re-acquiring
+is done on the unit's next 4-tick cohort turn, the engine's granularity (R-087-08), so every assertion's deadline is
+t_b + 20 + OM_TARGETING_COHORT_COUNT = t_b + 24 (COHORT_TICKS below, csrc/om_constants.h:533). The 20 itself is not
+changed, and the gap and the walking distance premises still use 20 ticks.
+
+Status: the four red tests carry `xfail(strict=True)` (FINDING-r087-09-not-built, owner VG-T-R087-WIRE): the file
+reports 6 passed and 4 xfailed, and the first test that passes because the rule is built turns into a failure
+(XPASS strict) so the mark is removed in the same piece. Failing lines when run without the marks (--runxfail), deadline t_b + 24 = 5052 (tests/csim/test_R_087_09_blocked_line.py):
+  [nogap idle], [nogap am] :373: AssertionError: R-087-09: still holding target 52 at tick 5052, the deadline (t_b 5028 + 20 + 4); E1 (46) never taken
+  [gap idle] :392: AssertionError: R-087-09: E0 (52) was not fired on by tick 5052 (t_b 5028 + 20 + 4); U at 7742.5, 7440.9, a clear-line spot 22 wu away
+  [gap am]   :392: AssertionError: R-087-09: E0 (52) was not fired on by tick 5052 (t_b 5028 + 20 + 4); U at 7805.7, 7470.9, a clear-line spot 22 wu away
 
 Not tested here: units as blockers (R-098-01 says units never block fire), movement past idle own units (Q-087-02).
 """
@@ -82,7 +95,13 @@ HOME = (8000.0, 15900.0)                           # where the rest of the enemy
 E0_SENT = (8330.0, 7700.0)
 A_PARK, U_PARK = (8300.0, 5000.0), (7670.0, 6500.0)   # where the spotter and U wait while E0 settles
 BASTION_WU_PER_TICK = 40.0 / 20.0                  # OM_ROSTER_BASTION_SPEED 40 wu/s, 20 ticks/s
-GIVE_UP_TICKS = 20                                 # R-087-09: "within 1 s (20 ticks)"
+GIVE_UP_TICKS = 20                                 # R-087-09: "within 1 s (20 ticks)"; the rule's own number, untouched
+# Re-acquisition runs on a 4-tick cohort turn (R-087-08), the engine's granularity: a unit that gives up at tick 20
+# takes its next target on its next turn, up to OM_TARGETING_COHORT_COUNT ticks later. Source: csrc/om_constants.h:533
+# `#define OM_TARGETING_COHORT_COUNT 4` (not exported by the library: ouroboros_sim.h has only the per-unit slot
+# om_unit_targeting_cohort, line 2155). Defined once here; if the constant changes, so must this line.
+COHORT_TICKS = 4
+DEADLINE_TICKS = GIVE_UP_TICKS + COHORT_TICKS      # deadline = t_b + 20 + OM_TARGETING_COHORT_COUNT (a reading)
 ATTACK_RANGE = 800.0                               # Bastion
 FULL_HP = 250.0                                    # Raider max_hp (profiles in the mission_begin frame)
 # scene -> where U is sent, where E1 is sent, the spotter's park and its final spot
@@ -280,8 +299,8 @@ def _premise(case, mode):
     if tb is not None:
         row = trace[tb]
         need(row["tgt"] == E0_ID, "U's first target is %r, not E0 (%d)" % (row["tgt"], E0_ID))
-        win = trace[tb:tb + GIVE_UP_TICKS + 1]
-        need(len(win) == GIVE_UP_TICKS + 1, "trace ends before t_b + 20")
+        win = trace[tb:tb + DEADLINE_TICKS + 1]
+        need(len(win) == DEADLINE_TICKS + 1, "trace ends before t_b + 24")
         need(all(r["vis_enemies"] in ([E0_ID], [E1_ID], sorted([E0_ID, E1_ID])) for r in win), "another enemy became visible: %r"
              % [r["vis_enemies"] for r in win if r["vis_enemies"] not in ([E0_ID], [E1_ID], sorted([E0_ID, E1_ID]))][:2])
         need(any(r["v1"] for r in trace[tb:tb + 11]), "E1 is not visible within 10 ticks of t_b")
@@ -334,12 +353,13 @@ def test_control_clear_line_target_is_fired_on_idle():
     facts, trace = _assert_premise("clear", "idle")
     tb = facts["tb"]
     hit = _first(trace[tb:], lambda r: r["e0hp"] < FULL_HP)
-    assert hit is not None and hit["t"] <= trace[tb]["t"] + GIVE_UP_TICKS, (
-        "a clear line to E0 was not fired on within %d ticks of t_b %d" % (GIVE_UP_TICKS, trace[tb]["t"]))
+    assert hit is not None and hit["t"] <= trace[tb]["t"] + DEADLINE_TICKS, (
+        "a clear line to E0 was not fired on within %d ticks of t_b %d" % (DEADLINE_TICKS, trace[tb]["t"]))
 
 
 # ------------------------------------------------------------------ the rule (red today)
 
+@pytest.mark.xfail(strict=True, reason="VG-T-R087-WIRE: R-087-09 not built, FINDING-r087-09-not-built")
 @pytest.mark.parametrize("mode", ["idle", "am"])
 def test_R_087_09_blocked_target_is_dropped_for_the_second_enemy_within_20_ticks(mode):
     """R-087-09, no gap: the line to E0 is blocked and the nearest clear-line spot is more than 20 ticks of walking
@@ -348,16 +368,17 @@ def test_R_087_09_blocked_target_is_dropped_for_the_second_enemy_within_20_ticks
     idle unit) or walks its route holding it (an attack-moving unit); nothing gives up."""
     facts, trace = _assert_premise("nogap", mode)
     tb = facts["tb"]
-    deadline = trace[tb]["t"] + GIVE_UP_TICKS
+    deadline = trace[tb]["t"] + DEADLINE_TICKS
     switched = _first(trace[tb:], lambda r: r["tgt"] == E1_ID)
     assert switched is not None and switched["t"] <= deadline, (
-        "R-087-09: still holding target %r at tick %d, the deadline (t_b %d + 20); E1 (%d) never taken"
-        % (trace[tb + GIVE_UP_TICKS]["tgt"], deadline, trace[tb]["t"], E1_ID))
+        "R-087-09: still holding target %r at tick %d, the deadline (t_b %d + 20 + 4); E1 (%d) never taken"
+        % (trace[tb + DEADLINE_TICKS]["tgt"], deadline, trace[tb]["t"], E1_ID))
     fired = _first(trace[tb:], lambda r: r["e1hp"] < FULL_HP)
     assert fired is not None and fired["t"] <= deadline, (
-        "R-087-09: E1 (%d) was not fired on by tick %d (t_b %d + 20)" % (E1_ID, deadline, trace[tb]["t"]))
+        "R-087-09: E1 (%d) was not fired on by tick %d (t_b %d + 20 + 4)" % (E1_ID, deadline, trace[tb]["t"]))
 
 
+@pytest.mark.xfail(strict=True, reason="VG-T-R087-WIRE: R-087-09 not built, FINDING-r087-09-not-built")
 @pytest.mark.parametrize("mode", ["idle", "am"])
 def test_R_087_09_unit_steers_to_a_clear_line_and_fires_at_the_first_target(mode):
     """R-087-09, gap reachable: the line to E0 is blocked but a clear-line spot is 22 wu away (11 ticks, under the
@@ -366,9 +387,9 @@ def test_R_087_09_unit_steers_to_a_clear_line_and_fires_at_the_first_target(mode
     is red, and VG-T-R087-WIRE is the build)."""
     facts, trace = _assert_premise("gap", mode)
     tb = facts["tb"]
-    deadline = trace[tb]["t"] + GIVE_UP_TICKS
+    deadline = trace[tb]["t"] + DEADLINE_TICKS
     fired = _first(trace[tb:], lambda r: r["e0hp"] < FULL_HP)
     assert fired is not None and fired["t"] <= deadline, (
-        "R-087-09: E0 (%d) was not fired on by tick %d (t_b %d + 20); U at %.1f, %.1f, a clear-line spot %.0f wu away"
-        % (E0_ID, deadline, trace[tb]["t"], trace[tb + GIVE_UP_TICKS]["u"][0], trace[tb + GIVE_UP_TICKS]["u"][1], facts["gap"]))
-    assert all(r["e1hp"] == FULL_HP for r in trace[tb:tb + GIVE_UP_TICKS + 1]), "R-087-09: fired at E1 instead of steering"
+        "R-087-09: E0 (%d) was not fired on by tick %d (t_b %d + 20 + 4); U at %.1f, %.1f, a clear-line spot %.0f wu away"
+        % (E0_ID, deadline, trace[tb]["t"], trace[tb + DEADLINE_TICKS]["u"][0], trace[tb + DEADLINE_TICKS]["u"][1], facts["gap"]))
+    assert all(r["e1hp"] == FULL_HP for r in trace[tb:tb + DEADLINE_TICKS + 1]), "R-087-09: fired at E1 instead of steering"
