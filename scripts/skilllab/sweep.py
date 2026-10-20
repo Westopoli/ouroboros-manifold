@@ -23,6 +23,7 @@ SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
 CONTROL_MAX_TICKS = 600     # DRAFT-control-max-ticks (Westley's number): controls that need no result stop here; a 12000-tick no-shot fight is wasted time
 LAYER2_RATIO = 0.4          # spec: vision at two layers is 0.4 of the one-layer value
 DAMAGE_CONTROL_PLAY = "s3_types_by_reach"   # decisions 22: damage-up's positive control is this one designated fight
+VISION_CONTROL_PLAY = "s3_vision_control"   # clause 24: the vision positive control is this one all cross-layer 16 v 16 fight
 SMOKE_LAYOUTS = ("81", "78", "192")         # layout indices of the run-1 draw (depth.lhs_draw(200, 0))
 SMOKE_CONTROLS = (("mirror", 16), ("numbers", 8), ("planted", 16))
 LAYER_PLAYS = ("s3_layer_above", "s3_types_by_reach")
@@ -244,7 +245,8 @@ def controls(family):
         return {"null": Control([zero, none], None, _identical)}
     out = {"null": Control([_as(p, "control_null") for p in grid(family)], (0, 0), _identical)}
     if family == "vision":
-        out["positive"] = Control([_as(_vision(0.0), "control_positive")], None, _vision_zero_ok)
+        out["positive"] = Control([_as(_vision(0.0), "control_positive")], None, _vision_zero_ok,
+                                  play=VISION_CONTROL_PLAY)
     if family == "damage_up":
         out["positive"] = Control([_as(_damage_up(v), "control_positive") for v in (1.0, 0.5)], None, _damage_ok,
                                   max_ticks=None, play=DAMAGE_CONTROL_PLAY)
