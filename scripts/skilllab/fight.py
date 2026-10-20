@@ -21,7 +21,9 @@ def _check_reach(setup):
 
 
 def _register_types(engine, w, setup):
-    """Return {name: (type_id, attack_range)} for every unit name the groups use, ids from 100 in order of first use."""
+    """Return {name: (type_id, attack_range)} for every unit name the groups use. A name with no entry, or an entry that names itself as its
+    base and adds nothing but a reach, is the built-in type (the engine keys the Warden aura and the Bastion cap on built-in ids,
+    FINDING-lab-d3); any other entry is a custom type, ids from 100 in order of first use."""
     types, next_id = {}, FIRST_CUSTOM_TYPE_ID
     for g in setup.groups:
         name = g.unit
@@ -30,6 +32,12 @@ def _register_types(engine, w, setup):
         entry = setup.unit_types.get(name)
         if entry is None:
             tid = engine.type_id(name)
+            types[name] = (tid, engine.type_stats(w, tid)["attack_range"])
+            continue
+        if entry.get("base") == name and set(entry) <= {"base", "reach"}:
+            tid = engine.type_id(name)
+            if "reach" in entry:
+                engine.set_reach(w, tid, *entry["reach"])
             types[name] = (tid, engine.type_stats(w, tid)["attack_range"])
             continue
         if "base" in entry:

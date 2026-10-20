@@ -134,12 +134,17 @@ def test_placed_ping_goal_is_the_enemy_anchor_on_the_enemys_layer_at_tick_0(sd, 
     assert all(g.order == "attack_move" for g in s.groups if g.side == 0)
 
 
-def test_placed_dark_striker_keeps_its_silent_steps_on_side_0():
-    """s3_dark_striker placed: the set_emission steps of the play survive placement unchanged (group, when, on) and silence only side 0."""
+def test_placed_dark_striker_keeps_its_silent_side_0_steps_and_side_1_emits():
+    """s3_dark_striker placed (rev 3 D5): the set_emission steps of the play survive placement unchanged (group, when, order, on); side 0's
+    steps silence it (on=False) and side 1's switch the enemy on (on=True, at least one), so the enemy emits at the emitting family's
+    values instead of nobody emitting (FINDING-lab-d5)."""
     own = plays_space.PLAYS["s3_dark_striker"].timeline
     s = placed("s3_dark_striker")
     assert [(t.group, t.when, t.order, t.on) for t in s.timeline] == [(t.group, t.when, t.order, t.on) for t in own]
-    assert all(s.groups[t.group].side == 0 for t in s.timeline)
+    side_0 = [t for t in s.timeline if s.groups[t.group].side == 0]
+    side_1 = [t for t in s.timeline if s.groups[t.group].side == 1]
+    assert side_0 and all(t.on is False for t in side_0)
+    assert side_1 and all(t.on is True for t in side_1)
 
 
 def test_counter_use_of_s1_outrange_attacks_the_held_choke():

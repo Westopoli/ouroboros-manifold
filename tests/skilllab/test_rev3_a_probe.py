@@ -97,7 +97,8 @@ def test_t2_the_probe_fights_base_unchanged_and_the_extreme_with_the_settings_me
     from scripts.skilllab import probe
     fight_fn, calls = fought(sensitive_plays("p"))
     probe.inert(plain_build, {"OM_TP_RANGE_UP_1": 0.25, "OM_TP_RANGE_UP_2": 0.25}, enemy_heads=20, seed=3, swap=True, fight_fn=fight_fn)
-    assert sorted((c["settings"].get("OM_TP_RANGE_UP_1"), c["settings"].get("OM_TP_RANGE_UP_2")) for c in calls) == [(0.25, 0.25), (None, None)]
+    assert sorted(((c["settings"].get("OM_TP_RANGE_UP_1"), c["settings"].get("OM_TP_RANGE_UP_2")) for c in calls),
+                  key=lambda pair: (pair[0] is not None, pair)) == [(None, None), (0.25, 0.25)]
     assert {(c["enemy"], c["seed"], c["swap"]) for c in calls} == {(20, 3, True)}
 
 

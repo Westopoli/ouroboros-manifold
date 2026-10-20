@@ -45,7 +45,7 @@ FRAIL_BACK = 400.0              # how far behind the strong line the frail type 
 # provisional (2026-10-05): S1 outrange counter
 OUTRANGE_FACTOR = 1.2
 
-_REACH = {"Vanguard": (0, 0), "Raider": (1, 1), "Interceptor": (2, 1), "Bombard": (0, 2), "Bastion": (0, 2)}
+_REACH = {"Vanguard": (0, 0), "Raider": (1, 1), "Interceptor": (2, 1), "Warden": (0, 0), "Bombard": (0, 2), "Bastion": (0, 2)}
 
 
 def _types(*names):
@@ -173,7 +173,8 @@ def _dark_striker():
     m = _mix("s3_dark_striker")
     groups = [_blob(0, "Raider", m["Raider"], -START_GAP / 2, layer=1),
               _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items())
-    return _setup(groups, timeline=[Step.set_emission(0, False), Step.set_emission(1, False)], unit_types=_types("Raider"))
+    enemy_on = [Step.set_emission(i, True) for i, g in enumerate(groups) if g.side == 1]
+    return _setup(groups, timeline=[Step.set_emission(0, False), Step.set_emission(1, False), *enemy_on], unit_types=_types("Raider"))
 
 
 def _ping_then_commit():
@@ -250,7 +251,7 @@ PLAYS = {
     "s3_over_the_choke": _play(_over_the_choke, "S3", {"WALL_HALF": WALL_HALF, "GAP_HALF": GAP_HALF},
         "Bombards fire over the wall top; a Raider past the choke spots for them."),
     "s3_dark_striker": _play(_dark_striker, "S3", {"HIGH_LAYER": HIGH_LAYER},
-        "Side 0 goes silent at tick 0; the enemy keeps emitting."),
+        "Side 0 goes silent at tick 0; the enemy is switched to emit at tick 0, at the emitting family's values."),
     "s3_ping_then_commit": _play(_ping_then_commit, "S3", {"HIGH_LAYER": HIGH_LAYER},
         "Side 0 pings the enemy layer at the enemy anchor at tick 0, then attack-moves."),
     "s4_bait": _play(_bait, "S4", {"BAIT_COUNT": BAIT_COUNT, "BAIT_FALLBACK_TICK": BAIT_FALLBACK_TICK,
