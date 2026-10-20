@@ -21,15 +21,15 @@ Part 2 -- group speed-sync (R-095-01):
   the group's speed (R-095-01: "all units move at the speed of the slowest member
   until the group has spread further than the magic box").
 
-  Unit 21 (Raider, type 0, ~147 wu/s) and unit 490 (Bastion, type 5, ~40 wu/s)
+  Unit 21 (Raider, type 0, ~147 wu/s) and unit 294 (Bastion, type 5, ~40 wu/s)
   are both at the edge of the spawn formation and can both move.  Commanded together
   with om_command_move (the unfixed pipe), unit 21 races at Raider speed while
-  unit 490 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
+  unit 294 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
   both are capped at the Bastion's speed: ratio ~1.0x.
 
   Positive controls:
     - Unit 21 must move (sanity check on the begin frame position).
-    - Unit 490 must move (confirms the slow unit also has a clear path).
+    - Unit 294 must move (confirms the slow unit also has a clear path).
 
 Seed-stability: unit ids and spawn positions are deterministic for seed 1 / 80 regions /
 features [1..7] / 10 strategic steps / faction 0.  If the world changes, the begin-frame
@@ -67,13 +67,17 @@ MIN_DIST_WU = 75.0
 
 # Part 2 -- speed-sync group: Raider + Bastion edge pair (R-095-01).
 # Both units are at the right/top edge of the formation and have a clear NE path.
-# Unit 21: type 0 (Raider), ~147 wu/s solo.  Unit 490: type 5 (Bastion), ~40 wu/s solo.
+# Unit 21: type 0 (Raider), ~147 wu/s solo.  Unit 294: type 5 (Bastion), ~40 wu/s solo.
 # When commanded together via om_command_group_move (the fix), both move at Bastion speed.
 # When commanded via om_command_move (the defect), Raider races ahead at 3.7x Bastion speed.
 FAST_ID = 21    # Raider at (12080, 120); TD-VG-D-7: was unit 23 at (12330, 15)
-SLOW_ID = 490   # Bastion at (12420, 450); TD-VG-D-7: was (11850, 645)
-SLOW_SPAWN_X = 12420.0
-SLOW_SPAWN_Y = 450.0
+# TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the player spawns
+# start_units of F, not F. Premise (this seed/region, archetype 8): F 490, p 1, e 1, n 2, share 0.5, frac 0.6, start 294.0,
+# start_units 294, so the player's units are ids 1..294 and the last Bastion is unit 294 (was unit 490 of F 490, an enemy
+# unit now), at (12080, 550) (was (12420, 450)). Unit 21's pin is unchanged.
+SLOW_ID = 294   # Bastion at (12080, 550); TD-VG-E-34: was unit 490 at (12420, 450); TD-VG-D-7: was (11850, 645)
+SLOW_SPAWN_X = 12080.0
+SLOW_SPAWN_Y = 550.0
 # Shared destination: 1000 wu NE of the midpoint between the two units.
 GROUP_DEST_X = (SPAWN_X + SLOW_SPAWN_X) / 2.0 + 1000.0   
 GROUP_DEST_Y = (SPAWN_Y + SLOW_SPAWN_Y) / 2.0 + 1000.0   
