@@ -1,6 +1,7 @@
 """One tactical fight of one setup, stepped tick by tick (spec AC 5-11; rev 2 spec 2026-10-14).
-A fight ends by elimination, or structurally (no_reach_stall, decided_one_way_reach: R-164-01 reach and live layers, LAB-REV3-C);
-reaching Setup.max_ticks is a cap, a lab defect to trace, never a result (Q-LAB-03)."""
+A fight ends by elimination, or structurally from R-164-01 reach and the live layers (LAB-REV3-C): no_reach_stall ends it at its first
+tick; decided_one_way_reach is recorded (verdict, decided_tick) and the fight plays on to elimination or the cap, where it ends as the
+decided side's win. Reaching Setup.max_ticks otherwise is a cap, a lab defect to trace, never a result (Q-LAB-03)."""
 import math
 import random
 
@@ -383,7 +384,7 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group, pa
     reengage = _Reengage(engine, w, setup, side_ids, ids_by_group, timeline)
     side_of = {u: s for s in (0, 1) for u in side_ids[s]}
     fired = [False, False]
-    blind, verdict, decided_tick, caches = False, None, None, ({}, {})
+    blind, verdict, decided_tick, decided_side, caches = False, None, None, None, ({}, {})
     while outcome is None:
         step(w)
         tick += 1
@@ -409,15 +410,16 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group, pa
             outcome = "side0"
         elif alive[0] == 0:
             outcome = "side1"
-        else:
+        if outcome is None and verdict is None:
             end = _structural(engine, w, side_ids, hp, *caches)
             if end is not None:
-                verdict = end[0]
                 if end[1] is None:
-                    outcome = verdict
+                    verdict = outcome = end[0]
                 else:
-                    outcome, decided_tick = "side%d" % end[1], tick
-        if outcome is None and tick >= setup.max_ticks:
+                    verdict, decided_tick, decided_side = end[0], tick, end[1]
+        if outcome is None and tick >= setup.max_ticks and verdict == DECIDED_ONE_WAY_REACH:
+            outcome = "side%d" % decided_side
+        elif outcome is None and tick >= setup.max_ticks:
             outcome = "cap"
             blind = not any(engine.visible_enemies(w, s, [u for u in side_ids[1 - s] if hp[u] > 0]) for s in (0, 1))
         if tick % setup.sample_every == 0:

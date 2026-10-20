@@ -102,7 +102,7 @@ class Setup:
 
 @dataclass
 class FightResult:
-    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "cap" (max_ticks reached: a lab defect, never a result) | "no_reach_stall" (nobody can reach anybody: a finding)
+    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "cap" (max_ticks reached: a lab defect, never a result) | "no_reach_stall" (nobody can reach anybody: a finding, the fight ends at its first tick); a decided_one_way_reach fight that reaches the cap ends as the decided side's win
     margin: float
     strength_left: tuple
     survivors: tuple
@@ -125,7 +125,7 @@ class FightResult:
     blind_cap: bool = False   # outcome "cap" and, at the cap tick, neither side sees any living enemy: a finding (blind post), not a lab cap defect
     living: tuple = ({}, {})  # ({side 0 Group.unit: count}, {side 1 Group.unit: count}) alive at the end of the fight, zero counts omitted
     verdict: Optional[str] = None       # None, "no_reach_stall" or "decided_one_way_reach" (the FROZEN_NAMES entries): the structural end of the fight, R-164-01
-    decided_tick: Optional[int] = None  # the tick the fight became decided; set with "decided_one_way_reach" only
+    decided_tick: Optional[int] = None  # the tick the fight became decided (recorded, not a stop: the fight plays on to elimination or the cap); set with "decided_one_way_reach" only
     paper_score: tuple = (0.0, 0.0)     # DRAFT: the paper score of (side 0, side 1) from scenes.paper_score (filled by the sweep, LAB-REV3-C part 2)
     predicted_paper: str = "tie"        # DRAFT: "side0" | "side1" | "tie" from scenes.paper_prediction (filled by the sweep)
 
