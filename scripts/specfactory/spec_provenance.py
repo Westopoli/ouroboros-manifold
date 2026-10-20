@@ -7,14 +7,17 @@
 Exit 1 on any finding, 0 on none, 2 on usage. Reasons: (1) untagged behaviour unit,
 (2) a stand-in-for-a-source phrase, (3) [P ..] without file:line or an approval heading
 without file:line, (4) [B R-id] absent from the epics, (5) [W Q-id] not closed in the
-register, (6) [DRAFT-name] with no ledger or register row, (7) CLASH_PAIRS on one piece id.
+register, (6) [DRAFT-name] with no ledger or register row, (7) CLASH_PAIRS on one piece id, (8) a [B R-id] pin missing or stale (rule_pins.py).
 Unit: a heading line, a list item with its continuation lines, or a blank-separated
 paragraph, reported at its first line. A tag in the unit, or in the lead-in paragraph a
 list item continues, covers it. Python standard library only.
 """
+import hashlib
 import re
 import sys
 from pathlib import Path
+
+DRAFT_PIN_HEX = 6  # DRAFT-pin-hex, harness enforcement spec section 4
 
 # See also: spec Lane H part 3 reason (7): extended as found. ('refuse','clear') are substrings
 # of two units sharing a piece id; ('ring','never form rings') pairs a unit with the word ring
@@ -33,7 +36,15 @@ PIECE_ID = re.compile(r"(?<![\w-])(?:VG-[A-Za-z0-9-]+|[A-Z]\d{1,2}[a-z]?(?:-[a-z
                       r"|HARNESS-[a-z-]+)(?![\w-])")
 LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
 RULE_ID = re.compile(r"R-\d+-\d+")
-B_TAG = re.compile(r"\[B (R-[^\]]*)\]")
+_PINNED = r"R-\d+-\d+(?:@[0-9a-f]{6})?"
+B_TAG = re.compile(r"\[B ((?:" + _PINNED + r")(?:,\s*" + _PINNED + r")*)([^\]]*)\]")
+PIN_RE = re.compile(r"(R-\d+-\d+)(?:@([0-9a-f]{6}))?")
+RULE_LINE = re.compile(r"^- (R-\d+-\d+)(?!\S)")
+
+
+def rule_pin(rule_line):
+    # See also: rule_pins.py (the pin tool); the pin is the sha256 of the line after "- R-id", whitespace normalised.
+    return hashlib.sha256(" ".join(rule_line.split()[2:]).encode("utf-8")).hexdigest()[:DRAFT_PIN_HEX]
 
 
 class Unit:
@@ -76,7 +87,7 @@ def split_units(lines):
 def reason1(units, ctx):
     for u in units:
         behaviour = NUMBER.search(u.plain) or BEHAVIOUR_WORDS.search(u.plain)
-        if behaviour and not TAG_START.search(u.tag_text):
+        if behaviour and not u.heading and not TAG_START.search(u.tag_text):
             yield u.line, 1, "behaviour unit without a provenance tag: " + u.text.splitlines()[0][:70]
 
 
@@ -103,6 +114,19 @@ def reason4(units, ctx):
             for rid in RULE_ID.findall(m.group(1)):
                 if rid not in ctx["rules"]:
                     yield u.line, 4, f"[B {rid}] is not in docs/bible/epics"
+
+
+def reason8(units, ctx):
+    for u in units:
+        for m in B_TAG.finditer(u.plain):
+            for rid, pin in PIN_RE.findall(m.group(1)):
+                if rid not in ctx["rule_lines"]:
+                    continue
+                now = rule_pin(ctx["rule_lines"][rid])
+                if not pin:
+                    yield u.line, 8, f"[B {rid}] has no pin"
+                elif pin != now:
+                    yield u.line, 8, f"[B {rid}@{pin}] pin is stale: the rule line is now {now}"
 
 
 def reason5(units, ctx):
@@ -143,7 +167,7 @@ def reason7(units, ctx):
                                          f"'{rule_words}' in the rule cited at line {units[j].line}")
 
 
-REASONS = [reason1, reason2, reason3, reason4, reason5, reason6, reason7]
+REASONS = [reason1, reason2, reason3, reason4, reason5, reason6, reason7, reason8]
 
 
 def find_root(spec):
@@ -154,11 +178,13 @@ def find_root(spec):
 
 
 def load_context(root):
-    rules, closed, rows = {}, {}, ""
+    rules, rule_lines, closed, rows = {}, {}, {}, ""
     for f in sorted((root / "docs" / "bible" / "epics").glob("*.md")):
         for line in f.read_text(errors="replace").splitlines():
             for rid in RULE_ID.findall(line):
                 rules[rid] = rules.get(rid, "") + " " + line
+            if (m := RULE_LINE.match(line)):
+                rule_lines.setdefault(m.group(1), line)
     register = root / "docs" / "northstar" / "ambiguity_register.md"
     ledger = root / "docs" / "northstar" / "plans" / "push_ledger_2026-09-22.md"
     for f in (register, ledger):
@@ -171,7 +197,7 @@ def load_context(root):
             cells = [c.strip() for c in line.strip().strip("|").split("|")]
             if f == register and len(cells) > 4 and cells[0].startswith("Q-"):
                 closed[cells[0]] = cells[4].lower().startswith("closed")
-    return {"rules": rules, "closed": closed, "rows": rows}
+    return {"rules": rules, "rule_lines": rule_lines, "closed": closed, "rows": rows}
 
 
 def main(argv):
