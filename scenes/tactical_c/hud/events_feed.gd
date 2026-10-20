@@ -13,6 +13,7 @@ var _lines: Array = []
 var _banner := ""
 var _banner_left := 0.0
 var _owners := {}
+var _strongpoints := {}
 var _progress := {}
 var _label: Label
 var _banner_label: Label
@@ -30,6 +31,9 @@ func _ready() -> void:
 
 func feed(frame: Dictionary, local_faction: int) -> void:
 	_connect_ticker()
+	# See also: scenes/economy/ticker_beats.gd (the strongpoint beats): a strongpoint id gets no Structure line.
+	for p in frame.get("strongpoints", []):
+		_strongpoints[int(p["id"])] = true
 	if frame.has("structures"):
 		for s in frame["structures"]:
 			_owners[int(s["id"])] = int(s["owner"])
@@ -39,6 +43,8 @@ func feed(frame: Dictionary, local_faction: int) -> void:
 			var now := int(s["owner"])
 			var was: int = _owners.get(id, now)
 			_owners[id] = now
+			if _strongpoints.has(id):
+				continue
 			if was != local_faction and now == local_faction:
 				add_beat("captured", "Structure captured")
 			elif was == local_faction and now != local_faction:
