@@ -9,7 +9,7 @@ removed (side1 wins at tick 1040, survivors (0, 3), seed 0), so a symmetry check
 one that ignores the layer. Under OM_TP_DAMAGE_UP_1 = 0.5 (the damage the units that fire UP deal, ALG-60's layer penalty knob) the offset
 bites: side 0 wins at tick 889 with (10, 0) left where the flat fight is the loss above. So:
   - SYMMETRY, base settings and damage_up 0.5: layers (0,1) to (3,4) give one result per (seed, swap), four seeds-and-swaps each;
-  - POSITIVE CONTROL: at damage_up 0.5 the offset-1 fight is NOT the flat fight (the comparison can fail);
+  - POSITIVE CONTROLS (green on the lab tip, built from the lab's helpers, not from the control play): at damage_up 0.5 the offset-1 fight is NOT the flat fight (the comparison can fail);
   - both sides fired across the layer and no fight capped (a fight that does not fire is not a symmetry result)."""
 import dataclasses
 import os
@@ -23,6 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import plays  # noqa: E402
+from scripts.skilllab.contract import Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
 SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="real fights; set OM_LAB_SLOW=1")
@@ -40,6 +41,16 @@ def run(setup, seed, swap):
 
 def control(low, settings):
     return dataclasses.replace(plays.layer_symmetry_play(16, low)(16, False), settings=dict(settings))
+
+
+def scratch(low, settings):
+    """The same fight as the builder's control, built here from the lab's own helpers (Raider v Raider, 16 v 16, one blob each, side 0 on
+    layer low + 1), so the two positive controls below hold on the lab tip without the control play. Same shape as plays._play."""
+    unit = "Raider"
+    gap = plays.unit_stats(unit)["sensor_radius"] + 1 + 2 * plays._depth(16, "blob")
+    g0 = dataclasses.replace(plays._group(0, unit, 16, "blob", -gap / 2), layer=low + 1)
+    g1 = dataclasses.replace(plays._group(1, unit, 16, "blob", gap / 2), layer=low)
+    return Setup(groups=(g0, g1), unit_types={unit: {"base": unit, "reach": (1, 1)}}, point=(0.0, 0.0), settings=dict(settings))
 
 
 def flat(setup):
@@ -63,14 +74,14 @@ def test_t6_the_same_offset_fight_gives_the_same_result_on_every_layer_pair(name
 @SLOW
 def test_t6_positive_control_the_offset_matters_under_damage_up_half():
     """The comparison above can fail: at damage_up 0.5 the fight one layer apart is not the fight on one layer (seed 0 unswapped: a win
-    for side 0 at tick 889 against a loss at tick 1040 on the lab tip). Red today for the missing control play."""
-    setup = control(0, SETTINGS["damage_up_half"])
+    for side 0 at tick 889 against a loss at tick 1040 on the lab tip). Not red today: the control is built here from the lab's helpers, so this is green on the lab tip."""
+    setup = scratch(0, SETTINGS["damage_up_half"])
     assert key(run(setup, 0, False)) != key(run(flat(setup), 0, False))
 
 
 @SLOW
 def test_t6_positive_control_the_base_settings_do_not_see_the_offset():
     """Why the second setting exists (see the module docstring): at the base settings the offset-1 fight IS the flat fight, so equality
-    across layer pairs there is a weaker claim than under damage_up 0.5. Green once the control exists; records the measurement."""
-    setup = control(0, SETTINGS["base"])
+    across layer pairs there is a weaker claim than under damage_up 0.5. Green on the lab tip (built from the lab's helpers); records the measurement."""
+    setup = scratch(0, SETTINGS["base"])
     assert key(run(setup, 0, False)) == key(run(flat(setup), 0, False))

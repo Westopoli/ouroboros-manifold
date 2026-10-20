@@ -7,6 +7,10 @@ M9 of plays_space.MIXES. Contract: tests/skilllab/test_rev3_b_mirror.py (sweep.m
     the number of capped fights the run recorded, and ok equal to the row's `enabled` flag ("a mix that caps is rejected and reported" is
     the flag; whether ONE capped fight or a share rejects is Westley's, so this test does not decide it: it holds the table to what the
     pre-check said). An enabled row never capped; a disabled row did, or the pre-check refused it for Wardens.
+  - MEASURED (2026-10-20, this file's reviewer, a scratch mirror of the same shape: blobs at x -350 and 350, seeds i // 2, swap i % 2,
+    lab tip, built-in types): M5 0 caps, M6 0, M7 0, M8 0 (max 8295 ticks), M9 1 cap of 30 (seed 6, unswapped, 12000 ticks). So whether
+    ONE capped fight rejects a mix decides whether M9 is enabled, and an M9 that is disabled leaves the Warden pairing uncovered in T1
+    (test_rev3_b_layers.py::test_t1_*): a rule question the plan does not answer (reported to the Architect, not decided here).
   - POSITIVE CONTROL for the cap detection on the real engine: the same pre-check with every fight cut at 200 ticks (a fight_fn that
     lowers max_ticks) rejects an ordinary mix as capped, 30 of 30.
   - T11: the Warden refusal of the real path fights nothing (a fast test in test_rev3_b_mirror.py patches the engine out; here the
