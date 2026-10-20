@@ -1,3 +1,4 @@
+# Rule pins: R-164-01@511d57
 # spec: docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md (requirement R7, test T9, defect D7; ledger FINDING-lab-d7, FINDING-lab-d11); piece LAB-REV3-C
 """LAB-REV3-C test support: the structural oracle, the fake engine with reach and live layers, the real-engine oracle hook.
 Imported by the other test_rev3_c_*.py files; its own tests are the oracle's positive controls (green on the base).
