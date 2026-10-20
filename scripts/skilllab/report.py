@@ -203,6 +203,13 @@ DRAFT_TEXT = {
     "DRAFT-control-max-ticks": "the tick cap of a control fight (sweep.CONTROL_MAX_TICKS)",
     "DRAFT-probe-count-bound": "the bound on the probes of a bisected scan (at most 9 at COARSE_STEP 8, derived)",
     "DRAFT-ground-geometry": "the coordinates and radii of the ground scenes",
+    "DRAFT-behind-cover": "how far short-reach types stand in front of the long-reach ones (scenes.BEHIND_COVER 150)",
+    "DRAFT-ambush-behind": "how far the ambush group stands behind the bait group (scenes.AMBUSH_BEHIND 200)",
+    "DRAFT-mix-M1": "the composition of roster mix M1, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M2": "the composition of roster mix M2, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M3": "the composition of roster mix M3, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M4": "the composition of roster mix M4, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M3b": "the composition of roster mix M3b, a row of the MIXES table in plays_space.py",
 }
 STANDIN = "re-engage is a lab stand-in for the engine's pending sight-engagement rule"
 NO_DEFENDER = "C1 for plays without a naive defender baseline rests on naive_attacker only"
