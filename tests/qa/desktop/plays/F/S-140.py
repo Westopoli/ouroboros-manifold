@@ -1,3 +1,4 @@
+# Rule pins: R-140-02@56c964, R-140-03@14a1c8
 """Story play S-140 "Commands over the wire": an order given in a match goes through the session and the unit moves.
 Two real game processes on the Steam-less local test network (VG-F-SKEL-B; Q-F-1 closed by Westley, 2026-10-11): the
 host box-selects its own units and right-clicks a point; at a common tick after the settle ticks the guest's qa_state shows
