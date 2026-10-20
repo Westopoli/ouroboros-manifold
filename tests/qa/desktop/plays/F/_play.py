@@ -86,20 +86,22 @@ def draw_ports() -> tuple[int, int, int, int]:
     raise RuntimeError("no free UDP ports found for the pair")
 
 
-def pair_games(seed: int = 1):
+def pair_games(seed: int = 1, host_args: list[str] | None = None, guest_args: list[str] | None = None):
     """Generator for a module-scoped pytest fixture: yields (host, guest) GodotGame instances, both running, neither
     past the loading screen's privacy modal. Host 1920x1080 (the shots are the host's, review resolution); guest
     1280x720 (memory cap, spec Rev 12b F-SKEL (8)). Both are started before either answers the privacy modal: a
-    privacy flag present at a game's boot leaves it on the loading screen (daemon_client.py GodotGame.start)."""
+    privacy flag present at a game's boot leaves it on the loading screen (daemon_client.py GodotGame.start).
+    host_args / guest_args: extra user args appended after the common ones (VG-F-S143, spec Rev 13 gap 2: the S-143
+    pair case gives each side `--net-local-eras <id,id>`); default none, so every other pair play is unchanged."""
     qa_h, qa_g, lobby, udp = draw_ports()
     note("ports lobby L=%d udp base U=%d qa host=%d qa guest=%d" % (lobby, udp, qa_h, qa_g))
     # Both games get `--seed <seed>` (GodotGame, default 1): the lobby takes its match seed from it (ledger row
     # RULE-lobby-seed-arg), so host and guest runs are repeatable.
     common = ["--net-local", "--net-local-lobby-port", str(lobby), "--net-local-udp-base", str(udp)]
     host = GodotGame(qa_port=qa_h, seed=seed, resolution=RESOLUTION, renderer="vulkan",
-                     extra_args=[*common, "--net-local-id", "1"])
+                     extra_args=[*common, "--net-local-id", "1", *(host_args or [])])
     guest = GodotGame(qa_port=qa_g, seed=seed, resolution="1280x720", renderer="vulkan",
-                      extra_args=[*common, "--net-local-id", "2"])
+                      extra_args=[*common, "--net-local-id", "2", *(guest_args or [])])
     host.lobby_port = lobby  # read by reach_pair_lobby
     try:
         host.start()
