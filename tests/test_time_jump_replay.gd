@@ -1,5 +1,5 @@
 extends SceneTree
-# test-timeout: 12000
+# test-timeout: 30000
 
 # G-C3 client unit 2 (A48 item 13, A52, A59, A65; E-09 R-069-03, R-069-05;
 # E-16 R-110-02/07): scenes/world/time_jump_sequencer.gd replays the map from
@@ -22,8 +22,10 @@ extends SceneTree
 #       shown_owners = the owner per region the map currently shows,
 #       keyframes_hit = frame keyframes the replay clock has passed, in order,
 #       entries_started = ids of entries whose start_tick the clock reached,
-#       in order (an entry begins printing there; the map never waits for the
-#       scroll, R-069-03).
+#       in order (an entry begins printing there). The live frame's replay takes
+#       its computed reading time, not a fixed 25 s: while the scroll prints and
+#       holds an entry the map waits at the next keyframe (R-069-03, Q-069-03 (a),
+#       Westley 2026-10-19; TD-VG-B-22 supersedes the A52 fixed-time reading).
 # Behaviour:
 #   * the replay takes (to_tick - from_tick) / REPLAY_TICKS_PER_SECOND seconds
 #     (tolerance TOL_SYNTH / TOL_LIVE below); snapshot k is shown from tick
@@ -42,6 +44,9 @@ const SCRIPT_PATH := "res://scenes/world/time_jump_sequencer.gd"
 const TOL_SYNTH := 0.4  # seconds; a few frames at 60 fps (provisional, Westley owns tolerances)
 const TOL_LIVE := 1.0   # seconds; the live frame is built while the scene loads
 const LIVE_N_REGIONS := 60
+const ENTRY_HOLD_S := 3.0  # R-069-03: a printed entry holds 3.0 s (Q-069-03 (a), Westley 2026-10-19)
+const MODEL_DT := 0.005    # seconds; step of the reading-time model, far below the tolerance
+const LOOP_MARGIN_S := 10.0  # seconds past computed time plus TOL_LIVE before the wait loop gives up
 
 var _pass_count := 0
 var _fail_count := 0
@@ -232,8 +237,85 @@ func _check_absent(node: Node) -> void:
 	_assert(_replay(node).get("shown_owners", []) == live, "A59: keyframes alone changed the picture")
 
 
-# Wiring: with no load_frame() call the scene replays the frame the bridge holds,
-# 50 ticks = 25 s at 2 ticks per second, ending on the bridge's live owners.
+# Reading time of a replay, computed from the loaded frame (R-069-03, Q-069-03 (a), "time varying is
+# ok it is like a book", Westley 2026-10-19; supersedes the fixed 50 ticks = 25 s of A52). The map runs at
+# REPLAY_TICKS_PER_SECOND; entries print one at a time, first in first out, each taking
+# words * word_interval + fade seconds (the last word's fade ends the entry) and then holding hold_s
+# before the next may start; while the scroll is busy the map holds at the first keyframe it has not
+# yet hit, and resumes from it once the printing entry and its hold have passed.
+# Frame quantisation (Architect 2026-10-19; TOL_LIVE untouched): frame_s is the mean frame time measured in
+# the same run (elapsed / frames), and the term added to the ideal reading time is
+#     extra = n_words * (frame_s / 2) + n_entries * 2 * frame_s
+# frame_s = 0 gives the ideal time. Each part is a frame boundary in the code, not a tolerance:
+#  * per word, on average half a frame late: the word cadence is a one-shot Timer (scenes/world/chronicle_entry.gd
+#    :123 one_shot = true) restarted for every word (:161-167 _schedule_next_tick, wait_time :166, start() :167,
+#    called again from the word handler at :199 and from start_printing at :136). A Timer is processed once per
+#    frame, so it fires on the first frame after wait_time has run out, and start() resets it, so the overshoot
+#    (uniform over one frame, mean half a frame) is dropped and not paid back by the next word.
+#  * per entry, a finish frame and a start frame: the entry ends in the fade tween's callback, which runs on a
+#    frame (chronicle_entry.gd :183 tween_method, :187-193 tween_callback calling _finish_printing, :248); the
+#    panel then sets its hold (scenes/world/chronicle_scroll_panel.gd on push/vg-b26r :290-294 _on_entry_finished,
+#    _hold_left_s = PRINT_HOLD_S at :294), counts it down by one delta per frame and starts the next queued entry
+#    only in _process (:232-236, _try_start_next at :236; start_printing :198-204 also goes through
+#    _try_start_next). The next entry therefore cannot begin before the frame after the hold has run out.
+#    Two frames per entry is the count of those two boundaries; at a 7 ms frame and 10 entries the whole
+#    per-entry part is about 0.14 s, against 1.0 s of tolerance.
+# entry_words: entry id -> words on screen; start_tick of each entry comes from the frame.
+func _computed_reading_s(frame: Dictionary, entry_words: Dictionary, word_interval_s: float, fade_s: float, hold_s: float, ticks_per_s: float, frame_s: float = 0.0) -> float:
+	var from_tick := int(frame["jump"]["from_tick"])
+	var to_tick := int(frame["jump"]["to_tick"])
+	var keyframes: Array = frame.get("keyframes", [])
+	var entries: Array = frame.get("entries", [])
+	var t := 0.0
+	var clock := 0.0
+	var started := {}
+	var hit := {}
+	var queue: Array = []
+	var printing_left := 0.0
+	var printing := false
+	var hold_left := 0.0
+	while t < 1000.0:
+		clock += MODEL_DT * ticks_per_s
+		var tick := from_tick + int(clock)
+		var busy := printing or hold_left > 0.0 or not queue.is_empty()
+		var held_kf := -1
+		if busy:
+			for k in keyframes:
+				if not hit.has(int(k)):
+					if tick >= int(k):
+						tick = int(k)
+						clock = float(tick - from_tick)
+						held_kf = tick
+					break
+		for k in keyframes:
+			if int(k) <= tick and int(k) != held_kf:
+				hit[int(k)] = true
+		for e in entries:
+			var id := int(e["id"])
+			if held_kf >= 0 and int(e["start_tick"]) >= held_kf:
+				continue
+			if int(e["start_tick"]) <= tick and not started.has(id):
+				started[id] = true
+				queue.append(id)
+		t += MODEL_DT
+		if tick >= to_tick:
+			return t
+		if hold_left > 0.0:
+			hold_left = maxf(0.0, hold_left - MODEL_DT)
+		if printing:
+			printing_left -= MODEL_DT
+			if printing_left <= 0.0:
+				printing = false
+				hold_left = hold_s
+		if not printing and hold_left <= 0.0 and not queue.is_empty():
+			var next_id: int = queue.pop_front()
+			printing = true
+			printing_left = float(entry_words.get(next_id, 0)) * (word_interval_s + 0.5 * frame_s) + fade_s + 2.0 * frame_s
+	return t
+
+
+# Wiring: with no load_frame() call the scene replays the frame the bridge holds, ending on the bridge's
+# live owners. The time it takes is the computed reading time of that frame (see _computed_reading_s).
 func _check_wired_live() -> void:
 	var bridge = load("res://autoload/sim_session.gd").bridge()
 	var CBridge = load("res://autoload/c_bridge.gd")
@@ -249,12 +331,33 @@ func _check_wired_live() -> void:
 	_assert(int(r.get("snapshot_count", -1)) == 26, "wired: snapshot_count = %s, expected 26 for a 50-tick jump (the decoy SimBridge timeline has 7)" % str(r.get("snapshot_count")))
 	_assert(int(r.get("to_tick", 0)) - int(r.get("from_tick", 0)) == 50, "wired: replay spans %s ticks, expected 50" % str(int(r.get("to_tick", 0)) - int(r.get("from_tick", 0))))
 	_assert((r.get("shown_owners", []) as Array).size() == CBridge.DEFAULT_N_REGIONS, "wired: shown_owners has %d entries, expected %d" % [(r.get("shown_owners", []) as Array).size(), CBridge.DEFAULT_N_REGIONS])
+	# the premise, all from the frame this scene holds: entries, words on screen, pace
+	var frame: Dictionary = bridge.chronicle_frame()
+	var scroll_qa: Dictionary = node.get("_scroll").qa_state()
+	var entry_words := {}
+	for qe in scroll_qa.get("entries", []):
+		entry_words[int(qe["entry_id"])] = (str(qe["text"]) as String).split(" ", false).size()
+	var pace: Dictionary = scroll_qa.get("pace", {})
+	var word_interval_s := float(pace.get("word_interval_s", 0.0))
+	var fade_s := float(pace.get("fade_s", 0.0))
+	var ideal := _computed_reading_s(frame, entry_words, word_interval_s, fade_s, ENTRY_HOLD_S, 2.0)
+	var total_words := 0
+	for id in entry_words:
+		total_words += int(entry_words[id])
+	_assert(entry_words.size() == (frame.get("entries", []) as Array).size() and total_words > 0 and ideal > 25.0,
+		"wired: the premise is %d entries shown of %d, %d words, computed reading time %.1f s; expected every entry shown, words on screen, and more than the map alone (25 s)" % [entry_words.size(), (frame.get("entries", []) as Array).size(), total_words, ideal])
+	print("INFO: live replay premise: %d entries, %d words, pace %s, hold %.1f s, ideal computed reading time %.2f s" % [entry_words.size(), total_words, str(pace), ENTRY_HOLD_S, ideal])
 	var t0 := Time.get_ticks_msec()
-	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < 40000:
+	var frames := 0
+	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < int((ideal + TOL_LIVE + LOOP_MARGIN_S) * 1000.0):
 		await process_frame
+		frames += 1
 		r = _replay(node)
 	var elapsed := (Time.get_ticks_msec() - t0) / 1000.0
-	_assert(absf(elapsed - 25.0) <= TOL_LIVE, "R-069-03: the live 50-tick replay took %.1f s from the first check, expected 25 s +/- %.1f" % [elapsed, TOL_LIVE])
+	var frame_s := elapsed / maxf(float(frames), 1.0)
+	var expected := _computed_reading_s(frame, entry_words, word_interval_s, fade_s, ENTRY_HOLD_S, 2.0, frame_s)
+	print("INFO: live replay took %.2f s from the first check over %d frames (mean frame %.2f ms); computed %.2f s with frame quantisation" % [elapsed, frames, frame_s * 1000.0, expected])
+	_assert(absf(elapsed - expected) <= TOL_LIVE, "R-069-03: the live 50-tick replay took %.1f s from the first check, expected the computed reading time %.1f s +/- %.1f" % [elapsed, expected, TOL_LIVE])
 	var live: Array = []
 	for i in range(CBridge.DEFAULT_N_REGIONS):
 		live.append(bridge.owner_of(i))
