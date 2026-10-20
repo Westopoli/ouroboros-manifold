@@ -405,7 +405,9 @@ def test_every_play_declares_anchors(play):
 # ---- (7) existing scenes untouched -------------------------------------------------------------------------------
 
 # Re-recorded for LAB-REV2-L3 (ledger TD-LAB-REV2-L3-hash): the rev 2 plays (stat variants retired, four new plays, M3b, scan rounding).
-PLAYS_SPACE_HASH = "c5c0965e153370fa9640bec596efaae0c8a6b6667a8776543d2173fb8a29f511"   # recorded on the L3 build 6826dd09
+# Re-recorded for LAB-VISION-CONTROL (ledger TD-LAB-VISION-CONTROL-registry): the registered control fixture s3_vision_control is enumerated;
+# the 14 earlier plays' per-play setup hashes are unchanged (the old value c5c0965e... is the hash of those 14 alone).
+PLAYS_SPACE_HASH = "fd83eeae8e27c500ba98b02d16b125b451f5fe04e5f700b176abd41d0785926b"   # L3 build 6826dd09 plays plus s3_vision_control
 
 
 def test_registered_space_plays_keep_their_setups():

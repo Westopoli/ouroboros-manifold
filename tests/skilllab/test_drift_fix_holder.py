@@ -18,7 +18,7 @@ INTERFACE FROZEN FOR THE BUILDER
     weighting and a plain mean agree), same units and counts, formation blob, radius 80 + 12 sqrt(n), the play's order, timeline dropped.
     A one-type side is unchanged from today (the hash in test_sweep_baselines.py::OPEN_BASELINE_HASH).
 Real plays: read from the PLACED Setup (default_builds(play, "play", features)), where placement gives a defender-anchored play its guard
-order. 11 of the 14 hold (EXPECTED_ROLES); s2_mass_one_end, s3_dark_striker and s3_ping_then_commit attack and have no holder."""
+order. 12 of the 15 hold (EXPECTED_ROLES); s2_mass_one_end, s3_dark_striker and s3_ping_then_commit attack and have no holder."""
 import csv
 import dataclasses
 import sys
@@ -42,7 +42,9 @@ ATT, HOLD = "naive_attacker", "naive_defender"
 LAYER_ROLES = ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
 EXPECTED_ROLES = {**{p: (ATT, HOLD) for p in ("s1_hold_choke", "s1_outrange", "s2_concave", "s2_screen", "s2_spread_line", "s4_bait",
                                               "s4_do_not_chase", "s5_vulnerable_away")},
-                  **{p: LAYER_ROLES for p in ("s3_layer_above", "s3_over_the_choke", "s3_types_by_reach")},
+                  # s3_vision_control (LAB-VISION-CONTROL): anchors role "defender", so side 0 is placed on guard; its only group is on layer 1
+                  # and the enemy stands on layer 0, so it is a holder with a group on another layer, like the three above
+                  **{p: LAYER_ROLES for p in ("s3_layer_above", "s3_over_the_choke", "s3_types_by_reach", "s3_vision_control")},
                   **{p: (ATT,) for p in ("s2_mass_one_end", "s3_dark_striker", "s3_ping_then_commit")}}
 
 
