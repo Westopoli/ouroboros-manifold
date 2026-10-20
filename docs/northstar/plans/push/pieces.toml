@@ -2966,8 +2966,8 @@ owns = ["tests/transport/test_pipe_u_observable.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_u_observable.py"]
 depends_on = []
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "4e1fd9e0" }
+tests_pending = false
 size_estimate = "one test file: the 16 observable mechanisms plus the place, ping and hold verbs, green except hold"
 
 [[piece]]
