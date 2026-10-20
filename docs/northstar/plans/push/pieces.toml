@@ -2157,7 +2157,7 @@ owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequen
 owns_glob = []
 acceptance = ["tests/test_vg_b_b26.gd"]
 depends_on = ["VG-B"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "40736b0" }
 tests_pending = true
 size_estimate = "B26 chronicle one entry at a time: the panel's print queue and hold, and the sequencer's hold at the next keyframe while an entry prints (Q-069-03 (a), status reading, Westley to confirm; ledger FINDING-chronicle-concurrent-print); then the S-108 re-run"
 
