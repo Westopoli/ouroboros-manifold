@@ -25,7 +25,6 @@ from daemon_client import (  # noqa: E402
 
 RUN_ID = os.environ.get("PLAY_RUN_ID") or datetime.now(timezone.utc).strftime("run-%Y%m%dT%H%M%SZ")
 SHOT_DIR = ROOT / "docs/northstar/story_reviews/shots" / RUN_ID
-QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 MAIN_MENU = "res://scenes/main_menu/main_menu.tscn"
 PRIVACY = "res://scenes/privacy_modal/privacy_modal.tscn"
 LOBBY = "res://scenes/lobby/lobby.tscn"
@@ -93,7 +92,7 @@ def record(client, story: str) -> dict:
     """Screenshot + qa_state of the moment under the run id. Returns the qa_state result."""
     SHOT_DIR.mkdir(parents=True, exist_ok=True)
     client.screenshot(story)
-    src = QA_SHOT_DIR / f"{story}.png"
+    src = client.user_dir / "qa" / f"{story}.png"
     deadline = time.monotonic() + 5
     while not src.exists() and time.monotonic() < deadline:
         time.sleep(0.1)
