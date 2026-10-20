@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-106-01@6302e6, R-106-02@4d4bb5, R-106-03@966faf, R-106-04@60db2a, R-107-01@10e8dc
 # test-timeout: 20000
 
 # Piece B23, the prototype's numbers exactly (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 12b,

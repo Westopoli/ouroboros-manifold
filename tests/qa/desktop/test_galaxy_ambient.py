@@ -1,3 +1,4 @@
+# Rule pins: R-106-05@bc7ef9
 # spec: docs/northstar/plans/2026-10-01-architect-rulings-2.md addendum 24 A60 (and A54); E-16 S-106; R-106-05 ambient field
 """A60: the live scenes/galaxy view carries the ambient particle field (the port of
 scenes/mockups/galaxy/legacy_ambient_rig.gd), and the quality tier thins it. After B25 (spec rev 12d) the
