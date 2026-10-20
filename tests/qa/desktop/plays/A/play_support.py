@@ -22,7 +22,6 @@ sys.path.insert(0, str(HERE.parents[2]))  # tests/qa/desktop: daemon_client, tes
 from daemon_client import GodotGame, pick_free_port  # noqa: E402
 from test_tactical_play import _to_tactical  # noqa: E402
 
-QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 RESOLUTION = "1920x1080"  # Westley's resolution (mission-plays rulings)
 # TD-VG-A-4: OM_PLAY_ERA picks the era the plays run in. Unset = the current space era; "ground" = the ground era the
 # lane C plays boot (tests/qa/desktop/plays/C/_play.py). Any other value is passed through as an --era value.
@@ -103,7 +102,7 @@ def moment(client, story: str, label: str) -> dict:
     name = "%s_%s%s" % (story, label, ERA_SUFFIX)
     client.screenshot(name)
     SHOT_DIR.mkdir(parents=True, exist_ok=True)
-    src = QA_SHOT_DIR / (name + ".png")
+    src = client.user_dir / "qa" / (name + ".png")
     deadline = time.monotonic() + 5.0
     while not src.exists() and time.monotonic() < deadline:
         time.sleep(0.1)

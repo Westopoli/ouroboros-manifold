@@ -38,7 +38,6 @@ from daemon_client import (
 GALAXY_SCENE = "res://scenes/galaxy/galaxy_view.tscn"
 MAIN_MENU_SCENE = "res://scenes/main_menu/main_menu.tscn"
 PRIVACY_MODAL_SCENE = "res://scenes/privacy_modal/privacy_modal.tscn"
-QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 
 BOOT_TIMEOUT_S = 45.0
 STEP_TIMEOUT_S = 10.0
@@ -131,7 +130,7 @@ def _sample_owned_systems(client, shot_name: str) -> list[tuple[int, tuple[float
     qa = client.state()["result"]["qa"]
     client.screenshot(shot_name)
     time.sleep(0.5)
-    img = _read_png_rgb(QA_SHOT_DIR / (shot_name + ".png"))
+    img = _read_png_rgb(client.user_dir / "qa" / (shot_name + ".png"))
     height, width = img.shape[:2]
     px = {int(i): v for i, v in qa["systems_px"].items()}
     samples = []
@@ -224,13 +223,13 @@ def test_c2_5b_owner_colour_flat_plant_reaches_the_pixels(galaxy_game):
     client = galaxy_game.client
     client.screenshot("c2_5b_before")
     time.sleep(0.5)
-    before = _read_png_rgb(QA_SHOT_DIR / "c2_5b_before.png")
+    before = _read_png_rgb(client.user_dir / "qa" / "c2_5b_before.png")
     resp = client.call("plant", "owner-colour-flat")
     assert resp.get("ok") and resp["result"].get("activated"), "plant did not activate: %r" % resp
     time.sleep(1.5)
     client.screenshot("c2_5b_after")
     time.sleep(0.5)
-    after = _read_png_rgb(QA_SHOT_DIR / "c2_5b_after.png")
+    after = _read_png_rgb(client.user_dir / "qa" / "c2_5b_after.png")
     differing = int(np.any(before != after, axis=2).sum())
     assert differing >= MIN_PLANT_DIFF_PX, (
         "owner-colour-flat changed %d of %d pixels (need >= %d): the plant is state-only"
@@ -254,7 +253,7 @@ def test_c2_7_edges_2d_overlay_plant_reaches_the_pixels(galaxy_game):
 
     client.screenshot("c2_7_clean")
     time.sleep(0.5)
-    clean_img = _read_png_rgb(QA_SHOT_DIR / "c2_7_clean.png")
+    clean_img = _read_png_rgb(client.user_dir / "qa" / "c2_7_clean.png")
 
     resp = client.call("plant", "edges-2d-overlay")
     assert resp.get("ok") and resp["result"].get("activated"), (
@@ -271,7 +270,7 @@ def test_c2_7_edges_2d_overlay_plant_reaches_the_pixels(galaxy_game):
 
     client.screenshot("c2_7_planted")
     time.sleep(0.5)
-    planted_img = _read_png_rgb(QA_SHOT_DIR / "c2_7_planted.png")
+    planted_img = _read_png_rgb(client.user_dir / "qa" / "c2_7_planted.png")
 
     differing = int(np.any(clean_img != planted_img, axis=2).sum())
     assert differing >= MIN_EDGES_2D_DIFF_PX, (

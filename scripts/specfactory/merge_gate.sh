@@ -56,6 +56,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# FINDING-ambient-user-dir: no stage reads or writes the machine's ~/.local/share/data.
+# project.godot's custom_user_dir_name="data" puts user:// at $XDG_DATA_HOME/data, so every
+# stage inherits a scratch XDG_DATA_HOME (dies with SCRATCH_ROOT). Only the export templates
+# are linked in (the headless export tests need them); nothing else lives under it.
+# See also: scripts/run_godot_tests.sh, tests/qa/desktop/daemon_client.py
+export XDG_DATA_HOME="$SCRATCH_ROOT/xdg"
+mkdir -p "$SCRATCH_ROOT/xdg/godot"
+if [[ -n "${HOME:-}" && -d "$HOME/.local/share/godot/export_templates" ]]; then
+    ln -s "$HOME/.local/share/godot/export_templates" "$SCRATCH_ROOT/xdg/godot/export_templates"
+fi
+
 REJECTED=0
 
 STAGE_MARK_US="${EPOCHREALTIME/./}"
@@ -249,6 +260,13 @@ if [[ $? -ne 0 ]]; then
 else
     ok placeholder_controls "$(sed 's/^OK //' "$PC_LOG" | tr '\n' ' ')"
 fi
+
+# -------------------------------------------------------------- 5d. pipe binary before the first regression stage
+# See also: FINDING-ambient-user-dir; specfactory_regression boots Godot (test_gate_userdir test_6/6b) and needs pipe/ouroboros_pipe before it runs
+# The transport stage (section 9) builds it again later; that make is then a no-op. A build
+# failure is not rejected here: the transport stage reports it as it always did.
+PRE_PIPE_LOG="$SCRATCH_ROOT/pipe_build_pre_regression.log"
+( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PRE_PIPE_LOG" 2>&1
 
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
