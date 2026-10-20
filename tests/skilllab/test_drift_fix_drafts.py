@@ -75,7 +75,7 @@ def test_the_named_lines_hold_the_numbers_they_name():
 def test_control_a_number_already_marked_is_found_the_same_way():
     """Positive control for the grep: the slope divisor grid and the sweep's base values are marked today."""
     assert "DRAFT" in line_of("ground/scenes_ground.py", r'"OM_TP_SLOPE_UP_DIV":')
-    assert "DRAFT" in line_of("sweep.py", r'"OM_TP_FIRING_ARC_DEG": 360\.0, "cone_range"')
+    assert "DRAFT" in line_of("sweep.py", r'"OM_TP_FIRING_ARC_DEG": [0-9.]+, "cone_range"')
 
 
 def test_the_five_ground_definitions_hold_the_numbers_the_ruling_names():

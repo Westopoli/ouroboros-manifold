@@ -147,8 +147,10 @@ def test_emitting_never_sweeps_the_base_vision_it_is_reported_saturated():
 
 
 def test_arc_grid_through_the_firing_arc_parameter():
+    """Ruling 11 and decision 47 (Westley's 30, decision 46): base 30 degrees, grid 30 x {0.25, 0.5, 1, 2, 4}, ascending."""
     pts = points("arc")
-    assert [p.value for p in pts] == [360, 270, 180, 120, 90] and {p.kind for p in pts} == {"grid"}
+    assert [p.value for p in pts] == [7.5, 15, 30, 60, 120] and {p.kind for p in pts} == {"grid"}
+    assert [p.value for p in pts] == [f * sweep.BASES["OM_TP_FIRING_ARC_DEG"] for f in (0.25, 0.5, 1, 2, 4)]
     for p in pts:
         assert p.knob == "OM_TP_FIRING_ARC_DEG" and p.setup == {"firing_arc_deg": float(p.value)} and p.settings == {}
 
@@ -208,7 +210,8 @@ def test_bases_are_the_bibles_values_or_westleys_start():
     b = sweep.BASES
     assert (b[V1], b[V2], b["OM_TP_RANGE_UP_1"], b["OM_TP_DAMAGE_UP_1"]) == (0.5, 0.2, 1.0, 1.0)
     assert (b["OM_TP_EMIT_SIGHT_MULT"], b["OM_TP_EMIT_SEEN_MULT"]) == (2.0, 3.0)        # Westley's start (2026-10-13)
-    assert b["OM_TP_FIRING_ARC_DEG"] == 360.0 and (b["cone_range"], b["cone_half_angle"]) == (300.0, 45.0)    # DRAFT bases
+    assert b["OM_TP_FIRING_ARC_DEG"] == 30.0                                       # Westley's firing arc (2026-10-19, decision 46)
+    assert (b["cone_range"], b["cone_half_angle"]) == (300.0, 45.0)                # DRAFT bases
 
 
 def test_no_grid_or_sign_flip_point_leaves_the_band_around_its_base():
@@ -353,6 +356,18 @@ def test_every_family_has_a_null_control_and_vision_and_damage_have_a_positive_o
         assert "null" in sweep.controls(fam)
     assert sweep.controls("vision")["positive"].reach is None and sweep.controls("damage_up")["positive"].reach is None
     assert set(sweep.controls("sign_flip")) <= {"null", "positive"}
+
+
+def test_arc_grid_spans_the_band_exactly_and_the_null_control_360_is_not_a_grid_point():
+    """Decision 47: 7.5 and 120 are the band's two edges around base 30 (0.25x and 4x, both inclusive); 360, the null control, is
+    outside the band and is not in the grid (negative control: in_band refuses 360 and the next step either side of the edges)."""
+    vals = [p.value for p in points("arc")]
+    base = sweep.BASES["OM_TP_FIRING_ARC_DEG"]
+    assert min(vals) == 0.25 * base and max(vals) == 4.0 * base and all(sweep.in_band(v, base) for v in vals)
+    assert 360 not in vals and 360.0 not in {p.setup["firing_arc_deg"] for p in points("arc")}
+    assert not sweep.in_band(360.0, base) and not sweep.in_band(7.4, base) and not sweep.in_band(120.1, base)
+    null = sweep.controls("arc")["null"]
+    assert {p.settings.get("OM_TP_FIRING_ARC_DEG") for p in null.points} == {360.0, None}        # the null stays 360 against unset
 
 
 def test_arc_null_control_is_the_parameter_set_to_360_against_the_parameter_never_set():
@@ -705,14 +720,15 @@ def test_damage_up_refines_by_the_arithmetic_midpoint(tmp_path):
 
 
 def test_arc_refines_between_the_bracketing_arcs_by_the_arithmetic_midpoint(tmp_path):
-    """Play break-even 20 from an arc of 200 degrees up, 12 below; attacker 16. Coarse 360, 270, 180, 120, 90: the change is
-    270|180, so 225 (ahead), then 202.5 (ahead). The refined points go to the world as firing_arc_deg."""
-    arc_be = lambda role, arc: (20 if arc >= 200 else 12) if role == "play" else 16
+    """Play break-even 20 from an arc of 50 degrees up, 12 below; attacker 16. Coarse 7.5, 15, 30, 60, 120: the change is 30|60, so
+    45 (behind), then 52.5 (ahead). The refined points go to the world as firing_arc_deg. (A string sort of the coarse values puts
+    120 before 15 and 7.5 last, which brackets differently: the refined set would not match.)"""
+    arc_be = lambda role, arc: (20 if arc >= 50 else 12) if role == "play" else 16
     entry, world = run(tmp_path, "arc", world=World(arc_be=arc_be), plays=("s2_concave",))
-    assert entry["refined"] == [202.5, 225.0]
-    assert {c["extra"]["arc"] for c in world.calls if c["role"] == "play"} >= {225.0, 202.5}
-    assert all(sweep.in_band(v, 360.0) for v in entry["refined"])
-    assert {float(r["knob_value"]) for r in read(tmp_path, "arc") if r["kind"] == "refined"} == {202.5, 225.0}
+    assert entry["refined"] == [45.0, 52.5]
+    assert {c["extra"]["arc"] for c in world.calls if c["role"] == "play"} >= {45.0, 52.5}
+    assert all(sweep.in_band(v, 30.0) for v in entry["refined"])
+    assert {float(r["knob_value"]) for r in read(tmp_path, "arc") if r["kind"] == "refined"} == {45.0, 52.5}
 
 
 @pytest.mark.parametrize("family,world_kw", [
@@ -1007,7 +1023,7 @@ def test_arc_and_cone_are_skipped_with_a_recorded_reason_when_the_library_lacks_
 
 def test_arc_and_cone_run_when_the_library_has_them_and_pass_the_setup_fields_through(tmp_path):
     entry, world = run(tmp_path, "arc", plays=("s2_concave",))
-    assert entry["skipped"] is None and {c["extra"]["arc"] for c in world.calls if c["role"] == "play"} >= {360.0, 270.0, 180.0, 120.0, 90.0}
+    assert entry["skipped"] is None and {c["extra"]["arc"] for c in world.calls if c["role"] == "play"} >= {7.5, 15.0, 30.0, 60.0, 120.0}
     entry, world = run(tmp_path, "cone", plays=("s2_concave",))
     cones = [c["extra"]["cone"] for c in world.calls if c["role"] == "play"]
     assert {tuple(c["Vanguard"]) for c in cones if c} >= {(150, 22.5, 1.0), (600, 90, 1.0)}
