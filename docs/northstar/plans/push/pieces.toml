@@ -2524,8 +2524,8 @@ owns = ["csrc/tactical_move.c", "docs/northstar/plans/push/pp_contract.md", "tes
 owns_glob = []
 acceptance = ["tests/csim/test_PP_collision_radius_runtime.py"]
 depends_on = ["VG-W2"]
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "b517d01a" }
+tests_pending = false
 size_estimate = "E3 collision radius: the runtime parameter reaches the collision pass, steering probe, navmesh margins and arrival tolerances (ruling 15; widens A133/Q-C6)"
 
 [[piece]]
@@ -2768,7 +2768,7 @@ owns = ["scripts/specfactory/rule_pins.py", "scripts/specfactory/spec_provenance
 owns_glob = []
 acceptance = ["tests/specfactory/test_rule_pins.py"]
 depends_on = ["A94-harness", "HARNESS-provenance"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "eb5d34c" }
 tests_pending = true
 size_estimate = "C1a rule pins: rule_pins.py (new) prints and checks the 6-hex pin of a rule line, and spec_provenance.py gains reason 8 and the heading exemption"
 
