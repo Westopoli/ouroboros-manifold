@@ -1889,10 +1889,10 @@ size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (e
 id = "VG-E1R"
 manager = "M0"
 wave = 9
-owns = ["csrc/economy_place.c", "csrc/economy_lots.c", "csrc/economy_internal.h", "docs/architecture.md", "tests/csim/test_VG_E_e1r.py", "tests/qa/desktop/plays/E/S-168.py"]  # Architect 2026-10-13: the S-193 play is E1k's (look); E1R is sim-side and proven by tests/csim/test_VG_E_e1r.py; the E1r shot is play S-168 (placing a building: place over natural lots, shot after the clear), so E1R owns plays/E/S-168.py first (overlap with the VG-E1 glob plays/E/**, E1 attached); the E1o and E1p-b pieces inside VG-E1 take the file over after E1R attaches (Architect message to the Dispatcher, 2026-10-13)
+owns = ["csrc/economy_place.c", "csrc/economy_lots.c", "csrc/economy_internal.h", "docs/architecture.md", "tests/csim/test_VG_E_e1r.py", "tests/qa/desktop/plays/E/S-168.py", "docs/northstar/spec_factory/symbol_modules.toml"]  # sigrows (b), Architect 2026-10-19: one om_lots_remove_row row in symbol_modules.toml [symbols]; no signatures.toml row, no header change, no ABI. Architect 2026-10-13: the S-193 play is E1k's (look); E1R is sim-side and proven by tests/csim/test_VG_E_e1r.py; the E1r shot is play S-168 (placing a building: place over natural lots, shot after the clear), so E1R owns plays/E/S-168.py first (overlap with the VG-E1 glob plays/E/**, E1 attached); the E1o and E1p-b pieces inside VG-E1 take the file over after E1R attaches (Architect message to the Dispatcher, 2026-10-13)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e1r.py"]
-depends_on = ["VG-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E7", "VG-K-D1", "LAB-REV2-E0"]  # E0 lands an hour behind E7; if E0's branch is not pushed by the time E-startforce's clerk reaches the gate, drop the edge and E0 lands after prodslot instead (Architect 2026-10-14); spec: depends_on VG-E1; E7 orders architecture.md (chain W2, E7, E1R, Dispatcher may flip) (its files return to attached when E1q's lane finishes; the Dispatcher pre-flights); E5 is the attached owner of economy_internal.h and architecture.md
+depends_on = ["VG-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E7", "VG-K-D1", "LAB-REV2-E0", "VG-CONTRACT-E3"]  # VG-CONTRACT-E3 (attached) is the attached owner of symbol_modules.toml; sigrows (b), Architect 2026-10-19; E0 lands an hour behind E7; if E0's branch is not pushed by the time E-startforce's clerk reaches the gate, drop the edge and E0 lands after prodslot instead (Architect 2026-10-14); spec: depends_on VG-E1; E7 orders architecture.md (chain W2, E7, E1R, Dispatcher may flip) (its files return to attached when E1q's lane finishes; the Dispatcher pre-flights); E5 is the attached owner of economy_internal.h and architecture.md
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "E1r: placement clears natural lots under the footprint (R-193-03), om_lots_remove_row; DRAFT-place-on-placed, Q-168-06"
@@ -2696,6 +2696,31 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "FIX post-merge fix piece: decisions 41 and 42 and the orders flip (decision 40)"
 
+# Records REC-l8m-rows (2026-10-20). Ran as a brief (no workflow script). Branches: push/labrev2-l8m (L8M builder b35c4576), push/labrev2-l8m-tests (434e8c09), push/labrev2-l8m2-tests (fad7e3e3). FIX (queued) owns fight.py, contract.py, report.py today and L8 owns test_reengage*.py by glob; L8M depends on FIX, which depends on L8, so owner_lint's depends_on-chain overlap allows both.
+[[piece]]
+id = "LAB-REV2-L8M"
+manager = "M0"
+wave = 10
+owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "tests/skilllab/test_reengage.py", "tests/skilllab/test_drift_fix_reengage.py", "tests/skilllab/test_drift_fix_moved.py", "tests/skilllab/integration/test_reengage_moved_real.py"]  # L8 re-engage "moved" fix (Architect ruling 2026-10-20, decision 50 amends 49 condition i: silence per side). Builder branch push/labrev2-l8m (b35c4576) edits fight.py (_Reengage), contract.py, report.py; tests branch push/labrev2-l8m-tests (434e8c09) changes test_reengage.py and test_drift_fix_reengage.py and adds test_drift_fix_moved.py and integration/test_reengage_moved_real.py. Overlap with LAB-REV2-FIX (fight.py, contract.py, report.py, test_drift_fix*.py) and LAB-REV2-L8 (test_reengage*.py) is along the depends_on chain.
+owns_glob = []
+acceptance = []
+depends_on = ["LAB-REV2", "LAB-REV2-FIX", "LAB-REV2-L8"]
+status = { state = "in_flight" }
+tests_pending = false
+size_estimate = "L8M re-engage moved fix: the lab's re-engage silence rule reads per side (decision 50 amending 49 condition i); tests TD-LAB-REV2-L8M-moved"
+
+[[piece]]
+id = "LAB-REV2-L8M2"
+manager = "M0"
+wave = 10
+owns = ["tests/skilllab/test_reengage_lone_shooter.py", "tests/skilllab/integration/test_reengage_lone_shooter_real.py", "scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "tests/skilllab/test_reengage.py", "tests/skilllab/test_drift_fix_reengage.py", "tests/skilllab/test_drift_fix_moved.py", "tests/skilllab/integration/test_reengage_moved_real.py"]  # Lone-shooter re-engage tests, branch push/labrev2-l8m2-tests (fad7e3e3); the shared files are LAB-REV2-L8M's, L8M2 depends on L8M (depends_on-chain overlap). Tests first by a different agent than the builder; the builder is not yet launched.
+owns_glob = []
+acceptance = []
+depends_on = ["LAB-REV2-L8M"]
+status = { state = "in_flight" }
+tests_pending = true
+size_estimate = "L8M2 lone-shooter re-engage: new tests test_reengage_lone_shooter.py and integration/test_reengage_lone_shooter_real.py on top of L8M"
+
 # Architect ruling 2026-10-20 (ledger FINDING-lab-vision-poscontrol): the vision positive control must run an all-cross-layer 16 v 16 fixture (VISION_CONTROL_PLAY), not the mixed sweep plays. Lands after the lab landing (LAB-REV2, LAB-REV2-FIX) and before LAB-REV3-A. Files are a DRAFT: the builder chooses plays_space.py or scenes.py for the play. sweep.py and tests/skilllab/test_sweep.py are LAB-REV2-FIX's and LAB-REV2-L4's, plays_space.py is LAB-REV2-L3's (and A's, B's, C's); the dependency on LAB-REV2-FIX, which depends on L3 and L4, orders them. Tests first by a different agent than the builder; the writer never builds.
 [[piece]]
 id = "LAB-VISION-CONTROL"
@@ -2729,7 +2754,7 @@ wave = 10
 owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/fight.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "scripts/skilllab/coverage.py", "scripts/skilllab/probe.py"]  # DRAFT list. coverage.py and probe.py are new files (DRAFT names). plays_space.py is also owned by LAB-REV2-L3 (queued); the dependency on LAB-REV2-FIX, which depends on L3, orders it. csrc/unit.c is never owned here (D6 engine piece is separate and unnamed)
 owns_glob = ["tests/skilllab/test_rev3_a_*.py", "tests/skilllab/integration/test_rev3_a_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3", "LAB-REV2", "LAB-REV2-FIX", "LAB-VISION-CONTROL"]
+depends_on = ["LAB-REV3", "LAB-REV2", "LAB-REV2-FIX", "LAB-REV2-L8M2", "LAB-VISION-CONTROL"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "A first: D3 built-in ids with om_roster_set_reach (no copies), D4 naive attacker fields the play's mix, D5 dark striker emits at the knob's values or is deleted, D6 category family marked unavailable, R5 coverage test T1, R6 inert-knob probe T2; tests T1 to T5 and T10 (DRAFT)"
@@ -2753,7 +2778,7 @@ wave = 10
 owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "scripts/skilllab/diagram.py", "scripts/skilllab/rows.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py"]  # DRAFT list. plays_space.py, scenes.py and sweep.py (reach knobs, pre-flight refusal) are also B's: C depends on B so one owner at a time. rows.py is owned by LAB-REV2-L8, ordered through LAB-REV2-FIX
 owns_glob = ["tests/skilllab/test_rev3_c_*.py", "tests/skilllab/integration/test_rev3_c_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX"]
+depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX", "LAB-REV2-L8M2"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "C reach and prediction: R3 reach and vision up/down as swept knobs, crossings per reach configuration (T7); R4 paper prediction beside the window and the totals (T8); R7 no_reach_stall end and pre-flight refusal, D7 (T9) (DRAFT); includes verdict decided_one_way_reach (FINDING-lab-d11)"
