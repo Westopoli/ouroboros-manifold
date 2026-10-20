@@ -290,6 +290,31 @@ func _scan_old(n: Node, found: Array) -> void:
 		_scan_old(c, found)
 
 
+# Wash detectors (R10; shown live on synthetic washes in R11). wash_fn(dir) -> Color over the hashed directions.
+func _wash_cols(wash_fn: Callable) -> Array:
+	var cols: Array = []
+	for k in WASH_DIRS:
+		var v := _hv(k, 21, 1.0)
+		var dir: Vector3 = v.normalized() if v.length() > 0.05 else Vector3.RIGHT
+		cols.append(wash_fn.call(dir))
+	return cols
+
+
+# Floor: no channel of the wash is below the background in any sampled direction (the wash only brightens: blend_add).
+func _wash_floor_ok(cols: Array) -> bool:
+	for c in cols:
+		for ch in 3:
+			if c[ch] < BG[ch] - FLOAT_EPS:
+				return false
+	return cols.size() > 0
+
+
+# Varies with the view direction: across the sampled directions the spread of the wash value is above zero (some channel).
+func _wash_varies(cols: Array) -> bool:
+	var sp := _spread(cols)
+	return cols.size() > 0 and (sp.x > 0.0 or sp.y > 0.0 or sp.z > 0.0)
+
+
 func _spread(cols: Array) -> Vector3:
 	var lo := Vector3(INF, INF, INF)
 	var hi := Vector3(-INF, -INF, -INF)
@@ -431,6 +456,23 @@ func _controls() -> void:
 	clean.free()
 	var st := _spread([Color(0.04, 0.05, 0.07), Color(0.09, 0.05, 0.07)])
 	_row("R11", st.x > WASH_CONTRAST and st.y == 0.0, "control: spread detector reads %s on a synthetic pair, want x above the contrast and y 0" % str(st))
+	# wash floor and variation detectors on synthetic washes (Architect 2026-10-20: a dead wash must not pass R10)
+	var wash_const := func(_d: Vector3) -> Color:
+		return Color(BG.r + 0.005, BG.g + 0.005, BG.b + 0.005, 1.0)
+	var wash_dark := func(d: Vector3) -> Color:
+		var t := 0.004 * (0.5 + 0.5 * d.x)
+		return Color(BG.r - t, BG.g - t, BG.b - t, 1.0)
+	var wash_good := func(d: Vector3) -> Color:
+		var t := 0.005 * (0.5 + 0.5 * d.x)
+		return Color(BG.r + t, BG.g + t, BG.b + t, 1.0)
+	var cc := _wash_cols(wash_const)
+	var cd := _wash_cols(wash_dark)
+	var cg := _wash_cols(wash_good)
+	_row("R11", not _wash_varies(cc), "control: wash variation detector accepts a constant wash")
+	_row("R11", _wash_floor_ok(cc), "control: wash floor detector rejects a constant brightening wash (it must only judge the floor)")
+	_row("R11", not _wash_floor_ok(cd), "control: wash floor detector accepts a wash that darkens below the background")
+	_row("R11", _wash_varies(cd), "control: wash variation detector rejects a wash that varies with the direction (the darkening one)")
+	_row("R11", _wash_floor_ok(cg) and _wash_varies(cg), "control: wash detectors reject a varying, brightening wash (floor %s, varies %s)" % [str(_wash_floor_ok(cg)), str(_wash_varies(cg))])
 	var fs := GDScript.new()
 	fs.source_code = "extends RefCounted\nstatic func twice(x: int) -> int:\n\treturn x * 2\n"
 	fs.reload()
@@ -770,26 +812,28 @@ func _build_rows() -> void:
 				_row("R9", not mat.shader.code.contains("TIME"), "R9 StarLayer%d shader contains TIME (stars are static, no shimmer)" % i)
 
 	# R10: "a very dim, low-contrast, direction-only background, computed once, no animation" (DRAFT-b25-wash).
+	# The ceiling (0.012 above the background) and the contrast cap (0.02) bound the wash from above only. The floor row
+	# proves the wash never darkens the background (no channel below it in any sampled direction: the wash is blend_add, it
+	# only brightens), and the variation row proves it is not dead (the spread over the sampled directions is above 0, no
+	# new number), so a constant or darkening wash cannot pass (Architect ruling 2026-10-20, item 3).
 	var have10 := _need("R10", [], ["wash_colour"])
 	if have10:
-		var cols: Array = []
 		var bad_level := 0
 		var unstable := 0
-		for k in WASH_DIRS:
-			var v := _hv(k, 21, 1.0)
-			var dir: Vector3 = v.normalized() if v.length() > 0.05 else Vector3.RIGHT
-			var c1: Color = _sc("wash_colour", [dir])
-			var c2: Color = _sc("wash_colour", [dir])
-			if c1 != c2:
+		var cols := _wash_cols(func(dir: Vector3) -> Color: return _sc("wash_colour", [dir]))
+		var again := _wash_cols(func(dir: Vector3) -> Color: return _sc("wash_colour", [dir]))
+		for k in cols.size():
+			if cols[k] != again[k]:
 				unstable += 1
-			cols.append(c1)
 			for ch in 3:
-				if c1[ch] - BG[ch] > WASH_CEILING + FLOAT_EPS:
+				if cols[k][ch] - BG[ch] > WASH_CEILING + FLOAT_EPS:
 					bad_level += 1
 		_row("R10", unstable == 0, "R10 wash_colour is not a function of the direction alone: %d of %d directions gave two colours" % [unstable, WASH_DIRS])
 		_row("R10", bad_level == 0, "R10 %d channel values exceed the background by more than %s (DRAFT-b25-wash)" % [bad_level, str(WASH_CEILING)])
 		var sp := _spread(cols)
 		_row("R10", sp.x <= WASH_CONTRAST + FLOAT_EPS and sp.y <= WASH_CONTRAST + FLOAT_EPS and sp.z <= WASH_CONTRAST + FLOAT_EPS, "R10 wash spread over %d hashed directions is %s per channel, want at most %s (DRAFT-b25-wash)" % [WASH_DIRS, str(sp), str(WASH_CONTRAST)])
+		_row("R10", _wash_floor_ok(cols), "R10 wash floor: some channel of wash_colour is below the background in a sampled direction (the wash only brightens, blend_add)")
+		_row("R10", _wash_varies(cols), "R10 wash does not vary with the view direction: spread %s over %d hashed directions, want above 0 in some channel (a dead wash)" % [str(sp), WASH_DIRS])
 	if rig6 != null:
 		var w = rig6.get_node_or_null("Wash")
 		_row("R10", w is MeshInstance3D, "R10 no MeshInstance3D named Wash under the rig")
