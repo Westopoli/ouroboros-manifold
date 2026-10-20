@@ -242,10 +242,24 @@ func _check_absent(node: Node) -> void:
 # REPLAY_TICKS_PER_SECOND; entries print one at a time, first in first out, each taking
 # words * word_interval + fade seconds (the last word's fade ends the entry) and then holding hold_s
 # before the next may start; while the scroll is busy the map holds at the first keyframe it has not
-# yet hit, and resumes from it once the printing entry and its hold have passed. frame_s is the mean frame
-# time of the run: every timer and tween the panel uses ends on a frame boundary, so each word costs half a
-# frame more than its interval and each entry about two frames more (fade end, hold end, next start);
-# frame_s = 0 gives the ideal reading time with no frame quantisation.
+# yet hit, and resumes from it once the printing entry and its hold have passed.
+# Frame quantisation (Architect 2026-10-19; TOL_LIVE untouched): frame_s is the mean frame time measured in
+# the same run (elapsed / frames), and the term added to the ideal reading time is
+#     extra = n_words * (frame_s / 2) + n_entries * 2 * frame_s
+# frame_s = 0 gives the ideal time. Each part is a frame boundary in the code, not a tolerance:
+#  * per word, on average half a frame late: the word cadence is a one-shot Timer (scenes/world/chronicle_entry.gd
+#    :123 one_shot = true) restarted for every word (:161-167 _schedule_next_tick, wait_time :166, start() :167,
+#    called again from the word handler at :199 and from start_printing at :136). A Timer is processed once per
+#    frame, so it fires on the first frame after wait_time has run out, and start() resets it, so the overshoot
+#    (uniform over one frame, mean half a frame) is dropped and not paid back by the next word.
+#  * per entry, a finish frame and a start frame: the entry ends in the fade tween's callback, which runs on a
+#    frame (chronicle_entry.gd :183 tween_method, :187-193 tween_callback calling _finish_printing, :248); the
+#    panel then sets its hold (scenes/world/chronicle_scroll_panel.gd on push/vg-b26r :290-294 _on_entry_finished,
+#    _hold_left_s = PRINT_HOLD_S at :294), counts it down by one delta per frame and starts the next queued entry
+#    only in _process (:232-236, _try_start_next at :236; start_printing :198-204 also goes through
+#    _try_start_next). The next entry therefore cannot begin before the frame after the hold has run out.
+#    Two frames per entry is the count of those two boundaries; at a 7 ms frame and 10 entries the whole
+#    per-entry part is about 0.14 s, against 1.0 s of tolerance.
 # entry_words: entry id -> words on screen; start_tick of each entry comes from the frame.
 func _computed_reading_s(frame: Dictionary, entry_words: Dictionary, word_interval_s: float, fade_s: float, hold_s: float, ticks_per_s: float, frame_s: float = 0.0) -> float:
 	var from_tick := int(frame["jump"]["from_tick"])
