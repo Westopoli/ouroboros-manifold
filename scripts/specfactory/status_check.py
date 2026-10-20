@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """status_check.py: method rev 2, guard 7. The status copies must agree.
 
-Five checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
+Seven checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
 print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0).
 
   lane_table  every sha in the programme lane table's "On main" cells is an
@@ -16,6 +16,12 @@ print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0
               check over the specs named by every piece row's `spec` key;
               WARN until the row FU-HARNESS-findings is attached in
               pieces.toml, DRIFT after (HARNESS-C1b)
+  register    a closed register row whose Answer says `until Westley`, `Westley to
+              confirm`, `Westley answers`, `Architect default` or the word `default`,
+              or a row of other than six cells; same WARN/DRIFT switch (HARNESS-C235)
+  reviews     a top-level story_reviews/*.md row dated on or after
+              DRAFT-review-fields-from whose reviewer-verdict cell lacks `legend=`,
+              `unit=` or `band=`; same switch (HARNESS-C235)
 
 See also: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
 """
@@ -32,11 +38,16 @@ D_PIECES = "docs/northstar/plans/push/pieces.toml"
 D_STORIES = "docs/bible/stories.md"
 D_REVIEWS = "docs/northstar/story_reviews"
 D_ROADMAP = "docs/northstar/ROADMAP.md"
+D_REGISTER = "docs/northstar/ambiguity_register.md"
 SWITCH_ROW = "FU-HARNESS-findings"
 
 SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
 # Column 8 of the queue format in docs/northstar/story_reviews/README.md.
 VERDICT_COL = 7
+REVIEW_VERDICT_COL, REVIEW_DATE_COL = 6, 8
+REVIEW_FIELDS_FROM = "2026-10-20"  # DRAFT-review-fields-from, harness enforcement spec section 4
+REVIEW_FIELDS = ("legend", "unit", "band")
+STAND_IN_ANSWER = re.compile(r"until Westley|Westley to confirm|Westley answers|Architect default|\bdefault\b", re.I)
 
 
 def cells(line):
@@ -138,8 +149,47 @@ def check_pins(repo, pieces_path):
     if not kinds:
         return [("pins", True, "every pin is right")]
     detail = ", ".join(f"{kinds.count(k)} {k}" for k in ("stale", "missing") if k in kinds)
-    attached = any(p["id"] == SWITCH_ROW and p["state"] == "attached" for p in pieces)
-    return [("pins", False if attached else "warn", detail)]
+    return [("pins", switched(pieces), detail)]
+
+
+def switched(pieces):
+    """False (DRIFT) once FU-HARNESS-findings is attached, else "warn". See also: owner_lint.py:37-44."""
+    return False if any(p["id"] == SWITCH_ROW and p["state"] == "attached" for p in pieces) else "warn"
+
+
+def check_register(register, pieces_path):
+    """See also: spec_provenance.py reason (5), which reads the same six-cell rows."""
+    if not register.is_file():
+        return [("register", True, f"no register file at {register.name}")]
+    found, n = [], 0
+    for ln in register.read_text().splitlines():
+        row = cells(ln)
+        if not ln.strip().startswith("|") or is_rule_row(ln) or not row[0].startswith("Q-"):
+            continue
+        n += 1
+        if len(row) != 6:
+            found.append(f"{row[0]} is malformed: {len(row)} cells, not 6")
+        elif row[4].lower().startswith("closed") and (m := STAND_IN_ANSWER.search(row[5])):
+            found.append(f"{row[0]} is closed with a stand-in answer: {m.group(0)}")
+    flag = switched(parse_pieces(pieces_path))
+    return [("register", flag, f) for f in found] or [("register", True, f"{n} rows checked")]
+
+
+def check_reviews(reviews, pieces_path):
+    found, n = [], 0
+    for f in sorted(reviews.glob("*.md")):
+        for ln in f.read_text().splitlines():
+            row = cells(ln)
+            if len(row) <= REVIEW_DATE_COL or not re.fullmatch(r"\d{4}-\d\d-\d\d", row[REVIEW_DATE_COL]):
+                continue
+            if row[REVIEW_DATE_COL] < REVIEW_FIELDS_FROM:
+                continue
+            n += 1
+            lacking = [k for k in REVIEW_FIELDS if not re.search(r"(?<!\w)" + k + "=", row[REVIEW_VERDICT_COL])]
+            if lacking:
+                found.append(f"{f.name} {row[0]} verdict cell lacks " + ", ".join(k + "=" for k in lacking))
+    flag = switched(parse_pieces(pieces_path))
+    return [("reviews", flag, f) for f in found] or [("reviews", True, f"{n} rows checked")]
 
 
 def check_seen(reviews, stories):
@@ -203,6 +253,7 @@ def main(argv):
     ap.add_argument("--stories", default=D_STORIES)
     ap.add_argument("--reviews", default=D_REVIEWS)
     ap.add_argument("--roadmap", default=D_ROADMAP)
+    ap.add_argument("--register", default=D_REGISTER)
     a = ap.parse_args(argv)
     repo = Path(a.repo)
 
@@ -216,6 +267,8 @@ def main(argv):
     results += check_seen(at(a.reviews), at(a.stories))
     results += check_roadmap(at(a.roadmap), a.programme)
     results += check_pins(repo, at(a.pieces))
+    results += check_register(at(a.register), at(a.pieces))
+    results += check_reviews(at(a.reviews), at(a.pieces))
     for name, ok, detail in results:
         print(f"STATUS {name} {'WARN' if ok == 'warn' else 'OK' if ok else 'DRIFT'} {detail}")
     return 0 if all(ok for _, ok, _ in results) else 1
