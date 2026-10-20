@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-104-01@d9c166, R-218-05@ee913f, R-235-01@4f35af, R-235-02@138056, R-235-03@14ac1a, R-235-04@a81fce
 # NEEDS A DISPLAY (the [PROJECT], [COLOUR] and [DESTROYED] groups read rendered pixels): run under
 #   timeout 1800 xvfb-run -a -s '-screen 0 1920x1080x24' godot.real --path . --resolution 1920x1080 -s tests/test_vg_e_e1n.gd
 #

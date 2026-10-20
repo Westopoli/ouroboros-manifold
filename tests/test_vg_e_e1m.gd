@@ -1,4 +1,5 @@
 extends "res://tests/support/vg_c_case.gd"
+# Rule pins: R-104-01@d9c166, R-104-02@03d7aa, R-235-01@4f35af, R-235-02@138056, R-235-03@14ac1a, R-235-04@a81fce
 
 # VG-E1M tests: S-235 ticker beats (scenes/economy/ticker_beats.gd, class TickerBeats) and the three-line skip in
 # scenes/tactical_c/hud/events_feed.gd (Architect ruling G2 (b), 2026-10-14). Spec:

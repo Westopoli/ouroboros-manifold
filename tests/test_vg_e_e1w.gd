@@ -1,4 +1,5 @@
 extends "res://tests/support/vg_c_case.gd"
+# Rule pins: R-104-01@d9c166, R-235-01@4f35af, R-235-02@138056, R-235-03@14ac1a, R-235-04@a81fce
 
 # VG-E1 piece E1w (scenes/tactical_c/tactical_view.gd wiring of scenes/economy/ticker_beats.gd and scenes/economy/map_markers.gd).
 # Proves S-235 (docs/bible/epics/E-16-client-camera-hud-and-world-view.md:271-274) and R-104-01 (:70). Quoted word for word:

@@ -1,3 +1,4 @@
+# Rule pins: R-104-01@d9c166, R-235-01@4f35af, R-235-03@14ac1a, R-235-04@a81fce
 """Story play S-235 (E-16): "The map shows the economy and its news." Moment `ticker_and_markers`: the player has marched to
 contact in the ground era, a strongpoint was taken or lost, the ticker names it once, and the strongpoint and home-base marks are on
 the map. Piece E1w (wiring of scenes/economy/ticker_beats.gd and scenes/economy/map_markers.gd into the tactical view); tests in
