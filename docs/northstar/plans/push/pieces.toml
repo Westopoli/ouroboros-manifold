@@ -2696,6 +2696,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "FIX post-merge fix piece: decisions 41 and 42 and the orders flip (decision 40)"
 
+# Architect ruling 2026-10-20 (ledger FINDING-lab-vision-poscontrol): the vision positive control must run an all-cross-layer 16 v 16 fixture (VISION_CONTROL_PLAY), not the mixed sweep plays. Lands after the lab landing (LAB-REV2, LAB-REV2-FIX) and before LAB-REV3-A. Files are a DRAFT: the builder chooses plays_space.py or scenes.py for the play. sweep.py and tests/skilllab/test_sweep.py are LAB-REV2-FIX's and LAB-REV2-L4's, plays_space.py is LAB-REV2-L3's (and A's, B's, C's); the dependency on LAB-REV2-FIX, which depends on L3 and L4, orders them. Tests first by a different agent than the builder; the writer never builds.
+[[piece]]
+id = "LAB-VISION-CONTROL"
+manager = "M0"
+wave = 10
+owns = ["scripts/skilllab/sweep.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/scenes.py", "tests/skilllab/test_sweep.py"]  # DRAFT list. plays_space.py or scenes.py as the builder decides
+owns_glob = ["tests/skilllab/test_vision_control.py"]  # New file (tests first, by a different agent than the builder)
+acceptance = []
+depends_on = ["LAB-REV2", "LAB-REV2-FIX"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "VISION_CONTROL_PLAY: all cross-layer 16 v 16, side 0 one layer up, run as DAMAGE_CONTROL_PLAY runs; _vision_zero_ok unchanged; tests: ok at vision 0.0 (red on the lab tip), fires at vision 1.0, the hand-fed unit test rewritten on the real scene or deleted with a TD row"
+
 # Skill lab rev 3 (Architect relaying Westley 2026-10-19; plan docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md, records step labrev3-records1). Lab defects D1 to D10 (ledger FINDING-lab-d1..d10). Every file list is a DRAFT: the test writer and overseer correct them against the code. Every rev 3 row depends on LAB-REV2 and LAB-REV2-FIX (FIX owns sweep.py, scenes.py, plays.py, scan.py, contract.py, fight.py, diagram.py, report.py; no file moves out of FIX). Landing order A, then B, then C.
 [[piece]]
 id = "LAB-REV3"
@@ -2716,7 +2729,7 @@ wave = 10
 owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/fight.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "scripts/skilllab/coverage.py", "scripts/skilllab/probe.py"]  # DRAFT list. coverage.py and probe.py are new files (DRAFT names). plays_space.py is also owned by LAB-REV2-L3 (queued); the dependency on LAB-REV2-FIX, which depends on L3, orders it. csrc/unit.c is never owned here (D6 engine piece is separate and unnamed)
 owns_glob = ["tests/skilllab/test_rev3_a_*.py", "tests/skilllab/integration/test_rev3_a_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3", "LAB-REV2", "LAB-REV2-FIX"]
+depends_on = ["LAB-REV3", "LAB-REV2", "LAB-REV2-FIX", "LAB-VISION-CONTROL"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "A first: D3 built-in ids with om_roster_set_reach (no copies), D4 naive attacker fields the play's mix, D5 dark striker emits at the knob's values or is deleted, D6 category family marked unavailable, R5 coverage test T1, R6 inert-knob probe T2; tests T1 to T5 and T10 (DRAFT)"
