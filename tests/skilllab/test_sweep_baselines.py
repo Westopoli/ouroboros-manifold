@@ -663,7 +663,9 @@ def test_d_a_blob_on_a_blocked_anchor_cell_fills_the_region_of_the_nearest_open_
     blocks the anchor's cell and its centre. The search starts from the nearest open cell, so the blob is skipped round the wall and
     equals the fill order over that region (unsorted). A search that fails or is empty from a blocked anchor cell cannot hold the count
     (label no_fit) and is red."""
-    groups = [vg(0, "Vanguard", count, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
+    # TD-LAB-REV2-FIX-blind-post-anchor: the enemy stands at y 1200 (was 1000) so the anchor, which stands at the corner of the wall's cells, keeps a
+    # clear line to the nearest enemy unit (the end cell is exempt) and decision 44's shift does not move it.
+    groups = [vg(0, "Vanguard", count, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1200.0, facing=180.0)]
     build = fake_scene(fake_base(groups, blocks=(aligned(925.0, 925.0, 1075.0, 1075.0),)))(role)
     setup = build(8, False)
     g = next(g for g in setup.groups if g.side == 0)
@@ -682,7 +684,8 @@ def test_d_a_free_point_inside_a_blocked_route_cell_is_not_used(fake_scene, libr
     anchor's side of the wall stand in open cells next to it (the first free cells are still taken). Fixture guard: the point reading
     (block and canvas only) WOULD use sliver points, so the case separates the readings. Red for a point-resolution builder."""
     wall = Block(1070.0, 800.0, 1230.0, 1200.0, 0, 4)
-    groups = [vg(0, "Vanguard", 16, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 3000.0, 1000.0, facing=180.0)]
+    # TD-LAB-REV2-FIX-blind-post-anchor: the enemy stands west of the anchor (was east, behind the wall) so the anchor is not blind and is not shifted.
+    groups = [vg(0, "Vanguard", 16, 1000.0, 1000.0, order="guard"), vg(1, "Vanguard", 8, 300.0, 1000.0, facing=0.0)]
     build = fake_scene(fake_base(groups, blocks=(wall,)))(role)
     setup = build(8, False)
     g = next(g for g in setup.groups if g.side == 0)

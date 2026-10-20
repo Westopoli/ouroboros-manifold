@@ -1254,5 +1254,7 @@ def test_the_sweep_and_smoke_builds_do_not_set_orders_per_unit():
 
 def test_sweep_module_names_no_retired_field_or_helper():
     src = (ROOT / "scripts/skilllab/sweep.py").read_text()
-    for gone in ("mopup", "approach", "stalemate", "decided_by_survivors", "hold_anchor", "placement_shift", "WIN_MARGIN", "weighted="):
+    # TD-LAB-REV2-FIX-blind-post-retired-name: "placement_shift" leaves this list; decision 44 gives the label back its meaning (the distance a blind
+    # naive-defender post was moved, set by the baseline builder in this file).
+    for gone in ("mopup", "approach", "stalemate", "decided_by_survivors", "hold_anchor", "WIN_MARGIN", "weighted="):
         assert gone not in src, gone
