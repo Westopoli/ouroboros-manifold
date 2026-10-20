@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order) and decision 33 (readings 1 to 4); E-13 R-096-02, R-096-08, R-099-05
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order) and decision 33 (readings 1 to 4), amended by decision 43 items 2 to 4 (per-unit orders, no-op retry, the 1 wu moved threshold: tests in test_drift_fix_reengage.py); E-13 R-096-02, R-096-08, R-099-05
 """LAB-REV2-L8: fight() re-engages a silent side. Fake-engine tests of the trigger (tests only; the builder writes scripts/skilllab).
 
 THE RULE (Architect decision 28 point 3). When a side has had NO unit fire or move for REENGAGE_SILENCE_TICKS while an enemy is
@@ -32,16 +32,20 @@ INTERFACE FOR THE BUILDER (every name below is what these tests import or read; 
     TRIGGER: side s keeps a counter of consecutive silent ticks (a fire or a move of s zeroes it). When it has reached
       REENGAGE_SILENCE_TICKS, a visible enemy exists and at least one living idle attack-move unit exists, the side re-engages at
       once (the order is issued in the loop iteration after engine.step number N, so a fake engine's step_count reads N for the first
-      one): ONE engine.order_attack_move(w, ids, x, y) call, ids = every such unit, (x, y) = the mean of engine.unit_pos over the
+      one): ONE engine.order_attack_move(w, [u], x, y) call PER such unit (decision 43 item 2, amending decision 33 item 2: a group
+      order gives each unit the slot click + (its own position - the group centroid), so a straggler's slot is where it already
+      stands), (x, y) = the mean of engine.unit_pos over the
       side's living enemy units THAT ARE VISIBLE to it, i.e. the set engine.visible_enemies returned (decision 33 item 4: never all the
       living enemies, fog would leak into the orders). The order is an (x, y): each unit keeps its own layer and the enemy's layer is
-      ignored (decision 33 item 3). reengage[s] += 1: events, one ordered call per trigger, not units ordered (decision 33 item 2).
+      ignored (decision 33 item 3). reengage[s] += 1: events, one per trigger, not units ordered and not calls (decision 33 item 2, kept by decision 43). The tests
+      here read EVENTS (fakes_reengage.reengage_orders merges the per-unit calls of one tick onto one goal); the per-unit calls are
+      pinned in test_drift_fix_reengage.py.
       The side then waits for activity: no further re-engage for that side until a fire or a move of that side has zeroed the counter
       and it has again counted REENGAGE_SILENCE_TICKS silent ticks ("once per silence period", decision 33 item 1: an unbroken silence
       is one event, and a re-engage that produces no movement leaves the side silent, so the fight caps). If no enemy is visible, or no
       unit is idle, the counter keeps counting and the re-engage fires on the first tick all three conditions hold (an idle unit that
       appears late, or an enemy that comes into sight late, is ordered at that tick).
-    THE RE-ENGAGE IGNORES Setup.orders_per_unit AND THE fight._chunks 450 wu SPLIT (decision 33 item 2): one call per trigger with every
+    THE RE-ENGAGE IGNORES Setup.orders_per_unit AND THE fight._chunks 450 wu SPLIT (decision 33 item 2, decision 43 item 2): one call per
       idle attack-move unit, whatever orders_per_unit says and however far apart the units stand (tests below).
     The fight ends only as today (elimination, or the cap): a re-engage never ends a fight or hides a cap.
 
@@ -101,7 +105,7 @@ def mean_pos(fake, ids):
     return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
 
 
-def nudge(side, index=0, dx=1.0):
+def nudge(side, index=0, dx=2.0):      # TD-LAB-REV2-FIX-reengage-moved: was 1.0; a move counts only above DRAFT-reengage-moved-wu = 1 wu
     def fn(f):
         u = f.units_of(side)[index]
         f.set_pos(u, f.units[u]["x"] + dx, f.units[u]["y"])
@@ -184,6 +188,8 @@ def test_one_reengage_per_silence_period_then_again_after_activity():
 
 
 def test_unbroken_silence_for_several_windows_is_still_one_event():
+    """TD-LAB-REV2-FIX-reengage-orders: the fake's orders now take effect (arrive_after=2 by default); a no-op order is retried
+    (decision 43 item 3, test_drift_fix_reengage.py), an order that works is not."""
     res, fake = run([G(0), G(1)], cap=3 * N + 5)
     assert len(fake.reengage_orders(0)) == 1 and len(fake.reengage_orders(1)) == 1
     assert tuple(res.reengage) == (1, 1)
@@ -403,11 +409,11 @@ def test_the_enemy_centroid_is_taken_on_a_raised_enemy_layer_too():
 # ---------------------------------------------------------------------------------------------------------- counts, caps, no-op runs
 
 @pytest.mark.parametrize("per_unit", (True, False))
-def test_the_reengage_is_one_call_whatever_orders_per_unit_says_and_however_spread_the_units_are(per_unit):
-    """Decision 33 item 2: one ordered call per trigger, never split per unit (orders_per_unit=True) and never split in chunks by
-    fight._chunks (units further apart than 450 wu from their centroid would be). Side 0 is four units 600 wu apart (the opening
-    order is split into chunks or per unit as today and is tick 0, not listed); the re-engage is ONE call with all four ids, and
-    the count is 1."""
+def test_the_reengage_is_one_event_whatever_orders_per_unit_says_and_however_spread_the_units_are(per_unit):
+    """Decision 33 item 2 as amended by decision 43 item 2 (TD-LAB-REV2-FIX-reengage-orders; was ..._is_one_call_...): one EVENT per
+    trigger whatever orders_per_unit says and however far apart the units stand (units further apart than 450 wu from their centroid
+    would be split in chunks by fight._chunks). Side 0 is four units 600 wu apart; the event lists all four and the count is 1. The
+    calls inside the event are one per unit (test_drift_fix_reengage.py)."""
     wide = dataclasses.replace(G(0, 4), params={"spacing": 600.0})
     res, fake = run([wide, G(1, 2)], cap=N + 5, orders_per_unit=per_unit)
     tick, ids, _goal = only(fake.reengage_orders(0))

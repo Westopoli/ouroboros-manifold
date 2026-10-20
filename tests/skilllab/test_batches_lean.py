@@ -30,9 +30,9 @@ def test_trim_series_keeps_every_row_value_and_empties_series():
 
 
 def test_trim_series_leaves_off_series_off():
-    f = dataclasses.replace(fight(), states=None)      # fight() sets states None when Setup.states is off (the field default is [])
+    f = dataclasses.replace(fight(), trace=None, states=[])      # fight() gives states [] when Setup.states is off (decision 1; TD-LAB-REV2-FIX-states), trace None
     t = trim_series(f)
-    assert t.trace is None and t.states is None
+    assert t.trace is None and t.states == []
 
 
 def test_trimmed_keeps_only_the_example_whole():

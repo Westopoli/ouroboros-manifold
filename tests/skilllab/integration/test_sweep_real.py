@@ -206,9 +206,11 @@ def _read(path):
 def _defects_of(rows):
     """The pinned definition of the defect count (test_sweep.py header), recounted from the CSV rows."""
     cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
-    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
-    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
-            "cells": len({cell(r) for r in bad})}
+    live = [r for r in rows if not r["kind"].startswith("control_")]
+    blind = [r for r in live if r["outcome"] == "cap" and r.get("blind_post") == "1"]      # decision 43 item 5 (TD-LAB-REV2-FIX-blind-keys)
+    bad = [r for r in live if r["outcome"] == "draw" or (r["outcome"] == "cap" and r.get("blind_post") != "1")]
+    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": len(blind),
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
 
 
 @SLOW
@@ -221,11 +223,11 @@ def test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_
     assert a["rows_sha256"] == b["rows_sha256"]
     smoke_rows = _read(tmp_path / "w1" / "smoke.csv")
     capped = [(r["play"], r["layout"], r["kind"], r["enemy_heads"]) for r in smoke_rows
-              if r["outcome"] == "cap" and not r["kind"].startswith("control_")]
-    assert not capped, capped          # decisions 23: a cap outside the control kinds is a defect to trace, never a tolerated row
+              if r["outcome"] == "cap" and not r["kind"].startswith("control_") and r["blind_post"] != "1"]
+    assert not capped, capped          # decision 23 as amended by decision 43: a cap outside the control kinds that is not a blind-post finding is a defect
     assert a["defects"] == _defects_of(smoke_rows) == b["defects"] and a["defects"]["cap_rows"] == 0
     assert {r["prefight"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] != "controls"} == {"ok"}
-    assert isinstance(a["refused"], list) and set(a["prefight"]) <= {"ok", "no_fit", "unroutable", "no_reach"}
+    assert isinstance(a["refused"], list) and set(a["prefight"]) <= {"ok", "no_fit", "unroutable", "no_reach", "blind_post"}
     layouts = {r["layout"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] == "vision"}
     assert layouts <= {"81", "78", "192"}
     assert {r["play"] for r in _read(tmp_path / "w1" / "smoke.csv") if r["family"] == "controls"} == {"mirror", "numbers", "planted"}
@@ -241,5 +243,5 @@ def test_the_sweep_command_writes_the_family_csv_and_the_summary(tmp_path):
     assert entry["skipped"] is None and entry["csv"] == "sweep_damage_up.csv"
     assert entry["controls"]["positive"]["ok"] is True and entry["controls"]["null"]["ok"] is True
     assert {r["outcome"] for r in rows} <= {"side0", "side1", "draw", "cap"}
-    assert {r["kind"] for r in rows if r["outcome"] == "cap"} <= {"control_positive", "control_null"}      # a cap is allowed in a control only
+    assert {r["kind"] for r in rows if r["outcome"] == "cap" and r["blind_post"] != "1"} <= {"control_positive", "control_null"}      # a cap is allowed in a control only (a blind-post finding aside, decision 43)
     assert entry["defects"] == _defects_of(rows) and entry["defects"]["cap_rows"] == 0

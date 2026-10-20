@@ -23,23 +23,28 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
         not an exemption: no test here asserts a damage-up response on s3_layer_above.
     refine(values, differs, max_rounds=2) -> [(round, value), ...]    differs(value) -> bool, called once per value
     Capabilities(arc, cone) (namedtuple of bool); detect(engine) -> Capabilities; skip_reason(family, caps) -> str | None
-    baseline_roles(play) -> tuple of roles; the roles for sweep rows: "play", "reach_zero" (the null control's build), and the
-        baselines "naive_attacker", "naive_defender" (a play whose name starts "s3_" has "naive_defender_attacker_layer" and
-        "naive_defender_play_layer" in place of "naive_defender", ruling 3 DRAFT). Decisions 24: a play with a holder carries a
-        `naive_defender*` role and gets the second listed crossing against it; a meeting (both sides attack-moved, no holder) carries
-        none and has none. refined_vs has one key per role that some run play's baseline_roles lists, and no other.
+    baseline_roles(setup) -> tuple of roles (LAB-REV2-FIX, Architect decision 41 ruling 3; was baseline_roles(play): the play's NAME is never
+        read). `setup` is the play's own Setup (the sweep passes builds(play, "play", layout)(ENEMY_FROM, False)). The roles for sweep
+        rows: "play", "reach_zero" (the null control's build), and the baselines "naive_attacker" always, then, only for a HOLDER (side 0
+        has a group on order "guard"): "naive_defender"; or, when a side-0 group stands on a layer no side-1 group stands on (a layer
+        holder), "naive_defender_attacker_layer" and "naive_defender_play_layer" in place of "naive_defender" (ruling 3 DRAFT; the
+        layer reading is the test writer's, question Q-FIX-1). A meeting (no side-0 guard group, an empty Setup included) carries
+        "naive_attacker" alone and has no second crossing (decisions 24). refined_vs has one key per role that some run play's
+        baseline_roles lists, and no other. The fakes (fakes_scans.fake_groups) give a Setup a guard group by default; `meeting=` plays
+        have none. Details: test_drift_fix_holder.py.
     run_family(family, out_dir, *, builds, layouts, plays=None, fight_fn=None, map_fn=None, caps=None, replicates=REPLICATES,
                full_scan=False) -> dict    full_scan False (the default) scans by bisection, True fights every headcount 8 to 48
         the entry: family, skipped, csv, rows, refined (sorted values added by refinement, all baselines), refined_vs ({baseline role:
         sorted values refined for the sign change of the gain against that baseline}), refused, controls ({"positive"/"null": {"ok"}}; the positive one also carries "play": the designated play, or None),
-        defects ({"cap_rows": cap fights outside control_* kinds, "draw_rows": draw fights, "cells": distinct (play, layout, kind,
-        knob_value, baseline, enemy_heads) non-control cells holding a cap or a draw}), saturated_at_vision (emitting)
+        defects ({"cap_rows": cap fights outside control_* kinds that are not blind-post findings, "blind_post_rows": cap fights outside
+        control_* kinds with FightResult.blind_cap (decision 43; test_drift_fix_blind.py), "draw_rows": draw fights, "cells": distinct (play,
+        layout, kind, knob_value, baseline, enemy_heads) non-control cells holding a non-blind cap or a draw}), saturated_at_vision (emitting)
         builds(play, role, layout_features) -> BuildFn (build.labels["prefight"] is set when the build is called, as
         scenes.placed_scene does); layouts {name: features}; caps None means detect the real library.
     run(families, out_dir, workers=1, full_scan=False, **same keywords) -> dict; calls sweep.run_family(name, out_dir, **kw) once per family, in the
         given order; with workers > 1 and no map_fn it fights through pool.FightPool(workers, lean=True).map
     SMOKE_LAYOUTS = ("81", "78", "192"); smoke_layouts() -> {name: features}; run_smoke(out_dir, workers=12, full_scan=False, **same keywords)
-    -> dict; its summary carries "defects" with the same three counts as a sweep entry. Smoke control rows have a kind starting
+    -> dict; its summary carries "defects" with the same four counts as a sweep entry. Smoke control rows have a kind starting
     "control_"; the vision rows do not.
     Refinement (families vision, range_up, damage_up, arc only): the sign of a point is "gain > 0", gain = break-even of the play minus the
     break-even of the baseline at the same knob value, a ceiling hit counting as the top of the range (48) and a scan with no break-even
@@ -544,9 +549,11 @@ def test_a_layer_play_gets_the_naive_defender_twice_on_the_attackers_layer_and_o
     rows = read(tmp_path, "range_up")
     assert {r["baseline"] for r in rows if r["kind"] == "grid"} == {"none", "naive_attacker", "naive_defender_attacker_layer",
                                                                      "naive_defender_play_layer"}
-    assert sweep.baseline_roles("s3_layer_above") == ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
-    assert sweep.baseline_roles("s2_concave") == ("naive_attacker", "naive_defender")
-    assert sweep.baseline_roles("s3_types_by_reach")[1:] == ("naive_defender_attacker_layer", "naive_defender_play_layer")
+    holder = lambda play, **kw: sweep.baseline_roles(fake_builds(**kw)(play, "play", {})(16, False))
+    assert holder("s3_layer_above") == ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
+    assert holder("s2_concave") == ("naive_attacker", "naive_defender")
+    assert holder("s3_types_by_reach")[1:] == ("naive_defender_attacker_layer", "naive_defender_play_layer")
+    assert holder("s3_layer_above", meeting=("s3_layer_above",)) == ("naive_attacker",)       # control: the guard group is what decides
 
 
 def test_states_are_on_for_every_sweep_fight_controls_included(tmp_path):
@@ -619,22 +626,20 @@ def test_a_meeting_has_no_holder_so_no_second_crossing_and_a_play_with_a_holder_
     """Decisions 24: the second listed crossing goes to every play whose baseline_roles carries a naive_defender* role (a holder), and
     to no other. p_meet is a meeting (no holder): its roles are the naive attacker alone. The defender's gain changes sign, the
     attacker's never does, so the second crossing exists exactly where a defender baseline is run."""
-    real = sweep.baseline_roles
-    monkeypatch.setattr(sweep, "baseline_roles", lambda play: ("naive_attacker",) if play == "p_meet" else real(play))
     be = _be_range(lambda v: 20, attacker=10, defender=lambda v: 18 if v >= 0.9 else 22)
-    entry, world = run(tmp_path / "meet", "range_up", world=World(be_of=be), plays=("p_meet",))
+    meet = fake_builds(meeting=("p_meet",))                       # LAB-REV2-FIX: a meeting is a Setup with no guard group, not a monkeypatched role list
+    entry, world = run(tmp_path / "meet", "range_up", world=World(be_of=be), plays=("p_meet",), builds=meet)
     assert set(entry["refined_vs"]) == {"naive_attacker"} and entry["refined"] == [] and entry["refined_vs"]["naive_attacker"] == []
     assert not [c for c in world.calls if c["role"].startswith("naive_defender")]
     assert {r["baseline"] for r in read(tmp_path / "meet", "range_up")} <= {"none", "naive_attacker"}
-    entry, _ = run(tmp_path / "both", "range_up", world=World(be_of=be), plays=("p_meet", "p2"))        # positive control: a holder play adds it
+    entry, _ = run(tmp_path / "both", "range_up", world=World(be_of=be), plays=("p_meet", "p2"), builds=meet)        # positive control: a holder play adds it
     assert entry["refined_vs"]["naive_defender"] == [0.875, 0.9375] and set(entry["refined_vs"]) == {"naive_attacker", "naive_defender"}
 
 
 def test_a_layer_play_lists_a_crossing_per_defender_baseline(tmp_path):
     be = _be_range(lambda v: 20 if v >= 0.7 else 12, defender=lambda v: 16)
     entry, _ = run(tmp_path, "range_up", world=World(be_of=be), plays=("s3_layer_above",))
-    assert set(entry["refined_vs"]) == set(sweep.baseline_roles("s3_layer_above")) == {
-        "naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer"}
+    assert set(entry["refined_vs"]) == {"naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer"}
     assert all(v == [0.625, 0.6875] for v in entry["refined_vs"].values())
 
 
@@ -878,9 +883,11 @@ CONTROL_KINDS = ("control_positive", "control_null")
 def _defects_of(rows):
     """Recount from the CSV: the pinned definition of entry["defects"] (header)."""
     cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
-    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
-    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
-            "cells": len({cell(r) for r in bad})}
+    live = [r for r in rows if not r["kind"].startswith("control_")]
+    blind = [r for r in live if r["outcome"] == "cap" and r.get("blind_post") == "1"]      # decision 43 item 5 (TD-LAB-REV2-FIX-blind-keys)
+    bad = [r for r in live if r["outcome"] == "draw" or (r["outcome"] == "cap" and r.get("blind_post") != "1")]
+    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": len(blind),
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
 
 
 def test_a_faithful_world_has_no_defects_and_its_only_caps_are_in_control_kinds(tmp_path):
@@ -890,14 +897,14 @@ def test_a_faithful_world_has_no_defects_and_its_only_caps_are_in_control_kinds(
     rows = read(tmp_path, "vision")
     caps = {r["kind"] for r in rows if r["outcome"] == "cap"}
     assert caps and caps <= set(CONTROL_KINDS)
-    assert entry["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+    assert entry["defects"] == {"cap_rows": 0, "blind_post_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
 
 
 def test_a_cap_or_a_draw_outside_the_controls_is_counted_as_a_defect(tmp_path):
     """The smallest cell of every play scan holds one cap (seed 0) and one draw (seed 1): 4 grid points, so 4 caps, 4 draws, 4 cells."""
     entry, _ = run(tmp_path, "damage_up", world=World(defects=True))
     rows = read(tmp_path, "damage_up")
-    assert entry["defects"] == {"cap_rows": 4, "draw_rows": 4, "cells": 4} == _defects_of(rows)
+    assert entry["defects"] == {"cap_rows": 4, "blind_post_rows": 0, "draw_rows": 4, "cells": 4} == _defects_of(rows)
     assert {r["kind"] for r in rows if r["outcome"] == "cap"} - set(CONTROL_KINDS) == {"grid"}      # the detector's input is really there
 
 
@@ -1102,10 +1109,10 @@ def test_smoke_counts_its_defects_like_a_sweep_entry(tmp_path):
     """The smallest cell of each of the 3 layouts x 2 plays holds one cap and one draw (the play role only): 6 of each, 6 cells.
     A faithful world has none."""
     summary, _, rows = _smoke(tmp_path / "clean", control_builds=control_builds())
-    assert summary["defects"] == {"cap_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+    assert summary["defects"] == {"cap_rows": 0, "blind_post_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
     assert not [r for r in rows if r["outcome"] == "cap" and not r["kind"].startswith("control_")]      # decisions 23: read from the rows
     summary, _, rows = _smoke(tmp_path / "bad", world=World(defects=True), control_builds=control_builds())
-    assert summary["defects"] == {"cap_rows": 6, "draw_rows": 6, "cells": 6} == _defects_of(rows)
+    assert summary["defects"] == {"cap_rows": 6, "blind_post_rows": 0, "draw_rows": 6, "cells": 6} == _defects_of(rows)
     assert len([r for r in rows if r["outcome"] == "cap" and not r["kind"].startswith("control_")]) == 6      # positive control for the row check
     assert json.loads((tmp_path / "bad" / "smoke_summary.json").read_text())["defects"] == summary["defects"]
 
@@ -1247,5 +1254,7 @@ def test_the_sweep_and_smoke_builds_do_not_set_orders_per_unit():
 
 def test_sweep_module_names_no_retired_field_or_helper():
     src = (ROOT / "scripts/skilllab/sweep.py").read_text()
-    for gone in ("mopup", "approach", "stalemate", "decided_by_survivors", "hold_anchor", "placement_shift", "WIN_MARGIN", "weighted="):
+    # TD-LAB-REV2-FIX-blind-post-retired-name: "placement_shift" leaves this list; decision 44 gives the label back its meaning (the distance a blind
+    # naive-defender post was moved, set by the baseline builder in this file).
+    for gone in ("mopup", "approach", "stalemate", "decided_by_survivors", "hold_anchor", "WIN_MARGIN", "weighted="):
         assert gone not in src, gone

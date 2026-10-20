@@ -1,6 +1,9 @@
 # spec: LAB-REV2-L6 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, the L6 row: scenes.py; decision 7, preflight order no_fit first)
-"""scenes.preflight answers "no_fit" for a unit placed on ground the generated field (Terrain.field_seed) says is not walkable,
-read through terrain_walkable_at, and "ok" for the same Setup on walkable ground. Today no_fit reads only hand-built blocks.
+"""scenes.preflight answers "no_fit" for a WALKING mover placed on ground the generated field (Terrain.field_seed) says is not walkable,
+read through terrain_walkable_at, and "ok" for the same Setup on walkable ground. LAB-REV2-FIX (Architect, decision 20 as rewritten): only
+walking movers read terrain_walkable_at; flyers and guards are checked against blocks only (tests/skilllab/test_drift_fix_nofit.py).
+So the mover here is a walking type with a move order; it was an idle built-in Vanguard (a flyer), which no longer reads the field
+(TD-LAB-REV2-FIX-nofit).
 Seed 11, 12000 canvas: (3500, 4000) is unwalkable band 1 ground, (2000, 2000) is walkable band 1 ground (measured 2026-10-14)."""
 import sys
 from pathlib import Path
@@ -22,11 +25,14 @@ def lib():
     return engine.Engine()
 
 
+WALKER = {"Walker": {"base": "Vanguard", "scale": {}, "set": {}, "movement": "walking"}}
+
+
 def _setup(at, seed=11):
-    def group(side, unit, p):
-        return Group(side=side, unit=unit, count=1, formation="points", x=p[0], y=p[1], facing_deg=0.0, layer=0, order="idle",
+    def group(side, unit, p, order, goal=None):
+        return Group(side=side, unit=unit, count=1, formation="points", x=p[0], y=p[1], facing_deg=0.0, layer=0, order=order, goal=goal,
                      params={"points": [p]})
-    return Setup(groups=(group(0, "Vanguard", at), group(1, "Vanguard", FOE)), unit_types={},
+    return Setup(groups=(group(0, "Walker", at, "move", FOE), group(1, "Vanguard", FOE, "idle")), unit_types=dict(WALKER),
                  terrain=Terrain(canvas=(12000.0, 12000.0), field_seed=seed))
 
 

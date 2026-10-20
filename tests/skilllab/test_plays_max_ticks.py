@@ -10,13 +10,17 @@ for _p in (ROOT, Path(__file__).resolve().parent):
         sys.path.insert(0, str(_p))
 
 from scripts.skilllab import plays  # noqa: E402
+from scripts.skilllab.contract import Setup  # noqa: E402
 from scripts.skilllab.asym import Side, asym_play  # noqa: E402
 from scripts.skilllab.plays import blob_play, damage_play, line_play, max_ticks_for, reach_play  # noqa: E402
 from scripts.skilllab.positions import ambush_play, bait_play, fall_back_play  # noqa: E402
 
 
 def test_constant():
-    assert plays.MAX_TICKS_BIG == 12000
+    """LAB-REV2-FIX (decision 41 ruling 7, TD-LAB-REV2-FIX-maxticks): MAX_TICKS_BIG is dead logic (it equalled the Setup default) and is
+    deleted; the cap every play carries is the Setup default, 12000 (the parametrized cases below keep that)."""
+    assert not hasattr(plays, "MAX_TICKS_BIG")
+    assert Setup(groups=(), unit_types={}).max_ticks == 12000 == max_ticks_for(48, 48) == max_ticks_for(8, 8)
 
 
 @pytest.mark.parametrize("size,heads,want", [(16, 24, 12000), (32, 8, 12000), (16, 32, 12000), (31, 31, 12000),

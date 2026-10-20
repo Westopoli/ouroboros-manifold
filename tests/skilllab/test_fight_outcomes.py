@@ -413,9 +413,12 @@ def test_states_are_read_from_the_seam_at_sample_ticks_only(seam):
     assert [c[6] for c in seam.calls_named("states")] == [0, 4, 8, 12]
 
 
-def test_states_are_none_when_not_requested_and_the_seam_is_not_asked(seam):
+def test_states_are_an_empty_list_when_not_requested_and_the_seam_is_not_asked(seam):
+    """LAB-REV2-FIX (decision 1: FightResult.states defaults to [], decision 41 ruling 9; TD-LAB-REV2-FIX-states): fight() returns [] when
+    Setup.states is off, not None. It was None; the same field is [] by default and [] after trim_series. Not pinned: trace stays None."""
     r, _ = run(S(max_ticks=4))
-    assert r.states is None
+    assert r.states == [] and r.states is not None
+    assert r.trace is None
     assert seam.calls_named("states") == []
 
 
