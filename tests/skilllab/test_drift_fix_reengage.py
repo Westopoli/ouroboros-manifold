@@ -17,19 +17,13 @@ INTERFACE FOR THE BUILDER
       retries after another REENGAGE_SILENCE_TICKS silent ticks. The retry tick is NOT PINNED between 2N and 2N + 1 (counted from the
       order or from the tick that found the no-op); each retry is one more event (reengage[s] += 1: every trigger is one event). An
       engage after which at least one ordered unit has a destination is not a no-op and is not retried inside the same silence period.
-    ITEM 4 (moved) IS AMENDED by the Architect's 2026-10-20 ruling (L8M, ledger TD-LAB-REV2-L8M-moved, tests in test_drift_fix_moved.py): the
-      reference is the position at the WINDOW START (the tick the counter was last zeroed), the tested set is the side's IDLE-ELIGIBLE units
-      (no destination, attack-move role) and a unit holding a destination is never tested; the strict > at 1 wu and the Euclidean distance
-      stand; a hit by either side zeroes both counters. Where the text below says 'a living unit of it' or 'ANY living unit', read 'any
-      idle-eligible unit'. ORIGINAL TEXT: A side has MOVED only when a living unit of it is displaced by MORE THAN contract.REENGAGE_MOVED_WU (strictly)
-      from its reference position; a fire still zeroes the counter at once. PINNED REFERENCE (audit of 32039a0f: the earlier text said
-      the tests hold for any reference; a rolling 'position REENGAGE_SILENCE_TICKS ago' reading fails 5 tests of test_reengage.py and
-      7+ cases here, the first re-engage landing at 2N instead of N + 1): the reference of a unit is its position at the LAST RESET of
-      its side's silence counter (a fire, or a move above 1 wu; at the very start, its spawn position); every reset takes a fresh
-      reference for all of the side's living units. The distance is EUCLIDEAN (L1 and Chebyshev fail the (0.6, 0.6) and (0.8, 0.8)
-      cases). ANY living unit of the side moving above the threshold moves the side (not the first unit, not the centroid). DRAFT
-      reading: Architect decision 43 item 4 says 'displacement over the silence window'; the last-reset reference and a cumulative path
-      length both pass these tests, the rolling reading does not. Exactly 1 wu is not a move.
+    ITEM 4 (moved), as ruled by the Architect on 2026-10-20 (L8M; ledger TD-LAB-REV2-L8M-moved; the full rule and its tests are in
+      test_drift_fix_moved.py): a side has MOVED only when an IDLE-ELIGIBLE living unit of it (no destination, attack-move role; a unit
+      holding a destination is never tested) is displaced by MORE than contract.REENGAGE_MOVED_WU (strictly, Euclidean: L1 and Chebyshev fail
+      the (0.6, 0.6) and (0.8, 0.8) cases; exactly 1 wu is not a move) from its position at the WINDOW START, the tick the side's counter was
+      last zeroed (at the very start, the spawn); a rolling reference fails 5 tests of test_reengage.py and 7+ cases here. ANY such unit
+      moving above the threshold moves the side (not the first unit, not the centroid). Every zeroing (a move, a hit dealt by either side,
+      the re-arm after a no-op) takes a fresh reference for the side's living units. DRAFT number: contract.REENGAGE_MOVED_WU = 1 wu.
     UNPINNED, THE BUILDER'S CHOICE (two interface points the tests do not fix): (a) a no-op check made on a side that fired or moved
       between the order and the check: the check may be skipped (the reset has already re-armed the side) or run; (b) the retry tick
       between 2N and 2N + 1, and every ordered unit dying (nothing left to check) are not pinned. PINNED: an ordered unit that is DEAD at

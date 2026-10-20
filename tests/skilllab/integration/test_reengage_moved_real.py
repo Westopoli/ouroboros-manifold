@@ -10,9 +10,9 @@ Measured on the unfixed lab tip (e54e69b7): outcome cap at 12000 ticks, survivor
 unreachable destination blocked by idle bodies and shuttles in a ~70 wu loop of period ~40 ticks; the old silence counter counted its
 every move, so the re-engage never fired.
 Under the corrected L8 (destination-holders neither tested nor ordered; the idle units are re-engaged) the fight ends by elimination: a scratch
-implementation of the rule (not committed) ended it `side1`, survivors (0, 7), at tick 6108, reengage (0, 1). The end tick and survivor
-counts are the engine's and the lab's to move; they are NOT asserted, only that the fight does not cap, that it is not the capped
-survivor pair, and that a re-engage is what ended the stall.
+implementation of the rule (not committed) ended it `side1`, survivors (0, 7), at tick 6108 (the scratch end tick), reengage (0, 1). The
+end tick and survivor counts are the engine's and the lab's to move; they are NOT asserted, only that the fight does not cap, that it is
+not the capped survivor pair, and that a re-engage is what ended the stall.
 Satisfiability: the scratch run above is the green; the red is the capped fight itself."""
 import dataclasses
 import os
@@ -61,4 +61,6 @@ def test_the_damage_up_fight_with_a_looping_destination_holder_no_longer_caps(li
     where = f"outcome {r.outcome}, survivors {r.survivors}, ticks {r.ticks}, reengage {r.reengage}"
     assert r.outcome != "cap", where
     assert r.survivors != CAPPED_SURVIVORS, where
+    # Fragile once the sight-engagement engine piece lands (the fight may then end with no re-engage): that needs a test-defect ledger row
+    # (assumption changed), not a silent edit.
     assert sum(r.reengage) >= 1, "the stall was ended without a re-engage: " + where

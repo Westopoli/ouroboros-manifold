@@ -1,29 +1,38 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 43 item 4 as corrected by the Architect's 2026-10-20 ruling (L8M, relayed; the damage_up caps README calls it decision 49); the number DRAFT-reengage-moved-wu = 1 wu is Westley's and unchanged
 """LAB-REV2-L8M: what counts as 'moved' for the re-engage silence counter (scripts/skilllab/fight.py, _Reengage). Tests only.
 
-THE RULE (Architect, 2026-10-20). A side's silence counter ADVANCES on a tick when (i) no unit of EITHER side fired this tick (a unit fires
-when an enemy unit's hp falls), and (ii) no IDLE-ELIGIBLE unit of that side is displaced by MORE than contract.REENGAGE_MOVED_WU (strictly;
-Euclidean; DRAFT-reengage-moved-wu, 1 wu, Westley's number) from its position at the WINDOW START (the tick the counter was last zeroed; at
-the very start, the spawn). Otherwise the counter is zeroed and a new window starts (a fresh reference for the side's living units).
-IDLE-ELIGIBLE (the existing definition, unchanged): no destination (engine.unit_destination is None) AND the unit holds an attack-move role
-(a guard holder, or a group whose latest order is move/group_move/idle/guard, does not). A unit holding a destination is NOT tested for
-movement and NEVER zeroes the counter; when the counter completes the re-engage orders go to the idle-eligible units only, and a
-destination-holder gets no order at all (its destination and its order state are untouched).
+THE RULE (Architect, 2026-10-20; rulings on the audit, same day). A side's silence counter ADVANCES on a tick when (i) no unit of EITHER side
+fired this tick (a unit fires when an enemy unit's hp falls; the victim's counter is delayed too, intended), and (ii) no IDLE-ELIGIBLE
+LIVING unit of that side is displaced by MORE than contract.REENGAGE_MOVED_WU (strictly; Euclidean; DRAFT-reengage-moved-wu, 1 wu, Westley's
+number) from its position at the WINDOW START. Otherwise the counter is zeroed and a new window starts. The WINDOW START is the tick the
+counter was last zeroed (not a rolling reference; at the very start, the spawn). EVERY zeroing takes a fresh reference for the side's
+living units: a displacement above the line, a hit dealt by either side (the victim's side too), and the re-arm after a no-op engage. Nothing
+else refreshes a reference: in particular a unit that holds a destination keeps its old reference while it marches.
+IDLE-ELIGIBLE (existing definition, unchanged): no destination (engine.unit_destination is None) AND the unit holds an attack-move role
+(a guard holder, or a group whose latest order is move/group_move/idle/guard, does not count). DEAD units are not tested (living units
+only; the decision text is silent, ruled by the Architect): a unit displaced and killed in the same step is not 'displaced' afterwards.
+A unit holding a destination is NOT tested for movement and NEVER zeroes the counter; when the counter completes the re-engage orders go to
+the idle-eligible units only, and a destination-holder gets no order at all (its destination and its order state are untouched).
+ARRIVAL (Reading A): a unit that just finished its order gets a fresh 40-tick silence before re-engage touches it; the arrival jump is not
+a bug. A holder that marches away from the window start and then drops its destination (it arrived) is idle-eligible from that tick and
+is tested against the window start, so its large displacement zeroes the counter on the arrival tick: the first order lands at the arrival
+tick + N. (Reading B, a reference refreshed while the unit holds a destination, would order at N.)
 Why: a unit that holds an unreachable destination and shuttles in a ~70 wu loop (period ~40 ticks) zeroed the old counter forever (old
 reading: ANY living unit displaced above 1 wu from its position at the last reset, destination or not, and a hit zeroed only the shooter's
 side): the capped damage_up fight (tests/skilllab/integration/test_reengage_moved_real.py).
 
-WHAT THESE TESTS PIN AND DO NOT PIN
-  Pinned: the jitter loop and a steady march of a destination-holder never zero the counter; idle teammates are re-engaged one order each at
-  tick N; the holder is never ordered; the strict > 1 wu line on an idle unit with a jittering holder beside it; a guard-role unit is not
-  idle-eligible so its displacement does not count; a creep of an idle unit is measured from the window start, not from the previous tick.
-  NOT PINNED (a question for the Architect, see the report): a unit that held a destination during the window and then arrives (becomes
-  idle-eligible): whether its displacement since the window start zeroes the counter on arrival (reading the window-start reference
-  literally) or the counter keeps running (reference refreshed while it held a destination). No test here has a unit change from holder to
-  idle inside a window, apart from the two opening ticks, where every unit of the fake engine holds the opening destination for two steps
-  (fakes_reengage.arrive_after = 2) and has not moved.
-  The a-hit-by-either-side rule is pinned in test_reengage.py (the three rewritten fire tests); the strict boundary and the Euclidean
-  distance in test_drift_fix_reengage.py (settle_then rewritten); both are ledger row TD-LAB-REV2-L8M-moved.
+BUILDER MUST UPDATE THESE TWO TEXTS (they state the old reading; no test reads them): scripts/skilllab/contract.py line ~160, the comment
+on REENGAGE_MOVED_WU ('the last reset of the silence counter': say the window start, idle-eligible units only); and
+report.DRAFT_TEXT['DRAFT-reengage-moved-wu'] in scripts/skilllab/report.py ('the displacement over the silence window': same).
+
+WHAT THESE TESTS PIN
+  The jitter loop and a steady march of a destination-holder never zero the counter; idle teammates are re-engaged one order each at tick N;
+  the holder is never ordered; the strict > 1 wu line on an idle unit with a jittering holder beside it; a guard-role unit is not
+  idle-eligible; a creep of an idle unit is measured from the window start, not from the previous tick; the ARRIVAL jump (and its control, a
+  holder that never arrives); a dead unit is not 'displaced' (even killed after a displacement); a hit by the other side refreshes the
+  references (a displacement split across a hit does not add up), for either victim side; a no-op engage's re-arm refreshes them too.
+  Pinned in test_reengage.py (the three rewritten fire tests) and test_drift_fix_reengage.py (the strict boundary, the Euclidean distance);
+  all of it is ledger row TD-LAB-REV2-L8M-moved.
 Fakes: fakes_reengage.ReengageFakeEngine; run/G/N/only/kill from test_reengage.py. set_dest is the destination of a holder; set_pos in the
 fake's step script moves it."""
 import math
@@ -38,7 +47,8 @@ for _p in (ROOT, Path(__file__).resolve().parent):
         sys.path.insert(0, str(_p))
 
 from scripts.skilllab import contract  # noqa: E402
-from test_reengage import G, N, mean_pos, only, run  # noqa: E402
+from fakes_reengage import ReengageFakeEngine  # noqa: E402
+from test_reengage import G, N, mean_pos, only, run, wound  # noqa: E402
 
 pytestmark = pytest.mark.usefixtures("seam")
 
@@ -81,9 +91,9 @@ def merged(*scripts):
     return out
 
 
-def displace(index, dx, dy=0.0):
+def displace(index, dx, dy=0.0, side=0):
     def fn(f):
-        u = f.units_of(0)[index]
+        u = f.units_of(side)[index]
         f.set_pos(u, f.units[u]["x"] + dx, f.units[u]["y"] + dy)
     return fn
 
@@ -222,3 +232,100 @@ def test_a_guard_role_unit_is_not_idle_eligible_so_its_displacement_does_not_cou
 def test_the_threshold_is_still_the_draft_one_wu():
     """The number is unchanged by the ruling (Westley's, DRAFT-reengage-moved-wu): one test also here so that this file alone fails if it moves."""
     assert contract.REENGAGE_MOVED_WU == 1.0
+
+
+# ---------------------------------------------------------------------------------------------------------- arrival (Reading A)
+
+def march_5(k, x0, y0, steps=30):
+    """5 wu a tick for `steps` ticks (150 wu), then it stands where it got to."""
+    return x0 + 5.0 * min(k + 1, steps), y0
+
+
+def drop_destination(f):
+    f.set_dest(holder_of(f), None)
+
+
+@pytest.mark.parametrize("arrives", (True, False))
+def test_a_holder_that_arrives_zeroes_the_counter_on_arrival_and_one_that_does_not_arrive_does_not(arrives):
+    """A unit that just finished its order gets a fresh 40-tick silence before re-engage touches it; the arrival jump is not a bug.
+    Side 0: a holder (unit 0) marches 5 wu a tick for 30 ticks (script keys 0..29 = ticks 1..30, 150 wu from its spawn); three idle teammates
+    stand at the spawn. ARRIVES: at key 30 (tick 31) it drops its destination (it arrived). From tick 31 it is idle-eligible and 150 wu from
+    the window start (the spawn), so the counter is zeroed ON tick 31 and a new window starts there; silent ticks 32..71 count 40 at tick
+    31 + N = 71 (N = 40): ONE event of four orders (the three idle and the arrived holder, which is idle-eligible now) at tick 71. Reading B
+    (a holder's reference refreshed every tick it holds a destination) sees no displacement at tick 31 and orders all four at tick 40.
+    CONTROL (not arrives): the same march and the holder keeps its destination: it is never tested, the three idle units are ordered at N
+    and the holder never (the existing marching-holder case, here beside its twin). Side 1 (nothing moves) is the control: ordered at N."""
+    events = holder_script(0, march_5, 35)
+    if arrives:
+        events = merged(events, {30: [drop_destination]})
+    res, fake = run([G(0, 4), G(1, 2)], cap=N + 45, script_events=events)
+    holder, idle = holder_of(fake), fake.units_of(0)[1:]
+    calls = fake.reengage_calls(0)
+    if arrives:
+        assert {t for t, _i, _g in calls} == {31 + N}, calls
+        assert sorted(u for _t, ids, _g in calls for u in ids) == sorted([holder] + idle)
+    else:
+        assert {t for t, _i, _g in calls} == {N}, calls
+        assert sorted(u for _t, ids, _g in calls for u in ids) == sorted(idle) and orders_to(fake, holder) == []
+    assert all(len(ids) == 1 for _t, ids, _g in calls)
+    assert only(fake.reengage_orders(1))[0] == N
+
+
+# ---------------------------------------------------------------------------------------------------------- dead units
+
+def test_a_unit_displaced_and_killed_in_the_same_step_does_not_stay_displaced():
+    """Dead units are not tested (living units only). An idle unit of side 0 is displaced 5 wu and killed in the same step (script key
+    N - 5 = tick N - 4). The kill is a hit (the other side fired), so both counters restart at tick N - 4 and both sides are ordered at
+    2N - 4 = (N - 4) + N, side 0 without the dead unit. A dead unit tested against a stale reference would stay 'displaced' and zero the
+    counter every tick after: no order for side 0 at all (the audit's scratch: tested dead units never order; the ruled rule: 2N - 4)."""
+    def displace_and_kill(f):
+        u = f.units_of(0)[1]
+        f.set_pos(u, f.units[u]["x"] + 5.0, f.units[u]["y"])
+        f.set_hp(u, 0.0)
+    res, fake = run([G(0, 4), G(1, 2)], cap=3 * N, script_events={N - 5: [displace_and_kill]})
+    dead = fake.units_of(0)[1]
+    calls = fake.reengage_calls(0)
+    assert {t for t, _i, _g in calls} == {2 * N - 4}, calls
+    assert dead not in [u for _t, ids, _g in calls for u in ids] and len(calls) == 3
+    assert only(fake.reengage_orders(1))[0] == 2 * N - 4
+
+
+def test_a_unit_displaced_earlier_and_killed_later_is_not_tested_after_its_death():
+    """The same, one window later: the unit was displaced 0.6 wu at tick 5 (not a move) and is moved a further 0.6 wu (1.2 wu from the
+    window start, which would be a move) in the very step in which it is killed at tick N - 4. The kill restarts the window (a hit); the
+    dead unit is not tested again: both sides are ordered at 2N - 4."""
+    def move_and_kill(f):
+        u = f.units_of(0)[1]
+        f.set_pos(u, f.units[u]["x"] + 0.6, f.units[u]["y"])
+        f.set_hp(u, 0.0)
+    res, fake = run([G(0, 4), G(1, 2)], cap=3 * N, script_events={4: [displace(1, 0.6)], N - 5: [move_and_kill]})
+    assert {t for t, _i, _g in fake.reengage_calls(0)} == {2 * N - 4}
+    assert only(fake.reengage_orders(1))[0] == 2 * N - 4
+
+
+# ---------------------------------------------------------------------------------------------------------- every zeroing refreshes the references
+
+@pytest.mark.parametrize("victim", (0, 1))
+def test_a_displacement_split_across_a_hit_dealt_by_the_other_side_does_not_add_up(victim):
+    """Every zeroing takes a fresh reference. An idle unit (index 1) of `victim`'s side is displaced 0.6 wu at tick N - 9 (not a move),
+    then one of its units loses hp at tick N - 4 (a hit dealt only by the OTHER side: the victim never fired), then the unit is displaced
+    another 0.6 wu at tick N + 6. The hit restarted the window with the displaced position as reference, so the second 0.6 wu is
+    0.6 wu from it and not a move: both sides are ordered at (N - 4) + N = 2N - 4. A reference refreshed only by the side's own fire or move
+    leaves the victim at 1.2 wu from the old reference: a move at tick N + 6, orders at 2N + 6."""
+    sc = ({N - 10: [displace(1, 0.6, side=victim)], N - 5: [wound(victim, 2)], N + 5: [displace(1, 0.6, side=victim)]})
+    res, fake = run([G(0, 4), G(1, 4)], cap=3 * N, script_events=sc)
+    assert {t for t, _i, _g in fake.reengage_calls(victim)} == {2 * N - 4}
+    assert {t for t, _i, _g in fake.reengage_calls(1 - victim)} == {2 * N - 4}
+
+
+def test_a_noop_engage_rearms_with_a_fresh_reference():
+    """The re-arm after a no-op engage is a zeroing and takes a fresh reference too. Every order is a no-op here (arrive_after=None).
+    Side 0 (three idle units): unit 1 is displaced 0.6 wu at tick 10 (not a move), the side is engaged at N, the no-op is found a tick
+    later and the side is re-armed with its units as they stand (0.6 wu from the spawn); unit 1 is then displaced another 0.6 wu at tick
+    N + 5 (0.6 wu from the new reference: not a move). The retry follows after another N silent ticks, at 2N or 2N + 1 (the retry tick
+    is not pinned between those two, test_drift_fix_reengage.py). A re-arm that leaves the old reference (the spawn) sees 1.2 wu at tick
+    N + 5, a move: the retry would be at 2N + 5."""
+    sc = {9: [displace(1, 0.6)], N + 4: [displace(1, 0.6)]}
+    res, fake = run([G(0, 3), G(1, 2)], cap=2 * N + 10, fake=ReengageFakeEngine(arrive_after=None), script_events=sc)
+    ticks = sorted({t for t, _i, _g in fake.reengage_calls(0)})
+    assert ticks[0] == N and len(ticks) == 2 and ticks[1] in (2 * N, 2 * N + 1), ticks
