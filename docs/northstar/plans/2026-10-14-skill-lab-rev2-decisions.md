@@ -223,3 +223,6 @@ Smaller readings confirmed:
 6. Docs: every stale documentation item of the audit is fixed, tests first where a test reads the doc.
 7. G2: the Architect edits the stale "the engine today" sentences in E-13 R-096-02 and E-11 R-087-06 once told the E1 landing sha; the rule bodies stay as rewritten.
 8. P2: the 24 ownerless files the audit found are added to the owning rows (LAB-REV2-FIX, -E1B, -L8, and the rows owning `summary.py` and `guard.py`) in `pieces.toml` before the landing. `owner_lint` and `status_check` are OK before every push.
+
+## 46. Firing arc number (Westley 2026-10-19)
+DRAFT-firing-arc-deg is 30 (Westley: "#5 yes 30 degrees"), no longer 120; the arc family's sweep band is read from 30. Recorded by the Architect; the overseer's code and artifact header follow.
