@@ -2858,16 +2858,3 @@ depends_on = ["VG-E1M", "VG-E1N", "VG-A-routeline", "VG-CONTRACT-layerspot"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the bridge passes structures_changed through (or the feed diffs owners from the full list, the builder picks the smaller); tests first by a different writer: a live-path test feeds a full frame then a delta with one owner flip through the bridge and expects exactly one captured line; no edit to the A8 test; shot = the S-235 play re-run with one flip in frame"
-
-# Record batch (Architect 2026-10-20, Westley may veto): FINDING-gate-lane-plays-scope. Rule text: a landing that changes any file under scenes/tactical_c/**, autoload/**, scenes/settings/** or csrc/** runs every lane's plays; the lane globs stay for everything else; a changed file matching no glob prints the file name in the gate log instead of silently running nothing. Tests first by a different agent. Positive control: a candidate touching only scenes/tactical_c/tactical_view.gd must select every lane's plays, a candidate touching only scenes/galaxy/** must select lane B alone. No launch before Westley's word on the queue.
-[[piece]]
-id = "HARNESS-lane-plays-scope"
-manager = "M0"
-wave = 13
-owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_lane_plays.py"]
-owns_glob = []
-acceptance = ["tests/specfactory/test_lane_plays.py"]
-depends_on = ["HARNESS-C4"]
-status = { state = "queued" }
-tests_pending = true
-size_estimate = "lane_plays.toml gains the all-lanes globs and lane_plays_check selects every lane for a changed file under them and prints the file name of any changed file matching no glob; tests first by a different writer with the two positive controls"
