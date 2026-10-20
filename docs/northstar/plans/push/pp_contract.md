@@ -75,7 +75,7 @@ What the parameters mean:
 - `ROUTE_ACROSS_LAYERS` 1: the router works over cells and layers together, by travel time (brief G4). 0: the router stays on the unit's layer.
 - `ATTACK_MOVE_LEASH`: distance from its anchor beyond which an attack-moving unit drops a target (today `OM_ATTACK_MOVE_LEASH_DIST`).
 - `RETURN_FIRE_FLEE_DIST`: the flinch distance (today `OM_RETURN_FIRE_FLEE_DIST`).
-- `UNIT_COLLISION_RADIUS`: read by the collision pass in `tactical_move.c`. Mission spawn spacing in `mission.c` and `enemy_macro.c` keeps the compile-time constant (A133 Q-C6: the setting reaches the collision pass only).
+- `UNIT_COLLISION_RADIUS`: the body size the sim uses (Q-LAB-02 (a); the Architect, 2026-10-13, widening A133 Q-C6, which had it reach the collision pass only). `tactical_move.c` reads it once per tick and uses it in the steering probe (gather, blocked and sure-blocked tests), the collision pass (pair push, neighbour list reach and slack, mark and sweep), the navmesh margins (a unit moved out of a blocked cell, the nearest reachable point) and the arrival tolerances (the unit's own 1.5 radii, the route-waypoint 2 radii, the group centroid 1.5 radii). Compile-time and unchanged by it: the broad-phase grid layout (base cell, margin), and the spawn spacing in `mission.c`, `enemy_macro.c` and `unit.c`. Changing it between ticks ends the collision pass's settled-state cache.
 - `VANTAGE_MULT`: the vantage multiplier on a cross-layer vision factor, the product capped at 1.0 (today `OM_VANTAGE_CONE_MULTIPLIER`). The vantage rules that read the offset 1 and 2 factors are unchanged.
 - `AOE_DAMAGE_CAP`: area damage total cap as a multiple of base damage.
 - `TARGETING_COHORTS`: `unit_id % N == tick % N` cohort rule.

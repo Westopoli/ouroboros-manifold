@@ -1,5 +1,6 @@
 # spec: docs/northstar/plans/2026-10-07-visible-game-spec.md "Lane H part 3: the spec provenance lint (HARNESS-provenance ...)"
 #       and "Rev 12b rulings on the script drafters' gaps" (HARNESS-provenance paragraph) and "Rev 12c (2026-10-12), batch 2"
+# Rule pins: R-990-01@?, R-990-02@?, R-991-01@?
 """Tests for scripts/specfactory/spec_provenance.py (piece HARNESS-provenance, method rev 3).
 
 Westley's recorded words (spec, Lane H part 3): "#14: approved" (2026-10-11).
@@ -10,6 +11,11 @@ blank-separated paragraph, whole words; a heading that claims approval with no
 file:line fails by reason (3), which is why rev 10 line 86 counts"; "The
 acceptance case asserts at least 39 reports on the rev 10 fixture; fewer is a
 STOP that says the lint is weaker than the audit, not a tune."
+
+HARNESS-C1a (docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1, rev 3a) extends this file at
+the bottom: reason (8) (a [B R-id] tag carries a pin, "no pin" / "pin is stale"), a multi-id [B] tag checked per id,
+and the heading exemption of reason (1). Fixture ids are pinned @? above: the fixture epics are the only place
+R-990-01 has a rule line. Moved under ledger row TD-HARNESS-C1: PASSING_SPEC carries the pin in its [B] tag.
 
 Each case builds a throwaway tree in tmp_path (docs/bible/epics/E-99-test.md
 with rule R-990-01, a register with a closed row Q-990-01 and an open row
@@ -49,12 +55,17 @@ LEDGER_TEXT = (
     "| day31 | DRAFT-test-thing (named draft) | x.c | 5 units. Architect draft. |\n"
 )
 
+# Section 3 of the harness enforcement spec: sha256(" ".join(rule_line_after_id.split()))[:6] of the rule line above.
+PIN_990_01 = hashlib.sha256(" ".join(EPIC_TEXT.splitlines()[2].split(None, 2)[2].split()).encode("utf-8")
+                            ).hexdigest()[:6]
+STALE_PIN = "000000"
+
 # A ten-line spec; every behaviour paragraph carries exactly one tag.
 PASSING_SPEC = (
     "# Test spec\n\n"
     "The tile shows 5 wu of rubble when asked. [W Q-990-01]\n\n"
     "The tile refuses 3 clicks. [W 2026-10-11: \"ok\"]\n\n"
-    "The lot draws 7 rows. [B R-990-01]\n\n"
+    f"The lot draws 7 rows. [B R-990-01@{PIN_990_01}]\n\n"
     "The view sees 12 cells. [P csrc/x.c:12]\n\n"
     "The default is 4 ticks. [DRAFT-test-thing]\n"
 )
@@ -279,3 +290,95 @@ def test_acceptance_rev10_fixture_reports_at_least_39(tmp_path):
              and re.search(r"\b117\b", l.split("(7)", 1)[1])
              and re.search(r"\b149\b", l.split("(7)", 1)[1])]
     assert clash, "no (7) finding naming both line 117 and line 149\n" + res.stdout
+
+
+# ---- HARNESS-C1a: reason (8) pins, multi-id tags, heading exemption --------------------
+# Spec sentences (HARNESS-C1a, rev 3a): "New reason (8), emitted beside reason 4: `[B R-id] has no pin` when the
+# pin group is empty, and `[B R-id@xxxxxx] pin is stale: the rule line is now yyyyyy` when it differs; an id
+# absent from the epics is reason 4's finding only."; "A `[B ...]` tag may name several rules; each id carries its
+# own pin"; "Reason 1 skips heading units: a heading is a title, not a behaviour unit".
+
+def test_control_pin_constant_is_the_known_value():
+    # Green today: the in-file formula gives the value the rule_pins tests use as their literal.
+    assert PIN_990_01 == "b2a3c8"
+    assert STALE_PIN != PIN_990_01
+
+
+def test_control_pinned_tag_with_the_right_pin_still_passes(tmp_path):
+    # Green today and after: a pin group on a present rule is no finding (reasons 4 and 8 both quiet).
+    spec, res, found = _run_text(tmp_path, f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{PIN_990_01}]\n")
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert res.stdout.strip() == ""
+
+
+def test_control_multi_id_tag_checks_every_id_for_reason_4(tmp_path):
+    # Green today and after (audit M5): the id after the comma is reason 4's, the present id is not.
+    text = "# Test spec\n\nThe lot draws 7 rows. [B R-990-01, R-990-02: words]\n"
+    spec, res, found = _run_text(tmp_path, text)
+    r4 = [l for _, n, l in found if n == 4]
+    assert len(r4) == 1 and "R-990-02" in r4[0] and "R-990-01" not in r4[0], res.stdout
+
+
+def test_control_backticked_b_tag_stays_invisible_to_the_lint(tmp_path):
+    # Green today and after: a tag in backticks is blanked (CODE_SPAN), so the unit is untagged (reason 1);
+    # this is the blindness `rule_pins.py unwrap` removes, and the reason `unwrap` leaves placeholders alone.
+    text = "# Test spec\n\nThe lot draws 7 rows. `[B R-990-01]`\n"
+    spec, res, found = _run_text(tmp_path, text)
+    assert (3, 1) in [(l, n) for l, n, _ in found], res.stdout
+
+
+def test_control_reason1_flags_a_numbered_paragraph(tmp_path):
+    # Green today and after: the text of the heading case below, as a paragraph, is a reason 1 finding.
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\nHeading 2026\n")
+    assert (3, 1) in [(l, n) for l, n, _ in found], res.stdout
+
+
+def test_reason8_tag_without_a_pin_is_a_finding(tmp_path):
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\nThe lot draws 7 rows. [B R-990-01]\n")
+    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (8)") and "[B R-990-01] has no pin" in l for _, _, l in found), res.stdout
+
+
+def test_reason8_stale_pin_names_both_pins(tmp_path):
+    text = f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{STALE_PIN}]\n"
+    spec, res, found = _run_text(tmp_path, text)
+    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    want = f"[B R-990-01@{STALE_PIN}] pin is stale: the rule line is now {PIN_990_01}"
+    assert any(l.startswith(f"{spec}:3: (8)") and want in l for _, _, l in found), res.stdout
+
+
+def test_reason8_multi_id_tag_checks_each_id_and_an_absent_id_is_reason_4_only(tmp_path):
+    text = f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{STALE_PIN}, R-990-02@aaaaaa: words]\n"
+    spec, res, found = _run_text(tmp_path, text)
+    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    r8 = [l for _, n, l in found if n == 8]
+    r4 = [l for _, n, l in found if n == 4]
+    assert len(r8) == 1 and "R-990-01@" + STALE_PIN in r8[0] and "R-990-02" not in r8[0], res.stdout
+    assert len(r4) == 1 and "R-990-02" in r4[0], res.stdout
+
+
+def test_reason8_editing_the_rule_line_makes_a_passing_spec_fail(tmp_path):
+    text = f"# Test spec\n\nThe lot draws 7 rows. [B R-990-01@{PIN_990_01}]\n"
+    spec, res, found = _run_text(tmp_path, text)
+    assert res.returncode == 0, res.stdout + res.stderr          # passes on the fixture rule line
+    epic = spec.parent / "docs" / "bible" / "epics" / "E-99-test.md"
+    edited = EPIC_TEXT.replace("never form rings", "never form squares")
+    epic.write_text(edited)
+    new_pin = hashlib.sha256(" ".join(edited.splitlines()[2].split(None, 2)[2].split()).encode("utf-8")
+                             ).hexdigest()[:6]
+    assert new_pin != PIN_990_01
+    res = _lint(spec)
+    assert "(8)" in res.stdout, "reason (8) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    want = f"[B R-990-01@{PIN_990_01}] pin is stale: the rule line is now {new_pin}"
+    assert any(f"{spec}:3: (8)" in l and want in l for l in res.stdout.splitlines()), res.stdout
+
+
+def test_reason1_skips_a_heading_unit(tmp_path):
+    # "a `### Heading 2026` unit gives no reason 1" (a title, not a behaviour unit).
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\n### Heading 2026\n")
+    assert [n for _, n, _ in found if n == 1] == [], res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
