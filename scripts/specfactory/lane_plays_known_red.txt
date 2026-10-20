@@ -2,6 +2,4 @@
 # then "# reason". A red not listed rejects; a listed play that passes rejects too (trim the list).
 tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # S-132 finding: distinct units ('50','53'),('77','80') project to one pixel on the ground view; Q-132-03 (Architect 2026-10-09)
 tests/qa/desktop/plays/E/s218.py::test_s218_strongpoints_on_slopes  # E1l (spec line 180) StrongpointLayer + E1p qa_state `strongpoints`: not built, qa_state has no `strongpoints` key
-tests/qa/desktop/plays/F/S-143.py::test_s143_lobby_shows_common_era_set  # red by design until FU-F-s143-common-eras: owned_eras and common_eras are not in the lobby qa_state (spec lane F part 1, Rev 12b F-SKEL (6))
-tests/qa/desktop/plays/F/S-241.py::test_s241_lobby_offers_teams_of_2_and_4  # red by design until FU-F-s241-teamsize: no TeamSize control and no team_sizes key (spec lane F part 1, Rev 12b F-SKEL (6))
 tests/qa/desktop/plays/F/S-140.py::test_s140_move_order_in_a_match_moves_the_units_on_both_peers  # FINDING-S140-move-no-progress

@@ -1,0 +1,19 @@
+{
+  "launch": "LAUNCH OK 374c9ae1dfb8a643b0e79ff883f80d5e9553ed2a46c09f34634a4acffdaffb44 -",
+  "statusDriftOk": false,
+  "repinOrder": "HARNESS-REPIN lands after LAB-REV2-L7 unless the lab overseer says otherwise (Architect 2026-10-19).",
+  "pushMain": true,
+  "stack": true,
+  "rulings": {"C235": "push/vg-harness-c235-rulings"},
+  "skip": {
+    "tests:C1a": "push/vg-harness-c1a-tests",
+    "build:C1a": "push/vg-harness-c1a",
+    "check:C1a": "ok",
+    "clerk:C1a": "push/vg-harness-c1a-land",
+    "tests:C1b": "push/vg-harness-c1b-tests",
+    "build:C1b": "push/vg-harness-c1b-fix1",
+    "check:C1b": "ok",
+    "clerk:C1b": "push/vg-harness-c1b-land",
+    "tests:C235": "push/vg-harness-c235-tests"
+  }
+}
