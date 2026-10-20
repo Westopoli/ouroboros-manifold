@@ -25,7 +25,7 @@ import subprocess
 import pytest
 
 from conftest import (
-    OMArchetype, OMEdge, OMFeature, OMTier, OMVec2,
+    OMArchetype, OMEdge, OMFeature, OMTier, OMVec2, load_lib,
     set_edge, set_faction, set_owner, set_region,
 )
 from test_VG_E_e7 import _bind as e7_bind, oracle_units, owners_of, roster_of  # TD-VG-E-34: the E7 starting-force oracle
@@ -199,6 +199,9 @@ def test_every_unit_spawns_on_walkable_ground_and_objective_is_reachable(lib, wo
     structure placement (the ground era caps the strongpoints at the slope count, R-218-01, so its p and e differ from the space
     era's). The expected count is the space era's enemy units (unchanged by E7) plus the ground world's start_units: it was the
     space era's total, which held while both eras spawned all of F. The premise (F, p, e, share, start_units) is in the message."""
+    # See also: test_VG_E_e7.py `lib` fixture (TD-VG-E-34): e7_bind retypes om_terrain_slope_at, so it binds a private handle,
+    # never the session lib other modules' tests share.
+    lib = load_lib()
     e7_bind(lib)
     for seed in SEEDS:
         space = _scene(lib, world_factory, ground=False, archetype=archetype, seed=seed)
