@@ -209,3 +209,37 @@ Smaller readings confirmed:
 7. Unequal-count groups of one type use the plain mean.
 8. One blob per (type, layer) only when a type's layers differ, else one per type (decision 25 reads so).
 9. The parity default world is the open-ground mirror blob, 16 v 16, tick 0, arc 360.
+
+## 45. Rulings after the second drift audit of push/labrev2-lab c2d9bce8 (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+1. D1: the blind-post shift (decision 43 item 6, decision 44 item 2) is reported as artifact lines "naive <role>: post shifted <wu> wu", one per (play, layout, role), and as a `shifted_posts` field in the smoke and sweep summaries. No CSV column.
+2. D2: decision 34 item 3 (ground-scene detection, the slope-divisor header line, its positive test) is withdrawn for batch one. The ground scene, its slope-divisor header line, the detection and its positive test are batch two's, built with the ground family. The README says so.
+3. D3: the README and the ground README reword "the first batch reports the inert knobs" to "batch two".
+4. X1: layouts 81 and 78 refuse the two vision plays (`s3_layer_above`, `s3_types_by_reach`) at the play's own pre-flight (`no_fit`), so batch one's vision cells effectively run on layout 192 only. Accepted for the first run. The artifact header and the README say so: "vision cells: layout 192 only; 81 and 78 refuse the play: no_fit". A probe report goes to Westley: a short table of which draw layouts fit the vision plays (and `s3_over_the_choke`, `s2_concave`), with a count per layout of how many of batch one's plays fit, so he can pick replacements that fit the most. No layout swap without Westley.
+5. N1 to N4: names and the roster table.
+   - DRAFT-* names in code: DRAFT-mix-M1..M4, DRAFT-mix-M3b, DRAFT-behind-cover 150, DRAFT-ambush-behind 200, DRAFT-coarse-step, DRAFT-control-max-ticks, DRAFT-probe-count-bound.
+   - The probe-count bound 14 is derived from `COARSE_STEP` in the tests, not written as a literal.
+   - The roster mixes become ONE data table in `plays_space.py` with a `used_in` column (plays) and an `enabled` flag. New mixes M5 to M9 are added there once Westley says go on the roster analysis (decision 42's heads-up).
+   - A small refactor piece, tests first, no number changes.
+6. Docs: every stale documentation item of the audit is fixed, tests first where a test reads the doc.
+7. G2: the Architect edits the stale "the engine today" sentences in E-13 R-096-02 and E-11 R-087-06 once told the E1 landing sha; the rule bodies stay as rewritten.
+8. P2: the 24 ownerless files the audit found are added to the owning rows (LAB-REV2-FIX, -E1B, -L8, and the rows owning `summary.py` and `guard.py`) in `pieces.toml` before the landing. `owner_lint` and `status_check` are OK before every push.
+
+## 46. Firing arc number (Westley 2026-10-19)
+DRAFT-firing-arc-deg is 30 (Westley: "#5 yes 30 degrees"), no longer 120; the arc family's sweep band is read from 30. Recorded by the Architect; the overseer's code and artifact header follow.
+
+## 47. Arc grid from 30, T1 as a strict expected failure, five small readings (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+1. Arc family, following decision 46: base 30 degrees (Westley's firing arc). Grid 30 x {0.25, 0.5, 1, 2, 4} = 7.5, 15, 30, 60, 120 degrees, the band as for every family (ruling 11: start at the bible's value, step inside 0.25x to 4x). The null control stays 360 = unset. The tests that pin the 360-based grid (360, 270, 180, 120, 90) move under one ruler row (assumption changed by decision 46), rewritten by the test writer, not the builder. The family stays skipped in batch one while E2 is absent.
+2. LAB-REV3 T1 (the coverage test) lands with piece A as a strict expected failure whose reason names every uncovered cell, reach pairing and layer: a documented red with its finding rows `FINDING-lab-d1` and `FINDING-lab-d2`, not a skip. Piece B removes the marker and T1 passes plain. The landing report of A lists T1 under known red with that reason. The LAB-REV3 plan file is updated: its DRAFT line saying A lands T1 expected-red is this ruling.
+3. Smaller readings confirmed:
+   - `shift_wu` in `shifted_posts` is the largest `placement_shift` over the headcounts built for that baseline.
+   - The vision-layouts header sentence (decision 45 item 4) reads the layouts that ran from the vision family rows, not a fixed list.
+   - `DRAFT-probe-count-bound` has no code line (the bound is derived in the tests); the header text "(at most 14)" becomes "(at most 9 at COARSE_STEP 8, derived)".
+   - `DRAFT-behind-cover`, `DRAFT-ambush-behind` and `DRAFT-mix-*` names join the artifact header DRAFT list.
+   - The arc header name stays `DRAFT-firing-arc-deg`, but the entry reads "Westley's ruling 30 deg".
+
+## 48. Firing arc lower bound 5 (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+Numbered 48: the highest decision on origin/main is 47.
+1. `OM_TP_FIRING_ARC_DEG` lo becomes 5 (was 10), hi stays 360, default 360. It is an engine-safety bound, not a design number: a 5 degree arc still contains a facing direction and the sin/cos tables hold at that width. Westley's number is the 30 degree base (decision 46); the band gives 7.5 as the grid's floor (decision 47), and the bound sits under it.
+2. lo is rewritten in E0's spec row, in `tests/skilllab/fakes_trace.py` and in the E0 branch tests under a ruler row (assumption changed by decision 47), before E0 lands.
+3. The engine refuses a value below lo as today: no clamp. An out-of-band value is a settings error, not a silent change.
+4. The grid order ascending (7.5 to 120) stands.
