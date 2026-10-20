@@ -11,7 +11,7 @@ the built tree 2026-10-19: camera, canvas, commands_sent_last_order, error_panel
 last_command, local_faction, objects_px, plants, scale, scene, selected, settlement_lots, space3d, tick, unit_count, units,
 units_in_last_command, units_px). `unit_count` counts every visible unit (the enemy is fogged at tick 0), so it is not the own count.
 
-Premise (Architect rulings 2026-10-19, (a); ledger row number pending): the share is NOT read from qa_state. qa_state `inventory.structures` counts the
+Premise (Architect rulings 2026-10-19, (a); TD-VG-E-33): the share is NOT read from qa_state. qa_state `inventory.structures` counts the
 structures the player can see, not the contested table the rule reads (the earlier derivation of share 1.0 from it was wrong). The
 premise constants below come from the C table, independently re-dumped on the tests-branch tree (push/vg-e7r-rulings, ABI 7, no E7)
 for seed 1, greek_placeholder, after New Game, step 10, Mission, Deploy (set_seed 80 regions, mission_start era_kind 1): the mission is
