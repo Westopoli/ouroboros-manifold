@@ -1,3 +1,4 @@
+# Rule pins: R-164-01@511d57
 # spec: docs/northstar/plans/skilllab-harness-spec.md clause 24 (cross-layer 16 v 16 fixture, side 0 one layer up); ledger FINDING-lab-vision-poscontrol (Architect ruling 2026-10-20, option (a)); piece LAB-VISION-CONTROL
 """LAB-VISION-CONTROL, the fast half (no engine): the vision family's positive control is ONE designated fight on a designated play,
 `sweep.VISION_CONTROL_PLAY`, run the way `sweep.DAMAGE_CONTROL_PLAY` is run (Control.play set, whatever plays the run covers).
