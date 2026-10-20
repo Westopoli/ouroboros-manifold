@@ -1,0 +1,4883 @@
+{
+ "M0": {
+  "fixed16": {
+   "outcomes": {
+    "side0": 5,
+    "side1": 3
+   },
+   "agreement": {
+    "both_right": 5,
+    "n/a": 2,
+    "both_wrong": 1
+   },
+   "mean_margin": 0.013,
+   "mean_ticks": 3302,
+   "rows": [
+    {
+     "outcome": "side0",
+     "margin": 0.175,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3245,
+     "fw": [
+      8.8,
+      8.2
+     ],
+     "ww": [
+      8.8,
+      8.2
+     ],
+     "fs": [
+      1271.5,
+      1049.8
+     ],
+     "ws": [
+      1271.5,
+      1049.8
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.112,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3892,
+     "fw": [
+      8.5,
+      8.0
+     ],
+     "ww": [
+      8.5,
+      8.0
+     ],
+     "fs": [
+      1274.5,
+      1128.5
+     ],
+     "ws": [
+      1274.5,
+      1128.5
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 30
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.177,
+     "surv": [
+      0,
+      5
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3355,
+     "fw": [
+      8.2,
+      8.2
+     ],
+     "ww": [
+      8.2,
+      8.2
+     ],
+     "fs": [
+      1048.5,
+      1273.5
+     ],
+     "ws": [
+      1048.5,
+      1273.5
+     ],
+     "pc": "tie",
+     "pt": "tie",
+     "agree": "n/a",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.178,
+     "surv": [
+      4,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3668,
+     "fw": [
+      8.8,
+      8.8
+     ],
+     "ww": [
+      8.8,
+      8.8
+     ],
+     "fs": [
+      1275.2,
+      1047.5
+     ],
+     "ws": [
+      1275.2,
+      1047.5
+     ],
+     "pc": "tie",
+     "pt": "tie",
+     "agree": "n/a",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.24,
+     "surv": [
+      6,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2925,
+     "fw": [
+      7.5,
+      8.8
+     ],
+     "ww": [
+      7.5,
+      8.8
+     ],
+     "fs": [
+      1267.2,
+      965.5
+     ],
+     "ws": [
+      1267.2,
+      965.5
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.184,
+     "surv": [
+      6,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3183,
+     "fw": [
+      9.0,
+      8.8
+     ],
+     "ww": [
+      9.0,
+      8.8
+     ],
+     "fs": [
+      1275.0,
+      1040.5
+     ],
+     "ws": [
+      1275.0,
+      1040.5
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 30
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.168,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3552,
+     "fw": [
+      8.5,
+      9.2
+     ],
+     "ww": [
+      8.5,
+      9.2
+     ],
+     "fs": [
+      1058.2,
+      1273.8
+     ],
+     "ws": [
+      1058.2,
+      1273.8
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 30
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.439,
+     "surv": [
+      0,
+      10
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2598,
+     "fw": [
+      7.5,
+      9.2
+     ],
+     "ww": [
+      7.5,
+      9.2
+     ],
+     "fs": [
+      712.0,
+      1272.2
+     ],
+     "ws": [
+      712.0,
+      1272.2
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 30
+    }
+   ]
+  },
+  "scan": {
+   "beats": 16,
+   "loses_to": 17,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 5.7,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.719,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_wrong": 3,
+      "both_right": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": true,
+     "defect": false,
+     "m": 0.178,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 17,
+     "won": false,
+     "defect": false,
+     "m": -0.044,
+     "out": {
+      "side1": 2,
+      "side0": 2
+     },
+     "agree": {
+      "both_wrong": 3,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 18,
+     "won": false,
+     "defect": false,
+     "m": -0.259,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "n/a": 1,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 20,
+     "won": false,
+     "defect": false,
+     "m": -0.403,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "n/a": 1,
+      "both_wrong": 1,
+      "both_right": 2
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.566,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.696,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.77,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.821,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "M1": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 6,
+    "side0": 2
+   },
+   "agreement": {
+    "both_wrong": 6,
+    "both_right": 2
+   },
+   "mean_margin": -0.026,
+   "mean_ticks": 3121,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.009,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 4007,
+     "fw": [
+      13.2,
+      11.5
+     ],
+     "ww": [
+      15.5,
+      13.9
+     ],
+     "fs": [
+      824.0,
+      829.8
+     ],
+     "ws": [
+      885.2,
+      888.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.048,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3216,
+     "fw": [
+      14.0,
+      15.8
+     ],
+     "ww": [
+      16.9,
+      18.9
+     ],
+     "fs": [
+      776.5,
+      828.0
+     ],
+     "ws": [
+      841.9,
+      880.2
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.052,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2824,
+     "fw": [
+      17.0,
+      15.8
+     ],
+     "ww": [
+      20.4,
+      19.1
+     ],
+     "fs": [
+      760.5,
+      832.5
+     ],
+     "ws": [
+      818.6,
+      893.0
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.054,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3285,
+     "fw": [
+      12.5,
+      16.5
+     ],
+     "ww": [
+      14.8,
+      20.8
+     ],
+     "fs": [
+      832.2,
+      762.2
+     ],
+     "ws": [
+      894.5,
+      825.1
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.018,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3378,
+     "fw": [
+      15.8,
+      13.0
+     ],
+     "ww": [
+      19.1,
+      15.5
+     ],
+     "fs": [
+      812.5,
+      836.5
+     ],
+     "ws": [
+      873.6,
+      901.5
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.011,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3295,
+     "fw": [
+      18.0,
+      12.8
+     ],
+     "ww": [
+      22.5,
+      14.9
+     ],
+     "fs": [
+      817.8,
+      836.0
+     ],
+     "ws": [
+      877.3,
+      896.8
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.18,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2259,
+     "fw": [
+      15.5,
+      15.2
+     ],
+     "ww": [
+      19.1,
+      18.5
+     ],
+     "fs": [
+      605.0,
+      826.8
+     ],
+     "ws": [
+      667.0,
+      882.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.059,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2705,
+     "fw": [
+      15.0,
+      13.8
+     ],
+     "ww": [
+      18.0,
+      16.5
+     ],
+     "fs": [
+      826.5,
+      753.0
+     ],
+     "ws": [
+      887.0,
+      812.8
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 25
+    }
+   ]
+  },
+  "scan": {
+   "beats": 14,
+   "loses_to": 15,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 2.3,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.676,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.395,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.232,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "count_right_type_wrong": 1,
+      "both_right": 3
+     }
+    },
+    {
+     "h": 15,
+     "won": false,
+     "defect": false,
+     "m": 0.085,
+     "out": {
+      "side0": 3,
+      "side1": 1
+     },
+     "agree": {
+      "both_wrong": 4
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.022,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_wrong": 3,
+      "both_right": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.411,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "both_wrong": 2
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.577,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.69,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.772,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "M2": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 1,
+    "side0": 7
+   },
+   "agreement": {
+    "both_wrong": 3,
+    "both_right": 5
+   },
+   "mean_margin": 0.074,
+   "mean_ticks": 2824,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.177,
+     "surv": [
+      0,
+      5
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2370,
+     "fw": [
+      12.8,
+      9.5
+     ],
+     "ww": [
+      14.9,
+      10.9
+     ],
+     "fs": [
+      725.5,
+      955.0
+     ],
+     "ws": [
+      828.2,
+      1049.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.135,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2658,
+     "fw": [
+      13.2,
+      11.0
+     ],
+     "ww": [
+      15.6,
+      12.8
+     ],
+     "fs": [
+      966.8,
+      780.8
+     ],
+     "ws": [
+      1058.1,
+      882.8
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.163,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2468,
+     "fw": [
+      17.2,
+      16.0
+     ],
+     "ww": [
+      20.9,
+      19.4
+     ],
+     "fs": [
+      965.0,
+      743.5
+     ],
+     "ws": [
+      1060.9,
+      843.2
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.105,
+     "surv": [
+      3,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3169,
+     "fw": [
+      14.8,
+      16.5
+     ],
+     "ww": [
+      16.5,
+      19.6
+     ],
+     "fs": [
+      960.5,
+      826.2
+     ],
+     "ws": [
+      1055.4,
+      917.9
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.058,
+     "surv": [
+      3,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3057,
+     "fw": [
+      13.0,
+      11.2
+     ],
+     "ww": [
+      15.1,
+      13.5
+     ],
+     "fs": [
+      954.5,
+      879.2
+     ],
+     "ws": [
+      1050.5,
+      977.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.166,
+     "surv": [
+      4,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2701,
+     "fw": [
+      18.2,
+      13.2
+     ],
+     "ww": [
+      21.5,
+      15.5
+     ],
+     "fs": [
+      960.8,
+      749.5
+     ],
+     "ws": [
+      1051.6,
+      844.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.052,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3389,
+     "fw": [
+      15.0,
+      16.0
+     ],
+     "ww": [
+      17.4,
+      19.0
+     ],
+     "fs": [
+      956.2,
+      888.8
+     ],
+     "ws": [
+      1052.4,
+      982.8
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 30
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.086,
+     "surv": [
+      3,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2784,
+     "fw": [
+      12.8,
+      12.0
+     ],
+     "ww": [
+      15.2,
+      14.0
+     ],
+     "fs": [
+      956.2,
+      849.8
+     ],
+     "ws": [
+      1052.6,
+      946.2
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 25
+    }
+   ]
+  },
+  "scan": {
+   "beats": 14,
+   "loses_to": 15,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 3.0,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.715,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.407,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.251,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "count_right_type_wrong": 1,
+      "both_right": 3
+     }
+    },
+    {
+     "h": 15,
+     "won": false,
+     "defect": false,
+     "m": 0.056,
+     "out": {
+      "side0": 3,
+      "side1": 1
+     },
+     "agree": {
+      "both_wrong": 2,
+      "both_right": 2
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": 0.045,
+     "out": {
+      "side1": 1,
+      "side0": 3
+     },
+     "agree": {
+      "both_wrong": 1,
+      "both_right": 3
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.453,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 1,
+      "both_wrong": 3
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.618,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.721,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.795,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "M3": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 7,
+    "side0": 1
+   },
+   "agreement": {
+    "n/a": 6,
+    "count_wrong_type_right": 2
+   },
+   "mean_margin": -0.051,
+   "mean_ticks": 1240,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.097,
+     "surv": [
+      0,
+      4
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1105,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      21.2,
+      17.1
+     ],
+     "fs": [
+      368.0,
+      418.0
+     ],
+     "ws": [
+      425.6,
+      448.0
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.068,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1341,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      18.2,
+      22.1
+     ],
+     "fs": [
+      366.8,
+      412.2
+     ],
+     "ws": [
+      395.0,
+      475.4
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.01,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1797,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      16.0,
+      24.0
+     ],
+     "fs": [
+      428.0,
+      435.2
+     ],
+     "ws": [
+      429.0,
+      520.2
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.138,
+     "surv": [
+      4,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 855,
+     "fw": [
+      16.2,
+      16.5
+     ],
+     "ww": [
+      24.1,
+      23.4
+     ],
+     "fs": [
+      341.0,
+      305.2
+     ],
+     "ws": [
+      422.6,
+      377.8
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.032,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1514,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      16.9,
+      18.9
+     ],
+     "fs": [
+      372.2,
+      382.8
+     ],
+     "ws": [
+      383.8,
+      414.4
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.119,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1231,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      16.2,
+      24.2
+     ],
+     "fs": [
+      324.5,
+      415.8
+     ],
+     "ws": [
+      341.5,
+      483.6
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.132,
+     "surv": [
+      0,
+      4
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1085,
+     "fw": [
+      16.5,
+      16.2
+     ],
+     "ww": [
+      19.1,
+      24.2
+     ],
+     "fs": [
+      353.8,
+      421.2
+     ],
+     "ws": [
+      404.2,
+      505.1
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.089,
+     "surv": [
+      0,
+      4
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 989,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      22.9,
+      16.0
+     ],
+     "fs": [
+      361.8,
+      361.2
+     ],
+     "ws": [
+      435.5,
+      369.2
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 15,
+   "loses_to": 16,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 1.7,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.774,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.53,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.354,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 15,
+     "won": true,
+     "defect": false,
+     "m": 0.257,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.079,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "n/a": 4
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.637,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.786,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.867,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.904,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "M3b": {
+  "fixed16": {
+   "outcomes": {
+    "side0": 2,
+    "side1": 6
+   },
+   "agreement": {
+    "n/a": 4,
+    "count_right_type_wrong": 2,
+    "both_right": 2
+   },
+   "mean_margin": -0.065,
+   "mean_ticks": 1366,
+   "rows": [
+    {
+     "outcome": "side0",
+     "margin": 0.011,
+     "surv": [
+      1,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1915,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      19.9,
+      17.2
+     ],
+     "fs": [
+      432.2,
+      422.2
+     ],
+     "ws": [
+      497.8,
+      457.0
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.057,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1095,
+     "fw": [
+      16.0,
+      16.2
+     ],
+     "ww": [
+      20.0,
+      17.2
+     ],
+     "fs": [
+      360.2,
+      370.0
+     ],
+     "ws": [
+      408.0,
+      405.5
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.03,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1659,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      18.0,
+      21.9
+     ],
+     "fs": [
+      377.2,
+      433.5
+     ],
+     "ws": [
+      430.2,
+      503.6
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.13,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1162,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      23.8,
+      16.9
+     ],
+     "fs": [
+      353.8,
+      395.0
+     ],
+     "ws": [
+      412.4,
+      430.4
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.129,
+     "surv": [
+      0,
+      5
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 981,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      16.9,
+      16.0
+     ],
+     "fs": [
+      319.0,
+      425.0
+     ],
+     "ws": [
+      357.4,
+      433.5
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.227,
+     "surv": [
+      0,
+      7
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 921,
+     "fw": [
+      16.0,
+      16.5
+     ],
+     "ww": [
+      16.9,
+      23.6
+     ],
+     "fs": [
+      312.0,
+      416.5
+     ],
+     "ws": [
+      300.6,
+      492.3
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.043,
+     "surv": [
+      1,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1263,
+     "fw": [
+      16.5,
+      16.2
+     ],
+     "ww": [
+      16.8,
+      20.2
+     ],
+     "fs": [
+      355.5,
+      387.2
+     ],
+     "ws": [
+      388.0,
+      439.4
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.002,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1930,
+     "fw": [
+      16.2,
+      16.5
+     ],
+     "ww": [
+      22.1,
+      22.2
+     ],
+     "fs": [
+      407.5,
+      421.8
+     ],
+     "ws": [
+      487.6,
+      491.3
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 15,
+   "loses_to": 16,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 1.7,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.761,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.462,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.381,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 15,
+     "won": true,
+     "defect": false,
+     "m": 0.173,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.101,
+     "out": {
+      "side0": 1,
+      "side1": 3
+     },
+     "agree": {
+      "n/a": 2,
+      "count_right_type_wrong": 1,
+      "both_right": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.648,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.778,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.863,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.901,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "M4": {
+  "fixed16": {
+   "outcomes": {
+    "side0": 2,
+    "side1": 5,
+    "cap": 1
+   },
+   "agreement": {
+    "n/a": 7,
+    "count_wrong_type_right": 1
+   },
+   "mean_margin": -0.028,
+   "mean_ticks": 9617,
+   "rows": [
+    {
+     "outcome": "side0",
+     "margin": 0.172,
+     "surv": [
+      3,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8961,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      21.2,
+      18.0
+     ],
+     "fs": [
+      2774.8,
+      2060.0
+     ],
+     "ws": [
+      2903.7,
+      2268.6
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.13,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 9711,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      19.1,
+      22.1
+     ],
+     "fs": [
+      2235.2,
+      2786.0
+     ],
+     "ws": [
+      2450.9,
+      2942.1
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.134,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 9020,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      16.0,
+      22.2
+     ],
+     "fs": [
+      2210.5,
+      2771.5
+     ],
+     "ws": [
+      2417.6,
+      2904.1
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "cap",
+     "margin": 0.023,
+     "surv": [
+      2,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 12000,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      24.1,
+      23.1
+     ],
+     "fs": [
+      2725.5,
+      2616.0
+     ],
+     "ws": [
+      2934.4,
+      2814.6
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.037,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 12000,
+     "fw": [
+      16.2,
+      16.2
+     ],
+     "ww": [
+      18.9,
+      18.2
+     ],
+     "fs": [
+      2638.8,
+      2783.0
+     ],
+     "ws": [
+      2773.7,
+      2921.2
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.183,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8242,
+     "fw": [
+      16.5,
+      16.5
+     ],
+     "ww": [
+      17.4,
+      22.8
+     ],
+     "fs": [
+      2018.5,
+      2752.5
+     ],
+     "ws": [
+      2219.4,
+      2882.9
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.133,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8810,
+     "fw": [
+      16.5,
+      16.2
+     ],
+     "ww": [
+      19.1,
+      22.5
+     ],
+     "fs": [
+      2228.0,
+      2777.2
+     ],
+     "ws": [
+      2446.0,
+      2916.4
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.194,
+     "surv": [
+      4,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8194,
+     "fw": [
+      16.0,
+      16.0
+     ],
+     "ww": [
+      22.0,
+      16.0
+     ],
+     "fs": [
+      2783.8,
+      1966.2
+     ],
+     "ws": [
+      2918.7,
+      2177.6
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 15,
+   "loses_to": 16,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 8.3,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.762,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.437,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.301,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 15,
+     "won": true,
+     "defect": false,
+     "m": 0.288,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.045,
+     "out": {
+      "side0": 1,
+      "side1": 3
+     },
+     "agree": {
+      "n/a": 4
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.506,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.707,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.804,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.859,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "N1_RBo": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 6,
+    "side0": 1,
+    "cap": 1
+   },
+   "agreement": {
+    "count_wrong_type_right": 2,
+    "n/a": 3,
+    "both_right": 1,
+    "count_right_type_wrong": 2
+   },
+   "mean_margin": -0.099,
+   "mean_ticks": 2365,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.196,
+     "surv": [
+      0,
+      6
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 838,
+     "fw": [
+      18.2,
+      17.5
+     ],
+     "ww": [
+      13.1,
+      16.1
+     ],
+     "fs": [
+      314.0,
+      385.0
+     ],
+     "ws": [
+      234.6,
+      351.6
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.107,
+     "surv": [
+      3,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1243,
+     "fw": [
+      18.0,
+      18.0
+     ],
+     "ww": [
+      12.0,
+      10.0
+     ],
+     "fs": [
+      439.8,
+      391.2
+     ],
+     "ws": [
+      319.4,
+      265.6
+     ],
+     "pc": "tie",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "cap",
+     "margin": -0.016,
+     "surv": [
+      1,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 12000,
+     "fw": [
+      17.8,
+      18.0
+     ],
+     "ww": [
+      17.8,
+      10.8
+     ],
+     "fs": [
+      451.5,
+      404.5
+     ],
+     "ws": [
+      334.3,
+      338.4
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.121,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1096,
+     "fw": [
+      17.5,
+      18.0
+     ],
+     "ww": [
+      9.1,
+      12.6
+     ],
+     "fs": [
+      370.5,
+      450.8
+     ],
+     "ws": [
+      259.7,
+      311.7
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.083,
+     "surv": [
+      0,
+      4
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1081,
+     "fw": [
+      18.2,
+      18.0
+     ],
+     "ww": [
+      12.7,
+      14.8
+     ],
+     "fs": [
+      327.0,
+      435.0
+     ],
+     "ws": [
+      243.4,
+      329.4
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.197,
+     "surv": [
+      0,
+      8
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 767,
+     "fw": [
+      17.5,
+      17.8
+     ],
+     "ww": [
+      14.7,
+      10.6
+     ],
+     "fs": [
+      306.0,
+      396.5
+     ],
+     "ws": [
+      207.0,
+      340.8
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.242,
+     "surv": [
+      0,
+      9
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 716,
+     "fw": [
+      18.0,
+      18.2
+     ],
+     "ww": [
+      16.6,
+      11.1
+     ],
+     "fs": [
+      284.5,
+      384.5
+     ],
+     "ws": [
+      207.5,
+      344.9
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.046,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1178,
+     "fw": [
+      18.0,
+      18.0
+     ],
+     "ww": [
+      9.8,
+      15.2
+     ],
+     "fs": [
+      348.0,
+      400.0
+     ],
+     "ws": [
+      264.5,
+      281.2
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 14,
+   "loses_to": 15,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 1.8,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.74,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.459,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.395,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 15,
+     "won": false,
+     "defect": false,
+     "m": 0.081,
+     "out": {
+      "side1": 2,
+      "side0": 2
+     },
+     "agree": {
+      "count_wrong_type_right": 1,
+      "both_wrong": 1,
+      "both_right": 1,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.092,
+     "out": {
+      "side1": 3,
+      "side0": 1
+     },
+     "agree": {
+      "count_wrong_type_right": 2,
+      "n/a": 1,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.572,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.752,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.823,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.866,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "N2_VW": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 5,
+    "side0": 3
+   },
+   "agreement": {
+    "both_right": 4,
+    "both_wrong": 3,
+    "n/a": 1
+   },
+   "mean_margin": -0.187,
+   "mean_ticks": 6362,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.772,
+     "surv": [
+      0,
+      13
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 5396,
+     "fw": [
+      8.2,
+      10.0
+     ],
+     "ww": [
+      8.2,
+      10.0
+     ],
+     "fs": [
+      2333.2,
+      3125.5
+     ],
+     "ws": [
+      2333.2,
+      3125.5
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.73,
+     "surv": [
+      0,
+      12
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 5408,
+     "fw": [
+      8.2,
+      9.5
+     ],
+     "ww": [
+      8.2,
+      9.5
+     ],
+     "fs": [
+      2159.2,
+      3027.5
+     ],
+     "ws": [
+      2159.2,
+      3027.5
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.461,
+     "surv": [
+      0,
+      8
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8393,
+     "fw": [
+      9.2,
+      8.0
+     ],
+     "ww": [
+      9.2,
+      8.0
+     ],
+     "fs": [
+      3612.5,
+      4036.8
+     ],
+     "ws": [
+      3612.5,
+      4036.8
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.865,
+     "surv": [
+      0,
+      14
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 4895,
+     "fw": [
+      9.5,
+      8.0
+     ],
+     "ww": [
+      9.5,
+      8.0
+     ],
+     "fs": [
+      2030.0,
+      3028.2
+     ],
+     "ws": [
+      2030.0,
+      3028.2
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.663,
+     "surv": [
+      11,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 4921,
+     "fw": [
+      9.2,
+      9.8
+     ],
+     "ww": [
+      9.2,
+      9.8
+     ],
+     "fs": [
+      2978.8,
+      2051.0
+     ],
+     "ws": [
+      2978.8,
+      2051.0
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.616,
+     "surv": [
+      10,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 5096,
+     "fw": [
+      10.2,
+      9.2
+     ],
+     "ww": [
+      10.2,
+      9.2
+     ],
+     "fs": [
+      2947.0,
+      2035.0
+     ],
+     "ws": [
+      2947.0,
+      2035.0
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 25
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.493,
+     "surv": [
+      8,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8194,
+     "fw": [
+      11.0,
+      11.0
+     ],
+     "ww": [
+      11.0,
+      11.0
+     ],
+     "fs": [
+      3680.2,
+      3276.2
+     ],
+     "ws": [
+      3680.2,
+      3276.2
+     ],
+     "pc": "tie",
+     "pt": "tie",
+     "agree": "n/a",
+     "contact": 30
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.438,
+     "surv": [
+      0,
+      7
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 8593,
+     "fw": [
+      8.0,
+      8.8
+     ],
+     "ww": [
+      8.0,
+      8.8
+     ],
+     "fs": [
+      3388.0,
+      3877.2
+     ],
+     "ws": [
+      3388.0,
+      3877.2
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 25
+    }
+   ]
+  },
+  "scan": {
+   "beats": 14,
+   "loses_to": 15,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 11.7,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.905,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_wrong": 3,
+      "both_right": 1
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.803,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_wrong": 3,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.753,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 15,
+     "won": false,
+     "defect": true,
+     "m": 0.413,
+     "out": {
+      "side0": 3,
+      "cap": 1
+     },
+     "agree": {
+      "both_wrong": 2,
+      "both_right": 1,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.056,
+     "out": {
+      "side1": 2,
+      "side0": 2
+     },
+     "agree": {
+      "both_right": 3,
+      "both_wrong": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.958,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.99,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.994,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -1.0,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "N3_VRBo": {
+  "fixed16": {
+   "outcomes": {
+    "side0": 6,
+    "side1": 2
+   },
+   "agreement": {
+    "both_wrong": 1,
+    "both_right": 4,
+    "count_right_type_wrong": 1,
+    "n/a": 1,
+    "count_wrong_type_right": 1
+   },
+   "mean_margin": 0.045,
+   "mean_ticks": 1237,
+   "rows": [
+    {
+     "outcome": "side0",
+     "margin": 0.049,
+     "surv": [
+      1,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1326,
+     "fw": [
+      12.2,
+      12.5
+     ],
+     "ww": [
+      4.6,
+      7.4
+     ],
+     "fs": [
+      399.0,
+      363.2
+     ],
+     "ws": [
+      391.6,
+      377.5
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.098,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1363,
+     "fw": [
+      12.0,
+      12.5
+     ],
+     "ww": [
+      6.7,
+      7.7
+     ],
+     "fs": [
+      366.5,
+      418.0
+     ],
+     "ws": [
+      377.8,
+      439.5
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.043,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1398,
+     "fw": [
+      12.5,
+      12.2
+     ],
+     "ww": [
+      5.1,
+      6.8
+     ],
+     "fs": [
+      385.8,
+      378.0
+     ],
+     "ws": [
+      394.4,
+      382.5
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.073,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1230,
+     "fw": [
+      12.2,
+      11.2
+     ],
+     "ww": [
+      8.1,
+      5.7
+     ],
+     "fs": [
+      409.5,
+      353.5
+     ],
+     "ws": [
+      426.6,
+      345.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.076,
+     "surv": [
+      2,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1294,
+     "fw": [
+      12.2,
+      12.2
+     ],
+     "ww": [
+      5.0,
+      11.5
+     ],
+     "fs": [
+      399.5,
+      365.2
+     ],
+     "ws": [
+      388.3,
+      414.5
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.138,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1091,
+     "fw": [
+      11.5,
+      12.8
+     ],
+     "ww": [
+      5.9,
+      5.3
+     ],
+     "fs": [
+      415.0,
+      341.5
+     ],
+     "ws": [
+      429.9,
+      335.4
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.146,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1111,
+     "fw": [
+      12.2,
+      11.8
+     ],
+     "ww": [
+      7.0,
+      4.5
+     ],
+     "fs": [
+      410.0,
+      324.2
+     ],
+     "ws": [
+      412.4,
+      310.2
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.062,
+     "surv": [
+      0,
+      1
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1082,
+     "fw": [
+      11.2,
+      12.2
+     ],
+     "ww": [
+      3.3,
+      4.6
+     ],
+     "fs": [
+      344.8,
+      385.0
+     ],
+     "ws": [
+      357.6,
+      387.5
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 15,
+   "loses_to": 16,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 1.6,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.763,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.528,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.332,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 15,
+     "won": true,
+     "defect": false,
+     "m": 0.181,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "count_right_type_wrong": 1,
+      "count_wrong_type_right": 2,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": 0.041,
+     "out": {
+      "side0": 3,
+      "side1": 1
+     },
+     "agree": {
+      "both_wrong": 1,
+      "both_right": 1,
+      "n/a": 1,
+      "count_wrong_type_right": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.613,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.763,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.835,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.888,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    }
+   ]
+  }
+ },
+ "N4_IBo": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 5,
+    "side0": 3
+   },
+   "agreement": {
+    "count_wrong_type_right": 3,
+    "both_right": 2,
+    "both_wrong": 2,
+    "count_right_type_wrong": 1
+   },
+   "mean_margin": -0.055,
+   "mean_ticks": 1225,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.272,
+     "surv": [
+      0,
+      9
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1041,
+     "fw": [
+      18.0,
+      17.5
+     ],
+     "ww": [
+      12.8,
+      14.7
+     ],
+     "fs": [
+      455.2,
+      578.2
+     ],
+     "ws": [
+      334.2,
+      510.7
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.37,
+     "surv": [
+      9,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1022,
+     "fw": [
+      17.8,
+      18.0
+     ],
+     "ww": [
+      13.2,
+      8.6
+     ],
+     "fs": [
+      624.8,
+      460.5
+     ],
+     "ws": [
+      450.7,
+      281.9
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.221,
+     "surv": [
+      6,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1203,
+     "fw": [
+      17.8,
+      17.5
+     ],
+     "ww": [
+      17.8,
+      10.3
+     ],
+     "fs": [
+      614.8,
+      472.0
+     ],
+     "ws": [
+      482.9,
+      353.0
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.17,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1496,
+     "fw": [
+      17.5,
+      18.0
+     ],
+     "ww": [
+      9.1,
+      12.6
+     ],
+     "fs": [
+      666.0,
+      597.8
+     ],
+     "ws": [
+      514.3,
+      371.8
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.172,
+     "surv": [
+      0,
+      7
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1321,
+     "fw": [
+      18.2,
+      17.8
+     ],
+     "ww": [
+      14.1,
+      14.6
+     ],
+     "fs": [
+      507.8,
+      644.2
+     ],
+     "ws": [
+      376.1,
+      504.9
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.225,
+     "surv": [
+      0,
+      6
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1435,
+     "fw": [
+      17.5,
+      17.8
+     ],
+     "ww": [
+      14.7,
+      10.6
+     ],
+     "fs": [
+      579.5,
+      660.0
+     ],
+     "ws": [
+      363.7,
+      497.3
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.16,
+     "surv": [
+      0,
+      7
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1321,
+     "fw": [
+      18.2,
+      17.8
+     ],
+     "ww": [
+      16.9,
+      10.6
+     ],
+     "fs": [
+      502.5,
+      631.2
+     ],
+     "ws": [
+      351.9,
+      550.6
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.37,
+     "surv": [
+      0,
+      10
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 961,
+     "fw": [
+      17.5,
+      18.0
+     ],
+     "ww": [
+      9.3,
+      18.0
+     ],
+     "fs": [
+      423.8,
+      607.5
+     ],
+     "ws": [
+      287.3,
+      464.0
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 14,
+   "loses_to": 15,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 2.2,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.694,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.447,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.408,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 15,
+     "won": false,
+     "defect": false,
+     "m": 0.115,
+     "out": {
+      "side1": 1,
+      "side0": 3
+     },
+     "agree": {
+      "count_wrong_type_right": 1,
+      "both_right": 2,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.075,
+     "out": {
+      "side1": 3,
+      "side0": 1
+     },
+     "agree": {
+      "count_wrong_type_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.547,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.739,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.837,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.876,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "N5_RBa": {
+  "fixed16": {
+   "outcomes": {
+    "side1": 8
+   },
+   "agreement": {
+    "count_wrong_type_right": 1,
+    "count_right_type_wrong": 4,
+    "n/a": 3
+   },
+   "mean_margin": -0.284,
+   "mean_ticks": 6773,
+   "rows": [
+    {
+     "outcome": "side1",
+     "margin": -0.122,
+     "surv": [
+      0,
+      3
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 9442,
+     "fw": [
+      17.8,
+      17.5
+     ],
+     "ww": [
+      9.8,
+      11.9
+     ],
+     "fs": [
+      2025.2,
+      2406.8
+     ],
+     "ws": [
+      1816.0,
+      2293.1
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.347,
+     "surv": [
+      0,
+      7
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 5448,
+     "fw": [
+      18.0,
+      18.2
+     ],
+     "ww": [
+      7.8,
+      7.5
+     ],
+     "fs": [
+      1374.8,
+      2244.2
+     ],
+     "ws": [
+      897.8,
+      2097.3
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.266,
+     "surv": [
+      0,
+      5
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 6791,
+     "fw": [
+      17.5,
+      18.2
+     ],
+     "ww": [
+      16.1,
+      8.2
+     ],
+     "fs": [
+      1605.0,
+      2342.5
+     ],
+     "ws": [
+      1233.4,
+      2188.4
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.301,
+     "surv": [
+      0,
+      5
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 6395,
+     "fw": [
+      17.8,
+      17.8
+     ],
+     "ww": [
+      5.2,
+      5.4
+     ],
+     "fs": [
+      1525.8,
+      2416.5
+     ],
+     "ws": [
+      1090.8,
+      2207.4
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.433,
+     "surv": [
+      0,
+      8
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 4659,
+     "fw": [
+      17.5,
+      17.5
+     ],
+     "ww": [
+      10.5,
+      12.9
+     ],
+     "fs": [
+      1209.0,
+      2093.8
+     ],
+     "ws": [
+      565.6,
+      2060.4
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.418,
+     "surv": [
+      0,
+      8
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 4819,
+     "fw": [
+      17.0,
+      17.5
+     ],
+     "ww": [
+      11.4,
+      7.5
+     ],
+     "fs": [
+      1310.0,
+      2144.0
+     ],
+     "ws": [
+      627.2,
+      2038.0
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.087,
+     "surv": [
+      0,
+      2
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 10312,
+     "fw": [
+      17.8,
+      18.0
+     ],
+     "ww": [
+      10.8,
+      8.0
+     ],
+     "fs": [
+      2265.5,
+      2482.5
+     ],
+     "ws": [
+      1986.1,
+      2295.7
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.3,
+     "surv": [
+      0,
+      5
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 6320,
+     "fw": [
+      18.0,
+      18.0
+     ],
+     "ww": [
+      8.4,
+      12.4
+     ],
+     "fs": [
+      1484.5,
+      2344.0
+     ],
+     "ws": [
+      1093.3,
+      2242.7
+     ],
+     "pc": "tie",
+     "pt": "side1",
+     "agree": "n/a",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 14,
+   "loses_to": 15,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 6.0,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.85,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.643,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.51,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 15,
+     "won": false,
+     "defect": false,
+     "m": 0.206,
+     "out": {
+      "side1": 1,
+      "side0": 3
+     },
+     "agree": {
+      "count_wrong_type_right": 1,
+      "both_right": 2,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.33,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "count_wrong_type_right": 1,
+      "count_right_type_wrong": 2,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.714,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 2
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.823,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.864,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "n/a": 1
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.893,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "N6_all": {
+  "fixed16": {
+   "outcomes": {
+    "side0": 5,
+    "side1": 3
+   },
+   "agreement": {
+    "both_right": 3,
+    "count_right_type_wrong": 2,
+    "both_wrong": 1,
+    "count_wrong_type_right": 2
+   },
+   "mean_margin": 0.013,
+   "mean_ticks": 2274,
+   "rows": [
+    {
+     "outcome": "side0",
+     "margin": 0.299,
+     "surv": [
+      5,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2163,
+     "fw": [
+      13.0,
+      12.8
+     ],
+     "ww": [
+      14.6,
+      5.4
+     ],
+     "fs": [
+      865.0,
+      655.8
+     ],
+     "ws": [
+      943.6,
+      445.6
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.353,
+     "surv": [
+      0,
+      6
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1861,
+     "fw": [
+      12.8,
+      13.5
+     ],
+     "ww": [
+      7.9,
+      6.5
+     ],
+     "fs": [
+      650.5,
+      880.2
+     ],
+     "ws": [
+      459.7,
+      829.7
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.115,
+     "surv": [
+      3,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 3177,
+     "fw": [
+      12.5,
+      12.0
+     ],
+     "ww": [
+      16.8,
+      17.4
+     ],
+     "fs": [
+      921.5,
+      752.0
+     ],
+     "ws": [
+      921.9,
+      782.0
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_right_type_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.181,
+     "surv": [
+      4,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2417,
+     "fw": [
+      12.2,
+      12.8
+     ],
+     "ww": [
+      4.6,
+      5.4
+     ],
+     "fs": [
+      856.2,
+      737.8
+     ],
+     "ws": [
+      781.1,
+      732.6
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_wrong",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.324,
+     "surv": [
+      7,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1978,
+     "fw": [
+      13.0,
+      12.0
+     ],
+     "ww": [
+      5.8,
+      4.5
+     ],
+     "fs": [
+      908.0,
+      635.5
+     ],
+     "ws": [
+      845.9,
+      419.3
+     ],
+     "pc": "side0",
+     "pt": "side0",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.352,
+     "surv": [
+      0,
+      6
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 1869,
+     "fw": [
+      13.5,
+      13.0
+     ],
+     "ww": [
+      6.5,
+      14.8
+     ],
+     "fs": [
+      599.8,
+      816.2
+     ],
+     "ws": [
+      384.8,
+      866.2
+     ],
+     "pc": "side0",
+     "pt": "side1",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side1",
+     "margin": -0.305,
+     "surv": [
+      0,
+      6
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2199,
+     "fw": [
+      12.0,
+      12.8
+     ],
+     "ww": [
+      4.6,
+      5.1
+     ],
+     "fs": [
+      684.5,
+      906.0
+     ],
+     "ws": [
+      453.2,
+      814.0
+     ],
+     "pc": "side1",
+     "pt": "side1",
+     "agree": "both_right",
+     "contact": 0
+    },
+    {
+     "outcome": "side0",
+     "margin": 0.198,
+     "surv": [
+      4,
+      0
+     ],
+     "heads": [
+      16,
+      16
+     ],
+     "ticks": 2529,
+     "fw": [
+      13.0,
+      13.8
+     ],
+     "ww": [
+      16.4,
+      9.0
+     ],
+     "fs": [
+      907.2,
+      728.8
+     ],
+     "ws": [
+      971.0,
+      583.0
+     ],
+     "pc": "side1",
+     "pt": "side0",
+     "agree": "count_wrong_type_right",
+     "contact": 0
+    }
+   ]
+  },
+  "scan": {
+   "beats": 15,
+   "loses_to": 16,
+   "ceiling": false,
+   "multi_flip": false,
+   "fights": 36,
+   "wall_s": 3.1,
+   "cells": [
+    {
+     "h": 8,
+     "won": true,
+     "defect": false,
+     "m": 0.904,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 12,
+     "won": true,
+     "defect": false,
+     "m": 0.731,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "count_right_type_wrong": 2,
+      "both_right": 2
+     }
+    },
+    {
+     "h": 14,
+     "won": true,
+     "defect": false,
+     "m": 0.515,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 15,
+     "won": true,
+     "defect": false,
+     "m": 0.408,
+     "out": {
+      "side0": 4
+     },
+     "agree": {
+      "both_right": 3,
+      "count_right_type_wrong": 1
+     }
+    },
+    {
+     "h": 16,
+     "won": false,
+     "defect": false,
+     "m": -0.02,
+     "out": {
+      "side0": 2,
+      "side1": 2
+     },
+     "agree": {
+      "both_right": 2,
+      "count_right_type_wrong": 1,
+      "count_wrong_type_right": 1
+     }
+    },
+    {
+     "h": 24,
+     "won": false,
+     "defect": false,
+     "m": -0.771,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "count_right_type_wrong": 4
+     }
+    },
+    {
+     "h": 32,
+     "won": false,
+     "defect": false,
+     "m": -0.919,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    },
+    {
+     "h": 40,
+     "won": false,
+     "defect": false,
+     "m": -0.949,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "count_right_type_wrong": 1,
+      "both_right": 3
+     }
+    },
+    {
+     "h": 48,
+     "won": false,
+     "defect": false,
+     "m": -0.978,
+     "out": {
+      "side1": 4
+     },
+     "agree": {
+      "both_right": 4
+     }
+    }
+   ]
+  }
+ },
+ "_wall_s": 77.4
+}
