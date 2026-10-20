@@ -1,3 +1,4 @@
+# Rule pins: R-141-01@7d98ed, R-241-01@e3d3f6, R-241-03@4be4be, R-241-04@21e446
 """Story play S-241 "Teams, sub-commanders and sub-civilizations": the team-size choice in the lobby (no E2 part).
 Rules R-141-01 ("it is played by teams of 2 or 4 (S-241)") and R-241-01 ("a team has 2 or 4 players"); R-241-04 keeps
 the confirmed peer count at 4. The lobby offers a TeamSize choice whose options are exactly 2 and 4; qa_state lists

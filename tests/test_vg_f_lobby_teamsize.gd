@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-141-01@7d98ed, R-159-01@8f5df8, R-241-01@e3d3f6, R-241-03@4be4be, R-241-04@21e446
 
 # Lane F part 2, piece VG-F-S241 (the lobby's team-size choice), docs/northstar/plans/2026-10-07-visible-game-spec.md
 # Rev 13 "F-S241". Story S-241 "Teams, sub-commanders and sub-civilizations" (the lobby choice only; a STUB until

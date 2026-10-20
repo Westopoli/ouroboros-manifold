@@ -1,3 +1,4 @@
+# Rule pins: R-143-01@e507dd, R-143-03@f98569, R-147-01@e12fb4, R-149-01@356d5b
 """Story play S-143 "Eras in sequence": the lobby says the match is limited to the common era set.
 Rules R-143-01 ("the match may traverse only eras every peer owns, in chronological order") and R-143-03 ("Given a peer
 lacks a pack, When the lobby forms, Then the match is limited to the common set and the lobby says so"); R-147-01 and

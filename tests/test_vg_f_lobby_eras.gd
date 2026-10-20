@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-143-01@e507dd, R-143-03@f98569, R-144-03@82524f, R-147-01@e12fb4, R-149-01@356d5b
 
 # Lane F part 2, piece VG-F-S143 (the lobby's common era set), docs/northstar/plans/2026-10-07-visible-game-spec.md
 # Rev 13 "F-S143". Story S-143 "Eras in sequence".
