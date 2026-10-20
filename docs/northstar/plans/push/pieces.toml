@@ -1892,7 +1892,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_f_nettick.gd", "tests/qa/desktop/plays/F/_play.py", "tests/qa/desktop/plays/F/S-140.py"]  # tactical_view.gd: the _load_live function only
 owns_glob = []
 acceptance = ["tests/test_vg_f_nettick.gd"]
-depends_on = ["VG-F-SKEL-B", "VG-E1"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owns tactical_view.gd
+depends_on = ["VG-F-SKEL-B", "VG-C6b"]  # VG-F-SKEL-B owns _play.py and S-140.py; the edge to VG-E1 removed 2026-10-20 (Architect ruling, PP-ledger): VG-E1 attached bb6d652 (2026-10-13) after NETTICK b12b47a (2026-10-12), so the edge made a cycle VG-E1 -> VG-A16 -> VG-F-NETTICK -> VG-E1; VG-C6b (attached, depends on VG-A) added in its place to keep the tactical_view.gd ordering NETTICK had through VG-E1 (clerk addition, pieces.py --check)
 status = { state = "attached", attach_sha = "b12b47a" }  # landed b12b47a
 size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (empty frame at _ready: load none, _match_frame loads the first released one); S-140 green, ticks wait (DRAFT-s140-settle-ticks), known-red line out"
 
@@ -2434,7 +2434,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_e_e1w.gd", "tests/qa/desktop/plays/E/S-235.py"]
 owns_glob = []
 acceptance = ["tests/test_vg_e_e1w.gd"]
-depends_on = ["VG-E1", "VG-A18", "VG-A-layerkeys", "VG-D-VIEW", "VG-A-startforce", "VG-E1M", "VG-E1N", "VG-A-routeline"]  # VG-A-routeline (queued) also owns tactical_view.gd (clerk addition for owner_lint); the three queued owners of tactical_view.gd land first (the stack order D-VIEW, layerkeys, startforce), then E1w
+depends_on = ["VG-E1", "VG-A18", "VG-D-VIEW", "VG-E1M", "VG-E1N"]  # Architect 2026-10-20: E1w lands first; the three queued rows that also own tactical_view.gd (VG-A-layerkeys, VG-A-startforce, VG-A-routeline) keep their depends_on VG-E1W (stack rule), so E1w no longer depends on them (that was a cycle)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "E1w wiring of TickerBeats and MapMarkers into the tactical view (PIECES entries, frame-path calls, qa_state map_markers); the S-235 play and shot"
