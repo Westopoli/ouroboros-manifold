@@ -2830,7 +2830,7 @@ owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_ch
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance.py"]
 depends_on = ["HARNESS-C1b"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "5b24164" }
 tests_pending = true
 size_estimate = "C235 quotes, numbers, set-asides: spec_provenance.py reasons 9, 10, 11, the [ASSERT] and [OPEN] tags, register status reading, status_check.py checks register and reviews"
 
