@@ -243,3 +243,16 @@ Numbered 48: the highest decision on origin/main is 47.
 2. lo is rewritten in E0's spec row, in `tests/skilllab/fakes_trace.py` and in the E0 branch tests under a ruler row (assumption changed by decision 47), before E0 lands.
 3. The engine refuses a value below lo as today: no clamp. An out-of-band value is a settings error, not a silent change.
 4. The grid order ascending (7.5 to 120) stands.
+
+## 49. L8 re-engage "moved" semantics, corrects decision 43 question 4 (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-20, implementation; Westley may veto)
+Numbered 49: the highest decision on origin/main is 48. The 1 wu number stays Westley's DRAFT.
+Evidence: the cap trace of the damage_up caps (`docs/northstar/research/layer_dynamics/audits/damage_up_caps_2026-10-20/`) found acquisition range-only (`csrc/unit.c:2178-2183`, A199 comment at `:2187-2189`, `csrc/fog.c:687` `om_unit_acquire_target` unwired) and the L8 counter being reset forever by one destination-holder (u31) shuttling in a loop of about 70 wu with a period of about 40 ticks toward the unreachable destination (754, 2042). Re-engage never fired in that fight. Forced by hand (attack-move onto the centroid of the visible enemies) the fight ends in 178 ticks.
+1. RULE for `_Reengage` "moved": a side's silence counter advances on a tick when (i) no unit of either side fired this tick, and (ii) no idle-eligible unit of that side is displaced more than DRAFT 1 wu from its position at the window start. Units holding a destination are not tested for movement and never reset the counter.
+2. When the counter completes, re-engage orders go to idle-eligible units only; a destination-holder keeps its order untouched.
+3. Why not the alternatives: (a) net displacement at window boundaries is phase-dependent (a 70 wu loop with a 40 tick period measured at window boundaries; a side centroid over 8 units still moves about 9 wu), a flaky test by construction; (b) best-distance-so-far needs a new mechanism; (c) is what re-engage is for: idle units.
+4. Tests, the writer first, a different agent builds, before the flip piece:
+   - Jitter-loop fixture: one destination-holder oscillating about 70 wu per 40 ticks plus seven idle units with a visible enemy out of range. The counter completes and re-engage fires for the seven. Red on today's L8.
+   - Positive control: a destination-holder advancing monotonically with idle teammates. The counter completes, re-engage goes to idle units only, and the marching unit's order is byte-identical before and after.
+   - Negative control: one idle unit displaced 5 wu inside the window resets the counter; 0.5 wu does not.
+   - The capped fight itself (damage_up knob 0.75, heads 24, layout 192, swap False, seed 1) ends under corrected L8 with survivors not (2, 8) at 12000 ticks. The actual end tick is recorded in the test comment.
+5. Findings: `FINDING-damage-up-caps` and `FINDING-blocked-destination-never-times-out` in the push ledger.
