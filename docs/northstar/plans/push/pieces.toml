@@ -1880,7 +1880,7 @@ owns = ["tests/qa/desktop/plays/F/S-140.py", "tests/qa/desktop/plays/F/_play.py"
 owns_glob = []
 acceptance = ["tests/qa/desktop/plays/F/S-140.py"]
 depends_on = ["VG-F-SKEL-B", "VG-F-S143", "VG-F-S241"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "f04f0d1a" }
 tests_pending = true
 size_estimate = "F-S140-CLICK: S-140 play selects every own unit and right-clicks the first clear corridor; DRAFT-s140-click-offset 360, DRAFT-s140-box-pad 12"
 
