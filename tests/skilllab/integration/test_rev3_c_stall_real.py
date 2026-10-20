@@ -8,12 +8,13 @@ tick of each state: {"mutual": t} (nobody reaches anybody) and {("decided", side
 them reaches a living enemy). It changes nothing in the simulation. The fight under test must end AT the oracle's tick with the matching verdict.
 
 Contract of the verdict fields: see test_rev3_c_stall.py (FightResult.verdict, FightResult.decided_tick, outcome "no_reach_stall" for the stall;
-a decided fight keeps outcome "side0" or "side1"; ticks == decided_tick).
+a decided fight keeps outcome "side0" or "side1"). Architect ruling 2026-10-20, supersedes the stop: decided_one_way_reach is RECORDED, not a stop:
+decided_tick is the first decided tick (the oracle's) and the fight plays on to elimination or the cap; the stall still ends at its first tick.
 
 What is here:
   fast (a few seconds):
-    - a hand-built one-way scene (6 Interceptors on layer 0 against 6 Vanguards on layer 2): decided at the first tick, not after the
-      Interceptors have shot the Vanguards dead (today: elimination hundreds of ticks later);
+    - a hand-built one-way scene (6 Interceptors on layer 0 against 6 Vanguards on layer 2): decided at the first tick (recorded), and the fight
+      plays on to the Interceptors shooting the Vanguards dead (elimination, side 0);
     - a hand-built mutual scene (Vanguards two layers apart): a stall at the first tick (today: the cap).
   OM_LAB_SLOW=1 (10 to 40 s a fight), the real range_up / null-control scenes of layout 192 (sweep.smoke_layouts()["192"]):
     - T9, D7: the null control of s3_layer_above and of s3_types_by_reach (sweep.default_builds(play, "reach_zero", features), every type at
@@ -22,7 +23,7 @@ What is here:
       at the cap) and 1670 (s3_types_by_reach, survivors (8, 12)); both ran to the cap. Setup.max_ticks is lowered to 4000 for speed only.
     - FINDING-lab-d11 positive controls: s3_types_by_reach, range_up 0.25, 20 side-1 heads, seed 2, swap False and swap True. On this tree
       (after LAB-REV2-L8M2, decision 50) these two fights end side 0 by elimination at ticks 7281 and 5469 and the oracle sees "decided side 0"
-      at ticks 5554 and 4466 (observations, not asserted). OPEN: the Architect's named fight (seed 1, swap False, survivors (1, 3), capped at
+      at ticks 5554 and 4466 (asserted since the ruling of 2026-10-20: the sim is deterministic and recording changes nothing in it). OPEN: the Architect's named fight (seed 1, swap False, survivors (1, 3), capped at
       12000, the survivor untouchable from tick 7411) was measured on the L8M tip b35c4576; on this tree it ends side 1 at tick 5932 with no
       decided moment (of the six fights run on this tree, seeds 0 to 2 with swap False and True, only seed 2 shows one, in both swaps), so seed 2 stands in. The preconditions
       below fail loudly if a later tree stops showing the moment, so the seed gets re-picked, not the assertion weakened.
@@ -67,14 +68,17 @@ def hand(side0, side1, cap=3000, types=None):
 
 # ---------------------------------------------------------------------------------------------------- hand-built real scenes (fast)
 
-def test_a_one_way_scene_on_the_real_engine_is_decided_at_the_first_tick():
-    """FINDING-lab-d11: Interceptors (up 2) on layer 0, Vanguards (0, 0) on layer 2. The oracle sees 'decided side 0' at tick 1; the fight must
-    stop there with the tag. Red today: the Interceptors shoot the Vanguards dead, hundreds of ticks later (outcome side0, verdict None)."""
+def test_a_one_way_scene_on_the_real_engine_is_recorded_decided_at_the_first_tick_and_plays_on():
+    """FINDING-lab-d11, Architect ruling 2026-10-20 (supersedes the stop): Interceptors (up 2) on layer 0, Vanguards (0, 0) on layer 2. The oracle
+    sees 'decided side 0' at tick 1; the fight records exactly that (decided_tick 1, verdict) and PLAYS ON: the Interceptors shoot the Vanguards
+    dead and side 0 wins by elimination. MEASUREMENT (2026-10-20, seed 0, swap False, on the base, which never sets a verdict): oracle decided at
+    tick 1, elimination at tick 2265 (side 0). The elimination tick is not pinned (it is the sim's, not this piece's); a build that stops at the
+    decision (ticks == 1) fails ticks > decided_tick. Red today: verdict None."""
     eng = oracle_engine()
     r = fight(hand(("Interceptor", 0), ("Vanguard", 2)), 0, False, engine=eng)
     assert eng.first.get(("decided", 0)) == 1, eng.first
-    assert r.ticks == 1, "stopped at tick %d (outcome %s), the oracle saw the decision at tick 1" % (r.ticks, r.outcome)
-    assert (r.outcome, r.winner, verdict_of(r), decided_tick_of(r)) == ("side0", "side0", DECIDED, 1)
+    assert (r.outcome, r.winner, verdict_of(r), decided_tick_of(r)) == ("side0", "side0", DECIDED, 1), (r.outcome, r.ticks)
+    assert r.ticks > decided_tick_of(r) and r.survivors[1] == 0, "the fight was stopped at tick %d; it must play on to elimination" % r.ticks
 
 
 def test_a_mutual_no_reach_scene_on_the_real_engine_stalls_at_the_first_tick():
@@ -119,29 +123,33 @@ def test_the_null_control_scene_ends_as_no_reach_stall_when_what_is_left_cannot_
 # LAB-REV2-L8M2 (decision 50: a side that is shot at but out of range re-engages) the same fight ends side 1 at tick 5932 with no decided moment
 # (the oracle never fires), so it is no longer a positive control; it stays in this file only as this comment, and test_control_the_same_scene_
 # without_a_decided_moment_is_an_ordinary_win below keeps seed 1 as a negative control. The stand-in is SEED 2, below.
+STAND_IN = {False: (5554, 7281), True: (4466, 5469)}      # swap -> (oracle's decided tick, elimination tick), measured 2026-10-20
+
+
 @SLOW
 @pytest.mark.parametrize("swap", [False, True])
-def test_the_decided_one_way_fight_stops_at_the_tick_it_became_decided(swap):
-    """FINDING-lab-d11 positive control (stand-in seed 2; see the comment above and the module docstring). The fight is decided for side 0 at
-    the oracle's tick, tagged, and stopped there, well before the fight's own end.
+def test_the_decided_one_way_fight_is_recorded_at_its_first_tick_and_plays_on_to_elimination(swap):
+    """FINDING-lab-d11 positive control (stand-in seed 2; see the comment above and the module docstring). Architect ruling 2026-10-20, supersedes
+    the stop: the decision is RECORDED at the oracle's tick and the fight plays on to the elimination the base reaches.
     PREMISE DUMP (measured 2026-10-20 on this tree, one fight per process, oracle_engine().first read after the fight):
         swap False: outcome side0 by elimination at tick 7281, survivors (3, 0), first = {("decided", 0): 5554}
         swap True : outcome side0 by elimination at tick 5469, survivors (5, 0), first = {("decided", 0): 4466}
-    so the builder's fight must stop at tick 5554 (swap False) and 4466 (swap True), ticks 1727 and 1003 before the elimination the base reaches.
-    The observed ticks are not asserted (the oracle's own tick is); the precondition below fails loudly if a later tree stops showing the moment.
-    Red today: no stop (outcome side0 at the elimination tick, verdict None)."""
+    Asserted (the sim is deterministic and recording changes nothing in it): verdict decided_one_way_reach, decided_tick 5554 / 4466, side 0
+    wins by elimination at tick 7281 / 5469 (ticks 1727 / 1003 after the decision). The precondition fails loudly if a later tree stops showing
+    the moment, so the seed gets re-picked, not the assertion weakened. Red today: verdict None, decided_tick None (the elimination is the same)."""
     eng = oracle_engine()
     r = fight(scene("s3_types_by_reach", "play", sweep._range_up(0.25), 20, swap), 2, swap, engine=eng)
-    assert ("decided", 0) in eng.first, "precondition: the oracle never saw 'decided side 0' (%s); re-pick the seed" % (eng.first,)
-    t = eng.first[("decided", 0)]
-    assert r.ticks == t, "outcome %s at tick %d; the oracle saw side 0 decided at tick %d" % (r.outcome, r.ticks, t)
-    assert (r.outcome, r.winner, verdict_of(r), decided_tick_of(r)) == ("side0", "side0", DECIDED, t)
+    decided_at, ended_at = STAND_IN[swap]
+    assert eng.first.get(("decided", 0)) == decided_at, "precondition: the oracle's decided tick is %s, expected %d; re-pick the seed" % (eng.first, decided_at)
+    assert (r.outcome, r.winner, r.ticks) == ("side0", "side0", ended_at), (r.outcome, r.ticks)
+    assert (verdict_of(r), decided_tick_of(r)) == (DECIDED, decided_at)
 
 
 @SLOW
 @pytest.mark.parametrize("seed", [0, 1])
 def test_control_the_same_scene_without_a_decided_moment_is_an_ordinary_win(seed):
-    """FINDING-lab-d11 negative control (b): same setup, swap False, seeds 0 and 1: an ordinary win, never a cap, no tag. Green today."""
+    """FINDING-lab-d11 negative control (b), unchanged by the ruling of 2026-10-20: same setup, swap False, seeds 0 and 1: no decided moment, so
+    an ordinary win, never a cap, no tag. Green today."""
     eng = oracle_engine()
     r = fight(scene("s3_types_by_reach", "play", sweep._range_up(0.25), 20, False), seed, False, engine=eng)
     assert not any(k != "mutual" and k[0] == "decided" for k in eng.first), "precondition: the oracle saw a decided moment (%s)" % (eng.first,)

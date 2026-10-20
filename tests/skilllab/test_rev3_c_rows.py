@@ -11,6 +11,9 @@ BUILDER CONTRACT (names DRAFT where marked):
       `no_reach_stall_rows` and `decided_one_way_reach_rows` (DRAFT key names: the frozen name plus _rows), counted over the live (non-control)
       rows whose `verdict` is that name; a stall row is in neither cap_rows nor cells (a fight that ends at a stall never reached the cap).
   A decided_one_way_reach row is an ordinary win for its side (outcome side0 or side1): a cell it fills is won when all its rows are side0.
+  Architect ruling 2026-10-20, supersedes the stop: the fight is not stopped at decided_tick; it plays on to elimination or the cap. A decided
+      fight that reaches the cap is classified decided_one_way_reach (READING: its outcome string is the decided side's win, not "cap"; ticks ==
+      Setup.max_ticks, decided_tick < ticks): its row is a DECIDED row, counted in decided_one_way_reach_rows and in neither cap_rows nor cells.
 RULED (Architect 2026-10-20, implementation; Westley may veto): the outcome STRING of a stall is "no_reach_stall" (test_rev3_c_stall.py); the
 controls below use the same string. Red today: FightResult has no verdict field; the counters and columns do not exist."""
 import csv
@@ -38,6 +41,12 @@ def stall(heads):
 
 def decided(heads, tick=50):
     return dataclasses.replace(_fr("side0", heads), verdict=DECIDED, decided_tick=tick)
+
+
+def decided_at_cap(heads, tick=50):
+    """A decided fight that played on to the cap: outcome the decided side's win, ticks == Setup.max_ticks, decided_tick < ticks."""
+    from scripts.skilllab.contract import Setup
+    return dataclasses.replace(_fr("side0", heads), verdict=DECIDED, decided_tick=tick, ticks=Setup(groups=(), unit_types={}).max_ticks)
 
 
 # ---- controls (green today): a stall is neither a win nor a defect ---------------------------------------------------------------------
@@ -109,3 +118,16 @@ def test_decided_rows_are_counted_and_stay_wins(tmp_path):
     assert n > 0 and all(r["outcome"] == "side0" for r in rows if r["verdict"] == DECIDED)
     d = entry["defects"]
     assert (d["decided_one_way_reach_rows"], d["cap_rows"], d["cells"]) == (n, 0, 0), d
+
+
+def test_a_decided_fight_that_reached_the_cap_is_a_decided_row_not_a_cap_row_and_not_a_defect(tmp_path):
+    """Architect ruling 2026-10-20, supersedes the stop: every fight is decided early and plays on to the cap (outcome side0, ticks == the cap,
+    decided_tick < ticks). The rows are counted in decided_one_way_reach_rows and in neither cap_rows nor cells; the cap-tick row is not a
+    defect and no cell is lost. Red today: the columns and the counter are absent."""
+    from scripts.skilllab.contract import Setup
+    cap = Setup(groups=(), unit_types={}).max_ticks
+    entry, rows = run(tmp_path, "capped", lambda setup, seed, swap: decided_at_cap(sum(g.count for g in setup.groups if g.side == 1)))
+    tagged = [r for r in rows if r["verdict"] == DECIDED and not r["kind"].startswith("control_")]
+    assert tagged and all(r["outcome"] == "side0" and int(r["ticks"]) == cap and int(r["decided_tick"]) < cap for r in tagged)
+    d = entry["defects"]
+    assert (d["decided_one_way_reach_rows"], d["cap_rows"], d["cells"]) == (len(tagged), 0, 0), d
