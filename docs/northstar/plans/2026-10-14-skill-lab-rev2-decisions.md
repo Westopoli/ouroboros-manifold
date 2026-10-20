@@ -168,3 +168,19 @@ A real cut at K of 8 or more on a closed pocket is not buildable through the nai
 Architect's rationale: batch one is a method check of the lab, not a sweep; width comes in batch two, after the artifact form is approved. The six pin tests of decision 13 become ruler rows in the landing. E7 launches today on the visible-game side with ABI 8 and save 12, and the places lane P3 is written for save 13, so E0's numbers are the next free at its landing, taken from the Dispatcher (ouroboros-manifold-d0 owns the numbering); E0's text must not pin a number before the clerk asks. A built piece that reads queued in `pieces.toml` is a status_check drift.
 
 Answered without a decision number: speed marks stay Westley's (decision 37 stands); DRAFT numbers are used as DRAFT, with the list in front of Westley alongside the artifact; a drift auditor runs before the lab landing (drift_audit.md pattern, report to Westley unedited); the artifact form is reviewed by the Architect before Westley.
+
+## 41. Drift audit of push/labrev2-lab-m4: smoke parity, anchors, holder, no_fit, reach, replicates, states (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+After a fresh drift audit of `push/labrev2-lab-m4`. All fixes are tests first, in the post-merge fix piece LAB-REV2-FIX.
+1. The smoke command runs `firing.parity` and writes it to `smoke_summary.json` once E0 is in the landing; until then the field reads "skipped: E0 absent".
+2. Per-type anchor, as decision 25 says: one naive blob per unit type at that type's mean anchor. `sweep.py:308` (one anchor for all blobs) is the defect.
+3. Holder = side 0 has a guard-stance group in the Setup, derived from the Setup, never from the play name (`sweep.py:184` `baseline_roles` keys off the `s3_` prefix: defect). A meeting (no guard group) gets no `naive_defender` baseline.
+4. Only walking movers read `terrain_walkable_at` for no_fit; flyers and guards are checked against blocks only (decision 20 as rewritten). `scenes.py:254` is the defect.
+5. `reach_play` and the `reach` command stay until a later piece; no change now. L7's "kept only for the reach command" sentence stands.
+6. 8..24 stays at 10 replicates for the golden-hash controls and the `reach` command. The README says ruling 4's 8..48 is the scan of plays, not of the hash controls.
+9. `FightResult.states = []` when off, per decision 1; fixed with the next build. A test that pins None is a ruler row (assumption changed by decision 1).
+
+## 42. Drafts marked and extras accepted (Architect session b1e8769e / ouroboros-manifold-b0, 2026-10-19, implementation; Westley may veto)
+7. Every one is marked DRAFT in code and in the artifact header: `scan.COARSE_STEP` 8, the probe-count bounds (at most 14), `sweep.CONTROL_MAX_TICKS` 600, the ground-scene geometry in `scripts/skilllab/ground/scenes_ground.py` (30 + 3*sqrt(n), radii 20/12/8, the five coordinates, "measured"). `plays.MAX_TICKS_BIG` is deleted as dead logic. `COARSE_STEP` and `CONTROL_MAX_TICKS` go to Westley with the other marks (the Architect carries them).
+8. Accepted as implementation (extras), each with its file: `contract.trim_series` and the lean pool path (`scripts/skilllab/contract.py`, `scripts/skilllab/pool.py`); the E3 settle-cache clearing in `om_move_load_radius` and the 2R > margin clamp in `om_move_probe_sure_blocked` (`csrc/tactical_move.c`); `sweep.in_band` (`scripts/skilllab/sweep.py`).
+
+Two heads-ups from the Architect: Westley asked whether a unit that sees an enemy should attack it (a report is with him; if he rules yes, L8 re-engage and mop-up become unnecessary and the E1 row grows, so L8 gets no more work than it needs to land). Westley asked two Opus analysts for wider roster mixes (M0-M4 use only four of six types), so the mix table must stay data-driven.
