@@ -1246,7 +1246,10 @@ FIX_DRAFTS = ("DRAFT-coarse-step", "DRAFT-control-max-ticks", "DRAFT-probe-count
 # Decision 45 item 5 (names) and decision 47 item 3 (they join the artifact header DRAFT list): always listed, once each (TD-LAB-REV2-FIX5-header-names).
 SCENE_MIX_DRAFTS = ("DRAFT-behind-cover", "DRAFT-ambush-behind", "DRAFT-mix-M1", "DRAFT-mix-M2", "DRAFT-mix-M3", "DRAFT-mix-M4", "DRAFT-mix-M3b",
                      # LAB-REV3-B: the rows M5 to M9 join the header (report.DRAFT_TEXT; ledger TD-LAB-REV3-B-report)
-                     "DRAFT-mix-M5", "DRAFT-mix-M6", "DRAFT-mix-M7", "DRAFT-mix-M8", "DRAFT-mix-M9")
+                     "DRAFT-mix-M5", "DRAFT-mix-M6", "DRAFT-mix-M7", "DRAFT-mix-M8", "DRAFT-mix-M9",
+                     # LAB-REV3-B-SMOKE: one layer-stack name per bombard-family play (report.DRAFT_TEXT; ledger TD-LAB-REV3-B-smoke)
+                     *(f"DRAFT-layer-stack-{p}" for p in ("s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider",
+                                                          "s3_bombard_bastion", "s3_bombard_bastion_level")))
 
 
 def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
