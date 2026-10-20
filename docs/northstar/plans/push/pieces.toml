@@ -2524,8 +2524,8 @@ owns = ["csrc/tactical_move.c", "docs/northstar/plans/push/pp_contract.md", "tes
 owns_glob = []
 acceptance = ["tests/csim/test_PP_collision_radius_runtime.py"]
 depends_on = ["VG-W2"]
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "b517d01a" }
+tests_pending = false
 size_estimate = "E3 collision radius: the runtime parameter reaches the collision pass, steering probe, navmesh margins and arrival tolerances (ruling 15; widens A133/Q-C6)"
 
 [[piece]]
@@ -2807,3 +2807,16 @@ depends_on = ["HARNESS-C235"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys script, args, launch, spec, status_check.py known keys and check launch, the script header line"
+
+# Record batch (Architect 2026-10-19): FINDING-a8-captured-never-shows. c_bridge.gd erases structures_changed before events_feed.gd reads it, so the captured and lost lines never show in play.
+[[piece]]
+id = "VG-E-a8feed"
+manager = "M0"
+wave = 9
+owns = ["autoload/c_bridge.gd", "scenes/tactical_c/hud/events_feed.gd", "tests/test_vg_e_a8feed.gd"]
+owns_glob = []
+acceptance = ["tests/test_vg_e_a8feed.gd"]
+depends_on = ["VG-E1M", "VG-E1N", "VG-A-routeline", "VG-CONTRACT-layerspot"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the bridge passes structures_changed through (or the feed diffs owners from the full list, the builder picks the smaller); tests first by a different writer: a live-path test feeds a full frame then a delta with one owner flip through the bridge and expects exactly one captured line; no edit to the A8 test; shot = the S-235 play re-run with one flip in frame"
