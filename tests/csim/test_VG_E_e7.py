@@ -109,6 +109,8 @@ def lib(lib):
     """A private handle on the built library for this module: _bind() below retypes shared functions (om_terrain_slope_at
     among them), which would break other modules' tests on the session `lib`. A second ctypes.CDLL of the same file has its
     own function objects; the worlds are plain pointers and the library state is shared."""
+    # See also: test_E01_T3_mission_ground.py test_every_unit_spawns_... (TD-VG-E-34): the second site that binds e7_bind on a
+    # private load_lib() handle.
     return load_lib()
 
 
