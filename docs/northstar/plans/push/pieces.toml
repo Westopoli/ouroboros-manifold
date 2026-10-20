@@ -2146,21 +2146,20 @@ owns = ["scenes/settings/settings.gd", "tests/test_galaxy_quality_setting.gd", "
 owns_glob = []
 acceptance = ["tests/test_galaxy_quality_setting.gd"]
 depends_on = ["VG-A18", "VG-B24"]  # VG-A18 owns scenes/settings/settings.gd until it lands (G-settings glob and VG-A16 are attached); VG-B24 no longer owns the test file (Architect 2026-10-13)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "2ae09a5" }
 size_estimate = "settings OptionButton full/standard/particles + label, APPLY writes [display] galaxy_quality (A54/A60); red-on-main finding FINDING-gd-red-main-2026-10-12b fixed here"
 
 [[piece]]
 id = "VG-B26-chronicle-serial"
 manager = "M0"
 wave = 9
-owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd: VG-B's file, VG-B is attached; the panel had no owner row
+owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd is VG-B's (attached); chronicle_scroll_panel.gd is under the attached C3/C8 globs scenes/world/chronicle_*; rev 2026-10-19: both files are edited by this piece (Q-069-03 (a))
 owns_glob = []
 acceptance = ["tests/test_vg_b_b26.gd"]
 depends_on = ["VG-B"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2026-10-13; FINDING-chronicle-concurrent-print); a print queue in the panel, next entry on finished_printing plus the 3.0 s hold; the sequencer unchanged except that start_printing enqueues; Q-069-03 default (b)"
+size_estimate = "B26 chronicle one entry at a time: the panel's print queue and hold, and the sequencer's hold at the next keyframe while an entry prints (Q-069-03 (a), status reading, Westley to confirm; ledger FINDING-chronicle-concurrent-print); then the S-108 re-run"
 
 [[piece]]
 id = "VG-B25"
@@ -2178,11 +2177,11 @@ size_estimate = "B25: dim wash, four star layers at 50/125/400/1250, wrapping mo
 id = "VG-D-VIEW"
 manager = "M0"
 wave = 9
-owns = ["scenes/space3d/space_view.gd", "scenes/space3d/space_view.tscn", "scenes/space3d/space_sheets.gd", "scenes/space3d/shaders/sheet_tube.gdshader", "scenes/space3d/space_rings.gd", "tests/test_vg_d_view.gd", "tests/qa/desktop/plays/D/S-246.py", "docs/northstar/story_reviews/D.md", "scenes/tactical_c/tactical_view.gd", "docs/northstar/plans/2026-10-02-space-kit-mode-spec.md", "docs/northstar/story_reviews/westley/D-S246-space-sheets-rings-tube.png", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/plans/2026-10-13-d-view-spec.md"]  # plays for stories the 3D view now serves run against the 3D to_screen (test-defect row TD-VG-D-1, Architect message 2026-10-14); the shot copy and its table row; VG-D-VIEW hides the 2D unit nodes for the space era in one line (see FU-ground-2d-overdraw); the kit spec: the 1,000 gap record edit rides the sprint-1 records landing, nobody owned the file (clerk addition, footprint); Architect 2026-10-13 (d-view spec): new files plus tactical_view.gd with "hosting lines beside the Ground3D hosting only; E1 attached"; test_vg_d_view.gd is owned explicitly to resolve the tests/test_vg_d_*.gd glob overlap with VG-D (attached, glob released); the d-view spec itself, nobody owned it (clerk addition, footprint, records sprint 4)
+owns = ["scenes/space3d/space_view.gd", "scenes/space3d/space_view.tscn", "scenes/space3d/space_sheets.gd", "scenes/space3d/shaders/sheet_tube.gdshader", "scenes/space3d/shaders/sheet_tube.gdshader.uid", "scenes/space3d/space_rings.gd", "tests/test_vg_d_view.gd", "tests/qa/desktop/plays/D/S-246.py", "docs/northstar/story_reviews/D.md", "scenes/tactical_c/tactical_view.gd", "docs/northstar/plans/2026-10-02-space-kit-mode-spec.md", "docs/northstar/story_reviews/westley/D-S246-space-sheets-rings-tube.png", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/plans/2026-10-13-d-view-spec.md"]  # the shader's .uid sidecar, committed with it (clerk addition, footprint, landing 2026-10-19); plays for stories the 3D view now serves run against the 3D to_screen (test-defect row TD-VG-D-1, Architect message 2026-10-14); the shot copy and its table row; VG-D-VIEW hides the 2D unit nodes for the space era in one line (see FU-ground-2d-overdraw); the kit spec: the 1,000 gap record edit rides the sprint-1 records landing, nobody owned the file (clerk addition, footprint); Architect 2026-10-13 (d-view spec): new files plus tactical_view.gd with "hosting lines beside the Ground3D hosting only; E1 attached"; test_vg_d_view.gd is owned explicitly to resolve the tests/test_vg_d_*.gd glob overlap with VG-D (attached, glob released); the d-view spec itself, nobody owned it (clerk addition, footprint, records sprint 4)
 owns_glob = []
 acceptance = ["tests/test_vg_d_view.gd"]
 depends_on = ["VG-A18", "VG-E1"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "a3495155" }
 tests_pending = true
 size_estimate = "D view, one piece, one shot: sheets, asteroid slabs, units with layer rings, the cursor vision tube (Westley's condition on the kit approval); five sheets at DRAFT-space-layer-gap 1,000 wu"
 
@@ -2336,8 +2335,8 @@ owns = ["csrc/layout_engine.c", "csrc/layout_internal.h", "csrc/layout_terrain.c
 owns_glob = ["tests/csim/test_VG_P_p1_*.py"]
 acceptance = ["tests/csim/test_VG_P_p1_layout.py"]
 depends_on = []  # new files; no shared file is touched (om_internal.h, ouroboros_sim.h, signatures.toml, symbol_modules.toml, mission.c, Makefile are not in the row)
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "85ef4e96" }
+tests_pending = false
 size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built as three serial units), layout_internal.h and layout_terrain.c (about 90 lines), the stub (about 90 lines), one csim test file; no ABI, no save, no pipe change"
 
 # Lane P piece P2 (places lane spec rev 4a, 2026-10-13): lot-order noise, contour/water/fallback lanes and the C growth probe, all new files; P3 wires them. The probe reports the 4th+8th harmonic share per seed against DRAFT-shape-harm 0.5; P3 waits for that report.
@@ -2345,10 +2344,10 @@ size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built
 id = "VG-P2"
 manager = "M0"
 wave = 12
-owns = ["csrc/economy_lot_noise.c", "csrc/lot_noise.h", "csrc/growth_probe.c"]
+owns = ["csrc/economy_field_noise.c", "csrc/field_noise.h", "csrc/growth_probe.c"]
 owns_glob = ["tests/csim/test_VG_P_p2_*.py"]  # test_VG_E_* is VG-E1's glob and test_VG_D_* VG-D's: neither matches test_VG_P_p2_*
-acceptance = ["tests/csim/test_VG_P_p2_lot_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
-depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot
+acceptance = ["tests/csim/test_VG_P_p2_field_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
+depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot; rev 6 (Architect 2026-10-19): field noise, files renamed from economy_lot_noise.c and lot_noise.h
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noise_q16, om_lot_noise_range, om_lane_build; about 160 lines), growth_probe.c (om_growth_probe_run; about 200 lines), two pytest files; DRAFT-lot-noise-*, DRAFT-lane-*, DRAFT-shape-harm 0.5"
@@ -2445,10 +2444,10 @@ size_estimate = "S-241 lobby team-size choice (2 or 4), qa_state team_sizes and 
 id = "VG-F-S143"
 manager = "M0"
 wave = 9
-owns = ["scenes/lobby/lobby.gd", "tests/test_vg_f_lobby_eras.gd", "tests/qa/desktop/plays/F/S-143.py", "scripts/specfactory/lane_plays_known_red.txt", "docs/northstar/story_reviews/F.md", "tests/test_vg_f_w4_lobby.gd", "tests/qa/desktop/plays/F/S-141.py"]  # the last two only if gap 4 of the script is ruled (b)
+owns = ["scenes/lobby/lobby.gd", "tests/test_vg_f_lobby_eras.gd", "tests/qa/desktop/plays/F/S-143.py", "scripts/specfactory/lane_plays_known_red.txt", "docs/northstar/story_reviews/F.md", "tests/test_vg_f_w4_lobby.gd", "tests/qa/desktop/plays/F/S-141.py", "tests/qa/desktop/plays/F/_play.py"]  # the last two only if gap 4 of the script is ruled (b) ; rev 13 (Architect 2026-10-19): _play.py for the guest extra-args hook in pair_games (gap 2 ruled (a)), after HARNESS-userdir lands
 owns_glob = []
 acceptance = ["tests/test_vg_f_lobby_eras.gd"]
-depends_on = ["VG-F-S241", "VG-F-SKEL-B", "HARNESS-laneplays", "VG-C-s004", "VG-E1K", "A94-harness"]
+depends_on = ["VG-F-S241", "VG-F-SKEL-B", "HARNESS-laneplays", "VG-C-s004", "VG-E1K", "A94-harness", "HARNESS-userdir"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "S-143 lobby shows the common era set: qa_state owned_eras and common_eras, EraLine; closes FU-F-s143-common-eras"
@@ -2557,7 +2556,7 @@ size_estimate = "E4 radius guard: R-096-08 step-and-return inside GUARD_RADIUS (
 id = "LAB-REV2-L1"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py", "docs/northstar/plans/skilllab-harness-spec.md", "tests/skilllab/test_firing.py", "tests/skilllab/test_firing_alive.py", "tests/skilllab/test_firing_weighted.py", "tests/skilllab/test_firing_weighted_target.py", "tests/skilllab/fakes_weighted.py", "tests/skilllab/fakes_weighted_target.py", "tests/skilllab/test_states.py", "tests/skilllab/fakes_states.py", "tests/skilllab/test_engine.py", "tests/skilllab/test_engine_destination.py", "tests/skilllab/test_engine_terrain.py", "tests/skilllab/integration/test_firing_real.py", "tests/skilllab/integration/test_firing_weighted_real.py", "tests/skilllab/integration/test_weighted_reads_engine_real.py", "tests/skilllab/integration/test_states_real.py", "tests/skilllab/integration/test_bindings_real.py", "tests/skilllab/integration/test_engine_getters_types.py", "tests/skilllab/integration/test_engine_pos_buffer.py"]  # Depends on E0 for its parity half only (composed half needs nothing); spec states the dependency. Takes over scripts/skilllab and tests/skilllab files from attached SL-harness (glob), SPACELAB-1, LAB-SEARCH. Spec clauses 10 and 24 rewritten, 9 and 15 marked retired (Q-LAB-03)
+owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py", "tests/skilllab/test_firing.py", "tests/skilllab/test_firing_alive.py", "tests/skilllab/test_firing_weighted.py", "tests/skilllab/test_firing_weighted_target.py", "tests/skilllab/fakes_weighted.py", "tests/skilllab/fakes_weighted_target.py", "tests/skilllab/test_states.py", "tests/skilllab/fakes_states.py", "tests/skilllab/test_engine.py", "tests/skilllab/test_engine_destination.py", "tests/skilllab/test_engine_terrain.py", "tests/skilllab/integration/test_firing_real.py", "tests/skilllab/integration/test_firing_weighted_real.py", "tests/skilllab/integration/test_weighted_reads_engine_real.py", "tests/skilllab/integration/test_states_real.py", "tests/skilllab/integration/test_bindings_real.py", "tests/skilllab/integration/test_engine_getters_types.py", "tests/skilllab/integration/test_engine_pos_buffer.py"]  # Depends on E0 for its parity half only (composed half needs nothing); spec states the dependency. Takes over scripts/skilllab and tests/skilllab files from attached SL-harness (glob), SPACELAB-1, LAB-SEARCH. Spec clauses 10 and 24 rewritten, 9 and 15 marked retired (Q-LAB-03). docs/northstar/plans/skilllab-harness-spec.md moved to LAB-REV2-L7's owns (decision 39 item 7: L1 is built, no further edit to it)
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-E0"]
@@ -2569,7 +2568,7 @@ size_estimate = "L1 the count: firing.py of the contract (count_able, count_weig
 id = "LAB-REV2-L2"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/maps.py", "scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/scenes.py", "scripts/skilllab/rows.py", "scripts/skilllab/plays.py", "scripts/skilllab/asym.py", "scripts/skilllab/positions.py", "scripts/skilllab/mopup.py", "scripts/skilllab/approach.py", "tests/skilllab/test_fight_outcomes.py", "tests/skilllab/test_fight.py", "tests/skilllab/test_fight_alive_calls.py", "tests/skilllab/test_fight_approach.py", "tests/skilllab/test_fight_slots.py", "tests/skilllab/test_fight_slots_group_move.py", "tests/skilllab/test_rows.py", "tests/skilllab/test_scenes.py", "tests/skilllab/test_plays.py", "tests/skilllab/test_plays_approach.py", "tests/skilllab/test_plays_max_ticks.py", "tests/skilllab/test_asym.py", "tests/skilllab/test_asym_concave_goal.py", "tests/skilllab/test_asym_layered_short_front.py", "tests/skilllab/test_positions.py", "tests/skilllab/test_approach.py", "tests/skilllab/test_mopup.py", "tests/skilllab/test_mopup_eligibility.py", "tests/skilllab/test_decided_by_survivors.py", "tests/skilllab/test_objective_scene.py", "tests/skilllab/test_layout_map.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_placed_by_feature.py", "tests/skilllab/test_profile.py", "tests/skilllab/test_settings.py", "tests/skilllab/test_target_policy.py", "tests/skilllab/test_timeline.py", "tests/skilllab/test_timeline_arrive_all.py", "tests/skilllab/test_timeline_orders.py", "tests/skilllab/test_trace.py", "tests/skilllab/test_group_move_order.py", "tests/skilllab/test_guard_order.py", "tests/skilllab/test_umbrella.py", "tests/skilllab/fakes.py", "tests/skilllab/fakes_approach.py", "tests/skilllab/fakes_group_move.py", "tests/skilllab/fakes_guard.py", "tests/skilllab/fakes_trace.py", "tests/skilllab/fakes_timeline.py", "tests/skilllab/fakes_reach.py", "tests/skilllab/golden_hashes.json", "tests/skilllab/conftest.py", "tests/skilllab/integration/test_contact_real.py", "tests/skilllab/integration/test_outcomes_real.py", "tests/skilllab/integration/test_approach_real.py", "tests/skilllab/integration/test_mopup_real.py", "tests/skilllab/integration/test_asym_real.py", "tests/skilllab/integration/test_guard_real.py", "tests/skilllab/integration/test_move_order_fires_real.py", "tests/skilllab/integration/test_timeline_orders_real.py", "tests/skilllab/integration/test_scenes_real.py", "tests/skilllab/integration/test_positions_real.py", "tests/skilllab/integration/test_group_move_real.py", "tests/skilllab/integration/test_slots_real.py", "tests/skilllab/integration/test_cross_machine.py", "tests/skilllab/integration/test_determinism.py", "tests/skilllab/integration/test_trace_real.py", "tests/skilllab/integration/test_timeline_real.py", "tests/skilllab/integration/test_alive_equals_hp_real.py", "tests/skilllab/integration/test_maps_real.py", "tests/skilllab/integration/test_concave_real.py", "tests/skilllab/integration/test_planted_advantage.py", "tests/skilllab/integration/test_mirror.py", "tests/skilllab/integration/test_numbers.py", "tests/skilllab/integration/test_settings_real.py", "tests/skilllab/integration/test_reach_real.py", "tests/skilllab/integration/test_target_policy_real.py", "tests/skilllab/integration/test_target_policy_unset_hash.py", "tests/skilllab/integration/test_fight_firing_real.py", "tests/skilllab/test_fight_wiring_firing.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/terrain.py", "scripts/skilllab/engine.py", "tests/skilllab/test_reach_binding.py", "tests/skilllab/fakes_reach.py"]  # new files test_fight_firing_real.py and test_fight_wiring_firing.py, written by the L1 fix pass. Architect 2026-10-14: owns scripts/skilllab/maps.py (moved here from LAB-SEARCH and the SL-harness glob; L4 reads it without owning it). Contract owner (scripts/skilllab/contract.py): every other L shard codes against the spec text. Test files listed are those that reference the retired terms (stalemate, mopup, approach, decided, held, hold_anchor, silence, objective, start_distance) outside other shards plus the fixtures and goldens; the test writer lists the full set under Q-LAB-03. New file: integration/test_contact_real.py. golden_hashes.json and test_cross_machine.py: re-recorded once after L2 lands under ledger row TD-LAB-REV2-golden. Goldens parity run after E0..E3 by the clerk. Overseer 2026-10-14 from L2 audit: plays_space.py (only the two-line mopup removal, done first; L3 depends on L2), terrain.py (with_terrain shifts Setup.point; L6 depends on L2), engine.py (Engine.set_cone binding; L1 landed its part on the lab branch first, L2 depends on L1), test_reach_binding.py and fakes_reach.py (seam fixture, moved from unowned). Take-over
+owns = ["scripts/skilllab/maps.py", "scripts/skilllab/rows.py", "scripts/skilllab/asym.py", "scripts/skilllab/positions.py", "scripts/skilllab/mopup.py", "scripts/skilllab/approach.py", "tests/skilllab/test_fight_outcomes.py", "tests/skilllab/test_fight.py", "tests/skilllab/test_fight_alive_calls.py", "tests/skilllab/test_fight_approach.py", "tests/skilllab/test_fight_slots.py", "tests/skilllab/test_fight_slots_group_move.py", "tests/skilllab/test_rows.py", "tests/skilllab/test_scenes.py", "tests/skilllab/test_plays.py", "tests/skilllab/test_plays_approach.py", "tests/skilllab/test_plays_max_ticks.py", "tests/skilllab/test_asym.py", "tests/skilllab/test_asym_concave_goal.py", "tests/skilllab/test_asym_layered_short_front.py", "tests/skilllab/test_positions.py", "tests/skilllab/test_approach.py", "tests/skilllab/test_mopup.py", "tests/skilllab/test_mopup_eligibility.py", "tests/skilllab/test_decided_by_survivors.py", "tests/skilllab/test_objective_scene.py", "tests/skilllab/test_layout_map.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_placed_by_feature.py", "tests/skilllab/test_profile.py", "tests/skilllab/test_settings.py", "tests/skilllab/test_target_policy.py", "tests/skilllab/test_timeline.py", "tests/skilllab/test_timeline_arrive_all.py", "tests/skilllab/test_timeline_orders.py", "tests/skilllab/test_trace.py", "tests/skilllab/test_group_move_order.py", "tests/skilllab/test_guard_order.py", "tests/skilllab/test_umbrella.py", "tests/skilllab/fakes.py", "tests/skilllab/fakes_approach.py", "tests/skilllab/fakes_group_move.py", "tests/skilllab/fakes_guard.py", "tests/skilllab/fakes_trace.py", "tests/skilllab/fakes_timeline.py", "tests/skilllab/fakes_reach.py", "tests/skilllab/golden_hashes.json", "tests/skilllab/conftest.py", "tests/skilllab/integration/test_contact_real.py", "tests/skilllab/integration/test_outcomes_real.py", "tests/skilllab/integration/test_approach_real.py", "tests/skilllab/integration/test_mopup_real.py", "tests/skilllab/integration/test_asym_real.py", "tests/skilllab/integration/test_guard_real.py", "tests/skilllab/integration/test_move_order_fires_real.py", "tests/skilllab/integration/test_timeline_orders_real.py", "tests/skilllab/integration/test_scenes_real.py", "tests/skilllab/integration/test_positions_real.py", "tests/skilllab/integration/test_group_move_real.py", "tests/skilllab/integration/test_slots_real.py", "tests/skilllab/integration/test_cross_machine.py", "tests/skilllab/integration/test_determinism.py", "tests/skilllab/integration/test_trace_real.py", "tests/skilllab/integration/test_timeline_real.py", "tests/skilllab/integration/test_alive_equals_hp_real.py", "tests/skilllab/integration/test_maps_real.py", "tests/skilllab/integration/test_concave_real.py", "tests/skilllab/integration/test_planted_advantage.py", "tests/skilllab/integration/test_mirror.py", "tests/skilllab/integration/test_numbers.py", "tests/skilllab/integration/test_settings_real.py", "tests/skilllab/integration/test_reach_real.py", "tests/skilllab/integration/test_target_policy_real.py", "tests/skilllab/integration/test_target_policy_unset_hash.py", "tests/skilllab/integration/test_fight_firing_real.py", "tests/skilllab/test_fight_wiring_firing.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/terrain.py", "scripts/skilllab/engine.py", "tests/skilllab/test_reach_binding.py", "tests/skilllab/fakes_reach.py"]  # new files test_fight_firing_real.py and test_fight_wiring_firing.py, written by the L1 fix pass. Architect 2026-10-14: owns scripts/skilllab/maps.py (moved here from LAB-SEARCH and the SL-harness glob; L4 reads it without owning it). Contract owner (scripts/skilllab/contract.py): every other L shard codes against the spec text. Test files listed are those that reference the retired terms (stalemate, mopup, approach, decided, held, hold_anchor, silence, objective, start_distance) outside other shards plus the fixtures and goldens; the test writer lists the full set under Q-LAB-03. New file: integration/test_contact_real.py. golden_hashes.json and test_cross_machine.py: re-recorded once after L2 lands under ledger row TD-LAB-REV2-golden. Goldens parity run after E0..E3 by the clerk. Overseer 2026-10-14 from L2 audit: plays_space.py (only the two-line mopup removal, done first; L3 depends on L2), terrain.py (with_terrain shifts Setup.point; L6 depends on L2), engine.py (Engine.set_cone binding; L1 landed its part on the lab branch first, L2 depends on L1), test_reach_binding.py and fakes_reach.py (seam fixture, moved from unowned). Take-over Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): contract.py, scenes.py, plays.py, fight.py.
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L1"]  # L1 added: overseer 2026-10-14 from L2 audit (Engine.set_cone follows L1 engine.py)
@@ -2581,7 +2580,7 @@ size_estimate = "L2 fight end and contact: elimination only, cap as defect, per-
 id = "LAB-REV2-L3"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/skills.py", "docs/northstar/research/layer_dynamics/plays_drafts.md", "tests/skilllab/test_plays_space.py", "tests/skilllab/test_plays_registry.py", "tests/skilllab/test_plays_space_scan.py", "scripts/skilllab/scenes.py", "tests/skilllab/test_scenes_mix.py", "tests/skilllab/test_placed_by_feature.py", "tests/skilllab/integration/test_contact_real.py"]  # Overseer 2026-10-14 from L3 audit: scenes.py (placed-scene mix fix for defender plays: side 1 scaled from the play's own side 1; ping goals not re-placed by group index), test_scenes_mix.py (new file, if the L3 test fix pass creates it), test_placed_by_feature.py and integration/test_contact_real.py (take-over from L2; L3 depends on L2 so the lint sees one owner at a time)
+owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/skills.py", "docs/northstar/research/layer_dynamics/plays_drafts.md", "tests/skilllab/test_plays_space.py", "tests/skilllab/test_plays_registry.py", "tests/skilllab/test_plays_space_scan.py", "tests/skilllab/test_scenes_mix.py", "tests/skilllab/test_placed_by_feature.py", "tests/skilllab/integration/test_contact_real.py"]  # Overseer 2026-10-14 from L3 audit: scenes.py (placed-scene mix fix for defender plays: side 1 scaled from the play's own side 1; ping goals not re-placed by group index), test_scenes_mix.py (new file, if the L3 test fix pass creates it), test_placed_by_feature.py and integration/test_contact_real.py (take-over from L2; L3 depends on L2 so the lint sees one owner at a time) Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): scenes.py.
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2"]
@@ -2593,7 +2592,7 @@ size_estimate = "L3 plays: stat variants and _HIGH retired; roster mixes M0..M4;
 id = "LAB-REV2-L4"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/batches.py", "scripts/skilllab/sweep.py", "scripts/skilllab/scan.py", "scripts/skilllab/depth.py", "scripts/skilllab/breakeven.py", "scripts/skilllab/pool.py", "tests/skilllab/test_sweep.py", "tests/skilllab/test_depth.py", "tests/skilllab/test_scan.py", "tests/skilllab/test_scan_draw.py", "tests/skilllab/test_scan_refine.py", "tests/skilllab/test_breakeven.py", "tests/skilllab/test_pool.py", "tests/skilllab/test_pool_shared_library.py", "tests/skilllab/test_main.py", "tests/skilllab/test_main_batch.py", "tests/skilllab/test_main_batch_workers.py", "tests/skilllab/test_main_reach.py", "tests/skilllab/test_batches.py", "tests/skilllab/test_batches_combinations.py", "tests/skilllab/test_batches_landscape.py", "tests/skilllab/test_batches_landscape_guard.py", "tests/skilllab/test_batches_landscape_no_effect.py", "tests/skilllab/test_batches_layers.py", "tests/skilllab/test_batches_lean.py", "tests/skilllab/test_batches_matchup.py", "tests/skilllab/test_batches_matchup_layered.py", "tests/skilllab/test_batches_notes.py", "tests/skilllab/test_batches_outcomes.py", "tests/skilllab/test_batches_positions.py", "tests/skilllab/test_batches_refine.py", "tests/skilllab/test_batches_spread.py", "tests/skilllab/test_batches_workers.py", "tests/skilllab/fakes_batches.py", "tests/skilllab/fakes_scans.py", "tests/skilllab/integration/test_sweep_real.py", "tests/skilllab/integration/test_breakeven_real.py", "tests/skilllab/integration/test_pool_real.py", "tests/skilllab/integration/test_pool_scan_real.py", "tests/skilllab/integration/test_batch_lean_real.py", "tests/skilllab/integration/lean_batch_probe.py", "scripts/skilllab/contract.py", "scripts/skilllab/summary.py"]  # New files: scripts/skilllab/sweep.py, tests/skilllab/test_sweep.py, integration/test_sweep_real.py. orders_per_unit default flipped to False in the landing after E1 is on main and its test green (E1 is ordered by the workflow, not by depends_on, per the spec) Overseer 2026-10-19: contract.py (L2 file; orders_per_unit default False, CellResult.defect, ScanResult.ceiling_hit/multi_flip, WIN_MARGIN deleted) and summary.py (L5 file; the mopup_orders fix), take-over convention; L4 depends on L2, and L5 (which depends on L4) owns summary.py after it. Architect decision 29 (2026-10-19): scripts/skilllab/__main__.py ownership moved to LAB-REV2-L5.
+owns = ["scripts/skilllab/batches.py", "scripts/skilllab/depth.py", "scripts/skilllab/breakeven.py", "scripts/skilllab/pool.py", "tests/skilllab/test_sweep.py", "tests/skilllab/test_depth.py", "tests/skilllab/test_scan.py", "tests/skilllab/test_scan_draw.py", "tests/skilllab/test_scan_refine.py", "tests/skilllab/test_breakeven.py", "tests/skilllab/test_pool.py", "tests/skilllab/test_pool_shared_library.py", "tests/skilllab/test_main.py", "tests/skilllab/test_main_batch.py", "tests/skilllab/test_main_batch_workers.py", "tests/skilllab/test_main_reach.py", "tests/skilllab/test_batches.py", "tests/skilllab/test_batches_combinations.py", "tests/skilllab/test_batches_landscape.py", "tests/skilllab/test_batches_landscape_guard.py", "tests/skilllab/test_batches_landscape_no_effect.py", "tests/skilllab/test_batches_layers.py", "tests/skilllab/test_batches_lean.py", "tests/skilllab/test_batches_matchup.py", "tests/skilllab/test_batches_matchup_layered.py", "tests/skilllab/test_batches_notes.py", "tests/skilllab/test_batches_outcomes.py", "tests/skilllab/test_batches_positions.py", "tests/skilllab/test_batches_refine.py", "tests/skilllab/test_batches_spread.py", "tests/skilllab/test_batches_workers.py", "tests/skilllab/fakes_batches.py", "tests/skilllab/fakes_scans.py", "tests/skilllab/integration/test_sweep_real.py", "tests/skilllab/integration/test_breakeven_real.py", "tests/skilllab/integration/test_pool_real.py", "tests/skilllab/integration/test_pool_scan_real.py", "tests/skilllab/integration/test_batch_lean_real.py", "tests/skilllab/integration/lean_batch_probe.py", "scripts/skilllab/summary.py"]  # New files: scripts/skilllab/sweep.py, tests/skilllab/test_sweep.py, integration/test_sweep_real.py. orders_per_unit default flipped to False in the landing after E1 is on main and its test green (E1 is ordered by the workflow, not by depends_on, per the spec) Overseer 2026-10-19: contract.py (L2 file; orders_per_unit default False, CellResult.defect, ScanResult.ceiling_hit/multi_flip, WIN_MARGIN deleted) and summary.py (L5 file; the mopup_orders fix), take-over convention; L4 depends on L2, and L5 (which depends on L4) owns summary.py after it. Architect decision 29 (2026-10-19): scripts/skilllab/__main__.py ownership moved to LAB-REV2-L5. Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): contract.py.
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3"]
@@ -2605,10 +2604,10 @@ size_estimate = "L4 sweep and CLI: knob families and bands, bracketed bisection,
 id = "LAB-REV2-L5"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/conditions.py", "scripts/skilllab/evidence.py", "scripts/skilllab/charts.py", "scripts/skilllab/report.py", "scripts/skilllab/diagram.py", "scripts/skilllab/summary.py", "scripts/skilllab/mapreport.py", "scripts/skilllab/tree.py", "scripts/skilllab/transfer.py", "scripts/skilllab/sample.py", "scripts/skilllab/__main__.py", "tests/skilllab/test_conditions.py", "tests/skilllab/test_conditions_all.py", "tests/skilllab/test_charts.py", "tests/skilllab/test_report.py", "tests/skilllab/test_report_firing_axis.py", "tests/skilllab/test_diagram.py", "tests/skilllab/test_mapreport.py", "tests/skilllab/test_tree.py", "tests/skilllab/test_transfer.py", "tests/skilllab/test_sample.py"]  # New files: scripts/skilllab/diagram.py, tests/skilllab/test_diagram.py Architect decision 29 (2026-10-19): owns scripts/skilllab/__main__.py for the artifact command (reads the sweep CSVs, writes the report page and the per-notable SVGs); owner-row edit once L4 is in the lab branch, take-over convention (L4 and LAB-SEARCH also list it; L5 depends on L4).
+owns = ["scripts/skilllab/conditions.py", "scripts/skilllab/evidence.py", "scripts/skilllab/charts.py", "scripts/skilllab/summary.py", "scripts/skilllab/mapreport.py", "scripts/skilllab/tree.py", "scripts/skilllab/transfer.py", "scripts/skilllab/sample.py", "scripts/skilllab/__main__.py", "scripts/skilllab/profile.py", "tests/skilllab/test_conditions.py", "tests/skilllab/test_conditions_all.py", "tests/skilllab/test_charts.py", "tests/skilllab/test_report.py", "tests/skilllab/test_report_firing_axis.py", "tests/skilllab/test_diagram.py", "tests/skilllab/test_mapreport.py", "tests/skilllab/test_tree.py", "tests/skilllab/test_transfer.py", "tests/skilllab/test_sample.py", "tests/skilllab/test_main_artifact.py"]  # New files: scripts/skilllab/diagram.py, tests/skilllab/test_diagram.py Architect decision 29 (2026-10-19): owns scripts/skilllab/__main__.py for the artifact command (reads the sweep CSVs, writes the report page and the per-notable SVGs); owner-row edit once L4 is in the lab branch, take-over convention (L4 and LAB-SEARCH also list it; L5 depends on L4). Records 8 (2026-10-19): owns scripts/skilllab/profile.py (ProfileMap gains the last field baselines: dict = field(default_factory=dict); tests/skilllab/test_conditions_all.py in this row requires it; decisions 29 and 31; test-writer slip), take-over convention from the attached SL-harness glob; no other row owns it. Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): diagram.py, report.py.
 owns_glob = []
 acceptance = []
-depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L4"]
+depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L4", "LAB-REV2-L8"]  # Order BASE then L8 then L5 then L7 (decision 31 A: L5 reads the point column L8 writes in sweep.py; L5 owns __main__.py and summary.py only after L4/L8)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "L5 reading: C1 against both baselines, C2 on the window and whole fight, agreement table, region map, SVG diagram per notable layout, artifact template"
@@ -2617,7 +2616,7 @@ size_estimate = "L5 reading: C1 against both baselines, C2 on the window and who
 id = "LAB-REV2-L6"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/ground/scenes_ground.py", "scripts/skilllab/ground/README.md", "scripts/skilllab/ground/highground.py", "scripts/skilllab/terrain.py", "tests/skilllab/ground/test_slope_top.py", "tests/skilllab/ground/test_highground.py", "tests/skilllab/ground/test_highground_real.py", "tests/skilllab/ground/test_scenes_tall_cover.py", "tests/skilllab/ground/test_tall_cover_real.py", "tests/skilllab/test_terrain.py", "tests/skilllab/integration/test_ground_slope_real.py", "tests/skilllab/integration/test_terrain_real.py", "tests/skilllab/integration/test_ground_scene_real.py", "tests/skilllab/integration/test_terrain_changes_fight.py", "scripts/skilllab/fight.py", "scripts/skilllab/scenes.py", "tests/skilllab/test_fight_movement.py", "tests/skilllab/test_scenes_preflight_field_fit.py", "tests/skilllab/test_scenes_preflight_flyer.py", "tests/skilllab/ground/test_slope_top_variants.py"]  # New files: ground/test_slope_top.py, integration/test_ground_slope_real.py. Files integration/test_ground_scene_real.py is also in the attached walk-route owner (take-over convention). Overseer 2026-10-14 from L2 audit: owns tests/skilllab/integration/test_terrain_changes_fight.py (path corrected 2026-10-14, the test lives in integration/). Overseer 2026-10-14 from the L6 test run: fight.py (movement key from unit_types[name]["movement"]; lab-defect raise when a spawn returns unit id 0; L2 file, take-over convention, L6 depends on L2) and scenes.py (preflight no_fit on terrain_walkable_at for field_seed terrain; L3 also owns scenes.py, so L3 is in L6 depends_on to order them) Overseer 2026-10-19: new files test_fight_movement.py, test_scenes_preflight_field_fit.py, test_scenes_preflight_flyer.py, ground/test_slope_top_variants.py.
+owns = ["scripts/skilllab/ground/highground.py", "scripts/skilllab/terrain.py", "tests/skilllab/ground/test_slope_top.py", "tests/skilllab/ground/test_highground.py", "tests/skilllab/ground/test_highground_real.py", "tests/skilllab/ground/test_scenes_tall_cover.py", "tests/skilllab/ground/test_tall_cover_real.py", "tests/skilllab/test_terrain.py", "tests/skilllab/integration/test_ground_slope_real.py", "tests/skilllab/integration/test_terrain_real.py", "tests/skilllab/integration/test_ground_scene_real.py", "tests/skilllab/integration/test_terrain_changes_fight.py", "tests/skilllab/test_fight_movement.py", "tests/skilllab/test_scenes_preflight_field_fit.py", "tests/skilllab/test_scenes_preflight_flyer.py", "tests/skilllab/ground/test_slope_top_variants.py"]  # New files: ground/test_slope_top.py, integration/test_ground_slope_real.py. Files integration/test_ground_scene_real.py is also in the attached walk-route owner (take-over convention). Overseer 2026-10-14 from L2 audit: owns tests/skilllab/integration/test_terrain_changes_fight.py (path corrected 2026-10-14, the test lives in integration/). Overseer 2026-10-14 from the L6 test run: fight.py (movement key from unit_types[name]["movement"]; lab-defect raise when a spawn returns unit id 0; L2 file, take-over convention, L6 depends on L2) and scenes.py (preflight no_fit on terrain_walkable_at for field_seed terrain; L3 also owns scenes.py, so L3 is in L6 depends_on to order them) Overseer 2026-10-19: new files test_fight_movement.py, test_scenes_preflight_field_fit.py, test_scenes_preflight_flyer.py, ground/test_slope_top_variants.py. Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): fight.py, ground/scenes_ground.py, ground/README.md.
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-E3"]
@@ -2641,25 +2640,61 @@ size_estimate = "S scale: guards for the ruling 13 marks (OM_LAB_SLOW=1 gate), e
 id = "LAB-REV2-L7"
 manager = "M0"
 wave = 10
-owns = ["docs/northstar/research/layer_dynamics/README.md", "docs/northstar/ambiguity_register.md", "docs/northstar/ROADMAP.md", "docs/northstar/plans/push/pieces.toml", "tests/specfactory/test_lab_docs.py"]  # Depends on everything (spec). New file: tests/specfactory/test_lab_docs.py. README.md owner SPACELAB-1 attached (take-over)
+owns = ["docs/northstar/research/layer_dynamics/README.md", "docs/northstar/plans/skilllab-harness-spec.md", "docs/northstar/ambiguity_register.md", "docs/northstar/ROADMAP.md", "docs/northstar/plans/push/pieces.toml", "tests/specfactory/test_lab_docs.py"]  # Depends on everything (spec) except E2 and E4 (decision 39 item 7, 2026-10-19). New file: tests/specfactory/test_lab_docs.py. README.md owner SPACELAB-1 attached (take-over). skilllab-harness-spec.md taken from LAB-REV2-L1 (built); L7 rewrites clauses 5, 11, 12, 13, 14, 17, 18, 19, 20, 26, 28 (decision 39 item 2)
 owns_glob = []
 acceptance = ["tests/specfactory/test_lab_docs.py"]
-depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-S", "LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E2", "LAB-REV2-E3", "LAB-REV2-E4"]
+depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-BASE", "LAB-REV2-S", "LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3"]  # E2 and E4 removed (decision 39 item 7, 2026-10-19): they land after the lab landing; L7 documents arc and cone as built, L7B updates their behaviour docs after E2 and E4 land. test_l7_depends_on_every_other_lab_rev2_row is changed by a ruler row
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "L7 docs and rows: README sections 3, 4, 5 (output rule), 7, 8; register rows Q-008-03, Q-008-07, Q-LAB-03 note; ROADMAP section 1 row; pieces.toml status rows"
 
 [[piece]]
+id = "LAB-REV2-L7B"
+manager = "M0"
+wave = 10
+owns = []  # Takes README sections 3/5/7 and the harness spec arc/cone clauses from L7 when E2 and E4 land; owner move recorded at that time. Empty on purpose: README.md and skilllab-harness-spec.md are owned by LAB-REV2-L7 and no two rows own one file (decision 39 item 7)
+owns_glob = []
+acceptance = []
+depends_on = ["LAB-REV2-L7", "LAB-REV2-E2", "LAB-REV2-E4"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "L7b docs follow-on: arc and cone behaviour docs (README sections 3/5/7, harness spec arc/cone clauses) after the E2 and E4 landings (decision 39 item 7)"
+
+[[piece]]
+id = "LAB-REV2-BASE"
+manager = "M0"
+wave = 10
+owns = ["tests/skilllab/test_naive_blob_skip.py", "tests/skilllab/test_sweep_baselines.py", "tests/skilllab/fakes_baselines.py", "tests/skilllab/integration/test_baselines_real.py"]  # Decisions 25, 26, 32 (2026-10-19): the naive blob skips blocked cells in its existing fill order (scenes.py), baseline variants go through pre-flight on their own setup with a refused baseline dropped singly, and an unplaceable baseline is a baseline_no_fit cut (sweep.py and scan.py). scenes.py moved out of LAB-REV2-L6 (built), sweep.py and scan.py out of LAB-REV2-L4 (built); LAB-REV2-L4 and L6 stay done. Order BASE then L8 then L5 then L7: L8 takes sweep.py over after BASE (the point column), L5 reads it. Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): sweep.py, scenes.py, scan.py.
+owns_glob = []
+acceptance = []
+depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L4", "LAB-REV2-L6"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "BASE baselines: naive blob skips blocked cells in fill order, baseline variants pre-flighted on their own setup, refused baseline dropped singly, baseline_no_fit cut scan (decisions 25, 26, 32)"
+
+[[piece]]
 id = "LAB-REV2-L8"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/rows.py"]
+owns = ["scripts/skilllab/rows.py"]  # Decision 31 A (2026-10-19): the `point` column is a fight-row label written by sweep.py and reaches the CSV; decision 34 says the fixed-key list in rows.py is unchanged. sweep.py is owned by LAB-REV2-BASE and L8 depends on BASE, so L8 edits it after BASE (take-over). Order BASE then L8 then L5 then L7. Moved to LAB-REV2-FIX per decisions 41/42 (2026-10-19, post-merge fix piece): fight.py, contract.py, sweep.py.
 owns_glob = ["tests/skilllab/test_reengage*.py"]  # New files: tests/skilllab/test_reengage*.py (decision 28 point 3). fight.py is also owned by LAB-REV2-L2 and L6, contract.py and rows.py by L2: L8 depends on all of them so one owner at a time
 acceptance = []
-depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2", "LAB-REV2-L4", "LAB-REV2-L6"]
+depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2", "LAB-REV2-L4", "LAB-REV2-L6", "LAB-REV2-BASE"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "L8 lab re-engage: when a side has had no unit fire or move for REENGAGE_SILENCE_TICKS (DRAFT 40, Westley's number) while an enemy is visible, every idle unit of that side holding an attack-move role is attack-moved onto the enemy centroid on the enemy's layer; guard-stance holders never; both sides, naive included; new CSV columns reengage_0/reengage_1 (decision 28 point 3)"
+
+[[piece]]
+id = "LAB-REV2-FIX"
+manager = "M0"
+wave = 10
+owns = ["scripts/skilllab/sweep.py", "scripts/skilllab/scenes.py", "scripts/skilllab/plays.py", "scripts/skilllab/scan.py", "scripts/skilllab/contract.py", "scripts/skilllab/fight.py", "scripts/skilllab/diagram.py", "scripts/skilllab/report.py", "scripts/skilllab/ground/scenes_ground.py", "scripts/skilllab/ground/README.md", "docs/northstar/research/layer_dynamics/README.md"]  # Decisions 41 and 42 (Architect session b1e8769e, 2026-10-19, implementation; Westley may veto). Paths moved here from LAB-REV2-L2/L3/L4/L5/L6/L8/BASE (one owner at a time); ground/README.md stale straight-line flyer text is retired by decisions 20/27; the layer_dynamics README sentences on the orders flip (decision 40) and on 8..24 vs 8..48 are FIX's, README.md stays in LAB-REV2-L7's owns too (L7 is not built; FIX depends on L7, so one owner at a time)
+owns_glob = ["tests/skilllab/test_drift_fix*.py", "tests/skilllab/integration/test_drift_fix*_real.py"]  # New files (tests first, by a different agent than the builder)
+acceptance = []
+depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-BASE", "LAB-REV2-S", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "LAB-REV2-L7"]  # Same set as L7 plus L7, minus E0 (E0, E2, E4 and L7B land later)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "FIX post-merge fix piece: decisions 41 and 42 and the orders flip (decision 40)"
 
 # Architect ruling 2026-10-14 (FINDING-cone-state): save the per-type cone and hash it like reach. Files are chosen when it launches (owns is empty until then).
 # Must land before any roster type ships with a cone. Manager is M0 (Architect rulings go through M0).
@@ -2674,3 +2709,52 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "contract piece: the per-type cone table (om_roster_set_cone, LAB-REV2-E2) is saved, hashed like reach and carried across om_tactical_reset; save-format bump; closes FINDING-cone-state; lands before any roster type ships with a cone"
+
+# Harness enforcement (Architect 2026-10-19, spec 2026-10-19-harness-enforcement-spec.md rev 3a, audited three rounds): C1a -> C1b -> C235 -> C4 serial, then HARNESS-REPIN (its row is added attached in its own landing) and FU-HARNESS-findings.
+[[piece]]
+id = "HARNESS-C1a"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/rule_pins.py", "scripts/specfactory/spec_provenance.py", "tests/specfactory/test_rule_pins.py", "tests/specfactory/test_spec_provenance.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_rule_pins.py"]
+depends_on = ["A94-harness", "HARNESS-provenance"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C1a rule pins: rule_pins.py (new) prints and checks the 6-hex pin of a rule line, and spec_provenance.py gains reason 8 and the heading exemption"
+
+[[piece]]
+id = "HARNESS-C1b"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/rule_pins_tests.py", "scripts/specfactory/rule_pins.toml", "scripts/specfactory/pre_gate.sh", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/status_check.py", "tests/specfactory/test_rule_pins_tests.py", "tests/specfactory/test_pre_gate.py", "tests/specfactory/test_status_check.py", "tests/specfactory/test_merge_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_rule_pins_tests.py"]
+depends_on = ["HARNESS-C1a", "HARNESS-userdir", "HARNESS-pregate", "HARNESS-status"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C1b pins in tests and where the checks run: rule_pins_tests.py and the rule_pins.toml sidecar (new), pre_gate.sh step pins, merge_gate.sh stages rule_pins and status, status_check.py check pins"
+
+[[piece]]
+id = "HARNESS-C235"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_spec_provenance.py", "tests/specfactory/test_status_check.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_spec_provenance.py"]
+depends_on = ["HARNESS-C1b"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C235 quotes, numbers, set-asides: spec_provenance.py reasons 9, 10, 11, the [ASSERT] and [OPEN] tags, register status reading, status_check.py checks register and reviews"
+
+[[piece]]
+id = "HARNESS-C4"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/launch_check.sh", "scripts/specfactory/status_check.py", "scripts/specfactory/pre_gate.sh", "tests/specfactory/test_launch_check.py", "tests/specfactory/test_status_check.py", "tests/specfactory/test_pre_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_launch_check.py"]
+depends_on = ["HARNESS-C235"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys script, args, launch, spec, status_check.py known keys and check launch, the script header line"
