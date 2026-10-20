@@ -263,8 +263,13 @@ def test_validation_errors_run_no_fight(kw):
 
 def test_default_fight_fn_imports_lazily_and_calls_fight(monkeypatch):
     """fight_fn=None resolves scripts.skilllab.fight.fight at call time; importing breakeven loads no engine."""
-    monkeypatch.delitem(sys.modules, "scripts.skilllab.fight", raising=False)
-    monkeypatch.delitem(sys.modules, "scripts.skilllab.breakeven", raising=False)
+    # Restore the original modules and the package attributes afterwards, or the seam fixture patches a stale fight module.
+    pkg = importlib.import_module("scripts.skilllab")
+    for name in ("fight", "breakeven"):
+        importlib.import_module(f"scripts.skilllab.{name}")
+        monkeypatch.setattr(pkg, name, sys.modules[f"scripts.skilllab.{name}"])
+    monkeypatch.delitem(sys.modules, "scripts.skilllab.fight")
+    monkeypatch.delitem(sys.modules, "scripts.skilllab.breakeven")
     importlib.import_module("scripts.skilllab.breakeven")
     assert "scripts.skilllab.fight" not in sys.modules
     import scripts.skilllab.fight as fight_module
