@@ -174,12 +174,14 @@ def fixture_setup():
 @pytest.mark.parametrize("play", sorted(plays_space.PLAYS) + [FIXTURE_PLAY])
 def test_r2_the_baselines_take_the_plays_own_layer_pair(play, monkeypatch):
     """R2 (Architect ruling 2026-10-20, plan R2 / T4 note): "a naive baseline takes the play's own layer pair: side 0 on the play's
-    side-0 layer, side 1 on the play's enemy layer, naive orders", so every baseline compares like for like. Checked for the naive
-    attacker and for the naive defender that keeps each type on the layer the play gave it (naive_defender_play_layer); the layers of
-    each side are compared as sets (a play with side 0 on layers 0 and 1 gives a baseline on layers 0 and 1). The two other defender
-    roles (naive_defender, naive_defender_attacker_layer) put side 0 on the enemy's layer by design (decisions 25 and 41) and are not
-    pinned. Red today: the naive attacker is on layer 0 for every play (the five plays with side 0 above layer 0 and the fixture, whose
-    pair is (3, 2)); the play-layer defender already keeps the play's layers (green)."""
+    side-0 layer, side 1 on the play's enemy layer, naive orders", so every baseline compares like for like.
+    The rule binds exactly two roles: naive_attacker and naive_defender_play_layer (the defender that keeps each type on the layer the
+    play gave it). LAYERS COMPARE AS SETS PER SIDE: a play with side 0 on layers 0 and 1 gives a baseline whose side 0 stands on layers
+    0 and 1. The two other defender roles, naive_defender and naive_defender_attacker_layer, put side 0 on the ENEMY's layer by design
+    (decisions 25 and 41 of the rev 2 decisions file; naive_defender_play_layer exists because a blob of ground types moved up to the
+    play's layer could not fire at the attackers at all), so they are exempt and not pinned. Red today: the naive attacker is on layer 0
+    for every play (the five plays with side 0 above layer 0 and the fixture, whose pair is (3, 2)); the play-layer defender already
+    keeps the play's layers (green)."""
     if play == FIXTURE_PLAY:
         monkeypatch.setitem(plays_space.PLAYS, FIXTURE_PLAY, plays_space.PlayDraft(
             setup_fn=fixture_setup, timeline=(), skill="S3", status="draft", numbers={}, words="fixture, not a swept play",

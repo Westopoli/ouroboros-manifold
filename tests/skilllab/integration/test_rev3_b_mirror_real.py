@@ -10,9 +10,9 @@ M9 of plays_space.MIXES. Contract: tests/skilllab/test_rev3_b_mirror.py (sweep.m
     for Wardens.
   - MEASURED (2026-10-20, this file's reviewer, a scratch mirror of the same shape: blobs at x -350 and 350, seeds i // 2, swap i % 2,
     lab tip, built-in types): M5 0 caps, M6 0, M7 0, M8 0 (max 8295 ticks), M9 1 cap of 30 (seed 6, unswapped, 12000 ticks).
-  - M9 ON THE REAL ENGINE (DRAFT shape, see test_rev3_b_mirror.py): its cap, if any, is fight 12 (seed 6 unswapped) and its living roster
-    at the cap is Wardens only, so M9 is accepted with the known-cap reason. This needs the real fight function to fill the DRAFT `living`
-    field of its result (scripts/skilllab/fight.py and contract.py are outside B's file list: flagged in the report).
+  - M9 ON THE REAL ENGINE (the ratified `living` shape, see test_rev3_b_mirror.py and test_rev3_b_living.py): its cap, if any, is fight 12 (seed 6 unswapped) and its living roster
+    at the cap is Wardens only, so M9 is accepted with the known-cap reason. This needs the real fight function to fill the `living`
+    field of its result (the B builder owns that contract.py and fight.py edit).
   - POSITIVE CONTROL for the cap detection on the real engine: the same pre-check with every fight cut at 200 ticks (a fight_fn that
     lowers max_ticks) rejects an ordinary mix as capped, 30 of 30.
   - T11: the Warden refusal of the real path fights nothing (a fast test in test_rev3_b_mirror.py patches the engine out; here the

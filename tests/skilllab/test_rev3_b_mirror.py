@@ -36,12 +36,12 @@ and the cap list; M9 stays enabled and vet_mixes shows it accepted. The Warden p
 Warden cap when, at the cap, every living unit on each side that still has a living unit is a Warden. Any other capped fight on M9, and any
 cap on M5 to M8 (or on a mix with no Warden), rejects the mix with reason "capped". The exception retires with the engine piece (a TD row
 removes it).
-  DRAFT SHAPE, to be ratified (the Architect left it open): a fight result carries a new defaulted field `living`, a tuple of two dicts
-  ({unit name: count} for side 0, then for side 1), the units alive at the last tick; the verdict gains `rosters` = {cap_fight_index: living}
-  for every capped fight (the living roster printed so the pattern is checkable). The fight index is the call order of the 30 fights, and
-  fight i is seed i // 2 with swap i % 2 == 1 (DRAFT: fight 12 is seed 6 unswapped). A capped result without `living` is not at the pattern.
-  The tests below set `living` on a fake result as an attribute (a FightResult-like object); that the real FightResult carries it, and that
-  the real fight function fills it, is the builder's and is checked by integration/test_rev3_b_mirror_real.py.
+  RATIFIED SHAPE (Architect, 2026-10-20): FightResult gains a defaulted field `living`, a tuple of two dicts ({unit name: count} for side 0,
+  then side 1), the units alive at the end of the fight, filled by fight.py at the end of every fight (test_rev3_b_living.py); the verdict
+  gains `rosters` = {capped fight index: living} for every capped fight (the living roster printed so the pattern is checkable). A capped
+  result without `living` is off the pattern and rejects. The fight index is the call order of the 30 fights, and fight i is seed i // 2
+  with swap i % 2 == 1 (DRAFT: fight 12 is seed 6 unswapped). The tests below set `living` on a fake result as an attribute (a
+  FightResult-like object); the B builder owns the contract.py and fight.py edit (one field, one fill site).
 
 NOT PINNED (listed in the report): the cap number; where the batch calls vet_mixes (the plan names no hook); what the artifact prints for
 M9's caps (report.py is outside B's file list and the plan gives no shape); a mix with Wardens other than M9 (the pattern is pinned for
@@ -76,7 +76,7 @@ def result(outcome="side0", ticks=900):
 
 class Recorder:
     """A fake fight_fn: records every call, answers `outcome_of(index)`; `living_of(index)`, when given, is set as the result's `living`
-    (the DRAFT field: the units alive at the last tick, ({side 0 name: count}, {side 1 name: count}))."""
+    (the ratified field: the units alive at the last tick, ({side 0 name: count}, {side 1 name: count}))."""
     def __init__(self, outcome_of=lambda i: "side0", living_of=None):
         self.calls, self.outcome_of, self.living_of = [], outcome_of, living_of
 
