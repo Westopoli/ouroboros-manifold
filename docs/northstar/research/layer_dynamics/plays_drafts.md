@@ -95,7 +95,7 @@ Groups (canvas coordinates, canvas centre 2000, 2000):
 
 Status: unconfirmed draft, not measured, for Westley's look.
 
-Side 0 goes silent at tick 0; the enemy keeps emitting.
+Side 0 goes silent at tick 0; the enemy is switched to emit at tick 0, at the emitting family's values.
 
 Numbers:
 - HIGH_LAYER = 1
@@ -109,6 +109,8 @@ Groups (canvas coordinates, canvas centre 2000, 2000):
 Timeline:
 - group 0, at tick 0: set_emission
 - group 1, at tick 0: set_emission
+- group 2, at tick 0: set_emission
+- group 3, at tick 0: set_emission
 
 ## s3_layer_above (S3)
 

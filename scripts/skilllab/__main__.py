@@ -68,7 +68,7 @@ def _sweep(name, out_dir, workers, full_scan):
     else:
         print("sweep needs one of: all, " + ", ".join(sweep.FAMILY_ORDER))
         return 2
-    summary = sweep.run(families, out_dir, workers=workers, full_scan=full_scan)
+    summary = sweep.run(families, out_dir, workers=workers, full_scan=full_scan, probe=True)
     for entry in summary["families"].values():
         if entry.get("csv"):
             print(out_dir / entry["csv"])
