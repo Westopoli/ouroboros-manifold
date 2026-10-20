@@ -1,4 +1,5 @@
 extends Node
+# Rule pins: R-106-05@bc7ef9
 # Real-GPU checks for the vast-space backdrop of the live galaxy rig (piece VG-B25-vast-space, lane B,
 # docs/northstar/plans/2026-10-07-visible-game-spec.md Rev 12d, paragraph "VG-B25-vast-space";
 # Step 5 of docs/northstar/plans/2026-10-02-galaxy-bubble-field-spec.md; Architect gap 7 ruling 2026-10-12).
