@@ -38,6 +38,7 @@ PLAYS_BY_FAMILY = {
     "emitting": ("s3_dark_striker",), "arc": ("s2_concave", "s2_mass_one_end", "s2_screen", "s2_warden_line"),
     "cone": ("s2_concave", "s2_mass_one_end", "s2_screen", "s2_warden_line"),
 }
+SMOKE_PLAYS = {"vision": ("s3_layer_above", "s3_types_by_reach")}      # the smoke's plays per family: a subset of PLAYS_BY_FAMILY (the batch sweeps all of them)
 BASES = {
     "OM_TP_VISION_UP_1": 0.5, "OM_TP_VISION_DOWN_1": 0.5, "OM_TP_VISION_UP_2": 0.2, "OM_TP_VISION_DOWN_2": 0.2,
     "OM_TP_RANGE_UP_1": 1.0, "OM_TP_RANGE_UP_2": 1.0, "OM_TP_RANGE_DOWN_1": 1.0, "OM_TP_RANGE_DOWN_2": 1.0,
@@ -681,7 +682,7 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         point = next(p for p in grid("vision") if p.value == 0.5)
         control_set = control_builds or default_control_builds()
         for layout, features in layouts.items():
-            for play in PLAYS_BY_FAMILY["vision"]:
+            for play in SMOKE_PLAYS["vision"]:
                 play_build, roles_wanted = _play_roles(builds, play, features)
                 by_role = {"play": play_build, **{r: builds(play, r, features) for r in roles_wanted}}
                 bad = _refusal({"play": by_role["play"]})

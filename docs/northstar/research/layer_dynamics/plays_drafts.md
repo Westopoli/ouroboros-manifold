@@ -114,6 +114,7 @@ Status: unconfirmed draft, not measured, for Westley's look.
 Bombards and Bastions stand on layers 3 and 4, half of each type on each, two and one layers above the enemy on layer 2, and fire down.
 
 Numbers:
+- DRAFT-layer-stack-s3_bombard_bastion = Bastion=(3, 4), Bombard=(3, 4)
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 4 x Bombard, blob, layer 4, at (1650, 2000), order attack_move
@@ -130,6 +131,7 @@ Status: unconfirmed draft, not measured, for Westley's look.
 Bombards and Bastions stand on the enemy's layer, layer 4, and fire level.
 
 Numbers:
+- DRAFT-layer-stack-s3_bombard_bastion_level = Bastion=(4,), Bombard=(4,)
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 8 x Bombard, blob, layer 4, at (1650, 2000), order attack_move
@@ -165,6 +167,7 @@ Status: unconfirmed draft, not measured, for Westley's look.
 Eight Interceptors sit two layers below the enemy and fire up; eight Bombards sit one layer above it. The enemy is on layer 3.
 
 Numbers:
+- DRAFT-layer-stack-s3_interceptor_bombard = Bombard=(4,), Interceptor=(1,)
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 8 x Interceptor, blob, layer 1, at (1650, 2000), order attack_move
@@ -179,6 +182,7 @@ Status: unconfirmed draft, not measured, for Westley's look.
 Eight Interceptors sit two layers below the enemy and eight Raiders one layer below it, all firing up. The enemy is on layer 4.
 
 Numbers:
+- DRAFT-layer-stack-s3_interceptor_raider = Interceptor=(2,), Raider=(3,)
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 8 x Interceptor, blob, layer 2, at (1650, 2000), order attack_move
@@ -244,6 +248,7 @@ Status: unconfirmed draft, not measured, for Westley's look.
 Eight Raiders sit one layer below the enemy and fire up; eight Bombards sit one layer above it and fire down. The enemy is on layer 2.
 
 Numbers:
+- DRAFT-layer-stack-s3_raider_bombard = Bombard=(3,), Raider=(1,)
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 8 x Raider, blob, layer 1, at (1650, 2000), order attack_move

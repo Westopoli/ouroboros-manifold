@@ -215,6 +215,11 @@ DRAFT_TEXT = {
     "DRAFT-mix-M7": "the composition of roster mix M7, a row of the MIXES table in plays_space.py",
     "DRAFT-mix-M8": "the composition of roster mix M8, a row of the MIXES table in plays_space.py",
     "DRAFT-mix-M9": "the composition of roster mix M9, a row of the MIXES table in plays_space.py",
+    "DRAFT-layer-stack-s3_raider_bombard": "the layers the play s3_raider_bombard places each side-0 unit type on (derived from its placement in plays_space.py)",
+    "DRAFT-layer-stack-s3_interceptor_bombard": "the layers the play s3_interceptor_bombard places each side-0 unit type on (derived from its placement in plays_space.py)",
+    "DRAFT-layer-stack-s3_interceptor_raider": "the layers the play s3_interceptor_raider places each side-0 unit type on (derived from its placement in plays_space.py)",
+    "DRAFT-layer-stack-s3_bombard_bastion": "the layers the play s3_bombard_bastion places each side-0 unit type on (derived from its placement in plays_space.py)",
+    "DRAFT-layer-stack-s3_bombard_bastion_level": "the layers the play s3_bombard_bastion_level places each side-0 unit type on (derived from its placement in plays_space.py)",
 }
 STANDIN = "re-engage is a lab stand-in for the engine's pending sight-engagement rule"
 NO_DEFENDER = "C1 for plays without a naive defender baseline rests on naive_attacker only"

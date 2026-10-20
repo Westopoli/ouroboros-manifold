@@ -256,6 +256,7 @@ Draft numbers in force (DRAFT; Westley sets what the first chart shows matters, 
 - Arc family grid: 30 times 0.25, 0.5, 1, 2 and 4, so 7.5, 15, 30, 60 and 120 degrees, ascending (decision 47); the null control stays 360. The family is batch two's, run with E2.
 - Cone: range 300, half-angle 45, share 1.0 (DRAFT-aoe-cone-range, DRAFT-aoe-cone-deg, DRAFT-aoe-cone-share); off when range is 0.
 - Roster mixes M0 to M9 and M3b (section 3; DRAFT-mix-M1 to M9 and DRAFT-mix-M3b, rows of one data table in `plays_space.py`).
+- Layer placements of the five mix plays (DRAFT-layer-stack-s3_raider_bombard, -s3_interceptor_bombard, -s3_interceptor_raider, -s3_bombard_bastion, -s3_bombard_bastion_level): the layers each side-0 unit type stands on, derived from the play's placement in `plays_space.py` and printed on `plays_drafts.md`; Westley sets them.
 - Behind cover 150 wu (DRAFT-behind-cover, `scenes.BEHIND_COVER`) and ambush behind 200 wu (DRAFT-ambush-behind, `scenes.AMBUSH_BEHIND`): provisional placements of the plays.
 - Re-engage silence: `REENGAGE_SILENCE_TICKS` 40 (DRAFT, the R-099-05 window; Westley's number).
 - Re-engage moved: `REENGAGE_MOVED_WU` 1 wu (DRAFT-reengage-moved-wu; Westley's number): a side has moved only when a living unit is displaced by more than this from its position at the last reset of the silence counter.
