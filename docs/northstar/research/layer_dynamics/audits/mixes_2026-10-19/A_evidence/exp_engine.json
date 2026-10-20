@@ -1,0 +1,832 @@
+{
+ "A1_warden_builtin_vs_clone": {
+  "outcomes": {
+   "side0": 8
+  },
+  "agreement": {
+   "both_right": 2,
+   "both_wrong": 6
+  },
+  "mean_margin": 0.944,
+  "mean_ticks": 2462,
+  "rows": [
+   {
+    "outcome": "side0",
+    "margin": 1.0,
+    "surv": [
+     16,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2629,
+    "fw": [
+     11.8,
+     10.5
+    ],
+    "ww": [
+     11.8,
+     10.5
+    ],
+    "fs": [
+     1681.5,
+     1348.5
+    ],
+    "ws": [
+     1681.5,
+     1348.5
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.926,
+    "surv": [
+     15,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2505,
+    "fw": [
+     16.0,
+     16.2
+    ],
+    "ww": [
+     16.0,
+     16.2
+    ],
+    "fs": [
+     1637.0,
+     1188.2
+    ],
+    "ws": [
+     1637.0,
+     1188.2
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_wrong",
+    "contact": 35
+   },
+   {
+    "outcome": "side0",
+    "margin": 1.0,
+    "surv": [
+     16,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2065,
+    "fw": [
+     11.5,
+     11.8
+    ],
+    "ww": [
+     11.5,
+     11.8
+    ],
+    "fs": [
+     1560.0,
+     906.0
+    ],
+    "ws": [
+     1560.0,
+     906.0
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_wrong",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.938,
+    "surv": [
+     15,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2581,
+    "fw": [
+     11.5,
+     12.5
+    ],
+    "ww": [
+     11.5,
+     12.5
+    ],
+    "fs": [
+     1669.2,
+     1249.0
+    ],
+    "ws": [
+     1669.2,
+     1249.0
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_wrong",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.937,
+    "surv": [
+     15,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2182,
+    "fw": [
+     11.8,
+     13.0
+    ],
+    "ww": [
+     11.8,
+     13.0
+    ],
+    "fs": [
+     1575.5,
+     958.5
+    ],
+    "ws": [
+     1575.5,
+     958.5
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_wrong",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.938,
+    "surv": [
+     15,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2583,
+    "fw": [
+     11.0,
+     13.0
+    ],
+    "ww": [
+     11.0,
+     13.0
+    ],
+    "fs": [
+     1675.5,
+     1194.8
+    ],
+    "ws": [
+     1675.5,
+     1194.8
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_wrong",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.938,
+    "surv": [
+     15,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2345,
+    "fw": [
+     10.8,
+     13.2
+    ],
+    "ww": [
+     10.8,
+     13.2
+    ],
+    "fs": [
+     1594.2,
+     1103.2
+    ],
+    "ws": [
+     1594.2,
+     1103.2
+    ],
+    "pc": "side1",
+    "pt": "side1",
+    "agree": "both_wrong",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.875,
+    "surv": [
+     14,
+     0
+    ],
+    "heads": [
+     16,
+     16
+    ],
+    "ticks": 2805,
+    "fw": [
+     12.5,
+     10.8
+    ],
+    "ww": [
+     12.5,
+     10.8
+    ],
+    "fs": [
+     1683.2,
+     1350.5
+    ],
+    "ws": [
+     1683.2,
+     1350.5
+    ],
+    "pc": "side0",
+    "pt": "side0",
+    "agree": "both_right",
+    "contact": 30
+   }
+  ]
+ },
+ "A2_raiders_vs_bastion_builtin": {
+  "outcomes": {
+   "side0": 8
+  },
+  "agreement": {
+   "count_wrong_type_right": 8
+  },
+  "mean_margin": 0.944,
+  "mean_ticks": 1057,
+  "rows": [
+   {
+    "outcome": "side0",
+    "margin": 0.944,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1101,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     369.5,
+     142.5
+    ],
+    "ws": [
+     554.2,
+     28.5
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.947,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1014,
+    "fw": [
+     3.8,
+     8.0
+    ],
+    "ww": [
+     5.6,
+     1.6
+    ],
+    "fs": [
+     366.2,
+     134.8
+    ],
+    "ws": [
+     549.4,
+     26.9
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.947,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1006,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     368.2,
+     134.5
+    ],
+    "ws": [
+     552.4,
+     26.9
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.946,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1042,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     366.5,
+     135.5
+    ],
+    "ws": [
+     549.8,
+     27.1
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.946,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1056,
+    "fw": [
+     5.0,
+     8.0
+    ],
+    "ww": [
+     7.5,
+     1.6
+    ],
+    "fs": [
+     369.5,
+     138.2
+    ],
+    "ws": [
+     554.2,
+     27.6
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.943,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1061,
+    "fw": [
+     5.0,
+     8.0
+    ],
+    "ww": [
+     7.5,
+     1.6
+    ],
+    "fs": [
+     366.2,
+     144.8
+    ],
+    "ws": [
+     549.4,
+     28.9
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.941,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1065,
+    "fw": [
+     5.5,
+     8.0
+    ],
+    "ww": [
+     8.2,
+     1.6
+    ],
+    "fs": [
+     367.8,
+     147.8
+    ],
+    "ws": [
+     551.6,
+     29.6
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.94,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 1109,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     367.8,
+     153.2
+    ],
+    "ws": [
+     551.6,
+     30.6
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   }
+  ]
+ },
+ "A2_raiders_vs_bastion_clone": {
+  "outcomes": {
+   "side0": 8
+  },
+  "agreement": {
+   "count_wrong_type_right": 8
+  },
+  "mean_margin": 0.962,
+  "mean_ticks": 720,
+  "rows": [
+   {
+    "outcome": "side0",
+    "margin": 0.961,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 727,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     243.8,
+     95.8
+    ],
+    "ws": [
+     365.6,
+     19.2
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.963,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 696,
+    "fw": [
+     3.8,
+     8.0
+    ],
+    "ww": [
+     5.6,
+     1.6
+    ],
+    "fs": [
+     241.2,
+     92.0
+    ],
+    "ws": [
+     361.9,
+     18.4
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.963,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 688,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     241.0,
+     90.8
+    ],
+    "ws": [
+     361.5,
+     18.2
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.964,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 694,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     240.8,
+     90.2
+    ],
+    "ws": [
+     361.1,
+     18.1
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.964,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 701,
+    "fw": [
+     5.0,
+     8.0
+    ],
+    "ww": [
+     7.5,
+     1.6
+    ],
+    "fs": [
+     247.5,
+     91.0
+    ],
+    "ws": [
+     371.2,
+     18.2
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.959,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 756,
+    "fw": [
+     5.0,
+     8.0
+    ],
+    "ww": [
+     7.5,
+     1.6
+    ],
+    "fs": [
+     244.8,
+     101.2
+    ],
+    "ws": [
+     367.1,
+     20.2
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.959,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 756,
+    "fw": [
+     5.5,
+     8.0
+    ],
+    "ww": [
+     8.2,
+     1.6
+    ],
+    "fs": [
+     242.8,
+     103.2
+    ],
+    "ws": [
+     364.1,
+     20.7
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   },
+   {
+    "outcome": "side0",
+    "margin": 0.961,
+    "surv": [
+     8,
+     0
+    ],
+    "heads": [
+     8,
+     4
+    ],
+    "ticks": 744,
+    "fw": [
+     5.2,
+     8.0
+    ],
+    "ww": [
+     7.9,
+     1.6
+    ],
+    "fs": [
+     240.8,
+     97.0
+    ],
+    "ws": [
+     361.1,
+     19.4
+    ],
+    "pc": "side1",
+    "pt": "side0",
+    "agree": "count_wrong_type_right",
+    "contact": 30
+   }
+  ]
+ },
+ "_wall_s": 22.3
+}
