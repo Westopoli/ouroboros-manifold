@@ -302,7 +302,7 @@ def pocket_base(ring):
 
 
 @pytest.mark.parametrize("ring", [True, False])
-def test_d_a_closed_pocket_smaller_than_the_count_is_the_baseline_no_fit_path_on_hand_built_terrain(tmp_path, fake_scene, library, ring):
+def test_d_a_closed_pocket_smaller_than_the_count_is_the_baseline_no_fit_path_on_hand_built_terrain(tmp_path, fake_scene, library, ring, monkeypatch):
     """The real sweep.default_builds over a hand-built terrain (scenes.placed_scene stands in for the play's own scene only): the
     naive defender's 16 holders cannot be placed in the closed pocket (decision 36: the region has no free cell left), so the REAL
     pre-flight of its own Setup reads 'no_fit' at every headcount, K < 8, and the layout is listed baseline_no_fit with last_headcount
@@ -310,6 +310,12 @@ def test_d_a_closed_pocket_smaller_than_the_count_is_the_baseline_no_fit_path_on
     nothing listed, every role scanned to 48. Red before: the build keeps its open-ground cells in the walls but nothing cuts the scan
     (and the label is the base's 'ok')."""
     fake_scene(pocket_base(ring))
+    pocket_scene = scenes.placed_scene
+    # The pocket stands in for the play's own scene only (rev 3 D4: the naive attacker is now rebuilt from the "naive" scene, so a pocket
+    # served there would put the play's own holders in it and refuse the attacker, which is not what this test is about): the naive
+    # scene is the same hand-built world without the ring.
+    monkeypatch.setattr(scenes, "placed_scene", lambda layout, play, start_distance, features, counter=False:
+                        pocket_base(False) if play == "naive" else pocket_scene(layout, play, start_distance, features, counter))
     heads = []
 
     def fight_fn(setup, seed, swap):

@@ -83,21 +83,23 @@ def test_t3_the_mirror_does_not_depend_on_the_side():
 
 
 def bastion_left(target):
+    """Hit points kept (side 1) by one `target` against four Raiders for 200 ticks. "Fortress" is a Bastion deliberately NOT collapsed
+    onto the built-in id (a differently named custom type with the Bastion's stats, entry rules of test_rev3_a_types.py)."""
     setup = Setup(groups=(blob(0, "Raider", 4, -150.0), blob(1, target, 1, 150.0)),
-                  unit_types={"Bastion": {"base": "Bastion", "reach": (0, 2)}}, max_ticks=200)
+                  unit_types={"Bastion": {"base": "Bastion", "reach": (0, 2)}, "Fortress": {"base": "Bastion", "reach": (0, 2)}}, max_ticks=200)
     return fight(setup, 0, False, engine=AliasEngine()).strength_left[1]
 
 
 @SLOW
 def test_positive_control_the_builtin_bastion_is_capped_at_one_times():
-    """Green on the lab tip: four Raiders (Strike, 1.5x against Siege uncapped) leave the built-in Bastion more hit points than the
-    uncapped multiplier would; measured 0.589 against 0.383 uncapped. The bound is the copy's own number from the same fight, not a
-    new threshold: the capped target keeps strictly more than the uncapped copy."""
-    assert bastion_left("BastionB") > bastion_left("Bastion")
+    """Green on the lab tip: four Raiders (Strike, 1.5x against Siege uncapped) leave the built-in Bastion more hit points than a custom
+    Bastion that is not on the built-in id (the cap bites on the built-in id only, D3); measured 0.589 against 0.383. The bound is the
+    custom copy's own number from the same fight, not a new threshold: the capped target keeps strictly more."""
+    assert bastion_left("BastionB") > bastion_left("Fortress")
 
 
 @SLOW
 def test_t3_a_lab_bastion_takes_the_same_damage_as_the_builtin_one_from_a_strike_attacker():
-    """T3 (D3): the lab Bastion (entry `{"base": "Bastion", "reach": (0, 2)}`) is capped at 1.0x like the built-in one. Red today:
-    the copy keeps 0.383 of its hit points, the built-in 0.589."""
+    """T3 (D3): the lab Bastion (entry `{"base": "Bastion", "reach": (0, 2)}`) is capped at 1.0x like the built-in one. Red before D3:
+    the copy kept 0.383 of its hit points, the built-in 0.589 (the "Fortress" control in the test above still keeps 0.383)."""
     assert bastion_left("Bastion") == pytest.approx(bastion_left("BastionB"), abs=1e-9)
