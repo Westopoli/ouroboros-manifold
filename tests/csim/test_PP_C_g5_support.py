@@ -1,3 +1,4 @@
+# Rule pins: 
 """Shared helpers for the Phase C step G5 tests (reach by unit type). Holds no tests of its own.
 
 Plan 2026-10-02-movement-layers-and-search-plan.md Phase C and brief 2026-10-02-skill-lab-cascade.md
@@ -152,8 +153,8 @@ def duel(lib, world_factory, a_type, a_layer, t_layer, dist, reach=(0, 0), param
     to that value (None leaves the defaults). `state` is 'idle' or 'attack_move' (marching away from the
     target, so a unit that does not stop for it walks off). Returns (engaged, first_hit_damage)."""
     w = world_factory(n_regions=1)
-    if reach != (0, 0):
-        assert set_reach(lib, w, a_type, *reach) == 0
+    # TD-VG-T-1: always set, so a "reach 0" case names (0, 0) instead of relying on the engine's default.
+    assert set_reach(lib, w, a_type, *reach) == 0
     if vision is not None:
         open_vision(lib, w, vision)
     for name, value in (params or {}).items():

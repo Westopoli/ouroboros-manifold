@@ -1,3 +1,4 @@
+# Rule pins: R-164-01@511d57
 # spec: docs/northstar/plans/2026-10-01-architect-rulings-2.md A185 (Addendum 64), A125
 # spec: docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md Phase C, G3
 """G3 hash invariant. With OM_TP_TARGET_BY_SIGHT = 0 (reach 0 and emission silent are the defaults)
@@ -23,6 +24,7 @@ import test_F1_fog_per_faction_observers as F1
 import test_F2_nearest_hostile_search as F2
 import test_F3_macro_contact_skip as F3
 from test_PP_C_g3_support import BOMBARD, SUPPLY, set_param, spawn, step
+from test_PP_C_g5_support import BUILTIN_COMBAT
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "parity" / "baseline"))
 import baseline_fights as B  # noqa: E402
@@ -45,6 +47,14 @@ def _off(lib, w):
     assert lib.om_tactical_get_param(w, TBS) == 0.0
 
 
+def _pin_no_reach(lib, w):
+    """TD-VG-T-1: the A99 fights were recorded with every type at reach (0, 0), which was the engine's default
+    (same-layer fire only). The builders name it instead of relying on it, so a game that sets the bible's reach table
+    (R-164-01) at mission start does not move the recorded hashes. No hash is re-recorded."""
+    for utype in BUILTIN_COMBAT:
+        assert lib.om_roster_set_reach(w, utype, 0, 0) == 0
+
+
 FAST = [r for r in A.RUNS if r[4] == "fast"]
 
 
@@ -55,6 +65,7 @@ def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
     rec = PRE_G3_A99[name]["hashes"]
     w = A.build(lib, units)
     _off(lib, w)
+    _pin_no_reach(lib, w)
     if gap is not None:
         A.stage_fight(lib, w, A._slots(lib, w), gap)
     got = []
@@ -71,6 +82,7 @@ def test_G3_positive_control_perturbed_recorded_hash_is_caught(lib):
     rec = list(PRE_G3_A99[name]["hashes"][:30])
     w = A.build(lib, units)
     _off(lib, w)
+    _pin_no_reach(lib, w)
     got = []
     for _ in range(30):
         lib.om_tactical_step(w)

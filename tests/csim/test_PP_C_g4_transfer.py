@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-002-01@6ac3b0, R-002-02@3f01e4, R-002-03@f4690a, R-002-04@5ee121, R-002-05@de5c73, R-002-06@7e0b06, R-002-07@247e37, R-004-01@61a9b6, R-004-02@7d61a4, R-004-03@c0c24d, R-004-04@9004f6
 """Phase C step G4: the hard layer transfer (E-01 S-002 and S-004; cascade brief section 5 "G4. Changing layer").
 
 Proves R-002-01 to R-002-07 (the rules the plan adds) and R-004-01 to R-004-04, with R-001-07 (every Settled Reach
@@ -111,9 +112,11 @@ def test_Q_002_01_a_far_transfer_is_one_transition_of_one_duration(lib, world_fa
 
 def _acquire_scene(lib, world_factory, transitioning):
     """T (Raider, side 0, layer 2) with an enemy O on the old layer 2 and an enemy N on the new layer 3, each 100 wu
-    away (Raider range 200, sensor 800: all in range and in sight). Same-layer targeting only (reach is 0 by default).
-    When `transitioning` the transfer to layer 3 is ordered, else T stays put (the control)."""
+    away (Raider range 200, sensor 800: all in range and in sight). Same-layer targeting only (the Raider's reach is
+    set to (0, 0) here; TD-VG-T-1: the scene tests transition timing, not reach, and no longer relies on the engine's
+    default). When `transitioning` the transfer to layer 3 is ordered, else T stays put (the control)."""
     w = new_world(world_factory, lib)
+    assert lib.om_roster_set_reach(w, RAIDER, 0, 0) == 0
     t = spawn(lib, w, RAIDER, FRIEND, 300.0, 400.0, OLD)
     o = spawn(lib, w, RAIDER, ENEMY, 400.0, 400.0, OLD)
     n = spawn(lib, w, RAIDER, ENEMY, 300.0, 500.0, NEW)

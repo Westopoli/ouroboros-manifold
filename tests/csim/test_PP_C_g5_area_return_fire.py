@@ -1,3 +1,4 @@
+# Rule pins: R-008-03@854dcc, R-087-06@2b0850, R-164-02@ac58a3
 """Phase C step G5, reach applied to area attacks and to return fire (E-01 R-008-03, R-164-02;
 E-11 R-087-06; register Q-008-03: area multiplier per signed layer offset).
 
@@ -41,8 +42,8 @@ def _splash(lib, world_factory, b_layer, victims, reach=(0, 0), params=None, far
     list of (key, layer) placed outside the radius. Returns {key: damage} for every victim, the centre
     under 'centre', measured on the tick the first splash lands."""
     w = world_factory(n_regions=1)
-    if reach != (0, 0):
-        assert set_reach(lib, w, BOMBARD, *reach) == 0
+    # TD-VG-T-1: always set, so (0, 0) is named here instead of relying on the engine's default.
+    assert set_reach(lib, w, BOMBARD, *reach) == 0
     for name, value in (params or {}).items():
         assert set_param(lib, w, name, value) == 0
     spawn(lib, w, BOMBARD, 0, 0.0, 0.0, layer=b_layer)

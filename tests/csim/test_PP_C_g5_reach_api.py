@@ -1,3 +1,4 @@
+# Rule pins: R-082-01@7030c1, R-164-01@511d57
 """Phase C step G5, the reach calls (E-01 S-164, R-164-01; contract pp_contract.md section 6).
 
 om_roster_set_reach(w, type, up, down): 0 ok, -1 for an unknown type. om_unit_profile_reach(w, type,
@@ -13,17 +14,79 @@ import ctypes
 
 import pytest
 
-from test_PP_C_g5_support import BUILTIN_COMBAT, RAIDER, VANGUARD, read_reach, set_reach
+from test_PP_C_g5_support import (
+    BASTION, BOMBARD, BUILTIN_COMBAT, INTERCEPTOR, RAIDER, VANGUARD, WARDEN, read_reach, set_reach,
+)
 
 UNKNOWN_TYPES = (99, -1)
+
+# TD-VG-T-1: the API test splits in two. This half is the bare world, no mission started; the other half
+# (test_R_164_01_a_world_after_the_games_own_mission_start_...) reads a world after the game's own start.
+# Rule pin text, R-164-01: "Line its own layer, Raider one layer either way, Interceptor two up and one down,
+# Siege two down". Line = Vanguard, Warden; Siege = Bombard, Bastion (E-11 R-082-01 table). (rc, up, down).
+BIBLE_REACH = {
+    RAIDER: (0, 1, 1), INTERCEPTOR: (0, 2, 1), VANGUARD: (0, 0, 0), WARDEN: (0, 0, 0),
+    BOMBARD: (0, 0, 2), BASTION: (0, 0, 2),
+}
+FEATURES = [1, 2, 3, 4, 5, 6, 7]
 
 
 @pytest.mark.parametrize("utype", BUILTIN_COMBAT)
 def test_R_164_01_built_in_default_reach_is_zero_up_zero_down(lib, world_factory, utype):
     """R-164-01 / brief G5: 'The built-in roster's default reach is 0 up, 0 down.' Each of the six
-    built-in combat types reads (0, 0) in a fresh world. Fails today: the stub writes nothing."""
+    built-in combat types reads (0, 0) in a bare world: one made with om_world_new and no mission started
+    (the half of the TD-VG-T-1 split that keeps the default; the bible table is read in a started world
+    below). Green after the table is wired too: a bare world is not the game's start."""
     w = world_factory(n_regions=1)
     assert read_reach(lib, w, utype) == (0, 0, 0)
+
+
+def _started_world(lib, world_factory):
+    """PATH: csim, the same exported calls in the same order as the pipe's set_seed (new_campaign false),
+    step 10, mission_start, mission_begin (csrc/pipe/om_pipe.c handle_set_seed, handle_mission_start,
+    handle_mission_begin), then one tactical step. Same recipe as tests/transport/test_pipe_tactical_world.py,
+    which checks it against the pipe's own world. The pipe variant of this claim is
+    tests/transport/test_pipe_reach_cross_layer.py (the pipe has no reach readout, so that test reads the fight)."""
+    w = world_factory(n_regions=80, seed=1)
+    for f in FEATURES:
+        lib.om_world_set_feature(w, f, 1)
+    lib.om_world_generate(w)
+    lib.om_events_load_launch(w)
+    lib.om_mission_load_launch_library(w)
+    for _ in range(10):
+        lib.om_world_step(w)
+    lib.om_mission_start(w, 0)
+    for ri in range(lib.om_region_count(w)):
+        lib.om_mission_refresh_context(w, ri)
+    for _ in range(5):
+        if lib.om_mission_generator_chosen_archetype(w) >= 0:
+            break
+        lib.om_time_jump_run(w, 20)
+        for ri in range(lib.om_region_count(w)):
+            lib.om_mission_refresh_context(w, ri)
+    archetype = lib.om_mission_generator_chosen_archetype(w)
+    region = lib.om_mission_generator_chosen_region(w)
+    if archetype < 0:
+        region, archetype = 0, 0
+    lib.om_mission_setup(w, region, archetype, 0)
+    lib.om_mission_build_objectives(w, archetype)
+    lib.om_chapter_set_phase(w, 2)  # GEN_PHASE_MISSION (csrc/generational.c), not exported by the header
+    lib.om_mission_begin(w)
+    lib.om_tactical_step(w)
+    return w
+
+
+@pytest.mark.parametrize("utype", BUILTIN_COMBAT)
+def test_R_164_01_a_world_after_the_games_own_mission_start_reads_the_bible_reach_table(lib, world_factory, utype):
+    """R-164-01: 'Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own
+    layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up
+    and one down, Siege two down.' PATH: csim, a world after the game's own start (see `_started_world`); no setter is
+    called by the test. Positive control inside the test: the started world really holds a mission (units exist), so
+    a (0, 0) read cannot come from a world that never started. RED today: every type reads (0, 0), because no game path
+    sets reach (D1 of docs/northstar/plans/drift_audits/2026-10-19-positioning-green-tests.md)."""
+    w = _started_world(lib, world_factory)
+    assert lib.om_unit_count(w) > 0, "control: the mission has units, so the world did start"
+    assert read_reach(lib, w, utype) == BIBLE_REACH[utype]
 
 
 @pytest.mark.parametrize("up,down", [(1, 0), (0, 1), (2, 1), (0, 2), (4, 4), (3, 0)])
