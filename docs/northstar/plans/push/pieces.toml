@@ -1775,7 +1775,7 @@ id = "VG-RECORD"
 manager = "M0"
 wave = 9
 owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave9-laneE1q.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave2b13-laneB22.js"]
-owns_glob = []
+owns_glob = ["docs/northstar/plans/workflows_2026-10-07/*.js", "docs/northstar/plans/workflows_2026-10-07/*.args.json"]  # Architect 2026-10-20: every workflow script and its args file committed under C4 (nothing launches from an uncommitted script) is landed under this row until HARNESS-C4 lands; VG-RECORD is attached, so owner_lint never flags it and the footprint fence accepts the paths.
 acceptance = []
 depends_on = []
 status = { state = "attached", attach_sha = "c0d1cda8" }
