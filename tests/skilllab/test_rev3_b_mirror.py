@@ -29,9 +29,23 @@ in sweep.py):
   The source of sweep.py names the retirement: a line near the Warden cap carries `FU-warden-no-stack` (traceability, plan note
   2026-10-20: the cap is interim and retires with that engine piece under a TD row).
 
-WHAT THE WRITER DID NOT PIN (with Westley, listed in the report): whether ONE capped fight of the 30 rejects the mix or a share of them
-does (the plan says "a mix that caps is rejected"; the tests use no capped fight and all of them capped); the cap number; and where the
-batch calls vet_mixes (the plan names no hook)."""
+THE KNOWN CAP (Architect ruling 2026-10-20, implementation; plan R1; Westley may veto): one capped fight rejects a mix, EXCEPT a cap
+whose cause is a recorded finding with a queued fix. M9 (12 Vanguard + 4 Warden) caps once in 30 (seed 6, unswapped, 12000 ticks): the
+Warden stall of FINDING-lab-d9, fix FU-warden-no-stack. For such a mix mirror_precheck returns ok True, reason "known_cap:FINDING-lab-d9"
+and the cap list; M9 stays enabled and vet_mixes shows it accepted. The Warden pattern (Architect definition): a capped fight is the known
+Warden cap when, at the cap, every living unit on each side that still has a living unit is a Warden. Any other capped fight on M9, and any
+cap on M5 to M8 (or on a mix with no Warden), rejects the mix with reason "capped". The exception retires with the engine piece (a TD row
+removes it).
+  DRAFT SHAPE, to be ratified (the Architect left it open): a fight result carries a new defaulted field `living`, a tuple of two dicts
+  ({unit name: count} for side 0, then for side 1), the units alive at the last tick; the verdict gains `rosters` = {cap_fight_index: living}
+  for every capped fight (the living roster printed so the pattern is checkable). The fight index is the call order of the 30 fights, and
+  fight i is seed i // 2 with swap i % 2 == 1 (DRAFT: fight 12 is seed 6 unswapped). A capped result without `living` is not at the pattern.
+  The tests below set `living` on a fake result as an attribute (a FightResult-like object); that the real FightResult carries it, and that
+  the real fight function fills it, is the builder's and is checked by integration/test_rev3_b_mirror_real.py.
+
+NOT PINNED (listed in the report): the cap number; where the batch calls vet_mixes (the plan names no hook); what the artifact prints for
+M9's caps (report.py is outside B's file list and the plan gives no shape); a mix with Wardens other than M9 (the pattern is pinned for
+M9's units only); how many Warden-pattern caps in one mix are still "known" (M9's is one in 30)."""
 import re
 import sys
 from pathlib import Path
@@ -48,6 +62,10 @@ from scripts.skilllab.contract import FightResult  # noqa: E402
 SRC = (ROOT / "scripts" / "skilllab" / "sweep.py").read_text()
 M3 = {"Vanguard": 8, "Bombard": 8}
 M9 = {"Vanguard": 12, "Warden": 4}
+KNOWN = "known_cap:FINDING-lab-d9"
+WARDENS_ONLY = ({"Warden": 3}, {"Warden": 2})
+NEW_NON_WARDEN = {"M5": {"Raider": 8, "Bombard": 8}, "M6": {"Interceptor": 8, "Bombard": 8}, "M7": {"Raider": 8, "Interceptor": 8},
+                  "M8": {"Bombard": 8, "Bastion": 8}}
 THREE_PER_16 = {"Vanguard": 14, "Warden": 2}
 
 
@@ -57,13 +75,23 @@ def result(outcome="side0", ticks=900):
 
 
 class Recorder:
-    """A fake fight_fn: records every call, answers `outcome_of(index)`."""
-    def __init__(self, outcome_of=lambda i: "side0"):
-        self.calls, self.outcome_of = [], outcome_of
+    """A fake fight_fn: records every call, answers `outcome_of(index)`; `living_of(index)`, when given, is set as the result's `living`
+    (the DRAFT field: the units alive at the last tick, ({side 0 name: count}, {side 1 name: count}))."""
+    def __init__(self, outcome_of=lambda i: "side0", living_of=None):
+        self.calls, self.outcome_of, self.living_of = [], outcome_of, living_of
 
     def __call__(self, setup, seed, swap):
         self.calls.append((setup, seed, swap))
-        return result(self.outcome_of(len(self.calls) - 1))
+        i = len(self.calls) - 1
+        r = result(self.outcome_of(i))
+        if self.living_of is not None:
+            r.living = self.living_of(i)
+        return r
+
+
+def one_cap(index=12, living=None):
+    """One capped fight of the 30 (fight `index`), every other fight quiet; `living` is that fight's living roster (None: not given)."""
+    return Recorder(lambda i: "cap" if i == index else "side0", None if living is None else (lambda i: living))
 
 
 def never(setup, seed, swap):
@@ -190,6 +218,87 @@ def test_r1_the_map_fn_path_is_one_call_for_all_the_jobs():
     assert len(calls) == 1 and len(calls[0]) == 30 and verdict["ok"] is True
 
 
+# ---- the seed scheme (DRAFT) -------------------------------------------------------------------------------------------------------
+
+def test_r1_fight_i_is_seed_i_div_2_and_swapped_when_i_is_odd():
+    """DRAFT scheme, so that "seed 6, unswapped" (M9's cap, FINDING-lab-d9) is reproducible: fight i uses seed i // 2 and swap i % 2 == 1,
+    so fight 12 is seed 6 unswapped. The 30 pairs are exactly that set, and the fights come in index order. Red today: no pre-check."""
+    rec = Recorder()
+    sweep.mirror_precheck(M3, fight_fn=rec)
+    got = [(seed, swap) for _setup, seed, swap in rec.calls]
+    assert set(got) == {(i // 2, i % 2 == 1) for i in range(30)}, got
+    assert got == [(i // 2, i % 2 == 1) for i in range(30)], got
+    assert got[12] == (6, False)
+
+
+# ---- one capped fight rejects a mix (ruling 2026-10-20) -----------------------------------------------------------------------------
+
+@pytest.mark.parametrize("index", [0, 12, 29])
+@pytest.mark.parametrize("name", sorted(NEW_NON_WARDEN) + ["M3"])
+def test_r1_exactly_one_capped_fight_of_30_rejects_a_mix_without_wardens(name, index):
+    """R1 ("a mix that caps is rejected and reported"), at one cap in 30, wherever it falls: M5 to M8 (and M3). Red today: no pre-check."""
+    verdict = sweep.mirror_precheck({**NEW_NON_WARDEN, "M3": M3}[name], fight_fn=one_cap(index))
+    assert verdict["ok"] is False and verdict["reason"] == "capped" and verdict["caps"] == 1 and verdict["fights"] == 30, verdict
+
+
+@pytest.mark.parametrize("living", [WARDENS_ONLY, ({"Raider": 2, "Bombard": 1}, {"Raider": 1}), None], ids=["wardens-only", "ordinary", "none-given"])
+@pytest.mark.parametrize("name", sorted(NEW_NON_WARDEN))
+def test_r1_a_cap_on_m5_to_m8_rejects_whatever_the_living_roster(name, living):
+    """The Warden pattern is M9's exception only: an all-Warden roster at a cap of a mix that fields no Wardens is not a known cap (it
+    cannot happen; the pre-check does not reason about it). Red today: no pre-check."""
+    verdict = sweep.mirror_precheck(NEW_NON_WARDEN[name], fight_fn=one_cap(12, living))
+    assert verdict["ok"] is False and verdict["reason"] == "capped", verdict
+
+
+# ---- the known cap: M9, FINDING-lab-d9 (FU-warden-no-stack) ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("living", [WARDENS_ONLY, ({"Warden": 1}, {}), ({}, {"Warden": 4})],
+                         ids=["wardens-both-sides", "side-1-all-dead", "side-0-all-dead"])
+@pytest.mark.parametrize("index", [12, 3])
+def test_t1_m9_with_a_cap_at_the_warden_pattern_is_ok_with_the_known_cap_reason(index, living):
+    """R1 exception (a) (T1 goes green with M9 enabled): the capped fight's living roster is only Wardens on each side that has a living
+    unit -> ok True, reason "known_cap:FINDING-lab-d9", the cap counted, the roster in the result. The pattern, not the seed, makes the
+    cap known (index 3 as well as 12). Red today: no pre-check."""
+    verdict = sweep.mirror_precheck(M9, fight_fn=one_cap(index, living))
+    assert verdict["ok"] is True and verdict["reason"] == KNOWN, verdict
+    assert verdict["caps"] == 1 and verdict["fights"] == 30, verdict
+    assert verdict["rosters"] == {index: living}, verdict
+
+
+@pytest.mark.parametrize("living", [({"Warden": 2, "Vanguard": 1}, {"Warden": 2}), ({"Warden": 2}, {"Vanguard": 3}),
+                                    ({"Vanguard": 4}, {"Vanguard": 2}), ({"Warden": 1, "Bombard": 1}, {})],
+                         ids=["vanguard-left-on-side-0", "vanguard-left-on-side-1", "no-wardens-at-all", "one-side-dead-other-mixed"])
+def test_t1_m9_with_a_cap_where_a_non_warden_is_alive_is_rejected(living):
+    """R1 exception (b): any other capped fight on M9 rejects the mix, reason "capped"; the living roster is printed all the same."""
+    verdict = sweep.mirror_precheck(M9, fight_fn=one_cap(12, living))
+    assert verdict["ok"] is False and verdict["reason"] == "capped" and verdict["caps"] == 1, verdict
+    assert verdict["rosters"] == {12: living}, verdict
+
+
+def test_t1_m9_with_a_cap_that_gives_no_living_roster_is_rejected():
+    """A capped fight whose result carries no `living` cannot be shown to be at the Warden pattern: rejected, not waved through."""
+    verdict = sweep.mirror_precheck(M9, fight_fn=one_cap(12, None))
+    assert verdict["ok"] is False and verdict["reason"] == "capped", verdict
+
+
+def test_t1_m9_with_one_known_cap_and_one_other_cap_is_rejected():
+    rec = Recorder(lambda i: "cap" if i in (12, 20) else "side0",
+                   lambda i: WARDENS_ONLY if i == 12 else ({"Warden": 2, "Vanguard": 2}, {"Warden": 1}))
+    verdict = sweep.mirror_precheck(M9, fight_fn=rec)
+    assert verdict["ok"] is False and verdict["reason"] == "capped" and verdict["caps"] == 2, verdict
+
+
+def test_t1_m9_with_no_cap_is_ok_with_no_reason():
+    """Control: a clean M9 is plain ok, not a known cap."""
+    verdict = sweep.mirror_precheck(M9, fight_fn=Recorder())
+    assert verdict["ok"] is True and verdict["reason"] is None and verdict["caps"] == 0, verdict
+
+
+def test_t1_the_known_cap_exception_names_its_finding_in_the_source():
+    """Traceability: the exception names FINDING-lab-d9 where it is made (retires with FU-warden-no-stack under a TD row)."""
+    assert KNOWN in SRC, "sweep.py does not hold the reason %r" % KNOWN
+
+
 # ---- vet_mixes: rejected and reported -----------------------------------------------------------------------------------------------
 
 def rows():
@@ -220,6 +329,31 @@ def test_r1_vet_mixes_accepts_rejects_and_reports_by_name_and_reason():
 def test_r1_vet_mixes_of_a_clean_table_rejects_nothing():
     report = sweep.vet_mixes([r for r in rows() if r["name"] == "MA"], fight_fn=Recorder())
     assert report["accepted"] == ["MA"] and report["rejected"] == [], report
+
+
+def test_t1_vet_mixes_shows_m9_accepted_with_a_known_cap_and_a_clean_m9_accepted():
+    """R1 exception (d): M9 stays enabled and vet_mixes lists it accepted, with its Warden-pattern cap or without."""
+    m9 = [{"name": "M9", "units": dict(M9), "used_in": ("p9",), "enabled": True}]
+    capped = sweep.vet_mixes(m9, fight_fn=one_cap(12, WARDENS_ONLY))
+    assert capped["accepted"] == ["M9"] and capped["rejected"] == [], capped
+    clean = sweep.vet_mixes(m9, fight_fn=Recorder())
+    assert clean["accepted"] == ["M9"] and clean["rejected"] == [], clean
+
+
+def test_t1_vet_mixes_still_rejects_m9_for_a_cap_off_the_pattern_and_a_non_warden_row_for_a_warden_pattern_cap():
+    table = [{"name": "M9", "units": dict(M9), "used_in": ("p9",), "enabled": True},
+             {"name": "M5", "units": {"Raider": 8, "Bombard": 8}, "used_in": ("p5",), "enabled": True}]
+    seen = []
+
+    def fight_fn(setup, seed, swap):
+        seen.append(1)
+        r = result("cap" if len(seen) in (13, 43) else "side0")        # fight 12 of each mix
+        r.living = WARDENS_ONLY if len(seen) == 13 else ({"Raider": 1}, {})
+        return r
+
+    report = sweep.vet_mixes(table, fight_fn=fight_fn)
+    assert report["accepted"] == ["M9"] and [r["mix"] for r in report["rejected"]] == ["M5"], report
+    assert report["rejected"][0]["reason"] == "capped" and report["rejected"][0]["caps"] == 1
 
 
 # ---- traceability -------------------------------------------------------------------------------------------------------------------

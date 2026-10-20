@@ -4,13 +4,15 @@ about 8,500 ticks each for the M9 shape, measured under load 11 on the lab tip):
 M9 of plays_space.MIXES. Contract: tests/skilllab/test_rev3_b_mirror.py (sweep.mirror_precheck) and test_rev3_b_mixes.py (the rows).
 
   - THE TABLE AND THE PRE-CHECK AGREE: for each new row, a recorded real run of mirror_precheck(row units) has fights == 30, caps equal to
-    the number of capped fights the run recorded, and ok equal to the row's `enabled` flag ("a mix that caps is rejected and reported" is
-    the flag; whether ONE capped fight or a share rejects is Westley's, so this test does not decide it: it holds the table to what the
-    pre-check said). An enabled row never capped; a disabled row did, or the pre-check refused it for Wardens.
+    the number of capped fights the run recorded, and ok equal to the row's `enabled` flag. Since the Architect's ruling of 2026-10-20 one
+    capped fight rejects a mix, except the known cap of M9 (FINDING-lab-d9, fix FU-warden-no-stack): an enabled row never capped, or capped
+    only at the Warden pattern (M9, ok True with reason known_cap:FINDING-lab-d9); a disabled row capped off the pattern, or was refused
+    for Wardens.
   - MEASURED (2026-10-20, this file's reviewer, a scratch mirror of the same shape: blobs at x -350 and 350, seeds i // 2, swap i % 2,
-    lab tip, built-in types): M5 0 caps, M6 0, M7 0, M8 0 (max 8295 ticks), M9 1 cap of 30 (seed 6, unswapped, 12000 ticks). So whether
-    ONE capped fight rejects a mix decides whether M9 is enabled, and an M9 that is disabled leaves the Warden pairing uncovered in T1
-    (test_rev3_b_layers.py::test_t1_*): a rule question the plan does not answer (reported to the Architect, not decided here).
+    lab tip, built-in types): M5 0 caps, M6 0, M7 0, M8 0 (max 8295 ticks), M9 1 cap of 30 (seed 6, unswapped, 12000 ticks).
+  - M9 ON THE REAL ENGINE (DRAFT shape, see test_rev3_b_mirror.py): its cap, if any, is fight 12 (seed 6 unswapped) and its living roster
+    at the cap is Wardens only, so M9 is accepted with the known-cap reason. This needs the real fight function to fill the DRAFT `living`
+    field of its result (scripts/skilllab/fight.py and contract.py are outside B's file list: flagged in the report).
   - POSITIVE CONTROL for the cap detection on the real engine: the same pre-check with every fight cut at 200 ticks (a fight_fn that
     lowers max_ticks) rejects an ordinary mix as capped, 30 of 30.
   - T11: the Warden refusal of the real path fights nothing (a fast test in test_rev3_b_mirror.py patches the engine out; here the
@@ -51,6 +53,20 @@ def test_r1_the_rows_enabled_flag_is_what_the_30_fight_mirror_said(name):
     assert verdict["fights"] == len(outcomes) == sweep.MIRROR_FIGHTS == 30, (verdict, len(outcomes))
     assert verdict["caps"] == outcomes.count("cap"), (verdict, outcomes)
     assert row["enabled"] is verdict["ok"], "%s: enabled=%r but the pre-check said %r (caps %d of 30)" % (name, row["enabled"], verdict["ok"], verdict["caps"])
+
+
+@SLOW
+def test_t1_m9_on_the_real_engine_is_accepted_and_its_only_cap_is_the_warden_stall_of_fight_12():
+    """R1 exception on the real engine: M9 is enabled in the table; the 30-fight mirror is ok; a cap, if any, is fight 12 and its living
+    roster is Wardens only (FINDING-lab-d9). Red today: no row M9, no pre-check."""
+    row = next((r for r in plays_space.MIXES if r["name"] == "M9"), None)
+    assert row is not None and row["enabled"] is True, row
+    verdict = sweep.mirror_precheck(row["units"], fight_fn=fight)
+    assert verdict["ok"] is True, verdict
+    assert set(verdict["rosters"]) <= {12}, verdict["rosters"]
+    assert verdict["reason"] == ("known_cap:FINDING-lab-d9" if verdict["caps"] else None), verdict
+    for living in verdict["rosters"].values():
+        assert all(set(side) <= {"Warden"} for side in living), living
 
 
 @SLOW

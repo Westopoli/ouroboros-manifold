@@ -10,22 +10,22 @@ What T6 pins here (every test below that is red today says why in its docstring)
     Interceptor group two layers below one (R2: "Interceptors two below, Raiders one below"). The play's own side 0 is the one below;
     the enemy's same-mix Raiders firing up at a side-0 Raider above them do not count. The shooter's reach (R-164-01: Raider one up,
     Interceptor two up) covers that offset, so the layer arrangement is a firing arrangement;
-  - the enemy layer is not always 0 across the swept plays ("the enemy layer varies", R2);
-  - the families whose knobs act at two layers (vision, range_up, damage_up: OM_TP_VISION_*_2, RANGE_*_2, DAMAGE_UP_2) are swept on at
-    least one play that has a two-layer pair a reach-capable type can fire across (D1: the two-layer families were byte-identical because
-    no unit was ever two layers from an enemy; the writer's reading of D1, flagged to the Architect: the plan's own wording is the
-    defect line, the inert-knob probe of piece A would otherwise refuse these families on every play).
+  - the enemy layer varies across the swept plays ("the enemy layer varies (0 to 4)", R2; T6: plays on layers 3 and 4): some swept play
+    has its enemy on layer 3 and some on layer 4;
   - T1 plain: the coverage oracle of piece A's test_rev3_a_coverage.py finds nothing uncovered over the swept set (piece A ships that
     check as a strict expected failure; B turns it green by adding plays to PLAYS_BY_FAMILY and removes A's marker. This file holds the
     same check as an ordinary test so B's red is a plain failure with the uncovered items in its message).
+  - baselines take the play's own layer pair (plan R2, Architect ruling 2026-10-20): ONE test over every play of plays_space.PLAYS (so
+    the new plays once built) and over a fixture play whose enemy stands on layer 2 (the base has no such play).
   - Guards (green on the lab tip, they fail a builder who breaks a rev 2 ruling in a new swept play): both sides field the same mix at
-    every headcount (ruling 2), the enemy stands on one layer (rev 2 spec M0 to M4 note), no play sets a vision factor (ruling 10), the
+    every headcount (ruling 2), no play sets a vision factor (ruling 10), the
     Setup validates and passes the pre-flight, the play has anchors, and no side fields more than 4 Wardens per 16 (D9; interim lab cap,
     see test_rev3_b_mirror.py).
 
 NOT PINNED, with Westley (the brief lists them): which layer pairs and which enemy layers batch one fields ("layouts"; the plan's DRAFT
 is every pair the reach table allows, and the tests ask for the examples the plan names, not for that exhaustive list); the cap number.
 The names of the new plays are the builder's. Detector positive controls are the fixture tests at the top (green on the lab tip)."""
+import dataclasses
 import sys
 from pathlib import Path
 
@@ -41,8 +41,6 @@ from scripts.skilllab import plays_space, scenes, sweep, timeline  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from test_rev3_a_coverage import oracle  # noqa: E402
 
-REACH = {**plays_space._REACH, "Warden": (0, 0)}      # the bible's reach table as the lab holds it (R-164-01); Warden (0, 0) is piece A's row
-TWO_LAYER_FAMILIES = ("vision", "range_up", "damage_up")
 WARDEN_CAP = 4                                          # per 16: the interim lab cap of FINDING-lab-d9 (retires with FU-warden-no-stack)
 
 
@@ -68,20 +66,11 @@ def pairs(setup, shooter_side=None):
                 yield base_of(setup, a), b.layer - a.layer
 
 
-def can_fire(base, offset):
-    up, down = REACH[base]
-    return -down <= offset <= up
-
-
 def has_pair(setups, base, offset):
     """Side 0, the play's own side, fires from below: its `base` group stands `offset` layers under a group of the enemy. The enemy
     fields the same mix (ruling 2), so its Raiders on the enemy layer fire UP at a side-0 Raider above them: that is the enemy's pairing
     and is not a play that fires from below (it is what T1 counts, both sides, and it is why this check reads side 0 only)."""
     return any(t == base and o == offset for s in setups for t, o in pairs(s, shooter_side=0))
-
-
-def has_two_layer_firing_pair(setup):
-    return any(abs(o) == 2 and can_fire(t, o) for t, o in pairs(setup))
 
 
 def roster(setup, side):
@@ -128,13 +117,9 @@ def test_control_a_raider_one_below_is_found_and_the_other_arrangements_are_not(
     assert not has_pair([below], "Interceptor", 2)
 
 
-def test_control_an_interceptor_two_below_is_found_and_a_raider_two_below_is_not_a_firing_pair():
+def test_control_an_interceptor_two_below_is_found():
     assert has_pair([S(G(0, "Interceptor", 0), G(1, "Bombard", 2))], "Interceptor", 2)
-    assert has_two_layer_firing_pair(S(G(0, "Interceptor", 0), G(1, "Bombard", 2)))
-    assert has_two_layer_firing_pair(S(G(0, "Bombard", 2), G(1, "Vanguard", 0)))          # a Bombard fires down two
-    assert not has_two_layer_firing_pair(S(G(0, "Raider", 0), G(1, "Vanguard", 2)))      # Raider reach is one
-    assert not has_two_layer_firing_pair(S(G(0, "Vanguard", 0), G(1, "Vanguard", 2)))     # Line reach is own layer only
-    assert not has_two_layer_firing_pair(S(G(0, "Bombard", 0), G(1, "Vanguard", 2)))      # a Bombard cannot fire UP two
+    assert not has_pair([S(G(0, "Interceptor", 0), G(1, "Bombard", 1))], "Interceptor", 2)
 
 
 def test_control_the_mix_check_flags_unequal_mixes_and_passes_equal_ones():
@@ -163,19 +148,54 @@ def test_t6_a_swept_play_has_interceptors_two_layers_below_the_enemy():
 
 
 def test_t6_the_enemy_layer_is_not_always_0_across_the_swept_plays():
-    """T6 (R2: "the enemy layer varies (0 to 4)"). Pinned: more than one enemy layer; which layers batch one fields is Westley's
-    (layouts). Red today: every swept play has its enemy on layer 0."""
+    """T6 (R2: "the enemy layer varies (0 to 4)"; T6: "plays exist on layers 3 and 4"): some swept play has its enemy on layer 3 and
+    some on layer 4 (strengthened from "more than one enemy layer" after the audit of c5bed6ac, which a play on layer 1 alone would
+    satisfy). Which other enemy layers batch one fields is Westley's (layouts). Red today: every swept play has its enemy on layer 0."""
     enemy = {g.layer for s in swept_setups() for g in s.groups if g.side == 1}
-    assert len(enemy) >= 2, "the enemy stands on layers %s in every swept play" % sorted(enemy)
+    assert {3, 4} <= enemy, "the enemy stands on layers %s across the swept plays; layers 3 and 4 are missing" % sorted(enemy)
 
 
-@pytest.mark.parametrize("family", TWO_LAYER_FAMILIES)
-def test_t6_each_two_layer_knob_family_is_swept_on_a_play_with_a_two_layer_firing_pair(family):
-    """T6 / D1 (the writer's reading, see the module docstring): a family whose knobs act at two layers has a play where a type can fire
-    across two layers. Red today: the vision, range_up and damage_up plays (s3_layer_above, s3_types_by_reach) have only one-layer pairs."""
-    plays = sweep.PLAYS_BY_FAMILY[family]
-    assert any(has_two_layer_firing_pair(plays_space.PLAYS[p].setup_fn()) for p in plays), \
-        "no play of family %s (%s) has a two-layer pair a type can fire across" % (family, ", ".join(plays))
+# ---- baselines take the play's own layer pair ---------------------------------------------------------------------------------------
+
+FIXTURE_PLAY = "fixture_enemy_on_layer_2"
+
+
+def fixture_setup():
+    """A play whose pair is (3, 2): side 0 Raiders on layer 3, side 1 Raiders on layer 2, built by hand (the shape of
+    plays.layer_symmetry_play(16, 2), without depending on the symmetry piece, so the red below is about the baselines)."""
+    raider = {"Raider": {"base": "Raider", "reach": (1, 1)}}
+    return Setup(groups=(Group(side=0, unit="Raider", count=16, formation="blob", x=-300.0, y=0.0, facing_deg=0.0, layer=3,
+                               order="attack_move", params={"radius": 128.0}),
+                         Group(side=1, unit="Raider", count=16, formation="blob", x=300.0, y=0.0, facing_deg=180.0, layer=2,
+                               order="attack_move", params={"radius": 128.0})),
+                 unit_types=raider, point=(0.0, 0.0))
+
+
+@pytest.mark.parametrize("play", sorted(plays_space.PLAYS) + [FIXTURE_PLAY])
+def test_r2_the_baselines_take_the_plays_own_layer_pair(play, monkeypatch):
+    """R2 (Architect ruling 2026-10-20, plan R2 / T4 note): "a naive baseline takes the play's own layer pair: side 0 on the play's
+    side-0 layer, side 1 on the play's enemy layer, naive orders", so every baseline compares like for like. Checked for the naive
+    attacker and for the naive defender that keeps each type on the layer the play gave it (naive_defender_play_layer); the layers of
+    each side are compared as sets (a play with side 0 on layers 0 and 1 gives a baseline on layers 0 and 1). The two other defender
+    roles (naive_defender, naive_defender_attacker_layer) put side 0 on the enemy's layer by design (decisions 25 and 41) and are not
+    pinned. Red today: the naive attacker is on layer 0 for every play (the five plays with side 0 above layer 0 and the fixture, whose
+    pair is (3, 2)); the play-layer defender already keeps the play's layers (green)."""
+    if play == FIXTURE_PLAY:
+        monkeypatch.setitem(plays_space.PLAYS, FIXTURE_PLAY, plays_space.PlayDraft(
+            setup_fn=fixture_setup, timeline=(), skill="S3", status="draft", numbers={}, words="fixture, not a swept play",
+            anchors=plays_space.Anchors("attacker", "choke_mouth", "blob")))
+    features = sweep.smoke_layouts()[sweep.SMOKE_LAYOUTS[0]]
+    try:
+        own = sweep.default_builds(play, "play", features)(16, False)
+    except ValueError as err:
+        if "disabled" in str(err):
+            pytest.skip("the play's mix is disabled; it cannot be built")
+        raise
+    pair = ({g.layer for g in own.groups if g.side == 0}, {g.layer for g in own.groups if g.side == 1})
+    for role in ("naive_attacker", "naive_defender_play_layer"):
+        base = sweep.default_builds(play, role, features)(16, False)
+        got = ({g.layer for g in base.groups if g.side == 0}, {g.layer for g in base.groups if g.side == 1})
+        assert got == pair, "%s: the play's layers (side 0, side 1) are %s, the %s baseline's are %s" % (play, tuple(map(sorted, pair)), role, tuple(map(sorted, got)))
 
 
 # ---- T1 plain ---------------------------------------------------------------------------------------------------------------------
@@ -196,12 +216,6 @@ SWEPT = swept_names()
 def test_guard_every_swept_play_fields_the_same_mix_on_both_sides_at_every_headcount(name):
     for heads in (16, 8, 48, 13, 29):
         assert mix_problems(plays_space.scan_build(name)(None, heads, False), heads) == [], (name, heads)
-
-
-@pytest.mark.parametrize("name", SWEPT)
-def test_guard_the_enemy_of_every_swept_play_stands_on_one_layer(name):
-    for heads in (16, 8, 48):
-        assert len({g.layer for g in plays_space.scan_build(name)(None, heads, False).groups if g.side == 1}) == 1, (name, heads)
 
 
 @pytest.mark.parametrize("name", SWEPT)

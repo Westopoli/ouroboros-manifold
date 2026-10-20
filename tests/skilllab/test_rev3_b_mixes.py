@@ -193,6 +193,13 @@ def test_t11_m9_holds_exactly_four_wardens_and_twelve_vanguards():
     assert dict(row("M9")["units"]) == {"Vanguard": 12, "Warden": 4}
 
 
+def test_t1_m9_is_enabled():
+    """Architect ruling 2026-10-20 (plan R1): M9's one cap in 30 (seed 6, unswapped) is the Warden stall of FINDING-lab-d9 (fix
+    FU-warden-no-stack), a known cap that is listed, not fatal: M9 stays enabled and T1 goes green on it. test_rev3_b_mirror.py holds the
+    pre-check side (ok True, reason known_cap:FINDING-lab-d9). Red today: no row M9."""
+    assert row("M9")["enabled"] is True
+
+
 def test_t11_no_enabled_row_holds_more_than_4_wardens_per_16():
     """Guard (green on the lab tip): the interim lab cap of FINDING-lab-d9, retiring with FU-warden-no-stack, holds in the table itself."""
     bad = [r["name"] for r in plays_space.MIXES if r["enabled"] and r["units"].get("Warden", 0) * 16 > WARDEN_CAP * sum(r["units"].values())]
