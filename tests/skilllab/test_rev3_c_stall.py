@@ -1,5 +1,5 @@
 # spec: docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md (requirement R7, test T9, defect D7); docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 50 (controls for decided_one_way_reach); ledger FINDING-lab-d7, FINDING-lab-d11 (Architect ruling 2026-10-20, implementation; Westley may veto); piece LAB-REV3-C
-# Rule pins: R-164-01@511d57
+# Rule pins: R-164-01@511d57, R-164-03@e018aa
 """LAB-REV3-C, the two structural end conditions of fight(), on the fake engine (fast).
 
 R-164-01 gives each type a reach (up, down) in layers: a unit on layer la reaches a unit on lb iff -down <= lb - la <= up. Effective range,
