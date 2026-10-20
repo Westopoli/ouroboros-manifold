@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from scripts.skilllab import depth, formations, maps, plays_space, pool, probe as probe_mod, rows as rows_mod, scan as scan_mod, scenes
-from scripts.skilllab.contract import FROZEN_NAMES, Group
+from scripts.skilllab.contract import FROZEN_NAMES, Group, Setup
 
 FAMILY_ORDER = ("vision", "range_up", "damage_up", "emitting", "arc", "cone", "sign_flip")
 SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
@@ -27,6 +27,10 @@ VISION_CONTROL_PLAY = "s3_vision_control"   # clause 24: the vision positive con
 SMOKE_LAYOUTS = ("81", "78", "192")         # layout indices of the run-1 draw (depth.lhs_draw(200, 0))
 SMOKE_CONTROLS = (("mirror", 16), ("numbers", 8), ("planted", 16))
 LAYER_PLAYS = ("s3_layer_above", "s3_types_by_reach")
+MIRROR_FIGHTS = 30          # DRAFT-mirror-fights (the Architect's number, on Westley's open list): fights of a mix's naive mirror pre-check
+MIRROR_X = 350.0            # the two blobs of a mirror fight stand at -x and +x
+WARDEN_PER_16 = 4           # interim lab cap, Wardens per 16 units; retires with FU-warden-no-stack (FINDING-lab-d9, a TD row removes it)
+KNOWN_CAP = "known_cap:FINDING-lab-d9"      # M9's one Warden-stall cap in 30; retires with FU-warden-no-stack
 PLAYS_BY_FAMILY = {
     "vision": LAYER_PLAYS, "range_up": LAYER_PLAYS, "damage_up": LAYER_PLAYS, "sign_flip": LAYER_PLAYS,
     "emitting": ("s3_dark_striker",), "arc": ("s2_concave", "s2_mass_one_end"), "cone": ("s2_concave", "s2_mass_one_end"),
@@ -367,6 +371,57 @@ def default_builds(play, role, features):
 def default_control_builds():
     from scripts.skilllab import plays
     return {"mirror": plays.blob_play(16), "numbers": plays.blob_play(16), "planted": plays.damage_play(16)}
+
+
+# ---- the mirror pre-check of a mix ------------------------------------------------------------------------------------------------
+
+def _mirror_setup(units):
+    """A naive mirror: the mix on both sides, one blob per type, attack-moving, one layer, no timeline, built-in types."""
+    def side(s):
+        return [Group(side=s, unit=t, count=n, formation="blob", x=-MIRROR_X if s == 0 else MIRROR_X, y=0.0,
+                      facing_deg=0.0 if s == 0 else 180.0, layer=0, order="attack_move", goal=None,
+                      params={"radius": 80 + 12 * math.sqrt(n)}) for t, n in units.items()]
+    return Setup(groups=tuple(side(0) + side(1)), unit_types={}, point=(0.0, 0.0))
+
+
+def _warden_stall(living):
+    """The Warden pattern of FINDING-lab-d9: someone is alive and every side that has a living unit has only Wardens."""
+    sides = [roster for roster in living if roster]
+    return bool(sides) and all(set(roster) == {"Warden"} for roster in sides)
+
+
+def mirror_precheck(units, *, fights=MIRROR_FIGHTS, fight_fn=None, map_fn=None):
+    """R1: `fights` naive mirror fights of the mix (fight i is seed i // 2, swapped when i is odd). More than WARDEN_PER_16 Wardens per
+    16 is refused before any fight (FU-warden-no-stack retires the cap). A capped fight rejects the mix, except the one cap of M9 whose
+    living roster is the Warden pattern (known_cap:FINDING-lab-d9). `rosters` maps each capped fight's index to its living roster."""
+    verdict = {"mix": dict(units), "ok": True, "reason": None, "fights": 0, "caps": 0, "rosters": {}}
+    if units.get("Warden", 0) * 16 > WARDEN_PER_16 * sum(units.values()):
+        return {**verdict, "ok": False, "reason": "warden_cap"}
+    setup = _mirror_setup(units)
+    results = scan_mod.run_jobs([(setup, i // 2, i % 2 == 1) for i in range(fights)], fight_fn, map_fn)
+    capped = [i for i, r in enumerate(results) if r.outcome == "cap"]
+    verdict.update(fights=len(results), caps=len(capped), rosters={i: results[i].living for i in capped})
+    if capped:
+        m9 = next(r["units"] for r in plays_space.MIXES if r["name"] == "M9")
+        known = dict(units) == m9 and len(capped) == 1 and _warden_stall(results[capped[0]].living)
+        verdict.update(ok=known, reason=KNOWN_CAP if known else "capped")
+    return verdict
+
+
+def vet_mixes(rows, *, fight_fn=None, map_fn=None):
+    """The enabled rows of a MIXES table through mirror_precheck; no row is edited (a person flips `enabled` after the report).
+    `verdicts` maps each name to its verdict: the artifact's summary["mixes"]."""
+    report = {"accepted": [], "rejected": [], "verdicts": {}}
+    for row in rows:
+        if not row["enabled"]:
+            continue
+        verdict = mirror_precheck(row["units"], fight_fn=fight_fn, map_fn=map_fn)
+        report["verdicts"][row["name"]] = verdict
+        if verdict["ok"]:
+            report["accepted"].append(row["name"])
+        else:
+            report["rejected"].append({**verdict, "mix": row["name"]})
+    return report
 
 
 # ---- running a family -------------------------------------------------------------------------------------------------------------

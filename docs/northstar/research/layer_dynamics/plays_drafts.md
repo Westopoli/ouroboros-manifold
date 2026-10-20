@@ -91,6 +91,37 @@ Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 16 x Vanguard, line, layer 0, at (1650, 2000), order attack_move
 - side 1: 16 x Vanguard, blob, layer 0, at (2350, 2000), order attack_move
 
+## s2_warden_line (S2)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Twelve Vanguards stand in front; four Wardens stand in a line behind them. All attack-move.
+
+Numbers:
+- SCREEN_AHEAD = 60
+- SCREEN_BEHIND = 60
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 12 x Vanguard, line, layer 0, at (1710, 2000), order attack_move
+- side 0: 4 x Warden, line, layer 0, at (1590, 2000), order attack_move
+- side 1: 12 x Vanguard, blob, layer 0, at (2350, 2000), order attack_move
+- side 1: 4 x Warden, blob, layer 0, at (2350, 2000), order attack_move
+
+## s3_bombard_bastion (S3)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Eight Bombards sit one layer above the enemy and fire down; the eight Bastions fight on the enemy's layer.
+
+Numbers:
+- HIGH_LAYER = 1
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 8 x Bombard, blob, layer 1, at (1650, 2000), order attack_move
+- side 0: 8 x Bastion, blob, layer 0, at (1650, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 0, at (2350, 2000), order attack_move
+- side 1: 8 x Bastion, blob, layer 0, at (2350, 2000), order attack_move
+
 ## s3_dark_striker (S3)
 
 Status: unconfirmed draft, not measured, for Westley's look.
@@ -111,6 +142,36 @@ Timeline:
 - group 1, at tick 0: set_emission
 - group 2, at tick 0: set_emission
 - group 3, at tick 0: set_emission
+
+## s3_interceptor_bombard (S3)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Eight Interceptors sit one layer above the enemy; the eight Bombards fight on the enemy's layer.
+
+Numbers:
+- HIGH_LAYER = 1
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 8 x Interceptor, blob, layer 1, at (1650, 2000), order attack_move
+- side 0: 8 x Bombard, blob, layer 0, at (1650, 2000), order attack_move
+- side 1: 8 x Interceptor, blob, layer 0, at (2350, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 0, at (2350, 2000), order attack_move
+
+## s3_interceptor_raider (S3)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Eight Interceptors sit one layer above the enemy; the eight Raiders fight on the enemy's layer.
+
+Numbers:
+- HIGH_LAYER = 1
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 8 x Interceptor, blob, layer 1, at (1650, 2000), order attack_move
+- side 0: 8 x Raider, blob, layer 0, at (1650, 2000), order attack_move
+- side 1: 8 x Raider, blob, layer 0, at (2350, 2000), order attack_move
+- side 1: 8 x Interceptor, blob, layer 0, at (2350, 2000), order attack_move
 
 ## s3_layer_above (S3)
 
@@ -162,6 +223,21 @@ Groups (canvas coordinates, canvas centre 2000, 2000):
 
 Timeline:
 - group 0, at tick 0: ping to (2350, 2000)
+
+## s3_raider_bombard (S3)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Eight Bombards sit one layer above the enemy and fire down; the eight Raiders fight on the enemy's layer.
+
+Numbers:
+- HIGH_LAYER = 1
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 8 x Bombard, blob, layer 1, at (1650, 2000), order attack_move
+- side 0: 8 x Raider, blob, layer 0, at (1650, 2000), order attack_move
+- side 1: 8 x Raider, blob, layer 0, at (2350, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 0, at (2350, 2000), order attack_move
 
 ## s3_types_by_reach (S3)
 

@@ -195,7 +195,7 @@ NO_C1 = "no C1: no equal-numbers cell"
 C2_FIELDS = ("c2_rank_agreement", "c2_off_trend_margin", "c2_off_trend_share")
 DRAFT_TEXT = {
     "DRAFT-guard-radius": "the radius a guarding holder steps out to engage",
-    "DRAFT-mixes": "the roster mixes M0 to M4 of the plays",
+    "DRAFT-mixes": "the roster mixes M0 to M9 (and M3b) of the plays",
     "DRAFT-reengage-silence-ticks": "the silence after which an idle side is attack-moved onto the enemy centroid",
     "DRAFT-scale-marks": "the speed marks of the scale guards",
     "DRAFT-reengage-moved-wu": "the displacement from the window start (the tick the silence counter was last zeroed) above which an idle-eligible unit counts as moved and zeroes its side's counter; units holding a destination are not tested (1 wu)",
@@ -210,6 +210,11 @@ DRAFT_TEXT = {
     "DRAFT-mix-M3": "the composition of roster mix M3, a row of the MIXES table in plays_space.py",
     "DRAFT-mix-M4": "the composition of roster mix M4, a row of the MIXES table in plays_space.py",
     "DRAFT-mix-M3b": "the composition of roster mix M3b, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M5": "the composition of roster mix M5, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M6": "the composition of roster mix M6, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M7": "the composition of roster mix M7, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M8": "the composition of roster mix M8, a row of the MIXES table in plays_space.py",
+    "DRAFT-mix-M9": "the composition of roster mix M9, a row of the MIXES table in plays_space.py",
 }
 STANDIN = "re-engage is a lab stand-in for the engine's pending sight-engagement rule"
 NO_DEFENDER = "C1 for plays without a naive defender baseline rests on naive_attacker only"
@@ -450,9 +455,31 @@ def _conditions(rows, t) -> list:
     return out
 
 
+def _mix_caps(verdict) -> str:
+    """The "caps (known)" cell: N of F fights capped; a known cap (sweep.KNOWN_CAP) adds its reason, fight index and seed (seed = index // 2).
+    The verdict may have been through JSON: roster keys are strings."""
+    text = "%d of %d" % (verdict["caps"], verdict["fights"])
+    if verdict["reason"] and verdict["reason"].startswith("known_cap:") and verdict["caps"] == 1 and verdict.get("rosters"):
+        index = int(next(iter(verdict["rosters"])))
+        text += ", %s, fight %d seed %d" % (verdict["reason"], index, index // 2)
+    return text
+
+
+def _mixes(mixes) -> list:
+    """The mixes section: one row per mirror_precheck verdict (R1), the caps column naming M9's known cap."""
+    out = ["<table>", "<tr><th>mix</th><th>units</th><th>result</th><th>caps (known)</th></tr>"]
+    for name, v in mixes.items():
+        units = ", ".join("%s %s" % (t, n) for t, n in (v.get("mix") or {}).items())
+        result = ("ok" if v["ok"] else "rejected") + (", " + v["reason"] if v["reason"] else "")
+        out.append("<tr%s><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
+            _attrs(mix=name), escape(name), escape(units), escape(result), escape(_mix_caps(v))))
+    return out + ["</table>"]
+
+
 def artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact", thresholds=None) -> str:
     """artifact.html and diagrams/<id>.svg in out_dir; the page is README section 5: drafts, findings with a diagram each, baseline
-    ceilings, agreement, both_wrong fights, refinement, the cone grid and the conditions the CSV rows alone support."""
+    ceilings, agreement, both_wrong fights, refinement, the cone grid and the conditions the CSV rows alone support; with summary["mixes"]
+    (sweep.vet_mixes verdicts) a last section, the mixes table with the caps of each mirror pre-check."""
     from scripts.skilllab import charts   # charts imports this module
     rows = list(rows)
     out = Path(os.fspath(out_dir))
@@ -478,8 +505,10 @@ def artifact(summary, rows, setup_for, out_dir, title="Skill lab artifact", thre
         "cone-grid": [charts.cone_grid_html(rows) or "<p>no cone family</p>"],
         "conditions": _conditions(rows, thresholds),
     }
+    if "mixes" in summary:
+        sections["mixes"] = _mixes(summary["mixes"])
     body = ["<h1>%s</h1>" % escape(title)]
-    for name in ARTIFACT_SECTIONS:
+    for name in ARTIFACT_SECTIONS + (("mixes",) if "mixes" in summary else ()):
         body += ['<section id="%s">' % name, "<h3>%s</h3>" % name.replace("-", " ")] + sections[name] + ["</section>"]
     out.mkdir(parents=True, exist_ok=True)
     diagram.write_all(rows, setup_for, out / "diagrams")
