@@ -9,7 +9,9 @@ BUILDER CONTRACT:
   `no_reach_stall` and `decided_one_way_reach` later (adding is fine), so these tests pin membership and the two positions above, never the
   length. The probe's reason string and the sweep's family key are taken from the constant, not repeated as literals: the tests compare
   against the FROZEN_NAMES entries, so a rename in contract.py moves code and artifact together or fails here.
-Red today: `contract.FROZEN_NAMES` does not exist (AttributeError)."""
+The first tests (the constant holds `inert_knob` and `category` in that order, the refusal reason and the unavailable family come from it) are
+green on the tip: the constant exists. Red: the four probe names (`survey`, `checked`, `seeds`, `probed`) missing from FROZEN_NAMES,
+and the refused entry / `probed` record key shapes (test_the_probe_names_are_frozen[*], test_the_refused_entry_and_the_probed_record_...)."""
 import sys
 from pathlib import Path
 
@@ -35,7 +37,7 @@ def test_frozen_names_is_a_tuple_of_strings_holding_both_names():
 
 def test_the_probes_refusal_reason_is_a_frozen_name(tmp_path):
     """The `reason` of a probe refusal in `entry["refused"]` equals FROZEN_NAMES[0] (read from the constant, not a literal).
-    Red today: no FROZEN_NAMES (and, behind it, no `probe` keyword)."""
+    Green on the tip (the constant and the probe keyword exist); a rename in contract.py or the sweep fails it."""
     names = contract.FROZEN_NAMES
 
     def result(setup, seed, swap):          # inert on every play: the knob never moves the row
@@ -49,7 +51,7 @@ def test_the_probes_refusal_reason_is_a_frozen_name(tmp_path):
 
 def test_the_unavailable_family_is_read_from_the_frozen_names(tmp_path):
     """The family name the sweep marks unavailable is FROZEN_NAMES[1]: `skip_reason`, `run_family` and the summary's `unavailable` key
-    all answer to that entry. Red today: no FROZEN_NAMES."""
+    all answer to that entry. Green on the tip."""
     family = contract.FROZEN_NAMES[1]
     reason = sweep.skip_reason(family, CAPS)
     assert reason and "FINDING-lab-d6" in reason
@@ -59,3 +61,32 @@ def test_the_unavailable_family_is_read_from_the_frozen_names(tmp_path):
     summary = sweep.run(list(sweep.FAMILY_ORDER), tmp_path / "all", builds=fake_builds(), layouts={"A": {}}, plays=("p",),
                         fight_fn=ScriptedFight(be_of=lambda s: 20), caps=CAPS)
     assert list(summary["unavailable"]) == [family]
+
+
+# ---- Q4 (Architect, 2026-10-20, implementation; Westley may veto): the probe's names are frozen too ----------------------------------------
+
+PROBE_NAMES = ("survey", "checked", "seeds", "probed")
+REFUSED_KEYS = {"family", "play", "layout", "role", "reason", "checked", "seeds"}      # the frozen shape of an `inert_knob` refusal
+PROBED_KEYS = {"family", "play", "layout", "first_differing", "line", "base_cached"}                   # the frozen shape of a `probed` record
+
+
+@pytest.mark.parametrize("name", PROBE_NAMES)
+def test_the_probe_names_are_frozen(name):
+    """contract.FROZEN_NAMES gains `survey` (probe.survey), `checked` and `seeds` (the refused entry's keys) and `probed` (the entry and
+    summary key): membership only, no length, and the first two positions stay. Red today: not in the tuple."""
+    assert name in contract.FROZEN_NAMES
+    assert contract.FROZEN_NAMES[:2] == ("inert_knob", "category")
+
+
+def test_the_refused_entry_and_the_probed_record_have_the_frozen_keys(tmp_path):
+    """The `inert_knob` entry's keys are exactly REFUSED_KEYS, the `probed` record's exactly PROBED_KEYS, and the names in them that are
+    FROZEN_NAMES come from the constant. Red today: no `checked`/`seeds`, no `probed`. (`base_cached` is a key of the record and of the survey
+    points, DRAFT: not one of the four frozen names.)"""
+    def result(setup, seed, swap):
+        return _fr("side0" if setup.unit_types["enemy"] <= 24 else "side1", setup.unit_types["enemy"])
+
+    entry = sweep.run_family("range_up", tmp_path, builds=fake_builds(), layouts={"A": {"id": 1}}, plays=("p1",),
+                             fight_fn=ScriptedFight(result_of=result), caps=CAPS, probe=True)
+    assert [set(r) for r in entry["refused"]] == [REFUSED_KEYS]
+    assert [set(r) for r in entry["probed"]] == [PROBED_KEYS]
+    assert {"checked", "seeds", "probed"} <= set(contract.FROZEN_NAMES) and entry["refused"][0]["reason"] == contract.FROZEN_NAMES[0]
