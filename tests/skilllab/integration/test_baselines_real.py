@@ -7,8 +7,8 @@
   - Layout 192 (choke 8 bodies, start distance 2800) at 24 and 48 enemy units: the naive attacker's defender blob used to stand in the
     wall ('no_fit' from 24 up, the 192 / 48 case); with decision 26 it skips the wall, nothing is refused, no scan is cut, and no unit of
     any baseline stands in a block, every naive unit is in the canvas and the anchor's region, and the blobs equal the fill order over
-    the free cells (decision 36). The unit at x = 3277 of the 48-unit defender blob is IN the anchor's region (the east side connects
-    through the choke wall's gap and round its ends) and stays: pinned in test_layout_192_48_the_unit_at_x_3277_stays_.... (Layouts 81 and 78
+    the free cells (decision 36). The unit at x = 3317.56 of the 24-unit side-1 blobs (rev 3 D4; x = 3277 of the 48-unit blob before) is IN the anchor's region (the east side connects
+    through the choke wall's gap and round its ends) and stays: pinned in test_layout_192_48_the_unit_at_x_3317_stays_.... (Layouts 81 and 78
     are not pinned: the plays themselves are refused there.)
   - Gated (OM_LAB_SLOW=1, a few seconds with a fake fight function; gated as the brief asks): sweep.run_family over the real builds on
     layout 192 for the two layer plays reaches 48 for the play and every baseline, lists no refusal and no cut cell.
@@ -63,7 +63,7 @@ def test_layout_192_places_every_baseline_in_open_cells_at_every_headcount(libra
     inside the canvas and in its anchor's region (decision 36), and every naive blob (both blobs of naive_attacker, the holders of the
     naive defender variants) equals the fill order over the free cells at CELL resolution (decision 38 item 1), UNSORTED, exactly. The
     real layout's walls are not on 50 wu bounds, so slivers exist (free points in a route cell whose centre is blocked); they are out.
-    The unit at x = 3277 of the 48-unit naive_attacker defender blob is IN the anchor's region (the east side connects to the anchor
+    The unit at x = 3317.56 of the 24-unit naive_attacker side-1 blobs is IN the anchor's region (the east side connects to the anchor
     through the choke wall's gap rows 1880 to 2120 and round the wall's ends) and stays."""
     features = sweep.smoke_layouts()["192"]
     for role in roles_of(play, features):
@@ -82,33 +82,45 @@ def test_layout_192_places_every_baseline_in_open_cells_at_every_headcount(libra
             assert expected is not None and rounded(pts) == rounded(expected), (play, role, heads, g.unit)
 
 
-def test_layout_192_48_the_unit_at_x_3277_stays_because_it_is_in_the_anchors_region(library):
-    """The named unit of the 192 / 48 case (naive_attacker, the 48-unit defender blob anchored at (3195, 2000) on the east face of the
-    choke wall): the open-ground blob has three units in the wall, the skip replaces them, and a unit at x = 3277, y = 2143 (beyond
-    the wall) is among the replacements because the east side is connected to the anchor through the gap. Pinned: it is there."""
+def test_layout_192_48_the_unit_at_x_3317_stays_because_it_is_in_the_anchors_region(library):
+    """The named unit of the 192 / 48 case (naive_attacker, side 1 anchored at (3195, 2000) on the east face of the choke wall). Rev 3 D4:
+    side 1 is the play's enemy roster at 48 heads, one 24-unit blob per unit name (Vanguard, Raider) on the same anchor, no longer one
+    48-unit blob (before: the unit at x = 3277, y = 2143). The open-ground blob of 24 has units in the wall, the skip replaces them, and
+    the replacement at x = 3317.56, y = 2071.02 (beyond the wall) is among them because the east side is connected to the anchor
+    through the gap; the other replacement, (3072.44, 1928.98), is west of the wall, reached through the gap. Pinned: both are there,
+    in each blob, in the anchor's region and in the fill-order list of the rule (expected_skipping)."""
     features = sweep.smoke_layouts()["192"]
     setup = sweep.default_builds("s3_layer_above", "naive_attacker", features)(48, False)
-    g = next(g for g in setup.groups if g.side == 1)
-    seen, _cell_fn = route_region(setup.terrain, g.layer, (g.x, g.y))
-    mine = [p for p in positions(g) if abs(p[0] - 3277.0) < 1.0 and abs(p[1] - 2143.0) < 1.0]
-    assert len(mine) == 1 and _cell_fn(mine[0]) in seen and mine[0][0] > max(b.x1 for b in setup.terrain.blocks)
+    blobs = [g for g in setup.groups if g.side == 1]
+    assert [(g.unit, g.count) for g in blobs] == [("Vanguard", 24), ("Raider", 24)]
+    for g in blobs:
+        seen, _cell_fn = route_region(setup.terrain, g.layer, (g.x, g.y))
+        mine = [p for p in positions(g) if abs(p[0] - 3317.56) < 1.0 and abs(p[1] - 2071.02) < 1.0]
+        assert len(mine) == 1 and _cell_fn(mine[0]) in seen and mine[0][0] > max(b.x1 for b in setup.terrain.blocks)
+        assert rounded(mine) == [p for p in rounded(expected_skipping(g, setup.terrain)) if abs(p[0] - 3317.56) < 1.0]
+        west = [p for p in positions(g) if abs(p[0] - 3072.44) < 1.0 and abs(p[1] - 1928.98) < 1.0]
+        assert len(west) == 1 and _cell_fn(west[0]) in seen and west[0][0] < min(b.x0 for b in setup.terrain.blocks)
 
 
-@pytest.mark.parametrize("heads", [24, 48])
+@pytest.mark.parametrize("heads", [32, 48])
 def test_layout_192_the_sliver_beside_the_gap_edge_is_not_used(library, heads):
     """Decision 38 item 1: (3139.97, 2117.59) is free (the wall's lower block starts at y = 2120) but its route cell (62, 42) has its
     centre (3125, 2125) inside that block, so it is a sliver and is OUT. The point reading (block and canvas only) would take it as the
-    22nd unit; the cell reading does not. Positive: the list is the cell-resolution list exactly, and it differs from the point list."""
+    22nd unit; the cell reading does not. Positive: the list is the cell-resolution list exactly, and it differs from the point list.
+    Rev 3 D4: side 1 is two blobs of heads / 2 units; the named sliver belongs to the 24-unit blob (48 heads, before: 24 heads, where a
+    12-unit blob has none), and 32 heads (16-unit blobs) is the other headcount with slivers at both gap edges."""
     features = sweep.smoke_layouts()["192"]
     setup = sweep.default_builds("s3_layer_above", "naive_attacker", features)(heads, False)
-    g = next(g for g in setup.groups if g.side == 1)
-    point_list = rounded(expected_skipping(g, setup.terrain, connected=False))
-    slivers = [p for p in point_list if not cell_open(setup.terrain, g.layer, cell_of(setup.terrain, p))]
-    assert slivers, "fixture: the point reading uses sliver points"
-    if heads == 24:
-        assert (3139.9746, 2117.5861) in slivers
-    pts = rounded(positions(g))
-    assert not [p for p in pts if p in slivers] and pts == rounded(expected_skipping(g, setup.terrain)) and pts != point_list
+    blobs = [g for g in setup.groups if g.side == 1]
+    assert [g.count for g in blobs] == [heads // 2, heads // 2]
+    for g in blobs:
+        point_list = rounded(expected_skipping(g, setup.terrain, connected=False))
+        slivers = [p for p in point_list if not cell_open(setup.terrain, g.layer, cell_of(setup.terrain, p))]
+        assert slivers, "fixture: the point reading uses sliver points"
+        if heads == 48:
+            assert (3139.9746, 2117.5861) in slivers
+        pts = rounded(positions(g))
+        assert not [p for p in pts if p in slivers] and pts == rounded(expected_skipping(g, setup.terrain)) and pts != point_list
 
 
 def test_ruling_25_variants_on_a_real_layer_play(library):
