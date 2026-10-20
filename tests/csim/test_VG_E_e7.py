@@ -343,6 +343,28 @@ def test_d_enemy_keeps_producing_while_the_player_is_capped(lib, world_factory):
     assert series[-1] > d["cap"], "the control must run the enemy past the player's cap"
 
 
+def test_h_empty_roster_start_0_cap_0_no_production(lib, world_factory):
+    """E7 (c) with gap 4 and the builder guard B14N-empty-roster-cap (Architect 2026-10-19): "reinforce_cap = F_units >=
+    start_units ? F_units - start_units : 0", so a mission with F_units 0 has start_units 0 and reinforce_cap 0 (not a wrapped
+    uint32) and "spawns a unit for the player's faction only while reinforce_spawned < reinforce_cap" lets no player structure
+    spawn. Scene: tests/csim/b1_macro_scene.py tactical_world(), a mission composed with zero units (roster all zero) that still
+    holds structures (player 2, enemy 1). The cap has no public getter (gap 4), so it is read behaviourally: no player row at
+    tick 0 and none after five production intervals, while the enemy structure keeps spawning (the control that production
+    runs in this scene). Red today: the player structures spawn without a cap."""
+    from b1_macro_scene import tactical_world
+    _bind(lib)
+    w = tactical_world(lib, world_factory)
+    roster = roster_of(lib, w)
+    owners = owners_of(lib, w)
+    assert sum(roster) == 0 and owners.count(PLAYER) >= 1 and owners.count(ENEMY) >= 1, f"premise: F 0 with structures on both sides: roster {roster}, owners {owners}"
+    assert len(rows(lib, w, PLAYER)) == 0, f"start_units must be 0 with F 0: {len(rows(lib, w, PLAYER))} player rows at tick 0"
+    interval = first_interval(lib, w, PLAYER)
+    player = spawn_series(lib, w, PLAYER, 5, interval)
+    enemy = len(rows(lib, w, ENEMY))
+    assert enemy > 0, f"control: the enemy structure must have produced in this scene (enemy rows {enemy})"
+    assert player == [0] * 5, f"reinforce_cap must be 0 with F 0 (F_units >= start_units ? F_units - start_units : 0): player spawned {player}; owners {owners}"
+
+
 def test_f_a_bare_world_without_a_mission_is_uncapped(lib, world_factory):
     """E7 (f), gap 6: "`reinforce_cap` is `UINT32_MAX` on a bare world with no mission set up" so production there is uncapped
     (tests/csim/test_core_support_driver.py and test_core_B14N_support_tick_materialise.py stay green unchanged). A bare world,
