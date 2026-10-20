@@ -48,9 +48,21 @@ def setup_of(side0_layers, side1_layers):
     ((2, 3), (2,), LAYER_ROLES),                # two holder groups, one of them on a layer the enemy is not on
     ((2, 2), (2,), (ATT, HOLD)),
     ((0,), (0,), (ATT, HOLD)),                  # control: the old layer-0 case
+    ((1,), (1, 2), (ATT, HOLD)),                # audit of 32039a0f item 4: one of the enemy's layers is the holder's (the lower one): plain
 ])
 def test_baseline_roles_compares_the_holders_layers_with_the_enemys_whatever_their_values(side0, side1, roles):
     assert sweep.baseline_roles(setup_of(side0, side1)) == roles
+
+
+def test_a_side_0_group_that_is_not_on_guard_does_not_count_toward_the_layer_rule():
+    """Audit of 32039a0f item 4. The holder (guard, layer 2) stands where the enemy does; a side-0 group that attack-moves from layer 3 is not a
+    holder and its layer plays no part: the roles are the plain ones. Controls: the same group on guard is a layer holder; the same group on
+    the enemy's layer changes nothing."""
+    holder, enemy = guard(2), guard(2, side=1)
+    raised = dataclasses.replace(guard(3), order="attack_move")
+    assert sweep.baseline_roles(Setup(groups=(holder, raised, enemy), unit_types={})) == (ATT, HOLD)
+    assert sweep.baseline_roles(Setup(groups=(holder, guard(3), enemy), unit_types={})) == LAYER_ROLES
+    assert sweep.baseline_roles(Setup(groups=(holder, dataclasses.replace(guard(2), order="attack_move"), enemy), unit_types={})) == (ATT, HOLD)
 
 
 def layer_builds(layer_of_holder):

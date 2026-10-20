@@ -189,6 +189,19 @@ def test_the_smoke_csv_header_has_blind_post_straight_after_baseline_no_fit(tmp_
     assert header.count("blind_post") == 1 and header.index("blind_post") == header.index("baseline_no_fit") + 1
 
 
+def test_the_smoke_csv_header_is_right_when_the_control_rows_alone_define_it(tmp_path):
+    """Audit of 32039a0f item 4: the header is the union of the rows' keys in first-appearance order, so a label placed wrongly at the smoke-control
+    call site only shows when no grid row comes first. Both vision plays refused: the only rows are the three controls', and blind_post must still
+    follow baseline_no_fit (the permutation of the family test, without the spy)."""
+    refuse = {(p, "play"): "no_reach" for p in sweep.PLAYS_BY_FAMILY["vision"]}
+    sweep.run_smoke(tmp_path, workers=1, builds=fake_builds(refuse=refuse), fight_fn=BlindWorld(), control_builds=control_builds())
+    with open(tmp_path / "smoke.csv", newline="") as fh:
+        reader = csv.reader(fh)
+        header, body = next(reader), list(reader)
+    assert body and {row[header.index("family")] for row in body} == {"controls"}              # fixture: control rows alone
+    assert header.count("blind_post") == 1 and header.index("blind_post") == header.index("baseline_no_fit") + 1
+
+
 def test_every_fight_row_call_in_sweep_passes_the_labels_in_the_same_order(tmp_path, monkeypatch):
     """Grid rows (_scan_rows), control rows (_control_rows) and the smoke's control rows must use the same key order, so a label can
     never first appear late in a later row's dict. Recorded at every rows.fight_row call of a family run and of a smoke run."""

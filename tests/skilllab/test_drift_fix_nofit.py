@@ -145,3 +145,22 @@ def test_a_side_1_flyer_over_unwalkable_ground_is_ok(lib, order):
 
 def test_control_a_side_1_walker_on_walkable_ground_is_ok(lib):
     assert scenes.preflight(_setup_side1("Walker", WALKABLE, "move"), lib) == "ok"
+
+
+# ---- a side-1 GUARD is read like a side-0 one (audit of 32039a0f, item 4) --------------------------------------------------------------------
+
+@pytest.mark.parametrize("unit", ["Vanguard", "Walker"])
+def test_a_side_1_guard_on_unwalkable_ground_is_ok_whatever_its_type(lib, unit):
+    """Kills a rule that exempts guards on side 0 only: a side-1 guard does not move, so the walk mask is not its business either."""
+    assert scenes.preflight(_setup_side1(unit, UNWALKABLE, "guard"), lib) == "ok"
+
+
+def test_control_a_side_1_walking_mover_on_the_same_ground_is_no_fit(lib):
+    assert scenes.preflight(_setup_side1("Walker", UNWALKABLE, "move"), lib) == "no_fit"
+
+
+@pytest.mark.parametrize("unit", ["Vanguard", "Walker"])
+def test_a_side_1_guard_inside_a_block_on_its_layer_is_no_fit(lib, unit):
+    block = Block(x0=3400.0, y0=3900.0, x1=3600.0, y1=4100.0, layer_lo=0, layer_hi=4)
+    setup = _setup_side1(unit, UNWALKABLE, "guard")
+    assert scenes.preflight(Setup(groups=setup.groups, unit_types=setup.unit_types, terrain=Terrain(canvas=CANVAS, blocks=(block,), field_seed=11)), lib) == "no_fit"

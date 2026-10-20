@@ -17,13 +17,16 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+for _p in (ROOT, ROOT / "tests" / "skilllab"):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
+from fakes_scans import _fr  # noqa: E402
 from scripts.skilllab import engine, firing, sweep  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
 ARC_OFF = 360.0
+CALL_NAMES = ("engine", "w", "units0", "units1", "arc_deg")      # firing.parity's own parameters, so a keyword call is read the same
 
 
 def _e0_on_main(lib):
@@ -61,3 +64,39 @@ def test_the_default_parity_of_the_smoke_is_the_clean_list_of_the_mirror_world(t
     assert summary["parity"] == spy.value
     assert json.loads((tmp_path / "smoke_summary.json").read_text())["parity"] == spy.value
     assert plays.blob_play(16)(16, False).groups == sweep.default_control_builds()["mirror"](16, False).groups      # the world is the lab's own mirror play
+
+
+def test_the_default_parity_fn_calls_firing_parity_once_on_the_16_v_16_mirror_world_without_e0(tmp_path, monkeypatch):
+    """Positive control of the default parity_fn that needs no E0 data (audit of 32039a0f, item 2). firing.parity is replaced by a recorder
+    that returns a NON-EMPTY list, so the wiring is checked and not the composition: run_smoke with caps.arc True and the default parity_fn
+    (parity_fn=None) calls the module attribute firing.parity exactly once, with the real engine, the arc 360.0 and the 16 + 16 units of the
+    mirror world (all alive, all different), and smoke_summary['parity'] is the returned list, on disk too. The real library is used for the
+    world (spawn and orders as fight() does); E0 is not needed because the recorder stands in for the composition."""
+    from scripts.skilllab.sweep import Capabilities
+    seen = []
+
+    def recorder(*args, **kw):
+        got = dict(zip(CALL_NAMES, args), **kw)
+        eng, w = got["engine"], got["w"]
+        seen.append(dict(arc=got["arc_deg"], n0=len(got["units0"]), n1=len(got["units1"]), ids=set(got["units0"]) | set(got["units1"]),
+                         alive=all(eng.unit_alive(w, u) for u in list(got["units0"]) + list(got["units1"])), engine=eng))
+        return [101, 102]
+    monkeypatch.setattr(firing, "parity", recorder)
+    first = next(iter(sweep.smoke_layouts()))
+    summary = sweep.run_smoke(tmp_path, workers=1, layouts={first: sweep.smoke_layouts()[first]}, caps=Capabilities(arc=True, cone=False),
+                              fight_fn=lambda setup, seed, swap: _fr("side0", 8), replicates=1)
+    assert len(seen) == 1, "firing.parity was called %d times" % len(seen)
+    (call,) = seen
+    assert call["arc"] == 360.0 and (call["n0"], call["n1"]) == (16, 16) and len(call["ids"]) == 32 and call["alive"]
+    assert isinstance(call["engine"], engine.Engine)
+    assert summary["parity"] == [101, 102] and json.loads((tmp_path / "smoke_summary.json").read_text())["parity"] == [101, 102]
+
+
+def test_control_without_e0_the_default_parity_fn_is_not_run(tmp_path, monkeypatch):
+    """Negative control for the test above: caps.arc False reads 'skipped: E0 absent' and never reaches firing.parity."""
+    from scripts.skilllab.sweep import Capabilities
+    monkeypatch.setattr(firing, "parity", lambda *a, **k: pytest.fail("firing.parity was called"))
+    first = next(iter(sweep.smoke_layouts()))
+    summary = sweep.run_smoke(tmp_path, workers=1, layouts={first: sweep.smoke_layouts()[first]}, caps=Capabilities(arc=False, cone=False),
+                              fight_fn=lambda setup, seed, swap: _fr("side0", 8), replicates=1)
+    assert summary["parity"] == "skipped: E0 absent"

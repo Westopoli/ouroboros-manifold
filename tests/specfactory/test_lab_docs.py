@@ -295,8 +295,8 @@ def test_readme_names_the_ground_scene_and_does_not_present_highground_as_live()
 
 CONTRACT = REPO / "scripts" / "skilllab" / "contract.py"
 
-_STALE_TRUE = r"stays true|true by default|until both hold|holds? [^.]*at true|per-unit by default"
-_STALE_FALSE = r"flipped|false by default|default is false|default flipped"
+_STALE_TRUE = r"stays true|true by default|defaults? to true|until both hold|holds? [^.]*at true|per-unit by default"
+_STALE_FALSE = r"flipped|false by default|defaults? to false|default is false|default flipped"
 _STATE_TOKENS = {   # what ONE README block must carry for each state of the default
     True: ("orders_per_unit", "True", ("per-unit", "per unit"), "flip"),
     False: ("orders_per_unit", "False", "group attack-move", "flipped", "lab landing"),
@@ -342,6 +342,18 @@ def test_mutant_a_readme_that_says_flipped_while_the_code_default_is_true_fails(
 
 def test_mutant_a_readme_that_says_true_while_the_code_default_is_false_fails():
     assert orders_default_problems(TRUE_TEXT, False)
+
+
+@pytest.mark.parametrize("wording,default", [
+    ("- Orders: `Setup.orders_per_unit` defaults to True; the opening is per-unit.", False),
+    ("- Orders: `Setup.orders_per_unit` default to True.", False),
+    ("- Orders: `Setup.orders_per_unit` defaults to False; the opening is group attack-move.", True),
+    ("- Orders: `Setup.orders_per_unit` default to False.", True),
+])
+def test_mutant_the_defaults_to_wordings_state_a_default(wording, default):
+    """Audit of 32039a0f, item 4: 'defaults to True' / 'defaults to False' state the default as 'true by default' does; a block saying the other one than
+    the code has is a problem (a README block that also carries the full tokens of the code's own state would still hold)."""
+    assert any("states the other default" in p for p in orders_default_problems(wording, default))
 
 
 def test_mutant_a_readme_that_says_nothing_about_the_default_fails_both_ways():

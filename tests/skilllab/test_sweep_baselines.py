@@ -32,7 +32,7 @@ at 8 stops the play's scan on that layout:
     refused entries have no "family"), empty when no cell was cut. `last_headcount` is K.
   - `refused` carries one entry per baseline role that failed to place at some headcount of 8..48, reason "no_fit", the cut play's other
     roles that placed everywhere absent; the play itself is not refused.
-  - `defects` (cap_rows, draw_rows, cells) and the refinement are not fed by the cut: the cut scan is not a defect.
+  - `defects` (cap_rows, blind_post_rows, draw_rows, cells; the key set of decision 43 item 5) and the refinement are not fed by the cut: the cut scan is not a defect.
 Decision 32 (Architect 2026-10-19, the BASE readings), pinned below:
   - item 1: a baseline refused no_reach / unroutable drops only that baseline (the play and the others run; listed with its role).
   - item 2: a baseline that cannot be placed at headcount 8 (K < 8) lists the layout as `baseline_no_fit` with last_headcount None, no scan

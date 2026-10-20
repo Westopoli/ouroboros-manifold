@@ -17,10 +17,19 @@ INTERFACE FOR THE BUILDER
       retries after another REENGAGE_SILENCE_TICKS silent ticks. The retry tick is NOT PINNED between 2N and 2N + 1 (counted from the
       order or from the tick that found the no-op); each retry is one more event (reengage[s] += 1: every trigger is one event). An
       engage after which at least one ordered unit has a destination is not a no-op and is not retried inside the same silence period.
-    ITEM 4 (moved). A side has MOVED only when a living unit of it is displaced by MORE THAN contract.REENGAGE_MOVED_WU (strictly) over
-      the silence window; a fire still zeroes the counter at once. A creep of a few hundredths of a wu per tick, totalling under 1 wu
-      over the window, is silence; a displacement over 1 wu (any direction) is a move; exactly 1 wu is not. The reference of "displacement"
-      (the last reset position, the position REENGAGE_SILENCE_TICKS ago, ...) is the builder's choice: the tests below hold for both.
+    ITEM 4 (moved). A side has MOVED only when a living unit of it is displaced by MORE THAN contract.REENGAGE_MOVED_WU (strictly)
+      from its reference position; a fire still zeroes the counter at once. PINNED REFERENCE (audit of 32039a0f: the earlier text said
+      the tests hold for any reference; a rolling 'position REENGAGE_SILENCE_TICKS ago' reading fails 5 tests of test_reengage.py and
+      7+ cases here, the first re-engage landing at 2N instead of N + 1): the reference of a unit is its position at the LAST RESET of
+      its side's silence counter (a fire, or a move above 1 wu; at the very start, its spawn position); every reset takes a fresh
+      reference for all of the side's living units. The distance is EUCLIDEAN (L1 and Chebyshev fail the (0.6, 0.6) and (0.8, 0.8)
+      cases). ANY living unit of the side moving above the threshold moves the side (not the first unit, not the centroid). DRAFT
+      reading: Architect decision 43 item 4 says 'displacement over the silence window'; the last-reset reference and a cumulative path
+      length both pass these tests, the rolling reading does not. Exactly 1 wu is not a move.
+    UNPINNED, THE BUILDER'S CHOICE (two interface points the tests do not fix): (a) a no-op check made on a side that fired or moved
+      between the order and the check: the check may be skipped (the reset has already re-armed the side) or run; (b) the retry tick
+      between 2N and 2N + 1, and every ordered unit dying (nothing left to check) are not pinned. PINNED: an ordered unit that is DEAD at
+      the check is not counted: the check reads the living ordered units only (test_a_dead_ordered_unit_is_not_counted_in_the_noop_check).
 Fakes: fakes_reengage.ReengageFakeEngine (arrive_after=2 default = an order that works, arrive_after=None = every order a no-op)."""
 import dataclasses
 import re
@@ -84,11 +93,12 @@ def test_only_idle_living_attack_move_units_are_ordered_one_each():
 
 class FirstEngageFake(ReengageFakeEngine):
     """The first re-engage of `side` (the orders issued at its first post-opening tick) takes effect for only its first `effective`
-    orders (0: a no-op); every later order works. Needs the default arrive_after."""
+    orders (0: a no-op), or, with `works`, for the orders whose ordinal (0 = the first order of that tick) is in `works`; every later
+    order works. Needs the default arrive_after."""
 
-    def __init__(self, side=0, effective=0, **kw):
+    def __init__(self, side=0, effective=0, works=None, **kw):
         super().__init__(**kw)
-        self.side, self.effective, self.first_tick, self.taken = side, effective, None, 0
+        self.side, self.effective, self.works, self.first_tick, self.taken = side, effective, works, None, 0
 
     def _give(self, ids, goal):
         if self.step_count > 0 and goal is not None and set(ids) <= set(self.units_of(self.side)):
@@ -96,7 +106,7 @@ class FirstEngageFake(ReengageFakeEngine):
                 self.first_tick = self.step_count
             if self.step_count == self.first_tick:
                 self.taken += 1
-                if self.taken > self.effective:
+                if (self.taken - 1) not in self.works if self.works is not None else self.taken > self.effective:
                     return
         super()._give(ids, goal)
 
@@ -121,6 +131,27 @@ def test_a_partly_effective_engage_is_not_a_noop():
     """One of the three ordered units has a destination one tick later: not a no-op, so no retry."""
     res, fake = run([G(0, 3), G(1, 2)], cap=3 * N + 5, fake=FirstEngageFake(side=0, effective=1))
     assert [t for t, _i, _g in fake.reengage_orders(0)] == [N] and tuple(res.reengage) == (1, 1)
+
+
+def test_a_working_order_on_a_later_unit_is_not_a_noop():
+    """Kills 'only the first ordered unit is looked at': three units, only the THIRD order takes effect. Not a no-op, so no retry."""
+    res, fake = run([G(0, 3), G(1, 2)], cap=3 * N + 5, fake=FirstEngageFake(side=0, works={2}))
+    assert [t for t, _i, _g in fake.reengage_orders(0)] == [N] and tuple(res.reengage) == (1, 1)
+
+
+def test_control_the_same_engage_with_no_working_order_is_retried():
+    """Control for the test above: works=set() is the all-no-op engage."""
+    res, fake = run([G(0, 3), G(1, 2)], cap=3 * N + 5, fake=FirstEngageFake(side=0, works=set()))
+    assert len(fake.reengage_orders(0)) == 2 and tuple(res.reengage) == (2, 1)
+
+
+def test_a_dead_ordered_unit_is_not_counted_in_the_noop_check():
+    """PINNED (audit item 5). Two units are ordered; the first one's order works (a destination) and the unit is killed in the next step; the
+    second one's order is a no-op. The check reads the LIVING ordered units: the second has no destination, so the engage is a no-op and is
+    retried. A builder that counted the dead unit's destination would see a working order and never retry."""
+    res, fake = run([G(0, 2), G(1, 2)], cap=3 * N + 5, fake=FirstEngageFake(side=0, works={0}), script_events={N: [kill(0, 0)]})
+    assert [t for t, _i, _g in fake.reengage_orders(0)][0] == N
+    assert len(fake.reengage_orders(0)) == 2, fake.reengage_orders(0)
 
 
 def test_an_engage_that_never_works_is_retried_every_window_not_every_tick():
@@ -190,6 +221,8 @@ def settle_then(dx, dy=0.0, k=N - 5):
     (1.001, 0.0, True),
     (-1.5, 0.0, True),
     (0.0, 2.0, True),
+    (0.8, 0.8, True),         # 1.13 wu Euclid: moved (Chebyshev would read 0.8: not moved)
+    (0.6, 0.6, False),        # 0.85 wu Euclid: not moved (L1 would read 1.2: moved)
 ])
 def test_a_displacement_counts_as_a_move_only_above_one_wu(dx, dy, moved):
     """Silence counts from tick 1 (the first unit jumped from its spawn to the origin). A later displacement of (dx, dy) at tick N - 4
@@ -197,3 +230,23 @@ def test_a_displacement_counts_as_a_move_only_above_one_wu(dx, dy, moved):
     res, fake = run([G(0), G(1)], cap=2 * N + 5, script_events=settle_then(dx, dy))
     assert only(fake.reengage_orders(0))[0] == (2 * N - 4 if moved else N + 1)
     assert only(fake.reengage_orders(1))[0] == N
+
+
+def test_any_unit_of_a_side_moving_above_the_threshold_moves_the_side():
+    """Three units, only the THIRD slides 2 wu at tick N - 4 (the other two stand still): the side has moved and is re-engaged at 2N - 4. Kills
+    'first unit only' and 'centroid of the side' (the centroid moves 0.67 wu). Side 1 is the control."""
+    third = {N - 5: [nudge_third(2.0)]}
+    res, fake = run([G(0, 3), G(1, 2)], cap=2 * N + 5, script_events=third)
+    assert only(fake.reengage_orders(0))[0] == 2 * N - 4 and only(fake.reengage_orders(1))[0] == N
+
+
+def test_control_the_same_unit_sliding_half_a_wu_leaves_the_side_silent():
+    res, fake = run([G(0, 3), G(1, 2)], cap=2 * N + 5, script_events={N - 5: [nudge_third(0.5)]})
+    assert only(fake.reengage_orders(0))[0] == N
+
+
+def nudge_third(dx):
+    def fn(f):
+        u = f.units_of(0)[2]
+        f.set_pos(u, f.units[u]["x"] + dx, f.units[u]["y"])
+    return fn
