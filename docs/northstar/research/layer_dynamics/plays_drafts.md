@@ -111,16 +111,31 @@ Groups (canvas coordinates, canvas centre 2000, 2000):
 
 Status: unconfirmed draft, not measured, for Westley's look.
 
-Eight Bombards sit one layer above the enemy and fire down; the eight Bastions fight on the enemy's layer.
+Bombards and Bastions stand on layers 3 and 4, half of each type on each, two and one layers above the enemy on layer 2, and fire down.
 
 Numbers:
-- HIGH_LAYER = 1
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
-- side 0: 8 x Bombard, blob, layer 1, at (1650, 2000), order attack_move
-- side 0: 8 x Bastion, blob, layer 0, at (1650, 2000), order attack_move
-- side 1: 8 x Bombard, blob, layer 0, at (2350, 2000), order attack_move
-- side 1: 8 x Bastion, blob, layer 0, at (2350, 2000), order attack_move
+- side 0: 4 x Bombard, blob, layer 4, at (1650, 2000), order attack_move
+- side 0: 4 x Bombard, blob, layer 3, at (1650, 2000), order attack_move
+- side 0: 4 x Bastion, blob, layer 4, at (1650, 2000), order attack_move
+- side 0: 4 x Bastion, blob, layer 3, at (1650, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 2, at (2350, 2000), order attack_move
+- side 1: 8 x Bastion, blob, layer 2, at (2350, 2000), order attack_move
+
+## s3_bombard_bastion_level (S3)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Bombards and Bastions stand on the enemy's layer, layer 4, and fire level.
+
+Numbers:
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 8 x Bombard, blob, layer 4, at (1650, 2000), order attack_move
+- side 0: 8 x Bastion, blob, layer 4, at (1650, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 4, at (2350, 2000), order attack_move
+- side 1: 8 x Bastion, blob, layer 4, at (2350, 2000), order attack_move
 
 ## s3_dark_striker (S3)
 
@@ -147,31 +162,29 @@ Timeline:
 
 Status: unconfirmed draft, not measured, for Westley's look.
 
-Eight Interceptors sit one layer above the enemy; the eight Bombards fight on the enemy's layer.
+Eight Interceptors sit two layers below the enemy and fire up; eight Bombards sit one layer above it. The enemy is on layer 3.
 
 Numbers:
-- HIGH_LAYER = 1
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 0: 8 x Interceptor, blob, layer 1, at (1650, 2000), order attack_move
-- side 0: 8 x Bombard, blob, layer 0, at (1650, 2000), order attack_move
-- side 1: 8 x Interceptor, blob, layer 0, at (2350, 2000), order attack_move
-- side 1: 8 x Bombard, blob, layer 0, at (2350, 2000), order attack_move
+- side 0: 8 x Bombard, blob, layer 4, at (1650, 2000), order attack_move
+- side 1: 8 x Interceptor, blob, layer 3, at (2350, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 3, at (2350, 2000), order attack_move
 
 ## s3_interceptor_raider (S3)
 
 Status: unconfirmed draft, not measured, for Westley's look.
 
-Eight Interceptors sit one layer above the enemy; the eight Raiders fight on the enemy's layer.
+Eight Interceptors sit two layers below the enemy and eight Raiders one layer below it, all firing up. The enemy is on layer 4.
 
 Numbers:
-- HIGH_LAYER = 1
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
-- side 0: 8 x Interceptor, blob, layer 1, at (1650, 2000), order attack_move
-- side 0: 8 x Raider, blob, layer 0, at (1650, 2000), order attack_move
-- side 1: 8 x Raider, blob, layer 0, at (2350, 2000), order attack_move
-- side 1: 8 x Interceptor, blob, layer 0, at (2350, 2000), order attack_move
+- side 0: 8 x Interceptor, blob, layer 2, at (1650, 2000), order attack_move
+- side 0: 8 x Raider, blob, layer 3, at (1650, 2000), order attack_move
+- side 1: 8 x Raider, blob, layer 4, at (2350, 2000), order attack_move
+- side 1: 8 x Interceptor, blob, layer 4, at (2350, 2000), order attack_move
 
 ## s3_layer_above (S3)
 
@@ -228,16 +241,15 @@ Timeline:
 
 Status: unconfirmed draft, not measured, for Westley's look.
 
-Eight Bombards sit one layer above the enemy and fire down; the eight Raiders fight on the enemy's layer.
+Eight Raiders sit one layer below the enemy and fire up; eight Bombards sit one layer above it and fire down. The enemy is on layer 2.
 
 Numbers:
-- HIGH_LAYER = 1
 
 Groups (canvas coordinates, canvas centre 2000, 2000):
-- side 0: 8 x Bombard, blob, layer 1, at (1650, 2000), order attack_move
-- side 0: 8 x Raider, blob, layer 0, at (1650, 2000), order attack_move
-- side 1: 8 x Raider, blob, layer 0, at (2350, 2000), order attack_move
-- side 1: 8 x Bombard, blob, layer 0, at (2350, 2000), order attack_move
+- side 0: 8 x Raider, blob, layer 1, at (1650, 2000), order attack_move
+- side 0: 8 x Bombard, blob, layer 3, at (1650, 2000), order attack_move
+- side 1: 8 x Raider, blob, layer 2, at (2350, 2000), order attack_move
+- side 1: 8 x Bombard, blob, layer 2, at (2350, 2000), order attack_move
 
 ## s3_types_by_reach (S3)
 

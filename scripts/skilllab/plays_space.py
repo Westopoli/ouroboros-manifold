@@ -1,5 +1,5 @@
 """Registered space-lab draft plays (spec: docs/northstar/plans/2026-10-05-space-lab-stage1-spec.md, lane "plays").
-Twenty-one plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
+Twenty-two plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
 is a named draft constant, provisional (2026-10-05), for Westley's look at docs/northstar/research/layer_dynamics/plays_drafts.md.
 Regenerate the page: python -m scripts.skilllab.plays_space"""
 import dataclasses
@@ -123,7 +123,7 @@ MIXES = [
     {"name": "M5", "units": {"Raider": 8, "Bombard": 8}, "used_in": ("s3_raider_bombard",), "enabled": True},   # DRAFT-mix-M5
     {"name": "M6", "units": {"Interceptor": 8, "Bombard": 8}, "used_in": ("s3_interceptor_bombard",), "enabled": True},   # DRAFT-mix-M6
     {"name": "M7", "units": {"Raider": 8, "Interceptor": 8}, "used_in": ("s3_interceptor_raider",), "enabled": True},   # DRAFT-mix-M7
-    {"name": "M8", "units": {"Bombard": 8, "Bastion": 8}, "used_in": ("s3_bombard_bastion",), "enabled": True},   # DRAFT-mix-M8
+    {"name": "M8", "units": {"Bombard": 8, "Bastion": 8}, "used_in": ("s3_bombard_bastion", "s3_bombard_bastion_level"), "enabled": True},   # DRAFT-mix-M8
     {"name": "M9", "units": {"Vanguard": 12, "Warden": 4}, "used_in": ("s2_warden_line",), "enabled": True},   # DRAFT-mix-M9
 ]
 
@@ -160,27 +160,38 @@ def _types_by_reach():
                    _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items()), unit_types=_types("Interceptor"))
 
 
-def _high_low(play, high, low):
-    """A mix of two types: `high` stands one layer above the enemy, `low` on the enemy's layer (the shape of _types_by_reach)."""
+def _stack(play, enemy_layer, *placements):
+    """Side 0: one blob per (type, layer) of `placements`, a type listed on several layers splitting its row count between them; side 1: the
+    same mix on `enemy_layer`. Every type of the play's mix is placed."""
     m = _mix(play)
-    return _setup([_blob(0, high, m[high], -START_GAP / 2, layer=HIGH_LAYER), _blob(0, low, m[low], -START_GAP / 2)] + _enemy(m.items()),
-                  unit_types=_types(high, low))
+    layers = {}
+    for unit, layer in placements:
+        layers.setdefault(unit, []).append(layer)
+    if set(layers) != set(m):
+        raise ValueError("%s places %s, its mix holds %s" % (play, sorted(layers), sorted(m)))
+    groups = [_blob(0, unit, count, -START_GAP / 2, layer=layer) for unit, ls in layers.items()
+              for count, layer in zip([m[unit] // len(ls) + (i < m[unit] % len(ls)) for i in range(len(ls))], ls) if count]
+    return _setup(groups + _enemy(m.items(), layer=enemy_layer), unit_types=_types(*m))
 
 
 def _raider_bombard():
-    return _high_low("s3_raider_bombard", "Bombard", "Raider")
+    return _stack("s3_raider_bombard", 2, ("Raider", 1), ("Bombard", 3))
 
 
 def _interceptor_bombard():
-    return _high_low("s3_interceptor_bombard", "Interceptor", "Bombard")
+    return _stack("s3_interceptor_bombard", 3, ("Interceptor", 1), ("Bombard", 4))
 
 
 def _interceptor_raider():
-    return _high_low("s3_interceptor_raider", "Interceptor", "Raider")
+    return _stack("s3_interceptor_raider", 4, ("Interceptor", 2), ("Raider", 3))
 
 
 def _bombard_bastion():
-    return _high_low("s3_bombard_bastion", "Bombard", "Bastion")
+    return _stack("s3_bombard_bastion", 2, ("Bombard", 4), ("Bombard", 3), ("Bastion", 4), ("Bastion", 3))
+
+
+def _bombard_bastion_level():
+    return _stack("s3_bombard_bastion_level", 4, ("Bombard", 4), ("Bastion", 4))
 
 
 def _warden_line():
@@ -278,14 +289,16 @@ PLAYS = {
         "Eight Raiders sit one layer above the enemy and fire down; the eight Vanguards fight on the enemy's layer."),
     "s3_types_by_reach": _play(_types_by_reach, "S3", {"HIGH_LAYER": HIGH_LAYER},
         "Eight Interceptors sit one layer above the enemy; the eight Vanguards fight on the enemy's layer."),
-    "s3_raider_bombard": _play(_raider_bombard, "S3", {"HIGH_LAYER": HIGH_LAYER},
-        "Eight Bombards sit one layer above the enemy and fire down; the eight Raiders fight on the enemy's layer."),
-    "s3_interceptor_bombard": _play(_interceptor_bombard, "S3", {"HIGH_LAYER": HIGH_LAYER},
-        "Eight Interceptors sit one layer above the enemy; the eight Bombards fight on the enemy's layer."),
-    "s3_interceptor_raider": _play(_interceptor_raider, "S3", {"HIGH_LAYER": HIGH_LAYER},
-        "Eight Interceptors sit one layer above the enemy; the eight Raiders fight on the enemy's layer."),
-    "s3_bombard_bastion": _play(_bombard_bastion, "S3", {"HIGH_LAYER": HIGH_LAYER},
-        "Eight Bombards sit one layer above the enemy and fire down; the eight Bastions fight on the enemy's layer."),
+    "s3_raider_bombard": _play(_raider_bombard, "S3", {},
+        "Eight Raiders sit one layer below the enemy and fire up; eight Bombards sit one layer above it and fire down. The enemy is on layer 2."),
+    "s3_interceptor_bombard": _play(_interceptor_bombard, "S3", {},
+        "Eight Interceptors sit two layers below the enemy and fire up; eight Bombards sit one layer above it. The enemy is on layer 3."),
+    "s3_interceptor_raider": _play(_interceptor_raider, "S3", {},
+        "Eight Interceptors sit two layers below the enemy and eight Raiders one layer below it, all firing up. The enemy is on layer 4."),
+    "s3_bombard_bastion": _play(_bombard_bastion, "S3", {},
+        "Bombards and Bastions stand on layers 3 and 4, half of each type on each, two and one layers above the enemy on layer 2, and fire down."),
+    "s3_bombard_bastion_level": _play(_bombard_bastion_level, "S3", {},
+        "Bombards and Bastions stand on the enemy's layer, layer 4, and fire level."),
     "s2_warden_line": _play(_warden_line, "S2", {"SCREEN_AHEAD": SCREEN_AHEAD, "SCREEN_BEHIND": SCREEN_BEHIND},
         "Twelve Vanguards stand in front; four Wardens stand in a line behind them. All attack-move."),
     "s3_vision_control": _play(_vision_control, "S3", {"HIGH_LAYER": HIGH_LAYER},
@@ -325,6 +338,7 @@ _ANCHORS = {
     "s3_layer_above": Anchors("defender", "behind_cover", "blob"),
     "s3_vision_control": Anchors("defender", "behind_cover", "blob"),
     "s3_raider_bombard": Anchors("defender", "behind_cover", "blob"),
+    "s3_bombard_bastion_level": Anchors("defender", "behind_cover", "blob"),
     "s3_interceptor_bombard": Anchors("defender", "behind_cover", "blob"),
     "s3_interceptor_raider": Anchors("defender", "behind_cover", "blob"),
     "s3_bombard_bastion": Anchors("defender", "behind_cover", "blob"),

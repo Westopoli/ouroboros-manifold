@@ -142,8 +142,9 @@ def _groups_and_timeline(play, anchors, heads, swap):
 
 def naive_mix(naive_build, play):
     """The play-less naive scene (one Vanguard blob each side) with both sides fielding the play's own roster (rev 3 plan T4, D4,
-    FINDING-lab-d4): per side, one blob per unit name at the position the naive scene gave that side, side 0 the play's side 0 counts, side 1 the
-    play's side 1 counts at that headcount. Orders, layer 0 and the empty timeline stay the naive scene's; the play's unit types come with the units."""
+    FINDING-lab-d4) on the play's own layer pair (rev 3 plan R2): per side, one blob per (unit name, layer) of the play's groups at the
+    position the naive scene gave that side, side 0 the play's side 0 counts, side 1 the play's side 1 counts at that headcount. Orders
+    and the empty timeline stay the naive scene's; the play's unit types come with the units."""
     def wrapped(enemy_heads, swap):
         setup = naive_build(enemy_heads, swap)
         mix = plays_space.scan_build(play)(None, enemy_heads, False)
@@ -153,9 +154,9 @@ def naive_mix(naive_build, play):
             counts = {}
             for g in mix.groups:
                 if g.side == side:
-                    counts[g.unit] = counts.get(g.unit, 0) + g.count
-            groups += [dataclasses.replace(anchor, unit=u, count=n, formation="blob", params={"radius": 80 + 12 * math.sqrt(n)})
-                       for u, n in counts.items()]
+                    counts[(g.unit, g.layer)] = counts.get((g.unit, g.layer), 0) + g.count
+            groups += [dataclasses.replace(anchor, unit=u, count=n, layer=layer, formation="blob", params={"radius": 80 + 12 * math.sqrt(n)})
+                       for (u, layer), n in counts.items()]
         skipped = tuple(skip_blocked(g, setup.terrain) for g in groups)
         point = setup.point if skipped == tuple(groups) else _placed_mean([g for g in skipped if g.side == 1])
         out = dataclasses.replace(setup, groups=skipped, unit_types=dict(mix.unit_types), settings=dict(mix.settings), point=point)

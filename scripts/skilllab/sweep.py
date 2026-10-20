@@ -31,9 +31,12 @@ MIRROR_FIGHTS = 30          # DRAFT-mirror-fights (the Architect's number, on We
 MIRROR_X = 350.0            # the two blobs of a mirror fight stand at -x and +x
 WARDEN_PER_16 = 4           # interim lab cap, Wardens per 16 units; retires with FU-warden-no-stack (FINDING-lab-d9, a TD row removes it)
 KNOWN_CAP = "known_cap:FINDING-lab-d9"      # M9's one Warden-stall cap in 30; retires with FU-warden-no-stack
+MIX_LAYER_PLAYS = ("s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider", "s3_bombard_bastion", "s3_bombard_bastion_level")
 PLAYS_BY_FAMILY = {
-    "vision": LAYER_PLAYS, "range_up": LAYER_PLAYS, "damage_up": LAYER_PLAYS, "sign_flip": LAYER_PLAYS,
-    "emitting": ("s3_dark_striker",), "arc": ("s2_concave", "s2_mass_one_end"), "cone": ("s2_concave", "s2_mass_one_end"),
+    "vision": LAYER_PLAYS + MIX_LAYER_PLAYS, "range_up": LAYER_PLAYS + MIX_LAYER_PLAYS, "damage_up": LAYER_PLAYS + MIX_LAYER_PLAYS,
+    "sign_flip": LAYER_PLAYS + MIX_LAYER_PLAYS,
+    "emitting": ("s3_dark_striker",), "arc": ("s2_concave", "s2_mass_one_end", "s2_screen", "s2_warden_line"),
+    "cone": ("s2_concave", "s2_mass_one_end", "s2_screen", "s2_warden_line"),
 }
 BASES = {
     "OM_TP_VISION_UP_1": 0.5, "OM_TP_VISION_DOWN_1": 0.5, "OM_TP_VISION_UP_2": 0.2, "OM_TP_VISION_DOWN_2": 0.2,
@@ -385,15 +388,14 @@ def _mirror_setup(units):
 
 
 def _warden_stall(living):
-    """The Warden pattern of FINDING-lab-d9: someone is alive and every side that has a living unit has only Wardens."""
-    sides = [roster for roster in living if roster]
-    return bool(sides) and all(set(roster) == {"Warden"} for roster in sides)
+    """P1 (the Warden pattern of FINDING-lab-d9): at the cap some side still has living units and every living unit of that side is a Warden."""
+    return any(roster and set(roster) == {"Warden"} for roster in living)
 
 
 def mirror_precheck(units, *, fights=MIRROR_FIGHTS, fight_fn=None, map_fn=None):
     """R1: `fights` naive mirror fights of the mix (fight i is seed i // 2, swapped when i is odd). More than WARDEN_PER_16 Wardens per
-    16 is refused before any fight (FU-warden-no-stack retires the cap). A capped fight rejects the mix, except the one cap of M9 whose
-    living roster is the Warden pattern (known_cap:FINDING-lab-d9). `rosters` maps each capped fight's index to its living roster."""
+    16 is refused before any fight (FU-warden-no-stack retires the cap). A capped fight rejects the mix, except on M9 when every capped
+    fight matches P1 (known_cap:FINDING-lab-d9). `rosters` maps each capped fight's index to its living roster."""
     verdict = {"mix": dict(units), "ok": True, "reason": None, "fights": 0, "caps": 0, "rosters": {}}
     if units.get("Warden", 0) * 16 > WARDEN_PER_16 * sum(units.values()):
         return {**verdict, "ok": False, "reason": "warden_cap"}
@@ -403,7 +405,7 @@ def mirror_precheck(units, *, fights=MIRROR_FIGHTS, fight_fn=None, map_fn=None):
     verdict.update(fights=len(results), caps=len(capped), rosters={i: results[i].living for i in capped})
     if capped:
         m9 = next(r["units"] for r in plays_space.MIXES if r["name"] == "M9")
-        known = dict(units) == m9 and len(capped) == 1 and _warden_stall(results[capped[0]].living)
+        known = dict(units) == m9 and all(_warden_stall(results[i].living) for i in capped)
         verdict.update(ok=known, reason=KNOWN_CAP if known else "capped")
     return verdict
 

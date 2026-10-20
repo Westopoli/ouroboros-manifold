@@ -459,9 +459,8 @@ def _mix_caps(verdict) -> str:
     """The "caps (known)" cell: N of F fights capped; a known cap (sweep.KNOWN_CAP) adds its reason, fight index and seed (seed = index // 2).
     The verdict may have been through JSON: roster keys are strings."""
     text = "%d of %d" % (verdict["caps"], verdict["fights"])
-    if verdict["reason"] and verdict["reason"].startswith("known_cap:") and verdict["caps"] == 1 and verdict.get("rosters"):
-        index = int(next(iter(verdict["rosters"])))
-        text += ", %s, fight %d seed %d" % (verdict["reason"], index, index // 2)
+    if verdict["reason"] and verdict["reason"].startswith("known_cap:"):
+        text += ", " + verdict["reason"] + "".join(", fight %d seed %d" % (int(i), int(i) // 2) for i in verdict["rosters"])
     return text
 
 
