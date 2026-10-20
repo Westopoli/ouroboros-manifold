@@ -28,7 +28,8 @@ CONTROL_FIXTURES = ("s3_vision_control",)     # LAB-VISION-CONTROL: registered, 
 NAMES = SKILLED + COUNTERS + CONTROL_FIXTURES
 LEVEL_CONTROL = "s3_bombard_bastion_level"     # LAB-REV3-B: M8 with every unit on the enemy's layer (fire level); it stands on no other layer by design
 S3 = tuple(n for n in NAMES if n.startswith("s3_") and n != LEVEL_CONTROL)
-# LAB-REV3-B layer-stack plays: placed by the layers in their words (builder: numbers {}), so the named-number rule does not apply to them
+# LAB-REV3-B layer-stack plays: every layer placement is a design number, named DRAFT-layer-stack-<play> (Architect 2026-10-20; TD-LAB-REV3-B-smoke)
+LAYER_DRAFT = "DRAFT-layer-stack-"
 LAYER_STACKS = ("s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider", "s3_bombard_bastion", LEVEL_CONTROL)
 STATUS = "unconfirmed draft, not measured"
 UNITS = 16
@@ -222,8 +223,10 @@ def test_play_has_words_skill_status_and_a_named_number(name):
     assert isinstance(p.words, str) and p.words.strip()
     assert p.skill in ("S1", "S2", "S3", "S4", "S5") and name.startswith(p.skill.lower() + "_")
     assert p.status.startswith(STATUS)
-    assert isinstance(p.numbers, dict) and (len(p.numbers) >= 1 or name in LAYER_STACKS)
-    assert all(isinstance(k, str) and k and isinstance(v, (int, float)) for k, v in p.numbers.items())
+    assert isinstance(p.numbers, dict) and len(p.numbers) >= 1      # the rule stands for every play (TD-LAB-REV3-B-smoke restores it)
+    # a layer-stack draft (DRAFT-layer-stack-<play>, test_rev3_b_layer_numbers.py) holds a dict unit -> layers; every other number is a scalar
+    assert all(isinstance(k, str) and k and (isinstance(v, (int, float)) or (k.startswith(LAYER_DRAFT) and isinstance(v, dict)))
+               for k, v in p.numbers.items())
     assert isinstance(p.timeline, tuple)
 
 

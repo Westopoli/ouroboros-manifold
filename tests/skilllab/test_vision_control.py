@@ -116,15 +116,16 @@ def test_vision_control_play_units_are_all_raiders_with_reach_one_up_and_one_dow
             assert tuple(entry.get("reach", plays_space._REACH.get(base))) == (1, 1), (layout, g.side, g.unit, entry)
 
 
-# The two mixed same-layer plays this control was written for. LAB-REV3-B changed the members of PLAYS_BY_FAMILY["vision"] (mix plays on layers
-# 2 to 4 joined; they are not mixed same-layer plays), so the list is named here (ledger TD-LAB-REV3-B-a-tests).
-MIXED_SAME_LAYER_PLAYS = ("s3_layer_above", "s3_types_by_reach")
-
-
-@pytest.mark.parametrize("play", MIXED_SAME_LAYER_PLAYS)
-def test_positive_control_the_structural_check_flags_the_mixed_sweep_plays(play):
+# The mixed same-layer plays this control was written for. LAB-REV3-B changed the members of PLAYS_BY_FAMILY["vision"] (mix plays on layers
+# 2 to 4 joined; they are not mixed same-layer plays), so the list was named here (ledger TD-LAB-REV3-B-a-tests); the smoke keeps exactly the
+# two vision plays this was written for, so the list is now the smoke's own, sweep.SMOKE_PLAYS["vision"] (ledger TD-LAB-REV3-B-smoke). It is
+# read inside the test, not at collection, so the file's other tests stay collectable on a tree without SMOKE_PLAYS.
+def test_positive_control_the_structural_check_flags_the_mixed_sweep_plays():
     """Positive control of the two structural tests above: the pair counter finds same-layer pairs in the real mixed sweep plays
     (side 1 all on layer 0 and 8 side-0 Vanguards on layer 0), which is exactly why the control cannot run on them."""
-    groups = plays_space.PLAYS[play].setup_fn().groups
-    cross, same = pairs(groups)
-    assert same > 0 and cross > 0, (play, cross, same)
+    plays = sweep.SMOKE_PLAYS["vision"]
+    assert plays, "positive control: the smoke list is not empty"
+    for play in plays:
+        groups = plays_space.PLAYS[play].setup_fn().groups
+        cross, same = pairs(groups)
+        assert same > 0 and cross > 0, (play, cross, same)
