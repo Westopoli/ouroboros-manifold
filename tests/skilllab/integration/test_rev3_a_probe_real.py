@@ -105,36 +105,33 @@ def extreme(family):
 
 
 @SLOW
-def test_t2_range_up_is_not_inert_on_s3_layer_above_it_bites_from_24_heads():
-    """T2 (R6, the Architect's ruling 2026-10-20): range_up at the 0.25 point on s3_layer_above, layout 192, is NOT inert. The rows equal
-    base at 8 and 16 heads (what the one-point probe saw: it refused the family here) and differ at 24, 32, 40 and 48 heads for both
-    seeds (the sweep measured caps at 32, 40 and 48 heads). The survey is the per-point record the artifact line 'inert below 24 heads,
-    bites from 24 seed 0' is built from. Red on the one-point probe: it says inert."""
+def test_t2_range_up_is_not_inert_on_s3_layer_above():
+    """T2 (R6, the Architect's ruling 2026-10-20, R4): range_up at the 0.25 point on s3_layer_above, layout 192, is NOT inert, and the
+    rows differ at the three headcounts where the sweep measured caps (32, 40, 48) on both seeds and are equal at the smallest (8) on
+    both seeds. Red on the one-point probe: it reads 16 heads, seed 0, and says inert.
+
+    The pin is deliberately only those facts: the real-engine rows move with the engine (decisions 50, pieces B and C). The full
+    measurement the artifact line is built from (2026-10-20, fb0874cc + this branch, extreme vs the same point with the family's own keys
+    at BASES, both seeds alike): equal at 8 and 16 heads, differing at 24, 32, 40 and 48, so the first differing headcount is 24 and the
+    record's line reads 'bites from 24 heads seed 0; silent at [(8, 0), (8, 1), (16, 0), (16, 1)]' (also reported in the A landing)."""
     from scripts.skilllab import probe
     settings, base = pair("range_up")
     assert probe.inert(build("s3_layer_above"), settings, base_settings=base) is False
     got = probe.survey(build("s3_layer_above"), settings, base_settings=base)
-    assert {k: v["differed"] for k, v in got.items()} == {(h, s): h >= 24 for (h, s) in ALL}, got
-    assert min(h for (h, s), v in got.items() if v["differed"]) == 24
+    differed = {k: v["differed"] for k, v in got.items()}
+    assert not any(differed[(HEADS[0], s)] for s in SEEDS), differed
+    assert all(differed[(h, s)] for h in (32, 40, 48) for s in SEEDS), differed
 
 
 @SLOW
-def test_t2_vision_on_s3_layer_above_differs_on_seed_1_at_8_heads_and_from_16_on_both_seeds():
-    """T2 (R6, iii on the real engine): at 8 heads the vision extreme moves the row on seed 1 only; seed 0 alone would read it silent
-    there. Red today: no survey."""
+def test_t2_vision_and_range_up_are_not_inert_on_the_layer_plays_they_are_swept_on():
+    """T2 (R6, R4 of the audit's open item): the families the sweep runs on the layer plays are not refused there. Documented measurement
+    only (not asserted): vision on s3_layer_above differs on seed 1 only at 8 heads and on both seeds from 16; range_up on
+    s3_types_by_reach is equal at 8 and differs from 16."""
     from scripts.skilllab import probe
-    settings, base = pair("vision")
-    got = probe.survey(build("s3_layer_above"), settings, base_settings=base)
-    assert {k: v["differed"] for k, v in got.items()} == {(h, s): not (h == 8 and s == 0) for (h, s) in ALL}, got
-
-
-@SLOW
-def test_t2_range_up_on_s3_types_by_reach_bites_from_16_heads():
-    """T2 (R6): the same family on the other layer play: silent at 8 heads, differing from 16."""
-    from scripts.skilllab import probe
-    settings, base = pair("range_up")
-    got = probe.survey(build("s3_types_by_reach"), settings, base_settings=base)
-    assert {k: v["differed"] for k, v in got.items()} == {(h, s): h >= 16 for (h, s) in ALL}, got
+    for family, play in (("vision", "s3_layer_above"), ("range_up", "s3_types_by_reach")):
+        settings, base = pair(family)
+        assert probe.inert(build(play), settings, base_settings=base) is False, (family, play)
 
 
 @SLOW
