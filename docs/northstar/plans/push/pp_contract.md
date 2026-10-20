@@ -157,7 +157,7 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 | 63 | `OM_TP_SLOPE_DOWN_MULT` | real | 1.1 | 1 | 10 | R-004-07 (Westley 2026-10-06): speed on a slope is multiplied by this going down; provisional (2026-10-06) | writer: 1 to 10 |
 | 64 | `OM_TP_SIGHT_EYE_HEIGHT` | real | 50 | 0 | 1000 | R-005-10: eye height in wu above the ground at both ends of a sight line; lab draft, provisional (2026-10-06) | writer: wu, 0 to 1000 |
 | 65 | `OM_TP_GROUND_FLYER_SEEN_MULT` | real | 1.5 | 1 | 10 | R-005-11: a ground-era flyer is seen from max(observer, flyer sensor radius) times this, so from farther than it sees; lab draft, provisional (2026-10-06) | writer: 1 to 10 |
-| 66 | `OM_TP_FIRING_ARC_DEG` | real | 360 | 10 | 360 | LAB-REV2 E0 (R-100 draft): the arc, in degrees, inside which a unit may fire; 360 means no arc; read by the fire pass from LAB-REV2-E2; hashed and saved like every member; draft, Westley owns the default | writer: 10 to 360 |
+| 66 | `OM_TP_FIRING_ARC_DEG` | real | 360 | 5 | 360 | LAB-REV2 E0 (R-100 draft): the arc, in degrees, inside which a unit may fire; 360 means no arc; read by the fire pass from LAB-REV2-E2; hashed and saved like every member; draft, Westley owns the default | writer: 5 to 360 |
 | 67 | `OM_TP__COUNT` | - | - | - | - | sentinel, not a parameter | - |
 
 Order: the six switches first (Phase A needs the first four, Phase C the last two), then the brief G1 numbers, then the section 6 numbers, then the four families by signed offset (up 1 to 4, then down 1 to 4, each family in the order VISION, RANGE, DAMAGE, AREA). A later member is only ever appended before `OM_TP__COUNT`, never inserted.
@@ -215,7 +215,7 @@ Addendum 46 of `docs/northstar/plans/2026-10-01-architect-rulings-2.md`. The ope
 - **R-162-03**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 60, no existing number moves): `OM_TP_PING_ALERT`, bool, default 0. `OM_TP__COUNT` becomes 61. R-162-01 also moves the `OM_TP_PING_REVEAL_TICKS` default from 40 to 100 (5 s); its range is unchanged.
 - **TERRAIN-1**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 61, no existing number moves): `OM_TP_TERRAIN_STEEP_DEG`, real, default 35, range 0 to 90. `OM_TP__COUNT` becomes 62. `OM_TP_PING_ALERT` landed first and holds 60, so this one is 61.
 - **TERRAIN-2**: four settings join the enum, appended last before `OM_TP__COUNT` (rows 62 to 65, no existing number moves): `OM_TP_SLOPE_UP_DIV`, `OM_TP_SLOPE_DOWN_MULT`, `OM_TP_SIGHT_EYE_HEIGHT`, `OM_TP_GROUND_FLYER_SEEN_MULT`, all real, defaults 1.1, 1.1, 50, 1.5. `OM_TP__COUNT` becomes 66. Defaults are Westley's 2026-10-06 rulings (slope) and lab drafts (sight), provisional (2026-10-06); the ranges are the writer's refusal bounds. The ping refusal reason 5 is added to section 6.
-- **LAB-REV2 E0**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 66, no existing number moves): `OM_TP_FIRING_ARC_DEG`, real, default 360, range 10 to 360. `OM_TP__COUNT` becomes 67. Its row is read by nothing until LAB-REV2-E2. ABI and save format bump with it.
+- **LAB-REV2 E0**: one setting joins the enum, appended last before `OM_TP__COUNT` (row 66, no existing number moves): `OM_TP_FIRING_ARC_DEG`, real, default 360, range 5 to 360. `OM_TP__COUNT` becomes 67. Its row is read by nothing until LAB-REV2-E2. ABI and save format bump with it.
 - **A136**: the parity tolerances (1e-6 wu, 2e-3 rad) are provisional and Westley's; they are not part of this contract.
 
 ## 8. Tests that prove this piece

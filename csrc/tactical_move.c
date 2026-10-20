@@ -359,7 +359,7 @@ static void om_move_transit_cancel(om_move_unit *mu) {
 #define OM_PP_SIGHT_EYE_DEFAULT 50.0 /* wu above the ground; provisional (2026-10-06) lab draft */
 #define OM_PP_SIGHT_EYE_HI 1000.0
 #define OM_PP_ARC_DEFAULT 360.0 /* LAB-REV2 E0: no arc; provisional draft, Westley owns */
-#define OM_PP_ARC_LO 10.0
+#define OM_PP_ARC_LO 5.0
 #define OM_PP_ARC_HI 360.0
 #define OM_PP_FLYER_SEEN_DEFAULT 1.5 /* provisional (2026-10-06) lab draft; Westley: longer than the flyer's own vision */
 #define OM_PP_AOE_CAP_HI 100.0
