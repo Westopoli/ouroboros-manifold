@@ -377,3 +377,45 @@ def test_provenance_rejects_a_piece_spec_with_a_finding(tmp_path):
     assert any(":1: (1)" in l for l in out), res.stdout + res.stderr
     assert out[-1] == "PRE_GATE verdict REJECT"
     assert res.returncode == 1
+
+
+FU_ROW = "FU-HARNESS-findings"
+
+
+def _pieces_with_fu_row(tmp_path: Path, status_toml: str) -> Path:
+    """_pieces(["P-1"]) (no spec key) plus an FU-HARNESS-findings row whose `status =` value is `status_toml`."""
+    path = _pieces(tmp_path, ["P-1"])
+    path.write_text(path.read_text() + f'\n[[piece]]\nid = "{FU_ROW}"\nowns = []\ndepends_on = []\n'
+                    f'status = {status_toml}\n')
+    return path
+
+
+def _no_spec_run(tmp_path: Path, status_toml: str):
+    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS})
+    return _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
+                env_extra={"MERGE_GATE_PIECES": str(_pieces_with_fu_row(tmp_path, status_toml)), "PRE_GATE_SPEC": ""})
+
+
+def test_provenance_no_spec_key_rejects_with_an_inline_table_attached_follow_up_row(tmp_path):
+    """Control: the C1b switch works at all with the inline table `status = { state = "attached" }`."""
+    res = _no_spec_run(tmp_path, '{ state = "attached" }')
+    assert "PRE_GATE provenance REJECT no spec key for P-1" in _lines(res), res.stdout + res.stderr
+    assert _lines(res)[-1] == "PRE_GATE verdict REJECT"
+    assert res.returncode == 1
+
+
+def test_provenance_no_spec_key_rejects_with_a_bare_string_attached_follow_up_row(tmp_path):
+    """owner_lint.py:37-44 reads both status shapes; 37 rows on main use the bare string `status = "attached"`."""
+    res = _no_spec_run(tmp_path, '"attached"')
+    assert "PRE_GATE provenance REJECT no spec key for P-1" in _lines(res), res.stdout + res.stderr
+    assert "Traceback" not in res.stderr, res.stderr
+    assert _lines(res)[-1] == "PRE_GATE verdict REJECT"
+    assert res.returncode == 1
+
+
+def test_provenance_no_spec_key_warns_with_a_bare_string_queued_follow_up_row(tmp_path):
+    """Control of the bare-string case: `status = "queued"` leaves the line a WARN."""
+    res = _no_spec_run(tmp_path, '"queued"')
+    assert "PRE_GATE provenance WARN no spec key for P-1" in _lines(res), res.stdout + res.stderr
+    assert _lines(res)[-1] == "PRE_GATE verdict OK"
+    assert res.returncode == 0
