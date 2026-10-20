@@ -2154,13 +2154,13 @@ size_estimate = "settings OptionButton full/standard/particles + label, APPLY wr
 id = "VG-B26-chronicle-serial"
 manager = "M0"
 wave = 9
-owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd: VG-B's file, VG-B is attached; the panel had no owner row
+owns = ["scenes/world/chronicle_scroll_panel.gd", "scenes/world/time_jump_sequencer.gd", "tests/test_vg_b_b26.gd"]  # time_jump_sequencer.gd is VG-B's (attached); chronicle_scroll_panel.gd is under the attached C3/C8 globs scenes/world/chronicle_*; rev 2026-10-19: both files are edited by this piece (Q-069-03 (a))
 owns_glob = []
 acceptance = ["tests/test_vg_b_b26.gd"]
 depends_on = ["VG-B"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "B26: chronicle entries print one at a time (R-069-03, Westley 2026-10-13; FINDING-chronicle-concurrent-print); a print queue in the panel, next entry on finished_printing plus the 3.0 s hold; the sequencer unchanged except that start_printing enqueues; Q-069-03 default (b)"
+size_estimate = "B26 chronicle one entry at a time: the panel's print queue and hold, and the sequencer's hold at the next keyframe while an entry prints (Q-069-03 (a), status reading, Westley to confirm; ledger FINDING-chronicle-concurrent-print); then the S-108 re-run"
 
 [[piece]]
 id = "VG-B25"
