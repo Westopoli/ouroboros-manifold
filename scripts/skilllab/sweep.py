@@ -10,6 +10,7 @@ import dataclasses
 import hashlib
 import json
 import math
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -19,7 +20,7 @@ from scripts.skilllab.contract import Group
 
 FAMILY_ORDER = ("vision", "range_up", "damage_up", "emitting", "arc", "cone", "sign_flip")
 SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
-CONTROL_MAX_TICKS = 600     # controls that need no result stop here; a 12000-tick no-shot fight is wasted time
+CONTROL_MAX_TICKS = 600     # DRAFT (Westley's number): controls that need no result stop here; a 12000-tick no-shot fight is wasted time
 LAYER2_RATIO = 0.4          # spec: vision at two layers is 0.4 of the one-layer value
 DAMAGE_CONTROL_PLAY = "s3_types_by_reach"   # decisions 22: damage-up's positive control is this one designated fight
 SMOKE_LAYOUTS = ("81", "78", "192")         # layout indices of the run-1 draw (depth.lhs_draw(200, 0))
@@ -181,12 +182,24 @@ def skip_reason(family, caps):
     return None
 
 
-def baseline_roles(play):
-    """The naive baselines a play is read against (ruling 3). A layer play runs the naive defender on the attacker's layer and on
-    the play's layer (DRAFT, Architect)."""
-    if play.startswith("s3_"):
+def baseline_roles(setup):
+    """The naive baselines a play is read against (ruling 3; decision 41 item 3), derived from the play's own Setup and never from its
+    name. A holder (a side-0 group on guard) is read against the naive attacker and the naive defender; one with a guard group on a
+    layer no side-1 group stands on gets the defender twice, on the attacker's layer and on the play's layer (DRAFT, Architect). A
+    meeting has no holder and no naive defender."""
+    holders = [g for g in setup.groups if g.side == 0 and g.order == "guard"]
+    if not holders:
+        return ("naive_attacker",)
+    enemy_layers = {g.layer for g in setup.groups if g.side == 1}
+    if any(g.layer not in enemy_layers for g in holders):
         return ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
     return ("naive_attacker", "naive_defender")
+
+
+def _play_roles(builds, play, features):
+    """(play build, baseline roles): the roles are read from the play's build at the first headcount, unswapped."""
+    play_build = builds(play, "play", features)
+    return play_build, baseline_roles(play_build(ENEMY_FROM, False))
 
 
 # ---- controls --------------------------------------------------------------------------------------------------------------------
@@ -297,27 +310,39 @@ def _mean_point(groups):
 
 
 def _naive_side(build, role):
-    """The play's scene with side 0 arranged naively: one blob per unit type at the mean anchor of side 0, the play's timeline
-    dropped, same units and counts (ruling 2). naive_defender and naive_defender_attacker_layer put every blob on the attacker's
-    (the enemy's) layer; naive_defender_play_layer keeps each type on the layer the play gave it (DRAFT, Architect: a blob of
-    ground types moved up to the play's layer could not fire at the attackers at all)."""
+    """The play's scene with side 0 arranged naively: one blob per unit type at the plain mean of that type's group anchors (one per
+    (type, layer) in the play-layer variant, where a type's layers differ), the play's timeline dropped, same units and counts
+    (ruling 2; decisions 25 and 41). naive_defender and naive_defender_attacker_layer put every blob on the attacker's (the
+    enemy's) layer; naive_defender_play_layer keeps each type on the layer the play gave it (DRAFT, Architect: a blob of
+    ground types moved up to the play's layer could not fire at the attackers at all). A holder's blob whose anchor sees no clear
+    line to the attackers' start moves to the nearest cell that does, else the build is refused blind_post and nothing moves
+    (decision 44); labels['placement_shift'] is the largest distance moved."""
     def wrapped(enemy_heads, swap):
         setup = build(enemy_heads, swap)
         own = [g for g in setup.groups if g.side == 0]
         enemy = [g for g in setup.groups if g.side == 1]
-        ax, ay = sum(g.x for g in own) / len(own), sum(g.y for g in own) / len(own)
         order = "guard" if any(g.order == "guard" for g in own) else "attack_move"
-        counts = collections.Counter()
+        members = collections.defaultdict(list)
         for g in own:
-            counts[(g.unit, g.layer if role == "naive_defender_play_layer" else enemy[0].layer)] += g.count
-        blobs = tuple(Group(side=0, unit=u, count=n, formation="blob", x=ax, y=ay, facing_deg=own[0].facing_deg, layer=layer,
-                            order=order, params={"radius": 80 + 12 * math.sqrt(n)}) for (u, layer), n in counts.items())
+            members[(g.unit, g.layer if role == "naive_defender_play_layer" else enemy[0].layer)].append(g)
+        anchors = {key: (sum(g.x for g in gs) / len(gs), sum(g.y for g in gs) / len(gs)) for key, gs in members.items()}
+        shift = 0.0
+        if order == "guard" and setup.terrain is not None:
+            starts = [(x, y, g.layer) for g in enemy for x, y in formations.place(g.formation, g.count, g.x, g.y, g.facing_deg, g.params)]
+            moved = {key: scenes.shifted_post(setup.terrain, key[1], a, starts) for key, a in anchors.items()}
+            if all(m is not None for m in moved.values()):
+                shift = max([math.hypot(moved[key][0] - a[0], moved[key][1] - a[1]) for key, a in anchors.items()], default=0.0)
+                anchors = moved
+        blobs = tuple(Group(side=0, unit=u, count=sum(g.count for g in gs), formation="blob", x=anchors[(u, layer)][0],
+                            y=anchors[(u, layer)][1], facing_deg=own[0].facing_deg, layer=layer, order=order,
+                            params={"radius": 80 + 12 * math.sqrt(sum(g.count for g in gs))}) for (u, layer), gs in members.items())
         blobs = tuple(scenes.skip_blocked(g, setup.terrain) for g in blobs)
         point = _mean_point(blobs) if order == "guard" else setup.point
         out = dataclasses.replace(setup, groups=blobs + tuple(enemy), timeline=(), point=point)
-        wrapped.labels["prefight"] = scenes.preflight(out, None)
+        wrapped.labels["prefight"] = scenes.preflight(out, None, naive_defender=True)
+        wrapped.labels["placement_shift"] = shift
         return out
-    wrapped.labels = {}
+    wrapped.labels = {"placement_shift": 0.0, "prefight": None}
     return wrapped
 
 
@@ -387,7 +412,9 @@ def _scan_rows(rows, family, play, layout, point, baseline, build, replicates, f
         for f in c.fights:
             rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), baseline=baseline,
                                            ceiling_hit=0 if cut else int(result.ceiling_hit),
-                                           prefight=applied.prefight.get(c.enemy_heads, "ok"), baseline_no_fit=int(cut), family=family, play=play, layout=layout, kind=point.kind, point=point_label(point), enemy_heads=c.enemy_heads))
+                                           prefight=applied.prefight.get(c.enemy_heads, "ok"), baseline_no_fit=int(cut),
+                                           blind_post=int(f.blind_cap), family=family, play=play, layout=layout, kind=point.kind,
+                                           point=point_label(point), enemy_heads=c.enemy_heads))
     return result
 
 
@@ -396,7 +423,8 @@ def _control_rows(rows, family, play, layout, point, build, replicates, fight_fn
     cell = scan_mod.cell(applied, SIZE, replicates, fight_fn=fight_fn, map_fn=map_fn)
     for f in cell.fights:
         rows.append(rows_mod.fight_row(f, knob=point.knob, knob_value=float(point.value), prefight=applied.prefight.get(SIZE, "ok"),
-                                       baseline_no_fit=0, family=family, play=play, layout=layout, kind=point.kind, point=point_label(point), enemy_heads=SIZE))
+                                       baseline_no_fit=0, blind_post=int(f.blind_cap), family=family, play=play, layout=layout,
+                                       kind=point.kind, point=point_label(point), enemy_heads=SIZE))
     return cell.fights
 
 
@@ -406,10 +434,14 @@ def _break_even(result):
 
 
 def _defects(rows):
+    """Caps outside the control kinds are the lab's defects to trace unless the survivors were blind to each other (decision 43: a
+    finding, counted apart in blind_post_rows and making no defect cell)."""
     cell = lambda r: (r["play"], r["layout"], r["kind"], r["knob_value"], r["baseline"], r["enemy_heads"])
-    bad = [r for r in rows if r["outcome"] in ("cap", "draw") and not r["kind"].startswith("control_")]
-    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "draw_rows": sum(r["outcome"] == "draw" for r in rows),
-            "cells": len({cell(r) for r in bad})}
+    live = lambda r: not r["kind"].startswith("control_")
+    blind = lambda r: r["outcome"] == "cap" and r["blind_post"] == 1
+    bad = [r for r in rows if live(r) and (r["outcome"] == "draw" or (r["outcome"] == "cap" and not blind(r)))]
+    return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": sum(live(r) and blind(r) for r in rows),
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
 
 
 def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_fn=None, map_fn=None, caps=None,
@@ -440,7 +472,9 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
 
     for layout, features in layouts.items():
         for play in run_plays:
-            by_role = {r: builds(play, r, features) for r in ("play", "reach_zero") + baseline_roles(play)}
+            play_build, roles_wanted = _play_roles(builds, play, features)
+            by_role = {"play": play_build, "reach_zero": builds(play, "reach_zero", features),
+                       **{r: builds(play, r, features) for r in roles_wanted}}
             bad = _refusal({r: by_role[r] for r in ("play", "reach_zero")})
             if bad:
                 entry["refused"].append({"family": family, "play": play, "layout": layout, "role": bad[0], "reason": bad[1]})
@@ -518,11 +552,35 @@ def run(families, out_dir, workers=1, full_scan=False, **kw):
     return _with_map(workers, kw, work)
 
 
+def _default_parity():
+    """firing.parity on a dedicated open-ground 16 v 16 mirror world (the lab's own blob play, seed 0), the units placed and ordered
+    exactly as fight() does, checked once at tick 0 with the arc off (360 degrees; decision 41 item 1; decision 44 item 9)."""
+    from scripts.skilllab import fight as fight_mod, firing
+    from scripts.skilllab.engine import Engine
+    setup = default_control_builds()["mirror"](16, False)
+    engine = Engine()
+    w = engine.new_world(0)
+    try:
+        if not setup.abilities:
+            engine.disable_abilities(w)
+        types = fight_mod._register_types(engine, w, setup)
+        rng, ids_by_group, ranges = random.Random(0), {}, {}
+        for side in (0, 1):
+            fight_mod._spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges)
+        fight_mod._issue_orders(engine, w, setup, ids_by_group)
+        sides = tuple([u for gi, g in enumerate(setup.groups) if g.side == side for u in ids_by_group[gi]] for side in (0, 1))
+        return firing.parity(engine, w, sides[0], sides[1], 360.0)
+    finally:
+        engine.free_world(w)
+
+
 def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=None, fight_fn=None, map_fn=None,
-              full_scan=False, replicates=REPLICATES):
+              full_scan=False, replicates=REPLICATES, caps=None, parity_fn=None):
     """Vision 0.5 alone on the three named layouts for both vision plays and their baselines, plus the three lab controls; the
-    rows are written to smoke.csv and hashed in smoke_summary.json (the same bytes at any worker count)."""
+    rows are written to smoke.csv and hashed in smoke_summary.json (the same bytes at any worker count). `parity` in the summary is
+    "skipped: E0 absent" when the library has no firing arc (caps.arc False), else parity_fn()'s value."""
     builds = builds or default_builds
+    caps = detect() if caps is None else caps
     layouts = smoke_layouts() if layouts is None else layouts
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -533,7 +591,8 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         control_set = control_builds or default_control_builds()
         for layout, features in layouts.items():
             for play in PLAYS_BY_FAMILY["vision"]:
-                by_role = {r: builds(play, r, features) for r in ("play",) + baseline_roles(play)}
+                play_build, roles_wanted = _play_roles(builds, play, features)
+                by_role = {"play": play_build, **{r: builds(play, r, features) for r in roles_wanted}}
                 bad = _refusal({"play": by_role["play"]})
                 if bad:
                     refused.append({"play": play, "layout": layout, "role": bad[0], "reason": bad[1]})
@@ -554,13 +613,14 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         for name, heads in SMOKE_CONTROLS:
             applied = Applied(control_set[name], dataclasses.replace(point, settings={}, kind="control_smoke"))
             for f in scan_mod.cell(applied, heads, replicates, fight_fn=more.get("fight_fn"), map_fn=more.get("map_fn")).fights:
-                rows.append(rows_mod.fight_row(f, baseline_no_fit=0, family="controls", play=name, layout="none", kind="control_smoke",
-                                               point="-", enemy_heads=heads))
+                rows.append(rows_mod.fight_row(f, baseline_no_fit=0, blind_post=int(f.blind_cap), family="controls", play=name,
+                                               layout="none", kind="control_smoke", point="-", enemy_heads=heads))
             words["ok"] += 1
         rows_mod.write_rows(rows, out / "smoke.csv")
         summary = {"rows_sha256": hashlib.sha256((out / "smoke.csv").read_bytes()).hexdigest(), "rows": len(rows),
                    "outcomes": dict(sorted(collections.Counter(r["outcome"] for r in rows).items())),
-                   "prefight": dict(sorted(words.items())), "refused": refused, "baseline_no_fit": cuts, "defects": _defects(rows)}
+                   "prefight": dict(sorted(words.items())), "refused": refused, "baseline_no_fit": cuts, "defects": _defects(rows),
+                   "parity": (parity_fn or _default_parity)() if caps.arc else "skipped: E0 absent"}
         (out / "smoke_summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
         return summary
 

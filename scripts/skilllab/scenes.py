@@ -1,7 +1,9 @@
 """Hand-built scenes in canvas coordinates."""
 import collections
 import dataclasses
+import functools
 import math
+from fractions import Fraction
 
 from scripts.skilllab import formations, maps, plays, plays_space, timeline
 from scripts.skilllab.contract import Block, Group, Setup, Terrain
@@ -140,6 +142,8 @@ def _groups_and_timeline(play, anchors, heads, swap):
 
 ROUTE_CELL = 50.0        # decision 7 (2026-10-14): wu of the lab-side breadth-first search grid; a cell is open when its centre is
 TERRAIN_CELL = 100.0     # OM_TERRAIN_CELL_WU (csrc/om_internal.h): the cell of the generated field's walk mask
+SIGHT_CELL = 100.0       # R-098-02's blocked-cell size (OM_NAVMESH_CELL_SIZE)
+GUARD_RADIUS = 200.0     # DRAFT (decision 44): how far a blind naive-defender post may move to a cell that sees the attackers' start
 _MOVING = ("attack_move", "move", "group_move")
 
 
@@ -237,8 +241,91 @@ def skip_blocked(g, terrain):
     return dataclasses.replace(g, formation="points", params={"points": points})
 
 
+@functools.lru_cache(maxsize=256)
+def _blocked_sight_cells(blocks, canvas, layer):
+    """The 100 wu cells the blocks turn blocked on `layer`: every cell a block touches (low bound floored, high bound ceiled and one
+    taken off, as om_map_block_rect), clipped to the canvas, on the block's layers layer_lo..layer_hi."""
+    out = set()
+    for b in blocks:
+        if not b.layer_lo <= layer <= b.layer_hi:
+            continue
+        lo_x, lo_y = max(b.x0, 0.0), max(b.y0, 0.0)
+        hi_x, hi_y = min(b.x1, canvas[0]), min(b.y1, canvas[1])
+        for cx in range(int(lo_x // SIGHT_CELL), math.ceil(hi_x / SIGHT_CELL)):
+            for cy in range(int(lo_y // SIGHT_CELL), math.ceil(hi_y / SIGHT_CELL)):
+                out.add((cx, cy))
+    return out
+
+
+def _crosses(a, b, cell):
+    """Does the segment a-b have positive length inside the half-open cell [cx*100, (cx+1)*100) squared? Exact on fractions, so a
+    segment that only touches a corner does not cross and one lying on a boundary line belongs to the cell above or to the right."""
+    ax, ay, bx, by = (Fraction(v) for v in (*a, *b))
+    x0, y0 = Fraction(cell[0] * SIGHT_CELL), Fraction(cell[1] * SIGHT_CELL)
+    t0, t1 = Fraction(0), Fraction(1)
+    for p, d, lo in ((ax, bx - ax, x0), (ay, by - ay, y0)):
+        hi = lo + Fraction(SIGHT_CELL)
+        if d == 0:
+            if not lo <= p < hi:
+                return False
+            continue
+        s, e = sorted(((lo - p) / d, (hi - p) / d))
+        t0, t1 = max(t0, s), min(t1, e)
+    return t1 > t0
+
+
+def sight_clear(terrain, a, la, b, lb):
+    """True when no blocked 100 wu cell crosses the segment a-b (R-098-02, range ignored; decision 44). The cell tested for a pair is the
+    one on the lower layer of the pair (csrc/fog.c om_fog_grid_blocks); the cells holding the two ends are exempt. Terrain None: clear."""
+    if terrain is None or not terrain.blocks:
+        return True
+    cells = _blocked_sight_cells(terrain.blocks, terrain.canvas, min(la, lb))
+    if not cells:
+        return True
+    ends = {(int(p[0] // SIGHT_CELL), int(p[1] // SIGHT_CELL)) for p in (a, b)}
+    lo_c = (int(min(a[0], b[0]) // SIGHT_CELL), int(min(a[1], b[1]) // SIGHT_CELL))
+    hi_c = (int(max(a[0], b[0]) // SIGHT_CELL), int(max(a[1], b[1]) // SIGHT_CELL))
+    box = [(i, j) for i in range(lo_c[0], hi_c[0] + 1) for j in range(lo_c[1], hi_c[1] + 1)] if (
+        (hi_c[0] - lo_c[0] + 1) * (hi_c[1] - lo_c[1] + 1) < len(cells)) else [c for c in cells if lo_c[0] <= c[0] <= hi_c[0] and lo_c[1] <= c[1] <= hi_c[1]]
+    return not any(c in cells and c not in ends and _crosses(a, b, c) for c in box)
+
+
+def blind_post(terrain, layer, post, starts):
+    """True iff there is a start and no clear sightline runs from `post` to the start nearest it (Euclid; decision 44). `starts`:
+    (x, y, layer) of the placed units of the opposing side."""
+    starts = list(starts)
+    if not starts:
+        return False
+    s = min(starts, key=lambda p: math.hypot(p[0] - post[0], p[1] - post[1]))
+    return not sight_clear(terrain, post, layer, (s[0], s[1]), s[2])
+
+
+def shifted_post(terrain, layer, post, starts, radius=GUARD_RADIUS):
+    """`post` itself when it is not blind, else the centre of the nearest free route cell of the post's region, within `radius`
+    (inclusive), from which the nearest start is seen: ties by angle from the post. None when there is none (decision 44)."""
+    if not blind_post(terrain, layer, post, starts):
+        return tuple(post)
+    seen, _cell_of, _start = _route_region(terrain, layer, post[0], post[1])
+    reach = int(radius // ROUTE_CELL) + 2
+    ci, cj = int(post[0] // ROUTE_CELL), int(post[1] // ROUTE_CELL)
+    found = []
+    for i in range(ci - reach, ci + reach + 1):
+        for j in range(cj - reach, cj + reach + 1):
+            if (i, j) not in seen:
+                continue
+            c = ((i + 0.5) * ROUTE_CELL, (j + 0.5) * ROUTE_CELL)
+            d = math.hypot(c[0] - post[0], c[1] - post[1])
+            if d <= radius:
+                found.append((d, math.atan2(c[1] - post[1], c[0] - post[0]) % (2 * math.pi), c))
+    for _d, _angle, c in sorted(found):
+        if not blind_post(terrain, layer, c, starts):
+            return c
+    return None
+
+
 def _no_fit(setup, engine):
-    """A placed unit stands inside a block on its layer, or on ground a generated field says is not walkable (no shifting, ruling 6)."""
+    """A placed unit stands inside a block on its layer, or a walking mover stands on ground a generated field says is not walkable
+    (decision 20; a flyer and a guard are checked against blocks only; no shifting, ruling 6)."""
     t = setup.terrain
     if t is None:
         return False
@@ -246,12 +333,17 @@ def _no_fit(setup, engine):
         return True
     if t.field_seed is None:
         return False
+    movers = [g for g in setup.groups if g.order in _MOVING]
+    walking = _walking_names(setup, engine, movers) if movers else set()
+    walkers = [g for g in movers if g.unit in walking]
+    if not walkers:
+        return False
     engine = _lazy_engine(engine)
     w = engine.new_world(0)
     try:
         engine.set_canvas(w, t.canvas[0], t.canvas[1])
         engine.terrain_generate(w, t.field_seed, t.canvas[0])
-        return any(not engine.terrain_walkable_at(w, x, y) for g in setup.groups for x, y in _placed(g))
+        return any(not engine.terrain_walkable_at(w, x, y) for g in walkers for x, y in _placed(g))
     finally:
         engine.free_world(w)
 
@@ -351,18 +443,28 @@ def _no_reach(setup, engine):
     return not any(-reach[a.unit][1] <= h.layer - a.layer <= reach[a.unit][0] for a, h in pairs)
 
 
-def preflight(setup, engine):
-    """"ok", or the first refusal in the order no_fit, unroutable, no_reach (decision 7, 2026-10-14). Runs no tick, moves nothing.
-    no_fit: a placed point inside a blocked cell. unroutable: a moving group cannot reach its target over the open cells of its
-    layer, a flyer's open cells being those no block reaching its layer covers and a walker's also the walkable ground). no_reach: no type facing a holder (a group
-    on guard) reaches the holder's layer; a meeting has no holder. no_fit also covers a placed point on ground a generated field
-    says is not walkable. The engine is needed only for a reach read or a generated field and is built when None."""
+def _blind_holder(setup):
+    """Some side-0 group on guard has an anchor from which the nearest placed unit of side 1 is not seen (decision 44)."""
+    starts = [(x, y, g.layer) for g in setup.groups if g.side == 1 for x, y in _placed(g)]
+    return any(blind_post(setup.terrain, g.layer, (g.x, g.y), starts) for g in setup.groups if g.side == 0 and g.order == "guard")
+
+
+def preflight(setup, engine, naive_defender=False):
+    """"ok", or the first refusal in the order no_fit, unroutable, no_reach, blind_post (decisions 7 and 44). Runs no tick, moves nothing.
+    no_fit: a placed point inside a blocked cell, or a walking mover on ground a generated field says is not walkable. unroutable:
+    a moving group cannot reach its target over the open cells of its layer, a flyer's open cells being those no block reaching its
+    layer covers and a walker's also the walkable ground. no_reach: no type facing a holder (a group on guard) reaches the holder's
+    layer; a meeting has no holder. blind_post, asked for with naive_defender=True only: a side-0 guard group's anchor sees no
+    clear line to the nearest unit of side 1. The engine is needed only for a reach read, a generated field or a unit type's
+    movement and is built when None."""
     if _no_fit(setup, engine):
         return "no_fit"
     if _unroutable(setup, engine):
         return "unroutable"
     if _no_reach(setup, engine):
         return "no_reach"
+    if naive_defender and setup.terrain is not None and _blind_holder(setup):
+        return "blind_post"
     return "ok"
 
 
@@ -371,7 +473,8 @@ def placed_scene(layout, play, start_distance, features, counter=False):
     the attacker `start_distance` from the choke on the other side attack-moves at it. Side 0 is the skilled, counter or naive side;
     the defender is side 0 for a defender play and side 1 for an attacker play. `counter` uses a play as the counter it is
     (plays_space.COUNTER_USE). Setup.point is the defender's centre of mass (ruling 6). Nothing is shifted to fit (Q-LAB-03):
-    build.labels['prefight'] is scenes.preflight of the built Setup, and build.labels['placement_shift'] stays 0.0."""
+    build.labels['prefight'] is scenes.preflight of the built Setup, and build.labels['placement_shift'] stays 0.0 (the naive defender's
+    blind-post shift is sweep._naive_side's, on its own build)."""
     if play in NAIVE_PLAYS:
         anchors = _NAIVE_ANCHORS
     else:

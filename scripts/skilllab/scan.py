@@ -5,7 +5,7 @@ from typing import Any
 
 from scripts.skilllab.contract import BuildFn, CellResult, ScanResult
 
-COARSE_STEP = 8   # bisection scans these headcounts first, then halves the first won-to-lost bracket
+COARSE_STEP = 8   # DRAFT (Westley's number): bisection scans these headcounts first, then halves the first won-to-lost bracket
 
 
 def run_jobs(jobs: list, fight_fn: Any = None, map_fn: Any = None) -> list:
