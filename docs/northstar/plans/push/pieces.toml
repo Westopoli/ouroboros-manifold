@@ -2436,7 +2436,7 @@ owns = ["scenes/lobby/lobby.gd", "tests/test_vg_f_lobby_teamsize.gd", "tests/qa/
 owns_glob = []
 acceptance = ["tests/test_vg_f_lobby_teamsize.gd"]
 depends_on = ["VG-F-SKEL-B", "HARNESS-laneplays", "VG-C-s004", "VG-E1K", "A94-harness"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "9884d091" }
 tests_pending = true
 size_estimate = "S-241 lobby team-size choice (2 or 4), qa_state team_sizes and team_size, TeamSize control; a stub until R-241-03 scaling (FU-F-teamsize-scaling)"
 
@@ -2448,7 +2448,7 @@ owns = ["scenes/lobby/lobby.gd", "tests/test_vg_f_lobby_eras.gd", "tests/qa/desk
 owns_glob = []
 acceptance = ["tests/test_vg_f_lobby_eras.gd"]
 depends_on = ["VG-F-S241", "VG-F-SKEL-B", "HARNESS-laneplays", "VG-C-s004", "VG-E1K", "A94-harness", "HARNESS-userdir"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "9884d091" }
 tests_pending = true
 size_estimate = "S-143 lobby shows the common era set: qa_state owned_eras and common_eras, EraLine; closes FU-F-s143-common-eras"
 
