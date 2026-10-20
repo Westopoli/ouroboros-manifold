@@ -1,3 +1,4 @@
+# Rule pins: R-081-03@1baef5
 # spec: docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md (requirement R8, test T3; defect D3); ledger FINDING-lab-d3; piece LAB-REV3-A
 """LAB-REV3-A, T3 (R8, D3) against the real engine (OM_LAB_SLOW=1; a few seconds a test): a lab Warden is a mirror of a built-in
 Warden, and a lab Bastion takes at most 1.0x from a Strike attacker (R-081-03's Siege exception, csrc/unit.c om_resolve_hit_multiplier).
