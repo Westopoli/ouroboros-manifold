@@ -2771,11 +2771,12 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "A first: D3 built-in ids with om_roster_set_reach (no copies), D4 naive attacker fields the play's mix, D5 dark striker emits at the knob's values or is deleted, D6 category family marked unavailable, R5 coverage test T1, R6 inert-knob probe T2; tests T1 to T5 and T10 (DRAFT)"
 
+# Architect ruling 2026-10-20 (implementation; Westley may veto): contract.py, fight.py: one FightResult field (living) and one fill site, ordered before LAB-REV3-C (C's FightResult fields verdict, decided_tick, paper_score, predicted_paper land on top in C's build, so C's writer treats `living` as present). report.py: B's builder prints a 'caps (known)' column per mix in the artifact's mix table and adds DRAFT-mix-M5..M9 to the header DRAFT list.
 [[piece]]
 id = "LAB-REV3-B"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/plays.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py"]  # DRAFT list. The mixes data table (columns name, units, used_in, enabled) lives in plays_space.py
+owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/plays.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "scripts/skilllab/contract.py", "scripts/skilllab/fight.py", "scripts/skilllab/report.py"]  # DRAFT list. The mixes data table (columns name, units, used_in, enabled) lives in plays_space.py. contract.py (field living) and fight.py (one fill site at the end of every fight) are also A's (fight.py) and C's: A, B, C order them; report.py is also C's
 owns_glob = ["tests/skilllab/test_rev3_b_*.py", "tests/skilllab/integration/test_rev3_b_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
 depends_on = ["LAB-REV3-A", "LAB-REV2-FIX"]
