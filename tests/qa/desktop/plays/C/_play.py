@@ -22,7 +22,6 @@ from daemon_client import GodotGame, pick_free_port  # noqa: E402
 from test_tactical_play import _to_tactical  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[5]
-QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 RUN_ID = os.environ.get("OM_RUN_ID") or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
 SHOT_DIR = REPO / "docs/northstar/story_reviews/shots" / RUN_ID
 
@@ -54,7 +53,7 @@ def evidence(game: GodotGame, story: str, moment: str) -> Path:
     game.client.screenshot(name)
     time.sleep(0.5)
     SHOT_DIR.mkdir(parents=True, exist_ok=True)
-    src = QA_SHOT_DIR / (name + ".png")
+    src = game.user_dir / "qa" / (name + ".png")
     dst = SHOT_DIR / (name + ".png")
     assert src.exists(), "screenshot %s was not written by the daemon" % src
     shutil.copy2(src, dst)

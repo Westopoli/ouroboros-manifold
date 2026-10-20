@@ -53,7 +53,6 @@ from daemon_client import (
     find_control,
     pick_free_port,
     wait_for,
-    write_privacy_flag,
 )
 
 PRIVACY_MODAL_SCENE = "res://scenes/privacy_modal/privacy_modal.tscn"
@@ -76,19 +75,18 @@ PORT_TIMEOUT_S = 60.0
 PRIVACY_FLAG_BOOT_TIMEOUT_S = 15.0
 
 SCREENSHOT_HINT = (
-    "user://qa/%s.png (globalized: ~/.local/share/data/qa/%s.png per "
+    "user://qa/%s.png (globalized: <user dir>/qa/%s.png per "
     "project.godot's config/custom_user_dir_name=\"data\")"
 )
 # C5-3: tactical screenshot must differ from blank grey by this many pixels.
 # 572 units drawn as ~1-px dots each give ~500 non-grey pixels; HUD text
 # alone (0 units case) gives ~50-150. 300 is comfortably between the two.
-QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
 MIN_TACTICAL_DIFF_PX = 300
 
 
-def _real_saves_snapshot() -> dict:
+def _real_saves_snapshot(game) -> dict:
     """Every file in the player's real save directory with its mtime and size."""
-    root = Path.home() / ".local/share/data/saves"
+    root = game.user_dir / "saves"
     if not root.exists():
         return {}
     return {str(p): (p.stat().st_mtime_ns, p.stat().st_size) for p in root.rglob("*") if p.is_file()}
@@ -98,7 +96,7 @@ def _real_saves_snapshot() -> dict:
 def game():
     port = pick_free_port()
     g = GodotGame(qa_port=port, seed=1)
-    real_before = _real_saves_snapshot()
+    real_before = _real_saves_snapshot(g)
     g.start()
     g.wait_for_port(timeout=PORT_TIMEOUT_S)
     try:
@@ -107,7 +105,7 @@ def game():
         g.stop()
     # C1-3: the flow's autosaves (mission start, debrief, chronicle jump) went to the
     # per-run OM_SAVE_DIR; the player's real save directory must be untouched.
-    assert _real_saves_snapshot() == real_before, "the flow wrote into the real save directory"
+    assert _real_saves_snapshot(g) == real_before, "the flow wrote into the real save directory"
     assert any(g.save_dir.glob("campaign_*.omsave")), "control: the flow wrote no autosave at all into OM_SAVE_DIR"
 
 
@@ -328,7 +326,7 @@ def test_s_c8_04_deploy_reaches_tactical(game):
     # unit markers. Use the median pixel value as the background reference so
     # the check is robust against the exact Godot clear colour.
     time.sleep(0.5)
-    shot_path = QA_SHOT_DIR / "flow_04_tactical.png"
+    shot_path = client.user_dir / "qa" / "flow_04_tactical.png"
     assert shot_path.exists(), "S-C8-04: screenshot not written at %s" % shot_path
     shot = _read_png_rgb(shot_path)
     bg = int(np.median(shot))
@@ -456,9 +454,9 @@ def test_s_c8_07_boot_reaches_main_menu_with_privacy_flag_present():
     already exists (real players hit this on their second-ever launch).
     Uses its own game instance -- reset_privacy_flag=False so start() does
     not delete the flag this test just wrote."""
-    write_privacy_flag()
     port = pick_free_port()
     g = GodotGame(qa_port=port, seed=1, reset_privacy_flag=False)
+    g.write_privacy_flag()
     g.start()
     try:
         g.wait_for_port(timeout=PORT_TIMEOUT_S)
