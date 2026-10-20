@@ -81,7 +81,11 @@ def frac(share):
 
 def oracle_units(F, p, e):
     """(start_units, reinforce_cap): start = F * frac(p / (p + e)); start_units = floor(start + 0.5); cap = F - start_units;
-    when p + e == 0 the whole F spawns and the cap is 0 (Architect 2026-10-19, under 5 percent)."""
+    when p + e == 0 the whole F spawns and the cap is 0 (Architect 2026-10-19, under 5 percent); when F == 0 there is no
+    composed roster and no cap: cap = UINT32_MAX (Architect 2026-10-19, withdrawing the empty-roster guard). Together:
+    cap = F == 0 ? UINT32_MAX : (F >= start_units ? F - start_units : 0)."""
+    if F == 0:
+        return 0, UINT32_MAX
     if p + e == 0:
         return F, 0
     start = F * frac(p / (p + e))
@@ -343,26 +347,64 @@ def test_d_enemy_keeps_producing_while_the_player_is_capped(lib, world_factory):
     assert series[-1] > d["cap"], "the control must run the enemy past the player's cap"
 
 
-def test_h_empty_roster_start_0_cap_0_no_production(lib, world_factory):
-    """E7 (c) with gap 4 and the builder guard B14N-empty-roster-cap (Architect 2026-10-19): "reinforce_cap = F_units >=
-    start_units ? F_units - start_units : 0", so a mission with F_units 0 has start_units 0 and reinforce_cap 0 (not a wrapped
-    uint32) and "spawns a unit for the player's faction only while reinforce_spawned < reinforce_cap" lets no player structure
-    spawn. Scene: tests/csim/b1_macro_scene.py tactical_world(), a mission composed with zero units (roster all zero) that still
-    holds structures (player 2, enemy 1). The cap has no public getter (gap 4), so it is read behaviourally: no player row at
-    tick 0 and none after five production intervals, while the enemy structure keeps spawning (the control that production
-    runs in this scene). Red today: the player structures spawn without a cap."""
+def reinforce_cap_left(lib, w):
+    """om_mission_reinforce_cap (csrc/om_internal.h): the allowance left, cap minus spawned, or UINT32_MAX when there is no cap
+    (Architect 2026-10-19: the accessor returns the allowance left, accepted)."""
+    assert hasattr(lib, "om_mission_reinforce_cap"), "om_mission_reinforce_cap is absent from the library (E7 adds it)"
+    lib.om_mission_reinforce_cap.argtypes, lib.om_mission_reinforce_cap.restype = [V], U32
+    return lib.om_mission_reinforce_cap(w)
+
+
+def test_h_f_units_0_reinforce_cap_uint32_max_and_production_unconstrained(lib, world_factory):
+    """E7 (c) with gap 4 and the rulings of 2026-10-19: the empty-roster guard is WITHDRAWN. "F_units == 0 means no composed
+    roster and no cap: reinforce_cap = UINT32_MAX and production is unconstrained", i.e. cap = F_units == 0 ? UINT32_MAX :
+    (F_units >= start_units ? F_units - start_units : 0). Scene: tests/csim/b1_macro_scene.py tactical_world(), a mission composed
+    with zero units (roster all zero) that still holds structures (player 2, enemy 1): no roster to cut (start_units 0, no player
+    row at tick 0), no cap, so the player's structures keep spawning every interval (five intervals: 2, 4, 6, 8, 10), the
+    enemy's too, and the accessor om_mission_reinforce_cap (the allowance left, cap minus spawned) stays UINT32_MAX. The four
+    hand-built-structure tests (test_core_B14N_support_tick_materialise.py x2, test_core_B9N_mission_setup_structures.py,
+    test_VG_E_e1h.py::test_held_strongpoint_produces_a_unit) stay green unchanged for the same reason. Red on the build that
+    still has the cap-0 guard (reinforce_cap 0, nothing spawns) and on the stub tree (the accessor is absent)."""
     from b1_macro_scene import tactical_world
     _bind(lib)
     w = tactical_world(lib, world_factory)
     roster = roster_of(lib, w)
     owners = owners_of(lib, w)
-    assert sum(roster) == 0 and owners.count(PLAYER) >= 1 and owners.count(ENEMY) >= 1, f"premise: F 0 with structures on both sides: roster {roster}, owners {owners}"
+    p = owners.count(PLAYER)
+    assert sum(roster) == 0 and p >= 1 and owners.count(ENEMY) >= 1, f"premise: F 0 with structures on both sides: roster {roster}, owners {owners}"
+    assert oracle_units(0, p, owners.count(ENEMY)) == (0, UINT32_MAX), "oracle: F 0 has no cap"
     assert len(rows(lib, w, PLAYER)) == 0, f"start_units must be 0 with F 0: {len(rows(lib, w, PLAYER))} player rows at tick 0"
     interval = first_interval(lib, w, PLAYER)
     player = spawn_series(lib, w, PLAYER, 5, interval)
     enemy = len(rows(lib, w, ENEMY))
     assert enemy > 0, f"control: the enemy structure must have produced in this scene (enemy rows {enemy})"
-    assert player == [0] * 5, f"reinforce_cap must be 0 with F 0 (F_units >= start_units ? F_units - start_units : 0): player spawned {player}; owners {owners}"
+    assert player == [p * k for k in range(1, 6)], f"F_units 0 means no cap, production unconstrained: player spawned {player}, expected {p} per interval; owners {owners}"
+    assert reinforce_cap_left(lib, w) == UINT32_MAX, "F_units 0: reinforce_cap is UINT32_MAX and nothing is counted against it"
+
+
+def test_h_f_1000_share_0_start_200_cap_800_production_stops_at_800(lib, world_factory):
+    """E7 (a), (c) and gap 4, the same rulings: for F 1000 and share 0 the formula gives start = 1000 * frac(0) = 200, start_units
+    200, reinforce_cap = F_units - start_units = 800, and "production stops at 800". No mission scene reaches share 0 with
+    p + e > 0 (om_structure_assign_owners answers p >= 1 whenever e >= 1 for every archetype and total, and the sweep of archetype x
+    military x seed finds no p 0 fixture; F 1000 is not a composed roster of any fixture either), so the F 1000 numbers are proven
+    on the sim's two functions and the oracle, and the behaviour 'the player's production stops once the allowance is spent, and the
+    accessor om_mission_reinforce_cap (the allowance left, cap minus spawned) counts it down to 0' on the ground_third fixture (F 16,
+    p 1, e 2, n 0, share 1/3, start 8.533, start_units 9, cap 7: floor(16 * (0.5 + 0.4 * (1/3 - 0.25)) + 0.5) = floor(9.03))."""
+    lib.om_mission_compute_starting_force.argtypes, lib.om_mission_compute_starting_force.restype = [D, D], D
+    lib.om_mission_compute_reinforcement_capacity.argtypes, lib.om_mission_compute_reinforcement_capacity.restype = [D, D], D
+    assert lib.om_mission_compute_starting_force(1000.0, 0.0) == pytest.approx(200.0, abs=1e-5), "start = F * frac(0) = 200 of F 1000"
+    assert lib.om_mission_compute_reinforcement_capacity(1000.0, 0.0) == pytest.approx(800.0, abs=1e-5), "capacity = F - start = 800"
+    assert oracle_units(1000, 0, 1) == (200, 800) and oracle_units(1000, 1, 0) == (800, 200), "oracle: share 0 gives 200 / 800, share 1 gives 800 / 200"
+    w = build(lib, world_factory, "ground_third")
+    d = premise(lib, w, "ground_third")
+    assert d["F"] == 16 and d["cap"] == d["F"] - d["start_units"] > 0, d
+    assert reinforce_cap_left(lib, w) == d["cap"], f"the allowance left at tick 0 is the cap F - start_units = {d['cap']}; PREMISE {d}"
+    interval = first_interval(lib, w, PLAYER)
+    intervals = math.ceil(d["cap"] / d["p"]) + 3
+    series = spawn_series(lib, w, PLAYER, intervals, interval)
+    print("CAP0", "interval", interval, "cap", d["cap"], "player spawned after each interval", series)
+    assert series[-1] == d["cap"] and series[-2] == series[-1] == series[-3], f"production must stop at the cap {d['cap']}: {series}; PREMISE {d}"
+    assert reinforce_cap_left(lib, w) == 0, "the allowance left is cap minus spawned: 0 once production has stopped"
 
 
 def test_f_a_bare_world_without_a_mission_is_uncapped(lib, world_factory):
