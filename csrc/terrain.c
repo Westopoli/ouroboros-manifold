@@ -31,7 +31,7 @@
  *  * field order, F2i). * /
  * #define OM_SAVE_MAGIC "OMSV"
  * #define OM_SAVE_MAGIC_LEN 4
- * #define OM_SAVE_FORMAT_VERSION 11 / * bumped 10 -> 11 (W2 stored routes): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
+ * #define OM_SAVE_FORMAT_VERSION 12 / * bumped 11 -> 12 (VG E7: reinforce_cap and reinforce_spawned in the mission slot): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (W2 stored routes): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration * /
  * #define OM_SAVE_BYTE_BITS 8
  * #define OM_SAVE_BYTE_MASK 0xFFu
  * #define OM_SAVE_SLOT_TACTICAL     0
