@@ -181,11 +181,12 @@ def test_positive_control_setup_still_takes_the_kept_fields():
 
 
 def test_setup_gains_point_orders_per_unit_firing_arc_cone_and_max_ticks_default():
-    """Spec: point, orders_per_unit=True, firing_arc_deg=360.0, cone={} and max_ticks=12000 (the cap, bug detector only)."""
+    """Spec: point, orders_per_unit, firing_arc_deg=360.0, cone={} and max_ticks=12000 (the cap, bug detector only). LAB-REV2-L4 ruler
+    (TD-LAB-REV2-flip, decisions 13): the orders_per_unit default is False (one group order) since E1 lands in the same landing."""
     names = {f.name for f in dataclasses.fields(Setup)}
     assert {"point", "orders_per_unit", "firing_arc_deg", "cone", "max_ticks"} <= names
     s = Setup(groups=(), unit_types={})
-    assert (s.point, s.orders_per_unit, s.firing_arc_deg, s.cone, s.max_ticks) == (None, True, 360.0, {}, 12000)   # decision: point defaults to None
+    assert (s.point, s.orders_per_unit, s.firing_arc_deg, s.cone, s.max_ticks) == (None, False, 360.0, {}, 12000)   # decision: point defaults to None
     assert s.cone is not Setup(groups=(), unit_types={}).cone      # a fresh dict per Setup
 
 
@@ -645,17 +646,24 @@ def _orders(fake):
     return [(c[2], c[3], c[4]) for c in fake.calls_named("order_attack_move")]
 
 
-def test_ruling_6_default_issues_one_attack_move_per_unit_to_the_shared_point(seam):
-    """Spec: orders_per_unit=True means one order_attack_move call per unit; `point` is the shared attack-move point."""
-    setup = S(count=3, max_ticks=2, point=(25.0, -40.0))
+def test_ruling_6_orders_per_unit_true_issues_one_attack_move_per_unit_to_the_shared_point(seam):
+    """Spec: orders_per_unit=True means one order_attack_move call per unit; `point` is the shared attack-move point.
+    LAB-REV2 flip ruler (TD-LAB-REV2-flip, decision 40): the per-unit path is now asked for explicitly (it was the default)."""
+    setup = S(count=3, max_ticks=2, point=(25.0, -40.0), orders_per_unit=True)
     _, fake = run(setup)
     got = _orders(fake)
     assert sorted(ids for ids, _x, _y in got) == [[1], [2], [3], [4], [5], [6]]
     assert all((x, y) == (25.0, -40.0) for _ids, x, y in got)
 
 
-def test_ruling_6_orders_per_unit_false_is_one_order_for_the_group_at_the_point(seam):
-    """Control: the group order (the default stays per-unit until E1 is in the landing and the smoke caps zero under group orders, decisions 23) is one call per group."""
+def test_ruling_6_the_default_is_one_order_for_the_group_at_the_point(seam):
+    """LAB-REV2-L4 flip (decisions 13): with the default, and with orders_per_unit=False spelled out, one call per group."""
+    setup = S(count=3, max_ticks=2, point=(25.0, -40.0))
+    assert setup.orders_per_unit is False
+    _, fake = run(setup)
+    got = _orders(fake)
+    assert sorted(ids for ids, _x, _y in got) == [[1, 2, 3], [4, 5, 6]]
+    assert all((x, y) == (25.0, -40.0) for _ids, x, y in got)
     setup = S(count=3, max_ticks=2, point=(25.0, -40.0), orders_per_unit=False)
     _, fake = run(setup)
     got = _orders(fake)
@@ -666,9 +674,9 @@ def test_ruling_6_orders_per_unit_false_is_one_order_for_the_group_at_the_point(
 def test_ruling_6_a_group_goal_overrides_the_point_for_that_group(seam):
     setup = Setup(groups=(G(0, 2, goal=(5.0, 6.0)), G(1, 2)), unit_types={}, max_ticks=2, point=(25.0, -40.0))
     _, fake = run(setup)
-    goals = {ids[0]: (x, y) for ids, x, y in _orders(fake)}
-    assert goals[1] == goals[2] == (5.0, 6.0)
-    assert goals[3] == goals[4] == (25.0, -40.0)
+    goals = {ids[0]: (x, y) for ids, x, y in _orders(fake)}       # the group order: one call per group, keyed by its first unit
+    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1, 2], [3, 4]]
+    assert goals[1] == (5.0, 6.0) and goals[3] == (25.0, -40.0)
 
 
 def test_ruling_6_per_unit_orders_go_out_before_the_first_step(seam):
@@ -682,7 +690,7 @@ def test_ruling_6_a_guard_group_gets_a_guard_order_not_an_attack_move(seam):
     setup = Setup(groups=(G(0, 2), G(1, 2, order="guard")), unit_types={}, max_ticks=2, point=(25.0, -40.0))
     _, fake = run(setup, engine_cls=GuardFakeEngine)
     assert [c[2] for c in fake.calls_named("order_guard")] == [[3, 4]]
-    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1], [2]]
+    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1, 2]]
 
 
 def test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of_the_other_side(seam):
@@ -692,8 +700,9 @@ def test_ruling_6_without_a_point_or_goal_each_group_aims_at_the_first_anchor_of
     assert setup.point is None
     _, fake = run(setup)
     got = {ids[0]: (x, y) for ids, x, y in _orders(fake)}
-    assert got[1] == got[2] == (300.0, 0.0)          # side 0 aims at side 1's anchor
-    assert got[3] == got[4] == (-300.0, 0.0)         # side 1 aims at side 0's anchor
+    assert sorted(ids for ids, _x, _y in _orders(fake)) == [[1, 2], [3, 4]]      # the group order (the default)
+    assert got[1] == (300.0, 0.0)          # side 0 aims at side 1's anchor
+    assert got[3] == (-300.0, 0.0)         # side 1 aims at side 0's anchor
 
 
 def test_ruling_6_the_fallback_is_the_other_sides_first_group_when_a_side_has_two(seam):
@@ -712,8 +721,7 @@ def test_ruling_6_orders_per_unit_applies_to_the_opening_orders_only(seam):
     """Decision (D16): later timeline steps stay group-level. With orders_per_unit True the opening is one call per unit; a
     step that attack-moves group 0 at tick 5 is ONE call with all three of group 0's units, and a move step is one call too."""
     steps = (Step(0, ("tick", 5), "attack_move", (10.0, 20.0)), Step(0, ("tick", 6), "move", (30.0, 40.0)))
-    setup = S(count=3, max_ticks=10, point=(25.0, -40.0), timeline=steps)
-    assert setup.orders_per_unit is True
+    setup = S(count=3, max_ticks=10, point=(25.0, -40.0), timeline=steps, orders_per_unit=True)
     _, fake = run(setup)
     opening = [c for c in _orders(fake) if (c[1], c[2]) == (25.0, -40.0)]
     assert sorted(ids for ids, _x, _y in opening) == [[1], [2], [3], [4], [5], [6]]
@@ -747,6 +755,6 @@ def test_the_retired_lab_modules_are_deleted(name):
 def test_no_mop_up_or_reissue_orders_after_the_opening_orders(seam):
     """Q-LAB-03: orders are issued once at tick 0 and never again by the fight loop (a side that stops stays stopped)."""
     r, fake = run(S(count=2, max_ticks=450, point=(0.0, 0.0)))
-    assert len(fake.calls_named("order_attack_move")) == 4
+    assert len(fake.calls_named("order_attack_move")) == 2        # one group order per side (the default since the L4 flip)
     first_step = [c[0] for c in fake.calls].index("step")
     assert all(i < first_step for i, c in enumerate(fake.calls) if c[0] == "order_attack_move")

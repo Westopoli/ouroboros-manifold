@@ -25,6 +25,7 @@ Satisfiability: a throwaway build of the E1b change (the ordered point kept, the
 the first test green: the same scene ends side0 with 8 left.
 """
 import ctypes
+import dataclasses
 import os
 import sys
 from pathlib import Path
@@ -74,7 +75,9 @@ def _setup():
     features = sweep.smoke_layouts()[LAYOUT]
     build = sweep.default_builds(PLAY, "play", features)
     point = next(p for p in sweep.grid("vision") if p.value == 0.5)
-    return sweep.Applied(build, point)(HEADS, SWAP)
+    setup = sweep.Applied(build, point)(HEADS, SWAP)
+    # LAB-REV2 ruler (TD-LAB-REV2-flip, decision 40): the Setup default is now the group order; the traced scene is the per-unit one, kept explicit.
+    return dataclasses.replace(setup, orders_per_unit=True)
 
 
 def _idle_line(probe):
