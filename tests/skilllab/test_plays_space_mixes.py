@@ -4,14 +4,22 @@
 
 INTERFACE FOR THE BUILDER (frozen here)
   plays_space.MIXES: a list of rows, each a dict {"name": str, "units": {unit type: count}, "used_in": (play name, ...), "enabled": bool}.
-    - units: the existing numbers, no number changes; the dict order is the order the groups are placed (it keeps the setup hashes).
+    - units: the existing numbers, no number changes. The dict order is the order of the side-1 groups (_enemy / the blobs follow it); side 0 keeps the order
+      its setup places today (test_placed_by_feature.py's setup hashes pin the actual order of both sides, so keep them green).
+    - Editing a row must also rewrite the hard-coded side-0 counts, the blob radii and the group counts: side 0 of s3_over_the_choke is V7, R1, B8 in the
+      code today. The builder must make side-0 composition follow the table (the edit tests below fail if any side-0 number is still hard-coded).
     - The table holds exactly the five rows M1, M2, M3, M4 and M3b (M0, all Vanguard, is not a row). The module-level tuples M1..M4 and the inline
       M3b of _over_the_choke are gone: the table is the only place the numbers live.
     - A play reads its mix when its setup_fn is CALLED (module-global lookup of MIXES each call), not at import: a test that replaces plays_space.MIXES
       with an edited copy changes the next build. A play's mix is the one ENABLED row whose used_in names it; both sides field it (side 0 and the
       side-1 blob(s) at 16), exactly as today.
+    - MIXES must be defined ABOVE PLAYS in plays_space.py: PLAYS builds its plays at import time, so the table has to exist by then (the lookup itself
+      still happens at each setup_fn call, as above).
+    - Two ENABLED rows naming the same play: building that play raises ValueError whose message holds the play name and the words "two mixes".
     - A play whose row is disabled: building it (setup_fn or scan_build(name)(...)) raises ValueError whose message holds the play name, the mix name and
-      the word "disabled". A play named by no row raises ValueError whose message holds the play name and the words "no mix". Plays on other mixes build as before.
+      the word "disabled". A play that takes its mix from the table and is named by no row raises ValueError whose message holds the
+      play name and the words "no mix". The six M0 plays (all Vanguard; s1_hold_choke, s2_concave, s2_spread_line, s2_mass_one_end, s4_bait, s4_do_not_chase)
+      are named by no row and do NOT take a mix from the table: they build as before. Plays on other mixes build as before.
   Each row's definition line (the line holding `name` and the mix name as a string, written `"name": "M1"` or `name="M1"`) carries `DRAFT-mix-M1`
   (M2, M3, M4 likewise, and `DRAFT-mix-M3b` on M3b; `DRAFT-mix-M3` is not satisfied by the M3b line: each name is checked on its own row's line).
   The header (module docstring or a comment above the table) says exactly: M5 to M9 are added here after Westley's go on the roster analysis
@@ -201,6 +209,28 @@ def test_a_play_named_by_no_row_raises_a_clear_error(table):
     with pytest.raises(ValueError) as e:
         plays_space.PLAYS["s3_types_by_reach"].setup_fn()
     assert "s3_types_by_reach" in str(e.value) and "no mix" in str(e.value), str(e.value)
+
+
+def test_two_enabled_rows_naming_one_play_raise_a_clear_error(table):
+    next(r for r in table if r["name"] == "M2")["used_in"] = ("s3_types_by_reach", "s3_layer_above")   # s3_layer_above is already on M1
+    with pytest.raises(ValueError) as e:
+        plays_space.PLAYS["s3_layer_above"].setup_fn()
+    assert "s3_layer_above" in str(e.value) and "two mixes" in str(e.value), str(e.value)
+    with pytest.raises(ValueError) as e2:
+        plays_space.scan_build("s3_layer_above")(None, 16, False)
+    assert "two mixes" in str(e2.value), str(e2.value)
+
+
+def test_control_the_m0_plays_build_with_the_table_present_and_in_no_row():
+    for p in sorted(M0_PLAYS):
+        plays_space.PLAYS[p].setup_fn()                                       # no raise: they take no mix from the table
+
+
+def test_the_table_is_defined_above_the_plays():
+    """PLAYS builds its plays at import time, so MIXES has to be assigned first (the first top-level `PLAYS = {` is line 202 today)."""
+    mixes = re.search(r"^MIXES\b[^\n=]*=", SOURCE, re.M)
+    plays = re.search(r"^PLAYS\b[^\n=]*=", SOURCE, re.M)
+    assert mixes and plays and mixes.start() < plays.start()
 
 
 # ---- the marks and the header (grep of the source, as test_drift_fix_drafts.py does) --------------------------------------------

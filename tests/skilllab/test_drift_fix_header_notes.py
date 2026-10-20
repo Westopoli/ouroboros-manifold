@@ -72,6 +72,13 @@ def test_vision_plays_refused_no_fit_on_81_and_78_with_192_run_say_so(tmp_path):
     assert els[-1] is ps[0] and [e.attrs.get("class") for e in els if e.name == "ul"] == ["drafts"]
 
 
+def test_data_layouts_run_is_sorted_as_strings_when_two_layouts_ran(tmp_path):
+    """The rows list layout 81 before 192; the attribute is sorted as strings, not in row order: "192,81"."""
+    _, _, html, _ = _page(tmp_path, rows=rows_on("81", "192"), summary=summary_with(vision_entry("78")))
+    ps = cls_p(html, "vision-layouts")
+    assert len(ps) == 1 and ps[0].attrs["data-layouts-run"] == "192,81" and ps[0].attrs["data-layouts-refused"] == "78"
+
+
 def test_the_sentence_sits_before_the_no_defender_note_which_stays_last(tmp_path):
     summary = summary_with(*FOUR, refused_entry("naive_defender", "blind_post", family="vision"))
     _, _, html, _ = _page(tmp_path, rows=rows_on("192"), summary=summary)

@@ -91,6 +91,12 @@ def test_the_largest_shift_over_the_headcounts_is_the_one_reported(tmp_path):
     assert [e["shift_wu"] for e in entry["shifted_posts"]] == [100.0 + sweep.ENEMY_TO]
 
 
+def test_the_largest_shift_is_found_when_it_sits_in_the_middle_of_the_headcounts(tmp_path):
+    """Not the last build and not the larger of the two endpoint headcounts (8 and 48): the shift peaks at 24 (150.0; 8 gives 134.0, 48 gives 126.0)."""
+    entry, _ = run_family(tmp_path, shifting({("p2", "naive_defender"): lambda h: 150.0 - abs(h - 24)}))
+    assert [e["shift_wu"] for e in entry["shifted_posts"]] == [150.0]
+
+
 def test_each_layer_variant_of_a_layer_holder_is_listed_in_baseline_order_per_layout(tmp_path):
     shifts = {(p, r): (lambda h, v=v: v) for p, base in (("s3_layer_above", 10.0), ("s3_types_by_reach", 20.0))
               for r, v in (("naive_defender_attacker_layer", base + 1.0), ("naive_defender_play_layer", base + 2.0))}
@@ -254,3 +260,88 @@ def test_control_the_refused_lists_alone_are_unchanged(tmp_path):
     _, _, html, _ = _page(tmp_path, summary=summary)
     sec = _sec(_tree(html), "findings")
     assert sec.elements()[-1] is global_ul(sec)[0] and "post shifted" not in html
+
+
+# ---------------------------------------------------------------------------------------------------- the artifact: orders and the naive_ filter (audit of FIX5)
+
+def sequence(sec, *classes):
+    """The (class, family, play) of the per-play blocks, in the order they sit among the findings' element children."""
+    return [(u.attrs["class"], u.attrs["data-family"], u.attrs["data-play"]) for u in sec.elements()
+            if u.name == "ul" and u.attrs.get("class") in classes]
+
+
+def keys(ul, *attrs):
+    return [tuple(li.attrs[a] for a in attrs) for li in ul.find("li")]
+
+
+def two_families(order, **by_family):
+    _, _, summary = _artifact_inputs()
+    summary["order"] = list(order)
+    for fam, posts in by_family.items():
+        summary["families"][fam] = dict(summary["families"][fam], shifted_posts=list(posts))
+    return summary
+
+
+def test_the_global_list_sorts_by_play_before_layout_and_before_role(tmp_path):
+    """Play a is on layout 81 and play b on layout 192: (play, layout, role) puts a before b, (layout, play, role) would not."""
+    summary = with_shifts(shifted("naive_defender", 1.0, play="b_play", layout="192"), shifted("naive_defender", 2.0, play="a_play", layout="81"))
+    _, _, html, _ = _page(tmp_path, summary=summary)
+    _, uls = shifted_uls(html, "shifted-posts")
+    assert keys(uls[0], "data-play", "data-layout") == [("a_play", "81"), ("b_play", "192")]
+
+
+def test_the_global_list_sorts_by_layout_before_role_within_a_play(tmp_path):
+    """Layout 192 carries the role that sorts LAST and layout 81 the role that sorts first: layout order and role order disagree."""
+    summary = with_shifts(shifted("naive_defender_play_layer", 1.0, layout="192"), shifted("naive_defender", 2.0, layout="81"),
+                          shifted("naive_defender_attacker_layer", 3.0, layout="81"))
+    _, _, html, _ = _page(tmp_path, summary=summary)
+    _, uls = shifted_uls(html, "shifted-posts")
+    assert keys(uls[0], "data-layout", "data-role") == [("192", "naive_defender_play_layer"), ("81", "naive_defender"), ("81", "naive_defender_attacker_layer")]
+
+
+def test_the_per_play_block_sorts_layouts_as_strings_and_layout_before_role(tmp_path):
+    """Layouts 192 and 78: as strings 192 < 78 (as integers 78 < 192); the role on 192 sorts after the role on 78."""
+    summary = with_shifts(shifted("naive_defender_play_layer", 1.0, layout="192"), shifted("naive_defender", 2.0, layout="78"))
+    _, _, html, _ = _page(tmp_path, summary=summary)
+    _, uls = shifted_uls(html, "shifted-play")
+    assert len(uls) == 1 and keys(uls[0], "data-layout", "data-role") == [("192", "naive_defender_play_layer"), ("78", "naive_defender")]
+
+
+def test_families_follow_summary_order_not_the_alphabet(tmp_path):
+    """summary["order"] = vision, range_up: vision comes first in the global list; alphabetically range_up would."""
+    summary = two_families(["vision", "range_up"], range_up=[shifted("naive_defender", 1.0)],
+                           vision=[shifted("naive_defender", 2.0, family="vision", play="s3_types_by_reach")])
+    _, _, html, _ = _page(tmp_path, summary=summary)
+    _, uls = shifted_uls(html, "shifted-posts")
+    assert keys(uls[0], "data-family", "data-play") == [("vision", "s3_types_by_reach"), ("range_up", "s3_layer_above")]
+
+
+def test_a_non_naive_role_is_in_no_shifted_list(tmp_path):
+    summary = with_shifts(shifted("reach_zero", 7.0), shifted("play", 8.0, layout="81"), shifted("naive_defender", 9.0, layout="78"))
+    _, _, html, _ = _page(tmp_path, summary=summary)
+    sec, uls = shifted_uls(html, "shifted-posts")
+    assert keys(uls[0], "data-role") == [("naive_defender",)]
+    assert [keys(u, "data-role") for u in in_sec(sec, "shifted-play")] == [[("naive_defender",)]]
+    assert "reach zero: post shifted" not in html and "play: post shifted" not in html
+
+
+def test_control_only_non_naive_roles_leave_no_shifted_element(tmp_path):
+    _, _, html, _ = _page(tmp_path, summary=with_shifts(shifted("reach_zero", 7.0), shifted("play", 8.0, layout="81")))
+    assert "post shifted" not in html and "shifted-posts" not in html and "shifted-play" not in html
+
+
+def test_leftover_plays_are_ordered_by_family_then_play_each_refused_block_just_before_its_shifted_block(tmp_path):
+    """Leftover plays (no notable on the page): s4_bait has a refused and a shifted block, s1_outrange only a shifted one. The inputs list s4_bait first."""
+    _, _, summary = _artifact_inputs()
+    summary["order"] = ["vision", "range_up"]
+    summary["families"]["range_up"] = dict(summary["families"]["range_up"], shifted_posts=[
+        shifted("naive_defender", 3.0, play="s4_bait"), shifted("naive_defender", 4.0, play="s1_outrange")],
+        refused=[refused_entry("naive_attacker", "no_reach", play="s4_bait")])
+    summary["families"]["vision"] = dict(summary["families"]["vision"], shifted_posts=[shifted("naive_defender", 5.0, play="s2_spread_line", family="vision")],
+                                         refused=[refused_entry("naive_attacker", "no_reach", play="s2_spread_line", family="vision")])
+    _, _, html, _ = _page(tmp_path, summary=summary)
+    sec = _sec(_tree(html), "findings")
+    assert sequence(sec, "refused-play", "shifted-play") == [
+        ("refused-play", "vision", "s2_spread_line"), ("shifted-play", "vision", "s2_spread_line"),
+        ("shifted-play", "range_up", "s1_outrange"), ("refused-play", "range_up", "s4_bait"), ("shifted-play", "range_up", "s4_bait")]
+

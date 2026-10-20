@@ -522,7 +522,9 @@ def _flat(text: str) -> str:
 
 
 _FIX5_README_CLAIMS = {
-    # (6) README names the plays batch one actually runs and says the five blind_post-refused plays are not in its sweep
+    # (6) README names the plays batch one actually runs. Evidence for s5_vulnerable_away among the five: the second drift audit's pre-flight probe of all 14
+    # plays on layouts 81, 78 and 192 refused s5_vulnerable_away blind_post alongside s1_outrange, s2_spread_line, s4_bait and s4_do_not_chase (TD-LAB-REV2-FIX5-docs)
+    # README names the plays batch one actually runs and says the five blind_post-refused plays are not in its sweep
     "batch-one-plays": (None, ("s3_layer_above", "s3_types_by_reach", "s3_dark_striker", "s1_outrange", "s2_spread_line", "s4_bait", "s4_do_not_chase",
                                "s5_vulnerable_away", "blind_post", ("not in batch one's sweep", "not in batch one’s sweep"))),
     # (6) the pre-flight list names all five words
@@ -618,6 +620,7 @@ def test_fix5_control_the_harness_helpers_catch_the_old_sentences():
 # --- the register ---------------------------------------------------------------------------------------------------
 
 def test_fix5_q_lab_01_is_no_longer_open():
+    """Architect decision 39 item 6: Q-LAB-01 is marked superseded by Q-LAB-03 (so the register no longer lists it as open)."""
     status = _register_row("Q-LAB-01")[STATUS].strip().lower()
     assert status != "open" and status.split()[0] in ("closed", "superseded"), f"Q-LAB-01 status is {status!r}"
 
