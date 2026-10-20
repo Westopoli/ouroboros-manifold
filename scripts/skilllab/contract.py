@@ -92,7 +92,7 @@ class Setup:
     states: bool = False      # True records FightResult.states
     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
     point: Optional[tuple] = None   # (x, y) the shared attack-move point; None: each group aims at the first anchor of the other side
-    orders_per_unit: bool = True    # one order_attack_move call per unit at the opening; later timeline steps stay group-level (L4 flips the default)
+    orders_per_unit: bool = True    # one order_attack_move call per unit at the opening; later timeline steps stay group-level (a flip of the default is conditional, decision 43 item 1)
     firing_arc_deg: float = 360.0   # set on the world through OM_TP_FIRING_ARC_DEG when below 360 and the library has the parameter
     cone: dict = field(default_factory=dict)   # type name -> (range, half-angle degrees, share), applied through Engine.set_cone
 
@@ -112,19 +112,20 @@ class FightResult:
     trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
     steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
     weighted_unit_seconds: tuple = (0.0, 0.0)   # the type-weighted count, whole fight
-    states: Optional[list] = field(default_factory=list)   # [(tick, unit, code), ...] at sample ticks when Setup.states; fight() sets None when off
+    states: Optional[list] = field(default_factory=list)   # [(tick, unit, code), ...] at sample ticks when Setup.states, [] when off
     firing_window: tuple = (0.0, 0.0)       # unit-seconds over [first_contact_tick, first_contact_tick + OPENING_WINDOW_TICKS)
     weighted_window: tuple = (0.0, 0.0)
     predicted_count: str = "tie"            # "side0" | "side1" | "tie": the larger window total
     predicted_type: str = "tie"
     agreement: str = "n/a"    # "both_right" | "count_wrong_type_right" | "both_wrong" | "count_right_type_wrong" | "n/a"
     reengage: tuple = (0, 0)  # (side 0, side 1) re-engage events: a silent side with an idle attack-move unit and a visible enemy was ordered onto the enemy centroid
+    blind_cap: bool = False   # outcome "cap" and, at the cap tick, neither side sees any living enemy: a finding (blind post), not a lab cap defect
 
 
 def trim_series(result: "FightResult") -> "FightResult":
     """The result without its per-tick series; row values stay. A series that was on becomes [] so 'was recorded' still reads."""
     return dataclasses.replace(result, firing=[], trace=None if result.trace is None else [],
-                               states=None if result.states is None else [])
+                               states=[])
 
 
 @dataclass
@@ -157,6 +158,7 @@ class Batch:
 TICKS_PER_SECOND = 20
 OPENING_WINDOW_TICKS = 40     # DRAFT-opening-window-ticks (Westley to confirm): the primary prediction window after first contact
 REENGAGE_SILENCE_TICKS = 40   # DRAFT-reengage-silence-ticks (Westley's number, the R-099-05 window): silent ticks of a side before the lab re-engages it
+REENGAGE_MOVED_WU = 1.0       # DRAFT-reengage-moved-wu (Westley's number): a side has moved only when a unit is displaced by more than this from its position at the last reset of the silence counter
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
 BuildFn = Callable[[int, bool], "Setup"]
 

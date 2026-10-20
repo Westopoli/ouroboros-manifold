@@ -3,7 +3,7 @@ A fight ends by elimination only; reaching Setup.max_ticks is a cap, a lab defec
 import math
 import random
 
-from scripts.skilllab.contract import OPENING_WINDOW_TICKS, REENGAGE_SILENCE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
+from scripts.skilllab.contract import OPENING_WINDOW_TICKS, REENGAGE_MOVED_WU, REENGAGE_SILENCE_TICKS, SHIFT_MAX, TICKS_PER_SECOND, FightResult
 from scripts.skilllab.firing import count_able, count_weighted, states
 from scripts.skilllab.formations import place
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
@@ -233,8 +233,11 @@ ROLE_STEPS = ("attack_move", "move", "group_move", "idle", "guard")   # the time
 
 
 class _Reengage:
-    """Decision 28 point 3: a side with no unit firing or moving for REENGAGE_SILENCE_TICKS gets its idle attack-move units
-    attack-moved onto the centroid of the enemies it sees, once per silence period. See also: Engine.visible_enemies, unit_destination."""
+    """Decision 28 point 3, amended by decision 43 items 2 to 4: a side with no unit firing or moving for REENGAGE_SILENCE_TICKS
+    gets each of its idle attack-move units its own attack-move onto the centroid of the enemies it sees, once per silence period
+    (one event per trigger, exempt from Setup.orders_per_unit). A no-op engage (every ordered living unit still has no destination
+    a tick later) re-arms the side at once. A move is a displacement above REENGAGE_MOVED_WU from the unit's position at the last
+    reset of the silence counter. See also: Engine.visible_enemies, unit_destination."""
 
     def __init__(self, engine, w, setup, side_ids, ids_by_group, timeline):
         self.engine, self.w, self.setup, self.side_ids, self.ids_by_group, self.timeline = engine, w, setup, side_ids, ids_by_group, timeline
@@ -242,8 +245,9 @@ class _Reengage:
         self.eligible = tuple(s for s in (0, 1) if any(
             g.side == s and (self.role[gi] or any(st.group == gi and st.order == "attack_move" for st in setup.timeline))
             for gi, g in enumerate(setup.groups)))
-        self.pos = {u: engine.unit_pos(w, u) for s in self.eligible for u in side_ids[s]}
+        self.ref = {u: engine.unit_pos(w, u) for s in self.eligible for u in side_ids[s]}
         self.silent, self.armed, self.count, self.seen_steps = [0, 0], [True, True], [0, 0], 0
+        self.ordered = [None, None]
 
     def tick(self, hp, fired):
         fired_steps = self.timeline.fired
@@ -252,20 +256,31 @@ class _Reengage:
             if step.order in ROLE_STEPS:
                 self.role[step.group] = step.order == "attack_move"
         self.seen_steps = len(fired_steps)
-        unit_pos, pos = self.engine.unit_pos, self.pos
+        unit_pos, ref, limit = self.engine.unit_pos, self.ref, REENGAGE_MOVED_WU * REENGAGE_MOVED_WU
         for s in self.eligible:
-            moved = False
+            moved, now = False, {}
             for u in self.side_ids[s]:
                 if hp[u] > 0:
-                    p = unit_pos(self.w, u)
-                    if p != pos[u]:
-                        pos[u], moved = p, True
+                    p = now[u] = unit_pos(self.w, u)
+                    r = ref[u]
+                    if (p[0] - r[0]) ** 2 + (p[1] - r[1]) ** 2 > limit:
+                        moved = True
             if fired[s] or moved:
+                ref.update(now)
+                self.silent[s], self.armed[s], self.ordered[s] = 0, True, None
+                continue
+            ordered, self.ordered[s] = self.ordered[s], None
+            if ordered is not None and self._noop(ordered, hp):
                 self.silent[s], self.armed[s] = 0, True
                 continue
             self.silent[s] += 1
             if self.silent[s] >= REENGAGE_SILENCE_TICKS and self.armed[s]:
                 self._engage(s, hp)
+
+    def _noop(self, ordered, hp):
+        engine, w = self.engine, self.w
+        living = [u for u in ordered if hp[u] > 0]
+        return bool(living) and all(engine.unit_destination(w, u) is None for u in living)
 
     def _engage(self, s, hp):
         engine, w = self.engine, self.w
@@ -279,9 +294,11 @@ class _Reengage:
         if not points:
             return
         x, y = _centroid(points)
-        engine.order_attack_move(w, idle, x, y)
+        for u in idle:
+            engine.order_attack_move(w, [u], x, y)
         self.count[s] += 1
         self.armed[s] = False
+        self.ordered[s] = idle
 
 
 def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
@@ -289,7 +306,7 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
     living = [u for ids in side_ids for u in ids]
     firing, weighted, tick, outcome = [], [], 0, None
     trace, last = ([] if setup.trace else None), {}
-    state_rows = [] if setup.states else None
+    state_rows = []
     all_ids = sorted(living)
     alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
     unit_hp, step, arc = engine.unit_hp, engine.step, setup.firing_arc_deg
@@ -306,7 +323,7 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
     def sample():
         firing.append((tick,) + tuple(count_able(engine, w, side_ids[0], side_ids[1], arc)))
         weighted.append((tick,) + tuple(count_weighted(engine, w, side_ids[0], side_ids[1], arc)))
-        if state_rows is not None:
+        if setup.states:
             state_rows.extend((tick, u, int(code)) for u, code in states(engine, w, side_ids[0], side_ids[1], arc))
 
     sample()
@@ -316,6 +333,7 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
     reengage = _Reengage(engine, w, setup, side_ids, ids_by_group, timeline)
     side_of = {u: s for s in (0, 1) for u in side_ids[s]}
     fired = [False, False]
+    blind = False
     while outcome is None:
         step(w)
         tick += 1
@@ -343,6 +361,7 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
             outcome = "side1"
         elif tick >= setup.max_ticks:
             outcome = "cap"
+            blind = not any(engine.visible_enemies(w, s, [u for u in side_ids[1 - s] if hp[u] > 0]) for s in (0, 1))
         if tick % setup.sample_every == 0:
             sample()
 
@@ -359,4 +378,4 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
                        steps_fired=tuple(timeline.fired), weighted_unit_seconds=wsec, states=state_rows,
                        winner=outcome if outcome in ("side0", "side1") else None, firing_window=fwin,
                        weighted_window=wwin, predicted_count=pcount, predicted_type=ptype,
-                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count))
+                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count), blind_cap=blind)
