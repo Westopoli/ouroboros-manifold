@@ -233,12 +233,12 @@ ROLE_STEPS = ("attack_move", "move", "group_move", "idle", "guard")   # the time
 
 
 class _Reengage:
-    """Decision 28 point 3, amended by decision 43 items 2 to 4 and decision 49: a side whose silence counter completes gets each of
+    """Decision 28 point 3, amended by decision 43 items 2 to 4, decision 49 and decision 50: a side whose silence counter completes gets each of
     its idle attack-move units its own attack-move onto the centroid of the enemies it sees, once per silence period (one event per
-    trigger, exempt from Setup.orders_per_unit). The counter of a side advances on a tick when no unit of either side was hit and no
+    trigger, exempt from Setup.orders_per_unit). The counter of a side advances on a tick when no unit of that side caused a hit and no
     idle-eligible living unit of that side (attack-move role, no destination) is displaced more than REENGAGE_MOVED_WU from its
     position at the window start (the tick the counter was last zeroed); a unit holding a destination is never tested and never
-    zeroes the counter, and is not ordered. Every zeroing takes a fresh reference for the side's units. A hit zeroes both sides. A
+    zeroes the counter, and is not ordered. Every zeroing takes a fresh reference for the side's units. A hit caused by a unit of the side zeroes that side only. A
     no-op engage (every ordered living unit still has no destination a tick later) re-arms the side at once.
     See also: Engine.visible_enemies, unit_destination."""
 
@@ -261,9 +261,8 @@ class _Reengage:
                 self.role[step.group] = step.order == "attack_move"
         self.seen_steps = len(fired_steps)
         unit_pos, ref, limit = self.engine.unit_pos, self.ref, REENGAGE_MOVED_WU * REENGAGE_MOVED_WU
-        hit = fired[0] or fired[1]
         for s in self.eligible:
-            reset = hit
+            reset = fired[s]
             if not reset:
                 for u in self.side_ids[s]:
                     if hp[u] > 0 and self.role[self.group_of[u]] and self.engine.unit_destination(self.w, u) is None:
