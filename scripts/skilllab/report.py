@@ -340,7 +340,9 @@ def _findings(summary, rows, ns, svgs) -> list:
     for k in sorted(set(blocks) | set(sblocks), key=lambda k: (order[k[0]], k[1])):
         out += [b[k] for b in (blocks, sblocks) if k in b]
     out += [_refused_ul(refused, "refused-baselines")] if refused else []
-    return out + ([_shifted_ul(shifted, "shifted-posts")] if shifted else [])
+    out += [_shifted_ul(shifted, "shifted-posts")] if shifted else []
+    return out + ['<p class="probed"%s>%s</p>' % (_attrs(family=r["family"], play=r["play"], layout=r["layout"]), escape(r["line"]))
+                  for r in summary.get("probed") or ()]
 
 
 def _vision_layouts(summary, rows) -> str:
