@@ -31,12 +31,28 @@ extends Node
 #   BACKDROP-MESH     the rows the headless file cannot hold: each StarLayer's ArrayMesh vertex array equals
 #                     ambient_rig.layer_star_positions(i, tier), PRIMITIVE_POINTS, one surface; the CameraDust MultiMesh
 #                     instance count equals DUST_COUNT and its transforms equal get_dust_positions()
+#   DUST-TINTS        the CameraDust MultiMesh instance colours as the real renderer holds them (MultiMesh.get_instance_color,
+#                     a read-back of the server-side buffer; the dummy renderer does not keep it) come in exactly the two ruled
+#                     tints and the ruled fractions of DRAFT-b25-dust: "gold 50 percent and blue 50 percent with the old colours",
+#                     gold (1.0, 0.88, 0.5, 0.3), blue (0.6, 0.7, 1.0, 0.2): every mote is one of the two tints (red, green, blue
+#                     compared; the colour is stored as half floats by the renderer, so the match is against the float or its
+#                     half-float rounding), exactly 50 percent of the motes gold and exactly 50 percent blue (no tolerance is given
+#                     in the row, so none is taken; an odd mote count cannot pass)
+#   DUST-FADE         the same read-back: "fade over the outer quarter of the half box from each face" (DRAFT-b25-dust) and the
+#                     INTERFACE's "per-instance alpha fading to 0 toward the box faces": a mote's distance from the box centre is
+#                     its largest absolute component about the camera (the box faces are planes); within each tint (same rgb), the
+#                     mean alpha of the motes in the outer quarter of the half box (distance above 3/4 of the half box) is strictly
+#                     below the mean alpha of the motes in the inner half (distance below 1/2 of the half box). No new threshold.
+#                     Positions are read from the MultiMesh transforms, the box and half box from DUST_BOX.
 #   SHADER-COMPILES   the Godot log of the launcher-line run has no SHADER ERROR / SCRIPT ERROR / Parse Error
 # Positive controls (each green on the tree without the backdrop, printed before the row they guard):
 #   DEVICE; BACKDROP-GPU-CONTROL (a deliberate full-screen heavy canvas shader adds more than BUDGET_MS, so the method
 #   can see a breach); BACKDROP-DRAWS-CONTROL (one added single-surface box adds at least one draw call);
-#   SHADER-COMPILES-CONTROL (the scan flags a sample error line, passes a clean one, and the log holds the Vulkan banner).
-# On a tree without the backdrop nodes the rows BACKDROP-GPU, -DRAWS and -MESH fail "absent"; the baseline lines
+#   SHADER-COMPILES-CONTROL (the scan flags a sample error line, passes a clean one, and the log holds the Vulkan banner);
+#   DUST-TINTS-CONTROL and DUST-FADE-CONTROL (a synthetic 400-mote MultiMesh built here, written and read back through the same
+#   reader on the real renderer: the two-tint, 50/50, faded synthetic passes both rows; a single-tint synthetic, a 60/40 synthetic
+#   and a synthetic with no fade are flagged by the row they belong to).
+# On a tree without the backdrop nodes the rows BACKDROP-GPU, -DRAWS, -MESH, DUST-TINTS and DUST-FADE fail "absent"; the baseline lines
 # (BASELINE <position> ...) print the rig-without-backdrop frame time and draws, which is the number to beat.
 #
 # MEASUREMENT METHOD (copied from scenes/mockups/galaxy/tests/gpu_checks.gd and scripts/galaxy_perf.sh on
@@ -64,6 +80,16 @@ const PLAYER_FACTION := 0   # galaxy_view.gd PLAYER_OWNER_VAL: faction 0 is the 
 const STAR_LAYERS := 4
 const BACKDROP_NODES := ["Wash", "StarLayer0", "StarLayer1", "StarLayer2", "StarLayer3", "CameraDust"]
 const POSITIONS := ["d120", "d25", "d7.5_player", "inside_shell"]
+
+# DRAFT-b25-dust (ledger day31, Architect gap ruling g4 2026-10-12): "gold 50 percent and blue 50 percent with the old colours",
+# old colours gold (1.0, 0.88, 0.5, 0.3), blue (0.6, 0.7, 1.0, 0.2) (ambient_rig.gd:203-217); "fade over the outer quarter of the
+# half box from each face"; box 120, 400 motes (read live from DUST_BOX and the MultiMesh, not pinned here).
+const DUST_GOLD := Color(1.0, 0.88, 0.5, 0.3)
+const DUST_BLUE := Color(0.6, 0.7, 1.0, 0.2)
+const DUST_GOLD_PERCENT := 50
+const DUST_BLUE_PERCENT := 50
+const DUST_FADE_QUARTER := 0.25   # "the outer quarter of the half box"
+const DUST_INNER_HALF := 0.5      # "the inner half" of the half box
 
 # [W 2026-10-02 budget]: the backdrop adds at most 0.5 ms at all four camera positions. Written once.
 const BUDGET_MS := 0.5
@@ -123,6 +149,7 @@ func _run() -> void:
 
 	await _check_gpu_and_draws()
 	_check_mesh()
+	await _check_dust()
 	_check_shader_compiles()
 
 
@@ -416,6 +443,160 @@ func _check_mesh() -> void:
 			bad = k
 			break
 	_check("BACKDROP-MESH", cpu.size() == mm.instance_count and bad == -1, "CameraDust: %d transforms against %d get_dust_positions()%s" % [mm.instance_count, cpu.size(), "" if bad == -1 else ", first difference at index %d (%s vs %s)" % [bad, mm.get_instance_transform(bad).origin, cpu[bad]]])
+
+
+# ---- DUST-TINTS and DUST-FADE ---------------------------------------------------------------------
+# Read-back: the CameraDust MultiMesh as the real renderer holds it. Not readable on the dummy renderer (CPU tests cannot see it).
+
+func _half(v: float) -> float:
+	var b := PackedByteArray()
+	b.resize(2)
+	b.encode_half(0, v)
+	return b.decode_half(0)
+
+
+func _rgb_is(c: Color, want: Color) -> bool:
+	for pair in [[c.r, want.r], [c.g, want.g], [c.b, want.b]]:
+		if not (is_equal_approx(pair[0], pair[1]) or pair[0] == _half(pair[1])):
+			return false
+	return true
+
+
+# A synthetic dust MultiMesh: n motes hashed into a box of side box about centre, tint by index (gold_percent of them gold, the
+# rest blue), alpha = the tint's alpha times a linear fade over the outer quarter of the half box when fade is true.
+func _synth_dust(n: int, box: float, centre: Vector3, gold_percent: int, single_tint: bool, fade: bool) -> MultiMesh:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = QuadMesh.new()
+	mm.instance_count = n
+	var half := box * 0.5
+	var state := 12345
+	for k in n:
+		var comp: Array = []
+		for a in 3:
+			state = (state * 1103515245 + 12345) & 0x7fffffff
+			comp.append((float(state % 20001) / 10000.0 - 1.0) * half * 0.999)
+		var d := Vector3(comp[0], comp[1], comp[2])
+		mm.set_instance_transform(k, Transform3D(Basis.IDENTITY, centre + d))
+		var gold := true if single_tint else (k * 100 / n) < gold_percent
+		var col: Color = DUST_GOLD if gold else DUST_BLUE
+		var f := 1.0
+		if fade:
+			var mx := maxf(absf(d.x), maxf(absf(d.y), absf(d.z)))
+			f = clampf((half - mx) / (half * DUST_FADE_QUARTER), 0.0, 1.0)
+		mm.set_instance_color(k, Color(col.r, col.g, col.b, col.a * f))
+	return mm
+
+
+# Reads the colours and positions of every instance through the server (the read-back under test).
+func _read_dust(mm: MultiMesh) -> Dictionary:
+	var pos := PackedVector3Array()
+	var cols := PackedColorArray()
+	for k in mm.instance_count:
+		pos.append(mm.get_instance_transform(k).origin)
+		cols.append(mm.get_instance_color(k) if mm.use_colors else Color(0, 0, 0, 0))
+	return {"pos": pos, "cols": cols, "use_colors": mm.use_colors}
+
+
+# DUST-TINTS verdict from read-back data: {ok, detail}.
+func _tint_verdict(data: Dictionary) -> Dictionary:
+	if not bool(data["use_colors"]):
+		return {"ok": false, "detail": "the MultiMesh has use_colors false: the instances carry no colour to read"}
+	var cols: PackedColorArray = data["cols"]
+	var n := cols.size()
+	var gold := 0
+	var blue := 0
+	var other := 0
+	for c in cols:
+		if _rgb_is(c, DUST_GOLD):
+			gold += 1
+		elif _rgb_is(c, DUST_BLUE):
+			blue += 1
+		else:
+			other += 1
+	var exact := n > 0 and (n * DUST_GOLD_PERCENT) % 100 == 0 and (n * DUST_BLUE_PERCENT) % 100 == 0
+	var ok := exact and other == 0 and gold == n * DUST_GOLD_PERCENT / 100 and blue == n * DUST_BLUE_PERCENT / 100
+	var detail := "%d motes: %d gold %s, %d blue %s, %d in neither tint; ruled (DRAFT-b25-dust) gold %d percent and blue %d percent with gold rgb %s and blue rgb %s%s" % [n, gold, str(DUST_GOLD), blue, str(DUST_BLUE), other, DUST_GOLD_PERCENT, DUST_BLUE_PERCENT, str(Vector3(DUST_GOLD.r, DUST_GOLD.g, DUST_GOLD.b)), str(Vector3(DUST_BLUE.r, DUST_BLUE.g, DUST_BLUE.b)), "" if exact else " (the mote count cannot split exactly)"]
+	return {"ok": ok, "detail": detail}
+
+
+# DUST-FADE verdict: within each rgb group, mean alpha of the outer-quarter motes strictly below that of the inner-half motes.
+func _fade_verdict(data: Dictionary, centre: Vector3, box: float) -> Dictionary:
+	if not bool(data["use_colors"]):
+		return {"ok": false, "detail": "the MultiMesh has use_colors false: the instances carry no alpha to read"}
+	var pos: PackedVector3Array = data["pos"]
+	var cols: PackedColorArray = data["cols"]
+	var half := box * 0.5
+	var outer_from := half * (1.0 - DUST_FADE_QUARTER)
+	var inner_to := half * DUST_INNER_HALF
+	var groups := {}
+	for k in pos.size():
+		var d := pos[k] - centre
+		var mx := maxf(absf(d.x), maxf(absf(d.y), absf(d.z)))
+		var key := "%d,%d,%d" % [roundi(cols[k].r * 1000.0), roundi(cols[k].g * 1000.0), roundi(cols[k].b * 1000.0)]
+		if not groups.has(key):
+			groups[key] = {"o": 0.0, "on": 0, "i": 0.0, "in": 0}
+		var g: Dictionary = groups[key]
+		if mx > outer_from:
+			g["o"] += cols[k].a
+			g["on"] += 1
+		elif mx < inner_to:
+			g["i"] += cols[k].a
+			g["in"] += 1
+	var compared := 0
+	var bad := 0
+	var parts: PackedStringArray = []
+	for key in groups:
+		var g: Dictionary = groups[key]
+		if g["on"] == 0 or g["in"] == 0:
+			continue
+		var mo: float = g["o"] / g["on"]
+		var mi: float = g["i"] / g["in"]
+		compared += 1
+		if not (mo < mi):
+			bad += 1
+		parts.append("rgb/1000 %s: outer %d motes mean alpha %.4f vs inner %d motes mean alpha %.4f" % [key, g["on"], mo, g["in"], mi])
+	var ok := compared > 0 and bad == 0
+	return {"ok": ok, "detail": "box %.1f about the camera, outer quarter of the half box is distance above %.1f, inner half is below %.1f; %d tint groups compared, %d not strictly lower: %s" % [box, outer_from, inner_to, compared, bad, " | ".join(parts) if not parts.is_empty() else "no tint group has motes in both zones"]}
+
+
+func _check_dust() -> void:
+	# Positive controls, on the real renderer through the same reader: green first.
+	var c_centre := Vector3(10.0, -20.0, 5.0)
+	var c_box := 120.0
+	var ok_d := _read_dust(_synth_dust(400, c_box, c_centre, 50, false, true))
+	var single_d := _read_dust(_synth_dust(400, c_box, c_centre, 100, true, true))
+	var split_d := _read_dust(_synth_dust(400, c_box, c_centre, 60, false, true))
+	var nofade_d := _read_dust(_synth_dust(400, c_box, c_centre, 50, false, false))
+	var t_ok: Dictionary = _tint_verdict(ok_d)
+	var t_single: Dictionary = _tint_verdict(single_d)
+	var t_split: Dictionary = _tint_verdict(split_d)
+	var f_ok: Dictionary = _fade_verdict(ok_d, c_centre, c_box)
+	var f_nofade: Dictionary = _fade_verdict(nofade_d, c_centre, c_box)
+	_check("DUST-TINTS-CONTROL", t_ok.ok and not t_single.ok and not t_split.ok, "a synthetic 400-mote MultiMesh read back on %s: 50/50 two-tint passes=%s; single-tint flagged=%s (%s); 60/40 flagged=%s (%s)" % [RenderingServer.get_video_adapter_name(), t_ok.ok, not t_single.ok, t_single.detail.substr(0, 60), not t_split.ok, t_split.detail.substr(0, 60)])
+	_check("DUST-FADE-CONTROL", f_ok.ok and not f_nofade.ok, "a synthetic faded MultiMesh passes=%s (%s); the same with no fade is flagged=%s (%s)" % [f_ok.ok, f_ok.detail.substr(0, 160), not f_nofade.ok, f_nofade.detail.substr(0, 160)])
+
+	var dust := _rig.get_node_or_null("CameraDust") if _rig != null else null
+	if dust == null or not (dust is MultiMeshInstance3D) or (dust as MultiMeshInstance3D).multimesh == null:
+		var why := "CameraDust: no MultiMeshInstance3D with a MultiMesh under the rig (backdrop absent)"
+		_check("DUST-TINTS", false, why)
+		_check("DUST-FADE", false, why)
+		return
+	var consts := _rig_script.get_script_constant_map()
+	if not consts.has("DUST_BOX"):
+		_check("DUST-TINTS", false, "ambient_rig.gd has no DUST_BOX constant")
+		_check("DUST-FADE", false, "ambient_rig.gd has no DUST_BOX constant")
+		return
+	await _set_pos("d25")
+	await _frames(4)
+	var cam := get_viewport().get_camera_3d()
+	var centre: Vector3 = cam.global_position if cam != null else _camera.global_position
+	var data := _read_dust((dust as MultiMeshInstance3D).multimesh)
+	var tv := _tint_verdict(data)
+	var fv := _fade_verdict(data, centre, float(consts["DUST_BOX"]))
+	_check("DUST-TINTS", tv.ok and _device_ok, tv.detail + ("" if _device_ok else " (GPU run invalid)"))
+	_check("DUST-FADE", fv.ok and _device_ok, fv.detail + ("" if _device_ok else " (GPU run invalid)"))
 
 
 # ---- SHADER-COMPILES ------------------------------------------------------------------------------
