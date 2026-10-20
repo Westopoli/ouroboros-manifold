@@ -1,3 +1,4 @@
+# Rule pins: R-096-08@629328
 # spec: R-096-08 (guard) - the landscape batch with guard defenders and the two tall-cover cells expressed
 """landscape batch: 12 expressed cells, nothing unexpressed, defenders guard. Fake sensors, no engine."""
 import sys

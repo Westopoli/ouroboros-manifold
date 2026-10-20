@@ -1,3 +1,4 @@
+# Rule pins: R-095-02@47ddf5, R-095-03@f360de
 # spec: Architect ruling A187 item 1 (slots kept for wide shapes, R-095-02/R-095-03) - scripts/skilllab/fight.py _issue_orders ; LAB-REV2-L2: Setup.orders_per_unit=False keeps the chunked group order under test
 """A wide group is split into chunks that each stay within SLOT_RADIUS of their own centroid. Fake engine; no library."""
 import math

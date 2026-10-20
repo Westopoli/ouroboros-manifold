@@ -1,3 +1,4 @@
+# Rule pins: R-005-05@96a3b1, R-164-01@511d57
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L1; harness-spec AC-24 (hand-built count)
 """The rev 2 count of LAB-REV2-L1 against the real engine, hand-built geometry, no fight loop.
 

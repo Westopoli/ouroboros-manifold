@@ -1,3 +1,4 @@
+# Rule pins: R-087-06@2b0850
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md::28 (point 1); docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::E1
 """LAB-REV2-E1b -- the layout-192 lone-attacker scene that capped (FINDING-attackmove-idle-cap) ends by elimination.
 

@@ -1,3 +1,4 @@
+# Rule pins: R-096-02@dbc10f
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md ruling 6 (contact architecture), rulings 1 and 5, piece LAB-REV2-L2; Q-LAB-03
 """Contact through the production library: the stall scene eliminates, an assault onto the holder's centre of mass eliminates,
 and the pre-flight refuses a cell that cannot be fought (`no_fit`, `unroutable`, `no_reach`) before any tick.

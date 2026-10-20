@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@edc84b, R-087-06@2b0850
 """PP-unit: return fire (E-11 S-087, R-087-06; plan Phase A row P6, audit G12).
 
 R-087-06: "Given an idle or attack-moving unit with no target taking damage, When hit, Then it

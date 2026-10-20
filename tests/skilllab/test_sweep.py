@@ -1,3 +1,4 @@
+# Rule pins: R-163-01@b165a4
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L4 (knob families and bands, controls, bisection, smoke and sweep commands); rulings 3, 4, 10, 11, 13
 """LAB-REV2-L4: scripts/skilllab/sweep.py (NEW), driven by fakes. No engine, no map, no pool process.
 

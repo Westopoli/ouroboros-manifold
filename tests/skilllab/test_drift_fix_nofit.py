@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-004-01@61a9b6
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 20 as rewritten ("no_fit on field_seed terrain reads terrain_walkable_at for
 # every walking mover"), LAB-REV2-FIX ruling 4 (Architect, decisions 41 and 42, 2026-10-19); R-001-07, R-004-01
 """scenes.preflight's no_fit: only WALKING movers read the generated field's walk mask.

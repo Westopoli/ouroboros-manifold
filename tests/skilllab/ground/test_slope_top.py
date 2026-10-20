@@ -1,3 +1,4 @@
+# Rule pins: R-004-06@ebf993, R-005-09@dd0832
 # spec: LAB-REV2-L6 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, rulings 10 and 11, the L6 row); R-005-09 (ground vision), S-164 (reach by type), R-004-06 (slope midline)
 """The ground scene s1_slope_top (M1): its structure, its knob grid, and the retirement of ground/highground.py.
 
