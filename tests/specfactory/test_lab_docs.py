@@ -214,7 +214,7 @@ _README_CLAIMS = {
     # DRAFT numbers stay marked DRAFT (decision 29 item 4, decision 31 F, the spec's open list)
     "draft-opening-window": (None, ("opening window", "40", "draft")),
     "draft-guard-radius": (None, (("guard radius", "guard_radius"), "200", "draft", "E4")),
-    "draft-firing-arc": (None, ("firing arc", "120", "draft", "flanked")),
+    "firing-arc-ruled": (None, ("firing arc", "30", "Westley", "flanked")),   # decision 46: 30 degrees is Westley's, no longer the 120 draft (TD-LAB-REV2-FIX5-arc30)
     "draft-cone": (None, ("cone", "300", "45", "1.0", "draft")),
     "draft-mixes": (None, ("M3b", "M4", "draft")),
     "draft-reengage-silence": (None, ("REENGAGE_SILENCE_TICKS", "40", "draft")),
@@ -424,9 +424,12 @@ def test_roadmap_highground_instrument_is_not_listed_as_live():
 # --- harness spec: the clauses decision 15 names (5, 11, 12, 13) are rewritten; each loses 'stalemate' / the win margin ---
 
 _CLAUSE_WORDS = {   # clause -> words it must carry (rev 2 contract: elimination only, cap a defect, FightResult and Setup fields)
-    5: ("elimination", "`cap`", "`orders_per_unit`", "`Setup.point`"),
+    5: ("elimination", "`cap`", "`orders_per_unit`", "`Setup.point`",
+        # decision 45 item 6 (TD-LAB-REV2-FIX5-docs): the no-op re-arm and the moved-displacement draft, in the re-engage sentence
+        "no-op", "re-arm", "another `REENGAGE_SILENCE_TICKS`", "DRAFT-reengage-moved-wu"),
     11: ("`draw`", "`cap`", "firing_window", "weighted_unit_seconds", "weighted_window",
-         "predicted_count", "predicted_type", "agreement", "states"),
+         "predicted_count", "predicted_type", "agreement", "states",
+         "`blind_cap`", "`[]`"),       # decision 45 item 6: the field list names blind_cap; states is [] when off, not None
     # decision 39 item 2: reach_play retired by ruling 2, damage_play the labelled positive control, point for goal None,
     # per-unit orders until the decision 23 flip, the contact placement sentence stands
     12: ("`Setup.point`", "meeting", "per-unit", "`orders_per_unit`", "`reach_play`", "retired", "ruling 2",
@@ -434,7 +437,8 @@ _CLAUSE_WORDS = {   # clause -> words it must carry (rev 2 contract: elimination
     13: ("every fight", "side0", "defect"),
     14: ("bisection", "`ceiling_hit`", "`multi_flip`", "`full_scan`"),
     17: ("firing_window_0", "weighted_unit_seconds_0", "weighted_window_0", "predicted_count", "predicted_type", "agreement",
-         "`knob`", "`knob_value`", "`baseline`", "`ceiling_hit`", "`prefight`", "reengage_0", "`point`", "baseline_no_fit"),
+         "`knob`", "`knob_value`", "`baseline`", "`ceiling_hit`", "`prefight`", "reengage_0", "`point`", "baseline_no_fit",
+         "`blind_post`"),             # decision 45 item 6: the blind_post column, and blind_post among the prefight words
     18: ("`artifact`", "SVG"),
     19: ("ceiling hit", "scan cut by baseline_no_fit"),
     20: ("`full_scan`",),
@@ -442,6 +446,7 @@ _CLAUSE_WORDS = {   # clause -> words it must carry (rev 2 contract: elimination
     28: ("FINDING-speed-marks-unmet", "known red", "Westley"),
 }
 _CLAUSE_ABSENT = {   # clause -> stale words it must not keep
+    11: ("None when it is not",),          # decision 45 item 6: states is [] when off
     12: ("a study knob", "`goal` None"),
     14: ("(all won, all lost, or flat)",),
 }
@@ -497,3 +502,133 @@ def test_control_the_parity_doc_check_accepts_a_block_that_has_the_tokens_and_re
     good = "- Smoke: `smoke_summary.json` carries `parity`: the units where the composed and the engine's answers differ, or skipped: E0 absent."
     assert _has_block(good, *_PARITY_TOKENS)
     assert not _has_block(good.replace("skipped: E0 absent", "n/a"), *_PARITY_TOKENS)
+
+
+# =====================================================================================================
+# LAB-REV2-FIX round 5 (Architect decision 45 items 2, 3, 4, 6 and the follow-ups of 2026-10-19; decision 46). Ledger TD-LAB-REV2-FIX5-docs.
+# Same method as above: presence / absence of named words in one bullet, paragraph or row; the builder writes the sentences.
+# =====================================================================================================
+
+GROUND_README = REPO / "scripts" / "skilllab" / "ground" / "README.md"
+
+
+def _sentences(text: str) -> list[str]:
+    flat = " ".join(text.split())
+    return [x for x in re.split(r"(?<=[.;:!?])\s+", flat) if x]
+
+
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+_FIX5_README_CLAIMS = {
+    # (6) README names the plays batch one actually runs and says the five blind_post-refused plays are not in its sweep
+    "batch-one-plays": (None, ("s3_layer_above", "s3_types_by_reach", "s3_dark_striker", "s1_outrange", "s2_spread_line", "s4_bait", "s4_do_not_chase",
+                               "s5_vulnerable_away", "blind_post", ("not in batch one's sweep", "not in batch one’s sweep"))),
+    # (6) the pre-flight list names all five words
+    "preflight-five-words": (7, ("scenes.preflight", "`ok`", "`no_fit`", "`unroutable`", "`no_reach`", "`blind_post`")),
+    # (6) the CSV rows bullet lists the blind_post column
+    "rows-blind-post-column": (7, ("`prefight`", "`baseline_no_fit`", "`reengage_0`", "`blind_post`")),
+    # (6) the orders flip is conditional on decision 43 item 1, with its status (green on the integration tree: kept as a guard)
+    "orders-flip-conditional": (7, ("orders_per_unit", "conditional", "decision 43 item 1", "FINDING-group-orders-cap")),
+    # (2) decision 45 item 2: the ground scene, its slope-divisor header line, the detection and its positive test are batch two's
+    "ground-scene-is-batch-two": (None, ("ground scene", ("slope-divisor", "slope divisor"), "header", "detection", ("positive test", "positive control"),
+                                         "batch two")),
+}
+
+
+@pytest.mark.parametrize("claim", sorted(_FIX5_README_CLAIMS))
+def test_fix5_readme_claim(claim):
+    section, tokens = _FIX5_README_CLAIMS[claim]
+    text = README.read_text()
+    if section is not None:
+        text = _section(text, section)
+    assert _has_block(text, *tokens), \
+        f"README{'' if section is None else f' section {section}'} has no single bullet, paragraph or row carrying {tokens}"
+
+
+def test_fix5_readme_x1_sentence_is_there_exactly():
+    assert "vision cells: layout 192 only; 81 and 78 refuse the play: no_fit" in _flat(README.read_text())
+
+
+def test_fix5_readme_says_reengage_is_a_stand_in_exactly():
+    assert "re-engage is a lab stand-in for the engine's pending sight-engagement rule" in _flat(README.read_text())
+
+
+def test_fix5_readme_firing_arc_is_thirty_not_the_old_draft():
+    """Decision 46 (Westley): the firing arc is 30 degrees. No README block about the firing arc and the flanked unit still says 120."""
+    blocks = [b for b in _blocks(README.read_text()) if "firing arc" in b.lower() and "flanked" in b.lower()]
+    assert blocks and not [b for b in blocks if re.search(r"\b120\b", b)], "a firing-arc block still says 120"
+
+
+@pytest.mark.parametrize("path", [README, GROUND_README], ids=["research-readme", "ground-readme"])
+def test_fix5_no_sentence_says_the_first_batch_reports_the_inert_knobs(path):
+    """Decision 45 item 3. The ground README said 'the first batch reports them inert'; the research README said 'the batch summary reports them inert'."""
+    bad = [x for x in _sentences(path.read_text()) if "inert" in x.lower() and "report" in x.lower() and re.search(r"first batch|batch one", x, re.I)]
+    assert not bad, bad[0][:160]
+
+
+@pytest.mark.parametrize("path", [README, GROUND_README], ids=["research-readme", "ground-readme"])
+def test_fix5_the_inert_knobs_are_batch_twos(path):
+    assert _has_block(path.read_text(), "inert", "batch two", ("report", "reports")), f"{path.name} does not say batch two reports the inert knobs"
+
+
+def test_fix5_control_the_inert_check_catches_the_old_wording():
+    old = "The knobs are inert here (`INERT_KNOBS`; the first batch reports them inert): every sight line is clear."
+    assert [x for x in _sentences(old) if "inert" in x.lower() and "report" in x.lower() and re.search(r"first batch|batch one", x, re.I)]
+    assert _has_block("- Batch two reports the inert knobs.", "inert", "batch two", ("report", "reports"))
+
+
+def test_fix5_no_test_pins_ground_scene_detection_or_a_slope_header_for_batch_one():
+    """Decision 45 item 2 withdraws decision 34 item 3 for batch one: no test under tests/skilllab asserts a slope-divisor header line or a ground-scene
+    detection. (The existing header test pins the opposite: no name containing 'slope'.)"""
+    hits = []
+    for p in sorted((REPO / "tests" / "skilllab").rglob("test_*.py")):
+        for i, ln in enumerate(p.read_text().splitlines(), 1):
+            if re.search(r"DRAFT-slope|DRAFT-ground-scene|detect_ground|ground_scene_ran|slope-divisor header", ln):
+                hits.append(f"{p.name}:{i}")
+    assert not hits, hits
+
+
+# --- the harness spec ----------------------------------------------------------------------------------------------
+
+def test_fix5_harness_clause17_lists_blind_post_as_a_column_and_as_a_prefight_word():
+    c = _clause(17)
+    m = re.search(r"`prefight` \(([^)]*)\)", c)
+    assert m and "`blind_post`" in m.group(1), "clause 17's prefight words lack `blind_post`"
+    assert c.replace(m.group(0), "").count("`blind_post`") >= 1 or "blind_post" in c.replace(m.group(0), ""), "clause 17 lists no blind_post column"
+
+
+def test_fix5_harness_parity_runs_at_tick_zero_only():
+    text = HARNESS.read_text()
+    assert _has_block(text, "parity", "tick 0"), "the harness spec does not say parity runs at tick 0"
+    assert not _has_block(text, "parity", "every sampled tick"), "the harness spec still says parity runs at every sampled tick"
+
+
+def test_fix5_harness_does_not_say_fight_imports_the_retired_count_able_weighted():
+    stale = [b for t in (HARNESS.read_text(), README.read_text()) for b in _blocks(t) if "fight.py" in b and "count_able_weighted" in b]
+    assert not stale, stale[0][:140]
+
+
+def test_fix5_control_the_harness_helpers_catch_the_old_sentences():
+    old = "- L1 and L2 land together: `fight.py` still imports the retired `count_able_weighted` until L2 rewires it.\n- Parity runs at every sampled tick (`Setup.sample_every`)."
+    assert _has_block(old, "fight.py", "count_able_weighted") and _has_block(old, "parity", "every sampled tick") and not _has_block(old, "parity", "tick 0")
+
+
+# --- the register ---------------------------------------------------------------------------------------------------
+
+def test_fix5_q_lab_01_is_no_longer_open():
+    status = _register_row("Q-LAB-01")[STATUS].strip().lower()
+    assert status != "open" and status.split()[0] in ("closed", "superseded"), f"Q-LAB-01 status is {status!r}"
+
+
+def test_fix5_q_lab_03_answer_lists_the_new_lab_drafts():
+    row = _register_row("Q-LAB-03")
+    text = " | ".join(row)
+    for name in ("GUARD_RADIUS", "REENGAGE_MOVED_WU", "COARSE_STEP", "CONTROL_MAX_TICKS"):
+        assert name in text, f"Q-LAB-03 row does not name {name} among the DRAFTs"
+    assert "draft" in text.lower()
+
+
+def test_fix5_control_register_status_helper_reads_a_superseded_row():
+    assert _register_row("Q-008-04")[STATUS] == "closed"

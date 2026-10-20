@@ -73,7 +73,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-from fakes_scans import FakePool, ScriptedFight, _fr, fake_builds  # noqa: E402
+from fakes_scans import FakePool, ScriptedFight, _fr, fake_builds, probe_bound  # noqa: E402
 from scripts.skilllab import __main__ as cli, pool, rows as rows_mod, sweep  # noqa: E402
 from scripts.skilllab.contract import Setup  # noqa: E402
 
@@ -528,12 +528,12 @@ def test_replicates_keyword_changes_the_cell_size(tmp_path):
 
 def test_the_scan_range_is_eight_to_forty_eight_by_bisection_not_forty_one_cells(tmp_path):
     """Ruling 4 and the 90 s mark: the play and each baseline are scanned from 8 to 48 enemy units, and the bisection fights at
-    most 14 of the 41 headcounts per scan."""
+    most probe_bound of the 41 headcounts per scan (derived from scan.COARSE_STEP, TD-LAB-REV2-FIX5-probe-bound)."""
     _, world = run(tmp_path, "damage_up")
     for role in ("play", "naive_attacker"):
         heads = sorted({c["enemy"] for c in world.calls if c["role"] == role and c["settings"].get("OM_TP_DAMAGE_UP_1") == 1.0
                         and c["play"] == "p2"})            # not the designated control fight on s3_types_by_reach (decisions 22)
-        assert heads[0] == 8 and heads[-1] == 48 and len(heads) <= 14, (role, heads)
+        assert heads[0] == 8 and heads[-1] == 48 and len(heads) <= probe_bound(sweep.ENEMY_FROM, sweep.ENEMY_TO), (role, heads)
 
 
 def test_both_baselines_are_run_and_reported_for_a_plain_play(tmp_path):
@@ -930,11 +930,11 @@ def _play_heads(world, setting="OM_TP_DAMAGE_UP_1", value=1.0):
 
 def test_run_family_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp_path):
     _, world = run(tmp_path / "bis", "damage_up")
-    assert len(_play_heads(world)) <= 14
+    assert len(_play_heads(world)) <= probe_bound(sweep.ENEMY_FROM, sweep.ENEMY_TO)
     _, world = run(tmp_path / "lin", "damage_up", full_scan=True)
     assert _play_heads(world) == list(range(8, 49))
     _, world = run(tmp_path / "off", "damage_up", full_scan=False)
-    assert len(_play_heads(world)) <= 14
+    assert len(_play_heads(world)) <= probe_bound(sweep.ENEMY_FROM, sweep.ENEMY_TO)
 
 
 def test_the_full_scan_rows_are_a_superset_of_the_bisection_rows(tmp_path):
@@ -958,7 +958,7 @@ def test_smoke_scans_every_headcount_with_full_scan_and_by_bisection_without(tmp
     _, world, _ = _smoke(tmp_path / "bis", control_builds=control_builds())
     plays_ = set(sweep.PLAYS_BY_FAMILY["vision"])
     heads = lambda w: sorted({c["enemy"] for c in w.calls if c["play"] in plays_ and c["role"] == "play"})
-    assert len(heads(world)) <= 14
+    assert len(heads(world)) <= probe_bound(sweep.ENEMY_FROM, sweep.ENEMY_TO)
     _, world, _ = _smoke(tmp_path / "lin", control_builds=control_builds(), full_scan=True)
     assert heads(world) == list(range(8, 49))
 

@@ -34,8 +34,8 @@ Engine methods this file fixes for the fake (and so for the builder; the spec's 
 plus the Engine methods that already exist: unit_alive, unit_pos, unit_layer, unit_facing, unit_target, type_stats,
 profile_reach, visible_enemies(w, side, enemy_ids), param_id, get_param, can_shoot.
 
-Named drafts used here: none of this file's numbers is a threshold; DRAFT-firing-arc-deg 120 appears as the arc width
-of the arc tests only because ruling 8 names it.
+Named numbers used here: none of this file's numbers is a threshold; the arc width 30 of the arc tests is Westley's ruling of 2026-10-19
+(decision 46: DRAFT-firing-arc-deg was 120, no longer a draft; TD-LAB-REV2-FIX5-arc30).
 """
 import ctypes
 import inspect
@@ -54,7 +54,7 @@ from scripts.skilllab import engine as engine_mod  # noqa: E402
 from scripts.skilllab import firing  # noqa: E402
 
 ARC_OFF = 360.0
-ARC_DRAFT = 120.0     # DRAFT-firing-arc-deg (ruling 8)
+ARC_RULED = 30.0      # the firing arc, Westley 2026-10-19 (decision 46); was DRAFT-firing-arc-deg 120
 CAT = {"Raider": 0, "Vanguard": 1, "Bombard": 2}           # the real engine's categories for these three types
 DEFAULT_PARAMS = {"OM_TP_TARGET_BY_SIGHT": 1.0, "OM_TP_VISION_UP_1": 0.5, "OM_TP_VISION_DOWN_1": 0.5}
 
@@ -377,8 +377,8 @@ def arc_world(bearing_deg, shooter_facing=0.0, enemy_facing=None, arc_dist=90.0)
 
 
 @pytest.mark.parametrize("bearing,arc,inside", [
-    (0.0, ARC_DRAFT, True), (59.0, ARC_DRAFT, True), (61.0, ARC_DRAFT, False),
-    (-59.0, ARC_DRAFT, True), (-61.0, ARC_DRAFT, False), (180.0, ARC_DRAFT, False),
+    (0.0, ARC_RULED, True), (14.0, ARC_RULED, True), (16.0, ARC_RULED, False),
+    (-14.0, ARC_RULED, True), (-16.0, ARC_RULED, False), (180.0, ARC_RULED, False),
     (89.0, 180.0, True), (91.0, 180.0, False), (179.0, 360.0, True), (180.0, 360.0, True),
 ])
 def test_r100_04_a_unit_counts_only_with_the_target_inside_the_arc_about_its_facing(bearing, arc, inside):
@@ -390,41 +390,41 @@ def test_r100_04_a_unit_counts_only_with_the_target_inside_the_arc_about_its_fac
 
 def test_r100_04_the_arc_turns_with_the_facing_and_wraps_at_pi():
     """Ruling 8: the angle is the shortest arc between facing and bearing. Facing 3.1 rad and a target at -3.1 rad are
-    0.08 rad apart, not 6.2 apart: inside any arc; a facing turned away by 90 degrees is outside a 120 degree arc."""
+    0.08 rad apart, not 6.2 apart: inside any arc; a facing turned away by 90 degrees is outside a 30 degree arc."""
     fake, w, a, e = arc_world(math.degrees(-3.1), shooter_facing=3.1)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT)[0] == 1
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED)[0] == 1
     fake, w, a, e = arc_world(0.0, shooter_facing=math.pi / 2)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT)[0] == 0
-    fake, w, a, e = arc_world(0.0, shooter_facing=math.pi / 2 - 0.3)    # 72.8 degrees off: still outside half-width 60
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT)[0] == 0
-    fake, w, a, e = arc_world(0.0, shooter_facing=0.5)                   # 28.6 degrees off: inside
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT)[0] == 1
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED)[0] == 0
+    fake, w, a, e = arc_world(0.0, shooter_facing=math.pi / 2 - 0.3)    # 72.8 degrees off: still outside half-width 15
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED)[0] == 0
+    fake, w, a, e = arc_world(0.0, shooter_facing=0.2)                   # 11.5 degrees off: inside
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED)[0] == 1
 
 
 def test_r100_04_a_flanked_unit_with_its_back_to_the_enemy_is_not_able_until_it_turns():
     """Ruling 8: the arc gates the SHOT: facing away reads 0, and the same unit reads 1 once the engine's face pass has
     turned it (facing is read live from unit_facing each call)."""
     fake, w, a, e = arc_world(0.0, shooter_facing=math.pi)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (0, 1)
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED) == (0, 1)
     fake.facings[a] = 0.0
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (1, 1)
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED) == (1, 1)
 
 
 def test_r100_04_the_arc_is_per_shooter_each_side_uses_its_own_facing():
     """Ruling 8: the enemy facing away from side 0 cannot fire at it; side 0 facing the enemy can: (1, 0). Swapped: (0, 1)."""
     fake, w, a, e = arc_world(0.0, shooter_facing=0.0, enemy_facing=0.0)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (1, 0)
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED) == (1, 0)
     fake, w, a, e = arc_world(0.0, shooter_facing=math.pi, enemy_facing=math.pi)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (0, 1)
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED) == (0, 1)
 
 
 def test_r100_04_the_arc_gate_composes_with_the_other_gates():
     """Gate 4 with gate 5: inside the arc but can_shoot false still reads 0; arc fails and can_shoot true reads 0 too."""
     fake, w, a, e = arc_world(0.0)
     fake.block(a, e)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (0, 1)
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED) == (0, 1)
     fake, w, a, e = arc_world(90.0)
-    assert firing.count_able(fake, w, [a], [e], ARC_DRAFT) == (0, 1)
+    assert firing.count_able(fake, w, [a], [e], ARC_RULED) == (0, 1)
 
 
 def test_r100_04_boundary_is_inclusive_and_arc_360_or_more_is_off():
@@ -625,7 +625,7 @@ def fail_world(code):
     elif code == 3:
         fake.units[e]["x"] = 400.0
     elif code == 4:
-        arc, fake.facings[a] = ARC_DRAFT, math.pi                      # the enemy is straight behind a
+        arc, fake.facings[a] = ARC_RULED, math.pi                      # the enemy is straight behind a
     elif code == 5:
         fake.block(a, e)
     return fake, w, a, e, arc
@@ -685,7 +685,7 @@ def test_states_code_is_the_lowest_failing_gate_when_several_fail(fails, code):
     if "range" in parts:
         fake.units[e]["x"] = 400.0
     if "arc" in parts:
-        arc, fake.facings[a] = ARC_DRAFT, math.pi
+        arc, fake.facings[a] = ARC_RULED, math.pi
     if "blocked" in parts:
         fake.block(a, e)
     assert dict(firing.states(fake, w, [a], [e], arc))[a] == code

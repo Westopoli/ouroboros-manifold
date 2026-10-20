@@ -22,9 +22,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+for _p in (ROOT, Path(__file__).resolve().parent):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
+from fakes_scans import probe_bound  # noqa: E402
 from scripts.skilllab import scan as scan_module  # noqa: E402
 from scripts.skilllab.contract import CellResult, FightResult, ScanResult, Setup  # noqa: E402
 from scripts.skilllab.scan import cell, scan  # noqa: E402
@@ -351,11 +353,11 @@ def test_bisection_finds_the_same_break_even_as_the_linear_sweep_on_one_flip(edg
 
 @pytest.mark.parametrize("edge", [8, 15, 16, 27, 47])
 def test_bisection_fights_far_fewer_cells_than_the_linear_sweep(edge):
-    """The 90 s scan mark rests on this: at most 14 of the 41 headcounts, in increasing order, with both bracket cells present."""
+    """The 90 s scan mark rests on this: at most probe_bound(8, 48) of the 41 headcounts (derived from COARSE_STEP: 9 today), in increasing order, with both bracket cells present."""
     rec = Recorder(won_up_to(edge))
     res = scan(_build, 16, 8, 48, replicates=3, fight_fn=rec)
     heads = _probes(res)
-    assert heads == sorted(set(heads)) and len(heads) <= 14
+    assert heads == sorted(set(heads)) and len(heads) <= probe_bound(8, 48)
     assert edge in heads and edge + 1 in heads
     assert rec.heads == heads and len(rec.calls) == len(heads) * 2 * 3 == len(set(rec.calls))
     lin = Recorder(won_up_to(edge))
@@ -363,18 +365,35 @@ def test_bisection_fights_far_fewer_cells_than_the_linear_sweep(edge):
     assert len(lin.calls) == 41 * 2 * 3 > 2 * len(rec.calls)
 
 
+@pytest.mark.parametrize("step", [2, 4, 8, 16])
+def test_the_probe_bound_is_derived_from_coarse_step_and_is_tight(monkeypatch, step):
+    """TD-LAB-REV2-FIX5-probe-bound: the bound is not a bare 14. The coarse points plus one probe per halving of a bracket of width COARSE_STEP:
+    never exceeded over every break-even edge, and reached by some edge (so a looser or a hard-coded bound would fail the second half)."""
+    monkeypatch.setattr(scan_module, "COARSE_STEP", step)
+    most = 0
+    for edge in range(7, 50):
+        res = scan(_build, 16, 8, 48, replicates=1, fight_fn=Recorder(won_up_to(edge)))
+        most = max(most, len(_probes(res)))
+    assert most == probe_bound(8, 48), (step, most)
+
+
+def test_the_probe_bound_is_nine_at_the_drafted_step():
+    """Control: the drafted COARSE_STEP 8 gives the Architect's figure (decision 45: at most 9 over 8 to 48, not 14)."""
+    assert scan_module.COARSE_STEP == 8 and probe_bound(8, 48) == 9
+
+
 def test_bisection_ceiling_hit_when_won_everywhere():
     rec = Recorder(won_up_to(99))
     res = scan(_build, 16, 8, 48, replicates=1, fight_fn=rec)
     assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (48, None, True, False)
-    assert len(_probes(res)) <= 14 and 48 in _probes(res)
+    assert len(_probes(res)) <= probe_bound(8, 48) and 48 in _probes(res)
 
 
 def test_bisection_lost_everywhere_is_none_and_cheap():
     rec = Recorder(won_up_to(0))
     res = scan(_build, 16, 8, 48, replicates=1, fight_fn=rec)
     assert (res.beats, res.loses_to, res.ceiling_hit, res.multi_flip) == (None, None, False, False)
-    assert len(_probes(res)) <= 14
+    assert len(_probes(res)) <= probe_bound(8, 48)
 
 
 def test_bisection_reports_multi_flip_on_two_wide_flips_and_reads_the_first_win_to_loss():
