@@ -22,8 +22,9 @@ INTERFACE FOR THE BUILDER
       holding a destination is never tested) is displaced by MORE than contract.REENGAGE_MOVED_WU (strictly, Euclidean: L1 and Chebyshev fail
       the (0.6, 0.6) and (0.8, 0.8) cases; exactly 1 wu is not a move) from its position at the WINDOW START, the tick the side's counter was
       last zeroed (at the very start, the spawn); a rolling reference fails 5 tests of test_reengage.py and 7+ cases here. ANY such unit
-      moving above the threshold moves the side (not the first unit, not the centroid). Every zeroing (a move, a hit dealt by either side,
-      the re-arm after a no-op) takes a fresh reference for the side's living units. DRAFT number: contract.REENGAGE_MOVED_WU = 1 wu.
+      moving above the threshold moves the side (not the first unit, not the centroid). Every zeroing (a move, a hit dealt by the side itself,
+      the re-arm after a no-op) takes a fresh reference for the side's living units; a hit dealt to the side zeroes nothing (decision 49 condition (i)
+      as amended 2026-10-20, FINDING-lab-d11). DRAFT number: contract.REENGAGE_MOVED_WU = 1 wu.
     UNPINNED, THE BUILDER'S CHOICE (two interface points the tests do not fix): (a) a no-op check made on a side that fired or moved
       between the order and the check: the check may be skipped (the reset has already re-armed the side) or run; (b) the retry tick
       between 2N and 2N + 1, and every ordered unit dying (nothing left to check) are not pinned. PINNED: an ordered unit that is DEAD at
@@ -84,7 +85,7 @@ def test_only_idle_living_attack_move_units_are_ordered_one_each():
         f.set_dest(f.units_of(0)[0], (0.0, 0.0))
     res, fake = run([G(0, 3), G(1, 2)], cap=N + 5, script_events={0: [busy, kill(0, 1)]})
     calls = fake.reengage_calls(0)
-    assert [ids for _t, ids, _g in calls] == [[fake.units_of(0)[2]]] and calls[0][0] == N + 1    # TD-LAB-REV2-L8M-moved: was N; the kill zeroes both counters
+    assert [ids for _t, ids, _g in calls] == [[fake.units_of(0)[2]]] and calls[0][0] == N    # decision 49 (i) amended: side 0 did not fire, the kill of its unit does not delay it (TD-LAB-REV2-L8M-moved: N + 1 on the L8M tip)
 
 
 # ---------------------------------------------------------------------------------------------------------- item 3: a no-op engage is retried

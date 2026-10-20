@@ -1,12 +1,13 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 43 item 4 as corrected by the Architect's 2026-10-20 ruling (L8M, relayed; the damage_up caps README calls it decision 49); the number DRAFT-reengage-moved-wu = 1 wu is Westley's and unchanged
 """LAB-REV2-L8M: what counts as 'moved' for the re-engage silence counter (scripts/skilllab/fight.py, _Reengage). Tests only.
 
-THE RULE (Architect, 2026-10-20; rulings on the audit, same day). A side's silence counter ADVANCES on a tick when (i) no unit of EITHER side
-fired this tick (a unit fires when an enemy unit's hp falls; the victim's counter is delayed too, intended), and (ii) no IDLE-ELIGIBLE
+THE RULE (Architect, 2026-10-20; rulings on the audit, same day). A side's silence counter ADVANCES on a tick when (i) no unit of THAT side
+fired this tick (a unit fires when an enemy unit's hp falls; a side that is shot at and does not reply is NOT delayed by the hits it
+takes: a lone shooter must not silence its idle victims forever; FINDING-lab-d11, decision 49 condition (i) as amended 2026-10-20), and (ii) no IDLE-ELIGIBLE
 LIVING unit of that side is displaced by MORE than contract.REENGAGE_MOVED_WU (strictly; Euclidean; DRAFT-reengage-moved-wu, 1 wu, Westley's
 number) from its position at the WINDOW START. Otherwise the counter is zeroed and a new window starts. The WINDOW START is the tick the
 counter was last zeroed (not a rolling reference; at the very start, the spawn). EVERY zeroing takes a fresh reference for the side's
-living units: a displacement above the line, a hit dealt by either side (the victim's side too), and the re-arm after a no-op engage. Nothing
+living units: a displacement above the line, a hit dealt BY THE SIDE (never a hit dealt to it), and the re-arm after a no-op engage. Nothing
 else refreshes a reference: in particular a unit that holds a destination keeps its old reference while it marches.
 IDLE-ELIGIBLE (existing definition, unchanged): no destination (engine.unit_destination is None) AND the unit holds an attack-move role
 (a guard holder, or a group whose latest order is move/group_move/idle/guard, does not count). DEAD units are not tested (living units
@@ -29,9 +30,10 @@ WHAT THESE TESTS PIN
   The jitter loop and a steady march of a destination-holder never zero the counter; idle teammates are re-engaged one order each at tick N;
   the holder is never ordered; the strict > 1 wu line on an idle unit with a jittering holder beside it; a guard-role unit is not
   idle-eligible; a creep of an idle unit is measured from the window start, not from the previous tick; the ARRIVAL jump (and its control, a
-  holder that never arrives); a dead unit is not 'displaced' (even killed after a displacement); a hit by the other side refreshes the
-  references (a displacement split across a hit does not add up), for either victim side; a no-op engage's re-arm refreshes them too.
-  Pinned in test_reengage.py (the three rewritten fire tests) and test_drift_fix_reengage.py (the strict boundary, the Euclidean distance);
+  holder that never arrives); a dead unit is not 'displaced' (even killed after a displacement); a hit dealt by a side refreshes its
+  references (a displacement split across a hit the side dealt does not add up), for either shooter side; a no-op engage's re-arm refreshes
+  them too; a hit dealt to a side never delays it (the lone-shooter case: test_reengage_lone_shooter.py).
+  Pinned in test_reengage.py (the fire tests, back at their pre-L8M expectations) and test_drift_fix_reengage.py (the strict boundary, the Euclidean distance);
   all of it is ledger row TD-LAB-REV2-L8M-moved.
 Fakes: fakes_reengage.ReengageFakeEngine; run/G/N/only/kill from test_reengage.py. set_dest is the destination of a holder; set_pos in the
 fake's step script moves it."""
@@ -199,17 +201,17 @@ def test_a_creep_of_an_idle_unit_is_measured_from_the_window_start_not_from_the_
     assert fake.reengage_orders(0) == [] and only(fake.reengage_orders(1))[0] == N
 
 
-# ---------------------------------------------------------------------------------------------------------- a hit by either side
+# ---------------------------------------------------------------------------------------------------------- a hit dealt zeroes only the shooter
 
 @pytest.mark.parametrize("victim", (0, 1))
-def test_a_hit_on_a_side_that_never_fired_still_zeroes_its_counter(victim):
-    """Condition (i): no unit of EITHER side fired. A unit of `victim` loses hp at tick N - 4 (the other side fired; `victim` did not), so both
-    counters restart: both sides are re-engaged at 2N - 4, the victim included (the old counter zeroed only the shooter's side: N). Both sides
-    carry a looping holder, so a late order cannot be the holder's doing."""
+def test_a_hit_on_a_side_that_never_fired_does_not_zero_its_counter(victim):
+    """Condition (i) as amended 2026-10-20, FINDING-lab-d11 (decision 49: the side's own counter; TD-LAB-REV2-L8M-moved: the L8M tip delayed the
+    victim to 2N - 4). A unit of `victim` loses hp at tick N - 4 (the other side fired; `victim` did not): the victim is re-engaged at N, the
+    shooter's counter restarts and it is re-engaged at 2N - 4. Side 0 carries a looping holder, so a late order cannot be the holder's doing."""
     def hit(f):
         f.set_hp(f.units_of(victim)[1], 90.0)
     res, fake = run([G(0, 4), G(1, 4)], cap=2 * N + 5, script_events=merged(holder_script(0, loop, 2 * N + 5), {N - 5: [hit]}))
-    assert {t for t, _i, _g in fake.reengage_calls(victim)} == {N - 4 + N}
+    assert {t for t, _i, _g in fake.reengage_calls(victim)} == {N}
     assert {t for t, _i, _g in fake.reengage_calls(1 - victim)} == {N - 4 + N}
 
 
@@ -275,9 +277,9 @@ def test_a_holder_that_arrives_zeroes_the_counter_on_arrival_and_one_that_does_n
 
 def test_a_unit_displaced_and_killed_in_the_same_step_does_not_stay_displaced():
     """Dead units are not tested (living units only). An idle unit of side 0 is displaced 5 wu and killed in the same step (script key
-    N - 5 = tick N - 4). The kill is a hit (the other side fired), so both counters restart at tick N - 4 and both sides are ordered at
-    2N - 4 = (N - 4) + N, side 0 without the dead unit. A dead unit tested against a stale reference would stay 'displaced' and zero the
-    counter every tick after: no order for side 0 at all (the audit's scratch: tested dead units never order; the ruled rule: 2N - 4)."""
+    N - 5 = tick N - 4). The kill is a hit dealt by side 1: side 1's counter restarts and it is ordered at 2N - 4 = (N - 4) + N; side 0
+    did not fire, is not delayed and is ordered at N without the dead unit. A dead unit tested against a stale reference would stay
+    'displaced' and zero side 0's counter every tick from N - 4 on: no order for side 0 at all (the audit's scratch: tested dead units never order)."""
     def displace_and_kill(f):
         u = f.units_of(0)[1]
         f.set_pos(u, f.units[u]["x"] + 5.0, f.units[u]["y"])
@@ -285,37 +287,38 @@ def test_a_unit_displaced_and_killed_in_the_same_step_does_not_stay_displaced():
     res, fake = run([G(0, 4), G(1, 2)], cap=3 * N, script_events={N - 5: [displace_and_kill]})
     dead = fake.units_of(0)[1]
     calls = fake.reengage_calls(0)
-    assert {t for t, _i, _g in calls} == {2 * N - 4}, calls
+    assert {t for t, _i, _g in calls} == {N}, calls
     assert dead not in [u for _t, ids, _g in calls for u in ids] and len(calls) == 3
     assert only(fake.reengage_orders(1))[0] == 2 * N - 4
 
 
 def test_a_unit_displaced_earlier_and_killed_later_is_not_tested_after_its_death():
     """The same, one window later: the unit was displaced 0.6 wu at tick 5 (not a move) and is moved a further 0.6 wu (1.2 wu from the
-    window start, which would be a move) in the very step in which it is killed at tick N - 4. The kill restarts the window (a hit); the
-    dead unit is not tested again: both sides are ordered at 2N - 4."""
+    window start, which would be a move) in the very step in which it is killed at tick N - 4. The kill is a hit dealt by side 1: side 1 is ordered at
+    2N - 4; side 0 is not delayed by it and the dead unit is not tested again: side 0 is ordered at N."""
     def move_and_kill(f):
         u = f.units_of(0)[1]
         f.set_pos(u, f.units[u]["x"] + 0.6, f.units[u]["y"])
         f.set_hp(u, 0.0)
     res, fake = run([G(0, 4), G(1, 2)], cap=3 * N, script_events={4: [displace(1, 0.6)], N - 5: [move_and_kill]})
-    assert {t for t, _i, _g in fake.reengage_calls(0)} == {2 * N - 4}
+    assert {t for t, _i, _g in fake.reengage_calls(0)} == {N}
     assert only(fake.reengage_orders(1))[0] == 2 * N - 4
 
 
 # ---------------------------------------------------------------------------------------------------------- every zeroing refreshes the references
 
-@pytest.mark.parametrize("victim", (0, 1))
-def test_a_displacement_split_across_a_hit_dealt_by_the_other_side_does_not_add_up(victim):
-    """Every zeroing takes a fresh reference. An idle unit (index 1) of `victim`'s side is displaced 0.6 wu at tick N - 9 (not a move),
-    then one of its units loses hp at tick N - 4 (a hit dealt only by the OTHER side: the victim never fired), then the unit is displaced
-    another 0.6 wu at tick N + 6. The hit restarted the window with the displaced position as reference, so the second 0.6 wu is
-    0.6 wu from it and not a move: both sides are ordered at (N - 4) + N = 2N - 4. A reference refreshed only by the side's own fire or move
-    leaves the victim at 1.2 wu from the old reference: a move at tick N + 6, orders at 2N + 6."""
-    sc = ({N - 10: [displace(1, 0.6, side=victim)], N - 5: [wound(victim, 2)], N + 5: [displace(1, 0.6, side=victim)]})
+@pytest.mark.parametrize("shooter", (0, 1))
+def test_a_displacement_split_across_a_hit_the_side_dealt_does_not_add_up(shooter):
+    """Every zeroing takes a fresh reference (TD-LAB-REV2-L8M-moved: the fixture was a hit dealt by the other side to the displaced unit's side;
+    under the amended condition (i) that hit zeroes nothing, so it now zeroes with the side's OWN hit). An idle unit (index 1) of `shooter`'s
+    side is displaced 0.6 wu at tick N - 9 (not a move), then `shooter` deals a hit at tick N - 4 (an enemy unit loses hp), then the unit is
+    displaced another 0.6 wu at tick N + 6. The hit restarted the window with the displaced position as reference, so the second 0.6 wu is
+    0.6 wu from it and not a move: `shooter` is ordered at (N - 4) + N = 2N - 4. A reference refreshed only by a move leaves it at 1.2 wu
+    from the old reference: a move at tick N + 6, orders at 2N + 6. The side that was hit and never fired is ordered at N."""
+    sc = ({N - 10: [displace(1, 0.6, side=shooter)], N - 5: [wound(1 - shooter, 2)], N + 5: [displace(1, 0.6, side=shooter)]})
     res, fake = run([G(0, 4), G(1, 4)], cap=3 * N, script_events=sc)
-    assert {t for t, _i, _g in fake.reengage_calls(victim)} == {2 * N - 4}
-    assert {t for t, _i, _g in fake.reengage_calls(1 - victim)} == {2 * N - 4}
+    assert {t for t, _i, _g in fake.reengage_calls(shooter)} == {2 * N - 4}
+    assert {t for t, _i, _g in fake.reengage_calls(1 - shooter)} == {N}
 
 
 def test_a_noop_engage_rearms_with_a_fresh_reference():
