@@ -22,7 +22,8 @@ from scripts.skilllab.contract import Block, Group, Setup, Terrain  # noqa: E402
 SKILLED = ("s1_hold_choke", "s2_concave", "s2_spread_line", "s2_screen", "s3_layer_above", "s3_types_by_reach",
            "s3_over_the_choke", "s3_dark_striker", "s3_ping_then_commit", "s4_bait", "s5_vulnerable_away")
 COUNTERS = ("s2_mass_one_end", "s4_do_not_chase", "s1_outrange")
-NAMES = SKILLED + COUNTERS
+CONTROL_FIXTURES = ("s3_vision_control",)     # LAB-VISION-CONTROL: registered, but the vision positive control, not an ordinary sweep play
+NAMES = SKILLED + COUNTERS + CONTROL_FIXTURES
 S3 = tuple(n for n in NAMES if n.startswith("s3_"))
 STATUS = "unconfirmed draft, not measured"
 UNITS = 16
