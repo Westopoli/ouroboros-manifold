@@ -783,6 +783,9 @@ def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
 #           and radii) and, from decision 43 item 4 (TD-LAB-REV2-FIX-moved), DRAFT-reengage-moved-wu (contract.REENGAGE_MOVED_WU, 1 wu); always, because the artifact cannot tell from the rows which scans or scenes a batch ran (Q-FIX-2). No name containing "slope" (the slope divisor joins only in a
 #           batch that runs the ground scene; nothing here says how the artifact would know, so no positive test) and none containing
 #           "band" (the 0.25x to 4x band is a ruling, decision 31 F, not a draft number).
+#           Decision 45 item 5 and decision 47 item 3 (TD-LAB-REV2-FIX5-header-names) add seven more, always listed, once each:
+#           DRAFT-behind-cover, DRAFT-ambush-behind, DRAFT-mix-M1, DRAFT-mix-M2, DRAFT-mix-M3, DRAFT-mix-M4, DRAFT-mix-M3b (they join the
+#           list, so DRAFT-mixes stays), and none of them is a data-draft element inside a diagram.
 #       <section id="findings">: for each notable, in diagram.notables order: one <h2 data-notable="<id>"> holding the sentence, then the
 #           exact diagram.render svg text (its root id = the notable id) as the NEXT element sibling of the h2 and a child of the section,
 #           then, for a crossing only, a <p class="counts" data-notable="<id>"> (the sentence under the diagram) holding one
@@ -1240,6 +1243,8 @@ def test_l5_artifact_cone_grid_section_is_the_charts_grid_or_says_there_is_no_co
 
 
 FIX_DRAFTS = ("DRAFT-coarse-step", "DRAFT-control-max-ticks", "DRAFT-probe-count-bound", "DRAFT-ground-geometry", "DRAFT-reengage-moved-wu")
+# Decision 45 item 5 (names) and decision 47 item 3 (they join the artifact header DRAFT list): always listed, once each (TD-LAB-REV2-FIX5-header-names).
+SCENE_MIX_DRAFTS = ("DRAFT-behind-cover", "DRAFT-ambush-behind", "DRAFT-mix-M1", "DRAFT-mix-M2", "DRAFT-mix-M3", "DRAFT-mix-M4", "DRAFT-mix-M3b")
 
 
 def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
@@ -1250,7 +1255,7 @@ def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
     root = _tree(_page(tmp_path)[2])
     names = [li.attrs["data-draft"] for li in _sec(root, "drafts").find("li") if "data-draft" in li.attrs]
     assert sorted(names) == sorted(["DRAFT-opening-window-ticks", "DRAFT-guard-radius", "DRAFT-mixes", "DRAFT-reengage-silence-ticks",
-                                    "DRAFT-scale-marks", *FIX_DRAFTS])
+                                    "DRAFT-scale-marks", *FIX_DRAFTS, *SCENE_MIX_DRAFTS])
     assert not [n for n in names if "slope" in n or "band" in n]
     opening = [li for li in _sec(root, "drafts").find("li") if li.attrs.get("data-draft") == "DRAFT-opening-window-ticks"][0]
     assert str(contract.OPENING_WINDOW_TICKS) in opening.text().split()
@@ -1262,12 +1267,28 @@ def test_l5_artifact_header_lists_every_draft_number_in_force_once(tmp_path):
     assert len(names2) == len(set(names2))
 
 
+def test_l5_artifact_header_lists_the_scene_and_mix_draft_names_once_and_no_diagram_legend_carries_them(tmp_path):
+    """Decision 45 item 5, decision 47 item 3: each of the seven names is exactly one header <li data-draft>, in the page with rows
+    and in the page without; and none is a data-draft element inside any diagram (the legend lists the draft numbers a diagram's own
+    arrows touch, these seven touch none)."""
+    for sub, kw in (("rows", {}), ("norows", {"rows": []})):
+        root = _tree(_page(tmp_path / sub, **kw)[2])
+        names = [li.attrs["data-draft"] for li in _sec(root, "drafts").find("li") if "data-draft" in li.attrs]
+        for name in SCENE_MIX_DRAFTS:
+            assert names.count(name) == 1, (sub, name, names.count(name))
+    root = _tree(_page(tmp_path / "svg")[2])
+    svgs = root.find("svg")
+    assert svgs, "positive control: the page with rows has diagrams to look in"
+    in_diagrams = [n.attrs["data-draft"] for svg in svgs for n in svg.iter() if n.attrs.get("data-draft") in SCENE_MIX_DRAFTS]
+    assert not in_diagrams, in_diagrams
+
+
 def test_l5_artifact_without_rows_does_not_mark_the_opening_window(tmp_path):
     """Negative control: no row means the opening window touched nothing; the other numbers in force stay listed."""
     root = _tree(_page(tmp_path, rows=[])[2])
     names = {li.attrs["data-draft"] for li in _sec(root, "drafts").find("li") if "data-draft" in li.attrs}
     assert "DRAFT-opening-window-ticks" not in names and {"DRAFT-guard-radius", "DRAFT-mixes", "DRAFT-reengage-silence-ticks", "DRAFT-scale-marks",
-                                                          *FIX_DRAFTS} <= names
+                                                          *FIX_DRAFTS, *SCENE_MIX_DRAFTS} <= names
     assert not root.find("svg")
 
 

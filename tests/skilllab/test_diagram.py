@@ -623,12 +623,13 @@ def test_series_sort_by_point_as_a_string_inside_a_family_play_layout():
     assert [n.point for n in kinds(rows, diagram.CROSSING)] == ["half=22.5", "half=45", "half=90"]
 
 
-def test_crossings_of_one_series_are_ordered_by_numeric_knob_lo_arc_90_before_120():
-    """A string sort puts "120.0" before "90.0". Gain -, +, -, -, - over 90, 120, 180, 270, 360: crossings (90, 120) and (120, 180)."""
-    rows = sweep_rows({90: 8, 120: 32, 180: 8, 270: 8, 360: 8}, {"naive_attacker": {v: 16 for v in (90, 120, 180, 270, 360)}},
+def test_crossings_of_one_series_are_ordered_by_numeric_knob_lo_arc_7_5_before_15():
+    """A string sort puts "15.0" before "7.5". Gain -, +, -, -, - over 7.5, 15, 30, 60, 120 (the arc grid, decision 47): crossings
+    (7.5, 15) and (15, 30)."""
+    rows = sweep_rows({7.5: 8, 15: 32, 30: 8, 60: 8, 120: 8}, {"naive_attacker": {v: 16 for v in (7.5, 15, 30, 60, 120)}},
                       family="arc", play="s2_concave")
     got = [(n.knob_lo, n.knob_hi) for n in kinds(rows, diagram.CROSSING)]
-    assert got == [(90.0, 120.0), (120.0, 180.0)]
+    assert got == [(7.5, 15.0), (15.0, 30.0)]
     assert [(n.knob_lo, n.knob_hi) for n in kinds(rows[::-1], diagram.CROSSING)] == got
 
 
@@ -638,10 +639,11 @@ def test_cone_range_crossing_has_float_bounds_150_and_300():
     assert (n.knob_lo, n.knob_hi) == (150.0, 300.0) and isinstance(n.knob_lo, float) and isinstance(n.knob_hi, float)
 
 
-def test_ceiling_hits_are_ordered_by_numeric_knob_value_90_120_270():
-    rows = sweep_rows({270: 48, 90: 48, 120: 48}, {}, family="arc", play="s2_concave")
+def test_ceiling_hits_are_ordered_by_numeric_knob_value_7_5_15_120():
+    """A string sort gives 120.0, 15.0, 7.5."""
+    rows = sweep_rows({120: 48, 7.5: 48, 15: 48}, {}, family="arc", play="s2_concave")
     got = [n.knob_lo for n in kinds(rows, diagram.CEILING_HIT)]
-    assert got == [90.0, 120.0, 270.0] and [n.knob_lo for n in kinds(rows[::-1], diagram.CEILING_HIT)] == got
+    assert got == [7.5, 15.0, 120.0] and [n.knob_lo for n in kinds(rows[::-1], diagram.CEILING_HIT)] == got
 
 
 def test_ceiling_hits_sort_by_family_play_layout_then_knob():
@@ -668,8 +670,8 @@ def test_ids_are_filesystem_safe_unique_and_a_function_of_the_fields():
 def test_ids_differ_across_knob_values_series_and_points_that_look_alike():
     """Unique across knob values: the two crossings of one arc series, the three ceiling hits, and points whose text is close
     ("half=22.5" and "half=225" must not collapse once the characters outside [A-Za-z0-9_-] are replaced)."""
-    arc = sweep_rows({90: 8, 120: 32, 180: 8}, {"naive_attacker": {90: 16, 120: 16, 180: 16}}, family="arc", play="s2_concave")
-    ceil = sweep_rows({90: 48, 120: 48, 270: 48}, {}, family="arc", play="s2_concave")
+    arc = sweep_rows({7.5: 8, 15: 32, 30: 8}, {"naive_attacker": {7.5: 16, 15: 16, 30: 16}}, family="arc", play="s2_concave")
+    ceil = sweep_rows({7.5: 48, 15: 48, 120: 48}, {}, family="arc", play="s2_concave")
     alike = cone_series("half=22.5", {300: 48}) + cone_series("half=225", {300: 48}) + cone_series("half=22-5", {300: 48})
     for rows in (arc, ceil, alike):
         ids = [n.id for n in diagram.notables(rows)]
@@ -1049,7 +1051,7 @@ def test_a_diagram_without_a_window_arrow_marks_no_opening_window_draft(rendered
 
 
 def test_arc_family_diagram_marks_the_firing_arc_draft():
-    rows = sweep_rows({90: 8, 120: 32, 180: 40, 270: 40, 360: 40}, {"naive_attacker": {90: 16, 120: 16, 180: 16, 270: 16, 360: 16}},
+    rows = sweep_rows({7.5: 8, 15: 32, 30: 40, 60: 40, 120: 40}, {"naive_attacker": {7.5: 16, 15: 16, 30: 16, 60: 16, 120: 16}},
                       family="arc", play="s2_concave")
     n = one(rows, diagram.CROSSING)
     assert set(drafts(parse(diagram.render(n, rows, fake_setup())))) == {"DRAFT-firing-arc-deg"}

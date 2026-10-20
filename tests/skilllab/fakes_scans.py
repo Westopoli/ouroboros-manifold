@@ -1,6 +1,5 @@
 """Hand-built ProfileMap/ScanResult objects for the profile and conditions-all tests. No engine."""
-import dataclasses
-
+import math
 from scripts.skilllab.contract import CellResult, FightResult, Group, ScanResult, Setup
 from scripts.skilllab.evidence import Thresholds
 from scripts.skilllab.profile import PROFILE_SKILLS, ProfileMap, subsets
@@ -11,6 +10,15 @@ EMPTY = frozenset()
 
 def S(*names):
     return frozenset(names)
+
+
+def probe_bound(enemy_from, enemy_to):
+    """The most headcounts a bisected scan of enemy_from..enemy_to may fight, derived from scan.COARSE_STEP (TD-LAB-REV2-FIX5-probe-bound):
+    the coarse pass (every COARSE_STEP-th headcount from enemy_from, and enemy_to) plus one probe per halving of the first won-to-lost
+    bracket, whose width is at most COARSE_STEP. 6 + 3 = 9 for COARSE_STEP 8 over 8 to 48."""
+    from scripts.skilllab import scan as scan_mod
+    coarse = set(range(enemy_from, enemy_to + 1, scan_mod.COARSE_STEP)) | {enemy_to}
+    return len(coarse) + math.ceil(math.log2(scan_mod.COARSE_STEP))
 
 
 def by_size(*vals):
@@ -41,16 +49,10 @@ def cell(heads, fights, won=True):
 
 
 def scan_of(size, beats, cells, ceiling_hit=False, multi_flip=False):
-    """LAB-REV2-L4: ScanResult has no win_margin and carries ceiling_hit and multi_flip. Written to build on both sides of L4's
-    contract change (it passes win_margin only while the field exists), so other pieces' tests that use it stay green."""
-    names = {f.name for f in dataclasses.fields(ScanResult)}
-    extra = {}
-    if "win_margin" in names:
-        extra["win_margin"] = 0.05
-    if "ceiling_hit" in names:
-        extra["ceiling_hit"], extra["multi_flip"] = ceiling_hit, multi_flip
+    """A ScanResult as contract.py defines it (TD-LAB-REV2-FIX5-fakes: the win_margin and fields-probing branch is gone)."""
     return ScanResult(size=size, cells=list(cells), beats=beats,
-                      loses_to=None if beats is None or ceiling_hit else beats + 1, **extra)
+                      loses_to=None if beats is None or ceiling_hit else beats + 1,
+                      ceiling_hit=ceiling_hit, multi_flip=multi_flip)
 
 
 def make_map(map_id="m", base=None, over=None, size=10, kind="open", offers=PROFILE_SKILLS,

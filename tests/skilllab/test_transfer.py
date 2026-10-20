@@ -97,7 +97,7 @@ def test_labels_reach_fight_row_and_are_deterministic():
 # the values: a Setup with firing_arc_deg below 360 or a non-empty cone is MAGNITUDES. The tests below stay.
 
 def test_l5_a_narrowed_firing_arc_is_a_magnitude():
-    assert transfer_class(setup(firing_arc_deg=120.0)) == MAGNITUDES
+    assert transfer_class(setup(firing_arc_deg=30.0)) == MAGNITUDES
     assert transfer_class(setup(firing_arc_deg=360.0)) == RULE_GEOMETRY          # the default arc changes nothing (negative control)
 
 
