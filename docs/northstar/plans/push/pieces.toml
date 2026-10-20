@@ -3022,7 +3022,7 @@ size_estimate = "one test file: region, character and chain bonuses rank events,
 id = "VG-U3-CHRON-WIRE"
 manager = "M0"
 wave = 13
-owns = ["csrc/generational.c"]
+owns = ["csrc/generational.c", "csrc/chronicle.c", "csrc/om_internal.h"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_chronicle_context.py"]
 depends_on = ["VG-U3-CHRON-TESTS", "VG-CONTRACT-U4-EVCHAR"]
@@ -3046,7 +3046,7 @@ size_estimate = "one test file: events fired by the tick carry a character id, w
 id = "VG-CONTRACT-U4-EVCHAR"
 manager = "M0"
 wave = 13
-owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/events.c", "csrc/generational.c", "csrc/save.c"]
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/events.c", "csrc/generational.c", "csrc/om_internal.h"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_event_characters.py"]
 depends_on = ["VG-U4-EVCHAR-TESTS", "VG-CONTRACT-U0", "VG-CONTRACT-E7", "LAB-REV2-E0", "VG-CONTRACT-layerspot", "VG-CONTRACT-route"]
@@ -3118,7 +3118,7 @@ size_estimate = "one test file: player preferences reach the sim through the pip
 id = "VG-U8-PREF-WIRE"
 manager = "M0"
 wave = 13
-owns = ["csrc/pipe/om_pipe.c", "csrc/mission.c", "docs/architecture.md"]
+owns = ["csrc/pipe/om_pipe.c", "csrc/mission.c", "docs/architecture.md", "csrc/om_internal.h"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_preferences.py"]
 depends_on = ["VG-U8-PREF-TESTS", "VG-U7-OBJECTIVES-WIRE", "VG-U3-CHRON-WIRE", "VG-CONTRACT-U0"]
@@ -3137,6 +3137,19 @@ depends_on = ["HARNESS-lane-plays-scope"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "Lane M menus skeleton: one play and three autoload scripts, thinnest end-to-end path"
+
+# FINDING-gate-lane-plays-scope (Architect 2026-10-20): the gate runs only the plays under a changed lane's own globs, so a cross-lane play (S-140) was never gated; widen the scope
+[[piece]]
+id = "HARNESS-lane-plays-scope"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_lane_plays_scope.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_lane_plays_scope.py"]
+depends_on = ["HARNESS-C4", "HARNESS-westley-folder"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the gate widens the lane-plays scope so a play that crosses lanes runs when any file it walks changes"
 
 [[piece]]
 id = "HARNESS-coverage"
