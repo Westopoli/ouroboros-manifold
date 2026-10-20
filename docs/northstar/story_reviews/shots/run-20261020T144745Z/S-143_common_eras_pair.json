@@ -1,0 +1,130 @@
+{
+  "inventory": {
+    "hud_texts": {
+      "@Label@82": "MULTIPLAYER",
+      "@Label@84": "Team size",
+      "BackButton": "BACK",
+      "DoctrineButton": "DOCTRINE: BALANCED",
+      "EraLine": "Eras: you settled_reach, greek_placeholder \u00b7 peers settled_reach \u00b7 playable settled_reach",
+      "HostButton": "HOST",
+      "JoinButton": "JOIN",
+      "LobbyIdField": "47574",
+      "StartButton": "START",
+      "StatusLine": "Lobby id 47574 (friends only). Invite friends or share the id.",
+      "TeamSize": "2"
+    },
+    "nodes_by_name": {
+      "@HBoxContainer@83": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@HBoxContainer@95": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@82": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@84": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@81": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "BackButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "DoctrineButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "EraLine": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "HostButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "JoinButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "LobbyIdField": {
+        "class": "LineEdit",
+        "count": 1,
+        "visible": true
+      },
+      "MemberList": {
+        "class": "ItemList",
+        "count": 1,
+        "visible": true
+      },
+      "StartButton": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "StatusLine": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "TeamSize": {
+        "class": "OptionButton",
+        "count": 1,
+        "visible": true
+      }
+    }
+  },
+  "qa": {
+    "common_eras": [
+      "settled_reach"
+    ],
+    "eras": {
+      "1": [
+        "settled_reach",
+        "greek_placeholder"
+      ],
+      "2": [
+        "settled_reach"
+      ]
+    },
+    "friends_only": true,
+    "max_members": 4,
+    "members": [
+      1,
+      2
+    ],
+    "owned_eras": [
+      "settled_reach",
+      "greek_placeholder"
+    ],
+    "playable_eras": [
+      "settled_reach"
+    ],
+    "scene": "lobby",
+    "team_size": 2,
+    "team_sizes": [
+      2,
+      4
+    ],
+    "tick": -1
+  },
+  "scene": "res://scenes/lobby/lobby.tscn",
+  "tick": 0
+}

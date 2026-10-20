@@ -17,6 +17,17 @@ the bottom: reason (8) (a [B R-id] tag carries a pin, "no pin" / "pin is stale")
 and the heading exemption of reason (1). Fixture ids are pinned @? above: the fixture epics are the only place
 R-990-01 has a rule line. Moved under ledger row TD-HARNESS-C1: PASSING_SPEC carries the pin in its [B] tag.
 
+HARNESS-C235 (same spec, section 1 HARNESS-C235, rev 3a) extends this file below the C1a block: reason (9)
+quantified quotes ([ASSERT tests/<path>::<name>], W_TAG parse, key clause inside an assertion line), reason (10)
+numbers after a quote (DRAFT-delay style names in the sentence), reason (11) set-asides ([OPEN Q-x] on an open
+register row whose Answer names a piece id or an FU- row), the register status `reading`, and the malformed-row
+finding under reason (5). Named drafts used: DRAFT-quantifiers (the twelve words), DRAFT-set-aside-phrases (the
+seven phrases). Nothing above moves: _tree and _run_text gained optional trailing arguments (register text, extra
+files) and keep their old behaviour. The fixture ids stay R-990-01 (pinned @? above) and the register ids Q-990-xx.
+UNSTATED INTERFACES (reported): the reason number of the `unquoted [W] text contains "["` finding (the spec names the
+text, not the number, so only the text is asserted); the wording of reason (5)'s finding for a `deferred`/`superseded`
+row (only "(5)" at the unit's line is asserted).
+
 Each case builds a throwaway tree in tmp_path (docs/bible/epics/E-99-test.md
 with rule R-990-01, a register with a closed row Q-990-01 and an open row
 Q-990-02, a ledger row for DRAFT-test-thing) so the repo root rule (first
@@ -34,7 +45,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 SCRIPT = REPO / "scripts" / "specfactory" / "spec_provenance.py"
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "spec_rev10.md"
 
-FINDING_RE = re.compile(r":(\d+): \((\d)\)")
+FINDING_RE = re.compile(r":(\d+): \((\d+)\)")
 TAG_RE = re.compile(r"\[W Q-|\[W \d{4}-\d\d-\d\d|\[B R-|\[P |\[DRAFT-")
 
 EPIC_TEXT = (
@@ -71,13 +82,16 @@ PASSING_SPEC = (
 )
 
 
-def _tree(tmp_path: Path, spec_text: str) -> Path:
+def _tree(tmp_path: Path, spec_text: str, register: str = REGISTER_TEXT, files=()) -> Path:
     root = tmp_path / "tree"
     (root / "docs" / "bible" / "epics").mkdir(parents=True)
     (root / "docs" / "northstar" / "plans").mkdir(parents=True)
     (root / "docs" / "bible" / "epics" / "E-99-test.md").write_text(EPIC_TEXT)
-    (root / "docs" / "northstar" / "ambiguity_register.md").write_text(REGISTER_TEXT)
+    (root / "docs" / "northstar" / "ambiguity_register.md").write_text(register)
     (root / "docs" / "northstar" / "plans" / "push_ledger_2026-09-22.md").write_text(LEDGER_TEXT)
+    for rel, body in files:                      # HARNESS-C235: files under the spec's root (a test for [ASSERT])
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        (root / rel).write_text(body)
     spec = root / "spec.md"
     spec.write_text(spec_text)
     return spec
@@ -105,8 +119,8 @@ def _line_of(text: str, needle: str) -> int:
     raise AssertionError(f"{needle!r} not in fixture text")
 
 
-def _run_text(tmp_path: Path, text: str):
-    spec = _tree(tmp_path, text)
+def _run_text(tmp_path: Path, text: str, register: str = REGISTER_TEXT, files=()):
+    spec = _tree(tmp_path, text, register, files)
     res = _lint(spec)
     return spec, res, _findings(res)
 
@@ -382,3 +396,316 @@ def test_reason1_skips_a_heading_unit(tmp_path):
     spec, res, found = _run_text(tmp_path, "# Test spec\n\n### Heading 2026\n")
     assert [n for _, n, _ in found if n == 1] == [], res.stdout
     assert res.returncode == 0, res.stdout + res.stderr
+
+
+# ---- HARNESS-C235: reasons 9, 10, 11, [ASSERT]/[OPEN], reading status ------------------------------------
+# Spec sentences (HARNESS-C235, rev 3a), cited by the case that proves each; "Tests first: ..." gives the inputs.
+
+NEVER = "never a square at any age"
+PY_GOOD = ("import pytest\n\n@pytest.mark.slow\ndef test_x():\n    # " + NEVER + "\n    shape = 'round'\n"
+           "    assert shape != 'square', \"" + NEVER + "\"\n\n\ndef test_other():\n    assert True\n")
+PY_COMMENT_ONLY = "def test_x():\n    # " + NEVER + "\n    assert True\n"
+PY_NEXT_FUNCTION = ("def test_x():\n    assert True\n\n@pytest.mark.slow\ndef test_y():\n"
+                    "    assert shape != 'square', \"" + NEVER + "\"\n")
+PY_CONTINUED = "def test_x():\n    assert shape != 'square', (\n        \"" + NEVER + "\"\n    )\n"
+GD_STATIC = ("extends SceneTree\n\nstatic func test_x() -> void:\n\tvar shape = 'round'\n"
+             "\t_assert(shape != 'square', \"" + NEVER + "\")\n\nfunc test_other() -> void:\n\tpass\n")
+GD_NEXT_FUNCTION = ("extends SceneTree\n\nstatic func test_x() -> void:\n\tpass\n\n"
+                    "func test_y() -> void:\n\t_assert(true, \"" + NEVER + "\")\n")
+GD_ASSERT_HELPER = "func test_x() -> void:\n\tassert_eq(shape, 'round', \"" + NEVER + "\")\n"
+
+
+def _w(quote, extra=""):
+    return f"# Test spec\n\nShape rule. [W 2026-10-11: \"{quote}\"]{extra}\n"
+
+
+def _rows(*rows):
+    return REGISTER_TEXT + "".join(rows)
+
+
+def _row(qid, status, answer):
+    return f"| {qid} | E-99 | A question? | (a) yes; (b) no | {status} | {answer} |\n"
+
+
+def _out_has(res, n, needle):
+    return any(f"({n})" in l and needle in l for l in res.stdout.splitlines())
+
+
+def test_control_c235_fixture_files_assert_the_quote_on_an_assertion_line():
+    # Green today and after: the fixture test files carry the key clause where the spec says it must be
+    # (an `assert ` / `_assert(` / `assert_` line), and PY_COMMENT_ONLY carries it only in a comment.
+    for body in (PY_GOOD, PY_NEXT_FUNCTION, PY_CONTINUED, GD_STATIC, GD_ASSERT_HELPER):
+        assert NEVER in body
+    assert not [l for l in PY_COMMENT_ONLY.splitlines() if l.strip().startswith("assert") and NEVER in l]
+
+
+def test_control_unquantified_quote_needs_no_assert(tmp_path):
+    # Green today and after ("only whole words"): "soon" and "allowed" hold none of the twelve words.
+    for quote in ("soon", "an allowed shape", "the alloy"):
+        sub = tmp_path / quote.replace(" ", "_")
+        sub.mkdir()
+        spec, res, found = _run_text(sub, _w(quote))
+        assert res.returncode == 0 and res.stdout.strip() == "", (quote, res.stdout + res.stderr)
+
+
+def test_control_assert_with_a_body_that_asserts_the_clause_passes(tmp_path):
+    # Green today and after: "passes with [ASSERT tests/t.py::test_x] whose body has assert ..., \"never a square at
+    # any age\"" (today the tag is simply not looked at).
+    spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/t.py::test_x]"),
+                                 files=[("tests/t.py", PY_GOOD)])
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_control_combined_w_tag_with_a_closed_row_and_a_date_passes(tmp_path):
+    # Green today and after: "[W Q-990-01, 2026-10-11: \"x\"]" has a closed first id.
+    spec, res, found = _run_text(tmp_path, '# Test spec\n\nShape rule. [W Q-990-01, 2026-10-11: "x"]\n')
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_reason9_quantified_quote_without_assert_is_a_finding(tmp_path):
+    # "fixture spec with [W 2026-10-11: \"never a square at any age\"] fails reason 9 without [ASSERT]"
+    spec, res, found = _run_text(tmp_path, _w(NEVER))
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (9)") and "quantified quote has no [ASSERT]" in l for _, _, l in found), \
+        res.stdout
+
+
+def test_reason9_each_of_the_twelve_quantifiers_triggers(tmp_path):
+    # DRAFT-quantifiers: "at least, at most, never, always, every, all, only, no more than, any age, within,
+    # exactly, none", whole words, case-insensitive.
+    words = ["at least", "at most", "never", "always", "every", "all", "only", "no more than", "any age",
+             "within", "exactly", "none"]
+    assert len(words) == 12
+    for i, word in enumerate(words):
+        sub = tmp_path / f"w{i}"
+        sub.mkdir()
+        quote = f"the tile is {word.upper() if i % 2 else word} round"
+        spec, res, found = _run_text(sub, _w(quote))
+        assert _out_has(res, 9, "quantified quote has no [ASSERT]"), (word, res.stdout + res.stderr)
+
+
+def test_reason9_assert_whose_test_asserts_the_clause_in_a_python_file_with_a_decorator(tmp_path):
+    # Section 5 (c): body slicing on a `.py` test with a decorator; a clause only in the NEXT function fails.
+    spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/t.py::test_x]"),
+                                 files=[("tests/t.py", PY_NEXT_FUNCTION)])
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert _out_has(res, 9, f"the test does not assert the quote's words: \"{NEVER}\""), res.stdout
+
+
+def test_reason9_clause_only_in_a_comment_names_the_clause(tmp_path):
+    # "fails naming the clause when the words sit only in a comment"
+    spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/t.py::test_x]"),
+                                 files=[("tests/t.py", PY_COMMENT_ONLY)])
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (9)") and f"[ASSERT tests/t.py::test_x] the test does not assert the "
+               f"quote's words: \"{NEVER}\"" in l for _, _, l in found), res.stdout
+
+
+def test_reason9_missing_file_and_missing_function_are_test_not_found(tmp_path):
+    # "fails when the file is missing"; the function is found by `^\s*(?:async\s+)?def <name>\(`.
+    spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/missing.py::test_x]"))
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert _out_has(res, 9, "[ASSERT tests/missing.py::test_x] test not found"), res.stdout
+    sub = tmp_path / "nofn"
+    sub.mkdir()
+    spec, res, found = _run_text(sub, _w(NEVER, " [ASSERT tests/t.py::test_nope]"), files=[("tests/t.py", PY_GOOD)])
+    assert _out_has(res, 9, "[ASSERT tests/t.py::test_nope] test not found"), res.stdout
+
+
+def test_reason9_assertion_may_continue_over_lines_and_case_is_ignored(tmp_path):
+    # Audit S2: an assertion line includes its continuation lines up to the closing parenthesis; the match is
+    # whitespace-normalised and case-insensitive.
+    quote = "Never   a square at any age"
+    spec, res, found = _run_text(tmp_path, _w(quote, " [ASSERT tests/t.py::test_x]"),
+                                 files=[("tests/t.py", PY_CONTINUED)])
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+    sub = tmp_path / "second"
+    sub.mkdir()
+    spec, res, found = _run_text(sub, _w(quote), files=[("tests/t.py", PY_CONTINUED)])
+    assert _out_has(res, 9, "quantified quote has no [ASSERT]"), "reason (9) is never emitted\n" + res.stdout
+
+
+def test_reason9_key_clause_is_the_clause_with_the_first_quantifier(tmp_path):
+    # "the quote's key clause (the clause holding the first quantifier, split on `.`, `;`, ` and `, ` so `)".
+    quote = "the tile grows; it never forms a square and it is round"
+    body = "def test_x():\n    assert grows, \"the tile grows\"\n"
+    spec, res, found = _run_text(tmp_path, _w(quote, " [ASSERT tests/t.py::test_x]"), files=[("tests/t.py", body)])
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert _out_has(res, 9, "the test does not assert the quote's words: \"it never forms a square\""), res.stdout
+    sub = tmp_path / "good"
+    sub.mkdir()
+    body = "def test_x():\n    assert ok, \"it never forms a square\"\n"
+    spec, res, found = _run_text(sub, _w(quote, " [ASSERT tests/t.py::test_x]"), files=[("tests/t.py", body)])
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_reason9_gd_static_func_body_ends_at_the_next_func(tmp_path):
+    # Section 5 (c): body slicing on a `.gd` file with `static func`; `_assert(` and `assert_` lines count.
+    spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/t.gd::test_x]"), files=[("tests/t.gd", GD_STATIC)])
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+    sub = tmp_path / "next"
+    sub.mkdir()
+    spec, res, found = _run_text(sub, _w(NEVER, " [ASSERT tests/t.gd::test_x]"),
+                                 files=[("tests/t.gd", GD_NEXT_FUNCTION)])
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert _out_has(res, 9, f"the test does not assert the quote's words: \"{NEVER}\""), res.stdout
+    sub = tmp_path / "helper"
+    sub.mkdir()
+    spec, res, found = _run_text(sub, _w(NEVER, " [ASSERT tests/t.gd::test_x]"),
+                                 files=[("tests/t.gd", GD_ASSERT_HELPER)])
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_w_tag_combined_form_parses_the_quote_after_the_date(tmp_path):
+    # "the combined `[W Q-990-01, 2026-10-11: \"x\"]` parses with the date in group 2" (group 3 is then the quote).
+    spec, res, found = _run_text(tmp_path, '# Test spec\n\nShape rule. [W Q-990-01, 2026-10-11: "never x"]\n')
+    assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
+    assert _out_has(res, 9, "quantified quote has no [ASSERT]"), res.stdout
+
+
+def test_w_tag_quote_may_hold_a_closing_bracket_when_double_quoted(tmp_path):
+    # W_TAG: group 3 "ends at `\"]`, so a `]` inside the quote is allowed".
+    spec, res, found = _run_text(tmp_path, '# Test spec\n\nShape rule. [W 2026-10-11: "never a [square] at once"]\n')
+    assert _out_has(res, 9, "quantified quote has no [ASSERT]"), "reason (9) is never emitted\n" + res.stdout
+    assert not _out_has(res, 9, "unquoted"), res.stdout
+
+
+def test_w_tag_unquoted_quote_with_an_open_bracket_is_the_quote_it_finding(tmp_path):
+    # "an unquoted quote with `[` gives the quote-it finding" (the reason number is not given: text asserted).
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\nShape rule. [W Q-990-01: some [thing] here]\n")
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert 'unquoted [W] text contains "[": put the quote in double quotes' in res.stdout, res.stdout
+
+
+def test_assert_and_open_tags_start_a_provenance_tag(tmp_path):
+    # TAG_START gains `\[ASSERT |\[OPEN Q-`: a unit with only one of them is covered for reason (1).
+    text = ("# Test spec\n\nThe tile shows 5 wu. [OPEN Q-990-02]\n\n"
+            "The tile shows 6 wu. [ASSERT tests/t.py::test_x]\n")
+    spec, res, found = _run_text(tmp_path, text, files=[("tests/t.py", PY_GOOD)])
+    assert [n for _, n, _ in found if n == 1] == [], res.stdout
+
+
+def test_control_numbers_before_or_excluded_after_a_quote_pass(tmp_path):
+    # Green today and after ("a number before the tag passes"; NUMBER matches that are a CITATION, a date, an id,
+    # a `@pin`, or a `rev`/`wave` number are not checked).
+    tails = ["the delay is 3 s. [W Q-990-01: \"soon\"]",
+             "[W Q-990-01: \"soon\"] this lands in wave 9",
+             "[W Q-990-01: \"soon\"] see rev 3",
+             "[W Q-990-01: \"soon\"] see scripts/x.py:36",
+             "[W Q-990-01: \"soon\"] on 2026-10-11",
+             "[W Q-990-01: \"soon\"] under TD-HARNESS-C1 and FU-HARNESS-findings"]
+    for i, tail in enumerate(tails):
+        sub = tmp_path / f"t{i}"
+        sub.mkdir()
+        spec, res, found = _run_text(sub, "# Test spec\n\n" + tail + "\n")
+        assert res.returncode == 0 and res.stdout.strip() == "", (tail, res.stdout + res.stderr)
+
+
+def test_reason10_number_after_a_quote_with_no_draft_in_its_sentence(tmp_path):
+    # "`[W Q-990-01: \"soon\"] the delay is 3 s` fails reason 10" (the spec names Q-990-03; Q-990-01 is the closed
+    # fixture row here).
+    spec, res, found = _run_text(tmp_path, '# Test spec\n\n[W Q-990-01: "soon"] the delay is 3 s\n')
+    assert "(10)" in res.stdout, "reason (10) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (10)") and "number 3 after a quote with no DRAFT in its sentence" in l
+               for _, _, l in found), res.stdout
+
+
+def test_reason10_a_draft_in_the_sentence_passes_a_draft_in_another_sentence_does_not(tmp_path):
+    # "`... 3 s (DRAFT-delay)` passes"; the sentence is split on `. `.
+    spec, res, found = _run_text(tmp_path, '# Test spec\n\n[W Q-990-01: "soon"] the delay is 3 s (DRAFT-delay)\n')
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+    sub = tmp_path / "other"
+    sub.mkdir()
+    spec, res, found = _run_text(sub, '# Test spec\n\n[W Q-990-01: "soon"] the delay is 3 s. See DRAFT-delay.\n')
+    assert "(10)" in res.stdout, "reason (10) is never emitted\n" + res.stdout + res.stderr
+    assert _out_has(res, 10, "number 3 after a quote with no DRAFT in its sentence"), res.stdout
+
+
+def test_reason11_set_aside_rule_without_an_open_flag(tmp_path):
+    # "`R-990-01 is deferred to a later piece` fails reason 11"
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\nR-990-01 is deferred to a later piece\n")
+    assert "(11)" in res.stdout, "reason (11) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (11)") and "R-990-01 set aside with no [OPEN Q-x]" in l
+               for _, _, l in found), res.stdout
+
+
+def test_reason11_each_of_the_seven_phrases_triggers_and_a_unit_without_a_rule_does_not(tmp_path):
+    # DRAFT-set-aside-phrases: "not in scope, out of scope, set aside, not this piece, deferred, later, follow-up".
+    phrases = ["not in scope", "out of scope", "set aside", "not this piece", "deferred", "later", "follow-up"]
+    assert len(phrases) == 7
+    for i, phrase in enumerate(phrases):
+        sub = tmp_path / f"p{i}"
+        sub.mkdir()
+        spec, res, found = _run_text(sub, f"# Test spec\n\nR-990-01 is {phrase}\n")
+        assert _out_has(res, 11, "R-990-01 set aside with no [OPEN Q-x]"), (phrase, res.stdout + res.stderr)
+    sub = tmp_path / "norule"
+    sub.mkdir()
+    spec, res, found = _run_text(sub, "# Test spec\n\nThis piece is deferred to a later piece\n")
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_control_reason11_open_flag_on_an_open_row_naming_a_piece_passes(tmp_path):
+    # Green today and after: "with `[OPEN Q-990-02]` (open, names `VG-X1`) passes"; an `FU-` row also counts.
+    text = "# Test spec\n\nR-990-01 is deferred to a later piece. [OPEN Q-990-02]\n"
+    reg = REGISTER_TEXT.replace("| open | none yet |", "| open | waits on VG-X1 |")
+    spec, res, found = _run_text(tmp_path, text, register=reg)
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+    sub = tmp_path / "fu"
+    sub.mkdir()
+    reg = REGISTER_TEXT.replace("| open | none yet |", "| open | waits on FU-LATER-1 |")
+    spec, res, found = _run_text(sub, text, register=reg)
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_reason11_open_flag_on_a_closed_row_is_a_finding(tmp_path):
+    # "with a closed row fails" (Q-990-01 is the closed fixture row).
+    text = "# Test spec\n\nR-990-01 is deferred to a later piece. [OPEN Q-990-01]\n"
+    spec, res, found = _run_text(tmp_path, text)
+    assert "(11)" in res.stdout, "reason (11) is never emitted\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (11)") and "[OPEN Q-990-01] row is not open" in l for _, _, l in found), \
+        res.stdout
+
+
+def test_reason11_open_row_that_names_no_piece_is_a_finding(tmp_path):
+    # Q-990-02 is open with the Answer "none yet": "[OPEN Q-x] row names no piece that waits".
+    text = "# Test spec\n\nR-990-01 is deferred to a later piece. [OPEN Q-990-02]\n"
+    spec, res, found = _run_text(tmp_path, text)
+    assert "(11)" in res.stdout, "reason (11) is never emitted\n" + res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (11)") and "[OPEN Q-990-02] row names no piece that waits" in l
+               for _, _, l in found), res.stdout
+
+
+def test_control_w_tag_on_open_deferred_superseded_or_missing_rows_is_reason_5(tmp_path):
+    # Green today and after: reason 5 "rejects `open`, `deferred`, `superseded` and a missing row".
+    reg = _rows(_row("Q-990-04", "deferred", "(a)"), _row("Q-990-05", "superseded", "(a)"))
+    text = ("# Test spec\n\nThe tile shows 1 wu. [W Q-990-02]\n\nThe tile shows 2 wu. [W Q-990-04]\n\n"
+            "The tile shows 3 wu. [W Q-990-05]\n\nThe tile shows 4 wu. [W Q-990-09]\n")
+    spec, res, found = _run_text(tmp_path, text, register=reg)
+    assert sorted((l, n) for l, n, _ in found if n == 5) == [(3, 5), (5, 5), (7, 5), (9, 5)], res.stdout
+
+
+def test_reason5_reading_row_passes(tmp_path):
+    # "`[W Q-990-03]` on a `reading` row passes reason 5" (the row's own Answer holds "default": a reading row is
+    # what such an answer is re-statused to).
+    reg = _rows(_row("Q-990-03", "reading (Westley to confirm)", "(a), the default."))
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\nThe tile shows 5 wu. [W Q-990-03]\n", register=reg)
+    assert res.returncode == 0 and res.stdout.strip() == "", res.stdout + res.stderr
+
+
+def test_reason5_seven_cell_row_is_malformed(tmp_path):
+    # "a row whose cells cannot be split into six is finding `register row Q-x is malformed` under reason 5"
+    # (a seven-cell row whose status cell still reads closed: the cells are what is wrong).
+    bad = "| Q-990-06 | E-99 | A question? | (a) yes | closed | (a) | stray |\n"
+    spec, res, found = _run_text(tmp_path, "# Test spec\n\nThe tile shows 5 wu. [W Q-990-06]\n",
+                                 register=_rows(bad))
+    assert "(5)" in res.stdout, "register row is never reported malformed\n" + res.stdout + res.stderr
+    assert res.returncode == 1, res.stdout + res.stderr
+    assert any(l.startswith(f"{spec}:3: (5)") and "register row Q-990-06 is malformed" in l for _, _, l in found), \
+        res.stdout
