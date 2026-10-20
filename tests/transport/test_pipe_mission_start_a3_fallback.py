@@ -37,6 +37,7 @@ PARITY_MAX = 1.0
 # the player's units; every QUIET_SEEDS fallback region is below it.
 SHORTFALL_KEEP_MIN = 0.75
 ENEMY_POWER_PER_MILITARY = 2000.0  # R-074-01 default form; R-072-08
+N_TYPES = 6
 SNAPSHOT_ROUNDING = 1e-3  # snapshot military is rounded to two decimals; relative slack on P
 LIB = ROOT / "libouroboros.so"
 
@@ -188,6 +189,8 @@ def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(s
     lib.om_mission_setup.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int]
     lib.om_mission_fill_player_force.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double]
     lib.om_mission_fill_player_force.restype = ctypes.c_double
+    lib.om_mission_setup_fallback.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int32]
+    lib.om_mission_get_player_units.argtypes = [ctypes.c_void_p, ctypes.c_int32, ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32]
 
     frames = _run([
         {"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": N_REGIONS,
@@ -230,7 +233,28 @@ def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(s
     finally:
         lib.om_world_free(w)
     assert low > 0, "seed %d: fixture drift, the oracle fill is empty for P=%.0f" % (seed, p)
-    got = sum(lib.om_unit_power(u["type"]) for u in mine)
+    # TD-VG-E-34 (measures the composed F, Architect 2026-10-19): the band is a statement about the composed budget (P x
+    # parity), and before E7 the spawned units were the whole composed force. The player now spawns start_units of F, so the
+    # test sums the composed roster (om_mission_get_player_units of a world set up through the same
+    # om_mission_setup_fallback the pipe calls) and keeps the band unchanged. Premise F, p, e, share, start, spawned is printed.
+    wf = lib.om_world_new(N_REGIONS, seed)
+    try:
+        lib.om_world_generate(wf)
+        lib.om_mission_load_launch_library(wf)
+        lib.om_mission_setup_fallback(wf, mission["region"], expected_enemy)
+        roster = (ctypes.c_uint32 * N_TYPES)()
+        lib.om_mission_get_player_units(wf, player, roster, N_TYPES)
+    finally:
+        lib.om_world_free(wf)
+    composed = list(roster)
+    owners = [s["owner"] for s in tactical["structures"]]
+    n_p, n_e = owners.count(player), owners.count(expected_enemy)
+    share = n_p / (n_p + n_e) if n_p + n_e else None
+    start = sum(composed) * ((0.2 + 1.2 * share if share <= 0.25 else 0.5 + 0.4 * (share - 0.25)) if share is not None else 1.0)
+    print("PREMISE", "seed %d F %d p %d e %d share %s start %.2f start_units %d spawned %d composed %r"
+          % (seed, sum(composed), n_p, n_e, share, start, int(start + 0.5), len(mine), composed))
+    assert sum(composed) >= len(mine) > 0, "premise: the composed force F is at least what spawned"
+    got = sum(lib.om_unit_power(t) * n for t, n in enumerate(composed))
     assert low <= got <= high, (
-        "seed %d: player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04)"
-        % (seed, got, low, high, p, strongest, expected_enemy))
+        "seed %d: composed player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04); F %d p %d e %d share %s start_units %d spawned %d"
+        % (seed, got, low, high, p, strongest, expected_enemy, sum(composed), n_p, n_e, share, int(start + 0.5), len(mine)))
