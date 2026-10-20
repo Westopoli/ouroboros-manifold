@@ -11,7 +11,8 @@ M9 of plays_space.MIXES. Contract: tests/skilllab/test_rev3_b_mirror.py (sweep.m
   - MEASURED (2026-10-20, this file's reviewer, a scratch mirror of the same shape: blobs at x -350 and 350, seeds i // 2, swap i % 2,
     lab tip, built-in types): M5 0 caps, M6 0, M7 0, M8 0 (max 8295 ticks), M9 1 cap of 30 (seed 6, unswapped, 12000 ticks).
   - M9 ON THE REAL ENGINE (the ratified `living` shape, see test_rev3_b_mirror.py and test_rev3_b_living.py): its cap, if any, is fight 12 (seed 6 unswapped) and its living roster
-    at the cap is Wardens only, so M9 is accepted with the known-cap reason. This needs the real fight function to fill the `living`
+    at the cap is ({'Vanguard': 2, 'Warden': 4}, {'Warden': 2}) (measured by the B builder: Architect ruling 2026-10-20, P1, side 1 is all
+    Wardens), so M9 is accepted with the known-cap reason. This needs the real fight function to fill the `living`
     field of its result (the B builder owns that contract.py and fight.py edit).
   - POSITIVE CONTROL for the cap detection on the real engine: the same pre-check with every fight cut at 200 ticks (a fight_fn that
     lowers max_ticks) rejects an ordinary mix as capped, 30 of 30.
@@ -57,8 +58,10 @@ def test_r1_the_rows_enabled_flag_is_what_the_30_fight_mirror_said(name):
 
 @SLOW
 def test_t1_m9_on_the_real_engine_is_accepted_and_its_only_cap_is_the_warden_stall_of_fight_12():
-    """R1 exception on the real engine: M9 is enabled in the table; the 30-fight mirror is ok; a cap, if any, is fight 12 and its living
-    roster is Wardens only (FINDING-lab-d9). Red today: no row M9, no pre-check."""
+    """Architect ruling 2026-10-20, P1: M9 is enabled in the table; the 30-fight mirror is ok; every cap matches P1 (at least one side has
+    living units and every living unit of that side is a Warden) and the cap is fight 12. MEASURED roster at that cap, pasted: side 0
+    {'Vanguard': 2, 'Warden': 4}, side 1 {'Warden': 2} (seed 6 unswapped, 12000 ticks; FINDING-lab-d9). Red today: no row M9 or no P1
+    pre-check; green on the builder's P1 fix."""
     row = next((r for r in plays_space.MIXES if r["name"] == "M9"), None)
     assert row is not None and row["enabled"] is True, row
     verdict = sweep.mirror_precheck(row["units"], fight_fn=fight)
@@ -66,7 +69,9 @@ def test_t1_m9_on_the_real_engine_is_accepted_and_its_only_cap_is_the_warden_sta
     assert set(verdict["rosters"]) <= {12}, verdict["rosters"]
     assert verdict["reason"] == ("known_cap:FINDING-lab-d9" if verdict["caps"] else None), verdict
     for living in verdict["rosters"].values():
-        assert all(set(side) <= {"Warden"} for side in living), living
+        assert any(side and set(side) == {"Warden"} for side in living), living
+    if 12 in verdict["rosters"]:
+        assert verdict["rosters"][12] == ({"Vanguard": 2, "Warden": 4}, {"Warden": 2}), verdict["rosters"][12]
 
 
 @SLOW
