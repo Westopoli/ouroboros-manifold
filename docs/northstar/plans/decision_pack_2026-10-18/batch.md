@@ -147,58 +147,6 @@ unblocks: how openly the project explains itself; nothing in the queue waits on 
 
 ## 3. Asked in chat, still open
 
-### C1 Lab fight length
-The lab's "attackers break a held line" fight runs 229 s against your 150 to 200 s window.
-(a) widen the window to 230 s; (b) keep the window, the lab landing waits for a faster fight; (c) replace the fight.
-unblocks: the whole lab rev 2 landing.
-
-### C2 Lab speed
-The rev 2 lab runs about 82 s per run in its Python against your 30 s mark (3.9 times slower than rev 1).
-(a) accept 82 s now and speed it up after; (b) hold the landing until under 30 s; (c) a new mark.
-unblocks: the same landing.
-
-### C3 Known-red list for the gate
-Let the merge gate carry a short list of tests known red for a named, recorded reason, so a landing is not rejected by a red that is already on record. yes / no.
-unblocks: two Lane T landings and the lab landing.
-
-### C4 Lab positive control
-The lab's "a planted bad fight trips the detector" control reads green on main when it should trip.
-(a) no lab landing until it trips; (b) land with it listed red and fix it next.
-unblocks: the lab landing order.
-
-### C5 Strongpoint damage (register Q-218-08)
-A strongpoint is captured or destroyed, but nothing says units shoot it and take away its hp. Do units damage strongpoints?
-(a) yes, by fire; rubble at zero hp; capture works as it does now; (b) capture only, never shot, and the unused damage code is deleted; (c) only the Siege category damages them.
-unblocks: the strongpoint-damage piece.
-
-### C6 Onboarding weights (register Q-074-05)
-Your onboarding answers carry a weight for each mission kind and a mark for rare kinds, but mission selection does not read them yet (preference and difficulty are being wired regardless). How should they weigh the pool of candidate missions?
-(a) the weights multiply each mission kind's score and the rare marks add the rare kinds to the pool; (b) they only feed the briefing's foreshadowing; (c) dropped from the design.
-unblocks: the weights part of the onboarding work.
-
-### C7 Housekeeping
-Three yes/no, answer each as `C7i`, `C7ii`, `C7iii`:
-(i) the clerks' scratch space: raise the /tmp quota, or keep all scratch under ~/Projects/om-push/tmp-*;
-(ii) discard the dirty lab diagnostic worktree labdiag (29 files of uncommitted edits on an old lab base, believed throwaway, unreviewed), or have an engineer read its diff first;
-(iii) widen the worktree-removal rule to treat Godot .import sidecars and dist/ as build outputs and to remove unmarked worktrees that are clean, on origin and older than three days.
-
-### C8 Failed-play frames
-Four ground-era story plays the reviewer judged "no", still pending with you, with no picture in your folder (all lane C, one run):
-- S-236 (fully zoomed-in ground map): the zoom never reached the close-up band, so the shot shows the whole island from far away as colour-banded patches with tiny hexagon units; no up-close land detail.
-- S-001 (slopes and blocked ground): no slope or blocked-ground marking exists; the opening frame shows coloured terrain bands but nothing marking blocked layers.
-- S-004 (crossing layers): no unit entered a layer transit within 1000 ticks of a cross-map move, so no transit or halfway line was ever shown.
-- S-132 (unit types readable): the force is collapsed or partly undrawn; four clusters of stacked identical hexagons with big cyan rings, types not distinguishable by shape.
-
-### C9 Starting force size
-You wrote on 10-11: "players start with at least half-force when a match begins, if not as far down as 20% (specific number depends on ... scaled)". The frame you rejected today showed half (176 of 330, the player holding half the strongpoints) and read to you as "still quite a few units, only decreased by ~25%".
-(a) keep half at a half share, sliding to a fifth at no strongpoints (today); (b) a third at a half share, same slide; (c) a quarter at a half share; (d) a number of your own.
-unblocks: FINDING-s126-count-still-large; the starting-force shot re-run.
-
-### C10 Vantage points need two paths?
-The terrain prototype's lookouts were unreachable; the audit found no rule that gives a vantage two routes (R-189-07's two-route rule covers bases, the objective and economic sites; R-192-03 lets about 30 percent of peaks be unreachable on foot).
-(a) every vantage and strategic point has at least two routes, like bases; (b) one slope path suffices and some peaks may stay unreachable (today); (c) two routes only for vantages within 1500 wu of a choke.
-unblocks: the terrain-obeys pass 3 and the layout engine's vantage request.
-
 ### C11 Building placement limits
 The placement engine refuses a building on top of another placed building and refuses when the engine's lot table (8192) is full. Your words were "limits only from terrain" and "no lot count in the beta".
 (a) the overlap refusal is physical and stays, the table size is a memory bound and is documented as not a rule (the Architect's reading); (b) remove the overlap refusal too: buildings may stack and the terrain alone limits; (c) something else.
@@ -207,6 +155,29 @@ unblocks: nothing today; the E1R shot.
 ### C12 September mockups without a verdict
 Five September mockups (fog, hud, units, objectives, menus) have no recorded verdict from you.
 (a) treat them as approved as built; (b) you look at each (commands in followups/01_transition.md section 1); (c) drop them.
+
+### C13 Opening-frame camera pitch
+The ground camera looks down 50 degrees. Your 10-18 note asked for about 15 more and "the classic RTS angle"; the research found StarCraft II and Warcraft III at 56, Age of Empires III at about 47, so the two asks point 9 to 20 degrees apart.
+(a) 56, the StarCraft II angle; (b) 65, your plus 15; (c) restore the approved 55-degree lens first (it buys 10 of your 15 degrees at the top of the frame) and judge the pitch on the next shot.
+unblocks: VG-A18-3d.
+
+### C14 Where the empty half of the frame comes from
+The army stands on the map's north edge and the camera faces north, so the map ends mid-screen.
+(a) the opening camera faces away from the home edge toward the objective; (b) the home anchor moves inboard by the base pad (1200 wu); (c) both.
+unblocks: VG-A18-3d's horizon test.
+
+## Answered 2026-10-21 (chat)
+
+- C1 "A": lab fight window widened to 230 s. DEC-C1-2026-10-21.
+- C2 "B", improvable, investigate the convo: lab landing waits for under 30 s. DEC-C2-2026-10-21.
+- C3 "yes": known-red list for the sim suites. DEC-C3-2026-10-21.
+- C4 "Fix the issue before moving on": fix the G3 control first. DEC-C4-2026-10-21.
+- C5 strongpoints can be shot, must be rebuilt; zones are captured. DEC-C5-2026-10-21.
+- C6 "C": onboarding weights dropped. DEC-C6-2026-10-21.
+- C7 "yes on all 3": housekeeping, widened removal rule. DEC-C7-2026-10-21.
+- C8 "I believe I ruled on these already": Batch A 11 covers them. DEC-C8-2026-10-21.
+- C9 "C": a quarter at a half share. DEC-C9-2026-10-21.
+- C10 "A": two routes to every vantage and strategic point. DEC-C10-2026-10-21.
 
 ## 4. Drafts in force unless you veto
 
