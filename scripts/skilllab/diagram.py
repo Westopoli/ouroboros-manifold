@@ -20,7 +20,7 @@ CROSSING, CEILING_HIT, BOTH_WRONG = "crossing", "ceiling_hit", "both_wrong"
 SCAN_KINDS = ("grid", "refined")
 _INT = ("enemy_heads", "ceiling_hit", "ticks", "first_contact_tick", "survivors_0", "survivors_1", "heads_0", "heads_1", "reengage_0", "reengage_1")
 _FLOAT = ("margin", "strength_left_0", "strength_left_1", "firing_unit_seconds_0", "firing_unit_seconds_1", "firing_window_0",
-          "firing_window_1", "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "knob_value")
+          "firing_window_1", "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "knob_value", "paper_score_0", "paper_score_1")
 OPENING = "DRAFT-opening-window-ticks"
 ARC = "DRAFT-firing-arc-deg"
 CONE = ("DRAFT-aoe-cone-range", "DRAFT-aoe-cone-deg", "DRAFT-aoe-cone-share")
