@@ -163,6 +163,15 @@ The terrain prototype's lookouts were unreachable; the audit found no rule that 
 (a) every vantage and strategic point has at least two routes, like bases; (b) one slope path suffices and some peaks may stay unreachable (today); (c) two routes only for vantages within 1500 wu of a choke.
 unblocks: the terrain-obeys pass 3 and the layout engine's vantage request.
 
+### C11 Building placement limits
+The placement engine refuses a building on top of another placed building and refuses when the engine's lot table (8192) is full. Your words were "limits only from terrain" and "no lot count in the beta".
+(a) the overlap refusal is physical and stays, the table size is a memory bound and is documented as not a rule (the Architect's reading); (b) remove the overlap refusal too: buildings may stack and the terrain alone limits; (c) something else.
+unblocks: nothing today; the E1R shot.
+
+### C12 September mockups without a verdict
+Five September mockups (fog, hud, units, objectives, menus) have no recorded verdict from you.
+(a) treat them as approved as built; (b) you look at each (commands in followups/01_transition.md section 1); (c) drop them.
+
 ## 4. Drafts in force unless you veto
 
 - DRAFT-b25-star-ref: 1080 px, 45 degree fov (Architect, 2026-10-21)
