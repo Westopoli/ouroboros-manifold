@@ -4,25 +4,6 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ## 1. Pictures
 
-### P6 Land that fits a layout: carved routes (S-191, S-189)
-
-![](../../story_reviews/westley/P-S191-terrain-obeys-pass2-carved-routes.png)
-
-**What you see:** A top-down prototype of a land map with flat base circles, an objective, a choke bar in the middle, and orange and blue route lines; pink dots mark the cells the generator carved to make routes. Every point now has its narrow and wide routes.
-**Judge:** The carved routes run as parallel lanes side by side, like a rail yard; is carving the right direction with a better path rule, or should routes come from the landforms?
-**Beta status of what is shown:**
-- Land that fits a requested layout, with routes (S-191, S-189): built as a prototype only, awaiting your verdict; in the game it is queued (not built), not scheduled (you said the layout engine comes first).
-- The layout engine that asks for those places: stub (built, not yet called by the game).
-
-### P7 Land that fits a layout: small map (S-191, S-189)
-
-![](../../story_reviews/westley/P-S191-terrain-obeys-pass2-small-canvas.png)
-
-**What you see:** The same prototype on a small map: base circles kept apart by scaling the pads down, steep ring slopes under the walking limit, and the same carved lanes in yellow and pink.
-**Judge:** Do the pads and routes still read on the small map, or does the carving swamp it?
-**Beta status of what is shown:**
-- Small-map pads and routes (S-191, S-189): built as a prototype only, awaiting your verdict; in the game queued (not built), not scheduled.
-
 ## 2. Questions
 
 ### Q-B23b-01 Which renderer is the look?
@@ -217,6 +198,15 @@ unblocks: FINDING-s126-count-still-large; the starting-force shot re-run.
 The terrain prototype's lookouts were unreachable; the audit found no rule that gives a vantage two routes (R-189-07's two-route rule covers bases, the objective and economic sites; R-192-03 lets about 30 percent of peaks be unreachable on foot).
 (a) every vantage and strategic point has at least two routes, like bases; (b) one slope path suffices and some peaks may stay unreachable (today); (c) two routes only for vantages within 1500 wu of a choke.
 unblocks: the terrain-obeys pass 3 and the layout engine's vantage request.
+
+### C11 Building placement limits
+The placement engine refuses a building on top of another placed building and refuses when the engine's lot table (8192) is full. Your words were "limits only from terrain" and "no lot count in the beta".
+(a) the overlap refusal is physical and stays, the table size is a memory bound and is documented as not a rule (the Architect's reading); (b) remove the overlap refusal too: buildings may stack and the terrain alone limits; (c) something else.
+unblocks: nothing today; the E1R shot.
+
+### C12 September mockups without a verdict
+Five September mockups (fog, hud, units, objectives, menus) have no recorded verdict from you.
+(a) treat them as approved as built; (b) you look at each (commands in followups/01_transition.md section 1); (c) drop them.
 
 ## 4. Drafts in force unless you veto
 
