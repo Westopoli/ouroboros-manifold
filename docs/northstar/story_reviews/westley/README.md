@@ -2,23 +2,6 @@
 
 How to answer: one word per picture, approve, reject, or a note. Where answers go: a message to the chat, or `answers.md` in the Batch A form; the clerk that records a verdict deletes the picture and its block in the same commit.
 
-## E-S126-starting-force-smaller-at-tick-0.png
-
-**What you see:** The opening frame of a ground mission in 3D: a rocky ridge under a grey sky, three tinted discs each holding a stack of your units, and one lone blue blob top left.
-**Judge:** Does the battle open with most of your force still to come, as your S-126 words say? The count (176 of 330) cannot be read by eye.
-**Beta status of what is shown:**
-- Smaller starting force (S-126): approved but not integrated (the sim gives 176 of 330; the unit count in the HUD and briefing still reads 330).
-- Ground-era 3D opening view: built but not yet shown (your last word on it was "too zoomed out to judge"; a zoomed-in re-shot is owed).
-
-## F-S143-S241-host-lobby-common-eras-and-team-size.png
-
-**What you see:** The multiplayer host lobby on a plain grey screen: an Eras line naming the one era both players share, a Team size drop-down showing 2, a member list of two, the lobby number, and Host, Join, Doctrine, Start and Back buttons.
-**Judge:** Does the Eras line tell two players with different packs which era they will play, and is the Team size choice where you expect it?
-**Beta status of what is shown:**
-- Common era line (S-143): built and awaiting your verdict.
-- Team size 2 or 4 (S-241): stub (the choice is offered but does nothing to map or enemy size until the scaling rule is built).
-- Lobby with member list and lobby number (S-141): Seen (approved 2026-10-13), placeholder look.
-
 ## P-S191-terrain-obeys-pass2-carved-routes.png
 
 **What you see:** A top-down prototype of a land map with flat base circles, an objective, a choke bar in the middle, and orange and blue route lines; pink dots mark the cells the generator carved to make routes. Every point now has its narrow and wide routes.
@@ -38,6 +21,8 @@ How to answer: one word per picture, approve, reject, or a note. Where answers g
 
 | File | Verdict | Cite |
 |---|---|---|
+| `E-S126-starting-force-smaller-at-tick-0.png` | Not approved: starting force still too large (about 25% fewer, not enough), units in a line, vision circle drawn parallel to the screen not the ground (Westley, 2026-10-21, new rulings 4) | `E.md` S-126 row; ledger day37 FINDING-s126-* |
+| `F-S143-S241-host-lobby-common-eras-and-team-size.png` | Approved: "Looks good" (Westley, 2026-10-21, new rulings 5) | `F.md` S-143 and S-241 rows, run run-20261020T144745Z |
 | `B-S106-regional-galaxy-b24-layout.png` (and `.state.json`) | Approved: "Looks good, approved." (Westley, 2026-10-21, new rulings 1) | `B.md` S-106 row, run 20261013-1406-59a24b4 |
 | `B-S110-galaxy-quality-choice-in-settings.png` | Approved: "Approved" (Westley, 2026-10-21, new rulings 2) | `B.md` S-110 row, run 20261014-0538-356c339 |
 | `D-S246-space-sheets-rings-tube.png` | Not approved: scale off, obstacles too sparse, scale prototype asked (Westley, 2026-10-21, new rulings 3) | `D.md` S-246 row; ledger day37 FINDING-s246-* and REQ-PROTO-scale |

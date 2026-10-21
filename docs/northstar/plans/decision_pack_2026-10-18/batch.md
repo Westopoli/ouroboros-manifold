@@ -4,27 +4,6 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ## 1. Pictures
 
-### P4 Smaller starting force (S-126)
-
-![](../../story_reviews/westley/E-S126-starting-force-smaller-at-tick-0.png)
-
-**What you see:** The opening frame of a ground mission in 3D: a rocky ridge under a grey sky, three tinted discs each holding a stack of your units, and one lone blue blob top left.
-**Judge:** Does the battle open with most of your force still to come, as your S-126 words say? The count (176 of 330) cannot be read by eye.
-**Beta status of what is shown:**
-- Smaller starting force (S-126): approved but not integrated (the sim gives 176 of 330; the unit count in the HUD and briefing still reads 330).
-- Ground-era 3D opening view: built but not yet shown (your last word on it was "too zoomed out to judge"; a zoomed-in re-shot is owed).
-
-### P5 Host lobby: common era and team size (S-143, S-241)
-
-![](../../story_reviews/westley/F-S143-S241-host-lobby-common-eras-and-team-size.png)
-
-**What you see:** The multiplayer host lobby on a plain grey screen: an Eras line naming the one era both players share, a Team size drop-down showing 2, a member list of two, the lobby number, and Host, Join, Doctrine, Start and Back buttons.
-**Judge:** Does the Eras line tell two players with different packs which era they will play, and is the Team size choice where you expect it?
-**Beta status of what is shown:**
-- Common era line (S-143): built and awaiting your verdict.
-- Team size 2 or 4 (S-241): stub (the choice is offered but does nothing to map or enemy size until the scaling rule is built).
-- Lobby with member list and lobby number (S-141): Seen (approved 2026-10-13), placeholder look.
-
 ### P6 Land that fits a layout: carved routes (S-191, S-189)
 
 ![](../../story_reviews/westley/P-S191-terrain-obeys-pass2-carved-routes.png)
@@ -48,7 +27,7 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ### Q-B23b-01 Which renderer is the look?
 
-Under the richer lighting the 3D ground wants, the see-through faction shells wash out the system dots (our pixel check reads 6 of 18); under the simpler lighting the checks use, the dots read fine. See P1.
+Under the richer lighting the 3D ground wants, the see-through faction shells wash out the system dots (our pixel check reads 6 of 18); under the simpler lighting the checks use, the dots read fine. (picture ruled 2026-10-21; see the lane row).
 
 (a) Ship the richer lighting, and the pixel check gains a run on it.  
 (b) The wash is the approved look.  
@@ -78,7 +57,7 @@ unblocks: lab rev 2 runs with real marks instead of drafts.
 
 ### Q-246-02 Who sets asteroid density?
 
-A space mission needs an asteroid-field density; the mockup uses one value (35). You asked on 2026-10-13 to see a prototype of the options first. See P3 (the prototype shot is the one owed for this).
+A space mission needs an asteroid-field density; the mockup uses one value (35). You asked on 2026-10-13 to see a prototype of the options first. (picture ruled 2026-10-21; see the lane row) (the prototype shot is the one owed for this).
 
 (a) One default for every mission.  
 (b) The region decides, tight in some and open in others, within a range.  
