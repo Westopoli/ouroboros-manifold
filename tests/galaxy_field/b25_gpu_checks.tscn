@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/galaxy_field/b25_gpu_checks.gd" id="1"]
+
+[node name="B25GpuChecks" type="Node"]
+script = ExtResource("1")
