@@ -208,6 +208,16 @@ Four ground-era story plays the reviewer judged "no", still pending with you, wi
 - S-004 (crossing layers): no unit entered a layer transit within 1000 ticks of a cross-map move, so no transit or halfway line was ever shown.
 - S-132 (unit types readable): the force is collapsed or partly undrawn; four clusters of stacked identical hexagons with big cyan rings, types not distinguishable by shape.
 
+### C9 Starting force size
+You wrote on 10-11: "players start with at least half-force when a match begins, if not as far down as 20% (specific number depends on ... scaled)". The frame you rejected today showed half (176 of 330, the player holding half the strongpoints) and read to you as "still quite a few units, only decreased by ~25%".
+(a) keep half at a half share, sliding to a fifth at no strongpoints (today); (b) a third at a half share, same slide; (c) a quarter at a half share; (d) a number of your own.
+unblocks: FINDING-s126-count-still-large; the starting-force shot re-run.
+
+### C10 Vantage points need two paths?
+The terrain prototype's lookouts were unreachable; the audit found no rule that gives a vantage two routes (R-189-07's two-route rule covers bases, the objective and economic sites; R-192-03 lets about 30 percent of peaks be unreachable on foot).
+(a) every vantage and strategic point has at least two routes, like bases; (b) one slope path suffices and some peaks may stay unreachable (today); (c) two routes only for vantages within 1500 wu of a choke.
+unblocks: the terrain-obeys pass 3 and the layout engine's vantage request.
+
 ## 4. Drafts in force unless you veto
 
 - DRAFT-b25-star-ref: 1080 px, 45 degree fov (Architect, 2026-10-21)
