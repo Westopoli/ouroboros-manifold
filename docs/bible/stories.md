@@ -113,7 +113,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-107 | E-16 | "Pan, zoom, orbit, focus a system, pick out a faction." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-107 |
 | S-108 | E-16 | "Mission pulls back into the galaxy and pushes into the next mission without a cut." | Spec'd, needs reference; prototype first (Westley, 2026-10-15), mockup in build | `epics/E-16-client-camera-hud-and-world-view.md` S-108 |
 | S-109 | E-16 | "The screens around a mission read as orders and reports from my civilization." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-109 |
-| S-110 | E-16 | "A main menu that sets the tone and settings that cover the basics." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-110 |
+| S-110 | E-16 | "A main menu that sets the tone and settings that cover the basics." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-110 |
 | S-111 | E-16 | "Saved at every chapter boundary without asking." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-111 |
 | S-112 | E-17 | "Maps built on hand-authored strategic layouts." | Spec'd (the layouts stay and terrain-first generation is added, the layout calls for places and the landscape engine must produce them, S-191 R-191-10; rewrite pending; see S-186, S-191) | `epics/E-17-map-generation.md` S-112 |
 | S-113 | E-17 | "Every place on the map is one of nine things." | Spec'd (the nine kinds stay and found places are added, S-191 R-191-10; rewrite pending; see S-191, S-192) | `epics/E-17-map-generation.md` S-113 |
