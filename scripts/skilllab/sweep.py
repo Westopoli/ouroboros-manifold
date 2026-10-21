@@ -31,6 +31,7 @@ LAYER_PLAYS = ("s3_layer_above", "s3_types_by_reach")
 MIRROR_FIGHTS = 30          # DRAFT-mirror-fights (the Architect's number, on Westley's open list): fights of a mix's naive mirror pre-check
 MIRROR_X = 350.0            # the two blobs of a mirror fight stand at -x and +x
 WARDEN_PER_16 = 4           # interim lab cap, Wardens per 16 units; retires with FU-warden-no-stack (FINDING-lab-d9, a TD row removes it)
+FROZEN_STALL, FROZEN_DECIDED = FROZEN_NAMES[6], FROZEN_NAMES[7]      # "no_reach_stall", "decided_one_way_reach": the verdicts mirror_precheck rejects on
 KNOWN_CAP = "known_cap:FINDING-lab-d9"      # M9's one Warden-stall cap in 30; retires with FU-warden-no-stack
 MIX_LAYER_PLAYS = ("s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider", "s3_bombard_bastion", "s3_bombard_bastion_level")
 PLAYS_BY_FAMILY = {
@@ -425,16 +426,26 @@ def _warden_stall(living):
 
 def mirror_precheck(units, *, fights=MIRROR_FIGHTS, fight_fn=None, map_fn=None):
     """R1: `fights` naive mirror fights of the mix (fight i is seed i // 2, swapped when i is odd). More than WARDEN_PER_16 Wardens per
-    16 is refused before any fight (FU-warden-no-stack retires the cap). A capped fight rejects the mix, except on M9 when every capped
-    fight matches P1 (known_cap:FINDING-lab-d9). `rosters` maps each capped fight's index to its living roster."""
+    16 is refused before any fight (FU-warden-no-stack retires the cap). A mirror is like for like, so the mix is rejected when
+    (precedence, first match): a fight carries verdict "decided_one_way_reach" (reason "decided"; never excused by the M9 known cap), a
+    fight carries verdict "no_reach_stall" (reason "stall"; DRAFT, it cannot happen in a symmetric mirror), a fight capped (reason
+    "capped"), except on M9 when every capped fight matches P1 (known_cap:FINDING-lab-d9). A decided fight that ends as a win counts as a
+    cap only when its ticks reached the Setup's max_ticks. `rosters` maps each capped fight's index to its living roster (None when a
+    decided fight at the cap has none)."""
     verdict = {"mix": dict(units), "ok": True, "reason": None, "fights": 0, "caps": 0, "rosters": {}}
     if units.get("Warden", 0) * 16 > WARDEN_PER_16 * sum(units.values()):
         return {**verdict, "ok": False, "reason": "warden_cap"}
     setup = _mirror_setup(units)
     results = scan_mod.run_jobs([(setup, i // 2, i % 2 == 1) for i in range(fights)], fight_fn, map_fn)
-    capped = [i for i, r in enumerate(results) if r.outcome == "cap"]
-    verdict.update(fights=len(results), caps=len(capped), rosters={i: results[i].living for i in capped})
-    if capped:
+    decided = [getattr(r, "verdict", None) == FROZEN_DECIDED for r in results]
+    stalled = [getattr(r, "verdict", None) == FROZEN_STALL for r in results]
+    capped = [i for i, r in enumerate(results) if r.outcome == "cap" or (decided[i] and r.ticks >= setup.max_ticks)]
+    verdict.update(fights=len(results), caps=len(capped), rosters={i: getattr(results[i], "living", None) for i in capped})
+    if any(decided):
+        verdict.update(ok=False, reason="decided")
+    elif any(stalled):
+        verdict.update(ok=False, reason="stall")
+    elif capped:
         m9 = next(r["units"] for r in plays_space.MIXES if r["name"] == "M9")
         known = dict(units) == m9 and all(_warden_stall(results[i].living) for i in capped)
         verdict.update(ok=known, reason=KNOWN_CAP if known else "capped")
