@@ -33,9 +33,7 @@ builds (every baseline the play's own placed scene; the three smoke controls blo
     to be traced), and no assertion in this file or in test_sweep.py is made on that play for damage-up.
   - a 600-tick damage control shows identical margins at both points on the real play, so the damage control runs to elimination.
 
-Capability-gated cases (skipped on a library without OM_TP_FIRING_ARC_DEG or a usable om_roster_set_cone): the arc null control
-(parameter pushed at 360 against never set) and the cone null control (range 0 against no cone) read byte-identical rows on the real
-engine. They skip today (E0 and E2 are not built) and are unverified for satisfiability until those land.
+The capability-gated E0/E2 cases (the arc and cone null controls) live on push/labrev2-capability-tests (459452f7) until E0 and E2 land (ledger row TD-LAB-REV2-capability-tests-move).
 """
 import csv
 import dataclasses

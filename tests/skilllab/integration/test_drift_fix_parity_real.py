@@ -1,13 +1,8 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 41 ruling 1 (the smoke command runs firing.parity once E0 is in the library); the audit of
 # 013370a4 freezes the default parity_fn (header of tests/skilllab/test_drift_fix_parity.py)
-"""LAB-REV2-FIX: the smoke's default parity_fn on the real library (SLOW: OM_LAB_SLOW=1; skipped with reason 'E0 absent' before E0, the E0 check first).
+"""LAB-REV2-FIX: the smoke's default parity_fn wiring, run without E0 in the library.
 
-With E0 in the library (OM_TP_FIRING_ARC_DEG and om_combat_can_engage), run_smoke with the default parity_fn writes smoke_summary['parity'] =
-firing.parity(engine, w, units0, units1, 360.0) on the dedicated 16 v 16 mirror world (plays.blob_play(16)(16, False)) at the first sample
-tick. This test computes that value independently (a fight() of the same Setup on an Engine that checks parity at its first step, over the
-units it spawned) and asserts: it is a clean list (a non-empty list is a defect of the composition), and the summary equals it, on disk too.
-Satisfiability: NOT run here (E0 absent in this tree; the engine stub answers can_engage -1 and the check passes trivially). The skip is the
-positive control that the test file imports and collects."""
+The default-parity smoke test that needs E0 (the summary equals the clean list of the 16 v 16 mirror world) lives on push/labrev2-capability-tests (459452f7) until E0 lands (ledger row TD-LAB-REV2-capability-tests-move). The two tests here need no E0 data."""
 import json
 import sys
 from pathlib import Path
