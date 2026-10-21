@@ -2364,15 +2364,28 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noise_q16, om_lot_noise_range, om_lane_build; about 160 lines), growth_probe.c (om_growth_probe_run; about 200 lines), two pytest files; DRAFT-lot-noise-*, DRAFT-lane-*, DRAFT-shape-harm 0.5"
 
-# Lane E piece VG-E-startforce (spec lane E part e, starting force by control group; Architect 2026-10-14: lands right after VG-CONTRACT-E7). The accessor om_mission_get_force_group rides E7's header piece (header, signatures.toml row, symbol_modules.toml line, conftest block, one ABI bump 7 to 8); no separate header piece. Not owned here: csrc/ouroboros_sim.h, signatures.toml, symbol_modules.toml, tests/csim/conftest.py, every save-format file (derived at read time, nothing saved or hashed), the goldens (E7's re-record under TD-VG-E-26).
+# the mission frame's force.groups field, a contract piece with the second-Fable audit (startforce rev 2, Architect 2026-10-20)
+[[piece]]
+id = "VG-CONTRACT-force-groups"
+manager = "M0"
+wave = 13
+owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_frame_briefing_fields.py"]
+owns_glob = []
+acceptance = ["tests/transport/test_pipe_mission_frame_briefing_fields.py"]
+depends_on = ["VG-CONTRACT-E7", "VG-CONTRACT-layerspot", "VG-CONTRACT-route"]  # om_pipe.c and architecture.md order
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "force-groups: the mission frame's force.groups field (one int per unit, 1 to 3, in the tally's ascending-id order), one architecture.md paragraph, the frame-shape pin and its examples"
+
+# Lane E piece VG-E-startforce (spec lane E part e, starting force by control group; Architect 2026-10-14: lands right after VG-CONTRACT-E7). The accessor om_mission_get_force_group rides E7's header piece (header, signatures.toml row, symbol_modules.toml line, conftest block, one ABI bump 7 to 8); no separate header piece. Not owned here: csrc/ouroboros_sim.h, signatures.toml, symbol_modules.toml, tests/csim/conftest.py, every save-format file (derived at read time, nothing saved or hashed). This piece re-records the goldens TD-VG-E-26 lists once (E7 re-recorded none).
 [[piece]]
 id = "VG-E-startforce"
 manager = "M0"
 wave = 9
-owns = ["csrc/mission.c", "csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/transport/test_pipe_mission_frame_briefing_fields.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "scripts/specfactory/reach_allowlist.toml", "scripts/specfactory/gd_tests_known_red.txt", "tests/csim/test_E01_T3_mission_ground.py"]  # records batch 8 (Architect 2026-10-13/14): reach_allowlist.toml drops the E7 stub entry for om_mission_get_force_group (Architect 2026-10-13 accessor); gd_tests_known_red.txt: deletes the TD-VG-E-26 entries it clears (overlap with the attached owners is the sanctioned pattern); the golden test file test_E01_T3_mission_ground.py (SPACE_GOLDEN) is re-recorded once under TD-VG-E-26 (VG-CONTRACT-E7 also lists it and lands first); the F1/F2/F3 goldens do not move (TD-VG-E-26)
+owns = ["csrc/mission.c", "csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/transport/test_pipe_mission_frame_briefing_fields.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "scripts/specfactory/reach_allowlist.toml", "scripts/specfactory/gd_tests_known_red.txt", "tests/csim/test_E01_T3_mission_ground.py", "tests/csim/test_VG_E_e7.py", "docs/northstar/spec_factory/signatures.toml", "docs/bible/epics/E-17-map-generation.md", "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_identity.py", "tests/csim/test_E13_A99_tactical_equivalence.py", "tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/parity/baseline/test_baseline_hashes.py", "tests/csim/test_PP_target_policy_per_side.py", "tests/csim/test_PP_portability.py"]  # records batch 8 (Architect 2026-10-13/14): reach_allowlist.toml drops the E7 stub entry for om_mission_get_force_group (Architect 2026-10-13 accessor); gd_tests_known_red.txt: deletes the TD-VG-E-26 entries it clears (overlap with the attached owners is the sanctioned pattern); the golden test file test_E01_T3_mission_ground.py (SPACE_GOLDEN) is re-recorded once under TD-VG-E-26 (VG-CONTRACT-E7 also lists it and lands first); the F1/F2/F3 goldens do not move (TD-VG-E-26)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_startforce.py"]
-depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot", "VG-E1"]  # LAB-REV2-E0 lands after the three E pieces (Architect 2026-10-20); these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
+depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot", "VG-E1", "VG-CONTRACT-force-groups", "VG-T-REACH-TESTS"]  # VG-T-REACH-TESTS also owns tests/csim/test_PP_C_g3_hash_invariant.py and lands first (owner_lint-forced, startforce rev 2, Architect to confirm); LAB-REV2-E0 lands after the three E pieces (Architect 2026-10-20); these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce: three control groups of the starting force carried on the mission frame (group per unit from om_mission_get_force_group), derived at read time; no save or hash change"
@@ -2385,7 +2398,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_startforce.gd", "tests/qa/desktop/plays/A/test_S_105_start_groups.py"]  # the test and the play are also covered by VG-A's globs; listing them keeps the owner explicit like the VG-E-prodslot row
 owns_glob = []
 acceptance = ["tests/test_vg_a_startforce.gd"]
-depends_on = ["VG-E-startforce", "VG-A18", "VG-A16", "VG-A", "VG-F-NETTICK", "VG-D-VIEW", "VG-E1W"]  # VG-E-startforce: the frame field; VG-A18: the opening frame must fit all three groups; VG-A16 and VG-F-NETTICK own earlier edits of the same file; VG-D-VIEW (building) also owns scenes/tactical_c/tactical_view.gd and lands first; VG-A-layerkeys comes after this piece (Architect 2026-10-14)
+depends_on = ["VG-E-startforce", "VG-A18", "VG-A16", "VG-A", "VG-F-NETTICK", "VG-D-VIEW", "VG-E1W", "VG-CONTRACT-force-groups"]  # VG-E-startforce: the frame field; VG-A18: the opening frame must fit all three groups; VG-A16 and VG-F-NETTICK own earlier edits of the same file; VG-D-VIEW (building) also owns scenes/tactical_c/tactical_view.gd and lands first; VG-A-layerkeys comes after this piece (Architect 2026-10-14)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce client: bind groups 1 to 3 from the mission frame, qa_state control_groups key; selection panel not edited"
