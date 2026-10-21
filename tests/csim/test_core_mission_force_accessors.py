@@ -1,3 +1,4 @@
+# Rule pins: R-079-01@7bf432
 """S-079 / R-079-01 (briefing assets), A4 ruling 5-6: om_mission_get_force_count
 and om_mission_get_force_unit report the player's spawned force only.
 
@@ -14,6 +15,8 @@ import ctypes
 from conftest import OMTier, set_region
 
 ARCH_SIEGE_BREAKING = 1
+ROSTER_10, START_10, CUT_10 = [24, 38, 21, 137, 30, 13], 158, [14, 23, 13, 82, 18, 8]  # TD-VG-E-34: F 263, p 1, e 1, share 0.5
+ROSTER_90, START_90 = [301, 434, 271, 846, 363, 206], 1453  # TD-VG-E-34: F 2421, p 2, e 2, share 0.5
 
 
 def _setup(lib, w, military, archetype=ARCH_SIEGE_BREAKING):
@@ -31,18 +34,18 @@ def _player_counts(lib, w):
 def test_R_079_01_force_count_equals_player_units_sum(lib, world_factory):
     w = world_factory(n_regions=1)
     _setup(lib, w, 10.0)
-    total = sum(_player_counts(lib, w))
-    assert total > 0, "fixture must produce a nonzero player force"
-    assert lib.om_mission_get_force_count(w) == total
+    assert _player_counts(lib, w) == ROSTER_10, "premise: the composed roster F 263"
+    assert lib.om_mission_get_force_count(w) == START_10  # was sum(roster) = 263: the player spawns start_units of F
 
 
 def test_R_079_01_force_unit_types_match_spawned_units(lib, world_factory):
     w = world_factory(n_regions=1)
     _setup(lib, w, 10.0)
+    assert _player_counts(lib, w) == ROSTER_10, "premise: the composed roster F 263"
     expected = []
-    for t, n in enumerate(_player_counts(lib, w)):
+    for t, n in enumerate(CUT_10):  # was the roster itself: the player spawns the cut of it (start_units 158)
         expected += [t] * n
-    assert expected
+    assert len(expected) == START_10
     ty, tier = ctypes.c_int32(-1), ctypes.c_int32(-1)
     for i, want in enumerate(expected):
         assert lib.om_mission_get_force_unit(w, i, ctypes.byref(ty), ctypes.byref(tier)) == 1
@@ -80,7 +83,8 @@ def test_R_079_01_control_force_count_tracks_force_size(lib, world_factory):
     _setup(lib, lo, 10.0)
     hi = world_factory(n_regions=1)
     _setup(lib, hi, 90.0)
-    t_lo, t_hi = sum(_player_counts(lib, lo)), sum(_player_counts(lib, hi))
+    assert _player_counts(lib, lo) == ROSTER_10 and _player_counts(lib, hi) == ROSTER_90, "premise: F 263 and F 2421"
+    t_lo, t_hi = START_10, START_90  # was sum(roster): 263 and 2421; the player spawns start_units of F
     assert t_lo != t_hi
     assert lib.om_mission_get_force_count(lo) == t_lo
     assert lib.om_mission_get_force_count(hi) == t_hi

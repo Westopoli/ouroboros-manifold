@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 11 /* bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 12 /* bumped 11 -> 12 (VG E7: reinforce_cap and reinforce_spawned in the mission slot): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -516,6 +516,15 @@ void om_step_lifecycle(om_world *w);
 void om_support_tick(om_world *w);
 /* Deadline-baseline hook (csrc/mission.c); called by fog.c om_mission_begin right after the phase moves to tactical. */
 void om_mission_on_begin(om_world *w);
+/* VG-CONTRACT-E7 (csrc/mission.c; read and noted by the player's production driver in csrc/tactical_support.c; the spec E7
+ * paragraph). om_mission_reinforce_cap: how many more units the player's structures may still spawn this mission, i.e.
+ * reinforce_cap (F_units - start_units, set when the mission is laid out) minus reinforce_spawned (both saved and hashed in the
+ * mission slot). UINT32_MAX on a bare world with no mission set up and on a mission whose composed roster is empty (F_units 0),
+ * so production there is uncapped; the driver spawns for the player only while it is nonzero. The accessor returns the allowance
+ * left, not the raw cap (Architect 2026-10-19, accepted). om_mission_reinforce_note_spawn: counts one player spawn into
+ * reinforce_spawned; a no-op when there is no cap (nothing to count against). */
+uint32_t om_mission_reinforce_cap(const om_world *w);
+void om_mission_reinforce_note_spawn(om_world *w);
 /* Resets the one-shot mission_started latch (csrc/fog.c); called by mission.c
  * om_mission_setup so a new mission's recon phase can be re-entered via
  * om_mission_begin. Without this, om_mission_is_started stays true forever
