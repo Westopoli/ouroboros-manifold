@@ -1,3 +1,4 @@
+# Rule pins: R-126-02@2361a1, R-126-06@84ac8e
 """B4 / B14-N: om_support_tick materialises a held structure's production.
 
 R-126-02: Given a held structure with a chosen unit type, When its production

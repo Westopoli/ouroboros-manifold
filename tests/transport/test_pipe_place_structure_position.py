@@ -1,3 +1,4 @@
+# Rule pins: R-126-01@71403e, R-126-02@2361a1
 """W-1e: place_structure x/y sets structure position via om_structure_set_position.
 
 place_structure with a non-origin x/y places the structure at that position.

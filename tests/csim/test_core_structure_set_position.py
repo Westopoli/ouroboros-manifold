@@ -1,3 +1,4 @@
+# Rule pins: R-126-02@2361a1
 """W-1e: om_structure_set_position sets x/y; read back via om_structure_get_position.
 
 (a) Set position on a fresh structure; read back through om_structure_get_position.

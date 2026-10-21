@@ -1,3 +1,4 @@
+# Rule pins: R-126-01@71403e, R-126-02@2361a1, R-127-04@db7974
 """W-1d: structure owner = E-05 faction id; neutral = -1.
 
 R-126-01: structure owner is an E-05 faction id; neutral structures have owner -1.

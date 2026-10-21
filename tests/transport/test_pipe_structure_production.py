@@ -1,3 +1,4 @@
+# Rule pins: R-126-02@2361a1
 """W-1b pipe test: structure production adds player-faction unit within timer.
 
 Uses pipe/ouroboros_pipe_dbg (debug build): place_structure is a TEST AND DEBUG

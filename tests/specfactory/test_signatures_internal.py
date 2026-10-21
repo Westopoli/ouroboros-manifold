@@ -60,7 +60,6 @@ EXPECTED_MODULE = {
     "om_grid_query_circle": "unit.c",
     "om_grid_query_circle_faction": "unit.c",
     "om_mission_on_begin": "mission.c",
-    # VG-E-prodslot (R-126-02, TD-VG-E-29, FINDING-production-stack): the first-free-slot helper production calls (G1).
     "om_mission_production_slot": "mission.c",
     # VG-CONTRACT-E7 (TD-VG-E-28): the cross-file bridge between mission.c (state) and tactical_support.c (production driver).
     "om_mission_reinforce_cap": "mission.c",

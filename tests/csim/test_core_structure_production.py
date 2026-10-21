@@ -1,3 +1,4 @@
+# Rule pins: R-126-02@2361a1, R-126-06@84ac8e
 """W-1b Stage B: structure production spawns units for the right faction.
 
 R-126-02: a held structure with a chosen unit type spawns one unit of the
