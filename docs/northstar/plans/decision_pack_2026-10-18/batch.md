@@ -6,26 +6,6 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ## 2. Questions
 
-### Q-B23b-01 Which renderer is the look?
-
-Under the richer lighting the 3D ground wants, the see-through faction shells wash out the system dots (our pixel check reads 6 of 18); under the simpler lighting the checks use, the dots read fine. (picture ruled 2026-10-21; see the lane row).
-
-(a) Ship the richer lighting, and the pixel check gains a run on it.  
-(b) The wash is the approved look.  
-(c) A small fix makes the shells fainter over the dots (the Architect's lean, shipping the richer path).
-
-unblocks: the galaxy pixel test and fix piece.
-
-### Q-C2-5-01 Owner colour at the dot
-
-In the galaxy frame (P1), 14 of the 38 owned systems do not show their owner's colour at the dot: a neighbouring region's glow covers them or the additive light whitens the hue.
-
-(a) That is the look you want; the colour test samples the wrong thing for those dots.  
-(b) A glow must not cover a neighbour's dot.  
-(c) The dot's core keeps its hue under the light.
-
-unblocks: the galaxy pixel test's margin (it passes by one dot today).
-
 ### Q-156-02 Lab pass marks
 
 The lab's ten draft pass marks (mirror tolerance, skill beating the noise, rank agreement, stacking, dominance, dead skills, counters) are unconfirmed.
@@ -36,31 +16,15 @@ The lab's ten draft pass marks (mirror tolerance, skill beating the noise, rank 
 
 unblocks: lab rev 2 runs with real marks instead of drafts.
 
-### Q-246-02 Who sets asteroid density?
-
-A space mission needs an asteroid-field density; the mockup uses one value (35). You asked on 2026-10-13 to see a prototype of the options first. (picture ruled 2026-10-21; see the lane row) (the prototype shot is the one owed for this).
-
-(a) One default for every mission.  
-(b) The region decides, tight in some and open in others, within a range.  
-(c) The mission type decides.
-
-unblocks: the asteroid density work.
-
-### Q-082-03 How does a big roster keep its shape?
-
-With 20 to 40 unit types per era, how do the three categories and six roles stretch?
-
-(a) Every unit belongs to one of the three categories and one of the six roles; the orderings hold within each category (recommended).  
-(b) Categories only, roles free.  
-(c) A free roster, balanced by the scoring check alone.
-
-unblocks: the spec for the 20-to-40 type roster.
+(your 2026-10-21 note: not enough context)
 
 ### Q-147-01 Name the land era and the roster
 
 The land era is "The Marble Reach" as a placeholder; its name, setting, tone and scale, and the order of eras after the first two, are unwritten. Give your words, or ask the Architect to draft candidates; also write the roster in order and mark each era earnable or purchase-only.
 
 unblocks: the era pack form, the land era's identity and the roster the store sells.
+
+(your 2026-10-21 note: Already decided this: Greek)
 
 ### Q-100-01 Firing arc
 
@@ -217,3 +181,10 @@ Five September mockups (fog, hud, units, objectives, menus) have no recorded ver
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
 
 Parked by you (8): see batch_closed.md.
+
+## Answered 2026-10-21
+
+- Q-B23b-01: It's fine as it is for now (recorded: docs/northstar/ambiguity_register.md)
+- Q-C2-5-01: A, that is the look; the test samples wrong (recorded: docs/northstar/ambiguity_register.md)
+- Q-246-02: Layout engine sets it, landscape engine conforms (recorded: docs/northstar/ambiguity_register.md)
+- Q-082-03: defer to after beta (recorded: docs/northstar/ambiguity_register.md, parked)
