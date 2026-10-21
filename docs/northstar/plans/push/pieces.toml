@@ -3216,6 +3216,10 @@ size_estimate = "coverage_run.sh, coverage_report.py, status_check.py check cove
 # owns that file. The branch never touches the ledger: a records clerk writes the piece's
 # ledger row to main with the branch sha when the build is done. Test branch
 # push/harness-lab-slow-tier-tests, build branch push/harness-lab-slow-tier.
+# The gate's lab stage collects tests/skilllab/integration and tests/skilllab/ground only, so 15 of
+# the 19 listed lab ids are the skips a landing shows; the list is the inventory of the slow tier
+# (every tests/skilllab test marked SLOW (OM_LAB_SLOW), whether or not the gate's lab stage
+# collects it today); built at push/harness-lab-slow-tier 5bbfb79.
 # See also: HARNESS-symown (earlier owner of scale_gated_tests.txt).
 [[piece]]
 id = "HARNESS-lab-slow-tier"
