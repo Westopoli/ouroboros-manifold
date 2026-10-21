@@ -5,7 +5,7 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 7
+abi_version = 8
 symbol_count = 767
 struct_count = 45
 ambiguous_remaining = 0
@@ -3229,10 +3229,10 @@ note = "Default 0.5; rare 0.1; else player weight."
 name = "om_mission_compute_reinforcement_capacity"
 module = "tactical_support.c"
 restype = "double"
-params = [{ name = "c_double", ctype = "double" }, { name = "time", ctype = "uint64_t" }]
+params = [{ name = "F", ctype = "double" }, { name = "share", ctype = "double" }]
 epics = ["E-15"]
 confidence = "likely"
-note = "No world. p0 = c_double F; p1 = time limit 3600 ticks (int literal). Return >= 80.0."
+note = "No world. F the composed full force, share the player's share p / (p + e) of the contested strongpoints at tick 0, clamped to [0, 1]. Returns F - om_mission_compute_starting_force(F, share) (VG-CONTRACT-E7; See also the visible-game spec, E7 paragraph). Two-argument since ABI 8."
 
 [[symbols]]
 name = "om_mission_compute_relevance"
@@ -3256,10 +3256,10 @@ note = "No world. Names from inline comments 'deployed power', 'surviving power 
 name = "om_mission_compute_starting_force"
 module = "tactical_support.c"
 restype = "double"
-params = [{ name = "c_double", ctype = "double" }]
+params = [{ name = "F", ctype = "double" }, { name = "share", ctype = "double" }]
 epics = ["E-15"]
 confidence = "likely"
-note = "No world. p0 = c_double expected full force F (100.0). Return approx 20.0 (0.20 F). Not in symbol_modules.toml; E-10 mission territory by name, owned here by rule."
+note = "No world. F the composed full force, share the player's share p / (p + e) of the contested strongpoints at tick 0, clamped to [0, 1]. Returns F * frac(share): 0.2 + 1.2 * share up to OM_START_KNEE 0.25 (DRAFT-e7-floor-knee), 0.5 + 0.4 * (share - 0.25) above it (VG-CONTRACT-E7, R-218-06; See also the visible-game spec, E7 paragraph). Two-argument since ABI 8. Not in symbol_modules.toml; E-10 mission territory by name, owned here by rule."
 
 [[symbols]]
 name = "om_mission_compute_time_limit"
@@ -3557,6 +3557,15 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint
 epics = ["E-10"]
 confidence = "likely"
 note = "HDR4-2-r: i-th player unit in spawn order; outs may be NULL; 1 on success, 0 out of range. Header doc (moved here from ouroboros_sim.h): i-th player-faction unit in spawn order: writes its unit type and tier (either out may be NULL), returns 1; 0 when i is out of range."
+
+[[symbols]]
+name = "om_mission_get_force_group"
+module = "mission.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }]
+epics = ["E-10"]
+confidence = "likely"
+note = "start group of the i-th player unit in spawn order: 1..3, 0 out of range or unassigned (DRAFT, GAP 13). A stub returning 0 until VG-E-startforce implements it; See also the visible-game spec, E7 paragraph (same shape as om_mission_get_force_unit)."
 
 [[symbols]]
 name = "om_mission_get_objective_completion"
@@ -7307,6 +7316,26 @@ note = "internal (om_internal.h); no ctypes binding"
 name = "om_move_terrain_epoch"
 module = "tactical_move.c"
 restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_mission_reinforce_cap"
+module = "mission.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_mission_reinforce_note_spawn"
+module = "mission.c"
+restype = "void"
 params = [{ name = "w", ctype = "om_world*" }]
 internal = true
 epics = ["internal"]

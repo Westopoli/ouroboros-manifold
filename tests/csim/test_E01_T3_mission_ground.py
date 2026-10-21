@@ -1,3 +1,4 @@
+# Rule pins: R-218-01@ecb14c
 """E-01 terrain stage 3, piece 3a (spec 2026-10-06-terrain-stage3-spec.md rev 3, piece "3a", csrc/mission.c).
 
 Proves: in a ground era (om_set_era_kind 1, walking kinds) om_mission_setup generates terrain (seed
@@ -25,9 +26,10 @@ import subprocess
 import pytest
 
 from conftest import (
-    OMArchetype, OMEdge, OMFeature, OMTier, OMVec2,
+    OMArchetype, OMEdge, OMFeature, OMTier, OMVec2, load_lib,
     set_edge, set_faction, set_owner, set_region,
 )
+from test_VG_E_e7 import _bind as e7_bind, oracle_units, owners_of, roster_of  # TD-VG-E-34: the E7 starting-force oracle
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 V = ctypes.c_void_p
@@ -191,14 +193,30 @@ def test_control_space_mission_has_no_terrain(lib, world_factory):
 def test_every_unit_spawns_on_walkable_ground_and_objective_is_reachable(lib, world_factory, archetype):
     """Spec 3a: every archetype at 20 seeds, ground era: every unit spawns (same count as the space era), each on
     a walkable cell, the (snapped) objective node on a walkable cell and reachable from a player and an enemy unit
-    by om_walk_route."""
+    by om_walk_route.
+
+    TD-VG-E-34 (pin move, start-count pins move with the starting-force cut, E7, Architect 2026-10-19): the player spawns
+    start_units of the composed force F in every era, with start = F * frac(share), share = p / (p + e) read from the era's own
+    structure placement (the ground era caps the strongpoints at the slope count, R-218-01, so its p and e differ from the space
+    era's). The expected count is the space era's enemy units (unchanged by E7) plus the ground world's start_units: it was the
+    space era's total, which held while both eras spawned all of F. The premise (F, p, e, share, start_units) is in the message."""
+    # See also: test_VG_E_e7.py `lib` fixture (TD-VG-E-34): e7_bind retypes om_terrain_slope_at, so it binds a private handle,
+    # never the session lib other modules' tests share.
+    lib = load_lib()
+    e7_bind(lib)
     for seed in SEEDS:
         space = _scene(lib, world_factory, ground=False, archetype=archetype, seed=seed)
-        expect = lib.om_unit_count(space)
+        space_enemy = sum(1 for u in _units(lib, space) if lib.om_unit_get_faction(space, u) == ENEMY_FAC)
         w = _scene(lib, world_factory, ground=True, archetype=archetype, seed=seed)
         assert lib.om_terrain_present(w) == 1, f"seed {seed}: no terrain"
         units = _units(lib, w)
-        assert len(units) == expect, f"seed {seed}: {len(units)} units spawned, the space era spawns {expect}"
+        owners = owners_of(lib, w)
+        F, p, e = sum(roster_of(lib, w)), owners.count(PLAYER_FAC), owners.count(ENEMY_FAC)
+        start_units, _cap = oracle_units(F, p, e)
+        expect = space_enemy + start_units
+        print("PREMISE", f"archetype {archetype} seed {seed} F {F} p {p} e {e} share {p / (p + e) if p + e else None} start_units {start_units} enemy {space_enemy} expect {expect}")
+        assert len(units) == expect, (f"seed {seed}: {len(units)} units spawned, E7 wants the enemy's {space_enemy} + start_units "
+                                      f"{start_units} = {expect} (F {F}, p {p}, e {e}, share {p / (p + e) if p + e else None})")
         for u in units:
             x, y = _pos(lib, w, u)
             assert lib.om_terrain_walkable_at(w, x, y) == 1, f"seed {seed}: unit {u} spawned unwalkable at {x},{y}"
