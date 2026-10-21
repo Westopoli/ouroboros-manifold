@@ -2492,7 +2492,7 @@ size_estimate = "contract piece: public om_unit_route_get + om_route_point, pipe
 
 # Skill lab rev 2 shard rows (spec docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, records step, clerk 2026-10-14). L-rows and S take over scripts/skilllab and tests/skilllab files from the attached SL-harness (glob), SPACELAB-1 and LAB-SEARCH; E-rows own the engine files.
 
-# E0 lands after E1, E2, E3, E4; it takes its ABI and save numbers from main at its landing, after VG-CONTRACT-E7 (ABI 8, save 12), VG-CONTRACT-layerspot (ABI 9, save 13) and VG-CONTRACT-route (Architect 2026-10-21)
+# E0 lands after E1, E1B and E3 (E2 builds on E0's contract and lands after E0); it takes its ABI and save numbers from main at its landing, after VG-CONTRACT-E7 (ABI 8, save 12), VG-CONTRACT-layerspot (ABI 9, save 13) and VG-CONTRACT-route (Architect 2026-10-21)
 [[piece]]
 id = "LAB-REV2-E0"
 manager = "M0"
@@ -2548,7 +2548,7 @@ wave = 10
 owns = ["csrc/unit.c", "csrc/tactical_move.c", "csrc/om_internal.h", "csrc/om_constants.h", "tests/csim/test_E13_S100_firing_arc.py", "tests/csim/test_E11_S082_cone.py", "tests/csim/test_PP_can_engage.py", "tests/specfactory/test_pp_contract_lab_rev2.py"]  # E2 retires its two stub tests test_set_cone_stub_returns_not_built and test_can_engage_stub_returns_not_built (superseded when E2 writes the bodies); a ruler edit under a ledger row. New files: the three csim tests. om_internal.h shared with E0 and VG-CONTRACT-E7 (ordered by depends_on)
 owns_glob = []
 acceptance = ["tests/csim/test_E13_S100_firing_arc.py", "tests/csim/test_E11_S082_cone.py", "tests/csim/test_PP_can_engage.py"]
-depends_on = ["LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-E-prodslot"]  # clerk addition (records batch 8, owner_lint-forced, Architect to confirm): E2 shares om_internal.h with VG-E-prodslot and VG-CONTRACT-layerspot and tactical_move.c with VG-CONTRACT-layerspot and VG-CONTRACT-route, which land first
+depends_on = ["LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-E-prodslot"]  # clerk addition (records batch 8, owner_lint-forced, Architect to confirm): E2 shares om_internal.h with VG-E-prodslot and VG-CONTRACT-layerspot and tactical_move.c with VG-CONTRACT-layerspot and VG-CONTRACT-route, which land first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "E2 firing arc gate in the fire pass, cone area damage, om_combat_can_engage body"
