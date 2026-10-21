@@ -3179,6 +3179,7 @@ tests_pending = true
 size_estimate = "Lane M menus skeleton: one play and three autoload scripts, thinnest end-to-end path"
 
 # FINDING-gate-lane-plays-scope (Architect 2026-10-20): the gate runs only the plays under a changed lane's own globs, so a cross-lane play (S-140) was never gated; widen the scope
+# S-140 case (2026-10-21): the F-S140 click rewrite changed lane F play code but the gate's lane_plays stage reported 'skipped: no lane plays touched', because lane F's globs in lane_plays.toml cover only autoload/net/** and scenes/lobby/**; the play was run by hand.
 [[piece]]
 id = "HARNESS-lane-plays-scope"
 manager = "M0"
@@ -3232,3 +3233,39 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "is_scale_gated gains the lab slow-tier clause, scale_gated_tests.txt gains the lab ids and a two-tier header; under 60 lines"
+
+# FINDING-gate-base-before-lock (Architect 2026-10-21, implementation; Westley may veto): the gate resolved
+# its base before the landing clerk's wait on gate.lock, so a candidate merged with a newer main failed
+# against a stale baseline. Stage 0 "base" fetches, resolves origin/main to a sha, rejects a candidate that
+# lacks it and sets BASE_REF to the sha; MERGE_GATE_STOP_AFTER=base is the test hook; rules.md section (b)
+# gets the locked-command form (take the lock, then merge main and run pre_gate inside it). Tests are on
+# branch push/vg-gatebase-tests (7a4d6490), not yet on main. depends_on: every earlier owner of
+# merge_gate.sh or rules.md is attached or landed (HARNESS-sigblocked, VG-GUARD, HARNESS-userdir,
+# HARNESS-C1b, HARNESS-methodcheck), so none is in flight; the latest two are named for order only.
+[[piece]]
+id = "HARNESS-gate-base-after-lock"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate.sh", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_base_stage.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_base_stage.py"]
+depends_on = ["HARNESS-C1b", "HARNESS-methodcheck"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "merge_gate.sh stage 0 'base': fetch, resolve origin/main to a sha, reject a candidate that lacks it, set BASE_REF to the sha; MERGE_GATE_STOP_AFTER=base test hook; rules.md section (b) locked command merges main and runs pre_gate inside the lock; under 60 lines"
+
+# FINDING-c2-5-pixels-red-under-gate (Architect 2026-10-21): the gate discards the pytest output and PNGs of a red
+# playthrough; keep them outside SCRATCH_ROOT so the next red can be diagnosed. merge_gate_support.py is also
+# owned by the queued HARNESS-westley-folder and HARNESS-lane-plays-scope (ordered after both via the latter);
+# drift_audit.md is owned by the queued HARNESS-coverage (ordered after it).
+[[piece]]
+id = "HARNESS-gate-keep-red-evidence"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_keep_red_evidence.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_keep_red_evidence.py"]
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-lane-plays-scope", "HARNESS-coverage"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA output and every PNG the suite wrote under ~/Projects/om-push/gate-evidence/<date>-<piece>/ (outside SCRATCH_ROOT, never /tmp), the GATE line names that path, the trap at merge_gate.sh:52-57 leaves that directory alone, a weekly cleanup line in the drift-audit page; tests first: a fixture red play leaves its stdout and PNG at the path and the GATE line names it, a green play leaves nothing"
