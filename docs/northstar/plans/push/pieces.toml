@@ -1892,7 +1892,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_f_nettick.gd", "tests/qa/desktop/plays/F/_play.py", "tests/qa/desktop/plays/F/S-140.py"]  # tactical_view.gd: the _load_live function only
 owns_glob = []
 acceptance = ["tests/test_vg_f_nettick.gd"]
-depends_on = ["VG-F-SKEL-B", "VG-E1"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owns tactical_view.gd
+depends_on = ["VG-F-SKEL-B"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owned tactical_view.gd; # edge removed (Architect 2026-10-20): VG-E1 landed after VG-F-NETTICK; the cycle among landed rows was inert
 status = { state = "attached", attach_sha = "b12b47a" }  # landed b12b47a
 size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (empty frame at _ready: load none, _match_frame loads the first released one); S-140 green, ticks wait (DRAFT-s140-settle-ticks), known-red line out"
 
@@ -2368,7 +2368,7 @@ size_estimate = "P2: lot_noise.h (3 prototypes), economy_lot_noise.c (om_lot_noi
 [[piece]]
 id = "VG-CONTRACT-force-groups"
 manager = "M0"
-wave = 13
+wave = 9
 owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_frame_briefing_fields.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_frame_briefing_fields.py"]
@@ -2500,7 +2500,7 @@ acceptance = ["tests/csim/test_VG_CONTRACT_route.py", "tests/transport/test_pipe
 depends_on = ["VG-W2", "VG-CONTRACT-E7", "VG-CONTRACT-layerspot", "VG-E-prodslot", "VG-E1R", "PP-ledger", "VG-CONTRACT-force-groups"]  # W2 owns tactical_move.c, signatures.toml, architecture.md, ledger and the pin tests; E7 the header, signatures.toml, conftest.py, architecture.md and the ABI pin tests; prodslot signatures.toml; startforce om_pipe.c, architecture.md, ledger; E1R architecture.md; layerspot first, route after
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "contract piece: public om_unit_route_get + om_route_point, pipe verb unit_route, ABI N to N+1 (N read at launch), docs paragraph; second-Fable audit; no save format change, no checksum change"
+size_estimate = "contract piece: public om_unit_route_get + om_route_point, top-level frame unit_route, ABI N to N+1 (N read at launch), docs paragraph; second-Fable audit; no save format change, no checksum change"
 
 
 # Skill lab rev 2 shard rows (spec docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, records step, clerk 2026-10-14). L-rows and S take over scripts/skilllab and tests/skilllab files from the attached SL-harness (glob), SPACELAB-1 and LAB-SEARCH; E-rows own the engine files.
