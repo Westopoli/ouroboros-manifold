@@ -3203,3 +3203,28 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "coverage_run.sh, coverage_report.py, status_check.py check coverage, baseline file; under 250 lines"
 
+
+# Architect ruling 2026-10-20, option (a); Westley may veto. Extend the merge gate's
+# scale-gated mechanism (suite_regression.is_scale_gated, A98) to the lab's slow tier:
+# is_scale_gated also returns true for a node id under tests/skilllab/ whose skip reason
+# contains "OM_LAB_SLOW" (marker SLOW at tests/skilllab/test_depth.py:38, reason "real
+# fights; set OM_LAB_SLOW=1"; ruling 13 of docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md),
+# provided the id is listed in docs/northstar/plans/push/scale_gated_tests.txt. That file
+# gains the lab ids and its header comment names both tiers; the gate then counts those
+# skips as "scale-gated: N", not as skips. The csim-tier check in
+# tests/specfactory/test_merge_gate_support.py is unchanged; HARNESS-westley-folder (queued)
+# owns that file. The branch never touches the ledger: a records clerk writes the piece's
+# ledger row to main with the branch sha when the build is done. Test branch
+# push/harness-lab-slow-tier-tests, build branch push/harness-lab-slow-tier.
+# See also: HARNESS-symown (earlier owner of scale_gated_tests.txt).
+[[piece]]
+id = "HARNESS-lab-slow-tier"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/suite_regression.py", "docs/northstar/plans/push/scale_gated_tests.txt", "tests/specfactory/test_lab_slow_tier_gate.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_lab_slow_tier_gate.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "is_scale_gated gains the lab slow-tier clause, scale_gated_tests.txt gains the lab ids and a two-tier header; under 60 lines"
