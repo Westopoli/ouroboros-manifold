@@ -4,25 +4,6 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ## 1. Pictures
 
-### P6 Land that fits a layout: carved routes (S-191, S-189)
-
-![](../../story_reviews/westley/P-S191-terrain-obeys-pass2-carved-routes.png)
-
-**What you see:** A top-down prototype of a land map with flat base circles, an objective, a choke bar in the middle, and orange and blue route lines; pink dots mark the cells the generator carved to make routes. Every point now has its narrow and wide routes.
-**Judge:** The carved routes run as parallel lanes side by side, like a rail yard; is carving the right direction with a better path rule, or should routes come from the landforms?
-**Beta status of what is shown:**
-- Land that fits a requested layout, with routes (S-191, S-189): built as a prototype only, awaiting your verdict; in the game it is queued (not built), not scheduled (you said the layout engine comes first).
-- The layout engine that asks for those places: stub (built, not yet called by the game).
-
-### P7 Land that fits a layout: small map (S-191, S-189)
-
-![](../../story_reviews/westley/P-S191-terrain-obeys-pass2-small-canvas.png)
-
-**What you see:** The same prototype on a small map: base circles kept apart by scaling the pads down, steep ring slopes under the walking limit, and the same carved lanes in yellow and pink.
-**Judge:** Do the pads and routes still read on the small map, or does the carving swamp it?
-**Beta status of what is shown:**
-- Small-map pads and routes (S-191, S-189): built as a prototype only, awaiting your verdict; in the game queued (not built), not scheduled.
-
 ## 2. Questions
 
 ### Q-B23b-01 Which renderer is the look?
