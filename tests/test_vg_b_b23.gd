@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-106-01@6302e6, R-106-02@4d4bb5, R-106-03@966faf, R-106-04@60db2a, R-107-01@10e8dc
 # test-timeout: 20000
 
 # Piece B23, the prototype's numbers exactly (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 12b,
@@ -207,7 +208,7 @@ func _run() -> void:
 		return
 
 	# scene: Camera3D, Environment, light (galaxy_mockup.tscn:12-17, 30-32, 41-43)
-	_ctrl(is_equal_approx(_cam.fov, 45.0) and is_equal_approx(_cam.far, 800.0), "Camera3D fov %s far %s, want 45 and 800 (galaxy_mockup.tscn:42-43)" % [_cam.fov, _cam.far])
+	_ctrl(is_equal_approx(_cam.fov, 45.0) and is_equal_approx(_cam.far, 3000.0), "Camera3D fov %s far %s, want 45 and 3000 (DRAFT-b25-far, TD-VG-B-20: ambient_rig.gd sets far at runtime; was 800, galaxy_mockup.tscn:42-43)" % [_cam.fov, _cam.far])
 	var we: WorldEnvironment = _view.get_node_or_null("WorldEnvironment")
 	var env: Environment = we.environment if we != null else null
 	_ctrl(env != null and env.background_mode == Environment.BG_COLOR

@@ -1,6 +1,9 @@
+# Rule pins: R-106-05@bc7ef9
 # spec: docs/northstar/plans/2026-10-01-architect-rulings-2.md addendum 24 A60 (and A54); E-16 S-106; R-106-05 ambient field
 """A60: the live scenes/galaxy view carries the ambient particle field (the port of
-scenes/mockups/galaxy/legacy_ambient_rig.gd), and the quality tier thins it.
+scenes/mockups/galaxy/legacy_ambient_rig.gd), and the quality tier thins it. After B25 (spec rev 12d) the
+starfield and dust are no longer particle emitters (a wash, four star-layer meshes and a MultiMesh of motes
+replace them, tests/test_vg_b_b25.gd); the field counted here is the rings, inflow streams and central glow.
 
   tier 0 full               raymarch shells, full ambient field
   tier 1 stand-in           stand-in shells, full ambient field (same amount as tier 0)
