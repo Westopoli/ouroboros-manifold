@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f
 """B5 (architect rulings round 2, section 2): the saved consequence_consumed flag changes
 the save layout, so OM_SAVE_FORMAT_VERSION goes 2 -> 3 (B5) -> 4 (B6 lifecycle fields, ruling 1.8) -> 5 (HDR5 region_edge 512, A29) and save.c rejects any other
 version cleanly (R-111-03; nothing has shipped, no migration).
@@ -10,7 +11,7 @@ import ctypes
 from conftest import OMTier, set_owner, set_region
 
 VERSION_OFFSET = 4
-EXPECTED_VERSION = 11
+EXPECTED_VERSION = 12
 
 
 def _bind_save(lib):
@@ -91,10 +92,10 @@ def test_R_111_03_a_version_3_save_is_refused_cleanly(lib, world_factory):
 
 
 def test_R_111_03_a_version_6_save_is_refused_cleanly(lib, world_factory):
-    """Given a save from a later build (version word 12), When loaded, Then it is refused: no migration either way, any other version is rejected."""
+    """Given a save from a later build (version word 13), When loaded, Then it is refused: no migration either way, any other version is rejected."""
     src = _world(lib, world_factory, seed=37)
     buf, size = _save(lib, src)
-    newer = _with_version(buf, size, 12)
+    newer = _with_version(buf, size, 13)
     dst = world_factory(n_regions=4, seed=38)
     before = lib.om_world_get_state_checksum(dst)
     assert lib.om_load_state_read(dst, newer, size) != 0
