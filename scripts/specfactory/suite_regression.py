@@ -103,9 +103,14 @@ def parse_junit_extra(xml_path: Path) -> tuple[dict[str, str], int, int]:
 
 
 def is_scale_gated(node_id: str, skipped_el) -> bool:
-    """A skip under tests/csim/scale/ whose reason names OM_SCALE (A98)."""
+    """A skip under tests/csim/scale/ whose reason names OM_SCALE (A98), or under
+    tests/skilllab/ whose reason names OM_LAB_SLOW (the lab's SLOW tier)."""
     reason = (skipped_el.get("message") or "") + (skipped_el.text or "")
-    return node_id.startswith("tests/csim/scale/") and "OM_SCALE" in reason
+    if node_id.startswith("tests/csim/scale/") and "OM_SCALE" in reason:
+        return True
+    # See also: pieces.toml HARNESS-lab-slow-tier; skill-lab rev 2 spec ruling 13 (SLOW marker).
+    # The trailing slash keeps prefixes such as tests/skilllabx/ out.
+    return node_id.startswith("tests/skilllab/") and "OM_LAB_SLOW" in reason
 
 
 def parse_junit_scale_gated(xml_path: Path) -> tuple[str, ...]:
