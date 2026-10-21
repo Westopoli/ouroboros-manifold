@@ -3199,7 +3199,7 @@ wave = 13
 owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_lane_plays_scope.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_lane_plays_scope.py"]
-depends_on = ["HARNESS-C4", "HARNESS-westley-folder"]
+depends_on = ["HARNESS-C4", "HARNESS-westley-folder", "HARNESS-gate-keep-red-evidence"]  # keep-red-evidence added by the Architect 2026-10-21 (merge_gate_support.py order)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the gate widens the lane-plays scope so a play that crosses lanes runs when any file it walks changes"
@@ -3211,7 +3211,7 @@ wave = 13
 owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
 owns_glob = ["docs/northstar/plans/drift_audits/coverage_runs/*"]
 acceptance = ["tests/specfactory/test_coverage_check.py"]
-depends_on = ["HARNESS-C235", "HARNESS-C4"]
+depends_on = ["HARNESS-C235", "HARNESS-C4", "HARNESS-gate-keep-red-evidence"]  # keep-red-evidence added by the Architect 2026-10-21 (drift_audit.md order)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "coverage_run.sh, coverage_report.py, status_check.py check coverage, baseline file; under 250 lines"
@@ -3277,7 +3277,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_keep_red_evidence.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_keep_red_evidence.py"]
-depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-lane-plays-scope", "HARNESS-coverage"]
+depends_on = ["HARNESS-gate-base-after-lock"]  # Architect 2026-10-21: HARNESS-lane-plays-scope and HARNESS-coverage now depend on this row (both queued, not in flight)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA output and every PNG the suite wrote under ~/Projects/om-push/gate-evidence/<date>-<piece>/ (outside SCRATCH_ROOT, never /tmp), the GATE line names that path, the trap at merge_gate.sh:52-57 leaves that directory alone, a weekly cleanup line in the drift-audit page; tests first: a fixture red play leaves its stdout and PNG at the path and the GATE line names it, a green play leaves nothing"
@@ -3286,14 +3286,28 @@ size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA outp
 id = "HARNESS-swarm-config"
 manager = "M0"
 wave = 13
-owns = [".claude-swarm.toml", "docs/northstar/plans/cascades/README.md", "scripts/specfactory/status_check.py", "tests/specfactory/test_tool_line.py"]
+owns = [".claude-swarm.toml", "docs/northstar/plans/cascades/README.md", "tests/specfactory/test_swarm_config.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_swarm_config.py"]
+depends_on = []  # Architect 2026-10-21: status_check.py and the Tool-line test moved to HARNESS-tool-line, which carries the HARNESS-C4 and HARNESS-coverage ordering
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
+size_estimate = "toml rewrite (keeps the old file's ambiguous_verbs under [invariants], [gates] extra_spec_gate_cmds = [] and worktree_link = []), cascades README, one test file"
+
+# Tool-line check split out of HARNESS-swarm-config (Architect harness ruling 2026-10-21, implementation; Westley may veto): both HARNESS-C4 and HARNESS-coverage own scripts/specfactory/status_check.py, so this row follows them.
+[[piece]]
+id = "HARNESS-tool-line"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_tool_line.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_tool_line.py"]
 depends_on = ["HARNESS-C4", "HARNESS-coverage"]  # both own scripts/specfactory/status_check.py; ordering only
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
-size_estimate = "toml rewrite, cascades README, Tool-line WARN check in status_check.py, one test file"
+size_estimate = "status_check.py gains the tool_line check: for a queued pieces row whose spec key names a file, the paragraph in that file whose bold opening contains the row id must contain a match of `Tool: (Workflow|cascade|/manager-mode)` anywhere in the paragraph: absent gives WARN for a queued row and DRIFT for an in_flight row; a row with no spec key gets its own WARN \"no spec key\"; no calendar date"
 
 [[piece]]
 id = "HARNESS-cost-report"
@@ -3309,17 +3323,17 @@ spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
 size_estimate = "usage-metadata cost script with --since/--until/--by and a dedup rule; one fixture test"
 
 [[piece]]
-id = "CASCADE-P3-trial"
+id = "CASCADE-laneU-tests"
 manager = "M0"
 wave = 12
-owns = []  # owns filled by the P3 spec at cascade start (one row per cascade)
+owns = []  # owns filled at cascade start (one row per cascade). Architect 2026-10-21 asked for the Lane U test files here; VG-U-PIPE-TESTS (attached) and VG-CONTRACT-unitrow-save own tests/transport/test_pipe_u_observable.py, VG-U9-ADMIN-TESTS owns tests/transport/test_pipe_admin_chain.py and VG-U4-EVCHAR-TESTS owns tests/transport/test_pipe_event_characters.py (there is no test_pipe_evchar.py), so no ownership is duplicated here
 owns_glob = []
 acceptance = []
 depends_on = ["HARNESS-swarm-config", "VG-P2"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
-size_estimate = "first /manager-mode cascade: VG-P3; measured per the spec section 6"
+size_estimate = "first /manager-mode cascade: the Lane U tests; measured per the spec section 6, measurement page docs/northstar/plans/retro_2026-10-21/laneU_trial.md"
 # Architect 2026-10-21 (implementation; Westley 2026-10-21: "go ahead with your suggestion on the pixel test"). Test-defect fix TD-VG-C2-5-patch; spec: Rev 13 section, VG-C2-5-patch paragraph. HARNESS-userdir (attached, 5bca0733) was the last owner of this file.
 [[piece]]
 id = "VG-C2-5-patch"
