@@ -26,6 +26,7 @@ void om_density_rebuild_inputs(om_world *w); /* K-e5: no-op stub, E1q-field fill
 void om_lots_init(om_world *w);
 void om_lots_step(om_world *w, uint64_t tick);
 void om_lots_on_area_hit(om_world *w, double x, double y, double radius);
+void om_lots_remove_row(om_world *w, uint32_t row); /* E1r: drop one lot row, shift the table, rebuild lot_at; See also: economy_place.c */
 
 /* economy_waves.c (E1d) */
 void om_waves_init(om_world *w);
