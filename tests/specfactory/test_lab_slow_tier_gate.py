@@ -26,11 +26,12 @@ import suite_regression as sr  # noqa: E402
 PYTHON = sr.DEFAULT_PYTHON
 GOOD_TEST = "def test_a():\n    assert 1 == 1\n"
 
-# The 15 SLOW ids of the lab landing tree (origin/push/labrev2-landLab 46fb4e17), tests/skilllab/integration,
-# read with OM_LAB_SLOW unset: the builder lists them in scale_gated_tests.txt.
-LAB_GROUP_A_IDS = (
-    "tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_control_the_same_scene_with_the_attacker_killed_before_it_fires_ends_by_elimination",
+# All 19 SLOW (OM_LAB_SLOW) ids under tests/skilllab of the lab landing tree (origin/push/labrev2-landLab 46fb4e17),
+# read by a collection-only pass with OM_LAB_SLOW unset: the 15 of tests/skilllab/integration (the only ones the gate's lab
+# stage collects), then 4 in the tests/skilllab top-level files. Architect 2026-10-20: the list is the inventory of the slow tier.
+LAB_SLOW_IDS = (
     "tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_E1b_layout_192_lone_attacker_scene_ends_by_elimination_not_by_the_cap",
+    "tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_control_the_same_scene_with_the_attacker_killed_before_it_fires_ends_by_elimination",
     "tests/skilllab/integration/test_attackmove_idle_cap_real.py::test_the_traced_scene_is_the_one_that_capped",
     "tests/skilllab/integration/test_baselines_real.py::test_e_the_sweep_over_the_real_builds_on_layout_192_reaches_48_with_nothing_refused_or_cut",
     "tests/skilllab/integration/test_blind_post_real.py::test_the_real_shift_and_the_real_refusal",
@@ -44,6 +45,10 @@ LAB_GROUP_A_IDS = (
     "tests/skilllab/integration/test_sweep_real.py::test_the_sweep_command_writes_the_family_csv_and_the_summary",
     "tests/skilllab/integration/test_workers_hash.py::test_real_smoke_rows_hash_identically_at_1_and_12_workers",
     "tests/skilllab/integration/test_workers_hash.py::test_real_sweep_family_rows_are_the_same_bytes_at_1_and_12_workers",
+    "tests/skilllab/test_depth.py::test_real_smoke_two_layouts_one_replicate_four_workers",
+    "tests/skilllab/test_diagram.py::test_real_agreement_values_are_all_known_and_a_real_both_wrong_would_be_listed",
+    "tests/skilllab/test_diagram.py::test_real_fight_rows_and_a_real_placed_scene_make_a_consistent_both_wrong_diagram",
+    "tests/skilllab/test_main_artifact.py::test_artifact_command_with_the_real_placed_scene_draws_every_real_unit",
 )
 
 
@@ -133,12 +138,30 @@ def test_positive_control_lab_skip_with_another_reason_is_still_a_skip(tmp_path,
     assert list(report.after.scale_gated) == []
 
 
-def test_positive_control_lab_slow_skip_not_in_the_list_is_still_a_skip(tmp_path, monkeypatch):
-    """Fixture C (control). HARNESS-lab-slow-tier: the list is the proviso; an unlisted OM_LAB_SLOW
-    lab skip counts as a skip."""
+def test_positive_control_lab_slow_skip_not_in_the_list_is_rejected_like_the_csim_tier(tmp_path, monkeypatch):
+    """Fixture C. HARNESS-lab-slow-tier mirrors the csim tier exactly: is_scale_gated and the junit
+    parsers do not see the list, so an unlisted OM_LAB_SLOW lab skip is still counted as scale-gated
+    (skipped_increase == 0, its id in scale_gated) and regression_check rejects it through the
+    "scale-gated tests missing from <list>" branch (merge_gate_support.py:732,755). Assertions copied
+    from the csim pin tests/specfactory/test_merge_gate_support.py:918-922
+    (test_positive_control_scale_test_missing_from_list_rejected)."""
     ok, detail, report = _candidate(
         tmp_path, monkeypatch, files={"tests/skilllab/test_slow_synth.py": _skip_test(LAB_SLOW_REASON)},
         list_text="# nothing listed\n")
+    assert ok is False
+    assert LAB_ID in detail and "scale" in detail
+    assert "scale-gated tests missing from" in detail
+    assert report.skipped_increase == 0  # counted on its own line, not as a skip
+    assert list(report.after.scale_gated) == [LAB_ID]
+
+
+@pytest.mark.parametrize("dirname", ["skilllabx", "skilllab_other"])
+def test_positive_control_lab_slow_reason_under_a_prefix_lookalike_dir_is_an_ordinary_skip(tmp_path, monkeypatch, dirname):
+    """Prefix control. Only the directory tests/skilllab/ is the lab tier: a skip under tests/skilllabx/
+    or tests/skilllab_other/ with an OM_LAB_SLOW reason, even listed, still counts as a skip."""
+    rel = f"tests/{dirname}/test_slow_synth.py"
+    ok, detail, report = _candidate(
+        tmp_path, monkeypatch, files={rel: _skip_test(LAB_SLOW_REASON)}, list_text=f"{rel}::test_real\n")
     assert ok is False
     assert report.skipped_increase == 1
     assert "skipped +1" in detail
@@ -206,9 +229,15 @@ def collect_lab_slow_ids(root: Path, scratch: Path) -> set[str]:
     (plug / "slowcollect_plugin.py").write_text(SLOW_PLUGIN)
     env = {k: v for k, v in os.environ.items() if k != "OM_LAB_SLOW"}
     env["PYTHONPATH"] = str(plug)
-    proc = subprocess.run([PYTHON, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider",
-                           "-p", "slowcollect_plugin", "tests/skilllab"],
-                          cwd=root, env=env, capture_output=True, text=True, timeout=300)
+    try:
+        proc = subprocess.run([PYTHON, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider",
+                               "-p", "slowcollect_plugin", "tests/skilllab"],
+                              cwd=root, env=env, capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired as exc:
+        pytest.fail(f"collection of {root}/tests/skilllab timed out after {exc.timeout}s")
+    if proc.returncode != 0 or proc.stderr.strip():
+        pytest.fail(f"collection of {root}/tests/skilllab failed (rc {proc.returncode}):\n"
+                    f"{proc.stdout[-1500:]}\n{proc.stderr[-1500:]}")
     return {ln[len("SLOWID "):].strip() for ln in proc.stdout.splitlines() if ln.startswith("SLOWID ")}
 
 
@@ -245,13 +274,16 @@ def test_real_repo_lab_list_names_every_lab_slow_test_present_today(tmp_path):
     assert unlisted(found, (REPO / mgs.SCALE_LIST_REL).read_text()) == set()
 
 
-def test_list_names_the_15_lab_group_a_ids():
-    """HARNESS-lab-slow-tier: the builder adds the 15 SLOW ids of tests/skilllab/integration to
-    scale_gated_tests.txt (red until then: ids missing from the list)."""
-    assert len(LAB_GROUP_A_IDS) == 15 and len(set(LAB_GROUP_A_IDS)) == 15
+def test_list_names_all_19_lab_slow_ids():
+    """HARNESS-lab-slow-tier, Architect 2026-10-20 option (a): ALL SLOW (OM_LAB_SLOW) ids under tests/skilllab
+    are listed in scale_gated_tests.txt. The gate's lab stage collects tests/skilllab/integration and
+    ground only, so 15 of the 19 are the skips a landing shows; the list is the inventory of the slow
+    tier. Red until the builder adds them (ids missing from the list)."""
+    assert len(LAB_SLOW_IDS) == 19 and len(set(LAB_SLOW_IDS)) == 19
+    assert sum("/integration/" in i for i in LAB_SLOW_IDS) == 15
     listed = _read_list((REPO / mgs.SCALE_LIST_REL).read_text())
-    missing = sorted(set(LAB_GROUP_A_IDS) - listed)
-    assert missing == [], f"ids missing from scale_gated_tests.txt: {len(missing)} of 15"
+    missing = sorted(set(LAB_SLOW_IDS) - listed)
+    assert missing == [], f"ids missing from scale_gated_tests.txt: {len(missing)} of 19"
 
 
 def test_positive_control_csim_ids_are_still_listed():
@@ -261,14 +293,18 @@ def test_positive_control_csim_ids_are_still_listed():
 
 
 def test_list_header_comment_names_both_tiers():
-    """HARNESS-lab-slow-tier: the header comment of scale_gated_tests.txt (its leading # lines) names
-    the csim tier (tests/csim/scale, OM_SCALE) and the lab tier (tests/skilllab, OM_LAB_SLOW)."""
-    lines = (REPO / mgs.SCALE_LIST_REL).read_text().splitlines()
+    """HARNESS-lab-slow-tier: the header comment of scale_gated_tests.txt (the whole leading block of
+    # lines, blank lines allowed between them, up to the first other line) names the csim tier
+    (tests/csim/scale, OM_SCALE) and the lab tier (tests/skilllab, OM_LAB_SLOW) and says the list is
+    the inventory of every SLOW test."""
     header = []
-    for ln in lines:
+    for ln in (REPO / mgs.SCALE_LIST_REL).read_text().splitlines():
+        if ln.strip() == "":
+            continue
         if not ln.lstrip().startswith("#"):
             break
-        header.append(ln)
-    text = "\n".join(header)
-    missing = [s for s in ("tests/csim/scale", "OM_SCALE", "tests/skilllab", "OM_LAB_SLOW") if s not in text]
+        header.append(ln.lstrip().lstrip("#").strip())
+    text = " ".join(" ".join(header).split())  # a sentence may wrap across comment lines
+    sentence = "every tests/skilllab test marked SLOW (OM_LAB_SLOW), whether or not the gate's lab stage collects it today"
+    missing = [x for x in ("tests/csim/scale", "OM_SCALE", "tests/skilllab", "OM_LAB_SLOW", sentence) if x not in text]
     assert missing == [], f"header comment does not name: {missing}"
