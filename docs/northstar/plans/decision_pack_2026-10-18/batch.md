@@ -4,6 +4,8 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ## 1. Pictures
 
+P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
+
 ## 2. Questions
 
 ### Q-156-02 Lab pass marks
@@ -52,6 +54,11 @@ unblocks: VG-A18-3d.
 The army stands on the map's north edge and the camera faces north, so the map ends mid-screen.
 (a) the opening camera faces away from the home edge toward the objective; (b) the home anchor moves inboard by the base pad (1200 wu); (c) both.
 unblocks: VG-A18-3d's horizon test.
+
+### C15 Faction income and the economy multiplier
+Two rules disagree: one says a faction's budget income is its holdings' base income (R-033-01), the other that the economy multiplier scales it (R-046-05); the code applies the multiplier (found by the sim-viewer run, followups/04_simviewer_run_analysis.md item I).
+(a) the multiplier applies (code stands, R-033-01 rewritten); (b) base income only (R-046-05 rewritten, code changes).
+unblocks: FINDING-sim-I-income-multiplier and the economy lane's numbers.
 
 ## Answered 2026-10-21 (chat)
 
