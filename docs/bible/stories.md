@@ -113,7 +113,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-107 | E-16 | "Pan, zoom, orbit, focus a system, pick out a faction." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-107 |
 | S-108 | E-16 | "Mission pulls back into the galaxy and pushes into the next mission without a cut." | Spec'd, needs reference; prototype first (Westley, 2026-10-15), mockup in build | `epics/E-16-client-camera-hud-and-world-view.md` S-108 |
 | S-109 | E-16 | "The screens around a mission read as orders and reports from my civilization." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-109 |
-| S-110 | E-16 | "A main menu that sets the tone and settings that cover the basics." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-110 |
+| S-110 | E-16 | "A main menu that sets the tone and settings that cover the basics." | Seen | `epics/E-16-client-camera-hud-and-world-view.md` S-110 |
 | S-111 | E-16 | "Saved at every chapter boundary without asking." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-111 |
 | S-112 | E-17 | "Maps built on hand-authored strategic layouts." | Spec'd (the layouts stay and terrain-first generation is added, the layout calls for places and the landscape engine must produce them, S-191 R-191-10; rewrite pending; see S-186, S-191) | `epics/E-17-map-generation.md` S-112 |
 | S-113 | E-17 | "Every place on the map is one of nine things." | Spec'd (the nine kinds stay and found places are added, S-191 R-191-10; rewrite pending; see S-191, S-192) | `epics/E-17-map-generation.md` S-113 |
@@ -146,7 +146,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-140 | E-19 | "My orders reach every peer with no server in the middle." | Spec'd | `epics/E-19-multiplayer.md` S-140 |
 | S-141 | E-19 | "I know what my friends and I are doing together in this galaxy." | Seen; co-op only at launch | `epics/E-19-multiplayer.md` S-141 |
 | S-142 | E-19 | "A match nobody can pause or roll back." | Spec'd | `epics/E-19-multiplayer.md` S-142 |
-| S-143 | E-19 | "A match with friends who own the same packs moves chronologically through eras." | Spec'd | `epics/E-19-multiplayer.md` S-143 |
+| S-143 | E-19 | "A match with friends who own the same packs moves chronologically through eras." | Seen | `epics/E-19-multiplayer.md` S-143 |
 | S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-03 | `epics/E-19-multiplayer.md` S-144 |
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
 | S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
@@ -238,7 +238,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-238 | E-18 | "I see workers walk and gather, weather cross the map, and disguised buildings look like what they pretend to be." | Design decided 2026-10-02, not scheduled; Q-238-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-238 |
 | S-239 | E-18 | "A ping, an emitting force and a ping alert read at a glance." | Spec'd, look decided 2026-10-07 | `epics/E-18-visual-style-and-combat-visuals.md` S-239 |
 | S-240 | E-18 | "A screen of thousands of units, workers and buildings stays smooth." | Direction only until the simulation's budgets (10,000) are reached | `epics/E-18-visual-style-and-combat-visuals.md` S-240 |
-| S-241 | E-19 | "My pair is a sub-civilization in a team of 2 or 4, and the map, resources and enemies grow with the team; teams of 6 are a desired future feature." | Spec'd (Architect 2026-10-14; builds as VG-F-S241, the TeamSize choice is a stub until R-241-03 scaling); no open flag | `epics/E-19-multiplayer.md` S-241 |
+| S-241 | E-19 | "My pair is a sub-civilization in a team of 2 or 4, and the map, resources and enemies grow with the team; teams of 6 are a desired future feature." | Seen (Westley 2026-10-21; the TeamSize choice is a stub until R-241-03 scaling); no open flag | `epics/E-19-multiplayer.md` S-241 |
 | S-242 | E-19 | "My building, scheduling and requests reach my partner as commands like any other." | Design decided 2026-10-02, not scheduled; no open flag | `epics/E-19-multiplayer.md` S-242 |
 | S-243 | E-20 | "The era pack checklist names what the economy and the landscape need." | Design decided 2026-10-02, not scheduled; Q-243-01, Q-159-08, Q-146-02, Q-146-03 | `epics/E-20-multi-era-and-monetization.md` S-243 |
 | S-244 | E-21 | "The names and teaching text for the economy come from the same pipeline as every other library." | Design decided 2026-10-02, not scheduled; Q-244-01 | `epics/E-21-offline-ai-pipeline.md` S-244 |

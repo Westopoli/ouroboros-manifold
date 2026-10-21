@@ -4,58 +4,6 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ## 1. Pictures
 
-### P1 Star map with glowing territory (S-106)
-
-![](../../story_reviews/westley/B-S106-regional-galaxy-b24-layout.png)
-
-**What you see:** The galaxy map close up: coloured discs for regions, soft glows for territory, thin curved links between neighbours, a haze of yellow dust. Linked regions now sit next to each other and same-owner regions cluster.
-**Judge:** Does this layout read as one connected galaxy of neighbours, as the prototype you approved did?
-**Beta status of what is shown:**
-- Star map with glowing territory (S-106): Seen (approved 2026-10-13 on the earlier dot-colour frame); this new layout is built and awaiting your verdict.
-- Faction names on the map: built but not yet shown (the labels exist, none is readable at this distance).
-- War flash: built but not yet shown (none fired in this frame).
-
-### P2 Galaxy Quality choice in Settings (S-110)
-
-![](../../story_reviews/westley/B-S110-galaxy-quality-choice-in-settings.png)
-
-**What you see:** The Settings screen. The Display card has a fourth row, Galaxy Quality, set to Full, lined up under Resolution, Fullscreen and VSync; Camera, Audio and Keybinds cards sit below.
-**Judge:** Is the Galaxy Quality row where and how you want it?
-**Beta status of what is shown:**
-- Galaxy Quality choice (Full, Stand-in, Fewer particles): built and awaiting your verdict.
-- Rest of the Settings screen (display, camera pan speed, audio sliders, keybind list): built and awaiting your verdict (S-110 is not yet Seen).
-
-### P3 Five layer sheets in space (S-246)
-
-![](../../story_reviews/westley/D-S246-space-sheets-rings-tube.png)
-
-**What you see:** A dark 3D space battlefield seen from above at a slant: flat slabs of rock scattered across layered sheets, your fleet as a small cluster of blue and pink blobs in the middle, and a pale see-through disc around the cursor where the upper sheets fade.
-**Judge:** Do the five sheets read as separate layers, with a ring on each unit and a see-through tube around the cursor, or is it still a dark blur?
-**Beta status of what is shown:**
-- Five layer sheets with asteroid slabs, unit rings, vision tube (S-246): built and awaiting your verdict (opt-in with OM_SPACE_VIEW=1, not yet the default view; the switch to default is planned, no piece scheduled).
-- To-layer buttons on the right edge: stub, being replaced by the Alt plus number keybind (queued, not built).
-
-### P4 Smaller starting force (S-126)
-
-![](../../story_reviews/westley/E-S126-starting-force-smaller-at-tick-0.png)
-
-**What you see:** The opening frame of a ground mission in 3D: a rocky ridge under a grey sky, three tinted discs each holding a stack of your units, and one lone blue blob top left.
-**Judge:** Does the battle open with most of your force still to come, as your S-126 words say? The count (176 of 330) cannot be read by eye.
-**Beta status of what is shown:**
-- Smaller starting force (S-126): approved but not integrated (the sim gives 176 of 330; the unit count in the HUD and briefing still reads 330).
-- Ground-era 3D opening view: built but not yet shown (your last word on it was "too zoomed out to judge"; a zoomed-in re-shot is owed).
-
-### P5 Host lobby: common era and team size (S-143, S-241)
-
-![](../../story_reviews/westley/F-S143-S241-host-lobby-common-eras-and-team-size.png)
-
-**What you see:** The multiplayer host lobby on a plain grey screen: an Eras line naming the one era both players share, a Team size drop-down showing 2, a member list of two, the lobby number, and Host, Join, Doctrine, Start and Back buttons.
-**Judge:** Does the Eras line tell two players with different packs which era they will play, and is the Team size choice where you expect it?
-**Beta status of what is shown:**
-- Common era line (S-143): built and awaiting your verdict.
-- Team size 2 or 4 (S-241): stub (the choice is offered but does nothing to map or enemy size until the scaling rule is built).
-- Lobby with member list and lobby number (S-141): Seen (approved 2026-10-13), placeholder look.
-
 ### P6 Land that fits a layout: carved routes (S-191, S-189)
 
 ![](../../story_reviews/westley/P-S191-terrain-obeys-pass2-carved-routes.png)
@@ -79,7 +27,7 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 ### Q-B23b-01 Which renderer is the look?
 
-Under the richer lighting the 3D ground wants, the see-through faction shells wash out the system dots (our pixel check reads 6 of 18); under the simpler lighting the checks use, the dots read fine. See P1.
+Under the richer lighting the 3D ground wants, the see-through faction shells wash out the system dots (our pixel check reads 6 of 18); under the simpler lighting the checks use, the dots read fine. (picture ruled 2026-10-21; see the lane row).
 
 (a) Ship the richer lighting, and the pixel check gains a run on it.  
 (b) The wash is the approved look.  
@@ -109,7 +57,7 @@ unblocks: lab rev 2 runs with real marks instead of drafts.
 
 ### Q-246-02 Who sets asteroid density?
 
-A space mission needs an asteroid-field density; the mockup uses one value (35). You asked on 2026-10-13 to see a prototype of the options first. See P3 (the prototype shot is the one owed for this).
+A space mission needs an asteroid-field density; the mockup uses one value (35). You asked on 2026-10-13 to see a prototype of the options first. (picture ruled 2026-10-21; see the lane row) (the prototype shot is the one owed for this).
 
 (a) One default for every mission.  
 (b) The region decides, tight in some and open in others, within a range.  
