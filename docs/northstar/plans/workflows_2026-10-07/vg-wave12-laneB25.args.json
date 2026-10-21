@@ -6,9 +6,10 @@
   "g4": "Architect 2026-10-12: (a) named drafts from the old rig lines, DRAFT-b25-* rows, each with the old value beside it.",
   "g5": "b",
   "g6": "a",
-  "g7": "Architect 2026-10-12: (a) tests/galaxy_field/b25_gpu_checks.gd and .tscn on the RTX 3060 under Forward+."
+  "g7": "Architect 2026-10-12: (a) tests/galaxy_field/b25_gpu_checks.gd and .tscn on the RTX 3060 under Forward+.",
+  "panels": "The scenes/world/* panel load and the galaxy_view_driven.gd and unknown_label.gd tests belong to the labels-and-panels follow-on to B24, not to B25 (Architect 2026-10-21); B25's play and test list are unchanged."
  },
- "tdExtra": "(1) tests/test_vg_b_b23.gd:210 asserts the live Camera3D far == 800.0; superseded by DRAFT-b25-far 3,000 under TD-VG-B-20 (the far is set at runtime by ambient_rig.gd); the only edit is the literal 800 to 3000 and its message, no tolerance. (2) tests/test_vg_b_b24.gd:91 FILAMENT_COVER_MAX 1.5, asserted at :713 on a Forward+ d25 frame: measure first on the B25 build and report the ratio; a ratio above 1.5 is a STOP to the Architect, never a re-pin; the only change allowed is scope-narrowing, masking the backdrop stars out of the filament pixel count by draw layer if they are what moved it, with the prototype comparison untouched; the ledger row is TD-VG-B-23 (22 is B26's).",
+ "tdExtra": "(1) tests/test_vg_b_b23.gd:210 asserts the live Camera3D far == 800.0; superseded by DRAFT-b25-far 3,000 under TD-VG-B-20 (the far is set at runtime by ambient_rig.gd); the only edit is the literal 800 to 3000 and its message, no tolerance. (2) tests/test_vg_b_b24.gd:91 FILAMENT_COVER_MAX 1.5, asserted at :713 on a Forward+ d25 frame: measure first on the B25 build and report the ratio; a ratio above 1.5 is a STOP to the Architect, never a re-pin; the only change allowed is scope-narrowing, masking the backdrop stars out of the filament pixel count by draw layer if they are what moved it, with the prototype comparison untouched; the ledger row is TD-VG-B-23 (22 is B26's). (3) Builder constraint (Architect 2026-10-21): every new shader compiles under gl_compatibility as well as forward_plus; the desktop pixel tests run opengl3.",
  "skip": {
   "records": "push/vg-b25-records",
   "tests:gd": "push/vg-b25-tests-b",
