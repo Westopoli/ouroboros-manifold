@@ -3229,6 +3229,6 @@ owns = ["scripts/specfactory/suite_regression.py", "docs/northstar/plans/push/sc
 owns_glob = []
 acceptance = ["tests/specfactory/test_lab_slow_tier_gate.py"]
 depends_on = []
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "5bbfb79" }
+tests_pending = false
 size_estimate = "is_scale_gated gains the lab slow-tier clause, scale_gated_tests.txt gains the lab ids and a two-tier header; under 60 lines"
