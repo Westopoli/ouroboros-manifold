@@ -2,6 +2,8 @@
 
 How to answer: one word per picture, approve, reject, or a note. Where answers go: a message to the chat, or `answers.md` in the Batch A form; the clerk that records a verdict deletes the picture and its block in the same commit.
 
+Each picture has one block under its file name, in this form: `**What you see:**`, `**Legend:**` (one line, what each colour and mark in the picture means), `**Judge:**`, `**Beta status of what is shown:**` with one line per feature.
+
 ## Removed today
 
 | File | Verdict | Cite |
