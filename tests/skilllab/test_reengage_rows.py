@@ -26,6 +26,7 @@ BEFORE_L8 = ["outcome", "margin", "strength_left_0", "strength_left_1", "survivo
              "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
              "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight"]
 REENGAGE = ["reengage_0", "reengage_1"]
+REV3C = ["verdict", "decided_tick", "paper_score_0", "paper_score_1", "predicted_paper"]   # LAB-REV3-C (TD-LAB-REV3-C-columns): five columns after reengage_1
 PLAIN = dict(knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok")
 
 
@@ -52,7 +53,7 @@ def test_the_field_carries_what_it_is_given_and_trim_series_keeps_it():
 
 def test_the_row_ends_its_fixed_columns_with_reengage_0_and_1():
     row = fight_row(_result(reengage=(3, 1)), play="reach", **PLAIN)
-    assert list(row) == ["play"] + BEFORE_L8 + REENGAGE
+    assert list(row) == ["play"] + BEFORE_L8 + REENGAGE + REV3C
     assert (row["reengage_0"], row["reengage_1"]) == (3, 1)
     assert type(row["reengage_0"]) is int and type(row["reengage_1"]) is int
 
@@ -62,14 +63,15 @@ def test_the_reengage_columns_sit_before_the_feature_columns():
                       fight_layer_blocked=False, cover_density_corridor=0.1, start_distance=1400.0, detour_ratio=0.0,
                       blocked_layer_top=4)
     keys = list(fight_row(_result(), features=f, **PLAIN))
-    assert keys[:len(BEFORE_L8) + 2] == BEFORE_L8 + REENGAGE
-    assert all(k.startswith("feat_") for k in keys[len(BEFORE_L8) + 2:]) and len(keys) > len(BEFORE_L8) + 2
+    n = len(BEFORE_L8) + 2 + len(REV3C)      # the reengage columns, then the five LAB-REV3-C columns, then the feature columns
+    assert keys[:n] == BEFORE_L8 + REENGAGE + REV3C
+    assert all(k.startswith("feat_") for k in keys[n:]) and len(keys) > n
 
 
 def test_a_row_without_a_reengage_equals_the_old_row_plus_two_zero_columns():
     """Byte-identity control: dropping the two new keys leaves every old key, in its old place, with the old value."""
     old = fight_row(_result(), play="reach", enemy_heads=12, **PLAIN)
-    base = {k: v for k, v in old.items() if k not in REENGAGE}
+    base = {k: v for k, v in old.items() if k not in REENGAGE + REV3C}
     assert list(base) == ["play", "enemy_heads"] + BEFORE_L8
     assert (old["reengage_0"], old["reengage_1"]) == (0, 0)
     assert base["margin"] == 0.5 and base["firing_unit_seconds_1"] == 7.25 and base["agreement"] == "both_right"
@@ -87,7 +89,7 @@ def test_the_csv_header_and_line_carry_the_counts_as_bare_ints(tmp_path):
     write_rows([fight_row(_result(reengage=(2, 0)), **PLAIN)], path)
     with open(path, newline="") as fh:
         header, line = list(csv.reader(fh))
-    assert header == BEFORE_L8 + REENGAGE
+    assert header == BEFORE_L8 + REENGAGE + REV3C
     got = dict(zip(header, line))
     assert (got["reengage_0"], got["reengage_1"]) == ("2", "0")
     assert line[:len(BEFORE_L8)] == [("" if v is None else repr(v) if isinstance(v, float) else str(v))

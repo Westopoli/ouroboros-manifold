@@ -41,7 +41,8 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
         sorted values refined for the sign change of the gain against that baseline}), refused, controls ({"positive"/"null": {"ok"}}; the positive one also carries "play": the designated play, or None),
         defects ({"cap_rows": cap fights outside control_* kinds that are not blind-post findings, "blind_post_rows": cap fights outside
         control_* kinds with FightResult.blind_cap (decision 43; test_drift_fix_blind.py), "draw_rows": draw fights, "cells": distinct (play,
-        layout, kind, knob_value, baseline, enemy_heads) non-control cells holding a non-blind cap or a draw}), saturated_at_vision (emitting)
+        layout, kind, knob_value, baseline, enemy_heads) non-control cells holding a non-blind cap or a draw, "no_reach_stall_rows" and
+        "decided_one_way_reach_rows": non-control rows whose verdict is that one (LAB-REV3-C; neither is a cap nor makes a defect cell)}), saturated_at_vision (emitting)
         builds(play, role, layout_features) -> BuildFn (build.labels["prefight"] is set when the build is called, as
         scenes.placed_scene does); layouts {name: features}; caps None means detect the real library.
     run(families, out_dir, workers=1, full_scan=False, **same keywords) -> dict; calls sweep.run_family(name, out_dir, **kw) once per family, in the
@@ -898,7 +899,9 @@ def _defects_of(rows):
     blind = [r for r in live if r["outcome"] == "cap" and r.get("blind_post") == "1"]      # decision 43 item 5 (TD-LAB-REV2-FIX-blind-keys)
     bad = [r for r in live if r["outcome"] == "draw" or (r["outcome"] == "cap" and r.get("blind_post") != "1")]
     return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": len(blind),
-            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad}),
+            "no_reach_stall_rows": sum(r.get("verdict") == "no_reach_stall" for r in live),        # LAB-REV3-C: own keys, no defect cell
+            "decided_one_way_reach_rows": sum(r.get("verdict") == "decided_one_way_reach" for r in live)}
 
 
 def test_a_faithful_world_has_no_defects_and_its_only_caps_are_in_control_kinds(tmp_path):
@@ -908,14 +911,14 @@ def test_a_faithful_world_has_no_defects_and_its_only_caps_are_in_control_kinds(
     rows = read(tmp_path, "vision")
     caps = {r["kind"] for r in rows if r["outcome"] == "cap"}
     assert caps and caps <= set(CONTROL_KINDS)
-    assert entry["defects"] == {"cap_rows": 0, "blind_post_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+    assert entry["defects"] == {"cap_rows": 0, "blind_post_rows": 0, "draw_rows": 0, "cells": 0, "no_reach_stall_rows": 0, "decided_one_way_reach_rows": 0} == _defects_of(rows)
 
 
 def test_a_cap_or_a_draw_outside_the_controls_is_counted_as_a_defect(tmp_path):
     """The smallest cell of every play scan holds one cap (seed 0) and one draw (seed 1): 4 grid points, so 4 caps, 4 draws, 4 cells."""
     entry, _ = run(tmp_path, "damage_up", world=World(defects=True))
     rows = read(tmp_path, "damage_up")
-    assert entry["defects"] == {"cap_rows": 4, "blind_post_rows": 0, "draw_rows": 4, "cells": 4} == _defects_of(rows)
+    assert entry["defects"] == {"cap_rows": 4, "blind_post_rows": 0, "draw_rows": 4, "cells": 4, "no_reach_stall_rows": 0, "decided_one_way_reach_rows": 0} == _defects_of(rows)
     assert {r["kind"] for r in rows if r["outcome"] == "cap"} - set(CONTROL_KINDS) == {"grid"}      # the detector's input is really there
 
 
@@ -1120,10 +1123,10 @@ def test_smoke_counts_its_defects_like_a_sweep_entry(tmp_path):
     """The smallest cell of each of the 3 layouts x 2 plays holds one cap and one draw (the play role only): 6 of each, 6 cells.
     A faithful world has none."""
     summary, _, rows = _smoke(tmp_path / "clean", control_builds=control_builds())
-    assert summary["defects"] == {"cap_rows": 0, "blind_post_rows": 0, "draw_rows": 0, "cells": 0} == _defects_of(rows)
+    assert summary["defects"] == {"cap_rows": 0, "blind_post_rows": 0, "draw_rows": 0, "cells": 0, "no_reach_stall_rows": 0, "decided_one_way_reach_rows": 0} == _defects_of(rows)
     assert not [r for r in rows if r["outcome"] == "cap" and not r["kind"].startswith("control_")]      # decisions 23: read from the rows
     summary, _, rows = _smoke(tmp_path / "bad", world=World(defects=True), control_builds=control_builds())
-    assert summary["defects"] == {"cap_rows": 6, "blind_post_rows": 0, "draw_rows": 6, "cells": 6} == _defects_of(rows)
+    assert summary["defects"] == {"cap_rows": 6, "blind_post_rows": 0, "draw_rows": 6, "cells": 6, "no_reach_stall_rows": 0, "decided_one_way_reach_rows": 0} == _defects_of(rows)
     assert len([r for r in rows if r["outcome"] == "cap" and not r["kind"].startswith("control_")]) == 6      # positive control for the row check
     assert json.loads((tmp_path / "bad" / "smoke_summary.json").read_text())["defects"] == summary["defects"]
 

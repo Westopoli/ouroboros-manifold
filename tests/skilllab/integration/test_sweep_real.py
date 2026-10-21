@@ -210,7 +210,9 @@ def _defects_of(rows):
     blind = [r for r in live if r["outcome"] == "cap" and r.get("blind_post") == "1"]      # decision 43 item 5 (TD-LAB-REV2-FIX-blind-keys)
     bad = [r for r in live if r["outcome"] == "draw" or (r["outcome"] == "cap" and r.get("blind_post") != "1")]
     return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": len(blind),
-            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad}),
+            "no_reach_stall_rows": sum(r.get("verdict") == "no_reach_stall" for r in live),        # LAB-REV3-C: own keys, no defect cell
+            "decided_one_way_reach_rows": sum(r.get("verdict") == "decided_one_way_reach" for r in live)}
 
 
 @SLOW

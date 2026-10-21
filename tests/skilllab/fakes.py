@@ -45,6 +45,7 @@ class FakeEngine:
         self.worlds_made = 0
         self.worlds_freed = []
         self.registered = {}       # type_id -> stats passed to register_unit_type
+        self.reach = {}            # LAB-REV3-C: type_id -> (up, down) a test sets; a type with none reaches every layer
         self.blocked = set()       # ordered (a, b): a cannot shoot b
         self._next_id = 1
 
@@ -141,6 +142,17 @@ class FakeEngine:
     def unit_alive(self, w, u):
         self.calls.append(("unit_alive", w, u))
         return self.units[u]["hp"] > 0
+
+    # LAB-REV3-C (structural verdicts): fight() reads unit_type, profile_reach and unit_layer per living unit every tick.
+    # Defaults keep every older fake fight unchanged: a type with no reach in `self.reach` reaches (9, 9) layers, so no_reach_stall
+    # and decided_one_way_reach cannot fire; a test that wants a verdict sets self.reach[type_id] (see test_rev3_c_support.ReachLayerFake).
+    def unit_type(self, w, u):
+        self.calls.append(("unit_type", w, u))
+        return self.units[u]["type"]
+
+    def profile_reach(self, w, type_id):
+        self.calls.append(("profile_reach", w, type_id))
+        return self.reach.get(type_id, (9, 9))
 
     def can_shoot(self, w, a, b):
         self.calls.append(("can_shoot", w, a, b))

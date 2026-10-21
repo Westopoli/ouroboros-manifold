@@ -114,16 +114,17 @@ def test_a_layer_change_mid_fight_is_read_live():
 # ----------------------------------------------------------------------- the reach is the engine's (audit gap F4)
 
 def test_a_setup_reach_override_of_zero_stalls_where_the_plays_table_would_not():
-    """F4: a Raider whose Setup.unit_types entry says reach (0, 0), on layer 1 against Vanguards on layer 0: nobody can reach anybody, so the
-    fight is a no_reach_stall at the first tick. plays_space._REACH says Raider (1, 1) and would see a fight (a builder that reads the static
+    """F4: Raiders whose Setup.unit_types entry says reach (0, 0), on layer 1 against Raiders on layer 0: nobody can reach anybody, so the
+    fight is a no_reach_stall at the first tick (TD-LAB-REV3-C-stall-control: the scene was Raiders against Vanguards, which is one-way under the
+    bible's (1, 1), so its control half was decided, not a fight both ways). plays_space._REACH says Raider (1, 1) and would see a fight (a builder that reads the static
     table instead of engine.profile_reach runs to the cap). Positive control in the same test: with the bible's (1, 1) the same scene is no stall.
     Red today: cap."""
     zero = {"Raider": {"base": "Raider", "reach": (0, 0)}}
-    r, f = run([G(0, "Raider", 2, 1), G(1, "Vanguard", 2, 0)], cap=CAP, unit_types=zero)
+    r, f = run([G(0, "Raider", 2, 1), G(1, "Raider", 2, 0)], cap=CAP, unit_types=zero)
     assert oracle(f.living()) == ("mutual",)
     assert r.ticks < CAP, "the fight ran to the cap (%s at tick %d)" % (r.outcome, r.ticks)
     assert (r.outcome, verdict_of(r), r.winner) == (STALL, STALL, None) and r.ticks <= 1
-    base, fb = run([G(0, "Raider", 2, 1), G(1, "Vanguard", 2, 0)], cap=CAP)
+    base, fb = run([G(0, "Raider", 2, 1), G(1, "Raider", 2, 0)], cap=CAP)
     assert oracle(fb.living()) is None and (base.outcome, base.ticks, verdict_of(base)) == ("cap", CAP, None)
 
 

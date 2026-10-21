@@ -30,7 +30,8 @@ REV2_FIXED = ["outcome", "margin", "strength_left_0", "strength_left_1", "surviv
               "first_contact_tick", "firing_unit_seconds_0", "firing_unit_seconds_1", "firing_window_0", "firing_window_1",
               "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
               "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight",
-              "reengage_0", "reengage_1"]   # LAB-REV2-L8 (TD-LAB-REV2-L8-columns)
+              "reengage_0", "reengage_1",   # LAB-REV2-L8 (TD-LAB-REV2-L8-columns)
+              "verdict", "decided_tick", "paper_score_0", "paper_score_1", "predicted_paper"]   # LAB-REV3-C (TD-LAB-REV3-C-columns)
 
 
 def _result():

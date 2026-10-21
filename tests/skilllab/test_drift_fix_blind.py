@@ -120,7 +120,9 @@ def defects_of(rows):
     blind = lambda r: r["outcome"] == "cap" and r["blind_post"] == "1"
     bad = [r for r in rows if live(r) and (r["outcome"] == "draw" or (r["outcome"] == "cap" and not blind(r)))]
     return {"cap_rows": sum(r["outcome"] == "cap" for r in bad), "blind_post_rows": sum(live(r) and blind(r) for r in rows),
-            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
+            "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad}),
+            "no_reach_stall_rows": sum(live(r) and r.get("verdict") == "no_reach_stall" for r in rows),        # LAB-REV3-C
+            "decided_one_way_reach_rows": sum(live(r) and r.get("verdict") == "decided_one_way_reach" for r in rows)}
 
 
 def test_blind_caps_are_counted_apart_from_cap_defects_in_a_sweep(tmp_path):
@@ -138,7 +140,8 @@ def test_a_blind_cap_alone_makes_no_defect_cell_and_no_cap_defect(tmp_path):
     """READING Q-FIX2-1: a blind-post cap is a finding; a cell holding nothing else is not a defect cell."""
     entry, _ = sweep_run(tmp_path, "damage_up", world=BlindWorld())
     rows = read(tmp_path, "damage_up")
-    assert entry["defects"] == defects_of(rows) == {"cap_rows": 0, "blind_post_rows": entry["defects"]["blind_post_rows"], "draw_rows": 0, "cells": 0}
+    assert entry["defects"] == defects_of(rows) == {"cap_rows": 0, "blind_post_rows": entry["defects"]["blind_post_rows"], "draw_rows": 0, "cells": 0,
+                                                       "no_reach_stall_rows": 0, "decided_one_way_reach_rows": 0}
     assert entry["defects"]["blind_post_rows"] > 0
 
 

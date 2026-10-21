@@ -1,3 +1,4 @@
+# Rule pins: R-096-02@dbc10f
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md ruling 6 (contact architecture), rulings 1 and 5, piece LAB-REV2-L2; Q-LAB-03
 """Contact through the production library: the stall scene eliminates, an assault onto the holder's centre of mass eliminates,
 and the pre-flight refuses a cell that cannot be fought (`no_fit`, `unroutable`, `no_reach`) before any tick.
@@ -270,9 +271,12 @@ def test_the_walls_alone_do_not_make_a_scene_unroutable_control(library):
 
 
 def test_a_meeting_has_no_holder_so_it_is_never_no_reach(library):
-    """Spec: no `no_reach` for a meeting (no group on guard). Side 0 on layer 0 and side 1 on layer 4, both attack-moved to a point
-    on open ground, Vanguards (reach 0, 0): 'ok'. Control: the same sides with side 1 on guard are refused 'no_reach'."""
-    meeting = Setup(groups=(_blob(0, "Vanguard", 8, -700.0, 0.0), _blob(1, "Vanguard", 8, 700.0, 0.0, layer=4)), unit_types={},
+    """Spec: no holder-rule `no_reach` for a meeting (no group on guard). Side 0 Vanguards (reach 0, 0) on layer 0 and side 1 on layer 4,
+    both attack-moved to a point on open ground: 'ok' while side 1's type reaches down to layer 0 (reach (0, 4): reach runs one way, which
+    starts decided and is not refused). Control: the same sides with side 1 on guard are refused 'no_reach' (the attackers cannot reach the
+    holder). TD-LAB-REV3-C-columns: the meeting used Vanguards (0, 0) on both sides, which is a mutual no_reach scene since LAB-REV3-C (R7)."""
+    deep = {"Deep": {"base": "Vanguard", "reach": (0, 4)}}
+    meeting = Setup(groups=(_blob(0, "Vanguard", 8, -700.0, 0.0), _blob(1, "Deep", 8, 700.0, 0.0, layer=4)), unit_types=deep,
                     point=(0.0, 0.0))
     assert _preflight(meeting, library) == "ok"
     holder = _holder_at(4)

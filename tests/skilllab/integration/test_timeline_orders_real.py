@@ -30,7 +30,9 @@ SETTLE_TICKS = 80           # a Raider takes 20 ticks to change layer; generous 
 EMIT_SEEN_MULT = 2.0        # the csim tests' value
 SILENT_RANGE, LOUD_GAP = 600.0, 600.0   # observer sensor 1000: seen at 600 only when emitting (test_bindings_real 7)
 IDLE_FAR = 9000.0
-DUMMY = {"Dummy": {"base": "Raider", "set": {"base_damage": 0.0}}}   # never fires, so nothing dies and no fight ends early
+DUMMY = {"Dummy": {"base": "Raider", "set": {"base_damage": 0.0}, "reach": (HIGH, HIGH)}}   # never fires, so nothing dies and no fight ends early
+# LAB-REV3-C (TD-LAB-REV3-C-columns): the Dummy reaches every layer of these scenes (reach (4, 4)); with the default (0, 0) on both sides
+# the scenes are a mutual no_reach_stall and fight() ends them at tick 1, before the timeline steps under test (ticks 5 and 10) can fire.
 
 BASELINE_ROW = {'outcome': 'cap', 'margin': 0.0, 'strength_left_0': 0.7799999999999999,
                 'strength_left_1': 0.7799999999999999, 'survivors_0': 3, 'survivors_1': 3, 'heads_0': 3,
