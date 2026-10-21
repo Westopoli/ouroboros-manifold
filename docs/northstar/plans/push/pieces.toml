@@ -3461,6 +3461,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "SPEED-2 lab speed, fight side: _Reengage poll and the sample seam in fight.py; FightResult equal over eight setups, goldens unchanged, process_time ratio against a frozen reference (DRAFT-lab-speed-ratio-2)"
 
+# Lab unit-position batch contract (lab overseer a7, Architect ruling 2026-10-21; Westley may veto): queued after VG-U8-PREF-WIRE (do not drop that edge: without it owner_lint gives 140 new FAILs). A csrc contract piece needing a second-Fable audit before building; built only if the stage-two speed profile still shows unit_pos above 10 percent; the row is on main as queued either way. Manager and wave copied from the sibling LAB-REV2 rows (M0, wave 10).
+[[piece]]
+id = "LAB-CONTRACT-unit-pos-batch"
+manager = "M0"
+wave = 10
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_move.c", "docs/architecture.md", "scripts/specfactory/reach_allowlist.toml", "tests/csim/conftest.py", "tests/csim/test_E02_S020_abi.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_VG_E_ke5.py", "tests/specfactory/test_pp_contract.py", "tests/transport/test_pipe_shapes.py", "tests/transport/test_pipe_vg_e.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_LAB_CONTRACT_unit_pos_batch.py"]
+depends_on = ["VG-U8-PREF-WIRE"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "contract piece: public batch position getter (name and shape a DRAFT for the Architect), ABI N to N+1 (N read at launch), one architecture.md paragraph, one reach_allowlist line, one csim test; the lab binding is a later consumer piece"
+
 # Provenance lint scope (Architect 2026-10-21 evening, implementation; Westley may veto): spec_provenance.py judged the whole spec file, so unrelated paragraphs blocked a piece's pre_gate. scripts/specfactory/pre_gate.sh is left out of owns: HARNESS-C4 (queued) owns it.
 [[piece]]
 id = "HARNESS-provenance-scope"
@@ -3483,7 +3496,7 @@ wave = 13
 owns = ["tests/csim/conftest.py", "scripts/specfactory/merge_gate.sh", "tests/specfactory/test_csim_xdist.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_csim_xdist.py"]
-depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-provenance-scope", "HARNESS-gate-keep-red-evidence", "LAB-REV2-E0", "VG-CONTRACT-E7", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-E-prodslot"]  # the last six edges are records-clerk additions (pieces.py --check overlap on merge_gate.sh and tests/csim/conftest.py), Architect to confirm or reverse (the alternative: those five pieces depend on this one)
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-provenance-scope", "HARNESS-gate-keep-red-evidence", "LAB-REV2-E0", "VG-CONTRACT-E7", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-E-prodslot", "LAB-CONTRACT-unit-pos-batch"]  # the last seven edges are records-clerk additions (pieces.py --check overlap on merge_gate.sh and tests/csim/conftest.py), Architect to confirm or reverse (the alternative: those five pieces depend on this one)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
