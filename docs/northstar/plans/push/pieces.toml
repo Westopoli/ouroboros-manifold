@@ -3320,3 +3320,15 @@ status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
 size_estimate = "first /manager-mode cascade: VG-P3; measured per the spec section 6"
+# Architect 2026-10-21 (implementation; Westley 2026-10-21: "go ahead with your suggestion on the pixel test"). Test-defect fix TD-VG-C2-5-patch; spec: Rev 13 section, VG-C2-5-patch paragraph. HARNESS-userdir (attached, 5bca0733) was the last owner of this file.
+[[piece]]
+id = "VG-C2-5-patch"
+manager = "M0"
+wave = 13
+owns = ["tests/qa/desktop/test_galaxy_pixels.py"]
+owns_glob = []
+acceptance = ["tests/qa/desktop/test_galaxy_pixels.py"]
+depends_on = ["G-qadesktoptests", "VG-B", "HARNESS-userdir"]  # pieces.py --check wants an ordering edge to every piece whose owns pattern overlaps this file: G-qadesktoptests (tests/qa/desktop/**), VG-B (tests/qa/desktop/test_galaxy_*.py), HARNESS-userdir (the file itself, attached 5bca0733); all three are attached, none depends on this row, so no cycle
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "galaxy pixel detector: 7x7 patch per dot, a dot hits when at least half the patch pixels are within tolerance 40; 0.6 line, isolation, samples and C2-5-02 unchanged; a Godot-free unit control with a synthetic disc plus a 6x6 pale square; test-defect fix TD-VG-C2-5-patch"
