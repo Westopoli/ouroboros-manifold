@@ -39,7 +39,12 @@ that does not show, the evidence is in the writer's report):
                            trip proves the f64, i32, u32 and u64 helpers of its family. The macro side is different: the bus
                            runner (enemy_macro.c om_macro_update_bus_runner) creates "objective_N_contested" and
                            "force_N_routed" flags in play, so msv_str/msr_str and msv_u8/msr_u8 run on non-empty names once
-                           the player holds the objective node; the macro round trip below drives that state.
+                           the player holds the objective node; the macro round trip (moved, see below) drives that state.
+  FINDING-u-pipe-events-save-load
+                           test_macro_state_survives_a_save_and_load is not in this file: it fails on main because load re-emits
+                           kills of rows dead before the save (unit row kill_logged, tier and fired_tick are not saved). It
+                           lives in tests/transport/test_pipe_unitrow_save.py as the positive control of
+                           VG-CONTRACT-unitrow-save (branch push/vg-contract-unitrow-tests).
   FINDING-pipe-hold-verb   `command` `hold` always answers error (no om_command_hold symbol, R-096-06 rejects a hold order);
                            U0 retires it, see test_command_hold_always_answers_error_today.
   FINDING-eliminate-start  no mission_start reaches an eliminate_force archetype (4 or 9) without a long refuse-and-jump
@@ -119,8 +124,14 @@ LINEAGE_MULT = 1.0 + 0.8  # R-066-02: the multiplier starts at 1.0, a lineage me
 DEDUP_OVERLAP = 0.40  # R-068-07: "40 percent or more of their content words"
 PING_RADIUS = 500.0  # R-162-01: "radius 500"
 ELIMINATE_STEPS = 800  # dumped on seed 8: 300 steps leave the progress at its clamp of 0, 800 give 0.014
-CLASH_STEPS_BEFORE_LOSS = 5700  # test_pipe_assign_commander.py (TD A150): the first player loss lands at about tick 5765
-CLASH_STEPS_AFTER = 300  # steps past the first loss so the lowest-hp unit has died (dumped: it died by 6000)
+# TD-U-PIPE-fixtures: the clash fixture re-measured on main after E7 cut the player force from 330 to 176 units (the old
+# value 5700 came from test_pipe_assign_commander.py, TD A150: first player loss at about tick 5765; there it is no longer true).
+# Measured on main (seed 1, chapter-1 Assault, every player unit attack-moves onto the enemy centroid): the first player-unit
+# kill is at tick 3668 (unit 160, type 4, killed by enemy unit 177); at step 3600 no player unit is damaged (14 units tie at
+# hp 250, min() picks id 1, which survives), at step 3640 unit 160 is the only damaged one (hp 113.35, a unique minimum), at
+# 3660 hp 30.19, at 3667 hp 10.36. 3640 is 28 steps before the first loss; the window below is unchanged.
+CLASH_STEPS_BEFORE_LOSS = 3640
+CLASH_STEPS_AFTER = 300  # steps past the pick so the lowest-hp unit has died (measured: unit 160 dies at tick 3668, 28 steps in)
 COOLDOWN_WAIT_STEPS = 450  # past OM_PULSE_COOLDOWN_TICKS = 400 (csrc/om_constants.h:563, R-162-02 "20 s")
 HOLD_WINDOW, HOLD_WINDOWS = 50, 100  # dumped on seed 5: the enemy reaches the zone at tick 3230, so 5000 steps hold 35 held windows
 
@@ -362,7 +373,7 @@ def _load_harness():
 
 @lru_cache(maxsize=None)
 def killed_commander_run():
-    """One interactive session (tests/long/harness.py Pipe) on seed 1's chapter-1 Assault (dumped: 330 player units against
+    """One interactive session (tests/long/harness.py Pipe) on seed 1's chapter-1 Assault (dumped on main: 176 player units against
     350): every player unit attack-moves onto the enemy centroid, CLASH_STEPS_BEFORE_LOSS steps run (no player unit has died
     yet), the player unit with the lowest hp is assigned commander (`assign_commander` acks in play, R-077-05), then
     CLASH_STEPS_AFTER more steps, `mission_end` and the post-mission `jump` 50. Returns the debrief, the snapshot after
@@ -402,10 +413,10 @@ def test_commander_death_ends_the_chapter_and_seats_a_successor():
     frames the death. The chapter end reason 1 is `GEN_CHAPTER_END_COMMANDER_DEATH` (docs/architecture.md, chronicle
     `jump.chapter_end_reason`).
 
-    What shows: debrief `commander_fate` 0 (killed) after the clash (the commander is the lowest-hp player unit at step 5700); the snapshot after `mission_end` and the one after
+    What shows: debrief `commander_fate` 0 (killed) after the clash (the commander is the lowest-hp player unit at step 3640, CLASH_STEPS_BEFORE_LOSS: unit 160, hp 113.35, the only damaged player unit); the snapshot after `mission_end` and the one after
     the jump: `commander` changes, `lineage` stays, `chapter` 1 to 2; the chronicle frame's `jump.chapter_end_reason` is
     1 and its entries open with a consequence cluster (cluster_type 0, outcome category 1 = failure for band 0, R-065-02).
-    Slow: one 6000-step clash in one session, about 17 s.
+    Slow: one 3940-step clash in one session.
 
     Positive control (scratch break, reverted and rebuilt): csrc/generational.c:1296 `d.commander_fate == 0` changed to
     `d.commander_fate == 9`. Red: `assert jumped["commander"] != ended["commander"]` (CONTROL-DEATH-RESULT)."""
@@ -716,44 +727,6 @@ def save_round_trip(prefix, steps_after, saved_bytes=None):
 
 
 MACRO_SECTION, FOG_SECTION = 7, 6  # tests/net/driver.py SECTIONS order: regions, factions, rng, units, movement, mission, fog, macro, support_map
-
-
-# Seed 5, all 32 player units ordered to the objective node (8000, 8000): by 3000 steps the bus runner has set the flags
-# "objective_N_contested" (csrc/enemy_macro.c om_macro_update_bus_runner, snprintf at :748 and :797) and the saved bytes hold
-# those names; 4000 steps leaves a margin. Coverage floor, not a rule value.
-MACRO_BUS_STEPS = 4000
-
-
-def test_macro_state_survives_a_save_and_load():
-    """R-064-04: a save and load leaves the next time jump or step as if never saved (determinism includes every saved
-    section). The enemy macro writes and reads its force table and its bus flags through msv_* / msr_* (csrc/enemy_macro.c
-    macro_state_put and its reader). The bus runner sets "objective_N_contested" flags in play, so msv_str/msr_str and
-    msv_u8/msr_u8 run on non-empty names in this state (premise asserted below on the saved bytes); the fog side has no such
-    string (FINDING-save-fog-str).
-
-    What shows: seed 5, the player force ordered to node (8000, 8000), MACRO_BUS_STEPS tactical steps, net_checksum, save
-    (the .omsave holds b"objective_" and b"_contested"); then 100 steps with no load (A) against load then 100 steps (B): the
-    `macro` section hash of net_checksum right after the load equals the one at save and differs from the one 100 steps on (the
-    state is live), and the 100-step full tactical frames of A and B are equal key for key.
-
-    Positive controls (scratch breaks, each reverted and rebuilt; the earlier 300-step prefix left msr_u8 broken and the test
-    green, which is why the prefix changed):
-      u8     csrc/enemy_macro.c:1346 `msr_u8` `(uint32_t)msr_uint(sr, sizeof(uint8_t))` XORed with 1u. Red:
-             `assert after_load[MACRO_SECTION] == at_save[MACRO_SECTION]` (CONTROL-MACRO-U8-RESULT).
-      str    csrc/enemy_macro.c:1363 in msr_str `dst[i] = (char)msr_u8(sr);` changed to
-             `dst[i] = (char)msr_u8(sr) ^ (char)(i == 0);` (the first name byte flips; a break that skips the read desyncs the
-             reader, the load fails and the in-process world is left as it was, so it stays green). Red: the same line
-             (CONTROL-MACRO-STR-RESULT).
-      f64    csrc/enemy_macro.c:1354 in msr_f64 `return v;` changed to `return 0.0;`. Red: the same line
-             (CONTROL-MACRO-F64-RESULT)."""
-    mine = seed5_player_ids()
-    prefix = [set_seed(5), start(), BEGIN, cmd("command", verb="move", units=mine, x=8000.0, y=8000.0), tstep(MACRO_BUS_STEPS)]
-    saved = []
-    at_save, after_load, frame_a, frame_b, later = save_round_trip(prefix, 100, saved)
-    assert b"objective_" in saved[0] and b"_contested" in saved[0]  # premise: a bus flag name is in the saved state
-    assert at_save[MACRO_SECTION] != later[MACRO_SECTION]  # the section is live state, not a constant
-    assert after_load[MACRO_SECTION] == at_save[MACRO_SECTION]
-    assert frame_b == frame_a
 
 
 def pick_ping_pair(frame_full):
