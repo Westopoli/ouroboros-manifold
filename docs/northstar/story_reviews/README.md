@@ -17,6 +17,7 @@ Committed copies live under `docs/northstar/story_reviews/shots/<run id>/<story>
 
 - Reviewer verdict: `yes`, `no` or `unclear`, followed by the evidence (what was seen, which state field).
 - Westley verdict: `pending` on entry, then `approved` or `rejected`.
+- The verdict cell holds only the word approved or rejected; Westley's words go in the date cell in parentheses; status_check counts the exact word.
 
 ## Seen
 
