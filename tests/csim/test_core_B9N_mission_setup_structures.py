@@ -1,4 +1,4 @@
-# Rule pins: R-126-01@71403e, R-126-02@2361a1
+# Rule pins: R-126-01@71403e, R-126-02@741af4
 """B4 / B9-N: om_mission_setup places reinforcement structures per archetype.
 
 R-126-01: Given a mission, When structures are placed, Then

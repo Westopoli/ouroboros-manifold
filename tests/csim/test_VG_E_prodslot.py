@@ -1,4 +1,4 @@
-# Rule pins: R-126-02@2361a1
+# Rule pins: R-126-02@741af4
 """Visible-game lane E1, piece VG-E-prodslot: a produced unit is placed in the first free slot of the structure's 30 wu lattice
 (csrc/tactical_support.c om_structure_tick_production and its driver, csrc/mission.c om_mission_production_slot). Tests first,
 fenced: builders never edit this file. Proves R-126-02 (as GAP 3 rewrites it), TD-VG-E-29 (Westley's rule change of 2026-10-12)
