@@ -9,7 +9,7 @@ Westley asked (2026-10-19): examine what the Mac chat did while the Linux box wa
 **What the player gets from it, in order.** Nothing is lost and the order is unchanged from the 2026-10-14 plan: the owner-table batches first (they unblock everything), then the starting-force contract and the galaxy quality-control piece that were stacked on them, then the layout engine (P1, then P2), the space view, the chronicle one-entry-at-a-time fix, edge scrolling, and the harness fix that keeps test runs out of the machine's home folder. The Mac added a week of sim-lane work behind those (the jump logs, the chronicle context, the control stubs) and two mockups that you judge by eye, which never land.
 
 **What changed under the Linux branches.** Three things, none of them breaking:
-- Lane P beyond P2 was respecced to layout-first after you closed the terrain question on 2026-10-15, and its later pieces wait on the terrain-obeys mockup verdict. P1 and P2, which are built and waiting, stand as they were.
+- Lane P beyond P2 was respecced to layout-first after you closed the terrain question on 2026-10-15, and its later pieces wait on the terrain-obeys mockup verdict (in, 2026-10-21). P1 and P2, which are built and waiting, stand as they were.
 - Nine open-question ids were renumbered in the register dedupe. None of the waiting branches cites an old id, so nothing needs re-pointing.
 - The one-shot-per-lane rule for your review folder is suspended for the 2026-10-18 batch, so the folder holds every pending shot at once (19 of them) until you rule; then the rule resumes.
 
