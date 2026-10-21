@@ -532,22 +532,22 @@ uint64_t om_structure_get_timer(om_world *w, uint32_t structure) {
     return om_sup_structure_at(w, structure)->timer;
 }
 
+/* R-126-02 (TD-VG-E-29): the unit goes to the first free slot of the structure's lattice, no RNG draw. No free slot within
+ * reach: nothing changes (timer kept) and the next support tick asks again. See also: om_mission_production_slot in
+ * csrc/mission.c (the scan; declared in csrc/om_internal.h) and om_sup_structure_tick_production_driver below. */
 void om_structure_tick_production(om_world *w, uint32_t structure) {
     om_sup_structure *s = om_sup_structure_at(w, structure);
     uint32_t interval = om_structure_production_interval_ticks(s->power);
-    double angle, dist;
+    double sx, sy, dx, dy;
     if (interval == 0 || s->timer < interval) return;
+    if (!om_mission_production_slot(w, structure, &sx, &sy)) return;
     s->timer -= interval;
     s->pending_spawns++;
-    /* R-126-02: spawn position from two world-stream draws, angle then
-     * distance, within half the capture radius -- never any other
-     * generator. cos(angle) is read off om_sin(angle + HALF_PI) since the
-     * deterministic sine wrapper has no cosine sibling (csrc/sim.c). */
-    angle = om_rng_draw(w) * OM_TWO_PI;
-    dist = om_rng_draw(w) * (OM_REINFORCEMENT_CAPTURE_RADIUS / 2.0);
-    s->last_spawn_distance = dist;
-    s->last_spawn_x = s->x + dist * om_sin(angle + OM_SUP_HALF_PI);
-    s->last_spawn_y = s->y + dist * om_sin(angle);
+    dx = sx - s->x;
+    dy = sy - s->y;
+    s->last_spawn_distance = sqrt(dx * dx + dy * dy); /* sqrt is correctly rounded (IEEE), not a libm transcendental */
+    s->last_spawn_x = sx;
+    s->last_spawn_y = sy;
 }
 
 int om_structure_pop_spawned_unit(om_world *w, uint32_t structure) {
@@ -875,6 +875,10 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
                 om_mission_reinforce_note_spawn(w);
             }
             om_unit_spawn(w, (int)s->unit_type, s->owner, s->last_spawn_x, s->last_spawn_y, 0);
+        } else {
+            /* TD-VG-E-29: no free slot, so the timer is still >= interval; end the loop for this tick (a blocked structure
+             * must not spin). The unit spawned above is live before the next pass, so the next slot scan sees it. */
+            break;
         }
     }
 }

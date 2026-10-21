@@ -3129,6 +3129,57 @@ void om_mission_reinforce_note_spawn(om_world *w) {
     st->reinforce_spawned++;
 }
 
+/* VG-E-prodslot; the contract is documented at the prototype in csrc/om_internal.h. Terrain refusal duplicates csrc/unit.c
+ * om_unit_spawn_internal :934-941 because unit.c is not owned by this piece (See also: FU-spawn-terrain-check-shared). The scan
+ * works in squared doubles with no epsilon: on a non-integer structure point rounding may skip one neighbour slot, which is
+ * deterministic and harmless (the next slot in order takes it). See also: om_structure_tick_production in
+ * csrc/tactical_support.c. */
+int om_mission_production_slot(const om_world *w, uint32_t structure, double *out_x, double *out_y) {
+    /* read-only use through non-const accessors; the pattern of om_mission_reinforce_cap, mission.c:3127 */
+    om_world *wm = (om_world *)w;
+    const double spacing = (double)OM_PRODSLOT_SPACING_WU;
+    const int ring_max = OM_PRODSLOT_RING_MAX;
+    const int unit_type = (int)om_structure_get_unit_type(wm, structure);
+    const int walker = om_terrain_present(w) && om_unit_profile_movement_kind(w, unit_type) == OM_MOVE_WALKING;
+    uint32_t n = om_unit_count(w);
+    om_vec2 p;
+    om_structure_get_position(wm, structure, &p);
+    for (int r = 1; r <= ring_max; r++) {
+        for (int j = -r; j <= r; j++) {
+            for (int i = -r; i <= r; i++) {
+                double x, y;
+                int free_slot = 1;
+                if ((i < 0 ? -i : i) != r && (j < 0 ? -j : j) != r) continue;
+                if (i * i + j * j > ring_max * ring_max) continue;
+                x = p.x + (double)i * spacing;
+                y = p.y + (double)j * spacing;
+                if (walker) {
+                    om_slope sl;
+                    int band = om_terrain_band_at(w, x, y);
+                    if (om_terrain_slope_at(w, x, y, &sl) >= 0) {
+                        double along = (x - sl.mx) * (sl.x1 - sl.x0) + (y - sl.my) * (sl.y1 - sl.y0);
+                        band = along >= 0.0 ? sl.upper_band : sl.lower_band;
+                    }
+                    if (band < 1 || !om_terrain_walkable_at(w, x, y)) continue;
+                }
+                for (uint32_t k = 0; k < n && free_slot; k++) {
+                    uint32_t id = om_unit_id_at(w, k);
+                    double dx, dy;
+                    if (!id || !om_unit_alive(wm, id)) continue;
+                    dx = om_unit_position_x(wm, id) - x;
+                    dy = om_unit_position_y(wm, id) - y;
+                    if (dx * dx + dy * dy < spacing * spacing) free_slot = 0;
+                }
+                if (!free_slot) continue;
+                *out_x = x;
+                *out_y = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
 #define OM_MIS_NET_PRIME 1099511628211ULL
 #define OM_MIS_NET_SEED 14695981039346656037ULL

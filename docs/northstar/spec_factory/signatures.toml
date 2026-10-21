@@ -7323,6 +7323,16 @@ confidence = "certain"
 note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
+name = "om_mission_production_slot"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "structure", ctype = "uint32_t" }, { name = "out_x", ctype = "double*" }, { name = "out_y", ctype = "double*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); bound by hand in tests/csim/test_VG_E_prodslot.py (VG-E-prodslot)"
+
+[[symbols]]
 name = "om_mission_reinforce_cap"
 module = "mission.c"
 restype = "uint32_t"
