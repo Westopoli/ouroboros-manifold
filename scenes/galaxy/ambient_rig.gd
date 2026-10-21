@@ -1,11 +1,47 @@
 extends Node3D
 
-# R-106-05 ambient field (rings, inflow streams, dust, starfield, central glow), built from
-# the prototype rig scenes/mockups/galaxy/legacy_ambient_rig.gd. A60: galaxy_quality 2 halves
-# every emitter's amount (never deletes one); tiers 0 and 1 carry the full field. The
-# shaders are the mockup's, read in place.
+# R-106-05 ambient field. The rings, inflow streams and central glow are built from the
+# prototype rig scenes/mockups/galaxy/legacy_ambient_rig.gd (its ring and stream shaders are
+# read in place). The vast-space backdrop behind them is VG-B25: a dim wash baked once from the
+# view direction, four world-fixed star layers at real depth, and one volume of motes that
+# wraps about the camera. A60: galaxy_quality 2 halves every emitter's amount (never deletes
+# one); tiers 0 and 1 carry the full field.
 
 const TIER_FEWER := 2
+
+# VG-B25 vast-space backdrop. Every DRAFT-b25-* value is a named draft with its row in
+# docs/northstar/plans/push_ledger_2026-09-22.md (Architect gap rulings g1 to g4, 2026-10-12).
+const GalaxyGen := preload("res://scenes/galaxy/galaxy_gen.gd")
+const StarsShader := preload("res://scenes/galaxy/shaders/backdrop_stars.gdshader")
+const WashShader := preload("res://scenes/galaxy/shaders/backdrop_wash.gdshader")
+const DustShader := preload("res://scenes/galaxy/shaders/backdrop_dust.gdshader")
+
+const LAYER_COUNT := 4
+const LAYER_RADII := [100.0, 250.0, 800.0, 2500.0]   # Step 5 of the galaxy bubble field spec, unscaled
+const BACKDROP_SCALE := 0.5   # g1 (b): layers at 50, 125, 400 and 1,250
+const CAMERA_FAR := 3000.0   # DRAFT-b25-far: covers the 1,250 layer and its 2R clip at 2,500
+const STARS_PER_LAYER := 2000   # DRAFT-b25-stars (old: Starfield _amt(2000))
+const SHELL_SIGMA := 0.25   # g3: Gaussian thickness R/4 about the layer radius
+const SHELL_CLIP := 4.0   # g3: clipped at 2R, which is four sigma
+const LAYER_BRIGHTNESS := [1.0, 0.8, 0.6, 0.45]   # DRAFT-b25-brightness
+const STAR_ALPHA_MIN := 0.3   # DRAFT-b25-brightness: alpha mix(0.3, 0.8, roll^2), the old starfield's
+const STAR_ALPHA_MAX := 0.8
+const STAR_GOLD := Color(1.0, 0.92, 0.7)   # DRAFT-b25-tints, the old starfield's colours
+const STAR_BLUE := Color(0.7, 0.8, 1.0)
+const STAR_GOLD_FRACTION := 0.6   # DRAFT-b25-tints: gold 60 percent, blue 40 percent
+const STAR_PX_MIN := 1.0   # Step 5: stars stay 1 to 3 pixels
+const STAR_PX_MAX := 3.0
+const STAR_REF_VIEWPORT_H := 1080.0   # liberty 2026-10-12: a star at its own layer radius is the
+const STAR_REF_FOV_DEG := 45.0   # middle of the pixel range at 1080 px and the scene camera's fov
+const BACKGROUND := Color(0.0392157, 0.0509804, 0.0705882)   # galaxy_view.tscn Environment background
+const WASH_MESH_RADIUS := 1000.0
+const DUST_BOX := 120.0   # DRAFT-b25-dust (old: sphere radius 60)
+const DUST_COUNT := 400
+const DUST_QUAD := 0.1
+const DUST_DRIFT := 0.3
+const DUST_FADE := 0.25   # fade over the outer quarter of the half box from each face
+const DUST_GOLD := Color(1.0, 0.88, 0.5, 0.3)
+const DUST_BLUE := Color(0.6, 0.7, 1.0, 0.2)
 
 var _tier := 0
 
@@ -13,6 +49,11 @@ var _central_point: MeshInstance3D
 var _stream_pivot: Node3D
 var _pulse_tween: Tween
 var _rotation_tween: Tween
+var _dust: MultiMeshInstance3D
+var _dust_homes := PackedVector3Array()
+var _dust_velocities := PackedVector3Array()
+var _dust_positions := PackedVector3Array()
+var _dust_time := 0.0
 
 
 func _ready() -> void:
@@ -45,8 +86,9 @@ func _ready() -> void:
 		_build_ring(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8],
 			Color(1.0, 0.88, 0.5, d[9]), 0.0 if flat_qa else d[10], 0.0 if flat_qa else d[11])
 	_build_radial_streams()
-	_build_ambient_dust()
-	_build_starfield()
+	_build_wash()
+	_build_star_layers()
+	_build_camera_dust()
 	_build_grid_plane()
 	_start_central_pulse()
 	_start_stream_rotation()
@@ -197,58 +239,259 @@ func _build_radial_streams() -> void:
 	_stream_pivot.add_child(particles)
 
 
-func _build_ambient_dust() -> void:
-	var particles := GPUParticles3D.new()
-	particles.name = "AmbientDust"
-	particles.amount = _amt(400)
-	particles.lifetime = 20.0
-	particles.fixed_fps = 30
-	particles.interpolate = true
-
-	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/mockups/galaxy/shaders/dust_particles.gdshader")
-	shader_mat.set_shader_parameter("sphere_radius", 60.0)
-	shader_mat.set_shader_parameter("drift_speed", 0.3)
-	shader_mat.set_shader_parameter("blue_fraction", 0.5)
-	shader_mat.set_shader_parameter("gold_color", Color(1.0, 0.88, 0.5, 0.3))
-	shader_mat.set_shader_parameter("blue_color", Color(0.6, 0.7, 1.0, 0.2))
-	particles.process_material = shader_mat
-
-	particles.draw_pass_1 = _make_particle_quad(0.1)
-	particles.material_override = _make_additive_material(
-		Color(1.0, 0.88, 0.5, 0.3),
-		Color(1.0, 0.88, 0.5),
-		1.5
-	)
-	particles.visibility_aabb = AABB(Vector3(-200, -200, -200), Vector3(400, 400, 400))
-	add_child(particles)
+func _process(delta: float) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	if cam.far != CAMERA_FAR:
+		cam.far = CAMERA_FAR
+	_dust_time += delta
+	update_dust(cam.global_position, _dust_time)
 
 
-func _build_starfield() -> void:
-	var particles := GPUParticles3D.new()
-	particles.name = "Starfield"
-	particles.amount = _amt(2000)
-	particles.lifetime = 1000.0
-	particles.explosiveness = 1.0
-	particles.fixed_fps = 0
-	particles.interpolate = false
+static func layer_radius(i: int) -> float:
+	return LAYER_RADII[i] * BACKDROP_SCALE
 
-	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/mockups/galaxy/shaders/starfield_particles.gdshader")
-	shader_mat.set_shader_parameter("sphere_radius", 55.0)
-	shader_mat.set_shader_parameter("blue_fraction", 0.4)
-	shader_mat.set_shader_parameter("gold_color", Color(1.0, 0.92, 0.7, 0.4))
-	shader_mat.set_shader_parameter("blue_color", Color(0.7, 0.8, 1.0, 0.25))
-	particles.process_material = shader_mat
 
-	particles.draw_pass_1 = _make_particle_quad(0.2)
-	particles.material_override = _make_additive_material(
-		Color(1.0, 0.95, 0.8, 0.7),
-		Color(1.0, 0.95, 0.8),
-		2.5
-	)
-	particles.visibility_aabb = AABB(Vector3(-200, -200, -200), Vector3(400, 400, 400))
-	add_child(particles)
+static func layer_star_count(_i: int, tier: int) -> int:
+	return maxi(1, STARS_PER_LAYER / 2) if tier == TIER_FEWER else STARS_PER_LAYER
+
+
+static func _hash(a: int, b: int) -> int:
+	var x: int = ((a * 73856093) ^ (b * 19349663) ^ 0x9E3779B9) & 0xFFFFFFFF
+	x ^= x >> 16
+	x = (x * 0x45D9F3B) & 0xFFFFFFFF
+	x ^= x >> 16
+	x = (x * 0x45D9F3B) & 0xFFFFFFFF
+	x ^= x >> 16
+	return x
+
+
+static func _unit(a: int, b: int) -> float:
+	return float(_hash(a, b)) / 4294967296.0
+
+
+# A direction uniform on the sphere from integer hashes: points in the unit cube are redrawn
+# until one falls inside the ball, then normalised.
+static func _direction(key: int) -> Vector3:
+	for attempt in 32:
+		var v := Vector3(
+			_unit(key, 3 * attempt + 1) * 2.0 - 1.0,
+			_unit(key, 3 * attempt + 2) * 2.0 - 1.0,
+			_unit(key, 3 * attempt + 3) * 2.0 - 1.0)
+		var l2 := v.length_squared()
+		if l2 > 0.0001 and l2 <= 1.0:
+			return v / sqrt(l2)
+	return Vector3.UP
+
+
+# Radial offset of star k of layer i in sigmas: twelve hashed uniforms summed (mean 0, variance 1),
+# clipped at SHELL_CLIP.
+static func _shell_z(key: int) -> float:
+	var z := -6.0
+	for m in 12:
+		z += _unit(key, 100 + m)
+	return clampf(z, -SHELL_CLIP, SHELL_CLIP)
+
+
+static func _star_key(i: int, k: int) -> int:
+	return i * 1000003 + k
+
+
+static func layer_star_positions(i: int, tier: int) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var r0 := layer_radius(i)
+	for k in layer_star_count(i, tier):
+		var key := _star_key(i, k)
+		out.append(_direction(key) * (r0 * (1.0 + SHELL_SIGMA * _shell_z(key))))
+	return out
+
+
+static func layer_star_alphas(i: int, tier: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	for k in layer_star_count(i, tier):
+		var key := _star_key(i, k)
+		var roll := _unit(key, 200)
+		var fall := 1.0 - pow(_shell_z(key) / SHELL_CLIP, 2.0)
+		out.append(lerpf(STAR_ALPHA_MIN, STAR_ALPHA_MAX, roll * roll) * LAYER_BRIGHTNESS[i] * fall * fall)
+	return out
+
+
+static func _star_world_size(i: int) -> float:
+	return 0.5 * (STAR_PX_MIN + STAR_PX_MAX) * 2.0 * layer_radius(i) * tan(deg_to_rad(STAR_REF_FOV_DEG) * 0.5) / STAR_REF_VIEWPORT_H
+
+
+static func star_pixel_size(i: int, distance: float, viewport_h_px: float, fov_deg: float) -> float:
+	return clampf(_star_world_size(i) * viewport_h_px / (2.0 * maxf(distance, 0.001) * tan(deg_to_rad(fov_deg) * 0.5)), STAR_PX_MIN, STAR_PX_MAX)
+
+
+# The view-direction wash as the colour the player sees (the background plus a few thousandths).
+static func wash_colour(dir: Vector3) -> Color:
+	var up := 0.5 + 0.5 * dir.y
+	var side := 0.5 + 0.5 * dir.x
+	return BACKGROUND + Color(
+		0.002 + 0.004 * side,
+		0.002 + 0.003 * up + 0.002 * side,
+		0.003 + 0.005 * up + 0.003 * (1.0 - side), 0.0)
+
+
+static func wrap_mote(p: Vector3, cam: Vector3) -> Vector3:
+	var half := DUST_BOX * 0.5
+	return cam + Vector3(
+		fposmod(p.x - cam.x + half, DUST_BOX) - half,
+		fposmod(p.y - cam.y + half, DUST_BOX) - half,
+		fposmod(p.z - cam.z + half, DUST_BOX) - half)
+
+
+func camera_reach() -> float:
+	var oc: Node = get_parent().get_node_or_null("OrbitCamera") if get_parent() != null else null
+	return (oc.DIST_MAX if oc != null else 0.0) + GalaxyGen.R_BALL
+
+
+func qa_inventory() -> Dictionary:
+	var layers: Array = []
+	for i in LAYER_COUNT:
+		var node := get_node_or_null("StarLayer%d" % i) as MeshInstance3D
+		layers.append({"radius": layer_radius(i), "stars": node.mesh.surface_get_array_len(0) if node != null and node.mesh != null else 0})
+	var wash := get_node_or_null("Wash") as MeshInstance3D
+	var cam: Camera3D = get_viewport().get_camera_3d() if is_inside_tree() else null
+	return {
+		"wash": wash != null and wash.mesh != null and wash.mesh.get_surface_count() == 1,
+		"star_layers": layers,
+		"dust": {"motes": _dust.multimesh.instance_count if _dust != null else 0, "box": DUST_BOX},
+		"far": cam.far if cam != null else 0.0,
+		"added_draws": _added_draws(),
+	}
+
+
+func _added_draws() -> int:
+	var draws := 0
+	for node_name in ["Wash", "StarLayer0", "StarLayer1", "StarLayer2", "StarLayer3", "CameraDust"]:
+		var node := get_node_or_null(node_name)
+		if node is MeshInstance3D and node.mesh != null:
+			draws += node.mesh.get_surface_count()
+		elif node is MultiMeshInstance3D and node.multimesh != null and node.multimesh.mesh != null:
+			draws += node.multimesh.mesh.get_surface_count()
+	return draws
+
+
+func _build_wash() -> void:
+	var lat_bands := 12
+	var lon_bands := 24
+	var verts := PackedVector3Array()
+	var custom := PackedFloat32Array()
+	var base := BACKGROUND.srgb_to_linear()
+	for lat in lat_bands + 1:
+		var theta := PI * float(lat) / float(lat_bands)
+		for lon in lon_bands + 1:
+			var phi := TAU * float(lon) / float(lon_bands)
+			var dir := Vector3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi))
+			verts.append(dir * WASH_MESH_RADIUS)
+			# the additive term that lands the display colour wash_colour(dir) on the background
+			var add := wash_colour(dir).srgb_to_linear() - base
+			custom.append_array(PackedFloat32Array([add.r, add.g, add.b, 0.0]))
+	var indices := PackedInt32Array()
+	for lat in lat_bands:
+		for lon in lon_bands:
+			var a := lat * (lon_bands + 1) + lon
+			var b := a + lon_bands + 1
+			indices.append_array(PackedInt32Array([a, b, a + 1, a + 1, b, b + 1]))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_CUSTOM0] = custom
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, Mesh.ARRAY_CUSTOM_RGBA_FLOAT << Mesh.ARRAY_FORMAT_CUSTOM0_SHIFT)
+	var mat := ShaderMaterial.new()
+	mat.shader = WashShader
+	var node := MeshInstance3D.new()
+	node.name = "Wash"
+	node.mesh = mesh
+	node.material_override = mat
+	node.extra_cull_margin = 16384.0
+	add_child(node)
+
+
+func _build_star_layers() -> void:
+	for i in LAYER_COUNT:
+		var positions := layer_star_positions(i, _tier)
+		var alphas := layer_star_alphas(i, _tier)
+		var colours := PackedColorArray()
+		for k in positions.size():
+			var tint := STAR_GOLD if _unit(_star_key(i, k), 300) < STAR_GOLD_FRACTION else STAR_BLUE
+			colours.append(Color(tint.r, tint.g, tint.b, alphas[k]))
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = positions
+		arrays[Mesh.ARRAY_COLOR] = colours
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_POINTS, arrays)
+		var mat := ShaderMaterial.new()
+		mat.shader = StarsShader
+		mat.set_shader_parameter("px_min", STAR_PX_MIN)
+		mat.set_shader_parameter("px_max", STAR_PX_MAX)
+		mat.set_shader_parameter("world_size", _star_world_size(i))
+		var node := MeshInstance3D.new()
+		node.name = "StarLayer%d" % i
+		node.mesh = mesh
+		node.material_override = mat
+		add_child(node)
+
+
+func _build_camera_dust() -> void:
+	var count := _amt(DUST_COUNT)
+	var half := DUST_BOX * 0.5
+	for k in count:
+		_dust_homes.append(Vector3(
+			_unit(k, 401) * DUST_BOX - half, _unit(k, 402) * DUST_BOX - half, _unit(k, 403) * DUST_BOX - half))
+		_dust_velocities.append(Vector3(
+			_unit(k, 501) - 0.5, _unit(k, 502) - 0.5, _unit(k, 503) - 0.5) * DUST_DRIFT)
+	_dust_positions.resize(count)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(DUST_QUAD, DUST_QUAD)
+	var mat := ShaderMaterial.new()
+	mat.shader = DustShader
+	quad.material = mat
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = quad
+	mm.instance_count = count
+	_dust = MultiMeshInstance3D.new()
+	_dust.name = "CameraDust"
+	_dust.multimesh = mm
+	add_child(_dust)
+	update_dust(Vector3.ZERO, 0.0)
+
+
+func update_dust(cam_pos: Vector3, t: float) -> void:
+	var count := _dust_homes.size()
+	var half := DUST_BOX * 0.5
+	var buffer := PackedFloat32Array()
+	buffer.resize(count * 16)
+	for k in count:
+		var p := wrap_mote(_dust_homes[k] + _dust_velocities[k] * t, cam_pos)
+		_dust_positions[k] = p
+		var d := _dust_positions[k] - cam_pos
+		var face := maxf(absf(d.x), maxf(absf(d.y), absf(d.z)))
+		var tint := DUST_GOLD if k % 2 == 0 else DUST_BLUE
+		var o := k * 16
+		buffer[o] = 1.0
+		buffer[o + 3] = _dust_positions[k].x
+		buffer[o + 5] = 1.0
+		buffer[o + 7] = _dust_positions[k].y
+		buffer[o + 10] = 1.0
+		buffer[o + 11] = _dust_positions[k].z
+		buffer[o + 12] = tint.r
+		buffer[o + 13] = tint.g
+		buffer[o + 14] = tint.b
+		buffer[o + 15] = tint.a * clampf((half - face) / (half * DUST_FADE), 0.0, 1.0)
+	_dust.multimesh.buffer = buffer
+
+
+func get_dust_positions() -> PackedVector3Array:
+	return _dust_positions
 
 
 func _build_grid_plane() -> void:
