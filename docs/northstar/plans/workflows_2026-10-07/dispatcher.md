@@ -54,3 +54,11 @@ Engineer briefs for the record clerk, the cleanup clerk, the branch triage clerk
 Consult briefs for the Architect: the shape in step 5. Never pad with history the ruling does not need.
 
 Reports to Westley: lane, sha, shots, what he must do now, one line each. No narration of what was checked.
+
+## Cascades and the consistency pass (2026-10-21)
+
+From `docs/northstar/plans/2026-10-21-tool-split-spec.md`:
+
+The Dispatcher chat (Sonnet) is the cascade's overlord: it runs `/manager-mode` (hardcore when the cascade touches a save, pipe or checksum path) in a worktree under `~/Projects/om-push/wt/<slug>` on branch `push/<slug>-cascade`, never in the live checkout and never on `main`. The Architect writes the spec, the contract and the umbrella test's assertions (the shard-test-writer writes the per-leaf tests inside the cascade). Leaves are Sonnet 5.5 doers (`DOER_BACKEND`); the test writers and auditors are Sonnet 5.5 (`TEST_WRITER`). No Fable agent is spawned by the cascade. The overlord's own context is the long-lived one; it restarts from its continuation memory past about 400k tokens like any coordinator chat, with the cascade's on-disk records as its state.
+
+For Workflow pieces, the one-agent preflight stop moves out of the script: before a launch, the Dispatcher spawns one Sonnet engineer with the spec paragraph, the pieces row, the ledger rows it names, the rule pins of the tests it names and the script's own preflight list, and that engineer reports every gap in one message. The Architect answers them in one ruling. The script then launches with the gaps closed. Fifteen of the twenty spec-and-records stops of 2026-10-14 to 10-21 would have been one message each instead of a relaunch.
