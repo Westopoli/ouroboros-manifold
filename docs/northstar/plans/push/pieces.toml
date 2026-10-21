@@ -2269,7 +2269,7 @@ wave = 9
 owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_end_retention.py", "docs/northstar/plans/sim_lane_2026-10-12/sv0_spec.md"]  # om_pipe.c: handle_mission_end only; architecture.md: the mission_end paragraph only
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_end_retention.py"]
-depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6", "VG-K-D1", "VG-W2", "VG-CONTRACT-E7"]  # attached owners of om_pipe.c (take-over convention, as VG-K-D1)
+depends_on = ["T1", "VG-D-pipefix", "VG-CONTRACT", "VG-CONTRACT-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E6", "VG-K-D1", "VG-W2", "VG-CONTRACT-E7", "VG-CONTRACT-force-groups"]  # attached owners of om_pipe.c (take-over convention, as VG-K-D1); om_pipe.c and architecture.md order (Architect 2026-10-20)
 status = { state = "attached", attach_sha = "50027e26" }
 tests_pending = false
 size_estimate = "SV-0: handle_mission_end reads optional retention, scales player unit HP, debug build only; one transport test file"
@@ -2372,7 +2372,7 @@ wave = 13
 owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_frame_briefing_fields.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_frame_briefing_fields.py"]
-depends_on = ["VG-CONTRACT-E7"]  # om_pipe.c and architecture.md order
+depends_on = ["VG-CONTRACT-E7", "VG-E1R"]  # architecture.md order: E1R lands first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "force-groups: the mission frame's force.groups field (one int per unit, 1 to 3, in the tally's ascending-id order), one architecture.md paragraph, the frame-shape pin and its examples"
