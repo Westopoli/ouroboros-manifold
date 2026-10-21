@@ -1,3 +1,4 @@
+# Rule pins: R-166-03@765e2e, R-168-01@c6cd6c, R-193-03@77e6bb
 """Visible-game lane E1 part e, piece E1r (VG-E1R): placement clears instead of refusing
 (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 12+, "Lane E1 part e", the E1r paragraph only; "Rev 12b rulings" and
 "Rev 12c batch 2" do not amend it; Architect rulings on the script's gaps, 2026-10-19, taken as written and named below).
