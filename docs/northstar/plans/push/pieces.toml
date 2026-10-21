@@ -2181,7 +2181,7 @@ owns = ["scenes/galaxy/ambient_rig.gd", "scenes/galaxy/shaders/backdrop_wash.gds
 owns_glob = []
 acceptance = ["tests/test_vg_b_b25.gd"]
 depends_on = ["VG-B24", "VG-B23", "VG-B"]  # VG-B23 for clarity (transitive via VG-B24); B24 is the last owner of galaxy_view.gd before this piece; VG-B owns tests/galaxy_field/** by glob
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "e852cbc7" }
 tests_pending = true
 size_estimate = "B25: dim wash, four star layers at 50/125/400/1250, wrapping motes; DRAFT-b25-*; real GPU check on the RTX 3060 under Forward+"
 
