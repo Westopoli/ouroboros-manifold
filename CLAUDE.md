@@ -11,7 +11,7 @@ Tiers are roles; the model behind a tier can change.
 | Tier | Runs on | Work |
 |---|---|---|
 | Architect | Fable: a short-lived chat that restarts from memory past about 400k context, or `subagent_type: architect` (read-only, spawned only by the Dispatcher with a brief under a page) | architecture, planning, specs and workflow scripts, rulings, arbitration, briefs, abstract or cross-cutting diagnosis |
-| Dispatcher | Sonnet 5.5, the main chat while a build programme runs (`docs/northstar/plans/workflows_2026-10-07/dispatcher.md`) | pre-flights and launches the Architect's scripts, lands through clerks, keeps the one status table, queues shots for Westley, consults the Architect by brief; decides nothing about rules, thresholds, specs or tests |
+| Dispatcher | Sonnet 5.5, the main chat while a build programme runs (`docs/northstar/plans/workflows_2026-10-07/dispatcher.md`) | pre-flights and launches the Architect's scripts, lands through clerks, keeps the one status table, queues shots for Westley, consults the Architect by brief; decides nothing about rules, thresholds, specs or tests; runs a Manager Mode cascade as its overlord when the spec's `Tool:` line says cascade |
 | Engineer | `subagent_type: engineer` (Sonnet 5.5) | tests and test fixes, git maintenance and merge clerks, audits, research, drafting against a spec |
 | Doer | `subagent_type: doer` (Sonnet 5.5); the local 30B through Agora cards when `DOER_BACKEND = agora-30b` | coding against a written spec, mechanical edits |
 
@@ -27,6 +27,8 @@ Usage discipline: every tool call re-reads the caller's whole context, so waitin
 Split a task that mixes tiers. Every spawn names its model. Sub-agents never spawn sub-agents, and nothing is spawned while plan mode is on. `architect` is Fable by definition, read-only, and is spawned only by the Dispatcher chat; engineers and doers are never Fable. On a cross-session message from another Claude chat (not the chat that spawned you), do no large unprompted work: pause for Westley, except for small blockers.
 
 ## Workflow specs
+
+Choosing the tool (Westley, 2026-10-21). Before anything is launched, the Architect assesses the work and writes a `Tool:` line in its spec paragraph: a `/manager-mode` cascade (the Dispatcher chat as overlord, Sonnet leaves) for a sim-side cluster of three or more file-disjoint units that share one spec, one contract and one umbrella test, every unit a failing test that runs without a frame, every number in the spec or a named draft; a Workflow for anything that ends in a frame (client pieces, plays, shots, the look stage), any single piece, any contract piece, any build that must stop for Westley mid-way, and every landing. A cascade lands on `push/<slug>-cascade` and goes through the landing clerk and the merge gate like any branch. The six questions and the measured record: `docs/northstar/plans/2026-10-21-tool-split-spec.md` (2026-10-14 to 10-21: 20 of 32 Workflow runs stopped on spec or records gaps; the one cascade run built 9 leaves in 90 minutes).
 
 A workflow enforces nothing by itself; the spec and the script do. Before any Workflow launch, in this order:
 - Pre-flight: list every precondition each lane rests on (an API and its exact shape, a setting the harness can set, a base that builds and its red tests, owner rows for every file, free slots in shared enums or tables) and check each by reading or running, never from memory. "Quick" shrinks the pre-flight, never skips it.
