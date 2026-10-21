@@ -25,4 +25,3 @@ tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_positive_control_perturbed_re
 tests/csim/test_PP_portability.py::test_W7_probe_reproduces_pinned_checksums :: TD-VG-E-26
 tests/csim/test_PP_target_policy_per_side.py::test_A196_A99_guard_positive_control_policy_1_changes_nothing_here_but_a_perturbed_hash_is_caught :: TD-VG-E-26
 tests/csim/test_PP_target_policy_per_side.py::test_A196_policy_0_explicit_equals_the_recorded_A99_hashes :: TD-VG-E-26
-tests/transport/test_pipe_vg_identity.py::test_new_pipe_views_equal_mains_without_the_new_keys :: TD-VG-E-26
