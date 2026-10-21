@@ -1930,7 +1930,7 @@ owns = ["csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "docs
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_prodslot.py"]
 depends_on = ["VG-CONTRACT-E7", "SV-0"]  # LAB-REV2-E0 lands after the three E pieces (Architect 2026-10-20); VG-CONTRACT-E7 owns all five shared files until it lands (spec rev 12d: after VG-CONTRACT-E7); Architect 2026-10-12: SV-0 (one field, one hook) goes first; prodslot lands after SV-0 and E7
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "006f2ed" }  # landed 006f2ed; bound (Architect): at most 80 slots x live units of distance checks per production event, not per tick; the E-15 scale requirement (8 structures under 0.2 ms per tick) is the existing scale suite's
 tests_pending = true
 size_estimate = "prodslot: nearest free slot of the 30 wu lattice within 150 wu, fixed scan order, no RNG draw; goldens with production move once (TD-VG-E-29); closes FINDING-production-stack"
 
