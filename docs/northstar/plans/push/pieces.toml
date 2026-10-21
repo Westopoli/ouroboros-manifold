@@ -2853,7 +2853,7 @@ wave = 10
 owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/fight.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "scripts/skilllab/coverage.py", "scripts/skilllab/probe.py"]  # DRAFT list. coverage.py and probe.py are new files (DRAFT names). plays_space.py is also owned by LAB-REV2-L3 (queued); the dependency on LAB-REV2-FIX, which depends on L3, orders it. csrc/unit.c is never owned here (D6 engine piece is separate and unnamed)
 owns_glob = ["tests/skilllab/test_rev3_a_*.py", "tests/skilllab/integration/test_rev3_a_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3", "LAB-REV2", "LAB-REV2-FIX", "LAB-REV2-L8M2", "LAB-VISION-CONTROL"]
+depends_on = ["LAB-REV3", "LAB-REV2", "LAB-REV2-FIX", "LAB-REV2-L8M2", "LAB-VISION-CONTROL", "LAB-REV2-SPEED-2"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "A first: D3 built-in ids with om_roster_set_reach (no copies), D4 naive attacker fields the play's mix, D5 dark striker emits at the knob's values or is deleted, D6 category family marked unavailable, R5 coverage test T1, R6 inert-knob probe T2; tests T1 to T5 and T10 (DRAFT)"
@@ -2866,7 +2866,7 @@ wave = 10
 owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/plays.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "scripts/skilllab/contract.py", "scripts/skilllab/fight.py", "scripts/skilllab/report.py"]  # DRAFT list. The mixes data table (columns name, units, used_in, enabled) lives in plays_space.py. contract.py (field living) and fight.py (one fill site at the end of every fight) are also A's (fight.py) and C's: A, B, C order them; report.py is also C's
 owns_glob = ["tests/skilllab/test_rev3_b_*.py", "tests/skilllab/integration/test_rev3_b_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3-A", "LAB-REV2-FIX"]
+depends_on = ["LAB-REV3-A", "LAB-REV2-FIX", "LAB-REV2-SPEED-2"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "B layers and mixes: R2 plays on all five layers, below the enemy, layer-symmetry control (T6); R1 mixes M5 to M9 as rows of the mixes table with a 30-fight naive mirror pre-check; D9 at most 4 Wardens per 16 refused by the pre-check (T11); T1 turns green here (DRAFT)"
@@ -2878,7 +2878,7 @@ wave = 10
 owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "scripts/skilllab/diagram.py", "scripts/skilllab/rows.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "docs/northstar/plans/skilllab-harness-spec.md", "docs/northstar/research/layer_dynamics/README.md", "scripts/skilllab/__main__.py", "scripts/skilllab/charts.py", "tests/skilllab/fakes.py", "tests/skilllab/integration/test_contact_real.py", "tests/skilllab/integration/test_sweep_real.py", "tests/skilllab/integration/test_timeline_orders_real.py", "tests/skilllab/test_diagram.py", "tests/skilllab/test_drift_fix_blind.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_reengage_rows.py", "tests/skilllab/test_rows.py", "tests/skilllab/test_sweep.py", "tests/skilllab/test_sweep_baselines.py", "tests/skilllab/golden_hashes.json"]  # DRAFT list. plays_space.py, scenes.py and sweep.py (reach knobs, pre-flight refusal) are also B's: C depends on B so one owner at a time. rows.py is owned by LAB-REV2-L8, ordered through LAB-REV2-FIX; ruler fixes 2026-10-20 (TD-LAB-REV3-C-fakes/-columns/-stall-control): the fifteen files are taken from their landed or queued lab rows for this piece (one owner at a time, C lands last in the stack); the ledger overlap is the sanctioned record-file pattern (as E7, startforce, layerspot); golden_hashes.json re-recorded once under TD-LAB-REV3-C-goldens (8325cfa5)
 owns_glob = ["tests/skilllab/test_rev3_c_*.py", "tests/skilllab/integration/test_rev3_c_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX", "LAB-REV2-L8M2"]
+depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX", "LAB-REV2-L8M2", "LAB-REV2-SPEED-2"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "C reach and prediction: R3 reach and vision up/down as swept knobs, crossings per reach configuration (T7); R4 paper prediction beside the window and the totals (T8); R7 no_reach_stall end and pre-flight refusal, D7 (T9) (DRAFT); includes verdict decided_one_way_reach (FINDING-lab-d11)"
@@ -3391,7 +3391,7 @@ wave = 13
 owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_tool_line.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_tool_line.py"]
-depends_on = ["HARNESS-C4", "HARNESS-coverage", "HARNESS-provenance-scope"]  # both own scripts/specfactory/status_check.py; ordering only
+depends_on = ["HARNESS-C4", "HARNESS-coverage", "HARNESS-provenance-scope", "HARNESS-C235-fail"]  # HARNESS-C235-fail added by the records clerk (owner_lint-forced, Architect to confirm): it also owns status_check.py. Both own scripts/specfactory/status_check.py; ordering only
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
@@ -3447,6 +3447,19 @@ depends_on = ["LAB-REV2-FIX"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "behaviour-preserving Python speed-up of firing.py with an Engine epoch counter cache; goldens untouched; the absolute 30 s mark is Westley's (C2)"
+
+# SPEED-2 (lab overseer a7, Architect ruling 2026-10-21; Westley may veto): the fight.py half of the lab speed-up, after LAB-REV2-SPEED and LAB-REV2-L8M2 (the owners of fight.py before it). DRAFT-lab-speed-ratio-2 is a named draft, value to be given by the Architect at launch. Manager and wave copied from the sibling LAB-REV2 rows (L8M, L8M2, FIX: M0, wave 10).
+[[piece]]
+id = "LAB-REV2-SPEED-2"
+manager = "M0"
+wave = 10
+owns = ["scripts/skilllab/fight.py", "tests/skilllab/ref_fight_rev2.py"]
+owns_glob = ["tests/skilllab/integration/test_speed2_*.py"]  # New files (tests first, by a different agent than the builder)
+acceptance = []
+depends_on = ["LAB-REV2-SPEED", "LAB-REV2-L8M2"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "SPEED-2 lab speed, fight side: _Reengage poll and the sample seam in fight.py; FightResult equal over eight setups, goldens unchanged, process_time ratio against a frozen reference (DRAFT-lab-speed-ratio-2)"
 
 # Provenance lint scope (Architect 2026-10-21 evening, implementation; Westley may veto): spec_provenance.py judged the whole spec file, so unrelated paragraphs blocked a piece's pre_gate. scripts/specfactory/pre_gate.sh is left out of owns: HARNESS-C4 (queued) owns it.
 [[piece]]
