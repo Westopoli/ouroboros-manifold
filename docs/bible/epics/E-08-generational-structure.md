@@ -150,7 +150,7 @@ Flag closed, rule text pending: Q-063-02, difficulty and preferences are set onc
 As a player, I want to pick a difficulty and which kinds of missions I prefer before the first chapter, and change my mind later, so that the game bends to how I like to play without locking me in.
 
 Rules
-- R-063-01  Given the onboarding screen, When shown, Then it offers difficulty (easy, medium, hard) and, for each of the 10 mission archetypes, a preference weight with a "rare" mark; at least one archetype must stay unmarked [Q-063-01: bible says at most two rare marks, code allows up to nine].
+- R-063-01  Given the onboarding screen, When shown, Then it offers difficulty (easy, medium, hard) and, for each of the 10 mission archetypes, a preference.
 - R-063-02  Given the player confirms, When saved, Then the choices are stored per save slot and read by the mission generator (E-10) and difficulty scaling.
 - R-063-03  Given the player wants to change the choices later, When they do, Then [Q-063-02: where and when; Westley removed permanence, A-058].
 - R-063-04  Given a new campaign after a terminal condition (S-054), When it starts, Then the onboarding screen shows again.
