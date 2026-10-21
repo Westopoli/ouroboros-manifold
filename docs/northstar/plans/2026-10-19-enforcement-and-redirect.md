@@ -50,7 +50,7 @@ Verdict per item, against the audit rows. "Proceed" means the piece is untouched
 | CONST-2, ALG coverage | Mac branches, gate | proceed | consistent |
 | Lab rev 2 (overseer chat) | its own landing | proceed, plus one game-side piece | rows 33 and 34 consistent. "Ground fire should go cross-layer, that's a bug" (10-13) became lab scope only (dts 14): a FINDING row and a csim test on the game's fire path, owner TBD after the lab landing |
 | Transition mockup (S-108) | prototype, not approved | **pass 2 waits on point 2's answer** | the battlefield-to-star ratio is two draft numbers with no rule (cons 1); his answer gives the rule, then pass 2 |
-| Terrain-obeys mockup (S-191, S-189) | prototype, not approved | **pass 3 does not start before P1 and P2 land** (his point 4: layout engine first); before any pass 3: the vantage check per R-192-03, the legend and unit on the shot, a route colour that is not water blue (cons 3 to 7, point 3) | |
+| Terrain-obeys mockup (S-191, S-189) | prototype pass 2 approved 2026-10-21 | **pass 3 does not start before P1 and P2 land** (his point 4: layout engine first); before any pass 3: the vantage check per R-192-03, the legend and unit on the shot, a route colour that is not water blue (cons 3 to 7, point 3) | |
 | Landscape pass 6b (approved 10-04) | prototype | one run of 6b alone to see whether the terrace stripes are in the approved look (cons 5, point 3) | |
 | Layout prototype pass 1 (10-04), layers mockup, settlement banding, space density, galaxy bubble, sand table | prototypes | each gets a `parity.toml` (constants with file:line) when it is consumed, the B23 pattern; Q-S3-02 (which layers prototype is the one he meant) is confirmed by him from the mockup frame, not guessed (dts 12) | |
 

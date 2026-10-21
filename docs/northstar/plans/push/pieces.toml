@@ -2445,8 +2445,8 @@ acceptance = ["tests/test_vg_a_a18_3d.gd"]
 depends_on = ["VG-A18", "HARNESS-provenance-scope"]
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the A18 paragraph (:390) plus docs/northstar/plans/decision_pack_2026-10-18/followups/s103_camera_report.md
-size_estimate = "the 3D rig frames the player's home base with the opening margin (A18's 2D rule), pitch per the S-103 camera report (number Westley's)"
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the A18 paragraph (:390) plus docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md; rig fov restored to the approved 55 (FINDING-rig-fov-lost), and the D-VIEW height 5400 and the sightdisc 0.766 pin are re-checked by this piece
+size_estimate = "the 3D rig frames the player's home base with the opening margin (A18's 2D rule), camera fov 55 restored (approved mockup number), pitch per the S-103 camera report (number Westley's, C13) and the horizon test per C14"
 
 # Lane A piece VG-A-dragbox (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (a)6): the units mockup's drag rectangle, which the game never draws. One new file plus one call from the selection handler in scenes/tactical_c/tactical_view.gd (VG-A's file: this piece does not own it and lands after VG-A-startforce, which edits it first).
 # Tool: Workflow
@@ -3529,3 +3529,33 @@ status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
 size_estimate = "gate_remote.sh <host> <ref> runs the slow tier on another machine from a fresh clone and pushes the summary to a gate-runs branch; every absolute path in the gate scripts becomes clone-relative or an environment variable; --dry-run refuses when the host lacks a dependency listed in gate_hosts.md"
+size_estimate = "first /manager-mode cascade: VG-P3; measured per the spec section 6"
+
+# HARNESS-known-xfail (Westley 2026-10-21, C3 "yes"; spec Lane H part 4): the sim suites get a known-red list like the plays and gd tests have, each entry tied to a ledger row. merge_gate_support.py and suite_regression.py are also owned by earlier queued HARNESS rows; ordered after them through the two depends_on entries.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-known-xfail"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/csim_known_xfail.txt", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/suite_regression.py", "tests/specfactory/test_known_xfail.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_known_xfail.py"]
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 4
+size_estimate = "csim_known_xfail.txt (new, same form as gd_tests_known_red.txt); the regression check lets a listed new red pass with a 'known-xfail: N' line, REJECTs a listed id whose row id is not in the ledger, WARNs 'known-xfail now green: <id>'; skip-rise and xfail-rise rejects unchanged; tests first: listed with a row (pass), listed with no row (REJECT), listed and green (WARN); positive control: today's check REJECTs the first fixture"
+
+# HARNESS-look-rejects (Architect 2026-10-21, ledger FINDING-look-stage-warns-only): CLAUDE.md guard 1 says the gate's look stage rejects a blank or near-uniform frame; merge_gate.sh stage 13 only warns (look_check returns OK or WARN). Queued behind HARNESS-gate-tiers.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-look-rejects"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_look_rejects.py"]  # merge_gate.sh: the look stage lines only (stage 13, ~636-648)
+owns_glob = []
+acceptance = ["tests/specfactory/test_look_rejects.py"]
+depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]  # the last two only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the look stage REJECTs a blank or near-uniform candidate frame instead of warning (guard 1); tests first: a uniform fixture frame REJECTs, a varied one passes; positive control: today's stage only warns on the uniform fixture"
