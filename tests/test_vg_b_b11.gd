@@ -1,5 +1,5 @@
 extends SceneTree
-# Rule pins: R-106-05@bc7ef9
+# Rule pins: R-106-05@a91085
 
 # Piece B11 tests (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 4, lane B; bible E-16
 # S-106 R-106-05, as B11 read it: "When idle, an ambient particle field (rings, inflow streams, dust,

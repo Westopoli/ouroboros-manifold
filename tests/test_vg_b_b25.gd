@@ -1,5 +1,5 @@
 extends SceneTree
-# Rule pins: R-106-05@bc7ef9
+# Rule pins: R-106-05@a91085
 # test-timeout: 20000
 
 # Piece VG-B25-vast-space (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 12d, lane B, paragraph

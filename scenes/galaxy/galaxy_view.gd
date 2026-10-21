@@ -363,6 +363,7 @@ func qa_state() -> Dictionary:
 		"shell_renderer": {"present": get_node_or_null("ShellRenderer") != null, "significance": _significance.duplicate()},
 		"unknown_factions": _unknown_factions.duplicate(),
 		"ambient_rig": {"present": get_node_or_null("AmbientRig") != null, "tier": _quality["tier"]},
+		"backdrop": get_node("AmbientRig").qa_inventory() if get_node_or_null("AmbientRig") != null else {},
 		"galaxy_quality": _quality.duplicate(),
 		"quality_tier": _quality["tier"],
 		"camera_autonomous": _camera_rig.has_method("is_autonomous") and _camera_rig.is_autonomous(),
