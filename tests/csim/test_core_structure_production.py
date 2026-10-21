@@ -1,8 +1,9 @@
 """W-1b Stage B: structure production spawns units for the right faction.
 
 R-126-02: a held structure with a chosen unit type spawns one unit of the
-owner's faction per production interval, positioned within half the capture
-radius, driven by om_tactical_step.
+owner's faction per production interval, placed at the first free slot of the
+structure's spawn lattice within half the capture radius (R-126-02 as rewritten,
+TD-VG-E-29), driven by om_tactical_step.
 R-126-06: om_mission_get_reinforcement_trickle stays 0.
 
 Faction mapping (W-1d: owner = E-05 faction id, neutral -1):

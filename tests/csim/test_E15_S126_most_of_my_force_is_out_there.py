@@ -54,7 +54,7 @@ def test_R_126_01_count_clamp_floor_region_military(lib, world_factory):
 
 
 def test_R_126_02_one_unit_that_type_spawns(lib, world_factory):
-    """Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns within half the capture radius of the structure on the structure's layer (position from two world-stream draws, angle then distance; never from any other generator) and the timer subtracts the interval."""
+    """Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns at the first free slot of the structure's spawn lattice (a grid at twice the unit collision radius centred on the structure, scanned ring by ring outward in a fixed order, within half the capture radius; a slot is free when no live unit stands within one spacing of it; no free slot delays production one tick) on the structure's layer, with no random draw, and the timer subtracts the interval (Westley 2026-10-12, TD-VG-E-29)."""
     w = world_factory(n_regions=1)
     # Unit type 0 with power 100 -> interval = 30s = 600 ticks (20 Hz)
     interval = lib.om_structure_production_interval_ticks(ctypes.c_double(100.0))
@@ -73,7 +73,7 @@ def test_R_126_02_one_unit_that_type_spawns(lib, world_factory):
     remaining_timer = lib.om_structure_get_timer(w, 0)
     assert remaining_timer == 0
 
-    # Spawn position within half capture radius (300 / 2 = 150 wu)
+    # Spawn position within half capture radius (300 / 2 = 150 wu, inclusive: the bound of the spawn lattice, R-126-02 as rewritten, TD-VG-E-29)
     dist = lib.om_structure_get_last_spawn_distance(w, 0)
     assert ctypes.c_double(dist).value <= 150.0
 

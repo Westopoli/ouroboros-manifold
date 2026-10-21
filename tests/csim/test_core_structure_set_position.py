@@ -58,7 +58,7 @@ def test_structure_set_position_out_of_range(lib, world_factory):
 
 def test_structure_set_position_does_not_alter_last_spawn_distance(lib, world_factory):
     """Setting position must not change last_spawn_distance (set only by
-    om_structure_tick_production's own RNG draw). After init and set_position,
+    om_structure_tick_production, from the lattice slot it picks: R-126-02 as rewritten, TD-VG-E-29; no RNG draw). After init and set_position,
     last_spawn_distance must still be its init value 0.0."""
     w = _tactical_world(lib, world_factory, seed=32)
     lib.om_structure_init(w, 0, 0, ctypes.c_double(10.0))

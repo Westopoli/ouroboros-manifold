@@ -2,7 +2,7 @@
 
 place_structure with a non-origin x/y places the structure at that position.
 After enough tactical steps the produced unit appears near the given point
-(within half the capture radius = 150 wu), not near the origin.
+(at a spawn-lattice slot within half the capture radius = 150 wu, R-126-02 as rewritten, TD-VG-E-29), not near the origin.
 
 Red on main (W-1e not applied): (void)x; (void)y discards the coordinates,
 structure stays at (0,0), unit spawns within 150 wu of origin, not of (1000,0).
@@ -25,7 +25,7 @@ FEATURES = [1, 2, 3, 4, 5, 6, 7]
 STRUCT_X = 1000.0
 STRUCT_Y = 0.0
 STRUCT_OWNER = 0
-# Half capture radius: R-126-02 bound; unit spawns within this of the structure.
+# Half capture radius: R-126-02 bound (150 wu inclusive, the spawn lattice's bound, TD-VG-E-29); unit spawns within this of the structure.
 HALF_CAP_RADIUS = 150.0
 # 1 wu tighter bound: unit must be closer to the given point than to origin.
 CLOSER_BOUND = 1.0
@@ -59,7 +59,7 @@ def test_place_structure_position_applied():
     (1000, 0). On main (x/y discarded) the structure sits at (0,0) and the
     unit spawns near origin, failing this assertion.
 
-    R-126-02: spawn within half capture radius of structure position.
+    R-126-02: spawn at the first free lattice slot within half capture radius of structure position (TD-VG-E-29).
     W-1e: position is applied via om_structure_set_position.
     """
     setup = [
