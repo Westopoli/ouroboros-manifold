@@ -1905,7 +1905,7 @@ owns = ["csrc/economy_place.c", "csrc/economy_lots.c", "csrc/economy_internal.h"
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_e1r.py"]
 depends_on = ["VG-E1", "VG-CONTRACT-E5", "VG-CONTRACT-E7", "VG-K-D1", "VG-CONTRACT-E3"]  # VG-CONTRACT-E3 (attached) is the attached owner of symbol_modules.toml; sigrows (b), Architect 2026-10-19; spec: depends_on VG-E1; E7 orders architecture.md (chain W2, E7, E1R, Dispatcher may flip) (its files return to attached when E1q's lane finishes; the Dispatcher pre-flights); E5 is the attached owner of economy_internal.h and architecture.md
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "11ccd49" }  # landed 11ccd49
 tests_pending = true
 size_estimate = "E1r: placement clears natural lots under the footprint (R-193-03), om_lots_remove_row; DRAFT-place-on-placed, Q-168-06"
 
