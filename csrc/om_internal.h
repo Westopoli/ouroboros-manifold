@@ -6,6 +6,7 @@
 #define OM_INTERNAL_H
 
 #include "ouroboros_sim.h"
+#include "om_constants.h"
 
 #define OM_MAX_NEIGHBORS 32
 /* HDR5 (A27): raised 128 -> 512 so every region-indexed and per-tick-record
@@ -532,7 +533,6 @@ void om_mission_reinforce_note_spawn(om_world *w);
  * centre, or 0 when none is free (the caller delays production one tick). No RNG draw. Defined in csrc/mission.c, called by
  * csrc/tactical_support.c om_structure_tick_production. Spacing is mission.c:2470's (2 * OM_UNIT_COLLISION_RADIUS), integer
  * ring bound as the Architect ruled (GAP 2, 2026-10-21): a slot (i, j) counts when i*i + j*j <= OM_PRODSLOT_RING_MAX^2. */
-#include "om_constants.h"
 #define OM_PRODSLOT_SPACING_WU (2 * OM_UNIT_COLLISION_RADIUS)
 #define OM_PRODSLOT_RING_MAX ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) / OM_PRODSLOT_SPACING_WU)
 _Static_assert((OM_REINFORCEMENT_CAPTURE_RADIUS % 2) == 0 && ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) % OM_PRODSLOT_SPACING_WU) == 0,
