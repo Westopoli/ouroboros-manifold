@@ -525,6 +525,19 @@ void om_mission_on_begin(om_world *w);
  * reinforce_spawned; a no-op when there is no cap (nothing to count against). */
 uint32_t om_mission_reinforce_cap(const om_world *w);
 void om_mission_reinforce_note_spawn(om_world *w);
+/* VG-E-prodslot (R-126-02, FINDING-production-stack, TD-VG-E-29, spec 2026-10-07-visible-game-spec.md "VG-E-prodslot"):
+ * the first free slot, in a fixed ring-by-ring row-major scan, of the 30 wu lattice around a structure's point, within half the
+ * capture radius (inclusive); the structure's own point excluded; a slot is free when no live unit (any faction, any layer) is
+ * strictly within one spacing of it and om_unit_spawn would accept the structure's unit type there. Returns 1 and the slot
+ * centre, or 0 when none is free (the caller delays production one tick). No RNG draw. Defined in csrc/mission.c, called by
+ * csrc/tactical_support.c om_structure_tick_production. Spacing is mission.c:2470's (2 * OM_UNIT_COLLISION_RADIUS), integer
+ * ring bound as the Architect ruled (GAP 2, 2026-10-21): a slot (i, j) counts when i*i + j*j <= OM_PRODSLOT_RING_MAX^2. */
+#include "om_constants.h"
+#define OM_PRODSLOT_SPACING_WU (2 * OM_UNIT_COLLISION_RADIUS)
+#define OM_PRODSLOT_RING_MAX ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) / OM_PRODSLOT_SPACING_WU)
+_Static_assert((OM_REINFORCEMENT_CAPTURE_RADIUS % 2) == 0 && ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) % OM_PRODSLOT_SPACING_WU) == 0,
+               "half the capture radius is a whole number of lattice spacings");
+int om_mission_production_slot(const om_world *w, uint32_t structure, double *out_x, double *out_y);
 /* Resets the one-shot mission_started latch (csrc/fog.c); called by mission.c
  * om_mission_setup so a new mission's recon phase can be re-entered via
  * om_mission_begin. Without this, om_mission_is_started stays true forever
