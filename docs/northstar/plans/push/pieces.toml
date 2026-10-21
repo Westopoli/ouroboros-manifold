@@ -3322,7 +3322,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_keep_red_evidence.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_keep_red_evidence.py"]
-depends_on = ["HARNESS-gate-base-after-lock"]  # Architect 2026-10-21: HARNESS-lane-plays-scope and HARNESS-coverage now depend on this row (both queued, not in flight)
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-westley-folder"]  # HARNESS-westley-folder added by the records clerk (owner_lint-forced, Architect to confirm): the Architect dropped HARNESS-lane-plays-scope, which carried the order after westley-folder on merge_gate_support.py. Architect 2026-10-21: HARNESS-lane-plays-scope and HARNESS-coverage now depend on this row (both queued, not in flight)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA output and every PNG the suite wrote under ~/Projects/om-push/gate-evidence/<date>-<piece>/ (outside SCRATCH_ROOT, never /tmp), the GATE line names that path, the trap at merge_gate.sh:52-57 leaves that directory alone, a weekly cleanup line in the drift-audit page; tests first: a fixture red play leaves its stdout and PNG at the path and the GATE line names it, a green play leaves nothing"
