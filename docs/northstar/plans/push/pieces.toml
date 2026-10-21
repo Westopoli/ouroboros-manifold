@@ -3281,3 +3281,42 @@ depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-lane-plays-scope", "HARNE
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA output and every PNG the suite wrote under ~/Projects/om-push/gate-evidence/<date>-<piece>/ (outside SCRATCH_ROOT, never /tmp), the GATE line names that path, the trap at merge_gate.sh:52-57 leaves that directory alone, a weekly cleanup line in the drift-audit page; tests first: a fixture red play leaves its stdout and PNG at the path and the GATE line names it, a green play leaves nothing"
+# Tool split (Westley 2026-10-21, docs/northstar/plans/2026-10-21-tool-split-spec.md section 6): the swarm config, the Tool-line check and the cascades README; depends on HARNESS-C4 only as ordering, because both own scripts/specfactory/status_check.py.
+[[piece]]
+id = "HARNESS-swarm-config"
+manager = "M0"
+wave = 13
+owns = [".claude-swarm.toml", "docs/northstar/plans/cascades/README.md", "scripts/specfactory/status_check.py", "tests/specfactory/test_tool_line.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_tool_line.py"]
+depends_on = ["HARNESS-C4", "HARNESS-coverage"]  # both own scripts/specfactory/status_check.py; ordering only
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
+size_estimate = "toml rewrite, cascades README, Tool-line WARN check in status_check.py, one test file"
+
+[[piece]]
+id = "HARNESS-cost-report"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/cost_report.py", "tests/specfactory/test_cost_report.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_cost_report.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
+size_estimate = "usage-metadata cost script with --since/--until/--by and a dedup rule; one fixture test"
+
+[[piece]]
+id = "CASCADE-P3-trial"
+manager = "M0"
+wave = 12
+owns = []  # owns filled by the P3 spec at cascade start (one row per cascade)
+owns_glob = []
+acceptance = []
+depends_on = ["HARNESS-swarm-config", "VG-P2"]
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
+size_estimate = "first /manager-mode cascade: VG-P3; measured per the spec section 6"
