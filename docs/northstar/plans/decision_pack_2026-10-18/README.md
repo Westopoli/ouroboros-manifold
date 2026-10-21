@@ -1,6 +1,6 @@
 # Decision pack, 2026-10-18 (Westley's offline batch)
 
-**Read `batch.md` instead of this page: since 2026-10-21 it holds only the 14 open design questions and the 8 parked ones, in the stories' voice with the ids kept as keys; the shots, the implementation rows the Architect took, the rows the record already answers, the duplicates and the moot rows are in `batch_closed.md`.** This page stays as the index and the record.
+**batch.md is the one page of what Westley decides (pictures, questions, chat items, drafts), 2026-10-21; answers go in answers.md one line per key.** This page stays as the index and the record.
 
 One sitting, offline, as many as you can. Everything here is a decision only you can make or a shot only you can judge; each says what it unblocks on the Linux box this week. Answer in one file (`answers.md` beside this one, or a message): shots as `<file>: approved | rejected — <note>`, questions as `<id>: <letter> — <words if any>`. The Architect folds every answer into the register, the epics and the queue, and the Dispatcher orders the week from them.
 

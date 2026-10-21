@@ -1208,3 +1208,28 @@ Answer by key and letter, one per line, for example `Q-082-03: a` or `Q-082-03: 
 ## 10. Skill lab pass marks (you set each)
 
 The skill lab is where tactical combat is measured on the real sim, to prove your sentence: "players with better understanding of the landscape, unit formation, layer awareness/intentionality, and the other players current position can defeat a much larger force." It judges rule sets with ten conditions. The marks below are drafts; none is confirmed. A "play" is a scripted skilled or naive way of fighting, and "the firing count" is how many units can get shots off, which your principle says decides a fight. The five skills are landscape, formation, layers, enemy position and unit-type matchup.
+
+## Moved 2026-10-21 (batch.md rewrite)
+
+Old batch.md header, kept for the record:
+
+> # The batch (2026-10-18, slimmed 2026-10-21): what only Westley decides
+>
+> Fourteen open design questions, in the order they unblock work, and eight you have parked. The implementation choices the Architect took, the rows the record already answers, the duplicates, the moot rows and the 2026-10-18 shots are in `batch_closed.md` (veto any of them in one line).
+> Answer in `answers.md` beside this file, one line each: `<key>: <letter>` or `<key>: <letter> - <your words>`; `<key>: open - <your words>` when none fits. Skip anything you do not want to rule yet.
+> Shots still waiting for your eye are in the page table `../../story_reviews/westley/README.md`. Q-069-03 is answered (2026-10-19) and moved out.
+
+## Parked by you
+
+| id | topic | your parking words |
+|---|---|---|
+| Q-083-03 | How trait cards are earned | Post-launch work. |
+| Q-132-02 | One silhouette per type | "Beta doesn't need to answer questions like this" (2026-10-07). |
+| Q-159-09 | Disguising a building | "Skip this for now" (2026-10-07). |
+| Q-238-01 | Drawing a disguised building | Follows the disguise design ("skipped for now", 2026-10-07). |
+| Q-173-01 | How mission tech is derived | "Post-beta". |
+| Q-173-02 | Tech levels per era | "Post-beta". |
+| Q-165-01 | Travel lanes as a mode (also covers pacing tools in the layout kit) | "Only an idea, not a decision." |
+| Q-180-01 | Form of the solo dial: three positions, a slider or a triangle | Asked with a shot when the economy lane reaches it. |
+
+The 14 open design questions of the old page are kept, trimmed, in the new batch.md section 2.
