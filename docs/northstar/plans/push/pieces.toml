@@ -939,7 +939,7 @@ wave = 4
 owns = ["scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/push/scale_gated_tests.txt"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_merge_gate_support.py"]
-depends_on = []
+depends_on = ["HARNESS-lab-slow-tier"]
 status = { state = "attached", attach_sha = "17a5d991" }
 size_estimate = "one helper and a few lines in _diff_added_definitions"
 
@@ -990,7 +990,7 @@ wave = 4
 owns = ["docs/northstar/spec_factory/constants_allowlist.txt", "tests/csim/conftest.py"]
 owns_glob = ["scripts/specfactory/[!m]*", "tests/specfactory/**"]
 acceptance = ["tests/specfactory"]
-depends_on = ["A94-contract", "K1"]
+depends_on = ["A94-contract", "K1", "HARNESS-lab-slow-tier"]
 status = { state = "attached", attach_sha = "8dfa3cd7" }
 size_estimate = "allowlist regeneration, vendored 205a fixture, synthetic reach control, PyYAML requirement (branch push/A94-harness-fixes, ledger TD-A94-*); later the gate steps for tests/specfactory, sig_table --check and the stale-allowlist lint, each with a positive control"
 
@@ -1097,7 +1097,7 @@ wave = 5
 owns = ["csrc/tactical_move.c", "docs/bible/algorithms.md", "docs/northstar/plans/push/scale_gated_tests.txt", "tests/csim/test_E13_S097_around_not_through.py", "tests/csim/test_E13_S098_firing_through_friends.py", "tests/csim/test_E13_S096_four_commands.py", "tests/csim/test_core_group_pace.py", "csrc/enemy_macro.c", "tests/csim/test_E14_S120_B1_2_patrol_waypoint_loop.py", "tests/csim/test_E13_S101_movement_that_reads.py", "tests/transport/test_pipe_assign_commander.py", "simulation/movement.py", "simulation/test_collision_all_start_checks.py", "csrc/om_constants.h", "simulation/config.py", "simulation/test_parity_changes.py", "tests/csim/test_core_collision_reference.py", "docs/bible/epics/E-13-movement-and-command.md", "tests/csim/test_PP_collision_settle.py", "tests/csim/scale/test_scale_E11.py", "tests/csim/test_PP_leash_own_distance.py", "simulation/test_leash_own_distance.py", "tests/csim/test_PP_grid_margin_exact.py", "tests/csim/test_PP_target_policy_per_side.py"]
 owns_glob = ["tests/csim/test_PP_move_*.py", "tests/csim/scale/test_PP_*.py"]
 acceptance = []
-depends_on = ["PP-contract", "B12", "B12b", "B13", "HARNESS-symown", "core"]
+depends_on = ["PP-contract", "B12", "B12b", "B13", "HARNESS-symown", "core", "HARNESS-lab-slow-tier"]
 status = { state = "attached", attach_sha = "2e46d8a8" }
 tests_pending = true
 size_estimate = "P8, P7, P5 tables, collision, clamp, cover exemption, routing (plan Phase A), in units of about 100 lines"
@@ -2375,7 +2375,7 @@ acceptance = ["tests/transport/test_pipe_mission_frame_briefing_fields.py"]
 depends_on = ["VG-CONTRACT-E7", "VG-E1R"]  # architecture.md order: E1R lands first
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "force-groups: the mission frame's force.groups field (one int per unit, 1 to 3, in the tally's ascending-id order), one architecture.md paragraph, the frame-shape pin and its examples"
+size_estimate = "force-groups: the mission frame's force.groups field (one int per unit, 0 to 3, 0 = no group until VG-E-startforce lands, in the tally's ascending-id order), one architecture.md paragraph, the frame-shape pin and its examples"
 
 # Lane E piece VG-E-startforce (spec lane E part e, starting force by control group; Architect 2026-10-14: lands right after VG-CONTRACT-E7). The accessor om_mission_get_force_group rides E7's header piece (header, signatures.toml row, symbol_modules.toml line, conftest block, one ABI bump 7 to 8); no separate header piece. Not owned here: csrc/ouroboros_sim.h, signatures.toml, symbol_modules.toml, tests/csim/conftest.py, every save-format file (derived at read time, nothing saved or hashed). This piece re-records the goldens TD-VG-E-26 lists once (E7 re-recorded none).
 [[piece]]
