@@ -2322,7 +2322,7 @@ manager = "M0"
 owns = ["scripts/specfactory/merge_gate_support.py", "scripts/specfactory/pieces.py", "tests/specfactory/test_owner_lint.py", "tests/specfactory/test_merge_gate_support.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_owner_lint.py", "tests/specfactory/test_merge_gate_support.py"]
-depends_on = ["VG-GUARD", "HARNESS-symown", "A94-harness"]  # VG-GUARD: in-flight status owner of merge_gate_support.py; pieces.py, owner_lint.py and the tests are A94-harness glob (attached)
+depends_on = ["VG-GUARD", "HARNESS-symown", "A94-harness", "HARNESS-gate-keep-red-evidence"]  # keep-red-evidence added by the Architect 2026-10-21 (both own merge_gate_support.py; keep-red depends only on gate-base-after-lock). VG-GUARD: in-flight status owner of merge_gate_support.py; pieces.py, owner_lint.py and the tests are A94-harness glob (attached)
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "SHARED_RECORD_GLOBS in pieces.py (11 lines), one import and the ignore entry in merge_gate_support.py (4 lines), two positive-control tests (57 lines)"
@@ -3322,7 +3322,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_keep_red_evidence.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_keep_red_evidence.py"]
-depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-westley-folder"]  # HARNESS-westley-folder added by the records clerk (owner_lint-forced, Architect to confirm): the Architect dropped HARNESS-lane-plays-scope, which carried the order after westley-folder on merge_gate_support.py. Architect 2026-10-21: HARNESS-lane-plays-scope and HARNESS-coverage now depend on this row (both queued, not in flight)
+depends_on = ["HARNESS-gate-base-after-lock"]  # Architect 2026-10-21: HARNESS-lane-plays-scope and HARNESS-coverage now depend on this row (both queued, not in flight)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA output and every PNG the suite wrote under ~/Projects/om-push/gate-evidence/<date>-<piece>/ (outside SCRATCH_ROOT, never /tmp), the GATE line names that path, the trap at merge_gate.sh:52-57 leaves that directory alone, a weekly cleanup line in the drift-audit page; tests first: a fixture red play leaves its stdout and PNG at the path and the GATE line names it, a green play leaves nothing"
@@ -3417,3 +3417,46 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold opening contains a piece id from PIECES and fails only on findings inside those paragraphs; the whole-file count is printed as information; a number followed by a [P file:line] cite within the same sentence is cited, not a draft; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"
+
+# Getting around the box (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box"; implementation rulings his to veto). Spec: the three lane H paragraphs in the visible-game spec. Land in this order: xdist, tiers, remote. The measurement engineer's report (stage timings, host dependencies) is pasted here at launch.
+# Records clerk notes: tests/transport/conftest.py does not exist on main, so it is left out of owns. The gate's venv is ~/Projects/agora/.venv (merge_gate.sh:19, outside the repo; no requirements file in the repo lists pytest-xdist, which is not installed there today), so no venv file is in owns: the install is unresolved, Architect to rule. tests/csim/conftest.py is also owned by A94-harness (attached) and LAB-REV2-E0 (queued).
+[[piece]]
+id = "HARNESS-csim-xdist"
+manager = "M0"
+wave = 13
+owns = ["tests/csim/conftest.py", "scripts/specfactory/merge_gate.sh", "tests/specfactory/test_csim_xdist.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_csim_xdist.py"]
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-provenance-scope", "HARNESS-gate-keep-red-evidence", "LAB-REV2-E0", "VG-CONTRACT-E7", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-E-prodslot"]  # the last six edges are records-clerk additions (pieces.py --check overlap on merge_gate.sh and tests/csim/conftest.py), Architect to confirm or reverse (the alternative: those five pieces depend on this one)
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
+size_estimate = "the csim library is built once per session by the controller and workers load it through OM_CSIM_LIB; the gate's csim stage runs under pytest-xdist (-n 6 --dist loadfile) and transport with -n 2; expected csim stage 40 min to under 10"
+
+# The measurement engineer's report (stage timings, host dependencies) is pasted here at launch. Shared file merge_gate.sh: after HARNESS-csim-xdist.
+[[piece]]
+id = "HARNESS-gate-tiers"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_tiers.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_tiers.py"]
+depends_on = ["HARNESS-csim-xdist", "HARNESS-lane-plays-scope", "HARNESS-westley-folder"]  # the last two are records-clerk additions (merge_gate_support.py overlap), Architect to confirm
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
+size_estimate = "merge_gate.sh --tier fast|slow|full (default full): the fast tier per landing under the lock, the slow tier as a sweep on main every 3 landings or 2 hours with bisect-and-revert, a status_check sweep line, and the rules.md section (b) text; replaces the temporary landing rule when it lands"
+
+# The measurement engineer's report (stage timings, host dependencies) is pasted here at launch. Shared-file edit in merge_gate.sh and merge_gate_support.py, line by line (records clerk, from origin/main 2026-10-21; the Preflight re-verifies): merge_gate.sh:19 PYTHON default /home/westopoli/Projects/agora/.venv/bin/python becomes a repo-relative or environment path; merge_gate.sh:372 VENV_TARGET default $HOME/Projects/agora/.venv likewise; merge_gate_support.py has no /home/westopoli path today. gate_remote.sh must also find the baseline cache and scratch root without the box's ~/Projects/om-push.
+[[piece]]
+id = "HARNESS-gate-remote"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/gate_remote.sh", "docs/northstar/plans/gate_hosts.md", "tests/specfactory/test_gate_remote.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_remote.py"]
+depends_on = ["HARNESS-gate-tiers"]
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
+size_estimate = "gate_remote.sh <host> <ref> runs the slow tier on another machine from a fresh clone and pushes the summary to a gate-runs branch; every absolute path in the gate scripts becomes clone-relative or an environment variable; --dry-run refuses when the host lacks a dependency listed in gate_hosts.md"
