@@ -367,7 +367,8 @@ struct om_world {
      * literal below -- OM_KNOWLEDGE_LOST_POP_WINDOW is a local #define in
      * diplomacy.c; struct array dimensions are exempt from the alg_constants lint).
      * Window = OM_KNOWLEDGE_LOST_POP_WINDOW (om_constants.h, ALG-27b); dimension
-     * stays literal 50 here since om_constants.h is not included in this header.
+     * stays literal 50 here (array dimension, lint-exempt); this header includes
+     * om_constants.h for the OM_PRODSLOT_* constants.
      * head = next write index (0..49); len = samples stored (0..50).
      * Initialized to 0 at world creation (calloc in om_world_new/region.c).
      * Serialized by SAVE-1 (save.c sv_write_body / sv_parse_body). */
