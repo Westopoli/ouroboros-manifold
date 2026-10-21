@@ -16,6 +16,14 @@ Rules proven (S-106/R-106-01: a region is drawn in its owner's colour):
            one colour or none.
 Positive control: the owner-colour-flat plant collapses every region to one
 colour, so the same detector must report a failure on it.
+
+TD-VG-C2-5-patch (Westley 2026-10-21): C2-5-01 read one pixel per dot and sat one dot above
+MIN_MATCH_FRACTION; a 5 to 6 px gold ambient mote drifting over a dot's centre pixel flipped it.
+The detector now reads, per dot, the PATCH_RADIUS square patch around the rounded centre
+(DRAFT-c25-patch-radius 3: a 7x7 patch, wider than the mote, inside the smallest drawn dot,
+clipped to the frame) and counts the dot as showing its colour when at least half of the patch
+pixels are within CHANNEL_TOLERANCE of it. Thresholds are unchanged. Control for the change:
+test_unit_patch_rule_survives_a_mote_the_single_pixel_rule_does_not.
 """
 from __future__ import annotations
 
@@ -45,6 +53,8 @@ ISOLATION_PX = 12.0
 CHANNEL_TOLERANCE = 40
 MIN_SAMPLES = 5
 MIN_MATCH_FRACTION = 0.6
+PATCH_RADIUS = 3  # DRAFT-c25-patch-radius: 7x7 patch per dot
+PATCH_MIN_FRACTION = 0.5
 MIN_DISTINCT_SCREEN_COLOURS = 5
 DISTINCT_STEP = 32
 
@@ -126,6 +136,20 @@ def _boot_to_galaxy(game: GodotGame) -> None:
     time.sleep(2.0)
 
 
+def _patch_at(img: np.ndarray, xi: int, yi: int) -> np.ndarray:
+    """The (2*PATCH_RADIUS+1)-square patch of pixels centred on (xi, yi), clipped to the frame,
+    as an (n, 3) array."""
+    height, width = img.shape[:2]
+    r = PATCH_RADIUS
+    return img[max(0, yi - r):min(height, yi + r + 1), max(0, xi - r):min(width, xi + r + 1)].reshape(-1, 3)
+
+
+def _patch_hit_fraction(exp, patch: np.ndarray) -> float:
+    """Fraction of the patch pixels within CHANNEL_TOLERANCE per channel of the expected colour."""
+    diff = np.abs(patch.astype(np.float64) - np.array(exp, dtype=np.float64))
+    return float(np.mean(np.all(diff <= CHANNEL_TOLERANCE, axis=1)))
+
+
 def _sample_owned_systems(client, shot_name: str) -> list[tuple[int, tuple[float, float, float], np.ndarray]]:
     qa = client.state()["result"]["qa"]
     client.screenshot(shot_name)
@@ -150,7 +174,7 @@ def _sample_owned_systems(client, shot_name: str) -> list[tuple[int, tuple[float
             continue
         col = qa["region_colours"][str(i)] if str(i) in qa["region_colours"] else qa["region_colours"][i]
         expected = tuple(float(c) * 255.0 for c in col[:3])
-        samples.append((i, expected, img[yi, xi]))
+        samples.append((i, expected, _patch_at(img, xi, yi)))
     return samples
 
 
@@ -159,20 +183,23 @@ def _detector_failures(samples) -> list[str]:
     if len(samples) < MIN_SAMPLES:
         problems.append("only %d isolated owned systems in view, need %d" % (len(samples), MIN_SAMPLES))
         return problems
-    hits = sum(1 for _, exp, got in samples if max(abs(exp[k] - float(got[k])) for k in range(3)) <= CHANNEL_TOLERANCE)
+    fractions = [_patch_hit_fraction(exp, patch) for _, exp, patch in samples]
+    is_hit = [f >= PATCH_MIN_FRACTION for f in fractions]
+    hits = sum(is_hit)
     frac = hits / len(samples)
     if frac < MIN_MATCH_FRACTION:
-        first = samples[0]
+        k = is_hit.index(False)
+        first = samples[k]
         problems.append(
             "C2-5-01: %d of %d isolated owned systems show their region colour (%.2f < %.2f); "
-            "e.g. region %d expected rgb %s, screen rgb %s"
+            "e.g. region %d expected rgb %s, its %d-pixel patch matched %.2f (need >= %.2f), mean screen rgb %s"
             % (hits, len(samples), frac, MIN_MATCH_FRACTION, first[0],
-               tuple(round(c) for c in first[1]), tuple(int(c) for c in first[2]))
+               tuple(round(c) for c in first[1]), len(first[2]), fractions[k], PATCH_MIN_FRACTION,
+               tuple(int(round(c)) for c in first[2].mean(axis=0)))
         )
-    # TD-VG-B-11: count the distinct EXPECTED owner colours among samples that matched within
-    # CHANNEL_TOLERANCE of their own region's colour (not screen-colour buckets, which label glow smears).
-    matched = [exp for _, exp, got in samples
-               if max(abs(exp[k] - float(got[k])) for k in range(3)) <= CHANNEL_TOLERANCE]
+    # TD-VG-B-11: count the distinct EXPECTED owner colours among samples that matched (same patch rule)
+    # their own region's colour (not screen-colour buckets, which label glow smears).
+    matched = [exp for (_, exp, _), h in zip(samples, is_hit) if h]
     distinct = {tuple(int(round(c)) for c in exp) for exp in matched}
     if len(distinct) < MIN_DISTINCT_SCREEN_COLOURS:
         problems.append(
@@ -211,6 +238,29 @@ def test_control_owner_colour_flat_trips_the_detector(galaxy_game):
         "control is dead: the detector reported no problem on a galaxy whose regions all share one "
         "colour (%d samples)" % len(samples)
     )
+
+
+def test_unit_patch_rule_survives_a_mote_the_single_pixel_rule_does_not():
+    """Control for TD-VG-C2-5-patch (no Godot). Proves the sentence 'a dot counts as showing its
+    region colour when at least half of its 7x7 patch is within tolerance': a 16 px disc of the
+    region colour carries a 6x6 square of (255, 255, 230), the mote, painted over the disc's
+    centre pixel (the square's corner on the centre, so the 7x7 patch keeps 33 of 49 region
+    pixels). The patch rule must call the dot a HIT; the old single-pixel rule, implemented here
+    only as the reference, must call it a MISS."""
+    region = (200, 60, 60)
+    img = np.zeros((40, 40, 3), dtype=np.uint8)
+    cx = cy = 20
+    yy, xx = np.mgrid[0:40, 0:40]
+    img[(xx - cx) ** 2 + (yy - cy) ** 2 <= 8 ** 2] = region
+    img[cy:cy + 6, cx:cx + 6] = (255, 255, 230)
+    exp = tuple(float(c) for c in region)
+    samples = [(i, exp, _patch_at(img, cx, cy)) for i in range(MIN_SAMPLES)]
+    assert _patch_hit_fraction(exp, samples[0][2]) >= PATCH_MIN_FRACTION, "patch rule missed the dot"
+    problems = _detector_failures(samples)
+    assert not any(m.startswith("C2-5-01") for m in problems), "patch rule: %s" % problems
+    single = [(i, e, img[cy, cx]) for i, e, _ in samples]
+    single_hits = sum(1 for _, e, got in single if max(abs(e[k] - float(got[k])) for k in range(3)) <= CHANNEL_TOLERANCE)
+    assert single_hits == 0, "single-pixel reference should miss the mote-covered centre"
 
 
 MIN_PLANT_DIFF_PX = 500
