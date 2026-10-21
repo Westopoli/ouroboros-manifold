@@ -2,25 +2,12 @@
 
 How to answer: one word per picture, approve, reject, or a note. Where answers go: a message to the chat, or `answers.md` in the Batch A form; the clerk that records a verdict deletes the picture and its block in the same commit.
 
-## P-S191-terrain-obeys-pass2-carved-routes.png
-
-**What you see:** A top-down prototype of a land map with flat base circles, an objective, a choke bar in the middle, and orange and blue route lines; pink dots mark the cells the generator carved to make routes. Every point now has its narrow and wide routes.
-**Judge:** The carved routes run as parallel lanes side by side, like a rail yard; is carving the right direction with a better path rule, or should routes come from the landforms?
-**Beta status of what is shown:**
-- Land that fits a requested layout, with routes (S-191, S-189): built as a prototype only, awaiting your verdict; in the game it is queued (not built), not scheduled (you said the layout engine comes first).
-- The layout engine that asks for those places: stub (built, not yet called by the game).
-
-## P-S191-terrain-obeys-pass2-small-canvas.png
-
-**What you see:** The same prototype on a small map: base circles kept apart by scaling the pads down, steep ring slopes under the walking limit, and the same carved lanes in yellow and pink.
-**Judge:** Do the pads and routes still read on the small map, or does the carving swamp it?
-**Beta status of what is shown:**
-- Small-map pads and routes (S-191, S-189): built as a prototype only, awaiting your verdict; in the game queued (not built), not scheduled.
-
 ## Removed today
 
 | File | Verdict | Cite |
 |---|---|---|
+| `P-S191-terrain-obeys-pass2-carved-routes.png` | Approved as a prototype: "Approved" (Westley, 2026-10-21, new rulings 6); S-191 and S-189 stay as they are | `P.md` row 3 (shot `shots/proto-terrain-obeys-2/obey_16000_1.png`); programme lane table, P layout engine and places row |
+| `P-S191-terrain-obeys-pass2-small-canvas.png` | Approved as a prototype: "We won't have a map this small in reality, but approved." (Westley, 2026-10-21, new rulings 7); S-191 and S-189 stay as they are | `P.md` row 3 (shot `shots/proto-terrain-obeys-2/obey_8000_1.png`); programme lane table, P layout engine and places row |
 | `E-S126-starting-force-smaller-at-tick-0.png` | Not approved: starting force still too large (about 25% fewer, not enough), units in a line, vision circle drawn parallel to the screen not the ground (Westley, 2026-10-21, new rulings 4) | `E.md` S-126 row; ledger day37 FINDING-s126-* |
 | `F-S143-S241-host-lobby-common-eras-and-team-size.png` | Approved: "Looks good" (Westley, 2026-10-21, new rulings 5) | `F.md` S-143 and S-241 rows, run run-20261020T144745Z |
 | `B-S106-regional-galaxy-b24-layout.png` (and `.state.json`) | Approved: "Looks good, approved." (Westley, 2026-10-21, new rulings 1) | `B.md` S-106 row, run 20261013-1406-59a24b4 |
