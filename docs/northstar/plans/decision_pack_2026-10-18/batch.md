@@ -208,6 +208,15 @@ Four ground-era story plays the reviewer judged "no", still pending with you, wi
 - S-004 (crossing layers): no unit entered a layer transit within 1000 ticks of a cross-map move, so no transit or halfway line was ever shown.
 - S-132 (unit types readable): the force is collapsed or partly undrawn; four clusters of stacked identical hexagons with big cyan rings, types not distinguishable by shape.
 
+### C11 Building placement limits
+The placement engine refuses a building on top of another placed building and refuses when the engine's lot table (8192) is full. Your words were "limits only from terrain" and "no lot count in the beta".
+(a) the overlap refusal is physical and stays, the table size is a memory bound and is documented as not a rule (the Architect's reading); (b) remove the overlap refusal too: buildings may stack and the terrain alone limits; (c) something else.
+unblocks: nothing today; the E1R shot.
+
+### C12 September mockups without a verdict
+Five September mockups (fog, hud, units, objectives, menus) have no recorded verdict from you.
+(a) treat them as approved as built; (b) you look at each (commands in followups/01_transition.md section 1); (c) drop them.
+
 ## 4. Drafts in force unless you veto
 
 - DRAFT-b25-star-ref: 1080 px, 45 degree fov (Architect, 2026-10-21)

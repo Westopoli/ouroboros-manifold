@@ -2403,6 +2403,21 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce client: bind groups 1 to 3 from the mission frame, qa_state control_groups key; selection panel not edited"
 
+# Lane A piece VG-A-dragbox (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (a)6): the units mockup's drag rectangle, which the game never draws. One new file plus one call from the selection handler in scenes/tactical_c/tactical_view.gd (VG-A's file: this piece does not own it and lands after VG-A-startforce, which edits it first).
+# Tool: Workflow
+[[piece]]
+id = "VG-A-dragbox"
+manager = "M0"
+wave = 15
+owns = ["scenes/tactical_c/selection_box.gd", "tests/test_vg_a_dragbox.gd"]
+owns_glob = []
+acceptance = ["tests/test_vg_a_dragbox.gd"]
+depends_on = ["VG-A-startforce"]  # the one scenes/tactical_c/tactical_view.gd call lands after VG-A-startforce's client piece on that file
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the VG-A-dragbox paragraph, after VG-A-startforce
+size_estimate = "selection_box.gd (new): the units mockup's drag rectangle drawn from the press point to the pointer once the pointer is past DRAFT-dragbox-dead 4 px, gone on release, qa_state()['drag_box'] its screen rect or null; one call from the tactical_view.gd selection handler; tests first by a different writer; shot = S-095 selection frame mid-drag"
+
 [[piece]]
 id = "LAB-REV2"
 manager = "M0"
@@ -2885,6 +2900,34 @@ depends_on = ["HARNESS-C235"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys script, args, launch, spec, status_check.py known keys and check launch, the script header line"
+
+# Spec stand-in sweep (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (b)11): records clerks clear the spec-lint findings and the stand-in register rows so that HARNESS-C235-fail can turn the warnings into failures. Owns the visible-game spec and the register by depends_on ordering after the in-flight owners of those files.
+# Tool: Workflow (records clerks)
+[[piece]]
+id = "SWEEP-spec-standins"
+manager = "M0"
+wave = 13
+owns = ["docs/northstar/plans/2026-10-07-visible-game-spec.md", "docs/northstar/ambiguity_register.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["VG-E-prodslot", "LAB-REV2-L7"]  # the in_flight rows that own docs/northstar/ambiguity_register.md today (grep of this file, 2026-10-21); no in_flight row owns the spec
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "records clerks clear the 289 spec-lint findings and the 15 stand-in register rows in batches of 30, each batch an Architect text; done when the lint reports 0"
+
+# HARNESS-C235-fail (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (b)11): HARNESS-C235 warns where it should fail; the switch waits for SWEEP-spec-standins. Same four files as HARNESS-C235.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-C235-fail"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_spec_provenance.py", "tests/specfactory/test_status_check.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_spec_provenance.py"]
+depends_on = ["HARNESS-C235", "SWEEP-spec-standins", "HARNESS-C4", "HARNESS-coverage", "HARNESS-swarm-config"]  # the last three are queued and also own scripts/specfactory/status_check.py (HARNESS-C4 also tests/specfactory/test_status_check.py); ordering only (owner_lint)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the C1 to C5 checks fail instead of warn once SWEEP-spec-standins has cleared the stand-ins (Westley picked all five, 2026-10-19 as the audit cites); spec keys required on every queued row"
 
 # Record batch (Architect 2026-10-19): FINDING-a8-captured-never-shows. c_bridge.gd erases structures_changed before events_feed.gd reads it, so the captured and lost lines never show in play.
 [[piece]]
