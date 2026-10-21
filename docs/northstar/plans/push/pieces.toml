@@ -3497,3 +3497,19 @@ status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph PROTO-landscape-lakefill, Prototypes (2026-10-21)
 size_estimate = "field_map.gd lake fill uses pop_front with the same 1,500-cell cap; land-to-water flips per row in a 60 by 60 cell box over a lake under DRAFT-lakefill-flips 4 on seeds 1 and 3; positive control: the unfixed loop gives 14.9; shot: seed 1 landscape re-shot with the crop beside the old one, queued as P12"
+
+# Tool: /manager-mode cascade
+# CASCADE-sim-rules (Architect 2026-10-21, batch 6): the second cascade, after CASCADE-laneU-tests; findings A, C, D, E, G, H, K, L of followups/04_simviewer_run_analysis.md, one leaf per finding. Modelled on CASCADE-P3-trial (CASCADE-laneU-tests has no row yet).
+# owns filled at cascade start: events.c, chronicle, replay keyframe, region.c, lifecycle.c, threshold events, generational.c
+[[piece]]
+id = "CASCADE-sim-rules"
+manager = "M0"
+wave = 12
+owns = []
+owns_glob = []
+acceptance = []
+depends_on = ["HARNESS-swarm-config", "CASCADE-laneU-tests"]  # CASCADE-laneU-tests has no row yet
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/cascades/sim-rules/spec.md (written at cascade start)"
+size_estimate = "eight leaves, one per finding (A events.c; C+D chronicle; E replay keyframe; G region.c; H lifecycle.c; K threshold events; L generational.c), each a failing csim test named by rule id plus a positive control; umbrella: the eight tests plus the full csim regression unchanged; contract csrc/ouroboros_sim.h parent-owned; hardcore audit"
