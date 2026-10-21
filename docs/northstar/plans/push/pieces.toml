@@ -2219,7 +2219,7 @@ wave = 15
 owns = ["scripts/mockups/scale_sizes.py", "tests/test_mockup_scale.gd"]
 owns_glob = ["scenes/mockups/scale/**"]  # the new folder: scale_mockup.tscn, scale_mockup.gd, camera_rig.gd, kits/sizes.json, README.md, and any .uid sidecars
 acceptance = ["tests/test_mockup_scale.gd"]
-depends_on = []
+depends_on = ["HARNESS-provenance-scope"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph PROTO-scale, under "Prototypes (2026-10-21)"
@@ -2427,7 +2427,7 @@ wave = 15
 owns = ["scenes/tactical_c/fog_layer.gd", "tests/test_vg_a_sightdisc.gd"]  # the fog shader is the SHADER constant inside fog_layer.gd (no separate shader file), so the first entry covers it
 owns_glob = []
 acceptance = ["tests/test_vg_a_sightdisc.gd"]
-depends_on = ["VG-A"]  # the spec paragraph says depends_on none (nothing must land first); VG-A is attached and owns scenes/tactical_c/** and tests/test_vg_a_*.gd by glob, and pieces.py --check flags a glob overlap with no ordering, so the entry only orders that check
+depends_on = ["VG-A", "HARNESS-provenance-scope"]  # the spec paragraph says depends_on none (nothing must land first); VG-A is attached and owns scenes/tactical_c/** and tests/test_vg_a_*.gd by glob, and pieces.py --check flags a glob overlap with no ordering, so the entry only orders that check
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-A-sightdisc, after VG-A-startforce
@@ -2442,7 +2442,7 @@ wave = 15
 owns = ["scenes/ground3d/camera_rig_3d.gd", "tests/test_vg_a_a18_3d.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_a_a18_3d.gd"]
-depends_on = ["VG-A18"]
+depends_on = ["VG-A18", "HARNESS-provenance-scope"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the A18 paragraph (:390) plus docs/northstar/plans/decision_pack_2026-10-18/followups/s103_camera_report.md
@@ -3334,7 +3334,7 @@ wave = 13
 owns = [".claude-swarm.toml", "docs/northstar/plans/cascades/README.md", "tests/specfactory/test_swarm_config.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_swarm_config.py"]
-depends_on = []  # Architect 2026-10-21: status_check.py and the Tool-line test moved to HARNESS-tool-line, which carries the HARNESS-C4 and HARNESS-coverage ordering
+depends_on = ["HARNESS-provenance-scope"]  # Architect 2026-10-21: status_check.py and the Tool-line test moved to HARNESS-tool-line, which carries the HARNESS-C4 and HARNESS-coverage ordering
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
@@ -3348,7 +3348,7 @@ wave = 13
 owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_tool_line.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_tool_line.py"]
-depends_on = ["HARNESS-C4", "HARNESS-coverage"]  # both own scripts/specfactory/status_check.py; ordering only
+depends_on = ["HARNESS-C4", "HARNESS-coverage", "HARNESS-provenance-scope"]  # both own scripts/specfactory/status_check.py; ordering only
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
@@ -3361,7 +3361,7 @@ wave = 13
 owns = ["scripts/specfactory/cost_report.py", "tests/specfactory/test_cost_report.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_cost_report.py"]
-depends_on = []
+depends_on = ["HARNESS-provenance-scope"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
@@ -3404,3 +3404,16 @@ depends_on = ["LAB-REV2-FIX"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "behaviour-preserving Python speed-up of firing.py with an Engine epoch counter cache; goldens untouched; the absolute 30 s mark is Westley's (C2)"
+
+# Provenance lint scope (Architect 2026-10-21 evening, implementation; Westley may veto): spec_provenance.py judged the whole spec file, so unrelated paragraphs blocked a piece's pre_gate. scripts/specfactory/pre_gate.sh is left out of owns: HARNESS-C4 (queued) owns it.
+[[piece]]
+id = "HARNESS-provenance-scope"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/spec_provenance.py", "tests/specfactory/test_spec_provenance_scope.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_spec_provenance_scope.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold opening contains a piece id from PIECES and fails only on findings inside those paragraphs; the whole-file count is printed as information; a number followed by a [P file:line] cite within the same sentence is cited, not a draft; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"

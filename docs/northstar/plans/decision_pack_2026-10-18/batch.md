@@ -209,8 +209,8 @@ Four ground-era story plays the reviewer judged "no", still pending with you, wi
 - S-132 (unit types readable): the force is collapsed or partly undrawn; four clusters of stacked identical hexagons with big cyan rings, types not distinguishable by shape.
 
 ### C9 Starting force size
-You wrote on 10-11: "players start with at least half-force when a match begins, if not as far down as 20% (specific number depends on ... scaled)". The frame you rejected today showed half (176 of 330, the player holding half the strongpoints) and read to you as "still quite a few units, only decreased by ~25%".
-(a) keep half at a half share, sliding to a fifth at no strongpoints (today); (b) a third at a half share, same slide; (c) a quarter at a half share; (d) a number of your own.
+You wrote on 10-11: "players start with at least half-force when a match begins, if not as far down as 20% (specific number depends on ... scaled)". The frame you rejected today showed a one-third share: 176 of 330 (today's curve gives half at a quarter share, 0.6 at a half share, four fifths at a full share) and read to you as "still quite a few units, only decreased by ~25%".
+(a) keep today's curve; (b) a third at a half share, same slide; (c) a quarter at a half share; (d) a number of your own.
 unblocks: FINDING-s126-count-still-large; the starting-force shot re-run.
 
 ### C10 Vantage points need two paths?
