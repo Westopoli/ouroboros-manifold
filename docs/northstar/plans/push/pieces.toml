@@ -1892,7 +1892,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_f_nettick.gd", "tests/qa/desktop/plays/F/_play.py", "tests/qa/desktop/plays/F/S-140.py"]  # tactical_view.gd: the _load_live function only
 owns_glob = []
 acceptance = ["tests/test_vg_f_nettick.gd"]
-depends_on = ["VG-F-SKEL-B"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owned tactical_view.gd; # edge removed (Architect 2026-10-20): VG-E1 landed after VG-F-NETTICK; the cycle among landed rows was inert
+depends_on = ["VG-F-SKEL-B", "VG-C6b"]  # VG-F-SKEL-B owns _play.py and S-140.py; VG-E1 owned tactical_view.gd; # edge removed (Architect 2026-10-20): VG-E1 landed after VG-F-NETTICK; the cycle among landed rows was inert; ordering restored after the VG-E1 edge was dropped for the cycle break; VG-C6b depends on VG-A, so both overlaps are ordered
 status = { state = "attached", attach_sha = "b12b47a" }  # landed b12b47a
 size_estimate = "F-NETTICK: _load_live loads NetMatch.last_frame() in a match (empty frame at _ready: load none, _match_frame loads the first released one); S-140 green, ticks wait (DRAFT-s140-settle-ticks), known-red line out"
 
@@ -2356,7 +2356,7 @@ size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built
 id = "VG-P2"
 manager = "M0"
 wave = 12
-owns = ["csrc/economy_field_noise.c", "csrc/field_noise.h", "csrc/growth_probe.c"]
+owns = ["csrc/economy_field_noise.c", "csrc/field_noise.h", "csrc/growth_probe.c", "docs/northstar/plans/2026-10-13-places-lane-spec.md"]  # the lane spec; its revisions land through records landings (Architect 2026-10-21); rev 6 12370c48 went to main unowned
 owns_glob = ["tests/csim/test_VG_P_p2_*.py"]  # test_VG_E_* is VG-E1's glob and test_VG_D_* VG-D's: neither matches test_VG_P_p2_*
 acceptance = ["tests/csim/test_VG_P_p2_field_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
 depends_on = ["VG-P1"]  # P2 includes P1's csrc/layout_internal.h and links its csrc/layout_terrain.c and tests/csim/layout_stub_terrain.c; serial, same slot; rev 6 (Architect 2026-10-19): field noise, files renamed from economy_lot_noise.c and lot_noise.h
@@ -2994,8 +2994,8 @@ owns = ["tests/transport/test_pipe_u_observable.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_u_observable.py"]
 depends_on = []
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "b51502d" }
+tests_pending = false
 size_estimate = "one test file: the 16 observable mechanisms plus the place, ping and hold verbs, green except hold"
 
 [[piece]]
@@ -3241,6 +3241,6 @@ owns = ["scripts/specfactory/suite_regression.py", "docs/northstar/plans/push/sc
 owns_glob = []
 acceptance = ["tests/specfactory/test_lab_slow_tier_gate.py"]
 depends_on = []
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "5bbfb79" }
+tests_pending = false
 size_estimate = "is_scale_gated gains the lab slow-tier clause, scale_gated_tests.txt gains the lab ids and a two-tier header; under 60 lines"
