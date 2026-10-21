@@ -2,7 +2,7 @@ extends Control
 
 const SimSession := preload("res://autoload/sim_session.gd")
 
-const CURRENT_SAVE_VERSION := 11
+const CURRENT_SAVE_VERSION := 12
 
 var _slot_list: VBoxContainer
 var _empty_label: Label
