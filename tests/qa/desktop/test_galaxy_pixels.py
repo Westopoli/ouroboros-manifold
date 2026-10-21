@@ -1,3 +1,4 @@
+# Rule pins: R-106-01@6302e6
 # spec: docs/northstar/plans/push/specs/C2.md::S-106/R-106-01
 """Piece C2-5: the galaxy's owner colours must reach the screen pixels.
 
