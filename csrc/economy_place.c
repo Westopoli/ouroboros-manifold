@@ -45,8 +45,10 @@ int om_economy_place(om_world *w, int32_t building, double x, double y) {
         for (dy = -E1E_HALF; dy <= E1E_HALF; dy++)
             if (!om_terrain_walkable_at(w, (cx + dx + 0.5) * E1E_CELL, (cy + dy + 0.5) * E1E_CELL)) return E1E_UNWALKABLE;
     /* pass 1, refusals only: DRAFT-place-on-placed (Q-168-06 default (a)): a placed lot (owner >= 0) within E1E_SPAN cells refuses;
-     * a natural lot (owner < 0, building 0) never does. UNDECIDED, flagged to the Architect: with no player faction a placed lot
-     * also has owner -1 (om_player_faction), as in test_VG_E_e1e.py's world, so a placed lot is owner >= 0 or building != 0. E1E_FULL counts the lots the clearing frees first (gap full (a)). */
+     * a natural lot (owner < 0, building 0) never does. A lot is placed when its owner is >= 0 or its building is != 0; it is natural when its owner is < 0
+     * and its building is 0. Natural lots always carry building 0 (lot_try_create), so a placed lot in a fixture with no mission
+     * (owner -1, as test_VG_E_e1e.py's world_factory(n_regions=1)) is still placed and is never cleared (Architect 2026-10-21).
+     * E1E_FULL counts the lots the clearing frees first (gap full (a)). */
     for (i = 0; i < e->n_lots; i++) {
         int32_t lx = e1e_cell(e->lots[i].x), ly = e1e_cell(e->lots[i].y);
         if (e->lots[i].owner < 0 && e->lots[i].building == 0) {
