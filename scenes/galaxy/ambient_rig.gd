@@ -31,8 +31,12 @@ const STAR_BLUE := Color(0.7, 0.8, 1.0)
 const STAR_GOLD_FRACTION := 0.6   # DRAFT-b25-tints: gold 60 percent, blue 40 percent
 const STAR_PX_MIN := 1.0   # Step 5: stars stay 1 to 3 pixels
 const STAR_PX_MAX := 3.0
-const STAR_REF_VIEWPORT_H := 1080.0   # liberty 2026-10-12: a star at its own layer radius is the
-const STAR_REF_FOV_DEG := 45.0   # middle of the pixel range at 1080 px and the scene camera's fov
+# DRAFT-b25-star-ref: a star at its own layer radius is the middle of the STAR_PX_MIN to STAR_PX_MAX
+# range (the px_min / px_max uniforms). A derivation from two fixed numbers, not new numbers: viewport
+# height 1080 px (Westley's 1080p ruling) and fov 45 degrees (the scene camera's, galaxy_view.tscn:35,
+# which orbit_camera.gd:131 reads from the same camera). The lever Westley would move is the 1 to 3 px range.
+const STAR_REF_VIEWPORT_H := 1080.0   # DRAFT-b25-star-ref: Westley's 1080p ruling
+const STAR_REF_FOV_DEG := 45.0   # DRAFT-b25-star-ref: the scene camera's fov
 const BACKGROUND := Color(0.0392157, 0.0509804, 0.0705882)   # galaxy_view.tscn Environment background
 const WASH_MESH_RADIUS := 1000.0
 const DUST_BOX := 120.0   # DRAFT-b25-dust (old: sphere radius 60)
