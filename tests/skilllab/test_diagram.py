@@ -284,9 +284,8 @@ def test_read_rows_round_trips_typed_cells(tmp_path):
     back = diagram.read_rows(path)
     assert len(back) == len(rows)
     for want, got in zip(rows, back):
-        # LAB-REV3-C (TD-LAB-REV3-C-columns): the two paper_score columns are in neither diagram._INT nor _FLOAT, so read_rows hands back their CSV text
-        # verdict and decided_tick are None on these rows: an empty cell, read back as None and filtered out of `got` below
-        want = {k: (diagram.csv_text(v) if k in ("paper_score_0", "paper_score_1") else v) for k, v in want.items() if v is not None}
+        # verdict and decided_tick are None on these rows: an empty cell, read back as None and filtered out of `got` and `want`
+        want = {k: v for k, v in want.items() if v is not None}
         assert {k: v for k, v in got.items() if v is not None} == want
     assert back[0]["layout"] == "81" and isinstance(back[0]["layout"], str)
     assert isinstance(back[0]["enemy_heads"], int) and isinstance(back[0]["knob_value"], float)
