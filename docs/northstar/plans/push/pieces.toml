@@ -2969,7 +2969,7 @@ owns = ["tests/csim/test_E11_S084_flat_damage.py", "tests/csim/test_E12_S091_sta
 owns_glob = []
 acceptance = ["tests/csim/test_E11_S084_flat_damage.py"]
 depends_on = []
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "033a1af7" }
 tests_pending = true
 size_estimate = "T7: elevation tests made honest (R-091-03)"
 
