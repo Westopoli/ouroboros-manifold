@@ -31,7 +31,7 @@ Spec sentences implemented (docs/northstar/plans/2026-10-13-places-lane-spec.md,
   "`DRAFT-shape-harm` is **0.5, pinned from the controls, not from the probe** (the auditor measured: clean
    square 0.99, diamond 0.99, octagon 0.997, noisy square 0.80, noise blobs 0.13 to 0.20; a rasterised disc
    0.48 to 0.84, so a disc is not a control); the probe prints its per-seed value beside the pin. A front
-   value above 0.5 at steps 10 and 20, a lots value above 0.5 at any age, or a first-ring spread under
+   value above 0.5 at steps 10 and 20, a lots value above 0.5 at any age from 20, or a first-ring spread under
    `DRAFT-first-ring-spread` 2 is Westley's number"
   "**first ring**: after 10 growth steps the eight compass-ray reaches are not all equal and the largest
    exceeds the smallest by at least `DRAFT-first-ring-spread` 2 cells, and after 10 and 20 steps the reached
@@ -54,6 +54,12 @@ Scope decisions read from spec rev 6a (origin/main 57ca6949), which postdates th
   * the front harmonic share is asserted at steps 10 and 20 and printed at steps 3 and 5 (spec :138);
   * the probe accepts side 1..400 (spec :125), so the bad-side case is 401;
   * the first-ring, front, shape, lots and determinism tests use side 240 with the core at (120, 120) (brief).
+  * the lots harmonic share is asserted at ages 20 and later and printed at age 10 (spec rev 6a: at age 10 a
+    town has about 86 lots and the share follows the list order the bookkeeping rule sets; the 0.5 draft is
+    unchanged);
+  * the divergence control runs at age 40 on side 400, seed 1 (spec rev 6a, Architect 2026-10-21);
+  * the next active list is built in one pass over the current list in its order: for each source the cells it
+    activates this step in the hop's neighbour order, then the source itself when it keeps budget.
 TD-VG-P-1 (GAP 11 ruling): the seeds-differ test is asserted at ages 20 and up; age 10 is printed only.
 
 Red reason on the built tree: csrc/field_noise.h, csrc/economy_field_noise.c and csrc/growth_probe.c do
@@ -450,10 +456,13 @@ def test_field_lot_counts_printed(libs):
 
 # ---------------------------------------------------------------- shape (probe, shape)
 def test_shape_harmonic_share(libs):
-    """Spec :138 (probe, shape), R-193-01: for core ages 10, 20, 30, 40, 100, 200 and seeds 1..10 the radial
-    profile r(theta) of the town's lots (32 sectors) has a harmonic 4 plus 8 share under DRAFT-shape-harm 0.5.
-    One line per (age, seed) is printed BEFORE the assertion; the 90 and 45 degree rotation correlations are
-    printed, not asserted (DRAFT-shape-corr 0.6 is a print label only)."""
+    """Spec rev 6a :138 (probe, shape), R-193-01: for core ages 10, 20, 30, 40, 100, 200 and seeds 1..10 the radial
+    profile r(theta) of the town's lots (32 sectors) has a harmonic 4 plus 8 share under DRAFT-shape-harm 0.5 at
+    ages 20 and later; age 10 prints its shares and asserts nothing (a town of about 86 lots follows the list
+    order the bookkeeping rule sets, not the field noise; the 0.5 draft is unchanged). One line per (age, seed) is
+    printed BEFORE the assertion; the 90 and 45 degree rotation correlations are printed, not asserted
+    (DRAFT-shape-corr 0.6 is a print label only). A value from age 20 up that reaches 0.5 is Westley's number:
+    the writer reports every seed beside the pin before anything is changed."""
     probe = libs.probe()
     rows = []
     for age in SHAPE_AGES:
@@ -461,9 +470,9 @@ def test_shape_harmonic_share(libs):
             r, lots, n, death, c90, c45 = town(probe, seed, age)
             share = harm_share(r)
             rows.append((age, seed, share))
-            print("PROBE_SHAPE age=%d seed=%d harm=%.3f pin=0.5 lots=%d death=%d" % (age, seed, share, n, death))
+            print("PROBE_SHAPE age=%d seed=%d harm=%.3f pin=0.5 lots=%d death=%d%s" % (age, seed, share, n, death, " (printed, not asserted)" if age == 10 else ""))
             print("PROBE_ROT age=%d seed=%d corr90=%.3f corr45=%.3f label=0.6 (printed, not asserted)" % (age, seed, c90, c45))
-    bad = [(a, s, h) for a, s, h in rows if not h < HARM_PIN]
+    bad = [(a, s, h) for a, s, h in rows if a >= 20 and not h < HARM_PIN]
     assert not bad, R193_01 % bad[0] + "; all failing (age, seed, share): %s" % bad
 
 
@@ -553,25 +562,22 @@ def test_ctrl_field_noise_off(libs):
 
 
 def test_ctrl_field_divergence_patched_build_fails(libs):
-    """GAP 3 ruling: a patched copy where PROBE_BASE_DECAY and PROBE_NONWATER_FAR are both 1.01 (edge factor
-    1.0201, above 1) fails the ring bound (P at ring k <= 0.99^k) and the death-step test: the control runs age
-    400 on the 400 box and asserts out_death_step == -1 (still active after the last step). The real build
-    passes both. If the patched build passes the ring bound or the death-step test, STOP with 'control-mismatch'.
-
-    PREDICTED MISMATCH (test writer's dry run, 2026-10-21, scratch probe outside the repo with the in-place hop
-    of economy_density.c:210-230 and its Q16 truncation): with the edge factor 1.0201 the field grows without
-    bound, passes 1.4e14 near age 70 and the (int64_t)(v * 65536.0) truncation overflows to INT64_MIN, so P reads
-    -1.41e14 everywhere, the ring maxima read 0 or less (ring bound 'passes') and the active list empties at step
-    110 to 144 (death-step bound 'passes'). Ages 20 to 60 show the divergence (ring 1 maximum 20.2, 360, 5e5, 9e10
-    at ages 20, 30, 40, 60; death -1). This test is written as GAP 3 rules it (age 400, death == -1); the ruling
-    needs the Architect before the build."""
+    """Spec rev 6a :138 divergence control (Architect 2026-10-21): a patched copy where PROBE_BASE_DECAY and
+    PROBE_NONWATER_FAR are both 1.01 (edge factor 1.0201, above 1), run at age 40 on side 400, seed 1, core
+    (200, 200): the ring-bound detector fails (ring-1 maximum above 0.99; measured 4.98e5) and the death step is
+    -1 (the active list is still full at step 40; measured). Both halves are kept, 30 steps before the Q16
+    truncation overflows (age 70, where no control is aimed). The real build passes the ring bound at the same
+    age, and the real death-step test (test_field_death_step) stays at age 400, its bound checked here from the
+    same cached run. If the patched build passes the ring bound or does not return -1, STOP with 'control-mismatch'."""
     real, bad_lib = libs.probe(), libs.diverged()
-    rm_real, _, death_real = box_run(real, 1, 400)
-    res = bad_lib.single(1, BOX_SIDE, BOX_XY, 400)
+    rm_real, _, _ = box_run(real, 1, 40)
+    _, _, death_real = box_run(real, 1, 400)
+    res = bad_lib.single(1, BOX_SIDE, BOX_XY, 40)
     rm_bad = ring_max(res.P, BOX_SIDE, BOX_XY[0], BOX_XY[1])
-    print("CTRL_DIVERGENCE real_ring_ok=%s real_death=%d patched_ring_ok=%s patched_death=%d patched_ring1=%.4f patched_ring20=%.4f"
+    print("CTRL_DIVERGENCE age=40 real_ring_ok=%s real_death_age400=%d patched_ring_ok=%s patched_death=%d patched_ring1=%.4g patched_ring20=%.4g"
           % (ring_ok(rm_real), death_real, ring_ok(rm_bad), res.death, rm_bad[0], rm_bad[19]))
-    assert ring_ok(rm_real), "the real build fails the ring bound"
-    assert DEATH_FLOOR < death_real < DEATH_STEPS, "the real build fails the death-step test: %d" % death_real
-    assert not ring_ok(rm_bad), "the patched build passes the ring bound; the detector cannot fail"
-    assert res.death == -1, "the patched build's active list emptied at step %d; expected -1" % res.death
+    assert ring_ok(rm_real), "the real build fails the ring bound at age 40"
+    assert DEATH_FLOOR < death_real < DEATH_STEPS, "the real build fails the death-step test at age 400: %d" % death_real
+    assert not ring_ok(rm_bad), "the patched build passes the ring bound at age 40; the detector cannot fail"
+    assert rm_bad[0] > 0.99, "the patched build's ring-1 maximum %.4g is not above 0.99" % rm_bad[0]
+    assert res.death == -1, "the patched build's active list emptied at step %d at age 40; expected -1" % res.death
