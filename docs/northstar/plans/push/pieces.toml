@@ -3332,3 +3332,16 @@ depends_on = ["G-qadesktoptests", "VG-B", "HARNESS-userdir"]  # pieces.py --chec
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "galaxy pixel detector: 7x7 patch per dot, a dot hits when at least half the patch pixels are within tolerance 40; 0.6 line, isolation, samples and C2-5-02 unchanged; a Godot-free unit control with a synthetic disc plus a 6x6 pale square; test-defect fix TD-VG-C2-5-patch"
+
+# Skill lab speed piece (lab overseer a7, Architect ruling 2026-10-21; Westley may veto). Build base push/labrev2-landLab tip 30f827b3; the piece lands after the lab landing. fight.py is left out on purpose (LAB-REV2-L8M, L8M2 and LAB-REV3-A/B/C own it; REV3-A/B/C take no depends_on on this row). Ruled acceptance: full FightResult equality against a frozen rev 2 firing.py (tests/skilllab/ref_firing_rev2.py) over eight setups, the three goldens unchanged, CPU time via process_time with wall printed beside it, ratio SPEED over the frozen reference measured in the same run. DRAFT-lab-speed-ratio = 0.5 (named draft, Architect 2026-10-21; the absolute 30 s mark is Westley's, C2).
+[[piece]]
+id = "LAB-REV2-SPEED"
+manager = "M0"
+wave = 10
+owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py"]
+owns_glob = ["tests/skilllab/integration/test_speed_equal*.py", "tests/skilllab/ref_firing_rev2.py"]  # New files (tests first, by a different agent than the builder)
+acceptance = ["tests/skilllab/integration/test_speed_equal.py"]
+depends_on = ["LAB-REV2-FIX"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "behaviour-preserving Python speed-up of firing.py with an Engine epoch counter cache; goldens untouched; the absolute 30 s mark is Westley's (C2)"
