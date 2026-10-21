@@ -26,88 +26,11 @@ unblocks: the era pack form, the land era's identity and the roster the store se
 
 (your 2026-10-21 note: Already decided this: Greek)
 
-### Q-100-01 Firing arc
-
-You ruled on 2026-10-13 that a unit fires only inside an arc about its facing. Width, and whether it varies by type, are yours after the lab shows the effect (so this one comes after the lab chart).
-
-(a) One arc for every type, 120 degrees as a draft the lab sweeps.  
-(b) Width per category: Strike wide, Line medium, Siege narrow.  
-(c) An arc for Siege only; the others fire all round.
-
-unblocks: the final arc rule.
-
-### Q-208-01 Can a force hold fire?
-
-A guard steps up to engage and returns to its post. Nothing lets you order a force to wait unseen and not shoot.
-
-(a) A hold-fire setting on the guard stance.  
-(b) A separate hold-fire order.  
-(c) No hold fire; an ambush is made by going silent alone.
-
-unblocks: the movement lane, after the lab data.
-
-### Q-228-01 Who gets a ledger character in a team?
-
-A chapter has one commander today; how the economy seat of a pair and each sub-commander enter the chapter record and the ledger is unsettled.
-
-(a) Only the commanding seat has a ledger character; the economy seat has none.  
-(b) Every player has a ledger character and a lineage.  
-(c) Other: your words.
-
-unblocks: pairs reaching the chronicle.
-
-### Q-149-01 How is an era earned?
-
-Eras can be earned by play as well as bought; the condition is not set.
-
-(a) Complete a 10-chapter campaign in the preceding era.  
-(b) Reach Tier 3 in any campaign.  
-(c) Other: your words.
-
-unblocks: store work, after the beta.
-
 ### Q-149-02 Which eras are purchase-only?
 
 Which eras are exclusive to purchase and which earnable, and the naming of the base three on the store. Give your words.
 
 unblocks: store work, after the beta.
-
-### B22 part 1 Show the internal figures on the website?
-
-The website refresh draft (built, not deployed) has a page on how the game is made. Does it publish the programme's internal figures?
-
-(a) Yes: publish the real figures.  
-(b) No: keep them out.
-
-unblocks: nothing in the queue; decide with the next three.
-
-### B22 part 2 Your name and quotes on the site?
-
-May the same draft name you and quote you?
-
-(a) Yes: name and quotes appear.  
-(b) No: the site speaks anonymously.
-
-unblocks: nothing in the queue.
-
-### B22 publish Publish the site at all?
-
-The draft shows the galaxy view, both landscape engines, the walking prototype and the method page. Nothing deploys until you say.
-
-(a) Yes: publish after your read.  
-(b) No: hold it.
-
-unblocks: nothing in the queue.
-
-### doc branch method ask 1 Is the method page the public face?
-
-A branch holds an outsider-readable page on how the game is built (tests first, prototypes approved before planning, a fight-measuring lab, ten draft pass marks). The branch verdict is "land after named edits".
-
-(a) Yes, it stays an outsider page.  
-(b) It becomes an internal page.  
-(c) Not wanted.
-
-unblocks: how openly the project explains itself; nothing in the queue waits on it. Decide with the three site questions.
 
 ## 3. Asked in chat, still open
 
@@ -180,7 +103,7 @@ Five September mockups (fog, hud, units, objectives, menus) have no recorded ver
 - Places lane drafts of rev 6a: DRAFT-shape-harm 0.5, DRAFT-first-ring-spread 2, DRAFT-field-cost-share 15 to 55 percent (Architect, 2026-10-21)
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
 
-Parked by you (8): see batch_closed.md.
+Parked by you (10): see batch_closed.md; added 2026-10-21: Q-208-01, Q-149-01.
 
 ## Answered 2026-10-21
 
@@ -188,3 +111,11 @@ Parked by you (8): see batch_closed.md.
 - Q-C2-5-01: A, that is the look; the test samples wrong (recorded: docs/northstar/ambiguity_register.md)
 - Q-246-02: Layout engine sets it, landscape engine conforms (recorded: docs/northstar/ambiguity_register.md)
 - Q-082-03: defer to after beta (recorded: docs/northstar/ambiguity_register.md, parked)
+- Q-100-01: B, arc width per category (Strike wide, Line medium, Siege narrow), widths still lab drafts (recorded: docs/northstar/ambiguity_register.md)
+- Q-208-01: defer to after beta (recorded: docs/northstar/ambiguity_register.md, parked)
+- Q-228-01: A, only the commanding seat has a ledger character (recorded: docs/northstar/ambiguity_register.md)
+- Q-149-01: defer to post beta (recorded: docs/northstar/ambiguity_register.md, parked)
+- B22 part 1: A, publish the real internal figures (recorded: docs/northstar/plans/push_ledger_2026-09-22.md, DEC-B22-part-1-2026-10-21)
+- B22 part 2: A, name and quotes appear (recorded: docs/northstar/plans/push_ledger_2026-09-22.md, DEC-B22-part-2-2026-10-21)
+- B22 publish: A, publish after his read (recorded: docs/northstar/plans/push_ledger_2026-09-22.md, DEC-B22-publish-2026-10-21)
+- doc branch method ask 1: B, the method page becomes an internal page (recorded: docs/northstar/plans/push_ledger_2026-09-22.md, DEC-doc-branch-method-ask-1-2026-10-21)
