@@ -2,7 +2,7 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $22.78 of $200; hard stop $190; expires 2026-10-24.
+Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $24.81 of $200; hard stop $190; expires 2026-10-24.
 Plus two crashed inv-landview runs, cost unknown.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -46,7 +46,13 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | records batch 11 (HARNESS-westley-folder flip, two rows, three ledger rows, three decisions, gate-wide line, credits rows) | claude-sonnet-5-5 | $5 | $0.233 | 15 turns, success |
 | 2026-10-23 | SDK engineer S-246 fix (branch push/vg-d-s246-import) | claude-sonnet-5-5 | $5 | $0.140 | 10 turns, stopped before commit (finding: line 217 needs a different source, awaiting Architect) |
 | 2026-10-23 | records batch 12 (SPEED-2 dropped, unit-batch spec paragraph, two spec paragraphs, decisions, credits rows) | claude-sonnet-5-5 | $5 | $0.366 | 28 turns, success (pushed 8ade684e) |
-| 2026-10-23 | records batch 13 (lane C wave order, B25 star finding, two decisions, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
+| 2026-10-23 | (Architect) records clerk "rec-prov", pushed cfde3a54 | claude-sonnet-5-5 | $5 | $0.143 | 10 turns, success |
+| 2026-10-23 | records batch 13 (lane C wave order, B25 star finding, two decisions, credits rows) | claude-sonnet-5-5 | $5 | $0.699 | 3 turns, success (pushed a575b930) |
+| 2026-10-23 | SDK engineer S-246 finish (branch push/vg-d-s246-import 70ce9afe) | claude-sonnet-5-5 | $5 | $0.109 | 9 turns, success |
+| 2026-10-23 | SDK landing clerk S-246 (push/vg-d-s246-import) | claude-sonnet-5-5 | $8 | $0.093 | 6 turns, stopped before the lock: pre_gate pins REJECT, S-246.py has no Rule pins line |
+| 2026-10-23 | SDK engineer derive script VG-C-land-one-projection | claude-sonnet-5-5 | $6 | $0.982 | 20 turns, success; drafts only, launch_check needs the files under workflows_2026-10-07/ |
+| 2026-10-23 | records batch 14 (Architect rulings: pins edges, land-one-projection interface) | claude-sonnet-5-5 | $6 | (pending, this run) |  |
+| 2026-10-23 | SDK engineer S-246 Rule pins line (branch push/vg-d-s246-import) | claude-sonnet-5-5 | $2 | (pending, this run) |  |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
