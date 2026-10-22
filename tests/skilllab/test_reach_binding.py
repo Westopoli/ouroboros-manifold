@@ -1,3 +1,4 @@
+# Rule pins: R-096-04@1876c2
 # spec: R-096-04 layer reach by unit type - Engine.set_reach and the "reach" key of Setup.unit_types
 """fight() calls engine.set_reach for a custom type that carries "reach": (up, down); stub-library wrapper test."""
 import sys
@@ -15,6 +16,8 @@ import scripts.skilllab.formations as formations_mod  # noqa: E402
 from fakes_reach import ReachFakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
+
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam), not the fake's engine
 
 FULL = {"category": 1, "role": "x", "max_hp": 55.0, "base_damage": 3.0, "attack_interval": 10.0,
         "attack_range": 77.0, "speed": 2.0, "sensor_radius": 100.0, "layer_transition_time": 0.0,

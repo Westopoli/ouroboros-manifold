@@ -1,4 +1,5 @@
-# spec: Architect ruling A187 item 1 (slots kept for wide shapes, R-095-02/R-095-03) - scripts/skilllab/fight.py _issue_orders
+# Rule pins: R-095-02@47ddf5, R-095-03@f360de
+# spec: Architect ruling A187 item 1 (slots kept for wide shapes, R-095-02/R-095-03) - scripts/skilllab/fight.py _issue_orders ; LAB-REV2-L2: Setup.orders_per_unit=False keeps the chunked group order under test
 """A wide group is split into chunks that each stay within SLOT_RADIUS of their own centroid. Fake engine; no library."""
 import math
 import random
@@ -29,7 +30,7 @@ def _run(group):
     """Spawn the group (plus an idle enemy so each side has a unit) and issue orders; return (engine, orders, ids, goals)."""
     other = Group(side=1 - group.side, unit="Vanguard", count=1, formation="blob", x=0.0, y=0.0, facing_deg=0.0,
                   layer=0, order="idle", params={"radius": 10.0})
-    setup = Setup(groups=(group, other), unit_types={})
+    setup = Setup(groups=(group, other), unit_types={}, orders_per_unit=False)   # LAB-REV2-L2: the chunked group order is the orders_per_unit=False path
     eng = FakeEngine()
     w = eng.new_world(0)
     types = fight._register_types(eng, w, setup)

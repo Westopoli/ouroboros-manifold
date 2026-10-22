@@ -5,17 +5,17 @@ from html import escape
 from pathlib import Path
 from typing import Optional
 
-from scripts.skilllab import compose, depth, maps, matchup, mopup, plays, pool, positions, profile, report, rows, scan, skills, summary
+from scripts.skilllab import compose, depth, maps, matchup, plays, pool, positions, profile, report, rows, scan, skills, summary
 from scripts.skilllab.asym import Side, asym_play
 from scripts.skilllab.contract import trim_series
 from scripts.skilllab.ground.scenes_ground import tall_cover, tall_cover_terrain
-from scripts.skilllab.scenes import guard_defenders, phase_b_choke
+from scripts.skilllab.scenes import guard_defenders
 from scripts.skilllab.terrain import with_terrain
 
-NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layers", "layout_search")
+NAMES = ("formation", "focus_fire", "matchup", "landscape", "enemy_position", "combinations", "layout_search")
 BASE_SETTINGS = {"OM_TP_PURSUE_BY_STEERING": 1}
-MOPUP_NOTE = (mopup.RULE_TEXT + " Setting: mopup=%s, mopup_interval_ticks=%d. Each fight's count is the mopup_orders column."
-              % (plays.MOPUP, plays.MOPUP_INTERVAL_TICKS))
+ELIMINATION_NOTE = ("A fight ends only when one side is eliminated; a fight that reaches the tick cap is a lab defect to trace, "
+                    "never a result (Q-LAB-03). A cell is won when every fight in it is won by side 0.")
 NOT_SINGLE = "not a single group order"
 REFINE_FACTOR = 3
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
@@ -24,16 +24,9 @@ REPLICATES = 10
 DEFENDER_ORDER = "guard"
 UNIT_TYPES = ("Vanguard", "Raider", "Bombard", "Bastion")
 REFERENCE = "reference"
-_STALLED = ("stalemate",)   # quiet stalemate only; caps and draws are counted apart (A201)
 PROFILE_NOTE = ("One row per subset of the five skills; break-even and advantage in whole units "
                 "(unconfirmed definition).")
 DRAFT_NUMBERS = "draft numbers: turn or spring tick 100, bait share 0.25, none confirmed"
-LAYER_SCENES = ("mirror", "choke", "choke_phase_b")
-LAYER_REACH = {"Vanguard": (0, 0)}   # the reach table's Vanguard row (REACH_TABLE); the type's reach goes in through set_reach
-REACH_NOTE = ("reach set per the reach table (Vanguard 0 up 0 down); every unit is on layer 0, so the "
-              "layer settings have no effect in this scene (a layered scene is still needed)")
-REACH_TABLE = ("Vanguard and Warden 0 up 0 down; Raider 1 up 1 down; Interceptor 2 up 1 down; "
-               "Bombard and Bastion 0 up 2 down (set per cell on the unit type through om_roster_set_reach)")
 
 
 @dataclass(frozen=True)
@@ -58,7 +51,6 @@ class BatchDef:
     cells: tuple
     variants: tuple
     unexpressed: tuple
-    weighted: bool = False
 
 
 def _cell(label, size, build, status, note="", enemy=None, reference=None, settings=None):
@@ -121,14 +113,13 @@ def _matchup():
         title="Skill lab matchup batch",
         scene=("Open map, no terrain, blob against blob. Side 0 of N units of one type or an even two-type mix against "
                "side 1 of half to one and a half times N of another. Sizes 16 and 32; every row against every column. "
-               "The weighted firing count is on. Layered cells (short-range types in front, long-range behind) run at size 16 only, "
+               "The type-weighted firing count is always recorded. Layered cells (short-range types in front, long-range behind) run at size 16 only, "
                "so the batch stays under about 30 minutes."),
         cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
+        unexpressed=("the weighted count reads the target of record (ruling 5): the engine's target if it can engage it, else the nearest living enemy that can be engaged, else the nearest living enemy; a unit that cannot engage contributes 0",
                      "only even two-type mixes; unequal mixes and three-type mixes are not included",
                      "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 "
-                     "and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"),
-        weighted=True)
+                     "and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"))
 
 
 def _landscape():
@@ -200,80 +191,6 @@ def _combinations():
                      "skills with no registered skilled play (defined with Westley later)"))
 
 
-def _layer_settings(u1=None, u2=None, d=None):
-    s = {}
-    for n, v in ((1, 0.5), (2, 0.2), (3, 0.0), (4, 0.0)):
-        s["OM_TP_VISION_UP_%d" % n] = s["OM_TP_VISION_DOWN_%d" % n] = v
-    for n in (1, 2):
-        for kind in ("RANGE", "DAMAGE"):
-            s["OM_TP_%s_UP_%d" % (kind, n)] = s["OM_TP_%s_DOWN_%d" % (kind, n)] = 1.0
-    if u1 is not None:
-        s["OM_TP_RANGE_UP_1"], s["OM_TP_RANGE_UP_2"] = u1, u2
-    if d is not None:
-        s["OM_TP_DAMAGE_UP_1"], s["OM_TP_DAMAGE_UP_2"] = d, d / 2
-    return s
-
-
-def _with_reach(build):
-    """Side units become a Vanguard-based type that carries its table reach (stale gate removed: set_reach is bound)."""
-    name = "VanguardL"
-
-    def wrapped(enemy_heads, swap):
-        setup = build(enemy_heads, swap)
-        groups = tuple(dataclasses.replace(g, unit=name) if g.unit == "Vanguard" else g for g in setup.groups)
-        types = {**setup.unit_types, name: {"base": "Vanguard", "reach": LAYER_REACH["Vanguard"]}}
-        return dataclasses.replace(setup, groups=groups, unit_types=types)
-    wrapped.labels = getattr(build, "labels", None)
-    return wrapped
-
-
-def _layers():
-    scenes = {"mirror": asym_play(16, Side("blob"), Side("blob")),
-              "choke": with_terrain(asym_play(16, Side("blob"), Side("blob")), maps.sample_map("wall", 0)),
-              "choke_phase_b": phase_b_choke(8)}
-    pairs = [(u1, u2) for u1 in (0.5, 0.75, 1.0) for u2 in (0.25, 0.5)]
-    cells = []
-
-    def add(table, scene, suffix, settings):
-        build = scenes[scene] if table == "LA" else _with_reach(scenes[scene])
-        label = "%s:%s%s" % (table, scene, suffix)
-        size, enemy = (8, (7, 12)) if scene == "choke_phase_b" else (16, (8, 24))
-        note = "settings are draft sweep points (A174)" if table == "LA" else REACH_NOTE
-        cells.append(_cell(label, size, build, skills.DRAFT, note, enemy=enemy, settings=settings))
-
-    for scene in LAYER_SCENES:
-        add("LA", scene, "", _layer_settings())
-    for scene in LAYER_SCENES:
-        for u1, u2 in pairs:
-            add("LB", scene, ":up1=%s,up2=%s" % (u1, u2), _layer_settings(u1, u2))
-    for scene in LAYER_SCENES:
-        for d in (0.5, 0.75):
-            for u1, u2 in pairs:
-                add("LC", scene, ":up1=%s,up2=%s,dmg1=%s" % (u1, u2, d), _layer_settings(u1, u2, d))
-    for r in (10, 15, 20, 30):
-        for a in (150, 200, 300, 450):
-            name = "RaiderR%d" % a
-            side = Side("blob", mix=((name, 1),))
-            build = asym_play(16, side, side, {name: {"base": "Raider", "set": {"attack_range": a}}})
-            ratio = "%.1f" % (a / (2 * r))
-            cells.append(_cell("body%d_range%d_ratio%s" % (2 * r, a, ratio), 16, build, skills.DRAFT,
-                               "collision radius %d, body size %d, attack range %d, range-to-body ratio %s"
-                               % (r, 2 * r, a, ratio), enemy=(8, 24), settings={"OM_TP_UNIT_COLLISION_RADIUS": r}))
-    return BatchDef(
-        name="layers",
-        title="Skill lab layers batch",
-        scene=("Tables LA (vision only), LB (vision and reach) and LC (vision, reach and damage) by three scenes: a "
-               "mirror and two chokes. 16 Vanguards against 8 to 24. The LB and LC values are sweep points "
-               "proposed by the Architect as drafts (A174), not confirmed by Westley. The sampled choke is a sampled wall from "
-               "maps.sample_map and the Phase B choke is its own cell: a 3000 by 1600 canvas with a gap in the wall, "
-               "where the defenders attack-move (the idle version is in the landscape batch) and side 0 is the 8 "
-               "defenders against 7 to 12 attackers. The last 16 cells are a Raider mirror over collision radius "
-               "and attack range (reach against body size), also drafts."),
-        cells=tuple(cells), variants=(("default", {}),),
-        unexpressed=("the tall-cover scene (units on different layers; reach is bound but this batch has no layered scene, see the landscape batch)", REACH_TABLE,
-                                          "the choke cells use a sampled wall from maps.sample_map; the Phase B choke scene is its own cell, choke_phase_b"))
-
-
 def get(name):
     if name == "formation":
         return _formation()
@@ -287,16 +204,13 @@ def get(name):
         return _enemy_position()
     if name == "combinations":
         return _combinations()
-    if name == "layers":
-        return _layers()
     raise ValueError("unknown batch %r; valid names: %s" % (name, ", ".join(NAMES)))
 
 
-def _with_settings(build, settings, weighted=False):
+def _with_settings(build, settings):
     def wrapped(enemy_heads, swap):
         setup = build(enemy_heads, swap)
-        setup = dataclasses.replace(setup, settings={**setup.settings, **BASE_SETTINGS, **settings})
-        return dataclasses.replace(setup, weighted=True) if weighted else setup
+        return dataclasses.replace(setup, settings={**setup.settings, **BASE_SETTINGS, **settings})
     return wrapped
 
 
@@ -337,30 +251,38 @@ def _spread_text(sc):
     return " | pair spread %.2f to %.2f" % (low, high)
 
 
+def _beats_text(sc):
+    """A scan won all the way is a ceiling hit (ruling 4), never 'no break-even'."""
+    if sc.ceiling_hit:
+        return "%d units beat all %d enemy units (ceiling hit)" % (sc.size, sc.cells[-1].enemy_heads)
+    if sc.beats is None:
+        return "no break-even in range"
+    return "%d units beat %d, lose to %d" % (sc.size, sc.beats, sc.loses_to)
+
+
 def _result_line(cell, variant, sc):
     fights = [f for c in sc.cells for f in c.fights]
-    beats = ("no break-even in range" if sc.beats is None
-             else "%d units beat %d, lose to %d" % (sc.size, sc.beats, sc.loses_to))
+    beats = _beats_text(sc)
     weighted = [f.weighted_unit_seconds for f in fights if f.weighted_unit_seconds is not None]
     weighted_text = ("; mean weighted firing unit-seconds %.2f side 0, %.2f side 1"
                      % (_mean([w[0] for w in weighted]), _mean([w[1] for w in weighted]))) if weighted else ""
     spread = _spread_text(sc)
     return ("- %s%s, %s: %s; mean fight ticks %.1f; mean firing unit-seconds %.2f side 0, %.2f side 1%s; "
-            "stalled fights %d (quiet stalemates only); caps %d; draws %d%s"
+            "caps %d; draws %d; defect cells %d%s"
             % (cell.label, _tag(cell), variant, beats, _mean([f.ticks for f in fights]),
                _mean([f.firing_unit_seconds[0] for f in fights]),
                _mean([f.firing_unit_seconds[1] for f in fights]), weighted_text,
-               sum(f.outcome in _STALLED for f in fights), sum(f.outcome == "cap" for f in fights),
-               sum(f.outcome == "draw" for f in fights), spread))
+               sum(f.outcome == "cap" for f in fights), sum(f.outcome == "draw" for f in fights),
+               sum(c.defect for c in sc.cells), spread))
 
 
 def _reference_line(sc):
-    if sc.beats is None:
-        return "naive against naive on this map: no break-even in range"
-    return "naive against naive on this map: %d units beat %d, lose to %d" % (sc.size, sc.beats, sc.loses_to)
+    return "naive against naive on this map: " + _beats_text(sc)
 
 
 def _units(sc):
+    if sc.ceiling_hit:
+        return "%d units beat all %d (ceiling hit)" % (sc.size, sc.cells[-1].enemy_heads)
     if sc.beats is None:
         return "%d units: no break-even in range" % sc.size
     return "%d units beat %d" % (sc.size, sc.beats)
@@ -411,7 +333,7 @@ def _changes(defn, scans):
 
 
 def _run_file(defn, scans, names):
-    lines = ["# " + defn.title, "", PROVISIONAL, "", MOPUP_NOTE, "", "## Scene", "", defn.scene, "", "## Cells", "",
+    lines = ["# " + defn.title, "", PROVISIONAL, "", ELIMINATION_NOTE, "", "## Scene", "", defn.scene, "", "## Cells", "",
              "| cell | size | enemy range | replicates | fights per cell | status |", "|---|---|---|---|---|---|"]
     for c in defn.cells:
         lines.append("| %s | %d | %d to %d | %d | %d | %s |" % (c.label, c.size, c.enemy_from, c.enemy_to,
@@ -448,7 +370,7 @@ def _run_file(defn, scans, names):
 
 
 def _matchup_page(defn, scans):
-    body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(MOPUP_NOTE),
+    body = ["<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(ELIMINATION_NOTE),
             "<p>%s</p>" % escape(defn.scene)]
     names = list(dict.fromkeys(c.label.split("_v_")[0] for c in defn.cells))
     plain = [c for c in defn.cells if not c.label.endswith(":layered")]
@@ -469,7 +391,7 @@ def _matchup_page(defn, scans):
 def _page(defn, scans, examples):
     if defn.name == "matchup":
         return _matchup_page(defn, scans)
-    body = ["<h1>%s</h1>" % escape(defn.title), "<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(MOPUP_NOTE),
+    body = ["<h1>%s</h1>" % escape(defn.title), "<p>%s</p>" % escape(PROVISIONAL), "<p>%s</p>" % escape(ELIMINATION_NOTE),
             "<p>%s</p>" % escape(defn.scene)]
     for c in defn.cells:
         body.append("<h2>%s (%s)</h2>" % (escape(c.label), escape(c.status)))
@@ -528,7 +450,9 @@ def _trimmed(result, keep):
 
 def _run(defn, out_dir, scan_fn=None, map_fn=None):
     scan_fn = scan_fn or scan.scan
-    more = {} if map_fn is None else {"map_fn": map_fn}
+    more = {"full_scan": True}   # the page charts a line of fights at every enemy size, and the example fight is the one at the unit size
+    if map_fn is not None:
+        more["map_fn"] = map_fn
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     scans, examples, fight_rows = {}, {}, []
@@ -537,11 +461,11 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
         if c.build is None:
             continue
         if c.reference is not None:
-            scans[(c.label, REFERENCE)] = _trimmed(scan_fn(_with_settings(c.reference, defn.variants[0][1], defn.weighted),
+            scans[(c.label, REFERENCE)] = _trimmed(scan_fn(_with_settings(c.reference, defn.variants[0][1]),
                                                   c.size, c.enemy_from, c.enemy_to, replicates=c.replicates,
                                                   refine_factor=REFINE_FACTOR, **more), None)
         for v, overlay in defn.variants:
-            result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}, defn.weighted), c.size, c.enemy_from, c.enemy_to,
+            result = scan_fn(_with_settings(c.build, {**overlay, **c.settings}), c.size, c.enemy_from, c.enemy_to,
                              replicates=c.replicates, refine_factor=REFINE_FACTOR, **more)
             scans[(c.label, v)] = result
             keep = None
@@ -557,7 +481,7 @@ def _run(defn, out_dir, scan_fn=None, map_fn=None):
     rows.write_rows(fight_rows, paths["csv"])
     paths["run"].write_text(_run_file(defn, scans, [p.name for p in paths.values()]), encoding="utf-8")
     paths["page"].write_text(_page(defn, scans, examples), encoding="utf-8")
-    summary.write(defn, scans, paths["summary"], MOPUP_NOTE)
+    summary.write(defn, scans, paths["summary"], ELIMINATION_NOTE)
     return paths
 
 

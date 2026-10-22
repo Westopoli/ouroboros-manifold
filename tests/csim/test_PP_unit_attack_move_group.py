@@ -1,15 +1,18 @@
+# Rule pins: R-095-01@d24419, R-095-02@47ddf5, R-095-04@d31828, R-096-02@e8ae96
 """PP-unit: attack-move as a group order (E-13 S-096, R-096-02; plan Phase A row P5, audit G11).
 
 R-096-02: "Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit
 halts and fires; when the target dies or leaves range it resumes toward the point. Two or more
-units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once
-every member of the group has engaged, the group ends and its members do not resume the march. A
-unit attack-moved alone is not a group: it resumes toward the point after every fight."
-Westley, on the lone unit: "It should resume its prior goal after the fight is completed".
+units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); after
+every fight the group resumes toward the point as a unit attack-moved alone does." (R-096-02 as
+rewritten 2026-10-13, option (a); the text before it ended a group once every member had engaged,
+superseded under TD-LAB-REV2-E1-2.)
+Westley, on the lone unit: "It should resume its prior goal after the fight is completed", which now
+holds for a group too.
 Plan P5 also keeps the slowest-member speed cap (R-095-01: a group moves at its slowest member).
 
 Today om_command_attack_move sends every unit to the one click point (no slots, no cap), and every
-attack-mover resumes after any fight (om_tac_release). There is no getter for a unit's group id
+attack-mover, alone or in a group, resumes after any fight (om_tac_release). There is no getter for a unit's group id
 (a missing observable; see the report), so "takes slots through om_command_group_move" is read off
 each member's destination and speed, compared with what om_command_group_move itself gives an
 identical formation.
@@ -112,7 +115,7 @@ def test_control_R_096_02_move_group_cap_is_what_the_attack_move_test_measures(l
     assert lib.om_unit_get_current_speed(w, raider) == pytest.approx(40.0, abs=1e-9)
 
 
-# ---- the group ends once every member has engaged; a lone unit resumes ----
+# ---- the group resumes after every member has engaged, as a lone unit does ----
 
 def _engage_pair(lib, w):
     """Two Raiders, each beside its own Supply target, attack-moved together toward (3000, 50).
@@ -129,27 +132,28 @@ def _engage_pair(lib, w):
     pytest.fail("fixture: both members should have engaged within 8 ticks")
 
 
-def test_R_096_02_group_ends_when_every_member_has_engaged(lib, world_factory):
-    """Both members engage their own target, then both targets die: the group has ended, so
-    neither resumes the march. Positions stay put and neither has a goal. Fails today: both
-    resume toward the point."""
+def test_R_096_02_group_resumes_after_every_member_has_engaged(lib, world_factory):
+    """Both members engage their own target, then both targets die: the group resumes the march
+    (R-096-02 rewritten 2026-10-13; TD-LAB-REV2-E1-2 replaces the group-ends test). Both members
+    move toward the point and keep a goal."""
     w = world_factory(n_regions=1)
     a, b, sa, sb = _engage_pair(lib, w)
     kill(lib, w, sa)
     kill(lib, w, sb)
     stopped = {a: pos(lib, w, a), b: pos(lib, w, b)}
 
-    step(lib, w, 30)      # past the 10 tick backswing a first shot leaves, so "stopped" is not a pause
+    step(lib, w, 30)      # past the 10 tick backswing a first shot leaves, so a standstill is not a pause
 
     for u in (a, b):
-        assert pos(lib, w, u) == stopped[u], f"member {u} marched on after the group had ended"
-        assert dest(lib, w, u)[0] == 0, f"member {u} still has a goal after the group ended"
+        assert pos(lib, w, u)[0] > stopped[u][0], f"member {u} did not march on after every member had engaged"
+        assert dest(lib, w, u)[0] == 1, f"member {u} lost its goal after the fight"
 
 
 def test_control_R_096_02_group_goes_on_while_a_member_has_not_engaged(lib, world_factory):
-    """Positive control (green today): the group has NOT ended while one member (b, 2000 wu behind,
-    out of everyone's sight) has not engaged, so the member that did (a) resumes toward the point
-    when its target dies. Shows the group-end test above can tell 'all engaged' from 'one engaged'."""
+    """Positive control (green before and after E1): the group marches on while one member (b, 2000 wu
+    behind, out of everyone's sight) has not engaged, so the member that did (a) resumes toward the
+    point when its target dies. Kept from the group-end days: a group never stopped for a member
+    that had not engaged."""
     w = world_factory(n_regions=1)
     a = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
     b = spawn(lib, w, RAIDER, 0, -2000.0, 0.0)
@@ -173,8 +177,8 @@ def test_control_R_096_02_group_goes_on_while_a_member_has_not_engaged(lib, worl
 def test_R_096_02_a_unit_attack_moved_alone_resumes_after_the_fight(lib, world_factory):
     """"A unit attack-moved alone is not a group: it resumes toward the point after every fight"
     (Westley: "It should resume its prior goal after the fight is completed"). The same fight as
-    the group-end test, with one Raider: when its target dies it marches on toward (3000, 50).
-    Green today; kept so the group change cannot take the lone unit's march away."""
+    the group-resume test, with one Raider: when its target dies it marches on toward (3000, 50).
+    Green before and after E1; kept so the group change cannot take the lone unit's march away."""
     w = world_factory(n_regions=1)
     a = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
     sa = spawn(lib, w, SUPPLY, 1, 150.0, 0.0)

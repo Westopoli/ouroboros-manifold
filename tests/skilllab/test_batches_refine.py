@@ -11,7 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
 
 SENTENCE = "Cells within 2 enemy units of a break-even run 3 times the fights."
 

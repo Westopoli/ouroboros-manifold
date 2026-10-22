@@ -83,55 +83,49 @@ class Setup:
     groups: tuple
     unit_types: dict          # name -> stats; see spec AC 5 (full stats, or base + scale/set)
     abilities: bool = False   # False calls om_tactical_disable_abilities
-    max_ticks: int = 12000
-    stalemate_ticks: int = 400
+    max_ticks: int = 12000    # the cap: a bug detector only, a capped fight is a lab defect to trace (Q-LAB-03)
     sample_every: int = 5     # ticks between firing-count samples
     trace: bool = False       # True records FightResult.trace
     settings: dict = field(default_factory=dict)   # OM_TP_* name -> number, set on the world before tick 1
     timeline: tuple = ()      # Steps issuing later orders; listed order matters
     terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
-    weighted: bool = False    # True records FightResult.weighted
-    states: bool = False      # True records FightResult.states and .order_ends
+    states: bool = False      # True records FightResult.states
     target_policy: Optional[tuple] = None   # (side 0, side 1), each None, 0 nearest or 1 most damaged; None sets nothing (A196)
-    approach: float = 0.0     # stop factor of the hold-to-contact opening (approach.py); 0.0 = off
-    mopup: bool = False       # lab rule, provisional (A199): re-issue a stopped side's attack-move at the enemies it sees (mopup.py)
-    start_distance: Optional[float] = None   # anchor distance between the sides, set by the objective scene; None = the plays' own contact distance
-    objective: Optional[tuple] = None        # (x, y) both groups attack-move to; None = no objective
-    quiet_from_first_damage: bool = False   # True counts stalemate_ticks from the first hp change, not tick 0 (objective scene)
-    mopup_interval_ticks: int = 200   # a side's mop-up is considered at multiples of this many ticks, so no more often
-    decided_by_survivors: bool = False   # True: after first damage 400 blind ticks end the fight "decided" (winner by hp); stalemate_ticks and mop-up are not used
-    silence_ticks: int = 0    # decided_by_survivors: after first damage this many ticks with no hp change end the fight "decided" (winner by hp); 0 = off
-    hold_ticks: int = 1200    # decided_by_survivors with hold_anchor: from first damage this long, then the hold rule applies (draft, Westley's number)
-    defender_side: int = 0    # the side whose units must stand at hold_anchor
-    hold_anchor: Optional[tuple] = None   # (x, y); None = no hold rule. Half the defender's living units within 300 wu and no attacker ends the fight "held", defender the winner
+    point: Optional[tuple] = None   # (x, y) the shared attack-move point; None: each group aims at the first anchor of the other side
+    orders_per_unit: bool = True    # one order_attack_move call per unit at the opening; later timeline steps stay group-level (a flip of the default is conditional, decision 43 item 1)
+    firing_arc_deg: float = 360.0   # set on the world through OM_TP_FIRING_ARC_DEG when below 360 and the library has the parameter
+    cone: dict = field(default_factory=dict)   # type name -> (range, half-angle degrees, share), applied through Engine.set_cone
 
 
 @dataclass
 class FightResult:
-    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "stalemate" (stalemate_ticks quiet) | "cap" (A201) | "decided" | "held" (decided_by_survivors)
+    outcome: str              # "side0" | "side1" | "draw" (both sides die on one tick) | "cap" (max_ticks reached: a lab defect, never a result)
     margin: float
     strength_left: tuple
     survivors: tuple
     heads: tuple
     ticks: int
-    first_contact_tick: int
+    first_contact_tick: int   # first sampled tick at which any unit's can_engage reads 0, -1 if none
     firing: list              # [(tick, able0, able1), ...]
     firing_unit_seconds: tuple
-    winner: Optional[str] = None   # "side0" | "side1" | "draw" for a decided fight (hp sums, within 5% is a draw), the defender's side for a held one, else None
+    winner: Optional[str] = None   # the surviving side ("side0" | "side1"); None for draw and cap
     trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
     steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
-    weighted: Optional[list] = None   # [(tick, w0, w1), ...] when Setup.weighted, else None
-    weighted_unit_seconds: Optional[tuple] = None   # as firing_unit_seconds, over the weighted series
-    states: Optional[list] = None   # [(tick, unit, state), ...] per living unit when Setup.states, else None
-    order_ends: Optional[tuple] = None   # ((unit, tick), ...) first tick each unit's destination ended, by unit id
-    mopup_orders: Optional[int] = None   # mop-up attack-moves issued by both sides in this fight; None when Setup.mopup is off
+    weighted_unit_seconds: tuple = (0.0, 0.0)   # the type-weighted count, whole fight
+    states: Optional[list] = field(default_factory=list)   # [(tick, unit, code), ...] at sample ticks when Setup.states, [] when off
+    firing_window: tuple = (0.0, 0.0)       # unit-seconds over [first_contact_tick, first_contact_tick + OPENING_WINDOW_TICKS)
+    weighted_window: tuple = (0.0, 0.0)
+    predicted_count: str = "tie"            # "side0" | "side1" | "tie": the larger window total
+    predicted_type: str = "tie"
+    agreement: str = "n/a"    # "both_right" | "count_wrong_type_right" | "both_wrong" | "count_right_type_wrong" | "n/a"
+    reengage: tuple = (0, 0)  # (side 0, side 1) re-engage events: a silent side with an idle attack-move unit and a visible enemy was ordered onto the enemy centroid
+    blind_cap: bool = False   # outcome "cap" and, at the cap tick, neither side sees any living enemy: a finding (blind post), not a lab cap defect
 
 
 def trim_series(result: "FightResult") -> "FightResult":
     """The result without its per-tick series; row values stay. A series that was on becomes [] so 'was recorded' still reads."""
     return dataclasses.replace(result, firing=[], trace=None if result.trace is None else [],
-                               weighted=None if result.weighted is None else [],
-                               states=None if result.states is None else [])
+                               states=[])
 
 
 @dataclass
@@ -139,7 +133,8 @@ class CellResult:
     enemy_heads: int
     fights: list              # [FightResult, ...]
     mean_margin: float
-    won: bool
+    won: bool                 # every fight is side0
+    defect: bool = False      # a draw or a cap sits in the cell (a lab defect to trace, never a result)
 
 
 @dataclass
@@ -148,7 +143,8 @@ class ScanResult:
     cells: list               # [CellResult, ...] in increasing enemy_heads
     beats: Optional[int]
     loses_to: Optional[int]
-    win_margin: float
+    ceiling_hit: bool = False   # won at every scanned headcount: beats is the top of the range, loses_to None
+    multi_flip: bool = False    # the won/lost sequence over the scanned cells changes more than once
 
 
 @dataclass
@@ -159,13 +155,10 @@ class Batch:
     rows: list                # [dict, ...] one per fight, from fight_row
 
 
-WIN_MARGIN = 0.05
 TICKS_PER_SECOND = 20
-DRAW_BAND = 0.05              # decided fights: hp sums within this share of the larger are a draw
-SILENCE_TICKS = 1200          # placed scenes set Setup.silence_ticks to this: no hp change for this long after first damage ends the fight "decided" (ruled 2026-10-07)
-REISSUE_TICKS = 200           # decided_by_survivors with hold_anchor: every group of either side with an enemy in sight and no target attack-moves at the anchor this often (ruled 2026-10-07)
-BLIND_TICKS = 400             # decided_by_survivors: ticks without sight, after first damage, that decide the fight
-HOLD_RADIUS = 300.0           # wu from hold_anchor
+OPENING_WINDOW_TICKS = 40     # DRAFT-opening-window-ticks (Westley to confirm): the primary prediction window after first contact
+REENGAGE_SILENCE_TICKS = 40   # DRAFT-reengage-silence-ticks (Westley's number, the R-099-05 window): silent ticks of a side before the lab re-engages it
+REENGAGE_MOVED_WU = 1.0       # DRAFT-reengage-moved-wu (Westley's number): a side has moved only when a unit is displaced by more than this from its position at the last reset of the silence counter
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
 BuildFn = Callable[[int, bool], "Setup"]
 
@@ -185,7 +178,7 @@ def place(kind: str, n: int, x: float, y: float, facing_deg: float, params: dict
 
 
 # firing.py
-def count_able(engine: Any, w: Any, units0: list, units1: list, ranges: dict) -> tuple:
+def count_able(engine: Any, w: Any, units0: list, units1: list, arc_deg: float) -> tuple:
     raise NotImplementedError
 
 
@@ -216,13 +209,12 @@ def unit_stats(name: str) -> dict:
 
 
 # scan.py
-def cell(build: BuildFn, enemy_heads: int, replicates: int,
-         win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> CellResult:
+def cell(build: BuildFn, enemy_heads: int, replicates: int, fight_fn: Any = None) -> CellResult:
     raise NotImplementedError
 
 
 def scan(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
-         win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> ScanResult:
+         fight_fn: Any = None, full_scan: bool = False) -> ScanResult:
     raise NotImplementedError
 
 

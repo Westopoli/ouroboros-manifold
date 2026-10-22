@@ -4,8 +4,9 @@ MAGNITUDES = "magnitudes: will retune"
 
 
 def transfer_class(setup):
-    """MAGNITUDES iff the setup overrides engine settings or unit stats; headcounts and layout are geometry."""
-    return MAGNITUDES if setup.settings or setup.unit_types else RULE_GEOMETRY
+    """MAGNITUDES iff the setup overrides engine settings or unit stats, narrows the firing arc or sets a cone (decision 29 item 7);
+    headcounts, layout, the point and the order style are geometry."""
+    return MAGNITUDES if setup.settings or setup.unit_types or setup.firing_arc_deg < 360.0 or setup.cone else RULE_GEOMETRY
 
 
 def row_labels(setup):

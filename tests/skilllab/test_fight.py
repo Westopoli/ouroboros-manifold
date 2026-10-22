@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-5
+# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-5; LAB-REV2-L2 (Q-LAB-03: elimination only; the L1/L2 firing seam)
 """fight() on a FakeEngine: spawn order, shifts, unit types, strength and margin, outcomes, firing samples.
 
 Formation placement is stubbed (a fixed, recorded point list) so these tests need neither a compiler nor the
@@ -15,12 +15,13 @@ for _p in (ROOT, Path(__file__).resolve().parent):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
-import scripts.skilllab.firing as firing_mod  # noqa: E402
 import scripts.skilllab.fight as fight_mod  # noqa: E402
 import scripts.skilllab.formations as formations_mod  # noqa: E402
 from fakes import FakeEngine  # noqa: E402
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
+
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
 
 
 @pytest.fixture(autouse=True)
@@ -43,9 +44,10 @@ def G(side, unit="Vanguard", count=1, x=None, y=0.0, layer=0, order="attack_move
                  params={"spacing": 30.0})
 
 
-def S(*groups, unit_types=None, abilities=False, max_ticks=50, stalemate_ticks=1000, sample_every=5):
+def S(*groups, unit_types=None, abilities=False, max_ticks=50, sample_every=5, orders_per_unit=False):
+    """orders_per_unit=False: these tests read group-level orders (the path kept until E1; per-unit orders are in test_fight_outcomes)."""
     return Setup(groups=tuple(groups), unit_types=unit_types or {}, abilities=abilities,
-                 max_ticks=max_ticks, stalemate_ticks=stalemate_ticks, sample_every=sample_every)
+                 max_ticks=max_ticks, sample_every=sample_every, orders_per_unit=orders_per_unit)
 
 
 def run(setup, seed=0, swap=False, **fake_kw):
@@ -309,24 +311,17 @@ def test_ac9_cap_when_max_ticks_is_reached_with_both_alive_and_elimination_on_th
     assert (too_late.outcome, too_late.ticks, fake.step_count) == ("cap", 5, 5)
 
 
-def test_ac9_stalemate_after_stalemate_ticks_without_any_hp_change_and_a_change_restarts_the_count():
-    """AC-9: N unchanged ticks end it (ticks == N); a change at step 5 pushes the end to step 5 + N."""
-    setup = S(G(0), G(1), max_ticks=100, stalemate_ticks=10)
-    quiet, _ = run(setup)
-    poked, _ = run(setup, script=lambda t, f: f.set_hp(f.units_of(1)[0], 90) if t == 4 else None)
-    assert (quiet.outcome, quiet.ticks) == ("stalemate", 10)
-    assert (poked.outcome, poked.ticks) == ("stalemate", 15)
-
-
-def test_ac9_a_change_every_stalemate_ticks_minus_one_ticks_never_stalemates():
-    """AC-9 boundary: runs of N-1 unchanged ticks do not trigger; the fight runs to the cap."""
+def test_ac9_quiet_ticks_never_end_a_fight(seam):
+    """Q-LAB-03 (stalemate retired): a long quiet stretch ends nothing; the fight runs to the cap, and a change does not matter."""
     def poke(t, f):
         if t % 10 == 9:
             u = f.units_of(1)[0]
             f.set_hp(u, f.units[u]["hp"] - 1)
 
-    res, _ = run(S(G(0), G(1), max_ticks=35, stalemate_ticks=10), script=poke)
-    assert (res.outcome, res.ticks) == ("cap", 35)
+    quiet, _ = run(S(G(0), G(1), max_ticks=100))
+    poked, _ = run(S(G(0), G(1), max_ticks=100), script=poke)
+    assert (quiet.outcome, quiet.ticks) == ("cap", 100)
+    assert (poked.outcome, poked.ticks) == ("cap", 100)
 
 
 # ---------------------------------------------------------------- AC 11: every field populated
@@ -339,16 +334,11 @@ def _scenario_cap():
     return run(two_vs_four())[0]
 
 
-def _scenario_stalemate():
-    return run(S(G(0), G(1), max_ticks=100, stalemate_ticks=10))[0]
-
-
 def _scenario_mutual():
     return run(two_vs_four(), script=lambda t, f: (kill(f, 0), kill(f, 1)) if t == 1 else None)[0]
 
 
-@pytest.mark.parametrize("scenario,outcome", [(_scenario_side0, "side0"), (_scenario_cap, "cap"),
-                                              (_scenario_stalemate, "stalemate"), (_scenario_mutual, "draw")])
+@pytest.mark.parametrize("scenario,outcome", [(_scenario_side0, "side0"), (_scenario_cap, "cap"), (_scenario_mutual, "draw")])
 def test_ac11_every_result_field_is_populated_with_its_type(scenario, outcome):
     """AC-11: outcome, ticks, margin, strength_left, survivors, heads, first_contact_tick, firing, seconds on every outcome."""
     r = scenario()
@@ -361,37 +351,29 @@ def test_ac11_every_result_field_is_populated_with_its_type(scenario, outcome):
 
 # ---------------------------------------------------------------- AC 10: firing samples (fight <-> firing)
 
-def _spy(monkeypatch, table):
-    seen = []
-
-    def spy(engine, w, units0, units1, ranges, alive=None):
-        seen.append({"engine": engine, "w": w, "u0": list(units0), "u1": list(units1),
-                     "ranges": dict(ranges), "tick": engine.step_count})
-        return table.get(engine.step_count, (0, 0))
-
-    monkeypatch.setattr(firing_mod, "count_able", spy)
-    monkeypatch.setattr(fight_mod, "count_able", spy, raising=False)
-    return seen
+def _table(seam, table):
+    """The able counts by tick: table.get(tick, (0, 0)). Returns the seam, whose .calls_named('count_able') lists the calls."""
+    seam.able = lambda tick: table.get(tick, (0, 0))
+    return seam
 
 
-def test_ac10_fight_calls_count_able_each_sample_with_the_right_units_world_and_ranges(monkeypatch):
-    """AC-10 interaction: one count_able call per sample (tick 0 first), with each side's unit ids, the world and ranges."""
-    seen = _spy(monkeypatch, {})
+def test_ac10_fight_calls_count_able_each_sample_with_the_right_units_world_and_arc(seam):
+    """AC-10 interaction (rev 2 seam): one firing.count_able(engine, w, units0, units1, arc_deg) per sample, tick 0 first,
+    with each side's unit ids, the world and Setup.firing_arc_deg (no ranges: the count reads the engine)."""
     types = {"Tank": dict(FULL), "Long": {"base": "Vanguard", "scale": {"attack_range": 2.0}}}
     setup = S(G(0, "Tank", count=2), G(0, "Long", x=-200.0), G(1, "Vanguard", count=2),
               unit_types=types, max_ticks=12, sample_every=3)
     res, fake = run(setup)
-    first = seen[0]
-    ranges = first["ranges"]
-    assert [s["tick"] for s in seen] == [t for t, _a, _b in res.firing]
-    assert first["tick"] == 0 and first["engine"] is fake and first["w"] == fake.world
-    assert (sorted(first["u0"]), sorted(first["u1"])) == ([1, 2, 3], [4, 5])
-    assert [ranges[u] for u in (1, 2, 3, 4, 5)] == [77.0, 77.0, 200.0, 100.0, 100.0]
+    calls = seam.calls_named("count_able")
+    first = calls[0]
+    assert [c[6] for c in calls] == [t for t, _a, _b in res.firing]
+    assert first[6] == 0 and first[1] is fake and first[2] == fake.world and first[5] == 360.0
+    assert (sorted(first[3]), sorted(first[4])) == ([1, 2, 3], [4, 5])
 
 
-def test_ac10_firing_series_contact_tick_and_unit_seconds_come_from_the_counts(monkeypatch):
+def test_ac10_firing_series_contact_tick_and_unit_seconds_come_from_the_counts(seam):
     """AC-10: firing = (tick, able0, able1) at 0 and every sample_every ticks; seconds = sum(able) * sample_every / 20."""
-    _spy(monkeypatch, {6: (4, 0), 9: (2, 1)})
+    _table(seam, {6: (4, 0), 9: (2, 1)})
     res, _ = run(S(G(0, count=2), G(1), max_ticks=12, sample_every=3))
     ticks = [t for t, _a, _b in res.firing]
     by_tick = {t: (a, b) for t, a, b in res.firing}
@@ -402,38 +384,17 @@ def test_ac10_firing_series_contact_tick_and_unit_seconds_come_from_the_counts(m
 
 
 @pytest.mark.parametrize("table,expected", [({}, -1), ({0: (0, 1)}, 0), ({10: (0, 2)}, 10)])
-def test_ac10_first_contact_tick_is_first_sample_with_anyone_able_or_minus_one(monkeypatch, table, expected):
+def test_ac10_first_contact_tick_is_first_sample_with_anyone_able_or_minus_one(seam, table, expected):
     """AC-10: -1 when never; the first sampled tick where able0 + able1 > 0 otherwise (sample_every 5)."""
-    _spy(monkeypatch, table)
+    _table(seam, table)
     res, _ = run(S(G(0), G(1), max_ticks=20, sample_every=5))
     assert res.first_contact_tick == expected
     assert (res.firing_unit_seconds == (0.0, 0.0)) == (expected == -1)
 
 
-def test_ac10_end_to_end_near_pair_fires_far_pair_does_not_blocked_pair_does_not():
-    """AC-10 end to end (real count_able): in reach reads (1, 1) at tick 0; far apart, blocked or on other layers reads (0, 0)."""
-    near = S(G(0, x=0.0), G(1, x=50.0), max_ticks=10)
-    far = S(G(0, x=0.0), G(1, x=500.0), max_ticks=10)
-    other_layer = S(G(0, x=0.0), G(1, x=50.0, layer=1), max_ticks=10)
-    n, _ = run(near)
-    f, _ = run(far)
-    b, _ = run(near, can_shoot_fn=lambda fk, a, c: False)
-    o, _ = run(other_layer)
-    assert n.firing[0] == (0, 1, 1) and n.first_contact_tick == 0
-    assert n.firing_unit_seconds == pytest.approx((sum(r[1] for r in n.firing) * 5 / 20, sum(r[2] for r in n.firing) * 5 / 20))
-    assert all(r[1:] == (0, 0) for r in f.firing) and f.first_contact_tick == -1
-    assert all(r[1:] == (0, 0) for r in b.firing) and b.first_contact_tick == -1
-    assert all(r[1:] == (0, 0) for r in o.firing)
-
-
-def test_ac10_derived_longer_reach_shows_up_in_the_able_count():
-    """AC-5/10: a side whose type has attack_range scaled 2x is able to fire from 130 away while the plain side is not."""
-    plain = S(G(0, x=0.0), G(1, x=130.0), max_ticks=5)
-    long0 = S(G(0, "Long", x=0.0), G(1, x=130.0), unit_types={"Long": {"base": "Vanguard", "scale": {"attack_range": 2.0}}},
-              max_ticks=5)
-    p, _ = run(plain)
-    lg, _ = run(long0)
-    assert p.firing[0] == (0, 0, 0) and lg.firing[0] == (0, 1, 0)
+# The two end-to-end tests that read the real count through a FakeEngine (near / far / blocked / other layer; a derived
+# longer reach) belong to the count itself: LAB-REV2-L1 tests/skilllab/test_firing.py and integration/test_firing_real.py.
+# fight() only forwards the seam (above); retired here by the L1/L2 seam of the 2026-10-14 contract.
 
 
 # ================================================================ Readings added after the spec ruling
@@ -492,11 +453,11 @@ def test_ac5_a_side_with_no_units_raises_valueerror(groups):
     assert len(fake.worlds_freed) == fake.worlds_made
 
 
-@pytest.mark.parametrize("field", ["max_ticks", "stalemate_ticks", "sample_every"])
+@pytest.mark.parametrize("field", ["max_ticks", "sample_every"])
 @pytest.mark.parametrize("value", [0, -1])
-def test_ac5_max_ticks_stalemate_ticks_sample_every_below_one_raise_valueerror(field, value):
-    """AC-5 (Readings): max_ticks, stalemate_ticks or sample_every below 1 raises ValueError."""
-    kw = {"max_ticks": 5, "stalemate_ticks": 100, "sample_every": 5}
+def test_ac5_max_ticks_sample_every_below_one_raise_valueerror(field, value):
+    """AC-5 (Readings): max_ticks or sample_every below 1 raises ValueError (stalemate_ticks is no longer a field, Q-LAB-03)."""
+    kw = {"max_ticks": 5, "sample_every": 5}
     kw[field] = value
     fake = FakeEngine()
     with pytest.raises(ValueError):
@@ -506,19 +467,13 @@ def test_ac5_max_ticks_stalemate_ticks_sample_every_below_one_raise_valueerror(f
 
 def test_ac5_sample_every_one_is_valid_and_samples_every_tick():
     """AC-5/10 (Readings): sample_every = 1 is the lowest valid value (not rejected); every tick 0..max_ticks is sampled."""
-    res, _ = run(S(G(0), G(1), max_ticks=4, stalemate_ticks=1000, sample_every=1))
+    res, _ = run(S(G(0), G(1), max_ticks=4, sample_every=1))
     assert res.outcome == "cap" and [t for t, _a, _b in res.firing] == [0, 1, 2, 3, 4]
-
-
-def test_ac5_stalemate_ticks_one_is_valid_and_ends_a_quiet_fight_after_one_tick():
-    """AC-5/9 (Readings): stalemate_ticks = 1 is accepted; one tick with no hp change is a stalemate at tick 1."""
-    res, _ = run(S(G(0), G(1), max_ticks=50, stalemate_ticks=1, sample_every=5))
-    assert (res.outcome, res.ticks) == ("stalemate", 1)
 
 
 def test_ac5_max_ticks_one_is_valid_and_caps_after_one_step():
     """AC-5/9 (Readings): max_ticks = 1 is accepted; both alive after one step is a cap at tick 1."""
-    res, fake = run(S(G(0), G(1), max_ticks=1, stalemate_ticks=1000, sample_every=5))
+    res, fake = run(S(G(0), G(1), max_ticks=1, sample_every=5))
     assert (res.outcome, res.ticks, fake.step_count) == ("cap", 1, 1)
 
 
@@ -552,21 +507,13 @@ def test_ac8_strength_is_not_clamped_above_one():
     assert res.strength_left == pytest.approx(((1.5 + 1.0) / 2, 1.0)) and res.margin == pytest.approx(0.25)
 
 
-def test_ac9_stalemate_and_max_ticks_on_the_same_tick_is_a_stalemate():
-    """AC-9 (Readings): checks run elimination, stalemate, cap; N quiet ticks landing on max_ticks reads "stalemate"."""
-    both, _ = run(S(G(0), G(1), max_ticks=10, stalemate_ticks=10))
-    later, _ = run(S(G(0), G(1), max_ticks=10, stalemate_ticks=11))       # positive control: stalemate not reached -> cap
-    assert (both.outcome, both.ticks) == ("stalemate", 10)
-    assert (later.outcome, later.ticks) == ("cap", 10)
-
-
-def test_ac9_elimination_wins_over_cap_and_over_stalemate_on_the_same_tick():
-    """AC-9 (Readings): a wipe-out on the very tick the cap and the quiet window both land is still "side0"."""
+def test_ac9_elimination_wins_over_cap_on_the_same_tick():
+    """AC-9 (Readings): a wipe-out on the very tick the cap lands is still "side0"."""
     def kill_last(t, f):
         if t == 9:
             kill(f, 1)
 
-    res, _ = run(S(G(0), G(1), max_ticks=10, stalemate_ticks=10), script=kill_last)
+    res, _ = run(S(G(0), G(1), max_ticks=10), script=kill_last)
     assert (res.outcome, res.ticks) == ("side0", 10)
 
 
@@ -578,27 +525,26 @@ def test_ac10_a_sample_is_also_taken_on_the_final_tick_when_it_is_a_multiple_of_
     assert [t for t, _a, _b in res.firing] == expected
 
 
-@pytest.mark.parametrize("script,kw,outcome,ticks,expected", [
-    (None, {"stalemate_ticks": 10}, "stalemate", 10, [0, 5, 10]),                                  # stalemate on a multiple
-    (None, {"stalemate_ticks": 13}, "cap", 12, [0, 5, 10]),                                        # control: cap on a non-multiple
-    (lambda t, f: kill(f, 1) if t == 9 else None, {}, "side0", 10, [0, 5, 10]),                    # elimination on a multiple
-    (lambda t, f: kill(f, 0) if t == 4 else None, {}, "side1", 5, [0, 5]),                         # elimination on a multiple
-    (lambda t, f: (kill(f, 0), kill(f, 1)) if t == 9 else None, {}, "draw", 10, [0, 5, 10]),  # mutual wipe-out on a multiple
-    (lambda t, f: kill(f, 1) if t == 6 else None, {}, "side0", 7, [0, 5]),                         # control: elimination off the grid
+@pytest.mark.parametrize("script,outcome,ticks,expected", [
+    (None, "cap", 12, [0, 5, 10]),                                                       # cap on a non-multiple: no sample off the grid
+    (lambda t, f: kill(f, 1) if t == 9 else None, "side0", 10, [0, 5, 10]),               # elimination on a multiple
+    (lambda t, f: kill(f, 0) if t == 4 else None, "side1", 5, [0, 5]),                    # elimination on a multiple
+    (lambda t, f: (kill(f, 0), kill(f, 1)) if t == 9 else None, "draw", 10, [0, 5, 10]),  # mutual wipe-out on a multiple
+    (lambda t, f: kill(f, 1) if t == 6 else None, "side0", 7, [0, 5]),                    # control: elimination off the grid
 ])
-def test_ac10_final_tick_sample_also_holds_when_the_fight_ends_by_elimination_or_stalemate(script, kw, outcome, ticks, expected):
+def test_ac10_final_tick_sample_also_holds_when_the_fight_ends_by_elimination(script, outcome, ticks, expected):
     """AC-10 (Readings): the final tick is sampled when it is a multiple of sample_every whatever ended the fight
-    (elimination exactly on a multiple, stalemate, mutual wipe-out); an elimination off the grid adds no sample."""
-    setup = S(G(0), G(1), max_ticks=12, sample_every=5, **{"stalemate_ticks": 1000, **kw})
+    (elimination exactly on a multiple, mutual wipe-out); an elimination off the grid adds no sample."""
+    setup = S(G(0), G(1), max_ticks=12, sample_every=5)
     res, _ = run(setup, script=script)
     assert (res.outcome, res.ticks) == (outcome, ticks)
     assert [t for t, _a, _b in res.firing] == expected
 
 
-def test_ac10_fight_hands_count_able_every_spawned_id_even_after_units_die(monkeypatch):
+def test_ac10_fight_hands_count_able_every_spawned_id_even_after_units_die(seam):
     """AC-10 (Readings): units0/units1 hold every spawned id on every call; count_able, not fight, skips the dead."""
-    seen = _spy(monkeypatch, {})
     run(S(G(0, count=2), G(1, count=3), max_ticks=10, sample_every=5),
         script=lambda t, f: f.set_hp(f.units_of(1)[0], 0) if t == 2 else None)
+    seen = seam.calls_named("count_able")
     assert len(seen) >= 2
-    assert all(sorted(c["u0"]) == [1, 2] and sorted(c["u1"]) == [3, 4, 5] for c in seen)
+    assert all(sorted(c[3]) == [1, 2] and sorted(c[4]) == [3, 4, 5] for c in seen)
