@@ -2545,7 +2545,7 @@ owns = ["docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md", "docs/northsta
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "VG-CONTRACT-E7", "VG-W2"]  # E0 takes the ABI and save-format numbers after E7 and W2 land
-status = { state = "in_flight" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = false
 size_estimate = "umbrella for the skill lab rev 2 workflow (spec 2026-10-14); shard rows LAB-REV2-L1..L7, LAB-REV2-S and LAB-REV2-E0..E4 added by the records step (2026-10-14) and take over scripts/skilllab and tests/skilllab files from SL-harness (glob), SPACELAB-1 and LAB-SEARCH (all attached); files named in no row stay with those attached owners"
 
@@ -2673,7 +2673,7 @@ owns = ["csrc/unit.c", "tests/csim/test_E13_S096_attack_move_resumes.py", "tests
 owns_glob = []
 acceptance = ["tests/csim/test_E13_S096_attack_move_resumes.py"]
 depends_on = ["B10", "B10c", "PP-move", "PP-unit", "VG-CONTRACT", "VG-CONTRACT-E2"]  # Architect 2026-10-14: no LAB-REV2 dependency (E0 dropped, ordering only). The six listed rows are attached owners of unit.c and the PP test globs (take-over convention, as VG-K-D1); no scheduling effect, they only keep pieces.py --check from adding owns-overlap FAILs
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "E1 attack-move resume: om_tac_release resumes a group toward its point after every engagement; om_tac_am_group_done deleted (R-096-02 rewritten 2026-10-13)"
 
@@ -2685,7 +2685,7 @@ owns = ["csrc/unit.c", "tests/csim/test_E13_S096_attack_move_resumes.py", "tests
 owns_glob = []
 acceptance = []
 depends_on = ["LAB-REV2-E1", "PP-parity"]  # ordering only: same files as E1, one owner at a time; PP-parity (attached) added by records13 so pieces.py --check sees the take-over of tests/csim/parity/test_attack_move_no_sight_pursuit_parity.py (no scheduling effect)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "E1b: return-fire pursuit resumes to the original point (decision 28 point 1); lands with E1 in the lab landing"
 
@@ -2733,7 +2733,7 @@ owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py", "tests/skill
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-E0"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L1 the count: firing.py of the contract (count_able, count_weighted, states, parity), engine.py bindings transition_progress and can_engage"
 
@@ -2745,7 +2745,7 @@ owns = ["scripts/skilllab/maps.py", "scripts/skilllab/rows.py", "scripts/skillla
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L1"]  # L1 added: overseer 2026-10-14 from L2 audit (Engine.set_cone follows L1 engine.py)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L2 fight end and contact: elimination only, cap as defect, per-unit orders, pre-flight refusals, shared point and centroid rule; mopup.py and approach.py deleted"
 
@@ -2757,7 +2757,7 @@ owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/skills.py", "docs/n
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L3 plays: stat variants and _HIGH retired; roster mixes M0..M4; plays s3_layer_above, s3_types_by_reach, s3_over_the_choke, s3_dark_striker, s3_ping_then_commit, s2_screen, s5_vulnerable_away, s1_outrange"
 
@@ -2769,7 +2769,7 @@ owns = ["scripts/skilllab/batches.py", "scripts/skilllab/depth.py", "scripts/ski
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L4 sweep and CLI: knob families and bands, bracketed bisection, sweep and smoke commands; tables LA, LB, LC and the body-size table deleted"
 
@@ -2781,7 +2781,7 @@ owns = ["scripts/skilllab/conditions.py", "scripts/skilllab/evidence.py", "scrip
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L4", "LAB-REV2-L8"]  # Order BASE then L8 then L5 then L7 (decision 31 A: L5 reads the point column L8 writes in sweep.py; L5 owns __main__.py and summary.py only after L4/L8)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L5 reading: C1 against both baselines, C2 on the window and whole fight, agreement table, region map, SVG diagram per notable layout, artifact template"
 
@@ -2793,7 +2793,7 @@ owns = ["scripts/skilllab/ground/highground.py", "scripts/skilllab/terrain.py", 
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-E3"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L6 ground scene: s1_slope_top on the generated field of seed 11; knobs sight eye height, flyer seen mult, slope-up divisor; ground/highground.py deleted with its tests listed (R-005-09, S-164)"
 
@@ -2805,7 +2805,7 @@ owns = ["tests/skilllab/integration/test_speed.py", "tests/skilllab/integration/
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "LAB-REV2-L4"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "S scale: guards for the ruling 13 marks (OM_LAB_SLOW=1 gate), each with a planted-slowdown control; written after L4's bisection"
 
@@ -2817,7 +2817,7 @@ owns = ["docs/northstar/research/layer_dynamics/README.md", "docs/northstar/plan
 owns_glob = []
 acceptance = ["tests/specfactory/test_lab_docs.py"]
 depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-BASE", "LAB-REV2-S", "LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "LAB-REV2-G3PC", "LAB-REV2-SPEED", "LAB-REV2-SPEED-1B"]  # land with L7 in the lab landing (Architect 2026-10-22). E2 and E4 removed (decision 39 item 7, 2026-10-19): they land after the lab landing; L7 documents arc and cone as built, L7B updates their behaviour docs after E2 and E4 land. test_l7_depends_on_every_other_lab_rev2_row is changed by a ruler row
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L7 docs and rows: README sections 3, 4, 5 (output rule), 7, 8; register rows Q-008-03, Q-008-07, Q-LAB-03 note; ROADMAP section 1 row; pieces.toml status rows"
 
@@ -2841,7 +2841,7 @@ owns = ["tests/skilllab/test_naive_blob_skip.py", "tests/skilllab/test_sweep_bas
 owns_glob = []
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L4", "LAB-REV2-L6"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "BASE baselines: naive blob skips blocked cells in fill order, baseline variants pre-flighted on their own setup, refused baseline dropped singly, baseline_no_fit cut scan (decisions 25, 26, 32)"
 
@@ -2853,7 +2853,7 @@ owns = ["scripts/skilllab/rows.py", "tests/skilllab/fakes_reengage.py", "tests/s
 owns_glob = ["tests/skilllab/test_reengage*.py"]  # New files: tests/skilllab/test_reengage*.py (decision 28 point 3). fight.py is also owned by LAB-REV2-L2 and L6, contract.py and rows.py by L2: L8 depends on all of them so one owner at a time
 acceptance = []
 depends_on = ["SL-harness", "SPACELAB-1", "LAB-SEARCH", "LAB-REV2-L2", "LAB-REV2-L4", "LAB-REV2-L6", "LAB-REV2-BASE"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "L8 lab re-engage: when a side has had no unit fire or move for REENGAGE_SILENCE_TICKS (DRAFT 40, Westley's number) while an enemy is visible, every idle unit of that side holding an attack-move role is attack-moved onto the enemy centroid on the enemy's layer; guard-stance holders never; both sides, naive included; new CSV columns reengage_0/reengage_1 (decision 28 point 3)"
 
@@ -2865,7 +2865,7 @@ owns = ["scripts/skilllab/sweep.py", "scripts/skilllab/scenes.py", "scripts/skil
 owns_glob = ["tests/skilllab/test_drift_fix*.py", "tests/skilllab/integration/test_drift_fix*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
 depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-BASE", "LAB-REV2-S", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "LAB-REV2-L7"]  # Same set as L7 plus L7, minus E0 (E0, E2, E4 and L7B land later)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "FIX post-merge fix piece: decisions 41 and 42 and the orders flip (decision 40)"
 
@@ -3519,7 +3519,7 @@ owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py"]
 owns_glob = ["tests/skilllab/integration/test_speed_equal*.py", "tests/skilllab/ref_firing_rev2.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = ["tests/skilllab/integration/test_speed_equal.py"]
 depends_on = ["LAB-REV2-FIX"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "behaviour-preserving Python speed-up of firing.py with an Engine epoch counter cache; goldens untouched; the absolute 30 s mark is Westley's (C2)"
 
@@ -3532,7 +3532,7 @@ owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py"]
 owns_glob = ["tests/skilllab/integration/test_speed1b_*.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = ["tests/skilllab/integration/test_speed1b_ratio.py"]
 depends_on = ["LAB-REV2-SPEED"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "SPEED-1B the firing.py levers after the epoch cache, identical results: alive from per-tick hp and a static type cache; layer cached per epoch (the epoch is bumped by step), never invalidated on set_layer only: if the csrc layer can change within an epoch without a step, the layer lever is dropped; single sort per unit, key computed once (squared distance, then id; lazy nearest-first measured slower, 0.67 against 0.65), hoisted code evaluation with gate order 1 to 5 kept; same equality tests against the frozen reference tests/skilllab/ref_firing_rev2.py; acceptance DRAFT-lab-speed-ratio-1b 0.68 (Architect 2026-10-22, implementation; Westley may veto; loosens the earlier 0.55: the auditor's measured 0.65 with margin, levers (a) to (d) in the repo idiom, no distance-cap prune)"
 

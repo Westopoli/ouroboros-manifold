@@ -2,7 +2,8 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (Dispatcher runs through batch 8 $1.44 + Architect runs through the SHOWCASE scan $1.66 + $13.70 base): $16.80 of $200; hard stop $190; expires 2026-10-24.
+Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $21.51 of $200; hard stop $190; expires 2026-10-24.
+Plus two crashed inv-landview runs, cost unknown.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
 ## SDK runs (from 2026-10-22)
@@ -20,11 +21,27 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-22 | (Architect) scout "S-001 frame elements in code" | claude-sonnet-5-5 | $3 | $0.170 | 12 turns, success |
 | 2026-10-22 | (Architect) records clerk "lane C paragraphs VG-C-land-marks, VG-C-facing-arrow, PROTO-ground-relief", pushed bdbe896f | claude-sonnet-5-5 | $5 | $0.187 | 10 turns, success |
 | 2026-10-22 | records batch 7 (scripts, LAB-REV2 owns, credits rows) | claude-sonnet-5-5 | $5 | $0.195 | 14 turns, success |
-| 2026-10-22 | records batch 7b (venvlink syntax, owner edges, credits row) | claude-sonnet-5-5 | $5 | (pending, this run) | |
+| 2026-10-22 | records batch 7b (venvlink syntax, owner edges, credits row) | claude-sonnet-5-5 | $5 | (pending-unknown: no figure in credits_pending_10.md; read from console) | |
 | 2026-10-22 | records batch 8 (venv-link syntax, revert LAB-REV2 edges, VG-C7) | claude-sonnet-5-5 | $5 | $0.234 | 18 turns, success |
 | 2026-10-22 | (Architect) records clerk "S-005 verdict flipped to rejected", pushed dbeefd25 | claude-sonnet-5-5 | $5 | $0.111 | 6 turns, success |
 | 2026-10-22 | (Architect) engineer "secrets and personal-data scan of git history (SHOWCASE lane)" | claude-sonnet-5-5 | $5 | $0.162 | 9 turns, success |
-| 2026-10-22 | records batch 9 (HARNESS-record-files paragraph and row, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) | |
+| 2026-10-22 | records batch 9 (HARNESS-record-files paragraph, row, credits rows), pushed f19c282a / e632186c | claude-sonnet-5-5 | $5 | $0.936 | 3 turns, success |
+| 2026-10-22 | (Architect) records clerk "slope markers removed, VG-C-no-slope-markers paragraph and row", pushed 840efcff | claude-sonnet-5-5 | $5 | $0.167 | 10 turns, success |
+| 2026-10-22 | (Architect) records clerk "S-005 approved (Seen), reference image, E1k yaw amendment", pushed 1b3e751a | claude-sonnet-5-5 | $5 | $0.199 | 10 turns, success |
+| 2026-10-22 | (Architect) records clerk "SHOWCASE lane plan page, eight rows, DEC-showcase, sightdisc dead-path sentence", pushed 033cb27d | claude-sonnet-5-5 | $5 | $0.483 | 3 turns, success; 30 min wait on gate.lock |
+| 2026-10-22 | records L7 depends_on (lab landing), pushed 86c6dae9 | claude-sonnet-5-5 | $5 | $0.160 | 3 turns, success |
+| 2026-10-22 | (Architect) engineer "SHOWCASE-inventory table (step 1)", pushed e176897a | claude-sonnet-5-5 | $8 | $0.657 | 4 turns, success |
+| 2026-10-22 | (Architect) scout "exact references for six folders (SHOWCASE)" | claude-sonnet-5-5 | $5 | $0.290 | 17 turns, success |
+| 2026-10-22 | (Architect) records clerk personal-data scrub, runs 1 and 2 | claude-sonnet-5-5 | $5 | $0.130 + $0.047 |  |
+| 2026-10-22 | (Architect) engineer "SHOWCASE-front-door: README, METHOD, docs map, CONTRIBUTING, MIT LICENSE", pushed 73fe8cd8 | claude-sonnet-5-5 | $8 | $0.484 | 18 turns, success |
+| 2026-10-22 | (Architect) records clerk "scrub, third run", pushed 3cbcd557 | claude-sonnet-5-5 | $5 | $0.062 |  |
+| 2026-10-22 | (Architect) records clerk "SHOWCASE piece paragraphs, rows, finding", pushed ca10456e | claude-sonnet-5-5 | $5 | $0.181 | 9 turns, success |
+| 2026-10-22 | (Architect) records clerk "rec-s004" (C-S004 rejection, VG-C-ground-one-colour, sightdisc amendment, S-140), pushed c561cb83 | claude-sonnet-5-5 | $5 | $0.217 | 11 turns, success |
+| 2026-10-22 | (Architect) investigator "inv-simfacing" | claude-sonnet-5-5 | n/a | $0.485 | 27 turns, success |
+| 2026-10-22 | (Architect) investigator "inv-landview", two attempts | claude-sonnet-5-5 | n/a | unknown, read from console | both crashed on the 1 MB buffer |
+| 2026-10-22 | (Architect) records clerk "rec-landview", pushed 1c12b5ce | claude-sonnet-5-5 | $5 | $0.256 | 15 turns, success |
+| 2026-10-22 | (Architect) records clerk "rec-landview2", pushed fd6f11f9 | claude-sonnet-5-5 | $5 | $0.123 | 8 turns, success |
+| 2026-10-22 | records batch 10 (LAB-REV2 attach flips, Q-085-02, ledger rows, dispatcher line, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
