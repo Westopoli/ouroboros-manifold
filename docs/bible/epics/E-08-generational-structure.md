@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 54 rules, numbers from `algorithms.md` ALG-45 through ALG-49 and Stage 1 verdicts A-050, A-052, A-058, A-061. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags on S-228, Q-228-01 and Q-228-02; Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-228, Q-228-02 (Q-228-01 closed 2026-10-21); Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
 | Every visible-surface story has a reference | **No.** S-063 (onboarding screen) has a visible surface and no reference. The chronicle scroll surface is E-09. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and is blocked on Q-228-01 and Q-228-02. One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and is blocked on Q-228-02 (Q-228-01 closed 2026-10-21). One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -180,12 +180,12 @@ As a player in a team of 2 or 4, I want the chapter, the ledger and the world to
 Direction decided in part 2026-10-02 (DECISIONS H7; E-19 R-159-01): more teammates mean bigger maps, more to do, more resources and more enemies; each player is a sub-commander; each pair is a sub-civilization inside the over-arching civilization. The simulation has no notion of either. Not scheduled for building. S-055 to S-064 are written for one player and one commander and stay as written for it.
 
 Rules
-- R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
+- R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then only the commanding seat has a ledger character; the economy seat has none (Westley 2026-10-21).
 - R-228-02  Given a team of 4, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
 
 Inputs: team size and pairs (E-19 S-159).
 Outputs: none until the flags are answered.
-Open flags: Q-228-01, Q-228-02.
+Open flags: Q-228-02.
 
 ## Inputs
 
@@ -238,7 +238,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-228-01, Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
+Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
