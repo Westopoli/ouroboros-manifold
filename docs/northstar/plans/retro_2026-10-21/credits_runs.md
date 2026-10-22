@@ -2,7 +2,7 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $22.27 of $200; hard stop $190; expires 2026-10-24.
+Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $22.78 of $200; hard stop $190; expires 2026-10-24.
 Plus two crashed inv-landview runs, cost unknown.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -44,8 +44,9 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-22 | records batch 10 (LAB-REV2 attach flips, Q-085-02, ledger rows, dispatcher line, credits rows) | claude-sonnet-5-5 | $5 | $0.442 | 25 turns, success |
 | 2026-10-23 | (Architect) records clerk "rec-lab3" | claude-sonnet-5-5 | $5 | $0.085 | 6 turns, success |
 | 2026-10-23 | records batch 11 (HARNESS-westley-folder flip, two rows, three ledger rows, three decisions, gate-wide line, credits rows) | claude-sonnet-5-5 | $5 | $0.233 | 15 turns, success |
-| 2026-10-23 | SDK engineer S-246 fix (branch push/vg-d-s246-import) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
-| 2026-10-23 | records batch 12 (SPEED-2 dropped, unit-batch spec paragraph, two spec paragraphs, decisions, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
+| 2026-10-23 | SDK engineer S-246 fix (branch push/vg-d-s246-import) | claude-sonnet-5-5 | $5 | $0.140 | 10 turns, stopped before commit (finding: line 217 needs a different source, awaiting Architect) |
+| 2026-10-23 | records batch 12 (SPEED-2 dropped, unit-batch spec paragraph, two spec paragraphs, decisions, credits rows) | claude-sonnet-5-5 | $5 | $0.366 | 28 turns, success (pushed 8ade684e) |
+| 2026-10-23 | records batch 13 (lane C wave order, B25 star finding, two decisions, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 

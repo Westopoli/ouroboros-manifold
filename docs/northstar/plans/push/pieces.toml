@@ -2150,7 +2150,7 @@ owns = [
 ]
 owns_glob = []
 acceptance = ["tests/test_vg_c_land_marks.gd"]
-depends_on = ["VG-C-unitscale", "VG-C6b"]
+depends_on = ["VG-C-unitscale", "VG-C6b", "VG-C-land-one-projection"]  # lane C wave order (Architect 2026-10-23, DEC-laneC-order-2026-10-23): shares unit_visuals.gd and tactical_view.gd
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "land-marks: layer_rings_enabled in unit_visuals.gd, occluded_ids in ground3d.gd via GroundPick.pick, one visibility line in tactical_view.gd, one test file; DRAFT-occlusion-slack 20 wu"
@@ -3985,10 +3985,10 @@ size_estimate = "fix the two ERRORs in test_gate_userdir.py::test_6_planted_sett
 id = "VG-C-land-one-projection"
 manager = "Architect"
 wave = 9
-owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/unit_squads.gd", "scenes/tactical_c/terrain_layer.gd", "scenes/tactical_c/structures_layer.gd", "scenes/tactical_c/fx/deaths.gd", "scenes/tactical_c/fx/abilities.gd", "scenes/tactical_c/fx/ambient.gd", "tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py"]
+owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/unit_visuals.gd", "scenes/tactical_c/unit_squads.gd", "scenes/tactical_c/terrain_layer.gd", "scenes/tactical_c/structures_layer.gd", "scenes/tactical_c/fx/deaths.gd", "scenes/tactical_c/fx/abilities.gd", "scenes/tactical_c/fx/ambient.gd", "tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py"]
 owns_glob = []
 acceptance = ["tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py"]
-depends_on = ["VG-C-land-marks", "VG-C-facing-arrow", "TERRAIN-3"]  # shares tactical_view.gd with these queued owners; owner_lint demands the order
+depends_on = ["TERRAIN-3"]  # lane C wave order (Architect 2026-10-23, DEC-laneC-order-2026-10-23): first in lane C; land-marks and facing-arrow follow it
 status = { state = "queued" }
 size_estimate = "land view one projection: UnitSquads and TerrainLayer hidden on land, UnitVisuals placed inside _redraw through a projector, fx and structures through set_projector; parity test at three cameras"
 
