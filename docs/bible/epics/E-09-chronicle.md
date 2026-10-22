@@ -176,7 +176,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - A digit leaks through a slot.
 - First-mention qualifier applied on every mention.
 - Cross-entry dedup keeps the later entry instead of the first.
-- Map waits for the scroll, or expand does not pause the map.
+- Map runs past an entry's keyframe while that entry is still printing or holding (R-069-03, Westley 2026-10-19), or expand does not pause the map.
 - Assembler seeded from wall clock, breaking determinism.
 
 ## Open ambiguity flags

@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-235 are design decided and not scheduled for building. The camera is chosen (the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
+**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-234 are design decided and not scheduled for building; the ticker beats of S-235 are queued (VG-E1M, VG-E1W). The camera is chosen (the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
 
 ## Purpose
 
@@ -164,7 +164,7 @@ As a player, I want a main menu that sets the tone and a settings screen that co
 
 Rules
 - R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Era Library, Settings, and Quit, and nothing else.
-- R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, a camera pan-speed slider, and a galaxy quality choice (full, stand-in, fewer particles) that the player sets by hand and the game never changes on its own; key rebinding for the layer modifier and control groups joins it once the layer controls (Q-005-03) and the camera controls (Q-103-04) are designed (Q-110-04); accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
+- R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, a camera pan-speed slider, and a galaxy quality choice (full, stand-in, fewer particles) that the player sets by hand and the game never changes on its own, except that under the Compatibility renderer the stand-in replaces the raymarch shell at every tier (Architect, 2026-10-08); key rebinding for the layer modifier and control groups joins it once the layer controls (Q-005-03) and the camera controls (Q-103-04) are designed (Q-110-04); accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
 - R-110-04  Given any loading screen the game shows (campaign load, era switch), When displayed, Then it carries information the player would otherwise never see, in the register of the chronicle (what the Long Horizon foreshadows), never wallpaper art or a bare spinner [Q-110-03: what is shown]. No loading screen exists between mission and galaxy (S-108).
 - R-110-05  Given the Era Library, When opened from the main menu, Then the player sees one card per installed era pack that passes validation (E-20 R-146-03), in chronological order, each with the pack's name, spatial scale and tone and whether the player owns it, telling them which ages they can play; a pack that fails validation is not listed.
@@ -265,7 +265,7 @@ Open flags: none here. Whether the Sand Table of S-161 is the zoomed-out end of 
 ### S-235 — The map shows the economy and its news
 As a commander, I want the map to show where the economy is and the ticker to tell me what happened to it, so that I can read the war's other half at a glance.
 
-Design decided 2026-10-02, not scheduled for building. Strongpoints and slopes apply to land maps; the space-era landscape is not designed (Q-166-02).
+Design decided 2026-10-02; the ticker beats are queued (VG-E1M, wired by VG-E1W) and not on main yet; four of the five beats lack a sim source. Strongpoints and slopes apply to land maps; the space-era landscape is not designed (Q-166-02).
 
 Rules
 - R-235-01  Given the map view (S-161) and the tactical view, When the economy's places are drawn, Then the economic locations, the neutral settlements, the objective, the side's base of operations, its expansions and forward works, and on land maps the strongpoints are marked (E-22 S-175, S-177; E-15).

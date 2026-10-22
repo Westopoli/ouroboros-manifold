@@ -84,11 +84,11 @@ Outputs: replay stream.
 Open flags: none.
 
 ### S-124 — Rare surprises
-Flag closed, rule text pending: Q-124-01, external reinforcement waves ship at launch with p = 0.07 per mission, scheduled at generation and foreshadowed in the briefing. The rule below is what the tests read today.
+Flag closed, rule text pending: Q-124-01, external reinforcement waves ship at launch with p = 0.21 (Q-124-03, Westley 2026-09-26; was 0.07), scheduled at generation and foreshadowed in the briefing. The rule below is what the tests read today.
 As a commander, I want a foreshadowed reinforcement wave to arrive once in a while, so that some missions turn on a moment I could see coming but not time.
 
 Rules
-- R-124-01  Given mission generation, When the external-reinforcement roll is made, Then the wave is scheduled with probability p [Q-124-01: 1 in 10 to 20 in the bible; nothing in code], its direction is named in the briefing, its arrival tick is fixed at generation and not shown.
+- R-124-01  Given mission generation, When the external-reinforcement roll is made, Then the wave is scheduled with probability p p = 0.21 (Q-124-03, Westley 2026-09-26), its direction is named in the briefing, its arrival tick is fixed at generation and not shown.
 - R-124-02  Given the wave arrives, When it spawns, Then units enter at a map-edge spawn point, set a bus flag, and run their own script. The wave is ALG-75's standard composition (ALG-76).
 
 Inputs: mission generation RNG.
