@@ -52,6 +52,8 @@ def _init_fixture_repo(base_dir: Path, *, makefile: str) -> Path:
     (repo / "tests" / "qa" / "t1").mkdir()
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     return repo
 
 
@@ -339,7 +341,8 @@ def test_status_stage_comes_after_look_and_is_called_with_repo_and_base(tmp_path
     assert look and status and look[0] < status[0], proc.stdout + proc.stderr
     argv = (root / "scripts" / "specfactory" / "status_check.argv").read_text().splitlines()
     assert argv[0] == "--repo" and os.path.realpath(argv[1]) == os.path.realpath(root), argv
-    assert argv[2:] == ["--base", "HEAD"], argv
+    origin_main = _git(tmp_path / "repo", "rev-parse", "origin/main").stdout.strip()
+    assert argv[2:] == ["--base", origin_main], argv
 
 
 def test_rule_pins_stage_rejects_on_a_pins_reject(tmp_path):

@@ -105,6 +105,8 @@ def _gate(tmp_path: Path, table: Path) -> subprocess.CompletedProcess:
     (repo / "tests" / "csim").mkdir(parents=True)
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     pieces = tmp_path / "pieces.toml"
     pieces.write_text('[[piece]]\nid = "B1"\nowns = ["csrc/stub.c"]\nacceptance = []\ndepends_on = []\n')
     env = {"MERGE_GATE_PIECES": str(pieces), "MERGE_GATE_SIGNATURES": str(table),

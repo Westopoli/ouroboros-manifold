@@ -1,0 +1,18 @@
+{
+  "specRef": "origin/main",
+  "pieces": "VG-E1R",
+  "baseRef": "",
+  "files": [
+    "docs/northstar/spec_factory/symbol_modules.toml"
+  ],
+  "gaps": {
+    "hold": "Released (Architect 2026-10-19): the hold on csrc/economy_place.c is lifted for VG-E1R for the lot loop at the E1E_OVERLAP site (:44-47) and the clearing call; the starting-force lines of csrc/tactical_support.c stay E7's; the placement UI pieces (E1o, E1p-b) stay held.",
+    "sigrows": "(b), Architect 2026-10-19: one om_lots_remove_row row in symbol_modules.toml [symbols]; no signatures.toml row, no header change, no ABI.",
+    "full": "(a): E1E_FULL is tested after the clearing count, before any mutation: cleared = the natural lots under the footprint; refuse only if n_lots - cleared + 1 > OM_LOT_CAP; a refusal still changes nothing (test_refused_placement_changes_nothing stays green as the control).",
+    "tail": "(a): after the shift, lot_hit_tick[old n_lots - 1] is zeroed and lots[old n_lots - 1] is not read; deterministic either way, zero is the saved and hashed value.",
+    "lotat": "(a): the observable proxy: after the clearing and 40 further steps no two lots share a cell, no lot has been created inside the footprint, and every surviving lot is unchanged in id, x, y, stage, building, owner and lot_hit_tick; the premise (the lot list before and after) is dumped.",
+    "ring": "(b): the refill assertion is amended to: after the clear and 120 further ticks (two density steps) no lot exists inside the footprint, every ring lot that stood before the placement stands unchanged, and at least one new stage-1 lot has been created on the map's growth front (creation continues as on every other cell); the writer dumps the premise and STOPs with 'gap:' if the fixture creates no lot at all in 120 ticks rather than pass vacuously.",
+    "play": "(a) defer: E1R lands sim-only; the C tests are the proof; tests/qa/desktop/plays/E/S-168.py is untouched and its shot waits for E1o or E1p-b, as the programme row says.",
+    "placed": "A lot is placed when its owner is >= 0 or its building is != 0; it is natural when its owner is < 0 and its building is 0. Natural lots always carry building 0 (lot_try_create), so a placed lot in a fixture with no mission (owner -1, as test_VG_E_e1e.py's world_factory(n_regions=1)) is still placed and is never cleared. The UNDECIDED comment at the site is replaced by this sentence with the ruling date."
+  }
+}

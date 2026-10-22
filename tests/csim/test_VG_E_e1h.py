@@ -1,3 +1,4 @@
+# Rule pins: R-126-01@71403e, R-126-04@6335da, R-127-03@75dcd8, R-192-01@8c30f2, R-218-01@ecb14c, R-218-02@e9d9ad, R-218-03@6afb4b, R-218-05@ee913f, R-218-06@c47aed, R-218-07@52cd5f
 """Visible-game lane E1, piece E1h: strongpoints on the slopes between height bands (csrc/strongpoint.c).
 Spec docs/northstar/plans/2026-10-07-visible-game-spec.md rev 6 (lane E1, section 2, section 7 liberties). Fenced:
 builders never edit this file.
@@ -307,9 +308,11 @@ def test_rubble_can_be_refounded(lib, world_factory):
 def test_no_fixed_force_split(lib, world_factory):
     """R-218-06: R-126-04's 0.20 starting-force split is dropped, so om_mission_compute_starting_force(F) != 0.20 F."""
     bind(lib)
-    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double]
+    lib.om_mission_compute_starting_force.argtypes = [ctypes.c_double, ctypes.c_double]  # (F, share): E7, TD-VG-E-28
     lib.om_mission_compute_starting_force.restype = ctypes.c_double
-    got = lib.om_mission_compute_starting_force(100.0)
+    # share 0.5, not 0.0: at share 0 the ruled floor is exactly a fifth (DRAFT-e7-floor-knee), 20.0, and the assertion would fail
+    # on a correct build; the point of this test is that the split is no longer a fixed 0.20 of F.
+    got = lib.om_mission_compute_starting_force(100.0, 0.5)
     assert not math.isclose(got, 20.0, abs_tol=1e-5), "the fixed fifth is still applied (R-126-04 retired by R-218-06)"
 
 
