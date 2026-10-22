@@ -10,7 +10,7 @@ The builder owns scripts/skilllab/firing.py and engine.py; this file only pins w
   (b) The three goldens (tests/skilllab/golden_hashes.json, tests/csim/data/baseline_hashes_pre_g3.json,
       tests/csim/parity/baseline/baseline_hashes.json) are not edited here; test_cross_machine.py and test_trace_real.py keep proving them.
   (c) CPU TIME. ratio = time.process_time spent by the live code / by the frozen reference, the two interleaved fight by fight in one
-      process; wall time is printed beside it. DRAFT_LAB_SPEED_RATIO is a DRAFT; the mark is Westley's.
+      process; wall time is printed beside it. DRAFT_LAB_SPEED_RATIO_1 is a DRAFT; the mark is Westley's.
   (d) THE EPOCH CONTRACT the builder satisfies (names are pinned here):
         Engine.epoch                    an int attribute. It rises on EVERY state-changing Engine method (MUTATORS below) and does not
                                         move on a read-only one (READ_ONLY below). A public Engine method in neither set fails the
@@ -52,7 +52,10 @@ import ref_firing_rev2 as ref  # noqa: E402
 from scripts.skilllab import engine as engine_mod, fight, firing, plays  # noqa: E402
 from scripts.skilllab.contract import Block, Cover, Group, Setup, Terrain  # noqa: E402
 
-DRAFT_LAB_SPEED_RATIO = 0.5     # DRAFT: process_time(live firing) / process_time(frozen reference) must not exceed it. The mark is Westley's.
+# DRAFT, Westley's number. Stage one (firing.py and engine.py) only; measured floor: with firing stubbed a 16v16 fight costs
+# 0.17 s CPU against 0.45 s today, so the ratio floor is about 0.38 and a prototype of the epoch cache reached about 0.71.
+# The 0.5 ratio (DRAFT-lab-speed-ratio) and the 30 s mark belong to the combined stages; SPEED-2 tests against the same frozen reference.
+DRAFT_LAB_SPEED_RATIO_1 = 0.75  # DRAFT: process_time(live firing) / process_time(frozen reference) must not exceed it. The mark is Westley's.
 RATIO_ENEMIES = range(12, 25)   # blob_play(16) against 12 to 24 enemies, both orders: 26 fights
 RATIO_SWAPS = (False, True)
 FIRING_FUNCTIONS = ("count_able", "count_weighted", "states")
@@ -668,7 +671,7 @@ def measure_ratio(new_fn, ref_fn, items):
 
 def within_ratio(measured, limit=None):
     """THE detector: the CPU ratio must not exceed the (DRAFT) limit."""
-    limit = DRAFT_LAB_SPEED_RATIO if limit is None else limit
+    limit = DRAFT_LAB_SPEED_RATIO_1 if limit is None else limit
     ratio, cpu_new, cpu_ref, wall_new, wall_ref = measured
     assert ratio <= limit, ("CPU ratio %.3f (live %.2f s / reference %.2f s) is over the DRAFT limit %.2f; wall %.2f s / %.2f s = %.3f"
                             % (ratio, cpu_new, cpu_ref, limit, wall_new, wall_ref, wall_new / wall_ref))
@@ -689,7 +692,7 @@ def test_the_speed_ratio_of_the_live_firing_against_the_frozen_reference(library
 
     measured = measure_ratio(run("new", firing), run("ref", ref), items)
     print("\nLAB-REV2-SPEED ratio %.3f  cpu live %.2f s ref %.2f s  wall live %.2f s ref %.2f s (limit DRAFT %.2f, %d fights each)"
-          % (measured[0], measured[1], measured[2], measured[3], measured[4], DRAFT_LAB_SPEED_RATIO, len(items)))
+          % (measured[0], measured[1], measured[2], measured[3], measured[4], DRAFT_LAB_SPEED_RATIO_1, len(items)))
     for item in items:
         assert_results_equal(seen[("new", item)], seen[("ref", item)], "enemies %d swap %s" % item)
     within_ratio(measured)
@@ -731,4 +734,4 @@ def test_control_the_ratio_is_cpu_time_not_wall_time():
 
 def test_the_ratio_constant_is_the_ruled_draft():
     """Pins the ruled DRAFT; it changes only with Westley's word."""
-    assert DRAFT_LAB_SPEED_RATIO == 0.5
+    assert DRAFT_LAB_SPEED_RATIO_1 == 0.75
