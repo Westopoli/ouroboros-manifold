@@ -1,0 +1,6092 @@
+{
+  "inventory": {
+    "hud_texts": {
+      "@Label@100": "",
+      "@Label@102": "01:04",
+      "@Label@103": "69 selected",
+      "@Label@106": "DEPLOYING FORCES",
+      "@Label@1488": "Paused, waiting for peer 1",
+      "@Label@3397": "HP 3000",
+      "@Label@3403": "Primary objective  0%",
+      "@Label@98": "raider x9\ninterceptor x11\nvanguard x3\nwarden x41\nbombard x5",
+      "@Label@99": "",
+      "EndMission": "END MISSION",
+      "ToLayer0": "To layer 1",
+      "ToLayer1": "To layer 2",
+      "ToLayer2": "To layer 3",
+      "ToLayer3": "To layer 4",
+      "ToLayer4": "To layer 5"
+    },
+    "nodes_by_name": {
+      "@ColorRect@105": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@108": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@111": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@114": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@117": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@120": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@123": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@126": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@129": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@132": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@135": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@138": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@141": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@144": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@147": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@1487": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@150": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@153": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@156": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@159": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@162": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@165": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@168": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@171": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@174": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@177": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@180": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@183": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@186": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@189": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@192": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@195": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@198": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@201": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@204": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@207": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@210": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@213": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@216": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@219": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@222": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@225": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@2258": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@228": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@231": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@234": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@237": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@240": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@243": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@246": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@249": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@252": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@255": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@258": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@261": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@264": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@267": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@270": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@273": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@276": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@279": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@282": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@285": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@288": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@291": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@294": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@297": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@300": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@303": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@306": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@309": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@312": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@315": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@318": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@321": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@3236": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@324": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@327": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@330": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@333": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@336": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@339": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@3394": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@3395": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@3396": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@3404": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@3405": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@342": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@345": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@348": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@351": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@354": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@357": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@360": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@363": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@366": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@369": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@372": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@375": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@378": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@381": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@384": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@387": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@390": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@393": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@396": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@399": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@ColorRect@402": {
+        "class": "ColorRect",
+        "count": 1,
+        "visible": true
+      },
+      "@Control@1489": {
+        "class": "Control",
+        "count": 1,
+        "visible": false
+      },
+      "@HBoxContainer@3398": {
+        "class": "HBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@100": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@102": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@103": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@106": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@1488": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@3397": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@3403": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@98": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Label@99": {
+        "class": "Label",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@107": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@110": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@113": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@116": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@119": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@122": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@125": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@128": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@131": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@134": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@137": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@140": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@143": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@146": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@149": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@152": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@155": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@158": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@161": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@164": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@167": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@170": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@173": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@176": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@179": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@182": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@185": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@188": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@191": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@194": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@197": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@200": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@203": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@206": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@209": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@212": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@215": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@218": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@221": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@224": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@2257": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@227": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@230": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@233": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@236": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@239": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@242": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@245": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@248": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@251": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@254": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@257": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@260": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@263": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@266": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@269": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@272": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@275": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@278": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@281": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@284": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@287": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@290": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@293": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@296": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@299": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@302": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@305": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@308": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@311": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@314": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@317": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@320": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@323": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@3235": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@326": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@329": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@332": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@335": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@338": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@341": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@344": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@347": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@350": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@353": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@356": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@359": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@362": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@365": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@368": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@371": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@374": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@377": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@380": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@383": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@386": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@389": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@392": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@395": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@398": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@401": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@555": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@556": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@557": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@558": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@559": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@560": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@561": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@562": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@563": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@564": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@565": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@566": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@567": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@568": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@569": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@570": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@573": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@576": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@579": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@580": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@581": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@582": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@583": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@584": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@585": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@586": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@587": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@588": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@589": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@590": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@591": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@592": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@593": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@594": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@597": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@600": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@612": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@613": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@614": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@615": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@616": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@617": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@618": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@619": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@620": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@945": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@946": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@947": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@948": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@949": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@950": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@951": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@952": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@953": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@954": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@955": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@956": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@957": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@958": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@959": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@960": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@961": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@962": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@963": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@964": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@965": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@966": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@967": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Line2D@968": {
+        "class": "Line2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@109": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@112": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@115": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@118": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@121": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@124": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@127": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@130": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@133": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@136": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@139": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@142": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@145": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@148": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@151": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@154": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@157": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@160": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@163": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@166": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@169": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@172": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@175": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@178": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@181": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@184": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@187": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@190": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@193": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@196": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@199": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@202": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@205": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@208": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@211": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@214": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@217": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@220": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@223": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@2259": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@226": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@229": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@232": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@235": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@238": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@241": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@244": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@247": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@250": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@253": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@256": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@259": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@262": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@265": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@268": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@271": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@274": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@277": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@280": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@283": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@286": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@289": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@292": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@295": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@298": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@301": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@304": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@307": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@310": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@313": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@316": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@319": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@322": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@3237": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@325": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@328": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@331": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@334": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@337": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@340": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@343": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@346": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@349": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@352": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@355": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@358": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@361": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@364": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@367": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@370": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@373": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@376": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@379": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@382": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@385": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@388": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@391": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@394": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@397": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@400": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@403": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@404": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@405": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@406": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node2D@407": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "@Node@96": {
+        "class": "Node",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@101": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@3406": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "@VBoxContainer@97": {
+        "class": "VBoxContainer",
+        "count": 1,
+        "visible": true
+      },
+      "Abilities": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "Ambient": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "Back": {
+        "class": "ColorRect",
+        "count": 4,
+        "visible": true
+      },
+      "Body": {
+        "class": "Polygon2D",
+        "count": 101,
+        "visible": true
+      },
+      "CanvasLayer": {
+        "class": "CanvasLayer",
+        "count": 1,
+        "visible": true
+      },
+      "Clock": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Comb": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Deaths": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "EndMission": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "Events": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Fill": {
+        "class": "ColorRect",
+        "count": 105,
+        "visible": true
+      },
+      "FogLayer": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "Fx": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "HpBar": {
+        "class": "Control",
+        "count": 105,
+        "visible": true
+      },
+      "Hud": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "LayerRing": {
+        "class": "Line2D",
+        "count": 101,
+        "visible": true
+      },
+      "LayerView": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "LoadingOverlay": {
+        "class": "Control",
+        "count": 1,
+        "visible": false
+      },
+      "MapLayer": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "ObjectiveMarkers": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "Objectives": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Reinforcements": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Selection": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "Shots": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "Strip": {
+        "class": "Control",
+        "count": 1,
+        "visible": true
+      },
+      "StructuresLayer": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "ToLayer0": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "ToLayer1": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "ToLayer2": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "ToLayer3": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "ToLayer4": {
+        "class": "Button",
+        "count": 1,
+        "visible": true
+      },
+      "UnitSquads": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      },
+      "UnitVisuals": {
+        "class": "Node2D",
+        "count": 1,
+        "visible": true
+      }
+    }
+  },
+  "qa": {
+    "camera": {
+      "x": 11950.0,
+      "y": 250.0
+    },
+    "canvas": 24000.0,
+    "commands_sent_last_order": 1,
+    "error_panel": false,
+    "focus_layer": 0,
+    "ground3d": {
+      "present": false
+    },
+    "ground_layer": {
+      "present": false
+    },
+    "inventory": {
+      "abilities_fx": 0,
+      "ambient": 0,
+      "cover_cells": 1,
+      "fog_layer": 101,
+      "hud": {
+        "clock": "01:04",
+        "comb": false,
+        "events": 0,
+        "objectives": 1,
+        "reinforcements": 1,
+        "selection": 5,
+        "strip": 3
+      },
+      "loading_overlay": 0,
+      "objective_markers": 1,
+      "obstacles": 0,
+      "settlement_lots": 0,
+      "shots_in_flight": 0,
+      "squads": 22,
+      "structures": 4,
+      "wrecks": 0
+    },
+    "last_command": {
+      "kind": "move",
+      "ok": true,
+      "units": 69,
+      "x": 11470.0,
+      "y": 250.0
+    },
+    "local_faction": 0,
+    "objects_px": [
+      [
+        960.0,
+        17388.0
+      ]
+    ],
+    "plants": [
+      "facing-fixed",
+      "camera-unbounded",
+      "move-order-dropped"
+    ],
+    "scale": 1.44,
+    "scene": "tactical_view",
+    "selected": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      22,
+      25,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      49,
+      52,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90
+    ],
+    "settlement_lots": [],
+    "space3d": {
+      "present": false
+    },
+    "tick": 1297,
+    "unit_count": 306,
+    "units": {
+      "1": {
+        "facing": 1.81350580094461,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11523.6361388142,
+        "y": 104.060979486503
+      },
+      "10": {
+        "facing": 1.88360002543366,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11424.6414768472,
+        "y": 111.959248417007
+      },
+      "100": {
+        "facing": -1.57352675035212,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11976.8521996774,
+        "y": 22075.7863113582
+      },
+      "101": {
+        "facing": -1.57928242649684,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 12033.1865231021,
+        "y": 22033.2512943688
+      },
+      "102": {
+        "facing": -1.56957492701405,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11938.0323799162,
+        "y": 22041.1188151164
+      },
+      "103": {
+        "facing": -1.56032604412326,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11847.157244585,
+        "y": 22050.0720079244
+      },
+      "104": {
+        "facing": -1.56429827972816,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11887.5269828017,
+        "y": 21842.6325722463
+      },
+      "105": {
+        "facing": -1.55926005936666,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11838.1991020252,
+        "y": 21913.4616906351
+      },
+      "106": {
+        "facing": -1.52691744397954,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11520.5763112616,
+        "y": 21954.9941581351
+      },
+      "107": {
+        "facing": -1.54570172448438,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11703.6460998334,
+        "y": 22019.2432460337
+      },
+      "108": {
+        "facing": -1.57114730268914,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11953.3927630262,
+        "y": 21907.0162890583
+      },
+      "109": {
+        "facing": -1.56184220563426,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11866.2830825612,
+        "y": 21566.3767266339
+      },
+      "11": {
+        "facing": 1.097402975741,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11407.6726749179,
+        "y": 83.3214167119596
+      },
+      "110": {
+        "facing": -1.56507917727772,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11896.7025803919,
+        "y": 21543.7043615344
+      },
+      "111": {
+        "facing": -1.57052947521354,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11947.5026843423,
+        "y": 21589.6837100071
+      },
+      "112": {
+        "facing": -1.54850010482227,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11737.4010965315,
+        "y": 21734.9324370902
+      },
+      "113": {
+        "facing": -1.55235647755711,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11774.1094737173,
+        "y": 21744.9427995968
+      },
+      "114": {
+        "facing": -1.55517950462557,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11801.4976476614,
+        "y": 21719.4020417111
+      },
+      "115": {
+        "facing": -1.54402280122387,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11689.938906714,
+        "y": 21910.0370932986
+      },
+      "116": {
+        "facing": -1.53849120427355,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11644.0122010353,
+        "y": 21652.9760454376
+      },
+      "117": {
+        "facing": -1.54943665184307,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11739.9992834919,
+        "y": 22040.7738885125
+      },
+      "118": {
+        "facing": -1.54605094264862,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11705.1308619925,
+        "y": 22100.4162935297
+      },
+      "119": {
+        "facing": -1.53339525904086,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11590.2768484509,
+        "y": 21793.9221266759
+      },
+      "12": {
+        "facing": 1.36537099060336,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11462.8672456085,
+        "y": 105.572771564643
+      },
+      "120": {
+        "facing": -1.5393271335411,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11646.2237477344,
+        "y": 21840.1741747206
+      },
+      "121": {
+        "facing": -1.56501314350003,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11893.0037294206,
+        "y": 22092.250311225
+      },
+      "122": {
+        "facing": -1.55803231994372,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11824.1854795489,
+        "y": 22081.7163415487
+      },
+      "123": {
+        "facing": -1.5404873721594,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11652.3972602285,
+        "y": 22012.1249500067
+      },
+      "124": {
+        "facing": -1.5240639082811,
+        "faction": 1,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11492.0001679538,
+        "y": 21964.1267390217
+      },
+      "125": {
+        "facing": -1.53449986311694,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11591.4214322052,
+        "y": 22063.1909549936
+      },
+      "126": {
+        "facing": -1.556782920354,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11813.8952216496,
+        "y": 21931.0492259567
+      },
+      "127": {
+        "facing": -1.5504643817823,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11753.3487364094,
+        "y": 21878.7172998169
+      },
+      "128": {
+        "facing": -1.57501957453633,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11990.3517399652,
+        "y": 21785.2443249691
+      },
+      "129": {
+        "facing": -1.56763968626803,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11918.796676542,
+        "y": 22127.0850489471
+      },
+      "13": {
+        "facing": 2.15687895596099,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11423.4427477329,
+        "y": 163.469547964368
+      },
+      "130": {
+        "facing": -1.56588590661989,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11902.6797818359,
+        "y": 21868.5245146498
+      },
+      "131": {
+        "facing": -1.55437393908521,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11789.4498388964,
+        "y": 21992.4983427577
+      },
+      "132": {
+        "facing": -1.56923525023815,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11935.1801730089,
+        "y": 21726.5010427893
+      },
+      "133": {
+        "facing": -1.57429279357528,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11983.8701097507,
+        "y": 21922.6358666713
+      },
+      "134": {
+        "facing": -1.57707785595964,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 12010.7968052769,
+        "y": 21909.4088840962
+      },
+      "135": {
+        "facing": -1.57367500050253,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11978.0977083597,
+        "y": 21999.5475515042
+      },
+      "136": {
+        "facing": -1.54156707081465,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11674.8222735534,
+        "y": 21599.4162685214
+      },
+      "137": {
+        "facing": -1.53738367755327,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11630.1025784134,
+        "y": 21755.9088816428
+      },
+      "138": {
+        "facing": -1.56642266782395,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11908.5181028017,
+        "y": 21712.748442589
+      },
+      "139": {
+        "facing": -1.54175213762649,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11666.864024389,
+        "y": 21942.0668338881
+      },
+      "14": {
+        "facing": 2.18457238811155,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11472.0205601244,
+        "y": 138.051174621054
+      },
+      "140": {
+        "facing": -1.53514046120728,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11603.407392426,
+        "y": 21901.8863068059
+      },
+      "141": {
+        "facing": -1.55525899698237,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11802.8879209151,
+        "y": 21677.5882522644
+      },
+      "142": {
+        "facing": -1.52839629517274,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11545.248739627,
+        "y": 21711.6298508392
+      },
+      "143": {
+        "facing": -1.5484271417137,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11731.6264211939,
+        "y": 21967.8042923948
+      },
+      "144": {
+        "facing": -1.54643532752843,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11715.9534784246,
+        "y": 21805.5308782878
+      },
+      "145": {
+        "facing": -1.55576824555063,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11806.0663462729,
+        "y": 21790.789359556
+      },
+      "146": {
+        "facing": -1.5528402058803,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11776.7275095207,
+        "y": 21859.9174868442
+      },
+      "147": {
+        "facing": -1.56148703904595,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11860.3417716417,
+        "y": 21855.3238583865
+      },
+      "148": {
+        "facing": -1.55197633176129,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11769.2047282257,
+        "y": 21814.0663513337
+      },
+      "149": {
+        "facing": -1.55788507471179,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11827.5938114705,
+        "y": 21694.5856366017
+      },
+      "15": {
+        "facing": 1.87524795709106,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11494.2737467073,
+        "y": 110.213209143827
+      },
+      "150": {
+        "facing": -1.56112056966246,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11858.8845131197,
+        "y": 21634.4542142757
+      },
+      "151": {
+        "facing": -1.56898095651616,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11932.7114722584,
+        "y": 21757.0570837251
+      },
+      "152": {
+        "facing": -1.54644176877056,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11714.6830639036,
+        "y": 21861.6589005684
+      },
+      "153": {
+        "facing": -1.57953867588215,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 12033.4928269675,
+        "y": 21773.3102445882
+      },
+      "154": {
+        "facing": -1.54302667861674,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11690.788105476,
+        "y": 21519.7471363636
+      },
+      "155": {
+        "facing": -1.56399623223498,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11885.9094800482,
+        "y": 21647.4792349096
+      },
+      "156": {
+        "facing": -1.55704885119216,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11822.9290431169,
+        "y": 21449.2569994311
+      },
+      "157": {
+        "facing": -1.55205207386765,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11774.7836623591,
+        "y": 21548.4375457898
+      },
+      "158": {
+        "facing": -1.53407015378685,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11604.6061297493,
+        "y": 21576.6308750912
+      },
+      "159": {
+        "facing": -1.56655184339801,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11910.275688297,
+        "y": 21583.8399852243
+      },
+      "16": {
+        "facing": 3.13246814473451,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11470.7816982416,
+        "y": 209.914839076747
+      },
+      "160": {
+        "facing": -1.56628188893211,
+        "faction": 1,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11906.9203289436,
+        "y": 21772.3808210797
+      },
+      "161": {
+        "facing": -1.55073272832986,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11763.9931768172,
+        "y": 21467.3373908254
+      },
+      "162": {
+        "facing": -1.53850991252044,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11649.7590662403,
+        "y": 21476.2889581856
+      },
+      "163": {
+        "facing": -1.51679534587722,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11439.5584540994,
+        "y": 21595.960024395
+      },
+      "164": {
+        "facing": -1.51967977448802,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11456.901223351,
+        "y": 21799.1389483051
+      },
+      "165": {
+        "facing": -1.54462712471051,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11694.2866512612,
+        "y": 21970.7365323752
+      },
+      "166": {
+        "facing": -1.53477306973068,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11597.1791192469,
+        "y": 21976.7539183492
+      },
+      "167": {
+        "facing": -1.52726805304597,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11528.5329606432,
+        "y": 21849.3253663417
+      },
+      "168": {
+        "facing": -1.53820110883724,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11633.3736646187,
+        "y": 21900.4641496845
+      },
+      "169": {
+        "facing": -1.56324701271828,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11876.5970122428,
+        "y": 21953.0184417916
+      },
+      "17": {
+        "facing": 2.07901553983378,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11465.423025221,
+        "y": 168.817316388766
+      },
+      "170": {
+        "facing": -1.57640098814942,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12005.2253126751,
+        "y": 22090.4394386144
+      },
+      "171": {
+        "facing": -1.54435168171206,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11686.9555779919,
+        "y": 22150.1675146942
+      },
+      "172": {
+        "facing": -1.58035827334332,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12042.7512521654,
+        "y": 21925.8471772154
+      },
+      "173": {
+        "facing": -1.58060418199633,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12044.4043057215,
+        "y": 21848.6485392095
+      },
+      "174": {
+        "facing": -1.58466847943342,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12085.1399807053,
+        "y": 21961.451072406
+      },
+      "175": {
+        "facing": -1.59910133121769,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12219.8234110313,
+        "y": 21722.1888105932
+      },
+      "176": {
+        "facing": -1.63999596636732,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12623.6043024461,
+        "y": 21856.1293097836
+      },
+      "177": {
+        "facing": -1.59717449966443,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12203.8768895569,
+        "y": 21819.5970736803
+      },
+      "178": {
+        "facing": -1.5847867732252,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12083.1916825224,
+        "y": 21733.4894496978
+      },
+      "179": {
+        "facing": -1.56926188447121,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11935.0260329628,
+        "y": 21999.6924527601
+      },
+      "18": {
+        "facing": 1.96811991778355,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11493.8027537881,
+        "y": 159.091525600588
+      },
+      "180": {
+        "facing": -1.5768431236163,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12008.0516190031,
+        "y": 21829.2599766165
+      },
+      "181": {
+        "facing": -1.53843663688612,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11654.8719990517,
+        "y": 21292.7377909624
+      },
+      "182": {
+        "facing": -1.55559909822118,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11806.6583318533,
+        "y": 21640.9554399692
+      },
+      "183": {
+        "facing": -1.53555217428614,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11620.0150844807,
+        "y": 21536.3993749795
+      },
+      "184": {
+        "facing": -1.52701350832356,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11538.1222969559,
+        "y": 21567.4154064892
+      },
+      "185": {
+        "facing": -1.5525322675523,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11777.2670448593,
+        "y": 21661.9815001957
+      },
+      "186": {
+        "facing": -1.549254077702,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11752.0180636303,
+        "y": 21382.334069389
+      },
+      "187": {
+        "facing": -1.52945313402768,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11561.9761003602,
+        "y": 21549.2221092853
+      },
+      "188": {
+        "facing": -1.53978968008786,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11664.6339021752,
+        "y": 21380.1457831201
+      },
+      "189": {
+        "facing": -1.5471568189281,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11730.2094986209,
+        "y": 21488.8865081759
+      },
+      "19": {
+        "facing": 1.82728663056014,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11623.6617515143,
+        "y": 106.595877695275
+      },
+      "190": {
+        "facing": -1.56134967212561,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11864.3843284276,
+        "y": 21270.9475205151
+      },
+      "191": {
+        "facing": -1.55872125305337,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11837.3429753714,
+        "y": 21540.8886105549
+      },
+      "192": {
+        "facing": -1.55440360163832,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11801.534286885,
+        "y": 21253.4610817616
+      },
+      "193": {
+        "facing": -1.5570429336684,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11820.6654356411,
+        "y": 21614.3044520256
+      },
+      "194": {
+        "facing": -1.5602360512948,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11852.383783161,
+        "y": 21454.9369506042
+      },
+      "195": {
+        "facing": -1.55497685243103,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11802.5300826191,
+        "y": 21526.870535041
+      },
+      "196": {
+        "facing": -1.56298916716796,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11875.1357060136,
+        "y": 21814.7820508313
+      },
+      "197": {
+        "facing": -1.5704386816109,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11946.6967431206,
+        "y": 21463.5468218755
+      },
+      "198": {
+        "facing": -1.56291200446595,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11877.2809722647,
+        "y": 21438.1998667861
+      },
+      "199": {
+        "facing": -1.53271743453471,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11580.4421079007,
+        "y": 21881.8488086879
+      },
+      "2": {
+        "facing": 1.91028080270381,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11554.8950559226,
+        "y": 114.514006427805
+      },
+      "20": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 12050.0,
+        "y": 120.0
+      },
+      "200": {
+        "facing": -1.54042013699804,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11659.1005460794,
+        "y": 21763.5976963266
+      },
+      "201": {
+        "facing": -1.53393194093579,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11597.5610610541,
+        "y": 21735.9206496604
+      },
+      "202": {
+        "facing": -1.54043625643402,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11661.4920857979,
+        "y": 21688.1132579995
+      },
+      "203": {
+        "facing": -1.52760843802295,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11547.4244440426,
+        "y": 21480.7061082838
+      },
+      "204": {
+        "facing": -1.53232835109161,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11586.2316532469,
+        "y": 21626.7096754844
+      },
+      "205": {
+        "facing": -1.51534572347669,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11416.7761586976,
+        "y": 21760.4987813976
+      },
+      "206": {
+        "facing": -1.54401375620794,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11691.8553754438,
+        "y": 21833.2841201339
+      },
+      "207": {
+        "facing": -1.52366371814931,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11499.4685061509,
+        "y": 21716.4949556346
+      },
+      "208": {
+        "facing": -1.57588385099711,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11997.950884813,
+        "y": 21650.5445452348
+      },
+      "209": {
+        "facing": -1.5706059190206,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11948.2053206883,
+        "y": 21658.829810381
+      },
+      "21": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 12080.0,
+        "y": 120.0
+      },
+      "210": {
+        "facing": -1.58703121193214,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12103.68325488,
+        "y": 21674.3061281007
+      },
+      "211": {
+        "facing": -1.566104236852,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11905.0183381023,
+        "y": 21817.4331448413
+      },
+      "212": {
+        "facing": -1.58689264692957,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12107.3602469746,
+        "y": 21992.9208733128
+      },
+      "213": {
+        "facing": -1.58852331829173,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12120.3206478073,
+        "y": 21817.3903161671
+      },
+      "214": {
+        "facing": -1.58005341468845,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12037.4007958733,
+        "y": 21660.4607310111
+      },
+      "215": {
+        "facing": -1.64098136464354,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12623.4533820436,
+        "y": 21713.0945570378
+      },
+      "216": {
+        "facing": -1.64484413788418,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12651.1121296994,
+        "y": 21577.0044535392
+      },
+      "217": {
+        "facing": -1.52199508073843,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11511.0042422131,
+        "y": 21138.2999503838
+      },
+      "218": {
+        "facing": -1.53189375040795,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11591.5955381714,
+        "y": 21376.7913289226
+      },
+      "219": {
+        "facing": -1.5192159973184,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11471.0798161094,
+        "y": 21429.1376909973
+      },
+      "22": {
+        "facing": 2.79156371493645,
+        "faction": 0,
+        "hp": 325.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 1,
+        "x": 11679.7033641266,
+        "y": 155.706523002997
+      },
+      "220": {
+        "facing": -1.51763561520649,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11468.1087703387,
+        "y": 21201.7715338682
+      },
+      "221": {
+        "facing": -1.53489827606643,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11618.1587921685,
+        "y": 21413.6367038427
+      },
+      "222": {
+        "facing": -1.54627469918535,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11720.3258480678,
+        "y": 21557.7937610811
+      },
+      "223": {
+        "facing": -1.53055867507755,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11576.0131755299,
+        "y": 21458.0214556375
+      },
+      "224": {
+        "facing": -1.52479154861284,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11513.3364109758,
+        "y": 21649.8793438183
+      },
+      "225": {
+        "facing": -1.54353815724547,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11691.2167946846,
+        "y": 21684.0584236498
+      },
+      "226": {
+        "facing": -1.56729042087021,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11918.2312864,
+        "y": 21278.7067953495
+      },
+      "227": {
+        "facing": -1.64153803567782,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12609.3133837407,
+        "y": 21431.9238736199
+      },
+      "228": {
+        "facing": -1.64238776752188,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12603.1254417825,
+        "y": 21229.9966427634
+      },
+      "229": {
+        "facing": -1.56212874299841,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11870.6516448746,
+        "y": 21366.3422602463
+      },
+      "23": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12050.0,
+        "y": 150.0
+      },
+      "230": {
+        "facing": -1.6364542847955,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12552.1706061995,
+        "y": 21289.3447076807
+      },
+      "231": {
+        "facing": -1.57368578590679,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11976.9311972923,
+        "y": 21546.3563838427
+      },
+      "232": {
+        "facing": -1.56778747499771,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11922.14705206,
+        "y": 21480.7895788717
+      },
+      "233": {
+        "facing": -1.59155484514762,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12151.2900513897,
+        "y": 21903.3515551236
+      },
+      "234": {
+        "facing": -1.58046715956394,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12040.3799377176,
+        "y": 21561.1739390212
+      },
+      "235": {
+        "facing": -1.53441026199664,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11628.2073636127,
+        "y": 21003.2051951299
+      },
+      "236": {
+        "facing": -1.53566828619164,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11635.1483272657,
+        "y": 21127.1839294184
+      },
+      "237": {
+        "facing": -1.53942291885559,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11671.9125932261,
+        "y": 21031.6053608717
+      },
+      "238": {
+        "facing": -1.53853760783544,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11661.4648913394,
+        "y": 21112.7812055318
+      },
+      "239": {
+        "facing": -1.54518402881455,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11716.774078049,
+        "y": 21289.1420222399
+      },
+      "24": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12080.0,
+        "y": 150.0
+      },
+      "240": {
+        "facing": -1.5445024845313,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11712.3999800231,
+        "y": 21216.5856571473
+      },
+      "241": {
+        "facing": -1.54128704779262,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11683.4180811674,
+        "y": 21208.8364934042
+      },
+      "242": {
+        "facing": -1.54673537147051,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11728.3417226807,
+        "y": 21400.7568423791
+      },
+      "243": {
+        "facing": -1.54473167073516,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11711.4991566917,
+        "y": 21333.8818032691
+      },
+      "244": {
+        "facing": -1.51689892561628,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11448.3252015762,
+        "y": 21448.6883308192
+      },
+      "245": {
+        "facing": -1.5250811375478,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11521.0620529073,
+        "y": 21539.1170700512
+      },
+      "246": {
+        "facing": -1.51836074918587,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11450.3776632544,
+        "y": 21676.1056799293
+      },
+      "247": {
+        "facing": -1.51485481789713,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11415.9365402509,
+        "y": 21688.859101524
+      },
+      "248": {
+        "facing": -1.53770782554043,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11625.3674926407,
+        "y": 21999.1098947189
+      },
+      "249": {
+        "facing": -1.5473407773737,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11718.8240119116,
+        "y": 22062.0249560975
+      },
+      "25": {
+        "facing": 1.51013513348339,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11608.875012331,
+        "y": 155.00576439482
+      },
+      "250": {
+        "facing": -1.52236504439139,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11496.4463688915,
+        "y": 21516.1485925508
+      },
+      "251": {
+        "facing": -1.52443608278691,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11499.4727600698,
+        "y": 21880.477954059
+      },
+      "252": {
+        "facing": -1.52986721827832,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11550.515121352,
+        "y": 21933.468462919
+      },
+      "253": {
+        "facing": -1.57919916916269,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12029.9140675294,
+        "y": 21732.703937903
+      },
+      "254": {
+        "facing": -1.59239729193008,
+        "faction": 1,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12153.0155066758,
+        "y": 21595.7566812517
+      },
+      "255": {
+        "facing": -1.58964878539798,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12130.5690997739,
+        "y": 21784.707141738
+      },
+      "256": {
+        "facing": -1.65415597530206,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12750.1834692677,
+        "y": 21693.1519434147
+      },
+      "257": {
+        "facing": -1.58745948781284,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12110.6048288518,
+        "y": 21850.3509547286
+      },
+      "258": {
+        "facing": -1.59980326170527,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12223.9044343498,
+        "y": 21628.7567308457
+      },
+      "259": {
+        "facing": -1.59514787037052,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12186.746619608,
+        "y": 21923.1174510914
+      },
+      "26": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12050.0,
+        "y": 180.0
+      },
+      "260": {
+        "facing": -1.56631493498221,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11906.4359492945,
+        "y": 21956.1229281625
+      },
+      "261": {
+        "facing": -1.65492306186286,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 4,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12750.7676986173,
+        "y": 21609.9770314497
+      },
+      "262": {
+        "facing": -1.52749864395799,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11560.7320022359,
+        "y": 21142.1105620898
+      },
+      "263": {
+        "facing": -1.53155853401262,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11602.2368241887,
+        "y": 21018.2228874303
+      },
+      "264": {
+        "facing": -1.53153927664049,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11599.2383480643,
+        "y": 21091.8929204899
+      },
+      "265": {
+        "facing": -1.528630474469,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11568.1160999243,
+        "y": 21211.6590618128
+      },
+      "266": {
+        "facing": -1.52571614849063,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11542.1747534045,
+        "y": 21196.6028386625
+      },
+      "267": {
+        "facing": -1.53181473244047,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11597.4016299273,
+        "y": 21205.1507799778
+      },
+      "268": {
+        "facing": -1.53345706605516,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11611.1927370363,
+        "y": 21237.0012368268
+      },
+      "269": {
+        "facing": -1.53051797706856,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11582.4241655691,
+        "y": 21285.522671395
+      },
+      "27": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12080.0,
+        "y": 180.0
+      },
+      "270": {
+        "facing": -1.52974801450715,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11572.6444818751,
+        "y": 21352.8527163812
+      },
+      "271": {
+        "facing": -1.54300737037355,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11700.8653286078,
+        "y": 21141.2882950145
+      },
+      "272": {
+        "facing": -1.54533190268286,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11724.1059124068,
+        "y": 21048.3126166978
+      },
+      "273": {
+        "facing": -1.55197754429342,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11782.9347211616,
+        "y": 21065.5565266092
+      },
+      "274": {
+        "facing": -1.55250007244252,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11781.8958895457,
+        "y": 21385.0387909216
+      },
+      "275": {
+        "facing": -1.54853301326394,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11748.6255390665,
+        "y": 21232.0766106884
+      },
+      "276": {
+        "facing": -1.55614965592486,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11819.3171195468,
+        "y": 21118.0982392411
+      },
+      "277": {
+        "facing": -1.55134562533563,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11772.6053512644,
+        "y": 21313.6790180496
+      },
+      "278": {
+        "facing": -1.5566888035331,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11820.9522749991,
+        "y": 21350.2440501485
+      },
+      "279": {
+        "facing": -1.56006710201027,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11853.7093096284,
+        "y": 21177.9657548932
+      },
+      "28": {
+        "facing": 2.14597841734895,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11547.6129851801,
+        "y": 195.768619424381
+      },
+      "280": {
+        "facing": -1.51231092600552,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11416.1967991702,
+        "y": 21256.4419194238
+      },
+      "281": {
+        "facing": -1.53364845620647,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11605.17470755,
+        "y": 21450.9783703588
+      },
+      "282": {
+        "facing": -1.52623928255737,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11539.311091584,
+        "y": 21371.7309798526
+      },
+      "283": {
+        "facing": -1.52472249854635,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11528.4516972187,
+        "y": 21299.965352827
+      },
+      "284": {
+        "facing": -1.51013567524605,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11367.4944758621,
+        "y": 21737.5030669885
+      },
+      "285": {
+        "facing": -1.53033438470064,
+        "faction": 1,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11560.4869790241,
+        "y": 21797.4666547878
+      },
+      "286": {
+        "facing": -1.52093168479015,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11490.600100524,
+        "y": 21358.5218959081
+      },
+      "287": {
+        "facing": -1.52655579855948,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11524.8838681239,
+        "y": 21773.037405739
+      },
+      "288": {
+        "facing": -1.53086661289061,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11569.6766825192,
+        "y": 21694.2150408758
+      },
+      "289": {
+        "facing": -1.57153373838788,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11956.7126714295,
+        "y": 21325.8397135821
+      },
+      "29": {
+        "facing": 3.73348219382866,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 11572.7794465182,
+        "y": 271.02620437443
+      },
+      "290": {
+        "facing": -1.57519621815806,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11990.3302353954,
+        "y": 21385.0733818854
+      },
+      "291": {
+        "facing": -1.57703807052151,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12007.7589825466,
+        "y": 21472.143296066
+      },
+      "292": {
+        "facing": -1.64880879869927,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12700.0194534104,
+        "y": 21718.0102892436
+      },
+      "293": {
+        "facing": -1.58466844695122,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12079.9054265698,
+        "y": 21573.686993721
+      },
+      "294": {
+        "facing": -1.64644243856161,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12668.2873169629,
+        "y": 21601.6014643833
+      },
+      "295": {
+        "facing": -1.5894197544538,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12133.3194627521,
+        "y": 22057.693583475
+      },
+      "296": {
+        "facing": -1.63732097978824,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12596.4195438071,
+        "y": 21843.4411697409
+      },
+      "297": {
+        "facing": -1.59445867011003,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12174.7773754536,
+        "y": 21695.8634264394
+      },
+      "298": {
+        "facing": -1.5263898977684,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11556.6354614042,
+        "y": 21005.1380345323
+      },
+      "299": {
+        "facing": -1.52484051344704,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11539.638859957,
+        "y": 21075.3987077363
+      },
+      "3": {
+        "facing": 0.343191690310511,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11526.3828045769,
+        "y": 134.024695107153
+      },
+      "30": {
+        "facing": 3.92710160534909,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11601.4832728973,
+        "y": 279.749182719053
+      },
+      "300": {
+        "facing": -1.5289705338017,
+        "faction": 1,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 11580.4131129449,
+        "y": 20986.8453232185
+      },
+      "301": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 10468.3464492441,
+        "y": 4139.54871097456
+      },
+      "302": {
+        "facing": 1.70902581031283,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12667.8279895471,
+        "y": 6734.7196307264
+      },
+      "303": {
+        "facing": 1.7776356830558,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 13175.8063696641,
+        "y": 6083.32074094183
+      },
+      "304": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 500.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 10348.5489046748,
+        "y": 4050.1493934356
+      },
+      "305": {
+        "facing": 1.64559246019382,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 12425.4645963044,
+        "y": 5487.58269773539
+      },
+      "306": {
+        "facing": 1.88340775848959,
+        "faction": 1,
+        "hp": 500.0,
+        "layer": 2,
+        "state": 0,
+        "tier": 1,
+        "type": 2,
+        "x": 14098.4968827203,
+        "y": 5315.22444375478
+      },
+      "31": {
+        "facing": 2.47567932179693,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11554.3453503645,
+        "y": 247.357995760443
+      },
+      "32": {
+        "facing": 1.15633513870189,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11524.9389020862,
+        "y": 241.419915291524
+      },
+      "33": {
+        "facing": 2.70276364423743,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11621.3647782415,
+        "y": 257.28308058168
+      },
+      "34": {
+        "facing": 2.27570231225625,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11542.3450808252,
+        "y": 274.862799375034
+      },
+      "35": {
+        "facing": 2.57285016487464,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11560.7900046302,
+        "y": 298.526264069169
+      },
+      "36": {
+        "facing": 3.78354579169597,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11608.6067474038,
+        "y": 337.630995111327
+      },
+      "37": {
+        "facing": 2.2671012776304,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11432.0190749869,
+        "y": 226.634659110313
+      },
+      "38": {
+        "facing": 2.43503270505255,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11499.9552518912,
+        "y": 201.262443416263
+      },
+      "39": {
+        "facing": 2.47423379335123,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11496.7723056242,
+        "y": 231.093113087961
+      },
+      "4": {
+        "facing": 2.78733607105737,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11558.6520269373,
+        "y": 163.189753145649
+      },
+      "40": {
+        "facing": 3.96050164385383,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11435.946891677,
+        "y": 305.917661481908
+      },
+      "41": {
+        "facing": 2.33922337106175,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11456.217080772,
+        "y": 265.885053697824
+      },
+      "42": {
+        "facing": 3.34512451433198,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11492.4014289817,
+        "y": 284.570979927867
+      },
+      "43": {
+        "facing": 3.95613652119114,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11441.1899142664,
+        "y": 341.260989309408
+      },
+      "44": {
+        "facing": 3.58466034540037,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11462.4484922922,
+        "y": 320.093257727571
+      },
+      "45": {
+        "facing": 3.32891817665805,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11493.8377479543,
+        "y": 314.536576664943
+      },
+      "46": {
+        "facing": 4.30637627479186,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11630.5014568754,
+        "y": 292.900716731643
+      },
+      "47": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12050.0,
+        "y": 220.0
+      },
+      "48": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12080.0,
+        "y": 220.0
+      },
+      "49": {
+        "facing": 3.48467252850913,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11664.6124104283,
+        "y": 299.220396500228
+      },
+      "5": {
+        "facing": 2.21191608009782,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11574.1614133477,
+        "y": 137.509820646231
+      },
+      "50": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12050.0,
+        "y": 250.0
+      },
+      "51": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12080.0,
+        "y": 250.0
+      },
+      "52": {
+        "facing": 3.63839986925074,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11634.5822413876,
+        "y": 322.621874141224
+      },
+      "53": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12050.0,
+        "y": 280.0
+      },
+      "54": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12080.0,
+        "y": 280.0
+      },
+      "55": {
+        "facing": 3.06574075100388,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11333.5745403638,
+        "y": 148.837720868377
+      },
+      "56": {
+        "facing": 2.29074584325836,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11361.1587371182,
+        "y": 129.198346988769
+      },
+      "57": {
+        "facing": 1.23204166947023,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11354.2670749825,
+        "y": 100.000658843847
+      },
+      "58": {
+        "facing": 3.06574075100388,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11333.5745403638,
+        "y": 178.837720868377
+      },
+      "59": {
+        "facing": 3.40762305129592,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11390.7013344625,
+        "y": 193.648257216693
+      },
+      "6": {
+        "facing": 3.3155511624478,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11592.5870123964,
+        "y": 183.929014336921
+      },
+      "60": {
+        "facing": 2.30912418910013,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11387.1684604083,
+        "y": 163.857003451245
+      },
+      "61": {
+        "facing": 3.06574075100388,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11333.5370991806,
+        "y": 208.841148892542
+      },
+      "62": {
+        "facing": 2.93884692378092,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11363.4126384151,
+        "y": 206.111285261068
+      },
+      "63": {
+        "facing": 2.90857253584728,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11420.2097753294,
+        "y": 199.056761409453
+      },
+      "64": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12120.0,
+        "y": 120.0
+      },
+      "65": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12150.0,
+        "y": 120.0
+      },
+      "66": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12180.0,
+        "y": 120.0
+      },
+      "67": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12120.0,
+        "y": 150.0
+      },
+      "68": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12150.0,
+        "y": 150.0
+      },
+      "69": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12180.0,
+        "y": 150.0
+      },
+      "7": {
+        "facing": 3.10466771376866,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11574.9255590431,
+        "y": 208.17923218025
+      },
+      "70": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12120.0,
+        "y": 180.0
+      },
+      "71": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12150.0,
+        "y": 180.0
+      },
+      "72": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 12180.0,
+        "y": 180.0
+      },
+      "73": {
+        "facing": 4.79563794200452,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11510.3400005626,
+        "y": 372.794922948782
+      },
+      "74": {
+        "facing": 2.55416645074236,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11573.043817883,
+        "y": 329.871183193384
+      },
+      "75": {
+        "facing": 4.2891105752337,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11594.6849164869,
+        "y": 400.205394275308
+      },
+      "76": {
+        "facing": 1.49336616995227,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11509.3070406252,
+        "y": 342.812711659958
+      },
+      "77": {
+        "facing": 3.03847992158588,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11564.5527733797,
+        "y": 378.15283503837
+      },
+      "78": {
+        "facing": 2.36111923808097,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11590.9310394066,
+        "y": 361.870824871441
+      },
+      "79": {
+        "facing": 3.4889524211113,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11532.5477237077,
+        "y": 417.833108889597
+      },
+      "8": {
+        "facing": 3.72546111749895,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11582.5693405142,
+        "y": 237.189102997302
+      },
+      "80": {
+        "facing": 3.03346815789117,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11563.6281180549,
+        "y": 408.138581861325
+      },
+      "81": {
+        "facing": 3.92627943970898,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11604.3801203674,
+        "y": 442.592752999487
+      },
+      "82": {
+        "facing": 3.06573941693986,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11333.5739822311,
+        "y": 248.837734022431
+      },
+      "83": {
+        "facing": 2.68560228396361,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11362.3872212915,
+        "y": 240.483258883498
+      },
+      "84": {
+        "facing": 3.19212907191732,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11392.5987265289,
+        "y": 251.445643860781
+      },
+      "85": {
+        "facing": 3.06574136019676,
+        "faction": 0,
+        "hp": 375.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 3,
+        "x": 11333.5745383681,
+        "y": 278.837734017277
+      },
+      "86": {
+        "facing": 3.20008411884256,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11363.4419798399,
+        "y": 281.654814053016
+      },
+      "87": {
+        "facing": 3.48644619838392,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11403.4537967961,
+        "y": 291.703831716781
+      },
+      "88": {
+        "facing": 3.06574136019193,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11333.5745384653,
+        "y": 308.837734021931
+      },
+      "89": {
+        "facing": 3.19906080771315,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11363.7890626251,
+        "y": 311.652806211496
+      },
+      "9": {
+        "facing": 3.48655291288783,
+        "faction": 0,
+        "hp": 250.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 0,
+        "x": 11619.220116448,
+        "y": 227.359838347734
+      },
+      "90": {
+        "facing": 4.41118228724932,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 11380.5021843211,
+        "y": 337.2046539532
+      },
+      "91": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12120.0,
+        "y": 220.0
+      },
+      "92": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12150.0,
+        "y": 220.0
+      },
+      "93": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12180.0,
+        "y": 220.0
+      },
+      "94": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12120.0,
+        "y": 250.0
+      },
+      "95": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 400.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 4,
+        "x": 12150.0,
+        "y": 250.0
+      },
+      "96": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12180.0,
+        "y": 250.0
+      },
+      "97": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12120.0,
+        "y": 280.0
+      },
+      "98": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12150.0,
+        "y": 280.0
+      },
+      "99": {
+        "facing": 0.0,
+        "faction": 0,
+        "hp": 1050.0,
+        "layer": 0,
+        "state": 0,
+        "tier": 1,
+        "type": 5,
+        "x": 12180.0,
+        "y": 280.0
+      }
+    },
+    "units_in_last_command": 69,
+    "units_px": {
+      "1": [
+        346.03546875,
+        329.847813720703
+      ],
+      "10": [
+        203.48390625,
+        341.221322021484
+      ],
+      "11": [
+        206.745,
+        292.085408935547
+      ],
+      "12": [
+        258.52875,
+        332.024787597656
+      ],
+      "13": [
+        201.75703125,
+        415.396142578125
+      ],
+      "14": [
+        271.70953125,
+        378.793696289062
+      ],
+      "15": [
+        303.75375,
+        338.707023925781
+      ],
+      "16": [
+        269.925,
+        482.277370605469
+      ],
+      "17": [
+        262.20890625,
+        423.096943359375
+      ],
+      "18": [
+        303.0759375,
+        409.091791992187
+      ],
+      "19": [
+        490.0734375,
+        333.498065185547
+      ],
+      "2": [
+        391.04953125,
+        344.900170898438
+      ],
+      "20": [
+        1104.0,
+        352.8
+      ],
+      "21": [
+        1147.2,
+        352.8
+      ],
+      "22": [
+        570.7725,
+        404.217399902344
+      ],
+      "23": [
+        1104.0,
+        396.0
+      ],
+      "24": [
+        1147.2,
+        396.0
+      ],
+      "25": [
+        468.78,
+        403.208305664062
+      ],
+      "26": [
+        1104.0,
+        439.2
+      ],
+      "27": [
+        1147.2,
+        439.2
+      ],
+      "28": [
+        380.563125,
+        461.906806640625
+      ],
+      "29": [
+        416.8021875,
+        570.277749023438
+      ],
+      "3": [
+        349.99125,
+        372.995551757813
+      ],
+      "30": [
+        458.13609375,
+        582.838813476562
+      ],
+      "301": [
+        -1173.58078125,
+        6140.9503125
+      ],
+      "304": [
+        -1346.0896875,
+        6012.21515625
+      ],
+      "31": [
+        390.2578125,
+        536.195522460937
+      ],
+      "32": [
+        347.91140625,
+        527.6446875
+      ],
+      "33": [
+        486.7659375,
+        550.48763671875
+      ],
+      "34": [
+        372.97640625,
+        575.802421875
+      ],
+      "35": [
+        399.53765625,
+        609.877836914063
+      ],
+      "36": [
+        468.39328125,
+        666.18861328125
+      ],
+      "37": [
+        214.108125,
+        506.353908691406
+      ],
+      "38": [
+        311.9353125,
+        469.817907714844
+      ],
+      "39": [
+        307.35234375,
+        512.774077148438
+      ],
+      "4": [
+        396.459375,
+        414.993251953125
+      ],
+      "40": [
+        219.7640625,
+        620.521435546875
+      ],
+      "41": [
+        248.9521875,
+        562.874458007812
+      ],
+      "42": [
+        301.05796875,
+        589.782216796875
+      ],
+      "43": [
+        227.3128125,
+        671.4158203125
+      ],
+      "44": [
+        257.92546875,
+        640.934296875
+      ],
+      "45": [
+        303.1265625,
+        632.932690429687
+      ],
+      "46": [
+        499.92140625,
+        601.777045898437
+      ],
+      "47": [
+        1104.0,
+        496.8
+      ],
+      "48": [
+        1147.2,
+        496.8
+      ],
+      "49": [
+        549.04171875,
+        610.877373046875
+      ],
+      "5": [
+        418.79203125,
+        378.014150390625
+      ],
+      "50": [
+        1104.0,
+        540.0
+      ],
+      "51": [
+        1147.2,
+        540.0
+      ],
+      "52": [
+        505.798125,
+        644.575517578125
+      ],
+      "53": [
+        1104.0,
+        583.2
+      ],
+      "54": [
+        1147.2,
+        583.2
+      ],
+      "55": [
+        72.3468750000001,
+        394.326320800781
+      ],
+      "56": [
+        112.06921875,
+        366.045622558594
+      ],
+      "57": [
+        102.14390625,
+        324.000944824219
+      ],
+      "58": [
+        72.3468750000001,
+        437.526320800781
+      ],
+      "59": [
+        154.6096875,
+        458.853486328125
+      ],
+      "6": [
+        445.32515625,
+        444.857783203125
+      ],
+      "60": [
+        149.52328125,
+        415.954094238281
+      ],
+      "61": [
+        72.2934375,
+        480.731264648438
+      ],
+      "62": [
+        115.31484375,
+        476.800246582031
+      ],
+      "63": [
+        197.10234375,
+        466.64173828125
+      ],
+      "64": [
+        1204.8,
+        352.8
+      ],
+      "65": [
+        1248.0,
+        352.8
+      ],
+      "66": [
+        1291.2,
+        352.8
+      ],
+      "67": [
+        1204.8,
+        396.0
+      ],
+      "68": [
+        1248.0,
+        396.0
+      ],
+      "69": [
+        1291.2,
+        396.0
+      ],
+      "7": [
+        419.893125,
+        479.778090820313
+      ],
+      "70": [
+        1204.8,
+        439.2
+      ],
+      "71": [
+        1248.0,
+        439.2
+      ],
+      "72": [
+        1291.2,
+        439.2
+      ],
+      "73": [
+        326.889375,
+        716.8246875
+      ],
+      "74": [
+        417.18328125,
+        655.014506835937
+      ],
+      "75": [
+        448.34578125,
+        756.295751953125
+      ],
+      "76": [
+        325.4015625,
+        673.650307617188
+      ],
+      "77": [
+        404.9559375,
+        724.540078125
+      ],
+      "78": [
+        442.94015625,
+        701.093979492187
+      ],
+      "79": [
+        358.86890625,
+        781.679663085937
+      ],
+      "8": [
+        430.89984375,
+        521.552307128906
+      ],
+      "80": [
+        403.62421875,
+        767.719555664062
+      ],
+      "81": [
+        462.30703125,
+        817.333549804687
+      ],
+      "82": [
+        72.3468750000001,
+        538.326342773438
+      ],
+      "83": [
+        113.83828125,
+        526.295895996094
+      ],
+      "84": [
+        157.34203125,
+        542.081733398437
+      ],
+      "85": [
+        72.3468750000001,
+        581.526342773437
+      ],
+      "86": [
+        115.35703125,
+        585.582934570313
+      ],
+      "87": [
+        172.97390625,
+        600.053510742188
+      ],
+      "88": [
+        72.3468750000001,
+        624.726342773438
+      ],
+      "89": [
+        115.85625,
+        628.780034179688
+      ],
+      "9": [
+        483.67640625,
+        507.398159179688
+      ],
+      "90": [
+        139.9228125,
+        665.574697265625
+      ],
+      "91": [
+        1204.8,
+        496.8
+      ],
+      "92": [
+        1248.0,
+        496.8
+      ],
+      "93": [
+        1291.2,
+        496.8
+      ],
+      "94": [
+        1204.8,
+        540.0
+      ],
+      "95": [
+        1248.0,
+        540.0
+      ],
+      "96": [
+        1291.2,
+        540.0
+      ],
+      "97": [
+        1204.8,
+        583.2
+      ],
+      "98": [
+        1248.0,
+        583.2
+      ],
+      "99": [
+        1291.2,
+        583.2
+      ]
+    }
+  },
+  "scene": "res://scenes/tactical_c/tactical_view.tscn",
+  "tick": 0
+}

@@ -40,6 +40,16 @@ Each picture has one block under its file name, in this form: `**What you see:**
 - Layer change on a slope (S-004, R-004-06): built and wired (lane C ground 3D, C7; S-004 play fix at bfd7f1c), the S-004 play passes; not Seen (your verdict pending).
 - The halfway line as a marked place for one crossing: stub in this view (only the long midline bars are drawn, none picked out for the crossing).
 
+## F-S140-click-move-order-obeyed.png
+
+**What you see:** The player drags a box on the left of the match, clicks to the right, and 69 of the units move there in both peers (order tick 68; the host reads the common tick 1273, the guest reads tick 1401). The right side had blockers, so the play used the left corridor. The frame is the host's at tick 1297: 99 own units on screen, the 69 selected ones ringed in white in a loose cluster at the left, a tidy grid of unselected units at the middle right, and "69 selected" in the HUD at lower left. The drawn route line you asked for on 2026-10-13 is not built, so no path is drawn.
+**Legend:** White ring: a selected unit (the HUD counts 69 selected). The other marks (green arcs, orange rings, blue arrowheads): none stated.
+**Judge:** Does the move read as an order obeyed, with units leaving the box and heading for the click (S-140: "My orders reach every peer with no server in the middle")?
+**Camera:** x 11950, y 250, scale 1.44, 1920x1080, tick 1297 (order given at tick 68, common read tick 1273). Last command: move, ok true, 69 units, to x 11470, y 250.
+**Beta status of what is shown:**
+- Move order reaching both peers (S-140, R-140-02): built and wired (lane F lockstep and lobby, VG-F-S140-CLICK); the S-140 play passes, host and guest read the same positions; not Seen (your verdict pending).
+- Route line to the clicked spot (your 2026-10-13 note): not built, queued as VG-A-routeline.
+
 ## Removed today
 
 | File | Verdict | Cite |
