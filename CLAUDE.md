@@ -17,6 +17,8 @@ Tiers are roles; the model behind a tier can change.
 
 `DOER_BACKEND = sonnet55` · `TEST_WRITER = sonnet55`
 
+Decisions: Westley answers looks (one word per picture) and rule meaning where he has no recorded words. Everything else the Architect decides, records in `docs/northstar/story_reviews/westley/decisions.md` (decision, rule, context) and Westley may veto (Westley, 2026-10-22).
+
 Usage discipline: every tool call re-reads the caller's whole context, so waiting is the expensive part, not the work.
 - A builder pushes its branch and stops. A fresh, small clerk lands it. No builder sits in a merge-wait loop.
 - Agents report once, at the end. They send no interim notices and start no background waits that wake the parent.

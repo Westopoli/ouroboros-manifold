@@ -50,63 +50,19 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Layer change on a slope (S-004, R-004-06): built and wired (lane C ground 3D, C7; S-004 play fix at bfd7f1c), the S-004 play passes; not Seen (your verdict pending).
 - The halfway line as a marked place for one crossing: stub in this view (only the long midline bars are drawn, none picked out for the crossing).
 
-## 2. Questions
+## 2. One pick: the land era's name (Q-147-01)
 
-### Q-156-02 Lab pass marks
+Greek antiquity, decided. Pick one, or give your own: (a) The Bronze Shore, city-states on a coast, oars and phalanx, the sea is the road; (b) The Olive Tyrannies, rival tyrants, walled hill towns, terraces and groves; (c) The Hoplite Age, citizen armies, the shield wall, the marble reach as its placeholder name retires.
 
-The lab's ten draft pass marks (mirror tolerance, skill beating the noise, rank agreement, stacking, dominance, dead skills, counters) are unconfirmed.
+## 3. Decided by the Architect 2026-10-22 (veto with a word)
 
-(a) The draft marks as written.  
-(b) You set each of the ten (opens ten per-mark questions).  
-(c) Report only, no pass or fail, until you confirm them.
-
-unblocks: lab rev 2 runs with real marks instead of drafts.
-
-(your 2026-10-21 note: not enough context)
-
-Architect's note: Q-156-02 is re-asked with the lab's pass-mark context (the ten per-mark values) in the next batch.
-
-### Q-147-01 Name the land era and the roster
-
-The land era is "The Marble Reach" as a placeholder; its name, setting, tone and scale, and the order of eras after the first two, are unwritten. Give your words, or ask the Architect to draft candidates; also write the roster in order and mark each era earnable or purchase-only.
-
-unblocks: the era pack form, the land era's identity and the roster the store sells.
-
-(your 2026-10-21 note: Already decided this: Greek)
-
-Architect's note: the land era is Greek antiquity (decided); the open parts are the era's name, brief, tone and roster, re-asked as one question with the era pack form in the next batch.
-
-### Q-149-02 Which eras are purchase-only?
-
-Which eras are exclusive to purchase and which earnable, and the naming of the base three on the store. Give your words.
-
-unblocks: store work, after the beta.
-
-## 3. Asked in chat, still open
-
-### C11 Building placement limits
-The placement engine refuses a building on top of another placed building and refuses when the engine's lot table (8192) is full. Your words were "limits only from terrain" and "no lot count in the beta".
-(a) the overlap refusal is physical and stays, the table size is a memory bound and is documented as not a rule (the Architect's reading); (b) remove the overlap refusal too: buildings may stack and the terrain alone limits; (c) something else.
-unblocks: nothing today; the E1R shot.
-
-### C12 September mockups without a verdict
-Five September mockups (fog, hud, units, objectives, menus) have no recorded verdict from you.
-(a) treat them as approved as built; (b) you look at each (commands in followups/01_transition.md section 1); (c) drop them.
-
-### C13 Opening-frame camera pitch
-The ground camera looks down 50 degrees. Your 10-18 note asked for about 15 more and "the classic RTS angle"; the research found StarCraft II and Warcraft III at 56, Age of Empires III at about 47, so the two asks point 9 to 20 degrees apart.
-(a) 56, the StarCraft II angle; (b) 65, your plus 15; (c) restore the approved 55-degree lens first (it buys 10 of your 15 degrees at the top of the frame) and judge the pitch on the next shot.
-unblocks: VG-A18-3d.
-
-### C14 Where the empty half of the frame comes from
-The army stands on the map's north edge and the camera faces north, so the map ends mid-screen.
-(a) the opening camera faces away from the home edge toward the objective; (b) the home anchor moves inboard by the base pad (1200 wu); (c) both.
-unblocks: VG-A18-3d's horizon test.
-
-### C15 Faction income and the economy multiplier
-Two rules disagree: one says a faction's budget income is its holdings' base income (R-033-01), the other that the economy multiplier scales it (R-046-05); the code applies the multiplier (found by the sim-viewer run, followups/04_simviewer_run_analysis.md item I).
-(a) the multiplier applies (code stands, R-033-01 rewritten); (b) base income only (R-046-05 rewritten, code changes).
-unblocks: FINDING-sim-I-income-multiplier and the economy lane's numbers.
+- C11 (a): the overlap refusal stays; the lot table size is a memory bound, not a rule. DEC-C11-2026-10-22.
+- C12 (a): the five September mockups are approved as built; re-shot inside their lanes' story plays. DEC-C12-2026-10-22.
+- C13 (c): the 55-degree lens is restored first; the pitch stays 50 degrees (DRAFT-a18-pitch) and is judged on the next S-103 shot. DEC-C13-2026-10-22.
+- C14 (c): the opening camera faces toward the objective and the home anchor moves inboard 1200 wu (DRAFT-home-anchor-inboard, piece VG-E-anchor-inboard). DEC-C14-2026-10-22.
+- C15 (a): the economy multiplier scales a faction's budget income; R-033-01 is rewritten. DEC-C15-2026-10-22.
+- Q-156-02 (c): the lab reports its ten conditions against the draft marks with no pass or fail until you confirm them. DEC-Q156-2026-10-22.
+- C16: the single-process 30 s lab speed mark is retired; the lab landing waits on the fight-window change only. DEC-C16-2026-10-22.
 
 ## Answered 2026-10-21 (chat)
 
@@ -128,6 +84,8 @@ unblocks: FINDING-sim-I-income-multiplier and the economy lane's numbers.
 - DRAFT-c25-patch-radius: 3 (Architect, 2026-10-21)
 - Places lane drafts of rev 6a: DRAFT-shape-harm 0.5, DRAFT-first-ring-spread 2, DRAFT-field-cost-share 15 to 55 percent (Architect, 2026-10-21)
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
+- DRAFT-a18-pitch 50 degrees; DRAFT-home-anchor-inboard 1200 wu (Architect, 2026-10-22)
+- DRAFT-lab-speed-ratio-1 0.75, DRAFT-lab-speed-ratio-1b 0.68 (Architect, 2026-10-21)
 
 Parked by you (11): see batch_closed.md; added 2026-10-21: Q-082-03, Q-208-01, Q-149-01.
 
