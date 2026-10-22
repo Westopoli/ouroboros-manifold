@@ -1,3 +1,4 @@
+# Rule pins: R-990-01@?
 """Tests for scripts/specfactory/sdk_engineer.py and batch_review.py (the console-credit tools).
 
 No network, no key: every test runs dry-run code paths or plain functions, and `batch_review.client` is
