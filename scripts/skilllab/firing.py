@@ -23,11 +23,14 @@ class _Sample:
         self.engine_mode = self._probe()
 
     def _living(self, units):
+        e, w = self.e, self.w
+        alive = getattr(e, "_fast_unit_alive", e.unit_alive)    # the memoised reads exist on the real engine only
+        utype = getattr(e, "_fast_unit_type", e.unit_type)
         out = {}
         for u in sorted(set(units)):
-            if self.e.unit_alive(self.w, u):
-                x, y = self.e.unit_pos(self.w, u)
-                out[u] = (x, y, self.e.unit_layer(self.w, u), self.e.unit_type(self.w, u))
+            if alive(w, u):
+                x, y = e.unit_pos(w, u)
+                out[u] = (x, y, e.unit_layer(w, u), utype(w, u))
         return out
 
     def _probe(self):
@@ -49,13 +52,16 @@ class _Sample:
         return self._visible[side]
 
     def offset_mult(self, off):
-        k = abs(off)
-        if off == 0 or k > 4:
-            return 1.0
-        name = "OM_TP_RANGE_%s_%d" % ("UP" if off > 0 else "DOWN", k)
-        if name not in self._mult:
-            self._mult[name] = self.e.get_param(self.w, self.e.param_id(name))
-        return self._mult[name]
+        m = self._mult.get(off)
+        if m is None:
+            k = abs(off)
+            if off == 0 or k > 4:
+                m = 1.0
+            else:
+                name = "OM_TP_RANGE_%s_%d" % ("UP" if off > 0 else "DOWN", k)
+                m = self.e.get_param(self.w, self.e.param_id(name))
+            self._mult[off] = m
+        return m
 
     def composed(self, side, u, v):
         x, y, layer, t = self.sides[side][u]
@@ -94,12 +100,53 @@ class _Sample:
         if not enemies:
             return -1, 0
         t = self.e.unit_target(self.w, u)
-        if t in enemies and self.code(side, u, t) == 0:
-            return 0, t
-        x, y = self.sides[side][u][:2]
+        tc = None
+        if t in enemies:
+            tc = self.code(side, u, t)
+            if tc == 0:
+                return 0, t
+        x, y, layer, ut = self.sides[side][u]
+        order = sorted([((ex - x) ** 2 + (ey - y) ** 2, v) for v, (ex, ey, _, _) in enemies.items()])
+        engine_mode = self.engine_mode
+        if not engine_mode:     # the gates of composed(), in its order, with the per-unit terms hoisted out of the pair loop
+            w, can_shoot, offset_mult, arc = self.w, self.e.can_shoot, self.offset_mult, self.arc
+            rng, (up, down), _ = self.type_info(ut)
+            vis, half, facing, mult = self.visible(side), math.radians(self.arc / 2.0), None, self._mult
         first = None
-        for v in sorted(enemies, key=lambda v: ((enemies[v][0] - x) ** 2 + (enemies[v][1] - y) ** 2, v)):
-            c = self.code(side, u, v)
+        for _, v in order:      # nearest first, ties by lower id: squared distance, then id
+            if v == t:
+                c = tc
+            elif engine_mode:
+                c = self.code(side, u, v)
+            else:
+                ex, ey, elayer, _ = enemies[v]
+                off = elayer - layer
+                if off > up or -off > down:
+                    c = 1
+                elif v not in vis:
+                    c = 2
+                else:
+                    m = mult.get(off)
+                    if m is None:
+                        m = offset_mult(off)
+                    reach = rng * m
+                    dx, dy = ex - x, ey - y
+                    if dx * dx + dy * dy > reach * reach:
+                        c = 3
+                    else:
+                        c = 0
+                        if arc < 360.0:
+                            if facing is None:
+                                facing = self.e.unit_facing(w, u)
+                            d = math.atan2(dy, dx) - facing
+                            while d > math.pi:
+                                d -= _TWO_PI
+                            while d < -math.pi:
+                                d += _TWO_PI
+                            if abs(d) > half:
+                                c = 4
+                        if c == 0 and not can_shoot(w, u, v):
+                            c = 5
             if c == 0:
                 return 0, v
             if first is None:
@@ -138,11 +185,13 @@ def count_able(engine, w, units0, units1, arc_deg):
 def count_weighted(engine, w, units0, units1, arc_deg):
     """(weight0, weight1): the category multiplier of each code-0 unit's category against its target of record's, summed."""
     s = _sample(engine, w, units0, units1, arc_deg)
-    totals = [0.0, 0.0]
+    totals, mult = [0.0, 0.0], {}
     for (side, u), (c, t) in sorted(s.records().items()):
         if c == 0:
-            totals[side] += float(engine.category_multiplier(
-                w, s.type_info(s.sides[side][u][3])[2], s.type_info(s.sides[1 - side][t][3])[2]))
+            pair = (s.type_info(s.sides[side][u][3])[2], s.type_info(s.sides[1 - side][t][3])[2])
+            if pair not in mult:
+                mult[pair] = float(engine.category_multiplier(w, *pair))
+            totals[side] += mult[pair]
     return tuple(totals)
 
 
