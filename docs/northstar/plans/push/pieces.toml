@@ -3830,3 +3830,101 @@ depends_on = ["HARNESS-westley-folder"]  # owner_lint ordering edge for pieces.p
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "SHARED_RECORD_GLOBS (pieces.py:46) gains the ledger, the ambiguity register, decisions.md, the decision-pack batch.md and story_reviews/*.md, so the footprint check (via DEFAULT_IGNORES) ignores them and owner_lint.in_flight_overlaps skips overlaps on them, printing 'record files (no owner): ...' once; rows that list them keep working; tests first: two in-flight pieces owning the ledger give no overlap, the same two owning csrc/mission.c still do (positive control), a ledger-and-register-only diff passes footprint_check under an unrelated id, a csrc/mission.c diff still fails, the glob list has the five entries"
+
+# SHOWCASE lane (Architect 2026-10-22; Westley approved the plan, licence MIT; Westley may veto)
+
+[[piece]]
+id = "SHOWCASE-inventory"
+manager = "Architect"
+wave = 9
+owns = ["docs/northstar/plans/showcase/inventory.md"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 1: the inventory table, read-only engineer; records landing (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-front-door"
+manager = "Architect"
+wave = 9
+owns = ["README.md", "docs/METHOD.md", "docs/README.md", "CONTRIBUTING.md", "LICENSE"]
+owns_glob = []
+acceptance = []
+depends_on = ["SHOWCASE-inventory"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 2: README, METHOD, docs map, CONTRIBUTING, MIT LICENSE; secrets scan report attached; records landing (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-junk"
+manager = "Architect"
+wave = 9
+owns = [".gitignore"]
+owns_glob = ["build/**", ".swarm/**", "tuning_output/**", "graphify-out/**"]
+acceptance = []
+depends_on = ["SHOWCASE-inventory"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.1: delete tracked build output, swarm backups, logs, graph output; full gate (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-legacy-sim"
+manager = "Architect"
+wave = 9
+owns = ["legacy/README.md"]
+owns_glob = ["simulation/**", "legacy/simulation/**", "toys/**", "legacy/toys/**"]
+acceptance = []
+depends_on = ["SHOWCASE-junk"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.2: simulation/ and toys/ to legacy/, tools still used re-pointed per the inventory; full gate (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-legacy-scenes"
+manager = "Architect"
+wave = 9
+owns = ["legacy/README.md"]
+owns_glob = ["scenes/debug/**", "legacy/scenes/**"]
+acceptance = []
+depends_on = ["SHOWCASE-legacy-sim"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.2: unreferenced debug and mockup scenes to legacy/scenes/; full gate (godot import) (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-docs-legacy"
+manager = "Architect"
+wave = 9
+owns = ["docs/legacy/README.md", "docs/README.md"]
+owns_glob = ["docs/legacy/**", "docs/claude_exchange/**", "docs/random/**", "docs/blender_stuff/**", "docs/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/northstar/plans/archive/**"]
+acceptance = []
+depends_on = ["SHOWCASE-front-door"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.3: stale docs folders to docs/legacy/, dated plans to plans/archive/, status_check green on pointers; records landing (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-quality-audit"
+manager = "Architect"
+wave = 9
+owns = ["docs/northstar/plans/showcase/code_quality.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["SHOWCASE-legacy-scenes"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 4: measured code-quality page, no fixes inside (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-first-look"
+manager = "Architect"
+wave = 9
+owns = ["docs/northstar/plans/showcase/first_look.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["SHOWCASE-docs-legacy", "SHOWCASE-quality-audit"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 5: cold-reader report (spec docs/northstar/plans/showcase/README.md)"

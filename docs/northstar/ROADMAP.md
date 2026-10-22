@@ -150,6 +150,8 @@ Work that does not wait on the build lanes. Written 2026-10-06 from Westley's li
 | T19 | Layout library audit against the lab's layout search (section 4 row 1) | being written 2026-10-18 (`research/layout_engine/library_audit_2026-10-18.md`) | Westley's pairing answers join the next pack |
 | T17 | Steam onboarding, public track (app fee, tax and identity, Coming Soon page) | Westley by hand; no report yet | Westley |
 
+SHOWCASE lane (2026-10-22): plans/showcase/README.md, behind beta and lab
+
 ## 4. Not planned yet
 
 Decided or partly decided in the bible, with no plan doc. Groups that entered the programme are gone from here (settlements, economy and bases, zoom and drawing, strongpoints and weather are lane E and C pieces; the layer mask is the terrain contract).
