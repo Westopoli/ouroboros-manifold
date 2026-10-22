@@ -23,7 +23,7 @@ Era-agnostic: the engine knows "layers 1 and 2 are blocked here." The era pack d
 
 ## Obviously working in 60 seconds
 
-Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and each unit's ring changes color when its layer changes. Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Ping layer 1 at the obstacle from a unit that can ping: the layer-1 enemy appears for a moment (provisional 2 seconds, Q-005-04), then vanishes, and the pinged side sees an alert pointing about 60 degrees toward the pinger. Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
+Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and each unit's ring changes color when its layer changes. Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Ping layer 1 at the obstacle from a unit that can ping: the layer-1 enemy caught by the ping stays visible, wherever it moves, for 5 seconds (R-162-01, Westley 2026-10-05), then vanishes, and the pinged side is told nothing (R-162-03, Westley 2026-10-05). Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
 
 ## Stories
 
@@ -293,7 +293,7 @@ Open flags: Q-166-04 (numbers that assume a standard layer step scale with the s
 | Preferred layer | Tick delta unit entry; preference indicator; save file |
 | Transitioning flag and remaining time | Tick delta unit entry; drawn height mid-tween |
 | Visible set per unit; player-visible list | Tick delta; fog reveal on screen |
-| Ping revealed set; the alert and its sector for the pinged side | Tick delta; screen |
+| Ping revealed set (the units caught at the cast, followed for 5 s); no alert for the pinged side unless OM_TP_PING_ALERT is 1, default 0 (R-162-03, Westley 2026-10-05) | Tick delta; screen |
 | Emit or silent state per force | Tick delta; mark on screen |
 | Pulse active, cooldown remaining (not built) | Tick delta; HUD cooldown ring; pulse effect on screen |
 | Command rejections | Command acknowledgement in the tick delta with a reason code |
