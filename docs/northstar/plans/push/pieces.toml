@@ -3817,3 +3817,101 @@ depends_on = ["HARNESS-red-evidence", "HARNESS-gate-remote"]  # edges for file o
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "godot_import sets a VENV_LINK_MADE flag when it links .venv (merge_gate.sh:394-403, import block :382-444) and a block just above the playthrough stage header removes the link (only when the flag is 1 and the path is still a symlink; prints ok venv_unlink; a pre-existing .venv is never removed; desktop acceptance and acceptance_godot keep the link); the test test_known_red_file_is_empty is renamed test_known_red_entries_name_open_rows: playthrough_known_red.txt lines have the one form `<test id> :: <row id>` (the playthrough parser strips a trailing `:: <row id>` the way lane_plays strips its trailing reason at merge_gate_support.py:973; an entry is valid when its row id names an open FINDING or TD ledger row, open = second cell does not match \\bclosed(?! when\\b)); the playthrough list uses `<test id> :: <row id>`, gd_tests_known_red.txt uses ` :: <id, id>`, lane_plays_known_red.txt a trailing `# reason`; the empty-file form is retired under TD-gate-known-red-empty-form; a new test that godot_import leaves no .venv after the gate and keeps a pre-existing one; the known-red line leaves the list; tests first: with the link present the fresh-checkout assertion fails (positive control), with it removed it passes"
+
+# SHOWCASE lane (Architect 2026-10-22; Westley approved the plan, licence MIT; Westley may veto)
+
+[[piece]]
+id = "SHOWCASE-inventory"
+manager = "Architect"
+wave = 9
+owns = ["docs/northstar/plans/showcase/inventory.md"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 1: the inventory table, read-only engineer; records landing (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-front-door"
+manager = "Architect"
+wave = 9
+owns = ["README.md", "docs/METHOD.md", "docs/README.md", "CONTRIBUTING.md", "LICENSE"]
+owns_glob = []
+acceptance = []
+depends_on = ["SHOWCASE-inventory"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 2: README, METHOD, docs map, CONTRIBUTING, MIT LICENSE; secrets scan report attached; records landing (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-junk"
+manager = "Architect"
+wave = 9
+owns = [".gitignore"]
+owns_glob = ["build/**", ".swarm/**", "tuning_output/**", "graphify-out/**"]
+acceptance = []
+depends_on = ["SHOWCASE-inventory"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.1: delete tracked build output, swarm backups, logs, graph output; full gate (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-legacy-sim"
+manager = "Architect"
+wave = 9
+owns = ["legacy/README.md"]
+owns_glob = ["simulation/**", "legacy/simulation/**", "toys/**", "legacy/toys/**"]
+acceptance = []
+depends_on = ["SHOWCASE-junk"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.2: simulation/ and toys/ to legacy/, tools still used re-pointed per the inventory; full gate (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-legacy-scenes"
+manager = "Architect"
+wave = 9
+owns = ["legacy/README.md"]
+owns_glob = ["scenes/debug/**", "legacy/scenes/**"]
+acceptance = []
+depends_on = ["SHOWCASE-legacy-sim"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.2: unreferenced debug and mockup scenes to legacy/scenes/; full gate (godot import) (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-docs-legacy"
+manager = "Architect"
+wave = 9
+owns = ["docs/legacy/README.md", "docs/README.md"]
+owns_glob = ["docs/legacy/**", "docs/claude_exchange/**", "docs/random/**", "docs/blender_stuff/**", "docs/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/northstar/plans/archive/**"]
+acceptance = []
+depends_on = ["SHOWCASE-front-door"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 3.3: stale docs folders to docs/legacy/, dated plans to plans/archive/, status_check green on pointers; records landing (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-quality-audit"
+manager = "Architect"
+wave = 9
+owns = ["docs/northstar/plans/showcase/code_quality.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["SHOWCASE-legacy-scenes"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 4: measured code-quality page, no fixes inside (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "SHOWCASE-first-look"
+manager = "Architect"
+wave = 9
+owns = ["docs/northstar/plans/showcase/first_look.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["SHOWCASE-docs-legacy", "SHOWCASE-quality-audit"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "step 5: cold-reader report (spec docs/northstar/plans/showcase/README.md)"
