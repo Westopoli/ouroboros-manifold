@@ -327,6 +327,8 @@ class Engine:
     def unit_alive(self, w, u):
         return bool(self._lib.om_unit_alive(w, u))
 
+    # A dead unit never revives; the lab never calls the C trait-modifier or set-hp calls. Pinned by
+    # test_stage_1b_la_dead_forever_assumption_no_revive_path_in_the_lab (tests/skilllab/integration/test_speed1b_levers.py).
     def _fast_unit_alive(self, w, u):
         """unit_alive for firing.py: a unit once read dead is not read again (hp only falls to 0 and a spawn clears the memo)."""
         if self._fast_dead is None:
