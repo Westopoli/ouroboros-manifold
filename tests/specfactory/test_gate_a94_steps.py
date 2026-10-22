@@ -293,6 +293,7 @@ def test_gate_specfactory_regression_tolerates_a_standing_red(tmp_path):
     _write(repo, "tests/specfactory/test_standing_red.py", "def test_standing_red():\n    assert False\n")
     _commit(repo, "standing red in base")
     base = _git(repo, "rev-parse", "HEAD").strip()
+    _git(repo, "update-ref", "refs/remotes/origin/main", base)  # stage 0 base replaces the base arg with origin/main
     _write(repo, "tests/specfactory/test_unrelated_ok.py", "def test_unrelated_ok():\n    assert True\n")
     _commit(repo, "unrelated change")
     proc = _gate(tmp_path, repo, base)
