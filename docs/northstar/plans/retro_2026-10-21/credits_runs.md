@@ -2,6 +2,14 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
+Running total (actual, batch and SDK): $13.70 of $200; hard stop $190; expires 2026-10-24.
+Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
+
+## SDK runs (from 2026-10-22)
+
+| Date | Purpose | Model | Cap | Actual | Report |
+|---|---|---|---|---|---|
+
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
 | Job | Batch id | Model | Requests | Estimate (ceiling, batch rates) | State | Actual at batch rates |
