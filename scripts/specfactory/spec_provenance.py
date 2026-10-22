@@ -2,17 +2,25 @@
 # spec: docs/northstar/plans/2026-10-07-visible-game-spec.md Lane H part 3
 #       (the spec provenance lint, HARNESS-provenance; Rev 12b and Rev 12c batch 2 rulings)
 # See also: scripts/specfactory/pre_gate.sh (runs this when PRE_GATE_SPEC is set, DRAFT-pregate-spec-env)
-"""spec_provenance.py <spec.md>: print `<spec path>:<line>: (<n>) <text>` per finding.
+"""spec_provenance.py <spec.md> [--pieces ID[,ID...]]: print `<spec path>:<line>: (<n>) <text>` per finding.
 
 Exit 1 on any finding, 0 on none, 2 on usage. Reasons: (1) untagged behaviour unit,
 (2) a stand-in-for-a-source phrase, (3) [P ..] without file:line or an approval heading
 without file:line, (4) [B R-id] absent from the epics, (5) [W Q-id] not closed in the
 register (closed or reading), (6) [DRAFT-name] with no ledger or register row, (7) CLASH_PAIRS on one piece id, (8) a [B R-id] pin missing or stale (rule_pins.py),
 (9) a quantified [W] quote with no [ASSERT file::test] that asserts its words, (10) a number after a [W] quote with no DRAFT- in its
-sentence, (11) an R-id set aside with no [OPEN Q-x] on an open register row that names a waiting piece (HARNESS-C235).
+sentence and no [P file:line] tag anywhere in its unit (a cited number is not a draft), (11) an R-id set aside with no [OPEN Q-x] on an open register row that names a waiting piece (HARNESS-C235).
 Unit: a heading line, a list item with its continuation lines, or a blank-separated
 paragraph, reported at its first line. A tag in the unit, or in the lead-in paragraph a
-list item continues, covers it. Python standard library only.
+list item continues, covers it.
+--pieces: every reason is still computed over the whole file, but only the findings whose line lies inside a
+paragraph that names a listed id are printed. A paragraph names an id when it opens with the bold token `**ID`
+followed by a space, a comma or an open parenthesis, or with a list item `- ID` (same followers, or end of line)
+or ``- `ID` ``. It runs to the line before a blank line outside a fence, a heading, or (list forms) the next list
+item. The last stdout line is `PROVSCOPE <path> pieces=<ids> paragraphs=<k> in-scope=<n> whole-file=<N>`. When no
+listed id opens a paragraph the whole file is checked as today (k = 0, no WARN); when one does, each listed id that
+opens none gets `PROVSCOPE WARN <path> id=<id> opens no paragraph`, which never changes the exit code. `--pieces ""`
+is an empty list. Python standard library only.
 """
 import hashlib
 import re
@@ -237,6 +245,9 @@ def reason10(units, ctx):
         tags = list(W_TAG.finditer(u.text))
         if not tags:
             continue
+        # See also: the module docstring, reason (10): a [P file:line] tag anywhere in the unit cites its numbers.
+        if any(CITATION.search(m.group(1)) for m in re.finditer(r"\[P ([^\]]*)\]", u.text)):
+            continue
         skip = [m.span() for m in NOT_A_NUMBER.finditer(u.text)]
         starts = [0] + [m.end() for m in re.finditer(r"\. ", u.text)] + [len(u.text) + 1]
         for m in NUMBER.finditer(u.text):
@@ -331,17 +342,76 @@ def load_context(root):
             "rows": rows, "root": root}
 
 
+LIST_START = re.compile(r"^\s*[-*+]\s")
+
+
+def paragraph_ranges(lines, ids):
+    """{opening line: last line} of the paragraphs that name a listed id, and the ids that opened one."""
+    ranges, matched, in_fence = {}, set(), False
+    for i, raw in enumerate(lines):
+        if raw.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        for pid in ids:
+            e = re.escape(pid)
+            # DRAFT-provscope-forms: the opening forms that name an id.
+            if re.match(r"\*\*" + e + r"(?=[ ,(])", raw):
+                list_form = False
+            elif re.match(r"\s*- " + e + r"(?=[ ,(]|$)|\s*- `" + e + "`", raw):
+                list_form = True
+            else:
+                continue
+            end, fenced = i, False
+            for j in range(i + 1, len(lines)):
+                if lines[j].lstrip().startswith("```"):
+                    fenced = not fenced
+                elif not fenced and (not lines[j].strip() or lines[j].startswith("#")
+                                     or (list_form and LIST_START.match(lines[j]))):
+                    break
+                end = j
+            ranges[i + 1] = end + 1
+            matched.add(pid)
+    return ranges, matched
+
+
+def parse_args(argv):
+    """(spec, ids) with ids None for one-argument mode, or None on a usage error."""
+    if len(argv) < 2:
+        return None
+    ids, rest = None, argv[2:]
+    if rest:
+        if len(rest) != 2 or rest[0] != "--pieces":
+            return None
+        ids = list(dict.fromkeys(t for t in rest[1].split(",") if t))
+    return argv[1], ids
+
+
 def main(argv):
-    if len(argv) != 2 or not Path(argv[1]).is_file():
-        print("usage: spec_provenance.py <spec.md>", file=sys.stderr)
+    args = parse_args(argv)
+    if args is None or not Path(args[0]).is_file():
+        print("usage: spec_provenance.py <spec.md> [--pieces ID[,ID...]]", file=sys.stderr)
         return 2
-    spec = Path(argv[1])
-    units = split_units(spec.read_text(errors="replace").splitlines())
+    spec, ids = Path(args[0]), args[1]
+    lines = spec.read_text(errors="replace").splitlines()
+    units = split_units(lines)
     ctx = load_context(find_root(spec))
     findings = sorted({f for r in REASONS for f in r(units, ctx)})
-    for line, n, text in findings:
-        print(f"{argv[1]}:{line}: ({n}) {text}")
-    return 1 if findings else 0
+    shown = findings
+    if ids is not None:
+        ranges, matched = paragraph_ranges(lines, ids)
+        # DRAFT-provscope-nomatch: no matched paragraph means the whole file is checked, with no WARN line.
+        if ranges:
+            shown = [f for f in findings if any(a <= f[0] <= b for a, b in ranges.items())]
+    for line, n, text in shown:
+        print(f"{args[0]}:{line}: ({n}) {text}")
+    if ids is not None:
+        print(f"PROVSCOPE {args[0]} pieces={','.join(ids)} paragraphs={len(ranges)} in-scope={len(shown)} whole-file={len(findings)}")
+        for pid in ids if ranges else ():
+            if pid not in matched:
+                print(f"PROVSCOPE WARN {args[0]} id={pid} opens no paragraph")
+    return 1 if shown else 0
 
 
 if __name__ == "__main__":
