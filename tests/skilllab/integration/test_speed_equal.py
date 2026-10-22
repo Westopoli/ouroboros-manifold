@@ -217,34 +217,38 @@ W = ctypes.c_void_p(7)
 class FakeSim:
     """The surface firing._Sample reads. units: id -> {pos, layer, type, alive, facing, target}. `calls` counts every query by name."""
 
-    def __init__(self, units, blocked=()):
+    def __init__(self, units, blocked=(), by_world=None):
         self.units = units
+        self.by_world = by_world or {}    # world handle value -> units dict: answers for that handle; any other handle reads `units`
         self.blocked = set(blocked)
         self.calls = Counter()
 
+    def _u(self, w):
+        return self.by_world.get(w.value, self.units)
+
     def unit_alive(self, w, u):
         self.calls["unit_alive"] += 1
-        return self.units[u]["alive"]
+        return self._u(w)[u]["alive"]
 
     def unit_pos(self, w, u):
         self.calls["unit_pos"] += 1
-        return self.units[u]["pos"]
+        return self._u(w)[u]["pos"]
 
     def unit_layer(self, w, u):
         self.calls["unit_layer"] += 1
-        return self.units[u]["layer"]
+        return self._u(w)[u]["layer"]
 
     def unit_type(self, w, u):
         self.calls["unit_type"] += 1
-        return self.units[u]["type"]
+        return self._u(w)[u]["type"]
 
     def unit_target(self, w, u):
         self.calls["unit_target"] += 1
-        return self.units[u].get("target", 0)
+        return self._u(w)[u].get("target", 0)
 
     def unit_facing(self, w, u):
         self.calls["unit_facing"] += 1
-        return self.units[u].get("facing", 0.0)
+        return self._u(w)[u].get("facing", 0.0)
 
     def type_stats(self, w, t):
         self.calls["type_stats"] += 1
@@ -293,8 +297,8 @@ def _units():
 SIDE0, SIDE1 = [1, 2, 3], [100, 101, 102]
 
 
-def _all_answers(module, eng, arc=360.0, s0=SIDE0, s1=SIDE1):
-    return (module.count_able(eng, W, s0, s1, arc), module.count_weighted(eng, W, s0, s1, arc), module.states(eng, W, s0, s1, arc))
+def _all_answers(module, eng, arc=360.0, s0=SIDE0, s1=SIDE1, w=W):
+    return (module.count_able(eng, w, s0, s1, arc), module.count_weighted(eng, w, s0, s1, arc), module.states(eng, w, s0, s1, arc))
 
 
 def _tie_units():
@@ -391,12 +395,20 @@ def test_the_cache_key_holds_the_arguments_the_world_and_the_engine():
     units[2]["facing"] = math.pi          # faces away from the enemy: outside a narrow arc
     eng = EpochSim(units)
     wide = _all_answers(firing, eng, 360.0)
+    sub = _all_answers(firing, eng, 360.0, s0=[1, 2], s1=SIDE1)       # right after `wide`: same arc, only the unit lists differ
     narrow = _all_answers(firing, eng, 30.0)
+    assert sub == _all_answers(ref, FakeSim(units), 360.0, s0=[1, 2], s1=SIDE1) and sub != wide, "the unit lists must reach the answer"
     assert narrow == _all_answers(ref, FakeSim(units), 30.0) and wide == _all_answers(ref, FakeSim(units), 360.0)
     assert narrow != wide, "the arc must reach the answer"
-    sub = _all_answers(firing, eng, 360.0, s0=[1, 2], s1=SIDE1)
-    assert sub == _all_answers(ref, FakeSim(units), 360.0, s0=[1, 2], s1=SIDE1) and sub != wide
-    assert firing.count_able(eng, ctypes.c_void_p(8), SIDE0, SIDE1, 360.0) == wide[0]     # another world handle, same answers asked again
+    gone = _units()
+    for u in SIDE1:
+        gone[u]["alive"] = False
+    both = EpochSim(units, by_world={8: gone})          # the answers depend on the world handle: handle 8 sees the enemies dead
+    w8 = ctypes.c_void_p(8)
+    first7 = _all_answers(firing, both)                 # handle 7, then handle 8 at the same epoch, same ids, same arc
+    assert first7 == wide
+    got8 = _all_answers(firing, both, w=w8)
+    assert got8 == _all_answers(ref, FakeSim(units, by_world={8: gone}), w=w8) and got8 != first7, "the world handle must reach the answer"
     dead = _units()
     for u in SIDE1:
         dead[u]["alive"] = False
