@@ -3350,8 +3350,8 @@ owns = ["scripts/specfactory/merge_gate.sh", "docs/northstar/plans/workflows_202
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_base_stage.py"]
 depends_on = ["HARNESS-C1b", "HARNESS-methodcheck"]
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "f7bdfe1" }  # landed f7bdfe1
+tests_pending = false
 size_estimate = "merge_gate.sh stage 0 'base': fetch, resolve origin/main to a sha, reject a candidate that lacks it, set BASE_REF to the sha; MERGE_GATE_STOP_AFTER=base test hook; rules.md section (b) locked command merges main and runs pre_gate inside the lock; under 60 lines"
 
 # FINDING-c2-5-pixels-red-under-gate (Architect 2026-10-21): the gate discards the pytest output and PNGs of a red

@@ -236,6 +236,8 @@ def _gate(tmp_path: Path, controls: dict[str, str], ids: str, *rows: str, placeh
     _git(repo, "config", "user.name", "gate")
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     pieces = _pieces(tmp_path, *rows)
     env = {"MERGE_GATE_PIECES": str(pieces),
            "MERGE_GATE_PLACEHOLDERS": str(_placeholders(tmp_path, *placeholders)),
