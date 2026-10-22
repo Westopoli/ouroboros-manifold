@@ -2,7 +2,7 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (actual, batch and SDK): $16.41 of $200; hard stop $190; expires 2026-10-24.
+Running total (Dispatcher runs through batch 8 $1.44 + Architect runs through the SHOWCASE scan $1.66 + $13.70 base): $16.80 of $200; hard stop $190; expires 2026-10-24.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
 ## SDK runs (from 2026-10-22)
@@ -21,6 +21,10 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-22 | (Architect) records clerk "lane C paragraphs VG-C-land-marks, VG-C-facing-arrow, PROTO-ground-relief", pushed bdbe896f | claude-sonnet-5-5 | $5 | $0.187 | 10 turns, success |
 | 2026-10-22 | records batch 7 (scripts, LAB-REV2 owns, credits rows) | claude-sonnet-5-5 | $5 | $0.195 | 14 turns, success |
 | 2026-10-22 | records batch 7b (venvlink syntax, owner edges, credits row) | claude-sonnet-5-5 | $5 | (pending, this run) | |
+| 2026-10-22 | records batch 8 (venv-link syntax, revert LAB-REV2 edges, VG-C7) | claude-sonnet-5-5 | $5 | $0.234 | 18 turns, success |
+| 2026-10-22 | (Architect) records clerk "S-005 verdict flipped to rejected", pushed dbeefd25 | claude-sonnet-5-5 | $5 | $0.111 | 6 turns, success |
+| 2026-10-22 | (Architect) engineer "secrets and personal-data scan of git history (SHOWCASE lane)" | claude-sonnet-5-5 | $5 | $0.162 | 9 turns, success |
+| 2026-10-22 | records batch 9 (HARNESS-record-files paragraph and row, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) | |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
