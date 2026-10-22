@@ -1880,7 +1880,7 @@ owns = ["tests/qa/desktop/plays/F/S-140.py", "tests/qa/desktop/plays/F/_play.py"
 owns_glob = []
 acceptance = ["tests/qa/desktop/plays/F/S-140.py"]
 depends_on = ["VG-F-SKEL-B", "VG-F-S143", "VG-F-S241"]
-status = { state = "attached", attach_sha = "f04f0d1a" }
+status = { state = "queued" }
 tests_pending = true
 size_estimate = "one play file: select the front UNITS_MAX own units on the side with the most room, click 360 px past their leading edge with a clear corridor, progress check unchanged"
 
