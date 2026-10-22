@@ -145,7 +145,7 @@ Rules
 
 Inputs: colliding intents; faction economies; tech; RNG.
 Outputs: collision record (strengths, winner, margin, refund) in the tick log.
-Open flags: none. The multi-faction collision resolver is built and was never described in the bible before this story (Stage 1 algorithm pass finding).
+Open flags: none (Q-039-01 closed, Architect 2026-10-18). Direction changed 2026-10-18, rewrite pending: collisions are grouped across matured telegraphs and immediate attacks in one resolution list, and step 3c only matures (this changes R-036-03); R-039-05 and R-039-06 are not built, the resolver skips owned targets (FINDING-sim-F-no-collisions, 2026-10-21). The multi-faction collision resolver is built and was never described in the bible before this story (Stage 1 algorithm pass finding).
 
 ### S-040 — Empires fracture
 As a commander, I want a large empire to shed provinces to institutional revolt no matter how calm they are, so that no faction, mine included, can swallow the galaxy.
