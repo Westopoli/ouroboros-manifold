@@ -1994,7 +1994,7 @@ wave = 9
 owns = ["scenes/tactical_c/layer_view.gd", "scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_layerkeys.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py", "scenes/settings/settings.gd", "scenes/tactical_c/hud/selection_panel.gd", "tests/test_vg_a_a16.gd", "docs/northstar/story_reviews/A.md", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S002-layer-keys-arm-and-click.png"]  # tactical_view.gd: the input handler lines only, plus the one-line c["layer"] fix in _send_match_command (FINDING-match-set-layer-no-layer, g9); settings.gd the keybind card rows; selection_panel.gd the digit guard; tests/test_vg_a_a16.gd its retired pins only; A.md the S-002 re-shot row; the westley README row and png copy (name is the drafter's draft from vg-wave12-laneAlayerkeys.js). Record batch 7 (Architect 2026-10-14)
 owns_glob = []
 acceptance = ["tests/test_vg_a_layerkeys.gd"]
-depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW", "VG-A-startforce", "VG-CONTRACT-layerspot", "VG-B24b-quality-control", "VG-E1W"]  # VG-D-VIEW and VG-A-startforce also own scenes/tactical_c/tactical_view.gd and land first: the three-armies binding is the sprint's shot, the keybind piece is a strip rework and can wait (Architect 2026-10-14); VG-CONTRACT-layerspot per the Architect 2026-10-14 (record batch 7); VG-B24b-quality-control (queued) also owns scenes/settings/settings.gd (clerk addition for owner_lint)
+depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW", "VG-A-startforce", "VG-CONTRACT-layerspot", "VG-B24b-quality-control", "VG-E1W", "VG-C-land-marks"]  # VG-D-VIEW and VG-A-startforce also own scenes/tactical_c/tactical_view.gd and land first: the three-armies binding is the sprint's shot, the keybind piece is a strip rework and can wait (Architect 2026-10-14); VG-CONTRACT-layerspot per the Architect 2026-10-14 (record batch 7); VG-B24b-quality-control (queued) also owns scenes/settings/settings.gd (clerk addition for owner_lint); shared tactical_view.gd: VG-C-land-marks' one line lands first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "Alt plus layer number arms a transfer for the whole selection, the next map click places it (R-002-08, R-105-06 rewritten 2026-10-13); no narrowing; the To-layer strip buttons go; re-shot S-002"
@@ -2006,7 +2006,7 @@ wave = 9
 owns = ["scenes/tactical_c/route_line.gd", "tests/test_vg_a_routeline.gd", "tests/qa/desktop/plays/F/S-140.py", "scenes/tactical_c/tactical_view.gd", "autoload/c_bridge.gd", "tests/fixtures/route_line/prototype_route_frame.png", "docs/northstar/story_reviews/westley/A-S140-route-line-on-the-way.png", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/F.md", "tests/qa/desktop/plays/A/test_S_101_route_line.py", "docs/northstar/story_reviews/A.md"]  # A.md: the S-101 queue row (Architect 2026-10-14); record batch 7 (Architect 2026-10-14): tactical_view.gd the hook and qa_state key, c_bridge.gd the bridge method, golden fixture and westley copy names from vg-wave12-laneAroute.js (args.golden, args.copyName defaults)
 owns_glob = []
 acceptance = ["tests/test_vg_a_routeline.gd"]
-depends_on = ["VG-A18", "VG-W2", "VG-CONTRACT-route", "VG-D-VIEW", "VG-A-startforce", "VG-A-layerkeys", "VG-F-S143", "VG-A16", "VG-F-S140-CLICK", "VG-E1W"]  # VG-F-S140-CLICK (TD-VG-F-s140-click, Architect 2026-10-20): routeline re-shoots S-140 on the rewritten play, so it lands after it; VG-F-S143 (queued, after VG-F-S241) also owns docs/northstar/story_reviews/F.md (clerk addition for owner_lint); record batch 7: the contract piece first, then the three queued owners of tactical_view.gd
+depends_on = ["VG-A18", "VG-W2", "VG-CONTRACT-route", "VG-D-VIEW", "VG-A-startforce", "VG-A-layerkeys", "VG-F-S143", "VG-A16", "VG-F-S140-CLICK", "VG-E1W", "VG-C-land-marks"]  # VG-F-S140-CLICK (TD-VG-F-s140-click, Architect 2026-10-20): routeline re-shoots S-140 on the rewritten play, so it lands after it; VG-F-S143 (queued, after VG-F-S241) also owns docs/northstar/story_reviews/F.md (clerk addition for owner_lint); record batch 7: the contract piece first, then the three queued owners of tactical_view.gd; shared tactical_view.gd: VG-C-land-marks' one line lands first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "copies the prototype's route line from scenes/mockups/walkers/walkers_mockup.gd (origin/push/proto-walkers, _draw), fed by the unit's stored route (W2) or the order target when none"
@@ -2137,6 +2137,46 @@ depends_on = ["VG-C-unitscale", "VG-C6b"]  # both attached owners of ground_unit
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "ground fit: normal from four height samples, Basis from normal and facing, lift 1.0 wu; one test file; TD-VG-C-ground-lift moves the walker-height pins"
+
+[[piece]]
+id = "VG-C-land-marks"
+manager = "Architect"
+wave = 9
+owns = [
+  "scenes/tactical_c/unit_visuals.gd",
+  "scenes/ground3d/ground3d.gd",
+  "scenes/tactical_c/tactical_view.gd",  # shared with lane A: only the one visibility line in _update_display_px; lands before the queued lane A owners
+  "tests/test_vg_c_land_marks.gd",
+]
+owns_glob = []
+acceptance = ["tests/test_vg_c_land_marks.gd"]
+depends_on = ["VG-C-unitscale", "VG-C6b"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "land-marks: layer_rings_enabled in unit_visuals.gd, occluded_ids in ground3d.gd via GroundPick.pick, one visibility line in tactical_view.gd, one test file; DRAFT-occlusion-slack 20 wu"
+
+[[piece]]
+id = "VG-C-facing-arrow"
+manager = "Architect"
+wave = 9
+owns = ["scenes/ground3d/ground_units.gd", "scenes/tactical_c/unit_visuals.gd", "tests/test_vg_c_facing_arrow.gd"]
+owns_glob = []
+acceptance = ["tests/test_vg_c_facing_arrow.gd"]
+depends_on = ["VG-C-unit-ground-fit", "VG-C-land-marks"]  # both own the same two scene files and land first
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "facing arrow: an Arrow child in _body (3D) and _make_node (2D), white, 0.4 x body width (DRAFT-facing-arrow-len); one test file"
+
+[[piece]]
+id = "PROTO-ground-relief"
+manager = "Architect"
+wave = 9
+owns = ["scenes/ground3d/ground3d.gd", "scenes/ground3d/ground_mesh.gd", "scenes/ground3d/ground_bands.gd"]
+owns_glob = []
+acceptance = []
+depends_on = ["VG-C-land-marks"]  # shares ground3d.gd; the prototype branch never lands before Westley's pick
+status = { state = "queued" }
+size_estimate = "prototype: RELIEF_VARIANT a/b/c in ground_mesh.gd, sun elevation, six frames to westley/; no landing"
 
 [[piece]]
 id = "VG-B23b-dotcolour"
@@ -2425,7 +2465,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_startforce.gd", "tests/qa/desktop/plays/A/test_S_105_start_groups.py"]  # the test and the play are also covered by VG-A's globs; listing them keeps the owner explicit like the VG-E-prodslot row
 owns_glob = []
 acceptance = ["tests/test_vg_a_startforce.gd"]
-depends_on = ["VG-E-startforce", "VG-A18", "VG-A16", "VG-A", "VG-F-NETTICK", "VG-D-VIEW", "VG-E1W", "VG-CONTRACT-force-groups"]  # VG-E-startforce: the frame field; VG-A18: the opening frame must fit all three groups; VG-A16 and VG-F-NETTICK own earlier edits of the same file; VG-D-VIEW (building) also owns scenes/tactical_c/tactical_view.gd and lands first; VG-A-layerkeys comes after this piece (Architect 2026-10-14)
+depends_on = ["VG-E-startforce", "VG-A18", "VG-A16", "VG-A", "VG-F-NETTICK", "VG-D-VIEW", "VG-E1W", "VG-CONTRACT-force-groups", "VG-C-land-marks"]  # VG-E-startforce: the frame field; VG-A18: the opening frame must fit all three groups; VG-A16 and VG-F-NETTICK own earlier edits of the same file; VG-D-VIEW (building) also owns scenes/tactical_c/tactical_view.gd and lands first; VG-A-layerkeys comes after this piece (Architect 2026-10-14); shared tactical_view.gd: VG-C-land-marks' one line lands first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce client: bind groups 1 to 3 from the mission frame, qa_state control_groups key; selection panel not edited"
@@ -2454,7 +2494,7 @@ wave = 15
 owns = ["scenes/ground3d/camera_rig_3d.gd", "tests/test_vg_a_a18_3d.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_a_a18_3d.gd"]
-depends_on = ["VG-A18", "HARNESS-provenance-scope"]
+depends_on = ["VG-A18", "HARNESS-provenance-scope", "VG-C-land-marks"]  # shared tactical_view.gd: VG-C-land-marks' one line lands first
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the A18 paragraph (:390) plus docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md; rig fov restored to the approved 55 (FINDING-rig-fov-lost), and the D-VIEW height 5400 and the sightdisc 0.766 pin are re-checked by this piece
@@ -2469,7 +2509,7 @@ wave = 15
 owns = ["scenes/tactical_c/selection_box.gd", "tests/test_vg_a_dragbox.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_a_dragbox.gd"]
-depends_on = ["VG-A-startforce"]  # the one scenes/tactical_c/tactical_view.gd call lands after VG-A-startforce's client piece on that file
+depends_on = ["VG-A-startforce", "VG-C-land-marks"]  # the one scenes/tactical_c/tactical_view.gd call lands after VG-A-startforce's client piece on that file; shared tactical_view.gd: VG-C-land-marks' one line lands first
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the VG-A-dragbox paragraph, after VG-A-startforce
@@ -2519,7 +2559,7 @@ wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_e_e1w.gd", "tests/qa/desktop/plays/E/S-235.py"]
 owns_glob = []
 acceptance = ["tests/test_vg_e_e1w.gd"]
-depends_on = ["VG-E1", "VG-A18", "VG-D-VIEW", "VG-E1M", "VG-E1N"]  # VG-E1W lands first among the queued owners of tactical_view.gd; VG-A-layerkeys, VG-A-startforce and VG-A-routeline depend on it (Architect 2026-10-20)
+depends_on = ["VG-E1", "VG-A18", "VG-D-VIEW", "VG-E1M", "VG-E1N", "VG-C-land-marks"]  # VG-E1W lands first among the queued owners of tactical_view.gd; VG-A-layerkeys, VG-A-startforce and VG-A-routeline depend on it (Architect 2026-10-20); shared tactical_view.gd: VG-C-land-marks' one line lands first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "E1w wiring of TickerBeats and MapMarkers into the tactical view (PIECES entries, frame-path calls, qa_state map_markers); the S-235 play and shot"

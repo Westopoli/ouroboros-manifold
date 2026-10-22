@@ -74,6 +74,7 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Places lane drafts of rev 6a: DRAFT-shape-harm 0.5, DRAFT-first-ring-spread 2, DRAFT-field-cost-share 15 to 55 percent (Architect, 2026-10-21)
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
 - DRAFT-a18-pitch 50 degrees; DRAFT-home-anchor-inboard 1200 wu (Architect, 2026-10-22)
+- DRAFT-occlusion-slack 20 wu; DRAFT-relief-k 0.6; DRAFT-contour-step 100 wu (Architect, 2026-10-22)
 - DRAFT-lab-speed-ratio-1 0.75, DRAFT-lab-speed-ratio-1b 0.68 (Architect, 2026-10-21)
 - DRAFT-facing-arrow-len 0.4 x body width, white (Architect, 2026-10-22, from Westley's 2/5)
 
