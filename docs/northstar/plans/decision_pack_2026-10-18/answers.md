@@ -83,3 +83,39 @@ Still quite a few units, only decreased by ~25% from what I can tell, units are 
 Looks good
 
 ### 6 
+Approved
+
+### 7
+We won't have a map this small in reality, but approved.
+
+## Qs
+Q-B23b-01 It's fine as it is for now
+
+Q-C2-5-01 A 
+
+Q-156-02 not enough context
+
+Q-246-02 Layout engine, landscape engine conforms. 
+
+Q-082-03 defer to after beta
+
+Q-147-01 Already decided this: Greek
+
+Q-100-01 B
+
+Q-208-01 defer to after beta
+
+Q-228-01 A
+
+Q-149-01 defer to post beta
+
+B22-1 A
+
+B22-2 A
+
+B22 publish A
+
+doc branch method ask 1 Is the method page the public face? B
+
+C1 Lab fight length: A
+C2 Lab speed: B, I think we talked about this before, I asked a claude chat whether it's alreayd really fast or of it's improvable, it said improveable, investigate the convo and what was done as a result of it. 
