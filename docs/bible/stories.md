@@ -8,7 +8,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-002 | E-01 | "I order selected units to a layer and they go there as soon as they can." | Spec'd | `epics/E-01-layer-system.md` S-002 |
 | S-003 | E-01 | "I give units a standing layer preference and they keep to it without me re-ordering at every obstacle." | Spec'd | `epics/E-01-layer-system.md` S-003 |
 | S-004 | E-01 | "Changing layers takes time and exposes the unit; on a slope the halfway line is a place I can see and hold." | Spec'd | `epics/E-01-layer-system.md` S-004 |
-| S-005 | E-01 | "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage." | Seen (Westley 2026-10-22; the sight disc is a screen circle, fix VG-A-sightdisc) | `epics/E-01-layer-system.md` S-005 |
+| S-005 | E-01 | "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage." | Spec'd | `epics/E-01-layer-system.md` S-005 |
 | S-006 | E-01 | "I spend a pulse to see every layer around a unit for two seconds, then it is gone and on cooldown." | Spec'd | `epics/E-01-layer-system.md` S-006 |
 | S-007 | E-01 | "A tall obstacle hides units on more layers than a short one; cover hides but never protects or blocks." | Spec'd | `epics/E-01-layer-system.md` S-007 |
 | S-008 | E-01 | "I know whether my unit can shoot an enemy one layer up." | Spec'd, blocked on Q-008-02, Q-008-03 | `epics/E-01-layer-system.md` S-008 |

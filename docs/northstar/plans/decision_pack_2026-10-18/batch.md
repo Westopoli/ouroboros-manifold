@@ -6,6 +6,8 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 
+### P10 Sight and the dimmed outside (S-005): rejected 2026-10-22; re-shot comes after the ground-derived sight disc lands.
+
 ### P8 Units close on the ground (S-132)
 
 ![](../../story_reviews/westley/C-S132-ground-units-close.png)

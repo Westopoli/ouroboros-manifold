@@ -28,7 +28,7 @@ Each picture has one block under its file name, in this form: `**What you see:**
 
 | File | Verdict | Cite |
 |---|---|---|
-| `C-S005-ground-sight-close.png` | Approved: "the screenshot looks good" (Westley, 2026-10-22); two findings: the sight disc is a screen circle (already VG-A-sightdisc, his words added), buildings randomly rotated (FINDING-s005-building-yaw-random, E1k yaw amendment) | C.md S-005 row |
+| `C-S005-ground-sight-close.png` | Rejected: "Reject it, I'd like to see an improved version based on my feedback" (Westley, 2026-10-22; earlier "the screenshot looks good" with two findings); re-shot owed after VG-A-sightdisc and the E1k yaw amendment land, same camera (height 300, run-20261021T221300Z-zoomed tick 9774) | C.md S-005 row |
 | `C-S001-ground-slope-and-blocked-band-close.png` | Rejected: "very mangled" (Westley, 2026-10-22); white lines are the slope midline bars, the group in the land is units behind the ridge whose 2D marks draw through the terrain, the steep face does not read as a wall; facing arrows asked, layer rings off in the land era (DEC-S001-facing-arrow, DEC-S001-no-layer-ring-land; FINDING-s001-marks-through-terrain, FINDING-s001-steep-face-flat); slope markers removed by his rule (DEC-S001-no-slope-markers) | C.md S-001 row |
 | `C-S132-ground-units-close.png` | Approved: "Yes I can tell them apart" (Westley, 2026-10-22); clipping into the ground noted, fix for beta (FINDING-s132-body-clip, piece VG-C-unit-ground-fit) | C.md S-132 row |
 | `P-S191-terrain-obeys-pass2-carved-routes.png` | Approved as a prototype: "Approved" (Westley, 2026-10-21, new rulings 6); S-191 and S-189 stay as they are | `P.md` row 3 (shot `shots/proto-terrain-obeys-2/obey_16000_1.png`); programme lane table, P layout engine and places row |
