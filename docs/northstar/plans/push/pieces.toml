@@ -2805,7 +2805,7 @@ wave = 10
 owns = ["docs/northstar/research/layer_dynamics/README.md", "docs/northstar/plans/skilllab-harness-spec.md", "docs/northstar/ambiguity_register.md", "docs/northstar/ROADMAP.md", "docs/northstar/plans/push/pieces.toml", "tests/specfactory/test_lab_docs.py"]  # Depends on everything (spec) except E2 and E4 (decision 39 item 7, 2026-10-19). New file: tests/specfactory/test_lab_docs.py. README.md owner SPACELAB-1 attached (take-over). skilllab-harness-spec.md taken from LAB-REV2-L1 (built); L7 rewrites clauses 5, 11, 12, 13, 14, 17, 18, 19, 20, 26, 28 (decision 39 item 2)
 owns_glob = []
 acceptance = ["tests/specfactory/test_lab_docs.py"]
-depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-BASE", "LAB-REV2-S", "LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3"]  # E2 and E4 removed (decision 39 item 7, 2026-10-19): they land after the lab landing; L7 documents arc and cone as built, L7B updates their behaviour docs after E2 and E4 land. test_l7_depends_on_every_other_lab_rev2_row is changed by a ruler row
+depends_on = ["VG-GUARD", "SPACELAB-1", "LAB-REV2-L1", "LAB-REV2-L2", "LAB-REV2-L3", "LAB-REV2-L4", "LAB-REV2-L5", "LAB-REV2-L6", "LAB-REV2-L8", "LAB-REV2-BASE", "LAB-REV2-S", "LAB-REV2-E0", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "LAB-REV2-G3PC", "LAB-REV2-SPEED", "LAB-REV2-SPEED-1B"]  # land with L7 in the lab landing (Architect 2026-10-22). E2 and E4 removed (decision 39 item 7, 2026-10-19): they land after the lab landing; L7 documents arc and cone as built, L7B updates their behaviour docs after E2 and E4 land. test_l7_depends_on_every_other_lab_rev2_row is changed by a ruler row
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "L7 docs and rows: README sections 3, 4, 5 (output rule), 7, 8; register rows Q-008-03, Q-008-07, Q-LAB-03 note; ROADMAP section 1 row; pieces.toml status rows"
@@ -3560,7 +3560,7 @@ owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/pre_gate.
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance_scope.py"]
 depends_on = ["HARNESS-C4"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "6a0eaca" }  # landed 6a0eaca
 tests_pending = true
 size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold or \"- ID\" opening names a piece id; a [P file:line] cite anywhere in the same unit clears reason 10; whole-file fallback when no id matches; a WARN line for unmatched ids; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"
 
@@ -3595,7 +3595,7 @@ tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
 size_estimate = "merge_gate.sh --tier fast|slow|full (default full): the fast tier per landing under the lock, the slow tier as a sweep on main every 3 landings or 2 hours with bisect-and-revert, a status_check sweep line, and the rules.md section (b) text; replaces the temporary landing rule when it lands"
 
-# The measurement engineer's report (stage timings, host dependencies) is pasted here at launch. Shared-file edit in merge_gate.sh and merge_gate_support.py, line by line (records clerk, from origin/main 2026-10-21; the Preflight re-verifies): merge_gate.sh:19 PYTHON default /home/westopoli/Projects/agora/.venv/bin/python becomes a repo-relative or environment path; merge_gate.sh:372 VENV_TARGET default $HOME/Projects/agora/.venv likewise; merge_gate_support.py has no /home/westopoli path today. gate_remote.sh must also find the baseline cache and scratch root without the box's ~/Projects/om-push.
+# The measurement engineer's report (stage timings, host dependencies) is pasted here at launch. Shared-file edit in merge_gate.sh and merge_gate_support.py, line by line (records clerk, from origin/main 2026-10-21; the Preflight re-verifies): merge_gate.sh:19 PYTHON default ~/Projects/agora/.venv/bin/python becomes a repo-relative or environment path; merge_gate.sh:372 VENV_TARGET default $HOME/Projects/agora/.venv likewise; merge_gate_support.py has no ~ path today. gate_remote.sh must also find the baseline cache and scratch root without the box's ~/Projects/om-push.
 # gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
 [[piece]]
 id = "HARNESS-gate-remote"
