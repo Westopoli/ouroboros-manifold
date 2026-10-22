@@ -176,6 +176,19 @@ Groups (canvas coordinates, canvas centre 2000, 2000):
 - side 1: 8 x Vanguard, blob, layer 0, at (2350, 2000), order attack_move
 - side 1: 8 x Interceptor, blob, layer 0, at (2350, 2000), order attack_move
 
+## s3_vision_control (S3)
+
+Status: unconfirmed draft, not measured, for Westley's look.
+
+Sixteen Raiders sit one layer above sixteen Raiders; every pair is cross-layer. The vision family's positive control fixture only: no ordinary sweep runs it.
+
+Numbers:
+- HIGH_LAYER = 1
+
+Groups (canvas coordinates, canvas centre 2000, 2000):
+- side 0: 16 x Raider, blob, layer 1, at (1650, 2000), order attack_move
+- side 1: 16 x Raider, blob, layer 0, at (2350, 2000), order attack_move
+
 ## s4_bait (S4)
 
 Status: unconfirmed draft, not measured, for Westley's look.

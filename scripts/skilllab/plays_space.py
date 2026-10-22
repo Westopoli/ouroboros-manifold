@@ -1,5 +1,5 @@
 """Registered space-lab draft plays (spec: docs/northstar/plans/2026-10-05-space-lab-stage1-spec.md, lane "plays").
-Fourteen plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
+Fifteen plays, each a Setup plus timeline in play coordinates (centre 0, 0; side 0 on the left), none measured. Every number
 is a named draft constant, provisional (2026-10-05), for Westley's look at docs/northstar/research/layer_dynamics/plays_drafts.md.
 Regenerate the page: python -m scripts.skilllab.plays_space"""
 import dataclasses
@@ -156,6 +156,11 @@ def _types_by_reach():
                    _blob(0, "Vanguard", m["Vanguard"], -START_GAP / 2)] + _enemy(m.items()), unit_types=_types("Interceptor"))
 
 
+def _vision_control():
+    return _setup([_blob(0, "Raider", UNITS, -START_GAP / 2, layer=HIGH_LAYER)] + _enemy([("Raider", UNITS)]),
+                  unit_types=_types("Raider"))
+
+
 def _over_the_choke():
     m = _mix("s3_over_the_choke")
     return _setup([_blob(0, "Bombard", m["Bombard"], HOLD_X, layer=2),
@@ -239,6 +244,9 @@ PLAYS = {
         "Eight Raiders sit one layer above the enemy and fire down; the eight Vanguards fight on the enemy's layer."),
     "s3_types_by_reach": _play(_types_by_reach, "S3", {"HIGH_LAYER": HIGH_LAYER},
         "Eight Interceptors sit one layer above the enemy; the eight Vanguards fight on the enemy's layer."),
+    "s3_vision_control": _play(_vision_control, "S3", {"HIGH_LAYER": HIGH_LAYER},
+        "Sixteen Raiders sit one layer above sixteen Raiders; every pair is cross-layer. The vision family's positive control "
+        "fixture only: no ordinary sweep runs it."),
     "s3_over_the_choke": _play(_over_the_choke, "S3", {"WALL_HALF": WALL_HALF, "GAP_HALF": GAP_HALF},
         "Bombards fire over the wall top; a Raider past the choke spots for them."),
     "s3_dark_striker": _play(_dark_striker, "S3", {"HIGH_LAYER": HIGH_LAYER},
@@ -271,6 +279,7 @@ _ANCHORS = {
     "s2_screen": Anchors("defender", "exit_screen", "blob"),
     "s3_types_by_reach": Anchors("defender", "behind_cover", "blob"),
     "s3_layer_above": Anchors("defender", "behind_cover", "blob"),
+    "s3_vision_control": Anchors("defender", "behind_cover", "blob"),
     "s3_over_the_choke": Anchors("defender", "choke_mouth", "blob"),
     "s3_dark_striker": Anchors("attacker", "exit_line", "blob"),
     "s3_ping_then_commit": Anchors("attacker", "exit_line", "blob"),
