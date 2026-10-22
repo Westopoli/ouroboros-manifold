@@ -3536,7 +3536,7 @@ status = { state = "attached", attach_sha = "43bf9462" }
 tests_pending = true
 size_estimate = "SPEED-1B the firing.py levers after the epoch cache, identical results: alive from per-tick hp and a static type cache; layer cached per epoch (the epoch is bumped by step), never invalidated on set_layer only: if the csrc layer can change within an epoch without a step, the layer lever is dropped; single sort per unit, key computed once (squared distance, then id; lazy nearest-first measured slower, 0.67 against 0.65), hoisted code evaluation with gate order 1 to 5 kept; same equality tests against the frozen reference tests/skilllab/ref_firing_rev2.py; acceptance DRAFT-lab-speed-ratio-1b 0.68 (Architect 2026-10-22, implementation; Westley may veto; loosens the earlier 0.55: the auditor's measured 0.65 with margin, levers (a) to (d) in the repo idiom, no distance-cap prune)"
 
-# SPEED-2 (lab overseer a7, Architect ruling 2026-10-21; Westley may veto): the fight.py half of the lab speed-up, after LAB-REV2-SPEED and LAB-REV2-L8M2 (the owners of fight.py before it). DRAFT-lab-speed-ratio-2 is a named draft, value to be given by the Architect at launch. Manager and wave copied from the sibling LAB-REV2 rows (L8M, L8M2, FIX: M0, wave 10).
+# SPEED-2 (lab overseer a7, Architect ruling 2026-10-21; Westley may veto): the fight.py half of the lab speed-up, after LAB-REV2-SPEED and LAB-REV2-L8M2 (the owners of fight.py before it). DRAFT-lab-speed-ratio-2 is a named draft, 0.60 or 0.9 x the measured pre-piece ratio, whichever is smaller (DEC-SPEED-2-ratio, 2026-10-23). Manager and wave copied from the sibling LAB-REV2 rows (L8M, L8M2, FIX: M0, wave 10).
 [[piece]]
 id = "LAB-REV2-SPEED-2"
 manager = "M0"
