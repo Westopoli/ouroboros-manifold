@@ -1,6 +1,6 @@
 # spec: docs/northstar/plans/2026-10-07-visible-game-spec.md paragraph HARNESS-provenance-scope (lane H; Tool: Workflow)
 #       and the Architect derivation brief of 2026-10-21 (items 1 to 3); piece HARNESS-provenance-scope, tests first
-# Rule pins: none (tooling piece, Architect derivation brief 2026-10-21)
+# Rule pins: R-990-01@? (a fixture id of the throwaway tree only; this piece proves no bible rule: tooling piece, Architect derivation brief 2026-10-21)
 """Tests for the --pieces scope and the cited-number rule of scripts/specfactory/spec_provenance.py.
 
 The four test sentences of the brief, word for word (method rev 3):
