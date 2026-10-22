@@ -6,6 +6,8 @@ Answer in answers.md, one line per key: `<key>: <approve | reject | a | b | c | 
 
 P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 
+### P10 Sight and the dimmed outside (S-005): rejected 2026-10-22; re-shot comes after the ground-derived sight disc lands.
+
 ### P8 Units close on the ground (S-132)
 
 ![](../../story_reviews/westley/C-S132-ground-units-close.png)
@@ -16,28 +18,6 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 **Beta status of what is shown:**
 - Unit shapes on the 3D ground (S-132): built and wired (lane C ground 3D, C6; scale fix VG-C-unitscale at 53ede72), the lane C plays pass; not Seen (your verdict pending).
 - Squad markers for the dart and arrowhead types: built, but drawn in the flat map projection so they float off the units in the ground view (finding, no piece yet).
-
-### P9 Slope with midline and blocked ground (S-001)
-
-![](../../story_reviews/westley/C-S001-ground-slope-and-blocked-band-close.png)
-
-**What you see:** A steep pink wall (ground that blocks the layer) rising behind your force, a flat orange band your units stand on, green terraces dropping away at the left, and two long white bars across the ground where a slope joining two layers is marked at its midline; the bar disappears where the ground rises in front of it. Your units stand at the foot of the wall as small round icons, because their flat blue bodies lie nearly edge-on and half buried in the steep ground.
-**Judge:** Can you see where terrain blocks a layer and where a slope joins two layers, so you can choose to go over, go around or hide (S-001)?
-**Camera:** height 300 wu (1.80 px per wu at the centre), 1920x1080, seed 1, tick 3006. Unit bodies are not readable here (edge-on on the steep face); only the 24 px icons read. Body size on level ground is in the S-132 frame (median 55 px wide).
-**Beta status of what is shown:**
-- Slopes drawn with a midline and blocked ground tinted pink (S-001, R-001-06): built and wired (lane C ground 3D, C7), the S-001 play passes; not Seen (your verdict pending).
-- Flat unit bodies on steep ground: built, they lie edge-on and half buried there (finding, no piece yet).
-
-### P10 Sight and the dimmed outside (S-005)
-
-![](../../story_reviews/westley/C-S005-ground-sight-close.png)
-
-**What you see:** Nineteen selected bombards and bastions (white rings) standing on open green ground beside the settlement's white blocks, with a bright lit area around them and a dimmed, darker region beyond a curved edge at the right of the frame, where the white slope bars show through grey. The edge is a circle on the screen centred on the group, not an ellipse on the ground, and the 24 px icons sit on top of the flat bodies.
-**Judge:** Do you see less outside your units' sight, with a clear edge between what they see and what they do not (S-005: "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage")?
-**Camera:** height 300 wu (1.80 px per wu at the centre), 1920x1080, seed 1, tick 9774; the lit edge is about 720 px from the group centre. Unit bodies are hidden under the 24 px icons and white selection rings. At this height the dim vanishes whenever an own unit stands far south of the camera (the sight circle of a unit near or behind the camera comes out huge), so the group was first sent south of every other unit to get this edge (finding, no piece yet). No separate darker band for a neighbouring layer is drawn: the dim is one overlay outside the sight circles (R-089-03), so this frame shows the edge but not the layer rule.
-**Beta status of what is shown:**
-- Sight circles and the dim outside them (S-005, R-089-03): built and wired (lane A fog layer, A1 to A21), the lane A plays pass; not Seen (your verdict pending).
-- The dim at close zoom: built, missing in most close positions (finding, no piece yet).
 
 ### P11 Crossing toward another layer (S-004)
 
@@ -50,10 +30,6 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Layer change on a slope (S-004, R-004-06): built and wired (lane C ground 3D, C7; S-004 play fix at bfd7f1c), the S-004 play passes; not Seen (your verdict pending).
 - The halfway line as a marked place for one crossing: stub in this view (only the long midline bars are drawn, none picked out for the crossing).
 
-## 2. One pick: the land era's name (Q-147-01)
-
-Greek antiquity, decided. Pick one, or give your own: (a) The Bronze Shore, city-states on a coast, oars and phalanx, the sea is the road; (b) The Olive Tyrannies, rival tyrants, walled hill towns, terraces and groves; (c) The Hoplite Age, citizen armies, the shield wall, the marble reach as its placeholder name retires.
-
 ## 3. Decided by the Architect 2026-10-22 (veto with a word)
 
 - C11 (a): the overlap refusal stays; the lot table size is a memory bound, not a rule. DEC-C11-2026-10-22.
@@ -63,6 +39,10 @@ Greek antiquity, decided. Pick one, or give your own: (a) The Bronze Shore, city
 - C15 (a): the economy multiplier scales a faction's budget income; R-033-01 is rewritten. DEC-C15-2026-10-22.
 - Q-156-02 (c): the lab reports its ten conditions against the draft marks with no pass or fail until you confirm them. DEC-Q156-2026-10-22.
 - C16: the single-process 30 s lab speed mark is retired; the lab landing waits on the fight-window change only. DEC-C16-2026-10-22.
+
+## Answered 2026-10-22
+
+- Q-147-01: the land era is named Greek (Westley 2026-10-22, "3rd time I'm ruling on it"); the Architect's three-name pick withdrawn.
 
 ## Answered 2026-10-21 (chat)
 
@@ -85,7 +65,10 @@ Greek antiquity, decided. Pick one, or give your own: (a) The Bronze Shore, city
 - Places lane drafts of rev 6a: DRAFT-shape-harm 0.5, DRAFT-first-ring-spread 2, DRAFT-field-cost-share 15 to 55 percent (Architect, 2026-10-21)
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
 - DRAFT-a18-pitch 50 degrees; DRAFT-home-anchor-inboard 1200 wu (Architect, 2026-10-22)
+- DRAFT-occlusion-slack 20 wu; DRAFT-relief-k 0.6; DRAFT-contour-step 100 wu (Architect, 2026-10-22)
 - DRAFT-lab-speed-ratio-1 0.75, DRAFT-lab-speed-ratio-1b 0.68 (Architect, 2026-10-21)
+- DRAFT-facing-arrow-len 0.4 x body width, white (Architect, 2026-10-22, from Westley's 2/5)
+- DRAFT-building-yaw-jitter 0.05 rad (Architect, 2026-10-22)
 
 Parked by you (11): see batch_closed.md; added 2026-10-21: Q-082-03, Q-208-01, Q-149-01.
 

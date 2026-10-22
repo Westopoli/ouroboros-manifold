@@ -135,7 +135,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-129 | E-15 | "Convoys and evacuees are real units that die." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-129 |
 | S-130 | E-15 | "Objectives and garrisons drift and hazards travel." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-130 |
 | S-131 | E-15 | "A nebula looks like a place I cannot see into; a garrison looks like something I can take." | Spec'd, needs reference | `epics/E-15-reinforcement-supply-and-hazards.md` S-131 |
-| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Spec'd, needs reference; Q-132-02 parked for the beta | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
+| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Seen (Westley 2026-10-22; Q-132-02 parked for the beta) | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
 | S-133 | E-18 | "A faction's technology tier shows in how its ships look, and shows loss when it falls." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-133 |
 | S-134 | E-18 | "Shots travel, hits bloom, nothing twitches." | Spec'd | `epics/E-18-visual-style-and-combat-visuals.md` S-134 |
 | S-135 | E-18 | "Every ability reads at a glance as an ability in progress." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-135 |
@@ -150,7 +150,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-03 | `epics/E-19-multiplayer.md` S-144 |
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
 | S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
-| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd; both eras exist as packs (Settled Reach, Greek placeholder "The Marble Reach"); the land era's final name and brief are Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
+| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd; both eras exist as packs (Settled Reach, Greek placeholder, the era named Greek); the land era's brief is Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
 | S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-04, Q-148-05 | `epics/E-20-multi-era-and-monetization.md` S-148 |
 | S-149 | E-20 | "A fair price and the chance to earn expansions by playing." | Spec'd, blocked on Q-149-02 | `epics/E-20-multi-era-and-monetization.md` S-149 |
 | S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd, blocked on Q-150-01 | `epics/E-20-multi-era-and-monetization.md` S-150 |

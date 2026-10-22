@@ -2,13 +2,25 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (actual, batch and SDK): $13.70 of $200; hard stop $190; expires 2026-10-24.
+Running total (actual, batch and SDK): $16.41 of $200; hard stop $190; expires 2026-10-24.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
 ## SDK runs (from 2026-10-22)
 
 | Date | Purpose | Model | Cap | Actual | Report |
 |---|---|---|---|---|---|
+| 2026-10-22 | provscope script follow-up (PARA re-quote, C235-fail, bullets 57-60) | claude-sonnet-5-5 | $5 | $0.238 | 16 turns, success |
+| 2026-10-22 | venv-link script re-check against main 5cc2e60e | claude-sonnet-5-5 | $5 | $0.278 | 17 turns, success; NOT READY: stale text |
+| 2026-10-22 | venv-link script stale-text fixes | claude-sonnet-5-5 | $5 | $0.261 | 14 turns, success |
+| 2026-10-22 | provscope final check (NOT READY: one comment cite) | claude-sonnet-5-5 | $5 | $0.234 | 18 turns, success |
+| 2026-10-22 | (Architect) records clerk "land era named Greek, Q-147-01 closed", pushed c39f475f | claude-sonnet-5-5 | $5 | $0.140 | 8 turns, success |
+| 2026-10-22 | (Architect) scout "unit icons and camera ladder in the 3D ground" | claude-sonnet-5-5 | $3 | $0.168 | 11 turns, success |
+| 2026-10-22 | (Architect) records clerk "S-132 approved, FINDING-s132-body-clip, VG-C-unit-ground-fit row", pushed 9ddda023 | claude-sonnet-5-5 | $5 | $0.225 | 13 turns, success |
+| 2026-10-22 | (Architect) records clerk "S-001 rejected, two findings, DEC-S001-facing-arrow and -no-layer-ring-land", pushed c764d7af | claude-sonnet-5-5 | $5 | $0.133 | 7 turns, success |
+| 2026-10-22 | (Architect) scout "S-001 frame elements in code" | claude-sonnet-5-5 | $3 | $0.170 | 12 turns, success |
+| 2026-10-22 | (Architect) records clerk "lane C paragraphs VG-C-land-marks, VG-C-facing-arrow, PROTO-ground-relief", pushed bdbe896f | claude-sonnet-5-5 | $5 | $0.187 | 10 turns, success |
+| 2026-10-22 | records batch 7 (scripts, LAB-REV2 owns, credits rows) | claude-sonnet-5-5 | $5 | $0.195 | 14 turns, success |
+| 2026-10-22 | records batch 7b (venvlink syntax, owner edges, credits row) | claude-sonnet-5-5 | $5 | (pending, this run) | |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
