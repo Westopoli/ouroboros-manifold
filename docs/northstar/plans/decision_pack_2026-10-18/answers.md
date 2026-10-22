@@ -53,3 +53,69 @@ approved
 For the stories refereced, the view is far too zoomed out to qualify as an assessment. Especially "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage.", the icons representing the units completely covers any vision 3 of the groups have, if any. Deliverables: new screenshots zoomed way in on the units, their surrounding landscape, and their vision. Their icons should not completely cover their vision. At the point that we're this far zoomed out, groups of units stacked like this should just recieve a single "group" symbol (documented in bible I believe, investigate and stop before making any changes if specifically a "symbol representing groups of units when zoomed out to a specific degree" is not found. Escelate to the overlord chat for it to escelate it to me, that's a gap if that ruling is not found). 
 
 note: there's a scaling issue here, from what I can tell the units are so small that their placeholder isn't even visible, which means that the landscape is really far zoomed out. There is a scaling issue here, either units are too small or the landscape isn't high fidelity enough. 
+
+
+
+---------- 
+
+## New rulings based on batch.md modification done on 10/21
+
+### 1
+Looks good, approved. 
+
+### 2
+Approved
+
+### 3
+Scaling seems off, units appear tiny compared to environment, it looks like whole armies could fit through the cracks. Are those obstacle obejects placeholders? I think to the user it would appear that they can go "through" the space between the layers, for inpassable areas the placeholder objects (asteroids) need to be so dense that it makes sense to the user why units can't pass through. I believe units (though they are too small in this screenshot, highly pixelated), no matter what type, can pass through those cracks. 
+
+This same scaling issue is evident in the land version of the game as well, I think me jumping into a prototype and iteratively talking back/forth with a sonnet agent that modifies the prototype will be the fastest way to get the type of scaling I want. 
+
+This prototype should show all units/things/landscapes shown in the game, and allow me to zoom. This includes all different types of units, a box representing their size (doesn't need to be actual objects), objective sizes, building sizes, mountain sizes, layout piece sizes, strategic position sizes, everything all lined up and interactable. 
+
+Not approved. 
+
+### 4
+Still quite a few units, only decreased by ~25% from what I can tell, units are spaced all in a line (unrealistic), vision "circle" is rotated to be parrallel with the screen, not the units and the current orientation of the landscape they're on. (In starcraft 2, the vision circle isn't a perfect circle from the users view, it's a perfect circle if you look straight down, which this screenshot isn't)
+
+
+### 5
+Looks good
+
+### 6 
+Approved
+
+### 7
+We won't have a map this small in reality, but approved.
+
+## Qs
+Q-B23b-01 It's fine as it is for now
+
+Q-C2-5-01 A 
+
+Q-156-02 not enough context
+
+Q-246-02 Layout engine, landscape engine conforms. 
+
+Q-082-03 defer to after beta
+
+Q-147-01 Already decided this: Greek
+
+Q-100-01 B
+
+Q-208-01 defer to after beta
+
+Q-228-01 A
+
+Q-149-01 defer to post beta
+
+B22-1 A
+
+B22-2 A
+
+B22 publish A
+
+doc branch method ask 1 Is the method page the public face? B
+
+C1 Lab fight length: A
+C2 Lab speed: B, I think we talked about this before, I asked a claude chat whether it's alreayd really fast or of it's improvable, it said improveable, investigate the convo and what was done as a result of it. 
