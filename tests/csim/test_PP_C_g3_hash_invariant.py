@@ -67,18 +67,53 @@ def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
 
 
 def test_G3_positive_control_perturbed_recorded_hash_is_caught(lib):
-    name, units, gap, _s, _t = FAST[0]
-    rec = list(PRE_G3_A99[name]["hashes"][:30])
-    w = A.build(lib, units)
-    _off(lib, w)
-    got = []
-    for _ in range(30):
-        lib.om_tactical_step(w)
-        got.append(A.state_hash(lib, w))
-    lib.om_world_free(w)
+    rec = _g3_first_run(lib)
+    got = _g3_first_run(lib)
     assert A.first_mismatch(rec, got) is None
     rec[9] = ("0" if rec[9][0] != "0" else "1") + rec[9][1:]
     assert A.first_mismatch(rec, got) == 9
+
+
+def _flip(h):
+    return ("0" if h[0] != "0" else "1") + h[1:]
+
+
+def _g3_first_run(lib, steps=30):
+    name, units, _gap, _s, _t = FAST[0]
+    w = A.build(lib, units)
+    _off(lib, w)
+    got = []
+    for _ in range(steps):
+        lib.om_tactical_step(w)
+        got.append(A.state_hash(lib, w))
+    lib.om_world_free(w)
+    return got
+
+
+def test_G3_control_survives_a_stale_recorded_reference(lib, monkeypatch):
+    """TD-VG-E-26: the existing perturbed-hash control must reach its perturbation arm and catch step 9
+    even when the recorded table is stale (every hash altered). RED while the control first asserts
+    built == recorded."""
+    name = FAST[0][0]
+    stale = dict(PRE_G3_A99[name])
+    stale["hashes"] = [_flip(h) for h in PRE_G3_A99[name]["hashes"]]
+    monkeypatch.setitem(PRE_G3_A99, name, stale)
+    calls, real = [], A.first_mismatch
+    monkeypatch.setattr(A, "first_mismatch", lambda r, g: calls.append((r is g, list(r), list(g), real(r, g))) or calls[-1][3])
+    test_G3_positive_control_perturbed_recorded_hash_is_caught(lib)
+    assert calls and calls[0][3] is None and not calls[0][0] and calls[0][1] == calls[0][2], "unperturbed arm must compare two distinct equal lists"
+    assert calls[-1][3] == 9 and calls[-1][1][9] != calls[-1][2][9], "perturbation arm must run and catch step 9"
+
+
+def test_G3_control_mechanism_catches_the_perturbed_step_only(lib):
+    """TD-VG-E-26 positive control, green now and after the fix: against a first-run reference the
+    unperturbed prefix is not flagged, and perturbing step k reports k (9, then 21)."""
+    got = _g3_first_run(lib)
+    assert A.first_mismatch(list(got), got) is None
+    for k in (9, 21):
+        rec = list(got)
+        rec[k] = _flip(rec[k])
+        assert A.first_mismatch(rec, got) == k
 
 
 @pytest.mark.parametrize("name", B.all_names())

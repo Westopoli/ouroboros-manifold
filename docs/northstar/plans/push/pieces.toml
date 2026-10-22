@@ -3724,7 +3724,7 @@ owns = ["tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/test_E13_A99_ta
 owns_glob = []
 acceptance = ["tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_positive_control_perturbed_recorded_hash_is_caught", "tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_positive_control_perturbed_hash_is_caught"]
 depends_on = ["PP-unit"]  # PP-unit (attached) owns tests/csim/test_PP_C_*.py; ordering only (pieces.py --check glob overlap), added by the records clerk
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "07e8132f" }
 tests_pending = true
 size_estimate = "G3PC: the two perturbed-hash controls build their reference from a first run of the same build, so a stale golden cannot hide the perturbation arm; the golden-agreement tests stay known-red under TD-VG-E-26 until startforce re-records; about 10 lines per control, no csrc, no threshold"
 

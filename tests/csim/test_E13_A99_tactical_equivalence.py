@@ -44,12 +44,41 @@ def test_A99_tactical_trace_equals_recorded_hashes(lib, run):
 
 
 def test_A99_positive_control_perturbed_hash_is_caught(lib):
-    name, units, gap, steps, _t = FAST[0]
-    rec = list(A.load_recorded()[name]["hashes"][:40])
+    _n, units, gap, _steps, _t = FAST[0]
+    rec = A.run_hashes(lib, units, gap, 40)
     got = A.run_hashes(lib, units, gap, 40)
     assert A.first_mismatch(rec, got) is None, "control premise: unperturbed prefix must match"
     rec[17] = ("0" if rec[17][0] != "0" else "1") + rec[17][1:]
     assert A.first_mismatch(rec, got) == 17
+
+
+def _flip(h):
+    return ("0" if h[0] != "0" else "1") + h[1:]
+
+
+def test_A99_control_survives_a_stale_recorded_reference(lib, monkeypatch):
+    """TD-VG-E-26: the existing perturbed-hash control must reach its perturbation arm and catch step 17
+    even when the recorded file is stale (every hash altered). RED while the control first asserts
+    built == recorded."""
+    stale = {n: dict(v, hashes=[_flip(h) for h in v["hashes"]]) for n, v in A.load_recorded().items()}
+    monkeypatch.setattr(A, "load_recorded", lambda: stale)
+    calls, real = [], A.first_mismatch
+    monkeypatch.setattr(A, "first_mismatch", lambda r, g: calls.append((r is g, list(r), list(g), real(r, g))) or calls[-1][3])
+    test_A99_positive_control_perturbed_hash_is_caught(lib)
+    assert calls and calls[0][3] is None and not calls[0][0] and calls[0][1] == calls[0][2], "unperturbed arm must compare two distinct equal lists"
+    assert calls[-1][3] == 17 and calls[-1][1][17] != calls[-1][2][17], "perturbation arm must run and catch step 17"
+
+
+def test_A99_control_mechanism_catches_the_perturbed_step_only(lib):
+    """TD-VG-E-26 positive control, green now and after the fix: against a first-run reference the
+    unperturbed prefix is not flagged, and perturbing step k reports k (17, then 33)."""
+    _n, units, gap, _s, _t = FAST[0]
+    got = A.run_hashes(lib, units, gap, 40)
+    assert A.first_mismatch(list(got), got) is None
+    for k in (17, 33):
+        rec = list(got)
+        rec[k] = _flip(rec[k])
+        assert A.first_mismatch(rec, got) == k
 
 
 @pytest.mark.parametrize("name", ["idle_502", "fight_502_gap100"])
