@@ -3560,7 +3560,7 @@ owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/pre_gate.
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance_scope.py"]
 depends_on = ["HARNESS-C4"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "6a0eaca" }  # landed 6a0eaca
 tests_pending = true
 size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold or \"- ID\" opening names a piece id; a [P file:line] cite anywhere in the same unit clears reason 10; whole-file fallback when no id matches; a WARN line for unmatched ids; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"
 
