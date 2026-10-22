@@ -2,7 +2,7 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (actual, batch and SDK): $15.73 of $200; hard stop $190; expires 2026-10-24.
+Running total (actual, batch and SDK): $16.41 of $200; hard stop $190; expires 2026-10-24.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
 ## SDK runs (from 2026-10-22)
@@ -19,6 +19,8 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-22 | (Architect) records clerk "S-001 rejected, two findings, DEC-S001-facing-arrow and -no-layer-ring-land", pushed c764d7af | claude-sonnet-5-5 | $5 | $0.133 | 7 turns, success |
 | 2026-10-22 | (Architect) scout "S-001 frame elements in code" | claude-sonnet-5-5 | $3 | $0.170 | 12 turns, success |
 | 2026-10-22 | (Architect) records clerk "lane C paragraphs VG-C-land-marks, VG-C-facing-arrow, PROTO-ground-relief", pushed bdbe896f | claude-sonnet-5-5 | $5 | $0.187 | 10 turns, success |
+| 2026-10-22 | records batch 7 (scripts, LAB-REV2 owns, credits rows) | claude-sonnet-5-5 | $5 | $0.195 | 14 turns, success |
+| 2026-10-22 | records batch 7b (venvlink syntax, owner edges, credits row) | claude-sonnet-5-5 | $5 | (pending, this run) | |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
