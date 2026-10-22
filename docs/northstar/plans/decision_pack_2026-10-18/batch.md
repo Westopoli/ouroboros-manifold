@@ -17,17 +17,6 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Unit shapes on the 3D ground (S-132): built and wired (lane C ground 3D, C6; scale fix VG-C-unitscale at 53ede72), the lane C plays pass; not Seen (your verdict pending).
 - Squad markers for the dart and arrowhead types: built, but drawn in the flat map projection so they float off the units in the ground view (finding, no piece yet).
 
-### P10 Sight and the dimmed outside (S-005)
-
-![](../../story_reviews/westley/C-S005-ground-sight-close.png)
-
-**What you see:** Nineteen selected bombards and bastions (white rings) standing on open green ground beside the settlement's white blocks, with a bright lit area around them and a dimmed, darker region beyond a curved edge at the right of the frame, where the white slope bars show through grey. The edge is a circle on the screen centred on the group, not an ellipse on the ground, and the 24 px icons sit on top of the flat bodies.
-**Judge:** Do you see less outside your units' sight, with a clear edge between what they see and what they do not (S-005: "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage")?
-**Camera:** height 300 wu (1.80 px per wu at the centre), 1920x1080, seed 1, tick 9774; the lit edge is about 720 px from the group centre. Unit bodies are hidden under the 24 px icons and white selection rings. At this height the dim vanishes whenever an own unit stands far south of the camera (the sight circle of a unit near or behind the camera comes out huge), so the group was first sent south of every other unit to get this edge (finding, no piece yet). No separate darker band for a neighbouring layer is drawn: the dim is one overlay outside the sight circles (R-089-03), so this frame shows the edge but not the layer rule.
-**Beta status of what is shown:**
-- Sight circles and the dim outside them (S-005, R-089-03): built and wired (lane A fog layer, A1 to A21), the lane A plays pass; not Seen (your verdict pending).
-- The dim at close zoom: built, missing in most close positions (finding, no piece yet).
-
 ### P11 Crossing toward another layer (S-004)
 
 ![](../../story_reviews/westley/C-S004-ground-layer-crossing-close.png)
@@ -77,6 +66,7 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - DRAFT-occlusion-slack 20 wu; DRAFT-relief-k 0.6; DRAFT-contour-step 100 wu (Architect, 2026-10-22)
 - DRAFT-lab-speed-ratio-1 0.75, DRAFT-lab-speed-ratio-1b 0.68 (Architect, 2026-10-21)
 - DRAFT-facing-arrow-len 0.4 x body width, white (Architect, 2026-10-22, from Westley's 2/5)
+- DRAFT-building-yaw-jitter 0.05 rad (Architect, 2026-10-22)
 
 Parked by you (11): see batch_closed.md; added 2026-10-21: Q-082-03, Q-208-01, Q-149-01.
 

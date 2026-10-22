@@ -4,14 +4,6 @@ How to answer: one word per picture, approve, reject, or a note. Where answers g
 
 Each picture has one block under its file name, in this form: `**What you see:**`, `**Legend:**` (one line, what each colour and mark in the picture means), `**Judge:**` (a `**Camera:**` line may follow), `**Beta status of what is shown:**` with one line per feature.
 
-## C-S005-ground-sight-close.png
-
-**What you see:** Nineteen selected bombards and bastions (white rings) standing on open green ground beside the settlement's white blocks, with a bright lit area around them and a dimmed, darker region beyond a curved edge at the right of the frame, where the white slope bars show through grey. The edge is a circle on the screen centred on the group, not an ellipse on the ground, and the 24 px icons sit on top of the flat bodies.
-**Judge:** Do you see less outside your units' sight, with a clear edge between what they see and what they do not (S-005: "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage")?
-**Camera:** height 300 wu (1.80 px per wu at the centre), 1920x1080, seed 1, tick 9774; the lit edge is about 720 px from the group centre. Unit bodies are hidden under the 24 px icons and white selection rings. At this height the dim vanishes whenever an own unit stands far south of the camera (the sight circle of a unit near or behind the camera comes out huge), so the group was first sent south of every other unit to get this edge (finding, no piece yet). No separate darker band for a neighbouring layer is drawn: the dim is one overlay outside the sight circles (R-089-03), so this frame shows the edge but not the layer rule.
-**Beta status of what is shown:**
-- Sight circles and the dim outside them (S-005, R-089-03): built and wired (lane A fog layer, A1 to A21), the lane A plays pass; not Seen (your verdict pending).
-- The dim at close zoom: built, missing in most close positions (finding, no piece yet).
 
 ## C-S004-ground-layer-crossing-close.png
 
@@ -36,6 +28,7 @@ Each picture has one block under its file name, in this form: `**What you see:**
 
 | File | Verdict | Cite |
 |---|---|---|
+| `C-S005-ground-sight-close.png` | Approved: "the screenshot looks good" (Westley, 2026-10-22); two findings: the sight disc is a screen circle (already VG-A-sightdisc, his words added), buildings randomly rotated (FINDING-s005-building-yaw-random, E1k yaw amendment) | C.md S-005 row |
 | `C-S001-ground-slope-and-blocked-band-close.png` | Rejected: "very mangled" (Westley, 2026-10-22); white lines are the slope midline bars, the group in the land is units behind the ridge whose 2D marks draw through the terrain, the steep face does not read as a wall; facing arrows asked, layer rings off in the land era (DEC-S001-facing-arrow, DEC-S001-no-layer-ring-land; FINDING-s001-marks-through-terrain, FINDING-s001-steep-face-flat); slope markers removed by his rule (DEC-S001-no-slope-markers) | C.md S-001 row |
 | `C-S132-ground-units-close.png` | Approved: "Yes I can tell them apart" (Westley, 2026-10-22); clipping into the ground noted, fix for beta (FINDING-s132-body-clip, piece VG-C-unit-ground-fit) | C.md S-132 row |
 | `P-S191-terrain-obeys-pass2-carved-routes.png` | Approved as a prototype: "Approved" (Westley, 2026-10-21, new rulings 6); S-191 and S-189 stay as they are | `P.md` row 3 (shot `shots/proto-terrain-obeys-2/obey_16000_1.png`); programme lane table, P layout engine and places row |
