@@ -2127,6 +2127,18 @@ tests_pending = true
 size_estimate = "unitscale: two constants in ground_units.gd (11.5 and 10) and one test; DRAFT-unit-body-radius; closes FINDING-unit-draw-overlap"
 
 [[piece]]
+id = "VG-C-unit-ground-fit"
+manager = "Architect"
+wave = 9
+owns = ["scenes/ground3d/ground_units.gd", "tests/test_vg_c_unit_ground_fit.gd"]
+owns_glob = []
+acceptance = ["tests/test_vg_c_unit_ground_fit.gd"]
+depends_on = ["VG-C-unitscale", "VG-C6b"]  # both attached owners of ground_units.gd
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "ground fit: normal from four height samples, Basis from normal and facing, lift 1.0 wu; one test file; TD-VG-C-ground-lift moves the walker-height pins"
+
+[[piece]]
 id = "VG-B23b-dotcolour"
 manager = "M0"
 wave = 9

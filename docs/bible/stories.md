@@ -135,7 +135,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-129 | E-15 | "Convoys and evacuees are real units that die." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-129 |
 | S-130 | E-15 | "Objectives and garrisons drift and hazards travel." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-130 |
 | S-131 | E-15 | "A nebula looks like a place I cannot see into; a garrison looks like something I can take." | Spec'd, needs reference | `epics/E-15-reinforcement-supply-and-hazards.md` S-131 |
-| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Spec'd, needs reference; Q-132-02 parked for the beta | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
+| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Seen (Westley 2026-10-22; Q-132-02 parked for the beta) | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
 | S-133 | E-18 | "A faction's technology tier shows in how its ships look, and shows loss when it falls." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-133 |
 | S-134 | E-18 | "Shots travel, hits bloom, nothing twitches." | Spec'd | `epics/E-18-visual-style-and-combat-visuals.md` S-134 |
 | S-135 | E-18 | "Every ability reads at a glance as an ability in progress." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-135 |
