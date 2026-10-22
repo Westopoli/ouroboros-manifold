@@ -3432,7 +3432,7 @@ owns = ["tests/qa/desktop/test_galaxy_pixels.py"]
 owns_glob = []
 acceptance = ["tests/qa/desktop/test_galaxy_pixels.py"]
 depends_on = ["G-qadesktoptests", "VG-B", "HARNESS-userdir"]  # pieces.py --check wants an ordering edge to every piece whose owns pattern overlaps this file: G-qadesktoptests (tests/qa/desktop/**), VG-B (tests/qa/desktop/test_galaxy_*.py), HARNESS-userdir (the file itself, attached 5bca0733); all three are attached, none depends on this row, so no cycle
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "8c9f1a75" }
 tests_pending = false
 size_estimate = "galaxy pixel detector: 7x7 patch per dot, a dot hits when at least half the patch pixels are within tolerance 40; 0.6 line, isolation, samples and C2-5-02 unchanged; a Godot-free unit control with a synthetic disc plus a 6x6 pale square; test-defect fix TD-VG-C2-5-patch"
 
@@ -3740,3 +3740,17 @@ depends_on = ["A94-harness"]
 status = { state = "attached", attach_sha = "665e0e0" }
 tests_pending = false
 size_estimate = "sdk_engineer.py (a Claude Code agent in a worktree on the console key) and batch_review.py (Batch API jobs and digests), both dry-run by default; one test file"
+
+# HARNESS-gate-venv-link (Architect 2026-10-22, ledger FINDING-gate-venv-link-vs-fresh-checkout): merge_gate.sh godot_import links ~/Projects/agora/.venv into the candidate and the playthrough's test_fresh_checkout_boots_to_main_menu_without_numpy_or_logs asserts the checkout has none, so it is red whenever the piece's acceptance touches tests/qa/desktop. Until this lands the test is listed in scripts/specfactory/playthrough_known_red.txt. Queued behind the other merge_gate.sh owners.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-gate-venv-link"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/playthrough_known_red.txt", "tests/specfactory/test_gate_venv_link.py"]  # merge_gate.sh: the godot_import venv link lines only (~366-376); playthrough_known_red.txt: the line leaves the list
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_venv_link.py"]
+depends_on = ["HARNESS-red-evidence", "HARNESS-gate-remote"]  # HARNESS-gate-remote only orders the merge_gate.sh overlap (owner_lint)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "godot_import removes its .venv link before the playthrough stage, or the fresh-checkout test is scoped to the gate's own fresh clone (the piece decides from the test's words); the known-red line leaves the list; tests first: with the link present the fresh-checkout assertion fails (positive control), with it removed it passes"
