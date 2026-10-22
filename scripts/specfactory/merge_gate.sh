@@ -369,6 +369,7 @@ GODOT_COUNT="$(echo "$GODOT_IDS" | grep -c . || true)"
 # imported checkout). Importing once here, before either acceptance step
 # runs, fixes that; a csim-only piece has neither id shape and pays nothing.
 NEED_GODOT_IMPORT=0
+VENV_LINK_MADE=0
 if [[ -n "$GODOT_IDS" ]]; then
     NEED_GODOT_IMPORT=1
 fi
@@ -394,11 +395,17 @@ if [[ "$NEED_GODOT_IMPORT" -eq 1 ]]; then
         # A fresh candidate worktree has no .venv; autoload/sim_bridge.gd
         # falls back to system python3, which has no numpy, so the sim dies
         # at import and every scene routes to error_screen (gate gap,
-        # 2026-09-22). Link the harness venv in before importing; the
-        # candidate worktree is discarded after the gate, so no cleanup.
+        # 2026-09-22). Link the harness venv in before importing. The link
+        # stays through the acceptance and transport stages and the gate
+        # removes it before the playthrough stage (ledger
+        # FINDING-gate-venv-link-vs-fresh-checkout: the playthrough's
+        # test_fresh_checkout_boots_to_main_menu_without_numpy_or_logs
+        # asserts the checkout has no .venv).
+        # See also: "venv_unlink" block above "9b. playthrough" below;
+        # tests/qa/desktop/test_fresh_checkout_boot.py.
         VENV_TARGET="${MERGE_GATE_VENV:-$HOME/Projects/agora/.venv}"
         if [[ ! -e "$CANDIDATE/.venv" ]]; then
-            ln -s "$VENV_TARGET" "$CANDIDATE/.venv"
+            ln -s "$VENV_TARGET" "$CANDIDATE/.venv" && VENV_LINK_MADE=1
             echo "ok venv_link \"$VENV_TARGET\""
         fi
         run_godot_import() {
@@ -548,6 +555,15 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
     fi
 else
     warn transport "no tests/transport directory in this candidate"
+fi
+
+# venv_unlink: remove the .venv link godot_import made (only the link; the
+# target is untouched, a pre-existing .venv is never removed).
+# See also: the venv_link comment in "6c. godot import" above; ledger
+# FINDING-gate-venv-link-vs-fresh-checkout; tests/qa/desktop/test_fresh_checkout_boot.py.
+if [[ "$VENV_LINK_MADE" -eq 1 && -L "$CANDIDATE/.venv" ]]; then
+    rm -f "$CANDIDATE/.venv"
+    echo "ok venv_unlink \"$VENV_TARGET\""
 fi
 
 # -------------------------------------------------------------- 9b. playthrough (desktop flow suite, real client under xvfb)
