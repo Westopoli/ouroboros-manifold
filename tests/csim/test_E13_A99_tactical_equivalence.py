@@ -52,6 +52,31 @@ def test_A99_positive_control_perturbed_hash_is_caught(lib):
     assert A.first_mismatch(rec, got) == 17
 
 
+def _flip(h):
+    return ("0" if h[0] != "0" else "1") + h[1:]
+
+
+def test_A99_control_survives_a_stale_recorded_reference(lib, monkeypatch):
+    """TD-VG-E-26: the existing perturbed-hash control must reach its perturbation arm and catch step 17
+    even when the recorded file is stale (every hash altered). RED while the control first asserts
+    built == recorded."""
+    stale = {n: dict(v, hashes=[_flip(h) for h in v["hashes"]]) for n, v in A.load_recorded().items()}
+    monkeypatch.setattr(A, "load_recorded", lambda: stale)
+    test_A99_positive_control_perturbed_hash_is_caught(lib)
+
+
+def test_A99_control_mechanism_catches_the_perturbed_step_only(lib):
+    """TD-VG-E-26 positive control, green now and after the fix: against a first-run reference the
+    unperturbed prefix is not flagged, and perturbing step k reports k (17, then 33)."""
+    _n, units, gap, _s, _t = FAST[0]
+    got = A.run_hashes(lib, units, gap, 40)
+    assert A.first_mismatch(list(got), got) is None
+    for k in (17, 33):
+        rec = list(got)
+        rec[k] = _flip(rec[k])
+        assert A.first_mismatch(rec, got) == k
+
+
 @pytest.mark.parametrize("name", ["idle_502", "fight_502_gap100"])
 def test_A99_positive_control_one_extra_tick_is_caught(lib, name):
     _n, units, gap, _steps, _t = next(r for r in A.RUNS if r[0] == name)

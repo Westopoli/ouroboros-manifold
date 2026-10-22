@@ -81,6 +81,44 @@ def test_G3_positive_control_perturbed_recorded_hash_is_caught(lib):
     assert A.first_mismatch(rec, got) == 9
 
 
+def _flip(h):
+    return ("0" if h[0] != "0" else "1") + h[1:]
+
+
+def _g3_first_run(lib, steps=30):
+    name, units, _gap, _s, _t = FAST[0]
+    w = A.build(lib, units)
+    _off(lib, w)
+    got = []
+    for _ in range(steps):
+        lib.om_tactical_step(w)
+        got.append(A.state_hash(lib, w))
+    lib.om_world_free(w)
+    return got
+
+
+def test_G3_control_survives_a_stale_recorded_reference(lib, monkeypatch):
+    """TD-VG-E-26: the existing perturbed-hash control must reach its perturbation arm and catch step 9
+    even when the recorded table is stale (every hash altered). RED while the control first asserts
+    built == recorded."""
+    name = FAST[0][0]
+    stale = dict(PRE_G3_A99[name])
+    stale["hashes"] = [_flip(h) for h in PRE_G3_A99[name]["hashes"]]
+    monkeypatch.setitem(PRE_G3_A99, name, stale)
+    test_G3_positive_control_perturbed_recorded_hash_is_caught(lib)
+
+
+def test_G3_control_mechanism_catches_the_perturbed_step_only(lib):
+    """TD-VG-E-26 positive control, green now and after the fix: against a first-run reference the
+    unperturbed prefix is not flagged, and perturbing step k reports k (9, then 21)."""
+    got = _g3_first_run(lib)
+    assert A.first_mismatch(list(got), got) is None
+    for k in (9, 21):
+        rec = list(got)
+        rec[k] = _flip(rec[k])
+        assert A.first_mismatch(rec, got) == k
+
+
 @pytest.mark.parametrize("name", B.all_names())
 def test_G3_baseline_fights_unchanged_with_target_by_sight_0(name, monkeypatch):
     """A185: baseline_hashes.json holds with the baseline switches at 0 AND TARGET_BY_SIGHT 0."""
