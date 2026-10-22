@@ -84,7 +84,7 @@ Outputs: intent record (action, target, commit, source, mode) in the tick log.
 Open flags: none.
 
 ### S-036 — Declared or sprung
-Flag closed, rule text pending: Q-036-02, no reservation: the faction re-decides every tick and attacks may stack on one target. The rule below is what the tests read today.
+Q-036-02 (b), Westley 2026-09-16: no reservation across factions or ticks, so attacks from different factions may stack on one target and a faction re-decides every tick; R-036-07 is the narrower guard that one faction resolves at most one attack against a target per tick (Architect 2026-10-21, implementation reading; Westley may veto). The rule below is what the tests read today.
 As a commander, I want some attacks announced a tick ahead at full strength and others sprung at once at half strength, so that a methodical neighbor and a raider feel different to live beside.
 
 Rules

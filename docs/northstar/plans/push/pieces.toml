@@ -3356,8 +3356,9 @@ size_estimate = "merge_gate.sh stage 0 'base': fetch, resolve origin/main to a s
 
 # FINDING-c2-5-pixels-red-under-gate (Architect 2026-10-21): the gate discards the pytest output and PNGs of a red
 # playthrough; keep them outside SCRATCH_ROOT so the next red can be diagnosed. merge_gate_support.py is also
-# owned by the queued HARNESS-westley-folder and HARNESS-lane-plays-scope (ordered after both via the latter);
-# drift_audit.md is owned by the queued HARNESS-coverage (ordered after it).
+# owned by the queued HARNESS-westley-folder and HARNESS-lane-plays-scope, and drift_audit.md by the queued
+# HARNESS-coverage; this row depends only on HARNESS-gate-base-after-lock, and those three rows depend on this one
+# (Architect 2026-10-21), so it lands before them.
 [[piece]]
 id = "HARNESS-gate-keep-red-evidence"
 manager = "M0"
