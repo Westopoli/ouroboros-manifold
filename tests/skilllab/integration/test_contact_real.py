@@ -1,4 +1,4 @@
-# Rule pins: R-096-02@e8ae96
+# Rule pins: R-096-02@e8ae96, R-099-05@ea8d02
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md ruling 6 (contact architecture), rulings 1 and 5, piece LAB-REV2-L2; Q-LAB-03
 """Contact through the production library: the stall scene eliminates, an assault onto the holder's centre of mass eliminates,
 and the pre-flight refuses a cell that cannot be fought (`no_fit`, `unroutable`, `no_reach`) before any tick.
@@ -10,8 +10,8 @@ It reads the Setup as built (placed unit positions, terrain, layers, orders, `po
 engine, runs no tick, and does not shift anything. `placed_scene` records the same value in build.labels["prefight"] (see
 test_placed_by_feature.py). Every use of the name is in `_preflight` below.
 
-Per-unit orders (`Setup.orders_per_unit`, default True) are what makes the stall scene end today: on the engine as it is on main a
-group attack-move ends after the group's first engagement (R-096-02, rewritten 2026-10-13; LAB-REV2-E1), a single unit's does not.
+Per-unit orders (`Setup.orders_per_unit`, default True) are what makes the stall scene end: after E1 (R-096-02, rewritten 2026-10-13) a
+group attack-move resumes toward its point after every engagement, and a unit that gives up under R-099-05 ends where it stands.
 Needs LAB-REV2-L1's firing.py as well as L2 for the fights to run: fight() reads the counts through the L1/L2 seam."""
 import math
 import sys
