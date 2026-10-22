@@ -3418,11 +3418,59 @@ wave = 15
 owns = ["scripts/specfactory/csim_known_xfail.txt", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/suite_regression.py", "tests/specfactory/test_known_xfail.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_known_xfail.py"]
-depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-cache-seed", "HARNESS-gate-concurrent"]  # the last two are records-clerk additions (merge_gate_support.py overlap, wave 15 after wave 13), Architect to confirm
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 4
 size_estimate = "csim_known_xfail.txt (new, same form as gd_tests_known_red.txt); the regression check lets a listed new red pass with a 'known-xfail: N' line, REJECTs a listed id whose row id is not in the ledger, WARNs 'known-xfail now green: <id>'; skip-rise and xfail-rise rejects unchanged; tests first: listed with a row (pass), listed with no row (REJECT), listed and green (WARN); positive control: today's check REJECTs the first fixture"
+
+# HARNESS-gate-cache-seed (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box", implementation, he may veto): spec Lane H, Rev 12e.
+# gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
+# Tool: Workflow (harness piece)
+[[piece]]
+id = "HARNESS-gate-cache-seed"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_cache_seed.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_cache_seed.py"]
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H, Rev 12e
+size_estimate = "merge_gate_support.py baseline cache lines only (a gate that passes and is pushed writes its failing-id sets per suite under the pushed sha, so the next landing's base is a cache hit); tests first: a fixture gate run seeds the cache and the next run reads it; positive control: today's cache is written only by a base run"
+
+# HARNESS-gate-reorder (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box", implementation, he may veto): spec Lane H, Rev 12e.
+# gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
+# Tool: Workflow (harness piece)
+[[piece]]
+id = "HARNESS-gate-reorder"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_gate_reorder.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_reorder.py"]
+depends_on = ["HARNESS-gate-cache-seed", "HARNESS-csim-xdist"]  # the second edge is a records-clerk addition (both own merge_gate.sh; csim-xdist has no row on main yet), Architect to confirm
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H, Rev 12e
+size_estimate = "merge_gate.sh stage order lines only (status, footprint, pins, transport, playthrough and lane_plays before csim, specfactory and lab); tests first: a fixture with a status DRIFT rejects before any csim run; positive control: today's order runs csim first"
+
+# HARNESS-gate-concurrent (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box", implementation, he may veto): spec Lane H, Rev 12e.
+# gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
+# Tool: Workflow (harness piece)
+[[piece]]
+id = "HARNESS-gate-concurrent"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/harness/gate-parallel-scout.md", "tests/specfactory/test_gate_concurrent.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_concurrent.py"]
+depends_on = ["HARNESS-csim-xdist", "HARNESS-gate-reorder"]
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H, Rev 12e
+size_estimate = "the regression stages of merge_gate.sh and merge_gate_support.py (main and candidate passes concurrently, csim, specfactory and transport side by side, each in its own scratch and XDG); docs/northstar/plans/harness/gate-parallel-scout.md is NEW and copied from ~/Projects/om-push/scratch/gate-parallel-scout.md by this piece's records step; tests first: a fixture with three stub suites runs them with overlapping timestamps; positive control: today's script runs them in series"
 
 # HARNESS-look-rejects (Architect 2026-10-21, ledger FINDING-look-stage-warns-only): CLAUDE.md guard 1 says the gate's look stage rejects a blank or near-uniform frame; merge_gate.sh stage 13 only warns (look_check returns OK or WARN). Queued behind HARNESS-gate-tiers.
 # Tool: Workflow
@@ -3433,7 +3481,7 @@ wave = 15
 owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_look_rejects.py"]  # merge_gate.sh: the look stage lines only (stage 13, ~636-648)
 owns_glob = []
 acceptance = ["tests/specfactory/test_look_rejects.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]  # the last two only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
+depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-reorder", "HARNESS-gate-concurrent"]  # the last two are records-clerk additions (merge_gate.sh overlap, Architect to confirm); the base-after-lock and keep-red edges only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the look stage REJECTs a blank or near-uniform candidate frame instead of warning (guard 1); tests first: a uniform fixture frame REJECTs, a varied one passes; positive control: today's stage only warns on the uniform fixture"
