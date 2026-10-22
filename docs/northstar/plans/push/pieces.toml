@@ -2190,6 +2190,17 @@ status = { state = "queued" }
 size_estimate = "no slope markers: the midline BoxMesh creation and the midlines qa key leave slope_view.gd; TD-VG-C-no-slope-markers retires the midline assertions and the S-001 play control; one parity assertion kept"
 
 [[piece]]
+id = "VG-C-ground-one-colour"
+manager = "Architect"
+wave = 9
+owns = ["scenes/ground3d/ground_bands.gd", "tests/test_vg_c2b_ground_bands.gd", "tests/test_vg_c7_slope_view.gd"]
+owns_glob = []
+acceptance = ["tests/test_vg_c2b_ground_bands.gd", "tests/test_vg_c7_slope_view.gd"]
+depends_on = ["VG-C-no-slope-markers", "PROTO-ground-relief"]  # shares test_vg_c7_slope_view.gd; PROTO-ground-relief owns ground_bands.gd
+status = { state = "queued" }
+size_estimate = "one ground colour: BAND_COLOURS becomes GROUND_COLOUR in ground_bands.gd; TD-VG-C-one-colour rewrites the band test and the slope test's colour assertion"
+
+[[piece]]
 id = "VG-B23b-dotcolour"
 manager = "M0"
 wave = 9
