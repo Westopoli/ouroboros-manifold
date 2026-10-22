@@ -39,7 +39,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "A"))  # lane A helpers, read-only
-from play_support import QA_SHOT_DIR, RUN_ID, SHOT_DIR, qa, start_tactical_game, step_until  # noqa: E402
+from play_support import RUN_ID, SHOT_DIR, qa, start_tactical_game, step_until  # noqa: E402
 from daemon_client import control_center, find_control  # noqa: E402
 
 W, H = 1920, 1080
@@ -214,7 +214,7 @@ def test_s246_space_sheets_rings_tube(g):
     time.sleep(3.0)  # harness wait: wall time, the frame-time average is over the last 120 frames
 
     # THE SHOT, written by this play (play_support.moment would name it S-246_<label>)
-    src = QA_SHOT_DIR / "S-246.png"
+    src = client.user_dir / "qa" / "S-246.png"
     if src.exists():
         src.unlink()  # a stale file from an earlier run must not be copied
     client.screenshot("S-246")
