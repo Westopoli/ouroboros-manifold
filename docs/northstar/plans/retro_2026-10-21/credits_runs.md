@@ -2,7 +2,7 @@
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $21.51 of $200; hard stop $190; expires 2026-10-24.
+Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $22.04 of $200; hard stop $190; expires 2026-10-24.
 Plus two crashed inv-landview runs, cost unknown.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -41,7 +41,9 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-22 | (Architect) investigator "inv-landview", two attempts | claude-sonnet-5-5 | n/a | unknown, read from console | both crashed on the 1 MB buffer |
 | 2026-10-22 | (Architect) records clerk "rec-landview", pushed 1c12b5ce | claude-sonnet-5-5 | $5 | $0.256 | 15 turns, success |
 | 2026-10-22 | (Architect) records clerk "rec-landview2", pushed fd6f11f9 | claude-sonnet-5-5 | $5 | $0.123 | 8 turns, success |
-| 2026-10-22 | records batch 10 (LAB-REV2 attach flips, Q-085-02, ledger rows, dispatcher line, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
+| 2026-10-22 | records batch 10 (LAB-REV2 attach flips, Q-085-02, ledger rows, dispatcher line, credits rows) | claude-sonnet-5-5 | $5 | $0.442 | 25 turns, success |
+| 2026-10-23 | (Architect) records clerk "rec-lab3" | claude-sonnet-5-5 | $5 | $0.085 | 6 turns, success |
+| 2026-10-23 | records batch 11 (HARNESS-westley-folder flip, two rows, three ledger rows, three decisions, gate-wide line, credits rows) | claude-sonnet-5-5 | $5 | (pending, this run) |  |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 

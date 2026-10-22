@@ -2397,7 +2397,7 @@ owns = ["scripts/specfactory/merge_gate_support.py", "scripts/specfactory/pieces
 owns_glob = []
 acceptance = ["tests/specfactory/test_owner_lint.py", "tests/specfactory/test_merge_gate_support.py"]
 depends_on = ["VG-GUARD", "HARNESS-symown", "A94-harness", "HARNESS-gate-keep-red-evidence"]  # keep-red-evidence added by the Architect 2026-10-21 (both own merge_gate_support.py; keep-red depends only on gate-base-after-lock). VG-GUARD: in-flight status owner of merge_gate_support.py; pieces.py, owner_lint.py and the tests are A94-harness glob (attached)
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "a9143106" }
 tests_pending = false
 size_estimate = "SHARED_RECORD_GLOBS in pieces.py (11 lines), one import and the ignore entry in merge_gate_support.py (4 lines), two positive-control tests (57 lines)"
 
@@ -3951,6 +3951,32 @@ depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-ven
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "one helper om_home() in pieces.py returning Path(os.environ.get(\"OM_HOME\", Path.home())), every default built from it, tests build expectations the same way (TD-HARNESS-home-paths); path defaults only in the six scripts; no behaviour change on this machine"
+
+# Tool: Workflow
+[[piece]]
+id = "VG-D-s246-import"
+manager = "M0"
+wave = 9
+owns = ["tests/qa/desktop/plays/D/S-246.py"]
+owns_glob = []
+acceptance = ["tests/qa/desktop/plays/D/S-246.py"]
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "two-line import fix: S-246.py:42 and :217 import QA_SHOT_DIR, which never existed; plays/A/play_support.py exports SHOT_DIR (TD-VG-D-s246-import)"
+
+# Tool: Workflow
+# Lane U (FINDING-gate-userdir-error)
+[[piece]]
+id = "HARNESS-gate-userdir-fix"
+manager = "M0"
+wave = 9
+owns = ["tests/specfactory/test_gate_userdir.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_userdir.py"]
+depends_on = ["HARNESS-gate-venv-link"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "fix the two ERRORs in test_gate_userdir.py::test_6_planted_settings_in_the_home_do_not_change_the_era and test_6b_detector_control_planted_settings_change_the_era_when_visible, present in the baseline at 5380e329 before HARNESS-gate-venv-link (FINDING-gate-userdir-error); owns more files once the error is read"
 
 [[piece]]
 id = "VG-C-land-one-projection"

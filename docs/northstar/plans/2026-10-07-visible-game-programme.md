@@ -59,6 +59,8 @@ Rules for this table: the landing clerk flips the lane's row in the landing comm
 | V sim viewer (SV-1..SV-3 landed; SV-0 retention override queued behind VG-CONTRACT-E7, VG-E1R; VG-W2 has landed) | SV-1 `pipe_session.py`, SV-2 `history.py`, SV-3 `viewer.py` at d7d01f40 (new files under `scripts/simviewer/`, spec `2026-10-12-simviewer-spec.md`); works: `tests/simviewer/` 67 passed, 1 xfailed (pick 0 / total failure, expected until SV-0); sees: tooling; first-look shots queued (`story_reviews/V.md`) | SV-0 (mission_end retention override on the pipe), queued behind VG-CONTRACT-E7 and VG-E1R (VG-W2 has landed) | none yet | V.md rows pending |
 | P layout engine and places | VG-P1 at 85ef4e96: `om_layout_places` in `csrc/layout_engine.c`, not yet called by the game; works: `tests/csim/test_VG_P_p1_layout.py` green and the isolation build deterministic across -O0 and -O2; sees: nothing, stub | P2 next, P3 after the probe | none yet from the game (the lane is a stub); terrain-obeys prototype pass 2 approved 2026-10-21 (Westley, new rulings 6: "Approved"; new rulings 7: "We won't have a map this small in reality, but approved."); approved, not integrated; a prototype approval only, S-191 and S-189 not Seen (`story_reviews/P.md` row 3) | none |
 
+Gate-wide: lane_plays rejects on tests/qa/desktop/plays/D/S-246.py until VG-D-s246-import lands; do not add a known-red line (Architect 2026-10-23).
+
 ## Method rev 2 (Westley picked all nine, 2026-10-10)
 
 The three-day record and the comparison with how large organisations build are in `retro_2026-10-10/README.md`. The rules, each with the measure that shows it working:
