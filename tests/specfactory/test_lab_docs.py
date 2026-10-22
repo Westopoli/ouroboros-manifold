@@ -123,16 +123,14 @@ def test_readme_gap_table_rows_deleted():
 
 # --- register: Q-008-03 and Q-008-07 closed to (a) by ruling 5; Q-LAB-03 note ---
 
-def test_q_008_03_stays_open_with_rev2_note():
-    # decision 39 item 1: Q-008-03 (the cross-layer parameter families) closes only when the ALG rows exist, after
-    # batch one's analysis and Westley's numbers; the rev 2 note cites rulings 10 and 11. (Was: closed to (a), ruling 5.)
+def test_q_008_03_closed_with_fu_row():
+    # Architect 2026-10-22 (implementation; Westley may veto) closed Q-008-03 and owes the ALG rows as FU-lab-alg-rows in the push ledger
+    # (ledger row TD-LAB-REV2-q008-closed). (Was test_q_008_03_stays_open_with_rev2_note: asserted status open and the rev 2 note.)
     row = _register_row("Q-008-03")
-    assert row[STATUS] == "open", f"Q-008-03 status is {row[STATUS]!r}"
-    text = " | ".join(row).lower()
-    assert re.search(r"rulings? 10\b", text), "Q-008-03 row does not cite ruling 10"
-    assert re.search(r"(ruling 11|\band 11\b|, 11\b)", text), "Q-008-03 row does not cite ruling 11"
-    assert "alg rows" in text, "Q-008-03 row does not say it closes when the ALG rows exist"
-    assert "rev 2" in text or "rev2" in text, "Q-008-03 row has no rev 2 note"
+    assert row[STATUS] == "closed", f"Q-008-03 status is {row[STATUS]!r}"
+    ledger = (REPO / "docs" / "northstar" / "plans" / "push_ledger_2026-09-22.md").read_text()
+    assert any(ln.startswith("|") and "FU-lab-alg-rows" in ln.split("|")[2] for ln in ledger.splitlines()), \
+        "the push ledger has no FU-lab-alg-rows row"
 
 
 def test_ruling5_q_008_07_closed_to_a():
@@ -175,7 +173,7 @@ def test_l7_depends_on_every_other_lab_rev2_row_except_e2_e4_and_l7b():
     rows = _lab_rev2_rows()
     l7 = next(p for p in rows if p["id"] == "LAB-REV2-L7")
     # rows that land after the lab landing (decision 39 item 7 for E2/E4; Architect 2026-10-20, implementation, Westley may veto, for L8M/L8M2); L7B takes their doc updates.
-    others = {p["id"] for p in rows if p["id"] not in ("LAB-REV2", "LAB-REV2-L7", "LAB-REV2-L7B", "LAB-REV2-E2", "LAB-REV2-E4", "LAB-REV2-L8M", "LAB-REV2-L8M2", "LAB-REV2-FIX")}
+    others = {p["id"] for p in rows if p["id"] not in ("LAB-REV2", "LAB-REV2-L7", "LAB-REV2-L7B", "LAB-REV2-E2", "LAB-REV2-E4", "LAB-REV2-L8M", "LAB-REV2-L8M2", "LAB-REV2-FIX", "LAB-REV2-SPEED-2")}
     missing = sorted(others - set(l7["depends_on"]))
     assert not missing, f"LAB-REV2-L7 depends_on lacks {missing}"
 
