@@ -62,7 +62,11 @@ def test_A99_control_survives_a_stale_recorded_reference(lib, monkeypatch):
     built == recorded."""
     stale = {n: dict(v, hashes=[_flip(h) for h in v["hashes"]]) for n, v in A.load_recorded().items()}
     monkeypatch.setattr(A, "load_recorded", lambda: stale)
+    calls, real = [], A.first_mismatch
+    monkeypatch.setattr(A, "first_mismatch", lambda r, g: calls.append((r is g, list(r), list(g), real(r, g))) or calls[-1][3])
     test_A99_positive_control_perturbed_hash_is_caught(lib)
+    assert calls and calls[0][3] is None and not calls[0][0] and calls[0][1] == calls[0][2], "unperturbed arm must compare two distinct equal lists"
+    assert calls[-1][3] == 17 and calls[-1][1][17] != calls[-1][2][17], "perturbation arm must run and catch step 17"
 
 
 def test_A99_control_mechanism_catches_the_perturbed_step_only(lib):

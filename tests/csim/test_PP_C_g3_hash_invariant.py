@@ -105,7 +105,11 @@ def test_G3_control_survives_a_stale_recorded_reference(lib, monkeypatch):
     stale = dict(PRE_G3_A99[name])
     stale["hashes"] = [_flip(h) for h in PRE_G3_A99[name]["hashes"]]
     monkeypatch.setitem(PRE_G3_A99, name, stale)
+    calls, real = [], A.first_mismatch
+    monkeypatch.setattr(A, "first_mismatch", lambda r, g: calls.append((r is g, list(r), list(g), real(r, g))) or calls[-1][3])
     test_G3_positive_control_perturbed_recorded_hash_is_caught(lib)
+    assert calls and calls[0][3] is None and not calls[0][0] and calls[0][1] == calls[0][2], "unperturbed arm must compare two distinct equal lists"
+    assert calls[-1][3] == 9 and calls[-1][1][9] != calls[-1][2][9], "perturbation arm must run and catch step 9"
 
 
 def test_G3_control_mechanism_catches_the_perturbed_step_only(lib):
