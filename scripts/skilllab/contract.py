@@ -158,7 +158,7 @@ class Batch:
 TICKS_PER_SECOND = 20
 OPENING_WINDOW_TICKS = 40     # DRAFT-opening-window-ticks (Westley to confirm): the primary prediction window after first contact
 REENGAGE_SILENCE_TICKS = 40   # DRAFT-reengage-silence-ticks (Westley's number, the R-099-05 window): silent ticks of a side before the lab re-engages it
-REENGAGE_MOVED_WU = 1.0       # DRAFT-reengage-moved-wu (Westley's number): a side has moved only when a unit is displaced by more than this from its position at the last reset of the silence counter
+REENGAGE_MOVED_WU = 1.0       # DRAFT-reengage-moved-wu (Westley's number): an idle-eligible unit (attack-move role, no destination) counts as moved when displaced by more than this from its position at the window start (the tick the silence counter was last zeroed); destination-holders are not tested
 SHIFT_MAX = 10.0              # replicate position shift, per axis, world units
 BuildFn = Callable[[int, bool], "Setup"]
 

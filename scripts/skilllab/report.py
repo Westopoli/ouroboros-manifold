@@ -198,7 +198,7 @@ DRAFT_TEXT = {
     "DRAFT-mixes": "the roster mixes M0 to M4 of the plays",
     "DRAFT-reengage-silence-ticks": "the silence after which an idle side is attack-moved onto the enemy centroid",
     "DRAFT-scale-marks": "the speed marks of the scale guards",
-    "DRAFT-reengage-moved-wu": "the displacement over the silence window above which a side counts as having moved (1 wu)",
+    "DRAFT-reengage-moved-wu": "the displacement from the window start (the tick the silence counter was last zeroed) above which an idle-eligible unit counts as moved and zeroes its side's counter; units holding a destination are not tested (1 wu)",
     "DRAFT-coarse-step": "the headcount step of the first coarse pass of a scan (scan.COARSE_STEP)",
     "DRAFT-control-max-ticks": "the tick cap of a control fight (sweep.CONTROL_MAX_TICKS)",
     "DRAFT-probe-count-bound": "the bound on the probes of a bisected scan (at most 9 at COARSE_STEP 8, derived)",

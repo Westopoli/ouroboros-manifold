@@ -2,9 +2,14 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order) and decision 33 (readings 1 to 4), amended by decision 43 items 2 to 4 (per-unit orders, no-op retry, the 1 wu moved threshold: tests in test_drift_fix_reengage.py); E-13 R-096-02, R-096-08, R-099-05
 """LAB-REV2-L8: fight() re-engages a silent side. Fake-engine tests of the trigger (tests only; the builder writes scripts/skilllab).
 
-THE RULE (Architect decision 28 point 3). When a side has had NO unit fire or move for REENGAGE_SILENCE_TICKS while an enemy is
-visible to it, every idle unit of that side holding an attack-move role is attack-moved onto the enemy centroid; a guard-stance
-holder never gets it (R-096-08). Both sides, naive baselines included. A cap after a re-engage stays a defect (outcome "cap").
+THE RULE (Architect decision 28 point 3, 'moved' semantics as ruled 2026-10-20, L8M, and amended the same day: the counter is the side's OWN; decision 49
+as amended by decision 50 (condition (i)); the full rule is in test_drift_fix_moved.py, ledger TD-LAB-REV2-L8M-moved). A side with no ACTIVITY for REENGAGE_SILENCE_TICKS
+while an enemy is visible to it has every idle unit holding an attack-move role attack-moved onto the enemy centroid; a guard-stance holder
+never gets it (R-096-08). Both sides, naive baselines included. A cap after a re-engage stays a defect (outcome "cap"). ACTIVITY on a tick,
+for a side, is: a unit of THAT side fired (a hit dealt by the side zeroes the side's counter and no other: a side that is shot at and does
+not reply keeps counting, FINDING-lab-d11), or an idle-eligible living unit of the side is displaced by more than DRAFT-reengage-moved-wu
+(1 wu) from its position at the window start (the tick the counter was last zeroed). A unit holding a destination is never tested for
+movement. The fire tests below keep their pre-L8M expectations (ledger row).
 
 INTERFACE FOR THE BUILDER (every name below is what these tests import or read; nothing else is pinned)
 
@@ -18,11 +23,11 @@ INTERFACE FOR THE BUILDER (every name below is what these tests import or read; 
   scripts/skilllab/fight.py   (the lab-side re-engage, in the tick loop next to timeline.check)
 
     OBSERVABLES, all on the Engine methods the lab already has (no new Engine method):
-      fire by side s at tick t   some enemy-of-s unit's hp read by the loop (engine.unit_hp) is lower at tick t than at tick t-1
-                                  (the loop already reads it every tick)
-      move by side s at tick t   some living unit of s reads engine.unit_pos(w, u) different from the previous tick's reading
-                                  (tick 0 is the spawn reading; compared with plain inequality)
-      silent tick                a tick t >= 1 on which side s had neither
+      fire at tick t             some unit's hp read by the loop (engine.unit_hp) is lower at tick t than at tick t-1 (the loop already
+                                  reads it every tick): it zeroes the counter of the SHOOTER's side only
+      move by side s at tick t   some idle-eligible living unit of s (no destination, attack-move role) reads engine.unit_pos(w, u) more
+                                  than DRAFT-reengage-moved-wu from its position at the window start (tick 0 is the spawn reading)
+      silent tick                a tick t >= 1 on which side s had neither a fire by s nor a move of s
       idle unit                  a living unit with engine.unit_destination(w, u) is None
       visible enemy              engine.visible_enemies(w, s, living_enemy_ids) is non-empty (the side's sight, om_player_can_see);
                                   read only when a re-engage could fire
@@ -30,7 +35,7 @@ INTERFACE FOR THE BUILDER (every name below is what these tests import or read; 
                                   Step "attack_move"; cleared by "move", "group_move", "idle", "guard" (opening or Step). Ping,
                                   set_layer and set_emission leave it alone. A re-engage keeps the role.
 
-    TRIGGER: side s keeps a counter of consecutive silent ticks (a fire or a move of s zeroes it). When it has reached
+    TRIGGER: side s keeps a counter of consecutive silent ticks (a fire BY s, or a move of s, zeroes it and starts a new window). When it has reached
       REENGAGE_SILENCE_TICKS, a visible enemy exists and at least one living idle attack-move unit exists, the side re-engages at
       once (the order is issued in the loop iteration after engine.step number N, so a fake engine's step_count reads N for the first
       one): ONE engine.order_attack_move(w, [u], x, y) call PER such unit (decision 43 item 2, amending decision 33 item 2: a group
@@ -41,7 +46,7 @@ INTERFACE FOR THE BUILDER (every name below is what these tests import or read; 
       ignored (decision 33 item 3). reengage[s] += 1: events, one per trigger, not units ordered and not calls (decision 33 item 2, kept by decision 43). The tests
       here read EVENTS (fakes_reengage.reengage_orders merges the per-unit calls of one tick onto one goal); the per-unit calls are
       pinned in test_drift_fix_reengage.py.
-      The side then waits for activity: no further re-engage for that side until a fire or a move of that side has zeroed the counter
+      The side then waits for activity: no further re-engage for that side until a fire by that side or a move of that side has zeroed the counter
       and it has again counted REENGAGE_SILENCE_TICKS silent ticks ("once per silence period", decision 33 item 1: an unbroken silence
       is one event, and a re-engage that produces no movement leaves the side silent, so the fight caps). If no enemy is visible, or no
       unit is idle, the counter keeps counting and the re-engage fires on the first tick all three conditions hold (an idle unit that
@@ -198,8 +203,9 @@ def test_unbroken_silence_for_several_windows_is_still_one_event():
 
 @pytest.mark.parametrize("side", (0, 1))
 def test_a_hit_dealt_after_a_reengage_rearms_the_shooter_like_a_move(side):
-    """Decision 33 item 1 for fire: after its first re-engage at N, `side` deals a hit (an enemy unit loses hp in step N + 5, so at
-    tick N + 6): its second order is at hit tick + N. The wounded side did not fire and stays at its single one."""
+    """Decision 33 item 1 for fire, decision 49 as amended by decision 50 (condition (i)) (the side's own counter; FINDING-lab-d11): after its first
+    re-engage at N, `side` deals a hit (an enemy unit loses hp in step N + 5, so at tick N + 6): its second order is at hit tick + N. The
+    wounded side did not fire and stays at its single one (TD-LAB-REV2-L8M-moved: the L8M tip had both at hit tick + N and (2, 2))."""
     hit_at = N + 6
     res, fake = run([G(0), G(1)], cap=2 * N + 20, script_events={N + 5: [wound(1 - side)]})
     assert [t for t, _i, _g in fake.reengage_orders(side)] == [N, hit_at + N]
@@ -219,7 +225,8 @@ def test_a_move_by_a_side_restarts_only_that_sides_silence(side):
 
 @pytest.mark.parametrize("side", (0, 1))
 def test_a_hit_dealt_restarts_the_shooters_silence_not_the_targets(side):
-    """A side fires when an enemy unit loses hp. The wounded side did not fire: it re-engages at N; the shooter at hit tick + N."""
+    """Decision 49 as amended by decision 50 (condition (i)) (the side's own counter; FINDING-lab-d11; TD-LAB-REV2-L8M-moved: the L8M tip delayed the
+    target too). A side fires when an enemy unit loses hp. The wounded side did not fire: it re-engages at N; the shooter at hit tick + N."""
     k = N - 5
     res, fake = run([G(0), G(1)], cap=2 * N + 5, script_events={k: [wound(1 - side)]})
     assert only(fake.reengage_orders(side))[0] == k + 1 + N
@@ -227,8 +234,8 @@ def test_a_hit_dealt_restarts_the_shooters_silence_not_the_targets(side):
 
 
 def test_a_kill_is_a_hit_and_a_dead_unit_is_not_ordered():
-    """The unit killed on the first step is side 0's: side 1 fired at tick 1 (re-engages at 1 + N), side 0 did nothing (at N) and
-    its order lists only the survivor."""
+    """Decision 49 as amended by decision 50 (condition (i)) (TD-LAB-REV2-L8M-moved: the L8M tip had side 0 at N + 1). The unit killed on the first
+    step is side 0's: side 1 fired at tick 1 (re-engages at 1 + N), side 0 did nothing (at N) and its order lists only the survivor."""
     res, fake = run([G(0, 2), G(1, 2)], cap=N + 10, script_events={0: [kill(0, 0)]})
     dead, alive = fake.units_of(0)
     tick, ids, _goal = only(fake.reengage_orders(0))
