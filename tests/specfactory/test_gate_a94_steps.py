@@ -100,6 +100,8 @@ def _base_repo(tmp_path: Path) -> Path:
                              capture_output=True, text=True)
     assert emitted.returncode == 0, emitted.stdout + emitted.stderr
     _commit(repo, "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     return repo
 
 
