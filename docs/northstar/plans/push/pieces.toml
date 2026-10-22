@@ -3724,7 +3724,6 @@ owns = ["scripts/specfactory/sdk_engineer.py", "scripts/specfactory/batch_review
 owns_glob = []
 acceptance = ["tests/specfactory/test_credits_tools.py"]
 depends_on = ["A94-harness"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "665e0e0" }
 tests_pending = false
-spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
 size_estimate = "sdk_engineer.py (a Claude Code agent in a worktree on the console key) and batch_review.py (Batch API jobs and digests), both dry-run by default; one test file"
