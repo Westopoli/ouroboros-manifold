@@ -64,6 +64,8 @@ unblocks: lab rev 2 runs with real marks instead of drafts.
 
 (your 2026-10-21 note: not enough context)
 
+Architect's note: Q-156-02 is re-asked with the lab's pass-mark context (the ten per-mark values) in the next batch.
+
 ### Q-147-01 Name the land era and the roster
 
 The land era is "The Marble Reach" as a placeholder; its name, setting, tone and scale, and the order of eras after the first two, are unwritten. Give your words, or ask the Architect to draft candidates; also write the roster in order and mark each era earnable or purchase-only.
@@ -71,6 +73,8 @@ The land era is "The Marble Reach" as a placeholder; its name, setting, tone and
 unblocks: the era pack form, the land era's identity and the roster the store sells.
 
 (your 2026-10-21 note: Already decided this: Greek)
+
+Architect's note: the land era is Greek antiquity (decided); the open parts are the era's name, brief, tone and roster, re-asked as one question with the era pack form in the next batch.
 
 ### Q-149-02 Which eras are purchase-only?
 
@@ -125,7 +129,7 @@ unblocks: FINDING-sim-I-income-multiplier and the economy lane's numbers.
 - Places lane drafts of rev 6a: DRAFT-shape-harm 0.5, DRAFT-first-ring-spread 2, DRAFT-field-cost-share 15 to 55 percent (Architect, 2026-10-21)
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
 
-Parked by you (10): see batch_closed.md; added 2026-10-21: Q-208-01, Q-149-01.
+Parked by you (11): see batch_closed.md; added 2026-10-21: Q-082-03, Q-208-01, Q-149-01.
 
 ## Answered 2026-10-21
 

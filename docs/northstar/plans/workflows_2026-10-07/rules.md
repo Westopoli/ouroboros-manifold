@@ -21,6 +21,8 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 
 ## (b) Landing clerk (Engineer)
 
+- Temporary landing rule (2026-10-21, 8 hours): until 2026-10-22 06:00 the paragraph "Temporary landing rule" at the end of `docs/northstar/plans/workflows_2026-10-07/dispatcher.md` supersedes the lock-first full-gate rule below for records-only landings (combined clerk, no suites) and for code landings (stacked gates, short lock).
+- After 2026-10-22 06:00 (unless Westley extends it) the rules below apply again unchanged.
 - Gate, run from the worktree, detached into `<TMPDIR>/gate.log`: `flock -w 14400 ~/Projects/om-push/gate.lock env TMPDIR=<dir> MERGE_GATE_SUITE_TIMEOUT=2400 MERGE_GATE_PLAYTHROUGH_TIMEOUT=2400 MERGE_GATE_PLAY_TIMEOUT=900 MERGE_GATE_PIECES=<worktree>/docs/northstar/plans/push/pieces.toml scripts/specfactory/merge_gate.sh <worktree> origin/main <comma piece list>`. Three positional arguments.
 - Wait: poll `gate.log` for the `^GATE look ` line, one foreground command under 10 minutes at a time. Then `pgrep -f '^bash scripts/specfactory/merge_gate.sh'` to confirm no gate for the worktree still runs; never pgrep your own command line. There is no VERDICT line: the verdict is the set of `GATE <stage> REJECT` lines.
 - Flake rule: a lone playthrough or lane_plays red that passes twice alone gets one re-run.

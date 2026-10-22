@@ -2,6 +2,8 @@
 
 How to answer: one word per picture, approve, reject, or a note. Where answers go: a message to the chat, or `answers.md` in the Batch A form; the clerk that records a verdict deletes the picture and its block in the same commit.
 
+Each picture has one block under its file name, in this form: `**What you see:**`, `**Legend:**` (one line, what each colour and mark in the picture means), `**Judge:**` (a `**Camera:**` line may follow), `**Beta status of what is shown:**` with one line per feature.
+
 ## C-S132-ground-units-close.png
 
 **What you see:** Your force from 300 wu up, standing on an orange ridge under a pink steep wall: darts and arrowheads on the left, kites and wide hexagons on the right, each flat blue body 45 to 80 px across with a small dark icon and a yellow layer ring on top. Rows of loose blue arrowheads float above and below the force, away from any unit (the squad markers of the dart and arrowhead types, drawn in a flat map projection, so they do not sit on the 3D ground).
