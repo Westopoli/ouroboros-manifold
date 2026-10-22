@@ -1,4 +1,6 @@
 # spec: docs/northstar/plans/briefs/2026-09-22-two-day-push.md, item 1
+#       and docs/northstar/plans/2026-10-19-harness-enforcement-spec.md section 1 HARNESS-C1b and section 2 (rev 3a)
+# Rule pins: R-990-01@?
 """Tests for scripts/specfactory/merge_gate.sh's own orchestration (exit
 codes, step lines). The individual mechanisms it calls into --
 footprint_check, symbol_ownership_check, regression_check -- have their own
@@ -11,7 +13,18 @@ suite_regression, acceptance ids, checksum_trace) is exercised for real in
 docs/northstar/proving_ground/evidence/push_2026-09-22/gate_replays.md --
 those need the genuine csrc/tests/csim tree this repo's own scratch fixture
 does not reproduce.
+
+HARNESS-C1b extends this file at the bottom: stage `status` after the look stage ("`merge_gate.sh` stage `status`
+rejects on a DRIFT fixture and passes a WARN fixture (the gate test harness's stub pattern)"; the stage runs
+`"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF"`, `reject` on any `STATUS <check>
+DRIFT` line, `warn` on `STATUS <check> WARN`) and stage `rule_pins` "AFTER the `--revert` exit, full gate only,
+the single-owner pattern with `reject` on REJECT and `warn` on WARN". The stub pattern: the gate finds every tool
+beside itself (GATE_DIR), so a fake repo root holds symlinks to every real file of scripts/specfactory except the
+stubbed tools, which are written in place and print canned lines; REPO_ROOT is then the fake root. Fixture id
+R-990-01 appears only in a canned stub line: pinned @? above. The `rule_pins` stub cases are the section 1 body
+text, beyond the one Tests-first sentence that names merge_gate (reported).
 """
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -39,6 +52,8 @@ def _init_fixture_repo(base_dir: Path, *, makefile: str) -> Path:
     (repo / "tests" / "qa" / "t1").mkdir()
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     return repo
 
 
@@ -223,3 +238,135 @@ def test_unknown_candidate_dir_is_a_usage_error():
         capture_output=True, text=True, timeout=10,
     )
     assert proc.returncode == 2
+
+
+# ---- HARNESS-C1b: stages rule_pins (after the --revert exit) and status (after the look stage) -----------------------
+
+SPEC_DIR = REPO / "scripts" / "specfactory"
+GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
+
+
+def _stub_tool(lines, rc):
+    """A stand-in for status_check.py / rule_pins*.py: records argv beside itself, prints canned lines, exits rc."""
+    body = "".join(f"print({l!r})\n" for l in lines)
+    return ("import sys\nfrom pathlib import Path\n"
+            "Path(__file__).with_suffix('.argv').write_text('\\n'.join(sys.argv[1:]))\n"
+            + body + f"sys.exit({rc})\n")
+
+
+def _fake_root(tmp_path: Path, stubs: dict) -> Path:
+    """Fake repo root: docs/ and every file of scripts/specfactory symlinked, except the stubbed tool names."""
+    root = tmp_path / "fakeroot"
+    (root / "scripts" / "specfactory").mkdir(parents=True)
+    (root / "docs").symlink_to(REPO / "docs")
+    for f in SPEC_DIR.iterdir():
+        if f.name not in stubs:
+            (root / "scripts" / "specfactory" / f.name).symlink_to(f)
+    for name, text in stubs.items():
+        (root / "scripts" / "specfactory" / name).write_text(text)
+    return root
+
+
+def _gate_run(tmp_path: Path, stubs: dict, *flags: str):
+    """Run the fake root's merge_gate.sh on the fixture repo; returns (stdout lines, completed process, fake root)."""
+    root = _fake_root(tmp_path, stubs)
+    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/stub.c"], "acceptance": []}])
+    env = {"MERGE_GATE_PIECES": str(pieces), "PATH": GATE_PATH}
+    gate = root / "scripts" / "specfactory" / "merge_gate.sh"
+    proc = subprocess.run(["bash", str(gate), *flags, str(repo), "HEAD", "B1"],
+                          capture_output=True, text=True, env=env, timeout=60)
+    return proc.stdout.splitlines(), proc, root
+
+
+def _stage(lines, name):
+    return [l for l in lines if l.startswith(f"GATE {name} ")]
+
+
+STATUS_OK = _stub_tool(["STATUS pins OK 0 files 0 ids"], 0)
+STATUS_WARN = _stub_tool(["STATUS pins WARN 1 stale"], 0)
+STATUS_DRIFT = _stub_tool(["STATUS pins WARN 1 stale", "STATUS register DRIFT 2 rows"], 1)
+PINS_OK = _stub_tool(["PINS OK 1 files 1 ids"], 0)
+PINS_WARN = _stub_tool(["PINS WARN unknown rule R-990-01 in tests/test_x.py"], 0)
+PINS_REJECT = _stub_tool(["PINS REJECT tests/test_x.py:1 R-990-01 stale 000000 b2a3c8"], 1)
+RULE_PINS_QUIET = _stub_tool(["PINS OK 0 files 0 ids"], 0)
+
+
+def test_control_stub_harness_runs_the_real_stages_to_the_look_line(tmp_path):
+    """Green today: the fake root runs the gate to the end; the status_check stub is not called yet (no stage)."""
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
+    for step in ("make", "owner_lint", "look"):
+        assert _stage(lines, step), proc.stdout + proc.stderr
+    assert [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")][0] < \
+        [i for i, l in enumerate(lines) if l.startswith("GATE look ")][0]
+    assert (root / "scripts" / "specfactory" / "merge_gate.sh").is_symlink()
+    assert (root / "scripts" / "specfactory" / "status_check.py").is_file()
+
+
+def test_control_revert_mode_prints_no_rule_pins_or_status_line(tmp_path):
+    """Green today and after: a revert never trips on a restored test, and stops before the later stages."""
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_DRIFT, "rule_pins_tests.py": PINS_REJECT,
+                                             "rule_pins.py": PINS_REJECT}, "--revert")
+    assert _stage(lines, "owner_lint"), proc.stdout + proc.stderr
+    assert not _stage(lines, "rule_pins") and not _stage(lines, "status"), proc.stdout
+    assert not (root / "scripts" / "specfactory" / "status_check.argv").exists()
+    assert not (root / "scripts" / "specfactory" / "rule_pins_tests.argv").exists()
+
+
+def test_status_stage_rejects_a_drift_line(tmp_path):
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_DRIFT})
+    status = _stage(lines, "status")
+    assert status and status[0].startswith("GATE status REJECT"), proc.stdout + proc.stderr
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+
+
+def test_status_stage_passes_a_warn_line(tmp_path):
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_WARN})
+    status = _stage(lines, "status")
+    assert status and status[0].startswith("GATE status WARN"), proc.stdout + proc.stderr
+    assert not any(l.startswith("GATE status REJECT") for l in lines), proc.stdout
+
+
+def test_status_stage_ok_when_every_check_is_ok(tmp_path):
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
+    status = _stage(lines, "status")
+    assert status and status[0].startswith("GATE status OK"), proc.stdout + proc.stderr
+
+
+def test_status_stage_comes_after_look_and_is_called_with_repo_and_base(tmp_path):
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
+    look = [i for i, l in enumerate(lines) if l.startswith("GATE look ")]
+    status = [i for i, l in enumerate(lines) if l.startswith("GATE status ")]
+    assert look and status and look[0] < status[0], proc.stdout + proc.stderr
+    argv = (root / "scripts" / "specfactory" / "status_check.argv").read_text().splitlines()
+    assert argv[0] == "--repo" and os.path.realpath(argv[1]) == os.path.realpath(root), argv
+    origin_main = _git(tmp_path / "repo", "rev-parse", "origin/main").stdout.strip()
+    assert argv[2:] == ["--base", origin_main], argv
+
+
+def test_rule_pins_stage_rejects_on_a_pins_reject(tmp_path):
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_REJECT,
+                                             "rule_pins.py": RULE_PINS_QUIET})
+    stage = _stage(lines, "rule_pins")
+    assert stage and stage[0].startswith("GATE rule_pins REJECT"), proc.stdout + proc.stderr
+    assert proc.returncode == 1
+
+
+def test_rule_pins_stage_warns_on_a_pins_warn_and_is_ok_on_ok(tmp_path):
+    warn_lines, warn_proc, _ = _gate_run(tmp_path / "w", {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_WARN,
+                                                          "rule_pins.py": RULE_PINS_QUIET})
+    stage = _stage(warn_lines, "rule_pins")
+    assert stage and stage[0].startswith("GATE rule_pins WARN"), warn_proc.stdout + warn_proc.stderr
+    ok_lines, ok_proc, _ = _gate_run(tmp_path / "o", {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_OK,
+                                                      "rule_pins.py": RULE_PINS_QUIET})
+    stage = _stage(ok_lines, "rule_pins")
+    assert stage and stage[0].startswith("GATE rule_pins OK"), ok_proc.stdout + ok_proc.stderr
+
+
+def test_rule_pins_stage_comes_after_owner_lint(tmp_path):
+    lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_OK,
+                                             "rule_pins.py": RULE_PINS_QUIET})
+    owner = [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")]
+    pins = [i for i, l in enumerate(lines) if l.startswith("GATE rule_pins ")]
+    assert owner and pins and owner[0] < pins[0], proc.stdout + proc.stderr

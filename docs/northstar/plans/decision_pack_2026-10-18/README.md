@@ -1,6 +1,6 @@
 # Decision pack, 2026-10-18 (Westley's offline batch)
 
-**Read `batch.md` instead of this page: it is the same batch rewritten in the stories' voice, with every picture and question explained from the player's side and the ids kept only as keys.** This page stays as the index and the record.
+**batch.md is the one page of what Westley decides (pictures, questions, chat items, drafts), 2026-10-21; answers go in answers.md one line per key.** This page stays as the index and the record.
 
 One sitting, offline, as many as you can. Everything here is a decision only you can make or a shot only you can judge; each says what it unblocks on the Linux box this week. Answer in one file (`answers.md` beside this one, or a message): shots as `<file>: approved | rejected — <note>`, questions as `<id>: <letter> — <words if any>`. The Architect folds every answer into the register, the epics and the queue, and the Dispatcher orders the week from them.
 
@@ -10,7 +10,7 @@ The four appendices: **A** the shots (`../../story_reviews/westley/README.md`, o
 
 | If you answer | Linux queues |
 |---|---|
-| The lane shots (A) | A, B, C, E fix pieces one per verdict; lane E fan-out (E1l, E1o, E1p-b) on S-237; lane B B25/B26 |
+| The lane shots (A) | A, B, C, E fix pieces one per verdict; lane E fan-out (E1l, E1o, E1p-b) depends on VG-P3; S-237 was rejected 2026-10-13 and re-shoots after P2 and P3; lane B B25/B26 |
 | SIM-LOGS W1, W2, W4 | SIM-LOGS tests and build; then the five call sites; then chronicle.c rows 7 to 9; both sweeps re-run |
 | Terrain-obeys pass 2 go | the route-carving mockup pass on the Mac or Linux; lane P rev 6 from its facts; P1 and P2 build meanwhile |
 | Transition 1b verdict | integration lane row for S-108 (guard 4) or pass 2 |

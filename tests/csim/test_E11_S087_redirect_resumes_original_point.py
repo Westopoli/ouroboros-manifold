@@ -1,3 +1,4 @@
+# Rule pins: R-087-02@1ecc04, R-087-05@6cbf99, R-087-06@2b0850, R-087-08@d94418, R-095-05@819fd3, R-096-02@e8ae96, R-096-03@915cb9, R-099-05@ea8d02
 """LAB-REV2-E1b -- an attack-moving unit hit from out of range pursues the attacker as ONE engagement of its order and
 then resumes toward its ORIGINAL ordered point (E-11 S-087, R-087-06 rewritten 2026-10-19; E-13 R-096-02).
 

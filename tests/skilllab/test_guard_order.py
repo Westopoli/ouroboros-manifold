@@ -1,3 +1,4 @@
+# Rule pins: R-096-08@629328
 # spec: R-096-08 (the unit holds, fires in range, never walks) - guard order in contract, fight, timeline and engine
 """The guard order on fake engines and a stub library: Group.order and Step.order "guard", Engine.order_guard."""
 import sys

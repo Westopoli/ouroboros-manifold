@@ -1,3 +1,4 @@
+# Rule pins: R-098-02@118a82
 """Helpers for the LAB-REV2-FIX round 3 tests (decision 44, blind naive-defender posts): an exact sight-line oracle written from the words of
 R-098-02 (a blocked 100 wu cell on the lower layer of the pair crosses the segment; the cells holding the two ends are exempt), and the
 cell search of the shift written as an exhaustive scan. No engine, nothing imported from the builder."""

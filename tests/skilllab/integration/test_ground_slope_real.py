@@ -1,3 +1,4 @@
+# Rule pins: R-004-07@c7c723, R-005-09@dd0832
 # spec: LAB-REV2-L6 (docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, rulings 6, 10, 11, the L6 row); R-005-09, S-164, R-004-07
 """s1_slope_top through the production library: pre-flight ok on seed 11, contact, elimination, the walkers and the reach table,
 and what each knob does (or is declared inert for). The engine-level controls (no scene) are green before the build.

@@ -1,0 +1,8 @@
+{
+  "released": ["csrc/tactical_support.c", "VG-CONTRACT-E7"],
+  "goldens": "known-red",
+  "rulings": "push/vg-e7r-rulings7",
+  "pieces": "VG-CONTRACT-E7,PP-ledger,VG-D8",
+  "skip": {"docs": "push/vg-e7r-docs4", "build": "push/vg-e7r-3"},
+  "audit": "Second review (architect agent, Fable) read the E7 paragraph at origin/main 0ebc280e: verdict approve with changes; it read the piecewise formula (start = F * frac(share), frac = 0.2 + 1.2*share for share <= START_KNEE 0.25 else 0.5 + 0.4*(share - 0.25)) and the accessor line int32_t om_mission_get_force_group(const om_world *w, uint32_t i) (1..3, 0 for none; stub declared in the ABI 7 to 8 bump), and recomputed the pins (200, 500, 600, 800; capacity 400) exactly. Its changes (script pins and briefs to the piecewise formula, TD-VG-E-28 pins, the DRAFT-e7-floor-knee file name, the p+e == 0 edge) were made by the Architect on origin/main d16be5c7 and in the script. The p+e == 0 clause (whole F spawns, capacity 0) was added after the audit, by the Architect under 5 percent. Westley's approval of the floor was given in advance ('go ahead', 2026-10-19, recorded in the register rows at 0ebc280e); he vetoes on the shot."
+}

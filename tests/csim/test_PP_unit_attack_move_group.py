@@ -1,3 +1,4 @@
+# Rule pins: R-095-01@d24419, R-095-02@47ddf5, R-095-04@d31828, R-096-02@e8ae96
 """PP-unit: attack-move as a group order (E-13 S-096, R-096-02; plan Phase A row P5, audit G11).
 
 R-096-02: "Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit

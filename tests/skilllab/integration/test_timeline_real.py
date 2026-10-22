@@ -1,3 +1,4 @@
+# Rule pins: R-096-02@e8ae96
 # spec: docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md::Phase S (order timeline: later orders for bait, ambush, fall-back)
 """The order timeline through the production library.
 
@@ -38,8 +39,8 @@ def test_delayed_attack_move_fires_once_and_the_fight_ends(library):
     exactly once, the order takes effect (first contact after tick 20, damage dealt), and a second run is identical.
 
     LAB-REV2-L2 (Q-LAB-03): the old assertion "the fight is not a cap" is dropped. A timeline step issues a GROUP attack-move, and
-    until LAB-REV2-E1 lands the engine ends a group's attack-move after its first engagement (R-096-02, rewritten 2026-10-13), so
-    this scene can end `cap` on today's engine; E1's test pins elimination. The outcome must still be one of the four names."""
+    E1 has landed with this change: the engine resumes the group toward its point after every engagement (R-096-02, rewritten
+    2026-10-13), and E1's test pins elimination. The outcome must still be one of the four names."""
     s = setup((Step(0, ("tick", 20), "attack_move"),))
     first, second = fight.fight(s, 1, False, engine=library), fight.fight(s, 1, False, engine=library)
     assert first.steps_fired == ((0, 20),)

@@ -86,6 +86,8 @@ def _fixture(base: Path, makefile: str) -> tuple[Path, Path]:
         (repo / d).mkdir(parents=True)
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     pieces = base / "pieces.toml"
     pieces.write_text('[[piece]]\nid = "B1"\nowns = ["csrc/stub.c"]\nacceptance = []\ndepends_on = []\n')
     return repo, pieces

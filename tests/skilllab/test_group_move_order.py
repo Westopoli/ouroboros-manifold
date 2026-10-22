@@ -1,3 +1,4 @@
+# Rule pins: R-095-02@47ddf5
 # spec: Architect ruling A198 (R-095-02, the group_move order kind) - scripts/skilllab/{fight,timeline}.py; LAB-REV2-L2: the approach opening A198 first served is retired (Q-LAB-03), the order kind stays for timeline steps
 """Group.order and Step.order accept "group_move": one Engine.order_group_move per group. Fake engine; no library."""
 import sys

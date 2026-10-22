@@ -12,6 +12,11 @@
 # symbol_modules.toml) always come from THIS repo (scripts/specfactory's own
 # location) -- never from the candidate worktree, which cannot edit any of
 # them. Only `make`, `pytest` and `git diff` run against the candidate.
+#
+# Stage 0 `base` runs first (also before the --revert exit): the candidate must
+# contain the current origin/main, whose sha then replaces <base_ref> for every
+# later stage. Env hook (tests only): MERGE_GATE_STOP_AFTER=base exits 0 right
+# after the `GATE base OK` line. Other MERGE_GATE_* variables are read where used.
 set -uo pipefail
 
 GATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -88,6 +93,28 @@ warn()   { gate_line "$1" WARN "${*:2}"; }
 harness() { gate_line "$1" HARNESS "${*:2}"; }
 
 tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
+
+# -------------------------------------------------------------- 0. base
+# The clerk merges origin/main inside gate.lock; a candidate gated against a main that has since
+# moved fails tests that compare with main's build. The sha, not the name, is the baseline from here on.
+# See also: docs/northstar/plans/workflows_2026-10-07/rules.md section (b) "Gate";
+# ledger row FINDING-gate-base-before-lock
+if ! git -C "$CANDIDATE" fetch -q origin >"$SCRATCH_ROOT/base_fetch.log" 2>&1; then
+    reject base "git fetch origin failed: $(tail_oneline "$SCRATCH_ROOT/base_fetch.log" 3)"
+    exit 1
+fi
+MAIN_SHA="$(git -C "$CANDIDATE" rev-parse --verify -q origin/main)"
+if [[ -z "$MAIN_SHA" ]]; then
+    reject base "origin/main not found in the candidate"
+    exit 1
+fi
+if ! git -C "$CANDIDATE" merge-base --is-ancestor "$MAIN_SHA" HEAD; then
+    reject base "candidate lacks origin/main $MAIN_SHA; merge origin/main inside the lock and rerun"
+    exit 1
+fi
+ok base "$MAIN_SHA"
+BASE_REF="$MAIN_SHA"
+[[ "${MERGE_GATE_STOP_AFTER:-}" == "base" ]] && exit 0
 
 # -------------------------------------------------------------- 1. make
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
@@ -239,6 +266,28 @@ if [[ "$REVERT_MODE" -eq 1 ]]; then
         exit 1
     fi
     exit 0
+fi
+
+# -------------------------------------------------------------- 5c-pins. rule pins (HARNESS-C1b; full gate only)
+# Single-owner pattern: tests changed by the diff and the specs of this piece. The pre-gate runs its own step, so a
+# revert never reaches here. See also: pre_gate.sh step pins, rule_pins_tests.py, rule_pins.py
+RP_LOG="$SCRATCH_ROOT/rule_pins.log"
+mapfile -t RP_DIFF < <(git -C "$CANDIDATE" diff --name-only "$BASE_REF"...HEAD 2>/dev/null)
+RP_RC=0
+"$PYTHON" "$GATE_DIR/rule_pins_tests.py" check "$CANDIDATE" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"} >"$RP_LOG" 2>&1 || RP_RC=1
+RP_SPECS=()
+while IFS= read -r sp_path; do
+    [[ -f "$CANDIDATE/$sp_path" ]] && RP_SPECS+=("$sp_path")
+done < <("$PYTHON" "$GATE_DIR/rule_pins.py" spec-of "$PIECES_TOML" "$PIECE_ID" 2>/dev/null)
+if (( ${#RP_SPECS[@]} )); then
+    (cd "$CANDIDATE" && "$PYTHON" "$GATE_DIR/rule_pins.py" check "${RP_SPECS[@]}" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"}) >>"$RP_LOG" 2>&1 || RP_RC=1
+fi
+if grep -q '^PINS REJECT' "$RP_LOG" || (( RP_RC != 0 )); then
+    reject rule_pins "$(grep '^PINS REJECT' "$RP_LOG" | tr '\n' ' ')$(grep -q '^PINS REJECT' "$RP_LOG" || tail_oneline "$RP_LOG" 3)"
+elif grep -q '^PINS WARN' "$RP_LOG"; then
+    warn rule_pins "$(grep '^PINS WARN' "$RP_LOG" | tr '\n' ' ')"
+else
+    ok rule_pins "$(tail_oneline "$RP_LOG" 1)"
 fi
 
 # -------------------------------------------------------------- 5c. control liveness (A114): the attaching piece's own controls
@@ -624,6 +673,19 @@ if [[ -d "${MERGE_GATE_LOOK_CANDIDATE:-}" && -d "${MERGE_GATE_LOOK_BASE:-}" ]]; 
     fi
 else
     warn look "no frame dirs (MERGE_GATE_LOOK_CANDIDATE / MERGE_GATE_LOOK_BASE unset); skipped"
+fi
+
+# -------------------------------------------------------------- 14. status (HARNESS-C1b)
+# The status copies must agree (guard 7): any `STATUS <check> DRIFT` line rejects, a WARN warns. Reads THIS repo.
+# See also: status_check.py, pre_gate.sh
+STATUS_LOG="$SCRATCH_ROOT/status.log"
+"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF" >"$STATUS_LOG" 2>&1
+if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
+    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
+elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
+    warn status "$(grep '^STATUS [a-z_]* WARN' "$STATUS_LOG" | tr '\n' ' ')"
+else
+    ok status "$(tail_oneline "$STATUS_LOG" 1)"
 fi
 
 # --------------------------------------------------------------

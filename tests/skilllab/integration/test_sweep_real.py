@@ -33,9 +33,7 @@ builds (every baseline the play's own placed scene; the three smoke controls blo
     to be traced), and no assertion in this file or in test_sweep.py is made on that play for damage-up.
   - a 600-tick damage control shows identical margins at both points on the real play, so the damage control runs to elimination.
 
-Capability-gated cases (skipped on a library without OM_TP_FIRING_ARC_DEG or a usable om_roster_set_cone): the arc null control
-(parameter pushed at 360 against never set) and the cone null control (range 0 against no cone) read byte-identical rows on the real
-engine. They skip today (E0 and E2 are not built) and are unverified for satisfiability until those land.
+The capability-gated E0/E2 cases (the arc and cone null controls) live on push/labrev2-capability-tests (459452f7) until E0 and E2 land (ledger row TD-LAB-REV2-capability-tests-move).
 """
 import csv
 import dataclasses
@@ -130,32 +128,6 @@ def test_positive_control_the_damage_detector_fires_on_two_identical_runs(librar
     a = fought(library, scene(damage_up=1.0, max_ticks=12000))
     b = fought(library, scene(damage_up=1.0, max_ticks=12000))
     assert sweep.controls("damage_up")["positive"].check([[a], [b]]) is False
-
-
-# ---- arc and cone null controls (gated on the library) ------------------------------------------------------------------------------
-
-def test_the_arc_null_control_reads_360_pushed_against_never_set_as_byte_identical_rows(library):
-    if not sweep.detect(library).arc:
-        pytest.skip("the library has no OM_TP_FIRING_ARC_DEG (E0 not built): unverified for satisfiability until it lands")
-    ctl = sweep.controls("arc")["null"]
-    got = []
-    for p in sorted(ctl.points, key=lambda p: -len(p.settings)):
-        setup = scene(vision=0.5)
-        setup = dataclasses.replace(setup, settings={**setup.settings, **p.settings}, **p.setup)
-        got.append([fought(library, setup)])
-    assert ctl.check(got) is True
-    assert got[0][0].firing_unit_seconds[0] > 0                 # positive control: the scene does shoot, so identical rows mean something
-
-
-def test_the_cone_null_control_reads_range_zero_against_no_cone_as_byte_identical_rows(library):
-    if not sweep.detect(library).cone:
-        pytest.skip("the library has no usable om_roster_set_cone (E2 not built): unverified for satisfiability until it lands")
-    ctl = sweep.controls("cone")["null"]
-    got = []
-    for p in sorted(ctl.points, key=lambda p: -len(p.setup)):
-        got.append([fought(library, dataclasses.replace(scene(vision=0.5), **p.setup))])
-    assert ctl.check(got) is True
-    assert got[0][0].firing_unit_seconds[0] > 0
 
 
 # ---- capabilities: arc and cone are skipped with a reason when the library lacks them ------------------------------------------------

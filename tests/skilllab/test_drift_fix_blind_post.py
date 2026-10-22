@@ -1,3 +1,4 @@
+# Rule pins: R-007-06@3926a6, R-098-02@118a82
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 43 items 5 and 6, and decision 44 (Architect, 2026-10-19, implementation; Westley may
 # veto; decision 44 is in the brief of this piece, not yet in the decisions file): a naive-defender post that cannot see the attackers' start is shifted, else refused
 """LAB-REV2-FIX round 3: blind naive-defender posts (shift, then refuse `blind_post`), and the artifact's line for every refused baseline.

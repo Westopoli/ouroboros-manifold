@@ -1,3 +1,4 @@
+# Rule pins: R-087-06@2b0850, R-099-05@ea8d02
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (re-engage) and decision 23 (FINDING-group-orders-cap)
 """LAB-REV2-L8 against the real engine (OM_LAB_SLOW=1: two capped fights today, about a second each).
 

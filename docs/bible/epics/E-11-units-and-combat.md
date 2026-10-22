@@ -75,7 +75,7 @@ Rules
 - R-083-01  Given a unit type, When its profile is read, Then it has the stats of S-082, zero to two trait cards the player has chosen, and exactly one ability.
 - R-083-02  Given a trait card, When applied, Then it changes a stat or a rule; no card or ability ever outweighs positioning: layer position and cross-layer geometry weigh more than any trait or ability, and cards granting vision across layers are kept to a minimum [Q-083-03: the weighting test].
 - R-083-04  Given a player, When they play, Then trait cards are unlocked through play, in the register of Dead by Daylight and Age of Empires 3, and abused cards are nerfed after launch [Q-083-03: what earns a card, where it persists, whether the enemy fields cards].
-- R-083-03  Given a Warden, When any friendly unit is within 300 wu, Then that unit takes 10 percent less damage and regains 0.075 HP per tick (the Warden's passive aura); a second Warden in range adds 0.05 reduction, not 0.10, and healing stacks per Warden.
+- R-083-03  Given a Warden, When any friendly unit is within 300 wu, Then that unit takes 10 percent less damage and regains 0.075 HP per tick (the Warden's passive aura); a second Warden in range adds nothing: the aura does not stack, so a player who spreads Wardens out covers more of the army; the player sees each Warden's 300 wu radius as a circle on the field (Westley, 2026-10-20: "they do not stack, but they have a visible circular radius of influence and if a player spreads them out better they'll get better healing coverage over more of their army").
 
 Inputs: profile table.
 Outputs: effective stats.
@@ -105,7 +105,7 @@ As a commander, I want fights to last long enough to read, reposition, and retre
 
 Rules
 - R-085-01  Given a 10v10 mirror of any single type at attack range with no abilities, When resolved, Then the fight lasts at least 45 s.
-- R-085-02  Given a 50v50 mirror with the default balanced composition, When resolved, Then the fight lasts 150 to 200 s.
+- R-085-02  Given a 50v50 mirror with the default balanced composition, When resolved, Then the fight lasts 150 to 230 s (upper bound widened from 200 s by Westley, 2026-10-21; the lab's own fight runs 229 s).
 - R-085-03  Given a 100v100 balanced battle, When resolved, Then it lasts more than 120 s.
 - R-085-04  Given a mixed battle, When per-category engagements are timed, Then Strike-vs-Strike resolves before Line-vs-Line, which resolves before Siege-vs-Siege.
 - R-085-05  Given a fight the player is losing, When they issue a move away at the 45 s mark, Then at least 30 percent of the force escapes alive.
@@ -137,18 +137,18 @@ Open flags: none.
 ### S-087 — Every unit thinks the same way
 As a commander, I want every unit on both sides to flinch from what it cannot fight, obey my orders, and otherwise shoot the nearest enemy in range, so that my skill is direction, not babysitting.
 
-Direction changed 2026-10-02, rewrite pending: an idle or attack-moving unit engages the nearest enemy within its type's reach that its side can see, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: an idle or attack-moving unit engages the nearest enemy within its type's reach, on its own layer or another (E-01 S-164, R-008-04). The rules below are what the game does today, including that acquiring, pursuing and firing use the side's visible set (E-12 R-093-02, Westley 2026-10-02; A185); only the cross-layer reach is pending.
 
 Rules
 - R-087-01  Given a unit taking damage from an attacker it cannot see or cannot reach, When the loop runs, Then it moves 200 wu directly away from the damage direction and stops; once the attacker is visible and in range it stands and fights.
 - R-087-02  Given a unit with an active player order, When the loop runs, Then the order wins over auto-engagement; a plain move never acquires or returns fire.
-- R-087-03  Given an idle or attack-moving unit with an enemy within attack range on its layer, When targets are evaluated, Then it attacks the nearest such enemy; an engaged target still alive and in range is kept.
+- R-087-03  Given an idle or attack-moving unit with an enemy that its side can see within attack range on its layer, When targets are evaluated, Then it attacks the nearest such enemy; an engaged target still alive and in range is kept.
 - R-087-04  Given an attack-moving unit with no target within its attack range, When evaluated, Then it keeps marching on its slot and route (R-095-02, R-097-03), steering around units in its way, and does not walk toward an enemy it merely sees in sensor range; the formation holds until shooting, not until sight (Westley, 2026-10-03, A199; marked for review in playtesting). It halts and fires when an enemy is within its attack range and it can shoot it (a target behind cover, a wall or a blocked cell does not stop the march: it keeps walking its route and fires when the line clears, or seeks a firing spot under R-087-09), and pursues an acquired target that leaves that range under the leash (R-087-05).
 - R-087-05  Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the unit itself pursues more than 200 wu from the anchor it drops the target and resumes its attack-move (R-096-03). The leash measures the pursuer's own distance from its anchor, never the target's, so a unit holding and firing from its anchor keeps its target at any weapon range (A188, 2026-10-03).
 - R-087-06  Given an idle or attack-moving unit with no target taking damage, When hit, Then it targets the attacker (return fire); if the attacker is out of range it pursues the attacker as an engagement (the R-096-03 leash applies). For an attack-moving unit the pursuit is one engagement of its order: when the attacker dies or leaves, it resumes toward its original ordered point (R-096-02, Westley 2026-10-13: an attack-move is not finished until the unit reaches its point; the Architect extended it to the redirect 2026-10-19 after the lab traced caps to units idling at a dead attacker's position). An idle unit has no point and holds where the pursuit ends. A plain-moving unit and an already-engaged unit ignore incoming damage for targeting. The engine today overwrites the ordered point with the attacker's position (unit.c last_attacker branch); the fix is in the lab rev 2 piece E1.
 - R-087-07  Given a supply or evacuation unit, When the loop runs, Then it never attacks; it flinches and otherwise holds.
 - R-087-08  Given target acquisition, When it runs, Then each unit re-acquires on every 4th tick (cohort stagger) and validates its current target every tick.
-- R-087-09  Given an idle or attack-moving unit with a target within its attack range whose line of fire is blocked by units, cover or ground, When evaluated, Then it steers around the blockers by the probe of blocked movement (R-097-03) until it reaches a spot with a clear line, and if it finds none within 1 s (20 ticks) it drops the target and acquires another (Westley, 2026-10-07: blocked fire is handled like blocked movement; "a unit gives up to pick another target if it can't find a firing spot within 1 second"). An obstacle is a detour, never a full stop (E-17 R-190-07).
+- R-087-09  Given an idle or attack-moving unit with a target within its attack range whose line of fire is blocked by units, cover or ground, When evaluated, Then it steers around the blockers by the probe of blocked movement (R-097-03) until it reaches a spot with a clear line, and if it finds none within 1 s (20 ticks) it drops the target and acquires another (Westley, 2026-10-07: blocked fire is handled like blocked movement; "a unit gives up to pick another target if it can't find a firing spot within 1 second"). An obstacle is a detour, never a full stop (E-17 R-190-07). The firing-spot search of this rule is ruled but not built, and has no test (positioning audit, 2026-10-19).
 
 Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
@@ -267,7 +267,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Intercept triggers on Line or Siege units.
 - Return fire overrides an existing engagement.
 - Cohort stagger skips validation, so a dead target is shot at.
-- Warden aura applies to enemies or stacks without bound.
+- Warden aura applies to enemies or stacks at all.
 - Backswing pauses attacking as well as moving.
 - Workers left out of the unit count, so the budgets pass with a base that holds thousands of them.
 - A unit fires at a layer outside its reach, or at a structure or worker its side cannot see.

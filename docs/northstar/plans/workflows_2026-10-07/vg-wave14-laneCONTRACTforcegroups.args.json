@@ -1,0 +1,5 @@
+{
+  "specRef": "origin/main",
+  "audit": "AUDIT VG-CONTRACT-force-groups: APPROVE WITH CHANGES (7) — second Fable audit 2026-10-20 (architect agent); all seven changes folded into the spec paragraph, pieces.toml rows and TD-VG-E-31 by the Architect at 6af9e2c7/17f74f31, no re-audit needed (Architect 2026-10-20)",
+  "tdExtra": "(1) and (2) go to the records clerk, not this piece. (3) The briefing-fields session (SET_SEED 1, START without era_kind) is the space era; wording that calls it ground is corrected. (4) The join 'groups[i] belongs to the i-th player unit by ascending id' rests on spawn order equalling force_units order, which nothing enforces today. This contract piece pins it in its owned test file tests/transport/test_pipe_mission_frame_briefing_fields.py: one test, both eras on seed 1, asserting the tally's unit order equals ascending id order and len(groups) equals the tally (the positive control reverses the id list). VG-E-startforce keeps the pin green when it changes placement, and its tests/transport/test_pipe_force_groups_values.py pins the values on top. (Architect 2026-10-21, implementation; Westley may veto.)"
+}

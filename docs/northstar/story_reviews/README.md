@@ -17,6 +17,7 @@ Committed copies live under `docs/northstar/story_reviews/shots/<run id>/<story>
 
 - Reviewer verdict: `yes`, `no` or `unclear`, followed by the evidence (what was seen, which state field).
 - Westley verdict: `pending` on entry, then `approved` or `rejected`.
+- The verdict cell holds only the word approved or rejected; Westley's words go in the date cell in parentheses; status_check counts the exact word.
 
 ## Seen
 
@@ -31,4 +32,4 @@ Many status cells hold compound text such as "Spec'd, blocked on Q-009-02". `See
 
 ## Westley's folder
 
-`docs/northstar/story_reviews/westley/` holds a plainly named copy of every shot that waits on Westley, with `README.md` as the page table (file here, story, lane, queue row, original path, what to judge). The clerk that writes a queue row adds the copy and the row; the clerk that records his verdict deletes both in the same commit. Run-id folders under `shots/` are never deleted; the folder is a view, not the record (Westley, 2026-10-13).
+`docs/northstar/story_reviews/westley/` holds a plainly named copy of every shot that waits on Westley, with `README.md` as the reading page: one block per picture (what you see, what to judge, the beta status of each feature shown). The clerk that writes a queue row adds the copy and the block; the clerk that records his verdict deletes both in the same commit. Every prototype and lane shot queued for Westley carries a one-line ground legend in its block (what each colour and mark means), written by the shot's clerk from the mockup's overlay constants; HARNESS-C235's legend check (legend=, unit=, band= in the reviewer cell) stays. Run-id folders under `shots/` are never deleted; the folder is a view, not the record (Westley, 2026-10-13; blocks and beta status, 2026-10-21).
