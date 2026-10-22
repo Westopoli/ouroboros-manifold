@@ -3936,7 +3936,7 @@ wave = 9
 owns = ["scripts/specfactory/chain_sim.py", "scripts/specfactory/control_liveness.py", "scripts/specfactory/parent_patch_fence.py", "scripts/specfactory/pieces.py", "scripts/specfactory/suite_regression.py", "scripts/specfactory/undertest_check.py", "tests/specfactory/test_no_home_paths.py", "tests/specfactory/test_checksum_trace.py", "tests/specfactory/test_gate_a94_steps.py", "tests/specfactory/test_gate_control_liveness.py", "tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_gate_placeholder_controls.py", "tests/specfactory/test_gate_sig_blocked.py", "tests/specfactory/test_merge_gate.py", "tests/specfactory/test_parent_patch_fence.py", "tests/specfactory/test_suite_regression.py", "tests/specfactory/fixtures/205a-e05-collision-lottery.md"]
 owns_glob = []
 acceptance = ["with OM_HOME=/tmp/x every harness path default starts with /tmp/x (positive control: unset, it starts with Path.home())", "a grep test asserts no /home/westopoli literal remains under scripts/ and tests/specfactory/"]
-depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-venv-link"]
+depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-venv-link", "HARNESS-record-files"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "one helper om_home() in pieces.py returning Path(os.environ.get(\"OM_HOME\", Path.home())), every default built from it, tests build expectations the same way (TD-HARNESS-home-paths); path defaults only in the six scripts; no behaviour change on this machine"
