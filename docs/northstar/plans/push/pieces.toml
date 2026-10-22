@@ -2179,6 +2179,17 @@ status = { state = "queued" }
 size_estimate = "prototype: RELIEF_VARIANT a/b/c in ground_mesh.gd, sun elevation, six frames to westley/; no landing"
 
 [[piece]]
+id = "VG-C-no-slope-markers"
+manager = "Architect"
+wave = 9
+owns = ["scenes/ground3d/slope_view.gd", "tests/test_vg_c7_slope_view.gd", "tests/qa/desktop/plays/C/s001.py"]
+owns_glob = []
+acceptance = ["tests/test_vg_c7_slope_view.gd"]
+depends_on = ["VG-C7"]  # attached owner of slope_view.gd and its test
+status = { state = "queued" }
+size_estimate = "no slope markers: the midline BoxMesh creation and the midlines qa key leave slope_view.gd; TD-VG-C-no-slope-markers retires the midline assertions and the S-001 play control; one parity assertion kept"
+
+[[piece]]
 id = "VG-B23b-dotcolour"
 manager = "M0"
 wave = 9
