@@ -1930,7 +1930,7 @@ owns = ["csrc/tactical_support.c", "csrc/mission.c", "csrc/om_internal.h", "docs
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_prodslot.py"]
 depends_on = ["VG-CONTRACT-E7", "SV-0"]  # LAB-REV2-E0 lands after the three E pieces (Architect 2026-10-20); VG-CONTRACT-E7 owns all five shared files until it lands (spec rev 12d: after VG-CONTRACT-E7); Architect 2026-10-12: SV-0 (one field, one hook) goes first; prodslot lands after SV-0 and E7
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "8d030453" }  # bound (Architect): at most 80 slots x live units of distance checks per production event, not per tick; the E-15 scale requirement (8 structures under 0.2 ms per tick) is the existing scale suite's
 tests_pending = true
 size_estimate = "prodslot: nearest free slot of the 30 wu lattice within 150 wu, fixed scan order, no RNG draw; goldens with production move once (TD-VG-E-29); closes FINDING-production-stack"
 
@@ -3370,7 +3370,7 @@ depends_on = ["HARNESS-gate-base-after-lock"]  # Architect 2026-10-21: HARNESS-l
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "a red playthrough or lane_plays stage keeps the pytest -rA output and every PNG the suite wrote under ~/Projects/om-push/gate-evidence/<date>-<piece>/ (outside SCRATCH_ROOT, never /tmp), the GATE line names that path, the trap at merge_gate.sh:52-57 leaves that directory alone, a weekly cleanup line in the drift-audit page; tests first: a fixture red play leaves its stdout and PNG at the path and the GATE line names it, a green play leaves nothing"
-# Tool split (Westley 2026-10-21, docs/northstar/plans/2026-10-21-tool-split-spec.md section 6): the swarm config, the Tool-line check and the cascades README; depends on HARNESS-C4 only as ordering, because both own scripts/specfactory/status_check.py.
+# Tool split (Westley 2026-10-21, docs/northstar/plans/2026-10-21-tool-split-spec.md section 6): the swarm config and the cascades README; depends on HARNESS-C4 only as ordering, because both own scripts/specfactory/status_check.py.
 [[piece]]
 id = "HARNESS-swarm-config"
 manager = "M0"
@@ -3378,7 +3378,7 @@ wave = 13
 owns = [".claude-swarm.toml", "docs/northstar/plans/cascades/README.md", "tests/specfactory/test_swarm_config.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_swarm_config.py"]
-depends_on = ["HARNESS-provenance-scope"]  # Architect 2026-10-21: status_check.py and the Tool-line test moved to HARNESS-tool-line, which carries the HARNESS-C4 and HARNESS-coverage ordering
+depends_on = ["HARNESS-provenance-scope"]  # Architect 2026-10-21: status_check.py and its check moved to HARNESS-tool-line, which carries the HARNESS-C4 and HARNESS-coverage ordering
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
@@ -3449,6 +3449,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "behaviour-preserving Python speed-up of firing.py with an Engine epoch counter cache; goldens untouched; the absolute 30 s mark is Westley's (C2)"
 
+# SPEED-1B (lab overseer a7, Architect ruling 2026-10-22; Westley may veto): the firing.py levers after the epoch cache of LAB-REV2-SPEED, results identical. Order: SPEED, 1B, SPEED-2, batch getter. Manager and wave copied from LAB-REV2-SPEED (M0, wave 10). Measured basis: with the epoch cache a fight takes 0.339 s (ratio 0.72), firing about 0.163 s of it; the three levers save about 0.025, 0.02 and 0.04 s, taking firing to 0.06 to 0.07 s (ratio about 0.5). DRAFT-lab-speed-ratio-1b = 0.55 (named draft, Westley's; the estimate is 0.5 with margin).
+[[piece]]
+id = "LAB-REV2-SPEED-1B"
+manager = "M0"
+wave = 10
+owns = ["scripts/skilllab/firing.py", "scripts/skilllab/engine.py"]
+owns_glob = ["tests/skilllab/integration/test_speed1b_*.py"]  # New files (tests first, by a different agent than the builder)
+acceptance = ["tests/skilllab/integration/test_speed1b_ratio.py"]
+depends_on = ["LAB-REV2-SPEED"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "SPEED-1B the firing.py levers after the epoch cache, identical results: alive from per-tick hp and static type/layer caches (layer invalidated on set_layer), lazy nearest-first with the same total order (squared distance, then id), hoisted code evaluation with gate order 1 to 5 kept; same equality tests against the frozen reference tests/skilllab/ref_firing_rev2.py; acceptance DRAFT-lab-speed-ratio-1b 0.55 (named draft, Westley's; estimate 0.5 with margin)"
+
 # SPEED-2 (lab overseer a7, Architect ruling 2026-10-21; Westley may veto): the fight.py half of the lab speed-up, after LAB-REV2-SPEED and LAB-REV2-L8M2 (the owners of fight.py before it). DRAFT-lab-speed-ratio-2 is a named draft, value to be given by the Architect at launch. Manager and wave copied from the sibling LAB-REV2 rows (L8M, L8M2, FIX: M0, wave 10).
 [[piece]]
 id = "LAB-REV2-SPEED-2"
@@ -3475,21 +3488,21 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "contract piece: public batch position getter (name and shape a DRAFT for the Architect), ABI N to N+1 (N read at launch), one architecture.md paragraph, one reach_allowlist line, one csim test; the lab binding is a later consumer piece"
 
-# Provenance lint scope (Architect 2026-10-21 evening, implementation; Westley may veto): spec_provenance.py judged the whole spec file, so unrelated paragraphs blocked a piece's pre_gate. scripts/specfactory/pre_gate.sh is left out of owns: HARNESS-C4 (queued) owns it.
+# Provenance lint scope (Architect 2026-10-21 evening, implementation; Westley may veto): spec_provenance.py judged the whole spec file, so unrelated paragraphs blocked a piece's pre_gate. The row owns the one spec_provenance.py call line in scripts/specfactory/pre_gate.sh; HARNESS-C4 (attached) owned the rest of that file before it.
 [[piece]]
 id = "HARNESS-provenance-scope"
 manager = "M0"
 wave = 13
-owns = ["scripts/specfactory/spec_provenance.py", "tests/specfactory/test_spec_provenance_scope.py"]
+owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/pre_gate.sh", "tests/specfactory/test_spec_provenance_scope.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance_scope.py"]
-depends_on = []
+depends_on = ["HARNESS-C4"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold opening contains a piece id from PIECES and fails only on findings inside those paragraphs; the whole-file count is printed as information; a number followed by a [P file:line] cite within the same sentence is cited, not a draft; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"
+size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold or \"- ID\" opening names a piece id; a [P file:line] cite anywhere in the same unit clears reason 10; whole-file fallback when no id matches; a WARN line for unmatched ids; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"
 
 # Getting around the box (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box"; implementation rulings his to veto). Spec: the three lane H paragraphs in the visible-game spec. Land in this order: xdist, tiers, remote. The measurement engineer's report (stage timings, host dependencies) is pasted here at launch.
-# Records clerk notes: tests/transport/conftest.py does not exist on main, so it is left out of owns. The gate's venv is ~/Projects/agora/.venv (merge_gate.sh:19, outside the repo; no requirements file in the repo), the requirement line pytest-xdist>=3.6,<4 goes in scripts/specfactory/requirements.txt (owned by this row), installed in both venvs by the Dispatcher (3.8.0). DRAFT-xdist-workers 5 (csim -n 5 --dist loadfile; transport -n 2; three stacked gates fit 16 cores with the lab held to 4 workers). tests/csim/conftest.py is also owned by A94-harness (attached) and LAB-REV2-E0 (queued).
+# Records clerk notes: tests/transport/conftest.py does not exist on main, so it is left out of owns. The gate's venv is ~/Projects/agora/.venv (merge_gate.sh:19, outside the repo; no requirements file in the repo), the requirement line pytest-xdist>=3.6,<4 goes in scripts/specfactory/requirements.txt (owned by this row), installed in both venvs by the Dispatcher (3.8.0). DRAFT-xdist-workers 5 (csim -n 5 --dist loadfile; transport -n 2; three stacked gates plus the lab held to 4 workers are 19 workers on 16 cores, serialised by the gate flock). tests/csim/conftest.py is also owned by A94-harness (attached) and LAB-REV2-E0 (queued).
 # gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
 [[piece]]
 id = "HARNESS-csim-xdist"

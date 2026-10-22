@@ -32,7 +32,7 @@ As a commander, I want reinforcements to come from the region's own garrisons th
 
 Rules
 - R-126-01  Given a mission, When structures are placed, Then count = clamp(floor(region military × 0.06), small [2, 4], medium [3, 6], large [4, 8]) and the archetype's split assigns player, enemy, and neutral owners (defensive stand 50/25/25, siege 33/33/34, reconquest and assault 25/50/25, suppression and counterinsurgency 40/30/30, multi-front 40/35/25, interception and containment 33/34/33, evacuation 50/25/25), player at least 1.
-- R-126-02  Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns within half the capture radius of the structure on the structure's layer (position from two world-stream draws, angle then distance; never from any other generator) and the timer subtracts the interval.
+- R-126-02  Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns at the first free slot of the structure's spawn lattice (a grid at twice the unit collision radius centred on the structure, scanned ring by ring outward in a fixed order, within half the capture radius; a slot is free when no live unit stands within one spacing of it; no free slot delays production one tick) on the structure's layer, with no random draw, and the timer subtracts the interval (Westley 2026-10-12, TD-VG-E-29).
 - R-126-03  Given the player clicks a held structure, When they pick a type, Then production switches to it at once and the current timer continues.
 - R-126-04  Given a mission's expected full force F (E-10 force sizing), When forces are allocated, Then the starting force is the fraction of F that R-218-06 gives by the player's share of the contested strongpoints at the start, and the reinforcement structures on the map can together produce the remainder (F minus the starting force) over the mission's time limit when all are held from the start; a player who holds every structure the whole mission fields at least F, and one who holds none fields the starting force only (rewritten Architect 2026-10-20 to follow R-218-06; Westley to confirm with that row).
 - R-126-05  Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06).
@@ -181,7 +181,7 @@ Open flags: Q-219-02 (to be designed).
 - A structure at 0 HP stays listed as rubble (R-127-03, R-218-05) and the place command at its cell refounds it at full HP (R-218-05, Architect 2026-10-10).
 - A strongpoint stands at a slope between height bands on land maps.
 - A trouble shuts down only what it is passing over, and both sides can see it.
-- Same seed, same spawns and drift, all platforms (every draw comes from the world stream, R-126-02).
+- Same seed, same spawns and drift, all platforms (every draw comes from the world stream; production placement draws nothing, R-126-02).
 
 ## Scale requirements
 
@@ -196,7 +196,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Capture progresses with the owner present.
 - Two enemy factions inside count as one capturer.
 - Production timer resets on type change.
-- Spawn position from an unseeded RNG.
+- Spawn position from any RNG draw, or from a scan whose order depends on unit order or platform (R-126-02: a fixed lattice scan, no draw).
 - Structure takes matchup multipliers.
 - Drifting objective's zone stays at the spawn position.
 - Convoy returns fire.

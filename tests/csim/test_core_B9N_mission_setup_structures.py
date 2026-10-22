@@ -1,3 +1,4 @@
+# Rule pins: R-126-01@71403e, R-126-02@741af4
 """B4 / B9-N: om_mission_setup places reinforcement structures per archetype.
 
 R-126-01: Given a mission, When structures are placed, Then
@@ -176,8 +177,8 @@ def test_second_mission_replaces_the_first_missions_structures(lib, world_factor
 
 def test_held_structure_from_setup_produces_a_unit_in_the_tactical_list(lib, world_factory):
     """R-126-01/R-126-02 integration: after om_mission_setup, the player's held structure
-    produces a unit of its chosen type, of the player faction, within half the capture
-    radius (150) of it, visible in the unit list after om_tactical_step ticks its interval."""
+    produces a unit of its chosen type, of the player faction, at the first free slot of its spawn lattice
+    (R-126-02 as rewritten, TD-VG-E-29), within half the capture radius (150) of it, visible in the unit list after om_tactical_step ticks its interval."""
     w = _scene(lib, world_factory, DEFENSIVE_STAND, military=80.0)
     lib.om_mission_set_phase(w, 1)
     lib.om_unit_spawn(w, 0, ENEMY_FAC, 100_000.0, 100_000.0, 0)  # filler: tactical step no-ops with no units
