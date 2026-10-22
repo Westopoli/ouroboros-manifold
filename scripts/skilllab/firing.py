@@ -107,18 +107,37 @@ class _Sample:
         return first
 
     def records(self):
-        return {(side, u): self.record(side, u) for side in (0, 1) for u in self.sides[side]}
+        if not hasattr(self, "_rec"):
+            self._rec = {(side, u): self.record(side, u) for side in (0, 1) for u in self.sides[side]}
+        return self._rec
+
+
+_last = {}      # id(engine) -> (engine, key, sample); the engine reference keeps id() from being reused
+
+
+def _sample(engine, w, units0, units1, arc_deg):
+    """One _Sample per (engine, world, epoch, units, arc); never cached for an engine without an int epoch."""
+    ep = getattr(engine, "epoch", None)
+    if type(ep) is not int:
+        return _Sample(engine, w, units0, units1, arc_deg)
+    key = (w.value, ep, tuple(units0), tuple(units1), float(arc_deg))
+    hit = _last.get(id(engine))
+    if hit is not None and hit[0] is engine and hit[1] == key:
+        return hit[2]
+    s = _Sample(engine, w, units0, units1, arc_deg)
+    _last[id(engine)] = (engine, key, s)
+    return s
 
 
 def count_able(engine, w, units0, units1, arc_deg):
     """(able0, able1): living units whose code is 0 against some living enemy."""
-    rec = _Sample(engine, w, units0, units1, arc_deg).records()
+    rec = _sample(engine, w, units0, units1, arc_deg).records()
     return tuple(sum(1 for (s, _), (c, _) in rec.items() if s == side and c == 0) for side in (0, 1))
 
 
 def count_weighted(engine, w, units0, units1, arc_deg):
     """(weight0, weight1): the category multiplier of each code-0 unit's category against its target of record's, summed."""
-    s = _Sample(engine, w, units0, units1, arc_deg)
+    s = _sample(engine, w, units0, units1, arc_deg)
     totals = [0.0, 0.0]
     for (side, u), (c, t) in sorted(s.records().items()):
         if c == 0:
@@ -129,7 +148,7 @@ def count_weighted(engine, w, units0, units1, arc_deg):
 
 def states(engine, w, units0, units1, arc_deg):
     """[(unit, code)] ordered by unit id, dead units omitted; code is the can_engage result against the target of record."""
-    rec = _Sample(engine, w, units0, units1, arc_deg).records()
+    rec = _sample(engine, w, units0, units1, arc_deg).records()
     return sorted((u, int(c)) for (_, u), (c, _) in rec.items())
 
 

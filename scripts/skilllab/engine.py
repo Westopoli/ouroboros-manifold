@@ -1,5 +1,6 @@
 """engine.py: build the production C library outside the repo and drive it through ctypes (spec AC 2 and 3)."""
 import ctypes
+import functools
 import platform
 import re
 import subprocess
@@ -66,8 +67,18 @@ def _cached_library():
     return _lib_cache
 
 
+def _bumps(fn):
+    @functools.wraps(fn)
+    def wrapped(self, *args, **kwargs):
+        self.epoch += 1
+        return fn(self, *args, **kwargs)
+    return wrapped
+
+
 class Engine:
     """The ctypes wrapper of the production library; every method takes the world handle first (except new_world)."""
+
+    epoch = 0       # rises on every state-changing method; firing.py keys its per-tick sample on it
 
     def __init__(self, lib_path=None):
         path = Path(lib_path) if lib_path is not None else _cached_library()
@@ -150,17 +161,20 @@ class Engine:
             fn.argtypes = [V, u32, u32]
             fn.restype = i
 
+    @_bumps
     def new_world(self, seed):
         w = self._lib.om_world_new(1, int(seed))
         if not w:
             raise RuntimeError("om_world_new returned NULL")
         return ctypes.c_void_p(w)
 
+    @_bumps
     def free_world(self, w):
         for k in [k for k in self._own if k[0] == w.value]:
             del self._own[k]
         self._lib.om_world_free(w)
 
+    @_bumps
     def register_unit_type(self, w, type_id, stats):
         rc = self._lib.om_roster_register_custom_unit(
             w, int(type_id), int(stats["category"]), str(stats["role"]).encode(), float(stats["max_hp"]),
@@ -191,32 +205,39 @@ class Engine:
             raise ValueError("om_unit_profile_reach(%r) refused" % (type_id,))
         return (int(up.value), int(down.value))
 
+    @_bumps
     def set_reach(self, w, type_id, up, down):
         rc = self._lib.om_roster_set_reach(w, int(type_id), int(up), int(down))
         if rc != 0:
             raise ValueError("om_roster_set_reach(%r, %r, %r) returned %d" % (type_id, up, down, rc))
 
+    @_bumps
     def set_cone(self, w, type_id, range, half_angle, share):
         rc = self._lib.om_roster_set_cone(w, int(type_id), float(range), float(half_angle), float(share))
         if rc != 0:
             raise ValueError("om_roster_set_cone(%r, %r, %r, %r) returned %d" % (type_id, range, half_angle, share, rc))
 
+    @_bumps
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)
 
+    @_bumps
     def spawn(self, w, type_id, faction, x, y, layer):
         uid = int(self._lib.om_unit_spawn(w, int(type_id), int(faction), float(x), float(y), int(layer)))
         if uid:
             self._own.setdefault((w.value, int(faction)), []).append(uid)
         return uid
 
+    @_bumps
     def ping(self, w, caster, layer, x, y):
         return int(self._lib.om_command_ping(w, int(caster), int(layer), float(x), float(y)))
 
+    @_bumps
     def set_layer(self, w, ids, layer):
         ids = [int(u) for u in ids]
         self._lib.om_command_set_layer(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), int(layer))
 
+    @_bumps
     def set_emission(self, w, ids, on):
         ids = [int(u) for u in ids]
         self._lib.om_command_set_emission(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), 1 if on else 0)
@@ -228,23 +249,28 @@ class Engine:
         own = [o for o in self._own.get((w.value, int(side)), []) if self.unit_alive(w, o)]
         return {int(e) for e in enemy_ids if any(self._lib.om_unit_can_see(w, o, int(e)) for o in own)}
 
+    @_bumps
     def set_ping_params(self, w, radius=None, reach=None, reveal_ticks=None, cooldown_ticks=None):
         for name, v in (("OM_TP_PING_RADIUS", radius), ("OM_TP_PING_REACH", reach),
                         ("OM_TP_PING_REVEAL_TICKS", reveal_ticks), ("OM_TP_PING_COOLDOWN_TICKS", cooldown_ticks)):
             if v is not None:
                 self.set_param(w, self.param_id(name), v)
 
+    @_bumps
     def order_attack_move(self, w, unit_ids, x, y):
         self._order(self._lib.om_command_attack_move, w, unit_ids, x, y)
 
+    @_bumps
     def order_move(self, w, unit_ids, x, y):
         # om_command_move, not om_unit_order_move: the latter only records a destination and never moves the unit.
         self._order(self._lib.om_command_move, w, unit_ids, x, y)
 
+    @_bumps
     def order_group_move(self, w, unit_ids, x, y):
         ids = [int(u) for u in unit_ids]
         return int(self._lib.om_command_group_move(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y)))
 
+    @_bumps
     def order_guard(self, w, unit_ids):
         ids = [int(u) for u in unit_ids]
         rc = self._lib.om_command_guard(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids))
@@ -259,10 +285,12 @@ class Engine:
     def can_see(self, w, observer, target):
         return bool(self._lib.om_unit_can_see(w, int(observer), int(target)))
 
+    @_bumps
     def clear_orders(self, w, unit_ids):
         for u in unit_ids:
             self._lib.om_unit_clear_orders(w, int(u))
 
+    @_bumps
     def step(self, w):
         self._lib.om_tactical_step(w)
 
@@ -314,6 +342,7 @@ class Engine:
     def get_param(self, w, param):
         return float(self._lib.om_tactical_get_param(w, int(param)))
 
+    @_bumps
     def set_param(self, w, param, value):
         if self._lib.om_tactical_set_param(w, int(param), float(value)) != 0:
             raise ValueError("om_tactical_set_param(%r, %r) refused" % (param, value))
@@ -321,27 +350,32 @@ class Engine:
     def can_shoot(self, w, a, b):
         return bool(self._lib.om_combat_can_shoot(w, a, b))
 
+    @_bumps
     def add_blocker(self, w, x, y, radius):
         if not radius > 0:
             raise ValueError("blocker radius must be positive, got %r" % (radius,))
         self._lib.om_map_add_obstacle(w, float(x), float(y), float(radius))
 
+    @_bumps
     def set_canvas(self, w, width, height):
         if self._lib.om_map_set_canvas(w, float(width), float(height)) != 0:
             raise ValueError("om_map_set_canvas(%r, %r) refused (set_canvas)" % (width, height))
 
+    @_bumps
     def block_rect(self, w, x0, y0, x1, y1, layer_lo, layer_hi):
         if self._lib.om_map_block_rect(w, float(x0), float(y0), float(x1), float(y1), int(layer_lo),
                                        int(layer_hi)) != 0:
             raise ValueError("om_map_block_rect(%r, %r, %r, %r, %r, %r) refused (block_rect)"
                              % (x0, y0, x1, y1, layer_lo, layer_hi))
 
+    @_bumps
     def add_cover(self, w, x, y, radius, height):
         idx = int(self._lib.om_map_add_cover(w, float(x), float(y), float(radius), float(height)))
         if idx == 0:
             raise ValueError("om_map_add_cover(%r, %r, %r, %r) refused (add_cover)" % (x, y, radius, height))
         return idx
 
+    @_bumps
     def terrain_generate(self, w, seed, canvas):
         return int(self._lib.om_terrain_generate(w, int(seed), float(canvas), float(canvas)))
 
@@ -368,9 +402,11 @@ class Engine:
     def terrain_slope_at(self, w, x, y):
         return int(self._lib.om_terrain_slope_at(w, float(x), float(y), None))
 
+    @_bumps
     def set_era_kind(self, w, kind):
         return int(self._lib.om_set_era_kind(w, int(kind)))
 
+    @_bumps
     def set_movement_kind(self, w, type_id, kind):
         return int(self._lib.om_roster_set_movement_kind(w, int(type_id), int(kind)))
 
