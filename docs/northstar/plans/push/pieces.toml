@@ -2400,7 +2400,7 @@ wave = 9
 owns = ["csrc/mission.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "scripts/specfactory/reach_allowlist.toml", "scripts/specfactory/gd_tests_known_red.txt", "tests/csim/test_E01_T3_mission_ground.py", "tests/csim/test_VG_E_e7.py", "docs/northstar/spec_factory/signatures.toml", "docs/bible/epics/E-17-map-generation.md", "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_identity.py", "tests/csim/test_E13_A99_tactical_equivalence.py", "tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/parity/baseline/test_baseline_hashes.py", "tests/csim/test_PP_target_policy_per_side.py", "tests/csim/test_PP_portability.py", "tests/transport/test_pipe_force_groups_values.py"]  # records batch 8 (Architect 2026-10-13/14): reach_allowlist.toml drops the E7 stub entry for om_mission_get_force_group (Architect 2026-10-13 accessor); gd_tests_known_red.txt: deletes the TD-VG-E-26 entries it clears (overlap with the attached owners is the sanctioned pattern); the golden test file test_E01_T3_mission_ground.py (SPACE_GOLDEN) is re-recorded once under TD-VG-E-26 (VG-CONTRACT-E7 also lists it and lands first); the F1/F2/F3 goldens do not move (TD-VG-E-26)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_startforce.py"]
-depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot", "VG-E1", "VG-CONTRACT-force-groups", "VG-T-REACH-TESTS", "VG-CONTRACT-layerspot", "VG-CONTRACT-route"]  # VG-T-REACH-TESTS also owns tests/csim/test_PP_C_g3_hash_invariant.py and lands first (owner_lint-forced, startforce rev 2, Architect to confirm); LAB-REV2-E0 lands after the three E pieces (Architect 2026-10-20); these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
+depends_on = ["VG-CONTRACT-E7", "VG-W2", "VG-E1R", "SV-0", "VG-E-prodslot", "VG-E1", "VG-CONTRACT-force-groups", "VG-T-REACH-TESTS", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "LAB-REV2-G3PC"]  # VG-T-REACH-TESTS also owns tests/csim/test_PP_C_g3_hash_invariant.py and lands first (owner_lint-forced, startforce rev 2, Architect to confirm); LAB-REV2-E0 lands after the three E pieces (Architect 2026-10-20); these pieces own csrc/mission.c, docs/architecture.md, csrc/pipe/om_pipe.c, csrc/ouroboros_sim.h and the pinned tests; E7 changes the number of starting units and moves the spawn after place_structures
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "startforce: three control groups of the starting force carried on the mission frame (group per unit from om_mission_get_force_group), derived at read time; no save or hash change"
@@ -2996,7 +2996,7 @@ wave = 13
 owns = ["tests/csim/test_PP_C_g5_support.py", "tests/csim/test_PP_C_g5_area_return_fire.py", "tests/csim/test_PP_C_g4_transfer.py", "tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/test_PP_C_g5_reach_api.py", "tests/csim/test_PP_C_g5_direct_fire.py", "tests/transport/test_pipe_reach_cross_layer.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_reach_cross_layer.py"]
-depends_on = []
+depends_on = ["LAB-REV2-G3PC"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "T1: reach tests rewritten to run through the game, plus a cross-layer fire test over the pipe (harness numbers DRAFT-t1-steps)"
@@ -3488,12 +3488,12 @@ tests_pending = true
 size_estimate = "spec_provenance.py checks only the paragraph(s) whose bold opening contains a piece id from PIECES and fails only on findings inside those paragraphs; the whole-file count is printed as information; a number followed by a [P file:line] cite within the same sentence is cited, not a draft; fixture spec with one clean and one dirty paragraph; positive control: today's whole-file mode rejects both"
 
 # Getting around the box (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box"; implementation rulings his to veto). Spec: the three lane H paragraphs in the visible-game spec. Land in this order: xdist, tiers, remote. The measurement engineer's report (stage timings, host dependencies) is pasted here at launch.
-# Records clerk notes: tests/transport/conftest.py does not exist on main, so it is left out of owns. The gate's venv is ~/Projects/agora/.venv (merge_gate.sh:19, outside the repo; no requirements file in the repo), so no venv file is in owns; the requirement is pytest-xdist>=3.6,<4, installed in both venvs by the Dispatcher (3.8.0). DRAFT-xdist-workers 5 (csim -n 5 --dist loadfile; transport -n 2; three stacked gates fit 16 cores with the lab held to 4 workers). tests/csim/conftest.py is also owned by A94-harness (attached) and LAB-REV2-E0 (queued).
+# Records clerk notes: tests/transport/conftest.py does not exist on main, so it is left out of owns. The gate's venv is ~/Projects/agora/.venv (merge_gate.sh:19, outside the repo; no requirements file in the repo), the requirement line pytest-xdist>=3.6,<4 goes in scripts/specfactory/requirements.txt (owned by this row), installed in both venvs by the Dispatcher (3.8.0). DRAFT-xdist-workers 5 (csim -n 5 --dist loadfile; transport -n 2; three stacked gates fit 16 cores with the lab held to 4 workers). tests/csim/conftest.py is also owned by A94-harness (attached) and LAB-REV2-E0 (queued).
 [[piece]]
 id = "HARNESS-csim-xdist"
 manager = "M0"
 wave = 13
-owns = ["tests/csim/conftest.py", "scripts/specfactory/merge_gate.sh", "tests/specfactory/test_csim_xdist.py"]
+owns = ["tests/csim/conftest.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/requirements.txt", "tests/specfactory/test_csim_xdist.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_csim_xdist.py"]
 depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-provenance-scope", "VG-E-prodslot", "HARNESS-gate-keep-red-evidence"]  # Architect D7 2026-10-21: prodslot and keep-red order the conftest.py and merge_gate.sh overlaps; VG-CONTRACT-layerspot, VG-CONTRACT-route and LAB-REV2-E0 depend on this row
@@ -3510,7 +3510,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_tiers.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_tiers.py"]
-depends_on = ["HARNESS-csim-xdist", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-known-xfail"]  # the last two are records-clerk additions (merge_gate_support.py overlap), Architect to confirm
+depends_on = ["HARNESS-csim-xdist", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-test-edit-row"]  # the last two are records-clerk additions (merge_gate_support.py overlap), Architect to confirm
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3524,7 +3524,7 @@ wave = 13
 owns = ["scripts/specfactory/gate_remote.sh", "docs/northstar/plans/gate_hosts.md", "tests/specfactory/test_gate_remote.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_remote.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects"]
+depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects", "HARNESS-red-evidence"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3649,3 +3649,30 @@ status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Rev 13 section, VG-C2-5-scope paragraph
 size_estimate = "galaxy pixel detector scope: a dot whose centre lies within another region's light disc is excluded from the sample before the 0.60 line is applied; line, tolerance, isolation and the patch rule unchanged; expected 24 of 24 to 26 sampled; tests first: a Godot-free exclusion fixture of three synthetic dots; positive control: without the exclusion all three are sampled; test-defect scope narrowing TD-VG-C2-5-scope"
+
+# Skill lab rev 2 G3 positive-control piece (lab overseer a7, Architect ruling 2026-10-21; Westley may veto). The FINDING-g3-positive-control-red rewrite rides the lab landing. VG-E-startforce and VG-T-REACH-TESTS depend on this row (without it the two test files overlap those rows). Manager and wave copied from the sibling LAB-REV2 rows (M0, wave 10).
+[[piece]]
+id = "LAB-REV2-G3PC"
+manager = "M0"
+wave = 10
+owns = ["tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/test_E13_A99_tactical_equivalence.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_positive_control_perturbed_recorded_hash_is_caught", "tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_positive_control_perturbed_hash_is_caught"]
+depends_on = ["PP-unit"]  # PP-unit (attached) owns tests/csim/test_PP_C_*.py; ordering only (pieces.py --check glob overlap), added by the records clerk
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "G3PC: the two perturbed-hash controls build their reference from a first run of the same build, so a stale golden cannot hide the perturbation arm; the golden-agreement tests stay known-red under TD-VG-E-26 until startforce re-records; about 10 lines per control, no csrc, no threshold"
+
+# Credits tools (Architect 2026-10-21; built outside the gate on Westley's credit word of 2026-10-21). Tests are on the branch push/credits-tools 29e840b5 and pass 5. depends_on A94-harness is ordering only (the scripts/specfactory glob).
+[[piece]]
+id = "HARNESS-credits-tools"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/sdk_engineer.py", "scripts/specfactory/batch_review.py", "scripts/specfactory/README_credits.md", "tests/specfactory/test_credits_tools.py", "docs/northstar/plans/retro_2026-10-21/credits_runs.md", "docs/northstar/plans/retro_2026-10-21/epics_audit_digest.md", "docs/northstar/plans/retro_2026-10-21/story_reviews_digest.md", "docs/northstar/plans/retro_2026-10-21/standins_batch_1_proposals.md", "docs/northstar/plans/retro_2026-10-21/epics_rewrite_table.md"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_credits_tools.py"]
+depends_on = ["A94-harness"]
+status = { state = "queued" }
+tests_pending = false
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
+size_estimate = "sdk_engineer.py (a Claude Code agent in a worktree on the console key) and batch_review.py (Batch API jobs and digests), both dry-run by default; one test file"
