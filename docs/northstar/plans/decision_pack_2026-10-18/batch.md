@@ -17,17 +17,6 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Unit shapes on the 3D ground (S-132): built and wired (lane C ground 3D, C6; scale fix VG-C-unitscale at 53ede72), the lane C plays pass; not Seen (your verdict pending).
 - Squad markers for the dart and arrowhead types: built, but drawn in the flat map projection so they float off the units in the ground view (finding, no piece yet).
 
-### P9 Slope with midline and blocked ground (S-001)
-
-![](../../story_reviews/westley/C-S001-ground-slope-and-blocked-band-close.png)
-
-**What you see:** A steep pink wall (ground that blocks the layer) rising behind your force, a flat orange band your units stand on, green terraces dropping away at the left, and two long white bars across the ground where a slope joining two layers is marked at its midline; the bar disappears where the ground rises in front of it. Your units stand at the foot of the wall as small round icons, because their flat blue bodies lie nearly edge-on and half buried in the steep ground.
-**Judge:** Can you see where terrain blocks a layer and where a slope joins two layers, so you can choose to go over, go around or hide (S-001)?
-**Camera:** height 300 wu (1.80 px per wu at the centre), 1920x1080, seed 1, tick 3006. Unit bodies are not readable here (edge-on on the steep face); only the 24 px icons read. Body size on level ground is in the S-132 frame (median 55 px wide).
-**Beta status of what is shown:**
-- Slopes drawn with a midline and blocked ground tinted pink (S-001, R-001-06): built and wired (lane C ground 3D, C7), the S-001 play passes; not Seen (your verdict pending).
-- Flat unit bodies on steep ground: built, they lie edge-on and half buried there (finding, no piece yet).
-
 ### P10 Sight and the dimmed outside (S-005)
 
 ![](../../story_reviews/westley/C-S005-ground-sight-close.png)
@@ -86,6 +75,7 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Age-10 lots scope narrowing (Architect, 2026-10-21)
 - DRAFT-a18-pitch 50 degrees; DRAFT-home-anchor-inboard 1200 wu (Architect, 2026-10-22)
 - DRAFT-lab-speed-ratio-1 0.75, DRAFT-lab-speed-ratio-1b 0.68 (Architect, 2026-10-21)
+- DRAFT-facing-arrow-len 0.4 x body width, white (Architect, 2026-10-22, from Westley's 2/5)
 
 Parked by you (11): see batch_closed.md; added 2026-10-21: Q-082-03, Q-208-01, Q-149-01.
 
