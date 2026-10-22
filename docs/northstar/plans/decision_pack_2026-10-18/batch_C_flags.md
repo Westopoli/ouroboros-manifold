@@ -181,7 +181,7 @@ Answer by key and letter, one per line, for example `Q-082-03: a` or `Q-082-03: 
 
 ### 1. Name the land era and the roster
 **Story.** "An era in space and an era on land to play, all one game." [S-147]
-**Today.** The land era is Greek antiquity, built as the placeholder "The Marble Reach"; its final name, setting, tone and scale are unwritten. The order of eras after the first two is only a brainstorm of twenty plus your spoken additions (World War I, the 2020s, Imperial China).
+**Today.** The land era is Greek antiquity, built as the era named Greek; its setting, tone and scale are unwritten. The order of eras after the first two is only a brainstorm of twenty plus your spoken additions (World War I, the 2020s, Imperial China).
 **The choice.** Open: your words. Name and brief the land era, write the roster in order, and mark each era earnable or purchase-only.
 <sub>key: Q-147-01</sub>
 

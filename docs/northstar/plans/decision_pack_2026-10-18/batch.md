@@ -50,10 +50,6 @@ P12 landscape lake-fill re-shot: coming with PROTO-landscape-lakefill
 - Layer change on a slope (S-004, R-004-06): built and wired (lane C ground 3D, C7; S-004 play fix at bfd7f1c), the S-004 play passes; not Seen (your verdict pending).
 - The halfway line as a marked place for one crossing: stub in this view (only the long midline bars are drawn, none picked out for the crossing).
 
-## 2. One pick: the land era's name (Q-147-01)
-
-Greek antiquity, decided. Pick one, or give your own: (a) The Bronze Shore, city-states on a coast, oars and phalanx, the sea is the road; (b) The Olive Tyrannies, rival tyrants, walled hill towns, terraces and groves; (c) The Hoplite Age, citizen armies, the shield wall, the marble reach as its placeholder name retires.
-
 ## 3. Decided by the Architect 2026-10-22 (veto with a word)
 
 - C11 (a): the overlap refusal stays; the lot table size is a memory bound, not a rule. DEC-C11-2026-10-22.
@@ -63,6 +59,10 @@ Greek antiquity, decided. Pick one, or give your own: (a) The Bronze Shore, city
 - C15 (a): the economy multiplier scales a faction's budget income; R-033-01 is rewritten. DEC-C15-2026-10-22.
 - Q-156-02 (c): the lab reports its ten conditions against the draft marks with no pass or fail until you confirm them. DEC-Q156-2026-10-22.
 - C16: the single-process 30 s lab speed mark is retired; the lab landing waits on the fight-window change only. DEC-C16-2026-10-22.
+
+## Answered 2026-10-22
+
+- Q-147-01: the land era is named Greek (Westley 2026-10-22, "3rd time I'm ruling on it"); the Architect's three-name pick withdrawn.
 
 ## Answered 2026-10-21 (chat)
 
