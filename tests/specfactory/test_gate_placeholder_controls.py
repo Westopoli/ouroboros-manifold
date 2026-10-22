@@ -209,6 +209,8 @@ def _gate(tmp_path: Path, controls: dict[str, str], listed=(), revert=False):
     _git(repo, "config", "user.name", "gate")
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "remote", "add", "origin", str(repo))
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     pieces = tmp_path / "pieces.toml"
     pieces.write_text('[[piece]]\nid = "H1"\nowns = ["csrc/H1.c"]\nacceptance = []\ndepends_on = []\n')
     env = {"MERGE_GATE_PIECES": str(pieces),
