@@ -3818,6 +3818,19 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "godot_import sets a VENV_LINK_MADE flag when it links .venv (merge_gate.sh:394-403, import block :382-444) and a block just above the playthrough stage header removes the link (only when the flag is 1 and the path is still a symlink; prints ok venv_unlink; a pre-existing .venv is never removed; desktop acceptance and acceptance_godot keep the link); the test test_known_red_file_is_empty is renamed test_known_red_entries_name_open_rows: playthrough_known_red.txt lines have the one form `<test id> :: <row id>` (the playthrough parser strips a trailing `:: <row id>` the way lane_plays strips its trailing reason at merge_gate_support.py:973; an entry is valid when its row id names an open FINDING or TD ledger row, open = second cell does not match \\bclosed(?! when\\b)); the playthrough list uses `<test id> :: <row id>`, gd_tests_known_red.txt uses ` :: <id, id>`, lane_plays_known_red.txt a trailing `# reason`; the empty-file form is retired under TD-gate-known-red-empty-form; a new test that godot_import leaves no .venv after the gate and keeps a pre-existing one; the known-red line leaves the list; tests first: with the link present the fresh-checkout assertion fails (positive control), with it removed it passes"
 
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-record-files"
+manager = "M0"
+wave = 9
+owns = ["scripts/specfactory/pieces.py", "scripts/specfactory/owner_lint.py", "tests/specfactory/test_record_files.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_record_files.py"]
+depends_on = ["HARNESS-westley-folder"]  # owner_lint ordering edge for pieces.py (queued owner); no queued or attached piece lists owner_lint.py in owns
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "SHARED_RECORD_GLOBS (pieces.py:46) gains the ledger, the ambiguity register, decisions.md, the decision-pack batch.md and story_reviews/*.md, so the footprint check (via DEFAULT_IGNORES) ignores them and owner_lint.in_flight_overlaps skips overlaps on them, printing 'record files (no owner): ...' once; rows that list them keep working; tests first: two in-flight pieces owning the ledger give no overlap, the same two owning csrc/mission.c still do (positive control), a ledger-and-register-only diff passes footprint_check under an unrelated id, a csrc/mission.c diff still fails, the glob list has the five entries"
+
 # SHOWCASE lane (Architect 2026-10-22; Westley approved the plan, licence MIT; Westley may veto)
 
 [[piece]]
@@ -3848,34 +3861,34 @@ size_estimate = "step 2: README, METHOD, docs map, CONTRIBUTING, MIT LICENSE; se
 id = "SHOWCASE-junk"
 manager = "Architect"
 wave = 9
-owns = [".gitignore"]
-owns_glob = ["build/**", ".swarm/**", "tuning_output/**", "graphify-out/**"]
+owns = [".gitignore", ".claude-swarm.toml"]
+owns_glob = ["build/**", ".swarm/**", "graphify-out/**", "docs/research/graphify-out/**", "tuning_output/**", "saves/**"]
 acceptance = []
-depends_on = ["SHOWCASE-inventory"]
+depends_on = ["SHOWCASE-inventory", "HARNESS-swarm-config"]
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "step 3.1: delete tracked build output, swarm backups, logs, graph output; full gate (spec docs/northstar/plans/showcase/README.md)"
 
 [[piece]]
-id = "SHOWCASE-legacy-sim"
+id = "SHOWCASE-legacy-toys"
 manager = "Architect"
 wave = 9
-owns = ["legacy/README.md"]
-owns_glob = ["simulation/**", "legacy/simulation/**", "toys/**", "legacy/toys/**"]
+owns = ["legacy/README.md", ".claude-swarm.toml"]
+owns_glob = ["toys/**", "legacy/toys/**"]
 acceptance = []
 depends_on = ["SHOWCASE-junk"]
 status = { state = "queued" }
 tests_pending = false
-size_estimate = "step 3.2: simulation/ and toys/ to legacy/, tools still used re-pointed per the inventory; full gate (spec docs/northstar/plans/showcase/README.md)"
+size_estimate = "toys/ to legacy/toys; simulation/ stays (FINDING-dev-build-spawns-python-pipe)"
 
 [[piece]]
 id = "SHOWCASE-legacy-scenes"
 manager = "Architect"
 wave = 9
-owns = ["legacy/README.md"]
+owns = ["legacy/README.md", "tests/test_qa_state_scenes.gd", "tests/test_legacy_tactical_deleted.gd"]  # skip-list lines only, TD-SHOWCASE-legacy-skip
 owns_glob = ["scenes/debug/**", "legacy/scenes/**"]
 acceptance = []
-depends_on = ["SHOWCASE-legacy-sim"]
+depends_on = ["SHOWCASE-legacy-toys"]
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "step 3.2: unreferenced debug and mockup scenes to legacy/scenes/; full gate (godot import) (spec docs/northstar/plans/showcase/README.md)"
@@ -3884,10 +3897,10 @@ size_estimate = "step 3.2: unreferenced debug and mockup scenes to legacy/scenes
 id = "SHOWCASE-docs-legacy"
 manager = "Architect"
 wave = 9
-owns = ["docs/legacy/README.md", "docs/README.md"]
-owns_glob = ["docs/legacy/**", "docs/claude_exchange/**", "docs/random/**", "docs/blender_stuff/**", "docs/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/northstar/plans/archive/**"]
+owns = ["docs/legacy/README.md", "docs/README.md", "docs/design_lane.md", "docs/design_lane_queue.md", "docs/research_lane.md", "docs/research_lane_queue.md", "docs/priority_queue.md", "docs/workflow.md", "docs/client_scene_graph.md"]
+owns_glob = ["docs/legacy/**", "docs/articles/**", "docs/claude_exchange/**", "docs/random/**", "docs/blender_stuff/**", "docs/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/research/**", "docs/northstar/proving_ground/**", "docs/northstar/research/**", "docs/northstar/plans/archive/**", "docs/northstar/proposals/**"]
 acceptance = []
-depends_on = ["SHOWCASE-front-door"]
+depends_on = ["SHOWCASE-front-door", "SHOWCASE-junk", "LAB-REV2-L3", "LAB-REV2-L7", "LAB-REV2-FIX", "LAB-REV3-C"]
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "step 3.3: stale docs folders to docs/legacy/, dated plans to plans/archive/, status_check green on pointers; records landing (spec docs/northstar/plans/showcase/README.md)"
@@ -3915,3 +3928,15 @@ depends_on = ["SHOWCASE-docs-legacy", "SHOWCASE-quality-audit"]
 status = { state = "queued" }
 tests_pending = false
 size_estimate = "step 5: cold-reader report (spec docs/northstar/plans/showcase/README.md)"
+
+[[piece]]
+id = "HARNESS-no-home-paths"
+manager = "Architect"
+wave = 9
+owns = ["scripts/specfactory/chain_sim.py", "scripts/specfactory/control_liveness.py", "scripts/specfactory/parent_patch_fence.py", "scripts/specfactory/pieces.py", "scripts/specfactory/suite_regression.py", "scripts/specfactory/undertest_check.py", "tests/specfactory/test_no_home_paths.py", "tests/specfactory/test_checksum_trace.py", "tests/specfactory/test_gate_a94_steps.py", "tests/specfactory/test_gate_control_liveness.py", "tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_gate_placeholder_controls.py", "tests/specfactory/test_gate_sig_blocked.py", "tests/specfactory/test_merge_gate.py", "tests/specfactory/test_parent_patch_fence.py", "tests/specfactory/test_suite_regression.py", "tests/specfactory/fixtures/205a-e05-collision-lottery.md"]
+owns_glob = []
+acceptance = ["with OM_HOME=/tmp/x every harness path default starts with /tmp/x (positive control: unset, it starts with Path.home())", "a grep test asserts no /home/westopoli literal remains under scripts/ and tests/specfactory/"]
+depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-venv-link", "HARNESS-record-files"]
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "one helper om_home() in pieces.py returning Path(os.environ.get(\"OM_HOME\", Path.home())), every default built from it, tests build expectations the same way (TD-HARNESS-home-paths); path defaults only in the six scripts; no behaviour change on this machine"
