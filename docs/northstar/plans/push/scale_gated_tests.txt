@@ -5,7 +5,7 @@
 # gate sees both as scale-gated skips and counts them on their own line instead
 # of as ordinary skips. The gate rejects a candidate whose tree has a scale-gated
 # test that is not named here. The gate's lab stage collects tests/skilllab/integration
-# and tests/skilllab/ground only, so 15 of the 19 lab ids are the skips a landing
+# and tests/skilllab/ground only, so 30 of the 34 lab ids are the skips a landing
 # shows; the other 4 (top-level tests/skilllab files) are listed for the inventory.
 # One node id per line; lines starting with # are comments. Add a line when you
 # add a scale or SLOW test; the budget misses are tracked in the push ledger, not
@@ -132,6 +132,16 @@ tests/skilllab/integration/test_reengage_real.py::test_the_elimination_came_thro
 tests/skilllab/integration/test_speed.py::test_play_scan_8_to_48_at_3_replicates_finishes_under_90_seconds_at_12_workers
 tests/skilllab/integration/test_sweep_real.py::test_smoke_rows_are_the_same_bytes_at_1_and_12_workers_and_every_fight_ends_clean
 tests/skilllab/integration/test_sweep_real.py::test_the_sweep_command_writes_the_family_csv_and_the_summary
+tests/skilllab/integration/test_vision_control_real.py::test_a_vision_knob_left_at_one_on_the_cross_layer_scene_fails_the_check[OM_TP_VISION_DOWN_1-0]
+tests/skilllab/integration/test_vision_control_real.py::test_a_vision_knob_left_at_one_on_the_cross_layer_scene_fails_the_check[OM_TP_VISION_UP_1-1]
+tests/skilllab/integration/test_vision_control_real.py::test_the_check_rejects_a_unit_lost_or_a_head_missing_or_a_shot_on_a_real_quiet_result
+tests/skilllab/integration/test_vision_control_real.py::test_the_check_still_fails_on_the_mixed_sweep_plays_at_vision_zero[s3_layer_above]
+tests/skilllab/integration/test_vision_control_real.py::test_the_check_still_fails_on_the_mixed_sweep_plays_at_vision_zero[s3_types_by_reach]
+tests/skilllab/integration/test_vision_control_real.py::test_the_control_rows_are_on_the_designated_play_on_every_smoke_layout_and_show_no_shot
+tests/skilllab/integration/test_vision_control_real.py::test_the_same_scene_at_vision_one_fires_on_both_sides_in_every_fight[192]
+tests/skilllab/integration/test_vision_control_real.py::test_the_same_scene_at_vision_one_fires_on_both_sides_in_every_fight[78]
+tests/skilllab/integration/test_vision_control_real.py::test_the_same_scene_at_vision_one_fires_on_both_sides_in_every_fight[81]
+tests/skilllab/integration/test_vision_control_real.py::test_the_vision_control_on_the_real_cross_layer_scene_at_vision_zero_is_ok
 tests/skilllab/integration/test_workers_hash.py::test_real_smoke_rows_hash_identically_at_1_and_12_workers
 tests/skilllab/integration/test_workers_hash.py::test_real_sweep_family_rows_are_the_same_bytes_at_1_and_12_workers
 tests/skilllab/test_depth.py::test_real_smoke_two_layouts_one_replicate_four_workers
