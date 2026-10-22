@@ -38,6 +38,17 @@ the three labelled fields `legend=`, `unit=`, `band=` (presence only ...). Both 
 asserted, plus the Q-id for a malformed row, which the spec says is named); what a missing register file prints (the
 older cases write none, so they are the guard that it must not crash); the register path is given by default only.
 
+HARNESS-C4 extends this file below the C235 block with the known-key check and check `launch` (spec section 1
+HARNESS-C4, rev 3a): "`status_check.py` prints `STATUS pieces DRIFT unknown key scritp`, `STATUS launch DRIFT` for a
+row with `script` and no `launch`, OK with the right sha, OK with `launch = "-"` on an id in `PRE_LAUNCH_IDS` and
+DRIFT on one that is not, OK with `args = "-"`, DRIFT with a wrong sha, DRIFT with an `args` path not in git, OK for a
+row with none of the keys." These cases run with `--base main` (the commit that holds the fixture script), except the
+one that proves the path test reads git at --base. UNSTATED INTERFACES (reported): `PRE_LAUNCH_IDS` is a module-level
+tuple of row ids read at call time (the cases patch it through a one-line runner, so a REPIN id list is never
+needed); the detail text after `STATUS launch DRIFT` (only the prefix is asserted); one `STATUS launch OK` line when
+no row drifts; `launch = "-"` exempts only the sha test (the script path must still be in git at --base); the sha is
+of the committed file (`git show <base>:<script>`), not of the working copy. No existing case moves.
+
 Controls: the fixture builds (base sha is an ancestor of base, the side sha is
 not) and the STATUS line format regex matches a hand-written line; both pass
 without the script. Every other test needs the script.
@@ -563,3 +574,203 @@ def test_reviews_only_the_top_level_files_are_read(tmp_path):
     _reviews_fixture(tmp_path, subdir_rows=[_review_late_row("S-007", "yes: seen", "2026-10-21")])
     res = run_check(tmp_path)
     assert line_for(res, "reviews")[0].startswith("STATUS reviews OK"), res.stdout
+
+
+# ---------------------------------------------------------------- HARNESS-C4: known keys and check launch
+
+import hashlib  # noqa: E402
+
+SPECFACTORY = REPO / "scripts" / "specfactory"
+JS = "docs/northstar/plans/workflows_2026-10-07/vg-x.js"
+ARGS = "docs/northstar/plans/workflows_2026-10-07/vg-x.args.json"
+JS_TEXT = "// fixture script\nconst a = 1\n"
+ARGS_TEXT = '{"stage": "contract"}\n'
+JS_SHA = hashlib.sha256(JS_TEXT.encode()).hexdigest()
+KEYS_FOUR = ("script", "args", "launch", "spec")
+
+
+def _row_toml(rid, state="in_flight", **extra):
+    lines = [f'id = "{rid}"', 'manager = "M0"', 'owns = ["z.c"]', 'owns_glob = []', 'acceptance = ["t.py"]',
+             'depends_on = []', f'status = {{ state = "{state}" }}', 'tests_pending = true']
+    lines += [f'{k} = "{v}"' for k, v in extra.items()]
+    return "\n[[piece]]\n" + "\n".join(lines) + "\n"
+
+
+def _launch_fixture(tmp_path, rows="", files=None):
+    """build_fixture, then one more commit on main (so --base main sees them) holding `files` (default the script
+    and its args file) and `rows` appended to pieces.toml."""
+    build_fixture(tmp_path)
+    for rel, text in (files if files is not None else {JS: JS_TEXT, ARGS: ARGS_TEXT}).items():
+        _put(tmp_path, rel, text)
+    (tmp_path / PIECES).write_text((tmp_path / PIECES).read_text() + rows)
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-q", "-m", "third")
+
+
+def run_main(tmp_path, *extra):
+    return run_check(tmp_path, "--base", "main", *extra)
+
+
+def run_main_patched(tmp_path, pre_launch_ids, *extra):
+    """run_main with status_check.PRE_LAUNCH_IDS set to `pre_launch_ids` (a tuple of row ids) inside the process."""
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import status_check as s; "
+            "s.PRE_LAUNCH_IDS = tuple(sys.argv[2].split(',')) if sys.argv[2] else (); "
+            "sys.exit(s.main(sys.argv[3:]))")
+    cmd = [sys.executable, "-c", code, str(SPECFACTORY), ",".join(pre_launch_ids), "--repo", str(tmp_path),
+           "--base", "main", "--programme", PROGRAMME, "--pieces", PIECES, "--stories", STORIES,
+           "--reviews", REVIEWS, "--roadmap", ROADMAP, *extra]
+    return subprocess.run(cmd, capture_output=True, text=True, cwd=tmp_path, timeout=60)
+
+
+def _launch_ok(res, why):
+    hits = line_for(res, "launch")
+    assert len(hits) == 1 and hits[0].startswith("STATUS launch OK"), (why, res.stdout)
+    assert res.returncode == 0, (why, res.stdout + res.stderr)
+
+
+def _launch_drift(res, why):
+    hits = line_for(res, "launch")
+    assert hits and all(h.startswith("STATUS launch DRIFT") for h in hits), (why, res.stdout)
+    assert res.returncode == 1, (why, res.stdout + res.stderr)
+
+
+def test_control_launch_fixture_sha_is_of_the_committed_script_and_the_old_checks_stay_ok(tmp_path):
+    # Green today and after: rows carrying the four new keys do not disturb the other checks and parse_pieces still
+    # reads their ids (P-L is listed as in flight); the fixture sha is the sha256 of `git show main:<script>`.
+    _launch_fixture(tmp_path, _row_toml("P-L", script=JS, args=ARGS, launch=JS_SHA))
+    shown = subprocess.run(["git", "-C", str(tmp_path), "show", f"main:{JS}"], capture_output=True, check=True).stdout
+    assert hashlib.sha256(shown).hexdigest() == JS_SHA
+    res = run_main(tmp_path)
+    for name in ("lane_table", "pieces", "seen", "roadmap"):
+        assert all(LINE_RE.match(ln).group(2) == "OK" for ln in line_for(res, name)), res.stdout
+    assert "P-L" in line_for(res, "pieces")[0].split("in_flight:")[1], res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_control_runner_that_patches_pre_launch_ids_runs_the_checks(tmp_path):
+    # Green today: the one-line runner of the PRE_LAUNCH_IDS cases prints the four old lines like the script does.
+    _launch_fixture(tmp_path)
+    res = run_main_patched(tmp_path, ("P-PRE",))
+    for name in ("lane_table", "pieces", "seen", "roadmap"):
+        assert all(LINE_RE.match(ln).group(2) == "OK" for ln in line_for(res, name)), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+# -------- known keys
+
+def test_pieces_all_fourteen_known_keys_give_no_unknown_key_line(tmp_path):
+    # Positive control, green today: the ten keys in use (id manager wave owns owns_glob acceptance depends_on
+    # status tests_pending size_estimate) plus script args launch spec are known; a comment line holding an unknown
+    # key and a trailing comment after a value are not keys. On the built tree the row is a good launch row too.
+    row = (_row_toml("P-ALL", wave="13", size_estimate="x", script=JS, args=ARGS, launch=JS_SHA,
+                     spec="docs/spec.md")
+           .replace('owns_glob = []', 'owns_glob = []  # scritp = "a trailing comment is no key"')
+           + '# scritp = "a comment is no key"\n')
+    _launch_fixture(tmp_path, row, files={JS: JS_TEXT, ARGS: ARGS_TEXT, "docs/spec.md": "# Spec\n"})
+    res = run_main(tmp_path)
+    assert not any("unknown key" in ln for ln in status_lines(res)), res.stdout
+    assert all(LINE_RE.match(ln).group(2) == "OK" for ln in line_for(res, "pieces")), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_pieces_unknown_key_is_drift_naming_key_and_row(tmp_path):
+    # "`STATUS pieces DRIFT unknown key scritp`": the line reads `unknown key <k> in <id>`, in any row state.
+    for state in ("in_flight", "attached", "queued"):
+        sub = tmp_path / state
+        sub.mkdir()
+        _launch_fixture(sub, _row_toml("P-BAD", state=state, scritp=JS))
+        res = run_main(sub)
+        assert "STATUS pieces DRIFT unknown key scritp in P-BAD" in line_for(res, "pieces"), (state, res.stdout)
+        assert res.returncode == 1, (state, res.stdout + res.stderr)
+
+
+# -------- the PRE_LAUNCH_IDS tuple
+
+def test_pre_launch_ids_is_a_module_level_tuple():
+    sys.path.insert(0, str(SPECFACTORY))
+    try:
+        import status_check
+    finally:
+        sys.path.remove(str(SPECFACTORY))
+    assert isinstance(status_check.PRE_LAUNCH_IDS, tuple), type(getattr(status_check, "PRE_LAUNCH_IDS", None))
+
+
+# -------- check launch
+
+def test_launch_row_with_none_of_the_keys_is_ok(tmp_path):
+    # "a row with none of the keys is exempt": the fixture's own three rows carry none; one STATUS launch OK line.
+    _launch_fixture(tmp_path)
+    _launch_ok(run_main(tmp_path), "no row has a launch key")
+
+
+def test_launch_right_sha_is_ok_with_args_dash_or_an_args_path_in_git(tmp_path):
+    # "OK with the right sha", "OK with `args = "-"`", and an args path that is in git at --base
+    for i, args in enumerate(["-", ARGS]):
+        sub = tmp_path / f"a{i}"
+        sub.mkdir()
+        _launch_fixture(sub, _row_toml("P-L", script=JS, args=args, launch=JS_SHA))
+        _launch_ok(run_main(sub), f"args = {args!r}")
+
+
+def test_launch_sha_is_of_the_committed_script_not_the_working_copy(tmp_path):
+    # "a row with `launch = "<sha>"` whose sha differs from `sha256sum` of `git show <base>:<script>` is DRIFT": a
+    # working copy that was edited after the commit changes nothing; the sha of the edited copy is the drift.
+    _launch_fixture(tmp_path, _row_toml("P-L", script=JS, args="-", launch=JS_SHA))
+    (tmp_path / JS).write_text(JS_TEXT + "// edited after the commit\n")
+    _launch_ok(run_main(tmp_path), "right sha of the committed file, edited working copy")
+    sub = tmp_path / "w"
+    sub.mkdir()
+    _launch_fixture(sub, _row_toml("P-L", script=JS, args="-", launch=hashlib.sha256(
+        (JS_TEXT + "// edited after the commit\n").encode()).hexdigest()))
+    (sub / JS).write_text(JS_TEXT + "// edited after the commit\n")
+    _launch_drift(run_main(sub), "sha of the working copy, not of the committed file")
+
+
+def test_launch_wrong_sha_is_drift(tmp_path):
+    _launch_fixture(tmp_path, _row_toml("P-L", script=JS, args="-", launch="0" * 64))
+    _launch_drift(run_main(tmp_path), "wrong sha")
+
+
+def test_launch_row_with_a_script_and_no_launch_key_is_drift(tmp_path):
+    # "a row with `script` and no `launch` key at all is DRIFT (a new row must carry one)"
+    _launch_fixture(tmp_path, _row_toml("P-L", script=JS, args="-"))
+    _launch_drift(run_main(tmp_path), "script without launch")
+
+
+def test_launch_dash_is_ok_only_for_an_id_in_pre_launch_ids(tmp_path):
+    # "`launch = "-"` ... is exempt from the sha test only for the ids in `PRE_LAUNCH_IDS`; `-` on any other id is DRIFT"
+    _launch_fixture(tmp_path, _row_toml("P-PRE", script=JS, args="-", launch="-"))
+    _launch_ok(run_main_patched(tmp_path, ("P-PRE",)), "- on an id in PRE_LAUNCH_IDS")
+    sub = tmp_path / "other"
+    sub.mkdir()
+    _launch_fixture(sub, _row_toml("P-NOT", script=JS, args="-", launch="-"))
+    _launch_drift(run_main_patched(sub, ("P-PRE",)), "- on an id not in PRE_LAUNCH_IDS")
+    _launch_drift(run_main(sub), "- with the shipped PRE_LAUNCH_IDS (no fixture id is in it)")
+
+
+def test_launch_dash_exempts_only_the_sha_test_the_script_must_still_be_in_git(tmp_path):
+    # "exempt from the sha test only": an id in PRE_LAUNCH_IDS whose script path is not in git is still DRIFT
+    _launch_fixture(tmp_path, _row_toml("P-PRE", script=JS, args="-", launch="-"), files={ARGS: ARGS_TEXT})
+    _launch_drift(run_main_patched(tmp_path, ("P-PRE",)), "- with a script not in git")
+
+
+def test_launch_script_path_not_in_git_at_base_is_drift(tmp_path):
+    # "a `script` path not in git at `--base` is DRIFT": absent from every commit, and present on main but not at
+    # --base base (the first commit): the path test reads git at --base, not the working tree or HEAD.
+    _launch_fixture(tmp_path, _row_toml("P-L", script=JS, args="-", launch=JS_SHA), files={ARGS: ARGS_TEXT})
+    _launch_drift(run_main(tmp_path), "script not in git anywhere")
+    sub = tmp_path / "later"
+    sub.mkdir()
+    _launch_fixture(sub, _row_toml("P-L", script=JS, args="-", launch=JS_SHA))
+    _launch_drift(run_check(sub), "script in git on main but not at --base base")
+
+
+def test_launch_args_path_not_in_git_is_drift_and_dash_is_exempt(tmp_path):
+    # "`args = "-"` means no args file and is exempt from the path test, any other `args` path must be in git"
+    _launch_fixture(tmp_path, _row_toml("P-L", script=JS, args="docs/northstar/plans/workflows_2026-10-07/nope.json",
+                                        launch=JS_SHA))
+    _launch_drift(run_main(tmp_path), "args path not in git")
+    sub = tmp_path / "dash"
+    sub.mkdir()
+    _launch_fixture(sub, _row_toml("P-L", script=JS, args="-", launch=JS_SHA), files={JS: JS_TEXT})
+    _launch_ok(run_main(sub), "args = - with no args file in git")
