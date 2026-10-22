@@ -44,8 +44,8 @@ def test_A99_tactical_trace_equals_recorded_hashes(lib, run):
 
 
 def test_A99_positive_control_perturbed_hash_is_caught(lib):
-    name, units, gap, steps, _t = FAST[0]
-    rec = list(A.load_recorded()[name]["hashes"][:40])
+    _n, units, gap, _steps, _t = FAST[0]
+    rec = A.run_hashes(lib, units, gap, 40)
     got = A.run_hashes(lib, units, gap, 40)
     assert A.first_mismatch(rec, got) is None, "control premise: unperturbed prefix must match"
     rec[17] = ("0" if rec[17][0] != "0" else "1") + rec[17][1:]

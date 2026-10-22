@@ -67,15 +67,8 @@ def test_G3_A99_traces_unchanged_with_target_by_sight_0(lib, run):
 
 
 def test_G3_positive_control_perturbed_recorded_hash_is_caught(lib):
-    name, units, gap, _s, _t = FAST[0]
-    rec = list(PRE_G3_A99[name]["hashes"][:30])
-    w = A.build(lib, units)
-    _off(lib, w)
-    got = []
-    for _ in range(30):
-        lib.om_tactical_step(w)
-        got.append(A.state_hash(lib, w))
-    lib.om_world_free(w)
+    rec = _g3_first_run(lib)
+    got = _g3_first_run(lib)
     assert A.first_mismatch(rec, got) is None
     rec[9] = ("0" if rec[9][0] != "0" else "1") + rec[9][1:]
     assert A.first_mismatch(rec, got) == 9
