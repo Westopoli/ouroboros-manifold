@@ -2942,8 +2942,8 @@ owns = ["scripts/specfactory/launch_check.sh", "scripts/specfactory/status_check
 owns_glob = []
 acceptance = ["tests/specfactory/test_launch_check.py"]
 depends_on = ["HARNESS-C235"]
-status = { state = "queued" }
-tests_pending = true
+status = { state = "attached", attach_sha = "8e83311" }
+tests_pending = false
 size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys script, args, launch, spec, status_check.py known keys and check launch, the script header line"
 
 # Spec stand-in sweep (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (b)11): records clerks clear the spec-lint findings and the stand-in register rows so that HARNESS-C235-fail can turn the warnings into failures. Owns the visible-game spec and the register by depends_on ordering after the in-flight owners of those files.
