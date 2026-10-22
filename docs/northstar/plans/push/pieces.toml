@@ -2205,7 +2205,7 @@ owns = ["scenes/mockups/landscape/hud.gd", "scenes/mockups/landscape/field_map_s
 owns_glob = []
 acceptance = []
 depends_on = []
-status = { state = "attached", attach_sha = "b152260" }
+status = { state = "superseded", note = "Westley 2026-10-21: Q-246-02 answered without the prototype; the selector's 'layout request' option is the rule" }  # was attached at b152260
 tests_pending = false
 size_estimate = "prototype gate (Q-246-02): a selector in the landscape mockup's space kit HUD: one default 35 / region range (light 15, medium 35, heavy 55, tight 70) / mission type; Westley flies it on the Mac branch"
 # PROTO-space-density landed 2026-10-13: scenes/mockups/landscape/qa/space_density.json (MK-harness glob) and no other file was added; field_map_space.gd was not touched.
@@ -2445,8 +2445,23 @@ acceptance = ["tests/test_vg_a_a18_3d.gd"]
 depends_on = ["VG-A18"]
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the A18 paragraph (:390) plus docs/northstar/plans/decision_pack_2026-10-18/followups/s103_camera_report.md
-size_estimate = "the 3D rig frames the player's home base with the opening margin (A18's 2D rule), pitch per the S-103 camera report (number Westley's)"
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the A18 paragraph (:390) plus docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md; rig fov restored to the approved 55 (FINDING-rig-fov-lost), and the D-VIEW height 5400 and the sightdisc 0.766 pin are re-checked by this piece
+size_estimate = "the 3D rig frames the player's home base with the opening margin (A18's 2D rule), camera fov 55 restored (approved mockup number), pitch per the S-103 camera report (number Westley's, C13) and the horizon test per C14"
+
+# Lane A piece VG-A-dragbox (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (a)6): the units mockup's drag rectangle, which the game never draws. One new file plus one call from the selection handler in scenes/tactical_c/tactical_view.gd (VG-A's file: this piece does not own it and lands after VG-A-startforce, which edits it first).
+# Tool: Workflow
+[[piece]]
+id = "VG-A-dragbox"
+manager = "M0"
+wave = 15
+owns = ["scenes/tactical_c/selection_box.gd", "tests/test_vg_a_dragbox.gd"]
+owns_glob = []
+acceptance = ["tests/test_vg_a_dragbox.gd"]
+depends_on = ["VG-A-startforce"]  # the one scenes/tactical_c/tactical_view.gd call lands after VG-A-startforce's client piece on that file
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the VG-A-dragbox paragraph, after VG-A-startforce
+size_estimate = "selection_box.gd (new): the units mockup's drag rectangle drawn from the press point to the pointer once the pointer is past DRAFT-dragbox-dead 4 px, gone on release, qa_state()['drag_box'] its screen rect or null; one call from the tactical_view.gd selection handler; tests first by a different writer; shot = S-095 selection frame mid-drag"
 
 [[piece]]
 id = "LAB-REV2"
@@ -2860,10 +2875,10 @@ size_estimate = "B layers and mixes: R2 plays on all five layers, below the enem
 id = "LAB-REV3-C"
 manager = "M0"
 wave = 10
-owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "scripts/skilllab/diagram.py", "scripts/skilllab/rows.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "docs/northstar/plans/skilllab-harness-spec.md", "docs/northstar/research/layer_dynamics/README.md", "scripts/skilllab/__main__.py", "scripts/skilllab/charts.py", "tests/skilllab/fakes.py", "tests/skilllab/integration/test_contact_real.py", "tests/skilllab/integration/test_sweep_real.py", "tests/skilllab/integration/test_timeline_orders_real.py", "tests/skilllab/test_diagram.py", "tests/skilllab/test_drift_fix_blind.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_reengage_rows.py", "tests/skilllab/test_rows.py", "tests/skilllab/test_sweep.py", "tests/skilllab/test_sweep_baselines.py", "tests/skilllab/golden_hashes.json"]  # DRAFT list. plays_space.py, scenes.py and sweep.py (reach knobs, pre-flight refusal) are also B's: C depends on B so one owner at a time. rows.py is owned by LAB-REV2-L8, ordered through LAB-REV2-FIX; ruler fixes 2026-10-20 (TD-LAB-REV3-C-fakes/-columns/-stall-control): the fifteen files are taken from their landed or queued lab rows for this piece (one owner at a time, C lands last in the stack); the ledger overlap is the sanctioned record-file pattern (as E7, startforce, layerspot); golden_hashes.json re-recorded once under TD-LAB-REV3-C-goldens (8325cfa5)
+owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "scripts/skilllab/diagram.py", "scripts/skilllab/rows.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "docs/northstar/plans/skilllab-harness-spec.md", "docs/northstar/research/layer_dynamics/README.md", "scripts/skilllab/__main__.py", "scripts/skilllab/charts.py", "tests/skilllab/fakes.py", "tests/skilllab/integration/test_contact_real.py", "tests/skilllab/integration/test_sweep_real.py", "tests/skilllab/integration/test_timeline_orders_real.py", "tests/skilllab/test_diagram.py", "tests/skilllab/test_drift_fix_blind.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_reengage_rows.py", "tests/skilllab/test_rows.py", "tests/skilllab/test_sweep.py", "tests/skilllab/test_sweep_baselines.py", "tests/skilllab/golden_hashes.json", "docs/northstar/plans/push/scale_gated_tests.txt"]  # TD-LAB-REV3-C-scale-gated: C lists its OM_LAB_SLOW real tests in scale_gated_tests.txt at landing. DRAFT list. plays_space.py, scenes.py and sweep.py (reach knobs, pre-flight refusal) are also B's: C depends on B so one owner at a time. rows.py is owned by LAB-REV2-L8, ordered through LAB-REV2-FIX; ruler fixes 2026-10-20 (TD-LAB-REV3-C-fakes/-columns/-stall-control): the fifteen files are taken from their landed or queued lab rows for this piece (one owner at a time, C lands last in the stack); the ledger overlap is the sanctioned record-file pattern (as E7, startforce, layerspot); golden_hashes.json re-recorded once under TD-LAB-REV3-C-goldens (8325cfa5)
 owns_glob = ["tests/skilllab/test_rev3_c_*.py", "tests/skilllab/integration/test_rev3_c_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
-depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX", "LAB-REV2-L8M2"]
+depends_on = ["LAB-REV3-A", "LAB-REV3-B", "LAB-REV2-FIX", "LAB-REV2-L8M2", "HARNESS-lab-slow-tier"]  # HARNESS-lab-slow-tier (attached) is the earlier owner of scale_gated_tests.txt; ordering edge for the TD-LAB-REV3-C-scale-gated line
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "C reach and prediction: R3 reach and vision up/down as swept knobs, crossings per reach configuration (T7); R4 paper prediction beside the window and the totals (T8); R7 no_reach_stall end and pre-flight refusal, D7 (T9) (DRAFT); includes verdict decided_one_way_reach (FINDING-lab-d11)"
@@ -2930,6 +2945,34 @@ depends_on = ["HARNESS-C235"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys script, args, launch, spec, status_check.py known keys and check launch, the script header line"
+
+# Spec stand-in sweep (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (b)11): records clerks clear the spec-lint findings and the stand-in register rows so that HARNESS-C235-fail can turn the warnings into failures. Owns the visible-game spec and the register by depends_on ordering after the in-flight owners of those files.
+# Tool: Workflow (records clerks)
+[[piece]]
+id = "SWEEP-spec-standins"
+manager = "M0"
+wave = 13
+owns = ["docs/northstar/plans/2026-10-07-visible-game-spec.md", "docs/northstar/ambiguity_register.md"]
+owns_glob = []
+acceptance = []
+depends_on = ["VG-E-prodslot", "LAB-REV2-L7"]  # the in_flight rows that own docs/northstar/ambiguity_register.md today (grep of this file, 2026-10-21); no in_flight row owns the spec
+status = { state = "queued" }
+tests_pending = false
+size_estimate = "records clerks clear the 289 spec-lint findings and the 15 stand-in register rows in batches of 30, each batch an Architect text; done when the lint reports 0"
+
+# HARNESS-C235-fail (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (b)11): HARNESS-C235 warns where it should fail; the switch waits for SWEEP-spec-standins. Same four files as HARNESS-C235.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-C235-fail"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_spec_provenance.py", "tests/specfactory/test_status_check.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_spec_provenance.py"]
+depends_on = ["HARNESS-C235", "SWEEP-spec-standins", "HARNESS-C4", "HARNESS-coverage", "HARNESS-swarm-config"]  # the last three are queued and also own scripts/specfactory/status_check.py (HARNESS-C4 also tests/specfactory/test_status_check.py); ordering only (owner_lint)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the C1 to C5 checks fail instead of warn once SWEEP-spec-standins has cleared the stand-ins (Westley picked all five, 2026-10-19 as the audit cites); spec keys required on every queued row"
 
 # Record batch (Architect 2026-10-19): FINDING-a8-captured-never-shows. c_bridge.gd erases structures_changed before events_feed.gd reads it, so the captured and lost lines never show in play.
 [[piece]]
@@ -3365,3 +3408,123 @@ status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
 size_estimate = "first /manager-mode cascade: VG-P3; measured per the spec section 6"
+
+# HARNESS-known-xfail (Westley 2026-10-21, C3 "yes"; spec Lane H part 4): the sim suites get a known-red list like the plays and gd tests have, each entry tied to a ledger row. merge_gate_support.py and suite_regression.py are also owned by earlier queued HARNESS rows; ordered after them through the two depends_on entries.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-known-xfail"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/csim_known_xfail.txt", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/suite_regression.py", "tests/specfactory/test_known_xfail.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_known_xfail.py"]
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 4
+size_estimate = "csim_known_xfail.txt (new, same form as gd_tests_known_red.txt); the regression check lets a listed new red pass with a 'known-xfail: N' line, REJECTs a listed id whose row id is not in the ledger, WARNs 'known-xfail now green: <id>'; skip-rise and xfail-rise rejects unchanged; tests first: listed with a row (pass), listed with no row (REJECT), listed and green (WARN); positive control: today's check REJECTs the first fixture"
+
+# HARNESS-look-rejects (Architect 2026-10-21, ledger FINDING-look-stage-warns-only): CLAUDE.md guard 1 says the gate's look stage rejects a blank or near-uniform frame; merge_gate.sh stage 13 only warns (look_check returns OK or WARN). Queued behind HARNESS-gate-tiers.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-look-rejects"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_look_rejects.py"]  # merge_gate.sh: the look stage lines only (stage 13, ~636-648)
+owns_glob = []
+acceptance = ["tests/specfactory/test_look_rejects.py"]
+depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence"]  # the last two only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
+status = { state = "queued" }
+tests_pending = true
+size_estimate = "the look stage REJECTs a blank or near-uniform candidate frame instead of warning (guard 1); tests first: a uniform fixture frame REJECTs, a varied one passes; positive control: today's stage only warns on the uniform fixture"
+
+# HARNESS-red-evidence (Architect 2026-10-21, ledger FINDING-red-first-unverified; spec Lane H part 5): the tests step commits the red run's output as docs/northstar/plans/push/red_evidence/<piece>.txt and a new gate stage red_evidence rejects a tests-first piece without it. merge_gate.sh and rules.md are also owned by other queued HARNESS rows; ordered after them through depends_on.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-red-evidence"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/red_check.py", "scripts/specfactory/merge_gate.sh", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_red_evidence.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_red_evidence.py"]
+depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-look-rejects"]  # HARNESS-look-rejects only orders the merge_gate.sh overlap (owner_lint)
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
+size_estimate = "red_check.py writes red_evidence/<piece>.txt (pytest -rA -q output of the red run on the built tree, failing assertion lines); merge_gate.sh gains stage red_evidence: REJECT when the file is missing, a listed red id is not green on the landing tree, or a control id was not green in the red run; 'none' for a piece with no new tests; tests first: fixture evidence files for the three cases; positive control: today's gate has no such stage"
+
+# HARNESS-size-lint-fail (Architect 2026-10-21, ledger FINDING-size-guides-unenforced; spec Lane H part 5): size_lint rejects at twice the guides. DRAFT-size-reject-lines 200, DRAFT-size-reject-asserts 80.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-size-lint-fail"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/size_lint.py", "tests/specfactory/test_size_lint.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_size_lint.py"]
+depends_on = ["A94-harness"]  # only the owns-overlap ordering edge pieces.py --check wants (A94-harness owns scripts/specfactory/[!m]* and tests/specfactory/**, attached)
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
+size_estimate = "size_lint REJECTs when a piece adds more than 200 lines to one implementation file or a test file exceeds 80 assertion lines, WARNs above the guides (about 100 and 40); a split exemption is a ledger row naming the card split; tests first: fixtures at 199/201 lines and 79/81 asserts; positive control: today's lint warns at 201"
+
+# HARNESS-test-edit-row (Architect 2026-10-21, ledger FINDING-pins-stale-at-merge; spec Lane H part 5): a landing that edits an existing test file must carry a TD- or FINDING- row id naming it. merge_gate_support.py is also owned by other queued HARNESS rows; ordered after them through depends_on.
+# Tool: Workflow
+[[piece]]
+id = "HARNESS-test-edit-row"
+manager = "M0"
+wave = 15
+owns = ["scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_test_edit_row.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_test_edit_row.py"]
+depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-known-xfail"]  # HARNESS-known-xfail only orders the merge_gate_support.py overlap (owner_lint)
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
+size_estimate = "footprint check: a diff that changes a tests/ file it did not create must carry a TD- or FINDING- row id (naming the file) in the ledger diff of the same landing, else REJECT 'test edited without a row'; tests first: fixture diffs with and without the row; positive control: today's footprint check passes both"
+
+# PROTO-landscape-lakefill (Architect 2026-10-21, ledger FINDING-landscape-lakefill-stripes; spec Prototypes section): the landscape mockup's lake flood runs in queue order, ending the every-second-column striping Westley rejected 2026-10-18. Shot: seed 1 landscape re-shot queued for Westley (P12).
+# Tool: Workflow
+[[piece]]
+id = "PROTO-landscape-lakefill"
+manager = "M0"
+wave = 15
+owns = ["scenes/mockups/landscape/field_map.gd", "tests/test_mockup_landscape_lakefill.gd"]
+owns_glob = []
+acceptance = ["tests/test_mockup_landscape_lakefill.gd"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph PROTO-landscape-lakefill, Prototypes (2026-10-21)
+size_estimate = "field_map.gd lake fill uses pop_front with the same 1,500-cell cap; land-to-water flips per row in a 60 by 60 cell box over a lake under DRAFT-lakefill-flips 4 on seeds 1 and 3; positive control: the unfixed loop gives 14.9; shot: seed 1 landscape re-shot with the crop beside the old one, queued as P12"
+
+# Tool: /manager-mode cascade
+# CASCADE-sim-rules (Architect 2026-10-21, batch 6): the second cascade, after CASCADE-laneU-tests; findings A, C, D, E, G, H, K, L of followups/04_simviewer_run_analysis.md, one leaf per finding. Modelled on CASCADE-P3-trial (CASCADE-laneU-tests has no row yet).
+# owns filled at cascade start: events.c, chronicle, replay keyframe, region.c, lifecycle.c, threshold events, generational.c
+[[piece]]
+id = "CASCADE-sim-rules"
+manager = "M0"
+wave = 12
+owns = []
+owns_glob = []
+acceptance = []
+depends_on = ["HARNESS-swarm-config", "CASCADE-laneU-tests"]  # CASCADE-laneU-tests has no row yet
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/cascades/sim-rules/spec.md (written at cascade start)"
+size_estimate = "eight leaves, one per finding (A events.c; C+D chronicle; E replay keyframe; G region.c; H lifecycle.c; K threshold events; L generational.c), each a failing csim test named by rule id plus a positive control; umbrella: the eight tests plus the full csim regression unchanged; contract csrc/ouroboros_sim.h parent-owned; hardcore audit"
+
+# VG-C2-5-scope (Architect 2026-10-21; Westley 2026-10-21, Q-C2-5-01 (a): the look stands, the test samples wrong). Test-defect scope narrowing TD-VG-C2-5-scope; spec: Rev 13 section, VG-C2-5-scope paragraph. VG-C2-5-patch (spec paragraph and row from records branch push/vg-records-combined) is the previous owner of this file; the ordering edge to G-qadesktoptests, VG-B and HARNESS-userdir (attached) is carried by that row.
+# Tool: Workflow
+[[piece]]
+id = "VG-C2-5-scope"
+manager = "M0"
+wave = 15
+owns = ["tests/qa/desktop/test_galaxy_pixels.py"]
+owns_glob = []
+acceptance = ["tests/qa/desktop/test_galaxy_pixels.py"]
+depends_on = ["VG-C2-5-patch", "G-qadesktoptests", "VG-B", "HARNESS-userdir"]  # the last three (attached) only carry the owns-overlap ordering edges pieces.py --check wants; VG-C2-5-patch is the previous owner of the file
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Rev 13 section, VG-C2-5-scope paragraph
+size_estimate = "galaxy pixel detector scope: a dot whose centre lies within another region's light disc is excluded from the sample before the 0.60 line is applied; line, tolerance, isolation and the patch rule unchanged; expected 24 of 24 to 26 sampled; tests first: a Godot-free exclusion fixture of three synthetic dots; positive control: without the exclusion all three are sampled; test-defect scope narrowing TD-VG-C2-5-scope"

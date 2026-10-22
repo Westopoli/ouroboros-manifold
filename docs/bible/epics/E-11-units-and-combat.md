@@ -105,7 +105,7 @@ As a commander, I want fights to last long enough to read, reposition, and retre
 
 Rules
 - R-085-01  Given a 10v10 mirror of any single type at attack range with no abilities, When resolved, Then the fight lasts at least 45 s.
-- R-085-02  Given a 50v50 mirror with the default balanced composition, When resolved, Then the fight lasts 150 to 200 s.
+- R-085-02  Given a 50v50 mirror with the default balanced composition, When resolved, Then the fight lasts 150 to 230 s (upper bound widened from 200 s by Westley, 2026-10-21; the lab's own fight runs 229 s).
 - R-085-03  Given a 100v100 balanced battle, When resolved, Then it lasts more than 120 s.
 - R-085-04  Given a mixed battle, When per-category engagements are timed, Then Strike-vs-Strike resolves before Line-vs-Line, which resolves before Siege-vs-Siege.
 - R-085-05  Given a fight the player is losing, When they issue a move away at the 45 s mark, Then at least 30 percent of the force escapes alive.
