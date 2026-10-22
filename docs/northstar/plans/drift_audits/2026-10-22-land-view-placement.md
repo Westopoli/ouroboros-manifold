@@ -1,5 +1,7 @@
 # Land view placement and facing, measured 2026-10-22 (Westley's live look at F-S140)
 
+Line numbers in the client report for `tactical_view.gd` are offset by the probe's 43 added lines; the corrected cites are in the spec and ledger.
+
 Westley played the land era live (OM_GODOT_GUI=1, greek placeholder, seed 1) and reported marks displaced from bodies, marks sliding against the camera, a facing arrow pointing backwards, invisible obstacles, unnamed grey lines and a uniform grey-blue backdrop; two Sonnet investigators measured the client (xvfb 1920x1080, origin/main bd814657) and the sim; their reports follow verbatim; the rulings are in `story_reviews/westley/decisions.md` (DEC-landview-one-projection, DEC-facing-travel, DEC-Q087-02, DEC-single-giveup) and the pieces in the visible-game spec.
 
 ## Client report
