@@ -1,17 +1,22 @@
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::S (speed); Architect ruling 2026-10-22 for LAB-REV2-SPEED-1B (Westley may veto)
-"""LAB-REV2-SPEED-1B (stage 1B): what the four firing.py levers must do, each with identical results. The builder owns scripts/skilllab/firing.py
-and engine.py; this file only pins it. The CPU ratio acceptance is test_speed1b_ratio.py; stage one's epoch tests stay in test_speed_equal.py.
+"""LAB-REV2-SPEED-1B (stage 1B): what the firing.py / engine.py levers must do, each with identical results. The builder owns
+scripts/skilllab/firing.py and engine.py; this file only pins it. The CPU ratio acceptance is test_speed1b_ratio.py; stage one's epoch
+tests stay in test_speed_equal.py.
 
-  (L-a) alive read at most once per living unit per sample (or taken from the per-tick hp): counted in a real 16v16 fight.
-  (L-b) a unit's type read once per unit and world; its layer cached, and invalidated by set_layer (never stale).
+  (L-a) alive read at most once per living unit per sample (or taken from the per-tick hp), plus one confirmation read per death and one at
+        spawn: counted in a real 16v16 fight.
+  (L-b) a unit's type read once per unit and world.
+  The layer is NOT a lever of 1B (Architect ruling 2026-10-22): a unit's layer can change inside step with no set_layer (route across layers,
+        walker slopes), so it is always read live. Four scenes pin that it is never stale (set_layer, route across layers, walker slope).
   (L-c) lazy nearest-first selection, the same total order (squared distance, then lower id): equality on tie scenes, a mutant fails.
   (L-d) hoisted code evaluation, gate order 1 to 5 kept (the code of the first failing gate): equality on one scene per code, a mutant fails.
 
 Read counts are taken at the ctypes boundary: a proxy around Engine._lib counts every call of a C function by name, and Engine._bind runs
 again through it, so a read the builder takes by any route through the library is counted. New public Engine methods are not allowed.
 
-RED today (stage one built): the three read-count bounds (L-a, L-b type, L-b layer). Everything that compares the live code with the frozen
-reference, every staleness check and every positive control is green.
+RED today (stage one built): the two read-count bounds (L-a alive, L-b type). Everything that compares the live code with the frozen
+reference (the staleness and prune scenes are correctness pins that stage one already passes), the cold-read guard and every positive
+control is green.
 """
 import ctypes
 import math
@@ -130,18 +135,32 @@ def fight_counts(engine, enemies=16, module=None, view=None):
 
 def test_the_counting_proxy_counts_a_real_fight(library):
     """Guard (green today): the proxy sees the spawns, the samples and the reads the bounds below are made of, so a bound cannot hold by a
-    blind counter. 16 + 16 units spawned; hundreds of samples; the stage-one code reads a unit's type and layer on every sample."""
+    blind counter. 16 + 16 units spawned; hundreds of samples. COLD-READ PROBE: in a fresh world under the proxy, one unit is spawned and
+    engine.unit_alive, unit_type and unit_layer are called once each; every C counter must be exactly 1. A value cache passes (its first read
+    is cold); a builder who binds the C functions as attributes in Engine.__init__ (bypassing the proxy) reads 0 and fails, so the bounds
+    below cannot pass by a blind counter."""
     counts, samples, living_sum, spawned = fight_counts(library)
     assert spawned == 32 and samples > 100 and 0 < living_sum <= 32 * samples
     assert counts["om_unit_get_pos"] >= living_sum and counts["om_command_set_layer"] == 0
+    with counted(library) as lib:
+        w = library.new_world(0)
+        try:
+            u = library.spawn(w, library.type_id("Vanguard"), 0, 1000.0, 1000.0, 0)
+            assert library.unit_alive(w, u) is True
+            assert isinstance(library.unit_type(w, u), int)
+            assert library.unit_layer(w, u) == 0
+        finally:
+            library.free_world(w)
+    for name in ("om_unit_alive", "om_unit_get_unit_type", "om_unit_get_layer"):
+        assert lib.counts[name] == 1, "cold read of %s counted %d times (a read that bypasses the counting proxy reads 0)" % (name, lib.counts[name])
 
 
 class ReadOnceView:
-    """Control: an engine view that reads a unit's type and layer once and asks alive only of units not yet seen dead. Run with the stage-one
-    firing (one sample per epoch) it shows that the three bounds below are reachable by the levers alone (no change of results)."""
+    """Control: an engine view that reads a unit's type once and asks alive only of units not yet seen dead. Run with the firing (one sample
+    per epoch) it shows that the two bounds below are reachable by caching alone (no change of results)."""
 
     def __init__(self, engine):
-        self._e, self._type, self._layer, self._dead = engine, {}, {}, set()
+        self._e, self._type, self._dead = engine, {}, set()
 
     def __getattr__(self, name):
         return getattr(self._e, name)
@@ -150,11 +169,6 @@ class ReadOnceView:
         if (w.value, u) not in self._type:
             self._type[(w.value, u)] = self._e.unit_type(w, u)
         return self._type[(w.value, u)]
-
-    def unit_layer(self, w, u):
-        if (w.value, u) not in self._layer:
-            self._layer[(w.value, u)] = self._e.unit_layer(w, u)
-        return self._layer[(w.value, u)]
 
     def unit_alive(self, w, u):
         if (w.value, u) in self._dead:
@@ -166,14 +180,13 @@ class ReadOnceView:
 
 
 def test_control_the_read_count_bounds_are_reachable_and_the_results_unchanged(library):
-    """Positive control (green today): the stage-one firing (one sample per epoch) through a view that reads type/layer once per unit and
-    alive only until a unit is seen dead meets all three bounds, and its FightResult equals the frozen reference's. So the bounds ask for
-    something that exists, reached by caching alone."""
+    """Positive control (green on stage one and on a correct sped tree alike): the firing through a view that reads a unit's type once and
+    alive only until a unit is seen dead meets both bounds, and its FightResult equals the frozen reference's. So the bounds ask for
+    something that exists, reached by caching alone. (It does not assert that the plain engine breaks the bounds: a correct sped engine
+    does not.)"""
     counts, samples, living_sum, spawned = fight_counts(library, view=ReadOnceView(library))
-    assert counts["om_unit_get_unit_type"] <= spawned and counts["om_unit_get_layer"] <= spawned
-    assert counts["om_unit_alive"] <= living_sum + spawned
-    plain, _, _, _ = fight_counts(library)
-    assert plain["om_unit_alive"] > living_sum + spawned and plain["om_unit_get_unit_type"] > spawned, "the plain stage-one code must break the bounds"
+    assert counts["om_unit_get_unit_type"] <= spawned
+    assert counts["om_unit_alive"] <= living_sum + 2 * spawned
     setup = plays.blob_play(16)(16, False)
     saved = {n: getattr(fight, n) for n in FIRING_FUNCTIONS}
     try:
@@ -187,15 +200,16 @@ def test_control_the_read_count_bounds_are_reachable_and_the_results_unchanged(l
 
 
 def test_stage_1b_la_alive_is_read_at_most_once_per_living_unit_per_sample_plus_once_per_unit(library):
-    """(L-a) RED today. Derivation: lever (L-a) is 'fewer ctypes reads of unit_alive per sample', alive taken from the per-tick hp or read
-    only where needed. A unit that is already known dead need not be read again, and a unit's death must be learned once, so over a fight
-    om_unit_alive reads <= sum over samples of the units alive at that sample + units spawned. (Judgement call: the Architect's wording is 'per
-    sample <= living units'; the added 'units spawned' term pays for learning each death once and is the loosest form that still fails stage
-    one.) Reading alive for every spawned unit on every sample, as stage one does, exceeds it as soon as units die. A builder taking alive from
-    hp reads it 0 times and passes."""
+    """(L-a) RED today. Derivation (Architect audit fix 2026-10-22): lever (L-a) is 'fewer ctypes reads of unit_alive per sample', alive
+    taken from the per-tick hp or read only where needed. A unit that is already known dead is not read again. Each sample reads each living
+    unit at most once (living_sum reads in all: the units alive at each sample, summed), each death costs one confirmation read (the read that
+    finds the unit dead, once per unit: at most `spawned`), and each unit may be read once at spawn (at most `spawned`). So over a fight
+    om_unit_alive reads <= living_sum + 2 * spawned (13318 + 64 = 13382 on the standard 16v16 fight). Reading alive for every spawned unit on
+    every sample, as stage one does (28896 reads), exceeds it as soon as units die. A builder taking alive from hp reads it 0 times and passes
+    (the cold-read probe in the counter guard keeps the counter honest)."""
     counts, samples, living_sum, spawned = fight_counts(library)
-    bound = living_sum + spawned
-    assert counts["om_unit_alive"] <= bound, "om_unit_alive read %d times over %d samples (bound %d = %d living-unit-samples + %d spawned)" % (
+    bound = living_sum + 2 * spawned
+    assert counts["om_unit_alive"] <= bound, "om_unit_alive read %d times over %d samples (bound %d = %d living-unit-samples + 2 * %d spawned)" % (
         counts["om_unit_alive"], samples, bound, living_sum, spawned)
 
 
@@ -207,16 +221,7 @@ def test_stage_1b_lb_unit_type_is_read_once_per_unit(library):
         counts["om_unit_get_unit_type"], samples, spawned)
 
 
-def test_stage_1b_lb_unit_layer_is_read_once_per_unit_when_no_set_layer_is_called(library):
-    """(L-b) RED today. Derivation: the layer is cached and invalidated by set_layer only; the fight never calls set_layer (the counter shows
-    0 calls of om_command_set_layer), so om_unit_get_layer reads <= units spawned + 0. Stage one reads it for every living unit on every sample."""
-    counts, samples, _, spawned = fight_counts(library)
-    assert counts["om_command_set_layer"] == 0
-    assert counts["om_unit_get_layer"] <= spawned + counts["om_command_set_layer"], (
-        "om_unit_get_layer read %d times over %d samples for %d units" % (counts["om_unit_get_layer"], samples, spawned))
-
-
-# ---- (L-b) the layer never goes stale -------------------------------------------------------------------------------------------------------
+# ---- the layer is read live and never stale (not a 1B lever; correctness pins that stage one passes) -------------------------------------------------------------------------------------------------------
 
 SPACING = 30.0
 
@@ -285,14 +290,94 @@ def test_control_a_layer_cache_never_invalidated_fails_the_staleness_check(libra
     assert mutant != frozen
 
 
+# ---- the layer changes inside step with no set_layer call: route across layers, and a walker on a slope --------------------------------------
+
+def _route_across_world(lib, w):
+    """OM_TP_ROUTE_ACROSS_LAYERS = 1 and a wall on layer 0 only between the mover and its goal: order_move sends the mover over the wall by
+    layer 1 (the layer goes 0, then 1 at about tick 25, then back to 0 at about tick 199, with no set_layer). The enemy sits on layer 0,
+    and a Vanguard's reach is 0 up 0 down, so the code against it is 2 (not seen) on layer 0 before the climb, 1 (out of reach) on layer 1, then 0."""
+    lib.set_canvas(w, 4000.0, 4000.0)
+    lib.set_param(w, lib.param_id("OM_TP_ROUTE_ACROSS_LAYERS"), 1.0)
+    lib.block_rect(w, 1500.0, 0.0, 1700.0, 4000.0, 0, 0)
+    t = lib.type_id("Vanguard")
+    me = lib.spawn(w, t, 0, 1000.0, 2000.0, 0)
+    enemy = lib.spawn(w, t, 1, 1900.0, 2100.0, 0)
+    lib.order_move(w, [me], 2400.0, 2000.0)
+    return me, enemy, 240
+
+
+def _slope_world(lib, w):
+    """A walker (Vanguard) at the foot of slope 2 of the generated field of seed 11 (canvas 12000, bands 2 and 3 = layers 1 and 2), ordered
+    to the top: its layer goes 1, then 2 at about tick 25 as it climbs, and back to 1 at about tick 229, with no set_layer. The enemy waits on
+    layer 2 (code 1 out of reach while the walker is on layer 1, then 3, 0, 3 as it climbs on layer 2). Costs about 13 s (terrain generation)."""
+    lib.set_canvas(w, 12000.0, 12000.0)
+    lib.terrain_generate(w, 11, 12000.0)
+    t = lib.type_id("Vanguard")
+    me = lib.spawn(w, t, 0, 9350.0, 3150.0, 1)
+    enemy = lib.spawn(w, t, 1, 8800.0, 3150.0, 2)
+    lib.order_move(w, [me], 8850.0, 3150.0)
+    return me, enemy, 260
+
+
+def _moving_trace(library, build):
+    """One world, one row per tick. Each row holds: the true layer (an uncounted read of the C library), the engine's unit_layer asked twice, the
+    live firing's three answers asked twice (so a hot cache is used), the frozen reference's answers, and the reference's answers on an engine
+    whose layer is cached forever (the mutant). No set_layer is ever called."""
+    w = library.new_world(0)
+    try:
+        library.disable_abilities(w)
+        me, enemy, ticks = build(library, w)
+        stale = StaleLayerEngine(library)
+        rows = []
+        for tick in range(ticks + 1):
+            if tick:
+                library.step(w)
+            rows.append(dict(
+                tick=tick, truth=library._lib.om_unit_get_layer(w, me), asked=(library.unit_layer(w, me), library.unit_layer(w, me)),
+                live=(_answers(firing, library, w, [me], [enemy]), _answers(firing, library, w, [me], [enemy])),
+                ref=_answers(ref, library, w, [me], [enemy]), mutant=_answers(ref, stale, w, [me], [enemy])))
+        return rows
+    finally:
+        library.free_world(w)
+
+
+@pytest.fixture(scope="module", params=["route_across_layers", "walker_slope"])
+def moving_rows(request, library):
+    return _moving_trace(library, {"route_across_layers": _route_across_world, "walker_slope": _slope_world}[request.param])
+
+
+def test_stage_1b_the_layer_that_changes_inside_step_is_never_stale_exactly_as_the_reference(moving_rows):
+    """Correctness pin (green on stage one; a layer cache that is not refreshed when the engine moves a unit between layers fails it). At
+    every tick the live engine's layer (asked twice) is the true layer, and the live firing's answers (asked twice) equal the frozen
+    reference's. The scene must prove the layer really changes without set_layer: the true layer takes at least two values, and the
+    reference answers on one layer are not any answer seen on another (so a stale layer would change an answer)."""
+    for r in moving_rows:
+        assert r["asked"] == (r["truth"], r["truth"]), "tick %d: unit_layer asked twice gave %s, the layer is %d" % (r["tick"], r["asked"], r["truth"])
+        assert r["live"] == (r["ref"], r["ref"]), "tick %d (layer %d): live answers differ from the reference" % (r["tick"], r["truth"])
+    layers = {r["truth"] for r in moving_rows}
+    assert len(layers) >= 2, "the layer never changed in this scene (%s)" % sorted(layers)
+    answers = {layer: {repr(r["ref"]) for r in moving_rows if r["truth"] == layer} for layer in layers}
+    for a in layers:
+        for b in layers:
+            assert a == b or not (answers[a] & answers[b]), "a reference answer is shared by layers %d and %d: a stale layer could hide" % (a, b)
+
+
+def test_control_a_layer_cache_never_invalidated_fails_the_moving_layer_scenes(moving_rows):
+    """Positive control: the reference on an engine whose layer is cached forever differs from the true reference at some tick once the
+    layer has changed inside step, so the check above can fail (a layer that changes with no set_layer defeats a cache refreshed by set_layer alone)."""
+    differing = [r["tick"] for r in moving_rows if r["mutant"] != r["ref"]]
+    assert differing and min(differing) > 0, "the never-invalidated layer cache is not caught by this scene"
+
+
 # ---- a fake engine for the logic scenes --------------------------------------------------------------------------------------------------------
 
 class FakeSim:
     """The surface firing reads. units: id -> {pos, layer, type, alive, facing, target}. `hidden` ids are not visible to the other side;
-    `blocked` pairs fail can_shoot; `codes` (when given) makes can_engage answer from the table (the E0 path), else -1 (not available)."""
+    `blocked` pairs fail can_shoot; `params` sets named parameters (default 1.0); `codes` (when given) makes can_engage answer from the table (the E0 path), else -1 (not available)."""
 
-    def __init__(self, units, hidden=(), blocked=(), codes=None):
+    def __init__(self, units, hidden=(), blocked=(), codes=None, params=None):
         self.units, self.hidden, self.blocked, self.codes = units, set(hidden), set(blocked), codes
+        self.params = params or {}      # parameter name -> value (param_id answers the name itself); default 1.0
         self.calls = Counter()
 
     def unit_alive(self, w, u):
@@ -323,7 +408,7 @@ class FakeSim:
         return {i for i in ids if i not in self.hidden}
 
     def get_param(self, w, p):
-        return 1.0
+        return self.params.get(p, 1.0)
 
     def param_id(self, name):
         return name
@@ -405,6 +490,69 @@ def test_control_a_record_variant_ordering_ties_by_the_higher_id_fails_the_tie_s
     assert _answers_fake(mutant, FakeSim(units, **kw), [1], s1) != _answers_fake(ref, FakeSim(units, **kw), [1], s1)
     kw2 = dict(hidden={12, 20}, blocked={(1, 5), (1, 9)})
     assert _answers_fake(mutant, FakeSim(units, **kw2), [1], s1) != _answers_fake(ref, FakeSim(units, **kw2), [1], s1)
+
+
+# ---- (L-c) the prune is sound: a valid target that is not the nearest, and a farther enemy in range through a layer-range multiplier ------------
+
+def _target_scene():
+    """Unit 1 (type 0, category 0) with two enemies in range: 5 at 100 (type 1, category 1) and 9 at 200 (type 2, category 2). The weight shows which
+    one the record names: category_multiplier is 1.0 + 0.1 * a + 0.01 * b."""
+    return {1: _u(0, 0, 0), 5: _u(100, 0, 1), 9: _u(200, 0, 2)}, [1], [5, 9]
+
+
+def test_stage_1b_lc_a_valid_non_nearest_target_of_record_is_kept_exactly_as_the_reference():
+    """(L-c) correctness pin: unit 1's `target` is the farther enemy 9 and it can still engage it (code 0), so the record names 9, not the
+    nearest 5 (the weight shows it: category 2, not 1). Blocking that shot (code 5) drops the record to the nearest-first scan, which finds 5."""
+    units, s0, s1 = _target_scene()
+    units[1]["target"] = 9
+    sim = FakeSim(units)
+    to_9, to_5 = sim.category_multiplier(W, 0, 2), sim.category_multiplier(W, 0, 1)
+    assert to_9 != to_5
+    expected = _answers_fake(ref, FakeSim(units), s0, s1)
+    assert expected[1][0] == to_9, "the reference must keep the valid non-nearest target 9"
+    assert _answers_fake(firing, FakeSim(units), s0, s1) == expected
+    blocked = _answers_fake(ref, FakeSim(units, blocked={(1, 9)}), s0, s1)
+    assert blocked[1][0] == to_5, "with the target's shot blocked the reference falls back to the nearest, 5"
+    assert _answers_fake(firing, FakeSim(units, blocked={(1, 9)}), s0, s1) == blocked
+
+
+def _range_up_scene():
+    """Unit 1 (range 300, reach 1 up 1 down) with OM_TP_RANGE_UP_1 = 1.5: the nearest enemy 5 (layer 0, 350 away) is out of range (code 3);
+    the farther enemy 9 (layer +1, 400 away, range there 300 * 1.5 = 450) is in range and fires. No other gate fails."""
+    units = {1: _u(0, 0, 0), 5: _u(350, 0, 1), 9: _u(0, 400, 2, layer=1)}
+    return units, [1], [5, 9], {"OM_TP_RANGE_UP_1": 1.5}
+
+
+def test_stage_1b_lc_a_farther_enemy_in_range_through_a_range_multiplier_above_one_is_found_exactly_as_the_reference():
+    """(L-c) correctness pin against an unsound prune: the nearest enemy is out of range but a farther one at +1 layer is in range (the
+    multiplier 1.5 above 1 lifts its reach to 450). The reference must choose that farther enemy 9 (asserted: one able unit, the weight of
+    category 2 against category 0), and the live code must equal it; a prune whose cap ignores multipliers above 1 stops at 300 and misses 9."""
+    units, s0, s1, params = _range_up_scene()
+    sim = FakeSim(units, params=params)
+    expected = _answers_fake(ref, FakeSim(units, params=params), s0, s1)
+    assert expected[0] == (1, 0) and dict(expected[2])[1] == 0
+    assert expected[1][0] == sim.category_multiplier(W, 0, 2) != sim.category_multiplier(W, 0, 1), "the reference must choose the farther enemy 9"
+    assert _answers_fake(firing, FakeSim(units, params=params), s0, s1) == expected
+
+
+def _prune_with_cap_equal_to_range(src):
+    """The mutant: stop the nearest-first scan once an enemy is farther than the unit's plain range (a cap that ignores multipliers above 1)."""
+    scan = "        for v in sorted(enemies, key=lambda v: ((enemies[v][0] - x) ** 2 + (enemies[v][1] - y) ** 2, v)):\n"
+    assert scan in src
+    return src.replace(scan, "        rng0 = self.type_info(self.sides[side][u][3])[0]\n" + scan +
+                       "            if first is not None and (enemies[v][0] - x) ** 2 + (enemies[v][1] - y) ** 2 > rng0 * rng0:\n"
+                       "                return first\n")
+
+
+def test_control_a_prune_with_the_cap_at_the_plain_range_fails_the_range_multiplier_scene():
+    """Positive control: the reference with that unsound prune answers (0, 0) (no unit able, code 3 against the nearest) where the reference
+    answers (1, 0), so the scene above can fail; and with the multiplier at its default 1.0 the prune is harmless, so it is the multiplier that
+    the scene exercises."""
+    mutant = load_variant("mutant_prune_cap_range", _prune_with_cap_equal_to_range)
+    units, s0, s1, params = _range_up_scene()
+    assert _answers_fake(mutant, FakeSim(units, params=params), s0, s1)[0] == (0, 0)
+    assert _answers_fake(ref, FakeSim(units, params=params), s0, s1)[0] == (1, 0)
+    assert _answers_fake(mutant, FakeSim(units), s0, s1) == _answers_fake(ref, FakeSim(units), s0, s1)
 
 
 # ---- (L-d) gate order 1 to 5 ----------------------------------------------------------------------------------------------------------------

@@ -8,8 +8,8 @@ test_speed1b_levers.py. The stage-one tests (test_speed_equal.py) keep running a
   the two interleaved fight by fight in one process, 26 fights (blob_play(16) against 12 to 24 enemies, both orders), the whole
   FightResult of every fight compared too. Wall time is printed beside it and never judged.
 
-RED today (stage one built): measured ratio 0.714 (limit 0.55). POSITIVE CONTROLS: a planted CPU slowdown, and a candidate exactly as slow
-as stage one (ratio 0.72), fail the check; a fast candidate passes; a sleep does not move a CPU measure; the constant is pinned.
+RED today (stage one built): measured ratio 0.714 (limit 0.68). POSITIVE CONTROLS: a planted CPU slowdown, and a candidate exactly as slow
+as stage one (ratio 0.72), fail the check; a candidate at about 0.60 and a fast one pass; a sleep does not move a CPU measure; the constant is pinned.
 """
 import contextlib
 import dataclasses
@@ -28,9 +28,10 @@ for _p in (str(ROOT), HERE):
 import ref_firing_rev2 as ref  # noqa: E402
 from scripts.skilllab import engine as engine_mod, fight, firing, plays  # noqa: E402
 
-# DRAFT, Westley's number. Stage one (epoch cache only) measured 0.714 and was held to the stage-one limit 0.75 in test_speed_equal.py; stage
-# 1B (the levers a to d in firing.py) must reach 0.55 (the estimate is 0.5, with margin). The combined 0.5 mark (DRAFT-lab-speed-ratio) is SPEED-2's.
-DRAFT_LAB_SPEED_RATIO_1B = 0.55  # DRAFT: process_time(live firing) / process_time(frozen reference) must not exceed it. The mark is Westley's.
+# DRAFT, Westley's number; auditor's prototype measured about 0.65 with levers (a) to (d); stage one 0.714. Stage one (epoch cache only) was
+# held to the stage-one limit 0.75 in test_speed_equal.py; stage 1B (the levers in firing.py and engine.py) must reach 0.68 (Architect ruling
+# 2026-10-22, Westley may veto). The combined 0.5 mark (DRAFT-lab-speed-ratio) is SPEED-2's.
+DRAFT_LAB_SPEED_RATIO_1B = 0.68  # DRAFT: process_time(live firing) / process_time(frozen reference) must not exceed it. The mark is Westley's.
 STAGE_ONE_MEASURED = 0.714
 STAGE_ONE_LIMIT = 0.75
 RATIO_ENEMIES = range(12, 25)
@@ -100,7 +101,7 @@ def within_ratio(measured, limit=None):
 
 def test_stage_1b_speed_ratio_of_the_live_firing_against_the_frozen_reference(library):
     """Acceptance (stage 1B): 26 fights, blob_play(16) against 12 to 24, both orders, live and reference interleaved in this process.
-    RED on the stage-one tree (ratio about 0.71 over the limit 0.55). Results are compared too, so a faster-but-different firing cannot pass."""
+    RED on the stage-one tree (ratio about 0.71 over the limit 0.68). Results are compared too, so a faster-but-different firing cannot pass."""
     items = [(enemies, swap) for enemies in RATIO_ENEMIES for swap in RATIO_SWAPS]
     seen = {}
 
@@ -123,7 +124,7 @@ def _spin_items(n=8):
 
 
 def test_control_a_planted_cpu_slowdown_fails_the_1b_ratio_check():
-    """Positive control: a candidate as slow as the reference (ratio 1.0), and one slower, fail the 0.55 check."""
+    """Positive control: a candidate as slow as the reference (ratio 1.0), and one slower, fail the 0.68 check."""
     for planted in (0.012, 0.02):
         measured = measure_ratio(lambda _: burn(planted), lambda _: burn(0.012), _spin_items())
         with pytest.raises(AssertionError):
@@ -131,17 +132,20 @@ def test_control_a_planted_cpu_slowdown_fails_the_1b_ratio_check():
 
 
 def test_control_a_candidate_as_slow_as_stage_one_fails_the_1b_check_but_passes_the_stage_one_check():
-    """Positive control: a candidate at ratio about 0.72 (stage one's speed) fails the 1B limit 0.55 and passes the stage-one limit 0.75,
-    so the new mark is stricter than the old one and the check can tell them apart."""
+    """Positive control: a candidate at ratio about 0.72 (stage one's speed) fails the 1B limit 0.68 and passes the stage-one limit 0.75,
+    so the new mark is stricter than the old one and the check can tell them apart; a candidate at about 0.60 passes."""
     measured = measure_ratio(lambda _: burn(0.0086), lambda _: burn(0.012), _spin_items())
-    assert 0.6 < measured[0] < 0.8
+    assert 0.68 < measured[0] < 0.8
     within_ratio(measured, STAGE_ONE_LIMIT)
     with pytest.raises(AssertionError):
         within_ratio(measured)
+    faster = measure_ratio(lambda _: burn(0.0072), lambda _: burn(0.012), _spin_items())
+    assert 0.5 < faster[0] < 0.68
+    within_ratio(faster)
 
 
 def test_control_a_wrapper_planted_around_a_fast_candidate_fails_the_1b_check():
-    """Positive control, wrapper form: a fast candidate (ratio 0.25) passes; wrapped to burn extra CPU per call (ratio 0.67), it fails."""
+    """Positive control, wrapper form: a fast candidate (ratio 0.25) passes; wrapped to burn extra CPU per call (ratio 0.75), it fails."""
     def fast(_):
         burn(0.003)
 
@@ -149,7 +153,7 @@ def test_control_a_wrapper_planted_around_a_fast_candidate_fails_the_1b_check():
 
     def slowed(item):
         fast(item)
-        burn(0.005)
+        burn(0.006)
 
     with pytest.raises(AssertionError):
         within_ratio(measure_ratio(slowed, lambda _: burn(0.012), _spin_items()))
@@ -164,5 +168,5 @@ def test_control_the_1b_ratio_is_cpu_time_not_wall_time():
 
 def test_the_1b_ratio_constant_is_the_ruled_draft():
     """Pins the ruled DRAFT (Westley's number); it changes only with his word. The stage-one limit stays 0.75 in test_speed_equal.py."""
-    assert DRAFT_LAB_SPEED_RATIO_1B == 0.55
+    assert DRAFT_LAB_SPEED_RATIO_1B == 0.68
     assert DRAFT_LAB_SPEED_RATIO_1B < STAGE_ONE_MEASURED < STAGE_ONE_LIMIT == 0.75
