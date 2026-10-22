@@ -3951,3 +3951,36 @@ depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-ven
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "one helper om_home() in pieces.py returning Path(os.environ.get(\"OM_HOME\", Path.home())), every default built from it, tests build expectations the same way (TD-HARNESS-home-paths); path defaults only in the six scripts; no behaviour change on this machine"
+
+[[piece]]
+id = "VG-C-land-one-projection"
+manager = "Architect"
+wave = 9
+owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/unit_squads.gd", "scenes/tactical_c/terrain_layer.gd", "scenes/tactical_c/structures_layer.gd", "scenes/tactical_c/fx/deaths.gd", "scenes/tactical_c/fx/abilities.gd", "scenes/tactical_c/fx/ambient.gd", "tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py"]
+owns_glob = []
+acceptance = ["tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py"]
+depends_on = ["VG-C-land-marks", "VG-C-facing-arrow", "TERRAIN-3", "VG-A-layerkeys", "VG-A-routeline", "VG-A-startforce", "VG-E1W"]  # shares tactical_view.gd with these queued owners; owner_lint demands the order
+status = { state = "queued" }
+size_estimate = "land view one projection: UnitSquads and TerrainLayer hidden on land, UnitVisuals placed inside _redraw through a projector, fx and structures through set_projector; parity test at three cameras"
+
+[[piece]]
+id = "VG-E-facing-travel"
+manager = "Architect"
+wave = 9
+owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_facing_travel.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_facing_travel.py"]
+depends_on = ["VG-T-EMIT-WIRE", "LAB-CONTRACT-unit-pos-batch"]
+status = { state = "queued" }
+size_estimate = "face pass turns toward the last-5-tick displacement heading while moving; goal heading only when stationary with an order"
+
+[[piece]]
+id = "VG-E-move-through-idle-own"
+manager = "Architect"
+wave = 9
+owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_move_through_idle_own.py"]
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_move_through_idle_own.py"]
+depends_on = ["VG-E-facing-travel"]
+status = { state = "queued" }
+size_estimate = "idle own units yield to movers; give-up pass covers single units after 40 ticks of no progress"
