@@ -100,7 +100,7 @@ Rules
 - R-046-02  Given a fortifier at tech 60, When read, Then attack 1.018, defense 1.054, economy 1.048.
 - R-046-03  Given any archetype at tech 0, When read, Then all three multipliers are 1.0.
 - R-046-04  Given the attack multiplier, When an attack resolves (E-05 S-037), Then effective attack is multiplied by it; the defender's defense multiplier multiplies effective defense.
-- R-046-05  Given the economy multiplier, When read, Then [Q-048-01: nothing in the sim consumes it today].
+- R-046-05  Given the economy multiplier, When a faction's budget accumulates (E-05 R-033-01), Then the gain is scaled by it (DEC-C15-2026-10-22).
 
 Inputs: archetype; tech.
 Outputs: multipliers used in attack resolution.

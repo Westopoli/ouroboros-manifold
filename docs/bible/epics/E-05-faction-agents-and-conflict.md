@@ -42,7 +42,7 @@ Open flags: none.
 As a commander, I want each region to pay for itself before it feeds my war chest, so that conquering rubble is a burden and holding a rich core is a strength.
 
 Rules
-- R-033-01  Given a faction owning regions with economy 66, 40, and 9, When budget accumulates for one tick, Then Δbudget = ((66 − 8) + (40 − 8) + (9 − 8)) · 0.025 = 2.275.
+- R-033-01  Given a faction owning regions with economy 66, 40, and 9, When budget accumulates for one tick, Then Δbudget = ((66 − 8) + (40 − 8) + (9 − 8)) · 0.025 · economy multiplier (E-06 R-046-05), which is 2.275 at multiplier 1.0 (DEC-C15-2026-10-22).
 - R-033-02  Given a faction owning one region at economy 8.0, When budget accumulates, Then Δbudget = 0 and budget never goes below 0.
 - R-033-03  Given a faction owning no regions, When budget accumulates, Then Δbudget = 0.
 
