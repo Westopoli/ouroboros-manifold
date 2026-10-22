@@ -3449,7 +3449,7 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "behaviour-preserving Python speed-up of firing.py with an Engine epoch counter cache; goldens untouched; the absolute 30 s mark is Westley's (C2)"
 
-# SPEED-1B (lab overseer a7, Architect ruling 2026-10-22; Westley may veto): the firing.py levers after the epoch cache of LAB-REV2-SPEED, results identical. Order: SPEED, 1B, SPEED-2, batch getter. Manager and wave copied from LAB-REV2-SPEED (M0, wave 10). Measured basis: with the epoch cache a fight takes 0.339 s (ratio 0.72), firing about 0.163 s of it; the three levers save about 0.025, 0.02 and 0.04 s, taking firing to 0.06 to 0.07 s (ratio about 0.5). DRAFT-lab-speed-ratio-1b = 0.55 (named draft, Westley's; the estimate is 0.5 with margin).
+# SPEED-1B (lab overseer a7, Architect ruling 2026-10-22; Westley may veto): the firing.py levers after the epoch cache of LAB-REV2-SPEED, results identical. Order: SPEED, 1B, SPEED-2, batch getter. Manager and wave copied from LAB-REV2-SPEED (M0, wave 10). Measured basis: with the epoch cache a fight takes 0.339 s (ratio 0.72), firing about 0.163 s of it; the three levers save about 0.025, 0.02 and 0.04 s, taking firing to 0.06 to 0.07 s (ratio about 0.5). DRAFT-lab-speed-ratio-1b = 0.68 (Architect 2026-10-22, implementation; Westley may veto; it loosens the earlier 0.55, see the ledger row). Dead-forever assumption in _fast_unit_alive: a dead unit never revives; om_unit_apply_trait_modifier is never called by the lab; pinned by a grep-level test.
 [[piece]]
 id = "LAB-REV2-SPEED-1B"
 manager = "M0"
@@ -3460,7 +3460,7 @@ acceptance = ["tests/skilllab/integration/test_speed1b_ratio.py"]
 depends_on = ["LAB-REV2-SPEED"]
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "SPEED-1B the firing.py levers after the epoch cache, identical results: alive from per-tick hp and static type/layer caches (layer invalidated on set_layer), lazy nearest-first with the same total order (squared distance, then id), hoisted code evaluation with gate order 1 to 5 kept; same equality tests against the frozen reference tests/skilllab/ref_firing_rev2.py; acceptance DRAFT-lab-speed-ratio-1b 0.55 (named draft, Westley's; estimate 0.5 with margin)"
+size_estimate = "SPEED-1B the firing.py levers after the epoch cache, identical results: alive from per-tick hp and a static type cache; layer cached per epoch (the epoch is bumped by step), never invalidated on set_layer only: if the csrc layer can change within an epoch without a step, the layer lever is dropped; single sort per unit, key computed once (squared distance, then id; lazy nearest-first measured slower, 0.67 against 0.65), hoisted code evaluation with gate order 1 to 5 kept; same equality tests against the frozen reference tests/skilllab/ref_firing_rev2.py; acceptance DRAFT-lab-speed-ratio-1b 0.68 (Architect 2026-10-22, implementation; Westley may veto; loosens the earlier 0.55: the auditor's measured 0.65 with margin, levers (a) to (d) in the repo idiom, no distance-cap prune)"
 
 # SPEED-2 (lab overseer a7, Architect ruling 2026-10-21; Westley may veto): the fight.py half of the lab speed-up, after LAB-REV2-SPEED and LAB-REV2-L8M2 (the owners of fight.py before it). DRAFT-lab-speed-ratio-2 is a named draft, value to be given by the Architect at launch. Manager and wave copied from the sibling LAB-REV2 rows (L8M, L8M2, FIX: M0, wave 10).
 [[piece]]
@@ -3741,16 +3741,16 @@ status = { state = "attached", attach_sha = "665e0e0" }
 tests_pending = false
 size_estimate = "sdk_engineer.py (a Claude Code agent in a worktree on the console key) and batch_review.py (Batch API jobs and digests), both dry-run by default; one test file"
 
-# HARNESS-gate-venv-link (Architect 2026-10-22, ledger FINDING-gate-venv-link-vs-fresh-checkout): merge_gate.sh godot_import links ~/Projects/agora/.venv into the candidate and the playthrough's test_fresh_checkout_boots_to_main_menu_without_numpy_or_logs asserts the checkout has none, so it is red whenever the piece's acceptance touches tests/qa/desktop. Until this lands the test is listed in scripts/specfactory/playthrough_known_red.txt. Queued behind the other merge_gate.sh owners.
+# HARNESS-gate-venv-link (Architect 2026-10-22, ledger FINDING-gate-venv-link-vs-fresh-checkout; sweep ruling 2026-10-22, Westley may veto: takes the FIRST 03:00 build slot): merge_gate.sh godot_import links ~/Projects/agora/.venv into the candidate and the playthrough's test_fresh_checkout_boots_to_main_menu_without_numpy_or_logs asserts the checkout has none, so it is red whenever the piece's acceptance touches tests/qa/desktop. Until this lands the test is listed in scripts/specfactory/playthrough_known_red.txt. test_gate_playthrough.py is owned here because test_known_red_file_is_empty changes form (ledger TD-gate-known-red-empty-form). Architect: depends_on none is right for the build; the two edges below are owner_lint ordering edges for file overlap only.
 # Tool: Workflow
 [[piece]]
 id = "HARNESS-gate-venv-link"
 manager = "M0"
 wave = 15
-owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/playthrough_known_red.txt", "tests/specfactory/test_gate_venv_link.py"]  # merge_gate.sh: the godot_import venv link lines only (~366-376); playthrough_known_red.txt: the line leaves the list
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/playthrough_known_red.txt", "tests/specfactory/test_gate_playthrough.py", "tests/specfactory/test_gate_venv_link.py"]  # merge_gate.sh: the godot_import venv link lines only (~366-376); playthrough_known_red.txt: the line leaves the list (the file stays owned here because the line must be deleted by this piece); test_gate_playthrough.py: test_known_red_file_is_empty changes form
 owns_glob = []
-acceptance = ["tests/specfactory/test_gate_venv_link.py"]
-depends_on = ["HARNESS-red-evidence", "HARNESS-gate-remote"]  # HARNESS-gate-remote only orders the merge_gate.sh overlap (owner_lint)
+acceptance = ["tests/specfactory/test_gate_venv_link.py", "tests/specfactory/test_gate_playthrough.py"]
+depends_on = ["HARNESS-red-evidence", "HARNESS-gate-remote"]  # edges for file overlap only (owner_lint ordering on merge_gate.sh); they are not build dependencies (Architect 2026-10-22: depends_on none is right for the build)
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "godot_import removes its .venv link before the playthrough stage, or the fresh-checkout test is scoped to the gate's own fresh clone (the piece decides from the test's words); the known-red line leaves the list; tests first: with the link present the fresh-checkout assertion fails (positive control), with it removed it passes"
+size_estimate = "godot_import removes its .venv link before the playthrough stage (or the fresh-checkout test is scoped to the gate's own fresh clone; the piece decides from the test's words); test_known_red_file_is_empty becomes 'every line in playthrough_known_red.txt names an open FINDING or TD row' (the empty-file form is retired under TD-gate-known-red-empty-form); a new test that godot_import leaves no .venv; the known-red line leaves the list; tests first: with the link present the fresh-checkout assertion fails (positive control), with it removed it passes"
