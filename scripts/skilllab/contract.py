@@ -10,6 +10,8 @@ import dataclasses
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
+FROZEN_NAMES = ("inert_knob", "category", "survey", "checked", "seeds", "probed")      # names other code and the artifact match on; adding is fine, renaming or removing is a contract change
+
 
 @dataclass(frozen=True)
 class Group:

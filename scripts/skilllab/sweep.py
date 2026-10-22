@@ -15,8 +15,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
-from scripts.skilllab import depth, formations, maps, pool, rows as rows_mod, scan as scan_mod, scenes
-from scripts.skilllab.contract import Group
+from scripts.skilllab import depth, formations, maps, plays_space, pool, probe as probe_mod, rows as rows_mod, scan as scan_mod, scenes
+from scripts.skilllab.contract import FROZEN_NAMES, Group
 
 FAMILY_ORDER = ("vision", "range_up", "damage_up", "emitting", "arc", "cone", "sign_flip")
 SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
@@ -176,6 +176,9 @@ def detect(engine=None):
 
 
 def skip_reason(family, caps):
+    if family == FROZEN_NAMES[1]:
+        return ("the library never reads OM_TP_CATMULT_* (csrc/unit.c uses the compile-time OM_CATEGORY_MULTIPLIER_* constants), "
+                "so every point would give one row; FINDING-lab-d6, waits for an engine piece")
     if family == "arc" and not caps.arc:
         return "the library has no OM_TP_FIRING_ARC_DEG (LAB-REV2-E0 not built)"
     if family == "cone" and not caps.cone:
@@ -352,7 +355,7 @@ def default_builds(play, role, features):
     """builds(play, role, features) -> BuildFn for the real engine. Roles: play, reach_zero (the null control's build),
     naive_attacker (scenes' naive blob attacking the same post), naive_defender and its two layer variants."""
     if role == "naive_attacker":
-        return _placed("naive", features)
+        return scenes.naive_mix(_placed("naive", features), play) if play in plays_space.PLAYS else _placed("naive", features)
     base = _placed(play, features)
     if role == "play":
         return base
@@ -454,8 +457,38 @@ def _defects(rows):
             "draw_rows": sum(r["outcome"] == "draw" for r in rows), "cells": len({cell(r) for r in bad})}
 
 
+def _probe_args(family):
+    """(settings, base_settings) of the family's extreme grid point, the one with the smallest value (rev 3 plan R6); None when the point
+    sets no OM_TP_* setting (arc and cone act through Setup fields, which the probe does not merge). The probe's base is that point
+    with only the family's own keys reset to BASES: every key of the point, except emitting, whose point also sets the joint vision
+    (a base at the default vision would differ through the vision alone), so its own keys are the two EMIT_* ones."""
+    point = min(grid(family), key=lambda p: p.value)
+    if not point.settings:
+        return None
+    own = ("OM_TP_EMIT_SIGHT_MULT", "OM_TP_EMIT_SEEN_MULT") if family == "emitting" else tuple(point.settings)
+    return point.settings, {**point.settings, **{k: BASES[k] for k in own}}
+
+
+def _probe_play(family, play, layout, build, probe_args, fight_fn, base_cache):
+    """(record, inert): the survey of the family's extreme on the play's own build and the `probed` record of it (rev 3 plan R6). The base
+    rows are kept in base_cache under (play, layout, base settings), so families that reset the same keys fight them once."""
+    settings, base_settings = probe_args
+    cache = base_cache.setdefault((play, layout, tuple(sorted(base_settings.items()))), {})
+    got = probe_mod.survey(build, settings, fight_fn=fight_fn, base_settings=base_settings, base_cache=cache)
+    first = next(((h, seed) for (h, seed), v in got.items() if v["differed"]), None)
+    if first is None:
+        line = "inert at every point"
+    else:
+        silent = [k for k, v in got.items() if k[0] <= first[0] and not v["differed"]]
+        line = "bites from %d heads seed %d" % first + ("; silent at %s" % silent if silent else "")
+    record = {"family": family, "play": play, "layout": layout,
+              "first_differing": None if first is None else {"heads": first[0], "seed": first[1]}, "line": line,
+              "base_cached": all(v["base_cached"] for v in got.values())}
+    return record, first is None
+
+
 def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_fn=None, map_fn=None, caps=None,
-               replicates=REPLICATES, full_scan=False):
+               replicates=REPLICATES, full_scan=False, probe=False, base_cache=None):
     builds = builds or default_builds
     layouts = smoke_layouts() if layouts is None else layouts
     out = Path(out_dir)
@@ -470,6 +503,10 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
     family_controls = controls(family)
     run_plays = plays if plays is not None else PLAYS_BY_FAMILY[family]
     scan_args = (replicates, fight_fn, map_fn, full_scan)
+    probe_args = _probe_args(family) if probe else None
+    base_cache = {} if base_cache is None else base_cache
+    if probe_args:
+        entry[FROZEN_NAMES[5]] = []
 
     def run_control(name, ctl, play, layout, features):
         role = "reach_zero" if ctl.reach else "play"
@@ -489,6 +526,13 @@ def run_family(family, out_dir, *, builds=None, layouts=None, plays=None, fight_
             if bad:
                 entry["refused"].append({"family": family, "play": play, "layout": layout, "role": bad[0], "reason": bad[1]})
                 continue
+            if probe_args:
+                record, inert = _probe_play(family, play, layout, by_role["play"], probe_args, fight_fn, base_cache)
+                entry[FROZEN_NAMES[5]].append(record)
+                if inert:
+                    entry["refused"].append({"family": family, "play": play, "layout": layout, "role": "play", "reason": FROZEN_NAMES[0],
+                                             FROZEN_NAMES[3]: probe_mod.coarse_heads(), FROZEN_NAMES[4]: list(probe_mod.SEEDS)})
+                    continue
             roles, top = _usable_baselines(by_role, entry["refused"], family, play, layout, entry["shifted_posts"])
             if top is None or top < ENEMY_TO:
                 entry["baseline_no_fit"].append({"family": family, "play": play, "layout": layout, "last_headcount": top})
@@ -549,13 +593,23 @@ def _with_map(workers, kw, work):
 
 
 def run(families, out_dir, workers=1, full_scan=False, **kw):
+    if kw.get("probe") is False:
+        raise ValueError("a batch needs the inert-knob probe on (probe=True): a knob that cannot bite on a play must be refused, not swept")
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
+    base_cache = {}
+
     def work(**more):
-        summary = {"order": list(families), "replicates": kw.get("replicates", REPLICATES), "families": {}}
+        summary = {"order": list(families), "replicates": kw.get("replicates", REPLICATES), "families": {},
+                   "unavailable": {FROZEN_NAMES[1]: skip_reason(FROZEN_NAMES[1], None)}}
+        if kw.get("probe"):
+            summary["probe"] = "on"
+            summary[FROZEN_NAMES[5]] = []
         for name in families:
-            summary["families"][name] = run_family(name, out, full_scan=full_scan, **more)
+            summary["families"][name] = run_family(name, out, full_scan=full_scan, base_cache=base_cache, **more)
+            if kw.get("probe"):
+                summary[FROZEN_NAMES[5]].extend(summary["families"][name].get(FROZEN_NAMES[5]) or ())
         (out / "sweep_summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
         return summary
 
