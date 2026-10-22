@@ -15,9 +15,9 @@ Each picture has one block under its file name, in this form: `**What you see:**
 **See it live (Westley 2026-10-22: motion is judged in the running game, DEC-S140-live-look):** in your checkout:
 ```
 cd ~/Projects/ouroboros-manifold && git pull --no-rebase && make && make pipe/ouroboros_pipe
-godot --path . -- --era greek_placeholder --seed 1
+OM_GODOT_GUI=1 godot --path . -- --era greek_placeholder --seed 1
 ```
-Menu to the mission, drag a box over some units, right-click the ground: the box's units walk there. For the two-peer version open two terminals: the same command with `--net-local --net-local-lobby-port 7777 --net-local-udp-base 7800 --net-local-id 1` in the first and `--net-local-id 2` (same ports) in the second, type the host's lobby id into the guest's lobby, press start on the host, then order units in either window. One word back ("approved" or "rejected") on this row.
+Menu to the mission, drag a box over some units, right-click the ground: the box's units walk there. For the two-peer version open two terminals: the same command (keep the `OM_GODOT_GUI=1` prefix; the `godot` on PATH is a wrapper that adds `--headless` without it) with `--net-local --net-local-lobby-port 7777 --net-local-udp-base 7800 --net-local-id 1` in the first and `--net-local-id 2` (same ports) in the second, type the host's lobby id into the guest's lobby, press start on the host, then order units in either window. One word back ("approved" or "rejected") on this row.
 **Beta status of what is shown:**
 - Move order reaching both peers (S-140, R-140-02): built and wired (lane F lockstep and lobby, VG-F-S140-CLICK); the S-140 play passes, host and guest read the same positions; not Seen (your verdict pending).
 - Route line to the clicked spot (your 2026-10-13 note): not built, queued as VG-A-routeline.
