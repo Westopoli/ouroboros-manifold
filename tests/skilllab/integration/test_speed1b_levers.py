@@ -611,3 +611,43 @@ def test_stage_1b_ld_the_engine_answer_path_is_unchanged():
     expected = _answers_fake(ref, FakeSim(units, codes=table), s0, s1)
     assert {c for _, c in expected[2]} >= {0, 2}
     assert _answers_fake(firing, FakeSim(units, codes=table), s0, s1) == expected
+
+
+# --- the dead-forever assumption (Architect 2026-10-22, Westley may veto) --------------------------------------------------------------
+REVIVE_SYMBOLS = ("om_unit_apply_trait_modifier", "om_unit_set_hp", "om_unit_revive", "om_unit_resurrect", "om_unit_heal")
+REVIVE_NAME_PATTERN = ("revive", "resurrect", "heal", "apply_trait", "set_hp")
+
+
+def revive_violations(sources, engine_class):
+    """Lab sources (name -> text) that mention a C symbol able to raise a dead unit, plus public names on `engine_class` that look like a revive."""
+    found = ["%s mentions %s" % (name, sym) for name, text in sources.items() for sym in REVIVE_SYMBOLS if sym in text]
+    found += ["Engine.%s is a public revive-looking name" % n for n in dir(engine_class)
+              if not n.startswith("_") and any(p in n.lower() for p in REVIVE_NAME_PATTERN)]
+    return found
+
+
+def test_stage_1b_la_dead_forever_assumption_no_revive_path_in_the_lab():
+    """(L-a) a dead unit never revives; _fast_unit_alive relies on it (TD / SPEED-1B, Architect 2026-10-22). It keeps a per-world set of ids
+    already read dead and never re-reads them. That holds while the lab binds no function that raises a dead unit's hp or alive flag. Of the
+    csrc/ouroboros_sim.h declarations, only om_unit_apply_trait_modifier (stat delta, can lift hp) and om_unit_set_hp (om_internal.h: 'one revived
+    by om_unit_set_hp is added back') can do so; aura and rally healing only reach living units, and there is no om_unit_revive, _resurrect or
+    _heal. None is mentioned in scripts/skilllab/engine.py, firing.py or fight.py, and Engine has no public name matching revive, resurrect,
+    heal, apply_trait or set_hp. A lab feature that adds one trips this test: drop the dead-set memo (or reset it at that call) first."""
+    lab = Path(engine_mod.__file__).parent
+    sources = {n: (lab / n).read_text() for n in ("engine.py", "firing.py", "fight.py")}
+    assert revive_violations(sources, engine_mod.Engine) == []
+
+
+def test_control_a_lab_that_binds_a_revive_path_is_reported():
+    """Positive control: a source mentioning om_unit_apply_trait_modifier, and an Engine with a public revive_unit, are each reported."""
+    class Mutant:
+        def revive_unit(self, w, uid):
+            pass
+
+        def _private_heal(self):
+            pass
+
+    assert revive_violations({"engine.py": "fn = lib.om_unit_apply_trait_modifier"}, engine_mod.Engine) == [
+        "engine.py mentions om_unit_apply_trait_modifier"]
+    assert revive_violations({}, Mutant) == ["Engine.revive_unit is a public revive-looking name"]
+    assert revive_violations({"engine.py": "x = 1"}, engine_mod.Engine) == []
