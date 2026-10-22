@@ -79,6 +79,7 @@ class Engine:
     """The ctypes wrapper of the production library; every method takes the world handle first (except new_world)."""
 
     epoch = 0       # rises on every state-changing method; firing.py keys its per-tick sample on it
+    _fast_dead = _fast_types = None     # per world address: ids seen dead; id -> unit type. Created on first use (see _fast_forget)
 
     def __init__(self, lib_path=None):
         path = Path(lib_path) if lib_path is not None else _cached_library()
@@ -161,15 +162,27 @@ class Engine:
             fn.argtypes = [V, u32, u32]
             fn.restype = i
 
+    def _fast_forget(self, w, u=None):
+        """Drop what _fast_unit_alive and _fast_unit_type remember of a world (a freed address may be reused), or of one unit id."""
+        if self._fast_dead is not None:
+            if u is None:
+                self._fast_dead.pop(w.value, None)
+                self._fast_types.pop(w.value, None)
+            else:
+                self._fast_dead.get(w.value, set()).discard(u)
+                self._fast_types.get(w.value, {}).pop(u, None)
+
     @_bumps
     def new_world(self, seed):
         w = self._lib.om_world_new(1, int(seed))
         if not w:
             raise RuntimeError("om_world_new returned NULL")
+        self._fast_forget(ctypes.c_void_p(w))
         return ctypes.c_void_p(w)
 
     @_bumps
     def free_world(self, w):
+        self._fast_forget(w)
         for k in [k for k in self._own if k[0] == w.value]:
             del self._own[k]
         self._lib.om_world_free(w)
@@ -225,6 +238,7 @@ class Engine:
     def spawn(self, w, type_id, faction, x, y, layer):
         uid = int(self._lib.om_unit_spawn(w, int(type_id), int(faction), float(x), float(y), int(layer)))
         if uid:
+            self._fast_forget(w, uid)
             self._own.setdefault((w.value, int(faction)), []).append(uid)
         return uid
 
@@ -312,6 +326,30 @@ class Engine:
 
     def unit_alive(self, w, u):
         return bool(self._lib.om_unit_alive(w, u))
+
+    # A dead unit never revives; the lab never calls the C trait-modifier or set-hp calls. Pinned by
+    # test_stage_1b_la_dead_forever_assumption_no_revive_path_in_the_lab (tests/skilllab/integration/test_speed1b_levers.py).
+    def _fast_unit_alive(self, w, u):
+        """unit_alive for firing.py: a unit once read dead is not read again (hp only falls to 0 and a spawn clears the memo)."""
+        if self._fast_dead is None:
+            self._fast_dead, self._fast_types = {}, {}
+        dead = self._fast_dead.setdefault(w.value, set())
+        if u in dead:
+            return False
+        if self._lib.om_unit_alive(w, u):
+            return True
+        dead.add(u)
+        return False
+
+    def _fast_unit_type(self, w, u):
+        """unit_type for firing.py: the type of a unit is fixed at spawn, read once per unit and world."""
+        if self._fast_types is None:
+            self._fast_dead, self._fast_types = {}, {}
+        types = self._fast_types.setdefault(w.value, {})
+        t = types.get(u)
+        if t is None:
+            t = types[u] = int(self._lib.om_unit_get_unit_type(w, int(u)))
+        return t
 
     def unit_target(self, w, u):
         return int(self._lib.om_unit_get_target(w, int(u)))
