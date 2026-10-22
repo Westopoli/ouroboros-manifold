@@ -12,6 +12,11 @@
 # symbol_modules.toml) always come from THIS repo (scripts/specfactory's own
 # location) -- never from the candidate worktree, which cannot edit any of
 # them. Only `make`, `pytest` and `git diff` run against the candidate.
+#
+# Stage 0 `base` runs first (also before the --revert exit): the candidate must
+# contain the current origin/main, whose sha then replaces <base_ref> for every
+# later stage. Env hook (tests only): MERGE_GATE_STOP_AFTER=base exits 0 right
+# after the `GATE base OK` line. Other MERGE_GATE_* variables are read where used.
 set -uo pipefail
 
 GATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -88,6 +93,28 @@ warn()   { gate_line "$1" WARN "${*:2}"; }
 harness() { gate_line "$1" HARNESS "${*:2}"; }
 
 tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
+
+# -------------------------------------------------------------- 0. base
+# The clerk merges origin/main inside gate.lock; a candidate gated against a main that has since
+# moved fails tests that compare with main's build. The sha, not the name, is the baseline from here on.
+# See also: docs/northstar/plans/workflows_2026-10-07/rules.md section (b) "Gate";
+# ledger row FINDING-gate-base-before-lock
+if ! git -C "$CANDIDATE" fetch -q origin >"$SCRATCH_ROOT/base_fetch.log" 2>&1; then
+    reject base "git fetch origin failed: $(tail_oneline "$SCRATCH_ROOT/base_fetch.log" 3)"
+    exit 1
+fi
+MAIN_SHA="$(git -C "$CANDIDATE" rev-parse --verify -q origin/main)"
+if [[ -z "$MAIN_SHA" ]]; then
+    reject base "origin/main not found in the candidate"
+    exit 1
+fi
+if ! git -C "$CANDIDATE" merge-base --is-ancestor "$MAIN_SHA" HEAD; then
+    reject base "candidate lacks origin/main $MAIN_SHA; merge origin/main inside the lock and rerun"
+    exit 1
+fi
+ok base "$MAIN_SHA"
+BASE_REF="$MAIN_SHA"
+[[ "${MERGE_GATE_STOP_AFTER:-}" == "base" ]] && exit 0
 
 # -------------------------------------------------------------- 1. make
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then

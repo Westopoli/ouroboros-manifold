@@ -1,3 +1,4 @@
+# Rule pins: R-126-02@741af4
 """W-1b pipe test: structure production adds player-faction unit within timer.
 
 Uses pipe/ouroboros_pipe_dbg (debug build): place_structure is a TEST AND DEBUG
@@ -7,6 +8,8 @@ Setup: seed 1, 80 regions, strategic features 1..7, 10 strategic steps.
 mission_start faction 0, mission_begin. The 10 strategic steps produce units in
 the tactical world so om_tactical_step calls om_support_tick (tactical_step is
 a no-op when n_units==0; om_support_tick drives production per base tick).
+R-126-02 (as rewritten, TD-VG-E-29): the produced unit stands at the first free slot of the
+structure's spawn lattice, drawing nothing; this test counts units only.
 
 place_structure kind=0 (RAIDER), owner=0 (E-05 player faction id; with W-1d
 neutral becomes -1, so owner=0 means player faction 0). Then step 600 ticks

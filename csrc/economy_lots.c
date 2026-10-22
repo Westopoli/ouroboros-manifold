@@ -117,3 +117,28 @@ void om_lots_on_area_hit(om_world *w, double x, double y, double radius) {
         e->lot_hit_tick[i] = (uint32_t)om_tactical_tick(w);
     }
 }
+
+/* internal, not in ouroboros_sim.h. VG-E1R (R-193-03): a placed building clears the natural lots under its footprint. Removes
+ * lots[row], shifts lots[] and lot_hit_tick[] down one, zeroes the vacated lot_hit_tick slot (zero is the saved and hashed value),
+ * and rebuilds lot_at[] from the table. The lot_at loop copies build_inputs in csrc/economy_density.c (static there, not ours).
+ * See also: csrc/economy_place.c, tests/csim/test_VG_E_e1r.py. */
+void om_lots_remove_row(om_world *w, uint32_t row) {
+    om_economy_state *e = &w->economy;
+    uint32_t k, side = e->density_side;
+    if (row >= e->n_lots) return;
+    for (k = row + 1; k < e->n_lots; k++) {
+        e->lots[k - 1] = e->lots[k];
+        e->lot_hit_tick[k - 1] = e->lot_hit_tick[k];
+    }
+    e->lot_hit_tick[e->n_lots - 1] = 0;
+    e->n_lots--;
+    if (side < 1 || side > OM_DENSITY_MAX_SIDE) return;
+    for (k = 0; k < side * side; k++) e->lot_at[k] = -1;
+    for (k = 0; k < e->n_lots; k++) {
+        if (e->lots[k].x < 0.0 || e->lots[k].y < 0.0) continue;
+        {
+            uint32_t gx = (uint32_t)(e->lots[k].x / LOT_CELL_WU), gy = (uint32_t)(e->lots[k].y / LOT_CELL_WU);
+            if (gx < side && gy < side) e->lot_at[gy * side + gx] = (int32_t)k;
+        }
+    }
+}

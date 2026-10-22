@@ -42,7 +42,7 @@ Open flags: none.
 As a commander, I want each region to pay for itself before it feeds my war chest, so that conquering rubble is a burden and holding a rich core is a strength.
 
 Rules
-- R-033-01  Given a faction owning regions with economy 66, 40, and 9, When budget accumulates for one tick, Then Δbudget = ((66 − 8) + (40 − 8) + (9 − 8)) · 0.025 = 2.275.
+- R-033-01  Given a faction owning regions with economy 66, 40, and 9, When budget accumulates for one tick, Then Δbudget = ((66 − 8) + (40 − 8) + (9 − 8)) · 0.025 · economy multiplier (E-06 R-046-05), which is 2.275 at multiplier 1.0 (DEC-C15-2026-10-22).
 - R-033-02  Given a faction owning one region at economy 8.0, When budget accumulates, Then Δbudget = 0 and budget never goes below 0.
 - R-033-03  Given a faction owning no regions, When budget accumulates, Then Δbudget = 0.
 
@@ -84,7 +84,7 @@ Outputs: intent record (action, target, commit, source, mode) in the tick log.
 Open flags: none.
 
 ### S-036 — Declared or sprung
-Flag closed, rule text pending: Q-036-02, no reservation: the faction re-decides every tick and attacks may stack on one target. The rule below is what the tests read today.
+Q-036-02 (b), Westley 2026-09-16: no reservation across factions or ticks, so attacks from different factions may stack on one target and a faction re-decides every tick; R-036-07 is the narrower guard that one faction resolves at most one attack against a target per tick (Architect 2026-10-21, implementation reading; Westley may veto). The rule below is what the tests read today.
 As a commander, I want some attacks announced a tick ahead at full strength and others sprung at once at half strength, so that a methodical neighbor and a raider feel different to live beside.
 
 Rules
@@ -145,7 +145,7 @@ Rules
 
 Inputs: colliding intents; faction economies; tech; RNG.
 Outputs: collision record (strengths, winner, margin, refund) in the tick log.
-Open flags: none. The multi-faction collision resolver is built and was never described in the bible before this story (Stage 1 algorithm pass finding).
+Open flags: none (Q-039-01 closed, Architect 2026-10-18). Direction changed 2026-10-18, rewrite pending: collisions are grouped across matured telegraphs and immediate attacks in one resolution list, and step 3c only matures (this changes R-036-03); R-039-05 and R-039-06 are not built, the resolver skips owned targets (FINDING-sim-F-no-collisions, 2026-10-21). The multi-faction collision resolver is built and was never described in the bible before this story (Stage 1 algorithm pass finding).
 
 ### S-040 — Empires fracture
 As a commander, I want a large empire to shed provinces to institutional revolt no matter how calm they are, so that no faction, mine included, can swallow the galaxy.

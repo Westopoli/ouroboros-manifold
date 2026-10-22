@@ -1,9 +1,12 @@
+# Rule pins: R-126-02@741af4, R-126-06@84ac8e
 """B4 / B14-N: om_support_tick materialises a held structure's production.
 
 R-126-02: Given a held structure with a chosen unit type, When its production
 timer reaches 30 s x (that type's power / 100), Then one unit of that type
-spawns within half the capture radius of the structure (300 / 2 = 150) on the
-structure's layer, and the timer subtracts the interval. The rule gives no cap
+spawns at the first free slot of the structure's spawn lattice, within half the
+capture radius of the structure (300 / 2 = 150, inclusive) on the structure's layer, with
+no random draw, and the timer subtracts the interval (R-126-02 as rewritten, Westley
+2026-10-12, TD-VG-E-29). The rule gives no cap
 on units alive, so none is asserted. R-126-06: no trickle for a player who holds
 nothing. Interval in ticks: om_structure_production_interval_ticks(power).
 

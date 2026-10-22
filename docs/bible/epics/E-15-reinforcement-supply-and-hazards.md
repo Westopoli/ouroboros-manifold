@@ -19,20 +19,20 @@ Reinforcement comes from strongpoints, the reinforcement structures, which stand
 
 ## Obviously working in 60 seconds
 
-Built today: start a medium Defensive Stand in a region with military 60: 3 to 6 structures, half player-owned, none neutral for long. Park three units inside a neutral structure's 300 wu radius with no enemy present: after 10 s it flips to the player and its row appears on the HUD. Set it to Raider: 30 s × (Raider power / 100) later a Raider spawns beside it. Send a Bombard to shoot an enemy structure: it takes a committed attack to burn 3,000 HP; when it dies it is gone for the mission. Order an evacuation convoy along a route: it never fires, flinches from damage, and counts toward the objective when it reaches extraction.
+Built today: start a medium Defensive Stand in a region with military 60: 3 to 6 structures, half player-owned, none neutral for long. Park three units inside a neutral structure's 300 wu radius with no enemy present: after 10 s it flips to the player and its row appears on the HUD. Set it to Raider: 30 s × (Raider power / 100) later a Raider spawns beside it. Send a Bombard to shoot an enemy structure: it takes a committed attack to burn 3,000 HP; when it dies it stays listed as rubble. Order an evacuation convoy along a route: it never fires, flinches from damage, and counts toward the objective when it reaches extraction.
 
-Decided, not built (S-218, S-219): on a land map with fitted height bands, a strongpoint stands at a slope between two bands. Take it, and units made there appear on its band and are paid for from your economy. Run a region's trouble across the map: both sides watch it move, and what it passes over stops working until it has gone by.
+Decided, not built (S-219; S-218 is partly built, see its status): on a land map with fitted height bands, a strongpoint stands at a slope between two bands. Take it, and units made there appear on its band and are paid for from your economy. Run a region's trouble across the map: both sides watch it move, and what it passes over stops working until it has gone by.
 
 ## Stories
 
 ### S-126 — Most of my force is out there
 
-Direction changed 2026-10-02, rewrite pending: these structures become strongpoints at the slopes between height bands on land maps, their production is paid for by the economy and changing it takes a while, so units are no longer free, nothing switches at once and the split of the starting force is open (S-218). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: these structures become strongpoints at the slopes between height bands on land maps, their production is paid for by the economy and changing it takes a while, so units are no longer free, nothing switches at once and the split of the starting force follows the strongpoint share (S-218 R-218-06). The rules below are what the game does today.
 As a commander, I want reinforcements to come from the region's own garrisons that I capture and hold, so that the map is a resource I fight over without ever building a base.
 
 Rules
 - R-126-01  Given a mission, When structures are placed, Then count = clamp(floor(region military × 0.06), small [2, 4], medium [3, 6], large [4, 8]) and the archetype's split assigns player, enemy, and neutral owners (defensive stand 50/25/25, siege 33/33/34, reconquest and assault 25/50/25, suppression and counterinsurgency 40/30/30, multi-front 40/35/25, interception and containment 33/34/33, evacuation 50/25/25), player at least 1.
-- R-126-02  Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns within half the capture radius of the structure on the structure's layer (position from two world-stream draws, angle then distance; never from any other generator) and the timer subtracts the interval.
+- R-126-02  Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns at the first free slot of the structure's spawn lattice (a grid at twice the unit collision radius centred on the structure, scanned ring by ring outward in a fixed order, within half the capture radius; a slot is free when no live unit stands within one spacing of it; no free slot delays production one tick) on the structure's layer, with no random draw, and the timer subtracts the interval (Westley 2026-10-12, TD-VG-E-29).
 - R-126-03  Given the player clicks a held structure, When they pick a type, Then production switches to it at once and the current timer continues.
 - R-126-04  Given a mission's expected full force F (E-10 force sizing), When forces are allocated, Then the starting force is the fraction of F that R-218-06 gives by the player's share of the contested strongpoints at the start, and the reinforcement structures on the map can together produce the remainder (F minus the starting force) over the mission's time limit when all are held from the start; a player who holds every structure the whole mission fields at least F, and one who holds none fields the starting force only (rewritten Architect 2026-10-20 to follow R-218-06; Westley to confirm with that row).
 - R-126-05  Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06).
@@ -48,7 +48,7 @@ As a commander, I want to capture a structure by holding it unopposed, and to be
 Rules
 - R-127-01  Given units of exactly one non-owner faction inside a structure's 300 wu radius and no owner units, When ticks pass, Then capture progress rises by dt / 10 s; at 1.0 the owner flips and progress resets.
 - R-127-02  Given units of two or more non-owner factions inside, or the owner also present, When ticks pass, Then progress resets to 0.
-- R-127-03  Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it is removed for the rest of the mission and never rebuilt.
+- R-127-03  Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it is destroyed and stays listed as rubble, and the place command at its cell refounds it for the placer at full HP (R-218-05, Westley 2026-10-06).
 - R-127-04  Given a structure changes owner, When the ticker runs, Then "structure captured" or "structure lost" appears (E-16 R-104-01).
 - R-127-05  Given a structure's HP, When read, Then it is 3,000 (ALG-75) with no category multiplier applied to structures; a single Bombard at 70 per attack needs about 43 attacks, so splash alone does not destroy it in one engagement.
 
@@ -117,7 +117,7 @@ Open flags: none here. The capturable structure is named Settlement engine-wide,
 ### S-218 — Strongpoints hold the way up and down
 As a commander on a land map, I want the reinforcement structures to stand at the slopes between height bands, so that holding one holds the way up or down and gives me production on that band, paid for by my economy.
 
-Status: design decided 2026-10-02, not scheduled for building. It applies to land maps; the space-era landscape is not designed (Q-166-02), so there is no space version. The built rules of S-126 and S-127 stay as they are until this story is built.
+Status: design decided 2026-10-02; partly built (E7, VG-CONTRACT-E7, 7e463db3, 2026-10-20): the slope-count cap of R-218-01, rubble and refounding of R-218-05 and the starting-force cut of R-218-06 are in code; the holder's payment of R-218-03 stays with E2, and R-218-04 and the R-218-08 era skin are not built. It applies to land maps; the space-era landscape is not designed (Q-166-02), so there is no space version. R-126-04 and R-127-03 follow R-218-06 and R-218-05.
 
 Rules
 - R-218-01  Given a land map whose ground has height bands fitted to it (E-17 R-166-04 and R-166-06) and slopes that join layers (E-01 R-001-07), When strongpoints are placed, Then they stand at the slopes between height bands, each strongpoint at its slope's midpoint. The count is R-126-01's, capped by the slopes there are, placed on the best slopes, with its archetype owner split (Westley, 2026-10-06; E-17 R-192-01; midpoint, Architect 2026-10-10).
@@ -125,7 +125,7 @@ Rules
 - R-218-03  Given a held strongpoint, When it produces, Then the units appear on the strongpoint's band, and the production is paid for by the holder's economy (E-22 S-167 and S-170), not free.
 - R-218-04  Given a held strongpoint, When what it makes is chosen, Then the economy rules choose it on the schedule of E-22 S-170, changing what it makes takes a while, and when nobody holds the economy seat the rules and the commander's override of E-22 S-179 and S-180 decide.
 - R-218-05  Given a strongpoint, When it is attacked or taken, Then it is captured as S-127 says, and when destroyed it falls to rubble; a strongpoint at 0 HP stays listed as rubble, and the place command at its cell refounds it for the placer at full HP (Westley, 2026-10-06, this replaces R-127-03's "never rebuilt"; listing and refounding, Architect 2026-10-10).
-- R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then the split of R-126-04 (a fifth at the start, the rest from structures) is dropped and the situation (E-10 S-211) decides; until S-211 the player starts with at least half of F, sliding down to a fifth only when the player holds almost none of the contested strongpoints at the start and up to four fifths when they hold them all, and the structures can produce the rest (Westley, 2026-10-11; Architect reading 2026-10-19, Westley to confirm).
+- R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then the split of R-126-04 (a fifth at the start, the rest from structures) is dropped and the situation (E-10 S-211) decides; until S-211 the player starts with a quarter of F when they hold half of the contested strongpoints at the start, sliding down to a fifth when they hold none and up to four fifths when they hold them all, and the structures can produce the rest (Westley, 2026-10-11 and 2026-10-21; curve DRAFT-e7-curve-2).
 - R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then a strongpoint does not drift: it is fixed at its slope for now (Westley, 2026-10-07).
 - R-218-08  Given a T2 screenshot, When inspected, Then a strongpoint is distinguishable by owner color from every unit silhouette and from a base, an expansion and forward works The mechanic is called "strongpoint", with an era-skinned visual, so it does not clash with "settlement" for the neutral populace and for self-built cities (Westley, 2026-10-06).
 
@@ -178,10 +178,10 @@ Open flags: Q-219-02 (to be designed).
 
 - A structure has exactly one owner or is neutral.
 - Capture progress in [0, 1]; resets on contest.
-- A destroyed non-strongpoint structure never returns (R-127-03); a strongpoint at 0 HP stays listed as rubble and the place command at its cell refounds it at full HP (R-218-05, Architect 2026-10-10).
+- A structure at 0 HP stays listed as rubble (R-127-03, R-218-05) and the place command at its cell refounds it at full HP (R-218-05, Architect 2026-10-10).
 - A strongpoint stands at a slope between height bands on land maps.
 - A trouble shuts down only what it is passing over, and both sides can see it.
-- Same seed, same spawns and drift, all platforms (every draw comes from the world stream, R-126-02).
+- Same seed, same spawns and drift, all platforms (every draw comes from the world stream; production placement draws nothing, R-126-02).
 
 ## Scale requirements
 
@@ -196,7 +196,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Capture progresses with the owner present.
 - Two enemy factions inside count as one capturer.
 - Production timer resets on type change.
-- Spawn position from an unseeded RNG.
+- Spawn position from any RNG draw, or from a scan whose order depends on unit order or platform (R-126-02: a fixed lattice scan, no draw).
 - Structure takes matchup multipliers.
 - Drifting objective's zone stays at the spawn position.
 - Convoy returns fire.
