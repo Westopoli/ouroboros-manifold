@@ -25,6 +25,7 @@ no space field, so there is no extra check here beyond the present:false control
 twice" check (G3): the qa inventory counts squad models, not visibility, so it cannot show a double draw.
 Control groups: VG-A-startforce has not landed on this base (qa_state has no group key), so the play takes the box path and says
 which path ran.
+Rule pins: R-246-01@7374f6, R-246-02@a02180, R-246-03@0bdc9c, R-246-04@837f23
 Red on main: qa["space3d"] is absent (the view is not hosted, the default space era is 2D), the control above and the whole
 motion (boxes, orders, arrival, zoom skipped) run green first.
 """
