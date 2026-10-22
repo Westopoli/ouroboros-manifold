@@ -1,4 +1,4 @@
-# Rule pins: R-087-04@edc84b, R-095-02@47ddf5, R-095-05@819fd3, R-096-02@dbc10f
+# Rule pins: R-087-04@edc84b, R-095-02@47ddf5, R-095-05@819fd3, R-096-02@e8ae96
 """Parity: attack-move holds slot and route until shooting, not sight (R-087-04, R-096-02; ruling A199; the engine
 twins are tests/csim/test_PP_attack_move_no_sight_pursuit.py and simulation/test_attack_move_no_sight_pursuit.py).
 Rule marked for playtest review, A199.

@@ -1,4 +1,4 @@
-# Rule pins: R-096-02@dbc10f, R-096-08@629328, R-099-05@cf1293
+# Rule pins: R-096-02@e8ae96, R-096-08@629328, R-099-05@ea8d02
 # spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md decision 28 point 3 (the attack-move idle cap, the lab's re-engage order) and decision 33 (readings 1 to 4), amended by decision 43 items 2 to 4 (per-unit orders, no-op retry, the 1 wu moved threshold: tests in test_drift_fix_reengage.py); E-13 R-096-02, R-096-08, R-099-05
 """LAB-REV2-L8: fight() re-engages a silent side. Fake-engine tests of the trigger (tests only; the builder writes scripts/skilllab).
 

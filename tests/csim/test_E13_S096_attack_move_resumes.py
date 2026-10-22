@@ -1,4 +1,4 @@
-# Rule pins: R-095-05@819fd3, R-096-02@dbc10f
+# Rule pins: R-095-05@819fd3, R-096-02@e8ae96
 """LAB-REV2-E1 -- an attack-move group resumes toward its point after every engagement (E-13 S-096, R-096-02).
 
 R-096-02 (rewritten 2026-10-13, Westley, option (a)): "after every fight the group resumes toward the

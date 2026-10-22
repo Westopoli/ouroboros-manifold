@@ -1,4 +1,4 @@
-# Rule pins: R-096-02@dbc10f
+# Rule pins: R-096-02@e8ae96
 # spec: docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md::Phase S (order timeline: later orders for bait, ambush, fall-back)
 """The order timeline through the production library.
 
