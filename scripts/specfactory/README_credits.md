@@ -53,7 +53,7 @@ client-side estimate, not a bill). Exit 0 ok; 1 agent error (budget or turn limi
 `--dry-run` output (no key read):
 
     {
-      "cwd": "/home/westopoli/Projects/om-push/wt/arch-credits",
+      "cwd": "~/Projects/om-push/wt/arch-credits",
       "model": "claude-sonnet-5-5",
       "max_turns": 60,
       "max_budget_usd": 5.0,
