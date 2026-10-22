@@ -1,5 +1,7 @@
 # Credits runs, 2026-10-21
 
+Plan 2026-10-23 (DEC-credit-day): the day's runs follow the list in decisions.md; one build pipeline at a time (DEC-slots-one).
+
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
 Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $22.78 of $200; hard stop $190; expires 2026-10-24.
