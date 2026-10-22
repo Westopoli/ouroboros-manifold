@@ -233,11 +233,14 @@ ROLE_STEPS = ("attack_move", "move", "group_move", "idle", "guard")   # the time
 
 
 class _Reengage:
-    """Decision 28 point 3, amended by decision 43 items 2 to 4: a side with no unit firing or moving for REENGAGE_SILENCE_TICKS
-    gets each of its idle attack-move units its own attack-move onto the centroid of the enemies it sees, once per silence period
-    (one event per trigger, exempt from Setup.orders_per_unit). A no-op engage (every ordered living unit still has no destination
-    a tick later) re-arms the side at once. A move is a displacement above REENGAGE_MOVED_WU from the unit's position at the last
-    reset of the silence counter. See also: Engine.visible_enemies, unit_destination."""
+    """Decision 28 point 3, amended by decision 43 items 2 to 4, decision 49 and decision 50: a side whose silence counter completes gets each of
+    its idle attack-move units its own attack-move onto the centroid of the enemies it sees, once per silence period (one event per
+    trigger, exempt from Setup.orders_per_unit). The counter of a side advances on a tick when no unit of that side caused a hit and no
+    idle-eligible living unit of that side (attack-move role, no destination) is displaced more than REENGAGE_MOVED_WU from its
+    position at the window start (the tick the counter was last zeroed); a unit holding a destination is never tested and never
+    zeroes the counter, and is not ordered. Every zeroing takes a fresh reference for the side's units. A hit caused by a unit of the side zeroes that side only. A
+    no-op engage (every ordered living unit still has no destination a tick later) re-arms the side at once.
+    See also: Engine.visible_enemies, unit_destination."""
 
     def __init__(self, engine, w, setup, side_ids, ids_by_group, timeline):
         self.engine, self.w, self.setup, self.side_ids, self.ids_by_group, self.timeline = engine, w, setup, side_ids, ids_by_group, timeline
@@ -246,6 +249,7 @@ class _Reengage:
             g.side == s and (self.role[gi] or any(st.group == gi and st.order == "attack_move" for st in setup.timeline))
             for gi, g in enumerate(setup.groups)))
         self.ref = {u: engine.unit_pos(w, u) for s in self.eligible for u in side_ids[s]}
+        self.group_of = {u: gi for gi, ids in ids_by_group.items() for u in ids}
         self.silent, self.armed, self.count, self.seen_steps = [0, 0], [True, True], [0, 0], 0
         self.ordered = [None, None]
 
@@ -258,24 +262,30 @@ class _Reengage:
         self.seen_steps = len(fired_steps)
         unit_pos, ref, limit = self.engine.unit_pos, self.ref, REENGAGE_MOVED_WU * REENGAGE_MOVED_WU
         for s in self.eligible:
-            moved, now = False, {}
-            for u in self.side_ids[s]:
-                if hp[u] > 0:
-                    p = now[u] = unit_pos(self.w, u)
-                    r = ref[u]
-                    if (p[0] - r[0]) ** 2 + (p[1] - r[1]) ** 2 > limit:
-                        moved = True
-            if fired[s] or moved:
-                ref.update(now)
-                self.silent[s], self.armed[s], self.ordered[s] = 0, True, None
+            reset = fired[s]
+            if not reset:
+                for u in self.side_ids[s]:
+                    if hp[u] > 0 and self.role[self.group_of[u]] and self.engine.unit_destination(self.w, u) is None:
+                        p, r = unit_pos(self.w, u), ref[u]
+                        if (p[0] - r[0]) ** 2 + (p[1] - r[1]) ** 2 > limit:
+                            reset = True
+                            break
+            if reset:
+                self._zero(s, hp)
                 continue
             ordered, self.ordered[s] = self.ordered[s], None
             if ordered is not None and self._noop(ordered, hp):
-                self.silent[s], self.armed[s] = 0, True
+                self._zero(s, hp)
                 continue
             self.silent[s] += 1
             if self.silent[s] >= REENGAGE_SILENCE_TICKS and self.armed[s]:
                 self._engage(s, hp)
+
+    def _zero(self, s, hp):
+        for u in self.side_ids[s]:
+            if hp[u] > 0:
+                self.ref[u] = self.engine.unit_pos(self.w, u)
+        self.silent[s], self.armed[s], self.ordered[s] = 0, True, None
 
     def _noop(self, ordered, hp):
         engine, w = self.engine, self.w
