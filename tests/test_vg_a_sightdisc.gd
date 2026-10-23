@@ -22,8 +22,23 @@ extends "res://tests/support/vg_c_case.gd"
 #    paragraph fixes the mask as "a SubViewport" but not how a test reaches its texture; lit = backdrop colour, dimmed = darker.
 #    A headless run (dummy renderer) has no pixels: there the test asserts only that a SubViewport exists under the FogLayer and
 #    prints "MASK-PIXELS: not sampled"; run it under xvfb-run with OM_QA_RENDERER=vulkan to sample.
-#  - qa_state()["sight_discs"] belongs to VG-C-land-one-projection (the shape of an entry's bounding box is not fixed in the
-#    paragraph), so it is not asserted here.
+#  - qa_state()["sight_discs"] (ruling 2026-10-23): the key is added EMPTY by VG-C-land-one-projection and FILLED by this piece.
+#    UNSTATED INTERFACE choice: a Dictionary keyed by the decimal-string unit id ("1", "2"), each value a bbox [x, y, w, h] (four
+#    numbers, w and h > 0). The view is the tactical_view scene fed by load_frame(frame) with two own units. On main the key is
+#    absent: red for reason (b). The test therefore needs the land-one-projection build under it before it can go green.
+#
+# Red reasons: (a) behaviour is wrong on main (a number or pixel differs); (b) the interface the piece adds is absent on main.
+# Three assertions passed on main without discriminating (Architect ruling 2026-10-23); what each became:
+#  1. pitch-90 ratio: the old assertion read the fallback circle, which is 1.0 on main. Now it reads `points` only (no fallback)
+#     and also asserts the 48 points equal the circle set theta k within 0.5 px: red on main for (b). Kept at pitch 90.
+#  2. unit above the midline: the extent check (x 350 to 750) is a full circle on main. Added: its points sit at their terrain
+#     heights (every polygon point within 0.5 px of Ground3DHost.to_screen of the ground point, the lower ground at height 0 while
+#     the unit stands at 300), read through the fallback circle too: red on main for (a) (the circle is at the unit's height all
+#     round). The extent check is kept as the unclipped-looking-down control.
+#  3. mask pixels: the old flat-path samples (centre lit, 120 px out dimmed) hold for main's circle too, so they are DROPPED.
+#     Replaced by a ground-path sample: host hidden, white backdrop, a point on the vertical axis between the projected ellipse
+#     edge and main's averaged-radius circle edge must be dimmed (main lights it): red on main for (a) under the renderer. A
+#     point at half the ellipse's vertical radius must be lit (control, green on main). Headless: not sampled.
 # Positive controls: on main the pitch-50 ratio reads 1.0 (the fallback below builds a circle polygon from centre and radius when
 # `points` is absent, so the stated reason is shown by a number, not by a missing key), both ramp discs are full circles, and the
 # source still holds the radius disc field, the float texture and the hole-punch loop.
@@ -99,6 +114,10 @@ func _poly(d: Dictionary) -> PackedVector2Array:
 	return out
 
 
+func host_to_screen(host, x: float, y: float) -> Vector2:
+	return host.to_screen(x, y)
+
+
 func _bbox(p: PackedVector2Array) -> Rect2:
 	var r := Rect2(p[0], Vector2.ZERO)
 	for q in p:
@@ -147,6 +166,7 @@ func _run() -> void:
 	await _ramp_clip()
 	await _space_path()
 	await _mask()
+	await _qa_discs()
 	_deletion()
 
 
@@ -158,10 +178,23 @@ func _ratio_and_close() -> void:
 		var d := _discs(fg)
 		_check(d.size() == 1, "S-126: one disc per own unit, got %d" % d.size())
 		if d.size() == 1:
+			var has_pts: bool = d[0].has("points") and (d[0]["points"] as PackedVector2Array).size() > 2
 			var b := _bbox(_poly(d[0]))
 			var ratio := b.size.y / maxf(b.size.x, 0.001)
-			_check(absf(ratio - case[2]) <= case[3], "S-126 R-089-03: bbox height over width at %s must be %.3f +- %.2f, reads %.3f (CONTROL: main reads 1.0 at pitch 50)" % [case[0], case[2], case[3], ratio])
+			_check(has_pts and absf(ratio - case[2]) <= case[3], "S-126 R-089-03: bbox height over width at %s must be %.3f +- %.2f, reads %.3f (CONTROL: main reads 1.0 at pitch 50; no `points` fails (b))" % [case[0], case[2], case[3], ratio])
 			_check(d[0].has("points") and (d[0]["points"] as PackedVector2Array).size() == SEGMENTS, "S-126: a disc is {points} of %d screen points (interface absent on main)" % SEGMENTS)
+			if case[1]:
+				var ctr: Vector2 = host_to_screen(r[0], 400, 400)
+				var rad: float = (host_to_screen(r[0], 700, 400) - ctr).x
+				var ok := has_pts and (d[0]["points"] as PackedVector2Array).size() == SEGMENTS
+				if ok:
+					for k in SEGMENTS:
+						var want := ctr + Vector2(cos(TAU * k / SEGMENTS), sin(TAU * k / SEGMENTS)) * rad
+						var hit := false
+						for q in (d[0]["points"] as PackedVector2Array):
+							hit = hit or q.distance_to(want) <= 0.5
+						ok = ok and hit
+				_check(ok, "S-126: at pitch 90 the 48 points are the circle theta k of radius sight x px-per-wu (%.1f px) round the unit, each within 0.5 px (interface absent on main (b))" % rad)
 			var sp: Array = fg.screen_points()
 			var c := _poly(d[0])
 			_check(sp.size() == 1 and d[0].has("points") and ((sp[0] as Vector2).distance_to(_area_centroid(c)) <= 0.5 or (sp[0] as Vector2).distance_to(_vertex_mean(c)) <= 0.5), "S-126: screen_points() returns each polygon's centroid, got %s" % [sp])
@@ -258,7 +291,14 @@ func _ramp_clip() -> void:
 		for w in xs2:
 			lo = minf(lo, w.x)
 			hi = maxf(hi, w.x)
-		_check(lo <= 350.0 + CELL and hi >= 750.0 - CELL, "R-005-09: a unit above the midline sees the ramp and the lower ground to its full radius (x 350 to 750, one cell of slack); reads %.0f to %.0f" % [lo, hi])
+		_check(lo <= 350.0 + CELL and hi >= 750.0 - CELL, "R-005-09: a unit above the midline sees the ramp and the lower ground to its full radius (x 350 to 750, one cell of slack); reads %.0f to %.0f (control, green on main)" % [lo, hi])
+		# Reason (a): the lower ground west of the midline is at height 0, the unit at 300; the polygon point for theta 180 deg
+		# (ground (350, 400)) is the projection at the terrain height, not at the unit's height (main's circle is at the unit's).
+		var want: Vector2 = host.to_screen(350.0, 400.0)
+		var near := false
+		for q in _poly(d2[0]):
+			near = near or q.distance_to(want) <= 0.5
+		_check(near and d2[0].has("points"), "R-005-09: the upper unit's disc point over the lower ground (350, 400) is the projection at that ground's height, screen %s (red on main for (a): the circle sits at the unit's height)" % want)
 	else:
 		_check(false, "R-005-09: no disc for the upper unit")
 	host.queue_free()
@@ -292,10 +332,6 @@ func _space_path() -> void:
 
 # Mask control: inside the polygon lit, outside dimmed. Structural (a SubViewport under the FogLayer) always; pixels with a renderer.
 func _mask() -> void:
-	var back := ColorRect.new()
-	back.color = Color.WHITE
-	back.size = get_root().get_visible_rect().size
-	root.add_child(back)
 	var fg = load(FOG).new()
 	root.add_child(fg)
 	await process_frame
@@ -307,15 +343,62 @@ func _mask() -> void:
 	if DisplayServer.get_name() == "headless":
 		print("MASK-PIXELS: not sampled (headless, dummy renderer)")
 	else:
-		var img: Image = get_root().get_texture().get_image()
-		# The captured image can differ in size from the visible rect (xvfb), so points are taken as fractions of the rect.
-		var vis := get_root().get_visible_rect().size
-		var to_px := Vector2(img.get_size()) / vis
-		var inside := img.get_pixelv(Vector2i(vis * 0.5 * to_px))
-		var outside := img.get_pixelv(Vector2i((vis * 0.5 + Vector2(120, 0)) * to_px))
-		_check(inside.r > 0.95, "R-089-03: a point inside the polygon is lit (backdrop white), reads %s" % inside)
-		_check(outside.r < 0.60 and outside.r > 0.30, "R-089-03: a point outside the polygon is dimmed (white under alpha 0.55 reads about 0.45), reads %s" % outside)
+		await _mask_pixels()
+	fg.queue_free()
+
+
+# qa_state()["sight_discs"] (ruling 2026-10-23, shape in the header): per own unit a bbox [x, y, w, h], w and h > 0. Red on main (b).
+func _qa_discs() -> void:
+	var v: Node = load("res://scenes/tactical_c/tactical_view.tscn").instantiate()
+	get_root().add_child(v)
+	await process_frame
+	v.set_process(false)
+	await process_frame
+	var f := _frame([_unit(1, 400, 400, 300), _unit(2, 600, 500, 250)])
+	v.load_frame(f)
+	await process_frame
+	var st: Dictionary = v.qa_state()
+	var inv = st.get("inventory", st)
+	var sd = inv.get("sight_discs") if inv is Dictionary else null
+	_check(sd is Dictionary, "S-126: qa_state()[\"sight_discs\"] is present as a Dictionary keyed by unit id (absent on main (b); filled by this piece, the key is added by VG-C-land-one-projection, so that build must be under this test)")
+	if sd is Dictionary:
+		_check(sd.size() == 2 and sd.has("1") and sd.has("2"), "S-126: sight_discs has an entry per own unit (\"1\", \"2\"), keys %s" % [sd.keys()])
+		for k in sd:
+			var bb = sd[k]
+			_check(bb is Array and bb.size() == 4 and float(bb[2]) > 0.0 and float(bb[3]) > 0.0, "S-126: sight_discs[%s] is a non-empty screen bbox [x, y, w, h], reads %s" % [k, bb])
+	v.queue_free()
+
+
+# Ground path under a renderer: host hidden so only the white backdrop and the fog mask show. The unit's ground disc at pitch 50 is
+# an ellipse with vertical radius ry < rx; main's averaged-radius circle reaches (rx + ry) / 2 > ry, so a point between is dimmed
+# by the polygon mask and lit by main.
+func _mask_pixels() -> void:
+	var back := ColorRect.new()
+	back.color = Color.WHITE
+	back.size = get_root().get_visible_rect().size
+	root.add_child(back)
+	var r = await _rig(_terrain("flat"), Vector2(400, 400))
+	var host = r[0]
+	var fg = r[1]
+	for c in host.get_children():
+		if c is Node3D or c is CanvasItem:
+			c.visible = false
+	fg.set_frame(_frame([_unit(1, 400, 400, 300)]), {}, 0)
+	for i in 3:
+		await process_frame
+	var ctr: Vector2 = host.to_screen(400, 400)
+	var ry: float = ctr.y - host.to_screen(400, 100).y
+	var rx: float = host.to_screen(700, 400).x - ctr.x
+	var vis := get_root().get_visible_rect().size
+	var img: Image = get_root().get_texture().get_image()
+	var to_px := Vector2(img.get_size()) / vis
+	var inside := img.get_pixelv(Vector2i((ctr + Vector2(0, ry * 0.5)) * to_px))
+	var between_y := ry + 0.5 * ((rx + ry) * 0.5 - ry)
+	var outside := img.get_pixelv(Vector2i((ctr + Vector2(0, between_y)) * to_px))
+	_check(inside.r > 0.95, "R-089-03: a point at half the ellipse's vertical radius is lit (control, green on main), reads %s" % inside)
+	_check(outside.r < 0.60 and outside.r > 0.30, "R-089-03: a point %.0f px below the unit (ellipse edge %.0f, main's circle edge %.0f) is dimmed (about 0.45), reads %s (red on main for (a))" % [between_y, ry, (rx + ry) * 0.5, outside])
 	back.queue_free()
+	host.queue_free()
 	fg.queue_free()
 
 
