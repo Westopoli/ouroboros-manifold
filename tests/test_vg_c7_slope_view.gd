@@ -1,5 +1,5 @@
 extends "res://tests/support/vg_c_case.gd"
-# Rule pins: R-001-01@025bc6, R-001-06@9f9051, R-004-01@61a9b6, R-004-06@ebf993, R-236-02@5cb2dc
+# Rule pins: R-001-01@025bc6, R-001-06@9f9051, R-004-01@61a9b6, R-004-06@ebf993, R-236-02@d5ddad
 
 # VG-C piece C7 (scenes/ground3d/slope_view.gd) as rewritten by VG-C-no-slope-markers: slopes and layers visible, without
 # the white midline bars. Proves S-001 R-001-06 (a slope is ground joining two layers; no bar is drawn), R-001-01 (blocked ground visible), S-004 R-004-01/06 (a unit

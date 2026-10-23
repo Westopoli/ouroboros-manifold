@@ -1,5 +1,5 @@
 extends "res://tests/support/vg_c_case.gd"
-# Rule pins: R-236-02@5cb2dc, R-010-01@b3e461, R-005-09@dd0832, R-004-06@ebf993, R-001-01@025bc6
+# Rule pins: R-236-02@d5ddad, R-010-01@b3e461, R-005-09@dd0832, R-004-06@ebf993, R-001-01@025bc6
 
 # VG-C piece C2b (scenes/ground3d/ground_bands.gd) rewritten by VG-C-ground-one-colour under TD-VG-C-one-colour.
 # Proves S-236 R-236-02 (a step between bands is the real height difference, not a colour) and S-001 R-001-01 (blocked
