@@ -5,7 +5,7 @@ extends RefCounted
 # Ray march + bisect after scenes/mockups/landscape/pass4_ui.gd _pick.
 
 const CELL_WU := 100.0
-const STEP := 50.0
+const STEP := 25.0  # DRAFT-pick-step-wu 25: halved from 50 so a crest thinner than 50 wu is not skipped
 const MAX_T := 80000.0
 const BISECT := 12
 
