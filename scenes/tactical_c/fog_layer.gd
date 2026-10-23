@@ -2,27 +2,35 @@ extends Node2D
 # See also: R-089-03 (outside sight is dimmed), R-089-04 (nothing remembered: discs are rebuilt from each frame).
 
 const OUTSIDE_ALPHA := 0.55
+const SEGMENTS := 48  # DRAFT-sightdisc-segments
+const CELL_WU := 100.0  # terrain cell size, as camera_rig_3d.gd CELL_WU
 const SHADER := """
 shader_type canvas_item;
-uniform sampler2D disc_tex : filter_nearest;
-uniform int count = 0;
+uniform sampler2D mask_tex : filter_linear;
 uniform float alpha = 0.55;
-varying vec2 pos;
-void vertex() { pos = VERTEX; }
 void fragment() {
-	float a = alpha;
-	for (int i = 0; i < count; i++) {
-		vec3 d = texelFetch(disc_tex, ivec2(i, 0), 0).rgb;
-		vec2 q = pos - d.xy;
-		if (dot(q, q) <= d.z * d.z) { a = 0.0; break; }
-	}
-	COLOR = vec4(0.0, 0.0, 0.0, a);
+	COLOR = vec4(0.0, 0.0, 0.0, alpha * (1.0 - texture(mask_tex, UV).r));
 }
 """
+
+
+# The sight mask: a black canvas with white where a sight polygon is, drawn into the SubViewport each frame.
+class MaskDraw extends Node2D:
+	var polys: Array = []
+	var size := Vector2(1920, 1080)
+
+	func _draw() -> void:
+		draw_rect(Rect2(Vector2.ZERO, size), Color.BLACK)
+		for p in polys:
+			draw_colored_polygon(p, Color.WHITE)
+
 
 var _discs: Array = []
 var _mat: ShaderMaterial
 var _projector := Callable()
+var _terrain := {}
+var _mask_vp: SubViewport
+var _mask_draw: MaskDraw
 
 
 func _ready() -> void:
@@ -32,13 +40,25 @@ func _ready() -> void:
 	_mat = ShaderMaterial.new()
 	_mat.shader = sh
 	material = _mat
+	_mask_vp = SubViewport.new()
+	_mask_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_mask_draw = MaskDraw.new()
+	_mask_vp.add_child(_mask_draw)
+	add_child(_mask_vp)
+	_mat.set_shader_parameter("mask_tex", _mask_vp.get_texture())
+	_mat.set_shader_parameter("alpha", OUTSIDE_ALPHA)
 
 
 # Two call shapes. Flat 2D: set_frame(frame, local_faction, world_scale, camera). Ground era (C10a):
-# set_frame(frame, mission, local_faction) with set_projector(world wu -> screen px) set; the disc radius is
-# re-derived through the projector (mean of the x and y offsets), never a flat scale.
+# set_frame(frame, mission, local_faction) with set_projector(world wu -> screen px) set; each disc point is projected
+# through the projector (ground height included), never a flat scale.
 func set_projector(projector: Callable) -> void:
 	_projector = projector
+
+
+# The frame's terrain dict (bands, cells_w, cells_h): a ground-era disc stops at ground of a higher band than the unit's (R-005-09).
+func set_terrain(terrain: Dictionary) -> void:
+	_terrain = terrain
 
 
 func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = null) -> void:
@@ -56,21 +76,23 @@ func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = nu
 			continue
 		var w := Vector2(float(u["x"]), float(u["y"]))
 		var sight := float(u["sight"])
-		if flat:
-			_discs.append({"center": (w - camera) * world_scale + half, "radius": sight * world_scale})
-		else:
-			var ctr: Vector2 = _projector.call(w)
-			var rx := ctr.distance_to(_projector.call(w + Vector2(sight, 0.0)))
-			var ry := ctr.distance_to(_projector.call(w + Vector2(0.0, sight)))
-			_discs.append({"center": ctr, "radius": (rx + ry) * 0.5})
-	_push_uniforms()
+		var unit_band := _unit_band(w, int(u.get("layer", 1)))
+		var pts := PackedVector2Array()
+		for k in SEGMENTS:
+			var dir := Vector2.from_angle(TAU * k / SEGMENTS)
+			if flat:
+				pts.append((w + dir * sight - camera) * world_scale + half)
+			else:
+				pts.append(_projector.call(w + dir * _clipped_reach(w, dir, sight, unit_band)))
+		_discs.append({"points": pts})
+	_push_mask()
 	queue_redraw()
 
 
 func screen_points() -> Array:
 	var out := []
 	for d in _discs:
-		out.append(d["center"])
+		out.append(_centroid(d["points"]))
 	return out
 
 
@@ -82,22 +104,60 @@ func outside_alpha() -> float:
 	return OUTSIDE_ALPHA
 
 
-# One dim over the canvas, one hole per own unit (no cap, no outlines): the disc list rides in a one-row float texture.
-func _push_uniforms() -> void:
+# Band of the terrain cell at world point w; 0 with no terrain, off the map, or a cell without a band.
+func _band_at(w: Vector2) -> int:
+	if _terrain.is_empty():
+		return 0
+	var cw := int(_terrain["cells_w"])
+	var cx := int(floorf(w.x / CELL_WU))
+	var cy := int(floorf(w.y / CELL_WU))
+	if cx < 0 or cy < 0 or cx >= cw or cy >= int(_terrain["cells_h"]):
+		return 0
+	return int((_terrain["bands"] as PackedByteArray)[cy * cw + cx])
+
+
+func _unit_band(w: Vector2, layer: int) -> int:
+	var b := _band_at(w)
+	return b if b > 0 else layer
+
+
+# How far along dir from w the unit sees: walks cells outward and stops before the first one of a higher band (R-005-09).
+func _clipped_reach(w: Vector2, dir: Vector2, sight: float, unit_band: int) -> float:
+	if _terrain.is_empty():
+		return sight
+	var d := 0.0
+	while d < sight:
+		var nd := minf(d + CELL_WU, sight)
+		if _band_at(w + dir * nd) > unit_band:
+			break
+		d = nd
+	return d
+
+
+func _centroid(p: PackedVector2Array) -> Vector2:
+	var area := 0.0
+	var c := Vector2.ZERO
+	for k in p.size():
+		var u := p[k]
+		var v := p[(k + 1) % p.size()]
+		var cr := u.x * v.y - v.x * u.y
+		area += cr
+		c += (u + v) * cr
+	if absf(area) < 0.0001:
+		return p[0] if p.size() > 0 else Vector2.ZERO
+	return c / (3.0 * area)
+
+
+# One dim over the canvas, one hole per sight polygon (no cap, no outlines): the polygons are drawn into the mask SubViewport.
+func _push_mask() -> void:
 	if _mat == null:
 		return
-	var n := _discs.size()
-	var data := PackedFloat32Array()
-	data.resize(maxi(n, 1) * 3)
-	for i in n:
-		var c: Vector2 = _discs[i]["center"]
-		data[i * 3] = c.x
-		data[i * 3 + 1] = c.y
-		data[i * 3 + 2] = float(_discs[i]["radius"])
-	var img := Image.create_from_data(maxi(n, 1), 1, false, Image.FORMAT_RGBF, data.to_byte_array())
-	_mat.set_shader_parameter("disc_tex", ImageTexture.create_from_image(img))
-	_mat.set_shader_parameter("count", n)
-	_mat.set_shader_parameter("alpha", OUTSIDE_ALPHA)
+	var vp := get_viewport()
+	var size := vp.get_visible_rect().size if vp != null else Vector2(1920, 1080)
+	_mask_vp.size = Vector2i(size)
+	_mask_draw.size = size
+	_mask_draw.polys = _discs.map(func(d: Dictionary) -> PackedVector2Array: return d["points"])
+	_mask_draw.queue_redraw()
 
 
 func _draw() -> void:
