@@ -40,6 +40,7 @@ var _camera := Vector2.ZERO
 var _vscale: Array = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 var _offset: Array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 var _own_color := FALLBACK_OWN
+var _projector := Callable()
 
 
 func _init() -> void:
@@ -59,7 +60,13 @@ func _init() -> void:
 		_offset[i] = float(e.get("facing_offset_rad", 0.0))
 
 
+func set_projector(projector: Callable) -> void:
+	_projector = projector
+
+
 func _to_screen(w: Vector2) -> Vector2:
+	if _projector.is_valid():
+		return _projector.call(w)
 	return (w - _camera) * _scale + Vector2(960.0, 540.0)
 
 
