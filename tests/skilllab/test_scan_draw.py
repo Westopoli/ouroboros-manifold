@@ -1,5 +1,7 @@
-# spec: ruling A201: a draw is decided, margin 0.0; stalemate and cap are undecided
-"""scan.cell_result / scan.cell / scan.scan with draws among the fights."""
+# spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Contract::Cell and scan (supersedes ruling A201: draw and cap are defects now)
+"""scan.cell_result with draws and caps among the fights (LAB-REV2-L4). Ruling 1 / Q-LAB-03: a draw is the one tie the engine
+can produce (both sides die on one tick); a cap is a bug detector. Neither is a result: the cell is `defect`, not won, and the scan
+goes on. A200-era 'decided', 'undecided', 'stalemate' and the win margin no longer exist."""
 import dataclasses
 import sys
 from pathlib import Path
@@ -12,7 +14,7 @@ for _p in (ROOT, Path(__file__).resolve().parent):
         sys.path.insert(0, str(_p))
 
 from fakes_batches import fight  # noqa: E402
-from scripts.skilllab.contract import WIN_MARGIN, Setup  # noqa: E402
+from scripts.skilllab.contract import Setup  # noqa: E402
 from scripts.skilllab.scan import cell, cell_result, scan  # noqa: E402
 
 
@@ -20,38 +22,39 @@ def F(outcome, margin):
     return dataclasses.replace(fight(outcome=outcome), margin=margin)
 
 
-def test_cell_of_only_draws_is_decided_mean_zero_and_not_won():
-    res = cell_result(8, [F("draw", 0.0)] * 4, WIN_MARGIN)
-    assert res.mean_margin == 0.0 and res.won is False
+def test_cell_of_only_draws_is_a_defect_mean_zero_and_not_won():
+    res = cell_result(8, [F("draw", 0.0)] * 4)
+    assert res.mean_margin == 0.0 and res.won is False and res.defect is True
 
 
-def test_a_draw_does_not_make_a_winning_cell_undecided():
-    """Margins 0.9, 0.9, 0.9, draw 0.0 -> mean 0.675 > 0.05 and decided, so won."""
-    res = cell_result(8, [F("side0", 0.9)] * 3 + [F("draw", 0.0)], WIN_MARGIN)
-    assert res.mean_margin == pytest.approx(0.675) and res.won is True
+def test_one_draw_among_wins_makes_the_cell_a_defect_and_not_won():
+    """Margins 0.9, 0.9, 0.9, draw 0.0: the mean is 0.675, but a cell is won only when every fight is side0."""
+    res = cell_result(8, [F("side0", 0.9)] * 3 + [F("draw", 0.0)])
+    assert res.mean_margin == pytest.approx(0.675) and res.won is False and res.defect is True
 
 
-def test_a_draw_adds_nothing_to_the_mean():
-    with_draw = cell_result(8, [F("side0", 0.4), F("side0", 0.4), F("draw", 0.0), F("draw", 0.0)], WIN_MARGIN)
-    assert with_draw.mean_margin == pytest.approx(0.2)
+def test_a_draw_adds_its_zero_margin_to_the_mean():
+    res = cell_result(8, [F("side0", 0.4), F("side0", 0.4), F("draw", 0.0), F("draw", 0.0)])
+    assert res.mean_margin == pytest.approx(0.2)
 
 
-def test_draws_pulling_the_mean_under_the_margin_lose_the_cell():
-    res = cell_result(8, [F("side0", 0.1)] + [F("draw", 0.0)] * 3, WIN_MARGIN)
-    assert res.mean_margin == pytest.approx(0.025) and res.won is False
+@pytest.mark.parametrize("bad", ["draw", "cap"])
+def test_positive_control_the_same_cell_with_a_clean_win_in_that_place_is_won(bad):
+    assert cell_result(8, [F("side0", 0.9)] * 3 + [F("side0", 0.9)]) == dataclasses.replace(
+        cell_result(8, [F("side0", 0.9)] * 4))
+    clean = cell_result(8, [F("side0", 0.9)] * 4)
+    dirty = cell_result(8, [F("side0", 0.9)] * 3 + [F(bad, 0.9)])
+    assert (clean.won, clean.defect) == (True, False) and (dirty.won, dirty.defect) == (False, True)
 
 
-@pytest.mark.parametrize("bad", ["stalemate", "cap"])
-def test_stalemate_and_cap_still_make_a_cell_not_won(bad):
-    res = cell_result(8, [F("side0", 0.9)] * 3 + [F(bad, 0.9)], WIN_MARGIN)
-    assert res.mean_margin == pytest.approx(0.9) and res.won is False
+def test_side1_wins_are_lost_but_not_defects():
+    res = cell_result(8, [F("side0", 0.9)] * 3 + [F("side1", -0.9)])
+    assert (res.won, res.defect) == (False, False)
 
 
-@pytest.mark.parametrize("bad", ["stalemate", "cap"])
-def test_positive_control_a_draw_in_the_same_place_is_won(bad):
-    """Same cell as above with the bad fight turned into a margin-0.9 draw would be won: only the label differs."""
-    assert cell_result(8, [F("side0", 0.9)] * 3 + [F("draw", 0.9)], WIN_MARGIN).won is True
-    assert cell_result(8, [F("side0", 0.9)] * 3 + [F(bad, 0.9)], WIN_MARGIN).won is False
+def test_cell_result_takes_no_win_margin():
+    with pytest.raises(TypeError):
+        cell_result(8, [F("side0", 0.9)], 0.05)
 
 
 def _build(enemy, swap):
@@ -59,31 +62,38 @@ def _build(enemy, swap):
 
 
 class Scripted:
-    def __init__(self, outcome_of, margin_of):
-        self.outcome_of, self.margin_of = outcome_of, margin_of
+    def __init__(self, outcome_of):
+        self.outcome_of = outcome_of
 
     def __call__(self, setup, seed, swap):
         e = setup.unit_types["enemy"]
-        return F(self.outcome_of(e, seed, swap), self.margin_of(e, seed, swap))
+        o = self.outcome_of(e, seed, swap)
+        return F(o, {"side0": 0.5, "side1": -0.5}.get(o, 0.0))
 
 
-def test_cell_runs_fights_through_the_draw_rule():
-    fn = Scripted(lambda e, s, w: "draw" if (s, w) == (0, False) else "side0", lambda e, s, w: 0.0 if (s, w) == (0, False) else 0.5)
+def test_cell_runs_fights_through_the_defect_rule():
+    fn = Scripted(lambda e, s, w: "draw" if (s, w) == (0, False) else "side0")
     res = cell(_build, 8, 2, fight_fn=fn)
-    assert res.mean_margin == pytest.approx(0.375) and res.won is True
+    assert res.mean_margin == pytest.approx(0.375) and res.won is False and res.defect is True
 
 
-def test_break_even_unchanged_by_draws_that_do_not_move_the_mean_below_the_margin():
-    """Cells up to 10 win with one draw per cell (mean 0.375); from 11 every fight is a draw (mean 0.0): beats 10."""
-    def outcome(e, s, w):
-        return "draw" if e >= 11 or (s, w) == (0, False) else "side0"
-    margin = lambda e, s, w: 0.0 if outcome(e, s, w) == "draw" else 0.5
-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Scripted(outcome, margin))
+def test_a_draw_cell_inside_the_won_run_ends_the_run_there_for_the_break_even():
+    """Cells up to 10 are clean wins; from 11 every fight is a draw: beats 10, loses_to 11, and those cells are defects."""
+    outcome = lambda e, s, w: "draw" if e >= 11 else "side0"
+    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Scripted(outcome), full_scan=True)
     assert [c.won for c in res.cells] == [True, True, True, False, False, False, False]
+    assert [c.defect for c in res.cells] == [False] * 3 + [True] * 4
     assert (res.beats, res.loses_to) == (10, 11)
 
 
-def test_break_even_still_treats_a_cap_cell_as_lost():
+def test_a_cap_in_one_cell_does_not_stop_the_scan():
     outcome = lambda e, s, w: "cap" if (e, s, w) == (11, 0, True) else "side0"
-    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=Scripted(outcome, lambda e, s, w: 0.5))
+    rec = []
+
+    def fn(setup, seed, swap):
+        rec.append(setup.unit_types["enemy"])
+        return Scripted(outcome)(setup, seed, swap)
+
+    res = scan(_build, 16, 8, 14, replicates=2, fight_fn=fn, full_scan=True)
+    assert sorted(set(rec)) == list(range(8, 15)) and res.cells[3].defect is True
     assert (res.beats, res.loses_to) == (10, 11)

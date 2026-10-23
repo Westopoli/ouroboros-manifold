@@ -1,4 +1,5 @@
 # spec: docs/northstar/plans/2026-10-06-layout-search-spec.md::1. A layout is a feature vector, 4. Pieces (P1)
+# LAB-REV2-L2 inventory (Q-LAB-03): KEPT unchanged. `start_distance` here is the layout Feature (spawn distance of maps.layout_map), not the retired Setup.start_distance; the 'residual stalemate' remark is the 2026-10-06 layout-geometry ruling.
 """maps.layout_map(features, seed): a feature-controlled layout beside sample_map. No Engine, no compiler.
 Geometry is measured here from the returned Terrain with test-local code, never with the generator's own helpers.
 Body = 2R = 30 wu (hardcoded until D1). `none` for choke width and detour ratio is 0 / 0.0; wall tests use
@@ -186,8 +187,10 @@ def test_every_feature_value_round_trips_through_features_and_rows(w, n, k, c, d
     """Spec section 4, P1 tests: every feature value round-trips through Features, and into the feat_ columns in field order."""
     f = feats(w, n, k, c, d, r)
     res = FightResult(outcome="side0", margin=0.5, strength_left=(0.75, 0.25), survivors=(12, 3), heads=(16, 12),
-                      ticks=340, first_contact_tick=35, firing=[(0, 0, 0)], firing_unit_seconds=(10.5, 7.25))
-    row = fight_row(res, f)
+                      ticks=340, first_contact_tick=35, firing=[(0, 0, 0)], firing_unit_seconds=(10.5, 7.25), winner="side0",
+                      firing_window=(4.0, 2.5), weighted_unit_seconds=(9.0, 6.0), weighted_window=(3.5, 2.0),
+                      predicted_count="side0", predicted_type="side0", agreement="both_right")   # LAB-REV2-L2: rev 2 result fields
+    row = fight_row(res, f, knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok")
     assert [k_ for k_ in row if k_.startswith("feat_")] == ["feat_" + x.name for x in dataclasses.fields(Features)]
     assert row["feat_detour_ratio"] == r and row["feat_blocked_layer_top"] == k
     assert row["feat_choke_width_bodies"] == w and row["feat_lane_count"] == n

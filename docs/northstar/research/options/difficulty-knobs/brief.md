@@ -41,7 +41,7 @@ Q-120-01, 2026-09-16 (`ambiguity_register.md:112`): "(b), AI postures deferred; 
 
 ## 5. Prior art already named
 
-ARMA's macro-tempo AI; Tron Bike Wars community high-skill play as an existence proof that simple rules plus intelligent opposition sustain a skill ceiling (`docs/bible_history/bible_2_00_design_vision.md:97`). StarCraft 2 scouting and knowledge asymmetry (A-136). Helldivers 2's "Joel" adjusting to player behavior, tagged ambiguous (`docs/research/games/helldivers_2.md:32`). Darkest Dungeon's Radiant and Stygian modes (`docs/research/games/darkest_dungeon.md:32`). Difficulty-readability complaints in Battle Brothers reviews (`docs/research/topics/audience_psychographics_2026.md:152`).
+ARMA's macro-tempo AI; Tron Bike Wars community high-skill play as an existence proof that simple rules plus intelligent opposition sustain a skill ceiling (`docs/bible_history/bible_2_00_design_vision.md:97`). StarCraft 2 scouting and knowledge asymmetry (A-136). Helldivers 2's "Joel" adjusting to player behavior, tagged ambiguous (`docs/legacy/games/helldivers_2.md:32`). Darkest Dungeon's Radiant and Stygian modes (`docs/legacy/games/darkest_dungeon.md:32`). Difficulty-readability complaints in Battle Brothers reviews (`docs/legacy/topics/audience_psychographics_2026.md:152`).
 
 ## 6. Contradictions, as questions for Westley
 

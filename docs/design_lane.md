@@ -50,5 +50,5 @@ Implementer work of any kind; `docs/northstar/e2e/**`, roadmap, sprints, and tes
 - Register: `docs/northstar/ambiguity_register.md`
 - Bible: `docs/bible/game_bible.md`, `stories.md`, `epics/`, `references/`, `algorithms.md`
 - Method: `docs/northstar/README.md`, `agile.md`
-- Research: `docs/research/`, `docs/research_lane.md`
-- Historical staging folders, read-only: `docs/design_questions/`, `docs/random/deleted/`
+- Research: `docs/research/`, `docs/legacy/research_lane.md`
+- Historical staging folders, read-only: `docs/legacy/design_questions/`, `docs/legacy/random/deleted/`

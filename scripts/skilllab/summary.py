@@ -17,13 +17,6 @@ def varies(batch, c):
         kind, rest = lab.split(":", 1)
         return ("map '%s' (see the scene text for where its blocked ground and cover lie); 16 attackers playing %s "
                 "against guarding defenders in a blob; all on layer 0" % (kind, rest.split("_v_")[0]))
-    if n == "layers":
-        if lab.startswith("body"):
-            return ("Raider mirror, blob against blob, with collision radius and attack range set from the label "
-                    "(range against body size); all on layer 0")
-        table, scene = lab.split(":")[0], lab.split(":")[1]
-        return ("scene '%s' with the layer vision, reach and damage multipliers of the label (%s); sides on layer 0 "
-                "except where the scene says otherwise" % (scene, table))
     if n == "enemy_position":
         return {"blob": MIRROR + " (control)", "bait": "a quarter of the units run in as bait, the rest wait, then the whole side attacks at tick 100",
                 "ambush": "the whole side stands still until tick 100, then attack-moves",
@@ -43,16 +36,19 @@ def _cell_summary(result):
         k = len(fights)
         count = lambda o: sum(f.outcome == o for f in fights)
         mean = lambda xs: round(sum(xs) / len(xs), 4) if xs else None
-        orders = [f.mopup_orders for f in fights if f.mopup_orders is not None]
         sizes[str(cell.enemy_heads)] = {
-            "fights": k, "won": count("side0"), "lost": count("side1"), "stalemate": count("stalemate"),
-            "cap": count("cap"), "draw": count("draw"), "mean_margin": mean([f.margin for f in fights]),
+            "fights": k, "won": count("side0"), "lost": count("side1"),
+            "cap": count("cap"), "draw": count("draw"), "defect": cell.defect, "mean_margin": mean([f.margin for f in fights]),
             "firing_unit_seconds_side0": mean([f.firing_unit_seconds[0] for f in fights]),
-            "firing_unit_seconds_side1": mean([f.firing_unit_seconds[1] for f in fights]),
-            "mean_reorders": mean(orders)}
-    return {"break_even": ("no break-even in range" if result.beats is None
-                           else "%d units beat %d, lose to %d" % (result.size, result.beats, result.loses_to)),
-            "beats": result.beats, "loses_to": result.loses_to, "by_enemy_size": sizes}
+            "firing_unit_seconds_side1": mean([f.firing_unit_seconds[1] for f in fights])}
+    if result.ceiling_hit:
+        words = "ceiling hit: %d units beat every headcount up to %d" % (result.size, result.beats)
+    elif result.beats is None:
+        words = "no break-even in range"
+    else:
+        words = "%d units beat %d, lose to %d" % (result.size, result.beats, result.loses_to)
+    return {"break_even": words, "beats": result.beats, "loses_to": result.loses_to, "ceiling_hit": result.ceiling_hit,
+            "multi_flip": result.multi_flip, "by_enemy_size": sizes}
 
 
 def write(defn, scans, path, rule, reference_key="reference"):

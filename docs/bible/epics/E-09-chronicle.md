@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 40 rules, numbers from `algorithms.md` ALG-50 through ALG-53. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags, Q-068-03 (S-068) and Q-070-02 (S-070); Q-159-07 is cited and held by E-22 S-182. |
+| Implied-but-unstated behavior turned into flags | 1 open flag, Q-070-02 (S-070); Q-068-03 closed 2026-10-21 (register); Q-159-07 is cited and held by E-22 S-182. |
 | Every visible-surface story has a reference | **No.** S-069 (the scroll presentation) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-068-03 (S-068), Q-070-02 (S-070) and one missing reference (S-069).
+**Gate verdict: not passed.** Blocked on Q-070-02 (S-070; Q-068-03 closed 2026-10-21, register) and one missing reference (S-069).
 
 ## Purpose
 
@@ -87,7 +87,7 @@ Rules
 
 Inputs: clusters; fragment library (E-21); ledger; world snapshot; registry names.
 Outputs: entries with base and expanded text, category, region, tick range; warnings.
-Open flags: Q-068-03 (whether events inside a mission, such as a base occupied, retaken or fallen back from, or an expansion made, reach the time-jump log and so the consequence slots and the `chain_expansion` category of R-067-04; it depends on what the pair carries forward between missions, Q-159-07 held by E-22 S-182).
+Open flags: none here. Q-068-03 closed 2026-10-21 (register: the outcome only, as Q-220-01); Q-159-07 is held by E-22 S-182.
 
 ### S-069 — Watching history happen
 As a player, I want to watch the map change on the left while the scroll writes itself on the right, and to be able to stop and read, so that the time jump is the game's signature moment and not a loading screen.

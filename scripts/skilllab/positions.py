@@ -23,7 +23,7 @@ def _play(name, size, rewrite):
     base = asym_play(size, Side("blob"), Side("blob"))
 
     def build(enemy_heads, swap):
-        setup = dataclasses.replace(rewrite(base(enemy_heads, swap)), approach=0.0)
+        setup = rewrite(base(enemy_heads, swap))
         timeline.validate(setup)
         return setup
     build.labels = {**base.labels, "play_side0": name, "status_side0": skills.DRAFT}

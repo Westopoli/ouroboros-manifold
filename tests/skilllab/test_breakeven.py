@@ -1,5 +1,10 @@
-# spec: break-even by scan with refinement, and the side-swap control (skill lab harness, item 3)
-"""Break-even flips, refinement fights near a flip, and swap_control, driven through scripted fight_fn fakes."""
+# spec: break-even by scan with refinement, and the side-swap control (skill lab harness, item 3); LAB-REV2-L4
+"""Break-even flips, refinement fights near a flip, and swap_control, driven through scripted fight_fn fakes.
+
+LAB-REV2-L4: a cell is won when every fight is side0 (the fakes derive the outcome from the margin's sign: margin > 0 is side0),
+there is no win margin, and find_break_even stays a LINEAR scan (it needs the neighbours of every flip, so it scans with
+full_scan=True whatever scan()'s default is). A scan won all the way is a ceiling hit: BreakEven.ceiling_hit, beats = the top
+headcount, no flips."""
 import dataclasses
 import importlib
 import sys
@@ -11,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab.contract import FightResult, Group, ScanResult, Setup, WIN_MARGIN  # noqa: E402
+from scripts.skilllab.contract import FightResult, Group, ScanResult, Setup  # noqa: E402
 from scripts.skilllab.scan import scan  # noqa: E402
 from scripts.skilllab.breakeven import (  # noqa: E402
     BreakEven, Flip, SwapControl, find_break_even, flip_sides, swap_control)
@@ -20,8 +25,8 @@ SIZE = 16
 PLANTED_BIAS = 0.1   # placeholder planted by the biased fake; not a tolerance
 
 
-def _result(margin, outcome="side0"):
-    return FightResult(outcome=outcome, margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0),
+def _result(margin, outcome=None):
+    return FightResult(outcome=outcome or ("side0" if margin > 0 else "side1"), margin=margin, strength_left=(1.0, 0.0), survivors=(1, 0),
                        heads=(1, 1), ticks=10, first_contact_tick=0, firing=[(0, 1, 1)],
                        firing_unit_seconds=(0.25, 0.25))
 
@@ -35,7 +40,7 @@ class Recorder:
 
     def __init__(self, margin_of, outcome_of=None):
         self.margin_of = margin_of
-        self.outcome_of = outcome_of or (lambda e, s, w: "side0")
+        self.outcome_of = outcome_of or (lambda e, s, w: "side0" if self.margin_of(e, s, w) > 0 else "side1")
         self.calls = []
 
     def __call__(self, setup, seed, swap):
@@ -74,8 +79,8 @@ def test_single_win_to_loss_flip():
 
 
 def test_single_flip_agrees_with_plain_scan():
-    """beats/loses_to equal scan.scan's for a one-flip curve."""
-    plain = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=Recorder(_curve({8, 9, 10})))
+    """beats/loses_to equal scan.scan's (full_scan) for a one-flip curve."""
+    plain = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=Recorder(_curve({8, 9, 10})), full_scan=True)
     res, _ = _find({8, 9, 10})
     assert (res.beats, res.loses_to) == (plain.beats, plain.loses_to) == (10, 11)
 
@@ -103,12 +108,13 @@ def test_beats_ignores_an_earlier_loss_to_win_flip():
     assert (res.beats, res.loses_to) == (10, 11)
 
 
-@pytest.mark.parametrize("won", [{8, 9, 10, 11, 12, 13}, set()])
-def test_all_won_and_all_lost_have_no_flips(won):
-    """No flip: empty flips, no beats, no refinement, rounds 0, and only the scan's fights ran."""
+@pytest.mark.parametrize("won,ceiling", [({8, 9, 10, 11, 12, 13}, True), (set(), False)])
+def test_all_won_and_all_lost_have_no_flips(won, ceiling):
+    """No flip: empty flips, no refinement, rounds 0, and only the scan's fights ran. Won everywhere is a ceiling hit (beats = the
+    top headcount, never 'no break-even'); lost everywhere is beats None."""
     res, rec = _find(won)
     assert res.flips == [] and res.multi_flip is False
-    assert res.beats is None and res.loses_to is None
+    assert res.ceiling_hit is ceiling and (res.beats, res.loses_to) == ((13, None) if ceiling else (None, None))
     assert res.refined == [] and res.rounds == 0
     assert len(rec.calls) == 6 * 2 * 2
 
@@ -137,7 +143,7 @@ def test_refinement_extra_fights_use_swap_outer_seed_inner_after_the_scan():
 def test_refined_cells_keep_old_fights_and_recompute_mean():
     """Refined cells hold old + new fights (old objects kept); mean_margin is the mean over all of them."""
     first = Recorder(_curve({8, 9, 10}))
-    scanned = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=first)
+    scanned = scan(_build, SIZE, 8, 13, replicates=2, fight_fn=first, full_scan=True)
     margins = lambda e, s, w: 0.5 if e in (8, 9, 10) else -0.5
     rec = Recorder(lambda e, s, w: margins(e, s, w) + (0.1 if (e, s) == (10, 3) and w else 0.0))
     res, _ = _find({8, 9, 10}, rec=rec)
@@ -216,23 +222,18 @@ def test_multi_flip_refines_every_adjacent_cell_once():
     assert set(rec.calls) == _grid(range(8, 14), range(2)) | _grid((9, 10, 11, 12), (2, 3))
 
 
-def test_refinement_recomputes_won_with_the_decided_rule():
-    """An extra fight ending in a cap makes the refined cell not won even with a high mean."""
-    outcome = lambda e, s, w: "cap" if (e, s, w) == (10, 3, True) else "side0"
+def test_refinement_recomputes_won_with_the_every_fight_side0_rule():
+    """An extra fight ending in a cap makes the refined cell a defect and not won even with a high mean margin."""
+    outcome = lambda e, s, w: "cap" if (e, s, w) == (10, 3, True) else ("side0" if e <= 10 else "side1")
     res, _ = _find(None, rec=Recorder(_curve({8, 9, 10}), outcome), rounds=1)
     cells = {c.enemy_heads: c for c in res.scan.cells}
-    assert cells[10].won is False and cells[10].mean_margin == pytest.approx(0.5)
+    assert cells[10].won is False and cells[10].defect is True and cells[10].mean_margin == pytest.approx(0.5)
     assert res.beats == 9
 
 
-def test_win_margin_is_used_by_scan_and_refinement():
-    """Refinement uses the given win_margin: mean 0.4 is won at margin 0.3, lost at 0.5."""
-    rec = Recorder(lambda e, s, w: 0.4 if e <= 10 else -0.5)
-    res, _ = _find(None, rec=rec, win_margin=0.3)
-    assert (res.beats, res.loses_to) == (10, 11)
-    rec = Recorder(lambda e, s, w: 0.4 if e <= 10 else -0.5)
-    res, _ = _find(None, rec=rec, win_margin=0.5)
-    assert res.flips == [] and res.beats is None
+def test_find_break_even_takes_no_win_margin():
+    import inspect
+    assert "win_margin" not in inspect.signature(find_break_even).parameters
 
 
 def test_deterministic_same_inputs_same_output():
@@ -262,8 +263,13 @@ def test_validation_errors_run_no_fight(kw):
 
 def test_default_fight_fn_imports_lazily_and_calls_fight(monkeypatch):
     """fight_fn=None resolves scripts.skilllab.fight.fight at call time; importing breakeven loads no engine."""
-    monkeypatch.delitem(sys.modules, "scripts.skilllab.fight", raising=False)
-    monkeypatch.delitem(sys.modules, "scripts.skilllab.breakeven", raising=False)
+    # Restore the original modules and the package attributes afterwards, or the seam fixture patches a stale fight module.
+    pkg = importlib.import_module("scripts.skilllab")
+    for name in ("fight", "breakeven"):
+        importlib.import_module(f"scripts.skilllab.{name}")
+        monkeypatch.setattr(pkg, name, sys.modules[f"scripts.skilllab.{name}"])
+    monkeypatch.delitem(sys.modules, "scripts.skilllab.fight")
+    monkeypatch.delitem(sys.modules, "scripts.skilllab.breakeven")
     importlib.import_module("scripts.skilllab.breakeven")
     assert "scripts.skilllab.fight" not in sys.modules
     import scripts.skilllab.fight as fight_module
@@ -289,7 +295,7 @@ def _two_groups():
                 Group(side=1, unit="Raider", count=12, formation="line", x=50.0, y=-1.0,
                       facing_deg=180.0, layer=1, order="attack_move", goal=None, params={"spacing": 30})),
         unit_types={"X": {"base": "Vanguard", "scale": {}, "set": {}}}, abilities=True, max_ticks=100,
-        stalemate_ticks=50, sample_every=2, trace=True, settings={"OM_TP_A": 1.5})
+        sample_every=2, trace=True, settings={"OM_TP_A": 1.5})
 
 
 def test_flip_sides_swaps_only_sides():

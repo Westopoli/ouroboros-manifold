@@ -5,21 +5,19 @@ How to answer: one word per picture, approve, reject, or a note. Where answers g
 Each picture has one block under its file name, in this form: `**What you see:**`, `**Legend:**` (one line, what each colour and mark in the picture means), `**Judge:**` (a `**Camera:**` line may follow), `**Beta status of what is shown:**` with one line per feature.
 
 
-## C-S004-ground-layer-crossing-close.png
-
-**What you see:** All 176 units selected (white rings) walking up a ridge in a long column, from the orange band at lower left to the brown band at upper right; the small ring under each unit changes from yellow to purple as it passes onto the upper layer, and the white midline bars of other slopes lie across the ground at the left. The column is thin and the units are single icons on the 3D ground, so the halfway line itself is not marked for the crossing.
-**Judge:** Is a layer change on a slope visible, with the halfway line a place you can see and hold (S-004)?
-**Camera:** height 300 wu (1.80 px per wu at the centre), 1920x1080, seed 1, tick 751 (the play's own order: every own unit sent to the top edge of the nearest slope, stepped in 25-tick chunks; these units crossed a ridge slope on the way, not the slope the play aimed at). No unit is in the timed transfer state, because walkers cross by position (R-004-06). Unit bodies are under the 24 px icons; body size in the S-132 frame.
-**Beta status of what is shown:**
-- Layer change on a slope (S-004, R-004-06): built and wired (lane C ground 3D, C7; S-004 play fix at bfd7f1c), the S-004 play passes; not Seen (your verdict pending).
-- The halfway line as a marked place for one crossing: stub in this view (only the long midline bars are drawn, none picked out for the crossing).
-
 ## F-S140-click-move-order-obeyed.png
 
 **What you see:** The player drags a box on the left of the match, clicks to the right, and 69 of the units move there in both peers (order tick 68; the host reads the common tick 1273, the guest reads tick 1401). The right side had blockers, so the play used the left corridor. The frame is the host's at tick 1297: 99 own units on screen, the 69 selected ones ringed in white in a loose cluster at the left, a tidy grid of unselected units at the middle right, and "69 selected" in the HUD at lower left. The drawn route line you asked for on 2026-10-13 is not built, so no path is drawn.
-**Legend:** White ring: a selected unit (the HUD counts 69 selected). The other marks (green arcs, orange rings, blue arrowheads): none stated.
+**Legend:** White ring: a selected unit (the HUD counts 69 selected). Blue outlines (dart, arrowhead, kite, hexagon, bar, square): your own units, one outline shape per unit type, in the space era's 2D view (`scenes/tactical_c/unit_visuals.gd` SHAPES, own colour (0.2, 0.6, 1.0)); the "blue diamonds" are the kite-shaped type. Small coloured ring under a unit: its layer (space era keeps layer rings). Green bar: hit points. Red-orange marks: the other faction's units. Light-blue glyphs: objective markers.
 **Judge:** Does the move read as an order obeyed, with units leaving the box and heading for the click (S-140: "My orders reach every peer with no server in the middle")?
 **Camera:** x 11950, y 250, scale 1.44, 1920x1080, tick 1297 (order given at tick 68, common read tick 1273). Last command: move, ok true, 69 units, to x 11470, y 250.
+**Why this frame looks the way it does:** lane F's plays run the lobby match, which starts in the space era; the space battle view is 2D and top-down by design, so there is no landscape and no pitch. The land era is a launch flag (below).
+**See it live (Westley 2026-10-22: motion is judged in the running game, DEC-S140-live-look):** in your checkout:
+```
+cd ~/Projects/ouroboros-manifold && git pull --no-rebase && make && make pipe/ouroboros_pipe
+OM_GODOT_GUI=1 godot --path . -- --era greek_placeholder --seed 1
+```
+Menu to the mission, drag a box over some units, right-click the ground: the box's units walk there. For the two-peer version open two terminals: the same command (keep the `OM_GODOT_GUI=1` prefix; the `godot` on PATH is a wrapper that adds `--headless` without it) with `--net-local --net-local-lobby-port 7777 --net-local-udp-base 7800 --net-local-id 1` in the first and `--net-local-id 2` (same ports) in the second, type the host's lobby id into the guest's lobby, press start on the host, then order units in either window. One word back ("approved" or "rejected") on this row.
 **Beta status of what is shown:**
 - Move order reaching both peers (S-140, R-140-02): built and wired (lane F lockstep and lobby, VG-F-S140-CLICK); the S-140 play passes, host and guest read the same positions; not Seen (your verdict pending).
 - Route line to the clicked spot (your 2026-10-13 note): not built, queued as VG-A-routeline.
@@ -28,6 +26,7 @@ Each picture has one block under its file name, in this form: `**What you see:**
 
 | File | Verdict | Cite |
 |---|---|---|
+| `C-S004-ground-layer-crossing-close.png` | Rejected by rule: "We don't need to indicate layer changes with landscape color, layer changes will be clear based on vision distance" (Westley, 2026-10-22; DEC-S004-vision-not-colour); re-shot owed after VG-C-ground-one-colour and the VG-A-sightdisc amendment land, same camera (height 300, run-20261021T221300Z-zoomed tick 751) | C.md S-004 row |
 | `C-S005-ground-sight-close.png` | Rejected: "Reject it, I'd like to see an improved version based on my feedback" (Westley, 2026-10-22; earlier "the screenshot looks good" with two findings); re-shot owed after VG-A-sightdisc and the E1k yaw amendment land, same camera (height 300, run-20261021T221300Z-zoomed tick 9774) | C.md S-005 row |
 | `C-S001-ground-slope-and-blocked-band-close.png` | Rejected: "very mangled" (Westley, 2026-10-22); white lines are the slope midline bars, the group in the land is units behind the ridge whose 2D marks draw through the terrain, the steep face does not read as a wall; facing arrows asked, layer rings off in the land era (DEC-S001-facing-arrow, DEC-S001-no-layer-ring-land; FINDING-s001-marks-through-terrain, FINDING-s001-steep-face-flat); slope markers removed by his rule (DEC-S001-no-slope-markers) | C.md S-001 row |
 | `C-S132-ground-units-close.png` | Approved: "Yes I can tell them apart" (Westley, 2026-10-22); clipping into the ground noted, fix for beta (FINDING-s132-body-clip, piece VG-C-unit-ground-fit) | C.md S-132 row |

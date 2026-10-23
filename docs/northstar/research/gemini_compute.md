@@ -18,7 +18,7 @@ Gemini CLI stopped serving Google AI Pro/Ultra requests on 2026-06-18 (Google De
 
 ## Sign-in
 
-Westley signed in once via the interactive `agy` REPL (Google account, browser OAuth). Confirmed working: interactive session shows `westleyyarlott@gmail.com (Google AI Pro)`, model `Gemini 3.8 Flash`.
+Westley signed in once via the interactive `agy` REPL (Google account, browser OAuth). Confirmed working: interactive session shows the author's account (Google AI Pro), model `Gemini 3.8 Flash`.
 
 ## Bug found and fixed: headless calls never saw the sign-in
 

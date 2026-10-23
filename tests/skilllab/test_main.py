@@ -32,7 +32,7 @@ def _fight(tag):
 def _scan_result(base):
     cells = [CellResult(enemy_heads=n, fights=[_fight(base + 2 * n), _fight(base + 2 * n + 1)],
                         mean_margin=0.1, won=True) for n in range(ENEMY_FROM, ENEMY_TO + 1)]
-    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
+    return ScanResult(size=16, cells=cells, beats=None, loses_to=None)
 
 
 class World:
@@ -59,9 +59,9 @@ class World:
             self.reach_args.append((args, kwargs))
             return self.reach_build
 
-        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, win_margin=0.05, fight_fn=None):
+        def fake_scan(build, size, enemy_from, enemy_to, replicates=10, fight_fn=None, map_fn=None, full_scan=False, **kw):
             self.scan_calls.append(dict(build=build, size=size, enemy_from=enemy_from, enemy_to=enemy_to,
-                                        replicates=replicates))
+                                        replicates=replicates, full_scan=full_scan))
             return self.results["identical"] if build is self.blob_build else self.results["damage"]
 
         def fake_fight_row(result, **labels):
@@ -205,3 +205,10 @@ def test_unknown_command_returns_two_and_runs_nothing(world, tmp_path):
         code = exc.code
     assert code == 2
     assert world.scan_calls == [] and world.write_calls == [] and world.report_calls == []
+
+
+def test_controls_scan_every_headcount_not_the_bisection(world, tmp_path):
+    """LAB-REV2-L4: scan() now bisects by default. The controls chart a dot per fight at every headcount 8 to 24 and the golden
+    planted hash covers every fight of both scans, so the `controls` command asks for the linear sweep."""
+    main(["controls", "--out", str(tmp_path)])
+    assert [c["full_scan"] for c in world.scan_calls] == [True, True]

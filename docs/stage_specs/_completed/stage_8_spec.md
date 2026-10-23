@@ -26,7 +26,7 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 
 All Stage 8 design questions are now captured. The list below is preserved for audit; each entry is marked with its resolution. Implementation is unblocked on the design-question front.
 
-- **S8-3 — Mid-mission UI information density.** RESOLVED (Q5): IGoP-inspired layout with Ouroboros substitutions. See `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout." Reference screenshots at `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
+- **S8-3 — Mid-mission UI information density.** RESOLVED (Q5): IGoP-inspired layout with Ouroboros substitutions. See `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout." Reference screenshots at `docs/legacy/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
 
 ### Captured decisions the spec relies on (no change needed)
 
@@ -559,7 +559,7 @@ Per CLAUDE.md: if an invariant fails, you may not widen thresholds or weaken tes
 - Bible capture items (§"Bible Capture Pending") all applied and verified in a pre-merge diff review.
 - No protected engine file modified. `socket_server.py` is protected from its first edit forward.
 - `docs/architecture.md` reflects the `MissionSetup.generated_at` field addition.
-- IGoP HUD reference images present at `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
+- IGoP HUD reference images present at `docs/legacy/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
 
 ## Files Created
 
@@ -655,12 +655,12 @@ Applied during implementation with Westley's approval. Spec lines already edited
 **Files created in Stage 8 (inventory for "Files Created" section above):**
 - Sim side: `simulation/socket_server.py`, `simulation/snapshot_serializer.py`, `simulation/command_ingest.py`, `simulation/run_debug_server.py`, `simulation/pipe_transport.py`, save / load modules, test files.
 - Godot side: `scenes/tactical/tactical.tscn` + `.gd`, `scenes/tactical/terrain_renderer.gd`, `scenes/tactical/unit_renderer.gd`, `scenes/tactical/input_router.gd`, `scenes/tactical/hud.tscn` + `.gd`. Autoloads: `autoload/tactical_bridge.gd`, `autoload/ws_client.gd`, `autoload/ws_input_sanitizer.gd`, `autoload/sim_bridge.gd`. (Other autoloads predate Stage 8.)
-- Docs: IGoP HUD reference screenshots at `docs/design_questions/Immortal-Gates-of-Pyre-*.jpg` — permanent reference for layout decisions.
+- Docs: IGoP HUD reference screenshots at `docs/legacy/design_questions/Immortal-Gates-of-Pyre-*.jpg` — permanent reference for layout decisions.
 
 ### Out-of-Stage-8 Items Surfaced During Implementation
 
 Track separately; **do not fold back into Stage 8**:
-- **Tactical art pass.** Settled Reach GLB assets exist at `docs/blender_stuff/the-settled-reach/` (at least `SetReachBastionT2.glb` imported). No stage spec currently covers importing era art into `tactical.tscn` — the scene is still Node2D with placeholder sprites per Checkpoint G. New design decision required: convert `tactical.tscn` to Node3D with an orthographic 60° camera (the `CAMERA_ANGLE_DEGREES = 60.0` constant anticipates this but is currently unused) vs. pre-render meshes to sprite sheets. Bible update + new stage spec needed if pursued.
+- **Tactical art pass.** Settled Reach GLB assets exist at `docs/legacy/blender_stuff/the-settled-reach/` (at least `SetReachBastionT2.glb` imported). No stage spec currently covers importing era art into `tactical.tscn` — the scene is still Node2D with placeholder sprites per Checkpoint G. New design decision required: convert `tactical.tscn` to Node3D with an orthographic 60° camera (the `CAMERA_ANGLE_DEGREES = 60.0` constant anticipates this but is currently unused) vs. pre-render meshes to sprite sheets. Bible update + new stage spec needed if pursued.
 - **Zoom-dependent camera tilt** (top-down at wide zoom → angled at close zoom). Not in any stage spec or bible section; hub §16 explicitly assumes *"the fixed top-down camera angle"*. If desired, belongs in `docs/bible_history/bible_2_00_combat.md` §Camera and Player View first.
 - **Layer visualization Tier 2/3** (`game_bible.md` §16 — light and heavy environmental dressing). Tier 1 (indicator rings) is Checkpoint H territory. Tiers 2/3 are deferred with no current owner.
 

@@ -51,7 +51,7 @@ docs/northstar/plans/sim_lane_2026-10-12/controls_triage.md (2026-10-18, Archite
 - push/pieces.toml:1049-1062 row `G-controls` (owns placeholder_controls.txt and tests/csim/controls/**; attached 6f757bfc).
 - docs/northstar/plans/2026-10-01-architect-rulings-2.md:590 A111 (92 placeholders counted in their own gate line), :600 A114 (seven dead controls brought to life).
 - drift audit note: docs/northstar/plans/drift_audits/2026-10-20-test-coverage-client-tooling.md:61 (gen_controls named-only, 95 files marker) and 2026-10-20-test-coverage-sim.md section 5 ("92 of them in controls, e.g. OMBug has no CONVOY_RETURNS_FIRE").
-- gen_controls ledger rows: only docs/northstar/plans/PLAN_MULTIAGENT_TEST_AUTHORING.md, preflight_2026-10-07/9-harness.md, harness-enforcement-2026-10-19.md and research/factory/A2-... mention it; the ledger itself has none by that name.
+- gen_controls ledger rows: only docs/northstar/plans/archive/PLAN_MULTIAGENT_TEST_AUTHORING.md, preflight_2026-10-07/9-harness.md, harness-enforcement-2026-10-19.md and research/factory/A2-... mention it; the ledger itself has none by that name.
 
 ## Q2 Coverage stage
 

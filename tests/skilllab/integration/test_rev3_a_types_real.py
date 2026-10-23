@@ -1,0 +1,105 @@
+# Rule pins: R-081-03@1baef5
+# spec: docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md (requirement R8, test T3; defect D3); ledger FINDING-lab-d3; piece LAB-REV3-A
+"""LAB-REV3-A, T3 (R8, D3) against the real engine (OM_LAB_SLOW=1; a few seconds a test): a lab Warden is a mirror of a built-in
+Warden, and a lab Bastion takes at most 1.0x from a Strike attacker (R-081-03's Siege exception, csrc/unit.c om_resolve_hit_multiplier).
+
+How the two kinds meet in one fight (no builder contract beyond tests/skilllab/test_rev3_a_types.py): `AliasEngine.type_id("<Name>B")`
+answers the built-in id of `<Name>`, so a group named "WardenB" is a BUILT-IN Warden that `fight._register_types` leaves alone (no
+unit_types entry), while a group named "Warden" with the entry `{"base": "Warden", "reach": (0, 0)}` is the lab-registered one,
+exactly what `plays_space._types` writes. The reach (0, 0) is the library default, so after the fix the two are the same type.
+
+The mirror is 12 Vanguards + 4 Wardens a side (the M9 shape, the most Wardens D9 allows per 16), not the plan's 8 Wardens against 8:
+two built-in Wardens a side cap at 12,000 ticks (D9's stall; measured 8 of 8 caps), which would make the check answer nothing.
+
+Measured on the lab tip (2026-10-20, this file's author): eight fights, seeds 0 to 7, the lab Wardens on side 0 and the built-in ones
+on side 1: side 1 wins 8 of 8 (the finding says "8 of 8"); the other way round side 0 wins 8 of 8; built-in on both sides: side 0 wins 3,
+side 1 wins 5. Four Raiders against one Bastion for 200 ticks: the lab Bastion
+is left at 0.383 of its hit points, the built-in one at 0.589 (the 1.5x of ALG-60's Strike to Siege applies to the copy)."""
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[3]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.skilllab.contract import Group, Setup  # noqa: E402
+from scripts.skilllab.engine import Engine  # noqa: E402
+from scripts.skilllab.fight import fight  # noqa: E402
+
+SLOW = pytest.mark.skipif(os.environ.get("OM_LAB_SLOW") != "1", reason="real fights; set OM_LAB_SLOW=1")
+SEEDS = range(8)
+
+
+class AliasEngine(Engine):
+    """A name ending in B is the built-in type of the name without it."""
+    def type_id(self, name):
+        return super().type_id(name[:-1] if name.endswith("B") else name)
+
+
+def blob(side, unit, n, x):
+    return Group(side=side, unit=unit, count=n, formation="blob", x=x, y=0.0, facing_deg=0.0 if side == 0 else 180.0, layer=0,
+                 order="attack_move", params={"radius": 80 + 12 * n ** 0.5})
+
+
+LAB = {"Warden": {"base": "Warden", "reach": (0, 0)}}
+
+
+def fights(side0, side1, types):
+    """(outcome, ticks, survivors) of eight fights of 12 Vanguards + 4 `side0` Wardens against 12 Vanguards + 4 `side1` Wardens."""
+    out = []
+    for seed in SEEDS:
+        setup = Setup(groups=(blob(0, "Vanguard", 12, -350.0), blob(0, side0, 4, -350.0),
+                              blob(1, "Vanguard", 12, 350.0), blob(1, side1, 4, 350.0)), unit_types=types)
+        r = fight(setup, seed, False, engine=AliasEngine())
+        out.append((r.outcome, r.ticks, r.survivors))
+    return out
+
+
+@SLOW
+def test_positive_control_two_builtin_wardens_split_the_wins():
+    """Green on the lab tip: with no copy on either side the same eight fights are not one-sided (side 0 wins 3, side 1 wins 5), and
+    the same call twice gives the same eight tuples (the fights are deterministic, which the equality tests below rely on)."""
+    got = fights("Warden", "WardenB", {})
+    assert {o for o, _, _ in got} == {"side0", "side1"}, got
+    assert got == fights("Warden", "WardenB", {})
+
+
+@SLOW
+def test_t3_a_lab_registered_warden_is_a_mirror_of_a_builtin_one():
+    """T3 (D3; W4 of the audit): once the lab Warden IS the built-in type, the fight is the built-in-against-built-in fight: the
+    (outcome, ticks, survivors) of all eight seeds equal the control's exactly. Red today: side 1 (built-in, aura heals) wins 8 of 8
+    in about 2,300 ticks, the control splits 3 : 5 in 5,000 to 7,000."""
+    assert fights("Warden", "WardenB", LAB) == fights("Warden", "WardenB", {})
+
+
+@SLOW
+def test_t3_the_mirror_does_not_depend_on_the_side():
+    """T3 (D3): the built-in Wardens on side 0 and the lab ones on side 1 equal the control with the sides' names swapped, seed by seed.
+    Red today: side 0 (built-in) wins 8 of 8."""
+    assert fights("WardenB", "Warden", LAB) == fights("WardenB", "Warden", {})
+
+
+def bastion_left(target):
+    """Hit points kept (side 1) by one `target` against four Raiders for 200 ticks. "Fortress" is a Bastion deliberately NOT collapsed
+    onto the built-in id (a differently named custom type with the Bastion's stats, entry rules of test_rev3_a_types.py)."""
+    setup = Setup(groups=(blob(0, "Raider", 4, -150.0), blob(1, target, 1, 150.0)),
+                  unit_types={"Bastion": {"base": "Bastion", "reach": (0, 2)}, "Fortress": {"base": "Bastion", "reach": (0, 2)}}, max_ticks=200)
+    return fight(setup, 0, False, engine=AliasEngine()).strength_left[1]
+
+
+@SLOW
+def test_positive_control_the_builtin_bastion_is_capped_at_one_times():
+    """Green on the lab tip: four Raiders (Strike, 1.5x against Siege uncapped) leave the built-in Bastion more hit points than a custom
+    Bastion that is not on the built-in id (the cap bites on the built-in id only, D3); measured 0.589 against 0.383. The bound is the
+    custom copy's own number from the same fight, not a new threshold: the capped target keeps strictly more."""
+    assert bastion_left("BastionB") > bastion_left("Fortress")
+
+
+@SLOW
+def test_t3_a_lab_bastion_takes_the_same_damage_as_the_builtin_one_from_a_strike_attacker():
+    """T3 (D3): the lab Bastion (entry `{"base": "Bastion", "reach": (0, 2)}`) is capped at 1.0x like the built-in one. Red before D3:
+    the copy kept 0.383 of its hit points, the built-in 0.589 (the "Fortress" control in the test above still keeps 0.383)."""
+    assert bastion_left("Bastion") == pytest.approx(bastion_left("BastionB"), abs=1e-9)

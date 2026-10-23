@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.skilllab import batches, pool  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, faked, stub_summary_write  # noqa: E402,F401
 
 
 class RecPool:

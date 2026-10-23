@@ -165,7 +165,7 @@ fi
 all_specs=("${spec_paths[@]}")
 [[ -n "${PRE_GATE_SPEC:-}" ]] && all_specs+=("$PRE_GATE_SPEC")
 for spec in "${all_specs[@]}"; do
-    if "$VENV_PYTHON" "$HERE/spec_provenance.py" "$WT/$spec"; then
+    if "$VENV_PYTHON" "$HERE/spec_provenance.py" "$WT/$spec" --pieces "$PIECES"; then
         echo "PRE_GATE provenance OK $spec"
     else
         echo "PRE_GATE provenance REJECT $spec"

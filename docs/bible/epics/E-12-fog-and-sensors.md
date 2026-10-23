@@ -68,7 +68,7 @@ Rules
 
 Inputs: vantage nodes; elevation gradient.
 Outputs: effective radius.
-Open flags: Q-091-01 (how the elevation tiers of R-091-02, steps of 0.25, relate to the five height-band layers, now that on land maps elevation and layers come from one height field (E-17 S-190); and whether the bonus is symmetric, since the sign of the tier difference is not stated while vision across layers is symmetric by layer distance, E-01 S-005).
+Open flags: none. Q-091-01 closed 2026-10-21 (register): the elevation bonus is retired for ground eras; the layers are the only elevation there.
 
 ### S-092 — Recon, then fog
 As a commander, I want to study the whole map before I commit and then lose sight of everything but what my units see, so that planning and scouting are two different skills.
