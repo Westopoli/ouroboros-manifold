@@ -2189,7 +2189,7 @@ wave = 9
 owns = ["scenes/ground3d/ground3d.gd", "scenes/ground3d/ground_mesh.gd"]
 owns_glob = []
 acceptance = []
-depends_on = ["VG-C-land-marks"]  # shares ground3d.gd; the prototype branch never lands before Westley's pick
+depends_on = ["VG-C-land-marks", "VG-A18-3d"]  # shares ground3d.gd; the prototype branch never lands before Westley's pick; VG-A18-3d added by the records clerk 2026-10-23 (owner_lint: VG-A18-3d owns ground3d.gd qa_state only; the prototype lands after it)
 status = { state = "queued" }
 size_estimate = "prototype: RELIEF_VARIANT a/b/c in ground_mesh.gd, sun elevation, six frames to westley/; no landing"
 
@@ -2532,7 +2532,7 @@ wave = 15
 owns = ["scenes/ground3d/camera_rig_3d.gd", "tests/test_vg_a_a18_3d.gd", "scenes/tactical_c/tactical_view.gd", "scenes/ground3d/ground3d.gd", "tests/qa/desktop/plays/A/test_S_103_start_view.py", "tests/test_vg_c_land_one_projection.gd", "docs/northstar/story_reviews/A.md", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S103-start-view-ground-fit.png"]  # tactical_view.gd: set_terrain ground block :375-379, frame handler :505-514 and :313, _go_home :1140-1146, home store :1074-1075 (VG-C-land-one-projection and VG-C-land-marks land first; VG-A glob); ground3d.gd: qa_state :150-163 only (after VG-C-land-marks); test_vg_c_land_one_projection.gd: :182 under TD-VG-A18-3d-1 (VG-C-land-one-projection and VG-A-sightdisc also own it: this piece lands between them); the S-103 play's ground variant (G-qadesktoptests glob, the existing pattern); wave is advisory, ordering is by depends_on
 owns_glob = []
 acceptance = ["tests/test_vg_a_a18_3d.gd"]
-depends_on = ["VG-A18", "HARNESS-provenance-scope", "VG-E-startforce", "VG-C-land-one-projection", "VG-C-land-marks"]  # shared tactical_view.gd and ground3d.gd: lane C's two pieces land first (DEC-laneC-order-2026-10-23); VG-E-startforce: the anchors inboard, so the play and shot see DEC-C14's whole frame
+depends_on = ["VG-A18", "HARNESS-provenance-scope", "VG-E-startforce", "VG-E1W", "VG-C-land-one-projection", "VG-C-land-marks"]  # shared tactical_view.gd and ground3d.gd: lane C's two pieces land first (DEC-laneC-order-2026-10-23); VG-E1W added by the records clerk 2026-10-23 (owner_lint: it also owns tactical_view.gd, queued, and lands before the startforce row); VG-E-startforce: the anchors inboard, so the play and shot see DEC-C14's whole frame
 status = { state = "queued" }
 tests_pending = true  # tests/test_vg_a_a18_3d.gd new; S-103 ground test 5 new; test_vg_c_land_one_projection.gd :182 re-pinned
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-A18-3d, after A18; plus docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md; rig fov restored to the approved 55 (FINDING-rig-fov-lost), and the D-VIEW height 5400 and the sightdisc 0.766 pin are re-checked by this piece
