@@ -458,7 +458,7 @@ func _flood_lake(elevation: PackedFloat32Array, water: PackedFloat32Array, seed_
 	visited[seed_idx] = true
 	var visits := 0
 	while not queue.is_empty() and visits < 1500:
-		var idx: int = queue.pop_back()
+		var idx: int = queue.pop_front()
 		visits += 1
 		if elevation[idx] > fill_level:
 			continue
