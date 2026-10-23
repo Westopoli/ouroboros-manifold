@@ -1,4 +1,4 @@
-# Rule pins: R-126-04@6335da, R-218-06@c47aed
+# Rule pins: R-126-04@6335da, R-218-06@795f15
 """Story play S-126 (E-15), VG-CONTRACT-E7: "Most of my force is out there." Moment: tick 0 of the first mission, ground era
 (`--era greek_placeholder`, seed 1): the battle screen shows the smaller starting force, the structures yet to produce the rest.
 Rules: R-218-06 as the spec rewrites it ("until S-211 the player starts with at least half of F, sliding down to a fifth only when
