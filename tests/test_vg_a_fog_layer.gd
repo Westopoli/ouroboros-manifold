@@ -1,11 +1,12 @@
 extends SceneTree
+# Rule pins: R-089-03@c09d1f, R-089-04@edc267
 
 # VG-A piece A4. Proves S-005 / S-091 / S-092, R-089-04 (visibility recomputed every tick, nothing remembered),
 # R-089-03 (what is outside sight is dimmed and not drawn).
 # RED because res://scenes/tactical_c/fog_layer.gd does not exist.
 # Interface (test's choice): fog_layer.gd extends Node2D, child "FogLayer".
 #   set_frame(frame, local_faction, world_scale, camera)
-#   sight_discs() -> Array of {center: Vector2 screen px, radius: float px}, one per own unit carrying `sight`
+#   sight_discs() -> Array of {points: PackedVector2Array} (TD-VG-A-sightdisc: was {center, radius}), one per own unit carrying `sight`
 #   outside_alpha() -> float, 0 < a < 1     the dim outside every disc
 
 const TITLE := "VG-A A4 fog layer"
@@ -151,6 +152,30 @@ func _count(v: Variant) -> int:
 	return 0
 
 
+# TD-VG-A-sightdisc: area centroid of a disc's polygon (a disc without `points` reads as Vector2(INF, INF) and fails the checks).
+func _centroid(disc: Dictionary) -> Vector2:
+	var p: PackedVector2Array = disc.get("points", PackedVector2Array())
+	if p.size() < 3:
+		return Vector2(INF, INF)
+	var a := 0.0
+	var c := Vector2.ZERO
+	for k in p.size():
+		var u := p[k]
+		var v := p[(k + 1) % p.size()]
+		var cr := u.x * v.y - v.x * u.y
+		a += cr
+		c += (u + v) * cr
+	return c / (3.0 * a)
+
+
+func _far(disc: Dictionary) -> float:
+	var c := _centroid(disc)
+	var f := -1.0
+	for q in disc.get("points", PackedVector2Array()):
+		f = maxf(f, q.distance_to(c))
+	return f
+
+
 func _bbox(poly: PackedVector2Array) -> Rect2:
 	var r := Rect2(poly[0], Vector2.ZERO)
 	for p in poly:
@@ -173,12 +198,13 @@ func _run_tests() -> void:
 	var d: Array = fg.call("sight_discs")
 	_assert(d.size() == 2, "A4: S-091 one disc per own unit with sight (2), none for a unit without sight or an enemy; got %d" % d.size())
 	if d.size() == 2:
-		var radii := [float(d[0]["radius"]), float(d[1]["radius"])]
+		# TD-VG-A-sightdisc: a disc is {points: PackedVector2Array}; its radius is the farthest point from the polygon's centroid.
+		var radii := [_far(d[0]), _far(d[1])]
 		radii.sort()
 		_assert(absf(radii[0] - 100.0) < 0.5 and absf(radii[1] - 200.0) < 0.5, "A4: radius = sight * world_scale; a unit that sees farther has a larger disc; got " + str(radii))
 		var near := false
 		for x in d:
-			if (x["center"] as Vector2).distance_to(_scr(Vector2(1500, 1500))) < 0.5:
+			if _centroid(x).distance_to(_scr(Vector2(1500, 1500))) < 0.5:
 				near = true
 		_assert(near, "A4 CONTROL: a disc is centred on the unit's screen position")
 	_assert(float(fg.call("outside_alpha")) > 0.0 and float(fg.call("outside_alpha")) < 1.0, "A4: S-092 the outside is dimmed, not black and not clear")
@@ -188,7 +214,7 @@ func _run_tests() -> void:
 	fg.call("set_frame", _frame(moved), 0, SCALE, CAM)
 	var stale := false
 	for x in fg.call("sight_discs"):
-		if (x["center"] as Vector2).distance_to(_scr(Vector2(1500, 1500))) < 0.5:
+		if _centroid(x).distance_to(_scr(Vector2(1500, 1500))) < 0.5:
 			stale = true
 	_assert(not stale, "A4: R-089-04 no disc remains at a position the unit has left")
 	_assert((fg.call("sight_discs") as Array).size() == 2, "A4: the moved unit still has its disc, at the new position")
