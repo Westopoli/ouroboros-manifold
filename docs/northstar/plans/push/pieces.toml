@@ -1987,14 +1987,16 @@ tests_pending = true  # tests/test_tactical_camera.gd (existing red) gains cases
 size_estimate = "A18: the opening frame is the player's home, [B R-103-01], DRAFT-a18-margin, DRAFT-a18-home-key; acceptance = the three framing groups of tests/test_tactical_camera.gd green (live, top-edge, bottom-right-corner); the four A6a-2 edge-scroll cases are FINDING-edge-scroll-xvfb (not A18's); test_tactical_view.gd :309/:314 re-pinned under TD-VG-A-13; test_pan_speed_zoom.py :93 re-pinned under TD-VG-A-14; FU-A18-3d for the 3D rig"
 
 # Westley 2026-10-13 verdicts: S-002 rejected (the layer order is a keybind), S-140 re-shot after the route line.
+# Tool: Workflow (a single client piece that ends in a frame)
 [[piece]]
 id = "VG-A-layerkeys"
 manager = "M0"
 wave = 9
-owns = ["scenes/tactical_c/layer_view.gd", "scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_layerkeys.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py", "scenes/settings/settings.gd", "scenes/tactical_c/hud/selection_panel.gd", "tests/test_vg_a_a16.gd", "docs/northstar/story_reviews/A.md", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S002-layer-keys-arm-and-click.png"]  # tactical_view.gd: the input handler lines only, plus the one-line c["layer"] fix in _send_match_command (FINDING-match-set-layer-no-layer, g9); settings.gd the keybind card rows; selection_panel.gd the digit guard; tests/test_vg_a_a16.gd its retired pins only; A.md the S-002 re-shot row; the westley README row and png copy (name is the drafter's draft from vg-wave12-laneAlayerkeys.js). Record batch 7 (Architect 2026-10-14)
+owns = ["scenes/tactical_c/layer_view.gd", "scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_layerkeys.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py", "scenes/settings/settings.gd", "scenes/tactical_c/hud/selection_panel.gd", "tests/test_vg_a_a16.gd", "docs/northstar/story_reviews/A.md", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S002-layer-keys-arm-and-click.png", "tests/qa/desktop/plays/D/S-246.py", "docs/northstar/plans/2026-10-13-d-view-spec.md"]  # tactical_view.gd: the input handler lines only, plus the one-line c["layer"] fix in _send_match_command (FINDING-match-set-layer-no-layer, g9); settings.gd the keybind card rows; selection_panel.gd the digit guard; tests/test_vg_a_a16.gd its retired pins only; S-246.py lines :181 and :186 only (Alt+3 and Alt+5 for engine 2 and 4); d-view-spec.md the :15 sentence only; the ledger TD and finding rows are the records clerk's, not owned here; the stale line numbers for _send_match_command are :890-902 on 543f6c04; A.md the S-002 re-shot row; the westley README row and png copy (name is the drafter's draft from vg-wave12-laneAlayerkeys.js). Record batch 7 (Architect 2026-10-14)
 owns_glob = []
+spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-A-layerkeys (rev 4)
 acceptance = ["tests/test_vg_a_layerkeys.gd"]
-depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW", "VG-A-startforce", "VG-CONTRACT-layerspot", "VG-B24b-quality-control", "VG-E1W", "VG-C-land-marks", "VG-C-land-one-projection"]  # VG-D-VIEW and VG-A-startforce also own scenes/tactical_c/tactical_view.gd and land first: the three-armies binding is the sprint's shot, the keybind piece is a strip rework and can wait (Architect 2026-10-14); VG-CONTRACT-layerspot per the Architect 2026-10-14 (record batch 7); VG-B24b-quality-control (queued) also owns scenes/settings/settings.gd (clerk addition for owner_lint); shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
+depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW", "VG-A-startforce", "VG-CONTRACT-layerspot", "VG-B24b-quality-control", "VG-E1W", "VG-C-land-marks", "VG-C-land-one-projection", "VG-D-s246-import"]  # VG-D-s246-import (attached 28e41ec3) is the S-246 play's current owner, ordering only; VG-D-VIEW and VG-A-startforce also own scenes/tactical_c/tactical_view.gd and land first: the three-armies binding is the sprint's shot, the keybind piece is a strip rework and can wait (Architect 2026-10-14); VG-CONTRACT-layerspot per the Architect 2026-10-14 (record batch 7); VG-B24b-quality-control (queued) also owns scenes/settings/settings.gd (clerk addition for owner_lint); shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "Alt plus layer number arms a transfer for the whole selection, the next map click places it (R-002-08, R-105-06 rewritten 2026-10-13); no narrowing; the To-layer strip buttons go; re-shot S-002"
@@ -3084,13 +3086,14 @@ size_estimate = "the C1 to C5 checks fail instead of warn once SWEEP-spec-standi
 id = "VG-E-a8feed"
 manager = "M0"
 wave = 9
-owns = ["autoload/c_bridge.gd", "scenes/tactical_c/hud/events_feed.gd", "tests/test_vg_e_a8feed.gd"]
+owns = ["scenes/tactical_c/hud/events_feed.gd", "tests/test_vg_e_a8feed.gd", "tests/qa/desktop/plays/E/S-127.py"]  # c_bridge.gd dropped: the feed diffs the view rows (spec paragraph); the test and play fall under VG-E1's attached globs, the sanctioned pattern
 owns_glob = []
 acceptance = ["tests/test_vg_e_a8feed.gd"]
-depends_on = ["VG-E1M", "VG-E1N", "VG-A-routeline", "VG-CONTRACT-layerspot"]
+depends_on = ["VG-E1M", "VG-E1N"]  # E1M: the three-line skip is the base (origin/push/vg-e1m d0988ac5); E1N ordering only (DEC-combined-landings-2026-10-23); VG-A-routeline and VG-CONTRACT-layerspot dropped: both edges existed for c_bridge.gd only (grep 2026-10-23)
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E-a8feed, after VG-E1W
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "the bridge passes structures_changed through (or the feed diffs owners from the full list, the builder picks the smaller); tests first by a different writer: a live-path test feeds a full frame then a delta with one owner flip through the bridge and expects exactly one captured line; no edit to the A8 test; shot = the S-235 play re-run with one flip in frame"
+size_estimate = "the feed diffs structure owners from the view rows (no bridge change); tests first by a different writer: a full frame then one owner flip through CBridge._reconstruct_tactical gives exactly one captured line; no edit to the A8 test; shot = the S-127 play (DRAFT-a8feed-play-budget set by the test writer from a dump)"
 
 # Lane T (Architect 2026-10-20): expected behaviour proved through the game; spec section in 2026-10-07-visible-game-spec.md
 
@@ -3137,7 +3140,7 @@ wave = 13
 owns = ["csrc/pipe/om_pipe.c", "csrc/tactical_move.c", "docs/northstar/plans/push/pp_contract.md", "docs/architecture.md", "autoload/c_bridge.gd", "tests/qa/desktop/plays/T/S-163.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_emission.py"]
-depends_on = ["VG-T-EMIT-TESTS", "VG-A-layerkeys", "VG-A-routeline", "VG-CONTRACT-route", "LAB-REV2-E2", "VG-E-a8feed", "VG-T-REACH-WIRE"]
+depends_on = ["VG-T-EMIT-TESTS", "VG-A-layerkeys", "VG-A-routeline", "VG-CONTRACT-route", "LAB-REV2-E2", "VG-T-REACH-WIRE"]  # VG-E-a8feed edge dropped 2026-10-23: a8feed no longer owns c_bridge.gd (audit finding)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "T4: emit verb in the command table, OM_TP_EMIT_SIGHT_MULT 2.0 and OM_TP_EMIT_SEEN_MULT 3.0 defaults, keybind in c_bridge.gd, S-163 play"
