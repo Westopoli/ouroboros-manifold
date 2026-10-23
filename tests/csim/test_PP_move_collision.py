@@ -1,3 +1,4 @@
+# Rule pins: R-097-05@e1bd3e, R-097-07@a85597, R-097-10@a759df, R-099-04@8a3792
 """PP-move rule tests, collision, arrival and map clamp.
 
 Proves E-13 R-097-05, R-097-10 (the stationary-pair rule, renumbered from the second R-097-10 by A158), R-099-04
@@ -73,8 +74,10 @@ def test_R_097_10_stationary_unit_takes_no_push_mover_takes_all(lib, tw):
     """R-097-10 (one stationary): a unit with no move target takes 0 and the mover takes the full displacement.
     M (id 1, the lower id so it starts the pair check) at (100,0) goes -x, 7.5 wu to (92.5,0), 17.5 from the idle
     S at (110,0); it is pushed back to 30 from S, i.e. to (80,0), and S has not moved at all."""
+    # TD-VG-E-idle-own (test-defect, assumption-changed by the R-097-10 rewrite, Architect 2026-10-23): S is an ENEMY idle unit;
+    # an idle unit of M's side now takes the whole displacement (tests/csim/test_VG_E_move_through_idle_own.py).
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 100.0, 0.0, 0)
-    s = lib.om_unit_spawn(tw, RAIDER, FRIEND, 110.0, 0.0, 0)
+    s = lib.om_unit_spawn(tw, RAIDER, ENEMY, 110.0, 0.0, 0)
     lib.om_command_move(tw, m, -1000.0, 0.0)
     lib.om_tactical_step(tw)
     assert lib.om_unit_get_pos(tw, s) == (110.0, 0.0), "a stationary unit was pushed"
@@ -207,7 +210,7 @@ def test_P3_collision_push_is_clamped_to_the_canvas(lib, tw):
     mostly toward -y, which is off the map: it is clamped to y = 0 (without the clamp it ends near y = -14)."""
     assert lib.om_map_set_canvas(tw, CANVAS_W, CANVAS_H) == 0
     m = lib.om_unit_spawn(tw, RAIDER, FRIEND, 500.0, 3.0, 0)
-    lib.om_unit_spawn(tw, RAIDER, FRIEND, 510.0, 15.0, 0)
+    lib.om_unit_spawn(tw, RAIDER, ENEMY, 510.0, 15.0, 0)   # TD-VG-E-idle-own: was FRIEND, an idle own unit takes the push
     lib.om_command_move(tw, m, 1000.0, 3.0)
     lib.om_tactical_step(tw)
     x, y = lib.om_unit_get_pos(tw, m)

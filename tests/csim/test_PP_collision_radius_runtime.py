@@ -1,3 +1,4 @@
+# Rule pins: R-097-03@6f75ba, R-097-09@4d4fa7, R-097-10@a759df, R-099-04@8a3792
 """LAB-REV2-E3: the runtime unit collision radius (Q-LAB-02 (a), Westley 2026-10-06; Architect 2026-10-13 under that
 ruling, widening A133 Q-C6 "collision pass only"; docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md ruling 15).
 
@@ -45,6 +46,7 @@ from conftest import OMFeature, OMTacParam
 
 RAIDER = 0
 FACTION = 0
+ENEMY = 1   # TD-VG-E-idle-own (test-defect, assumption-changed by the R-097-03/R-097-10 rewrite, Architect 2026-10-23): idle blockers are enemies
 LAYER = 0
 RADIUS_PARAM = OMTacParam.UNIT_COLLISION_RADIUS
 DEFAULT_RADIUS = 15.0
@@ -69,6 +71,10 @@ def _spawn(lib, w, x, y):
     return lib.om_unit_spawn(w, RAIDER, FACTION, x, y, LAYER)
 
 
+def _spawn_enemy(lib, w, x, y):
+    return lib.om_unit_spawn(w, RAIDER, ENEMY, x, y, LAYER)
+
+
 def _pos(lib, w, u):
     return tuple(lib.om_unit_get_pos(w, u))
 
@@ -84,8 +90,8 @@ def _gap_run(lib, radius, ticks=300):
     """Returns (x where the mover first crosses y = 1000 or None, final mover pos, the per-tick trajectory)."""
     w = _world(lib, radius)
     try:
-        _spawn(lib, w, *BLOCK_A)
-        _spawn(lib, w, *BLOCK_B)
+        _spawn_enemy(lib, w, *BLOCK_A)
+        _spawn_enemy(lib, w, *BLOCK_B)
         m = _spawn(lib, w, 1040.0, 1200.0)           # on the perpendicular bisector, 200 wu above the line
         lib.om_command_move(w, m, 1040.0, 800.0)      # 200 wu below it: the straight path runs through the gap
         crossing_x, prev, traj = None, _pos(lib, w, m), []
@@ -257,7 +263,7 @@ def _pass_by(lib, radius, offset):
     x = 1000 + offset). Returns the largest sideways drift of the walker from its straight line."""
     w = _world(lib, radius)
     try:
-        _spawn(lib, w, 1000.0, 1200.0)
+        _spawn_enemy(lib, w, 1000.0, 1200.0)
         m = _spawn(lib, w, 1000.0 + offset, 1000.0)
         lib.om_command_move(w, m, 1000.0 + offset, 1400.0)
         drift = 0.0
@@ -287,7 +293,7 @@ def _probe_ahead(lib, radius):
     the blocker. Returns the walker's sideways drift |x - 1000| after the step."""
     w = _world(lib, radius)
     try:
-        _spawn(lib, w, 1000.0, 1090.0)
+        _spawn_enemy(lib, w, 1000.0, 1090.0)
         m = _spawn(lib, w, 1000.0, 1000.0)
         lib.om_command_move(w, m, 1000.0, 1400.0)
         lib.om_tactical_step(w)

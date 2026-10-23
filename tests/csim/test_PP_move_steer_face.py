@@ -1,3 +1,4 @@
+# Rule pins: R-096-01@d86536, R-097-03@6f75ba, R-097-04@3756c3, R-097-10@a759df, R-099-02@9e76f5, R-100-01@f018af, R-100-02@91e007, R-102-02@c99d03
 """PP-move rule tests, steering sweep (P8) and facing (P7).
 
 Proves E-13 R-097-03, R-097-04, R-102-02 (S-097, S-102) and R-100-01 (S-100), as
@@ -61,8 +62,10 @@ def _step_once(lib, w, u):
     return math.atan2(y1 - y0, x1 - x0), math.hypot(x1 - x0, y1 - y0), (x1, y1)
 
 
+# TD-VG-E-idle-own (test-defect, assumption-changed by the R-097-03/R-097-10 rewrite, Architect 2026-10-23): a blocker is an
+# ENEMY unit, since idle units of the mover's side no longer block the probe; an enemy at the same spot still does (the control).
 def _spawn_blockers(lib, w, points, layer=0):
-    return [lib.om_unit_spawn(w, RAIDER, FRIEND, float(x), float(y), layer) for (x, y) in points]
+    return [lib.om_unit_spawn(w, RAIDER, ENEMY, float(x), float(y), layer) for (x, y) in points]
 
 
 # (case id, blocker positions around a Raider at (0,0) ordered to (1000, 0), expected first-step angle in degrees)
@@ -178,7 +181,7 @@ def test_R_097_03_start_of_tick_control_idle_unit_at_the_live_spot_blocks(lib, t
     """Positive control for the start-of-tick test: A idle at (7.5,0) (so its start-of-tick and live positions
     are the same) is 29.5 from B's probe point (37,0): B must deflect, whichever angle the sweep then picks
     (the sweep test owns the angle: +30 from heading 180 is 210 deg). Green today and must stay green."""
-    a = lib.om_unit_spawn(tw, RAIDER, FRIEND, 7.5, 0.0, 0)
+    a = lib.om_unit_spawn(tw, RAIDER, ENEMY, 7.5, 0.0, 0)   # TD-VG-E-idle-own: was FRIEND, an idle own unit no longer blocks
     b = lib.om_unit_spawn(tw, RAIDER, FRIEND, 77.0, 0.0, 0)
     lib.om_command_move(tw, b, -1000.0, 0.0)
     ang, dist, _ = _step_once(lib, tw, b)
