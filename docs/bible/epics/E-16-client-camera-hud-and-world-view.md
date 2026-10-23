@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 16 stories, 91 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values; the economy and layer-action stories (S-230 to S-235) state what must be shown and leave numbers and layout to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
-| Implied-but-unstated behavior turned into flags | 14 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 9 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01 (Q-235-01 closed 2026-10-12). |
+| Implied-but-unstated behavior turned into flags | 9 open flags: 3 on the first stories, Q-103-04, Q-103-06, Q-111-01, and 6 on S-230 to S-235, Q-230-01, Q-230-03, Q-231-03, Q-232-01, Q-232-02, Q-233-01 (Q-235-01 closed 2026-10-12; Q-103-05, Q-110-03, Q-230-02, Q-231-01 and Q-231-02 closed 2026-10-21, register). |
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-234 are design decided and not scheduled for building; the ticker beats of S-235 are queued (VG-E1M, VG-E1W). The camera is chosen (the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
+**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-234 are design decided and not scheduled for building; the ticker beats of S-235 are queued (VG-E1M, VG-E1W). The camera is chosen (the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) are the load-bearing open item (the map view prototype, Q-103-05, closed 2026-10-21: prototype first, then commit). This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Rules
 - R-103-09  Given the player pans by keys or by edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
 - R-103-10  Idea only, not a decision (Q-103-07; Westley, 2026-10-07). Instead of the Angle Rack and Layer Peel above, the player could bind keys to camera angles of their own: each key puts the camera at an angle relative to the current forward direction of a unit, in a view that tracks the unit as it moves; a default mode that does not follow, reached by its own key, is the one the player switches back to; and the player may change as much about each view as we can give: its angle, whether it follows, its zoom distance. Nothing here is specified or scheduled.
-- R-103-11  Given a ground-era mission, When the battle screen draws it, Then every own unit and every seen enemy (R-089-04) has a 3D body on the terrain, and a slope view marks slope midlines and blocked ground over the field; flyers stand above their layer floor once the terrain frame carries the floors (K-c6) (Architect, 2026-10-09; built by C6, C7 and VG-C-wire).
+- R-103-11  Given a ground-era mission, When the battle screen draws it, Then every own unit and every seen enemy (R-089-04) has a 3D body on the terrain, and slope midlines are not marked on the land view: the midline is a sim position (R-004-06), told by sight and height (Westley 2026-10-22, DEC-S001-no-slope-markers); flyers stand above their layer floor once the terrain frame carries the floors (K-c6) (Architect, 2026-10-09; built by C6, C7 and VG-C-wire).
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
@@ -58,7 +58,7 @@ Rules
 
 Inputs: mouse, keyboard.
 Outputs: viewport transform; orders.
-Open flags: Q-103-05 (Sand Table prototype before commitment), Q-103-06 (layer marks for groups beyond pins). What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
+Open flags: Q-103-06 (layer marks for groups beyond pins). What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
 Flag closed, rule text pending: Q-104-01, single-player pause is allowed (Escape or Pause halts the simulation and opens the menu) and multiplayer never pauses. The rule below is what the tests read today.
@@ -76,11 +76,11 @@ Rules
 - R-104-07  Given control groups 1 through 0, When the tabs are read, Then each bound group shows its unit-type icon and count.
 - R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker; the economy player's screen skips this place in the beta (Westley, 2026-10-07) [Q-230-02: parked].
 - R-104-09  Given the right sidebar, When read, Then it holds the layer strip and nothing else at launch; where the solo commander's dial, doctrine switch and unit-mix switches sit is the Architect's choice, with Westley's feedback after the beta (Q-231-01).
-- R-104-10  Given the in-world chrome, When read, Then every unit has a thin HP bar above it and a layer-color ring beneath it, and selected units have a selection ring, and every force set to emit carries the emit mark of S-232; there is no enemy composition readout anywhere [Q-230-03: where the line falls between that and what a player infers from the world, such as heavy gathering of one resource showing which role a side is making more of, E-22 S-171].
+- R-104-10  Given the in-world chrome, When read, Then every unit has a thin HP bar above it and a layer-color ring beneath it in the space era only (on land there is no ring; the height step and sight tell the layer, Westley 2026-10-22, DEC-S001-no-layer-ring-land), and selected units have a selection ring, and every force set to emit carries the emit mark of S-232; there is no enemy composition readout anywhere [Q-230-03: where the line falls between that and what a player infers from the world, such as heavy gathering of one resource showing which role a side is making more of, E-22 S-171].
 
 Inputs: tick delta; selection; control groups.
 Outputs: HUD panels, T2-checkable.
-Open flags: Q-230-02 (parked for the beta), Q-231-01 (liberty: Architect). Reference: IGoP HUD screenshots, pending confirmation.
+Open flags: none. Q-230-02 and Q-231-01 closed 2026-10-21 (register: the economy player's screen skips this place; the Architect's choice). Reference: IGoP HUD screenshots, pending confirmation.
 
 ### S-105 — Selection and control groups
 As a commander, I want to click, box-select, and bind groups, and never to have an all-army button, so that positional thinking is the whole game.
@@ -173,7 +173,7 @@ Rules
 
 Inputs: menu input.
 Outputs: screens.
-Open flags: Q-110-03 (loading screen content; decided before launch).
+Open flags: none. Q-110-03 closed 2026-10-21 (register: decided before launch, after a mockup).
 
 ### S-111 — Saving
 As a player, I want the game saved at every chapter boundary without asking, and to be able to leave at those boundaries, so that I never lose an evening.
@@ -203,7 +203,7 @@ Rules
 
 Inputs: economy state from the tick delta; the player's building, queue, schedule and technology commands.
 Outputs: the economy panels, T2-checkable.
-Open flags: Q-230-02 (parked for the beta). The economy player infers the enemy's composition from the world only and nothing is totalled (Westley, 2026-10-07).
+Open flags: none. Q-230-02 closed 2026-10-21 (register: the economy player's screen skips this place). The economy player infers the enemy's composition from the world only and nothing is totalled (Westley, 2026-10-07).
 
 ### S-231 — The solo commander's hand
 As a commander playing alone, I want one dial, a doctrine switch, switches for the unit mix, and a way to ask by pointing at the map, so that I steer the economy without running it.
@@ -219,7 +219,7 @@ Rules
 
 Inputs: dial setting; doctrine choice; switch states; a place and a request.
 Outputs: the controls and their state, T2-checkable; commands carried to the rules.
-Open flags: Q-231-01 and Q-231-02 (liberty: Architect). The dial, the doctrine switch and the unit-mix switches are outside hub principle 6 (Westley, 2026-10-07).
+Open flags: none. Q-231-01 and Q-231-02 closed 2026-10-21 (register: the Architect's choice). The dial, the doctrine switch and the unit-mix switches are outside hub principle 6 (Westley, 2026-10-07).
 
 ### S-232 — Pinging, going dark, and reach, on screen
 As a commander, I want to see my ping and my emitting forces, to be told when I am pinged and from which way, and to be told when a unit type cannot reach a layer, so that the three layer actions are things I can read and use on purpose.
@@ -260,7 +260,7 @@ Rules
 
 Inputs: scroll or zoom input.
 Outputs: viewport transform.
-Open flags: none here. Whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing is decided by the prototype (Q-103-05).
+Open flags: none here. Whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing is decided by the prototype (Q-103-05, closed 2026-10-21).
 
 ### S-235 — The map shows the economy and its news
 As a commander, I want the map to show where the economy is and the ticker to tell me what happened to it, so that I can read the war's other half at a glance.

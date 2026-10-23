@@ -45,7 +45,7 @@ Rules
 
 Inputs: the base; sources (E-22 S-177); the era's resources.
 Outputs: resource counts per side; worker positions in the tick delta.
-Open flags: Q-159-08, Q-167-01, Q-167-02. Unpicked pieces that touch this story, listed under Open ambiguity flags: workers under raid.
+Open flags: none. Q-159-08, Q-167-01 and Q-167-02 closed 2026-10-21 (register; named drafts). Unpicked pieces that touch this story, listed under Open ambiguity flags: workers under raid.
 
 ### S-168 — Building and placement
 
@@ -60,7 +60,7 @@ Rules
 
 Inputs: placement commands from the economy player; the terrain (E-17); the era's building set.
 Outputs: buildings with owner, footprint, stage and yield in the tick delta.
-Open flags: Q-168-03. Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
+Open flags: none. Q-168-03 closed 2026-10-21 (register; named draft). Unpicked: deeper districts, the Keystone. With nobody in the seat the rules place buildings (E-22 S-179) and a solo commander never does (E-22 S-180).
 
 ### S-169 — One population cap
 
@@ -74,7 +74,7 @@ Rules
 
 Inputs: units; housing; cap upgrades.
 Outputs: population and cap per side.
-Open flags: Q-169-01. Unpicked: upkeep bands.
+Open flags: none. Q-169-01 closed 2026-10-21 (register; named draft). Unpicked: upkeep bands.
 
 ### S-170 — Production and the schedule
 
@@ -90,7 +90,7 @@ Rules
 
 Inputs: the economy player's production and schedule commands; resources; the cap.
 Outputs: units in the tick delta; each building's focus and timeline.
-Open flags: Q-159-08, Q-170-01, Q-170-02, Q-170-03. What a seen building shows the enemy is E-22 S-172. A return-to-base ability is unpicked.
+Open flags: none. Q-159-08, Q-170-01, Q-170-02 and Q-170-03 closed 2026-10-21 (register; named drafts). What a seen building shows the enemy is E-22 S-172. A return-to-base ability is unpicked.
 
 ### S-171 — Counters
 
@@ -104,7 +104,7 @@ Rules
 
 Inputs: unit category and role; resource costs.
 Outputs: none of its own. The effect is the damage of E-11 S-081 and the fog-limited picture of E-12.
-Open flags: Q-159-08. The roles inside a category are E-11 Q-082-03.
+Open flags: none. Q-159-08 closed 2026-10-21 (register). The roles inside a category are E-11 Q-082-03.
 
 ### S-172 — Disguise
 
@@ -149,7 +149,7 @@ Rules
 
 Inputs: placement commands; the terrain.
 Outputs: defenses in the tick delta; raid events.
-Open flags: Q-174-02. Unpicked: workers under raid. With nobody in the seat the rules wall a lane only when the commander asks (E-22 S-180).
+Open flags: none. Q-174-02 closed 2026-10-21 (register; named draft). Unpicked: workers under raid. With nobody in the seat the rules wall a lane only when the commander asks (E-22 S-180).
 
 ### S-175 — Expansions and forward works
 
@@ -244,7 +244,7 @@ Rules
 
 Inputs: the economy's state; the doctrine; the dial and requests of E-22 S-180.
 Outputs: the economy's commands, which are the same kind a human economy player's are; ticker lines.
-Open flags: Q-179-02.
+Open flags: none. Q-179-02 closed 2026-10-21 (register; named draft).
 
 ### S-180 — The commander alone
 

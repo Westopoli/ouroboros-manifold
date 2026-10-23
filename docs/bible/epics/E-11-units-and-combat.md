@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-088 (how units read on screen, squads, ability cues) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags listed at the foot and one missing reference (S-088). S-081, S-084, S-085 and S-086 have no open flags; gate to be rerun. The roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones. The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
+**Gate verdict: not passed.** Blocked on the open flags listed at the foot and one missing reference (S-088). S-081, S-084, S-085 and S-086 have no open flags; gate to be rerun. The roster flag Q-082-03 (how a 20 to 40 type roster is shaped) is the load-bearing one; Q-082-04 and Q-082-05 closed 2026-10-21 (register). The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
 
 ## Purpose
 
@@ -66,7 +66,7 @@ Rules
 
 Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
-Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), workers sit outside the roster for the beta (Westley, 2026-10-07).
+Open flags: Q-082-03 (categories, roles, and the roster invariants past six types); Q-082-04 and Q-082-05 closed 2026-10-21 (register: the interim power formula plus matchup simulations; each launch era carries its own 20 to 40); workers sit outside the roster for the beta (Westley, 2026-10-07).
 
 ### S-083 — Stats, trait cards, ability
 As a commander, I want to unlock trait cards and build a force that plays my way, so that units differ in kind, and never in a way that beats positioning.
@@ -206,7 +206,7 @@ Rules
 
 Inputs: era pack cost table; population weights.
 Outputs: cost and weight in the loaded profile, read by E-22 S-170 and the economy screen.
-Open flags: Q-159-08, Q-169-01, Q-167-01 (what a worker costs).
+Open flags: none. Q-159-08, Q-169-01 and Q-167-01 (what a worker costs) closed 2026-10-21 (register; amounts are named drafts).
 
 ### S-204 — Buildings are things on the map
 As a commander, I want walls, gates, towers and production buildings to be things on the map that block, are seen and can be attacked, so that an assault has something to break and a defense has something to stand behind.
@@ -221,7 +221,7 @@ Rules
 
 Inputs: structure records (E-22 S-168, S-170, S-174); unit states; visibility (E-12).
 Outputs: structure hit points and destroyed events in the tick delta.
-Open flags: Q-174-02.
+Open flags: none. Q-174-02 closed 2026-10-21 (register: a named draft Westley tunes by feel).
 
 ## Inputs
 
