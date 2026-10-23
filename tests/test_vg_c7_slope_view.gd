@@ -1,5 +1,5 @@
 extends "res://tests/support/vg_c_case.gd"
-# Rule pins: R-001-01@025bc6, R-001-06@9f9051, R-004-01@61a9b6, R-004-06@ebf993
+# Rule pins: R-001-01@025bc6, R-001-06@9f9051, R-004-01@61a9b6, R-004-06@ebf993, R-236-02@5cb2dc
 
 # VG-C piece C7 (scenes/ground3d/slope_view.gd) as rewritten by VG-C-no-slope-markers: slopes and layers visible, without
 # the white midline bars. Proves S-001 R-001-06 (a slope is ground joining two layers; no bar is drawn), R-001-01 (blocked ground visible), S-004 R-004-01/06 (a unit
@@ -13,7 +13,11 @@ extends "res://tests/support/vg_c_case.gd"
 # POSITIVE CONTROL (the spec's): on main the no-bars assertion is red, the BoxMesh children exist (one per slope record).
 # UNSTATED INTERFACE choice: "no MIDLINE mesh child" = no child of the view is a MeshInstance3D whose mesh is a BoxMesh
 # (the bar is a BoxMesh, slope_view.gd:38-40; the circles are CylinderMesh and stay); the two transit circles of unit 4 are
-# counted as CylinderMesh children (:95-105 draws two). The band-colour parity belongs to VG-C-ground-one-colour.
+# counted as CylinderMesh children (:95-105 draws two). The band-colour parity belongs to VG-C-ground-one-colour, which adds
+# (TD-VG-C-one-colour, the kept ground-colour assertion): a slope's ground is GroundBands.GROUND_COLOUR on both sides of the
+# midline. UNSTATED: the fixture slope runs x 100..300 at y 100 with midline x 200, so the cells either side are (1,1) and
+# (2,1) (CELL_WU 100); their GroundBands.cell_colours entries are compared with the GROUND_COLOUR constant (red on main:
+# the constant does not exist (b) and the two bands' colours differ (a)).
 
 
 func _run() -> void:
@@ -32,6 +36,16 @@ func _run() -> void:
 	# PARITY (kept assertion, no deletion without parity): the slope is still in the view's inventory on the fixture
 	var qs: Dictionary = v.qa_state()
 	_check(int(qs.get("slopes", 0)) >= 1, "R-001-06 parity: qa_state().slopes is %s, want at least 1 on the fixture" % [qs.get("slopes")])
+	var gb := _load(SCENES + "ground_bands.gd")
+	if gb != null:
+		var consts: Dictionary = gb.get_script_constant_map()
+		var cols: PackedColorArray = gb.cell_colours(t)
+		var lo: Color = cols[1 * fx.W + 1]
+		var hi: Color = cols[1 * fx.W + 2]
+		_check(consts.has("GROUND_COLOUR"), "R-236-02: GroundBands has no GROUND_COLOUR constant")
+		_check(lo == hi, "R-236-02: the slope's ground differs across the midline: %s vs %s" % [lo.to_html(), hi.to_html()])
+		if consts.has("GROUND_COLOUR"):
+			_check(lo == consts["GROUND_COLOUR"] and hi == consts["GROUND_COLOUR"], "R-236-02: the slope's ground is not GROUND_COLOUR on both sides of the midline")
 	var blocked: Array = v.blocked_cells()
 	_check(blocked == [4 * fx.W + 5], "R-001-01: blocked cells must be exactly the one walkable==0 cell, got %s" % [blocked])
 	v.set_units(fx.frame()["units"])
