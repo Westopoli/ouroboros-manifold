@@ -6,6 +6,8 @@ extends Node2D
 const MANIFEST := "res://assets/eras/settled_reach/manifest.json"
 const TYPE_NAMES := ["raider", "interceptor", "vanguard", "warden", "bombard", "bastion"]
 const SHAPE_RADIUS := 12.0
+# VG-C-facing-arrow, DRAFT-facing-arrow-len: 0.4 x the body size (2 x SHAPE_RADIUS) long, base half that wide, base at the body radius. See also tests/test_vg_c_facing_arrow.gd
+const ARROW_LEN := 0.4 * 2.0 * SHAPE_RADIUS
 # draft: the manifest scale is for the 3D model (warden is 200.0); uncapped, one 2D body fills ~2400 px and 330 of them cost ~1.2 s a frame
 const MAX_VISUAL_SCALE := 1.0
 # draft: an HP bar shows only on a damaged or selected unit, so a full-health dense force shows shapes, not merged bars
@@ -40,6 +42,7 @@ var _camera := Vector2.ZERO
 var _vscale: Array = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 var _offset: Array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 var _own_color := FALLBACK_OWN
+static var _offsets: Array = []
 
 
 func _init() -> void:
@@ -57,6 +60,19 @@ func _init() -> void:
 		var e: Dictionary = units.get(TYPE_NAMES[i], {})
 		_vscale[i] = minf(float(e.get("visual_scale", 1.0)), MAX_VISUAL_SCALE)
 		_offset[i] = float(e.get("facing_offset_rad", 0.0))
+
+
+# The manifest's facing_offset_rad per type, the one place it is read (2D icon, 3D body, arrow).
+static func facing_offset(type: int) -> float:
+	if _offsets.is_empty():
+		_offsets = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+		var f := FileAccess.open(MANIFEST, FileAccess.READ)
+		var m = JSON.parse_string(f.get_as_text()) if f != null else null
+		if m is Dictionary:
+			var units: Dictionary = m.get("units", {})
+			for i in TYPE_NAMES.size():
+				_offsets[i] = float(units.get(TYPE_NAMES[i], {}).get("facing_offset_rad", 0.0))
+	return _offsets[clampi(type, 0, 5)]
 
 
 func _to_screen(w: Vector2) -> Vector2:
@@ -114,6 +130,14 @@ func _make_node(u: Dictionary, own: bool) -> Node2D:
 	body.add_child(edge)
 	node.add_child(body)
 	_fills[int(u["id"])] = body
+	var arrow := Polygon2D.new()
+	arrow.name = "Arrow"
+	arrow.color = Color.WHITE
+	arrow.polygon = PackedVector2Array([
+		Vector2(SHAPE_RADIUS + ARROW_LEN, 0.0) * k,
+		Vector2(SHAPE_RADIUS, ARROW_LEN * 0.25) * k,
+		Vector2(SHAPE_RADIUS, -ARROW_LEN * 0.25) * k])
+	node.add_child(arrow)
 	var half := SHAPE_RADIUS * k
 	var ring := Line2D.new()
 	ring.name = "LayerRing"
@@ -180,6 +204,7 @@ func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera
 		var fac := float(u.get("facing", 0.0))
 		_facing[id] = fac
 		_fills[id].rotation = fac + _offset[clampi(type, 0, 5)]
+		_nodes[id].get_node("Arrow").rotation = fac + _offset[clampi(type, 0, 5)]
 		var frac := clampf(float(u.get("hp", 0.0)) / maxf(float(max_hp.get(type, 1.0)), 0.001), 0.0, 1.0)
 		_hp[id] = frac
 		_bars[id].get_node("Fill").size.x = BAR_SIZE.x * frac
@@ -193,6 +218,19 @@ func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera
 
 func unit_node(id: int) -> Node2D:
 	return _nodes.get(id)
+
+
+func arrow_count() -> int:
+	var n := 0
+	for id in _nodes:
+		if _nodes[id].get_node_or_null("Arrow") != null:
+			n += 1
+	return n
+
+
+func arrow_apex_px(id: int) -> Vector2:
+	var a: Polygon2D = _nodes[id].get_node("Arrow")
+	return a.global_transform * a.polygon[0]
 
 
 func unit_polygon(id: int) -> PackedVector2Array:
