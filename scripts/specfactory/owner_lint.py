@@ -72,6 +72,19 @@ def in_flight_overlaps(pieces: list[dict]) -> list[tuple[str, str, str]]:
     return findings
 
 
+def skipped_record_files(pieces: list[dict]) -> list[str]:
+    """Record files (pc.SHARED_RECORD_GLOBS) listed by two or more in-flight pieces:
+    in_flight_overlaps skips them, main() names them once."""
+    seen: dict[str, set[str]] = {}
+    for p in pieces:
+        if not is_in_flight(p):
+            continue
+        for pat in pc.own_patterns(p):
+            if pc.is_shared_record(pat):
+                seen.setdefault(pat, set()).add(p.get("id", ""))
+    return sorted(pat for pat, ids in seen.items() if len(ids) > 1)
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         prog="owner_lint.py",
@@ -84,6 +97,9 @@ def main(argv: list[str]) -> int:
     pieces_list = pc.load_pieces(Path(args.pieces))
     findings = in_flight_overlaps(pieces_list)
 
+    skipped = skipped_record_files(pieces_list)
+    if skipped:
+        print("record files (no owner): " + ", ".join(skipped))
     for level, pair, msg in findings:
         print(f"{level} {pair}: {msg}")
 
