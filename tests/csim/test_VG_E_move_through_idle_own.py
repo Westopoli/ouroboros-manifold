@@ -12,10 +12,13 @@ UNSTATED INTERFACE CHOICES (none needs product code; a gap is a choice the parag
   order is to (11950, 550) from the group centroid (11950, 300), as in the probe.
 - The row gives the 26 idle own units only as "y 420 to 480, spacing about 29"; the exact x are not recorded.
   Choice: three rows y 420, 450, 480 of 9, 9 and 8 units, 30 wu apart, centred on x 11950 (9 wide: 11830..12070).
-- Units are Raiders on the walking movement kind (the T2 tests' ground world), canvas 24000 x 24000, seed 1, layer 2,
-  no om_terrain_generate (with it 25 of the 68 probe positions are masked and om_unit_spawn returns 0).
-- "Displaced" for the idle units: at least one of the 26 ends away from its start (units behind the column's
-  edge may legitimately stay). All 26 must be alive.
+- Architect ruling 2026-10-23 (row 20): the world is the paragraph's: om_terrain_generate with terrain seed 11 on a
+  16000 x 16000 canvas, built as tests/csim/test_E01_T2_collision_mask.py does, because the terrain shapes the
+  column and a flat canvas tests a different mechanism. Units are Raiders on the walking movement kind, layer 2.
+  Column and idle positions stay as the paragraph row gives them (and the writer's idle rows); checked against
+  the layer 2 walk mask: none of the 68 falls on masked terrain, so none was moved.
+- Architect ruling 2026-10-23 (row 22): "displaced" for the idle units is EVERY one of the 26 ends away from its
+  start and alive, as the paragraph says; all 26 stand inside the column's width, none is behind its edge.
 - "Arrives": the centroid of the 42 is within DRAFT-idle-own-arrive-wu = 20 wu of the goal after RUN_TICKS; the
   paragraph gives no tick count (the probe watched 1236 ticks): RUN_TICKS = 1200 is the writer's choice.
 - "No clear heading": the `waiting` flag has no getter and the :2417 line sits in the PP baseline path, which runs
@@ -34,9 +37,11 @@ from conftest import OMFeature, OMTacParam
 RAIDER = 0
 OWN, ENEMY = 0, 1
 OM_MOVE_WALKING = 1
-SEED = 1
+SEED = 1                  # the walker tests' world seed; the terrain scene uses TERRAIN_SEED
+TERRAIN_SEED = 11
 LAYER = 2
-CANVAS = 24000.0
+CANVAS = 16000.0
+CELL = 100.0
 GOAL = (11950.0, 550.0)
 ARRIVE_WU = 20.0          # DRAFT-idle-own-arrive-wu
 RUN_TICKS = 1200          # writer's choice, see the header
@@ -46,9 +51,10 @@ IDLE = [(11830.0 + 30.0 * i, y) for y, n in ((420.0, 9), (450.0, 9), (480.0, 8))
 
 
 def _world(lib, world_factory):
-    w = world_factory(n_regions=1, seed=SEED)
+    w = world_factory(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
     assert lib.om_map_set_canvas(w, CANVAS, CANVAS) == 0
+    assert lib.om_terrain_generate(w, TERRAIN_SEED, CANVAS, CANVAS) == 0
     assert lib.om_roster_set_movement_kind(w, RAIDER, OM_MOVE_WALKING) == 0
     return w
 
@@ -86,14 +92,14 @@ def test_R_097_10_a_column_ordered_past_idle_own_units_arrives(lib, world_factor
 
 
 def test_R_097_10_idle_own_units_are_displaced_and_alive(lib, world_factory):
-    """R-097-10: an idle unit takes the displacement from an own-side mover; none of the 26 is lost (red on main
+    """R-097-10: an idle unit takes the displacement from an own-side mover; every one of the 26 is displaced and alive (red on main
     (a): nothing moves them because the column never reaches them)."""
     w = _world(lib, world_factory)
     col, idle = _scene(lib, w, OWN)
     _run(lib, w, col)
     assert all(lib.om_unit_alive(w, u) for u in idle)
-    moved = [u for u, p in zip(idle, IDLE) if lib.om_unit_get_pos(w, u) != p]
-    assert moved, "no idle own unit was displaced"
+    still = [p for u, p in zip(idle, IDLE) if lib.om_unit_get_pos(w, u) == p]
+    assert not still, "idle own units not displaced: %r" % still
 
 
 def test_R_097_10_positive_control_a_column_through_an_enemy_line_stops_short(lib, world_factory):
