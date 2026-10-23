@@ -27,6 +27,7 @@ var _vertices := 0
 var _container: SubViewportContainer
 var _viewport: SubViewport
 var _mesh: MeshInstance3D
+var _row_max: PackedFloat32Array = PackedFloat32Array() # wu, highest height per cell row (occlusion skip)
 var _rig: Node3D
 var _units3d: Node3D
 var _slope_view: Node3D
@@ -104,6 +105,7 @@ func set_terrain(t: Dictionary) -> void:
 	if t.is_empty():
 		_rig.set_terrain({})
 		return
+	_row_max = _row_maxima(t)
 	_mesh = GroundMesh.build(t)
 	_viewport.add_child(_mesh)
 	_vertices = (int(t["cells_w"]) - 1) * (int(t["cells_h"]) - 1) * 6
@@ -153,6 +155,8 @@ func _recompute_occlusion() -> void:
 		for u in _frame.get("units", []):
 			var up := GroundPick.world_to_3d(_terrain, float(u.get("x", 0.0)), float(u.get("y", 0.0)))
 			var d := up - from
+			if _clear_view(from, up):
+				continue
 			var hit = GroundPick.pick(_terrain, from, d.normalized())
 			if hit == null:
 				continue
@@ -162,6 +166,45 @@ func _recompute_occlusion() -> void:
 	if now != _occluded:
 		_occluded = now
 		occlusion_changed.emit()
+
+
+# Cost guard (Architect ruling 2026-10-23, DRAFT 2 ms): the ray runs from the camera down to the unit; a row of cells (the
+# row and one either side, for the bilinear sample) can only block it if its highest height rises above the ray's lowest
+# height over that row's span, the end nearer the unit. When no row on the way does, the pick is skipped. Computed per
+# frame from _row_max, never cached across frames.
+func _clear_view(from: Vector3, up: Vector3) -> bool:
+	if from.y < up.y or _row_max.is_empty():
+		return false
+	var rows := _row_max.size()
+	var dz := up.z - from.z
+	var a := clampi(int(minf(from.z, up.z) / GroundPick.CELL_WU) - 1, 0, rows - 1)
+	var b := clampi(int(maxf(from.z, up.z) / GroundPick.CELL_WU) + 1, 0, rows - 1)
+	for j in range(a, b + 1):
+		var ray_y := up.y
+		if absf(dz) > 0.001:
+			var z_lo := (j - 1) * GroundPick.CELL_WU
+			var z_hi := (j + 2) * GroundPick.CELL_WU
+			var z := clampf(z_lo if dz < 0.0 else z_hi, minf(from.z, up.z), maxf(from.z, up.z))
+			ray_y = from.y + (up.y - from.y) * (z - from.z) / dz
+		if _row_max[j] > ray_y:
+			return false
+	return true
+
+
+static func _row_maxima(t: Dictionary) -> PackedFloat32Array:
+	var w := int(t.get("cells_w", 0))
+	var h := int(t.get("cells_h", 0))
+	var hs: PackedInt32Array = t.get("heights", PackedInt32Array())
+	var out := PackedFloat32Array()
+	if w < 1 or h < 1 or hs.size() < w * h:
+		return out
+	out.resize(h)
+	for j in h:
+		var m := hs[j * w]
+		for i in range(1, w):
+			m = maxi(m, hs[j * w + i])
+		out[j] = m / 100.0
+	return out
 
 
 func occluded_ids() -> Dictionary:
