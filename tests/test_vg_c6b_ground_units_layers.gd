@@ -19,6 +19,10 @@ extends "res://tests/support/vg_c_case.gd"
 const FLOORS_KEY := "layer_floors_wu"
 const FLYERS_KEY := "flyer_types"
 const FLOORS := [0.0, 100.0, 400.0, 800.0, 1200.0]
+# TD-VG-C-ground-lift (VG-C-unit-ground-fit): a walker's body is lifted 1.0 wu (DRAFT-unit-ground-lift) along the ground
+# normal; the fixture slope is shallow (normal y > 0.9998), so the y pin moves by 1.0 within the 0.05 tolerance.
+# See also: tests/test_vg_c_unit_ground_fit.gd
+const GROUND_LIFT_WU := 1.0
 
 
 func _unit(id: int, type: int, x: float, y: float, layer: int) -> Dictionary:
@@ -56,7 +60,7 @@ func _run() -> void:
 	if h0 is Dictionary:
 		for p in [[1, 250.0, 250.0], [6, 350.0, 250.0], [2, 450.0, 350.0], [7, 250.0, 450.0]]:
 			var y := float(h0.get(str(p[0]), -9999.0))
-			_check(absf(y - fx.ground_y(p[1], p[2])) < 0.05, "CONTROL: with no floors/flyer types unit %d Y %f is not the ground height %f" % [p[0], y, fx.ground_y(p[1], p[2])])
+			_check(absf(y - (fx.ground_y(p[1], p[2]) + GROUND_LIFT_WU)) < 0.05, "CONTROL: with no floors/flyer types unit %d Y %f is not the ground height + lift %f" % [p[0], y, fx.ground_y(p[1], p[2]) + GROUND_LIFT_WU])
 	_check((g0.get("units3d_shadows", []) as Array).is_empty(), "CONTROL: no flyer types yet a shadow disc exists: %s" % [g0.get("units3d_shadows")])
 	# Real case: the same frame with floors and flyer types on the terrain.
 	var t: Dictionary = fx.terrain()
@@ -66,8 +70,8 @@ func _run() -> void:
 	var h = g.get("units3d_heights", null)
 	_check(h is Dictionary, "S-132: no units3d_heights with floors fed")
 	if h is Dictionary:
-		_check(absf(float(h.get("1", -9999.0)) - fx.ground_y(250.0, 250.0)) < 0.05, "S-010: layer-0 walker Y %s, expected ground %f" % [h.get("1"), fx.ground_y(250.0, 250.0)])
-		_check(absf(float(h.get("6", -9999.0)) - fx.ground_y(350.0, 250.0)) < 0.05, "section 7: layer-1 walker Y %s, expected ground %f (walkers ignore the floor)" % [h.get("6"), fx.ground_y(350.0, 250.0)])
+		_check(absf(float(h.get("1", -9999.0)) - (fx.ground_y(250.0, 250.0) + GROUND_LIFT_WU)) < 0.05, "S-010: layer-0 walker Y %s, expected ground + lift %f" % [h.get("1"), fx.ground_y(250.0, 250.0) + GROUND_LIFT_WU])
+		_check(absf(float(h.get("6", -9999.0)) - (fx.ground_y(350.0, 250.0) + GROUND_LIFT_WU)) < 0.05, "section 7: layer-1 walker Y %s, expected ground + lift %f (walkers ignore the floor)" % [h.get("6"), fx.ground_y(350.0, 250.0) + GROUND_LIFT_WU])
 		_check(absf(float(h.get("7", -9999.0)) - (FLOORS[1] + 150.0)) < 0.05, "section 7: layer-1 flyer Y %s, expected floor %f + 150" % [h.get("7"), FLOORS[1]])
 		_check(absf(float(h.get("2", -9999.0)) - (FLOORS[2] + 150.0)) < 0.05, "section 7: layer-2 flyer Y %s, expected floor %f + 150" % [h.get("2"), FLOORS[2]])
 	var sh: Array = g.get("units3d_shadows", [])
