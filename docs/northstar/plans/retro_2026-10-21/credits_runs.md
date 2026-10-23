@@ -5,8 +5,8 @@ Target (Westley): exhausted by 21:00 EDT 2026-10-23; checkpoint 16:00 EDT (DEC-c
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total: $57.88 of $200 (rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $44.18, plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50 and the record-files test writer $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
-In flight (caps, not spent, a separate line from the rowed total): $31 across five rows marked (pending): combined landing clerk unit-ground-fit and no-slope-markers $6, pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, records batch 19 $8; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and are not counted.
+Running total: $59.71 of $200 (rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $46.01, plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 and the record-files TD edit and stack merge $0.50, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
+In flight (caps, not spent, a separate line from the rowed total): $26 across five rows marked (pending): combined landing clerk unit-ground-fit and no-slope-markers $6, pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, records batch 20 $3; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and are not counted.
 Plus two crashed inv-landview runs, cost unknown, plus runs still pending.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -138,7 +138,11 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK pin refresh ground-one-colour tests (R-236-02) then landing clerk 3 rerun | claude-sonnet-5-5 | $10 (2+8) | (pending) |   |
 | 2026-10-23 | SDK TD fix + builder comment HARNESS-lane-plays-scope (TD-HARNESS-lane-plays-known-red-detail) | claude-sonnet-5-5 | $3.5 (2+1.5) | (pending) |   |
 | 2026-10-23 | SDK TD edit + merges HARNESS-record-files (TD-HARNESS-record-files, stack onto lane-plays-scope) | claude-sonnet-5-5 | $3.5 (2+1.5) | (pending) |   |
-| 2026-10-23 | records batch 19 (records.lock) | claude-sonnet-5-5 | $8 | (pending) |   |
+| 2026-10-23 | SDK TD edit + stack merge HARNESS-record-files | claude-sonnet-5-5 | $3.5 | ~$0.50 | cost not captured, push/harness-recordfiles 511bbf21 (stacked keep-red + lane-plays + record-files; 146 passed, 1 pre-existing red), estimate $0.5 |
+| 2026-10-23 | SDK pins line test_merge_gate_support.py | claude-sonnet-5-5 | $1 | $0.088 | 7 turns, success, push/harness-recordfiles cae8ae6e (Rule pins: R-021-01@39f7e7) |
+| 2026-10-23 | records batch 19 | claude-sonnet-5-5 | $8 | $1.071 | 48 turns, success, main 63e0a5ae |
+| 2026-10-23 | SDK landing clerk 4 first run | claude-sonnet-5-5 | $8 | $0.172 | 15 turns, success; stopped before the gate: tests/test_showcase_legacy_scenes.gd has no owner row |
+| 2026-10-23 | records batch 20 (owner rows for the showcase test files) | claude-sonnet-5-5 | $3 | (pending) |   |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
