@@ -48,6 +48,12 @@ extends "res://tests/support/vg_c_case.gd"
 #  (7) ARROWS KEY (Architect ruling 2026-10-23): qa_state()["arrows"] is a Dictionary {"units_3d": int, "units_2d": int},
 #      from Units3D.arrow_count() (ground_units.gd) and UnitVisuals.arrow_count() (unit_visuals.gd), both added by the
 #      facing-arrow piece, which lands first. Inner names are this test's choice. Red on main for reason (b): no key.
+# (8) RECOMPUTE SEQUENCE (TD-VG-C-land-marks-fixture, 2026-10-23): the old sequence zoom_by(-9), pan_to, pan, set_top_down clamped
+#      the camera at height 300 on its first step and gave [1] at every pose. The new one, from the rig default (height 3000,
+#      pitch 50); camera poses measured on the builder tree: (a) pan_to(450,450) + set_top_down(true): camera (450,3400,450)
+#      straight above the crest, vertical rays, oracle []; (b) set_top_down(false): camera (450,3400,2967), oracle [1];
+#      (c) zoom_by(-9): camera (450,700,702), oracle [1]; (d) pan_to(450,900) then pan(0,-300): camera (450,300,852), oracle [1].
+#      Two distinct sets, [] then [1], occur between (a) and (b); (c) and (d) keep the old low-camera coverage.
 # Fixture frame (host and view): faction 0 owns all of 1 (behind), 2 (front), 3 (8 wu behind the crest); ids and points
 # below in _frame(). Camera = the rig default after set_terrain (height 3000, pitch 50 degrees).
 # Positive control (paragraph): a flat fixture gives an empty occluded_ids. The pick-distance controls (test_pick_geometry)
@@ -294,16 +300,18 @@ func test_host_recompute_on_camera_change() -> void:
 	var rig = host.camera_rig()
 	var cam: Camera3D = rig.get_camera()
 	var seen := {}
-	for step in ["zoom_in", "pan", "pan_by", "top_down"]:
+	for step in ["top_down_over_crest", "side_view", "zoom_in", "pan_far"]:
 		match step:
+			"top_down_over_crest":
+				rig.pan_to(Vector2(450.0, 450.0))
+				rig.set_top_down(true)
+			"side_view":
+				rig.set_top_down(false)
 			"zoom_in":
 				rig.zoom_by(-9)
-			"pan":
+			"pan_far":
 				rig.pan_to(Vector2(450.0, 900.0))
-			"pan_by":
 				rig.pan(Vector2(0.0, -300.0))
-			"top_down":
-				rig.set_top_down(true)
 		var settled: bool = await _settle(cam)
 		_check(settled, "R-001-06 CONTROL: the camera settled within the bound after rig %s" % step)
 		var want := _oracle(t, cam, _points())
