@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 30 rules, numbers from the bible's pipeline and naming sections and config; S-244 leaves the sources of the economy's names and text to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags: Q-155-01, Q-156-02. |
+| Implied-but-unstated behavior turned into flags | 1 open flag: Q-156-02; Q-155-01 closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | Not applicable; asset looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -66,7 +66,7 @@ Rules
 
 Inputs: faction subsets; pools.
 Outputs: names in the ledger and on screen.
-Open flags: Q-155-01.
+Open flags: none. Q-155-01 closed 2026-10-21 (register: reuse the oldest historical name).
 
 ### S-155 — Models for a new era
 As an era designer, I want a repeatable pipeline that turns concept art into clean low-poly models, so that an era costs weeks, not years.
@@ -173,7 +173,7 @@ Not applicable.
 
 ## Open ambiguity flags
 
-Q-155-01, Q-156-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-156-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

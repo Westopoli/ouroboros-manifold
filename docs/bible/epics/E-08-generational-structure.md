@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 54 rules, numbers from `algorithms.md` ALG-45 through ALG-49 and Stage 1 verdicts A-050, A-052, A-058, A-061. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-228, Q-228-02 (Q-228-01 closed 2026-10-21); Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
+| Implied-but-unstated behavior turned into flags | No open flag on S-228 (Q-228-01 and Q-228-02 closed 2026-10-21, register); Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
 | Every visible-surface story has a reference | **No.** S-063 (onboarding screen) has a visible surface and no reference. The chronicle scroll surface is E-09. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and is blocked on Q-228-02 (Q-228-01 closed 2026-10-21). One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and has no open flag (Q-228-01 and Q-228-02 closed 2026-10-21, register). One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -185,7 +185,7 @@ Rules
 
 Inputs: team size and pairs (E-19 S-159).
 Outputs: none until the flags are answered.
-Open flags: Q-228-02.
+Open flags: none. Q-228-02 closed 2026-10-21 (register: map the pair onto the chapter only).
 
 ## Inputs
 
