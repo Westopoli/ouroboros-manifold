@@ -90,6 +90,7 @@ def test_s140_land_marks_follow_the_ground_after_a_move_order(game):
     c.call("input", "click", float(click[0]), float(click[1]), 2)
     lc = _play.qa(game).get("last_command", {})
     assert lc.get("ok") is True, "c1: the move order was refused: %r" % (lc,)
+    c.call("pause", True)  # TD-VG-C-land-one-projection-2: the view's live clock must not tick between the 60-tick step and the checks
     _play.step(game, STEP_TICKS)
     q2 = _play.qa(game)
     assert int(q2["tick"]) >= int(q1["tick"]) + STEP_TICKS, "tick %s after %s + %d" % (q2["tick"], q1["tick"], STEP_TICKS)
