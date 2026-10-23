@@ -36,9 +36,9 @@ Start a mission with nobody in the economy seat. At the base, buildings stand un
 As a commander, I want literal workers who walk to a source and bring back one of three resources, so that the base is a place with people in it that I can protect or lose.
 
 Rules
-- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3: two common ones that together are about 75 percent of what lies on the map, and one rare one, about 25 percent, that technology draws on most (Westley, 2026-10-06); the names are Food, Wood and Coin in the ground era and Metal, Water and Uranium in the space era (Westley, 2026-10-07) ; the rare one is Coin in the ground era and Uranium in the space era (Westley, 2026-10-07) [Q-159-08: how each is gathered, and the amounts: placeholders for the beta].
-- R-167-02  Given a base, When a worker is trained, Then it appears at the base as a literal unit, walks to a source, gathers, and walks back to a drop-off, visible to the enemy and able to be killed [Q-167-01: training time, cost and the load a worker carries].
-- R-167-03  Given economic buildings, When the base is built, Then they include drop-off points, and Given a worker with a load, When it walks to a drop-off, Then the farther it walked the less it brings in [Q-167-02: how the yield falls with distance].
+- R-167-01  Given a side's economy, When it gathers, Then there are three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3: two common ones that together are about 75 percent of what lies on the map, and one rare one, about 25 percent, that technology draws on most (Westley, 2026-10-06); the names are Food, Wood and Coin in the ground era and Metal, Water and Uranium in the space era (Westley, 2026-10-07) ; the rare one is Coin in the ground era and Uranium in the space era (Westley, 2026-10-07) (closed 2026-10-21, Q-159-08: each role costs two of the three resources in a fixed pattern; amounts stay placeholders).
+- R-167-02  Given a base, When a worker is trained, Then it appears at the base as a literal unit, walks to a source, gathers, and walks back to a drop-off, visible to the enemy and able to be killed (closed 2026-10-21, Q-167-01: a named draft, Westley tunes it by feel).
+- R-167-03  Given economic buildings, When the base is built, Then they include drop-off points, and Given a worker with a load, When it walks to a drop-off, Then the farther it walked the less it brings in (closed 2026-10-21, Q-167-02: a named draft, Westley tunes it by feel).
 - R-167-04  Given a worker, When units are counted, Then it counts against the one population cap (E-22 S-169) and in the unit budgets, and it cannot fight: it never acquires a target, never returns fire, and flinches from damage (E-15 R-129-01); for the beta workers are not part of the roster of E-11 S-082 and post-beta will decide (Westley, 2026-10-07).
 
 - R-167-05  Given the sources of a base, When a side gathers, Then natural sources are fast and finite and built sources are slow and permanent and take lots, so the timing of the switch from foraging to farming is a skill (Westley, 2026-10-07).
@@ -52,10 +52,10 @@ Open flags: none. Q-159-08, Q-167-01 and Q-167-02 closed 2026-10-21 (register; n
 As an economy player, I want to place buildings where I choose and see the city reshape around them, so that where I build is a decision with consequences.
 
 Rules
-- R-168-01  Given a paired economy player, When he places a building, Then it claims its footprint and the self-built pieces around it are cleared and refilled, so the city reshapes around what he placed (E-17 R-166-03).
+- R-168-01  Given a paired economy player, When he places a building, Then it claims its footprint and the self-built pieces around it are cleared and refilled, so the city reshapes around what he placed (E-17 R-166-03); buildings in a settlement share the contour orientation of their ground with a jitter of DRAFT-building-yaw-jitter 0.05 rad (DEC-S005-building-yaw, Westley 2026-10-22: some uniformity, we're emulating reality).
 - R-168-02  Given a base, When lots are counted, Then no count of lots limits the buildings, and only terrain limits where one may stand, as in E-17 R-166-01 (Westley, 2026-10-06); the engine's lot table is finite (OM_LOT_CAP, 2048 today, 8192 after P3); the bound is a memory limit, never a design limit, and no mission reaches it (Architect 2026-10-21, implementation; Westley may veto). Direction for later, not for the beta: a very large base may be upgraded past its maximum into another tech level; there is no maximum in the beta, only terrain limits (Westley, 2026-10-07).
 - R-168-03  Given a building, When what stands beside it changes, Then what it yields changes; for the beta the effects are placeholders, and their kinds, size and range are set later in the lab (Westley, 2026-10-06).
-- R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished [Q-168-03: construction time, who builds it, and what it costs].
+- R-168-04  Given a building is placed, When work begins, Then it stands under construction and rises in stages until it is finished (closed 2026-10-21, Q-168-03: a named draft, Westley tunes it by feel).
 - R-168-05  Given an era, When its buildings are listed, Then they include drop-off points, housing, production buildings (E-22 S-170) and defenses (E-22 S-174); the set is small and fixed per era pack (E-20 R-146-01) and its names are era pack content, and the pack manifest field that lists them is named "buildings", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
 
 Inputs: placement commands from the economy player; the terrain (E-17); the era's building set.
@@ -68,7 +68,7 @@ As a commander, I want one cap shared by workers and soldiers that can be raised
 
 Rules
 - R-169-01  Given a side, When its units are counted, Then workers and soldiers count against one population cap.
-- R-169-02  Given a unit, When it counts against the cap, Then it counts by its population weight [Q-169-01: the weight per unit type, the starting cap, what raises the cap and by how much, and the ceiling].
+- R-169-02  Given a unit, When it counts against the cap, Then it counts by its population weight (closed 2026-10-21, Q-169-01: a named draft, Westley tunes it by feel).
 - R-169-03  Given a side at its cap, When another unit is queued, Then it cannot be trained until the cap rises or the count falls.
 - R-169-04  Given housing is finished or a cap upgrade is bought, When the cap is read, Then it has risen, a long way, up to thousands.
 
@@ -84,9 +84,9 @@ Rules
 - R-170-01  Given a production building, When it finishes a unit, Then the unit is one the commander receives, standing at that building.
 - R-170-02  Given the paired mode, When the commander wants a kind of unit, Then he asks the economy player by talking, and nothing on screen lists what the commander needs.
 - R-170-03  Given a production building, When it is set up, Then it is focused on one family at a time, Strike, Line or Siege (E-22 S-171).
-- R-170-04  Given a building focused on one family, When it is changed to another, Then the change takes a while [Q-170-01: how long, and whether the building makes nothing meanwhile].
-- R-170-05  Given the economy player, When he plans production, Then it is laid out ahead on a timeline for each production building [Q-170-02: how far ahead the timeline reaches and what changing a slot costs].
-- R-170-06  Given a unit is queued, When it is made, Then it costs resources by its role (R-171-03) and takes time [Q-170-03: build time per unit and how many a building makes at once].
+- R-170-04  Given a building focused on one family, When it is changed to another, Then the change takes a while (closed 2026-10-21, Q-170-01: a named draft, Westley tunes it by feel).
+- R-170-05  Given the economy player, When he plans production, Then it is laid out ahead on a timeline for each production building (closed 2026-10-21, Q-170-02: a named draft, Westley tunes it by feel).
+- R-170-06  Given a unit is queued, When it is made, Then it costs resources by its role (R-171-03) and takes time (closed 2026-10-21, Q-170-03: a named draft, Westley tunes it by feel).
 
 Inputs: the economy player's production and schedule commands; resources; the cap.
 Outputs: units in the tick delta; each building's focus and timeline.
@@ -99,7 +99,7 @@ As a commander, I want the three families to counter each other and each role to
 Rules
 - R-171-01  Given a unit, When it is classed for counters, Then its family is its category: Strike, Line or Siege (E-11 S-081).
 - R-171-02  Given two families in a fight, When damage is dealt, Then they counter each other by the triangle of E-11 S-081: Strike flanks Siege, Siege crushes Line, Line absorbs Strike.
-- R-171-03  Given a unit role, When it is trained, Then it costs two of the three resources in a fixed pattern (Westley, 2026-10-06): Strike and Line roles cost the two common resources, and each Siege role costs the rare one plus one common one, not the same common one for every Siege role [Q-159-08: the exact pattern per role and the amounts, with the E-11 roster, Q-082-03].
+- R-171-03  Given a unit role, When it is trained, Then it costs two of the three resources in a fixed pattern (Westley, 2026-10-06): Strike and Line roles cost the two common resources, and each Siege role costs the rare one plus one common one, not the same common one for every Siege role (closed 2026-10-21, Q-159-08: each role costs two of the three resources in a fixed pattern; amounts stay placeholders; the roles inside a category are Q-082-03, still open).
 - R-171-04  Given a side gathers heavily from one resource, When the other side sees it, Then it shows which role the first side is making more of, and the other side needs the counter; what shows it is workers seen at the sources through the fog (Westley, 2026-10-07), and how heavy counts as heavy is a placeholder for the lab.
 
 Inputs: unit category and role; resource costs.
@@ -144,7 +144,7 @@ Rules
 - R-174-01  Given a paired economy player, When he builds defenses, Then they are walls, gates and towers.
 - R-174-02  Given the terrain, When raiders go for workers or shipments, Then they come along lanes the terrain sets, for both sides; the lanes are an output of the map generator (E-17; Westley, 2026-10-06) [Q-174-01 closed; how a side sees its own and the enemy's lanes is E-16].
 - R-174-03  Given the lanes, When the economy player places defenses, Then he covers his own lanes, and he reads the enemy's lanes to tell the commander where a raid would hurt.
-- R-174-04  Given a wall, a gate or a tower, When it stands, Then it does [Q-174-02: what each does, whether it blocks, fires or sees, and its statistics].
+- R-174-04  Given a wall, a gate or a tower, When it stands, Then it does (closed 2026-10-21, Q-174-02: a named draft, Westley tunes it by feel).
 - R-174-05  Given a wall or gate is placed or destroyed, When units route, Then the cells that block movement have changed for every route (E-13 S-097).
 
 Inputs: placement commands; the terrain.
@@ -206,7 +206,7 @@ Rules
 - R-177-06  Given the simulation's situation, When a mission is set up, Then resources are sometimes limited and sometimes abundant, consistent with that situation and slanted by it so that a defender has the better position, and the player always has the means to accomplish the mission even when it is hard; richness is derived from the simulation's existing region fields and composites (E-02), so a region with a big economy gives a mission big resources (Westley, 2026-10-06).
 - R-177-07  Given the resources, When the mission is scored, Then they are not scored separately, and a side that ignores them is overrun unless it rushes and finishes fast.
 - R-177-08  Given a side's spending, When it spends, Then it is balanced between economy, technology and army, as in StarCraft 2.
-- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) [Q-177-06: the timer, and whether it is the same event as R-175-01].
+- R-177-09  Given settlements on the map, When a neutral populace lives in them, Then it is contested, and winning it is not the economy player's job; winning it gives a strategic position, a new place for production buildings and, most of all, economic assistance, and the neutral villagers become part of the winning team; it is not an instant win, it needs a hold timer, and it can be lost again (Westley, 2026-10-06) (closed 2026-10-06, Q-177-06: the same event as R-175-01, one timer).
 - R-177-10  Given a paired match of 4 to 6 players, When it is set up, Then there are more resources and more enemies and a bigger map (E-17), and each pair is its own sub-civilization inside the over-arching civilization; pairs on a team share shipments and technology (Westley, 2026-10-06); how much more a big match has is a placeholder.
 
 Inputs: mission archetype (E-10); the region's situation (E-02); the map (E-17).
@@ -238,7 +238,7 @@ Rules
 - R-179-01  Given any match, When nobody holds the economy seat, Then rules run the economy, run it well, need no intelligent agent, and call no model at play time.
 - R-179-02  Given a base in any mode, When the mission runs, Then buildings start under construction and rise, expansions are made, and population density changes over time (E-17 S-166).
 - R-179-03  Given nobody in the seat, When the rules run the economy, Then they follow a named doctrine, from the list boom, fortify, press and balanced, the player sets the first one in the lobby, and the player can change the doctrine on the fly to adapt to what the enemy is doing; the pack manifest field that lists the doctrines is named "doctrines", as the validator requires (Westley, 2026-10-06; field name, Architect 2026-10-10).
-- R-179-04  Given a doctrine, When it is read, Then it is a build order with its own weights on a checklist of standing habits [Q-179-02: the habits on the checklist and the weights per doctrine].
+- R-179-04  Given a doctrine, When it is read, Then it is a build order with its own weights on a checklist of standing habits (closed 2026-10-21, Q-179-02: a named draft, Westley tunes it by feel).
 - R-179-05  Given the rules run an economy, When it runs, Then they have perfect hands: they never idle a worker, never hit the population cap and never leave resources unspent.
 - R-179-06  Given the rules run an economy, When it runs, Then they have no foresight: they do not scout, do not read the enemy, do not counter-pick technology and do not disguise anything. The one exception is that they counter what the commander's forces have seen, by the unit counter shift of E-22 S-180.
 
@@ -350,11 +350,11 @@ None confirmed for the economy. The direction is thousands of units and workers 
 
 ## Open ambiguity flags
 
-Carried: Q-159-07, Q-159-08, Q-159-09, Q-159-10, Q-159-12, Q-159-13.
+Carried: Q-159-09, Q-159-12, Q-159-13.
 
-New: Q-167-01, Q-167-02, Q-167-03, Q-168-01, Q-168-02, Q-168-03, Q-168-04, Q-169-01, Q-170-01, Q-170-02, Q-170-03, Q-171-01, Q-172-01, Q-173-01, Q-173-02, Q-174-01, Q-174-02, Q-175-01, Q-175-02, Q-175-03, Q-176-01, Q-176-02, Q-177-01, Q-177-02, Q-177-03, Q-177-04, Q-177-05, Q-178-01, Q-178-02, Q-178-03, Q-178-04, Q-178-05, Q-179-01, Q-179-02, Q-180-01, Q-180-02, Q-180-03, Q-180-04, Q-181-01, Q-181-02. Details in `docs/northstar/ambiguity_register.md`.
+New: Q-173-01, Q-173-02, Q-180-01. Details in `docs/northstar/ambiguity_register.md`.
 
-Q-159-10, pieces offered to Westley and neither picked nor rejected. They are not rules. Where one would land is in brackets.
+Q-159-10 (closed 2026-10-21, register), pieces offered to Westley and neither picked nor rejected. They are not rules. Where one would land is in brackets.
 - Build-ons: upkeep bands (S-169), foraging to farming (S-167), deeper districts (S-168), trading posts at neutral settlements (S-175, S-177), trade caravans (S-175), ages by landmark (S-173), worker scouting (S-172), a return-to-base ability (S-170), workers under raid (S-174).
 - Thinking-ahead options: prizes on a clock, a shared market, demands from the civilization (S-176), the Keystone (S-168), the Contested Tree (S-173), agents.
 

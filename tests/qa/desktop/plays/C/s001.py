@@ -1,6 +1,8 @@
-"""S-001 play: blocked and open ground visible, slopes drawn with a midline (R-001-01, R-001-06). The ground3d block
-carries the C7 slope view under key 'slope_view' ({slopes, midlines, blocked_cells, in_transit}). Moment 'slopes': at least one
-midline per slope record and the counts agree. CONTROL: midlines equals slopes (a view that draws fewer midlines is caught)."""
+# Rule pins: R-001-01@025bc6, R-001-06@9f9051
+"""S-001 play: blocked and open ground visible, slopes in the ground without bars (R-001-01, R-001-06). The ground3d block
+carries the C7 slope view under key 'slope_view' ({slopes, blocked_cells, in_transit}). Moment 'slopes': at least one slope
+record and no 'midlines' key. CONTROL (no bars): 'midlines' not in the block and slopes >= 1 (TD-VG-C-no-slope-markers retires the
+old control midlines == slopes)."""
 from __future__ import annotations
 
 import sys
@@ -21,11 +23,11 @@ def game():
         g.stop()
 
 
-def test_s001_slopes_have_midlines_and_blocked_ground_shows(game):
+def test_s001_slopes_without_bars_and_blocked_ground_shows(game):
     g = _play.ground3d(game)
     sv = g.get("slope_view")
     assert isinstance(sv, dict), "R-001-06: ground3d has no slope_view block; keys = %s" % sorted(g)
     _play.evidence(game, "s001", "slopes")
     assert sv["slopes"] >= 1, "R-001-06: the ground era has no slope to draw, slopes=%r" % sv["slopes"]
-    assert sv["midlines"] == sv["slopes"], "R-001-06: %r midlines for %r slopes" % (sv["midlines"], sv["slopes"])
+    assert "midlines" not in sv, "R-001-06: slope_view still carries a midlines key (bars are not drawn): %r" % sv
     assert sv["blocked_cells"] >= 0, "R-001-01: blocked_cells missing"

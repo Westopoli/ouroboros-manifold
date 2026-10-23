@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://brs8in4lhnevd"]
+
+[ext_resource type="Script" uid="uid://fjeb4yiunr1c" path="res://scenes/world/time_jump_sequencer.gd" id="1"]
+[ext_resource type="Script" uid="uid://dvghexf64x8xd" path="res://legacy/scenes/debug/test_time_jump.gd" id="2"]
+
+[node name="TestTimeJump" type="Control" unique_id=816605009]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TimeJumpSequencer" type="Control" parent="." unique_id=1430158253]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="TestHarness" type="Control" parent="." unique_id=1786944131]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2")

@@ -2,4 +2,3 @@
 # test function name (or prefix) per line. Empty since the loop-fix landing; a
 # listed test that passes is reported "now green, remove from list".
 # FINDING-gate-venv-link-vs-fresh-checkout: godot_import links .venv into the candidate, the test asserts none; leaves the list when HARNESS-gate-venv-link lands. Entries are bare test names (the stage matches by prefix and does not strip comments), so the reason sits on this line.
-test_fresh_checkout_boots_to_main_menu_without_numpy_or_logs

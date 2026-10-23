@@ -6,7 +6,7 @@ extends SceneTree
 # Source: autoload/scene_router.gd SCENES dict + named overlays.
 #
 # EXEMPT categories (path rule, counted in failure messages):
-#   debug_scenes    scenes/debug/**           -- debug harness, never player-facing
+#   debug_scenes    scenes/debug/**, legacy/** -- debug harness and moved legacy scenes, never player-facing
 #   mockup_scenes   scenes/mockups/**         -- prototype mockups
 #   harness_scenes  scenes/harness/**         -- test harness
 #   shared_scenes   scenes/shared/**          -- world-view building blocks

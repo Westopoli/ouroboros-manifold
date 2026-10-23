@@ -22,6 +22,33 @@ Menu to the mission, drag a box over some units, right-click the ground: the box
 - Move order reaching both peers (S-140, R-140-02): built and wired (lane F lockstep and lobby, VG-F-S140-CLICK); the S-140 play passes, host and guest read the same positions; not Seen (your verdict pending).
 - Route line to the clicked spot (your 2026-10-13 note): not built, queued as VG-A-routeline.
 
+## C-S140-land-march-order-28-wardens.png
+
+**What you see:** Land era (greek_placeholder), seed 1, camera height 300, tick 89 (1920x1080). 28 wardens are selected (HUD "warden x28, 28 selected") and a move order was sent to x 13205.7, y 1144.6 (last command: move, ok, 28 units). The group has already walked; its centroid is 84 world units higher than at the order, and the frame shows them on the rising green slope with white selection rings, the 2D marks sitting on the terrain. From lane C landing 3b (VG-C-land-one-projection; marks use the land's own projection).
+**Legend:** White ring: a selected unit. Blue outlines with yellow ring: your own units and their layer ring. Green: ground; purple: steep or blocked ground. Red lines: map edges.
+**Judge:** Do the unit marks sit on the ground where the units are, instead of floating or drawing through the hill?
+**Camera:** x 13500, y 2650, height 300, scale 1.797, tick 89. The play's worst mark offset against the 3D units: 0.000 px at default and at height 300.
+**See it live (Westley 2026-10-22, DEC-S140-live-look):** in your checkout: `cd ~/Projects/ouroboros-manifold && git pull --no-rebase && make && make pipe/ouroboros_pipe`, then
+```
+OM_GODOT_GUI=1 godot --path . -- --era greek_placeholder --seed 1
+```
+**Beta status of what is shown:**
+- Marks projected through the land's own view (VG-C-land-one-projection): landed with gate 3b; the s140_land play passes; not Seen.
+- Route line to the clicked spot: not built, queued as VG-A-routeline.
+
+## C-S132-ground-force-three-groups-sight-discs.png
+
+**What you see:** Land era, seed 1, tactical band (camera height 3000, scale 0.18), tick 22 (1920x1080). 176 units are in the frame, in three groups, each inside a lit sight disc; the discs follow the land's relief. Small white triangles sit at the edge of each squad (the facing arrows, VG-C-facing-arrow). Terrain draws in two tones, green and purple, with the dark wall and ridge behind. From lane C landing 3b (VG-C-facing-arrow, VG-C-ground-one-colour, VG-C-groundpickstep).
+**Legend:** Blue outlines: own units; yellow ring: layer ring; lit green/purple disc: sight; small white triangle: the squad's facing. Red lines: map edges.
+**Judge:** Is each squad's facing readable, and is the ground one consistent colour scheme with no per-layer tint?
+**Camera:** x 13500, y 2650, height 3000, scale 0.18, tick 22. Known: the s132 play fails here on three pairs of units sharing one pixel at this distance (FINDING-s132-one-pixel, same on main).
+**See it live (Westley 2026-10-22, DEC-S140-live-look):** in your checkout: `cd ~/Projects/ouroboros-manifold && git pull --no-rebase && make && make pipe/ouroboros_pipe`, then
+```
+OM_GODOT_GUI=1 godot --path . -- --era greek_placeholder --seed 1
+```
+**Beta status of what is shown:**
+- Facing arrows, one-colour ground and the ground-pick step: landed with gate 3b; no separate pick frame exists (the pick step is exercised by the s140_land click, shot above); not Seen.
+
 ## Removed today
 
 | File | Verdict | Cite |

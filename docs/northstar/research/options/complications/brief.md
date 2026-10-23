@@ -43,7 +43,7 @@ A-118 research flag (`stage1_audit.md:210`), on story quality: "the chronicle/st
 
 ## 5. Prior art already named
 
-None for complications. `docs/bible/references/E-10/notes.md:3`: "TBD by design... start super simple and expand on player feedback." Difficulty-curve failure modes in the research corpus: `docs/research/topics/primary_tribe_psychographic_profile.md:70` ("Easy mode trivial, hard mode brutal, nothing in middle."), `docs/research/topics/audience_psychographics_2026.md:444`. Against the Storm's difficulty tiers (`docs/research/games/against_the_storm.md:26-28`).
+None for complications. `docs/bible/references/E-10/notes.md:3`: "TBD by design... start super simple and expand on player feedback." Difficulty-curve failure modes in the research corpus: `docs/legacy/topics/primary_tribe_psychographic_profile.md:70` ("Easy mode trivial, hard mode brutal, nothing in middle."), `docs/legacy/topics/audience_psychographics_2026.md:444`. Against the Storm's difficulty tiers (`docs/legacy/games/against_the_storm.md:26-28`).
 
 ## 6. Contradictions, as questions for Westley
 

@@ -17,7 +17,7 @@ No text or UI chrome baked into the image. No photoreal detail or realistic ligh
 Up to 14 per generation. Use what's relevant to the page:
 
 - `docs/bible/references/E-18/E-18-1.png` and `E-18-2.png` — the two Age of Empires Online shots the register is built from.
-- Live renders of the three unit types in the layer demo (`https://ouroboros-site.fly.dev/layers/` — orbit and screenshot a Raider, Interceptor, and Vanguard). The other three unit types (Bastion, Bombard, Warden) have GLBs under `assets/eras/settled_reach/units/` but are not in the live demo yet; screenshot them in Godot or the Blender source (`docs/blender_stuff/the-settled-reach/`) if wanted as references.
+- Live renders of the three unit types in the layer demo (`https://ouroboros-site.fly.dev/layers/` — orbit and screenshot a Raider, Interceptor, and Vanguard). The other three unit types (Bastion, Bombard, Warden) have GLBs under `assets/eras/settled_reach/units/` but are not in the live demo yet; screenshot them in Godot or the Blender source (`docs/legacy/blender_stuff/the-settled-reach/`) if wanted as references.
 
 ## Per-page prompts
 

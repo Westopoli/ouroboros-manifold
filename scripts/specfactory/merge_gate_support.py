@@ -656,6 +656,10 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     om_pipe.c on main yet) degrades to the old behaviour instead of crashing
     the gate."""
     suite_key = " ".join(test_args)
+    if os.environ.get("MALLOC_PERTURB_"):
+        # the gate perturbs the csim and transport stages; a perturbed baseline is not an unperturbed one.
+        # See also: MALLOC_PERTURB_=255 on the csim and transport commands of merge_gate.sh
+        suite_key += f" MALLOC_PERTURB_={os.environ['MALLOC_PERTURB_']}"
     main_sha = None
     cache_path = None
     harness_sha = None
@@ -881,10 +885,101 @@ def playthrough_trigger(files: list[str]) -> str:
             return f
     return ""
 
+# HARNESS-gate-keep-red-evidence: a red playthrough or lane_plays stage keeps its pytest -rA output and the PNGs it
+# wrote under <evidence root>/<UTC start>-<piece>/<stage>/ -- outside SCRATCH_ROOT, which dies with the gate run.
+# Only main() asks for it (evidence_out); the checks called bare write nothing.
+# See also: merge_gate.sh (strips the EVIDENCE line, prints `GATE evidence kept:`), drift_audit.md (weekly --prune-evidence)
+EVIDENCE_AGE_DAYS = 7  # DRAFT-evidence-age
+EVIDENCE_CAP_BYTES = 52_428_800  # DRAFT-evidence-cap, per stage subdirectory
+EVIDENCE_ENV_LINE = "env: MALLOC_PERTURB_=255 on the csim and transport stages of merge_gate.sh"
+
+
+def _evidence_root() -> Path:
+    return Path(os.environ.get("MERGE_GATE_EVIDENCE_ROOT") or "~/Projects/om-push/gate-evidence").expanduser()
+
+
+def _evidence_run_dir() -> Path:
+    import time
+    start = os.environ.get("MERGE_GATE_START_UTC") or time.strftime("%Y%m%d-%H%M", time.gmtime())
+    pieces = [x for x in os.environ.get("MERGE_GATE_PIECE_ID", "").split(",") if x]
+    return _evidence_root() / f"{start}-{pieces[0] if pieces else 'nopiece'}"
+
+
+def _qa_pngs() -> dict[Path, int]:
+    """qa/*.png under XDG_DATA_HOME, symlinks never followed, with their mtimes."""
+    root = os.environ.get("XDG_DATA_HOME")
+    found: dict[Path, int] = {}
+    for d, _dirs, files in os.walk(root, followlinks=False) if root else []:
+        if os.path.basename(d) != "qa":
+            continue
+        for n in files:
+            f = Path(d) / n
+            if n.endswith(".png") and not f.is_symlink():
+                found[f] = f.stat().st_mtime_ns
+    return found
+
+
+def _text(out) -> str:
+    return out.decode("utf-8", "replace") if isinstance(out, bytes) else (out or "")
+
+
+def _keep_evidence(stage: str, pytest_out: str, pngs_before: dict[Path, int], new_ids: list[str],
+                   evidence_out: list) -> None:
+    """Write the stage's evidence and append the run directory to evidence_out."""
+    run = _evidence_run_dir()
+    sub = run / stage
+    sub.mkdir(parents=True, exist_ok=True)
+    (sub / "pytest_rA.txt").write_text(pytest_out)
+    for f, mtime in sorted(_qa_pngs().items(), key=lambda kv: (kv[1], str(kv[0]))):
+        if pngs_before.get(f) == mtime:
+            continue
+        dest, n = sub / f.name, 2
+        while dest.exists():
+            dest, n = sub / f"{f.stem}-{n}{f.suffix}", n + 1
+        shutil.copy2(f, dest)
+    dropped = []
+    files = sorted((q for q in sub.iterdir() if q.is_file()), key=lambda q: q.stat().st_mtime)
+    total = sum(q.stat().st_size for q in files)
+    for q in files:
+        if total <= EVIDENCE_CAP_BYTES:
+            break
+        total -= q.stat().st_size
+        q.unlink()
+        dropped.append(q.name)
+    pieces = [x for x in os.environ.get("MERGE_GATE_PIECE_ID", "").split(",") if x]
+    with open(run / "REPORT.txt", "a") as rep:
+        rep.write(f"stage: {stage}\n")
+        if len(pieces) > 1:
+            rep.write(f"also in this gate run: {','.join(pieces[1:])}\n")
+        rep.write(f"new red ids: {','.join(new_ids) or 'none (timeout)'}\n")
+        if not os.environ.get("XDG_DATA_HOME"):
+            rep.write("XDG_DATA_HOME unset: no PNGs scanned\n")
+        if dropped:
+            rep.write(f"dropped over the {EVIDENCE_CAP_BYTES}-byte cap: {','.join(dropped)}\n")
+        rep.write(EVIDENCE_ENV_LINE + "\n\n")
+    evidence_out.append(str(run))
+
+
+def prune_evidence() -> list[str]:
+    """Delete run directories of the evidence root older than EVIDENCE_AGE_DAYS; never touches a file, a symlink
+    or a directory not named <YYYYMMDD>-<HHMM>-*."""
+    import time
+    root = _evidence_root()
+    pruned = []
+    if not root.is_dir():
+        return pruned
+    cutoff = time.time() - EVIDENCE_AGE_DAYS * 86400
+    for e in sorted(os.scandir(root), key=lambda e: e.name):
+        if e.is_dir(follow_symlinks=False) and re.match(r"[0-9]{8}-[0-9]{4}-", e.name) \
+                and e.stat(follow_symlinks=False).st_mtime < cutoff:
+            shutil.rmtree(e.path)
+            pruned.append(str(root / e.name))
+    return pruned
+
 
 def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeout: int,
                       known_red_path: Path = DEFAULT_KNOWN_RED, target: str = "tests/qa/desktop",
-                      force: bool = False, setup: bool = True) -> tuple[bool, str]:
+                      force: bool = False, setup: bool = True, evidence_out: list | None = None) -> tuple[bool, str]:
     """Run the desktop flow suite (not its lane plays directory) on the merged tree. ok=False on any red not in
     the known-red list, a suite that collects or runs nothing, or a timeout."""
     import time
@@ -904,12 +999,15 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
         # import exit code left unchecked: godot prints errors yet exits 0, so it is no reliable signal
         subprocess.run(["godot", "--headless", "--path", str(candidate), "--import"],
                        capture_output=True, timeout=300)
+    pngs_before = _qa_pngs() if evidence_out is not None else {}
     try:
         # lane story plays run in the lane_plays stage (HARNESS-laneplays), not here
         proc = subprocess.run([python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA", "--color=no",
                                "--ignore=" + target.rstrip("/") + "/plays", target],
                               cwd=str(candidate), capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as exc:
+        if evidence_out is not None:
+            _keep_evidence("playthrough", _text(exc.stdout), pngs_before, [], evidence_out)
         return False, f"timed out after {timeout}s"
     secs = f"{time.monotonic() - t0:.0f}s"
     known = {l.strip() for l in known_red_path.read_text().splitlines()
@@ -929,6 +1027,8 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
     if green:
         notes += f"; now green, remove from list: {','.join(green)}"
     if bad:
+        if evidence_out is not None:
+            _keep_evidence("playthrough", proc.stdout, pngs_before, bad, evidence_out)
         return False, f"red outside known-red list: {','.join(bad)} ({notes})"
     return True, f"{notes}; known red: {','.join(sorted(red)) or 'none'}"
 
@@ -940,12 +1040,21 @@ DEFAULT_LANE_MAP = Path(__file__).resolve().parent / "lane_plays.toml"
 def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout: int,
                      known_red_path: Path = DEFAULT_LANE_KNOWN_RED, lane_map_path: Path = DEFAULT_LANE_MAP,
                      plays_dir: str = "tests/qa/desktop/plays", changed: list[str] | None = None,
-                     setup: bool = True) -> tuple[bool, str]:
-    """Run each touched lane's play files alone; red outside the known-red list, or a listed
+                     setup: bool = True, evidence_out: list | None = None) -> tuple[bool, str]:
+    """Run each touched lane's play files alone (a lane is touched by its globs, its own play files, or the
+    lane_plays.toml [shared] table); red outside the known-red list, or a listed
     play that now passes, rejects."""
     files = changed if changed is not None else changed_files(candidate, base_ref)
-    lanes = tomllib.loads(lane_map_path.read_text()).get("lanes", {})
-    touched = sorted(l for l, globs in lanes.items() if any(fnmatch.fnmatch(f, g) for f in files for g in globs))
+    cfg = tomllib.loads(lane_map_path.read_text())
+    lanes, shared = cfg.get("lanes", {}), cfg.get("shared", {})
+    all_lanes = sorted(l for l in lanes if (candidate / plays_dir / l).is_dir())
+    touched = {l for l, globs in lanes.items() if any(fnmatch.fnmatch(f, g) for f in files for g in globs)}
+    touched |= {l for l in lanes if any(f.startswith(f"{plays_dir}/{l}/") for f in files)}
+    for g, who in shared.items():
+        # autoload/net/** belongs to F's own glob only, not the shared autoload/** glob
+        if any(fnmatch.fnmatch(f, g) and not (g == "autoload/**" and f.startswith("autoload/net/")) for f in files):
+            touched |= set(all_lanes) if "*" in who else set(who)
+    touched = sorted(touched)
     plays = [p for l in touched if (candidate / plays_dir / l).is_dir()
              for p in sorted((candidate / plays_dir / l).glob("*.py")) if p.name != "conftest.py"
              and re.search(r"^def test_", p.read_text(), re.M)]
@@ -954,15 +1063,21 @@ def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout
     prefix = ["xvfb-run", "-a"] if setup and shutil.which("xvfb-run") else []
     env = {**os.environ, "OM_QA_RENDERER": "vulkan"}
     passed, red = set(), set()
+    pngs_before = _qa_pngs() if evidence_out is not None else {}
+    red_out = ""  # the output of the red plays only, each under a `### play:` header
     for play in plays:
         rel = play.relative_to(candidate).as_posix()
         try:
             proc = subprocess.run([*prefix, python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rA",
                                    "--color=no", rel], cwd=str(candidate), env=env, capture_output=True,
                                   text=True, timeout=timeout)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
+            if evidence_out is not None:
+                _keep_evidence("lane_plays", red_out + f"### play: {rel}\n" + _text(exc.stdout), pngs_before, [],
+                               evidence_out)
             return False, f"timed out after {timeout}s: {rel}"
         found = 0
+        red_before = len(red)
         for line in proc.stdout.splitlines():
             m = re.match(r"(PASSED|FAILED|ERROR) (\S+)", line)
             if m:
@@ -970,10 +1085,14 @@ def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout
                 (passed if m.group(1) == "PASSED" else red).add(m.group(2))
         if not found:
             red.add(rel + "::<nothing ran>")
+        if len(red) > red_before or not found:
+            red_out += f"### play: {rel}\n{proc.stdout}\n"
     known = {l.split("#")[0].strip() for l in known_red_path.read_text().splitlines()
              if l.strip() and not l.startswith("#")} if known_red_path.exists() else set()
     bad = sorted(red - known)
     if bad:
+        if evidence_out is not None:
+            _keep_evidence("lane_plays", red_out, pngs_before, bad, evidence_out)
         return False, f"red outside known-red list: {','.join(bad)}"
     stale = sorted(passed & known)
     if stale:
@@ -1029,6 +1148,8 @@ def main(argv: list[str]) -> int:
     lp.add_argument("--timeout", type=int, default=900)
     lp.add_argument("--known-red", default=str(DEFAULT_LANE_KNOWN_RED))
     lp.add_argument("--lane-map", default=str(DEFAULT_LANE_MAP))
+
+    sub.add_parser("prune-evidence")
 
     rl = sub.add_parser("regression-lab")
     rl.add_argument("candidate_dir")
@@ -1130,14 +1251,21 @@ def main(argv: list[str]) -> int:
             green, red = partition_godot_ids(ids, Path(args.godot_log).read_text())
         print(f"WARN {acceptance_warn_detail(args.piece_id, resolved, green, ids, red)}")
         return 0
+    elif args.cmd == "prune-evidence":
+        for d in prune_evidence():
+            print(f"pruned: {d}")
+        return 0
     elif args.cmd == "playthrough":
+        evidence: list[str] = []
         ok, detail = playthrough_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                        timeout=args.timeout, known_red_path=Path(args.known_red),
-                                       target=args.target, force=args.force, setup=not args.no_setup)
+                                       target=args.target, force=args.force, setup=not args.no_setup,
+                                       evidence_out=evidence)
     elif args.cmd == "lane_plays":
+        evidence = []
         ok, detail = lane_plays_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                       timeout=args.timeout, known_red_path=Path(args.known_red),
-                                      lane_map_path=Path(args.lane_map))
+                                      lane_map_path=Path(args.lane_map), evidence_out=evidence)
     elif args.cmd == "regression-lab":
         ok, detail = regression_lab_check(Path(args.candidate_dir), args.base_ref, python_exe=args.python,
                                           timeout=args.timeout,
@@ -1167,6 +1295,8 @@ def main(argv: list[str]) -> int:
                                                  before_build=shlex.split(args.before_build)
                                                  if args.before_build else None)
     print(f"{'OK' if ok else 'REJECT'} {detail}")
+    if args.cmd in ("playthrough", "lane_plays") and evidence:
+        print(f"EVIDENCE {evidence[0]}")
     return 0 if ok else 1
 
 
