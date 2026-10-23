@@ -13,6 +13,9 @@ const FLYER_CLEARANCE_WU := 150.0
 const BODY_RADIUS_WU := 11.5
 # VG-C-unit-ground-fit, DRAFT-unit-ground-lift: a walker body is lifted this far along the ground normal so it does not z-fight the ground. See also tests/test_vg_c_unit_ground_fit.gd
 const UNIT_GROUND_LIFT_WU := 1.0
+# VG-C-facing-arrow, DRAFT-facing-arrow-len: the arrow is 0.4 x the body size (2 x BODY_RADIUS_WU) long, base half that wide, base at the body radius on the heading ray, lifted so it does not z-fight the body. See also tests/test_vg_c_facing_arrow.gd
+const ARROW_LEN_WU := 0.4 * 2.0 * BODY_RADIUS_WU
+const ARROW_LIFT_WU := 0.2
 const SHADOW_RADIUS_WU := 10.0
 const SHADOW_LIFT_WU := 0.5
 const OWN_COLOUR := Color(0.2, 0.6, 1.0)
@@ -45,6 +48,30 @@ static func _body(type: int, colour: Color) -> MeshInstance3D:
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh.surface_set_material(0, mat)
 	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.add_child(_arrow())
+	return mi
+
+
+# White unshaded triangle on the body's local +x ray; the body's Basis carries the heading.
+static func _arrow() -> MeshInstance3D:
+	var hw := ARROW_LEN_WU * 0.25
+	var verts := PackedVector3Array([
+		Vector3(BODY_RADIUS_WU + ARROW_LEN_WU, ARROW_LIFT_WU, 0.0),
+		Vector3(BODY_RADIUS_WU, ARROW_LIFT_WU, hw),
+		Vector3(BODY_RADIUS_WU, ARROW_LIFT_WU, -hw)])
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = verts
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color.WHITE
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh.surface_set_material(0, mat)
+	var mi := MeshInstance3D.new()
+	mi.name = "Arrow"
 	mi.mesh = mesh
 	return mi
 
@@ -81,7 +108,7 @@ func set_units(units: Array, terrain: Dictionary, layer_floors_wu: Array, flyer_
 			n = _body(int(u.get("type", 0)), OWN_COLOUR if own else OTHER_COLOUR)
 			add_child(n)
 			_nodes[id] = n
-		var facing := float(u.get("facing", 0.0))
+		var facing := float(u.get("facing", 0.0)) + UnitVisuals.facing_offset(int(u.get("type", 0)))
 		if flyer:
 			n.position = Vector3(x, y_for(flyer, gy, floor_wu), z)
 			n.rotation.y = -facing
@@ -115,6 +142,19 @@ func set_units(units: Array, terrain: Dictionary, layer_floors_wu: Array, flyer_
 
 func unit_node(id: int) -> Node3D:
 	return _nodes.get(id)
+
+
+func arrow_count() -> int:
+	var n := 0
+	for id in _nodes:
+		if _nodes[id].get_node_or_null("Arrow") != null:
+			n += 1
+	return n
+
+
+func arrow_apex_world(id: int) -> Vector3:
+	var a: Node3D = _nodes[id].get_node("Arrow")
+	return a.global_transform * Vector3(BODY_RADIUS_WU + ARROW_LEN_WU, ARROW_LIFT_WU, 0.0)
 
 
 func shadow_of(id: int) -> Node3D:

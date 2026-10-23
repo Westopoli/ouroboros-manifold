@@ -5,6 +5,8 @@ extends "res://tests/support/vg_c_case.gd"
 # in docs/northstar/plans/2026-10-07-visible-game-spec.md (Architect 2026-10-22). No R- rule bears on body tilt.
 # Named draft: DRAFT-unit-ground-lift 1.0 wu along the body normal. Ledger row TD-VG-C-ground-lift moves the walker
 # height pins by that lift (tests/test_vg_c6b_ground_units_layers.gd, edited alongside this file).
+# TD-VG-C-facing-arrow-offset (Architect 2026-10-23, superseded pin): after VG-C-facing-arrow the body heading is
+# h = facing + UnitVisuals.facing_offset(type), so the S-132 forward pins use h (type = k % 3, see _units), same tolerances.
 #
 # UNSTATED INTERFACE CHOICES (the paragraph gives none; each is a test-writer choice):
 #  1. The body is the MeshInstance3D returned by Units3D.unit_node(id) (as today); its mesh vertices are read from
@@ -34,6 +36,8 @@ const FLAT_Y_EPS := 0.05 # DRAFT-flat-y-eps
 const UP_DOT := 0.99 # DRAFT-ground-fit-up-dot
 const FACINGS := [0.0, 1.0, 2.5, -2.0]
 const POSITIONS := [[300.0, 300.0], [500.0, 250.0], [450.0, 600.0], [600.0, 500.0]] # all >= 150 wu from every edge
+
+const UV := preload("res://scenes/tactical_c/unit_visuals.gd")
 
 
 # 30-degree plane: rises tan30 * 100 wu per 100 wu cell along x (tilt_x) or along z (not tilt_x). Heights int32 cm.
@@ -139,11 +143,12 @@ func _run() -> void:
 			var want := Vector3(x, GroundPick.height_at(t, x, z), z) + n * LIFT
 			_check(xf.origin.distance_to(want) < 0.01, "DRAFT-unit-ground-lift: %s walker %d: body origin %s, expected ground + 1.0 along n = %s" % [tag, id, xf.origin, want])
 			# (4) facing still turns the body about n: forward = facing projected onto the plane of n
-			var face := Vector3(cos(f), 0.0, sin(f))
+			var h: float = f + UV.facing_offset(k % 3)
+			var face := Vector3(cos(h), 0.0, sin(h))
 			var proj := (face - n * face.dot(n)).normalized()
 			var fwd := xf.basis.x.normalized()
 			fwds[k] = fwd
-			_check(fwd.distance_to(proj) < EPS, "S-132: %s walker %d: body forward %s is not the facing %f projected on the plane %s" % [tag, id, fwd, f, proj])
+			_check(fwd.distance_to(proj) < EPS, "S-132: %s walker %d: body forward %s is not the heading %f (facing + type offset) projected on the plane %s" % [tag, id, fwd, h, proj])
 			# facing f + pi gives the opposite local x: re-feed the same unit turned by pi and compare
 			_check(absf(fwd.dot(n)) < FACING_EPS, "S-132: %s walker %d: body forward is not perpendicular to n within 1e-4 (dot %f)" % [tag, id, fwd.dot(n)])
 			_check(xf.basis.z.distance_to(xf.basis.x.cross(xf.basis.y)) < EPS, "S-132: %s walker %d: body basis z is not x cross y" % [tag, id])
@@ -174,6 +179,7 @@ func _run() -> void:
 		var xf: Transform3D = body.global_transform
 		_check(xf.basis.y.distance_to(Vector3.UP) < EPS, "S-132: flat ground walker %d: body up %s is not (0, 1, 0)" % [k + 1, xf.basis.y])
 		_check(absf(xf.origin.y - (5.0 + LIFT)) < FLAT_Y_EPS, "DRAFT-unit-ground-lift: flat ground walker %d: y %f, expected ground 5.0 + 1.0" % [k + 1, xf.origin.y])
-		_check(xf.basis.x.distance_to(Vector3(cos(FACINGS[k]), 0.0, sin(FACINGS[k]))) < EPS, "S-132: flat ground walker %d: facing %f does not turn the body about up, forward %s" % [k + 1, FACINGS[k], xf.basis.x])
+		var hk: float = FACINGS[k] + UV.facing_offset(k % 3)
+		_check(xf.basis.x.distance_to(Vector3(cos(hk), 0.0, sin(hk))) < EPS, "S-132: flat ground walker %d: heading %f (facing + type offset) does not turn the body about up, forward %s" % [k + 1, hk, xf.basis.x])
 		_check(absf(float(nf.heights().get(str(k + 1), -9999.0)) - (5.0 + LIFT)) < FLAT_Y_EPS, "DRAFT-unit-ground-lift: heights() for walker %d must report position.y = ground + 1.0, got %s" % [k + 1, nf.heights().get(str(k + 1))])
 	nf.queue_free()
