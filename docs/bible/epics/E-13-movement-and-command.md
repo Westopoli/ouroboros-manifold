@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-097-02 (two units on one spot), Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written. S-207 and S-209 are design decided, not scheduled for building, apart from the movement rules R-207-06 and R-207-07, which are ruled and built with the tactical port; S-207 carries open flags.
+**Gate verdict: not passed.** Blocked on Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written. S-207 and S-209 are design decided, not scheduled for building, apart from the movement rules R-207-06 and R-207-07, which are ruled and built with the tactical port; S-207 carries open flags.
 
 ## Purpose
 
@@ -77,7 +77,7 @@ Rules
 
 Inputs: map grid; unit positions, targets, states.
 Outputs: positions; route cache; collision log (T1).
-Open flags: Q-097-02. Q-165-01 (a lane speed above 1.0 is an idea only, E-17 S-165; R-097-06 stays as written until it is decided).
+Open flags: none here. Q-097-02 closed 2026-10-21 (register: invisible tie-break). Q-165-01 (a lane speed above 1.0 is an idea only, E-17 S-165; R-097-06 stays as written until it is decided).
 
 ### S-098 — Firing through friends
 As a commander, I want my back rank to shoot over my front rank, so that formation depth is an advantage and not a jam.
@@ -161,7 +161,7 @@ Rules
 
 Inputs: structures (E-11 S-204); slopes and sections too steep to cross (E-17 S-189, S-190); the route grid.
 Outputs: the route grid and the route cache as they change; unit positions.
-Open flags: Q-174-02.
+Open flags: none. Q-174-02 closed 2026-10-21 (register: a named draft Westley tunes by feel).
 
 ### S-208 — Guard
 As a commander, I want to put units on guard at a post, so that I can hold a choke, the top of a slope or a door without the units running out through it.
@@ -241,7 +241,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-097-02, Q-101-02, Q-207-01, Q-174-02, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-101-02, Q-207-01, Q-208-01, and from other epics Q-087-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
