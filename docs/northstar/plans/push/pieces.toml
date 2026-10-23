@@ -2568,13 +2568,14 @@ size_estimate = "umbrella for the skill lab rev 2 workflow (spec 2026-10-14); sh
 id = "VG-E1M"
 manager = "M0"
 wave = 9
-owns = ["scenes/economy/ticker_beats.gd", "tests/test_vg_e_e1m.gd", "scenes/tactical_c/hud/events_feed.gd"]  # events_feed.gd: the three-line edit so one line shows per strongpoint event (GAP 2 (b)); VG-A (glob) is the attached owner
+owns = ["scenes/economy/ticker_beats.gd", "tests/test_vg_e_e1m.gd", "scenes/tactical_c/hud/events_feed.gd"]  # events_feed.gd: the three-line edit plus one field so one line shows per strongpoint event (GAP 2 (b)); VG-A (glob) is the attached owner; ticker_beats.gd and the test also fall under VG-E1 (glob)
 owns_glob = []
 acceptance = ["tests/test_vg_e_e1m.gd"]
 depends_on = ["VG-E1", "VG-A18"]
 status = { state = "queued" }
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the VG-E1M paragraph, after "S-235 ticker (amends the E1m and E1n paragraphs; Q-235-01 closed)"
 tests_pending = true
-size_estimate = "E1m ticker beats (S-235): node TickerBeats, signal beat(kind, text), six kinds; strongpoint taken/lost live, the four economy beats stubbed (FU-E1m-beat-*); DRAFT-e1m-beat-text"
+size_estimate = "E1m ticker beats (S-235): node TickerBeats, signal beat(kind, text), the five beats of R-235-03 (six kind strings); strongpoint taken/lost live, the four economy beats stubbed (FU-E1m-beat-*); DRAFT-e1m-beat-text"
 
 [[piece]]
 id = "VG-E1N"
@@ -2585,8 +2586,9 @@ owns_glob = []
 acceptance = ["tests/test_vg_e_e1n.gd"]
 depends_on = ["VG-E1", "VG-A18"]
 status = { state = "queued" }
-tests_pending = true
-size_estimate = "E1n map markers (S-235): strongpoints and the home base from structures rows; marks with no sim source stay stubs"
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E1N, lane E1 part b, after the E1p paragraph; built on origin/push/vg-e1n-fix 87575377; lands only with VG-E1M and VG-E1W (its set_frame caller is E1W)
+tests_pending = false  # tests exist on origin/push/vg-e1n-tests 97fedf68 (tests/test_vg_e_e1n.gd)
+size_estimate = "E1n map markers (S-235): strongpoints from the full-frame list joined to the structures rows for owner and rubble, the home base from the kind-7 map node nearest the own units; marks with no sim source stay stubs; DRAFT-e1n-marker"
 
 [[piece]]
 id = "VG-E1W"
@@ -2594,11 +2596,13 @@ manager = "M0"
 wave = 9
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_e_e1w.gd", "tests/qa/desktop/plays/E/S-235.py"]
 owns_glob = []
+# Tool: Workflow (ends in a frame; the Escreens script relaunched from check); does not build until Westley answers Q-104-02
 acceptance = ["tests/test_vg_e_e1w.gd"]
-depends_on = ["VG-E1", "VG-A18", "VG-D-VIEW", "VG-E1M", "VG-E1N", "VG-C-land-marks", "VG-C-land-one-projection"]  # VG-E1W lands first among the queued owners of tactical_view.gd; VG-A-layerkeys, VG-A-startforce and VG-A-routeline depend on it (Architect 2026-10-20); shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
+depends_on = ["VG-E1", "VG-A18", "VG-D-VIEW", "VG-E1M", "VG-E1N", "VG-C-land-marks", "VG-C-land-one-projection"]  # VG-A-layerkeys, VG-A-startforce and VG-A-routeline depend on it (Architect 2026-10-20); E1W lands after VG-C-land-marks (Architect 2026-10-23); shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
 status = { state = "queued" }
-tests_pending = true
-size_estimate = "E1w wiring of TickerBeats and MapMarkers into the tactical view (PIECES entries, frame-path calls, qa_state map_markers); the S-235 play and shot"
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E1W, after the VG-E1M paragraph that follows the "S-235 ticker" amendment
+tests_pending = true  # the tests are on origin/push/vg-e1w-tests, not on main; flips at the landing
+size_estimate = "E1w wiring of TickerBeats and MapMarkers into the tactical view (PIECES entries, shell, load_frame feed, _redraw set_frame, qa_state and inventory map_markers); built on origin/push/vg-e1w-b, re-applied on current main (qa_state dict conflict with VG-C-land-one-projection); the S-235 play and shot; DRAFT-s235-budget 5920"
 
 # Record batch 7 (Architect 2026-10-14): lane F lobby pieces (vg-wave12-laneFlobby.js, header V6 and precondition 2). VG-F-S143 after VG-F-S241 (lobby.gd, the known-red file, F.md).
 [[piece]]
@@ -2664,6 +2668,20 @@ size_estimate = "contract: three unit row fields saved, save format 13 to 14, pi
 
 
 # Skill lab rev 2 shard rows (spec docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, records step, clerk 2026-10-14). L-rows and S take over scripts/skilllab and tests/skilllab files from the attached SL-harness (glob), SPACELAB-1 and LAB-SEARCH; E-rows own the engine files.
+
+# Tool: Workflow (contract piece: save format; a single piece). Architect 2026-10-23 DEC-audit-fixes (deferred here); spec: a-pieces paragraph VG-E-giveup-single.
+[[piece]]
+id = "VG-E-giveup-single"
+manager = "M0"
+wave = 14
+owns = ["csrc/tactical_move.c", "csrc/om_internal.h", "csrc/om_constants.h", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "docs/architecture.md", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E01_T3_contract.py", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_VG_W_w1_planner.py", "tests/csim/test_VG_E_giveup_single.py", "docs/bible/epics/E-13-movement-and-command.md", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # Save format N to N+1 (read at launch after layerspot 13 and unitrow-save 14); no ABI change; unit.c not touched (a stalled attack-mover with a standing target ends under this pass, one with a moving target is re-issued at unit.c:2214-2215 and exempt); trace goldens and movement tests that move are listed by the writer under TD-VG-E-38 (Architect 2026-10-23, drafted)
+owns_glob = []
+acceptance = ["tests/csim/test_VG_E_giveup_single.py"]
+depends_on = ["VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-CONTRACT-unitrow-save", "VG-E-facing-travel", "VG-E-move-through-idle-own", "LAB-REV2-E0", "LAB-REV2-E2", "VG-T-EMIT-WIRE"]  # every queued owner of csrc/tactical_move.c today; LAB-CONTRACT-unit-pos-batch is dropped per DEC-SPEED-2-dropped-2026-10-23 and is not listed: if it is un-dropped, add it here
+status = { state = "queued" }
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-E-giveup-single, after VG-CONTRACT-route
+size_estimate = "two row fields (f64, u32), one static pass of about 25 lines beside om_move_giveup_pass, three defines (DRAFT-giveup-single-ticks 40, -progress-wu 1.0, -reset-wu 80), save write/read/validate lines, one R-099-05 rewrite, pin moves; one csim test file"
 
 # E0 lands after E7, the three visible-game E pieces, layerspot and route, and before E2 and E4
 # E0 takes its ABI and save numbers from main at its landing, after VG-CONTRACT-E7 (ABI 8, save 12), VG-CONTRACT-layerspot (ABI 9, save 13) and VG-CONTRACT-route (Architect 2026-10-21)
@@ -3357,13 +3375,15 @@ size_estimate = "pipe handler for preferences and the two sim reads"
 id = "VG-M-SKEL"
 manager = "M0"
 wave = 13
-owns = ["tests/qa/desktop/plays/M/S-flow.py", "autoload/era_theme_resolver.gd", "autoload/input_sanitizer.gd", "autoload/scanline_overlay.gd", "scripts/specfactory/lane_plays.toml"]
+owns = ["tests/qa/desktop/plays/M/S-flow.py", "tests/specfactory/test_lane_plays_lane_m.py", "tests/specfactory/test_lane_plays_scope.py", "autoload/era_theme_resolver.gd", "autoload/input_sanitizer.gd", "autoload/scanline_overlay.gd", "scripts/specfactory/lane_plays.toml"]  # lane_plays.toml: the two attached owner rows are landed, this row is the next sole owner; test_lane_plays_scope.py: the one assertion at :159, under TD-VG-M-SKEL-lanes; the three autoloads are held for the lane, not edited here
 owns_glob = ["scenes/shared/world_view/**"]
-acceptance = ["tests/qa/desktop/plays/M/S-flow.py"]
+# Tool: Workflow (ends in frames for Westley and a verdict)
+acceptance = ["tests/qa/desktop/plays/M/S-flow.py", "tests/specfactory/test_lane_plays_lane_m.py"]
 depends_on = ["HARNESS-lane-plays-scope"]
 status = { state = "queued" }
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph "Lane M, the menus and flow skeleton (VG-M-SKEL", under the Lane U rev 3a heading
 tests_pending = true
-size_estimate = "Lane M menus skeleton: one play and three autoload scripts, thinnest end-to-end path"
+size_estimate = "Lane M skeleton: one story play over the live launch path (7 screens, shots), one gate-scope test, one lane_plays.toml row; no scene or autoload edited"
 
 # FINDING-gate-lane-plays-scope (Architect 2026-10-20): the gate runs only the plays under a changed lane's own globs, so a cross-lane play (S-140) was never gated; widen the scope
 # S-140 case (2026-10-21): the F-S140 click rewrite changed lane F play code but the gate's lane_plays stage reported 'skipped: no lane plays touched', because lane F's globs in lane_plays.toml cover only autoload/net/** and scenes/lobby/**; the play was run by hand.
@@ -3610,17 +3630,17 @@ size_estimate = "the csim library is built once per session by the controller an
 # gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
 [[piece]]
 id = "HARNESS-gate-tiers"
-# audit4 highs applied (Architect ruling 2026-10-23 14:10 EDT, records 22b), the report's mediums and lows pending; no launch until next week's pass; report ~/Projects/om-push/scratch/drafts-2026-10-22/audit4_report_HARNESS-gate-tiers.md
+# audit4 folded (rev 2, 2026-10-23, records 23a; T1 to T5 ACCEPT and the Sonnet audit of the draft applied): T2 and T4 go through one more Sonnet audit before launch; no launch until next week's pass; report ~/Projects/om-push/scratch/drafts-2026-10-22/audit4_report_HARNESS-gate-tiers.md, draft ~/Projects/om-push/tmp-arch/draft_HARNESS-gate-tiers.md
 manager = "M0"
 wave = 13
-owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/status_check.py", "docs/northstar/plans/push/sweeps.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_tiers.py"]
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/status_check.py", "docs/northstar/plans/push/sweeps.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "tests/specfactory/test_gate_tiers.py"]  # dispatcher.md: the temporary-rule paragraph only (its other owner, HARNESS-methodcheck, is landed); rules.md: HARNESS-red-evidence is ordered after this row through HARNESS-look-rejects
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_tiers.py"]
 depends_on = ["HARNESS-csim-xdist", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-test-edit-row", "HARNESS-tool-line"]  # the last two are records-clerk additions (merge_gate_support.py overlap), Architect to confirm
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
-size_estimate = "merge_gate.sh --tier fast|slow|full (default full): the fast tier per landing under the lock, the slow tier as a sweep on main every 3 landings or 2 hours with bisect-and-revert, a status_check sweep line, and the rules.md section (b) text; replaces the temporary landing rule when it lands"
+size_estimate = "merge_gate.sh [--revert] [--tier fast|slow|full] (default full unchanged) and one GATE tier <name> line: the fast tier per landing under the lock (lints, acceptance, transport, select-csim csim files through _symbol_module_map, status), the slow tier as a sweep on main every DRAFT-slow-tier-batch (3) landings or DRAFT-slow-tier-hours (2 h) with sweeps.md rows and bisect-and-revert, the status_check.py sweep check (DRIFT at DRAFT-slow-tier-drift-mult 2), rules.md (b) and dispatcher.md temporary-rule text replaced; replaces the temporary landing rule when it lands"
 
 # The measurement engineer's report (stage timings, host dependencies) is pasted here at launch. Shared-file edit in merge_gate.sh and merge_gate_support.py, line by line (records clerk, from origin/main 2026-10-21; the Preflight re-verifies): merge_gate.sh:19 PYTHON default ~/Projects/agora/.venv/bin/python becomes a repo-relative or environment path; merge_gate.sh:372 VENV_TARGET default $HOME/Projects/agora/.venv likewise; merge_gate_support.py has no ~ path today. gate_remote.sh must also find the baseline cache and scratch root without the box's ~/Projects/om-push.
 # gate measurement 2026-10-21: 54 to 57 min per landing; csim is two serial single-core passes of about 13 min each (main then candidate); the baseline cache hit 1 of 5 gates because every landing moves main; three of five gates REJECTed in their last stages after 26 to 57 min
@@ -3812,7 +3832,7 @@ depends_on = ["VG-C2-5-patch", "VG-C2-5-glowkey", "G-qadesktoptests", "VG-B", "H
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Rev 13 section, VG-C2-5-scope paragraph
-size_estimate = "galaxy pixel detector scope: a dot whose centre lies within another region's light disc is excluded from the sample before the 0.60 line is applied; line, tolerance, isolation and the patch rule unchanged; expected 24 of 24 to 26 sampled; tests first: a Godot-free exclusion fixture of three synthetic dots; positive control: without the exclusion all three are sampled; test-defect scope narrowing TD-VG-C2-5-scope"
+size_estimate = "galaxy pixel detector scope: a dot whose centre lies within a rival region's light disc (glow_radius_px x DRAFT-c25-glow-edge, 1.0 until the writer's measured value is recorded in the ledger row) is excluded from the sample before the 0.60 line is applied; line, tolerance, isolation and the patch rule unchanged; expected sampled count a range from the writer's sizing report; tests first: a Godot-free exclusion fixture of three synthetic dots; positive control: without the exclusion all three are sampled; test-defect scope narrowing TD-VG-C2-5-scope"
 
 # Skill lab rev 2 G3 positive-control piece (lab overseer a7, Architect ruling 2026-10-21; Westley may veto). The FINDING-g3-positive-control-red rewrite rides the lab landing. VG-E-startforce and VG-T-REACH-TESTS depend on this row (without it the two test files overlap those rows). Manager and wave copied from the sibling LAB-REV2 rows (M0, wave 10).
 
@@ -3822,14 +3842,14 @@ size_estimate = "galaxy pixel detector scope: a dot whose centre lies within ano
 id = "VG-C2-5-glowkey"
 manager = "M0"
 wave = 15
-owns = ["scenes/galaxy/galaxy_view.gd", "tests/test_galaxy_view.gd"]
+owns = ["scenes/galaxy/galaxy_view.gd", "tests/test_galaxy_view.gd"]  # galaxy_view.gd: inside qa_state() only; VG-B25 (queued) is the previous owner, every other owner of both files is attached and reached through its chain
 owns_glob = []
 acceptance = ["tests/test_galaxy_view.gd"]
-depends_on = ["VG-C2-5-patch", "VG-B25"]
+depends_on = ["VG-C2-5-patch", "VG-B25"]  # VG-C2-5-patch: the detector this key serves; VG-B25: the queued owner of the same qa_state() lines, so it lands first
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-C2-5-glowkey
-size_estimate = "galaxy_view.gd qa_state gains glow_radius_px, one float per region id (the shell's world radius significance x scale projected through the camera at the dot's depth); tests first: the key is present for every region and positive; positive control: on main the key is absent"
+size_estimate = "glowkey: qa_state() gains glow_radius_px, one float per visible region (14 wu x (0.6 + 0.4 x sig/max owner sig) projected at the dot, 0.0 neutral); tests first in tests/test_galaxy_view.gd: key present, positive for owned, zero for neutral, formula within DRAFT-c25-glowkey-tol 0.5 px, mutants for unprojected, global max and positive neutral; positive control: main has no key"
 
 [[piece]]
 id = "LAB-REV2-G3PC"
