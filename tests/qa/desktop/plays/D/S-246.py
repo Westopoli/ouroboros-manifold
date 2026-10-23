@@ -25,6 +25,7 @@ no space field, so there is no extra check here beyond the present:false control
 twice" check (G3): the qa inventory counts squad models, not visibility, so it cannot show a double draw.
 Control groups: VG-A-startforce has not landed on this base (qa_state has no group key), so the play takes the box path and says
 which path ran.
+Rule pins: R-246-01@7374f6, R-246-02@a02180, R-246-03@0bdc9c, R-246-04@837f23
 Red on main: qa["space3d"] is absent (the view is not hosted, the default space era is 2D), the control above and the whole
 motion (boxes, orders, arrival, zoom skipped) run green first.
 """
@@ -39,7 +40,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "A"))  # lane A helpers, read-only
-from play_support import QA_SHOT_DIR, RUN_ID, SHOT_DIR, qa, start_tactical_game, step_until  # noqa: E402
+from play_support import RUN_ID, SHOT_DIR, qa, start_tactical_game, step_until  # noqa: E402
 from daemon_client import control_center, find_control  # noqa: E402
 
 W, H = 1920, 1080
@@ -214,7 +215,7 @@ def test_s246_space_sheets_rings_tube(g):
     time.sleep(3.0)  # harness wait: wall time, the frame-time average is over the last 120 frames
 
     # THE SHOT, written by this play (play_support.moment would name it S-246_<label>)
-    src = QA_SHOT_DIR / "S-246.png"
+    src = client.user_dir / "qa" / "S-246.png"
     if src.exists():
         src.unlink()  # a stale file from an earlier run must not be copied
     client.screenshot("S-246")

@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-16 S-103 "The tactical camera", rules R-103-01 to R-103-04 (`docs/bible/epics/E-16-client-camera-hud-and-world-view.md:29-38`). Stage 1 rows A-145 to A-148 and A-155 (`docs/northstar/stage1_audit.md:246-249,256`), A-302 (`:474`). Flag Q-103-01 closed (a) on 2026-09-14 (`docs/northstar/ambiguity_register.md:99`). Research item RL-Q75 (`docs/research_lane_queue.md:93`) requested 2026-09-14, never run. The E-16 gate calls this "the biggest open design item in the whole bible" (`E-16:14`). A fixed-angle interim camera ships in every playtest round; the full system is committed scope waiting on this design. The map view zoom band (Q-103-02) has its own brief in `../map-view/`.
+E-16 S-103 "The tactical camera", rules R-103-01 to R-103-04 (`docs/bible/epics/E-16-client-camera-hud-and-world-view.md:29-38`). Stage 1 rows A-145 to A-148 and A-155 (`docs/northstar/stage1_audit.md:246-249,256`), A-302 (`:474`). Flag Q-103-01 closed (a) on 2026-09-14 (`docs/northstar/ambiguity_register.md:99`). Research item RL-Q75 (`docs/legacy/research_lane_queue.md:93`) requested 2026-09-14, never run. The E-16 gate calls this "the biggest open design item in the whole bible" (`E-16:14`). A fixed-angle interim camera ships in every playtest round; the full system is committed scope waiting on this design. The map view zoom band (Q-103-02) has its own brief in `../map-view/`.
 
 ## 2. Player-facing goal as documented
 
@@ -49,7 +49,7 @@ Mockup review 1, 2026-09-21 (`landscape_design/README.md:49`): "Camera did pan c
 - Age of Empires Online: the "class RTS camera angle for now" register (`landscape_design/README.md:15`).
 - Immortal: Gates of Pyre control scheme, StarCraft 2, Halo Wars, Supreme Commander (RL-Q75, `research_lane_queue.md:93`).
 
-Prior research the sub-agent must read: `docs/research/topics/delegated_command_precedents.md` (the Ender's Game decomposition; its verdict that a literal Battle Room arena is a "bad fit, small ceiling" for this game, `:83`).
+Prior research the sub-agent must read: `docs/legacy/topics/delegated_command_precedents.md` (the Ender's Game decomposition; its verdict that a literal Battle Room arena is a "bad fit, small ceiling" for this game, `:83`).
 
 ## 6. Contradictions, as questions for Westley
 
@@ -83,7 +83,7 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - The designed mode, entered from the classic RTS default view that has an auto-anchor home. Each option says how the player enters the mode, switches views inside it, steers, and returns home, and what they see while the view changes.
 - A control table per option: keys, mouse, and gestures for every action above.
 - How the five layers read from each view in the option; the Halo Wars height floor holds in every view.
-- Augmented-reality perception and legibility research is an explicit lead for wild options. Read `docs/research/topics/delegated_command_precedents.md` first; a literal Battle Room arena was already judged a bad fit.
+- Augmented-reality perception and legibility research is an explicit lead for wild options. Read `docs/legacy/topics/delegated_command_precedents.md` first; a literal Battle Room arena was already judged a bad fit.
 - Unit POV: optional; if an option includes it, say what the player does there.
 
 ## 10. Decision (2026-09-23)
