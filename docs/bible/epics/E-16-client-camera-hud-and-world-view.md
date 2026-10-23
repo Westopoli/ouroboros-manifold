@@ -61,14 +61,13 @@ Outputs: viewport transform; orders.
 Open flags: Q-103-06 (layer marks for groups beyond pins). What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
-Open question: Q-104-02 (see docs/northstar/ambiguity_register.md): which beats the ticker shows at launch, the four of R-104-01 or the longer list of R-235-03; the ticker is not built until it is answered.
 Flag closed, rule text pending: Q-104-01, single-player pause is allowed (Escape or Pause halts the simulation and opens the menu) and multiplayer never pauses. The rule below is what the tests read today.
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
 
 Direction changed 2026-10-02, rewrite pending: the ticker also carries economy events (S-235), and the structure panel's production timers belong to the economy seat's schedule (S-230, E-22 S-170) with the structures themselves strongpoints (E-15). The rules below are what the game does today.
 
 Rules
-- R-104-01  Given a mission, When the HUD is drawn, Then the player can always see the objective list with progress (top-left) and a quiet ticker of notable beats beneath it; the ticker recognizes structure captured, structure lost, force routed, and objective threshold crossed, and nothing else at launch.
+- R-104-01  Given a mission, When the HUD is drawn, Then the player can always see the objective list with progress (top-left) and a quiet ticker of notable beats beneath it; the ticker names six beats: structure captured, structure lost, force routed, objective threshold crossed, the economy beat (base occupied, a side falling back to an expansion, an expansion founded, or a weather trouble arriving, R-235-03), and a strongpoint taken or lost (R-235-03).
 - R-104-02  Given nothing mission-significant has happened, When the top-center is read, Then it is empty; Given a structure falls or an objective band threshold is crossed, Then a banner appears there and clears within 5 s.
 - R-104-03  Given a mission, When the top-right is read, Then it shows elapsed mission time and a pause or menu button [Q-104-01: pause in a real-time multiplayer match].
 - R-104-04  Given a selection, When the bottom-center is read, Then it shows the selected units' portraits, summed HP, and one ability slot per unit type with a cooldown ring, and no contextual prompt or "ready" notification.
@@ -276,7 +275,7 @@ Rules
 
 Inputs: economy and weather events from the tick delta.
 Outputs: marks on the map view; ticker lines, T2-checkable.
-Open flags: Q-104-02 (the ticker list at launch, with R-104-01; see docs/northstar/ambiguity_register.md). Q-235-01 closed 2026-10-12, R-235-03.
+Q-235-01 closed 2026-10-12, R-235-03. Q-104-02 closed 2026-10-23, R-104-01.
 
 ## Inputs
 
