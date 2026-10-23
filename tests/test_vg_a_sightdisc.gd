@@ -24,6 +24,13 @@ extends "res://tests/support/vg_c_case.gd"
 #    prints "MASK-PIXELS: not sampled"; run it under xvfb-run with OM_QA_RENDERER=vulkan to sample.
 #  - qa_state()["sight_discs"] belongs to VG-C-land-one-projection (the shape of an entry's bounding box is not fixed in the
 #    paragraph), so it is not asserted here.
+#  - Near-plane clip (fix brief 2026-10-23, tests 24 on): the helper is FogLayer.clip_to_plane(pts: PackedVector3Array,
+#    plane: Plane) -> PackedVector3Array, called statically through load(FOG); "in front" is plane.distance_to(p) >= 0.0. A test
+#    that finds the method missing fails with a message (no parse error). The helper script path is FOG unless the environment
+#    variable OM_CLIP_HELPER names another script (used once, to run the three helper tests against a reference). The near-plane
+#    construction (camera near + margin) is the doer's and is not asserted; the low-camera test reads only qa_state() sight_discs
+#    boxes. Its land fixture is a copy of tests/test_vg_c_land_one_projection.gd's (240x240 cells, 12 own units, sight 800, ground
+#    era, camera_set {height} through qa_daemon._dispatch), so it needs no qa key beyond sight_discs.
 # Positive controls: on main the pitch-50 ratio reads 1.0 (the fallback below builds a circle polygon from centre and radius when
 # `points` is absent, so the stated reason is shown by a number, not by a missing key), both ramp discs are full circles, and the
 # source still holds the radius disc field, the float texture and the hole-punch loop.
@@ -148,6 +155,8 @@ func _run() -> void:
 	await _space_path()
 	await _mask()
 	_deletion()
+	_clip_tests()
+	await _low_camera()
 
 
 func _ratio_and_close() -> void:
@@ -325,3 +334,126 @@ func _deletion() -> void:
 	_check(not src.contains("\"radius\"") and not src.contains("\"center\""), "VG-A-sightdisc: fog_layer.gd still holds the centre-and-radius disc field (CONTROL: main fails this)")
 	_check(not src.contains("disc_tex") and not src.contains("texelFetch") and not src.contains("FORMAT_RGBF"), "VG-A-sightdisc: fog_layer.gd still declares the one-row float texture (disc_tex / texelFetch / FORMAT_RGBF)")
 	_check(not src.contains("uniform int count"), "VG-A-sightdisc: the shader still declares the hole-punch loop's count uniform")
+
+
+# --- near-plane clip (fix brief 2026-10-23) -----------------------------------------------------------------------------------
+# Rule pins for these tests are the file's: R-089-03 (the disc draws only what R-089-03 computes, so points behind the camera must not corrupt it).
+
+func _clip(pts: PackedVector3Array, plane: Plane) -> Variant:
+	var path := OS.get_environment("OM_CLIP_HELPER")
+	var g = load(path if path != "" else FOG)
+	if g == null or not g.has_method("clip_to_plane"):
+		_check(false, "VG-A-sightdisc: FogLayer.clip_to_plane(pts, plane) does not exist (helper not built)")
+		return null
+	return g.clip_to_plane(pts, plane)
+
+
+func _square(z0: float, z1: float) -> PackedVector3Array:
+	return PackedVector3Array([Vector3(0, 0, z0), Vector3(10, 0, z0), Vector3(10, 0, z1), Vector3(0, 0, z1)])
+
+
+func _clip_tests() -> void:
+	var plane := Plane(Vector3(0, 0, 1), 0.0)  # in front is z >= 0
+	# test_clip_keeps_front_points
+	var front := _square(1.0, 3.0)
+	var r1 = _clip(front, plane)
+	if r1 != null:
+		_check(r1.size() == 4, "test_clip_keeps_front_points: %d points came back, want the 4 in front unchanged" % r1.size())
+		if r1.size() == 4:
+			var same: bool = true
+			for k in 4:
+				same = same and r1[k].distance_to(front[k]) < 0.001
+			_check(same, "test_clip_keeps_front_points: the four front points changed: %s" % [r1])
+	# test_clip_cuts_crossing_edges
+	var r2 = _clip(_square(-1.0, 1.0), plane)
+	if r2 != null:
+		var all_front: bool = r2.size() >= 3
+		var on_plane := 0
+		for p in r2:
+			all_front = all_front and plane.distance_to(p) >= -0.001
+			if absf(plane.distance_to(p)) < 0.001:
+				on_plane += 1
+		_check(all_front, "test_clip_cuts_crossing_edges: %d points, a point lies behind the plane (or fewer than 3 came back): %s" % [r2.size(), r2])
+		_check(on_plane == 2, "test_clip_cuts_crossing_edges: %d points on the plane, want the 2 intersection points" % on_plane)
+	# test_clip_behind_is_empty
+	var r3 = _clip(_square(-3.0, -1.0), plane)
+	if r3 != null:
+		_check(r3.size() == 0, "test_clip_behind_is_empty: %d points came back, want an empty array" % r3.size())
+
+
+const LC_OWN := [
+	[1, 12220.0, 920.0], [2, 12250.0, 920.0], [3, 12280.0, 920.0], [4, 12220.0, 950.0], [5, 12250.0, 950.0], [6, 12280.0, 950.0],
+	[7, 12220.0, 980.0], [8, 12250.0, 980.0], [9, 12280.0, 980.0], [10, 12320.0, 920.0], [11, 12350.0, 920.0], [12, 12380.0, 920.0]]
+
+
+func _lc_terrain() -> Dictionary:
+	var n := 240
+	var heights := PackedInt32Array()
+	var bands := PackedByteArray()
+	var walk := PackedByteArray()
+	for j in n:
+		for i in n:
+			heights.append(i * 12 + j * 7 + (300 if (i / 10 + j / 10) % 2 == 0 else 0))
+			bands.append(3)
+			walk.append(1)
+	return {"cells_w": n, "cells_h": n, "bands": bands, "walkable": walk, "heights": heights, "slopes": [],
+		"layer_floors_wu": [0.0, 150.0, 300.0, 450.0, 600.0], "flyer_types": []}
+
+
+func _lc_frame(tick: int) -> Dictionary:
+	var units := []
+	var ids := []
+	for p in LC_OWN:
+		units.append({"id": p[0], "faction": 0, "type": 0, "tier": 1, "x": p[1], "y": p[2], "hp": 250, "layer": 2, "facing": 0.0,
+			"target": -1, "state": 0, "sight": 800})
+		ids.append(p[0])
+	var profiles := []
+	for t in 6:
+		profiles.append({"type": t, "max_hp": 250, "range": 200, "interval": 1.0, "sensor": 800, "ability": t, "acd_max": 1500, "aoe": 0})
+	return {"type": "tactical", "tick": tick, "player_faction": 0, "mission_over": false, "units": units, "structures": [],
+		"visible": {"0": ids}, "profiles": profiles, "events": [], "objectives": [],
+		"map": {"canvas": 24000.0, "nodes": [], "cover": [], "obstacles": []}}
+
+
+# test_low_camera_boxes_not_all_full_width. Positive control: the height-3000 half is green on 743e4f35.
+func _low_camera() -> void:
+	var cfg = root.get_node("EraConfig")
+	var d = load("res://autoload/qa_daemon.gd").new()
+	root.add_child(d)
+	await process_frame
+	cfg.set_era(cfg.GROUND_ERA_ID)
+	var v: Node = (load("res://scenes/tactical_c/tactical_view.tscn") as PackedScene).instantiate()
+	root.add_child(v)
+	current_scene = v
+	await process_frame
+	v.set_process(false)
+	await process_frame
+	cfg.set_era(cfg.GROUND_ERA_ID)
+	v.load_frame(_lc_frame(0))
+	v.set_terrain(_lc_terrain())
+	await process_frame
+	v.load_frame(_lc_frame(1))
+	await process_frame
+	var vp: Vector2 = Ground3D.SCREEN_SIZE
+	var high: Dictionary = v.qa_state().get("sight_discs", {})
+	var inside: bool = high.size() == 12
+	for k in high:
+		var b = high[k]
+		inside = inside and b is Array and b.size() == 4 and b[0] >= 0.0 and b[1] >= 0.0 and b[0] + b[2] <= vp.x and b[1] + b[3] <= vp.y
+	_check(inside, "test_low_camera_boxes_not_all_full_width: at height 3000 sight_discs has %d entries (want 12), every box inside the viewport: %s" % [high.size(), high])
+	var r: Dictionary = await d._dispatch("camera_set", [{"height": 300.0}])
+	_check(bool(r.get("ok", false)), "test_low_camera_boxes_not_all_full_width: camera_set height 300 answered %s" % [r])
+	await process_frame
+	var low: Dictionary = v.qa_state().get("sight_discs", {})
+	var narrow := 0
+	var first = null
+	for k in low:
+		var b = low[k]
+		if first == null:
+			first = b
+		if b is Array and b.size() == 4 and float(b[2]) < vp.x:
+			narrow += 1
+	_check(narrow >= 1, "test_low_camera_boxes_not_all_full_width: at height 300 none of %d sight_discs boxes has w < %s (every box is full width, e.g. %s)" % [low.size(), vp.x, first])
+	v.queue_free()
+	current_scene = null
+	await process_frame
