@@ -1,7 +1,7 @@
 extends "res://tests/support/vg_c_case.gd"
 
 # VG-C-land-one-projection (docs/northstar/plans/2026-10-07-visible-game-spec.md, paragraph "VG-C-land-one-projection").
-# Rule pins: R-009-01@4af687, R-010-01@b3e461
+# Rule pins: R-009-01@164728, R-010-01@b3e461
 # Proves R-010-01 and R-009-01 as the paragraph tags them [B R-010-01] [B R-009-01]; fixes DEC-landview-one-projection
 # (docs/northstar/story_reviews/westley/decisions.md) and TD-VG-C-land-one-projection: in the land era every mark of a unit or
 # a structure sits where the ground host projects its world position, at every camera, with or without a sim step.

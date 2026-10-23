@@ -1,4 +1,4 @@
-# Rule pins: R-009-01@4af687, R-010-01@b3e461
+# Rule pins: R-009-01@164728, R-010-01@b3e461
 """S-140 land play (VG-C-land-one-projection, spec paragraph "VG-C-land-one-projection" in
 docs/northstar/plans/2026-10-07-visible-game-spec.md; lane C's copy of the S-140 moment on land, DEC-S140-live-look).
 Proves R-010-01 (a unit's marks sit on its ground position) and R-009-01 (a structure's marks sit on its ground position)
