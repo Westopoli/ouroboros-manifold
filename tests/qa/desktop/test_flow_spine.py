@@ -38,6 +38,9 @@ ever retries it.
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import signal
 import struct
 import time
 import zlib
@@ -93,9 +96,33 @@ def _real_saves_snapshot(game) -> dict:
 
 
 @pytest.fixture(scope="module")
-def game():
+def game(request):
+    # HARNESS-flow-spine-teardown: the finalizer removes the scratch dir and kills the xvfb-run/godot
+    # tree also when setup fails; the handlers run it on SIGTERM/SIGINT, which skip a generator's finally.
+    started: list = []
+
+    def teardown():
+        for g in started:
+            g.stop()
+            shutil.rmtree(g.scratch, ignore_errors=True)
+        started.clear()
+
+    def on_signal(signum, frame):
+        teardown()
+        signal.signal(signum, signal.SIG_DFL)
+        os.kill(os.getpid(), signum)
+
+    old = {s: signal.signal(s, on_signal) for s in (signal.SIGTERM, signal.SIGINT)}
+
+    def restore():
+        for s, h in old.items():
+            signal.signal(s, h)
+
+    request.addfinalizer(restore)
+    request.addfinalizer(teardown)
     port = pick_free_port()
     g = GodotGame(qa_port=port, seed=1)
+    started.append(g)
     real_before = _real_saves_snapshot(g)
     g.start()
     g.wait_for_port(timeout=PORT_TIMEOUT_S)
