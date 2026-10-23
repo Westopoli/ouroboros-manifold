@@ -44,6 +44,8 @@ var _offset: Array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 var _own_color := FALLBACK_OWN
 static var _offsets: Array = []
 var _projector := Callable()
+# VG-C-land-marks (DEC-S001-no-layer-ring-land): the layer ring is a space-era mark; set once in _ready from the era.
+var layer_rings_enabled := true
 
 
 func _init() -> void:
@@ -61,6 +63,11 @@ func _init() -> void:
 		var e: Dictionary = units.get(TYPE_NAMES[i], {})
 		_vscale[i] = minf(float(e.get("visual_scale", 1.0)), MAX_VISUAL_SCALE)
 		_offset[i] = float(e.get("facing_offset_rad", 0.0))
+
+
+func _ready() -> void:
+	var cfg := get_node_or_null("/root/EraConfig")
+	layer_rings_enabled = cfg == null or cfg.kind() != "ground"
 
 
 # The manifest's facing_offset_rad per type, the one place it is read (2D icon, 3D body, arrow).
@@ -148,6 +155,7 @@ func _make_node(u: Dictionary, own: bool) -> Node2D:
 	var half := SHAPE_RADIUS * k
 	var ring := Line2D.new()
 	ring.name = "LayerRing"
+	ring.visible = layer_rings_enabled
 	ring.points = _circle(SHAPE_RADIUS * 0.6 * k)
 	ring.closed = true
 	ring.width = 2.0

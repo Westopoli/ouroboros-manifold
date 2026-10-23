@@ -364,6 +364,7 @@ func set_terrain(t: Dictionary) -> void:
 		if _ground3d == null:
 			_ground3d = Ground3DHost.new()
 			_ground3d.name = "Ground3D"
+			_ground3d.occlusion_changed.connect(_hide_occluded)
 			add_child(_ground3d)
 			move_child(_ground3d, 0)
 		_ground3d.set_terrain(t)
@@ -407,7 +408,7 @@ func _sync_from_rig() -> void:
 	_camera = Vector2(q["x"], q["y"])
 	_world_scale = q["scale"]
 	if _ground_layer != null:
-		_ground_layer.visible = rig.band() == "map"
+		_ground_layer.visible = rig.band() == "map" and _space_hosted
 
 
 func _show_error(reason: String) -> void:
@@ -590,9 +591,34 @@ func qa_state() -> Dictionary:
 		"inventory": _inventory(),
 		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
 		"marks_px": _marks_px(),
+		"marks_visible": _marks_visible(),
+		"arrows": {"units_3d": _ground3d.arrow_count() if _ground3d != null and not _space_hosted else 0, "units_2d": _node("UnitVisuals").arrow_count()},
 		"hidden_on_land": ["UnitSquads", "TerrainLayer"] if _ground3d != null and not _space_hosted else [],
 		"sight_discs": {},
 	}
+
+
+# VG-C-land-marks (FINDING-s001-marks-through-terrain): a unit behind terrain on land draws no 2D mark.
+func _hide_occluded() -> void:
+	if _ground3d == null or _space_hosted:
+		return
+	var uv := _node("UnitVisuals")
+	var occ: Dictionary = _ground3d.occluded_ids()
+	for u in _frame.get("units", []):
+		var n: Node2D = uv.unit_node(int(u.get("id")))
+		if n != null:
+			n.visible = not occ.has(int(u.get("id")))
+
+
+func _marks_visible() -> Dictionary:
+	var out := {}
+	var uv := _node("UnitVisuals")
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		var n: Node2D = uv.unit_node(id)
+		if n != null:
+			out[str(id)] = {"body": n.visible and n.get_node("Body").visible, "ring": n.visible and uv.layer_ring(id).visible}
+	return out
 
 
 # VG-C-land-one-projection: the screen position of every unit icon and structure icon, plus the squad models while UnitSquads shows.
@@ -991,6 +1017,7 @@ func _apply_motion() -> void:
 		var node: Node2D = uv.unit_node(id)
 		if node != null:
 			node.position = Vector2(px[0], px[1])
+			node.visible = _ground3d == null or not _ground3d.occluded_ids().has(id)
 
 
 # R-099-03: the tick period the engine is currently spanning per
@@ -1375,6 +1402,7 @@ func _redraw() -> void:
 		_node(n).set_frame(_frame, lf, _world_scale, _camera)
 	if _space_hosted:
 		_hide_2d_units()
+	_hide_occluded()
 	for n in ["StructuresLayer", "Shots", "Deaths", "Abilities", "Ambient"]:
 		var piece := _node(n)
 		if piece.has_method("set_frame"):
