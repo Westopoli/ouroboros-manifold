@@ -32,8 +32,13 @@ extends "res://tests/support/vg_c_case.gd"
 #      the camera instead (rows 4 and 5) raised the 442 gap to 48.8 wu, past the slack, so it was not used.
 #  (2) "occluded_ids" in qa_state sits inside the "ground3d" block (like slope_view and units3d), which tactical_view forwards.
 #  (3) Ids in marks_visible are decimal strings, as units_px keys are.
-#  (4) The recompute-on-camera-change hook has no named signal or method: the test moves the rig (zoom_by, pan_to) and reads
-#      occluded_ids() at once, with no set_frame call and no await, so only a recompute triggered by the rig passes.
+#  (4) CAMERA-CHANGE RECOMPUTE (Architect ruling 2026-10-23, no rig hooks, camera_rig_3d.gd unedited): Ground3DHost recomputes
+#      occluded_ids in its own _process when the rig camera's global_transform differs from the one cached at the last recompute,
+#      at most once per DRAFT-occlusion-recompute-ms 100 ms while it keeps changing, and once more when it settles. The test
+#      drives the rig through its public verbs (zoom_by, pan_to, pan, set_top_down; the paragraph's pan_by is pan in the rig), then _settle() waits: until the camera
+#      global_transform is unchanged for 10 consecutive frames, then 300 ms of wall time (3 x the 100 ms settle recompute) and
+#      one more frame. BOUND: at most 600 frames or 10 s for the camera to settle (a failure to settle is its own red check);
+#      the whole wait is therefore bounded by about 10.3 s per verb. No set_frame call between the verb and the read.
 #  (5) The stub EraConfig: the real autoload is renamed aside for the duration of the unit-visuals checks and put back.
 #  (6) CREST UNIT OFFSET. The paragraph says 10 wu behind the crest, "inside the 20 wu slack". Measured with GroundPick on
 #      this fixture: the pick hit is 22.0 wu nearer than the unit at 10 wu (y = 440), so the paragraph's own control
@@ -277,7 +282,7 @@ func test_host_flat_control() -> void:
 	host.queue_free()
 
 
-# DRAFT-occlusion-recompute: recomputed when the rig reports a camera change, before the next frame.
+# DRAFT-occlusion-recompute: the host recomputes from the rig camera's transform in its own _process (header choice 4).
 func test_host_recompute_on_camera_change() -> void:
 	var t := _terrain(true)
 	var host = await _host(t)
@@ -289,20 +294,47 @@ func test_host_recompute_on_camera_change() -> void:
 	var rig = host.camera_rig()
 	var cam: Camera3D = rig.get_camera()
 	var seen := {}
-	for step in ["zoom_in", "pan", "top_down"]:
+	for step in ["zoom_in", "pan", "pan_by", "top_down"]:
 		match step:
 			"zoom_in":
 				rig.zoom_by(-9)
 			"pan":
 				rig.pan_to(Vector2(450.0, 900.0))
+			"pan_by":
+				rig.pan(Vector2(0.0, -300.0))
 			"top_down":
 				rig.set_top_down(true)
+		var settled: bool = await _settle(cam)
+		_check(settled, "R-001-06 CONTROL: the camera settled within the bound after rig %s" % step)
 		var want := _oracle(t, cam, _points())
 		var got := _sorted_ids(host.occluded_ids())
 		seen[str(want)] = true
-		_check(got == want, "R-001-06: after rig %s (no set_frame, no frame wait) occluded_ids is %s, the pick rule gives %s" % [step, got, want])
+		_check(got == want, "R-001-06: after rig %s and the settle wait occluded_ids is %s, the pick rule gives %s" % [step, got, want])
 	_check(seen.size() >= 2, "R-001-06 CONTROL: the camera moves produce at least two different occluded sets, saw %s" % [seen.keys()])
 	host.queue_free()
+
+
+# Wait until the camera has settled plus one frame past the 100 ms settle recompute; see header choice (4).
+func _settle(cam: Camera3D) -> bool:
+	var last := cam.global_transform
+	var still := 0
+	var frames := 0
+	var t0 := Time.get_ticks_msec()
+	while still < 10 and frames < 600 and Time.get_ticks_msec() - t0 < 10000:
+		await process_frame
+		frames += 1
+		if cam.global_transform == last:
+			still += 1
+		else:
+			still = 0
+			last = cam.global_transform
+	if still < 10:
+		return false
+	var t1 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t1 < 300:
+		await process_frame
+	await process_frame
+	return true
 
 
 func _view_land():
