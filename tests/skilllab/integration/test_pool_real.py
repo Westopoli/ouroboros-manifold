@@ -39,7 +39,7 @@ def test_pooled_scan_equals_serial_scan_field_by_field():
     serial = scan(build, 4, 3, 5, replicates=2)
     with FightPool(2) as fp:
         pooled = scan(build, 4, 3, 5, replicates=2, map_fn=fp.map)
-    assert pooled.size == serial.size and pooled.win_margin == serial.win_margin
+    assert pooled.size == serial.size and (pooled.ceiling_hit, pooled.multi_flip) == (serial.ceiling_hit, serial.multi_flip)
     assert (pooled.beats, pooled.loses_to) == (serial.beats, serial.loses_to)
     assert len(pooled.cells) == len(serial.cells)
     for a, b in zip(pooled.cells, serial.cells):
@@ -57,3 +57,15 @@ def test_pooled_find_break_even_equals_serial():
     with FightPool(2) as fp:
         pooled = find_break_even(build, 4, 3, 5, map_fn=fp.map, **kw)
     assert pooled == serial
+
+
+def test_pooled_bisection_scan_equals_serial_and_the_full_scan_agrees_on_the_break_even():
+    """LAB-REV2-L4: the default scan bisects; through the pool it must still equal the serial run, and the linear sweep (which
+    fights every headcount) reads the same break-even on the same engine."""
+    build = plays.blob_play(4)
+    serial = scan(build, 4, 2, 8, replicates=2)
+    with FightPool(2) as fp:
+        assert scan(build, 4, 2, 8, replicates=2, map_fn=fp.map) == serial
+        full = scan(build, 4, 2, 8, replicates=2, map_fn=fp.map, full_scan=True)
+    assert [c.enemy_heads for c in full.cells] == list(range(2, 9))
+    assert (full.beats, full.loses_to, full.ceiling_hit) == (serial.beats, serial.loses_to, serial.ceiling_hit)

@@ -427,7 +427,7 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 - A stored value outside 0 to 2 is clamped.
 - The galaxy view reads the setting when it is built. A change made while a galaxy view is open applies the next time the view is built; live re-apply is not required.
 
-**A61. Housekeeping.** An Engineer adds the four E3 gap rows from `c4_e3_c6_gap_rows.md` to `docs/northstar/plans/2026-09-30-work-list.md` under C6; the cover row says no rule governs it and names the Architect as owing one. `test_tactical_view` failing 2 of 127 under a 1280x720 virtual display on main is a pre-existing finding: QA's display is 1920x1080 by ruling, so the Engineer first re-runs it at that size and reports; nothing is edited.
+**A61. Housekeeping.** An Engineer adds the four E3 gap rows from `c4_e3_c6_gap_rows.md` to `docs/northstar/plans/archive/2026-09-30-work-list.md` under C6; the cover row says no rule governs it and names the Architect as owing one. `test_tactical_view` failing 2 of 127 under a 1280x720 virtual display on main is a pre-existing finding: QA's display is 1920x1080 by ruling, so the Engineer first re-runs it at that size and reports; nothing is edited.
 
 ## Addendum 25, 2026-10-02 (galaxy: drag direction; the prototype's bubbles)
 

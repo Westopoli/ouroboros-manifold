@@ -10,7 +10,7 @@ CANVAS_MAX = 28000.0
 def shift_terrain(t, dx, dy):
     blocks = tuple(dataclasses.replace(b, x0=b.x0 + dx, y0=b.y0 + dy, x1=b.x1 + dx, y1=b.y1 + dy) for b in t.blocks)
     covers = tuple(dataclasses.replace(c, x=c.x + dx, y=c.y + dy) for c in t.covers)
-    return Terrain(canvas=t.canvas, blocks=blocks, covers=covers)
+    return Terrain(canvas=t.canvas, blocks=blocks, covers=covers, field_seed=t.field_seed)
 
 
 def _validate_terrain(t):
@@ -63,7 +63,10 @@ def with_terrain(build, terrain):
             if goal is not None:
                 _check_inside(goal, terrain.canvas, "step goal")
             steps.append(dataclasses.replace(s, goal=goal))
-        return dataclasses.replace(setup, groups=tuple(groups), timeline=tuple(steps),
+        point = None if setup.point is None else _shift_point(setup.point, dx, dy)
+        if point is not None:
+            _check_inside(point, terrain.canvas, "setup point")
+        return dataclasses.replace(setup, groups=tuple(groups), timeline=tuple(steps), point=point,
                                    terrain=shift_terrain(terrain, dx, dy))
 
     return wrapped

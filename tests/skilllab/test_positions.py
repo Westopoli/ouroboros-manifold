@@ -184,3 +184,15 @@ def test_deterministic_and_swap_keeps_structure(make):
     a, b = build(16, False), build(16, True)
     assert dataclasses.replace(a, groups=()) == dataclasses.replace(b, groups=())
     assert [(g.side, g.count, g.order) for g in a.groups] == [(g.side, g.count, g.order) for g in b.groups]
+
+
+# ---------------------------------------------------------------- LAB-REV2-L2 (Q-LAB-03)
+
+@pytest.mark.parametrize("fn", [positions.bait_play, positions.ambush_play, positions.fall_back_play])
+def test_position_plays_keep_the_shared_point_and_per_unit_orders_of_the_base_play(fn):
+    """Ruling 6: the rewrite changes groups and steps only; the base play's Setup.point and orders_per_unit pass through, and no
+    retired field (approach, mopup) is set on the rewritten Setup."""
+    base, setup = _base(16), fn(16)(16, False)
+    assert base.point is not None
+    assert (setup.point, setup.orders_per_unit) == (base.point, base.orders_per_unit)
+    assert not hasattr(setup, "approach") and not hasattr(setup, "mopup")

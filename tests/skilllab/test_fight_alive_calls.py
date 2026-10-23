@@ -16,6 +16,8 @@ from fakes import FakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 
 @pytest.fixture(autouse=True)
 def stub_place(monkeypatch):
@@ -42,7 +44,7 @@ def hurt_and_kill(t, f):
 
 def run():  # script below drives the deaths
     setup = Setup(groups=(G(0, "Vanguard", 2), G(1, "Warden", 4)), unit_types={}, abilities=False,
-                  max_ticks=10, stalemate_ticks=1000, sample_every=5)
+                  max_ticks=10, sample_every=5)
     fake = FakeEngine(script=hurt_and_kill)
     return fight(setup, 0, False, engine=fake), fake
 

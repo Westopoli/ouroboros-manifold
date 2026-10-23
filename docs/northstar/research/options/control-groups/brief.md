@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-16 S-105 "Selection and control groups", rules R-105-01 to R-105-06 (`docs/bible/epics/E-16-client-camera-hud-and-world-view.md:61-72`). The open design item is recorded in E-16 "Ways this could be wrong" (`:190`) and research item RL-Q75 (`docs/research_lane_queue.md:93`), never run. Flags Q-105-01 and Q-106-01 closed (`docs/northstar/ambiguity_register.md:101-102`). Related closed flags: Q-E03-01 group pace (`:17`), Q-101-01 arrival (`:98`), Q-003-01 layer modifier (`:24`). No story exists for sub-groups yet.
+E-16 S-105 "Selection and control groups", rules R-105-01 to R-105-06 (`docs/bible/epics/E-16-client-camera-hud-and-world-view.md:61-72`). The open design item is recorded in E-16 "Ways this could be wrong" (`:190`) and research item RL-Q75 (`docs/legacy/research_lane_queue.md:93`), never run. Flags Q-105-01 and Q-106-01 closed (`docs/northstar/ambiguity_register.md:101-102`). Related closed flags: Q-E03-01 group pace (`:17`), Q-101-01 arrival (`:98`), Q-003-01 layer modifier (`:24`). No story exists for sub-groups yet.
 
 ## 2. Player-facing goal as documented
 

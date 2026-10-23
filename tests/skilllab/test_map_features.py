@@ -1,4 +1,5 @@
 # spec: docs/northstar/plans/2026-10-05-space-lab-stage1-spec.md::features lane
+# LAB-REV2-L2 inventory (Q-LAB-03): KEPT unchanged. `start_distance` here is the layout Feature (maps.sample_features), not the retired Setup.start_distance.
 """maps.sample_features and the feat_<field> columns of rows.fight_row. No Engine, no compiler."""
 import dataclasses
 import math
@@ -22,9 +23,21 @@ CANVAS = (4000.0, 4000.0)
 DEFAULT_RADIUS = 15.0   # wu, the spec's value when no engine is given
 
 
+# LAB-REV2-L2 (Q-LAB-03, spec "Lab data contract"): the result carries the window, weighted and prediction fields, and fight_row is
+# given the five columns the caller supplies (knob, knob_value, baseline, ceiling_hit, prefight) explicitly, as in test_rows.py.
+PLAIN = dict(knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok")
+REV2_FIXED = ["outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0", "survivors_1", "heads_0", "heads_1", "ticks",
+              "first_contact_tick", "firing_unit_seconds_0", "firing_unit_seconds_1", "firing_window_0", "firing_window_1",
+              "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
+              "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight",
+              "reengage_0", "reengage_1"]   # LAB-REV2-L8 (TD-LAB-REV2-L8-columns)
+
+
 def _result():
     return FightResult(outcome="side0", margin=0.5, strength_left=(0.75, 0.25), survivors=(12, 3), heads=(16, 12),
-                       ticks=340, first_contact_tick=35, firing=[(0, 0, 0)], firing_unit_seconds=(10.5, 7.25))
+                       ticks=340, first_contact_tick=35, firing=[(0, 0, 0)], firing_unit_seconds=(10.5, 7.25), winner="side0",
+                       firing_window=(4.0, 2.5), weighted_unit_seconds=(9.0, 6.0), weighted_window=(3.5, 2.0),
+                       predicted_count="side0", predicted_type="side0", agreement="both_right")
 
 
 def test_features_is_a_frozen_dataclass_with_the_spec_fields_in_order():
@@ -163,10 +176,9 @@ def test_unknown_kind_raises_value_error():
 
 def test_fight_row_without_features_is_byte_identical_to_before(tmp_path):
     """Spec: no features argument adds no column."""
-    plain = fight_row(_result(), play="reach")
-    assert list(plain) == ["play", "outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0", "survivors_1",
-                           "heads_0", "heads_1", "ticks", "first_contact_tick", "firing_unit_seconds_0", "firing_unit_seconds_1"]
-    assert fight_row(_result(), None, play="reach") == plain
+    plain = fight_row(_result(), play="reach", **PLAIN)
+    assert list(plain) == ["play"] + REV2_FIXED
+    assert fight_row(_result(), None, play="reach", **PLAIN) == plain
     write_rows([plain], tmp_path / "a.csv")
     assert b"feat_" not in (tmp_path / "a.csv").read_bytes()
 
@@ -174,23 +186,23 @@ def test_fight_row_without_features_is_byte_identical_to_before(tmp_path):
 def test_fight_row_with_features_adds_one_feat_column_per_field():
     """Spec: one column per field named feat_<field>, values carried."""
     f = sample_features("wall", 2, CANVAS)
-    row = fight_row(_result(), f, play="reach")
+    row = fight_row(_result(), f, play="reach", **PLAIN)
     for name in FIELDS:
         assert row["feat_" + name] == getattr(f, name)
     assert [k for k in row if k.startswith("feat_")] == ["feat_" + n for n in FIELDS]
-    base = fight_row(_result(), play="reach")
+    base = fight_row(_result(), play="reach", **PLAIN)
     assert {k: v for k, v in row.items() if not k.startswith("feat_")} == base
 
 
 def test_fight_row_features_by_keyword_and_label_order_kept():
     f = sample_features("open", 0, CANVAS)
-    row = fight_row(_result(), features=f, play="reach", n=1)
+    row = fight_row(_result(), features=f, play="reach", n=1, **PLAIN)
     assert list(row)[:2] == ["play", "n"]
 
 
 def test_features_rows_pass_through_write_rows(tmp_path):
     """Spec: the feat_ columns are written like any other."""
-    rows = [fight_row(_result(), sample_features(k, 1, CANVAS), play=k) for k in KINDS]
+    rows = [fight_row(_result(), sample_features(k, 1, CANVAS), play=k, **PLAIN) for k in KINDS]
     write_rows(rows, tmp_path / "f.csv")
     head = (tmp_path / "f.csv").read_text().splitlines()[0].split(",")
     assert all("feat_" + n in head for n in FIELDS)

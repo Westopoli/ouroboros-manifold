@@ -81,12 +81,12 @@ Tags: [V] VERIFIED, a fetched page said it. [R] REPORTED, a search-result summar
 - Battle Realms: rice, water, horses (gathered by peasants); yin/yang from combat. Peasants are produced free and automatically, at a rate inversely tied to army size, and are the only buildable unit; military buildings convert peasants into warriors for rice and water. [R] https://en.wikipedia.org/wiki/Battle_Realms (search summary). Distinctive: worker and soldier are the same pool, so army size trades against gatherer count.
 
 ## Foxhole (from existing note)
-- docs/research/games/foxhole.md is a market/community card and has almost no economy mechanics. What it holds: players self-organise into logistics ("logi") roles, voluntarily taking the least glamorous job, and the 2022 strike is a case of players treating logistics as owned labour. [V in-repo, itself citing public record].
+- docs/legacy/games/foxhole.md is a market/community card and has almost no economy mechanics. What it holds: players self-organise into logistics ("logi") roles, voluntarily taking the least glamorous job, and the 2022 strike is a case of players treating logistics as owned labour. [V in-repo, itself citing public record].
 - Mechanics from outside the note: raw resources (scrap, components, coal, sulfur) are refined to Bmats/Rmats, then manufactured; every spawn consumes a supply item; goods move physically by truck and container. [V] https://en.wikipedia.org/wiki/Foxhole_(video_game); salvage mines run automatically when fuelled; resource container holds 5000 [R] https://foxhole.wiki.gg/wiki/Salvage_Mine (search summary).
 - The L.O.G.I. group (1,800 members) struck for 49 days over logistics-system reform; ended with Update 48. [V] Wikipedia Foxhole page.
 
 ## Sins of a Solar Empire 2 (from existing note)
-- docs/research/games/sins_of_a_solar_empire_2.md covers market positioning only. It has no economy mechanics. Mechanics here are from outside it.
+- docs/legacy/games/sins_of_a_solar_empire_2.md covers market positioning only. It has no economy mechanics. Mechanics here are from outside it.
 - Credits, metal, crystal. Credits mostly from population tax (0.025 credits/s per population); metal and crystal from planet type and extractors; trade ports earn credits by linking planets/stars; logistics slots cap orbital structures per planet. [R] https://wiki.sinsofasolarempire2.com/space/SSEFW/1740898307 and the Sins 1 wiki pages (search summaries; some values may be Sins 1 data).
 
 ## Cross-cutting 1: asymmetric co-op, economy seat

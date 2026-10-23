@@ -51,6 +51,8 @@ Hours from launch to Westley's verdict on the first shot; landing attempts per l
 
 Engineer briefs for the record clerk, the cleanup clerk, the branch triage clerk and a resume: one page, a single deliverable, the exact file list, the verification command, the report shape, the rules.md section that applies, "model Sonnet 5.5, never spawn sub-agents, think tersely, report once". Never hand an engineer a plan; hand it a role.
 
+Landing clerk brief, one more line: Name every mark on a queued frame from the code before writing the page row.
+
 Consult briefs for the Architect: the shape in step 5. Never pad with history the ruling does not need.
 
 Reports to Westley: lane, sha, shots, what he must do now, one line each. No narration of what was checked.

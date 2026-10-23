@@ -1,0 +1,45 @@
+# PX-17/PX-18 finishing report (for Westley)
+
+2026-09-21. Evidence only, no recommendation -- the handoff brief says report evidence, design changes are the design lane's call.
+
+## Model substitution, in order
+
+The plan named `gemini-3.7-flash-high` (rerun on `gemini-3.1-pro-high` for failures) through `agy`. At run time both were `RESOURCE_EXHAUSTED` (checked directly with a trivial real call, not assumed). Checked `agy2` (a second, genuinely different Google account -- confirmed by comparing OAuth tokens: the author's account vs a second real account) on the same two models: same error, and the reset countdown on both accounts shrank by exactly the elapsed time between my two test calls -- one shared backend quota, not per-account. Checked the Claude/GPT group through `agy` (`claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium`): also exhausted, shorter reset (~4h vs ~45h for Gemini), same shared-clock signature. You said: use DeepSeek instead. `deepseek-v4-flash` through Agora's own direct API (not agy) had headroom and a real sanity call confirmed it end to end before any case ran.
+
+This is a real deviation from the plan's named models. The claim under test ("can the escalator fix a defect alone") is evidenced here for `deepseek-v4-flash`, not for Gemini. `escalator_fix_probe.py` now supports both paths (`call_gemini`/`call_deepseek`/`call_escalator`, dispatched by model name) so a Gemini run is a one-flag rerun once quota returns.
+
+## A harness bug found and fixed mid-run
+
+First real run (all 5 cases, `deepseek-v4-flash`): R7a passed; R7d, R8, R7f, R7l all scored `fence-violation` on attempt 1. Every violation had the same shape: the reply's `"name"` came back as `"<file> :: <label>"` instead of the bare label the output contract asked for. The prompt's own section heading read `### {file} :: {label}` directly above the fenced code -- ambiguous, not a model failure. Fixed the heading to `### name="{label}" (in {file})` and reran the four affected cases. R7a's real, valid result stands from the first run; the other four cases' final scores are from the corrected-prompt run. Total spend across both runs plus setup validation: **$0.061** (`~/Projects/agora/runs/costs.jsonl`, `campaign: px17-px18-escalator-probe`), 9 scored escalator calls, ~54s of combined model wall time (harness overhead -- git worktree checkout, `make`, the whole-suite regression gate -- dominates the 40-90s per-case wall time, not the model call).
+
+## Per case (final, corrected-prompt results)
+
+| Case | Model | Verdict | Attempts | Wall (case) | Escalator calls | Equivalence to human fix |
+|---|---|---|---|---|---|---|
+| R7a | deepseek-v4-flash | fixed-first-try | 1 | 68.0s | 1 | Same fix (`#include <math.h>`), appended at the end of the include block instead of inserted after `om_internal.h` -- no behavioral difference. |
+| R7d | deepseek-v4-flash | fixed-first-try | 1 | 74.4s | 1 | **Byte-identical** to `ecfcffe` except one comment line the human fix added and the model didn't. |
+| R8 | deepseek-v4-flash | fence-violation | 2 | 55.6s | 3 | N/A -- never reached the logic. |
+| R7f | deepseek-v4-flash | fixed-first-try | 1 | 85.9s | 1 | **Functionally byte-identical** to `d3273fa` in both functions (exact `target_idx == 1` filter, exact `200.0 / 0.70` budget); the human fix's explanatory comments are the only diff. |
+| R7l | deepseek-v4-flash | failed | 3 | 51.4s | 3 | N/A -- never passed; the same insufficient fixture resubmitted all 3 times. |
+
+**"Passes tests but wrong" instances: zero.** Every case that reached `done` was verified functionally identical (R7a, R7d) or byte-identical modulo comments (R7d, R7f) to the real human fix, not merely passing. No case produced a reply that passed the gates while doing something different from the correct fix.
+
+**Fence violations, in full:**
+1. R8 attempt 1's `om_intent_inject` reply invented C names not present anywhere in its prompt: `OM_ACTION_ATTACK` (real: `OM_ACT_ATTACK`), `OM_ATTACK_TELEGRAPH` (real: `OM_MODE_TELEGRAPH`), and `om_telegraph` struct fields `->tick`/`->faction_id` (the real struct has `declared_tick`/`attacker`, and the reply never set `target_idx`/`source_idx`/`commit`). This failed the **build** gate (a real compile error, not the fence-violation gate) -- listed here because it's the same root cause as the fence violation that followed: the fence (one function's body plus the header's prose contract) never showed the model the enum/struct definitions `om_intent_inject`'s own body has to reference.
+2. R8 attempt 2's `om_step_decisions` reply -- fenced to that one function alone -- returned **both** `om_step_decisions` and `om_intent_inject`. Terminal per the plan ("Reject any reply that names a function outside the fence"), no third attempt.
+
+**Weakened-assertion attempts in PX-18: zero, confirmed by the gate, not assumed.** `assertions_preserved` (compares the AST of every `assert` in the original fenced function against the reply, both directions) ran on every R7f attempt and reported every original assertion shape present in the reply. R7l has no equivalent function-level assertion-preservation check (its fence is the whole file, replacing the test outright is the point), but none of its 3 attempts removed or loosened an assertion either -- they resubmitted the same fixture verbatim, which `gate_vacuous_clears` correctly rejected each time on the actual numbers (`correct=31.3, buggy=31.3`, identical, because the model changed the defender's military without reworking the commit/defense math that determines both values).
+
+## Everything that argues against the claim
+
+- **R8's diagnosis was incomplete relative to the real fix, and that incompleteness is structural, not an oversight I can just patch.** The real human fix (`30e86bb`) needed a third sub-fix -- `om_intent_inject` stamping `w->tick + 1` instead of `w->tick` -- that DECISIONS.md itself says was "found along the way" during implementation, not known before it. This case's diagnosis faithfully reproduces what a pre-implementation diagnosis would say (matching how a real escalator would actually be briefed), but it means R8 was testing something harder than R7a/R7d/R7f: partly "can you apply a diagnosis" and partly "can you discover a bug the diagnosis doesn't mention." R8 never got far enough (fence violations both attempts) to find out which one blocked it.
+- **The fence, as designed, does not include struct/enum definitions the fenced function's own body has to reference.** R8's invented symbol names are the direct, predictable consequence: the model had `om_intent_inject`'s own signature and the header's prose contract, not the `om_action`/`om_attack_mode` enums or the `om_telegraph` struct it has to write into. This is a `Case`-scoped choice for this experiment, not something DeepSeek did wrong.
+- **R7l failed by anchoring on this case's own diagnosis text, not by ignoring it.** All 3 attempts produced the identical fixture (defender military 20.0 -> 10.0, attacker commit/budget unchanged), and the rationale each time claimed "correct (27.3) vs buggy (21.3)" -- the exact number pair the diagnosis gives as a worked example for a *different*, self-consistent commit. The model copied the example's numbers without re-deriving them for its own unchanged commit, despite the diagnosis explicitly saying "not a one-line number swap." The real, differing assertion failure fed back each attempt (`27.3 != 27.3`, not the diagnosis's own `27.3` vs `21.3`) did not change the reply at all across 3 attempts -- retry feedback alone did not break the anchor.
+- **One run per case, one model, no fallback.** The plan's up-to-3-attempts-per-model-with-a-second-model-on-failure protocol only ran in full for R7l (3 attempts, same model, no second model available). R7a/R7d/R7f succeeded on attempt 1, so the retry loop was never exercised on a *recoverable* failure for them; R8's retry loop was exercised (once) but never got past the fence gate to test whether more attempts, or the fallback model, would have found the real fix.
+- **The first run's fence-violations were a prompt bug, not evidence about the model**, but they did cost real attempt-budget and money before being caught -- a reminder that this harness's own prompt quality is itself something a real escalator seat would need verified, not just the model behind it.
+
+## What worked as designed
+
+- The reference-splice setup step (R7f: HEAD's real `om_step_reinforce`/`om_tick_reinforces` spliced into a stub-era worktree so the target-tests gate means something) was validated against known-correct and known-broken content before any real model call, and worked correctly on the real run.
+- `gate_vacuous_clears`, `gate_red_at_stub`, `gate_two_agent_confound_clears`, and `assertions_preserved` all ran on real replies and produced the correct verdict every time they fired (R7l's rejection three times running; R7f's three-way pass).
+- Cleanup: every worktree (both runs, all validation dry-runs) was removed; `git worktree list` and `git status --short` confirmed clean before and after.

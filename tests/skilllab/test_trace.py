@@ -32,6 +32,8 @@ from scripts.skilllab.contract import FightResult, Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 from scripts.skilllab.rows import fight_row  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 
 @pytest.fixture(autouse=True)
 def place_stub(monkeypatch):
@@ -49,8 +51,7 @@ def G(side, count=2, order="attack_move"):
 
 
 def S(trace=True, max_ticks=12, sample_every=5, counts=(2, 2)):
-    return Setup(groups=(G(0, counts[0]), G(1, counts[1])), unit_types={}, max_ticks=max_ticks,
-                 stalemate_ticks=1000, sample_every=sample_every, trace=trace)
+    return Setup(groups=(G(0, counts[0]), G(1, counts[1])), unit_types={}, max_ticks=max_ticks, sample_every=sample_every, trace=trace)
 
 
 def run(setup, seed=0, swap=False, **fake_kw):
@@ -76,13 +77,17 @@ def test_trace_is_off_by_default_and_reads_nothing_extra():
     assert not fake.calls_named("unit_target") and not fake.calls_named("unit_facing")
 
 
-def test_old_constructors_still_work():
-    """Backward compatible: a FightResult built the old way has trace None."""
+def test_constructors_without_a_trace_leave_it_none():
+    """Backward compatible: a FightResult built with the contract fields only (no trace) has trace None.
+    LAB-REV2-L2: the contract adds firing_window, weighted_unit_seconds, weighted_window, predicted_count, predicted_type and
+    agreement, so they are named here; the old pin `names.index("trace") == 10` (TD-LAB-trace-index) is dropped, since field
+    order is not part of the 2026-10-14 contract."""
     r = FightResult(outcome="cap", margin=0.0, strength_left=(1.0, 1.0), survivors=(1, 1), heads=(1, 1), ticks=1,
-                    first_contact_tick=-1, firing=[], firing_unit_seconds=(0.0, 0.0))
-    assert r.trace is None
-    names = [f.name for f in dataclasses.fields(FightResult)]
-    assert names.index("trace") == 10     # Rev 3 put winner (default None) at 9, so trace is 10; fields after trace keep their order
+                    first_contact_tick=-1, firing=[], firing_unit_seconds=(0.0, 0.0), firing_window=(0.0, 0.0),
+                    weighted_unit_seconds=(0.0, 0.0), weighted_window=(0.0, 0.0), predicted_count="tie",
+                    predicted_type="tie", agreement="n/a")
+    assert r.trace is None and r.winner is None
+    assert "trace" in [f.name for f in dataclasses.fields(FightResult)]
 
 
 def test_one_entry_per_unit_per_recorded_tick():

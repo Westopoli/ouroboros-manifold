@@ -2,16 +2,19 @@
 import csv
 import os
 
-_FIXED = ("outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0", "survivors_1",
-          "heads_0", "heads_1", "ticks", "first_contact_tick", "firing_unit_seconds_0",
-          "firing_unit_seconds_1")
+_FROM_RESULT = ("outcome", "margin", "strength_left_0", "strength_left_1", "survivors_0", "survivors_1",
+                "heads_0", "heads_1", "ticks", "first_contact_tick", "firing_unit_seconds_0",
+                "firing_unit_seconds_1", "firing_window_0", "firing_window_1", "weighted_unit_seconds_0",
+                "weighted_unit_seconds_1", "weighted_window_0", "weighted_window_1", "predicted_count",
+                "predicted_type", "agreement")
+_FIXED = _FROM_RESULT + ("knob", "knob_value", "baseline", "ceiling_hit", "prefight", "reengage_0", "reengage_1")
 
 # Features field order, matching scripts.skilllab.maps.Features
 _FEATURE_FIELDS = ("choke_count", "choke_width_wu", "choke_width_bodies", "lane_count", "blocked_layer_ranges",
                    "fight_layer_blocked", "cover_density_corridor", "start_distance", "detour_ratio", "blocked_layer_top")
 
 
-def fight_row(result, features=None, **labels):
+def fight_row(result, features=None, knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok", **labels):
     clash = [k for k in labels if k in _FIXED]
     if clash:
         raise ValueError("label names collide with fixed row keys: %s" % clash)
@@ -24,10 +27,12 @@ def fight_row(result, features=None, **labels):
     row["ticks"] = result.ticks
     row["first_contact_tick"] = result.first_contact_tick
     row["firing_unit_seconds_0"], row["firing_unit_seconds_1"] = result.firing_unit_seconds
-    if result.mopup_orders is not None:
-        row["mopup_orders"] = result.mopup_orders
-    if result.weighted is not None:
-        row["weighted_unit_seconds_0"], row["weighted_unit_seconds_1"] = result.weighted_unit_seconds
+    row["firing_window_0"], row["firing_window_1"] = result.firing_window
+    row["weighted_unit_seconds_0"], row["weighted_unit_seconds_1"] = result.weighted_unit_seconds
+    row["weighted_window_0"], row["weighted_window_1"] = result.weighted_window
+    row["predicted_count"], row["predicted_type"], row["agreement"] = result.predicted_count, result.predicted_type, result.agreement
+    row["knob"], row["knob_value"], row["baseline"], row["ceiling_hit"], row["prefight"] = knob, knob_value, baseline, ceiling_hit, prefight
+    row["reengage_0"], row["reengage_1"] = result.reengage
     if features is not None:
         for name in _FEATURE_FIELDS:
             row["feat_" + name] = getattr(features, name)

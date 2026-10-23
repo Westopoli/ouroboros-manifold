@@ -2,7 +2,10 @@
 """Phase B choke, 8 defenders against 8 attackers, through fight.fight twice.
 
 If om_map_block_rect is still an inert stub in this build the engine may ignore the walls, so this asserts only
-determinism, spawn positions and that the fight runs."""
+determinism, spawn positions and that the fight runs.
+
+LAB-REV2-L4 ruler (TD-LAB-REV2-L4-layers): test_layers_batch_has_the_choke_phase_b_cells is retired with the `layers` batch (tables
+LA, LB and LC are deleted by L4)."""
 import dataclasses
 import sys
 from pathlib import Path
@@ -13,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab import batches, engine, fight  # noqa: E402
+from scripts.skilllab import engine, fight  # noqa: E402
 from scripts.skilllab.formations import place  # noqa: E402
 from scripts.skilllab.scenes import phase_b_choke  # noqa: E402
 
@@ -46,8 +49,3 @@ def test_a_replicate_with_swap_also_runs(library):
     r = fight.fight(_setup(), 2, True, engine=library)
     assert r.ticks > 0 and r.heads == (8, 8)
 
-
-def test_layers_batch_has_the_choke_phase_b_cells():
-    cells = [c for c in batches.get("layers").cells if "choke_phase_b" in c.label]
-    assert len(cells) == 19
-    assert all((c.size, c.enemy_from, c.enemy_to) == (8, 7, 12) for c in cells)

@@ -7,7 +7,9 @@ from __future__ import annotations
 
 from html import escape
 
+from scripts.skilllab import diagram
 from scripts.skilllab.contract import ScanResult
+from scripts.skilllab.evidence import AGREEMENTS, agreement_counts
 from scripts.skilllab.report import CSS, _n, _scale, _text
 
 EXTRA = """
@@ -129,13 +131,15 @@ def small_multiples_html(panels, title=None) -> str:
     for label, sc in panels:
         cells = sorted(sc.cells, key=lambda c: c.enemy_heads)
         s = [f'<svg viewBox="0 0 {PW} {PH}" role="img">', _text(PX0, 14, label)]
-        if sc.beats is not None and sc.loses_to is not None:
+        if sc.ceiling_hit:
+            s.append(_text(PX1, 14, "ceiling hit", "ceiling", "end"))
+        elif sc.beats is not None and sc.loses_to is not None:
             mx = (xof(sc.beats) + xof(sc.loses_to)) / 2
             s.append(f'<line class="marker" x1="{_n(mx)}" x2="{_n(mx)}" y1="22" y2="68"/>')
         else:
             s.append(_text(PX1, 14, "no break-even in range", "muted", "end"))
         for c in cells:
-            s.append(f'<circle class="{"cell won" if c.won else "cell lost"}" '
+            s.append(f'<circle class="{"cell defect" if c.defect else "cell won" if c.won else "cell lost"}" '
                      f'cx="{_n(xof(c.enemy_heads))}" cy="{PCY}" r="4"/>')
             s.append(_text(xof(c.enemy_heads), PH - 6, c.enemy_heads, "muted", "middle"))
         s.append("</svg>")
@@ -143,7 +147,66 @@ def small_multiples_html(panels, title=None) -> str:
         won = [c.enemy_heads for c in cells if c.won]
         beats = sc.beats if sc.beats is not None else (max(won) if won else None)
         rows.append(f"<tr><td>{escape(str(label))}</td><td>{'none' if beats is None else beats}</td>"
-                    f"<td>{'none' if sc.loses_to is None else sc.loses_to}</td></tr>")
+                    f"<td>{'ceiling hit' if sc.ceiling_hit else 'none' if sc.loses_to is None else sc.loses_to}</td></tr>")
     head = f"<h2>{len(panels)} panels, same enemy headcounts on every panel</h2>"
     table = '<table class="words">\n' + "\n".join(rows) + "\n</table>"
     return _page(title, "\n".join([head, '<div class="multiples">'] + svgs + ["</div>", table]))
+
+
+def _table(rows, cls="words", attrs=""):
+    return f'<table class="{cls}"{attrs}>\n' + "\n".join(rows) + "\n</table>"
+
+
+def refinement_html(entries, title=None) -> str:
+    rows = ["<tr><th>Family</th><th>Refined between the coarse points</th></tr>"]
+    for family, e in entries.items():
+        if e.get("skipped"):
+            words = "skipped: " + e["skipped"]
+        else:
+            clauses = [f"{role}: " + (", ".join(format(v, "g") for v in sorted(values)) if values else "no crossing")
+                       for role, values in e.get("refined_vs", {}).items()]
+            words = "; ".join(clauses) if clauses else "no crossing"
+        rows.append(f"<tr><td>{escape(str(family))}</td><td>{escape(words)}</td></tr>")
+    return _page(title, _table(rows))
+
+
+def agreement_html(groups, title=None) -> str:
+    rows = ["<tr><th>Group</th>" + "".join(f"<th>{w}</th>" for w in AGREEMENTS) + "<th>Fights</th></tr>"]
+    for label, words in groups.items():
+        counts = agreement_counts(words)
+        cells = "".join(f'<td class="finding">{n}</td>' if w == "both_wrong" and n else f"<td>{n}</td>" for w, n in counts.items())
+        rows.append(f"<tr><td>{escape(str(label))}</td>{cells}<td>{sum(counts.values())}</td></tr>")
+    return _page(title, _table(rows))
+
+
+def _signed(v) -> str:
+    return f"{v:+d}" if v else "0"
+
+
+def cone_grid_html(rows, title=None) -> str:
+    rows = [r for r in rows if r.get("family") == "cone" and r.get("kind") in diagram.SCAN_KINDS]
+    index = diagram._index(rows)
+    tables = {}
+    for (family, play, layout, point), by_role in index.items():
+        for role in by_role:
+            if role != "none" and "none" in by_role:
+                tables.setdefault((play, layout, role), {})[point] = (by_role["none"], by_role[role])
+    out = []
+    for (play, layout, role), series in sorted(tables.items()):
+        points = sorted(series, key=lambda p: (float(p.split("=")[-1]) if "=" in p else 0.0, p))
+        ranges = sorted({k for p in points for scans in series[p] for k in scans})
+        head = "<tr><th>Range</th>" + "".join(f"<th>{escape(p)}</th>" for p in points) + "</tr>"
+        body = []
+        for rng in ranges:
+            cells = []
+            for p in points:
+                ours, theirs = series[p]
+                if rng in ours and rng in theirs:
+                    gain = diagram.break_even(rows, ours[rng]) - diagram.break_even(rows, theirs[rng])
+                    cells.append(f'<td data-range="{format(rng, "g")}" data-point="{escape(p)}" data-gain="{gain}">{_signed(gain)}</td>')
+                else:
+                    cells.append(f'<td data-range="{format(rng, "g")}" data-point="{escape(p)}" data-gain="">-</td>')
+            body.append(f'<tr><th>{format(rng, "g")}</th>{"".join(cells)}</tr>')
+        out.append(_table([head] + body, "words cone-grid",
+                          f' data-play="{escape(play)}" data-layout="{escape(layout)}" data-role="{escape(role)}"'))
+    return _page(title, "\n".join(out)) if out else ""
