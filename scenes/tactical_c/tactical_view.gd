@@ -1017,7 +1017,8 @@ func _apply_motion() -> void:
 		var node: Node2D = uv.unit_node(id)
 		if node != null:
 			node.position = Vector2(px[0], px[1])
-			node.visible = _ground3d == null or not _ground3d.occluded_ids().has(id)
+			# See also: review_push_vg-c-landmarks_fable.md row 15; the SpaceView host has no occluded_ids().
+			node.visible = _ground3d == null or _space_hosted or not _ground3d.occluded_ids().has(id)
 
 
 # R-099-03: the tick period the engine is currently spanning per
