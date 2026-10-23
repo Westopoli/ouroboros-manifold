@@ -2150,7 +2150,7 @@ owns = [
 ]
 owns_glob = []
 acceptance = ["tests/test_vg_c_land_marks.gd"]
-depends_on = ["VG-C-unitscale", "VG-C6b", "VG-C-land-one-projection"]  # lane C wave order (Architect 2026-10-23, DEC-laneC-order-2026-10-23): shares unit_visuals.gd and tactical_view.gd
+depends_on = ["VG-C-land-one-projection", "VG-C6b"]  # lane C wave order (Architect 2026-10-23, DEC-laneC-order-2026-10-23): shares unit_visuals.gd and tactical_view.gd
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "land-marks: layer_rings_enabled in unit_visuals.gd, occluded_ids in ground3d.gd via GroundPick.pick, one visibility line in tactical_view.gd, one test file; DRAFT-occlusion-slack 20 wu"
@@ -2159,10 +2159,10 @@ size_estimate = "land-marks: layer_rings_enabled in unit_visuals.gd, occluded_id
 id = "VG-C-facing-arrow"
 manager = "Architect"
 wave = 9
-owns = ["scenes/ground3d/ground_units.gd", "scenes/tactical_c/unit_visuals.gd", "tests/test_vg_c_facing_arrow.gd"]
+owns = ["scenes/ground3d/ground_units.gd", "scenes/tactical_c/unit_visuals.gd", "scenes/tactical_c/unit_squads.gd", "tests/test_vg_c_facing_arrow.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_c_facing_arrow.gd"]
-depends_on = ["VG-C-unit-ground-fit", "VG-C-land-marks"]  # both own the same two scene files and land first
+depends_on = ["VG-C-unit-ground-fit", "VG-C-land-marks", "VG-C-land-one-projection"]  # the first two own the same two scene files and land first; land-one-projection owns unit_squads.gd first
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "facing arrow: an Arrow child in _body (3D) and _make_node (2D), white, 0.4 x body width (DRAFT-facing-arrow-len); one test file"
@@ -2182,7 +2182,7 @@ size_estimate = "prototype: RELIEF_VARIANT a/b/c in ground_mesh.gd, sun elevatio
 id = "VG-C-no-slope-markers"
 manager = "Architect"
 wave = 9
-owns = ["scenes/ground3d/slope_view.gd", "tests/test_vg_c7_slope_view.gd", "tests/qa/desktop/plays/C/s001.py"]
+owns = ["scenes/ground3d/slope_view.gd", "tests/test_vg_c7_slope_view.gd", "tests/test_vg_c_wire_ground3d.gd", "tests/qa/desktop/plays/C/s001.py"]
 owns_glob = []
 acceptance = ["tests/test_vg_c7_slope_view.gd"]
 depends_on = ["VG-C"]  # attached owner of slope_view.gd and its test
@@ -2498,10 +2498,10 @@ size_estimate = "startforce client: bind groups 1 to 3 from the mission frame, q
 id = "VG-A-sightdisc"
 manager = "M0"
 wave = 15
-owns = ["scenes/tactical_c/fog_layer.gd", "tests/test_vg_a_sightdisc.gd"]  # the fog shader is the SHADER constant inside fog_layer.gd (no separate shader file), so the first entry covers it
+owns = ["scenes/tactical_c/fog_layer.gd", "scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_fog_layer.gd", "tests/test_vg_a_sightdisc.gd"]  # the fog shader is the SHADER constant inside fog_layer.gd (no separate shader file), so the first entry covers it
 owns_glob = []
 acceptance = ["tests/test_vg_a_sightdisc.gd"]
-depends_on = ["VG-A", "HARNESS-provenance-scope"]  # the spec paragraph says depends_on none (nothing must land first); VG-A is attached and owns scenes/tactical_c/** and tests/test_vg_a_*.gd by glob, and pieces.py --check flags a glob overlap with no ordering, so the entry only orders that check
+depends_on = ["VG-A", "HARNESS-provenance-scope", "VG-A-layerkeys", "VG-A-routeline", "VG-C-land-marks", "VG-A-startforce", "VG-E1W", "VG-C-land-one-projection"]  # the spec paragraph says depends_on none (nothing must land first); VG-A is attached and owns scenes/tactical_c/** and tests/test_vg_a_*.gd by glob, and pieces.py --check flags a glob overlap with no ordering, so the entry only orders that check
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-A-sightdisc, after VG-A-startforce
@@ -3996,7 +3996,7 @@ size_estimate = "land view one projection: UnitSquads and TerrainLayer hidden on
 [[piece]]
 id = "VG-E-facing-travel"
 manager = "Architect"
-wave = 9
+wave = 14
 owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_facing_travel.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_facing_travel.py"]
@@ -4007,8 +4007,8 @@ size_estimate = "face pass turns toward the last-5-tick displacement heading whi
 [[piece]]
 id = "VG-E-move-through-idle-own"
 manager = "Architect"
-wave = 9
-owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_move_through_idle_own.py"]
+wave = 14
+owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_move_through_idle_own.py", "tests/csim/test_PP_move_collision.py", "tests/csim/test_PP_move_collision_a5.py", "tests/csim/test_E13_S097_around_not_through.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_move_through_idle_own.py"]
 depends_on = ["VG-E-facing-travel"]
