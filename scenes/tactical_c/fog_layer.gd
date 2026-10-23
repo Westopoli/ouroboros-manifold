@@ -3,6 +3,7 @@ extends Node2D
 
 const OUTSIDE_ALPHA := 0.55
 const SEGMENTS := 48  # DRAFT-sightdisc-segments
+const CLIP_EPS_WU := 0.5  # DRAFT-sightdisc-clip-eps: margin past the camera near plane
 const CELL_WU := 100.0  # terrain cell size, as camera_rig_3d.gd CELL_WU
 const SHADER := """
 shader_type canvas_item;
@@ -26,9 +27,11 @@ class MaskDraw extends Node2D:
 
 
 var _discs: Array = []
+var _failed := 0  # mask rings Geometry2D.triangulate_polygon rejected this frame; such a ring would draw no hole
 var _mat: ShaderMaterial
 var _projector := Callable()
 var _terrain := {}
+var _rig: Node3D
 var _mask_vp: SubViewport
 var _mask_draw: MaskDraw
 
@@ -61,6 +64,29 @@ func set_terrain(terrain: Dictionary) -> void:
 	_terrain = terrain
 
 
+# The camera rig of the ground era: its camera's near plane clips each disc in world space before projection.
+func set_rig(rig: Node3D) -> void:
+	_rig = rig
+
+
+# Sutherland-Hodgman against one plane: the points with plane.distance_to(p) >= 0 stay, each crossing edge adds its intersection.
+static func clip_to_plane(pts: PackedVector3Array, plane: Plane) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var n := pts.size()
+	for k in n:
+		var a := pts[k]
+		var b := pts[(k + 1) % n]
+		var a_in := plane.distance_to(a) >= 0.0
+		var b_in := plane.distance_to(b) >= 0.0
+		if a_in:
+			out.append(a)
+		if a_in != b_in:
+			var hit: Variant = plane.intersects_segment(a, b)
+			if hit != null:
+				out.append(hit)
+	return out
+
+
 func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = null) -> void:
 	var half := Vector2(960, 540)
 	var vp := get_viewport()
@@ -71,6 +97,12 @@ func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = nu
 	var world_scale := float(b) if flat else 1.0
 	var camera: Vector2 = c if c is Vector2 else Vector2.ZERO
 	_discs.clear()
+	_failed = 0
+	var near_plane := Plane()
+	var cam: Camera3D = _rig.get_camera() if _rig != null and not flat else null
+	if cam != null:
+		var forward := -cam.global_transform.basis.z
+		near_plane = Plane(forward, cam.global_position + forward * (cam.near + CLIP_EPS_WU))
 	for u in frame.get("units", []):
 		if int(u.get("faction", -1)) != local_faction or not u.has("sight"):
 			continue
@@ -79,14 +111,26 @@ func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = nu
 		var unit_band := _unit_band(w, int(u.get("layer", 1)))
 		var pts := PackedVector2Array()
 		var world := PackedVector2Array()
+		var ring := PackedVector3Array()
 		for k in SEGMENTS:
 			var dir := Vector2.from_angle(TAU * k / SEGMENTS)
 			if flat:
 				pts.append((w + dir * sight - camera) * world_scale + half)
 			else:
 				var wp := w + dir * _clipped_reach(w, dir, sight, unit_band)
+				if cam == null:
+					world.append(wp)
+					pts.append(_projector.call(wp))
+				else:
+					ring.append(Vector3(wp.x, _rig.height_at(wp.x, wp.y), wp.y))
+		if cam != null:
+			for q in clip_to_plane(ring, near_plane):
+				var wp := Vector2(q.x, q.z)
 				world.append(wp)
 				pts.append(_projector.call(wp))
+			if pts.size() < 3:
+				pts = PackedVector2Array()
+				world = PackedVector2Array()
 		_discs.append({"points": pts, "world": world})
 	_push_mask()
 	queue_redraw()
@@ -101,6 +145,10 @@ func screen_points() -> Array:
 
 func sight_discs() -> Array:
 	return _discs
+
+
+func sight_discs_failed() -> int:
+	return _failed
 
 
 func outside_alpha() -> float:
@@ -159,7 +207,16 @@ func _push_mask() -> void:
 	var size := vp.get_visible_rect().size if vp != null else Vector2(1920, 1080)
 	_mask_vp.size = Vector2i(size)
 	_mask_draw.size = size
-	_mask_draw.polys = _discs.map(func(d: Dictionary) -> PackedVector2Array: return d["points"])
+	var rings: Array = []
+	for d in _discs:
+		var p: PackedVector2Array = d["points"]
+		if p.size() < 3:
+			continue
+		if Geometry2D.triangulate_polygon(p).is_empty():
+			_failed += 1
+			continue
+		rings.append(p)
+	_mask_draw.polys = rings
 	_mask_draw.queue_redraw()
 
 

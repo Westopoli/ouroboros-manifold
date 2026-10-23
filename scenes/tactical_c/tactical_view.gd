@@ -370,6 +370,8 @@ func set_terrain(t: Dictionary) -> void:
 		var fog := _node("FogLayer")
 		if fog != null and fog.has_method("set_terrain"):
 			fog.set_terrain(t)
+		if fog != null and fog.has_method("set_rig"):
+			fog.set_rig(_ground3d.camera_rig())
 		_add_ground_layers(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
 		# FU-A18-3d: the rig has no fit yet, so the ground-era centre is the own-unit box as on main; the spawn and lot terms come with the fit.
@@ -592,16 +594,16 @@ func qa_state() -> Dictionary:
 		"marks_px": _marks_px(),
 		"hidden_on_land": ["UnitSquads", "TerrainLayer"] if _ground3d != null and not _space_hosted else [],
 		"sight_discs": _sight_discs_px(),
+		"sight_discs_failed": _node("FogLayer").sight_discs_failed() if _node("FogLayer") != null else 0,
 	}
 
 
-# VG-A-sightdisc: per own unit with sight (id as string), the screen bbox [x, y, w, h] of the disc polygon's points in front of the
-# camera (Camera3D.is_position_behind on the world point, the rig's camera), clamped to the viewport; no such point, no entry.
+# VG-A-sightdisc: per own unit with sight (id as string), the screen bbox [x, y, w, h] of the disc polygon the FogLayer clipped at the
+# camera near plane and projected, clamped to the viewport; an empty clipped polygon, no entry.
 func _sight_discs_px() -> Dictionary:
 	var out := {}
 	if _rig() == null:
 		return out
-	var cam: Camera3D = _rig().get_camera()
 	var polys: Array = _node("FogLayer").sight_discs()
 	var i := 0
 	for u in _frame.get("units", []):
@@ -610,16 +612,12 @@ func _sight_discs_px() -> Dictionary:
 		if i >= polys.size():
 			break
 		var pts: PackedVector2Array = polys[i]["points"]
-		var world: PackedVector2Array = polys[i].get("world", PackedVector2Array())
 		i += 1
 		var lo := Vector2(INF, INF)
 		var hi := Vector2(-INF, -INF)
-		for k in mini(pts.size(), world.size()):
-			var wp := world[k]
-			if cam.is_position_behind(Vector3(wp.x, _rig().height_at(wp.x, wp.y), wp.y)):
-				continue
-			lo = Vector2(minf(lo.x, pts[k].x), minf(lo.y, pts[k].y))
-			hi = Vector2(maxf(hi.x, pts[k].x), maxf(hi.y, pts[k].y))
+		for pt in pts:
+			lo = Vector2(minf(lo.x, pt.x), minf(lo.y, pt.y))
+			hi = Vector2(maxf(hi.x, pt.x), maxf(hi.y, pt.y))
 		if lo.x == INF:
 			continue
 		lo = lo.clamp(Vector2.ZERO, Ground3D.SCREEN_SIZE)
