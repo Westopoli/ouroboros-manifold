@@ -576,7 +576,7 @@ fi
 
 # -------------------------------------------------------------- 9b. lane_plays (per-lane desktop plays, real client under xvfb)
 # Runs the plays of each lane whose globs (lane_plays.toml) the diff touches; red outside
-# lane_plays_known_red.txt rejects. See merge_gate_support.py lane_plays_check.
+# lane_plays_known_red.txt rejects. Shared paths (lane_plays.toml [shared]) run the lanes listed there. See merge_gate_support.py lane_plays_check.
 LP_LOG="$SCRATCH_ROOT/lane_plays.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1

@@ -1041,11 +1041,20 @@ def lane_plays_check(candidate: Path, base_ref: str, *, python_exe: str, timeout
                      known_red_path: Path = DEFAULT_LANE_KNOWN_RED, lane_map_path: Path = DEFAULT_LANE_MAP,
                      plays_dir: str = "tests/qa/desktop/plays", changed: list[str] | None = None,
                      setup: bool = True, evidence_out: list | None = None) -> tuple[bool, str]:
-    """Run each touched lane's play files alone; red outside the known-red list, or a listed
+    """Run each touched lane's play files alone (a lane is touched by its globs, its own play files, or the
+    lane_plays.toml [shared] table); red outside the known-red list, or a listed
     play that now passes, rejects."""
     files = changed if changed is not None else changed_files(candidate, base_ref)
-    lanes = tomllib.loads(lane_map_path.read_text()).get("lanes", {})
-    touched = sorted(l for l, globs in lanes.items() if any(fnmatch.fnmatch(f, g) for f in files for g in globs))
+    cfg = tomllib.loads(lane_map_path.read_text())
+    lanes, shared = cfg.get("lanes", {}), cfg.get("shared", {})
+    all_lanes = sorted(l for l in lanes if (candidate / plays_dir / l).is_dir())
+    touched = {l for l, globs in lanes.items() if any(fnmatch.fnmatch(f, g) for f in files for g in globs)}
+    touched |= {l for l in lanes if any(f.startswith(f"{plays_dir}/{l}/") for f in files)}
+    for g, who in shared.items():
+        # autoload/net/** belongs to F's own glob only, not the shared autoload/** glob
+        if any(fnmatch.fnmatch(f, g) and not (g == "autoload/**" and f.startswith("autoload/net/")) for f in files):
+            touched |= set(all_lanes) if "*" in who else set(who)
+    touched = sorted(touched)
     plays = [p for l in touched if (candidate / plays_dir / l).is_dir()
              for p in sorted((candidate / plays_dir / l).glob("*.py")) if p.name != "conftest.py"
              and re.search(r"^def test_", p.read_text(), re.M)]
