@@ -4089,7 +4089,7 @@ manager = "Architect"
 owns = ["tests/qa/desktop/test_flow_spine.py"]  # the tempdir and godot-tree fixture only
 owns_glob = []
 acceptance = ["tests/qa/desktop/test_flow_spine.py"]
-depends_on = []
+depends_on = ["HARNESS-userdir", "G-qadesktoptests"]  # ordering edges only: HARNESS-userdir owns test_flow_spine.py and G-qadesktoptests owns tests/qa/desktop/**, both attached (pieces.py --check, records batch 24)
 status = { state = "queued" }  # next week
 tests_pending = true
 size_estimate = "the test_flow_spine.py fixture removes its /tmp/qa_flow_spine.* tempdir and kills its godot tree in teardown, also when the run is killed mid-way"
