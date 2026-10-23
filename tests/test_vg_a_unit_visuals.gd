@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-089-03@c09d1f, R-104-10@9d91b9, R-132-01@e8c3c1
 
 # VG-A piece A1 (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 4, lane A table).
 # Proves S-104 / R-104-10 (every unit: thin HP bar above, layer-colour ring beneath, selection ring
@@ -83,6 +84,11 @@ func _frame(units: Array, extra: Dictionary = {}, hidden: Array = []) -> Diction
 
 func _scr(w: Vector2) -> Vector2:
 	return (w - CAM) * SCALE + Vector2(960, 540)
+
+
+# A non-uniform world-to-screen map standing in for the ground host projection (TD-VG-C-land-one-projection).
+func _land_proj(w: Vector2) -> Vector2:
+	return Vector2(w.x * 0.2 + w.y * 0.05 + 100.0, w.y * 0.35 - w.x * 0.02 + 60.0)
 
 
 # Loads a piece's script and instantiates it under the root; null (and one red) when the file is missing.
@@ -189,7 +195,16 @@ func _run_tests() -> void:
 			_assert(polys[i] != polys[j], "A1: types %d and %d share one shape (R-132-01 six shapes)" % [i, j])
 	# position, facing, faction colour
 	var n10: Node2D = uv.call("unit_node", 10)
-	_assert(n10 != null and n10.position.distance_to(_scr(Vector2(1000, 1500))) < 0.5, "A1: the node sits at the unit's screen position")
+	# TD-VG-C-land-one-projection: the flat formula _scr holds only in space (no projector set); on land the node sits at the projector's image.
+	_assert(n10 != null and n10.position.distance_to(_scr(Vector2(1000, 1500))) < 0.5, "A1: in space (no projector) the node sits at the flat screen position")
+	var land = _mod("res://scenes/tactical_c/unit_visuals.gd", "A1 land: a second node for the projector path")
+	if land != null and _need(land, ["set_projector", "set_frame", "unit_node"]):
+		land.call("set_projector", Callable(self, "_land_proj"))
+		land.call("set_frame", _frame(units, {}, [21]), 0, SCALE, CAM)
+		var l10: Node2D = land.call("unit_node", 10)
+		var want := _land_proj(Vector2(1000, 1500))
+		_assert(l10 != null and l10.position.distance_to(want) < 0.5, "A1 land: the node sits at the projector's image %s, got %s" % [want, l10.position if l10 != null else null])
+		_assert(want.distance_to(_scr(Vector2(1000, 1500))) > 5.0, "A1 land CONTROL: the test projector differs from the flat formula")
 	_assert(absf(float(uv.call("unit_facing", 22)) - 1.25) < 0.01, "A1: the shape faces unit.facing (S-100)")
 	_assert(uv.call("unit_color", 10) != uv.call("unit_color", 20), "A1: own and enemy units differ in faction colour")
 	_assert(uv.call("unit_color", 10) == uv.call("unit_color", 11), "A1: same faction, same colour whatever the type")

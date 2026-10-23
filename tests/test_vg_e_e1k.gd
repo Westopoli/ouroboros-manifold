@@ -1,4 +1,5 @@
 extends "res://tests/support/vg_c_case.gd"
+# Rule pins: R-166-01@42347a, R-193-01@451aaa, R-193-02@a4522c, R-193-05@c23a56, R-193-09@052634, R-237-01@1c816d
 # NEEDS A DISPLAY (MultiMesh transforms read identity under the dummy renderer; FU-B22-pregate-display, E1k extension):
 #   xvfb-run -a -s '-screen 0 1920x1080x24' godot.real --path . --resolution 1920x1080 -s res://tests/test_vg_e_e1k.gd
 
@@ -273,8 +274,8 @@ func _run() -> void:
 		var t := _terrain(true)
 		u3.set_units([{"id": 1, "x": 550.0, "y": 550.0, "type": 0, "faction": 0}, {"id": 2, "x": 3550.0, "y": 2050.0, "type": 0, "faction": 0}, {"id": 3, "x": 950.0, "y": 950.0, "type": 0, "faction": 1}], t, [0.0], [])
 		_check(u3.get_child_count() == 3 and u3.unit_node(1) != null and u3.unit_node(3) != null, "[CONTROL] Units3D on the hand-built terrain must draw 3 unit nodes, got %d children" % u3.get_child_count())
-		_check(u3.unit_node(2) != null and absf(u3.unit_node(2).position.y - 360.0) < 0.5, "[CONTROL] unit on the steep cell must stand at height 360 wu (the fixture terrain projects)")
-		_check(u3.unit_node(1) != null and absf(u3.unit_node(1).position.y) < 0.001, "[CONTROL] unit on flat ground must stand at height 0")
+		_check(u3.unit_node(2) != null and absf(u3.unit_node(2).position.y - 361.0) < 0.5, "[CONTROL] unit on the steep cell must stand at height 360 wu + the 1.0 lift (TD-VG-C-ground-lift, DRAFT-unit-ground-lift; the fixture terrain projects)")
+		_check(u3.unit_node(1) != null and absf(u3.unit_node(1).position.y - 1.0) < 0.001, "[CONTROL] unit on flat ground must stand at height 0 + the 1.0 lift (TD-VG-C-ground-lift, DRAFT-unit-ground-lift)")
 		u3.queue_free()
 	# Fixture controls, green always: the slope oracle reads the stated slopes; the hash copy reads the hand values; the yaw reader
 	# round-trips a known rotation.
