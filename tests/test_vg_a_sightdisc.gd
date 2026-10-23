@@ -28,9 +28,13 @@ extends "res://tests/support/vg_c_case.gd"
 #    plane: Plane) -> PackedVector3Array, called statically through load(FOG); "in front" is plane.distance_to(p) >= 0.0. A test
 #    that finds the method missing fails with a message (no parse error). The helper script path is FOG unless the environment
 #    variable OM_CLIP_HELPER names another script (used once, to run the three helper tests against a reference). The near-plane
-#    construction (camera near + margin) is the doer's and is not asserted; the low-camera test reads only qa_state() sight_discs
-#    boxes. Its land fixture is a copy of tests/test_vg_c_land_one_projection.gd's (240x240 cells, 12 own units, sight 800, ground
-#    era, camera_set {height} through qa_daemon._dispatch), so it needs no qa key beyond sight_discs.
+#    construction (camera near + margin) is the doer's and is not asserted; test_mask_rings_triangulate reads only qa_state() sight_discs
+#    boxes plus sight_discs_failed. Its land fixture is a copy of tests/test_vg_c_land_one_projection.gd's (240x240 cells, 12 own units, sight 800, ground
+#    era, camera_set {height} through qa_daemon._dispatch), so it needs no qa key beyond sight_discs and sight_discs_failed.
+#  - qa_state()["sight_discs_failed"] (int, beside sight_discs; the doer adds it): before draw_colored_polygon each mask ring is
+#    checked with Geometry2D.triangulate_polygon(p); an empty result skips the ring and increments a counter reset in set_frame,
+#    exposed by the qa fill. Rings with fewer than 3 points after clipping count as skipped, not failed. The test wants 0 at
+#    camera heights 300 and 3000 and every sight_discs box inside the viewport (Architect ruling 2026-10-23 16:20).
 # Positive controls: on main the pitch-50 ratio reads 1.0 (the fallback below builds a circle polygon from centre and radius when
 # `points` is absent, so the stated reason is shown by a number, not by a missing key), both ramp discs are full circles, and the
 # source still holds the radius disc field, the float texture and the hole-punch loop.
@@ -156,7 +160,7 @@ func _run() -> void:
 	await _mask()
 	_deletion()
 	_clip_tests()
-	await _low_camera()
+	await _mask_rings()
 
 
 func _ratio_and_close() -> void:
@@ -415,8 +419,9 @@ func _lc_frame(tick: int) -> Dictionary:
 		"map": {"canvas": 24000.0, "nodes": [], "cover": [], "obstacles": []}}
 
 
-# test_low_camera_boxes_not_all_full_width. Positive control: the height-3000 half is green on 743e4f35.
-func _low_camera() -> void:
+# test_mask_rings_triangulate. Positive control: on 743e4f35 the log holds "Invalid polygon data, triangulation failed" lines,
+# the evidence the counter reads above 0 without the clip.
+func _mask_rings() -> void:
 	var cfg = root.get_node("EraConfig")
 	var d = load("res://autoload/qa_daemon.gd").new()
 	root.add_child(d)
@@ -435,25 +440,23 @@ func _low_camera() -> void:
 	v.load_frame(_lc_frame(1))
 	await process_frame
 	var vp: Vector2 = Ground3D.SCREEN_SIZE
-	var high: Dictionary = v.qa_state().get("sight_discs", {})
-	var inside: bool = high.size() == 12
-	for k in high:
-		var b = high[k]
-		inside = inside and b is Array and b.size() == 4 and b[0] >= 0.0 and b[1] >= 0.0 and b[0] + b[2] <= vp.x and b[1] + b[3] <= vp.y
-	_check(inside, "test_low_camera_boxes_not_all_full_width: at height 3000 sight_discs has %d entries (want 12), every box inside the viewport: %s" % [high.size(), high])
-	var r: Dictionary = await d._dispatch("camera_set", [{"height": 300.0}])
-	_check(bool(r.get("ok", false)), "test_low_camera_boxes_not_all_full_width: camera_set height 300 answered %s" % [r])
-	await process_frame
-	var low: Dictionary = v.qa_state().get("sight_discs", {})
-	var narrow := 0
-	var first = null
-	for k in low:
-		var b = low[k]
-		if first == null:
-			first = b
-		if b is Array and b.size() == 4 and float(b[2]) < vp.x:
-			narrow += 1
-	_check(narrow >= 1, "test_low_camera_boxes_not_all_full_width: at height 300 none of %d sight_discs boxes has w < %s (every box is full width, e.g. %s)" % [low.size(), vp.x, first])
+	for h in [300.0, 3000.0]:
+		var r: Dictionary = await d._dispatch("camera_set", [{"height": h}])
+		_check(bool(r.get("ok", false)), "test_mask_rings_triangulate: camera_set height %s answered %s" % [h, r])
+		await process_frame
+		var st: Dictionary = v.qa_state()
+		print("QA-KEYS at height %s: %s" % [h, st.keys()])
+		var discs: Dictionary = st.get("sight_discs", {})
+		var inside: bool = discs.size() == 12 or h < 1000.0
+		for k in discs:
+			var b = discs[k]
+			inside = inside and b is Array and b.size() == 4 and b[0] >= 0.0 and b[1] >= 0.0 and b[0] + b[2] <= vp.x and b[1] + b[3] <= vp.y
+		_check(inside, "test_mask_rings_triangulate: at height %s sight_discs has %d entries (want 12 at 3000), every box inside the viewport: %s" % [h, discs.size(), discs])
+		if not st.has("sight_discs_failed"):
+			_check(false, "test_mask_rings_triangulate: qa_state() has no sight_discs_failed key (height %s)" % h)
+			break
+		else:
+			_check(int(st["sight_discs_failed"]) == 0, "test_mask_rings_triangulate: at height %s sight_discs_failed is %s (want 0: every drawn mask ring triangulates)" % [h, st["sight_discs_failed"]])
 	v.queue_free()
 	current_scene = null
 	await process_frame
