@@ -62,7 +62,7 @@ No shipped RTS ties its difficulty knob to a quantity that only grows over the m
 
 **Honors:** R-125-01 in spirit (how much, never how well); R-125-02 and R-123-03 exactly; changeable later; rewards positional and scouting skill directly (principle 6, A-136); reuses an existing system (E-15). **Strains:** R-074-03 as scoped covers only starting allocation, not a runtime rate; E-14 and E-15 would need extending to make reinforcement rate a difficulty-scaled value, which neither states today.
 
-**Prior art:** none found for a difficulty knob expressed as an interdictable resupply rate rather than a starting quantity. Darkest Dungeon's Radiant/Stygian modes are the closest adjacent shape, scaling resource curves and run length rather than a live, capturable throughput (REPORTED — `docs/research/games/darkest_dungeon.md:32`); StarCraft 2's Cheater tiers scale a passive economy bonus the human can never touch (REPORTED, Findings), inverted here into something the player can take away.
+**Prior art:** none found for a difficulty knob expressed as an interdictable resupply rate rather than a starting quantity. Darkest Dungeon's Radiant/Stygian modes are the closest adjacent shape, scaling resource curves and run length rather than a live, capturable throughput (REPORTED — `docs/legacy/games/darkest_dungeon.md:32`); StarCraft 2's Cheater tiers scale a passive economy bonus the human can never touch (REPORTED, Findings), inverted here into something the player can take away.
 
 **Tradeoffs.** Turns difficulty into an in-mission verb, deny the reinforcement point, rewarding the stated skill ceiling directly; asks more of early map awareness, and a player who never finds the structure experiences hard difficulty as a mystery escalation.
 

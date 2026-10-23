@@ -71,11 +71,11 @@ Run the land mockup before you design: the command is in `docs/northstar/ROADMAP
 
 | Path | Why |
 |---|---|
-| `docs/claude_exchange/plans/2026-09-30_layer-lab-plan_pasted-content-id-bf70-the-player-vivid-gizmo.md` | The goal, the principle (who gets shots off, and for how long), the five skills and their plays |
+| `docs/legacy/claude_exchange/plans/2026-09-30_layer-lab-plan_pasted-content-id-bf70-the-player-vivid-gizmo.md` | The goal, the principle (who gets shots off, and for how long), the five skills and their plays |
 | `docs/northstar/research/layer_dynamics/README.md`, sections 4 and 4.1a | The accepted table of plays and counters a map must make possible |
 | `docs/northstar/research/layer_dynamics/audits/2026-10-04_rules_against_strategic_depth.md` | Verdict per skill. Landscape is "absent in play" because no map has a choke |
 | `docs/northstar/research/layer_dynamics/audits/2026-10-04_plan_drift.md` | How this work drifted from its plan; do not repeat it |
-| `docs/research/topics/lanchester_and_combat_theory.md` | Why a choke, a flank and high ground matter: square and linear laws, defeat in detail, height as initiative |
+| `docs/legacy/topics/lanchester_and_combat_theory.md` | Why a choke, a flank and high ground matter: square and linear laws, defeat in detail, height as initiative |
 | `docs/bible/epics/E-01-layer-system.md` | Five layers, slopes, vantages, what terrain blocks |
 | `docs/northstar/research/layer_dynamics/runs/2026-10-04_formation_read.html` | The first lab chart Westley saw: on open ground formation is worth about three soldiers in sixteen. Terrain is where the rest must come from |
 

@@ -58,7 +58,7 @@ Do NOT read `docs/bible_history/bible_2_00_world.md` (map-gen handled by Stage 7
 - `instantiate_force(template_name: str, total_power: float, count_split: list[float] | None) → list[list[Unit]]` — given a template, total power budget (from the force-allocation system), and an optional split (e.g., `[0.6, 0.4]` for two forces), produces concrete unit lists per force preserving ratios and total power within ±5%.
 
 **`scripts/`** — JSON behavior script files.
-- `defensive_stand.json` — Force A (main thrust) + Force B (flanker), per DQ-A capture in `docs/design_questions/stage_7_8_design.md`.
+- `defensive_stand.json` — Force A (main thrust) + Force B (flanker), per DQ-A capture in `docs/legacy/design_questions/stage_7_8_design.md`.
 - `assault.json` — Force A (garrison) + Force B (reserve), per DQ-B.
 - `multi_front_defense.json` — 2-force and 3-force variants selected at mission start by approach-vector count, per DQ-C.
 - `counterinsurgency.json` — Variable cell count via fragmentation roll (Concentrated / Dispersed / Fragmented), per DQ-D.

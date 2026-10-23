@@ -89,7 +89,7 @@ An intangible eye released into the fight at human height. It has no body, canno
 
 Honors: "you are in it, not a god game"; the observing stance's letter, since the eye cannot act, be targeted, or possess a unit; the height floor, held per layer; positional thinking, since "where" is unavoidable. Strains: R-103-02's canvas bound holds, but a large battlefield at human height is impractical to cross without the return-home glide; passing through terrain a unit could not breaks, here alone, the rule that blocked terrain reads the same for everyone.
 
-Prior art: none found for the mechanic as a whole. Thematic precedent only: the Battle School observation deck framing, REPORTED — `docs/research/topics/delegated_command_precedents.md` ("3D volumetric tactical space," non-load-bearing), and "Ender reading the battle from many angles" (`docs/bible_history/bible_2_00_design_vision.md:85`).
+Prior art: none found for the mechanic as a whole. Thematic precedent only: the Battle School observation deck framing, REPORTED — `docs/legacy/topics/delegated_command_precedents.md` ("3D volumetric tactical space," non-load-bearing), and "Ender reading the battle from many angles" (`docs/bible_history/bible_2_00_design_vision.md:85`).
 
 Tradeoffs: a visceral sense of scale and threat, at the cost of the overview — down in it you cannot see the rest of the fight, and getting back costs a real trip, not a tap.
 

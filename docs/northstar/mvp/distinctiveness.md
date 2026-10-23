@@ -6,7 +6,7 @@ Status: proposal, 2026-09-14. Scores are Claude's first pass; Westley re-scores 
 
 Every offer is one of the hub's "What's Unique" items or a sacred principle, restated as something a player would notice. Three scores, 1 to 5 each:
 
-- **Distinctiveness.** How much of the reason to buy this game rather than another rests on this. From the hub, `vision_v2.md`, and the audience research in `docs/research/topics/`.
+- **Distinctiveness.** How much of the reason to buy this game rather than another rests on this. From the hub, `vision_v2.md`, and the audience research in `docs/legacy/topics/`.
 - **Risk.** How likely it is that the idea is wrong or that players will not value it, given the research, the code reality, and how many open flags the epics carry.
 - **Cost.** How much C, client, and Stage 3 to 5 work stands between today and a testable cut on the C/Agora path. 5 is "needs a full tactical slice and an unproven Agora capability."
 
@@ -33,7 +33,7 @@ Westley answered `Q-MVP-01` on 2026-09-14: Round 1 is every major feature at its
 
 ## What the research says players hate, and how each round watches for it
 
-From `docs/research/topics/` (audience profile, retention curves, tag research) and `../research/rts_bug_catalog.md`. Some briefs still name the killed Lieutenant system; those lines are ignored.
+From `docs/legacy/topics/` (audience profile, retention curves, tag research) and `../research/rts_bug_catalog.md`. Some briefs still name the killed Lieutenant system; those lines are ignored.
 
 | Complaint | Where it would show | Instrument | Round |
 |---|---|---|---|

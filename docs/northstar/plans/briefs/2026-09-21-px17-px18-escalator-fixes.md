@@ -56,7 +56,7 @@ Run every case with `gemini-3.7-flash-high` (the model Agora's build-intervene u
 ## Deliverables
 
 1. `scripts/specfactory/escalator_fix_probe.py` and its tests, committed and pushed.
-2. `docs/northstar/proving_ground/PX-17-escalator-fixes-code.md` and `PX-18-escalator-fixes-tests.md`, in the style of the existing `PX-*.md` files there (claim, result, table, limits, design consequences left blank for the design lane to fill) — normal prose, no caveman. One row each appended to `docs/northstar/proving_ground/SCORECARD.md`.
+2. `docs/legacy/proving_ground/PX-17-escalator-fixes-code.md` and `PX-18-escalator-fixes-tests.md`, in the style of the existing `PX-*.md` files there (claim, result, table, limits, design consequences left blank for the design lane to fill) — normal prose, no caveman. One row each appended to `docs/northstar/proving_ground/SCORECARD.md`.
 3. A finishing report for Westley to carry back, containing: per case and model the verdict, attempts, wall seconds, equivalence judgement against the human fix, every "passes tests but wrong" instance with the diff excerpt, every fence violation, every weakened-assertion attempt in PX-18, total Gemini calls and wall time, and anything that argues against the claim. Do not recommend design changes; report evidence.
 
 ## Verification

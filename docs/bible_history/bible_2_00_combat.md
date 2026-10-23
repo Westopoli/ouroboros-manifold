@@ -175,7 +175,7 @@ The moving battlefield is communicated through **world-space movement under free
 
 ### Mid-Mission HUD Layout
 
-> **RESOLVED (v2.13).** Layout reference: Immortal: Gates of Pyre. See `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
+> **RESOLVED (v2.13).** Layout reference: Immortal: Gates of Pyre. See `docs/legacy/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
 
 The mid-mission HUD inherits IGoP's clustered-bottom-bar layout and restrained UI chrome, with IGoP's economy/production surfaces subtracted (Ouroboros has no resource currency, no tech tree, no unit-production grid — reinforcements come from captured structures) and Ouroboros-specific surfaces added (reinforcement-structure panel, layer selector).
 
