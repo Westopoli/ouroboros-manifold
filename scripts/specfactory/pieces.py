@@ -139,6 +139,32 @@ def check_owns_disjoint(pieces: list[dict]) -> list[tuple[str, str, str]]:
     return findings
 
 
+def check_depends_acyclic(pieces: list[dict]) -> list[tuple[str, str, str]]:
+    """FAIL for each cycle among the depends_on edges of the rows present,
+    named `A -> B -> ... -> A`. Ids that are not rows present are ignored.
+    # See also: check_owns_disjoint, which skips an overlap on a transitive
+    # chain and so needs this pass to keep that chain acyclic."""
+    findings = []
+    by_id = {p["id"]: p for p in pieces if p.get("id")}
+    done: set[str] = set()
+
+    def walk(pid: str, path: list[str]) -> None:
+        if pid in path:
+            cycle = path[path.index(pid):] + [pid]
+            findings.append(("FAIL", pid, "depends_on cycle: " + " -> ".join(cycle)))
+            return
+        if pid in done:
+            return
+        for dep in by_id[pid].get("depends_on", []) or []:
+            if dep in by_id:
+                walk(dep, path + [pid])
+        done.add(pid)
+
+    for pid in by_id:
+        walk(pid, [])
+    return findings
+
+
 def _root_of(entry: str) -> str | None:
     for r in ROOTS:
         if entry == r or entry.startswith(r + "/"):
@@ -215,6 +241,7 @@ def run_check(pieces_path: Path, project: Path, *, python_exe: str = DEFAULT_PYT
     findings = []
     findings += check_unique_ids(pieces)
     findings += check_owns_disjoint(pieces)
+    findings += check_depends_acyclic(pieces)
     findings += check_acceptance(pieces, project, python_exe=python_exe, timeout=timeout, collector=collector)
     fail_count = sum(1 for f in findings if f[0] == "FAIL")
     return findings, len(pieces)
