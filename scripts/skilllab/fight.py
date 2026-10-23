@@ -390,10 +390,15 @@ def _run(engine, w, setup, side_ids, start_hp, heads, timeline, ids_by_group):
     fwin = _window_seconds(firing, contact, setup.sample_every)
     wwin = _window_seconds(weighted, contact, setup.sample_every)
     pcount, ptype = _predict(fwin), _predict(wwin)
+    living_roster = ({}, {})
+    for gi, g in enumerate(setup.groups):
+        n = sum(1 for u in ids_by_group[gi] if hp[u] > 0)
+        if n:
+            living_roster[g.side][g.unit] = living_roster[g.side].get(g.unit, 0) + n
     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
                        firing=firing, firing_unit_seconds=seconds, trace=trace,
                        steps_fired=tuple(timeline.fired), weighted_unit_seconds=wsec, states=state_rows,
                        winner=outcome if outcome in ("side0", "side1") else None, firing_window=fwin,
                        weighted_window=wwin, predicted_count=pcount, predicted_type=ptype,
-                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count), blind_cap=blind)
+                       agreement=_agreement(outcome, pcount, ptype), reengage=tuple(reengage.count), blind_cap=blind, living=living_roster)

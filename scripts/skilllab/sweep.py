@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from scripts.skilllab import depth, formations, maps, plays_space, pool, probe as probe_mod, rows as rows_mod, scan as scan_mod, scenes
-from scripts.skilllab.contract import FROZEN_NAMES, Group
+from scripts.skilllab.contract import FROZEN_NAMES, Group, Setup
 
 FAMILY_ORDER = ("vision", "range_up", "damage_up", "emitting", "arc", "cone", "sign_flip")
 SIZE, ENEMY_FROM, ENEMY_TO, REPLICATES = 16, 8, 48, 3
@@ -27,10 +27,18 @@ VISION_CONTROL_PLAY = "s3_vision_control"   # clause 24: the vision positive con
 SMOKE_LAYOUTS = ("81", "78", "192")         # layout indices of the run-1 draw (depth.lhs_draw(200, 0))
 SMOKE_CONTROLS = (("mirror", 16), ("numbers", 8), ("planted", 16))
 LAYER_PLAYS = ("s3_layer_above", "s3_types_by_reach")
+MIRROR_FIGHTS = 30          # DRAFT-mirror-fights (the Architect's number, on Westley's open list): fights of a mix's naive mirror pre-check
+MIRROR_X = 350.0            # the two blobs of a mirror fight stand at -x and +x
+WARDEN_PER_16 = 4           # interim lab cap, Wardens per 16 units; retires with FU-warden-no-stack (FINDING-lab-d9, a TD row removes it)
+KNOWN_CAP = "known_cap:FINDING-lab-d9"      # M9's one Warden-stall cap in 30; retires with FU-warden-no-stack
+MIX_LAYER_PLAYS = ("s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider", "s3_bombard_bastion", "s3_bombard_bastion_level")
 PLAYS_BY_FAMILY = {
-    "vision": LAYER_PLAYS, "range_up": LAYER_PLAYS, "damage_up": LAYER_PLAYS, "sign_flip": LAYER_PLAYS,
-    "emitting": ("s3_dark_striker",), "arc": ("s2_concave", "s2_mass_one_end"), "cone": ("s2_concave", "s2_mass_one_end"),
+    "vision": LAYER_PLAYS + MIX_LAYER_PLAYS, "range_up": LAYER_PLAYS + MIX_LAYER_PLAYS, "damage_up": LAYER_PLAYS + MIX_LAYER_PLAYS,
+    "sign_flip": LAYER_PLAYS + MIX_LAYER_PLAYS,
+    "emitting": ("s3_dark_striker",), "arc": ("s2_concave", "s2_mass_one_end", "s2_screen", "s2_warden_line"),
+    "cone": ("s2_concave", "s2_mass_one_end", "s2_screen", "s2_warden_line"),
 }
+SMOKE_PLAYS = {"vision": ("s3_layer_above", "s3_types_by_reach")}      # the smoke's plays per family: a subset of PLAYS_BY_FAMILY (the batch sweeps all of them)
 BASES = {
     "OM_TP_VISION_UP_1": 0.5, "OM_TP_VISION_DOWN_1": 0.5, "OM_TP_VISION_UP_2": 0.2, "OM_TP_VISION_DOWN_2": 0.2,
     "OM_TP_RANGE_UP_1": 1.0, "OM_TP_RANGE_UP_2": 1.0, "OM_TP_RANGE_DOWN_1": 1.0, "OM_TP_RANGE_DOWN_2": 1.0,
@@ -369,6 +377,56 @@ def default_control_builds():
     return {"mirror": plays.blob_play(16), "numbers": plays.blob_play(16), "planted": plays.damage_play(16)}
 
 
+# ---- the mirror pre-check of a mix ------------------------------------------------------------------------------------------------
+
+def _mirror_setup(units):
+    """A naive mirror: the mix on both sides, one blob per type, attack-moving, one layer, no timeline, built-in types."""
+    def side(s):
+        return [Group(side=s, unit=t, count=n, formation="blob", x=-MIRROR_X if s == 0 else MIRROR_X, y=0.0,
+                      facing_deg=0.0 if s == 0 else 180.0, layer=0, order="attack_move", goal=None,
+                      params={"radius": 80 + 12 * math.sqrt(n)}) for t, n in units.items()]
+    return Setup(groups=tuple(side(0) + side(1)), unit_types={}, point=(0.0, 0.0))
+
+
+def _warden_stall(living):
+    """P1 (the Warden pattern of FINDING-lab-d9): at the cap some side still has living units and every living unit of that side is a Warden."""
+    return any(roster and set(roster) == {"Warden"} for roster in living)
+
+
+def mirror_precheck(units, *, fights=MIRROR_FIGHTS, fight_fn=None, map_fn=None):
+    """R1: `fights` naive mirror fights of the mix (fight i is seed i // 2, swapped when i is odd). More than WARDEN_PER_16 Wardens per
+    16 is refused before any fight (FU-warden-no-stack retires the cap). A capped fight rejects the mix, except on M9 when every capped
+    fight matches P1 (known_cap:FINDING-lab-d9). `rosters` maps each capped fight's index to its living roster."""
+    verdict = {"mix": dict(units), "ok": True, "reason": None, "fights": 0, "caps": 0, "rosters": {}}
+    if units.get("Warden", 0) * 16 > WARDEN_PER_16 * sum(units.values()):
+        return {**verdict, "ok": False, "reason": "warden_cap"}
+    setup = _mirror_setup(units)
+    results = scan_mod.run_jobs([(setup, i // 2, i % 2 == 1) for i in range(fights)], fight_fn, map_fn)
+    capped = [i for i, r in enumerate(results) if r.outcome == "cap"]
+    verdict.update(fights=len(results), caps=len(capped), rosters={i: results[i].living for i in capped})
+    if capped:
+        m9 = next(r["units"] for r in plays_space.MIXES if r["name"] == "M9")
+        known = dict(units) == m9 and all(_warden_stall(results[i].living) for i in capped)
+        verdict.update(ok=known, reason=KNOWN_CAP if known else "capped")
+    return verdict
+
+
+def vet_mixes(rows, *, fight_fn=None, map_fn=None):
+    """The enabled rows of a MIXES table through mirror_precheck; no row is edited (a person flips `enabled` after the report).
+    `verdicts` maps each name to its verdict: the artifact's summary["mixes"]."""
+    report = {"accepted": [], "rejected": [], "verdicts": {}}
+    for row in rows:
+        if not row["enabled"]:
+            continue
+        verdict = mirror_precheck(row["units"], fight_fn=fight_fn, map_fn=map_fn)
+        report["verdicts"][row["name"]] = verdict
+        if verdict["ok"]:
+            report["accepted"].append(row["name"])
+        else:
+            report["rejected"].append({**verdict, "mix": row["name"]})
+    return report
+
+
 # ---- running a family -------------------------------------------------------------------------------------------------------------
 
 def _refusal(builds_by_role):
@@ -654,7 +712,7 @@ def run_smoke(out_dir, workers=12, *, builds=None, control_builds=None, layouts=
         point = next(p for p in grid("vision") if p.value == 0.5)
         control_set = control_builds or default_control_builds()
         for layout, features in layouts.items():
-            for play in PLAYS_BY_FAMILY["vision"]:
+            for play in SMOKE_PLAYS["vision"]:
                 play_build, roles_wanted = _play_roles(builds, play, features)
                 by_role = {"play": play_build, **{r: builds(play, r, features) for r in roles_wanted}}
                 bad = _refusal({"play": by_role["play"]})

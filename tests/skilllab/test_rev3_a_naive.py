@@ -14,8 +14,8 @@ BUILDER CONTRACT (behaviour only; no new name is pinned):
   - Side 1 scales with the headcount like the play's own side 1 (heads/16 of the mix, the play's own rounding): the roster tests run at
     heads 8, 16 and 48 (W7 of the audit); side 0 stays the 16-unit mix at every headcount.
   - SHAPE (W6 of the audit; green on the lab tip, they fail a fix that returns the skilled play wholesale): the naive attacker's
-    timeline is empty; every side-0 group is on layer 0 with order attack_move; side 1 stays the post holder (order guard) and every
-    side-1 group is on layer 0. (The play's own side 0 may be on guard, on layer 1 or 2, or carry steps: those must not leak in.)
+    timeline is empty; every side-0 group has order attack_move; side 1 stays the post holder (order guard); each side stands on the layers
+    the play gives it (LAB-REV3-B narrowed "layer 0" to this: for a layer-0 play it is layer 0). (The play's own side 0 may be on guard, on layer 1 or 2, or carry steps: those must not leak in.)
   - A play that is all Vanguards keeps its baseline as it is (the positive control)."""
 import collections
 import sys
@@ -75,11 +75,29 @@ def test_t4_the_naive_attackers_enemy_is_the_plays_enemy_roster(play, heads):
 @pytest.mark.parametrize("play", PLAYS)
 @pytest.mark.parametrize("heads", HEADS)
 def test_the_naive_attackers_shape_is_a_naive_blob_attacking_a_post_not_the_skilled_play(play, heads):
-    """W6 pin, green on the lab tip: no timeline, side 0 attack-moving on layer 0, side 1 holding (guard) on layer 0."""
-    _, naive = builds(play, heads)
+    """W6 pin, narrowed by LAB-REV3-B (ledger TD-LAB-REV3-B-a-tests, Architect ruling 2026-10-20): no timeline, side 0 attack-moving, side 1
+    holding (guard), each side on the layers the play itself gives it (the baseline takes the play's own layer pair, so a mix play on layers
+    2 to 4 is fought where it stands). For a play whose own pair is layer 0 this is still layer 0 on both sides."""
+    own, naive = builds(play, heads)
+    own_layers = [{g.layer for g in own.groups if g.side == s} for s in (0, 1)]
     assert naive.timeline == ()
-    assert {(g.order, g.layer) for g in naive.groups if g.side == 0} == {("attack_move", 0)}
-    assert {(g.order, g.layer) for g in naive.groups if g.side == 1} == {("guard", 0)}
+    assert {g.order for g in naive.groups if g.side == 0} == {"attack_move"}
+    assert {g.order for g in naive.groups if g.side == 1} == {"guard"}
+    assert [{g.layer for g in naive.groups if g.side == s} for s in (0, 1)] == own_layers
+    if own_layers == [{0}, {0}]:
+        assert {(g.order, g.layer) for g in naive.groups if g.side == 0} == {("attack_move", 0)}
+        assert {(g.order, g.layer) for g in naive.groups if g.side == 1} == {("guard", 0)}
+
+
+def test_the_layer_pin_is_still_layer_0_for_the_layer_0_plays_and_the_new_plays_stand_where_they_are():
+    """Control for the narrowing: the plays on layer 0 on both sides are still pinned to layer 0, and the layer-stack plays are not (their own pair
+    is not layer 0, so a layer-0 pin would have misplaced them)."""
+    flat = [p for p in PLAYS if {g.layer for g in plays_space.PLAYS[p].setup_fn().groups} == {0}]
+    assert {"s1_hold_choke", "s2_warden_line", "s5_vulnerable_away"} <= set(flat)
+    for p in flat:
+        assert {g.layer for g in builds(p)[1].groups} == {0}, p
+    for p in ("s3_raider_bombard", "s3_bombard_bastion", "s3_bombard_bastion_level"):
+        assert {g.layer for g in builds(p)[1].groups} - {0}, p
 
 
 def test_the_shape_pin_can_tell_a_skilled_play_from_a_naive_one():

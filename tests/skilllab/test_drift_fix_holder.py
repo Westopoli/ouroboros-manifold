@@ -18,7 +18,7 @@ INTERFACE FROZEN FOR THE BUILDER
     weighting and a plain mean agree), same units and counts, formation blob, radius 80 + 12 sqrt(n), the play's order, timeline dropped.
     A one-type side is unchanged from today (the hash in test_sweep_baselines.py::OPEN_BASELINE_HASH).
 Real plays: read from the PLACED Setup (default_builds(play, "play", features)), where placement gives a defender-anchored play its guard
-order. 12 of the 15 hold (EXPECTED_ROLES); s2_mass_one_end, s3_dark_striker and s3_ping_then_commit attack and have no holder."""
+order. 17 of the 21 hold (EXPECTED_ROLES); s2_mass_one_end, s3_dark_striker, s3_ping_then_commit and s3_bombard_bastion attack and have no holder."""
 import csv
 import dataclasses
 import sys
@@ -41,11 +41,20 @@ FEATS = {"blocked_layer_top": 0, "choke_width_bodies": 0, "cover_density_corrido
 ATT, HOLD = "naive_attacker", "naive_defender"
 LAYER_ROLES = ("naive_attacker", "naive_defender_attacker_layer", "naive_defender_play_layer")
 EXPECTED_ROLES = {**{p: (ATT, HOLD) for p in ("s1_hold_choke", "s1_outrange", "s2_concave", "s2_screen", "s2_spread_line", "s4_bait",
-                                              "s4_do_not_chase", "s5_vulnerable_away")},
+                                              "s4_do_not_chase", "s5_vulnerable_away",
+                                              # LAB-REV3-B: guard group on side 0, every side-0 layer is one the enemy stands on
+                                              # (s2_warden_line: all on layer 0; s3_bombard_bastion_level: all on layer 4, enemy on 4)
+                                              "s2_warden_line", "s3_bombard_bastion_level")},
                   # s3_vision_control (LAB-VISION-CONTROL): anchors role "defender", so side 0 is placed on guard; its only group is on layer 1
                   # and the enemy stands on layer 0, so it is a holder with a group on another layer, like the three above
-                  **{p: LAYER_ROLES for p in ("s3_layer_above", "s3_over_the_choke", "s3_types_by_reach", "s3_vision_control")},
-                  **{p: (ATT,) for p in ("s2_mass_one_end", "s3_dark_striker", "s3_ping_then_commit")}}
+                  **{p: LAYER_ROLES for p in ("s3_layer_above", "s3_over_the_choke", "s3_types_by_reach", "s3_vision_control",
+                                                 # LAB-REV3-B mixes (anchors "defender", guard on side 0): a side-0 group on a layer the
+                                                 # enemy is not on (raider_bombard 1 and 3 vs 2; interceptor_bombard 1 and 4 vs 3;
+                                                 # interceptor_raider 2 and 3 vs 4)
+                                                 "s3_raider_bombard", "s3_interceptor_bombard", "s3_interceptor_raider")},
+                  **{p: (ATT,) for p in ("s2_mass_one_end", "s3_dark_striker", "s3_ping_then_commit",
+                                              # LAB-REV3-B: Anchors("attacker", "exit_line", "blob"), no side-0 guard group
+                                              "s3_bombard_bastion")}}
 
 
 # ---- ruling 3: the holder comes from the Setup ----------------------------------------------------------------------------------------
@@ -58,7 +67,7 @@ def placed_setup(play):
 
 @pytest.mark.parametrize("play", sorted(plays_space.PLAYS))
 def test_a_real_play_is_a_holder_exactly_when_its_placed_side_0_has_a_guard_group(play):
-    """The 14 real plays, read from their placed Setup: eight hold on the enemy's layer, three hold with a group on another layer, three
+    """The 21 real plays, read from their placed Setup: ten hold on the enemy's layer, seven hold with a group on another layer, four
     meet and carry the naive attacker alone (s3_dark_striker and s3_ping_then_commit were given the layer roles by their s3_ name; the
     attackers of s2_mass_one_end the plain defender: that was the defect)."""
     assert sweep.baseline_roles(placed_setup(play)) == EXPECTED_ROLES[play]

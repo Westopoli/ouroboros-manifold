@@ -122,6 +122,7 @@ class FightResult:
     agreement: str = "n/a"    # "both_right" | "count_wrong_type_right" | "both_wrong" | "count_right_type_wrong" | "n/a"
     reengage: tuple = (0, 0)  # (side 0, side 1) re-engage events: a silent side with an idle attack-move unit and a visible enemy was ordered onto the enemy centroid
     blind_cap: bool = False   # outcome "cap" and, at the cap tick, neither side sees any living enemy: a finding (blind post), not a lab cap defect
+    living: tuple = ({}, {})  # ({side 0 Group.unit: count}, {side 1 Group.unit: count}) alive at the end of the fight, zero counts omitted
 
 
 def trim_series(result: "FightResult") -> "FightResult":

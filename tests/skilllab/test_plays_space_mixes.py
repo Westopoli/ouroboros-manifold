@@ -61,6 +61,8 @@ USED_IN = {
     "M3b": {"s3_over_the_choke"},
     "M4": {"s1_outrange"},
 }
+# LAB-REV3-B rows (the arbitration of 2026-10-19; their own contract is test_rev3_b_mixes.py): the table is these five beside the five above
+NEW_ROWS = ("M5", "M6", "M7", "M8", "M9")
 M0_PLAYS = {"s1_hold_choke", "s2_concave", "s2_spread_line", "s2_mass_one_end", "s4_bait", "s4_do_not_chase"}
 HEADER = "M5 to M9 are added here after Westley's go on the roster analysis"
 
@@ -88,9 +90,10 @@ def table(monkeypatch):
 
 # ---- the table itself -----------------------------------------------------------------------------------------------------------
 
-def test_the_table_exists_with_exactly_the_five_rows_and_the_fields():
+def test_the_table_exists_with_exactly_the_ten_rows_and_the_fields():
+    """Ten rows since LAB-REV3-B: M1, M2, M3, M3b, M4 and M5 to M9 (ledger TD-LAB-REV3-B-registry)."""
     assert isinstance(plays_space.MIXES, list)
-    assert sorted(r["name"] for r in plays_space.MIXES) == sorted(EXPECTED)
+    assert sorted(r["name"] for r in plays_space.MIXES) == sorted(tuple(EXPECTED) + NEW_ROWS)
     for r in plays_space.MIXES:
         assert set(r) == {"name", "units", "used_in", "enabled"}, r
         assert isinstance(r["units"], dict) and isinstance(r["used_in"], tuple) and r["enabled"] is True, r
@@ -255,5 +258,7 @@ def test_control_the_row_grep_tells_m3_from_m3b():
     assert re.search(r"DRAFT-mix-M3b(?![\w-])", m3b)
 
 
-def test_the_header_says_m5_to_m9_wait_for_westleys_go():
-    assert HEADER in " ".join(SOURCE.split()), "plays_space.py does not say: " + HEADER
+def test_the_header_no_longer_says_m5_to_m9_wait_for_westleys_go():
+    """Retired by the Architect's ruling of 2026-10-20 (LAB-REV3-B): M5 to M9 are rows now, so the sentence that they wait is stale."""
+    assert HEADER not in " ".join(SOURCE.split()), "plays_space.py still says: " + HEADER
+    assert set(NEW_ROWS) <= set(rows())

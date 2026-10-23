@@ -1097,7 +1097,7 @@ def test_smoke_runs_vision_half_only_on_the_three_layouts_plus_the_three_control
     summary, world, rows = _smoke(tmp_path, control_builds=control_builds())
     vision = [r for r in rows if r["family"] == "vision"]
     assert {r["layout"] for r in vision} == {"81", "78", "192"} and {float(r["knob_value"]) for r in vision} == {0.5}
-    assert {r["play"] for r in vision} == set(sweep.PLAYS_BY_FAMILY["vision"]) == {"s3_layer_above", "s3_types_by_reach"}
+    assert {r["play"] for r in vision} == set(sweep.SMOKE_PLAYS["vision"]) == {"s3_layer_above", "s3_types_by_reach"}
     ctl = [r for r in rows if r["family"] == "controls"]
     assert all(r["kind"].startswith("control_") for r in ctl) and not any(r["kind"].startswith("control_") for r in vision)
     assert {r["play"] for r in ctl} == {"mirror", "numbers", "planted"}

@@ -1,7 +1,9 @@
 """Plays: builders of the two-sided Setups the scans fight.
 A meeting (ruling 6): both sides are attack-moved to Setup.point, the midpoint of the two anchors, one order per unit."""
+import dataclasses
 import math
 
+from scripts.skilllab import plays_space
 from scripts.skilllab.contract import Group, Setup
 
 _LINE_SPACING = 30
@@ -69,3 +71,17 @@ def reach_play(size, unit="Vanguard", factor=1.2):
 
 def damage_play(size, unit="Vanguard", factor=1.2):
     return _derived_play(size, unit, factor, "Strong", "base_damage")
+
+
+def layer_symmetry_play(size, low_layer, unit="Raider"):
+    """T6 control: `size` of `unit` on layer low_layer + 1 against the enemy's blob on low_layer, both attack-moving, the unit with its bible
+    reach. Two builds differ only by a shift of the two layers."""
+    if size < 1 or not 0 <= low_layer <= 3 or unit not in plays_space._REACH:
+        raise ValueError("layer_symmetry_play needs size >= 1, low_layer in 0..3 and a bible unit, got %r, %r, %r" % (size, low_layer, unit))
+    build = _play(size, unit, "blob", unit_types={unit: {"base": unit, "reach": plays_space._REACH[unit]}})
+
+    def symmetric(enemy_heads, swap):
+        setup = build(enemy_heads, swap)
+        groups = tuple(dataclasses.replace(g, layer=low_layer + 1 - g.side) for g in setup.groups)
+        return dataclasses.replace(setup, groups=groups)
+    return symmetric
