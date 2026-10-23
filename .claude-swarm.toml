@@ -1,34 +1,24 @@
-# claude-swarm — Ouroboros project config
-# Cascade: skilllab-harness (Cascade A of docs/northstar/plans/2026-10-02-skill-lab-cascade.md)
+# claude-swarm project config for Ouroboros Manifold
+# See also: docs/northstar/plans/cascades/README.md (layout and landing path), pieces row HARNESS-swarm-config
 
-spec_dir          = "docs/northstar/plans/"
-briefs_dir        = ".swarm/skilllab-harness/briefs/"
-type_contract_path = "scripts/skilllab/contract.py"
-
-umbrella_test_cmd = "python3 -m pytest tests/skilllab/test_umbrella.py -p no:cacheprovider -q"
-apex_test_cmd     = "python3 -m pytest tests/skilllab/integration -p no:cacheprovider -q"
-graphify_cmd      = ""
-
-worktree_link = []
+spec_dir            = "docs/northstar/plans/cascades/"
+# set per cascade by its records commit
+type_contract_path  = "<the cascade's contract header, e.g. csrc/field_noise.h>"
+umbrella_test_cmd   = "python3 -m pytest <the cascade's umbrella file> -q -p no:cacheprovider"
+apex_test_cmd       = "scripts/specfactory/pre_gate.sh"
+briefs_dir          = "docs/northstar/plans/cascades/<slug>/briefs/"
+graphify_cmd        = ""
+worktree_link       = []
 
 parent_owned = [
-  "docs/northstar/plans/2026-10-02-skill-lab-cascade.md",
-  "docs/northstar/plans/skilllab-harness-spec.md",
-  "docs/bible/**",
-  "scripts/skilllab/contract.py",
-  "tests/skilllab/test_umbrella.py",
-  "tests/skilllab/integration/**",
-  "tests/skilllab/golden_hashes.json",
-  "csrc/**",
-  "Makefile",
-  "tests/csim/**",
-  "tests/specfactory/**",
-  "scripts/specfactory/**",
-  "toys/**",
+  "csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml",
+  "docs/bible/**", "docs/northstar/**", "tests/**",
+  "scripts/specfactory/**", "Makefile", "autoload/**", "scenes/**",
+  "tests/csim/data/**", "tests/skilllab/golden_hashes.json",
 ]
 
 [invariants]
-max_impl_lines      = 300
+max_impl_lines      = 100
 max_test_assertions = 40
 ambiguous_verbs = [
   "decide", "choose", "design", "determine",
