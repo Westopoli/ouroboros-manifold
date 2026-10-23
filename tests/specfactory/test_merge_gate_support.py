@@ -1,4 +1,5 @@
 # spec: docs/northstar/plans/briefs/2026-09-22-two-day-push.md, item 1
+# Rule pins: R-021-01@39f7e7
 """Tests for scripts/specfactory/merge_gate_support.py (the footprint fence
 and symbol-ownership lint merge_gate.sh calls into)."""
 import subprocess
