@@ -54,6 +54,17 @@ extends "res://tests/support/vg_c_case.gd"
 #      straight above the crest, vertical rays, oracle []; (b) set_top_down(false): camera (450,3400,2967), oracle [1];
 #      (c) zoom_by(-9): camera (450,700,702), oracle [1]; (d) pan_to(450,900) then pan(0,-300): camera (450,300,852), oracle [1].
 #      Two distinct sets, [] then [1], occur between (a) and (b); (c) and (d) keep the old low-camera coverage.
+# (9) OCCLUSION COST (Architect ruling 2026-10-23, cost guard): the pass is time-sliced, DRAFT-occlusion-slice-ms 2 per frame, a full
+#     pass within DRAFT-occlusion-pass-ms 500 on the S-001 frame, occluded_ids swapped in whole when a pass completes. UNSTATED
+#     INTERFACE CHOICE: Ground3DHost.occlusion_stats() -> Dictionary {max_slice_us: int, last_pass_ms: float, passes: int,
+#     pending: int}. max_slice_us is the largest single-frame occlusion cost (Time.get_ticks_usec around the slice loop of one
+#     _process) since the PREVIOUS occlusion_stats() call and is reset by the read, so the test excludes the one-time first-frame
+#     warm-up by reading (and discarding) the stats after the first frame; nothing else is excluded, no tolerance. last_pass_ms is
+#     the wall time from a pass's start to its swap, passes counts completed passes, pending the units left in the running pass.
+#     The S-001 frame is the real one: a CBridge session (seed 1, CBridge.DEFAULT_N_REGIONS, DEFAULT_FEATURES) with EraConfig
+#     set to greek_placeholder (as the plays' --era does), load_tactical_live, terrain() and tactical_frame() into a host.
+#     Renderer-only (the dummy renderer is no measure of a Vulkan frame): headless prints a RENDER-ONLY line and checks that the
+#     accessor exists; the sliced work is measured under OM_QA_RENDERER=vulkan xvfb-run -a.
 # Fixture frame (host and view): faction 0 owns all of 1 (behind), 2 (front), 3 (8 wu behind the crest); ids and points
 # below in _frame(). Camera = the rig default after set_terrain (height 3000, pitch 50 degrees).
 # Positive control (paragraph): a flat fixture gives an empty occluded_ids. The pick-distance controls (test_pick_geometry)
@@ -152,6 +163,7 @@ func _run() -> void:
 	await test_host_occlusion()
 	await test_host_flat_control()
 	await test_host_recompute_on_camera_change()
+	await test_occlusion_cost()
 	await test_view_marks_land()
 	await test_view_marks_space_control()
 
@@ -319,6 +331,87 @@ func test_host_recompute_on_camera_change() -> void:
 		seen[str(want)] = true
 		_check(got == want, "R-001-06: after rig %s and the settle wait occluded_ids is %s, the pick rule gives %s" % [step, got, want])
 	_check(seen.size() >= 2, "R-001-06 CONTROL: the camera moves produce at least two different occluded sets, saw %s" % [seen.keys()])
+	host.queue_free()
+
+
+# DRAFT-occlusion-slice-ms 2 and DRAFT-occlusion-pass-ms 500 (header choice 9). Renderer-only: see the header.
+func test_occlusion_cost() -> void:
+	var stats_ok := false
+	if DisplayServer.get_name() == "headless":
+		var h = await _host(_terrain(true))
+		if h != null:
+			stats_ok = h.has_method("occlusion_stats")
+			h.queue_free()
+		print("RENDER-ONLY: test_occlusion_cost measurements not run (headless dummy renderer; run under OM_QA_RENDERER=vulkan xvfb-run -a); only the occlusion_stats accessor is checked")
+		_check(stats_ok, "R-001-06: Ground3D host lacks occlusion_stats() ({max_slice_us, last_pass_ms, passes, pending})")
+		return
+	var era = root.get_node_or_null("EraConfig")
+	if era == null:
+		_check(false, "R-001-06: no EraConfig autoload, the S-001 frame cannot be loaded")
+		return
+	var prev: String = era.ACTIVE_ERA_ID
+	era.set_era("greek_placeholder")
+	var CBridge = load("res://autoload/c_bridge.gd")
+	var bridge = CBridge.new()
+	var live: bool = bridge.load_tactical_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_check(live, "R-001-06: the S-001 frame did not load live (%s)" % [bridge.last_error()])
+	var t: Dictionary = bridge.terrain()
+	var frame: Dictionary = bridge.tactical_frame()
+	var mission: Dictionary = bridge.mission()
+	bridge.close_session()
+	era.set_era(prev)
+	if not live or t.is_empty():
+		_check(false, "R-001-06: no ground terrain for the S-001 frame")
+		return
+	var units: Array = frame.get("units", [])
+	_check(units.size() >= 100, "R-001-06 CONTROL: the S-001 frame is the real crowded one (at least 100 units), got %d" % units.size())
+	var host = (_load(SCENES + "ground3d.gd")).new()
+	root.add_child(host)
+	await process_frame
+	host.set_terrain(t)
+	var t0 := Time.get_ticks_msec()
+	host.set_frame(frame, mission)
+	_check(host.has_method("occlusion_stats"), "R-001-06: Ground3D host lacks occlusion_stats() ({max_slice_us, last_pass_ms, passes, pending})")
+	if not host.has_method("occlusion_stats"):
+		host.queue_free()
+		return
+	await process_frame
+	host.occlusion_stats() # discard: the one-time first-frame warm-up, and the reset of max_slice_us
+	var worst_us := 0
+	var pass_wall_ms := -1
+	for f in 60:
+		await process_frame
+		var s: Dictionary = host.occlusion_stats()
+		worst_us = maxi(worst_us, int(s.get("max_slice_us", 0)))
+		if pass_wall_ms < 0 and int(s.get("passes", 0)) >= 1:
+			pass_wall_ms = Time.get_ticks_msec() - t0
+	_check(worst_us < 2000, "R-001-06: max per-frame occlusion cost over 60 frames is %.3f ms, DRAFT-occlusion-slice-ms is 2" % [worst_us / 1000.0])
+	# Wait for the passes to stop (camera settled, nothing pending), bounded at 600 frames.
+	var quiet := 0
+	var last_passes := -1
+	var n := 0
+	while quiet < 30 and n < 600:
+		await process_frame
+		n += 1
+		var s2: Dictionary = host.occlusion_stats()
+		if int(s2.get("pending", 1)) == 0 and int(s2.get("passes", 0)) == last_passes and int(s2.get("passes", 0)) >= 1:
+			quiet += 1
+		else:
+			quiet = 0
+		last_passes = int(s2.get("passes", 0))
+		if pass_wall_ms < 0 and last_passes >= 1:
+			pass_wall_ms = Time.get_ticks_msec() - t0
+	_check(quiet >= 30, "R-001-06 CONTROL: the occlusion passes settled (no pending units, passes unchanged for 30 frames) within 600 frames")
+	var final: Dictionary = host.occlusion_stats()
+	_check(pass_wall_ms >= 0 and pass_wall_ms <= 500, "R-001-06: a full pass over the S-001 frame completes within 500 ms (DRAFT-occlusion-pass-ms), first completed after %d ms" % pass_wall_ms)
+	_check(float(final.get("last_pass_ms", 1e9)) <= 500.0, "R-001-06: the host's own last_pass_ms is within 500 ms, got %s" % [final.get("last_pass_ms")])
+	var pts := {}
+	for u in units:
+		pts[int(u.get("id"))] = Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+	var want := _oracle(t, host.camera_rig().get_camera(), pts)
+	var got := _sorted_ids(host.occluded_ids())
+	_check(got == want, "R-001-06: after the sliced passes occluded_ids (%d ids) equals the unsliced pick-rule oracle (%d ids); only in got: %s, only in want: %s" % [got.size(), want.size(), got.filter(func(i): return not want.has(i)), want.filter(func(i): return not got.has(i))])
+	print("OCCLUSION-COST units=%d worst_slice_ms=%.3f first_pass_wall_ms=%d last_pass_ms=%s passes=%s occluded=%d" % [units.size(), worst_us / 1000.0, pass_wall_ms, final.get("last_pass_ms"), final.get("passes"), got.size()])
 	host.queue_free()
 
 
