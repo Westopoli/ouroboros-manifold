@@ -1,11 +1,19 @@
 extends "res://tests/support/vg_c_case.gd"
+# Rule pins: R-001-01@025bc6, R-001-06@9f9051, R-004-01@61a9b6, R-004-06@ebf993
 
-# VG-C piece C7 (scenes/ground3d/slope_view.gd): slopes and layers visible. Proves S-001 R-001-06 (a slope is ground
-# joining two layers, drawn with a midline), R-001-01 (blocked ground visible), S-004 R-004-01/06 (a unit mid-transition
-# is visibly in transition; the midline is a place the player can see). Transit is section 2's `state` bit 4.
-# API: SlopeView (Node3D): set_terrain(t), set_units(units), midline_count(), midline_world(i) -> Vector3,
-# blocked_cells() -> Array of cell indexes, in_transit_ids() -> Array, qa_state() -> {slopes,midlines,blocked_cells,in_transit}.
+# VG-C piece C7 (scenes/ground3d/slope_view.gd) as rewritten by VG-C-no-slope-markers: slopes and layers visible, without
+# the white midline bars. Proves S-001 R-001-06 (a slope is ground joining two layers; no bar is drawn), R-001-01 (blocked ground visible), S-004 R-004-01/06 (a unit
+# mid-transition is visibly in transition, circles at :95-105). Transit is section 2's `state` bit 4.
+# API: SlopeView (Node3D): set_terrain(t), set_units(units), blocked_cells() -> Array of cell indexes,
+# in_transit_ids() -> Array, qa_state() -> {slopes,blocked_cells,in_transit} (no `midlines` key).
 # CONTROL: units with state 0 and state 1 (fired only) are not in transit; state 5 (fired | transit) is.
+# TD-VG-C-no-slope-markers (rule-changed by Westley 2026-10-22) retires, from main's version of this file: the assertion
+# that midline_count() == slopes (main line 22), the midline 0 position and ground checks (lines 23-26), and the `midlines`
+# == 1 term of the qa inventory (line 46-47). midline_count()/midline_world() are not asserted either way.
+# POSITIVE CONTROL (the spec's): on main the no-bars assertion is red, the BoxMesh children exist (one per slope record).
+# UNSTATED INTERFACE choice: "no MIDLINE mesh child" = no child of the view is a MeshInstance3D whose mesh is a BoxMesh
+# (the bar is a BoxMesh, slope_view.gd:38-40; the circles are CylinderMesh and stay); the two transit circles of unit 4 are
+# counted as CylinderMesh children (:95-105 draws two). The band-colour parity belongs to VG-C-ground-one-colour.
 
 
 func _run() -> void:
@@ -18,14 +26,18 @@ func _run() -> void:
 	root.add_child(v)
 	await process_frame
 	v.set_terrain(t)
-	_check(v.midline_count() == (t["slopes"] as Array).size(), "R-001-06: one midline per slope record, got %d" % v.midline_count())
-	if v.midline_count() > 0:
-		var m: Vector3 = v.midline_world(0)
-		_check(absf(m.x - 200.0) < 0.01 and absf(m.z - 100.0) < 0.01, "R-001-06: midline 0 is not at the slope's (mx,my)")
-		_check(absf(m.y - fx.ground_y(200.0, 100.0)) < 0.5, "R-001-06: midline 0 does not sit on the ground")
+	var boxes := _box_children(v)
+	_check(boxes == 0, "R-001-06 TD-VG-C-no-slope-markers: %d BoxMesh (midline bar) children after set_terrain, want 0" % boxes)
+	_check(not (v.qa_state() as Dictionary).has("midlines"), "S-001: qa_state still carries a midlines key: %s" % [v.qa_state()])
+	# PARITY (kept assertion, no deletion without parity): the slope is still in the view's inventory on the fixture
+	var qs: Dictionary = v.qa_state()
+	_check(int(qs.get("slopes", 0)) >= 1, "R-001-06 parity: qa_state().slopes is %s, want at least 1 on the fixture" % [qs.get("slopes")])
 	var blocked: Array = v.blocked_cells()
 	_check(blocked == [4 * fx.W + 5], "R-001-01: blocked cells must be exactly the one walkable==0 cell, got %s" % [blocked])
 	v.set_units(fx.frame()["units"])
+	var cyl := _cylinder_children(v)
+	_check(cyl == 2, "R-004-06: unit 4 (TRANSIT_BIT) should show two transit circles, got %d" % cyl)
+	_check(_box_children(v) == 0, "R-001-06: a BoxMesh child appeared after set_units")
 	_check(v.in_transit_ids() == [4], "R-004-01: only unit 4 (state 5) is in transit, got %s" % [v.in_transit_ids()])
 	var plain: Array = []
 	for u in fx.frame()["units"]:
@@ -36,7 +48,24 @@ func _run() -> void:
 		plain.append(c)
 	v.set_units(plain)
 	_check(v.in_transit_ids().is_empty(), "CONTROL: state 1 (fired) or 0 counts as in transit")
+	_check(_cylinder_children(v) == 0, "CONTROL: a unit not in transit still has transit circles")
 	v.set_units(fx.frame()["units"])
 	var q: Dictionary = v.qa_state()
-	_check(int(q.get("slopes", -1)) == 1 and int(q.get("midlines", -1)) == 1 and int(q.get("blocked_cells", -1)) == 1 and int(q.get("in_transit", -1)) == 1,
+	_check(int(q.get("slopes", -1)) == 1 and not q.has("midlines") and int(q.get("blocked_cells", -1)) == 1 and int(q.get("in_transit", -1)) == 1,
 		"S-001: slope inventory wrong: %s" % q)
+
+
+func _box_children(v: Node) -> int:
+	var n := 0
+	for c in v.get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh is BoxMesh:
+			n += 1
+	return n
+
+
+func _cylinder_children(v: Node) -> int:
+	var n := 0
+	for c in v.get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh is CylinderMesh and not c.is_queued_for_deletion():
+			n += 1
+	return n
