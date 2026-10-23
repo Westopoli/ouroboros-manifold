@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 28 rules, numbers from `algorithms.md` ALG-41 through ALG-44. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | No open flags on this epic's stories. Q-220-02 (E-02 S-220) is cited and held there. |
+| Implied-but-unstated behavior turned into flags | No open flags on this epic's stories. Q-220-02 (E-02 S-220) is cited; closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | Not applicable. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict:** no open flags; gate to be rerun. The flag that touches this epic, Q-220-02, is held by E-02 S-220.
+**Gate verdict:** no open flags; gate to be rerun. The flag that touched this epic, Q-220-02, closed 2026-10-21 (register).
 
 ## Purpose
 

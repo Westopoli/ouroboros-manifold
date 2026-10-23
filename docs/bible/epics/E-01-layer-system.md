@@ -23,7 +23,7 @@ Era-agnostic: the engine knows "layers 1 and 2 are blocked here." The era pack d
 
 ## Obviously working in 60 seconds
 
-Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and each unit's ring changes color when its layer changes. Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Ping layer 1 at the obstacle from a unit that can ping: the layer-1 enemy caught by the ping stays visible, wherever it moves, for 5 seconds (R-162-01, Westley 2026-10-05), then vanishes, and the pinged side is told nothing (R-162-03, Westley 2026-10-05). Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
+Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and, in the space era, each unit's ring changes color when its layer changes (on land there is no ring; the height step and sight tell the layer). Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Ping layer 1 at the obstacle from a unit that can ping: the layer-1 enemy caught by the ping stays visible, wherever it moves, for 5 seconds (R-162-01, Westley 2026-10-05), then vanishes, and the pinged side is told nothing (R-162-03, Westley 2026-10-05). Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
 
 ## Stories
 
@@ -169,12 +169,12 @@ The prototype is same-layer only until the lab reports.
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
 
 Rules
-- R-009-01  Given any unit on screen, When the player looks at it, Then a ring under the unit shows one color per layer, and the color changes on the tick the unit's layer changes.
+- R-009-01  Given any unit on screen, When the player looks at it, Then in the space era a ring under the unit shows one color per layer, and the color changes on the tick the unit's layer changes.
 - R-009-02  Given a unit toggled toward another layer, When the player looks at it, Then the target disc on its spindle (R-009-05) gains an outline and a chevron, a waypoint-like mark of where it is going, distinct from the lit current-layer disc.
 - R-009-05  Given any unit on screen, When drawn, Then a thin rod beside it carries five small discs, one per layer, the unit's own disc lit at about 50 percent, adjacent discs at 10 to 20 percent, discs two away at 5 percent (the Floor Spindle); and its grid tiers are flat discs that tilt to the ground's slope at each layer's height (Terrace Reading). Both are subdued, never loud, and never block the view of the battlefield behind them.
 - R-009-06  Given units hidden from the player by the current perspective (behind terrain or another layer's ground), When the player looks at the scene, Then for the beta the vision tube (E-17 S-246) lets the player see them and no occlusion mark is drawn; a small mark on the occluding units is post-beta (Westley, 2026-10-07).
 - R-009-03  Given the layer strip on the HUD, When the player clicks a layer or presses Tab, Then the focused layer changes and the strip highlights the new one.
-- R-009-04  Given the same selection and camera, When a T2 screenshot is taken, Then the ring colors match the sim's per-unit layer field for every unit in view.
+- R-009-04  Given the same selection and camera, When a space-era T2 screenshot is taken, Then the ring colors match the sim's per-unit layer field for every unit in view.
 
 Inputs: unit layer, preferred layer; focus click or Tab.
 Outputs: ring color per unit; spindle and terrace discs; target mark; focused layer on the strip.

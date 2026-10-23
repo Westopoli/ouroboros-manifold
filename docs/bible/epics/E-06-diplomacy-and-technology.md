@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 46 rules, numbers from `algorithms.md` ALG-26 through ALG-28 and ALG-38 through ALG-40. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 4 open flags on S-227: Q-173-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have none. |
+| Implied-but-unstated behavior turned into flags | 2 open flags on S-227: Q-173-01 and Q-159-12 (held by E-22 S-173); Q-227-02 and Q-227-03 closed 2026-10-21 (register). S-042 to S-048 have none. |
 | Every visible-surface story has a reference | Not applicable. Tech tiers change unit look; that reference belongs to E-11. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-173-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-173-01 and Q-159-12 (held by E-22 S-173); Q-227-02 and Q-227-03 closed 2026-10-21 (register). S-042 to S-048 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -147,7 +147,7 @@ Rules
 
 Inputs: the faction's technology (S-045); the era's range of levels.
 Outputs: a mission's starting technology (E-10 mission generator, E-22 S-173).
-Open flags: Q-173-01, Q-227-02, Q-227-03, Q-159-12.
+Open flags: Q-173-01, Q-159-12. Q-227-02 and Q-227-03 closed 2026-10-21 (register: nothing flows back; tiers stay the coarse sim reading).
 
 ## Inputs
 
