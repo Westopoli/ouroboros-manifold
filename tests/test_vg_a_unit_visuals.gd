@@ -1,5 +1,5 @@
 extends SceneTree
-# Rule pins: R-089-03@c09d1f, R-104-10@9d91b9, R-132-01@e8c3c1
+# Rule pins: R-089-03@c09d1f, R-104-10@da1b22, R-132-01@e8c3c1
 
 # VG-A piece A1 (docs/northstar/plans/2026-10-07-visible-game-spec.md rev 4, lane A table).
 # Proves S-104 / R-104-10 (every unit: thin HP bar above, layer-colour ring beneath, selection ring
