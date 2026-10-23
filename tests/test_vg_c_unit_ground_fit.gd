@@ -24,13 +24,16 @@ extends "res://tests/support/vg_c_case.gd"
 
 const GroundPick := preload("res://scenes/ground3d/ground_pick.gd")
 const CELL := 100.0
-const W := 14
-const H := 10
+const W := 8 # spec: cells_w and cells_h 8
+const H := 8
 const TAN30 := 0.5773502691896258
 const LIFT := 1.0 # DRAFT-unit-ground-lift
 const EPS := 0.001
+const FACING_EPS := 0.0001 # spec: f and f + pi dot -1 and perpendicular to n within 1e-4
+const FLAT_Y_EPS := 0.05 # DRAFT-flat-y-eps
+const UP_DOT := 0.99 # DRAFT-ground-fit-up-dot
 const FACINGS := [0.0, 1.0, 2.5, -2.0]
-const POSITIONS := [[500.0, 500.0], [700.0, 450.0], [900.0, 600.0], [600.0, 700.0]]
+const POSITIONS := [[300.0, 300.0], [500.0, 250.0], [450.0, 600.0], [600.0, 500.0]] # all >= 150 wu from every edge
 
 
 # 30-degree plane: rises tan30 * 100 wu per 100 wu cell along x (tilt_x) or along z (not tilt_x). Heights int32 cm.
@@ -59,7 +62,7 @@ func _units(flyer_too: bool) -> Array:
 	for k in POSITIONS.size():
 		out.append({"id": k + 1, "faction": 0, "type": k % 3, "x": POSITIONS[k][0], "y": POSITIONS[k][1], "layer": 0, "facing": FACINGS[k]})
 	if flyer_too:
-		out.append({"id": 9, "faction": 0, "type": 5, "x": 700.0, "y": 500.0, "layer": 1, "facing": 0.5})
+		out.append({"id": 9, "faction": 0, "type": 5, "x": 400.0, "y": 400.0, "layer": 1, "facing": 0.5})
 	return out
 
 
@@ -102,10 +105,11 @@ func _run() -> void:
 		return
 	var r: float = gu.BODY_RADIUS_WU
 	for tilt_x in [true, false]:
+		var fwds := {}
 		var tag := "30-degree plane tilted along %s" % ("x" if tilt_x else "z")
 		var t := _plane(tilt_x)
 		# CONTROL: the fixture really is 30 degrees (normal . up = cos 30).
-		var n0 := _normal(t, 700.0, 500.0, r)
+		var n0 := _normal(t, 500.0, 500.0, r)
 		_check(absf(n0.dot(Vector3.UP) - cos(deg_to_rad(30.0))) < 0.002, "CONTROL: %s: fixture normal . up %f is not cos 30" % [tag, n0.dot(Vector3.UP)])
 		var node := await _fed(t, _units(true))
 		if node == null:
@@ -130,7 +134,7 @@ func _run() -> void:
 			# (2) up follows the plane normal
 			var n := _normal(t, x, z, r)
 			var up := xf.basis.y.normalized()
-			_check(up.dot(n) > 0.99, "S-132: %s walker %d: body up . plane normal is %f, not above 0.99" % [tag, id, up.dot(n)])
+			_check(up.dot(n) > UP_DOT, "S-132: %s walker %d: body up . plane normal is %f, not above 0.99 (DRAFT-ground-fit-up-dot)" % [tag, id, up.dot(n)])
 			# (3) lift 1.0 wu along n above the ground point
 			var want := Vector3(x, GroundPick.height_at(t, x, z), z) + n * LIFT
 			_check(xf.origin.distance_to(want) < 0.01, "DRAFT-unit-ground-lift: %s walker %d: body origin %s, expected ground + 1.0 along n = %s" % [tag, id, xf.origin, want])
@@ -138,8 +142,22 @@ func _run() -> void:
 			var face := Vector3(cos(f), 0.0, sin(f))
 			var proj := (face - n * face.dot(n)).normalized()
 			var fwd := xf.basis.x.normalized()
+			fwds[k] = fwd
 			_check(fwd.distance_to(proj) < EPS, "S-132: %s walker %d: body forward %s is not the facing %f projected on the plane %s" % [tag, id, fwd, f, proj])
+			# facing f + pi gives the opposite local x: re-feed the same unit turned by pi and compare
+			_check(absf(fwd.dot(n)) < FACING_EPS, "S-132: %s walker %d: body forward is not perpendicular to n within 1e-4 (dot %f)" % [tag, id, fwd.dot(n)])
+			_check(xf.basis.z.distance_to(xf.basis.x.cross(xf.basis.y)) < EPS, "S-132: %s walker %d: body basis z is not x cross y" % [tag, id])
 			_check(absf(fwd.dot(up)) < EPS and absf(xf.basis.x.length() - 1.0) < EPS and absf(xf.basis.y.length() - 1.0) < EPS and absf(xf.basis.z.length() - 1.0) < EPS, "S-132: %s walker %d: body basis is not orthonormal (no shear, no scale)" % [tag, id])
+		var turned: Array = _units(true)
+		for u in turned:
+			u["facing"] = float(u["facing"]) + PI
+		node.set_units(turned, t, [0.0, 100.0], [5])
+		await process_frame
+		for k in POSITIONS.size():
+			var b2: MeshInstance3D = node.unit_node(k + 1)
+			var xa: Vector3 = b2.global_transform.basis.x if b2 != null else Vector3.ZERO
+			var xb: Vector3 = fwds[k]
+			_check(absf(xa.dot(xb) + 1.0) < FACING_EPS, "S-132: %s walker %d: facings f and f + pi must give local x vectors with dot -1 within 1e-4, got %f" % [tag, k + 1, xa.dot(xb)])
 		# Flyers unchanged: layer floor + 150, up (0, 1, 0), whatever the ground below.
 		var fl: Node3D = node.unit_node(9)
 		_check(fl != null and absf(fl.position.y - 250.0) < 0.01 and fl.global_transform.basis.y.distance_to(Vector3.UP) < EPS, "S-132: %s: flyer must stay at floor + 150 = 250 with up (0, 1, 0), got %s" % [tag, fl.global_transform if fl != null else null])
@@ -155,7 +173,7 @@ func _run() -> void:
 			continue
 		var xf: Transform3D = body.global_transform
 		_check(xf.basis.y.distance_to(Vector3.UP) < EPS, "S-132: flat ground walker %d: body up %s is not (0, 1, 0)" % [k + 1, xf.basis.y])
-		_check(absf(xf.origin.y - (5.0 + LIFT)) < 0.01, "DRAFT-unit-ground-lift: flat ground walker %d: y %f, expected ground 5.0 + 1.0" % [k + 1, xf.origin.y])
+		_check(absf(xf.origin.y - (5.0 + LIFT)) < FLAT_Y_EPS, "DRAFT-unit-ground-lift: flat ground walker %d: y %f, expected ground 5.0 + 1.0" % [k + 1, xf.origin.y])
 		_check(xf.basis.x.distance_to(Vector3(cos(FACINGS[k]), 0.0, sin(FACINGS[k]))) < EPS, "S-132: flat ground walker %d: facing %f does not turn the body about up, forward %s" % [k + 1, FACINGS[k], xf.basis.x])
-		_check(absf(float(nf.heights().get(str(k + 1), -9999.0)) - (5.0 + LIFT)) < 0.01, "DRAFT-unit-ground-lift: heights() for walker %d must report position.y = ground + 1.0, got %s" % [k + 1, nf.heights().get(str(k + 1))])
+		_check(absf(float(nf.heights().get(str(k + 1), -9999.0)) - (5.0 + LIFT)) < FLAT_Y_EPS, "DRAFT-unit-ground-lift: heights() for walker %d must report position.y = ground + 1.0, got %s" % [k + 1, nf.heights().get(str(k + 1))])
 	nf.queue_free()
