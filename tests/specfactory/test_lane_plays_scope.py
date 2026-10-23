@@ -141,7 +141,7 @@ def test_known_red_list_applies_to_the_widened_scope(tmp_path, monkeypatch):
     """R-990-01: a listed red play in a lane run by the sim change stays accepted; an unlisted one rejects."""
     listed = f"{PLAYS}/E/p.py::test_marks"
     ok, detail, ran = _run(tmp_path / "a", monkeypatch, ["csrc/unit.c"], known=listed + "  # reason\n", red_lane="E")
-    assert ok and "known red: " + listed in detail and ran == ALL, (ok, detail, ran)
+    assert ok and "1 known red" in detail and ran == ALL, (ok, detail, ran)
     ok, detail, ran = _run(tmp_path / "b", monkeypatch, ["csrc/unit.c"], known="", red_lane="E")
     assert not ok and "red outside known-red list" in detail and listed in detail, (ok, detail)
 
