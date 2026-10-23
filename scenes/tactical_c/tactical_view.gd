@@ -352,6 +352,7 @@ func set_terrain(t: Dictionary) -> void:
 		return
 	if _ground_layer == null:
 		_ground_layer = load("res://scenes/tactical_c/terrain_layer.gd").new()
+		_ground_layer.name = "TerrainLayer"
 		add_child(_ground_layer)
 		move_child(_ground_layer, 0)
 	_ground_layer.set_terrain(t)
@@ -366,6 +367,9 @@ func set_terrain(t: Dictionary) -> void:
 			add_child(_ground3d)
 			move_child(_ground3d, 0)
 		_ground3d.set_terrain(t)
+		var fog := _node("FogLayer")
+		if fog != null and fog.has_method("set_terrain"):
+			fog.set_terrain(t)
 		_add_ground_layers(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
 		# FU-A18-3d: the rig has no fit yet, so the ground-era centre is the own-unit box as on main; the spawn and lot terms come with the fit.
@@ -585,7 +589,35 @@ func qa_state() -> Dictionary:
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 		"inventory": _inventory(),
 		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
+		"marks_px": _marks_px(),
+		"hidden_on_land": ["UnitSquads", "TerrainLayer"] if _ground3d != null and not _space_hosted else [],
+		"sight_discs": {},
 	}
+
+
+# VG-C-land-one-projection: the screen position of every unit icon and structure icon, plus the squad models while UnitSquads shows.
+func _marks_px() -> Dictionary:
+	var out := {}
+	var uv := _node("UnitVisuals")
+	var squads := _node("UnitSquads")
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		var n: Node2D = uv.unit_node(id)
+		if n == null:
+			continue
+		var m := {"icon": [n.global_position.x, n.global_position.y]}
+		if squads.visible:
+			var pts := []
+			for q in squads.squad_models(id):
+				pts.append([n.global_position.x + q.x, n.global_position.y + q.y])
+			m["squads"] = pts
+		out[str(id)] = m
+	var sl := _node("StructuresLayer")
+	for st in _frame.get("structures", []):
+		var n: Node2D = sl.structure_node(int(st.get("id")))
+		if n != null:
+			out["structure:%d" % int(st.get("id"))] = {"icon": [n.global_position.x, n.global_position.y]}
+	return out
 
 
 func _inventory() -> Dictionary:
@@ -1319,11 +1351,20 @@ func _redraw() -> void:
 	var lf := _get_local_faction()
 	var mission: Dictionary = SimSession.bridge().mission()
 	var ground := _ground3d != null
+	var land := ground and not _space_hosted
+	if land:
+		# VG-C-land-one-projection: the 3D bodies and the ground mesh are the units and the terrain on land.
+		_node("UnitSquads").visible = false
+		if _ground_layer != null:
+			_ground_layer.visible = false
 	if ground:
 		for n in ["MapLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "Shots"]:
 			var piece := _node(n)
 			if piece != null and piece.has_method("set_projector"):
 				piece.set_projector(_project_ground)
+		if land:
+			for n in ["UnitVisuals", "StructuresLayer", "Deaths", "Abilities", "Ambient"]:
+				_node(n).set_projector(_project_ground)
 	_node("MapLayer").set_frame(_frame, mission, lf, _world_scale, _camera)
 	_node("ObjectiveMarkers").set_frame(_frame, mission, lf, _world_scale, _camera)
 	if ground:

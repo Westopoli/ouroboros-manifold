@@ -250,6 +250,8 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			return _do_qa_select(args)
 		"project":
 			return _do_project(args)
+		"camera_set":
+			return _do_camera_set(args[0] if args.size() > 0 and typeof(args[0]) == TYPE_DICTIONARY else {})
 		"set_fog_filter":
 			_fog_filter_override = 1 if (args.size() > 0 and bool(args[0])) else 0
 			return {"ok": true, "result": {"fog_filter": fog_filter()}}
@@ -522,6 +524,27 @@ func _do_project(args: Array) -> Dictionary:
 	var px := float(p[0])
 	var py := float(p[1])
 	return {"ok": true, "result": {"x": px, "y": py, "on_screen": px >= 0.0 and px < scene.SCREEN_W and py >= 0.0 and py < scene.SCREEN_H}}
+
+
+# camera_set {height?, x?, y?}: the ground rig's height (in wheel steps, so it rounds to the rig's step) and pan, then a redraw without a sim step.
+func _do_camera_set(a: Dictionary) -> Dictionary:
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	var rig = scene.call("_rig") if scene != null and scene.has_method("_rig") else null
+	if rig == null:
+		return {"ok": false, "error": "camera_set: no ground rig"}
+	if a.has("height"):
+		for _i in 400:
+			var h: float = rig.camera_height()
+			var want := float(a["height"])
+			if absf(h - want) < 0.01:
+				break
+			rig.zoom_by(1 if want > h else -1)
+			if absf(rig.camera_height() - h) < 0.01:
+				break
+	var q: Dictionary = scene.qa_state()["camera"]
+	scene.call("qa_pan", float(a.get("x", q["x"])), float(a.get("y", q["y"])))
+	return {"ok": true, "result": {"height": rig.camera_height(), "camera": scene.qa_state()["camera"]}}
 
 
 func _do_qa_select(args: Array) -> Dictionary:
