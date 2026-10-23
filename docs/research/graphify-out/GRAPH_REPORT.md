@@ -34,15 +34,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `Stellaris Traditions` --semantically_similar_to--> `CK3 Cultural Innovations`  [INFERRED] [semantically similar]
-  docs/research/games/stellaris.md → docs/research/games/crusader_kings_3.md
+  docs/legacy/games/stellaris.md → docs/legacy/games/crusader_kings_3.md
 - `Family-as-Progression-Unit` --semantically_similar_to--> `CK3 Succession Crisis`  [INFERRED] [semantically similar]
-  docs/research/games/old_world.md → docs/research/games/crusader_kings_3.md
+  docs/legacy/games/old_world.md → docs/legacy/games/crusader_kings_3.md
 - `Lieutenant System (Menace)` --semantically_similar_to--> `Battle Brothers Procedural Brother Roster`  [INFERRED] [semantically similar]
-  docs/research/games/menace.md → docs/research/games/battle_brothers.md
+  docs/legacy/games/menace.md → docs/legacy/games/battle_brothers.md
 - `Stress and Affliction System` --semantically_similar_to--> `Lieutenant System (Menace)`  [INFERRED] [semantically similar]
-  docs/research/games/darkest_dungeon.md → docs/research/games/menace.md
+  docs/legacy/games/darkest_dungeon.md → docs/legacy/games/menace.md
 - `Fallen Empire Flavor` --semantically_similar_to--> `Cyclical / Predictive / Archival Register`  [INFERRED] [semantically similar]
-  docs/research/games/norland.md → docs/research/topics/foundation_vocabulary.md
+  docs/legacy/games/norland.md → docs/legacy/topics/foundation_vocabulary.md
 
 ## Hyperedges (group relationships)
 - **Lieutenant System Pivot Substrate (2026-05-16)** — topics_delegated_command_precedents_brief, topics_lieutenant_pivot_niche_brief_brief, topics_rts_market_kill_zone_2026_brief, topics_delegated_command_precedents_lieutenant_system_pivot, external_game_bible [EXTRACTED 1.00]

@@ -132,12 +132,12 @@ def test_westley_folder_listed_by_two_in_flight_pieces_is_not_a_finding(tmp_path
     control_toml = _write_pieces(tmp_path, """
 [[piece]]
 id = "X"
-owns = ["docs/northstar/story_reviews/A.md"]
+owns = ["csrc/mission.c"]
 status = "pending"
 
 [[piece]]
 id = "Y"
-owns = ["docs/northstar/story_reviews/A.md"]
+owns = ["csrc/mission.c"]
 status = "pending"
 """)
     control = _run(control_toml)

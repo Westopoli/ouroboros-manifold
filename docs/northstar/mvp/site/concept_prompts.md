@@ -24,7 +24,7 @@ Attach per prompt as listed (up to 14 per generation). Paths are in the `ourobor
 
 - **Register:** `docs/bible/references/E-18/E-18-1.png`, `E-18-2.png` — the two Age of Empires Online shots the register is built from.
 - **The game's own galaxy view (real):** `docs/bible/references/E-09/time_jump_galaxy_and_scroll.png` — captured from the legacy client: faction territory shells around system nodes, gold lane lines, a polar grid, a nebula star field, the chronicle scroll on the right.
-- **Unit renders:** screenshot the Raider, Interceptor, and Vanguard from the live demo at `https://ouroboros-site.fly.dev/layers/` (orbit and capture each). Warden, Bombard, and Bastion have GLBs under `assets/eras/settled_reach/units/` — capture in Godot or from `docs/blender_stuff/the-settled-reach/` if a scene needs them.
+- **Unit renders:** screenshot the Raider, Interceptor, and Vanguard from the live demo at `https://ouroboros-site.fly.dev/layers/` (orbit and capture each). Warden, Bombard, and Bastion have GLBs under `assets/eras/settled_reach/units/` — capture in Godot or from `docs/legacy/blender_stuff/the-settled-reach/` if a scene needs them.
 - **Scale and battles:** `docs/bible/references/E-13/E-13.png` (Halo Wars grouping), `docs/bible/references/E-17/E-17-1.png` (AoE Online).
 
 ---

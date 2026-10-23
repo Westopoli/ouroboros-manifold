@@ -1,6 +1,6 @@
 # Audit: the skill lab against its plan and Westley's words (2026-10-04)
 
-Auditor: Engineer (Sonnet 5.5), read-only except this file. Scope: the layer-lab plan of 2026-09-30/10-01, Westley's typed words in the two Mac transcripts, and what the Linux work has produced since. Westley's words below come from `docs/claude_exchange/transcripts/` (his own typed turns only, extracted by script). The Linux chats' transcripts are not in the repo, so every "Westley said" in the Linux documents dated after 2026-10-02 can be checked only against what those documents quote.
+Auditor: Engineer (Sonnet 5.5), read-only except this file. Scope: the layer-lab plan of 2026-09-30/10-01, Westley's typed words in the two Mac transcripts, and what the Linux work has produced since. Westley's words below come from `docs/legacy/claude_exchange/transcripts/` (his own typed turns only, extracted by script). The Linux chats' transcripts are not in the repo, so every "Westley said" in the Linux documents dated after 2026-10-02 can be checked only against what those documents quote.
 
 ## 1. Largest drifts, in order
 
