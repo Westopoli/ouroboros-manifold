@@ -405,7 +405,11 @@ def test_every_play_declares_anchors(play):
 # ---- (7) existing scenes untouched -------------------------------------------------------------------------------
 
 # Re-recorded for LAB-REV2-L3 (ledger TD-LAB-REV2-L3-hash): the rev 2 plays (stat variants retired, four new plays, M3b, scan rounding).
-PLAYS_SPACE_HASH = "c5c0965e153370fa9640bec596efaae0c8a6b6667a8776543d2173fb8a29f511"   # recorded on the L3 build 6826dd09
+# Re-recorded for LAB-REV3-A (ledger TD-LAB-REV3-A-dark-striker): s3_dark_striker alone changed (its enemy groups get set_emission(on) steps, D5).
+# Re-recorded for LAB-VISION-CONTROL (ledger TD-LAB-VISION-CONTROL-registry): the registered control fixture s3_vision_control is enumerated.
+# Re-recorded for the merge of the two (ledger TD-LAB-REV3-A-vc-merge): the combined tree differs from the vision-control tree only in s3_dark_striker
+# and from the piece A tree only by the added s3_vision_control entry (per-play setup hashes compared).
+PLAYS_SPACE_HASH = "c9cfcc697cb0ef92232c1e4956186c457b54f9903e84a61490215364d4af1ee3"   # merge of REV3-A 26e3b2db and LAB-VISION-CONTROL 07b7aad4
 
 
 def test_registered_space_plays_keep_their_setups():

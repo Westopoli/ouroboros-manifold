@@ -16,9 +16,11 @@ Anything marked "pinned" below is asserted; anything else in sweep.py is the bui
         max_ticks (CONTROL_MAX_TICKS for a control that needs no result, None for one that does: the fight runs to its own cap),
         play (str or None; decisions 22)
         check(results_by_point) -> bool, results_by_point = [[FightResult, ...] per control point, in points order]
-        play: None means the control is fought on every play the run covers (the vision and the null controls). A name means the
+        play: None means the control is fought on every play the run covers (the null controls). A name means the
         control is ONE DESIGNATED FIGHT on that play, whatever `plays` the run was given: the entry's "ok" comes from that fight alone,
-        never from a conjunction over plays (decisions 22). Damage-up's positive control is designated on "s3_types_by_reach". The
+        never from a conjunction over plays (decisions 22). Damage-up's positive control is designated on "s3_types_by_reach"; the
+        vision positive control on VISION_CONTROL_PLAY, an all cross-layer 16 v 16 (FINDING-lab-vision-poscontrol, TD-LAB-VISION-CONTROL-handfed;
+        tests/skilllab/test_vision_control.py). The
         control's rows are in the csv with kind "control_positive" and play = the designated play. A play on which a knob is inert is
         never the designated fight; an inert observation with no rule behind it is a finding (ledger FINDING-damage-up-layer-above),
         not an exemption: no test here asserts a damage-up response on s3_layer_above.
@@ -413,15 +415,6 @@ def test_vision_positive_control_is_vision_zero_both_directions():
     assert c.points[0].settings[V1] == c.points[0].settings["OM_TP_VISION_DOWN_1"] == 0.0 and c.points[0].settings[V2] == 0.0
 
 
-def test_vision_zero_check_wants_16_v_16_and_no_shot():
-    check = sweep.controls("vision")["positive"].check
-    quiet = _res("cap", fus=(0.0, 0.0), survivors=(16, 16))
-    assert check([[quiet, quiet]]) is True
-    assert check([[quiet, _res("cap", fus=(1.0, 0.0), survivors=(16, 16))]]) is False      # a shot was counted
-    assert check([[quiet, _res("cap", fus=(0.0, 0.0), survivors=(15, 16))]]) is False      # a unit fell
-    assert check([[quiet, _res("side0")]]) is False
-
-
 def test_null_check_wants_byte_identical_rows_across_the_points():
     check = sweep.controls("vision")["null"].check
     a, b = _res("cap", fus=(0.0, 0.0)), _res("cap", fus=(0.0, 0.0))
@@ -441,7 +434,8 @@ def test_damage_positive_control_changes_the_result_and_not_the_count():
     c = sweep.controls("damage_up")["positive"]
     assert [p.value for p in c.points] == [1.0, 0.5] and all(p.kind == "control_positive" for p in c.points)
     assert c.play == "s3_types_by_reach"                                                   # decisions 22: one designated fight
-    assert sweep.controls("vision")["positive"].play is None and all(sweep.controls(f)["null"].play is None for f in ("vision", "damage_up"))
+    assert sweep.controls("vision")["positive"].play == sweep.VISION_CONTROL_PLAY       # TD-LAB-VISION-CONTROL-handfed: was None (every play)
+    assert all(sweep.controls(f)["null"].play is None for f in ("vision", "damage_up"))
     base = [_lean(_res("side0", margin=0.5)) for _ in range(2)]
     half = [_lean(_res("side0", margin=0.25)) for _ in range(2)]
     assert c.check([base, half]) is True
