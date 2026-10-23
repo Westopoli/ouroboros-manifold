@@ -2005,13 +2005,14 @@ size_estimate = "Alt plus layer number arms a transfer for the whole selection, 
 id = "VG-A-routeline"
 manager = "M0"
 wave = 9
-owns = ["scenes/tactical_c/route_line.gd", "tests/test_vg_a_routeline.gd", "tests/qa/desktop/plays/F/S-140.py", "scenes/tactical_c/tactical_view.gd", "autoload/c_bridge.gd", "tests/fixtures/route_line/prototype_route_frame.png", "docs/northstar/story_reviews/westley/A-S140-route-line-on-the-way.png", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/F.md", "tests/qa/desktop/plays/A/test_S_101_route_line.py", "docs/northstar/story_reviews/A.md"]  # A.md: the S-101 queue row (Architect 2026-10-14); record batch 7 (Architect 2026-10-14): tactical_view.gd the hook and qa_state key, c_bridge.gd the bridge method, golden fixture and westley copy names from vg-wave12-laneAroute.js (args.golden, args.copyName defaults)
+owns = ["scenes/tactical_c/route_line.gd", "tests/test_vg_a_routeline.gd", "tests/qa/desktop/plays/F/S-140.py", "scenes/tactical_c/tactical_view.gd", "autoload/c_bridge.gd", "docs/northstar/story_reviews/westley/A-S140-route-line-on-the-way.png", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/F.md", "tests/qa/desktop/plays/A/test_S_101_route_line.py", "docs/northstar/story_reviews/A.md"]  # A.md: the S-101 queue row; tactical_view.gd: the ten edits of the paragraph (PIECES, _build_shell, four vars, _unit_walks, _refill_routes, dirty flags, _order_targets, _redraw line, qa_state and _inventory keys); c_bridge.gd: unit_route; S-140.py: FU-s140-tie only, inside ranked_sides (rev 4, 2026-10-23; the golden PNG and vg-wave12-laneAroute.js of the old comment exist on no ref)
+spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-A-routeline (rev 4)
 owns_glob = []
 acceptance = ["tests/test_vg_a_routeline.gd"]
 depends_on = ["VG-A18", "VG-W2", "VG-CONTRACT-route", "VG-D-VIEW", "VG-A-startforce", "VG-A-layerkeys", "VG-F-S143", "VG-A16", "VG-F-S140-CLICK", "VG-E1W", "VG-C-land-marks", "VG-C-land-one-projection"]  # VG-F-S140-CLICK (TD-VG-F-s140-click, Architect 2026-10-20): routeline re-shoots S-140 on the rewritten play, so it lands after it; VG-F-S143 (queued, after VG-F-S241) also owns docs/northstar/story_reviews/F.md (clerk addition for owner_lint); record batch 7: the contract piece first, then the three queued owners of tactical_view.gd; shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "copies the prototype's route line from scenes/mockups/walkers/walkers_mockup.gd (origin/push/proto-walkers, _draw), fed by the unit's stored route (W2) or the order target when none"
+size_estimate = "copies the prototype's route line from scenes/mockups/walkers/walkers_mockup.gd (origin/push/proto-walkers, _draw), fed by the unit's stored route (W2) through the route frame or the order target when none; the line goes on the sim's dest 0"
 
 # A18 test fixes (Architect 2026-10-13): TD-VG-A-13/14/15 applied by testfix-1; FINDING-edge-scroll-restore-overshoot by testfix-2.
 [[piece]]
@@ -2660,13 +2661,14 @@ size_estimate = "contract piece: public om_unit_route_get + om_route_point, top-
 id = "VG-CONTRACT-unitrow-save"
 manager = "M0"
 wave = 9
-owns = ["csrc/unit.c", "csrc/om_internal.h", "docs/architecture.md", "tests/csim/test_VG_CONTRACT_unitrow_save.py", "tests/transport/test_pipe_u_observable.py", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "tests/test_load_game_wrong_version.gd", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_E01_T3_contract.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_PP_portability.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # save 13 to 14: unit row fields fired_tick, kill_logged, tier (FINDING-u-pipe-events-save-load; Architect 2026-10-21); unit.c overlap with the queued lab E rows and VG-T-R087-WIRE is ordered by depends_on; after VG-E-startforce (its golden re-record precedes FU-unit-row-hash-fields) and after VG-U-PIPE-TESTS (which lands without the held test)
+owns = ["csrc/unit.c", "csrc/om_internal.h", "docs/architecture.md", "tests/csim/test_VG_CONTRACT_unitrow_save.py", "tests/transport/test_pipe_unitrow_save.py", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "tests/test_load_game_wrong_version.gd", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_E01_T3_contract.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # save N to N+1 (14 as queued; pins move under TD-VG-CONTRACT-unitrow-save-pins; the build cherry-picks e32a7950 first for tests/transport/test_pipe_unitrow_save.py; second-Fable audit owed before build): unit row fields fired_tick, kill_logged, tier (FINDING-u-pipe-events-save-load; Architect 2026-10-21); unit.c overlap with the queued lab E rows and VG-T-R087-WIRE is ordered by depends_on; after VG-E-startforce (its golden re-record precedes FU-unit-row-hash-fields) and after VG-U-PIPE-TESTS (which lands without the held test)
 owns_glob = []
-acceptance = ["tests/csim/test_VG_CONTRACT_unitrow_save.py"]
-depends_on = ["VG-CONTRACT-route", "LAB-REV2-E1B", "VG-E-startforce", "VG-U-PIPE-TESTS"]  # startforce re-measures CLASH_STEPS_BEFORE_LOSS first
+acceptance = ["tests/csim/test_VG_CONTRACT_unitrow_save.py", "tests/transport/test_pipe_unitrow_save.py"]
+depends_on = ["VG-CONTRACT-route", "LAB-REV2-E1B", "VG-E-startforce", "VG-U-PIPE-TESTS"]  # route and startforce live (startforce re-measures CLASH_STEPS_BEFORE_LOSS first); VG-U-PIPE-TESTS landed b51502d and LAB-REV2-E1B landed 43bf9462 (kept for the take-over of unit.c and the transport test file)
+spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-CONTRACT-unitrow-save, after VG-E-giveup-single (line 13)
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "contract: three unit row fields saved, save format 13 to 14, pins move once; second-Fable audit before the build"
+size_estimate = "contract: three unit row fields saved (tier u32, fired_tick u64, kill_logged i32, little-endian, appended after fired), save format N to N+1 read at launch (12 on main; 14 if layerspot and route land first), eleven pin sites move once; two test files; second-Fable audit before the build"
 
 
 # Skill lab rev 2 shard rows (spec docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md, records step, clerk 2026-10-14). L-rows and S take over scripts/skilllab and tests/skilllab files from the attached SL-harness (glob), SPACELAB-1 and LAB-SEARCH; E-rows own the engine files.
@@ -2990,19 +2992,20 @@ status = { state = "queued" }
 tests_pending = true
 size_estimate = "C reach and prediction: R3 reach and vision up/down as swept knobs, crossings per reach configuration (T7); R4 paper prediction beside the window and the totals (T8); R7 no_reach_stall end and pre-flight refusal, D7 (T9) (DRAFT); includes verdict decided_one_way_reach (FINDING-lab-d11)"
 
-# Architect ruling 2026-10-14 (FINDING-cone-state): save the per-type cone and hash it like reach. Files are chosen when it launches (owns is empty until then).
+# Architect ruling 2026-10-14 (FINDING-cone-state): save the per-type cone and hash it like reach. SECOND-FABLE AUDIT OWED BEFORE BUILD (save-format contract; Westley approves after it). Spec paragraph CONTRACT-cone-state (a-pieces spec, after VG-CONTRACT-unitrow-save); save format N to N+1, pins and goldens move under TD-VG-E-39 (reserved). The cone table is E2's (push/labrev2-e2), so this row lands after LAB-REV2-E2; the save-pin files are taken from the queued save-format rows ahead of it (layerspot, route, unitrow-save, giveup-single, E0) and the other sharers are ordered by depends_on (one owner at a time); the ledger and docs/architecture.md overlap is the sanctioned record-file pattern.
 # Must land before any roster type ships with a cone. Manager is M0 (Architect rulings go through M0).
 [[piece]]
 id = "CONTRACT-cone-state"
 manager = "M0"
 wave = 10
-owns = []
+owns = ["csrc/tactical_move.c", "csrc/unit.c", "csrc/om_internal.h", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E01_T3_contract.py", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_VG_E_ke5.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_VG_W_w1_planner.py", "csrc/checksum_full.c", "csrc/terrain.c", "docs/architecture.md", "tests/csim/test_CONTRACT_cone_state.py", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # checksum_full.c and terrain.c: the OM_SAVE_FORMAT_VERSION comment mirrors at :34 only. New file: tests/csim/test_CONTRACT_cone_state.py (tests first, by a different agent than the builder). Not owned, not touched: csrc/save.c, csrc/ouroboros_sim.h, signatures.toml, tests/csim/conftest.py (no ABI change under Q3 (a))
 owns_glob = []
-acceptance = []
-depends_on = []
+acceptance = ["tests/csim/test_CONTRACT_cone_state.py"]
+depends_on = ["LAB-REV2-E2", "LAB-REV2-E0", "VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-CONTRACT-unitrow-save", "VG-E-giveup-single", "LAB-CONTRACT-unit-pos-batch", "VG-E-startforce", "LAB-REV2-E4", "VG-T-R087-WIRE", "VG-T-EMIT-WIRE", "VG-E-facing-travel", "VG-E-move-through-idle-own", "VG-T-REACH-WIRE", "VG-U3-CHRON-WIRE", "VG-CONTRACT-U4-EVCHAR", "VG-U8-PREF-WIRE", "VG-CONTRACT-U0", "VG-CONTRACT-force-groups"]  # nineteen rows: the first seven (E2, E0, layerspot, route, unitrow-save, giveup-single, unit-pos-batch) are the cone table and the save-format, pin and tactical_move.c rows ahead of it; VG-E-startforce owns docs/architecture.md and the ledger; LAB-REV2-E4 and VG-T-R087-WIRE own csrc/unit.c; the rest are the queued rows that own one of its files today (owner_lint orders in-flight pairs); LAB-REV3-C and VG-U7-OBJECTIVES-WIRE are left out because their overlap is only the ledger and docs/architecture.md, the sanctioned record-file pattern (the second one is also blocked on Q-U7-designation); the records clerk may flip any sharer to the other direction by adding CONTRACT-cone-state to that row's depends_on instead (Q5)
 status = { state = "queued" }
 tests_pending = true
-size_estimate = "contract piece: the per-type cone table (om_roster_set_cone, LAB-REV2-E2) is saved, hashed like reach and carried across om_tactical_reset; save-format bump; closes FINDING-cone-state; lands before any roster type ships with a cone"
+spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph CONTRACT-cone-state; second-Fable audit owed before build
+size_estimate = "contract piece: the per-type cone table (om_roster_set_cone, LAB-REV2-E2) is saved, hashed like reach and carried across om_tactical_reset; save-format bump N to N+1; closes FINDING-cone-state; lands before any roster type ships with a cone"
 
 # Harness enforcement (Architect 2026-10-19, spec 2026-10-19-harness-enforcement-spec.md rev 3a, audited three rounds): C1a -> C1b -> C235 -> C4 serial, then HARNESS-REPIN (its row is added attached in its own landing) and FU-HARNESS-findings.
 [[piece]]
