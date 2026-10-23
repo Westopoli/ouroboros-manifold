@@ -1,8 +1,8 @@
 # Code quality page (SHOWCASE-quality-audit, step 4)
 
-Measured on the worktree branch from origin/main at `0d7868f2`, 2026-10-23. Read-only audit: nothing was fixed. Every number below came from a command run on this tree; where a count is a heuristic, the section says so.
+Re-measured on the worktree branch from origin/main at `543f6c04` (after landing 4 and the SHOWCASE legacy moves), 2026-10-23. First measured at `0d7868f2`; the changes are listed in 'What changed since 0d7868f2' below. Read-only audit: nothing was fixed. Every number below came from a command run on this tree; where a count is a heuristic, the section says so.
 
-**Discount the legacy paths.** The legacy moves (SHOWCASE-junk, SHOWCASE-legacy-toys, SHOWCASE-legacy-scenes, SHOWCASE-docs-legacy) have not landed. These paths are still in the tree and will move or go: `build/_pyi_dist`, `.swarm/backups`, `tuning_output/*.jsonl`, `graphify-out/` (junk, deleted); `simulation/` (legacy Python sim, to `legacy/simulation/`); `toys/`; `scenes/debug/` and the unreferenced `scenes/mockups/*` (to `legacy/`); `docs/legacy/claude_exchange`, `docs/legacy/random`, `docs/legacy/blender_stuff`, `docs/legacy/design_questions`, `docs/stage_specs`, `docs/test_specs`, the loose `docs/design_lane*.md` / `research_lane*.md` files and part of `docs/research` (to `docs/legacy/`). This page audits `csrc/`, `autoload/`, `scenes/`, `scripts/specfactory/`, `scripts/skilllab/` and `tests/`, none of which move, except `scenes/debug/` and `scenes/mockups/` (flagged where they matter) and `docs/stage_specs` (one comment points into it, see 2.4).
+**The legacy moves have landed.** SHOWCASE-junk untracked `build/_pyi_dist`, `.swarm`, `graphify-out` and the `tuning_output` logs (none is in the tree now; `build/` keeps its spec and zip script); SHOWCASE-legacy-toys moved `toys/` to `legacy/toys/`; SHOWCASE-legacy-scenes moved eight unreferenced debug scenes to `legacy/scenes/debug/` (`scenes/debug/debug_ws_test.*` stays, a test names it); SHOWCASE-docs-legacy moved retired docs to `docs/legacy/`. Not moved: `simulation/` (246 files, the legacy Python sim) is still at the top level, and `scenes/mockups/` (86 scripts, 22,586 lines) is still under `scenes/`, so discount those two. `docs/stage_specs/` and `docs/test_specs/` also remain in `docs/`. This page audits `csrc/`, `autoload/`, `scenes/`, `scripts/specfactory/`, `scripts/skilllab/` and `tests/`; `legacy/` is outside the counts below (8 debug `.gd` files, 1,265 lines, counted once in section 2).
 
 ## 1. `csrc/` (the C sim)
 
@@ -22,27 +22,27 @@ Measured on the worktree branch from origin/main at `0d7868f2`, 2026-10-23. Read
 
 **Functions over 150 lines** (file:line, name, lines): `csrc/pipe/pipe_tactical.c:299` write_tactical 365; `csrc/sim.c:194` om_world_step 359; `csrc/save.c:474` sv_parse_body 327; `csrc/worldgen.c:181` om_world_generate 272; `csrc/resolve.c:328` om_step_resolve 256; `csrc/pipe/om_pipe.c:521` write_delta 241; `csrc/unit.c:2035` om_tac_unit_ai 223; `csrc/space_plates.c:338` sp_layer 209; `csrc/generational.c:1948` gen_time_jump 209; `csrc/agent.c:248` om_step_decisions 209; `csrc/save.c:277` sv_write_body 186; `csrc/agent.c:47` om_faction_candidates 179; `csrc/region.c:13` om_world_new 169; `csrc/events.c:670` evt_resolve_queue 162; `csrc/pipe/om_pipe.c:359` write_snapshot 157; `csrc/pipe/om_pipe.c:1210` handle_mission_start 155. Several of these are the stochastic equations kept verbatim from the legacy algorithms by design (`docs/bible/algorithms.md`); the serializers (`write_*`, `sv_*`) are long because they are field lists.
 
-**Other.** `csrc/unit.c:997` cites `simulation/movement.py` (the legacy Python sim, which will move to `legacy/simulation/`); the comment will need the new path. `csrc/ouroboros_sim.h` is 2,167 lines, the frozen contract.
+**Other.** `csrc/unit.c:997` cites `simulation/movement.py` (the legacy Python sim; it has not moved, so the path is still valid). `csrc/ouroboros_sim.h` is 2,167 lines, the frozen contract.
 
 ## 2. `autoload/` and `scenes/` (GDScript)
 
 | Measure | `autoload/` | `scenes/` |
 |---|---|---|
-| `.gd` files | 32 | 189 (86 under `scenes/mockups/`) |
-| `.gd` lines | 4,732 | 42,591 (22,586 under `scenes/mockups/`) |
-| `.tscn` files | 0 | 51 |
-| Files over 600 lines | 1 | 11 |
+| `.gd` files | 32 | 181 (86 under `scenes/mockups/`) |
+| `.gd` lines | 4,755 | 41,468 (22,586 under `scenes/mockups/`) |
+| `.tscn` files | 0 | 43 |
+| Files over 600 lines | 2 | 11 |
 | TODO / FIXME / XXX | 0 | 0 |
-| Unreferenced files | 0 | 1 script, 9 scenes (+9 scripts only their own scene uses) |
+| Unreferenced files | 0 | 1 script, 0 scenes |
 
-**2.1 Unreferenced.** Method: for each `.gd`, grep its basename (and its `class_name`) over `scenes`, `autoload`, `project.godot` and `tests`, excluding itself. This is generous: any mention counts, so it under-reports. Result: one script, `scenes/mockups/objectives/tools/dump_nodes.gd` (21 lines). Stricter, by `.tscn`: nine scenes under `scenes/debug/` have no referrer in `scenes`, `autoload`, `project.godot`, `tests` or `scripts`: `debug_ws_test`, `test_chronicle_scroll`, `test_faction_info_panel`, `test_faction_palette`, `test_info_panel_host`, `test_region_info_panel`, `test_time_jump`, `test_world_view`, `wave2_visual_check` (the nine `.tscn`, each with its own `.gd`, 1,328 script lines, which only that scene loads). They are named `test_*` but are not tests (the suites live under `tests/`), so they read as live. They are in the legacy-scenes move. `scripts/specfactory/gd_reach_lint.py` (regression mode, reads git refs) is the gate's version of this check; this page did not run it.
+**2.1 Unreferenced.** Method: for each `.gd`, grep its basename (and its `class_name`) over `scenes`, `autoload`, `project.godot`, `tests`, `scripts` and `legacy`, excluding itself. This is generous: any mention counts, so it under-reports. Result: one script, `scenes/mockups/objectives/tools/dump_nodes.gd` (21 lines). Stricter, by `.tscn`: every one of the 43 scenes under `scenes/` and `autoload/` has a referrer (the nine unreferenced `scenes/debug/` scenes of the first run are gone: eight moved to `legacy/scenes/debug/` with a README that says why, and `debug_ws_test` is named by `tests/test_tacticalbridge_ratchet.gd`). `scripts/specfactory/gd_reach_lint.py` (regression mode, reads git refs) is the gate's version of this check; this page did not run it.
 
-**2.2 Over 600 lines** (`wc -l`): `scenes/mockups/landscape/field_map_space.gd` 1,520; `scenes/tactical_c/tactical_view.gd` 1,356; `scenes/mockups/landscape/placer.gd` 1,020; `scenes/mockups/landscape/field_map.gd` 961; `scenes/mockups/landscape/hud.gd` 920; `scenes/mission_briefing/mission_briefing.gd` 911; `scenes/shared/world_view/main_menu_galaxy.gd` 824; `scenes/mockups/landscape/pass4_terrain.gd` 798; `autoload/c_bridge.gd` 784; `scenes/world/time_jump_sequencer.gd` 707; `scenes/galaxy/galaxy_view.gd` 663; `scenes/mockups/settlement/settlement_sim.gd` 633. Six of twelve are prototypes under `scenes/mockups/`. Shipping-code outliers: `tactical_view.gd` and `c_bridge.gd` (the pipe client).
+**2.2 Over 600 lines** (`wc -l`; 13 files, 11 in `scenes/` and 2 in `autoload/`): `scenes/mockups/landscape/field_map_space.gd` 1,520; `scenes/tactical_c/tactical_view.gd` 1,397; `scenes/mockups/landscape/placer.gd` 1,020; `scenes/mockups/landscape/field_map.gd` 961; `scenes/mockups/landscape/hud.gd` 920; `scenes/mission_briefing/mission_briefing.gd` 911; `scenes/shared/world_view/main_menu_galaxy.gd` 824; `scenes/mockups/landscape/pass4_terrain.gd` 798; `autoload/c_bridge.gd` 784; `autoload/qa_daemon.gd` 609; `scenes/world/time_jump_sequencer.gd` 707; `scenes/galaxy/galaxy_view.gd` 663; `scenes/mockups/settlement/settlement_sim.gd` 633. Six of thirteen are prototypes under `scenes/mockups/`. Shipping-code outliers: `tactical_view.gd` and `c_bridge.gd` (the pipe client); `qa_daemon.gd` is new on the list, 9 lines over.
 
 **2.3 TODO / FIXME.** None in `autoload/` or `scenes/`.
 
-**2.4 Comments that name something gone.** 43 `See also` comments in GDScript; all path-like targets were tested for existence. Stale:
-- `autoload/debug_overlay.gd:5` points at `docs/stage_specs/stage_13_spec.md`; the file is now `docs/stage_specs/_deferred/stage_13_spec.md`, and the whole folder is queued for `docs/legacy/`. High (stale claim in a live comment).
+**2.4 Comments that name something gone.** 46 `See also` comments in GDScript; all path-like targets were tested for existence. Stale (both findings from the first run are still open):
+- `autoload/debug_overlay.gd:5` points at `docs/stage_specs/stage_13_spec.md`; the file is now `docs/stage_specs/_deferred/stage_13_spec.md` (the folder did not move). High (stale claim in a live comment).
 - `scenes/galaxy/shell_renderer.gd:6` says "See also: scenes/galaxy/legacy_shell_renderer.gd (superseded one box per faction)"; that file does not exist. High.
 - Not stale, noted: `scenes/tactical_c/loading_overlay.gd:2` names a deleted legacy file but gives the `git show` ref that recovers it; `tests/test_legacy_tactical_deleted.gd:93` is a deliberate positive control.
 Ruling and piece ids in comments (`R-`, `TD-`, `FINDING-`, `DRAFT-`) were not checked against `pieces.toml` one by one; only path targets were. Approximate.
@@ -52,53 +52,53 @@ Ruling and piece ids in comments (`R-`, `TD-`, `FINDING-`, `DRAFT-`) were not ch
 | Measure | `specfactory/` | `skilllab/` |
 |---|---|---|
 | `.py` files | 47 (one in a fixtures subfolder) | 44 |
-| Lines | 14,980 | 8,101 |
+| Lines | 15,135 | 8,101 |
 | Files over 800 lines | 3 | 0 |
-| TODO / FIXME | 9 matches, all in template text | 0 |
+| TODO / FIXME | 10 matches, all in template text | 0 |
 | Modules nothing imports | 21 by strict import grep, 6 by any mention | 0 (the package is imported through `__main__`) |
 
-**3.1 Over 800 lines:** `scripts/specfactory/merge_gate_support.py` 1,174; `escalator_fix_probe.py` 1,099; `alg_constants.py` 971.
+**3.1 Over 800 lines:** `scripts/specfactory/merge_gate_support.py` 1,304; `escalator_fix_probe.py` 1,099; `alg_constants.py` 971.
 
 **3.2 Modules nothing imports.** Strict method (`import <name>` or `from <name>` in `scripts/` or `tests/`): 21 under `scripts/specfactory/`. Nearly all are command-line tools run by path (each has a `__main__` guard and is cited in docs, the gate or a script), so "not imported" is expected: `libm_lint`, `size_lint`, `method_check`, `rule_pins`, `rule_pins_tests`, `gd_reach_lint`, `card_slice`, `tactical_trace`, `chain_graph`, `snapshot_fixture`, `gen_controls`, `gen_test_skeleton`, `gen_card`, `card_regen`, and `escalator_fix_fixtures/test_px17_scratch_r7d.py` (a scratch test under a fixtures dir, cited once). The weaker finding: six modules have no mention at all in `scripts`, `tests`, `Makefile`, `.claude` or `pieces.toml`, only in docs: `gen_all_cards.py` (217 lines, cited in 2 docs), `dor_check.py` (134), `fill_tests.py` (103), `draft_card.py` (126), `draft_e2e.py` (78), `fold_answers.py` (149). They belong to the retired card factory (Agora era) and are likely dead; each needs a look before it is called so. Medium.
 
-**3.3 TODO.** The 9 matches are strings that generators write into card and test templates (`gen_card.py:78`, `gen_controls.py:58`, `draft_card.py:71`), not open work.
+**3.3 TODO.** The 10 matches are strings that generators write into card and test templates (`gen_card.py:78`, `gen_controls.py:58`, `draft_card.py:71`, `gen_test_skeleton.py:65`), not open work.
 
-**3.4 Duplicated helper names** (same top-level `def` in two or more files; excludes `main`, `__init__`, `test_*`): 57 names. 16 of them involve `scripts/skilllab/contract.py`, which is by design a stub file of cross-module signatures (its docstring says so), so they are not duplication. The rest are real in the sense of copied helpers: `_page` in four files (`skilllab/depth.py:210`, `charts.py:63`, `batches.py:391`, `search_batch.py:343`); `grid` in four (`sample.py:47`, `search_batch.py:45`, `sweep.py:110`, `contract.py`); `_check` three (`sample.py:9`, `asym.py:77`, `positions.py:15`); `_run` three; `_play` three; `run_pytest` three (`specfactory/escalator_fix_probe.py:399`, `suite_regression.py:147`, `red_check.py:93`); `python_bin` two (`undertest_check.py:45`, `red_check.py:51`); `parse_junit` two (`control_liveness.py:253`, `red_check.py:107`); `find_function_span` two (`reach_lint.py:194`, `card_lint.py:68`); `load_allowlist` two (`reach_lint.py:330`, `alg_constants.py:862`); `build_owner_map` two (`chain_sim.py:84`, `tick_closure.py:158`); `load_cards` two (`parent_patch_fence.py:159`, `chain_sim.py:415`); `parse_card` two (`green_check.py:35`, `prefetch_measure.py:229`). The full list was produced by an `ast` scan of top-level functions. Many `skilllab` one-letter-ish private helpers (`_mean`, `_num`, `_cell`) are small. Medium.
+**3.4 Duplicated helper names** (same top-level `def` in two or more files; excludes `main`, `__init__`, `test_*`): 58 names. 16 of them involve `scripts/skilllab/contract.py`, which is by design a stub file of cross-module signatures (its docstring says so), so they are not duplication. The rest are real in the sense of copied helpers: `_page` in four files (`skilllab/depth.py:210`, `charts.py:63`, `batches.py:391`, `search_batch.py:343`); `grid` in four (`sample.py:47`, `search_batch.py:45`, `sweep.py:110`, `contract.py`); `_check` three (`sample.py:9`, `asym.py:77`, `positions.py:15`); `_run` three; `_play` three; `run_pytest` three (`specfactory/escalator_fix_probe.py:399`, `suite_regression.py:147`, `red_check.py:93`); `python_bin` two (`undertest_check.py:45`, `red_check.py:51`); `parse_junit` two (`control_liveness.py:253`, `red_check.py:107`); `find_function_span` two (`reach_lint.py:194`, `card_lint.py:68`); `load_allowlist` two (`reach_lint.py:330`, `alg_constants.py:862`); `build_owner_map` two (`chain_sim.py:84`, `tick_closure.py:158`); `load_cards` two (`parent_patch_fence.py:159`, `chain_sim.py:415`); `parse_card` two (`green_check.py:35`, `prefetch_measure.py:229`). The full list was produced by an `ast` scan of top-level functions. Many `skilllab` one-letter-ish private helpers (`_mean`, `_num`, `_cell`) are small. Medium.
 
-**3.5 Portability.** `scripts/specfactory/merge_gate.sh` (the `PYTHON=` default) hard-codes `/home/westopoli/Projects/agora/.venv/bin/python`; ten files under `scripts/`, `csrc/`, `autoload/` and `scenes/` contain `/home/westopoli`. A reader cloning the repo cannot run the gate without editing it. Medium.
+**3.5 Portability.** `scripts/specfactory/merge_gate.sh` (the `PYTHON=` default) hard-codes `/home/westopoli/Projects/agora/.venv/bin/python`; eleven files under `scripts/` (none in `csrc/`, `autoload/`, `scenes/` or `legacy/`) contain `/home/westopoli`. A reader cloning the repo cannot run the gate without editing it. Medium.
 
 ## 4. `tests/`
 
 | Suite | Test files (`test_*.py` / `*.gd`) | Lines (py + gd, all files) |
 |---|---|---|
-| `tests/csim/` (C sim through ctypes, incl. `controls/` and `scale/`) | 471 | 72,885 |
-| `tests/skilllab/` | 179 | 38,971 |
-| `tests/specfactory/` | 60 | 18,575 |
-| `tests/transport/` | 56 | 9,494 |
-| `tests/qa/` (desktop-driver plays) | 31 | 7,795 |
-| `tests/simviewer/` | 4 | 1,314 |
-| `tests/net/` | 4 | 478 |
-| `tests/long/`, `tests/push/` | 1 + 1 | 256 + 20 |
-| `tests/*.gd` (Godot, flat in `tests/`) | 150 `test_*` files (includes 2 `.py`) | not counted |
+| `tests/csim/` (C sim through ctypes, incl. `controls/` and `scale/`) | 471 | 73,370 |
+| `tests/skilllab/` | 179 | 39,166 |
+| `tests/specfactory/` | 66 | 19,701 |
+| `tests/transport/` | 56 | 9,550 |
+| `tests/qa/` (desktop-driver plays) | 31 | 7,978 |
+| `tests/simviewer/` | 4 | 1,318 |
+| `tests/net/` | 4 | 483 |
+| `tests/long/`, `tests/push/` | 1 + 1 | 258 + 21 |
+| `tests/*.gd` (Godot, flat in `tests/`) | 154 `test_*` files (includes 2 `.py`) | 34,387 (py and gd) |
 | `tests/galaxy_field/`, `tests/support/`, `tests/fixtures/` | helpers and fixtures | 255, 253, 0 |
 
-1,121 files in all. About 6,479 `def test_*` in Python and 123 `func test_*` / `_test_*` in GDScript (regex count, approximate; the Godot tests run many checks per function).
+1,132 files in all (967 of them `test_*` files). About 6,547 `def test_*` in Python and 129 `func test_*` / `_test_*` in GDScript (regex count, approximate; the Godot tests run many checks per function).
 
-**Files with no `S-`/`R-` id.** Heuristic: no `S-###`, `R-###-##` (or the `S###` filename form) in the first 40 lines or the filename. Of 957 test files checked, 412 name none. By suite: `csim` 156 of 471; flat `tests/*.gd` 40 of 150; `qa` 6 of 31; `transport` 15 of 56; `specfactory` 46 of 60; `skilllab` 145 of 179; `simviewer` 3 of 4; `push` 1 of 1. The tooling suites (`specfactory`, `skilllab`, `transport`) test scripts, not stories, so no id is expected there. The `csim` and `tests/*.gd` rows are the ones that matter against "each names the S-/R- id it proves"; many of those key on piece ids instead (`test_VG_W_w1_perf_control.py`, `test_E07_wiring.py`, `test_PP_*`, `test_core_*`), so the rule is met by another id, not by an `S-`/`R-` id. 130 of the 412 are under `controls/` or `scale/` (`csim`) names.
+**Files with no `S-`/`R-` id.** Heuristic: no `S-###`, `R-###-##` (or the `S###` filename form) in the first 40 lines or the filename. Of 967 test files checked, 416 name none. By suite: `csim` 156 of 471; flat `tests/*.gd` 41 of 154; `qa` 6 of 31; `transport` 15 of 56; `specfactory` 49 of 66; `skilllab` 145 of 179; `simviewer` 3 of 4; `push` 1 of 1. The tooling suites (`specfactory`, `skilllab`, `transport`) test scripts, not stories, so no id is expected there. The `csim` and `tests/*.gd` rows are the ones that matter against "each names the S-/R- id it proves"; many of those key on piece ids instead (`test_VG_W_w1_perf_control.py`, `test_E07_wiring.py`, `test_PP_*`, `test_core_*`), so the rule is met by another id, not by an `S-`/`R-` id. 130 of the 156 `csim` files are under `controls/` or `scale/` (130 at the first run; not re-counted).
 
-**Files over 400 assertion lines.** None. The most assertion-dense: `tests/skilllab/test_report.py` 293, `test_sweep.py` 288, `test_diagram.py` 170, `tests/specfactory/test_spec_provenance.py` 150. By total length, 92 test files exceed 400 lines (the largest are `tests/skilllab/test_report.py` 1,773 and `test_sweep.py` 1,272). Assertion lines were counted by regex (`assert`, `_assert(`, `expect`); approximate. TODO-word matches in tests: 185, not classified (many are generator output).
+**Files over 400 assertion lines.** None. The most assertion-dense: `tests/skilllab/test_report.py` 293, `test_sweep.py` 288, `test_diagram.py` 170, `tests/specfactory/test_spec_provenance.py` 150. By total length, 94 test files exceed 400 lines (the largest are `tests/skilllab/test_report.py` 1,773 and `test_sweep.py` 1,272). Assertion lines were counted by regex (`assert`, `_assert(`, `expect`); approximate. TODO-word matches in tests: 187, not classified (many are generator output).
 
 ## 5. The method machinery as a reader sees it
 
-- **`scripts/specfactory/merge_gate.sh`** (695 lines): one `GATE <step> OK|REJECT|WARN|HARNESS` line per step, base first (candidate must contain current origin/main), then build, lint and regression stages. Step names in the script include `base`, `venv`, `make`, `libm_lint`, `alg_constants`, `footprint`, `owner_lint`, `reach_lint`, `gd_reach`, `gd_class_names`, `size_lint`, `rule_pins`, `sig_check`, `symbol_ownership`, `control_liveness`, `acceptance`, `regression_csim`, `regression_qa_t1`, `playthrough`, `look`, `checksum_trace`, `tactical_trace`, `transport`, `lane_plays`. Order not verified step by step.
+- **`scripts/specfactory/merge_gate.sh`** (708 lines): one `GATE <step> OK|REJECT|WARN|HARNESS` line per step, base first (candidate must contain current origin/main), then build, lint and regression stages. Step names in the script include `base`, `venv`, `make`, `libm_lint`, `alg_constants`, `footprint`, `owner_lint`, `reach_lint`, `gd_reach`, `gd_class_names`, `size_lint`, `rule_pins`, `sig_check`, `symbol_ownership`, `control_liveness`, `acceptance`, `regression_csim`, `regression_qa_t1`, `playthrough`, `look`, `checksum_trace`, `tactical_trace`, `transport`, `lane_plays`. Step list carried from the first run and not re-derived; order not verified step by step.
 - **`pre_gate.sh`** (181 lines): five steps before any push: noise (`.uid`/`.import` hygiene), gate in `--revert` mode, named tests, rule pins, spec provenance.
 - **`status_check.py`** (323 lines): diffs the programme lane table, `pieces.toml` and the review queue against git; run after every landing.
-- **`owner_lint.py`** (98 lines): fails when two in-flight pieces own the same file, per `pieces.toml`.
+- **`owner_lint.py`** (114 lines): fails when two in-flight pieces own the same file, per `pieces.toml`.
 - **`method_check.py`** (271 lines): reads a chat's transcript and prints per rule how many turns broke it (DRIFT lines).
-- **Known-red lists:** `gd_tests_known_red.txt` 25 lines, `lane_plays_known_red.txt` 4, `playthrough_known_red.txt` 5 (34 in all, line counts include comments).
-- **`docs/northstar/plans/push/pieces.toml`:** 296 `[[piece]]` tables. `state =` counts: 151 attached, 97 queued, 3 superseded, 2 in_flight, 1 landed, 1 pending (255 rows carry a state; the other 41 were not classified by this page).
-- **Ledger** `docs/northstar/plans/push_ledger_2026-09-22.md`: 1,531 lines, about 1,500 table rows (counted by leading `|`, which includes header and separator lines).
-- **Decisions page** `docs/northstar/story_reviews/westley/decisions.md`: 38 `DEC-` rows (2026-10-22 onward).
+- **Known-red lists:** `gd_tests_known_red.txt` 25 lines, `lane_plays_known_red.txt` 4, `playthrough_known_red.txt` 4 (33 in all, line counts include comments).
+- **`docs/northstar/plans/push/pieces.toml`:** 298 `[[piece]]` tables. `state =` counts: 166 attached, 86 queued, 3 superseded, 1 landed, 1 pending, 0 in_flight (257 rows carry a state; the other 41 were not classified by this page).
+- **Ledger** `docs/northstar/plans/push_ledger_2026-09-22.md`: 1,578 lines, about 1,550 table rows (counted by leading `|`, which includes header and separator lines).
+- **Decisions page** `docs/northstar/story_reviews/westley/decisions.md`: 44 `DEC-` rows (2026-10-22 onward).
 
 ## 6. Closing table
 
@@ -107,11 +107,37 @@ Severity: high = dead code that looks live or a stale claim in a live comment; m
 | Directory | Lines | Files | High | Medium | Low | Takeaway |
 |---|---|---|---|---|---|---|
 | `csrc/` | 39,821 | 50 | 1 (9 shadowed weak stubs with stale comments) | 2 (16 functions over 150 lines; 250 tested-only public symbols) | 0 | A clean, TODO-free sim whose main debts are leftover bootstrap stubs and a long list of test-only API that needs a per-symbol wired-or-removed call. |
-| `autoload/` | 4,732 | 32 | 1 (`debug_overlay.gd:5` stale path) | 1 (`c_bridge.gd` 784 lines) | 0 | Small and referenced; one stale comment. |
-| `scenes/` | 42,591 | 189 | 3 (9 unreferenced debug scenes; `dump_nodes.gd`; `shell_renderer.gd:6` stale target) | 1 (11 files over 600 lines, six of them prototypes) | 0 | The shipped scenes are referenced and TODO-free; the mockups and debug scenes are where the dead weight sits, and they are moving to `legacy/`. |
-| `scripts/specfactory/` | 14,980 | 47 | 0 | 4 (3 files over 800; 6 likely-dead card-factory tools; duplicated helpers; hard-coded venv path) | 0 open (9 template strings) | A working gate and lint toolkit with some retired factory tools still sitting beside it. |
+| `autoload/` | 4,755 | 32 | 1 (`debug_overlay.gd:5` stale path) | 1 (`c_bridge.gd` 784 and `qa_daemon.gd` 609 lines) | 0 | Small and referenced; one stale comment. |
+| `scenes/` | 41,468 | 181 | 2 (`dump_nodes.gd` unreferenced; `shell_renderer.gd:6` stale target) | 1 (11 files over 600 lines, six of them prototypes) | 0 | The shipped scenes are referenced and TODO-free; the dead weight left is in `scenes/mockups/` (86 prototype scripts, 22,586 lines, not moved); the unreferenced debug scenes now sit in `legacy/scenes/debug/`. |
+| `scripts/specfactory/` | 15,135 | 47 | 0 | 4 (3 files over 800; 6 likely-dead card-factory tools; duplicated helpers; hard-coded venv path) | 0 open (10 template strings) | A working gate and lint toolkit with some retired factory tools still sitting beside it. |
 | `scripts/skilllab/` | 8,101 | 44 | 0 | 1 (copied private helpers across modules) | 0 | Cohesive lab package; duplication is small helpers, and `contract.py` duplicates by design. |
-| `tests/` | 1,121 files, about 150,000 lines of py and gd (flat `tests/*.gd` not counted) | 1,121 | 0 | 2 (412 files with no S-/R- id by heuristic, mostly tooling suites; 92 files over 400 lines) | 185 TODO-word matches, unclassified | The tests are the spec in volume (about 6,600 test functions); id traceability holds for story tests and is looser for tooling suites. |
+| `tests/` | 1,132 files, about 185,000 lines of py and gd | 1,132 | 0 | 2 (416 files with no S-/R- id by heuristic, mostly tooling suites; 94 files over 400 lines) | 187 TODO-word matches, unclassified | The tests are the spec in volume (about 6,700 test functions); id traceability holds for story tests and is looser for tooling suites. |
+
+## What changed since 0d7868f2
+
+Measured again on `543f6c04`; every number on this page was re-run. `csrc/` is unchanged.
+
+| Measure | Before (`0d7868f2`) | After (`543f6c04`) |
+|---|---|---|
+| `csrc/` files / lines / functions over 150 lines | 50 / 39,821 / 16 | 50 / 39,821 / 16 |
+| `reach_lint` unreachable (the appendix list is identical symbol for symbol) | 250 of 779 | 250 of 779 |
+| Weak stubs in `csrc/region.c` | 9 | 9 |
+| `autoload/` `.gd` files / lines / over 600 | 32 / 4,732 / 1 | 32 / 4,755 / 2 (`qa_daemon.gd` 609) |
+| `scenes/` `.gd` files / lines / `.tscn` | 189 / 42,591 / 51 | 181 / 41,468 / 43 |
+| Unreferenced scenes / scripts | 9 / 1 | 0 / 1 |
+| `scenes/` files over 600 lines | 11 | 11 (`tactical_view.gd` 1,356 to 1,397) |
+| `specfactory/` lines / over 800 | 14,980 / 3 | 15,135 / 3 (`merge_gate_support.py` 1,174 to 1,304) |
+| Duplicated helper names / files with `/home/westopoli` | 57 / 10 | 58 / 11 |
+| Test files / `def test_*` | 1,121 files / 6,479 | 1,132 files / 6,547 |
+| Test files with no `S-`/`R-` id (heuristic) | 412 of 957 | 416 of 967 |
+| `pieces.toml` rows / in_flight | 296 / 2 | 298 / 0 |
+| Ledger lines / `DEC-` rows | 1,531 / 38 | 1,578 / 44 |
+
+Findings fixed: the nine unreferenced `scenes/debug/` scenes (eight moved to `legacy/scenes/debug/` with a README; `debug_ws_test` is referenced by a test); the junk paths (`build/_pyi_dist`, `.swarm`, `graphify-out`, `tuning_output`) are untracked and absent; `toys/` is now `legacy/toys/`; the `docs/legacy` and dated-plan moves landed.
+
+Findings still open, unchanged: the 250 tested-but-unreachable symbols; the nine shadowed weak stubs and their stale comments (`csrc/region.c:249`, `:351-353`); `autoload/debug_overlay.gd:5` and `scenes/galaxy/shell_renderer.gd:6` stale `See also` targets; `dump_nodes.gd`; six likely-dead card-factory tools; duplicated helpers; the hard-coded venv path in `merge_gate.sh:24`.
+
+Findings new or moved: `autoload/qa_daemon.gd` crossed 600 lines; `merge_gate_support.py` grew 130 lines; one more `TODO` template string (`gen_test_skeleton.py:65`) and one more duplicated helper name were found by the re-run (this may be a counting difference more than new code); the `simulation/` legacy Python sim was named in the first run as moving to `legacy/simulation/` but did not move (246 files, still top level); `docs/stage_specs/` and `docs/test_specs/` did not move either.
 
 ## Appendix: the 250 tested-but-unreachable public symbols
 
@@ -369,3 +395,42 @@ Source: `python3 scripts/specfactory/reach_lint.py` output on this tree, none al
 | `om_world_set_seed` | ouroboros_sim.h:142 | csrc/region.c:243 | csim/test_E02_S020_rng_seeding.py |
 | `om_world_set_strategic_tick` | ouroboros_sim.h:1736 | csrc/generational.c:2183 | csim/test_E08_S060_named_leaders_live_and_die.py |
 | `om_zone_sample_interference` | ouroboros_sim.h:1617 | csrc/fog.c:829 | csim/controls/test_control_e12_window_interference_ignores_intensity.py |
+
+## Proposed fix pieces
+
+Proposals only; no pieces.toml rows exist yet; the Architect rules on rows.
+
+- **SHOWCASE-fix-weak-stubs (gated; owns `csrc/region.c` (lines 249-252 and 351-364 only) and new `tests/csim/test_showcase_weak_stubs.py`; depends_on `core` (attached; ordering only); Tool: Workflow (one piece; the one question: a single unit, no umbrella to share)).** Facts: nine `__attribute__((weak))` definitions in `region.c` are shadowed by strong ones in `sim.c` (eight) and `worldgen.c` (one); the `om_debug_inject` pair sits under the same `#ifdef OM_DEBUG_INJECT` on both sides and every library target defines it. Change: delete the nine stubs and their two comments (`:249`, `:351-353`); nothing else in the file moves. Tests first (`tests/csim/test_showcase_weak_stubs.py`, written before the build by a different writer, in the `test_PP_portability.py:109` shape): (1) `csrc/region.c` matches no `__attribute__\s*\(\(\s*weak\s*\)\)` (red on main: nine matches, the failing assertion line pasted in the brief); (2) `nm -D libouroboros.so` lists each of the nine names with type `T` and none with type `W` (green on main and after: the positive control that the link result is unchanged by the delete); (3) umbrella: the full csim regression green at the gate. Stated unchanged: `ouroboros_sim.h`, `signatures.toml`, traces and checksums (no body changes). Size: about 20 lines deleted, about 40 of test. Note for the records clerk: `CASCADE-sim-rules` names `region.c` for its finding G; if that cascade is in flight first, this row waits behind it.
+- **SHOWCASE-reach-triage (records, no gate; owns new `docs/northstar/plans/showcase/reach_triage.md`; depends_on `SHOWCASE-quality-audit`; Tool: Workflow (a read-only engineer page, one piece; nothing ends in a build)).** Facts: the appendix lists 250 symbols with header line, definition and first test; the allowlist format is `[[allow]] symbol / reason` with a one-line reason each. Change: a Sonnet engineer classes every one of the 250 into exactly one of (a) test fixture or reader (an allowlist row drafted in the file's own format, reason in one line, applied later by a records row that owns `reach_allowlist.toml`; today seven queued rows own it, so this page applies nothing); (b) real gap (a rule says it happens in play and no tick, jump or pipe handler reaches it: a `FINDING-reach-<symbol>` row drafted for the lane that owns the file, with the rule id); (c) dead (no rule, no fixture use: a deletion candidate, which is a contract piece since the header changes). Positive control for the method: `om_unit_attack` must land in (b) or the page's method is wrong (the page says so). Per-prefix counts and the three lists are the deliverable; no code moves. Size: one page, about 250 table rows. NUMBER-NEEDED: none. Question Q-A below (should the gate's bare `reach_lint` run count the baseline).
+- **SHOWCASE-fix-tacmove-header (gated; owns `csrc/tactical_move.c` (the header comment lines 22-32 only) and new `tests/csim/test_showcase_tacmove_header.py`; depends_on the queued owners of `tactical_move.c` found by the records clerk at launch (ordering only); Tool: Workflow (one piece)).** Facts: the header says `om_unit_attack` "never deals damage"; the body fires. Change: the builder verifies each of the block's four claims against `unit.c` and `tactical_move.c` on the built tree, deletes the ones that are false, keeps the true ones with a line number, and reports per claim (VERIFY-NEEDED, four items). Tests first: the file contains no line matching `om_unit_attack .* is STUB` (red on main: `:28`); positive control: the same test run against `git show origin/main:csrc/tactical_move.c` text finds the line. Size: under 12 lines plus about 25 of test.
+- **SHOWCASE-fix-stale-see-also (gated; owns `autoload/debug_overlay.gd` (line 5 only), `scenes/galaxy/shell_renderer.gd` (line 6 only), `scenes/galaxy/legacy_shell_renderer.gd.uid` (deleted), `scenes/mockups/objectives/tools/dump_nodes.gd` (a two-line header only) and new `tests/test_showcase_see_also.gd`; depends_on `G-debugoverlay`, `C2`, `C8`, `VG-B` (all attached; ordering only; no queued owner on these files); Tool: Workflow (one piece; a Godot test, no frame)).** Facts above (F5, F6, F-new-2, F7). Change, literal: `debug_overlay.gd:5` old `## See also: docs/stage_specs/stage_13_spec.md (Checkpoint D, Invariant I10).` new `## See also: docs/stage_specs/_deferred/stage_13_spec.md (Checkpoint D, Invariant I10).`; `shell_renderer.gd:6` old `# See also: scenes/galaxy/legacy_shell_renderer.gd (superseded one box per faction).` new `# See also: the superseded one-box-per-faction renderer, deleted in 74769942 (git show 74769942^:scenes/galaxy/legacy_shell_renderer.gd).`; `git rm scenes/galaxy/legacy_shell_renderer.gd.uid`; `dump_nodes.gd` gains after line 1: `# Hand-run generator (godot -s) of fixtures/nodes_seed*.json, read by objectives_mockup.gd and verify.gd; nothing loads this script.` Tests first (`tests/test_showcase_see_also.gd`, SceneTree, in the `test_showcase_legacy_scenes.gd` shape): (1) for every line under `autoload/` and `scenes/` (not `legacy/`) matching `See also:` followed by a `res`-relative path token ending in `.gd`, `.tscn`, `.md` or `.gdshader`, `FileAccess.file_exists` is true, or the line carries a `git show <sha>` form (red on main: the two lines, assertion text names each); positive control: `loading_overlay.gd:2` passes by the `git show` form and `test_legacy_tactical_deleted.gd:93` is excluded as a test file; (2) every `*.gd.uid` under `autoload/` and `scenes/` has its `*.gd` beside it (red on main: `legacy_shell_renderer.gd.uid`); positive control: `shell_renderer.gd.uid` passes. Size: 3 lines changed, 1 file deleted, 2 lines added, about 70 of test. Question Q-B: make check (1) a gate step later.
+- **SHOWCASE-legacy-cardfactory (gated; owns `legacy/README.md` (one block), `docs/northstar/agile.md` (line 132 only), new `tests/specfactory/test_showcase_legacy_cardfactory.py`; globs `legacy/scripts/specfactory/**`; the seven moved paths `scripts/specfactory/{gen_all_cards,dor_check,fill_tests,draft_card,draft_e2e,fold_answers,budget_gate}.py`; depends_on `SHOWCASE-legacy-scenes` (attached; the README block order) and `A94-harness` (attached; its glob `scripts/specfactory/[!m]*` covers the seven); Tool: Workflow (one piece, full gate: `scripts/` moves run the gate's lint stages)).** Facts (F10). Change: `git mv` the seven to `legacy/scripts/specfactory/` (imports between them keep working by directory; `agy_json` and `derive_agora_rules` are not moved, so the moved files no longer run, which is the point of legacy: "nothing here is built"); one README block in the `legacy/README.md` form (what, retired when, the commit, why kept: the Agora card factory, retired by the 2026-09-28 method reset); `agile.md:132` rewritten to say answer-folding is done by hand since the factory retired (old: names `scripts/specfactory/fold_answers.py`; new wording for the Architect, the sentence is his method text). Tests first (`tests/specfactory/test_showcase_legacy_cardfactory.py`, in the `test_showcase_junk.py` shape): the seven old paths are not tracked (`git ls-files`) and the seven new paths are; positive control: `scripts/specfactory/gen_card.py` is tracked at its old path (a live tool, so an empty answer is not a broken git call); a grep test: no file under `scripts/` or `tests/` names any of the seven stems (red on main only for the README-less state? no: red on main because the new paths are not tracked; the grep test is green on main and stays green, it is the parity guard). Size: 7 moves, about 10 README lines, 1 doc line, about 45 of test. Question Q-C: `fold_answers.py` stays if Westley or the Architect still folds answers with it.
+- **Amendment to HARNESS-no-home-paths (queued, `pieces.toml:4005-4015`; spec paragraph `showcase/README.md:81`); literal old -> new.** Old acceptance (second item): `a grep test asserts no /home/westopoli literal remains under scripts/ and tests/specfactory/`. New: `a grep test asserts no /home/westopoli literal remains in the six owned scripts and under tests/specfactory/; the five other sites (merge_gate.sh:24, batch_review.py:215, card_lint.py:37 and :461, sdk_engineer.py:67, scripts/integration_check.sh:6) are SHOWCASE-fix-home-paths-2's`. Reason: the five files are outside its owns, so the grep as written is red after the piece.
+- **SHOWCASE-fix-home-paths-2 (gated; owns `scripts/specfactory/merge_gate.sh` (line 24 only), `scripts/specfactory/batch_review.py` (line 215 only), `scripts/specfactory/card_lint.py` (lines 37 and 461 only), `scripts/specfactory/sdk_engineer.py` (line 67 only), `scripts/integration_check.sh` (line 6 only), and `tests/specfactory/test_no_home_paths.py` (one added test); depends_on `HARNESS-no-home-paths` (it supplies `om_home()` and the test file), `HARNESS-gate-venv-link`, `HARNESS-gate-reorder`, `HARNESS-gate-remote` (ordering on `merge_gate.sh`), `NET-backend` (attached, `integration_check.sh`), `HARNESS-credits-tools` (attached); Tool: Workflow (one piece)).** Facts (F12). Change: the two shell defaults become `${MERGE_GATE_PYTHON:-${OM_HOME:-$HOME}/Projects/agora/.venv/bin/python}` and the same form for `PY=`; the two `card_lint.py` `Path(...)` defaults are built from `om_home()`; the two `sys.exit` messages name the venv relative to `OM_HOME` in words. Tests first: the grep test widens to all of `scripts/` (red on the HARNESS-no-home-paths tree: the five sites, pasted); positive control: with `OM_HOME=/tmp/x`, `bash -c 'source'`-free parsing of `merge_gate.sh` line 24 via `MERGE_GATE_PYTHON` unset prints a path starting `/tmp/x` (and unset, `$HOME`). Size: 6 lines plus about 20 of test.
+
+Questions for the Architect:
+
+- Q-A [Architect] `reach_lint` bare run counts the whole baseline (250); the gate runs it with `--base-ref` (regression only). After the triage, should the allowlist be filled so the bare run goes green, or does the bare run stay informational? Candidates: (1) fill the allowlist from the triage's (a) list, bare run green becomes a gate step; (2) bare run stays informational, only (b) FINDINGs are acted on; (3) both, (b) first.
+- Q-B [Architect] The See-also check: (1) a one-off gd test in this piece (proposed); (2) a specfactory lint over `csrc/`, `autoload/`, `scenes/` run by `pre_gate.sh` (a new gate step, its own HARNESS row); (3) both, the test now and the lint when a second stale target appears.
+- Q-C [Westley or Architect] `fold_answers.py` is named by `docs/northstar/agile.md:132` as the method's folding tool. Candidates: (1) move it with the other six and rewrite the sentence (proposed); (2) keep it live and move six; (3) keep all seven, mark "retired factory" in a header comment only.
+- Q-D [Architect] F-new-1's block has four claims; one is verified false. Candidates: (1) the builder verifies the other three in the piece and reports (proposed); (2) the drafter verifies all four before the row is cut (another read).
+- Q-E [Architect] Ids: `SHOWCASE-fix-<slug>` as asked; the two new findings could instead be ledger `FINDING-` rows first (FINDING-tacmove-header-stale, FINDING-orphan-uid-shell-renderer) with the fix pieces citing them. Candidates: (1) rows only; (2) FINDING rows plus pieces (proposed, the ledger is the record).
+- NUMBER-NEEDED: none. No threshold, tolerance or rule meaning is touched by any proposal.
+
+The table:
+
+| id | finding | severity | kind | owns | size |
+|---|---|---|---|---|---|
+| SHOWCASE-fix-weak-stubs | F1 nine shadowed weak stubs, stale comments | high | fix | `csrc/region.c` (two ranges), new csim test | 20 del + 40 test |
+| SHOWCASE-fix-stale-see-also | F5, F6, F-new-2 orphan .uid, F7 generator header | high | fix | 4 one-line edits, 1 delete, new gd test | 6 + 70 test |
+| SHOWCASE-fix-tacmove-header | F-new-1 header says om_unit_attack is STUB | high | fix | `csrc/tactical_move.c:22-32`, new csim test | 12 + 25 test |
+| SHOWCASE-legacy-cardfactory | F10 seven dead card-factory tools | medium | legacy (new row; no open SHOWCASE row can carry it, legacy-scenes and legacy-toys are landed) | 7 moves, `legacy/README.md`, `agile.md:132`, new py test | 7 mv + 10 + 1 + 45 test |
+| HARNESS-no-home-paths amendment + SHOWCASE-fix-home-paths-2 | F12 venv path; the queued row's grep cannot go green | medium | fix (amend + sibling) | 5 scripts one line each, shared test file | 6 + 20 test |
+| SHOWCASE-reach-triage | F2 250 tested-only symbols | medium | leave with a records row (triage page) | new page | 1 page |
+| F3 functions over 150 | equations verbatim, serializers; no rule | medium | leave | | |
+| F4 unit.c:997 | valid path; waits on the simulation/ ruling | low | leave | | |
+| F8 .gd over 600, F9 .py over 800 | no rule; cosmetic refactor across queued owners | medium | leave | | |
+| F11 duplicated helpers | by design or different roles | medium | leave | | |
+| F13, F14, F15 tests | ids met by piece ids; no assertion-dense file; TODOs unclassified | medium/low | leave | | |
+| page framing: mockups, stage_specs, test_specs, simulation/ | classed live or ruled; not gaps | stale on the page | leave | | |
+Recommended order (one build at a time, cheapest first, none blocks another): 1 SHOWCASE-fix-stale-see-also (no queued owner clash, gd test only); 2 SHOWCASE-fix-weak-stubs (csim only; before CASCADE-sim-rules takes `region.c`); 3 SHOWCASE-legacy-cardfactory (after Q-C); 4 SHOWCASE-fix-tacmove-header (after the records clerk sets its depends_on); 5 HARNESS-no-home-paths amendment now (records), SHOWCASE-fix-home-paths-2 after that row and HARNESS-gate-venv-link land; 6 SHOWCASE-reach-triage any time (reading work, runs beside builds).

@@ -61,6 +61,7 @@ Outputs: viewport transform; orders.
 Open flags: Q-103-06 (layer marks for groups beyond pins). What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
+Open question: Q-104-02 (see docs/northstar/ambiguity_register.md): which beats the ticker shows at launch, the four of R-104-01 or the longer list of R-235-03; the ticker is not built until it is answered.
 Flag closed, rule text pending: Q-104-01, single-player pause is allowed (Escape or Pause halts the simulation and opens the menu) and multiplayer never pauses. The rule below is what the tests read today.
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
 
@@ -275,7 +276,7 @@ Rules
 
 Inputs: economy and weather events from the tick delta.
 Outputs: marks on the map view; ticker lines, T2-checkable.
-Open flags: none (Q-235-01 closed 2026-10-12, R-235-03).
+Open flags: Q-104-02 (the ticker list at launch, with R-104-01; see docs/northstar/ambiguity_register.md). Q-235-01 closed 2026-10-12, R-235-03.
 
 ## Inputs
 

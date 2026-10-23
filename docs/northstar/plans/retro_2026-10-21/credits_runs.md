@@ -5,8 +5,8 @@ Target (Westley): exhausted by 21:00 EDT 2026-10-23; checkpoint 16:00 EDT (DEC-c
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total: $61.68 of $200 (rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $47.99 (recomputed 2026-10-23 by parsing every row: 130 rows), plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 the record-files TD edit and stack merge $0.50, the landing clerk 3 stop $0.10 and records batch 20 $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
-In flight (caps, not spent, a separate line from the rowed total): $37 across six rows marked (pending): pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, landing clerk 3b $8, landing clerk 5 $6, records batch 21 $6; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and the combined landing clerk row by the three ugfnsm rows, none counted.
+Running total: $87.01 of $200 (batch 22b: $61.68 + $25.329 = $87.009; the previous total $61.68 plus the 20 ACTUAL rows of 2026-10-23 added below, $25.329; the two batch_review rows (est $5.52 and $1.52 at batch rates) are estimates, PENDING, outside the total; previous total: rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $47.99 (recomputed 2026-10-23 by parsing every row: 130 rows), plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 the record-files TD edit and stack merge $0.50, the landing clerk 3 stop $0.10 and records batch 20 $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
+In flight (caps, not spent, a separate line from the rowed total): $29 across five rows marked (pending) (landing clerk 3b $8 landed 2026-10-23 and is settled by its two ACTUAL rows): pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, landing clerk 5 $6, records batch 21 $6; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and the combined landing clerk row by the three ugfnsm rows, none counted.
 Plus two crashed inv-landview runs, cost unknown, plus runs still pending.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -153,9 +153,31 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK engineer userdir-fix skip fixture (push/harness-userdir) | claude-sonnet-5-5 | $1 | $0.113 | 11 turns, success, push/harness-userdir 40e3544c (22 passed built; 20 passed + 2 skipped on a fresh tree) |
 | 2026-10-23 | SDK landing clerk 4 rerun | claude-sonnet-5-5 | $8 | $0.228 | final-turn figure; gate passed clean, 28 min suite stage, stopped before the push on gate-left .import dirt |
 | 2026-10-23 | SDK landing clerk 4 continuation (waiver, push) | claude-sonnet-5-5 | $3 | $0.129 | 10 turns, success, LANDED main 60923594 (7 pieces: swarm-config, junk, legacy-toys, legacy-scenes, keep-red-evidence, lane-plays-scope, record-files; 643 files) |
-| 2026-10-23 | SDK landing clerk 3b (fresh worktree: land-one-projection + facing-arrow + ground-one-colour + groundpick-step) | claude-sonnet-5-5 | $8 | (pending) |   |
+| 2026-10-23 | SDK landing clerk 3b (fresh worktree: land-one-projection + facing-arrow + ground-one-colour + groundpick-step) | claude-sonnet-5-5 | $8 | (superseded: the two ACTUAL rows below, run 1 $0.285 and continuation $0.319; none counted here) |   |
 | 2026-10-23 | SDK landing clerk 5 (HARNESS-gate-venv-link + HARNESS-gate-userdir-fix) | claude-sonnet-5-5 | $6 | (pending) |   |
 | 2026-10-23 | records batch 21 (records.lock) | claude-sonnet-5-5 | $6 | (pending) |   |
+| 2026-10-23 | SDK landing clerk 3b run 1 (gate clean, stopped on dirt) | claude-sonnet-5-5 | - | $0.285 | 5 turns reported; gate ran in its shell |
+| 2026-10-23 | SDK Fable audit of 13 audit4 highs | claude-fable-5-1 | - | $4.074 | 38 turns, success |
+| 2026-10-23 | SDK test writer HARNESS-cost-report | claude-sonnet-5-5 | - | $0.431 | 19 turns push/harness-costreport-tests 240564ac |
+| 2026-10-23 | SDK test writer PROTO-landscape-lakefill | claude-sonnet-5-5 | - | $0.238 | 12 turns push/proto-lakefill-tests 7218f105 |
+| 2026-10-23 | SDK landing clerk 3b continuation | claude-sonnet-5-5 | - | $0.319 | (25 turns), LANDED main 82389338 + records c7d35d3f (land-one-projection, facing-arrow, ground-one-colour, groundpick-step); s132 red also on main, three pairs not one pixel |
+| 2026-10-23 | SDK builder sightdisc fill-the-key follow-up | claude-sonnet-5-5 | - | $0.179 | 16 turns, stopped at test-defect :228, uncommitted in wt/sd-build |
+| 2026-10-23 | SDK builder HARNESS-cost-report | claude-sonnet-5-5 | - | $0.223 | 12 turns push/harness-costreport |
+| 2026-10-23 | SDK builder PROTO-landscape-lakefill | claude-sonnet-5-5 | - | $0.147 | 11 turns push/proto-lakefill 38242c7d |
+| 2026-10-23 | SDK test writer sightdisc TD-3 assertion | claude-sonnet-5-5 | - | $0.138 | 11 turns push/vg-a-sightdisc-tests2 8ed1786f |
+| 2026-10-23 | SDK scout s132 three pairs | claude-sonnet-5-5 | - | $0.146 | 9 turns |
+| 2026-10-23 | SDK Fable second audit LAB-CONTRACT-unit-pos-batch | claude-fable-5-1 | - | $4.057 | 23 turns SOUND WITH AMENDMENTS, 2 high 6 medium 6 low |
+| 2026-10-23 | SDK builder sightdisc clamp + mask check | claude-sonnet-5-5 | - | $0.263 | 18 turns push/vg-a-sightdisc 743e4f35; mask is 2D from same projected points (FINDING, landing stops) |
+| 2026-10-23 | SDK test writer sightdisc clip tests | claude-sonnet-5-5 | - | $0.231 | 12 turns push/vg-a-sightdisc-tests3 4d7ff775 |
+| 2026-10-23 | SDK builder sightdisc clip fix | claude-sonnet-5-5 | - | $0.297 | 21 turns stopped before commit, low-camera test premise (disc contains camera) |
+| 2026-10-23 | SDK test writer sightdisc mask rings test | claude-sonnet-5-5 | - | $0.164 | 12 turns push/vg-a-sightdisc-tests4 fabb673b |
+| 2026-10-23 | SDK builder sightdisc ring check | claude-sonnet-5-5 | - | $0.176 | 16 turns push/vg-a-sightdisc c019e6d5, sight_discs_failed 0 at 300 and 3000, 0 triangulation msgs |
+| 2026-10-23 | SDK Fable spec audit startforce_rev2 | claude-fable-5-1 | - | $2.634 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK Fable spec audit layerspot_route_rev3 | claude-fable-5-1 | - | $4.150 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK Fable spec audit harness_coverage_spec_rev2 | claude-fable-5-1 | - | $2.473 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK Fable spec audit lane_u_spec_rev3 | claude-fable-5-1 | - | $4.704 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | batch_review audit-epics 22 epics | claude-fable-5-1 | - | est $5.52 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job, not yet read from the console |
+| 2026-10-23 | batch_review story-reviews 38 shots | claude-sonnet-5-5 | - | est $1.52 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job, not yet read from the console |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
