@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-104-01@1aaaa3, R-104-03@9dae08, R-104-04@6bbcd1
 
 # Plan item A6, unit A6b (docs/northstar/plans/2026-09-30-mission-plays-plan.md,
 # Wave A): the HUD of res://scenes/tactical_c/tactical_view.tscn on a live

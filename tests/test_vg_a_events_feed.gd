@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-104-01@1aaaa3, R-104-02@03d7aa, R-104-03@9dae08, R-127-04@db7974
 
 # VG-A piece A8. Proves S-104 / R-104-01 (a quiet ticker of four beats and nothing else at launch), R-104-02
 # (a banner appears and clears within 5 s; spec: 4 s), R-104-03 (elapsed mission time mm:ss, 20 ticks/s), R-127-04
