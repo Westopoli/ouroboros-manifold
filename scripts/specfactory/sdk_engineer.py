@@ -56,7 +56,8 @@ def build_options(a: argparse.Namespace, key: str | None) -> dict:
     return dict(
         cwd=str(a.worktree), model=a.model, max_turns=a.max_turns, max_budget_usd=a.max_budget_usd,
         tools=sorted({t.split("(")[0] for t in allowed}), allowed_tools=allowed, permission_mode="acceptEdits",
-        setting_sources=["project"], system_prompt={"type": "preset", "preset": "claude_code"},
+        setting_sources=["project"], max_buffer_size=16 * 1024 * 1024,  # DRAFT-sdk-buffer-bytes; FINDING-sdk-engineer-buffer-1mb
+        system_prompt={"type": "preset", "preset": "claude_code"},
         env={"ANTHROPIC_API_KEY": key or "<read from ~/.config/anthropic/api_key at run time>"})
 
 
