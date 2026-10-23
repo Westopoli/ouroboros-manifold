@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://brs8in4lhnevd"]
 
 [ext_resource type="Script" uid="uid://fjeb4yiunr1c" path="res://scenes/world/time_jump_sequencer.gd" id="1"]
-[ext_resource type="Script" uid="uid://dvghexf64x8xd" path="res://scenes/debug/test_time_jump.gd" id="2"]
+[ext_resource type="Script" uid="uid://dvghexf64x8xd" path="res://legacy/scenes/debug/test_time_jump.gd" id="2"]
 
 [node name="TestTimeJump" type="Control" unique_id=816605009]
 layout_mode = 3

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://7rk07xt5g8yk"]
 
-[ext_resource type="Script" uid="uid://c3apafkgegjdf" path="res://scenes/debug/test_chronicle_scroll.gd" id="1"]
+[ext_resource type="Script" uid="uid://c3apafkgegjdf" path="res://legacy/scenes/debug/test_chronicle_scroll.gd" id="1"]
 
 [node name="TestChronicleScroll" type="Control" unique_id=1158820806]
 layout_mode = 3
