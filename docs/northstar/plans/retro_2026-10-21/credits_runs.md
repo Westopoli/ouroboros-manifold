@@ -5,8 +5,8 @@ Target (Westley): exhausted by 21:00 EDT 2026-10-23; checkpoint 16:00 EDT (DEC-c
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total: $59.71 of $200 (rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $46.01, plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 and the record-files TD edit and stack merge $0.50, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
-In flight (caps, not spent, a separate line from the rowed total): $26 across five rows marked (pending): combined landing clerk unit-ground-fit and no-slope-markers $6, pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, records batch 20 $3; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and are not counted.
+Running total: $61.68 of $200 (rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $47.99 (recomputed 2026-10-23 by parsing every row: 130 rows), plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 the record-files TD edit and stack merge $0.50, the landing clerk 3 stop $0.10 and records batch 20 $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
+In flight (caps, not spent, a separate line from the rowed total): $37 across six rows marked (pending): pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, landing clerk 3b $8, landing clerk 5 $6, records batch 21 $6; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and the combined landing clerk row by the three ugfnsm rows, none counted.
 Plus two crashed inv-landview runs, cost unknown, plus runs still pending.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -75,7 +75,7 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK builder VG-C-no-slope-markers | claude-sonnet-5-5 | $5 | $0.21 | 19 turns, success, push/vg-c-noslope 74c68e6b; pre_gate REJECT noise (.import dirt) and base (needs merge main) |
 | 2026-10-23 | SDK ruler VG-C-unit-ground-fit | claude-sonnet-5-5 | $2 | $0.099 | 5 turns, success; ruling C, goes to the Architect |
 | 2026-10-23 | SDK TD edit VG-C-unit-ground-fit | claude-sonnet-5-5 | $2 | $0.128 | 10 turns, success |
-| 2026-10-23 | SDK combined landing clerk unit-ground-fit + no-slope-markers | claude-sonnet-5-5 | $6 | (pending) |   |
+| 2026-10-23 | SDK combined landing clerk unit-ground-fit + no-slope-markers | claude-sonnet-5-5 | $6 | (superseded) | replaced by the three ugfnsm landing clerk rows below |
 | 2026-10-23 | SDK second spec auditors x8 | claude-sonnet-5-5 | $1.0 each | $1.436 |  |
 | 2026-10-23 | SDK test writer VG-C-land-marks | claude-sonnet-5-5 | $3 | $0.815 | 29 turns, success |
 | 2026-10-23 | SDK test writer VG-C-facing-arrow | claude-sonnet-5-5 | $3 | $0.733 | 30 turns, success, push/vg-c-facingarrow-tests 907662c3 (old geometry; redo after amendment) |
@@ -142,7 +142,20 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK pins line test_merge_gate_support.py | claude-sonnet-5-5 | $1 | $0.088 | 7 turns, success, push/harness-recordfiles cae8ae6e (Rule pins: R-021-01@39f7e7) |
 | 2026-10-23 | records batch 19 | claude-sonnet-5-5 | $8 | $1.071 | 48 turns, success, main 63e0a5ae |
 | 2026-10-23 | SDK landing clerk 4 first run | claude-sonnet-5-5 | $8 | $0.172 | 15 turns, success; stopped before the gate: tests/test_showcase_legacy_scenes.gd has no owner row |
-| 2026-10-23 | records batch 20 (owner rows for the showcase test files) | claude-sonnet-5-5 | $3 | (pending) |   |
+| 2026-10-23 | records batch 20 (owner rows for the showcase test files) | claude-sonnet-5-5 | $3 | ~$0.40 | cost not captured in this view, estimate |
+| 2026-10-23 | SDK test writer follow-up HARNESS-gate-venv-link (push/vg-venvlink-tests2) | claude-sonnet-5-5 | $2 | $0.191 | 10 turns, success, push/vg-venvlink-tests2 53de3142 (R5 red on base, green on built) |
+| 2026-10-23 | SDK builder merge and re-check HARNESS-gate-venv-link (push/vg-venvlink-b) | claude-sonnet-5-5 | $3 | $0.153 | 11 turns, success, push/vg-venvlink-b 5c251eb1 (113 passed; pre_gate OK; stale-doc lines: programme :57, spec :448) |
+| 2026-10-23 | SDK engineer HARNESS-gate-userdir-fix (push/harness-userdir) | claude-sonnet-5-5 | $3 | $0.196 | 11 turns, success; no fix: the two ERRORs are an unbuilt pipe/ouroboros_pipe in a fresh worktree |
+| 2026-10-23 | SDK landing clerk ugfnsm first run (queued 1 h 40 min then gate) | claude-sonnet-5-5 | $6 | $0.284 | final-turn figure; gate passed clean, stopped before the push on dirty .import and moved main |
+| 2026-10-23 | SDK landing clerk ugfnsm continuation (records-only merge, by-hand plays C, push) | claude-sonnet-5-5 | $3 | $0.083 | 3 turns; stopped at step 2: incoming main has S-246.py (a lane D play) so not records-only; Architect waiver asked |
+| 2026-10-23 | SDK landing clerk 3 stopped by the Dispatcher | claude-sonnet-5-5 | $8 | ~$0.10 | gate 5 min in would reject: ground-one-colour carries the no-slope-markers tests but not its build; relaunch after landing 1 |
+| 2026-10-23 | SDK landing clerk ugfnsm 2nd continuation (waiver, by-hand C plays, known-red removal, push) | claude-sonnet-5-5 | $3 | $0.145 | 12 turns, success, LANDED main 080e7507 (ground-fit + no-slope-markers; s132 red also on main; known-red line removed) |
+| 2026-10-23 | SDK engineer userdir-fix skip fixture (push/harness-userdir) | claude-sonnet-5-5 | $1 | $0.113 | 11 turns, success, push/harness-userdir 40e3544c (22 passed built; 20 passed + 2 skipped on a fresh tree) |
+| 2026-10-23 | SDK landing clerk 4 rerun | claude-sonnet-5-5 | $8 | $0.228 | final-turn figure; gate passed clean, 28 min suite stage, stopped before the push on gate-left .import dirt |
+| 2026-10-23 | SDK landing clerk 4 continuation (waiver, push) | claude-sonnet-5-5 | $3 | $0.129 | 10 turns, success, LANDED main 60923594 (7 pieces: swarm-config, junk, legacy-toys, legacy-scenes, keep-red-evidence, lane-plays-scope, record-files; 643 files) |
+| 2026-10-23 | SDK landing clerk 3b (fresh worktree: land-one-projection + facing-arrow + ground-one-colour + groundpick-step) | claude-sonnet-5-5 | $8 | (pending) |   |
+| 2026-10-23 | SDK landing clerk 5 (HARNESS-gate-venv-link + HARNESS-gate-userdir-fix) | claude-sonnet-5-5 | $6 | (pending) |   |
+| 2026-10-23 | records batch 21 (records.lock) | claude-sonnet-5-5 | $6 | (pending) |   |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 
