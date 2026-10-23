@@ -1,7 +1,0 @@
-## Assumptions made during leaf-05
-
-- **visibility plumbing**: call `compute_visibility(store, tactical_map)` once at top of `resolve_damage`, build full vis dict per tick — source: `fog_of_war.py` line 46 sig `compute_visibility(store, tactical_map)`; no per-attacker visible-set was being passed in via existing call sites. Brief said "check existing imports first; do not introduce a new import path if a working one exists" — `compute_visibility` was not yet imported in `damage.py` so added direct import (same style as `movement` / `ability` imports already in file).
-- **gate placement**: visibility check placed AFTER range check, BEFORE `has_combat_los` (navmesh) check — source: spec lines 141-145 say "If `T not in compute_visibility()[A.uid]` → skip attack. Else apply existing `has_combat_los`." Order: range → visibility → navmesh LOS.
-- **skip semantics**: when gate fails, `continue` the per-uid loop (no damage accumulated, attack timer not reset, no backswing). This matches existing "out of range" / "navmesh blocked" skip behavior. No "return 0" branch needed since damage isn't accumulated.
-- **cover_density() method retained**: did not delete the METHOD from tactical_map.py (it's in `do_not_edit`). Only removed the 2 sample CALLS from damage.py per brief.
-- **visibility dict shape**: `visibility.get(uid, ())` defensive — if attacker has no entry (shouldn't happen for active units but guards against edge), treat as no visible targets.

@@ -142,7 +142,7 @@ func _run_tests() -> void:
 			# -> rect size 2000 px, origin = (0-4000)*0.25 + 960, (0-4000)*0.25 + 540
 			var r: Rect2 = layer.call("screen_rect", 0.25, Vector2(4000, 4000))
 			_assert(r.position.distance_to(Vector2(-40, -460)) < 0.5 and r.size.distance_to(Vector2(2000, 2000)) < 0.5,
-				"3d: screen rect follows _world_scale and _camera (1920x1080 screen); got " + str(r))
+				"3d: screen rect follows _world_scale and _camera (flat formula, space and the layer alone); got " + str(r))
 			var r2: Rect2 = layer.call("screen_rect", 0.5, Vector2(0, 0))
 			_assert(r2.position.distance_to(Vector2(960, 540)) < 0.5 and r2.size.distance_to(Vector2(4000, 4000)) < 0.5,
 				"3d: screen rect recomputed for another scale and camera; got " + str(r2))
@@ -175,6 +175,32 @@ func _run_tests() -> void:
 			_assert(v.qa_state().get("ground_layer", {}).get("present", true) == false,
 				"3d: clearing terrain (a space mission after a ground one) removes the layer")
 		v.queue_free()
+
+	# --- TD-VG-C-land-one-projection: the flat screen_rect formula above holds only in space (and for the layer alone);
+	# on land the ground host's mesh is the terrain, so the flat layer is hidden and named in qa_state()["hidden_on_land"].
+	var cfg = root.get_node("EraConfig")
+	cfg.set_era(cfg.GROUND_ERA_ID)
+	var fxs = load("res://tests/support/vg_c_fixture.gd")
+	var lv: Node = (load(VIEW_PATH) as PackedScene).instantiate()
+	root.add_child(lv)
+	await process_frame
+	lv.set_process(false)
+	await process_frame
+	cfg.set_era(cfg.GROUND_ERA_ID)
+	var lf: Dictionary = fxs.frame().duplicate(true)
+	lf["player_faction"] = 0
+	lf["map"]["canvas"] = 1000.0
+	lv.load_frame(lf)
+	lv.set_terrain(fxs.terrain())
+	await process_frame
+	var land_layer = lv._ground_layer
+	_assert(land_layer != null and not land_layer.visible, "TD-VG-C-land-one-projection: the flat TerrainLayer is visible on land")
+	if land_layer != null:
+		_assert(land_layer.name == "TerrainLayer", "TD-VG-C-land-one-projection: the terrain layer node is named %s, hidden_on_land carries TerrainLayer" % land_layer.name)
+	var hid = lv.qa_state().get("hidden_on_land", null)
+	_assert(hid is Array and hid.has("TerrainLayer"), "TD-VG-C-land-one-projection: hidden_on_land is %s, want TerrainLayer in it" % [hid])
+	lv.queue_free()
+	cfg.set_era(cfg.SPACE_ERA_ID)
 
 	# --- era items the audit/pre-flight fixed (3e/3f), reachable from Godot
 	var ec := load(ERA_CONFIG_PATH)

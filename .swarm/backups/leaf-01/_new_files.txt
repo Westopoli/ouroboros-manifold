@@ -1,2 +1,0 @@
-build/pyinstaller_win.spec
-simulation/test_b5_pyinstaller_specs.py
