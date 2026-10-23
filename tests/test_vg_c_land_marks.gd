@@ -65,6 +65,10 @@ extends "res://tests/support/vg_c_case.gd"
 #     set to greek_placeholder (as the plays' --era does), load_tactical_live, terrain() and tactical_frame() into a host.
 #     Renderer-only (the dummy renderer is no measure of a Vulkan frame): headless prints a RENDER-ONLY line and checks that the
 #     accessor exists; the sliced work is measured under OM_QA_RENDERER=vulkan xvfb-run -a.
+# (10) SPACE HOST LIVE STEP (Fable pre-landing review row 15): with OM_SPACE_VIEW=1 tactical_view's _ground3d is the SpaceView
+#     host (tactical_view.gd _host_space_view sets _space_hosted = true), which has no occluded_ids(); the spec paragraph says the
+#     space path is unchanged (visible = true). test_space_host_apply_motion_survives hosts a stub that lacks occluded_ids() exactly
+#     as SpaceView does (the real SpaceView needs a C-sim space_field, not available headless here), assigned as that function does.
 # Fixture frame (host and view): faction 0 owns all of 1 (behind), 2 (front), 3 (8 wu behind the crest); ids and points
 # below in _frame(). Camera = the rig default after set_terrain (height 3000, pitch 50 degrees).
 # Positive control (paragraph): a flat fixture gives an empty occluded_ids. The pick-distance controls (test_pick_geometry)
@@ -166,6 +170,7 @@ func _run() -> void:
 	await test_occlusion_cost()
 	await test_view_marks_land()
 	await test_view_marks_space_control()
+	await test_space_host_apply_motion_survives()
 
 
 # GREEN on main: GroundPick on the ridge fixture (R-001-06; the paragraph's "compares the pick distance to the unit distance").
@@ -493,4 +498,38 @@ func test_view_marks_space_control() -> void:
 	if mv is Dictionary:
 		for id in ["1", "2", "3"]:
 			_check((mv as Dictionary).get(id, {}) == {"body": true, "ring": true}, "R-001-06 CONTROL: space era unit %s keeps Body and ring, got %s" % [id, (mv as Dictionary).get(id)])
+	v.queue_free()
+
+
+class SpaceHostStub extends Node:
+	func to_screen(wx: float, wy: float, _layer: int = -1) -> Vector2:
+		return Vector2(wx, wy)
+
+
+# CONTROL: a SpaceView-like host (no occluded_ids(), _space_hosted true) survives a live _apply_motion step and leaves every
+# own unit's node visible (the space path is unchanged), see choice (10).
+func test_space_host_apply_motion_survives() -> void:
+	var cfg = root.get_node("EraConfig")
+	cfg.set_era(cfg.SPACE_ERA_ID)
+	var v: Node = (load("res://scenes/tactical_c/tactical_view.tscn") as PackedScene).instantiate()
+	root.add_child(v)
+	await process_frame
+	v.set_process(false)
+	await process_frame
+	v.load_frame(_frame())
+	await process_frame
+	var host := SpaceHostStub.new()
+	_check(not host.has_method("occluded_ids"), "R-001-06 CONTROL: the stub space host lacks occluded_ids() as SpaceView does")
+	v.add_child(host)
+	v._ground3d = host
+	v._space_hosted = true
+	v._live_stepped = true
+	v._motion.push_frame(_frame())
+	v._apply_motion()
+	for id in [1, 2, 3]:
+		var n = v.get_node("UnitVisuals").unit_node(id)
+		_check(n != null and n.visible, "R-001-06: space host, one live _apply_motion step keeps unit %d's node visible (space path unchanged)" % id)
+	v._ground3d = null
+	v._space_hosted = false
+	host.queue_free()
 	v.queue_free()
