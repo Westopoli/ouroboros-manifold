@@ -1,3 +1,4 @@
+# Rule pins: R-104-01@1aaaa3
 """Story play S-087 (E-11): "Every unit on both sides flinches, obeys, then shoots the nearest thing in
 range." Moment: a few hundred ticks into the first mission, shots are in the air. Needs K-a's fire events
 and lane A's shot effects: qa_state `shots_in_flight` (spec section 2 inventory) counts shots in flight and

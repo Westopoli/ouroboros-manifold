@@ -92,7 +92,7 @@ Outputs: tech level in the faction entry.
 Open flags: none. Knowledge Lost is stochastic and its constants (eligibility 20.0 economy or a 10.0 population fall over 50 ticks, probability 0.03 per eligible tick, tech −5.0, cooldown 100) are a first tuning; R-045-09 is the target Westley set and the number to retune against.
 
 ### S-046 — Archetypes spend tech differently
-Flag closed, rule text pending: Q-048-01, the economy multiplier is wired into ALG-05 growth. The rule below is what the tests read today.
+Flag closed: Q-048-01, the economy multiplier is wired into ALG-05 growth. The rule below is what the tests read today.
 As a commander, I want a conqueror's technology to show up as firepower and a fortifier's as walls and wealth, so that the same number tells different stories.
 
 Rules

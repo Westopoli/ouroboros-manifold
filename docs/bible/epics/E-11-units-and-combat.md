@@ -93,7 +93,7 @@ Rules
 - R-084-03  Given a Bombard attack centered on a target, When resolved, Then every enemy on the Bombard's layer within 150 wu of the target takes full per-target damage, and the total across all targets is capped at 4 × base damage (70), applied in target order until the cap.
 - R-084-04  Given a unit fires, When the attack lands, Then the unit pauses movement for 0.5 s (backswing).
 - R-084-05  Given a target behind cover, When hit by an attacker who can see it, Then damage is unmodified (E-01 R-007-04).
-- R-084-06  Given elevation, When damage is computed in the Settled Reach, Then no elevation bonus applies; the engine computes the tier difference and the era flag is off.
+- R-084-06  Given elevation, When damage is computed, Then no elevation bonus applies in any era: in the Settled Reach elevation affects sensors only (E-12 R-091-03), and the ground eras have no elevation tiers (E-12 R-091-02, Q-091-01); the era pack's elevation-damage flag is off everywhere and nothing reads a tier for damage. The flag `om_era_elevation_damage_bonus_enabled` stays a dead API until the contract piece HARNESS-dead-elevation-flag removes it (Architect reading 2026-10-23; Westley may veto).
 - R-084-07  Given DPS, When read for the HUD or tuning, Then it is base damage / interval.
 
 Inputs: attacker and target stats, states, positions.
@@ -231,7 +231,7 @@ Open flags: none. Q-174-02 closed 2026-10-21 (register: a named draft Westley tu
 | Structures | E-22 (S-168, S-170, S-174) | Position, footprint, layer, hit points | |
 | Ability activation | Player (E-13 command) or enemy macro | unit ids | on cooldown or dead: rejected |
 | Positions, layers, visibility | E-01, E-12, E-13 | | |
-| Elevation flag | Era pack | bool, false for the Settled Reach | |
+| Elevation flag | Era pack | bool, false in every era (R-084-06) | |
 
 ## Outputs
 
