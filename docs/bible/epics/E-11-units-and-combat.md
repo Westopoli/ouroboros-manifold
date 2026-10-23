@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-088 (how units read on screen, squads, ability cues) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags listed at the foot and one missing reference (S-088). S-081, S-084, S-085 and S-086 have no open flags; gate to be rerun. The roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones. The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
+**Gate verdict: not passed.** Blocked on the open flags listed at the foot and one missing reference (S-088). S-081, S-084, S-085 and S-086 have no open flags; gate to be rerun. The roster flag Q-082-03 (how a 20 to 40 type roster is shaped) is the load-bearing one; Q-082-04 and Q-082-05 closed 2026-10-21 (register). The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
 
 ## Purpose
 
@@ -30,7 +30,7 @@ Flag closed, rule text pending: Q-081-01, Siege to Strike is 0.20 at launch, to 
 As a commander, I want Strike to beat Siege, Siege to beat Line, and Line to beat Strike, with none of it a death sentence, so that composition matters and positioning can still overturn it.
 
 Rules
-- R-081-01  Given an attacker of category A and a target of category B, When damage is dealt, Then damage = base damage × M[A][B] with M: Strike→Strike 1.0, Strike→Line 0.75, Strike→Siege 1.5; Line→Strike 1.5, Line→Line 1.0, Line→Siege 0.75; Siege→Strike [Q-081-01: 0.20 in code, 0.75 in the bible], Siege→Line 1.5, Siege→Siege 1.0.
+- R-081-01  Given an attacker of category A and a target of category B, When damage is dealt, Then damage = base damage × M[A][B] with M: Strike→Strike 1.0, Strike→Line 0.75, Strike→Siege 1.5; Line→Strike 1.5, Line→Line 1.0, Line→Siege 0.75; Siege→Strike (Q-081-01 closed 2026-09-12: 0.20 at launch, tuned in playtest), Siege→Line 1.5, Siege→Siege 1.0.
 - R-081-02  Given equal power of Line versus Strike in a straight fight, When resolved, Then Line wins with at least 30 percent of its HP remaining; the same for Siege versus Line and Strike versus Siege from the flank.
 - R-081-03  Given a Bastion attacked by 4 Raiders from the flank, When resolved, Then the Bastion survives at least 20 s (the Siege exception to Strike-beats-Siege).
 - R-081-04  Given any matchup, When resolved, Then time to kill at a 1.5× advantage is 30 to 40 percent shorter than at 1.0×.
@@ -43,7 +43,7 @@ Open flags: none.
 As a commander, I want a roster of 20 to 40 unit types per era, each with a job I can learn, so that a force offers many options and still reads at a glance.
 
 Rules
-- R-082-01  Given the Settled Reach baseline, When loaded, Then it contains at least these six types with this table, checked by a contract test; the rest of each era's roster is set by Q-082-05:
+- R-082-01  Given the Settled Reach baseline, When loaded, Then it contains at least these six types with this table, checked by a contract test; the rest of each era's roster is set by the closed Q-082-05 (each launch era carries its own 20 to 40):
 
 | Unit | Category | Role | HP | Damage | Interval s | Range wu | Speed wu/s | Sensor wu | Layer transition s | AoE wu |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -60,13 +60,13 @@ Rules
 - R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack. Direction changed 2026-10-13, rewrite pending: area damage becomes a knob with its own range and shape, attachable to any role or a single unit (Westley, 2026-10-13; Q-082-06); the rule above is what the game does today.
 - R-082-10  Shape ruled (a cone from the attacker about its facing; Westley, 2026-10-15, Q-082-06 closed), numbers DRAFT (Westley, 2026-10-13: "AOE damage (with it's own range), like a cone shaped attack, something that can be added to any unit role or specific individual unit"; Q-082-06): Given a type with a cone set (range above 0; DRAFT-aoe-cone-range 300, DRAFT-aoe-cone-deg 45, DRAFT-aoe-cone-share 1.0), When it attacks, Then its target takes the direct hit and every other enemy inside the circular sector of that range and half-angle about the attacker's facing, within the type's reach offsets, takes the disc's per-victim damage (ALG-60 with the category multiplier, as the disc) times the share, in unit-id order until the ALG-61 cap; a cone replaces the type's disc; range 0 restores it. Shape, numbers and which launch types carry a cone are Westley's after the skill lab shows the effect.
 - R-082-06  Given an expansion pack adds a unit type, When loaded, Then it declares category, role, the stats above, and one ability, and no engine code changes.
-- R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, the declarations of R-082-09, and one ability, and the roster passes the balance scoring mechanism [Q-082-04]; an era built around a named conflict may weight its roster toward that conflict's sides [Q-082-05]; whether worker types count toward the 20 to 40 is Q-167-03.
+- R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, the declarations of R-082-09, and one ability, and the roster passes the balance scoring mechanism (Q-082-04 closed 2026-10-21: the interim power formula plus matchup simulations); an era built around a named conflict may weight its roster toward that conflict's sides (Q-082-05 closed 2026-10-21: each launch era carries its own 20 to 40); worker types do not count toward the 20 to 40 for the beta (Q-167-03 closed 2026-10-07: workers are a separate list).
 - R-082-08  Given Tier 1 and Tier 3, When profiles are read, Then HP and damage are 0.8× and 1.2× the Tier 2 values and all other ratios scale uniformly.
 - R-082-09  Given a unit type added by an era pack or an expansion, When it is loaded, Then it also declares its movement kind (walking, or flying or swimming; E-01 R-001-07), its reach (E-01 S-164), whether it can ping (E-01 S-162), its cost (S-203) and its population weight (E-22 S-169), and no engine code changes.
 
 Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
-Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), workers sit outside the roster for the beta (Westley, 2026-10-07).
+Open flags: Q-082-03 (categories, roles, and the roster invariants past six types); Q-082-04 and Q-082-05 closed 2026-10-21 (register: the interim power formula plus matchup simulations; each launch era carries its own 20 to 40); workers sit outside the roster for the beta (Westley, 2026-10-07).
 
 ### S-083 — Stats, trait cards, ability
 As a commander, I want to unlock trait cards and build a force that plays my way, so that units differ in kind, and never in a way that beats positioning.
@@ -173,7 +173,7 @@ As a commander in the land era, I want unit types that walk, so that slopes, ste
 Design decided 2026-10-02, not scheduled for building. This story is for the land era. The space era's types fly.
 
 Rules
-- R-201-01  Given the land era pack, When its roster is read, Then it contains unit types whose movement kind is walking (E-01 R-001-07), in the same three categories and under the same roster checks as the space era's roster, because "the units and rules for them will be essentially the same" (Westley, 2026-10-02); the six space types re-skinned with the space era's table (Westley, 2026-10-03), plus the vision units a ground era needs because it has no ping (E-01 R-005-12): seer-type units, and a simple placeholder scout for now (Westley, 2026-10-05: "correct not the same six"; "a simple placeholder unit that's a scout is sufficient for now") [Q-201-02: the seer type's stats and cost].
+- R-201-01  Given the land era pack, When its roster is read, Then it contains unit types whose movement kind is walking (E-01 R-001-07), in the same three categories and under the same roster checks as the space era's roster, because "the units and rules for them will be essentially the same" (Westley, 2026-10-02); the six space types re-skinned with the space era's table (Westley, 2026-10-03), plus the vision units a ground era needs because it has no ping (E-01 R-005-12): seer-type units, and a simple placeholder scout for now (Westley, 2026-10-05: "correct not the same six"; "a simple placeholder unit that's a scout is sufficient for now") (closed 2026-10-21, Q-201-02: a simple placeholder scout now; the seer's stats and cost are designed with the land roster).
 - R-201-02  Given a walking unit, When it changes layer, Then it does so only by walking a slope (E-01 R-001-07), the time the slope takes is its length over the unit's speed, and the unit type's layer transition time plays no part (E-01 R-004-07).
 
 Inputs: the land era pack's unit profile table.
@@ -201,12 +201,12 @@ As an economy player, I want each unit type to cost the three resources by its c
 Design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in two of the three resources, by its role, in the fixed pattern of E-22 R-171-03; Strike, Line and Siege are the unit families (E-22 S-171) [Q-159-08: the amounts; roles inside a category are Q-082-03].
-- R-203-02  Given a unit type, When it counts against the population cap, Then it counts by its population weight (E-22 S-169) [Q-169-01: the weight per type].
+- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in two of the three resources, by its role, in the fixed pattern of E-22 R-171-03; Strike, Line and Siege are the unit families (E-22 S-171) (closed 2026-10-21, Q-159-08: each role costs two of the three resources in a fixed pattern; amounts stay placeholders; the roles inside a category are Q-082-03, still open).
+- R-203-02  Given a unit type, When it counts against the population cap, Then it counts by its population weight (E-22 S-169) (closed 2026-10-21, Q-169-01: a named draft, Westley tunes it by feel).
 
 Inputs: era pack cost table; population weights.
 Outputs: cost and weight in the loaded profile, read by E-22 S-170 and the economy screen.
-Open flags: Q-159-08, Q-169-01, Q-167-01 (what a worker costs).
+Open flags: none. Q-159-08, Q-169-01 and Q-167-01 (what a worker costs) closed 2026-10-21 (register; amounts are named drafts).
 
 ### S-204 — Buildings are things on the map
 As a commander, I want walls, gates, towers and production buildings to be things on the map that block, are seen and can be attacked, so that an assault has something to break and a defense has something to stand behind.
@@ -214,14 +214,14 @@ As a commander, I want walls, gates, towers and production buildings to be thing
 Design decided 2026-10-02, not scheduled for building. Walls, gates and towers are written for land maps (E-22 S-174). That they block is E-13 S-097, and that they are seen is E-12 S-205.
 
 Rules
-- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points; it occupies and blocks its own layer and some layers above it, up to a height, as cover does (E-01 R-007-01; Westley, 2026-10-07: "#4: B") [Q-174-02: its statistics].
-- R-204-02  Given an enemy that can see a structure and has it within reach, When it attacks the structure, Then the structure takes damage, and at 0 HP it falls: it stops blocking (E-13 S-097) and stops being seen (E-12 S-205) [Q-174-02: the damage a structure takes from each category].
+- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points; it occupies and blocks its own layer and some layers above it, up to a height, as cover does (E-01 R-007-01; Westley, 2026-10-07: "#4: B") (closed 2026-10-21, Q-174-02: a named draft, Westley tunes it by feel).
+- R-204-02  Given an enemy that can see a structure and has it within reach, When it attacks the structure, Then the structure takes damage, and at 0 HP it falls: it stops blocking (E-13 S-097) and stops being seen (E-12 S-205) (closed 2026-10-21, Q-174-02: a named draft, Westley tunes it by feel).
 - R-204-03  Given an idle or attack-moving unit with an enemy structure within its reach and visible to its side, When targets are evaluated, Then it attacks an enemy unit in reach first, and an enemy structure only when no enemy unit is in reach (Westley, 2026-10-07: "#5: B").
-- R-204-04  Given a tower with an enemy within its range that its side sees, When its turn comes, Then [Q-174-02: whether a tower fires, and its damage, range and interval].
+- R-204-04  Given a tower with an enemy within its range that its side sees, When its turn comes, Then (closed 2026-10-21, Q-174-02: a named draft, Westley tunes it by feel).
 
 Inputs: structure records (E-22 S-168, S-170, S-174); unit states; visibility (E-12).
 Outputs: structure hit points and destroyed events in the tick delta.
-Open flags: Q-174-02.
+Open flags: none. Q-174-02 closed 2026-10-21 (register: a named draft Westley tunes by feel).
 
 ## Inputs
 
@@ -274,7 +274,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-082-03, Q-082-04, Q-082-05, Q-083-03, Q-087-01, Q-008-05, Q-201-01, and from E-22 Q-159-08, Q-159-10, Q-167-01, Q-167-03, Q-169-01, Q-174-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-082-03, Q-083-03 and Q-087-01 (the rest closed 2026-10-21). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
