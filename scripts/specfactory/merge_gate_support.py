@@ -912,8 +912,9 @@ def playthrough_check(candidate: Path, base_ref: str, *, python_exe: str, timeou
     except subprocess.TimeoutExpired:
         return False, f"timed out after {timeout}s"
     secs = f"{time.monotonic() - t0:.0f}s"
-    known = {l.strip() for l in known_red_path.read_text().splitlines()
-             if l.strip() and not l.startswith("#")} if known_red_path.exists() else set()
+    # See also: playthrough_known_red.txt (the <test id> :: <row id> form)
+    known = {l.split(" :: ")[0].strip() for l in known_red_path.read_text().splitlines()
+             if l.strip() and not l.startswith("#") and l.split(" :: ")[0].strip()} if known_red_path.exists() else set()
     passed, red = set(), set()
     for line in proc.stdout.splitlines():
         m = re.match(r"(PASSED|FAILED|ERROR) (\S+)", line)

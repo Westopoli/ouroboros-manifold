@@ -212,12 +212,12 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     assert import_line < accept_line, desktop.stdout
     assert "--import" in args_log.read_text()
     assert "--headless" in args_log.read_text()
-    assert (repo / ".venv").is_symlink(), "candidate should get the harness venv linked in"
-    assert (repo / ".venv").resolve() == fake_venv.resolve()
+    # TD-gate-venv-unlink: the gate removes the link before the playthrough stage (FINDING-gate-venv-link-vs-fresh-checkout)
+    assert not (repo / ".venv").exists() and not (repo / ".venv").is_symlink(), "no .venv may remain in the candidate"
+    assert fake_venv.is_dir(), "only the link goes, the target is untouched"
     venv_line = next(i for i, l in enumerate(desktop.stdout.splitlines()) if "venv_link" in l)
     assert venv_line < import_line, desktop.stdout
 
-    (repo / ".venv").unlink()
     args_log.write_text("")
     csim_only = subprocess.run(
         ["bash", str(GATE), str(repo), "HEAD~1", "B1"],
