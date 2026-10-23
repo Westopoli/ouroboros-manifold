@@ -168,7 +168,7 @@ For Ouroboros: T-S1 tag slate must be content-honest, capsule original, news-pos
 
 ## Conflict surfaced
 
-Check against T-S1 tag slate (`docs/research/topics/steam_tag_search_behavior_2026.md`): penalty surface around tag mis-fit must inform T-S1 final slate. If T-S1 recommends tags that materially overreach against actual Ouroboros content, tag-downvote risk and Queue trust loss flagged here applies. T-S1 needs content-honesty check pass before launch.
+Check against T-S1 tag slate (`docs/legacy/topics/steam_tag_search_behavior_2026.md`): penalty surface around tag mis-fit must inform T-S1 final slate. If T-S1 recommends tags that materially overreach against actual Ouroboros content, tag-downvote risk and Queue trust loss flagged here applies. T-S1 needs content-honesty check pass before launch.
 
 No other direct conflicts surfaced against current Wave 4 briefs.
 

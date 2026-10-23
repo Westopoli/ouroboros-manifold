@@ -125,9 +125,9 @@ The Research Lane preserves these statements as the originating analysis. The pi
 This brief feeds the locked Lieutenant System + RTS-framing-kill pivot captured in `docs/bible/game_bible.md ## In Flux`. It also feeds any future Design Lane work on:
 
 - Audience-pinning forks under the lieutenant entry — primary buyer persona shape, what the audience should feel when opening the game, what the marketing surface promises them.
-- WS4 multiplayer remaining-forks where audience preference for multiplayer shape (per-mission co-op, persistent shared world, asynchronous) is unresolved — cross-reference `docs/research/topics/mp_session_model_precedents.md`.
+- WS4 multiplayer remaining-forks where audience preference for multiplayer shape (per-mission co-op, persistent shared world, asynchronous) is unresolved — cross-reference `docs/legacy/topics/mp_session_model_precedents.md`.
 - WS3 strategic-depth forks where the audience's tolerance for simulation depth versus polish needs calibration.
-- WS5 progression-design forks where the audience's run-shape expectations (Crusader Kings 3 single-campaign-across-centuries, Wildermyth discrete chapters, Battle Brothers company-lifetime) compete — cross-reference `docs/research/topics/blue_ocean_run_shape.md`.
+- WS5 progression-design forks where the audience's run-shape expectations (Crusader Kings 3 single-campaign-across-centuries, Wildermyth discrete chapters, Battle Brothers company-lifetime) compete — cross-reference `docs/legacy/topics/blue_ocean_run_shape.md`.
 - Any future Steam-page draft, capsule copy, or marketing surface that must comply with the RTS-framing-kill decision.
 
 ## Open questions for further research

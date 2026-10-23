@@ -218,7 +218,7 @@ Surfaced this checkpoint. Load-bearing for pre-launch planning.
 
 **Pre-Zip Beta Readiness Gate** (per `docs/priority_queue.md` top-of-file Pre-Zip Gate section + CLAUDE.md project workflow): friends-ZIP → $100 Steam Direct → 30-day Steam page → launch. The 30-day Steam page directive implies Steam page goes live 30 days before launch.
 
-**T-D2 Next Fest timing requirement** (verbatim, `docs/research/topics/steam_next_fest_timing.md`): "60-120 day Steam-page-pre-fest lead time" — title needs Steam page existing + accumulating wishlist for 60-120 days BEFORE Next Fest slot to enter on momentum. Next Fest cadence Feb / Jun / Oct. October > February > June for niche-strategy per T-D2 audience-availability ranking. 8-16 week gap between Next Fest end + launch is optimal (drift outside this window degrades momentum tail).
+**T-D2 Next Fest timing requirement** (verbatim, `docs/legacy/topics/steam_next_fest_timing.md`): "60-120 day Steam-page-pre-fest lead time" — title needs Steam page existing + accumulating wishlist for 60-120 days BEFORE Next Fest slot to enter on momentum. Next Fest cadence Feb / Jun / Oct. October > February > June for niche-strategy per T-D2 audience-availability ranking. 8-16 week gap between Next Fest end + launch is optimal (drift outside this window degrades momentum tail).
 
 ### The conflict
 

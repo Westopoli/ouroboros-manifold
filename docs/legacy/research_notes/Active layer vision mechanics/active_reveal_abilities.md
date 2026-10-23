@@ -186,4 +186,4 @@ I found little direct designer commentary on active reveal abilities. What exist
 - No developer statement on why Homeworld Remastered changed the Sensors Array, why SC2 removed then returned the MULE, or why Revelation or Sensor Tower were retuned.
 - Did not find a documented case of a shipped game removing an active reveal ability outright for attention-tax reasons.
 - The Dota 2 7.41 patch coverage that surfaced in search ("U-turns on one of Valve's biggest additions") was not read and its relevance to vision is unknown.
-- The `docs/research/games/` cards give no overlap with this topic.
+- The `docs/legacy/games/` cards give no overlap with this topic.

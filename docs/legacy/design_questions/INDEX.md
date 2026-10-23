@@ -9,7 +9,7 @@
 > See `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` "Current Monetization Model" section.
 > Individual docs in this folder carry their own legacy banners where applicable.
 
-> **Folder purpose.** `docs/design_questions/` is the staging area for
+> **Folder purpose.** `docs/legacy/design_questions/` is the staging area for
 > open design questions — those actively being worked but not yet ready
 > for the bible (`docs/bible/`) or a stage spec (`docs/stage_specs/`).
 > Each file here is transient: a working doc that bridges chats and holds
@@ -96,13 +96,13 @@ shader pipeline. Possibly a follow-up to the Stage 11 amendment.
 
 The following were removed in a triage pass because their questions were
 fully captured and the docs were stale. They are not deleted from history —
-they live in `docs/random/` for reference.
+they live in `docs/legacy/random/` for reference.
 
-- `combat_visual_polish_design.md` → `docs/random/deleted/` — all 9
+- `combat_visual_polish_design.md` → `docs/legacy/random/deleted/` — all 9
   questions captured into `docs/bible_history/bible_2_00_combat.md`; Stage 12.5 spec shipped.
-- `stage_7_8_design.md` → `docs/random/deleted/` — all S7 / S7.5 / S8
+- `stage_7_8_design.md` → `docs/legacy/random/deleted/` — all S7 / S7.5 / S8
   questions captured into the respective stage specs and bible.
-- `Immortal-Gates-of-Pyre-*.jpg` (+ imports) → `docs/random/` — HUD
+- `Immortal-Gates-of-Pyre-*.jpg` (+ imports) → `docs/legacy/random/` — HUD
   reference material for the completed Stage 8 HUD design.
-- `igop_hud_reference_README.md` → `docs/random/` — admin scaffolding
+- `igop_hud_reference_README.md` → `docs/legacy/random/` — admin scaffolding
   for the Stage 8 HUD design phase.

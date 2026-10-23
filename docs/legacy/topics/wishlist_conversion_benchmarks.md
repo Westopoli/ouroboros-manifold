@@ -50,7 +50,7 @@ Caveats baked into the rule:
 
 - Rule is cross-genre median. Niche-strategy runs above median per audience-loyalty proxies. ESTIMATED +2-5 percentage points relative to general-indie benchmark.
 - Rule applies to launch-week only. Cumulative (lifetime) wishlist conversion is meaningfully higher — see launch-week vs year-1 section.
-- Rule assumes price point in the $15-30 modal-indie band. Higher-price launches ($35-45) drag the % down; lower-price ($10-15) push it up. Cross-ref `docs/research/topics/pricing_elasticity_niche.md ## Per-tier wishlist conversion`.
+- Rule assumes price point in the $15-30 modal-indie band. Higher-price launches ($35-45) drag the % down; lower-price ($10-15) push it up. Cross-ref `docs/legacy/topics/pricing_elasticity_niche.md ## Per-tier wishlist conversion`.
 - Rule is calculated against pre-launch accumulated wishlist count. Wishlists added in launch week itself convert at a separately-much-higher rate (effectively buyer intent + day-0 wishlist as one motion).
 
 **Niche-strategy launch-week conversion (estimated baseline 2020-2026):**
@@ -63,7 +63,7 @@ Caveats baked into the rule:
 | Soft launch | 7-12% | ESTIMATED |
 | Bust | 3-7% | ESTIMATED |
 
-The **niche-strategy median at approximately 15%** is the working number for funnel-math throughout this brief. ESTIMATED-leaning REPORTED via GameDiscoverCo aggregate commentary. Cross-ref `docs/research/topics/pricing_elasticity_niche.md` confirms 15-22% at $29.99 modal niche-strategy.
+The **niche-strategy median at approximately 15%** is the working number for funnel-math throughout this brief. ESTIMATED-leaning REPORTED via GameDiscoverCo aggregate commentary. Cross-ref `docs/legacy/topics/pricing_elasticity_niche.md` confirms 15-22% at $29.99 modal niche-strategy.
 
 **Cumulative (year-1) conversion** is meaningfully higher — see launch-week vs year-1 shift section. The 30-day cumulative for healthy niche-strategy is approximately 2× the 7-day figure (REPORTED per GameDiscoverCo Simon Carless analyses); the 12-month cumulative is approximately 3-5× the 7-day figure (ESTIMATED).
 
@@ -111,7 +111,7 @@ Crusader Kings 3 launched September 2020 at $49.99 (Royal Edition $74.99) and sh
 
 **Implications for Ouroboros generational/legacy positioning:**
 
-CK3 is the upper bound for the generational/legacy strategy tribe (primary tribe per `docs/research/topics/lieutenant_pivot_niche_brief.md`). Ouroboros cannot expect to match CK3 wishlist conversion (Paradox tribe loyalty is the binding multiplier) but can expect to capture a subset of the same audience w/ similar conversion shape if tagging + framing aligns. **Working assumption: Ouroboros launch-week conversion within primary tribe runs ~18-25% at $29.99-$34.99 — above niche-strategy median due to tribe loyalty premium, below CK3 because Ouroboros is new IP.** ESTIMATED.
+CK3 is the upper bound for the generational/legacy strategy tribe (primary tribe per `docs/legacy/topics/lieutenant_pivot_niche_brief.md`). Ouroboros cannot expect to match CK3 wishlist conversion (Paradox tribe loyalty is the binding multiplier) but can expect to capture a subset of the same audience w/ similar conversion shape if tagging + framing aligns. **Working assumption: Ouroboros launch-week conversion within primary tribe runs ~18-25% at $29.99-$34.99 — above niche-strategy median due to tribe loyalty premium, below CK3 because Ouroboros is new IP.** ESTIMATED.
 
 ## Wildermyth-likes
 
@@ -221,7 +221,7 @@ Summer + Winter sales are the two structural conversion-spike windows. Niche-str
 - **50% off** — converts ~15-25× typical week. Aggressive; appropriate for title 12+ months old.
 - **66%+ off** — converts ~20-40× typical week. Bargain-bin territory; appropriate for 2+ year old titles or aggressive end-of-life conversion grabs.
 
-Crosses w/ `docs/research/topics/pricing_elasticity_niche.md ## Per-tier wishlist conversion` — discount lift compounds w/ base-price elasticity. A $34.99 title at 30% off = $24.50 → catches a different buyer pool than $29.99 title at 30% off = $20.99.
+Crosses w/ `docs/legacy/topics/pricing_elasticity_niche.md ## Per-tier wishlist conversion` — discount lift compounds w/ base-price elasticity. A $34.99 title at 30% off = $24.50 → catches a different buyer pool than $29.99 title at 30% off = $20.99.
 
 **Steam Next Fest conversion (REPORTED — Valve disclosed aggregate data twice during 2022-2024 window):**
 
@@ -363,7 +363,7 @@ The decision of which target inside 80-200k band to plan for is a Design Lane fo
 
 **No new internal-bible conflict surfaced specifically by this brief.**
 
-Conflict #2 (bible-monetization L274 "Free to play" vs game_bible.md $25-35 paid-base) is surfaced in `docs/research/topics/pricing_elasticity_niche.md ## Conflict surfaced` and `docs/research/topics/primary_tribe_psychographic_profile.md ## Conflict surfaced`. Re-surface count is now at least three.
+Conflict #2 (bible-monetization L274 "Free to play" vs game_bible.md $25-35 paid-base) is surfaced in `docs/legacy/topics/pricing_elasticity_niche.md ## Conflict surfaced` and `docs/legacy/topics/primary_tribe_psychographic_profile.md ## Conflict surfaced`. Re-surface count is now at least three.
 
 **Adjacent observation (not full conflict):** the 80-200k first-month unit target is structurally tight to achieve w/o breakout-tier execution, per funnel-math gut check above. If bible-locked first-month target is firm + conversion patterns hold, pre-launch wishlist pool target is downstream-implied at ~180-670k — a meaningful resource commitment in marketing + community + festival presence. Bible does not currently specify a pre-launch wishlist target; T-W2 brief should close this loop. Research Lane surfaces; does not resolve.
 
@@ -402,7 +402,7 @@ This brief feeds:
 - **T-W2 velocity targets** (downstream wave) — provides per-month wishlist accrual baseline implied by funnel-math closure. Required pre-launch pool of 180-670k wishlists distributed over 12-30 month pre-launch window implies ~15-55k wishlists/month accrual rate sustained. T-W2 should refine w/ per-channel velocity baselines + source-mix targets.
 - **Funnel-math checkpoint #2 closure (this brief)** — applies observed ratios to bible 80-200k first-month unit target, surfaces required pre-launch wishlist pool 180-670k, surfaces Wildermyth-shape vs Manor Lords-shape comparable bands, surfaces structural challenge of stretch-target without breakout-tier execution. Closes checkpoint #2 input pool; Design Lane resolves which target inside band to plan against.
 - **T-D1 demo strategy** — demo-played-wishlist conversion premium is the highest-leverage pre-launch tactic per per-source section. T-D1 should resolve (a) demo content slice, (b) demo release timing relative to launch, (c) demo-feedback loop into launch-build. Bible currently does not commit to a demo strategy.
-- **T-D2 Next Fest planning** — Next Fest is 30-50% launch-week conversion lift for participants; 2-3 appearances pre-launch is the niche-strategy norm. T-D2 should resolve cadence + which Next Fest slot to anchor launch against. Cross-ref `docs/research/topics/pricing_elasticity_niche.md ## Per-tier wishlist conversion` for price-tier interactions w/ Next Fest participation.
+- **T-D2 Next Fest planning** — Next Fest is 30-50% launch-week conversion lift for participants; 2-3 appearances pre-launch is the niche-strategy norm. T-D2 should resolve cadence + which Next Fest slot to anchor launch against. Cross-ref `docs/legacy/topics/pricing_elasticity_niche.md ## Per-tier wishlist conversion` for price-tier interactions w/ Next Fest participation.
 - **T-S3 algorithmic visibility multipliers** — review-snowball threshold (60+ reviews by day 7) + wishlist-velocity feeding Steam recommendation surface are the structural drivers of percentile placement. T-S3 should close how Ouroboros operationally hits the snowball threshold + which Steam-side levers (tag mix, refund-rate management, review-prompt timing) are available.
 - **T-P2 launch-discount strategy** (cross-feed) — sale-event multipliers section informs first-major-sale timing and depth. Niche-strategy norm: 10-20% launch-week discount + first deep sale 3-6 months post-launch. Cross-ref pricing_elasticity_niche.md.
 - **T-P3 DLC pricing ladder** (cross-feed) — DLC-driven conversion re-engagement on base game (Paradox + RimWorld pattern) is a year-1+ cumulative conversion driver. DLC cadence informs long-tail conversion shape.
@@ -433,9 +433,9 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
 - **Steambase** — https://steambase.io — daily CCU + price-history scrape. Training-data flag: YES. Confidence: REPORTED.
 - **Adjacent press coverage** — Rock Paper Shotgun, PC Gamer, Game Developer, GamesIndustry.biz, Eurogamer. Training-data flag: YES. Confidence: REPORTED.
 - **Cross-reference within Ouroboros docs:**
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool + tribe shape
-  - `docs/research/topics/pricing_elasticity_niche.md` — per-tier conversion baseline at price; cross-feeds T-W1 ↔ T-P1
-  - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-title review-theme inputs + conflict #2 prior surfacing
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool + tribe shape
+  - `docs/legacy/topics/pricing_elasticity_niche.md` — per-tier conversion baseline at price; cross-feeds T-W1 ↔ T-P1
+  - `docs/legacy/topics/primary_tribe_psychographic_profile.md` — per-title review-theme inputs + conflict #2 prior surfacing
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 first-month target lock + bible-authority-resolves directive
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 adjacency
 

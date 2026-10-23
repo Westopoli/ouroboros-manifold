@@ -8,7 +8,7 @@
 | `.gitattributes` | 1 | 2026-04-02 6d9355f6 | none | legacy |  |
 | `.gitignore` | 1 | 2026-10-06 48d20426 | none | legacy |  |
 | `.swarm` | 130 | 2026-10-02 8d3dc5ec | `CLAUDE.md`, `autoload/bridge/frame_decode.gd`, `autoload/c_bridge.gd` (408) | live | live referrers: 179 |
-| `AGENTS.md` | 1 | 2026-09-14 8d2447f4 | `docs/northstar/plans/PLAN_RESTRUCTURE.md`, `docs/northstar/proposals/2026-09-28-task-matching.md`, `docs/northstar/research/gemini_compute.md` (3) | legacy |  |
+| `AGENTS.md` | 1 | 2026-09-14 8d2447f4 | `docs/northstar/plans/archive/PLAN_RESTRUCTURE.md`, `docs/northstar/plans/archive/proposals/2026-09-28-task-matching.md`, `docs/northstar/research/gemini_compute.md` (3) | legacy |  |
 | `CLAUDE.md` | 1 | 2026-10-22 0841fe99 | `csrc/ouroboros_sim.h`, `docs/northstar/PLAN.md`, `docs/northstar/README.md` (131) | live | live referrers: 39 |
 | `Makefile` | 1 | 2026-10-08 8bca92bf | `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/push/pieces.toml`, `docs/northstar/research/factory/audit_2026-09-21/README.md` (73) | live | live referrers: 20 |
 | `README.md` | 1 | 2026-04-02 d2abe5ab | none | legacy |  |
@@ -36,14 +36,14 @@
 | `toys` | 110 | 2026-10-01 a9fd3105 | `Makefile`, `csrc/region.c`, `docs/northstar/PLAN.md` (355) | live | live referrers: 176 |
 | `tuning_output` | 14 | 2026-05-18 1169517c | `docs/northstar/ambiguity_register.md`, `docs/northstar/stage1_audit.md` (2) | junk |  |
 | `docs/architecture` | 7 | 2026-09-28 31bccfaf | `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `tests/transport/test_pipe_u_observable.py`, `docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md` (8) | live | live referrers: 2 |
-| `docs/articles` | 2 | 2026-04-02 6d9355f6 | none | legacy |  |
+| `docs/legacy/articles` | 2 | 2026-04-02 6d9355f6 | none | legacy |  |
 | `docs/bible` | 93 | 2026-10-22 dbeefd25 | `CLAUDE.md`, `csrc/checksum_full.c`, `csrc/chronicle.c` (736) | records |  |
 | `docs/bible_history` | 38 | 2026-09-11 db719a3c | `CLAUDE.md`, `autoload/ui_data_bus.gd`, `docs/northstar/PLAN.md` (18) | records |  |
-| `docs/blender_stuff` | 26 | 2026-09-11 db719a3c | `docs/bible/epics/E-20-multi-era-and-monetization.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/mvp/site/concept_prompts.md` (6) | legacy |  |
-| `docs/claude_exchange` | 5 | 2026-10-04 69adce65 | `docs/northstar/plans/briefs/2026-10-05-layout-engine-redesign-brief.md`, `docs/northstar/research/layer_dynamics/audits/2026-10-04_plan_drift.md`, `docs/northstar/research/layer_dynamics/proposals_2026-10-13/agent_one.md` (4) | legacy |  |
-| `docs/design_questions` | 6 | 2026-09-11 db719a3c | `docs/bible/epics/E-16-client-camera-hud-and-world-view.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/research/options/era-feel/brief.md` (5) | legacy |  |
+| `docs/legacy/blender_stuff` | 26 | 2026-09-11 db719a3c | `docs/bible/epics/E-20-multi-era-and-monetization.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/mvp/site/concept_prompts.md` (6) | legacy |  |
+| `docs/legacy/claude_exchange` | 5 | 2026-10-04 69adce65 | `docs/northstar/plans/briefs/2026-10-05-layout-engine-redesign-brief.md`, `docs/northstar/research/layer_dynamics/audits/2026-10-04_plan_drift.md`, `docs/northstar/research/layer_dynamics/proposals_2026-10-13/agent_one.md` (4) | legacy |  |
+| `docs/legacy/design_questions` | 6 | 2026-09-11 db719a3c | `docs/bible/epics/E-16-client-camera-hud-and-world-view.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/research/options/era-feel/brief.md` (5) | legacy |  |
 | `docs/northstar` | 1540 | 2026-10-22 5380e329 | `CLAUDE.md`, `Makefile`, `autoload/era_config.gd` (573) | live | live referrers: 515 |
-| `docs/random` | 8 | 2026-09-11 db719a3c | `CLAUDE.md`, `autoload/bridge/frame_decode.gd`, `autoload/c_bridge.gd` (184) | live | live referrers: 88 |
+| `docs/legacy/random` | 8 | 2026-09-11 db719a3c | `CLAUDE.md`, `autoload/bridge/frame_decode.gd`, `autoload/c_bridge.gd` (184) | live | live referrers: 88 |
 | `docs/research` | 137 | 2026-10-06 6ae4c90d | `autoload/era_config.gd`, `autoload/era_theme_resolver.gd`, `docs/northstar/plans/2026-10-07-visible-game-spec.md` (70) | live | live referrers: 21 |
 | `docs/stage_specs` | 39 | 2026-09-11 db719a3c | `autoload/debug_overlay.gd`, `scenes/shared/world_view/main_menu_galaxy.gd`, `scenes/shared/world_view/world_view_data.gd` (11) | live | live referrers: 3 |
 | `docs/test_specs` | 13 | 2026-09-17 df961d27 | `tests/csim/controls/test_control_drift_gate_ignored.py`, `tests/csim/test_E02_S160_drift_gate.py`, `tests/specfactory/test_green_check.py` (5) | live | live referrers: 4 |
@@ -51,13 +51,13 @@
 | `docs/northstar/e2e` | 4 | 2026-09-22 ef97a176 | `csrc/ouroboros_sim.h`, `csrc/worldgen.c`, `docs/northstar/PLAN.md` (45) | live | live referrers: 23 |
 | `docs/northstar/mvp` | 8 | 2026-09-15 647fa13e | `docs/northstar/PLAN.md`, `docs/northstar/research/mockups/objectives/README.md`, `docs/northstar/ambiguity_register.md` (15) | live | live referrers: 2 |
 | `docs/northstar/plans` | 313 | 2026-10-22 5380e329 | `CLAUDE.md`, `autoload/net/net_match.gd`, `autoload/net/pipe_sim.gd` (481) | live | live referrers: 394 |
-| `docs/northstar/proposals` | 1 | 2026-09-28 b764082c | none | legacy |  |
+| `docs/northstar/plans/archive/proposals` | 1 | 2026-09-28 b764082c | none | legacy |  |
 | `docs/northstar/proving_ground` | 343 | 2026-10-15 f5a6726f | `autoload/era_config.gd`, `autoload/era_theme_resolver.gd`, `csrc/ouroboros_sim.h` (110) | live | live referrers: 46 |
 | `docs/northstar/research` | 640 | 2026-10-20 b7b347db | `CLAUDE.md`, `Makefile`, `csrc/agent.c` (249) | live | live referrers: 98 |
 | `docs/northstar/spec_factory` | 24 | 2026-10-21 7028d9e4 | `CLAUDE.md`, `csrc/checksum_full.c`, `csrc/chronicle.c` (146) | live | live referrers: 60 |
 | `docs/northstar/story_reviews` | 186 | 2026-10-22 dbeefd25 | `CLAUDE.md`, `csrc/ouroboros_sim.h`, `docs/northstar/PLAN.md` (352) | records |  |
 | `docs/northstar/plans/audits_2026-10-07` | 6 | 2026-10-19 a13ad73c | `docs/northstar/plans/drift_audits/2026-10-20-controls-and-coverage-preflight.md`, `docs/northstar/plans/push_ledger_2026-09-22.md`, `docs/northstar/plans/retro_2026-10-10/architect_log_2026-10-07_to_10.md` (5) | legacy |  |
-| `docs/northstar/plans/branch_triage_2026-10-15` | 5 | 2026-10-15 f5a6726f | `docs/northstar/plans/handoff_2026-10-19_mac_to_linux.md`, `docs/northstar/plans/mesh_report_2026-10-19.md` (2) | legacy |  |
+| `docs/northstar/plans/branch_triage_2026-10-15` | 5 | 2026-10-15 f5a6726f | `docs/northstar/plans/handoff_2026-10-19_mac_to_linux.md`, `docs/northstar/plans/archive/mesh_report_2026-10-19.md` (2) | legacy |  |
 | `docs/northstar/plans/briefs` | 63 | 2026-10-06 52bf084f | `csrc/chronicle.c`, `csrc/generational.c`, `csrc/ouroboros_sim.h` (101) | live | live referrers: 48 |
 | `docs/northstar/plans/decision_pack_2026-10-18` | 14 | 2026-10-22 dbeefd25 | `docs/northstar/ROADMAP.md`, `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/push/pieces.toml` (15) | records |  |
 | `docs/northstar/plans/drift_audits` | 17 | 2026-10-21 f98aaf5d | `docs/northstar/ROADMAP.md`, `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/decision_pack_2026-10-18/README.md` (13) | live | live referrers: 6 |
@@ -120,20 +120,20 @@
 | `tests/specfactory` | 60 | 2026-10-22 74df4d70 | `docs/northstar/plans/2026-10-07-visible-game-programme.md`, `docs/northstar/plans/2026-10-07-visible-game-rulebook.md`, `docs/northstar/plans/2026-10-07-visible-game-spec.md` (86) | live | live referrers: 7 |
 | `tests/support` | 4 | 2026-10-07 cb49ab24 | `docs/northstar/plans/push/pieces.toml`, `tests/test_chronicle_scene_open.gd`, `tests/test_debrief_proceed_jump.gd` (30) | live | live referrers: 28 |
 | `tests/transport` | 57 | 2026-10-21 f85efc52 | `CLAUDE.md`, `csrc/mission.c`, `csrc/pipe/om_pipe.c` (99) | live | live referrers: 38 |
-| `docs/research/analysis` | 3 | 2026-09-11 db719a3c | none | legacy |  |
-| `docs/research/games` | 35 | 2026-09-11 db719a3c | `docs/northstar/research/options/README.md`, `docs/northstar/backlog_seed.md`, `docs/northstar/research/economy_design/prior_art_resources.md` (8) | live | live referrers: 1 |
+| `docs/legacy/analysis` | 3 | 2026-09-11 db719a3c | none | legacy |  |
+| `docs/legacy/games` | 35 | 2026-09-11 db719a3c | `docs/northstar/research/options/README.md`, `docs/northstar/backlog_seed.md`, `docs/northstar/research/economy_design/prior_art_resources.md` (8) | live | live referrers: 1 |
 | `docs/research/graphify-out` | 29 | 2026-09-11 db719a3c | `autoload/era_config.gd`, `autoload/era_theme_resolver.gd`, `docs/northstar/plans/2026-10-07-visible-game-spec.md` (50) | junk |  |
-| `docs/research/reports` | 2 | 2026-10-01 01b9e584 | none | legacy |  |
+| `docs/legacy/reports` | 2 | 2026-10-01 01b9e584 | none | legacy |  |
 | `docs/research/research_notes` | 11 | 2026-10-01 18c4ea31 | none | legacy |  |
-| `docs/research/topics` | 56 | 2026-10-06 6ae4c90d | `docs/northstar/research/layer_dynamics/README.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/backlog_seed.md` (17) | live | live referrers: 1 |
+| `docs/legacy/topics` | 56 | 2026-10-06 6ae4c90d | `docs/northstar/research/layer_dynamics/README.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/backlog_seed.md` (17) | live | live referrers: 1 |
 | `docs/.gdignore` | 1 | 2026-09-24 c79c21c4 | none | legacy |  |
 | `docs/architecture.md` | 1 | 2026-10-21 2f6e08e7 | `CLAUDE.md`, `autoload/bridge/frame_decode.gd`, `autoload/c_bridge.gd` (184) | live | live referrers: 88 |
-| `docs/client_scene_graph.md` | 1 | 2026-09-28 b2fdeefd | none | legacy |  |
+| `docs/legacy/client_scene_graph.md` | 1 | 2026-09-28 b2fdeefd | none | legacy |  |
 | `docs/design_lane.md` | 1 | 2026-09-11 db719a3c | `docs/northstar/PLAN.md`, `docs/northstar/stage1_audit.md`, `docs/northstar/stage1_brief.md` (3) | live | live referrers: 1 |
-| `docs/design_lane_queue.md` | 1 | 2026-09-11 db719a3c | none | legacy |  |
+| `docs/legacy/design_lane_queue.md` | 1 | 2026-09-11 db719a3c | none | legacy |  |
 | `docs/priority_queue.md` | 1 | 2026-09-11 db719a3c | `autoload/era_theme_resolver.gd`, `docs/northstar/PLAN.md`, `docs/northstar/README.md` (8) | live | live referrers: 3 |
-| `docs/research_lane.md` | 1 | 2026-09-11 db719a3c | none | legacy |  |
-| `docs/research_lane_queue.md` | 1 | 2026-10-02 ae1184bc | `docs/northstar/research/layer_dynamics/crosscheck_2026-09-30.md`, `docs/northstar/research/options/camera/brief.md`, `docs/northstar/research/options/control-groups/brief.md` (3) | legacy |  |
+| `docs/legacy/research_lane.md` | 1 | 2026-09-11 db719a3c | none | legacy |  |
+| `docs/legacy/research_lane_queue.md` | 1 | 2026-10-02 ae1184bc | `docs/northstar/research/layer_dynamics/crosscheck_2026-09-30.md`, `docs/northstar/research/options/camera/brief.md`, `docs/northstar/research/options/control-groups/brief.md` (3) | legacy |  |
 | `docs/workflow.md` | 1 | 2026-09-11 db719a3c | `docs/northstar/PLAN.md`, `docs/northstar/README.md`, `docs/northstar/stage1_audit.md` (3) | live | live referrers: 2 |
 | `docs/northstar/PLAN.md` | 1 | 2026-10-03 abd1024d | `CLAUDE.md`, `docs/northstar/README.md`, `docs/northstar/ROADMAP.md` (60) | live | live referrers: 18 |
 | `docs/northstar/README.md` | 1 | 2026-09-19 c97606cc | none | legacy |  |
@@ -151,7 +151,7 @@
 | `docs/northstar/stage1_protocol_v2.md` | 1 | 2026-09-10 2b6d0443 | `docs/northstar/stage1_audit.md` (1) | legacy |  |
 | `docs/northstar/vision_v2.md` | 1 | 2026-09-10 77c029f3 | `docs/northstar/PLAN.md`, `docs/northstar/README.md`, `docs/northstar/agile.md` (14) | live | live referrers: 2 |
 | `scripts/agy_task.sh` | 1 | 2026-09-14 920a0454 | `scripts/specfactory/draft_card.py`, `scripts/specfactory/draft_e2e.py`, `scripts/specfactory/fill_tests.py` (5) | live | live referrers: 3 |
-| `scripts/bench_tactical_pipe.py` | 1 | 2026-10-01 71536ea6 | `tests/csim/scale/test_scale_pipe_budget.py`, `tests/transport/test_pipe_tactical_delta_frame.py`, `docs/northstar/plans/2026-09-30-a7-pipe-cost.md` (8) | live | live referrers: 2 |
+| `scripts/bench_tactical_pipe.py` | 1 | 2026-10-01 71536ea6 | `tests/csim/scale/test_scale_pipe_budget.py`, `tests/transport/test_pipe_tactical_delta_frame.py`, `docs/northstar/plans/archive/2026-09-30-a7-pipe-cost.md` (8) | live | live referrers: 2 |
 | `scripts/build_ledger.py` | 1 | 2026-09-14 96788953 | `docs/northstar/proving_ground/BUILD_LEDGER.md`, `docs/northstar/spec_factory.md` (2) | legacy |  |
 | `scripts/build_pipe_linux.sh` | 1 | 2026-10-08 8bca92bf | `docs/northstar/plans/push/pieces.toml`, `tests/transport/test_vg_f_w8a_static_pipe.py`, `docs/northstar/plans/2026-10-06-steam-multiplayer-wiring-spec.md` (5) | live | live referrers: 2 |
 | `scripts/build_pipe_macos.sh` | 1 | 2026-10-08 8bca92bf | `docs/northstar/ROADMAP.md`, `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/push/pieces.toml` (11) | live | live referrers: 4 |
@@ -169,24 +169,24 @@
 | `scripts/run_godot_tests.sh` | 1 | 2026-10-13 9393ada9 | `docs/northstar/plans/2026-10-07-visible-game-programme.md`, `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/push/pieces.toml` (85) | live | live referrers: 20 |
 | `scripts/steam_app_build_5402100.vdf` | 1 | 2026-10-07 a90e510e | `docs/northstar/plans/push/pieces.toml`, `tests/transport/test_vg_f_depot_script.py`, `tests/transport/test_vg_f_park_depot_setlive.py` (5) | live | live referrers: 3 |
 | `scripts/terrain_look.py` | 1 | 2026-10-06 70636a42 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/research/landscape_design/sim_port/README.md`, `docs/northstar/plans/2026-10-05-terrain-stage1-spec.md` (3) | live | live referrers: 2 |
-| `docs/research/low-poly-3d-ai-tools-findings.md` | 1 | 2026-09-23 c27cd0cf | none | legacy |  |
+| `docs/legacy/low-poly-3d-ai-tools-findings.md` | 1 | 2026-09-23 c27cd0cf | none | legacy |  |
 | `docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md` | 1 | 2026-09-28 b2fdeefd | `tests/csim/test_E03_C2_max_regions.py`, `tests/qa/desktop/galaxy_camera_probe.gd`, `tests/qa/desktop/galaxy_labels_probe.gd` (17) | live | live referrers: 17 |
-| `docs/northstar/plans/2026-09-30-a7-pipe-cost.md` | 1 | 2026-10-01 71536ea6 | none | legacy |  |
+| `docs/northstar/plans/archive/2026-09-30-a7-pipe-cost.md` | 1 | 2026-10-01 71536ea6 | none | legacy |  |
 | `docs/northstar/plans/2026-09-30-mission-plays-plan.md` | 1 | 2026-09-30 a49de1b1 | `docs/northstar/plans/push/pieces.toml`, `tests/csim/b1_macro_scene.py`, `tests/test_bug_report_live.gd` (14) | live | live referrers: 10 |
-| `docs/northstar/plans/2026-09-30-work-list.md` | 1 | 2026-10-01 7b6b729e | `docs/northstar/plans/2026-09-30-mission-plays-plan.md`, `docs/northstar/plans/2026-10-01-architect-rulings-2.md`, `docs/northstar/plans/2026-10-03-finish-loop-rulings.md` (5) | legacy |  |
+| `docs/northstar/plans/archive/2026-09-30-work-list.md` | 1 | 2026-10-01 7b6b729e | `docs/northstar/plans/2026-09-30-mission-plays-plan.md`, `docs/northstar/plans/2026-10-01-architect-rulings-2.md`, `docs/northstar/plans/2026-10-03-finish-loop-rulings.md` (5) | legacy |  |
 | `docs/northstar/plans/2026-10-01-a7-sim-profile.md` | 1 | 2026-10-01 33a0508a | `tests/csim/test_F1_fog_per_faction_observers.py`, `tests/csim/test_F2_nearest_hostile_search.py`, `tests/csim/test_F3_macro_contact_skip.py` (5) | live | live referrers: 3 |
 | `docs/northstar/plans/2026-10-01-architect-rulings-2.md` | 1 | 2026-10-03 dc6e25c1 | `docs/northstar/ROADMAP.md`, `tests/csim/scale/test_PP_C_budgets.py`, `tests/csim/scale/test_scale_E13_siege_breaking.py` (51) | live | live referrers: 43 |
 | `docs/northstar/plans/2026-10-01-architect-rulings.md` | 1 | 2026-10-15 0f0c6b4b | `tests/csim/test_E10_S072_a3_quiet_world_fallback.py`, `tests/test_briefing_a4_roster.gd`, `tests/test_settings_attack_move_text.gd` (7) | live | live referrers: 5 |
-| `docs/northstar/plans/2026-10-01-briefing-debrief-red-investigation.md` | 1 | 2026-10-01 09b38f4d | `docs/northstar/plans/push_ledger_2026-09-22.md` (1) | legacy |  |
-| `docs/northstar/plans/2026-10-02-bubble-algorithms-research.md` | 1 | 2026-10-02 7f52ff45 | none | legacy |  |
+| `docs/northstar/plans/archive/2026-10-01-briefing-debrief-red-investigation.md` | 1 | 2026-10-01 09b38f4d | `docs/northstar/plans/push_ledger_2026-09-22.md` (1) | legacy |  |
+| `docs/northstar/plans/archive/2026-10-02-bubble-algorithms-research.md` | 1 | 2026-10-02 7f52ff45 | none | legacy |  |
 | `docs/northstar/plans/2026-10-02-galaxy-bubble-field-spec.md` | 1 | 2026-10-02 0b591652 | `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/2026-10-01-architect-rulings-2.md`, `docs/northstar/plans/drift_audits/2026-10-19-decision-to-spec.md` (5) | live | live referrers: 1 |
-| `docs/northstar/plans/2026-10-02-galaxy-perf-audit.md` | 1 | 2026-10-01 31e74483 | `docs/northstar/plans/2026-10-02-territory-visuals-survey.md` (1) | legacy |  |
+| `docs/northstar/plans/archive/2026-10-02-galaxy-perf-audit.md` | 1 | 2026-10-01 31e74483 | `docs/northstar/plans/archive/2026-10-02-territory-visuals-survey.md` (1) | legacy |  |
 | `docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md` | 1 | 2026-10-03 b4d5b8ca | `docs/northstar/plans/push/pieces.toml`, `tests/csim/parity/baseline/baseline_fights.py`, `tests/csim/parity/baseline/test_baseline_hashes.py` (35) | live | live referrers: 32 |
 | `docs/northstar/plans/2026-10-02-skill-lab-cascade.md` | 1 | 2026-10-02 e1773566 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/research/layer_dynamics/README.md`, `tests/csim/parity/baseline/test_baseline_hashes.py` (19) | live | live referrers: 7 |
 | `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md` | 1 | 2026-10-13 289a6a50 | `docs/northstar/plans/2026-10-07-visible-game-programme.md`, `docs/northstar/plans/push/pieces.toml`, `docs/northstar/research/space_landscape/README.md` (9) | live | live referrers: 7 |
 | `docs/northstar/plans/2026-10-02-tactical-port-parity-requirements.md` | 1 | 2026-10-03 ee3ed01a | `docs/northstar/research/layer_dynamics/README.md`, `tests/csim/parity/test_parity_scenes.py`, `docs/bible/epics/E-17-map-generation.md` (7) | live | live referrers: 2 |
-| `docs/northstar/plans/2026-10-02-territory-visuals-survey.md` | 1 | 2026-10-02 7f52ff45 | none | legacy |  |
-| `docs/northstar/plans/2026-10-02-vast-space-research.md` | 1 | 2026-10-01 31e74483 | none | legacy |  |
+| `docs/northstar/plans/archive/2026-10-02-territory-visuals-survey.md` | 1 | 2026-10-02 7f52ff45 | none | legacy |  |
+| `docs/northstar/plans/archive/2026-10-02-vast-space-research.md` | 1 | 2026-10-01 31e74483 | none | legacy |  |
 | `docs/northstar/plans/2026-10-03-finish-loop-rulings.md` | 1 | 2026-10-03 1d963e54 | `docs/northstar/ROADMAP.md`, `docs/northstar/plans/push/pieces.toml`, `docs/northstar/ambiguity_register.md` (5) | live | live referrers: 2 |
 | `docs/northstar/plans/2026-10-03-land-mockup-pass4-spec.md` | 1 | 2026-10-03 d803fdaf | `docs/northstar/research/landscape_design/README.md`, `scenes/mockups/landscape/pass4_terrain.gd`, `scenes/mockups/landscape/pass4_ui.gd` (3) | live | live referrers: 3 |
 | `docs/northstar/plans/2026-10-03-land-mockup-pass5-spec.md` | 1 | 2026-10-03 a91710ba | `docs/northstar/research/landscape_design/README.md`, `scenes/mockups/landscape/pass5_layout.gd`, `docs/northstar/plans/briefs/2026-10-04-land-mockup-iteration-brief.md` (4) | live | live referrers: 2 |
@@ -203,7 +203,7 @@
 | `docs/northstar/plans/2026-10-06-steam-multiplayer-wiring-spec.md` | 1 | 2026-10-13 483ab2ba | `autoload/net/net_match.gd`, `autoload/net/pipe_sim.gd`, `autoload/steam/steam_init.gd` (24) | live | live referrers: 19 |
 | `docs/northstar/plans/2026-10-06-terrain-stage2-spec.md` | 1 | 2026-10-06 d1239ea3 | `docs/northstar/ROADMAP.md`, `tests/csim/test_E13_R207_05_walker_routes.py`, `tests/skilllab/integration/test_ground_scene_real.py` (3) | live | live referrers: 3 |
 | `docs/northstar/plans/2026-10-06-terrain-stage3-spec.md` | 1 | 2026-10-07 835f99b9 | `tests/csim/test_E01_T3_contract.py`, `tests/csim/test_E01_T3_mission_ground.py`, `tests/qa/desktop/test_ground_era.py` (8) | live | live referrers: 8 |
-| `docs/northstar/plans/2026-10-06-unit-size-runtime-spec.md` | 1 | 2026-10-06 17cd083a | `docs/northstar/research/layer_dynamics/proposals_2026-10-13/agent_one.md` (1) | legacy |  |
+| `docs/northstar/plans/archive/2026-10-06-unit-size-runtime-spec.md` | 1 | 2026-10-06 17cd083a | `docs/northstar/research/layer_dynamics/proposals_2026-10-13/agent_one.md` (1) | legacy |  |
 | `docs/northstar/plans/2026-10-07-visible-game-programme.md` | 1 | 2026-10-22 dbeefd25 | `CLAUDE.md`, `docs/northstar/ROADMAP.md`, `docs/northstar/plans/2026-10-07-visible-game-spec.md` (39) | live | live referrers: 7 |
 | `docs/northstar/plans/2026-10-07-visible-game-rulebook.md` | 1 | 2026-10-11 adf02d1e | `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/push/pieces.toml`, `tests/specfactory/fixtures/spec_rev10.md` (27) | live | live referrers: 3 |
 | `docs/northstar/plans/2026-10-07-visible-game-spec.md` | 1 | 2026-10-22 dbeefd25 | `csrc/economy_internal.h`, `csrc/economy_lots.c`, `csrc/om_internal.h` (124) | live | live referrers: 78 |
@@ -214,7 +214,7 @@
 | `docs/northstar/plans/2026-10-13-places-lane-spec.md` | 1 | 2026-10-21 3f144adc | `csrc/layout_engine.c`, `csrc/layout_internal.h`, `csrc/layout_terrain.c` (13) | live | live referrers: 5 |
 | `docs/northstar/plans/2026-10-13-sprint-48h.md` | 1 | 2026-10-19 8ad9b421 | `docs/northstar/plans/2026-10-07-visible-game-programme.md`, `docs/northstar/plans/2026-10-13-places-lane-spec.md`, `docs/northstar/plans/push_ledger_2026-09-22.md` (3) | live | live referrers: 1 |
 | `docs/northstar/plans/2026-10-14-a-pieces-spec.md` | 1 | 2026-10-21 3ca28c82 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/plans/drift_audits/2026-10-19-decision-to-spec.md`, `docs/northstar/plans/push_ledger_2026-09-22.md` (6) | live | live referrers: 1 |
-| `docs/northstar/plans/2026-10-14-skill-lab-rev2-baseline.md` | 1 | 2026-10-13 c6a4cb34 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/plans/2026-10-18-macos-pipe-probe.md`, `docs/northstar/plans/mesh_report_2026-10-19.md` (4) | live | live referrers: 1 |
+| `docs/northstar/plans/2026-10-14-skill-lab-rev2-baseline.md` | 1 | 2026-10-13 c6a4cb34 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/plans/2026-10-18-macos-pipe-probe.md`, `docs/northstar/plans/archive/mesh_report_2026-10-19.md` (4) | live | live referrers: 1 |
 | `docs/northstar/plans/2026-10-14-skill-lab-rev2-decisions.md` | 1 | 2026-10-20 06bd67a9 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/research/layer_dynamics/audits/attackmove_idle_cap_2026-10-19/README.md`, `docs/northstar/research/layer_dynamics/audits/damage_up_caps_2026-10-20/README.md` (8) | live | live referrers: 3 |
 | `docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md` | 1 | 2026-10-22 0841fe99 | `docs/northstar/plans/push/pieces.toml`, `tests/csim/test_PP_collision_radius_runtime.py`, `tests/specfactory/test_lab_slow_tier_gate.py` (10) | live | live referrers: 3 |
 | `docs/northstar/plans/2026-10-15-sim-logs-spec.md` | 1 | 2026-10-18 338b1e6e | `docs/northstar/ROADMAP.md`, `docs/northstar/plans/decision_pack_2026-10-18/README.md`, `docs/northstar/plans/handoff_2026-10-19_mac_to_linux.md` (3) | live | live referrers: 2 |
@@ -222,19 +222,19 @@
 | `docs/northstar/plans/2026-10-15-transition-mockup-spec.md` | 1 | 2026-10-15 56106792 | `docs/northstar/ROADMAP.md`, `docs/bible/epics/E-16-client-camera-hud-and-world-view.md`, `docs/northstar/story_reviews/P.md` (3) | live | live referrers: 1 |
 | `docs/northstar/plans/2026-10-18-chron-context-spec.md` | 1 | 2026-10-18 1ec91c0c | `docs/northstar/plans/decision_pack_2026-10-18/README.md`, `docs/northstar/plans/handoff_2026-10-19_mac_to_linux.md` (2) | live | live referrers: 1 |
 | `docs/northstar/plans/2026-10-18-macos-pipe-probe.md` | 1 | 2026-10-18 f00c4405 | `docs/northstar/ROADMAP.md`, `docs/northstar/ambiguity_register.md`, `docs/northstar/plans/handoff_2026-10-19_mac_to_linux.md` (3) | live | live referrers: 1 |
-| `docs/northstar/plans/2026-10-19-enforcement-and-redirect.md` | 1 | 2026-10-21 d03241ce | `docs/northstar/plans/2026-10-19-harness-enforcement-spec.md`, `docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md`, `docs/northstar/plans/drift_audits/2026-10-21-decision-consistency-2.md` (5) | legacy |  |
+| `docs/northstar/plans/archive/2026-10-19-enforcement-and-redirect.md` | 1 | 2026-10-21 d03241ce | `docs/northstar/plans/2026-10-19-harness-enforcement-spec.md`, `docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md`, `docs/northstar/plans/drift_audits/2026-10-21-decision-consistency-2.md` (5) | legacy |  |
 | `docs/northstar/plans/2026-10-19-harness-enforcement-spec.md` | 1 | 2026-10-20 d1930944 | `docs/northstar/plans/push/pieces.toml`, `scripts/specfactory/rule_pins.py`, `scripts/specfactory/rule_pins_tests.py` (13) | live | live referrers: 10 |
-| `docs/northstar/plans/2026-10-19-sight-engagement-proposal.md` | 1 | 2026-10-19 5c8fcc86 | `docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md`, `docs/northstar/plans/push_ledger_2026-09-22.md` (2) | legacy |  |
+| `docs/northstar/plans/archive/2026-10-19-sight-engagement-proposal.md` | 1 | 2026-10-19 5c8fcc86 | `docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md`, `docs/northstar/plans/push_ledger_2026-09-22.md` (2) | legacy |  |
 | `docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md` | 1 | 2026-10-20 e5cde155 | `docs/northstar/plans/push/pieces.toml`, `docs/northstar/plans/push_ledger_2026-09-22.md` (2) | live | live referrers: 1 |
 | `docs/northstar/plans/2026-10-21-tool-split-spec.md` | 1 | 2026-10-22 eddfe9fb | `CLAUDE.md`, `docs/northstar/plans/push/pieces.toml`, `docs/northstar/plans/push_ledger_2026-09-22.md` (7) | live | live referrers: 2 |
 | `docs/northstar/plans/PLAN_CARD_DECOMPOSITION.md` | 1 | 2026-09-16 7dda0a35 | `docs/northstar/research/harness_defects_2026-09-17/README.md`, `docs/northstar/research/harness_defects_2026-09-17/DECISIONS.md` (2) | live | live referrers: 1 |
-| `docs/northstar/plans/PLAN_MULTIAGENT_TEST_AUTHORING.md` | 1 | 2026-09-16 28c1415e | `docs/northstar/plans/drift_audits/2026-10-20-controls-and-coverage-preflight.md` (1) | legacy |  |
-| `docs/northstar/plans/PLAN_RESTRUCTURE.md` | 1 | 2026-09-16 7dda0a35 | none | legacy |  |
+| `docs/northstar/plans/archive/PLAN_MULTIAGENT_TEST_AUTHORING.md` | 1 | 2026-09-16 28c1415e | `docs/northstar/plans/drift_audits/2026-10-20-controls-and-coverage-preflight.md` (1) | legacy |  |
+| `docs/northstar/plans/archive/PLAN_RESTRUCTURE.md` | 1 | 2026-09-16 7dda0a35 | none | legacy |  |
 | `docs/northstar/plans/handoff_2026-10-19_mac_to_linux.md` | 1 | 2026-10-19 d469152e | `docs/northstar/ROADMAP.md` (1) | live | live referrers: 1 |
-| `docs/northstar/plans/mesh_report_2026-10-19.md` | 1 | 2026-10-21 d03241ce | none | legacy |  |
+| `docs/northstar/plans/archive/mesh_report_2026-10-19.md` | 1 | 2026-10-21 d03241ce | none | legacy |  |
 | `docs/northstar/plans/push_ledger_2026-09-22.md` | 1 | 2026-10-22 dbeefd25 | `docs/northstar/plans/2026-10-07-visible-game-spec.md`, `docs/northstar/plans/push/pieces.toml`, `docs/northstar/research/layer_dynamics/audits/attackmove_idle_cap_2026-10-19/README.md` (82) | records |  |
 | `docs/northstar/plans/skilllab-harness-spec.md` | 1 | 2026-10-03 2a2331f3 | `docs/northstar/plans/push/pieces.toml`, `tests/skilllab/integration/test_asym_real.py`, `tests/skilllab/integration/test_cross_machine.py` (33) | live | live referrers: 23 |
-| `docs/northstar/plans/work_inventory_2026-09-22.md` | 1 | 2026-09-22 79668156 | `docs/northstar/plans/briefs/2026-09-22-two-day-push.md`, `docs/northstar/proving_ground/evidence/push_2026-09-22/panel/refuters_journal.jsonl`, `docs/northstar/research/harness_defects_2026-09-17/DECISIONS.md` (3) | legacy |  |
+| `docs/northstar/plans/archive/work_inventory_2026-09-22.md` | 1 | 2026-09-22 79668156 | `docs/northstar/plans/briefs/2026-09-22-two-day-push.md`, `docs/northstar/proving_ground/evidence/push_2026-09-22/panel/refuters_journal.jsonl`, `docs/northstar/research/harness_defects_2026-09-17/DECISIONS.md` (3) | legacy |  |
 | `.swarm/backups` | 31 | 2026-05-27 ccf27657 | `CLAUDE.md`, `autoload/bridge/frame_decode.gd`, `autoload/c_bridge.gd` (323) | junk |  |
 | `tests/ (loose test_*.gd, .py, .tscn, .uid)` | 192 | 2026-10-20 63fa38a8 | `autoload/qa_daemon.gd`, `autoload/scene_router.gd`, `docs/northstar/plans/2026-10-07-visible-game-programme.md` (156) | live | live referrers: 37 |
 
@@ -249,7 +249,7 @@ git grep -l -F -f pat.txt -- scenes autoload csrc scripts tests Makefile project
 ```
 
 Hits inside the entry's own files are dropped; the count is of the remaining hits; the three listed are live referrers first. `pat.txt` holds the basename (with extension) of every file in the entry. Three deviations from the brief, so the column is honest:
-- For a folder the bare folder basename is replaced by its repo path with a trailing slash (`docs/research/analysis/`), because bare words (`data`, `build`, `push`) match prose everywhere.
+- For a folder the bare folder basename is replaced by its repo path with a trailing slash (`docs/legacy/analysis/`), because bare words (`data`, `build`, `push`) match prose everywhere.
 - Skipped as too generic: `README.md`, `__init__.py`, `.gdignore`, `.gitignore`, `.gitattributes`, `.editorconfig`, `LICENSE`; `.uid` and `.import` sidecars are not searched for.
 - The match is a plain substring, so a folder with many files (or copies of game files, as `build/` and `.swarm/backups` hold) over-reports referrers. A folder row's class is "live" when any one file or its path is referenced; read it as an upper bound and open the folder if it matters.
 

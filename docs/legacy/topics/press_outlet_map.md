@@ -14,7 +14,7 @@ Press outlet map for niche-strategy/sim launch outreach. Tier breakdown (Tier-1 
 
 Non-rec disclaimer: surfaces inputs only. No recommendation of outlet target list, outreach order, embargo window, or asset package. Final pick is Design Lane's.
 
-Bible context: Ouroboros targets 80k-200k generational/legacy strategy primary tribe plus 20k-80k Foundation/hard-SF thematic-differentiator tribe per `docs/research/topics/lieutenant_pivot_niche_brief.md`. Press matters most for Tier-1/2 cluster validation — Steam algorithm reads outlet coverage as quality signal. Primary tribe self-selects more via creator/curator surfaces (Quill18, SsethTzeentach, Many a True Nerd, Hooded Horse halo, /r/CrusaderKings, /r/grandstrategy) than Tier-1 review traffic — but Tier-2 niche-strategy review often tips curator/creator pickup. Press is cluster-validation lever feeding creator/curator lever, not direct sales driver.
+Bible context: Ouroboros targets 80k-200k generational/legacy strategy primary tribe plus 20k-80k Foundation/hard-SF thematic-differentiator tribe per `docs/legacy/topics/lieutenant_pivot_niche_brief.md`. Press matters most for Tier-1/2 cluster validation — Steam algorithm reads outlet coverage as quality signal. Primary tribe self-selects more via creator/curator surfaces (Quill18, SsethTzeentach, Many a True Nerd, Hooded Horse halo, /r/CrusaderKings, /r/grandstrategy) than Tier-1 review traffic — but Tier-2 niche-strategy review often tips curator/creator pickup. Press is cluster-validation lever feeding creator/curator lever, not direct sales driver.
 
 ## Method
 
@@ -68,7 +68,7 @@ Tier-3 = community blogs, Substack writers, niche YouTube channels with written 
 
 **Substack writers covering strategy/sim.** Growing class. Names from post-mortems (REPORTED): Game Maker's Garage Strategy & Wargames, Possibly Correct, Vintage Strategy, plus writers attached to specific games (CK3, Stellaris, Manor Lords). Pitch via direct email through Substack profile. High cold-pitch acceptance; many writers explicitly seeking under-covered strategy.
 
-**Niche YouTube channels with written companion blogs.** Several creators maintain written content — review posts, dev-diary roundups, "what I'm playing this week." Overlaps `docs/research/topics/audience_overlap_map.md`, feeds T-C1. Notable (REPORTED): Quill18 older blog content, Many a True Nerd blog posts, SsethTzeentach written notes attached to reviews, channel-adjacent Discord servers with pinned reviews.
+**Niche YouTube channels with written companion blogs.** Several creators maintain written content — review posts, dev-diary roundups, "what I'm playing this week." Overlaps `docs/legacy/topics/audience_overlap_map.md`, feeds T-C1. Notable (REPORTED): Quill18 older blog content, Many a True Nerd blog posts, SsethTzeentach written notes attached to reviews, channel-adjacent Discord servers with pinned reviews.
 
 **Community blogs.** /r/CrusaderKings stickied posts, /r/grandstrategy weekly threads, /r/Stellaris dev-diary discussion, /r/Wildermyth review threads, Paradox Plaza forum posts function as quasi-Tier-3 press surfaces. /r/asimov and /r/printSF recommendation threads serve Foundation/hard-SF.
 
@@ -177,7 +177,7 @@ Per-outlet Steam sales-uplift figures widely uncited in post-mortems, ESTIMATED 
 - **T-C1 creator-press pipeline brief** — Tier-2 review quote most-cited creator-coverage trigger; press and creator pipelines interlinked, outreach plan needs to schedule press and creator code distribution together.
 - **T-C4 newsletter/curator brief** — Tier-3 Substack writers overlap newsletter/curator surface; Tier-3 catalog informs target list.
 - **Embargo and review-copy scheduling** — outreach plan needs to pick code-distribution windows (~3-4 weeks pre-launch) and embargo windows (date-only Tier-2/3, date-and-time Tier-1) before launch-prep tasks lock.
-- **Steam page launch-week visibility planning** — Tier-1/2 coverage one of Steam algorithm's cluster-validation signals; outreach cadence affects launch-week visibility per `docs/research/topics/steam_algorithm_visibility.md`.
+- **Steam page launch-week visibility planning** — Tier-1/2 coverage one of Steam algorithm's cluster-validation signals; outreach cadence affects launch-week visibility per `docs/legacy/topics/steam_algorithm_visibility.md`.
 - **Pitch-copy language compliance with RTS-framing-kill** — pitch copy across all tiers must comply with bible's RTS-framing-kill; pitch-copy work must pre-empt default "tactical layer = RTS" categorization.
 - **Hooded Horse / Slitherine publisher-relationship fork** — publisher relationship is significant Tier-2 coverage multiplier. Publisher-relationship strategy fork may need separate Design Lane decision; flagged, not picked.
 

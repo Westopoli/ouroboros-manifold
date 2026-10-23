@@ -10,7 +10,7 @@ contributor: Research Lane Wave 3 capture
 
 ## What this brief is
 
-Discount + sale-cadence scan across niche-strategy 2020-2026. Anchors: launch-week discount % distribution, first summer + winter Steam sale discount %, year-1 lowest observed price, year-2/3 trajectory, free-weekend long-tail impact, bundle patterns (Humble + Hooded Horse Strategy Fest + prior-catalog), Daily Deal / Weekend Deal participation, over-discount anti-patterns. Cross-ref T-P1 pricing brief — `docs/research/topics/pricing_elasticity_niche.md` — modal launch price $29.99, primary tribe binding constraint at $40 wall, bible-locked band $25-35.
+Discount + sale-cadence scan across niche-strategy 2020-2026. Anchors: launch-week discount % distribution, first summer + winter Steam sale discount %, year-1 lowest observed price, year-2/3 trajectory, free-weekend long-tail impact, bundle patterns (Humble + Hooded Horse Strategy Fest + prior-catalog), Daily Deal / Weekend Deal participation, over-discount anti-patterns. Cross-ref T-P1 pricing brief — `docs/legacy/topics/pricing_elasticity_niche.md` — modal launch price $29.99, primary tribe binding constraint at $40 wall, bible-locked band $25-35.
 
 Feeds T-P2 launch SKU + first-year discount calendar, T-P3 DLC pricing ladder downstream, T-W1 wishlist-conversion benchmarks (launch-week discount is a wishlist-conversion variable), T-F1 launch-window seasonality (Steam-sale calendar collisions), T-F2 festival roster (Steam Strategy Fest + Hooded Horse Strategy Fest + Steam Next Fest).
 
@@ -412,7 +412,7 @@ This brief feeds:
 - **Per-publisher discount-policy disclosure** — Hooded Horse Tim Bender + Paradox investor decks have addressed discount strategy in interviews; specific 2024-2026 quotes not refreshed here.
 - **2025-2026 Strategy Fest revenue-lift benchmarks** — Valve publishes some aggregate data per festival; refresh.
 - **Free-weekend long-tail effect controlled study** — no public study isolates free-weekend impact from confounding patch / content releases. Out of Research Lane scope without publisher cooperation.
-- **Old World specifically Year-2-3 discount cadence and DLC-attach effect** — Old World is the closest commercial reference for Ouroboros per `docs/research/topics/lieutenant_pivot_niche_brief.md`. Hooded Horse may have disclosed specifics.
+- **Old World specifically Year-2-3 discount cadence and DLC-attach effect** — Old World is the closest commercial reference for Ouroboros per `docs/legacy/topics/lieutenant_pivot_niche_brief.md`. Hooded Horse may have disclosed specifics.
 
 ## Sources
 
@@ -439,11 +439,11 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
   - Rock Paper Shotgun — niche-strategy launch coverage 2020-2024
   - Eurogamer — Steam sale-event coverage + indie pricing analyses
 - **Cross-reference within Ouroboros docs:**
-  - `docs/research/topics/pricing_elasticity_niche.md` — T-P1 modal launch price + $40 wall + bible $25-35 lock + tribe price tolerance
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool + Old World closest commercial reference
-  - `docs/research/topics/tribe_demographics.md` — income proxy + regional split affecting discount-tolerance pattern
-  - `docs/research/topics/primary_tribe_psychographic_profile.md` — "wait for sale" review-theme frequency per anchor title
-  - `docs/research/topics/dlc_pricing_ladders.md` — DLC-cadence + DLC-discount inheritance pattern from base-game policy
+  - `docs/legacy/topics/pricing_elasticity_niche.md` — T-P1 modal launch price + $40 wall + bible $25-35 lock + tribe price tolerance
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool + Old World closest commercial reference
+  - `docs/legacy/topics/tribe_demographics.md` — income proxy + regional split affecting discount-tolerance pattern
+  - `docs/legacy/topics/primary_tribe_psychographic_profile.md` — "wait for sale" review-theme frequency per anchor title
+  - `docs/legacy/topics/dlc_pricing_ladders.md` — DLC-cadence + DLC-discount inheritance pattern from base-game policy
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 lock + bible-authority directive
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — adjacent collision carried from T-P1
 

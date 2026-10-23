@@ -367,17 +367,17 @@ Titles surveyed for tagline patterns (recalled from training):
 
 Cross-reference within Ouroboros docs:
 
-- `docs/research/topics/brand_positioning_relative.md` (T-B1) — capsule register options cascade into tagline shape pick
-- `docs/research/topics/author_voice_signalling.md` (T-B2) — author-voice mode cascades into tagline tone
-- `docs/research/topics/primary_tribe_psychographic_profile.md` (T-A1) — Cluster A + B + C pitch-language patterns
-- `docs/research/topics/audience_overlap_map.md` (T-A4) — cross-anchor union-pitch language, "world keeps moving" cross-cluster phrase
-- `docs/research/topics/steam_tag_overlap_2026.md` (T-S1) — banned-bundle keywords that must NOT appear in tagline
-- `docs/research/topics/foundation_vocabulary.md` — heroic vs archival register options, "the most legible Foundation-register lever is achievement naming" finding
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — passionate-niche success pattern paragraph, failed-RTS pattern paragraph
-- `docs/research/topics/rts_market_kill_zone_2026.md` — failed-RTS tagline-failure case studies
-- `docs/research/topics/free_tier_paid_dlc_precedents.md` (T-M1) — L274 "Free to play" carry-forward conflict
-- `docs/research/topics/cosmetic_monetization_niche.md` (T-M3) — L292 Fortnite carry-forward conflict
-- `docs/research/topics/paid_ad_channels_roi.md` (T-C7) — paid-ad headline cascade
+- `docs/legacy/topics/brand_positioning_relative.md` (T-B1) — capsule register options cascade into tagline shape pick
+- `docs/legacy/topics/author_voice_signalling.md` (T-B2) — author-voice mode cascades into tagline tone
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md` (T-A1) — Cluster A + B + C pitch-language patterns
+- `docs/legacy/topics/audience_overlap_map.md` (T-A4) — cross-anchor union-pitch language, "world keeps moving" cross-cluster phrase
+- `docs/legacy/topics/steam_tag_overlap_2026.md` (T-S1) — banned-bundle keywords that must NOT appear in tagline
+- `docs/legacy/topics/foundation_vocabulary.md` — heroic vs archival register options, "the most legible Foundation-register lever is achievement naming" finding
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — passionate-niche success pattern paragraph, failed-RTS pattern paragraph
+- `docs/legacy/topics/rts_market_kill_zone_2026.md` — failed-RTS tagline-failure case studies
+- `docs/legacy/topics/free_tier_paid_dlc_precedents.md` (T-M1) — L274 "Free to play" carry-forward conflict
+- `docs/legacy/topics/cosmetic_monetization_niche.md` (T-M3) — L292 Fortnite carry-forward conflict
+- `docs/legacy/topics/paid_ad_channels_roi.md` (T-C7) — paid-ad headline cascade
 - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
 - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 

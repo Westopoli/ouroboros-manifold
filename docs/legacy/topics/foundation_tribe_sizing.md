@@ -16,7 +16,7 @@ The brief feeds: thematic-differentiator marketing surface selection, the T-S1 s
 
 Non-recommendation disclaimer: the Research Lane reports inputs. The Research Lane does not pick which surfaces to prioritize, which tags to ship, or how to weight Foundation aesthetic adjacency against generational/legacy primary positioning. Picks live in the Design Lane and the bible.
 
-This brief resolves the third open question in `docs/research/topics/lieutenant_pivot_niche_brief.md` ("Foundation IP-adjacent audience hard numbers — Apple TV viewership figures, book sales for the Foundation series in the post-show window, and the actual size of /r/asimov plus /r/printSF in 2026").
+This brief resolves the third open question in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` ("Foundation IP-adjacent audience hard numbers — Apple TV viewership figures, book sales for the Foundation series in the post-show window, and the actual size of /r/asimov plus /r/printSF in 2026").
 
 ## Method
 
@@ -195,6 +195,6 @@ All sources below are training-data recall as of the assistant's training cutoff
 - HBomberguy, Quinns Quest, Jacob Geller, Folding Ideas, NakeyJakey, Action Button, Noah Caldwell-Gervais, Sseth, Quill18, Many a True Nerd subscriber-recall — training data.
 - Coode Street Podcast, Our Opinions Are Correct, Imaginary Worlds, SFF Yeah! podcast-recall — training data.
 - SpaceBattles and Sufficient Velocity forum-recall — training data.
-- Cross-reference: `docs/research/topics/lieutenant_pivot_niche_brief.md` open-question 3, which this brief resolves.
-- Cross-reference: `docs/research/topics/foundation_vocabulary.md` for the IP-safe vocabulary slate that pairs with the marketing-copy IP-collision flag.
-- Cross-reference: `docs/research/topics/steam_tag_search_behavior_2026.md` for T-S1 tag-slate inputs.
+- Cross-reference: `docs/legacy/topics/lieutenant_pivot_niche_brief.md` open-question 3, which this brief resolves.
+- Cross-reference: `docs/legacy/topics/foundation_vocabulary.md` for the IP-safe vocabulary slate that pairs with the marketing-copy IP-collision flag.
+- Cross-reference: `docs/legacy/topics/steam_tag_search_behavior_2026.md` for T-S1 tag-slate inputs.

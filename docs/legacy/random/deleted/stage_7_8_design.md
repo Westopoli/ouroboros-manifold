@@ -58,7 +58,7 @@ Upload or read these files at session start:
 6. `docs/design_rules.md` (process rules)
 7. `docs/dev_rules.md` (for reference on how specs are structured)
 8. `docs/stage_specs/stage_5_5_spec.md` and `stage_6_spec.md` (recent spec examples for format reference)
-9. **This file** (`docs/design_questions/stage_7_8_design.md`)
+9. **This file** (`docs/legacy/design_questions/stage_7_8_design.md`)
 
 **Relevant existing code** (read if question touches implementation):
 - `simulation/tactical_engine.py`, `tactical_map.py` — current tactical engine
@@ -159,7 +159,7 @@ S8-1c (chronicle on rewind) and S8-1d (snapshot retention) and the history-forma
 
 #### S8-3 — Mid-Mission UI Information Density [CAPTURED]
 
-**Answer (Q5, Stage-8-write-up session):** Adapt the Immortal: Gates of Pyre HUD as the layout reference. Reference screenshots saved to `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`. Ouroboros inherits IGoP's clustered-bottom-bar layout (portraits + minimap + command-adjacent grid + control-group tabs + commander portrait) and subtracts the economy / tech / build-grid surfaces that don't map to this game. Ouroboros-specific panels fill the freed space — reinforcement-structure production list where IGoP has TRAIN/TECH/BUILD/POWER, plus a new layer-selector strip above the commander portrait. Event ticker top-left. Objectives list top-left. Banner channel top-center reserved for significance moments. No enemy composition readout at launch (fog of war is a play element, not a summary). Right sidebar reserved — no content at launch, future features (chronicle intelligence feed, event-reaction prompts) fill it without a rework. Event-ticker content is hardcoded to the beat set at launch (capture / loss / rout / objective threshold); polished authored content deferred to a Beyond-Stage-9 HUD Personality pass.
+**Answer (Q5, Stage-8-write-up session):** Adapt the Immortal: Gates of Pyre HUD as the layout reference. Reference screenshots saved to `docs/legacy/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`. Ouroboros inherits IGoP's clustered-bottom-bar layout (portraits + minimap + command-adjacent grid + control-group tabs + commander portrait) and subtracts the economy / tech / build-grid surfaces that don't map to this game. Ouroboros-specific panels fill the freed space — reinforcement-structure production list where IGoP has TRAIN/TECH/BUILD/POWER, plus a new layer-selector strip above the commander portrait. Event ticker top-left. Objectives list top-left. Banner channel top-center reserved for significance moments. No enemy composition readout at launch (fog of war is a play element, not a summary). Right sidebar reserved — no content at launch, future features (chronicle intelligence feed, event-reaction prompts) fill it without a rework. Event-ticker content is hardcoded to the beat set at launch (capture / loss / rout / objective threshold); polished authored content deferred to a Beyond-Stage-9 HUD Personality pass.
 
 **Bible edits applied (v2.13):**
 - `docs/bible_history/bible_2_00_combat.md` — new section "Mid-Mission HUD Layout" inserted after "Camera and Player View," before "Moving Battlefields." Full layout captured, IGoP citation and reference-image paths included, launch-scope caveats noted.

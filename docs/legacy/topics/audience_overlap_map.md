@@ -360,8 +360,8 @@ Training-data-only — flag for re-capture w/ live Steam, SteamDB, curator-page,
   - DangerouslyFunny (outlier-cluster)
   - OhDough (outlier-cluster)
 - Cross-reference within Ouroboros docs:
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — parent brief, primary tribe + thematic differentiator ranking
-  - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-anchor review themes; this brief sharpens audience-side mapping from per-title-themes to cross-title-clusters
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — parent brief, primary tribe + thematic differentiator ranking
+  - `docs/legacy/topics/primary_tribe_psychographic_profile.md` — per-anchor review themes; this brief sharpens audience-side mapping from per-title-themes to cross-title-clusters
   - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 

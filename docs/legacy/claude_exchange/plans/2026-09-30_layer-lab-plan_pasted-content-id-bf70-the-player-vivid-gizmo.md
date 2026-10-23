@@ -50,7 +50,7 @@ Five layers always. Vision symmetric by layer distance; passive cross-layer visi
 
 ### Research on file
 
-`docs/research/topics/lanchester_and_combat_theory.md` (square and linear laws; a choke switches between them; defeat in detail; the hidden side's edge is bounded; first strike and staying power; height as initiative), `active_layer_vision_mechanics.md`, `charts_for_combat_simulation_data.md`.
+`docs/legacy/topics/lanchester_and_combat_theory.md` (square and linear laws; a choke switches between them; defeat in detail; the hidden side's edge is bounded; first strike and staying power; height as initiative), `active_layer_vision_mechanics.md`, `charts_for_combat_simulation_data.md`.
 
 ### Lessons about method
 
@@ -169,7 +169,7 @@ Westley runs once, since the guard blocks me from discarding files: `git restore
 
 - New: `scripts/skilllab/{engine,fight,plays,knobs,scan,sample,report}.py`, `tests/skilllab/`, `docs/northstar/research/layer_dynamics/runs/`, `history_2026-09-30_to_10-01.md`.
 - Rewritten: `docs/northstar/research/layer_dynamics/README.md`; memory `project_layer_lab.md`.
-- Edited: `docs/bible/epics/E-01-layer-system.md`, `docs/northstar/ambiguity_register.md`, `docs/research_lane_queue.md`, `CLAUDE.md`, `docs/northstar/plans/push/pieces.toml`, `Makefile` (G0).
+- Edited: `docs/bible/epics/E-01-layer-system.md`, `docs/northstar/ambiguity_register.md`, `docs/legacy/research_lane_queue.md`, `CLAUDE.md`, `docs/northstar/plans/push/pieces.toml`, `Makefile` (G0).
 - Engine, per step G1 to G7: `csrc/ouroboros_sim.h` and `docs/northstar/spec_factory/signatures.toml` (contract pieces), `csrc/unit.c`, `csrc/tactical_move.c`, `csrc/fog.c`, `csrc/tactical_mapgen.c`, new tests under `tests/csim/`.
 
 ## Verification

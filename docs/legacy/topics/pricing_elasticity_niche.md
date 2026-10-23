@@ -42,7 +42,7 @@ Confidence floor: **REPORTED** for niche launch-price modal claims w/ publisher 
 
 ## Modal price + distribution 2020-2026
 
-Niche-strategy launch prices in the $20-40 band, training-data window, alphabetical by title. Prices are USD MSRP at launch except where noted. Sales figures cross-referenced w/ `docs/research/topics/lieutenant_pivot_niche_brief.md` where overlap exists.
+Niche-strategy launch prices in the $20-40 band, training-data window, alphabetical by title. Prices are USD MSRP at launch except where noted. Sales figures cross-referenced w/ `docs/legacy/topics/lieutenant_pivot_niche_brief.md` where overlap exists.
 
 - **Against the Storm** (Eremite, 2023) — $29.99 launch. REPORTED.
 - **Banished** (Shining Rock Software, 2014 — older anchor) — $19.99. REPORTED. Historical anchor for $20 floor.
@@ -134,7 +134,7 @@ Steam refund window: 2 hours played + 14 days from purchase. Per-title refund ra
 
 Pattern: refund rate inversely correlated w/ price within niche-strategy band. Higher-price buyers self-select harder + are more invested. REPORTED-leaning. Pattern does NOT extend to general-indie — at $14.99-$19.99 impulse-buy refund spikes due to under-deliberation. ESTIMATED.
 
-**Refund-driver themes recur regardless of price** (cross-ref `docs/research/topics/primary_tribe_psychographic_profile.md`):
+**Refund-driver themes recur regardless of price** (cross-ref `docs/legacy/topics/primary_tribe_psychographic_profile.md`):
 
 - "Too much to read, didn't grab me" — tutorial bounce. Price-insensitive. REPORTED.
 - "UI overwhelm" — Field of Glory: Empires + CK3 specifically. Price-insensitive. REPORTED.
@@ -196,7 +196,7 @@ Steam review complaints crystallizing around "you charged too much" as a recurri
 
 ## Primary vs Foundation tribe price tolerance
 
-Cross-ref `docs/research/topics/tribe_demographics.md` income proxies + `docs/research/topics/primary_tribe_psychographic_profile.md` per-title patterns.
+Cross-ref `docs/legacy/topics/tribe_demographics.md` income proxies + `docs/legacy/topics/primary_tribe_psychographic_profile.md` per-title patterns.
 
 **Primary tribe (generational/legacy strategy — CK3 / Wildermyth / BB / FoG:E intersection):**
 
@@ -245,7 +245,7 @@ Steam regional pricing recommendations are published by Valve (publisher-facing)
 
 Notes:
 
-- **Russia post-2022:** Visa/MC withdrawal + ruble volatility + Steam payment rail disruption means real audience persists but observable revenue capture is unreliable. Regional pricing recommendation still published by Valve but conversion-to-revenue degraded. AMBIGUOUS. Cross-ref `docs/research/topics/tribe_demographics.md`.
+- **Russia post-2022:** Visa/MC withdrawal + ruble volatility + Steam payment rail disruption means real audience persists but observable revenue capture is unreliable. Regional pricing recommendation still published by Valve but conversion-to-revenue degraded. AMBIGUOUS. Cross-ref `docs/legacy/topics/tribe_demographics.md`.
 - **China:** Perfect World Steam client is separate catalog; license-approval process unpredictable post-2021. Most niche-strategy titles cannot reach mainland Chinese audience without local partnership. China-Steam regional pricing applies only to titles approved on Perfect World; international Steam reaches some Chinese audience via VPN but Steam-recommended pricing for the global page may default to higher-than-regional. ESTIMATED.
 - **Argentina + Turkey:** were historic price-arbitrage hotspots until Steam normalized 2023-2024. Niche-strategy publishers were among the first to feel the abuse cycle (buyer in cheap region resells to dollar buyer); Valve responded with regional-pricing reductions + USD floors. Argentina specifically moved to USD pricing in 2024. REPORTED.
 - **Brazil + India:** active aggressive discounting essential for monetization. Piracy is the alternative if regional pricing not offered. REPORTED.
@@ -292,15 +292,15 @@ ARPU/wishlist appears to peak around $19.99-$24.99 in pure-conversion-math terms
 
 **Conflict #2 — bible internal: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 "Free to play. Infinite eras." vs `docs/bible/game_bible.md` 80-200k units @ $25-35 paid-base lock.**
 
-Verbatim from `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274: "Free to play. Infinite eras." (As surfaced in `docs/research/topics/primary_tribe_psychographic_profile.md ## Conflict surfaced` and per the topic-scope directive for this brief.)
+Verbatim from `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274: "Free to play. Infinite eras." (As surfaced in `docs/legacy/topics/primary_tribe_psychographic_profile.md ## Conflict surfaced` and per the topic-scope directive for this brief.)
 
-The L274 tagline frames the product as free-to-play. The `docs/bible/game_bible.md` headline targets 80-200k units @ $25-35 paid-base + DLC-per-era. These are internally contradictory framings for the same product. A paid-base product cannot be marketed as "free to play" without consumer confusion + Steam review backlash from primary tribe (cross-ref `docs/research/topics/primary_tribe_psychographic_profile.md` — CK3, BB, FoG:E audiences are anti-F2P-framing). A free-to-play product cannot deliver the $25-35 ARPU implied by the unit + revenue target unless the F2P framing is purely tagline-cosmetic (e.g., "Roman era free-tier" reading) and not literal.
+The L274 tagline frames the product as free-to-play. The `docs/bible/game_bible.md` headline targets 80-200k units @ $25-35 paid-base + DLC-per-era. These are internally contradictory framings for the same product. A paid-base product cannot be marketed as "free to play" without consumer confusion + Steam review backlash from primary tribe (cross-ref `docs/legacy/topics/primary_tribe_psychographic_profile.md` — CK3, BB, FoG:E audiences are anti-F2P-framing). A free-to-play product cannot deliver the $25-35 ARPU implied by the unit + revenue target unless the F2P framing is purely tagline-cosmetic (e.g., "Roman era free-tier" reading) and not literal.
 
 The plausible reconciliation is "Roman era is free, subsequent eras are paid DLC, base game flow is technically reachable for $0 if user only plays Roman" — which is monetarily equivalent to "F2P with paid content gates" rather than "buy-once base." This reconciliation should be explicit; the verbatim L274 tagline as currently written is misleading.
 
-**Research Lane does not resolve.** Bible authority resolves — surface to Westley + Design Lane. Brief flags. Per `docs/research/topics/primary_tribe_psychographic_profile.md` and this brief, the conflict #2 surfaces for at least the third time in Research Lane outputs and should be resolved in the next bible pass.
+**Research Lane does not resolve.** Bible authority resolves — surface to Westley + Design Lane. Brief flags. Per `docs/legacy/topics/primary_tribe_psychographic_profile.md` and this brief, the conflict #2 surfaces for at least the third time in Research Lane outputs and should be resolved in the next bible pass.
 
-Adjacent: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L292 Fortnite reference is flagged in `docs/research/topics/primary_tribe_psychographic_profile.md` and is downstream of T-M1 free-tier framing / T-B1 brand positioning. Out of scope for this brief but noted as adjacent collision.
+Adjacent: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L292 Fortnite reference is flagged in `docs/legacy/topics/primary_tribe_psychographic_profile.md` and is downstream of T-M1 free-tier framing / T-B1 brand positioning. Out of scope for this brief but noted as adjacent collision.
 
 No additional conflict surfaced between this brief and the bible's stated $25-35 band.
 
@@ -340,7 +340,7 @@ This brief feeds:
 - **Live Steam page snapshot for all anchor titles** — current price, current review score, current review count. Required to upgrade REPORTED → VERIFIED for any specific figure.
 - **GameDiscoverCo 2025-2026 aggregate analyses** of per-tier wishlist conversion for niche-strategy specifically. Simon Carless newsletter has run niche-strategy breakouts; refresh w/ live fetch.
 - **Refund-rate per anchor title** — publisher-side telemetry. May be partially disclosable via Worldwalker / Overhype / Gamatron / Hooded Horse direct contact. Out of Research Lane scope.
-- **Old World launch wishlist-conversion specifically** — Hooded Horse has published partial figures; refresh w/ live fetch. Old World is the closest commercial reference for Ouroboros per `docs/research/topics/lieutenant_pivot_niche_brief.md`.
+- **Old World launch wishlist-conversion specifically** — Hooded Horse has published partial figures; refresh w/ live fetch. Old World is the closest commercial reference for Ouroboros per `docs/legacy/topics/lieutenant_pivot_niche_brief.md`.
 - **Foundation TV-show audience price-tolerance crossover into gaming** — no direct survey. Apple TV viewership disclosures + Foundation book sales post-2021 may have leading-indicator data.
 - **2026 regional pricing actual capture rates** — Russia + Turkey + Argentina monetization status. Affects 80-200k unit target's regional decomposition.
 - **DLC-attach rate for $29.99 vs $34.99 base-game pricing** — does the base-game price affect downstream DLC attach? Hypothesis: $34.99 base buyers are more committed and have higher DLC attach. ESTIMATED only; needs publisher disclosure or aggregate study.
@@ -376,9 +376,9 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
   - Game Developer — Frostpunk 2 sales coverage, indie pricing analyses
   - Eurogamer — niche-strategy reviews + launch coverage
 - **Cross-reference within Ouroboros docs:**
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool
-  - `docs/research/topics/tribe_demographics.md` — income proxy + regional split inputs feeding this brief
-  - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-title review-theme inputs + conflict #2 prior surfacing
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool
+  - `docs/legacy/topics/tribe_demographics.md` — income proxy + regional split inputs feeding this brief
+  - `docs/legacy/topics/primary_tribe_psychographic_profile.md` — per-title review-theme inputs + conflict #2 prior surfacing
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 lock + bible-authority-resolves directive
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 + adjacent collision
 

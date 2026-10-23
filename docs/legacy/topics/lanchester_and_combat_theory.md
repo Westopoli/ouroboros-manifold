@@ -12,7 +12,7 @@ contributor: Research Lane, queue Q77; five gathering sub-agents, brief written 
 
 Requested by Westley on 2026-09-30 while the layer lab (`docs/northstar/research/layer_dynamics/README.md`) tests its firing-share hypothesis (§6.1): that an engagement is decided by how many units on each side can get shots off. This brief reports what five bodies of military theory say about that quantity. It makes no design recommendation. Feeds register flags `Q-008-02` and `Q-008-03`.
 
-The full report, with every source link, is `docs/research/reports/Lanchester and combat theory.md`. The gathering notes are in `docs/research/research_notes/Lanchester and combat theory/` (five files). Confidence tags: VERIFIED (read in a primary or authoritative source), REPORTED (stated by a secondary source), ESTIMATED (arithmetic done in the notes, shown there), AMBIGUOUS (sources disagree).
+The full report, with every source link, is `docs/legacy/reports/Lanchester and combat theory.md`. The gathering notes are in `docs/legacy/research_notes/Lanchester and combat theory/` (five files). Confidence tags: VERIFIED (read in a primary or authoritative source), REPORTED (stated by a secondary source), ESTIMATED (arithmetic done in the notes, shown there), AMBIGUOUS (sources disagree).
 
 ## 1. The square law, the linear law, and what a choke does
 

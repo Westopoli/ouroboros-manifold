@@ -1,6 +1,6 @@
 # Territory / influence visuals around many points: survey for the galaxy view
 
-Date 2026-10-02. Research only. Context: `docs/northstar/plans/2026-10-02-galaxy-perf-audit.md` (brute-force raymarch, 15 to 60x over a 2 ms budget on an RTX 3060; up to 400 systems, 15 factions, orbit camera that can sit inside the bubbles; territory changes rarely).
+Date 2026-10-02. Research only. Context: `docs/northstar/plans/archive/2026-10-02-galaxy-perf-audit.md` (brute-force raymarch, 15 to 60x over a 2 ms budget on an RTX 3060; up to 400 systems, 15 factions, orbit camera that can sit inside the bubbles; territory changes rarely).
 
 Labels: PRIMARY = developer's own words (dev blog, forum post by the dev, paper by the authors, vendor article co-written with the studio). THIRD-PARTY = player, modder, tutorial author, forum commenter. REASONING = my own inference, not sourced; treat as a hypothesis to test. Search was a web search plus page fetches; several pages (Wikipedia-class summaries, search snippets) were thin, and I say so where it matters.
 

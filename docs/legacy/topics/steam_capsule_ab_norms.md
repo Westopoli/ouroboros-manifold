@@ -184,9 +184,9 @@ This brief feeds the following downstream Design Lane work and marketing-impleme
 - **T-S4 page top-slot**: the capsule is the load-bearing element above the fold on the Steam product page. The page-top slot also includes the trailer; the capsule and trailer thumbnail must coordinate visually.
 - **T-S3 algorithm-visibility**: Steam discovery surfaces reward CTR. A weak capsule is the single highest-leverage failure point in the discoverability stack. Post-launch capsule refresh based on Steamworks impression/conversion data should be planned, not improvised.
 - **Hooded Horse / publisher capsule QA pass**: if a publisher relationship lands, expect a capsule QA pass against the house style (wordmark-prominent, scene-with-implied-scale, muted-with-accent palette). The capsule-build spec should anticipate this and pre-align where possible.
-- **Cross-reference to `docs/research/topics/audience_overlap_map.md`** for tribe-specific aesthetic expectations.
-- **Cross-reference to `docs/research/topics/foundation_vocabulary.md`** for wordmark typography register lock.
-- **Cross-reference to `docs/research/topics/lieutenant_pivot_niche_brief.md`** for the primary-tribe / thematic-differentiator-tribe split that drives the era-signal fork.
+- **Cross-reference to `docs/legacy/topics/audience_overlap_map.md`** for tribe-specific aesthetic expectations.
+- **Cross-reference to `docs/legacy/topics/foundation_vocabulary.md`** for wordmark typography register lock.
+- **Cross-reference to `docs/legacy/topics/lieutenant_pivot_niche_brief.md`** for the primary-tribe / thematic-differentiator-tribe split that drives the era-signal fork.
 
 ## Open questions for further research
 

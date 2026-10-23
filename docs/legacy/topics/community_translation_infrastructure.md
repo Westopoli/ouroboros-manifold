@@ -168,7 +168,7 @@ The mod-as-translation pattern has structural properties worth noting:
 
 This is the lowest-cost translation infrastructure pattern available, conditional on (a) the game having Workshop or equivalent mod distribution, and (b) the game's text layer being externalized to mod-friendly files. REPORTED.
 
-For Ouroboros, the mod-as-translation pattern is contingent on CL4 Workshop payoff being designed in. If Workshop support is feasible (cross-reference `docs/research/topics/` for any future CL4 mod brief) then translation-as-mod becomes a real option for the long-tail languages that don't justify even Crowdin investment.
+For Ouroboros, the mod-as-translation pattern is contingent on CL4 Workshop payoff being designed in. If Workshop support is feasible (cross-reference `docs/legacy/topics/` for any future CL4 mod brief) then translation-as-mod becomes a real option for the long-tail languages that don't justify even Crowdin investment.
 
 ## Cross-axis comparison
 

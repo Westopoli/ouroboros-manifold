@@ -19,8 +19,8 @@ The three lanes never touch the same files. Research feeds Design via queryable 
 
 **Research artifacts are the work.**
 - The Research Lane's primary output is text in `docs/research/**`. That is the job, not a side effect.
-- `docs/research/games/<game>.md` — one file per commercial precedent, semantic-extractable body.
-- `docs/research/topics/<topic>.md` — Blue Ocean reads, audience-tribe scans, vocabulary scans, market-shape briefs.
+- `docs/legacy/games/<game>.md` — one file per commercial precedent, semantic-extractable body.
+- `docs/legacy/topics/<topic>.md` — Blue Ocean reads, audience-tribe scans, vocabulary scans, market-shape briefs.
 - `docs/research/queries/<answered_question>.md` — Q&A artifacts from past Design Lane consumption. `/graphify query` auto-saves these.
 
 **Graph-first organization.**
@@ -43,8 +43,8 @@ The three lanes never touch the same files. Research feeds Design via queryable 
 
 Research lives as a queryable knowledge graph backed by markdown.
 
-- **Game cards** in `docs/research/games/` — one per commercial precedent. Body written in semantic-extractable prose: "Menace is a tier-1 F-shape precedent at squad scale," not a key-value dump. Custom front-matter fields only auto-attribute four keys (`source_url`, `captured_at`, `author`, `contributor`) — everything else must appear as plain sentences to be edge-extractable.
-- **Topic briefs** in `docs/research/topics/` — Blue Ocean reads, audience-tribe scans, vocabulary scans, market shape briefs. Reference game cards by name. Body prose, semantic-extractable.
+- **Game cards** in `docs/legacy/games/` — one per commercial precedent. Body written in semantic-extractable prose: "Menace is a tier-1 F-shape precedent at squad scale," not a key-value dump. Custom front-matter fields only auto-attribute four keys (`source_url`, `captured_at`, `author`, `contributor`) — everything else must appear as plain sentences to be edge-extractable.
+- **Topic briefs** in `docs/legacy/topics/` — Blue Ocean reads, audience-tribe scans, vocabulary scans, market shape briefs. Reference game cards by name. Body prose, semantic-extractable.
 - **Query artifacts** in `docs/research/queries/` — when Design Lane (or any consumer) asks a question via `/graphify query`, the answer auto-saves as a node, building cumulative answered-questions corpus.
 - **Graph rebuild cadence:** `/graphify --update docs/research/` after each batch of new cards/briefs. Full `/graphify docs/research/` rebuild after major restructure.
 - **MCP option:** `/graphify --mcp` exposes the graph as a live MCP server. Design Lane chats can query without local rebuild.
@@ -58,7 +58,7 @@ For each research question the Research Lane picks up:
 3. **Parallel fetch.** WebFetch + WebSearch + `/graphify add <url>` for direct corpus ingestion of canonical sources.
 4. **Write artifacts.** Game cards for newly-surfaced games. Topic briefs for cross-cutting findings. Update existing cards if new data lands.
 5. **Graph update.** `/graphify --update docs/research/`.
-6. **Hand-off note to Design Lane.** One paragraph in `research_lane_queue.md` and (if relevant) a row in the topic brief: "Question X answered. See `docs/research/topics/<brief>.md`. Feeds flag Q-###-## in the ambiguity register."
+6. **Hand-off note to Design Lane.** One paragraph in `research_lane_queue.md` and (if relevant) a row in the topic brief: "Question X answered. See `docs/legacy/topics/<brief>.md`. Feeds flag Q-###-## in the ambiguity register."
 7. **Soft pause every three questions** — fatigue + direction check.
 
 ## 6. Hand-Off to Design Lane
@@ -74,19 +74,19 @@ Research → Design hand-offs are file-based, not chat-based.
 
 When Westley opens a fresh Research Lane chat, he pastes a message of this shape:
 
-> You are the Research Lane. Read `docs/research_lane.md` (this playbook) and the active session plan referenced in `docs/research_lane_queue.md`. Resume the active research question from the queue. Question: `<name>`.
+> You are the Research Lane. Read `docs/legacy/research_lane.md` (this playbook) and the active session plan referenced in `docs/legacy/research_lane_queue.md`. Resume the active research question from the queue. Question: `<name>`.
 
 The Research Lane chat then:
 
 1. Reads this playbook.
-2. Reads `docs/research_lane_queue.md` to find the active session plan file and current question position.
+2. Reads `docs/legacy/research_lane_queue.md` to find the active session plan file and current question position.
 3. Reads the active session plan file.
 4. Reads any prior research artifacts relevant to the active question (game cards, topic briefs).
 5. Confirms scope and resume point with Westley in three lines before proceeding.
 
 ## 8. Active Question Queue
 
-The live queue is maintained in `docs/research_lane_queue.md`. That file is the single source of truth for what is in flight, what is done, what is next, and where the active session plan lives.
+The live queue is maintained in `docs/legacy/research_lane_queue.md`. That file is the single source of truth for what is in flight, what is done, what is next, and where the active session plan lives.
 
 ## 9. Tooling
 
@@ -103,10 +103,10 @@ The live queue is maintained in `docs/research_lane_queue.md`. That file is the 
 
 ## 11. Pointers
 
-- This playbook: `docs/research_lane.md`.
-- Active question queue: `docs/research_lane_queue.md`.
-- Game cards: `docs/research/games/<game>.md`.
-- Topic briefs: `docs/research/topics/<topic>.md`.
+- This playbook: `docs/legacy/research_lane.md`.
+- Active question queue: `docs/legacy/research_lane_queue.md`.
+- Game cards: `docs/legacy/games/<game>.md`.
+- Topic briefs: `docs/legacy/topics/<topic>.md`.
 - Query artifacts: `docs/research/queries/<question>.md`.
 - Graphify outputs: `docs/research/graphify-out/` (graph.json, GRAPH_REPORT.md, graph.html).
 - Design Lane playbook (consumer): `docs/design_lane.md`.

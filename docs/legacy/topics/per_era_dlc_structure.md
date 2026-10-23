@@ -23,13 +23,13 @@ Confidence tag convention: VERIFIED (publisher / financial filing / press releas
 Critical method caveat: **no precedent surveyed below is a direct match for Ouroboros' "7-era civilizational arc with Roman-free anchor + 6 paid eras (or +7 paid eras) at solo-dev scale."** Train Simulator's 1000+ SKU is route/locomotive-shaped not narrative-arc-shaped. MSFS aircraft DLC is asset-shaped not era-shaped. Civ VII's era/age plan is the closest narrative-arc-shaped analog but ships at Firaxis scale not solo-dev scale. Every precedent is an axis-of-comparison, not a template — read accordingly.
 
 Cross-refs read before writing this brief:
-- `docs/research/topics/dlc_pricing_ladders.md` — T-P3 per-SKU price points
-- `docs/research/topics/dlc_attach_rates.md` — T-CL2 attach floors and decay curves
-- `docs/research/topics/post_launch_content_cadence.md` — T-CL1 cadence solo-dev ceiling (if present)
-- `docs/research/games/ck3_dlc_ladder.md`, `stellaris_dlc_ladder.md`, `rimworld_dlc_ladder.md`, `wildermyth_omenroad.md` — Paradox / indie cadence game cards
+- `docs/legacy/topics/dlc_pricing_ladders.md` — T-P3 per-SKU price points
+- `docs/legacy/topics/dlc_attach_rates.md` — T-CL2 attach floors and decay curves
+- `docs/legacy/topics/post_launch_content_cadence.md` — T-CL1 cadence solo-dev ceiling (if present)
+- `docs/legacy/games/ck3_dlc_ladder.md`, `stellaris_dlc_ladder.md`, `rimworld_dlc_ladder.md`, `wildermyth_omenroad.md` — Paradox / indie cadence game cards
 - Bible: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` — 7-era + Roman-free lock
 
-Dedicated game cards for Train Simulator, MSFS, ETS2/ATS, DCS World, Total War Warhammer trilogy, Civilization VI, Civilization VII, Endless Legend/Space do not yet exist in `docs/research/games/`. All figures inline below floor at training-data REPORTED. Flag for future Wave capture.
+Dedicated game cards for Train Simulator, MSFS, ETS2/ATS, DCS World, Total War Warhammer trilogy, Civilization VI, Civilization VII, Endless Legend/Space do not yet exist in `docs/legacy/games/`. All figures inline below floor at training-data REPORTED. Flag for future Wave capture.
 
 ## Extreme high-count precedent: Train Simulator Classic
 
@@ -318,7 +318,7 @@ Tag distribution across this brief: VERIFIED ~5% (Civ VI NFP structure, Civ VII 
 - Team-size scaling factor between Worldwalker (2-5), Tynan Sylvester (1 principal), SCS (50-100), Amplitude (50-80), Firaxis (200+), Creative Assembly (200+), Paradox (200+ per-title) is non-linear and not publicly disclosed. Cadence implications inferred at order-of-magnitude resolution.
 - Per-DLC attach rates uniformly ESTIMATED — no publisher in the surveyed set discloses per-SKU sell-through. Decay-curve figures are proxy-derived.
 - Cumulative-catalog price math is full-sticker; effective realized buyer-spend is lower due to sale discounts, bundle pricing, and partial-buy patterns. Cumulative full-sticker is the upper-bound buyer-perception figure, not the per-buyer realized revenue figure.
-- Dedicated game cards for Train Simulator, MSFS, ETS2/ATS, DCS World, Total War Warhammer trilogy, Civ VI, Civ VII, Endless Legend / Endless Space 2 do not yet exist in `docs/research/games/`. All figures inline above floor at training-data REPORTED. Wave 4+ work to add these cards would tighten provenance.
+- Dedicated game cards for Train Simulator, MSFS, ETS2/ATS, DCS World, Total War Warhammer trilogy, Civ VI, Civ VII, Endless Legend / Endless Space 2 do not yet exist in `docs/legacy/games/`. All figures inline above floor at training-data REPORTED. Wave 4+ work to add these cards would tighten provenance.
 
 ## Feeds Design Lane
 
@@ -347,16 +347,16 @@ Six bullets:
 WebFetch / WebSearch denied during capture — all figures sourced from training-data references.
 
 Sibling Research Lane briefs (read in full before writing this brief):
-- `docs/research/topics/dlc_pricing_ladders.md` — T-P3 per-SKU price-point survey across CK3 / Stellaris / EU4 / HOI4 / RimWorld / Wildermyth.
-- `docs/research/topics/dlc_attach_rates.md` — T-CL2 attach-rate survey, decay-curve calibration.
-- `docs/research/topics/free_tier_paid_dlc_precedents.md` — T-M1 free-tier precedent (PoE/Warframe/Albion).
-- `docs/research/topics/foundation_tribe_sizing.md`, `primary_tribe_psychographic_profile.md` — tribe-alignment substrate.
+- `docs/legacy/topics/dlc_pricing_ladders.md` — T-P3 per-SKU price-point survey across CK3 / Stellaris / EU4 / HOI4 / RimWorld / Wildermyth.
+- `docs/legacy/topics/dlc_attach_rates.md` — T-CL2 attach-rate survey, decay-curve calibration.
+- `docs/legacy/topics/free_tier_paid_dlc_precedents.md` — T-M1 free-tier precedent (PoE/Warframe/Albion).
+- `docs/legacy/topics/foundation_tribe_sizing.md`, `primary_tribe_psychographic_profile.md` — tribe-alignment substrate.
 
 Game-card cross-refs (Wave 0-3 captures, in this repository):
-- `docs/research/games/ck3_dlc_ladder.md` — CK3 full tier structure, flavor-pack pattern, Chapter Pass shape, subscription tension.
-- `docs/research/games/stellaris_dlc_ladder.md` — Stellaris 10-year catalog, three-tier structure, attach decay curve, Paradox Plus subscription, DLC fatigue at 15-20 SKUs.
-- `docs/research/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion model, no-bundle / no-cosmetic precedent.
-- `docs/research/games/wildermyth_omenroad.md` — single-DLC small-studio $9.99 model, single-developer cadence ceiling.
+- `docs/legacy/games/ck3_dlc_ladder.md` — CK3 full tier structure, flavor-pack pattern, Chapter Pass shape, subscription tension.
+- `docs/legacy/games/stellaris_dlc_ladder.md` — Stellaris 10-year catalog, three-tier structure, attach decay curve, Paradox Plus subscription, DLC fatigue at 15-20 SKUs.
+- `docs/legacy/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion model, no-bundle / no-cosmetic precedent.
+- `docs/legacy/games/wildermyth_omenroad.md` — single-DLC small-studio $9.99 model, single-developer cadence ceiling.
 
 Training-data inline references (no dedicated game cards yet — flag for Wave 4+):
 - Train Simulator Classic Steam catalog, Dovetail Games press / community discussion.

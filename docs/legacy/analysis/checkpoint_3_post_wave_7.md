@@ -341,14 +341,14 @@ Substrate for the Commercial / Audience-Targeting / Marketing research stream's 
 
 ## Source map
 
-- CP1 — `docs/research/analysis/checkpoint_1_post_wave_3.md` (post-W3 funnel math + audience sizing + tag overlap + page conversion + capsule norms)
-- CP2 — `docs/research/analysis/checkpoint_2_post_wave_5.md` (post-W5 funnel close + wishlist conversion + demo strategy + refund norms + Next Fest C14 surface)
-- W6 briefs — `docs/research/topics/launch_window_seasonality.md`, `festival_roster_and_timelines.md`, `youtube_creator_map.md`, `twitch_streamer_map.md`, `press_outlet_map.md`, `newsletter_and_curator_surfaces.md`, `tiktok_shortform_viability.md`, `community_map_subreddit_discord.md`, `paid_ad_channels_roi.md`
-- W7 briefs — `docs/research/topics/post_launch_content_cadence.md`, `dlc_attach_rates.md`, `retention_curves_niche.md`, `mod_workshop_payoff.md`, `async_play_marketing_viability.md`, `community_translation_infrastructure.md`, `free_tier_paid_dlc_precedents.md`, `cosmetic_monetization_niche.md`, `localization_priority_slate.md`, `per_era_dlc_structure.md`, `early_access_vs_launch.md`
+- CP1 — `docs/legacy/analysis/checkpoint_1_post_wave_3.md` (post-W3 funnel math + audience sizing + tag overlap + page conversion + capsule norms)
+- CP2 — `docs/legacy/analysis/checkpoint_2_post_wave_5.md` (post-W5 funnel close + wishlist conversion + demo strategy + refund norms + Next Fest C14 surface)
+- W6 briefs — `docs/legacy/topics/launch_window_seasonality.md`, `festival_roster_and_timelines.md`, `youtube_creator_map.md`, `twitch_streamer_map.md`, `press_outlet_map.md`, `newsletter_and_curator_surfaces.md`, `tiktok_shortform_viability.md`, `community_map_subreddit_discord.md`, `paid_ad_channels_roi.md`
+- W7 briefs — `docs/legacy/topics/post_launch_content_cadence.md`, `dlc_attach_rates.md`, `retention_curves_niche.md`, `mod_workshop_payoff.md`, `async_play_marketing_viability.md`, `community_translation_infrastructure.md`, `free_tier_paid_dlc_precedents.md`, `cosmetic_monetization_niche.md`, `localization_priority_slate.md`, `per_era_dlc_structure.md`, `early_access_vs_launch.md`
 - W1-W5 carry-forward — see CP1 + CP2 source maps
 - Active plan — `/Users/westley/.claude/plans/synchronous-cuddling-lynx.md`
-- Lane playbook — `docs/research_lane.md`
-- Lane queue — `docs/research_lane_queue.md`
+- Lane playbook — `docs/legacy/research_lane.md`
+- Lane queue — `docs/legacy/research_lane_queue.md`
 - Bible authority sources — `docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`
 
 Memory cross-refs applied:

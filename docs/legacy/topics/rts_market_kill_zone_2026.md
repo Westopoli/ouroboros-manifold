@@ -42,7 +42,7 @@ The fifth mechanism is **free-to-play does not solve the conversion problem**. T
 
 ## What this means for Ouroboros (per the originating research)
 
-The originating research drew the conclusion captured in the 2026-05-16 RTS-framing-kill decision: the RTS-buyer label is a kill-zone. Marketing surfaces that frame a strategy/sim game as "real-time strategy" or "RTS" attract the wrong audience — the audience that has already paid the switching cost on StarCraft 2 — and that audience leaves bad comparison reviews, sinks the discovery surface, and never converts. Meanwhile the audience the project actually targets (generational/legacy strategy plus Foundation/hard-SF, per `docs/research/topics/lieutenant_pivot_niche_brief.md`) does not search for "RTS" tags and never sees the game.
+The originating research drew the conclusion captured in the 2026-05-16 RTS-framing-kill decision: the RTS-buyer label is a kill-zone. Marketing surfaces that frame a strategy/sim game as "real-time strategy" or "RTS" attract the wrong audience — the audience that has already paid the switching cost on StarCraft 2 — and that audience leaves bad comparison reviews, sinks the discovery surface, and never converts. Meanwhile the audience the project actually targets (generational/legacy strategy plus Foundation/hard-SF, per `docs/legacy/topics/lieutenant_pivot_niche_brief.md`) does not search for "RTS" tags and never sees the game.
 
 The bible decision (sub-fork Q2) operationalizes this finding: the RTS tag is excluded from the storefront, the marketing-surface vocabulary is "generational strategy simulation with operational tactical missions," and any current or future capsule copy framing the game as RTS is non-compliant and must be reworked. The decision applies immediately and stands independent of the lieutenant-redesign cost assessment (Q1).
 
@@ -94,4 +94,4 @@ Originating chat session: `596bc13e-55c8-45e8-a241-86bc59bcf3ce.jsonl` (Design L
 - Bible decision Q2 (RTS-framing kill) in `docs/bible/game_bible.md ## In Flux` Lieutenant System entry — already locked.
 - Any future Steam-page draft, capsule copy, trailer voice-over, or marketing surface that lives inside BLOCKER 5 (Stage 13 packaging) or beyond. The kill-zone diagnosis is the empirical justification for the framing constraints.
 - Any future Design Lane fork that revisits the RTS-tag exclusion or the operational-strategy framing.
-- Cross-references `docs/research/topics/lieutenant_pivot_niche_brief.md` (the audience this decision pairs with) and `docs/research/topics/delegated_command_precedents.md` (the design alternative this decision enables).
+- Cross-references `docs/legacy/topics/lieutenant_pivot_niche_brief.md` (the audience this decision pairs with) and `docs/legacy/topics/delegated_command_precedents.md` (the design alternative this decision enables).

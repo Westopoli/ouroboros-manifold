@@ -91,7 +91,7 @@ Text overlays, arrows, callouts, and labels on screenshots. The "annotated" vari
 
 ## Per-cluster subject patterns
 
-The three audience clusters identified in `docs/research/topics/audience_overlap_map.md` (Cluster A dynastic, Cluster B emergent-story, Cluster C grand-spatial) each have characteristic subject patterns observed on successful niche-strategy store pages.
+The three audience clusters identified in `docs/legacy/topics/audience_overlap_map.md` (Cluster A dynastic, Cluster B emergent-story, Cluster C grand-spatial) each have characteristic subject patterns observed on successful niche-strategy store pages.
 
 **Cluster A — Dynastic (Crusader Kings 3 audience).** Characteristic subjects:
 

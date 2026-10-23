@@ -66,11 +66,11 @@ The originating sub-agent surveyed 17 commercial titles that gestured at one or 
 
 **Combat Mission franchise** (Battlefront, ongoing since 2000). Stated greater than 1 million lifetime franchise sales per Battlefront. Devoted hardcore audience. Lane: tactical wargame. Reference point for information-delay design (Iron mode specifically).
 
-**Battle Brothers** (Overhype Studios, 2017). Massive long tail with 95%+ positive reviews. Hit. Lane: overworld + tactical. The originating sub-agent identifies Battle Brothers as the closest tactical-personality-roster commercial precedent at squad scale. Confidence: VERIFIED on the long-tail status; figures detailed in `docs/research/games/battle_brothers.md`.
+**Battle Brothers** (Overhype Studios, 2017). Massive long tail with 95%+ positive reviews. Hit. Lane: overworld + tactical. The originating sub-agent identifies Battle Brothers as the closest tactical-personality-roster commercial precedent at squad scale. Confidence: VERIFIED on the long-tail status; figures detailed in `docs/legacy/games/battle_brothers.md`.
 
 **Wartales** (Shiro Games, 2023). Strong seller post-1.0. Lane: overworld + tactical. Adjacent to Battle Brothers.
 
-**Stormgate** (Frost Giant Studios, 2024). Peak concurrent users 5,000 at launch, dropped to 200 by month three. Approximately $35M raised in development financing, near-collapse at time of capture. Mixed reviews. Lane: classic RTS. Reference point for the kill-zone diagnosis; see `docs/research/topics/rts_market_kill_zone_2026.md` for full coverage.
+**Stormgate** (Frost Giant Studios, 2024). Peak concurrent users 5,000 at launch, dropped to 200 by month three. Approximately $35M raised in development financing, near-collapse at time of capture. Mixed reviews. Lane: classic RTS. Reference point for the kill-zone diagnosis; see `docs/legacy/topics/rts_market_kill_zone_2026.md` for full coverage.
 
 **Immortals: Gates of Pyre** (Sunspear Games, 2024 early access). Investors pulled back; struggling. Underperformer. Mixed reviews. Lane: classic RTS. Reference point for kill-zone diagnosis.
 
@@ -112,7 +112,7 @@ The pick that emerged from this analysis is captured in `docs/bible/game_bible.m
 - Ashes of the Singularity II's AI sub-commander implementation when shipped — the originating research cited a developer interview but the game was pre-release. Post-launch behavior and reception would close a meaningful evidence gap.
 - Chair Entertainment's Ender's Game: Battle Room design documentation — any public design materials from before the Epic acquisition could inform the (a) direction's failure mode for future reference.
 - Mount & Blade and Mount & Blade II: Bannerlord party / companion systems as precedent for personality-driven named subordinates at strategic scale. The originating sub-agent did not include Mount & Blade in the inventory, but it is the strongest existing commercial reference for named-companion-with-personality at scale.
-- Wildermyth's hero personality and trait system — how the system makes named characters feel like people through accumulated history. Cross-references `docs/research/games/wildermyth.md`.
+- Wildermyth's hero personality and trait system — how the system makes named characters feel like people through accumulated history. Cross-references `docs/legacy/games/wildermyth.md`.
 
 ## Sources
 
@@ -148,4 +148,4 @@ Originating chat session: `596bc13e-55c8-45e8-a241-86bc59bcf3ce.jsonl` (Design L
 - WS3 Fork-B series (sim dimensions) in `docs/bible_history/bible_2_00_simulation.md ## In Flux` — gated on Fork-A2; this brief informs the information-delay and fog-through-proxies design space.
 - Q1 (lieutenant-redesign cost) future work — the precedent inventory provides commercial-precedent reference for what the redesign is aiming at.
 - Q3 (chronicle extension to lieutenants) future work — the persistence and named-character precedents in this brief (Battle Brothers, Wildermyth, HighFleet) inform feasibility.
-- Cross-references `docs/research/topics/lieutenant_pivot_niche_brief.md` (audience that values this kind of system) and `docs/research/topics/rts_market_kill_zone_2026.md` (kill-zone that this direction explicitly avoids).
+- Cross-references `docs/legacy/topics/lieutenant_pivot_niche_brief.md` (audience that values this kind of system) and `docs/legacy/topics/rts_market_kill_zone_2026.md` (kill-zone that this direction explicitly avoids).

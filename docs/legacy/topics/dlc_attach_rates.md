@@ -16,7 +16,7 @@ Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Any
 
 ## Method
 
-Sources: Steam DLC catalog listings, Paradox press releases, Steam Spy / VGInsights estimates (where reachable in training data), Steam achievement percentages (proxy for attach), publisher communications (Ludeon, Worldwalker, Overhype, Mohawk Games, Creative Assembly), community discussion of attach signals, sibling Wave 3 game cards (`docs/research/games/*.md`). WebFetch/WebSearch denied during capture — every figure floors at REPORTED or ESTIMATED unless backed by widely documented public record (then VERIFIED).
+Sources: Steam DLC catalog listings, Paradox press releases, Steam Spy / VGInsights estimates (where reachable in training data), Steam achievement percentages (proxy for attach), publisher communications (Ludeon, Worldwalker, Overhype, Mohawk Games, Creative Assembly), community discussion of attach signals, sibling Wave 3 game cards (`docs/legacy/games/*.md`). WebFetch/WebSearch denied during capture — every figure floors at REPORTED or ESTIMATED unless backed by widely documented public record (then VERIFIED).
 
 Critical method caveat: **no publisher in the surveyed set publicly discloses per-DLC attach rates.** Paradox, Ludeon, Worldwalker, Overhype, Mohawk, Creative Assembly all withhold per-DLC sell-through. All attach rate figures below are ESTIMATED, derived from one or more of:
 - Steam achievement % proxy (fraction of base-game owners with a DLC-gated achievement unlocked)
@@ -28,14 +28,14 @@ Critical method caveat: **no publisher in the surveyed set publicly discloses pe
 Confidence tag convention: VERIFIED (publisher/financial filing/press release), REPORTED (training-data widely-documented), ESTIMATED (proxy-derived or analyst inference), AMBIGUOUS (conflicting signal or unresolved tier classification).
 
 Game-card cross-refs read before writing this brief:
-- `docs/research/games/ck3_dlc_ladder.md`
-- `docs/research/games/stellaris_dlc_ladder.md`
-- `docs/research/games/rimworld_dlc_ladder.md`
-- `docs/research/games/wildermyth_omenroad.md`
-- `docs/research/games/battle_brothers.md`
-- `docs/research/games/old_world.md`
-- `docs/research/games/total_war_franchise.md`
-- `docs/research/topics/dlc_pricing_ladders.md` (sibling brief)
+- `docs/legacy/games/ck3_dlc_ladder.md`
+- `docs/legacy/games/stellaris_dlc_ladder.md`
+- `docs/legacy/games/rimworld_dlc_ladder.md`
+- `docs/legacy/games/wildermyth_omenroad.md`
+- `docs/legacy/games/battle_brothers.md`
+- `docs/legacy/games/old_world.md`
+- `docs/legacy/games/total_war_franchise.md`
+- `docs/legacy/topics/dlc_pricing_ladders.md` (sibling brief)
 
 EU4 and HOI4 do not yet have dedicated game cards. Figures below training-data inline, REPORTED floor, flag for Wave 4.
 
@@ -315,19 +315,19 @@ Training-data flagged throughout — WebFetch/WebSearch denied during capture. A
 
 Game-card cross-refs (Research Lane Wave 0 + Wave 3 captures, in this repository):
 
-- `docs/research/games/ck3_dlc_ladder.md` — CK3 full tier structure, flavor-pack attach pattern, Royal Court 30-50% first-expansion estimate, subscription tension. Read in full.
-- `docs/research/games/stellaris_dlc_ladder.md` — Stellaris 10-year catalog, three-tier structure, attach decay curve mid-catalog 20-35%, late-catalog 10-20%, cumulative-cost ceiling effect. Read in full.
-- `docs/research/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion attach pattern (30-60% range with quality variance), re-engagement multiplier dynamic, Anomaly identity-deviation case. Read in full.
-- `docs/research/games/wildermyth_omenroad.md` — single-DLC small-studio $9.99 attach 10-25%, identity-deviation case, cadence-ceiling constraint. Read in full.
-- `docs/research/games/battle_brothers.md` — three-DLC small-studio catalog, ~$31M lifetime revenue (DLC/base split unknown), open question on attach. Read in full.
-- `docs/research/games/old_world.md` — modest-scale dynasty-4X DLC catalog, attach estimates 25-40% first DLC, open question on DLC-mechanics depth. Read in full.
-- `docs/research/games/total_war_franchise.md` — AAA-tier $59.99 base + $7.99-$19.99 DLC, Warhammer trilogy aggregate revenue estimates, Pharaoh underperformance signal. Read in full.
+- `docs/legacy/games/ck3_dlc_ladder.md` — CK3 full tier structure, flavor-pack attach pattern, Royal Court 30-50% first-expansion estimate, subscription tension. Read in full.
+- `docs/legacy/games/stellaris_dlc_ladder.md` — Stellaris 10-year catalog, three-tier structure, attach decay curve mid-catalog 20-35%, late-catalog 10-20%, cumulative-cost ceiling effect. Read in full.
+- `docs/legacy/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion attach pattern (30-60% range with quality variance), re-engagement multiplier dynamic, Anomaly identity-deviation case. Read in full.
+- `docs/legacy/games/wildermyth_omenroad.md` — single-DLC small-studio $9.99 attach 10-25%, identity-deviation case, cadence-ceiling constraint. Read in full.
+- `docs/legacy/games/battle_brothers.md` — three-DLC small-studio catalog, ~$31M lifetime revenue (DLC/base split unknown), open question on attach. Read in full.
+- `docs/legacy/games/old_world.md` — modest-scale dynasty-4X DLC catalog, attach estimates 25-40% first DLC, open question on DLC-mechanics depth. Read in full.
+- `docs/legacy/games/total_war_franchise.md` — AAA-tier $59.99 base + $7.99-$19.99 DLC, Warhammer trilogy aggregate revenue estimates, Pharaoh underperformance signal. Read in full.
 
 Sibling brief cross-ref:
 
-- `docs/research/topics/dlc_pricing_ladders.md` — sibling brief holding the per-SKU price-point map. Read in full before writing this brief. The two briefs are paired — pricing ladders define the price-points, attach rates define the % conversion at each price-point.
+- `docs/legacy/topics/dlc_pricing_ladders.md` — sibling brief holding the per-SKU price-point map. Read in full before writing this brief. The two briefs are paired — pricing ladders define the price-points, attach rates define the % conversion at each price-point.
 
-EU4 and HOI4 inline references in this brief are training-data only — no dedicated game cards exist yet in `docs/research/games/`. Flag for Wave 4 capture.
+EU4 and HOI4 inline references in this brief are training-data only — no dedicated game cards exist yet in `docs/legacy/games/`. Flag for Wave 4 capture.
 
 Bible authority sources:
 

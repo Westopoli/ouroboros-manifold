@@ -14,7 +14,7 @@ Wishlist-velocity scan across niche-strategy launches 2020-2026. Surfaces pre-la
 
 Feeds launch-week visibility plan (Steam algorithm wishlist-velocity multiplier), T-D2 Next Fest planning (cadence + slot anchoring), T-F2 festival roster (which festivals + when, beyond Next Fest), T-C1 through T-C7 channel-mix prioritization (which channels generate velocity, which generate aged-pool), T-S3 algorithm visibility (wishlist velocity feeds Steam recommendation surface placement).
 
-Closes Wave 5 wishlist-axis pair w/ T-W1 (`docs/research/topics/wishlist_conversion_benchmarks.md`) — T-W1 set funnel-math working range of 180-670k pre-launch wishlist pool to hit bible 80-200k first-month target. T-W2 distributes that pool across a pre-launch timeline + sets per-milestone targets.
+Closes Wave 5 wishlist-axis pair w/ T-W1 (`docs/legacy/topics/wishlist_conversion_benchmarks.md`) — T-W1 set funnel-math working range of 180-670k pre-launch wishlist pool to hit bible 80-200k first-month target. T-W2 distributes that pool across a pre-launch timeline + sets per-milestone targets.
 
 **Non-recommendation disclaimer.** Research Lane surfaces inputs. Does NOT pick velocity target, festival cadence, trailer schedule, or course-correct trigger thresholds. Westley + Design Lane resolve. Brief flags conflicts w/ bible directives but does not resolve them — bible authority resolves.
 
@@ -51,7 +51,7 @@ Distribute the T-W1-implied 180-670k pre-launch wishlist pool across a feasible 
 - **Long-tail shape** (24-30 months pre-launch active marketing) — common for Paradox-tribe + Hooded Horse-published titles w/ multi-year community-buildup. Wishlist accrues slowly + steadily w/ festival spikes punctuating.
 - **Sprint shape** (8-14 months pre-launch active marketing) — common for solo / small-team niche-strategy launches that build a demo + run Next Fest cycle + ride creator coverage spike. Wishlist accrues more sharply, weighted heavily toward last 6 months.
 
-Per T-W1 wishlist-freshness section (`docs/research/topics/wishlist_conversion_benchmarks.md ## Launch-week vs year-1 shift`): sprint-shape wishlist converts at higher launch-week rate due to freshness premium (3-5× vs 2+ year aged). Long-tail shape generates larger pool but pool is partially aged. Net first-month conversion is roughly comparable across shapes for healthy execution.
+Per T-W1 wishlist-freshness section (`docs/legacy/topics/wishlist_conversion_benchmarks.md ## Launch-week vs year-1 shift`): sprint-shape wishlist converts at higher launch-week rate due to freshness premium (3-5× vs 2+ year aged). Long-tail shape generates larger pool but pool is partially aged. Net first-month conversion is roughly comparable across shapes for healthy execution.
 
 **Wildermyth-shape sprint milestones (ESTIMATED, anchored to 250-300k pre-launch pool):**
 
@@ -376,7 +376,7 @@ Revenue-weighted pool is ~85% of raw pool for typical Western-niche-strategy mix
 
 **Implications for Ouroboros international targeting:**
 
-- Tribe alignment (Foundation-readers, generational-strategy gamers) is concentrated in US + Western Europe — primary tribe weighting will skew Western. Cross-ref `docs/research/topics/primary_tribe_psychographic_profile.md`.
+- Tribe alignment (Foundation-readers, generational-strategy gamers) is concentrated in US + Western Europe — primary tribe weighting will skew Western. Cross-ref `docs/legacy/topics/primary_tribe_psychographic_profile.md`.
 - Mandarin + Brazilian Portuguese + Russian + Polish + Japanese localization decisions affect per-region wishlist accrual + conversion. Bible currently does not commit to localization scope; surface for Design Lane.
 - Per-region conversion modifier means raw wishlist target of 300k = ~258k revenue-equivalent; bump raw target ~17% to account if revenue-target is the binding constraint.
 - T-W1 funnel-math assumes US-baseline conversion implicitly; international mix dilutes the actual conversion %. ESTIMATED ~10-15% conversion-rate drag from international mix. Implies T-W1 target band of 180-670k may be ~210-770k accounting for international mix. ESTIMATED.
@@ -557,10 +557,10 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
 - **Gamalytic** — https://gamalytic.com — wishlist + revenue modeling. Training-data flag: YES. Confidence: REPORTED for relative ranking, ESTIMATED for absolute.
 - **Adjacent press coverage** — Rock Paper Shotgun, PC Gamer, Game Developer, GamesIndustry.biz, Eurogamer. Training-data flag: YES. Confidence: REPORTED.
 - **Cross-reference within Ouroboros docs:**
-  - `docs/research/topics/wishlist_conversion_benchmarks.md` (T-W1) — funnel-math working range 180-670k pre-launch wishlist pool; per-source conversion premiums; wishlist freshness premium
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool + tribe shape
-  - `docs/research/topics/pricing_elasticity_niche.md` — per-tier conversion baseline at price; cross-feeds Next Fest tier outcomes
-  - `docs/research/topics/primary_tribe_psychographic_profile.md` — Foundation-tribe + generational-tribe demographic input; conflict #2 prior surfacing
+  - `docs/legacy/topics/wishlist_conversion_benchmarks.md` (T-W1) — funnel-math working range 180-670k pre-launch wishlist pool; per-source conversion premiums; wishlist freshness premium
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — niche-strategy landscape + reachable-buyer pool + tribe shape
+  - `docs/legacy/topics/pricing_elasticity_niche.md` — per-tier conversion baseline at price; cross-feeds Next Fest tier outcomes
+  - `docs/legacy/topics/primary_tribe_psychographic_profile.md` — Foundation-tribe + generational-tribe demographic input; conflict #2 prior surfacing
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 first-month target lock + bible-authority-resolves directive
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 re-surface
 

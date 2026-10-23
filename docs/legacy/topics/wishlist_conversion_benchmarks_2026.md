@@ -426,8 +426,8 @@ Originating `lieutenant_pivot_niche_brief.md` cites passionate-niche success sto
 - Steamworks Developer Group wishlist analysis announcement — https://steamcommunity.com/groups/steamworks/announcements/detail/950630846501680764
 
 **Cross-niche reference (Topic A audience-sizing brief):**
-- `docs/research/topics/audience_sizing_2026.md` — niche-capacity tiers (TRUSTED).
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — originating brief Q5 + revenue-per-dev claim.
+- `docs/legacy/topics/audience_sizing_2026.md` — niche-capacity tiers (TRUSTED).
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — originating brief Q5 + revenue-per-dev claim.
 
 
 

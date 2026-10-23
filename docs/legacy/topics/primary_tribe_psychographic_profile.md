@@ -190,7 +190,7 @@ Brief is an interpretation. Other valid interpretations of same source pool exis
 Specific forks this brief feeds:
 
 - **WS5 fork 2 (run shape granularity):** primary tribe pacing diverges (CK3 long, Wildermyth chapter-short, BB medium-long, FoG:E medium). Brief surfaces but doesn't resolve.
-- **WS5 fork 5 (save model):** primary tribe save-scumming culture varies (BB ironman, CK3 mixed, Wildermyth permadeath+rewind, FoG:E save-anytime). Cross-ref with `docs/research/topics/blue_ocean_run_shape.md` if collapse-rebuild commits a single save model.
+- **WS5 fork 5 (save model):** primary tribe save-scumming culture varies (BB ironman, CK3 mixed, Wildermyth permadeath+rewind, FoG:E save-anytime). Cross-ref with `docs/legacy/topics/blue_ocean_run_shape.md` if collapse-rebuild commits a single save model.
 - **WS5 fork 6 (lieutenant promotion/death granularity):** BB permadeath roster is closest precedent; CK3 dynasty is parallel pattern; Wildermyth retirement-to-wall is third option. All three viable; tribe doesn't unify on one.
 - **WS5 fork 9 (chronicle scale + content cap):** Wildermyth event-pool exhaustion at 3-5 campaigns is direct warning for Ouroboros chronicle if not procedurally regenerable. Bible's chronicle spec must address.
 - **WS4 MP forks:** primary tribe is SP-default. Opportunity to ship SP-first w/o backlash. Per-mission co-op (BB-style imaginary), persistent shared world, async — none of the four have strong async culture; CK3 + Wildermyth co-op precedents exist but small.
@@ -231,8 +231,8 @@ Training-data-only — flag for re-capture w/ live Steam/SteamDB queries when We
   - ItalianSpartacus FoG:E
   - Lionheart BB
 - Cross-reference within Ouroboros docs:
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — parent brief; this one sharpens its audience line
-  - `docs/research/topics/blue_ocean_run_shape.md` — collapse-rebuild Tier-1 lock; pacing fork cross-ref
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — parent brief; this one sharpens its audience line
+  - `docs/legacy/topics/blue_ocean_run_shape.md` — collapse-rebuild Tier-1 lock; pacing fork cross-ref
   - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 

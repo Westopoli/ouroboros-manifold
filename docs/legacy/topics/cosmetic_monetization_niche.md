@@ -18,7 +18,7 @@ Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Any
 
 ## Method
 
-Sources: per-game cards in `docs/research/games/` (CK3, Stellaris, Total War, RimWorld, Wildermyth, Songs of Syx, Caves of Qud, HighFleet, Hades); sibling brief `dlc_pricing_ladders.md` (complementary tier-structure data); Steam DLC catalog training-data references; Paradox storefront; community controversy signals. WebFetch/WebSearch denied — figures floor REPORTED or ESTIMATED unless widely documented public record (then VERIFIED).
+Sources: per-game cards in `docs/legacy/games/` (CK3, Stellaris, Total War, RimWorld, Wildermyth, Songs of Syx, Caves of Qud, HighFleet, Hades); sibling brief `dlc_pricing_ladders.md` (complementary tier-structure data); Steam DLC catalog training-data references; Paradox storefront; community controversy signals. WebFetch/WebSearch denied — figures floor REPORTED or ESTIMATED unless widely documented public record (then VERIFIED).
 
 EU4 + HOI4 lack dedicated game cards; cosmetic figures below are training-data inline, REPORTED floor, flagged for Wave 4. MTGA equivalent.
 
@@ -250,7 +250,7 @@ Tag distribution: VERIFIED ~12% (no-cosmetic empirical for RimWorld / Hades / Hi
 
 WebFetch / WebSearch denied. All sources training-data references to Steam DLC catalog, Paradox press releases, community subreddit / Steam forum discussion, GDC talks, trade press. Wave 4 web-access capture could verify late-catalog cosmetic SKUs and MTGA uptake disclosures.
 
-EU4 + HOI4 + MTGA inline references training-data only; no dedicated cards in `docs/research/games/` yet.
+EU4 + HOI4 + MTGA inline references training-data only; no dedicated cards in `docs/legacy/games/` yet.
 
 Tribe-fit severity inherently ESTIMATED — no quantified measurement across surveyed titles. Directional claims (generational/legacy + Foundation/hard-SF run cold on cosmetic) consistent across precedents but unquantified.
 
@@ -279,22 +279,22 @@ Tribe-fit severity inherently ESTIMATED — no quantified measurement across sur
 Training-data flagged throughout — WebFetch / WebSearch denied. Per-SKU prices, controversy signals, tribe-fit patterns sourced from training-data references to Steam DLC catalog, Paradox press releases, community subreddit + Steam forum discussion, GDC talks (Kasavin on Hades, Sylvester on RimWorld), trade press (PC Gamer, Rock Paper Shotgun, Waypoint).
 
 Game-card cross-refs (in repo):
-- `docs/research/games/ck3_dlc_ladder.md` — cosmetic-pack tier, ruler-designer, controversy.
-- `docs/research/games/stellaris_dlc_ladder.md` — species + music tier, DLC fatigue.
-- `docs/research/games/rimworld_dlc_ladder.md` — zero-cosmetic + flat-tier discipline.
-- `docs/research/games/wildermyth_omenroad.md` — small-studio zero-cosmetic.
-- `docs/research/games/total_war_franchise.md` — Lord / Race / Blood Pack surfaces.
-- `docs/research/games/hades.md` — Supergiant zero-cosmetic precedent.
-- `docs/research/games/caves_of_qud.md` — author-voice + zero-cosmetic.
-- `docs/research/games/songs_of_syx.md` — solo-dev + zero-cosmetic.
-- `docs/research/games/highfleet.md` — author-voice + zero-cosmetic.
+- `docs/legacy/games/ck3_dlc_ladder.md` — cosmetic-pack tier, ruler-designer, controversy.
+- `docs/legacy/games/stellaris_dlc_ladder.md` — species + music tier, DLC fatigue.
+- `docs/legacy/games/rimworld_dlc_ladder.md` — zero-cosmetic + flat-tier discipline.
+- `docs/legacy/games/wildermyth_omenroad.md` — small-studio zero-cosmetic.
+- `docs/legacy/games/total_war_franchise.md` — Lord / Race / Blood Pack surfaces.
+- `docs/legacy/games/hades.md` — Supergiant zero-cosmetic precedent.
+- `docs/legacy/games/caves_of_qud.md` — author-voice + zero-cosmetic.
+- `docs/legacy/games/songs_of_syx.md` — solo-dev + zero-cosmetic.
+- `docs/legacy/games/highfleet.md` — author-voice + zero-cosmetic.
 
 Sibling topic-brief cross-refs:
-- `docs/research/topics/dlc_pricing_ladders.md` — tier-structure substrate, Conflict 2 (L292 structural collision).
-- `docs/research/topics/foundation_tribe_sizing.md` — Foundation/hard-SF tribe sizing.
-- `docs/research/topics/primary_tribe_psychographic_profile.md` — legacy tribe psychology.
-- `docs/research/topics/pricing_elasticity_niche.md` — niche price elasticity.
-- `docs/research/topics/audience_psychographics_2026.md` — tribe psychology cross-ref.
+- `docs/legacy/topics/dlc_pricing_ladders.md` — tier-structure substrate, Conflict 2 (L292 structural collision).
+- `docs/legacy/topics/foundation_tribe_sizing.md` — Foundation/hard-SF tribe sizing.
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md` — legacy tribe psychology.
+- `docs/legacy/topics/pricing_elasticity_niche.md` — niche price elasticity.
+- `docs/legacy/topics/audience_psychographics_2026.md` — tribe psychology cross-ref.
 
 EU4 + HOI4 + MTGA inline only — Wave 4 capture flagged.
 

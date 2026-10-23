@@ -30,7 +30,7 @@ The Steam tag landscape brief is the first artifact in the commercial-stream wav
 
 > **Niches actively avoided.** SC2 / classic-RTS PvP players (kill zone, every entrant flopped); Warhammer 40K space-opera audience (IP-locked); AAA 4X seats (Civ / Stellaris own them and cannot be displaced); multiplayer-ladder anything (requires CCU that this project will never reach).
 
-The In Flux entry's sub-fork Q2 ("Kill RTS framing immediately") is operationalized in `docs/research/topics/rts_market_kill_zone_2026.md ## What this means for Ouroboros`:
+The In Flux entry's sub-fork Q2 ("Kill RTS framing immediately") is operationalized in `docs/legacy/topics/rts_market_kill_zone_2026.md ## What this means for Ouroboros`:
 
 > The bible decision (sub-fork Q2) operationalizes this finding: the RTS tag is excluded from the storefront, the marketing-surface vocabulary is "generational strategy simulation with operational tactical missions," and any current or future capsule copy framing the game as RTS is non-compliant and must be reworked.
 
@@ -145,8 +145,8 @@ Confidence floor for any Steam-side algorithm claim is ESTIMATED — the 2026 al
 
 - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L288 — verbatim priority and secondary tag lists captured in this brief.
 - `docs/bible/game_bible.md ## In Flux` Lieutenant System entry (2026-05-16) — verbatim niches-avoided list captured.
-- `docs/research/topics/rts_market_kill_zone_2026.md` — kill-zone substantiation; cited extensively.
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — tribe-discovery surface list and open-Q4 reference.
-- `docs/research/topics/blue_ocean_run_shape.md` — F-territory framing for Roguelite-adjacent tag exclusion.
-- `docs/research/games/crusader_kings_3.md`, `wildermyth.md`, `rimworld.md`, `stellaris.md`, `caves_of_qud.md`, `manor_lords.md`, `helldivers_2.md`, `sins_of_a_solar_empire_2.md`, `sea_power.md` — co-occurrence pattern inputs.
+- `docs/legacy/topics/rts_market_kill_zone_2026.md` — kill-zone substantiation; cited extensively.
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — tribe-discovery surface list and open-Q4 reference.
+- `docs/legacy/topics/blue_ocean_run_shape.md` — F-territory framing for Roguelite-adjacent tag exclusion.
+- `docs/legacy/games/crusader_kings_3.md`, `wildermyth.md`, `rimworld.md`, `stellaris.md`, `caves_of_qud.md`, `manor_lords.md`, `helldivers_2.md`, `sins_of_a_solar_empire_2.md`, `sea_power.md` — co-occurrence pattern inputs.
 - Steam store tag landscape circa 2024–2026 from training data. **Flag for re-capture when WebFetch available** — algorithm specifics and post-2024 tag emergences carry ESTIMATED floor.

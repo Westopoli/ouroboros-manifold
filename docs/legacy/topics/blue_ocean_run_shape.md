@@ -14,7 +14,7 @@ A Blue Ocean tier map for the eight run-shape options enumerated in Design Lane 
 
 ## Method
 
-The map is built from the 15-game competitor matrix captured as game cards in `docs/research/games/`. Each game was placed into a primary run-shape bucket based on observed gameplay structure, not marketing language. Tiers reflect commercial precedent density at depth — meaning a shape can be technically attempted by a small game (Tier 2) without being delivered at depth by a hit-quality precedent (which would be Tier 3 served).
+The map is built from the 15-game competitor matrix captured as game cards in `docs/legacy/games/`. Each game was placed into a primary run-shape bucket based on observed gameplay structure, not marketing language. Tiers reflect commercial precedent density at depth — meaning a shape can be technically attempted by a small game (Tier 2) without being delivered at depth by a hit-quality precedent (which would be Tier 3 served).
 
 ## Tier definitions
 
@@ -26,7 +26,7 @@ The map is built from the 15-game competitor matrix captured as game cards in `d
 
 ### Option A — Single continuous run across all eras
 
-**Tier 3 — served.** Owned by Crusader Kings 3 at multi-million-unit hit scale; supported by Old World, Battle Brothers, Star Dynasties at smaller scale. Norland sits here despite being misclassified as F by prior session web AI (see `docs/research/games/norland.md` for the correction). Generational/legacy tribe primary expectation. Entering A means head-on with CK3.
+**Tier 3 — served.** Owned by Crusader Kings 3 at multi-million-unit hit scale; supported by Old World, Battle Brothers, Star Dynasties at smaller scale. Norland sits here despite being misclassified as F by prior session web AI (see `docs/legacy/games/norland.md` for the correction). Generational/legacy tribe primary expectation. Entering A means head-on with CK3.
 
 ### Option B — Discrete chapters per era
 
@@ -74,7 +74,7 @@ F is the largest unmet-need shape in the run-shape fork. The open design problem
 
 - **Uncontested ≠ proven demand.** Two F-territory attempts (Massive Chalice, Epoch Cycle) underperformed. Blue Ocean does not guarantee a market; it guarantees the absence of head-on commercial competition.
 - **Niche-target collision.** Generational/legacy tribe (CK3 + Wildermyth + Battle Brothers + FoG: Empires) primary preference cluster sits at A and F. Foundation/hard-SF tribe preference cluster sits at F and H. F is the only option both clusters support; A serves only the primary cluster.
-- **Confidence on each tier classification:** VERIFIED for games with current Steam metrics captured; REPORTED for sales figures (no public per-title audit); ESTIMATED for Battle Brothers and RimWorld lifetime revenue. Individual game cards in `docs/research/games/` carry per-claim confidence tags.
+- **Confidence on each tier classification:** VERIFIED for games with current Steam metrics captured; REPORTED for sales figures (no public per-title audit); ESTIMATED for Battle Brothers and RimWorld lifetime revenue. Individual game cards in `docs/legacy/games/` carry per-claim confidence tags.
 
 ## Feeds Design Lane
 

@@ -20,9 +20,9 @@ Feed targets:
 - T-V1 trailer structure — pitch-shape question (does the trailer foreground async / short-burst angle, or bury it)
 - Brand positioning fork — async-friendly framing vs sit-down-grand-strategy framing
 - Marketing-copy register — capsule copy, "dip in for 20 minutes" tagline viability
-- `docs/research/topics/primary_tribe_psychographic_profile.md` time-budget read
-- `docs/research/topics/tribe_demographics.md` family-constrained adult bracket
-- `docs/research/topics/mp_session_model_precedents.md` Archetype 4 commercial floor (already surfaced async-as-primary-mode mostly dormant)
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md` time-budget read
+- `docs/legacy/topics/tribe_demographics.md` family-constrained adult bracket
+- `docs/legacy/topics/mp_session_model_precedents.md` Archetype 4 commercial floor (already surfaced async-as-primary-mode mostly dormant)
 
 ## Method
 
@@ -52,7 +52,7 @@ Mohawk's 2020 multiplayer announcement and follow-up press explicitly leaned on 
 
 ### Commercial signal
 
-Commercial outcome is the load-bearing data point: Old World sold a small / niche total (per `docs/research/topics/mp_session_model_precedents.md` — Steam peak under 1,000 concurrent users, current 24-hour peak low hundreds, lifetime sales unknown but characterized as critically-loved-commercially-niche). The originating multiplayer-precedents brief concluded async-as-primary-mode is commercially dormant — Civ VI Play By Cloud described as broken/abandoned per Bleeding Cool, Old World's mode shipped but commercially modest. Confidence: REPORTED.
+Commercial outcome is the load-bearing data point: Old World sold a small / niche total (per `docs/legacy/topics/mp_session_model_precedents.md` — Steam peak under 1,000 concurrent users, current 24-hour peak low hundreds, lifetime sales unknown but characterized as critically-loved-commercially-niche). The originating multiplayer-precedents brief concluded async-as-primary-mode is commercially dormant — Civ VI Play By Cloud described as broken/abandoned per Bleeding Cool, Old World's mode shipped but commercially modest. Confidence: REPORTED.
 
 ### The unpacked question
 
@@ -207,7 +207,7 @@ For Ouroboros specifically: the BLOCKER 1 autosave + world-serializer work curre
 
 ## Cross-axis 1 — Niche-strategy buyer time-budget
 
-T-A3 demographics (per `docs/research/topics/tribe_demographics.md` and `docs/research/topics/primary_tribe_psychographic_profile.md` at training-data floor) place the Ouroboros primary tribe at:
+T-A3 demographics (per `docs/legacy/topics/tribe_demographics.md` and `docs/legacy/topics/primary_tribe_psychographic_profile.md` at training-data floor) place the Ouroboros primary tribe at:
 
 - 30-48 age modal
 - White-collar
@@ -239,15 +239,15 @@ A latent tension in the precedent set: **async-friendly / save-anywhere framing 
 
 These framings are not mutually exclusive — RimWorld manages both — but they pull in different rhetorical directions. Confidence: ESTIMATED.
 
-For Ouroboros: the 7-era generational sweep + Foundation/hard-SF + Roman-free baseline creates a structural tension. If the headline framing is "every generational sweep is different" (replay framing), the time-shape pitch becomes a secondary affordance. If the headline framing is "your civilization's saga across centuries" (single-campaign-depth framing), the time-shape pitch aligns naturally as a primary affordance. The Design Lane has not resolved this fork at training-data floor — `docs/design_lane.md` and `docs/design_lane_queue.md` capture the parallel work. Confidence: REPORTED.
+For Ouroboros: the 7-era generational sweep + Foundation/hard-SF + Roman-free baseline creates a structural tension. If the headline framing is "every generational sweep is different" (replay framing), the time-shape pitch becomes a secondary affordance. If the headline framing is "your civilization's saga across centuries" (single-campaign-depth framing), the time-shape pitch aligns naturally as a primary affordance. The Design Lane has not resolved this fork at training-data floor — `docs/design_lane.md` and `docs/legacy/design_lane_queue.md` capture the parallel work. Confidence: REPORTED.
 
 ## Cross-axis 4 — Roman-free baseline as async-pitch entry surface
 
-The bible-locked Roman-free baseline (per `docs/bible/game_bible.md` — entry-level always-on tier, per `docs/research/topics/demo_strategy_norms.md` § Roman free-tier discussion) creates a unique surface for the async-pitch question.
+The bible-locked Roman-free baseline (per `docs/bible/game_bible.md` — entry-level always-on tier, per `docs/legacy/topics/demo_strategy_norms.md` § Roman free-tier discussion) creates a unique surface for the async-pitch question.
 
 If the Roman-free tier is intended to function as an **always-on discovery surface** — perpetually available, no time-gate, no buy-to-try — then the async-pitch register has a natural home there: "try Rome, dip in for 20 minutes, come back when you want." The Roman-free tier becomes the marketing proof-of-concept for the time-shape claim, rather than a claim the trailer makes about the paid product.
 
-Confidence: ESTIMATED. Whether the Roman-free tier actually plays this marketing role depends on T-D1 demo-strategy decisions and T-M1 free-tier framing work — both surfaced as planned in `docs/research_lane_queue.md`. The async-pitch viability question is **partially downstream** of those resolutions.
+Confidence: ESTIMATED. Whether the Roman-free tier actually plays this marketing role depends on T-D1 demo-strategy decisions and T-M1 free-tier framing work — both surfaced as planned in `docs/legacy/research_lane_queue.md`. The async-pitch viability question is **partially downstream** of those resolutions.
 
 ## Open questions for further research
 
@@ -309,13 +309,13 @@ GameDiscoverCo / Zukowski general:
 
 Cross-reference briefs:
 
-- `docs/research/topics/mp_session_model_precedents.md` (Archetype 4 async commercial floor)
-- `docs/research/topics/primary_tribe_psychographic_profile.md`
-- `docs/research/topics/tribe_demographics.md`
-- `docs/research/topics/demo_strategy_norms.md`
-- `docs/research/topics/audience_psychographics_2026.md`
-- `docs/research/topics/trailer_structure_norms.md`
-- `docs/research/topics/steam_capsule_ab_norms.md`
+- `docs/legacy/topics/mp_session_model_precedents.md` (Archetype 4 async commercial floor)
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md`
+- `docs/legacy/topics/tribe_demographics.md`
+- `docs/legacy/topics/demo_strategy_norms.md`
+- `docs/legacy/topics/audience_psychographics_2026.md`
+- `docs/legacy/topics/trailer_structure_norms.md`
+- `docs/legacy/topics/steam_capsule_ab_norms.md`
 
 ## Feeds Design Lane / Research Lane
 

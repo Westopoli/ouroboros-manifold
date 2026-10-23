@@ -10,7 +10,7 @@ contributor: Research Lane Wave 1 capture
 
 ## What this brief is
 
-Demographic breakdown both tribes Ouroboros targets. Primary tribe: generational/legacy strategy intersection (Crusader Kings 3 + Wildermyth + Battle Brothers + Field of Glory: Empires). Secondary tribe: Foundation/hard-SF literary readers as thematic differentiator. Per `docs/research/topics/lieutenant_pivot_niche_brief.md` ranking. Brief surfaces age, region, gender, income proxy, platform mix, cross-purchase, hardware tier, language preference splits. Feeds T-L1 localization slate, T-P1 pricing elasticity, T-C1 YT/streamer channel map, T-C7 paid ad ROI targeting, T-A4 overlap map (downstream).
+Demographic breakdown both tribes Ouroboros targets. Primary tribe: generational/legacy strategy intersection (Crusader Kings 3 + Wildermyth + Battle Brothers + Field of Glory: Empires). Secondary tribe: Foundation/hard-SF literary readers as thematic differentiator. Per `docs/legacy/topics/lieutenant_pivot_niche_brief.md` ranking. Brief surfaces age, region, gender, income proxy, platform mix, cross-purchase, hardware tier, language preference splits. Feeds T-L1 localization slate, T-P1 pricing elasticity, T-C1 YT/streamer channel map, T-C7 paid ad ROI targeting, T-A4 overlap map (downstream).
 
 Non-recommendation disclaimer: brief reports inputs only. Does not pick localization set, ad spend split, channel priority. Westley + Design Lane resolve. Research Lane gathers, tags confidence, flags conflicts.
 
@@ -294,7 +294,7 @@ Where the two tribes diverge in demographics:
 Checked against `docs/bible/game_bible.md` (sales target 80-200k @ $25-35, buy-once base + DLC-per-era):
 
 - **$25-35 price vs demographic income proxy:** no conflict. Income proxy supports this band cleanly. The audience age + hardware tier + Paradox-pattern willingness-to-pay all align.
-- **80-200k unit target vs region split:** consistent. NA + EU dominance for grand-strategy revenue means a 80-200k target is reachable primarily from approximately 65-85% of that goal coming from NA + EU. The remaining 15-35% from RoW assumes localization Tier 2 + Russian + regional pricing. No conflict surfaced; consistent with `docs/research/topics/lieutenant_pivot_niche_brief.md` reachable-buyer pool of 80-200k passionate primary tribe.
+- **80-200k unit target vs region split:** consistent. NA + EU dominance for grand-strategy revenue means a 80-200k target is reachable primarily from approximately 65-85% of that goal coming from NA + EU. The remaining 15-35% from RoW assumes localization Tier 2 + Russian + regional pricing. No conflict surfaced; consistent with `docs/legacy/topics/lieutenant_pivot_niche_brief.md` reachable-buyer pool of 80-200k passionate primary tribe.
 - **Foundation tribe size (20-80k reachable per lieutenant brief) vs region split:** consistent. Secondary tribe is additive thematic differentiator, not the volume driver.
 - **DLC-per-era (7 eras, Roman free):** no demographic conflict surfaced. The Paradox-pattern willingness-to-pay supports DLC monetization for this audience.
 
@@ -349,10 +349,10 @@ The Research Lane could not WebFetch / WebSearch within this brief's scope. Sour
 - **Quantic Foundry Gamer Motivation Profile** — https://quanticfoundry.com — strategy player profile blog series. Training-data flag: YES. Confidence: REPORTED.
 - **ESA Essential Facts About the Video Game Industry (annual US)** — https://www.theesa.com/resources — training-data flag: YES. Confidence: REPORTED.
 - **ISFE / Ipsos All About Video Games (Europe)** — https://www.isfe.eu — training-data flag: YES. Confidence: REPORTED.
-- **Paradox Interactive investor presentations + press releases** (CK3 4M units, Stellaris 8M units cited in `docs/research/topics/lieutenant_pivot_niche_brief.md`) — https://www.paradoxinteractive.com/media — training-data flag: YES. Confidence: REPORTED.
+- **Paradox Interactive investor presentations + press releases** (CK3 4M units, Stellaris 8M units cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md`) — https://www.paradoxinteractive.com/media — training-data flag: YES. Confidence: REPORTED.
 - **SteamSpy ownership proxy** (degraded post-2018 Valve API restrictions) — https://steamspy.com — training-data flag: YES. Confidence: ESTIMATED for any numeric ownership-share claim.
 - **Apple TV / Nielsen Foundation series viewership co-disclosures** — referenced via press coverage. Training-data flag: YES. Confidence: REPORTED, indirect.
-- **Reddit subscriber counts** (/r/CrusaderKings ~250k, /r/asimov ~70k, /r/printSF ~250k, /r/wildermyth, /r/IsaacArthur ~350k) — directional, drawn from `docs/research/topics/lieutenant_pivot_niche_brief.md` and Reddit subscriber displays in training-data window. Confidence: REPORTED, ±15-20%.
+- **Reddit subscriber counts** (/r/CrusaderKings ~250k, /r/asimov ~70k, /r/printSF ~250k, /r/wildermyth, /r/IsaacArthur ~350k) — directional, drawn from `docs/legacy/topics/lieutenant_pivot_niche_brief.md` and Reddit subscriber displays in training-data window. Confidence: REPORTED, ±15-20%.
 - **Worldwalker / Overhype / Paradox / Slitherine developer commentary** — GDC talks, podcast appearances, dev blogs. Training-data flag: YES. Confidence: REPORTED, indirect.
 
 Originating Research Lane capture: 2026-05-17 Wave 1, T-A3 — Tribe demographics breakdown.

@@ -19,13 +19,13 @@ Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Any
 Sources: Steam DLC catalog listings (per-title), Paradox press releases and storefront organization, publisher communications (Ludeon, Worldwalker), SteamDB price history (where reachable in training data), and community discussion of attach rates. WebFetch denied during capture — every figure floors at REPORTED or ESTIMATED unless backed by widely documented public record (then VERIFIED). Pre-2018 price history patchy because SteamDB-era price tracking improved coverage from approximately 2018 forward; older catalog entries (EU4 2013-2017, Stellaris 2016-2017) carry weaker price provenance.
 
 Game-card cross-refs read before writing this brief:
-- `docs/research/games/ck3_dlc_ladder.md`
-- `docs/research/games/stellaris_dlc_ladder.md`
-- `docs/research/games/rimworld_dlc_ladder.md`
-- `docs/research/games/wildermyth_omenroad.md`
-- `docs/research/games/free_anchor_precedents.md`
+- `docs/legacy/games/ck3_dlc_ladder.md`
+- `docs/legacy/games/stellaris_dlc_ladder.md`
+- `docs/legacy/games/rimworld_dlc_ladder.md`
+- `docs/legacy/games/wildermyth_omenroad.md`
+- `docs/legacy/games/free_anchor_precedents.md`
 
-EU4 and HOI4 do not yet have dedicated game cards in `docs/research/games/`. Figures below are training-data sourced, REPORTED floor, and should be confirmed against a Paradox catalog pull when a Wave 4 capture covers those titles.
+EU4 and HOI4 do not yet have dedicated game cards in `docs/legacy/games/`. Figures below are training-data sourced, REPORTED floor, and should be confirmed against a Paradox catalog pull when a Wave 4 capture covers those titles.
 
 ## Paradox expansion-tier ladder
 
@@ -268,13 +268,13 @@ Training-data flagged throughout — WebFetch denied during capture, all per-SKU
 
 Game-card cross-refs (Research Lane Wave 0 captures, in this repository):
 
-- `docs/research/games/ck3_dlc_ladder.md` — CK3 full tier structure, flavor-pack pattern, Chapter Pass shape, subscription tension. Read in full before writing this brief.
-- `docs/research/games/stellaris_dlc_ladder.md` — Stellaris 10-year catalog, three-tier structure, attach decay curve, Paradox Plus subscription, DLC fatigue at 15-20 SKUs. Read in full.
-- `docs/research/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion model, no-bundle / no-cosmetic precedent, retention-multiplier dynamic, Anomaly identity-deviation case. Read in full.
-- `docs/research/games/wildermyth_omenroad.md` — single-DLC small-studio $9.99 model, roguelite identity-deviation case, single-developer cadence ceiling. Read in full.
-- `docs/research/games/free_anchor_precedents.md` — PoE/Warframe/Albion F2P + paid-content shapes, niche-tribe subscription receptivity, free-anchor as discovery surface vs revenue model. Read in full.
+- `docs/legacy/games/ck3_dlc_ladder.md` — CK3 full tier structure, flavor-pack pattern, Chapter Pass shape, subscription tension. Read in full before writing this brief.
+- `docs/legacy/games/stellaris_dlc_ladder.md` — Stellaris 10-year catalog, three-tier structure, attach decay curve, Paradox Plus subscription, DLC fatigue at 15-20 SKUs. Read in full.
+- `docs/legacy/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion model, no-bundle / no-cosmetic precedent, retention-multiplier dynamic, Anomaly identity-deviation case. Read in full.
+- `docs/legacy/games/wildermyth_omenroad.md` — single-DLC small-studio $9.99 model, roguelite identity-deviation case, single-developer cadence ceiling. Read in full.
+- `docs/legacy/games/free_anchor_precedents.md` — PoE/Warframe/Albion F2P + paid-content shapes, niche-tribe subscription receptivity, free-anchor as discovery surface vs revenue model. Read in full.
 
-EU4 and HOI4 inline references in this brief are training-data only — no dedicated game cards exist yet in `docs/research/games/`. Flag for Wave 4 capture.
+EU4 and HOI4 inline references in this brief are training-data only — no dedicated game cards exist yet in `docs/legacy/games/`. Flag for Wave 4 capture.
 
 Bible authority sources:
 

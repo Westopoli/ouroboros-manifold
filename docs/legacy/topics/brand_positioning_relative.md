@@ -141,7 +141,7 @@ Per `lieutenant_pivot_niche_brief.md` and prior briefs, bible_monetization.md L2
 - **Path 2 — limited surface invocation:** allow Fortnite-mechanic reference inside internal dev blogs / investor decks / GDC talks (Path 2's "tell crafters how the sausage is made" stance), bar it from all consumer-facing surfaces. **Medium positioning risk.**
 - **Path 3 — full invocation as differentiator:** position Ouroboros as "Fortnite-style infinite eras meets Crusader Kings dynasty." **Highest positioning risk.** Per T-A1 + T-A4: collides with every primary-tribe anchor's audience expectation. Would require active reframing of the primary tribe ("we are pulling Fortnite players into strategy") which neither T-A1 nor T-A4 supports as feasible.
 
-Bible authority resolves. Research Lane only surfaces. Cross-reference: `docs/research/topics/cosmetic_monetization_niche.md` (T-M3) covered the cosmetic-monetization dimension; this brief covers the positioning-language dimension.
+Bible authority resolves. Research Lane only surfaces. Cross-reference: `docs/legacy/topics/cosmetic_monetization_niche.md` (T-M3) covered the cosmetic-monetization dimension; this brief covers the positioning-language dimension.
 
 ### Conflict #2 carry-forward — L274 "Free to play. Infinite eras." tagline
 
@@ -231,19 +231,19 @@ Training-data-only synthesis of upstream Research Lane artifacts — flag for re
 
 Upstream briefs synthesised:
 
-- `docs/research/topics/primary_tribe_psychographic_profile.md` (T-A1) — per-title review themes + cross-cutting findings + Conflict-surfaced section
-- `docs/research/topics/audience_overlap_map.md` (T-A4) — three clusters + outlier + pitch-language patterns + Conflict-surfaced section
-- `docs/research/topics/steam_tag_overlap_2026.md` (T-S1) — TRUSTED tag bundle + banned bundle + RTS-kill-zone evidence
-- `docs/research/topics/foundation_vocabulary.md` — heroic vs archival register + per-surface register discipline + Chronicle locked-anchor
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — niche ranking + passionate-niche success patterns + Genre-fusion-attempts paragraph + ranked-target-niches table
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md` (T-A1) — per-title review themes + cross-cutting findings + Conflict-surfaced section
+- `docs/legacy/topics/audience_overlap_map.md` (T-A4) — three clusters + outlier + pitch-language patterns + Conflict-surfaced section
+- `docs/legacy/topics/steam_tag_overlap_2026.md` (T-S1) — TRUSTED tag bundle + banned bundle + RTS-kill-zone evidence
+- `docs/legacy/topics/foundation_vocabulary.md` — heroic vs archival register + per-surface register discipline + Chronicle locked-anchor
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — niche ranking + passionate-niche success patterns + Genre-fusion-attempts paragraph + ranked-target-niches table
 
 Cross-reference within Ouroboros docs:
 
 - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
 - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L288 + L292 — conflict-flag targets
-- `docs/research/topics/cosmetic_monetization_niche.md` (T-M3) — Conflict #3 mechanic-side companion brief
-- `docs/research/topics/free_tier_paid_dlc_precedents.md` (T-M1) — Conflict #2 carry-forward
-- `docs/research/topics/per_era_dlc_structure.md` (T-M2) — era-naming + bundle architecture inputs
-- `docs/research/analysis/checkpoint_3_post_wave_7.md` — W1-W7 synthesis feeding W8 framing
+- `docs/legacy/topics/cosmetic_monetization_niche.md` (T-M3) — Conflict #3 mechanic-side companion brief
+- `docs/legacy/topics/free_tier_paid_dlc_precedents.md` (T-M1) — Conflict #2 carry-forward
+- `docs/legacy/topics/per_era_dlc_structure.md` (T-M2) — era-naming + bundle architecture inputs
+- `docs/legacy/analysis/checkpoint_3_post_wave_7.md` — W1-W7 synthesis feeding W8 framing
 
 **Re-capture stamp.** All positioning-slot identification + register-option enumeration + cross-anchor adjacency claims in this brief are synthesised from upstream REPORTED/TENTATIVE-floor briefs. Live capsule-text capture + competitive A/B data + festival-pitch-deck samples required to upgrade positioning claims toward VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.

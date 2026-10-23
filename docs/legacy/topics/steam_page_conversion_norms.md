@@ -54,7 +54,7 @@ Examples recalled from training (paraphrase, not verbatim):
 
 **Optimal word-count for niche-strategy: ESTIMATED 25-35 words / 150-200 characters.** Sits inside the observed primary-tribe cluster, leaves room for one differentiator-noun + one genre anchor + one micro-stake. AMBIGUOUS at the edges — 40-word pitches work for established-IP cases (Stellaris) where genre recognition is preloaded, but cold visitors to a no-IP page benefit from shorter copy.
 
-**Above-fold extras.** Tags carry conversion weight as a secondary above-fold signal — visitors who don't read the short description scan tags to confirm genre fit. T-S1 tag slate work (cross-ref `docs/research/topics/audience_overlap_map.md` cluster-derived tag picks) is the second above-fold lever. REPORTED.
+**Above-fold extras.** Tags carry conversion weight as a secondary above-fold signal — visitors who don't read the short description scan tags to confirm genre fit. T-S1 tag slate work (cross-ref `docs/legacy/topics/audience_overlap_map.md` cluster-derived tag picks) is the second above-fold lever. REPORTED.
 
 **Caveman summary.** 25-35 words. Genre anchor first 4-7 words. One concrete differentiator-noun. No filler. No studio name. ESTIMATED optimum.
 
@@ -324,9 +324,9 @@ Training-data-only — flag for re-capture w/ live crawl of GameDiscoverCo, Chri
   - Hooded Horse public-facing performance disclosures
   - Solo-dev wishlist-conversion-rate posts on r/gamedev + IndieDB
 - Cross-reference within Ouroboros docs:
-  - `docs/research/topics/lieutenant_pivot_niche_brief.md` — parent brief; primary tribe + thematic differentiator ranking + niche cluster framing
-  - `docs/research/topics/audience_overlap_map.md` — tag + curator + creator + press overlap; cluster-derived pitch-language list feeds capsule copy
-  - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-anchor review themes; "spreadsheet-feel UI" + depth-seeker patterns feed page-build choices
+  - `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — parent brief; primary tribe + thematic differentiator ranking + niche cluster framing
+  - `docs/legacy/topics/audience_overlap_map.md` — tag + curator + creator + press overlap; cluster-derived pitch-language list feeds capsule copy
+  - `docs/legacy/topics/primary_tribe_psychographic_profile.md` — per-anchor review themes; "spreadsheet-feel UI" + depth-seeker patterns feed page-build choices
   - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
   - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 

@@ -12,7 +12,7 @@ contributor: Research Lane, queue Q78; three gathering sub-agents, brief written
 
 Requested by Westley on 2026-10-01 with his sketch of a targeted ping (select units, choose the ping, press a layer number, click a place, get a very short burst of vision there; free scouts in eras without the technology). It reports what shipped games do. It makes no design recommendation. Feeds register flag `Q-005-03`.
 
-Full report with every source link: `docs/research/reports/Active layer vision mechanics.md`. Gathering notes: `docs/research/research_notes/Active layer vision mechanics/` (three files). Tags: VERIFIED (read in a primary or authoritative source), REPORTED (secondary), ESTIMATED (the notes' own derivation), AMBIGUOUS (sources disagree).
+Full report with every source link: `docs/legacy/reports/Active layer vision mechanics.md`. Gathering notes: `docs/legacy/research_notes/Active layer vision mechanics/` (three files). Tags: VERIFIED (read in a primary or authoritative source), REPORTED (secondary), ESTIMATED (the notes' own derivation), AMBIGUOUS (sources disagree).
 
 One limit applies to everything below: there is no telemetry, experiment or developer postmortem in the material on whether forcing an action adds depth. Every judgment of depth is a reviewer's, player's or wiki author's opinion.
 

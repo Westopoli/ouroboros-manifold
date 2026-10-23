@@ -76,7 +76,7 @@ Conversion estimates are noisy and platform-asymmetric. Drawn from publisher pos
 - **YT Shorts.** Conversion ESTIMATED slightly higher per-view than TikTok (0.2% to 3%) because YT Shorts viewers can click directly to a creator's long-form video, store page link, or pinned comment without leaving the platform. A 50k-view YT Short with a Steam CTA may yield 100-1,500 wishlists. Confidence: ESTIMATED.
 - **Volume implication.** To generate 10,000 wishlists from shortform alone at a 0.5% midpoint conversion requires ~2 million total platform views. That is a substantial volume target — the equivalent of one large viral hit or 50 mid-tier clips at 40k views each. Confidence: ESTIMATED.
 
-Conversion floor caveat. These ranges assume the Steam page is competent (capsule, trailer, copy aligned with the shortform hook). A shortform clip that promises one fantasy (e.g. building rotation) and a Steam page that delivers a different fantasy (e.g. RTS combat) will convert near zero. Cross-reference `docs/research/topics/steam_page_conversion_norms.md`.
+Conversion floor caveat. These ranges assume the Steam page is competent (capsule, trailer, copy aligned with the shortform hook). A shortform clip that promises one fantasy (e.g. building rotation) and a Steam page that delivers a different fantasy (e.g. RTS combat) will convert near zero. Cross-reference `docs/legacy/topics/steam_page_conversion_norms.md`.
 
 ## Posting cadence
 

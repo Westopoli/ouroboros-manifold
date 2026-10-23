@@ -252,17 +252,17 @@ Per-game ARPU + revenue ESTIMATED — Grinding Gear, Digital Extremes, Sandbox, 
 Training-data only — WebFetch + WebSearch denied. Per-precedent figures from publisher communications, GDC talks, Steam community discussion, industry-benchmark publications (GameDiscoverCo / Gamalytic-adjacent), and repository game cards.
 
 Game-card cross-refs (in this repository):
-- `docs/research/games/free_anchor_precedents.md` (G-20) — PoE / Warframe / Albion full coverage; primary surface.
-- `docs/research/games/ck3_dlc_ladder.md` — CK3 free-update cadence + Game Pass + Chapter Pass.
-- `docs/research/games/stellaris_dlc_ladder.md` — Stellaris flavor/story tier + Paradox Plus.
-- `docs/research/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion + no-bundle/no-cosmetic/no-F2P precedent.
-- `docs/research/games/wildermyth_omenroad.md` — single-DLC small-studio + no-free-tier indie norm.
+- `docs/legacy/games/free_anchor_precedents.md` (G-20) — PoE / Warframe / Albion full coverage; primary surface.
+- `docs/legacy/games/ck3_dlc_ladder.md` — CK3 free-update cadence + Game Pass + Chapter Pass.
+- `docs/legacy/games/stellaris_dlc_ladder.md` — Stellaris flavor/story tier + Paradox Plus.
+- `docs/legacy/games/rimworld_dlc_ladder.md` — flat $24.99 four-expansion + no-bundle/no-cosmetic/no-F2P precedent.
+- `docs/legacy/games/wildermyth_omenroad.md` — single-DLC small-studio + no-free-tier indie norm.
 
 Topic-brief cross-refs:
-- `docs/research/topics/dlc_pricing_ladders.md` (T-P3) — Paradox/RimWorld/Wildermyth DLC tier substrate; parallel Conflict surface.
-- `docs/research/topics/pricing_elasticity_niche.md` (T-P1) — niche-strategy $20-40 elasticity; modal price + tribe tolerance substrate.
-- `docs/research/topics/primary_tribe_psychographic_profile.md` (T-A1) — tribe-tolerance for F2P-feel cross-axis substrate.
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — niche-strategy sales + revenue benchmarks.
+- `docs/legacy/topics/dlc_pricing_ladders.md` (T-P3) — Paradox/RimWorld/Wildermyth DLC tier substrate; parallel Conflict surface.
+- `docs/legacy/topics/pricing_elasticity_niche.md` (T-P1) — niche-strategy $20-40 elasticity; modal price + tribe tolerance substrate.
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md` (T-A1) — tribe-tolerance for F2P-feel cross-axis substrate.
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — niche-strategy sales + revenue benchmarks.
 
 Bible authority:
 - `docs/bible/game_bible.md` — hub authority on conflict resolution per `CLAUDE.md`.

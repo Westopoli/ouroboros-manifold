@@ -30,7 +30,7 @@ Every design chat begins with the same setup. Westley uploads (or the chat reads
 1. **`docs/bible/game_bible.md`** — the hub. Always.
 2. **Relevant spoke files** — whichever `bible_*.md` spokes touch the system being discussed. The active design doc lists which ones are relevant.
 3. **This file (`design_rules.md`)** — the rules of engagement.
-4. **The active design doc** (`docs/design_questions/*.md`) — the working document for the current brainstorming effort. Contains open questions, resolved decisions, and the chat-to-chat handoff notes.
+4. **The active design doc** (`docs/legacy/design_questions/*.md`) — the working document for the current brainstorming effort. Contains open questions, resolved decisions, and the chat-to-chat handoff notes.
 
 The chat's first action is to read these, then confirm to Westley what it understands the current state to be. No design work begins until this confirmation.
 

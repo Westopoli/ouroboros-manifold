@@ -3920,8 +3920,8 @@ size_estimate = "step 3.2: unreferenced debug and mockup scenes to legacy/scenes
 id = "SHOWCASE-docs-legacy"
 manager = "Architect"
 wave = 9
-owns = ["docs/legacy/README.md", "docs/README.md", "docs/design_lane.md", "docs/design_lane_queue.md", "docs/research_lane.md", "docs/research_lane_queue.md", "docs/priority_queue.md", "docs/workflow.md", "docs/client_scene_graph.md"]
-owns_glob = ["docs/legacy/**", "docs/articles/**", "docs/claude_exchange/**", "docs/random/**", "docs/blender_stuff/**", "docs/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/research/**", "docs/northstar/proving_ground/**", "docs/northstar/research/**", "docs/northstar/plans/archive/**", "docs/northstar/proposals/**"]
+owns = ["docs/legacy/README.md", "docs/README.md", "docs/design_lane.md", "docs/legacy/design_lane_queue.md", "docs/legacy/research_lane.md", "docs/legacy/research_lane_queue.md", "docs/priority_queue.md", "docs/workflow.md", "docs/legacy/client_scene_graph.md"]
+owns_glob = ["docs/legacy/**", "docs/legacy/articles/**", "docs/legacy/claude_exchange/**", "docs/legacy/random/**", "docs/legacy/blender_stuff/**", "docs/legacy/design_questions/**", "docs/stage_specs/**", "docs/test_specs/**", "docs/research/**", "docs/northstar/proving_ground/**", "docs/northstar/research/**", "docs/northstar/plans/archive/**", "docs/northstar/plans/archive/proposals/**"]
 acceptance = []
 depends_on = ["SHOWCASE-front-door", "SHOWCASE-junk", "LAB-REV2-L3", "LAB-REV2-L7", "LAB-REV2-FIX", "LAB-REV3-C"]
 status = { state = "queued" }

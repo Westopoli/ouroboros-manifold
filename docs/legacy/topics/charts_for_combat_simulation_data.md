@@ -10,7 +10,7 @@ contributor: Research Lane, queue Q79; three gathering sub-agents, brief written
 
 ## What this brief is
 
-Westley, 2026-10-01, on the first sample charts from the layer lab: "it doesn't read well, I had to stare at it to figure out what it meant, research similar data sets and find out how they visualize it, research/scientific papers might be a good source." This brief reports what the sources show. It makes no design recommendation. Notes, with every source link: `docs/research/research_notes/Charts for combat simulation data/` (three files). Tags: VERIFIED (read in the source), REPORTED (secondary), ESTIMATED (inferred, for example from a caption), AMBIGUOUS. The gatherers could not see images; figure descriptions come from captions and surrounding text.
+Westley, 2026-10-01, on the first sample charts from the layer lab: "it doesn't read well, I had to stare at it to figure out what it meant, research similar data sets and find out how they visualize it, research/scientific papers might be a good source." This brief reports what the sources show. It makes no design recommendation. Notes, with every source link: `docs/legacy/research_notes/Charts for combat simulation data/` (three files). Tags: VERIFIED (read in the source), REPORTED (secondary), ESTIMATED (inferred, for example from a caption), AMBIGUOUS. The gatherers could not see images; figure descriptions come from captions and surrounding text.
 
 ## 1. What makes a chart readable at a glance
 

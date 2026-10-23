@@ -378,8 +378,8 @@ Audience-overlap precise percentages are paywalled (SteamDB Pro / Gamalytic Pro 
 - ZeroSpace Steam Charts (full launch + playtest): https://steamdb.info/app/1605850/
 
 **Cross-references (prior topic briefs in this graph):**
-- `docs/research/topics/audience_sizing_2026.md` — Topic A TRUSTED Paradox / Stellaris / RimWorld / Manor Lords / kill-zone unit-sales and CCU figures
-- `docs/research/topics/audience_psychographics_2026.md` — Topic B TRUSTED CK3 / Wildermyth / Battle Brothers / Old World audience rave/rage themes
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — locked pivot framing
-- `docs/research/topics/rts_market_kill_zone_2026.md` — Stormgate + Tempest + Homeworld 3 + ZeroSpace + Immortal: Gates of Pyre original kill-zone evidence
+- `docs/legacy/topics/audience_sizing_2026.md` — Topic A TRUSTED Paradox / Stellaris / RimWorld / Manor Lords / kill-zone unit-sales and CCU figures
+- `docs/legacy/topics/audience_psychographics_2026.md` — Topic B TRUSTED CK3 / Wildermyth / Battle Brothers / Old World audience rave/rage themes
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — locked pivot framing
+- `docs/legacy/topics/rts_market_kill_zone_2026.md` — Stormgate + Tempest + Homeworld 3 + ZeroSpace + Immortal: Gates of Pyre original kill-zone evidence
 

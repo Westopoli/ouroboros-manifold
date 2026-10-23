@@ -275,7 +275,7 @@ The brief does not surface 2026-specific live data — WebFetch denied, training
 This brief feeds the following live Design Lane forks and adjacent research consumers:
 
 - **Ouroboros paid-acquisition decision** — primary consumer. Westley + Design Lane select among Options A-E (or a hybrid) once a paid-spend ceiling is set. Recommend Design Lane scope this fork after T-W2 (wishlist velocity targets) lands, so the paid-supplement contribution can be sized against the organic + earned baseline.
-- **T-W2 velocity supplement** — paid spend, if any, is the velocity amplifier on top of the organic wishlist velocity targets in `docs/research/topics/wishlist_velocity_targets.md`. The cross-cutting finding on launch-week paid push is the direct linkage.
+- **T-W2 velocity supplement** — paid spend, if any, is the velocity amplifier on top of the organic wishlist velocity targets in `docs/legacy/topics/wishlist_velocity_targets.md`. The cross-cutting finding on launch-week paid push is the direct linkage.
 - **T-C1 organic Steam algorithm** — paid spend interacts with the algorithm by amplifying launch-week wishlist conversion velocity. Allocation decisions affect algorithm response.
 - **T-C2 creator coverage** — Option B and E intersect directly with creator-coverage strategy. Paid creator integrations vs organic creator outreach is the same audience surface bought two different ways.
 - **T-C5 community presence** — reddit native posts (Option A and E) require developer-account community presence as the credibility substrate. Promoting from a cold developer account underperforms promoting from an account with organic comment history on the tribe subreddits.

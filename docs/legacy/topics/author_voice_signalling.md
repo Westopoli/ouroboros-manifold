@@ -224,7 +224,7 @@ Synthesising per-studio patterns, four canonical modes emerge for Ouroboros to p
 
 **Surfaces.** Personal blog with long-form design essays. Steam patch notes with rationale paragraphs. GDC / podcast / interview presence as design-theorist. Twitter low-cadence + measured.
 
-**Fit for Ouroboros.** Requires Westley willing + able to be design-theorist face. Strong fit if Ouroboros' design rationale (Lieutenant System pivot, collapse-rebuild, chronicle, generational handoff) sustains essay-length explanation. Westley has published design-thinking essays elsewhere (e.g., `docs/articles/` directory exists in the repo per `CLAUDE.md` — partial evidence) — moderate fit.
+**Fit for Ouroboros.** Requires Westley willing + able to be design-theorist face. Strong fit if Ouroboros' design rationale (Lieutenant System pivot, collapse-rebuild, chronicle, generational handoff) sustains essay-length explanation. Westley has published design-thinking essays elsewhere (e.g., `docs/legacy/articles/` directory exists in the repo per `CLAUDE.md` — partial evidence) — moderate fit.
 
 **Trade-offs.** Highest design-credibility + founder-controversy attaches to founder + requires sustained writing cadence.
 
@@ -364,11 +364,11 @@ Studios + titles surveyed (recalled from training):
 
 Cross-reference within Ouroboros docs:
 
-- `docs/research/topics/brand_positioning_relative.md` (T-B1) — register-per-surface framing that author-voice mode interacts with
-- `docs/research/topics/primary_tribe_psychographic_profile.md` (T-A1) — per-tribe voice resonance data
-- `docs/research/topics/audience_overlap_map.md` (T-A4) — cluster-based creator + press voice-preference patterns
-- `docs/research/topics/lieutenant_pivot_niche_brief.md` — passionate-niche studio cluster sourced from this brief
-- `docs/research/topics/foundation_vocabulary.md` — register-per-surface discipline that voice cascades from
+- `docs/legacy/topics/brand_positioning_relative.md` (T-B1) — register-per-surface framing that author-voice mode interacts with
+- `docs/legacy/topics/primary_tribe_psychographic_profile.md` (T-A1) — per-tribe voice resonance data
+- `docs/legacy/topics/audience_overlap_map.md` (T-A4) — cluster-based creator + press voice-preference patterns
+- `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — passionate-niche studio cluster sourced from this brief
+- `docs/legacy/topics/foundation_vocabulary.md` — register-per-surface discipline that voice cascades from
 - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
 
 **Re-capture stamp.** All per-studio voice-pattern claims in this brief are training-data-derived. Live dev-blog text + founder Twitter / Bluesky timeline samples + press-interview transcripts + Discord moderator-style sampling required to upgrade REPORTED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.

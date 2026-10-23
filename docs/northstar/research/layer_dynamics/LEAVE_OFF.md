@@ -80,7 +80,7 @@ The design chat on the Mac stopped here. Westley, 2026-10-02: "I'm going to hand
 | Unit, fog, movement rules | `docs/bible/epics/E-11-units-and-combat.md`, `E-12-fog-and-sensors.md`, `E-13-movement-and-command.md` |
 | Strategic-depth principle | `docs/bible/game_bible.md`, principle 4 |
 | Register | `docs/northstar/ambiguity_register.md` |
-| Research briefs | `docs/research/topics/lanchester_and_combat_theory.md`, `active_layer_vision_mechanics.md`, `charts_for_combat_simulation_data.md` |
+| Research briefs | `docs/legacy/topics/lanchester_and_combat_theory.md`, `active_layer_vision_mechanics.md`, `charts_for_combat_simulation_data.md` |
 | Python reference sim | `simulation/` (`movement.py`, `damage.py`, `facing.py`, `tactical_map.py`, `reinforcement.py`) |
 | C sim | `csrc/` (`unit.c`, `tactical_move.c`, `fog.c`, `tactical_mapgen.c`, `tactical_support.c`) |
 | Frozen toy | `toys/layerlab/` |

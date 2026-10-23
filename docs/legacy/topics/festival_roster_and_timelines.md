@@ -24,7 +24,7 @@ Confidence taxonomy: REPORTED = third-party press/aggregator cited the figure; E
 
 ## Steam Next Fest
 
-Three cohorts per year: February, June, October. Roughly seven days each. Cross-reference T-D2 (`docs/research/topics/steam_next_fest_timing.md`) for full per-cohort analysis. This section summarizes the timing and asset surface only.
+Three cohorts per year: February, June, October. Roughly seven days each. Cross-reference T-D2 (`docs/legacy/topics/steam_next_fest_timing.md`) for full per-cohort analysis. This section summarizes the timing and asset surface only.
 
 **February 2026 cohort.** Approximate dates February 9-16 2026, ESTIMATED from prior-year shift patterns. Application window typically opens 8-10 weeks before fest open and closes 4-6 weeks before fest open. ESTIMATED. Cohort fit for niche-strategy: moderate. Post-holiday hardware activation, lower AAA noise. Confidence: REPORTED on cohort timing, ESTIMATED on exact dates.
 
@@ -301,7 +301,7 @@ Wishlist-delta figures should be treated as ±50% for any single title. Page qua
 This brief feeds the following Design Lane work:
 
 - **Ouroboros festival schedule** — five options surfaced under `## Ouroboros festival schedule options`. Westley/Design Lane picks. Decision should be captured in `docs/bible/game_bible.md ## In Flux` or `docs/priority_queue.md` Pre-Zip gate section.
-- **T-D2 Next Fest cohort pick** — cohort multipliers and once-per-game rule from this brief inform the cohort decision. Cross-ref `docs/research/topics/steam_next_fest_timing.md`.
+- **T-D2 Next Fest cohort pick** — cohort multipliers and once-per-game rule from this brief inform the cohort decision. Cross-ref `docs/legacy/topics/steam_next_fest_timing.md`.
 - **T-F1 launch month** — festival schedule constrains launch month. Festival anchor (typically Next Fest) is approximately 30-90 days before launch; launch month is downstream of cohort pick.
 - **T-W2 wishlist velocity targets** — festival deltas in this brief calibrate the cumulative wishlist target curve. The 80,000-200,000 first-month sales target requires a wishlist floor that festival stacks can plausibly hit.
 - **Pre-Zip gate scope** — the conflict surfaced under `## Conflict surfaced` is an active design decision needed before festival commitment. The 30-day gate minimum may need to extend to 60-90+ days for festival-aware launch.
@@ -338,6 +338,6 @@ Training-data-floor citations. All URLs reflect prior-cycle festival materials. 
 - Cliffski / Positech blog — post-festival retrospectives (training-data)
 - Tomas Sala (Falconeer) — post-festival blog posts (training-data)
 - Aggro Crab post-mortems (Going Under, Another Crab's Treasure) — (training-data)
-- T-D2 Steam Next Fest Timing — `docs/research/topics/steam_next_fest_timing.md` (Research Lane Wave 5)
+- T-D2 Steam Next Fest Timing — `docs/legacy/topics/steam_next_fest_timing.md` (Research Lane Wave 5)
 
 Festival URL archive note: each festival listed above runs an annually-rotating submissions URL. Training-data captures the parent domain only; the live submission portal URL for any 2026 cycle must be confirmed by WebFetch in a separate lane invocation. Treat all submission-portal URLs in this brief as pointers to the parent domain, not as live endpoints.

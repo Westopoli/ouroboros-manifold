@@ -104,7 +104,7 @@ WebFetch/WebSearch denied for this session. Live 2026 figures (current Manor Lor
 
 **Wishlist conversion.** Wishlist count entering launch reportedly very high (decade-plus of accumulated DF interest). 1.0 launch wishlist conversion estimated ~20–30% week-one — strong for niche, but the headline figure is the *absolute* wishlist count, not the conversion rate. Confidence: ESTIMATED.
 
-**Free classic version remained free.** Free legacy DF continued to be available on Bay 12's site post-Steam-launch. This is the canonical "free version as demo surface" case (T-D1 cross-ref `docs/research/topics/demo_strategy_norms.md`).
+**Free classic version remained free.** Free legacy DF continued to be available on Bay 12's site post-Steam-launch. This is the canonical "free version as demo surface" case (T-D1 cross-ref `docs/legacy/topics/demo_strategy_norms.md`).
 
 **Mechanics.** ~$30 price at launch. UI overhaul, Steam Workshop integration, tilesets, sound — all the polish-layer additions that the free version lacked. Publisher (Kitfox) ran a real launch campaign with trade-press outreach.
 
@@ -168,9 +168,9 @@ WebFetch/WebSearch denied for this session. Live 2026 figures (current Manor Lor
 
 Retention cohort differences between EA-launch and 1.0-launch are meaningful per REPORTED GameDiscoverCo / Chris Zukowski guidance:
 
-- **EA-cohort refund rate** — typically *higher* than 1.0-cohort refund rate. EA buyers know they're buying unfinished software but a fraction (~3–8%) refund anyway when they encounter the unfinished state. 1.0 buyers refund at typical Steam baseline (~2–5%) for niche-strategy. T-CL3 cross-ref `docs/research/topics/retention_curves_niche.md` for full retention curve detail. Confidence: ESTIMATED.
+- **EA-cohort refund rate** — typically *higher* than 1.0-cohort refund rate. EA buyers know they're buying unfinished software but a fraction (~3–8%) refund anyway when they encounter the unfinished state. 1.0 buyers refund at typical Steam baseline (~2–5%) for niche-strategy. T-CL3 cross-ref `docs/legacy/topics/retention_curves_niche.md` for full retention curve detail. Confidence: ESTIMATED.
 - **EA-cohort long-term retention** — *higher* than 1.0-cohort retention for the *same* unit. EA buyers are pre-qualified (they bought unfinished software intentionally) and tend to engage more deeply, return more often, write more reviews. 1.0 cohort skews more casual. Confidence: ESTIMATED.
-- **Refund-window behavior at EA launch.** Steam's 2-hour / 14-day refund window applies the same at EA. Niche-strategy EA refund rates land roughly 4–7% per GameDiscoverCo aggregate guidance — slightly above the 1.0 baseline of 2–5%. T-RR cross-ref `docs/research/topics/refund_rate_norms.md`. Confidence: REPORTED-ish.
+- **Refund-window behavior at EA launch.** Steam's 2-hour / 14-day refund window applies the same at EA. Niche-strategy EA refund rates land roughly 4–7% per GameDiscoverCo aggregate guidance — slightly above the 1.0 baseline of 2–5%. T-RR cross-ref `docs/legacy/topics/refund_rate_norms.md`. Confidence: REPORTED-ish.
 - **Review-cohort divergence.** EA cohort reviews are written with "this is unfinished" context; 1.0 cohort reviews evaluate the finished product. EA review score can drag if EA was rushed; 1.0 review score reflects the polished state. Manor Lords' EA review score (~88% Mostly Positive at peak) vs hypothetical 1.0 review score — divergence depends on 1.0 polish state.
 
 **Implication for Ouroboros.** EA-launch cohort retention is likely *better* than 1.0-launch cohort retention per unit, but absolute units depend on launch-shape choice. EA-cohort review noise (some negative reviews during EA from "this is unfinished" complaints) is a marketing-surface risk to manage during EA window.
@@ -185,7 +185,7 @@ REPORTED + ESTIMATED Chris Zukowski / GameDiscoverCo guidance:
 - **Total combined conversion** (EA + 1.0 on the same starting wishlist pool) typically lands ~25–40% across the EA → 1.0 arc. Higher than either single-event launch.
 - **EA → 1.0 wishlist re-accumulation.** During EA, the wishlist count continues to grow (new players discover the game during EA, wishlist for 1.0). 1.0-launch's wishlist pool is *not* simply "EA-launch wishlist minus EA conversions" — it's "EA-launch wishlist minus EA conversions plus EA-window new wishlists." For long-EA titles (CoQ-style), the 1.0 wishlist pool can exceed the EA-launch wishlist pool.
 
-T-W1 cross-ref `docs/research/topics/wishlist_conversion_benchmarks_2026.md`.
+T-W1 cross-ref `docs/legacy/topics/wishlist_conversion_benchmarks_2026.md`.
 
 ### Pre-Zip Steam-page-minimum-30-day gate fit
 
@@ -388,10 +388,10 @@ Recommend live-fetch pass before final launch-shape locks. Training-data floor a
 This brief feeds the following Design Lane decisions:
 
 - **EA-vs-1.0 launch-shape lock.** No current bible section. This brief surfaces Options A–F. Design Lane should resolve funding-shape question first (Westley-input required), then pick launch shape.
-- **T-W1 wishlist conversion (`docs/research/topics/wishlist_conversion_benchmarks_2026.md`).** EA conversion (10–15%) vs 1.0 conversion (15–25%) deltas cross-validated here. Total EA + 1.0 combined conversion ~25–40%.
-- **T-F1 launch window seasonality (`docs/research/topics/launch_window_seasonality.md`).** EA launches and 1.0 launches both benefit from seasonal placement. Two launches means two seasonal-fit decisions.
-- **T-F2 festival roster (`docs/research/topics/festival_roster_and_timelines.md`).** EA launches qualify for Next Fest if a demo accompanies (Wartales precedent). 1.0 launches qualify for full launch-festival circuit. Festival-fit differs.
-- **T-D1 demo strategy (`docs/research/topics/demo_strategy_norms.md`).** EA + demo combo is a viable shape. Roman free-tier interaction with EA-vs-1.0 decision is unresolved.
+- **T-W1 wishlist conversion (`docs/legacy/topics/wishlist_conversion_benchmarks_2026.md`).** EA conversion (10–15%) vs 1.0 conversion (15–25%) deltas cross-validated here. Total EA + 1.0 combined conversion ~25–40%.
+- **T-F1 launch window seasonality (`docs/legacy/topics/launch_window_seasonality.md`).** EA launches and 1.0 launches both benefit from seasonal placement. Two launches means two seasonal-fit decisions.
+- **T-F2 festival roster (`docs/legacy/topics/festival_roster_and_timelines.md`).** EA launches qualify for Next Fest if a demo accompanies (Wartales precedent). 1.0 launches qualify for full launch-festival circuit. Festival-fit differs.
+- **T-D1 demo strategy (`docs/legacy/topics/demo_strategy_norms.md`).** EA + demo combo is a viable shape. Roman free-tier interaction with EA-vs-1.0 decision is unresolved.
 - **T-B1 brand positioning capstone (planned).** Launch-shape affects brand framing. EA framing is "support solo dev / be part of the journey." 1.0 framing is "complete polished generational strategy." Different brand surface.
 - **Funding-shape decision substrate.** Westley-input required. Brief surfaces EA-as-funding pattern with case round detail.
 
@@ -403,25 +403,25 @@ This brief feeds the following Design Lane decisions:
 - **Generational/legacy EA-cluster precedent beyond Wildermyth.** Are there other generational/legacy strategy titles in EA that aren't yet at 1.0? Crusader Kings 3 (not EA but iteratively updated) is an adjacent case. Battle Brothers and Wildermyth are closest existing comps.
 - **Roman free-tier timing interaction with EA-vs-1.0.** When does Roman free-tier launch relative to EA / 1.0? Bible-locked free-tier exists, timing is unspecified. Design Lane decision.
 - **Lieutenant System polish state at EA-launch readiness.** If Lieutenant System is half-polished at EA launch, does the differentiator's brand suffer? Implementer Lane question informing Design Lane.
-- **EA-launch price ceiling for solo-dev / generational strategy in 2026.** Manor Lords ($39.99 EA) is high; Wildermyth ($25 EA) is typical. Pricing-elasticity cross-ref `docs/research/topics/pricing_elasticity_niche.md` for full pricing analysis.
+- **EA-launch price ceiling for solo-dev / generational strategy in 2026.** Manor Lords ($39.99 EA) is high; Wildermyth ($25 EA) is typical. Pricing-elasticity cross-ref `docs/legacy/topics/pricing_elasticity_niche.md` for full pricing analysis.
 - **Off-Steam EA viability in 2026.** RimWorld's Patreon-era EA was unusual in 2013–2016. Is Itch / Patreon / direct-sales EA still viable in 2026 niche-strategy ecosystem? Open question.
-- **EA-to-DLC strategy bridge.** Battle Brothers / Wildermyth shipped EA → 1.0 → sequential DLC. Ouroboros' 7-era DLC ladder fits this shape — does EA launch with all 7 eras or with subset, then era-by-era DLC during EA / post-1.0? Era-DLC pacing cross-ref `docs/research/topics/dlc_pricing_ladders.md` and `docs/research/topics/post_launch_content_cadence.md`.
+- **EA-to-DLC strategy bridge.** Battle Brothers / Wildermyth shipped EA → 1.0 → sequential DLC. Ouroboros' 7-era DLC ladder fits this shape — does EA launch with all 7 eras or with subset, then era-by-era DLC during EA / post-1.0? Era-DLC pacing cross-ref `docs/legacy/topics/dlc_pricing_ladders.md` and `docs/legacy/topics/post_launch_content_cadence.md`.
 
 ## Sources
 
 Training-data floor applied throughout. WebFetch / WebSearch denied this session. Sources cited from training-data window:
 
 - **RimWorld (Ludeon Studios, Tynan Sylvester)** — Patreon-era posts, GDC and trade-press coverage of Steam EA launch + 1.0 transition. Wikipedia + Ludeon dev blog — TRAINING-DATA-FLAG.
-- **Manor Lords (Slavic Magic / Hooded Horse)** — Steam EA April 2024 launch communications, Hooded Horse press releases, PC Gamer and Eurogamer coverage. TechRaptor sales coverage cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Manor Lords (Slavic Magic / Hooded Horse)** — Steam EA April 2024 launch communications, Hooded Horse press releases, PC Gamer and Eurogamer coverage. TechRaptor sales coverage cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
 - **Against the Storm (Eremite Games / Hooded Horse)** — Hooded Horse 1.0 launch communications December 2023, Game Developer best-of-2023 coverage, PC Gamer reviews. Wikipedia + Steam page — TRAINING-DATA-FLAG.
-- **Sea Power (Triassic Games / MicroProse)** — EA November 2024 launch coverage, Simulation Daily / wargame trade-press. Coverage cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
-- **Caves of Qud (Freehold Games / Kitfox)** — 1.0 launch December 2024 coverage, RPGamer / Rock Paper Shotgun / PC Gamer "best of 2024" coverage. Kitfox press communications. Cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
-- **Songs of Syx (Gamatron / Jakub Wasilewski)** — solo-dev posts, gamepressure.com interview, Steam page review of long EA cadence. Cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Sea Power (Triassic Games / MicroProse)** — EA November 2024 launch coverage, Simulation Daily / wargame trade-press. Coverage cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Caves of Qud (Freehold Games / Kitfox)** — 1.0 launch December 2024 coverage, RPGamer / Rock Paper Shotgun / PC Gamer "best of 2024" coverage. Kitfox press communications. Cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Songs of Syx (Gamatron / Jakub Wasilewski)** — solo-dev posts, gamepressure.com interview, Steam page review of long EA cadence. Cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
 - **Dwarf Fortress Steam (Bay 12 Games / Kitfox)** — Steam release December 2022, Bay 12 revenue disclosure ($7M+ first month), Game Developer / PC Gamer / Eurogamer launch coverage. — TRAINING-DATA-FLAG.
 - **Battle Brothers (Overhype Studios)** — Steam EA April 2015 → 1.0 March 2017, Overhype dev blog, Wikipedia, Steam Revenue Calculator (aggregator-flagged) — TRAINING-DATA-FLAG.
-- **Old World (Mohawk Games)** — Epic exclusivity → Steam launch May 2022, Mohawk dev communications, Steam Deck HQ coverage cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
-- **Wildermyth (Worldwalker Games)** — Steam EA November 2019 → 1.0 June 2021, Worldwalker dev blog, Wikipedia. Cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
-- **Frostpunk 2 (11 bit studios)** — full 1.0 launch September 2024, Game Developer launch coverage, 11 bit press communications. Cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Old World (Mohawk Games)** — Epic exclusivity → Steam launch May 2022, Mohawk dev communications, Steam Deck HQ coverage cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Wildermyth (Worldwalker Games)** — Steam EA November 2019 → 1.0 June 2021, Worldwalker dev blog, Wikipedia. Cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Frostpunk 2 (11 bit studios)** — full 1.0 launch September 2024, Game Developer launch coverage, 11 bit press communications. Cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
 - **Mechabellum (Game River)** — Steam EA September 2023 → 1.0 October 2024, Game River dev communications, Wikipedia, Steam page — TRAINING-DATA-FLAG.
 - **GameDiscoverCo (Simon Carless newsletter)** — recurring EA-vs-1.0 analyses, EA-revenue distribution across genres, 1.0 spike benchmarks. https://newsletter.gamediscover.co — TRAINING-DATA-FLAG.
 - **Chris Zukowski / howtomarketagame.com** — EA strategy posts, "should you do EA" decision frames, wishlist conversion guidance at EA vs 1.0. https://howtomarketagame.com — TRAINING-DATA-FLAG.

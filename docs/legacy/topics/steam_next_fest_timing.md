@@ -234,4 +234,4 @@ All sources accessed via training-data; WebFetch denied. Treat as floor.
 - Reddit r/gamedev — collected indie Next Fest post-mortems (training-data, self-selection biased; REPORTED at the pattern level).
 - Steamworks developer documentation — once-per-game rule and demo requirements (training-data, last refreshed January 2025; REPORTED).
 
-Originating context: Ouroboros Research Lane Wave 5, T-D2 — Steam Next Fest timing capture for Pre-Zip launch planning. Cross-referenced briefs to be authored or extended: T-D1 demo strategy, T-W2 velocity targets, T-F1 launch window, T-F2 festival roster, T-S3 Steam algorithm visibility (`docs/research/topics/steam_algorithm_visibility.md`).
+Originating context: Ouroboros Research Lane Wave 5, T-D2 — Steam Next Fest timing capture for Pre-Zip launch planning. Cross-referenced briefs to be authored or extended: T-D1 demo strategy, T-W2 velocity targets, T-F1 launch window, T-F2 festival roster, T-S3 Steam algorithm visibility (`docs/legacy/topics/steam_algorithm_visibility.md`).

@@ -10,7 +10,7 @@ contributor: Research Lane Wave 6 capture
 
 ## What this brief is
 
-Map of YT creators relevant to Ouroboros' primary tribe (generational/legacy strategy: CK3 + Wildermyth + Battle Brothers + FoG: Empires) plus secondary tribe (Foundation / literary hard-SF). Tier-1, Tier-2, Tier-3 buckets w/ approximate subscriber counts, cadence, pitch posture (sponsor-only / review-copy / community-pick), wishlist-conversion priors per tier, outreach paths, lead-time norms. Feeds future Ouroboros creator-outreach plan + channel-mix prioritization (T-C2 Twitch, T-C3, T-C4 newsletters, T-C5 shortform). Extends T-A4 (`docs/research/topics/audience_overlap_map.md`) — which identified Quill18, Splattercat, ChristopherOdd as 6-7/8 anchor coverage creators — by widening candidate pool, layering pitch posture, adding conversion priors.
+Map of YT creators relevant to Ouroboros' primary tribe (generational/legacy strategy: CK3 + Wildermyth + Battle Brothers + FoG: Empires) plus secondary tribe (Foundation / literary hard-SF). Tier-1, Tier-2, Tier-3 buckets w/ approximate subscriber counts, cadence, pitch posture (sponsor-only / review-copy / community-pick), wishlist-conversion priors per tier, outreach paths, lead-time norms. Feeds future Ouroboros creator-outreach plan + channel-mix prioritization (T-C2 Twitch, T-C3, T-C4 newsletters, T-C5 shortform). Extends T-A4 (`docs/legacy/topics/audience_overlap_map.md`) — which identified Quill18, Splattercat, ChristopherOdd as 6-7/8 anchor coverage creators — by widening candidate pool, layering pitch posture, adding conversion priors.
 
 **Non-recommendation disclaimer.** Research Lane surfaces inputs. Brief does not pick creators, spend, or outreach order. Picks belong to Westley / Design Lane / future marketing lane. Every figure tagged w/ confidence. Floor is REPORTED or ESTIMATED — WebFetch denied; figures from training-data snapshots, creator-public-statements priors, dev post-mortems, Chris Zukowski / How To Market A Game corpus.
 
@@ -117,7 +117,7 @@ Derived from dev post-mortems (Songs of Syx solo-dev press; Manor Lords pre-laun
 
 **Tier-3 long-tail: ~20-200 wishlists per video.** ESTIMATED. Individually small but **compound effect across 10-30 Tier-3 creators in coordinated wave is the bulk of pre-launch primary-tribe wishlist accumulation.** Songs of Syx, BB, Wildermyth retrospectives all credit long-tail-wave coverage as foundational to first-week velocity. REPORTED pattern; ESTIMATED per-video.
 
-**Compounding effects.** Single Tier-1 video amid no surrounding coverage converts ~30-50% as well as same video amid coordinated wave. Higher conversion when (a) video lands 2-4 weeks of demo / launch, (b) lands during Next Fest cluster (cross-ref `docs/research/topics/steam_next_fest_timing.md`), (c) game has strong capsule + 95%+ demo reviews at video time, (d) multiple creators cover within 1-2 week window (audience sees multi-endorsement → conversion-bias spike). ESTIMATED.
+**Compounding effects.** Single Tier-1 video amid no surrounding coverage converts ~30-50% as well as same video amid coordinated wave. Higher conversion when (a) video lands 2-4 weeks of demo / launch, (b) lands during Next Fest cluster (cross-ref `docs/legacy/topics/steam_next_fest_timing.md`), (c) game has strong capsule + 95%+ demo reviews at video time, (d) multiple creators cover within 1-2 week window (audience sees multi-endorsement → conversion-bias spike). ESTIMATED.
 
 ## Best-of-2026 indie-strategy coverage cases
 
@@ -152,7 +152,7 @@ Drawn from Chris Zukowski corpus + dev community priors.
 - **T1 review-copy hopeful (Quill18, ChristopherOdd, Splattercat opportunistic).** **4-8 weeks** before launch / Next Fest. Send keys w/ clear launch date so creator can slot. <4 weeks: slot full. >8 weeks: creator forgets. ESTIMATED.
 - **T2 review-copy.** **2-6 weeks** before launch. Shorter backlogs than T1. Most-effective ~3-4 weeks — long enough to play + produce, short enough that title still "new" by drop. ESTIMATED.
 - **T3 long-tail.** **Opportunistic** — 1 week to launch day. T3 often same-week production. ESTIMATED.
-- **Next Fest cluster timing.** Cross-ref `docs/research/topics/steam_next_fest_timing.md`. Short: pitch wave 4-6 weeks before Next Fest begins; Fest week itself too late for T1/T2 (slots full), T3 can still cover during. ESTIMATED.
+- **Next Fest cluster timing.** Cross-ref `docs/legacy/topics/steam_next_fest_timing.md`. Short: pitch wave 4-6 weeks before Next Fest begins; Fest week itself too late for T1/T2 (slots full), T3 can still cover during. ESTIMATED.
 
 **Common lead-time failure modes:** pitching too early (key buried in Lurkit pile — re-pitch 4-6 weeks before launch recommended); pitching too late (creator slot full, video drops post-launch-week-conversion-window); pitching without clear date (creator deprioritizes "any time" vs "drops Oct 15"); pitching during competing-game wave (T1/T2 finite slots — if 3 primary-tribe titles pitch same week, 2 get bumped).
 
@@ -203,7 +203,7 @@ Confidence-tag distribution: ~35% REPORTED, ~65% ESTIMATED. Most reliable: T-A4-
 - **Shortform overlap** — which named creators run Shorts / TikTok / Reels clip channels. Feeds T-C5.
 - **Foundation-tribe podcast surface** — Isaac Arthur is one node; what other Foundation-tribe podcasts / video-essayists (Quinns Quest, HBomberguy-adjacent, science-comm) where audience overlap is real but channel isn't a games channel? Separate sub-brief candidate.
 - **Niche-press creator-feeder loop calibration** — degree RPS / PC Gamer / Wargamer.com coverage actually triggers downstream creator pickup, and on what lag. T-A4 identified high-overlap outlets; brief surfaces loop but doesn't size lag.
-- **Per-creator audience demographic sizing** — overlap between a given creator's audience and primary-tribe psychographic profile (`docs/research/topics/primary_tribe_psychographic_profile.md`). Some T2 creators w/ smaller audiences may have higher primary-tribe density per subscriber than T1 creators.
+- **Per-creator audience demographic sizing** — overlap between a given creator's audience and primary-tribe psychographic profile (`docs/legacy/topics/primary_tribe_psychographic_profile.md`). Some T2 creators w/ smaller audiences may have higher primary-tribe density per subscriber than T1 creators.
 - **Creator-coverage-bundling effects** — when 3+ T2 creators cover within same week, how much cumulative wishlist conversion outperforms sum of individual videos? Wave-vs-trickle effect size. ESTIMATED currently, not calibrated.
 
 ## Sources
@@ -219,8 +219,8 @@ Training-data flag applies to all (WebFetch denied; figures from training-data s
 - Creator public statements on review-copy / sponsor / community-pick posture — Twitter / Bluesky / YT About-tab disclosures + interviews.
 - Lurkit (lurkit.com) + Keymailer (keymailer.co) public docs + dev-community priors.
 - FTC sponsored-content disclosure guidance — public.
-- Cross-ref: `docs/research/topics/steam_next_fest_timing.md` (Next Fest cluster timing for creator-wave alignment).
-- Cross-ref: `docs/research/topics/wishlist_velocity_targets.md` + `docs/research/topics/wishlist_conversion_benchmarks_2026.md` (wishlist priors).
-- Cross-ref: `docs/research/topics/primary_tribe_psychographic_profile.md` (audience-fit calibration).
+- Cross-ref: `docs/legacy/topics/steam_next_fest_timing.md` (Next Fest cluster timing for creator-wave alignment).
+- Cross-ref: `docs/legacy/topics/wishlist_velocity_targets.md` + `docs/legacy/topics/wishlist_conversion_benchmarks_2026.md` (wishlist priors).
+- Cross-ref: `docs/legacy/topics/primary_tribe_psychographic_profile.md` (audience-fit calibration).
 
 Training-data flag: all figures pre-2026-05 unless tagged. WebFetch unavailable for this capture. Sub-count refresh + 2026-coverage check listed under open questions.

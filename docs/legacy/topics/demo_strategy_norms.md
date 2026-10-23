@@ -12,7 +12,7 @@ contributor: Research Lane Wave 5 capture
 
 Survey of demo norms for niche strategy/sim PC titles on Steam — modal length, gate-type, content-shape, conversion deltas, save-carry, update cadence, permanent vs Next-Fest-only patterns — plus surface of unresolved question whether Ouroboros' bible-locked Roman free-tier *replaces* a Steam Demo product or whether a separate Demo surface is still required.
 
-Feed targets: Ouroboros demo plan (no current bible section), T-D2 Next Fest cohort fit (planned), T-W1 wishlist-conversion lift (planned), T-W2 velocity targets (planned), T-M1 free-tier precedents (planned — Roman-free-question lives here too), T-S3 algorithm/visibility (`docs/research/topics/steam_algorithm_visibility.md`).
+Feed targets: Ouroboros demo plan (no current bible section), T-D2 Next Fest cohort fit (planned), T-W1 wishlist-conversion lift (planned), T-W2 velocity targets (planned), T-M1 free-tier precedents (planned — Roman-free-question lives here too), T-S3 algorithm/visibility (`docs/legacy/topics/steam_algorithm_visibility.md`).
 
 Non-recommendation disclaimer: Research Lane surfaces inputs, never picks. Confidence tags inline. No advocated demo shape — only options + tradeoffs surfaced for Design Lane.
 
@@ -96,7 +96,7 @@ Benchmarks (REPORTED + ESTIMATED, GameDiscoverCo + Chris Zukowski aggregates):
 
 **T-W1 cross-reference**: demo-played wishlists convert to purchase approximately 2–3x cold (non-demo) wishlists per Chris Zukowski / GameDiscoverCo guidance. ESTIMATED. The demo functions as a *qualifier* — it filters wishlist into high-intent vs casual. This is the primary lever cited for "should we have a demo at all" — even modest demo download counts yield disproportionately higher purchase conversion because the demo-played wishlist is *pre-validated audience*.
 
-Steam-algorithm gloss: high demo-downloaded counts feed visibility (T-S3 cross-ref `docs/research/topics/steam_algorithm_visibility.md`) — the algorithm treats demo-downloads as a soft engagement signal that boosts page surfacing.
+Steam-algorithm gloss: high demo-downloaded counts feed visibility (T-S3 cross-ref `docs/legacy/topics/steam_algorithm_visibility.md`) — the algorithm treats demo-downloads as a soft engagement signal that boosts page surfacing.
 
 ## Roman free-tier as demo replacement
 
@@ -259,7 +259,7 @@ This brief feeds the following Design Lane decisions:
 - **T-W1 conversion lift (planned)** — demo-played wishlist 2–3x multiplier is the headline lever. Demo-shape choice determines magnitude of lift.
 - **T-W2 velocity targets (planned)** — Next Fest participation is a primary velocity surface; demo structure choice gates eligibility.
 - **T-M1 free-tier precedents (planned)** — Roman-free-tier question lives here directly; brief surfaces precedents (DF, OpenTTD-cluster, F2P-with-paid-expansion).
-- **T-S3 algorithm/visibility (`docs/research/topics/steam_algorithm_visibility.md`)** — demo-download is an algorithm engagement signal; demo permanence vs Next-Fest-only affects long-tail visibility.
+- **T-S3 algorithm/visibility (`docs/legacy/topics/steam_algorithm_visibility.md`)** — demo-download is an algorithm engagement signal; demo permanence vs Next-Fest-only affects long-tail visibility.
 
 ## Open questions for further research
 
@@ -277,7 +277,7 @@ Training-data floor applied throughout. WebFetch denied this session. Sources ci
 - **GameDiscoverCo (Simon Carless newsletter)** — recurring Next Fest analyses, demo-conversion aggregate medians, demo-to-wishlist multiplier benchmarks. https://newsletter.gamediscover.co — TRAINING-DATA-FLAG.
 - **Chris Zukowski / howtomarketagame.com** — demo length recommendations, Next Fest pre-festival prep, demo-as-marketing-pipeline analyses, free-game-as-demo discussions. https://howtomarketagame.com — TRAINING-DATA-FLAG.
 - **Valve Steam Next Fest documentation** — Steam Demo product type requirements, Next Fest cohort eligibility. Steam partner site — TRAINING-DATA-FLAG.
-- **Manor Lords (Slavic Magic / Hooded Horse)** — pre-launch demo strategy, GDC and press coverage. TechRaptor sales data and PC Gamer launch coverage cited in `docs/research/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
+- **Manor Lords (Slavic Magic / Hooded Horse)** — pre-launch demo strategy, GDC and press coverage. TechRaptor sales data and PC Gamer launch coverage cited in `docs/legacy/topics/lieutenant_pivot_niche_brief.md` — TRAINING-DATA-FLAG.
 - **Songs of Syx (Gamatron)** — solo-dev demo cadence over multi-year EA, gamepressure.com interview cited in lieutenant pivot brief — TRAINING-DATA-FLAG.
 - **Wildermyth (Worldwalker Games)** — demo and EA cadence. Wikipedia + dev posts — TRAINING-DATA-FLAG.
 - **Caves of Qud (Freehold Games + Kitfox)** — pre-1.0 free version functioning as demo surface. RPGamer coverage cited in lieutenant pivot brief — TRAINING-DATA-FLAG.

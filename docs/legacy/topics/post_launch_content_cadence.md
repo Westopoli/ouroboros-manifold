@@ -19,16 +19,16 @@ Non-recommendation discipline: Research Lane surfaces inputs, does not pick. Cad
 Sources: Steam DLC catalog listings (per-title), Paradox press releases, Ludeon/Worldwalker/Overhype/Mohawk/11 bit studios communications, SteamDB price+release history where reachable in training data, community discussion of post-launch tempo. WebFetch + WebSearch denied during capture — REPORTED/ESTIMATED floor unless backed by widely documented public record (then VERIFIED).
 
 Game-card cross-refs read before writing:
-- `docs/research/games/ck3_dlc_ladder.md`
-- `docs/research/games/stellaris_dlc_ladder.md`
-- `docs/research/games/rimworld_dlc_ladder.md`
-- `docs/research/games/wildermyth_omenroad.md`
-- `docs/research/games/battle_brothers.md`
-- `docs/research/games/old_world.md`
-- `docs/research/games/frostpunk_2.md`
-- `docs/research/games/free_anchor_precedents.md`
+- `docs/legacy/games/ck3_dlc_ladder.md`
+- `docs/legacy/games/stellaris_dlc_ladder.md`
+- `docs/legacy/games/rimworld_dlc_ladder.md`
+- `docs/legacy/games/wildermyth_omenroad.md`
+- `docs/legacy/games/battle_brothers.md`
+- `docs/legacy/games/old_world.md`
+- `docs/legacy/games/frostpunk_2.md`
+- `docs/legacy/games/free_anchor_precedents.md`
 
-Sibling brief cross-ref: `docs/research/topics/dlc_pricing_ladders.md` (per-SKU price points referenced here for tier identification; cadence focus here, pricing focus there).
+Sibling brief cross-ref: `docs/legacy/topics/dlc_pricing_ladders.md` (per-SKU price points referenced here for tier identification; cadence focus here, pricing focus there).
 
 ## Paradox-scale cadence
 
@@ -307,18 +307,18 @@ Training-data flagged throughout — WebFetch + WebSearch denied during capture,
 
 Game-card cross-refs (Research Lane prior captures, in this repository):
 
-- `docs/research/games/ck3_dlc_ladder.md` — CK3 cadence (Chapter Passes, flavor-pack cycle), DLC catalog density 2020-2026.
-- `docs/research/games/stellaris_dlc_ladder.md` — Stellaris 10-year cadence, named-author free patches, DLC fatigue at 15-20 SKUs.
-- `docs/research/games/rimworld_dlc_ladder.md` — flat $24.99 14-20 month cadence, no-bundle / no-cosmetic, single-principal-designer ceiling.
-- `docs/research/games/wildermyth_omenroad.md` — single-DLC very-small-team 3+ year cadence.
-- `docs/research/games/battle_brothers.md` — small-team 4-DLC cadence over 4 years, post-launch end at sequel transition.
-- `docs/research/games/old_world.md` — Hooded-Horse-published small-team cadence, 1-2 DLC per year.
-- `docs/research/games/frostpunk_2.md` — 11 bit studios mid-size-team post-launch cadence, Frostlander free pattern + paid DLC.
-- `docs/research/games/free_anchor_precedents.md` — free-anchor + paid-content shape, niche-tribe receptivity.
+- `docs/legacy/games/ck3_dlc_ladder.md` — CK3 cadence (Chapter Passes, flavor-pack cycle), DLC catalog density 2020-2026.
+- `docs/legacy/games/stellaris_dlc_ladder.md` — Stellaris 10-year cadence, named-author free patches, DLC fatigue at 15-20 SKUs.
+- `docs/legacy/games/rimworld_dlc_ladder.md` — flat $24.99 14-20 month cadence, no-bundle / no-cosmetic, single-principal-designer ceiling.
+- `docs/legacy/games/wildermyth_omenroad.md` — single-DLC very-small-team 3+ year cadence.
+- `docs/legacy/games/battle_brothers.md` — small-team 4-DLC cadence over 4 years, post-launch end at sequel transition.
+- `docs/legacy/games/old_world.md` — Hooded-Horse-published small-team cadence, 1-2 DLC per year.
+- `docs/legacy/games/frostpunk_2.md` — 11 bit studios mid-size-team post-launch cadence, Frostlander free pattern + paid DLC.
+- `docs/legacy/games/free_anchor_precedents.md` — free-anchor + paid-content shape, niche-tribe receptivity.
 
 Sibling topic brief cross-ref:
 
-- `docs/research/topics/dlc_pricing_ladders.md` — per-SKU price points and tier classification (pricing focus); this brief is cadence focus.
+- `docs/legacy/topics/dlc_pricing_ladders.md` — per-SKU price points and tier classification (pricing focus); this brief is cadence focus.
 
 Bible authority sources:
 
