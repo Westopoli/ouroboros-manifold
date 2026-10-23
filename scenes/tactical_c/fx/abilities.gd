@@ -9,10 +9,19 @@ const RING_SEGMENTS := 64
 const GLOW_PX := 14.0
 
 var _effects: Array = []
+var _projector := Callable()
 
 
 func _ready() -> void:
 	name = "Abilities"
+
+
+func set_projector(projector: Callable) -> void:
+	_projector = projector
+
+
+func has_projector() -> bool:
+	return _projector.is_valid()
 
 
 func set_frame(frame: Dictionary, _local_faction: int, world_scale: float, camera: Vector2) -> void:
@@ -28,8 +37,9 @@ func set_frame(frame: Dictionary, _local_faction: int, world_scale: float, camer
 			continue
 		var u: Dictionary = units[int(ev[1])]
 		var ability := int(ev[2])
+		var w := Vector2(float(u["x"]), float(u["y"]))
 		_effects.append({"unit": int(ev[1]), "ability": ability,
-			"center": (Vector2(float(u["x"]), float(u["y"])) - camera) * world_scale + SCREEN_CENTER,
+			"center": _projector.call(w) if _projector.is_valid() else (w - camera) * world_scale + SCREEN_CENTER,
 			"radius": float(aoe.get(ability, 0.0)) * world_scale})
 	queue_redraw()
 

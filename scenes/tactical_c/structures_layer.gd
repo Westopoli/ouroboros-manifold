@@ -16,10 +16,15 @@ var _camera := Vector2.ZERO
 var _data := {}
 var _max_hp := {}
 var _nodes := {}
+var _projector := Callable()
 
 
 func _ready() -> void:
 	name = "StructuresLayer"
+
+
+func set_projector(projector: Callable) -> void:
+	_projector = projector
 
 
 func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera: Vector2) -> void:
@@ -75,7 +80,8 @@ func _sync() -> void:
 			n = _make_node()
 			_nodes[id] = n
 			add_child(n)
-		n.position = (Vector2(float(s["x"]), float(s["y"])) - _camera) * _scale + SCREEN_CENTER
+		var w := Vector2(float(s["x"]), float(s["y"]))
+		n.position = _projector.call(w) if _projector.is_valid() else (w - _camera) * _scale + SCREEN_CENTER
 		n.set_meta("color", owner_color(id))
 		n.set_meta("cap", clampf(float(s.get("cap", 0.0)) / CAP_MAX, 0.0, 1.0))
 		n.queue_redraw()

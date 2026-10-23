@@ -25,11 +25,20 @@ var _haze: Array = []
 var _flybys: Array = []
 var _timer := 0.0
 var _rng := RandomNumberGenerator.new()
+var _projector := Callable()
 
 
 func _ready() -> void:
 	name = "Ambient"
 	_rng.seed = SEED
+
+
+func set_projector(projector: Callable) -> void:
+	_projector = projector
+
+
+func has_projector() -> bool:
+	return _projector.is_valid()
 
 
 func set_frame(frame: Dictionary, _local_faction: int, world_scale: float, camera: Vector2) -> void:
@@ -91,6 +100,8 @@ func _spawn_flyby() -> void:
 
 
 func _scr(w: Vector2) -> Vector2:
+	if _projector.is_valid():
+		return _projector.call(w)
 	return (w - _camera) * _scale + SCREEN_CENTER
 
 
