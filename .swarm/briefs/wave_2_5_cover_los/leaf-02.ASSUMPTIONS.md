@@ -1,6 +1,0 @@
-## Assumptions made during leaf-02
-
-- **On-edge detection method**: explicit collinearity + bbox check (cross product == 0 AND within segment bounding box) before ray-cast crossing count. — source: spec line 133 / brief task #6 mandates "point on edge counts as INSIDE"; canonical ray-cast alone does not guarantee this for vertical edges or vertex hits. No tie-breaking rule given in spec, so used cross==0 collinearity test which catches all edge orientations including horizontal/vertical/diagonal.
-- **Ray-cast crossing rule**: standard "yi > y != yj > y" half-open convention (excludes lower endpoint, includes upper) to avoid double-counting at vertices. — source: standard PNPOLY algorithm; spec line 127 specifies odd/even crossings but no vertex-handling rule.
-- **Degenerate polygon (<3 vertices)**: returns False from _point_in_polygon. — source: no source — pure guess; brief never specifies behavior for malformed polygons, defaulted to safe-false.
-- **cover_polygons default storage**: `cover_polygons if cover_polygons is not None else []` (not `cover_polygons or []`) so that an explicitly-passed empty list is preserved as the same list object. — source: matches pattern used by spec contract example line 96-97; minor defensive choice over `or []`.

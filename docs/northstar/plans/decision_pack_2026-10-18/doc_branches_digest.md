@@ -35,7 +35,7 @@ Checked after `git fetch origin`. Each verdict below is mine, offered as a candi
 
 ---
 
-## 2. `origin/docs/military-doctrine` (T7): three files under `docs/research/topics/`
+## 2. `origin/docs/military-doctrine` (T7): three files under `docs/legacy/topics/`
 
 Files: `terrain_in_military_doctrine.md` (126 lines, the synthesis), `terrain_in_military_doctrine_deep_research_2026-10-06.md` (243 lines, the Gemini report), `terrain_in_military_doctrine_gemini_prompt.md` (27 lines). The folder exists on main with other topic notes; these are not on main.
 
@@ -52,7 +52,7 @@ Files: `terrain_in_military_doctrine.md` (126 lines, the synthesis), `terrain_in
 - Lab references (condition C6, C7, "about 2x" target) cite `layer_dynamics/README.md`; I did not re-check that those numbers are unchanged. Re-check before landing.
 - Nothing is superseded.
 
-**Recommendation.** (a) land as is, as research under `docs/research/topics/`; or (b) with one edit, the C6/C7 and plays-table references re-checked against `layer_dynamics/README.md`. The raw report and prompt are provenance; keep or drop them as you prefer. Not (c).
+**Recommendation.** (a) land as is, as research under `docs/legacy/topics/`; or (b) with one edit, the C6/C7 and plays-table references re-checked against `layer_dynamics/README.md`. The raw report and prompt are provenance; keep or drop them as you prefer. Not (c).
 
 ---
 

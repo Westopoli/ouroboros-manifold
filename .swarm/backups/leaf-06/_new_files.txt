@@ -1,2 +1,0 @@
-autoload/tutorial_state_machine.gd
-tests/test_b3_tutorial_integration.gd

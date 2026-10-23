@@ -1,4 +1,5 @@
 # spec: docs/northstar/plans/briefs/2026-09-22-two-day-push.md, item 1
+# Rule pins: R-021-01@39f7e7
 """Tests for scripts/specfactory/merge_gate_support.py (the footprint fence
 and symbol-ownership lint merge_gate.sh calls into)."""
 import subprocess
@@ -997,15 +998,15 @@ def test_westley_folder_files_are_not_a_footprint(tmp_path):
     _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
 
     # Positive control: an unrelated unowned file is still a footprint reject.
-    (repo / "docs" / "northstar" / "story_reviews").mkdir(parents=True)
-    (repo / "docs" / "northstar" / "story_reviews" / "A.md").write_text("row\n")
+    (repo / "csrc").mkdir(exist_ok=True)
+    (repo / "csrc" / "mission.c").write_text("int x;\n")
     _git(repo, "add", "-A")
-    _git(repo, "commit", "-q", "-m", "queue file")
+    _git(repo, "commit", "-q", "-m", "unowned source file")
     ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
-    assert ok is False and "story_reviews/A.md" in detail
+    assert ok is False and "csrc/mission.c" in detail
 
     wdir = repo / "docs" / "northstar" / "story_reviews" / "westley"
-    wdir.mkdir()
+    wdir.mkdir(parents=True)
     (wdir / "README.md").write_text("| row |\n")
     (wdir / "A-S103-x.png").write_bytes(b"png")
     _git(repo, "add", "-A")

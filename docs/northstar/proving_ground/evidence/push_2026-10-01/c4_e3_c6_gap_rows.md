@@ -2,7 +2,7 @@
 
 Source: `push/C4-E3-tests2`. E3 retires `tests/test_cover_render.gd`, `tests/test_input_router_selection.gd` and `tests/test_input_router_control_groups.gd` (each with its .tscn) and `simulation/test_wave3_blockers_umbrella.py::test_umbrella_f_tactical_emits_unit_signals`. None of those files cites an R-id; the rule is the one the behaviour belongs to, checked against `docs/bible/epics/E-16-*.md` and a grep of every other test (`tests/`, `tests/csim/`, `tests/qa/`) for the id. Nothing below is rebuilt in E3, none is counted proven or skipped.
 
-Columns as in `docs/northstar/plans/2026-09-30-work-list.md` (item, area, rule, cluster, plan item, note). These are client gaps, so there is no `om_*` symbol; cluster 7 (misc).
+Columns as in `docs/northstar/plans/archive/2026-09-30-work-list.md` (item, area, rule, cluster, plan item, note). These are client gaps, so there is no `om_*` symbol; cluster 7 (misc).
 
 | Item | Area | Rule | Cluster | Plan item | Note |
 |---|---|---|---|---|---|

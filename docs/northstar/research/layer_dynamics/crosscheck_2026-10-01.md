@@ -206,7 +206,7 @@ I extracted every quotation of Westley in TEXT B and tested it, as an exact subs
 | T103 | S-165 travel lanes: tree-like lanes, 1.3 times speed, slowdowns at high ground, 1.0 elsewhere, an idea not a decision | E17:129 to 137 | M7 (all details match) | |
 | T104 | Q-165-01 options: separate mode, part of the standard generator, dropped; "as a mode or as part of every map" | REG:204, E17:137 | M7 said "potential gamemode"; options (b) and (c) are (b) | |
 | T105 | Q-E12-01 closed: ping is how a player sees far; seer dropped or very costly | E12:41, REG:201 | M7. The either-or stays open at REG:35 item 7 | |
-| T106 | Q-005-03 question and options (a) to (e), with precedents | REG:34 | M5 (quote exact) + (b); the research file `docs/research/topics/active_layer_vision_mechanics.md` exists | |
+| T106 | Q-005-03 question and options (a) to (e), with precedents | REG:34 | M5 (quote exact) + (b); the research file `docs/legacy/topics/active_layer_vision_mechanics.md` exists | |
 | T107 | Q-005-03 answer: (a), (b), (d) together; free; passive stays shorter; alert and 60-degree sector; pickets not chosen | REG:34 | M6 (exact quote) | |
 | T108 | Q-005-03 answer: option (a) "eras without the technology send small free scouts" counted as chosen | REG:34 | see T95 | OVERSTATED |
 | T109 | Q-005-04 item 5: "how much shorter passive cross-layer vision becomes than today's 0.50 and 0.20" while recommended default (a) says "passive factors start at today's values" | REG:35 | M6 ("just a shorter range", unspecified). Item 5 presupposes a cut from today; default (a) assumes none | CONTRADICTS |

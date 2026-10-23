@@ -7,3 +7,18 @@ C = ["scenes/ground3d/**"]
 D = ["scenes/space3d/**"]
 E = ["scenes/settlement/**"]
 F = ["autoload/net/**", "scenes/lobby/**"]
+
+# Shared paths: a diff touching one runs the listed lanes' plays ("*" = every lane with a plays directory).
+# A "*" in a shared glob crosses "/" under fnmatch, so "scenes/main*/**" matches scenes/main_menu/x.gd (the intent).
+# autoload/net/** is excepted from autoload/** in lane_plays_check (F only, through its own glob).
+[shared]
+"tests/qa/desktop/plays/*/_play.py" = ["*"]
+"tests/qa/desktop/plays/A/play_support.py" = ["*"]
+"tests/qa/desktop/daemon_client.py" = ["*"]
+"tests/qa/desktop/conftest.py" = ["*"]
+"autoload/**" = ["*"]
+"scenes/tactical_c/**" = ["A", "C"]
+"scenes/main*/**" = ["*"]
+"project.godot" = ["*"]
+"pipe/**" = ["*"]
+"csrc/**" = ["*"]
