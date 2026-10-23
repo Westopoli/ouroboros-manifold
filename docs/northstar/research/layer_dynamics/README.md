@@ -135,7 +135,7 @@ The artifact page (`python3 -m scripts.skilllab artifact <dir>`) reads `sweep_su
 - A naive defender whose post is blind to the attackers' start is moved first, not refused: the nearest free cell of the route grid in the same region from which the start is seen, within the guard radius. Every such shift is listed as a line "naive defender: post shifted 110.4 wu" (one decimal; the role as written, one line per play, layout and role; the distance is the largest over the headcounts built), last in the findings section after the refused list and again as a block per play right after that play's refused block. The shifts are also the `shifted_posts` field of the smoke and sweep summaries; no CSV column holds them.
 - The drafts section carries two notes when they hold. When a vision play is refused `no_fit` by its own pre-flight on a layout the vision family never ran on, it says which layouts ran: "vision cells: layout 192 only; 81 and 78 refuse the play: no_fit". When any row re-engaged it says that re-engage is a lab stand-in for the engine's pending sight-engagement rule.
 
-Research behind the form: `docs/research/topics/charts_for_combat_simulation_data.md`.
+Research behind the form: `docs/legacy/topics/charts_for_combat_simulation_data.md`.
 
 ## 6. Layer rulings in force
 
@@ -279,7 +279,7 @@ Findings open at the lab landing (status as the ledger holds it):
 |---|---|
 | Rules of the layer system | `docs/bible/epics/E-01-layer-system.md` |
 | Open and closed questions | `docs/northstar/ambiguity_register.md` |
-| Research: combat theory; active vision in other games; charts | `docs/research/topics/lanchester_and_combat_theory.md`, `active_layer_vision_mechanics.md`, `charts_for_combat_simulation_data.md` |
+| Research: combat theory; active vision in other games; charts | `docs/legacy/topics/lanchester_and_combat_theory.md`, `active_layer_vision_mechanics.md`, `charts_for_combat_simulation_data.md` |
 | History, the dimension map, every toy run | `history_2026-09-30_to_10-01.md` |
 | The build brief | `docs/northstar/plans/2026-10-02-skill-lab-cascade.md` |
 | The frozen toy | `toys/layerlab/` |

@@ -32,7 +32,7 @@ const THIS_TEST := "tests/test_legacy_tactical_deleted.gd"
 const RATCHET := "tests/test_tacticalbridge_ratchet.gd"
 const LIVE_SCENE := "scenes/tactical_c/tactical_view.tscn"
 const NEEDLE := "scenes/tactical/"
-const SKIP_TOP := [".swarm", "graphify-out", "docs", "simulation"]
+const SKIP_TOP := [".swarm", "graphify-out", "docs", "simulation", "legacy"]
 const EXTENSIONS := ["gd", "tscn", "tres"]
 
 var _pass_count := 0

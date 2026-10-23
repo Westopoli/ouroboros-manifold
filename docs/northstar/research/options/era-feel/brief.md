@@ -2,7 +2,7 @@
 
 ## 1. Feature and status
 
-E-20 S-151 "Later: eras that feel different" (`docs/bible/epics/E-20-multi-era-and-monetization.md:106-114`). Deferred by Stage 1 A-321 and its cluster (A-339, A-344, A-362, A-544 to A-546); no rule at launch. Q-146-01 closed: byte-identical mechanical config across the three launch packs (`docs/northstar/ambiguity_register.md:135`). Vision v2 Q7 named the mechanism as open Stage 2 work. Historical design material exists in `docs/design_questions/era_mechanical_axes.md` (eight-axis matrix, written under the scrapped subscription model).
+E-20 S-151 "Later: eras that feel different" (`docs/bible/epics/E-20-multi-era-and-monetization.md:106-114`). Deferred by Stage 1 A-321 and its cluster (A-339, A-344, A-362, A-544 to A-546); no rule at launch. Q-146-01 closed: byte-identical mechanical config across the three launch packs (`docs/northstar/ambiguity_register.md:135`). Vision v2 Q7 named the mechanism as open Stage 2 work. Historical design material exists in `docs/legacy/design_questions/era_mechanical_axes.md` (eight-axis matrix, written under the scrapped subscription model).
 
 ## 2. Player-facing goal as documented
 
@@ -27,7 +27,7 @@ Landscape answer 1, 2026-09-21 (`docs/northstar/research/landscape_design/README
 ## 4. Fixed constraints any option must honor
 
 - A-321: no mechanical or feel differentiation at launch; the three launch packs are byte-identical in mechanical config (Q-146-01). Options describe the post-MVP game.
-- Sacred principle 3: any per-era variation is config the engine consumes uniformly; no engine branch on era (`docs/bible/game_bible.md:75`; R-145-02). The production filter in `docs/design_questions/era_mechanical_axes.md:37-49`: dials must be cheap config, a player must be able to describe the difference without numbers, 5 to 7 axes at most, teachable once.
+- Sacred principle 3: any per-era variation is config the engine consumes uniformly; no engine branch on era (`docs/bible/game_bible.md:75`; R-145-02). The production filter in `docs/legacy/design_questions/era_mechanical_axes.md:37-49`: dials must be cheap config, a player must be able to describe the difference without numbers, 5 to 7 axes at most, teachable once.
 - Fixed abstractions: 6 unit types with fixed silhouettes across every era (A-413), fixed rock-paper-scissors, three tiers, five layers always, spine plus five gradients (R-146-04).
 - Any map, civilization, or skin works in any era (R-150).
 - Tempo targets at launch are the same in every era (E-11 S-085); per-era tempo is deferred (A-339, A-344).
@@ -35,7 +35,7 @@ Landscape answer 1, 2026-09-21 (`docs/northstar/research/landscape_design/README
 
 ## 5. Prior art already named
 
-StarCraft 2, Age of Empires 3, Halo Wars for the baseline RTS feel (vision Q8). The eight-axis matrix in `docs/design_questions/era_mechanical_axes.md:550-635` (tempo, information war, attrition, layer access, force scale, terrain expressiveness, environmental threat, cross-layer engagement) with Roman, 1980s, and Settled Reach columns; its "Sacred Principle #3" production filter is still valid, its access-tier annotations are not. Old bible branch system (`docs/bible_history/bible_2_00_combat.md:574`). Age of Empires 3 massed formations and The Expanse register in `docs/design_questions/era_selection_design.md:87,108-109` (historical).
+StarCraft 2, Age of Empires 3, Halo Wars for the baseline RTS feel (vision Q8). The eight-axis matrix in `docs/legacy/design_questions/era_mechanical_axes.md:550-635` (tempo, information war, attrition, layer access, force scale, terrain expressiveness, environmental threat, cross-layer engagement) with Roman, 1980s, and Settled Reach columns; its "Sacred Principle #3" production filter is still valid, its access-tier annotations are not. Old bible branch system (`docs/bible_history/bible_2_00_combat.md:574`). Age of Empires 3 massed formations and The Expanse register in `docs/legacy/design_questions/era_selection_design.md:87,108-109` (historical).
 
 ## 6. Contradictions, as questions for Westley
 

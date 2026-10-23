@@ -1,6 +1,7 @@
 extends Node2D
 # See also: unit_visuals.gd draws the single body; this draws the extra squad models of marked types (R-132-03).
 
+const UnitVisuals := preload("res://scenes/tactical_c/unit_visuals.gd")
 const OFFSETS: Array[Vector2] = [
 	Vector2(0.0, 0.0),
 	Vector2(-60.0, 60.0),
@@ -45,7 +46,7 @@ func set_frame(frame: Dictionary, local_faction: int, world_scale: float, camera
 			offs.append(OFFSETS[i] * world_scale)
 		_models[id] = offs
 		var centre := (Vector2(float(u["x"]), float(u["y"])) - camera) * world_scale + half
-		var rot := float(u.get("facing", 0.0)) + float(row.get("facing_offset_rad", 0.0))
+		var rot := float(u.get("facing", 0.0)) + UnitVisuals.facing_offset(int(u["type"]))
 		_batches.append({"c": centre, "offs": offs, "rot": rot, "f": int(u["faction"]), "s": world_scale})
 	queue_redraw()
 
