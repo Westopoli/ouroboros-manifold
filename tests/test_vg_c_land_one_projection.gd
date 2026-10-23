@@ -225,7 +225,17 @@ func _run() -> void:
 		var fxn = v._node(n)
 		_check(fxn != null and fxn.has_method("has_projector") and fxn.has_projector(), "R-010-01: %s has no valid projector on land (has_projector missing or false)" % n)
 	var qd: Dictionary = v.qa_state()
-	_check(qd.has("sight_discs") and qd["sight_discs"].size() == 0, "R-010-01: qa_state() sight_discs is %s, want the key present and empty (key missing on main)" % [qd.get("sight_discs", "<no key>")])
+	# TD-VG-C-land-one-projection-3: the empty-key placeholder is retired by VG-A-sightdisc; see also tests/test_vg_a_sightdisc.gd
+	var sd = qd.get("sight_discs", null)
+	_check(sd != null and sd.size() >= 1, "R-010-01: qa_state() sight_discs has %s entries on the land fixture, want the key present with at least one (empty on main)" % [sd.size() if sd != null else "<no key>"])
+	var vp: Vector2 = Ground3D.SCREEN_SIZE
+	for k in (sd if sd != null else {}):
+		var bx = sd[k]
+		var ok: bool = bx is Array and bx.size() == 4
+		if ok:
+			for f in bx:
+				ok = ok and (f is float)
+		_check(ok and bx[2] > 0.0 and bx[3] > 0.0 and bx[0] >= 0.0 and bx[0] + bx[2] <= vp.x and bx[1] >= 0.0 and bx[1] + bx[3] <= vp.y, "R-010-01: sight_discs[%s] is %s, want [x, y, w, h] floats with w, h > 0 inside the %s viewport" % [k, bx, vp])
 	_check(w0 >= 0.0, "worst default-camera offset is %s" % w0)
 	v.queue_free()
 	current_scene = null
