@@ -85,7 +85,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-079 | E-10 | "I receive my orders as a superior officer would give them, three parts, no haggling." | Spec'd, needs reference | `epics/E-10-missions.md` S-079 |
 | S-080 | E-10 | "Hard mode gives me less to work with, never gives the enemy better units." | Spec'd | `epics/E-10-missions.md` S-080 |
 | S-081 | E-11 | "Strike beats Siege, Siege beats Line, Line beats Strike, and none of it is a death sentence." | Spec'd | `epics/E-11-units-and-combat.md` S-081 |
-| S-082 | E-11 | "A roster of 20 to 40 unit types per era, each with a job I can learn." | Spec'd, blocked on Q-082-03 to Q-082-05 | `epics/E-11-units-and-combat.md` S-082 |
+| S-082 | E-11 | "A roster of 20 to 40 unit types per era, each with a job I can learn." | Spec'd, blocked on Q-082-03 (parked to after the beta, Westley 2026-10-21); Q-082-04 and Q-082-05 closed 2026-10-21: the interim power formula plus matchup simulations, each launch era carries its own 20 to 40 | `epics/E-11-units-and-combat.md` S-082 |
 | S-083 | E-11 | "I unlock trait cards and build a force that plays my way, and cards never beat positioning." | Spec'd, post-launch, blocked on Q-083-03 | `epics/E-11-units-and-combat.md` S-083 |
 | S-084 | E-11 | "Damage is simple: base times matchup, full damage in range, area damage capped." | Spec'd | `epics/E-11-units-and-combat.md` S-084 |
 | S-085 | E-11 | "Fights last long enough to read, reposition, and retreat." | Spec'd | `epics/E-11-units-and-combat.md` S-085 |
@@ -147,24 +147,24 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-141 | E-19 | "I know what my friends and I are doing together in this galaxy." | Seen; co-op only at launch | `epics/E-19-multiplayer.md` S-141 |
 | S-142 | E-19 | "A match nobody can pause or roll back." | Spec'd | `epics/E-19-multiplayer.md` S-142 |
 | S-143 | E-19 | "A match with friends who own the same packs moves chronologically through eras." | Seen | `epics/E-19-multiplayer.md` S-143 |
-| S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-03 | `epics/E-19-multiplayer.md` S-144 |
+| S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd; Q-144-03 closed 2026-10-21: any peer of the locked set hosts the next sitting | `epics/E-19-multiplayer.md` S-144 |
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
-| S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
-| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd; both eras exist as packs (Settled Reach, Greek placeholder, the era named Greek); the land era's brief is Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
+| S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd; Q-082-05 closed 2026-10-21: each launch era carries its own 20 to 40 | `epics/E-20-multi-era-and-monetization.md` S-146 |
+| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd; both eras exist as packs (Settled Reach, Greek placeholder, the era named Greek); the land era is named Greek (Q-147-01, closed 2026-10-22) | `epics/E-20-multi-era-and-monetization.md` S-147 |
 | S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-04, Q-148-05 | `epics/E-20-multi-era-and-monetization.md` S-148 |
 | S-149 | E-20 | "A fair price and the chance to earn expansions by playing." | Spec'd, blocked on Q-149-02 | `epics/E-20-multi-era-and-monetization.md` S-149 |
-| S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd, blocked on Q-150-01 | `epics/E-20-multi-era-and-monetization.md` S-150 |
+| S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd; Q-150-01 closed 2026-10-21: archetype weights, naming subset and colours transfer, skins map to the six abstract types | `epics/E-20-multi-era-and-monetization.md` S-150 |
 | S-151 | E-20 | "Eras that feel different." | Spec'd; values come from the simulation lab's crossings (Westley, 2026-10-15), not scheduled | `epics/E-20-multi-era-and-monetization.md` S-151 |
 | S-152 | E-21 | "The game works with no network and no model." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-152 |
 | S-153 | E-21 | "One pipeline produces every text library the game reads." | Spec'd, blocked on Q-153-01 | `epics/E-21-offline-ai-pipeline.md` S-153 |
-| S-154 | E-21 | "People, places, units, and factions have names that sound like they belong together." | Spec'd, blocked on Q-155-01 | `epics/E-21-offline-ai-pipeline.md` S-154 |
+| S-154 | E-21 | "People, places, units, and factions have names that sound like they belong together." | Spec'd; Q-155-01 closed 2026-10-21: a drained naming pool reuses the oldest historical name | `epics/E-21-offline-ai-pipeline.md` S-154 |
 | S-155 | E-21 | "A repeatable pipeline turns concept art into clean low-poly models." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-155 |
 | S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-156-02 | `epics/E-21-offline-ai-pipeline.md` S-156 |
 | S-157 | E-21 | "Someday, per-civilization unit variety and generated archetypes." | Deferred (A-278, A-279) | `epics/E-21-offline-ai-pipeline.md` S-157 |
 | S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |
 | S-159 | E-19 | "A real economy: run by a partner, or running itself." | Design decided 2026-10-01 and 10-07, not scheduled (Q-159-08 in part) | `epics/E-19-multiplayer.md` S-159 |
 | S-160 | E-02 | "A feature I switch off actually skips its step; a fresh world drifts by default." | Ready | `epics/E-02-region-fields-and-drift.md` S-160 |
-| S-161 | E-16 | "I pull the camera back until the battle reads as a map and give groups move orders from there." | Spec'd, blocked on Q-103-05 | `epics/E-16-client-camera-hud-and-world-view.md` S-161 |
+| S-161 | E-16 | "I pull the camera back until the battle reads as a map and give groups move orders from there." | Spec'd; Q-103-05 closed 2026-10-21: prototype first, then commit | `epics/E-16-client-camera-hud-and-world-view.md` S-161 |
 | S-162 | E-01 | "I ping a layer I choose at a place I choose and see it for a moment; whoever I ping learns roughly where I am." | Spec'd | `epics/E-01-layer-system.md` S-162 |
 | S-163 | E-01 | "I choose which of my forces look and which stay quiet; looking further means being seen." | Spec'd | `epics/E-01-layer-system.md` S-163 |
 | S-164 | E-01 | "Each unit type reaches only certain layers with its fire, so where I put each type decides who gets shots off." | Spec'd | `epics/E-01-layer-system.md` S-164 |

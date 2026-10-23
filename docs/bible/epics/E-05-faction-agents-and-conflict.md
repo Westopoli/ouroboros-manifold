@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 62 rules, numbers from `algorithms.md` ALG-11 through ALG-25 and ALG-29. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags on S-226, Q-226-01 and Q-226-02; Q-228-02 (E-08 S-228) is cited and held elsewhere. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-226, Q-226-01; Q-226-02 and Q-228-02 closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | Not applicable; conflict reaches the player through the world view (E-16), chronicle (E-09), and missions (E-10). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-032 to S-041 have no open flags and passed 2026-09-14. S-226 (added 2026-10-02) has not been through the gate and is blocked only on the parked Q-226-02.
+**Gate verdict: not passed.** S-032 to S-041 have no open flags and passed 2026-09-14. S-226 (added 2026-10-02) has not been through the gate and is blocked only on Q-226-01 (Q-226-02 closed 2026-10-21, register).
 
 ## Purpose
 
@@ -187,7 +187,7 @@ Rules
 
 Inputs: faction budget, archetype, tier; mission setup (E-10).
 Outputs: none until the flags are answered.
-Open flags: Q-226-02 (parked for the beta).
+Open flags: Q-226-01. Q-226-02 closed 2026-10-21 (register: for the beta, no link between archetype and doctrine).
 
 ## Inputs
 
