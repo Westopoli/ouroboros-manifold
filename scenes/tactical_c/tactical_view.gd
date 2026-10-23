@@ -591,8 +591,41 @@ func qa_state() -> Dictionary:
 		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
 		"marks_px": _marks_px(),
 		"hidden_on_land": ["UnitSquads", "TerrainLayer"] if _ground3d != null and not _space_hosted else [],
-		"sight_discs": {},
+		"sight_discs": _sight_discs_px(),
 	}
+
+
+# VG-A-sightdisc: per own unit with sight (id as string), the screen bbox [x, y, w, h] of the disc polygon's points in front of the
+# camera (Camera3D.is_position_behind on the world point, the rig's camera), clamped to the viewport; no such point, no entry.
+func _sight_discs_px() -> Dictionary:
+	var out := {}
+	if _rig() == null:
+		return out
+	var cam: Camera3D = _rig().get_camera()
+	var polys: Array = _node("FogLayer").sight_discs()
+	var i := 0
+	for u in _frame.get("units", []):
+		if int(u.get("faction", -1)) != _get_local_faction() or not u.has("sight"):
+			continue
+		if i >= polys.size():
+			break
+		var pts: PackedVector2Array = polys[i]["points"]
+		var world: PackedVector2Array = polys[i].get("world", PackedVector2Array())
+		i += 1
+		var lo := Vector2(INF, INF)
+		var hi := Vector2(-INF, -INF)
+		for k in mini(pts.size(), world.size()):
+			var wp := world[k]
+			if cam.is_position_behind(Vector3(wp.x, _rig().height_at(wp.x, wp.y), wp.y)):
+				continue
+			lo = Vector2(minf(lo.x, pts[k].x), minf(lo.y, pts[k].y))
+			hi = Vector2(maxf(hi.x, pts[k].x), maxf(hi.y, pts[k].y))
+		if lo.x == INF:
+			continue
+		lo = lo.clamp(Vector2.ZERO, Ground3D.SCREEN_SIZE)
+		hi = hi.clamp(Vector2.ZERO, Ground3D.SCREEN_SIZE)
+		out[str(int(u.get("id")))] = [lo.x, lo.y, hi.x - lo.x, hi.y - lo.y]
+	return out
 
 
 # VG-C-land-one-projection: the screen position of every unit icon and structure icon, plus the squad models while UnitSquads shows.

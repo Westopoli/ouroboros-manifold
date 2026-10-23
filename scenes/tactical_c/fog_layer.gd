@@ -78,13 +78,16 @@ func set_frame(frame: Dictionary, a: Variant, b: Variant = null, c: Variant = nu
 		var sight := float(u["sight"])
 		var unit_band := _unit_band(w, int(u.get("layer", 1)))
 		var pts := PackedVector2Array()
+		var world := PackedVector2Array()
 		for k in SEGMENTS:
 			var dir := Vector2.from_angle(TAU * k / SEGMENTS)
 			if flat:
 				pts.append((w + dir * sight - camera) * world_scale + half)
 			else:
-				pts.append(_projector.call(w + dir * _clipped_reach(w, dir, sight, unit_band)))
-		_discs.append({"points": pts})
+				var wp := w + dir * _clipped_reach(w, dir, sight, unit_band)
+				world.append(wp)
+				pts.append(_projector.call(wp))
+		_discs.append({"points": pts, "world": world})
 	_push_mask()
 	queue_redraw()
 
