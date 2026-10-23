@@ -101,7 +101,7 @@ As a commander, I want unexplored space, interference, and revealed ground to re
 
 Rules
 - R-094-01  Given a T2 screenshot, When inspected, Then revealed area, fogged area, and interference zones are three distinguishable treatments.
-- R-094-02  Given a unit inside interference, When drawn, Then its own sensor circle is visibly smaller.
+- R-094-02  Given a unit inside interference, When drawn, Then its own sight disc is visibly smaller.
 
 Inputs: visibility; interference field.
 Outputs: screen.
@@ -155,7 +155,7 @@ Open flags: none.
 |---|---|
 | Per-unit visible sets, player-visible list | Tick delta; T1 trace |
 | Visible structures; per-side record of enemy unit types seen | Tick delta; T1 trace |
-| Fog render, sensor circles, interference | Screen; T2 screenshots |
+| Fog render, sight discs, interference | Screen; T2 screenshots |
 | Recon state | Screen; mission clock |
 
 ## Invariants
