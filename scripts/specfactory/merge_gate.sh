@@ -29,6 +29,10 @@ SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
 MAKE_TIMEOUT="${MERGE_GATE_MAKE_TIMEOUT:-300}"
 SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-600}"
 
+if [[ "${1:-}" == "--prune-evidence" && $# -eq 1 ]]; then
+    exec "$PYTHON" "$GATE_DIR/merge_gate_support.py" prune-evidence
+fi
+
 REVERT_MODE=0
 if [[ "${1:-}" == "--revert" ]]; then
     REVERT_MODE=1
@@ -47,6 +51,10 @@ fi
 CANDIDATE="$(cd "$1" && pwd)"
 BASE_REF="$2"
 PIECE_ID="$3"
+# Run directory name of the kept playthrough / lane_plays evidence (merge_gate_support.py _evidence_run_dir).
+MERGE_GATE_START_UTC="$(date -u +%Y%m%d-%H%M)"
+export MERGE_GATE_START_UTC
+export MERGE_GATE_PIECE_ID="$PIECE_ID"
 
 # merge_queue.py always checks a candidate out at <merge_root>/wt-<name>, so
 # the candidate's own parent dir IS the runs/merge dir the gate never
@@ -319,7 +327,10 @@ PRE_PIPE_LOG="$SCRATCH_ROOT/pipe_build_pre_regression.log"
 
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+# MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
+# the baseline run and the branch run both inherit it.
+# MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
+MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
     reject regression_csim "$(cat "$REG_CSIM_LOG")"
@@ -521,7 +532,7 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
             warn transport "pipe/ouroboros_pipe_dbg did not build: $(tail_oneline "$PIPE_DBG_LOG")"
         fi
         TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
-        "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+        MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
             --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
             --before-build "make -s pipe/ouroboros_pipe" >"$TRANSPORT_LOG" 2>&1
         if [[ $? -ne 0 ]]; then
@@ -557,7 +568,8 @@ PT_LOG="$SCRATCH_ROOT/playthrough.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" playthrough "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAYTHROUGH_TIMEOUT:-900}" >"$PT_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject playthrough "$(sed 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
+    reject playthrough "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
+    sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$PT_LOG"
 else
     ok playthrough "$(sed 's/^OK //' "$PT_LOG" | tr '\n' ' ')"
 fi
@@ -569,7 +581,8 @@ LP_LOG="$SCRATCH_ROOT/lane_plays.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject lane_plays "$(sed 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+    reject lane_plays "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+    sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$LP_LOG"
 elif grep -q '^OK skipped' "$LP_LOG"; then
     warn lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
 else
