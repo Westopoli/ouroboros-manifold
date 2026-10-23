@@ -52,6 +52,10 @@ func hit_bloom_energy() -> float:
 
 func set_projector(projector: Callable) -> void:
 	_projector = projector
+
+
+func has_projector() -> bool:
+	return _projector.is_valid()
 	queue_redraw()
 
 

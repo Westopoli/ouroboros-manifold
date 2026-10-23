@@ -1,0 +1,436 @@
+# Code quality page (SHOWCASE-quality-audit, step 4)
+
+Re-measured on the worktree branch from origin/main at `543f6c04` (after landing 4 and the SHOWCASE legacy moves), 2026-10-23. First measured at `0d7868f2`; the changes are listed in 'What changed since 0d7868f2' below. Read-only audit: nothing was fixed. Every number below came from a command run on this tree; where a count is a heuristic, the section says so.
+
+**The legacy moves have landed.** SHOWCASE-junk untracked `build/_pyi_dist`, `.swarm`, `graphify-out` and the `tuning_output` logs (none is in the tree now; `build/` keeps its spec and zip script); SHOWCASE-legacy-toys moved `toys/` to `legacy/toys/`; SHOWCASE-legacy-scenes moved eight unreferenced debug scenes to `legacy/scenes/debug/` (`scenes/debug/debug_ws_test.*` stays, a test names it); SHOWCASE-docs-legacy moved retired docs to `docs/legacy/`. Not moved: `simulation/` (246 files, the legacy Python sim) is still at the top level, and `scenes/mockups/` (86 scripts, 22,586 lines) is still under `scenes/`, so discount those two. `docs/stage_specs/` and `docs/test_specs/` also remain in `docs/`. This page audits `csrc/`, `autoload/`, `scenes/`, `scripts/specfactory/`, `scripts/skilllab/` and `tests/`; `legacy/` is outside the counts below (8 debug `.gd` files, 1,265 lines, counted once in section 2).
+
+## 1. `csrc/` (the C sim)
+
+| Measure | Value |
+|---|---|
+| Files | 50 (`*.c` and `*.h`, including 5 files under `csrc/pipe/`) |
+| Lines | 39,821 (largest: `mission.c` 3,509, `tactical_move.c` 3,865, `unit.c` 3,428, `chronicle.c` 2,499) |
+| Functions with a body | about 1,750 (approximate: a regex brace-matcher, no C parser; `ctags` and `cloc` are not installed) |
+| Functions over 150 lines | 16 |
+| TODO / FIXME / XXX | 0 |
+| `__attribute__((weak))` stubs | 9, all in `csrc/region.c` |
+| Public symbols tested but not reachable from the game (`reach_lint.py`) | 250 of 779 tested public symbols |
+
+**Dead or unreachable (reach_lint).** `python3 scripts/specfactory/reach_lint.py` run bare exits 1: "REACH LINT FAILED (250 unreachable of 779 tested public symbols)". It checks public `csrc/ouroboros_sim.h` symbols that a test calls against a static call graph from `om_world_step`, `om_tactical_step`, the time-jump entry and the pipe dispatch loop. None of the 250 is in `reach_allowlist.toml`. By prefix: chronicle 33, map 28, unit 27, mission 22, macro 17, faction 10, tactical 9, structure 9. The full list with header line, definition file:line and first test is the appendix at the end. Caveats: the lint's own text says it is a regression-mode lint when given `--base-ref`; the bare run counts the whole baseline. Many of these are getters and setters for tests (`om_unit_hp`, `om_trace_read`, `om_world_set_seed`), so the finding is "tested API the running game never calls", not 250 proven-dead bodies. Some are real gaps of the kind the lint exists for, for example `om_unit_attack` (`csrc/unit.c`) and `om_time_jump_start_tick` (`csrc/generational.c`); each needs a per-symbol look.
+
+**Weak stubs (listed as stubs).** `csrc/region.c:250` `om_world_generate`; `:354` `om_world_step`; `:355` `om_world_run`; `:356` `om_region_drift`; `:357` `om_world_checksum`; `:358` `om_trace_enable`; `:359` `om_trace_len`; `:360` `om_trace_read`; `:362` `om_debug_inject` (under `#ifdef OM_DEBUG_INJECT`). Every one has a strong definition today (`csrc/sim.c` for eight, `csrc/worldgen.c` for `om_world_generate`), so the stubs are shadowed. The comments say "delete this stub after attach/B4" (`region.c:249`) and "when sim.c lands (card 201), its strong definitions override these" (`region.c:351-353`); both pieces are long attached. These are dead code that looks live, with stale comments.
+
+**Functions over 150 lines** (file:line, name, lines): `csrc/pipe/pipe_tactical.c:299` write_tactical 365; `csrc/sim.c:194` om_world_step 359; `csrc/save.c:474` sv_parse_body 327; `csrc/worldgen.c:181` om_world_generate 272; `csrc/resolve.c:328` om_step_resolve 256; `csrc/pipe/om_pipe.c:521` write_delta 241; `csrc/unit.c:2035` om_tac_unit_ai 223; `csrc/space_plates.c:338` sp_layer 209; `csrc/generational.c:1948` gen_time_jump 209; `csrc/agent.c:248` om_step_decisions 209; `csrc/save.c:277` sv_write_body 186; `csrc/agent.c:47` om_faction_candidates 179; `csrc/region.c:13` om_world_new 169; `csrc/events.c:670` evt_resolve_queue 162; `csrc/pipe/om_pipe.c:359` write_snapshot 157; `csrc/pipe/om_pipe.c:1210` handle_mission_start 155. Several of these are the stochastic equations kept verbatim from the legacy algorithms by design (`docs/bible/algorithms.md`); the serializers (`write_*`, `sv_*`) are long because they are field lists.
+
+**Other.** `csrc/unit.c:997` cites `simulation/movement.py` (the legacy Python sim; it has not moved, so the path is still valid). `csrc/ouroboros_sim.h` is 2,167 lines, the frozen contract.
+
+## 2. `autoload/` and `scenes/` (GDScript)
+
+| Measure | `autoload/` | `scenes/` |
+|---|---|---|
+| `.gd` files | 32 | 181 (86 under `scenes/mockups/`) |
+| `.gd` lines | 4,755 | 41,468 (22,586 under `scenes/mockups/`) |
+| `.tscn` files | 0 | 43 |
+| Files over 600 lines | 2 | 11 |
+| TODO / FIXME / XXX | 0 | 0 |
+| Unreferenced files | 0 | 1 script, 0 scenes |
+
+**2.1 Unreferenced.** Method: for each `.gd`, grep its basename (and its `class_name`) over `scenes`, `autoload`, `project.godot`, `tests`, `scripts` and `legacy`, excluding itself. This is generous: any mention counts, so it under-reports. Result: one script, `scenes/mockups/objectives/tools/dump_nodes.gd` (21 lines). Stricter, by `.tscn`: every one of the 43 scenes under `scenes/` and `autoload/` has a referrer (the nine unreferenced `scenes/debug/` scenes of the first run are gone: eight moved to `legacy/scenes/debug/` with a README that says why, and `debug_ws_test` is named by `tests/test_tacticalbridge_ratchet.gd`). `scripts/specfactory/gd_reach_lint.py` (regression mode, reads git refs) is the gate's version of this check; this page did not run it.
+
+**2.2 Over 600 lines** (`wc -l`; 13 files, 11 in `scenes/` and 2 in `autoload/`): `scenes/mockups/landscape/field_map_space.gd` 1,520; `scenes/tactical_c/tactical_view.gd` 1,397; `scenes/mockups/landscape/placer.gd` 1,020; `scenes/mockups/landscape/field_map.gd` 961; `scenes/mockups/landscape/hud.gd` 920; `scenes/mission_briefing/mission_briefing.gd` 911; `scenes/shared/world_view/main_menu_galaxy.gd` 824; `scenes/mockups/landscape/pass4_terrain.gd` 798; `autoload/c_bridge.gd` 784; `autoload/qa_daemon.gd` 609; `scenes/world/time_jump_sequencer.gd` 707; `scenes/galaxy/galaxy_view.gd` 663; `scenes/mockups/settlement/settlement_sim.gd` 633. Six of thirteen are prototypes under `scenes/mockups/`. Shipping-code outliers: `tactical_view.gd` and `c_bridge.gd` (the pipe client); `qa_daemon.gd` is new on the list, 9 lines over.
+
+**2.3 TODO / FIXME.** None in `autoload/` or `scenes/`.
+
+**2.4 Comments that name something gone.** 46 `See also` comments in GDScript; all path-like targets were tested for existence. Stale (both findings from the first run are still open):
+- `autoload/debug_overlay.gd:5` points at `docs/stage_specs/stage_13_spec.md`; the file is now `docs/stage_specs/_deferred/stage_13_spec.md` (the folder did not move). High (stale claim in a live comment).
+- `scenes/galaxy/shell_renderer.gd:6` says "See also: scenes/galaxy/legacy_shell_renderer.gd (superseded one box per faction)"; that file does not exist. High.
+- Not stale, noted: `scenes/tactical_c/loading_overlay.gd:2` names a deleted legacy file but gives the `git show` ref that recovers it; `tests/test_legacy_tactical_deleted.gd:93` is a deliberate positive control.
+Ruling and piece ids in comments (`R-`, `TD-`, `FINDING-`, `DRAFT-`) were not checked against `pieces.toml` one by one; only path targets were. Approximate.
+
+## 3. `scripts/specfactory/` and `scripts/skilllab/` (Python)
+
+| Measure | `specfactory/` | `skilllab/` |
+|---|---|---|
+| `.py` files | 47 (one in a fixtures subfolder) | 44 |
+| Lines | 15,135 | 8,101 |
+| Files over 800 lines | 3 | 0 |
+| TODO / FIXME | 10 matches, all in template text | 0 |
+| Modules nothing imports | 21 by strict import grep, 6 by any mention | 0 (the package is imported through `__main__`) |
+
+**3.1 Over 800 lines:** `scripts/specfactory/merge_gate_support.py` 1,304; `escalator_fix_probe.py` 1,099; `alg_constants.py` 971.
+
+**3.2 Modules nothing imports.** Strict method (`import <name>` or `from <name>` in `scripts/` or `tests/`): 21 under `scripts/specfactory/`. Nearly all are command-line tools run by path (each has a `__main__` guard and is cited in docs, the gate or a script), so "not imported" is expected: `libm_lint`, `size_lint`, `method_check`, `rule_pins`, `rule_pins_tests`, `gd_reach_lint`, `card_slice`, `tactical_trace`, `chain_graph`, `snapshot_fixture`, `gen_controls`, `gen_test_skeleton`, `gen_card`, `card_regen`, and `escalator_fix_fixtures/test_px17_scratch_r7d.py` (a scratch test under a fixtures dir, cited once). The weaker finding: six modules have no mention at all in `scripts`, `tests`, `Makefile`, `.claude` or `pieces.toml`, only in docs: `gen_all_cards.py` (217 lines, cited in 2 docs), `dor_check.py` (134), `fill_tests.py` (103), `draft_card.py` (126), `draft_e2e.py` (78), `fold_answers.py` (149). They belong to the retired card factory (Agora era) and are likely dead; each needs a look before it is called so. Medium.
+
+**3.3 TODO.** The 10 matches are strings that generators write into card and test templates (`gen_card.py:78`, `gen_controls.py:58`, `draft_card.py:71`, `gen_test_skeleton.py:65`), not open work.
+
+**3.4 Duplicated helper names** (same top-level `def` in two or more files; excludes `main`, `__init__`, `test_*`): 58 names. 16 of them involve `scripts/skilllab/contract.py`, which is by design a stub file of cross-module signatures (its docstring says so), so they are not duplication. The rest are real in the sense of copied helpers: `_page` in four files (`skilllab/depth.py:210`, `charts.py:63`, `batches.py:391`, `search_batch.py:343`); `grid` in four (`sample.py:47`, `search_batch.py:45`, `sweep.py:110`, `contract.py`); `_check` three (`sample.py:9`, `asym.py:77`, `positions.py:15`); `_run` three; `_play` three; `run_pytest` three (`specfactory/escalator_fix_probe.py:399`, `suite_regression.py:147`, `red_check.py:93`); `python_bin` two (`undertest_check.py:45`, `red_check.py:51`); `parse_junit` two (`control_liveness.py:253`, `red_check.py:107`); `find_function_span` two (`reach_lint.py:194`, `card_lint.py:68`); `load_allowlist` two (`reach_lint.py:330`, `alg_constants.py:862`); `build_owner_map` two (`chain_sim.py:84`, `tick_closure.py:158`); `load_cards` two (`parent_patch_fence.py:159`, `chain_sim.py:415`); `parse_card` two (`green_check.py:35`, `prefetch_measure.py:229`). The full list was produced by an `ast` scan of top-level functions. Many `skilllab` one-letter-ish private helpers (`_mean`, `_num`, `_cell`) are small. Medium.
+
+**3.5 Portability.** `scripts/specfactory/merge_gate.sh` (the `PYTHON=` default) hard-codes `/home/westopoli/Projects/agora/.venv/bin/python`; eleven files under `scripts/` (none in `csrc/`, `autoload/`, `scenes/` or `legacy/`) contain `/home/westopoli`. A reader cloning the repo cannot run the gate without editing it. Medium.
+
+## 4. `tests/`
+
+| Suite | Test files (`test_*.py` / `*.gd`) | Lines (py + gd, all files) |
+|---|---|---|
+| `tests/csim/` (C sim through ctypes, incl. `controls/` and `scale/`) | 471 | 73,370 |
+| `tests/skilllab/` | 179 | 39,166 |
+| `tests/specfactory/` | 66 | 19,701 |
+| `tests/transport/` | 56 | 9,550 |
+| `tests/qa/` (desktop-driver plays) | 31 | 7,978 |
+| `tests/simviewer/` | 4 | 1,318 |
+| `tests/net/` | 4 | 483 |
+| `tests/long/`, `tests/push/` | 1 + 1 | 258 + 21 |
+| `tests/*.gd` (Godot, flat in `tests/`) | 154 `test_*` files (includes 2 `.py`) | 34,387 (py and gd) |
+| `tests/galaxy_field/`, `tests/support/`, `tests/fixtures/` | helpers and fixtures | 255, 253, 0 |
+
+1,132 files in all (967 of them `test_*` files). About 6,547 `def test_*` in Python and 129 `func test_*` / `_test_*` in GDScript (regex count, approximate; the Godot tests run many checks per function).
+
+**Files with no `S-`/`R-` id.** Heuristic: no `S-###`, `R-###-##` (or the `S###` filename form) in the first 40 lines or the filename. Of 967 test files checked, 416 name none. By suite: `csim` 156 of 471; flat `tests/*.gd` 41 of 154; `qa` 6 of 31; `transport` 15 of 56; `specfactory` 49 of 66; `skilllab` 145 of 179; `simviewer` 3 of 4; `push` 1 of 1. The tooling suites (`specfactory`, `skilllab`, `transport`) test scripts, not stories, so no id is expected there. The `csim` and `tests/*.gd` rows are the ones that matter against "each names the S-/R- id it proves"; many of those key on piece ids instead (`test_VG_W_w1_perf_control.py`, `test_E07_wiring.py`, `test_PP_*`, `test_core_*`), so the rule is met by another id, not by an `S-`/`R-` id. 130 of the 156 `csim` files are under `controls/` or `scale/` (130 at the first run; not re-counted).
+
+**Files over 400 assertion lines.** None. The most assertion-dense: `tests/skilllab/test_report.py` 293, `test_sweep.py` 288, `test_diagram.py` 170, `tests/specfactory/test_spec_provenance.py` 150. By total length, 94 test files exceed 400 lines (the largest are `tests/skilllab/test_report.py` 1,773 and `test_sweep.py` 1,272). Assertion lines were counted by regex (`assert`, `_assert(`, `expect`); approximate. TODO-word matches in tests: 187, not classified (many are generator output).
+
+## 5. The method machinery as a reader sees it
+
+- **`scripts/specfactory/merge_gate.sh`** (708 lines): one `GATE <step> OK|REJECT|WARN|HARNESS` line per step, base first (candidate must contain current origin/main), then build, lint and regression stages. Step names in the script include `base`, `venv`, `make`, `libm_lint`, `alg_constants`, `footprint`, `owner_lint`, `reach_lint`, `gd_reach`, `gd_class_names`, `size_lint`, `rule_pins`, `sig_check`, `symbol_ownership`, `control_liveness`, `acceptance`, `regression_csim`, `regression_qa_t1`, `playthrough`, `look`, `checksum_trace`, `tactical_trace`, `transport`, `lane_plays`. Step list carried from the first run and not re-derived; order not verified step by step.
+- **`pre_gate.sh`** (181 lines): five steps before any push: noise (`.uid`/`.import` hygiene), gate in `--revert` mode, named tests, rule pins, spec provenance.
+- **`status_check.py`** (323 lines): diffs the programme lane table, `pieces.toml` and the review queue against git; run after every landing.
+- **`owner_lint.py`** (114 lines): fails when two in-flight pieces own the same file, per `pieces.toml`.
+- **`method_check.py`** (271 lines): reads a chat's transcript and prints per rule how many turns broke it (DRIFT lines).
+- **Known-red lists:** `gd_tests_known_red.txt` 25 lines, `lane_plays_known_red.txt` 4, `playthrough_known_red.txt` 4 (33 in all, line counts include comments).
+- **`docs/northstar/plans/push/pieces.toml`:** 298 `[[piece]]` tables. `state =` counts: 166 attached, 86 queued, 3 superseded, 1 landed, 1 pending, 0 in_flight (257 rows carry a state; the other 41 were not classified by this page).
+- **Ledger** `docs/northstar/plans/push_ledger_2026-09-22.md`: 1,578 lines, about 1,550 table rows (counted by leading `|`, which includes header and separator lines).
+- **Decisions page** `docs/northstar/story_reviews/westley/decisions.md`: 44 `DEC-` rows (2026-10-22 onward).
+
+## 6. Closing table
+
+Severity: high = dead code that looks live or a stale claim in a live comment; medium = size, duplication, tested-only API; low = TODOs. Counts are findings (a finding can name many files), not lines.
+
+| Directory | Lines | Files | High | Medium | Low | Takeaway |
+|---|---|---|---|---|---|---|
+| `csrc/` | 39,821 | 50 | 1 (9 shadowed weak stubs with stale comments) | 2 (16 functions over 150 lines; 250 tested-only public symbols) | 0 | A clean, TODO-free sim whose main debts are leftover bootstrap stubs and a long list of test-only API that needs a per-symbol wired-or-removed call. |
+| `autoload/` | 4,755 | 32 | 1 (`debug_overlay.gd:5` stale path) | 1 (`c_bridge.gd` 784 and `qa_daemon.gd` 609 lines) | 0 | Small and referenced; one stale comment. |
+| `scenes/` | 41,468 | 181 | 2 (`dump_nodes.gd` unreferenced; `shell_renderer.gd:6` stale target) | 1 (11 files over 600 lines, six of them prototypes) | 0 | The shipped scenes are referenced and TODO-free; the dead weight left is in `scenes/mockups/` (86 prototype scripts, 22,586 lines, not moved); the unreferenced debug scenes now sit in `legacy/scenes/debug/`. |
+| `scripts/specfactory/` | 15,135 | 47 | 0 | 4 (3 files over 800; 6 likely-dead card-factory tools; duplicated helpers; hard-coded venv path) | 0 open (10 template strings) | A working gate and lint toolkit with some retired factory tools still sitting beside it. |
+| `scripts/skilllab/` | 8,101 | 44 | 0 | 1 (copied private helpers across modules) | 0 | Cohesive lab package; duplication is small helpers, and `contract.py` duplicates by design. |
+| `tests/` | 1,132 files, about 185,000 lines of py and gd | 1,132 | 0 | 2 (416 files with no S-/R- id by heuristic, mostly tooling suites; 94 files over 400 lines) | 187 TODO-word matches, unclassified | The tests are the spec in volume (about 6,700 test functions); id traceability holds for story tests and is looser for tooling suites. |
+
+## What changed since 0d7868f2
+
+Measured again on `543f6c04`; every number on this page was re-run. `csrc/` is unchanged.
+
+| Measure | Before (`0d7868f2`) | After (`543f6c04`) |
+|---|---|---|
+| `csrc/` files / lines / functions over 150 lines | 50 / 39,821 / 16 | 50 / 39,821 / 16 |
+| `reach_lint` unreachable (the appendix list is identical symbol for symbol) | 250 of 779 | 250 of 779 |
+| Weak stubs in `csrc/region.c` | 9 | 9 |
+| `autoload/` `.gd` files / lines / over 600 | 32 / 4,732 / 1 | 32 / 4,755 / 2 (`qa_daemon.gd` 609) |
+| `scenes/` `.gd` files / lines / `.tscn` | 189 / 42,591 / 51 | 181 / 41,468 / 43 |
+| Unreferenced scenes / scripts | 9 / 1 | 0 / 1 |
+| `scenes/` files over 600 lines | 11 | 11 (`tactical_view.gd` 1,356 to 1,397) |
+| `specfactory/` lines / over 800 | 14,980 / 3 | 15,135 / 3 (`merge_gate_support.py` 1,174 to 1,304) |
+| Duplicated helper names / files with `/home/westopoli` | 57 / 10 | 58 / 11 |
+| Test files / `def test_*` | 1,121 files / 6,479 | 1,132 files / 6,547 |
+| Test files with no `S-`/`R-` id (heuristic) | 412 of 957 | 416 of 967 |
+| `pieces.toml` rows / in_flight | 296 / 2 | 298 / 0 |
+| Ledger lines / `DEC-` rows | 1,531 / 38 | 1,578 / 44 |
+
+Findings fixed: the nine unreferenced `scenes/debug/` scenes (eight moved to `legacy/scenes/debug/` with a README; `debug_ws_test` is referenced by a test); the junk paths (`build/_pyi_dist`, `.swarm`, `graphify-out`, `tuning_output`) are untracked and absent; `toys/` is now `legacy/toys/`; the `docs/legacy` and dated-plan moves landed.
+
+Findings still open, unchanged: the 250 tested-but-unreachable symbols; the nine shadowed weak stubs and their stale comments (`csrc/region.c:249`, `:351-353`); `autoload/debug_overlay.gd:5` and `scenes/galaxy/shell_renderer.gd:6` stale `See also` targets; `dump_nodes.gd`; six likely-dead card-factory tools; duplicated helpers; the hard-coded venv path in `merge_gate.sh:24`.
+
+Findings new or moved: `autoload/qa_daemon.gd` crossed 600 lines; `merge_gate_support.py` grew 130 lines; one more `TODO` template string (`gen_test_skeleton.py:65`) and one more duplicated helper name were found by the re-run (this may be a counting difference more than new code); the `simulation/` legacy Python sim was named in the first run as moving to `legacy/simulation/` but did not move (246 files, still top level); `docs/stage_specs/` and `docs/test_specs/` did not move either.
+
+## Appendix: the 250 tested-but-unreachable public symbols
+
+Source: `python3 scripts/specfactory/reach_lint.py` output on this tree, none allowlisted. Header line is the declaration in `csrc/ouroboros_sim.h`; definition is file:line of the body (grep-resolved).
+
+| symbol | header line | definition | first test that calls it |
+|---|---|---|---|
+| `om_abi_layout_check` | ouroboros_sim.h:126 | csrc/sim.c:630 | csim/test_E02_S020_abi.py |
+| `om_abi_version` | ouroboros_sim.h:28 | csrc/region.c:347 | csim/conftest.py |
+| `om_campaign_needs_onboarding` | ouroboros_sim.h:1631 | csrc/generational.c:1021 | csim/test_E08_S063_my_two_choices_at_the_start.py |
+| `om_character_create` | ouroboros_sim.h:1647 | csrc/generational.c:1095 | csim/scale/test_scale_E08.py |
+| `om_character_create_child` | ouroboros_sim.h:1648 | csrc/generational.c:1109 | csim/test_E08_S058_previous_pool_chapter_ago.py |
+| `om_character_create_random` | ouroboros_sim.h:1649 | csrc/generational.c:1130 | csim/test_E08_S060_named_leaders_live_and_die.py |
+| `om_character_create_with_rank` | ouroboros_sim.h:1650 | csrc/generational.c:1145 | csim/test_E08_S060_named_leaders_live_and_die.py |
+| `om_character_faction` | ouroboros_sim.h:1651 | csrc/generational.c:1165 | csim/test_E08_S058_who_i_come_back_as.py |
+| `om_character_lineage_id` | ouroboros_sim.h:1658 | csrc/generational.c:1217 | csim/test_E08_S058_previous_pool_chapter_ago.py |
+| `om_character_name_reuse_cooldown` | ouroboros_sim.h:1659 | csrc/generational.c:1222 | csim/test_E08_S058_who_i_come_back_as.py |
+| `om_character_set_faction` | ouroboros_sim.h:1666 | csrc/generational.c:1365 | csim/scale/test_scale_E08.py |
+| `om_character_set_generation` | ouroboros_sim.h:1667 | csrc/generational.c:1370 | csim/test_E08_S059_the_family_grows_while_i_am_away.py |
+| `om_chronicle_add_cluster_direct` | ouroboros_sim.h:1396 | csrc/chronicle.c:1967 | csim/test_E09_S065_five_to_ten_entries_in_the_right_order.py |
+| `om_chronicle_add_mock_entry` | ouroboros_sim.h:1400 | csrc/chronicle.c:1993 | csim/test_E09_S069_jump_replay_ownership.py |
+| `om_chronicle_add_raw_entry` | ouroboros_sim.h:1402 | csrc/chronicle.c:2014 | csim/test_E09_S068_written_from_fragments_never_the_same_twice.py |
+| `om_chronicle_apply_slot_echo_anaphora` | ouroboros_sim.h:1404 | csrc/chronicle.c:2025 | csim/test_E09_S068_written_from_fragments_never_the_same_twice.py |
+| `om_chronicle_apply_word_echo_synonym` | ouroboros_sim.h:1405 | csrc/chronicle.c:2036 | csim/test_E09_S068_written_from_fragments_never_the_same_twice.py |
+| `om_chronicle_assemble_cluster_entry` | ouroboros_sim.h:1406 | csrc/chronicle.c:2044 | csim/test_E09_S068_written_from_fragments_never_the_same_twice.py |
+| `om_chronicle_calculate_score` | ouroboros_sim.h:1410 | csrc/chronicle.c:2096 | csim/test_E09_S066_what_counts_as_notable.py |
+| `om_chronicle_category_name` | ouroboros_sim.h:1414 | csrc/chronicle.c:2121 | csim/test_E09_B5_consequence_entry.py |
+| `om_chronicle_context_multiplier` | ouroboros_sim.h:1416 | csrc/chronicle.c:2130 | csim/test_E09_S066_what_counts_as_notable.py |
+| `om_chronicle_count_by_type` | ouroboros_sim.h:1417 | csrc/chronicle.c:2136 | csim/test_E09_S065_five_to_ten_entries_in_the_right_order.py |
+| `om_chronicle_dedup_content_words` | ouroboros_sim.h:1418 | csrc/chronicle.c:2146 | csim/test_E09_S068_written_from_fragments_never_the_same_twice.py |
+| `om_chronicle_dismiss_expanded` | ouroboros_sim.h:1419 | csrc/chronicle.c:2172 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_distill_and_assemble` | ouroboros_sim.h:1420 | csrc/chronicle.c:2177 | csim/scale/test_scale_E08.py |
+| `om_chronicle_fragment_batch_exceeds_rejection_limit` | ouroboros_sim.h:1424 | csrc/chronicle.c:2197 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_chronicle_fragment_check_near_duplicate` | ouroboros_sim.h:1426 | csrc/chronicle.c:2208 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_chronicle_fragment_inject_invalid_slot` | ouroboros_sim.h:1427 | csrc/chronicle.c:2214 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_chronicle_fragment_library_load_launch` | ouroboros_sim.h:1428 | csrc/chronicle.c:2222 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_chronicle_fragment_library_validate` | ouroboros_sim.h:1429 | csrc/chronicle.c:2227 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_chronicle_fragment_pool_counts` | ouroboros_sim.h:1430 | csrc/chronicle.c:2235 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_chronicle_handle_click` | ouroboros_sim.h:1434 | csrc/chronicle.c:2290 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_mock_populate_events` | ouroboros_sim.h:1445 | csrc/chronicle.c:2344 | csim/test_E09_S065_five_to_ten_entries_in_the_right_order.py |
+| `om_chronicle_presentation_entry_hold_sec` | ouroboros_sim.h:1446 | csrc/chronicle.c:2359 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_presentation_map_width_ratio` | ouroboros_sim.h:1447 | csrc/chronicle.c:2364 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_presentation_slide_in_sec` | ouroboros_sim.h:1448 | csrc/chronicle.c:2369 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_presentation_slide_out_sec` | ouroboros_sim.h:1449 | csrc/chronicle.c:2374 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_presentation_word_cadence_sec` | ouroboros_sim.h:1450 | csrc/chronicle.c:2379 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_presentation_word_fade_sec` | ouroboros_sim.h:1451 | csrc/chronicle.c:2384 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_render_character_rank` | ouroboros_sim.h:1453 | csrc/chronicle.c:2394 | csim/test_E09_S070_my_family_is_always_in_the_story.py |
+| `om_chronicle_render_region_mention` | ouroboros_sim.h:1454 | csrc/chronicle.c:2400 | csim/test_E09_GC2_mentions.py |
+| `om_chronicle_score_base` | ouroboros_sim.h:1456 | csrc/chronicle.c:2411 | csim/controls/test_control_e09_window_significance_cap_skipped.py |
+| `om_chronicle_select_clusters` | ouroboros_sim.h:1458 | csrc/chronicle.c:2424 | csim/test_E09_S065_five_to_ten_entries_in_the_right_order.py |
+| `om_chronicle_set_entry_state` | ouroboros_sim.h:1460 | csrc/chronicle.c:2439 | csim/test_E09_S069_watching_history_happen.py |
+| `om_chronicle_validate_event_template_prose` | ouroboros_sim.h:1461 | csrc/chronicle.c:2445 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_client_snapshot_read` | ouroboros_sim.h:1587 | csrc/fog.c:840 | csim/test_E12_S089_i_see_what_my_units_see.py |
+| `om_collision_pass` | ouroboros_sim.h:1952 | csrc/tactical_move.c:2689 | csim/test_E13_S097_around_not_through.py |
+| `om_command_direct_move` | ouroboros_sim.h:1955 | csrc/tactical_move.c:2781 | csim/test_E13_S097_around_not_through.py |
+| `om_command_issue_named` | ouroboros_sim.h:1957 | csrc/tactical_move.c:2870 | csim/test_E13_S096_four_commands.py |
+| `om_command_queue_attack_move` | ouroboros_sim.h:1960 | csrc/tactical_move.c:2904 | csim/test_E13_S096_four_commands.py |
+| `om_command_queue_move` | ouroboros_sim.h:1961 | csrc/tactical_move.c:2913 | csim/scale/test_PP_tables.py |
+| `om_diplomacy_init` | ouroboros_sim.h:1480 | csrc/diplomacy.c:408 | csim/test_E06_S042_three_ways_to_feel_about_a_neighbor.py |
+| `om_enemy_production_adapt_target` | ouroboros_sim.h:2005 | csrc/tactical_support.c:440 | csim/test_E15_S128_what_the_enemy_builds.py |
+| `om_enemy_production_select_category` | ouroboros_sim.h:2006 | csrc/tactical_support.c:411 | csim/test_E15_S128_what_the_enemy_builds.py |
+| `om_era_elevation_damage_bonus_enabled` | ouroboros_sim.h:2092 | csrc/unit.c:2428 | csim/test_E11_S084_flat_damage.py |
+| `om_event_noise` | ouroboros_sim.h:643 | csrc/events.c:422 | csim/controls/test_control_e04_noise_rerolled.py |
+| `om_event_roll_noise` | ouroboros_sim.h:641 | csrc/events.c:409 | csim/controls/test_control_e04_noise_rerolled.py |
+| `om_event_set_noise` | ouroboros_sim.h:642 | csrc/events.c:416 | csim/conftest.py |
+| `om_event_template_chronicle_prose` | ouroboros_sim.h:1462 | csrc/chronicle.c:2454 | csim/test_E09_S071_the_fragment_library_contract.py |
+| `om_event_template_get` | ouroboros_sim.h:634 | csrc/events.c:383 | csim/conftest.py |
+| `om_events_load` | ouroboros_sim.h:632 | csrc/events.c:183 | csim/conftest.py |
+| `om_faction_confidence` | ouroboros_sim.h:319 | csrc/faction.c:173 | csim/test_E02_S020_rng_seeding.py |
+| `om_faction_cooperative_since` | ouroboros_sim.h:1484 | csrc/diplomacy.c:474 | csim/test_E06_S043_peace_grows_out_of_quiet.py |
+| `om_faction_create_named` | ouroboros_sim.h:1674 | csrc/generational.c:1418 | csim/test_E08_S060_named_leaders_live_and_die.py |
+| `om_faction_mark_conquered_this_tick` | ouroboros_sim.h:1742 | csrc/lifecycle.c:352 | csim/test_E07_S051_nations_that_never_were.py |
+| `om_faction_next_mission_unit_tier` | ouroboros_sim.h:1487 | csrc/diplomacy.c:757 | csim/test_E06_S048_three_tiers_of_technology.py |
+| `om_faction_phase` | ouroboros_sim.h:1743 | csrc/lifecycle.c:461 | csim/test_E07_S053_every_faction_has_an_age.py |
+| `om_faction_set_event_window_counts` | ouroboros_sim.h:1746 | csrc/lifecycle.c:384 | csim/test_E07_S053_every_faction_has_an_age.py |
+| `om_faction_tech_economy` | ouroboros_sim.h:1493 | csrc/diplomacy.c:559 | csim/test_E06_S046_archetypes_spend_tech_differently.py |
+| `om_faction_template` | ouroboros_sim.h:813 | csrc/worldgen.c:525 | csim/conftest.py |
+| `om_faction_tier_transition_candidate` | ouroboros_sim.h:1496 | csrc/diplomacy.c:820 | csim/test_E06_S048_three_tiers_of_technology.py |
+| `om_fairness_evaluate` | ouroboros_sim.h:1880 | csrc/tactical_mapgen.c:289 | csim/test_E17_S117_fair_enough.py |
+| `om_fairness_force_score` | ouroboros_sim.h:1881 | csrc/tactical_mapgen.c:294 | csim/test_E17_S117_fair_enough.py |
+| `om_fairness_run_post_generation_check` | ouroboros_sim.h:1883 | csrc/tactical_mapgen.c:305 | csim/test_E17_S117_fair_enough.py |
+| `om_force_set_surviving_units` | ouroboros_sim.h:1678 | csrc/generational.c:1451 | csim/test_E08_S064_what_carries_over.py |
+| `om_gen_set_extra_edge_ratio` | ouroboros_sim.h:777 | csrc/worldgen.c:467 | csim/conftest.py |
+| `om_gen_set_extra_edges_enabled` | ouroboros_sim.h:794 | csrc/worldgen.c:490 | csim/conftest.py |
+| `om_gen_set_home_range` | ouroboros_sim.h:800 | csrc/worldgen.c:496 | csim/conftest.py |
+| `om_gen_set_player_preference` | ouroboros_sim.h:781 | csrc/worldgen.c:473 | csim/conftest.py |
+| `om_gen_set_preference_weight` | ouroboros_sim.h:787 | csrc/worldgen.c:484 | csim/conftest.py |
+| `om_gen_set_region_range` | ouroboros_sim.h:775 | csrc/worldgen.c:454 | csim/conftest.py |
+| `om_gradient_add_moving_source` | ouroboros_sim.h:1884 | csrc/tactical_mapgen.c:310 | csim/test_E17_S118_the_battlefield_moves.py |
+| `om_gradient_combine_overlap` | ouroboros_sim.h:1885 | csrc/tactical_mapgen.c:315 | csim/test_E17_S114_texture_from_gradients.py |
+| `om_gradient_sample_single` | ouroboros_sim.h:1888 | csrc/tactical_mapgen.c:333 | csim/test_E17_S114_texture_from_gradients.py |
+| `om_hazard_sample_interference` | ouroboros_sim.h:2010 | csrc/tactical_support.c:975 | csim/test_E15_S130_the_battlefield_moves.py |
+| `om_hazard_spawn_moving_interference` | ouroboros_sim.h:2011 | csrc/tactical_support.c:956 | csim/test_E15_S130_the_battlefield_moves.py |
+| `om_ledger_commander_death_outcome_band` | ouroboros_sim.h:1679 | csrc/generational.c:1457 | csim/test_E08_S061_when_my_commander_dies.py |
+| `om_ledger_commander_death_region` | ouroboros_sim.h:1680 | csrc/generational.c:1465 | csim/test_E08_S061_when_my_commander_dies.py |
+| `om_lineage_create` | ouroboros_sim.h:1683 | csrc/generational.c:1473 | csim/scale/test_scale_E08.py |
+| `om_lineage_record_history_region` | ouroboros_sim.h:1690 | csrc/generational.c:1511 | csim/test_E08_S057_stay_with_the_family_or_move_on.py |
+| `om_lineage_spawn_descendant_at_tick` | ouroboros_sim.h:1692 | csrc/generational.c:1522 | csim/test_E08_S059_the_family_grows_while_i_am_away.py |
+| `om_lineage_spawn_single_descendant` | ouroboros_sim.h:1693 | csrc/generational.c:1527 | csim/test_E08_S059_the_family_grows_while_i_am_away.py |
+| `om_macro_bind_hook_flag` | ouroboros_sim.h:1521 | csrc/enemy_macro.c:293 | csim/test_E14_S122_forces_that_notice_each_other.py |
+| `om_macro_bus_register_vocab` | ouroboros_sim.h:1524 | csrc/enemy_macro.c:322 | csim/test_E14_S122_forces_that_notice_each_other.py |
+| `om_macro_eval_hook_flag` | ouroboros_sim.h:1527 | csrc/enemy_macro.c:346 | csim/test_E14_S122_forces_that_notice_each_other.py |
+| `om_macro_eval_timer_transition` | ouroboros_sim.h:1528 | csrc/enemy_macro.c:357 | csim/test_E14_S121_timers_and_thresholds_with_noise.py |
+| `om_macro_evaluation_interval_ticks` | ouroboros_sim.h:959 | csrc/enemy_macro.c:371 | csim/scale/test_scale_E14.py |
+| `om_macro_issues_illegal_command` | ouroboros_sim.h:1543 | csrc/enemy_macro.c:650 | csim/test_E14_S123_the_enemy_replays_like_i_do.py |
+| `om_macro_mutates_unit_stats` | ouroboros_sim.h:1544 | csrc/enemy_macro.c:657 | csim/test_E14_S123_the_enemy_replays_like_i_do.py |
+| `om_macro_reads_player_visibility_set` | ouroboros_sim.h:1546 | csrc/enemy_macro.c:668 | csim/test_E14_S123_the_enemy_replays_like_i_do.py |
+| `om_macro_resolve_conflict` | ouroboros_sim.h:1547 | csrc/enemy_macro.c:674 | csim/test_E14_S121_timers_and_thresholds_with_noise.py |
+| `om_macro_resolve_conflict_types` | ouroboros_sim.h:1548 | csrc/enemy_macro.c:680 | csim/test_E14_S121_timers_and_thresholds_with_noise.py |
+| `om_macro_set_base_transition_true` | ouroboros_sim.h:1549 | csrc/enemy_macro.c:686 | csim/test_E14_S120_B1_1_tick_runs_transitions.py |
+| `om_macro_set_force_hp_pct` | ouroboros_sim.h:1551 | csrc/enemy_macro.c:701 | csim/test_E14_S122_forces_that_notice_each_other.py |
+| `om_macro_set_hook_true` | ouroboros_sim.h:1552 | csrc/enemy_macro.c:707 | csim/test_E14_S120_B1_1_tick_runs_transitions.py |
+| `om_macro_set_state` | ouroboros_sim.h:1553 | csrc/enemy_macro.c:713 | csim/test_E14_S120_B1_1_tick_runs_transitions.py |
+| `om_macro_validate_bus_flag` | ouroboros_sim.h:1557 | csrc/enemy_macro.c:826 | csim/test_E14_S122_forces_that_notice_each_other.py |
+| `om_macro_validate_condition_name` | ouroboros_sim.h:1558 | csrc/enemy_macro.c:835 | csim/test_E14_S121_timers_and_thresholds_with_noise.py |
+| `om_macro_validate_state` | ouroboros_sim.h:1559 | csrc/enemy_macro.c:849 | csim/test_E14_S120_five_behaviors_three_moods.py |
+| `om_map_add_hazard_zone` | ouroboros_sim.h:1590 | csrc/fog.c:526 | csim/test_E12_S092_recon_then_fog.py |
+| `om_map_add_interference_zone` | ouroboros_sim.h:1591 | csrc/fog.c:532 | csim/controls/test_control_e12_window_interference_ignores_intensity.py |
+| `om_map_add_layer_restriction_zone` | ouroboros_sim.h:1890 | csrc/tactical_mapgen.c:352 | csim/test_E17_S114_texture_from_gradients.py |
+| `om_map_add_moving_interference_zone` | ouroboros_sim.h:1592 | csrc/fog.c:541 | csim/test_E12_S090_hiding_in_the_storm.py |
+| `om_map_add_obstacle` | ouroboros_sim.h:1891 | csrc/tactical_mapgen.c:387 | csim/parity/baseline/baseline_fights.py |
+| `om_map_add_structure` | ouroboros_sim.h:1894 | csrc/tactical_mapgen.c:378 | csim/controls/test_control_e15_window_structure_max_hp_wrong_constant.py |
+| `om_map_add_vantage_node` | ouroboros_sim.h:1593 | csrc/fog.c:553 | csim/scale/test_PP_tables.py |
+| `om_map_check_boundary_gradient_discontinuity` | ouroboros_sim.h:1896 | csrc/tactical_mapgen.c:406 | csim/test_E17_S119_terrain_that_reads_like_a_place.py |
+| `om_map_clamp_flavoring_delta` | ouroboros_sim.h:1897 | csrc/tactical_mapgen.c:412 | csim/test_E17_S115_the_region_shapes_the_terrain.py |
+| `om_map_compute_chokepoint_width` | ouroboros_sim.h:1899 | csrc/tactical_mapgen.c:418 | csim/test_E17_S113_nine_kinds_of_place.py |
+| `om_map_compute_economy_obstacle_delta` | ouroboros_sim.h:1900 | csrc/tactical_mapgen.c:424 | csim/test_E17_S115_the_region_shapes_the_terrain.py |
+| `om_map_compute_modified_canvas` | ouroboros_sim.h:1901 | csrc/tactical_mapgen.c:435 | csim/test_E17_S116_canvas.py |
+| `om_map_compute_tension_cover_delta` | ouroboros_sim.h:1902 | csrc/tactical_mapgen.c:451 | csim/test_E17_S115_the_region_shapes_the_terrain.py |
+| `om_map_count_distinct_routes_staging_to_objective` | ouroboros_sim.h:1903 | csrc/tactical_mapgen.c:457 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_map_flavoring_stability_multiplier` | ouroboros_sim.h:1907 | csrc/tactical_mapgen.c:489 | csim/test_E17_S115_the_region_shapes_the_terrain.py |
+| `om_map_generate` | ouroboros_sim.h:1908 | csrc/tactical_mapgen.c:495 | csim/scale/test_scale_E17.py |
+| `om_map_generate_gradients` | ouroboros_sim.h:1909 | csrc/tactical_mapgen.c:500 | csim/test_E17_S114_texture_from_gradients.py |
+| `om_map_generate_spine` | ouroboros_sim.h:1910 | csrc/tactical_mapgen.c:505 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_map_instantiate_zone_pos` | ouroboros_sim.h:1921 | csrc/tactical_mapgen.c:585 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_map_layout_check_hazard_approaches` | ouroboros_sim.h:1925 | csrc/tactical_mapgen.c:608 | csim/test_E17_S117_fair_enough.py |
+| `om_map_layout_check_vantage_reachability` | ouroboros_sim.h:1926 | csrc/tactical_mapgen.c:614 | csim/test_E17_S117_fair_enough.py |
+| `om_map_layout_matches_archetype_filter` | ouroboros_sim.h:1929 | csrc/tactical_mapgen.c:632 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_map_library_total_layouts` | ouroboros_sim.h:1930 | csrc/tactical_mapgen.c:638 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_map_sample_layer_accessibility` | ouroboros_sim.h:1933 | csrc/tactical_mapgen.c:678 | csim/scale/test_scale_E01.py |
+| `om_map_select_layout_uniform` | ouroboros_sim.h:1935 | csrc/tactical_mapgen.c:774 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_map_set_simulation_coupling` | ouroboros_sim.h:1936 | csrc/tactical_mapgen.c:780 | csim/test_E17_S115_the_region_shapes_the_terrain.py |
+| `om_map_setup_drifting_node` | ouroboros_sim.h:1937 | csrc/tactical_mapgen.c:785 | csim/test_E17_S118_the_battlefield_moves.py |
+| `om_map_verify_flank_connections` | ouroboros_sim.h:1938 | csrc/tactical_mapgen.c:790 | csim/test_E17_S112_bones_from_the_library.py |
+| `om_mission_apply_target_adjacent_player` | ouroboros_sim.h:1764 | csrc/mission.c:1018 | csim/test_E10_S078_a_battle_becomes_history.py |
+| `om_mission_can_edit_loadout` | ouroboros_sim.h:1769 | csrc/mission.c:1174 | csim/test_E10_S079_orders_not_menus.py |
+| `om_mission_check_extraction_objectives` | ouroboros_sim.h:2012 | csrc/tactical_support.c:1114 | csim/test_E15_S129_units_that_cannot_fight.py |
+| `om_mission_compute_parity` | ouroboros_sim.h:1778 | csrc/mission.c:1392 | csim/test_E10_S080_difficulty_is_scarcity_not_stronger_enemies.py |
+| `om_mission_compute_reinforcement_capacity` | ouroboros_sim.h:2013 | csrc/tactical_support.c:487 | csim/test_VG_E_e7.py |
+| `om_mission_eval_destroy_targets` | ouroboros_sim.h:1786 | csrc/mission.c:1562 | csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py |
+| `om_mission_eval_escort` | ouroboros_sim.h:1788 | csrc/mission.c:1582 | csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py |
+| `om_mission_eval_survive` | ouroboros_sim.h:1790 | csrc/mission.c:1606 | csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py |
+| `om_mission_fallback_archetype` | ouroboros_sim.h:1791 | csrc/mission.c:1618 | csim/test_E10_S072_orders_come_from_where_the_world_hurts.py |
+| `om_mission_init_seed` | ouroboros_sim.h:1565 | csrc/enemy_macro.c:1010 | csim/test_E14_S123_the_enemy_replays_like_i_do.py |
+| `om_mission_inject_candidate` | ouroboros_sim.h:1820 | csrc/mission.c:1976 | csim/test_E10_S072_orders_come_from_where_the_world_hurts.py |
+| `om_mission_select_layout` | ouroboros_sim.h:1829 | csrc/mission.c:2127 | csim/test_E10_S073_ten_kinds_of_trouble.py |
+| `om_mission_set_archetype_profile` | ouroboros_sim.h:1830 | csrc/mission.c:2135 | csim/test_E10_S073_ten_kinds_of_trouble.py |
+| `om_mission_set_external_reinforcement` | ouroboros_sim.h:1568 | csrc/enemy_macro.c:1038 | csim/test_E14_S124_rare_surprises.py |
+| `om_mission_set_player_units` | ouroboros_sim.h:1835 | csrc/mission.c:2176 | csim/test_E10_S074_you_get_what_the_civilization_can_spare.py |
+| `om_mission_set_preference` | ouroboros_sim.h:1836 | csrc/mission.c:2184 | csim/test_E10_S072_orders_come_from_where_the_world_hurts.py |
+| `om_mission_set_revolt_events` | ouroboros_sim.h:1837 | csrc/mission.c:2191 | csim/controls/test_control_e10_window_urgency_deficit_divisor_wrong.py |
+| `om_mission_setup_destroy_targets` | ouroboros_sim.h:1839 | csrc/mission.c:2884 | csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py |
+| `om_mission_setup_escort` | ouroboros_sim.h:1841 | csrc/mission.c:2902 | csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py |
+| `om_mission_setup_extraction_point` | ouroboros_sim.h:2017 | csrc/tactical_support.c:1102 | csim/test_E15_S129_units_that_cannot_fight.py |
+| `om_mission_setup_survive` | ouroboros_sim.h:1844 | csrc/mission.c:2921 | csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py |
+| `om_mission_unit_tier` | ouroboros_sim.h:1499 | csrc/diplomacy.c:773 | csim/test_E06_S048_three_tiers_of_technology.py |
+| `om_navmesh_find_path` | ouroboros_sim.h:1964 | csrc/tactical_move.c:2949 | csim/scale/test_PP_budgets.py |
+| `om_objective_setup_drifting` | ouroboros_sim.h:2018 | csrc/tactical_support.c:824 | csim/test_E15_S130_the_battlefield_moves.py |
+| `om_onboarding_load_from_slot` | ouroboros_sim.h:1698 | csrc/generational.c:1606 | csim/test_E08_S063_my_two_choices_at_the_start.py |
+| `om_onboarding_save_to_slot` | ouroboros_sim.h:1699 | csrc/generational.c:1613 | csim/test_E08_S063_my_two_choices_at_the_start.py |
+| `om_onboarding_update_choices` | ouroboros_sim.h:1700 | csrc/generational.c:1620 | csim/test_E08_S063_my_two_choices_at_the_start.py |
+| `om_onboarding_validate` | ouroboros_sim.h:1701 | csrc/generational.c:1626 | csim/test_E08_S063_my_two_choices_at_the_start.py |
+| `om_player_can_see` | ouroboros_sim.h:1599 | csrc/fog.c:601 | csim/test_E01_S162_ping_refused_on_ground.py |
+| `om_player_can_see_friendly` | ouroboros_sim.h:1600 | csrc/fog.c:605 | csim/test_E12_S089_i_see_what_my_units_see.py |
+| `om_player_faction_collapsed` | ouroboros_sim.h:1747 | csrc/lifecycle.c:393 | csim/test_E07_S052_no_plot_armor.py |
+| `om_player_faction_record_reassignment` | ouroboros_sim.h:1706 | csrc/generational.c:1716 | csim/test_E08_S062_when_my_civilization_falls.py |
+| `om_proc_arch_resolve_section_piece` | ouroboros_sim.h:1939 | csrc/tactical_mapgen.c:796 | csim/test_E17_S119_terrain_that_reads_like_a_place.py |
+| `om_progression_supports_era_unlocks` | ouroboros_sim.h:1710 | csrc/generational.c:1755 | csim/test_E08_S064_what_carries_over.py |
+| `om_region_assign_regional_commander` | ouroboros_sim.h:1711 | csrc/generational.c:1760 | csim/test_E08_S060_named_leaders_live_and_die.py |
+| `om_region_drift` | ouroboros_sim.h:180 | csrc/sim.c:562 | csim/conftest.py |
+| `om_render_detect_repeated_tile_boundary` | ouroboros_sim.h:1941 | csrc/tactical_mapgen.c:808 | csim/test_E17_S119_terrain_that_reads_like_a_place.py |
+| `om_renderer_interpolate_facing` | ouroboros_sim.h:1969 | csrc/tactical_move.c:2987 | csim/test_E13_S101_movement_that_reads.py |
+| `om_renderer_interpolate_position` | ouroboros_sim.h:1970 | csrc/tactical_move.c:2999 | csim/test_E13_S101_movement_that_reads.py |
+| `om_roster_register_custom_unit` | ouroboros_sim.h:2093 | csrc/unit.c:2434 | csim/parity/parity_c.py |
+| `om_selector_clear_pools` | ouroboros_sim.h:1716 | csrc/generational.c:1788 | csim/test_E08_S058_who_i_come_back_as.py |
+| `om_selector_resolve_fallback_pool` | ouroboros_sim.h:1721 | csrc/generational.c:1847 | csim/test_E08_S058_who_i_come_back_as.py |
+| `om_session_capture_enable` | ouroboros_sim.h:1572 | csrc/enemy_macro.c:1079 | csim/test_E14_S125_how_hard_the_enemy_tries.py |
+| `om_session_capture_read` | ouroboros_sim.h:1575 | csrc/enemy_macro.c:1094 | csim/test_E14_S125_how_hard_the_enemy_tries.py |
+| `om_set_era_flag` | ouroboros_sim.h:1607 | csrc/fog.c:647 | csim/test_E12_S091_standing_high.py |
+| `om_set_era_name` | ouroboros_sim.h:1608 | csrc/fog.c:661 | csim/test_E12_S091_standing_high.py |
+| `om_set_neighbors` | ouroboros_sim.h:1853 | csrc/mission.c:3054 | csim/test_E09_B5_consequence_entry.py |
+| `om_strategic_agent_read_region_field` | ouroboros_sim.h:1609 | csrc/fog.c:680 | csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py |
+| `om_structure_apply_damage` | ouroboros_sim.h:2023 | csrc/tactical_support.c:691 | csim/test_E15_S127_taking_a_garrison.py |
+| `om_structure_init_drifting` | ouroboros_sim.h:2037 | csrc/tactical_support.c:792 | csim/test_E15_S130_the_battlefield_moves.py |
+| `om_structure_set_capture_progress` | ouroboros_sim.h:2043 | csrc/tactical_support.c:639 | csim/test_E15_S127_taking_a_garrison.py |
+| `om_structure_set_capturing_faction` | ouroboros_sim.h:2044 | csrc/tactical_support.c:631 | csim/scale/test_scale_E15.py |
+| `om_structure_set_contested` | ouroboros_sim.h:2045 | csrc/tactical_support.c:635 | csim/test_E15_S127_taking_a_garrison.py |
+| `om_structure_set_timer` | ouroboros_sim.h:2048 | csrc/tactical_support.c:527 | csim/test_E15_S126_most_of_my_force_is_out_there.py |
+| `om_structure_switch_unit_type` | ouroboros_sim.h:2049 | csrc/tactical_support.c:515 | csim/test_E15_S126_most_of_my_force_is_out_there.py |
+| `om_structure_tick_capture` | ouroboros_sim.h:2050 | csrc/tactical_support.c:687 | csim/scale/test_scale_E15.py |
+| `om_structure_unit_cost` | ouroboros_sim.h:2052 | csrc/tactical_support.c:588 | csim/test_E15_S126_most_of_my_force_is_out_there.py |
+| `om_tactical_disable_abilities` | ouroboros_sim.h:2095 | csrc/unit.c:2478 | csim/parity/baseline/baseline_fights.py |
+| `om_tactical_run` | ouroboros_sim.h:2097 | csrc/unit.c:2516 | csim/test_E11_S081_three_categories_a_soft_triangle.py |
+| `om_tactical_run_until_eliminated` | ouroboros_sim.h:2098 | csrc/unit.c:2528 | csim/test_E11_S081_three_categories_a_soft_triangle.py |
+| `om_tactical_run_until_engagement_ends` | ouroboros_sim.h:2099 | csrc/unit.c:2545 | csim/test_E11_S086_one_ability_each.py |
+| `om_tactical_spawn_force_composition` | ouroboros_sim.h:2100 | csrc/unit.c:2572 | csim/test_E11_S085_long_enough_to_think.py |
+| `om_tactical_target_validation_runs_every_tick` | ouroboros_sim.h:2101 | csrc/unit.c:2607 | csim/test_E11_S087_every_unit_thinks_the_same_way.py |
+| `om_tactical_telegraph_active` | ouroboros_sim.h:2102 | csrc/unit.c:2612 | csim/test_E11_S086_one_ability_each.py |
+| `om_tactical_tick_to` | ouroboros_sim.h:2106 | csrc/unit.c:2628 | csim/test_E14_S120_B1_2_patrol_waypoint_loop.py |
+| `om_tactical_zone_visible_to_enemy` | ouroboros_sim.h:2107 | csrc/unit.c:2644 | csim/test_E11_S086_one_ability_each.py |
+| `om_tick_absorptions` | ouroboros_sim.h:1750 | csrc/lifecycle.c:401 | csim/test_E07_S051_nations_that_never_were.py |
+| `om_tick_reversions` | ouroboros_sim.h:1751 | csrc/lifecycle.c:409 | csim/test_E07_S050_old_loyalties.py |
+| `om_tick_revolts` | ouroboros_sim.h:1752 | csrc/lifecycle.c:417 | csim/test_E07_S049_a_revolt_can_birth_a_nation.py |
+| `om_ticker_pop_message` | ouroboros_sim.h:2053 | csrc/tactical_support.c:736 | csim/test_E15_S127_taking_a_garrison.py |
+| `om_tier_transition_candidate_exists` | ouroboros_sim.h:1502 | csrc/diplomacy.c:824 | csim/test_E06_S048_three_tiers_of_technology.py |
+| `om_time_jump_choose_length` | ouroboros_sim.h:1724 | csrc/generational.c:1874 | csim/controls/test_control_e08_window_time_jump_clamp_skipped.py |
+| `om_time_jump_death_processing_tick` | ouroboros_sim.h:1727 | csrc/generational.c:1898 | csim/test_E08_S056_decades_pass_while_i_am_gone.py |
+| `om_time_jump_interrupt` | ouroboros_sim.h:1729 | csrc/generational.c:1903 | csim/test_E08_S056_decades_pass_while_i_am_gone.py |
+| `om_time_jump_lineage_generation_tick` | ouroboros_sim.h:1730 | csrc/generational.c:1908 | csim/test_E08_S056_decades_pass_while_i_am_gone.py |
+| `om_time_jump_run_tracked` | ouroboros_sim.h:1734 | csrc/generational.c:2174 | csim/test_E08_S060_named_leaders_live_and_die.py |
+| `om_time_jump_start_tick` | ouroboros_sim.h:1735 | csrc/generational.c:2179 | csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py |
+| `om_trace_enable` | ouroboros_sim.h:202 | csrc/sim.c:572 | csim/controls/test_control_osc_as_level.py |
+| `om_trace_len` | ouroboros_sim.h:203 | csrc/sim.c:577 | csim/controls/test_control_osc_as_level.py |
+| `om_trace_read` | ouroboros_sim.h:205 | csrc/sim.c:581 | csim/controls/test_control_osc_as_level.py |
+| `om_unit_ability_active` | ouroboros_sim.h:2109 | csrc/unit.c:2649 | csim/test_E11_S086_one_ability_each.py |
+| `om_unit_acquire_target` | ouroboros_sim.h:1610 | csrc/fog.c:687 | csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py |
+| `om_unit_apply_trait_modifier` | ouroboros_sim.h:2112 | csrc/unit.c:2664 | csim/test_E11_S083_stats_traits_ability.py |
+| `om_unit_attack` | ouroboros_sim.h:2113 | csrc/unit.c:2673 | csim/test_E12_S091_standing_high.py |
+| `om_unit_can_return_fire` | ouroboros_sim.h:2054 | csrc/tactical_support.c:1057 | csim/test_E15_S129_units_that_cannot_fight.py |
+| `om_unit_compute_terrain_speed` | ouroboros_sim.h:1976 | csrc/tactical_move.c:3082 | csim/test_E13_S097_around_not_through.py |
+| `om_unit_deal_damage` | ouroboros_sim.h:2117 | csrc/unit.c:2726 | csim/test_E11_S081_three_categories_a_soft_triangle.py |
+| `om_unit_hp` | ouroboros_sim.h:2126 | csrc/unit.c:2839 | csim/test_E11_S081_three_categories_a_soft_triangle.py |
+| `om_unit_in_backswing` | ouroboros_sim.h:2128 | csrc/unit.c:2843 | csim/test_E11_S084_flat_damage.py |
+| `om_unit_in_flinch` | ouroboros_sim.h:2129 | csrc/unit.c:2848 | csim/test_E11_S087_every_unit_thinks_the_same_way.py |
+| `om_unit_order_hold_node` | ouroboros_sim.h:1944 | csrc/tactical_mapgen.c:820 | csim/test_E17_S118_the_battlefield_moves.py |
+| `om_unit_profile_dps` | ouroboros_sim.h:2139 | csrc/unit.c:2911 | csim/test_E11_S084_flat_damage.py |
+| `om_unit_render_silhouette_size` | ouroboros_sim.h:2146 | csrc/unit.c:2954 | csim/test_E11_S088_reading_units_on_screen.py |
+| `om_unit_set_ability_cooldown` | ouroboros_sim.h:2147 | csrc/unit.c:2964 | csim/test_E11_S086_one_ability_each.py |
+| `om_unit_set_brace_active` | ouroboros_sim.h:2148 | csrc/unit.c:2969 | csim/controls/test_control_e11_window_brace_reduction_wrong_constant.py |
+| `om_unit_set_facing` | ouroboros_sim.h:1985 | csrc/tactical_move.c:3191 | csim/test_E13_S100_facing.py |
+| `om_unit_set_fortify_active` | ouroboros_sim.h:2150 | csrc/unit.c:2979 | csim/test_E11_S084_flat_damage.py |
+| `om_unit_set_stealth` | ouroboros_sim.h:2152 | csrc/unit.c:2992 | csim/test_E11_S087_every_unit_thinks_the_same_way.py |
+| `om_unit_set_visible_to_faction` | ouroboros_sim.h:1987 | csrc/tactical_move.c:3220 | csim/test_E13_S096_four_commands.py |
+| `om_unit_set_warden_aura_active` | ouroboros_sim.h:2153 | csrc/unit.c:2997 | csim/test_E11_S084_flat_damage.py |
+| `om_unit_spawn_combat` | ouroboros_sim.h:2155 | csrc/unit.c:3006 | csim/test_E15_S129_units_that_cannot_fight.py |
+| `om_unit_spawn_for_category` | ouroboros_sim.h:2156 | csrc/unit.c:3010 | csim/test_E11_S081_three_categories_a_soft_triangle.py |
+| `om_unit_spawn_non_combat` | ouroboros_sim.h:2060 | csrc/tactical_support.c:1041 | csim/test_E15_S129_units_that_cannot_fight.py |
+| `om_unit_spawn_with_elevation` | ouroboros_sim.h:1614 | csrc/fog.c:800 | csim/scale/test_PP_tables.py |
+| `om_unit_targeting_cohort` | ouroboros_sim.h:2158 | csrc/unit.c:3026 | csim/test_E11_S087_every_unit_thinks_the_same_way.py |
+| `om_unit_teleport` | ouroboros_sim.h:1988 | csrc/tactical_move.c:3231 | csim/test_E11_S083_stats_traits_ability.py |
+| `om_unit_tick_decision_loop` | ouroboros_sim.h:2061 | csrc/tactical_support.c:1091 | csim/test_E15_S129_units_that_cannot_fight.py |
+| `om_visibility_compute` | ouroboros_sim.h:1615 | csrc/fog.c:812 | csim/test_E12_S089_i_see_what_my_units_see.py |
+| `om_visibility_set_player_fog` | ouroboros_sim.h:1616 | csrc/fog.c:823 | csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py |
+| `om_world_run` | ouroboros_sim.h:169 | csrc/sim.c:554 | csim/controls/test_control_osc_as_level.py |
+| `om_world_set_seed` | ouroboros_sim.h:142 | csrc/region.c:243 | csim/test_E02_S020_rng_seeding.py |
+| `om_world_set_strategic_tick` | ouroboros_sim.h:1736 | csrc/generational.c:2183 | csim/test_E08_S060_named_leaders_live_and_die.py |
+| `om_zone_sample_interference` | ouroboros_sim.h:1617 | csrc/fog.c:829 | csim/controls/test_control_e12_window_interference_ignores_intensity.py |
+
+## Proposed fix pieces
+
+Proposals only; no pieces.toml rows exist yet; the Architect rules on rows.
+
+- **SHOWCASE-fix-weak-stubs (gated; owns `csrc/region.c` (lines 249-252 and 351-364 only) and new `tests/csim/test_showcase_weak_stubs.py`; depends_on `core` (attached; ordering only); Tool: Workflow (one piece; the one question: a single unit, no umbrella to share)).** Facts: nine `__attribute__((weak))` definitions in `region.c` are shadowed by strong ones in `sim.c` (eight) and `worldgen.c` (one); the `om_debug_inject` pair sits under the same `#ifdef OM_DEBUG_INJECT` on both sides and every library target defines it. Change: delete the nine stubs and their two comments (`:249`, `:351-353`); nothing else in the file moves. Tests first (`tests/csim/test_showcase_weak_stubs.py`, written before the build by a different writer, in the `test_PP_portability.py:109` shape): (1) `csrc/region.c` matches no `__attribute__\s*\(\(\s*weak\s*\)\)` (red on main: nine matches, the failing assertion line pasted in the brief); (2) `nm -D libouroboros.so` lists each of the nine names with type `T` and none with type `W` (green on main and after: the positive control that the link result is unchanged by the delete); (3) umbrella: the full csim regression green at the gate. Stated unchanged: `ouroboros_sim.h`, `signatures.toml`, traces and checksums (no body changes). Size: about 20 lines deleted, about 40 of test. Note for the records clerk: `CASCADE-sim-rules` names `region.c` for its finding G; if that cascade is in flight first, this row waits behind it.
+- **SHOWCASE-reach-triage (records, no gate; owns new `docs/northstar/plans/showcase/reach_triage.md`; depends_on `SHOWCASE-quality-audit`; Tool: Workflow (a read-only engineer page, one piece; nothing ends in a build)).** Facts: the appendix lists 250 symbols with header line, definition and first test; the allowlist format is `[[allow]] symbol / reason` with a one-line reason each. Change: a Sonnet engineer classes every one of the 250 into exactly one of (a) test fixture or reader (an allowlist row drafted in the file's own format, reason in one line, applied later by a records row that owns `reach_allowlist.toml`; today seven queued rows own it, so this page applies nothing); (b) real gap (a rule says it happens in play and no tick, jump or pipe handler reaches it: a `FINDING-reach-<symbol>` row drafted for the lane that owns the file, with the rule id); (c) dead (no rule, no fixture use: a deletion candidate, which is a contract piece since the header changes). Positive control for the method: `om_unit_attack` must land in (b) or the page's method is wrong (the page says so). Per-prefix counts and the three lists are the deliverable; no code moves. Size: one page, about 250 table rows. NUMBER-NEEDED: none. Question Q-A below (should the gate's bare `reach_lint` run count the baseline).
+- **SHOWCASE-fix-tacmove-header (gated; owns `csrc/tactical_move.c` (the header comment lines 22-32 only) and new `tests/csim/test_showcase_tacmove_header.py`; depends_on the queued owners of `tactical_move.c` found by the records clerk at launch (ordering only); Tool: Workflow (one piece)).** Facts: the header says `om_unit_attack` "never deals damage"; the body fires. Change: the builder verifies each of the block's four claims against `unit.c` and `tactical_move.c` on the built tree, deletes the ones that are false, keeps the true ones with a line number, and reports per claim (VERIFY-NEEDED, four items). Tests first: the file contains no line matching `om_unit_attack .* is STUB` (red on main: `:28`); positive control: the same test run against `git show origin/main:csrc/tactical_move.c` text finds the line. Size: under 12 lines plus about 25 of test.
+- **SHOWCASE-fix-stale-see-also (gated; owns `autoload/debug_overlay.gd` (line 5 only), `scenes/galaxy/shell_renderer.gd` (line 6 only), `scenes/galaxy/legacy_shell_renderer.gd.uid` (deleted), `scenes/mockups/objectives/tools/dump_nodes.gd` (a two-line header only) and new `tests/test_showcase_see_also.gd`; depends_on `G-debugoverlay`, `C2`, `C8`, `VG-B` (all attached; ordering only; no queued owner on these files); Tool: Workflow (one piece; a Godot test, no frame)).** Facts above (F5, F6, F-new-2, F7). Change, literal: `debug_overlay.gd:5` old `## See also: docs/stage_specs/stage_13_spec.md (Checkpoint D, Invariant I10).` new `## See also: docs/stage_specs/_deferred/stage_13_spec.md (Checkpoint D, Invariant I10).`; `shell_renderer.gd:6` old `# See also: scenes/galaxy/legacy_shell_renderer.gd (superseded one box per faction).` new `# See also: the superseded one-box-per-faction renderer, deleted in 74769942 (git show 74769942^:scenes/galaxy/legacy_shell_renderer.gd).`; `git rm scenes/galaxy/legacy_shell_renderer.gd.uid`; `dump_nodes.gd` gains after line 1: `# Hand-run generator (godot -s) of fixtures/nodes_seed*.json, read by objectives_mockup.gd and verify.gd; nothing loads this script.` Tests first (`tests/test_showcase_see_also.gd`, SceneTree, in the `test_showcase_legacy_scenes.gd` shape): (1) for every line under `autoload/` and `scenes/` (not `legacy/`) matching `See also:` followed by a `res`-relative path token ending in `.gd`, `.tscn`, `.md` or `.gdshader`, `FileAccess.file_exists` is true, or the line carries a `git show <sha>` form (red on main: the two lines, assertion text names each); positive control: `loading_overlay.gd:2` passes by the `git show` form and `test_legacy_tactical_deleted.gd:93` is excluded as a test file; (2) every `*.gd.uid` under `autoload/` and `scenes/` has its `*.gd` beside it (red on main: `legacy_shell_renderer.gd.uid`); positive control: `shell_renderer.gd.uid` passes. Size: 3 lines changed, 1 file deleted, 2 lines added, about 70 of test. Question Q-B: make check (1) a gate step later.
+- **SHOWCASE-legacy-cardfactory (gated; owns `legacy/README.md` (one block), `docs/northstar/agile.md` (line 132 only), new `tests/specfactory/test_showcase_legacy_cardfactory.py`; globs `legacy/scripts/specfactory/**`; the seven moved paths `scripts/specfactory/{gen_all_cards,dor_check,fill_tests,draft_card,draft_e2e,fold_answers,budget_gate}.py`; depends_on `SHOWCASE-legacy-scenes` (attached; the README block order) and `A94-harness` (attached; its glob `scripts/specfactory/[!m]*` covers the seven); Tool: Workflow (one piece, full gate: `scripts/` moves run the gate's lint stages)).** Facts (F10). Change: `git mv` the seven to `legacy/scripts/specfactory/` (imports between them keep working by directory; `agy_json` and `derive_agora_rules` are not moved, so the moved files no longer run, which is the point of legacy: "nothing here is built"); one README block in the `legacy/README.md` form (what, retired when, the commit, why kept: the Agora card factory, retired by the 2026-09-28 method reset); `agile.md:132` rewritten to say answer-folding is done by hand since the factory retired (old: names `scripts/specfactory/fold_answers.py`; new wording for the Architect, the sentence is his method text). Tests first (`tests/specfactory/test_showcase_legacy_cardfactory.py`, in the `test_showcase_junk.py` shape): the seven old paths are not tracked (`git ls-files`) and the seven new paths are; positive control: `scripts/specfactory/gen_card.py` is tracked at its old path (a live tool, so an empty answer is not a broken git call); a grep test: no file under `scripts/` or `tests/` names any of the seven stems (red on main only for the README-less state? no: red on main because the new paths are not tracked; the grep test is green on main and stays green, it is the parity guard). Size: 7 moves, about 10 README lines, 1 doc line, about 45 of test. Question Q-C: `fold_answers.py` stays if Westley or the Architect still folds answers with it.
+- **Amendment to HARNESS-no-home-paths (queued, `pieces.toml:4005-4015`; spec paragraph `showcase/README.md:81`); literal old -> new.** Old acceptance (second item): `a grep test asserts no /home/westopoli literal remains under scripts/ and tests/specfactory/`. New: `a grep test asserts no /home/westopoli literal remains in the six owned scripts and under tests/specfactory/; the five other sites (merge_gate.sh:24, batch_review.py:215, card_lint.py:37 and :461, sdk_engineer.py:67, scripts/integration_check.sh:6) are SHOWCASE-fix-home-paths-2's`. Reason: the five files are outside its owns, so the grep as written is red after the piece.
+- **SHOWCASE-fix-home-paths-2 (gated; owns `scripts/specfactory/merge_gate.sh` (line 24 only), `scripts/specfactory/batch_review.py` (line 215 only), `scripts/specfactory/card_lint.py` (lines 37 and 461 only), `scripts/specfactory/sdk_engineer.py` (line 67 only), `scripts/integration_check.sh` (line 6 only), and `tests/specfactory/test_no_home_paths.py` (one added test); depends_on `HARNESS-no-home-paths` (it supplies `om_home()` and the test file), `HARNESS-gate-venv-link`, `HARNESS-gate-reorder`, `HARNESS-gate-remote` (ordering on `merge_gate.sh`), `NET-backend` (attached, `integration_check.sh`), `HARNESS-credits-tools` (attached); Tool: Workflow (one piece)).** Facts (F12). Change: the two shell defaults become `${MERGE_GATE_PYTHON:-${OM_HOME:-$HOME}/Projects/agora/.venv/bin/python}` and the same form for `PY=`; the two `card_lint.py` `Path(...)` defaults are built from `om_home()`; the two `sys.exit` messages name the venv relative to `OM_HOME` in words. Tests first: the grep test widens to all of `scripts/` (red on the HARNESS-no-home-paths tree: the five sites, pasted); positive control: with `OM_HOME=/tmp/x`, `bash -c 'source'`-free parsing of `merge_gate.sh` line 24 via `MERGE_GATE_PYTHON` unset prints a path starting `/tmp/x` (and unset, `$HOME`). Size: 6 lines plus about 20 of test.
+
+Questions for the Architect:
+
+- Q-A [Architect] `reach_lint` bare run counts the whole baseline (250); the gate runs it with `--base-ref` (regression only). After the triage, should the allowlist be filled so the bare run goes green, or does the bare run stay informational? Candidates: (1) fill the allowlist from the triage's (a) list, bare run green becomes a gate step; (2) bare run stays informational, only (b) FINDINGs are acted on; (3) both, (b) first.
+- Q-B [Architect] The See-also check: (1) a one-off gd test in this piece (proposed); (2) a specfactory lint over `csrc/`, `autoload/`, `scenes/` run by `pre_gate.sh` (a new gate step, its own HARNESS row); (3) both, the test now and the lint when a second stale target appears.
+- Q-C [Westley or Architect] `fold_answers.py` is named by `docs/northstar/agile.md:132` as the method's folding tool. Candidates: (1) move it with the other six and rewrite the sentence (proposed); (2) keep it live and move six; (3) keep all seven, mark "retired factory" in a header comment only.
+- Q-D [Architect] F-new-1's block has four claims; one is verified false. Candidates: (1) the builder verifies the other three in the piece and reports (proposed); (2) the drafter verifies all four before the row is cut (another read).
+- Q-E [Architect] Ids: `SHOWCASE-fix-<slug>` as asked; the two new findings could instead be ledger `FINDING-` rows first (FINDING-tacmove-header-stale, FINDING-orphan-uid-shell-renderer) with the fix pieces citing them. Candidates: (1) rows only; (2) FINDING rows plus pieces (proposed, the ledger is the record).
+- NUMBER-NEEDED: none. No threshold, tolerance or rule meaning is touched by any proposal.
+
+The table:
+
+| id | finding | severity | kind | owns | size |
+|---|---|---|---|---|---|
+| SHOWCASE-fix-weak-stubs | F1 nine shadowed weak stubs, stale comments | high | fix | `csrc/region.c` (two ranges), new csim test | 20 del + 40 test |
+| SHOWCASE-fix-stale-see-also | F5, F6, F-new-2 orphan .uid, F7 generator header | high | fix | 4 one-line edits, 1 delete, new gd test | 6 + 70 test |
+| SHOWCASE-fix-tacmove-header | F-new-1 header says om_unit_attack is STUB | high | fix | `csrc/tactical_move.c:22-32`, new csim test | 12 + 25 test |
+| SHOWCASE-legacy-cardfactory | F10 seven dead card-factory tools | medium | legacy (new row; no open SHOWCASE row can carry it, legacy-scenes and legacy-toys are landed) | 7 moves, `legacy/README.md`, `agile.md:132`, new py test | 7 mv + 10 + 1 + 45 test |
+| HARNESS-no-home-paths amendment + SHOWCASE-fix-home-paths-2 | F12 venv path; the queued row's grep cannot go green | medium | fix (amend + sibling) | 5 scripts one line each, shared test file | 6 + 20 test |
+| SHOWCASE-reach-triage | F2 250 tested-only symbols | medium | leave with a records row (triage page) | new page | 1 page |
+| F3 functions over 150 | equations verbatim, serializers; no rule | medium | leave | | |
+| F4 unit.c:997 | valid path; waits on the simulation/ ruling | low | leave | | |
+| F8 .gd over 600, F9 .py over 800 | no rule; cosmetic refactor across queued owners | medium | leave | | |
+| F11 duplicated helpers | by design or different roles | medium | leave | | |
+| F13, F14, F15 tests | ids met by piece ids; no assertion-dense file; TODOs unclassified | medium/low | leave | | |
+| page framing: mockups, stage_specs, test_specs, simulation/ | classed live or ruled; not gaps | stale on the page | leave | | |
+Recommended order (one build at a time, cheapest first, none blocks another): 1 SHOWCASE-fix-stale-see-also (no queued owner clash, gd test only); 2 SHOWCASE-fix-weak-stubs (csim only; before CASCADE-sim-rules takes `region.c`); 3 SHOWCASE-legacy-cardfactory (after Q-C); 4 SHOWCASE-fix-tacmove-header (after the records clerk sets its depends_on); 5 HARNESS-no-home-paths amendment now (records), SHOWCASE-fix-home-paths-2 after that row and HARNESS-gate-venv-link land; 6 SHOWCASE-reach-triage any time (reading work, runs beside builds).

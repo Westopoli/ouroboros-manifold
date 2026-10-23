@@ -37,3 +37,10 @@ pipe/ouroboros_pipe
 docs/northstar/research/mockups/**/*.import
 # worktree finished marker, see CLAUDE.md Git
 .wt-done
+
+# Showcase junk: tracked build output, swarm scratch, graph output, runtime saves (SHOWCASE-junk)
+build/_pyi_dist/
+.swarm/
+graphify-out/
+docs/research/graphify-out/
+saves/

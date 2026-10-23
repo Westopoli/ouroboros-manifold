@@ -1,10 +1,11 @@
 extends "res://tests/support/vg_c_case.gd"
+# Rule pins: R-001-06@9f9051, R-089-04@edc267
 
 # VG-C-wire (scenes/ground3d/ground3d.gd): the C6 Units3D (ground_units.gd) and C7 SlopeView (slope_view.gd) pieces
 # are built and tested alone but nothing attaches them to the Ground3D host. Proves S-001 R-001-06 and S-010/S-132.
 # ground3d.gd adds both children, so its qa_state carries the "slope_view" and "units3d" keys.
 # Contract pinned: after set_terrain + set_frame (fixtures as tactical_view feeds them), qa_state()["ground3d"] carries
-#   "slope_view": {slopes, midlines, blocked_cells, in_transit} (the names the S-001 play reads)
+#   "slope_view": {slopes, blocked_cells, in_transit} (the names the S-001 play reads; no midlines key, TD-VG-C-no-slope-markers)
 #   "units3d": int, the count of drawn 3D units = own units plus seen enemies (R-089-04, E-12; TD-VG-C-3): ids 1, 2, 4
 #   own and 3 seen enemy = 4; hidden enemy id 5 (not own, not in the visible list) is not counted.
 # units3d counts the own units plus the enemies seen (4 expected here; R-089-04).
@@ -37,9 +38,9 @@ func _run() -> void:
 	var sv = _find(qa, "slope_view")
 	_check(sv is Dictionary, "R-001-06: ground3d qa_state has no slope_view block (Units3D/SlopesView not attached); keys %s" % [qa.keys()])
 	if sv is Dictionary:
-		for k in ["slopes", "midlines", "blocked_cells", "in_transit"]:
+		for k in ["slopes", "blocked_cells", "in_transit"]:
 			_check((sv as Dictionary).has(k), "R-001-06: slope_view lacks %s" % k)
-		_check(int(sv.get("slopes", -1)) == 1 and int(sv.get("midlines", -1)) == 1, "R-001-06: slope_view counts wrong: %s" % [sv])
+		_check(int(sv.get("slopes", -1)) == 1 and not (sv as Dictionary).has("midlines"), "R-001-06: slope_view counts wrong: %s" % [sv])
 	var n = _find(qa, "units3d")
 	_check(n != null, "S-132: ground3d qa_state has no units3d count")
 	if n != null:

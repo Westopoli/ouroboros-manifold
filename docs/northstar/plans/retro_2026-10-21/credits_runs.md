@@ -5,8 +5,9 @@ Target (Westley): exhausted by 21:00 EDT 2026-10-23; checkpoint 16:00 EDT (DEC-c
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total (Dispatcher $1.60 + Architect $5.27 + $13.70 base + $0.94 batch 9): $24.81 of $200; hard stop $190; expires 2026-10-24.
-Plus two crashed inv-landview runs, cost unknown.
+Running total: $87.01 of $200 (batch 22b: $61.68 + $25.329 = $87.009; the previous total $61.68 plus the 20 ACTUAL rows of 2026-10-23 added below, $25.329; the two batch_review rows (est $5.52 and $1.52 at batch rates) are estimates, PENDING, outside the total; previous total: rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $47.99 (recomputed 2026-10-23 by parsing every row: 130 rows), plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 the record-files TD edit and stack merge $0.50, the landing clerk 3 stop $0.10 and records batch 20 $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
+In flight (caps, not spent, a separate line from the rowed total): $29 across five rows marked (pending) (landing clerk 3b $8 landed 2026-10-23 and is settled by its two ACTUAL rows): pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, landing clerk 5 $6, records batch 21 $6; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and the combined landing clerk row by the three ugfnsm rows, none counted.
+Plus two crashed inv-landview runs, cost unknown, plus runs still pending.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
 ## SDK runs (from 2026-10-22)
@@ -54,8 +55,129 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK engineer S-246 finish (branch push/vg-d-s246-import 70ce9afe) | claude-sonnet-5-5 | $5 | $0.109 | 9 turns, success |
 | 2026-10-23 | SDK landing clerk S-246 (push/vg-d-s246-import) | claude-sonnet-5-5 | $8 | $0.093 | 6 turns, stopped before the lock: pre_gate pins REJECT, S-246.py has no Rule pins line |
 | 2026-10-23 | SDK engineer derive script VG-C-land-one-projection | claude-sonnet-5-5 | $6 | $0.982 | 20 turns, success; drafts only, launch_check needs the files under workflows_2026-10-07/ |
-| 2026-10-23 | records batch 14 (Architect rulings: pins edges, land-one-projection interface) | claude-sonnet-5-5 | $6 | (pending, this run) |  |
-| 2026-10-23 | SDK engineer S-246 Rule pins line (branch push/vg-d-s246-import) | claude-sonnet-5-5 | $2 | (pending, this run) |  |
+| 2026-10-23 | records batch 14 (Architect rulings: pins edges, land-one-projection interface) | claude-sonnet-5-5 | $6 | $0.684 | 35 turns, success (pushed 3026d761) |
+| 2026-10-23 | SDK engineer S-246 Rule pins line (branch push/vg-d-s246-import) | claude-sonnet-5-5 | $2 | $0.102 | 8 turns, success (branch e2869d59) |
+| 2026-10-23 | SDK spec auditors x8 (land-marks, facing-arrow, ground-one-colour, sightdisc, facing-travel, idle-own, unit-ground-fit, no-slope-markers) | claude-sonnet-5-5 | $1.5 each | $1.318 total | 6 to 9 turns each |
+| 2026-10-23 | (Architect) records clerk "rec-audits" | claude-sonnet-5-5 | $5 | $0.505 |  |
+| 2026-10-22 | LAB-REV3-A landing clerk | SDK clerk | claude-sonnet-5-5 | 6 turns | $0.585 | landed 7b91383c |
+| 2026-10-23 | SDK landing clerk S-246 retry (push/vg-d-s246-import e2869d59) | claude-sonnet-5-5 | $8 | $0.253 | 9 turns, success, main 28e41ec3 (gate no REJECT; lane_plays skipped, no S-246 line) |
+| 2026-10-23 | SDK test writer VG-C-land-one-projection (push/vg-c-landone-tests) | claude-sonnet-5-5 | $3 | $1.085 | 48 turns, success, branch push/vg-c-landone-tests 2040a99f |
+| 2026-10-23 | SDK test writer VG-C-unit-ground-fit | claude-sonnet-5-5 | $3 | $0.428 | 19 turns, success |
+| 2026-10-23 | SDK test writer sight_discs follow-up | claude-sonnet-5-5 | $1 | $0.132 | 10 turns, success |
+| 2026-10-23 | SDK builder VG-C-land-one-projection (push/vg-c-landone) | claude-sonnet-5-5 | $5 | $1.221 | final-turn figure of a long run, success, push/vg-c-landone d1be356d; piece test 262/0; play s140_land.py:104 races the live clock (ruler); pre_gate REJECT noise/base only |
+| 2026-10-23 | (Architect) records clerk "rec-credit9pm" | claude-sonnet-5-5 | n/a | $0.07 | success |
+| 2026-10-23 | (Architect) records clerk "rec-audits" | claude-sonnet-5-5 | n/a | $0.505 | success, pushed 15f05633 |
+| 2026-10-23 | (Architect) records clerk "rec-slots3" | claude-sonnet-5-5 | n/a | $0.073 | success |
+| 2026-10-23 | SDK test writer VG-C-no-slope-markers | claude-sonnet-5-5 | $3 | $0.493 | 30 turns, success, push/vg-c-noslope-tests ebd23d03; s001 play not run (galaxy tick 10 timeout, pipe binary not built |
+| 2026-10-23 | SDK SHOWCASE-first-look | claude-sonnet-5-5 | $3 | $0.173 | 10 turns, success; page in wt/showcase-fl, uncommitted |
+| 2026-10-23 | SDK builder VG-C-unit-ground-fit | claude-sonnet-5-5 | $5 | $0.314 | 26 turns, success; stopped on c6 test-defect candidate |
+| 2026-10-23 | SDK SHOWCASE-quality-audit | claude-sonnet-5-5 | $4 | $0.552 | 30 turns, success; page in wt/showcase-qa, 371 lines, uncommitted |
+| 2026-10-23 | SDK builder VG-C-no-slope-markers | claude-sonnet-5-5 | $5 | $0.21 | 19 turns, success, push/vg-c-noslope 74c68e6b; pre_gate REJECT noise (.import dirt) and base (needs merge main) |
+| 2026-10-23 | SDK ruler VG-C-unit-ground-fit | claude-sonnet-5-5 | $2 | $0.099 | 5 turns, success; ruling C, goes to the Architect |
+| 2026-10-23 | SDK TD edit VG-C-unit-ground-fit | claude-sonnet-5-5 | $2 | $0.128 | 10 turns, success |
+| 2026-10-23 | SDK combined landing clerk unit-ground-fit + no-slope-markers | claude-sonnet-5-5 | $6 | (superseded) | replaced by the three ugfnsm landing clerk rows below |
+| 2026-10-23 | SDK second spec auditors x8 | claude-sonnet-5-5 | $1.0 each | $1.436 |  |
+| 2026-10-23 | SDK test writer VG-C-land-marks | claude-sonnet-5-5 | $3 | $0.815 | 29 turns, success |
+| 2026-10-23 | SDK test writer VG-C-facing-arrow | claude-sonnet-5-5 | $3 | $0.733 | 30 turns, success, push/vg-c-facingarrow-tests 907662c3 (old geometry; redo after amendment) |
+| 2026-10-23 | SDK test writer VG-C-ground-one-colour | claude-sonnet-5-5 | $3 | $0.231 | 14 turns, success |
+| 2026-10-23 | SDK drift audit | claude-sonnet-5-5 | $6 | $0.482 | 26 turns, success; 12 DRIFT lines, 6 SCOPE |
+| 2026-10-23 | (Architect) records clerk "rec-drift" | claude-sonnet-5-5 | n/a | $0.523 | success, pushed 44c74a99 |
+| 2026-10-23 | SDK builder VG-C-ground-one-colour | claude-sonnet-5-5 | $5 | $0.156 | 14 turns, success, push/vg-c-groundonecolour 12f9cc81; pre_gate REJECT noise (.import dirt) |
+| 2026-10-23 | SDK test writer follow-up VG-C-land-marks | claude-sonnet-5-5 | $1.5 | $0.207 | 13 turns, success |
+| 2026-10-23 | records batch 15 first run (stopped while waiting on gate.lock; cost unknown, in the SDK log) | claude-sonnet-5-5 | $6 | (unknown) | stopped on a spec merge conflict after the Architect drift fix |
+| 2026-10-23 | (Architect) records clerk "rec-recordslock" | claude-sonnet-5-5 | n/a | $0.07 | success, pushed 77de98f5 |
+| 2026-10-23 | records batch 15 finish (records.lock) | claude-sonnet-5-5 | $3 | (pending) |   |
+| 2026-10-23 | records batch 16 (records.lock) | claude-sonnet-5-5 | $6 | (pending) |   |
+| 2026-10-23 | SDK test writer rewrite VG-C-facing-arrow | claude-sonnet-5-5 | $3 | $0.351 | 13 turns, success, push/vg-c-facingarrow-tests fd588ec8 (169 red: 24 a, 143 b, 2 neither) |
+| 2026-10-23 | records batches 15+16 merged redo (batch17 brief, wt/records-batch8; the first two runs stopped on a spec merge conflict after the Architect drift fix) | claude-sonnet-5-5 | $8 | $1.654 | 73 turns, success, pushed 36136158 and 9a4fcd22 on main |
+| 2026-10-23 | SDK test writer VG-A-sightdisc | claude-sonnet-5-5 | $3 | $0.535 | 19 turns, success |
+| 2026-10-23 | SDK builder VG-C-facing-arrow | claude-sonnet-5-5 | $5 | $0.317 | 18 turns, success, push/vg-c-facingarrow e9c5669b; 6 ground-fit test assertions fail (S-132 forward ignores facing_offset; test-defect candidate |
+| 2026-10-23 | SDK builder VG-A-sightdisc | claude-sonnet-5-5 | $5 | $0.406 | 24 turns, success, push/vg-a-sightdisc 351ec01f, pre_gate OK (clean tree |
+| 2026-10-23 | SDK test writer VG-E-move-through-idle-own | claude-sonnet-5-5 | $3 | $0.982 | 51 turns, success |
+| 2026-10-23 | SDK builder fix unit_squads.gd (VG-C-facing-arrow) | claude-sonnet-5-5 | $1.5 | $0.123 | 13 turns, success |
+| 2026-10-23 | SDK test writer follow-up VG-A-sightdisc | claude-sonnet-5-5 | $2 | $0.262 | 13 turns, success |
+| 2026-10-23 | SDK test fixer VG-C-facing-arrow (TD offset pins + squad assertion), push/vg-c-facingarrow 147f45c9 | claude-sonnet-5-5 | $2.5 | ~$0.40 (estimate, not an ACTUAL; report overwritten by the next run, not in the total) |  |
+| 2026-10-23 | SDK ruler VG-C-land-one-projection s140_land.py clock race | claude-sonnet-5-5 | $2 | $0.140 | 7 turns, success; ruling C, to the Architect: option 1 recommended |
+| 2026-10-23 | SDK test writer VG-C-groundpick-step (push/vg-c-groundpickstep-tests) | claude-sonnet-5-5 | $2 | $0.158 | 10 turns, success, push/vg-c-groundpickstep-tests 47192d01 |
+| 2026-10-23 | SDK TD edit VG-C-land-one-projection s140_land.py pause (TD-VG-C-land-one-projection-2) | claude-sonnet-5-5 | $2 | $0.113 | 11 turns, success, push/vg-c-landone 999466ef; play passes in 21 s |
+| 2026-10-23 | SDK builder VG-C-groundpick-step (push/vg-c-groundpickstep) | claude-sonnet-5-5 | $2.5 | $0.106 | 8 turns, success, push/vg-c-groundpickstep 33585fb9, pre_gate OK (clean tree) |
+| 2026-10-23 | SDK third-round spec auditors x4 (land-one-projection, land-marks, facing-arrow, groundpick-step) | claude-sonnet-5-5 | $1.0 each | $0.673 | land-one-projection BLOCKED 3 high, land-marks READY WITH FIXES 3 high, facing-arrow 0 high, groundpick-step 0 high |
+| 2026-10-23 | SDK test writer HARNESS-swarm-config (push/harness-swarmconfig-tests) | claude-sonnet-5-5 | $3 | $0.215 | 13 turns, success, push/harness-swarmconfig-tests 22dfc7b1 (3 red on main of 11) |
+| 2026-10-23 | SDK builder HARNESS-swarm-config (push/harness-swarmconfig) | claude-sonnet-5-5 | $3 | $0.156 | 9 turns, success, push/harness-swarmconfig d99b92e9, pre_gate OK (clean tree); apex_test_cmd bare exit 2 note |
+| 2026-10-23 | SDK test writer follow-up VG-C-land-marks (host _process recompute, settle wait, pick distance) | claude-sonnet-5-5 | $2 | $0.148 | 8 turns, success, push/vg-c-landmarks-tests c914281d (settle wait loop never exercised on main) |
+| 2026-10-23 | SDK test writer SHOWCASE-junk (push/showcase-junk-tests, on top of harness-swarmconfig) | claude-sonnet-5-5 | $3 | $0.132 | 9 turns, success, push/showcase-junk-tests 53d2a5bd (5 red on main) |
+| 2026-10-23 | SDK TD edit land-one-projection structures/ability_fx tests | claude-sonnet-5-5 | $2.5 | ~$0.40 | cost not captured (report overwritten), estimate; push/vg-c-landone 7e082b93; green on the built tree (flat fallback), rewrite adds land coverage |
+| 2026-10-23 | SDK builder merge VG-C-facing-arrow with VG-C-land-one-projection (unit_visuals.gd conflict) | claude-sonnet-5-5 | $3 | ~$0.40 | report in the sdk-build log, estimate; push/vg-c-facingarrow 56383ed0, 7 test files green |
+| 2026-10-23 | SDK builder SHOWCASE-junk (push/showcase-junk) | claude-sonnet-5-5 | $3 | $0.159 | 10 turns, success, push/showcase-junk f12d462b (479 files untracked; pre_gate base reject only) |
+| 2026-10-23 | SDK builder VG-C-land-marks | claude-sonnet-5-5 | $5 | $0.532 | 29 turns, success, push/vg-c-landmarks 3751a69a; 54/55 own checks; test-defect candidate + cost-guard stop + stale pins |
+| 2026-10-23 | SDK test writer VG-E-facing-travel with throwaway priority-flip csim run | claude-sonnet-5-5 | $4 | $0.997 | 40 turns, success, push/vg-e-facingtravel-tests d15e8b37 (6 red of 9 on main) |
+| 2026-10-23 | SDK S-246 proof run at 28e41ec3 | claude-sonnet-5-5 | $1 | $0.075 | 4 turns, success, 1 passed in 36.04s |
+| 2026-10-23 | records batch 18 | claude-sonnet-5-5 | $6 | $1.010 | 39 turns, success, pushed cdf79c66; clerk running total in credits_runs.md $46.01, caps line $22 |
+| 2026-10-23 | SDK builder SHOWCASE-junk follow-up | claude-sonnet-5-5 | $1.5 | $0.064 | 4 turns, success, push/showcase-junk 8ed61fa1 (nine tuning_output files untracked) |
+| 2026-10-23 | SDK test writer HARNESS-gate-keep-red-evidence | claude-sonnet-5-5 | $3 | $0.541 | 20 turns, success, push/harness-keepred-tests 1504196c (19 red, 8 green) |
+| 2026-10-23 | SDK test writer fixture redo VG-C-land-marks | claude-sonnet-5-5 | $3 | $0.180 | 11 turns, success, push/vg-c-landmarks-tests 433b19ae (55/0 on the builder tree) |
+| 2026-10-23 | SDK pin refresh + re-merge (lop pins bee7d022, facing-arrow 6181d995) | claude-sonnet-5-5 | $4 | ~$0.30 | cost not captured, estimate $0.3 |
+| 2026-10-23 | SDK builder VG-C-land-marks follow-up | claude-sonnet-5-5 | $4 | $0.351 | 25 turns, success, push/vg-c-landmarks c25df880; cost guard 47.7-61.7 ms on the S-001 frame under Vulkan (limit 2 ms): Architect ruling pending |
+| 2026-10-23 | SDK test writer redo VG-E-facing-travel | claude-sonnet-5-5 | $2 | $0.292 | 17 turns, success, push/vg-e-facingtravel-tests 59793e04 (6 red + 5 green on main, 11 green on the flipped build) |
+| 2026-10-23 | SDK test writer slicing tests VG-C-land-marks | claude-sonnet-5-5 | $3 | ~$0.60 | cost not captured (report overwritten), push/vg-c-landmarks-tests d8fab26d, estimate $0.6 |
+| 2026-10-23 | SDK builder time-sliced occlusion + DDA VG-C-land-marks | claude-sonnet-5-5 | $5 | $0.672 | 31 turns, success, push/vg-c-landmarks ddbb3f2b; 3 numbers pass (1.91 ms max slice, 353-364 ms pass, oracle true) |
+| 2026-10-23 | SDK test writer SHOWCASE-legacy-toys | claude-sonnet-5-5 | $3 | ~$0.30 | cost not captured (report overwritten by the builder), push/showcase-legacy-toys-tests 1470f6f6, estimate $0.3 |
+| 2026-10-23 | SDK builder SHOWCASE-legacy-toys | claude-sonnet-5-5 | $4 | $0.110 | 10 turns, success, push/showcase-legacy-toys 6f3ab518 (110 files moved; pre_gate base reject only) |
+| 2026-10-23 | SDK builder HARNESS-gate-keep-red-evidence | claude-sonnet-5-5 | $5 | $0.727 | 22 turns, success, push/harness-keepred 7499295f, 27 tests green (neighbour failures identical on base) |
+| 2026-10-23 | SDK landing clerk 3 first run | claude-sonnet-5-5 | $8 | $0.179 | 12 turns, success; stopped before the lock: pre_gate pins REJECT R-236-02 stale 5cb2dc vs d5ddad in test_vg_c2b_ground_bands.gd and test_vg_c7_slope_view.gd |
+| 2026-10-23 | SDK test writer SHOWCASE-legacy-scenes | claude-sonnet-5-5 | $3 | ~$0.30 | cost not captured (overwritten), push/showcase-legacy-scenes-tests f4432c66, estimate $0.3 |
+| 2026-10-23 | SDK builder SHOWCASE-legacy-scenes | claude-sonnet-5-5 | $4 | $0.210 | 16 turns, success, push/showcase-legacy-scenes 74c02d19 (24 files moved; tscn script paths rewritten; pre_gate noise+base only) |
+| 2026-10-23 | SDK test writer HARNESS-lane-plays-scope | claude-sonnet-5-5 | $3 | ~$0.40 | cost not captured, push/harness-laneplays-tests 58f69a26, estimate $0.4 |
+| 2026-10-23 | SDK builder HARNESS-lane-plays-scope | claude-sonnet-5-5 | $4 | $0.156 | 11 turns, success, push/harness-laneplays dd7be148 (one test red: test_known_red_list_applies_to_the_widened_scope line 144, test-defect candidate) |
+| 2026-10-23 | SDK builder SHOWCASE-docs-legacy | claude-sonnet-5-5 | $5 | $0.401 | 18 turns, success, push/showcase-docs-legacy e2063729 (199 paths moved; pre_gate OK; 11 path groups NOT moved for live references) |
+| 2026-10-23 | SDK spec auditors round 4 x16 | claude-sonnet-5-5 | $0.5 each | $2.29 | BLOCKED: csim-xdist, gate-cache-seed, gate-concurrent, gate-reorder, gate-tiers, size-lint-fail, VG-C2-5-scope; READY WITH FIXES: the other nine |
+| 2026-10-23 | SDK doer SHOWCASE-docs-legacy citation rewrite | claude-sonnet-5-5 | $2 | ~$0.50 | cost not captured, push/showcase-docs-legacy 2923962a content (est $0.5) |
+| 2026-10-23 | SDK records landing clerk SHOWCASE-docs-legacy | claude-sonnet-5-5 | $4 | $0.097 | 7 turns, success, main 2923962a (records.lock; pre_gate footprint REJECT for 23 moved docs without an owner, pushed anyway) |
+| 2026-10-23 | SDK test writer HARNESS-record-files | claude-sonnet-5-5 | $3 | ~$0.40 | cost not captured, push/harness-recordfiles-tests 45305067, estimate $0.4 |
+| 2026-10-23 | SDK builder HARNESS-record-files | claude-sonnet-5-5 | $4 | $0.181 | 15 turns, success, push/harness-recordfiles dd728768; pre_gate OK; two old tests retired by the new ruling (test-defect candidates) |
+| 2026-10-23 | SDK pin refresh ground-one-colour tests (R-236-02) then landing clerk 3 rerun | claude-sonnet-5-5 | $10 (2+8) | (pending) |   |
+| 2026-10-23 | SDK TD fix + builder comment HARNESS-lane-plays-scope (TD-HARNESS-lane-plays-known-red-detail) | claude-sonnet-5-5 | $3.5 (2+1.5) | (pending) |   |
+| 2026-10-23 | SDK TD edit + merges HARNESS-record-files (TD-HARNESS-record-files, stack onto lane-plays-scope) | claude-sonnet-5-5 | $3.5 (2+1.5) | (pending) |   |
+| 2026-10-23 | SDK TD edit + stack merge HARNESS-record-files | claude-sonnet-5-5 | $3.5 | ~$0.50 | cost not captured, push/harness-recordfiles 511bbf21 (stacked keep-red + lane-plays + record-files; 146 passed, 1 pre-existing red), estimate $0.5 |
+| 2026-10-23 | SDK pins line test_merge_gate_support.py | claude-sonnet-5-5 | $1 | $0.088 | 7 turns, success, push/harness-recordfiles cae8ae6e (Rule pins: R-021-01@39f7e7) |
+| 2026-10-23 | records batch 19 | claude-sonnet-5-5 | $8 | $1.071 | 48 turns, success, main 63e0a5ae |
+| 2026-10-23 | SDK landing clerk 4 first run | claude-sonnet-5-5 | $8 | $0.172 | 15 turns, success; stopped before the gate: tests/test_showcase_legacy_scenes.gd has no owner row |
+| 2026-10-23 | records batch 20 (owner rows for the showcase test files) | claude-sonnet-5-5 | $3 | ~$0.40 | cost not captured in this view, estimate |
+| 2026-10-23 | SDK test writer follow-up HARNESS-gate-venv-link (push/vg-venvlink-tests2) | claude-sonnet-5-5 | $2 | $0.191 | 10 turns, success, push/vg-venvlink-tests2 53de3142 (R5 red on base, green on built) |
+| 2026-10-23 | SDK builder merge and re-check HARNESS-gate-venv-link (push/vg-venvlink-b) | claude-sonnet-5-5 | $3 | $0.153 | 11 turns, success, push/vg-venvlink-b 5c251eb1 (113 passed; pre_gate OK; stale-doc lines: programme :57, spec :448) |
+| 2026-10-23 | SDK engineer HARNESS-gate-userdir-fix (push/harness-userdir) | claude-sonnet-5-5 | $3 | $0.196 | 11 turns, success; no fix: the two ERRORs are an unbuilt pipe/ouroboros_pipe in a fresh worktree |
+| 2026-10-23 | SDK landing clerk ugfnsm first run (queued 1 h 40 min then gate) | claude-sonnet-5-5 | $6 | $0.284 | final-turn figure; gate passed clean, stopped before the push on dirty .import and moved main |
+| 2026-10-23 | SDK landing clerk ugfnsm continuation (records-only merge, by-hand plays C, push) | claude-sonnet-5-5 | $3 | $0.083 | 3 turns; stopped at step 2: incoming main has S-246.py (a lane D play) so not records-only; Architect waiver asked |
+| 2026-10-23 | SDK landing clerk 3 stopped by the Dispatcher | claude-sonnet-5-5 | $8 | ~$0.10 | gate 5 min in would reject: ground-one-colour carries the no-slope-markers tests but not its build; relaunch after landing 1 |
+| 2026-10-23 | SDK landing clerk ugfnsm 2nd continuation (waiver, by-hand C plays, known-red removal, push) | claude-sonnet-5-5 | $3 | $0.145 | 12 turns, success, LANDED main 080e7507 (ground-fit + no-slope-markers; s132 red also on main; known-red line removed) |
+| 2026-10-23 | SDK engineer userdir-fix skip fixture (push/harness-userdir) | claude-sonnet-5-5 | $1 | $0.113 | 11 turns, success, push/harness-userdir 40e3544c (22 passed built; 20 passed + 2 skipped on a fresh tree) |
+| 2026-10-23 | SDK landing clerk 4 rerun | claude-sonnet-5-5 | $8 | $0.228 | final-turn figure; gate passed clean, 28 min suite stage, stopped before the push on gate-left .import dirt |
+| 2026-10-23 | SDK landing clerk 4 continuation (waiver, push) | claude-sonnet-5-5 | $3 | $0.129 | 10 turns, success, LANDED main 60923594 (7 pieces: swarm-config, junk, legacy-toys, legacy-scenes, keep-red-evidence, lane-plays-scope, record-files; 643 files) |
+| 2026-10-23 | SDK landing clerk 3b (fresh worktree: land-one-projection + facing-arrow + ground-one-colour + groundpick-step) | claude-sonnet-5-5 | $8 | (superseded: the two ACTUAL rows below, run 1 $0.285 and continuation $0.319; none counted here) |   |
+| 2026-10-23 | SDK landing clerk 5 (HARNESS-gate-venv-link + HARNESS-gate-userdir-fix) | claude-sonnet-5-5 | $6 | (pending) |   |
+| 2026-10-23 | records batch 21 (records.lock) | claude-sonnet-5-5 | $6 | (pending) |   |
+| 2026-10-23 | SDK landing clerk 3b run 1 (gate clean, stopped on dirt) | claude-sonnet-5-5 | - | $0.285 | 5 turns reported; gate ran in its shell |
+| 2026-10-23 | SDK Fable audit of 13 audit4 highs | claude-fable-5-1 | - | $4.074 | 38 turns, success |
+| 2026-10-23 | SDK test writer HARNESS-cost-report | claude-sonnet-5-5 | - | $0.431 | 19 turns push/harness-costreport-tests 240564ac |
+| 2026-10-23 | SDK test writer PROTO-landscape-lakefill | claude-sonnet-5-5 | - | $0.238 | 12 turns push/proto-lakefill-tests 7218f105 |
+| 2026-10-23 | SDK landing clerk 3b continuation | claude-sonnet-5-5 | - | $0.319 | (25 turns), LANDED main 82389338 + records c7d35d3f (land-one-projection, facing-arrow, ground-one-colour, groundpick-step); s132 red also on main, three pairs not one pixel |
+| 2026-10-23 | SDK builder sightdisc fill-the-key follow-up | claude-sonnet-5-5 | - | $0.179 | 16 turns, stopped at test-defect :228, uncommitted in wt/sd-build |
+| 2026-10-23 | SDK builder HARNESS-cost-report | claude-sonnet-5-5 | - | $0.223 | 12 turns push/harness-costreport |
+| 2026-10-23 | SDK builder PROTO-landscape-lakefill | claude-sonnet-5-5 | - | $0.147 | 11 turns push/proto-lakefill 38242c7d |
+| 2026-10-23 | SDK test writer sightdisc TD-3 assertion | claude-sonnet-5-5 | - | $0.138 | 11 turns push/vg-a-sightdisc-tests2 8ed1786f |
+| 2026-10-23 | SDK scout s132 three pairs | claude-sonnet-5-5 | - | $0.146 | 9 turns |
+| 2026-10-23 | SDK Fable second audit LAB-CONTRACT-unit-pos-batch | claude-fable-5-1 | - | $4.057 | 23 turns SOUND WITH AMENDMENTS, 2 high 6 medium 6 low |
+| 2026-10-23 | SDK builder sightdisc clamp + mask check | claude-sonnet-5-5 | - | $0.263 | 18 turns push/vg-a-sightdisc 743e4f35; mask is 2D from same projected points (FINDING, landing stops) |
+| 2026-10-23 | SDK test writer sightdisc clip tests | claude-sonnet-5-5 | - | $0.231 | 12 turns push/vg-a-sightdisc-tests3 4d7ff775 |
+| 2026-10-23 | SDK builder sightdisc clip fix | claude-sonnet-5-5 | - | $0.297 | 21 turns stopped before commit, low-camera test premise (disc contains camera) |
+| 2026-10-23 | SDK test writer sightdisc mask rings test | claude-sonnet-5-5 | - | $0.164 | 12 turns push/vg-a-sightdisc-tests4 fabb673b |
+| 2026-10-23 | SDK builder sightdisc ring check | claude-sonnet-5-5 | - | $0.176 | 16 turns push/vg-a-sightdisc c019e6d5, sight_discs_failed 0 at 300 and 3000, 0 triangulation msgs |
+| 2026-10-23 | SDK Fable spec audit startforce_rev2 | claude-fable-5-1 | - | $2.634 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK Fable spec audit layerspot_route_rev3 | claude-fable-5-1 | - | $4.150 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK Fable spec audit harness_coverage_spec_rev2 | claude-fable-5-1 | - | $2.473 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK Fable spec audit lane_u_spec_rev3 | claude-fable-5-1 | - | $4.704 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | batch_review audit-epics 22 epics | claude-fable-5-1 | - | est $5.52 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job, not yet read from the console |
+| 2026-10-23 | batch_review story-reviews 38 shots | claude-sonnet-5-5 | - | est $1.52 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job, not yet read from the console |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 

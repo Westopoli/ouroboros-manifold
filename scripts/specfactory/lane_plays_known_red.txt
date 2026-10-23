@@ -1,4 +1,4 @@
 # Known-red lane plays for the lane_plays gate stage (HARNESS-laneplays). One pytest node id per line,
 # then "# reason". A red not listed rejects; a listed play that passes rejects too (trim the list).
-tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # S-132 finding: distinct units ('50','53'),('77','80') project to one pixel on the ground view; Q-132-03 (Architect 2026-10-09)
+tests/qa/desktop/plays/C/s132.py::test_s132_force_is_not_collapsed  # FINDING-s132-one-pixel (s132 three pairs): three pairs (41,44), (50,53), (76,79) project to one pixel on the ground view, red on origin/main before and after landing 3b; test premise (rounding, no tolerance) likely, Westley owns the tolerance; Q-132-03 (Architect 2026-10-09, 2026-10-23)
 tests/qa/desktop/plays/E/s218.py::test_s218_strongpoints_on_slopes  # E1l (spec line 180) StrongpointLayer + E1p qa_state `strongpoints`: not built, qa_state has no `strongpoints` key

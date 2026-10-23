@@ -8,7 +8,7 @@
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
 | Implied-but-unstated behavior turned into flags | 9 open flags: 3 on the first stories, Q-103-04, Q-103-06, Q-111-01, and 6 on S-230 to S-235, Q-230-01, Q-230-03, Q-231-03, Q-232-01, Q-232-02, Q-233-01 (Q-235-01 closed 2026-10-12; Q-103-05, Q-110-03, Q-230-02, Q-231-01 and Q-231-02 closed 2026-10-21, register). |
-| Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
+| Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/legacy/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
 **Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-234 are design decided and not scheduled for building; the ticker beats of S-235 are queued (VG-E1M, VG-E1W). The camera is chosen (the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) are the load-bearing open item (the map view prototype, Q-103-05, closed 2026-10-21: prototype first, then commit). This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
@@ -61,6 +61,7 @@ Outputs: viewport transform; orders.
 Open flags: Q-103-06 (layer marks for groups beyond pins). What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
+Open question: Q-104-02 (see docs/northstar/ambiguity_register.md): which beats the ticker shows at launch, the four of R-104-01 or the longer list of R-235-03; the ticker is not built until it is answered.
 Flag closed, rule text pending: Q-104-01, single-player pause is allowed (Escape or Pause halts the simulation and opens the menu) and multiplayer never pauses. The rule below is what the tests read today.
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
 
@@ -275,7 +276,7 @@ Rules
 
 Inputs: economy and weather events from the tick delta.
 Outputs: marks on the map view; ticker lines, T2-checkable.
-Open flags: none (Q-235-01 closed 2026-10-12, R-235-03).
+Open flags: Q-104-02 (the ticker list at launch, with R-104-01; see docs/northstar/ambiguity_register.md). Q-235-01 closed 2026-10-12, R-235-03.
 
 ## Inputs
 
