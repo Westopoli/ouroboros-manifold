@@ -4,56 +4,59 @@ extends "res://tests/support/vg_c_case.gd"
 # scenes/ground3d/ground_units.gd, scenes/tactical_c/unit_visuals.gd, scenes/tactical_c/unit_squads.gd). Proves S-001
 # ("arrows show facing", the S-001 ridge close frame) and the facing-offset amendment (FINDING-facing-offset-2d-only).
 # Words of the request, Westley 2026-10-22: "tiny little arrows pointing away from the unit that indicate direction
-# (like a white triangle, no bigger than 2/5 the unit size)". DRAFT-facing-arrow-len = 0.4 x the body width.
+# (like a white triangle, no bigger than 2/5 the unit size)". DRAFT-facing-arrow-len = 0.4 x the body size.
 # Rule pins:
 #
-# What is asserted (every number is the paragraph's):
-#   3D (Units3D body from ground_units.gd, `_body`): a child MeshInstance3D named "Arrow", an unshaded white triangle,
-#     length 0.4 x 2 x BODY_RADIUS_WU 11.5 = 9.2 wu (within 0.1 wu), base width half the length, base at the shape's largest
-#     x (1.0, 0.8 for the square) x 11.5 in the body's own frame, lifted 0.2 wu above the body plane, apex outward.
-#   2D (UnitVisuals._make_node): a child Polygon2D named "Arrow" of the unit's Node2D, white, length 0.4 x 2 x SHAPE_RADIUS 12
-#     = 9.6 px (within 0.5 px), base width half the length, base at the shape's largest x times the body's scale k, rotated
-#     with Body (the same rotation value); qa_state() counts the Arrow nodes = unit count.
-#   Direction, both views: the apex points along facing + the manifest's facing_offset_rad. Stated per type at facing 0
-#     (the paragraph): raider (type 0) -x, bombard (type 4) -y, the four others +x. Facing pi is the opposite side.
-#   Amendment: UnitVisuals.facing_offset(type) (static) is the one source (raider pi, bombard -pi/2, others 0); at pitch 90
-#     the raider's 3D nose and its 2D icon point within 2 degrees of each other on screen.
-#   Positive control: a unit whose facing changes by a half turn between two frames has its apex on the opposite side.
-#   Controls of the helpers (green on main): the apex/length reader is run on a synthetic triangle first.
+# AMENDMENT 2026-10-23 (round-two audit) WINS over the paragraph on main where they differ. Differences from the paragraph
+# (as on main when this was written): (1) the arrow lies on the ray from the body centre along the heading
+# h = facing + facing_offset_rad: base at distance r (3D 11.5 wu, 2D SHAPE_RADIUS 12 px x k) along the ray, apex at base +
+# 0.4 x body size (3D 9.2 wu, 2D 9.6 px x k) on the same ray; NO per-shape "largest x" base (the paragraph: 1.0, 0.8 square);
+# (2) 2D: Arrow is a SIBLING of Body under the unit's Node2D with rotation h (the paragraph: "child of the unit's Node2D,
+# rotated with Body"; Body keeps its own rotation, the arrow is not a child of Body); (3) 3D: Arrow is a child of the body
+# mesh node, local +x forward, no rotation of its own (the body's Basis carries h); (4) accessors, NO qa_state in this piece:
+# Units3D.arrow_count(), Units3D.arrow_apex_world(id) -> Vector3, UnitVisuals.arrow_count(), UnitVisuals.arrow_apex_px(id) ->
+# Vector2 (the paragraph: qa_state() `arrows`, which VG-C-land-marks adds, not this piece).
 #
-# UNSTATED INTERFACE choices (the paragraph does not fix these; a builder who differs files a test-defect row):
-#   U1  `qa_state()` of the paragraph is tactical_view.gd's: the count is qa_state()["inventory"]["arrows"] (the section 2
-#       inventory beside "squads", "wrecks"); a top-level qa_state()["arrows"] is accepted too.
-#   U2  The 3D arrow is a MeshInstance3D whose mesh is one surface of three distinct vertices (a non-indexed or indexed
-#       triangle); its colour is read from material_override, else surface 0, as albedo_color; "unshaded" is
-#       shading_mode == SHADING_MODE_UNSHADED. Its geometry is read through Arrow.transform inside the body, so the body's
-#       tilt (VG-C-unit-ground-fit) cannot move the assertions: lengths and the lift are taken in the body's own frame.
-#   U3  In the body's own frame the apex lies on +x (the offset turns the whole body: rotation.y = -(facing + offset));
-#       the world direction is then read from the apex's world offset from the body centre, projected on the ground plane.
-#   U4  2D: the Arrow polygon is three points; "base at the largest x times k" reads as the largest x of
-#       UnitVisuals.unit_polygon(id) (px, already x SHAPE_RADIUS) times Body.scale.x.
-#   U5  Tolerances the paragraph does not give: the 3D base position and lift use 0.1 wu (the paragraph's length tolerance);
-#       the 2D base position uses 0.5 px; every direction is within 2 degrees (the amendment's figure); base width uses the
-#       length tolerance of its view; "white" is each channel within 0.01 of 1.0.
-#   U6  The pitch-90 test builds the real Ground3DHost (ground3d.gd), calls camera_rig().set_top_down(true) and projects with
-#       the rig camera; the 3D nose is the mean of the body-mesh points of largest local x (the shape's nose on its axis); the 2D
-#       icon's nose is the same mean over the UnitVisuals Body polygon.
-#   U7  UnitSquads's own use of facing_offset is not asserted (its rotation lives in the private _batches); see the report.
+# What is asserted:
+#   3D (Units3D body from ground_units.gd): a child MeshInstance3D "Arrow" with identity rotation, an unshaded white triangle
+#     of one surface, length 9.2 wu (within 0.1), base width half the length, base_mid at local x 11.5, apex at x 20.7, on the
+#     body axis, lifted 0.2 wu above the body plane (the paragraph's lift; the amendment does not change it).
+#   2D (UnitVisuals._make_node): a Polygon2D "Arrow", child of the unit's Node2D (not of Body), white, rotation = facing +
+#     facing_offset(type) (Body's own rotation untouched by it); length 9.6 x k px (within 0.5), width half, base_mid at local
+#     x 12 x k, k = Body.scale.x.
+#   Direction, both views, read from the accessors: arrow_apex_world(id) / arrow_apex_px(id) minus the unit centre lies on
+#     the heading h (within 2 degrees) at distance r + 0.4 x size (3D 20.7 wu +-0.1; 2D (12 + 9.6) x k px +-0.5). Per type at
+#     facing 0: raider -x, bombard -y, the four others +x. The half turn control: a facing change of pi flips the direction.
+#   Counts: Units3D.arrow_count() and UnitVisuals.arrow_count() equal the unit count.
+#   Amendment FINDING-facing-offset-2d-only: UnitVisuals.facing_offset(type) static (raider pi, bombard -pi/2, others 0); at
+#     pitch 90 the raider's 3D nose and its 2D icon point within 2 degrees of each other on screen.
+#   Controls of the helpers (green on main): the triangle reader is run on synthetic triangles first.
+#
+# UNSTATED INTERFACE choices (a builder who differs files a test-defect row):
+#   U2  The 3D arrow is a MeshInstance3D whose mesh is one surface of three distinct vertices; colour from material_override,
+#       else surface 0, as albedo_color; "unshaded" is shading_mode == SHADING_MODE_UNSHADED. Geometry is read in the Arrow's
+#       local frame (the body's tilt cannot move it).
+#   U3  arrow_apex_world(id) is a Vector3 in world space, arrow_apex_px(id) a Vector2 in the same global space as the unit
+#       node's global_position (the centre); the world heading is atan2(z, x) of the apex offset (sim x = scene x, y = z).
+#   U4  2D "size" is 2 x SHAPE_RADIUS x k with k = Body.scale.x; the length is 9.6 x k.
+#   U5  Tolerances the amendment does not give: 0.1 wu in 3D, 0.5 px in 2D; every direction within 2 degrees; "white" is each
+#       channel within 0.01 of 1.0.
+#   U6  The pitch-90 test builds the real Ground3DHost, calls camera_rig().set_top_down(true) and projects with the rig
+#       camera; nose = mean of the body points of largest local x.
+#   U7  UnitSquads's own use of facing_offset is not asserted (its rotation lives in the private _batches).
 # The Superseded pins (TD-VG-C-facing-arrow) in tests/test_vg_c6_ground_units.gd, test_vg_c6b_ground_units_layers.gd and
-# test_vg_e_e1k.gd were checked: none reads rotation.y or a body's child inventory, so none is edited (the report lists lines).
+# test_vg_e_e1k.gd were checked earlier: none reads rotation.y or a body's child inventory, so none is edited.
 
 const UV := "res://scenes/tactical_c/unit_visuals.gd"
-const VIEW := "res://scenes/tactical_c/tactical_view.tscn"
 const LEN_RATIO := 0.4 # DRAFT-facing-arrow-len, x the body width
 const BODY_R_WU := 11.5 # BODY_RADIUS_WU
 const SHAPE_R_PX := 12.0 # SHAPE_RADIUS
 const LEN_3D := 9.2 # 0.4 x 2 x 11.5
-const LEN_2D := 9.6 # 0.4 x 2 x 12
+const LEN_2D := 9.6 # 0.4 x 2 x 12, x k
 const TOL_3D := 0.1
 const TOL_2D := 0.5
 const LIFT_WU := 0.2
 const DIR_TOL_DEG := 2.0
-const MAXX := [1.0, 1.0, 1.0, 1.0, 1.0, 0.8] # largest shape x per type: the square (bastion) is 0.8
 const TYPE_NAME := ["raider", "interceptor", "vanguard", "warden", "bombard", "bastion"]
 # the paragraph's per-type apex direction at facing 0 (x, y of the world / the unit's node)
 const DIR0 := [Vector2(-1, 0), Vector2(1, 0), Vector2(1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(1, 0)]
@@ -149,7 +152,7 @@ func _run() -> void:
 	await _test_arrow_2d()
 	await _test_direction_and_half_turn()
 	await _test_offset_single_source_pitch90()
-	await _test_arrow_count_in_qa_state()
+	await _test_arrow_counts()
 
 
 # CONTROL (green on main): the triangle reader finds the apex, length and width of a known triangle, 3D and 2D.
@@ -184,10 +187,10 @@ func _test_arrow_3d() -> void:
 		var m: BaseMaterial3D = _mat_of(ar)
 		_check(m != null and _white(m.albedo_color), "S-001: 3D %s arrow must be white, got %s" % [TYPE_NAME[t], m.albedo_color if m != null else "no material"])
 		_check(m != null and m.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED, "S-001: 3D %s arrow must be unshaded" % TYPE_NAME[t])
-		var loc: Transform3D = body.global_transform.affine_inverse() * ar.global_transform
+		_check(ar.transform.basis.is_equal_approx(Basis.IDENTITY), "S-001 amendment: 3D %s Arrow has no rotation of its own (local +x forward), basis %s" % [TYPE_NAME[t], ar.transform.basis])
 		var pts := []
 		for p in _mesh_pts(ar):
-			pts.append(loc * (p as Vector3))
+			pts.append(ar.transform * (p as Vector3))
 		var tri: Dictionary = _tri(pts)
 		_check(not tri.is_empty(), "S-001: 3D %s arrow must be one triangle of three distinct points, got %d points" % [TYPE_NAME[t], pts.size()])
 		if tri.is_empty():
@@ -196,7 +199,7 @@ func _test_arrow_3d() -> void:
 		_check(absf(tri["width"] - tri["length"] * 0.5) <= TOL_3D, "S-001: 3D %s arrow base width %.3f must be half its length %.3f" % [TYPE_NAME[t], tri["width"], tri["length"]])
 		var bm: Vector3 = tri["base_mid"]
 		var ap: Vector3 = tri["apex"]
-		_check(absf(bm.x - MAXX[t] * BODY_R_WU) <= TOL_3D and absf(bm.z) <= TOL_3D, "S-001: 3D %s arrow base must sit at x %.2f (largest shape x %.1f x 11.5) on the body's axis, got (%.2f, %.2f)" % [TYPE_NAME[t], MAXX[t] * BODY_R_WU, MAXX[t], bm.x, bm.z])
+		_check(absf(bm.x - BODY_R_WU) <= TOL_3D and absf(bm.z) <= TOL_3D, "S-001 amendment: 3D %s arrow base must sit at distance r = 11.5 wu on the body's +x axis (no per-shape front edge), got (%.2f, %.2f)" % [TYPE_NAME[t], bm.x, bm.z])
 		_check(absf(bm.y - LIFT_WU) <= TOL_3D and absf(ap.y - LIFT_WU) <= TOL_3D, "S-001: 3D %s arrow must be lifted 0.2 wu above the body plane, base y %.3f apex y %.3f" % [TYPE_NAME[t], bm.y, ap.y])
 		_check(ap.x > bm.x and absf(ap.z - bm.z) <= TOL_3D, "S-001 (U3): 3D %s arrow apex must point outward along +x of the body frame, apex %s base %s" % [TYPE_NAME[t], ap, bm])
 	node.queue_free()
@@ -231,14 +234,13 @@ func _test_arrow_2d() -> void:
 			continue
 		var body: Polygon2D = n.get_node("Body")
 		var k := body.scale.x
-		_check(absf(tri["length"] - LEN_2D) <= TOL_2D, "S-001 DRAFT-facing-arrow-len: 2D %s arrow length %.3f px, draft %.1f (0.4 x 2 x 12), within %.1f" % [TYPE_NAME[t], tri["length"], LEN_2D, TOL_2D])
+		_check(ar.get_parent() == n, "S-001 amendment: 2D %s Arrow must be a sibling of Body under the unit's Node2D (not a child of Body), parent %s" % [TYPE_NAME[t], ar.get_parent()])
+		var h: float = 0.5 + OFFSET_RAD[t]
+		_check(absf(angle_difference(ar.rotation, h)) < 1e-3, "S-001 amendment: 2D %s Arrow rotation %.4f must be h = facing + offset = %.4f" % [TYPE_NAME[t], ar.rotation, h])
+		_check(absf(tri["length"] - LEN_2D * k) <= TOL_2D, "S-001 DRAFT-facing-arrow-len: 2D %s arrow length %.3f px, draft %.1f x k %.2f (0.4 x 2 x 12 x k), within %.1f" % [TYPE_NAME[t], tri["length"], LEN_2D * k, k, TOL_2D])
 		_check(absf(tri["width"] - tri["length"] * 0.5) <= TOL_2D, "S-001: 2D %s arrow base width %.3f must be half its length %.3f" % [TYPE_NAME[t], tri["width"], tri["length"]])
-		var maxx := 0.0
-		for p in uv.unit_polygon(id):
-			maxx = maxf(maxx, p.x)
 		var bm: Vector3 = tri["base_mid"]
-		_check(absf(bm.x - maxx * k) <= TOL_2D and absf(bm.y) <= TOL_2D, "S-001 (U4): 2D %s arrow base must sit at largest x %.2f x k %.2f = %.2f on the axis, got (%.2f, %.2f)" % [TYPE_NAME[t], maxx, k, maxx * k, bm.x, bm.y])
-		_check(absf(angle_difference(ar.rotation, body.rotation)) < 1e-4, "S-001: 2D %s Arrow rotation %.4f must be the Body's %.4f (the same value, fac + offset)" % [TYPE_NAME[t], ar.rotation, body.rotation])
+		_check(absf(bm.x - SHAPE_R_PX * k) <= TOL_2D and absf(bm.y) <= TOL_2D, "S-001 amendment: 2D %s arrow base must sit at r = 12 x k = %.2f px on its local +x ray (no per-shape front edge), got (%.2f, %.2f)" % [TYPE_NAME[t], SHAPE_R_PX * k, bm.x, bm.y])
 	uv.queue_free()
 
 
@@ -262,48 +264,45 @@ func _test_direction_and_half_turn() -> void:
 		for id in [1, 2, 3, 4, 5, 6, 11, 15]:
 			var t: int = (id - 1) % 10
 			var want: float = DIR0[t].rotated(f).angle() # the paragraph's per-type direction, turned by the facing
-			var a3 = _apex_angle_3d(u3.unit_node(id))
-			var a2 = _apex_angle_2d(uv.unit_node(id))
+			var r3 = _apex_angle_3d(u3, id)
+			var r2 = _apex_angle_2d(uv, id)
+			var a3 = r3["a"] if r3 != null else null
+			var a2 = r2["a"] if r2 != null else null
 			dir3[[id, f]] = a3
 			dir2[[id, f]] = a2
-			_check(a3 != null and _deg(a3, want) <= DIR_TOL_DEG, "S-001: 3D %s (unit %d) at facing %.2f: apex angle %s, want %.1f deg (facing + offset)" % [TYPE_NAME[t], id, f, ("%.1f deg" % rad_to_deg(a3)) if a3 != null else "no Arrow", rad_to_deg(want)])
-			_check(a2 != null and _deg(a2, want) <= DIR_TOL_DEG, "S-001: 2D %s (unit %d) at facing %.2f: apex angle %s, want %.1f deg (facing + offset)" % [TYPE_NAME[t], id, f, ("%.1f deg" % rad_to_deg(a2)) if a2 != null else "no Arrow", rad_to_deg(want)])
+			var k: float = uv.unit_node(id).get_node("Body").scale.x
+			_check(a3 != null and _deg(a3, want) <= DIR_TOL_DEG, "S-001 (b): 3D %s (unit %d) at facing %.2f: apex angle %s, want %.1f deg (facing + offset)" % [TYPE_NAME[t], id, f, ("%.1f deg" % rad_to_deg(a3)) if a3 != null else "no arrow_apex_world", rad_to_deg(want)])
+			_check(a2 != null and _deg(a2, want) <= DIR_TOL_DEG, "S-001 (b): 2D %s (unit %d) at facing %.2f: apex angle %s, want %.1f deg (facing + offset)" % [TYPE_NAME[t], id, f, ("%.1f deg" % rad_to_deg(a2)) if a2 != null else "no arrow_apex_px", rad_to_deg(want)])
+			_check(r3 != null and absf(r3["d"] - (BODY_R_WU + LEN_3D)) <= TOL_3D, "S-001 (b): 3D %s (unit %d) apex must be r + 0.4 x size = 20.7 wu from the centre, got %s" % [TYPE_NAME[t], id, r3["d"] if r3 != null else "no arrow_apex_world"])
+			_check(r2 != null and absf(r2["d"] - (SHAPE_R_PX + LEN_2D) * k) <= TOL_2D, "S-001 (b): 2D %s (unit %d) apex must be (12 + 9.6) x k = %.2f px from the centre, got %s" % [TYPE_NAME[t], id, (SHAPE_R_PX + LEN_2D) * k, r2["d"] if r2 != null else "no arrow_apex_px"])
 	# Positive control: the same unit, facing changed by a half turn between two frames -> apex on the opposite side.
 	for id in [1, 4, 5]:
 		for pair in [[0.0, PI], [0.9, 0.9 + PI]]:
 			for view in [dir3, dir2]:
 				var p = view[[id, pair[0]]]
 				var q = view[[id, pair[1]]]
-				_check(p != null and q != null and _deg(p, q) > 180.0 - DIR_TOL_DEG, "CONTROL S-001: unit %d turned a half turn (%.2f -> %.2f) must have its apex on the opposite side, got %s and %s deg" % [id, pair[0], pair[1], ("%.1f" % rad_to_deg(p)) if p != null else "no Arrow", ("%.1f" % rad_to_deg(q)) if q != null else "no Arrow"])
+				_check(p != null and q != null and _deg(p, q) > 180.0 - DIR_TOL_DEG, "CONTROL S-001 (b): unit %d turned a half turn (%.2f -> %.2f) must have its apex on the opposite side, got %s and %s deg" % [id, pair[0], pair[1], ("%.1f" % rad_to_deg(p)) if p != null else "no accessor", ("%.1f" % rad_to_deg(q)) if q != null else "no accessor"])
 	u3.queue_free()
 	uv.queue_free()
 
 
-# World angle (x, y of the sim = x, z of the 3D scene) of the 3D apex's offset from the body centre; null without an Arrow.
-func _apex_angle_3d(body: Node3D) -> Variant:
-	if body == null:
+# World angle (x, y of the sim = x, z of the 3D scene) and distance of the 3D apex from the body centre, from the accessor;
+# null without the accessor or the body.
+func _apex_angle_3d(u3: Node3D, id: int) -> Variant:
+	var body: Node3D = u3.unit_node(id)
+	if body == null or not u3.has_method("arrow_apex_world"):
 		return null
-	var ar = body.get_node_or_null("Arrow") as MeshInstance3D
-	if ar == null:
-		return null
-	var tri: Dictionary = _tri((_mesh_pts(ar)).map(func(p): return ar.global_transform * (p as Vector3)))
-	if tri.is_empty():
-		return null
-	var v: Vector3 = (tri["apex"] as Vector3) - body.global_position
-	return atan2(v.z, v.x)
+	var v: Vector3 = (u3.call("arrow_apex_world", id) as Vector3) - body.global_position
+	return {"a": atan2(v.z, v.x), "d": v.length()}
 
 
-# Angle of the 2D apex in the unit node's frame (x right, y down, as the sim's x and y); null without an Arrow.
-func _apex_angle_2d(n: Node2D) -> Variant:
-	if n == null:
+# Angle and distance of the 2D apex from the unit node's centre, from the accessor; null without it.
+func _apex_angle_2d(uv: Node2D, id: int) -> Variant:
+	var n: Node2D = uv.unit_node(id)
+	if n == null or not uv.has_method("arrow_apex_px"):
 		return null
-	var ar = n.get_node_or_null("Arrow") as Polygon2D
-	if ar == null:
-		return null
-	var tri: Dictionary = _tri(Array(ar.polygon).map(func(p): return Vector3((ar.transform * (p as Vector2)).x, (ar.transform * (p as Vector2)).y, 0.0)))
-	if tri.is_empty():
-		return null
-	return atan2((tri["apex"] as Vector3).y, (tri["apex"] as Vector3).x)
+	var v: Vector2 = (uv.call("arrow_apex_px", id) as Vector2) - n.global_position
+	return {"a": v.angle(), "d": v.length()}
 
 
 # Amendment FINDING-facing-offset-2d-only: one source, UnitVisuals.facing_offset(type); and at pitch 90 the raider's 3D nose
@@ -380,24 +379,22 @@ func _nose2(pts: PackedVector2Array) -> Vector2:
 	return Vector2(n.x, n.z * 0.0 + n.y)
 
 
-# S-001: qa_state() gains `arrows` = count of Arrow nodes = unit count (U1).
-func _test_arrow_count_in_qa_state() -> void:
-	var p = load(VIEW)
-	if p == null:
-		_check(false, "tactical_view.tscn must load")
+# S-001: arrow_count() of each view equals the unit count (no qa_state in this piece; VG-C-land-marks adds `arrows`).
+func _test_arrow_counts() -> void:
+	var gu := _load(SCENES + "ground_units.gd")
+	var uvs = load(UV)
+	if gu == null or uvs == null:
 		return
-	var v: Node = p.instantiate()
-	root.add_child(v)
+	var fx := _fixture()
+	var u3: Node3D = gu.new()
+	root.add_child(u3)
+	var uv: Node2D = uvs.new()
+	root.add_child(uv)
 	await process_frame
-	v.set_process(false)
-	await process_frame
-	var units := _units(0.3).filter(func(u): return int(u["faction"]) == 0)
-	v.load_frame(_frame(units))
-	await process_frame
-	var q: Dictionary = v.qa_state()
-	var inv = q.get("inventory", {})
-	var n = inv.get("arrows", q.get("arrows", null)) if inv is Dictionary else q.get("arrows", null)
-	_check(n != null, "S-001 (b): qa_state() has no `arrows` (inventory keys %s)" % [inv.keys() if inv is Dictionary else inv])
-	if n != null:
-		_check(int(n) == units.size(), "S-001: qa_state arrows %s must equal the unit count %d" % [n, units.size()])
-	v.queue_free()
+	var units := _units(0.3)
+	u3.set_units(units, fx.terrain(), [0.0], [])
+	uv.set_frame(_frame(units), 0, 0.25, Vector2.ZERO)
+	_check(u3.has_method("arrow_count") and int(u3.call("arrow_count")) == units.size(), "S-001 (b): Units3D.arrow_count() must equal the unit count %d, got %s" % [units.size(), u3.call("arrow_count") if u3.has_method("arrow_count") else "no accessor"])
+	_check(uv.has_method("arrow_count") and int(uv.call("arrow_count")) == units.size(), "S-001 (b): UnitVisuals.arrow_count() must equal the unit count %d, got %s" % [units.size(), uv.call("arrow_count") if uv.has_method("arrow_count") else "no accessor"])
+	u3.queue_free()
+	uv.queue_free()
