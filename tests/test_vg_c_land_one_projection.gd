@@ -28,6 +28,8 @@ extends "res://tests/support/vg_c_case.gd"
 #  4. marks_px: values {"icon": [x, y]} as Arrays of two floats; structures keyed "structure:<id>". hidden_on_land is a top-level
 #     qa_state() key. The hidden terrain node is named "TerrainLayer" (the name hidden_on_land carries).
 #  5. has_projector() -> bool is read on the nodes Deaths, Abilities and Ambient found under the view by find_child.
+#  6. sight_discs (Architect ruling 2026-10-23): qa_state()["sight_discs"] exists and is empty until VG-A-sightdisc fills it; its shape is
+#     not stated (Dictionary or Array), so the test asserts present and `.size() == 0`. The piece also calls FogLayer.set_terrain(_terrain).
 #
 # CONTROLS: c1 the camera really moved between the passes (the icons' expected position changed by more than 10 px); c2 the death
 # wreck and the ability effect exist in the fixture frame (so a has_projector pass is not on an empty layer); c3 the direct
@@ -222,6 +224,8 @@ func _run() -> void:
 	for n in ["Deaths", "Abilities", "Ambient"]:
 		var fxn = v._node(n)
 		_check(fxn != null and fxn.has_method("has_projector") and fxn.has_projector(), "R-010-01: %s has no valid projector on land (has_projector missing or false)" % n)
+	var qd: Dictionary = v.qa_state()
+	_check(qd.has("sight_discs") and qd["sight_discs"].size() == 0, "R-010-01: qa_state() sight_discs is %s, want the key present and empty (key missing on main)" % [qd.get("sight_discs", "<no key>")])
 	_check(w0 >= 0.0, "worst default-camera offset is %s" % w0)
 	v.queue_free()
 	current_scene = null
