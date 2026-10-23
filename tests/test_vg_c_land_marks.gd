@@ -21,9 +21,15 @@ extends "res://tests/support/vg_c_case.gd"
 # UNSTATED INTERFACE CHOICES (the paragraph is silent; a builder may need to reconcile, nothing else is assumed):
 #  (1) RIDGE ORIENTATION. The paragraph says "a ridge of 400 wu height along column 4". Taken as heights[j * 8 + 4] (constant
 #      x, running along y) NO unit can be occluded: probed on main, the rig default camera sits at (920, 3000, 3437.3), looks
-#      along -y, and every pick hit equals its unit's point. The ridge here runs along ROW 4 (heights[4 * 8 + i], constant
-#      y, crest at y = 450, across the view axis); units "behind" it have y < 450. The paragraph needs the word "row" or
+#      along -y, and every pick hit equals its unit's point. The ridge here runs along ROWS 3 and 4 (heights[j * 8 + i], constant
+#      y, crest from y = 350 to 450, across the view axis); units "behind" it have y < 450. The paragraph needs the word "row" or
 #      "across the camera's view".
+#      CREST WIDTH (Architect ruling (c), 2026-10-23): rows 3 and 4 both carry the 400 wu height, so the crest is a plateau
+#      from y = 350 to y = 450, 100 wu wide (cells are 100 wu) = 2 x the 50 wu GroundPick march step: the test does not
+#      depend on the thin-crest fix (FINDING-groundpick-march-skips-crest). A one-row ridge was a point peak. The plateau
+#      is widened toward the back, so the 8 wu control (y = 442) now sits ON the plateau, 8 wu behind its camera-side
+#      edge (y = 450): measured gap -0.004 wu (the 17.6 wu of the one-row fixture came from the point peak). Widening toward
+#      the camera instead (rows 4 and 5) raised the 442 gap to 48.8 wu, past the slack, so it was not used.
 #  (2) "occluded_ids" in qa_state sits inside the "ground3d" block (like slope_view and units3d), which tactical_view forwards.
 #  (3) Ids in marks_visible are decimal strings, as units_px keys are.
 #  (4) The recompute-on-camera-change hook has no named signal or method: the test moves the rig (zoom_by, pan_to) and reads
@@ -34,6 +40,9 @@ extends "res://tests/support/vg_c_case.gd"
 #      would count as occluded; 17.6 at 8 wu (y = 442), 13.2 at 6 wu. This test uses 8 wu (the one number not from the
 #      paragraph; nothing else here is). Separately, GroundPick's 50 wu march step skips the thin crest for some rays
 #      (y = 438: no hit before the unit, gap -535), a false negative the paragraph does not know about.
+#  (7) ARROWS KEY (Architect ruling 2026-10-23): qa_state()["arrows"] is a Dictionary {"units_3d": int, "units_2d": int},
+#      from Units3D.arrow_count() (ground_units.gd) and UnitVisuals.arrow_count() (unit_visuals.gd), both added by the
+#      facing-arrow piece, which lands first. Inner names are this test's choice. Red on main for reason (b): no key.
 # Fixture frame (host and view): faction 0 owns all of 1 (behind), 2 (front), 3 (8 wu behind the crest); ids and points
 # below in _frame(). Camera = the rig default after set_terrain (height 3000, pitch 50 degrees).
 # Positive control (paragraph): a flat fixture gives an empty occluded_ids. The pick-distance controls (test_pick_geometry)
@@ -43,7 +52,7 @@ const SLACK_WU := 20.0 # DRAFT-occlusion-slack, ledger day38
 const RIDGE_CM := 40000 # 400 wu
 const BEHIND := Vector2(450.0, 100.0)
 const FRONT := Vector2(450.0, 700.0)
-const CREST := Vector2(450.0, 442.0) # 8 wu behind the crest peak at y = 450 (cell 4's centre); see choice (6)
+const CREST := Vector2(450.0, 442.0) # 8 wu behind the crest's camera-side edge at y = 450 (cell 4's centre); see choice (6)
 const UnitVisualsScript := "res://scenes/tactical_c/unit_visuals.gd"
 
 var _stub_src := "extends Node\nvar era := \"ground\"\nfunc kind() -> String:\n\treturn era\n"
@@ -55,7 +64,7 @@ func _terrain(ridge: bool) -> Dictionary:
 	var walk := PackedByteArray()
 	for j in 8:
 		for i in 8:
-			hs.append(RIDGE_CM if (ridge and j == 4) else 0)
+			hs.append(RIDGE_CM if (ridge and (j == 3 or j == 4)) else 0)
 			bands.append(1)
 			walk.append(1)
 	return {"cells_w": 8, "cells_h": 8, "bands": bands, "walkable": walk, "heights": hs, "slopes": []}
@@ -327,6 +336,8 @@ func test_view_marks_land() -> void:
 	var n2 = uvn.unit_node(2)
 	_check(n1 != null and not n1.visible, "R-001-06: the 2D node of the occluded unit 1 is invisible")
 	_check(n2 != null and n2.visible, "R-001-06 CONTROL: the 2D node of the unit in front is visible")
+	var ar = qa.get("arrows", null)
+	_check(ar is Dictionary and (ar as Dictionary).get("units_3d", null) is int and (ar as Dictionary).get("units_2d", null) is int, "R-001-06: qa_state has an arrows Dictionary {units_3d: int, units_2d: int}, got %s" % [ar])
 	var g: Dictionary = qa.get("ground3d", {})
 	_check(g.get("occluded_ids", null) == [1], "R-001-06: the view's ground3d block carries occluded_ids [1], got %s" % [g.get("occluded_ids")])
 	root.get_node("EraConfig").set_era(root.get_node("EraConfig").SPACE_ERA_ID)
