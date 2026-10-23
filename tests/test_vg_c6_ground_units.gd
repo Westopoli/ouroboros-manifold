@@ -27,7 +27,13 @@ func _run() -> void:
 	_check(walker != null, "S-010: no 3D node for unit 1")
 	if walker != null:
 		_check(absf(walker.position.y - (fx.ground_y(250.0, 250.0) + 1.0)) < 0.05, "S-010: walker Y %f is not the ground height + 1.0 lift %f (TD-VG-C-ground-lift, DRAFT-unit-ground-lift; See also tests/test_vg_c_unit_ground_fit.gd)" % [walker.position.y, fx.ground_y(250.0, 250.0) + 1.0])
-		_check(absf(walker.position.x - 250.0) < 0.01 and absf(walker.position.z - 250.0) < 0.01, "S-010: walker world (x,y) must be Vector3(x, h, y)")
+		# The lift runs along the ground normal, so x/z move by its components (DEC-ground-lift-xz; same formula as ground_units.gd).
+		var gp := preload("res://scenes/ground3d/ground_pick.gd")
+		var r: float = gu.BODY_RADIUS_WU
+		var gdx := Vector3(2.0 * r, gp.height_at(t, 250.0 + r, 250.0) - gp.height_at(t, 250.0 - r, 250.0), 0.0)
+		var gdz := Vector3(0.0, gp.height_at(t, 250.0, 250.0 + r) - gp.height_at(t, 250.0, 250.0 - r), 2.0 * r)
+		var gn := gdz.cross(gdx).normalized()
+		_check(absf(walker.position.x - (250.0 + gn.x * 1.0)) < 0.01 and absf(walker.position.z - (250.0 + gn.z * 1.0)) < 0.01, "S-010: walker world (x,y) must be the ground point + normal x 1.0 lift (x %f z %f; DEC-ground-lift-xz)" % [walker.position.x, walker.position.z])
 	var flyer: Node3D = node.unit_node(2)
 	_check(flyer != null, "S-132: no 3D node for flyer unit 2")
 	if flyer != null:
