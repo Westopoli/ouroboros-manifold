@@ -1,6 +1,7 @@
 # Credits runs, 2026-10-21
 
 Plan 2026-10-23 (DEC-credit-day): the day's runs follow the list in decisions.md; one build pipeline at a time (DEC-slots-one).
+Target (Westley): exhausted by 21:00 EDT 2026-10-23; checkpoint 16:00 EDT (DEC-credit-9pm).
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
