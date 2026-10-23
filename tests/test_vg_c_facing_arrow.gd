@@ -43,7 +43,8 @@ extends "res://tests/support/vg_c_case.gd"
 #       channel within 0.01 of 1.0.
 #   U6  The pitch-90 test builds the real Ground3DHost, calls camera_rig().set_top_down(true) and projects with the rig
 #       camera; nose = mean of the body points of largest local x.
-#   U7  UnitSquads's own use of facing_offset is not asserted (its rotation lives in the private _batches).
+#   U7  UnitSquads has no rotation accessor: its model rotation is read from the private _batches[0]["rot"] (a pin added by
+#       Architect ruling 2026-10-23 for the piece making unit_squads.gd use UnitVisuals.facing_offset(type)).
 # The Superseded pins (TD-VG-C-facing-arrow) in tests/test_vg_c6_ground_units.gd, test_vg_c6b_ground_units_layers.gd and
 # test_vg_e_e1k.gd were checked earlier: none reads rotation.y or a body's child inventory, so none is edited.
 
@@ -153,6 +154,7 @@ func _run() -> void:
 	await _test_direction_and_half_turn()
 	await _test_offset_single_source_pitch90()
 	await _test_arrow_counts()
+	await _test_squad_rotation()
 
 
 # CONTROL (green on main): the triangle reader finds the apex, length and width of a known triangle, 3D and 2D.
@@ -398,3 +400,23 @@ func _test_arrow_counts() -> void:
 	_check(uv.has_method("arrow_count") and int(uv.call("arrow_count")) == units.size(), "S-001 (b): UnitVisuals.arrow_count() must equal the unit count %d, got %s" % [units.size(), uv.call("arrow_count") if uv.has_method("arrow_count") else "no accessor"])
 	u3.queue_free()
 	uv.queue_free()
+
+
+# A raider squad model is turned by facing + UnitVisuals.facing_offset(raider) = facing + pi (single source of the offset).
+func _test_squad_rotation() -> void:
+	var sqs = load("res://scenes/tactical_c/unit_squads.gd")
+	if sqs == null:
+		_check(false, "S-001 (squad): res://scenes/tactical_c/unit_squads.gd does not load")
+		return
+	var sq: Node2D = sqs.new()
+	root.add_child(sq)
+	await process_frame
+	var facing := 0.4
+	var units := [_unit(1, 0, 0, 1000.0, 1500.0, facing)]
+	sq.call("set_frame", _frame(units), 0, 0.25, Vector2.ZERO)
+	var batches: Array = sq.get("_batches")
+	_check(batches.size() == 1 and sq.call("squad_models", 1).size() >= 3, "CONTROL: S-001 (squad): a raider squad must be drawn, got %d batches" % batches.size())
+	if batches.size() == 1:
+		var want: float = facing + load(UV).facing_offset(0)
+		_check(absf(float(batches[0]["rot"]) - want) < 1e-4 and absf(want - (facing + PI)) < 1e-4, "S-001 (squad): raider squad model rotation %f must be facing + facing_offset(raider) = facing + pi = %f" % [float(batches[0]["rot"]), facing + PI])
+	sq.queue_free()
