@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 8 stories, 28 rules; the architecture rules are concrete, the pricing, era-transition and unlock rules carry flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 9 open flags: Q-146-02, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-151-02. |
+| Implied-but-unstated behavior turned into flags | 4 open flags: Q-148-04, Q-149-01, Q-149-02, Q-151-02; Q-146-02, Q-147-01, Q-147-02, Q-148-05 and Q-150-01 closed (register, 2026-10-21 and 2026-10-22). |
 | Every visible-surface story has a reference | Not applicable in this epic; era looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags. Launch has two eras, one in space and one on land (S-147), and the base SKU's price buys 3 to 5 eras to start (S-149). The era-feel mechanism is chosen (the Climate of War, S-151, with its values found by the simulation lab); the transition trigger is chosen (the Long Horizon) with its measure open (Q-148-05); the land era's final name and brief (Q-147-01, the Greek placeholder stands in today) and the roster size per era (Q-082-05) still need Westley.
+**Gate verdict: not passed.** Blocked on the open flags listed at the foot. Launch has two eras, one in space and one on land (S-147), and the base SKU's price buys 3 to 5 eras to start (S-149). The era-feel mechanism is chosen (the Climate of War, S-151, with its values found by the simulation lab); the transition trigger is chosen (the Long Horizon) with its measure closed (Q-148-05, a named draft); the land era is named Greek (Q-147-01, closed 2026-10-22) and the roster size per era is closed (Q-082-05, each launch era carries its own 20 to 40).
 
 ## Purpose
 
@@ -52,19 +52,19 @@ Rules
 
 Inputs: pack manifest.
 Outputs: validation report; loaded pack.
-Open flags: Q-146-02 (whether resource names, doctrine names and environmental troubles are names or mechanics).
+Open flags: none. Q-146-02 closed 2026-10-21 (register: names and prose may differ per era, mechanics identical).
 
 ### S-147 — Two eras, one skeleton
 As a player, I want an era in space and an era on land to play, all one game, so that the smallest version I buy already spans two ages.
 
 Rules
-- R-147-01  Given the first build, When eras are listed, Then it contains exactly two, one in space and one on land, each with an era kind, with units and rules the same within a kind and the vision model, ping, vision units, landscape and visuals different between them (Westley, 2026-10-02 and 2026-10-05), chronologically ordered. The Settled Reach is the space era (`assets/eras/settled_reach/`). The land era is Greek antiquity, shipped today as the placeholder pack `assets/eras/greek_placeholder/` (the era named Greek, kind ground, era order 1, the six roster types walking, placeholder tone and scale) and reached in the game by the era toggle [Q-147-01: its final name, setting brief and tone, and the ordered roster of eras after the first two].
+- R-147-01  Given the first build, When eras are listed, Then it contains exactly two, one in space and one on land, each with an era kind, with units and rules the same within a kind and the vision model, ping, vision units, landscape and visuals different between them (Westley, 2026-10-02 and 2026-10-05), chronologically ordered. The Settled Reach is the space era (`assets/eras/settled_reach/`). The land era is Greek antiquity, named Greek, shipped today as the pack `assets/eras/greek_placeholder/` (the era named Greek, kind ground, era order 1, the six roster types walking, placeholder tone and scale) and reached in the game by the era toggle (Q-147-01 closed 2026-10-22: the land era is named Greek; its brief, tone and roster order are drafts written from the Greek antiquity setting).
 - R-147-02  Given any era, When a mission runs, Then the map generator, mission generator, agents, events, combat, and chronicle are the same code with the era's pack loaded.
 - R-147-03  Given the same seed in two eras, When maps are generated, Then the map seeds are identical and the landscape and the rendering differ, since the land and space landscape systems are sisters with different objects (E-17 S-166; the space system is Q-166-02) [Q-147-02: whether eras share map seeds or eras may weight layouts differently].
 
 Inputs: pack set.
 Outputs: era list; contract tests.
-Open flags: Q-147-01, Q-147-02.
+Open flags: none. Q-147-01 closed 2026-10-22 (the land era is named Greek, DEC-Q147); Q-147-02 closed 2026-10-21 (identical seeds).
 
 ### S-148 — Moving through eras
 As a player, I want a campaign to move chronologically through the eras I own, so that a bloodline can span the ages.
@@ -77,7 +77,7 @@ Rules
 
 Inputs: ownership; campaign state.
 Outputs: era in the save; chronicle entry.
-Open flags: Q-148-04 (the loop's effect on tech, characters, and the chronicle), Q-148-05 (the reach measure behind the Long Horizon).
+Open flags: Q-148-04 (the loop's effect on tech, characters, and the chronicle), Q-148-05 closed 2026-10-21 (register; the two chapters and the ceiling are named drafts).
 
 ### S-149 — Buying and earning eras
 As a player, I want a fair price and the chance to earn expansions by playing, so that the game respects my time and my wallet.
@@ -104,7 +104,7 @@ Rules
 
 Inputs: content libraries.
 Outputs: cross-era validity tests.
-Open flags: Q-150-01 (what "civilization" content transfers across eras beyond archetypes and names; the Fortnite analogy names skins, dances, maps, and Westley extends it to civilizations).
+Open flags: none. Q-150-01 closed 2026-10-21 (register: archetype weights, naming subset and colours transfer to every era; skins map to the six abstract types).
 
 ### S-151 — Eras that feel different
 As a player, I want the ancient era to be scout-blind and the future era all-seeing, so that time changes how war feels.
@@ -114,11 +114,11 @@ Not deferred (Westley, 2026-10-15: the whole point of the simulation lab is to f
 Rules
 - R-151-01  Given an era pack, When loaded, Then the difference between eras is the Climate of War: each era sets its own fog thickness, engagement pace, and reinforcement rate (the pace of production, E-22 S-170, and of strongpoint reinforcement, E-15) as manifest values the engine consumes uniformly [Q-151-02: which economy values an era may set]; units, categories, and counters never change with the era. Chosen through the options pass, `docs/northstar/research/options/era-feel/`, Q-151-01.
 - R-151-02  Given the simulation lab's search over the game's settings (`docs/northstar/research/layer_dynamics/README.md`), When it reports, Then it describes every region where the depth conditions hold, not the first found, and each region is recorded as a candidate Climate of War for an era; an era's values are chosen from a reported region, never set by hand outside one.
-- R-151-03  Given the planned eras, When one is briefed, Then it follows the Era Creation Template (R-146-04). The brainstorm list of twenty eras is `docs/blender_stuff/3d_model_outline_all_eras.md` (2026-09-11; Settled Reach, Medieval, Roman, Age of Sail, Feudal Japan, World War II, Viking, Cyberpunk, Ancient Egypt, Mongol Steppe, Colonial Mars, Bronze Age Collapse, Napoleonic, Mesoamerican, Cold War, Silk Road, Interwar, Post-Apocalyptic, Polynesian, Renaissance Italy); Westley's spoken list adds Greek (the land era as built), World War I, the 2020s and Imperial China "and many more" (2026-10-15). The ordered, named roster is his and is open under Q-147-01; the list is not a decision.
+- R-151-03  Given the planned eras, When one is briefed, Then it follows the Era Creation Template (R-146-04). The brainstorm list of twenty eras is `docs/legacy/blender_stuff/3d_model_outline_all_eras.md` (2026-09-11; Settled Reach, Medieval, Roman, Age of Sail, Feudal Japan, World War II, Viking, Cyberpunk, Ancient Egypt, Mongol Steppe, Colonial Mars, Bronze Age Collapse, Napoleonic, Mesoamerican, Cold War, Silk Road, Interwar, Post-Apocalyptic, Polynesian, Renaissance Italy); Westley's spoken list adds Greek (the land era as built), World War I, the 2020s and Imperial China "and many more" (2026-10-15). The ordered, named roster is his and is open under Q-147-01; the list is not a decision.
 
 Inputs: lab reports (crossing regions); the era roster.
 Outputs: per-era Climate of War values in the manifest.
-Open flags: Q-151-02; Q-147-01 (the era roster).
+Open flags: Q-151-02. Q-147-01 closed 2026-10-22 (the land era is named Greek).
 
 ### S-243 — What an era pack carries for the economy
 As an era designer, I want the checklist to name everything the economy and the landscape need from a pack, so that an era is complete and nothing else.
@@ -132,7 +132,7 @@ Rules
 
 Inputs: pack manifest.
 Outputs: validation report.
-Open flags: Q-159-08, Q-146-02.
+Open flags: none. Q-159-08 and Q-146-02 closed 2026-10-21 (register).
 
 ## Inputs
 
@@ -173,7 +173,7 @@ Not applicable; see E-18 per era.
 
 ## Open ambiguity flags
 
-Q-146-02, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-151-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-148-04, Q-149-01, Q-149-02, Q-151-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

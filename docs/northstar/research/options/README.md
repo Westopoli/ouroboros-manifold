@@ -72,7 +72,7 @@ One agent per feature, launched only when Westley says so. The agent reads, in o
 - Options: the count and wild count in the brief's section 9, labeled A to D. A wild option is a shape no shipped game has and may have no precedent.
 - Per option: a name; one paragraph on how it works from the player's chair; a 30 to 60 second play vignette in second person; the brief constraints it honors and the ones it strains, named; prior art with a confidence tag (VERIFIED, REPORTED, ESTIMATED, AMBIGUOUS) or "none"; player-side tradeoffs as consequences; one SVG diagram. Camera and control groups also carry a control table per option.
 - Diagram: hand-authored SVG, 960 wide, either a screen wireframe (what the player sees at one moment, labeled regions) or a flow (states the player passes through). Real labels, no lorem, no external images, plain SVG 1.1 with no scripts and no foreignObject, so GitHub renders it.
-- Research: WebSearch and WebFetch allowed; cite every prior-art claim; `docs/research/games/*.md` may be read.
+- Research: WebSearch and WebFetch allowed; cite every prior-art claim; `docs/legacy/games/*.md` may be read.
 - Write access: only `docs/northstar/research/options/<slug>/`. Never `docs/bible/**`, `docs/northstar/ambiguity_register.md`, `CLAUDE.md`, tests, code.
 - Prose: normal prose in `options.md`; caveman only in the report back to the main agent.
 - Length: 600 to 1,500 words plus tables unless the brief says otherwise; the required elements per option set the floor. Longer means the option is drifting into "how".

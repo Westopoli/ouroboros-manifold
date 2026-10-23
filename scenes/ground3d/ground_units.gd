@@ -11,6 +11,8 @@ const UnitVisuals := preload("res://scenes/tactical_c/unit_visuals.gd")
 const FLYER_CLEARANCE_WU := 150.0
 # VG-C-unitscale (FINDING-unit-draw-overlap), DRAFT-unit-body-radius: the drawn mesh bounding box fits the 30 wu spawn lattice pitch (2 * OM_UNIT_COLLISION_RADIUS 15, csrc/om_constants.h:581, csrc/mission.c:2463); the body polygons reach 1.28 x the radius, so 11.5, not 15; shadow inside the body. Named draft, Westley may veto after the shot. See also tests/test_vg_c_unitscale.gd
 const BODY_RADIUS_WU := 11.5
+# VG-C-unit-ground-fit, DRAFT-unit-ground-lift: a walker body is lifted this far along the ground normal so it does not z-fight the ground. See also tests/test_vg_c_unit_ground_fit.gd
+const UNIT_GROUND_LIFT_WU := 1.0
 const SHADOW_RADIUS_WU := 10.0
 const SHADOW_LIFT_WU := 0.5
 const OWN_COLOUR := Color(0.2, 0.6, 1.0)
@@ -79,8 +81,18 @@ func set_units(units: Array, terrain: Dictionary, layer_floors_wu: Array, flyer_
 			n = _body(int(u.get("type", 0)), OWN_COLOUR if own else OTHER_COLOUR)
 			add_child(n)
 			_nodes[id] = n
-		n.position = Vector3(x, y_for(flyer, gy, floor_wu), z)
-		n.rotation.y = -float(u.get("facing", 0.0))
+		var facing := float(u.get("facing", 0.0))
+		if flyer:
+			n.position = Vector3(x, y_for(flyer, gy, floor_wu), z)
+			n.rotation.y = -facing
+		else:
+			var r := BODY_RADIUS_WU
+			var dx := Vector3(2.0 * r, GroundPick.height_at(terrain, x + r, z) - GroundPick.height_at(terrain, x - r, z), 0.0)
+			var dz := Vector3(0.0, GroundPick.height_at(terrain, x, z + r) - GroundPick.height_at(terrain, x, z - r), 2.0 * r)
+			var up := dz.cross(dx).normalized()
+			var fwd := Vector3(cos(facing), 0.0, sin(facing))
+			fwd = (fwd - up * fwd.dot(up)).normalized()
+			n.transform = Transform3D(Basis(fwd, up, fwd.cross(up)), Vector3(x, gy, z) + up * UNIT_GROUND_LIFT_WU)
 		var sh: Node3D = _shadows.get(id)
 		if flyer and sh == null:
 			sh = _disc()

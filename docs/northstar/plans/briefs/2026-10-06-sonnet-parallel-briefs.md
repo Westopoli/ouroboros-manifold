@@ -25,7 +25,7 @@ Product: `docs/northstar/era_pack_form.md`, one to two pages: "how an era is wri
 
 ## B5. Military-strategy synthesis (after Westley's Gemini run)
 
-Input: the deep-research file Westley drops into `docs/research/` (ask him for the path). Product: `docs/research/topics/terrain_in_military_doctrine.md`: each principle with its case, the numbers, the source, and "how it translates into a rule the sim could test" in the game's terms (five layers, chokes, high ground sees down, walkers and flyers). End with a ranked list and a table mapping each principle to a pillar in `docs/northstar/research/map_design/README.md` (branch `docs/map-design-pillars` until it lands) and to one of the five skills. Push `docs/military-doctrine`.
+Input: the deep-research file Westley drops into `docs/research/` (ask him for the path). Product: `docs/legacy/topics/terrain_in_military_doctrine.md`: each principle with its case, the numbers, the source, and "how it translates into a rule the sim could test" in the game's terms (five layers, chokes, high ground sees down, walkers and flyers). End with a ranked list and a table mapping each principle to a pillar in `docs/northstar/research/map_design/README.md` (branch `docs/map-design-pillars` until it lands) and to one of the five skills. Push `docs/military-doctrine`.
 
 ## B6. Website refresh, part 1: captures and pages (code and copy)
 

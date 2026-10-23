@@ -28,7 +28,7 @@ Read-only audit, origin/main at 69adce65. Nothing is decided here; rule meaning 
 
 ## 3. Skill by skill (question 1)
 
-Theory column names the principle from `docs/research/topics/lanchester_and_combat_theory.md` (L) and `active_layer_vision_mechanics.md` (V). "Firing count" means units able to fire, through time.
+Theory column names the principle from `docs/legacy/topics/lanchester_and_combat_theory.md` (L) and `active_layer_vision_mechanics.md` (V). "Firing count" means units able to fire, through time.
 
 | Skill | The play | Rules that carry it | Rules that fight it | Theory predicts | Verdict |
 |---|---|---|---|---|---|

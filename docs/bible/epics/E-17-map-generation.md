@@ -113,7 +113,7 @@ Rules
 
 Inputs: archetype; region.
 Outputs: canvas size in the map seed.
-Open flags: Q-118-02 (which way each archetype pushes the canvas). Q-195-01 (what the largest present size is).
+Open flags: Q-195-01 (what the largest present size is).
 
 ### S-117 — Fair enough
 Flag closed, rule text pending: Q-113-01, a score outside the range is logged only until the generator is tuned in the P2 landscape design phase; switching to reject-and-regenerate is a design-phase decision. The rule below is what the tests read today.
@@ -473,7 +473,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-165-01, Q-166-02, Q-190-07, Q-166-04, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-165-01, Q-166-02, Q-190-07, Q-166-04, Q-193-04, Q-193-05, Q-194-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
