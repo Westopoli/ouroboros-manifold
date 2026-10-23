@@ -2587,7 +2587,7 @@ acceptance = ["tests/test_vg_e_e1n.gd"]
 depends_on = ["VG-E1", "VG-A18"]
 status = { state = "queued" }
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E1N, lane E1 part b, after the E1p paragraph; built on origin/push/vg-e1n-fix 87575377; lands only with VG-E1M and VG-E1W (its set_frame caller is E1W)
-tests_pending = false  # tests exist on origin/push/vg-e1n-tests 97fedf68 (tests/test_vg_e_e1n.gd)
+tests_pending = true  # the tests are on origin/push/vg-e1n-tests 97fedf68, not on main (pieces.py FAILs a missing acceptance file without it); flips at the landing
 size_estimate = "E1n map markers (S-235): strongpoints from the full-frame list joined to the structures rows for owner and rubble, the home base from the kind-7 map node nearest the own units; marks with no sim source stay stubs; DRAFT-e1n-marker"
 
 [[piece]]
