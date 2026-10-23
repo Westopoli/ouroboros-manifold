@@ -598,6 +598,8 @@ _skip_display = pytest.mark.skipif(bool(_NEEDS), reason="needs %s on PATH (displ
 def _boot_to_tactical_qa(fake_home: Path, xdg: Path | None, monkeypatch) -> dict:
     """Boot the real game through GodotGame with HOME=fake_home and the given XDG_DATA_HOME
     (None = removed from the process environment), walk to the tactical view, return qa."""
+    if not (REPO_ROOT / "pipe" / "ouroboros_pipe").exists():  # autoload/c_bridge.gd loads res://pipe/ouroboros_pipe
+        pytest.skip("pipe/ouroboros_pipe not built: run make pipe/ouroboros_pipe")
     from test_ground_era import _to_tactical  # noqa: PLC0415 (tests/qa/desktop on sys.path)
     _clean_env(monkeypatch, fake_home, xdg)
     g = dc.GodotGame(qa_port=dc.pick_free_port(), seed=1, reset_privacy_flag=False)
