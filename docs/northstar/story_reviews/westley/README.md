@@ -38,16 +38,16 @@ OM_GODOT_GUI=1 godot --path . -- --era greek_placeholder --seed 1
 
 ## C-S132-ground-force-three-groups-sight-discs.png
 
-**What you see:** Land era, seed 1, tactical band (camera height 3000, scale 0.18), tick 22 (1920x1080). 176 units are in the frame, in three groups, each inside a lit sight disc; the discs follow the land's relief. Small white triangles sit at the edge of each squad (the facing arrows, VG-C-facing-arrow). Terrain draws in two tones, green and purple, with the dark wall and ridge behind. From lane C landing 3b (VG-C-facing-arrow, VG-C-ground-one-colour, VG-C-groundpickstep).
-**Legend:** Blue outlines: own units; yellow ring: layer ring; lit green/purple disc: sight; small white triangle: the squad's facing. Red lines: map edges.
-**Judge:** Is each squad's facing readable, and is the ground one consistent colour scheme with no per-layer tint?
-**Camera:** x 13500, y 2650, height 3000, scale 0.18, tick 22. Known: the s132 play fails here on three pairs of units sharing one pixel at this distance (FINDING-s132-one-pixel, same on main).
+**What you see:** Land era, seed 1, tactical band (camera height 3000, scale 0.18), tick 22 (1920x1080). 176 units are in the frame, in three groups, each inside a lit sight disc; the discs follow the land's relief. Each unit body carries one small white unshaded triangle on its heading ray, 0.4 body sizes long (the facing arrow, VG-C-facing-arrow; `ground_units.gd`), on a blue body for your units and red for others. The ground draws in two colours only, the green ground colour and the magenta steep colour (`ground_bands.gd`), with the dark wall and ridge behind. From lane C landing 3b (VG-C-facing-arrow, VG-C-ground-one-colour, VG-C-groundpickstep).
+**Legend:** Blue body: own unit; red body: other faction; small white triangle on a body: that unit's facing; yellow ring: layer ring; lit green/magenta disc: sight. Red lines: map edges.
+**Judge:** Is each unit's facing readable from its white triangle, and is the ground one consistent colour scheme with no per-layer tint?
+**Camera:** x 13500, y 2650, height 3000, scale 0.18, tick 22. Known: the s132 play fails here on three pairs of units, (41,44), (50,53), (76,79), that round to one pixel at this distance; red on main before and after this landing (FINDING-s132-one-pixel, s132 three pairs: a test rounding premise, not a spawn overlap).
 **See it live (Westley 2026-10-22, DEC-S140-live-look):** in your checkout: `cd ~/Projects/ouroboros-manifold && git pull --no-rebase && make && make pipe/ouroboros_pipe`, then
 ```
 OM_GODOT_GUI=1 godot --path . -- --era greek_placeholder --seed 1
 ```
 **Beta status of what is shown:**
-- Facing arrows, one-colour ground and the ground-pick step: landed with gate 3b; no separate pick frame exists (the pick step is exercised by the s140_land click, shot above); not Seen.
+- Facing arrows (one white triangle per unit body), one-colour ground and the ground-pick step: landed with gate 3b; no separate pick frame exists (the pick step is exercised by the s140_land click, shot above); not Seen.
 
 ## Removed today
 
