@@ -28,7 +28,8 @@ DRAFT_WT_MIGRATING_MAX_DAYS = 7
 REAP_UNFLAGGED_DAYS = 3  # Westley 2026-10-21
 DRAFT_WT_BUILD_OUTPUTS = [".godot/", "build/", "dist/", "obj/", "obj_dbg/", "*.import", "*.so", "*.o",
                           "pipe/ouroboros_pipe", "pipe/ouroboros_pipe_dbg", ".sdk_engineer_report.md",
-                          ".wt-state", ".wt-done", ".wt-done-pending"]
+                          ".wt-state", ".wt-done", ".wt-done-pending",
+                          "*.uid", "landing-template.md"]  # rev 2, HARNESS-wt-cap-2
 DEFAULT_ROOT = Path.home() / "Projects" / "om-push" / "wt"
 REPO = Path(__file__).resolve().parents[2]
 COLS = ["name", "state", "size_mb", "age_days", "branch", "on_origin", "dirty", "open_files"]
@@ -68,7 +69,7 @@ def on_origin(repo, sha) -> bool:
 
 
 def porcelain(path) -> list:
-    rc, out = git("status", "--porcelain", cwd=path)
+    rc, out = git("status", "--porcelain", "--untracked-files=all", cwd=path)
     return out.splitlines() if rc == 0 else []
 
 
