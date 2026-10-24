@@ -4147,7 +4147,6 @@ owns = ["scripts/specfactory/wt.py", "tests/specfactory/test_wt_cap.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_wt_cap.py"]
 depends_on = ["A94-harness"]  # ordering edge only: A94-harness owns scripts/specfactory/[!m]* and tests/specfactory/** (pieces.py --check; the edge HARNESS-sdk-buffer carries)
-status = { state = "queued" }  # rev 2 after the Sonnet audit of 2026-10-24; Westley approved ("draft approved, go"); tests first on the credit pipeline
-tests_pending = true
+status = { state = "attached", attach_sha = "639ecbd1" }  # landed 639ecbd1 (build 293b5c7a); rev 2 after the Sonnet audit of 2026-10-24; Westley approved ("draft approved, go")
 spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
 size_estimate = "wt.py (about 260 lines: new, done, status, reap, check; .wt-state flag; slot cap, disk cap, free floor, sizes cache, migration marker, lock) and its tests (about 220 lines, twelve cases with a positive control; the tests writer commits the stub)"

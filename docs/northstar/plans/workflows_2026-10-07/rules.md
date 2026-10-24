@@ -5,7 +5,7 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 ## (a) Builder (Doer)
 
 - Model Sonnet 5.5; never spawn sub-agents; think tersely; the last message is the report, no interim notices.
-- Worktree ONLY by absolute path: `git -C ~/Projects/ouroboros-manifold fetch -q && git -C ~/Projects/ouroboros-manifold worktree add -b <branch> ~/Projects/om-push/wt/<suffix> origin/main`. Every command names its absolute path; never cd into, or touch, `~/Projects/ouroboros-manifold`.
+- Worktree ONLY by absolute path: `python3 ~/Projects/ouroboros-manifold/scripts/specfactory/wt.py new <name> --owner <you> --purpose "<piece>" --base origin/main`. Every command names its absolute path; never cd into, or touch, `~/Projects/ouroboros-manifold`.
 - No stash, rebase, amend, force, `make clean`; never push to main; never kill another process's gate.
 - Build: `make && make pipe/ouroboros_pipe pipe/ouroboros_pipe_dbg`; run `godot.real --headless --import` once first. Python `~/Projects/ouroboros-manifold/.venv/bin/python`; Godot `~/.local/bin/godot.real` (4.6.3).
 - Godot tests: `timeout 1800 scripts/run_godot_tests.sh <file>`. Display-needing files: `xvfb-run -a -s '-screen 0 1920x1080x24' godot.real --path . --resolution 1920x1080 -s <file>`. Wrap every Godot or xvfb run in `timeout 1800` (two wave-1 runs hung 8 h).
@@ -17,7 +17,7 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 - Liberties named in the spec are taken as written and marked in a code comment; anything else undecided stops the piece.
 - Stop and report (ok=false, stop_reason) on a file outside your list, a number nobody gave (named mockup drafts allowed: cite), or a new public C symbol not in the frozen header.
 - Never stage `*.import` or `*.uid` noise. `godot --import` leaves untracked `*.uid`: delete them before any checkout or merge. (Exception: a `.uid` beside a new script you wrote is committed per NOTE-uid-files.)
-- Push your branch, write `.wt-done` (date, branch, pushed sha). Stop past 120k context.
+- Push your branch, run `wt.py done <path> <sha>` (it writes `.wt-done`: date, branch, pushed sha). Stop past 120k context.
 
 ## (b) Landing clerk (Engineer)
 
