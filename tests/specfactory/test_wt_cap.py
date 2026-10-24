@@ -126,7 +126,7 @@ def test_01_new_refuses_at_the_slot_cap_and_names_active_trees(world, monkeypatc
     world.add("f1", "finished")
     stub(monkeypatch)
     rc, out = run_main(capsys, ["new", "t1_new", *OWNER_PURPOSE, *world.args("--slots", "3")])
-    assert rc == 3, f"exit {rc}: {out!r}"
+    assert rc == 3, f"Westley 2026-10-24: only allocating a specific amount of those active flags to enforce the cap; exit {rc}: {out!r}"
     assert "WT REFUSED" in out
     assert "a1" in out and "a2" in out
     assert not (world.root / "t1_new").exists()
