@@ -4139,7 +4139,7 @@ depends_on = ["A94-harness", "HARNESS-methodcheck"]  # A94-harness: ordering edg
 status = { state = "queued" }  # Westley 2026-10-24 "go ahead with all 3"; tests first on the credit pipeline, behind HARNESS-wt-cap's landing
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
-size_estimate = "context_guard.py about 90 lines (UserPromptSubmit hook: exit 2 past DRAFT-context-guard-tokens unless the prompt carries DRAFT-context-guard-word) and its tests (about 150 lines, ten cases with a positive control; the tests writer commits the stub)"
+size_estimate = "context_guard.py about 110 lines (UserPromptSubmit and PreToolUse hook: exit 2 past DRAFT-context-guard-tokens unless the prompt carries DRAFT-context-guard-word or the tool is a Write/Edit to the memory directory) and its tests (about 180 lines, twelve cases with a positive control; the tests writer commits the stub)"
 [[piece]]
 id = "HARNESS-wt-cap"
 manager = "Architect"
