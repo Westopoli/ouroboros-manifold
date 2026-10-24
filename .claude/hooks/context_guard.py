@@ -11,7 +11,7 @@ import os
 import re
 import sys
 
-TOKENS = 400000  # DRAFT-context-guard-tokens
+TOKENS = 440000  # DRAFT-context-guard-tokens, rev 2 (HARNESS-context-guard-2; above the compaction window)
 WORD = "handoff"  # DRAFT-context-guard-word
 TAIL_BYTES = 4194304  # DRAFT-context-guard-tail-bytes
 
