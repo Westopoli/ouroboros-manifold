@@ -348,3 +348,35 @@ def test_12_check_with_missing_root_is_ok(tmp_path):
                         capture_output=True, text=True, timeout=60)
     assert rc.returncode == 0, f"exit {rc.returncode}: {rc.stdout!r}"
     assert "STATUS wt OK no root" in rc.stdout
+
+
+def test_13_untracked_pipe_binaries_and_uid_sidecars_are_build_outputs(world):
+    def listed(name):
+        rc, out, err = world.cli("reap", "--dry-run", *world.args())
+        assert rc == 0, f"exit {rc}: {out!r} {err!r}"
+        return [ln for ln in out.splitlines() if re.search(rf"\b{name}\b", ln)]
+
+    def dirty(name):
+        rc, out, err = world.cli("status", "--json", *world.args())
+        assert rc == 0, f"exit {rc}: {out!r} {err!r}"
+        return {r["name"]: r for r in json.loads(out)[:-1]}[name]["dirty"]
+
+    t = world.add("t13_out", "finished")
+    (t / "pipe").mkdir()
+    (t / "pipe" / "ouroboros_pipe_dbg").write_bytes(b"\x7fELF-not-really")
+    (t / "scenes").mkdir()
+    (t / "scenes" / "x.gd.uid").write_text("uid://abc\n")
+    (t / "landing-template.md").write_text("template\n")
+    hits = listed("t13_out")
+    assert len(hits) == 1 and hits[0].startswith("REMOVE t13_out"), \
+        f"Westley 2026-10-21: Godot .import sidecars and dist/ count as build outputs for removal; untracked pipe binaries, .uid sidecars and landing-template.md are judged dirty: {hits!r}"
+    assert dirty("t13_out") is False
+    (t / "scenes" / "x.gd").write_text("extends Node\n")  # a .uid with its new script is real work
+    hits = listed("t13_out")
+    assert len(hits) == 1 and hits[0].startswith("KEEP t13_out dirty"), hits
+    assert dirty("t13_out") is True
+    c = world.add("t13_src", "finished")  # control: a modified tracked source file
+    (c / "src.c").write_text("int changed;\n")
+    hits = listed("t13_src")
+    assert len(hits) == 1 and hits[0].startswith("KEEP t13_src dirty"), hits
+    assert dirty("t13_src") is True
