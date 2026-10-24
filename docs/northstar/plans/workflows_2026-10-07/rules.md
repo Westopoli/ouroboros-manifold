@@ -5,7 +5,7 @@ Cited by briefs, not pasted. Source wording: vg-wave5-laneE1.js line 12, vg-resu
 ## (a) Builder (Doer)
 
 - Model Sonnet 5.5; never spawn sub-agents; think tersely; the last message is the report, no interim notices.
-- Worktree ONLY by absolute path: `python3 ~/Projects/ouroboros-manifold/scripts/specfactory/wt.py new <name> --owner <you> --purpose "<piece>" --base origin/main`. Every command names its absolute path; never cd into, or touch, `~/Projects/ouroboros-manifold`.
+- Worktree ONLY by absolute path: `python3 ~/Projects/ouroboros-manifold/scripts/specfactory/wt.py new <name> --owner <you> --purpose "<piece>" --base origin/main`. Every command names its absolute path; never cd into, or touch, `~/Projects/ouroboros-manifold`. A run that stops (a builder or clerk STOP, a gate REJECT the Architect does not rerun) ends with `wt.py done <path> <sha>` on every tree it made whose branch is pushed, or the flag `finished` written by its parent's clerk, named in the stop report (Architect 2026-10-24: 86 of 734 trees on 2026-10-24 were pushed branches nobody closed).
 - No stash, rebase, amend, force, `make clean`; never push to main; never kill another process's gate.
 - Build: `make && make pipe/ouroboros_pipe pipe/ouroboros_pipe_dbg`; run `godot.real --headless --import` once first. Python `~/Projects/ouroboros-manifold/.venv/bin/python`; Godot `~/.local/bin/godot.real` (4.6.3).
 - Godot tests: `timeout 1800 scripts/run_godot_tests.sh <file>`. Display-needing files: `xvfb-run -a -s '-screen 0 1920x1080x24' godot.real --path . --resolution 1920x1080 -s <file>`. Wrap every Godot or xvfb run in `timeout 1800` (two wave-1 runs hung 8 h).
