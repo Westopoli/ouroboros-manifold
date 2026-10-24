@@ -74,8 +74,8 @@ def test_01_under_the_threshold_passes_silently(tmp_path):
 def test_02_blocks_a_prompt_past_the_threshold_with_the_guard_line(tmp_path):
     t = write_transcript(tmp_path, [assistant(450000)])
     r = run(stdin=prompt_json(t, "continue"))
-    assert r.returncode == 2, f"Westley 2026-10-24 'go ahead with all 3, send it a message': a 450k prompt must exit 2, got {r.returncode}"
-    assert r.stderr.startswith("CONTEXT GUARD 450k past 400k:"), r.stderr
+    assert r.returncode == 2, f"Westley 2026-10-24 'go ahead with all 3, send it a message': I chose 400k, not 200k: a 450k prompt must exit 2, got {r.returncode}"
+    assert r.stderr.startswith("CONTEXT GUARD 450k past 440k:"), r.stderr
     assert r.stdout == "", r.stdout
 
 
@@ -92,7 +92,7 @@ def test_04_the_word_as_a_substring_does_not_pass(tmp_path):
     for prompt in ("write the handoffs", "do a hand-off now"):
         r = run(["--transcript", str(t), "--prompt", prompt])
         assert r.returncode == 2, f"{prompt!r} must still block, exit {r.returncode}"
-        assert r.stderr.startswith("CONTEXT GUARD 450k past 400k:"), r.stderr
+        assert r.stderr.startswith("CONTEXT GUARD 450k past 440k:"), r.stderr
 
 
 def test_05_a_missing_transcript_passes_silently(tmp_path):
@@ -135,7 +135,7 @@ def test_09_malformed_stdin_passes_silently(tmp_path):
 
 def test_10_settings_wire_the_hook_and_the_compact_window():
     cfg = json.loads(SETTINGS.read_text())
-    assert cfg.get("autoCompactWindow") == 200000, cfg.get("autoCompactWindow")
+    assert cfg.get("autoCompactWindow") == 400000, cfg.get("autoCompactWindow")
     entries = cfg.get("hooks", {}).get("UserPromptSubmit", [])
     cmds = [h.get("command", "") for e in entries for h in e.get("hooks", [])]
     assert any("context_guard.py" in c for c in cmds), cmds
