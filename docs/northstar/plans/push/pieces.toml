@@ -4130,6 +4130,17 @@ size_estimate = "ClaudeAgentOptions gets max_buffer_size = DRAFT-sdk-buffer-byte
 # HARNESS-wt-cap (Architect 2026-10-24, Westley's order 01:15 EDT, DEC-wt-cap; spec: 2026-10-19-harness-enforcement-spec.md section 1): the one way to make and finish a worktree under ~/Projects/om-push/wt, with a per-worktree state flag, a fixed number of active slots, a disk cap on wt/ and a free-space floor on /. New files only; the records half (CLAUDE.md Git paragraph, dispatcher page, ledger drafts, inventory, reap) is a records push after it lands. Urgent: outranks the weekend no-new-builds rule.
 # Tool: Workflow
 [[piece]]
+id = "HARNESS-wt-cap-2"
+manager = "Architect"
+owns = ["scripts/specfactory/wt.py", "tests/specfactory/test_wt_cap.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_wt_cap.py"]
+depends_on = ["HARNESS-wt-cap"]  # fix after the first reap dry run: porcelain --untracked-files=all; DRAFT-wt-build-outputs rev 2 (*.uid, landing-template.md)
+status = { state = "queued" }  # Architect 2026-10-24; under the DEC-wt-cap carve-out
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
+size_estimate = "wt.py: one flag and two list entries; test_13 in the existing file"
+[[piece]]
 id = "HARNESS-context-guard"
 manager = "Architect"
 owns = [".claude/hooks/context_guard.py", "tests/specfactory/test_context_guard.py", ".claude/settings.json"]
