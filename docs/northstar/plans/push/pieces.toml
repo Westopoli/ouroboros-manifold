@@ -4147,8 +4147,7 @@ owns = ["scripts/specfactory/wt.py", "tests/specfactory/test_wt_cap.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_wt_cap.py"]
 depends_on = ["HARNESS-wt-cap"]  # fix after the first reap dry run: porcelain --untracked-files=all; DRAFT-wt-build-outputs rev 2 (*.uid, landing-template.md)
-status = { state = "queued" }  # Architect 2026-10-24; under the DEC-wt-cap carve-out
-tests_pending = true
+status = { state = "attached", attach_sha = "0df295df" }  # landed 0df295df (test 13 1154f3d6); under the DEC-wt-cap carve-out
 spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
 size_estimate = "wt.py: one flag and two list entries; test_13 in the existing file"
 [[piece]]
