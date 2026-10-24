@@ -1,3 +1,4 @@
+# Rule pins: R-104-01@1aaaa3, R-104-03@9dae08
 """Story play S-104 (E-16, R-104-01/03/09): "A lean HUD that shows what I need and stays out of the way."
 Moment: the first tactical frame after Deploy. The HUD inventory exists: clock, objectives, selection, events, strip,
 comb, reinforcements; the clock reads mm:ss; the objectives list is not empty. Red on main: none of the inventory keys exist."""

@@ -1,4 +1,4 @@
-# Rule pins: R-126-01@71403e, R-126-04@6335da, R-127-03@75dcd8, R-192-01@8c30f2, R-218-01@ecb14c, R-218-02@e9d9ad, R-218-03@6afb4b, R-218-05@ee913f, R-218-06@c47aed, R-218-07@52cd5f
+# Rule pins: R-126-01@71403e, R-126-04@6335da, R-127-03@75dcd8, R-192-01@8c30f2, R-218-01@ecb14c, R-218-02@e9d9ad, R-218-03@6afb4b, R-218-05@ee913f, R-218-06@795f15, R-218-07@52cd5f
 """Visible-game lane E1, piece E1h: strongpoints on the slopes between height bands (csrc/strongpoint.c).
 Spec docs/northstar/plans/2026-10-07-visible-game-spec.md rev 6 (lane E1, section 2, section 7 liberties). Fenced:
 builders never edit this file.

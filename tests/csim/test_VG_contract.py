@@ -1,3 +1,4 @@
+# Rule pins: R-087-04@edc84b, R-096-05@1a9979, R-104-01@1aaaa3, R-205-02@1abaf8
 """Visible-game programme lane K, piece K-a (sim side: unit.c, tactical_support.c, mission.c,
 tactical_mapgen.c, terrain.c; the K0 symbols they implement). Written against
 docs/northstar/plans/2026-10-07-visible-game-spec.md rev 4, section 1 "Contract gates" and section 2

@@ -1,4 +1,4 @@
-# Rule pins: R-126-04@6335da, R-218-03@6afb4b, R-218-06@c47aed
+# Rule pins: R-126-04@6335da, R-218-03@6afb4b, R-218-06@795f15
 """VG-CONTRACT-E7 (lane E1 part e, spec docs/northstar/plans/2026-10-07-visible-game-spec.md rev 12c, "E7, the starting
 force"): the player starts with a fraction of F set by their share of the contested strongpoints; the structures produce the
 rest, up to a cap; the enemy's production is unchanged. Fenced: builders never edit this file.

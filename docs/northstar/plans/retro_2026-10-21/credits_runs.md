@@ -5,8 +5,8 @@ Target (Westley): exhausted by 21:00 EDT 2026-10-23; checkpoint 16:00 EDT (DEC-c
 
 Console credits, tools from `scripts/specfactory/` (README_credits.md). Keys never printed or exported.
 
-Running total: $87.01 of $200 (batch 22b: $61.68 + $25.329 = $87.009; the previous total $61.68 plus the 20 ACTUAL rows of 2026-10-23 added below, $25.329; the two batch_review rows (est $5.52 and $1.52 at batch rates) are estimates, PENDING, outside the total; previous total: rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $47.99 (recomputed 2026-10-23 by parsing every row: 130 rows), plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 the record-files TD edit and stack merge $0.50, the landing clerk 3 stop $0.10 and records batch 20 $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
-In flight (caps, not spent, a separate line from the rowed total): $29 across five rows marked (pending) (landing clerk 3b $8 landed 2026-10-23 and is settled by its two ACTUAL rows): pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, landing clerk 5 $6, records batch 21 $6; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and the combined landing clerk row by the three ugfnsm rows, none counted.
+Running total: $271.887 of the $300 pool (records batch 29b: $270.408 + the five ACTUAL rows of 2026-10-23 added below, 0.119 + 0.000 + 0.076 + 0.071 + 1.213 = $1.479; earlier: records batch 29: $262.754 + the seven ACTUAL rows of 2026-10-23 added below, 0.223 + 0.414 + 3.618 + 1.103 + 1.774 + 0.226 + 0.296 = $7.654; earlier: records batch 28b: $241.878 + the seven ACTUAL rows of 2026-10-23 added below, 2.564 + 5.390 + 0.453 + 0.183 + 4.294 + 3.728 + 4.264 = $20.876; earlier: $241.878 at records batch 28: $211.637 + the thirteen ACTUAL rows of 2026-10-23 added below, 0.207 + 0.247 + 0.257 + 4.001 + 0.232 + 4.370 + 2.580 + 12.850 + 0.215 + 0.232 + 3.550 + 0.000 + 1.500 = $30.241, the last an estimate for a run that reported no cost; the PENDING batch_review estimate rows stay outside the total; earlier: $211.637 at records batch 26: $204.27 + the four ACTUAL rows of 2026-10-23 added below, 2.995 + 0.234 + 1.380 + 2.758 = $7.367; earlier: $204.27 at records batch 25: $199.668 + the five ACTUAL rows of 2026-10-23 added below, $4.605) (the pool is $300 from 2026-10-23 16:00 EDT, not $200: FINDING-sdk-cost-overcount is withdrawn, the SDK estimates are accurate and the tally is the meter; stop tally $285 or 21:00 EDT; batch 24: $87.009 + $112.659 = $199.668, the 75 ACTUAL rows of 2026-10-23 added below, which settle the landing clerk 5 row that was pending; the three batch_review rows (est $5.52, $1.52 and $16.56 at batch rates) are estimates, PENDING, outside the total; earlier total: $87.009 at batch 22b, built as follows: previous total: rowed total, the arithmetic sum of every ACTUAL and '~' amount in the SDK runs table, Architect clerk rows included: $47.99 (recomputed 2026-10-23 by parsing every row: 130 rows), plus the two batch jobs $11.31 and $2.20 and the spec stand-ins trial $0.183; the '~' rows are the test fixer $0.40, the land-one-projection TD edit $0.40, the facing-arrow merge builder $0.40, the pin refresh and re-merge $0.30, the land-marks slicing test writer $0.60, the legacy-toys test writer $0.30, the legacy-scenes test writer $0.30, the lane-plays-scope test writer $0.40, the docs-legacy citation rewrite doer $0.50, the record-files test writer $0.40 the record-files TD edit and stack merge $0.50, the landing clerk 3 stop $0.10 and records batch 20 $0.40, estimates not ACTUALs); the rows marked (pending) and the in-flight caps are not in the sum, plus two crashed inv-landview runs, cost unknown, plus runs still pending; hard stop $190; expires 2026-10-24.
+In flight (caps, not spent, a separate line from the rowed total): $23 across four rows marked (pending) (landing clerk 3b $8 landed 2026-10-23 and is settled by its two ACTUAL rows): pin refresh ground-one-colour then landing clerk 3 rerun $10, lane-plays-scope TD fix and builder comment $3.5, record-files TD edit and merges $3.5, records batch 21 $6; the batch 15 finish and batch 16 rows ($3, $6) were superseded by the merged redo and the combined landing clerk row by the three ugfnsm rows, none counted.
 Plus two crashed inv-landview runs, cost unknown, plus runs still pending.
 Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, estimate before, actual after.
 
@@ -154,7 +154,6 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK landing clerk 4 rerun | claude-sonnet-5-5 | $8 | $0.228 | final-turn figure; gate passed clean, 28 min suite stage, stopped before the push on gate-left .import dirt |
 | 2026-10-23 | SDK landing clerk 4 continuation (waiver, push) | claude-sonnet-5-5 | $3 | $0.129 | 10 turns, success, LANDED main 60923594 (7 pieces: swarm-config, junk, legacy-toys, legacy-scenes, keep-red-evidence, lane-plays-scope, record-files; 643 files) |
 | 2026-10-23 | SDK landing clerk 3b (fresh worktree: land-one-projection + facing-arrow + ground-one-colour + groundpick-step) | claude-sonnet-5-5 | $8 | (superseded: the two ACTUAL rows below, run 1 $0.285 and continuation $0.319; none counted here) |   |
-| 2026-10-23 | SDK landing clerk 5 (HARNESS-gate-venv-link + HARNESS-gate-userdir-fix) | claude-sonnet-5-5 | $6 | (pending) |   |
 | 2026-10-23 | records batch 21 (records.lock) | claude-sonnet-5-5 | $6 | (pending) |   |
 | 2026-10-23 | SDK landing clerk 3b run 1 (gate clean, stopped on dirt) | claude-sonnet-5-5 | - | $0.285 | 5 turns reported; gate ran in its shell |
 | 2026-10-23 | SDK Fable audit of 13 audit4 highs | claude-fable-5-1 | - | $4.074 | 38 turns, success |
@@ -176,8 +175,125 @@ Metering rule: DEC-credits-2026-10-22 (decisions.md); one row per run below, est
 | 2026-10-23 | SDK Fable spec audit layerspot_route_rev3 | claude-fable-5-1 | - | $4.150 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
 | 2026-10-23 | SDK Fable spec audit harness_coverage_spec_rev2 | claude-fable-5-1 | - | $2.473 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
 | 2026-10-23 | SDK Fable spec audit lane_u_spec_rev3 | claude-fable-5-1 | - | $4.704 | turns about 25; "audited a stale draft; only the applies-to-main list used" |
+| 2026-10-23 | SDK records clerk 22a: ACTUAL $0.861 (33 turns) main 4b3aeb55 | claude-sonnet-5-5 | - | $0.861 | 33 turns |
+| 2026-10-23 | SDK records clerk 22b: ACTUAL $1.211 (38 turns) main 543f6c04 | claude-sonnet-5-5 | - | $1.211 | 38 turns |
+| 2026-10-23 | SDK Fable spec draft VG-E1M: ACTUAL $3.079 | claude-fable-5-1 | - | $3.079 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-E1M: ACTUAL $0.231 | claude-sonnet-5-5 | - | $0.231 |  |
+| 2026-10-23 | SDK Fable spec draft VG-E1N: ACTUAL $2.862 | claude-fable-5-1 | - | $2.862 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-E1N: ACTUAL $0.227 | claude-sonnet-5-5 | - | $0.227 |  |
+| 2026-10-23 | SDK Fable spec draft VG-E1W: ACTUAL $2.649 | claude-fable-5-1 | - | $2.649 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-E1W: ACTUAL $0.274 | claude-sonnet-5-5 | - | $0.274 |  |
+| 2026-10-23 | SDK Fable spec draft VG-M-SKEL: ACTUAL $3.467 | claude-fable-5-1 | - | $3.467 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-M-SKEL: ACTUAL $0.244 | claude-sonnet-5-5 | - | $0.244 |  |
+| 2026-10-23 | SDK Fable spec draft VG-C2-5-glowkey (stream 2): ACTUAL $2.604 | claude-fable-5-1 | - | $2.604 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-C2-5-glowkey: ACTUAL $0.266 | claude-sonnet-5-5 | - | $0.266 |  |
+| 2026-10-23 | SDK Fable spec draft HARNESS-gate-tiers (stream 2): ACTUAL $2.982 | claude-fable-5-1 | - | $2.982 |  |
+| 2026-10-23 | SDK Sonnet audit of draft HARNESS-gate-tiers: ACTUAL $0.263 | claude-sonnet-5-5 | - | $0.263 |  |
+| 2026-10-23 | SDK Fable spec draft VG-E-giveup-single (stream 2): ACTUAL $3.790 | claude-fable-5-1 | - | $3.790 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-E-giveup-single: ACTUAL $0.249 | claude-sonnet-5-5 | - | $0.249 |  |
+| 2026-10-23 | SDK Sonnet showcase refresh code_quality.md (sc-qa2): ACTUAL $0.429 | claude-sonnet-5-5 | - | $0.429 |  |
+| 2026-10-23 | SDK Sonnet showcase refresh first_look.md (sc-fl2): ACTUAL $0.203 | claude-sonnet-5-5 | - | $0.203 |  |
+| 2026-10-23 | SDK Fable spec draft VG-A-layerkeys: ACTUAL $2.812 | claude-fable-5-1 | - | $2.812 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-A-layerkeys: ACTUAL $0.308 | claude-sonnet-5-5 | - | $0.308 |  |
+| 2026-10-23 | SDK Fable spec draft VG-A-routeline: ACTUAL $3.342 | claude-fable-5-1 | - | $3.342 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-A-routeline: ACTUAL $0.258 | claude-sonnet-5-5 | - | $0.258 |  |
+| 2026-10-23 | SDK Fable spec draft VG-E-a8feed: ACTUAL $2.648 | claude-fable-5-1 | - | $2.648 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-E-a8feed: ACTUAL $0.295 | claude-sonnet-5-5 | - | $0.295 |  |
+| 2026-10-23 | SDK Fable spec draft VG-A-routeline rev 2: ACTUAL $3.588 | claude-fable-5-1 | - | $3.588 |  |
+| 2026-10-23 | SDK Sonnet audit of draft VG-A-routeline rev 2: ACTUAL $0.452 | claude-sonnet-5-5 | - | $0.452 |  |
+| 2026-10-23 | SDK records clerk 23a: ACTUAL $2.115 (65 turns) main 005074ce + d12626e7 | claude-sonnet-5-5 | - | $2.115 | 65 turns |
+| 2026-10-23 | SDK records clerk 23b: ACTUAL $0.513 (21 turns) main 13c5e364 | claude-sonnet-5-5 | - | $0.513 | 21 turns |
+| 2026-10-23 | SDK Fable spec draft CONTRACT-cone-state (stream 2b): ACTUAL $4.851 | claude-fable-5-1 | - | $4.851 | 29 turns |
+| 2026-10-23 | SDK Sonnet audit of draft CONTRACT-cone-state: ACTUAL $0.237 | claude-sonnet-5-5 | - | $0.237 | 8 turns |
+| 2026-10-23 | SDK Fable audit-and-amend VG-CONTRACT-unitrow-save (stream 2b): ACTUAL $3.828 | claude-fable-5-1 | - | $3.828 | 19 turns |
+| 2026-10-23 | SDK Sonnet audit of draft VG-CONTRACT-unitrow-save: ACTUAL $0.225 | claude-sonnet-5-5 | - | $0.225 | 8 turns |
+| 2026-10-23 | SDK landing clerk 5 (venv-link + userdir-fix): ACTUAL $0.373 (13 turns) LANDED main d1c18f54 (tips 5c251eb1, 40e3544c; gate base 4b3aeb55; two post-gate disjoint merges) | claude-sonnet-5-5 | - | $0.373 | 13 turns |
+| 2026-10-23 | SDK Fable showcase fix proposals (stream 2b): ACTUAL $3.664 (22 turns) | claude-fable-5-1 | - | $3.664 | 22 turns |
+| 2026-10-23 | SDK Fable branch review push/vg-a-sightdisc: ACTUAL $2.048 (15 turns) | claude-fable-5-1 | - | $2.048 | 15 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/vg-a-sightdisc: ACTUAL $0.173 (9 turns) | claude-sonnet-5-5 | - | $0.173 | 9 turns |
+| 2026-10-23 | SDK Fable spec draft VG-CONTRACT-U0 (stream C): ACTUAL $3.718 (25 turns) | claude-fable-5-1 | - | $3.718 | 25 turns |
+| 2026-10-23 | SDK Sonnet audit of draft VG-CONTRACT-U0 (stream C): ACTUAL $0.305 (12 turns) | claude-sonnet-5-5 | - | $0.305 | 12 turns |
+| 2026-10-23 | SDK records clerk 23c (routeline rev 2, cone-state, unitrow-save, E-11 flag, showcase proposals): ACTUAL $1.127 (48 turns) | claude-sonnet-5-5 | - | $1.127 | 48 turns |
+| 2026-10-23 | SDK Fable branch review push/vg-c-landmarks: ACTUAL $2.659 (14 turns) | claude-fable-5-1 | - | $2.659 | 14 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/vg-c-landmarks: ACTUAL $0.183 (9 turns) | claude-sonnet-5-5 | - | $0.183 | 9 turns |
+| 2026-10-23 | SDK landing clerk land-marks run 1: ACTUAL $0.588 (gate job died with its session; not landed) | claude-sonnet-5-5 | - | $0.588 | 3 turns |
+| 2026-10-23 | SDK Fable spec draft VG-T-EMIT-TESTS (stream C): ACTUAL $3.481 (21 turns) | claude-fable-5-1 | - | $3.481 | 21 turns |
+| 2026-10-23 | SDK landing clerk land-marks continuation (stopped on review NOT MET): ACTUAL $0.065 | claude-sonnet-5-5 | - | $0.065 | 4 turns |
+| 2026-10-23 | SDK Fable branch review push/vg-b25: ACTUAL $2.910 (18 turns) | claude-fable-5-1 | - | $2.910 | 18 turns |
+| 2026-10-23 | SDK Sonnet audit of draft VG-T-EMIT-TESTS (stream C): ACTUAL $0.295 (11 turns) | claude-sonnet-5-5 | - | $0.295 | 11 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/vg-b25: ACTUAL $0.158 (7 turns) | claude-sonnet-5-5 | - | $0.158 | 7 turns |
+| 2026-10-23 | SDK test writer land-marks space-host test: ACTUAL $0.178 (12 turns) | claude-sonnet-5-5 | - | $0.178 | 12 turns |
+| 2026-10-23 | SDK cleanup clerk qa_flow_spine tmp dirs: ACTUAL $0.071 (4 turns) | claude-sonnet-5-5 | - | $0.071 | 4 turns |
+| 2026-10-23 | SDK second-Fable contract audit CONTRACT-cone-state: ACTUAL $3.797 (19 turns) | claude-fable-5-1 | - | $3.797 | 19 turns |
+| 2026-10-23 | SDK builder land-marks space-host guard: ACTUAL $0.143 (12 turns) | claude-sonnet-5-5 | - | $0.143 | 12 turns |
+| 2026-10-23 | SDK Sonnet verify of contract audit CONTRACT-cone-state: ACTUAL $0.228 (14 turns) | claude-sonnet-5-5 | - | $0.228 | 14 turns |
+| 2026-10-23 | SDK Fable branch review push/harness-costreport: ACTUAL $1.868 (15 turns) | claude-fable-5-1 | - | $1.868 | 15 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/harness-costreport: ACTUAL $0.114 (5 turns) | claude-sonnet-5-5 | - | $0.114 | 5 turns |
+| 2026-10-23 | SDK Fable branch review push/proto-lakefill: ACTUAL $1.336 (14 turns) | claude-fable-5-1 | - | $1.336 | 14 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/proto-lakefill: ACTUAL $0.142 (7 turns) | claude-sonnet-5-5 | - | $0.142 | 7 turns |
+| 2026-10-23 | SDK Fable spec draft VG-T-EMIT-WIRE (stream C): ACTUAL $4.087 (23 turns) | claude-fable-5-1 | - | $4.087 | 23 turns |
+| 2026-10-23 | SDK second-Fable contract audit VG-CONTRACT-unitrow-save: ACTUAL $3.363 (18 turns) | claude-fable-5-1 | - | $3.363 | 18 turns |
+| 2026-10-23 | SDK Sonnet audit of draft VG-T-EMIT-WIRE (stream C): ACTUAL $0.322 (15 turns) | claude-sonnet-5-5 | - | $0.322 | 15 turns |
+| 2026-10-23 | SDK Sonnet verify of contract audit VG-CONTRACT-unitrow-save: ACTUAL $0.152 (7 turns) | claude-sonnet-5-5 | - | $0.152 | 7 turns |
+| 2026-10-23 | SDK landing clerk sightdisc run 1 (gate job died with its session): ACTUAL $0.188 | claude-sonnet-5-5 | - | $0.188 | 3 turns |
+| 2026-10-23 | SDK Fable branch review push/vg-e-idleown-tests: ACTUAL $2.800 (29 turns) | claude-fable-5-1 | - | $2.800 | 29 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/vg-e-idleown-tests: ACTUAL $0.174 (9 turns) | claude-sonnet-5-5 | - | $0.174 | 9 turns |
+| 2026-10-23 | SDK Fable spec draft VG-T-REACH-WIRE (stream C): ACTUAL $3.741 (26 turns) | claude-fable-5-1 | - | $3.741 | 26 turns |
+| 2026-10-23 | SDK Sonnet audit of draft VG-T-REACH-WIRE (stream C): ACTUAL $0.250 (7 turns) | claude-sonnet-5-5 | - | $0.250 | 7 turns |
+| 2026-10-23 | SDK Fable branch review push/vg-e-facingtravel-tests: ACTUAL $1.809 (17 turns) | claude-fable-5-1 | - | $1.809 | 17 turns |
+| 2026-10-23 | SDK second-Fable contract audit VG-CONTRACT-layerspot: ACTUAL $3.993 (23 turns) | claude-fable-5-1 | - | $3.993 | 23 turns |
+| 2026-10-23 | SDK Sonnet verify of branch review push/vg-e-facingtravel-tests: ACTUAL $0.229 (9 turns) | claude-sonnet-5-5 | - | $0.229 | 9 turns |
+| 2026-10-23 | SDK Sonnet verify of contract audit VG-CONTRACT-layerspot: ACTUAL $0.260 (11 turns) | claude-sonnet-5-5 | - | $0.260 | 11 turns |
+| 2026-10-23 | SDK test writer idle-own rows 20 and 22 re-pin: ACTUAL $0.151 (8 turns) | claude-sonnet-5-5 | - | $0.151 | 8 turns |
+| 2026-10-23 | SDK Fable spec draft VG-A18-3d (stream C): ACTUAL $3.323 (18 turns) | claude-fable-5-1 | - | $3.323 | 18 turns |
+| 2026-10-23 | SDK Sonnet audit of draft VG-A18-3d (stream C): ACTUAL $0.319 (10 turns) | claude-sonnet-5-5 | - | $0.319 | 10 turns |
+| 2026-10-23 | SDK second-Fable contract audit VG-CONTRACT-route: ACTUAL $3.488 (22 turns) | claude-fable-5-1 | - | $3.488 | 22 turns |
+| 2026-10-23 | SDK Sonnet verify of contract audit VG-CONTRACT-route: ACTUAL $0.171 (9 turns) | claude-sonnet-5-5 | - | $0.171 | 9 turns |
+| 2026-10-23 | SDK Fable spec draft HARNESS-look-rejects (stream C): ACTUAL $2.852 (18 turns) | claude-fable-5-1 | - | $2.852 | 18 turns |
+| 2026-10-23 | SDK Sonnet audit of draft HARNESS-look-rejects (stream C): ACTUAL $0.242 (9 turns) | claude-sonnet-5-5 | - | $0.242 | 9 turns |
+| 2026-10-23 | SDK second-Fable contract audit VG-CONTRACT-force-groups: ACTUAL $2.990 (17 turns) | claude-fable-5-1 | - | $2.990 | 17 turns |
+| 2026-10-23 | SDK Sonnet verify of contract audit VG-CONTRACT-force-groups: ACTUAL $0.237 (9 turns) | claude-sonnet-5-5 | - | $0.237 | 9 turns |
+| 2026-10-23 | SDK landing clerk B25 run 1 (gate job died with its session twice): ACTUAL $0.323 | claude-sonnet-5-5 | - | $0.323 | 3 turns |
+| 2026-10-23 | SDK records clerk 24: ACTUAL $0.813 (43 turns) | claude-sonnet-5-5 | - | $0.813 | 43 turns |
+| 2026-10-23 | batch_review audit-epics 22 epics x 3 samples PENDING est $16.56 (batch rates) msgbatch_01UHWp6pD6qsAbWMw1VcJ84n | claude-fable-5-1 | - | est $16.56 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job |
 | 2026-10-23 | batch_review audit-epics 22 epics | claude-fable-5-1 | - | est $5.52 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job, not yet read from the console |
 | 2026-10-23 | batch_review story-reviews 38 shots | claude-sonnet-5-5 | - | est $1.52 (estimate at batch rates, PENDING, not an ACTUAL, outside the total) | batch job, not yet read from the console |
+| 2026-10-23 | SDK Fable spec draft HARNESS-tool-line (stream C): ACTUAL $2.995 (18 turns) | claude-fable-5-1 | 18 | $2.995 | | |
+| 2026-10-23 | SDK Sonnet audit of draft HARNESS-tool-line (stream C): ACTUAL $0.234 (9 turns) | claude-sonnet-5-5 | 9 | $0.234 | | |
+| 2026-10-23 | SDK records clerk 25 (five contract audits' amendments, layerspot H1-H4, pieces-cycle row): ACTUAL $1.380 (37 turns) | claude-sonnet-5-5 | 37 | $1.380 | | |
+| 2026-10-23 | SDK Fable spec draft HARNESS-known-xfail (stream C): ACTUAL $2.758 (18 turns) | claude-fable-5-1 | 18 | $2.758 | | |
+| 2026-10-23 | SDK test writer HARNESS-pieces-cycle (stream D): ACTUAL $0.207 (12 turns) | claude-sonnet-5-5 | 12 | $0.207 | | |
+| 2026-10-23 | SDK Sonnet audit of draft HARNESS-known-xfail (stream C): ACTUAL $0.247 (7 turns) | claude-sonnet-5-5 | 7 | $0.247 | | |
+| 2026-10-23 | SDK records clerk 26 (batch 24 follow-ups: R104 pin refresh, closures, rules.md detached-gate line): ACTUAL $0.257 (18 turns) | claude-sonnet-5-5 | 18 | $0.257 | | |
+| 2026-10-23 | SDK Fable spec draft LAB-REV2-E4 (stream C): ACTUAL $4.001 (23 turns) | claude-fable-5-1 | 23 | $4.001 | | |
+| 2026-10-23 | SDK Sonnet audit of draft LAB-REV2-E4 (stream C): ACTUAL $0.232 (7 turns) | claude-sonnet-5-5 | 7 | $0.232 | | |
+| 2026-10-23 | batch_review audit-epics 22 epics x1 (msgbatch_01C3eqrZBdP8vLETJDR1ujp9): ACTUAL $4.370 at batch rates | claude-fable-5-1 | batch | $4.370 | | |
+| 2026-10-23 | batch_review story-reviews 38 shots (msgbatch_01E12j9jaHxSVJRqtC9khxEV): ACTUAL $2.580 at batch rates | claude-sonnet-5-5 | batch | $2.580 | | |
+| 2026-10-23 | batch_review audit-epics 22 epics x3 (msgbatch_01UHWp6pD6qsAbWMw1VcJ84n): ACTUAL $12.850 at batch rates | claude-fable-5-1 | batch | $12.850 | | |
+| 2026-10-23 | SDK builder HARNESS-pieces-cycle (stream D): ACTUAL $0.215 (11 turns) | claude-sonnet-5-5 | 11 | $0.215 | | |
+| 2026-10-23 | SDK test writer HARNESS-flow-spine-teardown (stream D): ACTUAL $0.232 (11 turns) | claude-sonnet-5-5 | 11 | $0.232 | | |
+| 2026-10-23 | SDK Fable read of batch-epics3 drift clustering: ACTUAL $3.550 (22 turns) | claude-fable-5-1 | 22 | $3.550 | | |
+| 2026-10-23 | SDK Fable read of the ten story no rows: ACTUAL $0.000 (? turns) | claude-fable-5-1 | ? | $0.000 | | |
+| 2026-10-23 | SDK Fable story no-rows run 1 (JSON buffer error, no cost reported; estimated): ACTUAL $1.500 | claude-fable-5-1 | | $1.500 | | |
+| 2026-10-23 | SDK records clerk 27 (nine stream C drafts): ACTUAL $2.564 | claude-sonnet-5-5 | | $2.564 | | |
+| 2026-10-23 | batch_review audit-epics re-run E-01 E-11 E-13 E-15 E-16 x3 at 16000 tokens (msgbatch_01LeaF6GUhFT4iGFF6oYvdfp): ACTUAL $5.390 at batch rates | claude-fable-5-1 | batch | $5.390 | | |
+| 2026-10-23 | SDK records clerk 28 (drift rulings N-1..N-3, L7, sdk-buffer row): ACTUAL $0.453 (30 turns) | claude-sonnet-5-5 | 30 | $0.453 | | |
+| 2026-10-23 | SDK test writer HARNESS-sdk-buffer: ACTUAL $0.183 (14 turns) | claude-sonnet-5-5 | 14 | $0.183 | | |
+| 2026-10-23 | SDK Fable read of the ten story no rows (run 2, downscaled images): ACTUAL $4.294 (36 turns) | claude-fable-5-1 | 36 | $4.294 | | |
+| 2026-10-23 | SDK Fable second clustering over batch-epics4: ACTUAL $3.728 (23 turns) | claude-fable-5-1 | 23 | $3.728 | | |
+| 2026-10-23 | SDK second-Fable contract audit VG-CONTRACT-U0: ACTUAL $4.264 (29 turns) | claude-fable-5-1 | 29 | $4.264 | | |
+| 2026-10-23 | SDK records clerk 28b (N7 elevation damage, N8 E-15 sentence): ACTUAL $0.223 (17 turns) | claude-sonnet-5-5 | 17 | $0.223 | | |
+| 2026-10-23 | SDK builder HARNESS-flow-spine-teardown (stream D): ACTUAL $0.414 (21 turns) | claude-sonnet-5-5 | 21 | $0.414 | | |
+| 2026-10-23 | SDK second-Fable contract audit VG-E-giveup-single: ACTUAL $3.618 (27 turns) | claude-fable-5-1 | 27 | $3.618 | | |
+| 2026-10-23 | SDK Fable branch review push/harness-pieces-cycle: ACTUAL $1.103 (9 turns) | claude-fable-5-1 | 9 | $1.103 | | |
+| 2026-10-23 | SDK Fable branch review push/harness-flow-spine-teardown: ACTUAL $1.774 (16 turns) | claude-fable-5-1 | 16 | $1.774 | | |
+| 2026-10-23 | SDK landing clerk land-marks run 3: ACTUAL $0.226 (3 turns) | claude-sonnet-5-5 | 3 | $0.226 | | |
+| 2026-10-23 | SDK builder HARNESS-sdk-buffer: ACTUAL $0.296 (16 turns) | claude-sonnet-5-5 | 16 | $0.296 | | |
+| 2026-10-23 | SDK cleanup clerk disk full (wt removals): ACTUAL $0.119 (12 turns) | claude-sonnet-5-5 | 12 | $0.119 | | |
+| 2026-10-23 | SDK git maintenance clerk QA clone (broken refs, fetch): ACTUAL $0.000 (? turns) | claude-sonnet-5-5 | ? | $0.000 | | |
+| 2026-10-23 | SDK git maintenance clerk QA clone (broken refs, fetch): ACTUAL $0.076 (6 turns) | claude-sonnet-5-5 | 6 | $0.076 | | |
+| 2026-10-23 | SDK git maintenance clerk QA clone step 2 (rm 0-byte ref, fetch, tmp packs): ACTUAL $0.071 (4 turns) | claude-sonnet-5-5 | 4 | $0.071 | | |
+| 2026-10-23 | SDK records clerk 29 (records-only items of the day): ACTUAL $1.213 (45 turns) | claude-sonnet-5-5 | 45 | $1.213 | | |
 
 ## Batches (submitted 2026-10-21 22:11:58Z to 22:12:17Z)
 

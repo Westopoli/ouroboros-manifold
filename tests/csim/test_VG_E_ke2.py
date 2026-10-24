@@ -1,4 +1,4 @@
-# Rule pins: R-218-01@ecb14c, R-218-05@ee913f, R-218-06@c47aed
+# Rule pins: R-218-01@ecb14c, R-218-05@ee913f, R-218-06@795f15
 """VG-CONTRACT-E2 (K-e2): the economy entry points and the three rule edits wired with them.
 
 Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a2: the K-e2 amendment".
