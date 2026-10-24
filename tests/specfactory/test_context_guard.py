@@ -74,7 +74,7 @@ def test_01_under_the_threshold_passes_silently(tmp_path):
 def test_02_blocks_a_prompt_past_the_threshold_with_the_guard_line(tmp_path):
     t = write_transcript(tmp_path, [assistant(450000)])
     r = run(stdin=prompt_json(t, "continue"))
-    assert r.returncode == 2, f"Westley 2026-10-24 'go ahead with all 3': a 450k prompt must exit 2, got {r.returncode}"
+    assert r.returncode == 2, f"Westley 2026-10-24 'go ahead with all 3, send it a message': a 450k prompt must exit 2, got {r.returncode}"
     assert r.stderr.startswith("CONTEXT GUARD 450k past 400k:"), r.stderr
     assert r.stdout == "", r.stdout
 
