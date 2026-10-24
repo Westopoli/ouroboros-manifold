@@ -144,8 +144,8 @@ def test_10_settings_wire_the_hook_and_the_compact_window():
 def test_11_a_tool_call_past_the_threshold_is_blocked(tmp_path):
     t = write_transcript(tmp_path, [assistant(450000)])
     r = run(stdin=tool_json(t, "Bash", {"command": "ls"}))
-    assert r.returncode == 2, f"Bash past 400k must exit 2, got {r.returncode}"
-    assert r.stderr.startswith("CONTEXT GUARD 450k past 400k: tool call blocked;"), r.stderr
+    assert r.returncode == 2, f"Bash past 440k must exit 2, got {r.returncode}"
+    assert r.stderr.startswith("CONTEXT GUARD 450k past 440k: tool call blocked;"), r.stderr
     assert r.stdout == "", r.stdout
 
 
@@ -158,4 +158,4 @@ def test_12_write_under_the_memory_dir_passes_and_outside_it_is_blocked(tmp_path
     assert_silent_pass(r, "Write under the memory dir")
     r = run(["--memory-dir", str(mem)], stdin=tool_json(t, "Write", {"file_path": str(outside), "content": "x"}))
     assert r.returncode == 2, f"Write outside the memory dir must exit 2, got {r.returncode}"
-    assert r.stderr.startswith("CONTEXT GUARD 450k past 400k: tool call blocked;"), r.stderr
+    assert r.stderr.startswith("CONTEXT GUARD 450k past 440k: tool call blocked;"), r.stderr
