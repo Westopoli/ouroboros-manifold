@@ -1714,9 +1714,10 @@ owns = [
 # reject 2026-10-10); CLAUDE.md is VG-GUARD's, the programme file HARNESS-status's, pieces.toml PP-ledger's.
 [[piece]]
 id = "HARNESS-methodcheck"
+# .claude/settings.json moved to HARNESS-context-guard (Architect 2026-10-24; this piece is landed).
 manager = "M0"
 wave = 9
-owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_check.py", ".claude/settings.json", "docs/northstar/plans/workflows_2026-10-07/method_check.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "docs/northstar/plans/workflows_2026-10-07/context_architect_2026-10-10.md"]
+owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_check.py", "docs/northstar/plans/workflows_2026-10-07/method_check.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "docs/northstar/plans/workflows_2026-10-07/context_architect_2026-10-10.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py"]
 depends_on = ["A94-harness"]
@@ -4128,6 +4129,17 @@ size_estimate = "ClaudeAgentOptions gets max_buffer_size = DRAFT-sdk-buffer-byte
 
 # HARNESS-wt-cap (Architect 2026-10-24, Westley's order 01:15 EDT, DEC-wt-cap; spec: 2026-10-19-harness-enforcement-spec.md section 1): the one way to make and finish a worktree under ~/Projects/om-push/wt, with a per-worktree state flag, a fixed number of active slots, a disk cap on wt/ and a free-space floor on /. New files only; the records half (CLAUDE.md Git paragraph, dispatcher page, ledger drafts, inventory, reap) is a records push after it lands. Urgent: outranks the weekend no-new-builds rule.
 # Tool: Workflow
+[[piece]]
+id = "HARNESS-context-guard"
+manager = "Architect"
+owns = [".claude/hooks/context_guard.py", "tests/specfactory/test_context_guard.py", ".claude/settings.json"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_context_guard.py"]
+depends_on = ["A94-harness", "HARNESS-methodcheck"]  # A94-harness: ordering edge (tests/specfactory/**); HARNESS-methodcheck: landed, settings.json moved from it
+status = { state = "queued" }  # Westley 2026-10-24 "go ahead with all 3"; tests first on the credit pipeline, behind HARNESS-wt-cap's landing
+tests_pending = true
+spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
+size_estimate = "context_guard.py about 90 lines (UserPromptSubmit hook: exit 2 past DRAFT-context-guard-tokens unless the prompt carries DRAFT-context-guard-word) and its tests (about 150 lines, ten cases with a positive control; the tests writer commits the stub)"
 [[piece]]
 id = "HARNESS-wt-cap"
 manager = "Architect"
