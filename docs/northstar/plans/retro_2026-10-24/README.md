@@ -11,6 +11,6 @@ Files this folder will hold:
 | `research_combining_and_failures.md` | Westley pasted the Gemini Deep Research report (prompt 3); landed 2026-10-24 by Westley from Gemini Deep Research, original title "AI Coding Agent Case Studies" | agents combining or porting codebases; failures and postmortems |
 | `gemini_prompts.md` | Architect | the three Gemini Deep Research prompts, copied 2026-10-24 from the scratch drafts |
 | `method_cost.md` | Sonnet engineer on API credit, after the pause | per-piece cost by role, product vs test vs doc lines by week, test-defect rows vs real catches, gate minutes and reject causes, stories Seen per week |
-| Westley's page row | Architect | six verdicts, the numbers, the three strongest research findings, what to drop, keep and try |
+| `story_reviews/westley/method_retro_2026-10-24.md` | Architect, landed 2026-10-24 after a Sonnet audit | six verdicts, the numbers, the three strongest research findings, what to drop, keep and try |
 
 The prompts: `~/Projects/om-push/scratch/drafts-2026-10-22/gemini_deep_research_prompts_2026-10-24.md` (outside the repo). Nothing in the method changes before Westley reads the page.
