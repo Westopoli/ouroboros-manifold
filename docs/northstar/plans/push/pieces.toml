@@ -4177,7 +4177,7 @@ manager = "Architect"  # owns its acceptance test file and the fixtures for the 
 owns = ["scripts/specfactory/method_metrics.py", "scripts/specfactory/method_thresholds.toml", "tests/specfactory/test_method_metrics.py"]
 owns_glob = ["tests/specfactory/fixtures/method_metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
-depends_on = []
+depends_on = ["A94-harness"]
 tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
@@ -4196,7 +4196,7 @@ size_estimate = "runs and transcript metrics M01b, M03, M06, M07, M08, M13, M14,
 [[piece]]
 id = "HARNESS-mm-1c"
 manager = "Architect"
-owns = ["scripts/specfactory/method_metrics_cli.py"]
+owns = ["scripts/specfactory/method_metrics_cli.py", "scripts/specfactory/method_metrics.py"]  # method_metrics.py: the entry line only, after mm-1a (spec A7)
 owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["HARNESS-mm-1a", "HARNESS-mm-1b"]
@@ -4270,3 +4270,14 @@ tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "pieces.toml status normalisation (40 rows) and contract flags; rule pins for the rev 3 sentences; gate_runs.csv header"
+[[piece]]
+id = "HARNESS-mm-7"
+manager = "Architect"
+owns = ["scripts/specfactory/pre_gate.sh"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_row.py"]
+depends_on = ["HARNESS-mm-2", "A94-harness"]
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "one line: pre_gate exports MERGE_GATE_RUNS_CSV=/dev/null so dry runs write no gate row (spec A6); one test case"
