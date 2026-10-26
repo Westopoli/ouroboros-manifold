@@ -466,7 +466,7 @@ def test_reason9_quantified_quote_without_assert_is_a_finding(tmp_path):
     # "fixture spec with [W 2026-10-11: \"never a square at any age\"] fails reason 9 without [ASSERT]"
     spec, res, found = _run_text(tmp_path, _w(NEVER))
     assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
-    assert res.returncode == 1, res.stdout + res.stderr
+    assert res.returncode == 0, res.stdout + res.stderr  # mm-5: reason 9 is a WARN (G03)
     assert any(l.startswith(f"{spec}:3: (9)") and "quantified quote has no [ASSERT]" in l for _, _, l in found), \
         res.stdout
 
@@ -490,7 +490,7 @@ def test_reason9_assert_whose_test_asserts_the_clause_in_a_python_file_with_a_de
     spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/t.py::test_x]"),
                                  files=[("tests/t.py", PY_NEXT_FUNCTION)])
     assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
-    assert res.returncode == 1, res.stdout + res.stderr
+    assert res.returncode == 0, res.stdout + res.stderr  # mm-5: reason 9 is a WARN (G03)
     assert _out_has(res, 9, f"the test does not assert the quote's words: \"{NEVER}\""), res.stdout
 
 
@@ -499,7 +499,7 @@ def test_reason9_clause_only_in_a_comment_names_the_clause(tmp_path):
     spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/t.py::test_x]"),
                                  files=[("tests/t.py", PY_COMMENT_ONLY)])
     assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
-    assert res.returncode == 1, res.stdout + res.stderr
+    assert res.returncode == 0, res.stdout + res.stderr  # mm-5: reason 9 is a WARN (G03)
     assert any(l.startswith(f"{spec}:3: (9)") and f"[ASSERT tests/t.py::test_x] the test does not assert the "
                f"quote's words: \"{NEVER}\"" in l for _, _, l in found), res.stdout
 
@@ -508,7 +508,7 @@ def test_reason9_missing_file_and_missing_function_are_test_not_found(tmp_path):
     # "fails when the file is missing"; the function is found by `^\s*(?:async\s+)?def <name>\(`.
     spec, res, found = _run_text(tmp_path, _w(NEVER, " [ASSERT tests/missing.py::test_x]"))
     assert "(9)" in res.stdout, "reason (9) is never emitted\n" + res.stdout + res.stderr
-    assert res.returncode == 1, res.stdout + res.stderr
+    assert res.returncode == 0, res.stdout + res.stderr  # mm-5: reason 9 is a WARN (G03)
     assert _out_has(res, 9, "[ASSERT tests/missing.py::test_x] test not found"), res.stdout
     sub = tmp_path / "nofn"
     sub.mkdir()
@@ -709,3 +709,22 @@ def test_reason5_seven_cell_row_is_malformed(tmp_path):
     assert res.returncode == 1, res.stdout + res.stderr
     assert any(l.startswith(f"{spec}:3: (5)") and "register row Q-990-06 is malformed" in l for _, _, l in found), \
         res.stdout
+
+
+# ---- method rev 3, HARNESS-mm-5 (spec G03): reason 9 becomes a WARN
+# spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md G03 "Fix" ("the provenance lint's reason 9 becomes WARN")
+# Interface fixed here: a reason-9 finding is still printed as `<spec>:<line>: (9) <text>`, but a spec whose only
+# findings are reason 9 exits 0 and prints a line `PROVENANCE WARN <spec> reason9=<n>`; any other reason still exits 1.
+# The reason-9 cases above that asserted exit 1 for a reason-9-only spec are changed to exit 0 (superseded ruling).
+def test_mm5_reason9_only_spec_exits_0_with_a_warn_line(tmp_path):
+    spec, res, found = _run_text(tmp_path, _w(NEVER))
+    assert any(l.startswith(f"{spec}:3: (9)") for _, _, l in found), res.stdout
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert any(l.startswith("PROVENANCE WARN") and "reason9=1" in l for l in res.stdout.splitlines()), res.stdout
+
+
+def test_mm5_reason9_next_to_another_reason_still_exits_1(tmp_path):
+    text = _w(NEVER) + "\nThe tile shows 5 wu of rubble.\n"  # an untagged behaviour paragraph: reason 1
+    spec, res, found = _run_text(tmp_path, text)
+    assert any(n == 1 for _, n, _ in found) and any(n == 9 for _, n, _ in found), res.stdout
+    assert res.returncode == 1, res.stdout + res.stderr

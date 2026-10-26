@@ -296,3 +296,68 @@ def test_args_file_not_on_main_or_differing_is_rejected_like_the_script(tmp_path
     assert f"LAUNCH REJECT {new} not on origin/main" in launch_lines(res), (res.stdout, res.stderr)
     assert not any(ln.startswith("LAUNCH OK") for ln in launch_lines(res)), res.stdout
     assert res.returncode != 0, res.stdout + res.stderr
+
+
+# ---------------------------------------------------------------- method rev 3, HARNESS-mm-5 (spec G12)
+# spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md G12 "Fix" and "Pieces and owners" (HARNESS-mm-5)
+# Interfaces fixed here (the spec leaves them open): the args JSON gains a top-level key `preflight`:
+# {"files": [repo paths the spec names], "functions": [{"file": ..., "name": ...}], "fenced_tests": ["path::test"]};
+# each check prints `LAUNCH REJECT <reason>` naming the file, function or test; a clean run still prints
+# `LAUNCH OK`. Owner rows are read from docs/northstar/plans/push/pieces.toml on origin/main (owns and owns_glob);
+# a function is found when `git show origin/main:<file>` has `def <name>` (py), `func <name>` (gd) or `<name>(`
+# (c, sh); a fenced test is red at the base when pytest on a checkout of origin/main fails it (the python is
+# $MERGE_GATE_PYTHON). The free-enum-slot check named in the spec has no input format and no case here.
+PIECES_REL_MM = "docs/northstar/plans/push/pieces.toml"
+PIECES_MM = ('[[piece]]\nid = "P-OWN"\nowns = ["scripts/owned.py"]\nowns_glob = ["lib/*.c"]\nacceptance = []\n'
+             'depends_on = []\nstatus = { state = "queued" }\n')
+PY_BASE = "def present_fn():\n    return 1\n"
+RED_TEST = "def test_red():\n    assert False, 'not built yet'\n"
+GREEN_TEST = "def test_green():\n    assert True\n"
+
+
+def preflight_args(**pf):
+    return json.dumps({"stage": "contract", "gaps": {}, "preflight": pf}, indent=2) + "\n"
+
+
+def mm_world(tmp_path, **pf):
+    files = {JS_REL: JS_TEXT, ARGS_REL: preflight_args(**pf), PIECES_REL_MM: PIECES_MM,
+             "scripts/owned.py": PY_BASE, "lib/a.c": "int x;\n", "tests/t_red.py": RED_TEST,
+             "tests/t_green.py": GREEN_TEST}
+    return make_world(tmp_path, files=files)
+
+
+def mm_run(tmp_path, work):
+    env_py = {"MERGE_GATE_PYTHON": __import__("sys").executable}
+    res = subprocess.run([str(SCRIPT), str(work / JS_REL), str(work / ARGS_REL)], capture_output=True, text=True,
+                         cwd=tmp_path, env={**_env(tmp_path), **env_py}, timeout=120)
+    return res, launch_lines(res)
+
+
+def test_mm5_control_clean_preflight_still_prints_launch_ok(tmp_path):
+    work = mm_world(tmp_path, files=["scripts/owned.py", "lib/a.c"],
+                    functions=[{"file": "scripts/owned.py", "name": "present_fn"}],
+                    fenced_tests=["tests/t_red.py::test_red"])
+    res, ln = mm_run(tmp_path, work)
+    assert ln and ln[-1].startswith("LAUNCH OK") and res.returncode == 0, (res.stdout, res.stderr)
+
+
+def test_mm5_file_without_an_owner_row_rejects(tmp_path):
+    work = mm_world(tmp_path, files=["scripts/owned.py", "scripts/unowned.py"])
+    res, ln = mm_run(tmp_path, work)
+    assert any(l.startswith("LAUNCH REJECT") and "scripts/unowned.py" in l for l in ln), (res.stdout, res.stderr)
+    assert not any("scripts/owned.py" in l and "REJECT" in l for l in ln)
+    assert res.returncode != 0
+
+
+def test_mm5_named_function_missing_at_the_base_rejects(tmp_path):
+    work = mm_world(tmp_path, functions=[{"file": "scripts/owned.py", "name": "absent_fn"}])
+    res, ln = mm_run(tmp_path, work)
+    assert any(l.startswith("LAUNCH REJECT") and "absent_fn" in l for l in ln), (res.stdout, res.stderr)
+    assert res.returncode != 0
+
+
+def test_mm5_fenced_test_that_is_green_at_the_base_rejects(tmp_path):
+    work = mm_world(tmp_path, fenced_tests=["tests/t_green.py::test_green"])
+    res, ln = mm_run(tmp_path, work)
+    assert any(l.startswith("LAUNCH REJECT") and "test_green" in l for l in ln), (res.stdout, res.stderr)
+    assert res.returncode != 0
