@@ -411,7 +411,10 @@ def main(argv):
         for pid in ids if ranges else ():
             if pid not in matched:
                 print(f"PROVSCOPE WARN {args[0]} id={pid} opens no paragraph")
-    return 1 if shown else 0
+    n9 = sum(1 for f in shown if f[1] == 9 and not f[2].startswith('unquoted'))
+    if n9:
+        print(f"PROVENANCE WARN {args[0]} reason9={n9}")  # See also: method rev 3 spec G03, reason 9 is a WARN
+    return 1 if len(shown) > n9 else 0
 
 
 if __name__ == "__main__":
