@@ -4196,7 +4196,7 @@ size_estimate = "runs and transcript metrics M01b, M03, M06, M07, M08, M13, M14,
 [[piece]]
 id = "HARNESS-mm-1c"
 manager = "Architect"
-owns = ["scripts/specfactory/method_metrics_cli.py"]
+owns = ["scripts/specfactory/method_metrics_cli.py", "scripts/specfactory/method_metrics.py"]  # method_metrics.py: the entry line only, after mm-1a (spec A7)
 owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["HARNESS-mm-1a", "HARNESS-mm-1b"]
