@@ -91,7 +91,7 @@ acceptance = [
 ]
 depends_on = ["freeze"]
 # Open red: R-045-09 (Westley's hold on the Knowledge Lost rate). Landed but not attached until it is ruled.
-status = "pending"
+status = { state = "attached", attach_sha = "3f293bf8" }
 size_estimate = "368 py lines, 42 tests (E-06 minus S-048, held for B5b)"
 
 [[piece]]
@@ -547,7 +547,7 @@ wave = 0
 owns = ["csrc/sim.c", "csrc/region.c", "csrc/om_internal.h", "csrc/ouroboros_sim.h", "csrc/om_constants.h", "Makefile"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "48a3a0d7" }
 
 [[piece]]
 id = "B10c"
@@ -560,7 +560,7 @@ status = { state = "attached", attach_sha = "cf1a44c3" }
 
 # Ownership-only G-* rows below (through G-wsinputsanitizer) are owner rows for existing files,
 # there is no build to attach: attached with no sha (Architect, 2026-10-07). G-legacytactical
-# keeps no status on purpose: scenes/tactical/** was deleted (C4-E3), no owned file is on main.
+# is queued (RECORDS-mm-1): scenes/tactical/** was deleted (C4-E3), no owned file is on main.
 [[piece]]
 id = "G-uidatabus"
 manager = "M3"
@@ -569,7 +569,7 @@ owns = []
 owns_glob = []  # autoload/ui_data_bus.gd moved to VG-B for the lane B landing (2026-10-08)
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached" }
 tests_pending = true
 
 [[piece]]
@@ -580,7 +580,7 @@ owns = []
 owns_glob = ["autoload/tactical_bridge.gd"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "9d44496e" }
 tests_pending = true
 
 [[piece]]
@@ -591,7 +591,7 @@ owns = []
 owns_glob = ["autoload/sim_bridge.gd", "autoload/sim_bridge_data_source.gd", "autoload/mock_data_source.gd"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "465d7145" }
 tests_pending = true
 
 [[piece]]
@@ -602,7 +602,7 @@ owns = []
 owns_glob = ["scenes/error_screen/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "0c18655a" }
 tests_pending = true
 
 [[piece]]
@@ -613,7 +613,7 @@ owns = []
 owns_glob = ["scenes/settings/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "6ac3e80b" }
 tests_pending = true
 
 [[piece]]
@@ -624,7 +624,7 @@ owns = []
 owns_glob = ["scenes/era_library/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "9d44496e" }
 tests_pending = true
 
 [[piece]]
@@ -635,7 +635,7 @@ owns = ["tests/test_bug_report_words_seed.gd"]
 owns_glob = ["scenes/bug_report/**", "autoload/bug_report_manager.gd"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "126d616e" }
 tests_pending = true
 
 [[piece]]
@@ -646,7 +646,7 @@ owns = []
 owns_glob = ["scenes/debug/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "4ad2754e" }
 tests_pending = true
 
 [[piece]]
@@ -657,7 +657,7 @@ owns = ["project.godot"]
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "126d616e" }
 tests_pending = true
 size_estimate = "autoload removals for G1 (SimBridge) then G6 (TacticalBridge), one unit each, in that order"
 
@@ -669,7 +669,7 @@ owns = []
 owns_glob = [".swarm/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "4ad2754e" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -683,6 +683,7 @@ acceptance = []
 depends_on = []
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+status = { state = "queued" }
 
 [[piece]]
 id = "G-mockupqa"
@@ -692,7 +693,7 @@ owns = []
 owns_glob = ["scenes/mockups/galaxy/qa/**", "scenes/mockups/hud/qa/**", "scenes/mockups/menus/qa/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "5349edb1" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -704,7 +705,7 @@ owns = []
 owns_glob = ["tests/qa/desktop/**"]
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "05cb09f3" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -720,7 +721,7 @@ owns = [
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "9d44496e" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -732,7 +733,7 @@ owns = []  # handed to VG-B for B9 (2026-10-08)
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -744,7 +745,7 @@ owns = ["autoload/debug_overlay.gd"]
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "04241eb7" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -756,7 +757,7 @@ owns = ["autoload/mission_metrics_recorder.gd"]
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "c4d9441a" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -768,7 +769,7 @@ owns = ["autoload/ws_input_sanitizer.gd"]
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"
+status = { state = "attached", attach_sha = "7e71e172" }
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
 
@@ -784,7 +785,7 @@ owns = []
 owns_glob = ["scenes/commander_assign/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = { state = "queued" }
 tests_pending = true
 size_estimate = "commander assignment UI for the briefing roster and the tactical reassign action (plan B7, Q-077-02)"
 
@@ -796,7 +797,7 @@ owns = []
 owns_glob = ["scenes/mission_refuse/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = { state = "queued" }
 tests_pending = true
 size_estimate = "Refuse flow for the briefing (plan B3, R-078-05, R-079-02)"
 
@@ -1414,7 +1415,7 @@ owns = [
 owns_glob = ["tests/qa/desktop/plays/K/**"]
 acceptance = ["tests/csim/test_VG_contract.py", "tests/transport/test_pipe_vg_contract.py", "tests/test_c_bridge_vg.gd"]
 depends_on = ["B10", "B10b", "B10c", "PP-unit", "B14", "A117-contract", "PP-capture", "B9", "B11", "PP-fog", "B12", "B12b", "PP-move", "B15m", "PP-mapgen", "TERRAIN-1", "core", "A2-contract", "A94-contract", "PP-contract", "SPEEDCAP-contract", "DOCS-arch", "A94-harness", "C2", "T2g", "C3", "C4", "C5", "C8", "NET-backend", "G-qadesktoptests"]
-status = "attached"  # landed fa243f75 (merge of push/vg-ka2-land-2, K-a landed)
+status = { state = "attached", attach_sha = "5aa9b40e" }  # landed fa243f75 (merge of push/vg-ka2-land-2, K-a landed)
 tests_pending = false
 size_estimate = "K0: eight getters stubbed, ABI 4 to 5, field table in architecture.md; K-a/K-f/K-h tests red until their pieces land"
 
@@ -1430,7 +1431,7 @@ owns = ["scenes/world/time_jump_sequencer.gd", "autoload/ui_data_bus.gd"]
 owns_glob = ["scenes/galaxy/**", "tests/galaxy_field/**", "tests/test_galaxy_*.gd", "tests/test_vg_b_*.gd", "tests/qa/desktop/galaxy_*", "tests/qa/desktop/probe_runner.py", "tests/qa/desktop/test_galaxy_*.py", "tests/qa/desktop/plays/B/**", "docs/northstar/story_reviews/B.md", "docs/northstar/story_reviews/shots/**", "docs/northstar/plans/push_2026-10-01/**"]
 acceptance = []
 depends_on = ["C2", "C8", "G-qadesktoptests"]
-status = "attached"  # landed 5333e1a0
+status = { state = "attached", attach_sha = "3efffb2e" }  # landed 5333e1a0
 tests_pending = true
 size_estimate = "lane B galaxy field, shell, labels, wiring (11 pieces); B0 base from push/vg-b0, not landed"
 
@@ -1445,7 +1446,7 @@ owns = []
 owns_glob = ["scenes/tactical_c/**", "tests/test_vg_a_*.gd", "tests/qa/desktop/plays/A/**", "tests/qa/desktop/test_vg_a_*.py"]
 acceptance = []
 depends_on = ["VG-CONTRACT"]
-status = "attached"  # landed 4d4babf8
+status = { state = "attached", attach_sha = "4ad2754e" }  # landed 4d4babf8
 tests_pending = true
 size_estimate = "lane A battle screen, 20 pieces in two workflows (vg-wave3-laneA.js parts a and b)"
 
@@ -1460,7 +1461,7 @@ owns = ["docs/northstar/story_reviews/C.md"]  # added by the records clerk (Disp
 owns_glob = ["scenes/ground3d/**", "tests/test_vg_c*.gd", "tests/support/vg_c_*.gd", "tests/csim/test_E01_*ground*.py", "tests/qa/desktop/plays/C/**", "tests/qa/desktop/test_vg_c_*.py"]
 acceptance = []
 depends_on = ["VG-CONTRACT", "TERRAIN-1"]
-status = "attached"  # landed bcad1954
+status = { state = "attached", attach_sha = "43bf9462" }  # landed bcad1954
 tests_pending = true
 size_estimate = "lane C 3D ground, 10 pieces in two workflows (vg-wave4-laneC.js parts a and b)"
 
@@ -1479,7 +1480,7 @@ owns = [
 owns_glob = ["tests/csim/test_VG_D_*.py"]  # Architect 2026-10-14: owns_glob of an attached piece is released; scenes/space_field/** (never existed; the space view lives in scenes/space3d/, VG-D-VIEW), tests/test_vg_d_*.gd and tests/qa/desktop/plays/D/** (collide with VG-D-VIEW; no other files matched them) released
 acceptance = []
 depends_on = ["VG-CONTRACT", "VG-C", "VG-CONTRACT-D"]
-status = "attached"  # landed 1fdeb1c0
+status = { state = "attached", attach_sha = "64847e0c" }  # landed 1fdeb1c0
 tests_pending = true
 size_estimate = "lane D space landscape, 9 pieces (vg-wave6-laneF-D.js lane D)"
 
@@ -1494,7 +1495,7 @@ owns = ["csrc/ouroboros_sim.h", "csrc/om_internal.h", "csrc/pipe/om_pipe.c", "cs
 owns_glob = []
 acceptance = ["tests/csim/test_VG_D_contract.py", "tests/transport/test_pipe_vg_d.py", "tests/test_c_bridge_vg_d.gd"]
 depends_on = ["VG-CONTRACT"]
-status = "attached"  # landed 1fdeb1c0
+status = { state = "attached", attach_sha = "ad67b56e" }  # landed 1fdeb1c0
 tests_pending = false
 size_estimate = "K-d: om_space_field getters, space_field_dump verb, bridge decode (placeholder plates)"
 
@@ -1508,7 +1509,7 @@ owns = ["docs/northstar/spec_factory/signatures.toml", "csrc/ouroboros_sim.h", "
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_contract.py", "tests/transport/test_pipe_vg_e.py", "tests/test_c_bridge_vg_e.gd"]
 depends_on = ["VG-CONTRACT", "VG-CONTRACT-D", "K-c6", "VG-D-pipefix"]
-status = "attached"  # landed ec4436da
+status = { state = "attached", attach_sha = "fa2acb8c" }  # landed ec4436da
 tests_pending = true
 size_estimate = "K-e: lots, density, strongpoint getters and frame fields; ABI 6, save format 8"
 
@@ -1575,7 +1576,7 @@ owns = ["export_presets.cfg", "scripts/build_pipe_linux.sh", "scripts/build_pipe
 owns_glob = ["tests/qa/desktop/plays/F/**", "autoload/net/**", "scenes/lobby/**"]
 acceptance = []
 depends_on = ["NET-wire-A"]
-status = "attached"  # landed 1398ba16
+status = { state = "attached", attach_sha = "a90e510e" }  # landed 1398ba16
 tests_pending = true
 size_estimate = "W8a, W8d and the depot script: six new files, no edit to existing files"
 
@@ -1587,7 +1588,7 @@ manager = "Architect"
 owns = ["csrc/space_field.c", "tests/csim/test_VG_D_d6.py"]
 acceptance = []
 depends_on = ["VG-D"]
-status = "attached"  # landed 1fdeb1c0
+status = { state = "attached", attach_sha = "64847e0c" }  # landed 1fdeb1c0
 tests_pending = true
 
 # Visible-game lane D, piece D7 (Architect 2026-10-09): handle_mission_start regenerates the space field after
@@ -1599,7 +1600,7 @@ manager = "Architect"
 owns = ["csrc/pipe/om_pipe.c", "tests/transport/test_pipe_vg_d7.py", "tests/csim/test_VG_D_d7.py"]
 acceptance = []
 depends_on = ["VG-D6", "K-c6"]
-status = "attached"  # landed 1fdeb1c0
+status = { state = "attached", attach_sha = "e129095d" }  # landed 1fdeb1c0
 tests_pending = true
 
 # Visible-game lane D, piece D8 (Westley 2026-10-09: armies spawn at their own home base): each faction's spawn slots in
@@ -1614,12 +1615,12 @@ owns = [
 ]
 acceptance = []
 depends_on = ["VG-D6"]
-status = "attached"  # landed 1fdeb1c0
+status = { state = "attached", attach_sha = "64847e0c" }  # landed 1fdeb1c0
 tests_pending = true
 # VG-C-wire (Architect 2026-10-09): attach Units3D and SlopesView to Ground3D, plus the wheel-zoom check.
 [[piece]]
 id = "VG-C-wire"
-status = "attached"  # landed 8e6ca39a
+status = { state = "attached", attach_sha = "c9c7545f" }  # landed 8e6ca39a
 depends_on = ["VG-C"]  # wiring on top of VG-C: its globs cover scenes/ground3d/** and tests/test_vg_c*.gd
 manager = "Architect"
 owns = [
@@ -1637,7 +1638,7 @@ owns = ["tests/test_qa_daemon.gd", "autoload/qa_daemon.gd"]  # qa_daemon.gd shar
 owns_glob = []
 acceptance = ["tests/test_qa_daemon.gd"]
 depends_on = ["VG-GUARD"]
-status = "attached"  # landed f37a926f
+status = { state = "attached", attach_sha = "e129095d" }  # landed f37a926f
 tests_pending = true
 size_estimate = "owns the 'project' verb lines in autoload/qa_daemon.gd (shared with VG-GUARD); dispatch case plus one helper calling the view's projection"
 
@@ -1649,7 +1650,7 @@ owns = ["scripts/specfactory/gd_reach_lint.py", "scripts/specfactory/gd_reach_st
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"  # landed fc986411
+status = { state = "attached", attach_sha = "dd926275" }  # landed fc986411
 tests_pending = true
 size_estimate = "one new file; also inserts the stage gd_reach in the SHARED scripts/specfactory/merge_gate.sh after reach_lint (one stage insert, queued)"
 
@@ -1660,7 +1661,7 @@ owns = ["scripts/specfactory/lane_plays.toml", "scripts/specfactory/lane_plays_k
 owns_glob = []
 acceptance = []
 depends_on = []
-status = "attached"  # landed fc986411
+status = { state = "attached", attach_sha = "4ad2754e" }  # landed fc986411
 tests_pending = true
 size_estimate = "lane_plays_check in the SHARED merge_gate_support.py plus the lane_plays stage in the SHARED merge_gate.sh after playthrough (queued edits)"
 
@@ -1671,7 +1672,7 @@ owns = ["tests/specfactory/test_gate_playthrough.py"]
 owns_glob = []
 acceptance = []
 depends_on = ["HARNESS-laneplays", "HARNESS-gate-venv-link"]  # HARNESS-gate-venv-link (landed d1c18f54) also owns tests/specfactory/test_gate_playthrough.py; ordering edge for the pieces.py --check FAIL (Architect 2026-10-23, batch 24)
-status = "attached"  # landed 7bb1f5a2
+status = { state = "attached", attach_sha = "f8f2f1a6" }  # landed 7bb1f5a2
 tests_pending = true
 size_estimate = "playthrough_check ignores tests/qa/desktop/plays; SHARES scripts/specfactory/merge_gate_support.py with HARNESS-laneplays (queued edit after it)"
 
@@ -1690,13 +1691,13 @@ owns = [
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_vg_c6.py", "tests/test_c_bridge_vg_c6.gd"]
 depends_on = ["VG-CONTRACT", "VG-CONTRACT-D"]
-status = "attached"  # landed 78185a63
+status = { state = "attached", attach_sha = "3d1812b6" }  # landed 78185a63
 tests_pending = false
 size_estimate = "two keys in handle_terrain_dump (about 15 lines) and two passthrough lines in terrain_from_frame"
 # VG-C6b (Architect 2026-10-09): feed Units3D the layer floors and flyer types (set_frame passes [] today). Shared file with VG-C-wire.
 [[piece]]
 id = "VG-C6b"
-status = "attached"  # landed bcad1954
+status = { state = "attached", attach_sha = "c9c7545f" }  # landed bcad1954
 manager = "Architect"
 depends_on = ["VG-C-wire", "VG-A"]
 owns = [
@@ -2323,7 +2324,7 @@ owns = ["scripts/specfactory/merge_gate.sh", "scripts/run_godot_tests.sh", "test
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_userdir.py", "tests/transport/test_fetch_godotsteam.py", "tests/transport/test_vg_f_w8d_presets.py"]
 depends_on = ["VG-GUARD", "HARNESS-runnertime", "G-qadesktoptests", "VG-A18-testfix-2", "VG-B24"]  # converts the seven TD-HARNESS-qadir sites in one piece to the construction-time user dir (spec :316; Architect 2026-10-13: HARNESS-qadir dropped as a separate piece, the VG-A18-testfix-2 and VG-B24 edits were not done, so plays/A/play_support.py and plays/B/_play.py are converted here after those two attach); VG-GUARD owns merge_gate.sh and daemon_client.py until it is attached; HARNESS-runnertime owns run_godot_tests.sh; G-qadesktoptests owns tests/qa/desktop/** by glob. Architect 2026-10-12: merge_gate.sh exports XDG_DATA_HOME=$SCRATCH_ROOT/xdg with $SCRATCH_ROOT/xdg/godot/export_templates symlinked to ~/.local/share/godot/export_templates and nothing else (never the data/ or app_userdir subtree), so the ambient settings.cfg is hidden while headless exports still build; acceptance = test_headless_linux_export_builds and test_windows_export_builds_headless green under the gate env, plus a positive control that a planted data/settings.cfg in the real home does not change qa_state() era.
-status = "attached"  # landed 5bca0733
+status = { state = "attached", attach_sha = "f8f2f1a6" }  # landed 5bca0733
 tests_pending = false
 size_estimate = "gate, test runner and desktop driver boot on an empty XDG_DATA_HOME (FINDING-ambient-user-dir)"
 
