@@ -72,7 +72,7 @@ def _run(cand, *flags, stop_after=None):
         env["MERGE_GATE_STOP_AFTER"] = stop_after
     r = subprocess.run(["bash", str(SCRIPT), *flags, str(cand), "origin/main", "HARNESS-gate-base-after-lock"],
                        capture_output=True, text=True, env=env, timeout=RUN_TIMEOUT_S)
-    gate = [ln for ln in r.stdout.splitlines() if ln.startswith("GATE ")]
+    gate = [ln for ln in r.stdout.splitlines() if ln.startswith("GATE ") and not ln.startswith("GATE row ")]
     return r.returncode, gate, r.stdout + r.stderr
 
 
