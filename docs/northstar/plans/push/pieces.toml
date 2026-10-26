@@ -4173,9 +4173,9 @@ spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
 size_estimate = "wt.py (about 260 lines: new, done, status, reap, check; .wt-state flag; slot cap, disk cap, free floor, sizes cache, migration marker, lock) and its tests (about 220 lines, twelve cases with a positive control; the tests writer commits the stub)"
 [[piece]]
 id = "HARNESS-mm-1a"
-manager = "Architect"
-owns = ["scripts/specfactory/method_metrics.py", "scripts/specfactory/method_thresholds.toml"]
-owns_glob = []
+manager = "Architect"  # owns its acceptance test file and the fixtures for the gate footprint only; the tests writer wrote them and builders never edit them
+owns = ["scripts/specfactory/method_metrics.py", "scripts/specfactory/method_thresholds.toml", "tests/specfactory/test_method_metrics.py"]
+owns_glob = ["tests/specfactory/fixtures/method_metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = []
 tests_pending = true
@@ -4207,7 +4207,7 @@ size_estimate = "M16, M17, M18, the CLI flags, --write, --last, the W43 self-che
 [[piece]]
 id = "HARNESS-mm-2"
 manager = "Architect"
-owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/suite_regression.py"]
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/suite_regression.py", "tests/specfactory/test_gate_row.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_row.py"]
 depends_on = ["A94-harness", "HARNESS-sigblocked", "VG-GUARD", "HARNESS-userdir", "HARNESS-C1b", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-csim-xdist", "HARNESS-gate-tiers", "HARNESS-gate-remote", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-look-rejects", "HARNESS-red-evidence", "HARNESS-size-lint-fail", "HARNESS-gate-venv-link", "HARNESS-lab-slow-tier", "HARNESS-no-home-paths"]  # attached owners of the same files: ordering edges only (pieces.py --check)
@@ -4218,7 +4218,7 @@ size_estimate = "GATE row line and csv append, default SUITE_TIMEOUT 2400, suite
 [[piece]]
 id = "HARNESS-mm-3"
 manager = "Architect"
-owns = ["scripts/specfactory/sdk_engineer.py", "scripts/specfactory/status_check.py"]
+owns = ["scripts/specfactory/sdk_engineer.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_sdk_runs.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_sdk_runs.py", "tests/specfactory/test_status_check.py"]
 depends_on = ["A94-harness", "HARNESS-status", "HARNESS-credits-tools", "HARNESS-sdk-buffer", "HARNESS-C1b", "HARNESS-C235", "HARNESS-C4", "HARNESS-C235-fail", "HARNESS-coverage", "HARNESS-tool-line", "HARNESS-gate-tiers"]  # attached owners of the same files: ordering edges only (pieces.py --check)
@@ -4229,7 +4229,7 @@ size_estimate = "run row append; checks findings, metrics and method_pins (spec 
 [[piece]]
 id = "HARNESS-mm-4"
 manager = "Architect"
-owns = ["scripts/specfactory/method_check.py", "scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "scripts/specfactory/systemd/om-method-metrics.timer"]
+owns = ["scripts/specfactory/method_check.py", "scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "scripts/specfactory/systemd/om-method-metrics.timer", "tests/specfactory/test_method_weekly.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py", "tests/specfactory/test_method_weekly.py"]
 depends_on = ["HARNESS-mm-1c", "HARNESS-methodcheck", "A94-harness"]  # methodcheck is on main; ordering edge for owner_lint
