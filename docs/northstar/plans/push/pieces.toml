@@ -4270,3 +4270,14 @@ tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "pieces.toml status normalisation (40 rows) and contract flags; rule pins for the rev 3 sentences; gate_runs.csv header"
+[[piece]]
+id = "HARNESS-mm-7"
+manager = "Architect"
+owns = ["scripts/specfactory/pre_gate.sh"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_row.py"]
+depends_on = ["HARNESS-mm-2", "A94-harness"]
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "one line: pre_gate exports MERGE_GATE_RUNS_CSV=/dev/null so dry runs write no gate row (spec A6); one test case"
