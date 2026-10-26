@@ -3081,7 +3081,7 @@ wave = 13
 owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_spec_provenance.py", "tests/specfactory/test_status_check.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance.py"]
-depends_on = ["HARNESS-C235", "SWEEP-spec-standins", "HARNESS-C4", "HARNESS-coverage", "HARNESS-swarm-config"]  # the last three are queued and also own scripts/specfactory/status_check.py (HARNESS-C4 also tests/specfactory/test_status_check.py); ordering only (owner_lint)
+depends_on = ["HARNESS-C235", "SWEEP-spec-standins", "HARNESS-C4", "HARNESS-coverage", "HARNESS-swarm-config", "HARNESS-mm-3", "HARNESS-mm-5"]  # the last three are queued and also own scripts/specfactory/status_check.py (HARNESS-C4 also tests/specfactory/test_status_check.py); ordering only (owner_lint)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the C1 to C5 checks fail instead of warn once SWEEP-spec-standins has cleared the stand-ins (Westley picked all five, 2026-10-19 as the audit cites); spec keys required on every queued row"
@@ -3418,7 +3418,7 @@ wave = 13
 owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
 owns_glob = ["docs/northstar/plans/drift_audits/coverage_runs/*"]
 acceptance = ["tests/specfactory/test_coverage_check.py"]
-depends_on = ["HARNESS-C235", "HARNESS-C4", "HARNESS-gate-keep-red-evidence"]  # keep-red-evidence added by the Architect 2026-10-21 (drift_audit.md order)
+depends_on = ["HARNESS-C235", "HARNESS-C4", "HARNESS-gate-keep-red-evidence", "HARNESS-mm-3"]  # keep-red-evidence added by the Architect 2026-10-21 (drift_audit.md order)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "coverage_run.sh, coverage_report.py, status_check.py check coverage, baseline file; under 250 lines"
@@ -3511,7 +3511,7 @@ wave = 13
 owns = ["scripts/specfactory/status_check.py", "tests/specfactory/test_tool_line.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_tool_line.py"]
-depends_on = ["HARNESS-C4", "HARNESS-coverage", "HARNESS-provenance-scope", "HARNESS-C235-fail"]  # HARNESS-C235-fail added by the records clerk (owner_lint-forced, Architect to confirm): it also owns status_check.py. Both own scripts/specfactory/status_check.py; ordering only
+depends_on = ["HARNESS-C4", "HARNESS-coverage", "HARNESS-provenance-scope", "HARNESS-C235-fail", "HARNESS-mm-3"]  # HARNESS-C235-fail added by the records clerk (owner_lint-forced, Architect to confirm): it also owns status_check.py. Both own scripts/specfactory/status_check.py; ordering only
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6, the HARNESS-tool-line paragraph (replaced its bullet, records batch 27)
@@ -3632,7 +3632,7 @@ wave = 13
 owns = ["tests/csim/conftest.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/requirements.txt", "tests/specfactory/test_csim_xdist.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_csim_xdist.py"]
-depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-provenance-scope", "VG-E-prodslot", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-cache-seed"]  # Architect D7 2026-10-21: prodslot and keep-red order the conftest.py and merge_gate.sh overlaps; VG-CONTRACT-layerspot, VG-CONTRACT-route and LAB-REV2-E0 depend on this row
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-provenance-scope", "VG-E-prodslot", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-cache-seed", "HARNESS-mm-2"]  # Architect D7 2026-10-21: prodslot and keep-red order the conftest.py and merge_gate.sh overlaps; VG-CONTRACT-layerspot, VG-CONTRACT-route and LAB-REV2-E0 depend on this row
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3648,7 +3648,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/status_check.py", "docs/northstar/plans/push/sweeps.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "tests/specfactory/test_gate_tiers.py"]  # dispatcher.md: the temporary-rule paragraph only (its other owner, HARNESS-methodcheck, is landed); rules.md: HARNESS-red-evidence is ordered after this row through HARNESS-look-rejects
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_tiers.py"]
-depends_on = ["HARNESS-csim-xdist", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-test-edit-row", "HARNESS-tool-line"]  # the last two are records-clerk additions (merge_gate_support.py overlap), Architect to confirm
+depends_on = ["HARNESS-csim-xdist", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-test-edit-row", "HARNESS-tool-line", "HARNESS-mm-2", "HARNESS-mm-3"]  # the last two are records-clerk additions (merge_gate_support.py overlap), Architect to confirm
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3664,7 +3664,7 @@ wave = 13
 owns = ["scripts/specfactory/gate_remote.sh", "docs/northstar/plans/gate_hosts.md", "tests/specfactory/test_gate_remote.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_remote.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects", "HARNESS-red-evidence"]
+depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects", "HARNESS-red-evidence", "HARNESS-mm-2"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3714,7 +3714,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_gate_reorder.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_reorder.py"]
-depends_on = ["HARNESS-gate-cache-seed", "HARNESS-csim-xdist"]  # the second edge is a records-clerk addition (both own merge_gate.sh; csim-xdist has no row on main yet), Architect to confirm
+depends_on = ["HARNESS-gate-cache-seed", "HARNESS-csim-xdist", "HARNESS-mm-2"]  # the second edge is a records-clerk addition (both own merge_gate.sh; csim-xdist has no row on main yet), Architect to confirm
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H, Rev 12e
@@ -3731,7 +3731,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_concurrent.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_concurrent.py"]
-depends_on = ["HARNESS-csim-xdist", "HARNESS-gate-reorder"]
+depends_on = ["HARNESS-csim-xdist", "HARNESS-gate-reorder", "HARNESS-mm-2"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H, Rev 12e
@@ -3746,7 +3746,7 @@ wave = 15
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_look_rejects.py", "tests/specfactory/test_gate_look_and_times.py"]  # merge_gate.sh: stage 13 look lines only (:692-705); merge_gate_support.py: frame_busyness/look_check (:832-858), the look parser (:1162-1164) and CLI clause (:1274-1278) only; test_gate_look_and_times.py: the look section (:131-176) under TD-HARNESS-look-rejects
 owns_glob = []
 acceptance = ["tests/specfactory/test_look_rejects.py", "tests/specfactory/test_gate_look_and_times.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-reorder", "HARNESS-gate-concurrent"]  # the last two are records-clerk additions (merge_gate.sh overlap, Architect to confirm); the base-after-lock and keep-red edges only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
+depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-mm-2"]  # the last two are records-clerk additions (merge_gate.sh overlap, Architect to confirm); the base-after-lock and keep-red edges only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
 status = { state = "queued" }
 tests_pending = true  # TEST_WRITER = sonnet55
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # lane H, the HARNESS-look-rejects paragraph
@@ -3762,7 +3762,7 @@ wave = 15
 owns = ["scripts/specfactory/red_check.py", "scripts/specfactory/merge_gate.sh", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_red_evidence.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_red_evidence.py"]
-depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-look-rejects"]  # HARNESS-look-rejects only orders the merge_gate.sh overlap (owner_lint)
+depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-look-rejects", "HARNESS-mm-2"]  # HARNESS-look-rejects only orders the merge_gate.sh overlap (owner_lint)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
@@ -3778,7 +3778,7 @@ wave = 15
 owns = ["scripts/specfactory/size_lint.py", "scripts/specfactory/merge_gate.sh", "tests/specfactory/test_size_lint.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_size_lint.py"]
-depends_on = ["A94-harness", "HARNESS-look-rejects", "HARNESS-gate-remote", "HARNESS-red-evidence", "HARNESS-gate-venv-link"]  # HARNESS-look-rejects orders the merge_gate.sh step 12 edit after the last queued mg.sh owner in wave 15; A94-harness: only the owns-overlap ordering edge pieces.py --check wants (A94-harness owns scripts/specfactory/[!m]* and tests/specfactory/**, attached)
+depends_on = ["A94-harness", "HARNESS-look-rejects", "HARNESS-gate-remote", "HARNESS-red-evidence", "HARNESS-gate-venv-link", "HARNESS-mm-2"]  # HARNESS-look-rejects orders the merge_gate.sh step 12 edit after the last queued mg.sh owner in wave 15; A94-harness: only the owns-overlap ordering edge pieces.py --check wants (A94-harness owns scripts/specfactory/[!m]* and tests/specfactory/**, attached)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
@@ -4021,7 +4021,7 @@ wave = 9
 owns = ["scripts/specfactory/chain_sim.py", "scripts/specfactory/control_liveness.py", "scripts/specfactory/parent_patch_fence.py", "scripts/specfactory/pieces.py", "scripts/specfactory/suite_regression.py", "scripts/specfactory/undertest_check.py", "tests/specfactory/test_no_home_paths.py", "tests/specfactory/test_checksum_trace.py", "tests/specfactory/test_gate_a94_steps.py", "tests/specfactory/test_gate_control_liveness.py", "tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_gate_placeholder_controls.py", "tests/specfactory/test_gate_sig_blocked.py", "tests/specfactory/test_merge_gate.py", "tests/specfactory/test_parent_patch_fence.py", "tests/specfactory/test_suite_regression.py", "tests/specfactory/fixtures/205a-e05-collision-lottery.md"]
 owns_glob = []
 acceptance = ["with OM_HOME=/tmp/x every harness path default starts with /tmp/x (positive control: unset, it starts with Path.home())", "a grep test asserts no /home/westopoli literal remains under scripts/ and tests/specfactory/"]
-depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-venv-link", "HARNESS-record-files"]
+depends_on = ["HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-venv-link", "HARNESS-record-files", "HARNESS-mm-2"]
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "one helper om_home() in pieces.py returning Path(os.environ.get(\"OM_HOME\", Path.home())), every default built from it, tests build expectations the same way (TD-HARNESS-home-paths); path defaults only in the six scripts; no behaviour change on this machine"
@@ -4122,7 +4122,7 @@ wave = 15
 owns = ["scripts/specfactory/sdk_engineer.py", "tests/specfactory/test_sdk_engineer_options.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_sdk_engineer_options.py"]
-depends_on = ["HARNESS-credits-tools"]  # ordering edge only: HARNESS-credits-tools (attached) owns sdk_engineer.py, and through it A94-harness's globs (pieces.py --check, records batch 28)
+depends_on = ["HARNESS-credits-tools", "HARNESS-mm-3"]  # ordering edge only: HARNESS-credits-tools (attached) owns sdk_engineer.py, and through it A94-harness's globs (pieces.py --check, records batch 28)
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "ClaudeAgentOptions gets max_buffer_size = DRAFT-sdk-buffer-bytes 16 MiB (the Architect's named draft, Westley vetoes); the test reads the built options via --dry-run and asserts the field; positive control: main's dry-run shows no such field; closes FINDING-sdk-engineer-buffer-1mb when landed"
@@ -4170,3 +4170,102 @@ depends_on = ["A94-harness"]  # ordering edge only: A94-harness owns scripts/spe
 status = { state = "attached", attach_sha = "639ecbd1" }  # landed 639ecbd1 (build 293b5c7a); rev 2 after the Sonnet audit of 2026-10-24; Westley approved ("draft approved, go")
 spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
 size_estimate = "wt.py (about 260 lines: new, done, status, reap, check; .wt-state flag; slot cap, disk cap, free floor, sizes cache, migration marker, lock) and its tests (about 220 lines, twelve cases with a positive control; the tests writer commits the stub)"
+[[piece]]
+id = "HARNESS-mm-1a"
+manager = "Architect"
+owns = ["scripts/specfactory/method_metrics.py", "scripts/specfactory/method_thresholds.toml"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_metrics.py"]
+depends_on = []
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "git and ledger metrics M01, M02, M04, M05, M10, M11, M12, M19, M20, M23, M24; about 300 lines; thresholds toml from the spec's DRAFT values"
+[[piece]]
+id = "HARNESS-mm-1b"
+manager = "Architect"
+owns = ["scripts/specfactory/method_metrics_runs.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_metrics.py"]
+depends_on = []
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "runs and transcript metrics M01b, M03, M06, M07, M08, M13, M14, M15, M21, M22; about 300 lines"
+[[piece]]
+id = "HARNESS-mm-1c"
+manager = "Architect"
+owns = ["scripts/specfactory/method_metrics_cli.py"]
+owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*"]
+acceptance = ["tests/specfactory/test_method_metrics.py"]
+depends_on = ["HARNESS-mm-1a", "HARNESS-mm-1b"]
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "M16, M17, M18, the CLI flags, --write, --last, the W43 self-check and snapshot; about 300 lines"
+[[piece]]
+id = "HARNESS-mm-2"
+manager = "Architect"
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/suite_regression.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_row.py"]
+depends_on = ["A94-harness", "HARNESS-sigblocked", "VG-GUARD", "HARNESS-userdir", "HARNESS-C1b", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-csim-xdist", "HARNESS-gate-tiers", "HARNESS-gate-remote", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-look-rejects", "HARNESS-red-evidence", "HARNESS-size-lint-fail", "HARNESS-gate-venv-link", "HARNESS-lab-slow-tier", "HARNESS-no-home-paths"]  # attached owners of the same files: ordering edges only (pieces.py --check)
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "GATE row line and csv append, default SUITE_TIMEOUT 2400, suite-timeout cause in the regression REJECT detail; under 80 lines"
+[[piece]]
+id = "HARNESS-mm-3"
+manager = "Architect"
+owns = ["scripts/specfactory/sdk_engineer.py", "scripts/specfactory/status_check.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_sdk_runs.py", "tests/specfactory/test_status_check.py"]
+depends_on = ["A94-harness", "HARNESS-status", "HARNESS-credits-tools", "HARNESS-sdk-buffer", "HARNESS-C1b", "HARNESS-C235", "HARNESS-C4", "HARNESS-C235-fail", "HARNESS-coverage", "HARNESS-tool-line", "HARNESS-gate-tiers"]  # attached owners of the same files: ordering edges only (pieces.py --check)
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "run row append; checks findings and metrics; story in KNOWN_KEYS; under 120 lines"
+[[piece]]
+id = "HARNESS-mm-4"
+manager = "Architect"
+owns = ["scripts/specfactory/method_check.py", "scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "scripts/specfactory/systemd/om-method-metrics.timer"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_check.py", "tests/specfactory/test_method_weekly.py"]
+depends_on = ["HARNESS-mm-1c", "HARNESS-methodcheck", "A94-harness"]  # methodcheck is on main; ordering edge for owner_lint
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "scratch exclusion in code_edits; weekly runner with --dry-run; two unit files; under 120 lines"
+[[piece]]
+id = "HARNESS-mm-5"
+manager = "Architect"
+owns = ["scripts/specfactory/launch_check.sh", "scripts/specfactory/spec_provenance.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_launch_check.py", "tests/specfactory/test_spec_provenance.py"]
+depends_on = ["A94-harness", "HARNESS-provenance", "HARNESS-C4", "HARNESS-C1a", "HARNESS-C235", "HARNESS-C235-fail", "HARNESS-provenance-scope"]  # attached owners of the same files: ordering edges only (pieces.py --check)
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "three pre-flight checks; reason 9 severity WARN; under 100 lines"
+[[piece]]
+id = "HARNESS-mm-6"
+manager = "Architect"
+owns = []
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_weekly.py"]
+depends_on = ["HARNESS-context-guard-2", "HARNESS-mm-4"]
+tests_pending = true
+status = { state = "pending" }  # owns .claude/settings.json once HARNESS-context-guard-2 (which owns it today) is attached; the owner row is added then
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "one SessionStart hook line: method_metrics.py --last"
+[[piece]]
+id = "RECORDS-mm-1"
+manager = "Architect"
+owns = ["scripts/specfactory/rule_pins.toml", "docs/northstar/plans/push/gate_runs.csv"]
+owns_glob = []
+acceptance = []
+depends_on = ["A94-harness", "HARNESS-C1b"]  # attached owners of the same files: ordering edges only (pieces.py --check)
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "pieces.toml status normalisation (40 rows) and contract flags; rule pins for the rev 3 sentences; gate_runs.csv header"
