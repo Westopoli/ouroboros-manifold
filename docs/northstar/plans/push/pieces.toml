@@ -4245,7 +4245,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_launch_check.py", "tests/specfactory/test_spec_provenance.py"]
 depends_on = ["A94-harness", "HARNESS-provenance", "HARNESS-C4", "HARNESS-C1a", "HARNESS-C235", "HARNESS-C235-fail", "HARNESS-provenance-scope"]  # attached owners of the same files: ordering edges only (pieces.py --check)
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "4c88120b09bb8186a9d249160e02cfd2b31e7c6b" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "three pre-flight checks; reason 9 severity WARN; under 100 lines"
 [[piece]]
