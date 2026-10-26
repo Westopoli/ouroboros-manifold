@@ -4225,7 +4225,7 @@ depends_on = ["A94-harness", "HARNESS-status", "HARNESS-credits-tools", "HARNESS
 tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
-size_estimate = "run row append; checks findings and metrics; story in KNOWN_KEYS; under 120 lines"
+size_estimate = "run row append; checks findings, metrics and method_pins (spec A2); story and contract in KNOWN_KEYS (spec A1); under 160 lines"
 [[piece]]
 id = "HARNESS-mm-4"
 manager = "Architect"
@@ -4262,7 +4262,7 @@ size_estimate = "one SessionStart hook line: method_metrics.py --last"
 [[piece]]
 id = "RECORDS-mm-1"
 manager = "Architect"
-owns = ["scripts/specfactory/rule_pins.toml", "docs/northstar/plans/push/gate_runs.csv"]
+owns = ["docs/northstar/plans/method_rev3_2026-10-26/pins.toml", "docs/northstar/plans/push/gate_runs.csv"]  # spec A2: rule_pins.toml has no sentence form
 owns_glob = []
 acceptance = []
 depends_on = ["A94-harness", "HARNESS-C1b"]  # attached owners of the same files: ordering edges only (pieces.py --check)

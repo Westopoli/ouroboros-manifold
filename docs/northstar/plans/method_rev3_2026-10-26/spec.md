@@ -39,6 +39,12 @@ Every new sentence gets a `rule_pins.toml` entry (RECORDS-mm-1) so a later edit 
 
 The tests writer (one Sonnet engineer, Phase 1) owns every test file above until the builders start; builders never edit them. Fixtures: `tests/specfactory/fixtures/method_metrics/`.
 
+## Amendments (Architect, 2026-10-26, after the records clerk's report)
+
+- A1 contract flag. `contract = true` joins `KNOWN_KEYS` in `status_check.py` (HARNESS-mm-3, with `story`). Scope: a row is a contract piece when it owns `csrc/ouroboros_sim.h` or `csrc/signatures.toml`, or its id starts with `CONTRACT-`, `VG-CONTRACT`, `LAB-CONTRACT` or `A*-contract`/`PP-contract`/`SPEEDCAP-contract`. Rows that own `docs/architecture.md` or `csrc/save.c` for one paragraph (VG-W2, VG-E1R, VG-E-prodslot, SV-0, core, and the like) are not contract pieces. The flags are applied by the landing clerk of HARNESS-mm-3 in its records commit (RECORDS-mm-1 step 2 moves there).
+- A2 sentence pins. `rule_pins.toml` pins `R-###-##` test rules only and has no sentence form, so the rev 3 sentences get their own records file: `docs/northstar/plans/method_rev3_2026-10-26/pins.toml`, `[[pin]] file = "CLAUDE.md"  sentence = "<exact new sentence>"  since = ""  gap = "G01"`. `status_check.py` gains check `method_pins` (HARNESS-mm-3): for every pin with a non-empty `since`, the sentence must appear verbatim in `git show <base>:<file>`; DRIFT when missing, OK otherwise; a pin with `since = ""` is skipped (the sentence lands in Phase 4, when the clerk fills `since`). RECORDS-mm-1 step 3 writes `pins.toml` with the 11 sentences from "Rule-text diffs", every `since` empty. The tests writer adds the `method_pins` cases (DRIFT on a missing dated pin, OK on an empty `since`, OK when present) to `tests/specfactory/test_status_check.py`.
+- A3 RECORDS-mm-1 scope after the clerk's run: step 1 done (41 rows: 36 attached with sha, 2 attached without, 3 queued), step 4 done, ledger row done; step 2 moves to mm-3's landing; step 3 is now `pins.toml` as in A2. RECORDS-mm-1 flips to attached when `pins.toml` is on main.
+
 ## Design
 
 Three records fixes come first, because without them half the metrics have nothing to read (G17 was "records cannot answer the question they exist for"):
