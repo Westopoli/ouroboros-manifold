@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """status_check.py: method rev 2, guard 7. The status copies must agree.
 
-Eight checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
+Twelve checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
 print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0).
 
   lane_table  every sha in the programme lane table's "On main" cells is an
@@ -27,14 +27,26 @@ print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0
               PRE_LAUNCH_IDS), a script and args path in git at --base; always
               DRIFT, no switch (HARNESS-C4). `check pieces` also prints
               `unknown key <k> in <id>` for a key outside KNOWN_KEYS.
+  findings    a FINDING- ledger row dated (git blame) on or after 2026-10-26 whose
+              Event cell lacks `found-by=`, or a TD- row lacking `ruler=`; always
+              DRIFT (HARNESS-mm-3, method rev 3 G17)
+  metrics     WARN naming the ids with status FAIL in the latest
+              method_rev3_2026-10-26/metrics/*.json, else OK (HARNESS-mm-3)
+  method_pins every pin in method_rev3_2026-10-26/pins.toml with a non-empty
+              `since` must appear verbatim in `git show <base>:<file>`; a pin with
+              an empty `since` is skipped; always DRIFT (HARNESS-mm-3, A2)
+  (`check pieces` also accepts the keys `story` and `contract`, A1.)
 
 See also: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
 """
 import argparse
+import datetime
 import hashlib
+import json
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -45,6 +57,9 @@ D_STORIES = "docs/bible/stories.md"
 D_REVIEWS = "docs/northstar/story_reviews"
 D_ROADMAP = "docs/northstar/ROADMAP.md"
 D_REGISTER = "docs/northstar/ambiguity_register.md"
+D_LEDGER = "docs/northstar/plans/push_ledger_2026-09-22.md"
+D_MM = "docs/northstar/plans/method_rev3_2026-10-26"
+LEDGER_TOKENS_FROM = "2026-10-26"  # method rev 3 G17: found-by= and ruler= are required from this date
 SWITCH_ROW = "FU-HARNESS-findings"
 
 SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
@@ -55,7 +70,7 @@ REVIEW_FIELDS_FROM = "2026-10-20"  # DRAFT-review-fields-from, harness enforceme
 REVIEW_FIELDS = ("legend", "unit", "band")
 # The ten keys pieces.toml rows use plus the four HARNESS-C4 adds. See also: pieces.py, which rejects no unknown key.
 KNOWN_KEYS = frozenset("id manager wave owns owns_glob acceptance depends_on status tests_pending size_estimate "
-                       "script args launch spec".split())
+                       "script args launch spec story contract".split())
 # Ids whose `launch = "-"` is exempt from the sha test (launched before launch_check.sh); REPIN fills it.
 PRE_LAUNCH_IDS = ()
 STAND_IN_ANSWER = re.compile(r"until Westley|Westley to confirm|Westley answers|Architect default|\bdefault\b", re.I)
@@ -288,6 +303,62 @@ def check_roadmap(roadmap, programme_rel):
     return out or [("roadmap", True, "no lane copies; programme row names its file")]
 
 
+def blame_dates(repo, rel):
+    """{1-based line: author date} of the working file; an uncommitted line counts as today."""
+    r = subprocess.run(["git", "-C", str(repo), "blame", "--line-porcelain", "--", rel], capture_output=True, text=True)
+    out, line = {}, 0
+    for ln in r.stdout.splitlines():
+        if re.match(r"[0-9a-f]{40} \d+ \d+", ln):
+            line = int(ln.split()[2])
+        elif ln.startswith("author-time "):
+            out[line] = datetime.datetime.fromtimestamp(int(ln.split()[1]), datetime.timezone.utc).date().isoformat()
+    return out
+
+
+def check_findings(repo, ledger):
+    """See also: the ledger token rules in docs/northstar/plans/method_rev3_2026-10-26/spec.md Design item 3."""
+    if not ledger.is_file():
+        return [("findings", True, f"no ledger file at {ledger.name}")]
+    lines = ledger.read_text().splitlines()
+    rows = [(i, c[1]) for i, ln in enumerate(lines, 1) if ln.startswith("|") and len(c := cells(ln)) > 1
+            and re.match(r"(FINDING|TD)-", c[1])]
+    dates = blame_dates(repo, ledger.relative_to(repo).as_posix()) if rows else {}
+    today = datetime.date.today().isoformat()
+    out = []
+    for i, event in rows:
+        if dates.get(i, today) < LEDGER_TOKENS_FROM:
+            continue
+        token = "found-by=" if event.startswith("FINDING-") else "ruler="
+        if token not in event:
+            out.append(("findings", False, f"{event.split()[0]} (ledger line {i}) lacks {token}"))
+    return out or [("findings", True, f"{len(rows)} rows checked")]
+
+
+def check_metrics(mm):
+    files = sorted((mm / "metrics").glob("*.json"))
+    if not files:
+        return [("metrics", True, "no metrics file")]
+    d = json.loads(files[-1].read_text())
+    fails = [m["id"] for m in d.get("metrics", []) if m.get("status") == "FAIL"]
+    return [("metrics", "warn", ", ".join(fails))] if fails else [("metrics", True, f"{files[-1].stem} has no FAIL")]
+
+
+def check_method_pins(repo, base, mm):
+    """See also: pins.toml (spec A2); rule_pins.py pins R-###-## test rules only."""
+    path = mm / "pins.toml"
+    if not path.is_file():
+        return [("method_pins", True, "no pins.toml")]
+    out, n = [], 0
+    for pin in tomllib.loads(path.read_text()).get("pin", []):
+        if not pin.get("since"):
+            continue
+        n += 1
+        blob = git_blob(repo, base, pin["file"])
+        if blob is None or pin["sentence"] not in blob.decode(errors="replace"):
+            out.append(("method_pins", False, f"{pin.get('gap', '?')} sentence missing from {base}:{pin['file']}"))
+    return out or [("method_pins", True, f"{n} dated pins checked")]
+
+
 def main(argv):
     ap = argparse.ArgumentParser(prog="status_check.py", description=__doc__.split("\n")[0])
     ap.add_argument("--repo", default=str(REPO))
@@ -298,6 +369,8 @@ def main(argv):
     ap.add_argument("--reviews", default=D_REVIEWS)
     ap.add_argument("--roadmap", default=D_ROADMAP)
     ap.add_argument("--register", default=D_REGISTER)
+    ap.add_argument("--ledger", default=D_LEDGER)
+    ap.add_argument("--method-dir", default=D_MM)
     a = ap.parse_args(argv)
     repo = Path(a.repo)
 
@@ -314,6 +387,9 @@ def main(argv):
     results += check_register(at(a.register), at(a.pieces))
     results += check_reviews(at(a.reviews), at(a.pieces))
     results += check_launch(repo, a.base, at(a.pieces))
+    results += check_findings(repo, at(a.ledger))
+    results += check_metrics(at(a.method_dir))
+    results += check_method_pins(repo, a.base, at(a.method_dir))
     for name, ok, detail in results:
         print(f"STATUS {name} {'WARN' if ok == 'warn' else 'OK' if ok else 'DRIFT'} {detail}")
     return 0 if all(ok for _, ok, _ in results) else 1
