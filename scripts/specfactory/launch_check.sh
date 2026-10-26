@@ -61,6 +61,57 @@ PY
       reject "gap $id not in the spec on main"
     fi
   done <<<"$gaps"
+
+  # See also: method rev 3 spec G12, the pre-flight list as executable checks.
+  pf=$(python3 - "$args" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1])).get("preflight") or {}
+for f in p.get("files") or []:
+    print("FILE\t" + f + "\t")
+for fn in p.get("functions") or []:
+    print("FUNC\t" + fn["file"] + "\t" + fn["name"])
+for t in p.get("fenced_tests") or []:
+    print("TEST\t" + t + "\t")
+PY
+  )
+  if [ -n "$pf" ]; then
+    pieces=$(git -C "$root" show "origin/main:docs/northstar/plans/push/pieces.toml" 2>/dev/null)
+    owned=$(PIECES_TOML="$pieces" python3 - <<'PY'
+import os, tomllib
+for p in tomllib.loads(os.environ["PIECES_TOML"]).get("piece", []):
+    for k in ("owns", "owns_glob"):
+        for x in p.get(k) or []:
+            print(x)
+PY
+    )
+    pybin="${MERGE_GATE_PYTHON:-/home/westopoli/Projects/agora/.venv/bin/python}"
+    basewt=""
+    while IFS=$'\t' read -r kind a b; do
+      [ -n "$kind" ] || continue
+      case "$kind" in
+        FILE)
+          hit=$(python3 -c 'import fnmatch,sys
+f=sys.argv[1]
+print(any(f==o or fnmatch.fnmatch(f,o) for o in sys.stdin.read().split("\n") if o))' "$a" <<<"$owned")
+          [ "$hit" = True ] || reject "$a has no owner row in pieces.toml"
+          ;;
+        FUNC)
+          src=$(git -C "$root" show "origin/main:$a" 2>/dev/null) || { reject "function $b: $a not on origin/main"; continue; }
+          grep -Eq -- "(def|func)[[:space:]]+$b\b|$b[[:space:]]*\(" <<<"$src" || reject "function $b not in $a at the base"
+          ;;
+        TEST)
+          if [ -z "$basewt" ]; then
+            basewt=$(mktemp -d)
+            git -C "$root" archive origin/main | tar -x -C "$basewt"
+          fi
+          if (cd "$basewt" && "$pybin" -m pytest -q -p no:cacheprovider "$a" >/dev/null 2>&1); then
+            reject "fenced test $a is green at the base"
+          fi
+          ;;
+      esac
+    done <<<"$pf"
+    [ -z "$basewt" ] || rm -rf "$basewt"
+  fi
 fi
 
 [ "$rc" -eq 0 ] && echo "LAUNCH OK $script_sha $args_sha"

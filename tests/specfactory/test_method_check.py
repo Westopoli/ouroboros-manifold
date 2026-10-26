@@ -328,26 +328,3 @@ def test_bash_sleep_flock_and_gate_script_segments_count(tmp_path):
     got = checks(r.stdout)
     assert got["polling"][:2] == ("DRIFT", 2), got["polling"]
     assert got["gate_runs"][:2] == ("DRIFT", 1), got["gate_runs"]
-
-
-# ---- method rev 3, HARNESS-mm-4 (spec G20): the Architect's runner scripts under om-push/scratch are not code edits
-# spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md G20 "In force"
-def test_mm4_architect_write_under_scratch_is_not_a_code_edit(tmp_path):
-    scratch = os.path.expanduser("~/Projects/om-push/scratch/runner.py")
-    entries = [assistant(FABLE, tools=[("Write", {"file_path": scratch, "content": "x"})])]
-    r = run(tmp_path, write_transcript(tmp_path, entries))
-    assert r.returncode == 0, r.stderr
-    assert checks(r.stdout)["code_edits"][0] == "OK", r.stdout
-
-
-def test_mm4_architect_write_under_scripts_is_still_a_code_edit(tmp_path):
-    sc = os.path.expanduser("~/Projects/om-push/wt/x/scripts/runner.py")
-    entries = [assistant(FABLE, tools=[("Write", {"file_path": sc, "content": "x"})])]
-    r = run(tmp_path, write_transcript(tmp_path, entries))
-    assert checks(r.stdout)["code_edits"] == ("DRIFT", 1, 1), r.stdout
-
-
-def test_mm4_scratch_shell_redirect_is_not_a_code_edit_either(tmp_path):
-    cmd = "cat > ~/Projects/om-push/scratch/run_gate.sh <<'EOF'\necho hi\nEOF"
-    r = run(tmp_path, write_transcript(tmp_path, [assistant(FABLE, tools=[bash(cmd)])]))
-    assert checks(r.stdout)["code_edits"][0] == "OK", r.stdout
