@@ -4177,7 +4177,7 @@ manager = "Architect"  # owns its acceptance test file and the fixtures for the 
 owns = ["scripts/specfactory/method_metrics.py", "scripts/specfactory/method_thresholds.toml", "tests/specfactory/test_method_metrics.py"]
 owns_glob = ["tests/specfactory/fixtures/method_metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
-depends_on = []
+depends_on = ["A94-harness"]
 tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
