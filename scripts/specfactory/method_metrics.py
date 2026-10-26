@@ -540,4 +540,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import method_metrics_cli
+    sys.exit(method_metrics_cli.main())

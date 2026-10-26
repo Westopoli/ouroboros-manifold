@@ -1,0 +1,327 @@
+{
+ "week": "2026-W43",
+ "metrics": [
+  {
+   "id": "M01",
+   "status": "FAIL",
+   "value": "8.38",
+   "threshold": "<=1.5",
+   "line": "METRIC M01 FAIL 8.38 vs <=1.5 G01 (tests +32453, game +3874) 2026-W43"
+  },
+  {
+   "id": "M01b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M01b DRAFT 0 vs <=0 G01 (tests runs on client-only pieces: none) 2026-W43"
+  },
+  {
+   "id": "M02",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=1.0",
+   "line": "METRIC M02 NA NA vs <=1.0 G02 (144 TD rows, 0 landings) 2026-W43"
+  },
+  {
+   "id": "M02b",
+   "status": "FAIL",
+   "value": "144",
+   "threshold": "<=10",
+   "line": "METRIC M02b FAIL 144 vs <=10 G02 (144 TD rows) 2026-W43"
+  },
+  {
+   "id": "M03",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=2",
+   "line": "METRIC M03 DRAFT 0 vs <=2 G02 (TD rows 144, ruler=fable 0: none) 2026-W43"
+  },
+  {
+   "id": "M04",
+   "status": "FAIL",
+   "value": "7.26",
+   "threshold": "<=2.0",
+   "line": "METRIC M04 FAIL 7.26 vs <=2.0 G03 (334 docs-only commits, 46 product commits) 2026-W43"
+  },
+  {
+   "id": "M05",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=3",
+   "line": "METRIC M05 NA NA vs <=3 G03 (493 ledger rows, 0 landings) 2026-W43"
+  },
+  {
+   "id": "M05b",
+   "status": "FAIL",
+   "value": "102",
+   "threshold": "<=2",
+   "line": "METRIC M05b FAIL 102 vs <=2 G03 (102 DRAFT rows) 2026-W43"
+  },
+  {
+   "id": "M06",
+   "status": "FAIL",
+   "value": "67",
+   "threshold": "<=25",
+   "line": "METRIC M06 FAIL 67 vs <=25 G04 (baseline W43 from the spec, no records for the week) 2026-W43"
+  },
+  {
+   "id": "M06b",
+   "status": "DRAFT",
+   "value": "1",
+   "threshold": "<=0",
+   "line": "METRIC M06b DRAFT 1 vs <=0 G04 (Fable draft/review runs on non-contract pieces: Second review(claude-fable-5-1 $0)) 2026-W43"
+  },
+  {
+   "id": "M07",
+   "status": "NA",
+   "value": "-",
+   "threshold": "<=5%",
+   "line": "METRIC M07 NA - vs <=5% G19 (audit+verify $0 of $0) 2026-W43"
+  },
+  {
+   "id": "M07b",
+   "status": "DRAFT",
+   "value": "10",
+   "threshold": "<=0",
+   "line": "METRIC M07b DRAFT 10 vs <=0 G19 (audit (non-contract) and verify runs: Apply audit(claude-sonnet-5-5 $0), Fresh audit(claude-sonnet-5-5 $0), Second-Fable audit(claude-fable-5-1 $0), Second-Fable audit(claude-fable-5-1 $0), Second-Fable audit(claude-fable-5-1 $0), Apply audit(claude-sonnet-5-5 $0), Drift audit(claude-sonnet-5-5 $0), Drift audit(claude-sonnet-5-5 $0), Epic audit(claude-sonnet-5-5 $0), TDD audit(claude-sonnet-5-5 $0)) 2026-W43"
+  },
+  {
+   "id": "M08",
+   "status": "DRAFT",
+   "value": "2599",
+   "threshold": "<=0",
+   "line": "METRIC M08 DRAFT 2599 vs <=0 G05 (calls over 400000: 2599, worst 965645 tokens, session ff52b24a-7e3b-41d9-9ee5-3305fd151243 at 2026-10-22T03:51:03.484Z) 2026-W43"
+  },
+  {
+   "id": "M08b",
+   "status": "DRAFT",
+   "value": "360",
+   "threshold": "<=0",
+   "line": "METRIC M08b DRAFT 360 vs <=0 G05 (polling turns 360: d586d4b2-ad75-4211-ab70-8445ca0a4da9 2026-10-20T17:46:29.974Z, d586d4b2-ad75-4211-ab70-8445ca0a4da9 2026-10-20T17:59:02.650Z, d586d4b2-ad75-4211-ab70-8445ca0a4da9 2026-10-20T21:10:44.550Z) 2026-W43"
+  },
+  {
+   "id": "M09",
+   "status": "FAIL",
+   "value": "5",
+   "threshold": "<=0",
+   "line": "METRIC M09 FAIL 5 vs <=0 G06 (baseline W43 from the spec, no records for the week) 2026-W43"
+  },
+  {
+   "id": "M09b",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=3600",
+   "line": "METRIC M09b NA NA vs <=3600 G06 (no rc-0 gate row) 2026-W43"
+  },
+  {
+   "id": "M09c",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=3600",
+   "line": "METRIC M09c NA NA vs <=3600 G06 (no gate row) 2026-W43"
+  },
+  {
+   "id": "M10",
+   "status": "NA",
+   "value": "NA",
+   "threshold": ">=40",
+   "line": "METRIC M10 NA NA vs >=40 G07 (0 rc-0 rows, under 3) 2026-W43"
+  },
+  {
+   "id": "M10b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M10b DRAFT 0 vs <=0 G07 (0 landings over 1000 product lines) 2026-W43"
+  },
+  {
+   "id": "M11",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=2.0",
+   "line": "METRIC M11 NA NA vs <=2.0 G08 (a retro folder is added this week) 2026-W43"
+  },
+  {
+   "id": "M11b",
+   "status": "DRAFT",
+   "value": "97",
+   "threshold": "<=120",
+   "line": "METRIC M11b DRAFT 97 vs <=120 G08 (CLAUDE.md lines) 2026-W43"
+  },
+  {
+   "id": "M11c",
+   "status": "FAIL",
+   "value": "77",
+   "threshold": "<=0",
+   "line": "METRIC M11c FAIL 77 vs <=0 G08 (77 data files outside data/) 2026-W43"
+  },
+  {
+   "id": "M12a",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=25",
+   "line": "METRIC M12a NA NA vs <=25 G09 (beta only) 2026-W43"
+  },
+  {
+   "id": "M12b",
+   "status": "NA",
+   "value": "NA",
+   "threshold": ">=80",
+   "line": "METRIC M12b NA NA vs >=80 G09 (beta only) 2026-W43"
+  },
+  {
+   "id": "M12c",
+   "status": "NA",
+   "value": "NA",
+   "threshold": ">=1",
+   "line": "METRIC M12c NA NA vs >=1 G09 (beta only) 2026-W43"
+  },
+  {
+   "id": "M13",
+   "status": "NA",
+   "value": "-",
+   "threshold": "<=2",
+   "line": "METRIC M13 NA - vs <=2 G10 (landing runs per piece: none; none) 2026-W43"
+  },
+  {
+   "id": "M13b",
+   "status": "NA",
+   "value": "-",
+   "threshold": "<=1",
+   "line": "METRIC M13b NA - vs <=1 G10 (landing $0 vs build $0 over 0 landed pieces) 2026-W43"
+  },
+  {
+   "id": "M14",
+   "status": "NA",
+   "value": "-",
+   "threshold": "<=4",
+   "line": "METRIC M14 NA - vs <=4 G11 (runs per landed piece: none) 2026-W43"
+  },
+  {
+   "id": "M14b",
+   "status": "NA",
+   "value": "-",
+   "threshold": "<=0",
+   "line": "METRIC M14b NA - vs <=0 G11 (extra roles: none) 2026-W43"
+  },
+  {
+   "id": "M15",
+   "status": "DRAFT",
+   "value": "0%",
+   "threshold": "<=20%",
+   "line": "METRIC M15 DRAFT 0% vs <=20% G12 (0 stops of 45 runs: none) 2026-W43"
+  },
+  {
+   "id": "M16",
+   "status": "FAIL",
+   "value": "2",
+   "threshold": "<=0",
+   "line": "METRIC M16 FAIL 2 vs <=0 G13 (2 lanes with >= 2 look pieces and no verdict) 2026-W43"
+  },
+  {
+   "id": "M17",
+   "status": "NA",
+   "value": "2 rows, oldest 1 d",
+   "threshold": "<=-",
+   "line": "METRIC M17 NA 2 rows, oldest 1 d vs <=-  (Westley README rows awaiting a verdict) 2026-W43"
+  },
+  {
+   "id": "M18a",
+   "status": "DRAFT",
+   "value": "7",
+   "threshold": "<=12",
+   "line": "METRIC M18a DRAFT 7 vs <=12 G15 (7 active of 833 trees) 2026-W43"
+  },
+  {
+   "id": "M18b",
+   "status": "FAIL",
+   "value": "218",
+   "threshold": "<=20",
+   "line": "METRIC M18b FAIL 218 vs <=20 G15 (218 finished and not reaped) 2026-W43"
+  },
+  {
+   "id": "M18c",
+   "status": "FAIL",
+   "value": "373.02",
+   "threshold": "<=120",
+   "line": "METRIC M18c FAIL 373.02 vs <=120 G15 (381971 MB under wt/) 2026-W43"
+  },
+  {
+   "id": "M18d",
+   "status": "FAIL",
+   "value": "254",
+   "threshold": "<=10",
+   "line": "METRIC M18d FAIL 254 vs <=10 G15 (254 unmerged push branches older than 14 d) 2026-W43"
+  },
+  {
+   "id": "M19a",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M19a DRAFT 0 vs <=0 G02 (0 rows without found-by=/ruler=) 2026-W43"
+  },
+  {
+   "id": "M19b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M19b DRAFT 0 vs <=0 G17 (0 pieces with a non-standard status) 2026-W43"
+  },
+  {
+   "id": "M19c",
+   "status": "FAIL",
+   "value": "13",
+   "threshold": "<=0",
+   "line": "METRIC M19c FAIL 13 vs <=0 G16 (13 of 13 product commits (100.0%) have no gate row) 2026-W43"
+  },
+  {
+   "id": "M20",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=20",
+   "line": "METRIC M20 NA NA vs <=20 G18 (no rc-0 gate row) 2026-W43"
+  },
+  {
+   "id": "M21a",
+   "status": "DRAFT",
+   "value": "4",
+   "threshold": "<=1",
+   "line": "METRIC M21a DRAFT 4 vs <=1 G20 (EXC rows: EXC-sprint-2026-10-13, EXC-method-check-2026-10-24, EXC-architect-placed-hook-files-2026-10-24, EXC-method-check-2026-10-24-b) 2026-W43"
+  },
+  {
+   "id": "M21b",
+   "status": "DRAFT",
+   "value": "366",
+   "threshold": "<=2",
+   "line": "METRIC M21b DRAFT 366 vs <=2 G20 (DRIFT lines 366: d586d4b2-ad75-4211-ab70-8445ca0a4da9 polling x6, d586d4b2-ad75-4211-ab70-8445ca0a4da9 spawn_model x1, d586d4b2-ad75-4211-ab70-8445ca0a4da9 code_edits x60, d586d4b2-ad75-4211-ab70-8445ca0a4da9 context x65, ff52b24a-7e3b-41d9-9ee5-3305fd151243 polling x50, ff52b24a-7e3b-41d9-9ee5-3305fd151243 gate_runs x15, ff52b24a-7e3b-41d9-9ee5-3305fd151243 live_tree x9, ff52b24a-7e3b-41d9-9ee5-3305fd151243 main_push x8, ff52b24a-7e3b-41d9-9ee5-3305fd151243 context x1257, 7738f822-b0a0-4ebe-8834-e184e12e27bb polling x4, 7738f822-b0a0-4ebe-8834-e184e12e27bb gate_runs x9, 7738f822-b0a0-4ebe-8834-e184e12e27bb main_push x1, 2531f51a-4cb5-4c26-bf8e-6547b3d1e601 polling x4, 2531f51a-4cb5-4c26-bf8e-6547b3d1e601 gate_runs x5, 374495bb-3308-4a75-97c8-0a6dafd6057b polling x3, 374495bb-3308-4a75-97c8-0a6dafd6057b gate_runs x3, 374495bb-3308-4a75-97c8-0a6dafd6057b main_push x1, 5c4dad4b-7602-4ce0-8713-936290a6110b polling x8, 5c4dad4b-7602-4ce0-8713-936290a6110b gate_runs x4, 3cc0e4cd-45aa-4029-829d-473a190df259 polling x1, d51f286f-244a-40f0-b7a6-2472af5e152e gate_runs x1, 8ffeb34c-cbd9-45e6-a5df-487562d54702 repo_edits x1, bc0ad0cd-00eb-4a41-903a-0b28dd0ef9c9 gate_runs x2, 42c840f3-7460-48a3-8328-4bc54ad13b5d polling x1, 42c840f3-7460-48a3-8328-4bc54ad13b5d main_push x1, acaec640-ec51-4531-a0a5-b7387ba2f675 gate_runs x1, 36ccf143-049a-4eb9-bc57-6efb5567e2eb gate_runs x2, ae376a9b-7d84-4aad-b75e-f1d5b2d8388a gate_runs x2, 39650987-b10c-4cdb-93c9-f596f6ab82c7 repo_edits x2, 43ee412f-4285-4748-8627-7eb1f9353b2f gate_runs x1, 10032c54-d715-4fa6-9e75-fe96f25850c5 gate_runs x1, 10032c54-d715-4fa6-9e75-fe96f25850c5 repo_edits x1, 390f148f-fd7c-415c-8476-0600943f7abb gate_runs x1, 2b249c34-dc77-4494-9dc4-a535e4815408 code_edits x2, 3517115b-d726-4f99-aa44-ca45adaef25f code_edits x4, 4561ade5-d2b7-4c54-a329-472d50695e1a code_edits x3, 5be59562-3366-4a6e-a495-a56569723f06 code_edits x3, 800ce147-20a4-4366-9765-89d9665312de code_edits x4, 8f5375f0-6075-4a4b-9667-ae54391891e1 code_edits x1, 94b419a7-16e9-484b-9613-b7fb31f5e7d8 code_edits x3, b15cda6e-baee-4e47-b8b8-c715753f7a62 code_edits x1, bc759b45-e70a-4290-a00b-64541b671e0e code_edits x2, c42aa776-6f51-45f8-b5de-ce5d20ebb681 code_edits x1, c60a34a3-cc3d-4ce4-9153-d48864be63fc code_edits x4, c665a77a-d6e0-43f4-bc40-2feb12f9020a gate_runs x1, cd94e952-d8c9-4fcf-845f-c15d088934ca gate_runs x1, cd94e952-d8c9-4fcf-845f-c15d088934ca code_edits x1, d09ca96d-9bf4-41a8-bfe4-4a3694fc60ab gate_runs x1, d09ca96d-9bf4-41a8-bfe4-4a3694fc60ab code_edits x10, d836a734-43f1-4442-9dac-fbe9ce0b180f gate_runs x3, d836a734-43f1-4442-9dac-fbe9ce0b180f code_edits x3, db4e1208-3999-452a-adf8-80fe9688a066 gate_runs x3, f699a06a-e65a-4503-900f-f5c107a8ba1f code_edits x2, f6d1f82b-2a62-4d5e-b36e-0e14b0026438 code_edits x2, 0a3b4b57-48f4-40a4-91fb-e4a577b2748d code_edits x4, 1802a03d-1f15-4e47-ac40-16f480b373fc code_edits x3, 2f495c47-c4cd-40d4-bd61-2ceaac20952a gate_runs x2, 2f495c47-c4cd-40d4-bd61-2ceaac20952a code_edits x1, 311c0c0c-96a5-48d3-9b36-efe5ef3283ef code_edits x7, 748ead20-a169-414b-8edc-62c324c89d33 gate_runs x2, 748ead20-a169-414b-8edc-62c324c89d33 code_edits x7, 768655dd-b649-43c8-b23f-189ee086c832 code_edits x4, 99dc29ab-7eb7-4ebd-b4f4-bf0f61f40c8e gate_runs x1, 99dc29ab-7eb7-4ebd-b4f4-bf0f61f40c8e code_edits x1, ac12c3a6-a183-4140-8924-6656272043d7 code_edits x1, b54b330f-8875-42ab-b505-1d99a5ef5750 code_edits x1, b736786e-914c-4581-9e94-413ff27d397b code_edits x5, c8516a3a-2dcf-49f6-91a0-99540a0cce7f code_edits x4, da639a2c-f3b0-48d8-82eb-c164abed68c4 code_edits x2, f071ba3e-b0a7-465c-a8e2-fa22195f80d8 code_edits x3, 01a14a96-1def-419a-a6ca-ddb61aa9c516 code_edits x1, 5837eaf0-be92-4fa6-b2c9-5a233e688cd7 code_edits x3, 5c5f82a4-06c2-403d-9d73-b62f3f708fe3 gate_runs x2, 5c5f82a4-06c2-403d-9d73-b62f3f708fe3 code_edits x2, 906997f8-3952-48e1-8c2f-c75aaa81805a gate_runs x1, 906997f8-3952-48e1-8c2f-c75aaa81805a code_edits x1, 964576bc-b693-4c98-af33-f6f7617b7773 code_edits x2, b6d77164-0b98-4cfe-b277-62e26cc7d57e code_edits x2, 55b37f1e-8061-4889-8314-eaa8e28a8d25 polling x1, 55b37f1e-8061-4889-8314-eaa8e28a8d25 gate_runs x1, 0080f0ce-e185-4bdb-8fe0-661acd98727f polling x5, 0080f0ce-e185-4bdb-8fe0-661acd98727f gate_runs x1, 9b38f88e-b5ce-4f7e-936b-e7da319d8e94 gate_runs x2, a501c547-38b6-483b-9c0b-897d5d853a5a gate_runs x1, 3f6de975-401b-41c2-bf77-3d0d65f97999 gate_runs x1, 5f360032-ba14-4394-bd6b-9f810b995971 gate_runs x1, 45343fe7-0a58-4895-9edb-4c4fd690659d gate_runs x2, bd406801-bd24-49bd-89b6-f388525e0cd6 gate_runs x1, 762d1646-bf42-4bf0-b179-2072c22ce524 polling x1, 762d1646-bf42-4bf0-b179-2072c22ce524 gate_runs x3, 9c385f34-095c-43e3-8a83-770f7b4d7202 gate_runs x1, 5633fe32-8320-4264-9c12-f808f4c43705 gate_runs x2, 9df62891-03f1-4582-beba-58c48c5e575e gate_runs x1, 499c630b-d2ac-4295-bcfa-e6af8df3e726 polling x1, 499c630b-d2ac-4295-bcfa-e6af8df3e726 gate_runs x1, 50902b36-3484-44ed-9b1d-0203ff8c6507 gate_runs x3, 587b6c83-fecb-4b0e-a7d7-0482d908cced polling x1, 587b6c83-fecb-4b0e-a7d7-0482d908cced gate_runs x1, 587b6c83-fecb-4b0e-a7d7-0482d908cced main_push x2, 597abaa5-b4ef-47e3-936d-c37bb1a44ee1 polling x2, 597abaa5-b4ef-47e3-936d-c37bb1a44ee1 gate_runs x1, 2dbddf37-5c6f-4390-9b5c-f57d451e9e8b main_push x1, 770a2192-3da6-4f12-a0c4-d2d421a90691 gate_runs x2, e514b1d6-de47-4813-a7d0-a5efb0a297bc polling x3, e514b1d6-de47-4813-a7d0-a5efb0a297bc gate_runs x2, 69b4688a-95ff-41d6-9185-f1100b9bc619 polling x2, 69b4688a-95ff-41d6-9185-f1100b9bc619 gate_runs x5, 69b4688a-95ff-41d6-9185-f1100b9bc619 main_push x2, 68ae205b-1b6a-4826-8510-5d5add1c8e9e polling x7, 68ae205b-1b6a-4826-8510-5d5add1c8e9e gate_runs x1, e6163b69-b6ec-4ac4-857b-aa3e30167bc9 polling x3, e6163b69-b6ec-4ac4-857b-aa3e30167bc9 gate_runs x1, 2c579a1e-7625-4571-a59d-4d9233140644 polling x3, 2c74de3a-86cb-4cc2-a397-84cee4cb3b43 polling x3, 7c5b515c-84e6-42c9-a965-6173f6bfc2db polling x3, 7c5b515c-84e6-42c9-a965-6173f6bfc2db gate_runs x3, fbf39305-d1ac-4bdd-a254-35786e01e93b polling x2, fbf39305-d1ac-4bdd-a254-35786e01e93b gate_runs x1, fbf39305-d1ac-4bdd-a254-35786e01e93b repo_edits x1, fbf39305-d1ac-4bdd-a254-35786e01e93b main_push x1, 5807b481-506c-447f-a7fd-c2ce380fb0e4 polling x2, 5807b481-506c-447f-a7fd-c2ce380fb0e4 gate_runs x1, 8059e885-41cc-4ea6-a9e5-02696f7b5b51 polling x2, 8059e885-41cc-4ea6-a9e5-02696f7b5b51 gate_runs x4, 83780d59-4878-4671-9922-8ece2ca1407a polling x4, 83780d59-4878-4671-9922-8ece2ca1407a gate_runs x2, 83780d59-4878-4671-9922-8ece2ca1407a main_push x1, 32225a3d-2750-4a37-ab67-2412f48475b0 polling x3, 32225a3d-2750-4a37-ab67-2412f48475b0 gate_runs x2, 333ba682-dec5-44ab-adcc-57f4bd0020be polling x3, 333ba682-dec5-44ab-adcc-57f4bd0020be gate_runs x1, 3912c66b-c60f-40e3-885c-fbd3f3223db2 polling x3, 3912c66b-c60f-40e3-885c-fbd3f3223db2 gate_runs x2, 74b7feeb-ce4f-41ea-8ba7-c60b8efcda63 polling x3, 74b7feeb-ce4f-41ea-8ba7-c60b8efcda63 gate_runs x3, 63a3df5c-78ca-4f4b-8600-779a2b40039b polling x3, 7033a497-5ae6-4570-8d8a-07aa3368120d polling x4, 7033a497-5ae6-4570-8d8a-07aa3368120d gate_runs x2, 87498b4f-5e9f-4674-acda-372438603139 polling x2, 87498b4f-5e9f-4674-acda-372438603139 gate_runs x1, 369f533d-c5d5-4688-8d6c-6455f4860d21 main_push x1, e6b52207-efd3-403f-9797-439ef4e36f9f polling x1, e6b52207-efd3-403f-9797-439ef4e36f9f gate_runs x2, 2b182a36-7496-4f92-b5f0-2b7772578ede polling x3, 2b182a36-7496-4f92-b5f0-2b7772578ede gate_runs x1, 2b182a36-7496-4f92-b5f0-2b7772578ede repo_edits x1, 4adb409e-535c-4cad-bcd9-03e02162bc02 polling x2, ce458a89-6948-4e58-bb2c-7d2bd7a16ed8 gate_runs x1, d19b9cb9-6f61-435d-aff1-a71a643b65d7 gate_runs x1, e6b8441f-d3bc-4043-9491-4449d7ed38a9 polling x2, e6b8441f-d3bc-4043-9491-4449d7ed38a9 main_push x1, a1774e7c-bbdb-4ee7-9a7c-81ea336cbdac polling x2, a1774e7c-bbdb-4ee7-9a7c-81ea336cbdac gate_runs x1, fa952f1b-c1e0-437c-bf54-030924f67afb main_push x1, 76481e69-aa8d-4d7e-ae9e-3cebd4dddcbe gate_runs x1, 7e6ebeed-f18f-4d7a-852b-90dc8dcfbb83 gate_runs x3, 0f95167a-5d46-4519-91fc-f924e5fed983 polling x1, 6eeacdaf-8221-426f-920f-491ffa7e209e gate_runs x1, 6eeacdaf-8221-426f-920f-491ffa7e209e repo_edits x1, 228cdb9c-b58c-408f-9a8f-3f3dbdd6101c polling x1, 228cdb9c-b58c-408f-9a8f-3f3dbdd6101c gate_runs x2, 2d910973-7fbc-4bf3-8731-c68b3b8e3ce2 gate_runs x1, b3f6d94a-b028-4b4e-9745-b5709c4be175 repo_edits x1, 95339346-2af9-44ef-a126-3f955b2b694b gate_runs x3, 95339346-2af9-44ef-a126-3f955b2b694b repo_edits x3, f2677b20-d120-4d32-97e3-2fabd599b7fc gate_runs x3, 2cd6776b-4176-4d30-b67b-03fec1b174b2 repo_edits x1, 393bd8b8-71fe-4d1b-9b64-070f70d6b93f gate_runs x2, c106232f-ce27-4ce4-8ed0-13dd773053a4 gate_runs x2, 0d97e2d1-555d-4bc4-9721-80d1e03c56bd gate_runs x2, 7a136c53-2407-4f4c-9694-d1390f5315eb gate_runs x1, 9a109a05-c484-4da0-895d-5064902b9ae5 gate_runs x3, 405362fe-3d90-4d86-b761-45a59a6981b1 polling x1, e82934dd-4e19-46c0-8a10-3cf2acdd5887 gate_runs x1, 17199e8e-61e2-4366-a94c-13837f968268 polling x2, 17199e8e-61e2-4366-a94c-13837f968268 main_push x2, 730663eb-dbcd-467c-9ddb-c7692156c4fb polling x1, 730663eb-dbcd-467c-9ddb-c7692156c4fb repo_edits x2, 730663eb-dbcd-467c-9ddb-c7692156c4fb main_push x1, ce737933-d899-4df8-b7af-b34c4d0d9fb8 polling x1, ce737933-d899-4df8-b7af-b34c4d0d9fb8 main_push x1, 234b7269-30a6-46cb-aac7-8bd5d2ce89dc polling x1, 234b7269-30a6-46cb-aac7-8bd5d2ce89dc gate_runs x1, 234b7269-30a6-46cb-aac7-8bd5d2ce89dc main_push x1, 8852b769-f9e5-4e49-9a48-97c24e8b9a55 polling x1, 8852b769-f9e5-4e49-9a48-97c24e8b9a55 main_push x1, 1f94a15f-9cd1-4d2b-a034-a3ab895bf81b polling x1, 1f94a15f-9cd1-4d2b-a034-a3ab895bf81b main_push x1, 37a07586-ca0e-40bd-b77d-6ab064b573a8 polling x1, 37a07586-ca0e-40bd-b77d-6ab064b573a8 main_push x1, bc933542-4e75-41b2-88a7-f7b2f47f435c polling x1, bc933542-4e75-41b2-88a7-f7b2f47f435c main_push x1, 3a51dc6f-639f-4f8f-8f79-a3b632cfc89a polling x1, 3a51dc6f-639f-4f8f-8f79-a3b632cfc89a main_push x1, e3198cbf-0d33-4f3c-b30e-8d078218ff4f polling x1, e3198cbf-0d33-4f3c-b30e-8d078218ff4f main_push x1, 4f89b1e1-3869-4889-a975-488dc18471f6 polling x1, 4f89b1e1-3869-4889-a975-488dc18471f6 main_push x1, a8585253-b738-4177-beef-a56af80e2a33 polling x1, a8585253-b738-4177-beef-a56af80e2a33 main_push x1, 422b7dd2-db24-48d3-a7a3-fcd11eef34be polling x1, 422b7dd2-db24-48d3-a7a3-fcd11eef34be main_push x1, 39235b77-bc75-4ee1-9930-4184c8c7d694 polling x1, 39235b77-bc75-4ee1-9930-4184c8c7d694 main_push x1, ba45c57a-c2df-409d-af79-07c80d26bc49 polling x1, ba45c57a-c2df-409d-af79-07c80d26bc49 main_push x1, 56dc3d1c-8f38-4504-9733-f2d1edbf19eb polling x1, 56dc3d1c-8f38-4504-9733-f2d1edbf19eb main_push x1, 9e771160-34ab-40db-b895-b2adbfecd53b polling x1, 9e771160-34ab-40db-b895-b2adbfecd53b main_push x1, 54b47381-c01a-450e-ac84-5408d86cbebd polling x3, 54b47381-c01a-450e-ac84-5408d86cbebd main_push x2, b0697384-cb4f-417f-a67a-81dac89ca573 polling x2, b0697384-cb4f-417f-a67a-81dac89ca573 main_push x2, a89741a5-6a64-4845-bd97-dd977977a020 polling x1, a89741a5-6a64-4845-bd97-dd977977a020 main_push x1, d7274981-9bad-48b5-963a-dad02a1ae19a polling x1, d7274981-9bad-48b5-963a-dad02a1ae19a main_push x1, 7ea60fa9-1794-4fa5-8a01-d32207b8c53c polling x1, 7ea60fa9-1794-4fa5-8a01-d32207b8c53c repo_edits x1, 7ea60fa9-1794-4fa5-8a01-d32207b8c53c main_push x1, 2ba6aabf-8320-4963-90f5-4b5d87ae3373 polling x1, 2ba6aabf-8320-4963-90f5-4b5d87ae3373 main_push x1, d375f278-686c-415c-aceb-e7d96a07bffc polling x2, d375f278-686c-415c-aceb-e7d96a07bffc main_push x1, eaac8578-8cb9-41fe-bd17-d75cc18947f0 polling x2, eaac8578-8cb9-41fe-bd17-d75cc18947f0 main_push x1, 95defec0-77fc-4a30-8399-5d64d37c8a8b polling x3, 95defec0-77fc-4a30-8399-5d64d37c8a8b gate_runs x1, 95defec0-77fc-4a30-8399-5d64d37c8a8b main_push x1, 332a8f44-464d-4534-acc4-460c2fa92585 polling x2, 332a8f44-464d-4534-acc4-460c2fa92585 main_push x1, 06ecb369-b3dd-4c52-9896-1e8b543a3cdf polling x2, 06ecb369-b3dd-4c52-9896-1e8b543a3cdf main_push x1, e6cd3f1e-8cfb-4b3e-9734-16682acfc774 polling x2, e6cd3f1e-8cfb-4b3e-9734-16682acfc774 gate_runs x1, e6cd3f1e-8cfb-4b3e-9734-16682acfc774 main_push x1, cd84d4e7-c892-44e4-b008-41233701529c polling x2, cd84d4e7-c892-44e4-b008-41233701529c main_push x1, 852b3f49-0a2a-4393-9042-d51634261332 polling x2, 852b3f49-0a2a-4393-9042-d51634261332 main_push x1, 36e4220e-7c98-4575-b12a-6836c0cf1edd polling x2, 36e4220e-7c98-4575-b12a-6836c0cf1edd main_push x1, c890801a-6f6c-4159-b8d0-90aea2ff4dfa polling x2, c890801a-6f6c-4159-b8d0-90aea2ff4dfa main_push x2, 4bcde130-bcee-4502-aafe-ee8a7cfae3fc polling x1, 4bcde130-bcee-4502-aafe-ee8a7cfae3fc main_push x1, 76d68a9f-d3ce-489d-af61-44d60745718b polling x2, 76d68a9f-d3ce-489d-af61-44d60745718b main_push x1, 5ad4df3b-3cda-4037-bab7-92a850ad15d0 polling x1, 5ad4df3b-3cda-4037-bab7-92a850ad15d0 main_push x1, 1eea2d3c-fde8-44e0-95c2-bebcb1fda382 polling x1, 1eea2d3c-fde8-44e0-95c2-bebcb1fda382 gate_runs x2, 1eea2d3c-fde8-44e0-95c2-bebcb1fda382 main_push x1, 48b9054d-21ba-49f2-873c-96fa7f8bb115 polling x6, 48b9054d-21ba-49f2-873c-96fa7f8bb115 gate_runs x10, 48b9054d-21ba-49f2-873c-96fa7f8bb115 main_push x4, 6674e9b5-fc63-44d1-acb2-d68e3ff7dddd polling x2, 6674e9b5-fc63-44d1-acb2-d68e3ff7dddd gate_runs x4, 6674e9b5-fc63-44d1-acb2-d68e3ff7dddd main_push x1, 9eaebc23-af04-42c3-bb20-4b5d11b2c221 polling x4, 9eaebc23-af04-42c3-bb20-4b5d11b2c221 gate_runs x4, 9eaebc23-af04-42c3-bb20-4b5d11b2c221 main_push x1, adfa32d6-7bfa-4ed4-be7e-e3e08b07049b polling x1, c9044194-cf5c-41a7-89d6-a6e5f8893ea4 polling x1, c9044194-cf5c-41a7-89d6-a6e5f8893ea4 gate_runs x5, c9044194-cf5c-41a7-89d6-a6e5f8893ea4 main_push x1, c98569e2-5a85-4f9d-b919-95f0b1001e6b polling x1, c98569e2-5a85-4f9d-b919-95f0b1001e6b gate_runs x7, c98569e2-5a85-4f9d-b919-95f0b1001e6b main_push x1, d10407d7-c903-4bbf-a916-303e471ebd71 polling x2, d10407d7-c903-4bbf-a916-303e471ebd71 gate_runs x3, fcef8ddf-9a57-4494-ab0b-9f3292c76c86 polling x5, fcef8ddf-9a57-4494-ab0b-9f3292c76c86 gate_runs x2, fcef8ddf-9a57-4494-ab0b-9f3292c76c86 main_push x2, ffb0a61c-d186-4d36-a0b7-085d159b5041 polling x4, ffb0a61c-d186-4d36-a0b7-085d159b5041 gate_runs x4, ffb0a61c-d186-4d36-a0b7-085d159b5041 main_push x1, 359db57c-160e-46cb-8536-f25c0cbf18ad polling x1, 359db57c-160e-46cb-8536-f25c0cbf18ad main_push x1, 5dfc08bd-fd5e-4a29-8648-49cdfa3eaf8a polling x1, 5dfc08bd-fd5e-4a29-8648-49cdfa3eaf8a gate_runs x1, 5dfc08bd-fd5e-4a29-8648-49cdfa3eaf8a main_push x1, 95c714dc-1031-47d4-afe9-e13dcc4a8fdd polling x1, 95c714dc-1031-47d4-afe9-e13dcc4a8fdd gate_runs x4, 95c714dc-1031-47d4-afe9-e13dcc4a8fdd main_push x1, a8082d64-3927-4712-8206-1c09887837d3 polling x1, a8082d64-3927-4712-8206-1c09887837d3 gate_runs x4, a8082d64-3927-4712-8206-1c09887837d3 main_push x1, b3368d14-89ec-48ca-a1e5-c17820633837 polling x1, b3368d14-89ec-48ca-a1e5-c17820633837 gate_runs x2, b3368d14-89ec-48ca-a1e5-c17820633837 main_push x1, 65967e4d-3cbf-479f-b2ac-cef2dec2b777 polling x2, 65967e4d-3cbf-479f-b2ac-cef2dec2b777 gate_runs x2, 65967e4d-3cbf-479f-b2ac-cef2dec2b777 main_push x1, 9a08344b-d673-4f77-b52a-98a1e91be89f polling x1, 9a08344b-d673-4f77-b52a-98a1e91be89f main_push x1, 014b5091-cffb-4bd6-933d-67db485979d3 gate_runs x1, 56ba0993-2516-4417-8c10-eb219e94f652 polling x1, 56ba0993-2516-4417-8c10-eb219e94f652 main_push x1, 99263c1b-fec0-4638-9bcf-e80c9ea1e039 gate_runs x2, 1b871120-15e0-431c-a602-0eec88ee6b51 gate_runs x2, 5fc3b062-4fe1-4483-ad76-d35ad5e43ff4 repo_edits x1, 175a6138-91b8-4666-bdb2-ddf8f93ae776 gate_runs x2, 8a967628-c1c9-498c-903b-ca3ccc0eaf4d gate_runs x2, ace23699-ab96-4165-9ce8-b05b6872dc89 gate_runs x3, d3d841fa-ec70-4d59-84d1-557d75fed399 gate_runs x1, d3d841fa-ec70-4d59-84d1-557d75fed399 repo_edits x2, 1b23e1cf-33ca-4eea-b050-5ced1a2e8f92 gate_runs x1, 28329de0-a380-4056-acc3-a5f78ad79e38 gate_runs x2, 44fcc9dc-01c2-43f0-90d1-e45afd7eb811 polling x1, 8bb9f357-cd14-4ebd-92af-b41dfc8f585e gate_runs x2, d0ea3153-929e-4b67-b6ee-436cb89fccc7 gate_runs x1, 15b8aa37-881f-416b-9128-19f77759a754 gate_runs x1, 2f2561fe-ebb4-4c18-848a-95d24fca85c4 gate_runs x1, bbf9f328-06c5-41d6-a23d-2b1b23938125 gate_runs x2, 3110e45c-1de3-4045-a745-e77308432082 repo_edits x1, 42d580bf-7cec-416c-b7ff-5e2d637e11e5 polling x2, 42d580bf-7cec-416c-b7ff-5e2d637e11e5 gate_runs x2, 42d580bf-7cec-416c-b7ff-5e2d637e11e5 main_push x2, 8b644940-78fa-40d6-8731-c61af891eaa4 gate_runs x1, bd448733-4bb0-4653-a409-05d06b0dfdf8 gate_runs x1, fdd8c7f4-e837-4057-8f8a-2c5ab09f4ab9 gate_runs x2, 05e76cf6-cdf7-4154-8331-55ce0fd81ce3 gate_runs x1, a4247367-f5bd-4711-b768-ee1b87edb993 gate_runs x1, ec041b5f-534b-4178-86e5-7baa4f0c13d2 polling x1, edcf317c-9517-4176-b993-56c3598a0d72 repo_edits x1, edcf317c-9517-4176-b993-56c3598a0d72 main_push x1, 48c9a93e-519b-425e-95c7-a51e18c95305 polling x1, 48c9a93e-519b-425e-95c7-a51e18c95305 gate_runs x3, 6882f31e-0b55-4fdf-8ccd-a8b3a2f81fc5 repo_edits x1, 07c17811-883b-452d-94ea-2756eae4b3b3 polling x4, 07c17811-883b-452d-94ea-2756eae4b3b3 main_push x2, 68d0c802-85c7-4c9d-8430-6ca417d7ef73 gate_runs x5, 68d0c802-85c7-4c9d-8430-6ca417d7ef73 repo_edits x1, c884ea3c-ab48-4cfc-97d8-57fdd5f208a1 gate_runs x1, 125684fe-d1ae-46de-b352-757894f71b12 gate_runs x2, 125684fe-d1ae-46de-b352-757894f71b12 repo_edits x1, 14094345-b535-4aa4-b82a-23f5622086f9 gate_runs x2, b261c780-01ae-4e11-a221-8d6a64592f00 polling x2, b261c780-01ae-4e11-a221-8d6a64592f00 gate_runs x1, 8289fea0-f795-44aa-b9e7-f117424803f2 polling x1, 8289fea0-f795-44aa-b9e7-f117424803f2 main_push x1, ffd7e2ff-b7d1-4e23-851a-74a50fdbf693 polling x3, ffd7e2ff-b7d1-4e23-851a-74a50fdbf693 main_push x1, 56fc69da-8426-4701-9f52-13780a871a0e polling x1, 56fc69da-8426-4701-9f52-13780a871a0e main_push x1, 47bb3571-0649-4c11-b1a1-7c4450417f50 gate_runs x1, 47bb3571-0649-4c11-b1a1-7c4450417f50 repo_edits x2, 315ca56f-b68a-42ec-914e-435b5bc0c18b context x12, 3a156992-1d9d-424c-b1a8-11d35fd091d4 polling x1, 6595578b-476b-499c-ae9d-903b2a7b43bd wakeups x1, 6595578b-476b-499c-ae9d-903b2a7b43bd polling x60, 6595578b-476b-499c-ae9d-903b2a7b43bd gate_runs x4, 6595578b-476b-499c-ae9d-903b2a7b43bd live_tree x4, 6595578b-476b-499c-ae9d-903b2a7b43bd context x391, 7e9d8393-6f9a-44e1-a26b-66264f334079 context x5, 847a5a58-28f4-4ef8-8405-35bd62c2243c polling x34, 847a5a58-28f4-4ef8-8405-35bd62c2243c gate_runs x1, 847a5a58-28f4-4ef8-8405-35bd62c2243c live_tree x1, 847a5a58-28f4-4ef8-8405-35bd62c2243c code_edits x23, b1e8769e-404e-4263-be23-8535a58b0e59 polling x5, b1e8769e-404e-4263-be23-8535a58b0e59 gate_runs x4, b1e8769e-404e-4263-be23-8535a58b0e59 fable_spawns x3, b1e8769e-404e-4263-be23-8535a58b0e59 live_tree x5, b1e8769e-404e-4263-be23-8535a58b0e59 context x800) 2026-W43"
+  },
+  {
+   "id": "M22",
+   "status": "DRAFT",
+   "value": "66",
+   "threshold": "<=2",
+   "line": "METRIC M22 DRAFT 66 vs <=2 G21 (coordinator sessions in hour 2026-10-23T14: 0080f0ce-e185-4bdb-8fe0-661acd98727f, 0d97e2d1-555d-4bc4-9721-80d1e03c56bd, 0e35ad07-a51d-4837-b433-0be632aead9a, 0ef8f0ec-df27-4dbd-b45d-9845f1e44726, 0f95167a-5d46-4519-91fc-f924e5fed983, 14b2cd7a-c24f-47ee-ba11-efa8c063f6eb, 1b665ac0-b648-473d-b5df-eac3f0a33b37, 1b871120-15e0-431c-a602-0eec88ee6b51, 1cff2580-fb45-4216-8cb7-c2226727d004, 1de2711c-8632-41fd-a97b-adc700bac4df, 228cdb9c-b58c-408f-9a8f-3f3dbdd6101c, 22cc508a-692e-4b63-9579-a9cf1923fc91, 2531f51a-4cb5-4c26-bf8e-6547b3d1e601, 28329de0-a380-4056-acc3-a5f78ad79e38, 2cd6776b-4176-4d30-b67b-03fec1b174b2, 2d61ac5b-627a-447e-b83b-3e00af2f96f5, 2d910973-7fbc-4bf3-8731-c68b3b8e3ce2, 36ccf143-049a-4eb9-bc57-6efb5567e2eb, 393bd8b8-71fe-4d1b-9b64-070f70d6b93f, 3f6de975-401b-41c2-bf77-3d0d65f97999, 408c7bca-34f5-4c04-a133-beb6ef7a28c3, 42d580bf-7cec-416c-b7ff-5e2d637e11e5, 42f0aa05-0102-4665-8785-2ff465c569df, 499c630b-d2ac-4295-bcfa-e6af8df3e726, 50902b36-3484-44ed-9b1d-0203ff8c6507, 5250fea6-7a2b-4512-b643-047473e03d25, 52fe1604-6685-4155-8895-17390f3f7a71, 59aeec14-36a2-42c5-be99-248b0574879d, 5f360032-ba14-4394-bd6b-9f810b995971, 6595578b-476b-499c-ae9d-903b2a7b43bd, 7013bb7d-0aea-4e46-ba8a-e8f31ae0c01a, 745e88b4-336f-4f3b-934a-510a54f10153, 762d1646-bf42-4bf0-b179-2072c22ce524, 7e6ebeed-f18f-4d7a-852b-90dc8dcfbb83, 8ba22d06-b1a0-4a68-b089-ea5a47c6c37d, 8bb9f357-cd14-4ebd-92af-b41dfc8f585e, 8d5838eb-5f80-4b69-b937-ccacc2d6e719, 8d6d0c76-3b9a-4a1f-aafa-c61a2a76c773, 8db00374-52aa-4a38-9e47-f1b6c184c5c1, 946c9d1a-d3c5-446a-b232-dbeeb6098a2d, 99263c1b-fec0-4638-9bcf-e80c9ea1e039, 9ae2284a-0a7c-4a05-9625-49d979996176, 9b131cf7-d387-4ff6-aa3b-a4da63881cb1, 9c385f34-095c-43e3-8a83-770f7b4d7202, 9eef1c2a-5eae-44bb-8514-3dc9113406eb, a60f0b5f-7e2e-4454-bb34-decbeb0684eb, ae376a9b-7d84-4aad-b75e-f1d5b2d8388a, b1e8769e-404e-4263-be23-8535a58b0e59, b3368d14-89ec-48ca-a1e5-c17820633837, b3b17f19-4fcb-4a73-95d6-c14a5427b869, b3f6d94a-b028-4b4e-9745-b5709c4be175, c106232f-ce27-4ce4-8ed0-13dd773053a4, c3b44813-b10f-4738-9c90-7b61aa0489eb, c884ea3c-ab48-4cfc-97d8-57fdd5f208a1, cbdf19ca-cc45-4a7b-a9e1-6b0bf6789501, d0ea3153-929e-4b67-b6ee-436cb89fccc7, d2e75199-b3cd-46d5-96a8-7f4e02b67a70, d53cad3e-0e29-49be-aa0f-81048440786b, dba3478c-44a4-4713-b2c8-d16cd2344203, dde3128c-c3cd-4d16-a23f-b8e973689c84, ebe713a2-c83d-43bf-b84b-7b015ca481d6, f1f94259-cf2e-417c-b122-ceeec98846c2, f2677b20-d120-4d32-97e3-2fabd599b7fc, f807150a-266a-4d35-ace0-087e8adf2415, fd7212a4-54c9-4ff4-a9a7-1a19a1f361ed, ff52b24a-7e3b-41d9-9ee5-3305fd151243) 2026-W43"
+  },
+  {
+   "id": "M23",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M23 DRAFT 0 vs <=0 G22 (0 golden/data files outside tests/fixtures) 2026-W43"
+  },
+  {
+   "id": "M24a",
+   "status": "FAIL",
+   "value": "33",
+   "threshold": "<=3",
+   "line": "METRIC M24a FAIL 33 vs <=3 G23 (33 method-text commits without a retro path) 2026-W43"
+  },
+  {
+   "id": "M24b",
+   "status": "FAIL",
+   "value": "2",
+   "threshold": "<=1",
+   "line": "METRIC M24b FAIL 2 vs <=1 G23 (2 retro folders in 14 days) 2026-W43"
+  }
+ ]
+}
