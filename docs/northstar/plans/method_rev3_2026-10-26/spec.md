@@ -250,12 +250,15 @@ Repo (worktrees under `~/Projects/om-push/wt/`, never the live checkout):
 - Machine: `~/Projects/om-push/gate_runs.csv`, `~/Projects/om-push/runs/sdk_runs.csv`, `~/.config/systemd/user/om-method-metrics.{service,timer}`.
 
 Pieces (one owner each, file-disjoint, so they build in parallel; `Tool: Workflow` each, harness work ends in no frame):
-- HARNESS-mm-1 `method_metrics.py` + `method_thresholds.toml` + `test_method_metrics.py` and fixtures. Split into mm-1a (metrics over git and the ledger: M01, M02, M04, M05, M08-, M10, M11, M12, M19, M20, M23, M24), mm-1b (metrics over runs and transcripts: M01b, M03, M06, M07, M08, M13, M14, M15, M21, M22) and mm-1c (M16, M17, M18, the CLI, `--write`, the W43 self-check), each about 300 lines.
-- HARNESS-mm-2 gate row: `merge_gate.sh`, `suite_regression.py` timeout signal, `test_gate_row.py`, the landing template line.
-- HARNESS-mm-3 run rows and ledger fields: `sdk_engineer.py`, `status_check.py` (`findings`, `story` key), `test_sdk_runs.py`.
-- HARNESS-mm-4 loudness: `settings.json` hook line, `status_check.py` check `metrics`, `method_check.py` scratch exclusion with its test case, `method_weekly.sh`, the systemd unit files.
-- HARNESS-mm-5 `launch_check.sh` pre-flight checks with `test_launch_check.py` cases; `spec_provenance.py` reason 9 WARN with its test.
-- RECORDS-mm-1 `pieces.toml` normalisation (40 rows) and `contract` flags, `rule_pins.toml` entries, `metrics/2026-W43.json` baseline, the lab data move (G08) if Westley approves it.
+- HARNESS-mm-1a `method_metrics.py` and `method_thresholds.toml`: metrics over git and the ledger (M01, M02, M04, M05, M09, M10, M11, M12, M19, M20, M23, M24), the thresholds toml, `test_method_metrics.py` cases `test_1a_*`. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-1b `method_metrics_runs.py`: metrics over runs and transcripts (M01b, M03, M06, M07, M08, M13, M14, M15, M21, M22), cases `test_1b_*`. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-1c `method_metrics_cli.py`: M16, M17, M18, the CLI, `--write`, `--last`, the W43 self-check and snapshot, cases `test_1c_*`. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-2 gate row: `merge_gate.sh`, `suite_regression.py` timeout signal, `test_gate_row.py`, the landing template line. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-3 run rows and ledger fields: `sdk_engineer.py`, `status_check.py` (`findings`, `story` key), `test_sdk_runs.py`. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-4 loudness: `settings.json` hook line, `status_check.py` check `metrics`, `method_check.py` scratch exclusion with its test case, `method_weekly.sh`, the systemd unit files. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-6 `.claude/settings.json` SessionStart hook line `method_metrics.py --last`; pending behind HARNESS-context-guard-2 (A3). [P docs/northstar/story_reviews/westley/decisions.md:65]
+- HARNESS-mm-5 `launch_check.sh` pre-flight checks with `test_launch_check.py` cases; `spec_provenance.py` reason 9 WARN (the quantified-quote and [ASSERT] findings; the unquoted-[W] finding stays a reject) with its test. [P docs/northstar/story_reviews/westley/decisions.md:65]
+- RECORDS-mm-1 `pieces.toml` normalisation (41 rows, done 7448d665), `pins.toml` (A2), `metrics/2026-W43.json` baseline, the lab data move (G08) if Westley approves it. [P docs/northstar/story_reviews/westley/decisions.md:65]
 
 ## Phases
 
