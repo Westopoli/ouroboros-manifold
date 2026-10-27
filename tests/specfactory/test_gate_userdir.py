@@ -122,7 +122,7 @@ def _gate_export_problems(text: str) -> list[str]:
     code = _code_lines(text)
     export_at = next((i for i, ln in code if _EXPORT_RE.match(ln)), None)
     godot_at = next((i for i, ln in code if _GODOT_BIN_USE_RE.search(ln)), None)
-    trap_at = next((i for i, ln in code if re.match(r"^\s*trap\s+cleanup\s+EXIT\b", ln)), None)
+    trap_at = next((i for i, ln in code if re.match(r"^\s*trap\s+(?:'[^']*\bcleanup\b[^']*'|cleanup)\s+EXIT\b", ln)), None)
     if export_at is None:
         problems.append('no line `export XDG_DATA_HOME="$SCRATCH_ROOT/xdg"`')
     if godot_at is None or trap_at is None:
@@ -215,7 +215,7 @@ def test_c0_files_exist_and_text_tests_read_the_right_file():
         assert p.is_file(), "%s is missing" % p
     code = _code_lines(GATE.read_text())
     assert any(re.match(r"^\s*GODOT_BIN=", ln) for _, ln in code), "merge_gate.sh has no GODOT_BIN= assignment"
-    assert any(re.match(r"^\s*trap\s+cleanup\s+EXIT\b", ln) for _, ln in code), "merge_gate.sh has no trap cleanup EXIT line"
+    assert any(re.match(r"^\s*trap\s+(?:'[^']*\bcleanup\b[^']*'|cleanup)\s+EXIT\b", ln) for _, ln in code), "merge_gate.sh has no trap cleanup EXIT line"
 
 
 def test_c1_ground_key_detector_works():

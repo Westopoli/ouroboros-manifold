@@ -3,6 +3,7 @@
 
   sdk_engineer.py --worktree <path> --brief <file> [--model claude-sonnet-5-5] [--max-budget-usd 5]
                   [--max-turns 60] [--allowed-tools Bash,Read,Edit,Write,Grep,Glob] [--dry-run]
+                  [--piece <id>] [--role <role>] [--label <text>]
 
 The API key is read at run time from ~/.config/anthropic/api_key (one line, mode 600; missing or any other mode:
 refuses) and passed to the agent process only as env={"ANTHROPIC_API_KEY": key}. Never export it or write it to a
@@ -11,10 +12,12 @@ reads no key, sends nothing. Needs claude_agent_sdk (om-push/venv-sdk); batch_re
 The agent loads the worktree's .claude/settings.json (deny rules, git-guard hook) and CLAUDE.md, not ~/.claude;
 only the --allowed-tools exist for it (no Task, so no sub-agents) and they run unasked. Assistant text goes to
 stdout; result, usage and cost to <worktree>/.sdk_engineer_report.md (untracked; the SDK's cost estimate, not a
-bill). Exit 0 ok; 1 agent error or bad arguments; 2 key file refused.
+bill). Every run, a dry run too, appends one row (date,label,piece,role,model,turns,cost,outcome) to the file
+SDK_RUNS_CSV names (default ~/Projects/om-push/runs/sdk_runs.csv; method rev 3, HARNESS-mm-3). Exit 0 ok; 1 agent error or bad arguments; 2 key file refused.
 """
 import argparse
 import asyncio
+import csv
 import dataclasses
 import datetime
 import json
@@ -89,6 +92,22 @@ def write_report(a: argparse.Namespace, result, err: str | None) -> Path:
     return path
 
 
+RUN_COLS = ["date", "label", "piece", "role", "model", "turns", "cost", "outcome"]
+
+
+def append_run_row(a: argparse.Namespace, turns, cost, outcome: str) -> None:
+    """One row per run in SDK_RUNS_CSV. See also: method_metrics.py M06/M07, which read it."""
+    path = Path(os.environ.get("SDK_RUNS_CSV") or Path.home() / "Projects" / "om-push" / "runs" / "sdk_runs.csv")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    new = not path.is_file() or path.stat().st_size == 0
+    with path.open("a", newline="") as f:
+        w = csv.writer(f)
+        if new:
+            w.writerow(RUN_COLS)
+        w.writerow([datetime.date.today(), a.label or f"{a.piece} {a.role}".strip(), a.piece, a.role, a.model,
+                    turns or 0, cost or 0, outcome])
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--worktree", required=True, type=Path)
@@ -97,6 +116,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--max-budget-usd", type=float, default=5.0)
     p.add_argument("--max-turns", type=int, default=60)
     p.add_argument("--allowed-tools", default="Bash,Read,Edit,Write,Grep,Glob")
+    p.add_argument("--piece", default="")
+    p.add_argument("--role", default="")
+    p.add_argument("--label", default="")
     p.add_argument("--dry-run", action="store_true", help="print the options and exit 0; no key read, no network")
     a = p.parse_args(argv)
     a.worktree = a.worktree.resolve()
@@ -109,10 +131,14 @@ def main(argv: list[str] | None = None) -> int:
     if a.dry_run:
         print(json.dumps(build_options(a, None), indent=2))
         print(f"brief: {a.brief} ({len(a.brief.read_text())} chars); key file: {key_problem() or 'ok (mode 600)'}")
+        append_run_row(a, 0, 0, "success")
         return 0
     result, err = asyncio.run(run(a.brief.read_text(), build_options(a, read_key())))
     print(f"done: {result.subtype if result else 'no result'}, report {write_report(a, result, err)}")
-    return 0 if result and not result.is_error and not err else 1
+    ok = bool(result and not result.is_error and not err)
+    append_run_row(a, result.num_turns if result else 0, result.total_cost_usd if result else 0,
+                   "success" if ok else "error")
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
