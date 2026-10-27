@@ -4212,7 +4212,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_gate_row.py"]
 depends_on = ["A94-harness", "HARNESS-sigblocked", "VG-GUARD", "HARNESS-userdir", "HARNESS-C1b", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-csim-xdist", "HARNESS-gate-tiers", "HARNESS-gate-remote", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-look-rejects", "HARNESS-red-evidence", "HARNESS-size-lint-fail", "HARNESS-gate-venv-link", "HARNESS-lab-slow-tier", "HARNESS-no-home-paths"]  # attached owners of the same files: ordering edges only (pieces.py --check)
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "c4b83bef3581acae47e674b1ab584012e4a488d6" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "GATE row line and csv append, default SUITE_TIMEOUT 2400, suite-timeout cause in the regression REJECT detail; under 80 lines"
 [[piece]]
