@@ -310,7 +310,7 @@ def test_t6_a_cite_in_a_heading_does_not_count(tmp_path, mode):
 @pytest.mark.parametrize("mode", MODES)
 def test_t6_a_cite_does_not_clear_reason_9(tmp_path, mode):
     spec, res, found = _cite_run(tmp_path, '[W Q-990-01: "the delay is never 3 s"] see [P csrc/x.c:12]', mode)
-    assert res.returncode == 1, res.stdout + res.stderr
+    assert res.returncode == 0, res.stdout + res.stderr  # mm-5: reason 9 is a WARN (TD-HARNESS-mm-5-1)
     assert [(l, r) for l, r, _ in found] == [(3, 9)], res.stdout
 
 

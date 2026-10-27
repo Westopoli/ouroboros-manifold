@@ -303,9 +303,14 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     diff_text = Path(args.diff_file).read_text()
-    report = whole_suite_regression(Path(args.worktree), diff_text, python_exe=args.python,
-                                     test_args=args.test_args, timeout=args.timeout,
-                                     junit=args.junit)
+    try:
+        report = whole_suite_regression(Path(args.worktree), diff_text, python_exe=args.python,
+                                         test_args=args.test_args, timeout=args.timeout,
+                                         junit=args.junit)
+    except subprocess.TimeoutExpired:
+        # See also: merge_gate.sh reg_detail, which quotes this text in the REJECT detail
+        print(f"suite-timeout {args.timeout}s")
+        return 1
     out = {"whole_suite": _report_to_dict(report)}
 
     pred = None

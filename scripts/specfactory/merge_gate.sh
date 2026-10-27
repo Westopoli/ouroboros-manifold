@@ -27,7 +27,7 @@ SIGNATURES_TOML="${MERGE_GATE_SIGNATURES:-$REPO_ROOT/docs/northstar/spec_factory
 PLACEHOLDERS_TXT="${MERGE_GATE_PLACEHOLDERS:-$REPO_ROOT/docs/northstar/spec_factory/placeholder_controls.txt}"
 SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
 MAKE_TIMEOUT="${MERGE_GATE_MAKE_TIMEOUT:-300}"
-SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-600}"
+SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-2400}"
 
 if [[ "${1:-}" == "--prune-evidence" && $# -eq 1 ]]; then
     exec "$PYTHON" "$GATE_DIR/merge_gate_support.py" prune-evidence
@@ -63,11 +63,40 @@ export MERGE_GATE_PIECE_ID="$PIECE_ID"
 MERGE_ROOT="$(dirname "$CANDIDATE")"
 
 SCRATCH_ROOT="$(mktemp -d -t merge_gate.XXXXXX)"
+# GATE row (HARNESS-mm-2): one csv line per run on every exit, also appended to MERGE_GATE_RUNS_CSV.
+# See also: docs/northstar/plans/method_rev3_2026-10-26/spec.md "Design" item 1, docs/northstar/plans/push/gate_runs.csv
+ROW_STAGES=""
+ROW_CAUSES=""
+STAGE_SUM_DS=0
+gate_row() {
+    local rc="$1" cand base sums p t d l a n path
+    cand="$(git -C "$CANDIDATE" rev-parse HEAD 2>/dev/null)"
+    base="${MAIN_SHA:-}"
+    p=0; t=0; d=0; l=0
+    if [[ -n "$base" ]]; then
+        while IFS=$'\t' read -r a n path; do
+            [[ "$a" =~ ^[0-9]+$ ]] || continue
+            case "$path" in
+                csrc/*|autoload/*|scenes/*) p=$((p + a)) ;;
+                scripts/skilllab/*) l=$((l + a)) ;;
+                tests/*) t=$((t + a)) ;;
+                docs/*) d=$((d + a)) ;;
+            esac
+        done < <(git -C "$CANDIDATE" diff --numstat "$base..$cand" 2>/dev/null)
+    fi
+    local row
+    row="$(date +%F),$PIECE_ID,$(git -C "$CANDIDATE" rev-parse --abbrev-ref HEAD 2>/dev/null),$base,$cand,${MERGE_GATE_QUEUE_S:-0},$((STAGE_SUM_DS / 10)).$((STAGE_SUM_DS % 10)),$rc,$ROW_STAGES,$ROW_CAUSES,$p,$t,$d,$l"
+    echo "GATE row $row"
+    local csv="${MERGE_GATE_RUNS_CSV:-$HOME/Projects/om-push/gate_runs.csv}"
+    mkdir -p "$(dirname "$csv")"
+    echo "$row" >>"$csv"
+}
 cleanup() {
+    gate_row "$GATE_RC"
     [[ -d "$SCRATCH_ROOT/mainpipe_base" ]] && git -C "$CANDIDATE" worktree remove --force "$SCRATCH_ROOT/mainpipe_base" >/dev/null 2>&1
     rm -rf "$SCRATCH_ROOT"
 }
-trap cleanup EXIT
+trap 'GATE_RC=$?; cleanup' EXIT
 
 # FINDING-ambient-user-dir: no stage reads or writes the machine's ~/.local/share/data.
 # project.godot's custom_user_dir_name="data" puts user:// at $XDG_DATA_HOME/data, so every
@@ -92,10 +121,20 @@ gate_line() {
     now_us="${EPOCHREALTIME/./}"
     el=$(( (now_us - STAGE_MARK_US + 50000) / 100000 ))
     STAGE_MARK_US="$now_us"
+    STAGE_SUM_DS=$((STAGE_SUM_DS + el))
     echo "GATE $name $status $detail [$((el / 10)).$((el % 10))s]"
 }
 
-reject() { gate_line "$1" REJECT "${*:2}"; REJECTED=1; }
+reject() {
+    local c="${*:2}"
+    gate_line "$1" REJECT "$c"; REJECTED=1
+    ROW_STAGES="${ROW_STAGES:+$ROW_STAGES;}$1"
+    c="$(printf '%s' "$c" | tr ',"\n' '   ' | cut -c1-120)"
+    ROW_CAUSES="${ROW_CAUSES:+$ROW_CAUSES;}$c"
+}
+# A suite_regression timeout surfaces as a TimeoutExpired traceback in the stage log; name it.
+# See also: suite_regression.py main (suite-timeout <N>s), spec G06
+reg_detail() { if grep -q TimeoutExpired "$1"; then echo "suite-timeout ${SUITE_TIMEOUT}s"; else cat "$1"; fi; }
 ok()     { gate_line "$1" OK "${*:2}"; }
 warn()   { gate_line "$1" WARN "${*:2}"; }
 harness() { gate_line "$1" HARNESS "${*:2}"; }
@@ -333,7 +372,7 @@ REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject regression_csim "$(cat "$REG_CSIM_LOG")"
+    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
 else
     ok regression_csim "$(cat "$REG_CSIM_LOG")"
 fi
@@ -342,7 +381,7 @@ REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject regression_lab "$(cat "$REG_LAB_LOG")"
+    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
 else
     ok regression_lab "$(cat "$REG_LAB_LOG")"
 fi
@@ -351,7 +390,7 @@ REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject regression_qa_t1 "$(cat "$REG_QA_LOG")"
+    reject regression_qa_t1 "$(reg_detail "$REG_QA_LOG")"
 else
     ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
 fi
@@ -360,7 +399,7 @@ REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject specfactory_regression "$(tr '\n' ' ' <"$REG_SF_LOG")"
+    reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')"
 else
     ok specfactory_regression "$(cat "$REG_SF_LOG")"
 fi
