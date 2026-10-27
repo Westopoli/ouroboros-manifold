@@ -1,2 +1,3 @@
 date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject_causes,product_lines,test_lines,docs_lines,lab_lines
 2026-10-26,HARNESS-mm-2,HARNESS-gate-base-after-lock,HARNESS-userdir,push/land-mm-2,65e43a66a167a14e75f8fb154e1944ddb03516c4,c4b83bef3581acae47e674b1ab584012e4a488d6,8,2110.9,0,,,0,149,0,0
+2026-10-26,HARNESS-mm-3,HARNESS-C4,PP-ledger,push/land-mm-3,1130a816854551c8482f47d9be1a47a72548bc79,c82be5eb741a2b34a8263a8adb83ecbc672b593f,235,3852.7,0,,,0,209,28,0

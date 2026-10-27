@@ -4250,8 +4250,7 @@ owns = ["scripts/specfactory/sdk_engineer.py", "scripts/specfactory/status_check
 owns_glob = []
 acceptance = ["tests/specfactory/test_sdk_runs.py", "tests/specfactory/test_status_check.py"]
 depends_on = ["A94-harness", "HARNESS-status", "HARNESS-credits-tools", "HARNESS-sdk-buffer", "HARNESS-C1b", "HARNESS-C235", "HARNESS-C4", "HARNESS-C235-fail", "HARNESS-coverage", "HARNESS-tool-line", "HARNESS-gate-tiers"]  # attached owners of the same files: ordering edges only (pieces.py --check)
-tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "c82be5eb741a2b34a8263a8adb83ecbc672b593f" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "run row append; checks findings, metrics and method_pins (spec A2); story and contract in KNOWN_KEYS (spec A1); under 160 lines"
 [[piece]]
