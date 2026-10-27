@@ -4207,7 +4207,7 @@ owns_glob = ["tests/specfactory/fixtures/method_metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["A94-harness"]
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "81896ac81664ac030c67b6855cdd2f27b363db87" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "git and ledger metrics M01, M02, M04, M05, M10, M11, M12, M19, M20, M23, M24; about 300 lines; thresholds toml from the spec's DRAFT values"
 [[piece]]
@@ -4218,7 +4218,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = []
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "81896ac81664ac030c67b6855cdd2f27b363db87" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "runs and transcript metrics M01b, M03, M06, M07, M08, M13, M14, M15, M21, M22; about 300 lines"
 [[piece]]
@@ -4229,7 +4229,7 @@ owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["HARNESS-mm-1a", "HARNESS-mm-1b"]
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "81896ac81664ac030c67b6855cdd2f27b363db87" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "M16, M17, M18, the CLI flags, --write, --last, the W43 self-check and snapshot; about 300 lines"
 [[piece]]
@@ -4261,7 +4261,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py", "tests/specfactory/test_method_weekly.py"]
 depends_on = ["HARNESS-mm-1c", "HARNESS-methodcheck", "A94-harness"]  # methodcheck is on main; ordering edge for owner_lint
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "81896ac81664ac030c67b6855cdd2f27b363db87" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "scratch exclusion in code_edits; weekly runner with --dry-run; two unit files; under 120 lines"
 [[piece]]
