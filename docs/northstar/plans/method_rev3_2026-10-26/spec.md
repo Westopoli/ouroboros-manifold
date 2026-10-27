@@ -314,3 +314,14 @@ Phase 5, constant verification:
 - The lab data move under `data/` (G08) and installing the systemd timer on his machine.
 - Rulings on each auditor finding that holds or is weakened.
 - The word that the lab is done, which starts the beta list.
+
+## Amendment A9 (2026-10-27): Phase 4 pieces after the audit
+
+Westley 2026-10-27: the draft numbers are back-tested (finding table, `audit_findings.md`; "Let's do #1"), the fixes build in parallel with it, one Dispatcher chat runs it (`dispatcher_context_phase4.md`). Three pieces replace the five sketched in `audit_findings.md`, by the G07 rule (one responsibility each). Tool: Workflow (harness, no frame; the Dispatcher runs them as Agent clerks, one tests writer then two builders then landings, as Phase 2 did). Tests first by a different agent than the builders (CLAUDE.md "The script"; harness pieces are sim-side by that rule).
+
+- HARNESS-mm-8, metrics correctness (briefs/builder_mm8.md): findings 1, 3 to 23, 25 to 27, 32 to 35, plus the `--weeks` back-test table, the baselines (M04 7.26 lab, M08 1229, M19a 0) and the `[prices]` rows. Owns `scripts/specfactory/method_metrics.py`, `method_metrics_runs.py`, `method_metrics_cli.py`, `method_thresholds.toml`, `tests/specfactory/test_method_metrics.py`, `tests/specfactory/fixtures/method_metrics/*`.
+- HARNESS-mm-9, gate row csv (briefs/builder_mm9.md): findings 2 and 24. Owns `scripts/specfactory/merge_gate.sh`, `tests/specfactory/test_gate_row.py`, `tests/specfactory/test_sdk_runs.py`.
+- RECORDS-mm-2, records repair (briefs/records_clerk_mm2.md): the eight mangled gate rows rewritten from the gate logs, the empty run rows deleted, the 32 workflow scripts moved (DEC-workflow-scripts-move-2026-10-27), the W43 snapshot re-written by the fixed script, the back-test table saved. Owns `docs/northstar/plans/push/gate_runs.csv`, `docs/northstar/plans/method_rev3_2026-10-26/metrics/*`, `scripts/specfactory/workflows/*`.
+- Decisions folded in: DEC-m04-docs-only-week (M04 NA when no product commit), DEC-scripts-tests-not-product (scripts/tests-only commits count in neither M04 term), DEC-m01-lab-ratio-kept, DEC-workflow-scripts-move. Q5: M21b is the week sum, counting only DRIFT lines that are breaches (rules `polling`, `gate_runs`, `live_tree`, `main_push`, `wakeups`, `spawn_model`, `fable_spawns`, `messages`; not `context`, which M08 counts, and not `code_edits` from doer or engineer transcripts); its number is set from the back-test (draft stays 2 until then).
+- Thresholds: none approved yet. The back-test (`method_metrics.py --weeks 2026-W38..2026-W44`) lands as `metrics/backtest_2026-10-27.md`; Westley approves from it.
+- CLAUDE.md: `CLAUDE_trim_draft.md` lands in the retro commit after Westley's word on the section moves (not in this hand-off).
