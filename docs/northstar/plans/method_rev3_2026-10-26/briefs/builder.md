@@ -2,7 +2,7 @@
 
 PIECE: <HARNESS-mm-1a | mm-1b | mm-1c | mm-2 | mm-3 | mm-4 | mm-5 | mm-6>
 
-Model: claude-sonnet-5-5 (doer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. Work only in the worktree your launcher names under `~/Projects/om-push/wt/`, branched from the tests writer's branch (so the red tests are on your tree); never touch `~/Projects/ouroboros-manifold`.
+Model: claude-sonnet-5-5 (doer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. STOP at 40 calls (ceiling 6.3 M tokens): report `RESULT stop:call-cap` with what is built and pushed. Work only in the worktree your launcher names under `~/Projects/om-push/wt/`, branched from the tests writer's branch (so the red tests are on your tree); never touch `~/Projects/ouroboros-manifold`.
 
 Spec: `docs/northstar/plans/method_rev3_2026-10-26/spec.md`. Your piece's row in "Pieces and owners" lists the only files you may create or edit. The tests in your piece's acceptance column are fenced: you never edit a test or a fixture. "Design" gives the records layout (gate row columns, run row columns, ledger tokens, the metric line format), "The gaps" gives every metric's exact procedure, FAIL condition and positive control. The thresholds live in `method_thresholds.toml` (mm-1a writes it from the spec's DRAFT values, every `approved = ""`), never in code.
 
