@@ -4346,10 +4346,10 @@ size_estimate = "records repair: 8 gate rows, 13 run rows, 32 script moves, W43 
 [[piece]]
 id = "HARNESS-mm-12"
 manager = "Architect"
-owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml"]
-owns_glob = []
+owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "scripts/specfactory/method_metrics.py"]
+owns_glob = ["tests/specfactory/fixtures/token_ledger/*"]
 acceptance = ["tests/specfactory/test_token_ledger.py"]
-depends_on = ["HARNESS-mm-8", "HARNESS-mm-1b"]  # ordering edges: mm-8 owns method_metrics_runs.py and the toml until it lands
+depends_on = ["HARNESS-mm-8", "HARNESS-mm-1b", "HARNESS-mm-1a"]  # ordering edges: mm-8 owns method_metrics_runs.py and the toml until it lands
 tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
