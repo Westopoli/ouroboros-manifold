@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-18 (Architect): section 1 gains the sim lane pieces, the two mockups and the probes; section 2 step 6 macOS done; section 3 points at the decision pack; 3b T5 to T9, T18 restated, T19 added. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
+Last updated: 2026-10-27 (Architect): section 1 gains the sim lane pieces, the two mockups and the probes; section 2 step 6 macOS done; section 3 points at the decision pack; 3b T5 to T9, T18 restated, T19 added. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -65,6 +65,7 @@ Branches only; main gets a piece only through the merge gate. Method rev 2 (`pla
 
 | Plan | Doc | State (2026-10-13) | Next |
 |---|---|---|---|
+| **Plans of record** (DEC-plans-of-record-2026-10-27): the simulation lab, then the beta | `plans/2026-10-27-lab-plan-of-record.md` (status head = the lab's state); `plans/2026-10-07-visible-game-programme.md` (PAUSED; lane table = the beta's state) | lab paused for the method fixes; beta paused for the lab | the lab resumes on Westley's word after the first planned day; `plans/2026-10-27-lab-only-programme-spec.md` is the how |
 | **The visible game programme**: every approved prototype into the game, the economy play, Steam phase B; stories acted out as the acceptance | `docs/northstar/plans/2026-10-07-visible-game-programme.md` (lane table = status), spec `plans/2026-10-07-visible-game-spec.md` rev 12f on `push/vg-kp-lots-spec` | IN FLIGHT since 2026-10-07, method rev 2 since 10-10; six lanes A to F plus contracts, harness and W walk routes; about 120 pieces landed, 0 stories Seen; every lane's second look (after the method fix) is in section 3 "Now" | lanes advance on Westley's verdicts; the record batch `push/vg-rec-12e` lands, then spec rev 13 (provenance tags) |
 | Simulation viewer and the simulation lane (ROADMAP 2b step 1, started early) | `plans/2026-10-12-simviewer-plan.md`, `plans/2026-10-12-sim-lane-context.md` | SV-1 to SV-3 landed (d7d01f40); first findings pass run 2026-10-15 on the Mac: 17 ledger rows in `plans/sim_lane_2026-10-12/README.md` (mission swaps, opening relevance 0, chronicle family and chain entries missing, blank shells, 37 ALG rows untested) | Westley reads the ledger; `Q-` rows for rows 3, 10, 13; SV-0 and the pipe gaps queue behind VG-CONTRACT-E7 |
 | Space lab: layout search | `plans/2026-10-06-layout-search-spec.md` rev 4 | run 1 landed a9ee5897; chart waits on Westley (`research/layer_dynamics/README.md` open list) | run 2 after the category table; the ground lab spec |
