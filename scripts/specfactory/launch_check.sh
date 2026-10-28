@@ -5,7 +5,7 @@
 # See also: status_check.py check_launch, which holds the landing-time sha test.
 set -uo pipefail
 
-WF_DIR="docs/northstar/plans/workflows_2026-10-07/"
+WF_DIR="scripts/specfactory/workflows/"
 rc=0
 reject() { echo "LAUNCH REJECT $1"; rc=1; }
 

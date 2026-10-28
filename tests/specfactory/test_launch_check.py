@@ -38,7 +38,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 SCRIPT = REPO / "scripts" / "specfactory" / "launch_check.sh"
 
-WF = "docs/northstar/plans/workflows_2026-10-07"
+WF = "scripts/specfactory/workflows"
 JS_REL = f"{WF}/vg-fixture.js"
 JS_TEXT = "// fixture workflow script\nconst x = 1\n"
 ARGS_REL = f"{WF}/vg-fixture.args.json"
@@ -185,10 +185,23 @@ def test_script_outside_the_workflows_dir_is_rejected(tmp_path):
     work = make_world(tmp_path, {JS_REL: JS_TEXT, **{rel: JS_TEXT for rel in outside}})
     for rel in outside:
         res = run_launch(tmp_path, work / rel)
-        assert ("LAUNCH REJECT script not under docs/northstar/plans/workflows_2026-10-07/" in launch_lines(res)), \
+        assert ("LAUNCH REJECT script not under scripts/specfactory/workflows/" in launch_lines(res)), \
             (rel, res.stdout, res.stderr)
         assert not any(ln.startswith("LAUNCH OK") for ln in launch_lines(res)), (rel, res.stdout)
         assert res.returncode != 0, (rel, res.stdout + res.stderr)
+
+
+def test_workflows_dir_is_scripts_specfactory_workflows(tmp_path):
+    # HARNESS-mm-14 (spec A11): the workflows dir moved; the new path passes the directory rule, the old one rejects.
+    new_rel = "scripts/specfactory/workflows/vg-fixture.js"
+    old_rel = "docs/northstar/plans/workflows_2026-10-07/vg-fixture.js"
+    work = make_world(tmp_path, {new_rel: JS_TEXT, old_rel: JS_TEXT})
+    ok = run_launch(tmp_path, work / new_rel)
+    assert not any(ln.startswith("LAUNCH REJECT script not under") for ln in launch_lines(ok)), (ok.stdout, ok.stderr)
+    assert any(ln.startswith("LAUNCH OK") for ln in launch_lines(ok)), (ok.stdout, ok.stderr)
+    old = run_launch(tmp_path, work / old_rel)
+    assert "LAUNCH REJECT script not under scripts/specfactory/workflows/" in launch_lines(old), (old.stdout, old.stderr)
+    assert old.returncode != 0, (old.stdout + old.stderr)
 
 
 def test_script_outside_any_checkout_is_rejected(tmp_path):
