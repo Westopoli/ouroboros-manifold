@@ -1,0 +1,5 @@
+# Brief: builder, HARNESS-mm-15 weekly run fixes
+
+Model: claude-sonnet-5-5 (doer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. STOP at 30 calls. Worktree named by your launcher, from origin/main; never the live checkout. Push `push/mm-15` and stop; never push main. Python: `/home/westopoli/Projects/om-push/venv-sdk/bin/python`.
+
+Spec: `docs/northstar/plans/method_rev3_2026-10-26/spec.md` Amendment A12. Edit only `scripts/specfactory/method_weekly.sh` and `tests/specfactory/test_method_weekly.py`. First add the three A12 test cases to the test file and run them: paste the three failing assertion lines (red on origin/main). Then the three fixes in the script, each with a one-line comment naming A12. The existing red case `test_6_settings_has_the_session_start_hook_line_for_metrics_last` belongs to HARNESS-mm-6 and stays red; every other case green. Run `scripts/specfactory/pre_gate.sh` before the push. Report: sha, the three red lines, pytest counts after, the output of `method_weekly.sh --dry-run` with `OM_NOW="2026-11-01 23:00"`, `RESULT`.

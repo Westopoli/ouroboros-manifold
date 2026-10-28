@@ -4365,3 +4365,15 @@ tests_pending = true
 status = { state = "attached", attach_sha = "72a5d46a9790989e7ea6a9515cb435dbb2b5c48b" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "WF_DIR path constant after the workflow-script move; one line plus one test case"
+[[piece]]
+id = "HARNESS-mm-15"
+manager = "Architect"
+owns = ["scripts/specfactory/method_weekly.sh", "tests/specfactory/test_method_weekly.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_weekly.py"]
+depends_on = ["HARNESS-mm-4"]  # ordering edge: mm-4 (attached) owns the same files
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "three one-line fixes in method_weekly.sh (week, exit, dry-run reap) and three test cases"
+
