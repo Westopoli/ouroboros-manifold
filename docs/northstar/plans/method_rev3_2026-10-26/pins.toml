@@ -1,62 +1,62 @@
-# Sentence pins for method rev 3 (spec A2). since = "" until the sentence lands in Phase 4;
+# Sentence pins for method rev 3 (spec A2). since = "2026-10-28" until the sentence lands in Phase 4;
 # status_check check method_pins reads this file: a pin with a non-empty since must appear verbatim in the file at the base.
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G01"
-since = ""
+since = "2026-10-28"
 sentence = "Every sim, pipe and lab story exists as failing tests before any code, in fenced paths builders cannot edit, each naming the `S-###`/`R-###-##` it proves. A client or look piece asserts its `qa_state()` element inventory in a test its builder writes and ships a shot; no separate tests writer."
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G01"
-since = ""
+since = "2026-10-28"
 sentence = "for sim, pipe and lab pieces, tests first by a different agent than the builder, red on the built tree"
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G02"
-since = ""
+since = "2026-10-28"
 sentence = "the landing clerk applies the rulebook to a builder's test-defect stop and writes `ruler=clerk` in the row; only new rule meaning goes to the Architect (`ruler=fable`)"
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G03"
-since = ""
+since = "2026-10-28"
 sentence = "One ledger row per landing, written by the landing clerk; a `DRAFT-` row only when a number is new; register and epic updates with the landing that needs them."
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G04"
-since = ""
+since = "2026-10-28"
 sentence = "architecture, planning, contract specs (header, pipe frames, save format), rulings, arbitration, abstract or cross-cutting diagnosis; the per-piece spec paragraph and the review of a built piece are Sonnet work"
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G07"
-since = ""
+since = "2026-10-28"
 sentence = "**Build units are one responsibility.** A Sonnet piece is one coherent responsibility: at most one cross-cutting concern, two or three outside integrations, rule clusters that share a failure domain (manager-mode decomposition rule, research 2026-08); the line cap is 1,000 and the complexity gate (cyclomatic 10, nesting 3) is advisory. A 30B card stays about one file under about 100 lines."
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G19"
-since = ""
+since = "2026-10-28"
 sentence = "Audit, for a contract spec or the beta list only: a fresh Sonnet auditor that has not seen the author's reasoning reads the spec against the bible and the code and tries to refute it"
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G11"
-since = ""
+since = "2026-10-28"
 sentence = "Every spawn names its model and starts its description with `<piece id> <role>` (roles: spec, tests, build, land, audit); every report starts with one line `RESULT success|stop:<reason>`."
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G21"
-since = ""
+since = "2026-10-28"
 sentence = "One Architect chat and one Dispatcher chat at a time; a third coordinator is an exception row."
 
 [[pin]]
 file = "CLAUDE.md"
 gap = "G23"
-since = ""
+since = "2026-10-28"
 sentence = "Method text (this file, `docs/northstar/plans/workflows_2026-10-07/`, `docs/northstar/README.md`, `PLAN.md`) changes only in a commit that also adds to a `retro_*` folder, at most one retro per 14 days; weekly numbers: `scripts/specfactory/method_metrics.py`."
