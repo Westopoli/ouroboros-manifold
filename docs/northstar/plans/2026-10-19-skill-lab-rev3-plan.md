@@ -83,7 +83,7 @@ Order and gating (Architect): the lab landing (`LAB-REV2`) first, then A, B, C. 
 
 ## Open for Westley (routed through the Architect)
 
-- D9 rule question: Warden healing stacks per Warden and stalls fights above 4 per 16. Until he answers the lab fields at most 4 Wardens per 16.
+- D9: retired 2026-10-27, not a question: R-083-03 says the aura does not stack; the engine's stacking is a defect (FU-warden-no-stack). The 4-per-16 cap stays until the fix lands.
 - Roster analysis go: the two Opus roster analyses and the arbitrated mix table (R1 is accepted; a go to run batch one with the known-gaps header is still his).
 - Layouts: which layer pairs and enemy layers (R2) the first batch fields (DRAFT: every pair the reach table allows).
 - Arcs and cones: whether the E2 arc and cone families run in batch one (they land after the lab landing).

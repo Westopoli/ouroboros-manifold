@@ -26,16 +26,18 @@ Finished (DEC-lab-finished-lines-cross-2026-10-27): the crossings are documented
 | The search (plan step 7): every region where the conditions hold, two ways | not specced |
 | The crossings document (section 1) | not started |
 
-## 3. Order of work when the lab resumes
+## 3. Order of work when the lab resumes (revised 2026-10-27 after Westley's answers)
 
 1. Records: B flip and landing row, ROADMAP row, the positioning-decides sentence in README sections 2 and 4, the ten coverage defects in README section 12. One clerk, under 1 M tokens.
-2. Batch one, the first night Westley's four answers are in (section 5). Compute; the review about 10 M.
-3. Rev 3 C as one manager-mode cascade (nine files, one spec, one umbrella). About 15 M at the median, 50 M ceiling.
-4. E2 and E4 as one cascade; then batch two. About 30 M.
-5. R9 and the Warden fix, one cascade. About 20 M.
-6. ALG rows, Q-008-03 closed. Records.
-7. The search: spec by the Architect (a Workflow or cascade decision, the stop rule, the two ways side by side), audited, then built. Unestimated until specced.
-8. The crossings document, built from the batches and the search, read by Westley. Done.
+2. E2 (firing arc, cone) and E4 (guard radius) as one cascade, with FU-warden-no-stack (a defect against R-083-03) in the same cascade: the combat behaviours before any batch (DEC-engine-before-batch-one). About 35 M.
+3. The vision-asymmetry plays: the Architect checks which ping, going-dark and decoy plays are registered in `plays_space.py`, specs the missing ones, one cascade builds them (DEC-batch-one-vision-asymmetry). About 15 M.
+4. Rev 3 C as one cascade (reach and vision as swept knobs, the paper prediction). About 15 M, ceiling 50 M.
+5. R9 sight-engagement, retire L8. One cascade, about 15 M.
+6. Batch one, the first night after 2 to 5 are on main: layer-above, types-by-reach, the five mix plays, the ping and dark plays; every layer pair the reach table allows; the arc, cone and guard families included. Compute; the review about 10 M.
+7. Batch two and the ground scene; ALG rows, Q-008-03 closed.
+8. The speed-up piece (FINDING-speed-marks-unmet, marks kept).
+9. The search: spec by the Architect, audited, then built. Unestimated until specced.
+10. The crossings document, read by Westley. Done.
 
 Each day is planned against DEC-daily-allotment (300 M: 60 Dispatcher, 180 pieces, 60 reserve) in the Dispatcher's status table; actuals by `token_ledger.py` once HARNESS-mm-12 lands.
 
@@ -45,9 +47,4 @@ Rulings 2026-10-13 (rev 2 spec); the positioning rule 2026-10-19 (`feedback-posi
 
 ## 5. What waits on Westley
 
-1. **The pass marks.** The lab runs a skilled play and a plain play on the same map and counts how many more units the skilled side gets firing, and whether it wins. The pass mark is the number that says "the skill worked": how much better the skilled side must do, and by what win margin, before the lab calls that play a success. Draft numbers are in README section 4; without his, every result is "measured, not judged".
-2. **Layer pairs for batch one.** In the space lab each side stands on a layer (height band). Batch one needs the list of which layer the skilled side stands on against which layer the enemy stands on. Draft: every pair the reach table allows.
-3. **Go for batch one with its gaps named.** Three engine behaviours (firing arc, cone fire, the guard radius) are not built yet. Batch one can run without them if its first page says so. Yes or wait.
-4. **Speed marks.** The lab's own speed tests are red: one check takes 180 s of CPU against a 30 s mark; one 16-against-48 fight takes 1.5 s against a 1.5 s mark. Keep the marks and queue a speed piece, or set new marks.
-5. **The Warden rule.** Wardens heal, and today their healing stacks per Warden, so a side with more than 4 Wardens in 16 never dies and the fight never ends. Is stacking the rule, or does healing cap? Until he says, the lab refuses mixes with more than 4 Wardens.
-Recommendation for all five: marks as drafted, every allowed pair, go with the gaps named, keep the speed marks and queue the speed piece, healing does not stack.
+Answered 2026-10-27: pass marks as drafted; layer pairs every allowed pair plus the vision-asymmetry plays in batch one; batch one after the combat behaviours; speed marks kept; the Warden aura does not stack (R-083-03, already in the bible). Open: nothing before step 6. At step 6: the batch's first page and diagrams for his reading.
