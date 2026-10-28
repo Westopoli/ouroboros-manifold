@@ -4340,7 +4340,7 @@ owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*", "scripts/s
 acceptance = []
 depends_on = ["RECORDS-mm-1", "HARNESS-mm-1c", "HARNESS-mm-8", "HARNESS-mm-9"]  # ordering edges only
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "d5c1e32bca7e50b9d3817d4b69d2a3b5482121ec" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "records repair: 8 gate rows, 13 run rows, 32 script moves, W43 re-snapshot, back-test table"
 [[piece]]
