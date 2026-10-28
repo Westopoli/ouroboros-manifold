@@ -1,6 +1,6 @@
 # Brief: tests writer, method rev 3 (Phase 1)
 
-Model: claude-sonnet-5-5 (engineer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. Work only in the worktree your launcher names under `~/Projects/om-push/wt/`; never touch `~/Projects/ouroboros-manifold`. Read the repo at `origin/main` (`git show origin/main:<path>`) for anything you do not change.
+Model: claude-sonnet-5-5 (engineer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. STOP at 60 calls (ceiling 16 M tokens); one fix pass per piece, a second is `RESULT stop:fix-pass-cap` for a ruling. Work only in the worktree your launcher names under `~/Projects/om-push/wt/`; never touch `~/Projects/ouroboros-manifold`. Read the repo at `origin/main` (`git show origin/main:<path>`) for anything you do not change.
 
 Spec: `docs/northstar/plans/method_rev3_2026-10-26/spec.md`, sections "Design" and "The gaps" (every metric's procedure, FAIL condition and positive control are there) and "Pieces and owners" (which file each builder may edit; you own only the test files and fixtures listed there).
 

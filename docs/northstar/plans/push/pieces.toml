@@ -4329,7 +4329,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_gate_row.py", "tests/specfactory/test_sdk_runs.py"]
 depends_on = ["HARNESS-mm-2", "HARNESS-mm-3"]  # attached owners of the same files: ordering edges only
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "a1c407fe29c7c24a9c0c656533d6ecf34977e4b7" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "gate_row label csv-quoted (findings 2, 24); about 40 lines"
 [[piece]]
@@ -4343,3 +4343,14 @@ tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "records repair: 8 gate rows, 13 run rows, 32 script moves, W43 re-snapshot, back-test table"
+[[piece]]
+id = "HARNESS-mm-12"
+manager = "Architect"
+owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_token_ledger.py"]
+depends_on = ["HARNESS-mm-8", "HARNESS-mm-1b"]  # ordering edges: mm-8 owns method_metrics_runs.py and the toml until it lands
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "token ledger (planned vs actual per day and piece) and metrics M25 to M29; about 150 plus 80 lines"

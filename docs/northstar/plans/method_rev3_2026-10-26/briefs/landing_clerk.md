@@ -2,7 +2,7 @@
 
 BRANCH: <push/...>   PIECES: <ids>
 
-Model: claude-sonnet-5-5 (engineer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. Procedure: the landing template (`docs/northstar/plans/workflows_2026-10-07/` landing steps as the Dispatcher's HANDOFF names them; the copy at `~/Projects/om-push/wt/land-wtcap/landing-template.md` is current), with these additions for rev 3:
+Model: claude-sonnet-5-5 (engineer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. STOP at 40 calls (ceiling 5.5 M tokens) excluding the gate wait: report `RESULT stop:call-cap`. Procedure: the landing template (`docs/northstar/plans/workflows_2026-10-07/` landing steps as the Dispatcher's HANDOFF names them; the copy at `~/Projects/om-push/wt/land-wtcap/landing-template.md` is current), with these additions for rev 3:
 - A test-defect stop from a builder (`RESULT stop:test-defect`): rule it yourself with the rulebook (`rules.md`); if the test is wrong, fix the test, write the ledger row with `ruler=clerk`; if the test is right, send the builder's branch back with the line that proves it. Only new rule meaning goes to the Architect (`ruler=fable`).
 - Rerun the gate at most once on your own; a second failure is reported with the decisive line, not retried.
 - One ledger row per landing, written by you, carrying every `FINDING-` with `found-by=` and every `TD-` with `ruler=`.
