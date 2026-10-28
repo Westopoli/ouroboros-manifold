@@ -91,3 +91,24 @@ Step back for one records-and-spec pass before resuming the lab, not a re-plan: 
 - The four lab answers (pass marks and margin, layer pairs, batch-one go, speed marks) and the D9 Warden rule.
 - W8: still or pannable scene for look verdicts.
 - Whether `~/.claude/plans` copies are retired in favour of the plan-of-record files.
+
+## 8. Where the coordinator tokens went (audit of 10-19 and 10-20, added 2026-10-27)
+
+Source: one Sonnet audit of the Dispatcher (6595578b) and Architect (b1e8769e) transcripts, every turn classed by its tool, every byte of inflow counted. The two chats cost 355 M over the two days; their sub-agents 710 M; 15 pieces attached in the same window, so the true price was about 71 M per landed piece, not "little landed".
+
+What the coordinators did with 355 M:
+- 99% of it was re-reading their own context. New content entering the two chats over the two days was 1.4 MB and 1.6 MB, about 0.35 M and 0.4 M tokens. Reading was not the cost; being woken up at a 330k to 380k context 500 times each was. Both chats ran above 300k for 60% of their turns; compactions reset them to about 70k, and they climbed back within hours.
+- Dispatcher: 513 turns. 51% of its tokens were text-only turns (252 of them, a status line after every event); 26% spawns; 13% messages to the Architect. 37% of its wakeups were sub-agent reports, 57 were peer messages, 9 were Westley.
+- Architect: 507 turns. 49% of its tokens were message episodes, 87 of them answers to the Dispatcher after reading files; 38% spawns; the rest memory writes and reads.
+- Checks a cheap screener could have answered in one line: 1% of tokens on the strict count, 9% as an upper bound (every no-action episode and short status). A Haiku screener is not the lever.
+- Counterfactual, same turns with the context capped per call: 200k halves both chats (185 to 95 M, 170 to 91 M); 150k cuts to 40%; 100k to 28%.
+
+What the sub-agents did with 710 M: 227 agents, median 0.8 M, the top 30 were 54%. "Fix" passes (test-fix passes after the tests-first writer, re-runs, resumes) were 42 agents and 201 M, 28%. The three dearest single agents were lab tests and builders (L4 builder 28 M at 118 calls; L5 tests fix pass 19.5 M; "FIX tests blind-post" 18 M). Inflow to the Dispatcher from reports was 70% of its 2.2 MB week, about 0.5 M tokens: reports are not the cost either.
+
+What changes, beyond rev 3 as landed:
+1. One wakeup per event, no status turn after it. The Dispatcher writes its status table at a fixed cadence (after each landing), never as a text-only turn after each report. This is the single largest item (half of its tokens). Rule text for `dispatcher.md`; counted by a new metric M27: text-only turns per event-triggered episode, DRAFT ≤ 0.1.
+2. Context cap for the Dispatcher at 150k, not 200k (`autoCompactWindow`; DRAFT-dispatcher-compact 150000; the counterfactual says 60% saved against the two days). The Architect by brief has no long context to cap.
+3. No chat-to-chat loop. The 87 Architect answers in two days are what "Fable by brief" replaced; keep it and count it: M28 cross-session messages per day, DRAFT ≤ 4.
+4. One fix pass per piece. A tests writer's "fix pass" costs as much as the first write; after one, the piece stops for a ruling. Brief line in `tests_writer` briefs; counted under M13's sibling M29: fix-pass runs per piece, DRAFT ≤ 1. In a manager-mode cascade the test auditor and the saboteur catch most of this before the builder runs, which is one more reason the lab's clusters are cascades.
+5. Per-agent call cap in every brief (STOP at N calls, N from the estimates table ceiling), so a 118-call builder cannot happen unnoticed.
+6. Not worth building: a Haiku screener (saves at most 9%, costs its own agent per check), shorter reports (reports were 0.5 M of 260 M).
