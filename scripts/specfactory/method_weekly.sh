@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Weekly method metrics without a chat (spec method_rev3 Design "Weekly run"; G15 reap with a dry run first).
+# Weekly method metrics without a chat (spec method_rev3 Design "Weekly run").
 # See also: systemd/om-method-metrics.timer, method_metrics.py. --dry-run prints "+ <command>" lines and runs nothing.
 set -euo pipefail
 DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 LIVE="${OM_REPO:-$HOME/Projects/ouroboros-manifold}"   # read only for scripts; all work happens in the worktree
 SF="$LIVE/scripts/specfactory"
 ROOT="$HOME/Projects/om-push"
-WEEK=$(date -d "last week" +%G-W%V)
+NOW="${OM_NOW:-now}"   # OM_NOW fakes the clock for tests
+# A12: the week ending today on a Sunday, else the week that ended last Sunday
+if [ "$(date -d "$NOW" +%u)" = 7 ]; then WEEK=$(date -d "$NOW" +%G-W%V); else WEEK=$(date -d "$NOW last sunday" +%G-W%V); fi
 NAME="metrics-$WEEK"
 WT="$ROOT/wt/$NAME"
 run() { echo "+ $*"; [ "$DRY" = 1 ] || "$@"; }
@@ -14,10 +16,12 @@ run() { echo "+ $*"; [ "$DRY" = 1 ] || "$@"; }
 run python3 "$SF/wt.py" new "$NAME" --owner method_weekly --purpose "weekly method metrics $WEEK"
 run git -C "$WT" fetch origin
 run git -C "$WT" merge --ff-only origin/main
-run python3 "$WT/scripts/specfactory/method_metrics.py" --week "$WEEK" --write
-# G15: dry run first, then the real reap (wt.py reap removes only the trees the dry run verdict allows)
-run python3 "$SF/wt.py" reap --dry-run
-run python3 "$SF/wt.py" reap
+# A12: method_metrics.py exits 1 on any FAIL; set -e must not end the script before the commit records the week
+run python3 "$WT/scripts/specfactory/method_metrics.py" --week "$WEEK" --write || true
+# A12: the reap stays halted by Westley; only the dry run runs, its output goes into the week's commit
+REAP_OUT="$WT/metrics/${WEEK}_reap_dryrun.txt"
+echo "+ python3 $SF/wt.py reap --dry-run > $REAP_OUT"
+if [ "$DRY" != 1 ]; then mkdir -p "$WT/metrics"; python3 "$SF/wt.py" reap --dry-run > "$REAP_OUT"; fi
 run git -C "$WT" add -A
 run git -C "$WT" commit -m "METRIC-$WEEK: weekly method metrics"
 run flock -w 1800 "$ROOT/records.lock" git -C "$WT" push origin HEAD:main
