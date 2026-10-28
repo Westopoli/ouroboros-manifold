@@ -13,9 +13,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parent.parent.parent
 SCRIPT = REPO / "scripts" / "specfactory" / "sdk_engineer.py"
 COLS = ["date", "label", "piece", "role", "model", "turns", "cost", "outcome"]
+REAL_CSV = Path("~/Projects/om-push/runs/sdk_runs.csv").expanduser()  # the machine file a bare dry run appends to
+_before = {}
+
+
+def _lines():
+    return len(REAL_CSV.read_text().splitlines()) if REAL_CSV.is_file() else 0
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _real_csv_line_count():
+    _before["n"] = _lines()
+    yield
 
 
 def _fixture(tmp_path):
@@ -38,8 +52,9 @@ def _run(tmp_path, csv_path, *extra):
 
 def test_control_dry_run_without_the_new_flags_still_works(tmp_path):
     wt, brief = _fixture(tmp_path)
+    env = {**os.environ, "SDK_RUNS_CSV": str(tmp_path / "control_runs.csv")}  # audit finding 24: never the real file
     r = subprocess.run([sys.executable, str(SCRIPT), "--worktree", str(wt), "--brief", str(brief), "--dry-run"],
-                       capture_output=True, text=True, timeout=60)
+                       capture_output=True, text=True, timeout=60, env=env)
     assert r.returncode == 0, r.stdout + r.stderr
 
 
@@ -65,3 +80,9 @@ def test_3_a_second_run_appends_and_keeps_one_header(tmp_path):
     rows = p.read_text().splitlines()
     assert sum(1 for x in rows if x.startswith("date,")) == 1 and len(rows) == 3, rows
     assert "claude-fable-5-1" in rows[-1]
+
+
+def test_24_zz_the_real_runs_csv_has_the_same_line_count_after_this_module():
+    """Audit finding 24: a subprocess without SDK_RUNS_CSV appended an empty-label row to the real machine csv on
+    every suite run. Runs last in the module (file order); the autouse fixture recorded the count before."""
+    assert _lines() == _before["n"], f"{REAL_CSV} grew from {_before['n']} to {_lines()} lines during test_sdk_runs.py"

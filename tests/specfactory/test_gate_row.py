@@ -25,7 +25,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 SCRIPT = REPO / "scripts" / "specfactory" / "merge_gate.sh"
 SREG = REPO / "scripts" / "specfactory" / "suite_regression.py"
 FIXTURE_ROOT = Path.home() / "Projects" / "om-push" / "tmp-gaterow"
-COLS = ["date", "label", "branch", "base", "candidate", "queue_s", "stage_s", "rc", "reject_stages",
+COLS = ["date", "label", "branch", "base_sha", "candidate_sha", "queue_s", "stage_s", "rc", "reject_stages",
         "reject_causes", "product_lines", "test_lines", "docs_lines", "lab_lines"]
 
 
@@ -64,12 +64,12 @@ def fx():
         shutil.rmtree(root)
 
 
-def _run(fx, csv_path, *, stop_after="base", extra_env=None):
+def _run(fx, csv_path, *, stop_after="base", extra_env=None, label="HARNESS-gate-row-fixture"):
     env = {"PATH": os.environ["PATH"], "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(csv_path)}
     if stop_after:
         env["MERGE_GATE_STOP_AFTER"] = stop_after
     env.update(extra_env or {})
-    r = subprocess.run(["bash", str(SCRIPT), str(fx["cand"]), "origin/main", "HARNESS-gate-row-fixture"],
+    r = subprocess.run(["bash", str(SCRIPT), str(fx["cand"]), "origin/main", label],
                        capture_output=True, text=True, env=env, timeout=120)
     rows = [ln for ln in r.stdout.splitlines() if ln.startswith("GATE row ")]
     return r, rows
@@ -92,7 +92,7 @@ def test_2_prints_one_gate_row_with_the_columns(fx, tmp_path):
     d = dict(zip(COLS, f))
     assert re.fullmatch(r"\d{4}-\d\d-\d\d", d["date"]), d["date"]
     assert d["label"] == "HARNESS-gate-row-fixture" and d["branch"] == "feat"
-    assert d["base"] == fx["m1"] and d["candidate"] == fx["head"]
+    assert d["base_sha"] == fx["m1"] and d["candidate_sha"] == fx["head"]
     assert d["rc"] == "0" and d["queue_s"].isdigit()
     assert float(d["stage_s"]) >= 0
     assert [d[k] for k in ("product_lines", "test_lines", "docs_lines", "lab_lines")] == ["3", "2", "4", "5"]
@@ -114,6 +114,33 @@ def test_2_base_reject_still_writes_a_row_with_rc_1_and_the_stage(fx, tmp_path):
     assert r.returncode == 1 and len(rows) == 1, f"{rows!r}\n{r.stdout}{r.stderr}"
     d = dict(zip(COLS, _fields(rows[0])))
     assert d["rc"] == "1" and "base" in d["reject_stages"]
+
+
+# audit finding 2 (HARNESS-mm-9): a multi-piece landing label is a comma list; unquoted it shifts every later column
+# (every multi-piece landing so far is unreadable). The label field is csv-quoted: "A,B,C".
+def test_2_multi_piece_label_is_csv_quoted_and_parses_to_14_fields(fx, tmp_path):
+    p = tmp_path / "g.csv"
+    r, rows = _run(fx, p, label="A,B,C")
+    assert len(rows) == 1, f"GATE row lines: {rows!r}\n{r.stdout}{r.stderr}"
+    f = _fields(rows[0])
+    assert len(f) == 14, f"{len(f)} fields: {f}"
+    d = dict(zip(COLS, f))
+    assert d["label"] == "A,B,C" and d["branch"] == "feat" and d["rc"] == "0", d
+    assert d["candidate_sha"] == fx["head"] and [d[k] for k in ("product_lines", "test_lines", "docs_lines", "lab_lines")] == ["3", "2", "4", "5"], d
+
+
+def test_2_multi_piece_label_row_in_the_runs_csv_parses_the_same(fx, tmp_path):
+    p = tmp_path / "g.csv"
+    _run(fx, p, label="A,B,C")
+    with open(p, newline="") as f:
+        data = list(csv.reader(f))
+    assert len(data) == 1 and len(data[0]) == 14 and data[0][1] == "A,B,C", data
+
+
+def test_2_control_single_piece_label_is_written_unquoted(fx, tmp_path):
+    p = tmp_path / "g.csv"
+    r, rows = _run(fx, p, label="HARNESS-one")
+    assert rows[0].startswith("GATE row ") and f",HARNESS-one,feat," in rows[0] and '"' not in rows[0], rows[0]
 
 
 def test_2_default_suite_timeout_is_2400():

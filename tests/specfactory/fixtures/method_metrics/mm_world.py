@@ -5,8 +5,10 @@ thresholds toml. `build_world(tmp, **opts)` returns the CLI argument list. The d
 (every metric PASS or NA); each test passes the one option that makes its metric the known-bad (positive control).
 
 Interfaces the fixtures fix (the spec leaves them open; the tests writer's report lists them):
-- gate_runs.csv columns: date,label,branch,base,candidate,queue_s,stage_s,rc,reject_stages,reject_causes,
-  product_lines,test_lines,docs_lines,lab_lines (header line first). `label` is the piece id (comma list allowed).
+- gate_runs.csv columns: date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject_causes,
+  product_lines,test_lines,docs_lines,lab_lines (header line first; audit finding 1: the header the real
+  docs/northstar/plans/push/gate_runs.csv carries, which the script must read). `label` is the piece id (a comma
+  list is quoted by csv.writer, as merge_gate.sh must write it, finding 2).
   product_lines = csrc/ autoload/ scenes/ ; lab_lines = scripts/skilllab/ ; test_lines = tests/ ; docs_lines = docs/.
 - sdk_runs.csv columns: date,label,piece,role,model,turns,cost,outcome (header first). cost in dollars.
 - thresholds toml: top-level `phase`, `lanes`; one table per metric id (sub-ids too) with id, gap, draft, value,
@@ -29,9 +31,11 @@ README_REL = "docs/northstar/story_reviews/westley/README.md"
 DECISIONS_REL = "docs/northstar/story_reviews/westley/decisions.md"
 STORIES_REL = "docs/bible/stories.md"
 METRICS_DIR = "docs/northstar/plans/method_rev3_2026-10-26/metrics"
-GATE_COLS = ["date", "label", "branch", "base", "candidate", "queue_s", "stage_s", "rc", "reject_stages",
+GATE_COLS = ["date", "label", "branch", "base_sha", "candidate_sha", "queue_s", "stage_s", "rc", "reject_stages",
              "reject_causes", "product_lines", "test_lines", "docs_lines", "lab_lines"]
 SDK_COLS = ["date", "label", "piece", "role", "model", "turns", "cost", "outcome"]
+SLUG = "-home-westopoli-Projects-ouroboros-manifold"  # default --project (finding 5): this repo's transcript folder
+VERDICTS_REL = "docs/northstar/story_reviews/westley/verdicts_2026-10.md"
 SONNET = "claude-sonnet-5-5"
 FABLE = "claude-fable-5-1"
 
@@ -46,6 +50,7 @@ TH = {
     "M09": ("<=", 0, "rows", "both"), "M09b": ("<=", 3600, "s", "both"), "M09c": ("<=", 3600, "s", "both"),
     "M10": (">=", 40, "lines", "both"), "M10b": ("<=", 0, "rows", "both"),
     "M11": ("<=", 2.0, "ratio", "both"), "M11b": ("<=", 120, "lines", "both"), "M11c": ("<=", 0, "files", "both"),
+    "M11b-bytes": ("<=", 18000, "bytes", "both"),
     "M12a": ("<=", 25, "rows", "beta"), "M12b": (">=", 80, "%", "beta"), "M12c": (">=", 1, "stories", "beta"),
     "M13": ("<=", 2, "runs", "both"), "M13b": ("<=", 1.0, "ratio", "both"),
     "M14": ("<=", 4, "runs", "both"), "M14b": ("<=", 0, "roles", "both"),
@@ -58,7 +63,8 @@ TH = {
     "M24a": ("<=", 3, "commits", "both"), "M24b": ("<=", 1, "folders", "both"),
 }
 # extra tuning numbers the spec gives in prose (min sample sizes); written into the matching table
-EXTRA = {"M01": {"min_game_lines": 200}, "M10": {"min_rows": 3}}
+# M15 max_unknown: the share of runs with no RESULT line above which M15 FAILs (finding 21; a key the tests fix)
+EXTRA = {"M01": {"min_game_lines": 200}, "M10": {"min_rows": 3}, "M15": {"max_unknown": 20}}
 
 
 def sh(cwd, *args, env=None, check=True):
@@ -107,8 +113,10 @@ def lines(n, prefix="line"):
     return "".join(f"{prefix} {i}\n" for i in range(n))
 
 
-def thresholds_toml(approved="2026-10-26", override=None, drop=(), lanes=("VG-X",)):
-    """override: {id: {key: value}}; drop: ids left out (unapproved test uses approved='')."""
+def thresholds_toml(approved="2026-10-26", override=None, drop=(), lanes=("VG-X",), prices=None):
+    """override: {id: {key: value}}; drop: ids left out (unapproved test uses approved='').
+    prices: {model id prefix: {input, cache_read, cache_write, output}} dollars per million tokens, written as
+    `[prices."<model>"]` tables (finding 8; the shape the tests fix, the builder reads it)."""
     out = [f'phase = "lab"', "lanes = [" + ", ".join(f'"{x}"' for x in lanes) + "]", ""]
     for mid, (op, val, unit, phase) in TH.items():
         if mid in drop:
@@ -120,6 +128,10 @@ def thresholds_toml(approved="2026-10-26", override=None, drop=(), lanes=("VG-X"
         out.append(f"[{mid}]")
         for k, v in row.items():
             out.append(f"{k} = {json.dumps(v)}")
+        out.append("")
+    for model, row in (prices or {}).items():
+        out.append(f'[prices."{model}"]')
+        out += [f"{k} = {json.dumps(v)}" for k, v in row.items()]
         out.append("")
     return "\n".join(out)
 
@@ -148,7 +160,13 @@ GOOD_LEDGER_WEEK = [
     "| day40 | TD-good-2 ruler=sonnet | a test-defect ruled by Sonnet |",
     "| day40 | DRAFT-good-1 | one named draft |",
 ]
-README_HEAD = ("# Shots waiting on Westley\n\n| File | Verdict | Cite |\n|---|---|---|\n")
+# the README's Picture table as Westley's 2026-10-26 form has it (finding 32): every row is a picture awaiting him
+README_HEAD = ("# Shots waiting on Westley\n\n| Picture | Story | What it shows | What to look for | Approve means / reject means |\n"
+               "|---|---|---|---|---|\n")
+README_TAIL = ("\n## Pages waiting on you\n\n| Page | What it asks |\n|---|---|\n| `page.md` | a question |\n")
+GOOD_VERDICTS = ("# Verdicts\n\n| Picture | Verdict |\n|---|---|\n"
+                 "| `VG-X-a` look piece | Approved: \"yes\" (Westley, 2026-10-22) |\n"
+                 "| `VG-X-b` look piece | Approved: \"yes\" (Westley, 2026-10-22) |\n")
 
 
 def default_pieces(n):
@@ -177,21 +195,24 @@ def write_csv(path, cols, rows):
 
 def build_world(tmp, *, phase="lab", prod_commits=4, prod_lines=100, test_lines=100, docs_commits=4,
                 docs_lines=50, claude_lines=100, extra_commits=(), old_branches=2, ledger_week=None,
-                ledger_old=True, readme_open=3, readme_rows=("| VG-X-look.png | Approved: \"yes\" (Westley, 2026-10-22) | x |",),
+                ledger_old=True, ledger=True, readme_open=3, readme_rows=(), verdicts_text=GOOD_VERDICTS,
+                claude_text=None, base_files=None,
                 pieces=None, gate_rows="auto", sdk_rows="auto", transcripts="auto", wt_active=3, wt_done=2,
                 wt_extra_mb=0, stories_seen_in_week=1, beta_list=None, thresholds=None, decisions_text=""):
     """Returns dict(args=[...], repo=Path, shas=[...], files=...). Every option's default is the good week."""
     tmp = Path(tmp)
     r = Repo(tmp / "repo")
-    base = r.commit({"CLAUDE.md": lines(claude_lines), "README.md": "r\n",
-                     LEDGER_REL: LEDGER_HEAD + (OLD_LEDGER if ledger_old else ""),
+    base = r.commit({"CLAUDE.md": claude_text if claude_text is not None else lines(claude_lines), "README.md": "r\n",
+                     **({LEDGER_REL: LEDGER_HEAD + (OLD_LEDGER if ledger_old else "")} if ledger else {}),
+                     **(base_files or {}),
                      STORIES_REL: "# Stories\n\n| Story | Epic | Words | Status | Depth |\n|---|---|---|---|---|\n"
                                   "| S-001 | E-01 | \"a\" | Spec'd | x |\n| S-002 | E-01 | \"b\" | Spec'd | x |\n"
                                   "| S-003 | E-01 | \"c\" | Spec'd | x |\n"
                                   "| S-004 | E-01 | \"d\" | Spec'd | x |\n| S-005 | E-01 | \"e\" | Spec'd | x |\n",
                      DECISIONS_REL: "# Decisions\n" + decisions_text}, "2026-10-01")
-    open_rows = "".join(f"| open-{i}.png | awaiting Westley's word | cite |\n" for i in range(readme_open))
-    r.commit({README_REL: README_HEAD + open_rows + "".join(x + "\n" for x in readme_rows)}, "2026-10-20")
+    open_rows = "".join(f"| `open-{i}.png` | S-00{i} | what it shows | look | yes / no |\n" for i in range(readme_open))
+    r.commit({README_REL: README_HEAD + open_rows + "".join(x + "\n" for x in readme_rows) + README_TAIL,
+              **({VERDICTS_REL: verdicts_text} if verdicts_text else {})}, "2026-10-20")
     side = None
     if old_branches:  # unmerged push/* branches whose commit is old (committer date 2026-09-01)
         git(r.path, "checkout", "-q", "-b", "side")
@@ -212,7 +233,7 @@ def build_world(tmp, *, phase="lab", prod_commits=4, prod_lines=100, test_lines=
     for files, date in extra_commits:
         prev = r.commit(files, date)
     week_rows = list(GOOD_LEDGER_WEEK if ledger_week is None else ledger_week)
-    if week_rows:
+    if week_rows and ledger:
         r.commit({LEDGER_REL: ("append", "".join(x + "\n" for x in week_rows))}, D["fri"], "ledger")
     if stories_seen_in_week:
         r.commit({STORIES_REL: ("append", "".join(f"| S-9{k} | E-09 | \"w\" | Seen | x |\n" for k in range(stories_seen_in_week)))},
@@ -263,7 +284,8 @@ def entry(model, ts, tools=(), ctx=60000, sidechain=False, text="ok"):
         content = [{"type": "text", "text": text}]
     return {"type": "assistant", "isSidechain": sidechain, "cwd": str(Path.home() / "Projects/om-push/wt/x"),
             "timestamp": ts, "message": {"model": model, "usage": {"input_tokens": 1000,
-            "cache_read_input_tokens": ctx - 1500, "cache_creation_input_tokens": 500}, "content": content}}
+            "cache_read_input_tokens": ctx - 1500, "cache_creation_input_tokens": 500, "output_tokens": 200},
+            "content": content}}
 
 
 def clean(model, ts, ctx=60000):
@@ -288,8 +310,10 @@ def default_transcripts():
 
 
 def write_transcripts(td, spec):
+    """Keys are written under <td>/<SLUG>/ (the default --project folder, finding 5); a key starting with `!` is
+    written relative to the transcripts root, to put a session in another project's folder."""
     for rel, body in spec.items():
-        p = Path(td) / rel
+        p = Path(td) / (rel[1:] if rel.startswith("!") else f"{SLUG}/{rel}")
         p.parent.mkdir(parents=True, exist_ok=True)
         if isinstance(body, dict):
             p.write_text(json.dumps(body))
