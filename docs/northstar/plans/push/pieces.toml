@@ -1788,10 +1788,10 @@ size_estimate = "journal.sh: git log first-parent formatter; about 25 lines"
 id = "VG-RECORD"
 manager = "M0"
 wave = 9
-owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave9-laneE1q.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave2b13-laneB22.js"]
+owns = ["scripts/specfactory/workflows/vg-harness-method.js", "scripts/specfactory/workflows/vg-wave9-laneE1q.js", "scripts/specfactory/workflows/vg-wave2b13-laneB22.js"]
 owns_glob = ["scripts/specfactory/workflows/*.js", "scripts/specfactory/workflows/*.args.json"]  # Architect 2026-10-20: every workflow script and its args file committed under C4 (nothing launches from an uncommitted script) is landed under this row until HARNESS-C4 lands; VG-RECORD is attached, so owner_lint never flags it and the footprint fence accepts the paths.
 acceptance = []
-depends_on = []
+depends_on = ["A94-harness"]  # ordering edge only: A94-harness owns scripts/specfactory/* by glob (mm-14 records, 2026-10-28)
 status = { state = "attached", attach_sha = "c0d1cda8" }
 tests_pending = false
 size_estimate = "docs-only: one workflow script, two lines changed"
