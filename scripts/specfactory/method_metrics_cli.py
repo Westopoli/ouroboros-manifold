@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md "Design", G13, G14, G15, A7 (HARNESS-mm-1c)
-"""Method metrics entry point: mm-1a (git/ledger) + mm-1b (runs/transcripts) + M16, M17, M18, --write, --last.
+"""Method metrics entry point: the git/ledger metrics (method_metrics.py), the runs/transcripts metrics
+(method_metrics_runs.py) and M16, M17, M18 here; --write, --last, --weeks (the back-test table), --verbose.
 
 method_metrics.py hands its __main__ to main() here (spec A7).
-# See also: scripts/specfactory/method_metrics.py (mm-1a) and method_metrics_runs.py (mm-1b), whose metrics
-# this module runs next to its own.
+# See also: scripts/specfactory/method_metrics.py and method_metrics_runs.py, whose metrics this module runs
+# next to its own.
 """
 import datetime as dt
 import json
 import re
+import functools
 import subprocess
 import sys
 from pathlib import Path
@@ -18,18 +20,22 @@ import method_metrics as m1a  # noqa: E402
 import method_metrics_runs as m1b  # noqa: E402
 
 METRICS_REL = "docs/northstar/plans/method_rev3_2026-10-26/metrics"
-DECISIONS_REL = "docs/northstar/story_reviews/westley/decisions.md"
-LINE = re.compile(r"^METRIC (\S+) (PASS|FAIL|DRAFT|NA) (.*) vs (\S+) (\S*) \((.*)\) (\S+)$")
+VERDICTS_DIR = "docs/northstar/story_reviews/westley"
+DECISIONS_REL = VERDICTS_DIR + "/decisions.md"
 
 
-def _readme_rows(ctx):
-    """[(author epoch, verdict cell, line)] of the Westley README's table rows."""
-    out = []
+def _picture_rows(ctx):
+    """[(author epoch, line)] of the rows of the README's Picture table (header starting `| Picture |`); a row leaves
+    the table on a verdict, so every row is a picture awaiting Westley."""
+    rows, inside = [], False
     for at, ln in ctx.blame_rows(m1a.README_REL):
-        cells = [c.strip() for c in ln.strip().strip("|").split("|")]
-        if ln.lstrip().startswith("|") and len(cells) >= 2 and not set(cells[0]) <= set("-: ") and cells[0] != "File":
-            out.append((at, cells[1], ln))
-    return out
+        if ln.lstrip().startswith("| Picture |"):
+            inside = True
+        elif inside and not ln.lstrip().startswith("|"):
+            inside = False
+        elif inside and not set(ln.replace("|", "").strip()) <= set("-: "):
+            rows.append((at, ln))
+    return rows
 
 
 def _state_of(p):
@@ -37,17 +43,33 @@ def _state_of(p):
     return s.get("state") if isinstance(s, dict) else (str(s).split() or [""])[0]
 
 
-def m16(ctx):  # G13 lanes with >= 2 attached look pieces and no verdict row
+def _verdict_text(ctx):
+    """Lines of the verdict files and decisions.md on origin/main."""
+    names = ctx.git("ls-tree", "--name-only", "origin/main", VERDICTS_DIR + "/").splitlines()
+    rels = [n for n in names if re.fullmatch(r"verdicts_.*\.md", Path(n).name)] + [DECISIONS_REL]
+    return [ln for rel in rels for ln in (ctx.show(rel) or "").splitlines()]
+
+
+def _landed_recently(ctx):
+    done = set()
+    for r in ctx.gate_rows(28):
+        if r["rc"] == "0":
+            done |= {x.strip() for x in r["label"].split(",")}
+    return done
+
+
+def m16(ctx):  # G13 lanes with >= 2 look pieces (attached, or landed in 28 days) and no verdict by piece id
     t = ctx.thr("M16") or {}
     need = t.get("value", 2)
-    verdicts = [ln for _, v, ln in _readme_rows(ctx) if v and "awaiting" not in v.lower()]
-    verdicts += (ctx.show(DECISIONS_REL) or "").splitlines()
+    text = _verdict_text(ctx)
+    recent = _landed_recently(ctx)
     bad = []
     for lane in ctx.th.get("lanes", []):
-        look = [p["id"] for p in ctx.pieces() if p["id"].startswith(lane) and _state_of(p) == "attached"
-                and any(o.startswith("scenes/") for o in p.get("owns", []))]
-        if len(look) >= need and not any(lane in v for v in verdicts):
-            bad.append(f"{lane}: {len(look)} attached look pieces, 0 verdicts ({' '.join(look)})")
+        look = [p["id"] for p in ctx.pieces() if p["id"].startswith(lane) and any(o.startswith("scenes/") for o in p.get("owns", []))
+                and (_state_of(p) == "attached" or p["id"] in recent)]
+        open_ = [i for i in look if not any(re.search(r"(?<![\w-])" + re.escape(i) + r"(?![\w-])", ln) for ln in text)]
+        if len(open_) >= need:
+            bad.append(f"{lane}: {len(open_)} look pieces with no verdict ({' '.join(open_)})")
     status = "FAIL" if bad else ("PASS" if t.get("approved") else "DRAFT")
     if bad:
         ctx.decisive["M16"] = bad
@@ -56,9 +78,9 @@ def m16(ctx):  # G13 lanes with >= 2 attached look pieces and no verdict row
 
 def m17(ctx):  # G14 report only
     sunday = dt.datetime.fromtimestamp(ctx.t1 - 86400, dt.timezone.utc).date()
-    rows = [(at, ln) for at, v, ln in _readme_rows(ctx) if not v or "awaiting" in v.lower()]
+    rows = _picture_rows(ctx)
     age = max(((sunday - dt.datetime.fromtimestamp(at, dt.timezone.utc).date()).days for at, _ in rows), default=0)
-    return "NA", f"{len(rows)} rows, oldest {age} d", ("<=", "-"), "Westley README rows awaiting a verdict"
+    return "NA", f"{len(rows)} rows, oldest {age} d", ("<=", "-"), "pictures awaiting Westley in the README"
 
 
 def _wt_dirs(ctx):
@@ -79,11 +101,16 @@ def _stale_branches(ctx):
     return sorted(old)
 
 
+@functools.lru_cache(maxsize=None)
+def _du_mb(root):
+    return int(subprocess.run(["du", "-sm", root], capture_output=True, text=True).stdout.split()[0])
+
+
 def m18(ctx):  # G15 worktree sprawl
     dirs = _wt_dirs(ctx)
     active = [d for d in dirs if _state(d) == "active"]
     done = [d for d in dirs if (d / ".wt-done").is_file()]
-    mb = int(subprocess.run(["du", "-sm", str(ctx.wt)], capture_output=True, text=True).stdout.split()[0]) if dirs else 0
+    mb = _du_mb(str(ctx.wt)) if dirs else 0
     old = _stale_branches(ctx)
     res = [
         m1a.judge(ctx, "M18a", len(active), f"{len(active)} active of {len(dirs)} trees", [d.name for d in active]),
@@ -95,45 +122,56 @@ def m18(ctx):  # G15 worktree sprawl
 
 
 def collect(a):
-    """[(id, status, value, line, decisive rows)] over all three modules."""
+    """(ctx, [(id, res)]) over all three modules, sorted by metric number."""
     ctx = m1a.Context(a)
-    out = []
-    for mid, fn in m1a.METRICS.items():
-        res = fn(ctx)
-        out.append((mid, res, ctx.decisive.get(mid, [])))
-    extra = {"M16": m16(ctx), "M17": m17(ctx), **m18(ctx)}
-    out += [(mid, res, ctx.decisive.get(mid, [])) for mid, res in extra.items()]
-    recs = [(mid, res[0], m1a.render(ctx, mid, res), rows) for mid, res, rows in out]
-    c2 = m1b.make_ctx(a.week, a.repo, a.ledger, a.pieces, a.sdk_runs, a.transcripts, a.thresholds)
-    c2["gate"] = Path(a.gate_runs).expanduser()
-    for ln in m1b.lines(c2):
-        m = LINE.match(ln)
-        recs.append((m.group(1), m.group(2), ln, []))
-    for mid in filter(None, a.baseline.split(",")):
-        base = (ctx.thr(mid) or {}).get("baseline", "")
-        if base == "":
-            continue
-        res = m1a.judge(ctx, mid, base, "baseline W43 from the spec, no records for the week")
-        recs = [r for r in recs if r[0] != mid] + [(mid, res[0], m1a.render(ctx, mid, res), ctx.decisive.get(mid, []))]
-    recs.sort(key=lambda r: (int(r[0][1:3]), r[0]))
-    return recs
+    res = {mid: fn(ctx) for mid, fn in {**m1a.METRICS, **m1b.METRICS}.items()}
+    res.update({"M16": m16(ctx), "M17": m17(ctx), **m18(ctx)})
+    return ctx, sorted(res.items(), key=lambda kv: (int(kv[0][1:3]), kv[0]))
 
 
-def write(a, recs):
-    d = Path(a.repo) / METRICS_REL
+def emit(ctx, recs):
+    """Print each metric's line, then, on a FAIL, its decisive rows (three, or all with --verbose) and, with
+    --verbose, the full detail list when the line's was cut."""
+    for mid, res in recs:
+        line = m1a.render(ctx, mid, res)
+        print(line)
+        if ctx.verbose and len(str(res[3])) > m1a.DETAIL_CAP:
+            print(f"  full: {res[3]}")
+        rows = ctx.decisive.get(mid, []) if res[0] == "FAIL" else []
+        for r in rows if ctx.verbose else rows[:3]:
+            print(f"  {r}"[:None if ctx.verbose else m1a.DETAIL_CAP])
+
+
+def write(ctx, recs):
+    d = Path(ctx.repo) / METRICS_REL
     d.mkdir(parents=True, exist_ok=True)
     ms = []
-    for mid, status, ln, _ in recs:
-        m = LINE.match(ln)
-        ms.append({"id": mid, "status": status, "value": m.group(3), "threshold": m.group(4), "line": ln})
-    (d / f"{a.week}.json").write_text(json.dumps({"week": a.week, "metrics": ms}, indent=1) + "\n")
+    for mid, res in recs:
+        value, thr = m1a.fields(ctx, mid, res)
+        ms.append({"id": mid, "status": res[0], "value": value, "threshold": thr, "line": m1a.render(ctx, mid, res)})
+    (d / f"{ctx.week}.json").write_text(json.dumps({"week": ctx.week, "phase": ctx.phase, "metrics": ms}, indent=1) + "\n")
     readme = d / "README.md"
     if not readme.is_file():
         readme.write_text("# Stored metric weeks\n\n| Week | FAIL | DRAFT | NA |\n|---|---|---|---|\n")
-    row = "| %s | %s | %d | %d |\n" % (a.week, " ".join(r[0] for r in recs if r[1] == "FAIL") or "-",
-                                       sum(r[1] == "DRAFT" for r in recs), sum(r[1] == "NA" for r in recs))
+    row = "| %s | %s | %d | %d |\n" % (ctx.week, " ".join(m for m, r in recs if r[0] == "FAIL") or "-",
+                                       sum(r[0] == "DRAFT" for _, r in recs), sum(r[0] == "NA" for _, r in recs))
     with open(readme, "a") as f:
         f.write(row)
+
+
+def backtest(a):
+    """Markdown table, one row per metric and one column per week; values only, nothing judged."""
+    weeks = m1a.week_range(a.weeks)
+    cols = {}
+    for w in weeks:
+        a.week = w
+        ctx, recs = collect(a)
+        cols[w] = {mid: m1a.fields(ctx, mid, res)[0] or "-" for mid, res in recs}
+    ids = sorted({m for c in cols.values() for m in c}, key=lambda m: (int(m[1:3]), m))
+    print("| Metric | " + " | ".join(weeks) + " |")
+    print("|-|" + "-|" * len(weeks))
+    for mid in ids:
+        print(f"| {mid} | " + " | ".join(cols[w].get(mid, "-") for w in weeks) + " |")
 
 
 def last(a):
@@ -151,21 +189,20 @@ def main(argv=None):
     p = m1a.parser()
     p.add_argument("--write", action="store_true")
     p.add_argument("--last", action="store_true")
-    p.add_argument("--baseline", default="", help="comma list of ids to take from the toml baseline (W43 snapshot only)")
-    a, _ = p.parse_known_args(argv)
+    a = p.parse_args(argv)
     if a.last:
         return last(a)
+    if a.weeks:
+        backtest(a)
+        return 0
     if not a.week:
         today = dt.date.today() - dt.timedelta(days=7)
         a.week = "%d-W%02d" % today.isocalendar()[:2]
-    recs = collect(a)
-    for _, _, ln, rows in recs:
-        print(ln)
-        for r in rows[:3]:
-            print(f"  {r}")
+    ctx, recs = collect(a)
+    emit(ctx, recs)
     if a.write:
-        write(a, recs)
-    return 1 if any(r[1] == "FAIL" for r in recs) else 0
+        write(ctx, recs)
+    return 1 if any(r[0] == "FAIL" for _, r in recs) else 0
 
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@ value = 2.0
 direction = "<="
 unit = "ratio"
 approved = ""
-baseline = 18.4
+baseline = 7.26 # lab phase: 334 docs-only over 46 product commits (the client-only sense, 332 over 18, was 18.4)
 window = "week"
 phase = "both"
 
@@ -157,7 +157,7 @@ value = 0
 direction = "<="
 unit = "calls"
 approved = ""
-baseline = 638
+baseline = 1229 # manifold project only, all transcripts, W43 (Jarvis sessions are not counted)
 window = "week"
 phase = "both"
 
@@ -253,6 +253,18 @@ draft = "DRAFT-mm-M11b"
 value = 120
 direction = "<="
 unit = "lines"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M11b-bytes]
+id = "M11b-bytes"
+gap = "G08"
+draft = "DRAFT-mm-M11b-bytes"
+value = 18000
+direction = "<="
+unit = "bytes"
 approved = ""
 baseline = ""
 window = "week"
@@ -365,6 +377,7 @@ approved = ""
 baseline = ""
 window = "week"
 phase = "both"
+max_unknown = 20 # percent of runs with no RESULT line above which M15 FAILs (draft)
 
 [M16]
 id = "M16"
@@ -434,7 +447,7 @@ value = 0
 direction = "<="
 unit = "rows"
 approved = ""
-baseline = 182
+baseline = 0 # nothing before 2026-10-26 counts; 182 untagged FINDING rows existed before the date
 window = "week"
 phase = "both"
 
@@ -546,5 +559,28 @@ baseline = ""
 window = "week"
 phase = "both"
 
-# list prices per model, DRAFT, empty until Westley gives them; while empty M06 and M07 count sdk_runs.csv only
-[prices]
+# List prices in dollars per million tokens, Anthropic pricing page (platform.claude.com/docs/en/about-claude/pricing),
+# fetched 2026-10-27. cache_write is the 5-minute rate; Haiku 5.5 is the up-to-100,000-token tier. Keys are model id prefixes.
+[prices."claude-fable-5-1"]
+input = 10.0
+cache_read = 0.25
+cache_write = 12.5
+output = 50.0
+
+[prices."claude-opus-5-5"]
+input = 4.0
+cache_read = 0.2
+cache_write = 5.0
+output = 20.0
+
+[prices."claude-sonnet-5-5"]
+input = 2.0
+cache_read = 0.1
+cache_write = 2.5
+output = 10.0
+
+[prices."claude-haiku-5-5"]
+input = 0.1
+cache_read = 0.01
+cache_write = 0.125
+output = 0.5

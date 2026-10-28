@@ -2,18 +2,19 @@
 # spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md "Design" and "The gaps" (HARNESS-mm-1a)
 """Method metrics, git and ledger half: M01, M02, M04, M05, M09, M10, M11, M12, M19, M20, M23, M24.
 
-One function per metric: f(ctx) -> (status, value, threshold, numbers); status PASS|FAIL|DRAFT|NA. Prints
-`METRIC <id> PASS|FAIL|DRAFT|NA <value> vs <op><threshold> <gap> (<numbers>) <week>`, exit 1 on any FAIL.
+One function per metric: f(ctx) -> (status, value, threshold, numbers); status PASS|FAIL|DRAFT|NA. Rendered as
+`METRIC <id> PASS|FAIL|DRAFT|NA <value> vs <op><threshold> <gap> (<numbers>) <week>`; the CLI exits 1 on any FAIL.
 Everything is read from origin/main through git on --repo, never from a live checkout.
 
-# See also: scripts/specfactory/method_metrics_runs.py (mm-1b: runs and transcript metrics) and
-# scripts/specfactory/method_metrics_cli.py (mm-1c: M16-M18, --write, --last, W43 self-check). Both import
-# Context, judge, na, fmt, METRICS and render from here; main() below is the minimal entry 1c extends.
+# See also: scripts/specfactory/method_metrics_runs.py (runs and transcript metrics) and
+# scripts/specfactory/method_metrics_cli.py (the entry point: M16-M18, --write, --last, --weeks). Both import
+# Context, judge, na, fmt, METRICS and render from here; this file's __main__ hands over to the CLI.
 """
 import argparse
 import csv
 import datetime as dt
 import os
+import re
 import statistics
 import subprocess
 import sys
@@ -28,9 +29,14 @@ CLIENT_PATHS = ("csrc/", "autoload/", "scenes/")
 LAB_PATHS = ("scripts/skilllab/",)
 GAME_EXT = (".c", ".h", ".gd", ".tscn", ".py")
 TEST_EXT = (".py", ".gd", ".c", ".h")
-DATA_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".csv", ".json", ".html")
+TEST_CODE_EXT = TEST_EXT + (".sh", ".tscn", ".md", ".uid")
+RETRO_REL = "docs/northstar/plans/retro_"
+SLUG = "-home-westopoli-Projects-ouroboros-manifold"
+DETAIL_CAP = 400
 METHOD_PATHS = ("CLAUDE.md", "docs/northstar/README.md", "docs/northstar/PLAN.md",
                 "docs/northstar/plans/workflows_2026-10-07/")
+# M11c does not count these: lab data (research/*/data/), shots, and the harness records (pieces, gate csv, stored weeks)
+M11C_SKIP = re.compile(r"^docs/northstar/(research/[^/]+/data/|story_reviews/|plans/push/|plans/method_rev3_2026-10-26/metrics/)")
 PIECE_STATES = ("attached", "queued", "superseded", "landed", "pending")
 FINDINGS_FROM = "2026-10-26"
 
@@ -57,6 +63,22 @@ def under(path, prefixes):
     return path.startswith(tuple(prefixes))
 
 
+def is_fixture(p):
+    return "/fixtures/" in p
+
+
+def week_range(spec):
+    """'2026-W40..2026-W42' -> ['2026-W40', '2026-W41', '2026-W42']."""
+    a, b = spec.split("..")
+    day = dt.date.fromisocalendar(int(a[:4]), int(a.split("W")[1]), 1)
+    end = dt.date.fromisocalendar(int(b[:4]), int(b.split("W")[1]), 1)
+    out = []
+    while day <= end:
+        out.append("%d-W%02d" % day.isocalendar()[:2])
+        day += dt.timedelta(days=7)
+    return out
+
+
 class Context:
     """Paths, week, phase, thresholds and cached git reads shared by every metric."""
 
@@ -69,6 +91,8 @@ class Context:
         self.pieces_rel = self.rel(a.pieces, PIECES_REL)
         self.gate_runs, self.sdk_runs = a.gate_runs, a.sdk_runs
         self.transcripts, self.wt = a.transcripts, a.wt
+        self.project, self.verbose = a.project, a.verbose
+        self.prices = self.th.get("prices", {})
         self.decisive = {}
         self._c = {}
 
@@ -162,7 +186,7 @@ class Context:
         return r.stdout if r.returncode == 0 else None
 
     def blame_rows(self, rel):
-        """[(author epoch, line text)] for a file on origin/main."""
+        """[(author epoch, line text)] for a file on origin/main; [] when the file is not there."""
         def load():
             r = subprocess.run(["git", "-C", str(self.repo), "blame", "--line-porcelain", "origin/main", "--", rel],
                                capture_output=True, text=True)
@@ -188,18 +212,61 @@ class Context:
         return out
 
     # ---- gate rows
-    def gate_rows(self):
+    def all_gate_rows(self):
+        """Every well-formed row of gate_runs.csv (header from merge_gate.sh); a row with more or fewer fields than
+        the header is skipped with a note on stderr (a multi-piece label written unquoted shifts every column)."""
         def load():
             if not self.gate_runs or not Path(self.gate_runs).is_file():
                 return []
             with open(self.gate_runs, newline="") as f:
                 rows = list(csv.DictReader(f))
-            return [r for r in rows if self.t0 <= date_epoch(r["date"]) < self.t1]
-        return self.cached("gate", load)
+            ok = [r for r in rows if None not in r and None not in r.values()]
+            if len(ok) < len(rows):
+                print(f"method_metrics: skipped {len(rows) - len(ok)} malformed rows of {self.gate_runs}", file=sys.stderr)
+            return ok
+        return self.cached("gate_all", load)
+
+    def gate_rows(self, days=7):
+        """Rows dated in the week (days=7) or in the `days` days up to its end."""
+        def in_window(r):
+            try:
+                return self.t1 - days * 86400 <= date_epoch(r["date"]) < self.t1
+            except ValueError:
+                return False
+        return self.cached(("gate", days), lambda: [r for r in self.all_gate_rows() if in_window(r)])
 
     def pieces(self):
         txt = self.show(self.pieces_rel)
         return tomllib.loads(txt).get("piece", []) if txt else []
+
+    def has_ledger(self):
+        return self.show(self.ledger_rel) is not None
+
+    def retro_folders(self):
+        """{folder: epoch of its first added file} over the whole history, for retro_* folders under plans/."""
+        def load():
+            out = self.git("log", "origin/main", "--no-renames", "--diff-filter=A", "--name-only", "--format=@%at",
+                           "--", "docs/northstar/plans/")
+            first, at = {}, 0
+            for ln in out.splitlines():
+                if ln.startswith("@"):
+                    at = int(ln[1:])
+                elif ln.startswith(RETRO_REL):
+                    f = "/".join(ln.split("/")[:4])
+                    first[f] = min(first.get(f, at), at)
+            return first
+        return self.cached("retro", load)
+
+    def recent_retro_folders(self):
+        """Retro folders first created in the 14 days up to the week's end (the current window)."""
+        return {f for f, at in self.retro_folders().items() if self.t1 - 14 * 86400 <= at < self.t1}
+
+    def in_recent_retro(self, path):
+        return any(path.startswith(f + "/") for f in self.recent_retro_folders())
+
+    def lab_sum(self, r):
+        """Product lines of a gate row in this phase: product_lines, plus lab_lines in the lab phase."""
+        return int(r["product_lines"]) + (int(r["lab_lines"]) if self.phase == "lab" else 0)
 
 
 def judge(ctx, mid, value, numbers, rows=()):
@@ -213,7 +280,7 @@ def judge(ctx, mid, value, numbers, rows=()):
     if status == "PASS" and not t.get("approved"):
         status = "DRAFT"
     if status == "FAIL":
-        ctx.decisive[mid] = list(rows)[:3]
+        ctx.decisive[mid] = list(rows)
     return status, value, (op, tv), numbers
 
 
@@ -237,8 +304,7 @@ def m01(ctx):  # G01 test-code lines over game-code lines
     for c in ctx.week_commits():
         for a, _, p in c["paths"]:
             base = os.path.basename(p)
-            if p.startswith("tests/") and not p.startswith("tests/fixtures/") and p.endswith(TEST_EXT) \
-                    and "golden" not in base:
+            if p.startswith("tests/") and not is_fixture(p) and p.endswith(TEST_EXT) and "golden" not in base:
                 tests += a
             elif under(p, ctx.product_paths) and p.endswith(GAME_EXT):
                 game += a
@@ -249,7 +315,7 @@ def m01(ctx):  # G01 test-code lines over game-code lines
 
 
 def _landings(ctx):
-    return [r for r in ctx.gate_rows() if r["rc"] == "0" and ctx.is_on_main(r["candidate"])]
+    return [r for r in ctx.gate_rows() if r["rc"] == "0" and ctx.is_on_main(r["candidate_sha"])]
 
 
 def m02(ctx):  # G02 test-defect rows over landings
@@ -277,7 +343,7 @@ def m04(ctx):  # G03 docs-only commits over product commits
             docs += 1
     n = f"{docs} docs-only commits, {prod} product commits"
     if not prod:
-        return judge(ctx, "M04", float(docs), n + " (no product commit)") if docs else na(ctx, "M04", n)
+        return na(ctx, "M04", n + " (no product commit)")
     return judge(ctx, "M04", round(docs / prod, 2), n)
 
 
@@ -321,25 +387,24 @@ def m09c(ctx):
 
 
 def m10(ctx):  # G07 a floor on landing size
-    rows = [r for r in ctx.gate_rows() if r["rc"] == "0"]
+    rows = [r for r in ctx.gate_rows() if r["rc"] == "0" and ctx.lab_sum(r) > 0]
     need = (ctx.thr("M10") or {}).get("min_rows", 3)
-    n = f"{len(rows)} rc-0 rows"
+    n = f"{len(rows)} rc-0 rows with product lines"
     if len(rows) < need:
         return na(ctx, "M10", n + f", under {need}")
-    lines = [int(r["product_lines"]) for r in rows]
-    return judge(ctx, "M10", statistics.median(lines), n + f", product_lines {lines}", [_gate_line(r) for r in rows])
+    return judge(ctx, "M10", statistics.median(ctx.lab_sum(r) for r in rows), n + f", lines {[ctx.lab_sum(r) for r in rows]}",
+                 [_gate_line(r) for r in rows])
 
 
 def m10b(ctx):
-    big = [r for r in ctx.gate_rows() if r["rc"] == "0" and int(r["product_lines"]) > 1000]
+    big = [r for r in ctx.gate_rows() if r["rc"] == "0" and ctx.lab_sum(r) > 1000]
     return judge(ctx, "M10b", len(big), f"{len(big)} landings over 1000 product lines",
-                 [f"{r['label']} product_lines={r['product_lines']}" for r in big])
+                 [f"{r['label']} lines={ctx.lab_sum(r)}" for r in big])
 
 
 def m11(ctx):  # G08 northstar md lines over product lines
-    added = ctx.week_added()
-    if any(p.startswith("docs/northstar/plans/retro_") for _, _, p in added):
-        return na(ctx, "M11", "a retro folder is added this week")
+    if any(ctx.in_recent_retro(p) for _, _, p in ctx.week_added()):
+        return na(ctx, "M11", "a file is added to a current retro folder this week")
     md = prod = 0
     for c in ctx.week_commits():
         for a, _, p in c["paths"]:
@@ -360,10 +425,17 @@ def m11b(ctx):
     return judge(ctx, "M11b", len(txt.splitlines()), "CLAUDE.md lines")
 
 
+def m11b_bytes(ctx):  # G08 wrapping keeps the line count flat while prose grows, so the bytes are bounded too
+    txt = ctx.show("CLAUDE.md")
+    if txt is None:
+        return na(ctx, "M11b-bytes", "no CLAUDE.md on origin/main")
+    return judge(ctx, "M11b-bytes", len(txt.encode()), "CLAUDE.md bytes")
+
+
 def m11c(ctx):
-    bad = [p for _, _, p in ctx.week_added() if p.startswith("docs/northstar/") and p.endswith(DATA_EXT)
-           and "/data/" not in p]
-    return judge(ctx, "M11c", len(bad), f"{len(bad)} data files outside data/", bad)
+    bad = [p for _, _, p in ctx.week_added() if p.startswith("docs/northstar/") and not p.endswith(".md")
+           and not M11C_SKIP.match(p)]
+    return judge(ctx, "M11c", len(bad), f"{len(bad)} non-md files outside data/, story_reviews/ and the records", bad)
 
 
 def _beta_list(ctx):
@@ -436,8 +508,7 @@ def m19b(ctx):
 
 
 def m19c(ctx):  # G17 product commits on main with no gate row
-    rows = _all_gate_rows(ctx)
-    keys = [r["candidate"] for r in rows if r.get("candidate")]
+    keys = [r["candidate_sha"] for r in ctx.all_gate_rows() if r.get("candidate_sha")]
     prod = [c for c in ctx.first_parent() if any(under(p, ctx.product_paths) for p in c[3])]
     missing = [c[0] for c in prod
                if not any(c[0].startswith(k) or k.startswith(c[0]) or k in c[2][1:] for k in keys if len(k) >= 7)]
@@ -445,17 +516,10 @@ def m19c(ctx):  # G17 product commits on main with no gate row
     return judge(ctx, "M19c", len(missing), n, [m[:12] for m in missing])
 
 
-def _all_gate_rows(ctx):
-    if not ctx.gate_runs or not Path(ctx.gate_runs).is_file():
-        return []
-    with open(ctx.gate_runs, newline="") as f:
-        return list(csv.DictReader(f))
-
-
 def m20(ctx):  # G18 landings off the phase's lane
     if not phase_ok(ctx, "M20"):
         return na(ctx, "M20", "lab phase only")
-    rows = [r for r in ctx.gate_rows() if r["rc"] == "0"]
+    rows = [r for r in ctx.gate_rows() if r["rc"] == "0" and ctx.lab_sum(r) > 0]
     off = [r for r in rows if int(r["lab_lines"]) == 0 and int(r["product_lines"]) > 0]
     if not rows:
         return na(ctx, "M20", "no rc-0 gate row")
@@ -465,9 +529,9 @@ def m20(ctx):  # G18 landings off the phase's lane
 
 def m23(ctx):  # G22 goldens and data counted as tests
     bad = [p for _, _, p in ctx.week_added()
-           if p.startswith("tests/") and not p.startswith("tests/fixtures/")
-           and (p.endswith((".json", ".csv", ".png", ".txt")) or "golden" in os.path.basename(p))]
-    return judge(ctx, "M23", len(bad), f"{len(bad)} golden/data files outside tests/fixtures", bad)
+           if p.startswith("tests/") and not is_fixture(p)
+           and (not p.endswith(TEST_CODE_EXT) or "golden" in os.path.basename(p))]
+    return judge(ctx, "M23", len(bad), f"{len(bad)} golden/data files outside a fixtures/ directory", bad)
 
 
 def _is_method(p):
@@ -475,37 +539,51 @@ def _is_method(p):
 
 
 def m24a(ctx):  # G23 method text edited with no retro in the commit
-    bad = [c for c in ctx.week_commits() if any(_is_method(p) for _, _, p in c["paths"])
-           and not any(p.startswith("docs/northstar/plans/retro_") for _, _, p in c["paths"])]
-    return judge(ctx, "M24a", len(bad), f"{len(bad)} method-text commits without a retro path", [c["sha"][:12] for c in bad])
+    retro_adds = {sha for sha, _, p in ctx.added_files() if ctx.in_recent_retro(p)}
+    bad = [c for c in ctx.week_commits() if any(_is_method(p) for _, _, p in c["paths"]) and c["sha"] not in retro_adds]
+    return judge(ctx, "M24a", len(bad), f"{len(bad)} method-text commits that add no file to a current retro folder",
+                 [c["sha"][:12] for c in bad])
 
 
 def m24b(ctx):  # G23 retro folders created in the trailing 14 days
-    first = {}
-    for sha, at, p in ctx.added_files():
-        if p.startswith("docs/northstar/plans/retro_"):
-            f = "/".join(p.split("/")[:4])
-            first[f] = min(first.get(f, at), at)
-    recent = sorted(f for f, at in first.items() if ctx.t1 - 14 * 86400 <= at < ctx.t1)
+    recent = sorted(ctx.recent_retro_folders())
     return judge(ctx, "M24b", len(recent), f"{len(recent)} retro folders in 14 days", recent)
 
 
 METRICS = {"M01": m01, "M02": m02, "M02b": m02b, "M04": m04, "M05": m05, "M05b": m05b, "M09": m09, "M09b": m09b,
-           "M09c": m09c, "M10": m10, "M10b": m10b, "M11": m11, "M11b": m11b, "M11c": m11c, "M12a": m12a,
+           "M09c": m09c, "M10": m10, "M10b": m10b, "M11": m11, "M11b": m11b, "M11b-bytes": m11b_bytes, "M11c": m11c, "M12a": m12a,
            "M12b": m12b, "M12c": m12c, "M19a": m19a, "M19b": m19b, "M19c": m19c, "M20": m20, "M23": m23,
            "M24a": m24a, "M24b": m24b}
 
 
+def num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def fields(ctx, mid, res):
+    """(value, threshold) as printed: a percent unit gets a % suffix on both."""
+    _, value, (op, tv), _ = res
+    pc = "%" if (ctx.thr(mid) or {}).get("unit") == "%" else ""
+    return fmt(value) + (pc if num(value) else ""), f"{op}{fmt(tv)}" + (pc if num(tv) else "")
+
+
+def cap(ctx, text):
+    return text if ctx.verbose or len(text) <= DETAIL_CAP else text[:DETAIL_CAP - 3] + "..."
+
+
 def render(ctx, mid, res):
-    status, value, (op, tv), numbers = res
+    value, thr = fields(ctx, mid, res)
     gap = (ctx.thr(mid) or {}).get("gap", "")
-    return f"METRIC {mid} {status} {fmt(value)} vs {op}{fmt(tv)} {gap} ({numbers}) {ctx.week}"
+    return f"METRIC {mid} {res[0]} {value} vs {thr} {gap} ({cap(ctx, str(res[3]))}) {ctx.week}"
 
 
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--week", default=None)
+    p.add_argument("--weeks", default=None, help="A..B: print the back-test table (values only, nothing judged)")
     p.add_argument("--phase", choices=("lab", "beta"))
+    p.add_argument("--project", default=SLUG, help="transcript folder under --transcripts that is counted")
+    p.add_argument("--verbose", action="store_true", help="print the full detail list under each line")
     for k, d in (("repo", "."), ("ledger", None), ("pieces", None), ("gate-runs", os.path.expanduser("~/Projects/om-push/gate_runs.csv")),
                  ("sdk-runs", os.path.expanduser("~/Projects/om-push/runs/sdk_runs.csv")),
                  ("transcripts", os.path.expanduser("~/.claude/projects")),
@@ -513,30 +591,6 @@ def parser():
                  ("thresholds", str(Path(__file__).with_name("method_thresholds.toml")))):
         p.add_argument("--" + k, default=d)
     return p
-
-
-def run_metrics(ctx, metrics=None):
-    """Returns (lines, any_fail) for the given {id: fn} (default METRICS)."""
-    lines, fail = [], False
-    for mid, fn in (metrics or METRICS).items():
-        res = fn(ctx)
-        lines.append(render(ctx, mid, res))
-        if res[0] == "FAIL":
-            fail = True
-            lines += [f"  {row}" for row in ctx.decisive.get(mid, [])[:3]]
-    return lines, fail
-
-
-def main(argv=None):
-    # minimal entry; mm-1c (method_metrics_cli.py) extends it with --write, --last and the other metrics
-    a, _ = parser().parse_known_args(argv)
-    if not a.week:
-        today = dt.date.today() - dt.timedelta(days=7)
-        a.week = "%d-W%02d" % today.isocalendar()[:2]
-    ctx = Context(a)
-    lines, fail = run_metrics(ctx)
-    print("\n".join(lines))
-    return 1 if fail else 0
 
 
 if __name__ == "__main__":
