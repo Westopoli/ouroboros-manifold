@@ -79,9 +79,27 @@ Branches only; main gets a piece only through the merge gate. Method rev 2 (`pla
 
 Landed and closed since the last rewrite: terrain stages 2 and 3 (008de465, 0304d821), Steam phase A (e63483f6), the programme guard pieces (reach lint, lane plays, play split, daemon verb), the harness pieces of method rev 2 (pre-gate, status check, journal, provenance lint), unit scale (53ede72), the Sonnet briefs B1 to B11 (their branches `docs/method`, `docs/military-doctrine`, `docs/era-pack-form`, `docs/map-design-pillars` wait on Westley's reading, section 3b).
 
+## 1b. Westley's log: what he pointed out, and what became of it
+
+Method (Westley, 2026-10-27, `story_reviews/westley/Answers.md`): every bug, issue or request Westley points out is logged here the day he says it, with a status, a pointer to where it is being worked on, and whether he has signed off on a revised version that is in the beta. Nothing he points out is acted on without a row here, and no row closes without his sign-off. The beta is paused for the simulation lab; when beta work resumes, the Architect reminds him of this section in chat before anything starts, and the first work items are the rows below in order, beginning with W0.
+
+Statuses: `logged` (recorded, nobody on it) · `investigating` (someone is finding out what happened; pointer names them) · `W-look` (a prototype or scene Westley can pan is owed before anyone builds; he rules on it, then it moves on) · `in progress` (pointer names the piece) · `built` (on main, waiting for his sign-off) · `signed off` (his word, with the date) · `dropped` (his word).
+
+| # | Date | What Westley said | Status | Pointer | Sign-off |
+|---|---|---|---|---|---|
+| W0 | 2026-10-27 | "My requests frequently don't appear to go anywhere." Investigate every request of the last few weeks that was not done (the map-edge request is the known case), and list each as its own row here with status and pointer, before any other beta work. | logged | first beta work item; a fresh Sonnet engineer reads `verdicts_2026-10.md`, `decisions.md`, the programme file lane notes and the Westley chat memory for every ask, and checks each against main | |
+| W1 | before 2026-10-22 | The player should not so easily see the edge of the map: a cut-off and a void look unpolished. Investigate what was done with that request. | logged | part of W0; answer owed to him with the commit or the reason nothing landed | |
+| W2 | 2026-10-27 | `C-S132` sight discs: the lit disc still reads as a flat circle from the player's view, not following the ground; if this is the "fixed" version it is not approved, it looks the same as the flawed one he pointed out before. | logged | VG-A-sightdisc on main; the disc must follow the ground (DEC-S004 vision discs); re-shot owed as a scene he can pan, not a still | |
+| W3 | 2026-10-27 | `C-S132` facing triangles: approved, specifically those, not every feature of the picture. | signed off | VG-C unit marks | Westley 2026-10-27 |
+| W4 | 2026-10-27 | `C-S132` run line shows no landscape: white space and units only. Big bug; fix and hand back. | logged | the README's run line for the C lane scene; find the regression on main | |
+| W5 | 2026-10-27 | `C-S132` whether units sit on the ground or float or draw through the hill: cannot be told from a still; movement is the tell. | W-look | a scene he can pan, with the units moving over the hill; rule then | |
+| W6 | 2026-10-27 | `C-S140` land march: rejected. Unit placeholders are 2D (same shape at every angle); placeholders must be 3D like the beta's (a plain box is fine). No colour change with distance, so distance cannot be read; the bunching may be slope or broken scale. The landscape looks fine. | W-look | a pannable prototype of this scene before anything is built; Westley rules on the prototype, then the row moves to in progress | |
+| W7 | 2026-10-27 | `F-S140` click-move order: rejected. Does not read as an order obeyed; shot predates the facing-triangle change, so directions cannot be read; perfectly top-down and 2D with no landscape, marks against it since the beta is 3D. Unit movement needs a prototype he can play with, not a still. | W-look | a pannable prototype of a two-player order in the space era; the re-shot after the facing triangles | |
+| W8 | 2026-10-27 | Method: "maybe we should amend the screenshot rule to a prototype/scene rule." His rule to make; nothing changes until he says so. | logged | Architect, to put to him with the W0 report: the look rule (Visible-game guard 1) would read "a scene he can pan" for motion and depth questions, a still for layout | |
+
 ## 2. The beta critical path
 
-Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
+Before any step here resumes after the lab: section 1b, W0 first, and the Architect reminds Westley in chat (his word, 2026-10-27). Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
 
 | # | Step | State (2026-10-13) | Gate | Then |
 |---|---|---|---|---|
