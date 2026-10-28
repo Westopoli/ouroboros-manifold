@@ -84,8 +84,9 @@ gate_row() {
             esac
         done < <(git -C "$CANDIDATE" diff --numstat "$base..$cand" 2>/dev/null)
     fi
-    local row
-    row="$(date +%F),$PIECE_ID,$(git -C "$CANDIDATE" rev-parse --abbrev-ref HEAD 2>/dev/null),$base,$cand,${MERGE_GATE_QUEUE_S:-0},$((STAGE_SUM_DS / 10)).$((STAGE_SUM_DS % 10)),$rc,$ROW_STAGES,$ROW_CAUSES,$p,$t,$d,$l"
+    local row label="$PIECE_ID"
+    if [[ "$label" == *[,\"]* ]]; then label="\"${label//\"/\"\"}\""; fi
+    row="$(date +%F),$label,$(git -C "$CANDIDATE" rev-parse --abbrev-ref HEAD 2>/dev/null),$base,$cand,${MERGE_GATE_QUEUE_S:-0},$((STAGE_SUM_DS / 10)).$((STAGE_SUM_DS % 10)),$rc,$ROW_STAGES,$ROW_CAUSES,$p,$t,$d,$l"
     echo "GATE row $row"
     local csv="${MERGE_GATE_RUNS_CSV:-$HOME/Projects/om-push/gate_runs.csv}"
     mkdir -p "$(dirname "$csv")"
