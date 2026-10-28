@@ -1,6 +1,6 @@
 // Visible game programme, harness enforcement: HARNESS-C1a (rule pins, the tool and the lint), HARNESS-C1b (pins in tests, gate stages), HARNESS-C235 (quotes, numbers, set-asides, register, reviews), HARNESS-C4 (launch from main), then HARNESS-REPIN (the records pass), method rev 2 and rev 3. DRAFT 2026-10-19 by a Doer from the Architect's spec; NOT launched: the Architect approves after the audit, Westley approves, the Dispatcher launches.
 // Spec (rev 3a): docs/northstar/plans/2026-10-19-harness-enforcement-spec.md, READ FROM origin/main (git show origin/main:<path>); a clerk pushes it there. Each brief names the piece heading ("### HARNESS-C1a" in section 1) and the agent reads that paragraph whole, plus sections 2 to 6. Rules: docs/northstar/plans/workflows_2026-10-07/rules.md sections (a) to (e). Pre-flight source: scratchpad harness_preflight.md (origin/main 3c85c949), audit rounds in harness_audit.md (origin/main d16be5c7).
-// LAUNCH: args.launch is the LAUNCH OK line of scripts/specfactory/launch_check.sh for this file; the Preflight scout STOPs 'script-not-on-main' unless args.launch starts with "LAUNCH OK " and its first sha equals sha256sum of git show origin/main:docs/northstar/plans/workflows_2026-10-07/vg-wave13-harness-enforce.js. (This script builds that tool: until HARNESS-C4 lands, origin/main has no launch_check.sh, so the Preflight only RECORDS args.launch and the stop is armed once the tool exists on origin/main.)
+// LAUNCH: args.launch is the LAUNCH OK line of scripts/specfactory/launch_check.sh for this file; the Preflight scout STOPs 'script-not-on-main' unless args.launch starts with "LAUNCH OK " and its first sha equals sha256sum of git show origin/main:scripts/specfactory/workflows/vg-wave13-harness-enforce.js. (This script builds that tool: until HARNESS-C4 lands, origin/main has no launch_check.sh, so the Preflight only RECORDS args.launch and the stop is armed once the tool exists on origin/main.)
 // One launch, five landings, SERIAL (one flock, never two landings at once). Per build piece: Tests (a test writer, a different agent than the builder, red on the base tree for the stated reason) -> Build (one Doer) -> Check (one engineer) -> Clerk (one landing); then Repin (one records clerk, one landing).
 //   Workflow({scriptPath, args: { launch: 'LAUNCH OK <sha> <sha|->', repinMap: '<the Architect map of step 4>' }})
 // args:
@@ -53,7 +53,7 @@ const PUSH_MAIN = !(args && args.pushMain === false)
 const PIECES = (args && args.pieces) || 'HARNESS-C1a,HARNESS-C1b,HARNESS-C235,HARNESS-C4,A94-harness,HARNESS-provenance,HARNESS-pregate,HARNESS-status,HARNESS-userdir,PP-ledger'
 const LAUNCH = (args && args.launch) || ''
 const REPIN_MAP = (args && args.repinMap) || ''
-const SCRIPT_PATH = 'docs/northstar/plans/workflows_2026-10-07/vg-wave13-harness-enforce.js'
+const SCRIPT_PATH = 'scripts/specfactory/workflows/vg-wave13-harness-enforce.js'
 const SPECFILE = 'docs/northstar/plans/2026-10-19-harness-enforcement-spec.md'
 const SPEC_SHOW = 'git -C ~/Projects/ouroboros-manifold show origin/main:' + SPECFILE
 const LEDGER = 'docs/northstar/plans/push_ledger_2026-09-22.md'

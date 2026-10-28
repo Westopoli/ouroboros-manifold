@@ -1,6 +1,6 @@
 # spec: docs/northstar/plans/push/pieces.toml row HARNESS-gate-keep-red-evidence (FINDING-c2-5-pixels-red-under-gate,
 #       FINDING-baseline-cache-perturb-key, DRAFT-evidence-age, DRAFT-evidence-cap) and the interface rulings T1 to T9 and
-#       D1 to D5 in docs/northstar/plans/workflows_2026-10-07/vg-wave15-harness-keepred.js (no visible-game spec paragraph exists)
+#       D1 to D5 in scripts/specfactory/workflows/vg-wave15-harness-keepred.js (no visible-game spec paragraph exists)
 # Rule pins: R-990-01@?
 """Proves what HARNESS-gate-keep-red-evidence builds in merge_gate.sh / merge_gate_support.py / drift_audit.md.
 
