@@ -4351,7 +4351,7 @@ owns_glob = ["tests/specfactory/fixtures/token_ledger/*"]
 acceptance = ["tests/specfactory/test_token_ledger.py"]
 depends_on = ["HARNESS-mm-8", "HARNESS-mm-1b", "HARNESS-mm-1a", "HARNESS-mm-16"]  # ordering edges: mm-8 owns method_metrics_runs.py and the toml until it lands
 tests_pending = true
-status = { state = "queued" }  # paused by Westley 2026-10-28 (spec A13): waits for his word
+status = { state = "queued" }  # resumed by Westley 2026-10-28 (spec A14), lands after HARNESS-mm-16
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "token ledger (planned vs actual per day and piece) and metrics M25 to M29; about 150 plus 80 lines"
 [[piece]]

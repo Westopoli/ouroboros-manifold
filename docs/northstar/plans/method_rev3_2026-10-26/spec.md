@@ -344,3 +344,7 @@ Westley 2026-10-28: "skip the ledger for now, let's just finish the #4 I asked f
 
 - HARNESS-mm-16 (Tool: Workflow; one doer writes the test case first, then the edit, allowed because it is a data change in one file): in `scripts/specfactory/method_thresholds.toml` every `approved = ""` becomes `approved = "Westley 2026-10-28"` and table M21b `value` becomes 8 (DEC-thresholds-approved-2026-10-28); nothing else in the file. Test case in `tests/specfactory/test_method_metrics.py`: every table with an `approved` key reads `Westley 2026-10-28`, M21b is 8, M01 is 1.5, and an approved metric inside its limit prints PASS, not DRAFT. [P docs/northstar/story_reviews/westley/decisions.md:65]
 - Order at the Dispatcher: HARNESS-mm-16, then HARNESS-mm-15 (A12, the weekly run), then the timer is installed. HARNESS-mm-12 waits for Westley's word. [P docs/northstar/story_reviews/westley/decisions.md:65]
+
+## Amendment A14 (2026-10-28): the token ledger resumes, in parallel
+
+- Westley 2026-10-28: "have the dispatcher build the token-ledger and that repair in parallel with 15/16." HARNESS-mm-12 (A10: `token_ledger.py`, the `[estimates]` table, M25 to M29, and the repair of M06 and M07 to include coordinator spend) builds now beside HARNESS-mm-16 and HARNESS-mm-15. The approvals stay in mm-16 (A13); mm-12's briefs drop them, and its new tables M25 to M29 start DRAFT. Landings stay one at a time through the gate: mm-16, then mm-15, then mm-12 (it owns the toml after mm-16; ordering edge). [P docs/northstar/story_reviews/westley/decisions.md:65]
