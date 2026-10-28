@@ -1569,7 +1569,7 @@ id = "VG-CONTRACT-E3"
 contract = true
 manager = "M0"
 wave = 8
-owns = ["csrc/om_internal.h", "csrc/save.c", "csrc/checksum_full.c", "csrc/economy.c", "tests/csim/test_VG_E_ke3.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "docs/northstar/spec_factory/symbol_modules.toml", "docs/northstar/ambiguity_register.md", "docs/northstar/plans/workflows_2026-10-07/vg-wave5-laneE1a2.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave5-laneE1a3.js", "docs/northstar/plans/workflows_2026-10-07/journal_2026-10-10.md", "docs/northstar/plans/drift_checks/2026-10-10.md", "docs/northstar/plans/drift_checks/2026-10-11-spec-authoring.md"]
+owns = ["csrc/om_internal.h", "csrc/save.c", "csrc/checksum_full.c", "csrc/economy.c", "tests/csim/test_VG_E_ke3.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "docs/northstar/spec_factory/symbol_modules.toml", "docs/northstar/ambiguity_register.md", "scripts/specfactory/workflows/vg-wave5-laneE1a2.js", "scripts/specfactory/workflows/vg-wave5-laneE1a3.js", "docs/northstar/plans/workflows_2026-10-07/journal_2026-10-10.md", "docs/northstar/plans/drift_checks/2026-10-10.md", "docs/northstar/plans/drift_checks/2026-10-11-spec-authoring.md"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_ke3.py"]
 depends_on = ["VG-CONTRACT-E1", "VG-CONTRACT-E2"]
@@ -1789,7 +1789,7 @@ id = "VG-RECORD"
 manager = "M0"
 wave = 9
 owns = ["docs/northstar/plans/workflows_2026-10-07/vg-harness-method.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave9-laneE1q.js", "docs/northstar/plans/workflows_2026-10-07/vg-wave2b13-laneB22.js"]
-owns_glob = ["docs/northstar/plans/workflows_2026-10-07/*.js", "docs/northstar/plans/workflows_2026-10-07/*.args.json"]  # Architect 2026-10-20: every workflow script and its args file committed under C4 (nothing launches from an uncommitted script) is landed under this row until HARNESS-C4 lands; VG-RECORD is attached, so owner_lint never flags it and the footprint fence accepts the paths.
+owns_glob = ["scripts/specfactory/workflows/*.js", "scripts/specfactory/workflows/*.args.json"]  # Architect 2026-10-20: every workflow script and its args file committed under C4 (nothing launches from an uncommitted script) is landed under this row until HARNESS-C4 lands; VG-RECORD is attached, so owner_lint never flags it and the footprint fence accepts the paths.
 acceptance = []
 depends_on = []
 status = { state = "attached", attach_sha = "c0d1cda8" }
@@ -4336,7 +4336,7 @@ size_estimate = "gate_row label csv-quoted (findings 2, 24); about 40 lines"
 id = "RECORDS-mm-2"
 manager = "Architect"
 owns = ["docs/northstar/plans/push/gate_runs.csv"]
-owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*", "scripts/specfactory/workflows/*"]
+owns_glob = ["docs/northstar/plans/method_rev3_2026-10-26/metrics/*"]
 acceptance = []
 depends_on = ["RECORDS-mm-1", "HARNESS-mm-1c", "HARNESS-mm-8", "HARNESS-mm-9"]  # ordering edges only
 tests_pending = true
@@ -4362,6 +4362,6 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_launch_check.py"]
 depends_on = ["HARNESS-mm-5"]  # ordering edge: mm-5 (attached) owns the same files
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "72a5d46a9790989e7ea6a9515cb435dbb2b5c48b" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "WF_DIR path constant after the workflow-script move; one line plus one test case"

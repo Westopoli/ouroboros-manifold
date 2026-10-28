@@ -4,3 +4,4 @@ date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject
 2026-10-27,"HARNESS-mm-1a,HARNESS-mm-1b,HARNESS-mm-1c,HARNESS-mm-4,HARNESS-methodcheck",push/land-mm-1c,3504663f785ddd2453b0daa0d1bf9adb0a3bae3e,81896ac81664ac030c67b6855cdd2f27b363db87,0,4078.4,1,specfactory_regression,baseline: computed 3504663f785ddd2453b0daa0d1bf9adb0a3bae3e REJECT new failures: ['tests/specfactory/test_method_weekly.,0,908,332,0
 2026-10-27,HARNESS-mm-9,push/land-mm-9,7c509c75a5349e2928be49fb8bc5a73daea316c4,f9548ed9224b58ef81133b14d1becc4d97b07a44,0,4057.1,0,,,0,53,0,0
 2026-10-28,HARNESS-mm-8,push/land-mm-8,8affaf027c2d3ca62c216e3a6405cc9cf1c97581,3ffc5997d8fcdf3ade68f5d18a786ff1039e9922,0,4169.1,0,,,0,406,0,0
+2026-10-28,HARNESS-mm-14,push/land-mm-14,2db7c138a508b718ab614900766fa443853c9323,72a5d46a9790989e7ea6a9515cb435dbb2b5c48b,0,4177.4,0,,,0,15,0,0
