@@ -4354,3 +4354,14 @@ tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "token ledger (planned vs actual per day and piece) and metrics M25 to M29; about 150 plus 80 lines"
+[[piece]]
+id = "HARNESS-mm-14"
+manager = "Architect"
+owns = ["scripts/specfactory/launch_check.sh", "tests/specfactory/test_launch_check.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_launch_check.py"]
+depends_on = ["HARNESS-mm-5"]  # ordering edge: mm-5 (attached) owns the same files
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "WF_DIR path constant after the workflow-script move; one line plus one test case"

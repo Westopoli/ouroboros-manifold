@@ -4,6 +4,7 @@ BRANCH: <push/...>   PIECES: <ids>
 
 Model: claude-sonnet-5-5 (engineer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. STOP at 40 calls (ceiling 5.5 M tokens) excluding the gate wait: report `RESULT stop:call-cap`. Procedure: the landing template (`docs/northstar/plans/workflows_2026-10-07/` landing steps as the Dispatcher's HANDOFF names them; the copy at `~/Projects/om-push/wt/land-wtcap/landing-template.md` is current), with these additions for rev 3:
 - A test-defect stop from a builder (`RESULT stop:test-defect`): rule it yourself with the rulebook (`rules.md`); if the test is wrong, fix the test, write the ledger row with `ruler=clerk`; if the test is right, send the builder's branch back with the line that proves it. Only new rule meaning goes to the Architect (`ruler=fable`).
+- Run the gate directly with `run_in_background` and wait on its completion notification; never `nohup` or a waiter of your own, and never end a turn with text while a background task is pending (the mm-9 clerk stalled nine hours this way, 2026-10-27).
 - Rerun the gate at most once on your own; a second failure is reported with the decisive line, not retried.
 - One ledger row per landing, written by you, carrying every `FINDING-` with `found-by=` and every `TD-` with `ruler=`.
 - After HARNESS-mm-2 is on main: append the gate's `GATE row` line to `docs/northstar/plans/push/gate_runs.csv` in the records commit.
