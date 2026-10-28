@@ -34,7 +34,7 @@ RETRO_REL = "docs/northstar/plans/retro_"
 SLUG = "-home-westopoli-Projects-ouroboros-manifold"
 DETAIL_CAP = 400
 METHOD_PATHS = ("CLAUDE.md", "docs/northstar/README.md", "docs/northstar/PLAN.md",
-                "docs/northstar/plans/workflows_2026-10-07/")
+                "docs/northstar/plans/workflows_2026-10-07/", "scripts/specfactory/workflows/")
 # M11c does not count these: lab data (research/*/data/), shots, and the harness records (pieces, gate csv, stored weeks)
 M11C_SKIP = re.compile(r"^docs/northstar/(research/[^/]+/data/|story_reviews/|plans/push/|plans/method_rev3_2026-10-26/metrics/)")
 PIECE_STATES = ("attached", "queued", "superseded", "landed", "pending")
@@ -535,7 +535,7 @@ def m23(ctx):  # G22 goldens and data counted as tests
 
 
 def _is_method(p):
-    return p in METHOD_PATHS or p.startswith(METHOD_PATHS[3]) or p.endswith("dispatcher.md")
+    return p in METHOD_PATHS or p.startswith(METHOD_PATHS[3:]) or p.endswith("dispatcher.md")
 
 
 def m24a(ctx):  # G23 method text edited with no retro in the commit

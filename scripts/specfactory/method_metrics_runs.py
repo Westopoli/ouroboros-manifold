@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md "The gaps" G01 G02 G04 G05 G10 G11 G12 G19 G20 G21; audit_findings.md
 """Method metrics read from runs and transcripts: M01b M03 M06 M06b M07 M07b M08 M08b M13 M13b M14 M14b M15
-M21a M21b M22. One function per metric returns (status, value, threshold, numbers) through the one `judge` in
+M21a M21b M22 M25 M26 M27 M28 M29. One function per metric returns (status, value, threshold, numbers) through the one `judge` in
 method_metrics.py; METRICS maps id to function. Run through method_metrics_cli.py.
 See also: method_metrics.py (git and ledger metrics, Context, judge), method_metrics_cli.py (the CLI)."""
 import csv
@@ -73,8 +73,8 @@ def entry_cost(ctx, e):
     return sum(int(usage.get(k) or 0) * price[p] for k, p in TOKEN_KEYS) / 1e6
 
 
-def transcript_cost(ctx, path):
-    """Cost of a transcript; entries that repeat one message id (one line per content block) count once."""
+def dedup_entries(path):
+    """Assistant entries of a transcript; entries that repeat one message id (one line per content block) count once."""
     by_id, anon = {}, []
     for e in raw_entries(path):
         mid = (e.get("message") or {}).get("id")
@@ -82,7 +82,25 @@ def transcript_cost(ctx, path):
             by_id[mid] = e
         else:
             anon.append(e)
-    return sum(entry_cost(ctx, e) for e in [*by_id.values(), *anon])
+    return [*by_id.values(), *anon]
+
+
+def entry_tokens(e):
+    """Millions of tokens of one entry: input + cache read + cache write + output, cache reads at face value (A10)."""
+    usage = (e.get("message") or {}).get("usage") or {}
+    return sum(int(usage.get(k) or 0) for k, _ in TOKEN_KEYS) / 1e6
+
+
+def transcript_cost(ctx, path):
+    return sum(entry_cost(ctx, e) for e in dedup_entries(path))
+
+
+def top_costs(ctx):
+    """[(model, dollars)] of every top-level session's entries dated in the week (A10: M06 and M07 include them)."""
+    def load():
+        return [(model_of(e), entry_cost(ctx, e)) for p, sub in top_files(ctx) if not sub
+                for e in dedup_entries(p) if in_window(ctx, e.get("timestamp") or "")]
+    return ctx.cached("top_costs", load)
 
 
 # ---------------------------------------------------------------- runs
@@ -102,7 +120,7 @@ def meta_runs(ctx):
         words = desc.split()
         labelled = len(words) >= 2 and words[0] in pieces and words[1] in ROLES
         jp = mp.with_name(mp.name[:-len(".meta.json")] + ".jsonl")
-        model, stamp, result, cost = "", "", "unknown", 0.0
+        model, stamp, result, cost, tokens = "", "", "unknown", 0.0, 0.0
         if jp.exists():
             for e in raw_entries(jp):
                 model = model or model_of(e)
@@ -112,8 +130,9 @@ def meta_runs(ctx):
                     if m:
                         result = m.group(1)
             cost = transcript_cost(ctx, jp)
+            tokens = sum(entry_tokens(e) for e in dedup_entries(jp))
         out.append({"label": desc, "piece": words[0] if labelled else "", "role": words[1] if labelled else "unlabelled",
-                    "model": model, "cost": cost, "outcome": result, "date": stamp[:10]})
+                    "model": model, "cost": cost, "outcome": result, "date": stamp[:10], "tokens": tokens})
     return out
 
 
@@ -124,7 +143,7 @@ def runs(ctx, days=7):
             with open(ctx.sdk_runs, newline="") as f:
                 for r in csv.DictReader(f):
                     rows.append({"label": r["label"], "piece": r["piece"], "role": r["role"], "model": r["model"],
-                                 "cost": float(r["cost"] or 0), "outcome": r["outcome"], "date": r["date"]})
+                                 "cost": float(r["cost"] or 0), "outcome": r["outcome"], "date": r["date"], "tokens": 0.0})
         return [r for r in rows + meta_runs(ctx) if in_window(ctx, r["date"], days)]
     return ctx.cached(("runs", days), load)
 
@@ -179,8 +198,9 @@ def m03(ctx):
 
 
 def m06(ctx):
-    rs = runs(ctx)
-    total, fable = spend(rs), spend([r for r in rs if "fable" in r["model"].lower()])
+    rs, tops = runs(ctx), top_costs(ctx)
+    total = spend(rs) + sum(c for _, c in tops)
+    fable = spend([r for r in rs if "fable" in r["model"].lower()]) + sum(c for m, c in tops if "fable" in m.lower())
     n = "fable $%s of $%s" % (fmt(fable), fmt(total))
     return judge(ctx, "M06", fable / total * 100, n) if total else na(ctx, "M06", n)
 
@@ -193,7 +213,7 @@ def m06b(ctx):
 
 def m07(ctx):
     rs = runs(ctx)
-    total, av = spend(rs), spend([r for r in rs if r["role"] in ("audit", "verify")])
+    total, av = spend(rs) + sum(c for _, c in top_costs(ctx)), spend([r for r in rs if r["role"] in ("audit", "verify")])
     n = "audit+verify $%s of $%s" % (fmt(av), fmt(total))
     return judge(ctx, "M07", av / total * 100, n) if total else na(ctx, "M07", n)
 
@@ -339,5 +359,70 @@ def m22(ctx):
     return judge(ctx, "M22", len(ss), "coordinator sessions in hour %s: %s" % (hour, ", ".join(sorted(ss)) or "none"), sorted(ss))
 
 
+def m25(ctx):  # A10: tokens per landed piece against the summed ceilings of the roles run on it; FAIL above the toml value
+    est, rows = ctx.th.get("estimates", {}), []
+    for p, rs in by_piece(ctx).items():
+        rs = [r for r in rs if r["role"] in est and r["tokens"] > 0]
+        if rs:
+            used, ceil = sum(r["tokens"] for r in rs), sum(est[x]["ceiling_m"] for x in {r["role"] for r in rs})
+            rows.append((used / ceil, p, used, ceil))
+    rows.sort(reverse=True)
+    n = "pieces: " + ("; ".join("%s %s of %s M" % (p, fmt(u), fmt(c)) for _, p, u, c in rows[:5]) or "none") + not_landed(ctx)
+    if not rows:
+        return na(ctx, "M25", n)
+    return judge(ctx, "M25", rows[0][0], n, ["%s %s of %s M" % (p, fmt(u), fmt(c)) for r, p, u, c in rows if r > ctx.thr("M25")["value"]])
+
+
+def m26(ctx):  # A10: the week's tokens against the allotment; report only
+    total = sum(entry_tokens(e) for p, _ in top_files(ctx) for e in dedup_entries(p) if in_window(ctx, e.get("timestamp") or ""))
+    return na(ctx, "M26", "total %s M of %s M a week" % (fmt(total), (ctx.thr("M26") or {}).get("value", "-")))
+
+
+EVENT_KINDS = ("task-notification", "peer")
+
+
+def is_event(e):
+    text = (e.get("message") or {}).get("content")
+    return e.get("type") == "user" and ((e.get("origin") or {}).get("kind") in EVENT_KINDS or (
+        isinstance(text, str) and ("<task-notification>" in text or "<cross-session-message" in text)))
+
+
+def m27(ctx):  # A10: text-only assistant turns per event-triggered episode in Dispatcher (Sonnet) sessions
+    turns = eps = 0
+    for p, sub in top_files(ctx):
+        es = [] if sub else [e for e in mc.load(p) if in_window(ctx, e.get("timestamp") or "")]
+        if mc.role_of([model_of(e) for e in es if e["type"] == "assistant" and model_of(e)]) != "dispatcher":
+            continue
+        open_ = False
+        for e in es:
+            if e["type"] == "user":
+                open_ = is_event(e)
+                eps += open_
+            elif open_ and not mc.calls(e):
+                turns += 1
+    n = "text-only turns %d in %d event episodes" % (turns, eps)
+    return judge(ctx, "M27", turns / eps, n) if eps else na(ctx, "M27", n)
+
+
+def m28(ctx):  # A10: SendMessage calls per top-level session-day, the worst one
+    per = {}
+    for p, sub in top_files(ctx):
+        for e in [] if sub else mc.load(p):
+            if e["type"] == "assistant" and in_window(ctx, e.get("timestamp") or ""):
+                k = (p.stem, str(e["timestamp"])[:10])
+                per[k] = per.get(k, 0) + sum(c["name"] == "SendMessage" for c in mc.calls(e))
+    worst = sorted(((v, k) for k, v in per.items() if v), reverse=True)
+    rows = ["%s %s x%d" % (k[0], k[1], v) for v, k in worst]
+    return judge(ctx, "M28", worst[0][0] if worst else 0, "messages per session-day, worst: " + (", ".join(rows[:3]) or "none"), rows)
+
+
+def m29(ctx):  # A10: tests runs beyond the first, worst landed piece
+    extra = {p: sum(r["role"] == "tests" for r in rs) - 1 for p, rs in by_piece(ctx).items()}
+    extra = {p: v for p, v in extra.items() if v > 0}
+    rows = ["%s +%d" % kv for kv in sorted(extra.items(), key=lambda kv: -kv[1])]
+    return judge(ctx, "M29", max(extra.values(), default=0), "extra tests runs per landed piece: " + (", ".join(rows) or "none"), rows)
+
+
 METRICS = {"M01b": m01b, "M03": m03, "M06": m06, "M06b": m06b, "M07": m07, "M07b": m07b, "M08": m08, "M08b": m08b,
-           "M13": m13, "M13b": m13b, "M14": m14, "M14b": m14b, "M15": m15, "M21a": m21a, "M21b": m21b, "M22": m22}
+           "M13": m13, "M13b": m13b, "M14": m14, "M14b": m14b, "M15": m15, "M21a": m21a, "M21b": m21b, "M22": m22,
+           "M25": m25, "M26": m26, "M27": m27, "M28": m28, "M29": m29}
