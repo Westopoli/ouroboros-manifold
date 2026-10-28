@@ -4318,7 +4318,7 @@ owns_glob = ["tests/specfactory/fixtures/method_metrics/*"]
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["HARNESS-mm-1a", "HARNESS-mm-1b", "HARNESS-mm-1c"]  # attached owners of the same files: ordering edges only
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "3ffc5997d8fcdf3ade68f5d18a786ff1039e9922" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "metrics correctness after the audit: findings 1, 3 to 23, 25 to 27, 32 to 35, back-test table, baselines, prices; about 250 changed lines"
 [[piece]]
