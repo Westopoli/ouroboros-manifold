@@ -169,7 +169,7 @@ def backtest(a):
         cols[w] = {mid: m1a.fields(ctx, mid, res)[0] or "-" for mid, res in recs}
     ids = sorted({m for c in cols.values() for m in c}, key=lambda m: (int(m[1:3]), m))
     print("| Metric | " + " | ".join(weeks) + " |")
-    print("|-|" + "-|" * len(weeks))
+    print("|---|" + "---|" * len(weeks))
     for mid in ids:
         print(f"| {mid} | " + " | ".join(cols[w].get(mid, "-") for w in weeks) + " |")
 

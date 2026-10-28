@@ -222,7 +222,7 @@ class Context:
                 rows = list(csv.DictReader(f))
             ok = [r for r in rows if None not in r and None not in r.values()]
             if len(ok) < len(rows):
-                print(f"method_metrics: skipped {len(rows) - len(ok)} malformed rows of {self.gate_runs}", file=sys.stderr)
+                print(f"method_metrics: skipped {len(rows) - len(ok)} malformed gate rows of {self.gate_runs}", file=sys.stderr)
             return ok
         return self.cached("gate_all", load)
 
