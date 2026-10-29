@@ -144,20 +144,52 @@ def test_labels_for_every_role():
         assert DRAFT not in asym_play(16, Side(role, skill="S1"), Side(role)).labels.values()
 
 
+def _result():
+    """A FightResult written the rev 2 way (spec contract): every new field set, none left to its default."""
+    return FightResult(outcome="side0", margin=0.5, strength_left=(1.0, 0.0), survivors=(3, 0), heads=(16, 16), ticks=10,
+                       first_contact_tick=2, firing=[], firing_unit_seconds=(1.0, 2.0), winner="side0", states=[(5, 1, 0)],
+                       weighted_unit_seconds=(3.0, 4.0), firing_window=(0.5, 1.5), weighted_window=(2.5, 3.5),
+                       predicted_count="side1", predicted_type="side0", agreement="count_wrong_type_right")
+
+
+NEW_COLUMNS = ("firing_window_0", "firing_window_1", "weighted_unit_seconds_0", "weighted_unit_seconds_1", "weighted_window_0",
+               "weighted_window_1", "predicted_count", "predicted_type", "agreement", "knob", "knob_value", "baseline", "ceiling_hit", "prefight")
+
+
 def test_labels_flow_into_fight_row_and_csv(tmp_path):
-    """fight_row(result, **labels) keeps the label columns; no label name collides with a fixed row key."""
+    """fight_row(result, **labels) keeps the label columns; no label name collides with a fixed row key (the fixed keys now include
+    knob, knob_value, baseline, ceiling_hit and prefight); the rev 2 result columns reach the row and the CSV."""
     labels = asym_play(16, Side("skilled"), Side("counter")).labels
     assert not set(labels) & set(rows._FIXED)
-    result = FightResult(outcome="side0", margin=0.5, strength_left=(1.0, 0.0), survivors=(3, 0), heads=(16, 16),
-                         ticks=10, first_contact_tick=2, firing=[], firing_unit_seconds=(1.0, 2.0))
-    row = rows.fight_row(result, **labels)
+    row = rows.fight_row(_result(), baseline="naive_defender", prefight="no_reach", **labels)
     for k in ("play_side0", "play_side1", "status_side0", "status_side1"):
         assert row[k] == labels[k]
+    assert (row["firing_window_0"], row["weighted_window_1"], row["agreement"]) == (0.5, 3.5, "count_wrong_type_right")
+    assert (row["baseline"], row["prefight"], row["knob"], row["ceiling_hit"]) == ("naive_defender", "no_reach", "none", 0)
     path = tmp_path / "out.csv"
     rows.write_rows([row], path)
     head, body = path.read_text().splitlines()[:2]
-    assert {"play_side0", "play_side1", "status_side0", "status_side1"} <= set(head.split(","))
-    assert DRAFT in body
+    cols = head.split(",")
+    assert {"play_side0", "play_side1", "status_side0", "status_side1", *NEW_COLUMNS} <= set(cols)
+    assert DRAFT in body and "naive_defender" in body and "no_reach" in body and "count_wrong_type_right" in body
+
+
+def test_control_a_label_named_like_a_result_column_is_refused():
+    """Control for the collision assertion: a label named like a rev 2 result column is refused by fight_row."""
+    for clash in ("agreement", "predicted_type", "weighted_window_0", "firing_window_1"):
+        with pytest.raises(ValueError):
+            rows.fight_row(_result(), **{clash: "x"})
+
+
+def test_every_registered_space_play_has_a_draft_registry_entry():
+    """Each plays_space play (the 14 of rev 2, the vision control fixture s3_vision_control and the six of LAB-REV3-B) points at a registered skills entry with status draft; S3 and S5 have no counter."""
+    from scripts.skilllab import plays_space
+    assert len(plays_space.PLAYS) == 21
+    for name, p in plays_space.PLAYS.items():
+        role = "counter" if name in ("s2_mass_one_end", "s4_do_not_chase", "s1_outrange") else "skilled"
+        assert skills.get(p.skill, role).status == DRAFT, name
+    assert {p.skill for p in plays_space.PLAYS.values()} == {"S1", "S2", "S3", "S4", "S5"}
+    assert not skills.has_counter("S3") and not skills.has_counter("S5")
 
 
 @pytest.mark.parametrize("name", ["asym.py", "skills.py"])

@@ -1,3 +1,4 @@
 # Desktop-flow tests allowed to be red in the gate's playthrough stage, one
 # test function name (or prefix) per line. Empty since the loop-fix landing; a
 # listed test that passes is reported "now green, remove from list".
+# An entry is "<test id> :: <row id>": the test function name (or prefix), then " :: ", then the open FINDING or TD row of docs/northstar/plans/push_ledger_2026-09-22.md that justifies it; the stage strips the " :: <row id>" before matching.

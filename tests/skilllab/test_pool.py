@@ -232,15 +232,28 @@ def test_cell_map_fn_jobs_match_serial_order_and_result():
     assert got == expected
 
 
-def test_scan_map_fn_is_one_call_with_all_cells_in_serial_order():
-    """Scan hands the map_fn ONE batch of every cell's jobs, in the serial order; same ScanResult."""
+def test_full_scan_map_fn_is_one_call_with_all_cells_in_serial_order():
+    """The linear sweep hands the map_fn ONE batch of every cell's jobs, in the serial order; same ScanResult."""
     ser, bat = Serial(), Batched()
-    expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser)
-    got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat)
+    expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser, full_scan=True)
+    got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat, full_scan=True)
     assert len(bat.batches) == 1
     assert bat.jobs == ser.jobs
     assert len(bat.batches[0]) == 4 * 2 * 2
     assert got == expected
+
+
+def test_bisection_map_fn_batches_the_coarse_pass_then_one_call_per_step_in_the_serial_order():
+    """LAB-REV2-L4: the default scan bisects. Through map_fn the first call carries the coarse cells together (that is what
+    keeps 12 workers busy), each later call is one bisection step, and the jobs and the ScanResult equal the serial run's."""
+    ser, bat = Serial(), Batched()
+    expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser)
+    got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat)
+    assert got == expected and (got.beats, got.loses_to) == (3, 4)
+    assert bat.jobs == ser.jobs
+    assert len(bat.batches) >= 2 and all(bat.batches)
+    first_heads = {job[0].unit_types["enemy"] for job in bat.batches[0]}
+    assert {2, 5} <= first_heads and len(bat.batches[0]) >= 2 * 2 * 2
 
 
 def test_find_break_even_map_fn_one_call_for_scan_then_one_per_refinement_round():

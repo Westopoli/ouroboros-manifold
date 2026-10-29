@@ -1,0 +1,10 @@
+# See also: om-method-metrics.service
+[Unit]
+Description=Method metrics, Sunday 23:00
+
+[Timer]
+OnCalendar=Sun 23:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

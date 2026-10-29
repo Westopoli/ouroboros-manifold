@@ -1,3 +1,4 @@
+# Rule pins: R-086-01@f6f61d, R-087-04@edc84b, R-089-02@d379f6, R-089-03@c09d1f, R-096-05@1a9979, R-104-01@1aaaa3, R-104-09@b27177, R-205-02@1abaf8
 """Visible-game programme lane K, pieces K-a (om_pipe.c frame fields), K-f (net_step frame, _setmode)
 and K-h (mission_start fog_filter). Written against docs/northstar/plans/2026-10-07-visible-game-spec.md
 rev 4 section 2 (the field table) and the rulebook rev 2. Fenced: builders never edit this file.
@@ -6,7 +7,7 @@ Stories and rules proved (each test names its own in its docstring):
   S-087 / R-087-*  fire and kill events          S-086 / R-096-05  ability events and `acd`
   S-005 / R-104-09 layer transit (`tl`,`ld`,4)    S-089 / R-089-03, S-205 / R-205-02 fog_filter
   S-007 cover class                               S-139 / S-140 net_step frame (K-f)
-Fixture: seed 8 (eight launch features), the clash of tests/transport/test_pipe_tactical_tier_state_reserved.py:
+Fixture: seed 8 (eight launch features; the clash fixture and the fog clash use CLASH_SEED, see below), the clash of tests/transport/test_pipe_tactical_tier_state_reserved.py:
 the opposing groups meet around tick 2300. Frames are read from the real pipe/ouroboros_pipe.
 Every detector function has a positive control (a planted bad frame it must reject).
 
@@ -34,6 +35,14 @@ EVENT_CAP = 512
 ONE_STEP_FRAMES = 300
 
 SET_SEED = {"type": "cmd", "name": "set_seed", "seed": SEED, "n_regions": 80, "features": list(range(8))}
+# TD-VG-E-34 (fixture seed moved so the first kill falls inside the 3000 window, Architect 2026-10-19): the player spawns
+# start_units of F, so the seed-8 clash (F 177, p 1, e 2, share 1/3, start 94) no longer kills anyone before tick 3000 (its first
+# kill event is at tick 3550 on the E7 build, 2917 on main). The kill tests use the LOWEST seed of 1 to 32 whose clash kills inside
+# the window with p + e > 0 on the E7 build: seed 1, archetype 3, region 76: F 236, p 1, e 2, n 1, share 1/3, frac 0.5333,
+# start 125.87, start_units 126, first fire tick 601, first kill event tick 2258 (17 kill events by tick 3000). Seeds of 1 to 32
+# with no kill before 3000: 6, 8, 15, 21, 23, 24. The window stays 3000.
+CLASH_SEED = 1
+CLASH_SET_SEED = dict(SET_SEED, seed=CLASH_SEED)
 BEGIN = {"type": "cmd", "name": "mission_begin"}
 QUIT = {"type": "cmd", "name": "quit"}
 
@@ -95,10 +104,11 @@ def first_frames():
 
 
 @pytest.fixture(scope="module")
-def clash(first_frames):
-    """Every frame of one clash run (full and delta), in order."""
-    first = tacticals(first_frames)[0]
-    return run([SET_SEED, start(), BEGIN] + clash_script(first))
+def clash():
+    """Every frame of one clash run (full and delta), in order. Seed CLASH_SEED (TD-VG-E-34: F 236, p 1, e 2, share 1/3,
+    start_units 126, first kill event at tick 2258, inside the 3000-tick window)."""
+    first = tacticals(run([CLASH_SET_SEED, start(), BEGIN]))[0]
+    return run([CLASH_SET_SEED, start(), BEGIN] + clash_script(first))
 
 
 # ---- detectors (pure functions on a frame, each with a positive control below) ----
@@ -416,11 +426,11 @@ def test_leaving_sight_sends_units_removed_and_events_follow_visibility():
     """R-089-03, S-089 (K-h): with fog_filter on, a unit that leaves sight while still alive appears in
     `units_removed` of a delta frame (control: an unfiltered run lists only real deaths there), and an event is
     sent only when its `a` or `b` is an own or visible unit. Red on main: the flag is ignored."""
-    plain = tacticals(run([SET_SEED, start(), BEGIN]))[0]
+    plain = tacticals(run([CLASH_SET_SEED, start(), BEGIN]))[0]  # TD-VG-E-34: seed 1 (F 236, p 1, e 2, share 1/3, start_units 126, first kill at tick 2258)
     script = clash_script(plain)
-    dead = {i for f in tacticals(run([SET_SEED, start(), BEGIN] + script)) for i in f.get("units_removed", [])}
+    dead = {i for f in tacticals(run([CLASH_SET_SEED, start(), BEGIN] + script)) for i in f.get("units_removed", [])}
     assert dead, "control: the unfiltered clash has no deaths"
-    frames = tacticals(run([SET_SEED, start(fog_filter=True), BEGIN] + script))
+    frames = tacticals(run([CLASH_SET_SEED, start(fog_filter=True), BEGIN] + script))
     left_alive = set()
     seen = set()
     for f in frames:

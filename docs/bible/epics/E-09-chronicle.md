@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 40 rules, numbers from `algorithms.md` ALG-50 through ALG-53. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags, Q-068-03 (S-068) and Q-070-02 (S-070); Q-159-07 is cited and held by E-22 S-182. |
+| Implied-but-unstated behavior turned into flags | 1 open flag, Q-070-02 (S-070); Q-068-03 closed 2026-10-21 (register); Q-159-07 is cited and held by E-22 S-182. |
 | Every visible-surface story has a reference | **No.** S-069 (the scroll presentation) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-068-03 (S-068), Q-070-02 (S-070) and one missing reference (S-069).
+**Gate verdict: not passed.** Blocked on Q-070-02 (S-070; Q-068-03 closed 2026-10-21, register) and one missing reference (S-069).
 
 ## Purpose
 
@@ -34,7 +34,7 @@ Rules
 - R-065-03  Given the player's lineage, When clusters are ranked, Then every lineage cluster is included regardless of score, one per region the lineage touched.
 - R-065-04  Given no event touched the lineage, When clusters are ranked, Then one `lineage_quiet` cluster is included, placed in the lineage's most recent region.
 - R-065-05  Given the remaining clusters, When the budget is filled, Then they are taken in descending peak score, skipping any category that already has 2 entries, until 10 entries.
-- R-065-06  Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order only from categories that still have fewer than 2 entries; the cap wins over the minimum, so a quiet jump may show 4 entries (Q-065-01, Westley 2026-10-01).
+- R-065-06  Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order only from categories that still have fewer than 2 entries; the cap wins over the minimum, so a quiet jump may show 4 entries (Q-065-03, Westley 2026-10-01).
 - R-065-07  Given the opening jump of a campaign, When the scroll is built, Then it has 3 to 5 entries and no consequence or lineage cluster.
 
 Inputs: time jump event log; mission outcome; ledger.
@@ -87,7 +87,7 @@ Rules
 
 Inputs: clusters; fragment library (E-21); ledger; world snapshot; registry names.
 Outputs: entries with base and expanded text, category, region, tick range; warnings.
-Open flags: Q-068-03 (whether events inside a mission, such as a base occupied, retaken or fallen back from, or an expansion made, reach the time-jump log and so the consequence slots and the `chain_expansion` category of R-067-04; it depends on what the pair carries forward between missions, Q-159-07 held by E-22 S-182).
+Open flags: none here. Q-068-03 closed 2026-10-21 (register: the outcome only, as Q-220-01); Q-159-07 is held by E-22 S-182.
 
 ### S-069 — Watching history happen
 As a player, I want to watch the map change on the left while the scroll writes itself on the right, and to be able to stop and read, so that the time jump is the game's signature moment and not a loading screen.
@@ -95,7 +95,7 @@ As a player, I want to watch the map change on the left while the scroll writes 
 Rules
 - R-069-01  Given the narration phase begins, When the panel appears, Then it slides in from the right over 0.40 s and the map view resizes to 62 percent of the width; it stays until the player presses Proceed (E-16 R-108-05, R-108-06), then slides out over 0.40 s and the map returns to full width.
 - R-069-02  Given an entry prints, When words appear, Then each word arrives every 0.08 s and fades from 0 to full opacity over 0.20 s.
-- R-069-03  Given the map animation is the master clock, When an entry's tick range is reached and no other entry is printing, Then that entry begins printing; entries print one after another, never two at once, so the scroll reads like a book (Westley, 2026-10-13, on the S-108 frame: "in the python version they were printed out one at a time so the user would read it like a book"); an entry whose tick is reached while another prints waits its turn; a printed entry holds for at least 3.0 s. Whether the map holds at that entry's keyframe until it has printed is open (Q-069-03). The map replays the jump at 2 ticks per second (Q-069-01), so a 20-tick jump lasts 10 s and a 100-tick jump 50 s.
+- R-069-03  Given the map animation is the master clock, When an entry's tick range is reached and no other entry is printing, Then that entry begins printing; entries print one after another, never two at once, so the scroll reads like a book (Westley, 2026-10-13, on the S-108 frame: "in the python version they were printed out one at a time so the user would read it like a book"); an entry whose tick is reached while another prints waits its turn; a printed entry holds for at least 3.0 s. The map holds at an entry's keyframe until that entry has printed and its hold has passed, so the scroll and the map stay in step like a book with pictures, and a jump lasts as long as its reading (Westley, 2026-10-19: "accepted, time varying is ok it is like a book"); while no entry is printing the map runs at its replay rate (Q-069-01). The map replays the jump at 2 ticks per second (Q-069-01), so a 20-tick jump lasts at least 10 s and a 100-tick jump at least 50 s.
 - R-069-04  Given an entry is printing, When the player clicks it, Then nothing happens; Given it is printed (blinking cursor shown), When clicked, Then the expanded form overlays the scroll and the map, clock, and any printing entry pause; dismissing resumes from the exact word and frame.
 - R-069-05  Given every chronicle entry, When keyframes are chosen, Then the map has a keyframe within the entry's tick range; and every ownership change has a keyframe whether or not it has an entry.
 - R-069-06  Given a T2 screenshot at the end of the narration phase, When compared, Then the number of entries on screen equals the number the distiller produced.
@@ -176,7 +176,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - A digit leaks through a slot.
 - First-mention qualifier applied on every mention.
 - Cross-entry dedup keeps the later entry instead of the first.
-- Map waits for the scroll, or expand does not pause the map.
+- Map runs past an entry's keyframe while that entry is still printing or holding (R-069-03, Westley 2026-10-19), or expand does not pause the map.
 - Assembler seeded from wall clock, breaking determinism.
 
 ## Open ambiguity flags

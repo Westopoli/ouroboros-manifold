@@ -4,6 +4,8 @@ import dataclasses
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -21,10 +23,12 @@ def _scan(**kw):
     return scan(plays.blob_play(8), 8, 6, 8, replicates=3, **kw)
 
 
-def test_pooled_scan_equals_serial_and_with_explicit_library_path():
-    serial = _fights(_scan())
+@pytest.mark.parametrize("full", [False, True])
+def test_pooled_scan_equals_serial_and_with_explicit_library_path(full):
+    """Both the default bisection and the linear sweep (LAB-REV2-L4)."""
+    serial = _fights(_scan(full_scan=full))
     with FightPool(3) as fp:
-        assert _fights(_scan(map_fn=fp.map)) == serial
+        assert _fights(_scan(map_fn=fp.map, full_scan=full)) == serial
     path = engine._cached_library()
     with FightPool(2, library_path=path) as fp:
-        assert _fights(_scan(map_fn=fp.map)) == serial
+        assert _fights(_scan(map_fn=fp.map, full_scan=full)) == serial

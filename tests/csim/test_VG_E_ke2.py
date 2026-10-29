@@ -1,8 +1,10 @@
+# Rule pins: R-218-01@ecb14c, R-218-05@ee913f, R-218-06@795f15
 """VG-CONTRACT-E2 (K-e2): the economy entry points and the three rule edits wired with them.
 
 Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a2: the K-e2 amendment".
 Rules: R-218-01 (ground structure count capped at the slope count), R-218-05 (a structure at 0 HP stays
-listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10).
+listed), R-218-06 (starting force is the whole force, reinforcement capacity 0; liberty 2026-10-10; superseded by E7, TD-VG-E-28:
+(F, share) pins, see the section above the starting-force tests).
 The entry points are internal (csrc/economy_internal.h) but exported by the shared object, so ctypes finds them.
 """
 import ctypes
@@ -107,23 +109,55 @@ def test_R_218_01_ground_structure_count_at_most_slope_count(lib, world_factory,
     assert not _over_cap(count, slopes), f"{count} structures over {slopes} slopes"
 
 
-def test_R_218_06_starting_force_is_the_whole_force(lib):
-    """R-218-06 (liberty 2026-10-10): om_mission_compute_starting_force(F) == F."""
-    lib.om_mission_compute_starting_force.argtypes = [D]
+# E7 (VG-CONTRACT-E7, TD-VG-E-28): R-218-06 as rewritten by Westley 2026-10-11 ("players start with at least half-force when
+# a match begins, if not as far down as 20%"): both functions take (F, share) and the five pins below replace the whole-force
+# (F, 0) pair. Piecewise with START_KNEE 0.25 (DRAFT-e7-floor-knee, Westley to confirm): frac = 0.2 + 1.2 * share up to the
+# knee, 0.5 + 0.4 * (share - 0.25) above it. Red until E7: the one-argument and (D, U64) functions answer F and 0.
+ONE_THOUSAND = 1000.0
+
+
+def _starting_force(lib, f, share):
+    lib.om_mission_compute_starting_force.argtypes = [D, D]
     lib.om_mission_compute_starting_force.restype = D
-    assert lib.om_mission_compute_starting_force(1000.0) == 1000.0
+    return lib.om_mission_compute_starting_force(f, share)
 
 
-def test_R_218_06_reinforcement_capacity_is_zero(lib):
-    """R-218-06: om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0."""
-    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, U64]
+def _capacity(lib, f, share):
+    lib.om_mission_compute_reinforcement_capacity.argtypes = [D, D]
     lib.om_mission_compute_reinforcement_capacity.restype = D
-    assert lib.om_mission_compute_reinforcement_capacity(1000.0, 1200) == 0.0
+    return lib.om_mission_compute_reinforcement_capacity(f, share)
+
+
+def test_R_218_06_starting_force_at_half_share_is_600(lib):
+    """R-218-06 (E7): om_mission_compute_starting_force(1000.0, 0.5) == 600.0 (old pin: (F) == F; TD-VG-E-28)."""
+    assert _starting_force(lib, ONE_THOUSAND, 0.5) == pytest.approx(600.0, abs=1e-5)
+
+
+def test_R_218_06_reinforcement_capacity_at_half_share_is_400(lib):
+    """R-218-06 (E7): om_mission_compute_reinforcement_capacity(1000.0, 0.5) == 400.0 (old pin: (1000.0, 1200) == 0.0; TD-VG-E-28)."""
+    assert _capacity(lib, ONE_THOUSAND, 0.5) == pytest.approx(400.0, abs=1e-5)
+
+
+def test_R_218_06_starting_force_at_zero_share_is_a_fifth(lib):
+    """R-218-06 (E7): a player holding none of the contested strongpoints starts with a fifth: (1000.0, 0.0) == 200.0."""
+    assert _starting_force(lib, ONE_THOUSAND, 0.0) == pytest.approx(200.0, abs=1e-5)
+
+
+def test_R_218_06_starting_force_at_the_knee_is_half(lib):
+    """R-218-06 (E7), DRAFT-e7-floor-knee: START_KNEE 0.25, half of F at the knee: (1000.0, 0.25) == 500.0."""
+    assert _starting_force(lib, ONE_THOUSAND, 0.25) == pytest.approx(500.0, abs=1e-5)
+
+
+def test_R_218_06_starting_force_at_full_share_is_four_fifths(lib):
+    """R-218-06 (E7): a player holding every contested strongpoint starts with four fifths: (1000.0, 1.0) == 800.0."""
+    assert _starting_force(lib, ONE_THOUSAND, 1.0) == pytest.approx(800.0, abs=1e-5)
 
 
 def test_R_218_06_detector_control(lib):
-    """Positive control: a non-whole starting force (a 0.2 share) is distinguishable from F."""
+    """Positive control (green today): a non-whole starting force (a 0.2 share of F) is distinguishable from F, and the
+    library exports both functions the pins above call."""
     assert 0.2 * 1000.0 != 1000.0
+    assert hasattr(lib, "om_mission_compute_starting_force") and hasattr(lib, "om_mission_compute_reinforcement_capacity")
 
 
 def _hp(lib, w, s):

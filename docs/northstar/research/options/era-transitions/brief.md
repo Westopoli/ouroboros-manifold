@@ -50,7 +50,7 @@ Q-147-01 answer column (`ambiguity_register.md:136`): "Westley to name and brief
 
 ## 5. Prior art already named
 
-Fortnite's cross-compatible content (vision Q8). Counter-model: Total War, where different eras are different titles (`docs/research/games/total_war_franchise.md:16`). Wildermyth legacy heroes carried across campaigns (`docs/research/games/wildermyth.md:26,77`). Old branch-ladder design in `docs/design_questions/era_selection_design.md` (historical, subscription framing scrapped). Refund risk of shallow era transitions (`docs/research/topics/refund_rate_norms.md:161,167`).
+Fortnite's cross-compatible content (vision Q8). Counter-model: Total War, where different eras are different titles (`docs/legacy/games/total_war_franchise.md:16`). Wildermyth legacy heroes carried across campaigns (`docs/legacy/games/wildermyth.md:26,77`). Old branch-ladder design in `docs/legacy/design_questions/era_selection_design.md` (historical, subscription framing scrapped). Refund risk of shallow era transitions (`docs/legacy/topics/refund_rate_norms.md:161,167`).
 
 ## 6. Contradictions, as questions for Westley
 

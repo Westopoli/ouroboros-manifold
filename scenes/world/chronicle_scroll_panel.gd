@@ -10,6 +10,12 @@ signal mention_clicked(kind: String, id: String)
 
 var _entries: Dictionary = {}
 var _printing_id: String = ""
+# R-069-03: entries print one at a time; an entry reached while another prints waits here.
+# See also: time_jump_sequencer.gd ENTRY_HOLD_S
+const PRINT_HOLD_S := 3.0  # R-069-03: a printed entry holds for at least 3.0 s; liberty 2026-10-13: the hold gates only the start of the next entry
+var _print_queue: Array[String] = []
+var _printed_order: Array[String] = []
+var _hold_left_s: float = 0.0
 var _total_expected: int = 0
 var _finished_count: int = 0
 var _paused: bool = false
@@ -161,7 +167,7 @@ func begin_time_jump(total_entries: int, faction_colors: Dictionary = {}) -> voi
 	_finished_count = 0
 	_time_jump_active = true
 	_paused = false
-	_printing_id = ""
+	_clear_print_state()
 	_faction_colors = faction_colors
 	_entries.clear()
 	for child in _entry_container.get_children():
@@ -188,12 +194,46 @@ func queue_entry(entry_data: Dictionary) -> void:
 	tw.parallel().tween_property(entry_node, "position:x", 0.0, 0.3)
 
 
+# liberty 2026-10-13: start_printing enqueues; an unknown, printing, queued or PRINTED id is ignored; FIFO in call order.
 func start_printing(entry_id: String) -> void:
-	if not _entries.has(entry_id):
+	if not _entries.has(entry_id) or entry_id == _printing_id or _print_queue.has(entry_id):
 		return
-	_printing_id = entry_id
-	_entries[entry_id].start_printing()
-	_auto_scroll_to_entry(entry_id)
+	if _entries[entry_id].get_current_state() == 2:  # PRINTED
+		return
+	_print_queue.append(entry_id)
+	_try_start_next()
+
+
+func _try_start_next() -> void:
+	if _printing_id != "" or _hold_left_s > 0.0:
+		return
+	while not _print_queue.is_empty():
+		var entry_id: String = _print_queue.pop_front()
+		if not _entries.has(entry_id) or not is_instance_valid(_entries[entry_id]):
+			continue  # a freed node is skipped
+		_printing_id = entry_id
+		_entries[entry_id].start_printing()
+		_auto_scroll_to_entry(entry_id)
+		return
+
+
+# R-069-03 / Q-069-03 (a): true from start_printing until entry_finished_printing plus the hold.
+func is_busy() -> bool:
+	return _printing_id != "" or _hold_left_s > 0.0 or not _print_queue.is_empty()
+
+
+func _clear_print_state() -> void:
+	_print_queue.clear()
+	_printed_order.clear()
+	_hold_left_s = 0.0
+	_printing_id = ""
+
+
+func _process(delta: float) -> void:
+	if _hold_left_s > 0.0 and not _paused and not _expansion_overlay.visible \
+			and not (FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused()):
+		_hold_left_s = maxf(0.0, _hold_left_s - delta)
+	_try_start_next()
 
 
 func end_time_jump() -> void:
@@ -201,6 +241,7 @@ func end_time_jump() -> void:
 
 
 func skip_all() -> void:
+	_clear_print_state()
 	for entry_id in _entries:
 		var entry_node: Node = _entries[entry_id]
 		if entry_node.get_current_state() != 2:  # not PRINTED
@@ -249,6 +290,8 @@ func slide_out() -> void:
 func _on_entry_finished(entry_id: String) -> void:
 	_finished_count += 1
 	_printing_id = ""
+	_printed_order.append(entry_id)
+	_hold_left_s = PRINT_HOLD_S
 	entry_finished_printing.emit(entry_id)
 	if _finished_count >= _total_expected:
 		all_entries_finished.emit()
@@ -394,6 +437,7 @@ func load_frame(frame: Dictionary) -> void:
 	for child in _entry_container.get_children():
 		child.queue_free()
 	_entries.clear()
+	_clear_print_state()
 	for qa_entry in _qa_entries:
 		queue_entry({
 			"entry_id": str(qa_entry["entry_id"]),
@@ -436,6 +480,12 @@ func qa_state() -> Dictionary:
 		"pace": CHRONICLE_PACE.duplicate(true),
 		"dropped_entries": _qa_dropped_entries,
 		"unresolved_refs": _qa_unresolved_refs,
+		"print": {
+			"printing_id": int(_printing_id) if _printing_id != "" else -1,
+			"queued": _print_queue.map(func(id): return int(id)),
+			"printed": _printed_order.map(func(id): return int(id)),
+			"hold_left_s": _hold_left_s,
+		},
 	}
 
 

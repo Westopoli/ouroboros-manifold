@@ -9,7 +9,7 @@ or per plan, not per merge.
 
     make libouroboros.so pipe/ouroboros_pipe
     cd tests/long
-    /home/westopoli/Projects/agora/.venv/bin/python -m pytest -q -p no:cacheprovider .
+    ~/Projects/agora/.venv/bin/python -m pytest -q -p no:cacheprovider .
 
 - `OM_LONG_SEEDS=3,5,6` overrides the seed list (default covers six archetypes plus reconquest seed 264).
 - `OM_LONG_RESULTS=path.jsonl` sets where one JSON row per run is appended (default `/tmp/om_long_results.jsonl`): archetype, ticks, game seconds (ticks / 20), how it ended, alive per side, tactical-frame band, objective progress, wall time, ticks per second.

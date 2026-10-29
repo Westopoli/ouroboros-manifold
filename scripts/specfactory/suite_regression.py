@@ -103,9 +103,14 @@ def parse_junit_extra(xml_path: Path) -> tuple[dict[str, str], int, int]:
 
 
 def is_scale_gated(node_id: str, skipped_el) -> bool:
-    """A skip under tests/csim/scale/ whose reason names OM_SCALE (A98)."""
+    """A skip under tests/csim/scale/ whose reason names OM_SCALE (A98), or under
+    tests/skilllab/ whose reason names OM_LAB_SLOW (the lab's SLOW tier)."""
     reason = (skipped_el.get("message") or "") + (skipped_el.text or "")
-    return node_id.startswith("tests/csim/scale/") and "OM_SCALE" in reason
+    if node_id.startswith("tests/csim/scale/") and "OM_SCALE" in reason:
+        return True
+    # See also: pieces.toml HARNESS-lab-slow-tier; skill-lab rev 2 spec ruling 13 (SLOW marker).
+    # The trailing slash keeps prefixes such as tests/skilllabx/ out.
+    return node_id.startswith("tests/skilllab/") and "OM_LAB_SLOW" in reason
 
 
 def parse_junit_scale_gated(xml_path: Path) -> tuple[str, ...]:
@@ -298,9 +303,14 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     diff_text = Path(args.diff_file).read_text()
-    report = whole_suite_regression(Path(args.worktree), diff_text, python_exe=args.python,
-                                     test_args=args.test_args, timeout=args.timeout,
-                                     junit=args.junit)
+    try:
+        report = whole_suite_regression(Path(args.worktree), diff_text, python_exe=args.python,
+                                         test_args=args.test_args, timeout=args.timeout,
+                                         junit=args.junit)
+    except subprocess.TimeoutExpired:
+        # See also: merge_gate.sh reg_detail, which quotes this text in the REJECT detail
+        print(f"suite-timeout {args.timeout}s")
+        return 1
     out = {"whole_suite": _report_to_dict(report)}
 
     pred = None

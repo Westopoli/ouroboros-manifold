@@ -1,8 +1,10 @@
+# Rule pins: R-126-01@71403e, R-126-02@741af4, R-127-04@db7974
 """W-1d: structure owner = E-05 faction id; neutral = -1.
 
 R-126-01: structure owner is an E-05 faction id; neutral structures have owner -1.
 R-126-02: a held structure spawns one unit of the owner's faction per production
-           interval, within half the capture radius (OM_REINFORCEMENT_CAPTURE_RADIUS / 2).
+           interval, at the first free slot of its spawn lattice within half the capture radius
+           (OM_REINFORCEMENT_CAPTURE_RADIUS / 2), with no random draw (rewritten, TD-VG-E-29).
 R-127-04: capture path writes s->owner = capturing_faction (E-05 id).
 """
 import ctypes
@@ -55,7 +57,7 @@ def _drive_capture(lib, w, structure=0, ticks=200):
 def test_player_capture_then_produces_faction0_unit(lib, world_factory):
     """R-126-01/R-126-02/R-127-04: structure starts neutral (-1); player
     (faction 0) captures it through the existing capture path; owner becomes 0;
-    production spawns a faction-0 unit within half the capture radius.
+    production spawns a faction-0 unit at a lattice slot within half the capture radius (TD-VG-E-29).
     RED on main (owner==0 treated as neutral); GREEN after W-1d."""
     w = _tactical_world_player0(lib, world_factory, seed=50)
 
@@ -87,7 +89,7 @@ def test_player_capture_then_produces_faction0_unit(lib, world_factory):
         f"R-126-02: spawned unit must belong to faction 0 (player), got {faction}"
     )
 
-    # Spawn position within half the capture radius (300 / 2 = 150 wu) of structure.
+    # Spawn position within half the capture radius (300 / 2 = 150 wu, inclusive: the lattice bound, TD-VG-E-29) of structure.
     sx, sy = _structure_position(lib, w)
     ux, uy = _spawn_position(lib, w, spawned_id)
     dist = ((ux - sx) ** 2 + (uy - sy) ** 2) ** 0.5

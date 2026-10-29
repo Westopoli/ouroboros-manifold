@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 46 rules, numbers from `algorithms.md` ALG-26 through ALG-28 and ALG-38 through ALG-40. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 4 open flags on S-227: Q-173-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have none. |
+| Implied-but-unstated behavior turned into flags | 2 open flags on S-227: Q-173-01 and Q-159-12 (held by E-22 S-173); Q-227-02 and Q-227-03 closed 2026-10-21 (register). S-042 to S-048 have none. |
 | Every visible-surface story has a reference | Not applicable. Tech tiers change unit look; that reference belongs to E-11. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-173-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-173-01 and Q-159-12 (held by E-22 S-173); Q-227-02 and Q-227-03 closed 2026-10-21 (register). S-042 to S-048 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -92,7 +92,7 @@ Outputs: tech level in the faction entry.
 Open flags: none. Knowledge Lost is stochastic and its constants (eligibility 20.0 economy or a 10.0 population fall over 50 ticks, probability 0.03 per eligible tick, tech −5.0, cooldown 100) are a first tuning; R-045-09 is the target Westley set and the number to retune against.
 
 ### S-046 — Archetypes spend tech differently
-Flag closed, rule text pending: Q-048-01, the economy multiplier is wired into ALG-05 growth. The rule below is what the tests read today.
+Flag closed: Q-048-01, the economy multiplier is wired into ALG-05 growth. The rule below is what the tests read today.
 As a commander, I want a conqueror's technology to show up as firepower and a fortifier's as walls and wealth, so that the same number tells different stories.
 
 Rules
@@ -100,7 +100,7 @@ Rules
 - R-046-02  Given a fortifier at tech 60, When read, Then attack 1.018, defense 1.054, economy 1.048.
 - R-046-03  Given any archetype at tech 0, When read, Then all three multipliers are 1.0.
 - R-046-04  Given the attack multiplier, When an attack resolves (E-05 S-037), Then effective attack is multiplied by it; the defender's defense multiplier multiplies effective defense.
-- R-046-05  Given the economy multiplier, When read, Then [Q-048-01: nothing in the sim consumes it today].
+- R-046-05  Given the economy multiplier, When a faction's budget accumulates (E-05 R-033-01), Then the gain is scaled by it (DEC-C15-2026-10-22).
 
 Inputs: archetype; tech.
 Outputs: multipliers used in attack resolution.
@@ -147,7 +147,7 @@ Rules
 
 Inputs: the faction's technology (S-045); the era's range of levels.
 Outputs: a mission's starting technology (E-10 mission generator, E-22 S-173).
-Open flags: Q-173-01, Q-227-02, Q-227-03, Q-159-12.
+Open flags: Q-173-01, Q-159-12. Q-227-02 and Q-227-03 closed 2026-10-21 (register: nothing flows back; tiers stay the coarse sim reading).
 
 ## Inputs
 

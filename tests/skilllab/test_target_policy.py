@@ -23,6 +23,8 @@ from fakes_trace import PARAMS, TraceFakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 F1 = "OM_TP_TARGET_POLICY_FACTION_1"
 P0 = "OM_TP_TARGET_POLICY"
 
@@ -49,7 +51,7 @@ def S(pair="absent", settings=None):
     kw = {} if pair == "absent" else {"target_policy": pair}
     if settings is not None:
         kw["settings"] = settings
-    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=10, stalemate_ticks=1000, **kw)
+    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=10, **kw)
 
 
 def run(setup):

@@ -21,16 +21,21 @@ extends SceneTree
 #   A71/A78  live path: the panel slides in (narrower than 38 percent at the
 #        start, at 38 percent within 0.40 s) and is visible at 38 percent
 #        before the first entry prints (R-069-01, R-108-02).
-#   A72/A79  keyframes never delay the map clock (R-069-03), and never delay
-#        settle: settle = replay clock at the jump's last tick AND the last
-#        entry printed and held 3.0 s. A pending keyframe never delays it.
+#   A72 (rewritten, TD-VG-B-22)  with keyframe entries pending the map holds at
+#        the next unhit keyframe while an entry prints and holds 3.0 s, and
+#        runs on once it has (R-069-03 as rewritten, Q-069-03 (a)). The A72 and
+#        A79 rulings (docs/northstar/plans/2026-10-01-architect-rulings-2.md:465,
+#        :481) that said keyframes never delay the map clock are superseded by
+#        Westley 2026-10-19 ("time varying is ok it is like a book").
+#   A79  settle = replay clock at the jump's last tick AND the last entry
+#        printed and held 3.0 s. A pending keyframe never delays settle.
 #   A73  an entry with no mentions is valid; an entry with empty text still
 #        yields the structural line, so the count on screen equals the
 #        distiller's count (R-069-06).
 #
-# Controls (expected GREEN today): A72 clock, A73, footer hidden while the
+# Controls (expected GREEN today): A73, footer hidden while the
 # replay runs, footer hidden at clock end while the last entry still prints.
-# Expected RED today: the rest of A69, A71/A78, A76, A79.
+# Expected RED today: the rest of A69, A71/A78, A76, A72 (map hold), A79.
 #
 # Run: xvfb-run -a godot --headless --path . -s res://tests/test_chronicle_scene_open.gd
 
@@ -159,7 +164,7 @@ func _run_tests() -> void:
 	await _a69_open_without_frame()
 	await _a69_general_ready_rule()
 	await _a71_panel_visible_before_first_entry()
-	await _a72_keyframes_never_hold_clock()
+	await _a72_keyframes_hold_clock_until_the_entry_has_printed()
 	await _a79_settle()
 	await _a73_entries_without_mentions_and_text()
 	await _a76_no_frame_proceed()
@@ -274,8 +279,14 @@ func _a71_panel_visible_before_first_entry() -> void:
 	await _unmount(seq)
 
 
-# A72: pending keyframe entries (the legacy bus path) never stop or slow the clock (R-069-03).
-func _a72_keyframes_never_hold_clock() -> void:
+# A72 (rewritten, TD-VG-B-22): pending keyframe entries (the legacy bus path) hold the map at the next unhit
+# keyframe while an entry prints and holds, and the map runs on once it has (R-069-03, Q-069-03 (a)).
+# The earlier A72/A79 rulings (docs/northstar/plans/2026-10-01-architect-rulings-2.md:465, :481), that keyframes
+# never stop or slow the clock, are superseded by Westley 2026-10-19 ("time varying is ok it is like a book").
+# Premise: a 10-tick replay from 100, keyframes at 101, 102, 103; entry "e1" (12 words, about 1.2 s to print)
+# is started by the first keyframe and then holds ENTRY_HOLD_S. The map reaches 101 at 0.5 s and waits there.
+# Control: with the map running on (no hold) it shows tick 104 at 2 s and ends at 5.0 s, which fails the asserts below.
+func _a72_keyframes_hold_clock_until_the_entry_has_printed() -> void:
 	_install(true)
 	var seq: Node = await _mount(SequencerScene)
 	var frame := _frame()
@@ -290,21 +301,35 @@ func _a72_keyframes_never_hold_clock() -> void:
 	for i in range(3):
 		bus.time_jump_keyframe.emit({"chronicle_entry_id": "e1", "regions_snapshot": [], "connections_snapshot": [], "military_events": []})
 	var t0 := Time.get_ticks_msec()
+	var finished := {"at": -1.0}
+	seq.get("_scroll").entry_finished_printing.connect(func(_id: String) -> void:
+		finished["at"] = (Time.get_ticks_msec() - t0) / 1000.0)
 	var tick_at_start := int(seq.qa_state().get("replay", {}).get("tick", -1))
 	var mid_tick := -1
+	var max_tick_before_release := -1
 	var elapsed := 0.0
 	var r: Dictionary = seq.qa_state().get("replay", {})
-	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < 9000:
+	while bool(r.get("active", false)) and Time.get_ticks_msec() - t0 < 15000:
 		await process_frame
 		r = seq.qa_state().get("replay", {})
 		elapsed = (Time.get_ticks_msec() - t0) / 1000.0
 		if elapsed >= 2.0 and mid_tick < 0:
 			mid_tick = int(r.get("tick", -1))
+		# before the printed entry has held ENTRY_HOLD_S (less a frame of slack) the map may not pass tick 101
+		if finished["at"] < 0.0 or elapsed < finished["at"] + ENTRY_HOLD_S - TIMING_SLACK_S:
+			max_tick_before_release = maxi(max_tick_before_release, int(r.get("tick", -1)))
+	print("INFO: A72 entry printed at %.2f s, tick at 2 s %d, highest tick before release %d, replay ended at %.2f s" % [finished["at"], mid_tick, max_tick_before_release, elapsed])
+	var release_at: float = finished["at"] + ENTRY_HOLD_S
+	var expected_end: float = release_at + float(110 - 101) / TICKS_PER_SECOND
 	_assert(tick_at_start == 100, "A72: replay did not start at from_tick (tick %d)" % tick_at_start)
-	_assert(mid_tick >= 103 and mid_tick <= 105,
-		"A72: replay tick after 2 s was %d with keyframe entries pending, expected about 104 (%.0f ticks per second; the map is the master clock, R-069-03)" % [mid_tick, TICKS_PER_SECOND])
-	_assert(not bool(r.get("active", false)) and absf(elapsed - 5.0) <= 0.6,
-		"A72: a 10-tick replay with keyframe entries pending took %.2f s, expected 5.0 s" % elapsed)
+	_assert(finished["at"] > 0.0 and finished["at"] < 2.0,
+		"A72: control: the keyframe entry finished printing at %.2f s, expected within 2 s (12 words at 0.08 s each)" % finished["at"])
+	_assert(mid_tick == 101,
+		"A72: replay tick after 2 s was %d while the keyframe entry prints and holds, expected 101: the map holds at the next unhit keyframe (R-069-03, Q-069-03 (a))" % mid_tick)
+	_assert(max_tick_before_release <= 101,
+		"A72: the replay tick reached %d before the printed entry had held %.1f s (printed at %.2f s), expected never past the keyframe at 101" % [max_tick_before_release, ENTRY_HOLD_S, finished["at"]])
+	_assert(not bool(r.get("active", false)) and absf(elapsed - expected_end) <= 0.6,
+		"A72: a 10-tick replay with a keyframe entry pending took %.2f s, expected %.2f s (entry printed at %.2f s, held %.1f s, then 9 ticks at %.0f per second)" % [elapsed, expected_end, finished["at"], ENTRY_HOLD_S, TICKS_PER_SECOND])
 	await _unmount(seq)
 
 

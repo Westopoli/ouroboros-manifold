@@ -1,0 +1,687 @@
+# spec: docs/northstar/plans/method_rev3_2026-10-26/spec.md "Design" and "The gaps" (HARNESS-mm-1a)
+# Every threshold is a DRAFT: approved = "" until Westley approves it (a metric with an empty approved prints DRAFT, never PASS).
+# `baseline` is the W43 value where the spec measured it, else "" (computed in Phase 2). `lanes` feed M16.
+phase = "lab"
+lanes = ["VG-A", "VG-B", "VG-C", "VG-D", "VG-E", "VG-F", "VG-T"]
+
+[M01]
+id = "M01"
+gap = "G01"
+draft = "DRAFT-mm-M01"
+value = 1.5
+direction = "<="
+unit = "ratio"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+min_game_lines = 200
+
+[M01b]
+id = "M01b"
+gap = "G01"
+draft = "DRAFT-mm-M01b"
+value = 0
+direction = "<="
+unit = "runs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M02]
+id = "M02"
+gap = "G02"
+draft = "DRAFT-mm-M02"
+value = 1.0
+direction = "<="
+unit = "ratio"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M02b]
+id = "M02b"
+gap = "G02"
+draft = "DRAFT-mm-M02b"
+value = 10
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M03]
+id = "M03"
+gap = "G02"
+draft = "DRAFT-mm-M03"
+value = 2
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M04]
+id = "M04"
+gap = "G03"
+draft = "DRAFT-mm-M04"
+value = 2.0
+direction = "<="
+unit = "ratio"
+approved = "Westley 2026-10-28"
+baseline = 7.26 # lab phase: 334 docs-only over 46 product commits (the client-only sense, 332 over 18, was 18.4)
+window = "week"
+phase = "both"
+
+[M05]
+id = "M05"
+gap = "G03"
+draft = "DRAFT-mm-M05"
+value = 3
+direction = "<="
+unit = "ratio"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M05b]
+id = "M05b"
+gap = "G03"
+draft = "DRAFT-mm-M05b"
+value = 2
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M06]
+id = "M06"
+gap = "G04"
+draft = "DRAFT-mm-M06"
+value = 25
+direction = "<="
+unit = "%"
+approved = "Westley 2026-10-28"
+baseline = 67
+window = "week"
+phase = "both"
+
+[M06b]
+id = "M06b"
+gap = "G04"
+draft = "DRAFT-mm-M06b"
+value = 0
+direction = "<="
+unit = "runs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M07]
+id = "M07"
+gap = "G19"
+draft = "DRAFT-mm-M07"
+value = 5
+direction = "<="
+unit = "%"
+approved = "Westley 2026-10-28"
+baseline = 6.2
+window = "week"
+phase = "both"
+
+[M07b]
+id = "M07b"
+gap = "G19"
+draft = "DRAFT-mm-M07b"
+value = 0
+direction = "<="
+unit = "runs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M08]
+id = "M08"
+gap = "G05"
+draft = "DRAFT-mm-M08"
+value = 0
+direction = "<="
+unit = "calls"
+approved = "Westley 2026-10-28"
+baseline = 1229 # manifold project only, all transcripts, W43 (Jarvis sessions are not counted)
+window = "week"
+phase = "both"
+
+[M08b]
+id = "M08b"
+gap = "G05"
+draft = "DRAFT-mm-M08b"
+value = 0
+direction = "<="
+unit = "turns"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M09]
+id = "M09"
+gap = "G06"
+draft = "DRAFT-mm-M09"
+value = 0
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = 5
+window = "week"
+phase = "both"
+
+[M09b]
+id = "M09b"
+gap = "G06"
+draft = "DRAFT-mm-M09b"
+value = 3600
+direction = "<="
+unit = "s"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M09c]
+id = "M09c"
+gap = "G06"
+draft = "DRAFT-mm-M09c"
+value = 3600
+direction = "<="
+unit = "s"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M10]
+id = "M10"
+gap = "G07"
+draft = "DRAFT-mm-M10"
+value = 40
+direction = ">="
+unit = "lines"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+min_rows = 3
+
+[M10b]
+id = "M10b"
+gap = "G07"
+draft = "DRAFT-mm-M10b"
+value = 0
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M11]
+id = "M11"
+gap = "G08"
+draft = "DRAFT-mm-M11"
+value = 2.0
+direction = "<="
+unit = "ratio"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M11b]
+id = "M11b"
+gap = "G08"
+draft = "DRAFT-mm-M11b"
+value = 120
+direction = "<="
+unit = "lines"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M11b-bytes]
+id = "M11b-bytes"
+gap = "G08"
+draft = "DRAFT-mm-M11b-bytes"
+value = 18000
+direction = "<="
+unit = "bytes"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M11c]
+id = "M11c"
+gap = "G08"
+draft = "DRAFT-mm-M11c"
+value = 0
+direction = "<="
+unit = "files"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M12a]
+id = "M12a"
+gap = "G09"
+draft = "DRAFT-mm-M12a"
+value = 25
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "beta"
+
+[M12b]
+id = "M12b"
+gap = "G09"
+draft = "DRAFT-mm-M12b"
+value = 80
+direction = ">="
+unit = "%"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "beta"
+
+[M12c]
+id = "M12c"
+gap = "G09"
+draft = "DRAFT-mm-M12c"
+value = 1
+direction = ">="
+unit = "stories"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "beta"
+
+[M13]
+id = "M13"
+gap = "G10"
+draft = "DRAFT-mm-M13"
+value = 2
+direction = "<="
+unit = "runs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M13b]
+id = "M13b"
+gap = "G10"
+draft = "DRAFT-mm-M13b"
+value = 1.0
+direction = "<="
+unit = "ratio"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M14]
+id = "M14"
+gap = "G11"
+draft = "DRAFT-mm-M14"
+value = 4
+direction = "<="
+unit = "runs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M14b]
+id = "M14b"
+gap = "G11"
+draft = "DRAFT-mm-M14b"
+value = 0
+direction = "<="
+unit = "roles"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M15]
+id = "M15"
+gap = "G12"
+draft = "DRAFT-mm-M15"
+value = 20
+direction = "<="
+unit = "%"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+max_unknown = 20 # percent of runs with no RESULT line above which M15 FAILs (draft)
+
+[M16]
+id = "M16"
+gap = "G13"
+draft = "DRAFT-mm-M16"
+value = 2
+direction = ">="
+unit = "pieces"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M18a]
+id = "M18a"
+gap = "G15"
+draft = "DRAFT-mm-M18a"
+value = 12
+direction = "<="
+unit = "dirs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M18b]
+id = "M18b"
+gap = "G15"
+draft = "DRAFT-mm-M18b"
+value = 20
+direction = "<="
+unit = "dirs"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M18c]
+id = "M18c"
+gap = "G15"
+draft = "DRAFT-mm-M18c"
+value = 120
+direction = "<="
+unit = "GB"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M18d]
+id = "M18d"
+gap = "G15"
+draft = "DRAFT-mm-M18d"
+value = 10
+direction = "<="
+unit = "branches"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M19a]
+id = "M19a"
+gap = "G02"
+draft = "DRAFT-mm-M19a"
+value = 0
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = 0 # nothing before 2026-10-26 counts; 182 untagged FINDING rows existed before the date
+window = "week"
+phase = "both"
+
+[M19b]
+id = "M19b"
+gap = "G17"
+draft = "DRAFT-mm-M19b"
+value = 0
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = 40
+window = "week"
+phase = "both"
+
+[M19c]
+id = "M19c"
+gap = "G16"
+draft = "DRAFT-mm-M19c"
+value = 0
+direction = "<="
+unit = "commits"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M20]
+id = "M20"
+gap = "G18"
+draft = "DRAFT-mm-M20"
+value = 20
+direction = "<="
+unit = "%"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "lab"
+
+[M21a]
+id = "M21a"
+gap = "G20"
+draft = "DRAFT-mm-M21a"
+value = 1
+direction = "<="
+unit = "rows"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M21b]
+id = "M21b"
+gap = "G20"
+draft = "DRAFT-mm-M21b"
+value = 8
+direction = "<="
+unit = "lines"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M22]
+id = "M22"
+gap = "G21"
+draft = "DRAFT-mm-M22"
+value = 2
+direction = "<="
+unit = "sessions"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M23]
+id = "M23"
+gap = "G22"
+draft = "DRAFT-mm-M23"
+value = 0
+direction = "<="
+unit = "files"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M24a]
+id = "M24a"
+gap = "G23"
+draft = "DRAFT-mm-M24a"
+value = 3
+direction = "<="
+unit = "commits"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M24b]
+id = "M24b"
+gap = "G23"
+draft = "DRAFT-mm-M24b"
+value = 1
+direction = "<="
+unit = "folders"
+approved = "Westley 2026-10-28"
+baseline = ""
+window = "week"
+phase = "both"
+
+[M25]
+id = "M25"
+gap = "G24"
+draft = "DRAFT-mm-M25"
+value = 1.0
+direction = "<="
+unit = "ratio"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M26]
+id = "M26"
+gap = "G24"
+draft = "DRAFT-mm-M26"
+value = 1500
+direction = "<="
+unit = "M"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+day_m = 300
+dispatcher_m = 60
+pieces_m = 180
+reserve_m = 60
+
+[M27]
+id = "M27"
+gap = "G24"
+draft = "DRAFT-mm-M27"
+value = 0.1
+direction = "<="
+unit = "ratio"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M28]
+id = "M28"
+gap = "G24"
+draft = "DRAFT-mm-M28"
+value = 4
+direction = "<="
+unit = "messages"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M29]
+id = "M29"
+gap = "G24"
+draft = "DRAFT-mm-M29"
+value = 1
+direction = "<="
+unit = "runs"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+# Planned tokens per task type, in millions (DEC-daily-allotment-2026-10-27; spec A10): median, ceiling, calls cap.
+# A role in a run label maps to the table of the same name. All DRAFT until Westley approves the numbers.
+[estimates.tests]
+median_m = 3.8
+ceiling_m = 16
+calls_cap = 60
+
+[estimates.build]
+median_m = 1.2
+ceiling_m = 6.3
+calls_cap = 40
+
+[estimates.land]
+median_m = 1.6
+ceiling_m = 5.5
+calls_cap = 40
+
+[estimates.records]
+median_m = 0.2
+ceiling_m = 1.2
+calls_cap = 15
+
+[estimates.audit]
+median_m = 4.7
+ceiling_m = 13.8
+calls_cap = 60
+
+[estimates.research]
+median_m = 1.4
+ceiling_m = 6.4
+calls_cap = 30
+
+[estimates.drift]
+median_m = 10.9
+ceiling_m = 15
+calls_cap = 70
+
+# List prices in dollars per million tokens, Anthropic pricing page (platform.claude.com/docs/en/about-claude/pricing),
+# fetched 2026-10-27. cache_write is the 5-minute rate; Haiku 5.5 is the up-to-100,000-token tier. Keys are model id prefixes.
+[prices."claude-fable-5-1"]
+input = 10.0
+cache_read = 0.25
+cache_write = 12.5
+output = 50.0
+
+[prices."claude-opus-5-5"]
+input = 4.0
+cache_read = 0.2
+cache_write = 5.0
+output = 20.0
+
+[prices."claude-sonnet-5-5"]
+input = 2.0
+cache_read = 0.1
+cache_write = 2.5
+output = 10.0
+
+[prices."claude-haiku-5-5"]
+input = 0.1
+cache_read = 0.01
+cache_write = 0.125
+output = 0.5

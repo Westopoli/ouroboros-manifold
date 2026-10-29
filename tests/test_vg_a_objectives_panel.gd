@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-104-01@1aaaa3
 
 # VG-A piece A6. Proves S-075 (one primary objective progressing, up to three secondary) and S-104 / R-104-01
 # (objective list with progress, top-left). section 2 objectives[{i,progress,done}].

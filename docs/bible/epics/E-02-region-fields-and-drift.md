@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 13 stories, 60 rules; the numbers of S-012 to S-020 and S-160 are from `algorithms.md` ALG-01 through ALG-10. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. No player inputs; every input is sim-internal. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 open flags: Q-220-01, Q-220-02, Q-159-13 (S-220), and Q-193-04, Q-193-05 (cited by S-222, parked). |
+| Implied-but-unstated behavior turned into flags | 3 open flags: Q-159-13 (S-220), and Q-193-04, Q-193-05 (cited by S-222, parked); Q-220-01 and Q-220-02 closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate; S-220 is blocked on Q-220-01, Q-220-02 and Q-159-13, and S-222 on Q-193-04 and Q-193-05 (cited from E-17 S-193, parked). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
+**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate; S-220 is blocked on Q-159-13 (Q-220-01 and Q-220-02 closed 2026-10-21), and S-222 on Q-193-04 and Q-193-05 (cited from E-17 S-193, parked). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
 
 ## Purpose
 
@@ -185,7 +185,7 @@ Rules
 
 Inputs: the consequence bundle and the mission's end state (E-10).
 Outputs: the region record, if any of the flags above add to it; the chronicle (E-09).
-Open flags: Q-220-01, Q-220-02, Q-159-13.
+Open flags: Q-159-13. Q-220-01 and Q-220-02 closed 2026-10-21 (register: no contract change; mission-only for now).
 
 ### S-221 — A region's climate, landform and trouble come from the seed
 As a commander, I want each region to have its own climate, landform and environmental trouble, so that no two missions are fought on the same kind of ground.

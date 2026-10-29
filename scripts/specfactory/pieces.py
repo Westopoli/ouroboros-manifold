@@ -42,8 +42,17 @@ ROOTS = ("tests/csim", "tests/qa/t1", "tests/qa/desktop", "tests/transport", "te
 # Record folders every shot-carrying piece writes into (the Westley shot page and its
 # copies, docs/northstar/story_reviews/westley/README.md): shared by rule, so a piece
 # may list them in owns without an owns-overlap finding, and the footprint fence ignores
-# them (merge_gate_support.DEFAULT_IGNORES). See also: HARNESS-westley-folder.
-SHARED_RECORD_GLOBS = ("docs/northstar/story_reviews/westley/*",)
+# them (merge_gate_support.DEFAULT_IGNORES). Record files every landing appends rows to
+# (ledger, register, decisions, decision-pack batch, lane review pages) have no owner either.
+# See also: HARNESS-westley-folder, HARNESS-record-files.
+SHARED_RECORD_GLOBS = (
+    "docs/northstar/story_reviews/westley/*",
+    "docs/northstar/plans/push_ledger_2026-09-22.md",
+    "docs/northstar/ambiguity_register.md",
+    "docs/northstar/story_reviews/westley/decisions.md",
+    "docs/northstar/plans/decision_pack_2026-10-18/batch.md",
+    "docs/northstar/story_reviews/*.md",
+)
 
 
 def load_pieces(path: Path) -> list[dict]:

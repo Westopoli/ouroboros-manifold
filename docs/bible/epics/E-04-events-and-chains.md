@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 33 rules, values from `algorithms.md` ALG-32 through ALG-37 and the launch library table. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags, Q-225-01 and Q-225-02, both on S-225. |
+| Implied-but-unstated behavior turned into flags | No open flags; Q-225-01 and Q-225-02 on S-225 closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | Not applicable; events reach the player through the chronicle (E-09) and world view (E-16). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-026 to S-031 have no open flags and passed 2026-09-14. S-225 (added 2026-10-02) has not been through the gate and is blocked on Q-225-01 and Q-225-02.
+**Gate verdict: not passed.** S-026 to S-031 have no open flags and passed 2026-09-14. S-225 (added 2026-10-02) has not been through the gate and has no open flags (Q-225-01 and Q-225-02 closed 2026-10-21, register).
 
 ## Purpose
 
@@ -150,7 +150,7 @@ Rules
 
 Inputs: the region's trouble (E-02 S-221); the template table.
 Outputs: none until Q-225-01 is answered.
-Open flags: Q-225-01, Q-225-02.
+Open flags: none. Q-225-01 and Q-225-02 closed 2026-10-21 (register: tactical only, the 26 templates stay closed; in-mission events).
 
 ## Inputs
 

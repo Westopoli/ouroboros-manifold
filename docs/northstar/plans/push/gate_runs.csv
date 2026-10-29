@@ -1,0 +1,12 @@
+date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject_causes,product_lines,test_lines,docs_lines,lab_lines
+2026-10-26,"HARNESS-mm-2,HARNESS-gate-base-after-lock,HARNESS-userdir",push/land-mm-2,65e43a66a167a14e75f8fb154e1944ddb03516c4,c4b83bef3581acae47e674b1ab584012e4a488d6,8,2110.9,0,,,0,149,0,0
+2026-10-26,"HARNESS-mm-3,HARNESS-C4,PP-ledger",push/land-mm-3,1130a816854551c8482f47d9be1a47a72548bc79,c82be5eb741a2b34a8263a8adb83ecbc672b593f,235,3852.7,0,,,0,209,28,0
+2026-10-27,"HARNESS-mm-1a,HARNESS-mm-1b,HARNESS-mm-1c,HARNESS-mm-4,HARNESS-methodcheck",push/land-mm-1c,3504663f785ddd2453b0daa0d1bf9adb0a3bae3e,81896ac81664ac030c67b6855cdd2f27b363db87,0,4078.4,1,specfactory_regression,baseline: computed 3504663f785ddd2453b0daa0d1bf9adb0a3bae3e REJECT new failures: ['tests/specfactory/test_method_weekly.,0,908,332,0
+2026-10-27,HARNESS-mm-9,push/land-mm-9,7c509c75a5349e2928be49fb8bc5a73daea316c4,f9548ed9224b58ef81133b14d1becc4d97b07a44,0,4057.1,0,,,0,53,0,0
+2026-10-28,HARNESS-mm-8,push/land-mm-8,8affaf027c2d3ca62c216e3a6405cc9cf1c97581,3ffc5997d8fcdf3ade68f5d18a786ff1039e9922,0,4169.1,0,,,0,406,0,0
+2026-10-28,HARNESS-mm-14,push/land-mm-14,2db7c138a508b718ab614900766fa443853c9323,72a5d46a9790989e7ea6a9515cb435dbb2b5c48b,0,4177.4,0,,,0,15,0,0
+2026-10-28,HARNESS-mm-16,push/land-mm-16,213c33339d7d991c305a4ff659be7686e95130e0,77214a3a391a942a9f21c78cda23dbba13d16b8e,0,4219.9,0,,,0,19,0,0
+2026-10-28,HARNESS-mm-15,push/land-mm-15,4b132aa9718744ac838a39cb1516973eee848bcf,b2771339138aa208edab79825f6b0b21a19957a8,,4125.9,1,acceptance,"test_6_settings_has_the_session_start_hook_line_for_metrics_last (mm-6 known red)",,,,
+2026-10-28,HARNESS-mm-15,push/land-mm-15,d2adc6fb77844806feba1518adbcbbda1a9941c5,9f2d233ac9ad11836e4696952ccf3ea07248db0d,0,3998.7,0,,,0,56,0,0
+2026-10-29,HARNESS-mm-12,push/land-mm-12,b1033d37b79db8dc7d46671c84566a77191c98c5,b0db675f324f2248f8ffffcd102eca31d9384a49,0,4167.5,0,,,0,357,0,0
+2026-10-29,HARNESS-mm-18,push/land-mm-18b,84b2567e2690aed8ea8e4823bd8ebd7337d617f0,b7b25e2dd21d793e05551161f4debb26997cea78,0,4187.4,0,,,0,22,0,0

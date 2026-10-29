@@ -30,6 +30,8 @@ from scripts.skilllab.contract import Group, Setup, Step  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 from scripts.skilllab.rows import fight_row  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 A0, A1 = (-300.0, 0.0), (300.0, 0.0)
 PING_LAYER, PING_X, PING_Y = 4, 1500.0, 0.0     # provisional (2026-10-05)
 TARGET_LAYER = 3                                  # provisional (2026-10-05)
@@ -76,8 +78,8 @@ def G(side, count=2):
 
 
 def S(timeline=(), max_ticks=10):
-    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=1000,
-                 sample_every=5, timeline=tuple(timeline))
+    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=max_ticks,
+                 sample_every=5, timeline=tuple(timeline), orders_per_unit=False)   # group-level order log under test
 
 
 def run(setup, seed=0, **fake_kw):
@@ -212,10 +214,21 @@ def test_a_step_on_a_dead_group_is_dropped_like_the_old_kinds():
 
 # ---- no new steps: nothing changes --------------------------------------------------------------------------
 
+ROW5 = dict(knob="none", knob_value=None, baseline="none", ceiling_hit=0, prefight="ok")   # LAB-REV2-L2: the five supplied columns
+
+
+def _old_columns(row):
+    """The twelve columns of BASELINE_ROW (recorded before the rev 2 columns existed), in the row's order."""
+    return {k: row[k] for k in BASELINE_ROW}
+
+
 def test_a_fight_without_the_new_steps_gives_the_recorded_row_and_no_new_calls():
+    """LAB-REV2-L2: the rev 2 columns come after the twelve recorded ones, which are unchanged."""
     result, fake = run(S())
-    assert fight_row(result) == BASELINE_ROW
-    assert repr(fight_row(result)) == repr(BASELINE_ROW)
+    row = fight_row(result, **ROW5)
+    assert _old_columns(row) == BASELINE_ROW
+    assert repr(_old_columns(row)) == repr(BASELINE_ROW)
+    assert list(row)[:len(BASELINE_ROW)] == list(BASELINE_ROW)
     assert result.steps_fired == () and fake.new_log == []
 
 
@@ -223,4 +236,4 @@ def test_old_steps_alone_leave_the_row_unchanged_by_the_new_code():
     old = [Step(0, ("tick", 3), "move", (5.0, 6.0))]
     r1, _ = run(S(old))
     r2, _ = run(S(old))
-    assert fight_row(r1) == fight_row(r2) and r1.steps_fired == ((0, 3),)
+    assert fight_row(r1, **ROW5) == fight_row(r2, **ROW5) and r1.steps_fired == ((0, 3),)

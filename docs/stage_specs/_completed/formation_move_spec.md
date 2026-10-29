@@ -203,7 +203,7 @@ Westley signs off after seeing all six.
 - Adaptive spacing through corridors.
 - Leader/follower flocking.
 - Replacing `_probe_is_blocked` probe steering.
-- Any ORCA/RVO revisit (see `docs/random/cc_paste_rvo_revert.md`).
+- Any ORCA/RVO revisit (see `docs/legacy/random/cc_paste_rvo_revert.md`).
 
 ## Files Created
 

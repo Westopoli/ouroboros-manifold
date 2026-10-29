@@ -63,12 +63,12 @@ As a commander, I want an elevated position to see farther, so that vantage is w
 
 Rules
 - R-091-01  Given a space era (vantage nodes are retired for ground eras, where high ground sees down, E-01 R-005-09; Westley, 2026-10-05) and a unit within a vantage node's radius (default 100 wu), When visibility is computed, Then cross-layer factors double and extend one layer (E-01 R-005-06).
-- R-091-02  Given a space era (the elevation bonus is retired for ground eras, replaced by E-01 R-005-09; Westley, 2026-10-05) and an elevation tier difference of d between observer and target, When the era enables elevation sensor bonus, Then the observer's effective radius is multiplied by 1 + 0.15 · d [Q-092-01: nothing in code reads this].
+- R-091-02  Given a space era (the elevation bonus is retired for ground eras, replaced by E-01 R-005-09; Westley, 2026-10-05) and an elevation tier difference of d between observer and target, When the era enables elevation sensor bonus, Then the observer's effective radius is multiplied by 1 + 0.15 · d (built: the tier is read in csrc/fog.c; a sensor of 800 at a tier difference of 2 reaches 1040; Q-092-01 closed, Westley 2026-09-13; no spawn path sets a tier yet, positioning audit 2026-10-19).
 - R-091-03  Given the Settled Reach, When elevation is read, Then it affects sensors only, never damage (E-11 R-084-06).
 
 Inputs: vantage nodes; elevation gradient.
 Outputs: effective radius.
-Open flags: Q-091-01 (how the elevation tiers of R-091-02, steps of 0.25, relate to the five height-band layers, now that on land maps elevation and layers come from one height field (E-17 S-190); and whether the bonus is symmetric, since the sign of the tier difference is not stated while vision across layers is symmetric by layer distance, E-01 S-005).
+Open flags: none. Q-091-01 closed 2026-10-21 (register): the elevation bonus is retired for ground eras; the layers are the only elevation there.
 
 ### S-092 — Recon, then fog
 As a commander, I want to study the whole map before I commit and then lose sight of everything but what my units see, so that planning and scouting are two different skills.
@@ -101,7 +101,7 @@ As a commander, I want unexplored space, interference, and revealed ground to re
 
 Rules
 - R-094-01  Given a T2 screenshot, When inspected, Then revealed area, fogged area, and interference zones are three distinguishable treatments.
-- R-094-02  Given a unit inside interference, When drawn, Then its own sensor circle is visibly smaller.
+- R-094-02  Given a unit inside interference, When drawn, Then its own sight disc is visibly smaller.
 
 Inputs: visibility; interference field.
 Outputs: screen.
@@ -155,7 +155,7 @@ Open flags: none.
 |---|---|
 | Per-unit visible sets, player-visible list | Tick delta; T1 trace |
 | Visible structures; per-side record of enemy unit types seen | Tick delta; T1 trace |
-| Fog render, sensor circles, interference | Screen; T2 screenshots |
+| Fog render, sight discs, interference | Screen; T2 screenshots |
 | Recon state | Screen; mission clock |
 
 ## Invariants

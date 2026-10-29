@@ -1,6 +1,6 @@
 extends SceneTree
 
-# Piece B10 (docs/northstar/plans/workflows_2026-10-07/vg-wave2b-laneB.js; ruling A54 and A60 in
+# Piece B10 (scripts/specfactory/workflows/vg-wave2b-laneB.js; ruling A54 and A60 in
 # docs/northstar/plans/2026-10-01-architect-rulings-2.md; E-16 R-110-02 / S-106): the galaxy quality
 # setting is STORED ([display] galaxy_quality, int 0..2, default 0, clamped on save and on read),
 # READ by scenes/galaxy/galaxy_quality.gd, and APPLIED to the shell renderer's res_divisor

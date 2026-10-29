@@ -2,7 +2,25 @@
 # (FAIL: res://tests/<file>.gd, or a pytest node id), then " :: ", then the ledger or finding row id that keeps it visible. A GATE REJECT line that names a test
 # listed here does not stop the clerk pushing main; a reject outside this file and lane_plays_known_red.txt does. The entry leaves when the row closes.
 # See also: scripts/specfactory/lane_plays_known_red.txt (plays); the merge gate itself does not read this file.
-res://tests/test_tactical_camera.gd :: FINDING-edge-scroll-xvfb
-res://tests/test_time_jump_replay.gd :: FINDING-gd-red-main-2026-10-12
 res://tests/test_vg_e_e1p.gd :: FINDING-gd-red-main-2026-10-12
-res://tests/test_galaxy_quality_setting.gd :: FINDING-gd-red-main-2026-10-12b
+# VG-CONTRACT-E7: starting-force goldens, red until VG-E-startforce re-records them once (TD-VG-E-26); VG-E-startforce deletes these lines in its re-record commit
+tests/csim/parity/baseline/test_baseline_hashes.py::test_baseline_unit_state_hash_unchanged_o2[a99_fight_502_gap100] :: TD-VG-E-26, TD-VG-E-29
+tests/csim/parity/baseline/test_baseline_hashes.py::test_baseline_unit_state_hash_unchanged_o2[a99_fight_990_gap300] :: TD-VG-E-26, TD-VG-E-29
+tests/csim/test_E01_T3_mission_ground.py::test_control_space_era_setup_unchanged[1] :: TD-VG-E-26
+tests/csim/test_E01_T3_mission_ground.py::test_control_space_era_setup_unchanged[2] :: TD-VG-E-26
+tests/csim/test_E01_T3_mission_ground.py::test_control_space_era_setup_unchanged[3] :: TD-VG-E-26
+tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes[fight_502_gap100] :: TD-VG-E-26
+tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes[idle_502] :: TD-VG-E-26
+tests/csim/test_E13_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes[idle_990] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_A99_traces_unchanged_with_target_by_sight_0[fight_502_gap100] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_A99_traces_unchanged_with_target_by_sight_0[fight_990_gap1500] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_A99_traces_unchanged_with_target_by_sight_0[fight_990_gap3000] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_A99_traces_unchanged_with_target_by_sight_0[fight_990_gap300] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_A99_traces_unchanged_with_target_by_sight_0[idle_502] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_A99_traces_unchanged_with_target_by_sight_0[idle_990] :: TD-VG-E-26
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_baseline_fights_unchanged_with_target_by_sight_0[a99_fight_502_gap100] :: TD-VG-E-26, TD-VG-E-29
+tests/csim/test_PP_C_g3_hash_invariant.py::test_G3_baseline_fights_unchanged_with_target_by_sight_0[a99_fight_990_gap300] :: TD-VG-E-26, TD-VG-E-29
+tests/csim/test_PP_portability.py::test_W7_probe_reproduces_pinned_checksums :: TD-VG-E-26, TD-VG-E-29
+tests/csim/test_PP_target_policy_per_side.py::test_A196_A99_guard_positive_control_policy_1_changes_nothing_here_but_a_perturbed_hash_is_caught :: TD-VG-E-26
+tests/csim/test_PP_target_policy_per_side.py::test_A196_policy_0_explicit_equals_the_recorded_A99_hashes :: TD-VG-E-26
+tests/specfactory/test_method_weekly.py::test_6_settings_has_the_session_start_hook_line_for_metrics_last :: METHOD-rev3-mm-1c-landing (HARNESS-mm-6 halted behind HARNESS-context-guard-2; entry leaves when mm-6 attaches)

@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 49 rules; numbers from the bible's combat visuals and animation sections and the Stage 1 A-368, A-369, A-372 rewrites; the world, settlement, economy, layer-action and scale stories (S-236 to S-240) leave numbers and looks to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes; every output is a screen, T2-checkable. |
-| Implied-but-unstated behavior turned into flags | 6 open flags: Q-132-02 (S-132), Q-133-01 (S-133), and Q-236-02, Q-237-01, Q-238-01, Q-239-01 on S-236 to S-240 (Q-236-02 is also listed on S-132). |
+| Implied-but-unstated behavior turned into flags | 4 open flags: Q-132-02 (S-132), and Q-237-01, Q-238-01, Q-239-01 on S-236 to S-240; Q-133-01 and Q-236-02 closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | **No.** This entire epic is a visible surface. Art of Rally (look), the opening battle of Revenge of the Sith (combat weight), Halo CE (world-building), and Claude Code's spinner (glyph animation) are the bible's named references; none is attached as a screenshot yet. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -38,7 +38,7 @@ Rules
 
 Inputs: era manifest models.
 Outputs: screen.
-Open flags: Q-132-02, Q-236-02. The readability check is manual review plus the playtest silhouette-naming question (Track L hypothesis H12); no automated classifier at launch.
+Open flags: Q-132-02. Q-236-02 closed 2026-10-21 (register: a named draft). The readability check is manual review plus the playtest silhouette-naming question (Track L hypothesis H12); no automated classifier at launch.
 
 ### S-133 — Three tiers you can read
 As a commander, I want a faction's technology tier to show in how its ships look, and to show loss when it falls, so that history is visible on the battlefield.
@@ -53,7 +53,7 @@ Rules
 
 Inputs: tier; era manifest.
 Outputs: screen.
-Open flags: Q-133-01.
+Open flags: none. Q-133-01 closed 2026-10-21 (register: a content budget, a named draft).
 
 ### S-134 — Attacks read as mass
 As a commander, I want shots to travel, hits to bloom, and nothing to twitch, so that combat feels heavy and slow enough to read.
@@ -127,7 +127,7 @@ Design decided 2026-10-02, not scheduled for building (E-17 S-166). These rules 
 
 Rules
 - R-236-01  Given the camera at any zoom between a single unit and the battlefield's map view, When the world is drawn, Then it is one world drawn at continuous detail: deep detail fully zoomed in, the shape of the land zoomed out, with smooth transitions between very different zoom levels and no pop from one level of detail to the next (E-17 R-166-05, E-16 S-234).
-- R-236-02  Given ground fitted to five height bands (E-17 R-166-04, R-166-06), When it is drawn, Then a step between bands is drawn as the real difference in height it is, benched and natural ground are both drawn, and cliffs, waterfalls and mountainsides read as the landforms they are.
+- R-236-02  Given ground fitted to five height bands (E-17 R-166-04, R-166-06), When it is drawn, Then a step between bands is drawn as the real difference in height it is, benched and natural ground are both drawn, and cliffs, waterfalls and mountainsides read as the landforms they are; the land ground is one colour; a band is told by its height step and by sight, never by a colour (Westley 2026-10-22, DEC-S004-vision-not-colour).
 - R-236-03  Given the Settled Reach, When a landform such as a cliff or a waterfall would appear, Then it does not appear: cliffs and waterfalls do not exist in space, and the space and ground eras are kept separate (E-17 R-188-05; Westley, 2026-10-06). What the space landscape draws is Q-166-02.
 
 Inputs: the map's fields and height bands; era manifest.
@@ -233,7 +233,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-132-02, Q-133-01, Q-236-02, Q-238-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-132-02, Q-238-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

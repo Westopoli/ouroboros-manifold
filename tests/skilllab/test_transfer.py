@@ -89,3 +89,23 @@ def test_labels_reach_fight_row_and_are_deterministic():
     row = rows.fight_row(r, **wrapped.labels)
     assert row["transfer"] == RULE_GEOMETRY and list(row)[0] == "transfer"
     assert label_build(_build()).labels == wrapped.labels
+
+
+# ---------- LAB-REV2-L5 (spec: 2026-10-14-skill-lab-rev2-spec.md::Pieces::L5 owns transfer.py; contract Setup gains firing_arc_deg and cone) ----------
+# RULED (Architect decision 29 item 7, restated in decision 31 G): the swept values of the arc and cone families are magnitudes (they will be
+# retuned); the mechanisms themselves (the arc gate, the sector) are rule geometry already ruled by Westley. The writer's reading stands for
+# the values: a Setup with firing_arc_deg below 360 or a non-empty cone is MAGNITUDES. The tests below stay.
+
+def test_l5_a_narrowed_firing_arc_is_a_magnitude():
+    assert transfer_class(setup(firing_arc_deg=30.0)) == MAGNITUDES
+    assert transfer_class(setup(firing_arc_deg=360.0)) == RULE_GEOMETRY          # the default arc changes nothing (negative control)
+
+
+def test_l5_a_cone_is_a_magnitude_and_an_empty_cone_is_not():
+    assert transfer_class(setup(cone={"Vanguard": (300.0, 45.0, 1.0)})) == MAGNITUDES
+    assert transfer_class(setup(cone={})) == RULE_GEOMETRY
+
+
+def test_l5_the_shared_point_and_the_order_style_stay_geometry():
+    """Where the units meet and how the orders are issued are layout, not a tunable number."""
+    assert transfer_class(setup(point=(100.0, 200.0), orders_per_unit=False)) == RULE_GEOMETRY

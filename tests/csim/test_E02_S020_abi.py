@@ -1,3 +1,4 @@
+# Rule pins: R-045-07@5f208d
 """S-020 -- ABI version and layout check.
 
 The header's own comment on om_abi_version (csrc/ouroboros_sim.h): "The test
@@ -19,7 +20,7 @@ from conftest import OMTier, OmCollision, OmDriftRow, OmTraceRow, set_region
 
 
 def test_R_020_abi_version_is_4(lib):
-    assert lib.om_abi_version() == 7
+    assert lib.om_abi_version() == 8
 
 
 def test_R_020_layout_check_matches_caller_sizes(lib):
