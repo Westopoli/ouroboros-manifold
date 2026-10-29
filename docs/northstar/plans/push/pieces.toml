@@ -3732,11 +3732,53 @@ wave = 13
 owns = ["scripts/specfactory/bisect_clerk.sh", "tests/specfactory/test_bisect_clerk.py", "docs/northstar/plans/workflows_2026-10-07/rules.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_bisect_clerk.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-sweep-timer"]
+depends_on = ["HARNESS-gate-tiers", "HARNESS-sweep-timer", "HARNESS-gate-combined-ids"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8"
 size_estimate = "bisect_clerk.sh about 80 lines, one rules.md paragraph"
+
+[[piece]]
+id = "HARNESS-gate-combined-ids"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_combined_ids.py", "docs/northstar/plans/workflows_2026-10-07/rules.md"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_combined_ids.py"]
+depends_on = ["HARNESS-gate-flag"]
+status = { state = "queued" }
+tests_pending = true
+# section 9
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+size_estimate = "about 30 lines in merge_gate_support.py across acceptance_ids, undertest_warn, acceptance-verdict and seed_cache; one rules.md sentence; two test groups"
+
+[[piece]]
+id = "HARNESS-pregate-pins"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/pre_gate.sh", "tests/specfactory/test_pregate_pins.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_pregate_pins.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+# section 9
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+size_estimate = "about 15 lines in pre_gate.sh, four tests on a stub repo"
+
+[[piece]]
+id = "HARNESS-rulepins-split"
+manager = "M0"
+wave = 13
+owns = ["scripts/specfactory/rule_pins_tests.py", "tests/specfactory/test_rulepins_split.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_rulepins_split.py"]
+depends_on = []
+status = { state = "queued" }
+tests_pending = true
+# section 9
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+size_estimate = "about 4 lines, three tests"
 
 [[piece]]
 id = "HARNESS-gate-remote"
@@ -3876,7 +3918,7 @@ wave = 15
 owns = ["scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_test_edit_row.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_test_edit_row.py"]
-depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-known-xfail"]  # HARNESS-known-xfail only orders the merge_gate_support.py overlap (owner_lint)
+depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-combined-ids"]  # HARNESS-known-xfail only orders the merge_gate_support.py overlap (owner_lint)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
