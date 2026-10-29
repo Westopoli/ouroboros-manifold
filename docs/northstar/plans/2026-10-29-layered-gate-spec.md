@@ -107,7 +107,7 @@ The paragraph's one real omission is that it leaves the double run and the over-
 
 **F11.** Layer 3 csim time: "under 10 minutes" (csim-xdist's estimate at DRAFT-xdist-workers 5), not "3 to 5". While `gate.lock` is held (`flock -n` test) the sweep runs csim with DRAFT-sweep-workers (3). Section 2 layer 3 reads accordingly.
 
-**F12.** The specfactory suite does not run under xdist (it boots Godot and uses worktrees); "under xdist" is struck from layer 2's `harness` rule. The suite-inputs-trim builder reports the measured wall time of `tests/specfactory` from its strace run; the 600 s target stays a DRAFT until measured.
+**F12.** The specfactory suite does not run under xdist (it boots Godot and uses worktrees); "under xdist" is struck from layer 2's `harness` rule. The suite-inputs-trim builder reports the measured wall time of `tests/specfactory`: that suite is exempt from the trim and is timed by one plain run under the gate venv (`timeout 2400`), not traced; the 600 s target stays a DRAFT until measured.
 
 **F13, bisect clerk.** `bisect_clerk.sh` runs pytest through a wrapper that maps exit 4 and 5 (no tests collected, usage error, test file absent) to 125 (skip); before bisecting it checks the ends (test green at `<good sha>`, red at HEAD) and exits 1 `BISECT ends not bisectable` otherwise; a revert that conflicts exits 1 `BISECT conflict <sha>` and leaves the worktree reset (`git revert --abort`); the "seconds per step" claim is struck, the builder measures one step (conftest runs make at import) and pastes it. Tests: groups (6) ends check, (7) exit-code mapping, (8) conflict.
 
