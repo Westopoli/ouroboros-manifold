@@ -34,6 +34,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 GATE = REPO / "scripts" / "specfactory" / "merge_gate.sh"
 SUPPORT = REPO / "scripts" / "specfactory" / "merge_gate_support.py"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import fake_gate_root, gate_env  # noqa: E402
+
 PY = sys.executable
 TIME_SUFFIX = re.compile(r"\[(\d+(?:\.\d+)?)s\]\s*$")
 
@@ -96,6 +99,15 @@ def _fixture(base: Path, makefile: str) -> tuple[Path, Path]:
 def _run_gate(repo, pieces, **extra):
     env = {"MERGE_GATE_PIECES": str(pieces), "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin", **extra}
     return subprocess.run(["bash", str(GATE), str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=120)
+
+
+def _run_gate_through(tmp_path, repo, pieces):
+    """Test-defect TD-HARNESS-gate-reorder-6 (ruler Architect 2026-10-29): `GATE look` prints after the early block, which
+    ends the run on the toy repo (decisive line: `GATE early_exit REJECT allowlist_strict;sig_check;reach_lint;status;
+    placeholder_controls`, then `merge_gate.sh: line 91: HOME: unbound variable`). Same fix as gate_toy_root.py."""
+    gate = fake_gate_root(tmp_path)
+    return subprocess.run(["bash", str(gate), str(repo), "HEAD", "B1"], capture_output=True, text=True,
+                          env=gate_env(tmp_path, pieces), timeout=240)
 
 
 def _line(out, step):
@@ -171,7 +183,7 @@ def test_look_compares_same_named_frames_only(tmp_path):
 
 def test_gate_prints_look_line_never_reject(tmp_path):
     repo, pieces = _fixture(tmp_path, FAST_MAKEFILE)
-    line = _line(_run_gate(repo, pieces).stdout, "look")
+    line = _line(_run_gate_through(tmp_path, repo, pieces).stdout, "look")
     assert line, "merge_gate.sh prints no `GATE look` line"
     assert not line.startswith("GATE look REJECT") and not line.startswith("GATE look HARNESS"), line
 
