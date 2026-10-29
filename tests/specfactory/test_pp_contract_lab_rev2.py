@@ -56,8 +56,8 @@ LOAD_GAME_TEST_GD = REPO / "tests" / "test_load_game_wrong_version.gd"
 # when VG-CONTRACT-E7 lands (ABI 8, save 12): test_base_literals_equal_the_numbers_on_origin_main_before_e0 then
 # fails loudly on any tree that does not have E0 yet, so a clerk raises the literals in the E7 landing. COUNT is E0's
 # alone (66 to 67) and is never stale.
-BASE_ABI_BEFORE_E0 = 7
-BASE_SAVE_BEFORE_E0 = 11
+BASE_ABI_BEFORE_E0 = 8
+BASE_SAVE_BEFORE_E0 = 12
 BASE_COUNT_BEFORE_E0 = 66
 
 
