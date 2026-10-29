@@ -4392,7 +4392,7 @@ id = "HARNESS-mm-18"
 manager = "Architect"
 owns = ["scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "tests/specfactory/test_method_weekly.py"]
 owns_glob = []
-acceptance = []  # node ids filled from the builder's report (two test_a16_ cases); the file also holds HARNESS-mm-6's halted red case
+acceptance = ["tests/specfactory/test_method_weekly.py::test_a16_unit_execstart_fetches_origin_and_runs_the_script_from_origin_main", "tests/specfactory/test_method_weekly.py::test_a16_dry_run_writes_the_reap_output_under_docs_metrics_not_the_top_level"]  # node ids (the file holds HARNESS-mm-6's halted red case); the second id is the corrected test (Architect 2026-10-29: the first version asserted the defect A16 removes)
 depends_on = ["HARNESS-mm-15", "HARNESS-mm-4"]  # ordering edges on the same files
 tests_pending = true
 status = { state = "queued" }
