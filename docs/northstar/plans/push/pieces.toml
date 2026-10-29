@@ -3723,7 +3723,7 @@ id = "HARNESS-gate-cache-seed"
 # audit4 highs applied (Architect ruling 2026-10-23 14:10 EDT, records 22b), the report's mediums and lows pending; no launch until next week's pass; report ~/Projects/om-push/scratch/drafts-2026-10-22/audit4_report_HARNESS-gate-cache-seed.md
 manager = "M0"
 wave = 13
-owns = ["scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_cache_seed.py"]
+owns = ["scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_cache_seed.py", "scripts/specfactory/suite_inputs.toml"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_cache_seed.py"]
 depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-lane-plays-scope"]  # the last two are records-clerk additions (merge_gate_support.py overlap: both are ordered after keep-red), Architect to confirm
@@ -4370,7 +4370,7 @@ id = "HARNESS-mm-15"
 manager = "Architect"
 owns = ["scripts/specfactory/method_weekly.sh", "tests/specfactory/test_method_weekly.py"]
 owns_glob = []
-acceptance = ["tests/specfactory/test_method_weekly.py"]
+acceptance = ["tests/specfactory/test_method_weekly.py::test_a12_dry_run_names_the_week_ending_on_a_sunday_and_the_last_week_on_a_wednesday", "tests/specfactory/test_method_weekly.py::test_a12_a_fail_from_the_metrics_still_reaches_the_commit_line", "tests/specfactory/test_method_weekly.py::test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit"]  # node ids, not the file: the file also holds HARNESS-mm-6's red case (halted by Westley; gd_tests_known_red.txt line 26), which is mm-6's acceptance, not this piece's (Architect 2026-10-28 after the 4b132aa9 reject)
 depends_on = ["HARNESS-mm-4"]  # ordering edge: mm-4 (attached) owns the same files
 tests_pending = true
 status = { state = "queued" }
@@ -4387,4 +4387,3 @@ tests_pending = true
 status = { state = "attached", attach_sha = "d29e0236cf3280aef27cd636ae3d7f6ad711cb02" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "threshold approvals written into the toml (Phase 4d); one data edit and one test case"
-
