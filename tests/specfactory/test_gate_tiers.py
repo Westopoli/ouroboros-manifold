@@ -1,7 +1,5 @@
-# Rule pins: 
-# spec: docs/northstar/plans/2026-10-07-visible-game-spec.md line 444 (the HARNESS-gate-tiers paragraph, rev 2);
-#       amended by docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4 (amendment items a to g) and section 8
-#       (audit fold-in: B1, B3, F7, F8, F10, amendment items f and g).
+# spec: docs/northstar/plans/2026-10-07-visible-game-spec.md line 444 (piece HARNESS-gate-tiers, lane H), amended by docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8
+# Rule pins: none (this piece proves a harness gate, not a bible rule)
 """HARNESS-gate-tiers (lane H, unit 4 of the stack): `merge_gate.sh [--revert] [--tier fast|slow|full]`, the new
 `select-csim` subcommand, the `GATE tier <name>` line, the `sweep` check of status_check.py, the slow tier's union
 diff and base, and the baseline cache that scans `candidate_results/` and keys subset runs by their file list.
@@ -601,12 +599,23 @@ def test_4_control_the_same_noise_plus_enough_land_merges_does_warn(tmp_path):
     assert _sweep_line(res).startswith("STATUS sweep WARN"), res.stdout + res.stderr
 
 
+@pytest.mark.parametrize("hours", [HOURS * 0.5, HOURS * 1.5, HOURS * MULT + 1])
+def test_4_a_pass_row_with_no_landings_since_it_is_quiet_at_any_age(tmp_path, hours):
+    """Group 4 (DEC-sweep-quiet-2026-10-29, TD-HARNESS-gate-tiers-3): the age check fires only when at least one landing
+    exists since the anchor. Zero landings since the PASS row: no WARN and no DRIFT at any age, and the line reads
+    `STATUS sweep OK 0 landings since <anchor sha>`."""
+    res = _status_fixture(tmp_path, ["land", ("anchor", "a")], [_row("a", "PASS", hours)])
+    line = _sweep_line(res)
+    assert re.match(r"STATUS sweep OK 0 landings since [0-9a-f]{7,40}\b", line), (hours, line)
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
 @pytest.mark.parametrize("hours,expect", [(HOURS * 0.5, "OK"), (HOURS * 1.5, "WARN"), (HOURS * MULT + 1, "DRIFT")])
 def test_4_a_pass_row_older_than_the_hours_limit_warns_and_at_the_multiplier_drifts(tmp_path, hours, expect):
-    """Group 4 (the paragraph's test 4, hours half, parametrised on DRAFT-slow-tier-hours and -drift-mult): no
-    landings since the PASS row, only its age differs: under the limit is OK, over it WARN, over mult times it
-    DRIFT."""
-    res = _status_fixture(tmp_path, ["land", ("anchor", "a")], [_row("a", "PASS", hours)])
+    """Group 4 (the paragraph's test 4, hours half, parametrised on DRAFT-slow-tier-hours and -drift-mult; corrected by
+    TD-HARNESS-gate-tiers-3 / DEC-sweep-quiet-2026-10-29, the positive control of the quiet rule above): ONE landing
+    since the PASS row, only its age differs: under the limit is OK, over it WARN, over mult times it DRIFT."""
+    res = _status_fixture(tmp_path, ["land", ("anchor", "a"), "land"], [_row("a", "PASS", hours)])
     assert _sweep_line(res).startswith(f"STATUS sweep {expect}"), (hours, res.stdout)
 
 
@@ -1059,13 +1068,14 @@ def test_9_a_csim_subset_base_run_drops_files_the_base_lacks(tmp_path):
 
 
 def test_9_the_log_names_each_file_the_base_run_dropped(tmp_path):
-    """Group 9 (iii), the logging half: the stage log names each dropped file (and not test_a.py, which the base has)."""
+    """Group 9 (iii), the logging half (Architect 2026-10-29): the stage log has one line `select-csim: dropped <file> (base run)`
+    per dropped file (and none for test_a.py, which the base has)."""
     r, _marker = _subset_with_new_files(tmp_path)
     log = r.stdout + r.stderr
     for dropped in ("tests/csim/test_new.py", "tests/csim/test_new2.py"):
-        assert re.search(rf"dropp?ed.*{re.escape(dropped)}|{re.escape(dropped)}.*dropp?ed", log, re.I), \
-            f"the log does not name the dropped base file {dropped}\n{log}"
-    assert not re.search(r"dropp?ed.*test_a\.py", log, re.I), f"test_a.py exists on the base and is not dropped\n{log}"
+        assert f"select-csim: dropped {dropped} (base run)" in log.splitlines(), \
+            f"the log does not name the dropped base file {dropped} in the form `select-csim: dropped <file> (base run)`\n{log}"
+    assert "select-csim: dropped tests/csim/test_a.py" not in log, f"test_a.py exists on the base and is not dropped\n{log}"
 
 
 def test_9_the_sweep_age_and_batch_rules_count_only_landings_since_the_last_row(tmp_path):
