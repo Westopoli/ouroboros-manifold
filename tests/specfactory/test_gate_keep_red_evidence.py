@@ -425,8 +425,8 @@ def test_gate_puts_the_perturb_prefix_on_the_csim_and_transport_commands_only():
     assert _perturbed(text, "tests/csim") and _perturbed(text, "tests/transport")
     assert not _perturbed(text, "tests/qa/t1") and not _perturbed(text, "tests/specfactory")
     code = [l for l in text.splitlines() if "MALLOC_PERTURB_" in l and not l.lstrip().startswith("#")]
-    assert len(code) == 4, code  # TD-HARNESS-gate-reorder-5: csim and transport each have a serial and an xdist branch
-    assert all("tests/csim" in l or "tests/transport" in l for l in code), code
+    assert len(code) == 5, code  # TD-HARNESS-gate-reorder-5, TD-HARNESS-gate-tiers-4: the count follows the number of csim/transport call sites (2, then 4 with xdist, then 5 with the fast-tier csim call)
+    assert all("tests/csim" in l or "tests/transport" in l or "CSIM_ARGS" in l for l in code), code
 
 
 def test_perturb_sites_carry_a_see_also_and_report_records_the_env_line(tmp_path):
