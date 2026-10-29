@@ -293,13 +293,29 @@ PINS_REJECT = _stub_tool(["PINS REJECT tests/test_x.py:1 R-990-01 stale 000000 b
 RULE_PINS_QUIET = _stub_tool(["PINS OK 0 files 0 ids"], 0)
 
 
-def test_control_stub_harness_runs_the_real_stages_to_the_look_line(tmp_path):
-    """Green today: the fake root runs the gate to the end; the status_check stub is not called yet (no stage)."""
+def test_control_stub_harness_runs_the_real_stages_to_the_early_exit_line(tmp_path):
+    """Green today: the fake root runs the early block in order, its toy csrc/ REJECTs (allowlist_strict among others),
+    and the gate stops at the early exit by design. The look line's reachability on a passing candidate is proven by
+    the lane H landing's gate row, not by this fake root. Test-defect TD-HARNESS-gate-reorder-1 (ruler Architect
+    2026-10-29): this test assumed stages past a REJECT still run. See also: tests/specfactory/test_gate_reorder.py"""
     lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
-    for step in ("make", "owner_lint", "look"):
+    for step in ("make", "owner_lint"):
         assert _stage(lines, step), proc.stdout + proc.stderr
-    assert [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")][0] < \
-        [i for i, l in enumerate(lines) if l.startswith("GATE look ")][0]
+    early = ["footprint", "status", "rule_pins", "control_liveness", "placeholder_controls", "acceptance", "transport",
+             "playthrough", "lane_plays"]
+    at = []
+    for step in early:
+        found = [i for i, l in enumerate(lines) if l.startswith(f"GATE {step} ")]
+        assert found, f"{step} line missing:\n{proc.stdout + proc.stderr}"
+        at.append(found[0])
+    assert at == sorted(at), f"early stages out of order: {dict(zip(early, at))}"
+    owner = [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")][0]
+    assert owner < at[1]  # owner_lint runs before status (footprint is the one early stage ahead of it)
+    exits = [i for i, l in enumerate(lines) if l.startswith("GATE early_exit REJECT")]
+    assert len(exits) == 1 and exits[0] > at[-1], proc.stdout + proc.stderr
+    assert "allowlist_strict" in lines[exits[0]].split("REJECT", 1)[1], lines[exits[0]]
+    assert not _stage(lines, "look") and not _stage(lines, "regression_csim"), proc.stdout
+    assert proc.returncode == 1, proc.stdout + proc.stderr
     assert (root / "scripts" / "specfactory" / "merge_gate.sh").is_symlink()
     assert (root / "scripts" / "specfactory" / "status_check.py").is_file()
 
