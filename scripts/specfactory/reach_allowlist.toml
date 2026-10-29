@@ -159,3 +159,11 @@ reason = "K-e contract stubs, reached by E1i: the getter is declared and tested 
 [[allow]]
 symbol = "om_terrain_set_heights"
 reason = "hard-fixture path (K-e5, VG-CONTRACT-E5): test-only hook that replaces the height grid of a generated ground mission with synthetic terrain (flat, sea strip, ridge) so the settlement field tests (E1q) control the inputs. No production caller; the generator and the load path derive bands and floors themselves. seeded 2026-10-11."
+
+[[allow]]
+symbol = "om_roster_set_cone"
+reason = "LAB-REV2 E0 contract stub: declared and tested, body returns -1 (not built) until LAB-REV2-E2, which writes the cone table that om_tac_fire reads; the lab sets it directly. Remove this entry when E2 lands."
+
+[[allow]]
+symbol = "om_combat_can_engage"
+reason = "LAB-REV2 E0 contract stub: declared and tested, body returns -1 (not built) until LAB-REV2-E2; a read-only query for the lab and tests, no game caller by design. Remove the stub note when E2 lands."
