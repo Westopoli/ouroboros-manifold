@@ -9,13 +9,19 @@ INTERFACES SHARED BY THE BUILDER AND THESE TESTS (fixed in full, verbatim from t
    lane_plays run before csim, specfactory and lab. In the gate's output the stage names are the existing
    ones: `GATE status`, `GATE footprint`, `GATE rule_pins` (the paragraph's "pins"), `GATE transport`,
    `GATE playthrough`, `GATE lane_plays`, then `GATE regression_csim`, `GATE specfactory_regression`,
-   `GATE regression_lab`. Test 3 pins the listed sequence status < footprint < rule_pins < transport <
-   playthrough < lane_plays; test 2 pins only "all six before every regression line".
+   `GATE regression_lab`. Test 2 pins "all six before every regression line".
 2. A new shell function call `early_exit_if_rejected` sits after the lane_plays stage and before the
-   regression block. When any stage so far has REJECTed (REJECTED=1), it prints
+   regression block. It checks the GLOBAL REJECTED flag (Architect ruling: a REJECT before the early block,
+   such as libm_lint, counts too). When any stage so far has REJECTed, it prints
        GATE early_exit REJECT <stage list>
-   and exits 1 at once. `<stage list>` names the rejected stage(s) (tests assert only that `status` is in
+   naming every REJECTed stage so far, and exits 1 at once (tests assert only that the named stages are in
    it; the separator is the builder's). With no REJECT it prints nothing and the gate goes on.
+   `look` stays where it is (after the regression stages); `status` moves into the early block. The order of
+   the six stages inside the block is the builder's: no test pins it (the strict-sequence test was dropped).
+   RETIRED CLAUSE: tests/specfactory/test_merge_gate.py::test_status_stage_comes_after_look_and_is_called_with_repo_and_base
+   asserts `look[0] < status[0]`; that ordering clause is retired by this piece under test-defect row
+   TD-HARNESS-gate-reorder-1 (a clerk writes the row and the edit; this file does not touch that test). Its
+   inverse, `status` before `regression_csim`, is test 2 below.
 3. After the block every stage runs to the end as today: a REJECT after the early block (here
    regression_csim) is followed by the rest of the stages and the `GATE row` summary, exit 1.
 4. Known-red handling is unchanged: a suite that is red on main and red on the candidate (baseline red)
@@ -97,7 +103,7 @@ def _overlay(root, rel_file, text):
     (dst / parts[-1]).write_text(text)
 
 
-def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=None):
+def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=None, stubs=None):
     """Returns (gate script path, candidate dir). candidate_files / base_files: {relpath: text} committed on top
     of the common first commit (base_files go into the base commit that origin/main points at)."""
     cand = tmp_path / "cand"
@@ -136,8 +142,9 @@ def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=Non
     # A copy, not a symlink: merge_gate_support.py runs sig_table.py by its resolved path, so only a real file
     # here makes it call the stub next to it.
     shutil.copy(SPEC_DIR / "merge_gate_support.py", root / "scripts" / "specfactory" / "merge_gate_support.py")
-    for name in NOISY_TOOLS:
-        (root / "scripts" / "specfactory" / name).write_text(OK_STUB)
+    for name, text in {**{n: OK_STUB for n in NOISY_TOOLS}, **(stubs or {})}.items():
+        (root / "scripts" / "specfactory" / name).unlink(missing_ok=True)
+        (root / "scripts" / "specfactory" / name).write_text(text)
     shutil.copy(gate_script, root / "scripts" / "specfactory" / "merge_gate.sh")
     _overlay(root, PROGRAMME,
              "| Lane | On main | Next piece | First look | Westley row |\n|---|---|---|---|---|\n"
@@ -149,9 +156,9 @@ def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=Non
     return root / "scripts" / "specfactory" / "merge_gate.sh", cand
 
 
-def _run(tmp_path, *, drift=False, gate_script=None, candidate_files=None, base_files=None):
+def _run(tmp_path, *, drift=False, gate_script=None, candidate_files=None, base_files=None, stubs=None):
     gate, cand = _build(tmp_path, drift=drift, gate_script=gate_script or (SPEC_DIR / "merge_gate.sh"),
-                        candidate_files=candidate_files, base_files=base_files)
+                        candidate_files=candidate_files, base_files=base_files, stubs=stubs)
     env = {"PATH": GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
            "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
            "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
@@ -230,15 +237,6 @@ def test_2_cheap_stages_all_run_before_every_regression_stage(tmp_path):
     assert last_early < first_reg, f"early stage after a regression stage:\n{out}"
 
 
-def test_3_early_block_keeps_the_listed_sequence(tmp_path):
-    """HARNESS-gate-reorder, clause 'the stage order status, footprint, pins, transport, playthrough,
-    lane_plays' (the listed sequence read as the order): first-occurrence indices strictly increase."""
-    rc, lines, out = _run(tmp_path)
-    idx = [_idx(lines, n) for n in EARLY]
-    assert None not in idx, out
-    assert idx == sorted(idx) and len(set(idx)) == len(idx), dict(zip(EARLY, idx))
-
-
 # ---------------------------------------------------------------- late reject and known red
 
 NEW_RED = "def test_new_red():\n    assert False, 'new red on the candidate'\n"
@@ -271,3 +269,31 @@ def test_5_known_red_stage_after_the_early_block_behaves_as_today(tmp_path):
     assert _idx(lines, "early_exit") is None, out
     assert _idx(lines, "lane_plays") < csim, "lane_plays must precede regression_csim:\n" + out
     assert rc == 0, out
+
+
+# ---------------------------------------------------------------- the global flag
+
+LIBM_REJECT_STUB = "import sys\nprint('libm call in csrc/stub.c')\nsys.exit(1)\n"
+
+
+def test_6_libm_lint_reject_exits_before_csim_and_early_exit_lists_it(tmp_path):
+    """HARNESS-gate-reorder, Architect ruling 3: early_exit_if_rejected checks the GLOBAL REJECTED flag and its line
+    lists every REJECT stage so far. A stubbed libm_lint.py that fails (stage 2, before the early block) gives
+    `GATE libm_lint REJECT`, then `GATE early_exit REJECT ...libm_lint...` and no regression_csim line, exit 1."""
+    rc, lines, out = _run(tmp_path, stubs={"libm_lint.py": LIBM_REJECT_STUB})
+    assert any(ln.startswith("GATE libm_lint REJECT") for ln in lines), out
+    early = [ln for ln in lines if ln.startswith("GATE early_exit REJECT")]
+    assert early, "no `GATE early_exit REJECT` line:\n" + out
+    assert "libm_lint" in early[0].split("REJECT", 1)[1], early[0]
+    assert not any(ln.startswith("GATE regression_csim") for ln in lines), out
+    assert rc == 1, out
+
+
+def test_6c_positive_control_saved_old_script_runs_csim_after_a_libm_lint_reject(tmp_path):
+    """Positive control for test 6 (green before and after): the same libm_lint stub on the saved pre-change
+    script REJECTs libm_lint and still runs `GATE regression_csim`, with no early_exit line."""
+    rc, lines, out = _run(tmp_path, gate_script=SAVED_OLD_GATE, stubs={"libm_lint.py": LIBM_REJECT_STUB})
+    assert any(ln.startswith("GATE libm_lint REJECT") for ln in lines), out
+    assert _idx(lines, "regression_csim") is not None, out
+    assert _idx(lines, "early_exit") is None, out
+    assert rc == 1, out
