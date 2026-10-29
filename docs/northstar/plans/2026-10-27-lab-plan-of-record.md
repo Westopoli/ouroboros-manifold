@@ -1,6 +1,6 @@
 # The simulation lab: plan of record (2026-10-27)
 
-**Status head.** State: PAUSED for the method fixes (HARNESS-mm-8, mm-9, RECORDS-mm-2 in the Dispatcher's hands); resumes on Westley's word after the first planned day (DEC-daily-allotment-2026-10-27). Last landing: LAB-REV3-B merged 7dd4d8fc (2026-10-23; records flip owed). Last batch run: layout run 1, 2026-10-08; batch one not yet run. Waits on Westley: section 5. Supersedes `~/.claude/plans/lovely-purring-wozniak.md` and `buzzing-greeting-sky.md` (DEC-plans-of-record-2026-10-27); the rev 2 spec, the rev 3 plan and `research/layer_dynamics/README.md` stay the detail; this file is the order and the status.
+**Status head.** State: RESUMED 2026-10-29 on Westley's "go"; step 1 (records) runs now, step 2 waits on the Architect's E0 contract spec and its second-Fable audit. Last landing: LAB-REV3-B merged 7dd4d8fc (2026-10-23; records flip owed). Last batch run: layout run 1, 2026-10-08; batch one not yet run. Waits on Westley: section 5. Supersedes `~/.claude/plans/lovely-purring-wozniak.md` and `buzzing-greeting-sky.md` (DEC-plans-of-record-2026-10-27); the rev 2 spec, the rev 3 plan and `research/layer_dynamics/README.md` stay the detail; this file is the order and the status.
 
 ## 1. Goal, and when it is finished
 
@@ -29,7 +29,7 @@ Finished (DEC-lab-finished-lines-cross-2026-10-27): the crossings are documented
 ## 3. Order of work when the lab resumes (revised 2026-10-27 after Westley's answers)
 
 1. Records: B flip and landing row, ROADMAP row, the positioning-decides sentence in README sections 2 and 4, the ten coverage defects in README section 12. One clerk, under 1 M tokens.
-2. E2 (firing arc, cone) and E4 (guard radius) as one cascade, with FU-warden-no-stack (a defect against R-083-03) in the same cascade: the combat behaviours before any batch (DEC-engine-before-batch-one). About 35 M.
+2. E0 (the contract piece, Workflow, second-Fable audit) then E2 (firing arc, cone) and E4 (guard radius) as one cascade, with FU-warden-no-stack (a defect against R-083-03) in the same cascade: the combat behaviours before any batch (DEC-engine-before-batch-one). About 35 M. E2 and E4 build stacked on one branch after E0 and land once (DEC-lab-E0-edges-2026-10-29; not a cascade, they share csrc/unit.c).
 3. The vision-asymmetry plays: the Architect checks which ping, going-dark and decoy plays are registered in `plays_space.py`, specs the missing ones, one cascade builds them (DEC-batch-one-vision-asymmetry). About 15 M.
 4. Rev 3 C as one cascade (reach and vision as swept knobs, the paper prediction). About 15 M, ceiling 50 M.
 5. R9 sight-engagement, retire L8. One cascade, about 15 M.
