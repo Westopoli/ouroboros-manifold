@@ -12,15 +12,19 @@ fails every dependent test loudly (red), per the QA plan for this suite.
 """
 import ctypes
 import math
+import os
 import pathlib
 import re
+import shutil
+import tempfile
 import tomllib
 
 import pytest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
-LIB_PATH = REPO_ROOT / "libouroboros.so"
-DBG_LIB_PATH = REPO_ROOT / "libouroboros_dbg.so"
+# Under xdist the controller copies both libraries and exports these two variables (pytest_configure below).
+LIB_PATH = pathlib.Path(os.environ.get("OM_CSIM_LIB") or REPO_ROOT / "libouroboros.so")
+DBG_LIB_PATH = pathlib.Path(os.environ.get("OM_CSIM_LIB_DBG") or REPO_ROOT / "libouroboros_dbg.so")
 CSRC_DIR = REPO_ROOT / "csrc"
 MVP_FEATURES_PATH = REPO_ROOT / "docs/northstar/spec_factory/mvp_features.toml"
 
@@ -54,7 +58,36 @@ def _build_libs():
 
 
 _HAS_CSRC = CSRC_DIR.exists() and any(CSRC_DIR.glob("*.c"))
-_build_libs()
+if os.environ.get("OM_CSIM_LIB"):
+    BUILD_ERROR = os.environ.get("OM_CSIM_BUILD_ERROR") or None
+else:
+    _build_libs()
+
+_XDIST_COPY_DIR = None
+
+
+def pytest_configure(config):
+    """Under xdist the controller (neither a worker nor non-distributing) copies the libraries it just built to
+    $TMPDIR/om_csim_<pid> and exports their paths, so workers skip make and load the copies."""
+    global _XDIST_COPY_DIR
+    if hasattr(config, "workerinput") or os.environ.get("PYTEST_XDIST_WORKER"):
+        return
+    if not (config.getoption("numprocesses", 0) and config.getoption("dist", "no") != "no"):
+        return
+    _XDIST_COPY_DIR = pathlib.Path(tempfile.gettempdir()) / f"om_csim_{os.getpid()}"
+    _XDIST_COPY_DIR.mkdir(parents=True, exist_ok=True)
+    for var, src in (("OM_CSIM_LIB", LIB_PATH), ("OM_CSIM_LIB_DBG", DBG_LIB_PATH)):
+        dst = _XDIST_COPY_DIR / src.name
+        if src.exists():
+            shutil.copy2(src, dst)
+        os.environ[var] = str(dst)
+    if BUILD_ERROR:
+        os.environ["OM_CSIM_BUILD_ERROR"] = BUILD_ERROR
+
+
+def pytest_unconfigure(config):
+    if _XDIST_COPY_DIR is not None:
+        shutil.rmtree(_XDIST_COPY_DIR, ignore_errors=True)
 
 # The header (csrc/ouroboros_sim.h) does not pin a literal integer anywhere;
 # it only says the harness "asserts this matches what it was written against."

@@ -370,8 +370,17 @@ REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 # MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
 # the baseline run and the branch run both inherit it.
 # MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
-MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
+# The csim stage runs under pytest-xdist (DRAFT-xdist-workers = 5); MERGE_GATE_CSIM_XDIST=0 runs the serial command
+# (the first gate after HARNESS-csim-xdist lands seeds its serial baseline that way). Same switch on the transport stage.
+# See also: tests/csim/conftest.py pytest_configure, the xdist branch is the last one so the call reader finds it
+if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
+    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
+else
+    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+        --pytest-extra '-n 5 --dist loadfile' >"$REG_CSIM_LOG" 2>&1
+fi
 if [[ $? -ne 0 ]]; then
     reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
 else
@@ -579,9 +588,15 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
             warn transport "pipe/ouroboros_pipe_dbg did not build: $(tail_oneline "$PIPE_DBG_LOG")"
         fi
         TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
-        MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
-            --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
-            --before-build "make -s pipe/ouroboros_pipe" >"$TRANSPORT_LOG" 2>&1
+        if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
+            MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+                --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+                --before-build "make -s pipe/ouroboros_pipe" >"$TRANSPORT_LOG" 2>&1
+        else
+            MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+                --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+                --before-build "make -s pipe/ouroboros_pipe" --pytest-extra '-n 2' >"$TRANSPORT_LOG" 2>&1
+        fi
         if [[ $? -ne 0 ]]; then
             # --before-build (merge_gate_support.py's regression_check) now
             # builds pipe/ouroboros_pipe on the base-ref side too, same as this
