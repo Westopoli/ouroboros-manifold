@@ -895,7 +895,7 @@ def test_a13_real_toml_every_threshold_approved_and_approved_prints_pass(tmp_pat
 # assistant entries that share one message.id count as one call in M27 and M28. Draft ceiling 1.0 M (Westley approves).
 # Fixture reading (the spec leaves it open): a call's context is input + cache-read + cache-creation tokens (method_check
 # ctx_size); fixtures put every token in cache_read and none in output, so the reading cannot change a result here.
-# The old M27 cases (text-only ratio) live in test_token_ledger.py; see the tests writer's report for their node ids.
+# The old M27 cases (text-only ratio) in test_token_ledger.py are retired/rewritten here: ledger row TD-HARNESS-mm-19-M27.
 sys.path.insert(0, str(HERE / "fixtures" / "token_ledger"))
 import tl_world as T  # noqa: E402
 
@@ -1048,4 +1048,5 @@ def test_a17_real_toml_M27_is_the_draft_ceiling_one_million():
     import tomllib
     d = tomllib.loads((REPO / "scripts" / "specfactory" / "method_thresholds.toml").read_text())["M27"]
     assert d["value"] == 1.0, d
+    assert d["draft"] == "DRAFT-m27-episode-context-mtok", d  # the table's existing `draft` field names it
     assert d["direction"] == "<=" and d["approved"] == "", d
