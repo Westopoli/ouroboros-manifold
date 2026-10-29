@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """status_check.py: method rev 2, guard 7. The status copies must agree.
 
-Twelve checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
+Thirteen checks, one `STATUS <check> OK|WARN|DRIFT <detail>` line each (a check may
 print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0).
 
   lane_table  every sha in the programme lane table's "On main" cells is an
@@ -35,6 +35,10 @@ print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0
   method_pins every pin in method_rev3_2026-10-26/pins.toml with a non-empty
               `since` must appear verbatim in `git show <base>:<file>`; a pin with
               an empty `since` is skipped; always DRIFT (HARNESS-mm-3, A2)
+  coverage    the newest summary.json under --coverage-runs against --coverage-baseline:
+              a zero count above baseline or a lines_pct more than
+              DRAFT-coverage-slack below it is DRIFT; WARN when stale or absent;
+              OK "coverage improved, run --accept" when better (HARNESS-coverage)
   (`check pieces` also accepts the keys `story` and `contract`, A1.)
 
 See also: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
@@ -59,8 +63,12 @@ D_ROADMAP = "docs/northstar/ROADMAP.md"
 D_REGISTER = "docs/northstar/ambiguity_register.md"
 D_LEDGER = "docs/northstar/plans/push_ledger_2026-09-22.md"
 D_MM = "docs/northstar/plans/method_rev3_2026-10-26"
+D_COVERAGE_BASELINE = "docs/northstar/plans/drift_audits/coverage_baseline.json"
+D_COVERAGE_RUNS = "docs/northstar/plans/drift_audits/coverage_runs"
 LEDGER_TOKENS_FROM = "2026-10-26"  # method rev 3 G17: found-by= and ruler= are required from this date
 SWITCH_ROW = "FU-HARNESS-findings"
+COVERAGE_SLACK = 0.5  # DRAFT-coverage-slack (points of lines_pct), the Architect's draft
+COVERAGE_STALE_DAYS = 10  # DRAFT-coverage-stale-days, the Architect's draft
 
 SHA_RE = re.compile(r"(?<![0-9a-fA-F])[0-9a-f]{7,40}(?![0-9a-fA-F])")
 # Column 8 of the queue format in docs/northstar/story_reviews/README.md.
@@ -359,6 +367,32 @@ def check_method_pins(repo, base, mm):
     return out or [("method_pins", True, f"{n} dated pins checked")]
 
 
+def check_coverage(baseline_path, runs_dir, today):
+    """See also: coverage_run.sh and coverage_report.py, which write the summaries and the baseline."""
+    runs = [json.loads(p.read_text()) for p in sorted(runs_dir.glob("*/summary.json"))]
+    if not runs:
+        return [("coverage", "warn", "no coverage run yet")]
+    run = max(runs, key=lambda s: s["date"])
+    base = json.loads(baseline_path.read_text()) if baseline_path.is_file() else None
+    nums = (f"zero_a_reachable={run['zero_a_reachable']} zero_b_reachable={run['zero_b_reachable']} "
+            f"lines_pct_a={run['lines_pct_a']:.1f} lines_pct_b={run['lines_pct_b']:.1f}")
+    if base is None:
+        return [("coverage", "warn", f"no baseline {nums}")]
+    out = [("coverage", False, f"{k} {run[k]} above baseline {base[k]}")
+           for k in ("zero_a_reachable", "zero_b_reachable") if run[k] > base[k]]
+    out += [("coverage", False, f"{k} {run[k]:.1f} below baseline {base[k]:.1f} by more than {COVERAGE_SLACK}")
+            for k in ("lines_pct_a", "lines_pct_b") if round(base[k] - run[k], 1) > COVERAGE_SLACK]
+    if out:
+        return out
+    if (today - datetime.date.fromisoformat(run["date"])).days > COVERAGE_STALE_DAYS:
+        return [("coverage", "warn", f"coverage stale (run {run['date']}) {nums}")]
+    zeros = ("zero_a_reachable", "zero_b_reachable")
+    pcts = ("lines_pct_a", "lines_pct_b")
+    worse = any(run[k] > base[k] for k in zeros) or any(run[k] < base[k] for k in pcts)
+    better = any(run[k] < base[k] for k in zeros) or any(run[k] > base[k] for k in pcts)
+    return [("coverage", True, f"coverage improved, run --accept {nums}" if better and not worse else nums)]
+
+
 def main(argv):
     ap = argparse.ArgumentParser(prog="status_check.py", description=__doc__.split("\n")[0])
     ap.add_argument("--repo", default=str(REPO))
@@ -371,6 +405,8 @@ def main(argv):
     ap.add_argument("--register", default=D_REGISTER)
     ap.add_argument("--ledger", default=D_LEDGER)
     ap.add_argument("--method-dir", default=D_MM)
+    ap.add_argument("--coverage-baseline", default=D_COVERAGE_BASELINE)
+    ap.add_argument("--coverage-runs", default=D_COVERAGE_RUNS)
     a = ap.parse_args(argv)
     repo = Path(a.repo)
 
@@ -390,6 +426,8 @@ def main(argv):
     results += check_findings(repo, at(a.ledger))
     results += check_metrics(at(a.method_dir))
     results += check_method_pins(repo, a.base, at(a.method_dir))
+    today = datetime.datetime.now(datetime.timezone.utc).date()
+    results += check_coverage(at(a.coverage_baseline), at(a.coverage_runs), today)
     for name, ok, detail in results:
         print(f"STATUS {name} {'WARN' if ok == 'warn' else 'OK' if ok else 'DRIFT'} {detail}")
     return 0 if all(ok for _, ok, _ in results) else 1
