@@ -4346,12 +4346,12 @@ size_estimate = "records repair: 8 gate rows, 13 run rows, 32 script moves, W43 
 [[piece]]
 id = "HARNESS-mm-12"
 manager = "Architect"
-owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "scripts/specfactory/method_metrics.py"]
-owns_glob = ["tests/specfactory/fixtures/token_ledger/*"]
+owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "scripts/specfactory/method_metrics.py", "tests/specfactory/test_method_metrics.py"]
+owns_glob = ["tests/specfactory/fixtures/token_ledger/*", "tests/specfactory/fixtures/method_metrics/mm_world.py"]  # mm_world.py: TD-HARNESS-mm-12-1 adds the G24 tables to its W.TH (Architect 2026-10-28); test_method_metrics.py a13 narrowing is TD-HARNESS-mm-12-2
 acceptance = ["tests/specfactory/test_token_ledger.py"]
 depends_on = ["HARNESS-mm-8", "HARNESS-mm-1b", "HARNESS-mm-1a", "HARNESS-mm-16"]  # ordering edges: mm-8 owns method_metrics_runs.py and the toml until it lands
 tests_pending = true
-status = { state = "queued" }  # resumed by Westley 2026-10-28 (spec A14), lands after HARNESS-mm-16
+status = { state = "attached", attach_sha = "b0db675f324f2248f8ffffcd102eca31d9384a49" }  # resumed by Westley 2026-10-28 (spec A14), lands after HARNESS-mm-16
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "token ledger (planned vs actual per day and piece) and metrics M25 to M29; about 150 plus 80 lines"
 [[piece]]
@@ -4370,10 +4370,10 @@ id = "HARNESS-mm-15"
 manager = "Architect"
 owns = ["scripts/specfactory/method_weekly.sh", "tests/specfactory/test_method_weekly.py"]
 owns_glob = []
-acceptance = ["tests/specfactory/test_method_weekly.py"]
+acceptance = ["tests/specfactory/test_method_weekly.py::test_a12_dry_run_names_the_week_ending_on_a_sunday_and_the_last_week_on_a_wednesday", "tests/specfactory/test_method_weekly.py::test_a12_a_fail_from_the_metrics_still_reaches_the_commit_line", "tests/specfactory/test_method_weekly.py::test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit"]  # node ids, not the file: the file also holds HARNESS-mm-6's red case (halted by Westley; gd_tests_known_red.txt line 26), which is mm-6's acceptance, not this piece's (Architect 2026-10-28 after the 4b132aa9 reject)
 depends_on = ["HARNESS-mm-4"]  # ordering edge: mm-4 (attached) owns the same files
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "9f2d233ac9ad11836e4696952ccf3ea07248db0d" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "three one-line fixes in method_weekly.sh (week, exit, dry-run reap) and three test cases"
 [[piece]]
@@ -4387,3 +4387,26 @@ tests_pending = true
 status = { state = "attached", attach_sha = "d29e0236cf3280aef27cd636ae3d7f6ad711cb02" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "threshold approvals written into the toml (Phase 4d); one data edit and one test case"
+[[piece]]
+id = "HARNESS-mm-18"
+manager = "Architect"
+owns = ["scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "tests/specfactory/test_method_weekly.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_method_weekly.py::test_a16_unit_execstart_fetches_origin_and_runs_the_script_from_origin_main", "tests/specfactory/test_method_weekly.py::test_a16_dry_run_writes_the_reap_output_under_docs_metrics_not_the_top_level"]  # node ids (the file holds HARNESS-mm-6's halted red case); the second id is the corrected test (Architect 2026-10-29: the first version asserted the defect A16 removes)
+depends_on = ["HARNESS-mm-15", "HARNESS-mm-4"]  # ordering edges on the same files
+tests_pending = true
+status = { state = "attached", attach_sha = "b7b25e2dd21d793e05551161f4debb26997cea78" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "unit ExecStart runs the script from origin/main; reap dry-run output path; two test cases"
+[[piece]]
+id = "HARNESS-mm-19"
+manager = "Architect"
+owns = ["scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "tests/specfactory/test_token_ledger.py"]
+owns_glob = []
+acceptance = []  # node ids from the builder's report
+depends_on = ["HARNESS-mm-12", "HARNESS-mm-16", "HARNESS-gate-cache-seed"]  # ordering edges; queued after cache-seed
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "M27 redefined as context tokens per Dispatcher wakeup; entries grouped by message.id in M27 and M28; one test case"
+

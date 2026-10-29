@@ -559,6 +559,107 @@ baseline = ""
 window = "week"
 phase = "both"
 
+[M25]
+id = "M25"
+gap = "G24"
+draft = "DRAFT-mm-M25"
+value = 1.0
+direction = "<="
+unit = "ratio"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M26]
+id = "M26"
+gap = "G24"
+draft = "DRAFT-mm-M26"
+value = 1500
+direction = "<="
+unit = "M"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+day_m = 300
+dispatcher_m = 60
+pieces_m = 180
+reserve_m = 60
+
+[M27]
+id = "M27"
+gap = "G24"
+draft = "DRAFT-mm-M27"
+value = 0.1
+direction = "<="
+unit = "ratio"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M28]
+id = "M28"
+gap = "G24"
+draft = "DRAFT-mm-M28"
+value = 4
+direction = "<="
+unit = "messages"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+[M29]
+id = "M29"
+gap = "G24"
+draft = "DRAFT-mm-M29"
+value = 1
+direction = "<="
+unit = "runs"
+approved = ""
+baseline = ""
+window = "week"
+phase = "both"
+
+# Planned tokens per task type, in millions (DEC-daily-allotment-2026-10-27; spec A10): median, ceiling, calls cap.
+# A role in a run label maps to the table of the same name. All DRAFT until Westley approves the numbers.
+[estimates.tests]
+median_m = 3.8
+ceiling_m = 16
+calls_cap = 60
+
+[estimates.build]
+median_m = 1.2
+ceiling_m = 6.3
+calls_cap = 40
+
+[estimates.land]
+median_m = 1.6
+ceiling_m = 5.5
+calls_cap = 40
+
+[estimates.records]
+median_m = 0.2
+ceiling_m = 1.2
+calls_cap = 15
+
+[estimates.audit]
+median_m = 4.7
+ceiling_m = 13.8
+calls_cap = 60
+
+[estimates.research]
+median_m = 1.4
+ceiling_m = 6.4
+calls_cap = 30
+
+[estimates.drift]
+median_m = 10.9
+ceiling_m = 15
+calls_cap = 70
+
 # List prices in dollars per million tokens, Anthropic pricing page (platform.claude.com/docs/en/about-claude/pricing),
 # fetched 2026-10-27. cache_write is the 5-minute rate; Haiku 5.5 is the up-to-100,000-token tier. Keys are model id prefixes.
 [prices."claude-fable-5-1"]
