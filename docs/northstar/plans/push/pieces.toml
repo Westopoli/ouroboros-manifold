@@ -2723,7 +2723,7 @@ owns = ["csrc/ouroboros_sim.h", "csrc/tactical_move.c", "csrc/unit.c", "csrc/sav
 owns_glob = []
 acceptance = ["tests/specfactory/test_pp_contract_lab_rev2.py"]
 depends_on = ["VG-CONTRACT-E7", "VG-W2", "PP-contract", "VG-E1R", "VG-E-prodslot", "LAB-REV2-E1", "LAB-REV2-E1B", "LAB-REV2-E3", "HARNESS-perf-minof-n", "SV-2"]  # ordering edge: SV-2 (attached) owns tests/simviewer/fixtures/**; E0 re-records those goldens (TD-LAB-E0-goldens)  # E0 takes its ABI and save numbers after layerspot and route land (Architect 2026-10-20)  # clerk 2026-10-14, owner_lint-forced (HARNESS-perf-minof-n also owns tests/csim/test_VG_W_w1_planner.py and lands first): VG-E1R/VG-E-startforce own docs/architecture.md, VG-E-prodslot owns om_internal.h/signatures.toml/test_signatures_internal.py; E1 owns unit.c and E3 tactical_move.c/pp_contract.md, and the Architect ruling dropped E0 from E1/E3, so the lint ordering runs E1, E3, then E0 (contradicts the spec Workflow step order E0 first: Architect to confirm) Architect 2026-10-14: fc to add LAB-REV2-E0 to those three VG rows' depends_on, then these three edges are removed (VG-E1R, VG-E-prodslot, VG-E-startforce); csrc/om_internal.h moved to LAB-REV2-E2 (E0's stubs need no accessor; it arrives with the cone body) and test_signatures_internal.py dropped from E0's owns. tests: the five E0 capability tests wait on push/labrev2-capability-tests (merge into push/labrev2-e0-tests after the lab lands); after the unit-row save fix (Architect 2026-10-21)  # edge dropped per DEC-E0-xdist-edge-dropped-2026-10-29
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "3ee3faaff2adc6e168d8bb69b2cbe07592b11445" }
 tests_pending = true
 size_estimate = "E0 contract: OM_TP_FIRING_ARC_DEG (row, mirror, pins), om_roster_set_cone and om_combat_can_engage stubbed, ABI and save-format bumps"
 
@@ -4357,7 +4357,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_gate_row.py"]
 depends_on = ["HARNESS-mm-2", "A94-harness", "HARNESS-mm-9"]
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "3ee3faaff2adc6e168d8bb69b2cbe07592b11445" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "one line: pre_gate exports MERGE_GATE_RUNS_CSV=/dev/null so dry runs write no gate row (spec A6); one test case"
 
