@@ -3740,7 +3740,7 @@ id = "HARNESS-gate-reorder"
 # audit4 highs applied (Architect ruling 2026-10-23 14:10 EDT, records 22b), the report's mediums and lows pending; no launch until next week's pass; report ~/Projects/om-push/scratch/drafts-2026-10-22/audit4_report_HARNESS-gate-reorder.md
 manager = "M0"
 wave = 13
-owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_gate_reorder.py"]
+owns = ["scripts/specfactory/merge_gate.sh", "tests/specfactory/test_gate_reorder.py", "tests/specfactory/fixtures/gate_reorder/merge_gate_pre_reorder.sh"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_reorder.py"]
 depends_on = ["HARNESS-gate-cache-seed", "HARNESS-csim-xdist", "HARNESS-mm-2"]  # the second edge is a records-clerk addition (both own merge_gate.sh; csim-xdist has no row on main yet), Architect to confirm
