@@ -198,6 +198,6 @@ def test_control_c3_pattern_equals_the_spec_pattern():
     quoted = "git grep -l -E '" + PATTERN + "' -- tests/csim"
     assert quoted in (__doc__ or ""), "the file header does not quote the spec grep"
     spec_text = SPEC_DOC.read_text()
-    paragraph = [p for p in spec_text.split("\n") if p.startswith("**HARNESS-pregate-pins**")]
+    paragraph = [p for p in spec_text.split("\n") if p.startswith("**HARNESS-pregate-pins")]
     assert len(paragraph) == 1, "spec paragraph HARNESS-pregate-pins not found"
     assert quoted in paragraph[0], "the test pattern differs from the spec pattern"
