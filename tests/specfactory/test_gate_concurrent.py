@@ -10,20 +10,21 @@ INTERFACES SHARED BY THE BUILDER AND THESE TESTS (verbatim from the paragraph; t
 
 1. "Each `regression` call becomes a background job (`&`) with its own log `$SCRATCH_ROOT/regression_<suite>.log`,
    its own `TMPDIR=$SCRATCH_ROOT/<suite>` and `XDG_DATA_HOME=$SCRATCH_ROOT/<suite>/xdg`; `wait` precedes the first
-   `reject`/`ok` line of the block."  <suite> is csim, qa_t1, specfactory, transport, lab (the names the gate's
-   stages already use in regression_<suite>.log / GATE regression_<suite>). The directories must exist when the
-   job starts (a TMPDIR that does not exist breaks tempfile; the paragraph names them as the job's own).
-2. "The main and candidate pytest passes of each suite run concurrently, and csim, specfactory and transport run
-   side by side, each in its own scratch and XDG; the per-stage [N.Ns] lines are kept."
-   Outputs are printed after the wait in a fixed order (the order must not depend on which job finishes first);
-   the verdict set is unchanged: a failing job still prints `GATE <stage> REJECT <its own log>` and the gate exits 1.
+   `reject`/`ok` line of the block."  <suite> is csim, qa_t1, specfactory, transport, lab (confirmed names); the
+   transport log is renamed regression_transport.log. Ruling (Architect, replacing the paragraph body): each job's
+   TMPDIR and XDG_DATA_HOME directories are created with `mkdir -p` before the job is backgrounded.
+2. Ruled shape (the paragraph's summary sentence): qa_t1 runs FIRST AND ALONE (its WALL_BUDGET 2.0 s detector shares
+   CPU badly): it ends before the first of the other jobs starts. Then a FOUR-job concurrent block, csim,
+   specfactory, transport, lab, then a single `wait` before the first reject/ok line of the block. "The main and
+   candidate pytest passes of each suite run concurrently ... the per-stage [N.Ns] lines are kept." Outputs are
+   printed after the wait in a fixed order (the order must not depend on which job finishes first); the verdict set
+   is unchanged: a failing job still prints `GATE <stage> REJECT <its own log>`.
 3. "Suites that self-build in the candidate (csim, qa/t1) are started after one `make -s libouroboros.so
    libouroboros_dbg.so` in the candidate and their conftests see it up to date (make is then a no-op)."
 4. "`_store_cached_baseline` takes `fcntl.flock` on `<main_sha>.json.lock` around read-modify-write; test: two
    threads store two suite keys and both are present."  The lock file sits beside the cache file: the cache path
    with `.lock` appended.
-5. "Lab and qa_t1 run in the same concurrent block as csim, specfactory and transport (five jobs); transport's
-   base-pipe worktree (mg.sh:515-526) is built before the block."  The base-pipe worktree is the gate's
+5. "transport's base-pipe worktree (mg.sh:515-526) is built before the block."  The base-pipe worktree is the gate's
    `$SCRATCH_ROOT/mainpipe_base` (OM_MAIN_PIPE).
 6. "Tests: a fixture with three stub suites runs them with overlapping timestamps; positive control: today's
    script runs them in series."
@@ -34,7 +35,7 @@ except merge_gate_support.py). The stub merge_gate_support.py answers `regressio
 with the requested rc) and hands every other subcommand to the real file. A `make` shim on PATH logs every make
 call (time, cwd, args) to $GC_MAKELOG and execs /usr/bin/make. Runs cost a few seconds each (the stub sleeps).
 
-Red on the base tree: tests 1, 2, 3 (x5), 3b, 3c, 4[transport], 8, 9, 10, 11 (the gate runs the stages in series,
+Red on the base tree: tests 1, 1b, 2, 3 (x5), 3b, 3c, 4[transport], 8, 9, 10, 11 (the gate runs the stages in series,
 no per-job TMPDIR/XDG, no lock, base pipe built after csim). Guards that stay green: 4 (four suites), 5, 6, 7 (log
 names, [N.Ns] lines, fixed order, verdict set, one candidate make). Controls C1 to C3 are green.
 """
@@ -54,7 +55,8 @@ SPEC_DIR = REPO / "scripts" / "specfactory"
 sys.path.insert(0, str(SPEC_DIR))
 GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
 SUITES = ("csim", "lab", "qa_t1", "specfactory", "transport")
-SIDE_BY_SIDE = ("csim", "specfactory", "transport")
+BLOCK = ("csim", "specfactory", "transport", "lab")  # the four concurrent jobs; qa_t1 runs first and alone
+CONTROL_SUITES = ("csim", "specfactory", "transport")  # the stubs C2 can drive by plain bash
 VERDICT_STAGE = {"csim": "regression_csim", "lab": "regression_lab", "qa_t1": "regression_qa_t1",
                  "specfactory": "specfactory_regression", "transport": "transport"}
 EQUAL_SLEEPS = {s: 2.0 for s in SUITES}
@@ -204,7 +206,7 @@ def reject_run(tmp_path_factory):
 # ------------------------------------------------------------------ positive controls (green on the base tree)
 
 def test_c1_overlap_detector_reads_serial_as_serial_and_overlap_as_overlap():
-    """Control for tests 1 and 2 (paragraph clause "positive control: today's script runs them in series")."""
+    """Control for tests 1, 1b and 2 (paragraph clause "positive control: today's script runs them in series")."""
     assert have_common_instant([(0.0, 2.0), (0.1, 2.1), (0.2, 2.2)])
     assert not have_common_instant([(0.0, 2.0), (2.0, 4.0), (4.0, 6.0)])
 
@@ -214,13 +216,13 @@ def test_c2_stub_suites_measure_series_and_overlap_correctly(tmp_path):
     yields disjoint and then overlapping timestamps; so a red test 1 means the gate runs them in series."""
     root, stub = _fake_root(tmp_path)
     env = {**_env(tmp_path, {s: 1.0 for s in SUITES}, {}), "TMPDIR": str(tmp_path)}
-    cmds = [f'"{sys.executable}" "{stub}" regression c b tests/{p}' for p in ("csim", "specfactory", "transport")]
+    cmds = [f'"{sys.executable}" "{stub}" regression c b tests/{p}' for p in CONTROL_SUITES]
     for mode, sep, tail in (("series", ";", ""), ("background", " &", "wait")):
         for f in (tmp_path / "trace").glob("*.json"):
             f.unlink()
         script = (sep + " ").join(cmds) + (" & wait" if mode == "background" else "")
         subprocess.run(["bash", "-c", script], env=env, check=True, capture_output=True)
-        recs = [json.loads((tmp_path / "trace" / f"{s}.json").read_text()) for s in SIDE_BY_SIDE]
+        recs = [json.loads((tmp_path / "trace" / f"{s}.json").read_text()) for s in CONTROL_SUITES]
         assert have_common_instant([(r["start"], r["end"]) for r in recs]) == (mode == "background"), (mode, recs)
 
 
@@ -232,18 +234,27 @@ def test_c3_fixture_gate_runs_all_five_stubs_to_a_verdict(equal_run):
 
 # ------------------------------------------------------------------ the mechanism (red on the base tree)
 
-def test_1_csim_specfactory_transport_run_side_by_side(equal_run):
-    """HARNESS-gate-concurrent: "csim, specfactory and transport run side by side" (stub suites with overlapping
-    timestamps). Red today: the gate runs the stages one after the other."""
-    iv = [(equal_run["recs"][s]["start"], equal_run["recs"][s]["end"]) for s in SIDE_BY_SIDE]
-    assert have_common_instant(iv), f"stub intervals {iv}: the three suites never run at the same instant"
+def test_1_the_four_block_jobs_run_side_by_side(equal_run):
+    """HARNESS-gate-concurrent: csim, specfactory, transport and lab run side by side (stub suites with overlapping
+    timestamps; ruled four-job block). Red today: the gate runs the stages one after the other."""
+    iv = {s: (equal_run["recs"][s]["start"], equal_run["recs"][s]["end"]) for s in BLOCK}
+    assert have_common_instant(list(iv.values())), f"stub intervals {iv}: the four suites never run at the same instant"
+
+
+def test_1b_qa_t1_runs_first_and_alone(equal_run):
+    """HARNESS-gate-concurrent (ruled): qa_t1 "runs FIRST AND ALONE": it ends before the first of the four block
+    jobs starts. Red today: the gate runs csim and lab before it and specfactory after it."""
+    q = equal_run["recs"]["qa_t1"]
+    first = min(equal_run["recs"][s]["start"] for s in BLOCK)
+    assert q["end"] <= first, f"qa_t1 ran {q['start']:.2f}..{q['end']:.2f}, first block job started {first:.2f}"
 
 
 def test_2_wait_precedes_the_first_verdict_line_of_the_block(equal_run):
-    """HARNESS-gate-concurrent: "`wait` precedes the first `reject`/`ok` line of the block". Red today: the
-    first verdict line prints when csim ends, while the other jobs have not started."""
-    first = verdicts(equal_run)[0][0]
-    last_end = max(r["end"] for r in equal_run["recs"].values())
+    """HARNESS-gate-concurrent: "`wait` precedes the first `reject`/`ok` line of the block" (the four-job block;
+    qa_t1's own line is not part of it). Red today: the first block verdict line prints when csim ends, while the
+    other jobs have not started."""
+    first = min(v[0] for v in verdicts(equal_run) if v[1] != VERDICT_STAGE["qa_t1"])
+    last_end = max(equal_run["recs"][s]["end"] for s in BLOCK)
     assert first >= last_end - 0.05, f"first verdict line at {first:.2f}, last job ended {last_end:.2f}"
 
 
@@ -318,8 +329,8 @@ def test_8_transport_base_pipe_worktree_is_built_before_the_block(equal_run):
     mainpipe_base make runs in the transport stage, after csim, lab, qa_t1 and specfactory have run."""
     base = [m for m in equal_run["makes"] if m[1].endswith("/mainpipe_base") and "pipe/ouroboros_pipe" in m[2]]
     assert base, equal_run["makes"]
-    first_job = min(r["start"] for r in equal_run["recs"].values())
-    assert base[0][0] < first_job, f"base-pipe make at {base[0][0]:.2f}, first job started {first_job:.2f}"
+    first_job = min(equal_run["recs"][s]["start"] for s in BLOCK)
+    assert base[0][0] < first_job, f"base-pipe make at {base[0][0]:.2f}, first block job started {first_job:.2f}"
     assert equal_run["recs"]["transport"]["om_main_pipe_exec"]
 
 
