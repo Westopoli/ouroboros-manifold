@@ -13,5 +13,5 @@ Read spec.md Amendment A10 and `decisions.md` rows DEC-daily-allotment-2026-10-2
 8. M29: runs per piece with role `tests` beyond the first; 2 extra is FAIL at limit 1.
 9. M06 and M07 include top-level session usage priced by model: a fixture week with a Fable top-level session and a Sonnet sub-agent gives a Fable share above 0.
 10. `method_metrics.py` `METHOD_PATHS` contains `scripts/specfactory/workflows/`; a commit touching only a file there counts as method text for M24a.
-11. Every table in `method_thresholds.toml` with an `approved` key reads `Westley 2026-10-28`; M21b `value` is 8; M01 `value` is 1.5; an approved metric within its limit prints PASS, not DRAFT.
-Keep existing tests green. Report: branch sha, the 11 failing assertion lines, pytest counts, `RESULT`.
+11. (moved to HARNESS-mm-16, spec A13: the approvals have their own piece; do not test them here.) New tables M25 to M29 carry `approved = ""` (DRAFT until Westley approves them).
+Keep existing tests green. Report: branch sha, the 10 failing assertion lines, pytest counts, `RESULT`.
