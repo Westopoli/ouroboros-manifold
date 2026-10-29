@@ -4398,4 +4398,15 @@ tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "unit ExecStart runs the script from origin/main; reap dry-run output path; two test cases"
+[[piece]]
+id = "HARNESS-mm-19"
+manager = "Architect"
+owns = ["scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "tests/specfactory/test_token_ledger.py"]
+owns_glob = []
+acceptance = []  # node ids from the builder's report
+depends_on = ["HARNESS-mm-12", "HARNESS-mm-16", "HARNESS-gate-cache-seed"]  # ordering edges; queued after cache-seed
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "M27 redefined as context tokens per Dispatcher wakeup; entries grouped by message.id in M27 and M28; one test case"
 

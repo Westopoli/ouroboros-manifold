@@ -9,3 +9,6 @@ Record for the rule change DEC-coordinator-wakeups-2026-10-27. Full numbers: `pl
 - 15 pieces attached in the window: about 71 M per landed piece all in.
 
 Rule changes landed with this file: `dispatcher.md` step 3 (one wakeup per event, status after each landing, Fable by one batched brief, call caps, one fix pass); brief templates under `method_rev3_2026-10-26/briefs/` (STOP at N calls). Metrics M27 to M29 are HARNESS-mm-12 (spec A10). Not taken: compaction at 150k.
+
+
+Correction, 2026-10-29: the 252 text-only Dispatcher turns were the closing turns of 252 wakeups (one per episode), not avoidable status lines. The saving is in fewer wakeups and a smaller context per call (the 150k compaction counterfactual), not in dropping the closing line. `dispatcher.md` step 3 reworded; M27 redefined (spec A17).
