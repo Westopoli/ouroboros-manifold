@@ -4370,7 +4370,7 @@ id = "HARNESS-mm-15"
 manager = "Architect"
 owns = ["scripts/specfactory/method_weekly.sh", "tests/specfactory/test_method_weekly.py"]
 owns_glob = []
-acceptance = ["tests/specfactory/test_method_weekly.py"]
+acceptance = ["tests/specfactory/test_method_weekly.py::test_a12_dry_run_names_the_week_ending_on_a_sunday_and_the_last_week_on_a_wednesday", "tests/specfactory/test_method_weekly.py::test_a12_a_fail_from_the_metrics_still_reaches_the_commit_line", "tests/specfactory/test_method_weekly.py::test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit"]  # node ids, not the file: the file also holds HARNESS-mm-6's red case (halted by Westley; gd_tests_known_red.txt line 26), which is mm-6's acceptance, not this piece's (Architect 2026-10-28 after the 4b132aa9 reject)
 depends_on = ["HARNESS-mm-4"]  # ordering edge: mm-4 (attached) owns the same files
 tests_pending = true
 status = { state = "queued" }
