@@ -32,7 +32,7 @@ NEW = {"M25": (1.0, "ratio"), "M26": (1500, "M"), "M27": (0.1, "ratio"), "M28": 
 
 
 def thresholds(approved=APPROVED, prices=None):
-    out = [W.thresholds_toml(prices=prices)]
+    out = [W.thresholds_toml(prices=prices, drop=tuple(NEW))]
     for mid, (val, unit) in NEW.items():
         out += [f"[{mid}]", f'id = "{mid}"', 'gap = "G24"', f'draft = "DRAFT-mm-{mid}"', f"value = {val}", 'direction = "<="',
                 f'unit = "{unit}"', f"approved = {json.dumps(approved)}", "baseline = 0", 'window = "week"', 'phase = "both"']

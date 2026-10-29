@@ -61,10 +61,14 @@ TH = {
     "M20": ("<=", 20, "%", "lab"), "M21a": ("<=", 1, "rows", "both"), "M21b": ("<=", 2, "lines", "both"),
     "M22": ("<=", 2, "sessions", "both"), "M23": ("<=", 0, "files", "both"),
     "M24a": ("<=", 3, "commits", "both"), "M24b": ("<=", 1, "folders", "both"),
+    # HARNESS-mm-12 token ledger (G24): the DRAFT values of tl_world.NEW
+    "M25": ("<=", 1.0, "ratio", "both"), "M26": ("<=", 1500, "M", "both"), "M27": ("<=", 0.1, "ratio", "both"),
+    "M28": ("<=", 4, "messages", "both"), "M29": ("<=", 1, "runs", "both"),
 }
 # extra tuning numbers the spec gives in prose (min sample sizes); written into the matching table
 # M15 max_unknown: the share of runs with no RESULT line above which M15 FAILs (finding 21; a key the tests fix)
-EXTRA = {"M01": {"min_game_lines": 200}, "M10": {"min_rows": 3}, "M15": {"max_unknown": 20}}
+EXTRA = {"M01": {"min_game_lines": 200}, "M10": {"min_rows": 3}, "M15": {"max_unknown": 20},
+         "M26": {"day_m": 300, "dispatcher_m": 60, "pieces_m": 180, "reserve_m": 60}}
 
 
 def sh(cwd, *args, env=None, check=True):

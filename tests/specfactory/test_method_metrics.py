@@ -873,10 +873,14 @@ def test_a13_real_toml_every_threshold_approved_and_approved_prints_pass(tmp_pat
     import tomllib
     real = REPO / "scripts" / "specfactory" / "method_thresholds.toml"
     d = tomllib.loads(real.read_text())
-    tabs = {k: v for k, v in d.items() if isinstance(v, dict) and "approved" in v}
+    # TD-HARNESS-mm-12-2: DEC-thresholds-approved-2026-10-28 approved the tables that existed that day; the G24 tables
+    # (M25 to M29, drafted later) read approved = "" until Westley approves them.
+    tabs = {k: v for k, v in d.items() if isinstance(v, dict) and "approved" in v and v.get("gap") != "G24"}
     assert tabs, "no tables with an approved key"
     bad = {k: v["approved"] for k, v in tabs.items() if v["approved"] != "Westley 2026-10-28"}
     assert not bad, f"approved is not 'Westley 2026-10-28' in: {bad}"
+    g24 = {k: v["approved"] for k, v in d.items() if isinstance(v, dict) and v.get("gap") == "G24"}
+    assert g24 and all(a == "" for a in g24.values()), f"G24 tables read approved = '' until Westley approves: {g24}"
     assert d["M21b"]["value"] == 8, d["M21b"]
     assert d["M01"]["value"] == 1.5, d["M01"]
     w = W.build_world(tmp_path)
