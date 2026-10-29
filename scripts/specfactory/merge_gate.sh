@@ -536,6 +536,11 @@ fi
 ok qa_t1 "covered by regression_qa_t1"
 
 # -------------------------------------------------------------- 9. tests/transport, if present and the pipe builds
+# HARNESS-gate-concurrent: this early section only builds (the base-ref pipe worktree and the candidate pipes) and
+# collects the warnings; the transport run and every `GATE transport` line belong to the concurrent block in section 6.
+# See also: TRANSPORT_RUN and TRANSPORT_WARNS in section 6, tests/specfactory/test_gate_concurrent.py test_2, test_8
+TRANSPORT_RUN=0
+TRANSPORT_WARNS=()
 if [[ -d "$CANDIDATE/tests/transport" ]]; then
     PIPE_LOG="$SCRATCH_ROOT/pipe_build.log"
     # See also: tests/transport/test_pipe_vg_identity.py skips without OM_MAIN_PIPE
@@ -550,7 +555,7 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
             export MERGE_GATE_BASELINE_CACHE="${MERGE_GATE_BASELINE_CACHE:-$MERGE_ROOT/baseline_cache_mainpipe}"
             mkdir -p "$MERGE_GATE_BASELINE_CACHE"
         else
-            warn transport "OM_MAIN_PIPE not set, base pipe did not build: $(tail_oneline "$SCRATCH_ROOT/mainpipe.log")"
+            TRANSPORT_WARNS+=("OM_MAIN_PIPE not set, base pipe did not build: $(tail_oneline "$SCRATCH_ROOT/mainpipe.log")")
         fi
     fi
     ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PIPE_LOG" 2>&1
@@ -558,42 +563,14 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
         PIPE_DBG_LOG="$SCRATCH_ROOT/pipe_dbg_build.log"
         ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe_dbg ) >"$PIPE_DBG_LOG" 2>&1
         if [[ $? -ne 0 ]]; then
-            warn transport "pipe/ouroboros_pipe_dbg did not build: $(tail_oneline "$PIPE_DBG_LOG")"
+            TRANSPORT_WARNS+=("pipe/ouroboros_pipe_dbg did not build: $(tail_oneline "$PIPE_DBG_LOG")")
         fi
-        TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
-        if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
-            MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
-                --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
-                --before-build "make -s pipe/ouroboros_pipe" >"$TRANSPORT_LOG" 2>&1
-        else
-            MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
-                --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
-                --before-build "make -s pipe/ouroboros_pipe" --pytest-extra '-n 2' >"$TRANSPORT_LOG" 2>&1
-        fi
-        if [[ $? -ne 0 ]]; then
-            # --before-build (merge_gate_support.py's regression_check) now
-            # builds pipe/ouroboros_pipe on the base-ref side too, same as this
-            # step already does for $CANDIDATE, so a REJECT here means an id
-            # newly fails against a REAL main build, not the old skip(before)
-            # -> fail(after) false positive from an unbuilt baseline
-            # (2026-09-24: B5-3, B9-1-2 rejected on ids that pass clean against
-            # a freshly built main). Before piece T1 attaches, main has no
-            # om_pipe.c at all -- the before_build there just fails and the
-            # base-ref worktree falls back to skipping, same as always; WARN
-            # until attach/T1 for that one case.
-            if git -C "$CANDIDATE" tag -l 'attach/T1' | grep -q .; then
-                reject transport "$(cat "$TRANSPORT_LOG")"
-            else
-                warn transport "before attach/T1: $(cat "$TRANSPORT_LOG")"
-            fi
-        else
-            ok transport "$(cat "$TRANSPORT_LOG")"
-        fi
+        TRANSPORT_RUN=1
     else
-        warn transport "pipe/ouroboros_pipe did not build: $(tail_oneline "$PIPE_LOG")"
+        TRANSPORT_WARNS+=("pipe/ouroboros_pipe did not build: $(tail_oneline "$PIPE_LOG")")
     fi
 else
-    warn transport "no tests/transport directory in this candidate"
+    TRANSPORT_WARNS+=("no tests/transport directory in this candidate")
 fi
 
 # venv_unlink: remove the .venv link godot_import made (only the link; the
@@ -635,38 +612,24 @@ fi
 
 early_exit_if_rejected
 
-# -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
-REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
-# MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
-# the baseline run and the branch run both inherit it.
-# MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
-# The csim stage runs under pytest-xdist (DRAFT-xdist-workers = 5); MERGE_GATE_CSIM_XDIST=0 runs the serial command
-# (the first gate after HARNESS-csim-xdist lands seeds its serial baseline that way). Same switch on the transport stage.
-# See also: tests/csim/conftest.py pytest_configure, the xdist branch is the last one so the call reader finds it
-if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
-    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
-        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
-else
-    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
-        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
-        --pytest-extra '-n 5 --dist loadfile' >"$REG_CSIM_LOG" 2>&1
-fi
-if [[ $? -ne 0 ]]; then
-    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
-else
-    ok regression_csim "$(cat "$REG_CSIM_LOG")"
-fi
+# -------------------------------------------------------------- 6. suite_regression: qa/t1 alone, then csim, transport, lab and specfactory side by side
+# HARNESS-gate-concurrent. qa/t1 runs first and alone (its WALL_BUDGET detector shares CPU badly); then the four other
+# suites run as background jobs, each with its own log $SCRATCH_ROOT/regression_<suite>.log, TMPDIR $SCRATCH_ROOT/<suite>
+# and XDG_DATA_HOME $SCRATCH_ROOT/<suite>/xdg. `wait` precedes the first reject/ok line of the block; the verdict lines
+# print after it in a fixed order (transport, csim, lab, specfactory), each with its own log. Each suite's base and
+# candidate passes run side by side inside merge_gate_support.py regression_check; the libs were built once in
+# section 1, so the self-building conftests of csim and qa/t1 find them up to date.
+# See also: tests/specfactory/test_gate_concurrent.py, docs/northstar/plans/harness/gate-parallel-scout.md design B
+job_dirs() {
+    mkdir -p "$SCRATCH_ROOT/$1/xdg/godot"
+    if [[ -n "${HOME:-}" && -d "$HOME/.local/share/godot/export_templates" ]]; then
+        ln -sfn "$HOME/.local/share/godot/export_templates" "$SCRATCH_ROOT/$1/xdg/godot/export_templates"
+    fi
+}
 
-REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
-else
-    ok regression_lab "$(cat "$REG_LAB_LOG")"
-fi
-
+job_dirs qa_t1
 REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
+TMPDIR="$SCRATCH_ROOT/qa_t1" XDG_DATA_HOME="$SCRATCH_ROOT/qa_t1/xdg" \
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
@@ -675,10 +638,96 @@ else
     ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
 fi
 
+# MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
+# the baseline run and the branch run both inherit it.
+# MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
+# The csim stage runs under pytest-xdist (DRAFT-xdist-workers = 5); MERGE_GATE_CSIM_XDIST=0 runs the serial command
+# (the first gate after HARNESS-csim-xdist lands seeds its serial baseline that way). Same switch on the transport stage.
+# See also: tests/csim/conftest.py pytest_configure, the xdist branch is the last one so the call reader finds it
+job_dirs csim
+job_dirs lab
+job_dirs specfactory
+REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
+if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
+    TMPDIR="$SCRATCH_ROOT/csim" XDG_DATA_HOME="$SCRATCH_ROOT/csim/xdg" \
+    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1 &
+else
+    TMPDIR="$SCRATCH_ROOT/csim" XDG_DATA_HOME="$SCRATCH_ROOT/csim/xdg" \
+    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+        --pytest-extra '-n 5 --dist loadfile' >"$REG_CSIM_LOG" 2>&1 &
+fi
+REG_CSIM_PID=$!
+
+REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
+TMPDIR="$SCRATCH_ROOT/lab" XDG_DATA_HOME="$SCRATCH_ROOT/lab/xdg" \
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1 &
+REG_LAB_PID=$!
+
 REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
+TMPDIR="$SCRATCH_ROOT/specfactory" XDG_DATA_HOME="$SCRATCH_ROOT/specfactory/xdg" \
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1 &
+REG_SF_PID=$!
+
+REG_TRANSPORT_LOG="$SCRATCH_ROOT/regression_transport.log"
+REG_TRANSPORT_PID=""
+if [[ "$TRANSPORT_RUN" -eq 1 ]]; then
+    job_dirs transport
+    if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
+        TMPDIR="$SCRATCH_ROOT/transport" XDG_DATA_HOME="$SCRATCH_ROOT/transport/xdg" \
+        MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+            --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+            --before-build "make -s pipe/ouroboros_pipe" >"$REG_TRANSPORT_LOG" 2>&1 &
+    else
+        TMPDIR="$SCRATCH_ROOT/transport" XDG_DATA_HOME="$SCRATCH_ROOT/transport/xdg" \
+        MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+            --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+            --before-build "make -s pipe/ouroboros_pipe" --pytest-extra '-n 2' >"$REG_TRANSPORT_LOG" 2>&1 &
+    fi
+    REG_TRANSPORT_PID=$!
+fi
+
+wait "$REG_CSIM_PID"; REG_CSIM_RC=$?
+wait "$REG_LAB_PID"; REG_LAB_RC=$?
+wait "$REG_SF_PID"; REG_SF_RC=$?
+REG_TRANSPORT_RC=0
+[[ -n "$REG_TRANSPORT_PID" ]] && { wait "$REG_TRANSPORT_PID"; REG_TRANSPORT_RC=$?; }
+
+for ((i = 0; i < ${#TRANSPORT_WARNS[@]}; i++)); do
+    warn transport "${TRANSPORT_WARNS[$i]}"
+done
+if [[ -n "$REG_TRANSPORT_PID" ]]; then
+    if [[ "$REG_TRANSPORT_RC" -ne 0 ]]; then
+        # --before-build (merge_gate_support.py's regression_check) builds pipe/ouroboros_pipe on the base-ref side
+        # too, so a REJECT here means an id newly fails against a REAL main build, not the old skip(before) ->
+        # fail(after) false positive from an unbuilt baseline (2026-09-24: B5-3, B9-1-2). Before piece T1 attaches,
+        # main has no om_pipe.c at all and the before_build just fails; WARN until attach/T1 for that one case.
+        if git -C "$CANDIDATE" tag -l 'attach/T1' | grep -q .; then
+            reject transport "$(cat "$REG_TRANSPORT_LOG")"
+        else
+            warn transport "before attach/T1: $(cat "$REG_TRANSPORT_LOG")"
+        fi
+    else
+        ok transport "$(cat "$REG_TRANSPORT_LOG")"
+    fi
+fi
+
+if [[ "$REG_CSIM_RC" -ne 0 ]]; then
+    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
+else
+    ok regression_csim "$(cat "$REG_CSIM_LOG")"
+fi
+
+if [[ "$REG_LAB_RC" -ne 0 ]]; then
+    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
+else
+    ok regression_lab "$(cat "$REG_LAB_LOG")"
+fi
+
+if [[ "$REG_SF_RC" -ne 0 ]]; then
     reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')"
 else
     ok specfactory_regression "$(cat "$REG_SF_LOG")"

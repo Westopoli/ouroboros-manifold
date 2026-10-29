@@ -10,6 +10,7 @@ candidate worktree being gated -- a leaf cannot edit any of them.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import fnmatch
 import hashlib
 import json
@@ -20,6 +21,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import tomllib
 import struct
 import uuid
@@ -590,27 +592,31 @@ def _load_cached_baseline(cache_path: Path, harness_sha: str, suite_key: str) ->
 
 def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
                             suite_key: str, result: sr.RunResult, input_hash: str | None = None) -> None:
-    data = {"main_sha": main_sha, "harness_sha": harness_sha, "suites": {}}
-    if cache_path.exists():
-        try:
-            existing = json.loads(cache_path.read_text())
-            if existing.get("harness_sha") == harness_sha and existing.get("main_sha") == main_sha:
-                data = existing
-        except (OSError, ValueError):
-            pass
-    data.setdefault("suites", {})[suite_key] = {
-        "passed": result.passed, "failed": result.failed,
-        "failing_ids": list(result.failing_ids), "returncode": result.returncode,
-        "first_assertion": dict(result.first_assertion),
-        "skipped": result.skipped, "xfailed": result.xfailed,
-        "scale_gated": list(result.scale_gated),
-    }
-    if input_hash is not None:
-        data["suites"][suite_key]["input_hash"] = input_hash
+    # The gate's concurrent suite jobs store into one <main_sha>.json: the read-modify-write holds a flock on
+    # <main_sha>.json.lock. See also: tests/specfactory/test_gate_concurrent.py test_10, test_11
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = cache_path.with_suffix(".json.tmp")
-    tmp_path.write_text(json.dumps(data))
-    tmp_path.replace(cache_path)
+    with open(cache_path.with_name(cache_path.name + ".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        data = {"main_sha": main_sha, "harness_sha": harness_sha, "suites": {}}
+        if cache_path.exists():
+            try:
+                existing = json.loads(cache_path.read_text())
+                if existing.get("harness_sha") == harness_sha and existing.get("main_sha") == main_sha:
+                    data = existing
+            except (OSError, ValueError):
+                pass
+        data.setdefault("suites", {})[suite_key] = {
+            "passed": result.passed, "failed": result.failed,
+            "failing_ids": list(result.failing_ids), "returncode": result.returncode,
+            "first_assertion": dict(result.first_assertion),
+            "skipped": result.skipped, "xfailed": result.xfailed,
+            "scale_gated": list(result.scale_gated),
+        }
+        if input_hash is not None:
+            data["suites"][suite_key]["input_hash"] = input_hash
+        tmp_path = cache_path.with_suffix(".json.tmp")
+        tmp_path.write_text(json.dumps(data))
+        tmp_path.replace(cache_path)
 
 
 SUITE_INPUTS_REL = "scripts/specfactory/suite_inputs.toml"
@@ -832,19 +838,41 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     try:
         with tempfile.TemporaryDirectory(prefix="merge_gate_junit_") as jtmp:
             after_xml = Path(jtmp) / "after.xml" if junit else None
+            # The base and candidate passes run side by side (HARNESS-gate-concurrent); a base-pass exception is
+            # re-raised after the candidate pass ends. See also: tests/specfactory/test_gate_concurrent.py test_9
+            before_box: dict = {}
+            before_thread = None
             if tmp is not None:
                 before_xml = Path(jtmp) / "before.xml" if junit else None
-                before = sr.run_pytest(tmp, python_exe, test_args, timeout, extra_args=extra_args, junit_path=before_xml)
-                # See regression_check's cache comment above: normalize before
-                # caching so a cached entry replayed from a since-removed `tmp`
-                # already reads "<WORKTREE>", matching whatever this run's own
-                # `after` normalizes its candidate_dir path down to.
-                before.first_assertion = {k: _normalize_worktree_paths(v, tmp)
-                                           for k, v in before.first_assertion.items()}
-                if cache_path is not None:
-                    _store_cached_baseline(cache_path, harness_sha, main_sha, suite_key, before, base_hash)
-            after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, extra_args=extra_args,
-                                  junit_path=after_xml)
+
+                def run_before() -> None:
+                    try:
+                        res = sr.run_pytest(tmp, python_exe, test_args, timeout, extra_args=extra_args,
+                                            junit_path=before_xml)
+                        # See regression_check's cache comment above: normalize before
+                        # caching so a cached entry replayed from a since-removed `tmp`
+                        # already reads "<WORKTREE>", matching whatever this run's own
+                        # `after` normalizes its candidate_dir path down to.
+                        res.first_assertion = {k: _normalize_worktree_paths(v, tmp)
+                                               for k, v in res.first_assertion.items()}
+                        if cache_path is not None:
+                            _store_cached_baseline(cache_path, harness_sha, main_sha, suite_key, res, base_hash)
+                        before_box["result"] = res
+                    except BaseException as exc:
+                        before_box["error"] = exc
+
+                before_thread = threading.Thread(target=run_before)
+                before_thread.start()
+            try:
+                after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, extra_args=extra_args,
+                                      junit_path=after_xml)
+            finally:
+                if before_thread is not None:
+                    before_thread.join()
+            if "error" in before_box:
+                raise before_box["error"]
+            if before_thread is not None:
+                before = before_box["result"]
         # Every unbuilt-symbol failure (extremely common in this codebase --
         # most of E-06..E-17 is still STUB) raises a ctypes AttributeError
         # whose text embeds the .so's own absolute path
