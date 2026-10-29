@@ -6,6 +6,7 @@
 #define OM_INTERNAL_H
 
 #include "ouroboros_sim.h"
+#include "om_constants.h"
 
 #define OM_MAX_NEIGHBORS 32
 /* HDR5 (A27): raised 128 -> 512 so every region-indexed and per-tick-record
@@ -33,7 +34,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 12 /* bumped 11 -> 12 (LAB-REV2 E0: the movement section grows by OM_TP_FIRING_ARC_DEG, one more setting in the param loop): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 13 /* bumped 12 -> 13 (LAB-REV2 E0: the movement section grows by OM_TP_FIRING_ARC_DEG, one more setting in the param loop): version-12 saves are refused, no migration (R-111-03). Earlier: bumped 11 -> 12 (VG E7: reinforce_cap and reinforce_spawned in the mission slot): version-11 saves are refused, no migration (R-111-03). Earlier: bumped 10 -> 11 (VG W2: the movement section stores the walk routes: plan_layer, route_n, route_i, route_ends_at_goal and the route cells): version-10 saves are refused, no migration (R-111-03). Earlier: bumped 9 -> 10 (VG K-e5: density_side, P, n_active, active, core_cell, next_lot_id; lot_hit_tick sized OM_LOT_CAP 2048): version-9 saves are refused, no migration (R-111-03). Earlier: bumped 8 -> 9 (VG K-e3: density_economy, lot_hit_tick): version-8 saves are refused, no migration (R-111-03). Earlier: bumped 7 -> 8 (VG K-e: lots, density grid, strongpoints, doctrine, wave log): version-7 saves are refused, no migration (R-111-03). Earlier: bumped 6 -> 7 (terrain stage 3): version-6 saves are refused. Earlier: bumped 5 -> 6 (lockstep spec 2026-10-05): version-5 saves are refused. Earlier: bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -366,7 +367,8 @@ struct om_world {
      * literal below -- OM_KNOWLEDGE_LOST_POP_WINDOW is a local #define in
      * diplomacy.c; struct array dimensions are exempt from the alg_constants lint).
      * Window = OM_KNOWLEDGE_LOST_POP_WINDOW (om_constants.h, ALG-27b); dimension
-     * stays literal 50 here since om_constants.h is not included in this header.
+     * stays literal 50 here (array dimension, lint-exempt); this header includes
+     * om_constants.h for the OM_PRODSLOT_* constants.
      * head = next write index (0..49); len = samples stored (0..50).
      * Initialized to 0 at world creation (calloc in om_world_new/region.c).
      * Serialized by SAVE-1 (save.c sv_write_body / sv_parse_body). */
@@ -516,6 +518,27 @@ void om_step_lifecycle(om_world *w);
 void om_support_tick(om_world *w);
 /* Deadline-baseline hook (csrc/mission.c); called by fog.c om_mission_begin right after the phase moves to tactical. */
 void om_mission_on_begin(om_world *w);
+/* VG-CONTRACT-E7 (csrc/mission.c; read and noted by the player's production driver in csrc/tactical_support.c; the spec E7
+ * paragraph). om_mission_reinforce_cap: how many more units the player's structures may still spawn this mission, i.e.
+ * reinforce_cap (F_units - start_units, set when the mission is laid out) minus reinforce_spawned (both saved and hashed in the
+ * mission slot). UINT32_MAX on a bare world with no mission set up and on a mission whose composed roster is empty (F_units 0),
+ * so production there is uncapped; the driver spawns for the player only while it is nonzero. The accessor returns the allowance
+ * left, not the raw cap (Architect 2026-10-19, accepted). om_mission_reinforce_note_spawn: counts one player spawn into
+ * reinforce_spawned; a no-op when there is no cap (nothing to count against). */
+uint32_t om_mission_reinforce_cap(const om_world *w);
+void om_mission_reinforce_note_spawn(om_world *w);
+/* VG-E-prodslot (R-126-02, FINDING-production-stack, TD-VG-E-29, spec 2026-10-07-visible-game-spec.md "VG-E-prodslot"):
+ * the first free slot, in a fixed ring-by-ring row-major scan, of the 30 wu lattice around a structure's point, within half the
+ * capture radius (inclusive); the structure's own point excluded; a slot is free when no live unit (any faction, any layer) is
+ * strictly within one spacing of it and om_unit_spawn would accept the structure's unit type there. Returns 1 and the slot
+ * centre, or 0 when none is free (the caller delays production one tick). No RNG draw. Defined in csrc/mission.c, called by
+ * csrc/tactical_support.c om_structure_tick_production. Spacing is mission.c:2470's (2 * OM_UNIT_COLLISION_RADIUS), integer
+ * ring bound as the Architect ruled (GAP 2, 2026-10-21): a slot (i, j) counts when i*i + j*j <= OM_PRODSLOT_RING_MAX^2. */
+#define OM_PRODSLOT_SPACING_WU (2 * OM_UNIT_COLLISION_RADIUS)
+#define OM_PRODSLOT_RING_MAX ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) / OM_PRODSLOT_SPACING_WU)
+_Static_assert((OM_REINFORCEMENT_CAPTURE_RADIUS % 2) == 0 && ((OM_REINFORCEMENT_CAPTURE_RADIUS / 2) % OM_PRODSLOT_SPACING_WU) == 0,
+               "half the capture radius is a whole number of lattice spacings");
+int om_mission_production_slot(const om_world *w, uint32_t structure, double *out_x, double *out_y);
 /* Resets the one-shot mission_started latch (csrc/fog.c); called by mission.c
  * om_mission_setup so a new mission's recon phase can be re-entered via
  * om_mission_begin. Without this, om_mission_is_started stays true forever

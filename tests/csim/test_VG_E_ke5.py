@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f, R-168-01@c6cd6c
 """Visible-game lane E1, contract piece K-e5 (VG-CONTRACT-E5): the saved density block, the load rejections, format 10, ABI 7
 and the test hook om_terrain_set_heights. Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 10d, "Lane E1 part c:
 the settlement port", the K-e5 paragraph (every case names the K-e5 clause it proves). Rules R-168-01/05 (new world state is
@@ -630,17 +631,17 @@ def test_ke5_load_rejects_core_cell_at_or_above_side_squared(klib, kmake):
 # ------------------------------------------------------------------------------------------------ version pins
 
 def test_ke5_save_format_version_is_10(klib, kmake):
-    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1); LAB-REV2 E0 moved it to 12; read as the moved pins read it (header bytes 4..8 of a save)."""
+    """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), LAB-REV2 E0 to 13, read as the moved pins read it (header bytes 4..8 of a save)."""
     assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 12
 
 
 def test_ke5_abi_version_is_7(klib):
-    """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol), read from om_abi_version() as the moved pins read it; LAB-REV2 E0 moved it to 8 (two new public symbols)."""
+    """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol); E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group); LAB-REV2 E0 moved it to 9 (two new public symbols), read from om_abi_version() as the moved pins read it."""
     assert klib.om_abi_version() == 8
 
 
 def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
-    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1); LAB-REV2 E0 moved it to 12. A save written through the
+    """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), LAB-REV2 E0 to 13. A save written through the
     pipe has sidecar format_version 12 and a version word 12 (the sidecar is the key the load-game screen reads). Control
     first: both exist and are integers."""
     if not PIPE.exists():

@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-12 (asymmetric plays, real engine)
+# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-12 (asymmetric plays, real engine); LAB-REV2-L2 (Q-LAB-03)
 """A 4-unit-per-side fight for each role pair runs to an outcome, and two runs of the same fight are identical."""
 import sys
 from pathlib import Path
@@ -14,7 +14,7 @@ from scripts.skilllab.asym import Side, asym_play  # noqa: E402
 
 ROLES = ("blob", "line", "skilled", "counter")
 PAIRS = [(a, b) for a in ROLES for b in ROLES if not (a == b == "counter")]
-OUTCOMES = {"side0", "side1", "draw", "stalemate", "cap"}
+OUTCOMES = {"side0", "side1", "draw", "cap"}   # LAB-REV2-L2 (Q-LAB-03): stalemate is retired; a cap is a defect, tolerated here as the run-and-equal check
 
 
 @pytest.fixture(scope="module")

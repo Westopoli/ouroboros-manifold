@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on Q-080-03 (S-080), on the open flags of S-210 to S-214, and on one missing reference (S-079). S-072 to S-078 have no open flags; gate to be rerun. Missions run 30 to 60 minutes; `om_mission_get_time_limit` still reads the retired 3 to 4.5 minute table until the clock rewire lands.
+**Gate verdict: not passed.** Blocked on Q-080-03 (S-080), on the open flags of S-210 to S-214, and on one missing reference (S-079). S-072 to S-078 have no open flags; gate to be rerun. Missions run 30 to 60 minutes; `om_mission_get_time_limit` computes the R-076-01 limit from the R-076-02 minutes table (clock rewire landed, 53101e2).
 
 ## Purpose
 
@@ -36,7 +36,7 @@ Rules
 - R-072-03  Given a candidate, When relevance is computed, Then relevance = clamp(0.4 · lineage + 0.3 · proximity + 0.3 · fit, 0, 1), lineage = 1.0 if a lineage member lives in the region, 0.5 if the lineage ever operated there, else 0; proximity = 1 − hops from the lineage home/5 (capped at 5 hops); fit = min(1, times the lineage has run this archetype/3).
 - R-072-04  Given a candidate, When preference is computed, Then it is 0.1 for an archetype the player marked rare, else the player's weight, default 0.5.
 - R-072-05  Given scored candidates, When one is selected, Then score = 0.5 · urgency + 0.3 · relevance + 0.2 · preference, the top 5 by score form the draw pool, and one weighted draw proportional to score picks the mission.
-- R-072-06  Given a region with stability 15 under attack by a neighbor at military 80, When scored, Then urgency ≥ 0.8 and it beats any quiet region regardless of relevance and preference.
+- R-072-06  Given a region with stability 15 and an active revolt chain (two revolt events) under attack by a neighbor at military 80, When scored, Then urgency ≥ 0.8 and it beats any quiet region regardless of relevance and preference (Q-072-02, Architect 2026-10-19).
 - R-072-07  Given no candidate in the pool, When selection runs, Then the sim runs another 20-tick jump and rebuilds the pool, up to 5 times; if the pool is still empty, the mission is a Defensive Stand on the player's weakest region: the player region with the lowest stability composite (ALG-09, the value E-10 reads everywhere as "stability"), ties to the lowest region index. (Q-072-01, Westley 2026-09-13 and 2026-09-30.)
 - R-072-08  Given the fallback of R-072-07, When its forces are composed, Then the enemy is the non-player faction nearest the region by connection hops (ties to the faction with the highest total military across its regions, then the lowest faction id); its power P is that faction's strongest region's military × 2000 (the R-074-01 default form), raised if needed so the enemy fields at least one unit; the player's force is P · parity as in R-074-04; and the fallback being reached at all is a simulation-health warning (`quiet_world` in the mission frame), because a tuned galaxy always has an attack somewhere. (Westley 2026-09-30: "this situation should never happen if we tune the simulation right.")
 
@@ -202,7 +202,7 @@ Rules
 
 Inputs: archetype library; the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
-Open flags: Q-210-07 (liberty: Architect: which mission types launch in the beta). Where a base stands is whatever the terrain gives (E-17 R-166-03).
+Where a base stands is whatever the terrain gives (E-17 R-166-03).
 
 ### S-211 — The resources fit the situation
 As a commander, I want the resources on the map to be scarce or plentiful as the simulation's situation says, tilted toward the side with the better position, and never so thin that I cannot do the job, so that the economy is part of the mission and never a trap.

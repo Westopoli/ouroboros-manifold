@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-104-06@146ed0, R-205-02@1abaf8
 
 # VG-A piece A13 (structures). Proves R-104-06's world half and R-205-02 for drawn structures: a structure is drawn at its
 # position with an owner ring and an HP bar. section 2 structures: {id,type,owner,x,y,hp,stage,cap,nst,next_type,period};
@@ -165,6 +166,10 @@ func _structs() -> Array:
 		{"id": 3, "type": 0, "owner": -1, "x": 1800.0, "y": 1900.0, "hp": 800.0, "stage": 0, "cap": 0, "nst": 0, "next_type": -1, "period": 0}]
 
 
+func _land_proj(w: Vector2) -> Vector2:
+	return Vector2(w.x * 0.2 + w.y * 0.05 + 100.0, w.y * 0.35 - w.x * 0.02 + 60.0)
+
+
 func _run_tests() -> void:
 	var sl = _mod("res://scenes/tactical_c/structures_layer.gd", "A13: structures drawn with owner ring and HP bar")
 	if sl == null:
@@ -176,7 +181,16 @@ func _run_tests() -> void:
 		_assert(sl.call("structure_node", i) != null, "A13: structure %d is drawn" % i)
 		_assert(sl.call("hp_bar", i) != null, "A13: structure %d carries an HP bar" % i)
 	var n: Node2D = sl.call("structure_node", 2)
-	_assert(n != null and n.position.distance_to(_scr(Vector2(2400, 2400))) < 0.5, "A13: a structure sits at its screen position")
+	_assert(n != null and n.position.distance_to(_scr(Vector2(2400, 2400))) < 0.5, "A13: in space (no projector) a structure sits at its flat screen position")
+	# TD-VG-C-land-one-projection: on land the structure sits at the projector's image, not the flat formula.
+	var land = _mod("res://scenes/tactical_c/structures_layer.gd", "A13 land: a second layer for the projector path")
+	if land != null and _need(land, ["set_projector", "set_frame", "structure_node"]):
+		land.call("set_projector", Callable(self, "_land_proj"))
+		land.call("set_frame", _frame([_unit(9, 0, 0, 1000.0, 1000.0)], {"structures": _structs()}), 0, SCALE, CAM)
+		var ln: Node2D = land.call("structure_node", 2)
+		var want := _land_proj(Vector2(2400, 2400))
+		_assert(ln != null and ln.position.distance_to(want) < 0.5, "A13 land: a structure sits at the projector's image %s, got %s" % [want, ln.position if ln != null else null])
+		_assert(want.distance_to(_scr(Vector2(2400, 2400))) > 5.0, "A13 land CONTROL: the test projector differs from the flat formula")
 	var c1 = sl.call("owner_color", 1)
 	var c2 = sl.call("owner_color", 2)
 	var c3 = sl.call("owner_color", 3)

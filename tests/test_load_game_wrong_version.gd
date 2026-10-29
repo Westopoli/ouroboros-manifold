@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-111-03@d25a6f
 
 # B5 (docs/northstar/plans/2026-10-01-architect-rulings-2.md section 2): the save layout
 # changed, OM_SAVE_FORMAT_VERSION is 5 (B6 lifecycle fields, ruling 1.8), and save.c rejects every other version. The

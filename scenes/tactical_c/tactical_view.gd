@@ -144,6 +144,8 @@ var _ground_layer: Node2D
 # Ground era (S-236): the 3D ground hosted under the 2D shell. The 2D terrain layer is demoted to the map band.
 var _ground3d: Node
 var _settlement: Node3D
+# VG-D-VIEW (docs/northstar/plans/2026-10-13-d-view-spec.md, Hosting): the SpaceView is assigned to _ground3d (duck-typed) when OM_SPACE_VIEW=1.
+var _space_hosted := false
 var _terrain: Dictionary = {}
 
 
@@ -268,12 +270,14 @@ func _load_live() -> void:
 			if not mf.is_empty():
 				load_frame(mf)
 		set_terrain(bridge.terrain() if bridge.has_method("terrain") else {})
+		_maybe_host_space_view()
 		return
 	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 		if _error_panel != null:
 			_error_panel.hide_error()
 		load_frame(bridge.tactical_frame())
 		set_terrain(bridge.terrain() if bridge.has_method("terrain") else {})
+		_maybe_host_space_view()
 		return
 	var reason: String = bridge.last_error()
 	push_error("tactical_view: live tactical frame failed: %s" % reason)
@@ -283,6 +287,54 @@ func _load_live() -> void:
 func _ground_era() -> bool:
 	var cfg := get_node_or_null("/root/EraConfig")
 	return cfg != null and cfg.kind() == "ground"
+
+
+# VG-D-VIEW (d-view spec rev 3, Hosting): OPT-IN for the first look. After set_terrain, because set_terrain with the space era's empty
+# terrain frees _ground3d (:290-300); set_terrain itself is not edited. The default space era stays 2D until Westley approves the shot.
+func _maybe_host_space_view() -> void:
+	if OS.get_environment("OM_SPACE_VIEW") != "1" or _ground3d != null or _ground_era():
+		return
+	var field: Dictionary = SimSession.bridge().space_field()
+	if not field.is_empty():
+		_host_space_view(field)
+
+
+func _host_space_view(field: Dictionary) -> void:
+	var host: Node = load("res://scenes/space3d/space_view.tscn").instantiate()
+	host.name = "SpaceView"
+	add_child(host)
+	move_child(host, 0)
+	_ground3d = host
+	_space_hosted = true
+	host.set_field(field)
+	host.set_focus_layer(int(_node("LayerView").focus_layer()))
+	host.set_frame(_frame, SimSession.bridge().mission())
+	_sync_from_rig()
+	_home_camera = _camera
+	_update_display_px()
+	_redraw()
+
+
+# G3 (a): the 2D bodies and layer rings are hidden through the public unit_node(id) and the squads layer is off, so a unit is not drawn
+# twice; the hp bar and the selection ring stay and follow the unit's pixel on its own sheet (_display_px). The hp bars are Controls
+# with the default STOP filter: at the 3D camera's scale a selected unit's bar is wider than the unit spacing and swallowed the press of
+# the next box drag (S-246 play), so they ignore the mouse like the other read-only HUD readouts (_ignore_mouse).
+func _hide_2d_units() -> void:
+	_node("UnitSquads").visible = false
+	var uv := _node("UnitVisuals")
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		var n: Node2D = uv.unit_node(id)
+		if n == null:
+			continue
+		for part in ["Body", "LayerRing"]:
+			var c := n.get_node_or_null(part)
+			if c != null:
+				c.visible = false
+		if _display_px.has(str(id)):
+			var px: Array = _display_px[str(id)]
+			n.position = Vector2(px[0], px[1])
+		_ignore_mouse(n)
 
 
 func set_terrain(t: Dictionary) -> void:
@@ -300,6 +352,7 @@ func set_terrain(t: Dictionary) -> void:
 		return
 	if _ground_layer == null:
 		_ground_layer = load("res://scenes/tactical_c/terrain_layer.gd").new()
+		_ground_layer.name = "TerrainLayer"
 		add_child(_ground_layer)
 		move_child(_ground_layer, 0)
 	_ground_layer.set_terrain(t)
@@ -314,6 +367,9 @@ func set_terrain(t: Dictionary) -> void:
 			add_child(_ground3d)
 			move_child(_ground3d, 0)
 		_ground3d.set_terrain(t)
+		var fog := _node("FogLayer")
+		if fog != null and fog.has_method("set_terrain"):
+			fog.set_terrain(t)
 		_add_ground_layers(t)
 		_ground3d.set_frame(_frame, SimSession.bridge().mission())
 		# FU-A18-3d: the rig has no fit yet, so the ground-era centre is the own-unit box as on main; the spawn and lot terms come with the fit.
@@ -524,6 +580,7 @@ func qa_state() -> Dictionary:
 		"selected": _selected.duplicate(),
 		"camera": {"x": _camera.x, "y": _camera.y},
 		"ground3d": _ground3d.qa_state()["ground3d"] if _ground3d != null else {"present": false},
+		"space3d": _ground3d.qa_state()["space3d"] if _space_hosted else {"present": false},
 		"objects_px": _objects_px(),
 		"last_command": _last_command.duplicate(),
 		"commands_sent_last_order": _commands_sent_last_order,
@@ -532,7 +589,35 @@ func qa_state() -> Dictionary:
 		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 		"inventory": _inventory(),
 		"settlement_lots": _settlement.lots_drawn() if _settlement != null else [],
+		"marks_px": _marks_px(),
+		"hidden_on_land": ["UnitSquads", "TerrainLayer"] if _ground3d != null and not _space_hosted else [],
+		"sight_discs": {},
 	}
+
+
+# VG-C-land-one-projection: the screen position of every unit icon and structure icon, plus the squad models while UnitSquads shows.
+func _marks_px() -> Dictionary:
+	var out := {}
+	var uv := _node("UnitVisuals")
+	var squads := _node("UnitSquads")
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		var n: Node2D = uv.unit_node(id)
+		if n == null:
+			continue
+		var m := {"icon": [n.global_position.x, n.global_position.y]}
+		if squads.visible:
+			var pts := []
+			for q in squads.squad_models(id):
+				pts.append([n.global_position.x + q.x, n.global_position.y + q.y])
+			m["squads"] = pts
+		out[str(id)] = m
+	var sl := _node("StructuresLayer")
+	for st in _frame.get("structures", []):
+		var n: Node2D = sl.structure_node(int(st.get("id")))
+		if n != null:
+			out["structure:%d" % int(st.get("id"))] = {"icon": [n.global_position.x, n.global_position.y]}
+	return out
 
 
 func _inventory() -> Dictionary:
@@ -794,6 +879,8 @@ func _process(delta: float) -> void:
 	else:
 		_step_live(delta)
 	_apply_motion()
+	if _space_hosted:
+		_ground3d.set_focus_layer(int(_node("LayerView").focus_layer()))  # G7: the strip's focus_layer as is
 
 
 # Wiring spec W5 / interface 5: in a match NetMatch owns the tick; the view only submits orders and shows frames.
@@ -899,7 +986,7 @@ func _apply_motion() -> void:
 		if not visible_ids.has(id) or not _motion.has_unit(id):
 			continue
 		var w: Vector2 = _motion.position_at(id, alpha)
-		var px := _to_screen(w.x, w.y)
+		var px := _to_screen(w.x, w.y, int(u.get("layer", 0)))
 		_display_px[str(id)] = px
 		var node: Node2D = uv.unit_node(id)
 		if node != null:
@@ -1206,9 +1293,10 @@ func _visible_ids() -> Dictionary:
 	return out
 
 
-func _to_screen(wx: float, wy: float) -> Array:
+func _to_screen(wx: float, wy: float, layer: int = -1) -> Array:
 	if _ground3d != null and is_inside_tree():
-		var p: Vector2 = _ground3d.to_screen(wx, wy)
+		# The SpaceView projects on the unit's own sheet when a layer is given, else on the focus sheet (the project verb, markers, fog).
+		var p: Vector2 = _ground3d.to_screen(wx, wy, layer) if _space_hosted else _ground3d.to_screen(wx, wy)
 		return [p.x, p.y]
 	var sx := (wx - _camera.x) * _world_scale + SCREEN_W * 0.5
 	var sy := (wy - _camera.y) * _world_scale + SCREEN_H * 0.5
@@ -1232,7 +1320,7 @@ func _update_display_px() -> void:
 	for u in _frame.get("units", []):
 		var id := int(u.get("id"))
 		if visible_ids.has(id):
-			current_px[str(id)] = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+			current_px[str(id)] = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)), int(u.get("layer", 0)))
 
 	if _stuck:
 		# Freeze: populate once on first load_frame after planting; never update after.
@@ -1263,11 +1351,20 @@ func _redraw() -> void:
 	var lf := _get_local_faction()
 	var mission: Dictionary = SimSession.bridge().mission()
 	var ground := _ground3d != null
+	var land := ground and not _space_hosted
+	if land:
+		# VG-C-land-one-projection: the 3D bodies and the ground mesh are the units and the terrain on land.
+		_node("UnitSquads").visible = false
+		if _ground_layer != null:
+			_ground_layer.visible = false
 	if ground:
 		for n in ["MapLayer", "ObjectiveMarkers", "FogLayer", "LayerView", "Shots"]:
 			var piece := _node(n)
 			if piece != null and piece.has_method("set_projector"):
 				piece.set_projector(_project_ground)
+		if land:
+			for n in ["UnitVisuals", "StructuresLayer", "Deaths", "Abilities", "Ambient"]:
+				_node(n).set_projector(_project_ground)
 	_node("MapLayer").set_frame(_frame, mission, lf, _world_scale, _camera)
 	_node("ObjectiveMarkers").set_frame(_frame, mission, lf, _world_scale, _camera)
 	if ground:
@@ -1276,6 +1373,8 @@ func _redraw() -> void:
 		_node("FogLayer").set_frame(_frame, lf, _world_scale, _camera)
 	for n in ["LayerView", "UnitSquads", "UnitVisuals"]:
 		_node(n).set_frame(_frame, lf, _world_scale, _camera)
+	if _space_hosted:
+		_hide_2d_units()
 	for n in ["StructuresLayer", "Shots", "Deaths", "Abilities", "Ambient"]:
 		var piece := _node(n)
 		if piece.has_method("set_frame"):

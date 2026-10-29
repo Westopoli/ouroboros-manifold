@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 9 stories, 33 rules; the determinism and transport rules are concrete, the match-shape rules are placeholders pending Westley, and the paired-mode stories (S-159, S-241, S-242) carry numbers as flags. |
 | Every input listed with range and rejection behavior | Partly; see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag: Q-144-03 (S-144). |
+| Implied-but-unstated behavior turned into flags | No open flags; Q-144-03 (S-144) closed 2026-10-21 (register). |
 | Every visible-surface story has a reference | **No.** S-144 (lobby and match flow) is a visible surface with no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the 1 open flag listed at the foot and one missing reference (S-144). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); a match is co-op only at launch (R-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
+**Gate verdict: not passed.** Blocked on one missing reference (S-144); Q-144-03 closed 2026-10-21 (register). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); a match is co-op only at launch (R-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
 
 Built ahead of the gate under the visible game programme's waiver (Westley, 2026-10-07).
 
@@ -108,7 +108,7 @@ Rules
 
 Inputs: Steam friends; lobby.
 Outputs: lobby screen; match start.
-Open flags: Q-144-03. Reference required: `references/E-19/notes.md`, missing.
+Open flags: none. Q-144-03 closed 2026-10-21 (register: any peer hosts the next sitting). Reference required: `references/E-19/notes.md`, missing.
 
 ### S-159 — The paired mode: a partner who runs my economy
 As a commander, I want to play with a partner who runs the economy behind my war, so that what I can field is something we earned and the two of us have to talk.
@@ -127,7 +127,7 @@ Open flags: none here; the economy's own flags are E-22's.
 ### S-241 — Teams, sub-commanders and sub-civilizations
 As a player in a team, I want my pair to be a sub-civilization inside the over-arching civilization, with the map, the resources and the enemies growing as players join, so that more friends make a bigger game.
 
-Design decided 2026-10-02 (DECISIONS H7, H13), not scheduled for building. Teams of 6 are a desired future feature that waits on a higher peer count than the confirmed 4 (R-241-04). Westley, 2026-10-02: "more teammates = bigger maps and more to do, more resources, more enemies, each player is their own "sub-commander" and we can fabricate "alliances" where each pair of players is their own "sub-civlization" inside the over-arching civlization. essentially the game turned up to 11."
+Design decided 2026-10-02 (DECISIONS H7, H13); the lobby's team-size choice builds as VG-F-S241 (visible-game spec rev 13, 2026-10-19), a stub until R-241-03 scaling (ledger row FU-F-teamsize-scaling). Teams of 6 are a desired future feature that waits on a higher peer count than the confirmed 4 (R-241-04). Westley, 2026-10-02: "more teammates = bigger maps and more to do, more resources, more enemies, each player is their own "sub-commander" and we can fabricate "alliances" where each pair of players is their own "sub-civlization" inside the over-arching civlization. essentially the game turned up to 11."
 
 Rules
 - R-241-01  Given the paired queue, When a team forms, Then it has 2 or 4 players, in pairs (R-159-01). Teams of 6 are a desired future feature (R-241-04).
@@ -202,7 +202,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-144-03. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
+None here (Q-144-03 closed 2026-10-21). The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

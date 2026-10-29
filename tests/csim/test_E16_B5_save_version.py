@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f
 """B5 (architect rulings round 2, section 2): the saved consequence_consumed flag changes
 the save layout, so OM_SAVE_FORMAT_VERSION goes 2 -> 3 (B5) -> 4 (B6 lifecycle fields, ruling 1.8) -> 5 (HDR5 region_edge 512, A29) and save.c rejects any other
 version cleanly (R-111-03; nothing has shipped, no migration).

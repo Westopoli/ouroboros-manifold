@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f, R-168-01@c6cd6c, R-179-01@631ae9, R-193-01@451aaa, R-193-02@a4522c, R-193-04@f28cf4, R-218-01@ecb14c
 """Visible-game programme lane E1, contract amendment K-e, sim side (docs/northstar/plans/2026-10-07-visible-game-spec.md
 rev 6, lane E1 section, piece E1a; contract text: docs/architecture.md "Visible-game economy fields"). Fenced: builders
 never edit this file.
@@ -68,7 +69,7 @@ def test_control_existing_getter_still_works(lib, world_factory):
 
 
 def test_abi_version_is_7(lib):
-    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6."""
+    """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6. E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group): red until then, the library reports 7."""
     lib.om_abi_version.argtypes, lib.om_abi_version.restype = [], ctypes.c_uint32
     assert lib.om_abi_version() == 8
 
@@ -133,8 +134,8 @@ def test_place_symbol_callable(lib, world_factory):
 
 
 def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
-    """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1); LAB-REV2 E0 moved it to 12: the version word is 12; the new state reads back empty / doctrine 3.
-    Red before W2: the version word is 10."""
+    """K-e3: format 9 writes and re-reads; K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): the version word is 11; the new state reads back empty / doctrine 3.
+    Red before W2: the version word is 10. E7 moved it to 12 (TD-VG-E-27); LAB-REV2 E0 moved it to 13: the version word is 13."""
     bind(lib)
     bind_save(lib)
     src = world_factory(n_regions=1)

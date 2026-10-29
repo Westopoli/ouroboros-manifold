@@ -43,9 +43,11 @@ def _t(**over):
 
 
 def _fight(f0=1.0, f1=1.0, margin=0.0, ticks=100, outcome="side0"):
+    """The opening window equals the whole-fight total here, so every test that does not speak of a basis reads the same on both
+    (TD-LAB-REV2-L5-basis: the default basis is the window, decisions 29 item 2 and 31 C)."""
     return FightResult(outcome=outcome, margin=margin, strength_left=(0.0, 0.0), survivors=(0, 0),
                        heads=(0, 0), ticks=ticks, first_contact_tick=0, firing=[],
-                       firing_unit_seconds=(f0, f1))
+                       firing_unit_seconds=(f0, f1), firing_window=(f0, f1))
 
 
 def _cell(heads, fights, won=True):
@@ -54,7 +56,7 @@ def _cell(heads, fights, won=True):
 
 
 def _scan(size, cells, beats=None, loses_to=None):
-    return ScanResult(size=size, cells=list(cells), beats=beats, loses_to=loses_to, win_margin=0.05)
+    return ScanResult(size=size, cells=list(cells), beats=beats, loses_to=loses_to)
 
 
 def _pts_scan(xs, ys, size=5):
@@ -394,3 +396,387 @@ def test_c2_deterministic():
     """Same input, same verdict."""
     xs, ys = [0.0, 0.125, 0.25, 0.375], [0.0, 0.25, 0.125, 0.5]
     assert _c2(xs, ys) == _c2(xs, ys)
+
+
+# =====================================================================================================================
+# LAB-REV2-L5 additions. spec: docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md::Pieces::L5 ("C1 against both baselines; C2 per
+# headcount cell and pooled, on the window and the whole fight; the agreement table"); ruling 5 (the opening window is the primary
+# prediction form, whole-fight totals stay); ruling 3 (naive baselines, both ways); decisions 24, 25 (baseline roles).
+#
+# INTERFACE FIXED HERE (the builder reads it as the spec; QUESTIONs are readings for the Architect):
+#   evidence.BASES = ("whole", "window");  evidence.DEFAULT_BASIS = "window"   (decision 29 item 2 for C2, decision 31 C for C1: the opening
+#       window is the primary prediction form and the default; the whole fight is reported beside it)
+#   evidence.firing_advantage(result, basis=DEFAULT_BASIS) -> float   (f0 - f1) / (f0 + f1), 0.0 when the sum is 0; "whole" reads
+#       result.firing_unit_seconds, "window" reads result.firing_window; any other basis raises ValueError naming BASES
+#   evidence.points(scan_result, heads=None, basis=DEFAULT_BASIS) -> list[FightPoint]   FightPoint.firing_adv on that basis
+#   evidence.AGREEMENTS = ("both_right", "count_wrong_type_right", "both_wrong", "count_right_type_wrong", "n/a")
+#   evidence.agreement_counts(agreements) -> dict   every word of AGREEMENTS as a key in that order, the count of each in the
+#       iterable of str; a word outside AGREEMENTS raises ValueError
+#   conditions.MapFiring gains `baselines: dict = {}` (LAST field, default empty dict): baseline role -> ScanResult of that naive
+#       baseline at the same settings point (roles as the CSV baseline column: naive_attacker, naive_defender,
+#       naive_defender_attacker_layer, naive_defender_play_layer)
+#   conditions.check_c1(maps, skill, t, basis=DEFAULT_BASIS)    the MIRROR C1, kept (decision 31 B), now on the basis
+#   conditions.check_c1_baselines(maps, skill, t, basis=DEFAULT_BASIS) -> list[Verdict]      one Verdict per baseline role present on
+#       any map that offers the skill, roles sorted; code "C1@<role>"; the existing C1 formula with that role's scan in the place of
+#       the mirror scan; a map without the role is not counted for it; no role anywhere -> []; detail starts "unconfirmed
+#       definition:", names the role and the basis. The noise reference is the LARGEST |firing advantage| over that baseline's fights
+#       at size (decision 31 C; not the mean, not the first), and the skilled mean must EXCEED it plus c1_min_firing_advantage
+#       (strict >: equal is not enough). With no fights at size the reference is 0.0 (as check_c1 does for the mirror).
+#   conditions.check_c2(scans, t, basis=DEFAULT_BASIS)           the detail names the basis
+#   conditions.check_c8(maps, t, c1_skills=PROFILE_SKILLS, basis=DEFAULT_BASIS)   the C1 inside C8 reads that basis
+#   conditions.c2_table(scans, t) -> list[dict]      keys scope ("pooled" | "cell"), enemy_heads (None for pooled), basis ("window" |
+#       "whole"), fights (int), rho, off_trend_share (floats, the check_c2 statistics on that subset), holds (bool, rho >=
+#       c2_rank_agreement AND off_trend_share <= c2_off_trend_share); order: basis window then whole; within a basis the pooled
+#       row first, then one row per distinct enemy_heads ascending (a cell pools that headcount over all scans); [] without fights
+# =====================================================================================================================
+from scripts.skilllab import conditions, evidence  # noqa: E402   (module attributes: a missing L5 symbol fails the test, not the import)
+
+
+def _wfight(w0, w1, f0=1.0, f1=1.0, margin=0.0, ticks=100):
+    r = _fight(f0=f0, f1=f1, margin=margin, ticks=ticks)
+    return dataclasses.replace(r, firing_window=(w0, w1))
+
+
+def test_l5_bases_and_agreements_are_the_named_tuples():
+    assert evidence.BASES == ("whole", "window") and evidence.DEFAULT_BASIS == "window"
+    assert evidence.AGREEMENTS == ("both_right", "count_wrong_type_right", "both_wrong", "count_right_type_wrong", "n/a")
+
+
+def test_l5_firing_advantage_reads_the_window_or_the_whole_fight():
+    """Ruling 5, decision 29 item 2: the window is the primary form and the default, the whole-fight total is read beside it."""
+    f = _wfight(w0=1.0, w1=3.0, f0=3.0, f1=1.0)          # whole +0.5, window -0.5
+    assert firing_advantage(f) == -0.5 and firing_advantage(f, "window") == -0.5
+    assert firing_advantage(f, "whole") == 0.5
+
+
+def test_l5_firing_advantage_window_zero_total_is_zero_and_unknown_basis_raises():
+    assert firing_advantage(_wfight(0.0, 0.0), "window") == 0.0          # positive control of the empty window: no division by zero
+    with pytest.raises(ValueError) as e:
+        firing_advantage(_wfight(1.0, 1.0), "weighted")
+    assert "whole" in str(e.value) and "window" in str(e.value)
+
+
+def test_l5_points_take_the_basis_through():
+    sc = _scan(5, [_cell(5, [_wfight(1.0, 3.0, f0=3.0, f1=1.0, margin=0.25)])])
+    assert [p.firing_adv for p in points(sc)] == [-0.5]                                    # the default basis is the window
+    assert [p.firing_adv for p in points(sc, basis="whole")] == [0.5]
+    assert [p.firing_adv for p in points(sc, basis="window")] == [-0.5]
+    assert [p.firing_adv for p in points(sc, heads=5, basis="window")] == [-0.5] and points(sc, heads=9, basis="window") == []
+
+
+def test_l5_agreement_counts_all_five_words_in_order_with_zeros():
+    got = evidence.agreement_counts(["both_wrong", "both_right", "both_wrong", "n/a"])
+    assert list(got) == list(evidence.AGREEMENTS)
+    assert got == {"both_right": 1, "count_wrong_type_right": 0, "both_wrong": 2, "count_right_type_wrong": 0, "n/a": 1}
+    assert sum(evidence.agreement_counts([]).values()) == 0           # empty input: all zeros, still five keys
+    with pytest.raises(ValueError):
+        evidence.agreement_counts(["both_right", "mostly_right"])      # negative control: an unknown word is a defect
+
+
+# ---------- C1 against both baselines ----------
+
+def _mapb(map_id, skilled_advs, baselines, size=5, skill="S2", mirror_adv=0.0):
+    def fights(advs):
+        return [_fight(f0=1 + a, f1=1 - a) for a in advs]
+    mirror = _scan(size, [_cell(size, fights([mirror_adv]))])
+    skilled = _scan(size, [_cell(size, fights(skilled_advs))])
+    base = {role: _scan(size, [_cell(size, fights(advs))]) for role, advs in baselines.items()}
+    return MapFiring(map_id, frozenset({skill}), mirror, skilled, size, base)
+
+
+def test_l5_mapfiring_baselines_default_is_empty_and_last():
+    mf = MapFiring("m", frozenset({"S2"}), _scan(5, []), _scan(5, []), 5)
+    assert mf.baselines == {}
+    assert dataclasses.fields(MapFiring)[-1].name == "baselines"
+
+
+def test_l5_c1_against_both_baselines_positive_control_one_verdict_per_role_sorted():
+    """Skilled 0.75 beats each baseline's noise (0.25) by more than 0.25: both verdicts hold."""
+    m = _mapb("m", [0.75, 0.75], {"naive_defender": [0.25, -0.25], "naive_attacker": [0.25, -0.25]})
+    vs = conditions.check_c1_baselines([m], "S2", _t(c1_map_share=1.0))
+    assert [v.code for v in vs] == ["C1@naive_attacker", "C1@naive_defender"]
+    assert [(v.holds, v.value) for v in vs] == [(True, 1.0), (True, 1.0)]
+    assert all(v.detail.startswith("unconfirmed definition:") for v in vs)
+    assert "naive_attacker" in vs[0].detail and "naive_defender" in vs[1].detail
+
+
+def test_l5_c1_each_baseline_is_judged_on_its_own_negative_control():
+    """The naive defender is a strong baseline (noise 0.625): the same skilled play holds against the attacker and not the defender."""
+    m = _mapb("m", [0.75, 0.75], {"naive_attacker": [0.25], "naive_defender": [0.625]})
+    vs = {v.code: v for v in conditions.check_c1_baselines([m], "S2", _t(c1_map_share=1.0))}
+    assert vs["C1@naive_attacker"].holds is True and vs["C1@naive_defender"].holds is False
+    assert vs["C1@naive_defender"].value == 0.0
+
+
+def test_l5_c1_the_baseline_replaces_the_mirror_as_the_noise_reference():
+    """QUESTION 1: a noisy mirror (0.9) does not matter when the baseline is quiet (0.0)."""
+    m = _mapb("m", [0.75], {"naive_attacker": [0.0]}, mirror_adv=0.9)
+    assert conditions.check_c1_baselines([m], "S2", _t(c1_map_share=1.0))[0].holds is True
+    assert check_c1([m], "S2", _t(c1_map_share=1.0)).holds is False          # the unchanged mirror C1 still reads the mirror
+
+
+def test_l5_c1_a_map_without_the_role_is_not_counted_for_it_and_only_offering_maps_count():
+    a = _mapb("a", [0.75], {"naive_attacker": [0.0]})
+    b = _mapb("b", [0.0], {})                                                  # no baselines: not counted for any role
+    c = _mapb("c", [0.0], {"naive_attacker": [0.0]}, skill="S1")               # offers S1 only
+    v = conditions.check_c1_baselines([a, b, c], "S2", _t(c1_map_share=1.0))[0]
+    assert (v.code, v.value, v.holds) == ("C1@naive_attacker", 1.0, True)
+
+
+def test_l5_c1_share_boundary_and_thresholds_come_from_the_input():
+    maps = [_mapb("a", [0.75], {"naive_attacker": [0.0]}), _mapb("b", [0.0], {"naive_attacker": [0.0]})]
+    assert conditions.check_c1_baselines(maps, "S2", _t(c1_map_share=0.5))[0].holds is True       # 1 of 2
+    assert conditions.check_c1_baselines(maps, "S2", _t(c1_map_share=0.75))[0].holds is False
+    assert conditions.check_c1_baselines(maps[:1], "S2", _t(c1_min_firing_advantage=0.9, c1_map_share=0.5))[0].holds is False
+
+
+def test_l5_c1_no_baseline_on_any_map_gives_no_verdict_and_leaves_c1_alone():
+    m = _map("m", {"S2"}, 0.25, [0.75])
+    assert conditions.check_c1_baselines([m], "S2", _t()) == []
+    assert check_c1([m], "S2", _t()).holds is True
+
+
+# ---------- C2 on the window and the whole fight, per cell and pooled ----------
+
+def _basis_scan():
+    """Two cells (4 and 5), three fights each. Window advantage rises with the margin; the whole-fight advantage falls with it."""
+    def fights(shift):
+        out = []
+        for w, m in ((-0.5, -0.5), (0.0, 0.0), (0.5, 0.5)):
+            w0, w1 = 1 + w + shift, 1 - w - shift
+            out.append(_wfight(w0, w1, f0=1 - w, f1=1 + w, margin=m))
+        return out
+    return _scan(5, [_cell(4, fights(0.0)), _cell(5, fights(0.0))])
+
+
+def test_l5_check_c2_basis_window_and_whole_read_different_fights_of_the_same_scan():
+    sc = _basis_scan()
+    whole = check_c2([sc], _t(), basis="whole")
+    window = check_c2([sc], _t(), basis="window")
+    assert whole.value[0] < 0                                                             # falling with the margin
+    assert window.value[0] > 0
+    assert whole.holds is False and window.holds is True
+    assert "whole" in whole.detail and "window" in window.detail
+    assert check_c2([sc], _t()).value == window.value and check_c2([sc], _t()).holds is True       # the default basis is the window
+
+
+def test_l5_check_c2_unknown_basis_raises():
+    with pytest.raises(ValueError):
+        check_c2([_basis_scan()], _t(), basis="weighted")
+
+
+def test_l5_c2_table_has_pooled_then_cells_for_the_window_then_the_whole_fight():
+    rows = conditions.c2_table([_basis_scan()], _t())
+    assert [(r["basis"], r["scope"], r["enemy_heads"]) for r in rows] == [
+        ("window", "pooled", None), ("window", "cell", 4), ("window", "cell", 5),
+        ("whole", "pooled", None), ("whole", "cell", 4), ("whole", "cell", 5)]
+    assert all(set(r) == {"scope", "enemy_heads", "basis", "fights", "rho", "off_trend_share", "holds"} for r in rows)
+    assert [r["fights"] for r in rows] == [6, 3, 3, 6, 3, 3]
+
+
+def test_l5_c2_table_cell_statistics_by_hand_and_holds_follows_the_thresholds():
+    """Per cell the window rho is +1 (rank order equal) and the whole-fight rho is -1; holds uses the marks of the input."""
+    rows = {(r["basis"], r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([_basis_scan()], _t())}
+    assert rows[("window", "cell", 4)]["rho"] == pytest.approx(1.0) and rows[("window", "cell", 4)]["holds"] is True
+    assert rows[("whole", "cell", 4)]["rho"] == pytest.approx(-1.0) and rows[("whole", "cell", 4)]["holds"] is False
+    strict = {(r["basis"], r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([_basis_scan()], _t(c2_rank_agreement=1.5))}
+    assert strict[("window", "cell", 4)]["holds"] is False
+
+
+def test_l5_c2_table_pooled_row_equals_check_c2_on_the_same_basis():
+    sc = _basis_scan()
+    t = _t()
+    rows = {(r["basis"], r["scope"]): r for r in conditions.c2_table([sc], t) if r["scope"] == "pooled"}
+    for basis in ("window", "whole"):
+        v = check_c2([sc], t, basis=basis)
+        assert (rows[(basis, "pooled")]["rho"], rows[(basis, "pooled")]["off_trend_share"]) == pytest.approx(v.value)
+        assert rows[(basis, "pooled")]["holds"] is v.holds
+
+
+def test_l5_c2_table_pools_a_headcount_across_scans_and_is_empty_without_fights():
+    a, b = _basis_scan(), _basis_scan()
+    rows = {(r["basis"], r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([a, b], _t())}
+    assert rows[("window", "cell", 4)]["fights"] == 6 and rows[("window", "pooled", None)]["fights"] == 12
+    assert conditions.c2_table([], _t()) == [] and conditions.c2_table([_scan(5, [])], _t()) == []
+
+
+def test_l5_c2_table_a_cell_under_three_fights_has_rho_zero_as_check_c2_does():
+    sc = _scan(5, [_cell(4, [_wfight(1.5, 0.5, margin=0.5), _wfight(0.5, 1.5, margin=-0.5)])])
+    r = [r for r in conditions.c2_table([sc], _t()) if r["scope"] == "cell" and r["basis"] == "window"][0]
+    assert r["rho"] == 0.0 and r["fights"] == 2 and r["holds"] is False
+
+
+def test_l5_c2_table_is_deterministic():
+    assert conditions.c2_table([_basis_scan()], _t()) == conditions.c2_table([_basis_scan()], _t())
+
+
+# ---------- decision 31 B and C: the mirror C1 is kept; C1 on the opening window, whole fight beside; the reference is the largest |advantage| ----------
+
+def _wf(window_adv, whole_adv):
+    """One fight whose opening-window advantage and whole-fight advantage are given (quarters and eighths: exact in binary)."""
+    return _wfight(1 + window_adv, 1 - window_adv, f0=1 + whole_adv, f1=1 - whole_adv)
+
+
+def _mapw(map_id, skilled, mirror, baselines, size=5, skill="S2"):
+    """Each argument is a list of (window_adv, whole_adv) pairs, one fight each, all in the one cell at `size`."""
+    scan = lambda pairs: _scan(size, [_cell(size, [_wf(*p) for p in pairs])])
+    return MapFiring(map_id, frozenset({skill}), scan(mirror), scan(skilled), size, {r: scan(v) for r, v in baselines.items()})
+
+
+def _same(*advs):
+    return [(a, a) for a in advs]
+
+
+@pytest.mark.parametrize("noise", [[0.9, 0.0], [0.0, 0.9], [-0.9, 0.0], [0.0, -0.9]])
+def test_l5_c1_reference_is_the_largest_absolute_advantage_not_the_mean_the_first_or_the_last(noise):
+    """Decision 31 C. Skilled mean 0.75, minimum 0.25. Baseline fights [0.9, 0.0] in either order and with either sign: the largest |adv|
+    is 0.9 and 0.75 does not exceed 1.15. The mean (0.45), the first (0.9 or 0.0) or the last would let some of these pass."""
+    m = _mapw("m", _same(0.75, 0.75), [(0.0, 0.0)], {"naive_defender": _same(*noise)})
+    v = conditions.check_c1_baselines([m], "S2", _t(c1_map_share=1.0))[0]
+    assert v.code == "C1@naive_defender" and v.holds is False and v.value == 0.0
+
+
+def test_l5_c1_reference_positive_controls_a_quiet_baseline_holds():
+    """Same skilled side, baseline [0.25, 0.0] (largest |adv| 0.25): 0.75 > 0.5 holds; [0.0, 0.0] holds."""
+    for noise in ([0.25, 0.0], [0.0, 0.25], [0.0, 0.0]):
+        m = _mapw("m", _same(0.75, 0.75), [(0.0, 0.0)], {"naive_defender": _same(*noise)})
+        assert conditions.check_c1_baselines([m], "S2", _t(c1_map_share=1.0))[0].holds is True, noise
+
+
+def test_l5_c1_the_comparison_is_strictly_greater_equal_does_not_hold():
+    """Reference 0.5 + minimum 0.25 = 0.75: a skilled mean of exactly 0.75 does not exceed it; 0.8125 does. Mirror C1 and baseline C1 alike."""
+    t = _t(c1_map_share=1.0)
+    equal = _mapw("m", _same(0.75, 0.75), _same(0.5, 0.0), {"naive_attacker": _same(0.5, 0.0)})
+    above = _mapw("m", _same(0.75, 0.875), _same(0.5, 0.0), {"naive_attacker": _same(0.5, 0.0)})
+    assert conditions.check_c1_baselines([equal], "S2", t)[0].holds is False and check_c1([equal], "S2", t).holds is False
+    assert conditions.check_c1_baselines([above], "S2", t)[0].holds is True and check_c1([above], "S2", t).holds is True
+
+
+def test_l5_c1_with_no_fights_at_size_the_reference_is_zero_and_nothing_is_skilled():
+    """A baseline scan without the cell at size has reference 0.0; a skilled scan without it cannot hold."""
+    m = _mapw("m", _same(0.75), [(0.0, 0.0)], {"naive_attacker": []})
+    m.baselines["naive_attacker"] = _scan(5, [])
+    assert conditions.check_c1_baselines([m], "S2", _t(c1_map_share=1.0))[0].holds is True
+    nobody = _mapw("m", [], [(0.0, 0.0)], {"naive_attacker": _same(0.0)})
+    assert conditions.check_c1_baselines([nobody], "S2", _t(c1_map_share=1.0))[0].holds is False
+
+
+def test_l5_c1_default_basis_is_the_opening_window_and_the_whole_fight_is_read_beside_it():
+    """Skilled side: window advantage 0.75, whole-fight advantage 0.0, baseline quiet on both. The default (window) holds, basis "whole"
+    does not; the mirror C1 and the baseline C1 agree on that."""
+    m = _mapw("m", [(0.75, 0.0)], [(0.0, 0.0)], {"naive_attacker": [(0.0, 0.0)]})
+    t = _t(c1_map_share=1.0)
+    assert conditions.check_c1_baselines([m], "S2", t)[0].holds is True and check_c1([m], "S2", t).holds is True
+    assert conditions.check_c1_baselines([m], "S2", t, basis="window")[0].holds is True
+    assert conditions.check_c1_baselines([m], "S2", t, basis="whole")[0].holds is False and check_c1([m], "S2", t, basis="whole").holds is False
+
+
+def test_l5_c1_whole_fight_can_hold_where_the_window_does_not():
+    """The mirror image of the above: window 0.0, whole 0.75."""
+    m = _mapw("m", [(0.0, 0.75)], [(0.0, 0.0)], {"naive_attacker": [(0.0, 0.0)]})
+    t = _t(c1_map_share=1.0)
+    assert conditions.check_c1_baselines([m], "S2", t)[0].holds is False and check_c1([m], "S2", t).holds is False
+    assert conditions.check_c1_baselines([m], "S2", t, basis="whole")[0].holds is True and check_c1([m], "S2", t, basis="whole").holds is True
+
+
+def test_l5_c1_the_noise_reference_is_read_on_the_same_basis_as_the_skilled_side():
+    """Baseline fights are quiet in the whole fight (0.0) and loud in the window (0.9): the same skilled side (0.75 on both) fails on the
+    window and holds on the whole fight, so the reference follows the basis."""
+    m = _mapw("m", _same(0.75), [(0.9, 0.0)], {"naive_defender": [(0.9, 0.0)]})
+    t = _t(c1_map_share=1.0)
+    assert conditions.check_c1_baselines([m], "S2", t)[0].holds is False and check_c1([m], "S2", t).holds is False
+    assert conditions.check_c1_baselines([m], "S2", t, basis="whole")[0].holds is True and check_c1([m], "S2", t, basis="whole").holds is True
+
+
+def test_l5_c1_details_name_the_basis_and_an_unknown_basis_raises():
+    m = _mapw("m", _same(0.75), [(0.0, 0.0)], {"naive_attacker": _same(0.0)})
+    t = _t()
+    assert "window" in conditions.check_c1_baselines([m], "S2", t)[0].detail
+    assert "whole" in conditions.check_c1_baselines([m], "S2", t, basis="whole")[0].detail
+    assert "window" in check_c1([m], "S2", t).detail
+    with pytest.raises(ValueError):
+        conditions.check_c1_baselines([m], "S2", t, basis="weighted")
+
+
+def test_l5_the_mirror_c1_is_its_own_row_beside_the_baseline_rows_and_unchanged_by_them():
+    """Decision 31 B: the mirror verdict keeps its code ("C1" from check_c1) and its formula; a baseline never replaces it."""
+    m = _mapw("m", _same(0.75), _same(0.9, 0.0), {"naive_attacker": _same(0.0), "naive_defender": _same(0.0)})
+    t = _t(c1_map_share=1.0)
+    mirror = check_c1([m], "S2", t)
+    baselines = conditions.check_c1_baselines([m], "S2", t)
+    assert mirror.code == "C1" and mirror.holds is False                     # the loud mirror sinks it
+    assert [v.code for v in baselines] == ["C1@naive_attacker", "C1@naive_defender"] and all(v.holds is True for v in baselines)
+
+
+# ---------- decision 29 item 2: C2 default window; per-cell statistics; holds respects the off-trend share ----------
+
+def _line_fights(xs, ys):
+    """One fight per (x, y): window and whole-fight advantage x, margin y (x in halves and quarters, exact)."""
+    return [_wfight(1 + x, 1 - x, f0=1 + x, f1=1 - x, margin=y) for x, y in zip(xs, ys)]
+
+
+def _off_trend_oracle(xs, ys, margin):
+    """The definition in check_c2's detail, independently: share of points farther than `margin` from the least-squares line."""
+    from fractions import Fraction
+    xs, ys = [Fraction(x) for x in xs], [Fraction(y) for y in ys]
+    n = len(xs)
+    mx, my = sum(xs) / n, sum(ys) / n
+    sxx = sum((x - mx) ** 2 for x in xs)
+    b = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx if sxx else Fraction(0)
+    return sum(1 for x, y in zip(xs, ys) if abs(y - (my + b * (x - mx))) > Fraction(margin)) / n
+
+
+ON_X, ON_Y = [-0.5, 0.0, 0.5], [-0.5, 0.0, 0.5]                                     # a cell on its line: rank order equal, nothing off trend
+OFF_X, OFF_Y = [-1.0, -0.5, 0.0, 0.5, 1.0], [-1.0, -0.99, -0.98, -0.97, 1.0]        # strictly increasing (rho 1) but bent: four of five off the line
+
+
+def _cells_scan():
+    return _scan(5, [_cell(4, _line_fights(ON_X, ON_Y)), _cell(5, _line_fights(OFF_X, OFF_Y))])
+
+
+def test_l5_c2_table_off_trend_share_per_cell_and_pooled_are_the_check_c2_statistics():
+    """The per-cell off_trend_share is asserted, not only rho: cell 4 is on its line (0.0), cell 5 has four of five points off (0.8), and
+    the pooled row (eight points, one least-squares line) is a third number."""
+    t = _t()
+    rows = {(r["basis"], r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([_cells_scan()], t)}
+    margin = DRAFT_UNCONFIRMED_C2_OFF_TREND_MARGIN
+    want4 = _off_trend_oracle(ON_X, ON_Y, margin)
+    want5 = _off_trend_oracle(OFF_X, OFF_Y, margin)
+    wantp = _off_trend_oracle(ON_X + OFF_X, ON_Y + OFF_Y, margin)
+    assert (want4, want5) == (0.0, 0.8) and wantp not in (want4, want5)
+    for basis in ("window", "whole"):
+        assert rows[(basis, "cell", 4)]["off_trend_share"] == pytest.approx(want4)
+        assert rows[(basis, "cell", 5)]["off_trend_share"] == pytest.approx(want5)
+        assert rows[(basis, "pooled", None)]["off_trend_share"] == pytest.approx(wantp)
+        assert rows[(basis, "pooled", None)]["off_trend_share"] == pytest.approx(check_c2([_cells_scan()], t, basis=basis).value[1])
+
+
+def test_l5_c2_table_holds_needs_the_rank_agreement_and_the_off_trend_share_both():
+    """Cell 5 has rho 1.0 (>= 0.8) and 80% of its points off trend (> the 25% mark): it does not hold. Cell 4 holds. Loosening only the
+    off-trend mark makes cell 5 hold (positive control), tightening only the rank mark makes cell 4 fail (negative control)."""
+    t = _t()
+    rows = {(r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([_cells_scan()], t) if r["basis"] == "window"}
+    assert rows[("cell", 5)]["rho"] == pytest.approx(1.0) and rows[("cell", 5)]["holds"] is False
+    assert rows[("cell", 4)]["holds"] is True
+    loose = {(r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([_cells_scan()], _t(c2_off_trend_share=0.9)) if r["basis"] == "window"}
+    assert loose[("cell", 5)]["holds"] is True
+    strict = {(r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([_cells_scan()], _t(c2_rank_agreement=1.5)) if r["basis"] == "window"}
+    assert strict[("cell", 4)]["holds"] is False and strict[("cell", 5)]["holds"] is False
+
+
+def test_l5_c2_table_a_pooled_verdict_can_differ_from_every_cell():
+    """Per cell versus pooled: the two cells above give holds True and False; the pooled eight points give their own answer, the one
+    check_c2 gives, and the table's pooled row says exactly that."""
+    t = _t()
+    sc = _cells_scan()
+    rows = {(r["scope"], r["enemy_heads"]): r for r in conditions.c2_table([sc], t) if r["basis"] == "window"}
+    pooled = check_c2([sc], t, basis="window")
+    assert rows[("pooled", None)]["holds"] is pooled.holds
+    assert rows[("pooled", None)]["off_trend_share"] != rows[("cell", 4)]["off_trend_share"] != rows[("cell", 5)]["off_trend_share"]
+    assert rows[("pooled", None)]["fights"] == 8 and rows[("cell", 4)]["fights"] == 3 and rows[("cell", 5)]["fights"] == 5
+
+
+def test_l5_check_c2_holds_respects_the_off_trend_share_on_the_default_basis():
+    """A scan whose pooled rank agreement passes but whose off-trend share fails does not hold; the share mark alone decides."""
+    sc = _scan(5, [_cell(5, _line_fights(OFF_X, OFF_Y))])
+    assert check_c2([sc], _t()).holds is False and check_c2([sc], _t(c2_off_trend_share=0.9)).holds is True

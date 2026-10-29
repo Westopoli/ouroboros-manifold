@@ -1,10 +1,18 @@
 # Shots waiting on Westley
 
-At most one shot per lane waits here at a time (Westley, 2026-10-13: "avoid multiple photo entries of the same letter"); a lane's next shot stays in its queue file until he has ruled on the one here.
+One word per picture: approve, reject, or a short note. Answer in the chat or in `answers.md`. When a verdict is recorded, the picture and its row are removed from here; past verdicts live in `verdicts_2026-10.md`, the rulings in `decisions.md`.
 
-This folder holds exactly the screenshots that wait on Westley's verdict, each under a name that says what it is, so he never has to open a run-id folder. The table is the page table: the name here, the row it stands for, and where the original lives. Rule (Westley, 2026-10-13): a shot enters this folder when its queue row is written, and leaves it (file and table row deleted, in the verdict's commit) when he rules; `git log` keeps the history. The queue rows in `../<lane>.md` stay the record; this folder is only the view.
+Name form: `<lane>-<story>-<what it shows>.png`. One row per picture.
 
-Name form: `<lane>-<story>-<what it shows>.png`. One row per file.
+| Picture | Story | What it shows | What to look for | Approve means / reject means |
+|---|---|---|---|---|
 
-| File here | Story | Lane | Queue row (run id) | Original | What to judge |
-|---|---|---|---|---|---|
+To see motion live rather than in a still (your rule of 2026-10-22): ask the chat for the run line; it is two commands.
+
+## Pages waiting on you
+
+| Page | What it asks |
+|---|---|
+| `method_audit_2026-10-27.md` | Eight yes-or-no questions and 24 thresholds from the audit of the method tests |
+| `wt_reap_dryrun_2026-10-24.md` | Second dry run of the worktree clean-up: your word to remove the listed trees. |
+| `method_retro_2026-10-24.md` | The method investigation: which of the drop, keep and try lists you take. Superseded in part by the rev 3 plan you approved on 2026-10-26; the thresholds come to you after the audit. |

@@ -1,3 +1,4 @@
+# Rule pins: R-193-01@451aaa, R-193-02@a4522c
 """Visible-game programme lane E1, contract amendment K-e, pipe side (docs/northstar/plans/2026-10-07-visible-game-spec.md
 rev 6, lane E1 section, piece E1a; contract text: docs/architecture.md "Visible-game economy fields"). Fenced: builders
 never edit this file.
@@ -184,7 +185,7 @@ def test_place_no_world():
 
 
 def test_hello_abi_is_7():
-    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16)."""
+    """K-e: the hello frame reported abi 6; K-e5 moved the pin to 7 (TD-VG-E-16); E7 moved it to 8 (TD-VG-E-28)."""
     script = b""
     for c in [QUIT]:
         body = json.dumps(c).encode()

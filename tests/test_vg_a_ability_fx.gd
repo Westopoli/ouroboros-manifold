@@ -158,6 +158,10 @@ func _bbox(poly: PackedVector2Array) -> Rect2:
 	return r
 
 
+func _land_proj(w: Vector2) -> Vector2:
+	return Vector2(w.x * 0.2 + w.y * 0.05 + 100.0, w.y * 0.35 - w.x * 0.02 + 60.0)
+
+
 func _run_tests() -> void:
 	var ab = _mod("res://scenes/tactical_c/fx/abilities.gd", "A14: S-135 rings, glows, pulses from ability events")
 	if ab == null:
@@ -172,5 +176,15 @@ func _run_tests() -> void:
 	_assert(e.size() == 1, "A14: one ability event draws one effect; got %d" % e.size())
 	if e.size() == 1:
 		_assert(int(e[0]["unit"]) == 1 and int(e[0]["ability"]) == 3, "A14: the effect names its unit and ability")
-		_assert((e[0]["center"] as Vector2).distance_to(_scr(Vector2(1500, 1500))) < 0.5, "A14: the effect is centred on the unit")
+		_assert((e[0]["center"] as Vector2).distance_to(_scr(Vector2(1500, 1500))) < 0.5, "A14: in space (no projector) the effect is centred on the unit's flat screen position")
 		_assert(absf(float(e[0]["radius"]) - 600.0 * SCALE) < 0.5, "A14: S-135 the ring radius is the profile aoe in px (150); got %f" % float(e[0]["radius"]))
+	# TD-VG-C-land-one-projection: on land the effect centre is the projector's image of the unit.
+	var land = _mod("res://scenes/tactical_c/fx/abilities.gd", "A14 land: a second layer for the projector path")
+	if land != null and _need(land, ["set_projector", "set_frame", "effects"]):
+		land.call("set_projector", Callable(self, "_land_proj"))
+		land.call("set_frame", _frame(units), 0, SCALE, CAM)
+		land.call("set_frame", _frame(units, {"tick": 101, "events": [[1, 1, 3, 101]]}), 0, SCALE, CAM)
+		var le: Array = land.call("effects")
+		var want := _land_proj(Vector2(1500, 1500))
+		_assert(le.size() == 1 and (le[0]["center"] as Vector2).distance_to(want) < 0.5, "A14 land: the effect is centred on the projector's image %s" % want)
+		_assert(want.distance_to(_scr(Vector2(1500, 1500))) > 5.0, "A14 land CONTROL: the test projector differs from the flat formula")

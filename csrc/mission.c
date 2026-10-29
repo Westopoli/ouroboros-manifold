@@ -370,6 +370,12 @@ typedef struct {
     int      fallback_active;
     int32_t  fallback_enemy;
     double   fallback_power;
+
+    /* VG-CONTRACT-E7: the player's production allowance. reinforce_cap = F_units - start_units, set when the mission is
+     * laid out (UINT32_MAX until then: a bare world is uncapped); reinforce_spawned counts the player's structure spawns
+     * against it. Both saved (appended last) and hashed (om_mis_net_hash). */
+    uint32_t reinforce_cap;
+    uint32_t reinforce_spawned;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -383,6 +389,7 @@ static om_mission_state *om_mis(om_world *w) {
     om_mission_state *st = (om_mission_state *)w->mission_state;
     if (!st) {
         st = (om_mission_state *)calloc(1, sizeof(om_mission_state));
+        st->reinforce_cap = UINT32_MAX; /* VG-CONTRACT-E7: no mission laid out, no cap */
         w->mission_state = st;
         w->mission_state_free = om_mis_state_free;
     }
@@ -2676,7 +2683,8 @@ static void om_mission_space_snap(uint8_t *good, double *x, double *y, int take)
 #define OM_MISSION_STRUCTURE_LATERAL 0.25
 #define OM_MISSION_STRUCTURE_SLOTS 64
 
-static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy, const uint8_t *good) {
+static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy, const uint8_t *good,
+                                        uint32_t *out_p, uint32_t *out_e) {
     uint8_t *free_cells = good ? (uint8_t *)malloc(OM_SPACE_FIELD_CELLS) : NULL;
     if (free_cells) memcpy(free_cells, good, OM_SPACE_FIELD_CELLS);
     uint32_t p = 0, e = 0, n = 0;
@@ -2684,6 +2692,8 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
     if (om_era_kind(w) == 1 && total > om_terrain_slope_count(w)) total = om_terrain_slope_count(w); /* R-218-01 */
     for (uint32_t i = 0; i < OM_MISSION_STRUCTURE_SLOTS; i++) om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, 0.0);
     om_structure_assign_owners((int)st->mission_archetype, total, &p, &e, &n);
+    *out_p = p; /* VG-CONTRACT-E7: the player's share p / (p + e) of the contested strongpoints, n excluded */
+    *out_e = e;
     for (uint32_t i = 0; i < total; i++) {
         int32_t owner = i < p ? player : (i < p + n ? -1 : enemy);
         double side = (i % 2 == 0) ? -1.0 : 1.0;
@@ -2696,6 +2706,31 @@ static void om_mission_place_structures(om_world *w, om_mission_state *st, int c
         om_structure_set_position(w, i, sx, sy);
     }
     free(free_cells);
+}
+
+/* VG-CONTRACT-E7 (spec E7 paragraph; See also: om_mission_compute_starting_force in csrc/tactical_support.c): the player's
+ * roster cut to start_units, integer arithmetic. Per type n_t = floor(count_t * start_units / F_units + 0.5); the remainder
+ * (positive or negative) lands on the type with the largest count_t, lowest type index on ties, so the sum is start_units and
+ * the mix stays the roster's. A negative remainder that would take that type below zero spills to the next largest (a case
+ * the spec leaves open; unreachable on the F and rosters of the fixtures). */
+static void om_mission_cut_roster(const uint32_t *roster, uint32_t start_units, uint32_t *out) {
+    uint64_t f_units = 0, sum = 0;
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) f_units += roster[t];
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+        out[t] = f_units ? (uint32_t)((2ULL * roster[t] * start_units + f_units) / (2ULL * f_units)) : 0;
+        sum += out[t];
+    }
+    while (f_units && sum != start_units) {
+        int grow = sum < start_units;
+        int best = -1;
+        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+            if (!grow && out[t] == 0) continue;
+            if (best < 0 || roster[t] > roster[best]) best = (int)t;
+        }
+        if (best < 0) break;
+        if (grow) { out[best]++; sum++; }
+        else { out[best]--; sum--; }
+    }
 }
 
 static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
@@ -2747,7 +2782,25 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_map_add_cover(w, ox, oy, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
     om_map_add_spawn_point(w, px, py, player);
     om_map_add_spawn_point(w, ex, ey, enemy);
-    if (om_mission_spawn_force(w, st, st->player_units, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
+    /* VG-CONTRACT-E7: the structures are placed first so p and e are known; the player spawns start_units of the composed
+     * force F_units (st->player_units stays F) and may produce the rest, up to reinforce_cap. The enemy spawns as before.
+     * See also: om_mission_compute_starting_force (csrc/tactical_support.c), the spec E7 paragraph. */
+    uint32_t n_struct_p = 0, n_struct_e = 0;
+    om_mission_place_structures(w, st, cat, canvas, player, enemy, space_good, &n_struct_p, &n_struct_e);
+    uint32_t f_units = n_player, start_units = f_units;
+    if (n_struct_p + n_struct_e > 0) {
+        double start = om_mission_compute_starting_force((double)f_units, (double)n_struct_p / (double)(n_struct_p + n_struct_e));
+        start_units = (uint32_t)(start + 0.5);
+        if (start_units > f_units) start_units = f_units;
+    }
+    /* Spec E7 paragraph (Architect 2026-10-19): no composed force (F_units 0, e.g. a mission region with military 0) has no
+     * cap: UINT32_MAX as on a bare world, so the structures of such a scene keep producing (R-218-02,
+     * tests/csim/test_VG_E_e1h.py::test_held_strongpoint_produces_a_unit). Otherwise reinforce_cap = F_units - start_units. */
+    st->reinforce_cap = f_units ? f_units - start_units : UINT32_MAX;
+    st->reinforce_spawned = 0;
+    uint32_t start_counts[OM_MISSION_N_UNIT_TYPES];
+    om_mission_cut_roster(st->player_units, start_units, start_counts);
+    if (om_mission_spawn_force(w, st, start_counts, player, px, py, 1.0, reach, rcw, rch, rlayer, player_pocket))
         fprintf(stderr, "mission: player spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
     if (om_mission_spawn_force(w, st, st->enemy_units, enemy, ex, ey, -1.0, reach, rcw, rch, rlayer, enemy_pocket))
         fprintf(stderr, "mission: enemy spawn pocket holds fewer open cells than the army needs (R-246-07)\n");
@@ -2762,7 +2815,6 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
      * the only reader of this registration. */
     om_macro_init_force(w, 0, enemy);
     om_macro_set_force_fallback_point(w, 0, ex, ey);
-    om_mission_place_structures(w, st, cat, canvas, player, enemy, space_good);
     free(space_good);
     om_economy_init(w);
 }
@@ -3057,7 +3109,76 @@ int om_objective_get_done(const om_world *w, uint32_t idx) {
     if (o->spec.is_failed) return 2;
     return (o->spec.is_complete || o->spec.completion >= 1.0) ? 1 : 0;
 }
+int32_t om_mission_get_force_group(const om_world *w, uint32_t i) {
+    /* STUB */
+    (void)w; (void)i;
+    return 0;
+}
 /* ---- end generated stubs ---- */
+
+/* VG-CONTRACT-E7; the contract is documented at the prototypes in csrc/om_internal.h. */
+uint32_t om_mission_reinforce_cap(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || st->reinforce_cap == UINT32_MAX) return UINT32_MAX;
+    return st->reinforce_spawned < st->reinforce_cap ? st->reinforce_cap - st->reinforce_spawned : 0;
+}
+
+void om_mission_reinforce_note_spawn(om_world *w) {
+    om_mission_state *st = (om_mission_state *)w->mission_state;
+    if (!st || st->reinforce_cap == UINT32_MAX) return;
+    st->reinforce_spawned++;
+}
+
+/* VG-E-prodslot; the contract is documented at the prototype in csrc/om_internal.h. Terrain refusal duplicates csrc/unit.c
+ * om_unit_spawn_internal :934-941 because unit.c is not owned by this piece (See also: FU-spawn-terrain-check-shared). The scan
+ * works in squared doubles with no epsilon: on a non-integer structure point rounding may skip one neighbour slot, which is
+ * deterministic and harmless (the next slot in order takes it). See also: om_structure_tick_production in
+ * csrc/tactical_support.c. */
+int om_mission_production_slot(const om_world *w, uint32_t structure, double *out_x, double *out_y) {
+    /* read-only use through non-const accessors; the pattern of om_mission_reinforce_cap, mission.c:3127 */
+    om_world *wm = (om_world *)w;
+    const double spacing = (double)OM_PRODSLOT_SPACING_WU;
+    const int ring_max = OM_PRODSLOT_RING_MAX;
+    const int unit_type = (int)om_structure_get_unit_type(wm, structure);
+    const int walker = om_terrain_present(w) && om_unit_profile_movement_kind(w, unit_type) == OM_MOVE_WALKING;
+    uint32_t n = om_unit_count(w);
+    om_vec2 p;
+    om_structure_get_position(wm, structure, &p);
+    for (int r = 1; r <= ring_max; r++) {
+        for (int j = -r; j <= r; j++) {
+            for (int i = -r; i <= r; i++) {
+                double x, y;
+                int free_slot = 1;
+                if ((i < 0 ? -i : i) != r && (j < 0 ? -j : j) != r) continue;
+                if (i * i + j * j > ring_max * ring_max) continue;
+                x = p.x + (double)i * spacing;
+                y = p.y + (double)j * spacing;
+                if (walker) {
+                    om_slope sl;
+                    int band = om_terrain_band_at(w, x, y);
+                    if (om_terrain_slope_at(w, x, y, &sl) >= 0) {
+                        double along = (x - sl.mx) * (sl.x1 - sl.x0) + (y - sl.my) * (sl.y1 - sl.y0);
+                        band = along >= 0.0 ? sl.upper_band : sl.lower_band;
+                    }
+                    if (band < 1 || !om_terrain_walkable_at(w, x, y)) continue;
+                }
+                for (uint32_t k = 0; k < n && free_slot; k++) {
+                    uint32_t id = om_unit_id_at(w, k);
+                    double dx, dy;
+                    if (!id || !om_unit_alive(wm, id)) continue;
+                    dx = om_unit_position_x(wm, id) - x;
+                    dy = om_unit_position_y(wm, id) - y;
+                    if (dx * dx + dy * dy < spacing * spacing) free_slot = 0;
+                }
+                if (!free_slot) continue;
+                *out_x = x;
+                *out_y = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 /* ---- net hooks (lockstep spec 2026-10-05) ---- */
 #define OM_MIS_NET_PRIME 1099511628211ULL
@@ -3086,6 +3207,8 @@ static uint64_t om_mis_net_hash(const om_world *w) {
     h = om_mis_h_word(h, (uint64_t)(int64_t)st->lineage_connection);
     h = om_mis_h_word(h, (uint64_t)(int64_t)st->mission_set);
     for (int k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) h = om_mis_h_word(h, st->player_units[k]);
+    h = om_mis_h_word(h, st->reinforce_cap);
+    h = om_mis_h_word(h, st->reinforce_spawned);
     h = om_mis_h_word(h, st->n_objectives);
     for (uint32_t i = 0; i < st->n_objectives && i < OM_MISSION_MAX_OBJECTIVES; i++) {
         const om_mission_objective *o = &st->objectives[i];
@@ -3234,6 +3357,8 @@ static uint32_t om_mis_serialize(const om_mission_state *st, uint8_t *out) {
     om_mis_w_i32(&m, st->fallback_active);
     om_mis_w_i32(&m, st->fallback_enemy);
     om_mis_w_f64(&m, st->fallback_power);
+    om_mis_w_u32(&m, st->reinforce_cap);
+    om_mis_w_u32(&m, st->reinforce_spawned);
     return m.pos;
 }
 
@@ -3363,6 +3488,9 @@ static int om_mis_net_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     st->fallback_active = om_mis_r_i32(&r);
     st->fallback_enemy = om_mis_r_i32(&r);
     st->fallback_power = om_mis_r_f64(&r);
+    st->reinforce_cap = om_mis_r_u32(&r);
+    st->reinforce_spawned = om_mis_r_u32(&r);
+    if (st->reinforce_cap != UINT32_MAX && st->reinforce_spawned > st->reinforce_cap) r.ok = 0; /* impossible pair */
     if (!r.ok || r.pos != r.len) {
         free(st);
         return 1;

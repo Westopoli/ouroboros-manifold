@@ -12,6 +12,11 @@
 # symbol_modules.toml) always come from THIS repo (scripts/specfactory's own
 # location) -- never from the candidate worktree, which cannot edit any of
 # them. Only `make`, `pytest` and `git diff` run against the candidate.
+#
+# Stage 0 `base` runs first (also before the --revert exit): the candidate must
+# contain the current origin/main, whose sha then replaces <base_ref> for every
+# later stage. Env hook (tests only): MERGE_GATE_STOP_AFTER=base exits 0 right
+# after the `GATE base OK` line. Other MERGE_GATE_* variables are read where used.
 set -uo pipefail
 
 GATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,7 +27,11 @@ SIGNATURES_TOML="${MERGE_GATE_SIGNATURES:-$REPO_ROOT/docs/northstar/spec_factory
 PLACEHOLDERS_TXT="${MERGE_GATE_PLACEHOLDERS:-$REPO_ROOT/docs/northstar/spec_factory/placeholder_controls.txt}"
 SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
 MAKE_TIMEOUT="${MERGE_GATE_MAKE_TIMEOUT:-300}"
-SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-600}"
+SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-2400}"
+
+if [[ "${1:-}" == "--prune-evidence" && $# -eq 1 ]]; then
+    exec "$PYTHON" "$GATE_DIR/merge_gate_support.py" prune-evidence
+fi
 
 REVERT_MODE=0
 if [[ "${1:-}" == "--revert" ]]; then
@@ -42,6 +51,10 @@ fi
 CANDIDATE="$(cd "$1" && pwd)"
 BASE_REF="$2"
 PIECE_ID="$3"
+# Run directory name of the kept playthrough / lane_plays evidence (merge_gate_support.py _evidence_run_dir).
+MERGE_GATE_START_UTC="$(date -u +%Y%m%d-%H%M)"
+export MERGE_GATE_START_UTC
+export MERGE_GATE_PIECE_ID="$PIECE_ID"
 
 # merge_queue.py always checks a candidate out at <merge_root>/wt-<name>, so
 # the candidate's own parent dir IS the runs/merge dir the gate never
@@ -50,11 +63,52 @@ PIECE_ID="$3"
 MERGE_ROOT="$(dirname "$CANDIDATE")"
 
 SCRATCH_ROOT="$(mktemp -d -t merge_gate.XXXXXX)"
+# GATE row (HARNESS-mm-2): one csv line per run on every exit, also appended to MERGE_GATE_RUNS_CSV.
+# See also: docs/northstar/plans/method_rev3_2026-10-26/spec.md "Design" item 1, docs/northstar/plans/push/gate_runs.csv
+ROW_STAGES=""
+ROW_CAUSES=""
+STAGE_SUM_DS=0
+gate_row() {
+    local rc="$1" cand base sums p t d l a n path
+    cand="$(git -C "$CANDIDATE" rev-parse HEAD 2>/dev/null)"
+    base="${MAIN_SHA:-}"
+    p=0; t=0; d=0; l=0
+    if [[ -n "$base" ]]; then
+        while IFS=$'\t' read -r a n path; do
+            [[ "$a" =~ ^[0-9]+$ ]] || continue
+            case "$path" in
+                csrc/*|autoload/*|scenes/*) p=$((p + a)) ;;
+                scripts/skilllab/*) l=$((l + a)) ;;
+                tests/*) t=$((t + a)) ;;
+                docs/*) d=$((d + a)) ;;
+            esac
+        done < <(git -C "$CANDIDATE" diff --numstat "$base..$cand" 2>/dev/null)
+    fi
+    local row label="$PIECE_ID"
+    if [[ "$label" == *[,\"]* ]]; then label="\"${label//\"/\"\"}\""; fi
+    row="$(date +%F),$label,$(git -C "$CANDIDATE" rev-parse --abbrev-ref HEAD 2>/dev/null),$base,$cand,${MERGE_GATE_QUEUE_S:-0},$((STAGE_SUM_DS / 10)).$((STAGE_SUM_DS % 10)),$rc,$ROW_STAGES,$ROW_CAUSES,$p,$t,$d,$l"
+    echo "GATE row $row"
+    local csv="${MERGE_GATE_RUNS_CSV:-$HOME/Projects/om-push/gate_runs.csv}"
+    mkdir -p "$(dirname "$csv")"
+    echo "$row" >>"$csv"
+}
 cleanup() {
+    gate_row "$GATE_RC"
     [[ -d "$SCRATCH_ROOT/mainpipe_base" ]] && git -C "$CANDIDATE" worktree remove --force "$SCRATCH_ROOT/mainpipe_base" >/dev/null 2>&1
     rm -rf "$SCRATCH_ROOT"
 }
-trap cleanup EXIT
+trap 'GATE_RC=$?; cleanup' EXIT
+
+# FINDING-ambient-user-dir: no stage reads or writes the machine's ~/.local/share/data.
+# project.godot's custom_user_dir_name="data" puts user:// at $XDG_DATA_HOME/data, so every
+# stage inherits a scratch XDG_DATA_HOME (dies with SCRATCH_ROOT). Only the export templates
+# are linked in (the headless export tests need them); nothing else lives under it.
+# See also: scripts/run_godot_tests.sh, tests/qa/desktop/daemon_client.py
+export XDG_DATA_HOME="$SCRATCH_ROOT/xdg"
+mkdir -p "$SCRATCH_ROOT/xdg/godot"
+if [[ -n "${HOME:-}" && -d "$HOME/.local/share/godot/export_templates" ]]; then
+    ln -s "$HOME/.local/share/godot/export_templates" "$SCRATCH_ROOT/xdg/godot/export_templates"
+fi
 
 REJECTED=0
 
@@ -68,15 +122,47 @@ gate_line() {
     now_us="${EPOCHREALTIME/./}"
     el=$(( (now_us - STAGE_MARK_US + 50000) / 100000 ))
     STAGE_MARK_US="$now_us"
+    STAGE_SUM_DS=$((STAGE_SUM_DS + el))
     echo "GATE $name $status $detail [$((el / 10)).$((el % 10))s]"
 }
 
-reject() { gate_line "$1" REJECT "${*:2}"; REJECTED=1; }
+reject() {
+    local c="${*:2}"
+    gate_line "$1" REJECT "$c"; REJECTED=1
+    ROW_STAGES="${ROW_STAGES:+$ROW_STAGES;}$1"
+    c="$(printf '%s' "$c" | tr ',"\n' '   ' | cut -c1-120)"
+    ROW_CAUSES="${ROW_CAUSES:+$ROW_CAUSES;}$c"
+}
+# A suite_regression timeout surfaces as a TimeoutExpired traceback in the stage log; name it.
+# See also: suite_regression.py main (suite-timeout <N>s), spec G06
+reg_detail() { if grep -q TimeoutExpired "$1"; then echo "suite-timeout ${SUITE_TIMEOUT}s"; else cat "$1"; fi; }
 ok()     { gate_line "$1" OK "${*:2}"; }
 warn()   { gate_line "$1" WARN "${*:2}"; }
 harness() { gate_line "$1" HARNESS "${*:2}"; }
 
 tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
+
+# -------------------------------------------------------------- 0. base
+# The clerk merges origin/main inside gate.lock; a candidate gated against a main that has since
+# moved fails tests that compare with main's build. The sha, not the name, is the baseline from here on.
+# See also: docs/northstar/plans/workflows_2026-10-07/rules.md section (b) "Gate";
+# ledger row FINDING-gate-base-before-lock
+if ! git -C "$CANDIDATE" fetch -q origin >"$SCRATCH_ROOT/base_fetch.log" 2>&1; then
+    reject base "git fetch origin failed: $(tail_oneline "$SCRATCH_ROOT/base_fetch.log" 3)"
+    exit 1
+fi
+MAIN_SHA="$(git -C "$CANDIDATE" rev-parse --verify -q origin/main)"
+if [[ -z "$MAIN_SHA" ]]; then
+    reject base "origin/main not found in the candidate"
+    exit 1
+fi
+if ! git -C "$CANDIDATE" merge-base --is-ancestor "$MAIN_SHA" HEAD; then
+    reject base "candidate lacks origin/main $MAIN_SHA; merge origin/main inside the lock and rerun"
+    exit 1
+fi
+ok base "$MAIN_SHA"
+BASE_REF="$MAIN_SHA"
+[[ "${MERGE_GATE_STOP_AFTER:-}" == "base" ]] && exit 0
 
 # -------------------------------------------------------------- 1. make
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
@@ -230,6 +316,28 @@ if [[ "$REVERT_MODE" -eq 1 ]]; then
     exit 0
 fi
 
+# -------------------------------------------------------------- 5c-pins. rule pins (HARNESS-C1b; full gate only)
+# Single-owner pattern: tests changed by the diff and the specs of this piece. The pre-gate runs its own step, so a
+# revert never reaches here. See also: pre_gate.sh step pins, rule_pins_tests.py, rule_pins.py
+RP_LOG="$SCRATCH_ROOT/rule_pins.log"
+mapfile -t RP_DIFF < <(git -C "$CANDIDATE" diff --name-only "$BASE_REF"...HEAD 2>/dev/null)
+RP_RC=0
+"$PYTHON" "$GATE_DIR/rule_pins_tests.py" check "$CANDIDATE" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"} >"$RP_LOG" 2>&1 || RP_RC=1
+RP_SPECS=()
+while IFS= read -r sp_path; do
+    [[ -f "$CANDIDATE/$sp_path" ]] && RP_SPECS+=("$sp_path")
+done < <("$PYTHON" "$GATE_DIR/rule_pins.py" spec-of "$PIECES_TOML" "$PIECE_ID" 2>/dev/null)
+if (( ${#RP_SPECS[@]} )); then
+    (cd "$CANDIDATE" && "$PYTHON" "$GATE_DIR/rule_pins.py" check "${RP_SPECS[@]}" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"}) >>"$RP_LOG" 2>&1 || RP_RC=1
+fi
+if grep -q '^PINS REJECT' "$RP_LOG" || (( RP_RC != 0 )); then
+    reject rule_pins "$(grep '^PINS REJECT' "$RP_LOG" | tr '\n' ' ')$(grep -q '^PINS REJECT' "$RP_LOG" || tail_oneline "$RP_LOG" 3)"
+elif grep -q '^PINS WARN' "$RP_LOG"; then
+    warn rule_pins "$(grep '^PINS WARN' "$RP_LOG" | tr '\n' ' ')"
+else
+    ok rule_pins "$(tail_oneline "$RP_LOG" 1)"
+fi
+
 # -------------------------------------------------------------- 5c. control liveness (A114): the attaching piece's own controls
 CL_LOG="$SCRATCH_ROOT/control_liveness.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" control-liveness "$CANDIDATE" "$PIECE_ID" \
@@ -250,12 +358,22 @@ else
     ok placeholder_controls "$(sed 's/^OK //' "$PC_LOG" | tr '\n' ' ')"
 fi
 
+# -------------------------------------------------------------- 5d. pipe binary before the first regression stage
+# See also: FINDING-ambient-user-dir; specfactory_regression boots Godot (test_gate_userdir test_6/6b) and needs pipe/ouroboros_pipe before it runs
+# The transport stage (section 9) builds it again later; that make is then a no-op. A build
+# failure is not rejected here: the transport stage reports it as it always did.
+PRE_PIPE_LOG="$SCRATCH_ROOT/pipe_build_pre_regression.log"
+( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PRE_PIPE_LOG" 2>&1
+
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+# MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
+# the baseline run and the branch run both inherit it.
+# MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
+MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject regression_csim "$(cat "$REG_CSIM_LOG")"
+    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
 else
     ok regression_csim "$(cat "$REG_CSIM_LOG")"
 fi
@@ -264,7 +382,7 @@ REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject regression_lab "$(cat "$REG_LAB_LOG")"
+    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
 else
     ok regression_lab "$(cat "$REG_LAB_LOG")"
 fi
@@ -273,7 +391,7 @@ REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject regression_qa_t1 "$(cat "$REG_QA_LOG")"
+    reject regression_qa_t1 "$(reg_detail "$REG_QA_LOG")"
 else
     ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
 fi
@@ -282,7 +400,7 @@ REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
     --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject specfactory_regression "$(tr '\n' ' ' <"$REG_SF_LOG")"
+    reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')"
 else
     ok specfactory_regression "$(cat "$REG_SF_LOG")"
 fi
@@ -302,6 +420,7 @@ GODOT_COUNT="$(echo "$GODOT_IDS" | grep -c . || true)"
 # imported checkout). Importing once here, before either acceptance step
 # runs, fixes that; a csim-only piece has neither id shape and pays nothing.
 NEED_GODOT_IMPORT=0
+VENV_LINK_MADE=0
 if [[ -n "$GODOT_IDS" ]]; then
     NEED_GODOT_IMPORT=1
 fi
@@ -327,11 +446,17 @@ if [[ "$NEED_GODOT_IMPORT" -eq 1 ]]; then
         # A fresh candidate worktree has no .venv; autoload/sim_bridge.gd
         # falls back to system python3, which has no numpy, so the sim dies
         # at import and every scene routes to error_screen (gate gap,
-        # 2026-09-22). Link the harness venv in before importing; the
-        # candidate worktree is discarded after the gate, so no cleanup.
+        # 2026-09-22). Link the harness venv in before importing. The link
+        # stays through the acceptance and transport stages and the gate
+        # removes it before the playthrough stage (ledger
+        # FINDING-gate-venv-link-vs-fresh-checkout: the playthrough's
+        # test_fresh_checkout_boots_to_main_menu_without_numpy_or_logs
+        # asserts the checkout has no .venv).
+        # See also: "venv_unlink" block above "9b. playthrough" below;
+        # tests/qa/desktop/test_fresh_checkout_boot.py.
         VENV_TARGET="${MERGE_GATE_VENV:-$HOME/Projects/agora/.venv}"
         if [[ ! -e "$CANDIDATE/.venv" ]]; then
-            ln -s "$VENV_TARGET" "$CANDIDATE/.venv"
+            ln -s "$VENV_TARGET" "$CANDIDATE/.venv" && VENV_LINK_MADE=1
             echo "ok venv_link \"$VENV_TARGET\""
         fi
         run_godot_import() {
@@ -454,7 +579,7 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
             warn transport "pipe/ouroboros_pipe_dbg did not build: $(tail_oneline "$PIPE_DBG_LOG")"
         fi
         TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
-        "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+        MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
             --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
             --before-build "make -s pipe/ouroboros_pipe" >"$TRANSPORT_LOG" 2>&1
         if [[ $? -ne 0 ]]; then
@@ -483,6 +608,15 @@ else
     warn transport "no tests/transport directory in this candidate"
 fi
 
+# venv_unlink: remove the .venv link godot_import made (only the link; the
+# target is untouched, a pre-existing .venv is never removed).
+# See also: the venv_link comment in "6c. godot import" above; ledger
+# FINDING-gate-venv-link-vs-fresh-checkout; tests/qa/desktop/test_fresh_checkout_boot.py.
+if [[ "$VENV_LINK_MADE" -eq 1 && -L "$CANDIDATE/.venv" ]]; then
+    rm -f "$CANDIDATE/.venv"
+    echo "ok venv_unlink \"$VENV_TARGET\""
+fi
+
 # -------------------------------------------------------------- 9b. playthrough (desktop flow suite, real client under xvfb)
 # Runs on the merged tree only when the diff touches game code; red outside
 # playthrough_known_red.txt rejects. See merge_gate_support.py playthrough_check.
@@ -490,19 +624,21 @@ PT_LOG="$SCRATCH_ROOT/playthrough.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" playthrough "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAYTHROUGH_TIMEOUT:-900}" >"$PT_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject playthrough "$(sed 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
+    reject playthrough "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$PT_LOG" | tr '\n' ' ')"
+    sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$PT_LOG"
 else
     ok playthrough "$(sed 's/^OK //' "$PT_LOG" | tr '\n' ' ')"
 fi
 
 # -------------------------------------------------------------- 9b. lane_plays (per-lane desktop plays, real client under xvfb)
 # Runs the plays of each lane whose globs (lane_plays.toml) the diff touches; red outside
-# lane_plays_known_red.txt rejects. See merge_gate_support.py lane_plays_check.
+# lane_plays_known_red.txt rejects. Shared paths (lane_plays.toml [shared]) run the lanes listed there. See merge_gate_support.py lane_plays_check.
 LP_LOG="$SCRATCH_ROOT/lane_plays.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" lane_plays "$CANDIDATE" "$BASE_REF" \
     --python "$PYTHON" --timeout "${MERGE_GATE_PLAY_TIMEOUT:-900}" >"$LP_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
-    reject lane_plays "$(sed 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+    reject lane_plays "$(sed -e '/^EVIDENCE /d' -e 's/^REJECT //' "$LP_LOG" | tr '\n' ' ')"
+    sed -n 's/^EVIDENCE /GATE evidence kept: /p' "$LP_LOG"
 elif grep -q '^OK skipped' "$LP_LOG"; then
     warn lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
 else
@@ -606,6 +742,19 @@ if [[ -d "${MERGE_GATE_LOOK_CANDIDATE:-}" && -d "${MERGE_GATE_LOOK_BASE:-}" ]]; 
     fi
 else
     warn look "no frame dirs (MERGE_GATE_LOOK_CANDIDATE / MERGE_GATE_LOOK_BASE unset); skipped"
+fi
+
+# -------------------------------------------------------------- 14. status (HARNESS-C1b)
+# The status copies must agree (guard 7): any `STATUS <check> DRIFT` line rejects, a WARN warns. Reads THIS repo.
+# See also: status_check.py, pre_gate.sh
+STATUS_LOG="$SCRATCH_ROOT/status.log"
+"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF" >"$STATUS_LOG" 2>&1
+if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
+    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
+elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
+    warn status "$(grep '^STATUS [a-z_]* WARN' "$STATUS_LOG" | tr '\n' ' ')"
+else
+    ok status "$(tail_oneline "$STATUS_LOG" 1)"
 fi
 
 # --------------------------------------------------------------

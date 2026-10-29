@@ -1,4 +1,5 @@
 extends SceneTree
+# Rule pins: R-089-03@c09d1f, R-096-05@1a9979, R-104-01@1aaaa3, R-104-09@b27177, R-205-02@1abaf8
 
 # Visible-game programme lane K, pieces K-a (autoload/c_bridge.gd decoders, set_layer and
 # activate_ability wrappers, heights into terrain()), K-f (OM_PIPE override of the pipe path) and

@@ -1,5 +1,6 @@
 # spec: Architect ruling A187 item 1 (slots kept for wide shapes) - scripts/skilllab/fight.py (real engine)
 """A Vanguard line keeps distinct slot destinations through the real engine: before the fix all sat on one point."""
+import dataclasses
 import random
 import sys
 from pathlib import Path
@@ -18,8 +19,10 @@ def library():
     return engine.Engine()
 
 
-def _destinations(library, n):
+def _destinations(library, n, per_unit=False):
     setup = plays.line_play(n)(n, False)
+    if not per_unit:
+        setup = dataclasses.replace(setup, orders_per_unit=False)
     w = library.new_world(0)
     try:
         library.disable_abilities(w)
@@ -36,8 +39,19 @@ def _destinations(library, n):
 
 @pytest.mark.parametrize("n,spread", [(32, 800), (16, 400)])
 def test_line_destinations_are_distinct_and_spread(library, n, spread):
-    dests = _destinations(library, n)
+    dests = _destinations(library, n)   # LAB-REV2-L2: the group order (orders_per_unit False) is the one that keeps slots
     assert all(d is not None for d in dests)
     assert len(set(dests)) == n
     ys = [d[1] for d in dests]
     assert max(ys) - min(ys) > spread
+
+
+@pytest.mark.parametrize("n", [16, 32])
+def test_per_unit_orders_all_head_for_the_shared_point(library, n):
+    """LAB-REV2-L2 (ruling 6, Q-LAB-03): the default is one attack-move per unit to Setup.point, so every destination is that point
+    (the control for the slot test above, which asks for the group order)."""
+    setup = plays.line_play(n)(n, False)
+    assert setup.orders_per_unit is True and setup.point is not None
+    dests = _destinations(library, n, per_unit=True)
+    assert all(d is not None for d in dests)
+    assert set(dests) == {tuple(float(v) for v in setup.point)}

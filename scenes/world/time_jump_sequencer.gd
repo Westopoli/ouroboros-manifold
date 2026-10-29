@@ -107,11 +107,25 @@ func _advance_replay(delta: float) -> void:
 		return
 	_rp_clock += delta * REPLAY_TICKS_PER_SECOND
 	_rp_tick = _rp_from + int(_rp_clock)
+	# Q-069-03 (a), status reading: while the scroll is busy the map holds at the first keyframe not yet
+	# hit; it is hit, and the entries tied to it start, once the printing entry and its hold have passed.
+	# liberty 2026-10-13: the held clock does not run ahead, so the map resumes from the keyframe.
+	var held_kf := -1
+	if _scroll.is_busy():
+		for k in _rp_keyframes:
+			if not _rp_keyframes_hit.has(int(k)):
+				if _rp_tick >= int(k):
+					_rp_tick = int(k)
+					_rp_clock = float(_rp_tick - _rp_from)
+					held_kf = _rp_tick
+				break
 	for k in _rp_keyframes:
-		if int(k) <= _rp_tick and not _rp_keyframes_hit.has(int(k)):
+		if int(k) <= _rp_tick and int(k) != held_kf and not _rp_keyframes_hit.has(int(k)):
 			_rp_keyframes_hit.append(int(k))
 	for e in _rp_entries:
 		var id := int(e.get("id", -1))
+		if held_kf >= 0 and int(e.get("start_tick", 0)) >= held_kf:
+			continue
 		if int(e.get("start_tick", 0)) <= _rp_tick and not _rp_entries_started.has(id):
 			_rp_entries_started.append(id)
 			_scroll.start_printing(str(id))

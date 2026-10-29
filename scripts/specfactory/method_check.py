@@ -50,6 +50,10 @@ NEXT = ("METHOD next: quote every DRIFT line to Westley in your first message af
         "a justified exception is a ledger row.")
 
 
+def in_scratch(p):
+    return "om-push/scratch/" in str(p).replace("$HOME", "~").replace(os.path.expanduser("~"), "~")
+
+
 def under(path, base):
     return path == base or path.startswith(base + os.sep)
 
@@ -153,9 +157,10 @@ def matcher(cid, role, live):
                 return bool(fp) and under_live(fp, cwd)
             return bool(s) and any(GIT_MUTATE.search(g) for g, w in segments(s)) and "om-push" not in s and under_live(cwd or "", "")
         if cid == "code_edits":
+            # G20: runner scripts under om-push/scratch/ are briefs, not code (spec method_rev3 G20)
             if n in EDIT_TOOLS:
-                return bool(fp) and re.search(r"\.%s$" % CODE_EXT, str(fp)) is not None
-            return bool(s) and any(REDIRECT.search(g) for g, w in segments(s))
+                return bool(fp) and re.search(r"\.%s$" % CODE_EXT, str(fp)) is not None and not in_scratch(fp)
+            return bool(s) and any(not in_scratch(m.group(0)) for g, w in segments(s) for m in REDIRECT.finditer(g))
         if cid == "repo_edits":
             return n in EDIT_TOOLS and bool(fp) and under_repo(fp, cwd)
         if cid == "main_push":

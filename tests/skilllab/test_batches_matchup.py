@@ -1,5 +1,6 @@
 # spec: batch runner spec addendum 2 (batch2_spec.md) - the "matchup" batch in scripts/skilllab/batches.py
-"""Matchup batch: 10 x 10 pairs of unit types and even mixes, weighted firing on. Fake scan only; no engine."""
+"""Matchup batch: 10 x 10 pairs of unit types and even mixes; the type-weighted count is always recorded (LAB-REV2: no
+Setup.weighted, no BatchDef.weighted). Fake scan only; no engine."""
 import csv
 import dataclasses
 import re
@@ -12,7 +13,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.skilllab import batches  # noqa: E402
 from scripts.skilllab.matchup import matchup_grid_html  # noqa: E402
-from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked  # noqa: E402
+from tests.skilllab.fakes_batches import FakeScan, fake_sensors, faked, stub_summary_write  # noqa: E402,F401
 
 PROVISIONAL = "Pass marks provisional (A174). Unconfirmed definitions stay unconfirmed."
 PURE = ("Vanguard", "Raider", "Bombard", "Bastion")
@@ -60,7 +61,7 @@ def _run(tmp_path, fake=None, sub="out", mutate=None):
 def test_matchup_definition_fields_and_cell_order():
     d = batches.get("matchup")
     assert d.name == "matchup" and d.title and d.scene
-    assert d.weighted is True
+    assert "weighted" not in {f.name for f in dataclasses.fields(d)}      # the count is always recorded; there is no switch
     assert d.variants == (("default", {}),)
     assert len(d.cells) == 284                                               # 200 interleaved + 84 layered
     assert [c.label for c in d.cells[:200]] == [_label(*x) for x in EXPECTED]      # size 16 then 32
@@ -71,8 +72,9 @@ def test_matchup_definition_fields_and_cell_order():
 
 def test_matchup_scene_and_unexpressed_lines():
     d = batches.get("matchup")
-    for want in ("the weighted count reads the engine's target (its sight and reach), so a unit counts once the engine has given it a target",
-                 "only even two-type mixes; unequal mixes and three-type mixes are not included",
+    assert not any("reads the engine's target (its sight and reach)" in u for u in d.unexpressed)      # superseded by ruling 5
+    assert any("target of record" in u for u in d.unexpressed)
+    for want in ("only even two-type mixes; unequal mixes and three-type mixes are not included",
                  "arrangement: interleaved in every cell; layered (short range in front, long range behind) only at size 16 and only on the even two-type mixes, in the first pass; the reverse arrangement and layered at 32 are not run"):
         assert want in d.unexpressed
     assert "weighted" in d.scene and "blob" in d.scene
@@ -101,23 +103,15 @@ def test_matchup_builds_put_the_mix_on_each_side(monkeypatch):
     assert counts(setup, 0) == {"Vanguard": 32} and counts(setup, 1) == {"Raider": 24}
 
 
-def test_matchup_scanned_once_per_cell_with_range_and_weighted_setups(tmp_path):
+def test_matchup_scanned_once_per_cell_with_range_setups(tmp_path):
     _, fake, _ = _run(tmp_path)
     assert len(fake.calls) == 284
     want = sorted((_label(*x), x[2], x[2] // 2, x[2] * 3 // 2) for x in EXPECTED)
     old = [c for c in fake.calls if ":layered" not in c["label"]]
     assert sorted((c["label"], c["size"], c["enemy_from"], c["enemy_to"]) for c in old) == want
     assert sum(":layered" in c["label"] for c in fake.calls) == 84
-    assert all(c["setup"].weighted is True for c in fake.calls)
+    assert not any(hasattr(c["setup"], "weighted") for c in fake.calls)
     assert all(c["replicates"] == 10 and c["setup"].settings == {"OM_TP_PURSUE_BY_STEERING": 1} for c in fake.calls)
-
-
-def test_weighted_comes_from_the_batch_flag(tmp_path):
-    """A matchup run whose batch is not weighted must not turn weighted on (mutant catcher for a hard-coded flag)."""
-    _, fake, _ = _run(tmp_path, sub="off", mutate=lambda d: dataclasses.replace(d, weighted=False))
-    assert all(c["setup"].weighted is False for c in fake.calls)
-    _, fake, _ = _run(tmp_path, sub="on")
-    assert all(c["setup"].weighted is True for c in fake.calls)
 
 
 def test_matchup_results_carry_weighted_unit_seconds(tmp_path):
@@ -144,7 +138,7 @@ def test_matchup_run_file_lists_unexpressed(tmp_path):
     t = _text(paths["run"])
     assert t.index(PROVISIONAL) < t.index("## Scene")
     sec = _section(t, "What the instrument could not express")
-    assert "weighted count reads the engine's target" in sec
+    assert "target of record" in sec and "reads the engine's target (its sight and reach)" not in sec
     assert "only even two-type mixes" in sec and "interleaved in every cell; layered" in sec
 
 

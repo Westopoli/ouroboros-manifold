@@ -1,3 +1,4 @@
+# Rule pins: R-111-03@d25a6f, R-168-01@c6cd6c
 """VG-CONTRACT-E3 (K-e3): density_economy is set at init, hashed by checksum_full and saved; save format 9.
 
 Spec: docs/northstar/plans/2026-10-07-visible-game-spec.md rev 8, "Lane E1 part a3" (Part a3 rulings, Q-222-01 a).
@@ -80,6 +81,6 @@ def test_ke3_density_economy_is_saved(lib, world_factory):
 
 
 def test_ke3_save_format_version_is_10(lib, world_factory):
-    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1); LAB-REV2 E0 moved it to 12: OM_SAVE_FORMAT_VERSION is 12 (header bytes 4..8, the pin the save-pin tests use); red: 10."""
+    """K-e3 added the density_economy and lot_hit_tick fields (format 9); K-e5 moved the pin to 10 (TD-VG-E-16); W2 moved it to 11 (TD-VG-W-1): E7 moved it to 12 (TD-VG-E-27); LAB-REV2 E0 moved it to 13: OM_SAVE_FORMAT_VERSION is 13 (header bytes 4..8, the pin the save-pin tests use); red: 12."""
     buf, _ = _save(lib, scene(lib, world_factory))
     assert int.from_bytes(bytes(buf[4:8]), "little") == 12

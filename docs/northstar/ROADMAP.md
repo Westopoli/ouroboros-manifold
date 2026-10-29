@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-13 (Architect): whole file rewritten against the state on main; the previous text was frozen at 2026-10-07. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
+Last updated: 2026-10-27 (Architect): section 1 gains the sim lane pieces, the two mockups and the probes; section 2 step 6 macOS done; section 3 points at the decision pack; 3b T5 to T9, T18 restated, T19 added. Before that, 2026-10-07: section 2b added, the order of work after the beta workflow (Westley).
 
 What is being built now, what is built next, and in what order. `PLAN.md` is the method; this file is the order. One row per plan.
 
@@ -65,17 +65,42 @@ Branches only; main gets a piece only through the merge gate. Method rev 2 (`pla
 
 | Plan | Doc | State (2026-10-13) | Next |
 |---|---|---|---|
+| **Plans of record** (DEC-plans-of-record-2026-10-27): the simulation lab, then the beta | `plans/2026-10-27-lab-plan-of-record.md` (status head = the lab's state); `plans/2026-10-07-visible-game-programme.md` (PAUSED; lane table = the beta's state) | lab paused for the method fixes; beta paused for the lab | the lab resumes on Westley's word after the first planned day; `plans/2026-10-27-lab-only-programme-spec.md` is the how |
 | **The visible game programme**: every approved prototype into the game, the economy play, Steam phase B; stories acted out as the acceptance | `docs/northstar/plans/2026-10-07-visible-game-programme.md` (lane table = status), spec `plans/2026-10-07-visible-game-spec.md` rev 12f on `push/vg-kp-lots-spec` | IN FLIGHT since 2026-10-07, method rev 2 since 10-10; six lanes A to F plus contracts, harness and W walk routes; about 120 pieces landed, 0 stories Seen; every lane's second look (after the method fix) is in section 3 "Now" | lanes advance on Westley's verdicts; the record batch `push/vg-rec-12e` lands, then spec rev 13 (provenance tags) |
-| Simulation viewer and the simulation lane (ROADMAP 2b step 1, started early) | `plans/2026-10-12-simviewer-plan.md`, `plans/2026-10-12-sim-lane-context.md` | spec SV-0 to SV-3 and owner rows on main (c4d3d939, c7961d75); nothing built | Westley opens the sim lane chat from the context file; SV-0 (one pipe field) lands first, second-Fable audit of its paragraph |
+| Simulation viewer and the simulation lane (ROADMAP 2b step 1, started early) | `plans/2026-10-12-simviewer-plan.md`, `plans/2026-10-12-sim-lane-context.md` | SV-1 to SV-3 landed (d7d01f40); first findings pass run 2026-10-15 on the Mac: 17 ledger rows in `plans/sim_lane_2026-10-12/README.md` (mission swaps, opening relevance 0, chronicle family and chain entries missing, blank shells, 37 ALG rows untested) | Westley reads the ledger; `Q-` rows for rows 3, 10, 13; SV-0 and the pipe gaps queue behind VG-CONTRACT-E7 |
 | Space lab: layout search | `plans/2026-10-06-layout-search-spec.md` rev 4 | run 1 landed a9ee5897; chart waits on Westley (`research/layer_dynamics/README.md` open list) | run 2 after the category table; the ground lab spec |
+| Skill lab rev 2 (LAB-REV2): the measure's blind spots closed, the 2026-10-13 rulings built, the first coarse knob batch | `plans/2026-10-14-skill-lab-rev2-spec.md`, `plans/2026-10-14-skill-lab-rev2-decisions.md`; record `research/layer_dynamics/README.md` | lab pieces L1 to L6, L8, BASE and S built on the integration branch `push/labrev2-lab`; L7 (this record, the harness spec and the register rows) in review; E0, E2 and E4 (arc, cone, radius guard) wait for batch two | one lab landing with E1 and E1b and the golden re-record (`TD-LAB-REV2-golden`), the smoke run as its check, then the first coarse knob batch and the analysis artifact for Westley |
 | Walk-route fix piece (`FINDING-walk-route-replan`) | none yet | W1 planner landed 6621ef96 (600-walker tick 64 ms to 10 ms); W2 stored routes queued (save 10 to 11, contract piece) | W2 builds; the fix piece is specced after W2's report |
+| Sim lane pieces: SIM-LOGS, then the call sites, then chronicle.c rows 7 to 9, then CHRON-CONTEXT | `plans/2026-10-15-sim-logs-spec.md` rev 4 (three Sonnet audits spent); `sim_lane_2026-10-12/README.md` ledger | specced; W1, W2, W4 and the second-Fable audit route in the decision pack (B1 to B5); ring and append tests being written on the Mac 2026-10-18 | Westley's W rulings; Linux for the gate; CHRON-CONTEXT specced from the 2026-10-18 scout |
+| Transition mockup, S-108 (prototype gate) | `plans/2026-10-15-transition-mockup-spec.md`; `push/proto-transition` 5537d3cb | pass 1b built on the Mac, 27 tests green; shots in `story_reviews/westley/` | Westley's verdict (pack B14); on approval an integration lane row here (guard 4) |
+| Terrain obeys the layout, S-191 and S-189 (prototype gate; lane P rev 6 follows it) | `plans/2026-10-15-terrain-obeys-mockup-spec.md`; `push/proto-terrain-obeys` 804f666b | pass 1 built on the Mac: pads, choke and vantage produced and measured; routes not, the engine must carve them; pass 2 (`push/proto-terrain-obeys-2`) approved by Westley 2026-10-21 | pass 3 and lane P rev 6 from the approved facts; integration lane in the next row |
+| Terrain obeys the layout (prototype pass 2 approved 2026-10-21) | `plans/2026-10-15-terrain-obeys-mockup-spec.md`; lane P in `plans/2026-10-07-visible-game-spec.md` | approved, not integrated (CLAUDE.md guard 4) | integration = lane P after P3 (P4 contract, then the generator's layout_requests piece); owner Architect; position after VG-P3 |
+| Sim viewer probes and the offline runner | `scripts/simviewer/probes/` (03cd9502) | landed 2026-10-18; `offline_run.sh` runs the two sweeps, the csim suite and a lab layout-search batch unattended | results read after the offline window |
 | Steam shipping, steps 6 to 8 of section 2 | `plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6 | phase A landed e63483f6; phase B is lane F (skeleton lobby and net first tick on main); mingw-w64 and wine64 installed 2026-10-06 | per-OS pipe build after lane F's tactical hookup |
 
 Landed and closed since the last rewrite: terrain stages 2 and 3 (008de465, 0304d821), Steam phase A (e63483f6), the programme guard pieces (reach lint, lane plays, play split, daemon verb), the harness pieces of method rev 2 (pre-gate, status check, journal, provenance lint), unit scale (53ede72), the Sonnet briefs B1 to B11 (their branches `docs/method`, `docs/military-doctrine`, `docs/era-pack-form`, `docs/map-design-pillars` wait on Westley's reading, section 3b).
 
+## 1b. Westley's log: what he pointed out, and what became of it
+
+Method (Westley, 2026-10-27, `story_reviews/westley/Answers.md`): every bug, issue or request Westley points out is logged here the day he says it, with a status, a pointer to where it is being worked on, and whether he has signed off on a revised version that is in the beta. Nothing he points out is acted on without a row here, and no row closes without his sign-off. The beta is paused for the simulation lab; when beta work resumes, the Architect reminds him of this section in chat before anything starts, and the first work items are the rows below in order, beginning with W0.
+
+Statuses: `logged` (recorded, nobody on it) · `investigating` (someone is finding out what happened; pointer names them) · `W-look` (a prototype or scene Westley can pan is owed before anyone builds; he rules on it, then it moves on) · `in progress` (pointer names the piece) · `built` (on main, waiting for his sign-off) · `signed off` (his word, with the date) · `dropped` (his word).
+
+| # | Date | What Westley said | Status | Pointer | Sign-off |
+|---|---|---|---|---|---|
+| W0 | 2026-10-27 | "My requests frequently don't appear to go anywhere." Investigate every request of the last few weeks that was not done (the map-edge request is the known case), and list each as its own row here with status and pointer, before any other beta work. | logged | first beta work item; a fresh Sonnet engineer reads `verdicts_2026-10.md`, `decisions.md`, the programme file lane notes and the Westley chat memory for every ask, and checks each against main | |
+| W1 | before 2026-10-22 | The player should not so easily see the edge of the map: a cut-off and a void look unpolished. Investigate what was done with that request. | logged | part of W0; answer owed to him with the commit or the reason nothing landed | |
+| W2 | 2026-10-27 | `C-S132` sight discs: the lit disc still reads as a flat circle from the player's view, not following the ground; if this is the "fixed" version it is not approved, it looks the same as the flawed one he pointed out before. | logged | VG-A-sightdisc on main; the disc must follow the ground (DEC-S004 vision discs); re-shot owed as a scene he can pan, not a still | |
+| W3 | 2026-10-27 | `C-S132` facing triangles: approved, specifically those, not every feature of the picture. | signed off | VG-C unit marks | Westley 2026-10-27 |
+| W4 | 2026-10-27 | `C-S132` run line shows no landscape: white space and units only. Big bug; fix and hand back. | logged | the README's run line for the C lane scene; find the regression on main | |
+| W5 | 2026-10-27 | `C-S132` whether units sit on the ground or float or draw through the hill: cannot be told from a still; movement is the tell. | W-look | a scene he can pan, with the units moving over the hill; rule then | |
+| W6 | 2026-10-27 | `C-S140` land march: rejected. Unit placeholders are 2D (same shape at every angle); placeholders must be 3D like the beta's (a plain box is fine). No colour change with distance, so distance cannot be read; the bunching may be slope or broken scale. The landscape looks fine. | W-look | a pannable prototype of this scene before anything is built; Westley rules on the prototype, then the row moves to in progress | |
+| W7 | 2026-10-27 | `F-S140` click-move order: rejected. Does not read as an order obeyed; shot predates the facing-triangle change, so directions cannot be read; perfectly top-down and 2D with no landscape, marks against it since the beta is 3D. Unit movement needs a prototype he can play with, not a still. | W-look | a pannable prototype of a two-player order in the space era; the re-shot after the facing triangles | |
+| W8 | 2026-10-27 | Method: "maybe we should amend the screenshot rule to a prototype/scene rule." His rule to make; nothing changes until he says so. | logged | Architect, to put to him with the W0 report: the look rule (Visible-game guard 1) would read "a scene he can pan" for motion and depth questions, a still for layout | |
+
 ## 2. The beta critical path
 
-Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
+Before any step here resumes after the lab: section 1b, W0 first, and the Architect reminds Westley in chat (his word, 2026-10-27). Target: a private Steam beta with multiplayer and every approved prototype integrated. Westley 2026-10-07: no date; "done right than fast"; efficiency, parallelism and no drift are the measures. Steps 1 to 5 are carried by the programme; this table keeps the Steam-side steps.
 
 | # | Step | State (2026-10-13) | Gate | Then |
 |---|---|---|---|---|
@@ -84,7 +109,7 @@ Target: a private Steam beta with multiplayer and every approved prototype integ
 | 3 | Unit size as a runtime setting (D1) | superseded for the programme by `VG-C-unitscale` (53ede72, body 11.5 / shadow 10 wu); the lab's per-type sizes follow the era rosters (3b T13) | | lab run 2 |
 | 4 | Steam wiring phase A | landed e63483f6 | done | 5 |
 | 5 | Steam wiring phase B: pipe frame flag, bridge wrappers, lobby, tactical hookup | lane F: skeleton lobby (dbe480a) and net first tick (b12b47a) on main; S-141 reviewer yes, S-140 unclear, both pending Westley | gate plus a two-process loopback match (S-141, S-142 green) | 6 |
-| 6 | Shipping the C pipe on Windows, macOS, Linux (static pipe per OS, mingw-w64 cross build, client path fix, signing) | tools installed 2026-10-06 (mingw-w64 13, wine64 10); first Windows probe matched byte for byte under wine; the macOS build needs a Mac with clang and a signing identity | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
+| 6 | Shipping the C pipe on Windows, macOS, Linux (static pipe per OS, mingw-w64 cross build, client path fix, signing) | Windows: first probe matched byte for byte under wine (2026-10-06). macOS: done 2026-10-18 on the Mac, `scripts/build_pipe_macos.sh` static ad-hoc-signed pipe, full checksums equal the Linux pins at ticks 100 to 2000 (`plans/2026-10-18-macos-pipe-probe.md`); notarisation and a signing identity are Westley's | a build per OS runs the probe and matches checksums (Q-NET-05) | 7 |
 | 7 | First real-Steam test: Westley's two accounts on Spacewar 480, Linux + Mac | after 5 and 6 | a match to its end, a stall, a leave | 8 |
 | 8 | Beta build on Westley's app id, Dev Comp keys, tester guide (`docs/northstar/beta/`) | guide and store copy drafted; app id is Westley's (3b T17) | one tester plays a mission and files an F12 report | public track |
 
@@ -102,24 +127,18 @@ Three steps, in this order. Step 1 and step 2 run at the same time; step 3 start
 
 Every decision waiting on Westley, in the order that unblocks the most work. Candidates for each `Q-` flag are in `ambiguity_register.md`. An answer is recorded in the register and the epic, and its row is deleted here.
 
-### Now (at most six; Westley 2026-10-10)
+### Now (the 2026-10-18 batch; the six-row cap is suspended for it, Westley 2026-10-18)
 
-The Dispatcher keeps this table at six rows or fewer, ordered by what each unblocks, and adds a row only when one frees; everything else waits in the sections below. A verdict on a shot is one word per row (approved or rejected, with any note) in the Dispatcher chat. The shots named here are plainly named copies in `story_reviews/westley/`.
+**Linux chat starts at `plans/handoff_2026-10-19_mac_to_linux.md`.** Everything waiting on Westley is in one pack: `plans/decision_pack_2026-10-18/batch.md` (the stories' voice; `README.md` beside it is the index and the record) (how to answer; what each answer unblocks on the Linux box this week), with its appendices: the shots in `story_reviews/westley/` (one row per file in its README), the Architect's rulings of the week (B1 to B19 in the pack), the register extract (`register_extract.md`, every open flag grouped, full text), and the five doc branches digested (`doc_branches_digest.md`). After the batch the Dispatcher rebuilds this table at six rows or fewer from what is left.
 
-| # | Item | Where | Unblocks |
-|---|---|---|---|
-| 1 | Chronicle: does the map wait for the printing entry (`Q-069-03`, default run on) | `ambiguity_register.md` | chronicle map piece |
-| 2 | Which renderer is the galaxy look (`Q-B23b-01`): Forward+ (the shells wash the dots, the pixel test gains a Forward+ run) or the default renderer | `ambiguity_register.md` | lane B pixel test |
-| 3 | Places on generated terrain (`Q-191-14`, default yes) | `ambiguity_register.md` | places on generated terrain |
-
-Closed 2026-10-13 from Westley's 2026-10-12 verdicts, found in the transcript: galaxy density (Q-B24-01, as built) and the two-units-one-pixel pairs (Q-132-03, the A18 opening camera); their shots stay under `story_reviews/westley/2026-10-13/` as the record.
+Closed since the last rewrite: Q-191-14 (b), Q-191-05, Q-191-08/09/10, Q-188-01, Q-189-04, Q-082-06 (2026-10-15, Westley); Q-NET-05 measured on the Mac 2026-10-18 (`plans/2026-10-18-macos-pipe-probe.md`), its closing is pack item B12.
 
 ### Parked questions (not asked until the work before them is reached)
 
 | Group | Items | Reference | Asked when |
 |---|---|---|---|
 | Finishing the MVP loop (scouts, 2026-10-03) | F1 event-threshold noise, F3 chronicle wording for a fallen faction and a dead commander, F4 campaign end over the pipe, F5 enemy hooks, F6 transition durations, F8 who consumes a faction's phase, F10 regional commander on conquest, F11 two functions against their rule, F12 objectives for four archetypes (red tests on `push/obj-tests`), F13 retention membership. F2, F7 and F9 are closed in the register (Q-062-01, Q-120-03, Q-056-01) | `plans/2026-10-03-finish-loop-rulings.md` "Westley" | the simulation lane (2b step 1) reads them first; the sim viewer makes F1, F3, F4, F10 visible |
-| Land generator | L1 smallest readable layer step and "unreasonably hard to reach" (Q-188-01, Q-189-04); L3 the places' figures (Q-191-05); L9 the land era's name and scope (Q-147-01) | register | lane C's second era; the places (section 4) |
+| Land generator | L9 the land era's name and scope (Q-147-01, in the decision pack); L1 and L3 closed 2026-10-15 (Q-188-01, Q-189-04, Q-191-05: the figures come from the lab and the terrain-obeys prototype) | register | the places (section 4) |
 | Space generator (parked, A207) | S1 to S4: kit pass, small-craft size, camera among sheets, shared density | Q-166-02, Q-166-05, 3b T3 | lane D resumes |
 | Movement, layers and search (parked, A209) | M1 to M10: pass marks, variant B, leash, scattered-group rule, guard stance, fling, scale suite, fight length, height bands | rulings-2 A174 to A199; Q-087-01, Q-096-01, Q-097-02, Q-166-04 | after the lab's data (layout search run 2) |
 | Balance and housekeeping | B1 rates for the balance simulation; B2 E-17 reds; B4 constants promotion, snapshot fixture policy, generation budget at 400 regions (Q-224-01) | rulings-2 | the simulation lane |
@@ -136,18 +155,22 @@ Work that does not wait on the build lanes. Written 2026-10-06 from Westley's li
 | T2 | Space landscape pass 6 approved; S1 to S4 to fold | approved 2026-10-06; folding waits on lane D's resume | Architect, when D resumes |
 | T3 | Camera options page for space (five opaque sheets) and Q-103-04/05/06, Q-232-01 | not drafted | Architect, with lane D |
 | T4 | Sense-of-scale prototype (Sand Table, Q-103-05, Q-234-01 c) | not built; the 3D ground on main (lane C) is where scale is first seen | after lane C's looks are Seen |
-| T5 | Methodology write-up | drafted on `docs/method`; method rev 2 and the retro supersede parts of it | Westley reads; then a Sonnet re-draft against `retro_2026-10-10/` |
-| T6 | Map-design pillars | branches `docs/map-design-pillars`, `docs/map-design-research`; `research/map_design/` on main | Westley accepts or amends |
-| T7 | Military-strategy research synthesis | drafted on `docs/military-doctrine` | lands after Westley reads it |
-| T8 | Website refresh (`~/Projects/ouroboros-site`): galaxy view, the two landscape engines, the walking prototype, `/method` | not started | Sonnet brief after lane B's look is Seen (the galaxy shots are the material) |
-| T9 | Era pack form for 20+ eras | drafted on `docs/era-pack-form`; lane E added the building and doctrine lists to the manifests (E1f, E1g) | lands after Westley reads it; the form gains those two lists |
+| T5 | Methodology write-up | drafted on `docs/method`; digested in the decision pack (`doc_branches_digest.md`): land after edits (rev 2 roles, pre-gate, guards) | Westley's a/b/c in the pack; then the re-draft |
+| T6 | Map-design pillars | both branches are already ancestors of main (`research/map_design/`); the pillars page asks Q-MAP-01 to -05, not yet in the register; digested in the pack | Westley answers Q-MAP-01 to -05 in the pack; the clerk adds the rows and retires the two branches |
+| T7 | Military-strategy research synthesis | drafted on `docs/military-doctrine`; digested in the pack (land as is, one cross-reference re-check) | Westley's a/b/c in the pack |
+| T8 | Website refresh (`~/Projects/ouroboros-site`): galaxy view, the two landscape engines, the walking prototype, `/method` | S-106 Seen 2026-10-13; a draft branch `refresh-2026-10-18` is being built in the site repo (no deploy) | Westley reads the draft; publish is his |
+| T9 | Era pack form for 20+ eras | drafted on `docs/era-pack-form`; digested in the pack: the era-kind row is wrong (Q-146-04 closed), the doctrine and building rows are stale (E1f, E1g), S-147/S-151 of 2026-10-15 missing | Westley's a/b/c in the pack; a clerk applies the named edits |
 | T10 | Cosmetics and art direction | nothing past placeholders; Westley needs example choices to pick from | after the beta's looks are Seen (2b step 2) |
 | T11 | Economy look mockup | superseded: lane E builds the settlement look in the game (E1k) and a banded-contour prototype after it (`PROTO-settlement-banding`); the economy screens (S-230 to S-235) are lane E pieces | lane E |
 | T12 | Flaky playthrough click `test_s_c8_09`, root cause | the gate's flake re-run (G1) masks it; root cause not found | Engineer, `investigate` brief, after the programme's harness pieces land |
 | T13 | Body size per type from the runtime collision radius (Q-LAB-02 a) | unit scale on main for the client (`VG-C-unitscale`); the sim's per-type radius follows the era rosters | lab, with the rosters |
-| T14 | Fight tick cap 12,000 and never-engaged fights not read as ties (Q-LAB-01) | cap raised (brief B2); outcome classes not yet recorded | lab spec |
+| T14 | Fight tick cap 12,000; a fight ends by elimination only and a capped fight is a lab defect, never a result (Q-LAB-03) | cap 12,000 in the lab; outcome classes `side0`, `side1`, `draw`, `cap` recorded by the rev 2 contract | lab spec |
 | T16 | Feedback and bug reports: in-game F12 capture, website feedback, classification | piece built 2026-10-06, awaiting its gate; the lockstep save it replays through is lane F | after lane F's tactical hookup |
+| T18 | Branch triage (second audit done 2026-10-15, `plans/branch_triage_2026-10-15/`: 250 proven landed, 127 not proven; delete is pack item B11): 225 unmerged `origin/push/*` branches of 09-22 to 09-24 (B1 to B15m, C1 to C8, T1, F2, HDR, INV) and old tooling branches, nothing deleted; Westley 2026-10-15 chose (c): delete only what a second audit proves landed by another route | report in this chat 2026-10-15; second audit not run | Engineer, a second audit that proves each branch's patches landed by another sha before any deletion |
+| T19 | Layout library audit against the lab's layout search (section 4 row 1) | being written 2026-10-18 (`research/layout_engine/library_audit_2026-10-18.md`) | Westley's pairing answers join the next pack |
 | T17 | Steam onboarding, public track (app fee, tax and identity, Coming Soon page) | Westley by hand; no report yet | Westley |
+
+SHOWCASE lane (2026-10-22): plans/showcase/README.md, behind beta and lab
 
 ## 4. Not planned yet
 
@@ -158,7 +181,7 @@ Decided or partly decided in the bible, with no plan doc. Groups that entered th
 | Layout library audit and archetype pairing | none | E-17, E-10, E-21 | Not written | Westley 2026-10-03: the eight old layouts (`simulation/layout_library/`) predate the game's change; audited against the lab's layout search before any pairing |
 | Land generator, part 2: the places | S-187, S-191, S-192, S-195, S-197, S-200, S-201, S-207, S-221 | E-17, E-01, E-11, E-13, E-02 | Design decided; towns rulings 2026-10-13 (R-191-06, R-193-01, R-177-02); spec next (Architect), launch on Westley's go | The lane that builds economic locations, neutral towns grown to a seeded age, resources and the base kinds in the sim; lane E's settlement look follows it |
 | Space generator in C | none in the bible yet | E-17 | Mockup pass 6 approved; lane D holds the sim side (D2 to D8 on main) | Waits on S1 to S4, the space stories, lane D's resume |
-| A second era to play | S-147 | E-20 | Q-147-01 open; the era pack form (3b T9) | After the beta |
+| The land era's identity and the era roster | S-147, S-151 | E-20 | Both packs exist (Settled Reach; Greek placeholder, the era named Greek, reached by the era toggle); Q-147-01 open for the name, brief and ordered roster; the era pack form (3b T9); S-151's values come from the lab's crossings | Design, not build: Westley writes the brief and roster; the Climate of War values wait on the lab reporting more than one crossing |
 | Cross-epic follow-ons | S-220, S-223 to S-228, S-239, S-241 to S-244 | several | Q-220-01/02, Q-224-01, Q-225-01/02, Q-226-02, Q-227-02/03, Q-228-01/02 open | Each follows its parent group; the simulation lane reads the sim-side ones |
 | Port parity P4, map content | none | E-17 | Held | Waits on the generator design |
 
@@ -173,11 +196,12 @@ Per `agile.md`, Prototype gate. A group marked "needed" is not planned until its
 | Galaxy | `push/galaxy-field` | Look approved 2026-10-07; integrated by lane B (B22, B23); the second look is in section 3 |
 | Settlements | Mockup `scenes/mockups/settlement/` | Pass 1 approved 2026-10-06; integrated by lane E (port E1q, look E1k); a banded-contour prototype is queued after E1k (`PROTO-settlement-banding`) |
 | Space generator | Mockup, space kit mode | Pass 6 approved 2026-10-06 (vision-tube note Q-S3-01); lane D held |
-| High ground worth | Instrument `scripts/skilllab/highground.py` | Built 2026-10-05; a space-lab result, fate open |
+| High ground worth | Instrument retired: `scripts/skilllab/ground/highground.py` deleted by LAB-REV2-L6; the ground scene `s1_slope_top` replaces it | Built 2026-10-05 as a space-lab stand-in; retired under R-005-09 and S-164 |
 | Movement and layers | Instrument, skill lab | Phase D pages; pass marks open (M1) |
 | Economy and bases, rules | Instrument, needed | None exists; the number flags are asked piece by piece in lane E |
 | Economy and bases, look | In the game, not a mockup | Lane E (E1k, the economy screens); Westley judges shots per piece |
 | Layout engine | No prototype (Westley 2026-10-06) | The lab's layout search supplies the data; `push/proto-layout` is reference only |
+| Mission-to-galaxy transition (S-108) | Mockup `scenes/mockups/transition/` on `push/proto-transition` | Needed (Westley, 2026-10-15); spec `plans/2026-10-15-transition-mockup-spec.md`; a Doer builds it on the Mac |
 | Multiplayer lobby | Mockup needed for the lobby screens | Lane F's skeleton lobby (S-141 shot) stands in; Westley's verdict pending |
 | Simulation | The sim viewer (2b step 1) | Specced 2026-10-12, not built |
 

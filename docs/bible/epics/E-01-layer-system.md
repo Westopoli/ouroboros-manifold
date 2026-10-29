@@ -23,7 +23,7 @@ Era-agnostic: the engine knows "layers 1 and 2 are blocked here." The era pack d
 
 ## Obviously working in 60 seconds
 
-Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and each unit's ring changes color when its layer changes. Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Ping layer 1 at the obstacle from a unit that can ping: the layer-1 enemy appears for a moment (provisional 2 seconds, Q-005-04), then vanishes, and the pinged side sees an alert pointing about 60 degrees toward the pinger. Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
+Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and, in the space era, each unit's ring changes color when its layer changes (on land there is no ring; the height step and sight tell the layer). Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Ping layer 1 at the obstacle from a unit that can ping: the layer-1 enemy caught by the ping stays visible, wherever it moves, for 5 seconds (R-162-01, Westley 2026-10-05), then vanishes, and the pinged side is told nothing (R-162-03, Westley 2026-10-05). Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
 
 ## Stories
 
@@ -50,7 +50,8 @@ Rules
 - R-002-01  Given a selected unit on layer 3 at a position where layer 5 is open, When the player issues a hard transfer to layer 5, Then the unit begins its transition on the same tick and finishes on layer 5 after its transition duration (S-004).
 - R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if the unit's route (R-001-05) changes its layer first, the transfer stays pending.
 - R-002-03  Given a unit with a pending hard transfer, When the player issues a second hard transfer to a different layer, Then the first transfer is discarded and only the second is pending.
-- R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer.
+- R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer. The spot transfer (`set_layer` with a spot) is queued, not pending: R-002-03 and R-002-04 apply from the moment it fires.
+  - Note: the spot-transfer sentence is the Architect's interpretation (2026-10-14, relayed), not yet Westley's; he may veto it.
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
 - R-002-06  Given a hard transfer to a layer outside the map's layer range, When it is issued, Then it is rejected and the unit's state does not change.
 - R-002-07  Given a hard transfer order for a mixed selection, When it is issued, Then every unit in the selection gets its own pending transfer and each resolves independently by its own position and duration.
@@ -168,12 +169,12 @@ The prototype is same-layer only until the lab reports.
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
 
 Rules
-- R-009-01  Given any unit on screen, When the player looks at it, Then a ring under the unit shows one color per layer, and the color changes on the tick the unit's layer changes.
+- R-009-01  Given any unit on screen, When the player looks at it, Then in the space era a ring under the unit shows one color per layer, and the color changes on the tick the unit's layer changes.
 - R-009-02  Given a unit toggled toward another layer, When the player looks at it, Then the target disc on its spindle (R-009-05) gains an outline and a chevron, a waypoint-like mark of where it is going, distinct from the lit current-layer disc.
 - R-009-05  Given any unit on screen, When drawn, Then a thin rod beside it carries five small discs, one per layer, the unit's own disc lit at about 50 percent, adjacent discs at 10 to 20 percent, discs two away at 5 percent (the Floor Spindle); and its grid tiers are flat discs that tilt to the ground's slope at each layer's height (Terrace Reading). Both are subdued, never loud, and never block the view of the battlefield behind them.
 - R-009-06  Given units hidden from the player by the current perspective (behind terrain or another layer's ground), When the player looks at the scene, Then for the beta the vision tube (E-17 S-246) lets the player see them and no occlusion mark is drawn; a small mark on the occluding units is post-beta (Westley, 2026-10-07).
 - R-009-03  Given the layer strip on the HUD, When the player clicks a layer or presses Tab, Then the focused layer changes and the strip highlights the new one.
-- R-009-04  Given the same selection and camera, When a T2 screenshot is taken, Then the ring colors match the sim's per-unit layer field for every unit in view.
+- R-009-04  Given the same selection and camera, When a space-era T2 screenshot is taken, Then the ring colors match the sim's per-unit layer field for every unit in view.
 
 Inputs: unit layer, preferred layer; focus click or Tab.
 Outputs: ring color per unit; spindle and terrace discs; target mark; focused layer on the strip.
@@ -222,7 +223,7 @@ The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
-Reach by type applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); going dark stays space only for now (Westley, 2026-10-05).
+Going dark is space only for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"; the reach half of that ruling was superseded 2026-10-13, S-164).
 
 Rules
 - R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer, its own included, see it from further away than they otherwise would; emitting widens how far it can be seen by more than it widens how far it sees (Westley, 2026-10-07: "emitting should extend the area that you can be seen beyond what you can see"). Provisional: cross-layer sight doubles, and the seen-from distance grows by more than that, held as runtime settings.
@@ -236,7 +237,7 @@ Silent is the default. The numbers are provisional runtime settings, tuned by th
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
-Space eras only, for now (Westley, 2026-10-05: "going dark and reach by type are only space for now"); a ground era fights by the ground model (S-005 R-005-09 to R-005-12).
+Applies in space and ground eras (Westley, 2026-10-13: "Ground fire should go cross-layer, that's a bug", superseding his 2026-10-05 "going dark and reach by type are only space for now" for reach); a ground era's sight still follows the ground model (S-005 R-005-09 to R-005-12), its fire reaches by type.
 
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].
@@ -292,7 +293,7 @@ Open flags: Q-166-04 (numbers that assume a standard layer step scale with the s
 | Preferred layer | Tick delta unit entry; preference indicator; save file |
 | Transitioning flag and remaining time | Tick delta unit entry; drawn height mid-tween |
 | Visible set per unit; player-visible list | Tick delta; fog reveal on screen |
-| Ping revealed set; the alert and its sector for the pinged side | Tick delta; screen |
+| Ping revealed set (the units caught at the cast, followed for 5 s); no alert for the pinged side unless OM_TP_PING_ALERT is 1, default 0 (R-162-03, Westley 2026-10-05) | Tick delta; screen |
 | Emit or silent state per force | Tick delta; mark on screen |
 | Pulse active, cooldown remaining (not built) | Tick delta; HUD cooldown ring; pulse effect on screen |
 | Command rejections | Command acknowledgement in the tick delta with a reason code |

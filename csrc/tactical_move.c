@@ -106,9 +106,8 @@
 #define OM_MOVE_NET_LARGE 16
 #define OM_MOVE_MASK_BITS 64
 
-/* The neighbour list of the collision sweep (om_move_collision_once). */
-#define OM_MOVE_LIST_REACH (4.0 * OM_UNIT_COLLISION_RADIUS)
-#define OM_MOVE_COLLISION_SLACK (OM_UNIT_COLLISION_RADIUS)
+/* The neighbour list of the collision sweep (om_move_collision_once) reaches this many collision radii. */
+#define OM_MOVE_LIST_REACH_RADII 4.0
 /* Marking stops, and every unit takes its turn, once this fraction (1 / the divisor) of the units have been
  * marked in one collision call: past that a dense scene revisits nearly everyone and the marking costs more
  * than it saves. A turn the marks would have skipped writes nothing, so results are bit-identical. */
@@ -316,6 +315,9 @@ uint32_t col_cur;
     int32_t  start_layer[OM_MOVE_MAX_UNITS];
     /* col_pursue / col_route cache the two switches during a collision pass. */
     int      col_pursue, col_route;
+    /* The runtime unit collision radius (OM_TP_UNIT_COLLISION_RADIUS), read once per tick and per standalone collision
+     * pass by om_move_load_radius; every site that ruling 15 names reads this, never the compile-time default. */
+    double   radius;
     /* PP-move (PURSUE_BY_STEERING): the map canvas, 0 x 0 when unset (no clamp); see om_move_set_canvas_size. */
     double   canvas_w, canvas_h;
 
@@ -561,6 +563,14 @@ static om_move_state *om_ms(om_world *w) {
 
 static int om_move_param_on(const om_move_state *ms, om_tac_param p) {
     return ms->param[p] != 0.0;
+}
+
+/* A changed radius ends the settle cache: a pass that found no overlap at the old radius may find one at the new. */
+static void om_move_load_radius(om_move_state *ms) {
+    const double r = ms->param[OM_TP_UNIT_COLLISION_RADIUS];
+    if (r == ms->radius) return;
+    ms->radius = r;
+    ms->settle_valid = 0;
 }
 
 /* Internal, not in the header: a cell turned blocked or open outside om_map_set_obstacle_density (om_map_block_rect),
@@ -1391,9 +1401,9 @@ static int om_move_nearest_reachable(const om_world *w, om_move_state *ms, uint3
     }
     if (best_c < 0) return 0;
     {
-        double x0 = (double)(best_c % nx) * OM_NAVMESH_CELL_SIZE + OM_UNIT_COLLISION_RADIUS;
-        double y0 = (double)(best_c / nx) * OM_NAVMESH_CELL_SIZE + OM_UNIT_COLLISION_RADIUS;
-        double x1 = x0 + OM_NAVMESH_CELL_SIZE - 2.0 * OM_UNIT_COLLISION_RADIUS, y1 = y0 + OM_NAVMESH_CELL_SIZE - 2.0 * OM_UNIT_COLLISION_RADIUS;
+        double x0 = (double)(best_c % nx) * OM_NAVMESH_CELL_SIZE + ms->radius;
+        double y0 = (double)(best_c / nx) * OM_NAVMESH_CELL_SIZE + ms->radius;
+        double x1 = x0 + OM_NAVMESH_CELL_SIZE - 2.0 * ms->radius, y1 = y0 + OM_NAVMESH_CELL_SIZE - 2.0 * ms->radius;
         *ox = dx < x0 ? x0 : (dx > x1 ? x1 : dx);
         *oy = dy < y0 ? y0 : (dy > y1 ? y1 : dy);
     }
@@ -1499,7 +1509,7 @@ done:
  * them after the tick. All other units (different group, group 0, stationary)
  * still block. */
 static uint32_t om_move_probe_gather(om_world *w, om_move_state *ms, uint32_t self_id, uint32_t self_group, double x, double y) {
-    const double r = OM_MOVE_PROBE_REACH + 2.0 * OM_UNIT_COLLISION_RADIUS;
+    const double r = OM_MOVE_PROBE_REACH + 2.0 * ms->radius;
     const double r2 = r * r;
     int32_t cx0, cx1, cy0, cy1, cy;
     uint32_t n = 0, base;
@@ -1578,7 +1588,7 @@ static int om_move_probe_blocked(const om_move_state *ms, uint32_t n_near, uint3
  * and rounds the predecessor of block_r^2 below block_r), so this is the
  * sqrt compare of R-097-03 without the sqrt. */
 static int om_move_probe_clear(const om_move_state *ms, uint32_t n_near, uint32_t *hints, double cand_x, double cand_y) {
-    return !om_move_probe_blocked(ms, n_near, hints, cand_x, cand_y, (2.0 * OM_UNIT_COLLISION_RADIUS) * (2.0 * OM_UNIT_COLLISION_RADIUS));
+    return !om_move_probe_blocked(ms, n_near, hints, cand_x, cand_y, (2.0 * ms->radius) * (2.0 * ms->radius));
 }
 
 /* A probe point computed with om_sin/om_cos is within 0.05 of the same point
@@ -1589,7 +1599,7 @@ static int om_move_probe_clear(const om_move_state *ms, uint32_t n_near, uint32_
  * diameter to the real one: the probe is blocked without evaluating
  * om_sin/om_cos for it. */
 static int om_move_probe_sure_blocked(const om_move_state *ms, uint32_t n_near, uint32_t *hints, double cand_x, double cand_y) {
-    const double sure = 2.0 * OM_UNIT_COLLISION_RADIUS - OM_MOVE_PROBE_SURE_MARGIN;
+    const double sure = 2.0 * ms->radius > OM_MOVE_PROBE_SURE_MARGIN ? 2.0 * ms->radius - OM_MOVE_PROBE_SURE_MARGIN : 0.0;
     return om_move_probe_blocked(ms, n_near, hints, cand_x, cand_y, sure * sure);
 }
 
@@ -1618,7 +1628,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     int changed = 0, routed = 0;
     if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
-    target = 2.0 * OM_UNIT_COLLISION_RADIUS;
+    target = 2.0 * ms->radius;
     if (dx * dx + dy * dy >= target * target) return 0;
     dist = sqrt(dx * dx + dy * dy);
     if (dist >= target) return 0;
@@ -1675,7 +1685,7 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
  * every lower-id unit within the collision diameter of where a unit moved to (the pair is checked in the
  * lower unit's turn). A skipped turn would have found no overlapping pair and written nothing. */
 static void om_move_collision_mark(om_move_state *ms, uint32_t id) {
-    const double target = 2.0 * OM_UNIT_COLLISION_RADIUS;
+    const double target = 2.0 * ms->radius;
     const double r2 = target * target;
     const double x = om_move_grid_x(ms, id), y = om_move_grid_y(ms, id);
     int32_t cx0, cx1, cy0, cy1, cy;
@@ -1730,7 +1740,7 @@ static void om_move_collide_pair_marked(om_world *w, om_move_state *ms, uint32_t
  * when queried. It stays complete while a is within slack of that position,
  * and a is re-queried once it has moved further.
  *
- * Kept from the sweep this replaced (see also: OM_MOVE_LIST_REACH): that sweep
+ * Kept from the sweep this replaced (see also: OM_MOVE_LIST_REACH_RADII): that sweep
  * built its list at twice the reach and examined a's drift only before its
  * next listed candidate, so a unit that drifted past the slack after its last
  * listed candidate ended its turn without a re-query, whatever it now
@@ -1738,8 +1748,8 @@ static void om_move_collide_pair_marked(om_world *w, om_move_state *ms, uint32_t
  * turn ends when the wider list has no candidate left
  * (om_move_grid_any_above). Returns whether any unit was displaced. */
 static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int last) {
-    const double target = 2.0 * OM_UNIT_COLLISION_RADIUS;
-    const double slack = OM_MOVE_COLLISION_SLACK;
+    const double target = 2.0 * ms->radius;
+    const double slack = ms->radius;
     const double drift2 = slack * slack;
     uint32_t id_i;
     ms->col_moved = 0;
@@ -1759,7 +1769,7 @@ static int om_move_collision_once(om_world *w, om_move_state *ms, int first, int
             om_move_collide_pair_marked(w, ms, id_i, id_j);
             mx = om_move_grid_x(ms, id_i) - ax0; my = om_move_grid_y(ms, id_i) - ay0;
             if (mx * mx + my * my > drift2) {
-                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH, id_j)) break;
+                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH_RADII * ms->radius, id_j)) break;
                 ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
                 n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_j);
                 k = (uint32_t)-1;
@@ -1823,6 +1833,7 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     int iter, passes, settled = 0;
     uint32_t id;
     om_move_discover(w, ms);
+    om_move_load_radius(ms);
     ms->col_pursue = om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING);
     ms->col_route = om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN);
     ms->col_open = (uint8_t)(!ms->density && om_mapgen_terrain_free(w));
@@ -1892,7 +1903,7 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
  * not. The grid was filed at the start of the tick, so a unit still in a cell is in the cell of its
  * start-of-tick position; a unit in the spill list is always a candidate. Returns the count. */
 static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, double x, double y) {
-    const double r = OM_STEERING_PROBE_DIST + 2.0 * OM_UNIT_COLLISION_RADIUS + OM_MOVE_GRID_BOUND_PAD;
+    const double r = OM_STEERING_PROBE_DIST + 2.0 * ms->radius + OM_MOVE_GRID_BOUND_PAD;
     const double r2 = r * r;
     const int32_t layer = ms->start_layer[self_id];
     int32_t cx0, cx1, cy0, cy1, cy;
@@ -2057,7 +2068,7 @@ static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_
     om_move_window(ms, &nx, &ny);
     if (!om_move_nearest_open(w, ms, walk, layer, mu->x, mu->y, nx + ny, &best_x, &best_y)) return;
     {
-        const double lo = OM_UNIT_COLLISION_RADIUS, hi = OM_NAVMESH_CELL_SIZE - OM_UNIT_COLLISION_RADIUS;
+        const double lo = ms->radius, hi = OM_NAVMESH_CELL_SIZE - ms->radius;
         double rx = mu->x - (double)best_x * OM_NAVMESH_CELL_SIZE, ry = mu->y - (double)best_y * OM_NAVMESH_CELL_SIZE;
         mu->x = (double)best_x * OM_NAVMESH_CELL_SIZE + (rx < lo ? lo : (rx > hi ? hi : rx));
         mu->y = (double)best_y * OM_NAVMESH_CELL_SIZE + (ry < lo ? lo : (ry > hi ? hi : ry));
@@ -2103,7 +2114,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     double dx, dy, dist, steer_x, steer_y, step_dist, move_dist;
     if (route) {
         double wx = mu->aim_x - mu->x, wy = mu->aim_y - mu->y;
-        const double reach = OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS;
+        const double reach = OM_WAYPOINT_ARRIVE_MULT * ms->radius;
         if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y
             || (mu->aim_is_waypoint && wx * wx + wy * wy < reach * reach))
             om_move_route_plan(w, ms, mu, om_move_across_plan(w, ms, mu, (uint32_t)om_move_layer(w, id)));
@@ -2117,7 +2128,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     mu->waiting = 0;
     /* R-099-04: a move that followed route waypoints ends within the waypoint radius, like every one before it; a direct move and a group slot keep 1.5 radii. */
     if (sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y))
-        < (route && mu->routed && mu->group_id == 0 ? OM_WAYPOINT_ARRIVE_MULT : OM_ARRIVAL_TOLERANCE_MULT) * OM_UNIT_COLLISION_RADIUS) {
+        < (route && mu->routed && mu->group_id == 0 ? OM_WAYPOINT_ARRIVE_MULT : OM_ARRIVAL_TOLERANCE_MULT) * ms->radius) {
         mu->has_dest = 0;
         om_move_route_drop(mu);
         mu->deflecting = 0;
@@ -2273,7 +2284,7 @@ static void om_move_walker_step(om_world *w, om_move_state *ms, om_move_unit *mu
         v = speed * f;
         if (d > 0.0 && !(v > 0.0)) { mu->waiting = 1; return; }
         /* See also: tests/csim/test_E01_T2_walker_waypoint_arrival.py */
-        if (mu->aim_is_waypoint && d < OM_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS) {
+        if (mu->aim_is_waypoint && d < OM_WAYPOINT_ARRIVE_MULT * ms->radius) {
             if (mu->route_n > 1) { mu->route_i++; om_move_route_aim(ms, mu); }
             else mu->plan_valid = 0;
         } else if (d == 0.0 || v * left >= d) {
@@ -2472,7 +2483,7 @@ static void om_move_face_pass(om_world *w, om_move_state *ms, uint32_t period) {
 }
 
 static void om_move_groups_check_arrival(om_move_state *ms) {
-    double tol = OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS;
+    double tol = OM_ARRIVAL_TOLERANCE_MULT * ms->radius;
     uint32_t g, m;
     for (g = 0; g < ms->n_groups; g++) {
         om_move_group *grp = &ms->groups[g];
@@ -2584,6 +2595,7 @@ static void om_move_giveup_pass(om_world *w, om_move_state *ms) {
 static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
+    om_move_load_radius(ms);
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
     if (ms->lay_any) om_move_layer_pass(w, ms, period);
     om_move_grid_rebuild(w, ms, 1);

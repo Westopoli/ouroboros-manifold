@@ -1,9 +1,11 @@
-# spec: docs/northstar/plans/push/pp_contract.md::section 5 (om_map_set_canvas, om_map_block_rect, om_map_add_cover); plan Phase S item 5a (terrain in a Setup)
+# spec: LAB-REV2-L6 (test-defect fix: stalemate_ticks retired by L2, the three fight tests take the L1/L2 `seam` fixture; field_seed kept by the shift); docs/northstar/plans/push/pp_contract.md::section 5 (om_map_set_canvas, om_map_block_rect, om_map_add_cover); plan Phase S item 5a (terrain in a Setup)
 """Terrain in a Setup: contract dataclasses, scripts/skilllab/terrain.py, and the apply order in fight().
 
 Contract these tests fix (the implementation comes later):
   Block(x0, y0, x1, y1, layer_lo=0, layer_hi=4), Cover(x, y, radius, height), Terrain(canvas, blocks=(), covers=())
   are frozen dataclasses in contract.py; Setup.terrain defaults to None.
+  Terrain(canvas, blocks=(), covers=(), field_seed=None): field_seed (a generated ground field, era kind 1) survives shift_terrain
+  and with_terrain unchanged (LAB-REV2-L6: the field scene needs it).
   fight(): terrain not None -> set_canvas once, every Block in order, every Cover in order, after the settings
   and before any unit type is registered or unit spawned. terrain None -> no terrain call at all.
   terrain.shift_terrain(t, dx, dy) and terrain.with_terrain(build, terrain) -> BuildFn (terrain in play coordinates,
@@ -49,7 +51,7 @@ def G(side, x, y=0.0, goal=None, params=None, formation="line"):
 
 
 def S(groups=None, timeline=(), terrain=None):
-    return Setup(groups=groups or (G(0, -300.0), G(1, 300.0)), unit_types={}, max_ticks=5, stalemate_ticks=1000,
+    return Setup(groups=groups or (G(0, -300.0), G(1, 300.0)), unit_types={}, max_ticks=5,
                  timeline=timeline, terrain=terrain)
 
 
@@ -154,6 +156,14 @@ def test_with_terrain_passes_enemy_heads_and_swap_to_the_build_and_is_determinis
     assert wrapped(7, True) == wrapped(7, True) and seen == [(7, True), (7, True)]
 
 
+def test_shift_terrain_and_with_terrain_keep_the_field_seed():
+    """A generated field is named by its seed: the shift moves blocks and covers and must not drop the seed (it did, 2026-10-14)."""
+    t = Terrain(canvas=(12000.0, 12000.0), field_seed=11, blocks=(Block(0.0, 0.0, 10.0, 10.0),), covers=(Cover(1.0, 1.0, 5.0, 1),))
+    assert shift_terrain(t, 5.0, 7.0).field_seed == 11
+    assert built(terrain=t, setup=S(groups=(G(0, -300.0), G(1, 300.0)))).terrain.field_seed == 11
+    assert shift_terrain(Terrain(canvas=CANVAS), 1.0, 1.0).field_seed is None
+
+
 # ---------------------------------------------------------------- with_terrain: validation
 
 def bad_terrain(**kw):
@@ -216,7 +226,7 @@ def test_with_terrain_rejects_a_timeline_step_goal_outside_the_canvas():
 
 # ---------------------------------------------------------------- fight(): apply order
 
-def test_fight_applies_canvas_then_blocks_then_covers_before_any_registration_or_spawn():
+def test_fight_applies_canvas_then_blocks_then_covers_before_any_registration_or_spawn(seam):
     """set_canvas once, every Block in order, every Cover in order; all after set_param and before register/spawn."""
     fake = TerrainFakeEngine()
     setup = dataclasses.replace(S(terrain=T), unit_types={"Big": {"base": "Vanguard", "scale": {"max_hp": 2.0}, "set": {}}},
@@ -235,7 +245,7 @@ def test_fight_applies_canvas_then_blocks_then_covers_before_any_registration_or
     assert names.count("set_canvas") == 1
 
 
-def test_fight_with_no_terrain_makes_no_terrain_call_and_the_log_is_unchanged():
+def test_fight_with_no_terrain_makes_no_terrain_call_and_the_log_is_unchanged(seam):
     """terrain None: no terrain call; the whole call log equals the log of the same fight on a terrain-free Setup."""
     a, b = TerrainFakeEngine(), TerrainFakeEngine()
     fight(S(), 1, False, engine=a)
@@ -243,7 +253,7 @@ def test_fight_with_no_terrain_makes_no_terrain_call_and_the_log_is_unchanged():
     assert a.terrain_calls() == [] and a.calls == b.calls
 
 
-def test_fight_with_terrain_is_deterministic_and_keeps_the_rest_of_the_log():
+def test_fight_with_terrain_is_deterministic_and_keeps_the_rest_of_the_log(seam):
     """Same seed twice gives equal results and logs; the log without terrain calls equals the no-terrain log."""
     a, b, c = TerrainFakeEngine(), TerrainFakeEngine(), TerrainFakeEngine()
     ra, rb = fight(S(terrain=T), 3, False, engine=a), fight(S(terrain=T), 3, False, engine=b)

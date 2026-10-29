@@ -1,4 +1,5 @@
 # spec: docs/northstar/research/layer_dynamics/README.md section 4 (conditions C3 to C6, the 32-combination skill profile); every pass mark is Westley's and an input
+# LAB-REV2-L2 inventory (Q-LAB-03): KEPT unchanged. 'undecided' means a scan whose break-even is None (no result), not the retired outcome `decided`.
 """profile.py (subsets, advantage, skill_profile, validate) and conditions C3, C4, C5, C6 over hand-built maps.
 Every statistic is the harness writer's unconfirmed definition; every Verdict.detail says so.
 Threshold values are placeholders for the tests only."""

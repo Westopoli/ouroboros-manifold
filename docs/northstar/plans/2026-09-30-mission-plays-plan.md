@@ -1,6 +1,6 @@
 # Plan: from "every item landed" to a mission that plays (2026-10)
 
-Approved by Westley 2026-09-30. The coordinating chat (any tier) runs Waves A to C from this file; Wave 0 was done by the Architect and its outputs are listed under "Wave 0 status" below. Companion: `docs/northstar/plans/2026-09-30-work-list.md` (the reach-triage mapping, 89 rows, landed 0848ebb). Architect rulings on its flagged rows: `om_chronicle_generate_map_keyframes` stays with C5 (G-C3); the four R-061 commander-death symbols belong to B7; the R-126-04 force-sizing pair moves into B4; the event wrappers and breakaway creators under the C6 sweep go live through A1 and need no unit of their own.
+Approved by Westley 2026-09-30. The coordinating chat (any tier) runs Waves A to C from this file; Wave 0 was done by the Architect and its outputs are listed under "Wave 0 status" below. Companion: `docs/northstar/plans/archive/2026-09-30-work-list.md` (the reach-triage mapping, 89 rows, landed 0848ebb). Architect rulings on its flagged rows: `om_chronicle_generate_map_keyframes` stays with C5 (G-C3); the four R-061 commander-death symbols belong to B7; the R-126-04 force-sizing pair moves into B4; the event wrappers and breakaway creators under the C6 sweep go live through A1 and need no unit of their own.
 
 
 ## Context
@@ -23,7 +23,7 @@ Order: Wave 0, then A, B, C in order; inside a wave the numbered items run in pa
 
 1. Doer on 5.5: DONE, commit f005eaa (`.claude/agents/doer.md`, `sonnet46-doer.md` deleted, CLAUDE.md). Loads after a session restart.
 2. Rules: DONE in this commit. R-075-02 hold-zone required = 10 minutes; Q-080-03 marked deferred (difficulty is a no-op in the MVP); R-030-01 says the launch library loads at `set_seed`. The other behaviours already have rules: R-055-04 and R-062-01 (selector and collapse after the jump), R-065-02 (consequence entry 1), R-067-01..03 (chains and categories), R-120-01..R-121-04 (patrol, ambush, transitions), R-126-01/02 (structures placed, units materialise), R-103-01 and R-104-01 (camera, HUD), R-078-05 (refuse), R-079-02 (briefing controls are Accept and Refuse only). No new Q rows were needed.
-3. Reach triage work list: Engineer task, output `docs/northstar/plans/2026-09-30-work-list.md`.
+3. Reach triage work list: Engineer task, output `docs/northstar/plans/archive/2026-09-30-work-list.md`.
 4. `pieces.toml` rows: part of the same Engineer task.
 
 Lane merge (2026-09-30): every lane branch is landed or superseded except `push/HDR4-2` (conflicts in 10 files; its briefing node/radius/force tests and the `wt/HDR4-2-r` rebuild are the starting point for A4) and `push/W-1` (probably superseded by W-1a..f; decide before Wave B4).

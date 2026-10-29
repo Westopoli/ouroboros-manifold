@@ -28,6 +28,8 @@ from fakes_trace import PARAMS, TraceFakeEngine  # noqa: E402
 from scripts.skilllab.contract import Group, Setup  # noqa: E402
 from scripts.skilllab.fight import fight  # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("seam")   # LAB-REV2-L2: fight() reads the firing counts through the L1/L2 seam (fakes.Seam)
+
 
 @pytest.fixture(autouse=True)
 def place_stub(monkeypatch):
@@ -46,7 +48,7 @@ def G(side, count=2):
 
 def S(settings=None, max_ticks=10):
     kw = {} if settings is None else {"settings": settings}
-    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=max_ticks, stalemate_ticks=1000, **kw)
+    return Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=max_ticks, **kw)
 
 
 def run(setup, **fake_kw):
@@ -138,6 +140,34 @@ def test_a_refusal_is_not_swallowed_into_a_default_run():
     """Positive control for the refusal detector: the same Setup with a valid value runs to the end."""
     result, fake = run(S({"OM_TP_TARGET_POLICY": 1.0}))
     assert result.ticks == 10 and fake.calls_named("step")
+
+
+ARC = "OM_TP_FIRING_ARC_DEG"
+
+
+def test_the_fake_mirrors_the_arc_range_lo_5_default_360_hi_360():
+    """Decision 48: the arc's lower bound is 5 (it was 10), so the grid's smallest point 7.5 is inside the range."""
+    assert PARAMS[ARC][1:] == (360.0, 5.0, 360.0)
+
+
+@pytest.mark.parametrize("value", [4.9, 0.0, -1.0])
+def test_an_arc_below_5_is_a_settings_error_through_settings_and_through_the_setup_field(value):
+    """The engine refuses below lo (no clamp); the lab passes the value as given and lets the refusal stand, before any step."""
+    for setup in (S({ARC: value}), Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=10, firing_arc_deg=value)):
+        fake = TraceFakeEngine()
+        with pytest.raises(ValueError):
+            fight(setup, 0, False, engine=fake)
+        assert not fake.calls_named("step") and fake.params[PARAMS[ARC][0]] == 360.0     # refused, not clamped to 5
+
+
+@pytest.mark.parametrize("value", [5.0, 7.5, 15.0, 360.0])
+def test_control_an_arc_of_5_7_5_15_and_360_is_accepted_and_reaches_the_world_unchanged(value):
+    """Positive control for the refusal above: the same two routes with a valid value run to the end; 7.5 is the grid's smallest point."""
+    result, fake = run(S({ARC: value}))
+    assert result.ticks == 10 and fake.params[PARAMS[ARC][0]] == value
+    fake2 = TraceFakeEngine()
+    fight(Setup(groups=(G(0), G(1)), unit_types={}, max_ticks=10, firing_arc_deg=value), 0, False, engine=fake2)
+    assert fake2.params[PARAMS[ARC][0]] == value
 
 
 # ---- the settings reach the result ------------------------------------------------------------------------

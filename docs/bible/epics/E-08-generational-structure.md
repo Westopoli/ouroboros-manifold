@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 54 rules, numbers from `algorithms.md` ALG-45 through ALG-49 and Stage 1 verdicts A-050, A-052, A-058, A-061. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 2 open flags on S-228, Q-228-01 and Q-228-02; Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
+| Implied-but-unstated behavior turned into flags | No open flag on S-228 (Q-228-01 and Q-228-02 closed 2026-10-21, register); Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
 | Every visible-surface story has a reference | **No.** S-063 (onboarding screen) has a visible surface and no reference. The chronicle scroll surface is E-09. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and is blocked on Q-228-01 and Q-228-02. One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and has no open flag (Q-228-01 and Q-228-02 closed 2026-10-21, register). One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -150,7 +150,7 @@ Flag closed, rule text pending: Q-063-02, difficulty and preferences are set onc
 As a player, I want to pick a difficulty and which kinds of missions I prefer before the first chapter, and change my mind later, so that the game bends to how I like to play without locking me in.
 
 Rules
-- R-063-01  Given the onboarding screen, When shown, Then it offers difficulty (easy, medium, hard) and, for each of the 10 mission archetypes, a preference weight with a "rare" mark; at least one archetype must stay unmarked [Q-063-01: bible says at most two rare marks, code allows up to nine].
+- R-063-01  Given the onboarding screen, When shown, Then it offers difficulty (easy, medium, hard) and, for each of the 10 mission archetypes, a preference.
 - R-063-02  Given the player confirms, When saved, Then the choices are stored per save slot and read by the mission generator (E-10) and difficulty scaling.
 - R-063-03  Given the player wants to change the choices later, When they do, Then [Q-063-02: where and when; Westley removed permanence, A-058].
 - R-063-04  Given a new campaign after a terminal condition (S-054), When it starts, Then the onboarding screen shows again.
@@ -180,12 +180,12 @@ As a player in a team of 2 or 4, I want the chapter, the ledger and the world to
 Direction decided in part 2026-10-02 (DECISIONS H7; E-19 R-159-01): more teammates mean bigger maps, more to do, more resources and more enemies; each player is a sub-commander; each pair is a sub-civilization inside the over-arching civilization. The simulation has no notion of either. Not scheduled for building. S-055 to S-064 are written for one player and one commander and stay as written for it.
 
 Rules
-- R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
+- R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then only the commanding seat has a ledger character; the economy seat has none (Westley 2026-10-21).
 - R-228-02  Given a team of 4, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
 
 Inputs: team size and pairs (E-19 S-159).
 Outputs: none until the flags are answered.
-Open flags: Q-228-01, Q-228-02.
+Open flags: none. Q-228-02 closed 2026-10-21 (register: map the pair onto the chapter only).
 
 ## Inputs
 
@@ -238,7 +238,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-228-01, Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
+Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

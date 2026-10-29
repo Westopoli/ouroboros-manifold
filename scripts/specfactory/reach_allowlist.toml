@@ -149,6 +149,10 @@ symbol = "om_chapter_transition_complete"
 reason = "unused flag pair partner of om_chapter_transition_start: clears in_transition (csrc/generational.c:1085), which nothing reads to gate behaviour. Ruling 2026-10-03 finish-loop."
 
 [[allow]]
+symbol = "om_mission_get_force_group"
+reason = "contract stub reached by VG-E-startforce"
+
+[[allow]]
 symbol = "om_density_at"
 reason = "K-e contract stubs, reached by E1i: the getter is declared and tested by the contract piece (docs/architecture.md Visible-game economy fields); mission.c and the pipe call it when E1b to E1i land."
 

@@ -17,7 +17,7 @@ The crossing is read off the galaxy itself. For several chapters before it happe
 **Honors:** R-148-02, R-148-03 as rewritten, R-143-01 to 03, sacred principle 3, A-321.
 **Strains:** a civilization-wide measure the player never manages directly, so the chronicle alone must make the coming crossing legible; a quiet civilization could in principle never outgrow its age.
 
-**Prior art.** None for a trigger tied to a civilization's own reach outgrowing its age. Total War's different-eras-as-different-titles model is the nearest counter-model — VERIFIED, `docs/research/games/total_war_franchise.md` — but it never crosses inside one continuous world.
+**Prior art.** None for a trigger tied to a civilization's own reach outgrowing its age. Total War's different-eras-as-different-titles model is the nearest counter-model — VERIFIED, `docs/legacy/games/total_war_franchise.md` — but it never crosses inside one continuous world.
 
 **Tradeoffs.** The crossing reads as earned, not scheduled, at the cost of a countdown with no visible number.
 
@@ -38,7 +38,7 @@ The crossing is counted, not read. Every campaign has an announced number of cha
 **Honors:** R-148-02, R-148-03 as rewritten, R-143-01 to 03, R-063-02, sacred principle 3.
 **Strains:** a legible, fully scheduled trigger — nothing about a mission's outcome moves the number, so principle 5's game-theoretic weight sits lightly here.
 
-**Prior art.** CK3's cultural-innovation progress across one continuous run is a structural cousin — VERIFIED, `docs/research/games/crusader_kings_3.md` — but CK3 never crosses into a differently-skinned age; the resemblance is only "a counted, visible progression."
+**Prior art.** CK3's cultural-innovation progress across one continuous run is a structural cousin — VERIFIED, `docs/legacy/games/crusader_kings_3.md` — but CK3 never crosses into a differently-skinned age; the resemblance is only "a counted, visible progression."
 
 **Tradeoffs.** Total predictability, easy to plan around, at the cost of feeling scheduled rather than won or suffered.
 
@@ -59,7 +59,7 @@ No measure and no count decides this crossing; the chronicle decides it by runni
 **Honors:** R-148-02, R-148-03 as rewritten, R-143-01 to 03, sacred principle 3, and the chronicle's purpose as the long memory that "reads like history and not a log," which this option ties the crossing itself to.
 **Strains:** R-065-01's five-to-ten-entry budget is sized for one age's ordinary stock, not for a mechanism measuring that stock running low; a player who plays very differently from the authored fragment pools could exhaust an age's freshness far earlier or later than another, with no external sign why.
 
-**Prior art.** None located; no shipped game ties a structural transition to its own narration detecting repetition in itself. Epoch Cycle's collapse-rebuild cycling is the nearest cyclical-structure precedent — REPORTED, `docs/research/games/epoch_cycle.md` — but its boundary is a collapse condition, not narration running dry, and its post-mortem (thin inter-cycle differentiation) is the failure mode this option avoids.
+**Prior art.** None located; no shipped game ties a structural transition to its own narration detecting repetition in itself. Epoch Cycle's collapse-rebuild cycling is the nearest cyclical-structure precedent — REPORTED, `docs/legacy/games/epoch_cycle.md` — but its boundary is a collapse condition, not narration running dry, and its post-mortem (thin inter-cycle differentiation) is the failure mode this option avoids.
 
 **Tradeoffs.** The crossing feels like a genuinely earned narrative beat, timed to nothing the player can grind, at the cost of a trigger with no visible number to check.
 

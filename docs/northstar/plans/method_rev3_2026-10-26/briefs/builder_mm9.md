@@ -1,0 +1,5 @@
+# Brief: builder, HARNESS-mm-9 gate row csv (Phase 4)
+
+Model: claude-sonnet-5-5 (doer). No sub-agents. Terse thinking, one final report, first line `RESULT success|stop:<reason>`. Worktree named by your launcher, based on origin/push/mm-8-9-tests; never the live checkout. Push `push/mm-9` and stop; never push main. Never edit anything under `tests/`; a wrong test is `RESULT stop:test-defect` with the line that proves it.
+
+Spec: `audit_findings.md` findings 2 and 24; tests `tests/specfactory/test_gate_row.py` and `test_sdk_runs.py` on your base. Edit only `scripts/specfactory/merge_gate.sh`, function `gate_row` (about line 71 to 95): the label field is csv-quoted when it contains a comma or a quote (double the quotes, wrap in `"`); every other field is unchanged; the `GATE row` echo and both csv appends carry the quoted form. No other change in the file. Run `scripts/specfactory/pre_gate.sh` before the push. Report: sha, pytest counts for the two files, one example row from a dry run with `PIECE_ID=A,B`, `RESULT`.

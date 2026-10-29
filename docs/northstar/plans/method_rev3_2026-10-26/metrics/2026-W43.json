@@ -1,0 +1,335 @@
+{
+ "week": "2026-W43",
+ "phase": "lab",
+ "metrics": [
+  {
+   "id": "M01",
+   "status": "FAIL",
+   "value": "8.38",
+   "threshold": "<=1.5",
+   "line": "METRIC M01 FAIL 8.38 vs <=1.5 G01 (tests +32453, game +3874) 2026-W43"
+  },
+  {
+   "id": "M01b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M01b DRAFT 0 vs <=0 G01 (tests runs on client-only pieces: none) 2026-W43"
+  },
+  {
+   "id": "M02",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=1.0",
+   "line": "METRIC M02 NA NA vs <=1.0 G02 (144 TD rows, 0 landings) 2026-W43"
+  },
+  {
+   "id": "M02b",
+   "status": "FAIL",
+   "value": "144",
+   "threshold": "<=10",
+   "line": "METRIC M02b FAIL 144 vs <=10 G02 (144 TD rows) 2026-W43"
+  },
+  {
+   "id": "M03",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=2",
+   "line": "METRIC M03 DRAFT 0 vs <=2 G02 (TD rows 144, ruler=fable 0: none) 2026-W43"
+  },
+  {
+   "id": "M04",
+   "status": "FAIL",
+   "value": "7.26",
+   "threshold": "<=2.0",
+   "line": "METRIC M04 FAIL 7.26 vs <=2.0 G03 (334 docs-only commits, 46 product commits) 2026-W43"
+  },
+  {
+   "id": "M05",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=3",
+   "line": "METRIC M05 NA NA vs <=3 G03 (493 ledger rows, 0 landings) 2026-W43"
+  },
+  {
+   "id": "M05b",
+   "status": "FAIL",
+   "value": "102",
+   "threshold": "<=2",
+   "line": "METRIC M05b FAIL 102 vs <=2 G03 (102 DRAFT rows) 2026-W43"
+  },
+  {
+   "id": "M06",
+   "status": "DRAFT",
+   "value": "0.0%",
+   "threshold": "<=25%",
+   "line": "METRIC M06 DRAFT 0.0% vs <=25% G04 (fable $0 of $324.34) 2026-W43"
+  },
+  {
+   "id": "M06b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M06b DRAFT 0 vs <=0 G04 (Fable draft/review runs on non-contract pieces: none) 2026-W43"
+  },
+  {
+   "id": "M07",
+   "status": "DRAFT",
+   "value": "0.0%",
+   "threshold": "<=5%",
+   "line": "METRIC M07 DRAFT 0.0% vs <=5% G19 (audit+verify $0 of $324.34) 2026-W43"
+  },
+  {
+   "id": "M07b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M07b DRAFT 0 vs <=0 G19 (audit (non-contract) and verify runs: none) 2026-W43"
+  },
+  {
+   "id": "M08",
+   "status": "FAIL",
+   "value": "1229",
+   "threshold": "<=0",
+   "line": "METRIC M08 FAIL 1229 vs <=0 G05 (calls over 400000: 1229, worst 764873 tokens, session b1e8769e-404e-4263-be23-8535a58b0e59 at 2026-10-21T00:24:29.585Z) 2026-W43"
+  },
+  {
+   "id": "M08b",
+   "status": "FAIL",
+   "value": "100",
+   "threshold": "<=0",
+   "line": "METRIC M08b FAIL 100 vs <=0 G05 (polling turns 100: 3a156992-1d9d-424c-b1a8-11d35fd091d4 2026-10-24T21:11:34.571Z, 6595578b-476b-499c-ae9d-903b2a7b43bd 2026-10-20T20:39:47.824Z, 6595578b-476b-499c-ae9d-903b2a7b43bd 2026-10-20T20:40:00.905Z) 2026-W43"
+  },
+  {
+   "id": "M09",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M09 DRAFT 0 vs <=0 G06 (0 of 0 gate rows) 2026-W43"
+  },
+  {
+   "id": "M09b",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=3600",
+   "line": "METRIC M09b NA NA vs <=3600 G06 (no rc-0 gate row) 2026-W43"
+  },
+  {
+   "id": "M09c",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=3600",
+   "line": "METRIC M09c NA NA vs <=3600 G06 (no gate row) 2026-W43"
+  },
+  {
+   "id": "M10",
+   "status": "NA",
+   "value": "NA",
+   "threshold": ">=40",
+   "line": "METRIC M10 NA NA vs >=40 G07 (0 rc-0 rows with product lines, under 3) 2026-W43"
+  },
+  {
+   "id": "M10b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M10b DRAFT 0 vs <=0 G07 (0 landings over 1000 product lines) 2026-W43"
+  },
+  {
+   "id": "M11",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=2.0",
+   "line": "METRIC M11 NA NA vs <=2.0 G08 (a file is added to a current retro folder this week) 2026-W43"
+  },
+  {
+   "id": "M11b",
+   "status": "DRAFT",
+   "value": "97",
+   "threshold": "<=120",
+   "line": "METRIC M11b DRAFT 97 vs <=120 G08 (CLAUDE.md lines) 2026-W43"
+  },
+  {
+   "id": "M11b-bytes",
+   "status": "DRAFT",
+   "value": "16952",
+   "threshold": "<=18000",
+   "line": "METRIC M11b-bytes DRAFT 16952 vs <=18000 G08 (CLAUDE.md bytes) 2026-W43"
+  },
+  {
+   "id": "M11c",
+   "status": "FAIL",
+   "value": "76",
+   "threshold": "<=0",
+   "line": "METRIC M11c FAIL 76 vs <=0 G08 (76 non-md files outside data/, story_reviews/ and the records) 2026-W43"
+  },
+  {
+   "id": "M12a",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=25",
+   "line": "METRIC M12a NA NA vs <=25 G09 (beta only) 2026-W43"
+  },
+  {
+   "id": "M12b",
+   "status": "NA",
+   "value": "NA",
+   "threshold": ">=80%",
+   "line": "METRIC M12b NA NA vs >=80% G09 (beta only) 2026-W43"
+  },
+  {
+   "id": "M12c",
+   "status": "NA",
+   "value": "NA",
+   "threshold": ">=1",
+   "line": "METRIC M12c NA NA vs >=1 G09 (beta only) 2026-W43"
+  },
+  {
+   "id": "M13",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=2",
+   "line": "METRIC M13 NA NA vs <=2 G10 (landing runs per piece: none; none; not landed this week: 0 runs on 0 pieces) 2026-W43"
+  },
+  {
+   "id": "M13b",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=1.0",
+   "line": "METRIC M13b NA NA vs <=1.0 G10 (landing $0 vs build $0 over 0 landed pieces, runs of the trailing 28 days) 2026-W43"
+  },
+  {
+   "id": "M14",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=4",
+   "line": "METRIC M14 NA NA vs <=4 G11 (runs per landed piece: none; not landed this week: 0 runs on 0 pieces) 2026-W43"
+  },
+  {
+   "id": "M14b",
+   "status": "FAIL",
+   "value": "353",
+   "threshold": "<=0",
+   "line": "METRIC M14b FAIL 353 vs <=0 G11 (extra roles: none; unlabelled runs: 353 (Extend LAB-REV3-C owner row, Append profile attribution to speed finding, Measure test_speed and damage_up on free box, Diagnose and re-record lab goldens, Lab landing prep merge clerk, FIX tests round 2 decision 43, range_up on pre-L8M lab tip, L8 moved semantics tests writer, Smoke rerun under group orders flip evidence, B writer follow-up after audit,...) 2026-W43"
+  },
+  {
+   "id": "M15",
+   "status": "FAIL",
+   "value": "0.0%",
+   "threshold": "<=20%",
+   "line": "METRIC M15 FAIL 0.0% vs <=20% G12 (0 stops of 353 runs: none; 353 unknown (no RESULT line): Extend LAB-REV3-C owner row, Append profile attribution to speed finding, Measure test_speed and damage_up on free box, Diagnose and re-record lab goldens, Lab landing prep merge clerk, FIX tests round 2 decision 43, range_up on pre-L8M lab tip, L8 moved semantics tests writer, Smoke rerun under group orders flip evidence, B writer follow...) 2026-W43"
+  },
+  {
+   "id": "M16",
+   "status": "FAIL",
+   "value": "5",
+   "threshold": "<=0",
+   "line": "METRIC M16 FAIL 5 vs <=0 G13 (5 lanes with >= 2 look pieces and no verdict) 2026-W43"
+  },
+  {
+   "id": "M17",
+   "status": "NA",
+   "value": "0 rows, oldest 0 d",
+   "threshold": "<=-",
+   "line": "METRIC M17 NA 0 rows, oldest 0 d vs <=-  (pictures awaiting Westley in the README) 2026-W43"
+  },
+  {
+   "id": "M18a",
+   "status": "DRAFT",
+   "value": "6",
+   "threshold": "<=12",
+   "line": "METRIC M18a DRAFT 6 vs <=12 G15 (6 active of 840 trees) 2026-W43"
+  },
+  {
+   "id": "M18b",
+   "status": "FAIL",
+   "value": "226",
+   "threshold": "<=20",
+   "line": "METRIC M18b FAIL 226 vs <=20 G15 (226 finished and not reaped) 2026-W43"
+  },
+  {
+   "id": "M18c",
+   "status": "FAIL",
+   "value": "376.6",
+   "threshold": "<=120",
+   "line": "METRIC M18c FAIL 376.6 vs <=120 G15 (385640 MB under wt/) 2026-W43"
+  },
+  {
+   "id": "M18d",
+   "status": "FAIL",
+   "value": "254",
+   "threshold": "<=10",
+   "line": "METRIC M18d FAIL 254 vs <=10 G15 (254 unmerged push branches older than 14 d) 2026-W43"
+  },
+  {
+   "id": "M19a",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M19a DRAFT 0 vs <=0 G02 (0 rows without found-by=/ruler=) 2026-W43"
+  },
+  {
+   "id": "M19b",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M19b DRAFT 0 vs <=0 G17 (0 pieces with a non-standard status) 2026-W43"
+  },
+  {
+   "id": "M19c",
+   "status": "FAIL",
+   "value": "13",
+   "threshold": "<=0",
+   "line": "METRIC M19c FAIL 13 vs <=0 G16 (13 of 13 product commits (100.0%) have no gate row) 2026-W43"
+  },
+  {
+   "id": "M20",
+   "status": "NA",
+   "value": "NA",
+   "threshold": "<=20%",
+   "line": "METRIC M20 NA NA vs <=20% G18 (no rc-0 gate row) 2026-W43"
+  },
+  {
+   "id": "M21a",
+   "status": "FAIL",
+   "value": "4",
+   "threshold": "<=1",
+   "line": "METRIC M21a FAIL 4 vs <=1 G20 (EXC rows: EXC-sprint-2026-10-13, EXC-method-check-2026-10-24, EXC-architect-placed-hook-files-2026-10-24, EXC-method-check-2026-10-24-b) 2026-W43"
+  },
+  {
+   "id": "M21b",
+   "status": "FAIL",
+   "value": "16",
+   "threshold": "<=2",
+   "line": "METRIC M21b FAIL 16 vs <=2 G20 (DRIFT lines 16: 3a156992-1d9d-424c-b1a8-11d35fd091d4 polling x1, 6595578b-476b-499c-ae9d-903b2a7b43bd wakeups x1, 6595578b-476b-499c-ae9d-903b2a7b43bd polling x60, 6595578b-476b-499c-ae9d-903b2a7b43bd gate_runs x4, 6595578b-476b-499c-ae9d-903b2a7b43bd live_tree x4, 6595578b-476b-499c-ae9d-903b2a7b43bd messages x206, 7e9d8393-6f9a-44e1-a26b-66264f334079 messages x17, 847a5a58-28f4-4ef8-8405-35bd...) 2026-W43"
+  },
+  {
+   "id": "M22",
+   "status": "FAIL",
+   "value": "3",
+   "threshold": "<=2",
+   "line": "METRIC M22 FAIL 3 vs <=2 G21 (coordinator sessions in hour 2026-10-19T15: 315ca56f-b68a-42ec-914e-435b5bc0c18b, 6595578b-476b-499c-ae9d-903b2a7b43bd, b1e8769e-404e-4263-be23-8535a58b0e59) 2026-W43"
+  },
+  {
+   "id": "M23",
+   "status": "DRAFT",
+   "value": "0",
+   "threshold": "<=0",
+   "line": "METRIC M23 DRAFT 0 vs <=0 G22 (0 golden/data files outside a fixtures/ directory) 2026-W43"
+  },
+  {
+   "id": "M24a",
+   "status": "FAIL",
+   "value": "39",
+   "threshold": "<=3",
+   "line": "METRIC M24a FAIL 39 vs <=3 G23 (39 method-text commits that add no file to a current retro folder) 2026-W43"
+  },
+  {
+   "id": "M24b",
+   "status": "FAIL",
+   "value": "2",
+   "threshold": "<=1",
+   "line": "METRIC M24b FAIL 2 vs <=1 G23 (2 retro folders in 14 days) 2026-W43"
+  }
+ ]
+}
