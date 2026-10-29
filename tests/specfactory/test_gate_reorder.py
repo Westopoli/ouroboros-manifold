@@ -58,8 +58,11 @@ SAVED_OLD_GATE = REPO / "tests" / "specfactory" / "fixtures" / "gate_reorder" / 
 GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
 RUN_TIMEOUT_S = 240
 PROGRAMME = "docs/northstar/plans/2026-10-07-visible-game-programme.md"
-EARLY = ["status", "footprint", "rule_pins", "transport", "playthrough", "lane_plays"]
-REGRESSION = ["regression_csim", "specfactory_regression", "regression_lab"]
+# Test-defect TD-HARNESS-gate-concurrent-1 (ruler Architect 2026-10-29): HARNESS-gate-concurrent moved every
+# `GATE transport` line into the concurrent block, after early_exit_if_rejected, so transport is a block stage, not
+# an early one (decisive line: `AssertionError: transport line missing or after early_exit`).
+EARLY = ["status", "footprint", "rule_pins", "playthrough", "lane_plays"]
+REGRESSION = ["transport", "regression_csim", "specfactory_regression", "regression_lab"]
 MAKEFILE = "libouroboros.so:\n\ttouch $@\nlibouroboros_dbg.so:\n\ttouch $@\n"
 OK_STUB = "import sys\nsys.exit(0)\n"
 # Tools whose real runs reject a toy repo for reasons that have nothing to do with the order under test; stubbed so

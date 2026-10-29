@@ -415,4 +415,4 @@ def test_P_rules_md_push_bullet_names_the_seed_cache_line():
     push = [ln for ln in text.splitlines() if ln.startswith("- Push:")]
     assert push, "no Push bullet"
     assert ("after the push run `merge_gate_support.py seed-cache <worktree> --merge-root "
-            "~/Projects/om-push/merge` (HARNESS-gate-cache-seed)") in push[0]
+            "~/Projects/om-push/wt` (HARNESS-gate-cache-seed)") in push[0]

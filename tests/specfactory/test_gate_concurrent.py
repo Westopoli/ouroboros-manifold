@@ -42,6 +42,7 @@ names, [N.Ns] lines, fixed order, verdict set, one candidate make). Controls C1 
 import fcntl
 import json
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -62,6 +63,15 @@ VERDICT_STAGE = {"csim": "regression_csim", "lab": "regression_lab", "qa_t1": "r
 EQUAL_SLEEPS = {s: 2.0 for s in SUITES}
 SKEWED_SLEEPS = {"csim": 0.5, "lab": 3.0, "qa_t1": 2.5, "specfactory": 1.5, "transport": 1.0}
 GATE_TIMEOUT_S = 240
+# Test-defect TD-HARNESS-gate-concurrent-1 (ruler Architect 2026-10-29): HARNESS-gate-reorder stops the gate before
+# the regression block when any earlier stage REJECTs, and on this toy repo six stages reject for reasons that have
+# nothing to do with concurrency (decisive line: `GATE early_exit REJECT allowlist_strict;sig_blocked;sig_check;
+# reach_lint;status;placeholder_controls`). Same mechanism as test_gate_reorder.py's NOISY_TOOLS: stub those tools in
+# the fake root. status_check.py joins them here because the fake root's docs/ is the real tree, whose lane table
+# disagrees with the toy repo.
+NOISY_TOOLS = ("alg_constants.py", "reach_lint.py", "sig_table.py", "status_check.py")
+OK_STUB = "import sys\nsys.exit(0)\n"
+REAL_SUPPORT_COPY = "merge_gate_support_real.py"
 
 STUB_SUPPORT = '''\
 import json, os, sys, time
@@ -109,10 +119,16 @@ def _fake_root(tmp_path):
     (root / "scripts" / "specfactory").mkdir(parents=True)
     (root / "docs").symlink_to(REPO / "docs")
     for f in SPEC_DIR.iterdir():
-        if f.name != "merge_gate_support.py":
+        if f.name not in ("merge_gate_support.py", *NOISY_TOOLS):
             (root / "scripts" / "specfactory" / f.name).symlink_to(f)
+    for name in NOISY_TOOLS:
+        (root / "scripts" / "specfactory" / name).write_text(OK_STUB)
+    # A real copy, not a symlink: the support file runs sig_table.py by its resolved path, so only a copy that
+    # sits in the fake root calls the stub next to it. The stub support hands every other subcommand to the copy.
+    real = root / "scripts" / "specfactory" / REAL_SUPPORT_COPY
+    shutil.copy(SPEC_DIR / "merge_gate_support.py", real)
     stub = root / "scripts" / "specfactory" / "merge_gate_support.py"
-    stub.write_text(STUB_SUPPORT.format(real=str(SPEC_DIR / "merge_gate_support.py")))
+    stub.write_text(STUB_SUPPORT.format(real=str(real)))
     return root, stub
 
 
@@ -138,9 +154,12 @@ def _env(tmp_path, sleeps, rcs):
     (shim / "make").write_text(MAKE_SHIM)
     (shim / "make").chmod(0o755)
     pieces = tmp_path / "pieces.toml"
+    placeholders = tmp_path / "placeholders.txt"
+    placeholders.write_text("")
     pieces.write_text('[[piece]]\nid = "B1"\nowns = ["csrc/stub.c"]\nacceptance = []\ndepends_on = []\n')
     return {"MERGE_GATE_PIECES": str(pieces), "PATH": f"{shim}:{GATE_PATH}", "GC_SLEEPS": json.dumps(sleeps),
-            "GC_RCS": json.dumps(rcs), "GC_TRACE": str(tmp_path / "trace"), "GC_MAKELOG": str(tmp_path / "make.log")}
+            "GC_RCS": json.dumps(rcs), "GC_TRACE": str(tmp_path / "trace"), "GC_MAKELOG": str(tmp_path / "make.log"),
+            "MERGE_GATE_PLACEHOLDERS": str(placeholders)}
 
 
 def run_gate(tmp_path, sleeps, rcs=None):

@@ -301,8 +301,8 @@ def test_control_stub_harness_runs_the_real_stages_to_the_early_exit_line(tmp_pa
     lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
     for step in ("make", "owner_lint"):
         assert _stage(lines, step), proc.stdout + proc.stderr
-    early = ["footprint", "status", "rule_pins", "control_liveness", "placeholder_controls", "acceptance", "transport",
-             "playthrough", "lane_plays"]
+    early = ["footprint", "status", "rule_pins", "control_liveness", "placeholder_controls", "acceptance",
+             "playthrough", "lane_plays"]  # transport prints in the concurrent block after the early exit (TD-HARNESS-gate-concurrent-1)
     at = []
     for step in early:
         found = [i for i, l in enumerate(lines) if l.startswith(f"GATE {step} ")]
