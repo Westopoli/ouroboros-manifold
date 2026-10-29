@@ -589,7 +589,7 @@ def _load_cached_baseline(cache_path: Path, harness_sha: str, suite_key: str) ->
 
 
 def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
-                            suite_key: str, result: sr.RunResult) -> None:
+                            suite_key: str, result: sr.RunResult, input_hash: str | None = None) -> None:
     data = {"main_sha": main_sha, "harness_sha": harness_sha, "suites": {}}
     if cache_path.exists():
         try:
@@ -605,10 +605,126 @@ def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
         "skipped": result.skipped, "xfailed": result.xfailed,
         "scale_gated": list(result.scale_gated),
     }
+    if input_hash is not None:
+        data["suites"][suite_key]["input_hash"] = input_hash
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = cache_path.with_suffix(".json.tmp")
     tmp_path.write_text(json.dumps(data))
     tmp_path.replace(cache_path)
+
+
+SUITE_INPUTS_REL = "scripts/specfactory/suite_inputs.toml"
+
+
+def _declared_inputs(candidate_dir: Path, suite_key: str) -> list[str] | None:
+    """Paths the suite reads, from the candidate's suite_inputs.toml; None when the suite has no table."""
+    path = Path(candidate_dir) / SUITE_INPUTS_REL
+    try:
+        table = tomllib.loads(path.read_text()).get("suites", {}).get(suite_key)
+    except (OSError, ValueError):
+        return None
+    return list(table["paths"]) if table and "paths" in table else None
+
+
+def _input_hash(repo: Path, rev: str, paths: list[str]) -> str:
+    """A15: sha256 of `<path>=<git rev-parse rev:path or ->` lines, committed state only."""
+    text = ""
+    for p in paths:
+        r = subprocess.run(["git", "rev-parse", f"{rev}:{p}"], cwd=str(repo), capture_output=True, text=True)
+        text += f"{p}={r.stdout.strip() if r.returncode == 0 else '-'}\n"
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
+
+
+def _baseline_cache_dir(merge_root: Path) -> Path:
+    return _baseline_cache_path(merge_root, "x").parent
+
+
+def _find_cached_by_inputs(merge_root: Path, harness_sha: str, suite_key: str,
+                           input_hash: str) -> sr.RunResult | None:
+    """A15: any baseline_cache/*.json entry for suite_key with this harness and input hash."""
+    d = _baseline_cache_dir(merge_root)
+    for f in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            entry = json.loads(f.read_text()).get("suites", {}).get(suite_key)
+        except (OSError, ValueError):
+            continue
+        if entry is None or entry.get("input_hash") != input_hash:
+            continue
+        hit = _load_cached_baseline(f, harness_sha, suite_key)
+        if hit is not None:
+            return hit
+    return None
+
+
+def _store_candidate_result(merge_root: Path, harness_sha: str, cand_sha: str, suite_key: str,
+                            result: sr.RunResult, input_hash: str | None) -> None:
+    path = Path(merge_root) / "candidate_results" / f"{cand_sha}.json"
+    _store_cached_baseline(path, harness_sha, cand_sha, suite_key, result, input_hash)
+
+
+def seed_cache(candidate_dir: Path, merge_root: Path) -> str:
+    """A15: after the push, copy candidate_results/<sha>.json to the baseline cache when origin/main is that sha."""
+    def rev(ref: str) -> str | None:
+        r = subprocess.run(["git", "rev-parse", "--verify", "-q", ref], cwd=str(candidate_dir),
+                           capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else None
+    sha, main = rev("HEAD"), rev("origin/main")
+    if sha is None or sha != main:
+        return f"seed-cache: skipped origin/main {main} is not HEAD {sha}"
+    src = Path(merge_root) / "candidate_results" / f"{sha}.json"
+    if not src.exists():
+        return f"seed-cache: skipped no candidate_results for {sha}"
+    dst = _baseline_cache_path(Path(merge_root), sha)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, dst)
+    return f"seed-cache: seeded {sha}"
+
+
+_STRACE_PID = re.compile(r"^\s*(?:\[pid\s+(\d+)\]|(\d+))?\s*")
+_STRACE_OPEN = re.compile(r'(openat|execve)\(\s*(?:[A-Z_]+,\s*)?"((?:[^"\\]|\\.)*)"')
+_STRACE_RET = re.compile(r"\)\s*=\s*(-?\d+)")
+_STRACE_RESUMED = re.compile(r"<\.\.\.\s*(openat|execve)\s+resumed>.*?=\s*(-?\d+)")
+
+
+def undeclared_opens(strace_text: str, repo_root: Path, declared: list[str]) -> list[str]:
+    """A15 coverage control: git-tracked repo files an `strace -f -e trace=openat,execve` log opened
+    successfully that lie outside every declared path."""
+    root = Path(repo_root)
+    roots = {os.path.normpath(str(root)), os.path.normpath(str(root.resolve()))}
+    ls = subprocess.run(["git", "ls-files"], cwd=str(root), capture_output=True, text=True)
+    tracked = set(ls.stdout.split("\n")) - {""}
+    decl = [d.rstrip("/") for d in declared]
+    pending: dict[str, str] = {}
+    found: set[str] = set()
+
+    def consider(path: str) -> None:
+        full = os.path.normpath(path if os.path.isabs(path) else os.path.join(str(root), path))
+        for r in roots:
+            if full == r or full.startswith(r + os.sep):
+                rel = os.path.relpath(full, r)
+                if rel in tracked and not any(rel == d or rel.startswith(d + "/") for d in decl):
+                    found.add(rel)
+                return
+
+    for line in strace_text.splitlines():
+        m = _STRACE_PID.match(line)
+        pid = (m.group(1) or m.group(2) or "") if m else ""
+        res = _STRACE_RESUMED.search(line)
+        if res:
+            path = pending.pop(pid, None)
+            if path is not None and int(res.group(2)) >= 0:
+                consider(path)
+            continue
+        op = _STRACE_OPEN.search(line)
+        if not op:
+            continue
+        if "<unfinished ...>" in line:
+            pending[pid] = op.group(2)
+            continue
+        ret = _STRACE_RET.search(line, op.end())
+        if ret and int(ret.group(1)) >= 0:
+            consider(op.group(2))
+    return sorted(found)
 
 
 def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *,
@@ -664,14 +780,30 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     cache_path = None
     harness_sha = None
     cached_before = None
+    declared = _declared_inputs(candidate_dir, " ".join(test_args))
+    base_hash = cand_hash = cand_sha = None
+    rev = subprocess.run(["git", "rev-parse", "--verify", "-q", base_ref],
+                          cwd=str(candidate_dir), capture_output=True, text=True)
+    if declared is not None and rev.returncode == 0:
+        # A15: a suite whose declared inputs did not change runs no pytest, base or candidate.
+        # See also: scripts/specfactory/suite_inputs.toml
+        base_hash = _input_hash(candidate_dir, base_ref, declared)
+        cand_hash = _input_hash(candidate_dir, "HEAD", declared)
+        if base_hash == cand_hash:
+            empty = sr.RunResult(passed=0, failed=0, failing_ids=(), wall_s=0.0, returncode=0)
+            return True, f"inputs unchanged {cand_hash}", sr.compare_runs(empty, empty)
     if merge_root is not None:
-        rev = subprocess.run(["git", "rev-parse", "--verify", "-q", base_ref],
-                              cwd=str(candidate_dir), capture_output=True, text=True)
+        sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(candidate_dir),
+                              capture_output=True, text=True)
+        cand_sha = sha.stdout.strip() if sha.returncode == 0 else None
         if rev.returncode == 0:
             main_sha = rev.stdout.strip()
             harness_sha = _harness_sha()
             cache_path = _baseline_cache_path(Path(merge_root), main_sha)
-            cached_before = _load_cached_baseline(cache_path, harness_sha, suite_key)
+            if base_hash is not None:
+                cached_before = _find_cached_by_inputs(Path(merge_root), harness_sha, suite_key, base_hash)
+            else:
+                cached_before = _load_cached_baseline(cache_path, harness_sha, suite_key)
 
     worktree_root = Path(worktree_root) if worktree_root else Path(tempfile.gettempdir())
     tmp = None
@@ -706,7 +838,7 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                 before.first_assertion = {k: _normalize_worktree_paths(v, tmp)
                                            for k, v in before.first_assertion.items()}
                 if cache_path is not None:
-                    _store_cached_baseline(cache_path, harness_sha, main_sha, suite_key, before)
+                    _store_cached_baseline(cache_path, harness_sha, main_sha, suite_key, before, base_hash)
             after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, junit_path=after_xml)
         # Every unbuilt-symbol failure (extremely common in this codebase --
         # most of E-06..E-17 is still STUB) raises a ctypes AttributeError
@@ -729,6 +861,14 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                      if flake_rerun(Path(candidate_dir), t, python_exe=python_exe, timeout=timeout)[0]]
             if flaky:
                 report.new_failures = [t for t in report.new_failures if t not in flaky]
+        if merge_root is not None and cand_sha is not None:
+            stored = sr.RunResult(passed=after.passed, failed=after.failed - len(set(flaky) & set(after.failing_ids)),
+                                  failing_ids=tuple(t for t in after.failing_ids if t not in flaky),
+                                  wall_s=after.wall_s, returncode=after.returncode,
+                                  first_assertion=after.first_assertion, skipped=after.skipped,
+                                  xfailed=after.xfailed, scale_gated=after.scale_gated)
+            _store_candidate_result(Path(merge_root), harness_sha or _harness_sha(), cand_sha, suite_key,
+                                    stored, cand_hash)
         # A red test whose first assertion line moves is a WARN, not a reject:
         # an attached piece legitimately changes how a still-unbuilt test fails
         # (B3 moved test_E16_S111's failing line by changing the checksum path).
@@ -1207,7 +1347,14 @@ def main(argv: list[str]) -> int:
                      help="shell-split command run in the base-ref worktree before its pytest call "
                           "(fresh baselines only); see regression_check's before_build docstring")
 
+    sd = sub.add_parser("seed-cache")
+    sd.add_argument("candidate_dir")
+    sd.add_argument("--merge-root", required=True)
+
     args = ap.parse_args(argv)
+    # A15: stage runs must not leave __pycache__ in a tree whose committed state is hashed (a records
+    # commit made with `git add -A` after a stage would change the suite's input hash).
+    os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
 
     if args.cmd == "footprint":
         ok, detail = footprint_check(Path(args.candidate_dir), args.base_ref, args.piece_id,
@@ -1251,6 +1398,9 @@ def main(argv: list[str]) -> int:
         else:
             green, red = partition_godot_ids(ids, Path(args.godot_log).read_text())
         print(f"WARN {acceptance_warn_detail(args.piece_id, resolved, green, ids, red)}")
+        return 0
+    elif args.cmd == "seed-cache":
+        print(seed_cache(Path(args.candidate_dir), Path(args.merge_root)))
         return 0
     elif args.cmd == "prune-evidence":
         for d in prune_evidence():

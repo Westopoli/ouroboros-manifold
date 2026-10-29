@@ -1,0 +1,8 @@
+[suites."tests/csim"]
+paths = ["tests/csim"]
+[suites."tests/qa/t1"]
+paths = ["tests/qa/t1"]
+[suites."tests/specfactory"]
+paths = ["tests/specfactory"]
+[suites."tests/transport"]
+paths = ["tests/transport"]
