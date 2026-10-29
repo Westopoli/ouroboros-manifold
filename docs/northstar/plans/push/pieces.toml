@@ -218,6 +218,7 @@ size_estimate = "1128 py lines, 45 tests (E-11 minus S-084/S-085/S-087, held for
 id = "B10b"
 manager = "M2"
 wave = 3
+impact = "sim"
 owns = []  # was ["csrc/unit.c"]; emptied by the LAB-REV2 records step (clerk 2026-10-14): the row is superseded and owner_lint still counts superseded as in flight, so the stale footprint blocked LAB-REV2-E1/E2/E4
 acceptance = [
     "tests/csim/test_E11_S084_flat_damage.py",
@@ -678,6 +679,7 @@ size_estimate = "remove bare SimBridge/TacticalBridge references so the file par
 id = "G-legacytactical"
 manager = "M3"
 wave = 3
+impact = "client"
 owns = []
 owns_glob = ["scenes/tactical/**"]
 acceptance = []
@@ -782,6 +784,7 @@ size_estimate = "remove bare SimBridge/TacticalBridge references so the file par
 id = "C6-cmd"
 manager = "M3"
 wave = 4
+impact = "client"
 owns = []
 owns_glob = ["scenes/commander_assign/**"]
 acceptance = []
@@ -794,6 +797,7 @@ size_estimate = "commander assignment UI for the briefing roster and the tactica
 id = "C6-refuse"
 manager = "M3"
 wave = 4
+impact = "client"
 owns = []
 owns_glob = ["scenes/mission_refuse/**"]
 acceptance = []
@@ -1730,6 +1734,7 @@ id = "HARNESS-methodcheck"
 # .claude/settings.json moved to HARNESS-context-guard (Architect 2026-10-24; this piece is landed).
 manager = "M0"
 wave = 9
+impact = "harness"
 owns = ["scripts/specfactory/method_check.py", "tests/specfactory/test_method_check.py", "docs/northstar/plans/workflows_2026-10-07/method_check.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "docs/northstar/plans/workflows_2026-10-07/context_architect_2026-10-10.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_method_check.py"]
@@ -2014,6 +2019,7 @@ wave = 9
 owns = ["scenes/tactical_c/layer_view.gd", "scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_layerkeys.gd", "tests/qa/desktop/plays/A/test_S_002_hard_transfer.py", "scenes/settings/settings.gd", "scenes/tactical_c/hud/selection_panel.gd", "tests/test_vg_a_a16.gd", "docs/northstar/story_reviews/A.md", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/westley/A-S002-layer-keys-arm-and-click.png", "tests/qa/desktop/plays/D/S-246.py", "docs/northstar/plans/2026-10-13-d-view-spec.md"]  # tactical_view.gd: the input handler lines only, plus the one-line c["layer"] fix in _send_match_command (FINDING-match-set-layer-no-layer, g9); settings.gd the keybind card rows; selection_panel.gd the digit guard; tests/test_vg_a_a16.gd its retired pins only; S-246.py lines :181 and :186 only (Alt+3 and Alt+5 for engine 2 and 4); d-view-spec.md the :15 sentence only; the ledger TD and finding rows are the records clerk's, not owned here; the stale line numbers for _send_match_command are :890-902 on 543f6c04; A.md the S-002 re-shot row; the westley README row and png copy (name is the drafter's draft from vg-wave12-laneAlayerkeys.js). Record batch 7 (Architect 2026-10-14)
 owns_glob = []
 spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-A-layerkeys (rev 4)
+impact = "client"
 acceptance = ["tests/test_vg_a_layerkeys.gd"]
 depends_on = ["VG-A18", "VG-A16", "VG-D-VIEW", "VG-A-startforce", "VG-CONTRACT-layerspot", "VG-B24b-quality-control", "VG-E1W", "VG-C-land-marks", "VG-C-land-one-projection", "VG-D-s246-import"]  # VG-D-s246-import (attached 28e41ec3) is the S-246 play's current owner, ordering only; VG-D-VIEW and VG-A-startforce also own scenes/tactical_c/tactical_view.gd and land first: the three-armies binding is the sprint's shot, the keybind piece is a strip rework and can wait (Architect 2026-10-14); VG-CONTRACT-layerspot per the Architect 2026-10-14 (record batch 7); VG-B24b-quality-control (queued) also owns scenes/settings/settings.gd (clerk addition for owner_lint); shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
 status = { state = "queued" }
@@ -2026,6 +2032,7 @@ manager = "M0"
 wave = 9
 owns = ["scenes/tactical_c/route_line.gd", "tests/test_vg_a_routeline.gd", "tests/qa/desktop/plays/F/S-140.py", "scenes/tactical_c/tactical_view.gd", "autoload/c_bridge.gd", "docs/northstar/story_reviews/westley/A-S140-route-line-on-the-way.png", "docs/northstar/story_reviews/westley/README.md", "docs/northstar/story_reviews/F.md", "tests/qa/desktop/plays/A/test_S_101_route_line.py", "docs/northstar/story_reviews/A.md"]  # A.md: the S-101 queue row; tactical_view.gd: the ten edits of the paragraph (PIECES, _build_shell, four vars, _unit_walks, _refill_routes, dirty flags, _order_targets, _redraw line, qa_state and _inventory keys); c_bridge.gd: unit_route; S-140.py: FU-s140-tie only, inside ranked_sides (rev 4, 2026-10-23; the golden PNG and vg-wave12-laneAroute.js of the old comment exist on no ref)
 spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-A-routeline (rev 4)
+impact = "client"
 owns_glob = []
 acceptance = ["tests/test_vg_a_routeline.gd"]
 depends_on = ["VG-A18", "VG-W2", "VG-CONTRACT-route", "VG-D-VIEW", "VG-A-startforce", "VG-A-layerkeys", "VG-F-S143", "VG-A16", "VG-F-S140-CLICK", "VG-E1W", "VG-C-land-marks", "VG-C-land-one-projection"]  # VG-F-S140-CLICK (TD-VG-F-s140-click, Architect 2026-10-20): routeline re-shoots S-140 on the rewritten play, so it lands after it; VG-F-S143 (queued, after VG-F-S241) also owns docs/northstar/story_reviews/F.md (clerk addition for owner_lint); record batch 7: the contract piece first, then the three queued owners of tactical_view.gd; shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
@@ -2165,6 +2172,7 @@ size_estimate = "ground fit: normal from four height samples, Basis from normal 
 id = "VG-C-land-marks"
 manager = "Architect"
 wave = 9
+impact = "client"
 owns = [
   "scenes/tactical_c/unit_visuals.gd",
   "scenes/ground3d/ground3d.gd",
@@ -2182,6 +2190,7 @@ size_estimate = "land-marks: layer_rings_enabled in unit_visuals.gd, occluded_id
 id = "VG-C-groundpick-step"
 manager = "Architect"
 wave = 9
+impact = "client"
 owns = ["scenes/ground3d/ground_pick.gd", "tests/test_vg_c4_ground_pick.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_c4_ground_pick.gd"]
@@ -2194,6 +2203,7 @@ size_estimate = "halves the pick march step (50 to 25 wu, DRAFT-pick-step-wu) an
 id = "VG-C-facing-arrow"
 manager = "Architect"
 wave = 9
+impact = "client"
 owns = ["scenes/ground3d/ground_units.gd", "scenes/tactical_c/unit_visuals.gd", "scenes/tactical_c/unit_squads.gd", "tests/test_vg_c_facing_arrow.gd", "tests/test_vg_c_unit_ground_fit.gd", "tests/qa/desktop/plays/C/s001.py", "tests/test_vg_c6_ground_units.gd", "tests/test_vg_c6b_ground_units_layers.gd", "tests/test_vg_c_wire_ground3d.gd", "tests/test_vg_e_e1k.gd"]  # unit_squads.gd for the one-source offset read, test_vg_c_unit_ground_fit.gd for TD-VG-C-facing-arrow-offset (Architect 2026-10-23)
 owns_glob = []
 acceptance = ["tests/test_vg_c_facing_arrow.gd"]
@@ -2206,6 +2216,7 @@ size_estimate = "facing arrow: an Arrow child in _body (3D) and _make_node (2D),
 id = "PROTO-ground-relief"
 manager = "Architect"
 wave = 9
+impact = "client"
 owns = ["scenes/ground3d/ground3d.gd", "scenes/ground3d/ground_mesh.gd"]
 owns_glob = []
 acceptance = []
@@ -2228,6 +2239,7 @@ size_estimate = "no slope markers: the midline BoxMesh creation and the midlines
 id = "VG-C-ground-one-colour"
 manager = "Architect"
 wave = 9
+impact = "client"
 owns = ["scenes/ground3d/ground_bands.gd", "tests/test_vg_c2b_ground_bands.gd", "tests/test_vg_c7_slope_view.gd"]
 owns_glob = []
 acceptance = ["tests/test_vg_c2b_ground_bands.gd", "tests/test_vg_c7_slope_view.gd"]
@@ -2286,6 +2298,7 @@ size_estimate = "B26 chronicle one entry at a time: the panel's print queue and 
 id = "VG-B25"
 manager = "M0"
 wave = 9
+impact = "client"
 owns = ["scenes/galaxy/ambient_rig.gd", "scenes/galaxy/shaders/backdrop_wash.gdshader", "scenes/galaxy/shaders/backdrop_stars.gdshader", "scenes/galaxy/shaders/backdrop_dust.gdshader", "tests/test_vg_b_b25.gd", "scenes/galaxy/galaxy_view.gd", "tests/galaxy_field/b25_gpu_checks.gd", "tests/galaxy_field/b25_gpu_checks.tscn", "tests/test_vg_b_b23.gd", "docs/bible/epics/E-16-client-camera-hud-and-world-view.md", "tests/test_vg_b_b11.gd", "tests/qa/desktop/test_galaxy_ambient.py"]  # galaxy_view.gd: one qa_state line (g5); shader names from the B25 script (SHADERS constant); the three shaders are new files; tests/test_vg_b_b23.gd: :210 only (the far-plane pin 800 -> DRAFT-b25-far 3,000; TD-VG-B-20; VG-B24 attached at 59a24b49 so its :188 hold is history); no galaxy_view.tscn edit (Architect 2026-10-19, spec :310): the wash and the star layers are built at runtime by ambient_rig.gd and the Environment (background mode, colour, fog) is untouched, so test_vg_b_b18.gd:79-84 stays green; the E-16 epic, tests/test_vg_b_b11.gd and tests/qa/desktop/test_galaxy_ambient.py: spec Rev 12d :312 stale-doc rewrites inside B25 (R-106-05 text, the two test headers); VG-B23 attached owns E-16 (test_galaxy_ambient.py is under the VG-B glob tests/qa/desktop/test_galaxy_*.py, the brief named it without the qa/desktop path)
 owns_glob = []
 acceptance = ["tests/test_vg_b_b25.gd"]
@@ -2310,6 +2323,7 @@ size_estimate = "D view, one piece, one shot: sheets, asteroid slabs, units with
 id = "PROTO-space-density"
 manager = "M0"
 wave = 9
+impact = "client"
 owns = ["scenes/mockups/landscape/hud.gd", "scenes/mockups/landscape/field_map_space.gd"]
 owns_glob = []
 acceptance = []
@@ -2332,6 +2346,7 @@ depends_on = ["HARNESS-provenance-scope"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph PROTO-scale, under "Prototypes (2026-10-21)"
+impact = "client"
 size_estimate = "prototype gate: scenes/mockups/scale/ on the tactical rig's numbers, every unit, structure, mission, terrain and space size at its code size, kits/sizes.json (84 entries) generated by scripts/mockups/scale_sizes.py from csrc/om_constants.h, csrc/om_internal.h, the era manifests and the named .gd constants; qa_state lists each element with its wu and px size"
 
 [[piece]]
@@ -2403,6 +2418,7 @@ size_estimate = "SV-0: handle_mission_end reads optional retention, scales playe
 id = "SV-4"
 manager = "M0"
 wave = 10
+impact = "harness"
 owns = ["scripts/simviewer/build_pipe_dbg_macos.sh", "scripts/simviewer/__main__.py", "scripts/simviewer/README.md", "tests/simviewer/test_pipe_option.py"]
 owns_glob = []
 acceptance = ["tests/simviewer/test_pipe_option.py"]
@@ -2416,6 +2432,7 @@ size_estimate = "about 15-line script, --pipe option (about 10 lines), README Ma
 id = "SIM-LANE"
 manager = "M0"
 wave = 10
+impact = "harness"
 owns = ["docs/northstar/plans/sim_lane_2026-10-12/README.md"]
 owns_glob = ["docs/northstar/plans/sim_lane_2026-10-12/findings/**", "scripts/simlane/**"]
 acceptance = []
@@ -2480,6 +2497,7 @@ size_estimate = "P1: om_layout_places (about 330 lines in layout_engine.c, built
 id = "VG-P2"
 manager = "M0"
 wave = 12
+impact = "sim"
 owns = ["csrc/economy_field_noise.c", "csrc/field_noise.h", "csrc/growth_probe.c", "docs/northstar/plans/2026-10-13-places-lane-spec.md"]  # the lane spec; its revisions land through records landings (Architect 2026-10-21); rev 6 12370c48 went to main unowned
 owns_glob = ["tests/csim/test_VG_P_p2_*.py"]  # test_VG_E_* is VG-E1's glob and test_VG_D_* VG-D's: neither matches test_VG_P_p2_*
 acceptance = ["tests/csim/test_VG_P_p2_field_noise_lanes.py", "tests/csim/test_VG_P_p2_probe_shape.py"]
@@ -2494,6 +2512,7 @@ id = "VG-CONTRACT-force-groups"
 contract = true
 manager = "M0"
 wave = 9
+impact = "contract"
 owns = ["csrc/pipe/om_pipe.c", "docs/architecture.md", "tests/transport/test_pipe_mission_frame_briefing_fields.py", "scripts/specfactory/reach_allowlist.toml", "docs/northstar/spec_factory/transport/mission.schema.json"]  # reach_allowlist.toml: this piece deletes the om_mission_get_force_group entry (the reach_lint control, second-Fable audit H1, 2026-10-23); mission.schema.json gains groups (M4)
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_mission_frame_briefing_fields.py"]
@@ -2508,6 +2527,7 @@ id = "VG-E-startforce"
 contract = true
 manager = "M0"
 wave = 9
+impact = "contract"
 owns = ["csrc/mission.c", "docs/architecture.md", "tests/csim/test_VG_E_startforce.py", "tests/csim/test_VG_D_d8.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "scripts/specfactory/reach_allowlist.toml", "scripts/specfactory/gd_tests_known_red.txt", "tests/csim/test_E01_T3_mission_ground.py", "tests/csim/test_VG_E_e7.py", "docs/northstar/spec_factory/signatures.toml", "docs/bible/epics/E-17-map-generation.md", "tests/csim/test_core_mission_force_accessors.py", "tests/transport/test_pipe_u_observable.py", "tests/transport/test_pipe_units_move.py", "tests/transport/test_pipe_vg_identity.py", "tests/csim/test_E13_A99_tactical_equivalence.py", "tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/parity/baseline/test_baseline_hashes.py", "tests/csim/test_PP_target_policy_per_side.py", "tests/csim/test_PP_portability.py", "tests/transport/test_pipe_force_groups_values.py", "csrc/tactical_support.c", "tests/csim/test_VG_E_ke2.py"]  # records batch 8 (Architect 2026-10-13/14): gd_tests_known_red.txt: deletes the TD-VG-E-26 entries it clears (overlap with the attached owners is the sanctioned pattern); the golden test file test_E01_T3_mission_ground.py (SPACE_GOLDEN) is re-recorded once under TD-VG-E-26 (VG-CONTRACT-E7 also lists it and lands first); the F1/F2/F3 goldens do not move (TD-VG-E-26)  # Architect 2026-10-22 (implementation; Westley may veto): test_pipe_u_observable.py gains the re-measured CLASH_STEPS_BEFORE_LOSS (3640 at force 330 today; re-measured on the curve-applied tree under TD-VG-E-36, expected near a 55-unit force)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_startforce.py"]
@@ -2522,6 +2542,7 @@ id = "VG-A-startforce"
 # audit4 findings pending the Architect (Architect 2026-10-23, round-4 audit): no launch until next week's pass; report ~/Projects/om-push/scratch/drafts-2026-10-22/audit4_report_VG-A-startforce.md
 manager = "M0"
 wave = 9
+impact = "client"
 owns = ["scenes/tactical_c/tactical_view.gd", "tests/test_vg_a_startforce.gd", "tests/qa/desktop/plays/A/test_S_105_start_groups.py", "tests/test_tactical_camera.gd", "tests/qa/desktop/plays/A/test_S_103_start_view.py"]  # the test and the play are also covered by VG-A's globs; listing them keeps the owner explicit like the VG-E-prodslot row
 owns_glob = []
 acceptance = ["tests/test_vg_a_startforce.gd"]
@@ -2543,6 +2564,7 @@ depends_on = ["VG-A", "HARNESS-provenance-scope", "VG-A-layerkeys", "VG-A-routel
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-A-sightdisc, after VG-A-startforce
+impact = "client"
 size_estimate = "sight disc as a projected ground polygon: DRAFT-sightdisc-segments 48 points per own unit, polygon mask drawn into a SubViewport, sight_discs() returns the polygons, qa_state sight_discs gives each bounding box; tests first (bbox height over width 0.766 within 0.05 at pitch 50, 1.0 within 0.02 at pitch 90, points at terrain height on a planted ramp); shot: the S-005 sight frame in the 3D ground view, queued for Westley"
 
 # FU-A18-3d becomes a piece (Architect 2026-10-21; ledger day31 and day32 rows FU-A18-3d): the 3D ground rig gets the opening fit that VG-A18 gave the 2D path.
@@ -2558,6 +2580,7 @@ depends_on = ["VG-A18", "HARNESS-provenance-scope", "VG-E-startforce", "VG-E1W",
 status = { state = "queued" }
 tests_pending = true  # tests/test_vg_a_a18_3d.gd new; S-103 ground test 5 new; test_vg_c_land_one_projection.gd :182 re-pinned
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-A18-3d, after A18; plus docs/northstar/plans/decision_pack_2026-10-18/followups/03_s103_camera_report.md; rig fov restored to the approved 55 (FINDING-rig-fov-lost), and the D-VIEW height 5400 and the sightdisc 0.766 pin are re-checked by this piece
+impact = "client"
 size_estimate = "the 3D rig frames the player's home base with the opening margin (A18's 2D rule), camera fov 55 restored (approved mockup number), pitch per the S-103 camera report (number Westley's, C13) and the horizon test per C14"
 
 # Lane A piece VG-A-dragbox (Architect 2026-10-21, drift audit 2026-10-21-decision-consistency-2 row (a)6): the units mockup's drag rectangle, which the game never draws. One new file plus one call from the selection handler in scenes/tactical_c/tactical_view.gd (VG-A's file: this piece does not own it and lands after VG-A-startforce, which edits it first).
@@ -2574,6 +2597,7 @@ depends_on = ["VG-A-startforce", "VG-C-land-marks"]  # the one scenes/tactical_c
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the VG-A-dragbox paragraph, after VG-A-startforce
+impact = "client"
 size_estimate = "selection_box.gd (new): the units mockup's drag rectangle drawn from the press point to the pointer once the pointer is past DRAFT-dragbox-dead 4 px, gone on release, qa_state()['drag_box'] its screen rect or null; one call from the tactical_view.gd selection handler; tests first by a different writer; shot = S-095 selection frame mid-drag"
 
 [[piece]]
@@ -2599,6 +2623,7 @@ acceptance = ["tests/test_vg_e_e1m.gd"]
 depends_on = ["VG-E1", "VG-A18"]
 status = { state = "queued" }
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # the VG-E1M paragraph, after "S-235 ticker (amends the E1m and E1n paragraphs; Q-235-01 closed)"
+impact = "client"
 tests_pending = true
 size_estimate = "E1m ticker beats (S-235): node TickerBeats, signal beat(kind, text), the five beats of R-235-03 (six kind strings); strongpoint taken/lost live, the four economy beats stubbed (FU-E1m-beat-*); DRAFT-e1m-beat-text"
 
@@ -2612,6 +2637,7 @@ acceptance = ["tests/test_vg_e_e1n.gd"]
 depends_on = ["VG-E1", "VG-A18"]
 status = { state = "queued" }
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E1N, lane E1 part b, after the E1p paragraph; built on origin/push/vg-e1n-fix 87575377; lands only with VG-E1M and VG-E1W (its set_frame caller is E1W)
+impact = "client"
 tests_pending = true  # the tests are on origin/push/vg-e1n-tests 97fedf68, not on main (pieces.py FAILs a missing acceptance file without it); flips at the landing
 size_estimate = "E1n map markers (S-235): strongpoints from the full-frame list joined to the structures rows for owner and rubble, the home base from the kind-7 map node nearest the own units; marks with no sim source stay stubs; DRAFT-e1n-marker"
 
@@ -2626,6 +2652,7 @@ acceptance = ["tests/test_vg_e_e1w.gd"]
 depends_on = ["VG-E1", "VG-A18", "VG-D-VIEW", "VG-E1M", "VG-E1N", "VG-C-land-marks", "VG-C-land-one-projection"]  # VG-A-layerkeys, VG-A-startforce and VG-A-routeline depend on it (Architect 2026-10-20); E1W lands after VG-C-land-marks (Architect 2026-10-23); shared tactical_view.gd: VG-C-land-marks' one line lands first; tactical_view.gd: the land view is fixed first
 status = { state = "queued" }
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E1W, after the VG-E1M paragraph that follows the "S-235 ticker" amendment
+impact = "client"
 tests_pending = true  # the tests are on origin/push/vg-e1w-tests, not on main; flips at the landing
 size_estimate = "E1w wiring of TickerBeats and MapMarkers into the tactical view (PIECES entries, shell, load_frame feed, _redraw set_frame, qa_state and inventory map_markers); built on origin/push/vg-e1w-b, re-applied on current main (qa_state dict conflict with VG-C-land-one-projection); the S-235 play and shot; DRAFT-s235-budget 5920"
 
@@ -2660,6 +2687,7 @@ id = "VG-CONTRACT-layerspot"
 contract = true
 manager = "M0"
 wave = 9
+impact = "contract"
 owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_move.c", "csrc/cmd_stream.c", "csrc/pipe/om_pipe.c", "autoload/c_bridge.gd", "docs/architecture.md", "tests/csim/conftest.py", "tests/specfactory/test_pp_contract.py", "tests/csim/test_VG_CONTRACT_layerspot.py", "tests/test_c_bridge_layerspot.gd", "tests/csim/test_E02_S020_abi.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_VG_E_ke5.py", "tests/transport/test_pipe_shapes.py", "tests/transport/test_pipe_vg_e.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "csrc/om_internal.h", "csrc/pipe/pipe_internal.h", "scenes/load_game/load_game.gd", "csrc/checksum_full.c", "csrc/terrain.c", "tests/csim/test_VG_E_ke3.py", "tests/csim/test_E01_T3_contract.py", "tests/test_load_game_wrong_version.gd", "tests/csim/test_E16_B5_save_version.py", "tests/csim/test_E16_C2_save_version.py", "tests/csim/test_VG_W_w1_planner.py", "tests/csim/test_VG_E_e1q_field.py", "csrc/unit.c"]  # owners as before; the paragraphs of 2026-10-14-a-pieces-spec.md rev 3 defer to this list (Architect 2026-10-20)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_CONTRACT_layerspot.py", "tests/test_c_bridge_layerspot.gd"]
@@ -2673,6 +2701,7 @@ id = "VG-CONTRACT-route"
 contract = true
 manager = "M0"
 wave = 9
+impact = "contract"
 owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_move.c", "csrc/pipe/om_pipe.c", "tests/csim/conftest.py", "tests/csim/test_VG_CONTRACT_route.py", "tests/transport/test_pipe_vg_route.py", "tests/csim/test_E02_S020_abi.py", "tests/csim/test_VG_E_contract.py", "tests/csim/test_VG_E_ke5.py", "tests/transport/test_pipe_shapes.py", "tests/transport/test_pipe_vg_e.py", "tests/specfactory/test_pp_contract.py", "docs/architecture.md", "docs/northstar/plans/push_ledger_2026-09-22.md"]  # owners as before; the paragraphs of 2026-10-14-a-pieces-spec.md rev 3 defer to this list (Architect 2026-10-20)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_CONTRACT_route.py", "tests/transport/test_pipe_vg_route.py"]
@@ -2691,6 +2720,7 @@ owns_glob = []
 acceptance = ["tests/csim/test_VG_CONTRACT_unitrow_save.py", "tests/transport/test_pipe_unitrow_save.py"]
 depends_on = ["VG-CONTRACT-route", "LAB-REV2-E1B", "VG-E-startforce", "VG-U-PIPE-TESTS", "LAB-REV2-E0", "LAB-REV2-E2", "LAB-CONTRACT-unit-pos-batch"]  # route and startforce live (startforce re-measures CLASH_STEPS_BEFORE_LOSS first); VG-U-PIPE-TESTS landed b51502d and LAB-REV2-E1B landed 43bf9462 (kept for the take-over of unit.c and the transport test file)  # after the lab chain per DEC-lab-E0-edges-2026-10-29
 spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-CONTRACT-unitrow-save, after VG-E-giveup-single (line 13)
+impact = "contract"
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "contract: three unit row fields appended after `fired` in this order: `fired_tick` u64, `kill_logged` i32, `tier` u32, little-endian (`om_unit_sw_put`), row 284 to 300 bytes, save format N to N+1 read at launch (12 on main; layerspot takes 13 and route keeps it, so 14 if layerspot lands first), twelve pin sites move once (eleven literal 12s in ten files plus the header define); two test files; second-Fable audit done 2026-10-23, amendments applied"
@@ -2710,6 +2740,7 @@ depends_on = ["VG-CONTRACT-layerspot", "VG-CONTRACT-route", "VG-CONTRACT-unitrow
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph VG-E-giveup-single, after VG-CONTRACT-route
+impact = "sim"
 size_estimate = "two row fields (f64, u32), one static pass of about 25 lines beside om_move_giveup_pass, three defines (DRAFT-giveup-single-ticks 40, -progress-wu 1.0, -reset-wu 80), save write/read/validate lines, one R-099-05 rewrite, pin moves; one csim test file"
 
 # E0 lands after E7, the three visible-game E pieces, layerspot and route, and before E2 and E4
@@ -2767,6 +2798,7 @@ size_estimate = "E3 collision radius: the runtime parameter reaches the collisio
 id = "LAB-REV2-E2"
 manager = "M0"
 wave = 10
+impact = "sim"
 owns = ["csrc/unit.c", "csrc/tactical_move.c", "csrc/om_internal.h", "csrc/om_constants.h", "tests/csim/test_E13_S100_firing_arc.py", "tests/csim/test_E11_S082_cone.py", "tests/csim/test_PP_can_engage.py", "tests/specfactory/test_pp_contract_lab_rev2.py"]  # E2 retires its two stub tests test_set_cone_stub_returns_not_built and test_can_engage_stub_returns_not_built (superseded when E2 writes the bodies); a ruler edit under a ledger row. New files: the three csim tests. om_internal.h shared with E0 and VG-CONTRACT-E7 (ordered by depends_on)
 owns_glob = []
 acceptance = ["tests/csim/test_E13_S100_firing_arc.py", "tests/csim/test_E11_S082_cone.py", "tests/csim/test_PP_can_engage.py"]
@@ -2786,6 +2818,7 @@ depends_on = ["LAB-REV2-E0", "LAB-REV2-E2"]  # layerspot rebases over E4 per DEC
 status = { state = "queued" }
 tests_pending = true  # flips false when the re-audited tests are on the piece branch red for the stated reason
 spec = "docs/northstar/plans/2026-10-14-skill-lab-rev2-spec.md"  # paragraph LAB-REV2-E4, after the Pieces table; tests on origin/push/labrev2-e4-tests 55b532df, re-audit owed
+impact = "sim"
 size_estimate = "E4 radius guard: R-096-08 step-and-return inside GUARD_RADIUS (DRAFT 200 wu)"
 
 [[piece]]
@@ -2888,6 +2921,7 @@ size_estimate = "L7 docs and rows: README sections 3, 4, 5 (output rule), 7, 8; 
 id = "LAB-REV2-L7B"
 manager = "M0"
 wave = 10
+impact = "sim"
 owns = []  # Takes README sections 3/5/7 and the harness spec arc/cone clauses from L7 when E2 and E4 land; owner move recorded at that time. Empty on purpose: README.md and skilllab-harness-spec.md are owned by LAB-REV2-L7 and no two rows own one file (decision 39 item 7)
 owns_glob = []
 acceptance = []
@@ -2974,6 +3008,7 @@ size_estimate = "VISION_CONTROL_PLAY: all cross-layer 16 v 16, side 0 one layer 
 id = "LAB-REV3"
 manager = "M0"
 wave = 10
+impact = "harness"
 owns = ["docs/northstar/plans/2026-10-19-skill-lab-rev3-plan.md"]
 owns_glob = []
 acceptance = []
@@ -2999,6 +3034,7 @@ size_estimate = "A first: D3 built-in ids with om_roster_set_reach (no copies), 
 id = "LAB-REV3-B"
 manager = "M0"
 wave = 10
+impact = "harness"
 owns = ["scripts/skilllab/plays_space.py", "scripts/skilllab/plays.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "scripts/skilllab/contract.py", "scripts/skilllab/fight.py", "scripts/skilllab/report.py"]  # DRAFT list. The mixes data table (columns name, units, used_in, enabled) lives in plays_space.py. contract.py (field living) and fight.py (one fill site at the end of every fight) are also A's (fight.py) and C's: A, B, C order them; report.py is also C's
 owns_glob = ["tests/skilllab/test_rev3_b_*.py", "tests/skilllab/integration/test_rev3_b_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
@@ -3011,6 +3047,7 @@ size_estimate = "B layers and mixes: R2 plays on all five layers, below the enem
 id = "LAB-REV3-C"
 manager = "M0"
 wave = 10
+impact = "harness"
 owns = ["scripts/skilllab/fight.py", "scripts/skilllab/contract.py", "scripts/skilllab/report.py", "scripts/skilllab/diagram.py", "scripts/skilllab/rows.py", "scripts/skilllab/plays_space.py", "scripts/skilllab/scenes.py", "scripts/skilllab/sweep.py", "docs/northstar/plans/push_ledger_2026-09-22.md", "docs/northstar/plans/skilllab-harness-spec.md", "docs/northstar/research/layer_dynamics/README.md", "scripts/skilllab/__main__.py", "scripts/skilllab/charts.py", "tests/skilllab/fakes.py", "tests/skilllab/integration/test_contact_real.py", "tests/skilllab/integration/test_sweep_real.py", "tests/skilllab/integration/test_timeline_orders_real.py", "tests/skilllab/test_diagram.py", "tests/skilllab/test_drift_fix_blind.py", "tests/skilllab/test_map_features.py", "tests/skilllab/test_reengage_rows.py", "tests/skilllab/test_rows.py", "tests/skilllab/test_sweep.py", "tests/skilllab/test_sweep_baselines.py", "tests/skilllab/golden_hashes.json", "docs/northstar/plans/push/scale_gated_tests.txt"]  # TD-LAB-REV3-C-scale-gated: C lists its OM_LAB_SLOW real tests in scale_gated_tests.txt at landing. DRAFT list. plays_space.py, scenes.py and sweep.py (reach knobs, pre-flight refusal) are also B's: C depends on B so one owner at a time. rows.py is owned by LAB-REV2-L8, ordered through LAB-REV2-FIX; ruler fixes 2026-10-20 (TD-LAB-REV3-C-fakes/-columns/-stall-control): the fifteen files are taken from their landed or queued lab rows for this piece (one owner at a time, C lands last in the stack); the ledger overlap is the sanctioned record-file pattern (as E7, startforce, layerspot); golden_hashes.json re-recorded once under TD-LAB-REV3-C-goldens (8325cfa5)
 owns_glob = ["tests/skilllab/test_rev3_c_*.py", "tests/skilllab/integration/test_rev3_c_*_real.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
@@ -3033,6 +3070,7 @@ depends_on = ["LAB-REV2-E2", "LAB-REV2-E0", "VG-CONTRACT-layerspot", "VG-CONTRAC
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-14-a-pieces-spec.md"  # paragraph CONTRACT-cone-state; second-Fable audit owed before build
+impact = "contract"
 size_estimate = "contract piece: the per-type cone table (om_roster_set_cone, LAB-REV2-E2) is saved, hashed like reach and carried across om_tactical_reset; save-format bump N to N+1; closes FINDING-cone-state; lands before any roster type ships with a cone"
 
 # Harness enforcement (Architect 2026-10-19, spec 2026-10-19-harness-enforcement-spec.md rev 3a, audited three rounds): C1a -> C1b -> C235 -> C4 serial, then HARNESS-REPIN (its row is added attached in its own landing) and FU-HARNESS-findings.
@@ -3090,6 +3128,7 @@ size_estimate = "C4 launches from main: launch_check.sh (new), pieces.toml keys 
 id = "SWEEP-spec-standins"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["docs/northstar/plans/2026-10-07-visible-game-spec.md", "docs/northstar/ambiguity_register.md"]
 owns_glob = []
 acceptance = []
@@ -3104,6 +3143,7 @@ size_estimate = "records clerks clear the 289 spec-lint findings and the 15 stan
 id = "HARNESS-C235-fail"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["scripts/specfactory/spec_provenance.py", "scripts/specfactory/status_check.py", "tests/specfactory/test_spec_provenance.py", "tests/specfactory/test_status_check.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_spec_provenance.py"]
@@ -3122,6 +3162,7 @@ owns_glob = []
 acceptance = ["tests/test_vg_e_a8feed.gd"]
 depends_on = ["VG-E1M", "VG-E1N"]  # E1M: the three-line skip is the base (origin/push/vg-e1m d0988ac5); E1N ordering only (DEC-combined-landings-2026-10-23); VG-A-routeline and VG-CONTRACT-layerspot dropped: both edges existed for c_bridge.gd only (grep 2026-10-23)
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-E-a8feed, after VG-E1W
+impact = "client"
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "the feed diffs structure owners from the view rows (no bridge change); tests first by a different writer: a full frame then one owner flip through CBridge._reconstruct_tactical gives exactly one captured line; no edit to the A8 test; shot = the S-127 play (DRAFT-a8feed-play-budget set by the test writer from a dump)"
@@ -3132,6 +3173,7 @@ size_estimate = "the feed diffs structure owners from the view rows (no bridge c
 id = "VG-T-REACH-TESTS"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["tests/csim/test_PP_C_g5_support.py", "tests/csim/test_PP_C_g5_area_return_fire.py", "tests/csim/test_PP_C_g4_transfer.py", "tests/csim/test_PP_C_g3_hash_invariant.py", "tests/csim/test_PP_C_g5_reach_api.py", "tests/csim/test_PP_C_g5_direct_fire.py", "tests/transport/test_pipe_reach_cross_layer.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_reach_cross_layer.py"]
@@ -3144,6 +3186,7 @@ size_estimate = "T1: reach tests rewritten to run through the game, plus a cross
 id = "VG-T-REACH-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/reach_table.c", "csrc/om_internal.h", "csrc/mission.c", "docs/architecture.md", "tests/qa/desktop/plays/T/S-164.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_reach_cross_layer.py"]
@@ -3161,6 +3204,7 @@ owns_glob = []
 acceptance = ["tests/transport/test_pipe_emission.py"]
 depends_on = []  # LAB-REV2-E0 edge dropped with test_PP_settings.py (E0 owns no other T3 file)
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph T3 and its rev 2 amendment, Lane T
+impact = "sim"
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "T3: emitting tests through the game over the pipe and lockstep; new verb shape set_emission {units,on}; DRAFT-emit-sight-mult, DRAFT-emit-seen-mult; harness drafts DRAFT-t3-steps, DRAFT-t3-dist-sight, DRAFT-t3-dist-seen, DRAFT-t3-samelayer-dist"
@@ -3174,6 +3218,7 @@ owns_glob = []
 acceptance = ["tests/transport/test_pipe_emission.py"]
 depends_on = ["VG-T-EMIT-TESTS", "VG-A-layerkeys", "VG-A-routeline", "VG-A-sightdisc", "VG-CONTRACT-route", "LAB-REV2-E2", "VG-T-REACH-WIRE"]  # VG-E-a8feed edge dropped 2026-10-23 (audit finding); VG-A-sightdisc added 2026-10-23: the one queued tactical_view.gd owner not upstream of VG-A-routeline
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph T4 (VG-T-EMIT-WIRE) and its 2026-10-23 amendment
+impact = "sim"
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "T4: set_emission verb in the pipe command chain and MATCH_VERBS, OM_PP_ROWS rows 21-22 to 2.0 and 3.0 (DRAFT-emit-sight-mult, DRAFT-emit-seen-mult), one keybind (DRAFT-emit-key) and qa_state emitting in tactical_view.gd, the whitelist line in c_bridge.gd, S-163 play"
@@ -3182,6 +3227,7 @@ size_estimate = "T4: set_emission verb in the pipe command chain and MATCH_VERBS
 id = "VG-T-R087-TESTS"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["tests/csim/test_R_087_09_blocked_line.py"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
 owns_glob = []
 acceptance = ["tests/csim/test_R_087_09_blocked_line.py"]
@@ -3194,6 +3240,7 @@ size_estimate = "T5: steer or drop a blocked target (R-087-09) test"
 id = "VG-T-R087-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/unit.c"]  # Lane T (Architect 2026-10-20, Westley go on the green-tests report)
 owns_glob = []
 acceptance = ["tests/csim/test_R_087_09_blocked_line.py"]
@@ -3238,6 +3285,7 @@ owns_glob = []
 acceptance = ["tests/transport/test_pipe_dump_state.py"]
 depends_on = ["VG-U-PIPE-TESTS", "VG-T-EMIT-WIRE", "VG-CONTRACT-E7", "LAB-REV2-E0", "VG-CONTRACT-layerspot", "VG-CONTRACT-route"]  # unchanged; Q4 asks whether VG-CONTRACT-unitrow-save (pipe_internal.h) and VG-CONTRACT-force-groups (om_pipe.c) become edges
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph U0, Lane U rev 3a, amended per tmp-arch/draft_VG-CONTRACT-U0.md; audited twice, amendments applied 2026-10-23
+impact = "contract"
 status = { state = "queued" }
 tests_pending = true
 size_estimate = "contract piece: the qa_dump_state frame fields Lane U tests read, the hold verb decision, documented in architecture.md"
@@ -3246,6 +3294,7 @@ size_estimate = "contract piece: the qa_dump_state frame fields Lane U tests rea
 id = "VG-U1-DIPLO-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_diplomacy_live.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_diplomacy_live.py"]
@@ -3258,6 +3307,7 @@ size_estimate = "one test file: stances at tick 20 and over 2000 ticks, positive
 id = "VG-U1-DIPLO-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/worldgen.c", "csrc/faction.c", "docs/bible/epics/E-05-faction-agents-and-conflict.md", "docs/bible/epics/E-06-diplomacy-and-technology.md", "docs/bible/algorithms.md"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_diplomacy_live.py"]
@@ -3270,6 +3320,7 @@ size_estimate = "om_world_generate calls om_diplomacy_init; R-032-04 rewritten; 
 id = "VG-U3-CHRON-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_chronicle_context.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_chronicle_context.py"]
@@ -3282,6 +3333,7 @@ size_estimate = "one test file: region, character and chain bonuses rank events,
 id = "VG-U3-CHRON-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/generational.c", "csrc/chronicle.c", "csrc/om_internal.h"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_chronicle_context.py"]
@@ -3294,6 +3346,7 @@ size_estimate = "chron_score_event computes the three context terms instead of p
 id = "VG-U4-EVCHAR-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_event_characters.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_event_characters.py"]
@@ -3307,6 +3360,7 @@ id = "VG-CONTRACT-U4-EVCHAR"
 contract = true
 manager = "M0"
 wave = 13
+impact = "contract"
 owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/events.c", "csrc/generational.c", "csrc/om_internal.h"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_event_characters.py"]
@@ -3319,6 +3373,7 @@ size_estimate = "the tick's fire path calls the attach step the manual path uses
 id = "VG-U5-BREAKAWAY-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_breakaway_skip.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_breakaway_skip.py"]
@@ -3331,6 +3386,7 @@ size_estimate = "one test file: conquest then breakaway shows the skip, with con
 id = "VG-U5-BREAKAWAY-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/resolve.c"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_breakaway_skip.py"]
@@ -3343,6 +3399,7 @@ size_estimate = "the conquest path sets the skip flag"
 id = "VG-U9-ADMIN-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_admin_chain.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_admin_chain.py"]
@@ -3355,6 +3412,7 @@ size_estimate = "one test file: a triggered admin revolt spawns a chain event wi
 id = "VG-U9-ADMIN-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/friction.c", "csrc/events.c"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_admin_chain.py"]
@@ -3367,6 +3425,7 @@ size_estimate = "the admin chain queues the library template the rule names"
 id = "VG-U7-OBJECTIVES-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_objective_kinds.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_objective_kinds.py"]
@@ -3379,6 +3438,7 @@ size_estimate = "one test file: the objective kinds other than eliminate-force, 
 id = "VG-U7-OBJECTIVES-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/mission.c", "docs/architecture.md"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_objective_kinds.py"]
@@ -3391,6 +3451,7 @@ size_estimate = "mission objective kinds wired into mission generation and the e
 id = "VG-U8-PREF-TESTS"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["tests/transport/test_pipe_preferences.py"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_preferences.py"]
@@ -3403,6 +3464,7 @@ size_estimate = "one test file: player preferences reach the sim through the pip
 id = "VG-U8-PREF-WIRE"
 manager = "M0"
 wave = 13
+impact = "sim"
 owns = ["csrc/pipe/om_pipe.c", "csrc/mission.c", "docs/architecture.md", "csrc/om_internal.h"]
 owns_glob = []
 acceptance = ["tests/transport/test_pipe_preferences.py"]
@@ -3422,6 +3484,7 @@ acceptance = ["tests/qa/desktop/plays/M/S-flow.py", "tests/specfactory/test_lane
 depends_on = ["HARNESS-lane-plays-scope"]
 status = { state = "queued" }
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph "Lane M, the menus and flow skeleton (VG-M-SKEL", under the Lane U rev 3a heading
+impact = "client"
 tests_pending = true
 size_estimate = "Lane M skeleton: one story play over the live launch path (7 screens, shots), one gate-scope test, one lane_plays.toml row; no scene or autoload edited"
 
@@ -3443,6 +3506,7 @@ size_estimate = "the gate widens the lane-plays scope so a play that crosses lan
 id = "HARNESS-coverage"
 manager = "M0"
 wave = 13
+impact = "harness"
 owns = ["scripts/specfactory/coverage_run.sh", "scripts/specfactory/coverage_report.py", "docs/northstar/plans/drift_audits/coverage_baseline.json", "scripts/specfactory/status_check.py", "tests/specfactory/test_coverage_check.py", "docs/northstar/plans/workflows_2026-10-07/drift_audit.md"]
 owns_glob = ["docs/northstar/plans/drift_audits/coverage_runs/*"]
 acceptance = ["tests/specfactory/test_coverage_check.py"]
@@ -3543,6 +3607,7 @@ depends_on = ["HARNESS-C4", "HARNESS-coverage", "HARNESS-provenance-scope", "HAR
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6, the HARNESS-tool-line paragraph (replaced its bullet, records batch 27)
+impact = "harness"
 size_estimate = "status_check.py gains check tool_line (check_tool_line, TOOL_RE, paragraph_ranges imported from spec_provenance.py): for a queued or in_flight row, no spec key WARN; spec not a file WARN; no paragraph naming the id WARN (DRAFT-tool-line-noparagraph); paragraph without a match of Tool: (Workflow|cascade|/manager-mode) WARN when queued, DRIFT when in_flight; one OK line else; no calendar date; one test file; about 60 lines of code (estimate)"
 
 [[piece]]
@@ -3556,6 +3621,7 @@ depends_on = ["HARNESS-provenance-scope"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
+impact = "harness"
 size_estimate = "usage-metadata cost script with --since/--until/--by and a dedup rule; one fixture test"
 
 [[piece]]
@@ -3569,6 +3635,7 @@ depends_on = ["HARNESS-swarm-config", "VG-P2"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-21-tool-split-spec.md"  # section 6
+impact = "sim"
 size_estimate = "first /manager-mode cascade: the Lane U tests; measured per the spec section 6, measurement page docs/northstar/plans/retro_2026-10-21/laneU_trial.md"
 # Architect 2026-10-21 (implementation; Westley 2026-10-21: "go ahead with your suggestion on the pixel test"). Test-defect fix TD-VG-C2-5-patch; spec: Rev 13 section, VG-C2-5-patch paragraph. HARNESS-userdir (attached, 5bca0733) was the last owner of this file.
 [[piece]]
@@ -3614,6 +3681,7 @@ size_estimate = "SPEED-1B the firing.py levers after the epoch cache, identical 
 id = "LAB-REV2-SPEED-2"
 manager = "M0"
 wave = 10
+impact = "harness"
 owns = ["scripts/skilllab/fight.py", "tests/skilllab/ref_fight_rev2.py"]
 owns_glob = ["tests/skilllab/integration/test_speed2_*.py"]  # New files (tests first, by a different agent than the builder)
 acceptance = []
@@ -3635,6 +3703,7 @@ depends_on = ["VG-U8-PREF-WIRE"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph LAB-CONTRACT-unit-pos-batch
+impact = "contract"
 size_estimate = "contract piece: public batch position getter (name and shape a DRAFT for the Architect), ABI N to N+1 (N read at launch), one architecture.md paragraph, one reach_allowlist line, one csim test; the lab binding is a later consumer piece"
 
 # Provenance lint scope (Architect 2026-10-21 evening, implementation; Westley may veto): spec_provenance.py judged the whole spec file, so unrelated paragraphs blocked a piece's pre_gate. The row owns the one spec_provenance.py call line in scripts/specfactory/pre_gate.sh; HARNESS-C4 (attached) owned the rest of that file before it.
@@ -3697,6 +3766,7 @@ depends_on = ["A94-harness", "HARNESS-gate-cache-seed"]  # ordering edges on lan
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+impact = "harness"
 size_estimate = "one toml rewrite from four strace runs; about 40 lines of test"
 
 [[piece]]
@@ -3723,6 +3793,7 @@ depends_on = ["HARNESS-gate-tiers"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+impact = "harness"
 size_estimate = "sweep.sh about 80 lines, two unit files"
 
 [[piece]]
@@ -3736,6 +3807,7 @@ depends_on = ["HARNESS-gate-tiers", "HARNESS-sweep-timer", "HARNESS-gate-combine
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+impact = "harness"
 size_estimate = "bisect_clerk.sh about 80 lines, one rules.md paragraph"
 
 [[piece]]
@@ -3750,6 +3822,7 @@ status = { state = "queued" }
 tests_pending = true
 # section 9
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+impact = "harness"
 size_estimate = "about 30 lines in merge_gate_support.py across acceptance_ids, undertest_warn, acceptance-verdict and seed_cache; one rules.md sentence; two test groups"
 
 [[piece]]
@@ -3778,6 +3851,7 @@ status = { state = "queued" }
 tests_pending = true
 # section 9
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
+impact = "harness"
 size_estimate = "about 4 lines, three tests"
 
 [[piece]]
@@ -3792,6 +3866,7 @@ depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects", "HARNESS-red-evidenc
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
+impact = "harness"
 size_estimate = "gate_remote.sh <host> <ref> runs the slow tier on another machine from a fresh clone and pushes the summary to a gate-runs branch; every absolute path in the gate scripts becomes clone-relative or an environment variable; --dry-run refuses when the host lacks a dependency listed in gate_hosts.md"
 
 # HARNESS-known-xfail (Westley 2026-10-21, C3 "yes"; spec Lane H part 4): the sim suites get a known-red list like the plays and gd tests have, each entry tied to a ledger row. merge_gate_support.py is also owned by queued wave-13 HARNESS rows (gate-tiers, gate-remote, csim-xdist, cache-seed, gate-concurrent); ordered after cache-seed and concurrent through depends_on, after the rest by the landing clerk's merge. suite_regression.py (attached lab-slow-tier, queued no-home-paths) is not touched.
@@ -3808,6 +3883,7 @@ depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", 
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 4
+impact = "harness"
 size_estimate = "csim_known_xfail.txt (new, same form as gd_tests_known_red.txt); the regression check lets a listed new red pass with a 'known-xfail: N' line, REJECTs a listed id whose row id is not in the ledger, WARNs 'known-xfail now green: <id>'; skip-rise and xfail-rise rejects unchanged; tests first: listed with a row (pass), listed with no row (REJECT), listed and green (WARN); positive control: today's check REJECTs the first fixture"
 
 # HARNESS-gate-cache-seed (Architect 2026-10-21; Westley: "Go ahead on all 3 for getting around the box", implementation, he may veto): spec Lane H, Rev 12e.
@@ -3875,6 +3951,7 @@ depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gat
 status = { state = "queued" }
 tests_pending = true  # TEST_WRITER = sonnet55
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # lane H, the HARNESS-look-rejects paragraph
+impact = "harness"
 size_estimate = "look_check gains an absolute floor (LOOK_BLANK_BUSYNESS, DRAFT-look-blank-busyness, NUMBER-NEEDED) and a REJECT status; merge_gate.sh stage 13 maps REJECT to reject; (b, Architect to confirm) `look --xdg` judges the playthrough's qa/flow_*.png of this run when no env dirs are set and keeps rejected frames as evidence; tests first in test_look_rejects.py (uniform fixture REJECTs, varied passes, positive control: today's stage prints WARN on the uniform fixture); four look tests of test_gate_look_and_times.py retired or rewritten under TD-HARNESS-look-rejects"
 
 # HARNESS-red-evidence (Architect 2026-10-21, ledger FINDING-red-first-unverified; spec Lane H part 5): the tests step commits the red run's output as docs/northstar/plans/push/red_evidence/<piece>.txt and a new gate stage red_evidence rejects a tests-first piece without it. merge_gate.sh and rules.md are also owned by other queued HARNESS rows; ordered after them through depends_on.
@@ -3891,6 +3968,7 @@ depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-look-rejects", "HARNESS
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
+impact = "harness"
 size_estimate = "red_check.py writes red_evidence/<piece>.txt (pytest -rA -q output of the red run on the built tree, failing assertion lines); merge_gate.sh gains stage red_evidence: REJECT when the file is missing, a listed red id is not green on the landing tree, or a control id was not green in the red run; 'none' for a piece with no new tests; tests first: fixture evidence files for the three cases; positive control: today's gate has no such stage"
 
 # HARNESS-size-lint-fail (Architect 2026-10-21, ledger FINDING-size-guides-unenforced; spec Lane H part 5): size_lint rejects at twice the guides. DRAFT-size-reject-lines 200, DRAFT-size-reject-asserts 80.
@@ -3907,6 +3985,7 @@ depends_on = ["A94-harness", "HARNESS-look-rejects", "HARNESS-gate-remote", "HAR
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
+impact = "harness"
 size_estimate = "size_lint REJECTs when a piece adds more than 200 lines to one implementation file or a test file exceeds 80 assertion lines, WARNs above the guides (about 100 and 40); a split exemption is a ledger row naming the card split; tests first: fixtures at 199/201 lines and 79/81 asserts; positive control: today's lint warns at 201"
 
 # HARNESS-test-edit-row (Architect 2026-10-21, ledger FINDING-pins-stale-at-merge; spec Lane H part 5): a landing that edits an existing test file must carry a TD- or FINDING- row id naming it. merge_gate_support.py is also owned by other queued HARNESS rows; ordered after them through depends_on.
@@ -3923,6 +4002,7 @@ depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNE
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
+impact = "harness"
 size_estimate = "footprint check: a diff that changes a tests/ file it did not create must carry a TD- or FINDING- row id (naming the file) in the ledger diff of the same landing, else REJECT 'test edited without a row'; tests first: fixture diffs with and without the row; positive control: today's footprint check passes both"
 
 # PROTO-landscape-lakefill (Architect 2026-10-21, ledger FINDING-landscape-lakefill-stripes; spec Prototypes section): the landscape mockup's lake flood runs in queue order, ending the every-second-column striping Westley rejected 2026-10-18. Shot: seed 1 landscape re-shot queued for Westley (P12).
@@ -3938,6 +4018,7 @@ depends_on = []
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph PROTO-landscape-lakefill, Prototypes (2026-10-21)
+impact = "client"
 size_estimate = "field_map.gd lake fill uses pop_front with the same 1,500-cell cap; land-to-water flips per row in a 60 by 60 cell box over a lake under DRAFT-lakefill-flips 4 on seeds 1 and 3; positive control: the unfixed loop gives 14.9; shot: seed 1 landscape re-shot with the crop beside the old one, queued as P12"
 
 # Tool: /manager-mode cascade
@@ -3954,6 +4035,7 @@ depends_on = ["HARNESS-swarm-config", "CASCADE-laneU-tests"]  # CASCADE-laneU-te
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/cascades/sim-rules/spec.md (written at cascade start)"
+impact = "sim"
 size_estimate = "eight leaves, one per finding (A events.c; C+D chronicle; E replay keyframe; G region.c; H lifecycle.c; K threshold events; L generational.c), each a failing csim test named by rule id plus a positive control; umbrella: the eight tests plus the full csim regression unchanged; contract csrc/ouroboros_sim.h parent-owned; hardcore audit"
 
 # VG-C2-5-scope (Architect 2026-10-21; Westley 2026-10-21, Q-C2-5-01 (a): the look stands, the test samples wrong). Test-defect scope narrowing TD-VG-C2-5-scope; spec: Rev 13 section, VG-C2-5-scope paragraph. VG-C2-5-patch (spec paragraph and row from records branch push/vg-records-combined) is the previous owner of this file; the ordering edge to G-qadesktoptests, VG-B and HARNESS-userdir (attached) is carried by that row.
@@ -3970,6 +4052,7 @@ depends_on = ["VG-C2-5-patch", "VG-C2-5-glowkey", "G-qadesktoptests", "VG-B", "H
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Rev 13 section, VG-C2-5-scope paragraph
+impact = "harness"
 size_estimate = "galaxy pixel detector scope: a dot whose centre lies within a rival region's light disc (glow_radius_px x DRAFT-c25-glow-edge, 1.0 until the writer's measured value is recorded in the ledger row) is excluded from the sample before the 0.60 line is applied; line, tolerance, isolation and the patch rule unchanged; expected sampled count a range from the writer's sizing report; tests first: a Godot-free exclusion fixture of three synthetic dots; positive control: without the exclusion all three are sampled; test-defect scope narrowing TD-VG-C2-5-scope"
 
 # Skill lab rev 2 G3 positive-control piece (lab overseer a7, Architect ruling 2026-10-21; Westley may veto). The FINDING-g3-positive-control-red rewrite rides the lab landing. VG-E-startforce and VG-T-REACH-TESTS depend on this row (without it the two test files overlap those rows). Manager and wave copied from the sibling LAB-REV2 rows (M0, wave 10).
@@ -3987,6 +4070,7 @@ depends_on = ["VG-C2-5-patch", "VG-B25"]  # VG-C2-5-patch: the detector this key
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # paragraph VG-C2-5-glowkey
+impact = "client"
 size_estimate = "glowkey: qa_state() gains glow_radius_px, one float per visible region (14 wu x (0.6 + 0.4 x sig/max owner sig) projected at the dot, 0.0 neutral); tests first in tests/test_galaxy_view.gd: key present, positive for owned, zero for neutral, formula within DRAFT-c25-glowkey-tol 0.5 px, mutants for unprojected, global max and positive neutral; positive control: main has no key"
 
 [[piece]]
@@ -4047,6 +4131,7 @@ size_estimate = "SHARED_RECORD_GLOBS (pieces.py:46) gains the ledger, the ambigu
 id = "SHOWCASE-inventory"
 manager = "Architect"
 wave = 9
+impact = "harness"
 owns = ["docs/northstar/plans/showcase/inventory.md"]
 owns_glob = []
 acceptance = []
@@ -4059,6 +4144,7 @@ size_estimate = "step 1: the inventory table, read-only engineer; records landin
 id = "SHOWCASE-front-door"
 manager = "Architect"
 wave = 9
+impact = "harness"
 owns = ["README.md", "docs/METHOD.md", "docs/README.md", "CONTRIBUTING.md", "LICENSE"]
 owns_glob = []
 acceptance = []
@@ -4119,6 +4205,7 @@ size_estimate = "step 3.3: stale docs folders to docs/legacy/, dated plans to pl
 id = "SHOWCASE-quality-audit"
 manager = "Architect"
 wave = 9
+impact = "harness"
 owns = ["docs/northstar/plans/showcase/code_quality.md"]
 owns_glob = []
 acceptance = []
@@ -4131,6 +4218,7 @@ size_estimate = "step 4: measured code-quality page, no fixes inside (spec docs/
 id = "SHOWCASE-first-look"
 manager = "Architect"
 wave = 9
+impact = "harness"
 owns = ["docs/northstar/plans/showcase/first_look.md"]
 owns_glob = []
 acceptance = []
@@ -4143,6 +4231,7 @@ size_estimate = "step 5: cold-reader report (spec docs/northstar/plans/showcase/
 id = "HARNESS-no-home-paths"
 manager = "Architect"
 wave = 9
+impact = "harness"
 owns = ["scripts/specfactory/chain_sim.py", "scripts/specfactory/control_liveness.py", "scripts/specfactory/parent_patch_fence.py", "scripts/specfactory/pieces.py", "scripts/specfactory/suite_regression.py", "scripts/specfactory/undertest_check.py", "tests/specfactory/test_no_home_paths.py", "tests/specfactory/test_checksum_trace.py", "tests/specfactory/test_gate_a94_steps.py", "tests/specfactory/test_gate_control_liveness.py", "tests/specfactory/test_gate_look_and_times.py", "tests/specfactory/test_gate_placeholder_controls.py", "tests/specfactory/test_gate_sig_blocked.py", "tests/specfactory/test_merge_gate.py", "tests/specfactory/test_parent_patch_fence.py", "tests/specfactory/test_suite_regression.py", "tests/specfactory/fixtures/205a-e05-collision-lottery.md"]
 owns_glob = []
 acceptance = ["with OM_HOME=/tmp/x every harness path default starts with /tmp/x (positive control: unset, it starts with Path.home())", "a grep test asserts no /home/westopoli literal remains under scripts/ and tests/specfactory/"]
@@ -4184,6 +4273,7 @@ size_estimate = "fix the two ERRORs in test_gate_userdir.py::test_6_planted_sett
 id = "VG-C-land-one-projection"
 manager = "Architect"
 wave = 9
+impact = "client"
 owns = ["scenes/tactical_c/tactical_view.gd", "scenes/tactical_c/unit_visuals.gd", "scenes/tactical_c/unit_squads.gd", "scenes/tactical_c/terrain_layer.gd", "scenes/tactical_c/structures_layer.gd", "scenes/tactical_c/fx/deaths.gd", "scenes/tactical_c/fx/abilities.gd", "scenes/tactical_c/fx/ambient.gd", "tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py", "autoload/qa_daemon.gd", "tests/test_vg_a_unit_visuals.gd", "tests/test_vg_a_unit_squads.gd", "tests/test_tactical_terrain_layer.gd", "tests/test_vg_a_structures_layer.gd", "tests/test_vg_a_ability_fx.gd"]  # owns widened 2026-10-23 (TD-VG-C-land-one-projection, G4 interface); tactical_view.gd beyond the _redraw/_apply_motion ranges: set_terrain and the TerrainLayer node name (tactical_view.gd:340-357)
 owns_glob = []
 acceptance = ["tests/test_vg_c_land_one_projection.gd", "tests/qa/desktop/plays/C/s140_land.py"]
@@ -4195,6 +4285,7 @@ size_estimate = "land view one projection: UnitSquads and TerrainLayer hidden on
 id = "VG-E-facing-travel"
 manager = "Architect"
 wave = 14
+impact = "sim"
 owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_facing_travel.py", "tests/csim/parity/test_parity_scenes.py", "tests/csim/test_E01_T2_walker_no_corner_cut.py", "tests/csim/test_E01_T2_walker_waypoint_arrival.py", "tests/csim/test_E01_T3_mission_ground.py"]  # the four re-recorded files of TD-VG-E-facing-travel (facing is in the unit hash; Architect 2026-10-23)
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_facing_travel.py"]
@@ -4206,6 +4297,7 @@ size_estimate = "face pass turns toward the one-tick displacement heading (prev_
 id = "VG-E-move-through-idle-own"
 manager = "Architect"
 wave = 14
+impact = "sim"
 owns = ["csrc/tactical_move.c", "tests/csim/test_VG_E_move_through_idle_own.py", "tests/csim/test_PP_move_collision.py", "tests/csim/test_PP_move_collision_a5.py", "tests/csim/test_E13_S097_around_not_through.py", "tests/csim/test_PP_move_steer_face.py", "tests/csim/test_PP_collision_radius_runtime.py"]
 owns_glob = []
 acceptance = ["tests/csim/test_VG_E_move_through_idle_own.py"]
@@ -4218,6 +4310,7 @@ size_estimate = "idle own units yield to movers; give-up pass covers single unit
 [[piece]]
 id = "HARNESS-flow-spine-teardown"
 manager = "Architect"
+impact = "harness"
 owns = ["tests/qa/desktop/test_flow_spine.py", "tests/specfactory/test_flow_spine_teardown.py"]  # the tempdir and godot-tree fixture only, plus its new test file (records batch 25: the row had no test file in owns)
 owns_glob = []
 acceptance = ["tests/specfactory/test_flow_spine_teardown.py"]
@@ -4231,6 +4324,7 @@ size_estimate = "the test_flow_spine.py fixture removes its /tmp/qa_flow_spine.*
 id = "HARNESS-pieces-cycle"
 manager = "M0"
 wave = 15
+impact = "harness"
 owns = ["scripts/specfactory/pieces.py", "tests/specfactory/test_pieces_cycle.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_pieces_cycle.py"]
@@ -4244,6 +4338,7 @@ size_estimate = "pieces.py --check fails on any depends_on cycle, naming the cyc
 id = "HARNESS-sdk-buffer"
 manager = "M0"
 wave = 15
+impact = "harness"
 owns = ["scripts/specfactory/sdk_engineer.py", "tests/specfactory/test_sdk_engineer_options.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_sdk_engineer_options.py"]
@@ -4264,6 +4359,7 @@ depends_on = ["HARNESS-context-guard"]  # the numbers after Westley's veto: auto
 status = { state = "queued" }  # Architect 2026-10-24; Westley "I chose 400k, not 200k"
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-19-harness-enforcement-spec.md"
+impact = "harness"
 size_estimate = "two constants; three expected values in the existing tests"
 [[piece]]
 id = "HARNESS-wt-cap-2"
@@ -4381,6 +4477,7 @@ depends_on = ["HARNESS-context-guard-2", "HARNESS-mm-4"]
 tests_pending = true
 status = { state = "pending" }  # owns .claude/settings.json once HARNESS-context-guard-2 (which owns it today) is attached; the owner row is added then
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+impact = "sim"
 size_estimate = "one SessionStart hook line: method_metrics.py --last"
 [[piece]]
 id = "RECORDS-mm-1"
@@ -4392,6 +4489,7 @@ depends_on = ["A94-harness", "HARNESS-C1b"]  # attached owners of the same files
 tests_pending = true
 status = { state = "queued" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+impact = "harness"
 size_estimate = "pieces.toml status normalisation (40 rows) and contract flags; rule pins for the rev 3 sentences; gate_runs.csv header"
 [[piece]]
 id = "HARNESS-mm-7"
