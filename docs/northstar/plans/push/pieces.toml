@@ -4407,7 +4407,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_method_metrics.py", "tests/specfactory/test_token_ledger.py"]  # Architect 2026-10-29: M27/M28 live in method_metrics_runs.py (:390, :407) and the toml [M27]; the retired case is in test_method_metrics.py
 depends_on = ["HARNESS-mm-12", "HARNESS-mm-16", "HARNESS-gate-cache-seed"]  # ordering edges; queued after cache-seed
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "eb0511b16014d9823f12dcf4f460010661692744" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "M27 redefined as context tokens per Dispatcher wakeup; entries grouped by message.id in M27 and M28; one test case"
 
