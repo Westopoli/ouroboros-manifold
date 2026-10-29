@@ -12,7 +12,7 @@ extends SceneTree
 # written now is current (sidecar and scene both say 5, so fresh saves are not refused).
 
 const SCENE_PATH := "res://scenes/load_game/load_game.tscn"
-const EXPECTED_VERSION := 12
+const EXPECTED_VERSION := 13
 
 var _pass_count := 0
 var _fail_count := 0
