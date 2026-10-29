@@ -62,7 +62,8 @@ TH = {
     "M22": ("<=", 2, "sessions", "both"), "M23": ("<=", 0, "files", "both"),
     "M24a": ("<=", 3, "commits", "both"), "M24b": ("<=", 1, "folders", "both"),
     # HARNESS-mm-12 token ledger (G24): the DRAFT values of tl_world.NEW
-    "M25": ("<=", 1.0, "ratio", "both"), "M26": ("<=", 1500, "M", "both"), "M27": ("<=", 0.1, "ratio", "both"),
+    # M27 retired by HARNESS-mm-19 A17, ledger row TD-HARNESS-mm-19-M27: was ("<=", 0.1, "ratio"), now 1.0 M tokens
+    "M25": ("<=", 1.0, "ratio", "both"), "M26": ("<=", 1500, "M", "both"), "M27": ("<=", 1.0, "M", "both"),
     "M28": ("<=", 4, "messages", "both"), "M29": ("<=", 1, "runs", "both"),
 }
 # extra tuning numbers the spec gives in prose (min sample sizes); written into the matching table

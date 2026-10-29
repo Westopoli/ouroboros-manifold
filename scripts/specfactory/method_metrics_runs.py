@@ -387,30 +387,53 @@ def is_event(e):
         isinstance(text, str) and ("<task-notification>" in text or "<cross-session-message" in text)))
 
 
-def m27(ctx):  # A10: text-only assistant turns per event-triggered episode in Dispatcher (Sonnet) sessions
-    turns = eps = 0
+def is_tool_result(e):
+    c = (e.get("message") or {}).get("content")
+    return isinstance(c, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in c)
+
+
+def new_calls(e, seen):
+    """Tool calls of an assistant entry not yet seen under its message.id (Claude Code writes one entry per content block)."""
+    mid = (e.get("message") or {}).get("id")
+    cs = mc.calls(e)
+    if not mid:
+        return cs
+    fresh = [c for c in cs if (mid, c.get("id")) not in seen]
+    seen.update((mid, c.get("id")) for c in cs)
+    return fresh
+
+
+def m27(ctx):  # A17: the Dispatcher's median context tokens per event episode, summed over its calls (cost of one wakeup)
+    totals = []
     for p, sub in top_files(ctx):
         es = [] if sub else [e for e in mc.load(p) if in_window(ctx, e.get("timestamp") or "")]
         if mc.role_of([model_of(e) for e in es if e["type"] == "assistant" and model_of(e)]) != "dispatcher":
             continue
-        open_ = False
+        open_, ids = False, set()
         for e in es:
             if e["type"] == "user":
-                open_ = is_event(e)
-                eps += open_
-            elif open_ and not mc.calls(e):
-                turns += 1
-    n = "text-only turns %d in %d event episodes" % (turns, eps)
-    return judge(ctx, "M27", turns / eps, n) if eps else na(ctx, "M27", n)
+                if is_event(e):
+                    open_ = True
+                    totals.append(0)
+                elif not is_tool_result(e):
+                    open_ = False
+            elif open_:
+                mid = (e.get("message") or {}).get("id")
+                if not mid or mid not in ids:
+                    ids.add(mid)
+                    totals[-1] += mc.ctx_size(e)
+    n = "median %s M context per wakeup over %d event episodes" % (fmt(statistics.median(totals) / 1e6) if totals else "-", len(totals))
+    return judge(ctx, "M27", statistics.median(totals) / 1e6, n) if totals else na(ctx, "M27", n)
 
 
 def m28(ctx):  # A10: SendMessage calls per top-level session-day, the worst one
     per = {}
     for p, sub in top_files(ctx):
+        seen = set()
         for e in [] if sub else mc.load(p):
             if e["type"] == "assistant" and in_window(ctx, e.get("timestamp") or ""):
                 k = (p.stem, str(e["timestamp"])[:10])
-                per[k] = per.get(k, 0) + sum(c["name"] == "SendMessage" for c in mc.calls(e))
+                per[k] = per.get(k, 0) + sum(c["name"] == "SendMessage" for c in new_calls(e, seen))
     worst = sorted(((v, k) for k, v in per.items() if v), reverse=True)
     rows = ["%s %s x%d" % (k[0], k[1], v) for v, k in worst]
     return judge(ctx, "M28", worst[0][0] if worst else 0, "messages per session-day, worst: " + (", ".join(rows[:3]) or "none"), rows)

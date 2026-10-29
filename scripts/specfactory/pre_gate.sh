@@ -33,6 +33,8 @@ shift 3
 VENV_PYTHON="${PRE_GATE_PYTHON:-$HOME/Projects/ouroboros-manifold/.venv/bin/python}"
 MERGE_GATE="${PRE_GATE_MERGE_GATE:-$HERE/merge_gate.sh}"
 
+# A pre-gate dry run must write no gate row (HARNESS-mm-7, method rev 3 A6).
+export MERGE_GATE_RUNS_CSV=/dev/null
 REJECTED=0
 OUT="$(mktemp -d -t pre_gate.XXXXXX)"
 trap 'rm -rf "$OUT"' EXIT
