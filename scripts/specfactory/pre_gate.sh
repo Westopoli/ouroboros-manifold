@@ -8,10 +8,11 @@
 # (exit 0) or `PRE_GATE verdict REJECT` (exit 1). Exit 2: usage.
 # Steps: (1) noise (.uid / .import files in status or deleted .import in the
 # diff), (2) gate (merge_gate.sh --revert, output passed through verbatim),
-# (3) tests (each given .py / pytest id or .gd file), (4) pins (rule pins of the
+# (3) tests (each given .py / pytest id or .gd file), (3b) csrc pins (a csrc change
+# builds pipe/ouroboros_pipe and runs the csim files that carry pinned values), (4) pins (rule pins of the
 # diff's tests and of the specs of the landing), (5) provenance (spec_provenance.py
 # on the spec of every piece row; HARNESS-C1b, enforcement spec sections 1 and 2).
-# Never takes ~/Projects/om-push/gate.lock, never pushes, never writes in <wt>.
+# Never takes ~/Projects/om-push/gate.lock, never pushes, writes in <wt> only build outputs (the pipe make).
 #
 # See also: merge_gate.sh --revert
 set -uo pipefail
@@ -114,6 +115,39 @@ else
             echo "PRE_GATE tests OK $t: $last"
         fi
     done
+fi
+
+# ---- (3b) csrc pins ----------------------------------------------------------
+# Layered-gate spec section 9, HARNESS-pregate-pins: a csrc change can move a pinned hash that
+# the piece's own tests miss, so the csim files carrying pins run here. The line prefix is
+# PREGATE as the spec writes it (D3), not PRE_GATE.
+# See also: tests/specfactory/test_pregate_pins.py
+if git -C "$WT" diff --name-only "$BASE"...HEAD 2>/dev/null | grep -q '^csrc/'; then
+    pin_files=()
+    pin_reject=""
+    if ! (cd "$WT" && make -s -j8 pipe/ouroboros_pipe) >"$OUT/pin_make.log" 2>&1; then
+        pin_reject="build pipe/ouroboros_pipe failed"
+    else
+        mapfile -t pin_files < <(git -C "$WT" grep -l -E 'PINNED_FULL|FLYER_SECTIONS|GOLDEN_|save_sha256' -- tests/csim)
+        (( ${#pin_files[@]} )) || pin_reject="no pinned test files found"
+    fi
+    if [[ -z "$pin_reject" ]]; then
+        (cd "$WT" && MALLOC_PERTURB_=255 PYTHONDONTWRITEBYTECODE=1 timeout 600 "$VENV_PYTHON" -m pytest "${pin_files[@]}" -q -p no:cacheprovider) >"$OUT/pins_csrc.log" 2>&1
+        prc=$?
+        pin_ids="$(sed -n -E 's/^(FAILED|ERROR) ([^ ]+).*/\2/p' "$OUT/pins_csrc.log" | tr '\n' ' ')"
+        if (( prc == 0 )); then
+            echo "PREGATE pins OK $(grep -oE '[0-9]+ passed' "$OUT/pins_csrc.log" | tail -n 1 | cut -d' ' -f1) tests"
+        elif (( prc == 124 )); then pin_reject="timeout 600s"
+        elif [[ -n "$pin_ids" ]]; then pin_reject="${pin_ids% }"
+        else pin_reject="pytest exit $prc"
+        fi
+    fi
+    if [[ -n "$pin_reject" ]]; then
+        echo "PREGATE pins REJECT $pin_reject"
+        REJECTED=1
+    fi
+else
+    echo "PREGATE pins skipped: no csrc change"
 fi
 
 # ---- (4) pins ----------------------------------------------------------------
