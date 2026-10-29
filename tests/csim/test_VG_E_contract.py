@@ -1,4 +1,4 @@
-# Rule pins: R-111-03@d25a6f, R-168-01@c6cd6c, R-179-01@631ae9, R-193-01@451aaa, R-193-02@a4522c, R-193-04@f28cf4, R-218-01@ecb14c
+# Rule pins: R-111-03@d25a6f, R-168-01@74540c, R-179-01@631ae9, R-193-01@451aaa, R-193-02@a4522c, R-193-04@f28cf4, R-218-01@ecb14c
 """Visible-game programme lane E1, contract amendment K-e, sim side (docs/northstar/plans/2026-10-07-visible-game-spec.md
 rev 6, lane E1 section, piece E1a; contract text: docs/architecture.md "Visible-game economy fields"). Fenced: builders
 never edit this file.
