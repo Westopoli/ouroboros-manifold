@@ -79,6 +79,7 @@ Branches only; main gets a piece only through the merge gate. Method rev 2 (`pla
 | Steam shipping, steps 6 to 8 of section 2 | `plans/2026-10-06-steam-multiplayer-wiring-spec.md` rev 6 | phase A landed e63483f6; phase B is lane F (skeleton lobby and net first tick on main); mingw-w64 and wine64 installed 2026-10-06 | per-OS pipe build after lane F's tactical hookup |
 
 Landed and closed since the last rewrite: terrain stages 2 and 3 (008de465, 0304d821), Steam phase A (e63483f6), the programme guard pieces (reach lint, lane plays, play split, daemon verb), the harness pieces of method rev 2 (pre-gate, status check, journal, provenance lint), unit scale (53ede72), the Sonnet briefs B1 to B11 (their branches `docs/method`, `docs/military-doctrine`, `docs/era-pack-form`, `docs/map-design-pillars` wait on Westley's reading, section 3b).
+- Layered landing gate (spec 2026-10-29): HARNESS-suite-inputs-trim first free slot; gate-tiers and gate-flag as lane H units 4 and 5; sweep-timer and bisect-clerk after the stack. Status: the Dispatcher's table.
 
 ## 1b. Westley's log: what he pointed out, and what became of it
 
