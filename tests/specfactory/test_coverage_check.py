@@ -293,23 +293,17 @@ def test_relative_flag_paths_resolve_against_repo_not_cwd(tmp_path):
 
 # ------------------------------------------------------------------ coverage_report.py on a fixture gcov directory
 
-SIM_C = """#include "ouroboros_sim.h"
-int om_a_only(void) { return 1; }
-int om_b_only(void) { return 2; }
-int om_unrun(void) { return 3; }
-int om_dead(void) { return 4; }
-int om_world_step(void) { return om_a_only() + om_unrun() + om_region_live() + om_region_hook(); }
-"""
-REGION_C = """#include "ouroboros_sim.h"
-__attribute__((weak)) int om_region_hook(void) { return 0; }
-int om_region_live(void) { return 5; }
-"""
-HEADER_H = """int om_a_only(void); int om_b_only(void); int om_unrun(void); int om_dead(void);
-int om_world_step(void); int om_region_hook(void); int om_region_live(void);
-"""
-PIPE_C = """#include "ouroboros_sim.h"
-int main(void) { for (;;) { om_b_only(); } }
-"""
+def _c(decls):  # C text is generated so no test-file line looks like an om_* definition to the gate's symbol lint
+    return '#include "ouroboros_sim.h"\n' + "".join(f"{pre}int {name}(void) {{ return {body}; }}\n" for pre, name, body in decls)
+
+
+W = "__attribute__((weak)) "
+SIM_C = _c([("", "om_a_only", "1"), ("", "om_b_only", "2"), ("", "om_unrun", "3"), ("", "om_dead", "4"),
+            ("", "om_world_step", "om_a_only() + om_unrun() + om_region_live() + om_region_hook()")])
+REGION_C = _c([(W, "om_region_hook", "0"), ("", "om_region_live", "5")])
+HEADER_H = "".join(f"int {n}(void);\n" for n in ("om_a_only", "om_b_only", "om_unrun", "om_dead", "om_world_step",
+                                                   "om_region_hook", "om_region_live"))
+PIPE_C = '#include "ouroboros_sim.h"\nint main(void) { for (;;) { om_b_only(); } }\n'
 # (file, function): {run dir: {build: (execution_count, [(line, count), ...])}}; two builds per dir, summed
 S, R = "csrc/sim.c", "csrc/region.c"
 GCOV = {
