@@ -37,8 +37,10 @@ print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0
               an empty `since` is skipped; always DRIFT (HARNESS-mm-3, A2)
   sweep       the last PASS or BASE row of sweeps.md is the anchor: WARN above
               DRAFT-slow-tier-batch first-parent `Land ` merges since its sha on
-              origin/main or its row older than DRAFT-slow-tier-hours, DRIFT above
-              DRAFT-slow-tier-drift-mult times either; a REJECT row is never an
+              origin/main or, with at least one such landing, its row older than
+              DRAFT-slow-tier-hours, DRIFT above DRAFT-slow-tier-drift-mult times
+              either; zero landings since the anchor is quiet at any age
+              (DEC-sweep-quiet-2026-10-29); a REJECT row is never an
               anchor and never a DRIFT (HARNESS-gate-tiers, spec section 8 B3, F10)
   (`check pieces` also accepts the keys `story` and `contract`, A1.)
 
@@ -388,6 +390,8 @@ def check_sweep(repo, base, sweeps):
     log = subprocess.run(["git", "-C", str(repo), "log", "--first-parent", "--merges", "--format=%s", f"{sha}..{tip}"],
                          capture_output=True, text=True).stdout.splitlines()
     landings = sum(1 for subject in log if subject.startswith("Land "))
+    if landings == 0:
+        return [("sweep", True, f"0 landings since {sha}")]
     try:
         stamp = datetime.datetime.strptime(anchor[0], SWEEP_TS_FMT).replace(tzinfo=datetime.timezone.utc)
     except ValueError:

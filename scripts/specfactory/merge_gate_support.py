@@ -327,7 +327,8 @@ def select_csim(candidate_dir: Path, base_ref: str, *, signatures_path: Path = D
     For each changed csrc/*.c, every symbol _symbol_module_map maps to that file name; every test file whose text
     contains one of those symbol names (a substring match, no import analysis). A changed csrc/*.h, Makefile or
     tests/csim/conftest.py selects every test file; a diff with no csrc change selects nothing. A changed .c file
-    that no table maps selects nothing: the slow tier's full csim regression covers it.
+    that no table maps selects the whole suite too (the strict case; the line `select-csim: <file> unmapped, whole
+    suite` goes to stderr).
     See also: docs/northstar/plans/2026-10-07-visible-game-spec.md (the HARNESS-gate-tiers paragraph)"""
     changed = changed_files(candidate_dir, base_ref)
     suite = sorted(p.relative_to(candidate_dir).as_posix()
@@ -338,8 +339,14 @@ def select_csim(candidate_dir: Path, base_ref: str, *, signatures_path: Path = D
     c_names = {Path(f).name for f in changed if f.startswith("csrc/") and f.endswith(".c")}
     if not c_names:
         return []
-    symbols = [sym for sym, mod in _symbol_module_map(signatures_path, symbol_modules_path).items()
-               if mod in c_names]
+    mapping = _symbol_module_map(signatures_path, symbol_modules_path)
+    unmapped = sorted(f for f in changed if f.startswith("csrc/") and f.endswith(".c")
+                      and Path(f).name not in set(mapping.values()))
+    if unmapped:
+        for f in unmapped:
+            print(f"select-csim: {f} unmapped, whole suite", file=sys.stderr)
+        return suite
+    symbols = [sym for sym, mod in mapping.items() if mod in c_names]
     return [f for f in suite
             if any(sym in (Path(candidate_dir) / f).read_text(errors="replace") for sym in symbols)]
 
@@ -896,6 +903,9 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                         # A csim subset can name a test file the base lacks (a new file); pytest errors on a missing
                         # path, so the base run covers only the files it has. See also: select_csim
                         base_args = [a for a in test_args if (Path(tmp) / a).exists()] if subset else test_args
+                        for a in test_args:
+                            if subset and a not in base_args:
+                                print(f"select-csim: dropped {a} (base run)")
                         if subset and not base_args:
                             res = sr.RunResult(passed=0, failed=0, failing_ids=(), wall_s=0.0, returncode=0)
                         else:
