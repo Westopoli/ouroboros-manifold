@@ -9,7 +9,7 @@ You are a Sonnet 5.5 Dispatcher chat. You launch clerks, wait, keep the status t
 - In the gate when this was written: HARNESS-mm-3, clerk worktree `~/Projects/om-push/wt/land-mm-3`, branch `push/land-mm-3`, log `/var/tmp/om-push/landmm3_gate.log`. Its clerk belongs to the Architect chat; if `pieces.toml` on origin/main shows HARNESS-mm-3 attached, it is done. If after two hours it is not, and `/var/tmp/om-push/landmm3_gate.log` is quiet, take it over: a fresh clerk on that worktree with the brief below.
 - Built, pushed, not landed: push/mm-1a 95aba546, push/mm-1b 04ce4640, push/mm-1c cd8378b0 (stacked on 1a and 1b: it already contains both), push/mm-4 930abbc4.
 - Builder worktrees are all `wt.py done`; do not touch them.
-- HARNESS-mm-6 (settings.json hook line) waits behind HARNESS-context-guard-2, which Westley halted: do not land it. HARNESS-mm-7 (one line in pre_gate.sh) is queued, no tests written: do not land it in this hand-off.
+- HARNESS-mm-6 (settings.json hook line) waits behind HARNESS-context-guard-2, which Westley halted: do not land it. HARNESS-mm-7 (one line in pre_gate.sh) is queued, no tests written: do not land it in this hand-off. Retired 2026-10-29: HARNESS-mm-7 builds in a slot (DEC-fill-slots-2026-10-29).
 
 ## Rules that bit the first two landings (do not repeat)
 

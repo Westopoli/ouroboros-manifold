@@ -889,3 +889,164 @@ def test_a13_real_toml_every_threshold_approved_and_approved_prints_pass(tmp_pat
     r = subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True, timeout=300)
     got = {m.group(1): m.group(2) for m in map(LINE.match, r.stdout.splitlines()) if m}
     assert got.get("M01") == "PASS", f"M01 inside its limit under the real toml: {got.get('M01')}\n{r.stdout[-800:]}"
+
+
+# ---- A17 (HARNESS-mm-19): M27 is the Dispatcher's median context tokens per event episode, summed over its calls;
+# assistant entries that share one message.id count as one call in M27 and M28. Draft ceiling 1.0 M (Westley approves).
+# Fixture reading (the spec leaves it open): a call's context is input + cache-read + cache-creation tokens (method_check
+# ctx_size); fixtures put every token in cache_read and none in output, so the reading cannot change a result here.
+# The old M27 cases (text-only ratio) in test_token_ledger.py are retired/rewritten here: ledger row TD-HARNESS-mm-19-M27.
+sys.path.insert(0, str(HERE / "fixtures" / "token_ledger"))
+import tl_world as T  # noqa: E402
+
+A17_DAY = W.D["wed"]
+
+
+def a17_call(model, minute, ctx_m, *, mid=None, tools=(), text="ok"):
+    e = T.tok(model, T.at(A17_DAY, 10, minute), usage={"cache_read_input_tokens": int(ctx_m * 1e6)}, tools=tools, text=text)
+    if mid:
+        e["message"]["id"] = mid
+    return e
+
+
+def a17_episode(i, ctxs, *, model=W.SONNET, kind=None, shared=False, tool_results=False):
+    """One event, then one assistant call per entry of `ctxs` (millions of context tokens each): Bash calls and a
+    last text-only call. `shared` writes every call as two entries with one message.id (one per content block)."""
+    out = [T.event(kind or ("task" if i % 2 == 0 else "peer"), T.at(A17_DAY, 10, i * 5))]
+    for k, c in enumerate(ctxs):
+        last = k == len(ctxs) - 1
+        tools = () if last else (("Bash", {"command": "ls"}),)
+        for part in range(2 if shared else 1):
+            out.append(a17_call(model, i * 5 + k, c, mid=f"msg_{model[-3:]}_{i}_{k}" if shared else None, tools=tools))
+        if tool_results and not last:
+            out.append({"type": "user", "isSidechain": False, "timestamp": T.at(A17_DAY, 10, i * 5 + k),
+                        "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t0", "content": "ok"}]}})
+    return out
+
+
+def a17_disp(episodes):
+    es = [W.clean(W.SONNET, T.at(A17_DAY, 9, 0))]
+    for ep in episodes:
+        es += ep
+    return {"sess-disp.jsonl": es}
+
+
+def a17_run(tmp_path, monkeypatch, mid, transcripts, ceiling=(1.0, "M")):
+    monkeypatch.setitem(T.NEW, "M27", ceiling)
+    if mid == "M28":
+        monkeypatch.setitem(T.NEW, "M28", (4, "messages"))
+    w = W.build_world(tmp_path, transcripts=transcripts, thresholds=T.thresholds(T.APPROVED), sdk_rows=[])
+    r = subprocess.run([sys.executable, str(SCRIPT), *w["args"]], capture_output=True, text=True, timeout=300)
+    got = {m.group(1): (m.group(2), ln) for ln in r.stdout.splitlines() if (m := LINE.match(ln))}
+    assert mid in got, f"no METRIC {mid} line in:\n{r.stdout}{r.stderr}"
+    return r, got[mid]
+
+
+def a17_nums(line):
+    return [float(x.replace(",", "")) for x in re.findall(r"(?<![\w.])\d[\d,]*(?:\.\d+)?", line)]
+
+
+def a17_has(line, want):
+    return any(abs(n - want) < 0.051 for n in a17_nums(line))
+
+
+def test_a17_M27_fail_wakeup_sums_its_calls(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: three calls of 0.4 M in each of three episodes is 1.2 M a wakeup, over the 1.0 M ceiling.
+    Red on base: the old ratio is 1.0 (one text-only turn per episode), which passes a 1.0 ceiling."""
+    eps = [a17_episode(i, [0.4, 0.4, 0.4]) for i in range(3)]
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", a17_disp(eps))
+    assert status == "FAIL", line
+    assert a17_has(line, 1.2), line
+    assert r.returncode == 1
+
+
+def test_a17_M27_pass_value_is_context_tokens_not_a_ratio(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: two calls of 0.3 M is 0.6 M a wakeup, inside the ceiling. Old and new definitions differ:
+    the old reading prints 1.0 for the same transcript."""
+    eps = [a17_episode(i, [0.3, 0.3]) for i in range(3)]
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", a17_disp(eps))
+    assert status == "PASS", line
+    assert a17_has(line, 0.6), line
+
+
+def test_a17_M27_median_not_mean(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: episodes of 0.6, 0.6 and 3.0 M have median 0.6 (PASS); the mean 1.4 would FAIL."""
+    eps = [a17_episode(0, [0.3, 0.3]), a17_episode(1, [0.3, 0.3]), a17_episode(2, [1.5, 1.5])]
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", a17_disp(eps))
+    assert status == "PASS", line
+    assert a17_has(line, 0.6) and not a17_has(line, 1.4), line
+
+
+def test_a17_M27_shared_message_id_counts_as_one_call(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: each call is written as two entries with one message.id; two calls of 0.4 M are 0.8 M
+    (PASS). Counting every entry would read 1.6 M (FAIL). Red on base: the old ratio ignores tokens."""
+    eps = [a17_episode(i, [0.4, 0.4], shared=True) for i in range(3)]
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", a17_disp(eps))
+    assert status == "PASS", line
+    assert a17_has(line, 0.8) and not a17_has(line, 1.6), line
+
+
+def test_a17_M27_episode_runs_through_tool_results(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: real transcripts put a tool_result user entry between the calls of one wakeup; those do not
+    end the episode. Three calls of 0.4 M with tool results between are 1.2 M (FAIL). (Reading of 'episode': it ends at
+    the next event or the next non-tool-result user entry; the spec says only 'per event episode summed over its calls'.)"""
+    eps = [a17_episode(i, [0.4, 0.4, 0.4], tool_results=True) for i in range(3)]
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", a17_disp(eps))
+    assert status == "FAIL", line
+    assert a17_has(line, 1.2), line
+
+
+def test_a17_M27_only_dispatcher_sessions_count(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: a Fable (Architect) session with 5.0 M episodes does not move the Dispatcher's 0.6 M."""
+    spec = a17_disp([a17_episode(i, [0.3, 0.3]) for i in range(3)])
+    spec["sess-arch.jsonl"] = [W.clean(W.FABLE, T.at(A17_DAY, 9, 0))] + [
+        e for i in range(3) for e in a17_episode(i, [2.5, 2.5], model=W.FABLE)]
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", spec)
+    assert status == "PASS", line
+    assert a17_has(line, 0.6), line
+
+
+def test_a17_M27_control_no_event_episodes_is_na(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17 control (green on base and after): a Dispatcher session with no event episodes reads NA."""
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M27", {"sess-disp.jsonl": [W.clean(W.SONNET, T.at(A17_DAY, 9, 0))]})
+    assert status == "NA", line
+
+
+def sends_with_ids(n, minute0=0, mid=None):
+    out = []
+    for i in range(n):
+        e = T.tok(W.SONNET, T.at(A17_DAY, 11, minute0 + i), 0.0, tools=[("SendMessage", {"to": "arch", "message": "m"})])
+        if mid:
+            e["message"]["id"] = mid
+        out.append(e)
+    return out
+
+
+def test_a17_M28_shared_message_id_counts_as_one_call(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17: five entries repeating one message.id, each carrying the SendMessage block, are one
+    SendMessage call (PASS at the ceiling 4). Red on base: it counts five (FAIL)."""
+    spec = {"sess-disp.jsonl": [W.clean(W.SONNET, T.at(A17_DAY, 9, 0)), *sends_with_ids(5, mid="msg_one")]}
+    r, (status, line) = a17_run(tmp_path, monkeypatch, "M28", spec)
+    assert status == "PASS", line
+    assert a17_has(line, 1), line
+
+
+def test_a17_M28_control_distinct_ids_and_no_ids_still_count_each(tmp_path, monkeypatch):
+    """HARNESS-mm-19 / A17 control (green on base and after): five entries with five different message.id FAIL, as do
+    five entries with no id."""
+    distinct = [sends_with_ids(1, i, mid=f"msg_{i}")[0] for i in range(5)]
+    for name, es in (("ids", distinct), ("anon", sends_with_ids(5))):
+        sub = tmp_path / name
+        sub.mkdir()
+        r, (status, line) = a17_run(sub, monkeypatch, "M28", {"sess-disp.jsonl": [W.clean(W.SONNET, T.at(A17_DAY, 9, 0)), *es]})
+        assert status == "FAIL", f"{name}: {line}"
+
+
+def test_a17_real_toml_M27_is_the_draft_ceiling_one_million():
+    """HARNESS-mm-19 / A17: the real [M27] table holds the draft ceiling 1.0 (M tokens), upper bound, unapproved until
+    Westley approves. Red on base: value is 0.1 (the old text-only ratio)."""
+    import tomllib
+    d = tomllib.loads((REPO / "scripts" / "specfactory" / "method_thresholds.toml").read_text())["M27"]
+    assert d["value"] == 1.0, d
+    assert d["draft"] == "DRAFT-m27-episode-context-mtok", d  # the table's existing `draft` field names it
+    assert d["direction"] == "<=" and d["approved"] == "", d

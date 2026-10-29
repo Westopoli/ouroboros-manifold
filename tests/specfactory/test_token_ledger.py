@@ -168,17 +168,20 @@ def test_5_M26_prints_NA_with_total_and_allotment(tmp_path):
 
 
 # ---------------------------------------------------------------- 6 (A10, DEC-coordinator-wakeups item 1: M27)
-def test_6_M27_fail_three_text_only_turns_in_ten_events(tmp_path):
-    r, got = metrics(tmp_path, ["M27"], {"sess-disp.jsonl": T.dispatcher_episodes(3)})
-    assert got["M27"][0] == "FAIL", got["M27"][1]
-    assert r.returncode == 1
-
-
+# test_6_M27_fail_three_text_only_turns_in_ten_events retired by HARNESS-mm-19 A17, ledger row TD-HARNESS-mm-19-M27
+# (it asserted the old definition: FAIL at 3 text-only turns in 10 events; new cases: test_method_metrics.py test_a17_M27_*).
 def test_6_M27_pass_one_in_ten_and_other_sessions_not_counted(tmp_path):
-    # a Fable (Architect) session with ten text-only replies after events must not count: only the Dispatcher does
-    spec = {"sess-disp.jsonl": T.dispatcher_episodes(1), "sess-arch.jsonl": T.dispatcher_episodes(10, model=W.FABLE)}
+    # rewritten by HARNESS-mm-19 A17, ledger row TD-HARNESS-mm-19-M27 (was: text-only ratio 1 in 10).
+    # Dispatcher: ten one-call episodes of 0.06 M each (PASS under the 1.0 M ceiling). A Fable (Architect) session with
+    # ten 5.0 M episodes must not count: only the Dispatcher does (counting it would read 5.0 M, FAIL).
+    arch = [W.clean(W.FABLE, T.at(W.D["wed"], 9, 0))]
+    for i in range(10):
+        arch += [T.event("task", T.at(W.D["wed"], 10, 2 * i)),
+                 T.tok(W.FABLE, T.at(W.D["wed"], 10, 2 * i + 1), usage={"cache_read_input_tokens": 5_000_000})]
+    spec = {"sess-disp.jsonl": T.dispatcher_episodes(1), "sess-arch.jsonl": arch}
     r, got = metrics(tmp_path, ["M27"], spec)
     assert got["M27"][0] == "PASS", got["M27"][1]
+    assert " 0.06 vs" in got["M27"][1], got["M27"][1]  # has() tolerance 0.051 would also accept the old 0.1
 
 
 # ---------------------------------------------------------------- 7 (A10, wakeups item 3: M28)

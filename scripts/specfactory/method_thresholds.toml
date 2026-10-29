@@ -590,10 +590,10 @@ reserve_m = 60
 [M27]
 id = "M27"
 gap = "G24"
-draft = "DRAFT-mm-M27"
-value = 0.1
+draft = "DRAFT-m27-episode-context-mtok"
+value = 1.0
 direction = "<="
-unit = "ratio"
+unit = "M"
 approved = ""
 baseline = ""
 window = "week"

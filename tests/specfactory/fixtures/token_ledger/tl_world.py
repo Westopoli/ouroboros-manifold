@@ -12,7 +12,7 @@ Interfaces the fixtures fix (the spec leaves them open; the tests writer's repor
   `[estimates.<task type>]` with median_m, ceiling_m, calls_cap. M25 value is the worst ratio over the week's landed
   pieces of (their runs' tokens in M) / (sum of the ceiling_m of the roles run on them), limit 1.0, a role maps to the
   estimates table of the same name. M26 value is the week allotment in M (1500) with day_m 300, dispatcher_m 60,
-  pieces_m 180, reserve_m 60 as extra keys. M27 value is a ratio, M28 messages per session-day, M29 extra tests runs.
+  pieces_m 180, reserve_m 60 as extra keys. M27 value is millions of context tokens per event episode (HARNESS-mm-19 A17), M28 messages per session-day, M29 extra tests runs.
 """
 import json
 import sys
@@ -28,7 +28,8 @@ PRICES = {
 }
 ESTIMATES = {"tests": (3.8, 16, 60), "build": (1.2, 6.3, 40), "land": (1.6, 5.5, 40), "records": (0.2, 1.2, 15),
              "audit": (4.7, 13.8, 60), "research": (1.4, 6.4, 30), "drift": (10.9, 15, 70)}
-NEW = {"M25": (1.0, "ratio"), "M26": (1500, "M"), "M27": (0.1, "ratio"), "M28": (4, "messages"), "M29": (1, "runs")}
+# M27 retired by HARNESS-mm-19 A17, ledger row TD-HARNESS-mm-19-M27: was (0.1, "ratio") text-only turns per episode
+NEW = {"M25": (1.0, "ratio"), "M26": (1500, "M"), "M27": (1.0, "M"), "M28": (4, "messages"), "M29": (1, "runs")}
 
 
 def thresholds(approved=APPROVED, prices=None):
