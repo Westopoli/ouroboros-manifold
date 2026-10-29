@@ -124,13 +124,22 @@ def test_control_planted_red_and_green_behave_as_today(tmp_path, monkeypatch):
 
 
 def _perturbed(text, suite):
-    """T8 detector: True when the merge_gate_support.py `regression` command naming `suite` carries the env prefix."""
+    """T8 detector: True when every merge_gate_support.py `regression` command naming `suite` carries the env prefix.
+
+    Test-defect TD-HARNESS-gate-reorder-5 (ruler Architect 2026-10-29): HARNESS-gate-concurrent starts each suite as a
+    background job whose command line begins with `TMPDIR=... XDG_DATA_HOME=... \\` and HARNESS-csim-xdist gives csim and
+    transport a serial and an xdist branch. So the prefix is looked for anywhere before the script (not only at the
+    line start) and on every command naming the suite, not only the first (decisive line: `assert (False)` in
+    `_perturbed(text, 'tests/csim')`)."""
     logical = re.sub(r"\\\n\s*", " ", text)
+    found = []
     for line in logical.splitlines():
         if "merge_gate_support.py" in line and re.search(r"\bregression\b(?!-)", line) \
                 and re.search(r"\s" + re.escape(suite) + r"(\s|$)", line):
-            return bool(re.match(r"\s*MALLOC_PERTURB_=255\s+", line))
-    raise AssertionError(f"no regression command naming {suite} found")
+            found.append(bool(re.search(r"(^|\s)MALLOC_PERTURB_=255\s", line.split("merge_gate_support.py")[0])))
+    if not found:
+        raise AssertionError(f"no regression command naming {suite} found")
+    return all(found)
 
 
 def test_control_t8_detector_sees_prefix_and_its_absence():
@@ -416,7 +425,8 @@ def test_gate_puts_the_perturb_prefix_on_the_csim_and_transport_commands_only():
     assert _perturbed(text, "tests/csim") and _perturbed(text, "tests/transport")
     assert not _perturbed(text, "tests/qa/t1") and not _perturbed(text, "tests/specfactory")
     code = [l for l in text.splitlines() if "MALLOC_PERTURB_" in l and not l.lstrip().startswith("#")]
-    assert len(code) == 2, code
+    assert len(code) == 4, code  # TD-HARNESS-gate-reorder-5: csim and transport each have a serial and an xdist branch
+    assert all("tests/csim" in l or "tests/transport" in l for l in code), code
 
 
 def test_perturb_sites_carry_a_see_also_and_report_records_the_env_line(tmp_path):

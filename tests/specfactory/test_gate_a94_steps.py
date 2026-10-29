@@ -42,8 +42,10 @@ SUPPORT = SPEC / "merge_gate_support.py"
 ALG = SPEC / "alg_constants.py"
 SIG = SPEC / "sig_table.py"
 sys.path.insert(0, str(SPEC))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import merge_gate_support as mgs  # noqa: E402
+from gate_toy_root import fake_gate_root, gate_env  # noqa: E402
 
 PY = sys.executable
 TABLE_REL = Path("docs/northstar/spec_factory/signatures.toml")
@@ -113,6 +115,19 @@ def _gate(tmp_path: Path, repo: Path, base_ref: str = "HEAD") -> subprocess.Comp
            "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
     return subprocess.run(["bash", str(GATE), str(repo), base_ref, "B1"],
                           capture_output=True, text=True, env=env, timeout=240)
+
+
+def _gate_to_regression(tmp_path: Path, repo: Path, base_ref: str, *owned: str) -> subprocess.CompletedProcess:
+    """Test-defect TD-HARNESS-gate-reorder-2 to -4 (ruler Architect 2026-10-29): the run must get past the early
+    block (decisive line: `GATE early_exit REJECT footprint;status;placeholder_controls`), so B1 owns the files the
+    candidate commits, status_check.py and sig_table.py (sig_blocked reads the gate's own tree, which a fake root lacks)
+    are stubs in a fake gate root, the placeholder list is empty and HOME is set."""
+    pieces = tmp_path / "pieces.toml"
+    owns = ", ".join(f'"{o}"' for o in ("csrc/stub.c", *owned))
+    pieces.write_text(f'[[piece]]\nid = "B1"\nowns = [{owns}]\nacceptance = []\ndepends_on = []\n')
+    gate = fake_gate_root(tmp_path, noisy=("sig_table.py", "status_check.py"))
+    return subprocess.run(["bash", str(gate), str(repo), base_ref, "B1"], capture_output=True, text=True,
+                          env=gate_env(tmp_path, pieces, MERGE_GATE_SIGNATURES=str(repo / TABLE_REL)), timeout=240)
 
 
 def _line(proc: subprocess.CompletedProcess, step: str) -> str:
@@ -271,7 +286,7 @@ def test_gate_specfactory_regression_rejects_a_new_failure(tmp_path):
     base = _git(repo, "rev-parse", "HEAD").strip()
     _write(repo, "tests/specfactory/test_planted.py", PLANTED_FAIL)
     _commit(repo, "plant a failing specfactory test")
-    proc = _gate(tmp_path, repo, base)
+    proc = _gate_to_regression(tmp_path, repo, base, "tests/specfactory/test_planted.py")
     assert "GATE specfactory_regression REJECT" in proc.stdout, proc.stdout + proc.stderr
     assert "test_planted_new_failure" in _line(proc, "specfactory_regression")
     assert proc.returncode == 1
@@ -282,7 +297,7 @@ def test_gate_specfactory_regression_passes_a_clean_candidate(tmp_path):
     base = _git(repo, "rev-parse", "HEAD").strip()
     _write(repo, "tests/specfactory/test_second_ok.py", "def test_second_ok():\n    assert True\n")
     _commit(repo, "another passing specfactory test")
-    proc = _gate(tmp_path, repo, base)
+    proc = _gate_to_regression(tmp_path, repo, base, "tests/specfactory/test_second_ok.py")
     assert "GATE specfactory_regression OK" in proc.stdout, proc.stdout + proc.stderr
 
 
@@ -296,7 +311,7 @@ def test_gate_specfactory_regression_tolerates_a_standing_red(tmp_path):
     _git(repo, "update-ref", "refs/remotes/origin/main", base)  # stage 0 base replaces the base arg with origin/main
     _write(repo, "tests/specfactory/test_unrelated_ok.py", "def test_unrelated_ok():\n    assert True\n")
     _commit(repo, "unrelated change")
-    proc = _gate(tmp_path, repo, base)
+    proc = _gate_to_regression(tmp_path, repo, base, "tests/specfactory/test_unrelated_ok.py")
     assert "GATE specfactory_regression OK" in proc.stdout, proc.stdout + proc.stderr
 
 
