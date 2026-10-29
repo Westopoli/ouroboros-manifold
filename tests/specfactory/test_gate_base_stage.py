@@ -11,7 +11,9 @@ Fixture (no build, no lock, no real stage): a bare origin and a candidate clone 
 ~/Projects/om-push/tmp-gatebase/<unique per run>/wt-cand, both holding one file and no Makefile. Run against a
 script WITHOUT the base stage, `make` fails at once ("GATE make HARNESS ... COMPILE ERROR", exit 3), so the first
 GATE line is make's and the script ends by itself within a second: no kill is needed (subprocess timeout 120 s
-is only a backstop). The script's own lock is not involved: merge_gate.sh holds none; the clerk's flock does.
+is only a backstop). Since HARNESS-gate-tiers the first GATE line is `GATE tier <name>` and `base` is the first stage
+line after it (TD-HARNESS-gate-tiers-1); `_run` checks the tier line and returns the stage lines after it.
+The script's own lock is not involved: merge_gate.sh holds none; the clerk's flock does.
 """
 import os
 import re
@@ -73,7 +75,10 @@ def _run(cand, *flags, stop_after=None):
     r = subprocess.run(["bash", str(SCRIPT), *flags, str(cand), "origin/main", "HARNESS-gate-base-after-lock"],
                        capture_output=True, text=True, env=env, timeout=RUN_TIMEOUT_S)
     gate = [ln for ln in r.stdout.splitlines() if ln.startswith("GATE ") and not ln.startswith("GATE row ")]
-    return r.returncode, gate, r.stdout + r.stderr
+    # TD-HARNESS-gate-tiers-1: `GATE tier <name>` is printed once and first (layered gate spec section 4, HARNESS-gate-tiers),
+    # so `base` is the first stage line after it. The tier line is checked here and dropped from the list the tests read.
+    assert gate and gate[0].startswith("GATE tier "), f"first stage line was {gate[:1]!r}, wanted `GATE tier <name>`"
+    return r.returncode, gate[1:], r.stdout + r.stderr
 
 
 def test_1_candidate_behind_new_main_is_rejected_before_make(fx):
@@ -82,7 +87,7 @@ def test_1_candidate_behind_new_main_is_rejected_before_make(fx):
     later = fx["push_new_main"]()
     rc, gate, out = _run(fx["cand"])
     assert gate and gate[0].startswith(f"GATE base REJECT candidate lacks origin/main {later}"), \
-        f"first GATE line was {gate[:1]!r}, wanted a base REJECT naming {later}"
+        f"first stage line was {gate[:1]!r}, wanted a base REJECT naming {later}"
     assert rc != 0, out
     assert not any(ln.startswith("GATE make") for ln in gate), "make ran after a base REJECT"
 
@@ -95,7 +100,7 @@ def test_2_candidate_merged_with_new_main_passes_and_stops(fx):
     _git(fx["cand"], "merge", "-q", "--no-edit", "origin/main")
     rc, gate, out = _run(fx["cand"], stop_after="base")
     assert gate == [g for g in gate if g.startswith("GATE base")] and gate, out
-    assert re.match(rf"GATE base OK {later}\b", gate[0]), f"first GATE line was {gate[0]!r}, wanted base OK {later}"
+    assert re.match(rf"GATE base OK {later}\b", gate[0]), f"first stage line was {gate[0]!r}, wanted base OK {later}"
     assert rc == 0, out
     assert len(gate) == 1, "stage ran past the base line"
 
@@ -104,7 +109,7 @@ def test_3_idle_control_main_unchanged(fx):
     """Proves: with main unmoved during the wait, the OK line carries the same sha as origin/main (the control
     that test 1 is red for the stale-main reason, not for a broken fixture)."""
     rc, gate, out = _run(fx["cand"], stop_after="base")
-    assert gate and re.match(rf"GATE base OK {fx['m1']}\b", gate[0]), f"first GATE line was {gate[:1]!r}"
+    assert gate and re.match(rf"GATE base OK {fx['m1']}\b", gate[0]), f"first stage line was {gate[:1]!r}"
     assert rc == 0 and len(gate) == 1, out
 
 
@@ -114,5 +119,5 @@ def test_4_revert_of_a_stale_candidate_is_rejected(fx):
     later = fx["push_new_main"]()
     rc, gate, out = _run(fx["cand"], "--revert")
     assert gate and gate[0].startswith(f"GATE base REJECT candidate lacks origin/main {later}"), \
-        f"first GATE line was {gate[:1]!r}, wanted a base REJECT naming {later}"
+        f"first stage line was {gate[:1]!r}, wanted a base REJECT naming {later}"
     assert rc != 0 and not any(ln.startswith("GATE make") for ln in gate), out

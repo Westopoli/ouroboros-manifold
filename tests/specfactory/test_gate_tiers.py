@@ -985,6 +985,106 @@ def test_8_control_a_non_empty_id_list_does_not_print_skipped_no_ids(tmp_path):
     assert _stage_text(out, "footprint").startswith("GATE footprint OK"), out
 
 
+# ====================================================================== group 9: unmapped C, fast acceptance, dropped base files, quiet sweep
+# Architect rulings after the first build (the dispatcher's brief to the tiers test writer, 2026-10-29). Group 8 above is
+# the slow-tier base group (B1, item g), so this group is 9. Each test names the item it proves.
+
+def test_9_an_unmapped_c_file_selects_the_whole_csim_suite(tmp_path):
+    """Group 9 (i), layered gate spec section 2 layer 1 ('a row without the key is `sim`, the strict case') applied to
+    `select-csim`: a changed csrc/*.c that no symbol table maps selects the WHOLE csim suite, as a header change does
+    (it used to select nothing). A mapped file keeps its narrow selection (group 1), so this is not a blanket rule."""
+    unmapped = "csrc/zz_unmapped_by_any_table.c"
+    sm, sig = _symbol_tables()
+    assert unmapped.rsplit("/", 1)[1] not in set(sm.values()) | set(sig.values()), \
+        "fixture: the unmapped file must not be in either symbol table"
+    repo, m = _select_repo(Path(_tmp()), {"tests/csim/test_b.py": "x = 1\n", "tests/csim/test_a.py": "x = 2\n",
+                                         unmapped: "int a;\n"})
+    _commit(repo, {unmapped: "int a;\nint b;\n"})
+    sel = _select(repo, m)
+    assert sel.returncode == 0 and sel.stdout.splitlines() == ["tests/csim/test_a.py", "tests/csim/test_b.py"], \
+        f"unmapped .c selected {sel.stdout.splitlines()!r}, wanted the whole suite\n{sel.stderr}"
+
+
+def test_9_the_gate_prints_the_unmapped_line_and_runs_the_whole_suite(tmp_path):
+    """Group 9 (i), the gate half: for a changed csrc/stub.c (om_stub is in neither table) `--tier fast` prints
+    `select-csim: <file> unmapped, whole suite` and runs every csim file (both marker tests ran)."""
+    marker = tmp_path / "ran.txt"
+
+    def main_steps(c):
+        _commit(c, {"tests/csim/test_a.py": "# nothing\n" + _marker_tests(marker, "a"),
+                    "tests/csim/test_b.py": "# nothing\n" + _marker_tests(marker, "b")})
+
+    fx = build_gate(tmp_path, main_steps=main_steps,
+                    cand_steps=lambda c: _commit(c, {"csrc/stub.c": "int om_stub(void) { return 1; }\n"}))
+    r, out = run_gate(fx, "--tier", "fast")
+    assert re.search(r"select-csim: (csrc/)?stub\.c unmapped, whole suite", out), out
+    assert sorted(set(_marks(marker))) == ["a", "b"], f"marks={_marks(marker)}\n{out}"
+    assert r.returncode == 0, out
+
+
+def test_9_fast_tier_adds_changed_test_files_to_acceptance_but_never_the_desktop_plays(tmp_path):
+    """Group 9 (ii), the HARNESS-gate-tiers paragraph ('the row's `acceptance` key plus every file under `tests/` the
+    diff touches') with merge_gate.sh's own exclusion of tests/qa/desktop/* (no frame in the fast tier): a changed
+    tests/unit/test_changed.py runs under `acceptance` although the row does not list it (GREEN control); a changed
+    tests/qa/desktop/test_desk.py, a valid collectable test, never runs (negative control)."""
+    marker = tmp_path / "ran.txt"
+    pieces = _pieces(("B1", ["feat.txt", "tests/unit/test_changed.py", "tests/qa/desktop/test_desk.py"], []))
+
+    def cand_steps(c):
+        _commit(c, {"feat.txt": "feat\n", "tests/unit/test_changed.py": _marker_tests(marker, "changed"),
+                    "tests/qa/desktop/test_desk.py": _marker_tests(marker, "desk")})
+
+    fx = build_gate(tmp_path, cand_steps=cand_steps, pieces=pieces)
+    r, out = run_gate(fx, "--tier", "fast")
+    assert _marks(marker) == ["changed"], f"marks={_marks(marker)} (the desktop file must not run)\n{out}"
+    assert _stage_text(out, "acceptance").startswith("GATE acceptance OK"), out
+
+
+def _subset_with_new_files(tmp_path):
+    """A subset {test_a (on the base), test_new, test_new2 (new in the candidate)}; returns (stage result, marker)."""
+    repo, m, marker = _cache_fixture(tmp_path)
+    _commit(repo, {"tests/csim/test_new.py": _marker_tests(marker, "new"),
+                   "tests/csim/test_new2.py": _marker_tests(marker, "new2"), "src/mod.py": "X = 2\n"}, "new tests")
+    sel = ("tests/csim/test_a.py", "tests/csim/test_new.py", "tests/csim/test_new2.py")
+    return _stage(repo, m, tmp_path / "root", sel), marker
+
+
+def test_9_a_csim_subset_base_run_drops_files_the_base_lacks(tmp_path):
+    """Group 9 (iii), F7 (a subset run, spec section 8) with `regression_check`'s base-side filter: a selected file the
+    base does not have (a new test file has no base result) is left out of the base run, so pytest does not error on a
+    missing path, and the candidate still runs it. GREEN control: base ran test_a only, candidate ran all three."""
+    r, marker = _subset_with_new_files(tmp_path)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert sorted(_marks(marker)) == ["a", "a", "new", "new2"], f"base ran a, candidate ran a, new, new2: {_marks(marker)}"
+
+
+def test_9_the_log_names_each_file_the_base_run_dropped(tmp_path):
+    """Group 9 (iii), the logging half: the stage log names each dropped file (and not test_a.py, which the base has)."""
+    r, _marker = _subset_with_new_files(tmp_path)
+    log = r.stdout + r.stderr
+    for dropped in ("tests/csim/test_new.py", "tests/csim/test_new2.py"):
+        assert re.search(rf"dropp?ed.*{re.escape(dropped)}|{re.escape(dropped)}.*dropp?ed", log, re.I), \
+            f"the log does not name the dropped base file {dropped}\n{log}"
+    assert not re.search(r"dropp?ed.*test_a\.py", log, re.I), f"test_a.py exists on the base and is not dropped\n{log}"
+
+
+def test_9_the_sweep_age_and_batch_rules_count_only_landings_since_the_last_row(tmp_path):
+    """Group 9 (iv), layered gate spec section 8 F10 and B3 ('the last PASS or BASE row is the anchor'; a landing is a
+    `Land ` first-parent merge): the last sweeps.md row is 3 * HOURS * MULT hours old (past the drift age) but nothing has landed since it,
+    so there is nothing to sweep: no WARN and no DRIFT."""
+    res = _status_fixture(tmp_path, ["land", ("anchor", "a")], [_row("a", "PASS", HOURS * MULT * 3)])
+    line = _sweep_line(res)
+    assert line.startswith("STATUS sweep OK"), f"zero landings since the last row but the check said: {line}"
+    assert res.returncode == 0, res.stdout + res.stderr
+
+
+def test_9_control_the_old_row_with_landings_past_the_limit_does_warn(tmp_path):
+    """Group 9 (iv) positive control: a row past the hours limit (under the drift multiple) with BATCH + 1 landings since
+    it WARNs, so the red test above is red because no landings were counted, not because the check cannot warn."""
+    res = _status_fixture(tmp_path, ["land", ("anchor", "a")] + ["land"] * (BATCH + 1), [_row("a", "PASS", HOURS * 1.5)])
+    assert _sweep_line(res).startswith("STATUS sweep WARN"), res.stdout + res.stderr
+
+
 # ---------------------------------------------------------------------------------------------------
 
 def _tmp():

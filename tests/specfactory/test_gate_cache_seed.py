@@ -237,8 +237,11 @@ def test_P_seed_cache_copies_candidate_results_when_origin_main_equals_the_gated
 
 
 def test_P_negative_control_origin_main_moved_by_a_docs_commit_seeds_nothing(tmp_path):
-    """P negative control: origin/main is one docs commit past the gated sha -> nothing is seeded, exit 0,
-    and the next landing's base (that docs commit) is a MISS, as today."""
+    """P negative control: origin/main is one docs commit past the gated sha -> nothing is seeded, exit 0.
+    TD-HARNESS-gate-tiers-2 (layered gate spec section 8 F8, HARNESS-gate-tiers): the next landing's base (that docs
+    commit) is a HIT through candidate_results/, because the gated sha is an ancestor of origin/main and its rc is 0.
+    CONTROL half: a candidate_results entry whose sha is NOT an ancestor of origin/main (an unlanded branch) is
+    never read: `baseline: computed`."""
     repo, m, _mark = _fixture(tmp_path)
     x = _commit(repo, "edit src", {"src/mod.py": "X = 2\n"})
     root = tmp_path / "root"
@@ -253,8 +256,23 @@ def test_P_negative_control_origin_main_moved_by_a_docs_commit_seeds_nothing(tmp
     _git(repo, "checkout", "-q", "records")
     y = _commit(repo, "next landing", {"src/mod.py": "X = 3\n"})
     nxt = _stage(repo, rec, root)
-    assert f"baseline: computed {rec}" in nxt.stdout, nxt.stdout + nxt.stderr
+    assert f"baseline: cached {rec}" in nxt.stdout, nxt.stdout + nxt.stderr
     assert y != x
+    # CONTROL: the same scene, but the gated sha sits on an unlanded branch that origin/main does not contain.
+    (tmp_path / "unlanded").mkdir()
+    repo2, m2, _mark2 = _fixture(tmp_path / "unlanded")
+    _git(repo2, "checkout", "-q", "-b", "other")
+    other = _commit(repo2, "other line", {"docs/README.md": "other\n"})
+    _git(repo2, "checkout", "-q", "-b", "cand", m2)
+    x2 = _commit(repo2, "edit src", {"src/mod.py": "X = 2\n"})
+    root2 = tmp_path / "root2"
+    assert _stage(repo2, m2, root2).returncode == 0
+    assert _cache_files(root2, "candidate_results") == [f"{x2}.json"]
+    _git(repo2, "update-ref", "refs/remotes/origin/main", other)
+    base2 = _commit(repo2, "records on the candidate line", {"docs/README.md": "r1\n"})
+    _commit(repo2, "next landing", {"src/mod.py": "X = 3\n"})
+    ctl = _stage(repo2, base2, root2)
+    assert f"baseline: computed {base2}" in ctl.stdout, ctl.stdout + ctl.stderr
 
 
 def test_P_fixture_gate_run_seeds_the_cache_and_the_next_run_reads_it(tmp_path):
