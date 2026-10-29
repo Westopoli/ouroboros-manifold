@@ -29,18 +29,18 @@ INTERFACES SHARED BY THE BUILDER AND THESE TESTS (verbatim from the paragraph un
    (DRAFT-xdist-workers = 5); the transport call passes `--pytest-extra '-n 2'`; no other regression call does.
 4. scripts/specfactory/requirements.txt gains the line `pytest-xdist>=3.6,<4`.
 
-[test] assumptions the paragraph leaves open, fixed here so the builder can meet them:
-   * "xdist really distributes" is read from the fake config as config.option.numprocesses > 0 together with
-     config.option.dist != "no" (xdist's own option names, also answered by config.getoption(name)); a worker is
-     recognised by config.workerinput being present and/or env PYTEST_XDIST_WORKER being set. The fakes below
-     give a consistent picture on all of these, and config.pluginmanager.hasplugin(...) answers True.
-   * the hook module is loaded by file path, not as a pytest plugin.
+5. Detection (ruled by the Architect, 2026-10-29). Worker = hasattr(config, "workerinput") OR env
+   PYTEST_XDIST_WORKER set (either is enough). Controller = no workerinput AND
+   config.getoption("numprocesses", 0) truthy AND config.getoption("dist", "no") != "no". Anything else (bare
+   pytest, -p no:xdist, -n 0) is neither and runs today's path. The fakes below give a consistent picture on
+   all of these. [test] the hook module is loaded by file path, not as a pytest plugin.
+6. MERGE_GATE_CSIM_XDIST (ruled 2026-10-29): when set to 0, merge_gate.sh omits the --pytest-extra arguments
+   of the csim and transport regression calls, so those stages run the serial command; unset, they carry
+   `-n 5 --dist loadfile` and `-n 2`.
 
 UNTESTED (cannot be proved without xdist installed, or are not unit-provable):
    * real distribution: that `-n 5 --dist loadfile` keeps a file's tests on one worker and the csim suite gives
      the same verdict alone and under loadfile (the paragraph's own once-only run of the whole suite both ways).
-   * the `MERGE_GATE_CSIM_XDIST=0` first-gate escape: the paragraph names the variable only inside a procedure
-     for the clerk ("or the baseline is seeded by hand"), with no stated effect on merge_gate.sh.
    * the expected gain (40 min to under 10) and test_PP_move_collision_a5.py / test_PP_portability.py /
      the two E17 S186 files, which the paragraph says stay as they are.
 
@@ -398,3 +398,72 @@ def test_13_build_failure_reaches_workers_via_om_csim_build_error(cx, tmp_path):
            "OM_CSIM_BUILD_ERROR": "compile boom", "PYTEST_XDIST_WORKER": "gw1"}
     w, _, _ = cx("worker", env)
     assert w["make_after_import"] == 0 and "compile boom" in (w["build_error"] or "")
+
+
+# ------------------------------------------------------------------ MERGE_GATE_CSIM_XDIST (stub run of merge_gate.sh)
+
+def _gate_regression_argvs(tmp_path, xdist_env):
+    """Run the real merge_gate.sh against a tiny candidate clone (a Makefile with empty targets, tests/csim and
+    tests/transport directories) with MERGE_GATE_PYTHON = a stub that logs its argv and exits 0, and return the
+    logged argv lists of the `merge_gate_support.py regression` calls keyed by their tests/ argument."""
+    root = tmp_path / "gate"
+    root.mkdir()
+    origin, pusher, cand = root / "origin.git", root / "pusher", root / "wt-cand"
+    _git(root, "init", "-q", "--bare", "-b", "main", str(origin))
+    _git(root, "clone", "-q", str(origin), str(pusher))
+    _git(pusher, "checkout", "-q", "-B", "main")
+    (pusher / "Makefile").write_text("libouroboros.so libouroboros_dbg.so pipe/ouroboros_pipe pipe/ouroboros_pipe_dbg:\n"
+                                     "\t@true\n")
+    for d in ("tests/csim", "tests/transport"):
+        (pusher / d).mkdir(parents=True)
+        (pusher / d / ".keep").write_text("\n")
+    _git(pusher, "add", "-A")
+    _git(pusher, "commit", "-q", "-m", "m1")
+    _git(pusher, "push", "-q", "origin", "main")
+    _git(root, "clone", "-q", str(origin), str(cand))
+    _git(cand, "checkout", "-q", "-b", "feat")
+    (cand / "feat.txt").write_text("f\n")
+    _git(cand, "add", "-A")
+    _git(cand, "commit", "-q", "-m", "feat")
+    log = tmp_path / "gate_argv.log"
+    stubpy = tmp_path / "gatestub"
+    stubpy.write_text(f"#!{PY}\nimport json, os, sys\n"
+                      "open(os.environ['STUB_LOG'], 'a').write(json.dumps(sys.argv[1:]) + '\\n')\n")
+    stubpy.chmod(0o755)
+    env = _env({"MERGE_GATE_PYTHON": str(stubpy), "STUB_LOG": str(log), "MERGE_GATE_MAKE_TIMEOUT": "60"})
+    if xdist_env is not None:
+        env["MERGE_GATE_CSIM_XDIST"] = xdist_env
+    subprocess.run(["bash", str(GATE), str(cand), "origin/main", "HARNESS-csim-xdist"], capture_output=True,
+                   text=True, env=env, timeout=300, cwd=str(tmp_path))
+    argvs = [json.loads(l) for l in log.read_text().splitlines()] if log.exists() else []
+    out = {}
+    for a in argvs:
+        if "regression" in a[:2] or (len(a) > 1 and a[1] == "regression"):
+            out[next(t for t in a if t.startswith("tests/"))] = a
+    return out
+
+
+def test_C_gate_stub_run_unset_passes_n5_and_n2(tmp_path):
+    """CONTROL for MERGE_GATE_CSIM_XDIST (HARNESS-csim-xdist, ruled 2026-10-29): with the variable unset the
+    stub-run gate's csim regression call carries `--pytest-extra '-n 5 --dist loadfile'` and the transport call
+    `--pytest-extra '-n 2'`. Red on the base until the stage flags exist (the stub run itself works today)."""
+    calls = _gate_regression_argvs(tmp_path, None)
+    assert {"tests/csim", "tests/transport"} <= set(calls), f"stub run did not reach the stages: {sorted(calls)}"
+    got = {k: (a[a.index("--pytest-extra") + 1] if "--pytest-extra" in a else None) for k, a in calls.items()}
+    assert (got["tests/csim"], got["tests/transport"]) == (CSIM_EXTRA, "-n 2")
+
+
+def test_14_gate_csim_xdist_zero_omits_pytest_extra(tmp_path):
+    """HARNESS-csim-xdist, MERGE_GATE_CSIM_XDIST=0 (Architect ruling 2026-10-29): merge_gate.sh omits the
+    --pytest-extra arguments of the csim and transport regression calls, so those stages run the serial command
+    (no `-n`). Positive control inside the test: the unset run has the flags, so the omission is the variable's
+    doing, and the stage is still invoked."""
+    (tmp_path / "u").mkdir()
+    (tmp_path / "z").mkdir()
+    unset = _gate_regression_argvs(tmp_path / "u", None)
+    zero = _gate_regression_argvs(tmp_path / "z", "0")
+    assert {"tests/csim", "tests/transport"} <= set(zero), f"stub run did not reach the stages: {sorted(zero)}"
+    assert "--pytest-extra" in unset["tests/csim"] and "--pytest-extra" in unset["tests/transport"], \
+        "unset run carries no --pytest-extra (the xdist flags are not in the gate yet)"
+    assert "--pytest-extra" not in zero["tests/csim"] and "--pytest-extra" not in zero["tests/transport"]
+    assert not any("-n" in t.split() for t in zero["tests/csim"] + zero["tests/transport"])
