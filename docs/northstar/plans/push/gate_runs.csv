@@ -10,3 +10,4 @@ date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject
 2026-10-28,HARNESS-mm-15,push/land-mm-15,d2adc6fb77844806feba1518adbcbbda1a9941c5,9f2d233ac9ad11836e4696952ccf3ea07248db0d,0,3998.7,0,,,0,56,0,0
 2026-10-29,HARNESS-mm-12,push/land-mm-12,b1033d37b79db8dc7d46671c84566a77191c98c5,b0db675f324f2248f8ffffcd102eca31d9384a49,0,4167.5,0,,,0,357,0,0
 2026-10-29,HARNESS-mm-18,push/land-mm-18b,84b2567e2690aed8ea8e4823bd8ebd7337d617f0,b7b25e2dd21d793e05551161f4debb26997cea78,0,4187.4,0,,,0,22,0,0
+2026-10-29,HARNESS-gate-cache-seed,push/land-cache-seed,53ada989955cb7d4d5d2f3eb708bb50f8c0cd64b,3a56e933b576038b019895108fbb117b92e23547,0,3797.6,0,,,0,418,1,0
