@@ -4395,7 +4395,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_method_weekly.py::test_a16_unit_execstart_fetches_origin_and_runs_the_script_from_origin_main", "tests/specfactory/test_method_weekly.py::test_a16_dry_run_writes_the_reap_output_under_docs_metrics_not_the_top_level"]  # node ids (the file holds HARNESS-mm-6's halted red case); the second id is the corrected test (Architect 2026-10-29: the first version asserted the defect A16 removes)
 depends_on = ["HARNESS-mm-15", "HARNESS-mm-4"]  # ordering edges on the same files
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "b7b25e2dd21d793e05551161f4debb26997cea78" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "unit ExecStart runs the script from origin/main; reap dry-run output path; two test cases"
 [[piece]]
