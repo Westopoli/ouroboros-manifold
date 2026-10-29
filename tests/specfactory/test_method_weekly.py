@@ -113,7 +113,7 @@ def test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit(tmp_pa
     r, calls, wt = _live_run(tmp_path, "2026-11-01 23:00")
     reaps = [ln for ln in calls.splitlines() if ln.startswith("wt.py reap")]
     assert reaps and all("--dry-run" in ln for ln in reaps), calls
-    assert (wt / "metrics/2026-W44_reap_dryrun.txt").read_text().strip() == "reap dry output"
+    assert (wt / "docs/northstar/plans/method_rev3_2026-10-26/metrics/2026-W44_reap_dryrun.txt").read_text().strip() == "reap dry output"
     for ln in SCRIPT.read_text().splitlines():
         if re.search(r"wt\.py\"? reap", ln) and not ln.lstrip().startswith("#"):
             assert "--dry-run" in ln, ln
@@ -130,10 +130,11 @@ def test_a16_unit_execstart_fetches_origin_and_runs_the_script_from_origin_main(
         "show origin/main:scripts/specfactory/method_weekly.sh", ""), cmd
 
 
-def test_a16_dry_run_writes_the_reap_output_to_the_top_level_metrics_folder_not_under_docs():
+def test_a16_dry_run_writes_the_reap_output_under_docs_metrics_not_the_top_level():
     r = _dry()
     assert r.returncode == 0, r.stdout + r.stderr
     reap = [ln for ln in r.stdout.splitlines() if "reap --dry-run" in ln]
     assert reap, r.stdout
-    assert re.search(r"> \S+/wt/metrics-\d{4}-W\d\d/metrics/\d{4}-W\d\d_reap_dryrun\.txt$", reap[0]), reap[0]
-    assert "docs/northstar/plans/method_rev3_2026-10-26/metrics" not in reap[0], reap[0]
+    assert re.search(r"> \S+/wt/metrics-\d{4}-W\d\d/docs/northstar/plans/method_rev3_2026-10-26/metrics/"
+                     r"\d{4}-W\d\d_reap_dryrun\.txt$", reap[0]), reap[0]
+    assert not re.search(r"/wt/metrics-[^/]+/metrics/", reap[0]), reap[0]
