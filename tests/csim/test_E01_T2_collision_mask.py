@@ -26,7 +26,7 @@ BLOB_R = 60.0              # lab's shape: 16 units in a 60 wu blob
 # 3388087635923795345); the pin is now the (units, movement) sections, which K-e5 does not touch.
 # TD-VG-W-2: old 59688484827617401, new 15349036910042598830 (movement word only; units word 5542676384425136191 unchanged):
 # W2 stored routes add the route block to the movement section.
-FLYER_SECTIONS_50 = (5542676384425136191, 15349036910042598830)   # re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
+FLYER_SECTIONS_50 = (5542676384425136191, 4978792054462148355)   # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
 
 
 def _units_movement(lib, w):

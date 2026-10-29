@@ -36,11 +36,12 @@ PYTHON = sys.executable
 # Re-recorded 2026-10-11 (TD-VG-E-21): E1q changes the growth hashed in the economy block; old values in the ledger row
 # TD-VG-W-2: W2 stored routes add the route block to the movement section; old values 100: 14414279078877383414,
 # 500: 2462771596946682441, 1000: 2825217407474388049, 2000: 263473283203217348 (new values below).
+# re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged
 PINNED_FULL = {
-    100: 15870404153552538785,
-    500: 5368266331726284326,
-    1000: 1335582271474088983,
-    2000: 6505739661716914864,
+    100: 1340420882857523623,
+    500: 15065243673284983748,
+    1000: 13532818765593894311,
+    2000: 10749923395565833911,
 }
 
 
