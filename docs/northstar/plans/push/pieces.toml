@@ -3681,7 +3681,7 @@ impact = "harness"
 depends_on = ["HARNESS-csim-xdist", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-mm-2", "HARNESS-mm-3"]
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md; amended by docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4"
+spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md; amended by docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4; section 8 (audit fold-in)"
 size_estimate = "merge_gate.sh [--revert] [--tier fast|slow|full] (default full unchanged) and one GATE tier <name> line: the fast tier per landing under the lock (lints, acceptance, transport, select-csim csim files through _symbol_module_map, status), the slow tier as a sweep on main every DRAFT-slow-tier-batch (3) landings or DRAFT-slow-tier-hours (2 h) with sweeps.md rows and bisect-and-revert, the status_check.py sweep check (DRIFT at DRAFT-slow-tier-drift-mult 2), rules.md (b) and dispatcher.md temporary-rule text replaced; replaces the temporary landing rule when it lands"
 
 # The measurement engineer's report (stage timings, host dependencies) is pasted here at launch. Shared-file edit in merge_gate.sh and merge_gate_support.py, line by line (records clerk, from origin/main 2026-10-21; the Preflight re-verifies): merge_gate.sh:19 PYTHON default ~/Projects/agora/.venv/bin/python becomes a repo-relative or environment path; merge_gate.sh:372 VENV_TARGET default $HOME/Projects/agora/.venv likewise; merge_gate_support.py has no ~ path today. gate_remote.sh must also find the baseline cache and scratch root without the box's ~/Projects/om-push.
@@ -3697,7 +3697,7 @@ impact = "harness"
 depends_on = ["A94-harness", "HARNESS-gate-cache-seed"]  # ordering edges on landed owners (overlap lint)
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4"
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8"
 size_estimate = "one toml rewrite from four strace runs; about 40 lines of test"
 
 [[piece]]
@@ -3711,7 +3711,7 @@ impact = "harness"
 depends_on = ["HARNESS-gate-tiers", "HARNESS-mm-9"]
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4"
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8"
 size_estimate = "gate_flag.py about 150 lines, merge_gate.sh one stage and a tier switch, pieces.py one check"
 
 [[piece]]
@@ -3725,7 +3725,7 @@ impact = "harness"
 depends_on = ["HARNESS-gate-tiers"]
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4"
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8"
 size_estimate = "sweep.sh about 80 lines, two unit files"
 
 [[piece]]
@@ -3739,7 +3739,7 @@ impact = "harness"
 depends_on = ["HARNESS-gate-tiers", "HARNESS-sweep-timer"]
 status = { state = "queued" }
 tests_pending = true
-spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4"
+spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md sections 4 and 8"
 size_estimate = "bisect_clerk.sh about 80 lines, one rules.md paragraph"
 
 [[piece]]
