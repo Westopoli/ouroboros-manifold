@@ -87,10 +87,13 @@ def _overlay(root, rel_file, text):
     src, dst = REPO, Path(root)
     for part in parts[:-1]:
         src, dst = src / part, dst / part
+        if dst.is_symlink():  # left by an earlier overlay: replace it, never write through it
+            dst.unlink()
         dst.mkdir(exist_ok=True)
         for e in src.iterdir():
             if e.name != parts[parts.index(part) + 1] and not (dst / e.name).exists():
                 (dst / e.name).symlink_to(e)
+    (dst / parts[-1]).unlink(missing_ok=True)  # a symlink into this tree: write_text would follow it
     (dst / parts[-1]).write_text(text)
 
 
