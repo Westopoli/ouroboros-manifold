@@ -3677,7 +3677,6 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "scripts/specfactory/status_check.py", "docs/northstar/plans/push/sweeps.md", "docs/northstar/plans/workflows_2026-10-07/rules.md", "docs/northstar/plans/workflows_2026-10-07/dispatcher.md", "tests/specfactory/test_gate_tiers.py"]  # dispatcher.md: the temporary-rule paragraph only (its other owner, HARNESS-methodcheck, is landed); rules.md: HARNESS-red-evidence is ordered after this row through HARNESS-look-rejects
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_tiers.py"]
-impact = "harness"
 depends_on = ["HARNESS-csim-xdist", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-mm-2", "HARNESS-mm-3"]
 status = { state = "queued" }
 tests_pending = true
@@ -3693,7 +3692,6 @@ wave = 13
 owns = ["scripts/specfactory/suite_inputs.toml", "tests/specfactory/test_suite_inputs.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_suite_inputs.py"]
-impact = "harness"
 depends_on = ["A94-harness", "HARNESS-gate-cache-seed"]  # ordering edges on landed owners (overlap lint)
 status = { state = "queued" }
 tests_pending = true
@@ -3707,7 +3705,6 @@ wave = 13
 owns = ["scripts/specfactory/gate_flag.py", "tests/specfactory/test_gate_flag.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/pieces.py", "docs/northstar/plans/push/pieces.toml"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_flag.py"]
-impact = "harness"
 depends_on = ["HARNESS-gate-tiers", "HARNESS-mm-9"]
 status = { state = "queued" }
 tests_pending = true
@@ -3721,7 +3718,6 @@ wave = 13
 owns = ["scripts/specfactory/sweep.sh", "scripts/specfactory/systemd/om-sweep.service", "scripts/specfactory/systemd/om-sweep.timer", "tests/specfactory/test_sweep_timer.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_sweep_timer.py"]
-impact = "harness"
 depends_on = ["HARNESS-gate-tiers"]
 status = { state = "queued" }
 tests_pending = true
@@ -3735,7 +3731,6 @@ wave = 13
 owns = ["scripts/specfactory/bisect_clerk.sh", "tests/specfactory/test_bisect_clerk.py", "docs/northstar/plans/workflows_2026-10-07/rules.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_bisect_clerk.py"]
-impact = "harness"
 depends_on = ["HARNESS-gate-tiers", "HARNESS-sweep-timer"]
 status = { state = "queued" }
 tests_pending = true
