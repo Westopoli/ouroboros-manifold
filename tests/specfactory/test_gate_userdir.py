@@ -354,10 +354,14 @@ def test_c5_pipe_before_regression_detector_fails_when_the_build_line_moves_afte
     text = GATE.read_text()
     assert _pipe_before_regression_problems(text) == []
     lines = text.splitlines()
-    build_idx = next(i for i, ln in enumerate(lines) if _PIPE_BUILD_RE.search(ln) and not ln.lstrip().startswith("#"))
-    moved = lines[:build_idx] + lines[build_idx + 1:]
+    # Test-defect TD-HARNESS-gate-reorder-7 (ruler Architect 2026-10-29): HARNESS-gate-reorder put a pre-build of the pipe
+    # (the early block) and HARNESS-gate-concurrent a main-pipe build before the regression stages, so the gate has
+    # several non-comment build lines before the first regression line; moving only the first left the others in
+    # place and the detector rightly found no problem. Move every one of them (assertions unchanged).
+    build_idxs = [i for i, ln in enumerate(lines) if _PIPE_BUILD_RE.search(ln) and not ln.lstrip().startswith("#")]
+    moved = [ln for i, ln in enumerate(lines) if i not in build_idxs]
     reg_idx = next(i for i, ln in enumerate(moved) if _FIRST_REGRESSION_RE.search(ln))
-    moved.insert(reg_idx + 1, lines[build_idx])
+    moved[reg_idx + 1:reg_idx + 1] = [lines[i] for i in build_idxs]
     problems = _pipe_before_regression_problems("\n".join(moved))
     assert problems and "is not before" in problems[0], problems
 
