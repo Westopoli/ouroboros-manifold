@@ -133,6 +133,15 @@ reject() {
     c="$(printf '%s' "$c" | tr ',"\n' '   ' | cut -c1-120)"
     ROW_CAUSES="${ROW_CAUSES:+$ROW_CAUSES;}$c"
 }
+# HARNESS-gate-reorder: the cheap, decisive stages run first; the first REJECT among them (or before them) ends the run
+# here, before the regression block. Checks the global REJECTED flag; ROW_STAGES names every REJECTed stage so far.
+# See also: tests/specfactory/test_gate_reorder.py
+early_exit_if_rejected() {
+    if [[ "$REJECTED" -eq 1 ]]; then
+        gate_line early_exit REJECT "$ROW_STAGES"
+        exit 1
+    fi
+}
 # A suite_regression timeout surfaces as a TimeoutExpired traceback in the stage log; name it.
 # See also: suite_regression.py main (suite-timeout <N>s), spec G06
 reg_detail() { if grep -q TimeoutExpired "$1"; then echo "suite-timeout ${SUITE_TIMEOUT}s"; else cat "$1"; fi; }
@@ -316,6 +325,19 @@ if [[ "$REVERT_MODE" -eq 1 ]]; then
     exit 0
 fi
 
+# -------------------------------------------------------------- 5c-status. status (HARNESS-C1b; early block, HARNESS-gate-reorder)
+# The status copies must agree (guard 7): any `STATUS <check> DRIFT` line rejects, a WARN warns. Reads THIS repo.
+# See also: status_check.py, pre_gate.sh
+STATUS_LOG="$SCRATCH_ROOT/status.log"
+"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF" >"$STATUS_LOG" 2>&1
+if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
+    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
+elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
+    warn status "$(grep '^STATUS [a-z_]* WARN' "$STATUS_LOG" | tr '\n' ' ')"
+else
+    ok status "$(tail_oneline "$STATUS_LOG" 1)"
+fi
+
 # -------------------------------------------------------------- 5c-pins. rule pins (HARNESS-C1b; full gate only)
 # Single-owner pattern: tests changed by the diff and the specs of this piece. The pre-gate runs its own step, so a
 # revert never reaches here. See also: pre_gate.sh step pins, rule_pins_tests.py, rule_pins.py
@@ -364,55 +386,6 @@ fi
 # failure is not rejected here: the transport stage reports it as it always did.
 PRE_PIPE_LOG="$SCRATCH_ROOT/pipe_build_pre_regression.log"
 ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PRE_PIPE_LOG" 2>&1
-
-# -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
-REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
-# MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
-# the baseline run and the branch run both inherit it.
-# MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
-# The csim stage runs under pytest-xdist (DRAFT-xdist-workers = 5); MERGE_GATE_CSIM_XDIST=0 runs the serial command
-# (the first gate after HARNESS-csim-xdist lands seeds its serial baseline that way). Same switch on the transport stage.
-# See also: tests/csim/conftest.py pytest_configure, the xdist branch is the last one so the call reader finds it
-if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
-    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
-        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
-else
-    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
-        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
-        --pytest-extra '-n 5 --dist loadfile' >"$REG_CSIM_LOG" 2>&1
-fi
-if [[ $? -ne 0 ]]; then
-    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
-else
-    ok regression_csim "$(cat "$REG_CSIM_LOG")"
-fi
-
-REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
-else
-    ok regression_lab "$(cat "$REG_LAB_LOG")"
-fi
-
-REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject regression_qa_t1 "$(reg_detail "$REG_QA_LOG")"
-else
-    ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
-fi
-
-REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')"
-else
-    ok specfactory_regression "$(cat "$REG_SF_LOG")"
-fi
 
 # -------------------------------------------------------------- 7. piece acceptance ids green
 ACCEPT_SPLIT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-ids "$PIECE_ID" \
@@ -660,6 +633,57 @@ else
     ok lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
 fi
 
+early_exit_if_rejected
+
+# -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
+REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
+# MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
+# the baseline run and the branch run both inherit it.
+# MALLOC_PERTURB_ is also in the baseline cache key. See also: MALLOC_PERTURB_ in merge_gate_support.py regression_check
+# The csim stage runs under pytest-xdist (DRAFT-xdist-workers = 5); MERGE_GATE_CSIM_XDIST=0 runs the serial command
+# (the first gate after HARNESS-csim-xdist lands seeds its serial baseline that way). Same switch on the transport stage.
+# See also: tests/csim/conftest.py pytest_configure, the xdist branch is the last one so the call reader finds it
+if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
+    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
+else
+    MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+        --pytest-extra '-n 5 --dist loadfile' >"$REG_CSIM_LOG" 2>&1
+fi
+if [[ $? -ne 0 ]]; then
+    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
+else
+    ok regression_csim "$(cat "$REG_CSIM_LOG")"
+fi
+
+REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
+else
+    ok regression_lab "$(cat "$REG_LAB_LOG")"
+fi
+
+REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject regression_qa_t1 "$(reg_detail "$REG_QA_LOG")"
+else
+    ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
+fi
+
+REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')"
+else
+    ok specfactory_regression "$(cat "$REG_SF_LOG")"
+fi
+
 # -------------------------------------------------------------- 10. checksum_trace O0 vs O2
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
     O0O2_LOG="$SCRATCH_ROOT/o0o2_build.log"
@@ -757,19 +781,6 @@ if [[ -d "${MERGE_GATE_LOOK_CANDIDATE:-}" && -d "${MERGE_GATE_LOOK_BASE:-}" ]]; 
     fi
 else
     warn look "no frame dirs (MERGE_GATE_LOOK_CANDIDATE / MERGE_GATE_LOOK_BASE unset); skipped"
-fi
-
-# -------------------------------------------------------------- 14. status (HARNESS-C1b)
-# The status copies must agree (guard 7): any `STATUS <check> DRIFT` line rejects, a WARN warns. Reads THIS repo.
-# See also: status_check.py, pre_gate.sh
-STATUS_LOG="$SCRATCH_ROOT/status.log"
-"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF" >"$STATUS_LOG" 2>&1
-if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
-    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
-elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
-    warn status "$(grep '^STATUS [a-z_]* WARN' "$STATUS_LOG" | tr '\n' ' ')"
-else
-    ok status "$(tail_oneline "$STATUS_LOG" 1)"
 fi
 
 # --------------------------------------------------------------
