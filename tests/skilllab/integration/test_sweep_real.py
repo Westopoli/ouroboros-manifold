@@ -140,13 +140,6 @@ def test_detect_matches_the_header_and_the_symbol(library):
         assert hasattr(library._lib, "om_roster_set_cone")
 
 
-def test_the_arc_family_is_skipped_with_a_recorded_reason_on_a_library_without_the_parameter(tmp_path, library):
-    if sweep.detect(library).arc:
-        pytest.skip("the library has OM_TP_FIRING_ARC_DEG; the skip path is covered with fakes in test_sweep.py")
-    entry = sweep.run_family("arc", tmp_path, builds=None, layouts={}, plays=())
-    assert "OM_TP_FIRING_ARC_DEG" in entry["skipped"] and entry["csv"] is None and not list(tmp_path.glob("sweep_arc*.csv"))
-
-
 def test_the_cone_family_is_skipped_with_a_recorded_reason_on_a_library_without_a_usable_cone(tmp_path, library):
     if sweep.detect(library).cone:
         pytest.skip("the library can set a cone; the skip path is covered with fakes in test_sweep.py")
