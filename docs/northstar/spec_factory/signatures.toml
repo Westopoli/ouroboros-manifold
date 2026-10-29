@@ -5,8 +5,8 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 8
-symbol_count = 767
+abi_version = 9
+symbol_count = 802
 struct_count = 45
 ambiguous_remaining = 0
 
@@ -6619,6 +6619,24 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "u
 epics = ["E-11"]
 confidence = "certain"
 note = "PP-contract (A133): 1 when the unit's engaged flag is set, else 0; 0 for an unknown unit or a NULL world."
+
+[[symbols]]
+name = "om_roster_set_cone"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_type", ctype = "int" }, { name = "range", ctype = "double" }, { name = "half_angle_deg", ctype = "double" }, { name = "share", ctype = "double" }]
+epics = ["E-11"]
+confidence = "likely"
+note = "LAB-REV2 E0 (R-082-06 draft): per-type cone area attack, range 0 clears it; 0 ok, -1 unknown type, -2 refused value. Stub returns -1 (not built) until LAB-REV2-E2."
+
+[[symbols]]
+name = "om_combat_can_engage"
+module = "unit.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "attacker", ctype = "uint32_t" }, { name = "target", ctype = "uint32_t" }]
+epics = ["E-13"]
+confidence = "likely"
+note = "LAB-REV2 E0 (R-100 draft): 0 when every gate passes, 1 to 5 the first failing reason, -1 for a bad pair. Stub returns -1 (not built) until LAB-REV2-E2."
 
 [[symbols]]
 name = "om_world_checksum_full"
