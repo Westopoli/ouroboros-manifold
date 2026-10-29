@@ -6,4 +6,6 @@ Description=Method metrics, weekly run (no model is called)
 Type=oneshot
 WorkingDirectory=/home/westopoli/Projects/ouroboros-manifold
 Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/bin/bash /home/westopoli/Projects/ouroboros-manifold/scripts/specfactory/method_weekly.sh
+# Runs method_weekly.sh as it is on origin/main, not the live checkout's copy (the live tree lags main).
+# See also: docs/northstar/plans/method_rev3_2026-10-26/spec.md Amendment A16.
+ExecStart=/bin/bash -c 'git -C /home/westopoli/Projects/ouroboros-manifold fetch -q origin && git -C /home/westopoli/Projects/ouroboros-manifold show origin/main:scripts/specfactory/method_weekly.sh > %t/om_method_weekly.sh && exec /bin/bash %t/om_method_weekly.sh'

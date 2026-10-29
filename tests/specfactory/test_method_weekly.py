@@ -117,3 +117,23 @@ def test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit(tmp_pa
     for ln in SCRIPT.read_text().splitlines():
         if re.search(r"wt\.py\"? reap", ln) and not ln.lstrip().startswith("#"):
             assert "--dry-run" in ln, ln
+
+
+# spec: Amendment A16 (HARNESS-mm-18): the unit runs the script as it is on origin/main; the reap output has its own folder
+def test_a16_unit_execstart_fetches_origin_and_runs_the_script_from_origin_main():
+    lines = [ln for ln in (UNITS / "om-method-metrics.service").read_text().splitlines() if ln.startswith("ExecStart=")]
+    assert lines, "no ExecStart line"
+    cmd = lines[-1]
+    assert re.search(r"fetch -q origin", cmd), cmd
+    assert "show origin/main:scripts/specfactory/method_weekly.sh" in cmd, cmd
+    assert "/ouroboros-manifold/scripts/specfactory/method_weekly.sh" not in cmd.replace(
+        "show origin/main:scripts/specfactory/method_weekly.sh", ""), cmd
+
+
+def test_a16_dry_run_writes_the_reap_output_to_the_top_level_metrics_folder_not_under_docs():
+    r = _dry()
+    assert r.returncode == 0, r.stdout + r.stderr
+    reap = [ln for ln in r.stdout.splitlines() if "reap --dry-run" in ln]
+    assert reap, r.stdout
+    assert re.search(r"> \S+/wt/metrics-\d{4}-W\d\d/metrics/\d{4}-W\d\d_reap_dryrun\.txt$", reap[0]), reap[0]
+    assert "docs/northstar/plans/method_rev3_2026-10-26/metrics" not in reap[0], reap[0]
