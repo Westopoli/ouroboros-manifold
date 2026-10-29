@@ -8,7 +8,7 @@ The rule numbers behind the settings are R-084-01 (category multiplier, used her
 R-087-05 (leash), R-005-02 (cross-layer vision), S-162 and S-163 (ping and emission numbers).
 
 Also here (rulings-2 Addendum 46): canvas limit OM_MAP_MAX_CANVAS (A133 Q-C3), settings survive om_tactical_reset
-and are not hashed (A133 Q-C4), the layer range 0 to OM_LAYER_COUNT - 1 and the cover height rule (A132), and the
+and are not in the light state checksum (A133 Q-C4), the layer range 0 to OM_LAYER_COUNT - 1 and the cover height rule (A132), and the
 unknown-unit returns of the three read-only getters (A133). The getters' bodies are stubs in the contract wave, so
 no behaviour beyond the unknown-unit return is tested here.
 
@@ -67,9 +67,9 @@ IDS = [p["name"] for p in PARAMS]
 
 
 def test_control_table_has_every_member_and_the_six_named_defaults():
-    """The table this file reads is whole: 66 members in order, the plan's six switches at their defaults.
+    """The table this file reads is whole: 67 members in order, the plan's six switches at their defaults.
     If the parser read nothing, every parametrized test below would silently vanish; this one would not."""
-    assert COUNT == 66
+    assert COUNT == 67
     assert [p["value"] for p in PARAMS] == list(range(COUNT))
     for name, default in (("OM_TP_PURSUE_BY_STEERING", 1), ("OM_TP_ROUTE_AROUND_TERRAIN", 1),
                           ("OM_TP_LEASH_BEFORE_DAMAGE", 0), ("OM_TP_TARGET_POLICY", 0),

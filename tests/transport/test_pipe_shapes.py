@@ -78,7 +78,7 @@ def test_pipe_hello_snapshot_and_checksum_match_ctypes():
     proc = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=60)
     frames = _read_frames(proc.stdout)
     kinds = [f["type"] for f in frames]
-    assert kinds[0] == "hello" and frames[0]["abi"] == 8 and frames[0]["layout_ok"] is True
+    assert kinds[0] == "hello" and frames[0]["abi"] == 9 and frames[0]["layout_ok"] is True
     snap = [f for f in frames if f["type"] == "snapshot"][-1]
     assert snap["tick"] == 10
     lib = csim.load_lib()
