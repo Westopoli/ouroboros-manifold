@@ -334,11 +334,11 @@ def test_status_stage_ok_when_every_check_is_ok(tmp_path):
     assert status and status[0].startswith("GATE status OK"), proc.stdout + proc.stderr
 
 
-def test_status_stage_comes_after_look_and_is_called_with_repo_and_base(tmp_path):
+def test_status_stage_runs_early_and_is_called_with_repo_and_base(tmp_path):
+    # Test-defect TD-HARNESS-gate-reorder-1 (ruler Architect 2026-10-29): the `look[0] < status[0]` clause is retired;
+    # status now runs in the early block, before rule_pins. See also: tests/specfactory/test_gate_reorder.py
     lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
-    look = [i for i, l in enumerate(lines) if l.startswith("GATE look ")]
-    status = [i for i, l in enumerate(lines) if l.startswith("GATE status ")]
-    assert look and status and look[0] < status[0], proc.stdout + proc.stderr
+    assert any(l.startswith("GATE status ") for l in lines), proc.stdout + proc.stderr
     argv = (root / "scripts" / "specfactory" / "status_check.argv").read_text().splitlines()
     assert argv[0] == "--repo" and os.path.realpath(argv[1]) == os.path.realpath(root), argv
     origin_main = _git(tmp_path / "repo", "rev-parse", "origin/main").stdout.strip()

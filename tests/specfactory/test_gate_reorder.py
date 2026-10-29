@@ -66,7 +66,17 @@ OK_STUB = "import sys\nsys.exit(0)\n"
 # the only REJECT in a fixture is the one the test plants. A stage that REJECTs before the early block would
 # otherwise trip early_exit_if_rejected in every fixture.
 NOISY_TOOLS = ("alg_constants.py", "reach_lint.py", "sig_table.py")
-PIECES = '[[piece]]\nid = "B1"\nowns = ["csrc/stub.c"]\nacceptance = []\ndepends_on = []\n'
+
+
+def _pieces(*owns):
+    return '[[piece]]\nid = "B1"\nowns = [' + ", ".join(f'"{o}"' for o in owns) + ']\nacceptance = []\ndepends_on = []\n'
+
+
+PIECES = _pieces("csrc/stub.c")
+# Test-defect TD-HARNESS-gate-reorder-1 (ruler Architect 2026-10-29): footprint is in the early block and a REJECT
+# there ends the run, so a fixture that must reach the regression block has B1 own every file its candidate commits.
+OWNS_CLEAN = _pieces("csrc/stub.c", "feat.txt")
+OWNS_NEW_RED = _pieces("csrc/stub.c", "feat.txt", "tests/csim/test_new_red.py")
 COPIED_INTO_CANDIDATE = ("csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "CLAUDE.md")  # CLAUDE.md: status_check method_pins reads it at the base
 LEDGER = "docs/northstar/plans/push_ledger_2026-09-22.md"  # the real ledger has open DRIFT rows: status_check reads it
 
@@ -103,7 +113,7 @@ def _overlay(root, rel_file, text):
     (dst / parts[-1]).write_text(text)
 
 
-def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=None, stubs=None):
+def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=None, stubs=None, pieces=PIECES):
     """Returns (gate script path, candidate dir). candidate_files / base_files: {relpath: text} committed on top
     of the common first commit (base_files go into the base commit that origin/main points at)."""
     cand = tmp_path / "cand"
@@ -149,16 +159,16 @@ def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=Non
     _overlay(root, PROGRAMME,
              "| Lane | On main | Next piece | First look | Westley row |\n|---|---|---|---|---|\n"
              f"| X | {sha} | - | - | - |\n")
-    _overlay(root, "docs/northstar/plans/push/pieces.toml", PIECES)
+    _overlay(root, "docs/northstar/plans/push/pieces.toml", pieces)
     _overlay(root, LEDGER, "")
-    (tmp_path / "pieces.toml").write_text(PIECES)
+    (tmp_path / "pieces.toml").write_text(pieces)
     (tmp_path / "placeholders.txt").write_text("")
     return root / "scripts" / "specfactory" / "merge_gate.sh", cand
 
 
-def _run(tmp_path, *, drift=False, gate_script=None, candidate_files=None, base_files=None, stubs=None):
+def _run(tmp_path, *, drift=False, gate_script=None, candidate_files=None, base_files=None, stubs=None, pieces=PIECES):
     gate, cand = _build(tmp_path, drift=drift, gate_script=gate_script or (SPEC_DIR / "merge_gate.sh"),
-                        candidate_files=candidate_files, base_files=base_files, stubs=stubs)
+                        candidate_files=candidate_files, base_files=base_files, stubs=stubs, pieces=pieces)
     env = {"PATH": GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
            "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
            "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
@@ -228,7 +238,7 @@ def test_2_cheap_stages_all_run_before_every_regression_stage(tmp_path):
     """HARNESS-gate-reorder, clause 'status, footprint, pins, transport, playthrough and lane_plays run before
     csim, specfactory and lab': on a clean fixture no early_exit prints and each of the six stage lines precedes
     each of the three regression lines."""
-    rc, lines, out = _run(tmp_path)
+    rc, lines, out = _run(tmp_path, pieces=OWNS_CLEAN)
     assert _idx(lines, "early_exit") is None, out
     for name in EARLY + REGRESSION:
         assert _idx(lines, name) is not None, f"{name} line missing:\n{out}"
@@ -248,7 +258,7 @@ def test_4_late_reject_still_runs_every_stage_to_the_end(tmp_path):
     still shows the full summary': a new red test in tests/csim REJECTs regression_csim after the early block;
     the stages after it (specfactory_regression, regression_lab, look) and the GATE row still print, exit 1,
     no early_exit. Red on the built tree because regression_csim still precedes lane_plays there."""
-    rc, lines, out = _run(tmp_path, candidate_files={"tests/csim/test_new_red.py": NEW_RED})
+    rc, lines, out = _run(tmp_path, candidate_files={"tests/csim/test_new_red.py": NEW_RED}, pieces=OWNS_NEW_RED)
     csim = _idx(lines, "regression_csim")
     assert csim is not None and lines[csim].startswith("GATE regression_csim REJECT"), out
     assert _idx(lines, "lane_plays") < csim, "lane_plays must precede regression_csim:\n" + out
@@ -263,7 +273,7 @@ def test_5_known_red_stage_after_the_early_block_behaves_as_today(tmp_path):
     """HARNESS-gate-reorder, clause 'the known-red handling is unchanged': a csim test red on main AND on the
     candidate is baseline red, not a regression: `GATE regression_csim OK`, no early_exit, exit 0. Red on the
     built tree only because regression_csim still precedes lane_plays there (the order assertion)."""
-    rc, lines, out = _run(tmp_path, base_files={"tests/csim/test_old_red.py": OLD_RED})
+    rc, lines, out = _run(tmp_path, base_files={"tests/csim/test_old_red.py": OLD_RED}, pieces=OWNS_CLEAN)
     csim = _idx(lines, "regression_csim")
     assert csim is not None and lines[csim].startswith("GATE regression_csim OK"), out
     assert _idx(lines, "early_exit") is None, out
