@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-004-07@c7c723
 """E-01 R-001-07 / R-004-07 (terrain stage 2): a walker takes its next waypoint inside the arrival radius.
 
 Defect diagnosed 2026-10-06 on push/t2-colmask: om_move_walker_step (csrc/tactical_move.c) advances to the next
@@ -45,7 +46,7 @@ FLYER_TICKS = 200
 # (units, movement) sections.
 # TD-VG-W-2: old 11290823588580758478, new 12903589747027128004 (movement word only; units word 1545777915625493498 unchanged):
 # W2 stored routes add the route block to the movement section.
-FLYER_SECTIONS_200 = (1545777915625493498, 12903589747027128004)   # re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
+FLYER_SECTIONS_200 = (1545777915625493498, 615507882537794494)   # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
 
 
 def _units_movement(lib, w):

@@ -171,3 +171,26 @@ def test_2_timed_out_suite_regression_says_suite_timeout_not_a_traceback(tmp_pat
     out = r.stdout + r.stderr
     assert "suite-timeout 1s" in out, out[-600:]
     assert "Traceback" not in out and r.returncode != 0, out[-600:]
+
+
+def test_7_pre_gate_exports_runs_csv_devnull(tmp_path):
+    """HARNESS-mm-7 (method rev 3 spec, item A6, "Pre-gate pollution"): a pre_gate.sh dry run calls
+    `merge_gate.sh --revert`, which appends a GATE row to the file MERGE_GATE_RUNS_CSV names; pre_gate.sh must
+    export MERGE_GATE_RUNS_CSV=/dev/null so the real gate_runs.csv gets no row. Behavioural and cheap: the
+    PRE_GATE_MERGE_GATE hook swaps in a stub gate that appends a row to whatever MERGE_GATE_RUNS_CSV it inherits
+    (and fails loudly if unset, so the real file is never touched); the test sets the variable to a temp file and
+    asserts pre_gate.sh overrode it, so the temp file is never written."""
+    wt = tmp_path / "wt"
+    wt.mkdir()
+    _git(wt, "init", "-q", "-b", "main")
+    _commit(wt, {"m.txt": 1})
+    stub = tmp_path / "stub_gate.sh"
+    stub.write_text('#!/usr/bin/env bash\necho "stub-row,$*" >> "${MERGE_GATE_RUNS_CSV:?unset}"\nexit 0\n')
+    stub.chmod(0o755)
+    csv_path = tmp_path / "gate_runs.csv"
+    env = {"PATH": os.environ["PATH"], "HOME": str(tmp_path), "MERGE_GATE_RUNS_CSV": str(csv_path),
+           "PRE_GATE_MERGE_GATE": str(stub), "PRE_GATE_PYTHON": sys.executable}
+    r = subprocess.run(["bash", str(REPO / "scripts" / "specfactory" / "pre_gate.sh"), str(wt), "HEAD", "HARNESS-mm-7"],
+                       capture_output=True, text=True, env=env, timeout=60)
+    assert "PRE_GATE gate OK" in r.stdout, r.stdout + r.stderr  # the stub gate ran (control: the step was reached)
+    assert not csv_path.exists(), f"pre_gate.sh left MERGE_GATE_RUNS_CSV unexported to /dev/null: {csv_path.read_text()!r}"

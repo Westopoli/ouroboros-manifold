@@ -12,3 +12,5 @@ date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject
 2026-10-29,HARNESS-mm-18,push/land-mm-18b,84b2567e2690aed8ea8e4823bd8ebd7337d617f0,b7b25e2dd21d793e05551161f4debb26997cea78,0,4187.4,0,,,0,22,0,0
 2026-10-29,HARNESS-gate-cache-seed,push/land-cache-seed,53ada989955cb7d4d5d2f3eb708bb50f8c0cd64b,3a56e933b576038b019895108fbb117b92e23547,0,3797.6,0,,,0,418,1,0
 2026-10-29,HARNESS-mm-19,push/land-mm-19,a8a879e6b6e00159155a58c78cd6843dadcd1ae1,eb0511b16014d9823f12dcf4f460010661692744,0,3529.0,0,,VM load,0,177,0,0
+2026-10-29,LAB-REV2-E0,push/land-e0,feb73b17de6017cd3c0840f4d1ce6c496c46431f,3367cdbd54e499a35a3d85f893bc1edf60b8ff2b,0,7056.9,1,regression_csim;regression_lab,VM running; baseline: computed feb73b17de6017cd3c0840f4d1ce6c496c46431f REJECT new failures: ['tests/csim/test_E01_T2_collision_mask;baseline: computed feb73b17de6017cd3c0840f4d1ce6c496c46431f REJECT changed assertions (warn): ['tests/skilllab/integrati,39,834,32,0
+2026-10-29,"LAB-REV2-E0,HARNESS-mm-7",push/land-e0-mm7,5652ef8397468a70587f5e13043fab445a55b8a1,94785716f4eb9e00a66da13ec4892824ee9b2455,0,6822.3,0,,VM running,39,867,32,0
