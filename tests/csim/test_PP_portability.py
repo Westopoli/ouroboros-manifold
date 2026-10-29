@@ -1,3 +1,4 @@
+# Rule pins: R-140-02@56c964
 """Steam wiring spec (docs/northstar/plans/2026-10-06-steam-multiplayer-wiring-spec.md), piece W7
 portability. Rules: E-19 R-140-02..04 (every peer's sim agrees byte for byte, so the checksum
 exchange of the session never desyncs on another OS or compiler) and the determinism contract

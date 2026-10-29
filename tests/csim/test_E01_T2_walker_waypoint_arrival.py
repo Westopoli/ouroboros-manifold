@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-004-07@c7c723
 """E-01 R-001-07 / R-004-07 (terrain stage 2): a walker takes its next waypoint inside the arrival radius.
 
 Defect diagnosed 2026-10-06 on push/t2-colmask: om_move_walker_step (csrc/tactical_move.c) advances to the next

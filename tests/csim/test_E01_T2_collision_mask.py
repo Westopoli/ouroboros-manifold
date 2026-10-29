@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-004-07@c7c723
 """E-01 R-001-07 / R-004-07 (terrain stage 2): the collision push-apart must not move a walker off its walk mask.
 
 Defect found 2026-10-06 on push/terrain2-land-2: om_move_collide_pair (csrc/tactical_move.c) shoves overlapping walkers
