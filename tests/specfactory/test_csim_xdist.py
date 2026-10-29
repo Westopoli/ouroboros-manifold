@@ -443,8 +443,8 @@ def _gate_regression_argvs(tmp_path, xdist_env):
     return out
 
 
-def test_C_gate_stub_run_unset_passes_n5_and_n2(tmp_path):
-    """CONTROL for MERGE_GATE_CSIM_XDIST (HARNESS-csim-xdist, ruled 2026-10-29): with the variable unset the
+def test_15_gate_stub_run_unset_passes_n5_and_n2(tmp_path):
+    """HARNESS-csim-xdist, MERGE_GATE_CSIM_XDIST unset (ruled 2026-10-29), the stub-run reader is sound (the stages are reached); with the variable unset the
     stub-run gate's csim regression call carries `--pytest-extra '-n 5 --dist loadfile'` and the transport call
     `--pytest-extra '-n 2'`. Red on the base until the stage flags exist (the stub run itself works today)."""
     calls = _gate_regression_argvs(tmp_path, None)
