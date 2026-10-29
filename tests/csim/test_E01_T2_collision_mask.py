@@ -1,3 +1,4 @@
+# Rule pins: R-001-07@8f31c3, R-004-07@c7c723
 """E-01 R-001-07 / R-004-07 (terrain stage 2): the collision push-apart must not move a walker off its walk mask.
 
 Defect found 2026-10-06 on push/terrain2-land-2: om_move_collide_pair (csrc/tactical_move.c) shoves overlapping walkers
@@ -26,7 +27,7 @@ BLOB_R = 60.0              # lab's shape: 16 units in a 60 wu blob
 # 3388087635923795345); the pin is now the (units, movement) sections, which K-e5 does not touch.
 # TD-VG-W-2: old 59688484827617401, new 15349036910042598830 (movement word only; units word 5542676384425136191 unchanged):
 # W2 stored routes add the route block to the movement section.
-FLYER_SECTIONS_50 = (5542676384425136191, 15349036910042598830)   # re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
+FLYER_SECTIONS_50 = (5542676384425136191, 4978792054462148355)   # re-recorded 2026-10-29 for LAB-REV2-E0 (movement section carries the movement slot); units word unchanged, positions identical to feb73b17; earlier: re-recorded 2026-10-13 on the W2 tree (was recorded 2026-10-11 on the K-e5 tree 2747b283)
 
 
 def _units_movement(lib, w):
