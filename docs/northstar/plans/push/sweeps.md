@@ -6,3 +6,4 @@ Row format (spec `docs/northstar/plans/2026-10-29-layered-gate-spec.md` section 
 
 | Date-time UTC | Main sha | Verdict | New | Red | Red ids |
 |---|---|---|---|---|---|
+| 2026-10-29 21:10 | 93c0583db1e4b00f5dde5ed4ee3129e7f5dde457 | BASE | new: none | red: 0 | |

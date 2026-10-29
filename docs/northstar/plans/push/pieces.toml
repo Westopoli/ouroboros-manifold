@@ -3678,7 +3678,7 @@ owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_sup
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_tiers.py"]
 depends_on = ["HARNESS-csim-xdist", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-lane-plays-scope", "HARNESS-westley-folder", "HARNESS-mm-2", "HARNESS-mm-3"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "93c0583db1e4b00f5dde5ed4ee3129e7f5dde457" }
 tests_pending = true
 # spec amended by docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4 and section 8 (audit fold-in)
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3707,7 +3707,7 @@ owns = ["scripts/specfactory/gate_flag.py", "tests/specfactory/test_gate_flag.py
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_flag.py"]
 depends_on = ["HARNESS-gate-tiers", "HARNESS-mm-9"]
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "93c0583db1e4b00f5dde5ed4ee3129e7f5dde457" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-29-layered-gate-spec.md"
 size_estimate = "gate_flag.py about 150 lines, merge_gate.sh one stage and a tier switch, pieces.py one check"
