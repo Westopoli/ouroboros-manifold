@@ -81,7 +81,7 @@ REVIEW_FIELDS_FROM = "2026-10-20"  # DRAFT-review-fields-from, harness enforceme
 REVIEW_FIELDS = ("legend", "unit", "band")
 # The ten keys pieces.toml rows use plus the four HARNESS-C4 adds. See also: pieces.py, which rejects no unknown key.
 KNOWN_KEYS = frozenset("id manager wave owns owns_glob acceptance depends_on status tests_pending size_estimate "
-                       "script args launch spec story contract".split())
+                       "script args launch spec story contract impact".split())
 # Ids whose `launch = "-"` is exempt from the sha test (launched before launch_check.sh); REPIN fills it.
 PRE_LAUNCH_IDS = ()
 STAND_IN_ANSWER = re.compile(r"until Westley|Westley to confirm|Westley answers|Architect default|\bdefault\b", re.I)

@@ -28,6 +28,11 @@
 #         the diff stages run over the union diff base...HEAD; the piece id is a comma list. A regression reject names
 #         the first-parent landings since <base_ref>.
 # `GATE tier <name>` is the first GATE line. See also: tests/specfactory/test_gate_tiers.py,
+# Flag (HARNESS-gate-flag): the piece's `impact` key (pieces.toml, `gate_flag.py impact`) adds the stage `flag` right after
+#   make (`GATE flag SKIP revert mode` under --revert; skipped with a line when the row has no key). Without --tier an
+#   explicit key picks the tier: sim and contract run `fast`; harness runs fast plus the specfactory suite and no csim or
+#   transport; client runs fast plus playthrough, lane plays and qa/t1, transport only when the diff touches autoload/ or
+#   tests/transport/, and no csim, lab or specfactory suite. --tier given wins. See also: tests/specfactory/test_gate_flag.py
 # docs/northstar/plans/2026-10-29-layered-gate-spec.md section 8 B1
 set -uo pipefail
 
@@ -62,6 +67,7 @@ case "${TIER:-full}" in fast|slow|full) ;; *) usage ;; esac
 if [[ "$REVERT_MODE" -eq 1 && "${TIER:-full}" != full ]]; then
     usage
 fi
+TIER_GIVEN="$TIER"
 TIER="${TIER:-full}"
 
 if [[ $# -ne 3 ]]; then
@@ -175,6 +181,28 @@ harness() { gate_line "$1" HARNESS "${*:2}"; }
 
 tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
 
+# HARNESS-gate-flag: the piece's `impact` key. rc 0 key valid, 2 value outside the four (the flag stage rejects), 3 no key.
+# Without --tier, a valid key picks the tier; no key keeps today's default, full.
+IMPACT=""
+IMPACT_RC=3
+if [[ "$REVERT_MODE" -eq 0 && -n "$PIECE_ID" ]]; then
+    IMPACT="$("$PYTHON" "$GATE_DIR/gate_flag.py" impact "$PIECES_TOML" "$PIECE_ID" --require-key 2>"$SCRATCH_ROOT/impact.err")"
+    IMPACT_RC=$?
+    case "$IMPACT" in harness|client|sim|contract) ;; *) [[ "$IMPACT_RC" -eq 2 ]] || IMPACT_RC=3 ;; esac
+fi
+FLAG_PICKS=""
+if [[ -z "$TIER_GIVEN" && "$IMPACT_RC" -eq 0 ]]; then
+    TIER=fast
+    case "$IMPACT" in harness|client) FLAG_PICKS="$IMPACT" ;; esac
+fi
+# Which suites run: the tier's, narrowed or widened by the flag when it picked the tier (diff = the client transport trigger).
+RUN_PT=1; RUN_QA_T1=1; RUN_CSIM=1; RUN_LAB=1; RUN_SF=1; RUN_TRANSPORT=1
+if [[ "$TIER" == fast ]]; then RUN_PT=0; RUN_QA_T1=0; RUN_LAB=0; RUN_SF=0; fi
+case "$FLAG_PICKS" in
+    harness) RUN_CSIM=0; RUN_SF=1; RUN_TRANSPORT=0 ;;
+    client) RUN_PT=1; RUN_QA_T1=1; RUN_CSIM=0; RUN_TRANSPORT=diff ;;
+esac
+
 echo "GATE tier $TIER"
 
 # -------------------------------------------------------------- 0. base
@@ -230,6 +258,31 @@ elif [[ $MAKE_RC -ne 0 ]]; then
 fi
 [[ -n "${MAKE_OPT_WARN:-}" ]] && warn make "$MAKE_OPT_WARN"
 ok make ""
+
+# -------------------------------------------------------------- 1b. flag (HARNESS-gate-flag)
+# Layer 1 of the layered gate: the two determinism traces against the base and the diff footprint, judged by the piece's
+# impact flag. See also: gate_flag.py verdict, tests/specfactory/test_gate_flag.py
+if [[ "$REVERT_MODE" -eq 1 ]]; then
+    gate_line flag SKIP "revert mode"
+elif [[ -z "$PIECE_ID" ]]; then
+    gate_line flag SKIP "no ids"
+elif [[ "$IMPACT_RC" -eq 2 ]]; then
+    reject flag "$(tail_oneline "$SCRATCH_ROOT/impact.err" 3)"
+elif [[ "$IMPACT_RC" -ne 0 ]]; then
+    gate_line flag SKIP "impact missing in pieces.toml (treated as sim); traces not checked"
+else
+    FLAG_LOG="$SCRATCH_ROOT/flag.log"
+    "$PYTHON" "$GATE_DIR/gate_flag.py" verdict "$CANDIDATE" "$BASE_REF" "$IMPACT" \
+        --merge-root "$MERGE_ROOT" --lib "$CANDIDATE/libouroboros.so" >"$FLAG_LOG" 2>"$SCRATCH_ROOT/flag.err"
+    FLAG_RC=$?
+    FLAG_LINE="$(grep -m1 '^flag ' "$FLAG_LOG")"
+    [[ -n "$FLAG_LINE" ]] || FLAG_LINE="gate_flag.py failed: $(tail_oneline "$SCRATCH_ROOT/flag.err" 3)"
+    if [[ "$FLAG_RC" -ne 0 ]]; then
+        reject flag "$FLAG_LINE"
+    else
+        ok flag "$FLAG_LINE"
+    fi
+fi
 
 # -------------------------------------------------------------- 2. libm_lint
 LIBM_LOG="$SCRATCH_ROOT/libm_lint.log"
@@ -598,7 +651,13 @@ ok qa_t1 "covered by regression_qa_t1"
 # See also: TRANSPORT_RUN and TRANSPORT_WARNS in section 6, tests/specfactory/test_gate_concurrent.py test_2, test_8
 TRANSPORT_RUN=0
 TRANSPORT_WARNS=()
-if [[ -d "$CANDIDATE/tests/transport" ]]; then
+if [[ "$RUN_TRANSPORT" == diff ]]; then
+    RUN_TRANSPORT=0
+    git -C "$CANDIDATE" diff --name-only "$BASE_REF"...HEAD | grep -qE '^(autoload/|tests/transport/)' && RUN_TRANSPORT=1
+fi
+if [[ "$RUN_TRANSPORT" -eq 0 ]]; then
+    :  # the flag left transport out
+elif [[ -d "$CANDIDATE/tests/transport" ]]; then
     PIPE_LOG="$SCRATCH_ROOT/pipe_build.log"
     # See also: tests/transport/test_pipe_vg_identity.py skips without OM_MAIN_PIPE
     # Build base-ref's pipe once and export it so the candidate and base runs see the same env;
@@ -639,8 +698,8 @@ if [[ "$VENV_LINK_MADE" -eq 1 && -L "$CANDIDATE/.venv" ]]; then
     echo "ok venv_unlink \"$VENV_TARGET\""
 fi
 
-# The fast tier skips playthrough and lane_plays (no frame in that tier); `fi` follows lane_plays.
-if [[ "$TIER" != fast ]]; then
+# The fast tier skips playthrough and lane_plays (no frame in that tier) unless the client flag picked it; `fi` follows lane_plays.
+if [[ "$RUN_PT" -eq 1 ]]; then
 # -------------------------------------------------------------- 9b. playthrough (desktop flow suite, real client under xvfb)
 # Runs on the merged tree only when the diff touches game code; red outside
 # playthrough_known_red.txt rejects. See merge_gate_support.py playthrough_check.
@@ -695,7 +754,7 @@ slow_landings() {
         "$(git -C "$CANDIDATE" log --first-parent --format=%h "$BASE_REF..$MAIN_SHA" 2>/dev/null | tr '\n' ' ')"
 }
 
-if [[ "$TIER" != fast ]]; then
+if [[ "$RUN_QA_T1" -eq 1 ]]; then
     job_dirs qa_t1
     REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
     TMPDIR="$SCRATCH_ROOT/qa_t1" XDG_DATA_HOME="$SCRATCH_ROOT/qa_t1/xdg" \
@@ -719,7 +778,7 @@ job_dirs lab
 job_dirs specfactory
 CSIM_ARGS=(tests/csim)
 CSIM_SKIPPED=""
-if [[ "$TIER" == fast ]]; then
+if [[ "$TIER" == fast && "$RUN_CSIM" -eq 1 ]]; then
     CSIM_SELECTION="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" select-csim "$CANDIDATE" "$BASE_REF" \
         --signatures "$SIGNATURES_TOML" --symbol-modules "$SYMBOL_MODULES_TOML")" \
         || { harness regression_csim "select-csim failed"; exit 3; }
@@ -731,7 +790,7 @@ if [[ "$TIER" == fast ]]; then
 fi
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 REG_CSIM_PID=""
-if [[ -n "$CSIM_SKIPPED" ]]; then
+if [[ "$RUN_CSIM" -eq 0 || -n "$CSIM_SKIPPED" ]]; then
     :
 elif [[ "$TIER" == fast ]]; then
     # The selected files run under the same xdist switch as the full suite.
@@ -761,12 +820,13 @@ REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
 REG_LAB_PID=""
 REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
 REG_SF_PID=""
-if [[ "$TIER" != fast ]]; then
+if [[ "$RUN_LAB" -eq 1 ]]; then
     TMPDIR="$SCRATCH_ROOT/lab" XDG_DATA_HOME="$SCRATCH_ROOT/lab/xdg" \
     "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
         --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1 &
     REG_LAB_PID=$!
-
+fi
+if [[ "$RUN_SF" -eq 1 ]]; then
     TMPDIR="$SCRATCH_ROOT/specfactory" XDG_DATA_HOME="$SCRATCH_ROOT/specfactory/xdg" \
     "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
         --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1 &
@@ -816,7 +876,9 @@ if [[ -n "$REG_TRANSPORT_PID" ]]; then
     fi
 fi
 
-if [[ -n "$CSIM_SKIPPED" ]]; then
+if [[ "$RUN_CSIM" -eq 0 ]]; then
+    :
+elif [[ -n "$CSIM_SKIPPED" ]]; then
     ok regression_csim "$CSIM_SKIPPED"
 elif [[ "$REG_CSIM_RC" -ne 0 ]]; then
     reject regression_csim "$(reg_detail "$REG_CSIM_LOG")$(slow_landings)"
@@ -824,13 +886,14 @@ else
     ok regression_csim "$(cat "$REG_CSIM_LOG")"
 fi
 
-if [[ "$TIER" != fast ]]; then
+if [[ "$RUN_LAB" -eq 1 ]]; then
     if [[ "$REG_LAB_RC" -ne 0 ]]; then
         reject regression_lab "$(reg_detail "$REG_LAB_LOG")$(slow_landings)"
     else
         ok regression_lab "$(cat "$REG_LAB_LOG")"
     fi
-
+fi
+if [[ "$RUN_SF" -eq 1 ]]; then
     if [[ "$REG_SF_RC" -ne 0 ]]; then
         reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')$(slow_landings)"
     else
