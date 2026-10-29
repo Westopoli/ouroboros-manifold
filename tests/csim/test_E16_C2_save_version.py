@@ -12,7 +12,7 @@ import ctypes
 from conftest import OMTier, set_owner, set_region
 
 VERSION_OFFSET = 4
-EXPECTED_VERSION = 12
+EXPECTED_VERSION = 13
 PRE_BUMP_VERSION = 9
 
 
