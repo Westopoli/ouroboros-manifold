@@ -4387,3 +4387,15 @@ tests_pending = true
 status = { state = "attached", attach_sha = "d29e0236cf3280aef27cd636ae3d7f6ad711cb02" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "threshold approvals written into the toml (Phase 4d); one data edit and one test case"
+[[piece]]
+id = "HARNESS-mm-18"
+manager = "Architect"
+owns = ["scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "tests/specfactory/test_method_weekly.py"]
+owns_glob = []
+acceptance = []  # node ids filled from the builder's report (two test_a16_ cases); the file also holds HARNESS-mm-6's halted red case
+depends_on = ["HARNESS-mm-15", "HARNESS-mm-4"]  # ordering edges on the same files
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "unit ExecStart runs the script from origin/main; reap dry-run output path; two test cases"
+
