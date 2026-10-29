@@ -4346,7 +4346,7 @@ size_estimate = "records repair: 8 gate rows, 13 run rows, 32 script moves, W43 
 [[piece]]
 id = "HARNESS-mm-12"
 manager = "Architect"
-owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "scripts/specfactory/method_metrics.py"]
+owns = ["scripts/specfactory/token_ledger.py", "tests/specfactory/test_token_ledger.py", "scripts/specfactory/method_metrics_runs.py", "scripts/specfactory/method_thresholds.toml", "scripts/specfactory/method_metrics.py", "tests/specfactory/test_method_metrics.py"]
 owns_glob = ["tests/specfactory/fixtures/token_ledger/*", "tests/specfactory/fixtures/method_metrics/mm_world.py"]  # mm_world.py: TD-HARNESS-mm-12-1 adds the G24 tables to its W.TH (Architect 2026-10-28); test_method_metrics.py a13 narrowing is TD-HARNESS-mm-12-2
 acceptance = ["tests/specfactory/test_token_ledger.py"]
 depends_on = ["HARNESS-mm-8", "HARNESS-mm-1b", "HARNESS-mm-1a", "HARNESS-mm-16"]  # ordering edges: mm-8 owns method_metrics_runs.py and the toml until it lands
