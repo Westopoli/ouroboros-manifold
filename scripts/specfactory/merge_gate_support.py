@@ -321,6 +321,29 @@ def _symbol_module_map(signatures_path: Path, symbol_modules_path: Path) -> dict
     return mapping
 
 
+def select_csim(candidate_dir: Path, base_ref: str, *, signatures_path: Path = DEFAULT_SIGNATURES,
+                symbol_modules_path: Path = DEFAULT_SYMBOL_MODULES) -> list[str]:
+    """HARNESS-gate-tiers: the tests/csim/test_*.py files (repo-relative, sorted) the fast tier runs for this diff.
+    For each changed csrc/*.c, every symbol _symbol_module_map maps to that file name; every test file whose text
+    contains one of those symbol names (a substring match, no import analysis). A changed csrc/*.h, Makefile or
+    tests/csim/conftest.py selects every test file; a diff with no csrc change selects nothing. A changed .c file
+    that no table maps selects nothing: the slow tier's full csim regression covers it.
+    See also: docs/northstar/plans/2026-10-07-visible-game-spec.md (the HARNESS-gate-tiers paragraph)"""
+    changed = changed_files(candidate_dir, base_ref)
+    suite = sorted(p.relative_to(candidate_dir).as_posix()
+                   for p in (Path(candidate_dir) / "tests" / "csim").glob("test_*.py"))
+    if any((f.startswith("csrc/") and f.endswith(".h")) or f in ("Makefile", "tests/csim/conftest.py")
+           for f in changed):
+        return suite
+    c_names = {Path(f).name for f in changed if f.startswith("csrc/") and f.endswith(".c")}
+    if not c_names:
+        return []
+    symbols = [sym for sym, mod in _symbol_module_map(signatures_path, symbol_modules_path).items()
+               if mod in c_names]
+    return [f for f in suite
+            if any(sym in (Path(candidate_dir) / f).read_text(errors="replace") for sym in symbols)]
+
+
 def symbol_ownership_check(candidate_dir: Path, base_ref: str, *,
                             signatures_path: Path = DEFAULT_SIGNATURES,
                             symbol_modules_path: Path = DEFAULT_SYMBOL_MODULES) -> tuple[bool, str]:
@@ -414,16 +437,20 @@ def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tupl
     this split it was silently never run for a client piece (C2, C7) whose
     acceptance is entirely Godot tests (2026-09-22 defect)."""
     pieces = _load_pieces(pieces_path)
-    piece = pieces.get(resolve_piece_id(piece_id, pieces))
-    if piece is None:
-        return [], []
     pytest_ids: list[str] = []
     godot_ids: list[str] = []
-    for a in piece.get("acceptance") or []:
-        if a.endswith(".gd"):
-            godot_ids.append(a)
-        elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
-            pytest_ids.append(a)
+    # A comma list (the slow tier's window) is the union of its pieces' acceptance, first occurrence kept.
+    for one in (p.strip() for p in piece_id.split(",") if p.strip()):
+        piece = pieces.get(resolve_piece_id(one, pieces))
+        if piece is None:
+            continue
+        for a in piece.get("acceptance") or []:
+            if a.endswith(".gd"):
+                if a not in godot_ids:
+                    godot_ids.append(a)
+            elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
+                if a not in pytest_ids:
+                    pytest_ids.append(a)
     return pytest_ids, godot_ids
 
 
@@ -646,19 +673,33 @@ def _baseline_cache_dir(merge_root: Path) -> Path:
 
 
 def _find_cached_by_inputs(merge_root: Path, harness_sha: str, suite_key: str,
-                           input_hash: str) -> sr.RunResult | None:
-    """A15: any baseline_cache/*.json entry for suite_key with this harness and input hash."""
-    d = _baseline_cache_dir(merge_root)
-    for f in sorted(d.glob("*.json")) if d.exists() else []:
-        try:
-            entry = json.loads(f.read_text()).get("suites", {}).get(suite_key)
-        except (OSError, ValueError):
-            continue
-        if entry is None or entry.get("input_hash") != input_hash:
-            continue
-        hit = _load_cached_baseline(f, harness_sha, suite_key)
-        if hit is not None:
-            return hit
+                           input_hash: str, repo: Path | None = None) -> sr.RunResult | None:
+    """A15: any baseline_cache/*.json entry for suite_key with this harness and input hash. With `repo`, then any
+    candidate_results/<sha>.json entry of that kind whose sha is an ancestor of origin/main and whose stored rc is 0
+    (F8): a REJECTed or abandoned candidate's result, or a red run, is never a baseline.
+    See also: docs/northstar/plans/2026-10-29-layered-gate-spec.md section 8 F8"""
+    root = Path(merge_root)
+    folders = [(_baseline_cache_dir(root), False)]
+    if repo is not None:
+        folders.append((root / "candidate_results", True))
+    for d, from_candidates in folders:
+        for f in sorted(d.glob("*.json")) if d.exists() else []:
+            try:
+                entry = json.loads(f.read_text()).get("suites", {}).get(suite_key)
+            except (OSError, ValueError):
+                continue
+            if entry is None or entry.get("input_hash") != input_hash:
+                continue
+            if from_candidates:
+                if entry.get("returncode") != 0:
+                    continue
+                anc = subprocess.run(["git", "merge-base", "--is-ancestor", f.stem, "origin/main"],
+                                     cwd=str(repo), capture_output=True, text=True)
+                if anc.returncode != 0:
+                    continue
+            hit = _load_cached_baseline(f, harness_sha, suite_key)
+            if hit is not None:
+                return hit
     return None
 
 
@@ -778,7 +819,11 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     parameter existed, so an unbuilt dependency (T1 not yet attached, no
     om_pipe.c on main yet) degrades to the old behaviour instead of crashing
     the gate."""
-    suite_key = " ".join(test_args)
+    # A subset of tests/csim/test_*.py files is keyed by its sorted file list, and its declared inputs are the csim
+    # table's (F7). See also: select_csim, tests/specfactory/test_gate_tiers.py group 7
+    subset = len(test_args) >= 1 and all(re.fullmatch(r"tests/csim/test_[^/]+\.py", a) for a in test_args)
+    suite_key = " ".join(sorted(test_args) if subset else test_args)
+    table_key = "tests/csim" if subset else " ".join(test_args)
     if extra_args:
         # a baseline run with another flag set (xdist or serial) is a different cache entry.
         suite_key += " " + " ".join(extra_args)
@@ -790,7 +835,7 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     cache_path = None
     harness_sha = None
     cached_before = None
-    declared = _declared_inputs(candidate_dir, " ".join(test_args))
+    declared = _declared_inputs(candidate_dir, table_key)
     base_hash = cand_hash = cand_sha = None
     rev = subprocess.run(["git", "rev-parse", "--verify", "-q", base_ref],
                           cwd=str(candidate_dir), capture_output=True, text=True)
@@ -811,7 +856,8 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
             harness_sha = _harness_sha()
             cache_path = _baseline_cache_path(Path(merge_root), main_sha)
             if base_hash is not None:
-                cached_before = _find_cached_by_inputs(Path(merge_root), harness_sha, suite_key, base_hash)
+                cached_before = _find_cached_by_inputs(Path(merge_root), harness_sha, suite_key, base_hash,
+                                                       repo=candidate_dir)
             else:
                 cached_before = _load_cached_baseline(cache_path, harness_sha, suite_key)
 
@@ -847,8 +893,14 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
 
                 def run_before() -> None:
                     try:
-                        res = sr.run_pytest(tmp, python_exe, test_args, timeout, extra_args=extra_args,
-                                            junit_path=before_xml)
+                        # A csim subset can name a test file the base lacks (a new file); pytest errors on a missing
+                        # path, so the base run covers only the files it has. See also: select_csim
+                        base_args = [a for a in test_args if (Path(tmp) / a).exists()] if subset else test_args
+                        if subset and not base_args:
+                            res = sr.RunResult(passed=0, failed=0, failing_ids=(), wall_s=0.0, returncode=0)
+                        else:
+                            res = sr.run_pytest(tmp, python_exe, base_args, timeout, extra_args=extra_args,
+                                                junit_path=before_xml)
                         # See regression_check's cache comment above: normalize before
                         # caching so a cached entry replayed from a since-removed `tmp`
                         # already reads "<WORKTREE>", matching whatever this run's own
@@ -1301,6 +1353,12 @@ def main(argv: list[str]) -> int:
     sc.add_argument("--project", default=str(REPO))
     sc.add_argument("--table", default=None)
 
+    sl = sub.add_parser("select-csim")
+    sl.add_argument("candidate_dir")
+    sl.add_argument("base_ref")
+    sl.add_argument("--signatures", default=str(DEFAULT_SIGNATURES))
+    sl.add_argument("--symbol-modules", default=str(DEFAULT_SYMBOL_MODULES))
+
     ai = sub.add_parser("acceptance-ids")
     ai.add_argument("piece_id")
     ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
@@ -1402,6 +1460,11 @@ def main(argv: list[str]) -> int:
                                             python_exe=args.python)
     elif args.cmd == "placeholder-controls":
         ok, detail = placeholder_controls_check(Path(args.project), Path(args.placeholders))
+    elif args.cmd == "select-csim":
+        for f in select_csim(Path(args.candidate_dir), args.base_ref, signatures_path=Path(args.signatures),
+                             symbol_modules_path=Path(args.symbol_modules)):
+            print(f)
+        return 0
     elif args.cmd == "acceptance-ids":
         pytest_ids, godot_ids = acceptance_ids(args.piece_id, pieces_path=Path(args.pieces))
         for i in pytest_ids:

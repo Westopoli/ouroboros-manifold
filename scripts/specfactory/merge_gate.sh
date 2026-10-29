@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/specfactory/merge_gate.sh <candidate_worktree> <base_ref> <piece_id>
+# scripts/specfactory/merge_gate.sh [--revert] [--tier fast|slow|full] <candidate_worktree> <base_ref> <piece_id>[,...]
 #
 # F6 item 1 (two-day push, decision 8 "whole_suite"). Every step prints one
 # line `GATE <step> OK|REJECT|WARN|HARNESS <detail>`. Exit codes: 0 every
@@ -17,6 +17,18 @@
 # contain the current origin/main, whose sha then replaces <base_ref> for every
 # later stage. Env hook (tests only): MERGE_GATE_STOP_AFTER=base exits 0 right
 # after the `GATE base OK` line. Other MERGE_GATE_* variables are read where used.
+#
+# Tiers (HARNESS-gate-tiers; the flags in either order before the three positionals; default full):
+#   full  every stage, as before.
+#   fast  the landing tier: the lints, acceptance (the piece's ids plus the test files the diff touches), transport and
+#         the csim files `merge_gate_support.py select-csim` picks; skips regression_lab, regression_qa_t1,
+#         the specfactory suite, playthrough, lane_plays, checksum_trace, tactical_trace, undertest_check, size_lint
+#         and look. No stage is reordered.
+#   slow  the sweep: every stage, with <base_ref> (the last green sweep's main sha) kept as the regression base and
+#         the diff stages run over the union diff base...HEAD; the piece id is a comma list. A regression reject names
+#         the first-parent landings since <base_ref>.
+# `GATE tier <name>` is the first GATE line. See also: tests/specfactory/test_gate_tiers.py,
+# docs/northstar/plans/2026-10-29-layered-gate-spec.md section 8 B1
 set -uo pipefail
 
 GATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -34,14 +46,26 @@ if [[ "${1:-}" == "--prune-evidence" && $# -eq 1 ]]; then
 fi
 
 REVERT_MODE=0
-if [[ "${1:-}" == "--revert" ]]; then
-    REVERT_MODE=1
-    shift
+TIER=""
+usage() {
+    echo "usage: merge_gate.sh [--revert] [--tier fast|slow|full] <candidate_worktree> <base_ref> <piece_id>[,<piece_id>...]" >&2
+    exit 2
+}
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --revert) REVERT_MODE=1; shift ;;
+        --tier) [[ $# -ge 2 ]] || usage; TIER="$2"; shift 2 ;;
+        *) break ;;
+    esac
+done
+case "${TIER:-full}" in fast|slow|full) ;; *) usage ;; esac
+if [[ "$REVERT_MODE" -eq 1 && "${TIER:-full}" != full ]]; then
+    usage
 fi
+TIER="${TIER:-full}"
 
 if [[ $# -ne 3 ]]; then
-    echo "usage: merge_gate.sh [--revert] <candidate_worktree> <base_ref> <piece_id>[,<piece_id>...]" >&2
-    exit 2
+    usage
 fi
 if [[ ! -d "$1" ]]; then
     echo "merge_gate.sh: candidate worktree not found: $1" >&2
@@ -151,6 +175,8 @@ harness() { gate_line "$1" HARNESS "${*:2}"; }
 
 tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
 
+echo "GATE tier $TIER"
+
 # -------------------------------------------------------------- 0. base
 # The clerk merges origin/main inside gate.lock; a candidate gated against a main that has since
 # moved fails tests that compare with main's build. The sha, not the name, is the baseline from here on.
@@ -170,7 +196,17 @@ if ! git -C "$CANDIDATE" merge-base --is-ancestor "$MAIN_SHA" HEAD; then
     exit 1
 fi
 ok base "$MAIN_SHA"
-BASE_REF="$MAIN_SHA"
+if [[ "$TIER" == slow ]]; then
+    # B1: the slow tier's regression base is the positional <base_ref>, the last green sweep's main sha; the ancestry
+    # rule above is unchanged. See also: tests/specfactory/test_gate_tiers.py group 8
+    BASE_REF="$(git -C "$CANDIDATE" rev-parse --verify -q "$BASE_REF^{commit}")"
+    if [[ -z "$BASE_REF" ]]; then
+        reject base "slow tier base_ref not found in the candidate"
+        exit 1
+    fi
+else
+    BASE_REF="$MAIN_SHA"
+fi
 [[ "${MERGE_GATE_STOP_AFTER:-}" == "base" ]] && exit 0
 
 # -------------------------------------------------------------- 1. make
@@ -223,12 +259,16 @@ fi
 
 # -------------------------------------------------------------- 4. footprint fence
 FP_LOG="$SCRATCH_ROOT/footprint.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" footprint "$CANDIDATE" "$BASE_REF" "$PIECE_ID" \
-    --pieces "$PIECES_TOML" >"$FP_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject footprint "$(cat "$FP_LOG")"
+if [[ -z "$PIECE_ID" ]]; then
+    ok footprint "skipped: no ids"
 else
-    ok footprint "$(cat "$FP_LOG")"
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" footprint "$CANDIDATE" "$BASE_REF" "$PIECE_ID" \
+        --pieces "$PIECES_TOML" >"$FP_LOG" 2>&1
+    if [[ $? -ne 0 ]]; then
+        reject footprint "$(cat "$FP_LOG")"
+    else
+        ok footprint "$(cat "$FP_LOG")"
+    fi
 fi
 
 # -------------------------------------------------------------- 4b. gd class_name uniqueness
@@ -327,9 +367,10 @@ fi
 
 # -------------------------------------------------------------- 5c-status. status (HARNESS-C1b; early block, HARNESS-gate-reorder)
 # The status copies must agree (guard 7): any `STATUS <check> DRIFT` line rejects, a WARN warns. Reads THIS repo.
-# See also: status_check.py, pre_gate.sh
+# --base is origin/main's sha in every tier: the slow tier's <base_ref> is the regression base only, and the sweep check
+# reads its own anchor from sweeps.md. See also: status_check.py, pre_gate.sh
 STATUS_LOG="$SCRATCH_ROOT/status.log"
-"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$BASE_REF" >"$STATUS_LOG" 2>&1
+"$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$MAIN_SHA" >"$STATUS_LOG" 2>&1
 if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
     reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
 elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
@@ -352,23 +393,29 @@ done < <("$PYTHON" "$GATE_DIR/rule_pins.py" spec-of "$PIECES_TOML" "$PIECE_ID" 2
 if (( ${#RP_SPECS[@]} )); then
     (cd "$CANDIDATE" && "$PYTHON" "$GATE_DIR/rule_pins.py" check "${RP_SPECS[@]}" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"}) >>"$RP_LOG" 2>&1 || RP_RC=1
 fi
+RP_NOTE=""
+[[ -z "$PIECE_ID" ]] && RP_NOTE=" (spec pins skipped: no ids)"
 if grep -q '^PINS REJECT' "$RP_LOG" || (( RP_RC != 0 )); then
     reject rule_pins "$(grep '^PINS REJECT' "$RP_LOG" | tr '\n' ' ')$(grep -q '^PINS REJECT' "$RP_LOG" || tail_oneline "$RP_LOG" 3)"
 elif grep -q '^PINS WARN' "$RP_LOG"; then
-    warn rule_pins "$(grep '^PINS WARN' "$RP_LOG" | tr '\n' ' ')"
+    warn rule_pins "$(grep '^PINS WARN' "$RP_LOG" | tr '\n' ' ')$RP_NOTE"
 else
-    ok rule_pins "$(tail_oneline "$RP_LOG" 1)"
+    ok rule_pins "$(tail_oneline "$RP_LOG" 1)$RP_NOTE"
 fi
 
 # -------------------------------------------------------------- 5c. control liveness (A114): the attaching piece's own controls
 CL_LOG="$SCRATCH_ROOT/control_liveness.log"
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" control-liveness "$CANDIDATE" "$PIECE_ID" \
-    --pieces "$PIECES_TOML" --placeholders "$PLACEHOLDERS_TXT" --scratch-root "$SCRATCH_ROOT/liveness" \
-    --python "$PYTHON" >"$CL_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject control_liveness "$(sed 's/^REJECT //' "$CL_LOG" | tr '\n' ' ')"
+if [[ -z "$PIECE_ID" ]]; then
+    ok control_liveness "skipped: no ids"
 else
-    ok control_liveness "$(sed 's/^OK //' "$CL_LOG" | tr '\n' ' ')"
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" control-liveness "$CANDIDATE" "$PIECE_ID" \
+        --pieces "$PIECES_TOML" --placeholders "$PLACEHOLDERS_TXT" --scratch-root "$SCRATCH_ROOT/liveness" \
+        --python "$PYTHON" >"$CL_LOG" 2>&1
+    if [[ $? -ne 0 ]]; then
+        reject control_liveness "$(sed 's/^REJECT //' "$CL_LOG" | tr '\n' ' ')"
+    else
+        ok control_liveness "$(sed 's/^OK //' "$CL_LOG" | tr '\n' ' ')"
+    fi
 fi
 
 PC_LOG="$SCRATCH_ROOT/placeholder_controls.log"
@@ -392,6 +439,14 @@ ACCEPT_SPLIT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-ids "$PIE
     --pieces "$PIECES_TOML" 2>/dev/null)"
 ACCEPT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^PY //p')"
 GODOT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^GD //p')"
+if [[ "$TIER" == fast ]]; then
+    # The fast tier's acceptance is the row's ids plus every test file under tests/ the diff touches (not the desktop
+    # plays: no frame in this tier). See also: the HARNESS-gate-tiers paragraph of 2026-10-07-visible-game-spec.md
+    while IFS= read -r CHANGED_TEST; do
+        [[ -n "$CHANGED_TEST" && -f "$CANDIDATE/$CHANGED_TEST" && "$CHANGED_TEST" != tests/qa/desktop/* ]] || continue
+        grep -qxF "$CHANGED_TEST" <<<"$ACCEPT_IDS" || ACCEPT_IDS="${ACCEPT_IDS:+$ACCEPT_IDS$'\n'}$CHANGED_TEST"
+    done < <(git -C "$CANDIDATE" diff --name-only "$BASE_REF"...HEAD -- 'tests/*test_*.py')
+fi
 GODOT_COUNT="$(echo "$GODOT_IDS" | grep -c . || true)"
 
 # -------------------------------------------------------------- 6c. godot import (desktop/scene acceptance only)
@@ -505,6 +560,8 @@ if [[ -n "$ACCEPT_IDS" ]]; then
     fi
 elif [[ -n "$GODOT_IDS" ]]; then
     warn acceptance "no pytest acceptance ids; $GODOT_COUNT godot ids"
+elif [[ -z "$PIECE_ID" ]]; then
+    ok acceptance "skipped: no ids"
 else
     warn acceptance "no pytest-collectible acceptance ids for piece $PIECE_ID"
 fi
@@ -582,6 +639,8 @@ if [[ "$VENV_LINK_MADE" -eq 1 && -L "$CANDIDATE/.venv" ]]; then
     echo "ok venv_unlink \"$VENV_TARGET\""
 fi
 
+# The fast tier skips playthrough and lane_plays (no frame in that tier); `fi` follows lane_plays.
+if [[ "$TIER" != fast ]]; then
 # -------------------------------------------------------------- 9b. playthrough (desktop flow suite, real client under xvfb)
 # Runs on the merged tree only when the diff touches game code; red outside
 # playthrough_known_red.txt rejects. See merge_gate_support.py playthrough_check.
@@ -609,6 +668,7 @@ elif grep -q '^OK skipped' "$LP_LOG"; then
 else
     ok lane_plays "$(sed 's/^OK //' "$LP_LOG" | tr '\n' ' ')"
 fi
+fi
 
 early_exit_if_rejected
 
@@ -627,15 +687,25 @@ job_dirs() {
     fi
 }
 
-job_dirs qa_t1
-REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
-TMPDIR="$SCRATCH_ROOT/qa_t1" XDG_DATA_HOME="$SCRATCH_ROOT/qa_t1/xdg" \
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject regression_qa_t1 "$(reg_detail "$REG_QA_LOG")"
-else
-    ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
+# The fast tier runs neither qa/t1, lab nor specfactory, and csim only on the selected files (`select-csim`).
+# A slow-tier reject names the first-parent landings since <base_ref>. See also: tests/specfactory/test_gate_tiers.py
+slow_landings() {
+    [[ "$TIER" == slow ]] || return 0
+    printf '; landings since %s: %s' "${BASE_REF:0:12}" \
+        "$(git -C "$CANDIDATE" log --first-parent --format=%h "$BASE_REF..$MAIN_SHA" 2>/dev/null | tr '\n' ' ')"
+}
+
+if [[ "$TIER" != fast ]]; then
+    job_dirs qa_t1
+    REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
+    TMPDIR="$SCRATCH_ROOT/qa_t1" XDG_DATA_HOME="$SCRATCH_ROOT/qa_t1/xdg" \
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
+    if [[ $? -ne 0 ]]; then
+        reject regression_qa_t1 "$(reg_detail "$REG_QA_LOG")$(slow_landings)"
+    else
+        ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
+    fi
 fi
 
 # MALLOC_PERTURB_=255 fills freed and fresh heap so a read of uninitialised memory fails the same way on every run;
@@ -647,30 +717,61 @@ fi
 job_dirs csim
 job_dirs lab
 job_dirs specfactory
+CSIM_ARGS=(tests/csim)
+CSIM_SKIPPED=""
+if [[ "$TIER" == fast ]]; then
+    CSIM_SELECTION="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" select-csim "$CANDIDATE" "$BASE_REF" \
+        --signatures "$SIGNATURES_TOML" --symbol-modules "$SYMBOL_MODULES_TOML")" \
+        || { harness regression_csim "select-csim failed"; exit 3; }
+    if [[ -n "$CSIM_SELECTION" ]]; then
+        mapfile -t CSIM_ARGS <<<"$CSIM_SELECTION"
+    else
+        CSIM_SKIPPED="skipped: no csrc change"
+    fi
+fi
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
-if [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
+REG_CSIM_PID=""
+if [[ -n "$CSIM_SKIPPED" ]]; then
+    :
+elif [[ "$TIER" == fast ]]; then
+    # The selected files run under the same xdist switch as the full suite.
+    CSIM_XDIST=(--pytest-extra '-n 5 --dist loadfile')
+    [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]] && CSIM_XDIST=()
+    # The support path sits in a variable so the call readers of test_csim_xdist.py and test_gate_cache_seed.py, which
+    # key the full-suite calls by their literal `tests/<dir>` argument, do not take this selected-files call for one.
+    SUPPORT_PY="$GATE_DIR/merge_gate_support.py"
+    TMPDIR="$SCRATCH_ROOT/csim" XDG_DATA_HOME="$SCRATCH_ROOT/csim/xdg" \
+    MALLOC_PERTURB_=255 "$PYTHON" "$SUPPORT_PY" regression "$CANDIDATE" "$BASE_REF" "${CSIM_ARGS[@]}" \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" "${CSIM_XDIST[@]}" >"$REG_CSIM_LOG" 2>&1 &
+    REG_CSIM_PID=$!
+elif [[ "${MERGE_GATE_CSIM_XDIST:-}" == 0 ]]; then
     TMPDIR="$SCRATCH_ROOT/csim" XDG_DATA_HOME="$SCRATCH_ROOT/csim/xdg" \
     MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
         --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1 &
+    REG_CSIM_PID=$!
 else
     TMPDIR="$SCRATCH_ROOT/csim" XDG_DATA_HOME="$SCRATCH_ROOT/csim/xdg" \
     MALLOC_PERTURB_=255 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
         --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
         --pytest-extra '-n 5 --dist loadfile' >"$REG_CSIM_LOG" 2>&1 &
+    REG_CSIM_PID=$!
 fi
-REG_CSIM_PID=$!
 
 REG_LAB_LOG="$SCRATCH_ROOT/regression_lab.log"
-TMPDIR="$SCRATCH_ROOT/lab" XDG_DATA_HOME="$SCRATCH_ROOT/lab/xdg" \
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1 &
-REG_LAB_PID=$!
-
+REG_LAB_PID=""
 REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
-TMPDIR="$SCRATCH_ROOT/specfactory" XDG_DATA_HOME="$SCRATCH_ROOT/specfactory/xdg" \
-"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1 &
-REG_SF_PID=$!
+REG_SF_PID=""
+if [[ "$TIER" != fast ]]; then
+    TMPDIR="$SCRATCH_ROOT/lab" XDG_DATA_HOME="$SCRATCH_ROOT/lab/xdg" \
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression-lab "$CANDIDATE" "$BASE_REF" \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_LAB_LOG" 2>&1 &
+    REG_LAB_PID=$!
+
+    TMPDIR="$SCRATCH_ROOT/specfactory" XDG_DATA_HOME="$SCRATCH_ROOT/specfactory/xdg" \
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
+        --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1 &
+    REG_SF_PID=$!
+fi
 
 REG_TRANSPORT_LOG="$SCRATCH_ROOT/regression_transport.log"
 REG_TRANSPORT_PID=""
@@ -690,10 +791,10 @@ if [[ "$TRANSPORT_RUN" -eq 1 ]]; then
     REG_TRANSPORT_PID=$!
 fi
 
-wait "$REG_CSIM_PID"; REG_CSIM_RC=$?
-wait "$REG_LAB_PID"; REG_LAB_RC=$?
-wait "$REG_SF_PID"; REG_SF_RC=$?
-REG_TRANSPORT_RC=0
+REG_CSIM_RC=0; REG_LAB_RC=0; REG_SF_RC=0; REG_TRANSPORT_RC=0
+[[ -n "$REG_CSIM_PID" ]] && { wait "$REG_CSIM_PID"; REG_CSIM_RC=$?; }
+[[ -n "$REG_LAB_PID" ]] && { wait "$REG_LAB_PID"; REG_LAB_RC=$?; }
+[[ -n "$REG_SF_PID" ]] && { wait "$REG_SF_PID"; REG_SF_RC=$?; }
 [[ -n "$REG_TRANSPORT_PID" ]] && { wait "$REG_TRANSPORT_PID"; REG_TRANSPORT_RC=$?; }
 
 for ((i = 0; i < ${#TRANSPORT_WARNS[@]}; i++)); do
@@ -706,7 +807,7 @@ if [[ -n "$REG_TRANSPORT_PID" ]]; then
         # fail(after) false positive from an unbuilt baseline (2026-09-24: B5-3, B9-1-2). Before piece T1 attaches,
         # main has no om_pipe.c at all and the before_build just fails; WARN until attach/T1 for that one case.
         if git -C "$CANDIDATE" tag -l 'attach/T1' | grep -q .; then
-            reject transport "$(cat "$REG_TRANSPORT_LOG")"
+            reject transport "$(cat "$REG_TRANSPORT_LOG")$(slow_landings)"
         else
             warn transport "before attach/T1: $(cat "$REG_TRANSPORT_LOG")"
         fi
@@ -715,24 +816,30 @@ if [[ -n "$REG_TRANSPORT_PID" ]]; then
     fi
 fi
 
-if [[ "$REG_CSIM_RC" -ne 0 ]]; then
-    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")"
+if [[ -n "$CSIM_SKIPPED" ]]; then
+    ok regression_csim "$CSIM_SKIPPED"
+elif [[ "$REG_CSIM_RC" -ne 0 ]]; then
+    reject regression_csim "$(reg_detail "$REG_CSIM_LOG")$(slow_landings)"
 else
     ok regression_csim "$(cat "$REG_CSIM_LOG")"
 fi
 
-if [[ "$REG_LAB_RC" -ne 0 ]]; then
-    reject regression_lab "$(reg_detail "$REG_LAB_LOG")"
-else
-    ok regression_lab "$(cat "$REG_LAB_LOG")"
+if [[ "$TIER" != fast ]]; then
+    if [[ "$REG_LAB_RC" -ne 0 ]]; then
+        reject regression_lab "$(reg_detail "$REG_LAB_LOG")$(slow_landings)"
+    else
+        ok regression_lab "$(cat "$REG_LAB_LOG")"
+    fi
+
+    if [[ "$REG_SF_RC" -ne 0 ]]; then
+        reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')$(slow_landings)"
+    else
+        ok specfactory_regression "$(cat "$REG_SF_LOG")"
+    fi
 fi
 
-if [[ "$REG_SF_RC" -ne 0 ]]; then
-    reject specfactory_regression "$(reg_detail "$REG_SF_LOG" | tr '\n' ' ')"
-else
-    ok specfactory_regression "$(cat "$REG_SF_LOG")"
-fi
-
+# The fast tier skips stages 10 to 13 (checksum_trace, tactical_trace, undertest_check, size_lint, look); `fi` before the exit.
+if [[ "$TIER" != fast ]]; then
 # -------------------------------------------------------------- 10. checksum_trace O0 vs O2
 if grep -q '\$(OPT)' "$CANDIDATE/Makefile" 2>/dev/null; then
     O0O2_LOG="$SCRATCH_ROOT/o0o2_build.log"
@@ -830,6 +937,7 @@ if [[ -d "${MERGE_GATE_LOOK_CANDIDATE:-}" && -d "${MERGE_GATE_LOOK_BASE:-}" ]]; 
     fi
 else
     warn look "no frame dirs (MERGE_GATE_LOOK_CANDIDATE / MERGE_GATE_LOOK_BASE unset); skipped"
+fi
 fi
 
 # --------------------------------------------------------------
