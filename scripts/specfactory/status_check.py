@@ -35,6 +35,13 @@ print several DRIFT lines); exit 1 when any check is DRIFT, else 0 (WARN exits 0
   method_pins every pin in method_rev3_2026-10-26/pins.toml with a non-empty
               `since` must appear verbatim in `git show <base>:<file>`; a pin with
               an empty `since` is skipped; always DRIFT (HARNESS-mm-3, A2)
+  sweep       the last PASS or BASE row of sweeps.md is the anchor: WARN above
+              DRAFT-slow-tier-batch first-parent `Land ` merges since its sha on
+              origin/main or, with at least one such landing, its row older than
+              DRAFT-slow-tier-hours, DRIFT above DRAFT-slow-tier-drift-mult times
+              either; zero landings since the anchor is quiet at any age
+              (DEC-sweep-quiet-2026-10-29); a REJECT row is never an
+              anchor and never a DRIFT (HARNESS-gate-tiers, spec section 8 B3, F10)
   (`check pieces` also accepts the keys `story` and `contract`, A1.)
 
 See also: docs/northstar/plans/2026-10-07-visible-game-programme.md Lane table
@@ -59,6 +66,10 @@ D_ROADMAP = "docs/northstar/ROADMAP.md"
 D_REGISTER = "docs/northstar/ambiguity_register.md"
 D_LEDGER = "docs/northstar/plans/push_ledger_2026-09-22.md"
 D_MM = "docs/northstar/plans/method_rev3_2026-10-26"
+D_SWEEPS = "docs/northstar/plans/push/sweeps.md"
+# Named drafts of docs/northstar/plans/2026-10-29-layered-gate-spec.md section 4; Westley's to change.
+SLOW_TIER_BATCH, SLOW_TIER_HOURS, SLOW_TIER_DRIFT_MULT = 3, 2, 2  # DRAFT-slow-tier-batch, -hours, -drift-mult
+SWEEP_TS_FMT = "%Y-%m-%d %H:%M"  # the date-time cell of a sweeps.md row, UTC
 LEDGER_TOKENS_FROM = "2026-10-26"  # method rev 3 G17: found-by= and ruler= are required from this date
 SWITCH_ROW = "FU-HARNESS-findings"
 
@@ -70,7 +81,7 @@ REVIEW_FIELDS_FROM = "2026-10-20"  # DRAFT-review-fields-from, harness enforceme
 REVIEW_FIELDS = ("legend", "unit", "band")
 # The ten keys pieces.toml rows use plus the four HARNESS-C4 adds. See also: pieces.py, which rejects no unknown key.
 KNOWN_KEYS = frozenset("id manager wave owns owns_glob acceptance depends_on status tests_pending size_estimate "
-                       "script args launch spec story contract".split())
+                       "script args launch spec story contract impact".split())
 # Ids whose `launch = "-"` is exempt from the sha test (launched before launch_check.sh); REPIN fills it.
 PRE_LAUNCH_IDS = ()
 STAND_IN_ANSWER = re.compile(r"until Westley|Westley to confirm|Westley answers|Architect default|\bdefault\b", re.I)
@@ -359,6 +370,41 @@ def check_method_pins(repo, base, mm):
     return out or [("method_pins", True, f"{n} dated pins checked")]
 
 
+def check_sweep(repo, base, sweeps):
+    """See also: tests/specfactory/test_gate_tiers.py group 4; row format in the layered gate spec section 8 B2.
+    A landing is a first-parent merge commit on origin/main (else `base`) whose subject begins `Land `."""
+    if not sweeps.is_file():
+        return [("sweep", True, f"no {sweeps.name}")]
+    anchor = None
+    for ln in sweeps.read_text().splitlines():
+        c = cells(ln) if ln.strip().startswith("|") else []
+        if len(c) >= 3 and c[2] in ("PASS", "BASE"):
+            anchor = c
+    if anchor is None:
+        return [("sweep", True, "no PASS or BASE row yet")]
+    sha = anchor[1]
+    tip = "origin/main" if subprocess.run(["git", "-C", str(repo), "rev-parse", "--verify", "-q", "origin/main"],
+                                          capture_output=True).returncode == 0 else base
+    if not is_ancestor(repo, sha, tip):
+        return [("sweep", "warn", f"{anchor[2]} row sha {sha} is not an ancestor of {tip}")]
+    log = subprocess.run(["git", "-C", str(repo), "log", "--first-parent", "--merges", "--format=%s", f"{sha}..{tip}"],
+                         capture_output=True, text=True).stdout.splitlines()
+    landings = sum(1 for subject in log if subject.startswith("Land "))
+    if landings == 0:
+        return [("sweep", True, f"0 landings since {sha}")]
+    try:
+        stamp = datetime.datetime.strptime(anchor[0], SWEEP_TS_FMT).replace(tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return [("sweep", False, f"{anchor[2]} row at {sha} has an unreadable date-time {anchor[0]!r}")]
+    hours = (datetime.datetime.now(datetime.timezone.utc) - stamp).total_seconds() / 3600
+    detail = f"{landings} landings and {hours:.1f} h since the {anchor[2]} row at {sha[:8]}"
+    if landings > SLOW_TIER_BATCH * SLOW_TIER_DRIFT_MULT or hours > SLOW_TIER_HOURS * SLOW_TIER_DRIFT_MULT:
+        return [("sweep", False, detail)]
+    if landings > SLOW_TIER_BATCH or hours > SLOW_TIER_HOURS:
+        return [("sweep", "warn", detail)]
+    return [("sweep", True, detail)]
+
+
 def main(argv):
     ap = argparse.ArgumentParser(prog="status_check.py", description=__doc__.split("\n")[0])
     ap.add_argument("--repo", default=str(REPO))
@@ -371,6 +417,7 @@ def main(argv):
     ap.add_argument("--register", default=D_REGISTER)
     ap.add_argument("--ledger", default=D_LEDGER)
     ap.add_argument("--method-dir", default=D_MM)
+    ap.add_argument("--sweeps", default=D_SWEEPS)
     a = ap.parse_args(argv)
     repo = Path(a.repo)
 
@@ -390,6 +437,7 @@ def main(argv):
     results += check_findings(repo, at(a.ledger))
     results += check_metrics(at(a.method_dir))
     results += check_method_pins(repo, a.base, at(a.method_dir))
+    results += check_sweep(repo, a.base, at(a.sweeps))
     for name, ok, detail in results:
         print(f"STATUS {name} {'WARN' if ok == 'warn' else 'OK' if ok else 'DRIFT'} {detail}")
     return 0 if all(ok for _, ok, _ in results) else 1

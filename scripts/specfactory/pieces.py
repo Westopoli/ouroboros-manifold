@@ -2,7 +2,7 @@
 """F6 item 4 (two-day push): validates docs/northstar/plans/push/pieces.toml,
 the per-piece attach unit `merge_gate.sh`/`merge_cli.py` read from.
 
-Three checks:
+Four checks:
   unique ids       -- no two [[piece]] blocks share an id.
   owns disjoint     -- no two pieces' `owns`/`owns_glob` overlap unless one is
                        in the other's transitive `depends_on` chain (a piece
@@ -16,6 +16,9 @@ Three checks:
                        `tests_pending = true` on a piece downgrades a missing
                        acceptance path from FAIL to WARN, for a piece whose
                        tests are named in the plan but not written yet.
+  impact is valid   -- `impact` is one of contract|sim|client|harness (FAIL
+                       otherwise); a queued or in_flight row without the key
+                       WARNs (treated as sim). See also: gate_flag.py.
 
 tests/csim and tests/qa/t1 each carry their own bare-named conftest.py, and
 running both directories in one pytest invocation fails collection for every
@@ -38,6 +41,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
 DEFAULT_PYTHON = "/home/westopoli/Projects/agora/.venv/bin/python"
+IMPACT_VALUES = ("contract", "sim", "client", "harness")  # the `impact` key; see also: gate_flag.py
 ROOTS = ("tests/csim", "tests/qa/t1", "tests/qa/desktop", "tests/transport", "tests/specfactory")
 # Record folders every shot-carrying piece writes into (the Westley shot page and its
 # copies, docs/northstar/story_reviews/westley/README.md): shared by rule, so a piece
@@ -209,6 +213,18 @@ def check_acceptance(pieces: list[dict], project: Path, *, python_exe: str = DEF
     return findings
 
 
+def check_impact(pieces: list[dict]) -> list[tuple[str, str, str]]:
+    findings = []
+    for p in pieces:
+        flag = p.get("impact")
+        if flag is None:
+            if (p.get("status") or {}).get("state") in ("queued", "in_flight"):
+                findings.append(("WARN", p.get("id", "?"), "impact missing (treated as sim)"))
+        elif flag not in IMPACT_VALUES:
+            findings.append(("FAIL", p.get("id", "?"), f"impact {flag!r} is not one of {', '.join(IMPACT_VALUES)}"))
+    return findings
+
+
 def run_check(pieces_path: Path, project: Path, *, python_exe: str = DEFAULT_PYTHON,
               timeout: int = 300, collector=None) -> tuple[list[tuple[str, str, str]], int]:
     pieces = load_pieces(pieces_path)
@@ -216,6 +232,7 @@ def run_check(pieces_path: Path, project: Path, *, python_exe: str = DEFAULT_PYT
     findings += check_unique_ids(pieces)
     findings += check_owns_disjoint(pieces)
     findings += check_acceptance(pieces, project, python_exe=python_exe, timeout=timeout, collector=collector)
+    findings += check_impact(pieces)
     fail_count = sum(1 for f in findings if f[0] == "FAIL")
     return findings, len(pieces)
 
