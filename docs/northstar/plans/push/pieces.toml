@@ -4384,7 +4384,7 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["HARNESS-mm-8"]  # ordering edge: mm-8 (attached) owns the same files
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "d29e0236cf3280aef27cd636ae3d7f6ad711cb02" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "threshold approvals written into the toml (Phase 4d); one data edit and one test case"
 
