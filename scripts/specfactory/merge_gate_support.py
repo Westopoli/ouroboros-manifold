@@ -731,7 +731,8 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                       python_exe: str = sr.DEFAULT_PYTHON, timeout: int = 600,
                       junit: bool = True, worktree_root: Path | None = None,
                       merge_root: Path | None = None,
-                      before_build: list[str] | None = None) -> tuple[bool, str, sr.RegressionReport]:
+                      before_build: list[str] | None = None,
+                      extra_args: list[str] | None = None) -> tuple[bool, str, sr.RegressionReport]:
     """(ok, detail, report). Runs `test_args` against `base_ref` (a throwaway
     `git worktree add --detach` sibling of `candidate_dir`, never the live
     checkout, removed before returning) and against `candidate_dir` itself
@@ -772,6 +773,9 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     om_pipe.c on main yet) degrades to the old behaviour instead of crashing
     the gate."""
     suite_key = " ".join(test_args)
+    if extra_args:
+        # a baseline run with another flag set (xdist or serial) is a different cache entry.
+        suite_key += " " + " ".join(extra_args)
     if os.environ.get("MALLOC_PERTURB_"):
         # the gate perturbs the csim and transport stages; a perturbed baseline is not an unperturbed one.
         # See also: MALLOC_PERTURB_=255 on the csim and transport commands of merge_gate.sh
@@ -830,7 +834,7 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
             after_xml = Path(jtmp) / "after.xml" if junit else None
             if tmp is not None:
                 before_xml = Path(jtmp) / "before.xml" if junit else None
-                before = sr.run_pytest(tmp, python_exe, test_args, timeout, junit_path=before_xml)
+                before = sr.run_pytest(tmp, python_exe, test_args, timeout, extra_args=extra_args, junit_path=before_xml)
                 # See regression_check's cache comment above: normalize before
                 # caching so a cached entry replayed from a since-removed `tmp`
                 # already reads "<WORKTREE>", matching whatever this run's own
@@ -839,7 +843,8 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                                            for k, v in before.first_assertion.items()}
                 if cache_path is not None:
                     _store_cached_baseline(cache_path, harness_sha, main_sha, suite_key, before, base_hash)
-            after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, junit_path=after_xml)
+            after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, extra_args=extra_args,
+                                  junit_path=after_xml)
         # Every unbuilt-symbol failure (extremely common in this codebase --
         # most of E-06..E-17 is still STUB) raises a ctypes AttributeError
         # whose text embeds the .so's own absolute path
@@ -1343,6 +1348,9 @@ def main(argv: list[str]) -> int:
     rg.add_argument("--timeout", type=int, default=600)
     rg.add_argument("--no-junit", action="store_true")
     rg.add_argument("--merge-root", default=None)
+    rg.add_argument("--pytest-extra", default=None,
+                     help="shlex-split extra pytest arguments (e.g. '-n 5 --dist loadfile'), placed after "
+                          "no:cacheprovider and part of the baseline cache key")
     rg.add_argument("--before-build", default=None,
                      help="shell-split command run in the base-ref worktree before its pytest call "
                           "(fresh baselines only); see regression_check's before_build docstring")
@@ -1444,7 +1452,9 @@ def main(argv: list[str]) -> int:
                                                  junit=not args.no_junit,
                                                  merge_root=Path(args.merge_root) if args.merge_root else None,
                                                  before_build=shlex.split(args.before_build)
-                                                 if args.before_build else None)
+                                                 if args.before_build else None,
+                                                 extra_args=shlex.split(args.pytest_extra)
+                                                 if args.pytest_extra else None)
     print(f"{'OK' if ok else 'REJECT'} {detail}")
     if args.cmd in ("playthrough", "lane_plays") and evidence:
         print(f"EVIDENCE {evidence[0]}")

@@ -4,3 +4,4 @@
 # elsewhere must install this file: pip install -r scripts/specfactory/requirements.txt
 # prefetch_measure.parse_card imports yaml (tests/specfactory/test_prefetch_measure.py).
 PyYAML>=6.0
+pytest-xdist>=3.6,<4
