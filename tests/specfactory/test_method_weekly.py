@@ -7,6 +7,7 @@ wt.py new, git fetch, method_metrics.py --week <last ISO week> --write, git comm
 push, wt.py done; a dry run creates nothing under ~/Projects/om-push/wt/.
 """
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -61,3 +62,58 @@ def test_6_settings_has_the_session_start_hook_line_for_metrics_last():
     mc = next(i for i, c in enumerate(cmds) if "method_check.py" in c)
     mm = next(i for i, c in enumerate(cmds) if "method_metrics.py --last" in c)
     assert mm > mc or mm == mc, "metrics --last must come after method_check.py"
+
+
+# spec: Amendment A12 (HARNESS-mm-15): the week, the exit, the reap
+def _week_in_dry_run(now):
+    r = subprocess.run(["bash", str(SCRIPT), "--dry-run"], capture_output=True, text=True, timeout=60,
+                       env={**os.environ, "OM_NOW": now})
+    assert r.returncode == 0, r.stdout + r.stderr
+    m = re.search(r"method_metrics\.py --week (\d{4}-W\d\d)", r.stdout)
+    assert m, r.stdout
+    return m.group(1)
+
+
+def test_a12_dry_run_names_the_week_ending_on_a_sunday_and_the_last_week_on_a_wednesday():
+    assert _week_in_dry_run("2026-11-01 23:00") == "2026-W44"  # Sunday: the week that ends today
+    assert _week_in_dry_run("2026-10-28 12:00") == "2026-W43"  # Wednesday: the week that ended last Sunday
+
+
+def _live_run(tmp_path, now):
+    home = tmp_path / "home"
+    for week in ("W43", "W44"):  # the pre-fix script names W43; the fixed one W44
+        w = home / f"Projects/om-push/wt/metrics-2026-{week}"
+        (w / "scripts/specfactory").mkdir(parents=True)
+        (w / "scripts/specfactory/method_metrics.py").write_text("import sys\nprint('FAIL M01')\nsys.exit(1)\n")
+    wt = home / "Projects/om-push/wt/metrics-2026-W44"
+    live = tmp_path / "live"
+    (live / "scripts/specfactory").mkdir(parents=True)
+    log = tmp_path / "calls.log"
+    (live / "scripts/specfactory/wt.py").write_text(
+        f"import sys\nopen({str(log)!r}, 'a').write('wt.py ' + ' '.join(sys.argv[1:]) + '\\n')\n"
+        "if sys.argv[1] == 'reap':\n    print('reap dry output')\n")
+    bin_ = tmp_path / "bin"
+    bin_.mkdir()
+    for name in ("git", "flock"):
+        (bin_ / name).write_text(f"#!/bin/sh\necho \"{name} $*\" >> {log}\n"
+                                 "case \"$*\" in *rev-parse*) echo abc123;; esac\nexit 0\n")
+        (bin_ / name).chmod(0o755)
+    env = {**os.environ, "HOME": str(home), "OM_REPO": str(live), "OM_NOW": now, "PATH": f"{bin_}:{os.environ['PATH']}"}
+    r = subprocess.run(["bash", str(SCRIPT)], capture_output=True, text=True, timeout=60, env=env)
+    return r, log.read_text() if log.exists() else "", wt
+
+
+def test_a12_a_fail_from_the_metrics_still_reaches_the_commit_line(tmp_path):
+    r, calls, _ = _live_run(tmp_path, "2026-11-01 23:00")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert re.search(r"git .*commit", calls), calls
+
+
+def test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit(tmp_path):
+    r, calls, wt = _live_run(tmp_path, "2026-11-01 23:00")
+    reaps = [ln for ln in calls.splitlines() if ln.startswith("wt.py reap")]
+    assert reaps and all("--dry-run" in ln for ln in reaps), calls
+    assert (wt / "metrics/2026-W44_reap_dryrun.txt").read_text().strip() == "reap dry output"
+    for ln in SCRIPT.read_text().splitlines():
+        if re.search(r"wt\.py\"? reap", ln) and not ln.lstrip().startswith("#"):
+            assert "--dry-run" in ln, ln

@@ -3723,7 +3723,7 @@ id = "HARNESS-gate-cache-seed"
 # audit4 highs applied (Architect ruling 2026-10-23 14:10 EDT, records 22b), the report's mediums and lows pending; no launch until next week's pass; report ~/Projects/om-push/scratch/drafts-2026-10-22/audit4_report_HARNESS-gate-cache-seed.md
 manager = "M0"
 wave = 13
-owns = ["scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_cache_seed.py"]
+owns = ["scripts/specfactory/merge_gate_support.py", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_gate_cache_seed.py", "scripts/specfactory/suite_inputs.toml"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_cache_seed.py"]
 depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-lane-plays-scope"]  # the last two are records-clerk additions (merge_gate_support.py overlap: both are ordered after keep-red), Architect to confirm
@@ -4370,10 +4370,10 @@ id = "HARNESS-mm-15"
 manager = "Architect"
 owns = ["scripts/specfactory/method_weekly.sh", "tests/specfactory/test_method_weekly.py"]
 owns_glob = []
-acceptance = ["tests/specfactory/test_method_weekly.py"]
+acceptance = ["tests/specfactory/test_method_weekly.py::test_a12_dry_run_names_the_week_ending_on_a_sunday_and_the_last_week_on_a_wednesday", "tests/specfactory/test_method_weekly.py::test_a12_a_fail_from_the_metrics_still_reaches_the_commit_line", "tests/specfactory/test_method_weekly.py::test_a12_reap_runs_dry_only_and_the_output_goes_into_the_weeks_commit"]  # node ids, not the file: the file also holds HARNESS-mm-6's red case (halted by Westley; gd_tests_known_red.txt line 26), which is mm-6's acceptance, not this piece's (Architect 2026-10-28 after the 4b132aa9 reject)
 depends_on = ["HARNESS-mm-4"]  # ordering edge: mm-4 (attached) owns the same files
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "9f2d233ac9ad11836e4696952ccf3ea07248db0d" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "three one-line fixes in method_weekly.sh (week, exit, dry-run reap) and three test cases"
 [[piece]]
@@ -4384,7 +4384,18 @@ owns_glob = []
 acceptance = ["tests/specfactory/test_method_metrics.py"]
 depends_on = ["HARNESS-mm-8"]  # ordering edge: mm-8 (attached) owns the same files
 tests_pending = true
-status = { state = "queued" }
+status = { state = "attached", attach_sha = "d29e0236cf3280aef27cd636ae3d7f6ad711cb02" }
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "threshold approvals written into the toml (Phase 4d); one data edit and one test case"
+[[piece]]
+id = "HARNESS-mm-18"
+manager = "Architect"
+owns = ["scripts/specfactory/method_weekly.sh", "scripts/specfactory/systemd/om-method-metrics.service", "tests/specfactory/test_method_weekly.py"]
+owns_glob = []
+acceptance = []  # node ids filled from the builder's report (two test_a16_ cases); the file also holds HARNESS-mm-6's halted red case
+depends_on = ["HARNESS-mm-15", "HARNESS-mm-4"]  # ordering edges on the same files
+tests_pending = true
+status = { state = "queued" }
+spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
+size_estimate = "unit ExecStart runs the script from origin/main; reap dry-run output path; two test cases"
 

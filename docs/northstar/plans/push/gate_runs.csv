@@ -5,3 +5,6 @@ date,label,branch,base_sha,candidate_sha,queue_s,stage_s,rc,reject_stages,reject
 2026-10-27,HARNESS-mm-9,push/land-mm-9,7c509c75a5349e2928be49fb8bc5a73daea316c4,f9548ed9224b58ef81133b14d1becc4d97b07a44,0,4057.1,0,,,0,53,0,0
 2026-10-28,HARNESS-mm-8,push/land-mm-8,8affaf027c2d3ca62c216e3a6405cc9cf1c97581,3ffc5997d8fcdf3ade68f5d18a786ff1039e9922,0,4169.1,0,,,0,406,0,0
 2026-10-28,HARNESS-mm-14,push/land-mm-14,2db7c138a508b718ab614900766fa443853c9323,72a5d46a9790989e7ea6a9515cb435dbb2b5c48b,0,4177.4,0,,,0,15,0,0
+2026-10-28,HARNESS-mm-16,push/land-mm-16,213c33339d7d991c305a4ff659be7686e95130e0,77214a3a391a942a9f21c78cda23dbba13d16b8e,0,4219.9,0,,,0,19,0,0
+2026-10-28,HARNESS-mm-15,push/land-mm-15,4b132aa9718744ac838a39cb1516973eee848bcf,b2771339138aa208edab79825f6b0b21a19957a8,,4125.9,1,acceptance,"test_6_settings_has_the_session_start_hook_line_for_metrics_last (mm-6 known red)",,,,
+2026-10-28,HARNESS-mm-15,push/land-mm-15,d2adc6fb77844806feba1518adbcbbda1a9941c5,9f2d233ac9ad11836e4696952ccf3ea07248db0d,0,3998.7,0,,,0,56,0,0

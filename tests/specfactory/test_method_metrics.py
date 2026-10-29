@@ -866,3 +866,22 @@ def test_e_malformed_gate_row_note_states_the_skipped_count(tmp_path):
     gp.write_text(gp.read_text() + "2026-10-28,P1,P2,push/p,extra,fields\n")  # fewer fields than the header
     r = subprocess.run([sys.executable, str(SCRIPT), *w["args"]], capture_output=True, text=True, timeout=300)
     assert "skipped 1 malformed gate rows" in r.stderr, r.stderr[-500:]
+
+
+# ---- A13 (HARNESS-mm-16): Westley approved every threshold on 2026-10-28
+def test_a13_real_toml_every_threshold_approved_and_approved_prints_pass(tmp_path):
+    import tomllib
+    real = REPO / "scripts" / "specfactory" / "method_thresholds.toml"
+    d = tomllib.loads(real.read_text())
+    tabs = {k: v for k, v in d.items() if isinstance(v, dict) and "approved" in v}
+    assert tabs, "no tables with an approved key"
+    bad = {k: v["approved"] for k, v in tabs.items() if v["approved"] != "Westley 2026-10-28"}
+    assert not bad, f"approved is not 'Westley 2026-10-28' in: {bad}"
+    assert d["M21b"]["value"] == 8, d["M21b"]
+    assert d["M01"]["value"] == 1.5, d["M01"]
+    w = W.build_world(tmp_path)
+    args = list(w["args"])
+    args[args.index("--thresholds") + 1] = str(real)
+    r = subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True, timeout=300)
+    got = {m.group(1): m.group(2) for m in map(LINE.match, r.stdout.splitlines()) if m}
+    assert got.get("M01") == "PASS", f"M01 inside its limit under the real toml: {got.get('M01')}\n{r.stdout[-800:]}"
