@@ -5,7 +5,7 @@ never edit this file.
 
 Proves the K-e getters exist with the documented signatures and answer the documented empty shape on a fresh world
 (R-193-02 lots and stages, R-193-01 density, R-218-01/02 strongpoints, R-179-01 doctrine, R-193-04 waves, R-168-01
-placement), ABI 6, and that save format 8 round-trips the (empty) new state.
+placement), ABI 6, and that save format 13 round-trips the (empty) new state.
 
 ASSUMED PROTOTYPES: the ones written in docs/architecture.md (the spec names the getters, the contract piece fixed the
 arguments; a mismatch is a K-e question). Structs: om_lot {u32 id; f64 x, y; i32 stage, building, owner},
@@ -71,7 +71,7 @@ def test_control_existing_getter_still_works(lib, world_factory):
 def test_abi_version_is_7(lib):
     """K-e: OM_ABI_VERSION 5 -> 6 (spec rev 6 lane E1); K-e5 moved the pin to 7 (the hook om_terrain_set_heights, TD-VG-E-16). Red before K-e5: the library reports 6. E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group): red until then, the library reports 7."""
     lib.om_abi_version.argtypes, lib.om_abi_version.restype = [], ctypes.c_uint32
-    assert lib.om_abi_version() == 8
+    assert lib.om_abi_version() == 9
 
 
 def test_new_symbols_present_and_bind(lib):
@@ -142,7 +142,7 @@ def test_save_round_trip_at_format_10_keeps_empty_new_state(lib, world_factory):
     size = lib.om_save_state_size(src)
     buf = (ctypes.c_uint8 * size)()
     lib.om_save_state_write(src, buf, size)
-    assert int.from_bytes(bytes(buf[4:8]), "little") == 12
+    assert int.from_bytes(bytes(buf[4:8]), "little") == 13
     dst = world_factory(n_regions=1)
     assert lib.om_load_state_read(dst, buf, size) == 0
     assert lib.om_lot_count(dst) == 0 and lib.om_strongpoint_count(dst) == 0

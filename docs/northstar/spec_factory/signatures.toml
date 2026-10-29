@@ -5,7 +5,7 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 8
+abi_version = 9
 symbol_count = 802
 struct_count = 45
 ambiguous_remaining = 0

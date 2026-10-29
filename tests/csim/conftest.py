@@ -61,7 +61,7 @@ _build_libs()
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 8
+EXPECTED_ABI_VERSION = 9
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----

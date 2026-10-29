@@ -23,7 +23,7 @@ old growth on the legacy 120 grid, so the legacy case below (density_side 120, n
 K-e5 tree only: E1q rewrites the density (side = canvas / 100) and retires it under its own ledger row, as it does the
 next_lot_id == 1 case. Every other case reads the side from the save, so it stays valid when E1q lands.
 
-Libraries are opened here (klib / kmake), not through conftest's lib fixture: that fixture asserts the moved ABI pin (8) and so
+Libraries are opened here (klib / kmake), not through conftest's lib fixture: that fixture asserts the moved ABI pin (9) and so
 fails every test of the suite on the built tree for the one reason (the library still reports 6); these cases must each fail for
 their own reason. After the K-e5 build the two are the same library.
 
@@ -632,17 +632,17 @@ def test_ke5_load_rejects_core_cell_at_or_above_side_squared(klib, kmake):
 
 def test_ke5_save_format_version_is_10(klib, kmake):
     """K-e5: OM_SAVE_FORMAT_VERSION 9 to 10; W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), LAB-REV2 E0 to 13, read as the moved pins read it (header bytes 4..8 of a save)."""
-    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 12
+    assert struct.unpack_from("<I", save(klib, scene(klib, kmake)), 4)[0] == 13
 
 
 def test_ke5_abi_version_is_7(klib):
     """K-e5: OM_ABI_VERSION 6 to 7 (the one new public symbol); E7 moved it to 8 (TD-VG-E-28, om_mission_get_force_group); LAB-REV2 E0 moved it to 9 (two new public symbols), read from om_abi_version() as the moved pins read it."""
-    assert klib.om_abi_version() == 8
+    assert klib.om_abi_version() == 9
 
 
 def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
     """K-e5: OM_PIPE_SAVE_FORMAT_VERSION goes to 10 (it is 8 today; finding FINDING-pipe-save-version); W2 moved it to 11 (TD-VG-W-1), E7 to 12 (TD-VG-E-27), LAB-REV2 E0 to 13. A save written through the
-    pipe has sidecar format_version 12 and a version word 12 (the sidecar is the key the load-game screen reads). Control
+    pipe has sidecar format_version 13 and a version word 13 (the sidecar is the key the load-game screen reads). Control
     first: both exist and are integers."""
     if not PIPE.exists():
         pytest.fail("pipe/ouroboros_pipe is not built")
@@ -659,8 +659,8 @@ def test_ke5_pipe_sidecar_format_version_is_10_and_matches_the_save():
         side = json.load(open(path + ".json"))
         word = struct.unpack_from("<I", open(path, "rb").read(), 4)[0]
     assert isinstance(side.get("format_version"), int) and isinstance(word, int)
-    assert side["format_version"] == 12, f"sidecar format_version {side['format_version']} (save version word {word})"
-    assert word == 12
+    assert side["format_version"] == 13, f"sidecar format_version {side['format_version']} (save version word {word})"
+    assert word == 13
 
 
 # ------------------------------------------------------------------------------------------------ the hook om_terrain_set_heights
