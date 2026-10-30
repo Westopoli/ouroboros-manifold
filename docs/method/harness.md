@@ -1,6 +1,6 @@
 # Harness stories
 
-Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same loop, same trailers; the story file is `docs/stories/H-###.md`; the gate flag is `harness`.
+Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same loop, same trailers; the story file is `docs/stories/H-###.md`; the gate flag is `harness`. The nightly timers (play, sweep, token report) run from the clone `~/Projects/om-push/main` and are installed with `systemctl --user link <unit path>` then `enable --now`.
 
 | Story | In Westley's words | Status | Depth |
 |---|---|---|---|
