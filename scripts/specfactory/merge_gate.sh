@@ -425,10 +425,16 @@ fi
 # reads its own anchor from sweeps.md. See also: status_check.py, pre_gate.sh
 STATUS_LOG="$SCRATCH_ROOT/status.log"
 "$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$MAIN_SHA" >"$STATUS_LOG" 2>&1
-if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
-    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
-elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
-    warn status "$(grep '^STATUS [a-z_]* WARN' "$STATUS_LOG" | tr '\n' ' ')"
+# H-014 (DEC-sweep-drift-warn-2026-10-30): `STATUS sweep DRIFT` (a sweep is due) is a WARN, since the sweep itself runs through
+# this gate; a landing after a bad sweep is blocked by the last sweeps.md row being REJECT. See also: sweep.sh
+SWEEP_ROW=$(grep '^|' "$REPO_ROOT/docs/northstar/plans/push/sweeps.md" 2>/dev/null | tail -1)
+SWEEP_VERDICT=$(awk -F'|' '{v=$4; gsub(/ /,"",v); print v}' <<<"$SWEEP_ROW")
+if [[ "$SWEEP_VERDICT" == REJECT ]]; then
+    reject status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $(awk -F'|' '{s=$3; gsub(/ /,"",s); print s}' <<<"$SWEEP_ROW")"
+elif grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" && grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -qv '^STATUS sweep DRIFT'; then
+    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -v '^STATUS sweep DRIFT' | tr '\n' ' ')"
+elif grep -q '^STATUS [a-z_]* \(WARN\|DRIFT\)' "$STATUS_LOG"; then
+    warn status "$(grep '^STATUS [a-z_]* \(WARN\|DRIFT\)' "$STATUS_LOG" | tr '\n' ' ')"
 else
     ok status "$(tail_oneline "$STATUS_LOG" 1)"
 fi
