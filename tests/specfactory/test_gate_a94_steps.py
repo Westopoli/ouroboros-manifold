@@ -45,7 +45,7 @@ sys.path.insert(0, str(SPEC))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import merge_gate_support as mgs  # noqa: E402
-from gate_toy_root import fake_gate_root, gate_env  # noqa: E402
+from gate_toy_root import fake_gate_root, gate_env, write_story  # noqa: E402
 
 PY = sys.executable
 TABLE_REL = Path("docs/northstar/spec_factory/signatures.toml")
@@ -98,6 +98,7 @@ def _base_repo(tmp_path: Path) -> Path:
     _write(repo, str(TABLE_REL), META + ROW_A)
     _write(repo, str(ALLOW_REL), "")
     _write(repo, "tests/specfactory/test_fixture_ok.py", "def test_ok():\n    assert True\n")
+    write_story(repo, "B1")  # H-020
     emitted = subprocess.run([PY, str(SIG), "--project", str(repo), "--emit"],
                              capture_output=True, text=True)
     assert emitted.returncode == 0, emitted.stdout + emitted.stderr
@@ -113,7 +114,7 @@ def _gate(tmp_path: Path, repo: Path, base_ref: str = "HEAD") -> subprocess.Comp
     env = {"MERGE_GATE_PIECES": str(pieces),
            "MERGE_GATE_SIGNATURES": str(repo / TABLE_REL),
            "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
-    return subprocess.run(["bash", str(GATE), str(repo), base_ref, "B1"],
+    return subprocess.run(["bash", str(GATE), "--tier", "full", str(repo), base_ref, "B1"],
                           capture_output=True, text=True, env=env, timeout=240)
 
 
@@ -126,7 +127,7 @@ def _gate_to_regression(tmp_path: Path, repo: Path, base_ref: str, *owned: str) 
     owns = ", ".join(f'"{o}"' for o in ("csrc/stub.c", *owned))
     pieces.write_text(f'[[piece]]\nid = "B1"\nowns = [{owns}]\nacceptance = []\ndepends_on = []\n')
     gate = fake_gate_root(tmp_path, noisy=("sig_table.py", "status_check.py"))
-    return subprocess.run(["bash", str(gate), str(repo), base_ref, "B1"], capture_output=True, text=True,
+    return subprocess.run(["bash", str(gate), "--tier", "full", str(repo), base_ref, "B1"], capture_output=True, text=True,
                           env=gate_env(tmp_path, pieces, MERGE_GATE_SIGNATURES=str(repo / TABLE_REL)), timeout=240)
 
 
