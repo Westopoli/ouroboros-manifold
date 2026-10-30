@@ -1,0 +1,10 @@
+# See also: scripts/method/token_report.py, docs/stories/H-003.md
+[Unit]
+Description=Token report, nightly (no model is called)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/westopoli/Projects/ouroboros-manifold
+Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Runs the live checkout's copy: the script locates the repo and git log from its own path, so it cannot run from a temp copy.
+ExecStart=/usr/bin/python3 scripts/method/token_report.py
