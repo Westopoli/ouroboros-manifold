@@ -249,13 +249,21 @@ def footprint_check(candidate_dir: Path, base_ref: str, piece_id: str, *,
 # ------------------------------------------------------------------ H-006: the story file replaces the pieces row
 # See also: docs/stories/H-006.md, tests/specfactory/test_gate_story.py
 def _story_line(path: Path, key: str) -> str | None:
-    """The value of the first `<key>:` line of a story file, None when absent or the file is missing."""
+    """The value of the last `<key>:` line outside a triple-backtick fence, None when absent or the file is missing."""
     try:
         text = Path(path).read_text()
     except OSError:
         return None
-    m = re.search(rf"^{key}:[ \t]*(.*?)[ \t]*$", text, re.M)
-    return m.group(1) if m else None
+    value = None
+    fenced = False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+        elif not fenced:
+            m = re.match(rf"{key}:[ \t]*(.*?)[ \t]*$", line)
+            if m:
+                value = m.group(1)
+    return value
 
 
 def story_flag(path: Path) -> str:
@@ -304,7 +312,7 @@ def story_acceptance(candidate_dir: Path, piece_ids: str) -> list[str]:
 
 
 def story_check(candidate_dir: Path, piece_ids: str) -> list[str]:
-    """`missing <key>` for each id's story file lacking `Flag:` or `Tests:` (`missing <file>` when the file is absent)."""
+    """`missing <key>` (and `bad flag <value>` outside harness, client, sim, contract) for each id's story file lacking `Flag:` or `Tests:` (`missing <file>` when the file is absent)."""
     bad: list[str] = []
     for one in (p.strip() for p in piece_ids.split(",") if p.strip()):
         f = Path(candidate_dir) / "docs/stories" / f"{one}.md"
@@ -312,6 +320,9 @@ def story_check(candidate_dir: Path, piece_ids: str) -> list[str]:
             bad.append(f"missing docs/stories/{one}.md")
             continue
         bad += [f"missing {k}" for k in ("Flag", "Tests") if _story_line(f, k) is None]
+        flag = _story_line(f, "Flag")
+        if flag is not None and flag not in ("harness", "client", "sim", "contract"):
+            bad.append(f"bad flag {flag}")
     return bad
 
 
