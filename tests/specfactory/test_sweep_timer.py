@@ -348,3 +348,61 @@ def test_control_status_check_reads_a_hand_written_pass_row_as_the_anchor(tmp_pa
     line = [ln for ln in r.stdout.splitlines() if ln.startswith("STATUS sweep ")]
     print(line)
     assert len(line) == 1 and re.search(r"2 landings and [\d.]+ h since the PASS row at " + fx.a[:8], line[0]), (line, r.stderr)
+
+
+# --- DEC-sweep-drift-warn-2026-10-30: the gate's status stage and the sweep rows -----------------------------------------
+# Fixture: the tests/specfactory/test_gate_reorder.py one (a candidate repo plus a gate repo holding the real merge_gate.sh).
+# Ruling (docs/stories/H-014.md "Deadlock ruling"): "the gate's status stage treats `STATUS sweep DRIFT` as a WARN under
+# every tier and rejects on every other DRIFT as before; what blocks a landing after a bad sweep is the last `sweeps.md`
+# row being REJECT, which the status stage checks as `GATE status REJECT sweep red <n> at <sha>`".
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import test_gate_reorder as gr  # noqa: E402
+
+SWEEP_DRIFT_STUB = "print('STATUS sweep DRIFT 9 landings and 40.0 h since the BASE row at 93c0583d')\n"
+OTHER_DRIFT_STUB = "print('STATUS lane_table DRIFT lane X cites a sha the base lacks')\n"
+
+
+def _gate_run(tmp_path, *, stubs=None, sweeps_text=None):
+    story = "## Machine lines\n\nFlag: harness\nTests: none\n"  # the H-006 story stage rejects a candidate without one
+    gate, cand = gr._build(tmp_path, drift=False, gate_script=gr.SPEC_DIR / "merge_gate.sh",
+                           pieces=gr.OWNS_CLEAN,
+                           # the toy repo has no real sim library: a copy of gate_flag.py beside a stub trace tool, so the flag stage cannot end the run
+                           stubs={"checksum_trace.py": gr.OK_STUB, "tactical_trace.py": gr.OK_STUB, "gate_flag.py": (SPEC / "gate_flag.py").read_text(), **(stubs or {})},
+                           candidate_files={"feat.txt": "feat\n", "docs/stories/B1.md": story})
+    if sweeps_text is not None:
+        gr._overlay(gate.parents[2], SWEEPS_REL, sweeps_text)
+    env = {"PATH": gr.GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
+           "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
+           "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
+    r = subprocess.run(["bash", str(gate), str(cand), "origin/main", "B1"], capture_output=True, text=True, env=env,
+                       timeout=gr.RUN_TIMEOUT_S)
+    return r.returncode, r.stdout.splitlines(), r.stdout + r.stderr
+
+
+def test_control_other_status_drift_still_rejects(tmp_path):
+    """Control for the two tests below (green today and after): a status_check stub printing a non-sweep DRIFT gates to
+    `GATE status REJECT`, so the stub mechanism drives the stage and "every other DRIFT" still rejects."""
+    rc, lines, out = _gate_run(tmp_path, stubs={"status_check.py": OTHER_DRIFT_STUB})
+    assert any(ln.startswith("GATE status REJECT") and "lane_table" in ln for ln in lines), out
+
+
+def test_10_sweep_drift_is_a_warn_and_the_run_goes_on_past_status(tmp_path):
+    """H-014 deadlock ruling: "the gate's status stage treats `STATUS sweep DRIFT` as a WARN under every tier": a
+    status_check stub printing `STATUS sweep DRIFT ...` gates to `GATE status WARN`, with no status REJECT and no
+    early_exit, and the stages after status still run."""
+    rc, lines, out = _gate_run(tmp_path, stubs={"status_check.py": SWEEP_DRIFT_STUB})
+    st = [ln for ln in lines if ln.startswith("GATE status ")]
+    assert len(st) == 1 and st[0].startswith("GATE status WARN"), f"status lines {st!r}\n{out}"
+    assert "STATUS sweep DRIFT" in st[0], st[0]
+    assert gr._idx(lines, "early_exit") is None, out
+    assert gr._idx(lines, "rule_pins") is not None and gr._idx(lines, "rule_pins") > gr._idx(lines, "status"), out
+
+
+def test_11_a_reject_row_last_in_sweeps_blocks_the_landing(tmp_path):
+    """H-014 deadlock ruling: "what blocks a landing after a bad sweep is the last `sweeps.md` row being REJECT ...
+    `GATE status REJECT sweep red <n> at <sha>`" (gate.md: "a landing after a red sweep waits for the bisect")."""
+    sha = "a" * 40
+    text = HEADER.format(base=sha) + f"| 2026-10-30 08:00 | {sha} | REJECT | new: t::y | red: 1 | t::y |\n"
+    rc, lines, out = _gate_run(tmp_path, sweeps_text=text)
+    assert any(re.match(r"GATE status REJECT .*sweep red 1 at " + sha[:8], ln) for ln in lines), out
+    assert rc == 1, out
