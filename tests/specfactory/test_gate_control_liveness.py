@@ -47,6 +47,8 @@ LIVENESS = REPO / "scripts" / "specfactory" / "control_liveness.py"
 SUPPORT = REPO / "scripts" / "specfactory" / "merge_gate_support.py"
 PYTHON = "/home/westopoli/Projects/agora/.venv/bin/python"
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import write_story  # noqa: E402
 
 import merge_gate_support as mgs  # noqa: E402
 
@@ -234,6 +236,10 @@ def _gate(tmp_path: Path, controls: dict[str, str], ids: str, *rows: str, placeh
     _git(repo, "init", "-q")
     _git(repo, "config", "user.email", "gate@test")
     _git(repo, "config", "user.name", "gate")
+    import tomllib
+    acceptance = {p["id"]: p.get("acceptance", []) for p in tomllib.loads("\n".join(rows)).get("piece", [])}
+    for one in ids.split(","):  # H-020: one story file per id the gate run names; its Tests are the old row's acceptance
+        write_story(repo, one, tests=" ".join(acceptance.get(one, [])))
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))
@@ -242,7 +248,7 @@ def _gate(tmp_path: Path, controls: dict[str, str], ids: str, *rows: str, placeh
     env = {"MERGE_GATE_PIECES": str(pieces),
            "MERGE_GATE_PLACEHOLDERS": str(_placeholders(tmp_path, *placeholders)),
            "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
-    cmd = ["bash", str(GATE)] + (["--revert"] if revert else []) + [str(repo), "HEAD", ids]
+    cmd = ["bash", str(GATE), "--tier", "full"] + (["--revert"] if revert else []) + [str(repo), "HEAD", ids]
     return subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=300)
 
 

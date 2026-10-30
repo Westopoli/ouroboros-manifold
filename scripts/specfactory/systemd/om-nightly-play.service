@@ -1,0 +1,10 @@
+# See also: scripts/method/nightly_play.sh, scripts/method/file_findings.py, docs/stories/H-004.md
+[Unit]
+Description=Nightly play of main, findings filed as harness stories (no edits)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/westopoli/Projects/om-push/main
+Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/bin/bash /home/westopoli/Projects/om-push/main/scripts/method/nightly_play.sh
+ExecStart=/bin/bash -c 'exec python3 scripts/method/file_findings.py /home/westopoli/Projects/om-push/nightly/$(date +%%F).log docs/method/harness.md --push'

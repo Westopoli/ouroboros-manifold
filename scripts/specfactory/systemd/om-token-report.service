@@ -1,0 +1,10 @@
+# See also: scripts/method/token_report.py, docs/stories/H-003.md
+[Unit]
+Description=Token report, nightly (no model is called)
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Projects/om-push/main
+Environment=PATH=/home/westopoli/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Refreshes the play checkout to origin/main and runs its copy: never the live checkout. The CSV goes to ~/Projects/om-push/metrics (outside the repo).
+ExecStart=/bin/sh -c 'git -C %h/Projects/om-push/main fetch -q origin && git -C %h/Projects/om-push/main reset -q --hard origin/main && exec /usr/bin/python3 scripts/method/token_report.py'

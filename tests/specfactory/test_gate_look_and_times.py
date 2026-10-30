@@ -35,7 +35,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 GATE = REPO / "scripts" / "specfactory" / "merge_gate.sh"
 SUPPORT = REPO / "scripts" / "specfactory" / "merge_gate_support.py"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from gate_toy_root import fake_gate_root, gate_env  # noqa: E402
+from gate_toy_root import fake_gate_root, gate_env, write_story  # noqa: E402
 
 PY = sys.executable
 TIME_SUFFIX = re.compile(r"\[(\d+(?:\.\d+)?)s\]\s*$")
@@ -87,6 +87,7 @@ def _fixture(base: Path, makefile: str) -> tuple[Path, Path]:
     (repo / "Makefile").write_text(makefile)
     for d in ("tests/csim", "tests/qa/t1"):
         (repo / d).mkdir(parents=True)
+    write_story(repo, "B1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))
@@ -98,7 +99,7 @@ def _fixture(base: Path, makefile: str) -> tuple[Path, Path]:
 
 def _run_gate(repo, pieces, **extra):
     env = {"MERGE_GATE_PIECES": str(pieces), "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin", **extra}
-    return subprocess.run(["bash", str(GATE), str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=120)
+    return subprocess.run(["bash", str(GATE), "--tier", "full", str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=120)
 
 
 def _run_gate_through(tmp_path, repo, pieces):
@@ -106,7 +107,7 @@ def _run_gate_through(tmp_path, repo, pieces):
     ends the run on the toy repo (decisive line: `GATE early_exit REJECT allowlist_strict;sig_check;reach_lint;status;
     placeholder_controls`, then `merge_gate.sh: line 91: HOME: unbound variable`). Same fix as gate_toy_root.py."""
     gate = fake_gate_root(tmp_path)
-    return subprocess.run(["bash", str(gate), str(repo), "HEAD", "B1"], capture_output=True, text=True,
+    return subprocess.run(["bash", str(gate), "--tier", "full", str(repo), "HEAD", "B1"], capture_output=True, text=True,
                           env=gate_env(tmp_path, pieces), timeout=240)
 
 
@@ -198,6 +199,7 @@ def _cache_repo(base: Path) -> Path:
     _git(repo, "config", "user.name", "g")
     (repo / "tests" / "t").mkdir(parents=True)
     (repo / "tests" / "t" / "test_a.py").write_text("def test_a():\n    assert True\n")
+    write_story(repo, "B1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "main")
     return repo

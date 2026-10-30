@@ -3818,7 +3818,7 @@ wave = 13
 owns = ["scripts/specfactory/merge_gate_support.py", "scripts/specfactory/merge_gate.sh", "tests/specfactory/test_gate_combined_ids.py", "tests/specfactory/test_gate_cache_seed.py", "docs/northstar/plans/workflows_2026-10-07/rules.md"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_combined_ids.py"]
-depends_on = ["HARNESS-gate-flag"]
+depends_on = ["HARNESS-gate-flag", "H-006"]
 status = { state = "queued" }
 tests_pending = true
 # section 9
@@ -3833,7 +3833,7 @@ wave = 13
 owns = ["scripts/specfactory/pre_gate.sh", "tests/specfactory/test_pregate_pins.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_pregate_pins.py"]
-depends_on = []
+depends_on = ["H-006"]
 status = { state = "queued" }
 tests_pending = true
 # section 9
@@ -3863,7 +3863,7 @@ wave = 13
 owns = ["scripts/specfactory/gate_remote.sh", "docs/northstar/plans/gate_hosts.md", "tests/specfactory/test_gate_remote.py", "scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_gate_remote.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects", "HARNESS-red-evidence", "HARNESS-mm-2", "HARNESS-gate-combined-ids"]
+depends_on = ["HARNESS-gate-tiers", "HARNESS-look-rejects", "HARNESS-red-evidence", "HARNESS-mm-2", "HARNESS-gate-combined-ids", "H-006"]
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"
@@ -3880,7 +3880,7 @@ wave = 15
 owns = ["scripts/specfactory/csim_known_xfail.txt", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_known_xfail.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_known_xfail.py"]
-depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-lane-plays-scope", "HARNESS-gate-cache-seed", "HARNESS-gate-concurrent"]  # the last two are records-clerk additions (merge_gate_support.py overlap, wave 15 after wave 13), Architect to confirm
+depends_on = ["HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-lane-plays-scope", "HARNESS-gate-cache-seed", "HARNESS-gate-concurrent", "H-006"]  # the last two are records-clerk additions (merge_gate_support.py overlap, wave 15 after wave 13), Architect to confirm
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 4
@@ -3948,7 +3948,7 @@ wave = 15
 owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_look_rejects.py", "tests/specfactory/test_gate_look_and_times.py"]  # merge_gate.sh: stage 13 look lines only (:692-705); merge_gate_support.py: frame_busyness/look_check (:832-858), the look parser (:1162-1164) and CLI clause (:1274-1278) only; test_gate_look_and_times.py: the look section (:131-176) under TD-HARNESS-look-rejects
 owns_glob = []
 acceptance = ["tests/specfactory/test_look_rejects.py", "tests/specfactory/test_gate_look_and_times.py"]
-depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-mm-2", "HARNESS-gate-combined-ids"]  # the last two are records-clerk additions (merge_gate.sh overlap, Architect to confirm); the base-after-lock and keep-red edges only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
+depends_on = ["HARNESS-gate-tiers", "HARNESS-gate-base-after-lock", "HARNESS-gate-keep-red-evidence", "HARNESS-gate-reorder", "HARNESS-gate-concurrent", "HARNESS-mm-2", "HARNESS-gate-combined-ids", "H-006"]  # the last two are records-clerk additions (merge_gate.sh overlap, Architect to confirm); the base-after-lock and keep-red edges only order the merge_gate.sh overlap (owner_lint); HARNESS-gate-tiers has no row yet (Architect 2026-10-21 names it as the piece this waits behind)
 status = { state = "queued" }
 tests_pending = true  # TEST_WRITER = sonnet55
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # lane H, the HARNESS-look-rejects paragraph
@@ -3965,7 +3965,7 @@ wave = 15
 owns = ["scripts/specfactory/red_check.py", "scripts/specfactory/merge_gate.sh", "docs/northstar/plans/workflows_2026-10-07/rules.md", "tests/specfactory/test_red_evidence.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_red_evidence.py"]
-depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-look-rejects", "HARNESS-mm-2", "HARNESS-gate-combined-ids"]  # HARNESS-look-rejects only orders the merge_gate.sh overlap (owner_lint)
+depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-look-rejects", "HARNESS-mm-2", "HARNESS-gate-combined-ids", "H-006"]  # HARNESS-look-rejects only orders the merge_gate.sh overlap (owner_lint)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
@@ -3982,7 +3982,7 @@ wave = 15
 owns = ["scripts/specfactory/size_lint.py", "scripts/specfactory/merge_gate.sh", "tests/specfactory/test_size_lint.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_size_lint.py"]
-depends_on = ["A94-harness", "HARNESS-look-rejects", "HARNESS-gate-remote", "HARNESS-red-evidence", "HARNESS-gate-venv-link", "HARNESS-mm-2", "HARNESS-gate-combined-ids"]  # HARNESS-look-rejects orders the merge_gate.sh step 12 edit after the last queued mg.sh owner in wave 15; A94-harness: only the owns-overlap ordering edge pieces.py --check wants (A94-harness owns scripts/specfactory/[!m]* and tests/specfactory/**, attached)
+depends_on = ["A94-harness", "HARNESS-look-rejects", "HARNESS-gate-remote", "HARNESS-red-evidence", "HARNESS-gate-venv-link", "HARNESS-mm-2", "HARNESS-gate-combined-ids", "H-006"]  # HARNESS-look-rejects orders the merge_gate.sh step 12 edit after the last queued mg.sh owner in wave 15; A94-harness: only the owns-overlap ordering edge pieces.py --check wants (A94-harness owns scripts/specfactory/[!m]* and tests/specfactory/**, attached)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
@@ -3999,7 +3999,7 @@ wave = 15
 owns = ["scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_test_edit_row.py"]
 owns_glob = []
 acceptance = ["tests/specfactory/test_test_edit_row.py"]
-depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-combined-ids"]  # HARNESS-known-xfail only orders the merge_gate_support.py overlap (owner_lint)
+depends_on = ["HARNESS-gate-keep-red-evidence", "HARNESS-westley-folder", "HARNESS-known-xfail", "HARNESS-gate-combined-ids", "H-006"]  # HARNESS-known-xfail only orders the merge_gate_support.py overlap (owner_lint)
 status = { state = "queued" }
 tests_pending = true
 spec = "docs/northstar/plans/2026-10-07-visible-game-spec.md"  # Lane H part 5
@@ -4606,3 +4606,16 @@ status = { state = "attached", attach_sha = "eb0511b16014d9823f12dcf4f4600106616
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "M27 redefined as context tokens per Dispatcher wakeup; entries grouped by message.id in M27 and M28; one test case"
 
+
+# H-006 (transitional, the last pieces.toml row ever added; docs/stories/H-006.md): the gate reads the story file, so this story lands through the old gate with one row.
+[[piece]]
+id = "H-006"
+manager = "Architect"
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/pre_gate.sh", "scripts/specfactory/gate_flag.py", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_story.py", "docs/stories/H-006.md", "docs/northstar/plans/push/pieces.toml"]
+owns_glob = []
+depends_on = []  # H-006 lands first; the queued rows that share its gate files wait for it (rows below name "H-006")
+acceptance = ["tests/specfactory/test_gate_story.py"]
+status = { state = "queued" }
+impact = "harness"
+spec = "docs/stories/H-006.md"
+size_estimate = "story_flag and story_tests readers; merge_gate.sh drops owner_lint and every pieces.toml read; pre_gate.sh drops the owner-row and provenance steps"
