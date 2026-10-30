@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # H-001: open today's main (or a story's scene) built, on the real display. See docs/stories/H-001.md.
-# play.sh [--scene <res path>] [--seed N] [--story <id>] [--tree <path>] [--check] [--dry-run]
+# play.sh [--scene <res path>] [--seed N] [--story <id>] [--tree <path>] [--check] [--dry-run] [--keep]
 set -uo pipefail
 GODOT="$HOME/.local/bin/godot.real"
 WINDOW_S=60   # DRAFT-play-window-s
 SETTLE_S=10   # DRAFT-play-settle-s
-scene=""; seed=""; story=""; tree=""; check=0; dry=0; extra=()
+scene=""; seed=""; story=""; tree=""; check=0; dry=0; keep=0; extra=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --scene) scene="$2"; shift 2;;
@@ -14,6 +14,7 @@ while [[ $# -gt 0 ]]; do
     --tree) tree="$2"; shift 2;;
     --check) check=1; shift;;
     --dry-run) dry=1; shift;;
+    --keep) keep=1; shift;;
     *) echo "play.sh: unknown argument $1" >&2; exit 64;;
   esac
 done
@@ -30,10 +31,13 @@ fi
 [[ -d "$tree" || $dry -eq 1 ]] || { echo "play.sh: no tree $tree" >&2; exit 1; }
 
 # 1b. --tree plays a shared scratch clone at the tree's HEAD, so Godot's rewrite of tracked
-# .import/.uid files never dirties the named tree. Under TMPDIR; nothing is removed.
+# .import/.uid files never dirties the named tree. Under TMPDIR (default om-push/tmp, never bare /tmp);
+# removed on every exit unless --keep.
 if [[ -n "$tree_arg" && $dry -eq 0 ]]; then
   sha=$(git -C "$tree" rev-parse HEAD) || exit 1
-  scratch=$(mktemp -d "${TMPDIR:-/tmp}/play-${sha:0:12}-XXXX") || exit 1
+  export TMPDIR="${TMPDIR:-$HOME/Projects/om-push/tmp}"; mkdir -p "$TMPDIR" || exit 1
+  scratch=$(mktemp -d "$TMPDIR/play-${sha:0:12}-XXXX") || exit 1
+  [[ $keep -eq 1 ]] || trap 'rm -rf "$scratch"' EXIT
   git clone -q --shared "$tree" "$scratch" && git -C "$scratch" checkout -q "$sha" || exit 1
   tree="$scratch"
   echo "scratch: $tree"
