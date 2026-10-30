@@ -351,3 +351,44 @@ def test_mm4_scratch_shell_redirect_is_not_a_code_edit_either(tmp_path):
     cmd = "cat > ~/Projects/om-push/scratch/run_gate.sh <<'EOF'\necho hi\nEOF"
     r = run(tmp_path, write_transcript(tmp_path, [assistant(FABLE, tools=[bash(cmd)])]))
     assert checks(r.stdout)["code_edits"][0] == "OK", r.stdout
+
+
+# ---- H-005 (docs/stories/H-005.md): the method check tests six rules and cites docs/method/, not retired documents
+SIX_RULES = {"polling", "wakeups", "gate_runs", "live_tree", "code_edits", "context"}
+
+
+def test_h005_six_rule_counts_on_the_existing_fixture(tmp_path):
+    """H-005 Tests: "The existing fixture transcript yields the same six counts as today (positive control)."
+    Story: "the rule table drops to six DRIFT checks (polling, wakeups, gate runs in a chat, live tree,
+    code edits by Fable, context past 400k)"."""
+    r = run(tmp_path, write_transcript(tmp_path, dispatcher_drift_entries(tmp_path)))
+    assert r.returncode == 0, r.stderr
+    got = checks(r.stdout)
+    for cid in ("wakeups", "polling", "live_tree"):
+        assert got[cid] == ("DRIFT", 1, 1), cid
+    assert got["context"] == ("OK", 0, 0)  # fixture ctx is 200k/210k, under today's 400k default
+    assert got["gate_runs"][0] == "OK"
+    assert set(got) <= SIX_RULES, f"rules beyond the six: {sorted(set(got) - SIX_RULES)}"
+    fable = run(tmp_path, write_transcript(tmp_path, [assistant(FABLE, tools=[
+        ("Write", {"file_path": str(tmp_path / "x" / "foo.gd"), "content": "x"})])], name="f.jsonl"))
+    fgot = checks(fable.stdout)
+    assert fgot["code_edits"] == ("DRIFT", 1, 1)
+    assert set(fgot) == SIX_RULES, f"rules beyond the six: {sorted(set(fgot) - SIX_RULES)}"
+
+
+def test_h005_method_check_cites_no_retired_document():
+    """H-005 Tests: "`grep -n 'dispatcher.md\\|context_architect\\|ledger row\\|lane table'
+    scripts/specfactory/method_check.py` is empty." Story: every rule text cites `docs/method/<card>.md`."""
+    pat = re.compile(r"dispatcher\.md|context_architect|ledger row|lane table")
+    hits = [f"{n}: {l.strip()[:80]}" for n, l in enumerate(SCRIPT.read_text().splitlines(), 1) if pat.search(l)]
+    assert not hits, "retired citations:\n" + "\n".join(hits)
+
+
+def test_h005_hook_output_on_an_empty_transcript_lists_exactly_six_rules(tmp_path):
+    """H-005 Tests: "The hook output on an empty transcript lists exactly six rules." """
+    t = tmp_path / "empty.jsonl"
+    t.write_text("")
+    r = run(tmp_path, t)
+    assert r.returncode == 0, r.stderr
+    ids = [m.group(1) for m in map(LINE_RE.match, r.stdout.splitlines()) if m]
+    assert len(ids) == 6 and set(ids) == SIX_RULES, f"{len(ids)} rules: {ids}"
