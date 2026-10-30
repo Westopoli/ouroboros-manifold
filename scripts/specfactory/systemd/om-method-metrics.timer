@@ -1,3 +1,4 @@
+# Disabled by H-003 (2026-10-30): om-token-report.timer replaces it; method_metrics.py stays callable by hand.
 # See also: om-method-metrics.service
 [Unit]
 Description=Method metrics, Sunday 23:00
@@ -7,4 +8,4 @@ OnCalendar=Sun 23:00
 Persistent=true
 
 [Install]
-WantedBy=timers.target
+WantedBy=
