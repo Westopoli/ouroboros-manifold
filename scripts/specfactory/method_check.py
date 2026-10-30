@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# spec: docs/northstar/plans/workflows_2026-10-07/method_check.md
+# spec: docs/stories/H-005.md
 """Method check at compaction: count, per rule, the turns of a chat transcript that broke it."""
 import argparse
 import json
@@ -7,47 +7,25 @@ import os
 import re
 import sys
 
-WT_ROOT = os.path.realpath(os.path.expanduser("~/Projects/om-push/wt"))
 CODE_EXT = r"(?:c|h|gd|py|sh|tscn)"
 EDIT_TOOLS = ("Edit", "Write", "NotebookEdit")
-AGENT_TOOLS = ("Agent", "Task")
 GIT_MUTATE = re.compile(r"\bgit\s+(?:add|commit|push|checkout|switch|merge|stash|reset|rm|mv)\b")
 REDIRECT = re.compile(r"(?:>>?|\btee\b(?:\s+-\w+)*)\s*[\"']?[^\s\"'|;&<>]*\.%s(?![\w.])" % CODE_EXT)
-MAIN_PUSH = re.compile(r"\bgit\s+push\b[^;&|\n]*(?:\s|:)main\b")
 HEREDOC = re.compile(r"(?<!<)<<-?\s*([\"']?)(\w+)\1")
 SEGMENT_SPLIT = re.compile(r"&&|\|\||;|\||\n")
 READERS = ("cat", "sed", "head", "tail", "grep", "ls", "wc", "echo", "git", "stat", "du", "find", "awk", "diff", "python3")
 
 # id, roles, kind, rule line
 CHECKS = [
-    ("wakeups", "both", "DRIFT", "No scheduled wakeups: the wait is the Workflow or Agent notification (CLAUDE.md Usage discipline; dispatcher.md step 3)."),
-    ("polling", "both", "DRIFT", "No chat sits in a wait loop or polls a gate; clerks inside scripts do (dispatcher.md \"What it never does\")."),
-    ("gate_runs", "both", "DRIFT", "Gates run inside landing clerks, never in a chat (rules.md section (b))."),
-    ("spawn_model", "both", "DRIFT", "Every spawn names its model (CLAUDE.md Task matching)."),
-    ("fable_spawns", "both", "DRIFT", "Engineers and doers are never Fable; `architect` is spawned only by the Dispatcher (CLAUDE.md Task matching)."),
-    ("live_tree", "both", "DRIFT", "Never touch `~/Projects/ouroboros-manifold` as a working tree; work in a worktree under `~/Projects/om-push/wt/` (CLAUDE.md Git; dispatcher.md \"What it never does\")."),
-    ("code_edits", "architect", "DRIFT", "The Fable chat writes no code; Sonnet doers do. It writes specs, briefs, workflow scripts and docs (CLAUDE.md Task matching; `feedback-no-code-from-thinker`)."),
-    ("repo_edits", "dispatcher", "DRIFT", "The Dispatcher edits nothing in the repo: tests, sources, bible, register, specs, scripts; record clerks do (dispatcher.md \"What it never does\")."),
-    ("main_push", "dispatcher", "DRIFT", "The Dispatcher never pushes to main; the landing clerk does (dispatcher.md \"What it never does\")."),
-    ("context", "both", "DRIFT", "Restart from memory past about 400k context; the compaction is not the restart (CLAUDE.md Usage discipline; dispatcher.md step 8)."),
-    ("messages", "both", "REVIEW", "Cross-chat messages are relayed by Westley; a chat that receives one pauses for him except for small blockers (CLAUDE.md Task matching)."),
-    ("live_reads", "both", "REVIEW", "Read `origin/main` (`git show origin/main:<path>`), not the live checkout, which lags main and carries Westley's uncommitted work (the two context files)."),
-    ("workflows", "both", "REVIEW", "At most two build workflows and one landing in flight (CLAUDE.md Workflow specs)."),
-]
-EXTRA_RULES = [
-    ("both", "Answers are not a go; nothing launches or builds without Westley's explicit word (`feedback-answers-are-not-go`)."),
-    ("both", "Pre-flight before any launch, every precondition checked by reading or running, never from memory (CLAUDE.md Workflow specs)."),
-    ("both", "Sub-agents never spawn sub-agents; every brief says so (CLAUDE.md Task matching)."),
-    ("both", "Westley owns every threshold, tolerance and pass mark; a real finding is never reclassified as a skip (CLAUDE.md Tests are the spec)."),
-    ("both", "Agents report once, at the end; no interim notices, no background waits that wake the parent (CLAUDE.md Usage discipline)."),
-    ("dispatcher", "Status lives in the lane table only; the Dispatcher keeps no copy and decides nothing about rules, thresholds, specs or tests (dispatcher.md \"What it owns\")."),
-    ("dispatcher", "Consults go to `subagent_type: architect` with a brief under a page; contract changes and new spec sections go to the Architect chat (dispatcher.md step 5)."),
-    ("architect", "Specs and scripts are handed to the Dispatcher to launch; the Architect launches, polls, lands and keeps status for nothing (context_architect \"What you do not do\")."),
-    ("architect", "One lane's detail in context at a time; ledger, register and epic updates are committed and pushed as they happen (context_architect; CLAUDE.md Git)."),
+    ("wakeups", "both", "DRIFT", "No scheduled wakeups: the wait is the Workflow or Agent notification (docs/method/runner.md)."),
+    ("polling", "both", "DRIFT", "No chat sits in a wait loop or polls a gate; clerks inside scripts do (docs/method/runner.md)."),
+    ("gate_runs", "both", "DRIFT", "Gates run inside landing clerks, never in a chat (docs/method/clerk.md)."),
+    ("live_tree", "both", "DRIFT", "Never touch `~/Projects/ouroboros-manifold` as a working tree; work in a worktree made by `wt.py` (docs/method/builder.md)."),
+    ("code_edits", "architect", "DRIFT", "The Fable chat writes no code; builders do. It writes stories, briefs and docs (docs/method/architect.md)."),
+    ("context", "both", "DRIFT", "Restart from memory past 400k context; the compaction is not the restart (docs/method/architect.md)."),
 ]
 NEXT = ("METHOD next: quote every DRIFT line to Westley in your first message after this compaction, before any other "
-        "work, and stop the behaviour. A DRIFT line is never argued away: a rule change is Westley's to make; "
-        "a justified exception is a ledger row.")
+        "work, and stop the behaviour. A DRIFT line is never argued away: a rule change is Westley's to make.")
 
 
 def in_scratch(p):
@@ -108,26 +86,19 @@ def role_of(models):
     kinds = set()
     for m in models:
         m = m.lower()
-        kinds.add("dispatcher" if "sonnet" in m else "architect" if ("fable" in m or "opus" in m) else "unknown")
+        kinds.add("runner" if "sonnet" in m else "architect" if ("fable" in m or "opus" in m) else "unknown")
     return kinds.pop() if len(kinds) == 1 else "unknown"
 
 
 def excerpt(c):
     i = c["input"]
-    if c["name"] in AGENT_TOOLS:
-        text = "model=%s subagent_type=%s" % (i.get("model"), i.get("subagent_type"))
-    else:
-        text = i.get("command") or i.get("file_path") or json.dumps(i, sort_keys=True)
+    text = i.get("command") or i.get("file_path") or json.dumps(i, sort_keys=True)
     return " ".join(str(text).split())[:100]
 
 
 def matcher(cid, role, live):
     def under_live(p, cwd):
         return under(resolve(p, cwd), live)
-
-    def under_repo(p, cwd):
-        rp = resolve(p, cwd)
-        return under(rp, live) or under(rp, WT_ROOT)
 
     def cmd(c):
         return str(c["input"].get("command") or "") if c["name"] == "Bash" else None
@@ -143,15 +114,6 @@ def matcher(cid, role, live):
         if cid == "gate_runs":
             return s is not None and any(
                 ("merge_gate.sh" in g or "pre_gate.sh" in g) and w not in READERS for g, w in segments(s))
-        if cid == "spawn_model":
-            return n in AGENT_TOOLS and not i.get("model")
-        if cid == "fable_spawns":
-            if n not in AGENT_TOOLS:
-                return False
-            st, m = i.get("subagent_type"), str(i.get("model") or "").lower()
-            if st == "architect":
-                return role != "dispatcher"
-            return "fable" in m or "opus" in m or st == "fork"
         if cid == "live_tree":
             if n in EDIT_TOOLS:
                 return bool(fp) and under_live(fp, cwd)
@@ -161,20 +123,6 @@ def matcher(cid, role, live):
             if n in EDIT_TOOLS:
                 return bool(fp) and re.search(r"\.%s$" % CODE_EXT, str(fp)) is not None and not in_scratch(fp)
             return bool(s) and any(not in_scratch(m.group(0)) for g, w in segments(s) for m in REDIRECT.finditer(g))
-        if cid == "repo_edits":
-            return n in EDIT_TOOLS and bool(fp) and under_repo(fp, cwd)
-        if cid == "main_push":
-            return bool(s) and MAIN_PUSH.search(s) is not None
-        if cid == "messages":
-            return n == "SendMessage"
-        if cid == "live_reads":
-            if n == "Read":
-                p = resolve(i.get("file_path") or "", cwd)
-                return bool(i.get("file_path")) and under(p, live) and not under(p, os.path.join(live, ".claude"))
-            return bool(s) and any(w in READERS and any(
-                under_live(t.strip("\"'"), cwd) for t in g.split() if "/" in t or t.startswith("~")) for g, w in segments(s))
-        if cid == "workflows":
-            return n == "Workflow"
         return False
     return hit
 
@@ -207,7 +155,6 @@ def report(entries, live, threshold, session):
     for cid, roles, kind, rule in CHECKS:
         if roles != "both" and role != "unknown" and roles != role:
             continue
-        review = kind == "REVIEW" or (roles != "both" and role == "unknown")
         if cid == "context":
             hits = [(e, {"name": "context", "input": {"command": str(ctx_size(e))}}) for e in asst_all if ctx_size(e) > threshold]
             hits.sort(key=lambda h: -ctx_size(h[0]))
@@ -222,7 +169,7 @@ def report(entries, live, threshold, session):
                         break
         in_span = [h for h in hits if id(h[0]) in span_ids]
         ns, nt = len(in_span), len(hits)
-        status = "REVIEW" if review else ("DRIFT" if ns else "OK")
+        status = "DRIFT" if ns else "OK"
         drift = drift or status == "DRIFT"
         out.append("METHOD %s %s span %d session %d  %s" % (cid, status, ns, nt, rule))
         pool = in_span if ns else hits
@@ -235,14 +182,6 @@ def report(entries, live, threshold, session):
             else:
                 out.append("  %s %s %s" % (e.get("timestamp", ""), c["name"], excerpt(c)))
     out.append("METHOD verdict %s" % ("DRIFT" if drift else "OK"))
-    out.append("METHOD rules %s" % role)
-    show = ("dispatcher", "architect") if role == "unknown" else (role,)
-    for cid, roles, kind, rule in CHECKS:
-        if roles == "both" or roles in show:
-            out.append("- " + rule)
-    for roles, rule in EXTRA_RULES:
-        if roles == "both" or roles in show:
-            out.append("- " + rule)
     out.append(NEXT)
     return out
 
