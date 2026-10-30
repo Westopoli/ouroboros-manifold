@@ -437,6 +437,9 @@ SWEEP_SHA=$(awk -F'|' '{s=$3; gsub(/ /,"",s); print s}' <<<"$SWEEP_ROW")
 STORY_FIXES=$(sed -n 's/^Fixes-sweep:[ \t]*//p' "$CANDIDATE/docs/stories/${PIECE_ID%%,*}.md" 2>/dev/null | tail -1)
 if [[ "$SWEEP_VERDICT" == REJECT && -n "$STORY_FIXES" && "$STORY_FIXES" == "$SWEEP_SHA" ]]; then
     warn status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $SWEEP_SHA fixed by ${PIECE_ID%%,*}"
+elif [[ "$SWEEP_VERDICT" == REJECT && "$TIER" == slow ]]; then
+    # DEC-slow-tier-ignores-red-row-2026-10-30: the slow tier is the sweep, a candidate that is main itself; it must run to replace the red row. See also: sweep.sh
+    warn status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $SWEEP_SHA slow tier"
 elif [[ "$SWEEP_VERDICT" == REJECT ]]; then
     reject status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $(awk -F'|' '{s=$3; gsub(/ /,"",s); print s}' <<<"$SWEEP_ROW")"
 elif grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" && grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -qv '^STATUS sweep DRIFT'; then
