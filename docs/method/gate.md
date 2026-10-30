@@ -16,7 +16,7 @@ The verdict is the set of `GATE <stage> REJECT` lines. The landing is one `--no-
 
 ## Off the lock
 
-- Sweep: the slow tier (the full suite) runs over main after DRAFT-slow-tier-batch (3) landings, DRAFT-slow-tier-hours (2 h), or nightly at DRAFT-sweep-nightly (23:30), on a worktree at `origin/main`, and records an empty commit `Sweep <date> pass|red n`.
+- Sweep: the slow tier (the full suite) runs over main after DRAFT-slow-tier-batch (3) landings, DRAFT-slow-tier-hours (2 h), or nightly at DRAFT-sweep-nightly (23:30), on a worktree at `origin/main`, and records the `sweeps.md` row and an empty commit `Sweep <date> pass|red n` (`scripts/specfactory/sweep.sh`, H-014; the timer runs the nightly one, the landing clerk starts the other two when the status line says a sweep is due). A due sweep is a warning in the landing gate; a REJECT sweep row blocks landings until the bisect (DEC-sweep-drift-warn-2026-10-30).
 - Baseline: before the first build after the method lands, and after every change to the gate, a sweep on `origin/main` records `Base: <sha>`; every later sweep and bisect measures from it.
 - Bisect: a red sweep runs `git bisect run --first-parent` on the failing test between the last green sweep and head, reverts the culprit landing (`Revert Land <id>`, trailer `Finding:`), and the story returns to Ready. Main is green when the last sweep is green.
 
