@@ -13,8 +13,9 @@ PLAY = ROOT / "scripts" / "play.sh"
 SCENE = "res://scenes/privacy_modal/privacy_modal.tscn"
 
 
-def run_play(args, env_drop=(), timeout=1200, tmpdir=None):
+def run_play(args, env_drop=(), timeout=1200, tmpdir=None, env_set=None):
     env = {k: v for k, v in os.environ.items() if k not in env_drop}
+    env.update(env_set or {})
     if tmpdir:
         env["TMPDIR"] = str(tmpdir)  # play.sh's own scratch clone lands in the test's scratch dir
     return subprocess.run(["bash", str(PLAY), *args], cwd=ROOT, env=env,
@@ -49,7 +50,9 @@ def test_control_build_pipe_exits_zero():
 
 def test_broken_project_godot_exits_nonzero_with_godot_error():
     """H-001 Tests: "A scratch worktree with a broken `project.godot` makes the
-    script exit non-zero with the Godot error line in its output.\""""
+    script exit non-zero with the Godot error line in its output.\"
+    DEC-play-display-check-first-2026-10-30, test-defect 2026-10-30: DISPLAY is set (:99,
+    no window opens; the headless import fails first) because the display check now comes first."""
     scratch = Path(tempfile.mkdtemp(prefix="h001-broken-"))
     try:
         tree = scratch / "tree"
@@ -58,7 +61,7 @@ def test_broken_project_godot_exits_nonzero_with_godot_error():
         (tree / "project.godot").write_text("config_version=5\n[application\nthis is not valid\n")
         subprocess.run(["git", "-C", str(tree), "-c", "user.name=t", "-c", "user.email=t@t",
                         "commit", "-qam", "broken"], check=True)  # play.sh plays the tree's HEAD
-        r = run_play(["--tree", str(tree)], env_drop=("DISPLAY",), tmpdir=scratch)
+        r = run_play(["--tree", str(tree)], env_set={"DISPLAY": ":99"}, tmpdir=scratch)
         out = r.stdout + r.stderr
         assert r.returncode != 0, "play.sh exited 0 on a broken project.godot"
         assert re.search(r"ERROR|project\.godot", out), out[-800:]
