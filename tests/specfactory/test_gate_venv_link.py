@@ -36,6 +36,8 @@ import sys
 from pathlib import Path
 
 import pytest
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import overlay_sweeps, write_story  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO / "scripts" / "specfactory"
@@ -179,6 +181,8 @@ def _init_fixture_repo(repo: Path, lane_play: bool = False) -> Path:
     (repo / "Makefile").write_text(FAST_MAKEFILE)
     for d in ("tests/csim", "tests/qa/t1"):
         (repo / d).mkdir(parents=True)
+    write_story(repo, "B1")  # H-020
+    write_story(repo, "D1", tests="tests/qa/desktop/test_x.py::test_pass")  # H-020: the old row's acceptance
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))
@@ -208,6 +212,7 @@ def _fake_root(tmp_path: Path, stub_text: str) -> Path:
     root = tmp_path / "fakeroot"
     (root / "scripts" / "specfactory").mkdir(parents=True)
     (root / "docs").symlink_to(REPO / "docs")
+    overlay_sweeps(root)  # H-020: never the live sweeps.md
     for f in SPEC_DIR.iterdir():
         if f.name != "merge_gate_support.py":
             (root / "scripts" / "specfactory" / f.name).symlink_to(f)
@@ -257,7 +262,7 @@ class GateRun:
             "MERGE_GATE_VENV": str(self.fake_venv),
         }
         self.proc = subprocess.run(
-            ["bash", str(self.root / "scripts" / "specfactory" / "merge_gate.sh"), str(self.repo), "HEAD~1", piece],
+            ["bash", str(self.root / "scripts" / "specfactory" / "merge_gate.sh"), "--tier", "full", str(self.repo), "HEAD~1", piece],
             capture_output=True, text=True, env=env, timeout=GATE_TIMEOUT_S)
         self.lines = self.proc.stdout.splitlines()
         # the lines these cases are about; the fixture gate prints other stage lines (rejects of a fixture repo) that are noise

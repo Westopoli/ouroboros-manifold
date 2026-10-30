@@ -249,19 +249,6 @@ def test_fewer_than_three_args_is_usage_exit_2(tmp_path):
 # Spec: Rev 12b, HARNESS-provenance paragraph: "an untagged fixture under PRE_GATE_SPEC makes pre_gate.sh exit non-zero".
 # TD-HARNESS-C1: part (a) of this test (no provenance output at all without the env var) is retired by section 2
 # (a piece row without a spec key now prints a provenance WARN line) and lives on as the case at the bottom.
-def test_pre_gate_spec_env_runs_provenance_lint(tmp_path):
-    repo = _make_repo(tmp_path, head_add={
-        "spec.md": "The tile shows 5 wu of rubble when the player clicks.\n"})
-    stub = _stub_gate(tmp_path, "GATE make OK", 0)
-    # PRE_GATE_SPEC=spec.md: the untagged paragraph is a reason (1) finding.
-    res = _run(repo, stub, env_extra={"PRE_GATE_SPEC": "spec.md"})
-    out = _lines(res)
-    assert any(l.startswith("PRE_GATE provenance REJECT spec.md") for l in out), res.stdout + res.stderr
-    assert any(":1: (1)" in l for l in out), res.stdout + res.stderr
-    assert out[-1] == "PRE_GATE verdict REJECT"
-    assert res.returncode != 0
-
-
 # ---- HARNESS-C1b: step pins (after tests) and step provenance (section 2) ---------------------------------------
 # Fixture: the rule line of test_spec_provenance.py:34-60 (R-990-01) lives in the throwaway repo's epics; the pin of
 # that line is b2a3c8 (section 3 formula, computed once; the control below proves it with the C1a tool).
@@ -331,7 +318,7 @@ def test_pins_step_warns_and_exits_0_when_the_candidate_changes_an_unrelated_fil
     assert res.returncode == 0
 
 
-def test_steps_come_in_order_noise_gate_tests_pins_provenance_verdict(tmp_path):
+def test_steps_come_in_order_noise_gate_tests_pins_verdict(tmp_path):
     repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS})
     res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
                env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"]))})
@@ -339,83 +326,8 @@ def test_steps_come_in_order_noise_gate_tests_pins_provenance_verdict(tmp_path):
     for l in _lines(res):
         if l.startswith("PRE_GATE ") and (not steps or steps[-1] != l.split()[1]):
             steps.append(l.split()[1])
-    assert steps == ["noise", "gate", "tests", "pins", "provenance", "verdict"], res.stdout + res.stderr
-
-
-def test_provenance_warns_for_a_row_without_a_spec_key(tmp_path):
-    """Replaces part (a) of test_pre_gate_spec_env_runs_provenance_lint (TD-HARNESS-C1): without PRE_GATE_SPEC the
-    step still prints a line for a piece row that has no spec key, and the verdict stays OK."""
-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS})
-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
-               env_extra={"MERGE_GATE_PIECES": str(_pieces(tmp_path, ["P-1"])), "PRE_GATE_SPEC": ""})
-    assert "PRE_GATE provenance WARN no spec key for P-1" in _lines(res), res.stdout + res.stderr
-    assert _lines(res)[-1] == "PRE_GATE verdict OK"
-    assert res.returncode == 0
-
-
-def test_provenance_lints_the_spec_of_each_piece_row(tmp_path):
-    """P-1 names a clean spec (OK), P-2 has no spec key (WARN naming P-2 only)."""
-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS}, head_add={"spec.md": PASSING_SPEC})
-    pieces = _pieces(tmp_path, ["P-1", "P-2"], specs={"P-1": "spec.md"})
-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0), pieces="P-1,P-2",
-               env_extra={"MERGE_GATE_PIECES": str(pieces)})
-    out = _lines(res)
-    assert any(l.startswith("PRE_GATE provenance OK") and "spec.md" in l for l in out), res.stdout + res.stderr
-    assert "PRE_GATE provenance WARN no spec key for P-2" in out
-    assert not any("no spec key for P-1" in l for l in out)
-    assert out[-1] == "PRE_GATE verdict OK"
-    assert res.returncode == 0
-
-
-def test_provenance_rejects_a_piece_spec_with_a_finding(tmp_path):
-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS}, head_add={
-        "spec.md": "The tile shows 5 wu of rubble when the player clicks.\n"})
-    pieces = _pieces(tmp_path, ["P-1"], specs={"P-1": "spec.md"})
-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0), env_extra={"MERGE_GATE_PIECES": str(pieces)})
-    out = _lines(res)
-    assert any(l.startswith("PRE_GATE provenance REJECT") and "spec.md" in l for l in out), res.stdout + res.stderr
-    assert any(":1: (1)" in l for l in out), res.stdout + res.stderr
-    assert out[-1] == "PRE_GATE verdict REJECT"
-    assert res.returncode == 1
+    # H-006 retired the provenance step (docs/stories/H-006.md; Test-defect, H-020): no spec read without pieces.toml.
+    assert steps == ["noise", "gate", "tests", "pins", "verdict"], res.stdout + res.stderr
 
 
 FU_ROW = "FU-HARNESS-findings"
-
-
-def _pieces_with_fu_row(tmp_path: Path, status_toml: str) -> Path:
-    """_pieces(["P-1"]) (no spec key) plus an FU-HARNESS-findings row whose `status =` value is `status_toml`."""
-    path = _pieces(tmp_path, ["P-1"])
-    path.write_text(path.read_text() + f'\n[[piece]]\nid = "{FU_ROW}"\nowns = []\ndepends_on = []\n'
-                    f'status = {status_toml}\n')
-    return path
-
-
-def _no_spec_run(tmp_path: Path, status_toml: str):
-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS})
-    return _run(repo, _stub_gate(tmp_path, "GATE make OK", 0),
-                env_extra={"MERGE_GATE_PIECES": str(_pieces_with_fu_row(tmp_path, status_toml)), "PRE_GATE_SPEC": ""})
-
-
-def test_provenance_no_spec_key_rejects_with_an_inline_table_attached_follow_up_row(tmp_path):
-    """Control: the C1b switch works at all with the inline table `status = { state = "attached" }`."""
-    res = _no_spec_run(tmp_path, '{ state = "attached" }')
-    assert "PRE_GATE provenance REJECT no spec key for P-1" in _lines(res), res.stdout + res.stderr
-    assert _lines(res)[-1] == "PRE_GATE verdict REJECT"
-    assert res.returncode == 1
-
-
-def test_provenance_no_spec_key_rejects_with_a_bare_string_attached_follow_up_row(tmp_path):
-    """owner_lint.py:37-44 reads both status shapes; 37 rows on main use the bare string `status = "attached"`."""
-    res = _no_spec_run(tmp_path, '"attached"')
-    assert "PRE_GATE provenance REJECT no spec key for P-1" in _lines(res), res.stdout + res.stderr
-    assert "Traceback" not in res.stderr, res.stderr
-    assert _lines(res)[-1] == "PRE_GATE verdict REJECT"
-    assert res.returncode == 1
-
-
-def test_provenance_no_spec_key_warns_with_a_bare_string_queued_follow_up_row(tmp_path):
-    """Control of the bare-string case: `status = "queued"` leaves the line a WARN."""
-    res = _no_spec_run(tmp_path, '"queued"')
-    assert "PRE_GATE provenance WARN no spec key for P-1" in _lines(res), res.stdout + res.stderr
-    assert _lines(res)[-1] == "PRE_GATE verdict OK"
-    assert res.returncode == 0

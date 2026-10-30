@@ -323,6 +323,9 @@ def story_check(candidate_dir: Path, piece_ids: str) -> list[str]:
         flag = _story_line(f, "Flag")
         if flag is not None and flag not in ("harness", "client", "sim", "contract"):
             bad.append(f"bad flag {flag}")
+        fixes = _story_line(f, "Fixes-sweep")
+        if fixes is not None and not re.fullmatch(r"[0-9a-f]{40}", fixes):
+            bad.append("bad fixes-sweep")
     return bad
 
 

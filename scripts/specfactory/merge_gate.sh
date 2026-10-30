@@ -117,7 +117,7 @@ gate_row() {
     if [[ "$label" == *[,\"]* ]]; then label="\"${label//\"/\"\"}\""; fi
     row="$(date +%F),$label,$(git -C "$CANDIDATE" rev-parse --abbrev-ref HEAD 2>/dev/null),$base,$cand,${MERGE_GATE_QUEUE_S:-0},$((STAGE_SUM_DS / 10)).$((STAGE_SUM_DS % 10)),$rc,$ROW_STAGES,$ROW_CAUSES,$p,$t,$d,$l"
     echo "GATE row $row"
-    local csv="${MERGE_GATE_RUNS_CSV:-$HOME/Projects/om-push/gate_runs.csv}"
+    local csv="${MERGE_GATE_RUNS_CSV:-${HOME:-$SCRATCH_ROOT}/Projects/om-push/gate_runs.csv}"
     mkdir -p "$(dirname "$csv")"
     echo "$row" >>"$csv"
 }
@@ -278,6 +278,9 @@ if [[ "$REVERT_MODE" -eq 1 ]]; then
     gate_line flag SKIP "revert mode"
 elif [[ -z "$PIECE_ID" ]]; then
     gate_line flag SKIP "no ids"
+elif [[ -n "$TIER_GIVEN" ]]; then
+    # DEC-gate-tier-given-skips-flag-2026-10-30: a given --tier means the caller chose the suites; no traces, no footprint.
+    gate_line flag SKIP "tier given"
 elif [[ "$IMPACT_RC" -eq 2 ]]; then
     reject flag "$(tail_oneline "$SCRATCH_ROOT/impact.err" 3)"
 elif [[ "$IMPACT_RC" -ne 0 ]]; then
@@ -429,7 +432,15 @@ STATUS_LOG="$SCRATCH_ROOT/status.log"
 # this gate; a landing after a bad sweep is blocked by the last sweeps.md row being REJECT. See also: sweep.sh
 SWEEP_ROW=$(grep '^|' "$REPO_ROOT/docs/northstar/plans/push/sweeps.md" 2>/dev/null | tail -1)
 SWEEP_VERDICT=$(awk -F'|' '{v=$4; gsub(/ /,"",v); print v}' <<<"$SWEEP_ROW")
-if [[ "$SWEEP_VERDICT" == REJECT ]]; then
+SWEEP_SHA=$(awk -F'|' '{s=$3; gsub(/ /,"",s); print s}' <<<"$SWEEP_ROW")
+# DEC-sweep-fix-exemption-2026-10-30: the story whose `Fixes-sweep:` is the red row's swept sha may land on that red row.
+STORY_FIXES=$(sed -n 's/^Fixes-sweep:[ \t]*//p' "$CANDIDATE/docs/stories/${PIECE_ID%%,*}.md" 2>/dev/null | tail -1)
+if [[ "$SWEEP_VERDICT" == REJECT && -n "$STORY_FIXES" && "$STORY_FIXES" == "$SWEEP_SHA" ]]; then
+    warn status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $SWEEP_SHA fixed by ${PIECE_ID%%,*}"
+elif [[ "$SWEEP_VERDICT" == REJECT && "$TIER" == slow ]]; then
+    # DEC-slow-tier-ignores-red-row-2026-10-30: the slow tier is the sweep, a candidate that is main itself; it must run to replace the red row. See also: sweep.sh
+    warn status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $SWEEP_SHA slow tier"
+elif [[ "$SWEEP_VERDICT" == REJECT ]]; then
     reject status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $(awk -F'|' '{s=$3; gsub(/ /,"",s); print s}' <<<"$SWEEP_ROW")"
 elif grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" && grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -qv '^STATUS sweep DRIFT'; then
     reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -v '^STATUS sweep DRIFT' | tr '\n' ' ')"
