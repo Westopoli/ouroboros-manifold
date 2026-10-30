@@ -19,6 +19,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # 1. Tree
+tree_arg="$tree"
 if [[ -z "$tree" ]]; then
   tree="$HOME/Projects/om-push/main"
   if [[ $dry -eq 0 ]]; then
@@ -27,6 +28,16 @@ if [[ -z "$tree" ]]; then
   fi
 fi
 [[ -d "$tree" || $dry -eq 1 ]] || { echo "play.sh: no tree $tree" >&2; exit 1; }
+
+# 1b. --tree plays a shared scratch clone at the tree's HEAD, so Godot's rewrite of tracked
+# .import/.uid files never dirties the named tree. Under TMPDIR; nothing is removed.
+if [[ -n "$tree_arg" && $dry -eq 0 ]]; then
+  sha=$(git -C "$tree" rev-parse HEAD) || exit 1
+  scratch=$(mktemp -d "${TMPDIR:-/tmp}/play-${sha:0:12}-XXXX") || exit 1
+  git clone -q --shared "$tree" "$scratch" && git -C "$scratch" checkout -q "$sha" || exit 1
+  tree="$scratch"
+  echo "scratch: $tree"
+fi
 
 # 3. Story: the Scene line replaces --scene and --seed
 if [[ -n "$story" ]]; then
