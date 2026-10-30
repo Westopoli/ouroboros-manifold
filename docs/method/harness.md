@@ -12,7 +12,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-007 | "The 30B plays the nightly session itself, through the QA port, instead of the game sitting open." | On hold (Westley 2026-10-30) | no story file yet |
 | H-006 | "The gate reads the story's flag from the story file and the merge message; it needs no pieces row and no owner table, so a story branch lands by itself." | Tested | `docs/stories/H-006.md` |
 | H-008 | "The simulation lab finds where the lines cross; it is finished when the crossings are documented." | Spec'd, waits on Westley's read | `docs/stories/H-008.md` |
-| H-014 | "The full suite runs on main by itself after three landings, two hours, or nightly, and writes its row; I never ask for a sweep." | Spec'd | `docs/stories/H-014.md` |
+| H-014 | "The full suite runs on main by itself after three landings, two hours, or nightly, and writes its row; I never ask for a sweep." | Tested | `docs/stories/H-014.md` |
 | H-015 | "A red sweep finds the landing that broke it by bisecting and reverts it with a Finding trailer." | Spec'd | `docs/stories/H-015.md` |
 | H-016 | "A landing of two stories at once runs both stories' tests, and the cache seed after a push actually seeds." | Spec'd | `docs/stories/H-016.md` |
 | H-017 | "A change under csrc runs the pinned csim tests before the push." | Spec'd | `docs/stories/H-017.md` |
