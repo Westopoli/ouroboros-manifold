@@ -8,7 +8,7 @@ Stages 0 to 3 run under `gate.lock`; stage 4 runs after it, off the lock, before
 
 0. Base: the candidate contains the current `origin/main`, else reject in seconds.
 1. Pre-gate (also run before every push, off the lock): make, every lint, the footprint fence, noise check, the story's own tests; with any `csrc/` change, the pinned csim files. A lint or noise reject never costs a gate.
-2. Flag layer: the story's `Flag:` (`harness`, `client`, `sim`, `contract`) is verified by the two determinism traces against the base sha and by the diff footprint. A wrong flag is a finding on the story, not a rule change.
+2. Flag layer: the story's `Flag:` (`harness`, `client`, `sim`, `contract`) is verified by the two determinism traces against the base sha and by the diff footprint. A wrong flag is a finding on the story, not a rule change. When `--tier` is given the stage prints `GATE flag SKIP tier given` and compares nothing (DEC-gate-tier-given-skips-flag-2026-10-30).
 3. Fast tier: the suites the flag selects (a `harness` story runs the harness tests; `client` adds the scripted end-to-end playthrough and the plays; `sim` adds the csim regression; `contract` adds the pins). The playthrough runs for every landing in the sweep, so no flag escapes it for longer than one sweep window. `merge_gate.sh --tier fast <candidate> origin/main <id>`.
 4. Play: `scripts/play.sh --story <id> --check --tree <worktree>`, window within DRAFT-play-window-s, scene reached after DRAFT-play-settle-s.
 
