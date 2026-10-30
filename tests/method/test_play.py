@@ -122,3 +122,29 @@ def test_real_display_window_under_60s():
     finally:
         subprocess.run(["pkill", "-f", "godot.real --path .*h001-window-"], check=False)
         shutil.rmtree(scratch, ignore_errors=True)
+
+
+def test_scratch_removed_on_exit_unless_keep():
+    """H-001 Tests: "After a `--tree` run without `--keep`, the scratch directory it
+    printed no longer exists; with `--keep` it does (positive control)." Stops at the
+    no-display check, after build and import."""
+    base = Path(tempfile.mkdtemp(prefix="h001-scratchexit-"))
+    drop = ("DISPLAY", "WAYLAND_DISPLAY")
+    kept = None
+    try:
+        tree = scratch_clone(base)
+        (base / "t1").mkdir()
+        r = run_play(["--tree", str(tree)], env_drop=drop, tmpdir=base / "t1")
+        m = re.search(r"^scratch: (.+)$", r.stdout, re.M)
+        assert m, r.stdout + r.stderr
+        assert not Path(m.group(1)).exists(), "scratch left behind without --keep: " + m.group(1)
+        (base / "t2").mkdir()
+        r = run_play(["--tree", str(tree), "--keep"], env_drop=drop, tmpdir=base / "t2")
+        m = re.search(r"^scratch: (.+)$", r.stdout, re.M)
+        assert m, r.stdout + r.stderr
+        kept = Path(m.group(1))
+        assert kept.exists(), "--keep did not keep the scratch directory"
+    finally:
+        if kept:
+            shutil.rmtree(kept, ignore_errors=True)
+        shutil.rmtree(base, ignore_errors=True)
