@@ -52,7 +52,10 @@ if [[ -n "$story" ]]; then
 fi
 [[ -n "$seed" ]] && extra=(--seed "$seed" "${extra[@]}")
 
-launch="$GODOT --path $tree${scene:+ $scene}"
+# DEC-play-check-scratch-userdir-2026-10-30: --check runs Godot under a scratch XDG_DATA_HOME so a stored profile cannot change the scene reached.
+# See also: scripts/specfactory/merge_gate.sh FINDING-ambient-user-dir
+envp=""; [[ $check -eq 1 ]] && envp="XDG_DATA_HOME=$tree/xdg "
+launch="${envp}$GODOT --path $tree${scene:+ $scene}"
 build="cd $tree && scripts/build_pipe_linux.sh"
 # 8. Dry run
 if [[ $dry -eq 1 ]]; then
@@ -89,7 +92,8 @@ if [[ $check -eq 1 ]]; then
   extra+=(--qa-port "$port")
 fi
 log="$tree/.play.log"
-setsid nohup "$GODOT" --path "$tree" ${scene:+"$scene"} -- "${extra[@]}" >"$log" 2>&1 &
+[[ $check -eq 1 ]] && mkdir -p "$tree/xdg"
+setsid nohup ${envp:+env "${envp% }"} "$GODOT" --path "$tree" ${scene:+"$scene"} -- "${extra[@]}" >"$log" 2>&1 &
 gpid=$!
 
 # 6. Window
