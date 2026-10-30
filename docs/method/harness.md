@@ -11,5 +11,6 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-005 | "The method check after a compaction tests six rules against the chat's transcript and cites this directory, not the retired documents." | Spec'd | `docs/stories/H-005.md` |
 | H-007 | "The 30B plays the nightly session itself, through the QA port, instead of the game sitting open." | On hold (Westley 2026-10-30) | no story file yet |
 | H-006 | "The gate reads the story's flag from the story file and the merge message; it needs no pieces row and no owner table, so a story branch lands by itself." | Tested | `docs/stories/H-006.md` |
+| H-008 | "The simulation lab finds where the lines cross; it is finished when the crossings are documented." | Spec'd, waits on Westley's read | `docs/stories/H-008.md` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
