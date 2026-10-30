@@ -4606,3 +4606,16 @@ status = { state = "attached", attach_sha = "eb0511b16014d9823f12dcf4f4600106616
 spec = "docs/northstar/plans/method_rev3_2026-10-26/spec.md"
 size_estimate = "M27 redefined as context tokens per Dispatcher wakeup; entries grouped by message.id in M27 and M28; one test case"
 
+
+# H-006 (transitional, the last pieces.toml row ever added; docs/stories/H-006.md): the gate reads the story file, so this story lands through the old gate with one row.
+[[piece]]
+id = "H-006"
+manager = "Architect"
+owns = ["scripts/specfactory/merge_gate.sh", "scripts/specfactory/pre_gate.sh", "scripts/specfactory/gate_flag.py", "scripts/specfactory/merge_gate_support.py", "tests/specfactory/test_gate_story.py", "docs/stories/H-006.md", "docs/northstar/plans/push/pieces.toml"]
+owns_glob = []
+depends_on = ["HARNESS-gate-combined-ids", "HARNESS-gate-remote", "HARNESS-known-xfail", "HARNESS-look-rejects", "HARNESS-pregate-pins", "HARNESS-red-evidence", "HARNESS-size-lint-fail", "HARNESS-test-edit-row"]  # ordering edges: the shared gate files overlap queued rows; H-006 lands after them (owner_lint)
+acceptance = ["tests/specfactory/test_gate_story.py"]
+status = { state = "queued" }
+impact = "harness"
+spec = "docs/stories/H-006.md"
+size_estimate = "story_flag and story_tests readers; merge_gate.sh drops owner_lint and every pieces.toml read; pre_gate.sh drops the owner-row and provenance steps"
