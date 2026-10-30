@@ -1,0 +1,10 @@
+# See also: om-nightly-play.service
+[Unit]
+Description=Nightly play, 23:00 (before the 23:30 sweep)
+
+[Timer]
+OnCalendar=*-*-* 23:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
