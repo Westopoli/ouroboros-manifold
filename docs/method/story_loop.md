@@ -13,7 +13,7 @@ The Architect writes one page, `docs/stories/<id>.md`, on the branch `s/<id>-<sl
 - the rules it proves, quoted by id;
 - every file it touches, named; every interface two agents share, in full (fields, types, column names);
 - every number, or a named `DRAFT-` with its register row;
-- the scene: the run line `scripts/play.sh --story <id>` resolves to (scene path, arguments, what the player should be able to do there);
+- the scene, one line `Scene: res://<path> [launch arguments]`, which `scripts/play.sh --story <id>` reads, plus a sentence on what the player should be able to do there; a placeholder scene says `stub` in that sentence;
 - the tool: a Workflow, or a `/manager-mode` cascade for a sim-side cluster of three or more file-disjoint units under one umbrella test;
 - the gate flag: `harness`, `client`, `sim` or `contract`;
 - the pre-flight: every precondition checked by reading or running, with the sha read.
@@ -26,7 +26,7 @@ A test writer, never the builder, commits to the same branch: fenced tests, red 
 
 ## 4. Build
 
-One builder, one worktree from `wt.py new`, reads `builder.md` and the story file, builds until the story's tests are green, runs `scripts/specfactory/pre_gate.sh`, pushes, runs `wt.py done`, stops. A test it believes wrong goes in its report as `test-defect:` with the failing line; the clerk rules it by `rulebook.md`. A change to a test is a commit with the trailer `Test-defect: <why> (<ruler>)`, never a silent edit. A reject returns to the same builder; after three rounds the clerk writes a brief under a page for the Architect.
+One builder, one worktree from `wt.py new`, reads `builder.md` and the story file, builds until the story's tests are green, runs `scripts/specfactory/pre_gate.sh`, pushes, runs `wt.py done`, stops. A test it believes wrong goes in its report as `test-defect:` with the failing line; the clerk rules it by `rulebook.md`. A change to a test is a commit with the trailer `Test-defect: <why> (<ruler>)`, never a silent edit. A reject returns to the same builder; a round is one build and its gate; after the third reject the clerk writes a brief under a page for the Architect and the story waits.
 
 ## 5. Verify
 
@@ -36,12 +36,12 @@ The clerk merges `origin/main` into the branch, runs `pre_gate.sh`, takes `~/Pro
 
 Before the push counts, the clerk opens the merged game as a player would: `scripts/play.sh --story <id>` on the merged tree builds the pipe, launches Godot on the real display, waits for the window (DRAFT-play-window-s 60) and runs the story's scene. A game that does not open, or a scene that cannot be reached, is a REJECT with the launch log quoted, whatever the tests said (Westley, 2026-10-30, after the game would not open for his friends).
 
-The merge is `git merge --no-ff` with subject `Land <id> <slug>` and trailers:
+The merge is `git merge --no-ff` with subject `Land <id> <slug>` (`Land <id> <slug> (stub)` when the story file says the scene is a placeholder) and trailers:
 
 ```
 Story: S-042
 Tests: tests/csim/test_layer_vision.py tests/test_tactical_view.gd
-Scene: scripts/play.sh --story S-042
+Play: scripts/play.sh --story S-042
 Played: 2026-11-02 window 11s scene reached
 Gate: 412s fast
 Flag: sim
@@ -53,7 +53,7 @@ The same merge flips the story to Tested in `stories.md`. Westley's verdict is a
 
 The review artifact of a player-facing story is a scene Westley runs and interacts with, never a picture. The story file names the scene path under `scenes/` and the launch arguments that put the game in the story's state; the existing `OS.get_cmdline_user_args()` readers in `autoload/c_bridge.gd`, `autoload/era_config.gd` and `autoload/qa_daemon.gd` are the pattern, and a story that needs a new entry state adds its argument in its own build. `scripts/play.sh [--scene <path>] [--seed N] [--story <id>]` is the one run line for every reader: Westley, the clerk at step 6, the 30B nightly. It refreshes `~/Projects/om-push/main` (a plain checkout of `origin/main` kept only for playing), runs `scripts/build_pipe_linux.sh`, launches Godot with the story's arguments and prints the seconds to the window. No shot per piece, no copy to a review folder, no README row, no verdict on a still. The blank-frame detector stays as an automated test on the frame. The 30B's nightly play uses the same script and files what it finds as `H-` rows.
 
-Playing main is the same script with no arguments.
+Playing main is the same script with no arguments. The 30B plays main nightly with the same script (H-004) and files what it finds as `H-` rows; its findings never edit a story.
 
 ## Other trailers
 
@@ -61,9 +61,9 @@ Playing main is the same script with no arguments.
 - `Decision: DEC-<slug>-<date>` on a commit that adds a row to `decisions.md`.
 - `Finding: <what broke, which landing>` on the revert a bisect produces, subject `Revert Land <id> <slug>`.
 - `Sweep <date> <pass|red n>` as the subject of the sweep's empty commit on main.
-- `Base: <sha>` on the first sweep after a gate change.
+- `Base: <sha>` on the first sweep after the method lands and after every change to the gate: the baseline every later sweep and bisect measures from, recorded before the first build that follows.
 
-`scripts/specfactory/status_check.py` checks the schema: every `Land` commit has Story, Tests, Scene, Played, Gate, Flag; every story in Tested has a `Land` commit; every `Seen` has a Verdict. The gate refuses a landing whose merge message lacks a trailer.
+`scripts/specfactory/status_check.py` checks the schema: every `Land` commit has Story, Tests, Play, Played, Gate, Flag; every story in Tested has a `Land` commit; every `Seen` has a Verdict. The gate refuses a landing whose merge message lacks a trailer.
 
 ## Slots and waits
 

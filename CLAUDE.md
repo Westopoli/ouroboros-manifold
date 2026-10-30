@@ -20,7 +20,7 @@ Claude designs and tests; agents build. The simulation is C with the stochastic 
 - **Contracts are frozen and minimal.** The contracts are `csrc/ouroboros_sim.h` (with `signatures.toml`) and the pipe frames in `docs/architecture.md`. A change to either lands first as its own contract story, documented before implementation, and consumers build after it lands.
 - **New code in new files; wiring is its own commit.** A new system is built in its own files behind a frozen header; the wiring commit on the shared file comes last.
 - **Wired, not just tested.** Behaviour a rule says happens in play must be reachable from the tick, the jump, or a pipe handler, not only from tests.
-- **Played, not just green.** Every landing opens the merged game and reaches the story's scene before the push counts.
+- **Played, not just green.** Every landing opens the merged game and reaches the story's scene before the push counts, and the scripted end-to-end playthrough runs in every sweep of main.
 - **Determinism is a contract.** Same seed and command stream give a byte-identical trace on every platform: no fast-math, no platform transcendentals, no hash-order or wall-clock input.
 - **No runtime API calls.** The game never calls a model; missing library content falls back to a placeholder.
 - **No IP exposure.** No names, places or plot from existing fiction.
@@ -39,11 +39,11 @@ Every story exists as failing tests before any code, in fenced paths builders ca
 
 ## Git
 
-One story, one branch `s/<id>-<slug>`, one `--no-ff` merge on main (`docs/method/story_loop.md`). Never touch `~/Projects/ouroboros-manifold` as a working tree. Worktrees live under `~/Projects/om-push/wt/<name>` and are made and finished only through `scripts/specfactory/wt.py new` and `wt.py done <path> <pushed sha>`; `wt.py reap` removes finished trees (dry run first, literal paths); `wt.py status` is the inventory. Never stage files you did not change, and never touch Westley's uncommitted work. Godot's `.uid` sidecar beside a script is committed with the script. Guardrails (`.claude/hooks/git-guard.sh`) deny rebase, force and other destructive operations; if a legitimate one is blocked, ask. A records-only push takes `~/Projects/om-push/records.lock`; a landing takes `gate.lock`. Commit trailers are the record: `Story:`, `Tests:`, `Scene:`, `Played:`, `Gate:`, `Flag:`, `Test-defect:`, `Decision:`, `Finding:`, `Verdict:`.
+One story, one branch `s/<id>-<slug>`, one `--no-ff` merge on main (`docs/method/story_loop.md`). Never touch `~/Projects/ouroboros-manifold` as a working tree. Worktrees live under `~/Projects/om-push/wt/<name>` and are made and finished only through `scripts/specfactory/wt.py new` and `wt.py done <path> <pushed sha>`; `wt.py reap` removes finished trees (dry run first, literal paths); `wt.py status` is the inventory. Never stage files you did not change, and never touch Westley's uncommitted work. Godot's `.uid` sidecar beside a script is committed with the script. Guardrails (`.claude/hooks/git-guard.sh`) deny rebase, force and other destructive operations; if a legitimate one is blocked, ask. A records-only push takes `~/Projects/om-push/records.lock`; a landing takes `gate.lock`. Commit trailers are the record: `Story:`, `Tests:`, `Play:`, `Played:`, `Gate:`, `Flag:`, `Base:`, `Test-defect:`, `Decision:`, `Finding:`, `Verdict:`.
 
 ## Usage
 
-Every tool call re-reads the caller's whole context, so waiting is the expensive part. A builder pushes and stops; a fresh clerk lands. Agents report once, at the end. Waits are `flock -w`, never a polling chat. Every spawn names its model; sub-agents never spawn; nothing is spawned in plan mode; engineers and doers are never Fable. The Architect restarts from memory past 400k context. Build plus tests is at least half of weekly model spend.
+Every tool call re-reads the caller's whole context, so waiting is the expensive part. A builder pushes and stops; a fresh clerk lands. Agents report once, at the end. Waits are `flock -w`, never a polling chat. Small context per call: one card and one story per agent, briefs by file path, a mixed-role task split into one brief per role. Every spawn names its model; sub-agents never spawn; nothing is spawned in plan mode; engineers and doers are never Fable. The Architect restarts from memory past 400k context. Build plus tests is at least half of weekly model spend.
 
 ## Tone
 

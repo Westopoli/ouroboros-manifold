@@ -4,7 +4,7 @@ What you see, where, and the words you give.
 
 ## Where you look
 
-`scripts/method/status.sh` from the repo, or the commit list of main on GitHub. Every `Land S-###` subject is a story landed; its trailers say which tests, which scene, when it was played and how long the gate took. `Seen S-###` is your verdict. `Sweep` lines are the full suite on main. There is no lane table, no pieces table, no ledger, no review queue, no README of shots. `decisions.md` and `stories.md` stay.
+`scripts/method/status.sh` from the repo, or the commit list of main on GitHub. Every `Land S-###` subject is a story landed; its trailers say which tests, which scene, when it was played and how long the gate took. `Seen S-###` is your verdict. A subject ending `(stub)` landed a placeholder scene, and the status script says so beside it. `Sweep` lines are the full suite on main. There is no lane table, no pieces table, no ledger, no review queue, no README of shots. `decisions.md` and `stories.md` stay.
 
 ## Playing
 

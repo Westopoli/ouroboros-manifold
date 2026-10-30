@@ -13,7 +13,7 @@ Where another document disagrees with this directory, this directory wins. Each 
 | Runner (the main chat while stories build) | Sonnet | `runner.md` |
 | Westley | human | `westley.md` |
 
-Every spawn names its model. Sub-agents never spawn sub-agents. Nothing is spawned in plan mode. Engineers and doers are never Fable.
+Every spawn names its model. A task that mixes roles is split, one brief per role. Sub-agents never spawn sub-agents. Nothing is spawned in plan mode. Engineers and doers are never Fable.
 
 ## The six steps
 
@@ -22,7 +22,7 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 1. **Requirement.** The story row exists, its epic rules are written, no open `Q-` row. The Architect moves it to Ready (`requirements.md`).
 2. **Spec.** The Architect writes one page, `docs/stories/<id>.md`, and commits it on the branch: `<id> spec: <what>`.
 3. **Verification.** A test writer, never the builder, commits red tests with the failing line pasted and one green positive control: `<id> tests: <n> red, <m> control`.
-4. **Build.** One builder on one worktree builds until the story's tests are green, runs `pre_gate.sh`, pushes, stops. Up to three rounds with the same builder before the Architect hears of it.
+4. **Build.** One builder on one worktree builds until the story's tests are green, runs `pre_gate.sh`, pushes, stops. A round is one build and its gate; after the third reject the Architect hears of it.
 5. **Verify.** A clerk merges main, runs the layered gate under `gate.lock` (`gate.md`), under ten minutes.
 6. **Land.** The clerk opens the merged game with `scripts/play.sh` and reaches the story's scene; a game that does not open is a REJECT whatever the tests said. The merge commit carries the trailers. Westley's verdict is a `Seen <id>` commit.
 
@@ -36,11 +36,13 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | Story size cap | 1,000 implementation lines | Westley, 2026-10-30 |
 | Builder rounds before escalation | 3 | Architect |
 | DRAFT-play-window-s | 60 s for the window to appear | Architect |
-| Architect context | restart past 400k; compaction at 400k | Westley, 2026-10-30 |
+| DRAFT-play-settle-s | 10 s after the window before `qa_state()` is read | Architect |
+| Agent context stop | 120k per builder, test writer or clerk; 60k for the on-call architect agent | method rev 2 |
+| Architect context | restart past 400k; compaction at 400k; guard constant stays 400k for now | Westley, 2026-10-30 |
 
 ## Status
 
-Status is computed, never written: `scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, waiting on Westley, test defects, sweeps and the four weekly numbers (build plus tests share, landings, stories Seen, Fable share). `scripts/method/token_report.py` writes the numbers nightly to `docs/method/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut before specifying the next story.
+This table is the register for every `DRAFT-` named in this directory. Status is computed, never written: `scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, waiting on Westley, test defects, sweeps and the four weekly numbers (build plus tests share, landings, stories Seen, Fable share). `scripts/method/token_report.py` writes the numbers nightly to `docs/method/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut before specifying the next story.
 
 ## Files
 

@@ -7,7 +7,7 @@ Fable, in a chat. Designs, specifies, decides, diagnoses. Writes no code and no 
 - The story file, one page, `docs/stories/<id>.md`, in the shape `story_loop.md` step 2 gives. Pre-flight first: every precondition the story rests on (an API and its exact shape, a setting the harness can set, a base that builds and its red tests, free slots in a shared enum) checked by reading `git show origin/main:<path>` or by running, never from memory, with the sha. A story whose pre-flight finds a gap waits.
 - Skeleton first for anything that ends in a frame: the first story of a feature is the thinnest end-to-end path in the real scene, and the feature's other stories wait for Westley's verdict on that scene.
 - Decisions, one row each in `docs/northstar/story_reviews/westley/decisions.md` (decision, rule, context), committed as they happen with the trailer `Decision:`. Westley may veto any of them. Looks and rule meaning he has no recorded words on are his: ask with two or three candidates, led by the player's view of the situation, not by ids or paths.
-- Briefs under a page, by file path, never by paste: the goal, what is ruled out, the files to read, the STOP rules, the report schema, the model, "spawn nothing".
+- Briefs under a page, by file path, never by paste; small context per call is the one measured lever (2026-09-22 against 2026-10-02), so an agent gets one card and one story, and a task that mixes roles is split into one brief per role: the goal, what is ruled out, the files to read, the STOP rules, the report schema, the model, "spawn nothing".
 - Bible text: rewrite, never append; an ambiguity becomes a `Q-` row with candidates, never a guess.
 
 ## What you never do

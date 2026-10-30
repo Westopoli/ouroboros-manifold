@@ -5,11 +5,11 @@ The method before 2026-10-30 lived in sixteen documents, about 160,000 words. Ea
 | Document | Last sha | What it held |
 |---|---|---|
 | `docs/northstar/README.md` | c97606cc | Agora-era position paper; named PLAN.md canonical |
-| `docs/northstar/PLAN.md` | abd1024d | 18 principles, the Agora stages, factory roles; principles 3, 5, 6, 9 to 12 and 16 to 18 live on in `README.md` and the cards |
+| `docs/northstar/PLAN.md` | abd1024d | 18 principles, the Agora stages, factory roles; what survives of its principles is restated in the cards without attribution |
 | `docs/northstar/agile.md` | f35f4d8b | The requirements hierarchy; now `requirements.md` |
 | `plans/workflows_2026-10-07/rules.md` | dda6ce64 | Six role sections; now the role cards |
 | `plans/workflows_2026-10-07/dispatcher.md` | dda6ce64 | The Dispatcher runbook; now `runner.md` |
-| `plans/workflows_2026-10-07/method_check.md` | 7ccc8dbe | Thirteen transcript checks; the script keeps six |
+| `plans/workflows_2026-10-07/method_check.md` | 7ccc8dbe | Thirteen transcript checks; H-005 cuts the script to six |
 | `plans/workflows_2026-10-07/drift_audit.md` | 7499295f | Weekly Sonnet drift audit; now on request |
 | `plans/method_rev3_2026-10-26/spec.md` | ddbfe9f0 | 23 gaps, 24 metrics; four metrics kept |
 | `plans/2026-10-21-tool-split-spec.md` | d5c1e32b | The six questions for Workflow versus cascade; one line in `architect.md` |

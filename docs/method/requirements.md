@@ -28,7 +28,7 @@ Rules
 Inputs: layer command (1..3), unit position, enemy position, fog state.
 Outputs: visible set per unit in the tick delta; HUD vision cone; fog reveal on screen.
 Scale: 1,000 units computing visibility in under 2 ms per tick.
-Scene: scenes/tactical/tactical.tscn --seed 7 --story S-042 (the state Westley plays).
+Scene: res://scenes/tactical/tactical.tscn --seed 7 (the state Westley plays; copied into the story file).
 References: references/E-07/notes.md, item 2.
 Ways this could be wrong: visibility identical across layers; cone drawn but set unchanged.
 Open flags: none.
