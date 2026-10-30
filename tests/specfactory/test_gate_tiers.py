@@ -62,6 +62,8 @@ STATUS = SPEC_DIR / "status_check.py"
 sys.path.insert(0, str(SPEC_DIR))
 
 import merge_gate_support as mgs  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import write_story  # noqa: E402
 
 PY = sys.executable
 GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
@@ -177,6 +179,8 @@ def build_gate(tmp_path, *, main_steps=None, cand_steps=None, pieces=None, stubs
     _commit(cand, {"tests/csim/.keep": "\n", "tests/qa/t1/.keep": "\n"})
     if tests_transport:
         _commit(cand, {"tests/transport/.keep": "\n"})
+    owned = next((p.get("owns", []) for p in tomllib.loads(pieces or "").get("piece", []) if p["id"] == "B1"), [])
+    write_story(cand, "B1", files=owned)  # H-020: staged here, committed with the next commit
     for rel in COPIED_INTO_CANDIDATE:
         _commit(cand, {rel: (REPO / rel).read_text()})
     fx.m1 = _git(cand, "rev-parse", "HEAD")
@@ -276,6 +280,7 @@ def _select_repo(tmp_path, tests):
     repo = tmp_path / "sel"
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
+    write_story(repo, "B1")  # H-020
     files = {"csrc/ouroboros_sim.h": "/* h */\n", "csrc/x.h": "/* x */\n", "Makefile": "all:\n",
              "tests/csim/conftest.py": "# c\n", "docs/readme.md": "r\n",
              "tests/csim/helper_zz.py": "# helper, not a test file\n"}
@@ -420,11 +425,11 @@ def test_2_bogus_tier_and_revert_with_a_non_full_tier_exit_2_with_the_new_usage_
 @pytest.mark.parametrize("flags", [("--revert", "--tier", "full"), ("--tier", "full", "--revert")])
 def test_2_revert_with_tier_full_is_allowed_in_either_order(tmp_path, flags):
     """Group 2 (control for the exit-2 rule): `--revert` is only refused with a tier other than full: with
-    `--tier full` the light revert profile runs (stops after owner_lint) and exits 0, in either flag order."""
+    `--tier full` the light revert profile runs (stops after gd_reach; owner_lint was retired by H-006, Test-defect H-020) and exits 0, in either flag order."""
     fx = build_gate(tmp_path, cand_steps=lambda c: _commit(c, {"feat.txt": "feat\n"}))
     r, out = run_gate(fx, *flags)
     assert r.returncode == 0, out
-    assert "GATE owner_lint OK" in out and "GATE regression_csim" not in out, out
+    assert "GATE reach_lint OK" in out and "GATE regression_csim" not in out, out
 
 
 # ====================================================================== group 3: stage sets and the tier line
@@ -432,7 +437,7 @@ def test_2_revert_with_tier_full_is_allowed_in_either_order(tmp_path, flags):
 FAST_SKIPPED = ["regression_lab", "regression_qa_t1", "specfactory_regression", "playthrough", "lane_plays",
                 "checksum_trace", "tactical_trace", "undertest_check", "size_lint", "look"]
 FAST_KEPT = ["base", "make", "libm_lint", "alg_constants", "allowlist_strict", "footprint", "gd_class_names",
-             "symbol_ownership", "sig_blocked", "sig_check", "reach_lint", "gd_reach", "owner_lint", "rule_pins",
+             "symbol_ownership", "sig_blocked", "sig_check", "reach_lint", "gd_reach", "rule_pins",
              "control_liveness", "placeholder_controls", "status", "acceptance", "qa_t1", "transport",
              "regression_csim"]
 
@@ -443,9 +448,10 @@ def _feat(c):
 
 def test_3_control_default_run_prints_every_stage_fast_skips(tmp_path):
     """Group 3 positive control: the default run (today's full list) prints each of the ten stages the fast tier
-    skips, so their absence under `--tier fast` means something."""
+    skips, so their absence under `--tier fast` means something. Re-pinned (H-020): the full list is now `--tier full`,
+    because a story file makes the default run the flag's tier (H-006)."""
     fx = build_gate(tmp_path, cand_steps=_feat, tests_transport=True)
-    r, out = run_gate(fx)
+    r, out = run_gate(fx, "--tier", "full")
     names = _stage_names(out)
     missing = [s for s in FAST_SKIPPED if s not in names]
     assert not missing, f"default run lacks {missing}\n{out}"
@@ -462,20 +468,13 @@ def test_3_fast_tier_prints_none_of_the_skipped_stages_and_every_kept_one(tmp_pa
     assert r.returncode == 0, out
 
 
-def test_3_full_tier_prints_the_same_stage_set_in_the_same_order_as_the_default_run(tmp_path):
-    """Group 3: `--tier full` is today's run unchanged: the ordered stage-name list equals the no-flag run's."""
-    fx = build_gate(tmp_path, cand_steps=_feat, tests_transport=True)
-    _r0, out0 = run_gate(fx)
-    r1, out1 = run_gate(fx, "--tier", "full")
-    n0, n1 = _stage_names(out0), _stage_names(out1)
-    assert n1 and n1 == n0, f"default {n0}\nfull {n1}\n{out1}"
-    assert r1.returncode == 0, out1
+# test_3_full_tier_prints_the_same_stage_set_in_the_same_order_as_the_default_run: retired by H-006 (the default run of a story is
+# the flag's tier, fast, so it no longer equals `--tier full`); Test-defect H-020.
 
 
-@pytest.mark.parametrize("flags,name", [(("--tier", "fast"), "fast"), (("--tier", "full"), "full"), ((), "full")])
+@pytest.mark.parametrize("flags,name", [(("--tier", "fast"), "fast"), (("--tier", "full"), "full"), ((), "fast")])
 def test_3_the_tier_line_is_printed_once_and_before_the_first_stage_line(tmp_path, flags, name):
-    """Group 3: exactly one `GATE tier <name>` line, ahead of every other GATE line (`--tier full` and the default
-    run both print `full`)."""
+    """Group 3: exactly one `GATE tier <name>` line, ahead of every other GATE line (`--tier full` prints `full`; the default run of a story prints the flag's tier, `fast`)."""
     fx = build_gate(tmp_path, cand_steps=_feat)
     r, out = run_gate(fx, *flags)
     gate_lines = [ln for ln in out.splitlines() if ln.startswith("GATE ")]
@@ -524,6 +523,7 @@ def _status_fixture(tmp_path, events, rows):
     repo = tmp_path / "st"
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
+    write_story(repo, "B1")  # H-020
     _commit(repo, {
         "README.txt": "base\n",
         "docs/northstar/plans/2026-10-07-visible-game-programme.md":
@@ -659,6 +659,8 @@ def test_5_a_comma_list_runs_acceptance_for_both_ids_and_the_union_diff_stages_o
     marker = tmp_path / "ran.txt"
 
     def main_steps(c):
+        write_story(c, "A", tests="tests/acc_a.py", files=["a_file.txt", "b_file.txt", "docs/stories/B.md", "tests/acc_b.py"])  # H-020: the ids this run names carry story files
+        write_story(c, "B", tests="tests/acc_b.py")
         _commit(c, {"a_file.txt": "a\n", "tests/acc_a.py": _marker_tests(marker, "a")}, "a")
         _commit(c, {"b_file.txt": "b\n", "tests/acc_b.py": _marker_tests(marker, "b")}, "b")
 
@@ -680,6 +682,8 @@ def test_5_control_a_single_id_of_the_pair_leaves_the_other_acceptance_unrun(tmp
     marker = tmp_path / "ran.txt"
 
     def main_steps(c):
+        write_story(c, "A", tests="tests/acc_a.py", files=["a_file.txt", "b_file.txt", "docs/stories/B.md", "tests/acc_b.py"])  # H-020: the ids this run names carry story files
+        write_story(c, "B", tests="tests/acc_b.py")
         _commit(c, {"a_file.txt": "a\n", "tests/acc_a.py": _marker_tests(marker, "a")}, "a")
         _commit(c, {"b_file.txt": "b\n", "tests/acc_b.py": _marker_tests(marker, "b")}, "b")
 
@@ -764,6 +768,7 @@ def _cache_fixture(tmp_path):
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
     marker = tmp_path / "ran.txt"
+    write_story(repo, "B1")  # H-020
     files = {f"tests/csim/test_{n}.py": _marker_tests(marker, n) for n in ("a", "b", "c")}
     files.update({"src/mod.py": "X = 1\n", "docs/README.md": "r0\n", TOML_REL: TOML})
     m = _commit(repo, files, "main")
