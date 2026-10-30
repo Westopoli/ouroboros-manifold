@@ -28,6 +28,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import overlay_sweeps, write_story  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent.parent
 GATE = REPO / "scripts" / "specfactory" / "merge_gate.sh"
@@ -50,6 +52,7 @@ def _init_fixture_repo(base_dir: Path, *, makefile: str) -> Path:
     (repo / "tests" / "csim").mkdir()
     (repo / "tests" / "qa").mkdir()
     (repo / "tests" / "qa" / "t1").mkdir()
+    write_story(repo, "B1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))
@@ -132,6 +135,8 @@ def test_acceptance_increment_warns_full_id_rejects(tmp_path):
         "acceptance": ["tests/accept/test_a.py::test_pass", "tests/accept/test_a.py::test_fail"],
     }])
 
+    write_story(repo, "B10")  # H-020
+    write_story(repo, "B10-2")  # H-020: the increment id is gated under its own story file
     (repo / "tests" / "accept").mkdir()
     (repo / "tests" / "accept" / "test_a.py").write_text(
         "def test_pass():\n    assert True\n\n"
@@ -172,6 +177,7 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     stands in for the real import (~60-90s); this only proves ordering and
     that a csim-only piece pays nothing."""
     repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    write_story(repo, "D1")  # H-020
     (repo / "tests" / "qa" / "desktop").mkdir()
     (repo / "tests" / "qa" / "desktop" / "test_x.py").write_text(
         "def test_pass():\n    assert True\n"
@@ -259,6 +265,7 @@ def _fake_root(tmp_path: Path, stubs: dict) -> Path:
     root = tmp_path / "fakeroot"
     (root / "scripts" / "specfactory").mkdir(parents=True)
     (root / "docs").symlink_to(REPO / "docs")
+    overlay_sweeps(root)  # H-020: never the live sweeps.md
     for f in SPEC_DIR.iterdir():
         if f.name not in stubs:
             (root / "scripts" / "specfactory" / f.name).symlink_to(f)
@@ -299,7 +306,7 @@ def test_control_stub_harness_runs_the_real_stages_to_the_early_exit_line(tmp_pa
     the lane H landing's gate row, not by this fake root. Test-defect TD-HARNESS-gate-reorder-1 (ruler Architect
     2026-10-29): this test assumed stages past a REJECT still run. See also: tests/specfactory/test_gate_reorder.py"""
     lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK})
-    for step in ("make", "owner_lint"):
+    for step in ("make",):  # H-006 retired owner_lint (DEC-ownership-by-conflict-2026-10-30; Test-defect, H-020)
         assert _stage(lines, step), proc.stdout + proc.stderr
     early = ["footprint", "status", "rule_pins", "control_liveness", "placeholder_controls", "acceptance",
              "playthrough", "lane_plays"]  # transport prints in the concurrent block after the early exit (TD-HARNESS-gate-concurrent-1)
@@ -309,8 +316,7 @@ def test_control_stub_harness_runs_the_real_stages_to_the_early_exit_line(tmp_pa
         assert found, f"{step} line missing:\n{proc.stdout + proc.stderr}"
         at.append(found[0])
     assert at == sorted(at), f"early stages out of order: {dict(zip(early, at))}"
-    owner = [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")][0]
-    assert owner < at[1]  # owner_lint runs before status (footprint is the one early stage ahead of it)
+    assert at[0] < at[1]  # footprint runs before status
     exits = [i for i, l in enumerate(lines) if l.startswith("GATE early_exit REJECT")]
     assert len(exits) == 1 and exits[0] > at[-1], proc.stdout + proc.stderr
     assert "allowlist_strict" in lines[exits[0]].split("REJECT", 1)[1], lines[exits[0]]
@@ -324,7 +330,7 @@ def test_control_revert_mode_prints_no_rule_pins_or_status_line(tmp_path):
     """Green today and after: a revert never trips on a restored test, and stops before the later stages."""
     lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_DRIFT, "rule_pins_tests.py": PINS_REJECT,
                                              "rule_pins.py": PINS_REJECT}, "--revert")
-    assert _stage(lines, "owner_lint"), proc.stdout + proc.stderr
+    assert _stage(lines, "make"), proc.stdout + proc.stderr  # H-006 retired owner_lint; make is the stage a revert still prints
     assert not _stage(lines, "rule_pins") and not _stage(lines, "status"), proc.stdout
     assert not (root / "scripts" / "specfactory" / "status_check.argv").exists()
     assert not (root / "scripts" / "specfactory" / "rule_pins_tests.argv").exists()
@@ -380,9 +386,24 @@ def test_rule_pins_stage_warns_on_a_pins_warn_and_is_ok_on_ok(tmp_path):
     assert stage and stage[0].startswith("GATE rule_pins OK"), ok_proc.stdout + ok_proc.stderr
 
 
-def test_rule_pins_stage_comes_after_owner_lint(tmp_path):
+def test_rule_pins_stage_comes_after_footprint(tmp_path):
     lines, proc, root = _gate_run(tmp_path, {"status_check.py": STATUS_OK, "rule_pins_tests.py": PINS_OK,
                                              "rule_pins.py": RULE_PINS_QUIET})
-    owner = [i for i, l in enumerate(lines) if l.startswith("GATE owner_lint ")]
+    # Re-pinned from owner_lint (retired by H-006) to footprint, the early stage that precedes rule_pins.
+    owner = [i for i, l in enumerate(lines) if l.startswith("GATE footprint ")]
     pins = [i for i, l in enumerate(lines) if l.startswith("GATE rule_pins ")]
     assert owner and pins and owner[0] < pins[0], proc.stdout + proc.stderr
+
+
+def test_h020_gate_without_home_reaches_its_first_stage_line(tmp_path):
+    """H-020 "the gate run with HOME unset reaches its first stage line": merge_gate.sh line 120 read `$HOME` under `set -u`
+    and aborted with `HOME: unbound variable` when the env dropped it. The env here has no HOME and no
+    MERGE_GATE_RUNS_CSV, so the runs-csv default is the line under test."""
+    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/stub.c"], "acceptance": []}])
+    env = {"MERGE_GATE_PIECES": str(pieces), "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
+    assert "HOME" not in env
+    proc = subprocess.run(["bash", str(GATE), str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=60)
+    assert "GATE base" in proc.stdout, proc.stdout + proc.stderr
+    assert "HOME: unbound variable" not in proc.stdout + proc.stderr, proc.stdout + proc.stderr

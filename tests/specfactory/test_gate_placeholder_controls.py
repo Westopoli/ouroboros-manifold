@@ -44,6 +44,8 @@ GATE = REPO / "scripts" / "specfactory" / "merge_gate.sh"
 SUPPORT = REPO / "scripts" / "specfactory" / "merge_gate_support.py"
 PYTHON = "/home/westopoli/Projects/agora/.venv/bin/python"
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import write_story  # noqa: E402
 
 import merge_gate_support as mgs  # noqa: E402
 
@@ -207,6 +209,7 @@ def _gate(tmp_path: Path, controls: dict[str, str], listed=(), revert=False):
     _git(repo, "init", "-q")
     _git(repo, "config", "user.email", "gate@test")
     _git(repo, "config", "user.name", "gate")
+    write_story(repo, "H1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))

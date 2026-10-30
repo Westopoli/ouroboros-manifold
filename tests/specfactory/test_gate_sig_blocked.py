@@ -20,6 +20,8 @@ REPO = Path(__file__).resolve().parent.parent.parent
 GATE = REPO / "scripts" / "specfactory" / "merge_gate.sh"
 SUPPORT = REPO / "scripts" / "specfactory" / "merge_gate_support.py"
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import write_story  # noqa: E402
 
 import merge_gate_support as mgs  # noqa: E402
 
@@ -103,6 +105,7 @@ def _gate(tmp_path: Path, table: Path) -> subprocess.CompletedProcess:
     (repo / "csrc" / "stub.c").write_text("int om_stub(void) { return 0; }\n")
     (repo / "Makefile").write_text("libouroboros.so:\n\ttouch $@\nlibouroboros_dbg.so:\n\ttouch $@\n")
     (repo / "tests" / "csim").mkdir(parents=True)
+    write_story(repo, "B1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))

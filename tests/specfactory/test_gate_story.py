@@ -184,3 +184,59 @@ def test_control_a_complete_story_file_raises_no_story_reject(tmp_path, libs):
     pieces = tgr._pieces("csrc/stub.c", "docs/x.md", f"docs/stories/{STORY_ID}.md", TEST_PATH) + 'impact = "harness"\n'
     rc, lines, out = _gate_story(tmp_path, libs, _story("harness"), {"docs/x.md": "docs only\n"}, pieces=pieces)
     assert not any(ln.startswith("GATE story REJECT") for ln in lines), out
+
+
+# ------------------------------------------------------------------ H-020: the story that fixes a red sweep
+
+SWEPT_SHA = "c4131ea5a0e1eb8098688c43c093c80892ae92ad"  # the swept sha of the REJECT row (docs/stories/H-020.md Machine lines)
+OTHER_SHA = "0123456789abcdef0123456789abcdef01234567"
+SWEEPS_REL = "docs/northstar/plans/push/sweeps.md"
+# Row shape of sweeps.md on origin/main: | Date-time UTC | Main sha | Verdict | New | Red | Red ids |
+SWEEPS_HEADER = "| Date-time UTC | Main sha | Verdict | New | Red | Red ids |\n|---|---|---|---|---|---|\n"
+
+
+def _gate_sweep(tmp_path: Path, libs, story: str):
+    """(lines, out) of the gate on the gate-repo fixture whose own sweeps.md (the file the status stage reads from the gate
+    repo) ends in a REJECT row at SWEPT_SHA with red: 3, and whose candidate carries `story` as docs/stories/B1.md."""
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    files = {f"docs/stories/{STORY_ID}.md": story, TEST_PATH: TEST_STUB, "docs/x.md": "docs only\n"}
+    gate, cand = tgr._build(tmp_path, drift=False, gate_script=GATE, candidate_files=files,
+                            base_files={"Makefile": tgf._mk(libs["A"])}, pieces=tgr.PIECES)
+    # _overlay replaces the symlink to this tree's sweeps.md; a plain write_text would write through it.
+    tgr._overlay(gate.parent.parent.parent, SWEEPS_REL,
+                 SWEEPS_HEADER + f"| 2026-10-30 16:12 | {SWEPT_SHA} | REJECT | new: tests/x.py::t | red: 3 | |\n")
+    env = {"PATH": tgr.GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
+           "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
+           "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
+    r = subprocess.run(["bash", str(gate), str(cand), "origin/main", STORY_ID], capture_output=True, text=True, env=env,
+                       timeout=tgf.GATE_TIMEOUT_S)
+    return r.stdout.splitlines(), r.stdout + r.stderr
+
+
+def test_h020_fixes_sweep_equal_to_the_reject_row_passes_status_as_warn(tmp_path, libs):
+    """H-020 (a): "a candidate story with `Fixes-sweep:` equal to the REJECT row's sha passes the status stage as WARN with
+    the line `GATE status WARN sweep red <n> at <sha> fixed by <story id>`" (DEC-sweep-fix-exemption-2026-10-30)."""
+    lines, out = _gate_sweep(tmp_path, libs, _story("harness") + f"Fixes-sweep: {SWEPT_SHA}\n")
+    want = f"GATE status WARN sweep red 3 at {SWEPT_SHA} fixed by {STORY_ID}"
+    assert any(ln.startswith(want) for ln in lines), out
+    assert not any(ln.startswith("GATE status REJECT sweep red") for ln in lines), out
+
+
+def test_h020_fixes_sweep_of_another_sha_still_rejects(tmp_path, libs):
+    """H-020 (b): "a different sha still rejects `GATE status REJECT sweep red`": the exemption is for the story that fixes
+    this sweep only. Green today (no exemption exists) and stays green."""
+    lines, out = _gate_sweep(tmp_path, libs, _story("harness") + f"Fixes-sweep: {OTHER_SHA}\n")
+    assert any(ln.startswith("GATE status REJECT sweep red") for ln in lines), out
+
+
+def test_h020_control_no_fixes_sweep_line_rejects_on_a_reject_row(tmp_path, libs):
+    """H-020 (c), positive control: no Fixes-sweep line and a REJECT last row is still `GATE status REJECT sweep red 3 at
+    <sha>`, so a red (a) means the exemption is missing, not that the fixture lost the row. Green today."""
+    lines, out = _gate_sweep(tmp_path, libs, _story("harness"))
+    assert any(ln.startswith(f"GATE status REJECT sweep red 3 at {SWEPT_SHA}") for ln in lines), out
+
+
+def test_h020_malformed_fixes_sweep_rejects_as_bad_fixes_sweep(tmp_path, libs):
+    """H-020 (d): "a malformed line rejects `bad fixes-sweep`" (story-check accepts an optional 40-hex Fixes-sweep line)."""
+    lines, out = _gate_sweep(tmp_path, libs, _story("harness") + "Fixes-sweep: nope\n")
+    assert any(ln.startswith("GATE story REJECT") and "bad fixes-sweep" in ln for ln in lines), out

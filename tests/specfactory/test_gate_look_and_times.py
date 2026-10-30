@@ -35,7 +35,7 @@ REPO = Path(__file__).resolve().parent.parent.parent
 GATE = REPO / "scripts" / "specfactory" / "merge_gate.sh"
 SUPPORT = REPO / "scripts" / "specfactory" / "merge_gate_support.py"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from gate_toy_root import fake_gate_root, gate_env  # noqa: E402
+from gate_toy_root import fake_gate_root, gate_env, write_story  # noqa: E402
 
 PY = sys.executable
 TIME_SUFFIX = re.compile(r"\[(\d+(?:\.\d+)?)s\]\s*$")
@@ -87,6 +87,7 @@ def _fixture(base: Path, makefile: str) -> tuple[Path, Path]:
     (repo / "Makefile").write_text(makefile)
     for d in ("tests/csim", "tests/qa/t1"):
         (repo / d).mkdir(parents=True)
+    write_story(repo, "B1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))
@@ -198,6 +199,7 @@ def _cache_repo(base: Path) -> Path:
     _git(repo, "config", "user.name", "g")
     (repo / "tests" / "t").mkdir(parents=True)
     (repo / "tests" / "t" / "test_a.py").write_text("def test_a():\n    assert True\n")
+    write_story(repo, "B1")  # H-020
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "main")
     return repo

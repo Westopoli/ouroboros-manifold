@@ -48,7 +48,10 @@ on tests/specfactory/test_merge_gate.py:337).
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import overlay_sweeps, write_story  # noqa: E402
 
 import pytest
 
@@ -127,6 +130,7 @@ def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=Non
     _commit(cand, "Makefile", MAKEFILE)
     for d in ("tests/csim", "tests/qa/t1"):
         _commit(cand, d + "/.keep", "\n")
+    write_story(cand, "B1")  # H-020: staged here, committed with the next commit
     for rel in COPIED_INTO_CANDIDATE:
         _commit(cand, rel, (REPO / rel).read_text())
     for rel, text in (base_files or {}).items():
@@ -164,6 +168,7 @@ def _build(tmp_path, *, drift, gate_script, candidate_files=None, base_files=Non
              f"| X | {sha} | - | - | - |\n")
     _overlay(root, "docs/northstar/plans/push/pieces.toml", pieces)
     _overlay(root, LEDGER, "")
+    overlay_sweeps(root, sha)  # H-020: never the live sweeps.md
     (tmp_path / "pieces.toml").write_text(pieces)
     (tmp_path / "placeholders.txt").write_text("")
     return root / "scripts" / "specfactory" / "merge_gate.sh", cand

@@ -54,6 +54,8 @@ import pytest
 REPO = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO / "scripts" / "specfactory"
 sys.path.insert(0, str(SPEC_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import overlay_sweeps, write_story  # noqa: E402
 GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
 SUITES = ("csim", "lab", "qa_t1", "specfactory", "transport")
 BLOCK = ("csim", "specfactory", "transport", "lab")  # the four concurrent jobs; qa_t1 runs first and alone
@@ -118,6 +120,7 @@ def _fake_root(tmp_path):
     root = tmp_path / "fakeroot"
     (root / "scripts" / "specfactory").mkdir(parents=True)
     (root / "docs").symlink_to(REPO / "docs")
+    overlay_sweeps(root)  # H-020: never the live sweeps.md
     for f in SPEC_DIR.iterdir():
         if f.name not in ("merge_gate_support.py", *NOISY_TOOLS):
             (root / "scripts" / "specfactory" / f.name).symlink_to(f)
@@ -141,6 +144,7 @@ def _fixture_repo(path):
     for d in ("tests/csim", "tests/qa/t1", "tests/transport"):
         (path / d).mkdir(parents=True)
     (path / "tests" / "transport" / "keep.txt").write_text("x\n")
+    write_story(path, "B1")  # H-020
     _git(path, "add", "-A")
     _git(path, "commit", "-q", "-m", "base")
     _git(path, "remote", "add", "origin", str(path))
@@ -367,6 +371,7 @@ def test_9_main_and_candidate_passes_of_a_suite_run_concurrently(tmp_path):
         "    t0 = time.time(); time.sleep(2)\n"
         "    d = pathlib.Path(os.environ['GC_TRACE']); d.mkdir(exist_ok=True)\n"
         "    (d / (str(abs(hash(__file__))) + '.json')).write_text(repr((t0, time.time(), __file__)))\n")
+    write_story(repo, "B1")  # H-020 (this test runs no gate; named by the story)
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     (repo / "note.txt").write_text("x\n")

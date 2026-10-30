@@ -62,6 +62,8 @@ STATUS = SPEC_DIR / "status_check.py"
 sys.path.insert(0, str(SPEC_DIR))
 
 import merge_gate_support as mgs  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gate_toy_root import write_story  # noqa: E402
 
 PY = sys.executable
 GATE_PATH = "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"
@@ -177,6 +179,7 @@ def build_gate(tmp_path, *, main_steps=None, cand_steps=None, pieces=None, stubs
     _commit(cand, {"tests/csim/.keep": "\n", "tests/qa/t1/.keep": "\n"})
     if tests_transport:
         _commit(cand, {"tests/transport/.keep": "\n"})
+    write_story(cand, "B1")  # H-020: staged here, committed with the next commit
     for rel in COPIED_INTO_CANDIDATE:
         _commit(cand, {rel: (REPO / rel).read_text()})
     fx.m1 = _git(cand, "rev-parse", "HEAD")
@@ -276,6 +279,7 @@ def _select_repo(tmp_path, tests):
     repo = tmp_path / "sel"
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
+    write_story(repo, "B1")  # H-020
     files = {"csrc/ouroboros_sim.h": "/* h */\n", "csrc/x.h": "/* x */\n", "Makefile": "all:\n",
              "tests/csim/conftest.py": "# c\n", "docs/readme.md": "r\n",
              "tests/csim/helper_zz.py": "# helper, not a test file\n"}
@@ -420,11 +424,11 @@ def test_2_bogus_tier_and_revert_with_a_non_full_tier_exit_2_with_the_new_usage_
 @pytest.mark.parametrize("flags", [("--revert", "--tier", "full"), ("--tier", "full", "--revert")])
 def test_2_revert_with_tier_full_is_allowed_in_either_order(tmp_path, flags):
     """Group 2 (control for the exit-2 rule): `--revert` is only refused with a tier other than full: with
-    `--tier full` the light revert profile runs (stops after owner_lint) and exits 0, in either flag order."""
+    `--tier full` the light revert profile runs (stops after gd_reach; owner_lint was retired by H-006, Test-defect H-020) and exits 0, in either flag order."""
     fx = build_gate(tmp_path, cand_steps=lambda c: _commit(c, {"feat.txt": "feat\n"}))
     r, out = run_gate(fx, *flags)
     assert r.returncode == 0, out
-    assert "GATE owner_lint OK" in out and "GATE regression_csim" not in out, out
+    assert "GATE reach_lint OK" in out and "GATE regression_csim" not in out, out
 
 
 # ====================================================================== group 3: stage sets and the tier line
@@ -524,6 +528,7 @@ def _status_fixture(tmp_path, events, rows):
     repo = tmp_path / "st"
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
+    write_story(repo, "B1")  # H-020
     _commit(repo, {
         "README.txt": "base\n",
         "docs/northstar/plans/2026-10-07-visible-game-programme.md":
@@ -764,6 +769,7 @@ def _cache_fixture(tmp_path):
     repo.mkdir()
     _git(repo, "init", "-q", "-b", "main")
     marker = tmp_path / "ran.txt"
+    write_story(repo, "B1")  # H-020
     files = {f"tests/csim/test_{n}.py": _marker_tests(marker, n) for n in ("a", "b", "c")}
     files.update({"src/mod.py": "X = 1\n", "docs/README.md": "r0\n", TOML_REL: TOML})
     m = _commit(repo, files, "main")

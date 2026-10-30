@@ -60,7 +60,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from test_spec_provenance import (REGISTER_TEXT, SCRIPT, _findings, _line_of, _tree)  # noqa: E402
-from test_pre_gate import (EPICS, _make_repo, _pieces, _run, _stub_gate)  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent.parent
 PRE_GATE = REPO / "scripts" / "specfactory" / "pre_gate.sh"
@@ -523,50 +522,4 @@ def test_source_names_the_two_drafts_in_comments():
     assert "DRAFT-provscope-forms" in src and "DRAFT-provscope-nomatch" in src
 
 
-def test_pre_gate_passes_its_piece_list_as_pieces():
-    src = PRE_GATE.read_text()
-    assert '"$VENV_PYTHON" "$HERE/spec_provenance.py" "$WT/$spec" --pieces "$PIECES"' in src
-
-
-# ---- T12: through pre_gate.sh ----------------------------------------------------------------------------------------
-
-def _pre_gate(tmp_path, pieces, env_extra=None, ids=("VG-X-clean", "VG-X-dirty", "VG-X-ghost")):
-    repo = _make_repo(tmp_path, base_files={"readme.txt": "base\n", **EPICS}, head_add={"spec.md": FIXTURE_TEXT})
-    specs = {i: "spec.md" for i in ids if i != "VG-X-ghost"}
-    toml = _pieces(tmp_path, list(ids), specs=specs)
-    env = {"MERGE_GATE_PIECES": str(toml), "PRE_GATE_SPEC": ""}
-    env.update(env_extra or {})
-    res = _run(repo, _stub_gate(tmp_path, "GATE make OK", 0), pieces=pieces, env_extra=env)
-    return repo, res, res.stdout.splitlines()
-
-
-def test_t12_clean_id_passes_pre_gate_provenance(tmp_path):
-    repo, res, out = _pre_gate(tmp_path, "VG-X-clean")
-    assert "PRE_GATE provenance OK spec.md" in out, res.stdout + res.stderr
-    assert out[-1] == "PRE_GATE verdict OK" and res.returncode == 0, res.stdout + res.stderr
-
-
-def test_t12_dirty_id_rejects_pre_gate_provenance_at_its_own_paragraph_only(tmp_path):
-    repo, res, out = _pre_gate(tmp_path, "VG-X-dirty")
-    assert "PRE_GATE provenance REJECT spec.md" in out, res.stdout + res.stderr
-    assert any(re.search(rf"spec\.md:{DIRTY_LINE}: \(1\)", l) for l in out), res.stdout
-    assert not any(re.search(rf"spec\.md:{OTHER_LINE}: \(1\)", l) for l in out), res.stdout
-    assert out[-1] == "PRE_GATE verdict REJECT" and res.returncode == 1, res.stdout + res.stderr
-
-
-def test_t12_a_listed_id_of_another_spec_prints_a_warn_and_the_verdict_stays_ok(tmp_path):
-    """The row VG-X-ghost has no spec key: its own 'no spec key' WARN is expected too."""
-    repo, res, out = _pre_gate(tmp_path, "VG-X-clean,VG-X-ghost")
-    assert any(l.startswith("PROVSCOPE WARN ") and l.endswith("id=VG-X-ghost opens no paragraph") for l in out), res.stdout
-    assert "PRE_GATE provenance WARN no spec key for VG-X-ghost" in out
-    assert "PRE_GATE provenance OK spec.md" in out
-    assert out[-1] == "PRE_GATE verdict OK" and res.returncode == 0, res.stdout + res.stderr
-
-
-def test_t12_control_the_extra_spec_path_with_no_matching_id_is_checked_whole_file(tmp_path):
-    """Green today and after: PRE_GATE_SPEC=spec.md, piece list P-1 (no id opens a paragraph) rejects whole-file."""
-    repo, res, out = _pre_gate(tmp_path, "P-1", env_extra={"PRE_GATE_SPEC": "spec.md"}, ids=("P-1",))
-    assert "PRE_GATE provenance REJECT spec.md" in out, res.stdout + res.stderr
-    for n in (DIRTY_LINE, OTHER_LINE):
-        assert any(re.search(rf"spec\.md:{n}: \(1\)", l) for l in out), res.stdout
-    assert out[-1] == "PRE_GATE verdict REJECT" and res.returncode == 1
+# T12 (through pre_gate.sh) retired by H-006: pre_gate.sh has no provenance step (Test-defect, H-020).
