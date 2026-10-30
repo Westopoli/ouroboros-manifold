@@ -246,6 +246,98 @@ def footprint_check(candidate_dir: Path, base_ref: str, piece_id: str, *,
     return True, "OK"
 
 
+# ------------------------------------------------------------------ H-006: the story file replaces the pieces row
+# See also: docs/stories/H-006.md, tests/specfactory/test_gate_story.py
+def _story_line(path: Path, key: str) -> str | None:
+    """The value of the last `<key>:` line outside a triple-backtick fence, None when absent or the file is missing."""
+    try:
+        text = Path(path).read_text()
+    except OSError:
+        return None
+    value = None
+    fenced = False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+        elif not fenced:
+            m = re.match(rf"{key}:[ \t]*(.*?)[ \t]*$", line)
+            if m:
+                value = m.group(1)
+    return value
+
+
+def story_flag(path: Path) -> str:
+    """The `Flag:` value of a story file; `sim` when the line is absent (called only after the story stage)."""
+    return _story_line(path, "Flag") or "sim"
+
+
+def story_tests(path: Path) -> list[str]:
+    """The `Tests:` paths of a story file, in order."""
+    return (_story_line(path, "Tests") or "").split()
+
+
+def story_files(path: Path) -> list[str]:
+    """The backticked paths before the colon of each bullet of the story file's `## Files` section."""
+    try:
+        text = Path(path).read_text()
+    except OSError:
+        return []
+    sec = re.search(r"^## Files\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
+    out: list[str] = []
+    for bullet in re.findall(r"^- (.*)$", sec.group(1) if sec else "", re.M):
+        out += re.findall(r"`([^`]+)`", bullet.split(": ", 1)[0])
+    return out
+
+
+def story_footprint(candidate_dir: Path, base_ref: str, story_path: Path, *,
+                    ignores: tuple[str, ...] = DEFAULT_IGNORES) -> str:
+    """`OK` or `WARN <paths>`: the diff files outside the story's Files section, its Tests paths and the story file.
+    Never a reject (ownership is by conflict, DEC-ownership-by-conflict-2026-10-30)."""
+    named = set(story_files(story_path)) | set(story_tests(story_path))
+    if Path(story_path).is_relative_to(candidate_dir):
+        named.add(Path(story_path).relative_to(candidate_dir).as_posix())
+    normalized = sorted({_norm_gd_uid(p) for p in changed_files(candidate_dir, base_ref) if not _ignored(p, ignores)})
+    extra = [p for p in normalized if p not in named]
+    return f"WARN {extra}" if extra else "OK"
+
+
+def story_acceptance(candidate_dir: Path, piece_ids: str) -> list[str]:
+    """Union of the `Tests:` paths of the candidate's story files for a comma list of ids, first occurrence kept."""
+    out: list[str] = []
+    for one in (p.strip() for p in piece_ids.split(",") if p.strip()):
+        for t in story_tests(Path(candidate_dir) / "docs/stories" / f"{one}.md"):
+            if t not in out:
+                out.append(t)
+    return out
+
+
+def story_check(candidate_dir: Path, piece_ids: str) -> list[str]:
+    """`missing <key>` (and `bad flag <value>` outside harness, client, sim, contract) for each id's story file lacking `Flag:` or `Tests:` (`missing <file>` when the file is absent)."""
+    bad: list[str] = []
+    for one in (p.strip() for p in piece_ids.split(",") if p.strip()):
+        f = Path(candidate_dir) / "docs/stories" / f"{one}.md"
+        if not f.is_file():
+            bad.append(f"missing docs/stories/{one}.md")
+            continue
+        bad += [f"missing {k}" for k in ("Flag", "Tests") if _story_line(f, k) is None]
+        flag = _story_line(f, "Flag")
+        if flag is not None and flag not in ("harness", "client", "sim", "contract"):
+            bad.append(f"bad flag {flag}")
+    return bad
+
+
+def split_acceptance(ids: list[str]) -> tuple[list[str], list[str]]:
+    """(pytest_ids, godot_ids): the same split acceptance_ids makes, over a plain list of paths."""
+    py: list[str] = []
+    gd: list[str] = []
+    for a in ids:
+        if a.endswith(".gd"):
+            gd.append(a)
+        elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
+            py.append(a)
+    return py, gd
+
+
 _COMMENT_RE = re.compile(r"/\*.*?\*/|//.*")
 
 
@@ -461,6 +553,15 @@ def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tupl
     return pytest_ids, godot_ids
 
 
+def story_controls(acceptance: list[str], project: Path) -> list[Path]:
+    """piece_controls over a plain acceptance list (the story file's Tests paths)."""
+    epics = {m.group(1) for a in acceptance for m in [re.search(r"test_E(\d+)_", a)] if m}
+    found: set[Path] = set()
+    for nn in epics:
+        found.update((Path(project) / "tests/csim/controls").glob(f"test_control_e{nn}_*.py"))
+    return sorted(found)
+
+
 def piece_controls(piece_ids: list[str], pieces_path: Path, project: Path) -> list[Path]:
     """Controls of the pieces' epics: an acceptance path `.../test_E<NN>_...` selects
     tests/csim/controls/test_control_e<NN>_*.py in `project`. No E<NN> path, no controls."""
@@ -478,7 +579,7 @@ def piece_controls(piece_ids: list[str], pieces_path: Path, project: Path) -> li
     return sorted(found)
 
 
-def control_liveness_check(project: Path, piece_ids: list[str], pieces_path: Path, placeholders_path: Path,
+def control_liveness_check(project: Path, piece_ids: list[str], pieces_path: Path | None, placeholders_path: Path,
                            scratch_root: Path | None = None, python_exe: str | None = None) -> tuple[bool, str]:
     """control_liveness.py over the pieces' controls in the candidate, listed placeholders removed first.
     Rejects any DEAD; an ERROR control (cannot run at all) also rejects, since it proves nothing."""
@@ -487,7 +588,9 @@ def control_liveness_check(project: Path, piece_ids: list[str], pieces_path: Pat
     if Path(placeholders_path).exists():
         listed = {ln.strip() for ln in Path(placeholders_path).read_text().splitlines()
                   if ln.strip() and not ln.strip().startswith("#")}
-    controls = piece_controls(piece_ids, pieces_path, project)
+    # H-006: no pieces table -> the controls come from the candidate's story files' Tests paths.
+    controls = (piece_controls(piece_ids, pieces_path, project) if pieces_path
+                else story_controls(story_acceptance(project, ",".join(piece_ids)), project))
     run = [c for c in controls if c.relative_to(project).as_posix() not in listed]
     skipped = len(controls) - len(run)
     if not run:
@@ -1346,6 +1449,19 @@ def main(argv: list[str]) -> int:
     fp.add_argument("piece_id")
     fp.add_argument("--pieces", default=str(DEFAULT_PIECES))
 
+    sf = sub.add_parser("story-footprint")
+    sf.add_argument("candidate_dir")
+    sf.add_argument("base_ref")
+    sf.add_argument("story")
+
+    sc = sub.add_parser("story-check")
+    sc.add_argument("candidate_dir")
+    sc.add_argument("piece_ids")
+
+    sa = sub.add_parser("story-acceptance")
+    sa.add_argument("candidate_dir")
+    sa.add_argument("piece_ids")
+
     sy = sub.add_parser("symbols")
     sy.add_argument("candidate_dir")
     sy.add_argument("base_ref")
@@ -1420,7 +1536,7 @@ def main(argv: list[str]) -> int:
     cl = sub.add_parser("control-liveness")
     cl.add_argument("project")
     cl.add_argument("piece_ids")
-    cl.add_argument("--pieces", default=str(DEFAULT_PIECES))
+    cl.add_argument("--pieces", default=None)
     cl.add_argument("--placeholders", default=str(DEFAULT_PLACEHOLDERS))
     cl.add_argument("--scratch-root", default=None)
     cl.add_argument("--python", default=None)
@@ -1463,8 +1579,23 @@ def main(argv: list[str]) -> int:
     if args.cmd == "footprint":
         ok, detail = footprint_check(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                       pieces_path=Path(args.pieces))
+    elif args.cmd == "story-footprint":
+        print(story_footprint(Path(args.candidate_dir), args.base_ref, Path(args.story)))
+        return 0
+    elif args.cmd == "story-check":
+        for line in story_check(Path(args.candidate_dir), args.piece_ids):
+            print(line)
+        return 0
+    elif args.cmd == "story-acceptance":
+        pytest_ids, godot_ids = split_acceptance(story_acceptance(Path(args.candidate_dir), args.piece_ids))
+        for i in pytest_ids:
+            print(f"PY {i}")
+        for i in godot_ids:
+            print(f"GD {i}")
+        return 0
     elif args.cmd == "control-liveness":
-        ok, detail = control_liveness_check(Path(args.project), args.piece_ids.split(","), Path(args.pieces),
+        ok, detail = control_liveness_check(Path(args.project), args.piece_ids.split(","),
+                                            Path(args.pieces) if args.pieces else None,
                                             Path(args.placeholders),
                                             scratch_root=Path(args.scratch_root) if args.scratch_root else None,
                                             python_exe=args.python)

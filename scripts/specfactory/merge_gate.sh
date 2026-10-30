@@ -8,7 +8,7 @@
 # immediately since nothing downstream is meaningful without a build).
 #
 # The tools this calls (libm_lint.py, alg_constants.py, merge_gate_support.py,
-# checksum_trace.py, undertest_check.py, pieces.toml, signatures.toml,
+# checksum_trace.py, undertest_check.py, signatures.toml,
 # symbol_modules.toml) always come from THIS repo (scripts/specfactory's own
 # location) -- never from the candidate worktree, which cannot edit any of
 # them. Only `make`, `pytest` and `git diff` run against the candidate.
@@ -28,8 +28,8 @@
 #         the diff stages run over the union diff base...HEAD; the piece id is a comma list. A regression reject names
 #         the first-parent landings since <base_ref>.
 # `GATE tier <name>` is the first GATE line. See also: tests/specfactory/test_gate_tiers.py,
-# Flag (HARNESS-gate-flag): the piece's `impact` key (pieces.toml, `gate_flag.py impact`) adds the stage `flag` right after
-#   make (`GATE flag SKIP revert mode` under --revert; skipped with a line when the row has no key). Without --tier an
+# Flag (HARNESS-gate-flag): the story's `Flag:` line (docs/stories/<id>.md on the candidate, `gate_flag.py story-impact`; H-006) adds the stage `flag` right after
+#   make (`GATE flag SKIP revert mode` under --revert; a story file missing `Flag:` or `Tests:` is `GATE story REJECT missing <key>`). Without --tier an
 #   explicit key picks the tier: sim and contract run `fast`; harness runs fast plus the specfactory suite and no csim or
 #   transport; client runs fast plus playthrough, lane plays and qa/t1, transport only when the diff touches autoload/ or
 #   tests/transport/, and no csim, lab or specfactory suite. --tier given wins. See also: tests/specfactory/test_gate_flag.py
@@ -39,7 +39,6 @@ set -uo pipefail
 GATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$GATE_DIR/../.." && pwd)"
 PYTHON="${MERGE_GATE_PYTHON:-/home/westopoli/Projects/agora/.venv/bin/python}"
-PIECES_TOML="${MERGE_GATE_PIECES:-$REPO_ROOT/docs/northstar/plans/push/pieces.toml}"
 SIGNATURES_TOML="${MERGE_GATE_SIGNATURES:-$REPO_ROOT/docs/northstar/spec_factory/signatures.toml}"
 PLACEHOLDERS_TXT="${MERGE_GATE_PLACEHOLDERS:-$REPO_ROOT/docs/northstar/spec_factory/placeholder_controls.txt}"
 SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
@@ -183,12 +182,18 @@ tail_oneline() { tail -n "${2:-8}" "$1" 2>/dev/null | tr '\n' ' '; }
 
 # HARNESS-gate-flag: the piece's `impact` key. rc 0 key valid, 2 value outside the four (the flag stage rejects), 3 no key.
 # Without --tier, a valid key picks the tier; no key keeps today's default, full.
+# H-006: the key is the `Flag:` line of docs/stories/<id>.md on the candidate (the story id is the piece id); no pieces.toml.
+# See also: docs/stories/H-006.md, merge_gate_support.py story_flag
 IMPACT=""
 IMPACT_RC=3
+STORY_BAD=""
 if [[ "$REVERT_MODE" -eq 0 && -n "$PIECE_ID" ]]; then
-    IMPACT="$("$PYTHON" "$GATE_DIR/gate_flag.py" impact "$PIECES_TOML" "$PIECE_ID" --require-key 2>"$SCRATCH_ROOT/impact.err")"
-    IMPACT_RC=$?
-    case "$IMPACT" in harness|client|sim|contract) ;; *) [[ "$IMPACT_RC" -eq 2 ]] || IMPACT_RC=3 ;; esac
+    STORY_BAD="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" story-check "$CANDIDATE" "$PIECE_ID" 2>&1 | tr '\n' ' ')"
+    if [[ -z "$STORY_BAD" ]]; then
+        IMPACT="$("$PYTHON" "$GATE_DIR/gate_flag.py" story-impact "$CANDIDATE/docs/stories/${PIECE_ID%%,*}.md" 2>"$SCRATCH_ROOT/impact.err")"
+        IMPACT_RC=$?
+        case "$IMPACT" in harness|client|sim|contract) ;; *) [[ "$IMPACT_RC" -eq 2 ]] || IMPACT_RC=3 ;; esac
+    fi
 fi
 FLAG_PICKS=""
 if [[ -z "$TIER_GIVEN" && "$IMPACT_RC" -eq 0 ]]; then
@@ -259,6 +264,13 @@ fi
 [[ -n "${MAKE_OPT_WARN:-}" ]] && warn make "$MAKE_OPT_WARN"
 ok make ""
 
+# -------------------------------------------------------------- 1a. story (H-006)
+# A story file without `Flag:` or `Tests:` (or no file) rejects here and ends the run before the flag stage.
+if [[ -n "$STORY_BAD" ]]; then
+    reject story "$STORY_BAD"
+    early_exit_if_rejected
+fi
+
 # -------------------------------------------------------------- 1b. flag (HARNESS-gate-flag)
 # Layer 1 of the layered gate: the two determinism traces against the base and the diff footprint, judged by the piece's
 # impact flag. See also: gate_flag.py verdict, tests/specfactory/test_gate_flag.py
@@ -269,7 +281,7 @@ elif [[ -z "$PIECE_ID" ]]; then
 elif [[ "$IMPACT_RC" -eq 2 ]]; then
     reject flag "$(tail_oneline "$SCRATCH_ROOT/impact.err" 3)"
 elif [[ "$IMPACT_RC" -ne 0 ]]; then
-    gate_line flag SKIP "impact missing in pieces.toml (treated as sim); traces not checked"
+    gate_line flag SKIP "no flag (treated as sim); traces not checked"
 else
     FLAG_LOG="$SCRATCH_ROOT/flag.log"
     "$PYTHON" "$GATE_DIR/gate_flag.py" verdict "$CANDIDATE" "$BASE_REF" "$IMPACT" \
@@ -315,10 +327,11 @@ FP_LOG="$SCRATCH_ROOT/footprint.log"
 if [[ -z "$PIECE_ID" ]]; then
     ok footprint "skipped: no ids"
 else
-    "$PYTHON" "$GATE_DIR/merge_gate_support.py" footprint "$CANDIDATE" "$BASE_REF" "$PIECE_ID" \
-        --pieces "$PIECES_TOML" >"$FP_LOG" 2>&1
-    if [[ $? -ne 0 ]]; then
-        reject footprint "$(cat "$FP_LOG")"
+    # H-006: a WARN for diff files outside the story's Files section, never a reject (DEC-ownership-by-conflict-2026-10-30).
+    "$PYTHON" "$GATE_DIR/merge_gate_support.py" story-footprint "$CANDIDATE" "$BASE_REF" \
+        "$CANDIDATE/docs/stories/${PIECE_ID%%,*}.md" >"$FP_LOG" 2>&1
+    if [[ "$(head -c4 "$FP_LOG")" == "WARN" ]]; then
+        warn footprint "$(sed 's/^WARN //' "$FP_LOG")"
     else
         ok footprint "$(cat "$FP_LOG")"
     fi
@@ -396,18 +409,6 @@ else
     warn gd_reach "$(tail_oneline "$GDREACH_LOG" 1)"
 fi
 
-# -------------------------------------------------------------- 5c. single-owner lint
-# Same gap-fix plan item: no file owned by two in-flight pieces. Reads
-# THIS repo's own pieces.toml ($PIECES_TOML), never the candidate's copy
-# (same rule this whole script follows for every other spec-factory tool).
-OWNER_LOG="$SCRATCH_ROOT/owner_lint.log"
-"$PYTHON" "$GATE_DIR/owner_lint.py" --pieces "$PIECES_TOML" >"$OWNER_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject owner_lint "$(cat "$OWNER_LOG")"
-else
-    ok owner_lint "$(tail_oneline "$OWNER_LOG" 1)"
-fi
-
 # `merge_cli.py revert`: only make, lints and footprint (decision 8: "no
 # acceptance, no regression" -- a revert's job is to get main back to a
 # known-good state fast, not to re-prove the piece it's undoing).
@@ -424,10 +425,16 @@ fi
 # reads its own anchor from sweeps.md. See also: status_check.py, pre_gate.sh
 STATUS_LOG="$SCRATCH_ROOT/status.log"
 "$PYTHON" "$GATE_DIR/status_check.py" --repo "$REPO_ROOT" --base "$MAIN_SHA" >"$STATUS_LOG" 2>&1
-if grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG"; then
-    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | tr '\n' ' ')"
-elif grep -q '^STATUS [a-z_]* WARN' "$STATUS_LOG"; then
-    warn status "$(grep '^STATUS [a-z_]* WARN' "$STATUS_LOG" | tr '\n' ' ')"
+# H-014 (DEC-sweep-drift-warn-2026-10-30): `STATUS sweep DRIFT` (a sweep is due) is a WARN, since the sweep itself runs through
+# this gate; a landing after a bad sweep is blocked by the last sweeps.md row being REJECT. See also: sweep.sh
+SWEEP_ROW=$(grep '^|' "$REPO_ROOT/docs/northstar/plans/push/sweeps.md" 2>/dev/null | tail -1)
+SWEEP_VERDICT=$(awk -F'|' '{v=$4; gsub(/ /,"",v); print v}' <<<"$SWEEP_ROW")
+if [[ "$SWEEP_VERDICT" == REJECT ]]; then
+    reject status "sweep red $(awk -F'|' '{r=$6; gsub(/[^0-9]/,"",r); print r}' <<<"$SWEEP_ROW") at $(awk -F'|' '{s=$3; gsub(/ /,"",s); print s}' <<<"$SWEEP_ROW")"
+elif grep -q '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" && grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -qv '^STATUS sweep DRIFT'; then
+    reject status "$(grep '^STATUS [a-z_]* DRIFT' "$STATUS_LOG" | grep -v '^STATUS sweep DRIFT' | tr '\n' ' ')"
+elif grep -q '^STATUS [a-z_]* \(WARN\|DRIFT\)' "$STATUS_LOG"; then
+    warn status "$(grep '^STATUS [a-z_]* \(WARN\|DRIFT\)' "$STATUS_LOG" | tr '\n' ' ')"
 else
     ok status "$(tail_oneline "$STATUS_LOG" 1)"
 fi
@@ -439,15 +446,9 @@ RP_LOG="$SCRATCH_ROOT/rule_pins.log"
 mapfile -t RP_DIFF < <(git -C "$CANDIDATE" diff --name-only "$BASE_REF"...HEAD 2>/dev/null)
 RP_RC=0
 "$PYTHON" "$GATE_DIR/rule_pins_tests.py" check "$CANDIDATE" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"} >"$RP_LOG" 2>&1 || RP_RC=1
-RP_SPECS=()
-while IFS= read -r sp_path; do
-    [[ -f "$CANDIDATE/$sp_path" ]] && RP_SPECS+=("$sp_path")
-done < <("$PYTHON" "$GATE_DIR/rule_pins.py" spec-of "$PIECES_TOML" "$PIECE_ID" 2>/dev/null)
-if (( ${#RP_SPECS[@]} )); then
-    (cd "$CANDIDATE" && "$PYTHON" "$GATE_DIR/rule_pins.py" check "${RP_SPECS[@]}" --only ${RP_DIFF[@]+"${RP_DIFF[@]}"}) >>"$RP_LOG" 2>&1 || RP_RC=1
-fi
+# H-006: no spec-of read (it needed pieces.toml); the story file carries no spec pins.
 RP_NOTE=""
-[[ -z "$PIECE_ID" ]] && RP_NOTE=" (spec pins skipped: no ids)"
+RP_NOTE=" (spec pins skipped: no pieces table)"
 if grep -q '^PINS REJECT' "$RP_LOG" || (( RP_RC != 0 )); then
     reject rule_pins "$(grep '^PINS REJECT' "$RP_LOG" | tr '\n' ' ')$(grep -q '^PINS REJECT' "$RP_LOG" || tail_oneline "$RP_LOG" 3)"
 elif grep -q '^PINS WARN' "$RP_LOG"; then
@@ -462,7 +463,7 @@ if [[ -z "$PIECE_ID" ]]; then
     ok control_liveness "skipped: no ids"
 else
     "$PYTHON" "$GATE_DIR/merge_gate_support.py" control-liveness "$CANDIDATE" "$PIECE_ID" \
-        --pieces "$PIECES_TOML" --placeholders "$PLACEHOLDERS_TXT" --scratch-root "$SCRATCH_ROOT/liveness" \
+        --placeholders "$PLACEHOLDERS_TXT" --scratch-root "$SCRATCH_ROOT/liveness" \
         --python "$PYTHON" >"$CL_LOG" 2>&1
     if [[ $? -ne 0 ]]; then
         reject control_liveness "$(sed 's/^REJECT //' "$CL_LOG" | tr '\n' ' ')"
@@ -488,8 +489,7 @@ PRE_PIPE_LOG="$SCRATCH_ROOT/pipe_build_pre_regression.log"
 ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PRE_PIPE_LOG" 2>&1
 
 # -------------------------------------------------------------- 7. piece acceptance ids green
-ACCEPT_SPLIT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-ids "$PIECE_ID" \
-    --pieces "$PIECES_TOML" 2>/dev/null)"
+ACCEPT_SPLIT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" story-acceptance "$CANDIDATE" "$PIECE_ID" 2>/dev/null)"
 ACCEPT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^PY //p')"
 GODOT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^GD //p')"
 if [[ "$TIER" == fast ]]; then
@@ -595,19 +595,8 @@ if [[ -n "$ACCEPT_IDS" ]]; then
     ACCEPT_LOG="$SCRATCH_ROOT/acceptance.log"
     ( cd "$CANDIDATE" && "$PYTHON" -m pytest -q -p no:cacheprovider $ACCEPT_IDS ) >"$ACCEPT_LOG" 2>&1
     if [[ $? -ne 0 ]]; then
-        # A straggler increment (push/<piece>-<n>) submits before the rest of
-        # its piece's acceptance is green; merge_gate_support.py resolves the
-        # id and reports WARN with the green/red split instead of REJECT. A
-        # full piece id (acceptance-verdict prints bare REJECT) keeps reject.
-        IDS_FILE="$SCRATCH_ROOT/acceptance_ids.txt"
-        printf '%s\n' $ACCEPT_IDS > "$IDS_FILE"
-        VERDICT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-verdict "$PIECE_ID" \
-            --pieces "$PIECES_TOML" --ids-file "$IDS_FILE" --pytest-log "$ACCEPT_LOG")"
-        if [[ "$VERDICT" == WARN* ]]; then
-            warn acceptance "${VERDICT#WARN }"
-        else
-            reject acceptance "$(tail_oneline "$ACCEPT_LOG" 15)"
-        fi
+        # H-006: no pieces table, so no straggler-increment WARN: a red acceptance id rejects.
+        reject acceptance "$(tail_oneline "$ACCEPT_LOG" 15)"
     else
         ok acceptance ""
     fi
@@ -626,16 +615,8 @@ if [[ -n "$GODOT_IDS" ]]; then
     if [[ $? -eq 0 ]]; then
         ok acceptance_godot "$(grep -c '^PASS: res://' "$GODOT_LOG") files PASS"
     else
-        GD_IDS_FILE="$SCRATCH_ROOT/godot_ids.txt"
-        printf '%s\n' $GODOT_IDS > "$GD_IDS_FILE"
-        VERDICT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-verdict "$PIECE_ID" \
-            --pieces "$PIECES_TOML" --ids-file "$GD_IDS_FILE" --godot-log "$GODOT_LOG")"
-        if [[ "$VERDICT" == WARN* ]]; then
-            warn acceptance_godot "${VERDICT#WARN }"
-        else
-            FIRST_FAIL="$(grep -m1 '^FAIL: res://' "$GODOT_LOG")"
-            reject acceptance_godot "${FIRST_FAIL:-$(tail_oneline "$GODOT_LOG" 10)}"
-        fi
+        FIRST_FAIL="$(grep -m1 '^FAIL: res://' "$GODOT_LOG")"
+        reject acceptance_godot "${FIRST_FAIL:-$(tail_oneline "$GODOT_LOG" 10)}"
     fi
 fi
 
@@ -965,13 +946,7 @@ else
 fi
 
 # -------------------------------------------------------------- 11. undertest_check (WARN only, never blocks)
-UT_OUT="$("$PYTHON" -c "
-import sys
-sys.path.insert(0, '$GATE_DIR')
-import merge_gate_support as m
-for line in m.undertest_warn('$CANDIDATE', '$BASE_REF', '$PIECE_ID', pieces_path='$PIECES_TOML'):
-    print(line)
-" 2>&1)"
+UT_OUT="undertest_check skipped: no ownership table (H-006)"
 warn undertest_check "$(echo "$UT_OUT" | tr '\n' '; ')"
 
 # -------------------------------------------------------------- 12. size_lint (WARN only, merge profile only)
@@ -984,7 +959,7 @@ warn undertest_check "$(echo "$UT_OUT" | tr '\n' '; ')"
 # separately, not something this wiring change decides on his behalf.
 SIZE_LOG="$SCRATCH_ROOT/size_lint.log"
 "$PYTHON" "$GATE_DIR/size_lint.py" HEAD "$BASE_REF" --piece-id "$PIECE_ID" \
-    --pieces "$PIECES_TOML" --project "$CANDIDATE" >"$SIZE_LOG" 2>&1
+    --project "$CANDIDATE" >"$SIZE_LOG" 2>&1
 warn size_lint "$(tail_oneline "$SIZE_LOG" 3)"
 
 # -------------------------------------------------------------- 13. look (WARN only until Westley's threshold lands)

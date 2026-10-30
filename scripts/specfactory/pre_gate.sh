@@ -3,14 +3,14 @@
 #
 # Method rev 2, the two-tier gate: the cheap pre-gate a builder runs before the
 # push and a landing clerk runs before taking gate.lock, so a full gate is never
-# spent on noise, lint, footprint or owner-row rejects. Prints one line per step,
+# spent on noise or lint rejects. Prints one line per step,
 # `PRE_GATE <step> OK|REJECT|WARN <detail>`, and ends `PRE_GATE verdict OK`
 # (exit 0) or `PRE_GATE verdict REJECT` (exit 1). Exit 2: usage.
 # Steps: (1) noise (.uid / .import files in status or deleted .import in the
 # diff), (2) gate (merge_gate.sh --revert, output passed through verbatim),
 # (3) tests (each given .py / pytest id or .gd file), (4) pins (rule pins of the
-# diff's tests and of the specs of the landing), (5) provenance (spec_provenance.py
-# on the spec of every piece row; HARNESS-C1b, enforcement spec sections 1 and 2).
+# diff's tests). H-006: no owner-row or provenance step; `PREGATE story OK <n> paths` names the story's Tests paths,
+# which run as the piece's tests when none are given.
 # Never takes ~/Projects/om-push/gate.lock, never pushes, never writes in <wt>.
 #
 # See also: merge_gate.sh --revert
@@ -93,6 +93,15 @@ else
 fi
 
 # ---- (3) tests ---------------------------------------------------------------
+# H-006: the story file's `Tests:` paths run as the piece's own tests when none are given. The story id is the first id.
+# See also: merge_gate_support.py story_tests, docs/stories/H-006.md
+STORY_FILE="$WT/docs/stories/${PIECES%%,*}.md"
+if [[ -f "$STORY_FILE" ]]; then
+    mapfile -t story_tests < <("$VENV_PYTHON" -c 'import sys; sys.path.insert(0, sys.argv[1]); import merge_gate_support as m; print(*m.story_tests(sys.argv[2]), sep="\n")' "$HERE" "$STORY_FILE")
+    [[ "${story_tests[0]:-}" == "" ]] && story_tests=()
+    echo "PREGATE story OK ${#story_tests[@]} paths"
+    (( $# == 0 )) && set -- ${story_tests[@]+"${story_tests[@]}"}
+fi
 if (( $# == 0 )); then
     echo "PRE_GATE tests WARN no tests given"
 else
@@ -117,17 +126,8 @@ else
 fi
 
 # ---- (4) pins ----------------------------------------------------------------
-# One PRE_GATE pins line per tool line; a failing tool is a reject. The specs come from `rule_pins.py spec-of`.
+# One PRE_GATE pins line per tool line; a failing tool is a reject.
 # See also: rule_pins.py, rule_pins_tests.py, enforcement spec section 1 HARNESS-C1b
-PIECES_TOML="${MERGE_GATE_PIECES:-$WT/docs/northstar/plans/push/pieces.toml}"
-IFS=, read -r -a piece_ids <<< "$PIECES"
-spec_paths=()
-if [[ -f "$PIECES_TOML" ]]; then
-    mapfile -t spec_lines < <("$VENV_PYTHON" "$HERE/rule_pins.py" spec-of "$PIECES_TOML" "$PIECES")
-    for i in "${!piece_ids[@]}"; do
-        [[ "${spec_lines[$i]:--}" != "-" ]] && spec_paths+=("${spec_lines[$i]}")
-    done
-fi
 mapfile -t diff_files < <(git -C "$WT" diff --name-only "$BASE"...HEAD 2>/dev/null)
 
 pins_step() {
@@ -143,38 +143,6 @@ pins_step() {
     return "$rc"
 }
 pins_step "$VENV_PYTHON" "$HERE/rule_pins_tests.py" check "$WT" --only ${diff_files[@]+"${diff_files[@]}"} || REJECTED=1
-if (( ${#spec_paths[@]} )); then
-    (cd "$WT" && pins_step "$VENV_PYTHON" "$HERE/rule_pins.py" check "${spec_paths[@]}" --only ${diff_files[@]+"${diff_files[@]}"}) || REJECTED=1
-fi
-
-# ---- (5) provenance ----------------------------------------------------------
-# A row without a spec key is a WARN; REJECT once FU-HARNESS-findings is attached (the C1b switch, as owner_lint reads it: bare string or inline table; See also: owner_lint.py:37-44).
-# See also: spec_provenance.py (method rev 3). DRAFT-pregate-spec-env keeps PRE_GATE_SPEC as an extra path.
-no_spec="WARN"
-if [[ -f "$PIECES_TOML" ]] && "$VENV_PYTHON" -c 'import sys, tomllib; rows = tomllib.load(open(sys.argv[1], "rb")).get("piece", []); st = lambda r: (r.get("status") or {}).get("state") if isinstance(r.get("status"), dict) else r.get("status"); sys.exit(0 if any(r.get("id") == "FU-HARNESS-findings" and st(r) == "attached" for r in rows) else 1)' "$PIECES_TOML"; then
-    no_spec="REJECT"
-fi
-if [[ ! -f "$PIECES_TOML" ]]; then
-    echo "PRE_GATE provenance WARN no pieces file $PIECES_TOML"
-else
-    for i in "${!piece_ids[@]}"; do
-        if [[ "${spec_lines[$i]:--}" == "-" ]]; then
-            echo "PRE_GATE provenance $no_spec no spec key for ${piece_ids[$i]}"
-            [[ "$no_spec" == REJECT ]] && REJECTED=1
-        fi
-    done
-fi
-all_specs=("${spec_paths[@]}")
-[[ -n "${PRE_GATE_SPEC:-}" ]] && all_specs+=("$PRE_GATE_SPEC")
-for spec in "${all_specs[@]}"; do
-    if "$VENV_PYTHON" "$HERE/spec_provenance.py" "$WT/$spec" --pieces "$PIECES"; then
-        echo "PRE_GATE provenance OK $spec"
-    else
-        echo "PRE_GATE provenance REJECT $spec"
-        REJECTED=1
-    fi
-done
-
 if (( REJECTED )); then
     echo "PRE_GATE verdict REJECT"
     exit 1
