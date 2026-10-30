@@ -27,4 +27,4 @@ Lost: the per-piece paper trail; "which landing changed this test and why" is no
 
 ## The four numbers
 
-Printed by the status script, written nightly to `docs/method/metrics/<week>.csv`: build plus tests share of model spend (at least 50%), landings this week, stories Seen this week, Fable share (DRAFT 25%). Under 50% is a method defect the Architect reports to you with the cut it proposes.
+Printed by the status script, written nightly to `~/Projects/om-push/metrics/<week>.csv`: build plus tests share of model spend (at least 50%), landings this week, stories Seen this week, Fable share (DRAFT 25%). Under 50% is a method defect the Architect reports to you with the cut it proposes.

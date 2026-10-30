@@ -37,12 +37,13 @@ The unit of work is one story: `S-###` from `docs/bible/stories.md`, or `H-###` 
 | Builder rounds before escalation | 3 | Architect |
 | DRAFT-play-window-s | 60 s for the window to appear | Architect |
 | DRAFT-play-settle-s | 10 s after the window before `qa_state()` is read | Architect |
+| DRAFT-token-report-tolerance | 3 points on shares, 5% on calls and tokens, for the 2026-10-29 fixture | Architect, DEC-token-report-day-2026-10-30 |
 | Agent context stop | 120k per builder, test writer or clerk; 60k for the on-call architect agent | method rev 2 |
 | Architect context | restart past 400k; compaction at 400k; guard constant stays 400k for now | Westley, 2026-10-30 |
 
 ## Status
 
-This table is the register for every `DRAFT-` named in this directory. Status is computed, never written: `scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, waiting on Westley, test defects, sweeps and the four weekly numbers (build plus tests share, landings, stories Seen, Fable share). `scripts/method/token_report.py` writes the numbers nightly to `docs/method/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut before specifying the next story.
+This table is the register for every `DRAFT-` named in this directory. Status is computed, never written: `scripts/method/status.sh` reads `git log` and prints stories in flight, landed this week, waiting on Westley, test defects, sweeps and the four weekly numbers (build plus tests share, landings, stories Seen, Fable share). `scripts/method/token_report.py` writes the numbers nightly to `~/Projects/om-push/metrics/<week>.csv`. Under 50% build plus tests for a week is a method defect: the Architect names the class that grew and proposes the cut before specifying the next story.
 
 ## Files
 
