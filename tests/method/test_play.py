@@ -13,19 +13,38 @@ PLAY = ROOT / "scripts" / "play.sh"
 SCENE = "res://scenes/privacy_modal/privacy_modal.tscn"
 
 
-def run_play(args, env_drop=(), timeout=1200):
+def run_play(args, env_drop=(), timeout=1200, tmpdir=None):
     env = {k: v for k, v in os.environ.items() if k not in env_drop}
+    if tmpdir:
+        env["TMPDIR"] = str(tmpdir)  # play.sh's own scratch clone lands in the test's scratch dir
     return subprocess.run(["bash", str(PLAY), *args], cwd=ROOT, env=env,
                           capture_output=True, text=True, timeout=timeout)
+
+
+def scratch_clone(base):
+    """A shared scratch copy of ROOT at HEAD; play.sh may import and build in it freely."""
+    tree = Path(base) / "tree"
+    subprocess.run(["git", "clone", "-q", "--shared", str(ROOT), str(tree)], check=True)
+    return tree
+
+
+def porcelain(tree):
+    return subprocess.run(["git", "-C", str(tree), "status", "--porcelain"],
+                          capture_output=True, text=True, check=True).stdout
 
 
 def test_control_build_pipe_exits_zero():
     """Positive control (H-001 Tests): "`scripts/build_pipe_linux.sh` on the test
     tree exits 0 (green today)."; a red below means play.sh is missing, not the build."""
-    r = subprocess.run(["bash", str(ROOT / "scripts" / "build_pipe_linux.sh")],
-                       cwd=ROOT, capture_output=True, text=True, timeout=1200)
-    assert r.returncode == 0, r.stdout[-500:] + r.stderr[-500:]
-    assert (ROOT / "dist" / "linux" / "ouroboros_pipe").exists()
+    scratch = Path(tempfile.mkdtemp(prefix="h001-control-"))
+    try:
+        tree = scratch_clone(scratch)  # a clone: the build never dirties the suite's own tree
+        r = subprocess.run(["bash", str(tree / "scripts" / "build_pipe_linux.sh")],
+                           cwd=tree, capture_output=True, text=True, timeout=1200)
+        assert r.returncode == 0, r.stdout[-500:] + r.stderr[-500:]
+        assert (tree / "dist" / "linux" / "ouroboros_pipe").exists()
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
 
 
 def test_broken_project_godot_exits_nonzero_with_godot_error():
@@ -37,7 +56,9 @@ def test_broken_project_godot_exits_nonzero_with_godot_error():
         subprocess.run(["git", "clone", "-q", "--shared", str(ROOT), str(tree)], check=True)
         subprocess.run(["git", "-C", str(tree), "checkout", "-q", "HEAD"], check=True)
         (tree / "project.godot").write_text("config_version=5\n[application\nthis is not valid\n")
-        r = run_play(["--tree", str(tree)], env_drop=("DISPLAY",))
+        subprocess.run(["git", "-C", str(tree), "-c", "user.name=t", "-c", "user.email=t@t",
+                        "commit", "-qam", "broken"], check=True)  # play.sh plays the tree's HEAD
+        r = run_play(["--tree", str(tree)], env_drop=("DISPLAY",), tmpdir=scratch)
         out = r.stdout + r.stderr
         assert r.returncode != 0, "play.sh exited 0 on a broken project.godot"
         assert re.search(r"ERROR|project\.godot", out), out[-800:]
@@ -59,17 +80,45 @@ def test_story_dry_run_launch_line_carries_scene_path():
 def test_no_display_exits_nonzero_with_message():
     """H-001 Behaviour 5: "`$DISPLAY` must be set; exit non-zero with `no display`
     otherwise"."""
-    r = run_play(["--tree", str(ROOT)], env_drop=("DISPLAY", "WAYLAND_DISPLAY"))
-    assert r.returncode != 0, "play.sh exited 0 with no DISPLAY"
-    assert "no display" in (r.stdout + r.stderr), r.stdout + r.stderr
+    scratch = Path(tempfile.mkdtemp(prefix="h001-nodisplay-"))
+    try:
+        r = run_play(["--tree", str(scratch_clone(scratch))], env_drop=("DISPLAY", "WAYLAND_DISPLAY"), tmpdir=scratch)
+        assert r.returncode != 0, "play.sh exited 0 with no DISPLAY"
+        assert "no display" in (r.stdout + r.stderr), r.stdout + r.stderr
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+def test_tree_stays_clean_after_any_tree_run():
+    """H-001 Tests: "After any `--tree` run, `git -C <tree> status --porcelain` is
+    empty (the tree is never dirtied)." Covers the dry runs on the tree itself and a
+    full run (stopped at the no-display check, after build and import) on a clone."""
+    before = porcelain(ROOT)
+    for args in (["--tree", str(ROOT), "--dry-run"],
+                 ["--tree", str(ROOT), "--story", "H-001", "--dry-run"]):
+        r = run_play(args)
+        assert r.returncode == 0, r.stdout + r.stderr
+        assert porcelain(ROOT) == before, porcelain(ROOT)
+    scratch = Path(tempfile.mkdtemp(prefix="h001-clean-"))
+    try:
+        tree = scratch_clone(scratch)
+        run_play(["--tree", str(tree)], env_drop=("DISPLAY", "WAYLAND_DISPLAY"), tmpdir=scratch)
+        assert porcelain(tree) == "", porcelain(tree)
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
 
 
 @pytest.mark.skipif(not os.environ.get("DISPLAY"), reason="display-bound; run by the clerk")
 def test_real_display_window_under_60s():
     """Display-bound (run by the clerk, not pre_gate). H-001 Tests: "On the real
     display: `scripts/play.sh --tree <worktree>` prints `PLAY window` under 60 s.\""""
-    r = run_play(["--tree", str(ROOT)], timeout=1800)
-    m = re.search(r"PLAY window (\d+)s", r.stdout)
-    assert r.returncode == 0 and m, r.stdout + r.stderr
-    assert int(m.group(1)) < 60
-    subprocess.run(["pkill", "-f", f"godot.real --path {ROOT}"], check=False)
+    scratch = Path(tempfile.mkdtemp(prefix="h001-window-"))
+    try:
+        tree = scratch_clone(scratch)
+        r = run_play(["--tree", str(tree)], timeout=1800, tmpdir=scratch)
+        m = re.search(r"PLAY window (\d+)s", r.stdout)
+        assert r.returncode == 0 and m, r.stdout + r.stderr
+        assert int(m.group(1)) < 60
+    finally:
+        subprocess.run(["pkill", "-f", "godot.real --path .*h001-window-"], check=False)
+        shutil.rmtree(scratch, ignore_errors=True)
