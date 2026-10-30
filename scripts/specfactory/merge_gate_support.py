@@ -269,13 +269,16 @@ def story_tests(path: Path) -> list[str]:
 
 
 def story_files(path: Path) -> list[str]:
-    """The paths named first in each bullet of the story file's `## Files` section."""
+    """The backticked paths before the colon of each bullet of the story file's `## Files` section."""
     try:
         text = Path(path).read_text()
     except OSError:
         return []
     sec = re.search(r"^## Files\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
-    return re.findall(r"^- `([^`]+)`", sec.group(1), re.M) if sec else []
+    out: list[str] = []
+    for bullet in re.findall(r"^- (.*)$", sec.group(1) if sec else "", re.M):
+        out += re.findall(r"`([^`]+)`", bullet.split(": ", 1)[0])
+    return out
 
 
 def story_footprint(candidate_dir: Path, base_ref: str, story_path: Path, *,
