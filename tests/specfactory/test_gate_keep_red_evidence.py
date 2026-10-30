@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import merge_gate_support as mgs  # noqa: E402
 import test_merge_gate as tmg  # noqa: E402
+from gate_toy_root import write_story  # noqa: E402
 
 SUPPORT = SPEC_DIR / "merge_gate_support.py"
 GATE = SPEC_DIR / "merge_gate.sh"
@@ -92,6 +93,7 @@ def _lane_repo(tmp_path, play_body, known=""):
     tmg._git(repo, "init", "-q")
     tmg._git(repo, "config", "user.email", "g@t")
     tmg._git(repo, "config", "user.name", "g")
+    write_story(repo, "B1")  # H-020
     tmg._git(repo, "add", "-A")
     tmg._git(repo, "commit", "-q", "-m", "one")
     (repo / "foo" / "a.txt").write_text("2\n")
@@ -445,6 +447,7 @@ def _cache_repo(base):
     tmg._git(repo, "config", "user.email", "g@t")
     tmg._git(repo, "config", "user.name", "g")
     (repo / "tests" / "t" / "test_a.py").write_text("def test_a():\n    assert True\n")
+    write_story(repo, "B1")  # H-020
     tmg._git(repo, "add", "-A")
     tmg._git(repo, "commit", "-q", "-m", "main")
     return repo

@@ -18,7 +18,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-017 | "A change under csrc runs the pinned csim tests before the push." | Spec'd | `docs/stories/H-017.md` |
 | H-018 | "The pins warning tells stale pins from never-pinned tests." | Spec'd | `docs/stories/H-018.md` |
 | H-019 | "The gate's cache hits on a docs-only merge because each suite declares only what it reads." | Spec'd | `docs/stories/H-019.md` |
-| H-020 | "The gate's own toy-repo tests carry a story file like every real candidate, so a sweep of main is green again, and the landing that fixes a red sweep's tests may pass the sweep check it is fixing." | Ready | `docs/stories/H-020.md` |
+| H-020 | "The gate's own toy-repo tests carry a story file like every real candidate, so a sweep of main is green again, and the landing that fixes a red sweep's tests may pass the sweep check it is fixing." | Tested | `docs/stories/H-020.md` |
 
 Order: H-006 first (every later landing needs it; it carries the last pieces.toml row ever written, its own), then H-001, H-002, H-003, H-005, H-004.
 
