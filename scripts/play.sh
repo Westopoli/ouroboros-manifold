@@ -64,6 +64,10 @@ if [[ $dry -eq 1 ]]; then
   exit 0
 fi
 
+# DEC-play-display-check-first-2026-10-30: no display exits before the build and the Godot import,
+# so nothing under $GODOT runs without a display.
+[[ -n "${DISPLAY:-}" ]] || { echo "play.sh: no display" >&2; exit 1; }
+
 # 2. Build
 if ! out=$(cd "$tree" && scripts/build_pipe_linux.sh 2>&1); then
   echo "$out" | tail -20; echo "play.sh: build failed" >&2; exit 1
@@ -85,7 +89,6 @@ wait "$ipid"; rc=$?
 if [[ $rc -ne 0 ]]; then tail -20 "$implog"; echo "play.sh: Godot import failed (exit $rc)" >&2; exit 1; fi
 
 # 5. Launch on the real display
-[[ -n "${DISPLAY:-}" ]] || { echo "play.sh: no display" >&2; exit 1; }
 port=""
 if [[ $check -eq 1 ]]; then
   port=$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1])')
