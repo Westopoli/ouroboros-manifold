@@ -89,34 +89,39 @@ def test_fixture_shares_match_hand_sum(tmp_path):
     _load()  # module must exist
     out = _run(tmp_path, "2026-W44")
     r = _row(out, "2026-W44")
-    # header: week,calls,weighted_tokens,build_plus_tests_share,fable_share,...
+    # header: window,calls,weighted_tokens,builder_share,tests_share,build_plus_tests_share,fable_share,...
     assert int(r[1]) == 4
     assert int(r[2]) == 14000
-    assert _pct(r[3]) == pytest.approx(5000 / 14000 * 100, abs=0.1)  # 35.7
-    assert _pct(r[4]) == pytest.approx(9000 / 14000 * 100, abs=0.1)  # 64.3
+    assert _pct(r[5]) == pytest.approx(5000 / 14000 * 100, abs=0.1)  # 35.7
+    assert _pct(r[6]) == pytest.approx(9000 / 14000 * 100, abs=0.1)  # 64.3
     assert "UNDER" in out or "OK" in out  # thresholds printed beside the shares
     csvp = REPO / "docs" / "method" / "metrics" / "2026-W44.csv"
     if csvp.exists():
         assert next(csv.reader(csvp.open()))[:5] == [
-            "week", "calls", "weighted_tokens", "build_plus_tests_share", "fable_share"]
+            "window", "calls", "weighted_tokens", "builder_share", "tests_share"]
         csvp.unlink()  # fixture run must not leave a record in the repo
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(not REAL_DIR.is_dir(), reason="no real transcript directory")
-def test_real_week_44_reproduces_measurement():
-    """H-003 Tests: "The week of 2026-10-29 on the real transcripts reproduces the engineer's
-    measurement of that day within 1 point: 2,812 calls, 80.4M weighted, builders 8%,
-    tests 9%, Fable 48%." CSV carries build_plus_tests only: 8+9 = 17."""
-    out = _run(Path.home(), "2026-W44")
-    r = _row(out, "2026-W44")
-    assert int(r[1]) == pytest.approx(2812, rel=0.01)
-    assert float(r[2]) == pytest.approx(80.4e6, rel=0.01)
-    assert _pct(r[3]) == pytest.approx(17, abs=1)
-    assert _pct(r[4]) == pytest.approx(48, abs=1)
-    p = REPO / "docs" / "method" / "metrics" / "2026-W44.csv"
-    if p.exists():
-        p.unlink()
+def test_real_day_reproduces_measurement():
+    """H-003 Tests: "--day 2026-10-29 on the real transcripts reproduces the engineer's
+    measurement of that day within DRAFT-token-report-tolerance: shares within 3 points
+    (builders 8, tests 9, Fable 48), calls and weighted tokens within 5% (2,812 and 80.4M)."
+    DEC-token-report-day-2026-10-30."""
+    env = dict(os.environ, HOME=str(Path.home()))
+    p = subprocess.run([sys.executable, str(SCRIPT), "--day", "2026-10-29"], cwd=REPO,
+                       env=env, capture_output=True, text=True)
+    assert p.returncode == 0, p.stderr
+    r = _row(p.stdout, "2026-10-29")
+    assert int(r[1]) == pytest.approx(2812, rel=0.05)
+    assert float(r[2]) == pytest.approx(80.4e6, rel=0.05)
+    assert _pct(r[3]) == pytest.approx(8, abs=3)
+    assert _pct(r[4]) == pytest.approx(9, abs=3)
+    assert _pct(r[6]) == pytest.approx(48, abs=3)
+    c = REPO / "docs" / "method" / "metrics" / "2026-10-29.csv"
+    if c.exists():
+        c.unlink()
 
 
 def test_timer_unit_parses():
