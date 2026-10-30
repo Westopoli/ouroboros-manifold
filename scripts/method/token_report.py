@@ -134,7 +134,7 @@ def main():
     tpl = "%.0f" % (total / lines) if lines else ""
     row = "%s,%d,%d,%.1f,%.1f,%.1f,%.1f,%d,%d,%s" % (label, calls, round(total), b, t, b + t, fa,
                                                     land, seen, tpl)
-    out = REPO / "docs" / "method" / "metrics" / (label + ".csv")
+    out = Path.home() / "Projects/om-push/metrics" / (label + ".csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(HEADER + "\n" + row + "\n")
     print(row)
