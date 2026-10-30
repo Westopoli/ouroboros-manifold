@@ -219,7 +219,7 @@ def _gate(tmp_path: Path, controls: dict[str, str], listed=(), revert=False):
     env = {"MERGE_GATE_PIECES": str(pieces),
            "MERGE_GATE_PLACEHOLDERS": str(_list(tmp_path, *listed)),
            "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
-    cmd = ["bash", str(GATE)] + (["--revert"] if revert else []) + [str(repo), "HEAD", "H1"]
+    cmd = ["bash", str(GATE), "--tier", "full"] + (["--revert"] if revert else []) + [str(repo), "HEAD", "H1"]
     return subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=300)
 
 

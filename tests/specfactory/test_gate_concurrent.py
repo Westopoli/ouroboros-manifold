@@ -172,7 +172,7 @@ def run_gate(tmp_path, sleeps, rcs=None):
     repo = _fixture_repo(tmp_path / "repo")
     env = _env(tmp_path, sleeps, rcs or {})
     gate = root / "scripts" / "specfactory" / "merge_gate.sh"
-    p = subprocess.Popen(["bash", str(gate), str(repo), "HEAD", "B1"], stdout=subprocess.PIPE,
+    p = subprocess.Popen(["bash", str(gate), "--tier", "full", str(repo), "HEAD", "B1"], stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT, text=True, env=env)
     timer = threading.Timer(GATE_TIMEOUT_S, p.kill)
     timer.start()

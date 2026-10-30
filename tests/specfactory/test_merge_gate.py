@@ -122,11 +122,8 @@ def test_every_step_before_the_first_reject_prints_a_line(tmp_path):
         assert f"GATE {step} " in proc.stdout, proc.stdout + proc.stderr
 
 
-def test_acceptance_increment_warns_full_id_rejects(tmp_path):
-    """Straggler rule end-to-end (F6 item 1, straggler follow-up): a red
-    acceptance test rejects under the FULL piece id, but the identical
-    candidate submitted under an INCREMENT id of that piece (B10-2, push
-    plan straggler rule) warns instead, naming the green/red split."""
+def test_acceptance_red_id_rejects(tmp_path):
+    """A red acceptance test rejects under the piece id (F6 item 1). The increment-id half of this case is retired by H-006."""
     repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
     pieces = tmp_path / "pieces.toml"
     _write_pieces(pieces, [{
@@ -135,8 +132,8 @@ def test_acceptance_increment_warns_full_id_rejects(tmp_path):
         "acceptance": ["tests/accept/test_a.py::test_pass", "tests/accept/test_a.py::test_fail"],
     }])
 
-    write_story(repo, "B10")  # H-020
-    write_story(repo, "B10-2")  # H-020: the increment id is gated under its own story file
+    write_story(repo, "B10", tests="tests/accept/test_a.py::test_pass tests/accept/test_a.py::test_fail")  # H-020: the old row's acceptance
+    write_story(repo, "B10-2", tests="tests/accept/test_a.py::test_pass tests/accept/test_a.py::test_fail")  # H-020: the increment id is gated under its own story file
     (repo / "tests" / "accept").mkdir()
     (repo / "tests" / "accept" / "test_a.py").write_text(
         "def test_pass():\n    assert True\n\n"
@@ -148,18 +145,12 @@ def test_acceptance_increment_warns_full_id_rejects(tmp_path):
     env = {"MERGE_GATE_PIECES": str(pieces), "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
 
     full = subprocess.run(
-        ["bash", str(GATE), str(repo), "HEAD~1", "B10"],
+        ["bash", str(GATE), "--tier", "full", str(repo), "HEAD~1", "B10"],
         capture_output=True, text=True, env=env, timeout=90,
     )
     assert "GATE acceptance REJECT" in full.stdout, full.stdout + full.stderr
-
-    increment = subprocess.run(
-        ["bash", str(GATE), str(repo), "HEAD~1", "B10-2"],
-        capture_output=True, text=True, env=env, timeout=90,
-    )
-    assert "GATE acceptance WARN" in increment.stdout, increment.stdout + increment.stderr
-    assert "increment B10-2 of B10: 1/2 acceptance ids green" in increment.stdout
-    assert "GATE acceptance REJECT" not in increment.stdout
+    # The increment half (B10-2 warns "1/2 acceptance ids green") is retired by H-006: merge_gate.sh line 600 has no straggler
+    # WARN without a pieces table, so a red acceptance id always rejects (Test-defect H-020).
 
 
 FAKE_GODOT = """\
@@ -177,7 +168,7 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     stands in for the real import (~60-90s); this only proves ordering and
     that a csim-only piece pays nothing."""
     repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
-    write_story(repo, "D1")  # H-020
+    write_story(repo, "D1", tests="tests/qa/desktop/test_x.py::test_pass")  # H-020: the old row's acceptance
     (repo / "tests" / "qa" / "desktop").mkdir()
     (repo / "tests" / "qa" / "desktop" / "test_x.py").write_text(
         "def test_pass():\n    assert True\n"
@@ -209,7 +200,7 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     }
 
     desktop = subprocess.run(
-        ["bash", str(GATE), str(repo), "HEAD~1", "D1"],
+        ["bash", str(GATE), "--tier", "full", str(repo), "HEAD~1", "D1"],
         capture_output=True, text=True, env=env, timeout=60,
     )
     assert "GATE godot_import OK" in desktop.stdout, desktop.stdout + desktop.stderr
@@ -226,7 +217,7 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
 
     args_log.write_text("")
     csim_only = subprocess.run(
-        ["bash", str(GATE), str(repo), "HEAD~1", "B1"],
+        ["bash", str(GATE), "--tier", "full", str(repo), "HEAD~1", "B1"],
         capture_output=True, text=True, env=env, timeout=60,
     )
     assert "GATE godot_import" not in csim_only.stdout, csim_only.stdout + csim_only.stderr
@@ -282,7 +273,7 @@ def _gate_run(tmp_path: Path, stubs: dict, *flags: str):
     _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/stub.c"], "acceptance": []}])
     env = {"MERGE_GATE_PIECES": str(pieces), "PATH": GATE_PATH}
     gate = root / "scripts" / "specfactory" / "merge_gate.sh"
-    proc = subprocess.run(["bash", str(gate), *flags, str(repo), "HEAD", "B1"],
+    proc = subprocess.run(["bash", str(gate), *(flags if "--revert" in flags else ("--tier", "full", *flags)), str(repo), "HEAD", "B1"],
                           capture_output=True, text=True, env=env, timeout=60)
     return proc.stdout.splitlines(), proc, root
 

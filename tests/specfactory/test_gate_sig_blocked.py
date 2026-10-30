@@ -114,7 +114,7 @@ def _gate(tmp_path: Path, table: Path) -> subprocess.CompletedProcess:
     pieces.write_text('[[piece]]\nid = "B1"\nowns = ["csrc/stub.c"]\nacceptance = []\ndepends_on = []\n')
     env = {"MERGE_GATE_PIECES": str(pieces), "MERGE_GATE_SIGNATURES": str(table),
            "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
-    return subprocess.run(["bash", str(GATE), str(repo), "HEAD", "B1"],
+    return subprocess.run(["bash", str(GATE), "--tier", "full", str(repo), "HEAD", "B1"],
                           capture_output=True, text=True, env=env, timeout=120)
 
 

@@ -114,7 +114,7 @@ def _gate(tmp_path: Path, repo: Path, base_ref: str = "HEAD") -> subprocess.Comp
     env = {"MERGE_GATE_PIECES": str(pieces),
            "MERGE_GATE_SIGNATURES": str(repo / TABLE_REL),
            "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
-    return subprocess.run(["bash", str(GATE), str(repo), base_ref, "B1"],
+    return subprocess.run(["bash", str(GATE), "--tier", "full", str(repo), base_ref, "B1"],
                           capture_output=True, text=True, env=env, timeout=240)
 
 
@@ -127,7 +127,7 @@ def _gate_to_regression(tmp_path: Path, repo: Path, base_ref: str, *owned: str) 
     owns = ", ".join(f'"{o}"' for o in ("csrc/stub.c", *owned))
     pieces.write_text(f'[[piece]]\nid = "B1"\nowns = [{owns}]\nacceptance = []\ndepends_on = []\n')
     gate = fake_gate_root(tmp_path, noisy=("sig_table.py", "status_check.py"))
-    return subprocess.run(["bash", str(gate), str(repo), base_ref, "B1"], capture_output=True, text=True,
+    return subprocess.run(["bash", str(gate), "--tier", "full", str(repo), base_ref, "B1"], capture_output=True, text=True,
                           env=gate_env(tmp_path, pieces, MERGE_GATE_SIGNATURES=str(repo / TABLE_REL)), timeout=240)
 
 

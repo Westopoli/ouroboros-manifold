@@ -45,17 +45,18 @@ def gate_env(tmp_path, pieces, **extra):
             "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin", **extra}
 
 
-def write_story(repo, piece_id, flag="harness"):
+def write_story(repo, piece_id, flag="harness", tests="", files=()):
     """H-020 (test-defect fix, DEC-sweep-red-test-defect-2026-10-30): a toy candidate carries `docs/stories/<piece_id>.md`
     like every real candidate (H-006 made the gate read the story file; without it the run ends at
     `GATE story REJECT missing docs/stories/<id>.md`). Writes a title line and a `## Machine lines` block with the Flag and an empty
-    `Tests:` line (story-check rejects a missing key; empty means no acceptance ids) and git-adds the file; the caller's
+    `Tests:` line and a `## Files` section of the `files` argument (the footprint WARN names diff files outside it) (the `tests` argument: space-separated paths, empty by default; story-check rejects a missing key; empty means no acceptance ids) and git-adds the file; the caller's
     own commit flow commits it. See also: docs/stories/H-020.md"""
     import subprocess
     repo = Path(repo)
     path = repo / "docs" / "stories" / f"{piece_id}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"# {piece_id}: toy fixture story\n\n## Machine lines\n\nFlag: {flag}\nTests:\n")
+    bullets = "".join(f"- `{p}`: toy file\n" for p in files)
+    path.write_text(f"# {piece_id}: toy fixture story\n\n## Files\n\n{bullets}\n## Machine lines\n\nFlag: {flag}\nTests: {tests}\n")
     subprocess.run(["git", "-C", str(repo), "add", f"docs/stories/{piece_id}.md"], check=True)
     return path
 

@@ -180,7 +180,7 @@ def _run(tmp_path, *, drift=False, gate_script=None, candidate_files=None, base_
     env = {"PATH": GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
            "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
            "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
-    r = subprocess.run(["bash", str(gate), str(cand), "origin/main", "B1"], capture_output=True, text=True,
+    r = subprocess.run(["bash", str(gate), *(() if gate_script == SAVED_OLD_GATE else ("--tier", "full")), str(cand), "origin/main", "B1"], capture_output=True, text=True,
                        env=env, timeout=RUN_TIMEOUT_S)
     lines = r.stdout.splitlines()
     return r.returncode, lines, r.stdout + r.stderr

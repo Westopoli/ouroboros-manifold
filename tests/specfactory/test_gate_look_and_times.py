@@ -99,7 +99,7 @@ def _fixture(base: Path, makefile: str) -> tuple[Path, Path]:
 
 def _run_gate(repo, pieces, **extra):
     env = {"MERGE_GATE_PIECES": str(pieces), "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin", **extra}
-    return subprocess.run(["bash", str(GATE), str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=120)
+    return subprocess.run(["bash", str(GATE), "--tier", "full", str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=120)
 
 
 def _run_gate_through(tmp_path, repo, pieces):
@@ -107,7 +107,7 @@ def _run_gate_through(tmp_path, repo, pieces):
     ends the run on the toy repo (decisive line: `GATE early_exit REJECT allowlist_strict;sig_check;reach_lint;status;
     placeholder_controls`, then `merge_gate.sh: line 91: HOME: unbound variable`). Same fix as gate_toy_root.py."""
     gate = fake_gate_root(tmp_path)
-    return subprocess.run(["bash", str(gate), str(repo), "HEAD", "B1"], capture_output=True, text=True,
+    return subprocess.run(["bash", str(gate), "--tier", "full", str(repo), "HEAD", "B1"], capture_output=True, text=True,
                           env=gate_env(tmp_path, pieces), timeout=240)
 
 

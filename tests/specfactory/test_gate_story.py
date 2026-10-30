@@ -47,7 +47,8 @@ def _story(flag: str | None = "harness", tests: str | None = TEST_PATH) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _gate_story(tmp_path: Path, libs, story: str, candidate_files=None, pieces: str | None = "none", drop_pieces=True):
+def _gate_story(tmp_path: Path, libs, story: str, candidate_files=None, pieces: str | None = "none", drop_pieces=True,
+                gate_flags=()):
     """(rc, stdout lines, stdout+stderr) of merge_gate.sh on the gate-repo fixture whose candidate carries
     docs/stories/B1.md = story. pieces: "none" -> no pieces.toml at all (the gate repo's copy is deleted and
     MERGE_GATE_PIECES unset); a text -> that pieces.toml is overlaid and MERGE_GATE_PIECES points at it."""
@@ -64,8 +65,8 @@ def _gate_story(tmp_path: Path, libs, story: str, candidate_files=None, pieces: 
         (tmp_path / "pieces.toml").unlink()
     else:
         env["MERGE_GATE_PIECES"] = str(tmp_path / "pieces.toml")
-    r = subprocess.run(["bash", str(gate), str(cand), "origin/main", STORY_ID], capture_output=True, text=True,
-                       env=env, timeout=tgf.GATE_TIMEOUT_S)
+    r = subprocess.run(["bash", str(gate), *gate_flags, str(cand), "origin/main", STORY_ID], capture_output=True,
+                       text=True, env=env, timeout=tgf.GATE_TIMEOUT_S)
     return r.returncode, r.stdout.splitlines(), r.stdout + r.stderr
 
 
@@ -240,3 +241,26 @@ def test_h020_malformed_fixes_sweep_rejects_as_bad_fixes_sweep(tmp_path, libs):
     """H-020 (d): "a malformed line rejects `bad fixes-sweep`" (story-check accepts an optional 40-hex Fixes-sweep line)."""
     lines, out = _gate_sweep(tmp_path, libs, _story("harness") + "Fixes-sweep: nope\n")
     assert any(ln.startswith("GATE story REJECT") and "bad fixes-sweep" in ln for ln in lines), out
+
+
+# ------------------------------------------------------------------ H-020 round 2: a given tier skips the flag stage
+
+def test_h020_tier_given_skips_the_flag_stage_and_runs_no_trace(tmp_path, libs):
+    """H-020 (e), DEC-gate-tier-given-skips-flag-2026-10-30: "`--tier full` with a valid harness story prints `GATE flag SKIP
+    tier given` and runs no flag trace". The story stage still ran (the story is valid) and the tier is the given one."""
+    rc, lines, out = _gate_story(tmp_path, libs, _story("harness"), {"docs/x.md": "docs only\n"},
+                                 gate_flags=("--tier", "full"))
+    assert "GATE tier full" in lines, out
+    assert any(ln.startswith("GATE flag SKIP tier given") for ln in lines), out
+    assert not any(re.match(r"GATE flag (OK|REJECT)", ln) for ln in lines), out
+    # The flag stage's traces would print `trace failed checksum_trace.py` on the toy library; the full tier's own
+    # `GATE checksum_trace` stage is a different stage and may print.
+    assert "trace failed" not in out and "traces " not in "\n".join(l for l in lines if l.startswith("GATE flag")), out
+
+
+def test_h020_control_no_tier_given_runs_the_flag_stage(tmp_path, libs):
+    """H-020 (f), positive control for (e): the same candidate without `--tier` runs the flag stage (it prints `GATE flag`
+    and not `SKIP`; on a toy library it may reject). Green today."""
+    rc, lines, out = _gate_story(tmp_path, libs, _story("harness"), {"docs/x.md": "docs only\n"})
+    flag = [ln for ln in lines if ln.startswith("GATE flag ")]
+    assert flag and not flag[0].startswith("GATE flag SKIP"), out

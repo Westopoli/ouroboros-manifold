@@ -182,6 +182,7 @@ def _init_fixture_repo(repo: Path, lane_play: bool = False) -> Path:
     for d in ("tests/csim", "tests/qa/t1"):
         (repo / d).mkdir(parents=True)
     write_story(repo, "B1")  # H-020
+    write_story(repo, "D1", tests="tests/qa/desktop/test_x.py::test_pass")  # H-020: the old row's acceptance
     _git(repo, "add", "-A")
     _git(repo, "commit", "-q", "-m", "base")
     _git(repo, "remote", "add", "origin", str(repo))
@@ -261,7 +262,7 @@ class GateRun:
             "MERGE_GATE_VENV": str(self.fake_venv),
         }
         self.proc = subprocess.run(
-            ["bash", str(self.root / "scripts" / "specfactory" / "merge_gate.sh"), str(self.repo), "HEAD~1", piece],
+            ["bash", str(self.root / "scripts" / "specfactory" / "merge_gate.sh"), "--tier", "full", str(self.repo), "HEAD~1", piece],
             capture_output=True, text=True, env=env, timeout=GATE_TIMEOUT_S)
         self.lines = self.proc.stdout.splitlines()
         # the lines these cases are about; the fixture gate prints other stage lines (rejects of a fixture repo) that are noise
