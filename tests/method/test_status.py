@@ -186,9 +186,13 @@ def test_status_check_one_drift(fx):
 
 
 def test_real_repo_status():
-    """H-002: on the real origin/main the script exits 0 and IN FLIGHT lists an
-    origin/s/* branch that exists today (s/H-001-play)."""
+    """H-002: on the real origin/main the script exits 0 and IN FLIGHT lists exactly
+    the origin/s/* branches `git branch -r --no-merged origin/main` reports."""
     assert STATUS_SH.exists(), "scripts/method/status.sh missing"
     r = subprocess.run(["bash", str(STATUS_SH)], cwd=ROOT, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
-    assert "s/H-001-play" in sections(r.stdout).get("IN FLIGHT", "")
+    out = git(ROOT, "branch", "-r", "--no-merged", "origin/main")
+    expected = {l.strip() for l in out.splitlines() if l.strip().startswith("origin/s/")}
+    flight = sections(r.stdout).get("IN FLIGHT", "")
+    listed = {m for m in re.findall(r"origin/s/\S+", flight)}
+    assert listed == expected, (sorted(listed ^ expected))
