@@ -109,6 +109,53 @@ def test_no_display_exits_nonzero_with_message():
         shutil.rmtree(scratch, ignore_errors=True)
 
 
+def _stub_home(base):
+    """A fake HOME whose .local/bin/godot.real is a stub that writes a marker when run.
+    play.sh hardcodes GODOT="$HOME/.local/bin/godot.real", so HOME is the only way to substitute it."""
+    home = Path(base) / "home"
+    (home / ".local" / "bin").mkdir(parents=True)
+    marker = Path(base) / "godot-ran"
+    stub = home / ".local" / "bin" / "godot.real"
+    stub.write_text('#!/bin/sh\necho "$@" >> "%s"\nexit 0\n' % marker)
+    stub.chmod(0o755)
+    return home, marker, stub
+
+
+def test_no_display_runs_no_godot():
+    """H-001 Behaviour 5 and DEC-play-display-check-first-2026-10-30: with no DISPLAY,
+    play.sh exits non-zero with `no display` AND runs no Godot (the check comes before
+    the build and import steps). Godot is a marker-writing stub under a fake HOME."""
+    base = Path(tempfile.mkdtemp(prefix="h001-nogodot-"))
+    try:
+        home, marker, stub = _stub_home(base)
+        tree = scratch_clone(base)
+        (base / "tmp").mkdir()
+        env = {k: v for k, v in os.environ.items() if k not in ("DISPLAY", "WAYLAND_DISPLAY")}
+        env.update(HOME=str(home), TMPDIR=str(base / "tmp"))
+        r = subprocess.run(["bash", str(PLAY), "--tree", str(tree)], cwd=ROOT, env=env,
+                           capture_output=True, text=True, timeout=1200)
+        assert r.returncode != 0 and "no display" in r.stdout + r.stderr, r.stdout + r.stderr
+        assert not marker.exists(), "Godot ran before the display check: " + marker.read_text()
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def test_stub_godot_control_is_wired():
+    """Positive control for test_no_display_runs_no_godot: the fake HOME is what play.sh
+    launches (the --dry-run launch line carries the stub path) and the stub writes the marker."""
+    base = Path(tempfile.mkdtemp(prefix="h001-stubctl-"))
+    try:
+        home, marker, stub = _stub_home(base)
+        env = {**os.environ, "HOME": str(home), "DISPLAY": os.environ.get("DISPLAY", ":99")}
+        r = subprocess.run(["bash", str(PLAY), "--tree", str(ROOT), "--dry-run"], cwd=ROOT, env=env,
+                           capture_output=True, text=True, timeout=120)
+        assert r.returncode == 0 and f"launch: {stub} --path" in r.stdout, r.stdout + r.stderr
+        subprocess.run([str(stub), "--headless"], check=True)
+        assert marker.exists(), "stub did not write its marker"
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
 def test_tree_stays_clean_after_any_tree_run():
     """H-001 Tests: "After any `--tree` run, `git -C <tree> status --porcelain` is
     empty (the tree is never dirtied)." Covers the dry runs on the tree itself and a
