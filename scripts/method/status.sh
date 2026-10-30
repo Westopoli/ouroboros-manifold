@@ -10,6 +10,16 @@ if git rev-parse -q --verify origin/main >/dev/null; then MAIN=origin/main; else
 WEEK=$(date +%G-W%V)
 SINCE=$(date -d "-$(( $(date +%u) - 1 )) days" +%F)
 NOW=$(date +%s)
+# Anchor (as status_check.py): the Base: of the first Sweep commit, else the commit that added
+# docs/method/README.md. Only `Land` commits after it that carry a Story: trailer are landings.
+ANCHOR=""
+for h in $(git log --first-parent --reverse --grep='^Sweep ' --format=%H "$MAIN"); do
+    b=$(git log -1 --format='%(trailers:key=Base,valueonly)' "$h" | sed '/^$/d' | awk '{print $1}')
+    [ -n "$b" ] && { ANCHOR=$b; break; }
+done
+[ -z "$ANCHOR" ] && ANCHOR=$(git log --diff-filter=A --format=%H "$MAIN" -- docs/method/README.md | tail -1)
+RANGE="$MAIN"; [ -n "$ANCHOR" ] && RANGE="$ANCHOR..$MAIN"
+has_story() { [ -n "$(git log -1 --format='%(trailers:key=Story,valueonly)' "$1" | sed '/^$/d')" ]; }
 ind() { sed 's/^/  /'; }
 
 echo "IN FLIGHT"
@@ -20,7 +30,8 @@ git branch -r --no-merged "$MAIN" --format='%(refname:short)' | grep '^origin/s/
 done | ind
 
 echo "LANDED $WEEK"
-git log --first-parent --since="$SINCE" --grep='^Land ' --format='%h %s' "$MAIN" | grep -E '^[0-9a-f]+ Land ' | while read -r h s; do
+git log --first-parent --since="$SINCE" --grep='^Land ' --format='%h %s' "$RANGE" | grep -E '^[0-9a-f]+ Land ' | while read -r h s; do
+    has_story "$h" || continue
     echo "$h $s"
     for k in Story Played Gate; do
         v=$(git log -1 --format="%(trailers:key=$k,valueonly)" "$h" | sed '/^$/d')
@@ -32,7 +43,8 @@ echo "WAITING ON WESTLEY"
 words_file=$(mktemp); trap 'rm -f "$words_file"' EXIT
 for f in docs/bible/stories.md docs/method/harness.md; do git show "$MAIN:$f" 2>/dev/null; done >"$words_file"
 seen=$(git log --first-parent --format=%s "$MAIN" | grep -E '^Seen ' | awk '{print $2}')
-git log --first-parent --reverse --grep='^Land ' --format='%H' "$MAIN" | while read -r H; do
+git log --first-parent --reverse --grep='^Land ' --format='%H' "$RANGE" | while read -r H; do
+    has_story "$H" || continue
     s=$(git log -1 --format=%s "$H")
     case "$s" in "Land "*) ;; *) continue ;; esac
     id=$(echo "$s" | awk '{print $2}')
