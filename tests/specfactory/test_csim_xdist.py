@@ -64,8 +64,10 @@ GATE = SPECFACTORY / "merge_gate.sh"
 REQUIREMENTS = SPECFACTORY / "requirements.txt"
 REAL_CONFTEST = REPO / "tests" / "csim" / "conftest.py"
 sys.path.insert(0, str(SPECFACTORY))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import suite_regression as sr  # noqa: E402
+from gate_toy_root import fake_gate_root, write_story  # noqa: E402  (H-022)
 
 PY = sys.executable
 SUITE = "tests/t"
@@ -423,6 +425,7 @@ def _gate_regression_argvs(tmp_path, xdist_env):
     _git(root, "clone", "-q", str(origin), str(cand))
     _git(cand, "checkout", "-q", "-b", "feat")
     (cand / "feat.txt").write_text("f\n")
+    write_story(cand, "HARNESS-csim-xdist")  # H-022: the gate reads docs/stories/<id>.md (H-006)
     _git(cand, "add", "-A")
     _git(cand, "commit", "-q", "-m", "feat")
     log = tmp_path / "gate_argv.log"
@@ -433,7 +436,7 @@ def _gate_regression_argvs(tmp_path, xdist_env):
     env = _env({"MERGE_GATE_PYTHON": str(stubpy), "STUB_LOG": str(log), "MERGE_GATE_MAKE_TIMEOUT": "60"})
     if xdist_env is not None:
         env["MERGE_GATE_CSIM_XDIST"] = xdist_env
-    subprocess.run(["bash", str(GATE), str(cand), "origin/main", "HARNESS-csim-xdist"], capture_output=True,
+    subprocess.run(["bash", str(fake_gate_root(tmp_path)), "--tier", "full", str(cand), "origin/main", "HARNESS-csim-xdist"], capture_output=True,
                    text=True, env=env, timeout=300, cwd=str(tmp_path))
     argvs = [json.loads(l) for l in log.read_text().splitlines()] if log.exists() else []
     out = {}
