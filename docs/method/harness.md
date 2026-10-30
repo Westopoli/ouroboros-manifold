@@ -5,7 +5,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | Story | In Westley's words | Status | Depth |
 |---|---|---|---|
 | H-001 | "I type one command and today's main opens, built, in front of me; with a story id it opens at that story's scene." | Spec'd | `docs/stories/H-001.md` |
-| H-002 | "One command prints what is in flight, what landed this week, what waits on me and the four numbers, from git alone." | Spec'd | `docs/stories/H-002.md` |
+| H-002 | "One command prints what is in flight, what landed this week, what waits on me and the four numbers, from git alone." | Tested | `docs/stories/H-002.md` |
 | H-003 | "Every night the token report writes the four numbers for the week, and the share of spend that went into building and testing is the first of them." | Tested | `docs/stories/H-003.md` |
 | H-004 | "Every night the 30B plays today's main through the same command I use and what it finds shows up as harness stories, never as edits." | Spec'd | `docs/stories/H-004.md` |
 | H-005 | "The method check after a compaction tests six rules against the chat's transcript and cites this directory, not the retired documents." | Spec'd | `docs/stories/H-005.md` |
