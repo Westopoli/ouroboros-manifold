@@ -196,7 +196,7 @@ SWEEPS_REL = "docs/northstar/plans/push/sweeps.md"
 SWEEPS_HEADER = "| Date-time UTC | Main sha | Verdict | New | Red | Red ids |\n|---|---|---|---|---|---|\n"
 
 
-def _gate_sweep(tmp_path: Path, libs, story: str):
+def _gate_sweep(tmp_path: Path, libs, story: str, gate_flags=()):
     """(lines, out) of the gate on the gate-repo fixture whose own sweeps.md (the file the status stage reads from the gate
     repo) ends in a REJECT row at SWEPT_SHA with red: 3, and whose candidate carries `story` as docs/stories/B1.md."""
     tmp_path.mkdir(parents=True, exist_ok=True)
@@ -209,8 +209,8 @@ def _gate_sweep(tmp_path: Path, libs, story: str):
     env = {"PATH": tgr.GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
            "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
            "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
-    r = subprocess.run(["bash", str(gate), str(cand), "origin/main", STORY_ID], capture_output=True, text=True, env=env,
-                       timeout=tgf.GATE_TIMEOUT_S)
+    r = subprocess.run(["bash", str(gate), *gate_flags, str(cand), "origin/main", STORY_ID], capture_output=True,
+                       text=True, env=env, timeout=tgf.GATE_TIMEOUT_S)
     return r.stdout.splitlines(), r.stdout + r.stderr
 
 
@@ -264,3 +264,23 @@ def test_h020_control_no_tier_given_runs_the_flag_stage(tmp_path, libs):
     rc, lines, out = _gate_story(tmp_path, libs, _story("harness"), {"docs/x.md": "docs only\n"})
     flag = [ln for ln in lines if ln.startswith("GATE flag ")]
     assert flag and not flag[0].startswith("GATE flag SKIP"), out
+
+
+# ------------------------------------------------------------------ H-021: a red sweep row never blocks the sweep
+
+def test_h021_slow_tier_warns_on_a_reject_row_and_runs_past_status(tmp_path, libs):
+    """H-021 (g), DEC-slow-tier-ignores-red-row-2026-10-30: under `--tier slow` a REJECT last row with no Fixes-sweep line
+    prints `GATE status WARN sweep red <n> at <sha> slow tier` and the run goes on (the sweep is a candidate that is main
+    itself and must be able to replace the row)."""
+    lines, out = _gate_sweep(tmp_path, libs, _story("harness"), gate_flags=("--tier", "slow"))
+    assert "GATE tier slow" in lines, out
+    assert any(ln.startswith(f"GATE status WARN sweep red 3 at {SWEPT_SHA} slow tier") for ln in lines), out
+    assert not any(ln.startswith("GATE status REJECT sweep red") for ln in lines), out
+    assert not any(ln.startswith("GATE early_exit REJECT status") for ln in lines), out
+
+
+def test_h021_control_full_tier_still_rejects_on_a_reject_row(tmp_path, libs):
+    """H-021 (h), positive control: the same fixture under `--tier full` still prints `GATE status REJECT sweep red`, so a
+    red (g) means the slow-tier warning is missing, not that the fixture lost the row. Green today."""
+    lines, out = _gate_sweep(tmp_path, libs, _story("harness"), gate_flags=("--tier", "full"))
+    assert any(ln.startswith(f"GATE status REJECT sweep red 3 at {SWEPT_SHA}") for ln in lines), out
