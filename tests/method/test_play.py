@@ -77,6 +77,26 @@ def test_story_dry_run_launch_line_carries_scene_path():
     assert SCENE in launch[0], launch[0]
 
 
+def test_check_dry_run_uses_scratch_xdg_data_home():
+    """H-001 round 4, DEC-play-check-scratch-userdir-2026-10-30: under `--check` Godot
+    runs with `XDG_DATA_HOME=<scratch>/xdg`, so a stored `user://privacy_accepted` cannot
+    skip the boot scene. The dry run prints the env on the tree, build or launch line (a
+    dry run makes no scratch clone, so the path is checked to sit under the tree or TMPDIR).
+    Positive control: the same dry run without `--check` prints no `XDG_DATA_HOME=`."""
+    tmp = Path.home() / "Projects" / "om-push" / "tmp" / "h001-r4"
+    tmp.mkdir(parents=True, exist_ok=True)
+    chk = run_play(["--tree", str(ROOT), "--story", "H-001", "--check", "--dry-run"], tmpdir=tmp)
+    assert chk.returncode == 0, chk.stdout + chk.stderr
+    m = re.search(r"XDG_DATA_HOME=(\S+)", chk.stdout)
+    assert m, "no XDG_DATA_HOME= in --check dry run:\n" + chk.stdout
+    path = m.group(1)
+    assert path.endswith("/xdg"), path
+    assert path.startswith((str(tmp), str(ROOT))), path
+    plain = run_play(["--tree", str(ROOT), "--story", "H-001", "--dry-run"], tmpdir=tmp)
+    assert plain.returncode == 0, plain.stdout + plain.stderr
+    assert "XDG_DATA_HOME=" not in plain.stdout, plain.stdout
+
+
 def test_no_display_exits_nonzero_with_message():
     """H-001 Behaviour 5: "`$DISPLAY` must be set; exit non-zero with `no display`
     otherwise"."""
