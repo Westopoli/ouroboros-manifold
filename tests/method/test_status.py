@@ -178,10 +178,10 @@ def test_status_check_one_drift(fx):
     one DRIFT line naming it; the complete landing prints nothing."""
     r = subprocess.run([sys.executable, str(CHECK_PY), "--repo", str(fx["repo"])],
                        capture_output=True, text=True, cwd=fx["repo"])
-    drift = [l for l in r.stdout.splitlines() if "DRIFT" in l]
+    drift = [l for l in r.stdout.splitlines() if re.match(r"^STATUS [a-z_]* DRIFT", l)]
     assert len(drift) == 1, (r.stdout[:600], r.stderr[-600:])
-    assert "S-902" in drift[0] and "Played" in drift[0]
-    assert "S-900" not in drift[0]
+    assert drift[0] == "STATUS land_trailer DRIFT S-902", drift[0]
+    assert "S-900" not in r.stdout
     assert r.returncode != 0
 
 
