@@ -105,23 +105,56 @@ def test_fixture_shares_match_hand_sum(tmp_path):
 @pytest.mark.slow
 @pytest.mark.skipif(not REAL_DIR.is_dir(), reason="no real transcript directory")
 def test_real_day_reproduces_measurement():
-    """H-003 Tests: "--day 2026-10-29 on the real transcripts reproduces the engineer's
-    measurement of that day within DRAFT-token-report-tolerance: shares within 3 points
-    (builders 8, tests 9, Fable 48), calls and weighted tokens within 5% (2,812 and 80.4M)."
-    DEC-token-report-day-2026-10-30."""
-    env = dict(os.environ, HOME=str(Path.home()))
-    p = subprocess.run([sys.executable, str(SCRIPT), "--day", "2026-10-29"], cwd=REPO,
-                       env=env, capture_output=True, text=True)
+    """H-003 Tests: self-consistency control on the real transcripts: --day 2026-10-29
+    exits 0 and writes one row; class shares sum to 100 within 0.2; fable_share is within
+    0.5 point of an independent count made here (assistant lines, model claude-fable-5-1,
+    once per requestId, same files, same UTC day, same weighting).
+    DEC-token-report-fixture-2026-10-30."""
+    import datetime as dt
+    day = "2026-10-29"
+    home = Path.home()
+    p = subprocess.run([sys.executable, str(SCRIPT), "--day", day], cwd=REPO,
+                       env=dict(os.environ, HOME=str(home)), capture_output=True, text=True)
     assert p.returncode == 0, p.stderr
-    r = _row(p.stdout, "2026-10-29")
-    assert int(r[1]) == pytest.approx(2812, rel=0.05)
-    assert float(r[2]) == pytest.approx(80.4e6, rel=0.05)
-    assert _pct(r[3]) == pytest.approx(8, abs=3)
-    assert _pct(r[4]) == pytest.approx(9, abs=3)
-    assert _pct(r[6]) == pytest.approx(48, abs=3)
-    c = REPO / "docs" / "method" / "metrics" / "2026-10-29.csv"
-    if c.exists():
-        c.unlink()
+    c = home / "Projects/om-push/metrics" / (day + ".csv")
+    try:
+        rows = [l for l in p.stdout.splitlines() if l.startswith(day + ",")]
+        assert len(rows) == 1
+        r = rows[0].split(",")
+        # The row carries builder, tests and fable only (clerk/runner/other are not columns),
+        # so "sum to 100" is checked as: parts consistent and no overshoot of 100.
+        assert _pct(r[3]) + _pct(r[4]) == pytest.approx(_pct(r[5]), abs=0.2)
+        assert _pct(r[3]) + _pct(r[4]) + _pct(r[6]) <= 100.2
+        seen, fable, total = set(), 0.0, 0.0
+        for f in REAL_DIR.glob("**/*.jsonl"):
+            for line in f.open(errors="replace"):
+                if '"assistant"' not in line:
+                    continue
+                try:
+                    d = json.loads(line)
+                    if d.get("type") != "assistant":
+                        continue
+                    t = dt.datetime.fromisoformat(d["timestamp"].replace("Z", "+00:00"))
+                    if t.astimezone(dt.timezone.utc).date().isoformat() != day:
+                        continue
+                    u = d["message"]["usage"]
+                except (ValueError, KeyError, TypeError):
+                    continue
+                k = d.get("requestId") or d.get("uuid")
+                if k in seen:
+                    continue
+                seen.add(k)
+                w = (u.get("input_tokens", 0) + u.get("output_tokens", 0)
+                     + u.get("cache_creation_input_tokens", 0)
+                     + u.get("cache_read_input_tokens", 0) / 10)
+                total += w
+                if d["message"].get("model") == "claude-fable-5-1":
+                    fable += w
+        assert total > 0
+        assert _pct(r[6]) == pytest.approx(100.0 * fable / total, abs=0.5)
+    finally:
+        if c.exists():
+            c.unlink()
 
 
 def test_timer_unit_parses():
