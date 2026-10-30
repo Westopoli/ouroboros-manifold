@@ -1,0 +1,10 @@
+# See also: om-sweep.service. The three-landings and two-hours sweeps are the Dispatcher's, on `STATUS sweep WARN` from status_check.py.
+[Unit]
+Description=Slow-tier sweep of main, nightly 23:30
+
+[Timer]
+OnCalendar=*-*-* 23:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
