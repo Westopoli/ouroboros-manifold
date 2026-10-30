@@ -18,6 +18,8 @@ The Architect writes one page, `docs/stories/<id>.md`, on the branch `s/<id>-<sl
 - the gate flag: `harness`, `client`, `sim` or `contract`;
 - the pre-flight: every precondition checked by reading or running, with the sha read.
 
+The file ends with a `## Machine lines` block the gate reads: `Flag: <harness|client|sim|contract>`, `Tests: <path> [<path> ...]` (space-separated), and for a player-facing story `Scene: res://<path> [launch arguments]`. The readers take the last such line outside a code fence, so prose and examples above may mention the keys freely.
+
 Commit subject `<id> spec: <what>`. The branch on origin is "in flight". The Architect names files so that two in-flight stories do not share one; if they do, the merge at step 5 conflicts and the landing returns to the builder, who merges main into the branch and pushes again. Contract files (`csrc/ouroboros_sim.h`, `signatures.toml`, the pipe frames, the save format) are frozen: a story that changes one is a `contract` story and lands before its consumers start.
 
 ## 3. Verification

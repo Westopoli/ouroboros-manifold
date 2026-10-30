@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """HARNESS-gate-flag (layered gate spec, layer 1): the per-piece `impact` flag and its verdict.
 
+  gate_flag.py story-impact <story.md>      (H-006: the flag the gate reads)
   gate_flag.py impact <pieces.toml> <id>[,<id>...] [--require-key]
       prints the strictest flag of the listed rows (contract > sim > client > harness; a row without the key is sim);
       exit 2 on a value outside the four; with --require-key exit 3 when a listed row has no key (still prints it).
@@ -58,6 +59,16 @@ def cmd_impact(args) -> int:
         flags.append(flag)
     print(max(flags, key=STRICTNESS.index))
     return 3 if missing and args.require_key else 0
+
+
+def cmd_story_impact(args) -> int:
+    """H-006: the flag of a story file (`sim` when the line is absent); rc 2 outside the four."""
+    flag = msp.story_flag(Path(args.story))
+    if flag not in STRICTNESS:
+        print(f"gate_flag: {args.story}: Flag {flag!r} is not one of {', '.join(STRICTNESS)}", file=sys.stderr)
+        return 2
+    print(flag)
+    return 0
 
 
 def _rev(cwd: str, rev: str) -> str:
@@ -182,6 +193,8 @@ def main(argv: list[str] | None = None) -> int:
     imp.add_argument("pieces")
     imp.add_argument("ids")
     imp.add_argument("--require-key", action="store_true")
+    sti = sub.add_parser("story-impact")
+    sti.add_argument("story")
     ver = sub.add_parser("verdict")
     ver.add_argument("candidate")
     ver.add_argument("base_ref")
@@ -189,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     ver.add_argument("--merge-root", required=True)
     ver.add_argument("--lib", required=True)
     args = ap.parse_args(argv)
-    return cmd_impact(args) if args.cmd == "impact" else cmd_verdict(args)
+    return {"impact": cmd_impact, "story-impact": cmd_story_impact}.get(args.cmd, cmd_verdict)(args)
 
 
 if __name__ == "__main__":

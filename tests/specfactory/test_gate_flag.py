@@ -511,13 +511,13 @@ def _gate(tmp_path: Path, libs, impact, candidate_files: dict, pre_args=(), stub
     """(rc, stdout lines, stdout+stderr) of merge_gate.sh on the test_gate_reorder.py gate-repo fixture, base Makefile
     copying libA, the piece's row carrying `impact` (None: no key). Merge root is tmp_path."""
     tmp_path.mkdir(parents=True, exist_ok=True)
-    owns = ["csrc/stub.c", *candidate_files]
-    pieces = tgr._pieces(*owns) + (f'impact = "{impact}"\n' if impact else "")
+    # H-006 / DEC-ownership-by-conflict-2026-10-30: the flag comes from the story file's Machine lines block in the candidate.
+    story = "# B1: fixture\n\n## Machine lines\n\n" + (f"Flag: {impact}\n" if impact else "") + "Tests: tests/csim/test_fixture.py\n"
+    candidate_files = {**candidate_files, "docs/stories/B1.md": story}
     gate, cand = tgr._build(tmp_path, drift=False, gate_script=GATE, candidate_files=candidate_files,
-                            base_files={"Makefile": _mk(libs["A"])},
-                            stubs=stubs, pieces=pieces)
+                            base_files={"Makefile": _mk(libs["A"]), "tests/csim/test_fixture.py": "def test_fixture():\n    assert True\n"},
+                            stubs=stubs)
     env = {"PATH": tgr.GATE_PATH, "HOME": str(Path.home()), "MERGE_GATE_RUNS_CSV": str(tmp_path / "runs.csv"),
-           "MERGE_GATE_PIECES": str(tmp_path / "pieces.toml"),
            "MERGE_GATE_PLACEHOLDERS": str(tmp_path / "placeholders.txt")}
     r = subprocess.run(["bash", str(gate), *pre_args, str(cand), "origin/main", "B1"], capture_output=True, text=True,
                        env=env, timeout=GATE_TIMEOUT_S)
