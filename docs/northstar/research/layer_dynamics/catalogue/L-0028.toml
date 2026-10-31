@@ -4,8 +4,8 @@ landscape = "large_tiered"
 seed = 1091698
 predict = "A"
 predict_why = "Side A holds four separate clusters on three layers and side B is one mass among them, so position outweighs numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "Westley: too far zoomed out, nothing discernable, no city, no buildings; five layers shown for a ground era that has one walkable layer at any point."
 
 [side_a]
 headcount = 16

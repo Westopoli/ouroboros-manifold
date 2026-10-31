@@ -4,8 +4,8 @@ landscape = "small_flat"
 seed = 1051670
 predict = "A"
 predict_why = "Side A waits off the flank of side B's marching column, so the one at rest outweighs numbers."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "No transit route or destination drawn."
 
 [side_a]
 headcount = 16

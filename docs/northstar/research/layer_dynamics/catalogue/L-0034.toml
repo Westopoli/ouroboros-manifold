@@ -4,8 +4,8 @@ landscape = "large_flat"
 seed = 1111712
 predict = "draw"
 predict_why = "Neither side holds a positional edge in open_field and the numbers are even."
-verdict = ""
-feedback = ""
+verdict = "deny"
+feedback = "Open field is the one situation the flat plane fits, but the units are unreadable at this distance and no ranges are shown; redo with round two's camera and glyphs."
 
 [side_a]
 headcount = 16

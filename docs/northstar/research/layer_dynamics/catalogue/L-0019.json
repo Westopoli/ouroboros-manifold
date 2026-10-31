@@ -5,8 +5,8 @@
   "seed": 1061677,
   "predict": "B",
   "predict_why": "Side B sends part of its force round the long way onto side A's flank, so position outweighs numbers.",
-  "verdict": "",
-  "feedback": "",
+  "verdict": "deny",
+  "feedback": "No flank route and no terrain; five stacked planes wash out a ground-era field; units barely visible.",
   "side_a": {
     "headcount": 16,
     "units": [
