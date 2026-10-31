@@ -398,3 +398,90 @@ def test_h020_gate_without_home_reaches_its_first_stage_line(tmp_path):
     proc = subprocess.run(["bash", str(GATE), str(repo), "HEAD", "B1"], capture_output=True, text=True, env=env, timeout=60)
     assert "GATE base" in proc.stdout, proc.stdout + proc.stderr
     assert "HOME: unbound variable" not in proc.stdout + proc.stderr, proc.stdout + proc.stderr
+
+
+# H-035 gate-import-any-godot-test (DEC-gate-import-any-godot-test-2026-10-31): the headless Godot import runs before
+# acceptance whenever an acceptance file lives under tests/qa/ or mentions daemon_client or GodotGame, not only for
+# tests/qa/desktop/ ids or .gd ids. Same stub as test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece:
+# a fake `godot` on PATH; no real Godot, no real gate tree. See also: docs/stories/H-035.md, H-027 in docs/method/harness.md
+def _h035_gate_run(tmp_path: Path, test_rel: str, body: str):
+    """Toy repo with story H035 whose one acceptance id is `test_rel` (a passing pytest file holding `body`);
+    returns (gate stdout + stderr, text the fake godot logged)."""
+    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    write_story(repo, "H035", tests=test_rel)
+    target = repo / test_rel
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(body + "\ndef test_pass():\n    assert True\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "H035", "owns": [test_rel], "acceptance": []}])
+    fake_bin = tmp_path / "fakebin"
+    fake_bin.mkdir()
+    godot_path = fake_bin / "godot"
+    godot_path.write_text(FAKE_GODOT)
+    godot_path.chmod(0o755)
+    args_log = tmp_path / "godot_args.log"
+    args_log.write_text("")
+    fake_venv = tmp_path / "fake_venv"
+    fake_venv.mkdir()
+    env = {
+        "MERGE_GATE_PIECES": str(pieces),
+        "PATH": f"{fake_bin}:/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin",
+        "GODOT_ARGS_LOG": str(args_log),
+        "MERGE_GATE_VENV": str(fake_venv),
+    }
+    run = subprocess.run(
+        ["bash", str(GATE), "--tier", "full", str(repo), "HEAD~1", "H035"],
+        capture_output=True, text=True, env=env, timeout=60,
+    )
+    return run.stdout + run.stderr, args_log.read_text()
+
+
+def _h035_assert_import_before_acceptance(out: str, godot_log: str):
+    assert "GATE godot_import OK" in out, out
+    lines = out.splitlines()
+    import_line = next(i for i, l in enumerate(lines) if "GATE godot_import" in l)
+    accept_line = next(i for i, l in enumerate(lines) if "GATE acceptance " in l)
+    assert import_line < accept_line, out
+    assert "--headless" in godot_log and "--import" in godot_log, godot_log
+
+
+def test_h035_qa_id_importing_godotgame_from_daemon_client_triggers_the_import(tmp_path):
+    """H-035 Tests line: tests/qa/toy_launches_godot.py with `from tests.qa.daemon_client import GodotGame`."""
+    out, godot_log = _h035_gate_run(
+        tmp_path, "tests/qa/toy_launches_godot.py",
+        "try:\n    from tests.qa.daemon_client import GodotGame  # noqa\nexcept ImportError:\n    GodotGame = None\n")
+    _h035_assert_import_before_acceptance(out, godot_log)
+
+
+def test_h035_qa_id_that_mentions_no_godot_still_triggers_the_import(tmp_path):
+    """H-035 Files line: the id's file under tests/qa/ is enough, whatever the file says."""
+    out, godot_log = _h035_gate_run(tmp_path, "tests/qa/toy_plain.py", "# nothing here launches anything\n")
+    _h035_assert_import_before_acceptance(out, godot_log)
+
+
+def test_h035_non_qa_id_mentioning_daemon_client_triggers_the_import(tmp_path):
+    """H-035 Files line: a file text match on `daemon_client` outside tests/qa/ triggers the import."""
+    out, godot_log = _h035_gate_run(tmp_path, "tests/csim/toy_daemon.py", "try:\n    import daemon_client  # noqa\nexcept ImportError:\n    daemon_client = None\n")
+    _h035_assert_import_before_acceptance(out, godot_log)
+
+
+def test_h035_non_qa_id_mentioning_godotgame_triggers_the_import(tmp_path):
+    """H-035 Files line: a file text match on `GodotGame` outside tests/qa/ triggers the import."""
+    out, godot_log = _h035_gate_run(tmp_path, "tests/csim/toy_game.py", "GAME = 'GodotGame'\n")
+    _h035_assert_import_before_acceptance(out, godot_log)
+
+
+def test_h035_control_id_that_touches_no_godot_prints_no_import_line(tmp_path):
+    """H-035 negative control (green today): tests/csim/ id that mentions neither daemon_client nor GodotGame."""
+    out, godot_log = _h035_gate_run(tmp_path, "tests/csim/toy_plain.py", "# pure sim check\n")
+    assert "GATE acceptance " in out, out
+    assert "GATE godot_import" not in out, out
+    assert "--import" not in godot_log, godot_log
+
+
+def test_h035_control_desktop_id_still_triggers_the_import(tmp_path):
+    """H-035 positive control (green today): the existing tests/qa/desktop/ behaviour stays."""
+    out, godot_log = _h035_gate_run(tmp_path, "tests/qa/desktop/toy_x.py", "# desktop play stub\n")
+    _h035_assert_import_before_acceptance(out, godot_log)
