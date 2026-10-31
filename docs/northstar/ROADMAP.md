@@ -61,7 +61,9 @@ If a scene prints "Could not find type" errors, the folder has not been imported
 
 ## 1. Now building
 
-Next (Westley 2026-10-30): H-023 unit-scale comparison scene and his tuning session; it blocks the simulation lab (H-008 rewrite, catalogue, runs). H-024 match replay vs snapshots prototype runs alongside; it blocks only the snapshot ruling. H-028 stable beta build stands beside H-023 (Westley 2026-10-30).
+GATE (Westley 2026-10-30): no story that builds a scene, a prototype or the beta launches until proof by eyes is fixed and proved working: H-031. Westley, verbatim: "the 'no-window' gap has been persistent for long enough. Before we launch *any* more specs for building the beta the verification via *eyes* for both prototypes/scenes and the beta itself needs to be fixed and proved working. Make sure that's the case in roadmap.md"
+
+Held behind it: H-024 (landing), H-028 (beta), any H-025 round two, the lab runs. Not held: harness stories with no scene (H-016, H-017, H-029). H-023 and H-025 are landed but unverified until H-031's capture proves them.
 
 Branches only; main gets a piece only through the merge gate. Method rev 2 (`plans/retro_2026-10-10/README.md`): a Sonnet Dispatcher runs the programme, the Architect is on call by brief, every lane lands a skeleton with a shot before it fans out.
 
