@@ -12,6 +12,8 @@ Stages 0 to 3 run under `gate.lock`; stage 4 runs after it, off the lock, before
 3. Fast tier: the suites the flag selects (a `harness` story runs the harness tests; `client` adds the scripted end-to-end playthrough and the plays; `sim` adds the csim regression; `contract` adds the pins). The playthrough runs for every landing in the sweep, so no flag escapes it for longer than one sweep window. `merge_gate.sh --tier fast <candidate> origin/main <id>`.
 4. Play: `scripts/play.sh --story <id> --check --tree <worktree>`, window within DRAFT-play-window-s, scene reached after DRAFT-play-settle-s.
 
+The gd_reach lint (stage 1) rejects a `.gd` under `scenes/` or `autoload/` that no scene reaches; prototype scenes under `scenes/proto/` are declared in `scripts/specfactory/gd_reach_stubs.txt` by their builder (DEC-proto-scenes-reach-2026-10-30).
+
 The verdict is the set of `GATE <stage> REJECT` lines. The landing is one `--no-ff` merge whose subject begins `Land `.
 
 ## Off the lock
