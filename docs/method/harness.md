@@ -17,7 +17,7 @@ Work on the method or the tooling. Same columns as `docs/bible/stories.md`, same
 | H-016 | "The cache seed after a push actually seeds: it reads the candidate results stored under the gated sha." | Tested | `docs/stories/H-016.md` |
 | H-017 | "A change under csrc runs the pinned csim tests before the push." | Tested | `docs/stories/H-017.md`; pins step exercised by the builder's real-tree run only; first csrc landing proves it |
 | H-018 | "The pins warning tells stale pins from never-pinned tests." | Tested | `docs/stories/H-018.md` |
-| H-019 | "The gate's csim baseline cache survives docs-only commits on main because each suite declares only what it reads." | Ready | `docs/stories/H-019.md` |
+| H-019 | "The gate's csim baseline cache survives docs-only commits on main because each suite declares only what it reads." | Tested | `docs/stories/H-019.md` |
 | H-020 | "The gate's own toy-repo tests carry a story file like every real candidate, so a sweep of main is green again, and the landing that fixes a red sweep's tests may pass the sweep check it is fixing." | Tested | `docs/stories/H-020.md` |
 | H-021 | "A red sweep row never blocks the next sweep: the slow tier reports the row as a warning and runs the suite that can replace it." | Tested | `docs/stories/H-021.md` |
 | H-022 | "The csim xdist gate tests carry a story file and the tier they mean, like the rest of the toy gates." | Tested | `docs/stories/H-022.md` |
