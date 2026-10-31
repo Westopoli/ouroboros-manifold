@@ -171,6 +171,8 @@ def test_shot_out_writes_a_png_that_is_not_blank(layout, tmp_path, monkeypatch):
 # numbers (not roster claims); Bastion's 0.0 exercises the "no range" entry.
 
 GLYPH_MIN_PX = 14  # DRAFT-glyph-min-px 14
+# Named rounding allowance (H-025 second rulings 9), the Architect's under the trivial-decision rule, not a threshold a player could notice.
+DRAFT_GEOMETRY_EPS = 0.02  # DRAFT-geometry-eps, wu
 TOY_RANGES = {"Vanguard": 90.0, "Raider": 60.0, "Interceptor": 150.0, "Warden": 200.0, "Bombard": 600.0, "Bastion": 0.0}
 TOY_OBJECTIVE = {"kind": "objective", "x": 1800.0, "y": 2000.0, "radius": 300}
 
@@ -281,4 +283,4 @@ def test_qa_state_camera_frames_units_and_features_with_a_fifteen_percent_margin
     cam = qa["camera"]
     assert set(cam) == {"bbox", "margin"}, "camera keys %s" % sorted(cam)
     assert cam["margin"] == 0.15
-    assert len(cam["bbox"]) == 4 and all(abs(float(a) - b) <= 0.02 for a, b in zip(cam["bbox"], bbox)), "camera bbox %s, want %s" % (cam["bbox"], bbox)
+    assert len(cam["bbox"]) == 4 and all(abs(float(a) - b) <= DRAFT_GEOMETRY_EPS for a, b in zip(cam["bbox"], bbox)), "camera bbox %s, want %s" % (cam["bbox"], bbox)

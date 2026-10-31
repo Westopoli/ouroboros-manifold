@@ -21,6 +21,7 @@ Closed lists, key lists and rule texts below are copied from the story; the seed
 ROUND TWO (2026-10-31, "Round two" section of the story, after Westley denied batch one; the section is quoted in the docstrings of the tests
 marked ROUND TWO below). Red on the round-one tree because: the layout has no `features`, rules.toml has no R6, `--plant R6` is refused, and
 the recipes put flank_route, city and open_field on 12000 wu presets. Positive controls green today: test_control_round_two_*.
+Second rulings 8 and 9: the batch-one producer tests (36 features-free layouts) are deleted, the rule checks run on batch two, the epsilons are named.
 The scene half of round two (qa_state `features`, `ranges_visible`, `glyph_px`) is in tests/qa/test_layout_shot.py.
 """
 import hashlib
@@ -42,9 +43,6 @@ REVIEW = CAT / "review.py"
 # DRAFT-situation-kinds, the closed list (H-025 "Layout file").
 SITUATIONS = ["chokepoint", "vantage", "cover", "objective", "staging", "transit", "flank_route", "hazard_anchor",
               "slope", "city", "trap", "open_field"]
-# DRAFT-batch-one: every situation kind at pairs 16:16, 16:32 and 32:16, 36 layouts.
-PAIRS = [(16, 16), (16, 32), (32, 16)]
-PAIRS_ARG = "16:16,16:32,32:16"
 SEED = 1  # fixture choice; the story gives no batch seed
 ROLES = ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]  # scripts/skilllab/engine.py:16
 RULE_IDS = ["R1", "R2", "R3", "R4", "R5"]
@@ -79,19 +77,6 @@ def _load_toml(p: Path) -> dict:
 
 def _all_units(layout: dict):
     return layout["side_a"]["units"] + layout["side_b"]["units"]
-
-
-@pytest.fixture(scope="module")
-def batch(tmp_path_factory):
-    out = tmp_path_factory.mktemp("batch_one")
-    r = _cli(out, "all", PAIRS_ARG)
-    return out, r
-
-
-def _need36(out: Path):
-    files = _layouts(out)
-    assert len(files) == 36, "batch one wrote %d TOML files, the story says 36" % len(files)
-    return files
 
 
 # ---------------------------------------------------------------- positive controls (green today)
@@ -133,111 +118,6 @@ def test_rules_toml_is_the_closed_list_r1_to_r6():
     assert not re.search(r"\bR(?!1\b|2\b|3\b|4\b|5\b|6\b)\d+\b", text), "rules.toml names a rule beyond R1 to R6"
 
 
-def test_cli_batch_one_exits_zero_and_writes_36_layouts(batch):
-    """H-025 "`produce` writes 36 valid files for batch one"; "Batch one ... every situation kind at pairs 16:16, 16:32 and 32:16, 36 layouts";
-    "exits 2 if any layout was rejected, 0 otherwise"."""
-    out, r = batch
-    assert r.returncode == 0, "producer CLI rc=%s stderr tail: %s" % (r.returncode, r.stderr[-400:])
-    assert "REJECT" not in r.stderr
-    assert len(_layouts(out)) == 36, "TOML files: %d" % len(_layouts(out))
-    assert len(list(out.glob("L-*.json"))) == 36
-
-
-def test_every_toml_has_a_json_sibling_with_the_same_content(batch):
-    """H-025 "a sibling <id>.json with the same content (Godot reads JSON)"."""
-    out, _ = batch
-    for p in _need36(out):
-        j = p.with_suffix(".json")
-        assert j.is_file(), "no JSON sibling for %s" % p.name
-        assert json.loads(j.read_text()) == _load_toml(p), "%s: TOML and JSON differ" % p.name
-
-
-def test_ids_are_L_numbers_upward_from_0001(batch):
-    """H-025 "Path .../catalogue/<id>.toml, id L-0001 upward"; "`id` (string)"."""
-    out, _ = batch
-    ids = [p.stem for p in _need36(out)]
-    assert all(re.fullmatch(r"L-\d{4}", i) for i in ids), ids[:5]
-    assert len(set(ids)) == len(ids)
-    assert "L-0001" in ids
-    assert all(_load_toml(p)["id"] == p.stem for p in _need36(out))
-
-
-def test_layout_key_lists(batch):
-    """H-025 "Layout file ... Keys: id, situation, landscape, seed, predict, predict_why, verdict, feedback, [side_a] and [side_b] each with headcount and rows [[side_a.units]]
-    with role, x, y, facing, layer"."""
-    out, _ = batch
-    for p in _need36(out):
-        d = _load_toml(p)
-        assert set(d) - {"features", "defender"} == TOP_KEYS, "%s keys: %s" % (p.name, sorted(d))  # round two adds `features` and `defender`
-        for s in ("side_a", "side_b"):
-            assert set(d[s]) == SIDE_KEYS, "%s %s keys: %s" % (p.name, s, sorted(d[s]))
-            for u in d[s]["units"]:
-                assert set(u) - {"range"} == UNIT_KEYS, "%s %s unit keys: %s" % (p.name, s, sorted(u))  # round two adds `range`
-
-
-def test_layout_value_types_and_closed_values(batch):
-    """H-025 "`seed` (int). `predict`: "A", "B" or "draw"; `predict_why`: one sentence. `verdict`: "" until Westley ... `feedback` (string)";
-    "x, y (float, world units), facing (float, radians), layer (int, 0-based)"."""
-    out, _ = batch
-    presets_text = (CAT / "presets.toml").read_text()
-    for p in _need36(out):
-        d = _load_toml(p)
-        assert isinstance(d["seed"], int) and not isinstance(d["seed"], bool)
-        assert d["predict"] in ("A", "B", "draw"), p.name
-        assert isinstance(d["predict_why"], str) and d["predict_why"].strip(), p.name
-        assert d["verdict"] == "" and isinstance(d["feedback"], str), p.name
-        assert d["landscape"] and d["landscape"] in presets_text, "%s landscape %r not in presets.toml" % (p.name, d["landscape"])
-        for u in _all_units(d):
-            assert isinstance(u["x"], float) and isinstance(u["y"], float) and isinstance(u["facing"], float), (p.name, u)
-            assert isinstance(u["layer"], int) and not isinstance(u["layer"], bool) and u["layer"] >= 0, (p.name, u)
-
-
-def test_every_situation_kind_appears_three_times_and_only_the_closed_list(batch):
-    """H-025 "every situation kind appears"; "`situation`: one of the closed list DRAFT-situation-kinds: chokepoint, vantage, ... open_field"."""
-    out, _ = batch
-    kinds = [_load_toml(p)["situation"] for p in _need36(out)]
-    assert set(kinds) == set(SITUATIONS), "situations seen: %s" % sorted(set(kinds))
-    assert all(kinds.count(k) == 3 for k in SITUATIONS), {k: kinds.count(k) for k in set(kinds)}
-
-
-def test_headcount_pairs_per_situation(batch):
-    """H-025 "one layout per situation per pair"; "every situation kind at pairs 16:16, 16:32 and 32:16"."""
-    out, _ = batch
-    seen = {}
-    for p in _need36(out):
-        d = _load_toml(p)
-        seen.setdefault(d["situation"], []).append((d["side_a"]["headcount"], d["side_b"]["headcount"]))
-    for k in SITUATIONS:
-        assert sorted(seen.get(k, [])) == sorted(PAIRS), "%s pairs: %s" % (k, seen.get(k))
-
-
-def test_independent_rule_check_r2_r4_r5(batch):
-    """H-025 R2 "no two units closer than 30 world units"; R4 "each side's headcount within 8 to 256 and equal to its unit row count";
-    R5 "roles from the roster". Checked here without check_layout, so the producer is not its own oracle."""
-    out, _ = batch
-    for p in _need36(out):
-        d = _load_toml(p)
-        for s in ("side_a", "side_b"):
-            side = d[s]
-            assert HEADCOUNT_MIN <= side["headcount"] <= HEADCOUNT_MAX, (p.name, s)
-            assert side["headcount"] == len(side["units"]), (p.name, s)
-            assert all(u["role"] in ROLES for u in side["units"]), (p.name, s)
-        us = _all_units(d)
-        for i, a in enumerate(us):
-            for b in us[i + 1:]:
-                assert math.hypot(a["x"] - b["x"], a["y"] - b["y"]) >= MIN_SPACING, "%s: two units closer than %d" % (p.name, MIN_SPACING)
-
-
-def test_check_layout_passes_every_produced_layout(batch):
-    """H-025 "`produce` ... every file passes `check_layout`"; "`check_layout(layout, presets, rules) -> list[str]`: the rule ids violated, empty when valid"."""
-    out, _ = batch
-    from scripts.skilllab.catalogue.produce import check_layout
-    presets = _load_toml(CAT / "presets.toml")
-    rules = _load_toml(CAT / "rules.toml")
-    bad = {p.name: check_layout(_load_toml(p), presets, rules) for p in _need36(out)}
-    assert not {k: v for k, v in bad.items() if v}, "violations: %s" % {k: v for k, v in bad.items() if v}
-
-
 def test_produce_function_returns_one_path_per_situation_per_pair_and_is_deterministic(tmp_path):
     """H-025 "`produce(situations, pairs, seed, out) -> list[Path]`: one layout per situation per pair, deterministic from the seed"."""
     from scripts.skilllab.catalogue.produce import produce
@@ -267,20 +147,6 @@ def _mutations():
     def r5(d):
         d["side_a"]["units"][0]["role"] = "Wizard"
     return {"R1": r1, "R2": r2, "R3": r3, "R4": r4, "R5": r5}
-
-
-@pytest.mark.parametrize("rule", RULE_IDS)
-def test_check_layout_names_the_broken_rule(batch, rule):
-    """H-025 R1 "every unit inside the preset's bounds"; R2 "no two units closer than 30 world units"; R3 "every layer below the preset's layer count";
-    R4 "headcount within 8 to 256 and equal to its unit row count"; R5 "roles from the roster". A valid layout broken on one rule returns that rule id."""
-    out, _ = batch
-    from scripts.skilllab.catalogue.produce import check_layout
-    presets = _load_toml(CAT / "presets.toml")
-    rules = _load_toml(CAT / "rules.toml")
-    d = _load_toml(_need36(out)[0])
-    assert check_layout(d, presets, rules) == []
-    _mutations()[rule](d)
-    assert rule in check_layout(d, presets, rules), "%s not reported" % rule
 
 
 # ---------------------------------------------------------------- --plant positive controls
@@ -363,14 +229,16 @@ def test_review_apply_writes_toml_and_json_and_denied_lists_it(small):
 #    `small_flat`"; "`produce.py --batch two` ... a grid with pitch 40 wu"; "Layout file: `defender` (`"A"` or `"B"` ...; `open_field` has `defender = ""`), and
 #    per unit row `range` (float, world units, from the sim roster through `scripts/skilllab/engine.py` `om_unit_profile_attack_range`)";
 #    "Vantage: a unit whose centre is inside the vantage disc stands on layer `height_band`; outside, layer 0".
-# Every number is a story DRAFT (Architect, 5% rule); no test here widens one. Floats are compared to 0.02 because layouts round coordinates to 0.01.
+# Every number is a story DRAFT (Architect, 5% rule); no test here widens one. Floats are compared to DRAFT_GEOMETRY_EPS (0.02) because layouts round coordinates to 0.01.
 
 GLYPH_MIN_PX = 14  # DRAFT-glyph-min-px 14
 B2_PAIRS = [(16, 32), (24, 24), (8, 8), (32, 32), (8, 64), (64, 8), (48, 12), (12, 48), (40, 56), (64, 64), (16, 16), (32, 16)]  # DRAFT-batch2-headcounts
 B2_TIERED = {"vantage", "slope", "flank_route"}
 COLLISION_RADIUS = 15  # OM_UNIT_COLLISION_RADIUS (control test_control_collision_radius_is_fifteen)
 GRID_PITCH = 40.0  # ruling 5
-TOL = 0.02
+# Named rounding allowances (second rulings 9), the Architect's under the trivial-decision rule, not thresholds a player could notice; a later widening must show here.
+DRAFT_GEOMETRY_EPS = 0.02  # DRAFT-geometry-eps, wu: feature geometry comparisons (layout files round to 0.01)
+DRAFT_PITCH_EPS = 0.05  # DRAFT-pitch-eps, wu: the grid pitch check
 
 
 def _cli_two(out: Path, plant: str | None = None, seed: int = SEED):
@@ -409,7 +277,7 @@ def _inside_expanded(ux, uy, r, pad) -> bool:
 
 
 def _near(a, b) -> bool:
-    return abs(a - b) <= TOL
+    return abs(a - b) <= DRAFT_GEOMETRY_EPS
 
 
 # ---------------------------------------------------------------- ROUND TWO positive controls (green today)
@@ -569,7 +437,7 @@ def test_batch_two_sides_are_grids_of_pitch_forty(batch_two):
             us = d[s]["units"]
             for i, a in enumerate(us):
                 near = min(math.hypot(a["x"] - b["x"], a["y"] - b["y"]) for j, b in enumerate(us) if j != i)
-                assert abs(near - GRID_PITCH) <= 0.05, "%s %s unit %d: nearest same-side unit is %.2f wu away, the grid pitch is 40" % (d["id"], s, i, near)
+                assert abs(near - GRID_PITCH) <= DRAFT_PITCH_EPS, "%s %s unit %d: nearest same-side unit is %.2f wu away, the grid pitch is 40" % (d["id"], s, i, near)
 
 
 def test_features_in_toml_and_json_are_the_same(batch_two):
@@ -612,7 +480,7 @@ def _geometry_vantage(f):
 def _geometry_cover(f):
     assert 2 <= len(f["boxes"]) <= 4, "%d boxes" % len(f["boxes"])
     assert all(b["w"] == 120 and b["h"] == 60 for b in f["boxes"]), f["boxes"]
-    assert all(math.hypot(b["x"] - f["x"], b["y"] - f["y"]) <= 300 + TOL for b in f["boxes"]), "a box centre is beyond DRAFT-cover-spread 300"
+    assert all(math.hypot(b["x"] - f["x"], b["y"] - f["y"]) <= 300 + DRAFT_GEOMETRY_EPS for b in f["boxes"]), "a box centre is beyond DRAFT-cover-spread 300"
 
 
 def _geometry_objective(f):
@@ -745,3 +613,52 @@ def test_control_round_two_geometry_checks_accept_a_feature_built_from_the_rulin
     GEOMETRY["_geometry_trap"](dict(kind="trap", x=x, y=y, mouth=0.0, walls=[rect(x, y - 400, 800, 200), rect(x, y + 400, 800, 200), rect(x - 500, y, 200, 1000)]))
     with pytest.raises(AssertionError):
         GEOMETRY["_geometry_objective"](dict(good["objective"], radius=301))
+
+
+# ---------------------------------------------------------------- ROUND TWO, second rulings 8: batch one's tests retired, the rule detectors ported to batch two
+# H-025 rulings 8: "`--batch two` is the default and R6 applies to every layout the producer writes; `--batch one` stays as a flag for history and its output is not
+# checked by any test." The round-one tests that ran the producer without `--batch` on 36 features-free layouts are deleted (Test-defect trailer in the commit); the
+# three below keep what they proved (rules R1 to R5 detect their violations; values and closed lists hold; R2, R4, R5 hold without check_layout) on batch two.
+
+def test_check_layout_names_the_broken_rule_on_a_batch_two_layout(batch_two):
+    """H-025 R1 "every unit inside the preset's bounds"; R2 "no two units closer than 30 world units"; R3 "every layer below the preset's layer count";
+    R4 "headcount within 8 to 256 and equal to its unit row count"; R5 "roles from the roster". A valid batch-two layout (the chokepoint) broken on one rule
+    returns that rule id, for R1 to R5 (the positive control of "R1 to R5 still pass on a round-two layout")."""
+    from scripts.skilllab.catalogue.produce import check_layout
+    presets, rules = _load_toml(CAT / "presets.toml"), _load_toml(CAT / "rules.toml")
+    base = next(d for d in _b2(batch_two) if d["situation"] == "chokepoint")
+    assert check_layout(base, presets, rules) == []
+    for rule, mutate in _mutations().items():
+        d = json.loads(json.dumps(base))
+        mutate(d)
+        assert rule in check_layout(d, presets, rules), "%s not reported" % rule
+
+
+def test_batch_two_values_and_closed_lists(batch_two):
+    """H-025 "`seed` (int). `predict`: "A", "B" or "draw"; `predict_why`: one sentence. `verdict`: "" until Westley ... `feedback` (string)"; "x, y (float, world
+    units), facing (float, radians), layer (int, 0-based)"; `landscape` from presets.toml; `situation` from the closed list; `id` equals the file name."""
+    out, _ = batch_two
+    presets = _load_toml(CAT / "presets.toml")
+    _b2(batch_two)  # fails with the producer's stderr when it wrote nothing
+    for p in _layouts(out):
+        d = _load_toml(p)
+        assert d["id"] == p.stem and d["situation"] in SITUATIONS
+        assert isinstance(d["seed"], int) and not isinstance(d["seed"], bool)
+        assert d["predict"] in ("A", "B", "draw") and isinstance(d["predict_why"], str) and d["predict_why"].strip(), p.name
+        assert d["verdict"] == "" and isinstance(d["feedback"], str) and d["landscape"] in presets, p.name
+        for u in _all_units(d):
+            assert isinstance(u["x"], float) and isinstance(u["y"], float) and isinstance(u["facing"], float), (p.name, u)
+            assert isinstance(u["layer"], int) and not isinstance(u["layer"], bool) and u["layer"] >= 0, (p.name, u)
+
+
+def test_batch_two_independent_rule_check_r2_r4_r5(batch_two):
+    """H-025 R2 "no two units closer than 30 world units"; R4 "each side's headcount within 8 to 256 and equal to its unit row count"; R5 "roles from the roster".
+    Checked without check_layout, so the producer is not its own oracle."""
+    for d in _b2(batch_two):
+        for s in ("side_a", "side_b"):
+            assert HEADCOUNT_MIN <= d[s]["headcount"] <= HEADCOUNT_MAX and d[s]["headcount"] == len(d[s]["units"]), (d["id"], s)
+            assert all(u["role"] in ROLES for u in d[s]["units"]), (d["id"], s)
+        us = _all_units(d)
+        for i, a in enumerate(us):
+            for b in us[i + 1:]:
+                assert math.hypot(a["x"] - b["x"], a["y"] - b["y"]) >= MIN_SPACING, "%s: two units closer than %d" % (d["id"], MIN_SPACING)
