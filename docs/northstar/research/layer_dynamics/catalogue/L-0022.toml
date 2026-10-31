@@ -1,0 +1,238 @@
+id = "L-0022"
+situation = "hazard_anchor"
+landscape = "small_flat"
+seed = 1071684
+predict = "B"
+predict_why = "Side B stands as a ring that cannot be flanked and side A has one front to push, so position outweighs numbers."
+verdict = ""
+feedback = ""
+
+[side_a]
+headcount = 16
+
+[[side_a.units]]
+role = "Raider"
+x = 1200.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1200.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1200.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1200.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1160.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1160.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1160.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Raider"
+x = 1160.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1120.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1120.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1120.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1120.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1080.0
+y = 1940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1080.0
+y = 1980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1080.0
+y = 2020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 1080.0
+y = 2060.0
+facing = 0.0
+layer = 0
+
+[side_b]
+headcount = 16
+
+[[side_b.units]]
+role = "Warden"
+x = 3174.24
+y = 1941.47
+facing = -0.1963
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3174.24
+y = 2058.53
+facing = 0.1963
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3129.44
+y = 1833.33
+facing = -0.589
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3129.44
+y = 2166.67
+facing = 0.589
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3046.67
+y = 1750.56
+facing = -0.9817
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3046.67
+y = 2249.44
+facing = 0.9817
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2938.53
+y = 1705.76
+facing = -1.3744
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2938.53
+y = 2294.24
+facing = 1.3744
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2821.47
+y = 1705.76
+facing = -1.7671
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2821.47
+y = 2294.24
+facing = 1.7671
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2713.33
+y = 1750.56
+facing = -2.1598
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 2713.33
+y = 2249.44
+facing = 2.1598
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2630.56
+y = 1833.33
+facing = -2.5525
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2630.56
+y = 2166.67
+facing = 2.5525
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2585.76
+y = 1941.47
+facing = -2.9452
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 2585.76
+y = 2058.53
+facing = 2.9452
+layer = 0

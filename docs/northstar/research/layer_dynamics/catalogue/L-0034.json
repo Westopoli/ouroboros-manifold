@@ -1,0 +1,244 @@
+{
+  "id": "L-0034",
+  "situation": "open_field",
+  "landscape": "large_flat",
+  "seed": 1111712,
+  "predict": "draw",
+  "predict_why": "Neither side holds a positional edge in open_field and the numbers are even.",
+  "verdict": "",
+  "feedback": "",
+  "side_a": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 3000.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3000.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3000.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3000.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2960.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 2960.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2960.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2960.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2920.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2920.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2920.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2920.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2880.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2880.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2880.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 2880.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9040.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9040.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9080.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9080.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9080.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9080.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9120.0,
+        "y": 6060.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9120.0,
+        "y": 6020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9120.0,
+        "y": 5980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9120.0,
+        "y": 5940.0,
+        "facing": 3.1416,
+        "layer": 0
+      }
+    ]
+  }
+}

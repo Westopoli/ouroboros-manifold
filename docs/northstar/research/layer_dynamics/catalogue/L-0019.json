@@ -1,0 +1,244 @@
+{
+  "id": "L-0019",
+  "situation": "flank_route",
+  "landscape": "large_tiered",
+  "seed": 1061677,
+  "predict": "B",
+  "predict_why": "Side B sends part of its force round the long way onto side A's flank, so position outweighs numbers.",
+  "verdict": "",
+  "feedback": "",
+  "side_a": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Warden",
+        "x": 3600.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 3600.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 3600.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 3600.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 3560.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 3560.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3560.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3560.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3520.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3520.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3520.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 3520.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 3480.0,
+        "y": 6060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 3480.0,
+        "y": 6020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 3480.0,
+        "y": 5980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 3480.0,
+        "y": 5940.0,
+        "facing": 0.0,
+        "layer": 0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 5960.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 6000.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 9000.0,
+        "y": 6040.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 5960.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 6000.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 9040.0,
+        "y": 6040.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9080.0,
+        "y": 5960.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9080.0,
+        "y": 6000.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 9080.0,
+        "y": 6040.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 5964.6,
+        "y": 1421.37,
+        "facing": 2.0553,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 6000.0,
+        "y": 1440.0,
+        "facing": 2.0553,
+        "layer": 0
+      },
+      {
+        "role": "Warden",
+        "x": 6035.4,
+        "y": 1458.63,
+        "facing": 2.0553,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 5983.23,
+        "y": 1385.97,
+        "facing": 2.0553,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 6018.63,
+        "y": 1404.6,
+        "facing": 2.0553,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 6054.03,
+        "y": 1423.23,
+        "facing": 2.0553,
+        "layer": 0
+      },
+      {
+        "role": "Bombard",
+        "x": 6037.26,
+        "y": 1369.21,
+        "facing": 2.0553,
+        "layer": 0
+      }
+    ]
+  }
+}

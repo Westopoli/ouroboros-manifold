@@ -1,0 +1,238 @@
+id = "L-0013"
+situation = "staging"
+landscape = "small_flat"
+seed = 1041663
+predict = "draw"
+predict_why = "Neither side holds a positional edge in staging and the numbers are even."
+verdict = ""
+feedback = ""
+
+[side_a]
+headcount = 16
+
+[[side_a.units]]
+role = "Warden"
+x = 522.43
+y = 3562.43
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 494.14
+y = 3534.14
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 465.86
+y = 3505.86
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 437.57
+y = 3477.57
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 494.14
+y = 3590.71
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Warden"
+x = 465.86
+y = 3562.43
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 437.57
+y = 3534.14
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 409.29
+y = 3505.86
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 465.86
+y = 3618.99
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 437.57
+y = 3590.71
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 409.29
+y = 3562.43
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 381.01
+y = 3534.14
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 437.57
+y = 3647.28
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 409.29
+y = 3618.99
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 381.01
+y = 3590.71
+facing = -0.7854
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 352.72
+y = 3562.43
+facing = -0.7854
+layer = 0
+
+[side_b]
+headcount = 16
+
+[[side_b.units]]
+role = "Warden"
+x = 3477.57
+y = 437.57
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3505.86
+y = 465.86
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3534.14
+y = 494.14
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3562.43
+y = 522.43
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3505.86
+y = 409.29
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Warden"
+x = 3534.14
+y = 437.57
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3562.43
+y = 465.86
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3590.71
+y = 494.14
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3534.14
+y = 381.01
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3562.43
+y = 409.29
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3590.71
+y = 437.57
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 3618.99
+y = 465.86
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3562.43
+y = 352.72
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3590.71
+y = 381.01
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3618.99
+y = 409.29
+facing = 2.3562
+layer = 0
+
+[[side_b.units]]
+role = "Bombard"
+x = 3647.28
+y = 437.57
+facing = 2.3562
+layer = 0

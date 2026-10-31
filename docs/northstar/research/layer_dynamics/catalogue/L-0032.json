@@ -1,0 +1,356 @@
+{
+  "id": "L-0032",
+  "situation": "trap",
+  "landscape": "small_flat",
+  "seed": 1101721,
+  "predict": "B",
+  "predict_why": "Side B shows a small bait and keeps two wings on either side of it, so the ambush outweighs numbers.",
+  "verdict": "",
+  "feedback": "",
+  "side_a": {
+    "headcount": 16,
+    "units": [
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 800.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Vanguard",
+        "x": 760.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 720.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 720.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 720.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 720.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 680.0,
+        "y": 1940.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 680.0,
+        "y": 1980.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 680.0,
+        "y": 2020.0,
+        "facing": 0.0,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 680.0,
+        "y": 2060.0,
+        "facing": 0.0,
+        "layer": 0
+      }
+    ]
+  },
+  "side_b": {
+    "headcount": 32,
+    "units": [
+      {
+        "role": "Raider",
+        "x": 1800.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 1800.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 1800.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 1840.0,
+        "y": 2040.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1840.0,
+        "y": 2000.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1840.0,
+        "y": 1960.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1880.0,
+        "y": 2020.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 1880.0,
+        "y": 1980.0,
+        "facing": 3.1416,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2525.72,
+        "y": 1238.86,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2495.24,
+        "y": 1212.95,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2464.76,
+        "y": 1187.05,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2434.28,
+        "y": 1161.14,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2551.62,
+        "y": 1208.38,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2521.14,
+        "y": 1182.48,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2490.67,
+        "y": 1156.57,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2460.19,
+        "y": 1130.66,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2577.53,
+        "y": 1177.9,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2547.05,
+        "y": 1152.0,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2516.57,
+        "y": 1126.09,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2486.1,
+        "y": 1100.19,
+        "facing": 2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2434.28,
+        "y": 2838.86,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2464.76,
+        "y": 2812.95,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2495.24,
+        "y": 2787.05,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2525.72,
+        "y": 2761.14,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2460.19,
+        "y": 2869.34,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Raider",
+        "x": 2490.67,
+        "y": 2843.43,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2521.14,
+        "y": 2817.52,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2551.62,
+        "y": 2791.62,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2486.1,
+        "y": 2899.81,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2516.57,
+        "y": 2873.91,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2547.05,
+        "y": 2848.0,
+        "facing": -2.2753,
+        "layer": 0
+      },
+      {
+        "role": "Interceptor",
+        "x": 2577.53,
+        "y": 2822.1,
+        "facing": -2.2753,
+        "layer": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,350 @@
+id = "L-0030"
+situation = "city"
+landscape = "large_tiered"
+seed = 1093314
+predict = "B"
+predict_why = "Side B holds four separate clusters on three layers and side A is one mass among them, so position outweighs numbers."
+verdict = ""
+feedback = ""
+
+[side_a]
+headcount = 32
+
+[[side_a.units]]
+role = "Vanguard"
+x = 3000.0
+y = 5900.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 3000.0
+y = 5940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 3000.0
+y = 5980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 3000.0
+y = 6020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 3000.0
+y = 6060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 3000.0
+y = 6100.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2960.0
+y = 5900.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2960.0
+y = 5940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2960.0
+y = 5980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2960.0
+y = 6020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Vanguard"
+x = 2960.0
+y = 6060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2960.0
+y = 6100.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2920.0
+y = 5900.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2920.0
+y = 5940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2920.0
+y = 5980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2920.0
+y = 6020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2920.0
+y = 6060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2920.0
+y = 6100.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2880.0
+y = 5900.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2880.0
+y = 5940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2880.0
+y = 5980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Interceptor"
+x = 2880.0
+y = 6020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2880.0
+y = 6060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2880.0
+y = 6100.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2840.0
+y = 5900.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2840.0
+y = 5940.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2840.0
+y = 5980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2840.0
+y = 6020.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2840.0
+y = 6060.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2840.0
+y = 6100.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2800.0
+y = 5980.0
+facing = 0.0
+layer = 0
+
+[[side_a.units]]
+role = "Bombard"
+x = 2800.0
+y = 6020.0
+facing = 0.0
+layer = 0
+
+[side_b]
+headcount = 16
+
+[[side_b.units]]
+role = "Vanguard"
+x = 7200.0
+y = 4220.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 7200.0
+y = 4180.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 7240.0
+y = 4220.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Interceptor"
+x = 7240.0
+y = 4180.0
+facing = 3.1416
+layer = 0
+
+[[side_b.units]]
+role = "Vanguard"
+x = 7200.0
+y = 7820.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 7200.0
+y = 7780.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Interceptor"
+x = 7240.0
+y = 7820.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Interceptor"
+x = 7240.0
+y = 7780.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 9000.0
+y = 4220.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 9000.0
+y = 4180.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Interceptor"
+x = 9040.0
+y = 4220.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Interceptor"
+x = 9040.0
+y = 4180.0
+facing = 3.1416
+layer = 1
+
+[[side_b.units]]
+role = "Vanguard"
+x = 9000.0
+y = 7820.0
+facing = 3.1416
+layer = 2
+
+[[side_b.units]]
+role = "Vanguard"
+x = 9000.0
+y = 7780.0
+facing = 3.1416
+layer = 2
+
+[[side_b.units]]
+role = "Interceptor"
+x = 9040.0
+y = 7820.0
+facing = 3.1416
+layer = 2
+
+[[side_b.units]]
+role = "Interceptor"
+x = 9040.0
+y = 7780.0
+facing = 3.1416
+layer = 2
